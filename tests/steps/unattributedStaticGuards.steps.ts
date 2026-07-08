@@ -36,6 +36,16 @@ const USG_GUARD_FIXTURE: UsgFixture = {
   packageJson: "tests/fixtures/usg-guard/package.json",
 };
 
+// @SCN-USG-005 — a third fixture target whose CI runs the SAME guard:* script (guard:domain-purity)
+// but which ALSO declares it via @lint=guard:domain-purity (the boundary keeping USG-004 honest).
+// Distinct from USG_GUARD_FIXTURE (which declares nothing) so the attributed vs unattributed
+// counts stay separable: here the guard is demanded → 1 run, 0 unattributed.
+const USG_GUARD_DECLARED_FIXTURE: UsgFixture = {
+  features: "tests/fixtures/usg-guard-declared/features",
+  ci: "tests/fixtures/usg-guard-declared/ci.yml",
+  packageJson: "tests/fixtures/usg-guard-declared/package.json",
+};
+
 // The active fixture + its tmp target dir + the rendered report — set by each Given, so the
 // one shared "When ... rendered for the target" step drives whichever fixture the scenario picked.
 let activeFixture: UsgFixture;
@@ -62,6 +72,19 @@ Given("a target whose CI runs the guard:domain-purity script", function () {
 Given("no @lint scenario declares guard:domain-purity", function () {
   // The usg-guard fixture's target.feature declares NO @lint at all; guard:domain-purity is
   // invoked in the fixture ci.yml but nothing declares it — the unattributed guard:* one.
+});
+
+// @SCN-USG-005
+Given("a target whose CI runs the guard:domain-purity script it declares", function () {
+  activeFixture = USG_GUARD_DECLARED_FIXTURE;
+  activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg005-"));
+});
+
+// @SCN-USG-005
+Given("an @lint scenario declares guard:domain-purity", function () {
+  // The usg-guard-declared fixture's target.feature declares @lint=guard:domain-purity on
+  // @SCN-TGD-001; the same guard:* script is invoked in the fixture ci.yml — so it is a
+  // DEMANDED running guard, attributed to its scenario, not folded onto the suspense row.
 });
 
 When("the reconciliation report is rendered for the target", function () {
@@ -148,6 +171,26 @@ Then(
     assert.ok(
       activeMd.includes("2 guard(s) run, 1 unattributed static-guard(s)"),
       `expected lint:foo folded into the running volume (2 run, 1 unattributed static-guard(s)); got:\n${activeMd}`
+    );
+  }
+);
+
+// @SCN-USG-005 — the declared guard:* is attributed, not an unattributed static-guard. The
+// usg-guard-declared fixture runs guard:domain-purity in CI AND declares @lint=guard:domain-purity:
+// the demanded-guard filter (reconcile's !demandedGuardSet.has(o.guard)) removes it from the
+// running-observation stream so it is not folded onto the suspense row, and the counter attributes
+// it (1 run, 0 unattributed) — never double-counted as both demanded and unattributed. The guard:*
+// mirror of USG-002, keeping the USG-004 broadening honest.
+Then(
+  "guard:domain-purity is not reported as an unattributed static-guard",
+  function () {
+    assert.ok(
+      !activeMd.includes("cites-no-scenario (guard:domain-purity)"),
+      `guard:domain-purity is @lint-declared; it must not surface as an unattributed static-guard credit; got:\n${activeMd}`
+    );
+    assert.ok(
+      activeMd.includes("1 guard(s) run, 0 unattributed static-guard(s)"),
+      `expected guard:domain-purity attributed (1 run, 0 unattributed static-guard(s)); got:\n${activeMd}`
     );
   }
 );

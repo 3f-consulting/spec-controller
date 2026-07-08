@@ -58,3 +58,12 @@ Feature: Detect unattributed static-guards — a CI guard no @lint declares
       And no @lint scenario declares guard:domain-purity
       When the reconciliation report is rendered for the target
       Then the Static guards section reports guard:domain-purity as an unattributed static-guard
+
+  Rule: a guard:-prefixed CI script an @lint scenario declares is attributed, not unattributed
+
+    @unit @integration @SCN-USG-005
+    Scenario: a declared guard:-prefixed script is attributed, not an unattributed static-guard
+      Given a target whose CI runs the guard:domain-purity script it declares
+      And an @lint scenario declares guard:domain-purity
+      When the reconciliation report is rendered for the target
+      Then guard:domain-purity is not reported as an unattributed static-guard

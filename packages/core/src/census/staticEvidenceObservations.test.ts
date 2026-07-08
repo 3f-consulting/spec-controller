@@ -56,6 +56,17 @@ describe("[SCN-USG-002] a guard an @lint scenario declares is demanded, not unat
   });
 });
 
+describe("[SCN-USG-005] a declared guard:-prefixed script is attributed, not unattributed", () => {
+  it("counts a running guard:* an @lint declares as running-but-not-unattributed (guard:* mirror of USG-002)", () => {
+    // guard:domain-purity RUNS in CI and is DEMANDED (@lint=guard:domain-purity); the prefix-agnostic
+    // demanded set attributes it exactly once — folded into runningGuardCount, never unattributed,
+    // never double-counted. Keeps the USG-004 guard:* broadening honest at the declared boundary.
+    const counts = countStaticEvidenceObservationKinds([running("guard:domain-purity")], ["guard:domain-purity"]);
+    expect(counts.runningGuardCount).toBe(1);
+    expect(counts.unattributedStaticGuardCount).toBe(0);
+  });
+});
+
 describe("[SCN-USG-003] non-running guard observations are not counted as running guards", () => {
   it("skips a missing guard (no script) — it does not run, so it is not a running guard", () => {
     const missing: GuardEvidenceObservation = {
