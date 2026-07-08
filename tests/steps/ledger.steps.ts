@@ -553,6 +553,106 @@ Then(
   }
 );
 
+// @SCN-LDG-015 — the NEGATIVE BOUNDARY of the general rule. Its own fixtures (distinct step
+// text: "declared @unit only", "citing the @unit-only scenario") leave LDG-011/012/013/014's
+// steps byte-untouched; only the generic "the ledger reconciles the target" When is shared.
+let ldg015ScnId: string;
+
+// @SCN-LDG-015
+Given("a scenario declared @unit only", function () {
+  // A declared scenario carrying ONLY a @unit tier tag (no @integration/@e2e/@performance),
+  // built through the REAL declared reader → exactly ONE evidence obligation: unit. There is NO
+  // non-unit obligation for a cucumber observation to discharge — the negative boundary.
+  ldg015ScnId = "SCN-LDG-015";
+  const feature = [
+    "@LDG",
+    "Feature: fixture",
+    "  Rule: a fixture rule",
+    `    @unit @${ldg015ScnId}`,
+    "    Scenario: a unit-only fixture scenario",
+    "      Given a fixture step",
+  ].join("\n");
+  scenarios = parseScenarios(feature);
+});
+
+// @SCN-LDG-015
+Given("a passing cucumber observation citing the @unit-only scenario", function () {
+  // A passing cucumber JSON report citing the @unit-only scenario, run through the REAL parser
+  // with the JS-ecosystem "integration" fallback. deriveLevels finds NO non-unit tier tag (@unit
+  // is inert for cucumber — unit is vitest's substrate, never derived), so it falls back to the
+  // single caller-declared level (integration) — a level this @unit-only scenario never declared.
+  // The observation therefore discharges NO obligation and is UNDEMANDED. Crucially it does NOT
+  // discharge the @unit obligation: cucumber must never manufacture a unit discharge.
+  const report: CucumberJsonReport = [
+    {
+      uri: "features/fixture.feature",
+      elements: [
+        {
+          tags: [{ name: "@unit" }, { name: `@${ldg015ScnId}` }],
+          steps: [{ result: { status: "passed" } }],
+        },
+      ],
+    },
+  ];
+  evidenceObservations = parseCucumberEvidenceObservations(report, "integration");
+});
+
+// @SCN-LDG-015
+Then("the cucumber observation is reported undemanded", function () {
+  // Row-scoped to the @unit-only scenario's OWN row: the cucumber observation posts to this
+  // scenario's account (it cites it) at a level the scenario never declared → an UNDEMANDED
+  // credit-side item (at the fallback integration level). The row's verdict is out-of-balance
+  // (an undemanded item is a non-satisfied reconciling item). Reds under a mutation that lets
+  // cucumber DERIVE a unit level from the @unit tag — the observation would then DISCHARGE the
+  // unit obligation (satisfied, balanced) and no undemanded item would appear.
+  const { verdict, items } = rowCells(ldg015ScnId);
+  const undemanded = items
+    .split(";")
+    .map((s) => s.trim())
+    .find((s) => s.includes("undemanded"));
+  assert.ok(
+    undemanded,
+    `expected ${ldg015ScnId} to carry an undemanded cucumber observation; got "${items}"`
+  );
+  assert.ok(
+    undemanded.includes("integration"),
+    `expected the undemanded observation at the fallback integration level; got "${undemanded}"`
+  );
+  assert.match(
+    verdict,
+    /out-of-balance/,
+    `expected ${ldg015ScnId} out-of-balance (undemanded observation); got "${verdict}"`
+  );
+});
+
+// @SCN-LDG-015
+Then("the @unit obligation remains the scenario's only required evidence", function () {
+  // Row-scoped: the scenario's ONLY demanded (required) obligation is unit — and it is
+  // required-but-MISSING here (no vitest observation was supplied; the cucumber observation
+  // discharged NOTHING). No non-unit obligation was manufactured: the only non-unit tier present
+  // is the UNDEMANDED cucumber credit (a credit, not a demanded obligation). Reds under a mutation
+  // that derives unit for cucumber (the unit obligation would be wrongly satisfied — no missing).
+  const { items } = rowCells(ldg015ScnId);
+  const missing = items
+    .split(";")
+    .map((s) => s.trim())
+    .find((s) => s.includes("missing"));
+  assert.ok(
+    missing,
+    `expected the unit obligation required-but-missing (cucumber discharged nothing); got "${items}"`
+  );
+  assert.ok(
+    missing.includes("unit"),
+    `expected the missing (required) obligation to be unit; got "${missing}"`
+  );
+  // Unit is the ONLY required evidence: no non-unit tier appears as a demanded (missing) obligation
+  // — integration is present only as the undemanded credit, not manufactured into an obligation.
+  assert.ok(
+    !missing.includes("integration") && !missing.includes("e2e"),
+    `expected unit to be the scenario's only required evidence; got "${missing}"`
+  );
+});
+
 // @SCN-LDG-001
 When("the reconciler runs", function () {
   markdown = renderMarkdown(reconcile(scenarios, evidenceObservations), CTX);

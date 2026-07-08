@@ -140,3 +140,28 @@ describe("[SCN-LDG-014] parseCucumberEvidenceObservations emits one observation 
     ]);
   });
 });
+
+describe("[SCN-LDG-015] parseCucumberEvidenceObservations derives NO non-unit level from a @unit-only scenario and never manufactures a unit discharge", () => {
+  it("falls back to the single caller-declared level for a @unit-only scenario — never a unit observation (unit is vitest's substrate, not cucumber-derivable)", () => {
+    // The NEGATIVE BOUNDARY of the derivation rule: @unit is NOT a cucumber-derivable tier, so
+    // deriveLevels finds no non-unit tier tag and falls back to the SINGLE caller-declared level
+    // (integration). Exactly ONE observation, at the fallback level — and crucially NOT levelled
+    // unit: cucumber must never manufacture a unit discharge for a @unit-only scenario (unit is
+    // the vitest substrate). Reds if @unit is added to the derivable tiers — a spurious unit
+    // observation would then discharge the scenario's unit obligation where none is declared.
+    const report: CucumberJsonReport = [
+      {
+        uri: "features/unitOnly.feature",
+        elements: [
+          {
+            tags: [{ name: "@unit" }, { name: "@SCN-LDG-015" }],
+            steps: [{ result: { status: "passed" } }],
+          },
+        ],
+      },
+    ];
+    expect(parseCucumberEvidenceObservations(report, "integration")).toEqual([
+      { qualityCheck: "integration", scnId: "SCN-LDG-015", status: "passed", locator: "features/unitOnly.feature" },
+    ]);
+  });
+});

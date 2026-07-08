@@ -234,3 +234,25 @@ Feature: Ledger over declared-vs-observed evidence
       And a single passing cucumber observation citing it
       When the ledger reconciles the target
       Then both the integration and the e2e obligations are satisfied and the scenario is balanced
+
+    # The NEGATIVE BOUNDARY of the general rule (SCN-LDG-015): a @unit-only scenario cited by a
+    # cucumber observation. @unit is NOT a cucumber-derivable tier (unit is vitest's substrate,
+    # never derived from the cucumber report), so the observation derives NO non-unit level from
+    # the scenario and falls back to the JS-ecosystem default (integration) — a level the
+    # @unit-only scenario never declared, so the observation is UNDEMANDED on the scenario's OWN
+    # row (a cited credit against no obligation; contrast the null-scnId suspense row of LDG-007).
+    # It discharges NOTHING: the @unit obligation is NOT manufactured-discharged by cucumber — it
+    # remains the scenario's only required evidence, unmet here because no vitest observation was
+    # supplied. Pins that "a cucumber observation discharges the cited scenario's NON-UNIT
+    # obligations" never manufactures a unit (or any) discharge where none is declared. Distinct
+    # step wording ("declared @unit only", "citing the @unit-only scenario", "the cucumber
+    # observation is reported undemanded", "the @unit obligation remains the scenario's only
+    # required evidence") leaves LDG-011/012/013/014's steps byte-untouched; only the generic
+    # "the ledger reconciles the target" When is shared.
+    @unit @integration @SCN-LDG-015
+    Scenario: a cucumber observation for a @unit-only scenario discharges nothing and is undemanded
+      Given a scenario declared @unit only
+      And a passing cucumber observation citing the @unit-only scenario
+      When the ledger reconciles the target
+      Then the cucumber observation is reported undemanded
+      And the @unit obligation remains the scenario's only required evidence
