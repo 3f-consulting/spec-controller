@@ -1,0 +1,404 @@
+/**
+ * Step definitions for features/ledger.feature (the @LDG runtime spine).
+ *
+ * @SCN-LDG-001 / @SCN-LDG-002 / @SCN-LDG-003 / @SCN-LDG-005 — bidirectional
+ * evidence markers for features/ledger.feature (Evidence Manifesto §9). The
+ * @integration arm exercises the declared → reconcile → render wiring end-to-end
+ * (cross-component), complementing the @unit tests that prove reconcile() in
+ * isolation.
+ *
+ * The verdict model reframes the Then assertions onto the binary scenario VERDICT
+ * (balanced | out-of-balance) and the LIST of reconciling items. Assertions are
+ * ROW-SCOPED to the scenario's own row CELLS — not a bare regex over the whole
+ * report, which would be toothless (the summary line names every verdict, so a
+ * loose /out-of-balance/ or /balanced/ match would pass regardless of the row's
+ * actual verdict). Cell-scoping gives the assertions
+ * teeth: each reds under a wrong-verdict mutation of the reconcile core.
+ */
+
+import { Given, When, Then } from "@cucumber/cucumber";
+import assert from "node:assert/strict";
+import { parseScenarios } from "@3f-consulting/spec-controller-core";
+import { reconcile } from "@3f-consulting/spec-controller-core";
+import { renderMarkdown } from "@3f-consulting/spec-controller-core";
+import type { Scenario, EvidenceObservation } from "@3f-consulting/spec-controller-core";
+import type { RunContext } from "@3f-consulting/spec-controller-core";
+
+// Fixtures shared across steps within a scenario (isolated per scenario by Cucumber).
+let scenarios: Scenario[];
+let evidenceObservations: EvidenceObservation[];
+let markdown: string;
+
+// A RunContext fixture — the sibling provenance arg renderMarkdown now requires.
+// These @LDG assertions are ROW-SCOPED to the verdict table, so the
+// provenance header above it leaves them byte-green (the Scenario-CRUD Read).
+const CTX: RunContext = {
+  target: "spec-controller",
+  inputs: {},
+  runStart: new Date("2026-01-01T00:00:00.000Z"),
+  sourceSha: null,
+};
+
+/**
+ * Extract a scenario's OWN ledger row, split into its cells. The ledger
+ * row is `| <scnId> | <verdict> | <reconciling items> |`; this returns the verdict and
+ * items CELLS so an assertion scopes to the row, not the whole report.
+ *
+ * Matched on the FIRST cell equalling the scnId — NOT a bare `includes(scnId)` — so the
+ * scnId mention in the "Out-of-balance by feature" cut (`| LDG | 1 | SCN-LDG-004 |`,
+ * which the reformat moved ABOVE the ledger) can't shadow the ledger row.
+ */
+function rowCells(scnId: string): { verdict: string; items: string } {
+  // Scope to the `## Scenario Reconciliations` section: the reformat moved the
+  // ledger to the end and added summary cuts above it (the by-feature table) that
+  // mention the scnId, so search only the ledger and match the scnId in the FIRST cell.
+  const ledgerStart = markdown.indexOf("## Scenario Reconciliations");
+  const ledger = ledgerStart >= 0 ? markdown.slice(ledgerStart) : markdown;
+  const row = ledger.split("\n").find((line) => {
+    if (!line.startsWith("|")) return false;
+    const cells = line.split("|").map((c) => c.trim());
+    return cells[1] === scnId;
+  });
+  assert.ok(row, `expected a ledger row for ${scnId}; got:\n${markdown}`);
+  const cells = row.split("|").map((c) => c.trim());
+  // cells: ['', scnId, verdict, items, ''].
+  return { verdict: cells[2] ?? "", items: cells[3] ?? "" };
+}
+
+// @SCN-LDG-001
+Given("a declared scenario {string} requiring unit-level evidence", function (scnId: string) {
+  // Build the declared side from a real feature snippet through the declared
+  // reader, so the @integration arm exercises the parse → declared seam (not a
+  // hand-seeded Scenario the reader never produced).
+  const feature = [
+    "@LDG",
+    "Feature: fixture",
+    "  Rule: a fixture rule",
+    `    @unit @${scnId}`,
+    "    Scenario: a fixture scenario",
+    "      Given a fixture step",
+  ].join("\n");
+  scenarios = parseScenarios(feature);
+});
+
+// @SCN-LDG-003
+Given(
+  "a declared scenario {string} requiring integration-level evidence",
+  function (scnId: string) {
+    // Build the declared side from a real feature snippet through the declared
+    // reader, so the @integration arm exercises the parse → declared seam.
+    const feature = [
+      "@LDG",
+      "Feature: fixture",
+      "  Rule: a fixture rule",
+      `    @integration @${scnId}`,
+      "    Scenario: a fixture scenario",
+      "      Given a fixture step",
+    ].join("\n");
+    scenarios = parseScenarios(feature);
+  }
+);
+
+// @SCN-LDG-004
+Given(
+  "a declared scenario {string} requiring both unit-level and integration-level evidence",
+  function (scnId: string) {
+    // Build the declared side from a real feature snippet through the declared
+    // reader, so the @integration arm exercises the parse → declared seam. The two
+    // co-located level tags produce TWO (kind, level) evidence obligations — the multi-
+    // evidence obligation case that exercises the (kind, level) keying.
+    const feature = [
+      "@LDG",
+      "Feature: fixture",
+      "  Rule: a fixture rule",
+      `    @unit @integration @${scnId}`,
+      "    Scenario: a fixture scenario",
+      "      Given a fixture step",
+    ].join("\n");
+    scenarios = parseScenarios(feature);
+  }
+);
+
+// @SCN-LDG-010
+Given("a zero-evidence obligation declared scenario {string}", function (scnId: string) {
+  // A declared scenario carrying ONLY its @SCN tag — no @unit/@integration/@lint level tag —
+  // so it declares ZERO evidence obligations. Built through the declared reader so the
+  // @integration arm exercises the parse → declared seam (a real zero-evidence obligation scenario,
+  // not a hand-seeded empty Scenario). Its @SCN is nonetheless cited by a stray
+  // credit (the next Given) — the negative twin: an evidence observation at an undeclared quality-check.
+  const feature = [
+    "@LDG",
+    "Feature: fixture",
+    "  Rule: a fixture rule",
+    `    @${scnId}`,
+    "    Scenario: a fixture scenario",
+    "      Given a fixture step",
+  ].join("\n");
+  scenarios = parseScenarios(feature);
+});
+
+// @SCN-LDG-001
+Given("a passing unit-level result for {string}", function (scnId: string) {
+  evidenceObservations = [{ qualityCheck: "unit", scnId, status: "passed" }];
+});
+
+// @SCN-LDG-008
+Given("a passing integration-level result for {string}", function (scnId: string) {
+  // A passing integration credit citing a REAL declared scenario — but at the integration
+  // quality-check, which the scenario did NOT declare (it declares unit). It posts to a real
+  // account against no evidence obligation → undemanded. Carries a locator (the where-to-fix, ruling Q5).
+  evidenceObservations = [
+    { qualityCheck: "integration", scnId, status: "passed", locator: "src/undemanded.test.ts" },
+  ];
+});
+
+// @SCN-LDG-002
+Given("a failing unit-level result for {string}", function (scnId: string) {
+  evidenceObservations = [{ qualityCheck: "unit", scnId, status: "failed" }];
+});
+
+// @SCN-LDG-004
+Given("no integration-level result for {string}", function (scnId: string) {
+  // Leave the observed side carrying NO integration result for this scenario — its
+  // required integration evidence is missing, so it reconciles to required-but-
+  // missing ALONGSIDE the failing-unit's failing. Defensive: drop any
+  // integration result if a prior step added one (here none has).
+  evidenceObservations = (evidenceObservations ?? []).filter(
+    (o) => !(o.qualityCheck === "integration" && "scnId" in o && o.scnId === scnId)
+  );
+});
+
+// @SCN-LDG-009
+Given("no results are observed", function () {
+  // The both-missing case: NO evidence observation cites this scenario — the observed
+  // side is entirely empty, so a zero-evidence obligation declared scenario reconciles to zero rows
+  // on BOTH sides. Distinct phrasing from "no result matches {string}" (which seeds a
+  // stray credit for a DIFFERENT scenario) — here nothing is observed at all.
+  evidenceObservations = [];
+});
+
+// @SCN-LDG-003
+Given("no result matches {string}", function (scnId: string) {
+  // A required ledger entry never recorded: the only observed result is for a
+  // DIFFERENT scenario, so nothing matches SCN-LDG-003 at integration level. This
+  // pins "no MATCHING result" (the join keys on scnId), not merely "no results".
+  evidenceObservations = [
+    { qualityCheck: "integration", scnId: "SCN-LDG-OTHER", status: "passed" },
+  ];
+});
+
+// @SCN-LDG-006
+Given(
+  "a passing unit-level result for an undeclared scenario {string}",
+  function (scnId: string) {
+    // A credit citing an @SCN id that NO declared scenario matches — a phantom credit
+    // (posting to a non-existent account). It carries a locator (the where-to-fix,
+    // ruling Q5) so the phantom row can surface it on its cites-unknown-scenario item.
+    evidenceObservations = [
+      { qualityCheck: "unit", scnId, status: "passed", locator: "src/phantom.test.ts" },
+    ];
+  }
+);
+
+// @SCN-LDG-007
+Given("a passing unit-level result carrying no scenario id", function () {
+  // A runtime credit carrying NO @SCN anchor at all (scnId null) — it cites no scenario,
+  // so it posts to the SUSPENSE scenario. It carries a locator (the where-to-fix, ruling
+  // Q5) so the suspense row can surface it on its cites-no-scenario item.
+  evidenceObservations = [
+    { qualityCheck: "unit", scnId: null, status: "passed", locator: "src/uncited.test.ts" },
+  ];
+});
+
+// @SCN-LDG-001
+When("the reconciler runs", function () {
+  markdown = renderMarkdown(reconcile(scenarios, evidenceObservations), CTX);
+});
+
+// @SCN-LDG-001
+Then(
+  "the ledger reports {string} as balanced with no reconciling items",
+  function (scnId: string) {
+    // Row-scoped + has teeth: the scenario's OWN verdict CELL must read balanced
+    // and NOT out-of-balance, and its reconciling-items CELL must be empty (the
+    // em-dash placeholder). Under a balanced→out-of-balance mutation the verdict
+    // cell reads "out-of-balance" and the items cell lists an item, so this reds.
+    const { verdict, items } = rowCells(scnId);
+    assert.match(
+      verdict,
+      /\bbalanced\b/,
+      `expected ${scnId}'s verdict cell to read balanced; got "${verdict}"`
+    );
+    assert.doesNotMatch(
+      verdict,
+      /out-of-balance/,
+      `expected ${scnId} not to be out-of-balance; got "${verdict}"`
+    );
+    assert.equal(
+      items,
+      "—",
+      `expected ${scnId} to carry no reconciling items; got "${items}"`
+    );
+  }
+);
+
+// @SCN-LDG-002, @SCN-LDG-003, @SCN-LDG-005
+Then(
+  "the ledger reports {string} as out of balance",
+  function (scnId: string) {
+    // Row-scoped to the scenario's OWN verdict cell (not a bare /out-of-balance/
+    // over the whole report) — has teeth: under an out-of-balance→balanced mutation
+    // the cell reads "balanced" and this reds.
+    const { verdict } = rowCells(scnId);
+    assert.match(
+      verdict,
+      /out-of-balance/,
+      `expected ${scnId}'s verdict cell to read out-of-balance; got "${verdict}"`
+    );
+  }
+);
+
+// @SCN-LDG-006
+Then(
+  "the ledger reports {string} as a phantom-scenario reconciliation with a cites-unknown-scenario item",
+  function (scnId: string) {
+    // Row-scoped to the phantom scenario's OWN ledger row: its reconciling-items cell must
+    // carry the cites-unknown-scenario item (only a phantom emits it), and the report must
+    // name it a phantom-scenario (the P count). Reds if no phantom row is emitted/rendered.
+    const { items } = rowCells(scnId);
+    assert.ok(
+      items.includes("cites-unknown-scenario"),
+      `expected ${scnId}'s reconciling items to include cites-unknown-scenario; got "${items}"`
+    );
+    assert.match(
+      markdown,
+      /phantom-scenario/,
+      `expected the ledger to name ${scnId} a phantom-scenario reconciliation; got:\n${markdown}`
+    );
+  }
+);
+
+// @SCN-LDG-006
+Then("the phantom-scenario {string} is out of balance", function (scnId: string) {
+  // Row-scoped to the phantom scenario's OWN verdict cell — a phantom is ALWAYS out of
+  // balance (it reconciles a credit against no evidence obligation).
+  const { verdict } = rowCells(scnId);
+  assert.match(
+    verdict,
+    /out-of-balance/,
+    `expected phantom-scenario ${scnId}'s verdict cell to read out-of-balance; got "${verdict}"`
+  );
+});
+
+// @SCN-LDG-007
+Then(
+  "the ledger reports a suspense-scenario reconciliation {string} with a cites-no-scenario item",
+  function (scnId: string) {
+    // Row-scoped to the suspense scenario's OWN ledger row (sentinel id "(no scenario)"):
+    // its reconciling-items cell must carry the cites-no-scenario item (only a suspense row
+    // emits it), and the report must name it a suspense-scenario. Reds if no suspense row is
+    // emitted/rendered.
+    const { items } = rowCells(scnId);
+    assert.ok(
+      items.includes("cites-no-scenario"),
+      `expected ${scnId}'s reconciling items to include cites-no-scenario; got "${items}"`
+    );
+    assert.match(
+      markdown,
+      /suspense-scenario/,
+      `expected the ledger to name ${scnId} a suspense-scenario reconciliation; got:\n${markdown}`
+    );
+  }
+);
+
+// @SCN-LDG-007
+Then("the suspense-scenario is out of balance", function () {
+  // Row-scoped to the suspense scenario's OWN verdict cell — a suspense scenario is ALWAYS
+  // out of balance (it reconciles a credit against no scenario at all).
+  const { verdict } = rowCells("(no scenario)");
+  assert.match(
+    verdict,
+    /out-of-balance/,
+    `expected the suspense-scenario's verdict cell to read out-of-balance; got "${verdict}"`
+  );
+});
+
+// @SCN-LDG-008, @SCN-LDG-010
+Then(
+  "the ledger reports {string} with an undemanded item at {word}",
+  function (scnId: string, qualityCheck: string) {
+    // Row-scoped to the REAL scenario's OWN ledger row: its reconciling-items cell must carry
+    // an undemanded item at the named quality-check (a credit citing this real scenario at a
+    // level it never declared). Reds if the undemanded credit is silently swallowed (counted as
+    // attributed) rather than surfaced as a credit-side reconciling item on the row. The row's
+    // verdict is out-of-balance (an undemanded item is a non-satisfied reconciling item).
+    const { verdict, items } = rowCells(scnId);
+    assert.ok(
+      items.includes("undemanded"),
+      `expected ${scnId}'s reconciling items to include an undemanded item; got "${items}"`
+    );
+    assert.ok(
+      items.includes(qualityCheck),
+      `expected ${scnId}'s undemanded item to be at ${qualityCheck}; got "${items}"`
+    );
+    assert.match(
+      verdict,
+      /out-of-balance/,
+      `expected ${scnId}'s verdict cell to read out-of-balance; got "${verdict}"`
+    );
+  }
+);
+
+// @SCN-LDG-009
+Then(
+  "the ledger reports {string} with a both-missing item",
+  function (scnId: string) {
+    // Row-scoped to the scenario's OWN ledger row: its reconciling-items cell must carry a
+    // both-missing item — the degenerate Quality Check Reconciliation a declared scenario
+    // emits when it reconciles to zero rows on BOTH sides (no evidence obligation, no evidence observation).
+    // Reds if the scenario is instead swept to a warnings surface (the earlier behaviour)
+    // and so carries NO ledger row at all, or if it is mis-reported as any other outcome.
+    const { items } = rowCells(scnId);
+    assert.ok(
+      items.includes("both-missing"),
+      `expected ${scnId}'s reconciling items to include a both-missing item; got "${items}"`
+    );
+    // The warnings section has dissolved entirely — the both-missing row is its only home.
+    assert.ok(
+      !markdown.includes("## Warnings"),
+      `expected NO "## Warnings" section (dissolved); got:\n${markdown}`
+    );
+  }
+);
+
+// @SCN-LDG-010
+Then("{string} is not reported as both-missing", function (scnId: string) {
+  // The both-missing boundary (@SCN-LDG-009): a zero-evidence obligation scenario CITED by a stray
+  // credit has an evidence observation, so it is undemanded, NOT both-missing. Row-scoped to the
+  // scenario's OWN ledger row — its reconciling-items cell carries no both-missing marker.
+  // (NOT a whole-report check: the trial-balance cause table legitimately names the
+  // neither-side `both-missing` group at count 0 for every report.)
+  const { items } = rowCells(scnId);
+  assert.ok(
+    !items.includes("both-missing"),
+    `expected ${scnId} not to be reported as both-missing; got "${items}"`
+  );
+});
+
+// @SCN-LDG-002, @SCN-LDG-003, @SCN-LDG-005
+Then(
+  "the reconciling items for {string} are {string}",
+  function (scnId: string, expected: string) {
+    // Every expected reconciling-item TYPE must appear in the scenario's items
+    // CELL — the renderer lists EVERY non-balanced item. Comma-separated
+    // for the multi-item case (LDG-004 will exercise that); single item
+    // here. Row-scoped, so it reds if the scenario is mis-reported as balanced.
+    const { items } = rowCells(scnId);
+    for (const type of expected.split(",").map((t) => t.trim())) {
+      assert.ok(
+        items.includes(type),
+        `expected ${scnId}'s reconciling items to include "${type}"; got "${items}"`
+      );
+    }
+  }
+);

@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "skipLibCheck": true
+  },
+  "include": ["packages/*/src", "packages/*/static-guards", "tests"],
+  "exclude": ["node_modules", "**/dist"]
+}

@@ -1,0 +1,396 @@
+@RPT
+Feature: The report renders the ledger as sectioned facts
+
+  Slice 1 of "The report generates itself". The report's FACTS move into the renderer so the
+  tool generates them — no hand-authored narrative wrapping the output.
+
+  The foundation this feature lays: run provenance is a sibling RunContext
+  ({ target, inputs, runStart, sourceSha }) threaded CLI→renderers, the
+  Ledger model staying pure; and src/render/markdown.ts becomes a SECTIONED
+  renderer — an ordered list of section-emitters [title, provenance, scenarioTable,
+  verdict, warnings] each over (balance, ctx). The existing table / verdict /
+  warnings stay byte-green (a Scenario-CRUD Read; the @LDG / @WRN scenarios are the
+  regression guard). The only new bytes are the provenance section.
+
+  Facts only — no interpretation, editorial, or cross-run comparison (project
+  design §5).
+
+  Rule: the markdown report opens with a run-provenance header
+
+    The headline behaviour (foundation-bearing). The markdown report no
+    longer opens straight into the per-scenario table: it opens with a "## Run
+    provenance" section stating the target repo, the input paths/flags actually
+    used, the run-start timestamp in UTC, and the target's source SHA (a null SHA
+    rendered as an explicit "unknown (non-git target)"). The @integration arm drives
+    the REAL CLI pipeline (runReconcile → writeOutputs with a ctx) and asserts the
+    PERSISTED spec-reconciliation.md carries the header — the cross-component ctx-threading
+    is the critical-path wiring.
+
+    The "Target repo:" fact is sourced from --target VERBATIM — no resolution,
+    defaulting to "unknown-target" on omit, parallel to sourceSha's "unknown"
+    (Fork A; the facts artefact is self-describing, run.yaml optional in
+    CI). The prior basename(dirname(--features)) resolution — and its degenerate "."
+    — are gone: the target is now the operator's --target value or the explicit
+    default, never a guess. The target-sourcing @integration arm runs the REAL CLI
+    binary as a subprocess and reads the persisted "Target repo:" line back, so a CLI
+    that guessed the target (or omitted the line) REDS.
+
+    @unit @integration @SCN-RPT-001
+    Scenario: the markdown report opens with a Run provenance header whose Target repo is the --target value verbatim, defaulting to unknown-target
+      Given a reconciliation run targeting "an-adopters-repository" with the input "--features ../an-adopters-repository/features" at the UTC instant "2026-06-27T08:17:53.000Z" and source SHA "905a987c0ffeeba110000000000000000deadbeef"
+      When the run writes its markdown artifact
+      Then the persisted spec-reconciliation.md opens with a Run provenance header stating the target, the input, the UTC timestamp, and the source SHA
+      When the real CLI writes a markdown report with --target "chosen-target-name"
+      Then the persisted report's Run provenance outcomes "Target repo: chosen-target-name" verbatim
+      When the real CLI writes a markdown report with no --target flag
+      Then the persisted report's Run provenance outcomes "Target repo: unknown-target"
+
+  Rule: the JSON report carries a provenance object
+
+    The machine-readable surface (@SCN-RPT-002). The JSON report grows a
+    top-level `provenance` object carrying the same non-derivable run facts as the
+    markdown header — target, source SHA, the UTC run timestamp, and the input
+    paths/flags actually used — while the reconciliation body (scenarios, warnings)
+    is unchanged: the serialised shape becomes { provenance, scenarios, warnings }.
+    Provenance is not derivable from the Ledger, so it is persisted on the
+    JSON surface (project design §1, §3 — persist a fact on JSON iff it is not
+    derivable from the balance; the derived human views stay off JSON). The
+    integration arm drives the REAL CLI pipeline (runReconcile → writeOutputs
+    with a ctx) and asserts the PERSISTED spec-reconciliation.json parses to an object
+    whose provenance round-trips — the machine artifact is a consumed contract
+    surface.
+
+    @unit @integration @SCN-RPT-002
+    Scenario: the JSON report carries a provenance object stating target, source SHA, UTC timestamp, and inputs, with the reconciliation body intact
+      Given a reconciliation run targeting "an-adopters-repository" with the input "--features ../an-adopters-repository/features" at the UTC instant "2026-06-27T08:17:53.000Z" and source SHA "905a987c0ffeeba110000000000000000deadbeef"
+      When the run writes its JSON artifact
+      Then the persisted spec-reconciliation.json parses to an object whose runProvenance outcomes the target, source SHA, UTC timestamp, and input, with the evidenceReconciliation body intact
+
+  Rule: an explicit source SHA wins, and a non-git target resolves to unknown
+
+    The resolution rule (@SCN-RPT-003). The source SHA on the report's
+    provenance is resolved by resolveSourceSha (landed in RPT-001): an explicit
+    non-empty source SHA — the operator-supplied override flag — wins over any git
+    read, so an auditor reconciling a zip export, a detached-HEAD checkout, or a tree
+    with no .git can still outcome a complete provenance. When no override is given and
+    the target is not a git repository, the git read cannot answer and the source SHA
+    resolves to a recorded null ("unknown") rather than crashing the run (project
+    design §4). A pure resolution rule, so it is proven in isolation by Vitest — the
+    flag→ctx→rendered-header thread is already proven by RPT-001's integration arm, so
+    this scenario carries no integration arm of its own (substitution-is-degradation:
+    the moved-to layer here, isolation, uniquely proves the override + non-git
+    fallback over a controlled non-git temp directory).
+
+    @unit @SCN-RPT-003
+    Scenario: an explicit source SHA overrides the git read, and a non-git target with no override resolves to unknown
+      Given a target directory that is itself a git repository and an explicit source SHA override
+      When the source SHA is resolved
+      Then the explicit override is returned verbatim, not the git HEAD of that directory
+      And resolving over a non-git target directory with no override returns a recorded unknown
+
+  Rule: the markdown report renders the trial balance as a subjects-rows table with balanced and out-of-balance columns
+
+    The trial balance (@SCN-RPT-004; reshaped to subjects-rows,
+    superseding the Axis-Count shape). Under "## Summary views", a
+    "### Trial balance" section renders ONE table whose SUBJECTS are rows — Scenario and
+    Evidence obligation — each with its own Total, and balanced / out-of-balance as COLUMNS
+    (both subjects report into the same binary, so the "Axis"/"Verdict"/"outcome" words
+    retire). The Evidence-evidence obligation out-of-balance is decomposed in place into its
+    reconciling-item causes: three nested ("↳") rows in canonical order — missing,
+    failing, and the watermelon watermelon —
+    populating the out-of-balance column only, always shown (a zero cause is itself a fact).
+    The missing row carries the bare-level split as its Detail (a runtime
+    evidence obligation by its bare level, a static one as "lint" — the label-=-tag lock),
+    canonical order (lint first), counting evidence obligations not scenarios. The scenario and
+    evidence-obligation out-of-balance counts diverge on purpose — SCN-PST-035's two missing
+    arms are why 43 out-of-balance scenarios become 44 out-of-balance evidence obligations — and the
+    table presents that as a granularity fact, the nested causes reconciling to the
+    evidence-obligation out-of-balance. No bold. A pure derive over
+    balance.scenarios[].evidenceObligations[] — markdown-only (project design §3), proven in
+    isolation by Vitest.
+
+    @unit @SCN-RPT-004
+    Scenario: the markdown report renders the trial balance as subjects-rows with balanced and out-of-balance columns
+      Given a reconciliation balance whose scenarios carry a double missing arm, so the out-of-balance scenario and evidence obligation counts diverge
+      When the markdown report is rendered
+      Then it carries a "### Trial balance" section with a "Subject | Total | Balanced | Out-of-balance | Detail" table — a Scenario row and an Evidence obligation row each with its own total, the evidence-obligation out-of-balance decomposed into nested missing (with its bare-level split), failing, and watermelon rows that reconcile to it
+
+  Rule: the markdown report surfaces the lint evidence obligations as their own section
+
+    The by-kind view (@SCN-RPT-005; re-cut under Summary views with a total
+    line by the reformat; labelled by the @lint TAG, not the kind).
+    The lint (@lint) evidence obligations sit mixed in with runtime items in the
+    per-scenario ledger. This section lifts them out: under "## Summary views", a
+    "### Lint evidence obligations" section opens with a total line ("N of M lint
+    evidence obligations reconcile balanced.") then a table listing each kind === "static"
+    evidence obligation with its scenario, guard handle, and reconciliation outcome — so the lint
+    axis (incl. any 🍉 watermelon) reads on its own. The label is the tag word "lint" (the
+    internal kind "static" is never rendered). Omitted entirely (total line and
+    all) when no scenario declares a lint evidence obligation. A pure derive over
+    balance.scenarios[].evidenceObligations[] filtered on kind === "static" —
+    markdown-only (project design §3), proven in isolation by Vitest.
+
+    @unit @SCN-RPT-005
+    Scenario: the markdown report lists the lint evidence obligations as their own section
+      Given a reconciliation balance whose scenarios declare lint (@lint) evidence obligations spanning balanced and the watermelon, alongside runtime evidence obligations
+      When the markdown report is rendered
+      Then it carries a "### Lint evidence obligations" section with a total line and a table listing each lint evidence obligation's scenario, guard handle, and reconciliation outcome — including the 🍉 watermelon — and excluding the runtime evidence obligations
+
+  Rule: the markdown report groups out-of-balance scenarios by feature
+
+    The by-feature view (@SCN-RPT-006; re-cut under Summary views with a total
+    line and rendered as a TABLE by the reformat; the FFF prefix enriched to the
+    full feature name). The per-scenario ledger lists every scenario in document
+    order; it does not show which FEATURES carry the discrepancies. Under "## Summary
+    views", a "### Out-of-balance by feature" section opens with a total line ("The N of M
+    out-of-balance scenarios, grouped by feature:") then a "Feature | Count | Out-of-balance
+    ids" table grouping the verdict === "out-of-balance" scenarios under the <FFF> parsed
+    from each scnId (SCN-<FFF>-<NNN>), one row per feature with a per-feature count,
+    so a reader sees the discrepancy CONCENTRATION by feature. The Feature cell reads
+    "<full-name> (<FFF>)" — the full name is the feature file's filename slug, looked up via
+    a target-derived code→slug map (readFeatureNames over discoverFeatures, the 5th sibling
+    renderer arg, markdown-only). An UNCODED id (an @SCN-XYZ-* whose XYZ no file declares)
+    falls back to the bare FFF (the map misses) — as does the no-map back-compat path.
+    Balanced scenarios are excluded (this is the discrepancy view). The scnId → <FFF> parse
+    REUSES the shared featureCodeOf helper rather than a fresh regex. Omitted entirely when
+    no scenario is out of balance. A pure derive over balance.scenarios + the markdown-only
+    label lookup. The @unit arm proves the render (full name + uncoded fallback) in
+    isolation; the @integration arm drives the REAL readFeatureNames→map→disk plumbing over
+    a fixture feature dir (a coded + an uncoded feature) to the persisted markdown.
+
+    @unit @integration @SCN-RPT-006
+    Scenario: the by-feature cut names each out-of-balance feature in full, falling back to the bare code when uncoded
+      Given a target feature directory whose features declare codes alongside an uncoded one
+      When the run writes its artifacts with the feature-name map
+      Then the persisted spec-reconciliation.md by-feature cut names the coded feature in full and falls back to the bare code for the uncoded id
+
+  Rule: the declared corpus census survives the Declared-corpus section's dissolution
+
+    The corpus census (@SCN-RPT-007; the standalone "## Declared corpus"
+    section DISSOLVED by the reformat, Q1a). The report no longer carries a
+    dedicated "## Declared corpus" section. The declared count is NOT lost: it is
+    recoverable as the ledger scenario-count ("- N scenario(s): …") PLUS
+    the "## Warnings" count — every declared scenario surfaces on exactly one axis (a
+    balance verdict in the ledger or a no-evidence-declared warning). A pure markdown-only
+    derive over the balance (project design §3), proven in isolation by Vitest. RPT-008's
+    excluded-occurrence bullet relocates into the ledger summary.
+
+    @unit @SCN-RPT-007
+    Scenario: the declared corpus census is recoverable from the ledger summary and warnings
+      Given a reconciliation balance carrying declared scenarios alongside no-evidence-declared warnings
+      When the markdown report is rendered
+      Then it carries no standalone "## Declared corpus" section, and the declared census is recoverable as the ledger scenario-count plus the warnings count
+
+  Rule: the report outcomes the excluded non-tag @SCN occurrences on both surfaces
+
+    The corpus is reconciled against every raw mention (@SCN-RPT-008,
+    slice 5). The report outcomes "N @SCN ids seen in non-tag context, excluded" — the
+    delta between raw @SCN-FFF-NNN occurrences in the source (prose, comments, step
+    text) and the ids actually read as declared scenarios — on BOTH surfaces (the
+    markdown ledger-summary bullet, relocated there by the reformat, + a JSON
+    evidenceObligations object). NEW corpus metadata, NOT
+    derivable from Ledger, so it lands on both surfaces (project design §1, §3 —
+    the same non-derivable rule that put provenance on both surfaces). The producer is
+    a new countScnOccurrences(source) in scenarios.ts (parseScenarios unchanged); the
+    datum is a EvidenceObligations sibling (src/declared/corpus.ts) threaded CLI→renderers
+    exactly like RunContext (an optional third renderer argument). The @integration arm
+    drives the REAL CLI pipeline (runReconcile → readEvidenceObligations → writeOutputs
+    with a corpus) over spec-controller's own corpus and asserts BOTH persisted artifacts
+    carry the excluded fact and AGREE on the number — the scenarios.ts→corpus→both-
+    renderers→disk wiring is critical-path, NOT covered by RPT-001's ctx thread.
+
+    @unit @integration @SCN-RPT-008
+    Scenario: the report outcomes the excluded non-tag @SCN occurrences on both surfaces
+      Given a reconciliation run whose source mentions @SCN ids in non-tag context beyond the declared scenarios
+      When the run writes its markdown and JSON artifacts
+      Then the persisted spec-reconciliation.md outcomes "N @SCN ids seen in non-tag context, excluded" and the persisted spec-reconciliation.json carries the same excluded count on a evidenceObligations object
+
+  Rule: the report renders summary-first, ledger-last
+
+    The reformat (@SCN-RPT-009, surfaced by the acceptance dogfood).
+    The report opens with "# Evidence Reconciliation" (renamed from "# Ledger", via the
+    interim "# Spec reconciliation" — the report IS the reconciliation; "Ledger" names only
+    the INPUT in canon, so the reconciled OUTPUT is never titled "Ledger"), keeps
+    "## Run provenance" first, then groups the derived cuts under "## Summary views"
+    (### Trial balance → ### Lint evidence obligations → ### Out-of-balance by
+    feature), and moves the per-scenario "## Scenario Reconciliations" table to the END with its
+    summary lines on top (the verdict tally and the relocated excluded-occurrence bullet),
+    "## Warnings" last. So the digestible summary leads and the 500-row ledger trails, and
+    the cuts read as cuts OF the ledger, not a separate ledger. A pure layout reorg
+    over existing data — no new derivation, the JSON surface unchanged (markdown-only).
+    The RPT-004/005/006/007 scenarios are updated in the same change. Every reconciling
+    item is labelled by its TAG (the bare level for runtime — unit / integration / … —
+    and "lint" for the static kind), never the internal kind axis. Proven in
+    isolation by Vitest (the markdown integration thread is already proven by RPT-001).
+
+    @unit @SCN-RPT-009
+    Scenario: the markdown report renders summary-first with the scenario reconciliations last
+      Given a reconciliation balance spanning balanced and out-of-balance scenarios, a lint evidence obligation, and a no-evidence-declared warning
+      When the markdown report is rendered
+      Then it opens with "# Evidence Reconciliation" and "## Run provenance", groups the derived cuts under "## Summary views", and renders the "## Scenario Reconciliations" table last with its summary lines on top
+
+  Rule: the report reconciles the test evidence observation — raw = attributed + suspense
+
+    The evidence observation-reconciliation spine (@SCN-RPT-010). The report's evidence obligation
+    (demand) side has a Headline tally; its evidence observation side had nothing — the evidence observations
+    the pipeline builds were consumed by reconcile() and thrown away. This retains the
+    observed test evidence observation as a RuntimeEvidenceObservationKindCounts datum, counted by kind against the @SCN
+    anchor in ONE shared pass — attributed-to-declared (per-(scnId, level) counts),
+    phantom-id (an @SCN no scenario declares), and unattributed evidence observation (no @SCN)
+    — with raw per-level totals and file locators. Under "## Summary views", a
+    "### Test volume" cut renders the balancing identity ("N evidence observations = M attributed +
+    G phantom + K suspense", a derived view) then a by-level evidence observation table (all four levels,
+    e2e/performance zeros shown — a fixed tally like Trial balance). The identity holds
+    BY CONSTRUCTION: one pass counts each evidence observation into exactly one kind while
+    summing the raw total, so the three terms can't drift. The non-derivable atoms
+    (rawByRuntimeQualityCheck, attributed, phantom, unattributed evidence observation) persist on JSON (project design §3); the
+    identity line stays markdown-only. The @integration arm drives the REAL file-read
+    pipeline (readEvidenceObservations over fixture Vitest/Cucumber reports → writeOutputs → both
+    persisted surfaces) and asserts the JSON atoms balance by construction — the
+    readEvidenceObservations→countRuntimeEvidenceObservationKinds→both-renderers→disk wiring, not just an in-memory aggregate.
+    Foundational: later scenarios consume the aggregate.
+
+    @unit @integration @SCN-RPT-010
+    Scenario: the report renders the Test volume cut and the evidence observation identity balances by construction
+      Given a reconciliation run over a target whose Vitest and Cucumber reports span attributed, phantom-id, and unattributed evidence observations
+      When the run writes its artifacts with the evidence observation reconciliation
+      Then the persisted spec-reconciliation.md renders the Test volume cut with the balancing identity and spec-reconciliation.json carries evidence-observation atoms that balance by construction
+
+  Rule: the per-scenario ledger shows the evidence backing each evidence obligation
+
+    Per-scenario evidence columns (@SCN-RPT-011), consuming the evidence observation
+    aggregate. The ledger row gains corpus-driven columns between Scenario and Verdict —
+    Lint first, then the runtime levels present in demand or evidence observation (Unit, Integration,
+    e2e, Performance; e2e/performance only when a run has them). Each cell is a four-way
+    demand×evidence observation encoding: `N` (demanded, N evidence observations attributed — backing present,
+    pass OR fail), `∅` (demanded, none — missing), `(N)` (NOT demanded but N
+    present — undeclared evidence observation, the case the reconciler never computed), `—` (neither).
+    The cell counts BACKING, not quality — a failing evidence obligation shows its
+    count, its failing-ness staying in the Verdict + Reconciling-items columns.
+    The Lint cell reads the static evidence obligation outcomes (lint isn't a counted evidence observation):
+    the count of guards present (balanced or the watermelon — the script exists; its
+    inadequacy is the 🍉 in Reconciling-items); no `(N)` for lint. A fixed cell key
+    (notation, not data — so facts-only) renders immediately before the table. Markdown-only
+    — the attributed atoms are already on JSON. Proven in isolation by Vitest
+    over a balance + evidence observation fixture spanning every cell case. The "count is backing, not
+    quality — never rank by it" discipline is a documented rule, NOT rendered.
+
+    @unit @SCN-RPT-011
+    Scenario: the ledger row shows corpus-driven evidence columns with the four-way cell encoding
+      Given a reconciliation balance and evidence observation aggregate spanning met, missing, undeclared-evidence observation, and absent evidence across the lint and runtime columns
+      When the markdown report is rendered
+      Then each scenario row carries one cell per corpus column (Lint first, then the runtime levels present) with the four-way encoding — the count, ∅, (N), or — — and the fixed cell key renders immediately before the ledger table
+
+  Rule: Warnings flags the unattributed evidence observation tests with their file locators
+
+    Anchor audit — unattributed evidence observation tests (@SCN-RPT-012), consuming the
+    evidence observation aggregate's `suspense` array (already a term in the evidence observation identity, with
+    the test-file locators retained). `## Warnings` gains a second sub-part listing the
+    unattributed evidence observation-test count + per-file locators (grouped by file, per-file counts, sorted
+    — so the per-file counts reconcile to the total). It renders `N test(s) carry no @SCN
+    anchor:` then `- <count> in \`<file>\`` bullets. The section now renders when EITHER
+    no-evidence-declared warnings OR unattributed evidence observation tests are present; the no-evidence
+    sub-part is byte-unchanged and renders first. Facts-only — count + locator, no
+    interpretation; the count links the reader to the Test volume cut's `unattributed evidence observation`
+    term. Markdown-only (the atoms are already on JSON). Proven in isolation
+    by Vitest over a evidence observation fixture with multi-file unattributed evidence observations. Completes the
+    evidence observation identity's visible accounting (raw = attributed + suspense, now with
+    where-to-look); the phantom evidence observation-id case remains.
+
+    @unit @SCN-RPT-012
+    Scenario: Warnings lists the unattributed evidence observation tests with per-file locators
+      Given a evidence observation aggregate carrying unattributed evidence observations (no @SCN anchor) across more than one test file
+      When the markdown report is rendered
+      Then the "## Warnings" section lists the unattributed evidence observation-test count and the per-file locators with per-file counts, sorted, and renders whether or not any no-evidence-declared warnings are present
+
+  # Rule: Warnings flags the phantom evidence observation-id tests — RETIRED (@SCN-LDG-006).
+  # The phantom-id anchor audit (was @SCN-RPT-013) is superseded by the bidirectional
+  # reconciler: a credit citing an undeclared @SCN now surfaces as a PHANTOM-scenario
+  # reconciliation row in the Ledger (outcome cites-unknown-scenario, carrying its id +
+  # locator), not a Warnings sub-part — so the phantom detail lives in exactly one place (no
+  # double-report). The behaviour is proven by @SCN-LDG-006 (features/ledger.feature); the
+  # phantom COUNT survives in the Test volume balance-check identity.
+
+  Rule: Warnings flags the untagged scenarios with their feature locators
+
+    Anchor audit — untagged scenarios (@SCN-RPT-014), the declared-side
+    counterpart to the evidence observation anomalies. `parseScenarios` only emits
+    scenarios WITH an @SCN; a new `parseUntaggedScenarios` counts Gherkin scenario
+    headers (Scenario / Scenario Outline / Scenario Template / Example — NOT the
+    Examples: data table) and subtracts those whose preceding tag block carries an @SCN
+    — the 514-headers-vs-512-tags gap. `## Warnings` gains a fourth sub-part listing the
+    untagged-scenario count + `feature-file : scenario` locators (sorted). The datum lives
+    on EvidenceObligations.untaggedScenarios (declared-side census, like excludedOccurrences) and
+    — a NEW non-derivable datum — persists on the JSON evidenceObligations object beside
+    excludedOccurrences (project design §3). The section gate now fires on no-evidence OR
+    unattributed evidence observation OR phantom OR untagged; the earlier sub-parts are byte-unchanged. Facts-only
+    — count + locator. The @integration arm drives the REAL parse over a fixture feature
+    dir (tagged + untagged) → both persisted surfaces, proving the header-parse + file-pairing.
+
+    @unit @integration @SCN-RPT-014
+    Scenario: Warnings lists the untagged scenarios with their feature locators
+      Given a target feature directory mixing @SCN-tagged and untagged scenarios
+      When the run writes its artifacts with the declared corpus
+      Then the persisted spec-reconciliation.md lists the untagged scenarios with feature locators and spec-reconciliation.json carries them on evidenceObligations
+
+  Rule: Warnings flags the prose-only @SCN codes — mentioned but never tagged
+
+    Anchor audit — prose-only codes (@SCN-RPT-015), the fifth and final
+    `## Warnings` sub-part, completing the @SCN anchor census. A new cross-corpus
+    `proseOnlyCodes` classifies every @SCN occurrence as a tag or a prose mention, then
+    returns `proseCodes − tagCodes` — the codes mentioned in non-tag context (prose,
+    comments, step text) that are NEVER an @SCN tag ANYWHERE across the corpus. The
+    cross-file union is load-bearing: a code tagged in one file but prosed in another is
+    NOT dangling. This is the ~10 unique DANGLING references, distinct from the census's
+    "167 @SCN occurrences" line (which counts every non-tag occurrence, not the unique
+    untagged difference) — so it reads as a refinement, not a contradiction. `## Warnings`
+    gains a fifth sub-part listing the prose-only-code count + bare `- SCN-FOO-001` codes
+    (sorted). The datum lives on EvidenceObligations.proseOnlyCodes and — a NEW non-derivable
+    declared-side datum — persists on the JSON evidenceObligations object beside
+    excludedOccurrences / untaggedScenarios (project design §3). The section gate now fires
+    on no-evidence OR unattributed evidence observation OR phantom OR untagged OR prose-only; the earlier sub-parts
+    are byte-unchanged and render first. Facts-only — bare codes, no interpretation. The
+    integration arm drives the REAL cross-corpus parse over a fixture feature dir (a tagged
+    code also prosed, plus a dangling prose-only code) → both persisted surfaces, proving the
+    tag-vs-prose classification on real files.
+
+    @unit @integration @SCN-RPT-015
+    Scenario: Warnings lists the prose-only @SCN codes mentioned but never tagged
+      Given a target feature directory mentioning an @SCN code only in prose
+      When the run writes its artifacts with the declared corpus over that directory
+      Then the persisted spec-reconciliation.md lists the prose-only code and spec-reconciliation.json carries it on evidenceObligations
+
+  Rule: a cross-repo reconcile relativises paths against the target repo root, not the run cwd
+
+    The portability fix. The portable-path design (provenance inputs /
+    evidence-observation locators) relativized both surfaces against
+    process.cwd() — the TOOL's own repo (spec-controller). That assumed a self-reconcile
+    (cwd = target). Reconciling a DIFFERENT repo — the primary use case — the
+    target's absolute paths are NOT under cwd, so relativizeToRoot took its
+    "absolute-not-under-root" branch and kept them verbatim: the ledger leaked 356
+    absolute /Users/… paths across provenance.inputs and the phantom evidence-observation
+    and suspense evidence-observation locators. A stored report is more sensitive than
+    code and public-bound, so leaking the local FS layout defeats the portability thesis.
+
+    The fix derives the root from the TARGET, not the run cwd: a new resolveTargetRoot
+    reads the git top-level of dirname(--features) when the target is a git repo, else
+    dirname(--features) itself, else process.cwd() for a self-reconcile with no --features.
+    That single derived root is threaded to BOTH the provenance-input relativisation
+    (run/runContext.ts) and the evidence-observation locator relativisation
+    (evidenceObservations.ts) at the CLI edge, so output is portable regardless of where
+    the tool is invoked.
+
+    The unit arm proves resolveTargetRoot derives the target repo root from --features,
+    independent of the run cwd. The integration arm drives the REAL CLI, run from a cwd
+    that is NOT the target repo, over a target whose Vitest / Cucumber reports carry
+    ABSOLUTE test-file locators: it persists a markdown + JSON report carrying ZERO of the
+    target's absolute paths — the evidence-observation locators collapse to repo-relative
+    and the input paths record relative to the target root. RED on the current
+    cwd-stripping (the target's paths leak verbatim); GREEN once the root is derived from
+    the target.
+
+    @unit @integration @SCN-RPT-016
+    Scenario: a cross-repo reconcile run from a foreign cwd yields zero absolute paths on both surfaces
+      Given a target repo outside the run cwd whose Vitest and Cucumber reports carry absolute test-file locators under that repo
+      When the real CLI reconciles it from a foreign cwd and persists the markdown and JSON reports
+      Then the persisted spec-reconciliation.md and spec-reconciliation.json carry none of the target's absolute paths — the evidence-observation locators are repo-relative and the input paths record relative to the target root

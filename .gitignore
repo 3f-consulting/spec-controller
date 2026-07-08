@@ -1,0 +1,15 @@
+.DS_Store
+node_modules/
+*.log
+.env*
+dist/
+build/
+
+.claude/*.local.json
+
+# Reconciliation run output is NOT tracked in the repo. A report enumerates a
+# codebase's gaps, dangling anchors, and watermelons — more sensitive than the
+# code itself — so stored runs live OUTSIDE the repo. Ignore the whole runs/ tree
+# with NO re-includes, so no new in-repo run path can ever be committed by
+# accident. The lint:no-committed-reports CI guard enforces this over the real tree.
+runs/**

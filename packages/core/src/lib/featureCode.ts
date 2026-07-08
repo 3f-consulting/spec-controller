@@ -1,0 +1,22 @@
+/**
+ * The `scnId → feature-code` grammar helper — the pure core of the feature-code
+ * registry (split out of the old spec/featureCodes.ts). Per Evidence
+ * Manifesto §9A a scenario id is `SCN-<FFF>-<NNN>` where `<FFF>` is 2–5 uppercase
+ * alphanumerics. This is the ONE engine-side owner of parsing the `<FFF>` off a bare
+ * scenario id; the impure feature-file discovery (`discoverFeatures`) lives in
+ * ingest/ingestScenarios.ts and the duplicate-code lint in static-guards/featureCodes.ts.
+ *
+ * Reused by the by-feature report grouping (@SCN-RPT-006).
+ */
+
+/**
+ * Parse the feature code (the `<FFF>`) from a bare scenario id of the form
+ * `SCN-<FFF>-<NNN>` (no leading `@`). Returns null when the id is malformed. The
+ * single owner of `scnId → feature-code` parsing — callers reuse this rather than
+ * re-deriving a regex (Evidence Manifesto §9A: a scenario id is `SCN-<FFF>-<NNN>`
+ * where `<FFF>` is 2–5 uppercase alphanumerics).
+ */
+export function featureCodeOf(scnId: string): string | null {
+  const match = /^SCN-([A-Z0-9]{2,5})-\d+$/.exec(scnId);
+  return match ? match[1]! : null;
+}

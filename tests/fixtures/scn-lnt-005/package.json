@@ -1,0 +1,9 @@
+{
+  "name": "external-target-repo-fixture",
+  "private": true,
+  "scripts": {
+    "lint:vocab-check": "tsx src/spec/lintVocabCheckCli.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  }
+}

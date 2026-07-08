@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "lint:foo": "echo foo-guard",
+    "lint:bar": "echo bar-guard",
+    "test": "echo test",
+    "cucumber": "echo cucumber"
+  }
+}

@@ -1,0 +1,18 @@
+name: CI
+
+# A FIXTURE CI config for the external target repo (@SCN-LNT-005). It wires the
+# test + typecheck steps but NOT `pnpm lint:vocab-check` — the guard's command is
+# absent from CI, so the guard (which DOES exist in the external package.json) is
+# present-but-not-enforced-over-real-source: the watermelon. This is the historical
+# watermelon shape made into a hermetic fixture.
+on: [push, pull_request]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Type-check
+        run: pnpm typecheck
+      - name: Test
+        run: pnpm test

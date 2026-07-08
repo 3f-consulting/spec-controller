@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # The feature-code lint over the REAL feature set — a pure function of the
+      # checked-out tree. Asserts every declared @<FFF> header code is unique and
+      # registered.
+      - name: Lint feature codes
+        run: pnpm lint:feature-codes
+
+      # The no-committed-reports guard over the REAL tree — a pure function of the
+      # checked-out repo: fails if any report artefact is TRACKED under runs/ (the
+      # in-repo leak vector). Reconciliation reports are more sensitive than the code,
+      # so they live OUTSIDE the repo, never committed. @lint-declared
+      # (@lint=lint:no-committed-reports on @SCN-NCR-001) so the tool's own ledger
+      # reconciles it.
+      - name: Lint no committed reports
+        run: pnpm lint:no-committed-reports
+
+      - name: Type-check
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Cucumber
+        run: pnpm cucumber

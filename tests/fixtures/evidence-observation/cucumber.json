@@ -1,0 +1,9 @@
+[
+  {
+    "uri": "features/widget.feature",
+    "elements": [
+      { "tags": [{ "name": "@SCN-TGT-002" }], "steps": [{ "result": { "status": "passed" } }] },
+      { "tags": [{ "name": "@smoke" }], "steps": [{ "result": { "status": "passed" } }] }
+    ]
+  }
+]

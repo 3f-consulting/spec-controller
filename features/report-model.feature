@@ -1,0 +1,206 @@
+@RMD
+Feature: The reconciliation is one whole-document report model, serialised to spec-reconciliation.json
+
+  Slice 1 of "[spec-controller] Outputs & vocabulary — one model, two renderings".
+  There is no report model
+  today: model.ts's Ledger is only the balance; provenance / corpus / evidence observation /
+  guards are assembled in cli.ts main() and threaded to BOTH renderers, which
+  diverge into two dialects of one document.
+
+  This feature builds the ONE whole-document report model — the ordered sections of
+  the document as data (runProvenance → summary → evidenceObligations →
+  staticGuards → evidenceReconciliation → evidenceObservations) — and serialises the
+  JSON glue-free FROM it (render/json.ts collapses to JSON.stringify(assembleReport)).
+  (The `warnings` key was RETIRED entirely — a zero-evidence scenario is a
+  both-missing row in evidenceReconciliation, not a separate axis.)
+  The machine file is renamed ledger.json → spec-reconciliation.json (it is the machine
+  form of the WHOLE document, parity with spec-reconciliation.md). The markdown renderer
+  is UNTOUCHED and stays byte-identical — the JSON-key renames (the manifesto-vocabulary
+  revert) live in the ASSEMBLER, not in markdown.ts / evidence observation.ts internals.
+
+  Rule: the reconciliation publishes as one glue-free whole-document report model
+
+    The foundation (@SCN-RMD-001). A single Report model + assembleReport(...)
+    is built from the existing reconcile pieces, and render/json.ts serialises it
+    glue-free (JSON.stringify(assembleReport(...))) — no per-key hand-assembly. The
+    published machine artefact is spec-reconciliation.json. The report opens with
+    runProvenance (the run facts), then a materialised summary (the totals the markdown's
+    trial-balance table derives), then the declared evidence obligations, then the
+    remaining sections. The retired `warnings` key is absent — a zero-evidence
+    scenario is a both-missing row in evidenceReconciliation, not a separate axis. The @integration
+    arm drives the REAL kept-run scaffold — which names
+    the artefact via the renamed RECONCILIATION_JSON constant — and reads the persisted
+    spec-reconciliation.json back, so a run still writing ledger.json (or a JSON missing
+    the assembled sections) REDS. The @unit arm proves assembleReport + the glue-free
+    serialisation in isolation.
+
+    @unit @integration @SCN-RMD-001
+    Scenario: the reconciliation publishes as spec-reconciliation.json, one glue-free serialisation of a single whole-document report model
+      Given a kept run over a target corpus under an injected store root
+      When the kept run persists its machine artefact
+      Then the persisted artefact is named spec-reconciliation.json
+      And it parses to one object carrying runProvenance, summary, and evidenceObligations as top-level sections in document order
+
+  Rule: the per-scenario reconciliation is the trial balance
+
+    The revert on the JSON surface (@SCN-RMD-002
+    — "the per-scenario reconciliation is the trial balance, not the ledger"). The per-scenario
+    reconciliation serialises under the top-level key evidenceReconciliation (was scenarios), and the model
+    type Ledger is renamed to EvidenceReconciliation (keeping its members). HELD (slice 5): each reconciled
+    evidence obligation keeps its outcome field UNCHANGED — the literals balanced / missing /
+    failing / watermelon survive verbatim (the
+    outcome → outcome rationalisation is deferred). A pure derive over the model, proven in isolation
+    by Vitest.
+
+    @unit @SCN-RMD-002
+    Scenario: the per-scenario reconciliation serialises under evidenceReconciliation with each evidence obligation's outcome field unchanged
+      Given a reconciliation whose scenarios carry reconciled evidence obligations
+      When the report is serialised to JSON
+      Then the per-scenario reconciliation is carried under the top-level key evidenceReconciliation, not scenarios
+      And each evidence obligation keeps its outcome field with the reconciliation-outcome literals unchanged
+
+  Rule: the observed evidence is evidence observations
+
+    Retire "evidence observation" on the JSON surface (@SCN-RMD-003
+    — the observed side is evidence OBSERVATIONS, the credits; "evidence observation" was a made-up word). The
+    observed-evidence reconciliation serialises under evidenceObservations (was evidence observation), carrying
+    the fine grain: raw-by-level totals, per-scenario attributed counts, and the phantom evidence observation /
+    unattributed evidence observations with their file locators, under phantomEvidenceObservations /
+    suspenseEvidenceObservations. The JSON-key renames live in the ASSEMBLER — the
+    RuntimeEvidenceObservationKindCounts model + evidence observation.ts internals stay untouched — so the markdown is
+    byte-identical. The balancing identity Σ rawByRuntimeQualityCheck = Σ attributed + cites-unknown-scenario + cites-no-scenario
+    holds on the persisted spec-reconciliation.json. The @unit proves the mapping in isolation;
+    the @integration drives the REAL file-read pipeline over a fixture spanning attributed,
+    phantom-id, and unattributed evidence observations and asserts the identity on the persisted file.
+
+    @unit @integration @SCN-RMD-003
+    Scenario: observed evidence serialises as evidenceObservations and the balancing identity holds on the persisted file
+      Given a reconciliation run whose observed evidence spans attributed, phantom-id, and unattributed evidence observations
+      When the run persists spec-reconciliation.json
+      Then the observed evidence is carried under evidenceObservations with phantomEvidenceObservations and suspenseEvidenceObservations at fine grain with locators
+      And the sum of rawByRuntimeQualityCheck equals the attributed total plus the cites-unknown-scenario and cites-no-scenario counts
+
+  Rule: the static-guard census is summary counts, no standalone section
+
+    The static-axis manifesto landing on the JSON surface (@SCN-RMD-004). The static-guard census is
+    summary.staticGuards COUNTS alone — a pure counter over the guard observations
+    (countStaticEvidenceObservationKinds), symmetric with the runtime testVolume counter. The
+    standalone member-list section (was guards, then staticGuards) COLLAPSED: the guard member
+    detail lives in the rows now (demanded → each scenario's @lint sub-row; undemanded → the
+    suspense row's cites-no-scenario credit items), so there is no double-report on the JSON
+    surface. The counts runningGuardCount and unattributedStaticGuardCount are carried on the
+    persisted summary; the demanded count is implicit, running − unattributed. A pure
+    derive over the model, proven in isolation by Vitest.
+
+    @unit @SCN-RMD-004
+    Scenario: the static-guard census is summary counts with no standalone section
+      Given a reconciliation run whose derived running-guard set includes a guard no @lint scenario declares
+      When the report is serialised to JSON
+      Then the static-guard census carries no standalone staticGuards (or guards) section
+      And the static-guard counts are carried under summary.staticGuards as runningGuardCount and unattributedStaticGuardCount
+
+  Rule: the summary materialises the three report totals a JSON consumer reads
+
+    Completing "the whole document as one report model" (@SCN-RMD-005;
+    operator ruling 2026-07-02 — MATERIALISE). Slice 1 (RMD-001) materialised most of the
+    document, but three printed numbers were still renderer arithmetic, not model data: the
+    Test-volume totals, the Static-guard totals, and the Lint tally. This scenario materialises
+    all three into report.summary so a JSON consumer reads them (slice 2 later reads rather than
+    computes them, byte-identical). The test-volume identity line is a reconciliation fact (a
+    balance check, Σ = Σ) that belongs in the model, not asserted by the renderer:
+
+      Test volume — Σ rawByRuntimeQualityCheck = attributed + cites-unknown-scenario + cites-no-scenario.
+
+    The static-guard census carries runningGuardCount and unattributedStaticGuardCount; the
+    demanded count is implicit, running − unattributed, and the completeness invariant is
+    asserted inside the counter rather than on the surface. The Lint tally is the static-only
+    evidence obligation cut (satisfied of total) — summary.byOutcome is kind-agnostic and cannot
+    provide the static-only lint total, so it is materialised explicitly. HELD (slice 5): the
+    evidence obligation outcome field is untouched. Markdown is not migrated here (slice 2) and stays
+    byte-identical. The @unit arm proves buildSummary / assembleReport in isolation; the @integration
+    arm drives the REAL CLI over a fixture spanning attributed / phantom evidence observation /
+    unattributed evidence observations AND a CI guard no @lint declares, then reads the persisted
+    spec-reconciliation.json and proves the test-volume Σ = Σ identity plus the static-guard shape on
+    the file.
+
+    @unit @integration @SCN-RMD-005
+    Scenario: the summary materialises the test-volume, static-guard, and lint totals with the test-volume balance identity and the static-guard shape holding on the persisted file
+      Given a reconciliation run whose evidence spans attributed, phantom-id, and unattributed evidence observations and whose CI runs a guard no @lint declares
+      When the reconciliation run persists spec-reconciliation.json
+      Then the summary carries the test-volume totals, the static-guard totals, and the lint tally
+      And the test-volume identity Σ rawByRuntimeQualityCheck = attributed + cites-unknown-scenario + cites-no-scenario holds on the persisted summary
+      And the persisted static-guard summary carries runningGuardCount and unattributedStaticGuardCount with demanded implicit
+
+  Rule: the report model carries the feature titles, published on the JSON and sourced by the markdown
+
+    The by-feature cut names each feature in full ("slug (FFF)") via the feature titles
+    materialised onto the report model. Originally they sat under a top-level
+    `featureNames` key, a sibling of the reconciliation records; a later change MOVES them under a small
+    top-level `metadata` object (report.metadata.featureNames) — presentation *metadata* (names),
+    cleanly separated from the reconciliation records (summary / evidenceReconciliation /
+    evidenceObservations / staticGuards), before the public contract freezes. assembleReport takes
+    the code→slug source and stores it under metadata.featureNames as a plain object (only when
+    non-empty; the metadata object is the LAST document key), the published JSON GAINS the titles
+    nested there (the deliberate JSON-shape change that enables round-trip), and renderReport reads
+    them off metadata.featureNames — needing no external map. The markdown stays byte-identical
+    (same slugs, now model-sourced). Its unit arm proves assembleReport carries the titles under
+    metadata, the glue-free JSON serialises them there, and the model-sourced by-feature cut names
+    features in full byte-identically to the map-threaded render; the integration arm drives the
+    REAL CLI and reads the persisted spec-reconciliation.json carrying the titles under metadata,
+    keyed by feature code.
+
+    @unit @integration @SCN-RMD-006
+    Scenario: the published spec-reconciliation.json carries the feature titles under metadata, keyed by feature code
+      Given a reconciliation over a target corpus whose feature files declare their feature codes
+      When the coded-corpus reconciliation run persists its machine artefacts
+      Then the persisted spec-reconciliation.json carries the feature titles keyed by feature code
+      And the persisted spec-reconciliation.md names each out-of-balance feature in full, sourced from the model
+
+  Rule: the markdown regenerates from a saved spec-reconciliation.json alone
+
+    The load-bearing proof that the JSON IS the model (@SCN-RMD-007). A seam reads a banked spec-reconciliation.json,
+    JSON.parses it back into a Report, and renders the human markdown via renderReport — no
+    RunContext, no live inputs, the JSON alone: the exported renderReportFromJson(json) + the CLI
+    "--render-from-json <path>" mode (reads the file, prints the regenerated markdown to stdout,
+    exits before any reconcile). Drift-equality is the acceptance: the markdown regenerated from
+    the saved JSON EQUALS the markdown rendered directly from the same run — the by-feature titles
+    included (why the feature-title model-completion, @SCN-RMD-006, is the enabling dependency).
+    Its unit arm proves the parse→renderReport drift-equality over a corpus spanning the whole
+    document (the three-way test-volume line, the materialised summary totals, and a coded
+    out-of-balance feature, so the by-feature title path has teeth); its integration arm drives
+    the REAL CLI end-to-end over a fixture whose by-feature cut names a coded feature — reconcile,
+    persist the JSON, regenerate from it, byte-identical to the direct render.
+
+    @unit @integration @SCN-RMD-007
+    Scenario: the markdown regenerates from a saved spec-reconciliation.json byte-identical to the direct render
+      Given a reconciliation run persisted as spec-reconciliation.json alongside its direct markdown render
+      When the markdown is regenerated from the saved spec-reconciliation.json alone
+      Then the regenerated markdown equals the directly rendered markdown
+      And the regenerated markdown names the coded out-of-balance feature in full
+
+  Rule: each evidence sub-row is keyed by one flat quality-check coordinate
+
+    Slice 1 of "[spec-controller] Reconciliation model — bidirectional reconciling items".
+    The (kind, level) two-axis evidence coordinate collapses to ONE flat quality-check ∈
+    {lint, unit, integration, e2e, performance}: @lint is one quality-check value, not a
+    second axis. So the JSON evidenceReconciliation[].evidenceObligations[] / reconcilingItems[] sub-row
+    was { kind, level, outcome } (runtime) / { kind, guard, outcome } (static); it becomes
+    { qualityCheck, outcome } (runtime) / { qualityCheck: "lint", guard, outcome } (static),
+    and the summary's missing split is renamed to missingByQualityCheck
+    (same { subject, count } values, keyed by the flat quality-check). Kind / Level retire; the
+    two reconcile functions merge on the == lint watermelon discriminator. The markdown surface
+    stays byte-identical (the renderer already labels each item by its tag word, which IS the
+    quality-check value), so the @SCN-RMD-007 round-trip still holds. HELD (slice 2):
+    the outcome VALUES; (slice 4): the interim container terms (EvidenceReconciliation, trial balance).
+    The @unit arm proves the reconcile → assemble shape in isolation; the @integration arm drives
+    the REAL CLI over a corpus declaring BOTH a runtime and a lint evidence obligation, persists
+    spec-reconciliation.json, and asserts the flat coordinate (and the ABSENCE of kind / level)
+    on the persisted file.
+
+    @unit @integration @SCN-RMD-008
+    Scenario: each reconciled evidence sub-row carries a single quality-check coordinate, not a (kind, level) grid
+      Given a reconciliation whose scenarios declare runtime and lint evidence obligations
+      When the report is serialised to spec-reconciliation.json
+      Then each evidence sub-row is keyed by one quality-check field with no kind or level
+      And a lint sub-row carries its quality-check "lint" alongside its guard
+      And the summary's missing split is carried under missingByQualityCheck keyed by quality-check

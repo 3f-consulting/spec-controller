@@ -1,0 +1,34 @@
+{
+  "name": "spec-controller",
+  "version": "0.1.0",
+  "description": "Reconcile the behaviour you declared against the evidence that actually ran — the deterministic `balance` CLI.",
+  "keywords": [
+    "reconciliation",
+    "gherkin",
+    "bdd",
+    "evidence",
+    "double-entry",
+    "cli"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "spec-controller": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json"
+  },
+  "dependencies": {
+    "@3f-consulting/spec-controller-core": "workspace:*",
+    "yaml": "^2.9.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

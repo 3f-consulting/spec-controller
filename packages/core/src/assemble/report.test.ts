@@ -1,0 +1,614 @@
+/**
+ * Unit tests for assembleReport — the whole-document report model (@SCN-RMD-001).
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-RMD-001 id
+ * matching features/report-model.feature, so a grep of the id returns both halves (this
+ * @unit + the Cucumber @integration step-block).
+ *
+ * Proves the assembler + the glue-free JSON serialisation in isolation: assembleReport builds
+ * ONE object carrying the whole-document sections in document order (runProvenance renamed
+ * from provenance; a materialised summary; evidenceObligations; the reconciliation
+ * body; the retired warnings key gone), and renderJson is JUST JSON.stringify of that
+ * object (glue-free — no per-key hand-assembly), so the parsed JSON equals the assembled model.
+ *
+ * Parent: (@SCN-RMD-001).
+ */
+
+import { describe, it, expect } from "vitest";
+import { assembleReport } from "./report.js";
+import { renderJson } from "../render/json.js";
+import { renderReport, renderMarkdown } from "../render/markdown.js";
+import { parseScenarios } from "../parse/scenarios.js";
+import { reconcile } from "../reconcile/reconcile.js";
+import type { EvidenceReconciliation } from "../model.js";
+import type { RunContext } from "../provenance/provenance.js";
+import type { EvidenceObligations } from "../census/evidenceObligations.js";
+import type { RuntimeEvidenceObservationKindCounts } from "../census/evidenceObservations.js";
+import type { StaticEvidenceObservationKindCounts } from "../census/staticEvidenceObservations.js";
+
+// A balance spanning a balanced scenario and an out-of-balance one with a DOUBLE missing arm
+// (unit + integration), so the summary totals have teeth (2 scenarios / 1 balanced; 3
+// evidenceObligations / 2 out-of-balance; missing split 1 unit + 1 integration).
+const balance: EvidenceReconciliation = {
+  scenarioReconciliations: [
+    {
+      scnId: "SCN-RMD-001",
+      verdict: "balanced",
+      evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+      reconcilingItems: [],
+    },
+    {
+      scnId: "SCN-RMD-002",
+      verdict: "out-of-balance",
+      evidenceObligations: [
+        { qualityCheck: "unit", outcome: "missing" },
+        { qualityCheck: "integration", outcome: "missing" },
+      ],
+      reconcilingItems: [
+        { qualityCheck: "unit", outcome: "missing" },
+        { qualityCheck: "integration", outcome: "missing" },
+      ],
+    },
+  ],
+};
+
+const ctx: RunContext = {
+  target: "an-adopters-repository",
+  inputs: { features: "../an-adopters-repository/features" },
+  runStart: new Date("2026-07-02T08:17:53.000Z"),
+  sourceSha: "905a987c0ffeeba110000000000000000deadbeef",
+};
+
+const evidenceObligations: EvidenceObligations = {
+  rawScnOccurrences: 10,
+  scenarioCount: 7,
+  excludedOccurrences: 3,
+  untaggedScenarios: [],
+  proseOnlyCodes: [],
+};
+
+describe("[SCN-RMD-001] assembleReport builds one whole-document report model", () => {
+  it("carries the sections as top-level keys in document order", () => {
+    const report = assembleReport(balance, ctx, evidenceObligations) as unknown as Record<string, unknown>;
+    // runProvenance opens; summary + evidenceObligations follow; evidenceReconciliation is the body.
+    // The retired `warnings` key is GONE — a zero-evidence scenario is a
+    // both-missing row in evidenceReconciliation, not a separate top-level axis.
+    expect(Object.keys(report)).toEqual([
+      "runProvenance",
+      "summary",
+      "evidenceObligations",
+      "evidenceReconciliation",
+    ]);
+    expect(report).not.toHaveProperty("warnings");
+  });
+
+  it("renames the provenance section to runProvenance carrying the run facts", () => {
+    const report = assembleReport(balance, ctx);
+    expect(report.runProvenance.target).toBe("an-adopters-repository");
+    expect(report.runProvenance.sourceSha).toBe("905a987c0ffeeba110000000000000000deadbeef");
+    expect(report.runProvenance.runTimestamp).toBe("2026-07-02T08:17:53Z");
+  });
+
+  it("materialises the summary totals from the balance", () => {
+    const report = assembleReport(balance, ctx);
+    // The headline verdict tally counts DECLARED scenarios only, with phantom shown apart
+    // (ruling Q3) — this balance declares no phantom rows, so phantom is 0.
+    expect(report.summary.scenarios).toEqual({ total: 2, balanced: 1, outOfBalance: 1, phantom: 0, suspense: 0 });
+    expect(report.summary.evidenceObligations.total).toBe(3);
+    expect(report.summary.evidenceObligations.outOfBalance).toBe(2);
+    expect(report.summary.evidenceObligations.byOutcome["satisfied"]).toBe(1);
+    expect(report.summary.evidenceObligations.byOutcome["missing"]).toBe(2);
+    // The missing split counts evidence obligations (not scenarios), keyed by
+    // quality-check in canonical order.
+    expect(report.summary.evidenceObligations.missingByQualityCheck).toEqual([
+      { subject: "unit", count: 1 },
+      { subject: "integration", count: 1 },
+    ]);
+  });
+
+  it("carries no warnings key — the retired authoring-quality axis", () => {
+    const report = assembleReport(balance, ctx) as unknown as Record<string, unknown>;
+    expect(report).not.toHaveProperty("warnings");
+    expect((report.evidenceReconciliation as unknown[])).toHaveLength(2);
+  });
+
+  it("renderJson is a glue-free JSON.stringify of the assembled report", () => {
+    const parsed = JSON.parse(renderJson(balance, ctx, evidenceObligations));
+    // Glue-free: the parsed JSON EQUALS the assembled model (no divergent hand-assembly).
+    expect(parsed).toEqual(assembleReport(balance, ctx, evidenceObligations));
+    // And it carries the renamed provenance + materialised summary on the machine surface.
+    expect(parsed.runProvenance).toBeDefined();
+    expect(parsed.summary.scenarios.total).toBe(2);
+    expect(parsed).not.toHaveProperty("provenance");
+  });
+});
+
+/**
+ * Unit tests for the evidenceReconciliation section (@SCN-RMD-002) — the revert.
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries @SCN-RMD-002.
+ *
+ * The per-scenario reconciliation serialises under the top-level key `evidenceReconciliation` (the
+ * manifesto's "per-scenario reconciliation is the trial balance"), NOT `scenarios`. HELD: each
+ * reconciled evidenceObligation keeps its `outcome` field verbatim (the outcome → outcome rename is deferred
+ * to slice 5), so this asserts `outcome` with the reconciliation-outcome literals survives.
+ */
+describe("[SCN-RMD-002] the per-scenario reconciliation serialises under evidenceReconciliation", () => {
+  it("carries the per-scenario reconciliation under evidenceReconciliation, not scenarios", () => {
+    const parsed = JSON.parse(renderJson(balance, ctx));
+    expect(Array.isArray(parsed.evidenceReconciliation)).toBe(true);
+    expect(parsed.evidenceReconciliation).toHaveLength(2);
+    expect(parsed.evidenceReconciliation[0].scnId).toBe("SCN-RMD-001");
+    // The 1138 revert: the per-scenario reconciliation is NOT under `scenarios` any more.
+    expect(parsed).not.toHaveProperty("scenarios");
+  });
+
+  it("carries each evidence obligation's outcome field with the reconciliation-outcome literals", () => {
+    const parsed = JSON.parse(renderJson(balance, ctx));
+    const outOfBalance = parsed.evidenceReconciliation.find(
+      (s: { scnId: string }) => s.scnId === "SCN-RMD-002"
+    );
+    // The flat quality-check coordinate: a runtime sub-row's keys are exactly
+    // qualityCheck / outcome (the retired kind / level gone); the outcome literal survives
+    // (the outcome-value rename is deferred to slice 2).
+    expect(outOfBalance.evidenceObligations[0].outcome).toBe("missing");
+    expect(Object.keys(outOfBalance.evidenceObligations[0]).sort()).toEqual(
+      ["qualityCheck", "outcome"].sort()
+    );
+  });
+});
+
+/**
+ * Unit tests for the evidenceObservations section (@SCN-RMD-003).
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries @SCN-RMD-003.
+ *
+ * The observed evidence serialises under `evidenceObservations` (was `evidenceObservations`), retiring the
+ * made-up "evidenceObservations" word, with `phantom` → `phantomEvidenceObservations` and `unattributed evidence observation` →
+ * `suspenseEvidenceObservations`, carrying the fine grain (raw-by-level, attributed counts,
+ * phantom / unattributed evidence observation evidenceObservations WITH their file locators). The mapping lives in the
+ * assembler; the balancing identity holds by construction.
+ */
+describe("[SCN-RMD-003] observed evidence serialises as evidenceObservations", () => {
+  // A countRuntimeEvidenceObservationKinds-shaped fixture that BALANCES: 5 unit (4 attributed + 1 phantomEvidenceObservation) + 1 integration
+  // (1 suspenseEvidenceObservation) = 6 raw = 4 attributed + 1 phantomEvidenceObservation + 1 unattributed evidence observation.
+  const evidenceObservations: RuntimeEvidenceObservationKindCounts = {
+    rawByRuntimeQualityCheck: { unit: 5, integration: 1, e2e: 0, performance: 0 },
+    attributed: [{ scnId: "SCN-RMD-001", qualityCheck: "unit", count: 4 }],
+    undemandedCount: 0,
+    phantomCount: 1,
+    suspenseCount: 1,
+  };
+
+  it("carries the observed evidence under the evidenceObservations key", () => {
+    const parsed = JSON.parse(renderJson(balance, ctx, undefined, evidenceObservations));
+    expect(parsed.evidenceObservations).toBeDefined();
+    expect(parsed.evidenceObservations.rawByRuntimeQualityCheck).toEqual({ unit: 5, integration: 1, e2e: 0, performance: 0 });
+    expect(parsed.evidenceObservations.attributed).toContainEqual({ scnId: "SCN-RMD-001", qualityCheck: "unit", count: 4 });
+  });
+
+  it("dissolves BOTH the phantom and the suspense detail arrays from the section (no double-report)", () => {
+    const parsed = JSON.parse(renderJson(balance, ctx, undefined, evidenceObservations));
+    // The PHANTOM detail dissolved into the phantom rows (@SCN-LDG-006); the SUSPENSE
+    // detail dissolved into the suspense row (@SCN-LDG-007). Neither is a standalone array
+    // on the section any more. The retired shortenings are likewise gone.
+    expect(parsed.evidenceObservations).not.toHaveProperty("phantomCount");
+    expect(parsed.evidenceObservations).not.toHaveProperty("suspenseCount");
+    expect(parsed.evidenceObservations).not.toHaveProperty("phantom evidence observation");
+    expect(parsed.evidenceObservations).not.toHaveProperty("unattributed evidence observation");
+    // But BOTH counts survive in summary.testVolume — the balance-check identity is kept.
+    expect(parsed.summary.testVolume.citesUnknownScenario).toBe(1);
+    expect(parsed.summary.testVolume.citesNoScenario).toBe(1);
+  });
+
+  it("keeps the balancing identity: Σ rawByRuntimeQualityCheck = Σ attributed + phantom + suspense (both counts from summary.testVolume)", () => {
+    const parsed = JSON.parse(renderJson(balance, ctx, undefined, evidenceObservations));
+    const raw = (Object.values(parsed.evidenceObservations.rawByRuntimeQualityCheck) as number[]).reduce((a, b) => a + b, 0);
+    const tv = parsed.summary.testVolume;
+    const attributed =
+      parsed.evidenceObservations.attributed.reduce((n: number, a: { count: number }) => n + a.count, 0) +
+      tv.citesUnknownScenario;
+    expect(raw).toBe(attributed + tv.citesNoScenario);
+  });
+});
+
+/**
+ * Unit tests for the static-guard census collapse (@SCN-RMD-004).
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries @SCN-RMD-004.
+ *
+ * The static-guard census is `summary.staticGuards` COUNTS alone (2.4) — the standalone
+ * member-list section (`guards` → `staticGuards`, `{ciGuards[], demanded[]}`) COLLAPSED, symmetric
+ * with the runtime side. The guard member detail now lives in the rows (demanded → each scenario's
+ * `@lint` sub-row; undemanded → the suspense row's `cites-no-scenario` credit items), so there is
+ * no double-report and no census section on the JSON surface.
+ */
+describe("[SCN-RMD-004] the static-guard census is summary counts, no standalone section", () => {
+  const guards: StaticEvidenceObservationKindCounts = { runningGuardCount: 2, unattributedStaticGuardCount: 1 };
+
+  it("carries NO standalone staticGuards (or guards) section — the census collapsed to summary counts", () => {
+    const parsed = JSON.parse(renderJson(balance, ctx, undefined, undefined, guards));
+    // The member-list section (was `guards`, then `staticGuards`) is gone: the guard detail now
+    // lives in the rows, symmetric with the runtime side — no double-report on the JSON surface.
+    expect(parsed).not.toHaveProperty("staticGuards");
+    expect(parsed).not.toHaveProperty("guards");
+  });
+
+  it("materialises the counts under summary.staticGuards ({ runningGuardCount, unattributedStaticGuardCount })", () => {
+    const parsed = JSON.parse(renderJson(balance, ctx, undefined, undefined, guards));
+    expect(parsed.summary.staticGuards).toEqual({ runningGuardCount: 2, unattributedStaticGuardCount: 1 });
+  });
+});
+
+/**
+ * Unit tests for the materialised summary totals (@SCN-RMD-005).
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries @SCN-RMD-005, matching
+ * features/report-model.feature, so a grep of the id returns both halves (this @unit + the
+ * Cucumber @integration step-block).
+ *
+ * Completing "the whole document as one report model" (operator ruling — MATERIALISE):
+ * the three printed numbers that were renderer arithmetic are now model data on report.summary —
+ * the Test-volume totals, the Static-guard totals, and the Lint tally. The two Σ = Σ identity
+ * lines are reconciliation facts (a balance check) carried in the model. Matched byte-for-byte to
+ * markdown's arithmetic so slice 2 can swap to reads with zero byte change: test-volume attributed
+ * is the attributed-to-declared count (phantomEvidenceObservation carried separately); the lint tally counts static
+ * evidenceObligations balanced / total (markdown's countStaticEvidenceObligations). testVolume / staticGuards are
+ * present only when the evidenceObservations / guard sibling is threaded; the lint tally is always present.
+ */
+describe("[SCN-RMD-005] the summary materialises the three report totals", () => {
+  // A evidenceObservations fixture with teeth: 6 raw = 4 attributed-to-declared + 1 phantom + 1 unattributed evidence observation, so
+  // the 3-way test-volume identity is non-trivial (attributed excludes phantomEvidenceObservation).
+  const evidenceObservations: RuntimeEvidenceObservationKindCounts = {
+    rawByRuntimeQualityCheck: { unit: 5, integration: 1, e2e: 0, performance: 0 },
+    attributed: [
+      { scnId: "SCN-RMD-001", qualityCheck: "unit", count: 3 },
+      { scnId: "SCN-RMD-002", qualityCheck: "integration", count: 1 },
+    ],
+    undemandedCount: 0,
+    phantomCount: 1,
+    suspenseCount: 1,
+  };
+
+  // Static-guard kind-counts with teeth: 2 running CI guards = 1 declared + 1 unattributed.
+  const guards: StaticEvidenceObservationKindCounts = { runningGuardCount: 2, unattributedStaticGuardCount: 1 };
+
+  // A balance carrying static (@lint) evidenceObligations so the lint tally is non-trivial: 2 static
+  // evidenceObligations, 1 balanced (satisfied) + 1 not — satisfied 1 of 2. The runtime evidenceObligations must
+  // NOT count towards the static-only lint tally (summary.byOutcome is kind-agnostic; the lint tally
+  // is not).
+  const lintBalance: EvidenceReconciliation = {
+    scenarioReconciliations: [
+      {
+        scnId: "SCN-RMD-010",
+        verdict: "out-of-balance",
+        evidenceObligations: [
+          { qualityCheck: "lint", guard: "lint:foo", outcome: "satisfied" },
+          { qualityCheck: "unit", outcome: "missing" },
+        ],
+        reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
+      },
+      {
+        scnId: "SCN-RMD-011",
+        verdict: "out-of-balance",
+        evidenceObligations: [
+          { qualityCheck: "lint", guard: "lint:bar", outcome: "watermelon" },
+        ],
+        reconcilingItems: [
+          { qualityCheck: "lint", guard: "lint:bar", outcome: "watermelon" },
+        ],
+      },
+    ],
+  };
+
+  it("materialises the test-volume totals (attributed excludes cites-unknown-scenario)", () => {
+    const report = assembleReport(balance, ctx, undefined, evidenceObservations);
+    expect(report.summary.testVolume).toEqual({
+      totalEvidenceObservations: 6,
+      attributed: 4,
+      citesUnknownScenario: 1,
+      citesNoScenario: 1,
+    });
+  });
+
+  it("keeps the test-volume identity Σ rawByRuntimeQualityCheck = attributed + phantomEvidenceObservation + suspenseEvidenceObservation", () => {
+    const report = assembleReport(balance, ctx, undefined, evidenceObservations);
+    const tv = report.summary.testVolume!;
+    expect(tv.totalEvidenceObservations).toBe(tv.attributed + tv.citesUnknownScenario + tv.citesNoScenario);
+  });
+
+  it("materialises the static-guard totals", () => {
+    const report = assembleReport(balance, ctx, undefined, undefined, guards);
+    expect(report.summary.staticGuards).toEqual({
+      runningGuardCount: 2,
+      unattributedStaticGuardCount: 1,
+    });
+  });
+
+  it("carries the 2-field census shape with demanded implicit (no ciGuards/demanded on the surface)", () => {
+    const report = assembleReport(balance, ctx, undefined, undefined, guards);
+    const sg = report.summary.staticGuards!;
+    // demanded is IMPLICIT — running − unattributed, never a surface field.
+    expect(sg.runningGuardCount - sg.unattributedStaticGuardCount).toBe(1);
+    expect(sg).not.toHaveProperty("ciGuards");
+    expect(sg).not.toHaveProperty("demanded");
+  });
+
+  it("materialises the static-only lint tally (satisfied / total), ignoring runtime evidenceObligations", () => {
+    const report = assembleReport(lintBalance, ctx);
+    expect(report.summary.lint).toEqual({ satisfied: 1, total: 2 });
+  });
+
+  it("omits testVolume / staticGuards when their sibling read is not threaded, but always carries lint", () => {
+    const report = assembleReport(balance, ctx);
+    expect(report.summary).not.toHaveProperty("testVolume");
+    expect(report.summary).not.toHaveProperty("staticGuards");
+    // The lint tally is a pure balance derive — always present (this balance declares no static
+    // evidenceObligations, so it reads 0 of 0).
+    expect(report.summary.lint).toEqual({ satisfied: 0, total: 0 });
+  });
+
+  it("carries the three totals through the glue-free JSON serialisation", () => {
+    const parsed = JSON.parse(renderJson(lintBalance, ctx, undefined, evidenceObservations, guards));
+    expect(parsed.summary.testVolume).toEqual({ totalEvidenceObservations: 6, attributed: 4, citesUnknownScenario: 1, citesNoScenario: 1 });
+    expect(parsed.summary.staticGuards).toEqual({ runningGuardCount: 2, unattributedStaticGuardCount: 1 });
+    expect(parsed.summary.lint).toEqual({ satisfied: 1, total: 2 });
+  });
+});
+
+/**
+ * Unit tests for the feature titles on the report model (@SCN-RMD-006).
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries @SCN-RMD-006, matching
+ * features/report-model.feature, so a grep of the id returns both halves (this @unit + the
+ * Cucumber @integration step-block).
+ *
+ * The by-feature cut's feature titles (`feature-code → slug`) are MATERIALISED onto the report
+ * under the small top-level `metadata` object (report.metadata.featureNames — moved
+ * out from a top-level `featureNames` sibling of the reconciliation records), so the published
+ * JSON carries them and a render from the saved report alone reconstructs the by-feature
+ * names with no external map. assembleReport takes the code→slug source (a ReadonlyMap) and stores
+ * it under `metadata.featureNames` as a plain object, only when non-empty, as the LAST document key
+ * (the retired warnings key no longer trails it). The markdown stays byte-identical: renderReport
+ * reads the titles off `metadata.featureNames`, matching the prior map-threaded render exactly.
+ */
+describe("[SCN-RMD-006] the report model carries the feature titles", () => {
+  // Two out-of-balance scenarios in two coded features (LDG, LNT), so the by-feature cut is
+  // non-empty and the feature-title path is exercised.
+  const codedBalance: EvidenceReconciliation = {
+    scenarioReconciliations: [
+      {
+        scnId: "SCN-LDG-003",
+        verdict: "out-of-balance",
+        evidenceObligations: [{ qualityCheck: "unit", outcome: "missing" }],
+        reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
+      },
+      {
+        scnId: "SCN-LNT-002",
+        verdict: "out-of-balance",
+        evidenceObligations: [
+          { qualityCheck: "lint", guard: "guard-lint", outcome: "watermelon" },
+        ],
+        reconcilingItems: [
+          { qualityCheck: "lint", guard: "guard-lint", outcome: "watermelon" },
+        ],
+      },
+    ],
+  };
+  const featureNames = new Map([
+    ["LDG", "ledger"],
+    ["LNT", "lint-evidence"],
+  ]);
+
+  it("materialises the feature titles under metadata as a plain object", () => {
+    const report = assembleReport(codedBalance, ctx, undefined, undefined, undefined, featureNames);
+    // The titles now live under the small top-level `metadata` object (presentation
+    // metadata), not as a top-level `featureNames` sibling of the reconciliation records.
+    expect(report.metadata?.featureNames).toEqual({ LDG: "ledger", LNT: "lint-evidence" });
+    expect(report).not.toHaveProperty("featureNames");
+  });
+
+  it("serialises the feature titles under metadata through the glue-free JSON", () => {
+    const parsed = JSON.parse(
+      renderJson(codedBalance, ctx, undefined, undefined, undefined, featureNames)
+    );
+    expect(parsed.metadata.featureNames).toEqual({ LDG: "ledger", LNT: "lint-evidence" });
+    expect(parsed).not.toHaveProperty("featureNames");
+  });
+
+  it("renderReport names each feature in full sourced from the model, no external map", () => {
+    const report = assembleReport(codedBalance, ctx, undefined, undefined, undefined, featureNames);
+    const md = renderReport(report);
+    expect(md).toContain("| ledger (LDG) | 1 | SCN-LDG-003 |");
+    expect(md).toContain("| lint-evidence (LNT) | 1 | SCN-LNT-002 |");
+  });
+
+  it("keeps the markdown byte-identical: the model-sourced render equals the map-threaded render", () => {
+    const modelSourced = renderReport(
+      assembleReport(codedBalance, ctx, undefined, undefined, undefined, featureNames)
+    );
+    const mapThreaded = renderMarkdown(codedBalance, ctx, undefined, undefined, featureNames);
+    expect(modelSourced).toBe(mapThreaded);
+  });
+
+  it("omits metadata when no coded feature is declared (no map, or an empty map)", () => {
+    // With no feature titles, the whole `metadata` object is omitted (present only
+    // when the run declares ≥1 coded feature), and no top-level `featureNames` key appears.
+    expect(assembleReport(codedBalance, ctx)).not.toHaveProperty("metadata");
+    expect(assembleReport(codedBalance, ctx)).not.toHaveProperty("featureNames");
+    expect(
+      assembleReport(codedBalance, ctx, undefined, undefined, undefined, new Map())
+    ).not.toHaveProperty("metadata");
+  });
+
+  it("places metadata last, carrying featureNames — no top-level featureNames sibling", () => {
+    const report = assembleReport(
+      codedBalance,
+      ctx,
+      undefined,
+      undefined,
+      undefined,
+      featureNames
+    ) as unknown as Record<string, unknown>;
+    const keys = Object.keys(report);
+    // The titles now nest under `metadata` (presentation metadata), which is the LAST document
+    // key — NOT a top-level `featureNames` sibling of the reconciliation records.
+    expect(keys).toContain("metadata");
+    expect(keys).not.toContain("featureNames");
+    expect(keys[keys.length - 1]).toBe("metadata");
+    expect((report.metadata as Record<string, unknown>).featureNames).toEqual({
+      LDG: "ledger",
+      LNT: "lint-evidence",
+    });
+    expect(report).not.toHaveProperty("warnings");
+  });
+});
+
+/**
+ * Unit tests for the flat quality-check coordinate (@SCN-RMD-008).
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries @SCN-RMD-008, matching
+ * features/report-model.feature, so a grep of the id returns both halves (this @unit + the
+ * Cucumber @integration step-block).
+ *
+ * Slice 1 of the reconciliation-model restructure: the (kind, level) two-axis evidence coordinate
+ * collapses to ONE flat quality-check. Each JSON evidence sub-row
+ * (evidenceReconciliation[].evidenceObligations[] / reconcilingItems[]) is keyed by a single qualityCheck
+ * field — no kind, no level; a lint sub-row carries qualityCheck "lint" alongside its guard — and
+ * the summary's missing split serialises under missingByQualityCheck. Built through the
+ * REAL declared → reconcile → assemble pipeline (parseScenarios, not a hand-seeded balance) and read
+ * off the glue-free JSON, so the assertion pins the emitted shape, not an internal type.
+ */
+describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single quality-check coordinate", () => {
+  // A scenario declaring BOTH a runtime (@unit) and a lint (@lint=lint:x) evidence obligation, parsed through
+  // the real declared reader; reconciled against NO evidence observations → the runtime evidence obligation is
+  // missing and the lint evidence obligation is missing (guard retained). The
+  // glue-free JSON round-trip makes the assertions read the EMITTED shape, type-agnostic.
+  const feature = [
+    "@RMD",
+    "Feature: fixture",
+    "  Rule: a fixture rule",
+    "    @unit @lint=lint:x @SCN-RMD-008",
+    "    Scenario: a fixture scenario",
+    "      Given a fixture step",
+  ].join("\n");
+  const report = () =>
+    JSON.parse(JSON.stringify(assembleReport(reconcile(parseScenarios(feature), []), ctx))) as {
+      evidenceReconciliation: Array<{
+        evidenceObligations: Array<Record<string, unknown>>;
+        reconcilingItems: Array<Record<string, unknown>>;
+      }>;
+      summary: { evidenceObligations: Record<string, unknown> };
+    };
+
+  it("keys each evidence sub-row by a single qualityCheck field with no kind or level", () => {
+    const r = report();
+    const qualityCheckReconciliations = r.evidenceReconciliation.flatMap((s) => [...s.evidenceObligations, ...s.reconcilingItems]);
+    expect(qualityCheckReconciliations.length).toBeGreaterThan(0);
+    for (const row of qualityCheckReconciliations) {
+      expect(typeof row.qualityCheck).toBe("string");
+      expect(row).not.toHaveProperty("kind");
+      expect(row).not.toHaveProperty("level");
+    }
+  });
+
+  it("carries a lint sub-row's qualityCheck as 'lint' alongside its guard", () => {
+    const r = report();
+    const lint = r.evidenceReconciliation
+      .flatMap((s) => s.evidenceObligations)
+      .find((o) => o.qualityCheck === "lint");
+    expect(lint).toBeDefined();
+    expect(lint!.qualityCheck).toBe("lint");
+    expect(lint!.guard).toBe("lint:x");
+  });
+
+  it("keys a runtime sub-row by its level as the quality-check", () => {
+    const r = report();
+    const runtime = r.evidenceReconciliation
+      .flatMap((s) => s.evidenceObligations)
+      .find((o) => o.qualityCheck === "unit");
+    expect(runtime).toBeDefined();
+    expect(runtime).not.toHaveProperty("guard");
+  });
+
+  it("carries the missing split under missingByQualityCheck, keyed by quality-check", () => {
+    const eo = report().summary.evidenceObligations;
+    expect(eo).toHaveProperty("missingByQualityCheck");
+    const split = eo.missingByQualityCheck as Array<{ subject: string; count: number }>;
+    // lint first (the canonical quality-check order), then the runtime level.
+    expect(split).toEqual([
+      { subject: "lint", count: 1 },
+      { subject: "unit", count: 1 },
+    ]);
+  });
+});
+
+/**
+ * Unit test for the TWO "attributed" counts staying distinct (@SCN-LDG-008, ruling Q1).
+ *
+ * There are now two different "attributed" numbers, and a reader (JSON + markdown) must not
+ * read them as the same number:
+ *  - Test-volume `attributed` (summary.testVolume.attributed) = credits that CITE A DECLARED
+ *    SCENARIO — this INCLUDES undemanded (a subset), keeping the 3-termed identity
+ *    `total = attributed + phantom + suspense`.
+ *  - Reconciliation matched-`attributed` (Σ report.evidenceObservations.attributed[].count) =
+ *    credits matching a declared (scnId, quality-check) PAIR — this SHRINKS as undemanded breaks
+ *    out into its own outcome, which surfaces distinctly in summary.byOutcome.undemanded.
+ *
+ * The load-bearing assertion: the two numbers DIFFER by exactly byOutcome.undemanded.
+ */
+describe("[SCN-LDG-008] the two attributed counts stay distinct (ruling Q1)", () => {
+  // A balance with an undemanded credit-side item ON a real declared scenario's row (its unit
+  // evidence obligation reconciles satisfied; an integration credit is undemanded).
+  const undemandedBalance: EvidenceReconciliation = {
+    scenarioReconciliations: [
+      {
+        scnId: "SCN-LDG-008",
+        kind: "scenario",
+        verdict: "out-of-balance",
+        evidenceObligations: [
+          { qualityCheck: "unit", outcome: "satisfied" },
+          { qualityCheck: "integration", outcome: "undemanded", locator: "src/undemanded.test.ts" },
+        ],
+        reconcilingItems: [
+          { qualityCheck: "integration", outcome: "undemanded", locator: "src/undemanded.test.ts" },
+        ],
+      },
+    ],
+  };
+  // The evidence-observation kind-counts: ONE matched credit ((SCN-LDG-008, unit)) + ONE undemanded
+  // credit ((SCN-LDG-008, integration) — cites a declared scenario, at an undeclared quality-check).
+  const evidenceObservations: RuntimeEvidenceObservationKindCounts = {
+    rawByRuntimeQualityCheck: { unit: 1, integration: 1, e2e: 0, performance: 0 },
+    attributed: [{ scnId: "SCN-LDG-008", qualityCheck: "unit", count: 1 }],
+    undemandedCount: 1,
+    phantomCount: 0,
+    suspenseCount: 0,
+  };
+
+  it("carries undemanded as its OWN entry in summary.byOutcome", () => {
+    const report = assembleReport(undemandedBalance, ctx, undefined, evidenceObservations);
+    expect(report.summary.evidenceObligations.byOutcome.undemanded).toBe(1);
+  });
+
+  it("keeps Test-volume attributed INCLUDING undemanded (cites a declared scenario), so it EXCEEDS the reconciliation matched-attributed by exactly byOutcome.undemanded", () => {
+    const report = assembleReport(undemandedBalance, ctx, undefined, evidenceObservations);
+    // Test-volume attributed = credits citing a declared scenario = matched (1) + undemanded (1).
+    expect(report.summary.testVolume!.attributed).toBe(2);
+    // Reconciliation matched-attributed = Σ over the per-(scnId, level) matched-pair array = 1.
+    const matched = report.evidenceObservations!.attributed.reduce((n, a) => n + a.count, 0);
+    expect(matched).toBe(1);
+    // The two are NOT the same number — they differ by exactly the undemanded count.
+    expect(report.summary.testVolume!.attributed - matched).toBe(
+      report.summary.evidenceObligations.byOutcome.undemanded
+    );
+  });
+
+  it("keeps the Test-volume identity 3-termed (undemanded is a SUBSET of attributed, not a 4th term)", () => {
+    const report = assembleReport(undemandedBalance, ctx, undefined, evidenceObservations);
+    const tv = report.summary.testVolume!;
+    expect(tv.totalEvidenceObservations).toBe(
+      tv.attributed + tv.citesUnknownScenario + tv.citesNoScenario
+    );
+  });
+});

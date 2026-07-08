@@ -1,0 +1,8 @@
+packages:
+  - "packages/*"
+
+# esbuild ships a postinstall that places its platform binary; allow it to run so
+# `pnpm install --frozen-lockfile` doesn't fail the ignored-build-scripts check in
+# CI. esbuild backs tsx + vitest's bundling.
+allowBuilds:
+  esbuild: true
