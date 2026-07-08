@@ -560,6 +560,112 @@ After({ tags: "@SCN-RPT-017" }, function () {
   if (runsRoot017 && existsSync(runsRoot017)) rmSync(runsRoot017, { recursive: true, force: true });
 });
 
+// @SCN-RPT-018
+// The MULTI-TAG view mirror (3F-1452): the view-side mirror of the reconciler's @SCN-LDG-014.
+// A scenario declaring @integration @e2e proven by a SINGLE passing cucumber observation must be
+// counted in BOTH tiers across the views — because parseCucumber emits one observation per declared
+// non-unit tier (per-tier emission, @SCN-LDG-014) and the census PROJECTS that parsed set
+// (@SCN-RPT-017), tallying the integration and e2e observations for the one scenario independently
+// with NO multi-tag-specific census logic. The @integration arm drives the REAL reconcile + render
+// over a fixture whose cucumber report proves a passing @integration @e2e scenario (SCN-TGT-102)
+// with NO vitest evidence: the persisted Test volume must count it under BOTH integration and e2e,
+// and the scenario declares both obligations, so both the Integration and E2e cells must render
+// their attributed count, not ∅. Per-tier counting is INHERITED from the parsed set — green on the
+// full-unify census; teeth proven by the census unit arm + local mutation (collapsing the parsed
+// set to one-per-scenario reds the second tier).
+const EVIDENCE_OBSERVATION_INTEGRATION_E2E_OPTS = {
+  features: "tests/fixtures/evidence-observation-integration-e2e/features",
+  cucumber: "tests/fixtures/evidence-observation-integration-e2e/cucumber.json",
+  // NB: no vitest report — the @integration and @e2e obligations are both discharged by the one
+  // cucumber pass (the multi-tag ruling: one execution exercises the integrated tiers, LDG-014).
+};
+let runsRoot018: string;
+let md018: string;
+let json018: string;
+
+Given(
+  "a target whose cucumber report has a single passing @integration @e2e scenario tagged SCN-TGT-102",
+  function () {
+    runsRoot018 = mkdtempSync(join(tmpdir(), "spec-controller-rpt018-"));
+  }
+);
+
+When(
+  "the reconciliation report is rendered for that @integration @e2e-via-cucumber target",
+  function () {
+    const balance = runReconcile(EVIDENCE_OBSERVATION_INTEGRATION_E2E_OPTS);
+    const evidenceObservations = readEvidenceObservations(EVIDENCE_OBSERVATION_INTEGRATION_E2E_OPTS);
+    const ctx018: RunContext = {
+      target: "evidence-observation-integration-e2e-fixture",
+      inputs: {},
+      runStart: new Date("2026-07-08T20:30:17.000Z"),
+      sourceSha: null,
+    };
+    const runDir = persistReport(runsRoot018, { balance, ctx: ctx018, evidenceObservations });
+    md018 = readFileSync(join(runDir, "spec-reconciliation.md"), "utf8");
+    json018 = readFileSync(join(runDir, "spec-reconciliation.json"), "utf8");
+  }
+);
+
+Then("Test volume counts the single observation under both integration and e2e", function () {
+  // parseCucumber emits ONE observation per declared tier from the single scenario pass, and the
+  // census projects both — so the by-level Test volume table counts the scenario under integration
+  // AND e2e (each 1). A census that deduped by scnId (ignoring level) or a parse that collapsed the
+  // multi-tag scenario to one tier would leave the second tier at 0 → RED here.
+  assert.match(
+    md018,
+    /### Test volume/,
+    `expected the persisted spec-reconciliation.md to carry the Test volume cut; got:\n${md018}`
+  );
+  assert.ok(
+    md018.includes("| integration | 1 |"),
+    `expected the Test volume by-level table to count the observation under integration (| integration | 1 |); got:\n${md018}`
+  );
+  assert.ok(
+    md018.includes("| e2e | 1 |"),
+    `expected the Test volume by-level table to ALSO count the observation under e2e (| e2e | 1 |); got:\n${md018}`
+  );
+  // Cross-check the JSON attributed carries BOTH tiers for the one scenario.
+  const parsed = JSON.parse(json018) as {
+    evidenceObservations?: {
+      attributed: Array<{ scnId: string; qualityCheck: string; count: number }>;
+    };
+  };
+  const attributed = parsed.evidenceObservations?.attributed ?? [];
+  assert.ok(
+    attributed.some((a) => a.scnId === "SCN-TGT-102" && a.qualityCheck === "integration" && a.count === 1),
+    `expected attributed to carry (SCN-TGT-102, integration, 1); got: ${JSON.stringify(attributed)}`
+  );
+  assert.ok(
+    attributed.some((a) => a.scnId === "SCN-TGT-102" && a.qualityCheck === "e2e" && a.count === 1),
+    `expected attributed to ALSO carry (SCN-TGT-102, e2e, 1); got: ${JSON.stringify(attributed)}`
+  );
+});
+
+Then("SCN-TGT-102's Integration and E2e cells each render a count, not ∅", function () {
+  // The ledger row for SCN-TGT-102 declares BOTH the integration and e2e obligations (its tier
+  // tags), and both are discharged by the one cucumber pass. So the Integration column AND the E2e
+  // column each read the attributed (SCN-TGT-102, tier) count of 1 — the row reads
+  // `| SCN-TGT-102 | 1 | 1 | ...`. If the second tier's credit were lost (census dedup, or a
+  // one-per-scenario parse), that cell would collapse to ∅ (declared, no observation) → RED.
+  const row = md018.split("\n").find((l) => l.includes("| SCN-TGT-102 |"));
+  assert.ok(row, `expected a ledger row for SCN-TGT-102; got:\n${md018}`);
+  assert.ok(
+    !row!.includes("∅"),
+    `expected SCN-TGT-102's Integration and E2e cells to each render a count, not ∅; got row:\n${row}`
+  );
+  // Columns are in canonical order (integration, then e2e) — both cells carry the count 1.
+  assert.match(
+    row!,
+    /\| SCN-TGT-102 \| 1 \| 1 \|/,
+    `expected SCN-TGT-102's Integration and E2e cells to each render the count 1; got row:\n${row}`
+  );
+});
+
+After({ tags: "@SCN-RPT-018" }, function () {
+  if (runsRoot018 && existsSync(runsRoot018)) rmSync(runsRoot018, { recursive: true, force: true });
+});
+
 // @SCN-RPT-014
 // The untagged-scenarios @integration arm drives the REAL declared-side parse over a
 // fixture feature dir mixing @SCN-tagged and untagged scenarios: readEvidenceObligations runs

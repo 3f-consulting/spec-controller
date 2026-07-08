@@ -255,3 +255,58 @@ describe("[SCN-RPT-017] the census PROJECTS the parsed observation set, levellin
     expect(totalEvidenceObservations(census)).toBe(attributedTotal(census) + census.suspenseCount);
   });
 });
+
+describe("[SCN-RPT-018] the census counts an @integration @e2e-via-cucumber observation in BOTH tiers", () => {
+  // The MULTI-TAG view mirror (3F-1452): the view-side mirror of the reconciler's @SCN-LDG-014.
+  // SCN-TGT-102 declares BOTH @integration and @e2e; a SINGLE passing cucumber scenario proves it.
+  // parseCucumber emits ONE observation per declared non-unit tier (per-tier emission, @SCN-LDG-014)
+  // — so the parsed set carries an integration AND an e2e observation, both citing SCN-TGT-102. The
+  // census PROJECTS that set (@SCN-RPT-017): it tallies the two observations independently, with NO
+  // multi-tag-specific logic, so both tiers' raw counts are 1 and attributed carries both
+  // (SCN-TGT-102, integration) and (SCN-TGT-102, e2e). This proves the second tier is NOT lost in the
+  // census (a dedup-by-scnId would drop it) — the view agreeing with the reconciler that one cucumber
+  // pass discharges both non-unit obligations.
+  const scenarios: Scenario[] = [
+    { scnId: "SCN-TGT-102", evidenceObligations: [{ qualityCheck: "integration" }, { qualityCheck: "e2e" }] },
+  ];
+  const cucumber: CucumberJsonReport = [
+    {
+      uri: "features/widget.feature",
+      elements: [
+        {
+          tags: [{ name: "@integration" }, { name: "@e2e" }, { name: "@SCN-TGT-102" }],
+          steps: [{ result: { status: "passed" } }],
+        },
+      ],
+    },
+  ];
+  // Parse with the integration FALLBACK — the parser derives the levels from the scenario's tier
+  // tags, so the SINGLE scenario yields TWO parsed observations (integration + e2e). The census
+  // merely PROJECTS this set; it re-derives nothing and adds no multi-tag logic of its own.
+  const observations = parseCucumberEvidenceObservations(cucumber, "integration");
+  const census: RuntimeEvidenceObservationKindCounts = countRuntimeEvidenceObservationKinds({
+    observations,
+    scenarios,
+  });
+
+  it("counts the one scenario under BOTH integration and e2e (per-tier emission, projected)", () => {
+    expect(census.rawByRuntimeQualityCheck.integration).toBe(1);
+    expect(census.rawByRuntimeQualityCheck.e2e).toBe(1);
+  });
+
+  it("attributes the observation to BOTH (scnId, integration) and (scnId, e2e) — the second tier is not lost", () => {
+    expect(census.attributed).toContainEqual({ scnId: "SCN-TGT-102", qualityCheck: "integration", count: 1 });
+    expect(census.attributed).toContainEqual({ scnId: "SCN-TGT-102", qualityCheck: "e2e", count: 1 });
+    // Exactly the two attributed entries — no undemanded, phantom, or suspense leakage.
+    expect(census.attributed).toHaveLength(2);
+    expect(census.undemandedCount).toBe(0);
+    expect(census.phantomCount).toBe(0);
+    expect(census.suspenseCount).toBe(0);
+  });
+
+  it("holds the identity BY CONSTRUCTION over the two-tier projected set", () => {
+    // raw (2) = attributed (2) + undemanded (0) + phantom (0) + suspense (0).
+    expect(totalEvidenceObservations(census)).toBe(2);
+    expect(totalEvidenceObservations(census)).toBe(attributedTotal(census) + census.suspenseCount);
+  });
+});

@@ -432,3 +432,21 @@ Feature: The report renders the ledger as sectioned facts
       Then Test volume counts the observation under e2e, not integration
       And the scenario appears in attributed at e2e
       And the scenario's E2e cell renders a count, not ∅
+
+    # The MULTI-TAG view mirror (@SCN-RPT-018, 3F-1452). The view-side mirror of the reconciler's
+    # @SCN-LDG-014: a scenario declaring @integration @e2e proven by a SINGLE passing cucumber
+    # observation is counted in BOTH tiers across the views — because parseCucumber emits one
+    # observation per declared non-unit tier (the per-tier emission, @SCN-LDG-014), and the census is
+    # now a PROJECTION of that parsed set (@SCN-RPT-017), so the two observations (integration + e2e)
+    # for the one scenario are tallied independently with NO multi-tag-specific census logic. Test
+    # volume counts the scenario's single cucumber pass under integration AND under e2e; the scenario
+    # declares both obligations (its tier tags), so both the Integration and E2e cells read their
+    # attributed count and render it — neither collapses to ∅. Per-tier counting is INHERITED from the
+    # parsed set, not re-implemented; this scenario pins that the multi-tier credit survives the
+    # census projection into the views (the second tier is not lost).
+    @unit @integration @SCN-RPT-018
+    Scenario: an @integration @e2e-via-cucumber observation is counted in both tiers across the views
+      Given a target whose cucumber report has a single passing @integration @e2e scenario tagged SCN-TGT-102
+      When the reconciliation report is rendered for that @integration @e2e-via-cucumber target
+      Then Test volume counts the single observation under both integration and e2e
+      And SCN-TGT-102's Integration and E2e cells each render a count, not ∅
