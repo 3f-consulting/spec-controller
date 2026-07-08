@@ -25,6 +25,10 @@ import {
   parseCucumberEvidenceObservations,
   type CucumberJsonReport,
 } from "@3f-consulting/spec-controller-core";
+import {
+  parseVitestEvidenceObservations,
+  type VitestJsonReport,
+} from "@3f-consulting/spec-controller-core";
 import type { Scenario, EvidenceObservation } from "@3f-consulting/spec-controller-core";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
 
@@ -378,6 +382,101 @@ Then("the integration obligation is satisfied and the scenario is balanced", fun
     `expected ${ldg012ScnId} to carry no reconciling items; got "${items}"`
   );
 });
+
+// @SCN-LDG-013 — the cited scenario for the split ACROSS RUNNERS. Its own fixtures (distinct
+// step text: a vitest report AND a cucumber report) leave LDG-011/012's steps byte-untouched;
+// only the generic "the ledger reconciles the target" When is shared.
+let ldg013ScnId: string;
+
+// @SCN-LDG-013
+Given("a scenario declared @unit @e2e", function () {
+  // A declared scenario carrying BOTH a @unit and an @e2e tier tag, built through the REAL
+  // declared reader → TWO evidence obligations (unit + e2e). @unit is discharged by a vitest
+  // observation; @e2e by a cucumber observation whose level is DERIVED from this same @e2e tag.
+  // The single-non-unit-tag case of the multi-tag ruling — the split across runners.
+  ldg013ScnId = "SCN-LDG-013";
+  const feature = [
+    "@LDG",
+    "Feature: fixture",
+    "  Rule: a fixture rule",
+    `    @unit @e2e @${ldg013ScnId}`,
+    "    Scenario: a unit-and-e2e fixture scenario",
+    "      Given a fixture step",
+  ].join("\n");
+  scenarios = parseScenarios(feature);
+});
+
+// @SCN-LDG-013
+Given("a passing vitest observation citing the @unit @e2e scenario", function () {
+  // A passing vitest JSON report citing the @unit @e2e scenario, run through the REAL vitest
+  // reader at the JS-ecosystem unit default → a unit observation. Vitest is the unit substrate:
+  // its level is NOT derived (a unit test can only prove @unit, and its JSON carries no tier tag
+  // to derive from). This discharges the @unit obligation. Seeds the observed side; the cucumber
+  // observation is APPENDED next so BOTH tiers are observed.
+  const report: VitestJsonReport = {
+    testResults: [
+      {
+        name: "src/unitAndE2e.test.ts",
+        assertionResults: [
+          { fullName: `[${ldg013ScnId}] the unit substrate proves the unit tier`, status: "passed" },
+        ],
+      },
+    ],
+  };
+  evidenceObservations = parseVitestEvidenceObservations(report, "unit");
+});
+
+// @SCN-LDG-013
+Given("a passing cucumber observation citing the @unit @e2e scenario", function () {
+  // A passing cucumber JSON report citing the SAME @unit @e2e scenario, run through the REAL
+  // cucumber reader with the JS-ecosystem "integration" fallback. deriveLevel reads the
+  // scenario's declared @e2e tier tag (the @unit tag is NOT a non-unit tier → inert for cucumber;
+  // unit is vitest's job) → exactly ONE e2e observation. APPENDED to the vitest unit observation
+  // so the observed side carries BOTH tiers: vitest→unit, cucumber→e2e — the split across runners.
+  const report: CucumberJsonReport = [
+    {
+      uri: "features/fixture.feature",
+      elements: [
+        {
+          tags: [{ name: "@unit" }, { name: "@e2e" }, { name: `@${ldg013ScnId}` }],
+          steps: [{ result: { status: "passed" } }],
+        },
+      ],
+    },
+  ];
+  evidenceObservations = [
+    ...(evidenceObservations ?? []),
+    ...parseCucumberEvidenceObservations(report, "integration"),
+  ];
+});
+
+// @SCN-LDG-013
+Then(
+  "both the unit and the e2e obligations are satisfied and the scenario is balanced",
+  function () {
+    // Row-scoped to the @unit @e2e scenario's OWN row: verdict reads balanced (and NOT
+    // out-of-balance) with NO reconciling items — BOTH obligations discharged, the @unit by the
+    // vitest observation and the @e2e by the derived-e2e cucumber observation. Reds if deriveLevel
+    // stops deriving @e2e (e2e missing + integration undemanded → out of balance) or if the vitest
+    // observation is levelled off unit (@unit missing → out of balance).
+    const { verdict, items } = rowCells(ldg013ScnId);
+    assert.match(
+      verdict,
+      /\bbalanced\b/,
+      `expected ${ldg013ScnId}'s verdict cell to read balanced; got "${verdict}"`
+    );
+    assert.doesNotMatch(
+      verdict,
+      /out-of-balance/,
+      `expected ${ldg013ScnId} not to be out-of-balance; got "${verdict}"`
+    );
+    assert.equal(
+      items,
+      "—",
+      `expected ${ldg013ScnId} to carry no reconciling items; got "${items}"`
+    );
+  }
+);
 
 // @SCN-LDG-001
 When("the reconciler runs", function () {

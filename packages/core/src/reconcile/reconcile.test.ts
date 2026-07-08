@@ -16,6 +16,9 @@
 import { describe, it, expect } from "vitest";
 import { reconcile } from "./reconcile.js";
 import type { Scenario, EvidenceObservation } from "../model.js";
+import { parseScenarios } from "../parse/scenarios.js";
+import { parseVitestEvidenceObservations, type VitestJsonReport } from "../parse/vitest.js";
+import { parseCucumberEvidenceObservations, type CucumberJsonReport } from "../parse/cucumber.js";
 
 describe("[SCN-LDG-001] a scenario whose required evidence exists and passes is reported as balanced", () => {
   it("returns the balanced verdict with no reconciling items when its required unit-level evidence is present and passing", () => {
@@ -407,5 +410,76 @@ describe("[SCN-WRN-001] a scenario declaring no evidence obligations is reported
       "SCN-WRN-001",
       "SCN-WRN-002",
     ]);
+  });
+});
+
+describe("[SCN-LDG-013] a @unit @e2e scenario proven by BOTH a vitest and a cucumber observation reconciles both tiers satisfied", () => {
+  it("balances both obligations — vitest discharges @unit, cucumber (derived) discharges @e2e — from a real declared scenario and both real readers", () => {
+    // The split ACROSS RUNNERS, composed through the REAL readers (evidence-manifesto §11A:
+    // assert real output, not a hand-seeded fixture). The declared side: a real @unit @e2e
+    // scenario through the real reader → TWO evidence obligations (unit + e2e).
+    const scenarios = parseScenarios(
+      [
+        "@LDG",
+        "Feature: fixture",
+        "  Rule: a fixture rule",
+        "    @unit @e2e @SCN-LDG-013",
+        "    Scenario: a unit-and-e2e fixture scenario",
+        "      Given a fixture step",
+      ].join("\n")
+    );
+
+    // The VITEST side: a real vitest JSON report citing the scenario, parsed at the JS-ecosystem
+    // unit default → a unit observation. Vitest is the unit substrate; its level is NOT derived
+    // (a unit test can only prove @unit). This discharges the @unit obligation.
+    const vitestReport: VitestJsonReport = {
+      testResults: [
+        {
+          name: "src/unitAndE2e.test.ts",
+          assertionResults: [
+            { fullName: "[SCN-LDG-013] the unit substrate proves the unit tier", status: "passed" },
+          ],
+        },
+      ],
+    };
+    const vitestObs = parseVitestEvidenceObservations(vitestReport, "unit");
+
+    // The CUCUMBER side: a real cucumber JSON report citing the SAME scenario, parsed with the
+    // JS-ecosystem "integration" fallback. deriveLevel reads the scenario's declared @e2e tag
+    // (the @unit tag is NOT a non-unit tier → inert for cucumber; unit is vitest's job) → exactly
+    // ONE observation, at e2e — NOT unit (cucumber does not double-count unit), NOT integration
+    // (the fallback is overridden by the @e2e tag). This discharges the @e2e obligation.
+    const cucumberReport: CucumberJsonReport = [
+      {
+        uri: "features/fixture.feature",
+        elements: [
+          {
+            tags: [{ name: "@unit" }, { name: "@e2e" }, { name: "@SCN-LDG-013" }],
+            steps: [{ result: { status: "passed" } }],
+          },
+        ],
+      },
+    ];
+    const cucumberObs = parseCucumberEvidenceObservations(cucumberReport, "integration");
+    expect(cucumberObs).toEqual([
+      { qualityCheck: "e2e", scnId: "SCN-LDG-013", status: "passed", locator: "features/fixture.feature" },
+    ]);
+
+    // The ledger's (scnId, level) matching balances each obligation against its own-tier
+    // observation — no reconciler change, no new item type. Both tiers satisfied → balanced.
+    const balance = reconcile(scenarios, [...vitestObs, ...cucumberObs]);
+    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-LDG-013");
+
+    expect(scenario?.verdict).toBe("balanced");
+    expect(scenario?.reconcilingItems).toEqual([]);
+    // BOTH obligations satisfied — order-independent (no ranking between tiers), and EXACTLY the
+    // two tiers the scenario declared (no phantom third obligation).
+    expect(scenario?.evidenceObligations).toEqual(
+      expect.arrayContaining([
+        { qualityCheck: "unit", outcome: "satisfied" },
+        { qualityCheck: "e2e", outcome: "satisfied" },
+      ])
+    );
+    expect(scenario?.evidenceObligations).toHaveLength(2);
   });
 });

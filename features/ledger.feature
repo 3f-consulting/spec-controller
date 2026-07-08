@@ -198,3 +198,19 @@ Feature: Ledger over declared-vs-observed evidence
       And a passing cucumber observation citing the @integration scenario
       When the ledger reconciles the target
       Then the integration obligation is satisfied and the scenario is balanced
+
+    # The split ACROSS RUNNERS (SCN-LDG-013): a scenario declared @unit @e2e, run by BOTH
+    # runners, reconciles both tiers satisfied — the VITEST observation discharges @unit
+    # (vitest is the unit substrate; its level is not derived), and the CUCUMBER observation
+    # discharges @e2e (the level DERIVED from the @e2e tag; the @unit tag is inert for cucumber,
+    # so cucumber does not double-count unit). This is the single-non-unit-tag case of the
+    # multi-tag ruling — no reconciler change: the ledger's (scnId, level) matching balances
+    # each. Distinct step wording (a vitest report AND a cucumber report) leaves LDG-011/012's
+    # steps byte-untouched; only the generic "the ledger reconciles the target" When is shared.
+    @unit @integration @SCN-LDG-013
+    Scenario: a @unit @e2e scenario with a vitest and a cucumber observation satisfies both tiers
+      Given a scenario declared @unit @e2e
+      And a passing vitest observation citing the @unit @e2e scenario
+      And a passing cucumber observation citing the @unit @e2e scenario
+      When the ledger reconciles the target
+      Then both the unit and the e2e obligations are satisfied and the scenario is balanced
