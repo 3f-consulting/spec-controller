@@ -39,3 +39,10 @@ Feature: spec-controller balance runs standalone
         | --features     |
         | --ci           |
         | --package-json |
+
+    @SCN-CLI-003 @unit @e2e
+    Scenario: an omitted optional input flag is not an error
+      Given a target with declared scenarios and a Vitest report
+      When "spec-controller balance" is invoked with no --cucumber flag through the CLI binary
+      Then the command exits zero
+      And it reconciles the declared scenarios against the supplied evidence

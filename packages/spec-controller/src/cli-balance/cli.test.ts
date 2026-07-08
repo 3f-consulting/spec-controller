@@ -110,3 +110,27 @@ describe("[SCN-CLI-002] checkInputsExist rejects a supplied input path that does
     expect(error).toContain("--cucumber");
   });
 });
+
+describe("[SCN-CLI-003] checkInputsExist treats an OMITTED optional flag as nothing-to-validate, not missing", () => {
+  it("returns null for an omitted flag even when other flags are supplied and present", () => {
+    // The positive boundary that keeps CLI-002 honest: absence-of-flag stays legal
+    // (reconcile whatever WAS supplied); only supplied-but-absent errors. Here --vitest
+    // and --features are supplied AND present (`exists` → true for them), while
+    // --cucumber / --ci / --package-json are OMITTED (undefined). The predicate must
+    // treat an undefined path as "nothing to validate" and NOT consult `exists` for it,
+    // so it returns null.
+    //
+    // Teeth: `exists` returns FALSE for anything other than the two present paths, so a
+    // tightening that over-reached into the legitimate optional path — dropping the
+    // `path !== undefined` guard, or requiring all inputs once ANY is supplied — would
+    // call `exists(undefined)` → false → a spurious error for the omitted --cucumber, and
+    // this assertion would red. This case pins that boundary specifically: the
+    // omit-with-NOTHING-supplied case (`{}` → every flag undefined) does NOT catch a
+    // supply-one-require-all tightening, but an omitted flag ALONGSIDE supplied-present
+    // ones does.
+    const args = { vitest: "reports/vitest.json", features: "features" };
+    const exists = (path: string) =>
+      path === "reports/vitest.json" || path === "features";
+    expect(checkInputsExist(args, exists)).toBeNull();
+  });
+});
