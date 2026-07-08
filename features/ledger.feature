@@ -214,3 +214,23 @@ Feature: Ledger over declared-vs-observed evidence
       And a passing cucumber observation citing the @unit @e2e scenario
       When the ledger reconciles the target
       Then both the unit and the e2e obligations are satisfied and the scenario is balanced
+
+    # The multi-tag ruling's TEETH (SCN-LDG-014): a scenario declared @integration @e2e,
+    # proven by a SINGLE cucumber run, discharges BOTH non-unit obligations — the one
+    # execution genuinely exercises the integrated components AND the end-to-end journey
+    # (the journey contains the integration), so parseCucumberEvidenceObservations emits
+    # ONE observation PER declared non-unit tier (integration + e2e) from the single pass.
+    # This is the general rule LDG-011/012/013 are single-tier instances of. Why principled
+    # (Evidence Manifesto §11): §11 complementarity is scoped to @unit-vs-the-run (isolation
+    # vs the integrated system, different runners) — so @unit still needs its own vitest
+    # observation; it does NOT bite WITHIN the cucumber tiers, so discharging both is honest,
+    # not double-crediting. No new reconciling-item type, no flag — the reconciler's existing
+    # (scnId, level) matching balances each. Distinct step wording ("declared @integration @e2e",
+    # "a single passing cucumber observation", "both the integration and the e2e obligations")
+    # leaves LDG-011/012/013's steps byte-untouched; only the generic When is shared.
+    @unit @integration @SCN-LDG-014
+    Scenario: an @integration @e2e scenario with one cucumber observation satisfies both non-unit tiers
+      Given a scenario declared @integration @e2e
+      And a single passing cucumber observation citing it
+      When the ledger reconciles the target
+      Then both the integration and the e2e obligations are satisfied and the scenario is balanced

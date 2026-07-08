@@ -478,6 +478,81 @@ Then(
   }
 );
 
+// @SCN-LDG-014 — the cited scenario for the multi-tag ruling's teeth. Its own fixtures
+// (distinct step text: "declared @integration @e2e", "a single passing cucumber observation
+// citing it") leave LDG-011/012/013's steps byte-untouched; only the generic "the ledger
+// reconciles the target" When is shared.
+let ldg014ScnId: string;
+
+// @SCN-LDG-014
+Given("a scenario declared @integration @e2e", function () {
+  // A declared scenario carrying BOTH an @integration and an @e2e tier tag, built through the
+  // REAL declared reader → TWO non-unit evidence obligations (integration + e2e). A SINGLE
+  // cucumber run must discharge BOTH — the observation's per-tier emission is derived from these
+  // same two tags. The multi-tag ruling's teeth: LDG-011/012/013 were single-tier instances.
+  ldg014ScnId = "SCN-LDG-014";
+  const feature = [
+    "@LDG",
+    "Feature: fixture",
+    "  Rule: a fixture rule",
+    `    @integration @e2e @${ldg014ScnId}`,
+    "    Scenario: an integration-and-e2e fixture scenario",
+    "      Given a fixture step",
+  ].join("\n");
+  scenarios = parseScenarios(feature);
+});
+
+// @SCN-LDG-014
+Given("a single passing cucumber observation citing it", function () {
+  // ONE passing cucumber JSON report citing the @integration @e2e scenario, run through the REAL
+  // parser with the JS-ecosystem "integration" fallback. From this SINGLE pass the parser must
+  // emit ONE observation PER declared non-unit tier — an integration observation AND an e2e
+  // observation, same scnId — so BOTH obligations are discharged and the scenario balances.
+  // Before per-tier emission the parser emitted ONE observation (the first tier), so the OTHER
+  // tier went missing (and the emitted tier, when it was the wrong one, undemanded) → out of
+  // balance: exactly the red this scenario pins.
+  const report: CucumberJsonReport = [
+    {
+      uri: "features/fixture.feature",
+      elements: [
+        {
+          tags: [{ name: "@integration" }, { name: "@e2e" }, { name: `@${ldg014ScnId}` }],
+          steps: [{ result: { status: "passed" } }],
+        },
+      ],
+    },
+  ];
+  evidenceObservations = parseCucumberEvidenceObservations(report, "integration");
+});
+
+// @SCN-LDG-014
+Then(
+  "both the integration and the e2e obligations are satisfied and the scenario is balanced",
+  function () {
+    // Row-scoped to the @integration @e2e scenario's OWN row: verdict reads balanced (and NOT
+    // out-of-balance) with NO reconciling items — BOTH non-unit obligations discharged from the
+    // ONE cucumber run (integration by the integration observation, e2e by the e2e observation).
+    // Reds while the parser emits a single observation: the un-emitted tier is then missing
+    // (and any wrong-tier observation undemanded) → out of balance.
+    const { verdict, items } = rowCells(ldg014ScnId);
+    assert.match(
+      verdict,
+      /\bbalanced\b/,
+      `expected ${ldg014ScnId}'s verdict cell to read balanced; got "${verdict}"`
+    );
+    assert.doesNotMatch(
+      verdict,
+      /out-of-balance/,
+      `expected ${ldg014ScnId} not to be out-of-balance; got "${verdict}"`
+    );
+    assert.equal(
+      items,
+      "—",
+      `expected ${ldg014ScnId} to carry no reconciling items; got "${items}"`
+    );
+  }
+);
+
 // @SCN-LDG-001
 When("the reconciler runs", function () {
   markdown = renderMarkdown(reconcile(scenarios, evidenceObservations), CTX);

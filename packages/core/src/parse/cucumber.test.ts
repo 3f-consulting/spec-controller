@@ -93,3 +93,50 @@ describe("[SCN-LDG-012] parseCucumberEvidenceObservations derives integration fr
     ]);
   });
 });
+
+describe("[SCN-LDG-014] parseCucumberEvidenceObservations emits one observation per declared non-unit tier", () => {
+  it("emits BOTH an integration and an e2e observation from ONE cucumber pass of an @integration @e2e scenario", () => {
+    // The multi-tag ruling's teeth: a SINGLE cucumber run of a scenario declaring two non-unit
+    // tiers discharges BOTH obligations, so the parser must emit ONE observation per declared
+    // tier (integration + e2e), same scnId, same passed status. Before per-tier emission the
+    // parser emitted a SINGLE observation (the first matched tier), so this reds at length 1.
+    const report: CucumberJsonReport = [
+      {
+        uri: "features/both.feature",
+        elements: [
+          {
+            tags: [{ name: "@integration" }, { name: "@e2e" }, { name: "@SCN-LDG-014" }],
+            steps: [{ result: { status: "passed" } }],
+          },
+        ],
+      },
+    ];
+    // One observation per declared tier, in declaration order (@integration then @e2e), same
+    // scnId / status / locator. Today's single-observation parser emits only the first tier, so
+    // toEqual reds on the length-1 vs length-2 mismatch.
+    expect(parseCucumberEvidenceObservations(report, "integration")).toEqual([
+      { qualityCheck: "integration", scnId: "SCN-LDG-014", status: "passed", locator: "features/both.feature" },
+      { qualityCheck: "e2e", scnId: "SCN-LDG-014", status: "passed", locator: "features/both.feature" },
+    ]);
+  });
+
+  it("GUARD: a single-non-unit-tag scenario still emits EXACTLY ONE observation (no accidental duplicate)", () => {
+    // Per-tier emission must not double-count the single-tier case: an @integration-only
+    // scenario yields exactly one integration observation, not two. Pins LDG-011/012/013's
+    // single-observation invariant against a regression in the per-tier fan-out.
+    const report: CucumberJsonReport = [
+      {
+        uri: "features/one.feature",
+        elements: [
+          {
+            tags: [{ name: "@integration" }, { name: "@SCN-LDG-014" }],
+            steps: [{ result: { status: "passed" } }],
+          },
+        ],
+      },
+    ];
+    expect(parseCucumberEvidenceObservations(report, "e2e")).toEqual([
+      { qualityCheck: "integration", scnId: "SCN-LDG-014", status: "passed", locator: "features/one.feature" },
+    ]);
+  });
+});
