@@ -65,6 +65,18 @@ const VITEST_QUALITY_CHECK: RuntimeQualityCheck = "unit";
 const CUCUMBER_QUALITY_CHECK: RuntimeQualityCheck = "integration";
 
 /**
+ * The static-guard script-prefix convention set — which package.json script names the
+ * running-guard observer (`runningStaticGuards`) recognises as static guards, DECLARED at the
+ * CLI edge rather than hardcoded in the core parser. `lint:*` is an earlier internal tool's own convention;
+ * `guard:*` is an adopter's repository's (four `guard:*` guards run in an adopter's repository's CI). A third convention adds its
+ * prefix here; the core never assumes the set. No CLI override flag yet — that earns its place
+ * at a third ecosystem, not now (mirrors the VITEST_QUALITY_CHECK stance above).
+ * `qualityCheck: "lint"` (the static-guard axis name) is unchanged — this is the script prefix,
+ * not the axis.
+ */
+const GUARD_SCRIPT_PREFIXES: readonly string[] = ["lint:", "guard:"];
+
+/**
  * The reconciler's resolved input paths — the CLI options threaded to the readers.
  * Every path is optional; a missing result file is tolerated (its evidence is
  * simply absent). `packageJson` is the EXTERNALLY-SPECIFIED package.json the static
@@ -222,7 +234,9 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
   // running guards are added here. They cite no scenario — the reconciler folds them into the suspense row.
   const demandedGuardSet = new Set(demandedGuards);
   evidenceObservations.push(
-    ...runningStaticGuards(ciSource, packageJson).filter((o) => !demandedGuardSet.has(o.guard))
+    ...runningStaticGuards(ciSource, packageJson, GUARD_SCRIPT_PREFIXES).filter(
+      (o) => !demandedGuardSet.has(o.guard)
+    )
   );
 
   // The stream is now COMPLETE: every running CI guard is a GuardEvidenceObservation
@@ -261,7 +275,9 @@ export function readStaticEvidenceObservationCounts(opts: ReconcileOptions): Sta
   const demandedSet = new Set(demandedGuards);
   const observations = [
     ...checkStaticEvidenceObligations(demandedGuards, ciSource, packageJson),
-    ...runningStaticGuards(ciSource, packageJson).filter((o) => !demandedSet.has(o.guard)),
+    ...runningStaticGuards(ciSource, packageJson, GUARD_SCRIPT_PREFIXES).filter(
+      (o) => !demandedSet.has(o.guard)
+    ),
   ];
   return countStaticEvidenceObservationKinds(observations, demandedGuards);
 }

@@ -1,0 +1,7 @@
+{
+  "scripts": {
+    "guard:domain-purity": "echo domain-purity-guard",
+    "test": "echo test",
+    "cucumber": "echo cucumber"
+  }
+}

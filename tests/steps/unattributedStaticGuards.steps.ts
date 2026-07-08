@@ -15,16 +15,36 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-const USG_FIXTURE = {
+interface UsgFixture {
+  features: string;
+  ci: string;
+  packageJson: string;
+}
+
+const USG_FIXTURE: UsgFixture = {
   features: "tests/fixtures/usg/features",
   ci: "tests/fixtures/usg/ci.yml",
   packageJson: "tests/fixtures/usg/package.json",
 };
-let usgDir: string;
-let usgMd: string;
+
+// @SCN-USG-004 — a second fixture target whose CI runs a guard:* script (guard:domain-purity)
+// declared by NO @lint at all (an adopter's repository-shaped case). Distinct from USG_FIXTURE so the
+// exact counts USG-001/002/003 assert over the lint:* fixture stay intact.
+const USG_GUARD_FIXTURE: UsgFixture = {
+  features: "tests/fixtures/usg-guard/features",
+  ci: "tests/fixtures/usg-guard/ci.yml",
+  packageJson: "tests/fixtures/usg-guard/package.json",
+};
+
+// The active fixture + its tmp target dir + the rendered report — set by each Given, so the
+// one shared "When ... rendered for the target" step drives whichever fixture the scenario picked.
+let activeFixture: UsgFixture;
+let activeDir: string;
+let activeMd: string;
 
 Given("a target whose CI runs the lint:foo and lint:bar guards", function () {
-  usgDir = mkdtempSync(join(tmpdir(), "spec-controller-usg001-"));
+  activeFixture = USG_FIXTURE;
+  activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg001-"));
 });
 
 Given("only lint:foo is declared by an @lint scenario", function () {
@@ -32,20 +52,32 @@ Given("only lint:foo is declared by an @lint scenario", function () {
   // invoked in the fixture ci.yml but no @lint declares it — the unattributed evidence observation one.
 });
 
+// @SCN-USG-004
+Given("a target whose CI runs the guard:domain-purity script", function () {
+  activeFixture = USG_GUARD_FIXTURE;
+  activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg004-"));
+});
+
+// @SCN-USG-004
+Given("no @lint scenario declares guard:domain-purity", function () {
+  // The usg-guard fixture's target.feature declares NO @lint at all; guard:domain-purity is
+  // invoked in the fixture ci.yml but nothing declares it — the unattributed guard:* one.
+});
+
 When("the reconciliation report is rendered for the target", function () {
   const repoRoot = process.cwd();
   const abs = (p: string): string => join(repoRoot, p);
-  const reportPath = join(usgDir, "spec-reconciliation.md");
+  const reportPath = join(activeDir, "spec-reconciliation.md");
   const argv = [
     join(repoRoot, "packages", "spec-controller", "src", "cli-balance", "cli.ts"),
-    "--features", abs(USG_FIXTURE.features),
-    "--ci", abs(USG_FIXTURE.ci),
-    "--package-json", abs(USG_FIXTURE.packageJson),
+    "--features", abs(activeFixture.features),
+    "--ci", abs(activeFixture.ci),
+    "--package-json", abs(activeFixture.packageJson),
     "--target", "usg-fixture",
     "--format", `md:${reportPath}`,
   ];
   const result = spawnSync(join(repoRoot, "node_modules", ".bin", "tsx"), argv, {
-    cwd: usgDir,
+    cwd: activeDir,
     encoding: "utf8",
   });
   assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
@@ -54,7 +86,7 @@ When("the reconciliation report is rendered for the target", function () {
     0,
     `expected exit 0 writing the report; got ${result.status}\nstderr:\n${result.stderr}`
   );
-  usgMd = readFileSync(reportPath, "utf8");
+  activeMd = readFileSync(reportPath, "utf8");
 });
 
 Then(
@@ -64,17 +96,41 @@ Then(
     // the per-guard DETAIL re-homed to the suspense-scenario row, where lint:bar surfaces as
     // a cites-no-scenario credit item (with its guard handle). Both are asserted.
     assert.match(
-      usgMd,
+      activeMd,
       /### Static guards/,
-      `expected a Static guards section; got:\n${usgMd}`
+      `expected a Static guards section; got:\n${activeMd}`
     );
     assert.ok(
-      usgMd.includes("2 guard(s) run, 1 unattributed static-guard(s)"),
-      `expected the guard counts "2 guard(s) run, 1 unattributed static-guard(s)"; got:\n${usgMd}`
+      activeMd.includes("2 guard(s) run, 1 unattributed static-guard(s)"),
+      `expected the guard counts "2 guard(s) run, 1 unattributed static-guard(s)"; got:\n${activeMd}`
     );
     assert.ok(
-      usgMd.includes("lint ❓ cites-no-scenario (lint:bar)"),
-      `expected lint:bar re-homed onto the suspense row as a cites-no-scenario credit; got:\n${usgMd}`
+      activeMd.includes("lint ❓ cites-no-scenario (lint:bar)"),
+      `expected lint:bar re-homed onto the suspense row as a cites-no-scenario credit; got:\n${activeMd}`
+    );
+  }
+);
+
+// @SCN-USG-004 — a guard:-prefixed CI script (guard:domain-purity) that no @lint declares
+// surfaces as an unattributed static-guard, exactly as a lint:* one does. The report's Static
+// guards section reports 1 running guard / 1 unattributed, and the suspense row carries the
+// guard:domain-purity handle as a cites-no-scenario credit under the "lint" axis (the axis name
+// is unchanged — it is the static-guard axis, not the script prefix).
+Then(
+  "the Static guards section reports guard:domain-purity as an unattributed static-guard",
+  function () {
+    assert.match(
+      activeMd,
+      /### Static guards/,
+      `expected a Static guards section; got:\n${activeMd}`
+    );
+    assert.ok(
+      activeMd.includes("1 guard(s) run, 1 unattributed static-guard(s)"),
+      `expected the guard counts "1 guard(s) run, 1 unattributed static-guard(s)"; got:\n${activeMd}`
+    );
+    assert.ok(
+      activeMd.includes("lint ❓ cites-no-scenario (guard:domain-purity)"),
+      `expected guard:domain-purity re-homed onto the suspense row as a cites-no-scenario credit; got:\n${activeMd}`
     );
   }
 );
@@ -86,12 +142,12 @@ Then(
   "lint:foo is not reported as an unattributed static-guard",
   function () {
     assert.ok(
-      !usgMd.includes("cites-no-scenario (lint:foo)"),
-      `lint:foo is @lint-declared; it must not surface as an unattributed static-guard credit; got:\n${usgMd}`
+      !activeMd.includes("cites-no-scenario (lint:foo)"),
+      `lint:foo is @lint-declared; it must not surface as an unattributed static-guard credit; got:\n${activeMd}`
     );
     assert.ok(
-      usgMd.includes("2 guard(s) run, 1 unattributed static-guard(s)"),
-      `expected lint:foo folded into the running volume (2 run, 1 unattributed static-guard(s)); got:\n${usgMd}`
+      activeMd.includes("2 guard(s) run, 1 unattributed static-guard(s)"),
+      `expected lint:foo folded into the running volume (2 run, 1 unattributed static-guard(s)); got:\n${activeMd}`
     );
   }
 );
@@ -103,16 +159,16 @@ Then(
   "only lint:foo and lint:bar are counted as CI guards, not test or cucumber",
   function () {
     assert.ok(
-      usgMd.includes("2 guard(s) run, 1 unattributed static-guard(s)"),
-      `expected exactly 2 running guards (test/cucumber excluded); got:\n${usgMd}`
+      activeMd.includes("2 guard(s) run, 1 unattributed static-guard(s)"),
+      `expected exactly 2 running guards (test/cucumber excluded); got:\n${activeMd}`
     );
     assert.ok(
-      !usgMd.includes("(test)") && !usgMd.includes("(cucumber)"),
-      `test/cucumber must not surface as static-guard credits; got:\n${usgMd}`
+      !activeMd.includes("(test)") && !activeMd.includes("(cucumber)"),
+      `test/cucumber must not surface as static-guard credits; got:\n${activeMd}`
     );
   }
 );
 
 After({ tags: "@USG" }, function () {
-  if (usgDir && existsSync(usgDir)) rmSync(usgDir, { recursive: true, force: true });
+  if (activeDir && existsSync(activeDir)) rmSync(activeDir, { recursive: true, force: true });
 });
