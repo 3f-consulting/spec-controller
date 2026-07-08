@@ -307,6 +307,78 @@ Then(
   }
 );
 
+// @SCN-LDG-012 — the cited scenario for the derivation-not-hardcode regression pin. Its
+// own fixtures (distinct step text) leave LDG-011's steps byte-untouched; only the generic
+// "the ledger reconciles the target" When is shared.
+let ldg012ScnId: string;
+
+// @SCN-LDG-012
+Given("a scenario declared @integration", function () {
+  // A declared scenario carrying an @integration tier tag, built through the REAL declared
+  // reader (so the @integration arm exercises the parse → declared seam). Its @integration
+  // tag sets a single integration evidence obligation — the obligation a cucumber-sourced
+  // observation must discharge once its level is DERIVED from this same tag.
+  ldg012ScnId = "SCN-LDG-012";
+  const feature = [
+    "@LDG",
+    "Feature: fixture",
+    "  Rule: a fixture rule",
+    `    @integration @${ldg012ScnId}`,
+    "    Scenario: an integration fixture scenario",
+    "      Given a fixture step",
+  ].join("\n");
+  scenarios = parseScenarios(feature);
+});
+
+// @SCN-LDG-012
+Given("a passing cucumber observation citing the @integration scenario", function () {
+  // A passing cucumber JSON report citing the @integration scenario, run through the REAL
+  // parser with a CONTRASTING non-integration fallback ("e2e") — deliberately NOT the
+  // JS-ecosystem "integration". This is the whole point of LDG-012 over the old hardcode:
+  // the observation's integration level can ONLY come from DERIVING the scenario's declared
+  // @integration tag, never from the source fallback (the retired CUCUMBER_QUALITY_CHECK=
+  // "integration" hardcode supplied integration by COINCIDENCE). If the parser ignored the tag
+  // and used the fallback, the level would be e2e and the integration obligation would go
+  // missing (out of balance) — which is exactly the mutation that proves this pin's teeth.
+  const report: CucumberJsonReport = [
+    {
+      uri: "features/fixture.feature",
+      elements: [
+        {
+          tags: [{ name: "@integration" }, { name: `@${ldg012ScnId}` }],
+          steps: [{ result: { status: "passed" } }],
+        },
+      ],
+    },
+  ];
+  evidenceObservations = parseCucumberEvidenceObservations(report, "e2e");
+});
+
+// @SCN-LDG-012
+Then("the integration obligation is satisfied and the scenario is balanced", function () {
+  // Row-scoped to the @integration scenario's OWN row: its verdict reads balanced (and NOT
+  // out-of-balance) and it carries no reconciling items — the integration obligation is
+  // discharged by the derived-integration observation, with NO missing item (obligation unmet)
+  // and NO undemanded item (an observation at the wrong level). Reds if the observation is
+  // levelled anything but integration (missing + undemanded → out of balance).
+  const { verdict, items } = rowCells(ldg012ScnId);
+  assert.match(
+    verdict,
+    /\bbalanced\b/,
+    `expected ${ldg012ScnId}'s verdict cell to read balanced; got "${verdict}"`
+  );
+  assert.doesNotMatch(
+    verdict,
+    /out-of-balance/,
+    `expected ${ldg012ScnId} not to be out-of-balance; got "${verdict}"`
+  );
+  assert.equal(
+    items,
+    "—",
+    `expected ${ldg012ScnId} to carry no reconciling items; got "${items}"`
+  );
+});
+
 // @SCN-LDG-001
 When("the reconciler runs", function () {
   markdown = renderMarkdown(reconcile(scenarios, evidenceObservations), CTX);

@@ -185,3 +185,16 @@ Feature: Ledger over declared-vs-observed evidence
       When the ledger reconciles the target
       Then the scenario is balanced
       And it is not reported e2e-missing with an undemanded integration observation
+
+    # The regression pin (SCN-LDG-012): the integration tier used to be correct by
+    # ACCIDENT — the old CUCUMBER_QUALITY_CHECK="integration" hardcode happened to agree
+    # with an @integration scenario. This pins that generalising the level to tag-DERIVATION
+    # did not regress the tier that used to be right-by-coincidence. The observation carries
+    # a CONTRASTING non-integration source (see the steps), so its integration level can only
+    # come from DERIVING the scenario's @integration tag — never from the source fallback.
+    @unit @integration @SCN-LDG-012
+    Scenario: an @integration scenario proven via cucumber satisfies its integration obligation
+      Given a scenario declared @integration
+      And a passing cucumber observation citing the @integration scenario
+      When the ledger reconciles the target
+      Then the integration obligation is satisfied and the scenario is balanced

@@ -69,3 +69,27 @@ describe("[SCN-LDG-011] parseCucumberEvidenceObservations derives the level from
     ]);
   });
 });
+
+describe("[SCN-LDG-012] parseCucumberEvidenceObservations derives integration from the @integration tag, not the source fallback", () => {
+  it("stamps an @integration-tagged scenario's observation integration even under a non-integration fallback — derivation, not the old hardcode", () => {
+    const report: CucumberJsonReport = [
+      {
+        uri: "features/integration.feature",
+        elements: [
+          {
+            tags: [{ name: "@integration" }, { name: "@SCN-LDG-012" }],
+            steps: [{ result: { status: "passed" } }],
+          },
+        ],
+      },
+    ];
+    // Fallback "e2e" is deliberately NOT "integration": the integration level can only come
+    // from DERIVING the scenario's declared @integration tag. The retired
+    // CUCUMBER_QUALITY_CHECK="integration" hardcode agreed for this case by COINCIDENCE; this
+    // proves the tier is now reached by derivation. If the parser ignored the tag and used the
+    // fallback, the level would be e2e — the mutation that proves this pin's teeth.
+    expect(parseCucumberEvidenceObservations(report, "e2e")).toEqual([
+      { qualityCheck: "integration", scnId: "SCN-LDG-012", status: "passed", locator: "features/integration.feature" },
+    ]);
+  });
+});
