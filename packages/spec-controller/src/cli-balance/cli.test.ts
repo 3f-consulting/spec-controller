@@ -12,7 +12,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { checkLegacyJson, sourceTarget } from "./cli.js";
+import { checkInputsExist, checkLegacyJson, sourceTarget } from "./cli.js";
 
 describe("[SCN-FMT-006] checkLegacyJson rejects the removed --json flag with a migration hint", () => {
   it("returns the typed migration-hint error naming --format json:<path> when --json is present", () => {
@@ -56,5 +56,57 @@ describe("[SCN-RPT-001] sourceTarget sources the provenance target from --target
     // omit path is always the explicit default regardless of any --features value.
     expect(sourceTarget({ features: "../an-adopters-repository/features" })).toBe("unknown-target");
     expect(sourceTarget({ features: "features" })).toBe("unknown-target");
+  });
+});
+
+describe("[SCN-CLI-002] checkInputsExist rejects a supplied input path that does not exist", () => {
+  // The five input flags are Examples of one boundary rule; parseArgs strips the `--`,
+  // so the predicate reads the keys `vitest` / `cucumber` / `features` / `ci` /
+  // `package-json`. Existence is decided by the injected `exists` fn — no fs.
+  const flags = ["vitest", "cucumber", "features", "ci", "package-json"] as const;
+
+  it.each(flags)(
+    "returns a typed error naming --%s and the missing path when that flag's path is absent",
+    (flag) => {
+      // Teeth: a supplied-but-absent input must NEVER be reconciled silently — the
+      // predicate returns a non-null message that names BOTH the offending flag (so the
+      // operator knows which path to fix) and the path itself. A predicate that returned
+      // null here is exactly the dogfooding fault: a mistyped path → false all-red report.
+      const missing = `does/not/exist/${flag}.missing`;
+      const error = checkInputsExist({ [flag]: missing }, () => false);
+      expect(error).not.toBeNull();
+      expect(error).toContain(`--${flag}`);
+      expect(error).toContain(missing);
+    },
+  );
+
+  it("returns null when every supplied input path exists, so the CLI proceeds to reconcile", () => {
+    // supplied-and-present → ok. All five flags supplied, exists returns true for each.
+    const args = {
+      vitest: "reports/vitest.json",
+      cucumber: "reports/cucumber.json",
+      features: "features",
+      ci: ".github/workflows/ci.yml",
+      "package-json": "package.json",
+    };
+    expect(checkInputsExist(args, () => true)).toBeNull();
+  });
+
+  it("returns null when no input flags are supplied (each flag is legitimately optional)", () => {
+    // The boundary that keeps the rule honest: an OMITTED flag is not an error — it is
+    // simply no evidence of that kind. The predicate must not fire on `exists` alone; it
+    // fires only on supplied-but-absent. `exists` is never even consulted here.
+    expect(checkInputsExist({}, () => false)).toBeNull();
+    expect(checkInputsExist({ target: "some-target" }, () => false)).toBeNull();
+  });
+
+  it("reports the FIRST supplied-but-absent flag when several are missing", () => {
+    // Deterministic: with several bad paths the predicate returns one typed error (the
+    // first in flag order), not an aggregate — the operator fixes and re-runs.
+    const error = checkInputsExist(
+      { cucumber: "bad/cucumber.json", ci: "bad/ci.yml" },
+      () => false,
+    );
+    expect(error).toContain("--cucumber");
   });
 });

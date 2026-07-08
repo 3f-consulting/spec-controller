@@ -15,3 +15,27 @@ Feature: spec-controller balance runs standalone
     Then the command exits zero
     And it prints the Evidence Reconciliation to stdout
     And the reconciliation reports the target's scenarios
+
+  Rule: A supplied input path that does not exist is a hard error, not silent empty evidence.
+
+    A supplied `--vitest` / `--cucumber` / `--features` / `--ci` / `--package-json`
+    whose path does not exist halts `balance` BEFORE reconciling — non-zero exit,
+    stderr naming the flag and the missing path — never the silent zero-evidence
+    all-red report that a mistyped path used to produce. The five flags are
+    Examples of one boundary behaviour; scope is existence only.
+
+    @SCN-CLI-002 @unit @e2e
+    Scenario Outline: a supplied-but-missing <flag> exits non-zero and names the path
+      Given a target, and <flag> pointing at a path that does not exist
+      When "spec-controller balance" is invoked over that target through the CLI binary
+      Then the command exits non-zero
+      And stderr names <flag> and the missing path
+      And nothing is reconciled
+
+      Examples:
+        | flag           |
+        | --vitest       |
+        | --cucumber     |
+        | --features     |
+        | --ci           |
+        | --package-json |

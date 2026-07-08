@@ -11,7 +11,7 @@
  *                  [--format <fmt>[:<path>]]
  */
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname } from "node:path";
 import {
   runReconcile,
@@ -99,6 +99,39 @@ export function sourceTarget(args: Record<string, string>): string {
   return args["target"] ?? "unknown-target";
 }
 
+/**
+ * Guard the supplied input-file/dir flags at the CLI edge (@SCN-CLI-002). A
+ * mistyped `--vitest` / `--cucumber` / `--features` / `--ci` / `--package-json`
+ * pointing at a non-existent path used to reconcile silently against ZERO evidence —
+ * a terrifying false all-red report meaning "you forgot the reports", not "your code
+ * is broken" (the dogfooding fault). The five flags are Examples of ONE boundary
+ * rule: a supplied-but-absent input path is a hard error. Scope is existence only
+ * (readability / file-vs-dir type-correctness out of scope; `exists` covers the dir
+ * flag and the file flags alike).
+ *
+ * PURE and `@unit`-testable like `checkLegacyJson` / `sourceTarget`: reads the parsed
+ * args + an injected `exists` fn (no fs), returns the FIRST supplied-but-absent
+ * `(flag, path)` as a typed error naming both — routed to stderr + a non-zero exit by
+ * `runBalance` (the shared typed-error surface) — else null. An OMITTED flag is not an
+ * error (legitimately optional: simply no evidence of that kind).
+ */
+export function checkInputsExist(
+  args: Record<string, string>,
+  exists: (path: string) => boolean,
+): string | null {
+  // The five input flags in declared order — the FIRST supplied-but-absent one is the
+  // reported error (deterministic; the operator fixes and re-runs). Keys are the
+  // parseArgs form (the `--` stripped); the message names the flag WITH its dashes.
+  const flags = ["vitest", "cucumber", "features", "ci", "package-json"] as const;
+  for (const flag of flags) {
+    const path = args[flag];
+    if (path !== undefined && !exists(path)) {
+      return `The --${flag} path does not exist: ${path}`;
+    }
+  }
+  return null;
+}
+
 export function runBalance(argv: string[]): void {
   // Capture the run-start instant up front — the run provenance's UTC timestamp,
   // threaded through ctx.runStart to the renderers.
@@ -126,6 +159,18 @@ export function runBalance(argv: string[]): void {
     const savedReport = readFileSync(rehydratePath, "utf8");
     process.stdout.write(renderReportFromJson(savedReport) + "\n");
     return;
+  }
+
+  // Input-existence guard (@SCN-CLI-002): a supplied input-file/dir flag pointing at a
+  // non-existent path is a HARD ERROR — halt BEFORE reconciling, with a typed message
+  // naming the flag + path, never the silent zero-evidence all-red report a mistyped
+  // path used to produce (the dogfooding fault). Routed to stderr + a non-zero exit,
+  // exactly as the legacy-`--json` guard above (the shared typed-error surface). An
+  // omitted flag is legitimately optional and passes through untouched.
+  const missingInputError = checkInputsExist(args, existsSync);
+  if (missingInputError) {
+    process.stderr.write(missingInputError + "\n");
+    process.exit(1);
   }
 
   const inputs = {
