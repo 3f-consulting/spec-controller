@@ -59,3 +59,30 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
       When the run-id is resolved
       Then it is that instant as a filesystem-safe ISO-8601 UTC timestamp — no colons, no milliseconds
       And resolving with an operator --run-id mnemonic instead returns that mnemonic verbatim, ignoring the clock
+
+  Rule: the operator can store any command's run from the shipped tool
+
+    A global --store <root> host modifier turns any command into a stored run. The host
+    parses --store (and an optional --run-id) BEFORE dispatch; when --store is present it
+    wraps the command via the kept-run scaffold — routing the command's outputs into
+    <root>/<target>/<run-id>/ and stamping run.yaml — and hands the command its own clean
+    args, unchanged. Storage is orthogonal to the command (it wraps balance now, analyse /
+    migrate later with no change), so it is a cross-cutting HOST option — not a peer command,
+    and never a flag inside balance, which stays emit-only. --store is required to store (no
+    default: a default would write inside the repo, the committed-report leak); --run-id
+    defaults to a timestamp. Without --store the host dispatches the command directly and its
+    output is unchanged.
+
+    The @unit proves the host rule in isolation — given --store the command is invoked wrapped
+    (its clean args plus the store-dir --format specs), without --store it is dispatched
+    directly. The @e2e proves operator-reachability through the REAL binary: a stored run dir
+    the operator can open, not the scaffold in isolation.
+
+    @unit @e2e @SCN-RMG-004
+    Scenario: `spec-controller --store <root> balance` writes a stored run the operator can reach
+      Given a reconcilable target and a store root outside the repo
+      When the operator runs balance under a store directive through the CLI binary
+      Then the store command exits zero
+      And a run directory named for the target and run-id exists under the store root
+      And that run directory holds spec-reconciliation.md, spec-reconciliation.json, and run.yaml
+      And its run.yaml parses with mode balance, the target, and the run-id
