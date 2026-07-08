@@ -14,9 +14,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname } from "node:path";
 import {
-  runReconcile,
+  reconcileWithCensus,
   readEvidenceObligations,
-  readEvidenceObservations,
   readStaticEvidenceObservationCounts,
   readFeatureNames,
 } from "../ingest/ingestQualityChecks.js";
@@ -181,18 +180,17 @@ export function runBalance(argv: string[]): void {
     packageJson: args["package-json"],
   };
 
-  const balance = runReconcile(inputs);
+  // Parse the runtime observations ONCE and feed the SAME set to both the reconciler and the
+  // runtime census (@SCN-RPT-017 / 3F-1452 FULL UNIFY): the census is a PROJECTION of the one
+  // ledger, so the evidence-observation views (Test volume, attributed, E2e cell) can never drift
+  // from the reconciler's verdict. `evidenceObservations` is the by-kind census whose balancing
+  // identity holds by construction; threaded to the renderers via writeOutputs like ctx/corpus.
+  const { balance, evidenceObservations } = reconcileWithCensus(inputs);
 
   // Read the declared-corpus census alongside the balance (@SCN-RPT-008) —
   // the raw-vs-declared @SCN-occurrence delta over the same discovered feature corpus.
   // A sibling to the balance, threaded to the renderers via writeOutputs like ctx.
   const evidenceObligations = readEvidenceObligations(args["features"]);
-
-  // Read the evidenceObservations reconciliation alongside the balance (@SCN-RPT-010) — the
-  // observed test evidenceObservations counted by kind against the @SCN anchor in one shared pass, so the
-  // by-level evidenceObservations + the balancing identity hold by construction. A 4th sibling,
-  // threaded to the renderers via writeOutputs like ctx/corpus.
-  const evidenceObservations = readEvidenceObservations(inputs);
 
   // Read the static-guard kind-counts alongside the balance (@SCN-USG-001) —
   // the guard observations COUNTED by kind (a guard that runs in CI with no @lint is an

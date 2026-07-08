@@ -467,6 +467,99 @@ After({ tags: "@SCN-RPT-010" }, function () {
   if (runsRoot010 && existsSync(runsRoot010)) rmSync(runsRoot010, { recursive: true, force: true });
 });
 
+// @SCN-RPT-017
+// The FULL-UNIFY view fix (3F-1452): the report's evidence-observation views must level a
+// runtime observation by the cited scenario's declared tier tag — the SAME rule the reconciler
+// uses (@SCN-LDG-011 / 3F-1434) — because the census is now a PROJECTION of the one parsed
+// observation set, not a second raw-report walk. The @integration arm drives the REAL reconcile +
+// render over a fixture whose cucumber report proves a passing @e2e scenario (SCN-TGT-101) with NO
+// vitest evidence: the persisted Test volume must count it under e2e (not the caller-declared
+// integration fallback), the JSON `attributed` must carry (SCN-TGT-101, e2e), and the scenario's
+// E2e cell must render a count, not ∅. RED on the census's own raw-report walk (which stamps
+// cucumber ⇒ integration); GREEN once the census projects the tag-derived parsed set.
+const EVIDENCE_OBSERVATION_E2E_OPTS = {
+  features: "tests/fixtures/evidence-observation-e2e/features",
+  cucumber: "tests/fixtures/evidence-observation-e2e/cucumber.json",
+  // NB: no vitest report — the @e2e obligation is discharged solely by the cucumber run.
+};
+let runsRoot017: string;
+let md017: string;
+let json017: string;
+
+Given(
+  "a target whose cucumber report has a passing @e2e scenario with no vitest evidence",
+  function () {
+    runsRoot017 = mkdtempSync(join(tmpdir(), "spec-controller-rpt017-"));
+  }
+);
+
+When("the reconciliation report is rendered for that @e2e-via-cucumber target", function () {
+  const balance = runReconcile(EVIDENCE_OBSERVATION_E2E_OPTS);
+  const evidenceObservations = readEvidenceObservations(EVIDENCE_OBSERVATION_E2E_OPTS);
+  const ctx017: RunContext = {
+    target: "evidence-observation-e2e-fixture",
+    inputs: {},
+    runStart: new Date("2026-07-08T20:30:17.000Z"),
+    sourceSha: null,
+  };
+  const runDir = persistReport(runsRoot017, { balance, ctx: ctx017, evidenceObservations });
+  md017 = readFileSync(join(runDir, "spec-reconciliation.md"), "utf8");
+  json017 = readFileSync(join(runDir, "spec-reconciliation.json"), "utf8");
+});
+
+Then("Test volume counts the observation under e2e, not integration", function () {
+  // The by-level evidence-observation table must count the single cucumber observation under
+  // e2e (its cited scenario's declared tier), NOT the caller-declared integration fallback.
+  assert.match(
+    md017,
+    /### Test volume/,
+    `expected the persisted spec-reconciliation.md to carry the Test volume cut; got:\n${md017}`
+  );
+  assert.ok(
+    md017.includes("| e2e | 1 |"),
+    `expected the Test volume by-level table to count the observation under e2e (| e2e | 1 |); got:\n${md017}`
+  );
+  assert.ok(
+    md017.includes("| integration | 0 |"),
+    `expected the Test volume by-level table to count ZERO under integration (| integration | 0 |); got:\n${md017}`
+  );
+});
+
+Then("the scenario appears in attributed at e2e", function () {
+  const parsed = JSON.parse(json017) as {
+    evidenceObservations?: {
+      attributed: Array<{ scnId: string; qualityCheck: string; count: number }>;
+    };
+  };
+  const attributed = parsed.evidenceObservations?.attributed ?? [];
+  assert.ok(
+    attributed.some((a) => a.scnId === "SCN-TGT-101" && a.qualityCheck === "e2e" && a.count === 1),
+    `expected attributed to carry (SCN-TGT-101, e2e, 1); got: ${JSON.stringify(attributed)}`
+  );
+});
+
+Then("the scenario's E2e cell renders a count, not ∅", function () {
+  // The ledger row for SCN-TGT-101 — the E2e cell reads the attributed (SCN-TGT-101, e2e)
+  // count. Pre-fix, the census stamped the integration fallback, so the e2e credit landed
+  // nowhere the cell reads → ∅. Post-fix (tag-derived projection) it renders the count.
+  const row = md017.split("\n").find((l) => l.includes("| SCN-TGT-101 |"));
+  assert.ok(row, `expected a ledger row for SCN-TGT-101; got:\n${md017}`);
+  assert.ok(
+    !row!.includes("∅"),
+    `expected SCN-TGT-101's E2e cell to render a count, not ∅; got row:\n${row}`
+  );
+  // The E2e column carries the attributed count (1) — the cell is the backing count.
+  assert.match(
+    row!,
+    /\| SCN-TGT-101 \| 1 \|/,
+    `expected SCN-TGT-101's E2e cell to render the count 1; got row:\n${row}`
+  );
+});
+
+After({ tags: "@SCN-RPT-017" }, function () {
+  if (runsRoot017 && existsSync(runsRoot017)) rmSync(runsRoot017, { recursive: true, force: true });
+});
+
 // @SCN-RPT-014
 // The untagged-scenarios @integration arm drives the REAL declared-side parse over a
 // fixture feature dir mixing @SCN-tagged and untagged scenarios: readEvidenceObligations runs

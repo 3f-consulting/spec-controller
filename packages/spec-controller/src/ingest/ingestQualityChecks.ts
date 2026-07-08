@@ -160,45 +160,46 @@ export function readEvidenceObligations(features?: string): EvidenceObligations 
 }
 
 /**
- * Read the evidenceObservations reconciliation over the same inputs `runReconcile` consumes
- * (@SCN-RPT-010): the raw Vitest / Cucumber reports + the declared corpus → `countRuntimeEvidenceObservationKinds`,
- * which counts every evidenceObservation by kind against the `@SCN` anchor in one pass. A sibling read
- * to the balance — the IO orchestration here, the pure counter in the engine's census —
- * threaded to the renderers via `writeOutputs` like `ctx`/`corpus`; `runReconcile`
- * stays unchanged (its `EvidenceReconciliation` contract is consumed by the @LDG / @LNT step tests).
+ * Parse the target's RUNTIME observations ONCE — the tag-derived, per-tier observation set
+ * (@SCN-RPT-017 / 3F-1452 FULL UNIFY) fed to BOTH the reconciler and the runtime census, so the
+ * two can never disagree. Each source declares its FALLBACK quality-check at the CLI edge
+ * (vitest⇒unit, cucumber⇒integration); the parsers DERIVE the level from the cited scenario's tier
+ * tag (@SCN-LDG-011 / 3F-1434), using the fallback only for an untagged scenario. A missing report
+ * contributes nothing. Root-relative so a phantom-scenario row's where-to-fix stays portable.
  */
-export function readEvidenceObservations(opts: ReconcileOptions): RuntimeEvidenceObservationKindCounts {
+function parseRuntimeObservations(opts: ReconcileOptions, root: string | undefined): EvidenceObservation[] {
+  const out: EvidenceObservation[] = [];
   const vitestReport = readJsonIfPresent<VitestJsonReport>(opts.vitest);
+  if (vitestReport) out.push(...parseVitestEvidenceObservations(vitestReport, VITEST_QUALITY_CHECK, root));
   const cucumberReport = readJsonIfPresent<CucumberJsonReport>(opts.cucumber);
-  return countRuntimeEvidenceObservationKinds({
-    // Each source declares its quality-check at the CLI edge — vitest⇒unit,
-    // cucumber⇒integration — rather than countRuntimeEvidenceObservationKinds assuming it.
-    vitest: vitestReport ? { report: vitestReport, qualityCheck: VITEST_QUALITY_CHECK } : undefined,
-    cucumber: cucumberReport ? { report: cucumberReport, qualityCheck: CUCUMBER_QUALITY_CHECK } : undefined,
-    scenarios: scenariosFromFeatures(opts.features),
-    // NB: the runtime evidence-observation census is now COUNT-only — it retains no
-    // per-item locators, so it takes no run root. The RunContext still relativizes the recorded
-    // input paths against the target root (@SCN-RPT-016) below.
-  });
+  if (cucumberReport) out.push(...parseCucumberEvidenceObservations(cucumberReport, CUCUMBER_QUALITY_CHECK, root));
+  return out;
 }
 
 /**
- * Reconcile declared-vs-observed evidence for a target tree, given resolved input
- * paths. The pure CLI core — exercised directly by @SCN-LNT-005 (`@unit` + the
- * `@integration` Cucumber arm) so the --package-json threading is proven without a
- * subprocess.
+ * Reconcile declared-vs-observed evidence AND count the runtime evidence-observation census for a
+ * target tree, from a SINGLE parse of the runtime observations (@SCN-RPT-017 / 3F-1452 FULL UNIFY).
+ * The runtime observations are parsed ONCE (tag-derived) and the SAME set feeds both `reconcile`
+ * (alongside the static-guard observations) and `countRuntimeEvidenceObservationKinds` — so the
+ * census is a PROJECTION of the one ledger, never a second derivation that could drift from the
+ * verdict (the drift bug this fixes). `runReconcile` / `readEvidenceObservations` are thin views.
  */
-export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
+export function reconcileWithCensus(opts: ReconcileOptions): {
+  balance: EvidenceReconciliation;
+  evidenceObservations: RuntimeEvidenceObservationKindCounts;
+} {
   const scenarios = scenariosFromFeatures(opts.features);
 
   // The TARGET repo root the credit locators are made relative to, so a
   // phantom-scenario row's where-to-fix (ruling Q5) stays portable in a banked artefact.
   const root = resolveTargetRoot({ features: opts.features });
-  const evidenceObservations: EvidenceObservation[] = [];
-  const vitestReport = readJsonIfPresent<VitestJsonReport>(opts.vitest);
-  if (vitestReport) evidenceObservations.push(...parseVitestEvidenceObservations(vitestReport, VITEST_QUALITY_CHECK, root));
-  const cucumberReport = readJsonIfPresent<CucumberJsonReport>(opts.cucumber);
-  if (cucumberReport) evidenceObservations.push(...parseCucumberEvidenceObservations(cucumberReport, CUCUMBER_QUALITY_CHECK, root));
+
+  // Parse the runtime observations ONCE — the SAME set feeds both the reconciler and the census.
+  const runtimeObservations = parseRuntimeObservations(opts, root);
+
+  // The full observation stream `reconcile` consumes: the runtime observations PLUS the static
+  // (guard) observations. The census is the RUNTIME axis, so only `runtimeObservations` is projected.
+  const evidenceObservations: EvidenceObservation[] = [...runtimeObservations];
 
   // Static (guard) kind: observe each declared @lint=<guard> against the CI config
   // + package.json over the real tree. Read the CI + package.json ONCE — both
@@ -243,7 +244,36 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
   // — the demanded ones match their @lint obligation, the undemanded ones (a guard no @lint
   // declares) cite no scenario, so `reconcile` folds them into the SUSPENSE row itself. No
   // derive-and-diff, no `unattributedStaticGuards` param.
-  return reconcile(scenarios, evidenceObservations);
+  const balance = reconcile(scenarios, evidenceObservations);
+
+  // The census PROJECTS the one parsed runtime set — no second raw-report walk, no re-derivation
+  // of the level. The views (Test volume, attributed, E2e cell) therefore agree with the verdict.
+  const census = countRuntimeEvidenceObservationKinds({
+    observations: runtimeObservations,
+    scenarios,
+  });
+  return { balance, evidenceObservations: census };
+}
+
+/**
+ * Reconcile declared-vs-observed evidence for a target tree, given resolved input
+ * paths. The pure CLI core — exercised directly by @SCN-LNT-005 (`@unit` + the
+ * `@integration` Cucumber arm) so the --package-json threading is proven without a
+ * subprocess. A thin view onto `reconcileWithCensus` (the balance half).
+ */
+export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
+  return reconcileWithCensus(opts).balance;
+}
+
+/**
+ * Read the runtime evidence-observation census over the same inputs `runReconcile` consumes
+ * (@SCN-RPT-010) — a thin view onto `reconcileWithCensus` (the census half). The census is a
+ * PROJECTION of the ONE parsed observation set the reconciler consumes (@SCN-RPT-017 / 3F-1452
+ * FULL UNIFY), not an independent re-walk — so the evidence-observation views can never drift from
+ * the verdict. Threaded to the renderers via `writeOutputs` like `ctx`/`corpus`.
+ */
+export function readEvidenceObservations(opts: ReconcileOptions): RuntimeEvidenceObservationKindCounts {
+  return reconcileWithCensus(opts).evidenceObservations;
 }
 
 /**

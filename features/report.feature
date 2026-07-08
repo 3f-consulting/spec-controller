@@ -394,3 +394,41 @@ Feature: The report renders the ledger as sectioned facts
       Given a target repo outside the run cwd whose Vitest and Cucumber reports carry absolute test-file locators under that repo
       When the real CLI reconciles it from a foreign cwd and persists the markdown and JSON reports
       Then the persisted spec-reconciliation.md and spec-reconciliation.json carry none of the target's absolute paths — the evidence-observation locators are repo-relative and the input paths record relative to the target root
+
+  Rule: the report's evidence-observation views level a runtime observation by the cited scenario's tag
+
+    The FULL-UNIFY view fix (@SCN-RPT-017, 3F-1452). @SCN-LDG-011 / 3F-1434 made the
+    RECONCILER level a runtime observation by the cited scenario's declared tier tag, so a
+    cucumber run of an @e2e scenario discharges an e2e obligation. But the report's
+    evidence-observation views — Test volume `rawByRuntimeQualityCheck`, `attributed`, and the
+    per-scenario E2e cell — were fed by a SECOND, independent derivation: the census
+    (`countRuntimeEvidenceObservationKinds`) did its OWN raw-report walk and stamped the single
+    caller-declared quality-check (cucumber ⇒ integration), so an @e2e-via-cucumber observation
+    surfaced as `e2e: 0` in the views while the reconciler correctly reported the e2e obligation
+    satisfied — the report contradicting itself.
+
+    The fix removes the second derivation: the census becomes a PROJECTION of the one observation
+    set the reconciler consumes. `countRuntimeEvidenceObservationKinds` tallies the already-parsed
+    `EvidenceObservation[]` (tag-derived, per-tier), classifying each by `(scnId, qualityCheck)`
+    into raw / attributed / undemanded / phantom / suspense exactly as before — only the SOURCE of
+    the level changes (the parsed set, not the hardcode). The CLI parses the runtime observations
+    ONCE and feeds the same set to both `reconcile` and the census. The renderer is untouched — it
+    reads `attributed` + `rawByRuntimeQualityCheck` from the census, so the three views fix
+    together. The identity (`Σ raw = attributed + undemanded + phantom + suspense`) holds by
+    construction over the projected set (the parsed set retains null-scnId → suspense and
+    unknown-scnId → phantom observations WITH levels).
+
+    The unit arm proves the census, projecting a parsed set that contains an @e2e-via-cucumber
+    observation, counts it under e2e (not integration) with `attributed` carrying `(scnId, e2e)`.
+    The integration arm drives the REAL reconcile + render over a fixture whose cucumber report has
+    a passing @e2e scenario with no vitest evidence: the rendered Test volume counts it under e2e,
+    and the scenario's E2e cell renders a count, not ∅. RED on the census's own raw-report walk
+    (which hardcodes integration); GREEN once the census projects the tag-derived parsed set.
+
+    @unit @integration @SCN-RPT-017
+    Scenario: an @e2e-via-cucumber observation is counted at e2e across the report views
+      Given a target whose cucumber report has a passing @e2e scenario with no vitest evidence
+      When the reconciliation report is rendered for that @e2e-via-cucumber target
+      Then Test volume counts the observation under e2e, not integration
+      And the scenario appears in attributed at e2e
+      And the scenario's E2e cell renders a count, not ∅

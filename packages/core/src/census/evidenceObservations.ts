@@ -6,12 +6,15 @@
  * The reconcile core (`reconcile.ts`) records evidence EXISTENCE (`.find()`), never
  * counts, and the observed readers drop every result carrying no `@SCN`. The report's
  * evidence-observation side — how much evidence actually ran, and how it breaks down by kind —
- * needs the raw evidence observations the pipeline otherwise throws away. `countRuntimeEvidenceObservationKinds`
- * walks the raw Vitest / Cucumber reports once, counting every evidence observation by kind into
- * exactly one of {attributed-to-declared, undemanded, attributed-to-undeclared (phantom),
- * suspense} while summing the raw per-quality-check total — so
+ * needs the parsed evidence observations the pipeline otherwise throws away. `countRuntimeEvidenceObservationKinds`
+ * is a PROJECTION of the ONE observation set the reconciler consumes (@SCN-RPT-017 / 3F-1452 FULL
+ * UNIFY): it tallies the already-parsed `EvidenceObservation[]` — tag-derived and per-tier (per
+ * @SCN-LDG-011 / 3F-1434) — into exactly one of {attributed-to-declared, undemanded,
+ * attributed-to-undeclared (phantom), suspense} while summing the raw per-quality-check total, so
  * `Σ rawByRuntimeQualityCheck = Σ attributed.count + undemandedCount + phantomCount + suspenseCount`
- * can never drift (the failure mode of independent passes).
+ * can never drift. There is NO second raw-report walk and NO re-derivation of the level here — the
+ * census reads the level off the parsed observation, so the views (Test volume, attributed, E2e
+ * cell) always agree with the reconciler's verdict (the drift bug 3F-1452 fixed).
  *
  * The attributed counts (per `(scnId, quality-check)`) feed the per-scenario columns;
  * the undemanded/phantom/suspense counts feed the anchor-audit slices.
@@ -19,9 +22,7 @@
  * Parent: (@SCN-RPT-010) — the evidence-observation-reconciliation spine.
  */
 
-import type { Scenario, RuntimeQualityCheck } from "../model.js";
-import type { VitestJsonReport } from "../parse/vitest.js";
-import type { CucumberJsonReport } from "../parse/cucumber.js";
+import type { Scenario, RuntimeQualityCheck, EvidenceObservation } from "../model.js";
 
 /** An attributed-to-declared evidence observation tally: a `(scnId, quality-check)` with its count. */
 export interface AttributedCount {
@@ -65,23 +66,24 @@ export interface RuntimeEvidenceObservationKindCounts {
 /** The canonical runtime quality-check order, in reading order. */
 export const RUNTIME_QUALITY_CHECKS: readonly RuntimeQualityCheck[] = ["unit", "integration", "e2e", "performance"];
 
-/** An `@SCN-FFF-NNN` id anywhere in a Vitest assertion's name (the bidirectional link). */
-const SCN_IN_NAME = /\bSCN-[A-Z0-9]+-\d+\b/;
-/** A bare `@SCN-FFF-NNN` Cucumber tag. */
-const SCN_TAG = /^@?(SCN-[A-Z0-9]+-\d+)$/;
-
 /**
- * Build the evidence-observation reconciliation from the raw runner reports + the declared corpus.
- * A SINGLE walk per report counts each evidence observation by kind and sums the raw total in
- * lockstep, so the kind-count identity holds by construction. Missing reports contribute
- * nothing (their quality-checks stay zero); runtime quality-checks no input declares are zero
- * (the JS-ecosystem CLI declares only unit + integration) and surface as facts in the tally.
+ * Build the evidence-observation reconciliation as a PROJECTION of the ONE parsed observation
+ * set the reconciler consumes (@SCN-RPT-017 / 3F-1452 FULL UNIFY). It tallies each observation by
+ * kind against the `@SCN` anchor and sums the raw total in lockstep, so the kind-count identity
+ * holds by construction. The level comes from the ALREADY-PARSED observation (tag-derived, per
+ * @SCN-LDG-011 / 3F-1434) — there is NO second raw-report walk and NO re-derivation of the level
+ * here, so the census can never drift from the reconciler's verdict. Guard (`lint`) observations
+ * are skipped: this is the runtime axis. Runtime quality-checks no observation carries stay zero
+ * and surface as facts in the tally.
  */
 export function countRuntimeEvidenceObservationKinds(args: {
-  /** The Vitest source + the quality-check it DECLARES (no Vitest⇒unit hardcode). */
-  vitest?: { report: VitestJsonReport; qualityCheck: RuntimeQualityCheck };
-  /** The Cucumber source + the quality-check it DECLARES (no Cucumber⇒integration hardcode). */
-  cucumber?: { report: CucumberJsonReport; qualityCheck: RuntimeQualityCheck };
+  /**
+   * The already-parsed runtime observations the reconciler derives (via
+   * `parseVitestEvidenceObservations` + `parseCucumberEvidenceObservations`) — tag-derived and
+   * per-tier. The census PROJECTS this set: each observation's level is read from the parsed
+   * observation, never re-derived. Guard (`lint`) observations are ignored (the static axis).
+   */
+  observations: EvidenceObservation[];
   scenarios: Scenario[];
 }): RuntimeEvidenceObservationKindCounts {
   const scenarioIds = new Set(args.scenarios.map((d) => d.scnId));
@@ -125,29 +127,14 @@ export function countRuntimeEvidenceObservationKinds(args: {
     }
   };
 
-  // Vitest source → its DECLARED quality-check. One evidence observation per assertion.
-  const vitestInput = args.vitest;
-  if (vitestInput) {
-    for (const file of vitestInput.report.testResults ?? []) {
-      for (const assertion of file.assertionResults ?? []) {
-        const name = `${assertion.fullName ?? ""} ${assertion.title ?? ""}`;
-        const m = SCN_IN_NAME.exec(name);
-        countKind(vitestInput.qualityCheck, m ? m[0] : null);
-      }
-    }
-  }
-
-  // Cucumber source → its DECLARED quality-check. One evidence observation per scenario element.
-  const cucumberInput = args.cucumber;
-  if (cucumberInput) {
-    for (const feature of cucumberInput.report) {
-      for (const scenario of feature.elements ?? []) {
-        const tag = (scenario.tags ?? [])
-          .map((t) => SCN_TAG.exec(t.name ?? ""))
-          .find((x): x is RegExpExecArray => x !== null);
-        countKind(cucumberInput.qualityCheck, tag ? tag[1]! : null);
-      }
-    }
+  // PROJECT the one parsed observation set: each runtime observation's level is read from the
+  // already-parsed observation (tag-derived), NOT re-derived from a raw report. Guard (`lint`)
+  // observations are the static axis and are skipped here. This is the single-derivation
+  // discipline the FULL UNIFY ruling requires (3F-1452): the census can never drift from the
+  // reconciler because it consumes the SAME set.
+  for (const obs of args.observations) {
+    if (obs.qualityCheck === "lint") continue; // a guard observation — the static axis, not runtime
+    countKind(obs.qualityCheck, obs.scnId);
   }
 
   const result: RuntimeEvidenceObservationKindCounts = {

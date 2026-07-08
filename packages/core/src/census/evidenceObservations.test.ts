@@ -22,8 +22,8 @@ import {
   type RuntimeEvidenceObservationKindCounts,
 } from "./evidenceObservations.js";
 import type { Scenario } from "../model.js";
-import type { VitestJsonReport } from "../parse/vitest.js";
-import type { CucumberJsonReport } from "../parse/cucumber.js";
+import { parseVitestEvidenceObservations, type VitestJsonReport } from "../parse/vitest.js";
+import { parseCucumberEvidenceObservations, type CucumberJsonReport } from "../parse/cucumber.js";
 
 describe("[SCN-RPT-010] countRuntimeEvidenceObservationKinds counts the observed test evidenceObservations by kind against the @SCN anchor", () => {
   // SCN-LDG-001 and SCN-LDG-002 are declared; SCN-PHANTOM-999 is NOT (a phantomEvidenceObservation-id).
@@ -61,11 +61,17 @@ describe("[SCN-RPT-010] countRuntimeEvidenceObservationKinds counts the observed
     },
   ];
 
-  // Each source declares its level: vitest⇒unit, cucumber⇒integration — the
-  // JS-ecosystem mapping, now declared at the input rather than hardcoded in countRuntimeEvidenceObservationKinds.
+  // The census now PROJECTS the already-parsed observation set the reconciler consumes
+  // (@SCN-RPT-017 / 3F-1452 FULL UNIFY) — parse each source at its declared FALLBACK
+  // (vitest⇒unit, cucumber⇒integration), the parser deriving the level from the scenario's tier
+  // tag (@SCN-LDG-011 / 3F-1434). These fixtures are tier-untagged, so the fallback stands and the
+  // counts are unchanged — a mechanical signature migration, not a value change.
+  const observations = [
+    ...parseVitestEvidenceObservations(vitest, "unit"),
+    ...parseCucumberEvidenceObservations(cucumber, "integration"),
+  ];
   const evidenceObservations: RuntimeEvidenceObservationKindCounts = countRuntimeEvidenceObservationKinds({
-    vitest: { report: vitest, qualityCheck: "unit" },
-    cucumber: { report: cucumber, qualityCheck: "integration" },
+    observations,
     scenarios,
   });
 
@@ -106,7 +112,7 @@ describe("[SCN-RPT-010] countRuntimeEvidenceObservationKinds counts the observed
     // by-level, per-evidence observation kind, phantomEvidenceObservation) must read e2e. This is the
     // assertion that fails if anyone re-bakes the source→level mapping.
     const evidenceObservationsAtE2e = countRuntimeEvidenceObservationKinds({
-      vitest: { report: vitest, qualityCheck: "e2e" },
+      observations: parseVitestEvidenceObservations(vitest, "e2e"),
       scenarios,
     });
     expect(evidenceObservationsAtE2e.rawByRuntimeQualityCheck).toEqual({ unit: 0, integration: 0, e2e: 4, performance: 0 });
@@ -121,7 +127,7 @@ describe("[SCN-RPT-010] countRuntimeEvidenceObservationKinds counts the observed
   });
 
   it("contributes nothing for a missing report (its level stays zero)", () => {
-    const unitOnly = countRuntimeEvidenceObservationKinds({ vitest: { report: vitest, qualityCheck: "unit" }, scenarios });
+    const unitOnly = countRuntimeEvidenceObservationKinds({ observations: parseVitestEvidenceObservations(vitest, "unit"), scenarios });
     expect(unitOnly.rawByRuntimeQualityCheck.integration).toBe(0);
     expect(unitOnly.rawByRuntimeQualityCheck.unit).toBe(4);
     // The identity still holds with a report absent.
@@ -164,9 +170,15 @@ describe("[SCN-LDG-008] the counter gains the (scnId, quality-check)-declared-pa
     },
   ];
 
+  // Projection of the parsed set (@SCN-RPT-017 / 3F-1452): SCN-LDG-008's cucumber element is
+  // tier-untagged, so it parses at the integration fallback — a real scenario at an undeclared
+  // quality-check → undemanded, exactly as before. A mechanical signature migration.
+  const observations = [
+    ...parseVitestEvidenceObservations(vitest, "unit"),
+    ...parseCucumberEvidenceObservations(cucumber, "integration"),
+  ];
   const evidenceObservations: RuntimeEvidenceObservationKindCounts = countRuntimeEvidenceObservationKinds({
-    vitest: { report: vitest, qualityCheck: "unit" },
-    cucumber: { report: cucumber, qualityCheck: "integration" },
+    observations,
     scenarios,
   });
 
@@ -198,5 +210,48 @@ describe("[SCN-LDG-008] the counter gains the (scnId, quality-check)-declared-pa
         evidenceObservations.phantomCount +
         evidenceObservations.suspenseCount
     ).toBe(raw);
+  });
+});
+
+describe("[SCN-RPT-017] the census PROJECTS the parsed observation set, levelling by the cited scenario's tag", () => {
+  // The FULL-UNIFY view fix (3F-1452): the census tallies the ALREADY-PARSED observation set the
+  // reconciler consumes (tag-derived, per @SCN-LDG-011 / 3F-1434), NOT a second raw-report walk
+  // that stamps the caller-declared quality-check. SCN-TGT-101 declares @e2e; a cucumber run proves
+  // it. Parsed with the JS-ecosystem integration FALLBACK, the observation's level is nevertheless
+  // DERIVED from the @e2e tier tag — so it is an e2e observation. Projecting that parsed set, the
+  // census must count it under e2e (not integration) and attribute (SCN-TGT-101, e2e), matching the
+  // reconciler's verdict. This is the census view agreeing with the reconciler — the report no
+  // longer contradicting itself.
+  const scenarios: Scenario[] = [
+    { scnId: "SCN-TGT-101", evidenceObligations: [{ qualityCheck: "e2e" }] },
+  ];
+  const cucumber: CucumberJsonReport = [
+    {
+      uri: "features/widget.feature",
+      elements: [
+        { tags: [{ name: "@e2e" }, { name: "@SCN-TGT-101" }], steps: [{ result: { status: "passed" } }] },
+      ],
+    },
+  ];
+  // Parse with the integration FALLBACK — the parser derives the level from the @e2e tag, so the
+  // parsed observation is at e2e. The census merely PROJECTS this set; it re-derives nothing.
+  const observations = parseCucumberEvidenceObservations(cucumber, "integration");
+  const census: RuntimeEvidenceObservationKindCounts = countRuntimeEvidenceObservationKinds({
+    observations,
+    scenarios,
+  });
+
+  it("counts the @e2e-via-cucumber observation under e2e, not the integration fallback", () => {
+    expect(census.rawByRuntimeQualityCheck.e2e).toBe(1);
+    expect(census.rawByRuntimeQualityCheck.integration).toBe(0);
+  });
+
+  it("attributes the observation to (scnId, e2e) — the reconciler's tag-derived level, not a hardcode", () => {
+    expect(census.attributed).toContainEqual({ scnId: "SCN-TGT-101", qualityCheck: "e2e", count: 1 });
+  });
+
+  it("holds the identity BY CONSTRUCTION over the projected set", () => {
+    expect(totalEvidenceObservations(census)).toBe(1);
+    expect(totalEvidenceObservations(census)).toBe(attributedTotal(census) + census.suspenseCount);
   });
 });
