@@ -164,3 +164,24 @@ Feature: Ledger over declared-vs-observed evidence
       When the reconciler runs
       Then the ledger reports "SCN-LDG-009" with a both-missing item
       And the ledger reports "SCN-LDG-009" as out of balance
+
+  Rule: a runtime observation's level is the cited scenario's declared tag, not the input source
+
+    The headline of the tag-derivation fix (SCN-LDG-011). A runtime observation's
+    level comes from the CITED scenario's declared tier tag (integration / e2e /
+    performance), NOT from the input source that produced it. Cucumber is an
+    orchestrator ACROSS levels — a scenario declares its tier by tag and cucumber runs
+    whichever — so an e2e scenario proven via cucumber must yield an e2e observation,
+    discharging its e2e obligation and reconciling balanced. Before the fix the cucumber
+    source was hardcoded to integration, so an e2e-via-cucumber scenario false-red:
+    e2e missing PLUS integration undemanded (an adopter's repository 12-scenario false-red). The
+    caller-declared source level survives only as the fallback for an untagged scenario;
+    the reconciler's existing (scnId, level) matching does the rest, untouched.
+
+    @unit @integration @SCN-LDG-011
+    Scenario: an @e2e scenario proven via cucumber reconciles balanced
+      Given a scenario declared @e2e
+      And a passing cucumber observation citing it
+      When the ledger reconciles the target
+      Then the scenario is balanced
+      And it is not reported e2e-missing with an undemanded integration observation

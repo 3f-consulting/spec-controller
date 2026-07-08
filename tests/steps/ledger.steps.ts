@@ -21,6 +21,10 @@ import assert from "node:assert/strict";
 import { parseScenarios } from "@3f-consulting/spec-controller-core";
 import { reconcile } from "@3f-consulting/spec-controller-core";
 import { renderMarkdown } from "@3f-consulting/spec-controller-core";
+import {
+  parseCucumberEvidenceObservations,
+  type CucumberJsonReport,
+} from "@3f-consulting/spec-controller-core";
 import type { Scenario, EvidenceObservation } from "@3f-consulting/spec-controller-core";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
 
@@ -209,6 +213,99 @@ Given("a passing unit-level result carrying no scenario id", function () {
     { qualityCheck: "unit", scnId: null, status: "passed", locator: "src/uncited.test.ts" },
   ];
 });
+
+// @SCN-LDG-011 — the cited scenario for the tag-derivation headline. The scnId is
+// stored so the later "citing it" / "the scenario is balanced" steps refer to the same one.
+let ldg011ScnId: string;
+
+// @SCN-LDG-011
+Given("a scenario declared @e2e", function () {
+  // A declared scenario carrying an @e2e tier tag (built through the real declared
+  // reader, so the @integration arm exercises the parse → declared seam). Its @e2e tag
+  // sets a single e2e evidence obligation — the obligation a cucumber-sourced observation
+  // must discharge once its level is DERIVED from this same tag.
+  ldg011ScnId = "SCN-LDG-011";
+  const feature = [
+    "@LDG",
+    "Feature: fixture",
+    "  Rule: a fixture rule",
+    `    @e2e @${ldg011ScnId}`,
+    "    Scenario: an e2e fixture scenario",
+    "      Given a fixture step",
+  ].join("\n");
+  scenarios = parseScenarios(feature);
+});
+
+// @SCN-LDG-011
+Given("a passing cucumber observation citing it", function () {
+  // A passing cucumber JSON report citing the @e2e scenario, run through the REAL
+  // parser with the JS-ecosystem fallback ("integration") — so this @integration arm
+  // exercises the tag-derivation seam end-to-end: the observation's level is DERIVED from
+  // the scenario's declared @e2e tag, NOT stamped from the fallback source level. Before the
+  // fix the parser stamped "integration", so the e2e obligation went missing and the
+  // integration observation was undemanded.
+  const report: CucumberJsonReport = [
+    {
+      uri: "features/fixture.feature",
+      elements: [
+        {
+          tags: [{ name: "@e2e" }, { name: `@${ldg011ScnId}` }],
+          steps: [{ result: { status: "passed" } }],
+        },
+      ],
+    },
+  ];
+  evidenceObservations = parseCucumberEvidenceObservations(report, "integration");
+});
+
+// @SCN-LDG-011
+When("the ledger reconciles the target", function () {
+  markdown = renderMarkdown(reconcile(scenarios, evidenceObservations), CTX);
+});
+
+// @SCN-LDG-011
+Then("the scenario is balanced", function () {
+  // Row-scoped to the @e2e scenario's OWN row: its verdict cell reads balanced (and NOT
+  // out-of-balance), and it carries no reconciling items — the e2e obligation is discharged
+  // by the derived-e2e observation. Reds while the observation is stamped integration (the
+  // obligation is then missing and the observation undemanded → out-of-balance).
+  const { verdict, items } = rowCells(ldg011ScnId);
+  assert.match(
+    verdict,
+    /\bbalanced\b/,
+    `expected ${ldg011ScnId}'s verdict cell to read balanced; got "${verdict}"`
+  );
+  assert.doesNotMatch(
+    verdict,
+    /out-of-balance/,
+    `expected ${ldg011ScnId} not to be out-of-balance; got "${verdict}"`
+  );
+  assert.equal(
+    items,
+    "—",
+    `expected ${ldg011ScnId} to carry no reconciling items; got "${items}"`
+  );
+});
+
+// @SCN-LDG-011
+Then(
+  "it is not reported e2e-missing with an undemanded integration observation",
+  function () {
+    // The specific false-red this fix retires: row-scoped to the @e2e scenario's items cell,
+    // it must carry NEITHER a missing item (the e2e obligation unmet) NOR an undemanded item
+    // (the integration observation with no obligation). Both appear together while the level is
+    // taken from the source rather than the tag.
+    const { items } = rowCells(ldg011ScnId);
+    assert.ok(
+      !items.includes("missing"),
+      `expected ${ldg011ScnId} not to carry a missing item; got "${items}"`
+    );
+    assert.ok(
+      !items.includes("undemanded"),
+      `expected ${ldg011ScnId} not to carry an undemanded item; got "${items}"`
+    );
+  }
+);
 
 // @SCN-LDG-001
 When("the reconciler runs", function () {
