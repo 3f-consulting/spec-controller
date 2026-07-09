@@ -34,3 +34,10 @@ Feature: A pending evidence obligation raises a Pending Item
         | @integrationpending | integration   |
         | @e2epending         | e2e           |
         | @performancepending | performance   |
+
+    @unit @integration @SCN-PND-002
+    Scenario: `@integrationpending` is not read as `@integration` — the suffix is significant
+      Given the planted suffix-significance fixture — a bare `@integration` scenario alongside an `@integrationpending` one
+      When the parser derives each scenario's evidence obligations
+      Then the bare `@integration` scenario declares a plain "integration" obligation and no pending one
+      And the `@integrationpending` scenario declares a pending "integration" obligation and no plain one

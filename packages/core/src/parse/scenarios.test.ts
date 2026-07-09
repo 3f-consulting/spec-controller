@@ -216,3 +216,51 @@ describe("[SCN-PND-001] pendingQualityCheck recognises a <quality-check>pending 
     expect(pendingQualityCheck("lint")).toBeNull();
   });
 });
+
+/**
+ * Unit test for the `pending` suffix significance at the parseScenarios level (@SCN-PND-002).
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-PND-002 id
+ * matching features/pending-items.feature, so a grep of the id returns both halves — this
+ * @unit arm (parseScenarios over inline strings, in isolation) and the @integration arm
+ * (tests/steps/pendingItems.steps.ts, over a planted tests/fixtures/ feature-string).
+ *
+ * Proves the two recognitions never collide: a scenario carrying a bare `@integration`
+ * derives `{ qualityCheck: "integration" }` and NO pending obligation; a scenario carrying
+ * `@integrationpending` derives `{ qualityCheck: "integration", pending: true }` and NO
+ * plain (non-pending) integration obligation. This is the full derivation-loop significance
+ * of the `pending` suffix that @SCN-PND-001's helper unit only hints at.
+ *
+ * Parent: @SCN-PND-002.
+ */
+describe("[SCN-PND-002] the pending suffix is significant at the parseScenarios level", () => {
+  it("a bare @integration scenario derives a plain integration obligation and no pending one", () => {
+    const source = [
+      "@integration @SCN-XXX-001",
+      "Scenario: a bare integration scenario",
+      "  Given a step",
+    ].join("\n");
+    const [scenario] = parseScenarios(source);
+    // Exactly the plain obligation — the object carries no `pending` key.
+    expect(scenario!.evidenceObligations).toEqual([{ qualityCheck: "integration" }]);
+    expect(scenario!.evidenceObligations.some((o) => o.pending)).toBe(false);
+  });
+
+  it("an @integrationpending scenario derives a pending integration obligation and no plain one", () => {
+    const source = [
+      "@integrationpending @SCN-XXX-002",
+      "Scenario: a deferred integration scenario",
+      "  Given a step",
+    ].join("\n");
+    const [scenario] = parseScenarios(source);
+    // Exactly the pending obligation — and crucially NOT also a plain integration one.
+    expect(scenario!.evidenceObligations).toEqual([
+      { qualityCheck: "integration", pending: true },
+    ]);
+    expect(
+      scenario!.evidenceObligations.some(
+        (o) => o.qualityCheck === "integration" && o.pending !== true
+      )
+    ).toBe(false);
+  });
+});
