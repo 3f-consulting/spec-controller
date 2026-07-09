@@ -187,6 +187,21 @@ Given("a target that reconciles out-of-balance", function () {
   invocationArgs = ["--features", FIXTURE.features, "--vitest", FIXTURE.vitest];
 });
 
+// @SCN-CLI-005
+Given("a target that reconciles all-balanced", function () {
+  const root = process.cwd();
+  // The POSITIVE BOUNDARY (@SCN-CLI-005) that keeps CLI-004 honest: the ALL-BALANCED
+  // fixture — two @unit declared scenarios BOTH satisfied by --vitest, no phantom, no
+  // uncited credit, and a GUARDLESS --package-json so no suspense-row watermelon. The
+  // WHOLE reconciliation is balanced, so the new fail-on-out-of-balance gate must NOT
+  // over-fire: it leaves process.exitCode at its default 0. Reuses the shared When and
+  // the `exits with status {int}` Then (CLI-004, byte-untouched) — only the target shape
+  // is distinct from CLI-004's out-of-balance Given.
+  assert.ok(existsSync(join(root, BALANCED.features)), `missing fixture features: ${BALANCED.features}`);
+  assert.ok(existsSync(join(root, BALANCED.vitest)), `missing fixture vitest report: ${BALANCED.vitest}`);
+  invocationArgs = ["--features", BALANCED.features, "--vitest", BALANCED.vitest, "--package-json", BALANCED.packageJson];
+});
+
 // @SCN-CLI-004
 Then("the command exits with status {int}", function (code: number) {
   // The EXACT code, not merely non-zero (@SCN-CLI-004): an out-of-balance run must exit

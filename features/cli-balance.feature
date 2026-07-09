@@ -64,3 +64,9 @@ Feature: spec-controller balance runs standalone
       When "spec-controller balance" is invoked over that target through the CLI binary
       Then the command exits with status 1
       And it prints the Evidence Reconciliation to stdout
+
+    @SCN-CLI-005 @unit @e2e
+    Scenario: an all-balanced reconciliation exits 0
+      Given a target that reconciles all-balanced
+      When "spec-controller balance" is invoked over that target through the CLI binary
+      Then the command exits with status 0

@@ -97,3 +97,39 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
     expect(isBalanced(reconciliation)).toBe(false);
   });
 });
+
+/**
+ * @unit for @SCN-CLI-005 — the POSITIVE BOUNDARY that keeps CLI-004 honest: an all-balanced
+ * reconciliation is NOT reded by the new fail-on-out-of-balance gate. Where CLI-004's @unit
+ * proves the predicate REDS correctly (out-of-balance scenario / watermelon / phantom → false),
+ * this proves the gate must not OVER-fire — a genuinely clean run maps to exit code 0.
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe/it strings carry the
+ * SCN-CLI-005 id, matching features/cli-balance.feature's @SCN-CLI-005 scenario and its @e2e
+ * Cucumber step-block (tests/steps/cliBalance.steps.ts, `// @SCN-CLI-005`). A grep of
+ * SCN-CLI-005 returns the scenario, this @unit, and the @e2e steps.
+ */
+describe("[SCN-CLI-005] isBalanced — the positive boundary: a clean all-balanced run is not reded", () => {
+  it("is balanced for a clean run (every declared row balanced, no suspense or phantom row) → isBalanced true", () => {
+    // Mirrors the ALL-BALANCED FIXTURE the @e2e drives: two @unit declared scenarios both
+    // satisfied and — crucially — NO suspense/phantom row at all (the guardless design).
+    // isBalanced consults every row's reconcilingItems, finds none anywhere, and returns true.
+    const reconciliation: EvidenceReconciliation = {
+      scenarioReconciliations: [balancedScenario("SCN-TGT-001"), balancedScenario("SCN-TGT-002")],
+    };
+    expect(isBalanced(reconciliation)).toBe(true);
+  });
+
+  it("maps a balanced reconciliation to NO non-zero exit code (the gate does not over-fire)", () => {
+    // The exit-code arm: the CLI edge's gate is `if (!isBalanced(balance)) process.exitCode = 1`.
+    // For a balanced reconciliation the condition is false, so no non-zero code is ever set —
+    // the run leaves process.exitCode at its default 0. Expressing the gate's own condition
+    // here makes the positive boundary explicit: isBalanced true → exit code 0. Inverting or
+    // always-failing the predicate flips this to 1 (the mutation that proves this pin's teeth).
+    const reconciliation: EvidenceReconciliation = {
+      scenarioReconciliations: [balancedScenario("SCN-TGT-001"), balancedScenario("SCN-TGT-002")],
+    };
+    const exitCode = !isBalanced(reconciliation) ? 1 : 0;
+    expect(exitCode).toBe(0);
+  });
+});
