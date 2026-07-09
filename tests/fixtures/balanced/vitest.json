@@ -1,0 +1,11 @@
+{
+  "testResults": [
+    {
+      "name": "tests/fixtures/balanced/widget.test.ts",
+      "assertionResults": [
+        { "fullName": "[SCN-BAL-001] the first target unit scenario is proven", "status": "passed" },
+        { "fullName": "[SCN-BAL-002] the second target unit scenario is proven", "status": "passed" }
+      ]
+    }
+  ]
+}

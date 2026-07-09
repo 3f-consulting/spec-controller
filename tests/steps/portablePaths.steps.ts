@@ -120,10 +120,13 @@ When(
       undefined,
       `expected the CLI subprocess to run; it failed to spawn: ${result.error?.message}`
     );
+    // [3F-1460] fix-to-canon (3F-1414): balance is now an unconditional CI gate, so this
+    // out-of-balance fixture exits 1 (the report is still written IN FULL first). Pure
+    // exit-expectation flip 0->1; every content/path assertion is unchanged.
     assert.equal(
       result.status,
-      0,
-      `expected the CLI to exit 0; got exit ${result.status}\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`
+      1,
+      `expected the CLI to exit 1 (out-of-balance); got exit ${result.status}\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`
     );
     assert.ok(existsSync(mdPath) && existsSync(jsonPath), `expected both reports persisted in ${outDir}`);
     markdown = readFileSync(mdPath, "utf8");

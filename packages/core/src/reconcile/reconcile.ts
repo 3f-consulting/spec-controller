@@ -117,6 +117,31 @@ function reconcilingItemsOf(
   return evidenceObligations.filter((r) => r.outcome !== "satisfied");
 }
 
+/**
+ * The WHOLE-RUN verdict — is the ENTIRE reconciliation balanced? A pure domain
+ * derivation over the WHOLE `EvidenceReconciliation`: balanced IFF NO reconciling
+ * item exists ANYWHERE, across every Scenario Reconciliation row — declared,
+ * phantom, and suspense alike. Out-of-balance iff ANY row carries a reconciling
+ * item: a declared scenario's out-of-balance items (failing / missing /
+ * undemanded / both-missing) AND the credit-side suspense/phantom rows (an
+ * undemanded static-guard watermelon, an uncited credit, a phantom scenario).
+ *
+ * It is deliberately NOT a scan of DECLARED-scenario verdicts alone — that would
+ * let a watermelon-only run (every declared scenario balanced, yet an undemanded
+ * static guard sitting unreconciled in the suspense row) read as balanced, the
+ * false pass a CI gate must never give. Every row's `reconcilingItems` is
+ * consulted, so the suspense/phantom rows (verdict ALWAYS out-of-balance) count.
+ *
+ * The CLI edge maps this boolean to the process exit code — balanced → 0,
+ * out-of-balance → EXACTLY 1 — an ENUMERATED status, never a count (a count would
+ * 8-bit `& 0xFF` wrap → false pass).
+ */
+export function isBalanced(reconciliation: EvidenceReconciliation): boolean {
+  return reconciliation.scenarioReconciliations.every(
+    (row) => row.reconcilingItems.length === 0
+  );
+}
+
 export function reconcile(
   scenarios: Scenario[],
   evidenceObservations: EvidenceObservation[]

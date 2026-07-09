@@ -11,8 +11,8 @@
  * @unit + its @integration Cucumber step-block over the REAL CLI subprocess).
  */
 
-import { describe, it, expect } from "vitest";
-import { checkInputsExist, checkLegacyJson, sourceTarget } from "./cli.js";
+import { describe, it, expect, vi } from "vitest";
+import { checkInputsExist, checkLegacyJson, runBalance, sourceTarget } from "./cli.js";
 
 describe("[SCN-FMT-006] checkLegacyJson rejects the removed --json flag with a migration hint", () => {
   it("returns the typed migration-hint error naming --format json:<path> when --json is present", () => {
@@ -108,6 +108,47 @@ describe("[SCN-CLI-002] checkInputsExist rejects a supplied input path that does
       () => false,
     );
     expect(error).toContain("--cucumber");
+  });
+});
+
+describe("[SCN-CLI-004] runBalance sets the out-of-balance exit code AFTER emitting the report in full, never a truncating process.exit", () => {
+  it("emits the whole Evidence Reconciliation to stdout AND sets process.exitCode = 1, returning normally", () => {
+    // The ordering the gate MUST honour (@SCN-CLI-004): map the out-of-balance verdict via
+    // `process.exitCode = 1; return` — NOT `process.exit(1)`, which can truncate the
+    // buffered report mid-write. This test proves the write happens IN FULL, THEN the exit
+    // code is set, THEN runBalance RETURNS. Reaching the assertions at all is half the proof:
+    // a `process.exit(1)` would tear the worker down and never return here.
+    const savedExitCode = process.exitCode;
+    const chunks: string[] = [];
+    const writeSpy = vi
+      .spyOn(process.stdout, "write")
+      .mockImplementation((chunk: string | Uint8Array): boolean => {
+        chunks.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
+        return true;
+      });
+    try {
+      // The shared out-of-balance fixture under the tool's own default --ci/--package-json:
+      // SCN-TGT-002's @integration obligation is missing (no --cucumber supplied), plus a
+      // phantom scenario and a suspense row — out-of-balance many times over.
+      runBalance([
+        "--features",
+        "tests/fixtures/evidence-observation/features",
+        "--vitest",
+        "tests/fixtures/evidence-observation/vitest.json",
+      ]);
+
+      const emitted = chunks.join("");
+      // The report is emitted IN FULL (header + the out-of-balance body) BEFORE the exit
+      // code is set — the write was never truncated by an abrupt exit.
+      expect(emitted).toMatch(/^# Evidence Reconciliation/m);
+      expect(emitted).toMatch(/out-of-balance/);
+      // And the exit code is EXACTLY 1 — set on process.exitCode, not process.exit'd.
+      expect(process.exitCode).toBe(1);
+    } finally {
+      writeSpy.mockRestore();
+      // Never leak a non-zero exit code into the vitest run itself.
+      process.exitCode = savedExitCode;
+    }
   });
 });
 

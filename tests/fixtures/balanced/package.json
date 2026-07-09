@@ -1,0 +1,7 @@
+{
+  "name": "balanced-fixture-target",
+  "private": true,
+  "scripts": {
+    "test": "vitest run"
+  }
+}

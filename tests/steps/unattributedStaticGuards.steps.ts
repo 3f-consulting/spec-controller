@@ -104,10 +104,14 @@ When("the reconciliation report is rendered for the target", function () {
     encoding: "utf8",
   });
   assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
+  // [3F-1460] fix-to-canon (3F-1414): balance is now an unconditional CI gate, so this
+  // out-of-balance fixture (an unattributed static-guard in the suspense row) exits 1 —
+  // the report is still written IN FULL first. Pure exit-expectation flip 0->1; every
+  // rendered-content assertion is unchanged.
   assert.equal(
     result.status,
-    0,
-    `expected exit 0 writing the report; got ${result.status}\nstderr:\n${result.stderr}`
+    1,
+    `expected exit 1 (out-of-balance) writing the report; got ${result.status}\nstderr:\n${result.stderr}`
   );
   activeMd = readFileSync(reportPath, "utf8");
 });

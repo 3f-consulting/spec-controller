@@ -65,10 +65,13 @@ When("the kept run persists its machine artefact", function () {
         { cwd: rmdStoreRoot, encoding: "utf8" }
       );
       assert.equal(result.error, undefined, `the tool subprocess failed to spawn: ${result.error?.message}`);
+      // [3F-1460] fix-to-canon (3F-1414): balance is now an unconditional CI gate, so this
+      // out-of-balance fixture exits 1 (the JSON/markdown are written IN FULL first). Pure
+      // exit-expectation flip 0->1; every persisted-content assertion is unchanged.
       assert.equal(
         result.status,
-        0,
-        `the tool exited non-zero:\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`
+        1,
+        `expected exit 1 (out-of-balance); got ${result.status}:\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`
       );
     }
   );
@@ -144,7 +147,10 @@ When("the run persists spec-reconciliation.json", function () {
         ],
         { cwd: rmd003StoreRoot, encoding: "utf8" }
       );
-      assert.equal(result.status, 0, `the tool exited non-zero:\n${result.stderr}`);
+      // [3F-1460] fix-to-canon (3F-1414): balance is now an unconditional CI gate, so this
+      // out-of-balance fixture exits 1 (the JSON/markdown are written IN FULL first). Pure
+      // exit-expectation flip 0->1; every persisted-content assertion is unchanged.
+      assert.equal(result.status, 1, `expected exit 1 (out-of-balance); got ${result.status}:\n${result.stderr}`);
     }
   );
   rmd003Json = JSON.parse(readFileSync(join(plan.runDir, "spec-reconciliation.json"), "utf8"));
@@ -265,7 +271,10 @@ When("the reconciliation run persists spec-reconciliation.json", function () {
         ],
         { cwd: rmd005StoreRoot, encoding: "utf8" }
       );
-      assert.equal(result.status, 0, `the tool exited non-zero:\n${result.stderr}`);
+      // [3F-1460] fix-to-canon (3F-1414): balance is now an unconditional CI gate, so this
+      // out-of-balance fixture exits 1 (the JSON/markdown are written IN FULL first). Pure
+      // exit-expectation flip 0->1; every persisted-content assertion is unchanged.
+      assert.equal(result.status, 1, `expected exit 1 (out-of-balance); got ${result.status}:\n${result.stderr}`);
     }
   );
   rmd005Json = JSON.parse(readFileSync(join(plan.runDir, "spec-reconciliation.json"), "utf8"));
@@ -362,7 +371,9 @@ When("the coded-corpus reconciliation run persists its machine artefacts", funct
     ],
     { cwd: rmd006Dir, encoding: "utf8" }
   );
-  assert.equal(result.status, 0, `the tool exited non-zero:\n${result.stderr}`);
+  // [3F-1460] fix-to-canon (3F-1414): unconditional CI gate — out-of-balance fixture now
+  // exits 1 (report written IN FULL first). Pure exit-expectation flip 0->1.
+  assert.equal(result.status, 1, `expected exit 1 (out-of-balance); got ${result.status}:\n${result.stderr}`);
   rmd006Json = JSON.parse(readFileSync(jsonPath, "utf8"));
   rmd006Md = readFileSync(mdPath, "utf8");
 });
@@ -445,7 +456,10 @@ Given(
       ],
       { cwd: rmd007Dir, encoding: "utf8" }
     );
-    assert.equal(result.status, 0, `the reconciliation run exited non-zero:\n${result.stderr}`);
+    // [3F-1460] fix-to-canon (3F-1414): unconditional CI gate — this out-of-balance
+    // reconciliation run exits 1 (both md + json written IN FULL first, so the round-trip
+    // regenerate below still holds). Pure exit-expectation flip 0->1.
+    assert.equal(result.status, 1, `expected exit 1 (out-of-balance); got ${result.status}:\n${result.stderr}`);
     assert.ok(existsSync(rmd007JsonPath), `expected the banked JSON at ${rmd007JsonPath}`);
     assert.ok(existsSync(mdPath), `expected the direct markdown render at ${mdPath}`);
     rmd007DirectMd = readFileSync(mdPath, "utf8");
@@ -526,7 +540,10 @@ When("the report is serialised to spec-reconciliation.json", function () {
         ],
         { cwd: rmd008StoreRoot, encoding: "utf8" }
       );
-      assert.equal(result.status, 0, `the tool exited non-zero:\n${result.stderr}`);
+      // [3F-1460] fix-to-canon (3F-1414): balance is now an unconditional CI gate, so this
+      // out-of-balance fixture exits 1 (the JSON/markdown are written IN FULL first). Pure
+      // exit-expectation flip 0->1; every persisted-content assertion is unchanged.
+      assert.equal(result.status, 1, `expected exit 1 (out-of-balance); got ${result.status}:\n${result.stderr}`);
     }
   );
   rmd008Json = JSON.parse(readFileSync(join(plan.runDir, "spec-reconciliation.json"), "utf8"));

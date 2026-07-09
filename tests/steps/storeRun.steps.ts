@@ -65,8 +65,14 @@ When("the operator runs balance under a store directive through the CLI binary",
 });
 
 // @SCN-RMG-004
-Then("the store command exits zero", function () {
-  assert.equal(storeResult.status, 0, `expected exit 0; got ${storeResult.status}\n${storeResult.stderr}`);
+// [3F-1460] fix-to-canon (3F-1414): balance is now an unconditional CI gate, and its
+// store wrapper propagates the exit code. This target is out-of-balance (a --vitest-only
+// run over the reconcilable fixture: a missing integration obligation + a phantom + a
+// suspense row), so the stored run exits 1 — the run dir + artefacts + manifest are still
+// written IN FULL first. Pure exit-expectation flip 0->1; every stored-artefact assertion
+// that follows is unchanged.
+Then("the store command exits with status 1", function () {
+  assert.equal(storeResult.status, 1, `expected exit 1 (out-of-balance); got ${storeResult.status}\n${storeResult.stderr}`);
 });
 
 // @SCN-RMG-004

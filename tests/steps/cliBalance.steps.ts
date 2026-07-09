@@ -33,6 +33,21 @@ const FIXTURE = {
   vitest: "tests/fixtures/evidence-observation/vitest.json",
 };
 
+/**
+ * The ALL-BALANCED fixture target ([3F-1460] fix-to-canon, 3F-1414) — two @unit scenarios
+ * BOTH satisfied by the Vitest report, no phantom, no uncited credit, and a GUARDLESS
+ * --package-json so the tool's own lint:* guards don't post an undemanded suspense row.
+ * The whole reconciliation is balanced, so `balance` exits 0. Used by CLI-001/003, whose
+ * intent is a CLEAN standalone run (exit 0) — now that the gate makes exit 0 mean
+ * genuinely balanced, their target must actually be balanced (it used to exit 0 only
+ * because balance was a reporter, not a gate).
+ */
+const BALANCED = {
+  features: "tests/fixtures/balanced/features",
+  vitest: "tests/fixtures/balanced/vitest.json",
+  packageJson: "tests/fixtures/balanced/package.json",
+};
+
 /** The `--flag value` pairs the shared When passes to `balance` (set by each Given). */
 let invocationArgs: string[] = [];
 /** The path CLI-002's Given points a flag at — asserted verbatim in stderr. */
@@ -59,9 +74,12 @@ function spawnBalance(args: string[]): SpawnSyncReturns<string> {
 // @SCN-CLI-001
 Given("a target with declared scenarios and a Vitest report of what ran", function () {
   const root = process.cwd();
-  assert.ok(existsSync(join(root, FIXTURE.features)), `missing fixture features: ${FIXTURE.features}`);
-  assert.ok(existsSync(join(root, FIXTURE.vitest)), `missing fixture vitest report: ${FIXTURE.vitest}`);
-  invocationArgs = ["--features", FIXTURE.features, "--vitest", FIXTURE.vitest];
+  // [3F-1460] fix-to-canon (3F-1414): repointed to the ALL-BALANCED fixture so this clean
+  // standalone run genuinely exits 0 under the new gate (was the deliberately out-of-balance
+  // fixture, which exited 0 only pre-gate). --package-json is guardless so no suspense row.
+  assert.ok(existsSync(join(root, BALANCED.features)), `missing fixture features: ${BALANCED.features}`);
+  assert.ok(existsSync(join(root, BALANCED.vitest)), `missing fixture vitest report: ${BALANCED.vitest}`);
+  invocationArgs = ["--features", BALANCED.features, "--vitest", BALANCED.vitest, "--package-json", BALANCED.packageJson];
 });
 
 // @SCN-CLI-002
@@ -127,9 +145,13 @@ Given("a target with declared scenarios and a Vitest report", function () {
   const root = process.cwd();
   // A real reconcilable target: declared scenarios (--features) + one evidence report
   // (--vitest). --cucumber is DELIBERATELY omitted — the positive boundary under test.
-  assert.ok(existsSync(join(root, FIXTURE.features)), `missing fixture features: ${FIXTURE.features}`);
-  assert.ok(existsSync(join(root, FIXTURE.vitest)), `missing fixture vitest report: ${FIXTURE.vitest}`);
-  invocationArgs = ["--features", FIXTURE.features, "--vitest", FIXTURE.vitest];
+  // [3F-1460] fix-to-canon (3F-1414): repointed to the ALL-BALANCED fixture so omitting
+  // --cucumber stays a clean exit-0 run under the gate (both declared scenarios are @unit,
+  // satisfied by --vitest; guardless --package-json so no suspense row). The omitted flag
+  // is still not an error — the point of this scenario.
+  assert.ok(existsSync(join(root, BALANCED.features)), `missing fixture features: ${BALANCED.features}`);
+  assert.ok(existsSync(join(root, BALANCED.vitest)), `missing fixture vitest report: ${BALANCED.vitest}`);
+  invocationArgs = ["--features", BALANCED.features, "--vitest", BALANCED.vitest, "--package-json", BALANCED.packageJson];
 });
 
 // @SCN-CLI-003
@@ -150,4 +172,31 @@ Then("it reconciles the declared scenarios against the supplied evidence", funct
   // omitted --cucumber did not short-circuit the pipeline.
   assert.match(cliResult.stdout, /^# Evidence Reconciliation/m);
   assert.match(cliResult.stdout, /\| Scenario \| 2 \|/);
+});
+
+// @SCN-CLI-004
+Given("a target that reconciles out-of-balance", function () {
+  const root = process.cwd();
+  // The shared out-of-balance fixture: it declares SCN-TGT-002 at @integration but the
+  // run supplies only --vitest (no --cucumber), so that obligation reconciles as MISSING;
+  // it also carries a phantom (SCN-PHANTOM-999) and uncited credits (the suspense row) —
+  // so the whole reconciliation is out-of-balance many times over. Reconcilable end-to-end:
+  // the ONLY thing wrong is the balance itself, which is exactly what the gate must red.
+  assert.ok(existsSync(join(root, FIXTURE.features)), `missing fixture features: ${FIXTURE.features}`);
+  assert.ok(existsSync(join(root, FIXTURE.vitest)), `missing fixture vitest report: ${FIXTURE.vitest}`);
+  invocationArgs = ["--features", FIXTURE.features, "--vitest", FIXTURE.vitest];
+});
+
+// @SCN-CLI-004
+Then("the command exits with status {int}", function (code: number) {
+  // The EXACT code, not merely non-zero (@SCN-CLI-004): an out-of-balance run must exit
+  // exactly 1 so it can't masquerade as the usage error (2, @SCN-CLI-002). The `And it
+  // prints the Evidence Reconciliation to stdout` step that follows asserts the report was
+  // emitted IN FULL before the exit code was set — the gate sets process.exitCode AFTER
+  // writeOutputs and returns, so the report is never truncated by an abrupt process.exit.
+  assert.equal(
+    cliResult.status,
+    code,
+    `expected exit ${code}; got ${cliResult.status}\nstdout:\n${cliResult.stdout}\nstderr:\n${cliResult.stderr}`,
+  );
 });

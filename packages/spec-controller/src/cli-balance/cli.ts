@@ -21,7 +21,7 @@ import {
 } from "../ingest/ingestQualityChecks.js";
 import { planOutput } from "./emit/format.js";
 import { writeOutputs } from "./emit/writer.js";
-import { renderReportFromJson } from "@3f-consulting/spec-controller-core";
+import { renderReportFromJson, isBalanced } from "@3f-consulting/spec-controller-core";
 import { resolveSourceSha, resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
 
@@ -145,7 +145,10 @@ export function runBalance(argv: string[]): void {
   const legacyJsonError = checkLegacyJson(args);
   if (legacyJsonError) {
     process.stderr.write(legacyJsonError + "\n");
-    process.exit(1);
+    // Usage/config error → exit 2 (the enumerated usage code, @SCN-CLI-002), distinct
+    // from the out-of-balance verdict code 1 (@SCN-CLI-004): an out-of-balance run must
+    // never masquerade as a usage error, nor the reverse.
+    process.exit(2);
   }
 
   // Render-from-saved-JSON mode (@SCN-RMD-007): regenerate the human markdown from a
@@ -169,7 +172,9 @@ export function runBalance(argv: string[]): void {
   const missingInputError = checkInputsExist(args, existsSync);
   if (missingInputError) {
     process.stderr.write(missingInputError + "\n");
-    process.exit(1);
+    // Usage/input error → exit 2 (@SCN-CLI-002), distinct from the out-of-balance
+    // verdict code 1 (@SCN-CLI-004).
+    process.exit(2);
   }
 
   const inputs = {
@@ -233,9 +238,23 @@ export function runBalance(argv: string[]): void {
   const planResult = planOutput(collectFormatSpecs(argv));
   if (!planResult.ok) {
     process.stderr.write(planResult.error + "\n");
-    process.exit(1);
+    // Usage/config error (bad --format spec) → exit 2 (@SCN-CLI-002), distinct from the
+    // out-of-balance verdict code 1 (@SCN-CLI-004).
+    process.exit(2);
   }
   writeOutputs(planResult.plan, { balance, ctx, evidenceObligations, evidenceObservations, guards, featureNames });
+
+  // The CI gate (@SCN-CLI-004): `balance` is a GATE, not just a reporter. AFTER the report
+  // is written in full, map the whole-run verdict to the process exit code. Out-of-balance
+  // (ANY reconciling item anywhere: an out-of-balance scenario OR a suspense-row item such
+  // as an undemanded static-guard watermelon) sets process.exitCode = 1 and RETURNS — set,
+  // never `process.exit(1)`, so the buffered report is flushed intact rather than truncated
+  // mid-write. It exits EXACTLY 1 so it reds a CI build and can't masquerade as the usage
+  // error (2, above). An ENUMERATED status, never a count (8-bit wrap → false pass). A
+  // balanced run leaves process.exitCode at its default 0 and returns.
+  if (!isBalanced(balance)) {
+    process.exitCode = 1;
+  }
 }
 
 // Only run the balance command when this module is executed directly

@@ -99,10 +99,13 @@ function runCliForTarget(targetArg: string | undefined): string {
     undefined,
     `expected the CLI subprocess to run; it failed to spawn: ${result.error?.message}`
   );
+  // [3F-1460] fix-to-canon (3F-1414): balance is now an unconditional CI gate, so this
+  // out-of-balance fixture exits 1 (the report is still written IN FULL before the exit
+  // code is set). Pure exit-expectation flip 0->1; every content assertion is unchanged.
   assert.equal(
     result.status,
-    0,
-    `expected the CLI to exit 0 writing the markdown report; got exit ${result.status}\n` +
+    1,
+    `expected the CLI to exit 1 (out-of-balance) writing the markdown report; got exit ${result.status}\n` +
       `stdout:\n${result.stdout}\nstderr:\n${result.stderr}`
   );
   assert.ok(

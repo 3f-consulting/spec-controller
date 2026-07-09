@@ -82,7 +82,7 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
     Scenario: `spec-controller --store <root> balance` writes a stored run the operator can reach
       Given a reconcilable target and a store root outside the repo
       When the operator runs balance under a store directive through the CLI binary
-      Then the store command exits zero
+      Then the store command exits with status 1
       And a run directory named for the target and run-id exists under the store root
       And that run directory holds spec-reconciliation.md, spec-reconciliation.json, and run.yaml
       And its run.yaml parses with mode balance, the target, and the run-id

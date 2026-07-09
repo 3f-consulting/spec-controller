@@ -157,6 +157,7 @@ const EXPECTED_VALUE_EXPORTS: readonly string[] = [
   "evidenceObligations",
   // Reconcile (reconcile/reconcile.ts)
   "reconcile",
+  "isBalanced",
   // Runtime observation counter (census/evidenceObservations.ts)
   "countRuntimeEvidenceObservationKinds",
   "RUNTIME_QUALITY_CHECKS",
