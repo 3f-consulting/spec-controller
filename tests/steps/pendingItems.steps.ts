@@ -27,12 +27,18 @@ const SUFFIX_FIXTURE = join(
   process.cwd(),
   "tests/fixtures/pending-tags/features/suffix-significance.feature"
 );
+const UNKNOWN_FIXTURE = join(
+  process.cwd(),
+  "tests/fixtures/pending-tags/features/unknown-pending.feature"
+);
 
 // Fixtures shared across steps within a scenario (isolated per scenario by Cucumber).
 let pendingTag: string;
 let obligations: EvidenceObligation[];
 // @SCN-PND-002 — the parsed suffix-significance fixture scenarios, keyed by @SCN id.
 let suffixScenarios: Scenario[];
+// @SCN-PND-003 — the parsed unknown-pending fixture scenarios (@foopending / @pending / @foo).
+let unknownScenarios: Scenario[];
 
 // @SCN-PND-001
 Given("a planted fixture scenario tagged {string}", function (tag: string) {
@@ -133,6 +139,63 @@ Then(
       atCheck[0]!.pending,
       true,
       `an @integrationpending must gain a pending obligation; got ${JSON.stringify(atCheck[0])}`
+    );
+  }
+);
+
+// @SCN-PND-003 — a tag OUTSIDE the recognised `<quality-check>pending` lexicon is passed
+// through / ignored, exactly like any unrecognised tag: it contributes NO evidence
+// obligation. Proved through the REAL parseScenarios over a PLANTED tests/fixtures/
+// feature-string (the unknown `@foopending` @SCN-PDU-001, the bare `@pending` @SCN-PDU-002,
+// and the plain unknown `@foo` @SCN-PDU-003) — never a real `@<x>pending` scenario in the
+// scanned features/ corpus (fixture policy, evidence-manifesto §11B). The @unit arm
+// (packages/core/src/parse/scenarios.test.ts, [SCN-PND-003]) proves the same passthrough
+// over inline strings + the pendingQualityCheck helper in isolation.
+Given(
+  "the planted unknown-pending fixture — an `@foopending` scenario, a bare `@pending` scenario, and a plain unknown `@foo` scenario",
+  function () {
+    // The fixture (all three scenarios) is the source; the parse happens in the When.
+  }
+);
+
+When("the parser derives each unknown scenario's evidence obligations", function () {
+  const source = readFileSync(UNKNOWN_FIXTURE, "utf8");
+  unknownScenarios = parseScenarios(source);
+});
+
+Then(
+  "every scenario declares no evidence obligation — the unknown `<x>pending` and bare `@pending` are ignored exactly like the plain unknown tag",
+  function () {
+    // All three fixture scenarios are emitted (each carries an @SCN id), and every one
+    // derives an EMPTY obligation set: the unknown `@foopending` and bare `@pending` are
+    // ignored EXACTLY like the plain unknown `@foo`. Reds if the parser derives any
+    // obligation from a tag outside the recognised lexicon.
+    assert.equal(
+      unknownScenarios.length,
+      3,
+      `expected all three planted unknown-tag scenarios; got ${unknownScenarios.length} (${JSON.stringify(
+        unknownScenarios
+      )})`
+    );
+    for (const scenario of unknownScenarios) {
+      assert.deepEqual(
+        scenario.evidenceObligations,
+        [],
+        `${scenario.scnId} carries a tag outside the recognised lexicon and must derive NO obligation; got ${JSON.stringify(
+          scenario.evidenceObligations
+        )}`
+      );
+    }
+    // Passthrough PARITY: the unknown `@foopending` (SCN-PDU-001) derives exactly what the
+    // plain unknown `@foo` (SCN-PDU-003) does — nothing. The `pending` suffix buys an unknown
+    // prefix no special treatment.
+    const foopending = unknownScenarios.find((s) => s.scnId === "SCN-PDU-001");
+    const foo = unknownScenarios.find((s) => s.scnId === "SCN-PDU-003");
+    assert.ok(foopending && foo, "expected the @foopending and @foo fixture scenarios");
+    assert.deepEqual(
+      foopending.evidenceObligations,
+      foo.evidenceObligations,
+      "an unknown `@foopending` must derive exactly what a plain unknown `@foo` derives (both empty)"
     );
   }
 );

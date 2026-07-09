@@ -41,3 +41,9 @@ Feature: A pending evidence obligation raises a Pending Item
       When the parser derives each scenario's evidence obligations
       Then the bare `@integration` scenario declares a plain "integration" obligation and no pending one
       And the `@integrationpending` scenario declares a pending "integration" obligation and no plain one
+
+    @unit @integration @SCN-PND-003
+    Scenario: an unrecognised `<x>pending` (no such quality-check) is passed through, ignored like any unrecognised tag
+      Given the planted unknown-pending fixture — an `@foopending` scenario, a bare `@pending` scenario, and a plain unknown `@foo` scenario
+      When the parser derives each unknown scenario's evidence obligations
+      Then every scenario declares no evidence obligation — the unknown `<x>pending` and bare `@pending` are ignored exactly like the plain unknown tag

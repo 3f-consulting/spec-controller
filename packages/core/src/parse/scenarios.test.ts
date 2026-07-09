@@ -264,3 +264,61 @@ describe("[SCN-PND-002] the pending suffix is significant at the parseScenarios 
     ).toBe(false);
   });
 });
+
+/**
+ * Unit test for the passthrough of an unrecognised `<x>pending` tag (@SCN-PND-003).
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-PND-003 id
+ * matching features/pending-items.feature, so a grep of the id returns both halves — this
+ * @unit arm (the pendingQualityCheck helper + parseScenarios over inline strings, in
+ * isolation) and the @integration arm (tests/steps/pendingItems.steps.ts, over a planted
+ * tests/fixtures/ feature-string).
+ *
+ * Proves the boundary/passthrough rule: a tag OUTSIDE the recognised `<quality-check>pending`
+ * lexicon — an unknown `@foopending` (foo ∉ the five checks) or a bare `@pending` — is
+ * recognised by nothing and derives NO obligation, exactly like a plain unknown `@foo`. We
+ * give special meaning only to our recognised lexicon; we do not police the developer's tags.
+ *
+ * Parent: @SCN-PND-003.
+ */
+describe("[SCN-PND-003] an unrecognised <x>pending tag is passed through, ignored like any unknown tag", () => {
+  it("the helper returns null for an unknown <x>pending and for bare pending", () => {
+    // foo is not one of the five quality-checks, so `foopending` is not in the lexicon.
+    expect(pendingQualityCheck("foopending")).toBeNull();
+    // Bare `pending` (the slice-4 community deferral tag) is likewise unrecognised at slice 1.
+    expect(pendingQualityCheck("pending")).toBeNull();
+    // A near-miss with an extra suffix is still not one of the five.
+    expect(pendingQualityCheck("unitpendingx")).toBeNull();
+  });
+
+  it("an @foopending scenario derives no obligation — exactly like a plain unknown @foo", () => {
+    const foopending = parseScenarios(
+      ["@foopending @SCN-XXX-003", "Scenario: an unknown pending tag", "  Given a step"].join("\n")
+    );
+    const foo = parseScenarios(
+      ["@foo @SCN-XXX-004", "Scenario: a plain unknown tag", "  Given a step"].join("\n")
+    );
+    // Both derive an EMPTY obligation set — the unknown `pending` suffix buys no special
+    // treatment; the passthrough is identical to any unrecognised tag.
+    expect(foopending[0]!.evidenceObligations).toEqual([]);
+    expect(foo[0]!.evidenceObligations).toEqual([]);
+    expect(foopending[0]!.evidenceObligations).toEqual(foo[0]!.evidenceObligations);
+  });
+
+  it("a bare @pending scenario derives no obligation", () => {
+    const [scenario] = parseScenarios(
+      ["@pending @SCN-XXX-005", "Scenario: a bare pending tag", "  Given a step"].join("\n")
+    );
+    expect(scenario!.evidenceObligations).toEqual([]);
+  });
+
+  it("an unknown <x>pending alongside a recognised tag leaves the recognised obligation intact", () => {
+    // The passthrough is silent and local: `@foopending` contributes nothing while a
+    // co-located `@unit` still derives its obligation — no error, no diagnostic, no
+    // interference with the recognised lexicon.
+    const [scenario] = parseScenarios(
+      ["@unit @foopending @SCN-XXX-006", "Scenario: a mix", "  Given a step"].join("\n")
+    );
+    expect(scenario!.evidenceObligations).toEqual([{ qualityCheck: "unit" }]);
+  });
+});
