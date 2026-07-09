@@ -1229,3 +1229,112 @@ describe("[SCN-USG-001] the markdown report renders the Static guards section", 
     expect(md).not.toContain("### Static guards");
   });
 });
+
+/**
+ * Unit test for the flat obligation-summary decomposition (@SCN-RPT-019, 3F-1453).
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries the
+ * @SCN-RPT-019 id matching features/report.feature, so a grep of the id returns
+ * both halves of the pair.
+ *
+ * Proves the evidenceReconciliationSection decomposes the evidence-obligation
+ * out-of-balance into a FLAT list of the seven leaf outcomes — with NO
+ * debit/credit/neither group-side subtotal rows. The former grouping emitted both a
+ * "↳ <group>-side" subtotal row AND each leaf row at the same "↳" indent, so a naive
+ * column-sum double-counted (the live 170 vs 85). Removing the grouping leaves exactly
+ * seven counted "↳ <outcome>" rows reconciling to the out-of-balance total once.
+ *
+ * Teeth: against the pre-fix renderer the three group-side subtotal rows still render,
+ * so the "exactly seven ↳ rows" and "no group row" assertions red (the genuine
+ * red→green). Markdown-only — the derived view is NOT duplicated into JSON.
+ *
+ * Parent: (@SCN-RPT-019).
+ */
+describe("[SCN-RPT-019] the markdown obligation summary lists the seven leaf outcomes with no group rows", () => {
+  // A balance whose out-of-balance obligations span all three FORMER groups:
+  //   DEBIT   — SCN-A carries a missing obligation.
+  //   CREDIT  — the suspense row carries a cites-no-scenario credit.
+  //   NEITHER — SCN-C reconciles to zero on both sides (a both-missing row).
+  // byOutcome (derived from every row's evidenceObligations[]): missing 1,
+  // cites-no-scenario 1, both-missing 1, everything else 0 — out-of-balance = 3.
+  const spanning: EvidenceReconciliation = {
+    scenarioReconciliations: [
+      {
+        scnId: "SCN-A",
+        kind: "scenario",
+        verdict: "out-of-balance",
+        evidenceObligations: [{ qualityCheck: "unit", outcome: "missing" }],
+        reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
+      },
+      {
+        scnId: "(no scenario)",
+        kind: "suspense-scenario",
+        verdict: "out-of-balance",
+        evidenceObligations: [
+          { qualityCheck: "unit", outcome: "cites-no-scenario", locator: "tests/stray.test.ts:1" },
+        ],
+        reconcilingItems: [
+          { qualityCheck: "unit", outcome: "cites-no-scenario", locator: "tests/stray.test.ts:1" },
+        ],
+      },
+      {
+        scnId: "SCN-C",
+        kind: "scenario",
+        verdict: "out-of-balance",
+        evidenceObligations: [{ outcome: "both-missing" }],
+        reconcilingItems: [{ outcome: "both-missing" }],
+      },
+    ],
+  };
+
+  // The seven out-of-balance leaf outcomes in canonical (model.ts reading) order —
+  // satisfied excluded (it is the balanced outcome, not in the out-of-balance decomposition).
+  const LEAVES = [
+    "missing",
+    "failing",
+    "watermelon",
+    "cites-unknown-scenario",
+    "cites-no-scenario",
+    "undemanded",
+    "both-missing",
+  ] as const;
+
+  it("decomposes the evidence-obligation out-of-balance into exactly the seven leaf outcome rows", () => {
+    const md = renderMarkdown(spanning, ctx);
+    // Every leaf outcome renders as a counted "↳ <outcome>" row.
+    for (const leaf of LEAVES) {
+      expect(md).toContain(`| ↳ ${leaf} |`);
+    }
+    // And there are EXACTLY seven "↳" rows in the decomposition — no more (the group-side
+    // subtotal rows are gone). Count every "↳ " marker across the rendered document; the
+    // only "↳" rows are the seven leaf decomposition rows.
+    const arrowRows = md.split("\n").filter((line) => line.includes("↳"));
+    expect(arrowRows.length).toBe(7);
+  });
+
+  it("sums the leaf counts to the evidence-obligation out-of-balance total", () => {
+    const md = renderMarkdown(spanning, ctx);
+    // The Evidence-obligation subject row's out-of-balance count.
+    const oblOutOfBalance = Number(
+      /\| Evidence obligation \| \d+ \| \d+ \| (\d+) \|/.exec(md)?.[1]
+    );
+    expect(oblOutOfBalance).toBe(3);
+    // Each leaf row's own out-of-balance count, summed.
+    let leafSum = 0;
+    for (const leaf of LEAVES) {
+      const n = Number(
+        new RegExp(`↳ ${leaf} \\|[^\\d]*(\\d+) \\|`).exec(md)?.[1]
+      );
+      expect(Number.isNaN(n)).toBe(false);
+      leafSum += n;
+    }
+    expect(leafSum).toBe(oblOutOfBalance);
+  });
+
+  it("renders NO debit-side / credit-side / neither-side group subtotal row", () => {
+    const md = renderMarkdown(spanning, ctx);
+    expect(md).not.toContain("↳ debit-side");
+    expect(md).not.toContain("↳ credit-side");
+    expect(md).not.toContain("↳ neither-side");
+  });
+});

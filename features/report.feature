@@ -450,3 +450,26 @@ Feature: The report renders the ledger as sectioned facts
       When the reconciliation report is rendered for that @integration @e2e-via-cucumber target
       Then Test volume counts the single observation under both integration and e2e
       And SCN-TGT-102's Integration and E2e cells each render a count, not ∅
+
+  Rule: the evidence-obligation out-of-balance decomposes into a flat list of the seven leaf outcomes, with no group-side subtotal rows
+
+    The obligation-summary decomposition (@SCN-RPT-019, 3F-1453). The Evidence
+    reconciliation's evidence-obligation out-of-balance row decomposes into a FLAT list of the
+    seven out-of-balance leaf outcomes — missing, failing, watermelon,
+    cites-unknown-scenario, cites-no-scenario, undemanded, both-missing — each a counted
+    "↳ <outcome>" row whose Out-of-balance counts SUM to the evidence-obligation out-of-balance
+    total. The former debit/credit/neither grouping is removed entirely: no "↳ debit-side",
+    "↳ credit-side", or "↳ neither-side" subtotal row is rendered. The grouping construct
+    double-counted — each group emitted a subtotal row AND its leaf rows at the same indent, so
+    a naive column-sum doubled (170 vs 85). Removing the grouping leaves the leaves reconciling
+    to the total exactly once. The existing @SCN-RPT-004 leaf-presence guard stays green (the
+    leaves still render). A pure derive over the report's materialised
+    summary.evidenceObligations.byOutcome — markdown-only, proven in isolation by Vitest.
+
+    @unit @SCN-RPT-019
+    Scenario: the obligation summary lists the seven leaf outcomes summing to the out-of-balance total, with no group rows
+      Given a reconciliation balance whose out-of-balance obligations span debit, credit, and neither outcomes
+      When the markdown report is rendered
+      Then the Evidence obligation out-of-balance decomposes into exactly the seven leaf outcome rows
+      And their counts sum to the evidence-obligation out-of-balance total
+      And no debit-side / credit-side / neither-side group row is present

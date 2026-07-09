@@ -222,37 +222,37 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
       "",
     ]),
   ];
-  // Decompose the evidence-obligation out-of-balance into its causes, GROUPED by debit /
-  // credit / neither (ruling Q2) — NOT a flat list. Each group
-  // opens with a `↳ <group>-side` sub-total row, then its member outcomes as nested `↳ <outcome>`
-  // rows (only the out-of-balance column populated). `missing` carries the bare-level split.
+  // Decompose the evidence-obligation out-of-balance into its causes — a FLAT list of the
+  // seven out-of-balance leaf outcomes in canonical order (@SCN-RPT-019, 3F-1453), each a
+  // counted `↳ <outcome>` row (only the out-of-balance column populated) reconciling to the
+  // total exactly once. No debit/credit/neither grouping: the grouping emitted a subtotal
+  // `↳ <group>-side` row AND its leaf rows at the same `↳` indent, so a naive column-sum
+  // double-counted (the live 170 vs 85). `missing` carries the bare-level split as Detail.
   // Every outcome is ALWAYS rendered, including a zero count (a zero cause is itself a fact).
-  for (const { group, outcomes } of OUTCOME_GROUPS) {
-    const groupTotal = outcomes.reduce((n, o) => n + evidenceObligations.byOutcome[o], 0);
-    lines.push(row([`↳ ${group}-side`, "", "", String(groupTotal), ""]));
-    for (const outcome of outcomes) {
-      const detail = outcome === "missing" ? missingSplit : "";
-      lines.push(row([`↳ ${outcome}`, "", "", String(evidenceObligations.byOutcome[outcome]), detail]));
-    }
+  for (const outcome of OUT_OF_BALANCE_OUTCOMES) {
+    const detail = outcome === "missing" ? missingSplit : "";
+    lines.push(row([`↳ ${outcome}`, "", "", String(evidenceObligations.byOutcome[outcome]), detail]));
   }
   lines.push("");
   return lines;
 };
 
 /**
- * The reconciling-item outcomes grouped by SIDE (ruling Q2), in canonical
- * reading order — `satisfied` (the balanced outcome) excluded, since the decomposition is of the
- * OUT-of-balance total. Three groups:
- *   - `debit`   — an evidence obligation with no good evidence observation: missing / failing / watermelon.
- *   - `credit`  — an evidence observation with no evidence obligation: cites-unknown-scenario / cites-no-scenario /
- *                 undemanded.
- *   - `neither` — zero rows on both sides: both-missing (the degenerate shape, @SCN-LDG-009).
- * Every outcome is ALWAYS rendered (a zero count is a fact).
+ * The out-of-balance reconciling-item outcomes in canonical reading order (the `Outcome`
+ * type's order in model.ts), `satisfied` excluded — it is the BALANCED outcome, not part of
+ * the OUT-of-balance decomposition. A FLAT list (@SCN-RPT-019, 3F-1453): the earlier
+ * debit/credit/neither grouping was removed because it emitted a `↳ <group>-side` subtotal
+ * row AND its leaf rows at the same `↳` indent, so a naive column-sum double-counted (the
+ * live 170 vs 85). The seven leaves reconcile to the out-of-balance total exactly once.
  */
-const OUTCOME_GROUPS: readonly { group: "debit" | "credit" | "neither"; outcomes: readonly Outcome[] }[] = [
-  { group: "debit", outcomes: ["missing", "failing", "watermelon"] },
-  { group: "credit", outcomes: ["cites-unknown-scenario", "cites-no-scenario", "undemanded"] },
-  { group: "neither", outcomes: ["both-missing"] },
+const OUT_OF_BALANCE_OUTCOMES: readonly Outcome[] = [
+  "missing",
+  "failing",
+  "watermelon",
+  "cites-unknown-scenario",
+  "cites-no-scenario",
+  "undemanded",
+  "both-missing",
 ];
 
 /**
