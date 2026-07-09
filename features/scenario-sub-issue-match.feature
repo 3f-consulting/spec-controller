@@ -25,3 +25,17 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
       Given an added scenario code on an internal PR that carries a ticket handle
       When the scenario sub-issue gate decides
       Then the gate passes
+
+  Rule: a behaviour-bearing change on an internal PR with no ticket handle reds the gate
+
+    The dogfooding TEETH. Internal work (a branch in the repo, non-fork) must
+    bind its scenario to a tracked work-unit: a behaviour-bearing @SCN change on
+    an internal PR that carries no 3F ticket handle is REJECTED — the gate reds
+    and names the unbound code. Fork status is the only exemption; handle-absence
+    on an internal PR is precisely the violation the gate exists to catch.
+
+    @unit @integration @SCN-SSM-002
+    Scenario: an added scenario code on an internal PR with no ticket handle is rejected
+      Given a PR that adds a behaviour-bearing @SCN code, from a branch in the repo, carrying no 3F ticket handle
+      When the scenario sub-issue gate runs over the fixture PR
+      Then the gate reds with a violation naming the unbound code

@@ -36,3 +36,18 @@ describe("[SCN-SSM-001] a behaviour-bearing change on a ticketed internal PR pas
     expect(result.violations).toEqual([]);
   });
 });
+
+describe("[SCN-SSM-002] a behaviour-bearing change on an internal PR with no ticket handle reds the gate", () => {
+  it("reds an added scenario code when the PR carries no ticket handle and is not external, naming the unbound code", () => {
+    const result = decideScnGate(
+      baseInput({ addedCodes: ["SCN-LDG-002"], hasTicketHandle: false, isExternalPr: false })
+    );
+    expect(result.ok).toBe(false);
+    expect(result.violations.length).toBeGreaterThan(0);
+    const violation = result.violations[0]!;
+    expect(violation.kind).toBe("missing-ticket-handle");
+    expect(violation.code).toBe("SCN-LDG-002");
+    // The violation NAMES the unbound code (the bidirectional teeth).
+    expect(violation.message).toContain("SCN-LDG-002");
+  });
+});
