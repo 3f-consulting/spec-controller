@@ -17,7 +17,8 @@
     "balance": "tsx packages/spec-controller/src/cli.ts",
     "audit:vocab": "tsx packages/spec-controller/static-guards/vocabAuditCli.ts",
     "lint:feature-codes": "tsx packages/spec-controller/static-guards/lintFeatureCodesCli.ts",
-    "lint:no-committed-reports": "tsx packages/spec-controller/static-guards/lintNoCommittedReportsCli.ts"
+    "lint:no-committed-reports": "tsx packages/spec-controller/static-guards/lintNoCommittedReportsCli.ts",
+    "lint:scn-subissues": "tsx packages/spec-controller/static-guards/lintScnSubIssuesCli.ts"
   },
   "devDependencies": {
     "@3f-consulting/spec-controller-core": "workspace:*",

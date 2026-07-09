@@ -119,6 +119,12 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     status: "declared",
     note: "the engine-purity guard — a @unit guard that reds if any production file in the pure core imports from the app package or references IO (node:fs/child_process/process); makes the pure seam executable, the dogfood analogue of @SCN-API-001",
   },
+  {
+    code: "SSM",
+    slug: "scenario-sub-issue-match",
+    status: "declared",
+    note: "the hermetic scenario↔sub-issue gate (ported from an earlier internal tool / an adopter's repository 3F-834) — every behaviour-bearing @SCN change on a PR must carry its @SCN cite AND a ticket handle, verified from the diff + CI metadata alone, no Linear call; wired PR-only via lint:scn-subissues (parent 3F-1137)",
+  },
 ];
 
 /** A single lint finding. */

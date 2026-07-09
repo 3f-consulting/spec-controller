@@ -10,6 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full history so the scenario sub-issue guard can diff HEAD against
+          # the PR base ref (github.event.pull_request.base.sha). The default
+          # shallow checkout would not contain the base commit.
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -44,3 +49,23 @@ jobs:
 
       - name: Cucumber
         run: pnpm cucumber
+
+      # The hermetic scenario ⟷ sub-issue gate (ported from an earlier internal tool / an adopter's repository
+      # 3F-834), wired over spec-controller's REAL source on every PR. Every
+      # behaviour-bearing @SCN change must carry its @SCN cite AND be on a ticketed
+      # PR (the Linear-auto-named branch / [3F-NNN] commit prefix) — verified from
+      # the diff + CI metadata ALONE, with NO live Linear call. Wiring it here (not
+      # only over synthetic fixtures) is what makes the guard see real-source drift.
+      # PR-only: it needs the PR diff + base context; on push-to-main there is no PR
+      # base, so it is skipped (parent 3F-1137; @SCN-SSM-001, 3F-1489).
+      - name: Lint scenario sub-issue match
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          # The PR's source branch — Linear auto-names it "steven/3f-NNN-…", the
+          # primary ticket-handle source.
+          GITHUB_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          # The PR body is one of the two SCN-exempt trailer sources (the other is
+          # the PR's commit messages); the parser scans both.
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: pnpm lint:scn-subissues
