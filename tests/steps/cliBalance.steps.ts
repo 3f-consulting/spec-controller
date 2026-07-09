@@ -26,6 +26,7 @@ import assert from "node:assert/strict";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { cliRegistry } from "../../packages/spec-controller/src/cli-registry.js";
 
 /** The reconcilable fixture target — declared scenarios + a Vitest report. */
 const FIXTURE = {
@@ -200,6 +201,44 @@ Given("a target that reconciles all-balanced", function () {
   assert.ok(existsSync(join(root, BALANCED.features)), `missing fixture features: ${BALANCED.features}`);
   assert.ok(existsSync(join(root, BALANCED.vitest)), `missing fixture vitest report: ${BALANCED.vitest}`);
   invocationArgs = ["--features", BALANCED.features, "--vitest", BALANCED.vitest, "--package-json", BALANCED.packageJson];
+});
+
+// @SCN-CLI-006
+Given("the spec-controller binary", function () {
+  // No fixture target needed: `balance --help` is answered from the registry BEFORE any
+  // reconcile, so there is nothing to reconcile. The shared When spawns the real binary.
+  invocationArgs = ["--help"];
+});
+
+// @SCN-CLI-006
+When("{string} is invoked", function (command: string) {
+  assert.equal(command, "spec-controller balance --help");
+  cliResult = spawnBalance(invocationArgs);
+});
+
+// @SCN-CLI-006
+Then("it exits 0 and prints each registered balance flag with its description", function () {
+  assert.equal(cliResult.status, 0, `expected exit 0; got ${cliResult.status}\n${cliResult.stderr}`);
+  const balanceFlags = cliRegistry.commands.find((c) => c.name === "balance")?.flags ?? [];
+  // Non-vacuous: the registry must register balance's whole flag scope (9 flags + --help/-h),
+  // else there is nothing to prove appeared. This reds in Discovery (empty registry stub) and
+  // greens when the Implementation phase populates the registry.
+  assert.ok(
+    balanceFlags.length >= 10,
+    `registry must register balance's flags; got ${balanceFlags.length}`,
+  );
+  // The real binary's stdout lists every registered flag with its description — proof the
+  // registry is the single source `balance --help` renders from, over the actual subprocess.
+  for (const flag of balanceFlags) {
+    assert.ok(
+      cliResult.stdout.includes(flag.name),
+      `expected stdout to list ${flag.name}; got:\n${cliResult.stdout}`,
+    );
+    assert.ok(
+      cliResult.stdout.includes(flag.description),
+      `expected stdout to describe ${flag.name}; got:\n${cliResult.stdout}`,
+    );
+  }
 });
 
 // @SCN-CLI-004

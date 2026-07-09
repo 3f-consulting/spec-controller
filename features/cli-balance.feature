@@ -70,3 +70,18 @@ Feature: spec-controller balance runs standalone
       Given a target that reconciles all-balanced
       When "spec-controller balance" is invoked over that target through the CLI binary
       Then the command exits with status 0
+
+  Rule: the CLI answers --help from a single command/flag registry, completeness-guarded.
+
+    `spec-controller balance --help` (and `-h`) prints the balance command's flags —
+    each name + arg-placeholder + description — rendered from the declarative
+    command/flag registry, and exits 0. It is handled in `runBalance` BEFORE any
+    parse/reconcile, so `--help` never falls through as a stray flag while balance runs
+    anyway. The registry is the single source: a flag exists ⇒ a registry entry ⇒ it
+    appears in help, by construction.
+
+    @SCN-CLI-006 @unit @e2e
+    Scenario: balance --help lists the command's flags and exits 0
+      Given the spec-controller binary
+      When "spec-controller balance --help" is invoked
+      Then it exits 0 and prints each registered balance flag with its description

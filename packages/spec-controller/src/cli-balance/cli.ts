@@ -23,6 +23,7 @@ import { planOutput } from "./emit/format.js";
 import { writeOutputs } from "./emit/writer.js";
 import { renderReportFromJson, isBalanced } from "@3f-consulting/spec-controller-core";
 import { resolveSourceSha, resolveTargetRoot } from "../run-management/resolveRunInputs.js";
+import { cliRegistry, renderBalanceHelp } from "../cli-registry.js";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
 
 /** Parse `--flag value` pairs from argv into a record. */
@@ -132,6 +133,17 @@ export function checkInputsExist(
 }
 
 export function runBalance(argv: string[]): void {
+  // Answer `--help`/`-h` from the command/flag registry (@SCN-CLI-006) BEFORE any
+  // parse or reconcile: render the balance command's per-command scope (a line per
+  // registered flag — name + arg + description), leave process.exitCode at its default 0,
+  // and return. This intercepts --help so it never falls through parseArgs as a stray flag
+  // while balance runs anyway. The registry is the single source, so a flag that exists is
+  // a flag that appears in help — no hand-kept list to drift.
+  if (argv.includes("--help") || argv.includes("-h")) {
+    process.stdout.write(renderBalanceHelp(cliRegistry) + "\n");
+    return;
+  }
+
   // Capture the run-start instant up front — the run provenance's UTC timestamp,
   // threaded through ctx.runStart to the renderers.
   const runStart = new Date();
