@@ -83,3 +83,49 @@ describe("[SCN-CLI-007] renderTopLevelHelp renders the commands and the global s
     expect(out).toContain("--run-id");
   });
 });
+
+/**
+ * @SCN-CLI-008 (@unit) — the completeness guard. Where @SCN-CLI-006/007 pin each
+ * renderer against a KNOWN set, this guard is the structural capstone: it walks the
+ * registry itself and asserts NOTHING it declares is missing from its help surface,
+ * per scope. Adding a flag/command/modifier to `cliRegistry` without it reaching the
+ * matching renderer leaves a non-empty `missing` set — the guard reds. That is the
+ * mechanism that makes "all further additions reach help" structural, not a note (the
+ * Pending-Items increment's `--strict` reds this until it is in help).
+ *
+ * @unit-only: a structural test over the registry + renderers — no binary, no runtime.
+ * Bidirectional evidence (Evidence Manifesto §9): the describe string carries the
+ * [SCN-CLI-008] id, matching the @unit @SCN-CLI-008 scenario in
+ * features/cli-balance.feature (a grep of the id returns both halves).
+ */
+describe("[SCN-CLI-008] the completeness guard — no registry entry is missing from its help surface", () => {
+  it("finds every per-command balance flag in the balance --help render (per-command scope)", () => {
+    // Teeth: iterate the WHOLE per-command scope; a flag added to the registry but not
+    // reaching renderBalanceHelp lands in `missing` and reds. Naming the missing flag
+    // (rather than a bare toContain per known flag, @SCN-CLI-006) is the completeness
+    // framing: the guard reports exactly which registered flag fell out of help.
+    const balanceFlags = cliRegistry.commands.find((c) => c.name === "balance")?.flags ?? [];
+    expect(balanceFlags.length).toBeGreaterThan(0);
+    const out = renderBalanceHelp(cliRegistry);
+    const missing = balanceFlags.filter((flag) => !out.includes(flag.name)).map((flag) => flag.name);
+    expect(missing).toEqual([]);
+  });
+
+  it("finds every global host modifier in the top-level --help render (global scope)", () => {
+    // Teeth: iterate the WHOLE global scope; a modifier added to cliRegistry.global but
+    // not reaching renderTopLevelHelp lands in `missing` and reds.
+    expect(cliRegistry.global.length).toBeGreaterThan(0);
+    const out = renderTopLevelHelp(cliRegistry);
+    const missing = cliRegistry.global.filter((flag) => !out.includes(flag.name)).map((flag) => flag.name);
+    expect(missing).toEqual([]);
+  });
+
+  it("finds every registered command in the top-level --help render (command scope)", () => {
+    // Teeth: iterate the WHOLE command set; a command added to cliRegistry.commands but
+    // not reaching renderTopLevelHelp lands in `missing` and reds.
+    expect(cliRegistry.commands.length).toBeGreaterThan(0);
+    const out = renderTopLevelHelp(cliRegistry);
+    const missing = cliRegistry.commands.filter((command) => !out.includes(command.name)).map((command) => command.name);
+    expect(missing).toEqual([]);
+  });
+});
