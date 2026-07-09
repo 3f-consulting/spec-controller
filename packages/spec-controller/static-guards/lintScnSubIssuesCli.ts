@@ -17,14 +17,17 @@
  * the surface is inert: no violations, exit 0 — a no-op that smoke-tests the
  * whole wiring (git diff + handle read) live, over the REAL checked-out source.
  *
- * `isExternalPr` is passed `false` in this slice (3F-1489). @SCN-SSM-003 (3F-1495)
- * wires the live fork read (GITHUB_EVENT_PATH: head.repo != base.repo) and the
- * skip-silently exemption for external PRs.
+ * `isExternalPr` is read LIVE from the GitHub PR event payload (@SCN-SSM-003,
+ * 3F-1495): readIsExternalPr parses GITHUB_EVENT_PATH and returns
+ * head.repo.full_name != base.repo.full_name — a fork-sourced (external) PR is
+ * exempt (decideScnGate skips it silently, exit 0). Absent/local runs default
+ * false (internal), keeping the teeth for no-handle internal PRs.
  *
  * Parent: 3F-1137 (the port + fork-exemption design).
  */
 
 import { execFileSync } from "node:child_process";
+import fs from "node:fs";
 import {
   decideScnGate,
   detectDeletedCodes,
@@ -62,6 +65,41 @@ export function readTicketHandle(
 ): boolean {
   if (headRef && TICKET_HANDLE.test(headRef)) return true;
   return commitMessages.some((m) => TICKET_HANDLE.test(m));
+}
+
+/**
+ * Decide whether a PR is fork-sourced (external) from a PARSED GitHub PR event
+ * payload — the reliable fork signal: head.repo.full_name != base.repo.full_name.
+ * A missing/malformed payload (local or non-PR runs) is NOT external → false.
+ *
+ * Pure over the parsed payload so it is @unit-testable over an event-payload
+ * fixture; the file read lives in `readIsExternalPr`. @SCN-SSM-003 (3F-1495).
+ */
+export function isExternalPrFromEvent(event: unknown): boolean {
+  const pullRequest = (event as { pull_request?: unknown } | null | undefined)?.pull_request;
+  const headRepo = (pullRequest as { head?: { repo?: { full_name?: unknown } } } | undefined)?.head
+    ?.repo?.full_name;
+  const baseRepo = (pullRequest as { base?: { repo?: { full_name?: unknown } } } | undefined)?.base
+    ?.repo?.full_name;
+  if (typeof headRepo !== "string" || typeof baseRepo !== "string") return false;
+  return headRepo !== baseRepo;
+}
+
+/**
+ * Read the fork signal live from the GitHub PR event payload: parse the JSON at
+ * `eventPath` (`GITHUB_EVENT_PATH`) and delegate to `isExternalPrFromEvent`. An
+ * absent path (local / non-PR runs) or an unreadable/malformed payload is NOT
+ * external → false. @SCN-SSM-003 (3F-1495).
+ */
+export function readIsExternalPr(eventPath: string | undefined): boolean {
+  if (eventPath === undefined || eventPath.trim() === "") return false;
+  let event: unknown;
+  try {
+    event = JSON.parse(fs.readFileSync(eventPath, "utf8"));
+  } catch {
+    return false;
+  }
+  return isExternalPrFromEvent(event);
 }
 
 /** Compute `git diff <base>...HEAD` over the given pathspecs. */
@@ -193,8 +231,10 @@ async function main(): Promise<void> {
   );
   const hasTicketHandle = readTicketHandle(process.env["GITHUB_HEAD_REF"], commitMessages);
 
-  // Injected false in this slice; @SCN-SSM-003 (3F-1495) wires the live fork read.
-  const isExternalPr = false;
+  // The live fork read (@SCN-SSM-003): a fork-sourced (external) PR —
+  // head.repo.full_name != base.repo.full_name in the GitHub PR event payload —
+  // is exempt. Absent/local runs default false (internal), keeping the teeth.
+  const isExternalPr = readIsExternalPr(process.env["GITHUB_EVENT_PATH"]);
 
   console.log(
     `scn-subissue lint: ${addedCodes.length} added, ${updatedCodes.length} updated, ${deletedCodes.length} deleted @SCN code(s); unit-equivalent: ${unitEquivalentBehaviourBearing ? "behaviour-bearing" : "inert"}, cited [${unitEquivalentCitedCodes.join(", ")}]; ticket handle: ${hasTicketHandle ? "present" : "ABSENT"}${codesToCheck.length > 0 ? ` — checking: ${codesToCheck.join(", ")}` : ""}`

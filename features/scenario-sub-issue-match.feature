@@ -39,3 +39,22 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
       Given a PR that adds a behaviour-bearing @SCN code, from a branch in the repo, carrying no 3F ticket handle
       When the scenario sub-issue gate runs over the fixture PR
       Then the gate reds with a violation naming the unbound code
+
+  Rule: a fork-sourced external PR is exempt from the gate
+
+    The community-contribution CARVE-OUT. A fork-sourced (external) PR — one
+    whose head repo differs from the base repo — is EXEMPT: even a
+    behaviour-bearing @SCN change carrying no 3F ticket handle is skipped
+    silently and exits 0, so the methodology dogfoods on internal PRs without
+    auto-rejecting outside contributors. Fork status — read from the GitHub PR
+    event payload (head.repo.full_name != base.repo.full_name) — is the ONLY
+    exemption signal; handle-absence is NEVER exempting (that is precisely the
+    violation the gate exists to catch, and a no-handle INTERNAL PR still reds —
+    see SSM-002). The decision stays hermetic: given isExternalPr the pure
+    decision returns no violation; only the live CLI reads the payload.
+
+    @unit @integration @SCN-SSM-003
+    Scenario: a fork-sourced external PR is exempt from the gate
+      Given a fork-PR fixture whose head repo differs from the base repo, adding a behaviour-bearing @SCN code with no 3F ticket handle
+      When the scenario sub-issue gate runs over the fork-PR fixture
+      Then the gate is exempt and exits 0 with no violation

@@ -51,3 +51,22 @@ describe("[SCN-SSM-002] a behaviour-bearing change on an internal PR with no tic
     expect(violation.message).toContain("SCN-LDG-002");
   });
 });
+
+describe("[SCN-SSM-003] a fork-sourced external PR is exempt from the gate", () => {
+  it("exempts a behaviour-bearing added code with no ticket handle when the PR is external (fork)", () => {
+    const result = decideScnGate(
+      baseInput({ addedCodes: ["SCN-LDG-003"], hasTicketHandle: false, isExternalPr: true })
+    );
+    // The exemption: a fork PR is skipped regardless of the missing handle.
+    expect(result.ok).toBe(true);
+    expect(result.violations).toEqual([]);
+  });
+
+  it("still reds the SAME no-handle change on an INTERNAL PR — fork status is the only exemption (teeth intact)", () => {
+    const result = decideScnGate(
+      baseInput({ addedCodes: ["SCN-LDG-003"], hasTicketHandle: false, isExternalPr: false })
+    );
+    expect(result.ok).toBe(false);
+    expect(result.violations[0]!.kind).toBe("missing-ticket-handle");
+  });
+});

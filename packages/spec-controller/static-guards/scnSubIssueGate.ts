@@ -20,11 +20,11 @@
  * lintScnSubIssuesCli.ts → readTicketHandle). There is NO Linear seam left to
  * consult — the decision is a pure function of the checked-out tree + CI metadata.
  *
- * `isExternalPr` is a SECOND injected boolean, added here (3F-1489) so the
- * fork-exemption slots in without a later signature churn. It is passed `false` in
- * this slice and the decision does not yet branch on it; @SCN-SSM-003 (3F-1495)
- * wires the live fork read (GITHUB_EVENT_PATH: head.repo != base.repo) and the
- * skip-silently exemption for external PRs.
+ * `isExternalPr` is a SECOND injected boolean (added 3F-1489). @SCN-SSM-003
+ * (3F-1495) wires the exemption over it: given `isExternalPr` the decision skips
+ * silently — no violation, whatever the codes or handle — the fork carve-out. The
+ * live CLI reads it from the GitHub PR event payload (GITHUB_EVENT_PATH:
+ * head.repo.full_name != base.repo.full_name); the decision stays hermetic.
  *
  * The teeth: the 3F-805 leak (new behaviour shipped as a @unit test, no Gherkin
  * @SCN delta, no @SCN cite in its describe/it) still reds — the @SCN cite is still
@@ -117,10 +117,21 @@ export interface ScnGateResult {
  * exemption → red; else the change must be ON A TICKET — `hasTicketHandle` → pass,
  * no handle → red with a `missing-ticket-handle` violation.
  *
- * `isExternalPr` is accepted (injected) but not yet consulted; @SCN-SSM-003 adds
- * the fork exemption over it.
+ * The fork exemption (@SCN-SSM-003): a FORK-SOURCED (external) PR is exempt —
+ * given `isExternalPr` the decision returns NO violation regardless of the codes
+ * or the (absent) ticket handle, so the methodology dogfoods on internal PRs
+ * without auto-rejecting community contributions. Fork status is the ONLY
+ * exemption signal — handle-absence is never exempting (a no-handle INTERNAL PR
+ * still reds; that is the very violation the gate exists to catch).
  */
 export function decideScnGate(input: ScnGateInput): ScnGateResult {
+  // Fork exemption: a fork-sourced (external) PR is skipped silently — no
+  // violation, whatever the code sets or the ticket handle. Fork status ONLY;
+  // an internal PR (isExternalPr false) still runs the full gate below.
+  if (input.isExternalPr) {
+    return { ok: true, violations: [] };
+  }
+
   const violations: ScnGateViolation[] = [];
 
   const checkCode = (code: string, verb: "Added" | "Updated" | "Deleted"): void => {
