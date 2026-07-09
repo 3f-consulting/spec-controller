@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { cliRegistry, renderBalanceHelp } from "./cli-registry.js";
+import { cliRegistry, renderBalanceHelp, renderTopLevelHelp } from "./cli-registry.js";
 
 describe("[SCN-CLI-006] renderBalanceHelp renders a line per registered balance flag", () => {
   const balanceFlags = cliRegistry.commands.find((c) => c.name === "balance")?.flags ?? [];
@@ -52,5 +52,34 @@ describe("[SCN-CLI-006] renderBalanceHelp renders a line per registered balance 
     }
     const flagLines = out.split("\n").filter((line) => /(^|\s)--[a-z]/.test(line));
     expect(flagLines).toHaveLength(balanceFlags.length);
+  });
+});
+
+describe("[SCN-CLI-007] renderTopLevelHelp renders the commands and the global scope", () => {
+  it("lists each registered command by name and its exact registry summary", () => {
+    // Teeth: the top-level surface is driven BY the registry's command set — every
+    // registered command's name AND its verbatim summary appear. A renderer that dropped a
+    // command, or reworded/wrapped its summary (as the hand-kept USAGE did), reds.
+    expect(cliRegistry.commands.length).toBeGreaterThan(0);
+    const out = renderTopLevelHelp(cliRegistry);
+    for (const command of cliRegistry.commands) {
+      expect(out).toContain(command.name);
+      expect(out).toContain(command.summary);
+    }
+  });
+
+  it("documents each global host modifier — name, arg-placeholder and exact description", () => {
+    // Teeth: the global scope (`--store <root>`, `--run-id <id>`) is rendered from the
+    // registry's global list, each with its verbatim description contiguous — proof the
+    // top-level help sources the host modifiers from the registry, not a hand-kept string.
+    expect(cliRegistry.global.length).toBeGreaterThanOrEqual(2);
+    const out = renderTopLevelHelp(cliRegistry);
+    for (const flag of cliRegistry.global) {
+      expect(out).toContain(flag.name);
+      expect(out).toContain(flag.description);
+      if (flag.arg !== undefined) expect(out).toContain(flag.arg);
+    }
+    expect(out).toContain("--store");
+    expect(out).toContain("--run-id");
   });
 });

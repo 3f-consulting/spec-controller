@@ -63,8 +63,9 @@ spec-controller balance --features ./features \
 | `--package-json <path>` | `package.json` — used to check a declared guard's script exists. |
 | `--target <name>` | A name recorded verbatim in the report's provenance (which project this run reconciled). |
 | `--source-sha <sha>` | Override the git commit SHA recorded in provenance (defaults to the resolved HEAD). |
-| `--format <fmt>[:<path>]` | Where to send output. Repeatable. See below. |
+| `--format <fmt>[:<path>]` | Where to send output (`md` or `json`, optionally `:<path>` to write to a file). Repeatable. See below. |
 | `--render-from-json <path>` | Re-render Markdown from a previously saved Evidence Reconciliation JSON — no reconcile, no live inputs. |
+| `--help`, `-h` | Show `balance`'s help and exit. |
 
 ### `--format` — routing the output
 
@@ -75,6 +76,31 @@ spec-controller balance --features ./features \
 - Repeat the flag to emit several at once: `--format md:report.md --format json:report.json`.
 
 At most one output may go to stdout in a single invocation. (The legacy `--json <path>` flag has been removed; use `--format json:<path>` instead.)
+
+### Host modifiers — storing a run (`--store` / `--run-id`)
+
+`--store` and `--run-id` are **host modifiers**: they go *before* the command, not among `balance`'s own flags.
+
+```sh
+spec-controller [--store <root>] [--run-id <id>] balance [options]
+```
+
+Storage is a cross-cutting concern of the host, not of `balance`. A leading `--store` turns any run into a **stored** run — the host writes `<root>/<target>/<run-id>/` with the reconciliation outputs plus a `run.yaml` manifest, and hands `balance` its own clean args unchanged (so a bare, no-`--store` run stays emit-only and byte-identical). Without `--store`, nothing is written to disk beyond what `--format …:<path>` requests.
+
+| Modifier | Purpose |
+|---|---|
+| `--store <root>` | Store the run: write `<root>/<target>/<run-id>/` with the reconciliation outputs + a `run.yaml` manifest. Required to store; there is no default (a default would write inside the repo). |
+| `--run-id <id>` | Name the stored run (default: an ISO-8601 UTC timestamp). |
+
+```sh
+spec-controller --store ./runs --run-id 2026-07-09-ci balance \
+  --features ./features \
+  --vitest ./vitest-report.json \
+  --target my-project
+# → ./runs/my-project/2026-07-09-ci/  (reconciliation outputs + run.yaml)
+```
+
+Run `spec-controller --help` for the top-level summary of commands and host modifiers, or `spec-controller balance --help` for `balance`'s full flag list.
 
 ---
 

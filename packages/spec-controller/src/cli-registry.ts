@@ -163,3 +163,41 @@ export function renderBalanceHelp(registry: CliRegistry): string {
     ...lines,
   ].join("\n");
 }
+
+/**
+ * Render the top-level `spec-controller --help` surface (@SCN-CLI-007) FROM the registry:
+ * a Commands section (each command's name + one-line summary) and a Host modifiers section
+ * (each global-scope flag: name + arg-placeholder + one-line description). The global-scope
+ * half of the two-scope registry — the counterpart to `renderBalanceHelp`'s per-command
+ * half — so the top-level usage no longer hand-keeps (and can no longer silently drift
+ * from) the command set or the host modifiers; both are sourced from `cliRegistry`.
+ * Summaries and descriptions render on a single line (no wrapping) so a registered string
+ * appears verbatim. Returns the block WITHOUT a trailing newline (the caller adds it).
+ */
+export function renderTopLevelHelp(registry: CliRegistry): string {
+  const commandGutter = 4;
+  const commandWidth = Math.max(0, ...registry.commands.map((c) => c.name.length));
+  const commandLines = registry.commands.map(
+    (command) => `  ${command.name.padEnd(commandWidth + commandGutter)}${command.summary}`,
+  );
+  const modifierGutter = 3;
+  const modifierWidth = Math.max(0, ...registry.global.map((f) => flagLabel(f).length));
+  const modifierLines = registry.global.map(
+    (flag) => `  ${flagLabel(flag).padEnd(modifierWidth + modifierGutter)}${flag.description}`,
+  );
+  const modifierUsage = registry.global.map((flag) => `[${flagLabel(flag)}]`).join(" ");
+  return [
+    "spec-controller — reconcile declared behaviour against observed evidence",
+    "",
+    "Usage:",
+    `  spec-controller ${modifierUsage} <command> [command-args]`,
+    "",
+    "Commands:",
+    ...commandLines,
+    "",
+    "Host modifiers (before the command):",
+    ...modifierLines,
+    "",
+    "Full flags, examples, and CI wiring: doc/how_to_use.md.",
+  ].join("\n");
+}

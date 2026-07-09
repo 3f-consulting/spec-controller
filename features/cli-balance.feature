@@ -85,3 +85,9 @@ Feature: spec-controller balance runs standalone
       Given the spec-controller binary
       When "spec-controller balance --help" is invoked
       Then it exits 0 and prints each registered balance flag with its description
+
+    @SCN-CLI-007 @unit @e2e
+    Scenario: spec-controller --help lists the commands and the global --store/--run-id modifiers
+      Given the spec-controller top-level binary
+      When "spec-controller --help" is run
+      Then it exits 0, lists each registered command, and documents the global --store and --run-id modifiers

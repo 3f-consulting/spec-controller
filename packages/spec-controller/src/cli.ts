@@ -30,23 +30,7 @@ import {
   type RunManifestMeta,
 } from "./run-management/keptRun.js";
 import { parseHostInvocation, wrapCommandArgv, peekFlag } from "./host.js";
-
-const USAGE = `spec-controller — reconcile declared behaviour against observed evidence
-
-Usage:
-  spec-controller [--store <root>] [--run-id <id>] balance [options]
-
-Commands:
-  balance    Reconcile Gherkin scenarios against test/CI evidence and emit the
-             Evidence Reconciliation (Markdown to stdout by default).
-
-Host modifiers (before the command):
-  --store <root>   Store the run: write <root>/<target>/<run-id>/ with the
-                   reconciliation outputs + a run.yaml manifest. Required to store;
-                   there is no default (a default would write inside the repo).
-  --run-id <id>    Name the stored run (default: an ISO-8601 UTC timestamp).
-
-Full flags, examples, and CI wiring: doc/how_to_use.md.`;
+import { cliRegistry, renderTopLevelHelp } from "./cli-registry.js";
 
 /** Dispatch a command to its handler with the given (clean or store-wrapped) argv. */
 function runCommand(command: string, argv: string[]): void {
@@ -55,7 +39,9 @@ function runCommand(command: string, argv: string[]): void {
       runBalance(argv);
       return;
     default:
-      process.stderr.write(`spec-controller: unknown command "${command}".\n\n${USAGE}\n`);
+      process.stderr.write(
+        `spec-controller: unknown command "${command}".\n\n${renderTopLevelHelp(cliRegistry)}\n`,
+      );
       process.exit(1);
   }
 }
@@ -65,7 +51,7 @@ function main(hostArgv: string[]): void {
   const command = inv.command;
 
   if (command === undefined || command === "help" || command === "--help" || command === "-h") {
-    process.stdout.write(USAGE + "\n");
+    process.stdout.write(renderTopLevelHelp(cliRegistry) + "\n");
     return;
   }
 

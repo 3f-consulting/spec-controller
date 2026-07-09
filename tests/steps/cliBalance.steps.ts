@@ -241,6 +241,79 @@ Then("it exits 0 and prints each registered balance flag with its description", 
   }
 });
 
+// @SCN-CLI-007
+/**
+ * The top-level surface: `spec-controller --help` (no subcommand) must list the
+ * registered COMMANDS and document the GLOBAL host modifiers (`--store` / `--run-id`),
+ * rendered from the registry's global scope — not the hand-kept USAGE string. Spawns the
+ * real binary WITHOUT the `balance` subcommand (distinct from CLI-006's `spawnBalance`),
+ * and asserts the registry's exact command summaries + global-modifier descriptions appear
+ * verbatim — the registry-SOURCED proof (the wrapped hand-kept USAGE breaks those exact
+ * strings across lines, so this reds until the top-level help renders from the registry).
+ */
+let topLevelArgs: string[] = [];
+let controllerResult: SpawnSyncReturns<string>;
+
+/** Spawn the real top-level binary with NO subcommand — the `spec-controller <flags>` path. */
+function spawnController(args: string[]): SpawnSyncReturns<string> {
+  const root = process.cwd();
+  const result = spawnSync(
+    join(root, "node_modules", ".bin", "tsx"),
+    [join(root, "packages", "spec-controller", "src", "cli.ts"), ...args],
+    { cwd: root, encoding: "utf8" },
+  );
+  assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
+  return result;
+}
+
+// @SCN-CLI-007
+Given("the spec-controller top-level binary", function () {
+  // No subcommand, no fixture: `--help` is answered by the dispatcher BEFORE any command.
+  topLevelArgs = ["--help"];
+});
+
+// @SCN-CLI-007
+When("{string} is run", function (command: string) {
+  assert.equal(command, "spec-controller --help");
+  controllerResult = spawnController(topLevelArgs);
+});
+
+// @SCN-CLI-007
+Then(
+  "it exits 0, lists each registered command, and documents the global --store and --run-id modifiers",
+  function () {
+    assert.equal(
+      controllerResult.status,
+      0,
+      `expected exit 0; got ${controllerResult.status}\n${controllerResult.stderr}`,
+    );
+    const out = controllerResult.stdout;
+    // Registry-SOURCED: every registered command appears by name AND with its EXACT
+    // registry summary as one contiguous string. The wrapped hand-kept USAGE breaks the
+    // summary across a newline, so this is the genuine red the registry rendering closes.
+    assert.ok(cliRegistry.commands.length > 0, "registry must register at least one command");
+    for (const command of cliRegistry.commands) {
+      assert.ok(out.includes(command.name), `expected top-level --help to list ${command.name}; got:\n${out}`);
+      assert.ok(
+        out.includes(command.summary),
+        `expected top-level --help to carry ${command.name}'s exact registry summary; got:\n${out}`,
+      );
+    }
+    // The global host-modifier scope: both `--store` and `--run-id` documented, each with
+    // its EXACT registry description contiguous (the wrapped USAGE breaks --store's).
+    assert.ok(cliRegistry.global.length >= 2, "registry must register the global --store/--run-id modifiers");
+    for (const flag of cliRegistry.global) {
+      assert.ok(out.includes(flag.name), `expected top-level --help to document ${flag.name}; got:\n${out}`);
+      assert.ok(
+        out.includes(flag.description),
+        `expected top-level --help to carry ${flag.name}'s exact registry description; got:\n${out}`,
+      );
+    }
+    assert.ok(out.includes("--store"), `expected top-level --help to document --store; got:\n${out}`);
+    assert.ok(out.includes("--run-id"), `expected top-level --help to document --run-id; got:\n${out}`);
+  },
+);
+
 // @SCN-CLI-004
 Then("the command exits with status {int}", function (code: number) {
   // The EXACT code, not merely non-zero (@SCN-CLI-004): an out-of-balance run must exit
