@@ -314,6 +314,47 @@ Then(
   },
 );
 
+// @SCN-CLI-009
+// The registry-bounded parser: `balance` accepts ONLY its registered flags; an
+// unregistered flag (a typo `--bogus`) is a usage error — exit 2 (3F-1414's 0/1/2
+// taxonomy), stderr naming the flag, BEFORE any reconcile. Distinct step wording from
+// CLI-006's `--help` steps (which assert `spec-controller balance --help`), so the two
+// scenarios never cross-match. Reuses the shared `spawnBalance` real-subprocess helper.
+Given("the spec-controller balance command", function () {
+  // The unregistered flag under test — a bare typo, no other args needed: the bounded
+  // parser rejects it before any reconcile, so no fixture target is required.
+  invocationArgs = ["--bogus"];
+});
+
+// @SCN-CLI-009
+When("{string} is run through the CLI binary", function (command: string) {
+  assert.equal(command, "spec-controller balance --bogus");
+  cliResult = spawnBalance(invocationArgs);
+});
+
+// @SCN-CLI-009
+Then("it exits with status 2 naming the unrecognised flag --bogus on stderr", function () {
+  // EXACTLY 2 — the usage code (3F-1414 / 3F-1405): an unregistered flag must never
+  // masquerade as the out-of-balance verdict (1) nor be silently swallowed (0). stderr
+  // names the offending flag so the operator sees the typo.
+  assert.equal(
+    cliResult.status,
+    2,
+    `expected exit 2; got ${cliResult.status}\nstdout:\n${cliResult.stdout}\nstderr:\n${cliResult.stderr}`,
+  );
+  assert.ok(
+    cliResult.stderr.includes("--bogus"),
+    `expected stderr to name the unknown flag --bogus; got:\n${cliResult.stderr}`,
+  );
+});
+
+// @SCN-CLI-009
+Then("nothing is reconciled to stdout", function () {
+  // The bounded parser rejects BEFORE runReconcile, so no Evidence Reconciliation is
+  // emitted — the unregistered flag never runs balance against zero evidence.
+  assert.doesNotMatch(cliResult.stdout, /Evidence Reconciliation/);
+});
+
 // @SCN-CLI-004
 Then("the command exits with status {int}", function (code: number) {
   // The EXACT code, not merely non-zero (@SCN-CLI-004): an out-of-balance run must exit

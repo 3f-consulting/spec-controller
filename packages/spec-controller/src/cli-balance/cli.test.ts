@@ -12,7 +12,8 @@
  */
 
 import { describe, it, expect, vi } from "vitest";
-import { checkInputsExist, checkLegacyJson, runBalance, sourceTarget } from "./cli.js";
+import { checkInputsExist, checkLegacyJson, checkUnknownFlags, runBalance, sourceTarget } from "./cli.js";
+import { cliRegistry } from "../cli-registry.js";
 
 describe("[SCN-FMT-006] checkLegacyJson rejects the removed --json flag with a migration hint", () => {
   it("returns the typed migration-hint error naming --format json:<path> when --json is present", () => {
@@ -149,6 +150,38 @@ describe("[SCN-CLI-004] runBalance sets the out-of-balance exit code AFTER emitt
       // Never leak a non-zero exit code into the vitest run itself.
       process.exitCode = savedExitCode;
     }
+  });
+});
+
+describe("[SCN-CLI-009] checkUnknownFlags bounds balance to the flags the registry declares", () => {
+  // The registry-bounded parser (operator constraint 1): `balance` accepts ONLY registered
+  // flags. parseArgs strips the `--`, so the predicate reads the bare-name keys and compares
+  // them against the balance command's registered flag names (+ aliases). Pure and
+  // @unit-testable at the CLI edge, like checkLegacyJson / checkInputsExist.
+  it("returns null when every parsed flag is registered", () => {
+    // Registered flags pass through: features/vitest/format/render-from-json/help are all in
+    // the balance scope, so the bounded parser accepts them and the reconcile proceeds.
+    expect(checkUnknownFlags({ features: "features", vitest: "v.json" }, cliRegistry)).toBeNull();
+    expect(
+      checkUnknownFlags({ format: "json:out.json", "render-from-json": "r.json" }, cliRegistry),
+    ).toBeNull();
+    // No flags at all is trivially all-registered.
+    expect(checkUnknownFlags({}, cliRegistry)).toBeNull();
+  });
+
+  it("returns a typed usage error naming an unregistered flag (the swallowed-typo footgun)", () => {
+    // Teeth: an unregistered flag — a bare `--bogus`, or a typo like `--strcit` for --strict —
+    // must NEVER be silently swallowed the way the old permissive parseArgs did. The predicate
+    // returns a non-null message that NAMES the offending flag, which runBalance routes to
+    // stderr + exit 2 (usage, per 3F-1414's 0/1/2 taxonomy), never exit 1, never a silent
+    // reconcile against the wrong intent.
+    const bogus = checkUnknownFlags({ bogus: "true" }, cliRegistry);
+    expect(bogus).not.toBeNull();
+    expect(bogus).toContain("--bogus");
+
+    const typo = checkUnknownFlags({ strcit: "true" }, cliRegistry);
+    expect(typo).not.toBeNull();
+    expect(typo).toContain("--strcit");
   });
 });
 

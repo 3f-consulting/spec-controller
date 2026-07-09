@@ -24,6 +24,7 @@ import { writeOutputs } from "./emit/writer.js";
 import { renderReportFromJson, isBalanced } from "@3f-consulting/spec-controller-core";
 import { resolveSourceSha, resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 import { cliRegistry, renderBalanceHelp } from "../cli-registry.js";
+import type { CliRegistry } from "../cli-registry.js";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
 
 /** Parse `--flag value` pairs from argv into a record. */
@@ -132,6 +133,43 @@ export function checkInputsExist(
   return null;
 }
 
+/**
+ * The registry-bounded flag check at the CLI edge (@SCN-CLI-009). `balance` accepts ONLY
+ * the flags its per-command registry scope declares (by `name` or `alias`); an unregistered
+ * flag — a typo like `--strcit`, a stray `--bogus` — is a usage error, NOT silently
+ * swallowed the way the old permissive `parseArgs` did. This is the structural teeth behind
+ * "accepted = registry = help": a flag can't affect behaviour without a registry entry (and
+ * so, by CLI-008's guard, without appearing in help).
+ *
+ * PURE and `@unit`-testable like `checkLegacyJson` / `checkInputsExist`: reads the parsed
+ * args (keys are the `--`-stripped flag names) + the registry, returns the FIRST unregistered
+ * flag as a typed usage error naming it WITH its dashes — routed to stderr + exit 2 by
+ * `runBalance` (per 3F-1414's `0` balanced / `1` out-of-balance / `2` usage taxonomy),
+ * never exit 1, never a silent reconcile — else null. The global `--store`/`--run-id`
+ * modifiers never reach here: the top-level dispatcher (`parseHostInvocation`) consumes them
+ * BEFORE `balance` is dispatched, so the bounded parser sees only the command's own args.
+ */
+export function checkUnknownFlags(args: Record<string, string>, registry: CliRegistry): string | null {
+  // The accepted set: every balance-scope flag name AND alias, with the leading dashes
+  // stripped so it compares against parseArgs's `--`-stripped keys (e.g. "--features" and
+  // "-h" become "features" and "h"). Built from the registry alone — the single source — so
+  // "accepted = registry" holds by construction.
+  const balance = registry.commands.find((command) => command.name === "balance");
+  const accepted = new Set<string>();
+  for (const flag of balance?.flags ?? []) {
+    accepted.add(flag.name.replace(/^-+/, ""));
+    for (const alias of flag.aliases ?? []) accepted.add(alias.replace(/^-+/, ""));
+  }
+  // The FIRST parsed flag not in the accepted set is the reported error (Object.keys is
+  // argv order, so this is deterministic). The message names the flag WITH its dashes.
+  for (const key of Object.keys(args)) {
+    if (!accepted.has(key)) {
+      return `Unknown flag --${key} for 'spec-controller balance'. Run 'spec-controller balance --help' to see the accepted flags.`;
+    }
+  }
+  return null;
+}
+
 export function runBalance(argv: string[]): void {
   // Answer `--help`/`-h` from the command/flag registry (@SCN-CLI-006) BEFORE any
   // parse or reconcile: render the balance command's per-command scope (a line per
@@ -161,6 +199,21 @@ export function runBalance(argv: string[]): void {
     // from the out-of-balance verdict code 1 (@SCN-CLI-004): an out-of-balance run must
     // never masquerade as a usage error, nor the reverse.
     process.exit(2);
+  }
+
+  // Registry-bounded parse (@SCN-CLI-009): `balance` accepts ONLY the flags its registry
+  // scope declares. An unregistered flag — a typo `--strcit`, a stray `--bogus` — is a
+  // USAGE error: name it on stderr, set process.exitCode = 2 (the enumerated usage code,
+  // 3F-1414's 0/1/2 taxonomy — never 1, never a silent swallow), and RETURN before any
+  // reconcile. Runs AFTER the legacy-`--json` guard so `--json` keeps its specific migration
+  // hint; the global `--store`/`--run-id` modifiers were consumed by the dispatcher before
+  // balance, so they never reach here. This is the structural teeth behind "accepted =
+  // registry = help" — a flag can't affect behaviour without a registry entry.
+  const unknownFlagError = checkUnknownFlags(args, cliRegistry);
+  if (unknownFlagError) {
+    process.stderr.write(unknownFlagError + "\n");
+    process.exitCode = 2;
+    return;
   }
 
   // Render-from-saved-JSON mode (@SCN-RMD-007): regenerate the human markdown from a

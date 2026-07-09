@@ -98,3 +98,10 @@ Feature: spec-controller balance runs standalone
       Then no per-command flag the registry declares is missing from the balance --help render
       And no global modifier and no registered command is missing from the top-level --help render
       And a registry entry that its help surface omits reds the guard
+
+    @SCN-CLI-009 @unit @e2e
+    Scenario: an unregistered flag to balance is a usage error
+      Given the spec-controller balance command
+      When "spec-controller balance --bogus" is run through the CLI binary
+      Then it exits with status 2 naming the unrecognised flag --bogus on stderr
+      And nothing is reconciled to stdout
