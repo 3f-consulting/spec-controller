@@ -25,9 +25,35 @@
  * Parent: @SCN-LDG-001.
  */
 
-import type { Scenario, EvidenceObligation, RuntimeQualityCheck } from "../model.js";
+import type { Scenario, EvidenceObligation, QualityCheck, RuntimeQualityCheck } from "../model.js";
 
 const SCN_CODE = /^SCN-[A-Z0-9]+-\d+$/;
+
+/**
+ * The recognised `<quality-check>pending` lexicon (evidence-manifesto §11B) — a bare tag
+ * (the `@` stripped) that DEFERS an obligation to a later slice. Exact-match keyed, so the
+ * `pending` suffix is significant: `integrationpending` is NOT `integration`, and an
+ * unrecognised `<x>pending` (or bare `pending`) is absent from the map → ignored. Unlike
+ * `TAG_TO_QUALITY_CHECK`, this covers ALL FIVE quality-checks including `lint` (a pending
+ * lint obligation is one-sided — no guard payload).
+ */
+const PENDING_TAG_TO_QUALITY_CHECK: Record<string, QualityCheck> = {
+  lintpending: "lint",
+  unitpending: "unit",
+  integrationpending: "integration",
+  e2epending: "e2e",
+  performancepending: "performance",
+};
+
+/**
+ * Recognise a `<quality-check>pending` tag (evidence-manifesto §11B) — return its deferred
+ * quality-check, or `null` when the bare tag is not one of the five recognised `<qc>pending`
+ * (a bare tier tag, an unknown `<x>pending`, or bare `pending`). The pure per-tag helper
+ * `parseScenarios` uses to derive a pending obligation.
+ */
+export function pendingQualityCheck(tag: string): QualityCheck | null {
+  return PENDING_TAG_TO_QUALITY_CHECK[tag] ?? null;
+}
 /**
  * `lint=<guard>` — the static-guard handle. Split on the FIRST `=`; the guard is
  * everything after it (the exact npm-script name, which may itself contain `:`).
@@ -146,8 +172,19 @@ export function parseScenarios(source: string): Scenario[] {
     if (scnTag) {
       const evidenceObligations: EvidenceObligation[] = [];
       const seenQualityChecks = new Set<RuntimeQualityCheck>();
+      const seenPending = new Set<QualityCheck>();
       const seenGuards = new Set<string>();
       for (const t of blockTags) {
+        // A `<quality-check>pending` tag derives a DEFERRED, one-sided obligation
+        // `{ qualityCheck, pending: true }` (no guard payload). Tracked in its own set so
+        // it is neither blocked by nor blocks a bare tier of the same quality-check, and
+        // recognised SEPARATELY from the bare tier tag (the `pending` suffix is significant).
+        const pendingCheck = pendingQualityCheck(t);
+        if (pendingCheck && !seenPending.has(pendingCheck)) {
+          seenPending.add(pendingCheck);
+          evidenceObligations.push({ qualityCheck: pendingCheck, pending: true });
+          continue;
+        }
         const qualityCheck = TAG_TO_QUALITY_CHECK[t];
         if (qualityCheck && !seenQualityChecks.has(qualityCheck)) {
           seenQualityChecks.add(qualityCheck);

@@ -125,6 +125,12 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     status: "declared",
     note: "the hermetic scenario↔sub-issue gate (ported from an earlier internal tool / an adopter's repository 3F-834) — every behaviour-bearing @SCN change on a PR must carry its @SCN cite AND a ticket handle, verified from the diff + CI metadata alone, no Linear call; wired PR-only via lint:scn-subissues (parent 3F-1137)",
   },
+  {
+    code: "PND",
+    slug: "pending-items",
+    status: "declared",
+    note: "the pending evidence obligation — a <quality-check>pending tag (evidence-manifesto §11B) parses as a deferred, one-sided obligation ({ qualityCheck, pending: true }); PARSE only, the ledger's Pending Item behaviour is a later slice",
+  },
 ];
 
 /** A single lint finding. */

@@ -22,6 +22,7 @@ import {
   countScnOccurrences,
   parseScenarios,
   parseUntaggedScenarios,
+  pendingQualityCheck,
   proseOnlyCodes,
 } from "./scenarios.js";
 
@@ -182,5 +183,36 @@ describe("[SCN-RPT-015] proseOnlyCodes returns the @SCN codes mentioned in prose
       "  Given @SCN-SAME-001 is also in prose here",
     ].join("\n");
     expect(proseOnlyCodes([single])).toEqual([]);
+  });
+});
+
+/**
+ * Unit test for pendingQualityCheck (@SCN-PND-001).
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-PND-001
+ * id matching features/pending-items.feature, so a grep of the id returns both halves —
+ * this @unit arm (the parse helper in isolation) and the @integration arm
+ * (tests/steps/pendingItems.steps.ts, the tag flowing through parseScenarios).
+ *
+ * Proves the helper that recognises a `<quality-check>pending` tag (evidence-manifesto
+ * §11B): each recognised `<qc>pending` maps to its quality-check, and the `pending` suffix
+ * is significant — a bare tier tag is NOT a pending recognition.
+ *
+ * Parent: @SCN-PND-001.
+ */
+describe("[SCN-PND-001] pendingQualityCheck recognises a <quality-check>pending tag", () => {
+  it("maps each recognised <qc>pending tag to its quality-check", () => {
+    expect(pendingQualityCheck("lintpending")).toBe("lint");
+    expect(pendingQualityCheck("unitpending")).toBe("unit");
+    expect(pendingQualityCheck("integrationpending")).toBe("integration");
+    expect(pendingQualityCheck("e2epending")).toBe("e2e");
+    expect(pendingQualityCheck("performancepending")).toBe("performance");
+  });
+
+  it("does not read a bare tier tag as pending — the suffix is significant", () => {
+    // The helper's own contract: a bare `@integration` is not a pending recognition
+    // (the full parseScenarios-level significance is @SCN-PND-002's scenario).
+    expect(pendingQualityCheck("integration")).toBeNull();
+    expect(pendingQualityCheck("lint")).toBeNull();
   });
 });

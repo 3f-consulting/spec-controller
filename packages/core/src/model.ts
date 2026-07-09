@@ -40,6 +40,15 @@ export interface EvidenceObligation {
   qualityCheck: QualityCheck;
   /** The guard handle — present IFF `qualityCheck === 'lint'`. */
   guard?: string;
+  /**
+   * The obligation is owed but deliberately DEFERRED to a later slice — a
+   * `<quality-check>pending` tag (evidence-manifesto §11B). ABSENT (undefined) on a
+   * normal obligation; `true` on a pending one. A pending obligation is one-sided:
+   * `@lintpending` derives `{ qualityCheck: 'lint', pending: true }` with NO guard payload
+   * (the guard doesn't exist yet). PARSE only — what a pending obligation DOES on the ledger
+   * (the one-sided Pending Item) is a later slice.
+   */
+  pending?: boolean;
 }
 
 /** A scenario's declared evidence obligations, read from its @SCN tags. */
