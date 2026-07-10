@@ -505,3 +505,51 @@ describe("[SCN-PND-018] a scenario-scope `@wip` and an obligation-scope `@integr
     expect(scenario!.evidenceObligations).toHaveLength(2);
   });
 });
+
+/**
+ * Unit test for the NEGATIVE BOUNDARY of scenario-scope community-tag deferral at the
+ * parseScenarios level (@SCN-PND-020).
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-PND-020 id
+ * matching features/pending-items.feature, so a grep of the id returns both halves — this
+ * @unit arm (parseScenarios over inline strings, in isolation) and the @integration arm
+ * (tests/steps/pendingItems.steps.ts, over a planted tests/fixtures/ feature-string).
+ *
+ * Pins the negative boundary of @SCN-PND-016: a tag NOT in the recognised deferral set — an
+ * unregistered project tag like `@foo`, neither a DEFAULT_DEFERRAL_TAGS community tag nor a
+ * `<qc>pending` obligation-scope tag — is given NO special meaning and defers NOTHING. A `@foo
+ * @unit` scenario derives a PLAIN (non-pending) unit obligation: the scenario-scope deferral is
+ * gated on membership of the recognised set, never on any tag that merely looks like a deferral.
+ * This is the slice-1 lexicon principle at scenario-scope — everything outside the recognised set
+ * passes through untouched, exactly like the obligation-scope `<x>pending` passthrough
+ * (@SCN-PND-003).
+ *
+ * Parent: @SCN-PND-020.
+ */
+describe("[SCN-PND-020] an unrecognised tag is given no special meaning — it defers nothing", () => {
+  it("derives a plain (non-pending) obligation for a scenario carrying an unrecognised @foo tag", () => {
+    // `@foo @unit`, no recognised deferral tag: `@foo` is not in the recognised set, so the bare
+    // `@unit` obligation stays plain (no pending flag) — the scenario-scope machinery does not
+    // over-reach into a tag that merely looks community-shaped.
+    const source = [
+      "@foo @unit @SCN-XXX-200",
+      "Scenario: a scenario carrying an unrecognised tag alongside a declared unit obligation",
+      "  Given a step",
+    ].join("\n");
+    const [scenario] = parseScenarios(source);
+    expect(scenario!.evidenceObligations).toEqual([{ qualityCheck: "unit" }]);
+  });
+
+  it("an unrecognised tag derives exactly what no extra tag would — the tag buys no special treatment", () => {
+    // Passthrough PARITY: the `@foo` scenario derives exactly the obligation set a bare `@unit`
+    // scenario (no extra tag at all) does — an unrecognised tag is inert, changing nothing.
+    const withFoo = parseScenarios(
+      ["@foo @unit @SCN-XXX-201", "Scenario: with an unrecognised tag", "  Given a step"].join("\n")
+    );
+    const withoutFoo = parseScenarios(
+      ["@unit @SCN-XXX-202", "Scenario: without any extra tag", "  Given a step"].join("\n")
+    );
+    expect(withFoo[0]!.evidenceObligations).toEqual(withoutFoo[0]!.evidenceObligations);
+    expect(withFoo[0]!.evidenceObligations).toEqual([{ qualityCheck: "unit" }]);
+  });
+});

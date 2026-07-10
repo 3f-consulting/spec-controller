@@ -299,3 +299,20 @@ Feature: A pending evidence obligation raises a Pending Item
       Then the filtered-out scenario's integration obligation is a Pending Item, not a missing reconciling item — the deferral overrides the absent observation
       And the pending-status scenario's integration obligation is a Pending Item, not a missing reconciling item — the deferral overrides the dropped observation
       And each scenario has verdict balanced and names no reconciling item — the declaration governs regardless of the observation side
+
+    # The NEGATIVE BOUNDARY of the slice-4 Rule: a tag NOT in the recognised deferral set — an
+    # unregistered project tag like `@foo` — is given NO special meaning and does NOT defer. The
+    # scenario-scope deferral is gated on membership of the recognised set (the DEFAULT_DEFERRAL_TAGS
+    # starter tags, or a project's configured extension @SCN-PND-021), never on any tag that merely
+    # LOOKS like a deferral. So a scenario carrying `@foo` alongside a declared `@unit` obligation
+    # reconciles that obligation ON ITS OBSERVATION (satisfied / failing / missing per slice 3) — here
+    # a passing unit observation reconciles it satisfied — and raises NO Pending Item. This is the
+    # slice-1 lexicon principle at scenario-scope: special meaning only for the recognised set;
+    # everything else passes through untouched, exactly like the obligation-scope `<x>pending`
+    # passthrough (@SCN-PND-003).
+    @unit @integration @SCN-PND-020
+    Scenario: an unrecognised tag is not treated as pending — the obligation reconciles on its observation
+      Given a planted fixture scenario carrying an unrecognised `@foo` tag alongside a declared `@unit` obligation, with a passing unit observation citing it
+      When the parser derives the unrecognised-tag scenario's evidence obligations and the reconciler reconciles it against that passing unit observation
+      Then the unit obligation is not deferred — the unrecognised tag carries no special meaning, so it has no pending flag
+      And the unit obligation reconciles satisfied and the scenario raises no Pending Item — verdict balanced, no reconciling item

@@ -1895,3 +1895,108 @@ Then(
     }
   }
 );
+
+// @SCN-PND-020 — the NEGATIVE BOUNDARY of the slice-4 Rule: an UNRECOGNISED tag (a tag absent
+// from the recognised deferral set — an unregistered project tag like `@foo`) is given NO special
+// meaning and defers NOTHING. Proved through the REAL parse→reconcile pipeline over the PLANTED
+// tests/fixtures/pending-tags/unrecognised-tag.feature (@SCN-PDZ-001 — `@foo @unit`, no recognised
+// deferral tag) fed a hand-built PASSING unit observation citing that very scenario. The bare
+// `@unit` obligation stays un-deferred (no pending flag — the scenario-scope machinery is gated on
+// membership of the recognised set), so it reconciles `satisfied`; the scenario raises NO Pending
+// Item. Never a real `@foo`-deferred scenario in the scanned features/ corpus (fixture policy,
+// evidence-manifesto §11B). The @unit arm (packages/core/src/parse/scenarios.test.ts,
+// [SCN-PND-020]) proves the same non-deferral over parseScenarios in isolation. Green-first over
+// the scenario-scope path (@SCN-PND-016, already delivered — an unrecognised tag isn't in the set,
+// so nothing is marked pending); teeth proven by a local mutation that defers on ANY tag
+// (reverted) — the `@foo` obligation would then wrongly become a Pending Item.
+const UNRECOGNISED_TAG_FIXTURE = join(
+  process.cwd(),
+  "tests/fixtures/pending-tags/features/unrecognised-tag.feature"
+);
+
+// The parsed scenario carrying `@foo @unit` (its parse-level obligations under test).
+let unrecognisedTagScenario: Scenario | undefined;
+
+Given(
+  "a planted fixture scenario carrying an unrecognised `@foo` tag alongside a declared `@unit` obligation, with a passing unit observation citing it",
+  function () {
+    // The fixture (@SCN-PDZ-001) is the source; the parse+reconcile (with the passing unit
+    // observation) happens in the When.
+  }
+);
+
+When(
+  "the parser derives the unrecognised-tag scenario's evidence obligations and the reconciler reconciles it against that passing unit observation",
+  function () {
+    // Feed the PLANTED unrecognised-tag fixture to the pure parser, then reconcile against a
+    // PASSING unit observation citing @SCN-PDZ-001. The `@foo` tag is NOT in the recognised
+    // deferral set, so the bare `@unit` obligation stays NON-pending (no scenario-scope deferral);
+    // the observation discharges it to `satisfied`, and no obligation partitions to a Pending Item.
+    const source = readFileSync(UNRECOGNISED_TAG_FIXTURE, "utf8");
+    const scenarios: Scenario[] = parseScenarios(source);
+    unrecognisedTagScenario = scenarios.find((s) => s.scnId === "SCN-PDZ-001");
+    assert.ok(unrecognisedTagScenario, "expected the planted fixture scenario SCN-PDZ-001 to parse");
+    const passingUnit: EvidenceObservation = {
+      qualityCheck: "unit",
+      scnId: "SCN-PDZ-001",
+      status: "passed",
+    };
+    reconciliation = reconcile([unrecognisedTagScenario], [passingUnit]);
+  }
+);
+
+Then(
+  "the unit obligation is not deferred — the unrecognised tag carries no special meaning, so it has no pending flag",
+  function () {
+    // The parse-level negative boundary: the `@foo` tag is unrecognised, so the bare `@unit`
+    // obligation stays plain (NO pending flag) — the scenario-scope deferral is gated on membership
+    // of the recognised set. Reds under a mutation that defers on ANY tag (the unit obligation
+    // would then wrongly gain `pending: true`).
+    const obligations = unrecognisedTagScenario!.evidenceObligations;
+    assert.deepEqual(
+      obligations,
+      [{ qualityCheck: "unit" }],
+      `the unrecognised @foo tag must defer nothing — the bare @unit obligation stays plain (no pending flag); got ${JSON.stringify(
+        obligations
+      )}`
+    );
+  }
+);
+
+Then(
+  "the unit obligation reconciles satisfied and the scenario raises no Pending Item — verdict balanced, no reconciling item",
+  function () {
+    // The reconcile side of the negative boundary: the un-deferred unit obligation reconciles
+    // `satisfied` against its passing observation (a genuine reconciling-side balance — the
+    // obligation reconciles ON ITS OBSERVATION, never partitioned off), and the scenario raises NO
+    // Pending Item. Verdict balanced, no reconciling item.
+    const scenario = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-PDZ-001");
+    assert.ok(scenario, "expected the reconciled fixture scenario (SCN-PDZ-001)");
+    assert.deepEqual(
+      scenario.evidenceObligations,
+      [{ qualityCheck: "unit", outcome: "satisfied" }],
+      `the un-deferred unit obligation must reconcile satisfied as the sole reconciled evidence obligation; got ${JSON.stringify(
+        scenario.evidenceObligations
+      )}`
+    );
+    assert.deepEqual(
+      scenario.pendingItems ?? [],
+      [],
+      `an unrecognised tag must raise NO Pending Item; got ${JSON.stringify(scenario.pendingItems)}`
+    );
+    assert.equal(
+      scenario.verdict,
+      "balanced",
+      `the negative-boundary scenario must have verdict balanced; got "${scenario.verdict}" (row: ${JSON.stringify(
+        scenario
+      )})`
+    );
+    assert.deepEqual(
+      scenario.reconcilingItems,
+      [],
+      `no reconciling item may be named — the unit obligation reconciles satisfied on its observation; got ${JSON.stringify(
+        scenario.reconcilingItems
+      )}`
+    );
+  }
+);
