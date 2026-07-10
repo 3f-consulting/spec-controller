@@ -26,6 +26,13 @@ import {
   proseOnlyCodes,
 } from "./scenarios.js";
 
+// The recognised community deferral tags, passed EXPLICITLY into `parseScenarios`. The core
+// default is now `[]` (a policy-free pure core recognises only what it is told); the starter
+// policy lives in the app (`packages/spec-controller/src/deferralTags.ts`). These @unit tests
+// inject the set to exercise scenario-scope deferral — mirroring the app always passing its
+// resolved (starter ∪ config) set at the ingest edge.
+const DEFERRAL_TAGS: readonly string[] = ["wip", "ignore", "skip", "todo", "pending"];
+
 describe("[SCN-RPT-008] countScnOccurrences counts every @SCN occurrence including non-tag context", () => {
   // Two tag-line declarations (@SCN-RPT-001, @SCN-LDG-003) plus two NON-tag mentions
   // (the same @SCN-RPT-001 in prose, @SCN-LNT-005 in a comment). Raw = 4; declared = 2.
@@ -351,7 +358,7 @@ describe("[SCN-PND-016] a recognised community deferral tag defers every declare
         "Scenario: a community-deferred scenario declaring unit and integration obligations",
         "  Given a step",
       ].join("\n");
-      const [scenario] = parseScenarios(source);
+      const [scenario] = parseScenarios(source, DEFERRAL_TAGS);
       // Every declared obligation is deferred pending — the community tag defers the whole
       // scenario. Reds today: a community tag is ignored, so the obligations are plain (no pending).
       expect(scenario!.evidenceObligations).toEqual([
@@ -364,7 +371,8 @@ describe("[SCN-PND-016] a recognised community deferral tag defers every declare
   it("defers a @lint=<guard> obligation too — the whole scenario is deferred", () => {
     // Scenario-scope deferral covers EVERY obligation kind, including a static-guard `@lint`.
     const [scenario] = parseScenarios(
-      ["@wip @lint=lint:feature-codes @SCN-XXX-110", "Scenario: a deferred lint scenario", "  Given a step"].join("\n")
+      ["@wip @lint=lint:feature-codes @SCN-XXX-110", "Scenario: a deferred lint scenario", "  Given a step"].join("\n"),
+      DEFERRAL_TAGS
     );
     expect(scenario!.evidenceObligations).toEqual([
       { qualityCheck: "lint", guard: "lint:feature-codes", pending: true },
@@ -444,7 +452,7 @@ describe("[SCN-PND-017] `@integrationpending` defers only its own obligation (ob
       "Scenario: the same scenario, now scenario-scope deferred",
       "  Given a step",
     ].join("\n");
-    const [scenario] = parseScenarios(source);
+    const [scenario] = parseScenarios(source, DEFERRAL_TAGS);
     expect(scenario!.evidenceObligations).toEqual([
       { qualityCheck: "unit", pending: true },
       { qualityCheck: "integration", pending: true },
@@ -482,7 +490,7 @@ describe("[SCN-PND-018] a scenario-scope `@wip` and an obligation-scope `@integr
       "Scenario: a composition scenario — scenario-scope over obligation-scope",
       "  Given a step",
     ].join("\n");
-    const [scenario] = parseScenarios(source);
+    const [scenario] = parseScenarios(source, DEFERRAL_TAGS);
     expect(scenario!.evidenceObligations).toEqual([
       { qualityCheck: "unit", pending: true },
       { qualityCheck: "integration", pending: true },
@@ -498,7 +506,7 @@ describe("[SCN-PND-018] a scenario-scope `@wip` and an obligation-scope `@integr
       "Scenario: overlap on the integration obligation",
       "  Given a step",
     ].join("\n");
-    const [scenario] = parseScenarios(source);
+    const [scenario] = parseScenarios(source, DEFERRAL_TAGS);
     const integration = scenario!.evidenceObligations.filter((o) => o.qualityCheck === "integration");
     expect(integration).toEqual([{ qualityCheck: "integration", pending: true }]);
     expect(scenario!.evidenceObligations).toHaveLength(2);
@@ -585,7 +593,7 @@ describe("[SCN-PND-022] a deferred scenario declaring no obligations synthesises
       "Scenario: a bare @wip scenario declaring no obligations",
       "  Given a step",
     ].join("\n");
-    const [scenario] = parseScenarios(source);
+    const [scenario] = parseScenarios(source, DEFERRAL_TAGS);
     expect(scenario!.evidenceObligations).toEqual([{ pending: true }]);
   });
 
@@ -604,7 +612,8 @@ describe("[SCN-PND-022] a deferred scenario declaring no obligations synthesises
     // obligation marks it pending (the @SCN-PND-016 scenario-scope path, unchanged) and adds NO
     // extra synthesised obligation — the list is exactly the one deferred obligation.
     const [scenario] = parseScenarios(
-      ["@wip @unit @SCN-XXX-212", "Scenario: a @wip scenario declaring a unit obligation", "  Given a step"].join("\n")
+      ["@wip @unit @SCN-XXX-212", "Scenario: a @wip scenario declaring a unit obligation", "  Given a step"].join("\n"),
+      DEFERRAL_TAGS
     );
     expect(scenario!.evidenceObligations).toEqual([{ qualityCheck: "unit", pending: true }]);
   });

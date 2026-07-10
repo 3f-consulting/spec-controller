@@ -15,7 +15,7 @@
  * source of truth. Registry + renderers live in the CLI/app layer, never the domain.
  */
 
-import { DEFAULT_DEFERRAL_TAGS } from "@3f-consulting/spec-controller-core";
+import { DEFAULT_DEFERRAL_TAGS } from "./deferralTags.js";
 
 /** One flag in a scope: its canonical name, optional aliases, value placeholder, help. */
 export interface FlagSpec {

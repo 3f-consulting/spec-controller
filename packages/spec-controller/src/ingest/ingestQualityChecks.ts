@@ -20,8 +20,8 @@ import {
   countScnOccurrences,
   parseUntaggedScenarios,
   proseOnlyCodes,
-  DEFAULT_DEFERRAL_TAGS,
 } from "@3f-consulting/spec-controller-core";
+import { DEFAULT_DEFERRAL_TAGS } from "../deferralTags.js";
 import {
   evidenceObligations,
   type EvidenceObligations,

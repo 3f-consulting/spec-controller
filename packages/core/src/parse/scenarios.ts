@@ -30,23 +30,6 @@ import type { Scenario, EvidenceObligation, QualityCheck, RuntimeQualityCheck } 
 const SCN_CODE = /^SCN-[A-Z0-9]+-\d+$/;
 
 /**
- * The single-sourced STARTER set of recognised community deferral tags (@SCN-PND-016) — bare
- * names (the `@` is tag-line syntax). A scenario whose tag block carries one of these DEFERS
- * every obligation it declares to a Pending Item (scenario-scope), reusing the slice-1/2
- * `pending` machinery. These are the established Cucumber deferral conventions; `parseScenarios`
- * takes the recognised set as a DEFAULTED param, so a project may EXTEND it by configuration
- * (@SCN-PND-021) — the injection reads `package.json` at the ingest edge and is NOT this seam's
- * concern (the core stays pure). Exported so the CLI `--help` can source the starter set.
- */
-export const DEFAULT_DEFERRAL_TAGS: readonly string[] = [
-  "wip",
-  "ignore",
-  "skip",
-  "todo",
-  "pending",
-];
-
-/**
  * The recognised `<quality-check>pending` lexicon (evidence-manifesto §11B) — a bare tag
  * (the `@` stripped) that DEFERS an obligation to a later slice. Exact-match keyed, so the
  * `pending` suffix is significant: `integrationpending` is NOT `integration`, and an
@@ -178,7 +161,7 @@ export function parseUntaggedScenarios(source: string): string[] {
 
 export function parseScenarios(
   source: string,
-  deferralTags: readonly string[] = DEFAULT_DEFERRAL_TAGS
+  deferralTags: readonly string[] = []
 ): Scenario[] {
   const scenarios: Scenario[] = [];
 
@@ -221,8 +204,9 @@ export function parseScenarios(
         }
       }
       // SCENARIO-SCOPE community deferral (@SCN-PND-016): when the tag block carries a
-      // RECOGNISED community deferral tag (a bare tag ∈ the injected set — the five
-      // DEFAULT_DEFERRAL_TAGS by default), the whole scenario is deferred: mark EVERY declared
+      // RECOGNISED community deferral tag (a bare tag ∈ the injected `deferralTags` set —
+      // empty by default; the app passes its starter policy ∪ config), the whole scenario is
+      // deferred: mark EVERY declared
       // obligation `pending: true`, overriding its observation-derived outcome. Applied AFTER the
       // obligation list is built, so it composes with the `<qc>pending` recognition and covers
       // every obligation kind (runtime tiers AND `@lint=<guard>`). Idempotent on an

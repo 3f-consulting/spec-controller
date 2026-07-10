@@ -23,7 +23,7 @@
 import { describe, it, expect } from "vitest";
 import { join } from "node:path";
 import { runReconcile, resolveDeferralTags } from "./ingestQualityChecks.js";
-import { DEFAULT_DEFERRAL_TAGS } from "@3f-consulting/spec-controller-core";
+import { DEFAULT_DEFERRAL_TAGS } from "../deferralTags.js";
 
 const FIXTURE = join(process.cwd(), "tests/fixtures/scn-lnt-005");
 const EXTERNAL_GUARD = "lint:vocab-check";

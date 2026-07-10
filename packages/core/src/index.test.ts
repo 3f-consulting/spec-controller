@@ -153,7 +153,6 @@ const EXPECTED_VALUE_EXPORTS: readonly string[] = [
   "countScnOccurrences",
   "parseUntaggedScenarios",
   "proseOnlyCodes",
-  "DEFAULT_DEFERRAL_TAGS",
   // Evidence-obligation census (census/evidenceObligations.ts)
   "evidenceObligations",
   // Reconcile (reconcile/reconcile.ts)

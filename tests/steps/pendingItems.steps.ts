@@ -21,6 +21,11 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseScenarios, reconcile, isBalanced, renderMarkdown, assembleReport } from "@3f-consulting/spec-controller-core";
 import { runReconcile } from "../../packages/spec-controller/src/ingest/ingestQualityChecks.js";
+// The starter community-deferral policy now lives in the APP, not the core barrel (@SCN-API-001).
+// These @integration steps pass it explicitly into the pure `parseScenarios` — the same resolved
+// set the `balance` pipeline hands the parser at the ingest edge — so the scenario-scope deferral
+// path is exercised end-to-end (app policy → core parse), behaviour unchanged.
+import { DEFAULT_DEFERRAL_TAGS } from "../../packages/spec-controller/src/deferralTags.js";
 import {
   parseCucumberEvidenceObservations,
   type CucumberJsonReport,
@@ -1463,7 +1468,7 @@ When(
     const scnId = COMMUNITY_TAG_TO_SCN[communityTag];
     assert.ok(scnId, `unexpected community tag "${communityTag}"`);
     const source = readFileSync(COMMUNITY_TAGS_FIXTURE, "utf8");
-    const scenarios: Scenario[] = parseScenarios(source);
+    const scenarios: Scenario[] = parseScenarios(source, DEFAULT_DEFERRAL_TAGS);
     communityScenario = scenarios.find((s) => s.scnId === scnId);
     assert.ok(communityScenario, `expected the planted fixture scenario ${scnId} to parse`);
     reconciliation = reconcile([communityScenario], []);
@@ -1658,7 +1663,7 @@ When(
     // `@wip`). Both partition to Pending Items — one from each source — so the second Then reads two
     // Pending Items, verdict balanced, off the real reconciliation.
     const source = readFileSync(COMPOSE_SCOPE_FIXTURE, "utf8");
-    const scenarios: Scenario[] = parseScenarios(source);
+    const scenarios: Scenario[] = parseScenarios(source, DEFAULT_DEFERRAL_TAGS);
     composeScopeScenario = scenarios.find((s) => s.scnId === "SCN-PDP-001");
     assert.ok(composeScopeScenario, "expected the planted fixture scenario SCN-PDP-001 to parse");
     reconciliation = reconcile([composeScopeScenario], []);
@@ -1767,7 +1772,7 @@ When(
     // deferral tag over an @integration obligation, so parseScenarios marks each integration
     // obligation pending (scenario-scope, @SCN-PND-016).
     const source = readFileSync(OVERRIDE_FIXTURE, "utf8");
-    const scenarios: Scenario[] = parseScenarios(source);
+    const scenarios: Scenario[] = parseScenarios(source, DEFAULT_DEFERRAL_TAGS);
     const filteredOut = scenarios.find((s) => s.scnId === "SCN-PDF-001");
     const pendingStatus = scenarios.find((s) => s.scnId === "SCN-PDF-002");
     assert.ok(filteredOut, "expected the planted filtered-out fixture scenario (SCN-PDF-001)");
@@ -2147,7 +2152,7 @@ When(
     // one qualityCheck-less Pending Item, verdict balanced. renderMarkdown internally assembles the
     // report and renders it — the assemble→render surface under test.
     const source = readFileSync(NO_OBLIGATIONS_FIXTURE, "utf8");
-    const scenarios: Scenario[] = parseScenarios(source);
+    const scenarios: Scenario[] = parseScenarios(source, DEFAULT_DEFERRAL_TAGS);
     const rec = reconcile(scenarios, []);
     noObligationsRow = rec.scenarioReconciliations.find((r) => r.scnId === "SCN-PDX-001");
     const ctx: RunContext = {

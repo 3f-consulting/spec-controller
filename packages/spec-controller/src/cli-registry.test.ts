@@ -12,7 +12,7 @@
 
 import { describe, it, expect } from "vitest";
 import { cliRegistry, renderBalanceHelp, renderTopLevelHelp } from "./cli-registry.js";
-import { DEFAULT_DEFERRAL_TAGS } from "@3f-consulting/spec-controller-core";
+import { DEFAULT_DEFERRAL_TAGS } from "./deferralTags.js";
 
 describe("[SCN-CLI-006] renderBalanceHelp renders a line per registered balance flag", () => {
   const balanceFlags = cliRegistry.commands.find((c) => c.name === "balance")?.flags ?? [];
