@@ -331,3 +331,51 @@ describe("[SCN-PND-010] the JSON report carries a scenario's Pending Items", () 
     expect(row.reconcilingItems).toEqual([]);
   });
 });
+
+/**
+ * Unit test for the JSON summary carrying the Pending Items tally (@SCN-PND-011).
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-PND-011 id
+ * matching features/pending-items.feature, so a grep of the id returns both halves.
+ *
+ * The markdown side is the genuine red→green of @SCN-PND-011 (the human renderer must learn to
+ * emit the Pending Items tally line). This JSON side is the glue-free CONSISTENCY pin: `renderJson`
+ * is `JSON.stringify(assembleReport(...))`, and the materialised `summary.pending` tally reaches
+ * the machine surface WITHOUT any renderer glue, so the two renderings stay consistent — the
+ * machine surface carries the same count the human surface renders. Its teeth are the exact count
+ * on the exact key, so a dropped/renamed field reds.
+ *
+ * Parent: (@SCN-PND-011).
+ */
+describe("[SCN-PND-011] the JSON summary carries the Pending Items tally", () => {
+  const pendingBalance: EvidenceReconciliation = {
+    scenarioReconciliations: [
+      {
+        scnId: "SCN-PDX-001",
+        kind: "scenario",
+        verdict: "balanced",
+        evidenceObligations: [],
+        reconcilingItems: [],
+        pendingItems: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }],
+      },
+      {
+        scnId: "SCN-PDX-002",
+        kind: "scenario",
+        verdict: "out-of-balance",
+        evidenceObligations: [{ qualityCheck: "unit", outcome: "missing" }],
+        reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
+        pendingItems: [{ qualityCheck: "integration" }],
+      },
+    ],
+  };
+
+  it("serialises summary.pending counting the Pending Items (glue-free consistency with markdown)", () => {
+    const parsed = JSON.parse(renderJson(pendingBalance, ctx));
+    // 2 (SCN-PDX-001) + 1 (SCN-PDX-002) = 3 Pending Items — the same tally the markdown renders.
+    expect(parsed.summary.pending).toBe(3);
+    // The tally is SEPARATE from the verdict counts and never an evidence-obligation outcome.
+    expect(parsed.summary.scenarios.balanced).toBe(1);
+    expect(parsed.summary.scenarios.outOfBalance).toBe(1);
+    expect(parsed.summary.evidenceObligations.byOutcome).not.toHaveProperty("pending");
+  });
+});

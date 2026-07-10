@@ -127,3 +127,19 @@ Feature: A pending evidence obligation raises a Pending Item
       Then the balanced scenario's row shows its deferred integration obligation as a Pending Item, labelled distinct from a reconciling item
       And the mixed scenario's row shows the missing unit error and the deferred integration Pending Item as separate, distinctly-labelled categories
       And no Pending Item is rendered as a reconciling item — the deferred integration check never appears as a missing or failing error
+
+    # The Summary now TALLIES Pending Items — the second surface sub-issue. The Evidence
+    # Reconciliation Summary carries a Pending Items count SEPARATE from the scenario balanced
+    # and out-of-balance counts, materialised on report.summary and rendered in the
+    # `### Evidence reconciliation` view. It counts Pending ITEMS (one per deferred obligation),
+    # not scenarios-carrying-pending — mirroring the out-of-balance decomposition, which counts
+    # obligations, not scenarios. Hard constraint (3F-1453 line, endorsed): the Pending tally is
+    # NEVER an eighth out-of-balance leaf — a Pending Item is deferred, not out-of-balance, so it
+    # is tallied apart, never a row under the seven-leaf out-of-balance decomposition.
+    @unit @integration @SCN-PND-011
+    Scenario: the Evidence Reconciliation Summary tallies Pending Items separately from balanced and out-of-balance
+      Given a planted summary-tally fixture — scenarios carrying Pending Items alongside a genuinely-missing error, spanning balanced and out-of-balance
+      When the report is assembled and rendered from the reconciled fixture
+      Then the materialised summary tallies the Pending Items, a count apart from the scenario balanced and out-of-balance counts
+      And the tally counts Pending Items, not scenarios carrying them — one deferred obligation is one Pending Item
+      And the rendered Evidence reconciliation shows the Pending Items tally, never an eighth out-of-balance leaf

@@ -108,6 +108,17 @@ export interface LintTally {
 export interface Summary {
   scenarios: ScenarioTotals;
   evidenceObligations: EvidenceObligationTotals;
+  /**
+   * The Pending Items tally (@SCN-PND-011) — the count of Pending Items across the
+   * reconciliation (one per deferred `<quality-check>pending` obligation, evidence-manifesto §11B),
+   * SEPARATE from the scenario balanced / out-of-balance counts and the evidence-obligation counts.
+   * A Pending Item is deferred, NOT out-of-balance, so it is NEVER folded into the seven
+   * `OUT_OF_BALANCE_OUTCOMES` (never an eighth leaf) nor into `evidenceObligations` — its own tally.
+   * Counts Pending ITEMS, not scenarios-carrying-pending (mirroring the out-of-balance
+   * decomposition, which counts obligations, not scenarios). Always present (a pure balance derive,
+   * like `lint`); reads 0 when no scenario declares a pending obligation.
+   */
+  pending: number;
   /** The runtime test-volume kind-counts (RMD-005) — present when the evidenceObservations read is threaded. */
   testVolume?: TestVolumeTotals;
   /** The static-guard kind-counts (RMD-005) — present when the guard read is threaded. */
@@ -204,7 +215,17 @@ function buildSummary(
   const verdict: Record<"balanced" | "out-of-balance", number> = { balanced: 0, "out-of-balance": 0 };
   let phantom = 0;
   let suspense = 0;
+  // The Pending Items tally (@SCN-PND-011) — the count of Pending Items across the
+  // reconciliation, one per deferred `<quality-check>pending` obligation. Counts ITEMS, not
+  // scenarios-carrying-pending (a scenario may declare several), mirroring the out-of-balance
+  // decomposition, which counts obligations, not scenarios. A Pending Item is a structurally
+  // distinct category (never a reconciling item / evidence obligation), so it is tallied
+  // SEPARATELY here — never folded into `byOutcome` (the seven out-of-balance leaves) below.
+  let pending = 0;
   for (const s of balance.scenarioReconciliations) {
+    // Pending Items ride every row's `pendingItems` (only declared scenarios carry them; a
+    // phantom / suspense row has none), so the tally is a plain sum across all rows.
+    pending += (s.pendingItems ?? []).length;
     if (s.kind === "phantom-scenario") {
       phantom++;
       continue;
@@ -263,6 +284,12 @@ function buildSummary(
         (subject) => ({ subject, count: missing.get(subject)! })
       ),
     },
+    // The Pending Items tally (@SCN-PND-011) — its OWN summary count, SEPARATE from the
+    // scenario verdict counts and the evidence-obligation counts. A Pending Item is deferred,
+    // not out-of-balance, so it is never one of the seven `OUT_OF_BALANCE_OUTCOMES` (never an
+    // eighth `byOutcome` leaf). Always present (a pure balance derive, like `lint`); reads 0
+    // when no scenario declares a pending obligation.
+    pending,
     // The runtime test-volume kind-counts (RMD-005), materialised only when the evidenceObservations read is
     // threaded. Ruling Q1: this `attributed` is the TEST-VOLUME attributed — credits that
     // CITE A DECLARED SCENARIO, which INCLUDES undemanded as a subset (matched-pair + undemanded). It

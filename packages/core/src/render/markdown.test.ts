@@ -1452,3 +1452,114 @@ describe("[SCN-PND-010] the markdown report renders a Pending Item distinct from
     expect(md).not.toMatch(/integration ∅ missing|integration ✗ failing/);
   });
 });
+
+/**
+ * Unit test for the Summary's Pending Items tally (@SCN-PND-011).
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-PND-011 id
+ * matching features/pending-items.feature, so a grep of the id returns both halves. The
+ * @integration arm (tests/steps/pendingItems.steps.ts) proves the same tally through the real
+ * parse→reconcile→assemble→render pipeline over a planted fixture; this @unit arm proves the
+ * renderer in isolation over hand-built balances carrying `pendingItems`.
+ *
+ * Proves the `### Evidence reconciliation` view carries a SEPARATE Pending Items tally, off the
+ * materialised `summary.pending` count. Hard constraint (3F-1453 line, endorsed): the tally is
+ * NEVER an eighth out-of-balance leaf — the seven-leaf `↳ <outcome>` decomposition stays intact
+ * and unchanged, and no `↳ pending` row is ever emitted. The tally is its OWN line (a Pending
+ * Item is deferred, not out-of-balance). Rendered only when the run genuinely carries Pending
+ * Items (the omit-when-empty precedent), so a zero-pending report stays byte-identical.
+ *
+ * Teeth: until the emitter reads `summary.pending`, no tally line renders — the ⏳ assertions
+ * red (the genuine red→green). The zero-pending regression row pins the byte-identical omission.
+ *
+ * Parent: (@SCN-PND-011).
+ */
+describe("[SCN-PND-011] the markdown Summary tallies Pending Items separately from the verdict counts", () => {
+  /** The `### Evidence reconciliation` section slice (heading to the next section heading). */
+  const evidenceReconciliationSection = (md: string): string => {
+    const i = md.indexOf("### Evidence reconciliation");
+    expect(i, "expected the Evidence reconciliation section").toBeGreaterThanOrEqual(0);
+    const rest = md.slice(i + 1);
+    const next = rest.search(/\n#{2,3} /);
+    return next >= 0 ? rest.slice(0, next) : rest;
+  };
+
+  // A balance carrying 3 Pending Items (two on SCN-PDX-001, one on SCN-PDX-002) alongside a
+  // genuine missing-unit error — so the seven-leaf out-of-balance decomposition renders AND the
+  // Pending tally is distinct from it.
+  const pendingBalance: EvidenceReconciliation = {
+    scenarioReconciliations: [
+      {
+        scnId: "SCN-PDX-001",
+        kind: "scenario",
+        verdict: "balanced",
+        evidenceObligations: [],
+        reconcilingItems: [],
+        pendingItems: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }],
+      },
+      {
+        scnId: "SCN-PDX-002",
+        kind: "scenario",
+        verdict: "out-of-balance",
+        evidenceObligations: [{ qualityCheck: "unit", outcome: "missing" }],
+        reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
+        pendingItems: [{ qualityCheck: "integration" }],
+      },
+    ],
+  };
+
+  it("renders the Pending Items tally (3) in the Evidence reconciliation view, marked with ⏳", () => {
+    const md = renderMarkdown(pendingBalance, ctx);
+    const section = evidenceReconciliationSection(md);
+    expect(section).toMatch(/⏳\s*3 Pending Item/);
+  });
+
+  it("keeps the seven-leaf out-of-balance decomposition intact — the tally is NOT an eighth leaf", () => {
+    const md = renderMarkdown(pendingBalance, ctx);
+    const section = evidenceReconciliationSection(md);
+    // The seven `↳ <outcome>` leaves still render, unchanged.
+    for (const leaf of [
+      "missing",
+      "failing",
+      "watermelon",
+      "cites-unknown-scenario",
+      "cites-no-scenario",
+      "undemanded",
+      "both-missing",
+    ]) {
+      expect(section).toContain(`↳ ${leaf} `);
+    }
+    // The Pending tally is NEVER a `↳ pending` leaf row — anywhere in the report.
+    expect(md).not.toContain("↳ pending");
+  });
+
+  it("renders the tally as its OWN line, after the out-of-balance decomposition (not a table row)", () => {
+    const md = renderMarkdown(pendingBalance, ctx);
+    const iBothMissing = md.indexOf("↳ both-missing");
+    const iTally = md.search(/⏳\s*3 Pending Item/);
+    expect(iBothMissing).toBeGreaterThanOrEqual(0);
+    expect(iTally).toBeGreaterThan(iBothMissing);
+    // The tally line is not a `| ↳ ... |` table row.
+    const tallyLine = md.split("\n").find((l) => /⏳\s*3 Pending Item/.test(l))!;
+    expect(tallyLine.startsWith("| ↳")).toBe(false);
+  });
+
+  it("omits the tally line entirely when no scenario carries a Pending Item (byte-identical regression)", () => {
+    const noPending: EvidenceReconciliation = {
+      scenarioReconciliations: [
+        {
+          scnId: "SCN-PDX-003",
+          kind: "scenario",
+          verdict: "balanced",
+          evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+          reconcilingItems: [],
+          pendingItems: [],
+        },
+      ],
+    };
+    const md = renderMarkdown(noPending, ctx);
+    // No pending items → no tally line, no ⏳ marker, the report unchanged from before this slice.
+    expect(md).not.toContain("Pending Item");
+    expect(md).not.toContain("⏳");
+  });
+});

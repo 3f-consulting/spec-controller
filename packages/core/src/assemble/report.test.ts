@@ -612,3 +612,103 @@ describe("[SCN-LDG-008] the two attributed counts stay distinct (ruling Q1)", ()
     );
   });
 });
+
+/**
+ * Unit tests for the materialised Pending Items tally (@SCN-PND-011).
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries @SCN-PND-011, matching
+ * features/pending-items.feature, so a grep of the id returns both halves (this @unit + the
+ * Cucumber @integration step-block).
+ *
+ * The summary materialises a Pending Items tally — a count of the Pending Items across the
+ * reconciliation (one per deferred `<quality-check>pending` obligation), SEPARATE from the
+ * scenario balanced / out-of-balance counts and the evidence-obligation counts. Hard constraint
+ * (3F-1453 line, endorsed): a Pending Item is deferred, NOT out-of-balance, so the tally is NEVER
+ * folded into `evidenceObligations.byOutcome` (the seven out-of-balance leaf outcomes) nor into
+ * the evidence-obligation total — it is its OWN count. It counts Pending ITEMS, not
+ * scenarios-carrying-pending (mirroring the out-of-balance decomposition, which counts
+ * obligations, not scenarios). Being a pure balance derive (like the lint tally), it is ALWAYS
+ * present. The glue-free JSON carries it with no renderer glue.
+ */
+describe("[SCN-PND-011] the summary materialises a Pending Items tally, separate from the verdict counts", () => {
+  // A balance with teeth: SCN-PDX-001 carries TWO Pending Items (balanced), SCN-PDX-002 ONE
+  // (out-of-balance via a genuine missing unit error), SCN-PDX-003 NONE (balanced). So Pending
+  // Items = 3 across 2 scenarios; scenarios: 3 (balanced 2, out-of-balance 1); evidence
+  // obligations: 2 (1 satisfied, 1 missing). The tally (3) coincides with none of them.
+  const pendingBalance: EvidenceReconciliation = {
+    scenarioReconciliations: [
+      {
+        scnId: "SCN-PDX-001",
+        kind: "scenario",
+        verdict: "balanced",
+        evidenceObligations: [],
+        reconcilingItems: [],
+        pendingItems: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }],
+      },
+      {
+        scnId: "SCN-PDX-002",
+        kind: "scenario",
+        verdict: "out-of-balance",
+        evidenceObligations: [{ qualityCheck: "unit", outcome: "missing" }],
+        reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
+        pendingItems: [{ qualityCheck: "integration" }],
+      },
+      {
+        scnId: "SCN-PDX-003",
+        kind: "scenario",
+        verdict: "balanced",
+        evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+        reconcilingItems: [],
+        pendingItems: [],
+      },
+    ],
+  };
+
+  it("materialises summary.pending counting Pending Items across the rows", () => {
+    const report = assembleReport(pendingBalance, ctx);
+    // 2 (SCN-PDX-001) + 1 (SCN-PDX-002) + 0 (SCN-PDX-003) = 3 Pending Items.
+    expect(report.summary.pending).toBe(3);
+  });
+
+  it("counts Pending ITEMS, not scenarios carrying them (SCN-PDX-001 alone carries two)", () => {
+    const report = assembleReport(pendingBalance, ctx);
+    const scenariosCarryingPending = pendingBalance.scenarioReconciliations.filter(
+      (s) => (s.pendingItems ?? []).length > 0
+    ).length;
+    expect(scenariosCarryingPending).toBe(2);
+    // The tally counts items (3), not the 2 scenarios carrying them — the load-bearing distinction.
+    expect(report.summary.pending).not.toBe(scenariosCarryingPending);
+  });
+
+  it("keeps the tally SEPARATE from the scenario balanced / out-of-balance counts", () => {
+    const report = assembleReport(pendingBalance, ctx);
+    expect(report.summary.scenarios).toEqual({ total: 3, balanced: 2, outOfBalance: 1, phantom: 0, suspense: 0 });
+    // The tally is its own number — it coincides with neither verdict count.
+    expect(report.summary.pending).not.toBe(report.summary.scenarios.balanced);
+    expect(report.summary.pending).not.toBe(report.summary.scenarios.outOfBalance);
+  });
+
+  it("NEVER folds a Pending Item into the evidence-obligation counts (not an eighth out-of-balance outcome)", () => {
+    const report = assembleReport(pendingBalance, ctx);
+    // The evidence-obligation total counts the two REAL obligations (1 satisfied + 1 missing) —
+    // the three Pending Items are NOT obligations, so they never inflate it.
+    expect(report.summary.evidenceObligations.total).toBe(2);
+    expect(report.summary.evidenceObligations.outOfBalance).toBe(1);
+    expect(report.summary.evidenceObligations.byOutcome.satisfied).toBe(1);
+    expect(report.summary.evidenceObligations.byOutcome.missing).toBe(1);
+    // There is NO `pending` key among the reconciliation outcomes — a Pending Item is a
+    // structurally distinct category, never one of the seven out-of-balance leaves.
+    expect(report.summary.evidenceObligations.byOutcome).not.toHaveProperty("pending");
+  });
+
+  it("is always present — a pure balance derive reading 0 when no scenario declares a pending obligation", () => {
+    const report = assembleReport(balance, ctx);
+    // The `balance` fixture (top of file) declares no pending obligations, so the tally reads 0.
+    expect(report.summary.pending).toBe(0);
+  });
+
+  it("carries the tally through the glue-free JSON serialisation", () => {
+    const parsed = JSON.parse(renderJson(pendingBalance, ctx));
+    expect(parsed.summary.pending).toBe(3);
+  });
+});

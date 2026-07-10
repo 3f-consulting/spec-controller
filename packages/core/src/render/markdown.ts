@@ -259,6 +259,19 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
     const detail = outcome === "missing" ? missingSplit : "";
     lines.push(row([`↳ ${outcome}`, "", "", String(evidenceObligations.byOutcome[outcome]), detail]));
   }
+  // The Pending Items tally (@SCN-PND-011) — a SEPARATE line, NEVER an eighth out-of-balance
+  // leaf (3F-1453 line, endorsed): a Pending Item is deferred, not out-of-balance, so it is
+  // tallied apart from BOTH the balanced and out-of-balance counts and the seven-leaf `↳`
+  // decomposition above — its own line, never a `↳` row under the out-of-balance table. Read
+  // off the materialised `summary.pending`; rendered only when the run genuinely carries Pending
+  // Items (the omit-when-empty precedent), so a zero-pending report stays byte-identical.
+  const pending = report.summary.pending;
+  if (pending > 0) {
+    lines.push("");
+    lines.push(
+      `⏳ ${pending} Pending Item(s) — deferred, tallied apart from balanced and out-of-balance.`
+    );
+  }
   lines.push("");
   return lines;
 };

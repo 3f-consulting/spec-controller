@@ -19,12 +19,13 @@ import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { parseScenarios, reconcile, isBalanced, renderMarkdown } from "@3f-consulting/spec-controller-core";
+import { parseScenarios, reconcile, isBalanced, renderMarkdown, assembleReport } from "@3f-consulting/spec-controller-core";
 import type {
   Scenario,
   EvidenceObligation,
   EvidenceObservation,
   EvidenceReconciliation,
+  Report,
   RunContext,
 } from "@3f-consulting/spec-controller-core";
 
@@ -864,6 +865,150 @@ Then(
       renderedReport,
       /integration ∅ missing|integration ✗ failing/,
       `no deferred integration obligation may render as a reconciling-item error in:\n${renderedReport}`
+    );
+  }
+);
+
+// @SCN-PND-011 — the Evidence Reconciliation SUMMARY tallies Pending Items SEPARATELY from the
+// scenario balanced and out-of-balance counts. Proved through the REAL
+// parse→reconcile→assemble→render (assemble→render) pipeline over the PLANTED
+// tests/fixtures/pending-tags/summary-tally.feature — @SCN-PDT-001 (`@unitpending
+// @integrationpending`, two Pending Items, balanced), @SCN-PDT-002 (`@unit @integrationpending`,
+// one Pending Item, out-of-balance via a missing unit) and @SCN-PDT-003 (`@unit`, no Pending
+// Item, out-of-balance). Reconciled against NO observations: the materialised summary tally
+// counts 3 Pending Items (2 + 1 + 0) across 2 scenarios, apart from balanced (1) and
+// out-of-balance (2). Never a real `@<qc>pending` scenario in the scanned features/ corpus
+// (fixture policy, evidence-manifesto §11B). The @unit arm proves the summary materialisation
+// (packages/core/src/assemble/report.test.ts, [SCN-PND-011]) and the render + JSON consistency
+// (packages/core/src/render/markdown.test.ts + json.test.ts, [SCN-PND-011]) in isolation.
+const SUMMARY_TALLY_FIXTURE = join(
+  process.cwd(),
+  "tests/fixtures/pending-tags/features/summary-tally.feature"
+);
+
+// The assembled report + rendered markdown of the reconciled summary-tally fixture.
+let summaryReport: Report;
+let summaryRendered: string;
+
+Given(
+  "a planted summary-tally fixture — scenarios carrying Pending Items alongside a genuinely-missing error, spanning balanced and out-of-balance",
+  function () {
+    // The fixture (all three scenarios) is the source; the parse+reconcile+assemble+render
+    // happens in the When.
+  }
+);
+
+When("the report is assembled and rendered from the reconciled fixture", function () {
+  // Feed the PLANTED summary-tally fixture through the REAL parse→reconcile→assemble→render
+  // pipeline. No observation is supplied: @SCN-PDT-001 is balanced-with-pending (two Pending
+  // Items), @SCN-PDT-002 reconciles its bare unit to a `missing` error (out-of-balance) while
+  // its `@integrationpending` partitions to a Pending Item, and @SCN-PDT-003's bare unit is a
+  // `missing` error (out-of-balance, no Pending Item). assembleReport materialises the summary
+  // (the Pending Items tally under test) and renderMarkdown renders it. Reds before the tally is
+  // materialised (summary.pending is undefined) and before the renderer emits its line.
+  const source = readFileSync(SUMMARY_TALLY_FIXTURE, "utf8");
+  const scenarios: Scenario[] = parseScenarios(source);
+  const reconciliation = reconcile(scenarios, []);
+  const ctx: RunContext = {
+    target: "pending-summary-tally-fixture",
+    inputs: {},
+    runStart: new Date("2026-07-10T00:00:00.000Z"),
+    sourceSha: null,
+  };
+  summaryReport = assembleReport(reconciliation, ctx);
+  summaryRendered = renderMarkdown(reconciliation, ctx);
+});
+
+Then(
+  "the materialised summary tallies the Pending Items, a count apart from the scenario balanced and out-of-balance counts",
+  function () {
+    // The summary carries a Pending Items tally of 3 — the two on @SCN-PDT-001 plus the one on
+    // @SCN-PDT-002. It is SEPARATE from the scenario verdict tally (balanced 1, out-of-balance 2):
+    // a Pending Item is deferred, neither balanced nor out-of-balance. Reds before the tally is
+    // materialised (summary.pending undefined).
+    assert.equal(
+      summaryReport.summary.pending,
+      3,
+      `the summary must tally 3 Pending Items; got ${summaryReport.summary.pending} (summary: ${JSON.stringify(
+        summaryReport.summary
+      )})`
+    );
+    assert.equal(
+      summaryReport.summary.scenarios.balanced,
+      1,
+      `expected 1 balanced scenario; got ${summaryReport.summary.scenarios.balanced}`
+    );
+    assert.equal(
+      summaryReport.summary.scenarios.outOfBalance,
+      2,
+      `expected 2 out-of-balance scenarios; got ${summaryReport.summary.scenarios.outOfBalance}`
+    );
+    // The tally is its OWN number — it coincides with neither the balanced nor the
+    // out-of-balance count (the separateness the behaviour names).
+    assert.notEqual(summaryReport.summary.pending, summaryReport.summary.scenarios.balanced);
+    assert.notEqual(summaryReport.summary.pending, summaryReport.summary.scenarios.outOfBalance);
+  }
+);
+
+Then(
+  "the tally counts Pending Items, not scenarios carrying them — one deferred obligation is one Pending Item",
+  function () {
+    // The tally equals the TOTAL Pending Items across the reconciled rows (one per deferred
+    // obligation), NOT the number of scenarios carrying pending. @SCN-PDT-001 alone carries two,
+    // so items (3) exceeds scenarios-carrying-pending (2) — the load-bearing distinction.
+    const totalItems = summaryReport.evidenceReconciliation.flatMap((s) => s.pendingItems ?? []).length;
+    const scenariosCarryingPending = summaryReport.evidenceReconciliation.filter(
+      (s) => (s.pendingItems ?? []).length > 0
+    ).length;
+    assert.equal(
+      summaryReport.summary.pending,
+      totalItems,
+      `the tally must count Pending Items (${totalItems}), not ${summaryReport.summary.pending}`
+    );
+    assert.equal(totalItems, 3, `expected 3 Pending Items across the rows; got ${totalItems}`);
+    assert.equal(
+      scenariosCarryingPending,
+      2,
+      `expected 2 scenarios carrying pending; got ${scenariosCarryingPending}`
+    );
+    assert.notEqual(
+      summaryReport.summary.pending,
+      scenariosCarryingPending,
+      `the tally counts items, not scenarios carrying them — it must not equal ${scenariosCarryingPending}`
+    );
+  }
+);
+
+Then(
+  "the rendered Evidence reconciliation shows the Pending Items tally, never an eighth out-of-balance leaf",
+  function () {
+    // The `### Evidence reconciliation` view shows a distinct Pending Items tally carrying the
+    // count (3). Reds before the renderer emits it.
+    const iSection = summaryRendered.indexOf("### Evidence reconciliation");
+    assert.ok(iSection >= 0, `expected the Evidence reconciliation section in:\n${summaryRendered}`);
+    const rest = summaryRendered.slice(iSection + 1);
+    const nextHeading = rest.search(/\n#{2,3} /);
+    const section = nextHeading >= 0 ? rest.slice(0, nextHeading) : rest;
+    // The tally shows within the section, carrying the count, marked with ⏳ (the pending marker).
+    assert.match(
+      section,
+      /⏳\s*3 Pending Item/,
+      `the Evidence reconciliation section must show the Pending Items tally (3); got:\n${section}`
+    );
+    // The seven out-of-balance leaves stay INTACT — the tally is not one of them.
+    for (const leaf of ["missing", "failing", "watermelon", "both-missing"]) {
+      assert.match(
+        section,
+        new RegExp(`↳ ${leaf} `),
+        `the seven-leaf out-of-balance decomposition must stay intact (↳ ${leaf}); got:\n${section}`
+      );
+    }
+    // The Pending tally is NEVER an eighth out-of-balance leaf (3F-1453 line): no `↳ pending`
+    // row anywhere in the whole report.
+    assert.doesNotMatch(
+      summaryRendered,
+      /↳ pending/,
+      `a Pending Item must NEVER render as an out-of-balance leaf (↳ pending) in:\n${summaryRendered}`
     );
   }
 );
