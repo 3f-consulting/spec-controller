@@ -261,7 +261,7 @@ export interface ScenarioReconciliation {
    * (no pending items), the same reserved-default convention as `kind`. `reconcile`
    * always sets it explicitly (`[]` when the scenario declared no pending obligation).
    */
-  pendingItems?: PendingItem[];
+  pendingItems: PendingItem[];
 }
 
 /**

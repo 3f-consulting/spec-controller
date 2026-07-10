@@ -32,6 +32,7 @@ const balancedScenario = (scnId: string): ScenarioReconciliation => ({
   kind: "scenario",
   verdict: "balanced",
   evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+  pendingItems: [],
   reconcilingItems: [],
 });
 
@@ -54,6 +55,7 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
           kind: "scenario",
           verdict: "out-of-balance",
           evidenceObligations: [{ qualityCheck: "integration", outcome: "missing" }],
+          pendingItems: [],
           reconcilingItems: [{ qualityCheck: "integration", outcome: "missing" }],
         },
       ],
@@ -76,6 +78,7 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
           kind: "suspense-scenario",
           verdict: "out-of-balance",
           evidenceObligations: [{ qualityCheck: "lint", guard: "guard:static", outcome: "cites-no-scenario" }],
+          pendingItems: [],
           reconcilingItems: [{ qualityCheck: "lint", guard: "guard:static", outcome: "cites-no-scenario" }],
         },
       ],
@@ -95,6 +98,7 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
           kind: "phantom-scenario",
           verdict: "out-of-balance",
           evidenceObligations: [{ qualityCheck: "unit", outcome: "cites-unknown-scenario" }],
+          pendingItems: [],
           reconcilingItems: [{ qualityCheck: "unit", outcome: "cites-unknown-scenario" }],
         },
       ],

@@ -28,7 +28,7 @@ import type { RuntimeEvidenceObservationKindCounts } from "../census/evidenceObs
 /** A minimal balanced balance — enough for the renderer to serialise a report. */
 const balance: EvidenceReconciliation = {
   scenarioReconciliations: [
-    { scnId: "SCN-RPT-002", verdict: "balanced", evidenceObligations: [], reconcilingItems: [] },
+    { scnId: "SCN-RPT-002", verdict: "balanced", evidenceObligations: [], pendingItems: [], reconcilingItems: [] },
   ],
 };
 

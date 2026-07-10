@@ -29,7 +29,7 @@ import type { RuntimeEvidenceObservationKindCounts } from "../census/evidenceObs
 /** A minimal balanced balance — enough for the renderer to produce a report. */
 const balance: EvidenceReconciliation = {
   scenarioReconciliations: [
-    { scnId: "SCN-RPT-001", verdict: "balanced", evidenceObligations: [], reconcilingItems: [] },
+    { scnId: "SCN-RPT-001", verdict: "balanced", evidenceObligations: [], pendingItems: [], reconcilingItems: [] },
   ],
 };
 
@@ -119,6 +119,7 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
           { qualityCheck: "unit", outcome: "satisfied" },
           { qualityCheck: "integration", outcome: "failing" },
         ],
+        pendingItems: [],
         reconcilingItems: [
           { qualityCheck: "integration", outcome: "failing" },
         ],
@@ -133,6 +134,7 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
           { qualityCheck: "unit", outcome: "missing" },
           { qualityCheck: "integration", outcome: "missing" },
         ],
+        pendingItems: [],
         reconcilingItems: [
           { qualityCheck: "unit", outcome: "missing" },
           { qualityCheck: "integration", outcome: "missing" },
@@ -144,6 +146,7 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
         evidenceObligations: [
           { qualityCheck: "unit", outcome: "satisfied" },
         ],
+        pendingItems: [],
         reconcilingItems: [],
       },
     ],
@@ -235,6 +238,7 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
             { qualityCheck: "unit", outcome: "missing" },
             { qualityCheck: "integration", outcome: "missing" },
           ],
+          pendingItems: [],
           reconcilingItems: [
             { qualityCheck: "unit", outcome: "missing" },
             { qualityCheck: "integration", outcome: "missing" },
@@ -246,6 +250,7 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
           evidenceObligations: [
             { qualityCheck: "unit", outcome: "missing" },
           ],
+          pendingItems: [],
           reconcilingItems: [
             { qualityCheck: "unit", outcome: "missing" },
           ],
@@ -276,6 +281,7 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
             { qualityCheck: "integration", outcome: "missing" },
             { qualityCheck: "lint", guard: "typecheck", outcome: "missing" },
           ],
+          pendingItems: [],
           reconcilingItems: [
             { qualityCheck: "integration", outcome: "missing" },
             { qualityCheck: "lint", guard: "typecheck", outcome: "missing" },
@@ -339,6 +345,7 @@ describe("[SCN-RPT-005] the markdown report lists the lint evidence obligations 
           { qualityCheck: "lint", guard: "guard-typecheck", outcome: "satisfied" },
           { qualityCheck: "integration", outcome: "failing" },
         ],
+        pendingItems: [],
         reconcilingItems: [
           { qualityCheck: "integration", outcome: "failing" },
         ],
@@ -353,6 +360,7 @@ describe("[SCN-RPT-005] the markdown report lists the lint evidence obligations 
           },
           { qualityCheck: "e2e", outcome: "missing" },
         ],
+        pendingItems: [],
         reconcilingItems: [
           {
             qualityCheck: "lint", guard: "guard-lint",
@@ -411,6 +419,7 @@ describe("[SCN-RPT-005] the markdown report lists the lint evidence obligations 
           scnId: "SCN-A",
           verdict: "balanced",
           evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+          pendingItems: [],
           reconcilingItems: [],
         },
       ],
@@ -468,12 +477,14 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
         scnId: "SCN-LDG-001",
         verdict: "balanced",
         evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+        pendingItems: [],
         reconcilingItems: [],
       },
       {
         scnId: "SCN-LDG-003",
         verdict: "out-of-balance",
         evidenceObligations: [{ qualityCheck: "unit", outcome: "missing" }],
+        pendingItems: [],
         reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
       },
       {
@@ -485,6 +496,7 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
             outcome: "watermelon",
           },
         ],
+        pendingItems: [],
         reconcilingItems: [
           {
             qualityCheck: "lint", guard: "guard-lint",
@@ -496,12 +508,14 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
         scnId: "SCN-LNT-009",
         verdict: "balanced",
         evidenceObligations: [{ qualityCheck: "lint", guard: "guard-lint", outcome: "satisfied" }],
+        pendingItems: [],
         reconcilingItems: [],
       },
       {
         scnId: "SCN-LDG-007",
         verdict: "out-of-balance",
         evidenceObligations: [{ qualityCheck: "integration", outcome: "failing" }],
+        pendingItems: [],
         reconcilingItems: [{ qualityCheck: "integration", outcome: "failing" }],
       },
     ],
@@ -551,6 +565,7 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
           scnId: "SCN-LDG-001",
           verdict: "balanced",
           evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+          pendingItems: [],
           reconcilingItems: [],
         },
       ],
@@ -574,6 +589,7 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
               outcome: "watermelon",
             },
           ],
+          pendingItems: [],
           reconcilingItems: [
             {
               qualityCheck: "lint", guard: "guard-lint",
@@ -651,12 +667,14 @@ describe("[SCN-RPT-007] the declared corpus census is recoverable from the ledge
         scnId: "SCN-A",
         verdict: "balanced",
         evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+        pendingItems: [],
         reconcilingItems: [],
       },
       {
         scnId: "SCN-B",
         verdict: "out-of-balance",
         evidenceObligations: [{ qualityCheck: "integration", outcome: "missing" }],
+        pendingItems: [],
         reconcilingItems: [{ qualityCheck: "integration", outcome: "missing" }],
       },
       {
@@ -664,6 +682,7 @@ describe("[SCN-RPT-007] the declared corpus census is recoverable from the ledge
         kind: "scenario",
         verdict: "out-of-balance",
         evidenceObligations: [{ outcome: "both-missing" }],
+        pendingItems: [],
         reconcilingItems: [{ outcome: "both-missing" }],
       },
     ],
@@ -721,7 +740,7 @@ describe("[SCN-RPT-007] the declared corpus census is recoverable from the ledge
 describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN occurrences", () => {
   const simple: EvidenceReconciliation = {
     scenarioReconciliations: [
-      { scnId: "SCN-A", verdict: "balanced", evidenceObligations: [], reconcilingItems: [] },
+      { scnId: "SCN-A", verdict: "balanced", evidenceObligations: [], pendingItems: [], reconcilingItems: [] },
     ],
   };
   const evidenceObligations = { rawScnOccurrences: 10, scenarioCount: 7, excludedOccurrences: 3, untaggedScenarios: [], proseOnlyCodes: [] };
@@ -779,12 +798,14 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
         scnId: "SCN-LDG-001",
         verdict: "balanced",
         evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+        pendingItems: [],
         reconcilingItems: [],
       },
       {
         scnId: "SCN-LDG-002",
         verdict: "out-of-balance",
         evidenceObligations: [{ qualityCheck: "unit", outcome: "missing" }],
+        pendingItems: [],
         reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
       },
       {
@@ -793,6 +814,7 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
         evidenceObligations: [
           { qualityCheck: "lint", guard: "guard-lint", outcome: "watermelon" },
         ],
+        pendingItems: [],
         reconcilingItems: [
           { qualityCheck: "lint", guard: "guard-lint", outcome: "watermelon" },
         ],
@@ -878,7 +900,7 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
 describe("[SCN-RPT-010] the markdown report renders the Test volume evidenceObservations reconciliation", () => {
   const balance: EvidenceReconciliation = {
     scenarioReconciliations: [
-      { scnId: "SCN-A", verdict: "balanced", evidenceObligations: [], reconcilingItems: [] },
+      { scnId: "SCN-A", verdict: "balanced", evidenceObligations: [], pendingItems: [], reconcilingItems: [] },
     ],
   };
   // A evidenceObservations fixture whose kind-counts sum cleanly: raw 5 unit + 3 integration = 8;
@@ -955,6 +977,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
           { qualityCheck: "lint", guard: "guard-x", outcome: "satisfied" },
           { qualityCheck: "lint", guard: "guard-y", outcome: "watermelon" },
         ],
+        pendingItems: [],
         reconcilingItems: [
           { qualityCheck: "lint", guard: "guard-y", outcome: "watermelon" },
         ],
@@ -963,24 +986,28 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
         scnId: "SCN-B",
         verdict: "out-of-balance",
         evidenceObligations: [{ qualityCheck: "unit", outcome: "missing" }],
+        pendingItems: [],
         reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
       },
       {
         scnId: "SCN-C",
         verdict: "balanced",
         evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+        pendingItems: [],
         reconcilingItems: [],
       },
       {
         scnId: "SCN-D",
         verdict: "balanced",
         evidenceObligations: [{ qualityCheck: "integration", outcome: "satisfied" }],
+        pendingItems: [],
         reconcilingItems: [],
       },
       {
         scnId: "SCN-E",
         verdict: "out-of-balance",
         evidenceObligations: [{ qualityCheck: "lint", guard: "guard-z", outcome: "missing" }],
+        pendingItems: [],
         reconcilingItems: [{ qualityCheck: "lint", guard: "guard-z", outcome: "missing" }],
       },
     ],
@@ -1085,7 +1112,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
 describe("[SCN-RPT-014] the markdown report renders untagged scenarios in the declared-corpus census", () => {
   const balanced: EvidenceReconciliation = {
     scenarioReconciliations: [
-      { scnId: "SCN-A", verdict: "balanced", evidenceObligations: [], reconcilingItems: [] },
+      { scnId: "SCN-A", verdict: "balanced", evidenceObligations: [], pendingItems: [], reconcilingItems: [] },
     ],
   };
   const evidenceObligations = {
@@ -1147,7 +1174,7 @@ describe("[SCN-RPT-014] the markdown report renders untagged scenarios in the de
 describe("[SCN-RPT-015] the markdown report renders prose-only @SCN codes in the declared-corpus census", () => {
   const balanced: EvidenceReconciliation = {
     scenarioReconciliations: [
-      { scnId: "SCN-A", verdict: "balanced", evidenceObligations: [], reconcilingItems: [] },
+      { scnId: "SCN-A", verdict: "balanced", evidenceObligations: [], pendingItems: [], reconcilingItems: [] },
     ],
   };
   const evidenceObligations = {
@@ -1264,6 +1291,7 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the seven leaf out
         kind: "scenario",
         verdict: "out-of-balance",
         evidenceObligations: [{ qualityCheck: "unit", outcome: "missing" }],
+        pendingItems: [],
         reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
       },
       {
@@ -1273,6 +1301,7 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the seven leaf out
         evidenceObligations: [
           { qualityCheck: "unit", outcome: "cites-no-scenario", locator: "tests/stray.test.ts:1" },
         ],
+        pendingItems: [],
         reconcilingItems: [
           { qualityCheck: "unit", outcome: "cites-no-scenario", locator: "tests/stray.test.ts:1" },
         ],
@@ -1282,6 +1311,7 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the seven leaf out
         kind: "scenario",
         verdict: "out-of-balance",
         evidenceObligations: [{ outcome: "both-missing" }],
+        pendingItems: [],
         reconcilingItems: [{ outcome: "both-missing" }],
       },
     ],

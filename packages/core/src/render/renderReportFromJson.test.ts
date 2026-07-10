@@ -33,12 +33,14 @@ const balance: EvidenceReconciliation = {
       scnId: "SCN-CHK-001",
       verdict: "balanced",
       evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+      pendingItems: [],
       reconcilingItems: [],
     },
     {
       scnId: "SCN-CHK-002",
       verdict: "out-of-balance",
       evidenceObligations: [{ qualityCheck: "integration", outcome: "missing" }],
+      pendingItems: [],
       reconcilingItems: [{ qualityCheck: "integration", outcome: "missing" }],
     },
     // A SUSPENSE-scenario row — an uncited runtime credit + the suspense
@@ -53,6 +55,7 @@ const balance: EvidenceReconciliation = {
         { qualityCheck: "unit", outcome: "cites-no-scenario", locator: "src/b.test.ts" },
         { qualityCheck: "lint", guard: "lint:bar", outcome: "cites-no-scenario" },
       ],
+      pendingItems: [],
       reconcilingItems: [
         { qualityCheck: "unit", outcome: "cites-no-scenario", locator: "src/b.test.ts" },
         { qualityCheck: "lint", guard: "lint:bar", outcome: "cites-no-scenario" },

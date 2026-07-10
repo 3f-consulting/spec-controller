@@ -35,6 +35,7 @@ const balance: EvidenceReconciliation = {
       scnId: "SCN-RMD-001",
       verdict: "balanced",
       evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+      pendingItems: [],
       reconcilingItems: [],
     },
     {
@@ -44,6 +45,7 @@ const balance: EvidenceReconciliation = {
         { qualityCheck: "unit", outcome: "missing" },
         { qualityCheck: "integration", outcome: "missing" },
       ],
+      pendingItems: [],
       reconcilingItems: [
         { qualityCheck: "unit", outcome: "missing" },
         { qualityCheck: "integration", outcome: "missing" },
@@ -286,6 +288,7 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
           { qualityCheck: "lint", guard: "lint:foo", outcome: "satisfied" },
           { qualityCheck: "unit", outcome: "missing" },
         ],
+        pendingItems: [],
         reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
       },
       {
@@ -294,6 +297,7 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
         evidenceObligations: [
           { qualityCheck: "lint", guard: "lint:bar", outcome: "watermelon" },
         ],
+        pendingItems: [],
         reconcilingItems: [
           { qualityCheck: "lint", guard: "lint:bar", outcome: "watermelon" },
         ],
@@ -381,6 +385,7 @@ describe("[SCN-RMD-006] the report model carries the feature titles", () => {
         scnId: "SCN-LDG-003",
         verdict: "out-of-balance",
         evidenceObligations: [{ qualityCheck: "unit", outcome: "missing" }],
+        pendingItems: [],
         reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
       },
       {
@@ -389,6 +394,7 @@ describe("[SCN-RMD-006] the report model carries the feature titles", () => {
         evidenceObligations: [
           { qualityCheck: "lint", guard: "guard-lint", outcome: "watermelon" },
         ],
+        pendingItems: [],
         reconcilingItems: [
           { qualityCheck: "lint", guard: "guard-lint", outcome: "watermelon" },
         ],
@@ -570,6 +576,7 @@ describe("[SCN-LDG-008] the two attributed counts stay distinct (ruling Q1)", ()
           { qualityCheck: "unit", outcome: "satisfied" },
           { qualityCheck: "integration", outcome: "undemanded", locator: "src/undemanded.test.ts" },
         ],
+        pendingItems: [],
         reconcilingItems: [
           { qualityCheck: "integration", outcome: "undemanded", locator: "src/undemanded.test.ts" },
         ],
