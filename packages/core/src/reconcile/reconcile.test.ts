@@ -750,3 +750,45 @@ describe("[SCN-PND-009] a @unit @integrationpending scenario with a passing unit
     expect(scenario?.reconcilingItems).toEqual([]);
   });
 });
+
+describe("[SCN-PND-014] an undeclared undefined step is reported out-of-balance (missing), not excused as pending", () => {
+  // The anti-leniency corollary of PND-013, sharpened at the VERDICT level over the REAL reader
+  // feeding the REAL reconciler (§11A). A scenario declares an @integration obligation and NO
+  // <qc>pending; its cucumber run has an `undefined` step. The reader drops the inconclusive
+  // scenario (emits nothing), so the declared obligation reconciles MISSING by absence and the
+  // verdict is out-of-balance. Because no <qc>pending was declared, NO Pending Item is raised —
+  // an undefined step is NOT excused as pending (Cucumber's own leniency, the hole this tool must
+  // not have). Pending is a DECLARATION, never inferred from an inconclusive run's status.
+  it("drops the undefined observation → the declared obligation reconciles missing, verdict out-of-balance, no Pending Item", () => {
+    const scenarios: Scenario[] = [
+      { scnId: "SCN-PND-014", evidenceObligations: [{ qualityCheck: "integration" }] },
+    ];
+    // The observed side, straight from the REAL cucumber reader: an `undefined` step is
+    // inconclusive → dropped → an EMPTY observation set (no back-door hand-built observation).
+    const report: CucumberJsonReport = [
+      {
+        uri: "features/pnd014.feature",
+        elements: [
+          {
+            tags: [{ name: "@integration" }, { name: "@SCN-PND-014" }],
+            steps: [{ result: { status: "undefined" } }],
+          },
+        ],
+      },
+    ];
+    const observations = parseCucumberEvidenceObservations(report, "integration");
+    expect(observations).toEqual([]); // the reader dropped the inconclusive scenario.
+
+    const balance = reconcile(scenarios, observations);
+    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-PND-014");
+
+    // Missing by absence — the anti-leniency outcome.
+    expect(scenario?.verdict).toBe("out-of-balance");
+    expect(scenario?.reconcilingItems).toEqual([
+      { qualityCheck: "integration", outcome: "missing" },
+    ]);
+    // The teeth: NOT excused as pending. A Pending Item requires a <qc>pending declaration, which
+    // this scenario does not carry — so it raises none.
+    expect(scenario?.pendingItems).toEqual([]);
+  });
+});

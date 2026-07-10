@@ -185,3 +185,18 @@ Feature: A pending evidence obligation raises a Pending Item
         | pending   | missing   |
         | skipped   | missing   |
         | ambiguous | missing   |
+
+    # The anti-leniency corollary of PND-013, at the VERDICT level: PND-013 pinned the reader's
+    # per-status outcome; this pins what an undefined step DOES to a scenario that declared an
+    # obligation but NO `<qc>pending`. Cucumber's own leniency would silently excuse an undefined
+    # step (the hole this tool must not have); here the dropped observation leaves the declared
+    # `@integration` obligation MISSING, so the scenario verdict is out-of-balance — a real gap,
+    # never a Pending Item. A Pending Item requires a `<qc>pending` DECLARATION (slice 1/4); it is
+    # never inferred from an inconclusive run's status. This is the observation-side assertion that
+    # makes "pending is a declaration, never inferred from status" bite.
+    @unit @integration @SCN-PND-014
+    Scenario: an undeclared undefined step is reported out-of-balance (missing), not excused as pending
+      Given a planted declared integration obligation carrying no pending declaration, and a cucumber report whose step is undefined
+      When the cucumber reader drops the undefined step and the reconciler reconciles the declared obligation
+      Then the scenario verdict is out-of-balance, its integration obligation a missing reconciling item
+      And the scenario raises no Pending Item — the undefined step is not excused as pending

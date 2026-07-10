@@ -1233,3 +1233,99 @@ Then(
     );
   }
 );
+
+// @SCN-PND-014 — the anti-leniency corollary of PND-013, at the VERDICT level, proved through the
+// REAL parse→reconcile pipeline. The DECLARED side is the planted
+// tests/fixtures/pending-tags/features/undefined-not-pending.feature (a single @integration
+// @SCN-PDA-001 obligation, an UNREGISTERED fixture code, carrying NO `<qc>pending` declaration).
+// The OBSERVED side is a cucumber JSON report whose one step is `undefined`, fed to the REAL
+// parseCucumberEvidenceObservations (§11A): the reader drops the inconclusive scenario, so the
+// declared obligation finds no observation and reconciles MISSING by absence — the scenario verdict
+// is out-of-balance. Because no `<qc>pending` was declared, the scenario raises NO Pending Item: an
+// undefined step is NOT excused as pending (Cucumber's own leniency, the hole this tool must not
+// have). Pending is a DECLARATION (slice 1/4), never inferred from an inconclusive run's status.
+// Never a real scanned scenario (fixture policy, evidence-manifesto §11B). The @unit arm
+// (packages/core/src/reconcile/reconcile.test.ts, [SCN-PND-014]) sharpens the same assertion over
+// the real reader feeding the real reconciler in isolation.
+const UNDEFINED_NOT_PENDING_FIXTURE = join(
+  process.cwd(),
+  "tests/fixtures/pending-tags/features/undefined-not-pending.feature"
+);
+
+let antiLeniencyScenarios: Scenario[];
+let antiLeniencyReport: CucumberJsonReport;
+
+Given(
+  "a planted declared integration obligation carrying no pending declaration, and a cucumber report whose step is undefined",
+  function () {
+    // Parse the DECLARED side from the planted fixture (one @integration @SCN-PDA-001 obligation,
+    // no `<qc>pending`) and build the OBSERVED side — a cucumber JSON report whose single step is
+    // `undefined`. The reader runs in the When.
+    const source = readFileSync(UNDEFINED_NOT_PENDING_FIXTURE, "utf8");
+    antiLeniencyScenarios = parseScenarios(source);
+    antiLeniencyReport = [
+      {
+        uri: "features/undefined-not-pending.feature",
+        elements: [
+          {
+            tags: [{ name: "@integration" }, { name: "@SCN-PDA-001" }],
+            steps: [{ result: { status: "undefined" } }],
+          },
+        ],
+      },
+    ];
+  }
+);
+
+When(
+  "the cucumber reader drops the undefined step and the reconciler reconciles the declared obligation",
+  function () {
+    // The REAL cucumber reader (§11A): the `undefined` step is inconclusive, so the reader emits
+    // NOTHING — the declared obligation joins against an empty observation set and reconciles
+    // missing by absence.
+    const observations = parseCucumberEvidenceObservations(antiLeniencyReport, "integration");
+    reconciliation = reconcile(antiLeniencyScenarios, observations);
+  }
+);
+
+Then(
+  "the scenario verdict is out-of-balance, its integration obligation a missing reconciling item",
+  function () {
+    const scenario = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-PDA-001");
+    assert.ok(scenario, "expected the declared fixture scenario (SCN-PDA-001)");
+    assert.equal(
+      scenario.verdict,
+      "out-of-balance",
+      `an undefined step for a declared, non-pending integration obligation must leave the scenario out-of-balance; got "${
+        scenario.verdict
+      }" (row: ${JSON.stringify(scenario)})`
+    );
+    const missing = scenario.reconcilingItems.filter(
+      (o) => o.qualityCheck === "integration" && o.outcome === "missing"
+    );
+    assert.equal(
+      missing.length,
+      1,
+      `the integration obligation must be the scenario's one missing reconciling item; got ${
+        missing.length
+      } (reconcilingItems: ${JSON.stringify(scenario.reconcilingItems)})`
+    );
+  }
+);
+
+Then(
+  "the scenario raises no Pending Item — the undefined step is not excused as pending",
+  function () {
+    const scenario = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-PDA-001");
+    assert.ok(scenario, "expected the declared fixture scenario (SCN-PDA-001)");
+    // The anti-leniency teeth: an inconclusive run raises NO Pending Item. A Pending Item requires
+    // a `<qc>pending` DECLARATION (slice 1/4) — it is never inferred from an observation's status.
+    assert.deepEqual(
+      scenario.pendingItems,
+      [],
+      `an undefined step with no <qc>pending declaration must raise no Pending Item — it is not excused as pending; got ${JSON.stringify(
+        scenario.pendingItems
+      )}`
+    );
+  }
+);
