@@ -158,3 +158,30 @@ Feature: A pending evidence obligation raises a Pending Item
       Then the clean-balanced scenario's balanced row shows the em-dash placeholder — nothing outstanding
       And the balanced-with-pending scenario's balanced row shows the ⏳ pending label instead — owed work, never an error
       And the two balanced rows read differently at a glance — the pending row is not the clean-balanced em-dash
+
+  # Pending is NEVER inferred from an observation's STATUS — a stub that ran but proved nothing
+  # is missing, not pending. This pins the READER's three-way classification (the seam being
+  # refactored, distinct from @LDG which tests the reconciler over hand-built observations). The
+  # cucumber reader classifies THREE-WAY: any failing step → a `failed` observation (failing);
+  # all steps passed → a `passed` observation (satisfied); otherwise INCONCLUSIVE
+  # (undefined/pending/skipped/ambiguous, none failed) → the reader emits NOTHING, so the declared
+  # obligation finds no observation and reconciles missing BY ABSENCE. `EvidenceStatus` stays
+  # binary (passed/failed) — the drop realises inconclusive→missing with no new status and no
+  # reconciler change. `ambiguous` is deliberately inconclusive, not failing (no valid pass →
+  # missing, never its own category).
+  Rule: An observation status maps to an existing outcome — pending is never inferred from status
+
+    @unit @integration @SCN-PND-013
+    Scenario Outline: a <result> cucumber observation for a non-deferred obligation → <outcome>
+      Given a planted declared integration obligation and a cucumber report whose step status is "<result>"
+      When the cucumber reader parses the report and the reconciler reconciles the declared obligation
+      Then the declared integration obligation reconciles "<outcome>"
+
+      Examples:
+        | result    | outcome   |
+        | passed    | satisfied |
+        | failed    | failing   |
+        | undefined | missing   |
+        | pending   | missing   |
+        | skipped   | missing   |
+        | ambiguous | missing   |

@@ -20,6 +20,10 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseScenarios, reconcile, isBalanced, renderMarkdown, assembleReport } from "@3f-consulting/spec-controller-core";
+import {
+  parseCucumberEvidenceObservations,
+  type CucumberJsonReport,
+} from "@3f-consulting/spec-controller-core";
 import type {
   Scenario,
   EvidenceObligation,
@@ -1141,6 +1145,91 @@ Then(
       pendingCell,
       /⏳ pending: integration/,
       `the balanced-with-pending exceptions cell must carry the ⏳ pending: integration label; got: "${pendingCell}"`
+    );
+  }
+);
+
+// @SCN-PND-013 — the cucumber reader's THREE-WAY classification, proved through the REAL
+// parse→reconcile pipeline. The DECLARED side is the planted
+// tests/fixtures/pending-tags/features/inconclusive-classification.feature (a single
+// @integration @SCN-PDN-001 obligation, an UNREGISTERED fixture code). The OBSERVED side is a
+// cucumber JSON report built per Examples row and fed to the REAL
+// parseCucumberEvidenceObservations (§11A — the reader's own emitted-or-dropped output, never a
+// hand-built observation). A `passed`/`failed` step emits a passed/failed observation →
+// satisfied/failing; an inconclusive step (`undefined`/`pending`/`skipped`/`ambiguous`, none
+// failed) is DROPPED, so the declared obligation finds no observation and reconciles missing BY
+// ABSENCE. Reds today: an inconclusive result currently emits a `failed` observation, so the
+// obligation reconciles `failing`, not `missing`. Never a real scanned scenario (fixture policy,
+// evidence-manifesto §11B). The @unit arm (packages/core/src/parse/cucumber.test.ts,
+// [SCN-PND-013]) proves the emitted-or-dropped classification over the reader in isolation.
+const INCONCLUSIVE_FIXTURE = join(
+  process.cwd(),
+  "tests/fixtures/pending-tags/features/inconclusive-classification.feature"
+);
+
+// The row's step status, the parsed declared side, and the built observed-side report.
+let classificationResult: string;
+let classificationScenarios: Scenario[];
+let classificationReport: CucumberJsonReport;
+
+Given(
+  "a planted declared integration obligation and a cucumber report whose step status is {string}",
+  function (result: string) {
+    // Parse the DECLARED side from the planted fixture (one @integration @SCN-PDN-001 obligation)
+    // and build the OBSERVED side — a cucumber JSON report whose single step carries this row's
+    // status. The reader runs in the When.
+    classificationResult = result;
+    const source = readFileSync(INCONCLUSIVE_FIXTURE, "utf8");
+    classificationScenarios = parseScenarios(source);
+    classificationReport = [
+      {
+        uri: "features/inconclusive-classification.feature",
+        elements: [
+          {
+            tags: [{ name: "@integration" }, { name: "@SCN-PDN-001" }],
+            steps: [{ result: { status: result } }],
+          },
+        ],
+      },
+    ];
+  }
+);
+
+When(
+  "the cucumber reader parses the report and the reconciler reconciles the declared obligation",
+  function () {
+    // The REAL cucumber reader (§11A): its emitted-or-dropped output IS the observation set the
+    // reconciler joins the declared obligation against. An inconclusive result emits nothing, so
+    // the join finds no observation → missing by absence.
+    const observations = parseCucumberEvidenceObservations(classificationReport, "integration");
+    reconciliation = reconcile(classificationScenarios, observations);
+  }
+);
+
+Then(
+  "the declared integration obligation reconciles {string}",
+  function (outcome: string) {
+    // Row-scoped to the declared SCN-PDN-001 scenario's OWN reconciled integration obligation.
+    // Its outcome is the three-way classification's result: satisfied (passed) / failing (failed)
+    // / missing (any inconclusive, by absence). Reds while an inconclusive result maps to failing.
+    const scenario = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-PDN-001");
+    assert.ok(scenario, "expected the declared fixture scenario (SCN-PDN-001)");
+    const integrationOutcomes = scenario.evidenceObligations.filter(
+      (o) => o.qualityCheck === "integration"
+    );
+    assert.equal(
+      integrationOutcomes.length,
+      1,
+      `expected exactly one reconciled integration obligation on SCN-PDN-001; got ${
+        integrationOutcomes.length
+      } (${JSON.stringify(scenario.evidenceObligations)})`
+    );
+    assert.equal(
+      integrationOutcomes[0]!.outcome,
+      outcome,
+      `the declared integration obligation for a "${classificationResult}" observation must reconcile "${outcome}"; got "${
+        integrationOutcomes[0]!.outcome
+      }" (row: ${JSON.stringify(scenario)})`
     );
   }
 );

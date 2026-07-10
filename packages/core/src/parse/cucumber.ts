@@ -8,12 +8,15 @@
  * source (Cucumber-as-orchestrator-across-levels: the scenario declares its tier, cucumber
  * runs whichever). An @e2e scenario proven via cucumber yields an e2e observation. The
  * caller-declared level (the JS-ecosystem default, integration, declared at the CLI edge)
- * survives only as the fallback for an UNTAGGED scenario. A scenario passes iff every step passed.
+ * survives only as the fallback for an UNTAGGED scenario. The reader classifies THREE-WAY
+ * (@SCN-PND-013): any failed step → a `failed` observation; all passed → a `passed` observation;
+ * otherwise INCONCLUSIVE (undefined/pending/skipped/ambiguous) → the scenario is DROPPED (no
+ * observation), so its obligation reconciles missing by absence — pending is never inferred from status.
  *
  * Parent: @SCN-LDG-011 (the tag-derivation headline) over @SCN-LDG-001 (the foundation seam).
  */
 
-import type { RuntimeQualityCheck, EvidenceObservation } from "../model.js";
+import type { RuntimeQualityCheck, EvidenceObservation, EvidenceStatus } from "../model.js";
 import { relativizeToRoot } from "../lib/portablePath.js";
 
 /** The minimal shape of Cucumber-JS's JSON formatter output this reader depends on. */
@@ -78,8 +81,9 @@ function deriveLevels(
  * cited scenario's declared tier tag (falling back to `fallbackQualityCheck` for an untagged
  * scenario). One result per scenario: those carrying an @SCN tag cite that scenario; those with
  * NO @SCN tag emit a null-scnId credit (@SCN-LDG-007 — previously DROPPED). A null-scnId credit
- * cites no scenario, so the reconciler folds it into the SUSPENSE row. A scenario passes iff
- * every step passed.
+ * cites no scenario, so the reconciler folds it into the SUSPENSE row. A scenario is classified
+ * THREE-WAY (@SCN-PND-013): passed (all steps passed) / failed (any step failed) / INCONCLUSIVE
+ * (otherwise) — an inconclusive scenario emits NOTHING, dropped so it reconciles missing by absence.
  */
 export function parseCucumberEvidenceObservations(
   report: CucumberJsonReport,
@@ -98,8 +102,20 @@ export function parseCucumberEvidenceObservations(
         .find((m): m is RegExpExecArray => m !== null);
 
       const steps = scenario.steps ?? [];
-      const passed =
-        steps.length > 0 && steps.every((s) => s.result?.status === "passed");
+      // THREE-WAY classification (@SCN-PND-013) — pending is NEVER inferred from status:
+      //   - any step `failed` → a `failed` observation → failing.
+      //   - every step `passed` → a `passed` observation → satisfied.
+      //   - otherwise (any `undefined`/`pending`/`skipped`/`ambiguous`, none failed) →
+      //     INCONCLUSIVE: a stub that RAN but proved nothing. Emit NOTHING — the declared
+      //     obligation then finds no matching observation and reconciles missing BY ABSENCE.
+      // `ambiguous` is deliberately inconclusive, not failing (no valid pass → missing, never
+      // its own category). `EvidenceStatus` stays binary (no new status, no reconciler change):
+      // the DROP is what realises inconclusive→missing. The drop is WHOLE-SCENARIO — an
+      // inconclusive scenario emits no observation at ANY declared tier (the `continue` below).
+      const anyFailed = steps.some((s) => s.result?.status === "failed");
+      const allPassed = steps.length > 0 && steps.every((s) => s.result?.status === "passed");
+      if (!anyFailed && !allPassed) continue; // inconclusive → drop the whole scenario.
+      const status: EvidenceStatus = anyFailed ? "failed" : "passed";
       // One observation PER declared non-unit tier: a cucumber run of an @integration @e2e
       // scenario discharges BOTH obligations, so it emits an integration AND an e2e observation
       // (the multi-tag ruling's teeth, @SCN-LDG-014). A single-tier or untagged scenario emits
@@ -109,7 +125,7 @@ export function parseCucumberEvidenceObservations(
         results.push({
           qualityCheck: level,
           scnId: scnTag ? scnTag[1]! : null, // no @SCN tag → an uncited credit (SUSPENSE).
-          status: passed ? "passed" : "failed",
+          status,
           locator,
         });
       }

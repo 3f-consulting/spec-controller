@@ -165,3 +165,75 @@ describe("[SCN-LDG-015] parseCucumberEvidenceObservations derives NO non-unit le
     ]);
   });
 });
+
+describe("[SCN-PND-013] parseCucumberEvidenceObservations classifies a scenario three-way — pending is never inferred from status", () => {
+  /** A single-scenario cucumber report whose one step carries `status`. */
+  const reportWithStep = (status: string): CucumberJsonReport => [
+    {
+      uri: "features/pnd013.feature",
+      elements: [
+        {
+          tags: [{ name: "@integration" }, { name: "@SCN-PDN-001" }],
+          steps: [{ result: { status } }],
+        },
+      ],
+    },
+  ];
+
+  it("emits a `passed` observation when every step passed (→ satisfied downstream)", () => {
+    expect(parseCucumberEvidenceObservations(reportWithStep("passed"), "integration")).toEqual([
+      { qualityCheck: "integration", scnId: "SCN-PDN-001", status: "passed", locator: "features/pnd013.feature" },
+    ]);
+  });
+
+  it("emits a `failed` observation when a step failed (→ failing downstream)", () => {
+    expect(parseCucumberEvidenceObservations(reportWithStep("failed"), "integration")).toEqual([
+      { qualityCheck: "integration", scnId: "SCN-PDN-001", status: "failed", locator: "features/pnd013.feature" },
+    ]);
+  });
+
+  // The three-way's teeth: each inconclusive status (a stub that RAN but proved nothing) emits
+  // NOTHING — dropped at the reader, so the declared obligation reconciles missing BY ABSENCE.
+  // `ambiguous` is deliberately here (inconclusive, not failing). Reds today: each currently
+  // emits a single `failed` observation (the binary `passed ? "passed" : "failed"`).
+  for (const status of ["undefined", "pending", "skipped", "ambiguous"]) {
+    it(`DROPS an inconclusive "${status}" scenario — emits no observation (→ missing by absence)`, () => {
+      expect(parseCucumberEvidenceObservations(reportWithStep(status), "integration")).toEqual([]);
+    });
+  }
+
+  it("drops an inconclusive scenario at EVERY declared tier — the drop is whole-scenario, not per-tier", () => {
+    // The multi-tier note: a scenario declaring @integration @e2e that reads inconclusive emits
+    // NO observation at ANY tier (not integration-dropped-but-e2e-kept). Reds today: the binary
+    // reader would emit a `failed` observation per declared tier (two observations).
+    const report: CucumberJsonReport = [
+      {
+        uri: "features/multi.feature",
+        elements: [
+          {
+            tags: [{ name: "@integration" }, { name: "@e2e" }, { name: "@SCN-PDN-002" }],
+            steps: [{ result: { status: "passed" } }, { result: { status: "skipped" } }],
+          },
+        ],
+      },
+    ];
+    expect(parseCucumberEvidenceObservations(report, "integration")).toEqual([]);
+  });
+
+  it("still emits a genuine passed/failed UNCITED (null-scnId) result — only inconclusive is dropped", () => {
+    // The null-scnId handling survives the three-way: a scenario carrying NO @SCN tag but a
+    // genuine failed step still emits its null-scnId credit (SUSPENSE). Only inconclusive results
+    // are dropped; a real pass/fail — cited or not — is preserved.
+    const report: CucumberJsonReport = [
+      {
+        uri: "features/uncited.feature",
+        elements: [
+          { tags: [{ name: "@integration" }], steps: [{ result: { status: "failed" } }] },
+        ],
+      },
+    ];
+    expect(parseCucumberEvidenceObservations(report, "integration")).toEqual([
+      { qualityCheck: "integration", scnId: null, status: "failed", locator: "features/uncited.feature" },
+    ]);
+  });
+});
