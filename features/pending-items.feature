@@ -250,3 +250,18 @@ Feature: A pending evidence obligation raises a Pending Item
         | @skip    |
         | @todo    |
         | @pending |
+
+    # The SCOPE CONTRAST to @SCN-PND-016. A `<qc>pending` tag — the slice-1 obligation-scope
+    # deferral — defers ONLY its own obligation, NOT the whole scenario: a `@unit @integrationpending`
+    # scenario (carrying NO community tag) defers the integration obligation alone, leaving the bare
+    # `@unit` one un-deferred, so a passing unit observation still reconciles it satisfied — a normal
+    # balance — while the deferred integration one is the scenario's single Pending Item. Where a
+    # RECOGNISED community tag (@SCN-PND-016) is scenario-scope — it defers EVERY obligation — the
+    # `<qc>pending` suffix is obligation-scope: one tag, one deferred check. This pins the distinction
+    # so the scenario-scope machinery never over-reaches into a bare tier obligation.
+    @unit @integration @SCN-PND-017
+    Scenario: `@integrationpending` defers only the integration obligation (obligation-scope) — a passing unit observation still reconciles
+      Given a planted fixture scenario carrying `@unit @integrationpending` and NO community deferral tag, with a passing unit observation citing it
+      When the parser derives the scenario's evidence obligations and the reconciler reconciles it against that passing unit observation
+      Then only the integration obligation is deferred pending — the bare unit obligation is not, so the `@integrationpending` scope is the single check
+      And the unit obligation reconciles satisfied and the deferred integration one is the scenario's single Pending Item — verdict balanced, no reconciling item

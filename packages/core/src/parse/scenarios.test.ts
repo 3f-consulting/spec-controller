@@ -399,3 +399,56 @@ describe("[SCN-PND-016] a recognised community deferral tag defers every declare
     expect(parseScenarios(source)[0]!.evidenceObligations).toEqual([{ qualityCheck: "unit" }]);
   });
 });
+
+/**
+ * Unit test for the OBLIGATION-SCOPE vs SCENARIO-SCOPE contrast at the parseScenarios level
+ * (@SCN-PND-017).
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-PND-017 id
+ * matching features/pending-items.feature, so a grep of the id returns both halves — this
+ * @unit arm (parseScenarios over inline strings, in isolation) and the @integration arm
+ * (tests/steps/pendingItems.steps.ts, over a planted tests/fixtures/ feature-string).
+ *
+ * Pins the SCOPE distinction: a `<qc>pending` tag (slice-1 obligation-scope) defers ONLY its own
+ * obligation — a `@unit @integrationpending` scenario derives a NON-pending unit obligation
+ * alongside a pending integration one. This CONTRASTS with the scenario-scope community tag
+ * (@SCN-PND-016), which would defer BOTH: adding a `@wip` to the same scenario marks the unit
+ * obligation pending too. The scenario-scope machinery must never over-reach into a bare tier
+ * obligation absent a community tag.
+ *
+ * Parent: @SCN-PND-017.
+ */
+describe("[SCN-PND-017] `@integrationpending` defers only its own obligation (obligation-scope), not the whole scenario", () => {
+  it("derives a non-pending unit obligation alongside a pending integration one — obligation-scope", () => {
+    // `@unit @integrationpending`, NO community tag: the bare `@unit` obligation stays plain
+    // (non-pending), while `@integrationpending` derives a deferred, one-sided obligation. The
+    // `<qc>pending` deferral is scoped to its own check — it does NOT defer the whole scenario.
+    const source = [
+      "@unit @integrationpending @SCN-XXX-140",
+      "Scenario: an obligation-scope-deferred scenario, no community tag",
+      "  Given a step",
+    ].join("\n");
+    const [scenario] = parseScenarios(source);
+    expect(scenario!.evidenceObligations).toEqual([
+      { qualityCheck: "unit" },
+      { qualityCheck: "integration", pending: true },
+    ]);
+  });
+
+  it("contrasts with the scenario-scope community tag — adding @wip defers the unit obligation too", () => {
+    // The load-bearing contrast: the SAME `@unit @integrationpending` scenario, now ALSO carrying a
+    // recognised community tag (@wip, scenario-scope), defers BOTH obligations. So obligation-scope
+    // (integration only) and scenario-scope (every obligation) are distinct — the community tag
+    // reaches the bare unit obligation, the bare `@integrationpending` never does.
+    const source = [
+      "@wip @unit @integrationpending @SCN-XXX-141",
+      "Scenario: the same scenario, now scenario-scope deferred",
+      "  Given a step",
+    ].join("\n");
+    const [scenario] = parseScenarios(source);
+    expect(scenario!.evidenceObligations).toEqual([
+      { qualityCheck: "unit", pending: true },
+      { qualityCheck: "integration", pending: true },
+    ]);
+  });
+});

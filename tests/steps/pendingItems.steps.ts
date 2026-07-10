@@ -1503,3 +1503,111 @@ Then(
     );
   }
 );
+
+// @SCN-PND-017 — the SCOPE CONTRAST to @SCN-PND-016: a `<qc>pending` tag is OBLIGATION-SCOPE
+// (it defers only its own check), whereas a recognised community tag is SCENARIO-SCOPE (it defers
+// every obligation). Proved through the REAL parse→reconcile pipeline over the PLANTED
+// tests/fixtures/pending-tags/obligation-scope.feature (@SCN-PDO-001 — `@unit @integrationpending`,
+// NO community tag) fed a hand-built PASSING unit observation citing that very scenario. The bare
+// `@unit` obligation is NOT deferred (the scenario-scope machinery does not over-reach absent a
+// community tag), so it reconciles `satisfied`; the `@integrationpending` one partitions off to a
+// one-sided Pending Item. Never a real `@<qc>pending` scenario in the scanned features/ corpus
+// (fixture policy, evidence-manifesto §11B). The @unit arm
+// (packages/core/src/parse/scenarios.test.ts, [SCN-PND-017]) proves the same obligation-scope
+// distinction over parseScenarios in isolation, contrasted against the scenario-scope community
+// tag. Green-first over the obligation-scope path (slice 1 + PND-009, already delivered); teeth
+// proven by a make-`@integrationpending`-scenario-scope mutation (reverted).
+const OBLIGATION_SCOPE_FIXTURE = join(
+  process.cwd(),
+  "tests/fixtures/pending-tags/features/obligation-scope.feature"
+);
+
+// The parsed scenario carrying `@unit @integrationpending` (its parse-level obligations under test).
+let obligationScopeScenario: Scenario | undefined;
+
+Given(
+  "a planted fixture scenario carrying `@unit @integrationpending` and NO community deferral tag, with a passing unit observation citing it",
+  function () {
+    // The fixture (@SCN-PDO-001) is the source; the parse+reconcile (with the passing unit
+    // observation) happens in the When.
+  }
+);
+
+When(
+  "the parser derives the scenario's evidence obligations and the reconciler reconciles it against that passing unit observation",
+  function () {
+    // Feed the PLANTED obligation-scope fixture to the pure parser, then reconcile against a
+    // PASSING unit observation citing @SCN-PDO-001. The bare `@unit` obligation stays NON-pending
+    // (obligation-scope: only `@integrationpending` defers), so the observation discharges it to
+    // `satisfied`; the `@integrationpending` one partitions to a one-sided Pending Item.
+    const source = readFileSync(OBLIGATION_SCOPE_FIXTURE, "utf8");
+    const scenarios: Scenario[] = parseScenarios(source);
+    obligationScopeScenario = scenarios.find((s) => s.scnId === "SCN-PDO-001");
+    assert.ok(obligationScopeScenario, "expected the planted fixture scenario SCN-PDO-001 to parse");
+    const passingUnit: EvidenceObservation = {
+      qualityCheck: "unit",
+      scnId: "SCN-PDO-001",
+      status: "passed",
+    };
+    reconciliation = reconcile([obligationScopeScenario], [passingUnit]);
+  }
+);
+
+Then(
+  "only the integration obligation is deferred pending — the bare unit obligation is not, so the `@integrationpending` scope is the single check",
+  function () {
+    // The parse-level scope distinction: `@integrationpending` derives a pending integration
+    // obligation, while the bare `@unit` obligation is NOT deferred (no `pending` flag). Reds under
+    // the scenario-scope mutation (which would mark the unit obligation pending too). This is the
+    // obligation-scope-vs-scenario-scope contrast with @SCN-PND-016.
+    const obligations = obligationScopeScenario!.evidenceObligations;
+    const unit = obligations.find((o) => o.qualityCheck === "unit");
+    const integration = obligations.find((o) => o.qualityCheck === "integration");
+    assert.ok(
+      unit && unit.pending === undefined,
+      `the bare @unit obligation must NOT be deferred (obligation-scope, not scenario-scope); got ${JSON.stringify(obligations)}`
+    );
+    assert.ok(
+      integration && integration.pending === true,
+      `the @integrationpending obligation must be deferred pending; got ${JSON.stringify(obligations)}`
+    );
+  }
+);
+
+Then(
+  "the unit obligation reconciles satisfied and the deferred integration one is the scenario's single Pending Item — verdict balanced, no reconciling item",
+  function () {
+    // The reconcile side of the contrast: the un-deferred unit obligation reconciles `satisfied`
+    // against its passing observation (a genuine reconciling-side balance — NOT swallowed by any
+    // scenario-scope deferral), while the deferred integration one is the scenario's single one-sided
+    // Pending Item. Verdict balanced, no reconciling item.
+    const scenario = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-PDO-001");
+    assert.ok(scenario, "expected the reconciled fixture scenario (SCN-PDO-001)");
+    assert.deepEqual(
+      scenario.evidenceObligations,
+      [{ qualityCheck: "unit", outcome: "satisfied" }],
+      `the un-deferred unit obligation must reconcile satisfied as the sole reconciled evidence obligation; got ${JSON.stringify(
+        scenario.evidenceObligations
+      )}`
+    );
+    assert.deepEqual(
+      scenario.pendingItems ?? [],
+      [{ qualityCheck: "integration" }],
+      `the deferred integration obligation must be the scenario's single Pending Item; got ${JSON.stringify(
+        scenario.pendingItems
+      )}`
+    );
+    assert.equal(
+      scenario.verdict,
+      "balanced",
+      `the obligation-scope scenario must have verdict balanced; got "${scenario.verdict}" (row: ${JSON.stringify(scenario)})`
+    );
+    assert.deepEqual(
+      scenario.reconcilingItems,
+      [],
+      `no reconciling item may be named — the deferred integration is a Pending Item, the unit is satisfied; got ${JSON.stringify(
+        scenario.reconcilingItems
+      )}`
+    );
+  }
+);
