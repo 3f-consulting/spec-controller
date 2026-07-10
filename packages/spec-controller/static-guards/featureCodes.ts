@@ -131,6 +131,12 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     status: "declared",
     note: "the pending evidence obligation — a <quality-check>pending tag (evidence-manifesto §11B) parses as a deferred, one-sided obligation ({ qualityCheck, pending: true }); PARSE only, the ledger's Pending Item behaviour is a later slice",
   },
+  {
+    code: "STG",
+    slug: "scn-tags",
+    status: "declared",
+    note: "the tier-tag floor over spec-controller's own scenarios (the cobbler's shoes) — the lint:scn-tags CI guard reds if any @SCN scenario declares no evidence tier (@unit/@integration/@e2e/@performance, a <tier>pending variant, or @lint=<guard>) and is not @wip; @lint-self-declared so the tool's own ledger reconciles it",
+  },
 ];
 
 /** A single lint finding. */

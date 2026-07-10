@@ -41,6 +41,16 @@ jobs:
       - name: Lint no committed reports
         run: pnpm lint:no-committed-reports
 
+      # The tier-tag floor over spec-controller's OWN scenarios (the cobbler's
+      # shoes) — a pure property of the committed source: every scenario under
+      # features/ carrying an @SCN must declare an evidence tier
+      # (@unit/@integration/@e2e/@performance, a <tier>pending variant, or
+      # @lint=<guard>) unless it is @wip. Fails naming each tier-less offender.
+      # A full gate on every push (no GitHub API). @lint-declared
+      # (@lint=lint:scn-tags on @SCN-STG-001) so the tool's own ledger reconciles it.
+      - name: Lint scn-tags
+        run: pnpm lint:scn-tags
+
       - name: Type-check
         run: pnpm typecheck
 
