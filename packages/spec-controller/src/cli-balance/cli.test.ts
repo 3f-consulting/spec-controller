@@ -153,6 +153,50 @@ describe("[SCN-CLI-004] runBalance sets the out-of-balance exit code AFTER emitt
   });
 });
 
+describe("[SCN-CLI-010] runBalance leaves the exit code 0 for an only-Pending-Items run when --strict is not given", () => {
+  it("emits the balanced-with-pending report AND leaves process.exitCode at its default 0, returning normally", () => {
+    // The LENIENT DEFAULT (@SCN-CLI-010): a reconciliation balanced except for Pending Items
+    // is run-neutral without --strict — Pending Items partition off (slice 2 / @SCN-PND-008)
+    // contributing NO reconciling item, so `isBalanced` is true and the gate leaves
+    // process.exitCode at 0. This is the predicate side of the @e2e real-binary scenario:
+    // runBalance in-process over the pending-only fixture must NOT escalate. Reaching the
+    // assertions proves runBalance RETURNED (no truncating process.exit), mirroring CLI-004.
+    const savedExitCode = process.exitCode;
+    // Normalise the starting exit code so the assertion reflects THIS run, not vitest's
+    // ambient state: the balanced-with-pending gate must LEAVE it 0, so start it at 0.
+    process.exitCode = 0;
+    const chunks: string[] = [];
+    const writeSpy = vi
+      .spyOn(process.stdout, "write")
+      .mockImplementation((chunk: string | Uint8Array): boolean => {
+        chunks.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
+        return true;
+      });
+    try {
+      // The pending-only fixture: two @*pending declared scenarios, guardless --package-json,
+      // no evidence report — balanced-with-pending, the only exception being Pending Items.
+      runBalance([
+        "--features",
+        "tests/fixtures/pending-only/features",
+        "--package-json",
+        "tests/fixtures/pending-only/package.json",
+      ]);
+
+      const emitted = chunks.join("");
+      // The report is emitted IN FULL and genuinely carries a Pending Item — proof the run is
+      // balanced-WITH-pending, not a trivially empty balanced run.
+      expect(emitted).toMatch(/^# Evidence Reconciliation/m);
+      expect(emitted).toMatch(/Pending Item/);
+      // The teeth: NO reconciling item anywhere → the gate leaves the exit code at 0. A future
+      // --strict escalation (@SCN-CLI-011) must not leak into the no-strict default.
+      expect(process.exitCode).toBe(0);
+    } finally {
+      writeSpy.mockRestore();
+      process.exitCode = savedExitCode;
+    }
+  });
+});
+
 describe("[SCN-CLI-009] checkUnknownFlags bounds balance to the flags the registry declares", () => {
   // The registry-bounded parser (operator constraint 1): `balance` accepts ONLY registered
   // flags. parseArgs strips the `--`, so the predicate reads the bare-name keys and compares

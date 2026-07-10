@@ -71,6 +71,22 @@ Feature: spec-controller balance runs standalone
       When "spec-controller balance" is invoked over that target through the CLI binary
       Then the command exits with status 0
 
+  Rule: --strict escalates Pending Items to a run failure
+
+    Pending Items are run-neutral by default (the slice-2 partition, @SCN-PND-008); --strict
+    is the opt-in that fails a run carrying them. This Rule pins the LENIENT DEFAULT first:
+    a reconciliation that is balanced except for Pending Items exits 0 through the real binary
+    when --strict is NOT given, so deferred work never reds a build unless the team opts in.
+    (The --strict escalation to exit 3 — distinct from out-of-balance's 1 — is @SCN-CLI-011.)
+
+    @unit @e2e @SCN-CLI-010
+    Scenario: an only-Pending-Items reconciliation with no --strict → balance exits 0
+      Given a target whose only exception is Pending Items
+      When "spec-controller balance" is invoked over that target through the CLI binary
+      Then the command exits with status 0
+      And it prints the Evidence Reconciliation to stdout
+      And the reconciliation reports a Pending Item
+
   Rule: the CLI answers --help from a single command/flag registry, completeness-guarded.
 
     `spec-controller balance --help` (and `-h`) prints the balance command's flags —

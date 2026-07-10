@@ -49,6 +49,19 @@ const BALANCED = {
   packageJson: "tests/fixtures/balanced/package.json",
 };
 
+/**
+ * The PENDING-ONLY fixture target (@SCN-CLI-010) — two declared scenarios whose SOLE
+ * obligation is a deferred `<quality-check>pending` one, so each partitions off to a
+ * one-sided Pending Item (run-neutral by default — slice 2 / @SCN-PND-008), leaving ZERO
+ * reconciled rows; no observation, no phantom, no uncited credit, and a GUARDLESS
+ * --package-json so no suspense row. The WHOLE reconciliation is balanced-with-pending, so
+ * `balance` exits 0 when --strict is NOT given (the lenient default this scenario pins).
+ */
+const PENDING_ONLY = {
+  features: "tests/fixtures/pending-only/features",
+  packageJson: "tests/fixtures/pending-only/package.json",
+};
+
 /** The `--flag value` pairs the shared When passes to `balance` (set by each Given). */
 let invocationArgs: string[] = [];
 /** The path CLI-002's Given points a flag at — asserted verbatim in stderr. */
@@ -201,6 +214,35 @@ Given("a target that reconciles all-balanced", function () {
   assert.ok(existsSync(join(root, BALANCED.features)), `missing fixture features: ${BALANCED.features}`);
   assert.ok(existsSync(join(root, BALANCED.vitest)), `missing fixture vitest report: ${BALANCED.vitest}`);
   invocationArgs = ["--features", BALANCED.features, "--vitest", BALANCED.vitest, "--package-json", BALANCED.packageJson];
+});
+
+// @SCN-CLI-010
+Given("a target whose only exception is Pending Items", function () {
+  const root = process.cwd();
+  // The PENDING-ONLY fixture: every declared scenario's sole obligation is a deferred
+  // `<quality-check>pending` one, so each partitions off to a one-sided Pending Item
+  // (run-neutral by default — slice 2 / @SCN-PND-008), leaving ZERO reconciled rows. No
+  // observation, no phantom, no uncited credit, and a GUARDLESS --package-json so no
+  // suspense-row watermelon — the WHOLE reconciliation is balanced-with-pending. The
+  // lenient default (@SCN-CLI-010) must NOT escalate: with no --strict, `isBalanced` sees
+  // no reconciling item anywhere, so process.exitCode stays 0. Distinct from CLI-005's
+  // all-balanced target (that one carries NO Pending Item) — this pins that Pending Items
+  // specifically are run-neutral without --strict, not merely that a clean run exits 0.
+  assert.ok(existsSync(join(root, PENDING_ONLY.features)), `missing fixture features: ${PENDING_ONLY.features}`);
+  assert.ok(
+    existsSync(join(root, PENDING_ONLY.packageJson)),
+    `missing fixture package.json: ${PENDING_ONLY.packageJson}`,
+  );
+  invocationArgs = ["--features", PENDING_ONLY.features, "--package-json", PENDING_ONLY.packageJson];
+});
+
+// @SCN-CLI-010
+Then("the reconciliation reports a Pending Item", function () {
+  // Keeps the scenario honest: exit 0 must come from a balanced-WITH-pending run, not a
+  // trivially empty one. The markdown tally line (renderPendingItem / the summary Pending
+  // Items line, @SCN-PND-010/011) proves the fixture genuinely carried a deferred
+  // obligation the lenient default declined to escalate.
+  assert.match(cliResult.stdout, /Pending Item/);
 });
 
 // @SCN-CLI-006
