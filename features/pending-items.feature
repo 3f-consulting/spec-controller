@@ -200,3 +200,25 @@ Feature: A pending evidence obligation raises a Pending Item
       When the cucumber reader drops the undefined step and the reconciler reconciles the declared obligation
       Then the scenario verdict is out-of-balance, its integration obligation a missing reconciling item
       And the scenario raises no Pending Item — the undefined step is not excused as pending
+
+    # The uniformity scenario: inconclusive→missing is reader-AGNOSTIC, so the vitest reader
+    # classifies THREE-WAY exactly as the cucumber reader (PND-013) does — over vitest's own status
+    # vocabulary. A `passed` assertion → a `passed` observation (satisfied); a `failed` assertion →
+    # a `failed` observation (failing); an inconclusive vitest status (`skipped`/`todo`, and any
+    # status ∉ {passed, failed}) → the reader emits NOTHING, so the declared obligation finds no
+    # observation and reconciles missing BY ABSENCE. A dedicated scenario (not a PND-013 row)
+    # because the readers have DISTINCT status vocabularies; the same reader-agnostic Rule houses
+    # both. Cucumber-only would leave a skipped unit test read as a FAILURE — the exact per-reader
+    # inconsistency this uniformity scenario exists to catch. A skipped/todo unit test is a gap.
+    @unit @integration @SCN-PND-015
+    Scenario Outline: a vitest <result> observation for a non-deferred obligation → <outcome>
+      Given a planted declared unit obligation and a vitest report whose assertion status is "<result>"
+      When the vitest reader parses the report and the reconciler reconciles the declared obligation
+      Then the declared unit obligation reconciles "<outcome>"
+
+      Examples:
+        | result  | outcome   |
+        | passed  | satisfied |
+        | failed  | failing   |
+        | skipped | missing   |
+        | todo    | missing   |

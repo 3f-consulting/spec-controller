@@ -23,6 +23,8 @@ import { parseScenarios, reconcile, isBalanced, renderMarkdown, assembleReport }
 import {
   parseCucumberEvidenceObservations,
   type CucumberJsonReport,
+  parseVitestEvidenceObservations,
+  type VitestJsonReport,
 } from "@3f-consulting/spec-controller-core";
 import type {
   Scenario,
@@ -1326,6 +1328,87 @@ Then(
       `an undefined step with no <qc>pending declaration must raise no Pending Item — it is not excused as pending; got ${JSON.stringify(
         scenario.pendingItems
       )}`
+    );
+  }
+);
+
+// @SCN-PND-015 — the vitest reader's THREE-WAY classification, uniform with the cucumber reader
+// (@SCN-PND-013), proved through the REAL parse→reconcile pipeline. The DECLARED side is the planted
+// tests/fixtures/pending-tags/features/vitest-inconclusive-classification.feature (a single @unit
+// @SCN-PDV-001 obligation, an UNREGISTERED fixture code). The OBSERVED side is a VITEST JSON report
+// built per Examples row and fed to the REAL parseVitestEvidenceObservations (§11A — the reader's own
+// emitted-or-dropped output, never a hand-built observation). A `passed`/`failed` assertion emits a
+// passed/failed observation → satisfied/failing; an inconclusive vitest status (`skipped`/`todo`, any
+// status ∉ {passed, failed}) is DROPPED, so the declared obligation finds no observation and reconciles
+// missing BY ABSENCE. The status strings are the real vitest JSON reporter's actual assertion statuses
+// (§11A), never hand-seeded. Reds today: an inconclusive result currently maps to a `failed` observation,
+// so the obligation reconciles `failing`, not `missing`. Never a real scanned scenario (fixture policy,
+// evidence-manifesto §11B). The @unit arm (packages/core/src/parse/vitest.test.ts, [SCN-PND-015]) proves
+// the emitted-or-dropped classification over the reader in isolation.
+const VITEST_INCONCLUSIVE_FIXTURE = join(
+  process.cwd(),
+  "tests/fixtures/pending-tags/features/vitest-inconclusive-classification.feature"
+);
+
+// The row's assertion status, the parsed declared side, and the built observed-side vitest report.
+let vitestClassificationResult: string;
+let vitestClassificationScenarios: Scenario[];
+let vitestClassificationReport: VitestJsonReport;
+
+Given(
+  "a planted declared unit obligation and a vitest report whose assertion status is {string}",
+  function (result: string) {
+    // Parse the DECLARED side from the planted fixture (one @unit @SCN-PDV-001 obligation) and build
+    // the OBSERVED side — a vitest JSON report whose single assertion carries this row's status. The
+    // reader runs in the When.
+    vitestClassificationResult = result;
+    const source = readFileSync(VITEST_INCONCLUSIVE_FIXTURE, "utf8");
+    vitestClassificationScenarios = parseScenarios(source);
+    vitestClassificationReport = {
+      testResults: [
+        {
+          name: "packages/core/src/parse/vitest-inconclusive.test.ts",
+          assertionResults: [{ fullName: "[SCN-PDV-001] a declared unit obligation", status: result }],
+        },
+      ],
+    };
+  }
+);
+
+When(
+  "the vitest reader parses the report and the reconciler reconciles the declared obligation",
+  function () {
+    // The REAL vitest reader (§11A): its emitted-or-dropped output IS the observation set the
+    // reconciler joins the declared @unit obligation against. An inconclusive result emits nothing, so
+    // the join finds no observation → missing by absence. The declared level (unit — the JS-ecosystem
+    // default at the CLI edge) is passed as the reader's caller-declared level.
+    const observations = parseVitestEvidenceObservations(vitestClassificationReport, "unit");
+    reconciliation = reconcile(vitestClassificationScenarios, observations);
+  }
+);
+
+Then(
+  "the declared unit obligation reconciles {string}",
+  function (outcome: string) {
+    // Row-scoped to the declared SCN-PDV-001 scenario's OWN reconciled unit obligation. Its outcome is
+    // the three-way classification's result: satisfied (passed) / failing (failed) / missing (any
+    // inconclusive, by absence). Reds while an inconclusive result maps to failing.
+    const scenario = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-PDV-001");
+    assert.ok(scenario, "expected the declared fixture scenario (SCN-PDV-001)");
+    const unitOutcomes = scenario.evidenceObligations.filter((o) => o.qualityCheck === "unit");
+    assert.equal(
+      unitOutcomes.length,
+      1,
+      `expected exactly one reconciled unit obligation on SCN-PDV-001; got ${
+        unitOutcomes.length
+      } (${JSON.stringify(scenario.evidenceObligations)})`
+    );
+    assert.equal(
+      unitOutcomes[0]!.outcome,
+      outcome,
+      `the declared unit obligation for a "${vitestClassificationResult}" observation must reconcile "${outcome}"; got "${
+        unitOutcomes[0]!.outcome
+      }" (row: ${JSON.stringify(scenario)})`
     );
   }
 );
