@@ -635,3 +635,121 @@ Then(
     );
   }
 );
+
+// @SCN-PND-009 — the COMPOSITION case: a `@unit @integrationpending` scenario with a passing
+// unit observation reconciles to a satisfied unit obligation AND a one-sided integration
+// Pending Item, verdict balanced, no reconciling item. The pending and non-pending obligations
+// coexist on the same scenario WITHOUT interference — the pending partition does not swallow the
+// unit obligation, and the unit reconcile does not swallow the pending one. Proved through the
+// REAL parse→reconcile pipeline over the PLANTED
+// tests/fixtures/pending-tags/composition.feature (@SCN-PDC-001) fed a hand-built PASSING unit
+// observation citing that very scenario — never a real `@<qc>pending` scenario in the scanned
+// features/ corpus (fixture policy, evidence-manifesto §11B). The @unit arm
+// (packages/core/src/reconcile/reconcile.test.ts, [SCN-PND-009]) proves the same composition
+// over the reconcile function in isolation. Green-first on the sibling partition (PND-004..007);
+// teeth proven by a pending-partition-swallows-unit mutation (reverted).
+const COMPOSITION_FIXTURE = join(
+  process.cwd(),
+  "tests/fixtures/pending-tags/features/composition.feature"
+);
+
+Given(
+  "a planted fixture scenario declaring `@unit @integrationpending`, with a passing unit observation citing it",
+  function () {
+    // The fixture (@SCN-PDC-001) is the source; the parse+reconcile (with the passing unit
+    // observation) happens in the When.
+  }
+);
+
+When(
+  "the reconciler reconciles the composition fixture against that passing unit observation",
+  function () {
+    // Feed the PLANTED composition fixture through the REAL parse→reconcile pipeline, supplying a
+    // PASSING unit observation citing @SCN-PDC-001 at the very check the bare `@unit` obligation
+    // declares. The unit obligation reconciles `satisfied`; the `@integrationpending` one
+    // partitions to a one-sided Pending Item BEFORE the observation match.
+    const source = readFileSync(COMPOSITION_FIXTURE, "utf8");
+    const scenarios: Scenario[] = parseScenarios(source);
+    const passingUnit: EvidenceObservation = {
+      qualityCheck: "unit",
+      scnId: "SCN-PDC-001",
+      status: "passed",
+    };
+    reconciliation = reconcile(scenarios, [passingUnit]);
+  }
+);
+
+Then(
+  "the unit obligation reconciles satisfied — a genuine reconciling-side balance",
+  function () {
+    // The bare `@unit` obligation is discharged by the passing observation: it appears among the
+    // reconciled evidence-obligation outcomes as `satisfied` — a genuine reconciling-side balance,
+    // NOT partitioned off. Reds if the pending partition swallowed the unit obligation too (the
+    // scenario would then carry no reconciled evidence obligation at all).
+    const scenario = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-PDC-001");
+    assert.ok(scenario, "expected the composition fixture scenario (SCN-PDC-001)");
+    assert.deepEqual(
+      scenario.evidenceObligations,
+      [{ qualityCheck: "unit", outcome: "satisfied" }],
+      `the unit obligation must reconcile satisfied as the scenario's sole reconciled evidence obligation; got ${JSON.stringify(
+        scenario.evidenceObligations
+      )}`
+    );
+  }
+);
+
+Then(
+  "the deferred integration obligation is the scenario's one Pending Item, partitioned off",
+  function () {
+    // The `@integrationpending` obligation partitions to EXACTLY one one-sided Pending Item for
+    // integration — and it stays OUT of the reconciled evidence-obligation outcomes (never a
+    // `satisfied`/`missing` row). Reds if the pending one were reconciled instead of partitioned,
+    // or if it were dropped (zero Pending Items).
+    const scenario = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-PDC-001");
+    assert.ok(scenario, "expected the composition fixture scenario (SCN-PDC-001)");
+    assert.deepEqual(
+      scenario.pendingItems ?? [],
+      [{ qualityCheck: "integration" }],
+      `the deferred integration obligation must be the scenario's one Pending Item; got ${JSON.stringify(
+        scenario.pendingItems
+      )}`
+    );
+    // The pending integration check names NO reconciled evidence-obligation outcome — it is a
+    // structurally distinct category, never reconciled.
+    const integrationOutcomes = scenario.evidenceObligations.filter(
+      (o) => o.qualityCheck === "integration"
+    );
+    assert.equal(
+      integrationOutcomes.length,
+      0,
+      `the deferred integration obligation must name NO reconciled outcome (it is partitioned off); got ${JSON.stringify(
+        integrationOutcomes
+      )}`
+    );
+  }
+);
+
+Then(
+  "the scenario has verdict balanced and names no reconciling item — the pending and non-pending obligations coexist without interference",
+  function () {
+    // The composition is balanced: the satisfied unit contributes no reconciling item, the
+    // Pending Item is verdict-neutral, so the verdict is `balanced` with an empty reconciling-item
+    // list. The two obligations coexist without interference — neither swallows the other.
+    const scenario = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-PDC-001");
+    assert.ok(scenario, "expected the composition fixture scenario (SCN-PDC-001)");
+    assert.equal(
+      scenario.verdict,
+      "balanced",
+      `the composition scenario must have verdict balanced; got "${scenario.verdict}" (row: ${JSON.stringify(
+        scenario
+      )})`
+    );
+    assert.deepEqual(
+      scenario.reconcilingItems,
+      [],
+      `the composition scenario must name no reconciling item; got ${JSON.stringify(
+        scenario.reconcilingItems
+      )}`
+    );
+  }
+);

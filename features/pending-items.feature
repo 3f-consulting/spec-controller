@@ -103,3 +103,11 @@ Feature: A pending evidence obligation raises a Pending Item
       When the reconciler reconciles the whole fixture, the passing unit observation supplied
       Then the whole Evidence Reconciliation is balanced — isBalanced is true, the run does not fail
       And the run genuinely carries Pending Items, yet no row names a reconciling item
+
+    @unit @integration @SCN-PND-009
+    Scenario: `@unit @integrationpending` with a passing unit observation → verdict balanced, one Pending Item
+      Given a planted fixture scenario declaring `@unit @integrationpending`, with a passing unit observation citing it
+      When the reconciler reconciles the composition fixture against that passing unit observation
+      Then the unit obligation reconciles satisfied — a genuine reconciling-side balance
+      And the deferred integration obligation is the scenario's one Pending Item, partitioned off
+      And the scenario has verdict balanced and names no reconciling item — the pending and non-pending obligations coexist without interference

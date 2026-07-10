@@ -708,3 +708,45 @@ describe("[SCN-PND-007] a scenario whose only exception is a Pending Item has ve
     expect(scenario?.reconcilingItems).toEqual([{ outcome: "both-missing" }]);
   });
 });
+
+describe("[SCN-PND-009] a @unit @integrationpending scenario with a passing unit observation is balanced with one Pending Item", () => {
+  // The COMPOSITION case: a pending and a non-pending obligation coexist on ONE scenario WITHOUT
+  // interference. A `@unit @integrationpending` scenario with a PASSING unit observation
+  // reconciles to a SATISFIED unit obligation (a genuine reconciling-side balance) AND a one-sided
+  // integration Pending Item (partitioned off). Verdict balanced; reconcilingItems empty; exactly
+  // one Pending Item. The pending partition does not swallow the unit obligation, and the unit
+  // reconcile does not swallow the pending one. Green-first over the foundation (the same
+  // partition PND-004..007 landed); teeth proven by a pending-partition-swallows-unit mutation
+  // (reverted). Asserts REAL reconcile output (evidence-manifesto §11A). The @integration arm
+  // (tests/steps/pendingItems.steps.ts, @SCN-PND-009) proves the same composition through the
+  // parse→reconcile pipeline over the planted composition fixture.
+  it("reconciles the unit obligation satisfied and partitions the integration one to a Pending Item", () => {
+    const scenarios: Scenario[] = [
+      {
+        scnId: "SCN-PND-009",
+        evidenceObligations: [
+          { qualityCheck: "unit" },
+          { qualityCheck: "integration", pending: true },
+        ],
+      },
+    ];
+    // A passing unit observation citing the scenario discharges the bare `@unit` obligation; the
+    // `@integrationpending` one is one-sided (no observation is sought for it).
+    const evidenceObservations: EvidenceObservation[] = [
+      { qualityCheck: "unit", scnId: "SCN-PND-009", status: "passed" },
+    ];
+    const balance = reconcile(scenarios, evidenceObservations);
+    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-PND-009");
+
+    // Coexistence without interference, pinned sharply:
+    //   - the unit obligation reconciles satisfied — the scenario's SOLE reconciled evidence
+    //     obligation (the pending partition did NOT swallow it).
+    expect(scenario?.evidenceObligations).toEqual([{ qualityCheck: "unit", outcome: "satisfied" }]);
+    //   - the deferred integration obligation is EXACTLY one one-sided Pending Item (the unit
+    //     reconcile did NOT swallow it).
+    expect(scenario?.pendingItems).toEqual([{ qualityCheck: "integration" }]);
+    //   - verdict balanced, no reconciling item — the composition is honestly balanced.
+    expect(scenario?.verdict).toBe("balanced");
+    expect(scenario?.reconcilingItems).toEqual([]);
+  });
+});
