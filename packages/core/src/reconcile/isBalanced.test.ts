@@ -18,8 +18,13 @@
 
 import { describe, it, expect } from "vitest";
 
-import { isBalanced } from "./reconcile.js";
-import type { EvidenceReconciliation, ScenarioReconciliation } from "../model.js";
+import { isBalanced, reconcile } from "./reconcile.js";
+import type {
+  EvidenceReconciliation,
+  ScenarioReconciliation,
+  Scenario,
+  EvidenceObservation,
+} from "../model.js";
 
 /** A DECLARED scenario row that reconciles balanced — zero reconciling items. */
 const balancedScenario = (scnId: string): ScenarioReconciliation => ({
@@ -131,5 +136,63 @@ describe("[SCN-CLI-005] isBalanced — the positive boundary: a clean all-balanc
     };
     const exitCode = !isBalanced(reconciliation) ? 1 : 0;
     expect(exitCode).toBe(0);
+  });
+});
+
+/**
+ * @unit for @SCN-PND-008 — the RUN-NEUTRAL boundary of the Pending Item: a WHOLE Evidence
+ * Reconciliation whose only exceptions are Pending Items does not fail. Where @SCN-PND-007
+ * pins the per-SCENARIO verdict (balanced), this pins the WHOLE-RUN predicate: `isBalanced`
+ * over the entire reconciliation is true. A Pending Item lives in a row's `pendingItems`,
+ * never its `reconcilingItems` — the partition (@SCN-PND-004) does the work — so `isBalanced`,
+ * which consults every row's `reconcilingItems`, finds none anywhere and calls the run
+ * balanced. This is the seam slice 5 (`--strict`, 3F-1504) later escalates.
+ *
+ * Asserts REAL reconcile output (evidence-manifesto §11A): the reconciliation is built by the
+ * real `reconcile` over only-pending scenarios plus a passing-unit-plus-pending one, NOT a
+ * hand-seeded fixture. Bidirectional evidence (Evidence Manifesto §9): the describe/it strings
+ * carry the SCN-PND-008 id, matching features/pending-items.feature's @SCN-PND-008 scenario and
+ * its @integration Cucumber step-block (tests/steps/pendingItems.steps.ts, `// @SCN-PND-008`).
+ *
+ * Green-first on the sibling partition (PND-004..007 already split pending off before the
+ * match and out of `reconcilingItems`); its teeth are proven by a local, reverted mutation
+ * making `isBalanced` also fail on `pendingItems.length > 0` — that reds this pin because the
+ * run genuinely carries Pending Items.
+ */
+describe("[SCN-PND-008] isBalanced — an EvidenceReconciliation whose only exceptions are Pending Items does not fail", () => {
+  it("is balanced over a WHOLE run whose only exceptions are Pending Items — one-sided, run-neutral", () => {
+    // A real run mixing the shapes: two scenarios whose SOLE obligation is deferred pending
+    // (each reconciles to zero rows on both sides, balanced-with-pending) and one carrying a
+    // PASSING unit obligation alongside a deferred integration one (the unit satisfied, the
+    // pending integration partitioned off). No row names a reconciling item, so the whole run
+    // does not fail — yet three Pending Items are genuinely carried.
+    const scenarios: Scenario[] = [
+      { scnId: "SCN-PDR-001", evidenceObligations: [{ qualityCheck: "integration", pending: true }] },
+      { scnId: "SCN-PDR-002", evidenceObligations: [{ qualityCheck: "unit", pending: true }] },
+      {
+        scnId: "SCN-PDR-003",
+        evidenceObligations: [
+          { qualityCheck: "unit" },
+          { qualityCheck: "integration", pending: true },
+        ],
+      },
+    ];
+    // The only observation supplied discharges SCN-PDR-003's bare unit obligation.
+    const evidenceObservations: EvidenceObservation[] = [
+      { qualityCheck: "unit", scnId: "SCN-PDR-003", status: "passed" },
+    ];
+    const balance = reconcile(scenarios, evidenceObservations);
+
+    // The balance is NOT vacuous: the run genuinely carries three Pending Items…
+    const pendingCount = balance.scenarioReconciliations.flatMap((s) => s.pendingItems ?? []).length;
+    expect(pendingCount).toBe(3);
+    // …and yet NO row names a reconciling item anywhere.
+    expect(
+      balance.scenarioReconciliations.every((s) => s.reconcilingItems.length === 0)
+    ).toBe(true);
+
+    // The whole-run predicate: the run does not fail. Reds under the mutation that makes
+    // `isBalanced` also fail on `pendingItems.length > 0`.
+    expect(isBalanced(balance)).toBe(true);
   });
 });

@@ -19,7 +19,7 @@ import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { parseScenarios, reconcile } from "@3f-consulting/spec-controller-core";
+import { parseScenarios, reconcile, isBalanced } from "@3f-consulting/spec-controller-core";
 import type {
   Scenario,
   EvidenceObligation,
@@ -543,3 +543,95 @@ Then("neither scenario names any reconciling item", function () {
     )}`
   );
 });
+
+// @SCN-PND-008 — a Pending Item is RUN-NEUTRAL: the WHOLE Evidence Reconciliation whose only
+// exceptions are Pending Items does not fail. `isBalanced` reads each row's `reconcilingItems`
+// — a Pending Item lives in `pendingItems`, never in `reconcilingItems`, so the whole-run
+// predicate finds no reconciling item anywhere and returns true (the run passes). Proved
+// through the REAL parse→reconcile→isBalanced pipeline over the PLANTED
+// tests/fixtures/pending-tags/run-neutral-pending.feature (two only-pending scenarios
+// @SCN-PDR-001/002 and a passing-unit-plus-pending one @SCN-PDR-003), a passing unit
+// observation citing @SCN-PDR-003 supplied so its bare `@unit` obligation is satisfied. Never a
+// real `@<qc>pending` scenario in the scanned features/ corpus (fixture policy,
+// evidence-manifesto §11B). The @unit arm
+// (packages/core/src/reconcile/isBalanced.test.ts, [SCN-PND-008]) proves the same whole-run
+// neutrality over reconcile→isBalanced in isolation. Green-first on the sibling partition
+// (PND-004..007); teeth proven by an isBalanced-fails-on-pending mutation (reverted).
+const RUN_NEUTRAL_FIXTURE = join(
+  process.cwd(),
+  "tests/fixtures/pending-tags/features/run-neutral-pending.feature"
+);
+
+// The whole-run balance verdict of the reconciled run-neutral fixture.
+let wholeRunBalanced: boolean;
+
+Given(
+  "a planted fixture whose scenarios' only exceptions are Pending Items — two only-pending scenarios and one carrying a passing unit obligation alongside a deferred integration one",
+  function () {
+    // The fixture (all three scenarios) is the source; the parse+reconcile happens in the When.
+  }
+);
+
+When("the reconciler reconciles the whole fixture, the passing unit observation supplied", function () {
+  // Feed the PLANTED fixture through the REAL parse→reconcile→isBalanced pipeline. The only
+  // observation supplied is a PASSING unit observation citing @SCN-PDR-003, so its bare `@unit`
+  // obligation reconciles to `satisfied`; every deferred `<qc>pending` obligation partitions to
+  // a one-sided Pending Item. `isBalanced` over the WHOLE reconciliation is the predicate under
+  // test.
+  const source = readFileSync(RUN_NEUTRAL_FIXTURE, "utf8");
+  const scenarios: Scenario[] = parseScenarios(source);
+  const passingUnit: EvidenceObservation = {
+    qualityCheck: "unit",
+    scnId: "SCN-PDR-003",
+    status: "passed",
+  };
+  reconciliation = reconcile(scenarios, [passingUnit]);
+  wholeRunBalanced = isBalanced(reconciliation);
+});
+
+Then(
+  "the whole Evidence Reconciliation is balanced — isBalanced is true, the run does not fail",
+  function () {
+    // The whole-run predicate: `isBalanced` finds no reconciling item on ANY row (the Pending
+    // Items live in `pendingItems`, never `reconcilingItems`), so the run does not fail. Reds
+    // under the isBalanced-fails-on-pending mutation (a row's Pending Item would tip the run
+    // out-of-balance).
+    assert.equal(
+      wholeRunBalanced,
+      true,
+      `a run whose only exceptions are Pending Items must not fail — isBalanced true; got ${wholeRunBalanced} (rows: ${JSON.stringify(
+        reconciliation.scenarioReconciliations
+      )})`
+    );
+  }
+);
+
+Then(
+  "the run genuinely carries Pending Items, yet no row names a reconciling item",
+  function () {
+    // The balance is NOT vacuous: three Pending Items are genuinely carried across the run
+    // (@SCN-PDR-001/002/003), and yet NO row names a single reconciling item anywhere — the
+    // Pending Item is a structurally distinct category that never reaches the whole-run
+    // predicate.
+    const pendingCount = reconciliation.scenarioReconciliations.flatMap(
+      (s) => s.pendingItems ?? []
+    ).length;
+    assert.equal(
+      pendingCount,
+      3,
+      `the run must genuinely carry three Pending Items (the balance is not vacuous); got ${pendingCount} (rows: ${JSON.stringify(
+        reconciliation.scenarioReconciliations
+      )})`
+    );
+    const reconcilingCount = reconciliation.scenarioReconciliations.flatMap(
+      (s) => s.reconcilingItems
+    ).length;
+    assert.equal(
+      reconcilingCount,
+      0,
+      `no row may name a reconciling item; got ${reconcilingCount} (rows: ${JSON.stringify(
+        reconciliation.scenarioReconciliations
+      )})`
+    );
+  }
+);

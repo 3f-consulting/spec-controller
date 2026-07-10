@@ -96,3 +96,10 @@ Feature: A pending evidence obligation raises a Pending Item
       When the reconciler reconciles the fixture, the passing unit observation supplied
       Then both scenarios have verdict balanced — the Pending Item is verdict-neutral
       And neither scenario names any reconciling item
+
+    @unit @integration @SCN-PND-008
+    Scenario: an Evidence Reconciliation whose only exceptions are Pending Items does not fail
+      Given a planted fixture whose scenarios' only exceptions are Pending Items — two only-pending scenarios and one carrying a passing unit obligation alongside a deferred integration one
+      When the reconciler reconciles the whole fixture, the passing unit observation supplied
+      Then the whole Evidence Reconciliation is balanced — isBalanced is true, the run does not fail
+      And the run genuinely carries Pending Items, yet no row names a reconciling item
