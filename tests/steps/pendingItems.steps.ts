@@ -1611,3 +1611,110 @@ Then(
     );
   }
 );
+
+// @SCN-PND-018 — the COMPOSITION of the two deferral sources: SCENARIO-SCOPE (a recognised
+// community tag, @SCN-PND-016) and OBLIGATION-SCOPE (`@<qc>pending`, @SCN-PND-017) coexist without
+// interference. Proved through the REAL parse→reconcile pipeline over the PLANTED
+// tests/fixtures/pending-tags/compose-scope.feature (@SCN-PDP-001 — `@wip @unit @integrationpending`)
+// reconciled against NO observation. The bare `@unit` obligation is deferred by the scenario-scope
+// `@wip` alone (there is no `@unitpending`); the `@integration` obligation is deferred by the
+// obligation-scope `@integrationpending` AND overlappingly by `@wip` (idempotent). So BOTH obligations
+// partition off to Pending Items — one owed from each source — verdict balanced, no reconciling item.
+// Never a real community-tagged or `@<qc>pending` scenario in the scanned features/ corpus (fixture
+// policy, evidence-manifesto §11B). The @unit arm (packages/core/src/parse/scenarios.test.ts,
+// [SCN-PND-018]) proves the same composition over parseScenarios in isolation. Green-first over the
+// slice-4 scenario-scope post-pass (@SCN-PND-016, already delivered — `@wip` marks every obligation
+// pending, subsuming `@integrationpending`); teeth proven by a local mutation (reverted) that lets one
+// source suppress the other so only one obligation defers.
+const COMPOSE_SCOPE_FIXTURE = join(
+  process.cwd(),
+  "tests/fixtures/pending-tags/features/compose-scope.feature"
+);
+
+// The parsed scenario carrying `@wip @unit @integrationpending` (its parse-level obligations under test).
+let composeScopeScenario: Scenario | undefined;
+
+Given(
+  "a planted fixture scenario carrying `@wip` over a bare `@unit` and an obligation-scope `@integrationpending`",
+  function () {
+    // The fixture (@SCN-PDP-001) is the source; the parse+reconcile against no observation happens
+    // in the When.
+  }
+);
+
+When(
+  "the parser derives the composition scenario's evidence obligations and the reconciler reconciles it against no observation",
+  function () {
+    // Feed the PLANTED compose-scope fixture to the pure parser, then reconcile against NO
+    // observation. The bare `@unit` obligation is deferred by the scenario-scope `@wip`; the
+    // `@integration` obligation by the obligation-scope `@integrationpending` (and overlappingly by
+    // `@wip`). Both partition to Pending Items — one from each source — so the second Then reads two
+    // Pending Items, verdict balanced, off the real reconciliation.
+    const source = readFileSync(COMPOSE_SCOPE_FIXTURE, "utf8");
+    const scenarios: Scenario[] = parseScenarios(source);
+    composeScopeScenario = scenarios.find((s) => s.scnId === "SCN-PDP-001");
+    assert.ok(composeScopeScenario, "expected the planted fixture scenario SCN-PDP-001 to parse");
+    reconciliation = reconcile([composeScopeScenario], []);
+  }
+);
+
+Then(
+  "the unit obligation is deferred by the scenario-scope `@wip` and the integration obligation by the obligation-scope `@integrationpending` — both pending, one from each source",
+  function () {
+    // The parse-level composition: `@integrationpending` derives a pending integration obligation
+    // (obligation-scope), and the scenario-scope `@wip` post-pass marks EVERY obligation pending —
+    // reaching the bare `@unit` one (there is no `@unitpending`) and idempotently re-marking the
+    // already-pending integration one. Neither source suppresses the other. Reds under a mutation
+    // that lets one source override the other so only a single obligation defers.
+    const obligations = composeScopeScenario!.evidenceObligations;
+    const unit = obligations.find((o) => o.qualityCheck === "unit");
+    const integration = obligations.find((o) => o.qualityCheck === "integration");
+    assert.ok(
+      unit && unit.pending === true,
+      `the bare @unit obligation must be deferred by the scenario-scope @wip; got ${JSON.stringify(obligations)}`
+    );
+    assert.ok(
+      integration && integration.pending === true,
+      `the @integration obligation must be deferred by the obligation-scope @integrationpending (and @wip); got ${JSON.stringify(obligations)}`
+    );
+  }
+);
+
+Then(
+  "the scenario raises two Pending Items and has verdict balanced — no reconciling item, the two deferral sources composing without interference",
+  function () {
+    // The reconcile side of the composition: BOTH deferred obligations partition off to one-sided
+    // Pending Items — one owed from the scenario-scope source, one from the obligation-scope source.
+    // No active obligation remains to reconcile, so no reconciling item and no both-missing fallback:
+    // verdict balanced. The two sources compose — obligation-scope does not narrow the scenario-scope
+    // deferral, scenario-scope does not merge away the obligation-scope Pending Item.
+    const scenario = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-PDP-001");
+    assert.ok(scenario, "expected the reconciled fixture scenario (SCN-PDP-001)");
+    assert.deepEqual(
+      scenario.pendingItems ?? [],
+      [{ qualityCheck: "unit" }, { qualityCheck: "integration" }],
+      `both deferred obligations must be Pending Items, one from each source; got ${JSON.stringify(
+        scenario.pendingItems
+      )}`
+    );
+    assert.equal(
+      scenario.verdict,
+      "balanced",
+      `a scenario whose only exceptions are Pending Items is balanced; got "${scenario.verdict}" (row: ${JSON.stringify(scenario)})`
+    );
+    assert.deepEqual(
+      scenario.reconcilingItems,
+      [],
+      `no reconciling item may be named — both deferred obligations are Pending Items, not errors; got ${JSON.stringify(
+        scenario.reconcilingItems
+      )}`
+    );
+    assert.deepEqual(
+      scenario.evidenceObligations,
+      [],
+      `no obligation reconciles — both are partitioned off as Pending Items; got ${JSON.stringify(
+        scenario.evidenceObligations
+      )}`
+    );
+  }
+);

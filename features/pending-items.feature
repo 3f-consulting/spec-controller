@@ -265,3 +265,19 @@ Feature: A pending evidence obligation raises a Pending Item
       When the parser derives the scenario's evidence obligations and the reconciler reconciles it against that passing unit observation
       Then only the integration obligation is deferred pending — the bare unit obligation is not, so the `@integrationpending` scope is the single check
       And the unit obligation reconciles satisfied and the deferred integration one is the scenario's single Pending Item — verdict balanced, no reconciling item
+
+    # The COMPOSITION of the two deferral sources — scenario-scope (@SCN-PND-016) and obligation-scope
+    # (@SCN-PND-017) — pinned to coexist without interference. A scenario carrying `@wip` (scenario-scope)
+    # over a bare `@unit` and an `@integrationpending` (obligation-scope): the unit obligation is deferred
+    # by `@wip` alone (scenario-scope reaches it — there is no `@unitpending`), the integration obligation
+    # is deferred by `@integrationpending` AND overlappingly by `@wip` (the two sources coincide on it,
+    # the scenario-scope post-pass mark idempotent on the already-pending obligation). So BOTH obligations
+    # are Pending Items — one owed from each source — verdict balanced, no reconciling item. Neither source
+    # suppresses the other: obligation-scope does not narrow the scenario-scope deferral, and scenario-scope
+    # does not swallow the obligation-scope Pending Item into a merged one.
+    @unit @integration @SCN-PND-018
+    Scenario: `@wip` and `@integrationpending` compose — both obligations pending, one from each source
+      Given a planted fixture scenario carrying `@wip` over a bare `@unit` and an obligation-scope `@integrationpending`
+      When the parser derives the composition scenario's evidence obligations and the reconciler reconciles it against no observation
+      Then the unit obligation is deferred by the scenario-scope `@wip` and the integration obligation by the obligation-scope `@integrationpending` — both pending, one from each source
+      And the scenario raises two Pending Items and has verdict balanced — no reconciling item, the two deferral sources composing without interference

@@ -452,3 +452,56 @@ describe("[SCN-PND-017] `@integrationpending` defers only its own obligation (ob
     ]);
   });
 });
+
+/**
+ * Unit test for the COMPOSITION of the two deferral sources at the parseScenarios level
+ * (@SCN-PND-018).
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-PND-018 id
+ * matching features/pending-items.feature, so a grep of the id returns both halves — this
+ * @unit arm (parseScenarios over inline strings, in isolation) and the @integration arm
+ * (tests/steps/pendingItems.steps.ts, over a planted tests/fixtures/ feature-string).
+ *
+ * Pins that SCENARIO-SCOPE (@SCN-PND-016 — a recognised community tag defers every obligation) and
+ * OBLIGATION-SCOPE (@SCN-PND-017 — `@<qc>pending` defers only its own check) COMPOSE without
+ * interference. A `@wip @unit @integrationpending` scenario: the bare `@unit` obligation is deferred
+ * by `@wip` alone (there is no `@unitpending`); the `@integration` obligation is deferred by
+ * `@integrationpending` AND overlappingly by `@wip` (the scenario-scope post-pass mark is idempotent
+ * on the already-pending obligation). So BOTH obligations are pending — one owed from each source.
+ * Neither source suppresses the other.
+ *
+ * Parent: @SCN-PND-018.
+ */
+describe("[SCN-PND-018] a scenario-scope `@wip` and an obligation-scope `@integrationpending` compose — both obligations pending", () => {
+  it("defers the bare unit by the scenario-scope `@wip` and the integration by the obligation-scope `@integrationpending` — both pending", () => {
+    // `@wip @unit @integrationpending`: `@integrationpending` derives a pending integration
+    // obligation (obligation-scope); `@wip` marks EVERY obligation pending (scenario-scope), reaching
+    // the bare `@unit` one and idempotently re-marking the already-pending integration one. Both
+    // obligations end pending — one from each source, composing without interference.
+    const source = [
+      "@wip @unit @integrationpending @SCN-XXX-160",
+      "Scenario: a composition scenario — scenario-scope over obligation-scope",
+      "  Given a step",
+    ].join("\n");
+    const [scenario] = parseScenarios(source);
+    expect(scenario!.evidenceObligations).toEqual([
+      { qualityCheck: "unit", pending: true },
+      { qualityCheck: "integration", pending: true },
+    ]);
+  });
+
+  it("the scenario-scope source overlaps the obligation-scope one on integration — the mark is idempotent, no duplicate obligation", () => {
+    // The overlap on the integration check: `@integrationpending` already flags it pending, and the
+    // `@wip` post-pass marks it pending again — idempotent, never a second integration obligation.
+    // Exactly one integration obligation (pending) and one unit obligation (pending), in tag order.
+    const source = [
+      "@wip @unit @integrationpending @SCN-XXX-161",
+      "Scenario: overlap on the integration obligation",
+      "  Given a step",
+    ].join("\n");
+    const [scenario] = parseScenarios(source);
+    const integration = scenario!.evidenceObligations.filter((o) => o.qualityCheck === "integration");
+    expect(integration).toEqual([{ qualityCheck: "integration", pending: true }]);
+    expect(scenario!.evidenceObligations).toHaveLength(2);
+  });
+});
