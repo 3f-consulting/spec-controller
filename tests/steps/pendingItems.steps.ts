@@ -1012,3 +1012,135 @@ Then(
     );
   }
 );
+
+// @SCN-PND-012 — a BALANCED scenario carrying a Pending Item is visibly distinguished from a
+// CLEAN-BALANCED one. The same-verdict contrast: both rows read `✓ balanced`, yet the
+// clean-balanced row shows the em-dash placeholder `—` (nothing outstanding) while the
+// balanced-with-pending row shows the `⏳ pending: <check>` label (owed/deferred work), the
+// Pending Item never reading as an error. Distinct from @SCN-PND-010, which contrasts a Pending
+// Item against a reconciling ERROR on an out-of-balance/mixed row. Proved through the REAL
+// parse→reconcile→renderMarkdown (assemble→render) pipeline over the PLANTED
+// tests/fixtures/pending-tags/balanced-contrast.feature — @SCN-PDD-001 (a bare `@unit`
+// obligation discharged by a passing unit observation → clean-balanced, `—`) and @SCN-PDD-002
+// (a sole `@integrationpending` → balanced-with-pending, `⏳ pending: integration`). Never a real
+// `@<qc>pending` scenario in the scanned features/ corpus (fixture policy, evidence-manifesto
+// §11B). The @unit arm (packages/core/src/render/markdown.test.ts, [SCN-PND-012]) proves the same
+// same-verdict render distinction over renderMarkdown in isolation.
+const BALANCED_CONTRAST_FIXTURE = join(
+  process.cwd(),
+  "tests/fixtures/pending-tags/features/balanced-contrast.feature"
+);
+
+// The rendered markdown report of the reconciled balanced-contrast fixture.
+let balancedContrastReport: string;
+
+Given(
+  "a planted balanced-contrast fixture — a clean-balanced scenario alongside a balanced-with-pending one, both verdict balanced",
+  function () {
+    // The fixture (both scenarios) is the source; the parse+reconcile+render happens in the When.
+  }
+);
+
+When(
+  "the report is rendered from the reconciled balanced-contrast fixture, the clean-balanced scenario's unit observation supplied",
+  function () {
+    // Feed the PLANTED balanced-contrast fixture through the REAL parse→reconcile→renderMarkdown
+    // pipeline, supplying a PASSING unit observation citing @SCN-PDD-001 so its bare `@unit`
+    // obligation reconciles `satisfied` — a genuinely CLEAN-BALANCED row (no reconciling item, no
+    // Pending Item → the em-dash `—`). @SCN-PDD-002's sole `@integrationpending` partitions to a
+    // one-sided Pending Item with no observation sought → BALANCED-WITH-PENDING (the ⏳ label).
+    // renderMarkdown internally assembles the report and renders it — the assemble→render surface
+    // under test. Reds before the renderer emits the Pending Item label: today's clean-balanced `—`
+    // would render for the balanced-with-pending row too, collapsing the distinction.
+    const source = readFileSync(BALANCED_CONTRAST_FIXTURE, "utf8");
+    const scenarios: Scenario[] = parseScenarios(source);
+    const passingUnit: EvidenceObservation = {
+      qualityCheck: "unit",
+      scnId: "SCN-PDD-001",
+      status: "passed",
+    };
+    const reconciliation = reconcile(scenarios, [passingUnit]);
+    const ctx: RunContext = {
+      target: "pending-balanced-contrast-fixture",
+      inputs: {},
+      runStart: new Date("2026-07-10T00:00:00.000Z"),
+      sourceSha: null,
+    };
+    balancedContrastReport = renderMarkdown(reconciliation, ctx);
+  }
+);
+
+Then(
+  "the clean-balanced scenario's balanced row shows the em-dash placeholder — nothing outstanding",
+  function () {
+    // The @SCN-PDD-001 row is balanced (its unit obligation satisfied) and its exceptions cell is
+    // the clean em-dash `—` — nothing outstanding, no reconciling item, no Pending Item.
+    const row = rowFor(balancedContrastReport, "SCN-PDD-001");
+    assert.match(row, /✓ balanced/, `the clean-balanced row must read balanced; got: ${row}`);
+    assert.match(
+      row,
+      /\|\s*—\s*\|/,
+      `the clean-balanced row's exceptions cell must be the em-dash placeholder; got: ${row}`
+    );
+    // A clean-balanced row carries NO pending label.
+    assert.doesNotMatch(
+      row,
+      /⏳/,
+      `the clean-balanced row must carry no pending label; got: ${row}`
+    );
+  }
+);
+
+Then(
+  "the balanced-with-pending scenario's balanced row shows the ⏳ pending label instead — owed work, never an error",
+  function () {
+    // The @SCN-PDD-002 row is ALSO balanced, yet its exceptions cell shows the deferred integration
+    // obligation as a `⏳ pending: integration` Pending Item — owed work, NOT the clean-balanced `—`
+    // and NOT a reconciling-item error.
+    const row = rowFor(balancedContrastReport, "SCN-PDD-002");
+    assert.match(row, /✓ balanced/, `the balanced-with-pending row must read balanced; got: ${row}`);
+    assert.match(
+      row,
+      /⏳ pending: integration/,
+      `the balanced-with-pending row must show the ⏳ pending: integration label; got: ${row}`
+    );
+    // It is NOT the clean-balanced em-dash placeholder.
+    assert.doesNotMatch(
+      row,
+      /\|\s*—\s*\|/,
+      `the balanced-with-pending row must NOT be the clean-balanced em-dash; got: ${row}`
+    );
+    // And the Pending Item never reads as an error: the integration check renders as no
+    // reconciling-item outcome on this row.
+    assert.doesNotMatch(
+      row,
+      /integration ∅ missing|integration ✗ failing/,
+      `a Pending Item must never render as a reconciling-item error; got: ${row}`
+    );
+  }
+);
+
+Then(
+  "the two balanced rows read differently at a glance — the pending row is not the clean-balanced em-dash",
+  function () {
+    // The reviewer-legibility close-out: both rows read `✓ balanced`, yet their exceptions cells
+    // DIFFER — the clean-balanced cell is `—`, the balanced-with-pending cell is the ⏳ pending
+    // label. The two exceptions cells are not equal, so the distinction is legible at a glance.
+    const cleanRow = rowFor(balancedContrastReport, "SCN-PDD-001");
+    const pendingRow = rowFor(balancedContrastReport, "SCN-PDD-002");
+    const exceptionsCell = (row: string): string => (row.split("|")[3] ?? "").trim();
+    const cleanCell = exceptionsCell(cleanRow);
+    const pendingCell = exceptionsCell(pendingRow);
+    assert.equal(cleanCell, "—", `the clean-balanced exceptions cell must be the em-dash; got: "${cleanCell}"`);
+    assert.notEqual(
+      pendingCell,
+      cleanCell,
+      `the balanced-with-pending exceptions cell ("${pendingCell}") must differ from the clean-balanced em-dash ("${cleanCell}") — the two balanced rows must read differently`
+    );
+    assert.match(
+      pendingCell,
+      /⏳ pending: integration/,
+      `the balanced-with-pending exceptions cell must carry the ⏳ pending: integration label; got: "${pendingCell}"`
+    );
+  }
+);

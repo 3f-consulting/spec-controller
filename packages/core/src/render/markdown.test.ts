@@ -1563,3 +1563,91 @@ describe("[SCN-PND-011] the markdown Summary tallies Pending Items separately fr
     expect(md).not.toContain("⏳");
   });
 });
+
+/**
+ * Unit test for the balanced-with-pending vs clean-balanced render contrast (@SCN-PND-012).
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-PND-012 id
+ * matching features/pending-items.feature, so a grep of the id returns both halves of the pair.
+ * The @integration arm (tests/steps/pendingItems.steps.ts) proves the same same-verdict
+ * distinction through the real parse→reconcile→renderMarkdown pipeline over a planted fixture;
+ * this @unit arm proves the renderer in isolation over hand-built balances carrying `pendingItems`.
+ *
+ * The DISTINCT assertion from @SCN-PND-010: that scenario pinned the pending-vs-ERROR contrast
+ * (a Pending Item labelled apart from a reconciling item, on an out-of-balance/mixed row). This
+ * pins the SAME-VERDICT contrast — TWO rows that are BOTH `✓ balanced`, one clean (its empty
+ * reconciling items rendered as the em-dash `—`, nothing outstanding) and one carrying a Pending
+ * Item (rendered as the `⏳ pending: <check>` label, owed work). The reviewer tells "balanced,
+ * nothing outstanding" from "balanced, with owed/deferred work" at a glance, the Pending Item
+ * never reading as an error.
+ *
+ * Teeth: until `renderRowExceptions` emits the pending label for a balanced row the two balanced
+ * rows would render IDENTICALLY (both the clean `—`), collapsing the distinction — so the
+ * differ-at-a-glance assertion reds (the genuine red→green). The clean-balanced row pins that the
+ * `—` placeholder is exactly what a nothing-outstanding balanced row shows.
+ *
+ * Parent: (@SCN-PND-012).
+ */
+describe("[SCN-PND-012] a balanced-with-pending row is visibly distinguished from a clean-balanced one", () => {
+  /** The row (markdown table line) whose first cell is the given scnId. */
+  const rowFor = (md: string, scnId: string): string => {
+    const row = md.split("\n").find((line) => line.startsWith(`| ${scnId} `));
+    expect(row, `expected a rendered row for ${scnId}`).toBeTruthy();
+    return row!;
+  };
+  /** The exceptions cell (fourth pipe-delimited field) of a rendered scenario row. */
+  const exceptionsCell = (row: string): string => (row.split("|")[3] ?? "").trim();
+
+  /**
+   * A hand-built balance carrying the same-verdict contrast — BOTH rows verdict `balanced`:
+   *   - SCN-PDD-001 clean-balanced — no reconciling items, no pending items (the em-dash row).
+   *   - SCN-PDD-002 balanced-with-pending — a sole deferred obligation, no reconciling items.
+   */
+  const contrastBalance: EvidenceReconciliation = {
+    scenarioReconciliations: [
+      {
+        scnId: "SCN-PDD-001",
+        kind: "scenario",
+        verdict: "balanced",
+        evidenceObligations: [],
+        reconcilingItems: [],
+        pendingItems: [],
+      },
+      {
+        scnId: "SCN-PDD-002",
+        kind: "scenario",
+        verdict: "balanced",
+        evidenceObligations: [],
+        reconcilingItems: [],
+        pendingItems: [{ qualityCheck: "integration" }],
+      },
+    ],
+  };
+
+  it("renders the clean-balanced row as ✓ balanced with the em-dash placeholder — nothing outstanding", () => {
+    const md = renderMarkdown(contrastBalance, ctx);
+    const row = rowFor(md, "SCN-PDD-001");
+    expect(row).toContain("| SCN-PDD-001 | ✓ balanced | — |");
+    expect(row).not.toContain("⏳");
+  });
+
+  it("renders the balanced-with-pending row as ✓ balanced with the ⏳ pending label — owed work, not an error", () => {
+    const md = renderMarkdown(contrastBalance, ctx);
+    const row = rowFor(md, "SCN-PDD-002");
+    expect(row).toContain("✓ balanced");
+    expect(row).toMatch(/⏳ pending: integration/);
+    // Not the clean-balanced em-dash, and never a reconciling-item error.
+    expect(row).not.toMatch(/\|\s*—\s*\|/);
+    expect(row).not.toMatch(/integration ∅ missing|integration ✗ failing/);
+  });
+
+  it("makes the two balanced rows read differently at a glance — the pending cell is not the clean em-dash", () => {
+    const md = renderMarkdown(contrastBalance, ctx);
+    const cleanCell = exceptionsCell(rowFor(md, "SCN-PDD-001"));
+    const pendingCell = exceptionsCell(rowFor(md, "SCN-PDD-002"));
+    // Same verdict, different exceptions cell — the at-a-glance distinction the reviewer relies on.
+    expect(cleanCell).toBe("—");
+    expect(pendingCell).not.toBe(cleanCell);
+    expect(pendingCell).toMatch(/⏳ pending: integration/);
+  });
+});

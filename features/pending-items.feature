@@ -143,3 +143,18 @@ Feature: A pending evidence obligation raises a Pending Item
       Then the materialised summary tallies the Pending Items, a count apart from the scenario balanced and out-of-balance counts
       And the tally counts Pending Items, not scenarios carrying them — one deferred obligation is one Pending Item
       And the rendered Evidence reconciliation shows the Pending Items tally, never an eighth out-of-balance leaf
+
+    # The reviewer-legibility close-out: two BALANCED rows read differently at a glance. @SCN-PND-010
+    # pinned the pending-vs-ERROR contrast (on an out-of-balance/mixed row); this pins the
+    # same-verdict contrast — a clean-balanced row (its empty reconciling items rendered as the
+    # em-dash `—`, nothing outstanding) beside a balanced-with-pending row (its deferred obligation
+    # rendered as the `⏳ pending: <check>` label, owed work). Both read `✓ balanced`, yet their
+    # exceptions cells differ, so the reviewer tells "balanced, nothing outstanding" from "balanced,
+    # with owed/deferred work" without the Pending Item ever reading as an error.
+    @unit @integration @SCN-PND-012
+    Scenario: a balanced scenario carrying a Pending Item is visibly distinguished from a clean-balanced one
+      Given a planted balanced-contrast fixture — a clean-balanced scenario alongside a balanced-with-pending one, both verdict balanced
+      When the report is rendered from the reconciled balanced-contrast fixture, the clean-balanced scenario's unit observation supplied
+      Then the clean-balanced scenario's balanced row shows the em-dash placeholder — nothing outstanding
+      And the balanced-with-pending scenario's balanced row shows the ⏳ pending label instead — owed work, never an error
+      And the two balanced rows read differently at a glance — the pending row is not the clean-balanced em-dash
