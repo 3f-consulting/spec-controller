@@ -287,3 +287,47 @@ describe("[SCN-RPT-015] the JSON evidenceObligations carries the prose-only code
     expect(parsed.evidenceObligations.proseOnlyCodes).toEqual([]);
   });
 });
+
+/**
+ * Unit test for the JSON report carrying a scenario's Pending Items (@SCN-PND-010).
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries the
+ * @SCN-PND-010 id matching features/pending-items.feature, so a grep of the id returns
+ * both halves of the pair.
+ *
+ * The markdown side is the genuine red→green of @SCN-PND-010 (the human renderer must
+ * learn to emit the ⏳ pending label). This JSON side is the glue-free CONSISTENCY pin:
+ * `renderJson` is `JSON.stringify(assembleReport(...))`, and `assembleReport` passes the
+ * scenario reconciliations through verbatim as `evidenceReconciliation`, so a scenario's
+ * `pendingItems` reach the machine surface WITHOUT any renderer glue. This test pins that
+ * the two renderings stay consistent — the machine surface carries the same Pending Items
+ * the human surface labels. Green-first (the glue-free path already carries the field); its
+ * teeth are the deep-equality on the exact Pending Item, so a dropped/renamed field reds.
+ *
+ * Parent: (@SCN-PND-010).
+ */
+describe("[SCN-PND-010] the JSON report carries a scenario's Pending Items", () => {
+  const pendingBalance: EvidenceReconciliation = {
+    scenarioReconciliations: [
+      {
+        scnId: "SCN-PDX-001",
+        kind: "scenario",
+        verdict: "balanced",
+        evidenceObligations: [],
+        reconcilingItems: [],
+        pendingItems: [{ qualityCheck: "integration" }],
+      },
+    ],
+  };
+
+  it("serialises a scenario's pendingItems on its evidenceReconciliation row (glue-free consistency with markdown)", () => {
+    const parsed = JSON.parse(renderJson(pendingBalance, ctx));
+    const row = parsed.evidenceReconciliation.find((s: { scnId: string }) => s.scnId === "SCN-PDX-001");
+    expect(row).toBeDefined();
+    // The machine surface carries the same Pending Item the markdown labels — one IOU at
+    // the deferred integration check, one-sided (no outcome, not a reconciling item).
+    expect(row.pendingItems).toEqual([{ qualityCheck: "integration" }]);
+    // A Pending Item is NOT a reconciling item: it stays out of reconcilingItems entirely.
+    expect(row.reconcilingItems).toEqual([]);
+  });
+});

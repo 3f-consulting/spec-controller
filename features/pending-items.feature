@@ -111,3 +111,19 @@ Feature: A pending evidence obligation raises a Pending Item
       Then the unit obligation reconciles satisfied — a genuine reconciling-side balance
       And the deferred integration obligation is the scenario's one Pending Item, partitioned off
       And the scenario has verdict balanced and names no reconciling item — the pending and non-pending obligations coexist without interference
+
+  # The Pending Item now SURFACES on the rendered report — the first render sub-issue. A
+  # scenario's Pending Item(s) show on its rendered Scenario Reconciliation row with a label
+  # VISIBLY DISTINCT from a reconciling item (the missing/failing/etc. errors), never mixed
+  # into the reconciling-item list. The label carries its own ⏳ pending marker — reading as
+  # neither balanced-clean (—) nor an error (a reconciling item's ✗/∅/🍉 outcome). The SUMMARY
+  # tally is the next sub-issue (@SCN-PND-011); this one is the per-scenario label.
+  Rule: The Pending Item surfaces — visible and tallied, distinct from a Reconciling Item
+
+    @unit @integration @SCN-PND-010
+    Scenario: the Pending Item shows on its Quality Check Reconciliation, labelled distinct from a Reconciling Item
+      Given a planted render fixture — a balanced-with-pending scenario and one mixing a genuinely-missing unit error with a deferred integration obligation
+      When the report is rendered from the reconciled fixture
+      Then the balanced scenario's row shows its deferred integration obligation as a Pending Item, labelled distinct from a reconciling item
+      And the mixed scenario's row shows the missing unit error and the deferred integration Pending Item as separate, distinctly-labelled categories
+      And no Pending Item is rendered as a reconciling item — the deferred integration check never appears as a missing or failing error

@@ -27,6 +27,7 @@ import type {
   ScenarioVerdict,
   RuntimeQualityCheck,
   EvidenceReconciliation,
+  PendingItem,
 } from "../model.js";
 import {
   projectProvenanceObject,
@@ -99,15 +100,40 @@ function renderItem(item: ScenarioReconciliation["reconcilingItems"][number]): s
 }
 
 /**
- * Render one scenario row: its id, its binary verdict, and EVERY reconciling item.
- * A balanced scenario has none — rendered as an em-dash placeholder.
+ * Render a Pending Item (@SCN-PND-010) — the one-sided IOU a deliberately-deferred
+ * `<quality-check>pending` obligation raises (evidence-manifesto §11B). Labelled DISTINCT from
+ * a reconciling item: the ⏳ marker + the explicit "pending" word read as neither
+ * balanced-clean (the `—` placeholder) nor an error (a reconciling item's ✗/∅/🍉 outcome). It
+ * is NEVER run through `renderItem` and never enters the reconciling-item list — a Pending
+ * Item is a structurally distinct category, never one of the seven out-of-balance outcomes.
+ */
+function renderPendingItem(item: PendingItem): string {
+  return `⏳ pending: ${item.qualityCheck}`;
+}
+
+/**
+ * The exceptions cell for a Scenario Reconciliation row (@SCN-PND-010) — its reconciling items
+ * (the errors an out-of-balance verdict carries) and its Pending Items (the deferred IOUs),
+ * each rendered as its OWN distinctly-labelled group and then joined. The two groups are built
+ * separately, so a Pending Item is never folded into the reconciling-item list nor mistaken for
+ * an error. A row with neither renders the em-dash placeholder; a balanced-with-pending row
+ * shows its ⏳ pending group alone (distinct from the clean-balanced `—`). A row with no
+ * `pendingItems` renders byte-identically to before (reconciling items only, or `—`).
+ */
+function renderRowExceptions(s: ScenarioReconciliation): string {
+  const reconciling = s.reconcilingItems.map(renderItem).join("; ");
+  const pending = (s.pendingItems ?? []).map(renderPendingItem).join("; ");
+  const groups = [reconciling, pending].filter((g) => g.length > 0);
+  return groups.length === 0 ? "—" : groups.join("; ");
+}
+
+/**
+ * Render one scenario row: its id, its binary verdict, and its exceptions cell — EVERY
+ * reconciling item followed by any Pending Item (labelled distinct). A balanced scenario with
+ * neither is rendered as an em-dash placeholder.
  */
 function renderScenario(s: ScenarioReconciliation): string {
-  const items =
-    s.reconcilingItems.length === 0
-      ? "—"
-      : s.reconcilingItems.map(renderItem).join("; ");
-  return `| ${s.scnId} | ${VERDICT_GLYPH[s.verdict]} ${s.verdict} | ${items} |`;
+  return `| ${s.scnId} | ${VERDICT_GLYPH[s.verdict]} ${s.verdict} | ${renderRowExceptions(s)} |`;
 }
 
 /**
@@ -602,10 +628,7 @@ const ledgerSection: SectionEmitter = (report) => {
     lines.push(`| ${headers.map(() => "---").join(" | ")} |`);
     for (const s of scenarios) {
       const cells = columns.map((col) => evidenceCell(s, col, evidenceObservations.attributed));
-      const items =
-        s.reconcilingItems.length === 0
-          ? "—"
-          : s.reconcilingItems.map(renderItem).join("; ");
+      const items = renderRowExceptions(s);
       lines.push(
         `| ${[s.scnId, ...cells, `${VERDICT_GLYPH[s.verdict]} ${s.verdict}`, items].join(" | ")} |`
       );

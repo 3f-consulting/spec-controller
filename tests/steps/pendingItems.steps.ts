@@ -19,12 +19,13 @@ import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { parseScenarios, reconcile, isBalanced } from "@3f-consulting/spec-controller-core";
+import { parseScenarios, reconcile, isBalanced, renderMarkdown } from "@3f-consulting/spec-controller-core";
 import type {
   Scenario,
   EvidenceObligation,
   EvidenceObservation,
   EvidenceReconciliation,
+  RunContext,
 } from "@3f-consulting/spec-controller-core";
 
 const FIXTURE = join(process.cwd(), "tests/fixtures/pending-tags/features/target.feature");
@@ -750,6 +751,119 @@ Then(
       `the composition scenario must name no reconciling item; got ${JSON.stringify(
         scenario.reconcilingItems
       )}`
+    );
+  }
+);
+
+// @SCN-PND-010 — the Pending Item SURFACES on the rendered report: a scenario's Pending
+// Item(s) show on its rendered Scenario Reconciliation row with a label VISIBLY DISTINCT from
+// a reconciling item, never mixed into the reconciling-item list. Proved through the REAL
+// parse→reconcile→renderMarkdown (assemble→render) pipeline over the PLANTED
+// tests/fixtures/pending-tags/render-pending.feature — a balanced-with-pending scenario
+// (@SCN-PDL-001) and a MIXED one declaring `@unit @integrationpending` (@SCN-PDL-002 — the
+// bare unit reconciles to a `missing` error, a reconciling item; the integration one
+// partitions to a Pending Item). Never a real `@<qc>pending` scenario in the scanned features/
+// corpus (fixture policy, evidence-manifesto §11B). The @unit arm
+// (packages/core/src/render/markdown.test.ts, [SCN-PND-010]) proves the same render distinction
+// over renderReport in isolation; the JSON side stays glue-free consistent
+// (packages/core/src/render/json.test.ts, [SCN-PND-010]).
+const RENDER_FIXTURE = join(
+  process.cwd(),
+  "tests/fixtures/pending-tags/features/render-pending.feature"
+);
+
+// The rendered markdown report of the reconciled render fixture.
+let renderedReport: string;
+
+/** The rendered Scenario Reconciliation row (the markdown table line) for a scnId. */
+function rowFor(md: string, scnId: string): string {
+  const row = md.split("\n").find((line) => line.startsWith(`| ${scnId} `));
+  assert.ok(row, `expected a rendered Scenario Reconciliation row for ${scnId} in:\n${md}`);
+  return row;
+}
+
+Given(
+  "a planted render fixture — a balanced-with-pending scenario and one mixing a genuinely-missing unit error with a deferred integration obligation",
+  function () {
+    // The fixture (both scenarios) is the source; the parse+reconcile+render happens in the When.
+  }
+);
+
+When("the report is rendered from the reconciled fixture", function () {
+  // Feed the PLANTED render fixture through the REAL parse→reconcile→renderMarkdown pipeline.
+  // No observation is supplied: @SCN-PDL-001 (sole `@integrationpending`) is balanced with one
+  // Pending Item; @SCN-PDL-002 (`@unit @integrationpending`) reconciles its bare unit to a
+  // `missing` error (a reconciling item) while the integration one partitions to a Pending
+  // Item. renderMarkdown internally assembles the report and renders it — the assemble→render
+  // surface under test. Reds before the renderer emits the Pending Item (today the pending
+  // items are ignored: the balanced-with-pending row renders as a clean `—`, and the mixed
+  // row shows only its `unit ∅ missing` error, with no pending label anywhere).
+  const source = readFileSync(RENDER_FIXTURE, "utf8");
+  const scenarios: Scenario[] = parseScenarios(source);
+  const reconciliation = reconcile(scenarios, []);
+  const ctx: RunContext = {
+    target: "pending-render-fixture",
+    inputs: {},
+    runStart: new Date("2026-07-10T00:00:00.000Z"),
+    sourceSha: null,
+  };
+  renderedReport = renderMarkdown(reconciliation, ctx);
+});
+
+Then(
+  "the balanced scenario's row shows its deferred integration obligation as a Pending Item, labelled distinct from a reconciling item",
+  function () {
+    // The @SCN-PDL-001 row (sole deferred obligation) is balanced, and its exceptions cell
+    // shows the deferred integration obligation as a Pending Item — the ⏳ pending marker —
+    // NOT the em-dash a clean-balanced row shows, and NOT a reconciling-item error rendering.
+    const row = rowFor(renderedReport, "SCN-PDL-001");
+    assert.match(
+      row,
+      /⏳ pending: integration/,
+      `the balanced-with-pending row must show the Pending Item's ⏳ pending: integration label; got: ${row}`
+    );
+    assert.match(row, /✓ balanced/, `the sole-pending row must read balanced; got: ${row}`);
+    // The Pending Item is NOT a reconciling item: the integration check never renders as an
+    // error outcome on this row.
+    assert.doesNotMatch(
+      row,
+      /integration ∅ missing|integration ✗ failing/,
+      `a Pending Item must never render as a reconciling-item error; got: ${row}`
+    );
+  }
+);
+
+Then(
+  "the mixed scenario's row shows the missing unit error and the deferred integration Pending Item as separate, distinctly-labelled categories",
+  function () {
+    // The @SCN-PDL-002 row carries BOTH categories, visibly apart: the genuine `unit ∅ missing`
+    // reconciling item (the error) AND the `⏳ pending: integration` Pending Item (the deferred
+    // IOU), each with its own distinct label.
+    const row = rowFor(renderedReport, "SCN-PDL-002");
+    assert.match(
+      row,
+      /unit ∅ missing/,
+      `the mixed row must render the genuine unit error as a reconciling item; got: ${row}`
+    );
+    assert.match(
+      row,
+      /⏳ pending: integration/,
+      `the mixed row must render the deferred obligation as a distinct Pending Item; got: ${row}`
+    );
+    assert.match(row, /✗ out-of-balance/, `the mixed row is out-of-balance via its unit error; got: ${row}`);
+  }
+);
+
+Then(
+  "no Pending Item is rendered as a reconciling item — the deferred integration check never appears as a missing or failing error",
+  function () {
+    // Across the WHOLE rendered report, the deferred integration check is only ever the Pending
+    // Item marker — it never surfaces as an `integration ∅ missing` / `integration ✗ failing`
+    // reconciling-item error. This is the structural distinctness the label buys.
+    assert.doesNotMatch(
+      renderedReport,
+      /integration ∅ missing|integration ✗ failing/,
+      `no deferred integration obligation may render as a reconciling-item error in:\n${renderedReport}`
     );
   }
 );

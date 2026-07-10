@@ -1338,3 +1338,117 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the seven leaf out
     expect(md).not.toContain("↳ neither-side");
   });
 });
+
+/**
+ * Unit test for the Pending Item's per-scenario render label (@SCN-PND-010).
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries the
+ * @SCN-PND-010 id matching features/pending-items.feature, so a grep of the id
+ * returns both halves of the pair. The @integration arm
+ * (tests/steps/pendingItems.steps.ts) proves the same render distinction through the
+ * real parse→reconcile→renderMarkdown pipeline over a planted fixture; this @unit arm
+ * proves the renderer in isolation over hand-built balances carrying `pendingItems`.
+ *
+ * Proves the per-scenario render distinction: a scenario's Pending Item(s) surface on
+ * its rendered Scenario Reconciliation row with a ⏳ pending label VISIBLY DISTINCT from
+ * a reconciling item (an error), never mixed into the reconciling-item list. A
+ * balanced-with-pending row shows the label instead of the clean-balanced em-dash; a
+ * mixed row shows the reconciling-item error AND the Pending Item as separate categories.
+ *
+ * Teeth: until `renderRowExceptions` emits the pending label the renderer ignores
+ * `pendingItems` entirely — a balanced-with-pending row renders as a clean `—`, a mixed
+ * row shows only its `unit ∅ missing` error — so every ⏳ assertion reds (the genuine
+ * red→green). The clean-balanced regression row (no pending) pins that the em-dash
+ * placeholder survives where there is no Pending Item.
+ *
+ * Parent: (@SCN-PND-010).
+ */
+describe("[SCN-PND-010] the markdown report renders a Pending Item distinct from a reconciling item", () => {
+  /** The row (markdown table line) whose first cell is the given scnId. */
+  const rowFor = (md: string, scnId: string): string => {
+    const row = md.split("\n").find((line) => line.startsWith(`| ${scnId} `));
+    expect(row, `expected a rendered row for ${scnId}`).toBeTruthy();
+    return row!;
+  };
+
+  /**
+   * A hand-built balance carrying the three contrasting shapes:
+   *   - SCN-PDX-001 balanced-with-pending — a sole deferred obligation, no reconciling items.
+   *   - SCN-PDX-002 mixed — a genuine missing-unit reconciling item PLUS a deferred Pending Item.
+   *   - SCN-PDX-003 clean-balanced — no reconciling items, no pending items (the regression row).
+   */
+  const pendingBalance: EvidenceReconciliation = {
+    scenarioReconciliations: [
+      {
+        scnId: "SCN-PDX-001",
+        kind: "scenario",
+        verdict: "balanced",
+        evidenceObligations: [],
+        reconcilingItems: [],
+        pendingItems: [{ qualityCheck: "integration" }],
+      },
+      {
+        scnId: "SCN-PDX-002",
+        kind: "scenario",
+        verdict: "out-of-balance",
+        evidenceObligations: [{ qualityCheck: "unit", outcome: "missing" }],
+        reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
+        pendingItems: [{ qualityCheck: "integration" }],
+      },
+      {
+        scnId: "SCN-PDX-003",
+        kind: "scenario",
+        verdict: "balanced",
+        evidenceObligations: [],
+        reconcilingItems: [],
+        pendingItems: [],
+      },
+    ],
+  };
+
+  it("renders a balanced-with-pending row's Pending Item as a distinct ⏳ pending label, not a reconciling error", () => {
+    const md = renderMarkdown(pendingBalance, ctx);
+    const row = rowFor(md, "SCN-PDX-001");
+    // The Pending Item surfaces with its own label — distinct from a reconciling item.
+    expect(row).toMatch(/⏳ pending: integration/);
+    expect(row).toContain("✓ balanced");
+    // It is NOT rendered as a reconciling-item error (no missing/failing outcome for it).
+    expect(row).not.toMatch(/integration ∅ missing|integration ✗ failing/);
+    // And the exceptions cell is NOT the clean-balanced em-dash placeholder.
+    expect(row).not.toMatch(/\|\s*—\s*\|$/);
+  });
+
+  it("renders a mixed row's error and Pending Item as separate, distinctly-labelled categories", () => {
+    const md = renderMarkdown(pendingBalance, ctx);
+    const row = rowFor(md, "SCN-PDX-002");
+    // The genuine unit error renders as a reconciling item.
+    expect(row).toMatch(/unit ∅ missing/);
+    // The deferred integration obligation renders as a distinct Pending Item alongside it.
+    expect(row).toMatch(/⏳ pending: integration/);
+    expect(row).toContain("✗ out-of-balance");
+  });
+
+  it("leaves a clean-balanced row (no Pending Item) rendering the em-dash placeholder — the regression guard", () => {
+    const md = renderMarkdown(pendingBalance, ctx);
+    const row = rowFor(md, "SCN-PDX-003");
+    expect(row).toContain("| SCN-PDX-003 | ✓ balanced | — |");
+    expect(row).not.toContain("⏳");
+  });
+
+  it("keeps the Pending Item distinct in the wide evidence-column ledger path too", () => {
+    // Thread an evidence-observation read so the ledger renders its wide (evidence-column)
+    // table — the OTHER row-render path — and assert the ⏳ pending label survives there.
+    const evidenceObservations: RuntimeEvidenceObservationKindCounts = {
+      rawByRuntimeQualityCheck: { unit: 1, integration: 0, e2e: 0, performance: 0 },
+      attributed: [],
+      undemandedCount: 0,
+      phantomCount: 0,
+      suspenseCount: 0,
+    };
+    const md = renderMarkdown(pendingBalance, ctx, undefined, evidenceObservations);
+    expect(rowFor(md, "SCN-PDX-001")).toMatch(/⏳ pending: integration/);
+    expect(rowFor(md, "SCN-PDX-002")).toMatch(/⏳ pending: integration/);
+    // Still never rendered as a reconciling-item error anywhere.
+    expect(md).not.toMatch(/integration ∅ missing|integration ✗ failing/);
+  });
+});
