@@ -543,3 +543,53 @@ describe("[SCN-PND-004] a declared-pending obligation reconciles as a one-sided 
     expect(scenario?.reconcilingItems).toEqual([]);
   });
 });
+
+describe("[SCN-PND-005] the pending declaration governs even when a matching observation exists — the Pending Item is raised, the observation is not undemanded", () => {
+  // A Pending Item is ONE-SIDED: the pending tag's existence ALONE raises it — no observation
+  // is sought. Even when a MATCHING observation exists for the pending obligation's check, the
+  // pending declaration governs: the obligation is NOT reconciled against the observation (it
+  // never becomes `satisfied`, never a reconciling item), AND the observation is NOT flagged
+  // `undemanded` — the pending obligation keeps its (scnId, qualityCheck) pair DEMANDED (it
+  // stays in evidenceObligationPairs). Pins the "partition-before-match, but the pair stays
+  // demanded" invariant PND-004 established (green-first regression pin over that foundation).
+  // Asserts REAL reconcile output (evidence-manifesto §11A). The @integration arm
+  // (tests/steps/pendingItems.steps.ts, @SCN-PND-005) proves the same through the
+  // parse→reconcile pipeline over a planted fixture carrying a matching observation.
+  it("raises the Pending Item and leaves the matching observation demanded (obligation never satisfied, observation never undemanded)", () => {
+    const scenarios: Scenario[] = [
+      {
+        scnId: "SCN-PND-005",
+        evidenceObligations: [{ qualityCheck: "integration", pending: true }],
+      },
+    ];
+    // A MATCHING integration observation — present and passing — citing the very
+    // (scenario, quality-check) the pending obligation declares. A non-pending obligation
+    // would reconcile this to `satisfied`; the pending one must ignore it entirely.
+    const evidenceObservations: EvidenceObservation[] = [
+      { qualityCheck: "integration", scnId: "SCN-PND-005", status: "passed" },
+    ];
+
+    const balance = reconcile(scenarios, evidenceObservations);
+    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-PND-005");
+
+    // The pending declaration governs: exactly one Pending Item at the declared check,
+    // regardless of the matching observation's presence.
+    expect(scenario?.pendingItems).toEqual([{ qualityCheck: "integration" }]);
+    // The obligation never reconciled against the match — it did NOT become `satisfied`, and
+    // posted no reconciling item (one-sided: nothing is reconciled).
+    expect(scenario?.evidenceObligations).toEqual([]);
+    expect(scenario?.reconcilingItems).toEqual([]);
+    // The matching observation is NOT flagged `undemanded` anywhere: the pending pair stays
+    // DEMANDED (in evidenceObligationPairs), so the pending declaration owns that observation
+    // rather than it posting as a stray credit.
+    const undemanded = balance.scenarioReconciliations.flatMap((s) =>
+      s.reconcilingItems.filter((r) => r.outcome === "undemanded")
+    );
+    expect(undemanded).toEqual([]);
+    // And the observation is not shunted to a suspense/phantom row either — it is simply
+    // owned by the pending pair and reconciled nowhere.
+    expect(
+      balance.scenarioReconciliations.every((s) => s.kind === "scenario" || s.kind === undefined)
+    ).toBe(true);
+  });
+});

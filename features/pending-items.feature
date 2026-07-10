@@ -68,3 +68,17 @@ Feature: A pending evidence obligation raises a Pending Item
         | integration   |
         | e2e           |
         | performance   |
+
+  # A Pending Item is one-sided: the pending TAG's existence alone raises it — no observation
+  # is sought. Even when a matching observation exists for the pending obligation's check, the
+  # pending declaration governs: the obligation never reconciles against the observation (never
+  # `satisfied`), and the observation is not flagged `undemanded` — the pending pair stays
+  # DEMANDED. (Verdict-neutral / run-neutral are @SCN-PND-006..008; this pins the one-sidedness.)
+  Rule: A Pending Item is one-sided and never affects the verdict or the run
+
+    @unit @integration @SCN-PND-005
+    Scenario: the pending tag's existence alone raises the Pending Item — no observation is sought
+      Given a planted fixture scenario declaring a pending "integration" obligation, with a matching integration observation citing it
+      When the reconciler reconciles the fixture against that matching observation
+      Then the scenario raises exactly one Pending Item for "integration"
+      And the matching observation is not flagged undemanded — the pending pair stays demanded

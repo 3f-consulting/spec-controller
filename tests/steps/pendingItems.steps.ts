@@ -23,6 +23,7 @@ import { parseScenarios, reconcile } from "@3f-consulting/spec-controller-core";
 import type {
   Scenario,
   EvidenceObligation,
+  EvidenceObservation,
   EvidenceReconciliation,
 } from "@3f-consulting/spec-controller-core";
 
@@ -214,6 +215,66 @@ Then(
       `expected exactly one Pending Item for "${qualityCheck}" across the reconciled fixture; got ${
         pendingAtCheck.length
       } (rows: ${JSON.stringify(reconciliation.scenarioReconciliations)})`
+    );
+  }
+);
+
+// @SCN-PND-005 — the pending declaration governs EVEN WHEN a matching observation exists.
+// A Pending Item is one-sided: the tag's existence alone raises it — no observation is sought.
+// Proved through the REAL parse→reconcile pipeline over the PLANTED
+// tests/fixtures/pending-tags/pending-with-observation.feature (an `@integrationpending`
+// scenario, @SCN-PDM-001) fed a hand-built MATCHING integration observation citing that very
+// scenario — never a real `@<qc>pending` scenario in the scanned features/ corpus (fixture
+// policy, evidence-manifesto §11B). The @unit arm
+// (packages/core/src/reconcile/reconcile.test.ts, [SCN-PND-005]) proves the same partition +
+// pair-stays-demanded invariant over the reconcile function in isolation.
+const MATCH_FIXTURE = join(
+  process.cwd(),
+  "tests/fixtures/pending-tags/features/pending-with-observation.feature"
+);
+
+Given(
+  "a planted fixture scenario declaring a pending {string} obligation, with a matching integration observation citing it",
+  function (qualityCheck: string) {
+    // Record the check under test; the parse+reconcile (with the matching observation)
+    // happens in the When over the planted fixture.
+    pendingCheck = qualityCheck;
+  }
+);
+
+When("the reconciler reconciles the fixture against that matching observation", function () {
+  // Feed the PLANTED fixture through the REAL parse→reconcile pipeline, supplying a MATCHING
+  // integration observation citing the fixture scenario (@SCN-PDM-001) at the very check the
+  // pending obligation declares. A non-pending obligation would reconcile this to `satisfied`;
+  // the pending declaration must ignore it (partition-before-match) AND keep the pair demanded
+  // (so the observation is not flagged `undemanded`).
+  assert.ok(pendingCheck, "expected a pending quality-check to have been recorded");
+  const source = readFileSync(MATCH_FIXTURE, "utf8");
+  const scenarios: Scenario[] = parseScenarios(source);
+  const matchingObservation: EvidenceObservation = {
+    qualityCheck: "integration",
+    scnId: "SCN-PDM-001",
+    status: "passed",
+  };
+  reconciliation = reconcile(scenarios, [matchingObservation]);
+});
+
+Then(
+  "the matching observation is not flagged undemanded — the pending pair stays demanded",
+  function () {
+    // The pending obligation keeps its (scnId, quality-check) pair DEMANDED (in
+    // evidenceObligationPairs), so the matching observation is NOT posted as an `undemanded`
+    // credit anywhere in the reconciliation. Reds if the pending pair were dropped from the
+    // demanded set (the observation would then red as undemanded on the scenario's row).
+    const undemanded = reconciliation.scenarioReconciliations.flatMap((s) =>
+      s.reconcilingItems.filter((r) => r.outcome === "undemanded")
+    );
+    assert.equal(
+      undemanded.length,
+      0,
+      `the matching observation must NOT be flagged undemanded — the pending pair stays demanded; got ${
+        undemanded.length
+      } undemanded item(s) (rows: ${JSON.stringify(reconciliation.scenarioReconciliations)})`
     );
   }
 );
