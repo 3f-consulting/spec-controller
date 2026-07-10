@@ -305,12 +305,11 @@ describe("[SCN-PND-003] an unrecognised <x>pending tag is passed through, ignore
     expect(foopending[0]!.evidenceObligations).toEqual(foo[0]!.evidenceObligations);
   });
 
-  it("a bare @pending scenario derives no obligation", () => {
-    const [scenario] = parseScenarios(
-      ["@pending @SCN-XXX-005", "Scenario: a bare pending tag", "  Given a step"].join("\n")
-    );
-    expect(scenario!.evidenceObligations).toEqual([]);
-  });
+  // (A bare `@pending` scenario is NO LONGER a witness here: bare `pending` is a recognised
+  // community DEFERRAL tag (a DEFAULT_DEFERRAL_TAG), so a zero-obligation `@pending` scenario
+  // synthesises a scenario-scope Pending Item (@SCN-PND-022) — it is INSIDE the deferral lexicon,
+  // not an unknown tag. Its obligation-scope absence stays proven by the `pendingQualityCheck`
+  // helper test above; its synthesis by the [SCN-PND-022] arm.)
 
   it("an unknown <x>pending alongside a recognised tag leaves the recognised obligation intact", () => {
     // The passthrough is silent and local: `@foopending` contributes nothing while a
@@ -551,5 +550,76 @@ describe("[SCN-PND-020] an unrecognised tag is given no special meaning — it d
     );
     expect(withFoo[0]!.evidenceObligations).toEqual(withoutFoo[0]!.evidenceObligations);
     expect(withFoo[0]!.evidenceObligations).toEqual([{ qualityCheck: "unit" }]);
+  });
+});
+
+/**
+ * Unit test for INTERPRETATION 2 — the synthesised scenario-scope pending obligation at the
+ * parseScenarios level (@SCN-PND-022).
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-PND-022 id
+ * matching features/pending-items.feature, so a grep of the id returns both halves — this @unit
+ * arm (parseScenarios over inline strings, in isolation, plus the reconcile.test.ts partition
+ * arm) and the @integration arm (tests/steps/pendingItems.steps.ts, the full pipeline over a
+ * planted tests/fixtures/ feature-string).
+ *
+ * Pins the close-out of the slice-4 Rule: a scenario carrying a recognised deferral tag but
+ * declaring ZERO evidence obligations (a bare `@wip` — no evidence tag) synthesises ONE
+ * scenario-scope pending obligation `{ pending: true }` with NO `qualityCheck` (undefined =
+ * scenario-scope). The reconcile partition (reconcile.test.ts) then routes it to one
+ * `qualityCheck`-less Pending Item — so the scenario is deferred (pending), not both-missing.
+ * The synthesis is GATED on a recognised deferral tag (the negative boundary) and fires ONLY on
+ * the zero-obligation case (a `@wip` declaring obligations keeps marking each pending, no extra
+ * synthesised one — the @SCN-PND-016 path, unchanged).
+ *
+ * Parent: @SCN-PND-022.
+ */
+describe("[SCN-PND-022] a deferred scenario declaring no obligations synthesises one scenario-scope pending obligation", () => {
+  it("a bare @wip scenario (no evidence tag) derives ONE scenario-scope pending obligation with no qualityCheck", () => {
+    // A bare `@wip` scenario declares zero obligations. Reds today: the scenario-scope post-pass
+    // is a no-op on an empty obligation list, so parseScenarios emits `[]` and the scenario
+    // reconciles both-missing downstream. Interpretation 2 synthesises ONE `qualityCheck`-less
+    // pending obligation instead — the whole scenario is deferred.
+    const source = [
+      "@wip @SCN-XXX-210",
+      "Scenario: a bare @wip scenario declaring no obligations",
+      "  Given a step",
+    ].join("\n");
+    const [scenario] = parseScenarios(source);
+    expect(scenario!.evidenceObligations).toEqual([{ pending: true }]);
+  });
+
+  it("does NOT synthesise for a NON-deferred scenario declaring no obligations — the negative boundary", () => {
+    // Without a recognised deferral tag, a zero-obligation scenario stays zero-obligation (it
+    // reconciles both-missing downstream, unchanged). The synthesis is gated on the deferral tag,
+    // never fired for a bare scenario that merely happens to declare nothing.
+    const [scenario] = parseScenarios(
+      ["@SCN-XXX-211", "Scenario: a bare scenario, no deferral tag", "  Given a step"].join("\n")
+    );
+    expect(scenario!.evidenceObligations).toEqual([]);
+  });
+
+  it("still marks declared obligations pending when the @wip scenario DOES declare them — no spurious synthesised obligation", () => {
+    // The synthesis is ONLY for the zero-obligation case. A `@wip` scenario that declares a `@unit`
+    // obligation marks it pending (the @SCN-PND-016 scenario-scope path, unchanged) and adds NO
+    // extra synthesised obligation — the list is exactly the one deferred obligation.
+    const [scenario] = parseScenarios(
+      ["@wip @unit @SCN-XXX-212", "Scenario: a @wip scenario declaring a unit obligation", "  Given a step"].join("\n")
+    );
+    expect(scenario!.evidenceObligations).toEqual([{ qualityCheck: "unit", pending: true }]);
+  });
+
+  it("synthesises for a project-configured deferral tag too — a custom tag on a zero-obligation scenario defers scenario-scope", () => {
+    // The synthesis is gated on membership of the INJECTED deferralTags set (not the built-in
+    // default alone): a project-configured `@deferme` on a zero-obligation scenario synthesises the
+    // scenario-scope pending obligation, exactly like a built-in `@wip`.
+    const source = [
+      "@deferme @SCN-XXX-213",
+      "Scenario: a custom-deferral-tag scenario declaring no obligations",
+      "  Given a step",
+    ].join("\n");
+    expect(parseScenarios(source, ["deferme"])[0]!.evidenceObligations).toEqual([{ pending: true }]);
+    // Under the built-in default set, `@deferme` is unrecognised → no synthesis (zero obligations).
+    expect(parseScenarios(source)[0]!.evidenceObligations).toEqual([]);
   });
 });

@@ -52,7 +52,7 @@ let pendingTag: string;
 let obligations: EvidenceObligation[];
 // @SCN-PND-002 — the parsed suffix-significance fixture scenarios, keyed by @SCN id.
 let suffixScenarios: Scenario[];
-// @SCN-PND-003 — the parsed unknown-pending fixture scenarios (@foopending / @pending / @foo).
+// @SCN-PND-003 — the parsed unknown-pending fixture scenarios (@foopending / @foo).
 let unknownScenarios: Scenario[];
 // @SCN-PND-004 — the quality-check under test + the reconciliation of the planted fixture.
 let pendingCheck: string;
@@ -164,15 +164,21 @@ Then(
 // @SCN-PND-003 — a tag OUTSIDE the recognised `<quality-check>pending` lexicon is passed
 // through / ignored, exactly like any unrecognised tag: it contributes NO evidence
 // obligation. Proved through the REAL parseScenarios over a PLANTED tests/fixtures/
-// feature-string (the unknown `@foopending` @SCN-PDU-001, the bare `@pending` @SCN-PDU-002,
-// and the plain unknown `@foo` @SCN-PDU-003) — never a real `@<x>pending` scenario in the
-// scanned features/ corpus (fixture policy, evidence-manifesto §11B). The @unit arm
+// feature-string (the unknown `@foopending` @SCN-PDU-001 and the plain unknown `@foo`
+// @SCN-PDU-003) — never a real `@<x>pending` scenario in the scanned features/ corpus
+// (fixture policy, evidence-manifesto §11B). The @unit arm
 // (packages/core/src/parse/scenarios.test.ts, [SCN-PND-003]) proves the same passthrough
 // over inline strings + the pendingQualityCheck helper in isolation.
+//
+// Bare `@pending` was formerly a third witness (@SCN-PDU-002) — but it is INSIDE the recognised
+// community deferral lexicon (a DEFAULT_DEFERRAL_TAG), not an unknown tag: a bare `@pending`
+// scenario declaring zero obligations synthesises a scenario-scope Pending Item (@SCN-PND-022),
+// so it no longer belongs in this "outside the lexicon" set (its obligation-scope absence stays
+// proven by the pendingQualityCheck helper unit test).
 Given(
-  "the planted unknown-pending fixture — an `@foopending` scenario, a bare `@pending` scenario, and a plain unknown `@foo` scenario",
+  "the planted unknown-pending fixture — an `@foopending` scenario and a plain unknown `@foo` scenario",
   function () {
-    // The fixture (all three scenarios) is the source; the parse happens in the When.
+    // The fixture (both scenarios) is the source; the parse happens in the When.
   }
 );
 
@@ -420,16 +426,15 @@ Then(
 );
 
 Then(
-  "every scenario declares no evidence obligation — the unknown `<x>pending` and bare `@pending` are ignored exactly like the plain unknown tag",
+  "every scenario declares no evidence obligation — the unknown `<x>pending` is ignored exactly like the plain unknown tag",
   function () {
-    // All three fixture scenarios are emitted (each carries an @SCN id), and every one
-    // derives an EMPTY obligation set: the unknown `@foopending` and bare `@pending` are
-    // ignored EXACTLY like the plain unknown `@foo`. Reds if the parser derives any
-    // obligation from a tag outside the recognised lexicon.
+    // Both fixture scenarios are emitted (each carries an @SCN id), and every one derives an
+    // EMPTY obligation set: the unknown `@foopending` is ignored EXACTLY like the plain unknown
+    // `@foo`. Reds if the parser derives any obligation from a tag outside the recognised lexicon.
     assert.equal(
       unknownScenarios.length,
-      3,
-      `expected all three planted unknown-tag scenarios; got ${unknownScenarios.length} (${JSON.stringify(
+      2,
+      `expected both planted unknown-tag scenarios; got ${unknownScenarios.length} (${JSON.stringify(
         unknownScenarios
       )})`
     );
@@ -2108,5 +2113,97 @@ Then(
         builtinScenario.reconcilingItems
       )}`
     );
+  }
+);
+
+// @SCN-PND-022 — INTERPRETATION 2: a deferred scenario declaring ZERO obligations (a bare `@wip`
+// — @wip + @SCN, NO evidence tag) synthesises ONE scenario-scope Pending Item (a `qualityCheck`-
+// less IOU) rather than reconciling BOTH-MISSING (out-of-balance). Proved through the REAL
+// parse→reconcile→renderMarkdown pipeline over the PLANTED
+// tests/fixtures/pending-tags/features/scenario-scope-no-obligations.feature. Never a real bare-
+// `@wip` scenario in the scanned features/ corpus (fixture policy, evidence-manifesto §11B). The
+// @unit arm (packages/core/src/parse/scenarios.test.ts + reconcile.test.ts, [SCN-PND-022]) proves
+// the parse synthesis + the reconcile partition in isolation. Reds today: a bare `@wip` declares
+// zero obligations → both-missing (out-of-balance), rendered as an em-dash, no ⏳ pending.
+const NO_OBLIGATIONS_FIXTURE = join(
+  process.cwd(),
+  "tests/fixtures/pending-tags/features/scenario-scope-no-obligations.feature"
+);
+let noObligationsReport: string;
+let noObligationsRow: ScenarioReconciliation | undefined;
+
+Given(
+  "a planted fixture scenario carrying a bare `@wip` deferral tag and declaring no evidence obligations",
+  function () {
+    // The fixture (the bare-@wip scenario) is the source; parse+reconcile+render happens in the When.
+  }
+);
+
+When(
+  "the parser derives its obligations and the reconciler and renderer run the full pipeline over it",
+  function () {
+    // Feed the PLANTED bare-@wip fixture through the REAL parse→reconcile→renderMarkdown pipeline.
+    // No observation is supplied: the synthesised scenario-scope pending obligation partitions to
+    // one qualityCheck-less Pending Item, verdict balanced. renderMarkdown internally assembles the
+    // report and renders it — the assemble→render surface under test.
+    const source = readFileSync(NO_OBLIGATIONS_FIXTURE, "utf8");
+    const scenarios: Scenario[] = parseScenarios(source);
+    const rec = reconcile(scenarios, []);
+    noObligationsRow = rec.scenarioReconciliations.find((r) => r.scnId === "SCN-PDX-001");
+    const ctx: RunContext = {
+      target: "no-obligations-fixture",
+      inputs: {},
+      runStart: new Date("2026-07-10T00:00:00.000Z"),
+      sourceSha: null,
+    };
+    noObligationsReport = renderMarkdown(rec, ctx);
+  }
+);
+
+Then(
+  "the scenario synthesises one scenario-scope Pending Item and has verdict balanced — not the both-missing out-of-balance row",
+  function () {
+    const row = noObligationsRow;
+    assert.ok(row, "expected the bare-@wip scenario to reconcile to a row");
+    assert.equal(
+      (row.pendingItems ?? []).length,
+      1,
+      `the bare-@wip scenario must synthesise exactly one scenario-scope Pending Item; got ${JSON.stringify(row.pendingItems)}`
+    );
+    assert.equal(
+      row.pendingItems[0]!.qualityCheck,
+      undefined,
+      `the synthesised Pending Item is scenario-scope — no specific quality-check; got ${JSON.stringify(row.pendingItems[0])}`
+    );
+    assert.equal(
+      row.verdict,
+      "balanced",
+      `a deferred scenario is balanced-with-pending, not out-of-balance; got "${row.verdict}" (row: ${JSON.stringify(row)})`
+    );
+    assert.equal(
+      row.evidenceObligations.filter((o) => o.outcome === "both-missing").length,
+      0,
+      `the deferred scenario must NOT post a both-missing row; got ${JSON.stringify(row.evidenceObligations)}`
+    );
+  }
+);
+
+Then(
+  "the rendered row shows a check-less `⏳ pending` marker — scenario-scope, naming no specific quality-check",
+  function () {
+    const row = rowFor(noObligationsReport, "SCN-PDX-001");
+    // The scenario-scope Pending Item renders `⏳ pending` with NO `: <check>` suffix — distinct
+    // from an obligation-scope `⏳ pending: <check>` and from a clean-balanced `—`.
+    assert.match(
+      row,
+      /⏳ pending(?![:\w])/,
+      `the scenario-scope Pending Item must render a check-less ⏳ pending; got: ${row}`
+    );
+    assert.doesNotMatch(
+      row,
+      /⏳ pending:/,
+      `a scenario-scope Pending Item names no quality-check — no "pending: <check>"; got: ${row}`
+    );
+    assert.match(row, /✓ balanced/, `the deferred scenario reads balanced; got: ${row}`);
   }
 );

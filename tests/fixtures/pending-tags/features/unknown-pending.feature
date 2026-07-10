@@ -3,11 +3,16 @@ Feature: an unknown-pending fixture target
 
   A FIXTURE feature (NOT under features/) standing in for a spec whose scenarios carry
   tags OUTSIDE the recognised `<quality-check>pending` lexicon: an unknown `@foopending`
-  (foo is no quality-check), a bare `@pending` (the slice-4 community deferral tag), and a
-  plain unknown `@foo`. It is fed to the pure `parseScenarios` by the @SCN-PND-003
-  @integration step so the passthrough is exercised through the real parser WITHOUT planting
-  a real `@<x>pending` scenario in the scanned features/ corpus (fixture policy,
+  (foo is no quality-check) and a plain unknown `@foo`. It is fed to the pure `parseScenarios`
+  by the @SCN-PND-003 @integration step so the passthrough is exercised through the real parser
+  WITHOUT planting a real `@<x>pending` scenario in the scanned features/ corpus (fixture policy,
   evidence-manifesto §11B).
+
+  (Bare `@pending` was formerly a third witness here — but it is INSIDE the recognised community
+  deferral lexicon (a DEFAULT_DEFERRAL_TAG), not an unknown tag: a bare `@pending` scenario
+  declaring zero obligations synthesises a scenario-scope Pending Item (@SCN-PND-022), so it no
+  longer belongs in this "outside the lexicon" set. Its obligation-scope absence is proven by the
+  `pendingQualityCheck("pending")` helper unit test; its synthesis by the @SCN-PND-022 arms.)
 
   This file lives under tests/fixtures/ (NOT features/), so neither the feature-code
   registry lint nor the scenario↔sub-issue gate sees @PDU / @SCN-PDU-NNN — they scan
@@ -20,10 +25,6 @@ Feature: an unknown-pending fixture target
 
     @foopending @SCN-PDU-001
     Scenario: an unknown <x>pending tag (foo is no quality-check)
-      Given a fixture step
-
-    @pending @SCN-PDU-002
-    Scenario: a bare @pending tag (the slice-4 deferral tag, ignored at slice 1)
       Given a fixture step
 
     @foo @SCN-PDU-003

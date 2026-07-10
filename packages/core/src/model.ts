@@ -35,9 +35,17 @@ export type RuntimeQualityCheck = Exclude<QualityCheck, "lint">;
  *   - `@lint=<guard>`           → `{ qualityCheck: 'lint', guard }`.
  * `guard` is present IFF `qualityCheck === 'lint'` (the guard handle a `@lint=<guard>`
  * tag names); a runtime evidence obligation carries no guard.
+ *
+ * `qualityCheck` is OPTIONAL (@SCN-PND-022) — `undefined` = SCENARIO-SCOPE: the
+ * synthesised whole-scenario deferral a recognised deferral tag raises on a scenario
+ * declaring ZERO obligations (a bare `@wip` — no evidence tag). It is always
+ * `{ pending: true }` with no `qualityCheck` (nor `guard`): it owes no specific check,
+ * so the reconcile partition routes it to ONE `qualityCheck`-less Pending Item rather
+ * than a both-missing row. Every ordinary (tag-derived) obligation carries a
+ * `qualityCheck`; only the synthesised scenario-scope pending omits it.
  */
 export interface EvidenceObligation {
-  qualityCheck: QualityCheck;
+  qualityCheck?: QualityCheck;
   /** The guard handle — present IFF `qualityCheck === 'lint'`. */
   guard?: string;
   /**
@@ -208,10 +216,16 @@ export interface QualityCheckReconciliation {
  * `reconcilingItems`. It records only WHICH quality-check is owed-but-deferred: an IOU on
  * the report, verdict-neutral and run-neutral. One Pending Item per `<qc>pending`
  * obligation the scenario declared.
+ *
+ * `qualityCheck` is OPTIONAL (@SCN-PND-022) — `undefined` = SCENARIO-SCOPE: the whole
+ * scenario is deferred (a bare `@wip` declaring no obligations) and owes NO specific
+ * check. An obligation-scope Pending Item (a `<qc>pending` tag) names its owed
+ * `qualityCheck`; a scenario-scope one names none. Kept ONE `PendingItem` type — the
+ * `undefined` `qualityCheck` is the scenario-scope discriminator, not a parallel flag.
  */
 export interface PendingItem {
-  /** The flat quality-check this deferred obligation is owed at. */
-  qualityCheck: QualityCheck;
+  /** The flat quality-check this deferred obligation is owed at; ABSENT for a scenario-scope Pending Item. */
+  qualityCheck?: QualityCheck;
 }
 
 /**

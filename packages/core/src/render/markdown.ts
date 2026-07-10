@@ -108,7 +108,10 @@ function renderItem(item: ScenarioReconciliation["reconcilingItems"][number]): s
  * Item is a structurally distinct category, never one of the seven out-of-balance outcomes.
  */
 function renderPendingItem(item: PendingItem): string {
-  return `⏳ pending: ${item.qualityCheck}`;
+  // A `qualityCheck`-less Pending Item (@SCN-PND-022) is SCENARIO-SCOPE — a whole-scenario
+  // deferral (a bare `@wip` declaring no obligations) owing NO specific check. Render `⏳ pending`
+  // alone; an obligation-scope Pending Item names its owed check (`⏳ pending: <check>`).
+  return item.qualityCheck === undefined ? "⏳ pending" : `⏳ pending: ${item.qualityCheck}`;
 }
 
 /**

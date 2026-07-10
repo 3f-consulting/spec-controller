@@ -226,11 +226,19 @@ export function parseScenarios(
       // obligation `pending: true`, overriding its observation-derived outcome. Applied AFTER the
       // obligation list is built, so it composes with the `<qc>pending` recognition and covers
       // every obligation kind (runtime tiers AND `@lint=<guard>`). Idempotent on an
-      // already-pending obligation. (A deferred scenario declaring ZERO obligations — bare `@wip`
-      // — is a LATER slice's synthesised scenario-level Pending Item, @SCN-PND-022; here it is a
-      // no-op.)
+      // already-pending obligation.
       if (blockTags.some((t) => deferralTags.includes(t))) {
-        for (const obligation of evidenceObligations) obligation.pending = true;
+        if (evidenceObligations.length === 0) {
+          // INTERPRETATION 2 (@SCN-PND-022): a deferred scenario declaring ZERO obligations (a
+          // bare `@wip` — no evidence tag) synthesises ONE scenario-scope pending obligation:
+          // `{ pending: true }` with NO `qualityCheck` (undefined = scenario-scope) and no `guard`.
+          // The reconcile partition routes it to one `qualityCheck`-less Pending Item, so the
+          // scenario is deferred (pending) — the both-missing guard (fires only on zero pending
+          // items) leaves it balanced, not the degenerate both-missing row.
+          evidenceObligations.push({ pending: true });
+        } else {
+          for (const obligation of evidenceObligations) obligation.pending = true;
+        }
       }
       scenarios.push({ scnId: scnTag, evidenceObligations });
     }

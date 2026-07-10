@@ -881,3 +881,48 @@ describe("[SCN-PND-019] a recognised deferral tag raises the Pending Item whethe
     expect(nonDeferredScenario?.pendingItems).toEqual([]);
   });
 });
+
+describe("[SCN-PND-022] a deferred scenario declaring no obligations is a Pending Item, not both-missing", () => {
+  // INTERPRETATION 2 — the reconcile PARTITION arm. A synthesised scenario-scope pending
+  // obligation (`{ pending: true }` with NO `qualityCheck` — what parseScenarios emits for a bare
+  // `@wip` declaring zero obligations, @SCN-PND-022) partitions to ONE `qualityCheck`-less Pending
+  // Item. The both-missing guard fires only on ZERO pending items, so the synthesised pending →
+  // NOT both-missing: the scenario reconciles to zero rows on both sides yet is balanced-with-
+  // pending (the forward-compatibility slice 2 built into the guard). This proves the partition +
+  // both-missing-guard behaviour over the reconcile function in isolation; the parse synthesis that
+  // FEEDS it is the scenarios.test.ts arm, and the full parse→reconcile→render pipeline is the
+  // @integration arm (tests/steps/pendingItems.steps.ts, @SCN-PND-022). Asserts REAL reconcile
+  // output (evidence-manifesto §11A).
+  it("routes a synthesised scenario-scope pending obligation to one qualityCheck-less Pending Item, balanced, not both-missing", () => {
+    const scenarios: Scenario[] = [
+      { scnId: "SCN-PDX-001", evidenceObligations: [{ pending: true }] },
+    ];
+    // No observation is sought — a scenario-scope Pending Item is one-sided.
+    const balance = reconcile(scenarios, []);
+    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-PDX-001");
+
+    // Exactly one Pending Item, scenario-scope (no owed quality-check).
+    expect(scenario?.pendingItems).toHaveLength(1);
+    expect(scenario?.pendingItems[0]!.qualityCheck).toBeUndefined();
+    // Balanced-with-pending: the both-missing guard does NOT fire (a pending item is present), so
+    // no both-missing reconciling item, and the empty reconciled list reads balanced.
+    expect(scenario?.verdict).toBe("balanced");
+    expect(scenario?.reconcilingItems).toEqual([]);
+    expect(scenario?.evidenceObligations).toEqual([]);
+    expect(scenario?.evidenceObligations.some((o) => o.outcome === "both-missing")).toBe(false);
+  });
+
+  it("the both-missing guard is unchanged: a truly zero-obligation scenario (no pending) still reconciles both-missing", () => {
+    // The non-regression contrast. A bare-empty scenario — no obligation AND no synthesised pending
+    // (never carried a deferral tag) — still posts the degenerate both-missing row (out-of-balance).
+    // Only the synthesised-pending case above flips to balanced; the guard is not special-cased
+    // further than the pending-items clause it already had.
+    const scenarios: Scenario[] = [{ scnId: "SCN-XXX-999", evidenceObligations: [] }];
+    const balance = reconcile(scenarios, []);
+    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-XXX-999");
+
+    expect(scenario?.verdict).toBe("out-of-balance");
+    expect(scenario?.reconcilingItems).toEqual([{ outcome: "both-missing" }]);
+    expect(scenario?.pendingItems).toEqual([]);
+  });
+});

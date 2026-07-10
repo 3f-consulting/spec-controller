@@ -44,9 +44,9 @@ Feature: A pending evidence obligation raises a Pending Item
 
     @unit @integration @SCN-PND-003
     Scenario: an unrecognised `<x>pending` (no such quality-check) is passed through, ignored like any unrecognised tag
-      Given the planted unknown-pending fixture — an `@foopending` scenario, a bare `@pending` scenario, and a plain unknown `@foo` scenario
+      Given the planted unknown-pending fixture — an `@foopending` scenario and a plain unknown `@foo` scenario
       When the parser derives each unknown scenario's evidence obligations
-      Then every scenario declares no evidence obligation — the unknown `<x>pending` and bare `@pending` are ignored exactly like the plain unknown tag
+      Then every scenario declares no evidence obligation — the unknown `<x>pending` is ignored exactly like the plain unknown tag
 
   # The met→balanced and neither→missing results are the established @LDG baselines
   # (@SCN-LDG-001 satisfied→balanced; @SCN-LDG-003 absent→missing). This Rule adds the third:
@@ -338,3 +338,24 @@ Feature: A pending evidence obligation raises a Pending Item
       When the balance reconciler ingests the target — reading specController.deferralTags from its package.json and threading the extended set through the parser
       Then the project-configured `@deferred` scenario's integration obligation is a Pending Item — deferred like a built-in, verdict balanced, no reconciling item
       And the built-in `@wip` scenario still defers its integration obligation as a Pending Item — config extends the recognised set, never replaces it
+
+    # INTERPRETATION 2 — the bare-`@wip` close-out of the slice-4 Rule. A scenario carrying a
+    # recognised deferral tag (a bare `@wip` — drive-slice's convention for an authored scenario
+    # awaiting its evidence: `@wip` + `@SCN`, NO evidence tag) declares ZERO evidence obligations.
+    # Before this, it reconciled as BOTH-MISSING (out-of-balance) — the degenerate zero-rows-on-
+    # both-sides row. Now the deferral tag synthesises ONE scenario-scope Pending Item (a
+    # `qualityCheck`-less IOU — the whole scenario is deferred, owing no specific check), so the
+    # scenario is deferred (pending), verdict balanced, NOT both-missing. The model change:
+    # `PendingItem.qualityCheck` (and the `EvidenceObligation.qualityCheck` that feeds it) becomes
+    # optional — `undefined` = scenario-scope. The render (slice 2's `⏳ pending: <check>`) handles
+    # the check-less item → a bare `⏳ pending` marker; the Summary tally counts it like any Pending
+    # Item. The @unit arm proves the parse synthesis + the reconcile partition in isolation; this
+    # @integration arm proves the full parse→reconcile→render pipeline over a PLANTED bare-`@wip`
+    # feature-string. Never a real bare-`@wip` scenario in the scanned features/ corpus (fixture
+    # policy, evidence-manifesto §11B).
+    @unit @integration @SCN-PND-022
+    Scenario: a deferred scenario declaring no obligations is a Pending Item, not both-missing
+      Given a planted fixture scenario carrying a bare `@wip` deferral tag and declaring no evidence obligations
+      When the parser derives its obligations and the reconciler and renderer run the full pipeline over it
+      Then the scenario synthesises one scenario-scope Pending Item and has verdict balanced — not the both-missing out-of-balance row
+      And the rendered row shows a check-less `⏳ pending` marker — scenario-scope, naming no specific quality-check
