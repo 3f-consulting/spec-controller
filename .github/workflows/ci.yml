@@ -9,14 +9,14 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # Full history so the scenario sub-issue guard can diff HEAD against
           # the PR base ref (github.event.pull_request.base.sha). The default
           # shallow checkout would not contain the base commit.
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
 
