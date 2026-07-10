@@ -20,6 +20,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseScenarios, reconcile, isBalanced, renderMarkdown, assembleReport } from "@3f-consulting/spec-controller-core";
+import { runReconcile } from "../../packages/spec-controller/src/ingest/ingestQualityChecks.js";
 import {
   parseCucumberEvidenceObservations,
   type CucumberJsonReport,
@@ -1996,6 +1997,115 @@ Then(
       [],
       `no reconciling item may be named — the unit obligation reconciles satisfied on its observation; got ${JSON.stringify(
         scenario.reconcilingItems
+      )}`
+    );
+  }
+);
+
+// @SCN-PND-021 — the recognised deferral-tag set is CONFIGURATION: a project-configured tag
+// defers like a built-in. Proved through the REAL ingest→parse→reconcile pipeline (runReconcile,
+// the impure CLI edge that reads `package.json`) over a PLANTED target repo
+// tests/fixtures/pending-tags/config-extends/ — its package.json configures
+// `specController.deferralTags: ["deferred"]`, and its feature declares a `@deferred @integration`
+// scenario (@SCN-CFG-001) alongside a built-in `@wip @integration` one (@SCN-CFG-002). runReconcile
+// reads the configured set, unions it with DEFAULT_DEFERRAL_TAGS, and threads DEFAULT ∪ configured
+// into parseScenarios — so the `@deferred` scenario's integration obligation defers to a Pending
+// Item exactly like the built-in `@wip` one. Config EXTENDS, never replaces: the `@wip` scenario
+// still defers alongside the configured tag. Never a real configured deferral tag in the scanned
+// features/ corpus (fixture policy, evidence-manifesto §11B). The @unit arm proves the config
+// read/union in isolation (packages/spec-controller/src/ingest/ingestQualityChecks.test.ts,
+// [SCN-PND-021]) and the --help documentation (packages/spec-controller/src/cli-registry.test.ts,
+// [SCN-PND-021]). Reds today: the ingest edge reads no config, so `@deferred` is unrecognised and
+// its integration obligation reconciles MISSING (out-of-balance), not a Pending Item.
+const CONFIG_EXTENDS_FIXTURE = join(process.cwd(), "tests/fixtures/pending-tags/config-extends");
+
+// The two reconciled rows of the config-extends target, keyed by fixture @SCN id.
+let configuredScenario: ScenarioReconciliation | undefined;
+let builtinScenario: ScenarioReconciliation | undefined;
+
+Given(
+  'a planted target repo whose package.json configures the deferral tag "@deferred", alongside a feature declaring a `@deferred @integration` scenario and a built-in `@wip @integration` one',
+  function () {
+    // The planted target repo (tests/fixtures/pending-tags/config-extends/) is the source; the
+    // ingest→parse→reconcile happens in the When over its --features + --package-json.
+  }
+);
+
+When(
+  "the balance reconciler ingests the target — reading specController.deferralTags from its package.json and threading the extended set through the parser",
+  function () {
+    // Drive the REAL impure CLI core end-to-end: runReconcile resolves the input paths, reads
+    // `specController.deferralTags` from the target package.json, unions it with the starter set, and
+    // threads DEFAULT ∪ configured into parseScenarios. No result reports are supplied, so each
+    // integration obligation is reconciled against no observation — deferred → a one-sided Pending
+    // Item, or (without the config read) MISSING by absence.
+    const reconciliation = runReconcile({
+      features: join(CONFIG_EXTENDS_FIXTURE, "features"),
+      packageJson: join(CONFIG_EXTENDS_FIXTURE, "package.json"),
+    });
+    configuredScenario = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-CFG-001");
+    builtinScenario = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-CFG-002");
+  }
+);
+
+Then(
+  "the project-configured `@deferred` scenario's integration obligation is a Pending Item — deferred like a built-in, verdict balanced, no reconciling item",
+  function () {
+    // The configured `@deferred` tag defers through the full pipeline: the integration obligation
+    // partitions to EXACTLY one one-sided Pending Item, the verdict is balanced, and no reconciling
+    // item is named. Reds until the ingest edge reads specController.deferralTags and threads the
+    // extended set (today `@deferred` is unrecognised → the obligation reconciles MISSING).
+    assert.ok(configuredScenario, "expected the reconciled configured-tag row (SCN-CFG-001)");
+    assert.deepEqual(
+      configuredScenario.pendingItems ?? [],
+      [{ qualityCheck: "integration" }],
+      `the @deferred scenario's integration obligation must be a Pending Item (config defers it like a built-in); got ${JSON.stringify(
+        configuredScenario.pendingItems
+      )}`
+    );
+    assert.equal(
+      configuredScenario.verdict,
+      "balanced",
+      `the configured-tag scenario must be balanced (its only exception is a Pending Item); got "${configuredScenario.verdict}" (row: ${JSON.stringify(
+        configuredScenario
+      )})`
+    );
+    assert.deepEqual(
+      configuredScenario.reconcilingItems,
+      [],
+      `no reconciling item may be named — the configured deferral makes the integration obligation a Pending Item, not a missing error; got ${JSON.stringify(
+        configuredScenario.reconcilingItems
+      )}`
+    );
+  }
+);
+
+Then(
+  "the built-in `@wip` scenario still defers its integration obligation as a Pending Item — config extends the recognised set, never replaces it",
+  function () {
+    // Config EXTENDS, never replaces: the built-in `@wip` still defers alongside the configured
+    // `@deferred` tag — a project cannot un-recognise `@wip`. Its integration obligation is also a
+    // one-sided Pending Item, verdict balanced, no reconciling item.
+    assert.ok(builtinScenario, "expected the reconciled built-in-tag row (SCN-CFG-002)");
+    assert.deepEqual(
+      builtinScenario.pendingItems ?? [],
+      [{ qualityCheck: "integration" }],
+      `the built-in @wip scenario must still defer its integration obligation as a Pending Item (config extends, never replaces); got ${JSON.stringify(
+        builtinScenario.pendingItems
+      )}`
+    );
+    assert.equal(
+      builtinScenario.verdict,
+      "balanced",
+      `the built-in-tag scenario must be balanced; got "${builtinScenario.verdict}" (row: ${JSON.stringify(
+        builtinScenario
+      )})`
+    );
+    assert.deepEqual(
+      builtinScenario.reconcilingItems,
+      [],
+      `no reconciling item may be named — the built-in deferral makes the integration obligation a Pending Item; got ${JSON.stringify(
+        builtinScenario.reconcilingItems
       )}`
     );
   }

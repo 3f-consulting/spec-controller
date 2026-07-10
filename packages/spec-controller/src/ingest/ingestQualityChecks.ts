@@ -20,6 +20,7 @@ import {
   countScnOccurrences,
   parseUntaggedScenarios,
   proseOnlyCodes,
+  DEFAULT_DEFERRAL_TAGS,
 } from "@3f-consulting/spec-controller-core";
 import {
   evidenceObligations,
@@ -98,10 +99,36 @@ function readJsonIfPresent<T>(path: string | undefined): T | undefined {
   return JSON.parse(readFileSync(path, "utf8")) as T;
 }
 
-function scenariosFromFeatures(featuresDir: string | undefined): Scenario[] {
+/**
+ * Resolve the recognised deferral-tag set for the target (@SCN-PND-021) — the single-sourced
+ * starter constant `DEFAULT_DEFERRAL_TAGS` EXTENDED by the target `package.json`'s
+ * `specController.deferralTags`. Config EXTENDS, never replaces: a project cannot un-recognise a
+ * built-in (`@wip` always defers). Configured tags are bare names, `@`-stripped, consistent with
+ * `DEFAULT_DEFERRAL_TAGS`; non-string / non-array config is ignored defensively. The set is the
+ * impure edge's to build (it reads the `package.json` off disk); the core parser stays pure — it
+ * takes the union as the injected `deferralTags` param.
+ */
+export function resolveDeferralTags(packageJson: {
+  specController?: { deferralTags?: unknown };
+}): readonly string[] {
+  const configured = packageJson.specController?.deferralTags;
+  const extras = Array.isArray(configured)
+    ? configured
+        .filter((tag): tag is string => typeof tag === "string")
+        .map((tag) => tag.replace(/^@/, ""))
+    : [];
+  // Union: the starter set FIRST (extends, never replaces — a project cannot un-recognise a
+  // built-in), then the configured extras; de-duplicated to keep the set clean.
+  return [...new Set([...DEFAULT_DEFERRAL_TAGS, ...extras])];
+}
+
+function scenariosFromFeatures(
+  featuresDir: string | undefined,
+  deferralTags: readonly string[] = DEFAULT_DEFERRAL_TAGS
+): Scenario[] {
   const features =
     featuresDir !== undefined ? discoverFeatures(featuresDir) : discoverFeatures();
-  return features.flatMap((f) => parseScenarios(readFileSync(f.path, "utf8")));
+  return features.flatMap((f) => parseScenarios(readFileSync(f.path, "utf8"), deferralTags));
 }
 
 /**
@@ -188,7 +215,15 @@ export function reconcileWithCensus(opts: ReconcileOptions): {
   balance: EvidenceReconciliation;
   evidenceObservations: RuntimeEvidenceObservationKindCounts;
 } {
-  const scenarios = scenariosFromFeatures(opts.features);
+  // Read the target's package.json ONCE — its `specController.deferralTags` config extends the
+  // recognised deferral-tag set (@SCN-PND-021), and its `scripts` back the static-guard `exists`
+  // read (the --package-json seam, below). The disk read stays at this impure edge; the core parser
+  // takes the resolved set as its injected `deferralTags` param, staying pure.
+  const pkgPath = opts.packageJson ?? "package.json";
+  const packageJson =
+    readJsonIfPresent<PackageJsonScripts & { specController?: { deferralTags?: unknown } }>(pkgPath) ?? {};
+  const deferralTags = resolveDeferralTags(packageJson);
+  const scenarios = scenariosFromFeatures(opts.features, deferralTags);
 
   // The TARGET repo root the credit locators are made relative to, so a
   // phantom-scenario row's where-to-fix (ruling Q5) stays portable in a banked artefact.
@@ -220,8 +255,6 @@ export function reconcileWithCensus(opts: ReconcileOptions): {
   // its CI → watermelon, not missing).
   const ciPath = opts.ci ?? ".github/workflows/ci.yml";
   const ciSource = existsSync(ciPath) ? readFileSync(ciPath, "utf8") : "";
-  const pkgPath = opts.packageJson ?? "package.json";
-  const packageJson = readJsonIfPresent<PackageJsonScripts>(pkgPath) ?? {};
   if (demandedGuards.length > 0) {
     evidenceObservations.push(...checkStaticEvidenceObligations(demandedGuards, ciSource, packageJson));
   }

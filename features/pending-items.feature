@@ -316,3 +316,25 @@ Feature: A pending evidence obligation raises a Pending Item
       When the parser derives the unrecognised-tag scenario's evidence obligations and the reconciler reconciles it against that passing unit observation
       Then the unit obligation is not deferred — the unrecognised tag carries no special meaning, so it has no pending flag
       And the unit obligation reconciles satisfied and the scenario raises no Pending Item — verdict balanced, no reconciling item
+
+    # The CONFIG-EXTENSION close-out of the slice-4 Rule: the recognised deferral-tag set is
+    # CONFIGURATION. The impure CLI/ingest edge reads a project's `package.json`
+    # `specController.deferralTags: string[]` (establishing the `specController` config namespace)
+    # and passes DEFAULT_DEFERRAL_TAGS ∪ configured into parseScenarios (the defaulted `deferralTags`
+    # param, @SCN-PND-016). A project-configured tag (e.g. `@deferred`) then defers every obligation
+    # on its scenario exactly like a built-in — a Pending Item, verdict balanced. Config EXTENDS,
+    # never replaces: the built-in `@wip` still defers alongside the configured tag (a project cannot
+    # un-recognise `@wip`). The core stays PURE — the set is injected at the edge; the disk read of
+    # `specController.deferralTags` is the impure edge's concern (the `--package-json` precedent). The
+    # @unit arm proves the config read/union in isolation (a package.json object → the unioned set)
+    # and the `--help` documentation (the field + the starter set single-sourced from
+    # DEFAULT_DEFERRAL_TAGS, the 3F-1405 completeness discipline); this @integration arm proves a
+    # configured tag defers through the full ingest→parse→reconcile pipeline over a PLANTED target
+    # repo (a package.json + a feature-string). Never a real configured deferral tag in the scanned
+    # features/ corpus (fixture policy, evidence-manifesto §11B).
+    @unit @integration @SCN-PND-021
+    Scenario: the recognised deferral-tag set is configuration — a project-configured tag defers like the built-in set
+      Given a planted target repo whose package.json configures the deferral tag "@deferred", alongside a feature declaring a `@deferred @integration` scenario and a built-in `@wip @integration` one
+      When the balance reconciler ingests the target — reading specController.deferralTags from its package.json and threading the extended set through the parser
+      Then the project-configured `@deferred` scenario's integration obligation is a Pending Item — deferred like a built-in, verdict balanced, no reconciling item
+      And the built-in `@wip` scenario still defers its integration obligation as a Pending Item — config extends the recognised set, never replaces it

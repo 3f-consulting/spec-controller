@@ -15,6 +15,8 @@
  * source of truth. Registry + renderers live in the CLI/app layer, never the domain.
  */
 
+import { DEFAULT_DEFERRAL_TAGS } from "@3f-consulting/spec-controller-core";
+
 /** One flag in a scope: its canonical name, optional aliases, value placeholder, help. */
 export interface FlagSpec {
   /** The canonical flag with dashes (e.g. "--features", "--help"). */
@@ -156,11 +158,24 @@ export function renderBalanceHelp(registry: CliRegistry): string {
   const lines = flags.map(
     (flag) => `  ${flagLabel(flag).padEnd(labelWidth + gutter)}${flag.description}`,
   );
+  // The `specController.deferralTags` config field, with its recognised starter set SINGLE-SOURCED
+  // from DEFAULT_DEFERRAL_TAGS (@SCN-PND-021 / the 3F-1405 completeness discipline — the render reads
+  // the constant, never a hand-kept copy, so the documented set cannot drift from the recognised one).
+  const starterSet = DEFAULT_DEFERRAL_TAGS.map((tag) => `@${tag}`).join(", ");
+  const configLines = [
+    "Configuration (in the target repo's package.json):",
+    "  specController.deferralTags: string[]",
+    "      Extra recognised deferral tags. A scenario carrying one defers every obligation it",
+    "      declares to a Pending Item, extending (never replacing) the built-in set.",
+    `      Built-in deferral tags: ${starterSet}`,
+  ];
   return [
     `spec-controller balance — ${command?.summary ?? ""}`,
     "",
     "Options:",
     ...lines,
+    "",
+    ...configLines,
   ].join("\n");
 }
 

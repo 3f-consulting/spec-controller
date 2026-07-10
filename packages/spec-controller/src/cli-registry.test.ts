@@ -12,6 +12,7 @@
 
 import { describe, it, expect } from "vitest";
 import { cliRegistry, renderBalanceHelp, renderTopLevelHelp } from "./cli-registry.js";
+import { DEFAULT_DEFERRAL_TAGS } from "@3f-consulting/spec-controller-core";
 
 describe("[SCN-CLI-006] renderBalanceHelp renders a line per registered balance flag", () => {
   const balanceFlags = cliRegistry.commands.find((c) => c.name === "balance")?.flags ?? [];
@@ -126,6 +127,36 @@ describe("[SCN-CLI-008] the completeness guard — no registry entry is missing 
     expect(cliRegistry.commands.length).toBeGreaterThan(0);
     const out = renderTopLevelHelp(cliRegistry);
     const missing = cliRegistry.commands.filter((command) => !out.includes(command.name)).map((command) => command.name);
+    expect(missing).toEqual([]);
+  });
+});
+
+/**
+ * @SCN-PND-021 (@unit) — `balance --help` documents the `specController.deferralTags` config field
+ * and lists the recognised starter set, SINGLE-SOURCED from DEFAULT_DEFERRAL_TAGS (the 3F-1405
+ * completeness discipline: the help renderer reads the constant, it does not hardcode the list, so
+ * the documented set can never drift from the recognised one). The config surface is discoverable.
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries the [SCN-PND-021] id,
+ * matching features/pending-items.feature and the @integration arm in
+ * tests/steps/pendingItems.steps.ts (a grep of the id returns both halves), plus the config-union
+ * @unit arm in packages/spec-controller/src/ingest/ingestQualityChecks.test.ts.
+ */
+describe("[SCN-PND-021] balance --help documents specController.deferralTags and the starter set", () => {
+  it("documents the specController.deferralTags config field", () => {
+    // Teeth: the help surface names the config field so a project can discover it. Reds while the
+    // help renderer says nothing about the config namespace.
+    const out = renderBalanceHelp(cliRegistry);
+    expect(out).toContain("specController.deferralTags");
+  });
+
+  it("lists the recognised starter set, single-sourced from DEFAULT_DEFERRAL_TAGS", () => {
+    // Teeth: EVERY built-in deferral tag appears in the help, iterated FROM the constant — not a
+    // hand-kept copy. A tag added to DEFAULT_DEFERRAL_TAGS but absent from the render reds here, so
+    // the documented set cannot drift from the recognised one (the completeness discipline).
+    expect(DEFAULT_DEFERRAL_TAGS.length).toBeGreaterThan(0);
+    const out = renderBalanceHelp(cliRegistry);
+    const missing = DEFAULT_DEFERRAL_TAGS.filter((tag) => !out.includes(tag));
     expect(missing).toEqual([]);
   });
 });

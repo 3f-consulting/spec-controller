@@ -1,0 +1,7 @@
+{
+  "name": "config-extends-target-fixture",
+  "private": true,
+  "specController": {
+    "deferralTags": ["deferred"]
+  }
+}
