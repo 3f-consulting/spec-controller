@@ -82,3 +82,10 @@ Feature: A pending evidence obligation raises a Pending Item
       When the reconciler reconciles the fixture against that matching observation
       Then the scenario raises exactly one Pending Item for "integration"
       And the matching observation is not flagged undemanded — the pending pair stays demanded
+
+    @unit @integration @SCN-PND-006
+    Scenario: a Pending Item is not a Reconciling Item (it is not an error)
+      Given a planted fixture scenario declaring a pending "integration" obligation alongside a genuinely missing "unit" obligation
+      When the reconciler reconciles the mixed fixture against no observation
+      Then the missing "unit" obligation is the scenario's only reconciling item — its one error
+      And the pending "integration" check names no reconciling item and no evidence-obligation outcome — the Pending Item is a structurally distinct category, never counted as an error

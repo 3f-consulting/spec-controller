@@ -593,3 +593,50 @@ describe("[SCN-PND-005] the pending declaration governs even when a matching obs
     ).toBe(true);
   });
 });
+
+describe("[SCN-PND-006] a Pending Item is not a Reconciling Item — a structurally distinct category, never an error", () => {
+  // A Pending Item is NEVER a Reconciling Item (never in `reconcilingItems`) and NEVER a
+  // `QualityCheckReconciliation` outcome (never in `evidenceObligations`): it is a structurally
+  // distinct category (`pendingItems`), so it is never counted among, or rendered as, an
+  // error/discrepancy. Pinned over a MIXED scenario — one declaring BOTH a bare @unit
+  // obligation (which reconciles to a genuine `missing` error, a real reconciling item) AND an
+  // @integrationpending one (which partitions to a one-sided Pending Item). The error list
+  // carries ONLY the missing unit; the deferred integration stays OUT of it. This is the sharp
+  // pin beyond PND-004 (whose only-pending scenario has an EMPTY reconciling list): here the
+  // reconciling list is NON-empty, yet the Pending Item is still not folded in. Green-first
+  // regression pin over the partition PND-004 established (Option A gives category-distinctness
+  // by construction); teeth proven by a local mutation that leaks the pending item into the
+  // reconciling list. Asserts REAL reconcile output (evidence-manifesto §11A). The @integration
+  // arm (tests/steps/pendingItems.steps.ts, @SCN-PND-006) proves the same through the
+  // parse→reconcile pipeline over the planted mixed fixture.
+  it("keeps the deferred obligation out of the reconciling/error list even when a genuine error is present", () => {
+    const scenarios: Scenario[] = [
+      {
+        scnId: "SCN-PND-006",
+        evidenceObligations: [
+          { qualityCheck: "unit" },
+          { qualityCheck: "integration", pending: true },
+        ],
+      },
+    ];
+    // No observation is sought — the unit obligation goes `missing` (a genuine error), the
+    // pending integration one partitions to a one-sided Pending Item.
+    const balance = reconcile(scenarios, []);
+    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-PND-006");
+
+    // The error list carries ONLY the missing unit — the deferred integration is not among it.
+    expect(scenario?.reconcilingItems).toEqual([
+      { qualityCheck: "unit", outcome: "missing" },
+    ]);
+    // The Pending Item is a structurally distinct category: it names NO reconciling item and
+    // NO evidence-obligation outcome at the pending check.
+    expect(
+      scenario?.reconcilingItems.some((r) => r.qualityCheck === "integration")
+    ).toBe(false);
+    expect(
+      scenario?.evidenceObligations.some((r) => r.qualityCheck === "integration")
+    ).toBe(false);
+    // Positive confirmation the deferred obligation IS in the pending category (not dropped).
+    expect(scenario?.pendingItems).toEqual([{ qualityCheck: "integration" }]);
+  });
+});

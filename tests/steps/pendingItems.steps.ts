@@ -299,6 +299,116 @@ Then(
   }
 );
 
+// @SCN-PND-006 — a Pending Item is a structurally DISTINCT category: it is never a
+// Reconciling Item (never in `reconcilingItems`) and never a `QualityCheckReconciliation`
+// outcome (never in `evidenceObligations`), so it is never counted among, or rendered as, an
+// error/discrepancy. Proved through the REAL parse→reconcile pipeline over the PLANTED
+// tests/fixtures/pending-tags/pending-with-error.feature — a MIXED scenario (@SCN-PDE-001)
+// declaring BOTH a bare `@unit` obligation (which reconciles to a genuine `missing` error)
+// AND an `@integrationpending` one (which partitions to a one-sided Pending Item). The error
+// list carries ONLY the missing unit; the pending integration stays out of it. Never a real
+// `@<qc>pending` scenario in the scanned features/ corpus (fixture policy, evidence-manifesto
+// §11B). The @unit arm (packages/core/src/reconcile/reconcile.test.ts, [SCN-PND-006]) proves
+// the same category-distinctness over the reconcile function in isolation.
+const ERROR_FIXTURE = join(
+  process.cwd(),
+  "tests/fixtures/pending-tags/features/pending-with-error.feature"
+);
+
+// The pending + missing quality-checks under test, recorded by the Given.
+let pendingCheckMixed: string;
+let missingCheckMixed: string;
+
+Given(
+  "a planted fixture scenario declaring a pending {string} obligation alongside a genuinely missing {string} obligation",
+  function (pendingCheck: string, missingCheck: string) {
+    // Record the two checks under test; the parse+reconcile happens in the When over the
+    // planted mixed fixture (one scenario tagged `@unit @integrationpending`).
+    pendingCheckMixed = pendingCheck;
+    missingCheckMixed = missingCheck;
+  }
+);
+
+When("the reconciler reconciles the mixed fixture against no observation", function () {
+  // Feed the PLANTED mixed fixture through the REAL parse→reconcile pipeline. No observation
+  // is supplied: the bare `@unit` obligation reconciles to `missing` (a genuine error, a
+  // reconciling item), while the `@integrationpending` obligation partitions to a one-sided
+  // Pending Item. Reds if reconcile ever leaked the pending item into the reconciling/error
+  // list (it would show up as a second reconciling item or an evidence-obligation outcome at
+  // the pending check).
+  assert.ok(pendingCheckMixed, "expected a pending quality-check to have been recorded");
+  assert.ok(missingCheckMixed, "expected a missing quality-check to have been recorded");
+  const source = readFileSync(ERROR_FIXTURE, "utf8");
+  const scenarios: Scenario[] = parseScenarios(source);
+  reconciliation = reconcile(scenarios, []);
+});
+
+Then(
+  "the missing {string} obligation is the scenario's only reconciling item — its one error",
+  function (missingCheck: string) {
+    // Exactly one reconciling item across the reconciled fixture — the missing unit — and it
+    // is the genuine error. Reds if the pending item leaked in (there would be two).
+    const reconcilingItems = reconciliation.scenarioReconciliations.flatMap(
+      (s) => s.reconcilingItems
+    );
+    assert.equal(
+      reconcilingItems.length,
+      1,
+      `expected exactly one reconciling item (the missing "${missingCheck}" error); got ${
+        reconcilingItems.length
+      } (rows: ${JSON.stringify(reconciliation.scenarioReconciliations)})`
+    );
+    assert.deepEqual(
+      reconcilingItems[0],
+      { qualityCheck: missingCheck, outcome: "missing" },
+      `the one reconciling item must be the missing "${missingCheck}" obligation; got ${JSON.stringify(
+        reconcilingItems[0]
+      )}`
+    );
+  }
+);
+
+Then(
+  "the pending {string} check names no reconciling item and no evidence-obligation outcome — the Pending Item is a structurally distinct category, never counted as an error",
+  function (pendingCheck: string) {
+    // The pending check appears in NEITHER the reconciling items NOR the evidence-obligation
+    // outcomes: a Pending Item is never a QualityCheckReconciliation. Reds if the pending
+    // obligation were reconciled (it would post a `missing`/`satisfied` outcome at this check).
+    const reconcilingAtCheck = reconciliation.scenarioReconciliations.flatMap((s) =>
+      s.reconcilingItems.filter((r) => r.qualityCheck === pendingCheck)
+    );
+    assert.equal(
+      reconcilingAtCheck.length,
+      0,
+      `the pending "${pendingCheck}" check must name NO reconciling item; got ${
+        reconcilingAtCheck.length
+      } (rows: ${JSON.stringify(reconciliation.scenarioReconciliations)})`
+    );
+    const outcomeAtCheck = reconciliation.scenarioReconciliations.flatMap((s) =>
+      s.evidenceObligations.filter((r) => r.qualityCheck === pendingCheck)
+    );
+    assert.equal(
+      outcomeAtCheck.length,
+      0,
+      `the pending "${pendingCheck}" check must name NO evidence-obligation outcome; got ${
+        outcomeAtCheck.length
+      } (rows: ${JSON.stringify(reconciliation.scenarioReconciliations)})`
+    );
+    // Positive confirmation the deferred obligation IS in the pending category (not silently
+    // dropped): exactly one Pending Item at the pending check.
+    const pendingAtCheck = reconciliation.scenarioReconciliations.flatMap((s) =>
+      (s.pendingItems ?? []).filter((p) => p.qualityCheck === pendingCheck)
+    );
+    assert.equal(
+      pendingAtCheck.length,
+      1,
+      `the deferred "${pendingCheck}" obligation must be exactly one Pending Item; got ${
+        pendingAtCheck.length
+      } (rows: ${JSON.stringify(reconciliation.scenarioReconciliations)})`
+    );
+  }
+);
+
 Then(
   "every scenario declares no evidence obligation — the unknown `<x>pending` and bare `@pending` are ignored exactly like the plain unknown tag",
   function () {
