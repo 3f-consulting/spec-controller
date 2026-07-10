@@ -640,3 +640,71 @@ describe("[SCN-PND-006] a Pending Item is not a Reconciling Item — a structura
     expect(scenario?.pendingItems).toEqual([{ qualityCheck: "integration" }]);
   });
 });
+
+describe("[SCN-PND-007] a scenario whose only exception is a Pending Item has verdict balanced", () => {
+  // A Pending Item is VERDICT-NEUTRAL: it never contributes an out-of-balance reconciling
+  // item, so a scenario whose only non-satisfied element is a Pending Item is `balanced`. Two
+  // shapes: a scenario whose SOLE obligation is deferred (partitions to zero reconciled rows,
+  // yet balanced — the fix: `verdictFor` over an empty list must read balanced, not the vacuous
+  // out-of-balance), and a scenario carrying a PASSING obligation alongside a deferred one (the
+  // passing one satisfied, the pending one one-sided → balanced). The verdict is derived from
+  // reconciling-item emptiness, so the both-missing row (which DOES carry a reconciling item)
+  // stays out-of-balance — the non-regression guard below. Asserts REAL reconcile output
+  // (evidence-manifesto §11A). The @integration arm (tests/steps/pendingItems.steps.ts,
+  // @SCN-PND-007) proves the same verdict-neutrality through the parse→reconcile pipeline over
+  // the planted only-pending-balanced fixture.
+  it("balances a scenario whose sole obligation is deferred pending (no reconciling item, one Pending Item)", () => {
+    const scenarios: Scenario[] = [
+      { scnId: "SCN-PND-007", evidenceObligations: [{ qualityCheck: "integration", pending: true }] },
+    ];
+    // No observation is sought — a Pending Item is one-sided.
+    const balance = reconcile(scenarios, []);
+    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-PND-007");
+
+    // The verdict is BALANCED though the reconciled evidence-obligation list is empty — the
+    // Pending Item contributes no reconciling item. Reds before the fix: `verdictFor([])`
+    // returned out-of-balance (the vacuous verdict over an empty list).
+    expect(scenario?.verdict).toBe("balanced");
+    expect(scenario?.reconcilingItems).toEqual([]);
+    expect(scenario?.evidenceObligations).toEqual([]);
+    expect(scenario?.pendingItems).toEqual([{ qualityCheck: "integration" }]);
+  });
+
+  it("balances a scenario carrying a passing unit obligation alongside a deferred integration one", () => {
+    const scenarios: Scenario[] = [
+      {
+        scnId: "SCN-PND-007",
+        evidenceObligations: [
+          { qualityCheck: "unit" },
+          { qualityCheck: "integration", pending: true },
+        ],
+      },
+    ];
+    // The unit obligation is discharged by a passing observation; the pending integration one
+    // is one-sided. The scenario's only non-satisfied element is the Pending Item → balanced.
+    const evidenceObservations: EvidenceObservation[] = [
+      { qualityCheck: "unit", scnId: "SCN-PND-007", status: "passed" },
+    ];
+    const balance = reconcile(scenarios, evidenceObservations);
+    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-PND-007");
+
+    expect(scenario?.verdict).toBe("balanced");
+    expect(scenario?.reconcilingItems).toEqual([]);
+    expect(scenario?.evidenceObligations).toEqual([{ qualityCheck: "unit", outcome: "satisfied" }]);
+    expect(scenario?.pendingItems).toEqual([{ qualityCheck: "integration" }]);
+  });
+
+  it("does NOT regress both-missing: a scenario with zero obligations and no citation stays out-of-balance", () => {
+    // The non-regression guard on the verdict fix. A bare-empty scenario (no obligation, no
+    // pending, cited by nothing) reconciles to the degenerate both-missing row — which CARRIES a
+    // reconciling item — so it stays out-of-balance. The fix derives the verdict from
+    // reconciling-item emptiness, so both-missing (a non-empty reconciling list) is untouched;
+    // only the truly-empty list (an only-pending scenario) flips to balanced.
+    const scenarios: Scenario[] = [{ scnId: "SCN-PND-007", evidenceObligations: [] }];
+    const balance = reconcile(scenarios, []);
+    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-PND-007");
+
+    expect(scenario?.verdict).toBe("out-of-balance");
+    expect(scenario?.reconcilingItems).toEqual([{ outcome: "both-missing" }]);
+  });
+});

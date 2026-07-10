@@ -89,3 +89,10 @@ Feature: A pending evidence obligation raises a Pending Item
       When the reconciler reconciles the mixed fixture against no observation
       Then the missing "unit" obligation is the scenario's only reconciling item — its one error
       And the pending "integration" check names no reconciling item and no evidence-obligation outcome — the Pending Item is a structurally distinct category, never counted as an error
+
+    @unit @integration @SCN-PND-007
+    Scenario: a scenario whose only exception is a Pending Item has verdict balanced
+      Given a planted fixture — one scenario whose sole obligation is pending, and one carrying a passing unit obligation alongside a pending integration one
+      When the reconciler reconciles the fixture, the passing unit observation supplied
+      Then both scenarios have verdict balanced — the Pending Item is verdict-neutral
+      And neither scenario names any reconciling item

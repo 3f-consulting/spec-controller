@@ -89,23 +89,28 @@ function reconcileEvidenceObligation(
 
 /**
  * Reduce a scenario's reconciling items to its binary VERDICT:
- * `balanced` IFF every evidenceObligation balances (zero non-balanced reconciling items);
- * otherwise `out-of-balance`. No prioritisation between discrepancy kinds — the
- * verdict does NOT pick a winner; the non-balanced items are carried in full by
- * `reconcilingItemsOf` and listed in full by the renderers.
+ * `balanced` IFF the scenario has NO reconciling item; otherwise `out-of-balance`,
+ * carrying the FULL list of non-balanced items (no prioritisation, no picked
+ * winner — `reconcilingItemsOf` carries them all, the renderers list them all).
+ * The verdict is DERIVED from reconciling-item emptiness, so the two stay in lock
+ * step by construction (an out-of-balance verdict always has ≥1 item; a balanced
+ * one always has zero).
  *
- * Zero-rows-on-both-sides case: a declared scenario reconciling to an EMPTY
- * evidenceObligations set (no evidence obligation AND no citing evidence observation) is handled UPSTREAM —
- * `reconcile` posts it ONE degenerate `both-missing` reconciling item, so this function
- * never sees a truly empty list. The `evidenceObligations.length > 0` guard below stays as a
- * defensive belt — a verdict over an empty set could only ever be vacuously `out-of-balance`,
- * never a false `balanced`; and the both-missing item (not `satisfied`) yields `out-of-balance`.
+ * Empty-list case (@SCN-PND-007): a scenario reconciling to an EMPTY
+ * evidenceObligations set has no reconciling item, so it is `balanced` — verdict-neutral.
+ * This is the ONLY-PENDING scenario: its sole obligation partitioned off to a
+ * one-sided Pending Item upstream, leaving zero reconciled rows. A Pending Item
+ * never contributes a reconciling item, so it never tips the verdict. (Deriving
+ * from emptiness — not `every satisfied` over a non-empty list — is what makes the
+ * empty list read `balanced` rather than the earlier vacuous `out-of-balance`.)
+ *
+ * Both-missing is NOT this case: the degenerate zero-rows-on-both-sides scenario
+ * (no obligation, no pending, no citing observation) is posted ONE `both-missing`
+ * reconciling item UPSTREAM by `reconcile`, so its list is NON-empty and it stays
+ * `out-of-balance` — untouched by the emptiness derivation.
  */
 function verdictFor(evidenceObligations: QualityCheckReconciliation[]): ScenarioVerdict {
-  const allBalanced =
-    evidenceObligations.length > 0 &&
-    evidenceObligations.every((r) => r.outcome === "satisfied");
-  return allBalanced ? "balanced" : "out-of-balance";
+  return reconcilingItemsOf(evidenceObligations).length === 0 ? "balanced" : "out-of-balance";
 }
 
 /**

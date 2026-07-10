@@ -445,3 +445,101 @@ Then(
     );
   }
 );
+
+// @SCN-PND-007 — a Pending Item is VERDICT-NEUTRAL: a scenario whose only non-satisfied
+// element is a Pending Item has verdict `balanced`. Proved through the REAL parse→reconcile
+// pipeline over the PLANTED tests/fixtures/pending-tags/only-pending-balanced.feature, which
+// carries the two shapes the behaviour names: a scenario whose SOLE obligation is deferred
+// (@SCN-PDB-001 — reconciles to zero rows on both sides, yet balanced-with-pending, not
+// both-missing: the verdict fix) and a scenario carrying a PASSING unit obligation alongside a
+// deferred integration one (@SCN-PDB-002 — the unit reconciles satisfied, the pending
+// integration partitions off). A passing unit observation citing @SCN-PDB-002 is hand-built so
+// its unit obligation is satisfied. Both rows have verdict balanced and no reconciling item.
+// Never a real `@<qc>pending` scenario in the scanned features/ corpus (fixture policy,
+// evidence-manifesto §11B). The @unit arm
+// (packages/core/src/reconcile/reconcile.test.ts, [SCN-PND-007]) proves the same
+// verdict-neutrality over the reconcile function in isolation, plus the both-missing
+// non-regression guard.
+const BALANCED_FIXTURE = join(
+  process.cwd(),
+  "tests/fixtures/pending-tags/features/only-pending-balanced.feature"
+);
+
+Given(
+  "a planted fixture — one scenario whose sole obligation is pending, and one carrying a passing unit obligation alongside a pending integration one",
+  function () {
+    // The fixture (both scenarios) is the source; the parse+reconcile happens in the When.
+  }
+);
+
+When("the reconciler reconciles the fixture, the passing unit observation supplied", function () {
+  // Feed the PLANTED fixture through the REAL parse→reconcile pipeline. The only observation
+  // supplied is a PASSING unit observation citing @SCN-PDB-002, so its bare `@unit` obligation
+  // reconciles to `satisfied` while its `@integrationpending` one partitions to a Pending Item.
+  // @SCN-PDB-001 (sole `@integrationpending`) is reconciled against no observation — one-sided.
+  // Reds before the verdict fix: @SCN-PDB-001 reconciles to zero rows on both sides, so
+  // `verdictFor([])` returns `out-of-balance` (the vacuous verdict over an empty list).
+  const source = readFileSync(BALANCED_FIXTURE, "utf8");
+  const scenarios: Scenario[] = parseScenarios(source);
+  const passingUnit: EvidenceObservation = {
+    qualityCheck: "unit",
+    scnId: "SCN-PDB-002",
+    status: "passed",
+  };
+  reconciliation = reconcile(scenarios, [passingUnit]);
+});
+
+Then(
+  "both scenarios have verdict balanced — the Pending Item is verdict-neutral",
+  function () {
+    // Both fixture rows have verdict `balanced`: the sole-pending scenario (@SCN-PDB-001) and
+    // the passing-unit-plus-pending one (@SCN-PDB-002). The Pending Item contributes no
+    // reconciling item, so it never tips the verdict out of balance. Reds on the sole-pending
+    // row before the verdict fix (its empty evidence-obligation list reads as out-of-balance).
+    const sole = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-PDB-001");
+    const mixed = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-PDB-002");
+    assert.ok(sole, "expected the sole-pending fixture scenario (SCN-PDB-001)");
+    assert.ok(mixed, "expected the passing-unit-plus-pending fixture scenario (SCN-PDB-002)");
+    assert.equal(
+      sole.verdict,
+      "balanced",
+      `a scenario whose sole obligation is pending must be balanced; got "${sole.verdict}" (row: ${JSON.stringify(
+        sole
+      )})`
+    );
+    assert.equal(
+      mixed.verdict,
+      "balanced",
+      `a scenario carrying a passing unit obligation + a pending integration one must be balanced; got "${mixed.verdict}" (row: ${JSON.stringify(
+        mixed
+      )})`
+    );
+    // Positive confirmation each carries its Pending Item (the exception is genuinely present,
+    // not silently dropped — the verdict is balanced DESPITE it).
+    assert.deepEqual(sole.pendingItems ?? [], [{ qualityCheck: "integration" }]);
+    assert.deepEqual(mixed.pendingItems ?? [], [{ qualityCheck: "integration" }]);
+  }
+);
+
+Then("neither scenario names any reconciling item", function () {
+  // Both rows carry an EMPTY reconciling-item list — the balanced verdict is honest (no error
+  // hidden behind it). The passing unit obligation on @SCN-PDB-002 is satisfied, not a
+  // reconciling item; the pending integration obligations are one-sided, never reconciling
+  // items.
+  const sole = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-PDB-001");
+  const mixed = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-PDB-002");
+  assert.deepEqual(
+    sole?.reconcilingItems,
+    [],
+    `the sole-pending scenario must name no reconciling item; got ${JSON.stringify(
+      sole?.reconcilingItems
+    )}`
+  );
+  assert.deepEqual(
+    mixed?.reconcilingItems,
+    [],
+    `the passing-unit-plus-pending scenario must name no reconciling item; got ${JSON.stringify(
+      mixed?.reconcilingItems
+    )}`
+  );
+});
