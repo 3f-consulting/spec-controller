@@ -1412,3 +1412,94 @@ Then(
     );
   }
 );
+
+// @SCN-PND-016 — SCENARIO-SCOPE community deferral: a recognised community deferral tag (@wip /
+// @ignore / @skip / @todo / @pending — the DEFAULT_DEFERRAL_TAGS starter set) on a scenario
+// defers EVERY obligation the scenario declares. Proved through the REAL parse→reconcile pipeline
+// over the PLANTED tests/fixtures/pending-tags/community-tags.feature — each fixture scenario
+// carries one community tag alongside a `@unit` and an `@integration` obligation, so both must be
+// marked pending → two Pending Items, verdict balanced. Never a real community-tagged scenario in
+// the scanned features/ corpus (fixture policy, evidence-manifesto §11B). The @unit arm
+// (packages/core/src/parse/scenarios.test.ts, [SCN-PND-016]) proves the deferral over
+// parseScenarios in isolation. Reds today: a community tag is ignored, so both obligations
+// reconcile MISSING (out-of-balance), not pending.
+const COMMUNITY_TAGS_FIXTURE = join(
+  process.cwd(),
+  "tests/fixtures/pending-tags/features/community-tags.feature"
+);
+// Each recognised community deferral tag → the @SCN id of the planted fixture scenario carrying
+// it (each declares a @unit + @integration obligation).
+const COMMUNITY_TAG_TO_SCN: Record<string, string> = {
+  "@wip": "SCN-PDW-001",
+  "@ignore": "SCN-PDW-002",
+  "@skip": "SCN-PDW-003",
+  "@todo": "SCN-PDW-004",
+  "@pending": "SCN-PDW-005",
+};
+let communityTag: string;
+let communityScenario: Scenario | undefined;
+
+Given(
+  "a planted fixture scenario carrying the community tag {string} alongside a `@unit` and an `@integration` obligation",
+  function (tag: string) {
+    // Record the tag under test; the parse+reconcile over the planted fixture happens in the When.
+    communityTag = tag;
+  }
+);
+
+When(
+  "the parser derives the scenario's evidence obligations and the reconciler reconciles it against no observation",
+  function () {
+    // Feed the PLANTED community-tags fixture to the pure parser; scope to the scenario carrying
+    // this row's community tag (via the tag→@SCN map). Reconcile it against NO observation, so the
+    // second Then reads the Pending Items + verdict off the real reconciliation.
+    const scnId = COMMUNITY_TAG_TO_SCN[communityTag];
+    assert.ok(scnId, `unexpected community tag "${communityTag}"`);
+    const source = readFileSync(COMMUNITY_TAGS_FIXTURE, "utf8");
+    const scenarios: Scenario[] = parseScenarios(source);
+    communityScenario = scenarios.find((s) => s.scnId === scnId);
+    assert.ok(communityScenario, `expected the planted fixture scenario ${scnId} to parse`);
+    reconciliation = reconcile([communityScenario], []);
+  }
+);
+
+Then(
+  "both the declared unit and integration obligations are deferred — pending, overriding their observation-derived outcome",
+  function () {
+    const obligations = communityScenario!.evidenceObligations;
+    const unit = obligations.find((o) => o.qualityCheck === "unit");
+    const integration = obligations.find((o) => o.qualityCheck === "integration");
+    assert.ok(
+      unit && unit.pending === true,
+      `expected a pending unit obligation on the ${communityTag} scenario; got ${JSON.stringify(obligations)}`
+    );
+    assert.ok(
+      integration && integration.pending === true,
+      `expected a pending integration obligation on the ${communityTag} scenario; got ${JSON.stringify(obligations)}`
+    );
+  }
+);
+
+Then(
+  "the scenario raises two Pending Items and has verdict balanced — no reconciling item",
+  function () {
+    const [row] = reconciliation.scenarioReconciliations;
+    assert.ok(row, "expected exactly one reconciled scenario row");
+    const pendingCount = (row.pendingItems ?? []).length;
+    assert.equal(
+      pendingCount,
+      2,
+      `the ${communityTag} scenario must raise two Pending Items (both deferred obligations); got ${pendingCount} (row: ${JSON.stringify(row)})`
+    );
+    assert.equal(
+      row.verdict,
+      "balanced",
+      `a scenario whose only exceptions are Pending Items is balanced; got "${row.verdict}" (row: ${JSON.stringify(row)})`
+    );
+    assert.equal(
+      row.reconcilingItems.length,
+      0,
+      `no reconciling item may be named — the deferred obligations are Pending Items, not errors; got ${JSON.stringify(row.reconcilingItems)}`
+    );
+  }
+);

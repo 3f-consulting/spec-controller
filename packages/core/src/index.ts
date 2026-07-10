@@ -38,7 +38,7 @@ export type {
 } from "./model.js";
 
 // --- Scenario parse (`parse/scenarios.ts`) ---
-export { parseScenarios, countScnOccurrences, parseUntaggedScenarios, proseOnlyCodes } from "./parse/scenarios.js";
+export { parseScenarios, countScnOccurrences, parseUntaggedScenarios, proseOnlyCodes, DEFAULT_DEFERRAL_TAGS } from "./parse/scenarios.js";
 
 // --- Evidence-obligation census (`census/evidenceObligations.ts`) ---
 export { evidenceObligations } from "./census/evidenceObligations.js";

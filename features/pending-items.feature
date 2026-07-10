@@ -222,3 +222,31 @@ Feature: A pending evidence obligation raises a Pending Item
         | failed  | failing   |
         | skipped | missing   |
         | todo    | missing   |
+
+  # Slice 4 — SCENARIO-SCOPE community deferral (foundation). A recognised community
+  # deferral tag — @wip / @ignore / @skip / @todo / @pending, the established Cucumber
+  # conventions — on a scenario defers EVERY obligation the scenario declares: each becomes
+  # a Pending Item, overriding the observation-derived outcome (slice 3). It reuses the
+  # slice-1/2 pending machinery (the `pending` flag → the reconcile partition → Pending
+  # Item), so a `@wip @unit @integration` scenario carries TWO Pending Items and verdict
+  # balanced. The recognised set is the single-sourced starter constant DEFAULT_DEFERRAL_TAGS
+  # (bare names; the `@` is tag-line syntax); parseScenarios takes the set as a defaulted
+  # param, so config-EXTENSION is @SCN-PND-021's job, not this one. This sub-issue covers
+  # scenarios WITH declared obligations; the zero-obligation bare-`@wip` case (a synthesised
+  # scenario-level Pending Item) is @SCN-PND-022.
+  Rule: A recognised deferral tag raises a Pending Item, overriding the observation-derived outcome
+
+    @unit @integration @SCN-PND-016
+    Scenario Outline: a recognised community tag <tag> defers every obligation on its scenario (scenario-scope)
+      Given a planted fixture scenario carrying the community tag "<tag>" alongside a `@unit` and an `@integration` obligation
+      When the parser derives the scenario's evidence obligations and the reconciler reconciles it against no observation
+      Then both the declared unit and integration obligations are deferred — pending, overriding their observation-derived outcome
+      And the scenario raises two Pending Items and has verdict balanced — no reconciling item
+
+      Examples:
+        | tag      |
+        | @wip     |
+        | @ignore  |
+        | @skip    |
+        | @todo    |
+        | @pending |

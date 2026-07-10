@@ -322,3 +322,80 @@ describe("[SCN-PND-003] an unrecognised <x>pending tag is passed through, ignore
     expect(scenario!.evidenceObligations).toEqual([{ qualityCheck: "unit" }]);
   });
 });
+
+/**
+ * Unit test for SCENARIO-SCOPE community-tag deferral at the parseScenarios level (@SCN-PND-016).
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-PND-016 id
+ * matching features/pending-items.feature, so a grep of the id returns both halves — this
+ * @unit arm (parseScenarios over inline strings, in isolation) and the @integration arm
+ * (tests/steps/pendingItems.steps.ts, over a planted tests/fixtures/ feature-string).
+ *
+ * Proves the slice-4 foundation: when a scenario's tag block contains a RECOGNISED community
+ * deferral tag (bare name ∈ the recognised set — the five DEFAULT_DEFERRAL_TAGS starter tags
+ * @wip / @ignore / @skip / @todo / @pending), EVERY declared evidence obligation is marked
+ * `pending: true`, reusing the slice-1/2 pending flag. So `@wip @unit @integration` derives two
+ * PENDING obligations — the community tag defers the whole scenario, overriding the
+ * observation-derived outcome. An UNRECOGNISED tag defers nothing (the negative boundary); and
+ * the recognised set is a defaulted PARAM (`deferralTags`), so an injected set governs while the
+ * built-in default is unaffected — config injection itself is @SCN-PND-021's job.
+ *
+ * Parent: @SCN-PND-016.
+ */
+describe("[SCN-PND-016] a recognised community deferral tag defers every declared obligation on its scenario", () => {
+  const COMMUNITY_TAGS = ["@wip", "@ignore", "@skip", "@todo", "@pending"] as const;
+
+  COMMUNITY_TAGS.forEach((tag, i) => {
+    it(`${tag} marks both the @unit and @integration obligation pending`, () => {
+      const source = [
+        `${tag} @unit @integration @SCN-XXX-${100 + i}`,
+        "Scenario: a community-deferred scenario declaring unit and integration obligations",
+        "  Given a step",
+      ].join("\n");
+      const [scenario] = parseScenarios(source);
+      // Every declared obligation is deferred pending — the community tag defers the whole
+      // scenario. Reds today: a community tag is ignored, so the obligations are plain (no pending).
+      expect(scenario!.evidenceObligations).toEqual([
+        { qualityCheck: "unit", pending: true },
+        { qualityCheck: "integration", pending: true },
+      ]);
+    });
+  });
+
+  it("defers a @lint=<guard> obligation too — the whole scenario is deferred", () => {
+    // Scenario-scope deferral covers EVERY obligation kind, including a static-guard `@lint`.
+    const [scenario] = parseScenarios(
+      ["@wip @lint=lint:feature-codes @SCN-XXX-110", "Scenario: a deferred lint scenario", "  Given a step"].join("\n")
+    );
+    expect(scenario!.evidenceObligations).toEqual([
+      { qualityCheck: "lint", guard: "lint:feature-codes", pending: true },
+    ]);
+  });
+
+  it("does not defer for an UNRECOGNISED community-shaped tag — the negative boundary", () => {
+    // `@notadeferral` is not in the recognised set, so the obligations stay plain (non-pending):
+    // recognition is gated on the set, not on any community-looking tag.
+    const [scenario] = parseScenarios(
+      ["@notadeferral @unit @integration @SCN-XXX-120", "Scenario: an unrecognised tag", "  Given a step"].join("\n")
+    );
+    expect(scenario!.evidenceObligations).toEqual([
+      { qualityCheck: "unit" },
+      { qualityCheck: "integration" },
+    ]);
+  });
+
+  it("honours the injected deferralTags param — a custom tag defers, the built-in default does not", () => {
+    // parseScenarios(source, deferralTags) takes the recognised set as a defaulted param. Passing
+    // a custom set makes `@deferme` defer; under the default set it is unrecognised and does not.
+    // (This proves the param is honoured; config INJECTION from package.json is @SCN-PND-021.)
+    const source = [
+      "@deferme @unit @SCN-XXX-130",
+      "Scenario: a custom-deferral-tag scenario",
+      "  Given a step",
+    ].join("\n");
+    expect(parseScenarios(source, ["deferme"])[0]!.evidenceObligations).toEqual([
+      { qualityCheck: "unit", pending: true },
+    ]);
+    expect(parseScenarios(source)[0]!.evidenceObligations).toEqual([{ qualityCheck: "unit" }]);
+  });
+});

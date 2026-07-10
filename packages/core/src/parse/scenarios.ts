@@ -30,6 +30,23 @@ import type { Scenario, EvidenceObligation, QualityCheck, RuntimeQualityCheck } 
 const SCN_CODE = /^SCN-[A-Z0-9]+-\d+$/;
 
 /**
+ * The single-sourced STARTER set of recognised community deferral tags (@SCN-PND-016) — bare
+ * names (the `@` is tag-line syntax). A scenario whose tag block carries one of these DEFERS
+ * every obligation it declares to a Pending Item (scenario-scope), reusing the slice-1/2
+ * `pending` machinery. These are the established Cucumber deferral conventions; `parseScenarios`
+ * takes the recognised set as a DEFAULTED param, so a project may EXTEND it by configuration
+ * (@SCN-PND-021) — the injection reads `package.json` at the ingest edge and is NOT this seam's
+ * concern (the core stays pure). Exported so the CLI `--help` can source the starter set.
+ */
+export const DEFAULT_DEFERRAL_TAGS: readonly string[] = [
+  "wip",
+  "ignore",
+  "skip",
+  "todo",
+  "pending",
+];
+
+/**
  * The recognised `<quality-check>pending` lexicon (evidence-manifesto §11B) — a bare tag
  * (the `@` stripped) that DEFERS an obligation to a later slice. Exact-match keyed, so the
  * `pending` suffix is significant: `integrationpending` is NOT `integration`, and an
@@ -159,7 +176,10 @@ export function parseUntaggedScenarios(source: string): string[] {
   return untagged;
 }
 
-export function parseScenarios(source: string): Scenario[] {
+export function parseScenarios(
+  source: string,
+  deferralTags: readonly string[] = DEFAULT_DEFERRAL_TAGS
+): Scenario[] {
   const scenarios: Scenario[] = [];
 
   // Accumulate the contiguous tag block; when it carries an @SCN id, emit the
@@ -199,6 +219,18 @@ export function parseScenarios(source: string): Scenario[] {
             evidenceObligations.push({ qualityCheck: "lint", guard });
           }
         }
+      }
+      // SCENARIO-SCOPE community deferral (@SCN-PND-016): when the tag block carries a
+      // RECOGNISED community deferral tag (a bare tag ∈ the injected set — the five
+      // DEFAULT_DEFERRAL_TAGS by default), the whole scenario is deferred: mark EVERY declared
+      // obligation `pending: true`, overriding its observation-derived outcome. Applied AFTER the
+      // obligation list is built, so it composes with the `<qc>pending` recognition and covers
+      // every obligation kind (runtime tiers AND `@lint=<guard>`). Idempotent on an
+      // already-pending obligation. (A deferred scenario declaring ZERO obligations — bare `@wip`
+      // — is a LATER slice's synthesised scenario-level Pending Item, @SCN-PND-022; here it is a
+      // no-op.)
+      if (blockTags.some((t) => deferralTags.includes(t))) {
+        for (const obligation of evidenceObligations) obligation.pending = true;
       }
       scenarios.push({ scnId: scnTag, evidenceObligations });
     }
