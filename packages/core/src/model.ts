@@ -200,6 +200,21 @@ export interface QualityCheckReconciliation {
 }
 
 /**
+ * A PENDING ITEM — the one-sided ledger entry a deliberately-DEFERRED evidence
+ * obligation raises. A `<quality-check>pending` tag (evidence-manifesto §11B) declares
+ * an obligation owed but deferred to a later slice; on the ledger it is NOT a Reconciling
+ * Item — nothing is reconciled (no observation is sought, none is matched), so it never
+ * becomes a `QualityCheckReconciliation` and never enters `evidenceObligations` /
+ * `reconcilingItems`. It records only WHICH quality-check is owed-but-deferred: an IOU on
+ * the report, verdict-neutral and run-neutral. One Pending Item per `<qc>pending`
+ * obligation the scenario declared.
+ */
+export interface PendingItem {
+  /** The flat quality-check this deferred obligation is owed at. */
+  qualityCheck: QualityCheck;
+}
+
+/**
  * The scenario-kind discriminator — which KIND of scenario a Scenario
  * Reconciliation row is *about* (Account ≠ Scenario):
  *   - `scenario`          — a real, DECLARED scenario (the ordinary row).
@@ -237,6 +252,16 @@ export interface ScenarioReconciliation {
    * order. This is the list an out-of-balance verdict carries.
    */
   reconcilingItems: QualityCheckReconciliation[];
+  /**
+   * The one-sided PENDING ITEMS — one per `<quality-check>pending` obligation the
+   * scenario declared (evidence-manifesto §11B). PARTITIONED OFF before reconciliation:
+   * a Pending Item is never a Reconciling Item (never in `evidenceObligations` /
+   * `reconcilingItems`), so `verdictFor` / `reconcilingItemsOf` / `isBalanced` need no
+   * pending-awareness. OPTIONAL for back-compat with hand-built fixtures — ABSENCE ≡ `[]`
+   * (no pending items), the same reserved-default convention as `kind`. `reconcile`
+   * always sets it explicitly (`[]` when the scenario declared no pending obligation).
+   */
+  pendingItems?: PendingItem[];
 }
 
 /**

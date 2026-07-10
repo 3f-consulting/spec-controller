@@ -28,6 +28,7 @@ import type {
   ScenarioReconciliation,
   QualityCheckReconciliation,
   Outcome,
+  PendingItem,
   RuntimeEvidenceObservation,
   ScenarioVerdict,
   EvidenceReconciliation,
@@ -181,8 +182,24 @@ export function reconcile(
     byScn.set(o.scnId, list);
   }
   for (const d of scenarios) {
-    // The declared side: each declared evidence obligation reconciled against the observed evidence.
-    const reconciledEvidenceObligations = d.evidenceObligations.map((req) =>
+    // PENDING PARTITION (@SCN-PND-004) — a `<quality-check>pending` obligation (the
+    // `pending: true` flag from PND-001, evidence-manifesto §11B) is deliberately DEFERRED.
+    // Split it OFF here, BEFORE the observation match: it becomes ONE one-sided Pending
+    // Item, never flows through `reconcileEvidenceObligation`, never becomes a
+    // QualityCheckReconciliation, never a reconciling item ("one-sided: nothing is
+    // reconciled"). Only the NON-pending obligations reconcile below. NOTE the pending
+    // pair STAYS in `evidenceObligationPairs` above (built over ALL obligations) — so a
+    // stray observation matching a pending pair is NOT `undemanded`: the pending
+    // declaration owns that pair (PND-005). The Pending Item is verdict-neutral and
+    // run-neutral: `verdictFor` / `reconcilingItemsOf` / `isBalanced` see none of it.
+    const pendingItems: PendingItem[] = d.evidenceObligations
+      .filter((req) => req.pending)
+      .map((req) => ({ qualityCheck: req.qualityCheck }));
+    const activeObligations = d.evidenceObligations.filter((req) => !req.pending);
+
+    // The declared side: each declared (non-pending) evidence obligation reconciled against
+    // the observed evidence.
+    const reconciledEvidenceObligations = activeObligations.map((req) =>
       reconcileEvidenceObligation(d.scnId, req, evidenceObservations)
     );
 
@@ -211,15 +228,23 @@ export function reconcile(
     // already produced an `undemanded` row above, so it falls through here, never both-missing.
     // Retires the no-evidence-declared warning (@SCN-WRN-001 Update): the zero-evidence scenario
     // is now this out-of-balance row, not a separate authoring-quality axis.
+    // BOTH-MISSING GUARD (@SCN-LDG-009, fixed @SCN-PND-004) — the degenerate row fires
+    // ONLY on zero reconciled rows AND zero Pending Items. A scenario whose ONLY obligation
+    // is pending reconciles to zero rows on both sides but is NOT both-missing: it is
+    // balanced-with-pending (the partition made "nothing is reconciled" true by
+    // construction). Absent the pending-items clause, an only-pending scenario would post a
+    // spurious both-missing. (Forward-compatible with slice 4: a bare-empty scenario — no
+    // obligation, no pending — stays both-missing.)
     const rows = [...reconciledEvidenceObligations, ...undemandedItems];
     const evidenceObligations: QualityCheckReconciliation[] =
-      rows.length === 0 ? [{ outcome: "both-missing" }] : rows;
+      rows.length === 0 && pendingItems.length === 0 ? [{ outcome: "both-missing" }] : rows;
     scenarioReconciliations.push({
       scnId: d.scnId,
       kind: "scenario",
       verdict: verdictFor(evidenceObligations),
       evidenceObligations,
       reconcilingItems: reconcilingItemsOf(evidenceObligations),
+      pendingItems,
     });
   }
 
@@ -250,6 +275,8 @@ export function reconcile(
       verdict: "out-of-balance",
       evidenceObligations: items,
       reconcilingItems: items,
+      // A phantom scenario declares nothing, so it can carry no Pending Item.
+      pendingItems: [],
     });
   }
 
@@ -293,6 +320,8 @@ export function reconcile(
       verdict: "out-of-balance",
       evidenceObligations: items,
       reconcilingItems: items,
+      // The suspense scenario declares nothing, so it can carry no Pending Item.
+      pendingItems: [],
     });
   }
 

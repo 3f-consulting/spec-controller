@@ -483,3 +483,63 @@ describe("[SCN-LDG-013] a @unit @e2e scenario proven by BOTH a vitest and a cucu
     expect(scenario?.evidenceObligations).toHaveLength(2);
   });
 });
+
+describe("[SCN-PND-004] a declared-pending obligation reconciles as a one-sided Pending Item, never a reconciling item", () => {
+  // The pending result of an obligation (the third result, alongside @SCN-LDG-001
+  // satisfied→balanced and @SCN-LDG-003 absent→missing): a `<quality-check>pending`
+  // obligation (the `pending: true` flag from PND-001) is PARTITIONED off before the
+  // observation match — it becomes a one-sided Pending Item (owed IOU), never a
+  // QualityCheckReconciliation, never a reconciling item. Asserts REAL reconcile output
+  // (evidence-manifesto §11A). The @integration arm (tests/steps/pendingItems.steps.ts,
+  // @SCN-PND-004) proves the same through the parse→reconcile pipeline over the planted
+  // fixture. Verdict-balanced (PND-007) and the render/tally (PND-010/011) are later
+  // sub-issues; this pins ONLY the model partition + the both-missing guard fix.
+  const CHECKS = ["lint", "unit", "integration", "e2e", "performance"] as const;
+
+  for (const qualityCheck of CHECKS) {
+    it(`raises exactly one Pending Item for a ${qualityCheck}pending obligation and posts no both-missing row`, () => {
+      const scenarios: Scenario[] = [
+        { scnId: "SCN-PND-004", evidenceObligations: [{ qualityCheck, pending: true }] },
+      ];
+      // No observation is sought — a Pending Item is one-sided.
+      const balance = reconcile(scenarios, []);
+      const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-PND-004");
+
+      // Exactly one Pending Item, at the declared quality-check.
+      expect(scenario?.pendingItems).toEqual([{ qualityCheck }]);
+      // The pending obligation is PARTITIONED OFF: it never becomes a reconciling item, and
+      // an only-pending scenario is NOT the degenerate both-missing row (the guard fix).
+      expect(scenario?.evidenceObligations).toEqual([]);
+      expect(scenario?.reconcilingItems).toEqual([]);
+    });
+  }
+
+  it("keeps the bare (non-pending) obligation reconciling while partitioning the pending one off (mixed scenario)", () => {
+    // A scenario declaring BOTH a normal @unit obligation and an @integrationpending one:
+    // the unit obligation reconciles as usual (satisfied here), while the pending
+    // integration obligation partitions to a one-sided Pending Item — never a second
+    // reconciling item, never a both-missing row.
+    const scenarios: Scenario[] = [
+      {
+        scnId: "SCN-PND-004",
+        evidenceObligations: [
+          { qualityCheck: "unit" },
+          { qualityCheck: "integration", pending: true },
+        ],
+      },
+    ];
+    const evidenceObservations: EvidenceObservation[] = [
+      { qualityCheck: "unit", scnId: "SCN-PND-004", status: "passed" },
+    ];
+
+    const balance = reconcile(scenarios, evidenceObservations);
+    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-PND-004");
+
+    // Only the unit obligation reconciles; the pending integration one is one-sided.
+    expect(scenario?.evidenceObligations).toEqual([
+      { qualityCheck: "unit", outcome: "satisfied" },
+    ]);
+    expect(scenario?.pendingItems).toEqual([{ qualityCheck: "integration" }]);
+    expect(scenario?.reconcilingItems).toEqual([]);
+  });
+});

@@ -47,3 +47,24 @@ Feature: A pending evidence obligation raises a Pending Item
       Given the planted unknown-pending fixture — an `@foopending` scenario, a bare `@pending` scenario, and a plain unknown `@foo` scenario
       When the parser derives each unknown scenario's evidence obligations
       Then every scenario declares no evidence obligation — the unknown `<x>pending` and bare `@pending` are ignored exactly like the plain unknown tag
+
+  # The met→balanced and neither→missing results are the established @LDG baselines
+  # (@SCN-LDG-001 satisfied→balanced; @SCN-LDG-003 absent→missing). This Rule adds the third:
+  # the pending result — a deliberately-deferred obligation reconciles as a one-sided
+  # Pending Item (owed IOU), never a Reconciling Item.
+  Rule: The pending result of an obligation
+
+    @unit @integration @SCN-PND-004
+    Scenario Outline: <quality-check> — obligation declared pending → Pending Item (owed IOU)
+      Given a planted fixture scenario declaring a pending "<quality-check>" obligation
+      When the reconciler reconciles it against no observation
+      Then the scenario raises exactly one Pending Item for "<quality-check>"
+      And the scenario posts no both-missing reconciling item — nothing is reconciled
+
+      Examples:
+        | quality-check |
+        | lint          |
+        | unit          |
+        | integration   |
+        | e2e           |
+        | performance   |
