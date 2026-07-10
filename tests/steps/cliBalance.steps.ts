@@ -245,6 +245,24 @@ Then("the reconciliation reports a Pending Item", function () {
   assert.match(cliResult.stdout, /Pending Item/);
 });
 
+// @SCN-CLI-011
+// The --strict ESCALATION over the SAME pending-only fixture as CLI-010: with --strict the
+// otherwise-balanced-with-pending run exits the DISTINCT code 3 (taxonomy 0/1/2/3 — a
+// Pending Item is not out-of-balance, so it must never share 1). Distinct step wording
+// ("invoked with --strict over …") from CLI-010's shared When so the two never cross-match;
+// appends --strict to the pending-only invocationArgs the shared CLI-010 Given built, and
+// spawns the real binary. Reuses the exact-code Then (`exits with status 3`, @SCN-CLI-004)
+// and the `prints … to stdout` / `reports a Pending Item` Thens — the report must flush IN
+// FULL before the exit code is set (process.exitCode, never process.exit), exactly the
+// 3F-1414 pattern the CLI-004 exact-code Then relies on.
+When(
+  "{string} is invoked with --strict over that target through the CLI binary",
+  function (command: string) {
+    assert.equal(command, "spec-controller balance");
+    cliResult = spawnBalance([...invocationArgs, "--strict"]);
+  },
+);
+
 // @SCN-CLI-006
 Given("the spec-controller binary", function () {
   // No fixture target needed: `balance --help` is answered from the registry BEFORE any

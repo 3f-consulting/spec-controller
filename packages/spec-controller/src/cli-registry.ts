@@ -102,6 +102,10 @@ const balanceFlags: FlagSpec[] = [
     description: "Re-render Markdown from a previously saved Evidence Reconciliation JSON — no reconcile, no live inputs.",
   },
   {
+    name: "--strict",
+    description: "Fail the run (exit 3) when it carries Pending Items — the opt-in that escalates otherwise-run-neutral deferred obligations.",
+  },
+  {
     name: "--help",
     aliases: ["-h"],
     description: "Show this help and exit.",

@@ -18,7 +18,7 @@
 
 import { describe, it, expect } from "vitest";
 
-import { isBalanced, reconcile } from "./reconcile.js";
+import { isBalanced, hasPendingItems, reconcile } from "./reconcile.js";
 import type {
   EvidenceReconciliation,
   ScenarioReconciliation,
@@ -198,5 +198,96 @@ describe("[SCN-PND-008] isBalanced — an EvidenceReconciliation whose only exce
     // The whole-run predicate: the run does not fail. Reds under the mutation that makes
     // `isBalanced` also fail on `pendingItems.length > 0`.
     expect(isBalanced(balance)).toBe(true);
+  });
+});
+
+/**
+ * @unit for @SCN-CLI-011 — the `--strict` escalation, and the pure predicate `hasPendingItems`
+ * it consults. Where @SCN-PND-008 pins that a balanced-with-pending run does not fail by
+ * DEFAULT, this pins the OPT-IN escalation: under `--strict`, an otherwise-balanced run
+ * CARRYING Pending Items exits the DISTINCT code 3 (taxonomy 0 balanced / 1 out-of-balance /
+ * 2 usage / 3 pending-under-strict — a Pending Item is not out-of-balance, so it must NOT
+ * share code 1). Out-of-balance DOMINATES: an out-of-balance run exits 1 regardless of
+ * `--strict`, because the escalation is checked only when `isBalanced` is true. And the
+ * escalation must NOT over-fire: a balanced run with NO Pending Items stays 0 even under
+ * `--strict`.
+ *
+ * `hasPendingItems` is the SYMMETRIC counterpart to `isBalanced` (the two are the whole-run
+ * verdict surface): true iff ANY row carries a Pending Item. Asserted over REAL `reconcile`
+ * output (evidence-manifesto §11A) — the reconciliations are built by the real reconciler
+ * over pending / out-of-balance / clean scenarios, NOT hand-seeded rows.
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe/it strings carry the
+ * SCN-CLI-011 id, matching features/cli-balance.feature's @SCN-CLI-011 scenario and its
+ * @e2e Cucumber step-block (tests/steps/cliBalance.steps.ts, `// @SCN-CLI-011`). A grep of
+ * SCN-CLI-011 returns the scenario, this @unit, and the @e2e steps.
+ */
+describe("[SCN-CLI-011] hasPendingItems + the --strict exit-3 escalation", () => {
+  // The CLI edge's exit-code decision, expressed over the two REAL predicates — mirroring
+  // `runBalance`'s gate: out-of-balance DOMINATES (1); else strict-with-pending escalates
+  // (3); else 0. Exercising the real `isBalanced` / `hasPendingItems` here is what makes
+  // this a genuine @unit on the escalation logic, not a re-statement of a constant.
+  const exitCodeFor = (balance: EvidenceReconciliation, strict: boolean): number => {
+    if (!isBalanced(balance)) return 1;
+    if (strict && hasPendingItems(balance)) return 3;
+    return 0;
+  };
+
+  it("hasPendingItems is true when any row carries a Pending Item (real reconcile output)", () => {
+    const balance = reconcile(
+      [{ scnId: "SCN-PDR-001", evidenceObligations: [{ qualityCheck: "integration", pending: true }] }],
+      [],
+    );
+    expect(hasPendingItems(balance)).toBe(true);
+  });
+
+  it("hasPendingItems is false when no row carries a Pending Item (real reconcile output)", () => {
+    const balance = reconcile(
+      [{ scnId: "SCN-PDR-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
+      [{ qualityCheck: "unit", scnId: "SCN-PDR-001", status: "passed" }],
+    );
+    expect(hasPendingItems(balance)).toBe(false);
+  });
+
+  it("--strict escalates an otherwise-balanced run carrying Pending Items to exit 3", () => {
+    // Two scenarios whose SOLE obligation is deferred pending → each partitions off to a
+    // one-sided Pending Item, leaving ZERO reconciling rows: the run is balanced yet carries
+    // Pending Items. --strict maps this to the distinct code 3.
+    const balance = reconcile(
+      [
+        { scnId: "SCN-PDR-001", evidenceObligations: [{ qualityCheck: "integration", pending: true }] },
+        { scnId: "SCN-PDR-002", evidenceObligations: [{ qualityCheck: "unit", pending: true }] },
+      ],
+      [],
+    );
+    expect(isBalanced(balance)).toBe(true);
+    expect(hasPendingItems(balance)).toBe(true);
+    expect(exitCodeFor(balance, true)).toBe(3);
+  });
+
+  it("out-of-balance DOMINATES: an out-of-balance run carrying Pending Items exits 1 under --strict, never 3", () => {
+    // One scenario is out-of-balance (a required integration obligation with no matching
+    // observation → missing), another defers a pending one. Out-of-balance is checked FIRST,
+    // so --strict never reaches the escalation — the run exits 1, not 3.
+    const balance = reconcile(
+      [
+        { scnId: "SCN-PDR-001", evidenceObligations: [{ qualityCheck: "integration" }] },
+        { scnId: "SCN-PDR-002", evidenceObligations: [{ qualityCheck: "unit", pending: true }] },
+      ],
+      [],
+    );
+    expect(isBalanced(balance)).toBe(false);
+    expect(hasPendingItems(balance)).toBe(true);
+    expect(exitCodeFor(balance, true)).toBe(1);
+  });
+
+  it("a balanced run with NO Pending Items stays 0 even under --strict (the escalation does not over-fire)", () => {
+    const balance = reconcile(
+      [{ scnId: "SCN-PDR-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
+      [{ qualityCheck: "unit", scnId: "SCN-PDR-001", status: "passed" }],
+    );
+    expect(isBalanced(balance)).toBe(true);
+    expect(hasPendingItems(balance)).toBe(false);
+    expect(exitCodeFor(balance, true)).toBe(0);
   });
 });

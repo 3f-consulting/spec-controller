@@ -21,7 +21,7 @@ import {
 } from "../ingest/ingestQualityChecks.js";
 import { planOutput } from "./emit/format.js";
 import { writeOutputs } from "./emit/writer.js";
-import { renderReportFromJson, isBalanced } from "@3f-consulting/spec-controller-core";
+import { renderReportFromJson, isBalanced, hasPendingItems } from "@3f-consulting/spec-controller-core";
 import { resolveSourceSha, resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 import { cliRegistry, renderBalanceHelp } from "../cli-registry.js";
 import type { CliRegistry } from "../cli-registry.js";
@@ -317,8 +317,21 @@ export function runBalance(argv: string[]): void {
   // mid-write. It exits EXACTLY 1 so it reds a CI build and can't masquerade as the usage
   // error (2, above). An ENUMERATED status, never a count (8-bit wrap → false pass). A
   // balanced run leaves process.exitCode at its default 0 and returns.
+  //
+  // The --strict escalation (@SCN-CLI-011): Pending Items are run-neutral by DEFAULT
+  // (@SCN-PND-008 — they never red a build), but `--strict` is the OPT-IN that fails an
+  // OTHERWISE-BALANCED run carrying them, exiting the DISTINCT code 3 (taxonomy 0 balanced /
+  // 1 out-of-balance / 2 usage / 3 pending-under-strict — a Pending Item is not out-of-balance,
+  // so it must NEVER share code 1). Out-of-balance DOMINATES: the escalation is checked ONLY in
+  // the `isBalanced` branch, so an out-of-balance run exits 1 regardless of --strict. Like the
+  // CLI-004 gate this SETS process.exitCode (never process.exit) AFTER writeOutputs, so the
+  // buffered report is flushed intact. `--strict` is a registry-declared boolean, recorded by
+  // parseArgs as the string "true" — presence is what matters, so `!== undefined` reads it.
+  const strict = args["strict"] !== undefined;
   if (!isBalanced(balance)) {
     process.exitCode = 1;
+  } else if (strict && hasPendingItems(balance)) {
+    process.exitCode = 3;
   }
 }
 

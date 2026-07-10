@@ -148,6 +148,20 @@ export function isBalanced(reconciliation: EvidenceReconciliation): boolean {
   );
 }
 
+/**
+ * Does the WHOLE reconciliation carry any Pending Item? A pure domain predicate over the
+ * WHOLE `EvidenceReconciliation`, SYMMETRIC with `isBalanced` — together they are the
+ * whole-run verdict surface. True iff ANY Scenario Reconciliation row carries a Pending
+ * Item (a deferred `<quality-check>pending` obligation partitioned off before reconciliation,
+ * @SCN-PND-004). Pending Items are run-neutral by default (@SCN-PND-008); the CLI edge
+ * consults this ALONGSIDE `isBalanced` to escalate an otherwise-balanced run to the distinct
+ * exit code 3 under `--strict` (@SCN-CLI-011) — an OPT-IN gate on deferred obligations,
+ * checked only when `isBalanced` is true (out-of-balance dominates, exit 1).
+ */
+export function hasPendingItems(reconciliation: EvidenceReconciliation): boolean {
+  return reconciliation.scenarioReconciliations.some((row) => row.pendingItems.length > 0);
+}
+
 export function reconcile(
   scenarios: Scenario[],
   evidenceObservations: EvidenceObservation[]

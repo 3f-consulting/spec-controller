@@ -87,6 +87,14 @@ Feature: spec-controller balance runs standalone
       And it prints the Evidence Reconciliation to stdout
       And the reconciliation reports a Pending Item
 
+    @unit @e2e @SCN-CLI-011
+    Scenario: an only-Pending-Items reconciliation with --strict → balance exits 3
+      Given a target whose only exception is Pending Items
+      When "spec-controller balance" is invoked with --strict over that target through the CLI binary
+      Then the command exits with status 3
+      And it prints the Evidence Reconciliation to stdout
+      And the reconciliation reports a Pending Item
+
   Rule: the CLI answers --help from a single command/flag registry, completeness-guarded.
 
     `spec-controller balance --help` (and `-h`) prints the balance command's flags —
