@@ -31,6 +31,7 @@ import type {
   EvidenceObligation,
   EvidenceObservation,
   EvidenceReconciliation,
+  ScenarioReconciliation,
   Report,
   RunContext,
 } from "@3f-consulting/spec-controller-core";
@@ -1716,5 +1717,181 @@ Then(
         scenario.evidenceObligations
       )}`
     );
+  }
+);
+
+// @SCN-PND-019 — the DECLARATION-OVERRIDES-OBSERVATION close-out: a recognised community
+// deferral tag raises the Pending Item REGARDLESS of the observation side (slice 3 — the
+// declaration overrides the observation-derived outcome). The pending flag is set at PARSE,
+// before any observation match, so the obligation partitions to a Pending Item whatever the
+// observed side would ELSE derive. Proved through the REAL parse→(reader)→reconcile pipeline over
+// the PLANTED tests/fixtures/pending-tags/declaration-overrides-observation.feature — a `@skip
+// @integration` scenario FILTERED OUT of the run (@SCN-PDF-001 — no observation at all, missing
+// by absence without the deferral) and a `@wip @integration` scenario REPORTING A PENDING STATUS
+// (@SCN-PDF-002 — a cucumber `pending`-status step the REAL reader drops as inconclusive, again
+// missing by absence). Both are instead Pending Items, never missing reconciling items. The
+// pending-status side feeds the REAL parseCucumberEvidenceObservations (§11A), so the dropped
+// observation is the reader's own output, never a hand-built one. Never a real @skip / @wip
+// scenario in the scanned features/ corpus (fixture policy, evidence-manifesto §11B). The @unit
+// arm (packages/core/src/reconcile/reconcile.test.ts, [SCN-PND-019]) proves the same override
+// from both observation sides over the reader + reconciler in isolation. Green-first over
+// @SCN-PND-016 (the parse-level deferral) + @SCN-PND-013 (the reader's inconclusive drop), both
+// already delivered; teeth proven by a local mutation removing the scenario-scope deferral
+// (reverted) — both sides then reconcile missing.
+const OVERRIDE_FIXTURE = join(
+  process.cwd(),
+  "tests/fixtures/pending-tags/features/declaration-overrides-observation.feature"
+);
+
+// The two reconciled rows — one per observation side — keyed by fixture @SCN id.
+let filteredOutScenario: ScenarioReconciliation | undefined;
+let pendingStatusScenario: ScenarioReconciliation | undefined;
+
+Given(
+  "a planted fixture — a `@skip @integration` scenario filtered out of the run, and a `@wip @integration` scenario reporting a cucumber pending status",
+  function () {
+    // The fixture (both scenarios) is the source; the parse + per-side reconcile happens in the When.
+  }
+);
+
+When(
+  "the parser derives each scenario's obligations and the reconciler reconciles each against its observation side — the filtered-out one against no observation, the pending-status one against the reader's dropped output",
+  function () {
+    // Feed the PLANTED fixture to the pure parser: both scenarios carry a recognised community
+    // deferral tag over an @integration obligation, so parseScenarios marks each integration
+    // obligation pending (scenario-scope, @SCN-PND-016).
+    const source = readFileSync(OVERRIDE_FIXTURE, "utf8");
+    const scenarios: Scenario[] = parseScenarios(source);
+    const filteredOut = scenarios.find((s) => s.scnId === "SCN-PDF-001");
+    const pendingStatus = scenarios.find((s) => s.scnId === "SCN-PDF-002");
+    assert.ok(filteredOut, "expected the planted filtered-out fixture scenario (SCN-PDF-001)");
+    assert.ok(pendingStatus, "expected the planted pending-status fixture scenario (SCN-PDF-002)");
+
+    // OBSERVATION SIDE 1 — FILTERED OUT: the @skip scenario is excluded from the run, so it
+    // contributes NO observation at all. Reconcile it against an EMPTY observation set — without
+    // the deferral its integration obligation would reconcile `missing` by absence.
+    const filteredOutReconciliation = reconcile([filteredOut], []);
+    filteredOutScenario = filteredOutReconciliation.scenarioReconciliations.find(
+      (s) => s.scnId === "SCN-PDF-001"
+    );
+
+    // OBSERVATION SIDE 2 — REPORTS A PENDING STATUS: the @wip scenario runs and yields a cucumber
+    // `pending`-status step. Fed to the REAL cucumber reader (§11A), the inconclusive step is
+    // DROPPED → an empty observation set (no back-door hand-built observation). Reconcile the
+    // pending-status scenario against the reader's OWN dropped output — again missing by absence
+    // without the deferral.
+    const pendingStatusReport: CucumberJsonReport = [
+      {
+        uri: "features/declaration-overrides-observation.feature",
+        elements: [
+          {
+            tags: [{ name: "@wip" }, { name: "@integration" }, { name: "@SCN-PDF-002" }],
+            steps: [{ result: { status: "pending" } }],
+          },
+        ],
+      },
+    ];
+    const droppedObservations = parseCucumberEvidenceObservations(pendingStatusReport, "integration");
+    assert.deepEqual(
+      droppedObservations,
+      [],
+      `the cucumber reader must DROP the pending-status step as inconclusive (missing by absence); got ${JSON.stringify(
+        droppedObservations
+      )}`
+    );
+    const pendingStatusReconciliation = reconcile([pendingStatus], droppedObservations);
+    pendingStatusScenario = pendingStatusReconciliation.scenarioReconciliations.find(
+      (s) => s.scnId === "SCN-PDF-002"
+    );
+  }
+);
+
+Then(
+  "the filtered-out scenario's integration obligation is a Pending Item, not a missing reconciling item — the deferral overrides the absent observation",
+  function () {
+    // The @skip deferral governs: the declared integration obligation partitions to EXACTLY one
+    // one-sided Pending Item, and names NO `missing` reconciling item — the declaration overriding
+    // the absent observation that would ELSE derive `missing`. Reds under a mutation removing the
+    // scenario-scope deferral (the obligation would then reconcile `missing`, no Pending Item).
+    assert.ok(filteredOutScenario, "expected the reconciled filtered-out row (SCN-PDF-001)");
+    assert.deepEqual(
+      filteredOutScenario.pendingItems ?? [],
+      [{ qualityCheck: "integration" }],
+      `the filtered-out scenario's integration obligation must be a Pending Item; got ${JSON.stringify(
+        filteredOutScenario.pendingItems
+      )}`
+    );
+    const missing = filteredOutScenario.reconcilingItems.filter(
+      (r) => r.qualityCheck === "integration" && r.outcome === "missing"
+    );
+    assert.equal(
+      missing.length,
+      0,
+      `the deferral must override the absent observation — no missing reconciling item; got ${JSON.stringify(
+        filteredOutScenario.reconcilingItems
+      )}`
+    );
+  }
+);
+
+Then(
+  "the pending-status scenario's integration obligation is a Pending Item, not a missing reconciling item — the deferral overrides the dropped observation",
+  function () {
+    // The @wip deferral governs the OTHER observation side identically: the reader dropped the
+    // pending-status step (missing by absence), yet the declared integration obligation is a
+    // Pending Item, not a `missing` reconciling item — the declaration overriding the dropped
+    // observation. Reds under the same deferral-removal mutation.
+    assert.ok(pendingStatusScenario, "expected the reconciled pending-status row (SCN-PDF-002)");
+    assert.deepEqual(
+      pendingStatusScenario.pendingItems ?? [],
+      [{ qualityCheck: "integration" }],
+      `the pending-status scenario's integration obligation must be a Pending Item; got ${JSON.stringify(
+        pendingStatusScenario.pendingItems
+      )}`
+    );
+    const missing = pendingStatusScenario.reconcilingItems.filter(
+      (r) => r.qualityCheck === "integration" && r.outcome === "missing"
+    );
+    assert.equal(
+      missing.length,
+      0,
+      `the deferral must override the dropped observation — no missing reconciling item; got ${JSON.stringify(
+        pendingStatusScenario.reconcilingItems
+      )}`
+    );
+  }
+);
+
+Then(
+  "each scenario has verdict balanced and names no reconciling item — the declaration governs regardless of the observation side",
+  function () {
+    // Both observation sides land the same verdict: the deferred obligation is a one-sided Pending
+    // Item (verdict-neutral), so each scenario is balanced with an empty reconciling-item list. The
+    // declaration governs from either side — the filtered-out absence and the dropped pending-status
+    // observation alike.
+    for (const scenario of [filteredOutScenario, pendingStatusScenario]) {
+      assert.ok(scenario, "expected both reconciled fixture rows");
+      assert.equal(
+        scenario.verdict,
+        "balanced",
+        `a scenario whose only exception is a Pending Item is balanced; got "${scenario.verdict}" (row: ${JSON.stringify(
+          scenario
+        )})`
+      );
+      assert.deepEqual(
+        scenario.reconcilingItems,
+        [],
+        `no reconciling item may be named — the deferred obligation is a Pending Item, not an error; got ${JSON.stringify(
+          scenario.reconcilingItems
+        )}`
+      );
+      assert.deepEqual(
+        scenario.evidenceObligations,
+        [],
+        `no obligation reconciles — the integration obligation is partitioned off as a Pending Item; got ${JSON.stringify(
+          scenario.evidenceObligations
+        )}`
+      );
+    }
   }
 );

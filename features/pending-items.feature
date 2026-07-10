@@ -281,3 +281,21 @@ Feature: A pending evidence obligation raises a Pending Item
       When the parser derives the composition scenario's evidence obligations and the reconciler reconciles it against no observation
       Then the unit obligation is deferred by the scenario-scope `@wip` and the integration obligation by the obligation-scope `@integrationpending` — both pending, one from each source
       And the scenario raises two Pending Items and has verdict balanced — no reconciling item, the two deferral sources composing without interference
+
+    # The DECLARATION-OVERRIDES-OBSERVATION close-out of the slice-4 Rule: the recognised
+    # deferral tag raises the Pending Item REGARDLESS of the observation side (slice 3 — the
+    # declaration overrides the observation-derived outcome). The pending flag is set at PARSE,
+    # before any observation match, so the obligation partitions to a Pending Item whatever the
+    # observed side would otherwise derive. Pinned over the two sides that would ELSE reconcile
+    # `missing`: a `@skip` scenario FILTERED OUT of the run (no observation at all → missing by
+    # absence) and a `@wip` scenario REPORTING A PENDING STATUS (a cucumber `pending`-status step
+    # the reader drops → again missing by absence). Both are instead Pending Items — never a
+    # missing reconciling item — so the declaration is proven to govern from either observation
+    # side, not merely against no observation (@SCN-PND-016's angle).
+    @unit @integration @SCN-PND-019
+    Scenario: a community deferral tag raises the Pending Item whether its scenario is filtered out (absent from the report) or reports a pending status
+      Given a planted fixture — a `@skip @integration` scenario filtered out of the run, and a `@wip @integration` scenario reporting a cucumber pending status
+      When the parser derives each scenario's obligations and the reconciler reconciles each against its observation side — the filtered-out one against no observation, the pending-status one against the reader's dropped output
+      Then the filtered-out scenario's integration obligation is a Pending Item, not a missing reconciling item — the deferral overrides the absent observation
+      And the pending-status scenario's integration obligation is a Pending Item, not a missing reconciling item — the deferral overrides the dropped observation
+      And each scenario has verdict balanced and names no reconciling item — the declaration governs regardless of the observation side

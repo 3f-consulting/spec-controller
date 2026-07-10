@@ -792,3 +792,92 @@ describe("[SCN-PND-014] an undeclared undefined step is reported out-of-balance 
     expect(scenario?.pendingItems).toEqual([]);
   });
 });
+
+describe("[SCN-PND-019] a recognised deferral tag raises the Pending Item whether the scenario is filtered out or reports a pending status — the declaration overrides the observation-derived outcome", () => {
+  // The DECLARATION-OVERRIDES-OBSERVATION close-out of the slice-4 Rule (slice 3 — the declaration
+  // overrides the observation-derived outcome). A deferred obligation (the `pending: true` flag a
+  // recognised community tag sets at PARSE, @SCN-PND-016) partitions to a one-sided Pending Item
+  // BEFORE any observation match — so it raises the Pending Item REGARDLESS of the observation
+  // side. Pinned over the two sides that would ELSE reconcile `missing`, with the contrast that
+  // makes the override bite (a NON-deferred obligation on the same side → `missing`):
+  //   - FILTERED OUT: no observation at all (the @skip scenario excluded from the run) → missing
+  //     by absence without the deferral.
+  //   - REPORTS A PENDING STATUS: a cucumber `pending`-status step the REAL reader (§11A) drops as
+  //     inconclusive → again missing by absence without the deferral.
+  // Green-first over @SCN-PND-016 (the parse-level deferral) + @SCN-PND-013 (the reader's drop),
+  // both already delivered; teeth proven by a local mutation removing the scenario-scope deferral
+  // (reverted). Asserts REAL reconcile + REAL reader output (evidence-manifesto §11A). The
+  // @integration arm (tests/steps/pendingItems.steps.ts, @SCN-PND-019) proves the same override
+  // from both observation sides through the parse→(reader)→reconcile pipeline over the planted
+  // declaration-overrides-observation fixture.
+
+  it("filtered out (no observation): a deferred obligation is a Pending Item where a non-deferred one is missing", () => {
+    // A deferred @integration obligation reconciled against NO observation (the filtered-out side)
+    // → a one-sided Pending Item, verdict balanced, no reconciling item.
+    const deferred: Scenario[] = [
+      { scnId: "SCN-PND-019", evidenceObligations: [{ qualityCheck: "integration", pending: true }] },
+    ];
+    const balance = reconcile(deferred, []);
+    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-PND-019");
+    expect(scenario?.pendingItems).toEqual([{ qualityCheck: "integration" }]);
+    expect(scenario?.verdict).toBe("balanced");
+    expect(scenario?.reconcilingItems).toEqual([]);
+
+    // The contrast that makes the override bite: WITHOUT the deferral, the same obligation on the
+    // same (no-observation) side reconciles `missing` — an out-of-balance error, not a Pending Item.
+    const nonDeferred: Scenario[] = [
+      { scnId: "SCN-PND-019", evidenceObligations: [{ qualityCheck: "integration" }] },
+    ];
+    const nonDeferredBalance = reconcile(nonDeferred, []);
+    const nonDeferredScenario = nonDeferredBalance.scenarioReconciliations.find(
+      (s) => s.scnId === "SCN-PND-019"
+    );
+    expect(nonDeferredScenario?.reconcilingItems).toEqual([
+      { qualityCheck: "integration", outcome: "missing" },
+    ]);
+    expect(nonDeferredScenario?.pendingItems).toEqual([]);
+  });
+
+  it("reports a pending status (the reader dropped it): a deferred obligation is a Pending Item where a non-deferred one is missing", () => {
+    // The observed side, straight from the REAL cucumber reader: a `pending` step is inconclusive
+    // → dropped → an EMPTY observation set (no back-door hand-built observation).
+    const report: CucumberJsonReport = [
+      {
+        uri: "features/pnd019.feature",
+        elements: [
+          {
+            tags: [{ name: "@wip" }, { name: "@integration" }, { name: "@SCN-PND-019" }],
+            steps: [{ result: { status: "pending" } }],
+          },
+        ],
+      },
+    ];
+    const observations = parseCucumberEvidenceObservations(report, "integration");
+    expect(observations).toEqual([]); // the reader dropped the pending-status scenario.
+
+    // A deferred @integration obligation reconciled against the reader's OWN dropped output →
+    // a one-sided Pending Item, verdict balanced, no reconciling item.
+    const deferred: Scenario[] = [
+      { scnId: "SCN-PND-019", evidenceObligations: [{ qualityCheck: "integration", pending: true }] },
+    ];
+    const balance = reconcile(deferred, observations);
+    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-PND-019");
+    expect(scenario?.pendingItems).toEqual([{ qualityCheck: "integration" }]);
+    expect(scenario?.verdict).toBe("balanced");
+    expect(scenario?.reconcilingItems).toEqual([]);
+
+    // The contrast: WITHOUT the deferral, the dropped pending-status observation leaves the same
+    // obligation `missing` by absence — an error, not a Pending Item.
+    const nonDeferred: Scenario[] = [
+      { scnId: "SCN-PND-019", evidenceObligations: [{ qualityCheck: "integration" }] },
+    ];
+    const nonDeferredBalance = reconcile(nonDeferred, observations);
+    const nonDeferredScenario = nonDeferredBalance.scenarioReconciliations.find(
+      (s) => s.scnId === "SCN-PND-019"
+    );
+    expect(nonDeferredScenario?.reconcilingItems).toEqual([
+      { qualityCheck: "integration", outcome: "missing" },
+    ]);
+    expect(nonDeferredScenario?.pendingItems).toEqual([]);
+  });
+});
