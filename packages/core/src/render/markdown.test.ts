@@ -23,6 +23,7 @@
 import { describe, it, expect } from "vitest";
 import { renderMarkdown } from "./markdown.js";
 import type { EvidenceReconciliation } from "../model.js";
+import { OUTCOME_DESCRIPTION } from "../model.js";
 import type { RunContext } from "../provenance/provenance.js";
 import type { RuntimeEvidenceObservationKindCounts } from "../census/evidenceObservations.js";
 
@@ -168,21 +169,22 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
     const md = renderMarkdown(spanning, ctx);
     // The three non-balanced causes nest (↳) under the evidence-obligation row,
     // populating the out-of-balance column only; missing carries the
-    // bare-level split (1 unit + 1 integration — SCN-B's two missing arms).
-    expect(md).toContain("| ↳ missing |");
+    // bare-level split (1 unit + 1 integration — SCN-B's two missing arms). The Subject
+    // cell shows the outcome's canon DESCRIPTION, not the bare handle (3F-1626).
+    expect(md).toContain("| ↳ Evidence Observation is missing |");
     expect(md).toContain("1 unit + 1 integration");
-    expect(md).toContain("| ↳ failing |");
-    expect(md).toContain("| ↳ watermelon |");
+    expect(md).toContain("| ↳ Evidence Observation is failing |");
+    expect(md).toContain("| ↳ Evidence Observation is passing but fabricated |");
   });
 
   it("reads the scenario / evidence-obligation out-of-balance divergence as a granularity fact (causes reconcile to the evidenceObligation out-of-balance)", () => {
     const md = renderMarkdown(spanning, ctx);
     const scenOutOfBalance = Number(/\| Scenario \| \d+ \| \d+ \| (\d+) \|/.exec(md)?.[1]);
     const oblOutOfBalance = Number(/\| Evidence \S+ \| \d+ \| \d+ \| (\d+) \|/.exec(md)?.[1]);
-    const rbm = Number(/↳ missing \|[^\d]*(\d+) \|/.exec(md)?.[1]);
-    const pbf = Number(/↳ failing \|[^\d]*(\d+) \|/.exec(md)?.[1]);
+    const rbm = Number(/↳ Evidence Observation is missing \|[^\d]*(\d+) \|/.exec(md)?.[1]);
+    const pbf = Number(/↳ Evidence Observation is failing \|[^\d]*(\d+) \|/.exec(md)?.[1]);
     const wm = Number(
-      /↳ watermelon \|[^\d]*(\d+) \|/.exec(md)?.[1]
+      /↳ Evidence Observation is passing but fabricated \|[^\d]*(\d+) \|/.exec(md)?.[1]
     );
     // The divergence IS the point of the reshape (the live 43≠44 in miniature):
     // 2 out-of-balance scenarios, 3 out-of-balance evidenceObligations (SCN-B's double
@@ -196,14 +198,14 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
 
   it("always renders the watermelon cause even at zero (a zero watermelon is itself a fact)", () => {
     const md = renderMarkdown(spanning, ctx);
-    expect(/↳ watermelon \|[^\d]*0 \|/.test(md)).toBe(true);
+    expect(/↳ Evidence Observation is passing but fabricated \|[^\d]*0 \|/.test(md)).toBe(true);
   });
 
   it("renders the nested causes in the fixed order missing → failing → watermelon", () => {
     const md = renderMarkdown(spanning, ctx);
-    const iMissing = md.indexOf("| ↳ missing |");
-    const iFailing = md.indexOf("| ↳ failing |");
-    const iWatermelon = md.indexOf("| ↳ watermelon |");
+    const iMissing = md.indexOf("| ↳ Evidence Observation is missing |");
+    const iFailing = md.indexOf("| ↳ Evidence Observation is failing |");
+    const iWatermelon = md.indexOf("| ↳ Evidence Observation is passing but fabricated |");
     expect(iMissing).toBeGreaterThanOrEqual(0);
     expect(iMissing).toBeLessThan(iFailing);
     expect(iFailing).toBeLessThan(iWatermelon);
@@ -264,7 +266,7 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
     expect(md).toContain("| Evidence obligation | 3 | 0 | 3 |");
     expect(md).toContain("2 unit + 1 integration");
     // The missing nested cause carries the full evidence-obligation out-of-balance (3).
-    expect(/↳ missing \|[^\d]*3 \|/.test(md)).toBe(true);
+    expect(/↳ Evidence Observation is missing \|[^\d]*3 \|/.test(md)).toBe(true);
   });
 
   it("renders a missing static evidenceObligation as the bare 'lint' bucket, lint-first in the split", () => {
@@ -293,7 +295,7 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
     // The split maps the static evidenceObligation to the bare word "lint" and orders
     // it FIRST; the nested missing cause carries the full out-of-balance (2).
     expect(md).toContain("1 lint + 1 integration");
-    expect(/↳ missing \|[^\d]*2 \|/.test(md)).toBe(true);
+    expect(/↳ Evidence Observation is missing \|[^\d]*2 \|/.test(md)).toBe(true);
   });
 
   it("renders the trial balance under the Summary views heading, before the ledger", () => {
@@ -380,11 +382,11 @@ describe("[SCN-RPT-005] the markdown report lists the lint evidence obligations 
     expect(md).toContain("1 of 2 lint evidence obligations reconcile satisfied.");
     // The table header.
     expect(md).toContain("| Scenario | Guard | Outcome |");
-    // The satisfied static guard, glyphed.
-    expect(md).toContain("| SCN-A | guard-typecheck | ✓ satisfied |");
+    // The satisfied static guard, glyphed — the outcome shown as its canon description (3F-1626).
+    expect(md).toContain("| SCN-A | guard-typecheck | ✓ Evidence Observation is present and passing |");
     // The watermelon static guard, glyphed — the 🍉 reads at a glance.
     expect(md).toContain(
-      "| SCN-B | guard-lint | 🍉 watermelon |"
+      "| SCN-B | guard-lint | 🍉 Evidence Observation is passing but fabricated |"
     );
   });
 
@@ -701,7 +703,7 @@ describe("[SCN-RPT-007] the declared corpus census is recoverable from the ledge
     expect(md).toContain("- 3 scenario(s): 1 balanced, 2 out-of-balance.");
     // The zero-evidence scenario is a ledger row (a both-missing item), NOT a warnings entry.
     expect(md).toContain("SCN-C");
-    expect(md).toContain("⊘ both-missing");
+    expect(md).toContain("⊘ Evidence Observation and Evidence Obligation are both missing for the Scenario");
     expect(md).not.toContain("## Warnings");
   });
 
@@ -872,9 +874,9 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
     const md = renderMarkdown(reformatted, ctx);
     // The runtime evidenceObligation renders its bare LEVEL; the static (@lint) evidenceObligation
     // renders the tag word "lint" — both level-less of the kind axis.
-    expect(md).toContain("| SCN-LDG-002 | ✗ out-of-balance | unit ∅ missing |");
+    expect(md).toContain("| SCN-LDG-002 | ✗ out-of-balance | unit ∅ Evidence Observation is missing |");
     expect(md).toContain(
-      "| SCN-LNT-001 | ✗ out-of-balance | lint 🍉 watermelon |"
+      "| SCN-LNT-001 | ✗ out-of-balance | lint 🍉 Evidence Observation is passing but fabricated |"
     );
     // The kind axis ("runtime" / "static") is never rendered in the report.
     expect(md).not.toContain("runtime/");
@@ -1331,9 +1333,10 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the seven leaf out
 
   it("decomposes the evidence-obligation out-of-balance into exactly the seven leaf outcome rows", () => {
     const md = renderMarkdown(spanning, ctx);
-    // Every leaf outcome renders as a counted "↳ <outcome>" row.
+    // Every leaf outcome renders as a counted "↳ <description>" row — the canon
+    // description, not the bare handle (3F-1626), located via the single-sourced map.
     for (const leaf of LEAVES) {
-      expect(md).toContain(`| ↳ ${leaf} |`);
+      expect(md).toContain(`| ↳ ${OUTCOME_DESCRIPTION[leaf]} |`);
     }
     // And there are EXACTLY seven "↳" rows in the decomposition — no more (the group-side
     // subtotal rows are gone). Count every "↳ " marker across the rendered document; the
@@ -1353,7 +1356,7 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the seven leaf out
     let leafSum = 0;
     for (const leaf of LEAVES) {
       const n = Number(
-        new RegExp(`↳ ${leaf} \\|[^\\d]*(\\d+) \\|`).exec(md)?.[1]
+        new RegExp(`↳ ${OUTCOME_DESCRIPTION[leaf]} \\|[^\\d]*(\\d+) \\|`).exec(md)?.[1]
       );
       expect(Number.isNaN(n)).toBe(false);
       leafSum += n;
@@ -1366,6 +1369,131 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the seven leaf out
     expect(md).not.toContain("↳ debit-side");
     expect(md).not.toContain("↳ credit-side");
     expect(md).not.toContain("↳ neither-side");
+  });
+});
+
+/**
+ * Unit test for the outcome-description gloss (@SCN-RPT-020, 3F-1626).
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-RPT-020 id
+ * matching features/report.feature, so a grep of the id returns both halves of the pair.
+ *
+ * The reconciling-item outcome is meaningless to a human as a bare handle in a CI log. This
+ * pins that the markdown renders each outcome's CANON DESCRIPTION in place of the handle,
+ * EVERYWHERE an outcome surfaces to a reader — the summary `↳` decomposition rows, the
+ * per-scenario reconciling-items list, and the lint-obligation table's Outcome column — and
+ * that the handle is GONE. Single-source: the descriptions come from `OUTCOME_DESCRIPTION`
+ * (model.ts), so the render cannot drift from the map (the drift class the census / views were
+ * burned by). The JSON keeps the bare handle (proven separately in json.test.ts); this is the
+ * markdown-only human axis. The glyph is retained; only the word changes.
+ *
+ * Teeth: while the renderer emits the bare handle (`↳ missing`, `unit ∅ missing`,
+ * `🍉 watermelon`) every description assertion reds and every `not`-handle assertion reds — the
+ * genuine red→green.
+ *
+ * Parent: (@SCN-RPT-020).
+ */
+describe("[SCN-RPT-020] the markdown renders each outcome's canon description, not the bare handle", () => {
+  // A balance rich enough to exercise all three render sites: SCN-A carries a runtime debit
+  // (unit missing) and a lint watermelon (→ the lint table AND a per-scenario lint item);
+  // SCN-B is the degenerate both-missing (neither-side) item; the suspense row carries a
+  // credit-side cites-no-scenario item with a locator. The summary `↳` decomposition always
+  // renders all seven leaves (zero counts shown), so every outcome's description is on the page.
+  const rich: EvidenceReconciliation = {
+    scenarioReconciliations: [
+      {
+        scnId: "SCN-A",
+        kind: "scenario",
+        verdict: "out-of-balance",
+        evidenceObligations: [
+          { qualityCheck: "unit", outcome: "missing" },
+          { qualityCheck: "lint", guard: "typecheck", outcome: "watermelon" },
+        ],
+        pendingItems: [],
+        reconcilingItems: [
+          { qualityCheck: "unit", outcome: "missing" },
+          { qualityCheck: "lint", guard: "typecheck", outcome: "watermelon" },
+        ],
+      },
+      {
+        scnId: "SCN-B",
+        kind: "scenario",
+        verdict: "out-of-balance",
+        evidenceObligations: [{ outcome: "both-missing" }],
+        pendingItems: [],
+        reconcilingItems: [{ outcome: "both-missing" }],
+      },
+      {
+        scnId: "(no scenario)",
+        kind: "suspense-scenario",
+        verdict: "out-of-balance",
+        evidenceObligations: [
+          { qualityCheck: "integration", outcome: "cites-no-scenario", locator: "tests/stray.test.ts:1" },
+        ],
+        pendingItems: [],
+        reconcilingItems: [
+          { qualityCheck: "integration", outcome: "cites-no-scenario", locator: "tests/stray.test.ts:1" },
+        ],
+      },
+    ],
+  };
+
+  it("renders every summary ↳ decomposition row with the canon description, and no bare handle", () => {
+    const md = renderMarkdown(rich, ctx);
+    // Each of the seven out-of-balance leaves carries its canon description in the Subject cell.
+    expect(md).toContain("| ↳ Evidence Observation is missing |");
+    expect(md).toContain("| ↳ Evidence Observation is failing |");
+    expect(md).toContain("| ↳ Evidence Observation is passing but fabricated |");
+    expect(md).toContain("| ↳ Evidence Observation cites an unknown Scenario |");
+    expect(md).toContain("| ↳ Evidence Observation cites no Scenario |");
+    expect(md).toContain("| ↳ Evidence Observation cites a Scenario that did not demand it |");
+    expect(md).toContain(
+      "| ↳ Evidence Observation and Evidence Obligation are both missing for the Scenario |"
+    );
+    // The bare handle is GONE from the summary Subject cells.
+    for (const handle of [
+      "missing",
+      "failing",
+      "watermelon",
+      "cites-unknown-scenario",
+      "cites-no-scenario",
+      "undemanded",
+      "both-missing",
+    ]) {
+      expect(md).not.toContain(`| ↳ ${handle} |`);
+    }
+  });
+
+  it("renders each per-scenario reconciling item with the canon description, glyph retained", () => {
+    const md = renderMarkdown(rich, ctx);
+    // Debit runtime item, lint watermelon item, neither-side both-missing item, credit item.
+    expect(md).toContain("unit ∅ Evidence Observation is missing");
+    expect(md).toContain("lint 🍉 Evidence Observation is passing but fabricated");
+    expect(md).toContain(
+      "⊘ Evidence Observation and Evidence Obligation are both missing for the Scenario"
+    );
+    expect(md).toContain(
+      "integration ❓ Evidence Observation cites no Scenario (tests/stray.test.ts:1)"
+    );
+    // The bare handles are gone from the reconciling-items cells (the glyph stays).
+    expect(md).not.toContain("∅ missing");
+    expect(md).not.toContain("🍉 watermelon");
+    expect(md).not.toContain("❓ cites-no-scenario");
+  });
+
+  it("renders the lint table's Outcome column with the canon description", () => {
+    const md = renderMarkdown(rich, ctx);
+    expect(md).toContain("| SCN-A | typecheck | 🍉 Evidence Observation is passing but fabricated |");
+  });
+
+  it("single-sources the gloss from OUTCOME_DESCRIPTION — the render cannot drift from the map", () => {
+    const md = renderMarkdown(rich, ctx);
+    // The rendered gloss is exactly the map's value at each site — so editing the map is the
+    // only way to change the render, and a description can never diverge from the outcome it names.
+    expect(md).toContain(`↳ ${OUTCOME_DESCRIPTION.missing}`);
+    expect(md).toContain(`unit ∅ ${OUTCOME_DESCRIPTION.missing}`);
+    expect(md).toContain(`🍉 ${OUTCOME_DESCRIPTION.watermelon}`);
+    expect(md).toContain(`⊘ ${OUTCOME_DESCRIPTION["both-missing"]}`);
   });
 });
 
@@ -1443,7 +1571,8 @@ describe("[SCN-PND-010] the markdown report renders a Pending Item distinct from
     expect(row).toMatch(/⏳ pending: integration/);
     expect(row).toContain("✓ balanced");
     // It is NOT rendered as a reconciling-item error (no missing/failing outcome for it).
-    expect(row).not.toMatch(/integration ∅ missing|integration ✗ failing/);
+    // Reconciling items now render the canon description, not the handle (3F-1626).
+    expect(row).not.toMatch(/integration ∅ Evidence Observation is missing|integration ✗ Evidence Observation is failing/);
     // And the exceptions cell is NOT the clean-balanced em-dash placeholder.
     expect(row).not.toMatch(/\|\s*—\s*\|$/);
   });
@@ -1451,8 +1580,8 @@ describe("[SCN-PND-010] the markdown report renders a Pending Item distinct from
   it("renders a mixed row's error and Pending Item as separate, distinctly-labelled categories", () => {
     const md = renderMarkdown(pendingBalance, ctx);
     const row = rowFor(md, "SCN-PDX-002");
-    // The genuine unit error renders as a reconciling item.
-    expect(row).toMatch(/unit ∅ missing/);
+    // The genuine unit error renders as a reconciling item (canon description; 3F-1626).
+    expect(row).toMatch(/unit ∅ Evidence Observation is missing/);
     // The deferred integration obligation renders as a distinct Pending Item alongside it.
     expect(row).toMatch(/⏳ pending: integration/);
     expect(row).toContain("✗ out-of-balance");
@@ -1478,8 +1607,8 @@ describe("[SCN-PND-010] the markdown report renders a Pending Item distinct from
     const md = renderMarkdown(pendingBalance, ctx, undefined, evidenceObservations);
     expect(rowFor(md, "SCN-PDX-001")).toMatch(/⏳ pending: integration/);
     expect(rowFor(md, "SCN-PDX-002")).toMatch(/⏳ pending: integration/);
-    // Still never rendered as a reconciling-item error anywhere.
-    expect(md).not.toMatch(/integration ∅ missing|integration ✗ failing/);
+    // Still never rendered as a reconciling-item error anywhere (canon description; 3F-1626).
+    expect(md).not.toMatch(/integration ∅ Evidence Observation is missing|integration ✗ Evidence Observation is failing/);
   });
 });
 
@@ -1547,7 +1676,8 @@ describe("[SCN-PND-011] the markdown Summary tallies Pending Items separately fr
   it("keeps the seven-leaf out-of-balance decomposition intact — the tally is NOT an eighth leaf", () => {
     const md = renderMarkdown(pendingBalance, ctx);
     const section = evidenceReconciliationSection(md);
-    // The seven `↳ <outcome>` leaves still render, unchanged.
+    // The seven `↳ <description>` leaves still render, unchanged — located by the canon
+    // description (3F-1626), not the bare handle.
     for (const leaf of [
       "missing",
       "failing",
@@ -1556,8 +1686,8 @@ describe("[SCN-PND-011] the markdown Summary tallies Pending Items separately fr
       "cites-no-scenario",
       "undemanded",
       "both-missing",
-    ]) {
-      expect(section).toContain(`↳ ${leaf} `);
+    ] as const) {
+      expect(section).toContain(`↳ ${OUTCOME_DESCRIPTION[leaf]} `);
     }
     // The Pending tally is NEVER a `↳ pending` leaf row — anywhere in the report.
     expect(md).not.toContain("↳ pending");
@@ -1565,7 +1695,7 @@ describe("[SCN-PND-011] the markdown Summary tallies Pending Items separately fr
 
   it("renders the tally as its OWN line, after the out-of-balance decomposition (not a table row)", () => {
     const md = renderMarkdown(pendingBalance, ctx);
-    const iBothMissing = md.indexOf("↳ both-missing");
+    const iBothMissing = md.indexOf(`↳ ${OUTCOME_DESCRIPTION["both-missing"]}`);
     const iTally = md.search(/⏳\s*3 Pending Item/);
     expect(iBothMissing).toBeGreaterThanOrEqual(0);
     expect(iTally).toBeGreaterThan(iBothMissing);
@@ -1666,9 +1796,9 @@ describe("[SCN-PND-012] a balanced-with-pending row is visibly distinguished fro
     const row = rowFor(md, "SCN-PDD-002");
     expect(row).toContain("✓ balanced");
     expect(row).toMatch(/⏳ pending: integration/);
-    // Not the clean-balanced em-dash, and never a reconciling-item error.
+    // Not the clean-balanced em-dash, and never a reconciling-item error (canon description; 3F-1626).
     expect(row).not.toMatch(/\|\s*—\s*\|/);
-    expect(row).not.toMatch(/integration ∅ missing|integration ✗ failing/);
+    expect(row).not.toMatch(/integration ∅ Evidence Observation is missing|integration ✗ Evidence Observation is failing/);
   });
 
   it("makes the two balanced rows read differently at a glance — the pending cell is not the clean em-dash", () => {

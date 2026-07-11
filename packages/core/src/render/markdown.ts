@@ -29,6 +29,10 @@ import type {
   EvidenceReconciliation,
   PendingItem,
 } from "../model.js";
+// The single source for the human-readable outcome gloss — rendered in place of the bare
+// handle wherever an outcome surfaces to a reader (3F-1626). An internal core import (NOT on
+// the frozen v1 barrel), so the renderer and the map cannot drift.
+import { OUTCOME_DESCRIPTION } from "../model.js";
 import {
   projectProvenanceObject,
   type RunContext,
@@ -70,16 +74,18 @@ const VERDICT_GLYPH: Record<ScenarioVerdict, string> = {
 /**
  * Render one reconciling item, labelled by its flat quality-check (the
  * label-=-tag rule): the `qualityCheck` value IS the tag word — a runtime item
- * is its bare level (`unit ✗ failing`, `integration ∅ missing`,
- * …); a lint item is `lint 🍉 watermelon`. Byte-identical to the prior `(kind, level)`
- * derivation, which already resolved to the same tag word.
+ * is its bare level (`unit ✗ Evidence Observation is failing`,
+ * `integration ∅ Evidence Observation is missing`, …); a lint item is
+ * `lint 🍉 Evidence Observation is passing but fabricated`. The outcome renders as its
+ * CANON DESCRIPTION (the single-sourced `OUTCOME_DESCRIPTION`, 3F-1626) — never the bare
+ * handle, which is meaningless to a human reading a CI log. The glyph is retained.
  */
 function renderItem(item: ScenarioReconciliation["reconcilingItems"][number]): string {
   // The NEITHER-side both-missing item is blank on both sides — it names no
   // quality-check (neither a debit evidence obligation nor a credit evidence observation), so it renders with
-  // its glyph + outcome alone, no leading subject.
+  // its glyph + description alone, no leading subject.
   if (item.outcome === "both-missing") {
-    return `${ITEM_GLYPH["both-missing"]} both-missing`;
+    return `${ITEM_GLYPH["both-missing"]} ${OUTCOME_DESCRIPTION["both-missing"]}`;
   }
   const subject = item.qualityCheck;
   // A CREDIT-SIDE item surfaces its WHERE-TO-FIX in the reconciliation cell (ruling
@@ -96,7 +102,7 @@ function renderItem(item: ScenarioReconciliation["reconcilingItems"][number]): s
   let suffix = "";
   if (isCredit && item.guard) suffix = ` (${item.guard})`;
   else if (isCredit && item.locator !== undefined) suffix = ` (${item.locator})`;
-  return `${subject} ${ITEM_GLYPH[item.outcome]} ${item.outcome}${suffix}`;
+  return `${subject} ${ITEM_GLYPH[item.outcome]} ${OUTCOME_DESCRIPTION[item.outcome]}${suffix}`;
 }
 
 /**
@@ -260,7 +266,9 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
   // Every outcome is ALWAYS rendered, including a zero count (a zero cause is itself a fact).
   for (const outcome of OUT_OF_BALANCE_OUTCOMES) {
     const detail = outcome === "missing" ? missingSplit : "";
-    lines.push(row([`↳ ${outcome}`, "", "", String(evidenceObligations.byOutcome[outcome]), detail]));
+    // The Subject cell shows the outcome's CANON DESCRIPTION, not the bare handle (3F-1626)
+    // — single-sourced from OUTCOME_DESCRIPTION so it cannot drift from the outcome it names.
+    lines.push(row([`↳ ${OUTCOME_DESCRIPTION[outcome]}`, "", "", String(evidenceObligations.byOutcome[outcome]), detail]));
   }
   // The Pending Items tally (@SCN-PND-011) — a SEPARATE line, NEVER an eighth out-of-balance
   // leaf (3F-1453 line, endorsed): a Pending Item is deferred, not out-of-balance, so it is
@@ -383,7 +391,9 @@ const lintSection: SectionEmitter = (report) => {
     .flatMap((s) =>
       s.evidenceObligations
         .filter((r) => r.qualityCheck === "lint")
-        .map((r) => `| ${s.scnId} | ${r.guard!} | ${ITEM_GLYPH[r.outcome]} ${r.outcome} |`)
+        // The Outcome cell shows the canon DESCRIPTION, not the bare handle (3F-1626,
+        // single-sourced from OUTCOME_DESCRIPTION); the ITEM_GLYPH glyph is retained.
+        .map((r) => `| ${s.scnId} | ${r.guard!} | ${ITEM_GLYPH[r.outcome]} ${OUTCOME_DESCRIPTION[r.outcome]} |`)
     );
   if (rows.length === 0) return [];
   const { satisfied, total } = report.summary.lint;

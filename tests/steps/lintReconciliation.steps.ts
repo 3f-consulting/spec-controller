@@ -317,7 +317,7 @@ Then(
     );
     assert.match(
       items,
-      /lint .*watermelon/,
+      /lint .*Evidence Observation is passing but fabricated/,
       `expected ${scnId} to carry the lint watermelon reconciling item for "${guard}"; got "${items}"`
     );
     assert.match(
@@ -379,7 +379,7 @@ Then(
     );
     assert.match(
       items,
-      /lint .*watermelon/,
+      /lint .*Evidence Observation is passing but fabricated/,
       `expected ${scnId} to carry the lint watermelon reconciling item for "${guard}"; got "${items}"`
     );
     assert.match(
@@ -412,7 +412,7 @@ Then(
     );
     assert.match(
       items,
-      /lint .*watermelon/,
+      /lint .*Evidence Observation is passing but fabricated/,
       `expected ${scnId} to carry the lint watermelon reconciling item for the external guard "${guard}"; got "${items}"`
     );
     assert.match(

@@ -119,8 +119,8 @@ describe("[SCN-RMD-007] the markdown regenerates from a saved spec-reconciliatio
     // The SUSPENSE row survives the round-trip — its S bullet, its ledger cell
     // (with the re-homed guard + the uncited-credit locator), and its cites-no-scenario items.
     expect(regenerated).toContain('1 suspense-scenario(s): credits citing no scenario, aggregated into "(no scenario)".');
-    expect(regenerated).toContain("lint ❓ cites-no-scenario (lint:bar)");
-    expect(regenerated).toContain("unit ❓ cites-no-scenario (src/b.test.ts)");
+    expect(regenerated).toContain("lint ❓ Evidence Observation cites no Scenario (lint:bar)");
+    expect(regenerated).toContain("unit ❓ Evidence Observation cites no Scenario (src/b.test.ts)");
   });
 
   it("needs no RunContext — the JSON string alone reconstructs the report", () => {

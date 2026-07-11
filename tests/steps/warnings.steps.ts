@@ -100,8 +100,9 @@ Then(
     // and read out-of-balance. Row-scoped, so it reds if the scenario is instead swept to a
     // warnings surface (the earlier behaviour) and carries no ledger row at all.
     const { verdict, items } = ledgerRowCells(scnId);
+    // The reconciling item renders the outcome's canon description, not the handle (3F-1626).
     assert.ok(
-      items.includes("both-missing"),
+      items.includes("Evidence Observation and Evidence Obligation are both missing for the Scenario"),
       `expected ${scnId}'s reconciling items to include a both-missing item; got "${items}"`
     );
     assert.match(

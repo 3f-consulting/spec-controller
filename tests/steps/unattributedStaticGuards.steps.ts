@@ -132,7 +132,7 @@ Then(
       `expected the guard counts "2 guard(s) run, 1 unattributed static-guard(s)"; got:\n${activeMd}`
     );
     assert.ok(
-      activeMd.includes("lint ❓ cites-no-scenario (lint:bar)"),
+      activeMd.includes("lint ❓ Evidence Observation cites no Scenario (lint:bar)"),
       `expected lint:bar re-homed onto the suspense row as a cites-no-scenario credit; got:\n${activeMd}`
     );
   }
@@ -156,7 +156,7 @@ Then(
       `expected the guard counts "1 guard(s) run, 1 unattributed static-guard(s)"; got:\n${activeMd}`
     );
     assert.ok(
-      activeMd.includes("lint ❓ cites-no-scenario (guard:domain-purity)"),
+      activeMd.includes("lint ❓ Evidence Observation cites no Scenario (guard:domain-purity)"),
       `expected guard:domain-purity re-homed onto the suspense row as a cites-no-scenario credit; got:\n${activeMd}`
     );
   }
@@ -169,7 +169,7 @@ Then(
   "lint:foo is not reported as an unattributed static-guard",
   function () {
     assert.ok(
-      !activeMd.includes("cites-no-scenario (lint:foo)"),
+      !activeMd.includes("Evidence Observation cites no Scenario (lint:foo)"),
       `lint:foo is @lint-declared; it must not surface as an unattributed static-guard credit; got:\n${activeMd}`
     );
     assert.ok(
@@ -189,7 +189,7 @@ Then(
   "guard:domain-purity is not reported as an unattributed static-guard",
   function () {
     assert.ok(
-      !activeMd.includes("cites-no-scenario (guard:domain-purity)"),
+      !activeMd.includes("Evidence Observation cites no Scenario (guard:domain-purity)"),
       `guard:domain-purity is @lint-declared; it must not surface as an unattributed static-guard credit; got:\n${activeMd}`
     );
     assert.ok(

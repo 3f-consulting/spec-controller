@@ -169,6 +169,32 @@ export type Outcome =
   // The verdict stays two-valued (out-of-balance VIA this reconciling item, never a third verdict).
 
 /**
+ * The canon description for each reconciling-item Outcome — the human-readable gloss a
+ * markdown reader needs (the bare handle means nothing in a CI log). SINGLE SOURCE: the
+ * markdown renderer renders this description in place of the handle EVERYWHERE an outcome
+ * surfaces to a reader — the Evidence-reconciliation summary's `↳` decomposition rows, the
+ * per-scenario reconciling-items list, and the lint-obligation table's Outcome column. The
+ * JSON keeps the bare handle (the machine axis; a programmatic consumer uses it).
+ *
+ * Keyed by EVERY `Outcome` (a `Record<Outcome, …>`), so a new outcome cannot be added to the
+ * union without a description here — the description can never silently diverge from the
+ * outcome it names (the drift class this project has been burned by: the census, the views).
+ * These phrasings ARE the original canon — later abbreviated to the handles; 3F-1626 restores
+ * them. `satisfied` (the balanced outcome, excluded from the out-of-balance decomposition)
+ * carries one for totality's sake.
+ */
+export const OUTCOME_DESCRIPTION: Record<Outcome, string> = {
+  satisfied: "Evidence Observation is present and passing",
+  failing: "Evidence Observation is failing",
+  watermelon: "Evidence Observation is passing but fabricated",
+  missing: "Evidence Observation is missing",
+  "cites-unknown-scenario": "Evidence Observation cites an unknown Scenario",
+  "cites-no-scenario": "Evidence Observation cites no Scenario",
+  undemanded: "Evidence Observation cites a Scenario that did not demand it",
+  "both-missing": "Evidence Observation and Evidence Obligation are both missing for the Scenario",
+};
+
+/**
  * The scenario-level VERDICT — its OWN type, distinct from Outcome
  * (superseding the `ScenarioOutcome = Outcome` collapse).
  *

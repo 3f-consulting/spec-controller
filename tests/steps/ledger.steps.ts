@@ -300,12 +300,13 @@ Then(
     // (the integration observation with no obligation). Both appear together while the level is
     // taken from the source rather than the tag.
     const { items } = rowCells(ldg011ScnId);
+    // Reconciling items render the outcome's canon description, not the handle (3F-1626).
     assert.ok(
-      !items.includes("missing"),
+      !items.includes("Evidence Observation is missing"),
       `expected ${ldg011ScnId} not to carry a missing item; got "${items}"`
     );
     assert.ok(
-      !items.includes("undemanded"),
+      !items.includes("Evidence Observation cites a Scenario that did not demand it"),
       `expected ${ldg011ScnId} not to carry an undemanded item; got "${items}"`
     );
   }
@@ -609,7 +610,8 @@ Then("the cucumber observation is reported undemanded", function () {
   const undemanded = items
     .split(";")
     .map((s) => s.trim())
-    .find((s) => s.includes("undemanded"));
+    // The item renders the outcome's canon description, not the handle (3F-1626).
+    .find((s) => s.includes("Evidence Observation cites a Scenario that did not demand it"));
   assert.ok(
     undemanded,
     `expected ${ldg015ScnId} to carry an undemanded cucumber observation; got "${items}"`
@@ -710,7 +712,7 @@ Then(
     // name it a phantom-scenario (the P count). Reds if no phantom row is emitted/rendered.
     const { items } = rowCells(scnId);
     assert.ok(
-      items.includes("cites-unknown-scenario"),
+      items.includes("Evidence Observation cites an unknown Scenario"),
       `expected ${scnId}'s reconciling items to include cites-unknown-scenario; got "${items}"`
     );
     assert.match(
@@ -743,7 +745,7 @@ Then(
     // emitted/rendered.
     const { items } = rowCells(scnId);
     assert.ok(
-      items.includes("cites-no-scenario"),
+      items.includes("Evidence Observation cites no Scenario"),
       `expected ${scnId}'s reconciling items to include cites-no-scenario; got "${items}"`
     );
     assert.match(
@@ -777,7 +779,7 @@ Then(
     // verdict is out-of-balance (an undemanded item is a non-satisfied reconciling item).
     const { verdict, items } = rowCells(scnId);
     assert.ok(
-      items.includes("undemanded"),
+      items.includes("Evidence Observation cites a Scenario that did not demand it"),
       `expected ${scnId}'s reconciling items to include an undemanded item; got "${items}"`
     );
     assert.ok(
@@ -802,8 +804,9 @@ Then(
     // Reds if the scenario is instead swept to a warnings surface (the earlier behaviour)
     // and so carries NO ledger row at all, or if it is mis-reported as any other outcome.
     const { items } = rowCells(scnId);
+    // Reconciling items render the outcome's canon description, not the handle (3F-1626).
     assert.ok(
-      items.includes("both-missing"),
+      items.includes("Evidence Observation and Evidence Obligation are both missing for the Scenario"),
       `expected ${scnId}'s reconciling items to include a both-missing item; got "${items}"`
     );
     // The warnings section has dissolved entirely — the both-missing row is its only home.
@@ -823,7 +826,7 @@ Then("{string} is not reported as both-missing", function (scnId: string) {
   // neither-side `both-missing` group at count 0 for every report.)
   const { items } = rowCells(scnId);
   assert.ok(
-    !items.includes("both-missing"),
+    !items.includes("Evidence Observation and Evidence Obligation are both missing for the Scenario"),
     `expected ${scnId} not to be reported as both-missing; got "${items}"`
   );
 });

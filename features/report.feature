@@ -473,3 +473,27 @@ Feature: The report renders the ledger as sectioned facts
       Then the Evidence obligation out-of-balance decomposes into exactly the seven leaf outcome rows
       And their counts sum to the evidence-obligation out-of-balance total
       And no debit-side / credit-side / neither-side group row is present
+
+  Rule: the markdown renders each outcome's canon description in place of the bare handle
+
+    The outcome gloss (@SCN-RPT-020, 3F-1626). A reconciling-item outcome handle
+    (missing, cites-no-scenario, undemanded, both-missing, …) is meaningless to a human
+    reading the report in a CI log. So the markdown renders each outcome's full CANON
+    DESCRIPTION in place of the handle, EVERYWHERE an outcome surfaces to a reader: the
+    Evidence-reconciliation summary's "↳" decomposition rows (Subject cell), the per-scenario
+    reconciling-items list, and the lint-obligation table's Outcome column. "↳ missing"
+    becomes "↳ Evidence Observation is missing"; "unit ∅ missing" becomes "unit ∅ Evidence
+    Observation is missing"; "🍉 watermelon" becomes "🍉 Evidence Observation is passing but
+    fabricated". The handle is GONE from the markdown; the glyph is retained. The descriptions
+    are SINGLE-SOURCED from OUTCOME_DESCRIPTION (model.ts, next to the Outcome type), so the
+    render cannot drift from the outcome it names — the drift class the census and the views
+    were burned by. Markdown ONLY: the JSON keeps the bare handle (the machine axis; a
+    programmatic consumer uses it). The Detail column is unchanged. A pure derive over the
+    report model, proven in isolation by Vitest.
+
+    @unit @SCN-RPT-020
+    Scenario: the markdown renders each outcome's canon description, not the bare handle
+      Given a reconciliation balance whose scenarios span the runtime, lint, credit, and neither-side outcomes
+      When the markdown report is rendered
+      Then the summary decomposition rows, the per-scenario reconciling items, and the lint table each render the outcome's canon description, single-sourced from OUTCOME_DESCRIPTION
+      And the bare outcome handle appears nowhere in the markdown

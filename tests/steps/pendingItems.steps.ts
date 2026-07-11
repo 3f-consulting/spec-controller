@@ -846,7 +846,7 @@ Then(
     // error outcome on this row.
     assert.doesNotMatch(
       row,
-      /integration ∅ missing|integration ✗ failing/,
+      /integration ∅ Evidence Observation is missing|integration ✗ Evidence Observation is failing/,
       `a Pending Item must never render as a reconciling-item error; got: ${row}`
     );
   }
@@ -861,7 +861,7 @@ Then(
     const row = rowFor(renderedReport, "SCN-PDL-002");
     assert.match(
       row,
-      /unit ∅ missing/,
+      /unit ∅ Evidence Observation is missing/,
       `the mixed row must render the genuine unit error as a reconciling item; got: ${row}`
     );
     assert.match(
@@ -881,7 +881,7 @@ Then(
     // reconciling-item error. This is the structural distinctness the label buys.
     assert.doesNotMatch(
       renderedReport,
-      /integration ∅ missing|integration ✗ failing/,
+      /integration ∅ Evidence Observation is missing|integration ✗ Evidence Observation is failing/,
       `no deferred integration obligation may render as a reconciling-item error in:\n${renderedReport}`
     );
   }
@@ -1013,8 +1013,14 @@ Then(
       /⏳\s*3 Pending Item/,
       `the Evidence reconciliation section must show the Pending Items tally (3); got:\n${section}`
     );
-    // The seven out-of-balance leaves stay INTACT — the tally is not one of them.
-    for (const leaf of ["missing", "failing", "watermelon", "both-missing"]) {
+    // The seven out-of-balance leaves stay INTACT — the tally is not one of them. Each leaf
+    // renders its canon description, not the bare handle (3F-1626).
+    for (const leaf of [
+      "Evidence Observation is missing",
+      "Evidence Observation is failing",
+      "Evidence Observation is passing but fabricated",
+      "Evidence Observation and Evidence Obligation are both missing for the Scenario",
+    ]) {
       assert.match(
         section,
         new RegExp(`↳ ${leaf} `),
@@ -1132,7 +1138,7 @@ Then(
     // reconciling-item outcome on this row.
     assert.doesNotMatch(
       row,
-      /integration ∅ missing|integration ✗ failing/,
+      /integration ∅ Evidence Observation is missing|integration ✗ Evidence Observation is failing/,
       `a Pending Item must never render as a reconciling-item error; got: ${row}`
     );
   }
