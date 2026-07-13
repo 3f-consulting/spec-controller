@@ -109,11 +109,21 @@ Feature: The report renders the ledger as sectioned facts
     balance.scenarios[].evidenceObligations[] — markdown-only (project design §3), proven in
     isolation by Vitest.
 
+    The subject row is the SCENARIO RECONCILIATION (3F-1726) — the manifesto's collection, all
+    three row kinds (declared, phantom, suspense) — not "Scenario", which names only the
+    declared thing. The table is a pure presentation of summary.scenarioReconciliations, whose
+    totals count EVERY row (@SCN-RMD-001, 3F-1724; phantom / suspense reconciliations are
+    always out-of-balance), so on a run whose only out-of-balance row is the suspense
+    reconciliation the table renders N+1 | N | 1 — never N | N | 0. The subject's
+    out-of-balance column therefore agrees with isBalanced and with the exit code, the three
+    views that disagreed in an adopter's repository 17-36-50Z run.
+
     @unit @SCN-RPT-004
     Scenario: the markdown report renders the trial balance as subjects-rows with balanced and out-of-balance columns
       Given a reconciliation balance whose scenarios carry a double missing arm, so the out-of-balance scenario and evidence obligation counts diverge
       When the markdown report is rendered
-      Then it carries a "### Trial balance" section with a "Subject | Total | Balanced | Out-of-balance | Detail" table — a Scenario row and an Evidence obligation row each with its own total, the evidence-obligation out-of-balance decomposed into nested missing (with its bare-level split), failing, and watermelon rows that reconcile to it
+      Then it carries a "### Trial balance" section with a "Subject | Total | Balanced | Out-of-balance | Detail" table — a Scenario Reconciliation row and an Evidence obligation row each with its own total, the evidence-obligation out-of-balance decomposed into nested missing (with its bare-level split), failing, and watermelon rows that reconcile to it
+      And a balance of N declared balanced scenarios plus one suspense reconciliation renders the Scenario Reconciliation row as N+1 total, N balanced, 1 out-of-balance — the suspense reconciliation counted, so the table cannot read a pass on a run isBalanced fails
 
   Rule: the markdown report surfaces the lint evidence obligations as their own section
 

@@ -24,6 +24,7 @@ import { describe, it, expect } from "vitest";
 import { renderMarkdown } from "./markdown.js";
 import type { EvidenceReconciliation, Outcome } from "../model.js";
 import { OUTCOME_DESCRIPTION } from "../model.js";
+import { isBalanced } from "../reconcile/reconcile.js";
 import type { RunContext } from "../provenance/provenance.js";
 import type { RuntimeEvidenceObservationKindCounts } from "../census/evidenceObservations.js";
 
@@ -158,9 +159,12 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
     expect(md).toContain("### Evidence reconciliation");
     expect(md).toContain("| Subject | Total | Balanced | Out-of-balance | Detail |");
     expect(md).toContain("| --- | --- | --- | --- | --- |");
-    // Scenario subject — total 3, balanced 1, out-of-balance 2. The substring stops
-    // before the (empty) Detail cell, so the assertion is robust to that cell's spacing.
-    expect(md).toContain("| Scenario | 3 | 1 | 2 |");
+    // Scenario Reconciliation subject — total 3, balanced 1, out-of-balance 2. The subject
+    // is the manifesto's COLLECTION (declared + phantom + suspense), not `Scenario`, which
+    // names only the declared thing (3F-1726). The numbers are unchanged by the rename. The
+    // substring stops before the (empty) Detail cell, so the assertion is robust to that
+    // cell's spacing.
+    expect(md).toContain("| Scenario Reconciliation | 3 | 1 | 2 |");
     // Evidence-evidenceObligation subject — total 5, balanced 2, out-of-balance 3.
     expect(md).toContain("| Evidence obligation | 5 | 2 | 3 |");
   });
@@ -179,7 +183,9 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
 
   it("reads the scenario / evidence-obligation out-of-balance divergence as a granularity fact (causes reconcile to the evidenceObligation out-of-balance)", () => {
     const md = renderMarkdown(spanning, ctx);
-    const scenOutOfBalance = Number(/\| Scenario \| \d+ \| \d+ \| (\d+) \|/.exec(md)?.[1]);
+    const scenOutOfBalance = Number(
+      /\| Scenario Reconciliation \| \d+ \| \d+ \| (\d+) \|/.exec(md)?.[1]
+    );
     const oblOutOfBalance = Number(/\| Evidence \S+ \| \d+ \| \d+ \| (\d+) \|/.exec(md)?.[1]);
     const rbm = Number(/↳ Evidence Observation is missing \|[^\d]*(\d+) \|/.exec(md)?.[1]);
     const pbf = Number(/↳ Evidence Observation is failing \|[^\d]*(\d+) \|/.exec(md)?.[1]);
@@ -262,7 +268,7 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
     const md = renderMarkdown(multiMissing, ctx);
     // 2 out-of-balance scenarios, 3 missing evidenceObligations — the divergence
     // again (PST-035's double arm). The Detail split counts evidence obligations: 2 unit + 1 integration.
-    expect(md).toContain("| Scenario | 2 | 0 | 2 |");
+    expect(md).toContain("| Scenario Reconciliation | 2 | 0 | 2 |");
     expect(md).toContain("| Evidence obligation | 3 | 0 | 3 |");
     expect(md).toContain("2 unit + 1 integration");
     // The missing nested cause carries the full evidence-obligation out-of-balance (3).
@@ -306,6 +312,88 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
     expect(iSummary).toBeGreaterThanOrEqual(0);
     expect(iSummary).toBeLessThan(iHeadline);
     expect(iHeadline).toBeLessThan(iLedger);
+  });
+
+  // The arm @SCN-RPT-004 never had (3F-1726): a fixture carrying a SUSPENSE reconciliation.
+  // The old fixtures are declared-only, so they never exercised the divergence that let the
+  // an adopter's repository 17-36-50Z run render `141 | 141 | 0` — a clean-looking board — on a run `isBalanced`
+  // failed → exit 1. The subject row is the SCENARIO RECONCILIATION (the manifesto's
+  // collection: declared + phantom + suspense), so the suspense row is IN the total and, being
+  // always out-of-balance, in the out-of-balance column: N+1 | N | 1, never N | N | 0.
+  const threeDeclaredPlusSuspense: EvidenceReconciliation = {
+    scenarioReconciliations: [
+      {
+        scnId: "SCN-A",
+        verdict: "balanced",
+        evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+        pendingItems: [],
+        reconcilingItems: [],
+      },
+      {
+        scnId: "SCN-B",
+        verdict: "balanced",
+        evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+        pendingItems: [],
+        reconcilingItems: [],
+      },
+      {
+        scnId: "SCN-C",
+        verdict: "balanced",
+        evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+        pendingItems: [],
+        reconcilingItems: [],
+      },
+      {
+        // The suspense reconciliation — credits citing NO scenario, aggregated into one row.
+        // ALWAYS out-of-balance (double-entry-manifesto); the 17-36-50Z `(no scenario)` row.
+        scnId: "(no scenario)",
+        kind: "suspense-scenario",
+        verdict: "out-of-balance",
+        evidenceObligations: [
+          { qualityCheck: "unit", outcome: "cites-no-scenario" },
+          { qualityCheck: "integration", outcome: "cites-no-scenario" },
+        ],
+        pendingItems: [],
+        reconcilingItems: [
+          { qualityCheck: "unit", outcome: "cites-no-scenario" },
+          { qualityCheck: "integration", outcome: "cites-no-scenario" },
+        ],
+      },
+    ],
+  };
+
+  it("counts the suspense reconciliation in the trial balance's out-of-balance column (N+1 | N | 1, never N | N | 0)", () => {
+    const md = renderMarkdown(threeDeclaredPlusSuspense, ctx);
+    // 3 declared (all balanced) + 1 suspense = 4 Scenario Reconciliations, 3 balanced,
+    // 1 out-of-balance. The suspense row survives as a sub-count OF the total, never a
+    // bucket outside it.
+    expect(md).toContain("| Scenario Reconciliation | 4 | 3 | 1 |");
+    // The regression the whole slice exists to kill: the declared-only tally rendered the
+    // suspense row away, so a failing run's subject row read as a pass.
+    expect(md).not.toContain("| Scenario Reconciliation | 3 | 3 | 0 |");
+  });
+
+  it("agrees with isBalanced and with the evidence-obligation row's own out-of-balance count", () => {
+    const md = renderMarkdown(threeDeclaredPlusSuspense, ctx);
+    const scenOutOfBalance = Number(
+      /\| Scenario Reconciliation \| \d+ \| \d+ \| (\d+) \|/.exec(md)?.[1]
+    );
+    const oblOutOfBalance = Number(/\| Evidence obligation \| \d+ \| \d+ \| (\d+) \|/.exec(md)?.[1]);
+    // The three views that DISAGREED in an adopter's repository 17-36-50Z run — the scenario line, the
+    // obligation line, and the actual verdict — now agree that the run is out-of-balance.
+    expect(isBalanced(threeDeclaredPlusSuspense)).toBe(false);
+    expect(scenOutOfBalance).toBe(1);
+    expect(oblOutOfBalance).toBe(2);
+    // Both non-zero: neither view can read as a pass while the other fails. (They differ by
+    // granularity on purpose — one suspense ROW carries two uncited-credit ITEMS.)
+    expect(scenOutOfBalance).toBeGreaterThan(0);
+    expect(oblOutOfBalance).toBeGreaterThan(0);
+    // The suspense row's items land on the `cites-no-scenario` leaf, reconciling to the
+    // evidence-obligation out-of-balance.
+    const citesNoScenario = OUTCOME_DESCRIPTION["cites-no-scenario"];
+    expect(
+      new RegExp(`↳ ${citesNoScenario} \\|[^\\d]*2 \\|`).test(md)
+    ).toBe(true);
   });
 });
 

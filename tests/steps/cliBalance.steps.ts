@@ -141,9 +141,11 @@ Then("it prints the Evidence Reconciliation to stdout", function () {
 });
 
 Then("the reconciliation reports the target's scenarios", function () {
-  // The fixture declares SCN-TGT-001 / SCN-TGT-002; the Summary's Scenario row must
-  // count them — proof the whole reconcile ran end-to-end through the binary.
-  assert.match(cliResult.stdout, /\| Scenario \| 2 \|/);
+  // The fixture declares SCN-TGT-001 / SCN-TGT-002; the Summary's Scenario Reconciliation
+  // row must count them — proof the whole reconcile ran end-to-end through the binary.
+  // (Subject label renamed by 3F-1726; the fixture is declared-only, so the COUNT is
+  // unchanged — the same fact, the manifesto's spelling.)
+  assert.match(cliResult.stdout, /\| Scenario Reconciliation \| 2 \|/);
 });
 
 // @SCN-CLI-002
@@ -197,9 +199,10 @@ Then("it reconciles the declared scenarios against the supplied evidence", funct
   // Exit-zero alone isn't enough — the reconcile must actually have RUN against the
   // supplied evidence. The Evidence Reconciliation renders to stdout and its Summary
   // counts the fixture's two declared scenarios (SCN-TGT-001 / SCN-TGT-002), proof the
-  // omitted --cucumber did not short-circuit the pipeline.
+  // omitted --cucumber did not short-circuit the pipeline. (Subject label renamed by
+  // 3F-1726; declared-only fixture, so the COUNT is unchanged — the same fact.)
   assert.match(cliResult.stdout, /^# Evidence Reconciliation/m);
-  assert.match(cliResult.stdout, /\| Scenario \| 2 \|/);
+  assert.match(cliResult.stdout, /\| Scenario Reconciliation \| 2 \|/);
 });
 
 // @SCN-CLI-004

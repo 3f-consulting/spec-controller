@@ -300,9 +300,18 @@ const summaryViewsSection: SectionEmitter = () => ["## Summary views", ""];
 
 /**
  * Evidence reconciliation (@SCN-RPT-004 Update — supersedes the `Axis |
- * Count` shape) — a SUBJECTS-AS-ROWS table: each subject (Scenario, Evidence obligation)
- * on its own row with its own Total, and balanced / out-of-balance as COLUMNS (both
+ * Count` shape) — a SUBJECTS-AS-ROWS table: each subject (Scenario Reconciliation, Evidence
+ * obligation) on its own row with its own Total, and balanced / out-of-balance as COLUMNS (both
  * subjects report into the same binary, so the "Verdict"/"outcome"/"Axis" words retire).
+ *
+ * The first subject is the SCENARIO RECONCILIATION — the manifesto's collection, ALL three row
+ * kinds (declared, phantom, suspense) — not `Scenario`, which names only the declared thing
+ * (3F-1726). Because the row is a pure presentation of `summary.scenarioReconciliations`, whose
+ * totals count every row (@SCN-RMD-001, 3F-1724 — a phantom / suspense reconciliation is always
+ * out-of-balance), a run whose only out-of-balance row is the suspense reconciliation renders
+ * `N+1 | N | 1`, never `N | N | 0`. The subject's out-of-balance column therefore agrees with
+ * `isBalanced` and with the exit code — the three views that disagreed in an adopter's repository 17-36-50Z run
+ * (3F-1703), where a failing run's tally read `141 | 141 | 0` and looked like a clean board.
  * The evidence-obligation out-of-balance is decomposed IN PLACE into its reconciling-item
  * causes — three nested (`↳`) rows in canonical order (missing,
  * failing, the watermelon),
@@ -338,7 +347,10 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
     row(["Subject", "Total", "Balanced", "Out-of-balance", "Detail"]),
     row(["---", "---", "---", "---", "---"]),
     row([
-      "Scenario",
+      // The subject is the SCENARIO RECONCILIATION — the manifesto's COLLECTION (declared,
+      // phantom and suspense rows alike), not `Scenario`, which names only the declared thing
+      // (@SCN-RPT-004, 3F-1726; `scenarios` is in the manifesto's retired column).
+      "Scenario Reconciliation",
       String(scenarioReconciliations.total),
       String(scenarioReconciliations.balanced),
       String(scenarioReconciliations.outOfBalance),
