@@ -114,7 +114,7 @@ function renderItem(item: ScenarioReconciliation["reconcilingItems"][number]): s
  * a reconciling item: the ⏳ marker + the explicit "pending" word read as neither
  * balanced-clean (the `—` placeholder) nor an error (a reconciling item's ✗/∅/🍉 outcome). It
  * is NEVER run through `renderItem` and never enters the reconciling-item list — a Pending
- * Item is a structurally distinct category, never one of the seven out-of-balance outcomes.
+ * Item is a structurally distinct category, never one of the eight out-of-balance outcomes.
  */
 function renderPendingItem(item: PendingItem): string {
   // A `qualityCheck`-less Pending Item (@SCN-PND-022) is SCENARIO-SCOPE — a whole-scenario
@@ -261,7 +261,7 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
     ]),
   ];
   // Decompose the evidence-obligation out-of-balance into its causes — a FLAT list of the
-  // seven out-of-balance leaf outcomes in canonical order (@SCN-RPT-019, 3F-1453), each a
+  // eight out-of-balance leaf outcomes in canonical order (@SCN-RPT-019, 3F-1453), each a
   // counted `↳ <outcome>` row (only the out-of-balance column populated) reconciling to the
   // total exactly once. No debit/credit/neither grouping: the grouping emitted a subtotal
   // `↳ <group>-side` row AND its leaf rows at the same `↳` indent, so a naive column-sum
@@ -273,9 +273,10 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
     // — single-sourced from OUTCOME_DESCRIPTION so it cannot drift from the outcome it names.
     lines.push(row([`↳ ${OUTCOME_DESCRIPTION[outcome]}`, "", "", String(evidenceObligations.byOutcome[outcome]), detail]));
   }
-  // The Pending Items tally (@SCN-PND-011) — a SEPARATE line, NEVER an eighth out-of-balance
-  // leaf (3F-1453 line, endorsed): a Pending Item is deferred, not out-of-balance, so it is
-  // tallied apart from BOTH the balanced and out-of-balance counts and the seven-leaf `↳`
+  // The Pending Items tally (@SCN-PND-011) — a SEPARATE line, NEVER a ninth out-of-balance
+  // leaf (3F-1453 line, endorsed; still endorsed at eight leaves, 3F-1649): a Pending Item is
+  // deferred, not out-of-balance, so it is
+  // tallied apart from BOTH the balanced and out-of-balance counts and the eight-leaf `↳`
   // decomposition above — its own line, never a `↳` row under the out-of-balance table. Read
   // off the materialised `summary.pending`; rendered only when the run genuinely carries Pending
   // Items (the omit-when-empty precedent), so a zero-pending report stays byte-identical.
@@ -296,7 +297,16 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
  * the OUT-of-balance decomposition. A FLAT list (@SCN-RPT-019, 3F-1453): the earlier
  * debit/credit/neither grouping was removed because it emitted a `↳ <group>-side` subtotal
  * row AND its leaf rows at the same `↳` indent, so a naive column-sum double-counted (the
- * live 170 vs 85). The seven leaves reconcile to the out-of-balance total exactly once.
+ * live 170 vs 85). The eight leaves reconcile to the out-of-balance total exactly once.
+ *
+ * ⚠ HAND-MAINTAINED (3F-1649). Unlike `OUTCOME_DESCRIPTION`, `ITEM_GLYPH` and
+ * `summary.byOutcome` — all three type-forced `Record<Outcome, …>` maps that REFUSE TO
+ * COMPILE when the union grows — this is a plain `readonly Outcome[]`, so it accepts a
+ * missing member SILENTLY. `broken` (@SCN-LDG-017) is the lived case: it joined the union,
+ * tallied into the JSON via `byOutcome.broken`, and would have been omitted from this table
+ * with a clean build. A new `Outcome` member MUST be added here too. The @SCN-RPT-019
+ * exhaustiveness guard (markdown.test.ts) derives its expectation from a type-forced
+ * `Record<Outcome, true>` and reds if this array ever falls behind the union again.
  */
 const OUT_OF_BALANCE_OUTCOMES: readonly Outcome[] = [
   "missing",
@@ -304,6 +314,9 @@ const OUT_OF_BALANCE_OUTCOMES: readonly Outcome[] = [
   "watermelon",
   "cites-unknown-scenario",
   "cites-no-scenario",
+  // A credit whose proving SUITE FAILED TO COLLECT (@SCN-LDG-017) — a suspense-row sibling of
+  // `cites-no-scenario`, distinguished by errored-vs-completed. Its own leaf, never folded in.
+  "broken",
   "undemanded",
   "both-missing",
 ];

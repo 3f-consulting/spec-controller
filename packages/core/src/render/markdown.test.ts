@@ -22,7 +22,7 @@
 
 import { describe, it, expect } from "vitest";
 import { renderMarkdown } from "./markdown.js";
-import type { EvidenceReconciliation } from "../model.js";
+import type { EvidenceReconciliation, Outcome } from "../model.js";
 import { OUTCOME_DESCRIPTION } from "../model.js";
 import type { RunContext } from "../provenance/provenance.js";
 import type { RuntimeEvidenceObservationKindCounts } from "../census/evidenceObservations.js";
@@ -1267,19 +1267,27 @@ describe("[SCN-USG-001] the markdown report renders the Static guards section", 
  * both halves of the pair.
  *
  * Proves the evidenceReconciliationSection decomposes the evidence-obligation
- * out-of-balance into a FLAT list of the seven leaf outcomes — with NO
+ * out-of-balance into a FLAT list of the eight leaf outcomes — with NO
  * debit/credit/neither group-side subtotal rows. The former grouping emitted both a
  * "↳ <group>-side" subtotal row AND each leaf row at the same "↳" indent, so a naive
  * column-sum double-counted (the live 170 vs 85). Removing the grouping leaves exactly
- * seven counted "↳ <outcome>" rows reconciling to the out-of-balance total once.
+ * eight counted "↳ <outcome>" rows reconciling to the out-of-balance total once.
+ *
+ * EXHAUSTIVENESS (3F-1649): OUT_OF_BALANCE_OUTCOMES is a hand-maintained readonly
+ * Outcome[], NOT a type-forced Record — so it can fall behind the union silently, as it
+ * did when `broken` (@SCN-LDG-017) joined: tallied in byOutcome, compiling clean, and
+ * omitted from this table. The guard below derives its expectation from a
+ * Record<Outcome, true> (type-forced — a new union member fails to compile until it is
+ * listed) and asserts every member except `satisfied` renders a leaf row. Never a
+ * hand-transcribed list, or the guard would inherit the very weakness it guards against.
  *
  * Teeth: against the pre-fix renderer the three group-side subtotal rows still render,
- * so the "exactly seven ↳ rows" and "no group row" assertions red (the genuine
+ * so the "exactly eight ↳ rows" and "no group row" assertions red (the genuine
  * red→green). Markdown-only — the derived view is NOT duplicated into JSON.
  *
  * Parent: (@SCN-RPT-019).
  */
-describe("[SCN-RPT-019] the markdown obligation summary lists the seven leaf outcomes with no group rows", () => {
+describe("[SCN-RPT-019] the markdown obligation summary lists the eight leaf outcomes with no group rows", () => {
   // A balance whose out-of-balance obligations span all three FORMER groups:
   //   DEBIT   — SCN-A carries a missing obligation.
   //   CREDIT  — the suspense row carries a cites-no-scenario credit.
@@ -1319,7 +1327,7 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the seven leaf out
     ],
   };
 
-  // The seven out-of-balance leaf outcomes in canonical (model.ts reading) order —
+  // The eight out-of-balance leaf outcomes in canonical (model.ts reading) order —
   // satisfied excluded (it is the balanced outcome, not in the out-of-balance decomposition).
   const LEAVES = [
     "missing",
@@ -1327,22 +1335,63 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the seven leaf out
     "watermelon",
     "cites-unknown-scenario",
     "cites-no-scenario",
+    "broken",
     "undemanded",
     "both-missing",
   ] as const;
 
-  it("decomposes the evidence-obligation out-of-balance into exactly the seven leaf outcome rows", () => {
+  // The EXHAUSTIVENESS source of truth (3F-1649): a type-forced Record over the whole
+  // Outcome union. A new union member cannot be added without a line here — TypeScript
+  // refuses to compile the Record until it is — so the expected leaf set below is DERIVED
+  // from the union itself, never hand-transcribed. `satisfied` is the one member excluded
+  // from the decomposition (it is the BALANCED outcome).
+  const ALL_OUTCOMES: Record<Outcome, true> = {
+    satisfied: true,
+    failing: true,
+    watermelon: true,
+    missing: true,
+    "cites-unknown-scenario": true,
+    "cites-no-scenario": true,
+    broken: true,
+    undemanded: true,
+    "both-missing": true,
+  };
+  const EXPECTED_LEAVES = (Object.keys(ALL_OUTCOMES) as Outcome[]).filter(
+    (outcome) => outcome !== "satisfied"
+  );
+
+  it("decomposes the evidence-obligation out-of-balance into exactly the eight leaf outcome rows", () => {
     const md = renderMarkdown(spanning, ctx);
     // Every leaf outcome renders as a counted "↳ <description>" row — the canon
     // description, not the bare handle (3F-1626), located via the single-sourced map.
     for (const leaf of LEAVES) {
       expect(md).toContain(`| ↳ ${OUTCOME_DESCRIPTION[leaf]} |`);
     }
-    // And there are EXACTLY seven "↳" rows in the decomposition — no more (the group-side
+    // And there are EXACTLY eight "↳" rows in the decomposition — no more (the group-side
     // subtotal rows are gone). Count every "↳ " marker across the rendered document; the
-    // only "↳" rows are the seven leaf decomposition rows.
+    // only "↳" rows are the eight leaf decomposition rows.
     const arrowRows = md.split("\n").filter((line) => line.includes("↳"));
-    expect(arrowRows.length).toBe(7);
+    expect(arrowRows.length).toBe(8);
+  });
+
+  it("renders a leaf row for EVERY Outcome member except satisfied (the exhaustiveness guard)", () => {
+    const md = renderMarkdown(spanning, ctx);
+    // The rendered leaf set, read back off the markdown, mapped from canon description to
+    // handle — the observable form of OUT_OF_BALANCE_OUTCOMES.
+    const rendered = new Set(
+      md
+        .split("\n")
+        .filter((line) => line.includes("↳"))
+        .map((line) => line.split("|")[1]?.trim().replace("↳ ", ""))
+    );
+    // Every member of the union except satisfied MUST be there: the hand-maintained
+    // OUT_OF_BALANCE_OUTCOMES array can never again fall behind the Outcome union.
+    for (const outcome of EXPECTED_LEAVES) {
+      expect(rendered).toContain(OUTCOME_DESCRIPTION[outcome]);
+    }
+    // And nothing else is: satisfied never renders a leaf row, and no group-side row does.
+    expect(rendered.size).toBe(EXPECTED_LEAVES.length);
+    expect(rendered).not.toContain(OUTCOME_DESCRIPTION.satisfied);
   });
 
   it("sums the leaf counts to the evidence-obligation out-of-balance total", () => {
