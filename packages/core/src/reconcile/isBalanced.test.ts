@@ -18,7 +18,7 @@
 
 import { describe, it, expect } from "vitest";
 
-import { isBalanced, hasPendingItems, reconcile } from "./reconcile.js";
+import { isBalanced, hasPendingItems, hasBrokenEvidence, reconcile } from "./reconcile.js";
 import type {
   EvidenceReconciliation,
   ScenarioReconciliation,
@@ -289,5 +289,106 @@ describe("[SCN-CLI-011] hasPendingItems + the --strict exit-3 escalation", () =>
     expect(isBalanced(balance)).toBe(true);
     expect(hasPendingItems(balance)).toBe(false);
     expect(exitCodeFor(balance, true)).toBe(0);
+  });
+});
+
+/**
+ * @unit for @SCN-LDG-018 — `hasBrokenEvidence`, the THIRD whole-run predicate, beside `isBalanced`
+ * and `hasPendingItems`. @SCN-LDG-017 put the collection failure ON the ledger (a `broken` suspense
+ * item); this reads the WHOLE RUN off it: if any proving suite failed to collect, the evidence
+ * never fully materialised, so every `missing` in that run is SUSPECT — it may be a broken proof
+ * rather than an absent one. The run is UNSOUND.
+ *
+ * Soundness is a property of the RUN, not of a scenario (no third ScenarioVerdict) and is DERIVED,
+ * NEVER STORED (no flag on EvidenceReconciliation) — the same no-drift reason `isBalanced` and
+ * `hasPendingItems` derive. The name is the existential twin of `hasPendingItems` (the same
+ * `some(row => some(item => item.outcome === X))` scan); "unsound" is the RENDER HEADLINE word
+ * (@SCN-RPT-021), as "out-of-balance" is for `isBalanced`.
+ *
+ * Asserted over REAL `reconcile` output (evidence-manifesto §11A) — the `broken` item is minted by
+ * the real reconciler from a real collection-failed observation, never hand-seeded onto a row.
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe/it strings carry the SCN-LDG-018 id,
+ * matching features/ledger.feature's @SCN-LDG-018 scenario and its @integration Cucumber
+ * step-block (tests/steps/ledger.steps.ts, `// @SCN-LDG-018`).
+ *
+ * NOTE: imported from `./reconcile.js`, NOT from the core barrel — the barrel export of
+ * `hasBrokenEvidence` is @SCN-API-001's frozen-surface touch, owned by the next sub-issue (3F-1651).
+ */
+describe("[SCN-LDG-018] hasBrokenEvidence — the whole-run soundness predicate", () => {
+  /** A collection-failed vitest observation: errored before it named a test, so it cites no @SCN. */
+  const brokenObservation: EvidenceObservation = {
+    qualityCheck: "unit",
+    scnId: null,
+    status: "failed",
+    broken: true,
+    locator: "packages/core/src/collection-failed.test.ts",
+    message: "Error: Cannot find package '@cucumber/tag-expressions'",
+  };
+
+  it("is true when the run carries a broken reconciling item (real reconcile output)", () => {
+    // The scenario's own row reads `missing` (honest at its resolution — no evidence citing it
+    // arrived); the `broken` item lands on the SUSPENSE row. The predicate scans EVERY row, so it
+    // sees it. Reds while the predicate does not exist / does not scan for the `broken` outcome.
+    const balance = reconcile(
+      [{ scnId: "SCN-HNS-018", evidenceObligations: [{ qualityCheck: "unit" }] }],
+      [brokenObservation],
+    );
+    expect(hasBrokenEvidence(balance)).toBe(true);
+  });
+
+  it("is false when no row carries a broken item, even though the run is out-of-balance (real reconcile output)", () => {
+    // TEETH: an ordinary out-of-balance run — a `missing` obligation, no collection failure. A
+    // predicate that keyed on "the run has reconciling items" (i.e. on !isBalanced) would call this
+    // unsound, masking every honest gap as a broken harness. Soundness keys on `broken`, and only
+    // on `broken`.
+    const balance = reconcile(
+      [{ scnId: "SCN-HNS-018", evidenceObligations: [{ qualityCheck: "unit" }] }],
+      [],
+    );
+    expect(isBalanced(balance)).toBe(false);
+    expect(hasBrokenEvidence(balance)).toBe(false);
+  });
+
+  it("is false for a balanced run (real reconcile output)", () => {
+    const balance = reconcile(
+      [{ scnId: "SCN-HNS-018", evidenceObligations: [{ qualityCheck: "unit" }] }],
+      [{ qualityCheck: "unit", scnId: "SCN-HNS-018", status: "passed" }],
+    );
+    expect(hasBrokenEvidence(balance)).toBe(false);
+  });
+
+  it("the three whole-run predicates are INDEPENDENT: pending-without-broken is sound; broken-without-pending is unsound", () => {
+    // A deferred obligation makes a run carry Pending Items — it does NOT make it unsound. And a
+    // collection failure makes a run unsound with no Pending Item anywhere in sight. Neither
+    // predicate may be derived from the other.
+    const pendingOnly = reconcile(
+      [{ scnId: "SCN-HNS-019", evidenceObligations: [{ qualityCheck: "integration", pending: true }] }],
+      [],
+    );
+    expect(hasPendingItems(pendingOnly)).toBe(true);
+    expect(hasBrokenEvidence(pendingOnly)).toBe(false);
+
+    const brokenOnly = reconcile(
+      [{ scnId: "SCN-HNS-018", evidenceObligations: [{ qualityCheck: "unit" }] }],
+      [brokenObservation],
+    );
+    expect(hasBrokenEvidence(brokenOnly)).toBe(true);
+    expect(hasPendingItems(brokenOnly)).toBe(false);
+    // A broken run is ALWAYS out-of-balance (the `broken` item sits on the suspense row, whose
+    // verdict is always out-of-balance) — which is exactly why the CLI must check soundness BEFORE
+    // the balance verdict (@SCN-CLI-012), or exit 4 would be unreachable.
+    expect(isBalanced(brokenOnly)).toBe(false);
+  });
+
+  it("soundness is DERIVED, never stored: the reconciliation carries no soundness field", () => {
+    // The no-drift ruling (parent 3F-1642): no flag on EvidenceReconciliation. Reds the moment a
+    // `unsound` / `sound` / `hasBrokenEvidence` field is written onto the reconciliation instead of
+    // being derived from its rows.
+    const balance = reconcile(
+      [{ scnId: "SCN-HNS-018", evidenceObligations: [{ qualityCheck: "unit" }] }],
+      [brokenObservation],
+    );
+    expect(Object.keys(balance)).toEqual(["scenarioReconciliations"]);
   });
 });

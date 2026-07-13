@@ -175,6 +175,36 @@ export function hasPendingItems(reconciliation: EvidenceReconciliation): boolean
   return reconciliation.scenarioReconciliations.some((row) => row.pendingItems.length > 0);
 }
 
+/**
+ * Does the WHOLE reconciliation carry BROKEN evidence — i.e. is the run UNSOUND? The THIRD
+ * whole-run predicate (@SCN-LDG-018), beside `isBalanced` and `hasPendingItems`, and the
+ * EXISTENTIAL TWIN of the latter: the same `some(row => some(item => item.outcome === X))` scan.
+ *
+ * Soundness is a property of the RUN, not of a scenario. If any proving suite FAILED TO COLLECT
+ * (@SCN-LDG-017), the evidence never fully materialised — so every `missing` in that run is
+ * SUSPECT: it may be a broken proof rather than an absent one, and the remedies differ (fix the
+ * harness vs write a test). The scenario's own row stays honest at its own resolution (`missing`);
+ * the RUN is what is stamped unsound.
+ *
+ * DERIVED, NEVER STORED — no soundness flag is written onto `EvidenceReconciliation`, the same
+ * no-drift reason `isBalanced` and `hasPendingItems` derive. Machine consumers read soundness off
+ * `summary.byOutcome.broken > 0` (type-forced into the JSON the moment `broken` joined the
+ * `Outcome` union); the markdown renderer prints the HEADLINE word — "unsound" is the render word,
+ * never the predicate's name, exactly as "out-of-balance" is for `isBalanced`.
+ *
+ * Keyed on the `broken` OUTCOME specifically, never on `!isBalanced`: an ordinary out-of-balance
+ * run (an honest `missing`, no collection failure) is perfectly SOUND. The three whole-run
+ * predicates are INDEPENDENT — a run may carry Pending Items and be sound; a run may carry broken
+ * evidence and no Pending Items. (A broken run is ALWAYS out-of-balance, since the `broken` item
+ * sits on the suspense row — which is why the CLI edge must consult THIS predicate BEFORE the
+ * balance verdict, @SCN-CLI-012, or its exit code would be unreachable.)
+ */
+export function hasBrokenEvidence(reconciliation: EvidenceReconciliation): boolean {
+  return reconciliation.scenarioReconciliations.some((row) =>
+    row.reconcilingItems.some((item) => item.outcome === "broken")
+  );
+}
+
 export function reconcile(
   scenarios: Scenario[],
   evidenceObservations: EvidenceObservation[]

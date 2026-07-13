@@ -321,3 +321,33 @@ Feature: Ledger over declared-vs-observed evidence
       Then the suspense scenario carries a broken reconciling item naming the collection-failed file and its error
       And the broken item is not reported as cites-no-scenario
       And the scenario whose proof was in the collection-failed file still reads missing
+
+  # UNSOUND IS A PROPERTY OF THE RUN (SCN-LDG-018). @SCN-LDG-017 puts the collection failure ON
+  # the ledger as a `broken` suspense item; this Rule reads the WHOLE run off it. If any proving
+  # suite failed to collect, the evidence never fully materialised — so every `missing` in that
+  # run is SUSPECT: it may be a broken proof rather than an absent one. Soundness is therefore a
+  # WHOLE-RUN predicate, `hasBrokenEvidence` — the existential twin of `hasPendingItems` (the same
+  # `some(row => some(item => item.outcome === X))` scan) — and NOT a third ScenarioVerdict (a
+  # scenario's own row stays honest at its own resolution) and NOT a stored flag.
+  #
+  # DERIVED, NEVER STORED: no soundness field is written onto the EvidenceReconciliation — the
+  # same no-drift reason `isBalanced` and `hasPendingItems` derive. Machine consumers read
+  # soundness off `summary.byOutcome.broken > 0`, type-forced into the JSON the moment `broken`
+  # joined the Outcome union.
+  #
+  # The three whole-run predicates are INDEPENDENT: a run may carry Pending Items and be perfectly
+  # sound; a run may carry broken evidence and no Pending Items. (A broken run is ALWAYS
+  # out-of-balance — the `broken` item sits on the suspense row — which is exactly why the CLI
+  # must check soundness BEFORE the balance verdict, @SCN-CLI-012.)
+  #
+  # "Unsound" is the RENDER HEADLINE word (@SCN-RPT-021), not the predicate's name — as
+  # "out-of-balance" is the headline for `isBalanced`.
+  Rule: a run carrying a broken proving suite is unsound
+
+    @unit @integration @SCN-LDG-018
+    Scenario: a reconciliation carrying a broken item is unsound, and one carrying none is sound
+      Given a run whose vitest report carries a collection-failed file, and a second run whose report collects cleanly but defers an obligation
+      When the ledger reconciles both runs
+      Then the run carrying the collection failure reports broken evidence
+      And the run that merely defers an obligation reports no broken evidence — a Pending Item does not make a run unsound
+      And soundness is derived from the reconciling items, never stored on the reconciliation

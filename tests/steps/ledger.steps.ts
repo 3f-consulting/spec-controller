@@ -35,6 +35,12 @@ import type {
   EvidenceReconciliation,
 } from "@3f-consulting/spec-controller-core";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
+// The whole-run soundness predicate (@SCN-LDG-018), imported by MODULE PATH rather than from the
+// package barrel: the barrel is the FROZEN v1 surface (@SCN-API-001), and adding `hasBrokenEvidence`
+// to it is 3F-1651's contract touch, sequenced immediately after this sub-issue. Deep module
+// imports into packages/ are the established shape in these step files (cliBalance.steps.ts,
+// report.steps.ts, pendingItems.steps.ts).
+import { hasBrokenEvidence } from "../../packages/core/src/reconcile/reconcile.js";
 
 // Fixtures shared across steps within a scenario (isolated per scenario by Cucumber).
 let scenarios: Scenario[];
@@ -1157,6 +1163,157 @@ Then(
     assert.ok(
       items.includes("missing"),
       `expected ${ldg017ScnId} to still read missing; got "${items}"`
+    );
+  }
+);
+
+// UNSOUND IS A PROPERTY OF THE RUN (@SCN-LDG-018) — the @integration arm, through the REAL
+// parse→reconcile pipeline (two runs, reconciled side by side, so the predicate is exercised at
+// BOTH polarities in one scenario).
+//
+// `hasBrokenEvidence` is imported by MODULE PATH (see the file header), not from the package
+// barrel — the barrel is the FROZEN v1 surface (@SCN-API-001) and the export that adds it there is
+// 3F-1651's work, sequenced immediately after this sub-issue.
+const LDG018_BROKEN_FILE = "packages/core/src/collection-failed.test.ts";
+const LDG018_MESSAGE = "Error: Cannot find package '@cucumber/tag-expressions'";
+// The two reconciliations the When produces: the run whose suite failed to collect, and the
+// sound-but-deferring control.
+let ldg018BrokenRun: EvidenceReconciliation;
+let ldg018SoundRun: EvidenceReconciliation;
+
+// @SCN-LDG-018
+Given(
+  "a run whose vitest report carries a collection-failed file, and a second run whose report collects cleanly but defers an obligation",
+  function () {
+    // TWO runs, both built through the REAL declared reader + the REAL vitest reader.
+    //
+    // Run A (UNSOUND): one declared @unit scenario whose proof lived in a file that failed to
+    // collect — the file reports `status: "failed"` with a message and ZERO assertionResults, so
+    // it names no test, cites no @SCN, and posts a `broken` item to the suspense row.
+    //
+    // Run B (SOUND): a scenario deferring its integration obligation (`@integrationpending`) plus
+    // a cleanly-collected proving file for its unit obligation. It carries a Pending Item and NO
+    // broken evidence — the CONTROL that gives the predicate its teeth: soundness must key on the
+    // `broken` outcome specifically, not on "the run carries something unusual".
+    const brokenFeature = [
+      "@LDG",
+      "Feature: fixture",
+      "  Rule: a fixture rule",
+      "    @unit @SCN-HNS-018",
+      "    Scenario: the scenario whose proof was in the broken file",
+      "      Given a fixture step",
+    ].join("\n");
+    ldg018BrokenRun = reconcile(
+      parseScenarios(brokenFeature),
+      parseVitestEvidenceObservations(
+        {
+          testResults: [
+            {
+              name: LDG018_BROKEN_FILE,
+              status: "failed",
+              message: LDG018_MESSAGE,
+              assertionResults: [],
+            },
+          ],
+        } satisfies VitestJsonReport,
+        "unit"
+      )
+    );
+
+    const soundFeature = [
+      "@LDG",
+      "Feature: fixture",
+      "  Rule: a fixture rule",
+      "    @unit @integrationpending @SCN-HNS-019",
+      "    Scenario: the scenario deferring its integration obligation",
+      "      Given a fixture step",
+    ].join("\n");
+    ldg018SoundRun = reconcile(
+      parseScenarios(soundFeature),
+      parseVitestEvidenceObservations(
+        {
+          testResults: [
+            {
+              name: "packages/core/src/collects-fine.test.ts",
+              status: "passed",
+              assertionResults: [
+                {
+                  fullName: "[SCN-HNS-019] the scenario deferring its integration obligation",
+                  status: "passed",
+                },
+              ],
+            },
+          ],
+        } satisfies VitestJsonReport,
+        "unit"
+      )
+    );
+  }
+);
+
+// @SCN-LDG-018
+When("the ledger reconciles both runs", function () {
+  // Both reconciliations are produced in the Given (the real pipeline runs there); this When is
+  // the ledger's act, kept for GWT shape. Assert the fixtures are what the Thens claim to read.
+  assert.ok(ldg018BrokenRun, "expected the collection-failed run to have been reconciled");
+  assert.ok(ldg018SoundRun, "expected the cleanly-collecting run to have been reconciled");
+});
+
+// @SCN-LDG-018
+Then("the run carrying the collection failure reports broken evidence", function () {
+  // The predicate under test, over REAL reconcile output: a `broken` item exists SOMEWHERE on the
+  // run (it sits on the suspense row — a collection failure is attributable to no scenario), so
+  // the run is UNSOUND. Reds before `hasBrokenEvidence` scans for the `broken` outcome.
+  assert.equal(
+    hasBrokenEvidence(ldg018BrokenRun),
+    true,
+    `expected the collection-failed run to carry broken evidence; rows: ${JSON.stringify(
+      ldg018BrokenRun.scenarioReconciliations.map((s) => ({
+        scnId: s.scnId,
+        items: s.reconcilingItems.map((i) => i.outcome),
+      }))
+    )}`
+  );
+});
+
+// @SCN-LDG-018
+Then(
+  "the run that merely defers an obligation reports no broken evidence — a Pending Item does not make a run unsound",
+  function () {
+    // The CONTROL arm, and the INDEPENDENCE of the three whole-run predicates: this run carries a
+    // Pending Item (its deferred integration obligation) yet NO broken evidence — it is sound.
+    // Reds under a predicate that keys on "anything unusual on the run" (e.g. a pendingItems or a
+    // reconcilingItems length scan) rather than on the `broken` outcome specifically.
+    assert.equal(
+      hasBrokenEvidence(ldg018SoundRun),
+      false,
+      `expected the cleanly-collecting run to carry NO broken evidence; rows: ${JSON.stringify(
+        ldg018SoundRun.scenarioReconciliations.map((s) => ({
+          scnId: s.scnId,
+          items: s.reconcilingItems.map((i) => i.outcome),
+        }))
+      )}`
+    );
+    assert.ok(
+      ldg018SoundRun.scenarioReconciliations.some((s) => s.pendingItems.length > 0),
+      "expected the control run to actually carry a Pending Item (else it proves nothing about independence)"
+    );
+  }
+);
+
+// @SCN-LDG-018
+Then(
+  "soundness is derived from the reconciling items, never stored on the reconciliation",
+  function () {
+    // DERIVED, NEVER STORED (parent 3F-1642's decision of record): no soundness flag is written
+    // onto the EvidenceReconciliation — the same no-drift reason `isBalanced` and
+    // `hasPendingItems` derive. The reconciliation carries EXACTLY its rows.
+    assert.deepEqual(
+      Object.keys(ldg018BrokenRun).sort(),
+      ["scenarioReconciliations"],
+      `expected the EvidenceReconciliation to carry no stored soundness field; got keys ${JSON.stringify(
+        Object.keys(ldg018BrokenRun)
+      )}`
     );
   }
 );
