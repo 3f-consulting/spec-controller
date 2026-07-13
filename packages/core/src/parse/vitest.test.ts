@@ -114,3 +114,71 @@ describe("[SCN-PND-015] parseVitestEvidenceObservations classifies three-way —
     ]);
   });
 });
+
+describe("[SCN-LDG-016] parseVitestEvidenceObservations attributes an assertion by its own leaf title", () => {
+  // The REAL-SHAPED report vitest emits for a grouping `describe` carrying a bracket citation with
+  // two `it`s beneath it. Vitest gives each assertion BOTH names: `fullName` is the ANCESTOR PATH
+  // (outermost describe → innermost it, so it LEADS with the describe's citation) and `title` is
+  // the assertion's OWN name.
+  //   - the SELF-CITING leaf: its own title cites SCN-LEA-016; its fullName leads with SCN-ANC-016.
+  //   - the BARE sibling leaf: no citation of its own — the ancestor path is its only citation.
+  const report: VitestJsonReport = {
+    testResults: [
+      {
+        name: "/r/citation.test.ts",
+        assertionResults: [
+          {
+            fullName: "[SCN-ANC-016] the grouping describe > @SCN-LEA-016 the leaf proves its own scenario",
+            title: "@SCN-LEA-016 the leaf proves its own scenario",
+            status: "passed",
+          },
+          {
+            fullName: "[SCN-ANC-016] the grouping describe > the bare sibling leaf proves the ancestor's",
+            title: "the bare sibling leaf proves the ancestor's",
+            status: "passed",
+          },
+        ],
+      },
+    ],
+  };
+
+  it("credits the self-citing leaf to the scenario its OWN title cites, not the ancestor describe's", () => {
+    // The ATTRIBUTION SET, whole: the self-citing leaf posts to the leaf-cited scenario and the
+    // bare sibling posts to the ancestor — one credit each. Under first-match-on-the-concatenation
+    // BOTH read SCN-ANC-016 (the leaf's citation shadowed), so this reds on the first element.
+    expect(parseVitestEvidenceObservations(report, "unit")).toEqual([
+      { qualityCheck: "unit", scnId: "SCN-LEA-016", status: "passed", locator: "/r/citation.test.ts" },
+      { qualityCheck: "unit", scnId: "SCN-ANC-016", status: "passed", locator: "/r/citation.test.ts" },
+    ]);
+  });
+
+  it("credits the ancestor exactly once — the bare sibling leaf — with no spurious second credit", () => {
+    // The MIRROR symptom, counted: the shadowed leaf's credit was STOLEN by the ancestor, which
+    // then carried TWO credits for its one obligation. Reds with 2 (and 0) under the old reader.
+    const out = parseVitestEvidenceObservations(report, "unit");
+    expect(out.filter((o) => o.qualityCheck !== "lint" && o.scnId === "SCN-ANC-016")).toHaveLength(1);
+    expect(out.filter((o) => o.qualityCheck !== "lint" && o.scnId === "SCN-LEA-016")).toHaveLength(1);
+  });
+
+  it("falls back to the ancestor path when the leaf's own title carries no citation", () => {
+    // The FALLBACK half — leaf-title-first must not break the established "describe carries the
+    // bracket, plain `it`s beneath" style: a leaf with no citation of its own still credits the
+    // describe's scenario. Reds if the reader ever stopped reading fullName at all.
+    const out = parseVitestEvidenceObservations(
+      {
+        testResults: [
+          {
+            name: "/r/citation.test.ts",
+            assertionResults: [
+              { fullName: "[SCN-ANC-016] the grouping describe > a plain leaf", title: "a plain leaf", status: "passed" },
+            ],
+          },
+        ],
+      },
+      "unit"
+    );
+    expect(out).toEqual([
+      { qualityCheck: "unit", scnId: "SCN-ANC-016", status: "passed", locator: "/r/citation.test.ts" },
+    ]);
+  });
+});

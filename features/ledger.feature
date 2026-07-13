@@ -256,3 +256,33 @@ Feature: Ledger over declared-vs-observed evidence
       When the ledger reconciles the target
       Then the cucumber observation is reported undemanded
       And the @unit obligation remains the scenario's only required evidence
+
+  # MOST-SPECIFIC-CITATION-WINS (SCN-LDG-016). Vitest's `fullName` is the ANCESTOR PATH
+  # (outermost describe → innermost it); the assertion's OWN name is `title`. The reader
+  # matched the FIRST @SCN in `fullName + " " + title`, so a grouping describe's bracket
+  # citation SHADOWED a self-citing child it: the leaf's own scenario reconciled `missing`
+  # while the ancestor took a spurious SECOND credit. Found by an adopter's repository CI dogfood
+  # (2026-07-13) — SCN-CLI-007 and SCN-CLI-041 false-red `missing` against passing,
+  # self-citing tests. The fix is leaf-title-first, ancestor-path fallback: most-specific-
+  # wins, done SEMANTICALLY (which name is the assertion's own) rather than positionally
+  # (rejected: last-match on the concatenation, which misfires when a leaf's prose names a
+  # second scenario after its own). Both halves of the rule reconcile in ONE pass, so they
+  # are ONE scenario: a two-assertion report — one self-citing leaf, one BARE sibling leaf
+  # beneath the same citing describe — exercises leaf-wins AND ancestor-fallback together.
+  # The Thens assert attribution-set IDENTITY, not a balance boolean: a bare "the ancestor
+  # is balanced" check is VACUOUS (the ancestor balances under the old code too — by BOTH
+  # leaves — and under the new one by the sibling alone). So they pin WHICH observation
+  # credits WHOM and HOW MANY, which is what locks the mirror symptom (the spurious double
+  # credit) a balance boolean would ship untested. Distinct step wording leaves
+  # LDG-011/012/013/014/015's steps byte-untouched; only the generic "the ledger reconciles
+  # the target" When is shared.
+  Rule: a vitest assertion is attributed to the @SCN its own leaf cites, not its ancestor's
+
+    @unit @integration @SCN-LDG-016
+    Scenario: a self-citing leaf discharges its own scenario while a bare sibling leaf still discharges the ancestor's
+      Given a scenario cited by an ancestor describe and a scenario self-cited by a leaf beneath it
+      And a passing vitest report whose one leaf self-cites and whose sibling leaf does not
+      When the ledger reconciles the target
+      Then the self-citing leaf is attributed to the leaf-cited scenario, not to the ancestor
+      And the ancestor scenario carries exactly one crediting observation — the bare sibling leaf
+      And both scenarios are balanced

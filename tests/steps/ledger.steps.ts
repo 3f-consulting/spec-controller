@@ -831,6 +831,178 @@ Then("{string} is not reported as both-missing", function (scnId: string) {
   );
 });
 
+// @SCN-LDG-016 — MOST-SPECIFIC-CITATION-WINS. Two fixture scenarios: the one the grouping
+// `describe` cites (the ANCESTOR) and the one a child `it` self-cites (the LEAF). Their own
+// fixtures (distinct step text) leave LDG-011/012/013/014/015's steps byte-untouched; only the
+// generic "the ledger reconciles the target" When is shared.
+let ldg016AncestorScnId: string;
+let ldg016LeafScnId: string;
+
+/**
+ * The CREDITING OBSERVATIONS for one scenario — the credit-side entries the parse arm attributed
+ * to it. This is the attribution SET the LDG-016 Thens assert on: the ledger's row model carries
+ * a verdict and reconciling items, NOT a per-row credit COUNT, so a spurious SECOND credit on an
+ * already-satisfied obligation is invisible in the rendered row (the ancestor reads `balanced`
+ * under the old reader AND the new one). Counting the credits is what gives the mirror symptom
+ * teeth. The `qualityCheck !== "lint"` guard narrows the EvidenceObservation union to the runtime
+ * shape (a guard observation carries no scnId).
+ */
+function creditsFor(scnId: string): EvidenceObservation[] {
+  return (evidenceObservations ?? []).filter(
+    (o) => o.qualityCheck !== "lint" && o.scnId === scnId
+  );
+}
+
+// @SCN-LDG-016
+Given(
+  "a scenario cited by an ancestor describe and a scenario self-cited by a leaf beneath it",
+  function () {
+    // TWO declared scenarios, both @unit (one unit obligation each), built through the REAL
+    // declared reader: the one a grouping `describe` cites in its bracket, and the one a child
+    // `it` cites in its OWN title. Each must end up discharged by exactly the assertion that
+    // cites it — the whole point of most-specific-wins.
+    ldg016AncestorScnId = "SCN-ANC-016";
+    ldg016LeafScnId = "SCN-LEA-016";
+    const feature = [
+      "@LDG",
+      "Feature: fixture",
+      "  Rule: a fixture rule",
+      `    @unit @${ldg016AncestorScnId}`,
+      "    Scenario: the scenario the grouping describe cites",
+      "      Given a fixture step",
+      "",
+      `    @unit @${ldg016LeafScnId}`,
+      "    Scenario: the scenario the child it self-cites",
+      "      Given a fixture step",
+    ].join("\n");
+    scenarios = parseScenarios(feature);
+  }
+);
+
+// @SCN-LDG-016
+Given(
+  "a passing vitest report whose one leaf self-cites and whose sibling leaf does not",
+  function () {
+    // A REAL-SHAPED vitest JSON report: one grouping `describe` carrying the ancestor's bracket
+    // citation, two `it`s beneath it. Vitest emits BOTH names per assertion — `fullName` is the
+    // ancestor PATH (describe → it, so it LEADS with the describe's citation) and `title` is the
+    // assertion's OWN name. Run through the REAL vitest reader at the JS-ecosystem unit default.
+    //
+    //   1. The SELF-CITING leaf: its `title` cites the leaf scenario; its `fullName` leads with
+    //      the ancestor's citation. First-match-on-the-concatenation SHADOWS it — the ancestor
+    //      wins and the leaf's own scenario is never credited (it reconciles `missing`).
+    //   2. The BARE sibling leaf: no citation of its own, so the ancestor path is the ONLY
+    //      citation — it still credits the ancestor (the fallback half of the rule; this is what
+    //      keeps the "describe carries the bracket, plain `it`s beneath" style working).
+    const report: VitestJsonReport = {
+      testResults: [
+        {
+          name: "packages/core/src/citation.test.ts",
+          assertionResults: [
+            {
+              fullName: `[${ldg016AncestorScnId}] the grouping describe > @${ldg016LeafScnId} the leaf proves its own scenario`,
+              title: `@${ldg016LeafScnId} the leaf proves its own scenario`,
+              status: "passed",
+            },
+            {
+              fullName: `[${ldg016AncestorScnId}] the grouping describe > the bare sibling leaf proves the ancestor's`,
+              title: "the bare sibling leaf proves the ancestor's",
+              status: "passed",
+            },
+          ],
+        },
+      ],
+    };
+    evidenceObservations = parseVitestEvidenceObservations(report, "unit");
+  }
+);
+
+// @SCN-LDG-016
+Then(
+  "the self-citing leaf is attributed to the leaf-cited scenario, not to the ancestor",
+  function () {
+    // ATTRIBUTION-SET IDENTITY, not a balance boolean: the leaf-cited scenario must carry EXACTLY
+    // ONE crediting observation — the self-citing leaf's. Under the shadowing reader the ancestor's
+    // bracket citation wins the first match, so the leaf-cited scenario carries ZERO credits and
+    // reconciles `missing`: this reds with `got 0`. (A "the leaf scenario is balanced" check would
+    // red too, but says nothing about WHOSE credit balanced it — the count is what pins the
+    // attribution.) Its `status`/`qualityCheck` are pinned too: a `passed` unit credit, so the
+    // scenario's declared unit obligation is genuinely DISCHARGED by this assertion.
+    const leafCredits = creditsFor(ldg016LeafScnId);
+    assert.equal(
+      leafCredits.length,
+      1,
+      `expected the self-citing leaf to be attributed to ${ldg016LeafScnId} (exactly one credit); got ${leafCredits.length} — the ancestor's citation shadowed the leaf's own`
+    );
+    assert.deepEqual(
+      leafCredits[0],
+      {
+        qualityCheck: "unit",
+        scnId: ldg016LeafScnId,
+        status: "passed",
+        locator: "packages/core/src/citation.test.ts",
+      },
+      `expected the leaf's credit to be a passing unit observation citing ${ldg016LeafScnId}`
+    );
+  }
+);
+
+// @SCN-LDG-016
+Then(
+  "the ancestor scenario carries exactly one crediting observation — the bare sibling leaf",
+  function () {
+    // The MIRROR SYMPTOM, and the reason a balance boolean has no teeth here: under the shadowing
+    // reader the ancestor takes TWO credits (its own bare sibling leaf AND the self-citing leaf it
+    // stole) for its ONE unit obligation — yet still renders `balanced`, so only a COUNT catches
+    // it. Exactly one credit ⇒ the spurious double-credit is gone and the ancestor is discharged
+    // by the assertion that actually cites it. Reds with `got 2` under the unfixed reader.
+    const ancestorCredits = creditsFor(ldg016AncestorScnId);
+    assert.equal(
+      ancestorCredits.length,
+      1,
+      `expected ${ldg016AncestorScnId} to carry exactly one crediting observation (the bare sibling leaf); got ${ancestorCredits.length} — a spurious second credit stolen from the self-citing leaf`
+    );
+    assert.deepEqual(
+      ancestorCredits[0],
+      {
+        qualityCheck: "unit",
+        scnId: ldg016AncestorScnId,
+        status: "passed",
+        locator: "packages/core/src/citation.test.ts",
+      },
+      `expected the ancestor's one credit to be a passing unit observation citing ${ldg016AncestorScnId}`
+    );
+  }
+);
+
+// @SCN-LDG-016
+Then("both scenarios are balanced", function () {
+  // The through-the-ledger confirmation: with the credits attributed to the scenarios that cite
+  // them, BOTH unit obligations are discharged and BOTH rows read balanced with no reconciling
+  // items. Row-scoped to each scenario's OWN cells. Under the shadowing reader the leaf-cited
+  // scenario is `missing` (out of balance) — the false-red this fix retires — while the ancestor
+  // is balanced regardless, which is exactly why the two Thens above (not this one) are the
+  // load-bearing assertions.
+  for (const scnId of [ldg016AncestorScnId, ldg016LeafScnId]) {
+    const { verdict, items } = rowCells(scnId);
+    assert.match(
+      verdict,
+      /\bbalanced\b/,
+      `expected ${scnId}'s verdict cell to read balanced; got "${verdict}"`
+    );
+    assert.doesNotMatch(
+      verdict,
+      /out-of-balance/,
+      `expected ${scnId} not to be out-of-balance; got "${verdict}"`
+    );
+    assert.equal(
+      items,
+      "—",
+      `expected ${scnId} to carry no reconciling items; got "${items}"`
+    );
+  }
+});
+
 // @SCN-LDG-002, @SCN-LDG-003, @SCN-LDG-005
 Then(
   "the reconciling items for {string} are {string}",

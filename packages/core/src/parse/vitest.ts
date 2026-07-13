@@ -9,8 +9,11 @@
  * into the parser. The JS-ecosystem default (unit) is declared at the CLI edge.
  *
  * The @SCN id is the bracketed `[SCN-<FFF>-<NNN>]` token carried in the test's
- * `describe`/`it` name (the bidirectional-link rule), surfaced by Vitest as
- * `assertionResults[].fullName`.
+ * `describe`/`it` name (the bidirectional-link rule). Vitest surfaces the assertion's OWN
+ * name as `assertionResults[].title` and its ANCESTOR PATH (describe → it) as `fullName`;
+ * the citation belongs to the assertion, so the reader reads the leaf's title FIRST and
+ * falls back to the ancestor path only when the leaf does not self-cite — most-specific-
+ * citation-wins (@SCN-LDG-016).
  *
  * The reader classifies THREE-WAY (@SCN-PND-015), uniform with the cucumber reader
  * (@SCN-PND-013): a `passed` assertion → a `passed` observation (satisfied); a `failed`
@@ -74,8 +77,18 @@ export function parseVitestEvidenceObservations(
       // skipped/todo/pending/undefined proved nothing, so the obligation reconciles missing by
       // absence. Only genuine passed/failed emit (the guard narrows `status` to EvidenceStatus).
       if (status !== "passed" && status !== "failed") continue;
-      const name = `${assertion.fullName ?? ""} ${assertion.title ?? ""}`;
-      const m = SCN_IN_NAME.exec(name);
+      // MOST-SPECIFIC-CITATION-WINS (@SCN-LDG-016): the citation belongs to the ASSERTION, and
+      // the assertion's OWN name is `title`; `fullName` is the ancestor PATH (outermost describe
+      // → innermost it). So read the leaf's own title FIRST and fall back to the ancestor path
+      // only when the leaf does not self-cite. This preserves the "describe carries the bracket,
+      // plain `it`s beneath" style (a bare leaf falls through to the describe's citation) while
+      // letting a self-citing leaf OVERRIDE its ancestor. The retired first-match-on-
+      // `fullName + " " + title` did the opposite: a grouping describe's citation SHADOWED a
+      // self-citing child, so the leaf's scenario reconciled missing while the ancestor took a
+      // spurious SECOND credit. Semantic, not positional — last-match on the concatenation would
+      // misfire when a leaf's prose names a second scenario after its own.
+      const m =
+        SCN_IN_NAME.exec(assertion.title ?? "") ?? SCN_IN_NAME.exec(assertion.fullName ?? "");
       results.push({
         qualityCheck,
         scnId: m ? m[0] : null, // no @SCN → an uncited credit (SUSPENSE).
