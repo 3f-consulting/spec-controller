@@ -1447,7 +1447,7 @@ describe("[SCN-RPT-020] the markdown renders each outcome's canon description, n
   // (unit missing) and a lint watermelon (→ the lint table AND a per-scenario lint item);
   // SCN-B is the degenerate both-missing (neither-side) item; the suspense row carries a
   // credit-side cites-no-scenario item with a locator. The summary `↳` decomposition always
-  // renders all seven leaves (zero counts shown), so every outcome's description is on the page.
+  // renders all eight leaves (zero counts shown), so every outcome's description is on the page.
   const rich: EvidenceReconciliation = {
     scenarioReconciliations: [
       {
@@ -1489,7 +1489,8 @@ describe("[SCN-RPT-020] the markdown renders each outcome's canon description, n
 
   it("renders every summary ↳ decomposition row with the canon description, and no bare handle", () => {
     const md = renderMarkdown(rich, ctx);
-    // Each of the seven out-of-balance leaves carries its canon description in the Subject cell.
+    // Each of the eight out-of-balance leaves carries its canon description in the Subject cell.
+    // (`broken` — @SCN-LDG-017, the eighth — is asserted by @SCN-RPT-019's exhaustiveness guard.)
     expect(md).toContain("| ↳ Evidence Observation is missing |");
     expect(md).toContain("| ↳ Evidence Observation is failing |");
     expect(md).toContain("| ↳ Evidence Observation is passing but fabricated |");
@@ -1672,7 +1673,7 @@ describe("[SCN-PND-010] the markdown report renders a Pending Item distinct from
  *
  * Proves the `### Evidence reconciliation` view carries a SEPARATE Pending Items tally, off the
  * materialised `summary.pending` count. Hard constraint (3F-1453 line, endorsed): the tally is
- * NEVER an eighth out-of-balance leaf — the seven-leaf `↳ <outcome>` decomposition stays intact
+ * NEVER an out-of-balance leaf of its own — the eight-leaf `↳ <outcome>` decomposition stays intact
  * and unchanged, and no `↳ pending` row is ever emitted. The tally is its OWN line (a Pending
  * Item is deferred, not out-of-balance). Rendered only when the run genuinely carries Pending
  * Items (the omit-when-empty precedent), so a zero-pending report stays byte-identical.
@@ -1693,7 +1694,7 @@ describe("[SCN-PND-011] the markdown Summary tallies Pending Items separately fr
   };
 
   // A balance carrying 3 Pending Items (two on SCN-PDX-001, one on SCN-PDX-002) alongside a
-  // genuine missing-unit error — so the seven-leaf out-of-balance decomposition renders AND the
+  // genuine missing-unit error — so the eight-leaf out-of-balance decomposition renders AND the
   // Pending tally is distinct from it.
   const pendingBalance: EvidenceReconciliation = {
     scenarioReconciliations: [
@@ -1722,10 +1723,10 @@ describe("[SCN-PND-011] the markdown Summary tallies Pending Items separately fr
     expect(section).toMatch(/⏳\s*3 Pending Item/);
   });
 
-  it("keeps the seven-leaf out-of-balance decomposition intact — the tally is NOT an eighth leaf", () => {
+  it("keeps the eight-leaf out-of-balance decomposition intact — the tally is NOT a ninth leaf", () => {
     const md = renderMarkdown(pendingBalance, ctx);
     const section = evidenceReconciliationSection(md);
-    // The seven `↳ <description>` leaves still render, unchanged — located by the canon
+    // The `↳ <description>` leaves still render, unchanged — located by the canon
     // description (3F-1626), not the bare handle.
     for (const leaf of [
       "missing",
@@ -1858,5 +1859,154 @@ describe("[SCN-PND-012] a balanced-with-pending row is visibly distinguished fro
     expect(cleanCell).toBe("—");
     expect(pendingCell).not.toBe(cleanCell);
     expect(pendingCell).toMatch(/⏳ pending: integration/);
+  });
+});
+
+/**
+ * Unit test for the unsound run-integrity stamp (@SCN-RPT-021).
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-RPT-021 id
+ * matching features/report.feature, so a grep of the id returns both halves of the pair.
+ * @unit ONLY (operator-endorsed): the renderer is a pure function over the report model, and the
+ * pipeline manifestation is already carried by @SCN-LDG-017 / @SCN-LDG-018's @integration arms.
+ *
+ * The customer-visible payoff of the whole `broken` slice (3F-1642). A `missing` row tells the
+ * reader to WRITE A TEST; when the proof exists and its suite merely failed to COLLECT, that
+ * instruction is wrong. So the markdown NAMES the collection-failed suite, PRINTS the runner's
+ * own collection error verbatim, and STAMPS the run "unsound" — the render headline word (the
+ * predicate is `hasBrokenEvidence`; predicate-name ≠ headline-word, per `isBalanced` vs
+ * "balanced"). The stamp is what marks every `missing` outcome below it as suspect.
+ *
+ * Remedy-NEUTRAL: a collection error is equally a missing dependency, a syntax error, a bad
+ * import, or a top-level throw — the report never prescribes a cure (no `pnpm install`); the one
+ * remedy it gives is the one that always holds, "fix the harness and regenerate".
+ *
+ * Teeth: before the emitter exists, `renderMarkdown` has no `## Run integrity` section at all —
+ * the word "unsound", the suite locator, and the collection message are nowhere in the document,
+ * and the suspense row's broken item renders bare (no locator suffix — @SCN-LDG-017 deliberately
+ * left the credit-side suffix unextended for this scenario). So every assertion below reds.
+ *
+ * Parent: (@SCN-RPT-021).
+ */
+describe("[SCN-RPT-021] the markdown names the collection-failed suite and its error, stamped unsound", () => {
+  const LOCATOR = "tests/harness/cucumber.trigger.test.ts";
+  // A REAL vitest collection message: multi-line, with a stack — the shape that forces the
+  // verbatim print into a fenced block rather than a table cell.
+  const MESSAGE =
+    "Error: Cannot find package '@cucumber/tag-expressions' imported from " +
+    `${LOCATOR}\n    at packageResolve (node:internal/modules/esm/resolve:catch)\n    at moduleResolve (node:internal/modules/esm/resolve)`;
+
+  /** The row (markdown table line) whose first cell is the given scnId. */
+  const rowFor = (md: string, scnId: string): string => {
+    const row = md.split("\n").find((line) => line.startsWith(`| ${scnId} `));
+    expect(row, `expected a rendered row for ${scnId}`).toBeTruthy();
+    return row!;
+  };
+
+  // The lived an adopter's repository shape (3F-1642): a declared scenario reconciling `missing` (its proof exists,
+  // but the suite that carries it never ran), alongside the suspense row carrying the `broken`
+  // credit for that collection-failed suite. The whole point of the slice is that a reader can
+  // tell these two rows apart.
+  const brokenBalance: EvidenceReconciliation = {
+    scenarioReconciliations: [
+      {
+        scnId: "SCN-HNS-002",
+        kind: "scenario",
+        verdict: "out-of-balance",
+        evidenceObligations: [{ qualityCheck: "unit", outcome: "missing" }],
+        reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
+        pendingItems: [],
+      },
+      {
+        scnId: "(no scenario)",
+        kind: "suspense-scenario",
+        verdict: "out-of-balance",
+        evidenceObligations: [],
+        reconcilingItems: [
+          { qualityCheck: "unit", outcome: "broken", locator: LOCATOR, message: MESSAGE },
+        ],
+        pendingItems: [],
+      },
+    ],
+  };
+
+  it("stamps the run unsound, above the summary views", () => {
+    const md = renderMarkdown(brokenBalance, ctx);
+    // "Unsound" is the RENDER HEADLINE word — the reader's one-glance verdict on run integrity.
+    expect(md).toContain("## Run integrity: unsound");
+    // Sited between the provenance header and the summary views: the stamp qualifies every
+    // count below it (a `missing` in an unsound run may be a broken proof), so it must be read
+    // FIRST. @SCN-RPT-009's summary-first / ledger-last ordering is otherwise unchanged.
+    const iProvenance = md.indexOf("## Run provenance");
+    const iStamp = md.indexOf("## Run integrity: unsound");
+    const iSummary = md.indexOf("## Summary views");
+    expect(iProvenance).toBeLessThan(iStamp);
+    expect(iStamp).toBeLessThan(iSummary);
+    // The stamp explains what it INVALIDATES — that a `missing` below may be a broken proof,
+    // not an absent one. Without this the word "unsound" is a label with no consequence.
+    expect(md).toMatch(/unsound[\s\S]{0,400}missing/i);
+  });
+
+  it("names the collection-failed suite and prints the runner's collection error verbatim", () => {
+    const md = renderMarkdown(brokenBalance, ctx);
+    // The WHERE-to-fix: the file that failed to collect.
+    expect(md).toContain(LOCATOR);
+    // The WHAT-broke: the runner's own message, VERBATIM (every line, stack included) — the
+    // reader diagnoses from it. A fenced block, because a vitest message is multi-line.
+    const fence = md.slice(md.indexOf("## Run integrity"));
+    expect(fence).toContain(MESSAGE);
+    expect(fence).toMatch(/```[\s\S]*Cannot find package[\s\S]*```/);
+  });
+
+  it("sends the reader to fix the harness and regenerate — prescribing no cure for the error itself", () => {
+    const md = renderMarkdown(brokenBalance, ctx);
+    // The one remedy that ALWAYS holds, whatever the collection error was.
+    expect(md).toMatch(/fix the harness and regenerate/i);
+    // REMEDY-NEUTRAL: the collection error is equally a missing dep, a syntax error, a bad
+    // import, or a top-level throw — the report must never guess the cure.
+    expect(md).not.toMatch(/pnpm install|npm install|yarn install|--frozen-lockfile/);
+  });
+
+  it("carries the suite locator on the suspense row's broken item — a broken proof, not an absent one", () => {
+    const md = renderMarkdown(brokenBalance, ctx);
+    const suspense = rowFor(md, "(no scenario)");
+    // The credit-side locator suffix (ruling Q5), now extended to `broken`: glyph + the canon
+    // description (single-sourced from OUTCOME_DESCRIPTION, 3F-1626) + the where-to-fix.
+    expect(suspense).toContain(`💥 ${OUTCOME_DESCRIPTION.broken}`);
+    expect(suspense).toContain(LOCATOR);
+    // The row cell carries the error's HEADLINE line only — the verbatim multi-line message
+    // lives in the run-integrity section; a stack in a table cell would destroy the table.
+    expect(suspense).toContain("Cannot find package '@cucumber/tag-expressions'");
+    expect(suspense).not.toContain("at packageResolve");
+    // The DISTINCTION the slice exists for: the declared scenario still reads `missing` (honest
+    // at its own resolution — no evidence cited it), and it is NOT the broken row. A reader
+    // tells "the proof exists and is broken" from "no proof was written".
+    const declared = rowFor(md, "SCN-HNS-002");
+    expect(declared).toContain(`∅ ${OUTCOME_DESCRIPTION.missing}`);
+    expect(declared).not.toContain("💥");
+  });
+
+  it("omits the stamp entirely when the run carries no broken evidence (byte-identical regression)", () => {
+    // The omit-when-empty precedent (the Pending Items tally): a SOUND run's report must not gain
+    // a stray empty section — it renders byte-identically to the pre-slice output.
+    const sound: EvidenceReconciliation = {
+      scenarioReconciliations: [
+        {
+          scnId: "SCN-SND-001",
+          kind: "scenario",
+          verdict: "out-of-balance",
+          evidenceObligations: [{ qualityCheck: "unit", outcome: "missing" }],
+          reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
+          pendingItems: [],
+        },
+      ],
+    };
+    const md = renderMarkdown(sound, ctx);
+    expect(md).not.toContain("Run integrity");
+    expect(md).not.toContain("unsound");
+    expect(md).not.toContain("💥");
+    // An out-of-balance-but-SOUND run still reads `missing` exactly as it did before the slice —
+    // the honest instruction there IS "write the test".
+    expect(md).toContain(`unit ∅ ${OUTCOME_DESCRIPTION.missing}`);
   });
 });

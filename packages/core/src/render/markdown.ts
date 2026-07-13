@@ -41,6 +41,10 @@ import type { EvidenceObligations } from "../census/evidenceObligations.js";
 import { RUNTIME_QUALITY_CHECKS, type AttributedCount, type RuntimeEvidenceObservationKindCounts } from "../census/evidenceObservations.js";
 import type { StaticEvidenceObservationKindCounts } from "../census/staticEvidenceObservations.js";
 import { assembleReport, type Report } from "../assemble/report.js";
+// The run-integrity predicate (@SCN-LDG-018) — the existential scan for a `broken` reconciling
+// item. The renderer asks the predicate and prints the HEADLINE word: predicate-name ≠
+// headline-word (`hasBrokenEvidence` → "unsound"), exactly as `isBalanced` → "balanced".
+import { hasBrokenEvidence } from "../reconcile/reconcile.js";
 import { featureCodeOf } from "../lib/featureCode.js";
 
 /** A short status glyph per reconciling-item outcome — a visual cue alongside the word. */
@@ -103,9 +107,38 @@ function renderItem(item: ScenarioReconciliation["reconcilingItems"][number]): s
     // evidence observation locator (ruling Q5) — surface the where-to-fix in the reconciliation cell.
     item.outcome === "undemanded";
   let suffix = "";
-  if (isCredit && item.guard) suffix = ` (${item.guard})`;
+  // The `broken` credit (@SCN-RPT-021) carries BOTH halves of its where-to-fix: the file that
+  // failed to collect AND what the runner said about it. The message's HEADLINE LINE only — a
+  // vitest collection message is multi-line (message + stack) and a stack in a table cell would
+  // destroy the table; the VERBATIM message is printed in the `## Run integrity` section above,
+  // which is where a reader diagnoses. Here the row stays legible without leaving the table.
+  if (item.outcome === "broken") {
+    const where = [item.locator, item.message === undefined ? undefined : headlineOf(item.message)]
+      .filter((part): part is string => part !== undefined && part.length > 0)
+      .join(": ");
+    if (where.length > 0) suffix = ` (${cellSafe(where)})`;
+  } else if (isCredit && item.guard) suffix = ` (${item.guard})`;
   else if (isCredit && item.locator !== undefined) suffix = ` (${item.locator})`;
   return `${subject} ${ITEM_GLYPH[item.outcome]} ${OUTCOME_DESCRIPTION[item.outcome]}${suffix}`;
+}
+
+/**
+ * The first non-empty line of a runner message — its HEADLINE (`Error: Cannot find package
+ * '@cucumber/tag-expressions' imported from …`), the line that names what broke. The rest is
+ * the stack, which belongs in the fenced verbatim print, not in a table cell.
+ */
+function headlineOf(message: string): string {
+  return message.split("\n").map((line) => line.trim()).find((line) => line.length > 0) ?? "";
+}
+
+/**
+ * Make an arbitrary runner-supplied string safe to sit INSIDE a markdown table cell: collapse
+ * every run of whitespace to a single space, and escape the pipe — an unescaped `|` in a cell
+ * silently splits it into two columns and corrupts the table from that row on. Defensive: the
+ * text comes from the runner, not from us.
+ */
+function cellSafe(text: string): string {
+  return text.replace(/\s+/g, " ").replace(/\|/g, "\\|").trim();
 }
 
 /**
@@ -195,6 +228,65 @@ const provenanceSection: SectionEmitter = (report) => {
   lines.push(`- Run timestamp (UTC): ${p.runStartUtc}`);
   lines.push(`- Source SHA: ${p.sourceSha ?? "unknown (non-git target)"}`);
   lines.push("");
+  return lines;
+};
+
+/**
+ * The RUN-INTEGRITY stamp (@SCN-RPT-021) — the customer-visible payoff of the `broken`
+ * reconciling item (3F-1642), and the ONLY place the word **"unsound"** appears. The renderer
+ * asks `hasBrokenEvidence` and prints the headline word: predicate-name ≠ headline-word, the
+ * `isBalanced` / "balanced" precedent.
+ *
+ * WHY IT SITS HERE — after provenance, BEFORE the summary views. The stamp is not one more cut
+ * of the reconciliation; it is a caveat ON all of them. A behaviour that was never exercised
+ * reconciles `missing` whether its proof is ABSENT or merely BROKEN, so a `missing` row in an
+ * unsound run cannot be read as "write the test" — the reader must know that before reading a
+ * single count. Every other section keeps its @SCN-RPT-009 summary-first / ledger-last position.
+ *
+ * WHAT IT PRINTS. The suite that failed to collect (the WHERE) and the runner's own message
+ * VERBATIM in a fenced block (the WHAT) — multi-line, stack included, because that is what the
+ * reader diagnoses from and a table cell cannot hold it. The gloss is REMEDY-NEUTRAL: a
+ * collection error is equally a missing dependency, a syntax error, a bad import, or a
+ * top-level throw, so the report never guesses the cure (never `pnpm install`). The one remedy
+ * that always holds — fix the harness and regenerate — is the one it gives, carrying the
+ * parent's fuller `OUTCOME_DESCRIPTION` gloss through to the reader.
+ *
+ * OMIT-WHEN-EMPTY (the Pending Items tally precedent): a run carrying no broken evidence
+ * returns `[]`, so a SOUND report is byte-identical to the pre-slice output — no stray empty
+ * section. Markdown-only: a machine consumer reads soundness as `summary.byOutcome.broken > 0`,
+ * already type-forced into the JSON, so no new JSON field is owed.
+ */
+const runIntegritySection: SectionEmitter = (report) => {
+  // The predicate is the single source of the verdict — the renderer never re-derives
+  // "is this run sound?" with its own scan, so the stamp cannot drift from the CLI's exit 4
+  // (@SCN-CLI-012), which asks the same predicate.
+  if (!hasBrokenEvidence({ scenarioReconciliations: report.evidenceReconciliation })) return [];
+  const brokenItems = report.evidenceReconciliation.flatMap((s) =>
+    s.reconcilingItems.filter((item) => item.outcome === "broken")
+  );
+  const count = brokenItems.length;
+  const suites = count === 1 ? "1 proving suite" : `${count} proving suites`;
+  const lines = [
+    "## Run integrity: unsound",
+    "",
+    `⚠ **This run is unsound.** ${suites} failed to collect, so the behaviour ` +
+      `${count === 1 ? "it proves was" : "they prove was"} never exercised. A \`missing\` outcome ` +
+      "below may therefore be a BROKEN proof rather than an absent one — it cannot be read as " +
+      `"write the test", because the test may already be there. Fix the harness and regenerate.`,
+    "",
+  ];
+  for (const item of brokenItems) {
+    // The suite that failed to collect. A `broken` observation always carries its file locator
+    // (the reader's WHERE-to-fix); the fallback keeps the section honest if one ever does not.
+    lines.push(`- \`${item.locator ?? "(suite not named by the runner)"}\` — the collection error the runner reported:`);
+    lines.push("");
+    // VERBATIM — every line the runner gave, stack included, unedited. The tool does not
+    // interpret the error; the reader diagnoses it.
+    lines.push("```text");
+    lines.push(...(item.message ?? "(no message reported by the runner)").split("\n"));
+    lines.push("```");
+    lines.push("");
+  }
   return lines;
 };
 
@@ -688,15 +780,22 @@ const ledgerSection: SectionEmitter = (report) => {
 
 /**
  * The ordered section list (project design §2; reorganised summary-first / ledger-last,
- * test volume added): title → provenance → Summary views
+ * test volume added): title → provenance → the run-integrity stamp (only when the run is
+ * unsound) → Summary views
  * (Evidence reconciliation, test volume, lint evidence obligations, out-of-balance by feature)
  * → the ledger. The `## Warnings` section was RETIRED entirely: the
  * no-evidence-declared scenario is now a `both-missing` ledger row, and the declared-corpus
  * census facts (untagged scenarios / prose-only codes) re-homed into the ledger summary.
+ *
+ * The run-integrity stamp (@SCN-RPT-021) precedes the summary views because it is a caveat ON
+ * them, not another cut OF them — an unsound run's `missing` counts cannot be taken at face
+ * value. It omits itself entirely on a sound run, so the ordering above is unchanged for
+ * every report that carries no broken evidence.
  */
 const SECTIONS: readonly SectionEmitter[] = [
   titleSection,
   provenanceSection,
+  runIntegritySection,
   summaryViewsSection,
   evidenceReconciliationSection,
   testVolumeSection,
