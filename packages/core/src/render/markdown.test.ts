@@ -2098,3 +2098,126 @@ describe("[SCN-RPT-021] the markdown names the collection-failed suite and its e
     expect(md).toContain(`unit ∅ ${OUTCOME_DESCRIPTION.missing}`);
   });
 });
+
+/**
+ * Unit test for the run-verdict headline (@SCN-RPT-022).
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-RPT-022 id
+ * matching features/report.feature, so a grep of the id returns both halves of the pair.
+ * @unit ONLY (ticket-endorsed): the renderer is a pure function over the report model. The
+ * agreement between this headline and the REAL process exit code is @SCN-CLI-013's arm.
+ *
+ * A SUPPLEMENT, not the fix (3F-1727). The tally already fails on its own once every Scenario
+ * Reconciliation is counted (@SCN-RMD-001, 3F-1724); this makes the failure impossible to MISS.
+ * The slice's non-negotiable invariant: a run that exits non-zero NEVER renders a headline that
+ * reads as a pass — an adopter's repository 17-36-50Z fault (3F-1703), where `141 | 141 | 0` looked like a
+ * clean board on a run that exited 1.
+ *
+ * The verdict is read off the WHOLE-RUN predicates in the CLI's own dominance order (broken →
+ * out-of-balance → pending, cli-balance/cli.ts) — asking the same predicates in the same order
+ * is what stops the headline drifting from the exit code it names. Exit 3 is the one code the
+ * core cannot assert: `--strict` is a CLI-edge flag invisible to the core, so a balanced run
+ * carrying Pending Items names it CONDITIONALLY and never claims it.
+ *
+ * Parent: (@SCN-RPT-022).
+ */
+describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code it maps to", () => {
+  /** The text from the `## Summary views` heading to the first cut beneath it. */
+  const summaryOpening = (md: string): string =>
+    md.slice(md.indexOf("## Summary views"), md.indexOf("### Evidence reconciliation"));
+
+  const balancedRow = (): EvidenceReconciliation["scenarioReconciliations"][number] => ({
+    scnId: "SCN-VRD-001",
+    kind: "scenario",
+    verdict: "balanced",
+    evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+    reconcilingItems: [],
+    pendingItems: [],
+  });
+
+  const balanced: EvidenceReconciliation = { scenarioReconciliations: [balancedRow()] };
+
+  // an adopter's repository 17-36-50Z shape in miniature: every DECLARED row balances, and the only
+  // out-of-balance row is the SUSPENSE reconciliation — the run that read as a pass.
+  const outOfBalance: EvidenceReconciliation = {
+    scenarioReconciliations: [
+      balancedRow(),
+      {
+        scnId: "(no scenario)",
+        kind: "suspense-scenario",
+        verdict: "out-of-balance",
+        evidenceObligations: [],
+        reconcilingItems: [{ qualityCheck: "unit", outcome: "cites-no-scenario", locator: "x.test.ts" }],
+        pendingItems: [],
+      },
+    ],
+  };
+
+  const broken: EvidenceReconciliation = {
+    scenarioReconciliations: [
+      balancedRow(),
+      {
+        scnId: "(no scenario)",
+        kind: "suspense-scenario",
+        verdict: "out-of-balance",
+        evidenceObligations: [],
+        reconcilingItems: [
+          { qualityCheck: "unit", outcome: "broken", locator: "tests/harness/x.test.ts", message: "Error: boom" },
+        ],
+        pendingItems: [],
+      },
+    ],
+  };
+
+  const balancedWithPending: EvidenceReconciliation = {
+    scenarioReconciliations: [
+      {
+        ...balancedRow(),
+        pendingItems: [{ qualityCheck: "integration" }],
+      },
+    ],
+  };
+
+  it("opens the summary with the verdict, before any cut of the reconciliation", () => {
+    // ALWAYS present — unlike the omit-when-empty unsound stamp, a BALANCED run needs its
+    // verdict line too, so the headline is the first thing under the summary heading.
+    const opening = summaryOpening(renderMarkdown(balanced, ctx));
+    expect(opening).toContain("### Run verdict");
+    expect(opening).toMatch(/BALANCED/);
+  });
+
+  it("reads BALANCED and exit 0 when every Scenario Reconciliation balances", () => {
+    const md = renderMarkdown(balanced, ctx);
+    expect(summaryOpening(md)).toContain("**BALANCED**");
+    expect(summaryOpening(md)).toContain("exit 0");
+  });
+
+  it("reads OUT-OF-BALANCE and exit 1 — never as a pass — when a row does not balance", () => {
+    const opening = summaryOpening(renderMarkdown(outOfBalance, ctx));
+    // The slice's non-negotiable invariant: the failing run's headline is the FAILURE.
+    expect(opening).toContain("**OUT-OF-BALANCE**");
+    expect(opening).toContain("exit 1");
+    expect(opening).not.toContain("**BALANCED**");
+  });
+
+  it("reads UNSOUND and exit 4 when the run carries broken evidence, pre-empting the balance verdict", () => {
+    const opening = summaryOpening(renderMarkdown(broken, ctx));
+    // The CLI's dominance order, mirrored: a broken run is ALWAYS out-of-balance too (its
+    // broken item sits on the suspense row), so `broken` must be asked FIRST or the headline
+    // would say exit 1 while the process exits 4.
+    expect(opening).toContain("**UNSOUND**");
+    expect(opening).toContain("exit 4");
+    expect(opening).not.toContain("exit 1");
+  });
+
+  it("notes exit 3 under --strict conditionally when a balanced run carries Pending Items — and never asserts it", () => {
+    const opening = summaryOpening(renderMarkdown(balancedWithPending, ctx));
+    // Balanced is still the verdict — the Pending Items note is a CONDITIONAL rider, because
+    // `--strict` is a CLI-edge flag the core cannot see.
+    expect(opening).toContain("**BALANCED**");
+    expect(opening).toContain("exit 0");
+    expect(opening).toMatch(/exit 3 under `--strict`/);
+    // A balanced run WITHOUT Pending Items never mentions exit 3 at all.
+    expect(summaryOpening(renderMarkdown(balanced, ctx))).not.toContain("exit 3");
+  });
+});

@@ -556,3 +556,34 @@ Feature: The report renders the ledger as sectioned facts
       And it sends the reader to fix the harness and regenerate, prescribing no cure for the error itself
       And the suspense row's broken item carries the same suite locator, distinguishing a broken proof from an absent one
       And a balance carrying no broken credit renders byte-identically to the pre-slice output
+
+  Rule: the summary opens with the run's verdict
+
+    The tally now fails on its own (@SCN-RMD-001, 3F-1724 — every Scenario Reconciliation is
+    counted, so a suspense row makes the totals read out-of-balance), but a reader still has to
+    READ it. The verdict is the bottom line, so the summary says it OUTRIGHT — one line that IS
+    the outcome, coherent with the "## Run integrity: unsound" stamp (@SCN-RPT-021) and the
+    Pending Items line. A run that exits non-zero can then never render a headline that reads
+    as a pass: the summary's FIRST words are the failure.
+
+    The verdict is read off the WHOLE-RUN predicates — hasBrokenEvidence, isBalanced,
+    hasPendingItems — never re-scanned by the renderer, and in the CLI's own dominance order
+    (broken → out-of-balance → pending, cli-balance/cli.ts). Asking the same predicates in the
+    same order is what stops the headline drifting from the exit code it names.
+
+    UNSOUND maps to exit 4, OUT-OF-BALANCE to exit 1, BALANCED to exit 0 — determinate from
+    the reconciliation alone. Exit 3 is NOT: it fires only under --strict, a CLI-edge flag the
+    core cannot see, so a balanced run carrying Pending Items names exit 3 CONDITIONALLY
+    ("exit 3 under --strict") and never asserts it. Unlike the unsound stamp, this section is
+    ALWAYS present — a balanced run needs its verdict line too. The agreement with the real
+    process exit code is @SCN-CLI-013's arm, not this one's.
+
+    @unit @SCN-RPT-022
+    Scenario: the summary opens with the run verdict and the exit code it maps to
+      Given a reconciliation whose verdict is broken, out-of-balance, or balanced
+      When the markdown report is rendered
+      Then the summary opens with a verdict line naming the outcome and the exit code it maps to
+      And a run carrying broken evidence reads UNSOUND and exit 4, pre-empting the balance verdict
+      And an out-of-balance run reads OUT-OF-BALANCE and exit 1, never as a pass
+      And a balanced run reads BALANCED and exit 0
+      And a balanced run carrying Pending Items notes exit 3 under --strict, conditionally and unasserted
