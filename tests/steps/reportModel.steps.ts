@@ -34,6 +34,12 @@ const META: RunManifestMeta = { sourceSha: "unknown", mode: "balance", date: "20
 
 let rmdStoreRoot: string;
 let rmdPlan: KeptRunPlan;
+/**
+ * The REAL process exit code the tool returned for this run (3F-1724). Captured so the
+ * tally assertion can prove the invariant the bug broke: the summary's out-of-balance
+ * count and the process exit code AGREE. Read off the subprocess, never re-derived.
+ */
+let rmdExitCode: number | null = null;
 
 Given("a kept run over a target corpus under an injected store root", function () {
   const repoRoot = process.cwd();
@@ -65,6 +71,7 @@ When("the kept run persists its machine artefact", function () {
         { cwd: rmdStoreRoot, encoding: "utf8" }
       );
       assert.equal(result.error, undefined, `the tool subprocess failed to spawn: ${result.error?.message}`);
+      rmdExitCode = result.status;
       // [3F-1460] fix-to-canon (3F-1414): balance is now an unconditional CI gate, so this
       // out-of-balance fixture exits 1 (the JSON/markdown are written IN FULL first). Pure
       // exit-expectation flip 0->1; every persisted-content assertion is unchanged.
@@ -104,6 +111,66 @@ Then(
     const keys = Object.keys(parsed);
     assert.equal(keys[0], "runProvenance", `expected runProvenance first; got ${keys.join(", ")}`);
     assert.equal(keys[1], "summary", `expected summary second; got ${keys.join(", ")}`);
+  }
+);
+
+/**
+ * @SCN-RMD-001 (3F-1724) — the summary totals count EVERY Scenario Reconciliation.
+ *
+ * The Evidence Reconciliation is all Scenario Reconciliations assembled and the summary is
+ * its totals (the maintainers' private notes); phantom / suspense reconciliations are
+ * ALWAYS out-of-balance, so they count into the total and into out-of-balance. The fixture
+ * corpus reconciles to 4 rows — 2 balanced declared scenarios, 1 phantom, 1 suspense — and
+ * the run exits 1. Under the declared-only tally the summary read `total 2, balanced 2,
+ * outOfBalance 0`: a FAILING run rendering a headline that reads as a clean pass, the exact
+ * divergence 3F-1703 found in an adopter's repository dogfood.
+ *
+ * Anti-watermelon: every number is read off the REAL persisted spec-reconciliation.json and
+ * the REAL process exit code — no re-run of assembleReport, no re-derivation. The final
+ * assertion pins the invariant the bug broke: the tally AGREES with the exit code.
+ */
+Then(
+  "its summary totals count every Scenario Reconciliation, so the tally reads out-of-balance and agrees with the run's exit code",
+  function () {
+    const parsed = JSON.parse(
+      readFileSync(join(rmdPlan.runDir, "spec-reconciliation.json"), "utf8")
+    ) as {
+      summary: { scenarios: { total: number; balanced: number; outOfBalance: number; phantom: number; suspense: number } };
+      evidenceReconciliation: { kind?: string; verdict: string }[];
+    };
+    const totals = parsed.summary.scenarios;
+    const rows = parsed.evidenceReconciliation;
+
+    // The total is EVERY row — declared + phantom + suspense — not the declared rows alone.
+    assert.equal(
+      totals.total,
+      rows.length,
+      `the summary total must count every Scenario Reconciliation; got total ${totals.total} over ${rows.length} rows ` +
+        `(${JSON.stringify(totals)})`
+    );
+    // The out-of-balance count is every row whose verdict is out-of-balance — the phantom
+    // and suspense rows among them (they are always out-of-balance).
+    const outOfBalanceRows = rows.filter((r) => r.verdict === "out-of-balance").length;
+    assert.equal(
+      totals.outOfBalance,
+      outOfBalanceRows,
+      `the summary out-of-balance count must count every out-of-balance Scenario Reconciliation; got ` +
+        `${totals.outOfBalance} against ${outOfBalanceRows} out-of-balance rows (${JSON.stringify(totals)})`
+    );
+    assert.equal(totals.balanced, rows.length - outOfBalanceRows, `balanced must be the remaining rows`);
+    // phantom / suspense survive as sub-counts — a BREAKDOWN of the total, not a bucket outside it.
+    assert.equal(totals.phantom, rows.filter((r) => r.kind === "phantom-scenario").length);
+    assert.equal(totals.suspense, rows.filter((r) => r.kind === "suspense-scenario").length);
+    assert.ok(totals.suspense >= 1, `the fixture must carry a suspense reconciliation; got ${JSON.stringify(totals)}`);
+
+    // THE INVARIANT THE BUG BROKE: the tally agrees with the process exit code. The run is
+    // out-of-balance (exit 1), so the tally must read out-of-balance too — never 0.
+    assert.equal(rmdExitCode, 1, `expected the run to exit 1 (out-of-balance); got ${rmdExitCode}`);
+    assert.ok(
+      totals.outOfBalance > 0,
+      `the run exited ${rmdExitCode} (out-of-balance) but the tally reads ${totals.outOfBalance} out-of-balance — ` +
+        `a failing run rendering as a pass (${JSON.stringify(totals)})`
+    );
   }
 );
 

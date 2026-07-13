@@ -696,18 +696,22 @@ const ledgerSection: SectionEmitter = (report) => {
     // ("Ledger" is the INPUT concept in canon; double-entry-manifesto).
     "## Scenario Reconciliations",
     "",
-    // The headline verdict tally counts DECLARED scenarios only (ruling Q3).
+    // The headline verdict tally counts EVERY Scenario Reconciliation — declared, phantom and
+    // suspense alike (@SCN-RMD-001, 3F-1724; the declared-only "ruling Q3" is retracted).
     `- ${totals.total} scenario(s): ${totals.balanced} balanced, ` +
       `${totals.outOfBalance} out-of-balance.`,
   ];
-  // The phantom (P) count is shown SEPARATELY, never folded into out-of-balance (ruling Q3).
+  // The phantom (P) count is broken out as a SUB-COUNT of the tally above — it is counted
+  // INSIDE total / out-of-balance (a phantom reconciliation is always out-of-balance), and
+  // named here so a reader sees what makes up the total.
   if (totals.phantom > 0) {
     lines.push(
       `- ${totals.phantom} phantom-scenario(s): cited by an evidence observation, declared by no feature.`
     );
   }
-  // The suspense (S) count is shown SEPARATELY too — credits citing no scenario at all
-  // (uncited evidence observations + unattributed static-guards), aggregated into one row (ruling Q3).
+  // The suspense (S) count is broken out the same way — credits citing no scenario at all
+  // (uncited evidence observations + unattributed static-guards), aggregated into one row,
+  // counted INSIDE the tally above.
   if (totals.suspense > 0) {
     lines.push(
       `- ${totals.suspense} suspense-scenario(s): credits citing no scenario, aggregated into "(no scenario)".`

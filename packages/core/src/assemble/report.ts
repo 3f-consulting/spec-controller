@@ -27,21 +27,38 @@ import { totalEvidenceObservations, type AttributedCount, type RuntimeEvidenceOb
 import type { StaticEvidenceObservationKindCounts } from "../census/staticEvidenceObservations.js";
 
 /**
- * The materialised scenario totals — the headline verdict tally, counted BY KIND
- * (ruling Q3): `total` / `balanced` / `outOfBalance` count DECLARED scenarios
- * only (kind `scenario`); `phantom` is the SEPARATE count of phantom-scenario rows
- * (cited-but-undeclared) — NOT folded into `outOfBalance`.
+ * The materialised totals over the Scenario Reconciliations — the headline verdict tally,
+ * counted over EVERY row (@SCN-RMD-001, 3F-1724).
+ *
+ * The Evidence Reconciliation is ALL Scenario Reconciliations assembled, and the summary is
+ * its totals (`the maintainers' private notes`). There are three row kinds — declared
+ * (`scenario`), `phantom-scenario` (cited by a credit, declared by no feature) and
+ * `suspense-scenario` (credits citing no scenario at all) — and phantom / suspense
+ * reconciliations are ALWAYS out-of-balance. So `total` / `balanced` / `outOfBalance` count
+ * every row, phantom and suspense among them.
+ *
+ * (The earlier "ruling Q3" — a declared-only tally with phantom / suspense bucketed APART —
+ * was a divergence from the manifesto, not a decision: it let `isBalanced` (which correctly
+ * walks every row's reconciling items → exit 1) disagree with a tally reading 0
+ * out-of-balance, so a failing run rendered a headline that read as a pass. RETRACTED by the
+ * operator, 2026-07-13; the bug it caused is 3F-1703.)
  */
 export interface ScenarioTotals {
+  /** Every Scenario Reconciliation — declared, phantom and suspense rows alike. */
   total: number;
   balanced: number;
+  /** Every out-of-balance row — the phantom and suspense rows among them (they always are). */
   outOfBalance: number;
-  /** Phantom-scenario rows (cited by a credit, declared by no feature) — shown apart. */
+  /**
+   * Phantom-scenario rows (cited by a credit, declared by no feature) — a SUB-COUNT, i.e. a
+   * breakdown OF `total` / `outOfBalance`, not a bucket outside them.
+   */
   phantom: number;
   /**
-   * Suspense-scenario rows (ruling Q3) — credits citing NO scenario aggregated
-   * into the one `(no scenario)` bucket. Shown as its OWN count, NOT folded into
-   * `outOfBalance` (the declared verdict tally stays declared-only).
+   * Suspense-scenario rows — credits citing NO scenario, aggregated into the one
+   * `(no scenario)` row. A SUB-COUNT like `phantom`: counted INSIDE `total` and
+   * `outOfBalance`, and surfaced separately so a reader recovers the declared count as
+   * `total − phantom − suspense`.
    */
   suspense: number;
 }
@@ -210,8 +227,12 @@ function buildSummary(
   evidenceObservations?: RuntimeEvidenceObservationKindCounts,
   guards?: StaticEvidenceObservationKindCounts
 ): Summary {
-  // The headline verdict tally counts DECLARED scenarios only (ruling Q3); phantom rows
-  // are counted separately and NOT folded into out-of-balance-Y.
+  // The headline verdict tally counts EVERY Scenario Reconciliation (@SCN-RMD-001, 3F-1724):
+  // the summary is the totals over ALL rows (double-entry-manifesto), and phantom / suspense
+  // reconciliations are ALWAYS out-of-balance, so they count into the tally like any other row.
+  // `phantom` / `suspense` are kept as SUB-COUNTS — a breakdown OF the total, not a bucket
+  // outside it. (The retracted "ruling Q3" tallied declared rows only, which is what let the
+  // tally read 0 out-of-balance on a run `isBalanced` correctly failed → exit 1: 3F-1703.)
   const verdict: Record<"balanced" | "out-of-balance", number> = { balanced: 0, "out-of-balance": 0 };
   let phantom = 0;
   let suspense = 0;
@@ -226,14 +247,11 @@ function buildSummary(
     // Pending Items ride every row's `pendingItems` (only declared scenarios carry them; a
     // phantom / suspense row has none), so the tally is a plain sum across all rows.
     pending += (s.pendingItems ?? []).length;
-    if (s.kind === "phantom-scenario") {
-      phantom++;
-      continue;
-    }
-    if (s.kind === "suspense-scenario") {
-      suspense++;
-      continue;
-    }
+    // The kind sub-counts, tallied ALONGSIDE the verdict (never instead of it) — the row still
+    // falls through to the verdict tally below, so a phantom / suspense reconciliation counts
+    // into `total` and (being always out-of-balance) into `outOfBalance`.
+    if (s.kind === "phantom-scenario") phantom++;
+    if (s.kind === "suspense-scenario") suspense++;
     verdict[s.verdict]++;
   }
 
@@ -274,9 +292,12 @@ function buildSummary(
 
   return {
     scenarios: {
+      // Every row's verdict is tallied, so this IS the count of all Scenario Reconciliations
+      // (declared + phantom + suspense) — the manifesto's "the summary is the totals".
       total: verdict.balanced + verdict["out-of-balance"],
       balanced: verdict.balanced,
       outOfBalance: verdict["out-of-balance"],
+      // Sub-counts: a breakdown OF the totals above (declared = total − phantom − suspense).
       phantom,
       suspense,
     },

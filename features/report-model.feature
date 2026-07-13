@@ -34,12 +34,24 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     the assembled sections) REDS. The @unit arm proves assembleReport + the glue-free
     serialisation in isolation.
 
+    And its summary totals count EVERY Scenario Reconciliation (3F-1724). The Evidence
+    Reconciliation is all Scenario Reconciliations assembled, and the summary is its
+    totals (the maintainers' private notes). Three row kinds — declared, phantom,
+    suspense — and phantom / suspense reconciliations are ALWAYS out-of-balance, so they
+    count into the total and into out-of-balance; `phantom` / `suspense` survive as
+    sub-counts, a BREAKDOWN of the total rather than a bucket outside it (declared =
+    total − phantom − suspense). Tallying declared rows only is what let isBalanced —
+    which correctly walks the suspense row → exit 1 — disagree with a tally reading 0
+    out-of-balance, so a failing run rendered a headline that read as a pass. The tally
+    now fails on its own and AGREES with the exit code.
+
     @unit @integration @SCN-RMD-001
-    Scenario: the reconciliation publishes as spec-reconciliation.json, one glue-free serialisation of a single whole-document report model
+    Scenario: the reconciliation publishes as spec-reconciliation.json, one glue-free serialisation of a single whole-document report model whose summary totals count every Scenario Reconciliation
       Given a kept run over a target corpus under an injected store root
       When the kept run persists its machine artefact
       Then the persisted artefact is named spec-reconciliation.json
       And it parses to one object carrying runProvenance, summary, and evidenceObligations as top-level sections in document order
+      And its summary totals count every Scenario Reconciliation, so the tally reads out-of-balance and agrees with the run's exit code
 
   Rule: the per-scenario reconciliation is the trial balance
 

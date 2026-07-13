@@ -19,7 +19,7 @@ import { assembleReport } from "./report.js";
 import { renderJson } from "../render/json.js";
 import { renderReport, renderMarkdown } from "../render/markdown.js";
 import { parseScenarios } from "../parse/scenarios.js";
-import { reconcile } from "../reconcile/reconcile.js";
+import { isBalanced, reconcile } from "../reconcile/reconcile.js";
 import type { EvidenceReconciliation } from "../model.js";
 import type { RunContext } from "../provenance/provenance.js";
 import type { EvidenceObligations } from "../census/evidenceObligations.js";
@@ -93,8 +93,8 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
 
   it("materialises the summary totals from the balance", () => {
     const report = assembleReport(balance, ctx);
-    // The headline verdict tally counts DECLARED scenarios only, with phantom shown apart
-    // (ruling Q3) — this balance declares no phantom rows, so phantom is 0.
+    // A declared-only balance: every row is a declared scenario, so the totals are the
+    // declared rows and the phantom / suspense sub-counts read 0.
     expect(report.summary.scenarios).toEqual({ total: 2, balanced: 1, outOfBalance: 1, phantom: 0, suspense: 0 });
     expect(report.summary.evidenceObligations.total).toBe(3);
     expect(report.summary.evidenceObligations.outOfBalance).toBe(2);
@@ -106,6 +106,91 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
       { subject: "unit", count: 1 },
       { subject: "integration", count: 1 },
     ]);
+  });
+
+  // an adopter's repository dogfood shape (3F-1703, run 2026-07-13T17-36-50Z) in miniature: every DECLARED
+  // scenario is balanced, yet a credit citing NO scenario posts a `cites-no-scenario` item to
+  // the suspense `(no scenario)` row — so the run IS out-of-balance and exits 1. Under the
+  // declared-only tally the summary read `total 2, balanced 2, outOfBalance 0`: a failing run
+  // rendering a headline that read as a clean pass.
+  const balanceWithSuspense: EvidenceReconciliation = {
+    scenarioReconciliations: [
+      {
+        scnId: "SCN-TGT-001",
+        verdict: "balanced",
+        evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+        pendingItems: [],
+        reconcilingItems: [],
+      },
+      {
+        scnId: "SCN-TGT-002",
+        verdict: "balanced",
+        evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+        pendingItems: [],
+        reconcilingItems: [],
+      },
+      {
+        scnId: "(no scenario)",
+        kind: "suspense-scenario",
+        verdict: "out-of-balance",
+        evidenceObligations: [{ qualityCheck: "lint", guard: "guard:static", outcome: "cites-no-scenario" }],
+        pendingItems: [],
+        reconcilingItems: [{ qualityCheck: "lint", guard: "guard:static", outcome: "cites-no-scenario" }],
+      },
+    ],
+  };
+
+  it("counts the suspense reconciliation in the summary totals — a run whose only out-of-balance row is the suspense row tallies 1 out-of-balance, not 0", () => {
+    const report = assembleReport(balanceWithSuspense, ctx);
+    // The Evidence Reconciliation is ALL Scenario Reconciliations assembled and the summary is
+    // its totals (the maintainers' private notes). A suspense reconciliation is ALWAYS
+    // out-of-balance, so it counts into the total AND into out-of-balance: 2 declared + 1
+    // suspense = 3 rows, 2 balanced, 1 out-of-balance. `suspense` survives as a sub-count — a
+    // BREAKDOWN of the total (declared = total − phantom − suspense), not a bucket outside it.
+    expect(report.summary.scenarios).toEqual({
+      total: 3,
+      balanced: 2,
+      outOfBalance: 1,
+      phantom: 0,
+      suspense: 1,
+    });
+    // THE INVARIANT THE BUG BROKE (3F-1703): the tally agrees with `isBalanced` — the predicate
+    // the CLI maps to the process exit code. `isBalanced` walks EVERY row's reconcilingItems, so
+    // it correctly calls this run out-of-balance (exit 1); the declared-only tally read 0
+    // out-of-balance and disagreed, rendering a failing run as a pass.
+    expect(isBalanced(balanceWithSuspense)).toBe(false);
+    expect(report.summary.scenarios.outOfBalance).toBeGreaterThan(0);
+  });
+
+  it("counts the phantom reconciliation in the summary totals too — cited-but-undeclared is out-of-balance, not a bucket apart", () => {
+    // The phantom row (a credit citing an @SCN no feature declares) is the suspense row's
+    // sibling: also ALWAYS out-of-balance, so it also counts into the total and into
+    // out-of-balance, with `phantom` surviving as its sub-count.
+    const balanceWithPhantom: EvidenceReconciliation = {
+      scenarioReconciliations: [
+        ...balanceWithSuspense.scenarioReconciliations,
+        {
+          scnId: "SCN-PHANTOM-999",
+          kind: "phantom-scenario",
+          verdict: "out-of-balance",
+          evidenceObligations: [{ qualityCheck: "unit", outcome: "cites-unknown-scenario" }],
+          pendingItems: [],
+          reconcilingItems: [{ qualityCheck: "unit", outcome: "cites-unknown-scenario" }],
+        },
+      ],
+    };
+    const report = assembleReport(balanceWithPhantom, ctx);
+    expect(report.summary.scenarios).toEqual({
+      total: 4,
+      balanced: 2,
+      outOfBalance: 2,
+      phantom: 1,
+      suspense: 1,
+    });
+    // The sub-counts reconcile to the total: declared = total − phantom − suspense.
+    const t = report.summary.scenarios;
+    expect(t.total - t.phantom - t.suspense).toBe(2);
+    expect(isBalanced(balanceWithPhantom)).toBe(false);
   });
 
   it("carries no warnings key — the retired authoring-quality axis", () => {
