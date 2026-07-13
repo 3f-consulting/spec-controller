@@ -45,7 +45,7 @@ export { evidenceObligations } from "./census/evidenceObligations.js";
 export type { EvidenceObligations, UntaggedScenario } from "./census/evidenceObligations.js";
 
 // --- Reconcile (`reconcile/reconcile.ts`) ---
-export { reconcile, isBalanced, hasPendingItems } from "./reconcile/reconcile.js";
+export { reconcile, isBalanced, hasPendingItems, hasBrokenEvidence } from "./reconcile/reconcile.js";
 
 // --- Runtime observation counter (`census/evidenceObservations.ts`) ---
 export {

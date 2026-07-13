@@ -159,6 +159,7 @@ const EXPECTED_VALUE_EXPORTS: readonly string[] = [
   "reconcile",
   "isBalanced",
   "hasPendingItems",
+  "hasBrokenEvidence",
   // Runtime observation counter (census/evidenceObservations.ts)
   "countRuntimeEvidenceObservationKinds",
   "RUNTIME_QUALITY_CHECKS",
