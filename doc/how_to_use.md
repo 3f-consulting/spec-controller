@@ -102,6 +102,31 @@ spec-controller --store ./runs --run-id 2026-07-09-ci balance \
 
 Run `spec-controller --help` for the top-level summary of commands and host modifiers, or `spec-controller balance --help` for `balance`'s full flag list.
 
+
+---
+
+## Run against an adopter's repository
+
+```
+cd ./projects/3f/an-adopters-repository
+git pull --ff-only
+pnpm install --frozen-lockfile
+npx cucumber-js --format summary --format json:reports/cucumber.json
+npx vitest run --reporter=json --outputFile=reports/vitest.json
+
+
+cd .
+node_modules/.bin/tsx packages/spec-controller/src/cli.ts \
+  --store . \
+  balance \
+  --target an-adopters-repository \
+  --features ./projects/3f/an-adopters-repository/features \
+  --vitest ./projects/3f/an-adopters-repository/reports/vitest.json \
+  --cucumber ./projects/3f/an-adopters-repository/reports/cucumber.json \
+  --ci ./projects/3f/an-adopters-repository/.github/workflows/ci.yml \
+  --package-json ./projects/3f/an-adopters-repository/package.json
+```
+
 ---
 
 ## What you get
