@@ -315,10 +315,10 @@ const summaryViewsSection: SectionEmitter = () => ["## Summary views", ""];
  * arm — the live 43 scenarios vs 44 evidenceObligations). The reshape presents that as a
  * granularity fact, not a contradiction. The nested causes reconcile to the evidenceObligation
  * out-of-balance. No bold. A pure presentation of the report's materialised
- * `summary.scenarios` / `summary.evidenceObligations` totals; markdown-only.
+ * `summary.scenarioReconciliations` / `summary.evidenceObligations` totals; markdown-only.
  */
 const evidenceReconciliationSection: SectionEmitter = (report) => {
-  const scenarios = report.summary.scenarios;
+  const scenarioReconciliations = report.summary.scenarioReconciliations;
   const evidenceObligations = report.summary.evidenceObligations;
   const totalEvidenceObligations = evidenceObligations.total;
   // The evidenceObligation out-of-balance is the sum of the three non-balanced outcomes — the
@@ -339,9 +339,9 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
     row(["---", "---", "---", "---", "---"]),
     row([
       "Scenario",
-      String(scenarios.total),
-      String(scenarios.balanced),
-      String(scenarios.outOfBalance),
+      String(scenarioReconciliations.total),
+      String(scenarioReconciliations.balanced),
+      String(scenarioReconciliations.outOfBalance),
       "",
     ]),
     row([
@@ -676,7 +676,7 @@ const CELL_KEY: readonly string[] = [
  * fixed cell key; without it the original three-column ledger is preserved (the 2-/3-arg callers
  * stay green). Markdown-only (the JSON carries the raw scenario facts + the declared / observed
  * objects); the verdict-tally bullet keeps the `scenario(s):` phrasing other surfaces guard on.
- * Reads the report's materialised `summary.scenarios`, `evidenceObligations`, and
+ * Reads the report's materialised `summary.scenarioReconciliations`, `evidenceObligations`, and
  * `evidenceObservations.attributed`.
  */
 const ledgerSection: SectionEmitter = (report) => {
@@ -690,7 +690,7 @@ const ledgerSection: SectionEmitter = (report) => {
   const suspenseRows = report.evidenceReconciliation.filter((s) => s.kind === "suspense-scenario");
   const scenarios = [...scenarioRows, ...phantomRows, ...suspenseRows];
   const evidenceObservations = report.evidenceObservations;
-  const totals = report.summary.scenarios;
+  const totals = report.summary.scenarioReconciliations;
   const lines = [
     // The reconciled per-scenario OUTPUT table — "Scenario Reconciliations", not "Ledger"
     // ("Ledger" is the INPUT concept in canon; double-entry-manifesto).

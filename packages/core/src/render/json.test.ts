@@ -374,8 +374,8 @@ describe("[SCN-PND-011] the JSON summary carries the Pending Items tally", () =>
     // 2 (SCN-PDX-001) + 1 (SCN-PDX-002) = 3 Pending Items — the same tally the markdown renders.
     expect(parsed.summary.pending).toBe(3);
     // The tally is SEPARATE from the verdict counts and never an evidence-obligation outcome.
-    expect(parsed.summary.scenarios.balanced).toBe(1);
-    expect(parsed.summary.scenarios.outOfBalance).toBe(1);
+    expect(parsed.summary.scenarioReconciliations.balanced).toBe(1);
+    expect(parsed.summary.scenarioReconciliations.outOfBalance).toBe(1);
     expect(parsed.summary.evidenceObligations.byOutcome).not.toHaveProperty("pending");
   });
 });

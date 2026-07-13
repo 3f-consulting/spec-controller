@@ -135,10 +135,18 @@ Then(
     const parsed = JSON.parse(
       readFileSync(join(rmdPlan.runDir, "spec-reconciliation.json"), "utf8")
     ) as {
-      summary: { scenarios: { total: number; balanced: number; outOfBalance: number; phantom: number; suspense: number } };
+      summary: {
+        scenarioReconciliations: {
+          total: number;
+          balanced: number;
+          outOfBalance: number;
+          phantom: number;
+          suspense: number;
+        };
+      };
       evidenceReconciliation: { kind?: string; verdict: string }[];
     };
-    const totals = parsed.summary.scenarios;
+    const totals = parsed.summary.scenarioReconciliations;
     const rows = parsed.evidenceReconciliation;
 
     // The total is EVERY row — declared + phantom + suspense — not the declared rows alone.

@@ -952,19 +952,19 @@ Then(
       )})`
     );
     assert.equal(
-      summaryReport.summary.scenarios.balanced,
+      summaryReport.summary.scenarioReconciliations.balanced,
       1,
-      `expected 1 balanced scenario; got ${summaryReport.summary.scenarios.balanced}`
+      `expected 1 balanced scenario; got ${summaryReport.summary.scenarioReconciliations.balanced}`
     );
     assert.equal(
-      summaryReport.summary.scenarios.outOfBalance,
+      summaryReport.summary.scenarioReconciliations.outOfBalance,
       2,
-      `expected 2 out-of-balance scenarios; got ${summaryReport.summary.scenarios.outOfBalance}`
+      `expected 2 out-of-balance scenarios; got ${summaryReport.summary.scenarioReconciliations.outOfBalance}`
     );
     // The tally is its OWN number — it coincides with neither the balanced nor the
     // out-of-balance count (the separateness the behaviour names).
-    assert.notEqual(summaryReport.summary.pending, summaryReport.summary.scenarios.balanced);
-    assert.notEqual(summaryReport.summary.pending, summaryReport.summary.scenarios.outOfBalance);
+    assert.notEqual(summaryReport.summary.pending, summaryReport.summary.scenarioReconciliations.balanced);
+    assert.notEqual(summaryReport.summary.pending, summaryReport.summary.scenarioReconciliations.outOfBalance);
   }
 );
 

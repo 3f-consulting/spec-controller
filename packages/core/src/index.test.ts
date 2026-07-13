@@ -122,7 +122,7 @@ const EXPECTED_TYPE_EXPORTS: readonly string[] = [
   "Report",
   "ReportMetadata",
   "Summary",
-  "ScenarioTotals",
+  "ScenarioReconciliationTotals",
   "EvidenceObligationTotals",
   "MissingByQualityCheck",
   "TestVolumeTotals",
@@ -199,6 +199,16 @@ describe("[SCN-API-001] the core barrel exports exactly the frozen v1 contract s
   it("re-exports exactly the frozen TYPE surface — reds on any type added, dropped, or renamed", () => {
     const actual = reflectBarrelTypeExports();
     expect(actual).toEqual([...EXPECTED_TYPE_EXPORTS].sort());
+  });
+
+  // The manifesto retires "the collection named `scenarios`" — the collection is the Scenario
+  // Reconciliations, since a scenario is only the declared thing. @SCN-RMD-002 made that rename
+  // at the top level (`report.scenarios` → `report.evidenceReconciliation`, pinned there by
+  // `not.toHaveProperty("scenarios")`); 3F-1725 finishes it on the summary. This pins the
+  // RETIREMENT by name on the actual surface, so the old spelling cannot creep back re-exported.
+  it("[SCN-API-001] retires ScenarioTotals from the actual type surface — the totals are the Scenario Reconciliations'", () => {
+    expect(reflectBarrelTypeExports()).not.toContain("ScenarioTotals");
+    expect(reflectBarrelTypeExports()).toContain("ScenarioReconciliationTotals");
   });
 
   it("names each frozen symbol exactly once (no accidental duplicate in the expected sets)", () => {

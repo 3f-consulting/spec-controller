@@ -95,7 +95,7 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
     const report = assembleReport(balance, ctx);
     // A declared-only balance: every row is a declared scenario, so the totals are the
     // declared rows and the phantom / suspense sub-counts read 0.
-    expect(report.summary.scenarios).toEqual({ total: 2, balanced: 1, outOfBalance: 1, phantom: 0, suspense: 0 });
+    expect(report.summary.scenarioReconciliations).toEqual({ total: 2, balanced: 1, outOfBalance: 1, phantom: 0, suspense: 0 });
     expect(report.summary.evidenceObligations.total).toBe(3);
     expect(report.summary.evidenceObligations.outOfBalance).toBe(2);
     expect(report.summary.evidenceObligations.byOutcome["satisfied"]).toBe(1);
@@ -147,7 +147,7 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
     // out-of-balance, so it counts into the total AND into out-of-balance: 2 declared + 1
     // suspense = 3 rows, 2 balanced, 1 out-of-balance. `suspense` survives as a sub-count — a
     // BREAKDOWN of the total (declared = total − phantom − suspense), not a bucket outside it.
-    expect(report.summary.scenarios).toEqual({
+    expect(report.summary.scenarioReconciliations).toEqual({
       total: 3,
       balanced: 2,
       outOfBalance: 1,
@@ -159,7 +159,7 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
     // it correctly calls this run out-of-balance (exit 1); the declared-only tally read 0
     // out-of-balance and disagreed, rendering a failing run as a pass.
     expect(isBalanced(balanceWithSuspense)).toBe(false);
-    expect(report.summary.scenarios.outOfBalance).toBeGreaterThan(0);
+    expect(report.summary.scenarioReconciliations.outOfBalance).toBeGreaterThan(0);
   });
 
   it("counts the phantom reconciliation in the summary totals too — cited-but-undeclared is out-of-balance, not a bucket apart", () => {
@@ -180,7 +180,7 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
       ],
     };
     const report = assembleReport(balanceWithPhantom, ctx);
-    expect(report.summary.scenarios).toEqual({
+    expect(report.summary.scenarioReconciliations).toEqual({
       total: 4,
       balanced: 2,
       outOfBalance: 2,
@@ -188,7 +188,7 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
       suspense: 1,
     });
     // The sub-counts reconcile to the total: declared = total − phantom − suspense.
-    const t = report.summary.scenarios;
+    const t = report.summary.scenarioReconciliations;
     expect(t.total - t.phantom - t.suspense).toBe(2);
     expect(isBalanced(balanceWithPhantom)).toBe(false);
   });
@@ -205,7 +205,7 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
     expect(parsed).toEqual(assembleReport(balance, ctx, evidenceObligations));
     // And it carries the renamed provenance + materialised summary on the machine surface.
     expect(parsed.runProvenance).toBeDefined();
-    expect(parsed.summary.scenarios.total).toBe(2);
+    expect(parsed.summary.scenarioReconciliations.total).toBe(2);
     expect(parsed).not.toHaveProperty("provenance");
   });
 });
@@ -774,10 +774,10 @@ describe("[SCN-PND-011] the summary materialises a Pending Items tally, separate
 
   it("keeps the tally SEPARATE from the scenario balanced / out-of-balance counts", () => {
     const report = assembleReport(pendingBalance, ctx);
-    expect(report.summary.scenarios).toEqual({ total: 3, balanced: 2, outOfBalance: 1, phantom: 0, suspense: 0 });
+    expect(report.summary.scenarioReconciliations).toEqual({ total: 3, balanced: 2, outOfBalance: 1, phantom: 0, suspense: 0 });
     // The tally is its own number — it coincides with neither verdict count.
-    expect(report.summary.pending).not.toBe(report.summary.scenarios.balanced);
-    expect(report.summary.pending).not.toBe(report.summary.scenarios.outOfBalance);
+    expect(report.summary.pending).not.toBe(report.summary.scenarioReconciliations.balanced);
+    expect(report.summary.pending).not.toBe(report.summary.scenarioReconciliations.outOfBalance);
   });
 
   it("NEVER folds a Pending Item into the evidence-obligation counts (not an eighth out-of-balance outcome)", () => {

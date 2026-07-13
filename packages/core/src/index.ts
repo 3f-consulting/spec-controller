@@ -76,7 +76,7 @@ export type {
   Report,
   ReportMetadata,
   Summary,
-  ScenarioTotals,
+  ScenarioReconciliationTotals,
   EvidenceObligationTotals,
   MissingByQualityCheck,
   TestVolumeTotals,

@@ -43,7 +43,7 @@ import type { StaticEvidenceObservationKindCounts } from "../census/staticEviden
  * out-of-balance, so a failing run rendered a headline that read as a pass. RETRACTED by the
  * operator, 2026-07-13; the bug it caused is 3F-1703.)
  */
-export interface ScenarioTotals {
+export interface ScenarioReconciliationTotals {
   /** Every Scenario Reconciliation — declared, phantom and suspense rows alike. */
   total: number;
   balanced: number;
@@ -123,7 +123,7 @@ export interface LintTally {
 
 /** The materialised summary — the totals (manifesto: "the aggregate of the trial balance"). */
 export interface Summary {
-  scenarios: ScenarioTotals;
+  scenarioReconciliations: ScenarioReconciliationTotals;
   evidenceObligations: EvidenceObligationTotals;
   /**
    * The Pending Items tally (@SCN-PND-011) — the count of Pending Items across the
@@ -291,7 +291,7 @@ function buildSummary(
   const total = (Object.values(byOutcome) as number[]).reduce((a, b) => a + b, 0);
 
   return {
-    scenarios: {
+    scenarioReconciliations: {
       // Every row's verdict is tallied, so this IS the count of all Scenario Reconciliations
       // (declared + phantom + suspense) — the manifesto's "the summary is the totals".
       total: verdict.balanced + verdict["out-of-balance"],
