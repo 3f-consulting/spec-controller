@@ -246,6 +246,10 @@ function buildSummary(
     "watermelon": 0,
     "cites-unknown-scenario": 0,
     "cites-no-scenario": 0,
+    // The broken reconciling item (@SCN-LDG-017) — a proving suite that failed to collect. A
+    // machine consumer reads run-soundness off this count: `byOutcome.broken > 0` ⇒ any `missing`
+    // in the run may be a BROKEN proof rather than an absent one.
+    "broken": 0,
     // The undemanded reconciling item (@SCN-LDG-008) — a credit citing a real
     // scenario at an undeclared quality-check. Shown here so a reader sees it break out of
     // the reconciliation-matched-attributed count (ruling Q1).

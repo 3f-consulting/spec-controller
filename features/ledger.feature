@@ -286,3 +286,38 @@ Feature: Ledger over declared-vs-observed evidence
       Then the self-citing leaf is attributed to the leaf-cited scenario, not to the ancestor
       And the ancestor scenario carries exactly one crediting observation — the bare sibling leaf
       And both scenarios are balanced
+
+  # BROKEN, NOT ABSENT (SCN-LDG-017). A vitest file that fails to COLLECT reports
+  # `status: "failed"` with a message and ZERO assertionResults. The reader walked
+  # `assertionResults[]` only, so it saw nothing to emit — and the scenario whose proof lived in
+  # that file reconciled `missing`, indistinguishable from an unwritten test. A red harness
+  # masqueraded as a benign gap (found by an adopter's repository CI dogfood, 2026-07-13: SCN-HNS-002 read
+  # `missing` while its proving test existed and cited it correctly, the file having failed to
+  # collect on `Cannot find package '@cucumber/tag-expressions'`). The remedies differ — fix the
+  # harness vs write a test — so the ledger must distinguish them.
+  #
+  # A collection failure names no test, so it cites no @SCN and CANNOT be attributed to any
+  # scenario: it is a sibling of `cites-no-scenario` (both land in suspense because they name no
+  # scenario), distinguished by errored-vs-completed. The scenario whose proof was in that file
+  # STILL reads `missing` — honest at its own resolution (no evidence citing it arrived) — but the
+  # run now carries the collection failure, so the reader is sent to fix the harness rather than
+  # write a test that already exists.
+  #
+  # BOUNDARY: a runtime throw INSIDE a named `it` is attributable (vitest reports it with a name
+  # and status failed) and already lands as `failing`. `broken` is specifically the citation-less
+  # collection failure.
+  #
+  # FAIL-SAFE (operator-mandated): `broken` is checked BEFORE `status`. A broken observation must
+  # NEVER reconcile as `failing` or `satisfied` — it names no scenario, so it can post to no
+  # scenario's row. Pinned in the @unit arm (reconcile.test.ts) under BOTH status values, not in
+  # the code alone.
+  Rule: a proving suite that failed to collect is broken, not absent
+
+    @unit @integration @SCN-LDG-017
+    Scenario: a collection-failed vitest file posts a broken suspense item naming the file and its error, while the scenario it would have proven still reads missing
+      Given a declared scenario whose only proving test lived in a vitest file that failed to collect
+      And a vitest report whose file carries a collection failure and zero assertions
+      When the ledger reconciles the target
+      Then the suspense scenario carries a broken reconciling item naming the collection-failed file and its error
+      And the broken item is not reported as cites-no-scenario
+      And the scenario whose proof was in the collection-failed file still reads missing

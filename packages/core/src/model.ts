@@ -96,6 +96,29 @@ export interface RuntimeEvidenceObservation {
    * (and the earlier readers) omit it.
    */
   locator?: string;
+  /**
+   * The proving suite FAILED TO COLLECT (@SCN-LDG-017) — it errored before it named a test, so
+   * it cites no @SCN and can be attributed to NO scenario. ABSENT (undefined) on an ordinary
+   * observation; `true` on a collection failure. The optional-flag shape, mirroring
+   * `EvidenceObligation.pending?: true` (chosen over a third variant in the `EvidenceObservation`
+   * union, which would touch every `qualityCheck === "lint"` narrowing site).
+   *
+   * FAIL-SAFE: the reconciler checks `broken` BEFORE `status`. A broken observation NEVER
+   * reconciles as `failing` or `satisfied` — a suite that never ran cannot discharge (or fail) an
+   * obligation. It posts ONE `broken` reconciling item on the SUSPENSE row, whatever `scnId` /
+   * `status` it structurally carries.
+   *
+   * BOUNDARY: a runtime throw INSIDE a named `it` is attributable (vitest reports it with a name
+   * and `status: failed`) and lands as `failing`, as before. `broken` is specifically the
+   * CITATION-LESS collection failure.
+   */
+  broken?: true;
+  /**
+   * The collection error the runner reported (Vitest `testResults[].message`) — the WHAT-BROKE
+   * half of a `broken` observation's where-to-fix payload, alongside the file `locator`. Present
+   * on a `broken` observation; absent on an ordinary one.
+   */
+  message?: string;
 }
 
 /**
@@ -152,6 +175,12 @@ export type Outcome =
   | "cites-no-scenario" // a credit citing NO @SCN at all — the reconciling item on the
   // SUSPENSE scenario (@SCN-LDG-007). Aggregates uncited runtime credits AND the
   // unattributed static-guard (a `lint` credit no evidence obligation declares, ruling Q4).
+  | "broken" // a credit whose proving SUITE FAILED TO COLLECT (@SCN-LDG-017) — it errored before
+  // naming a test, so it cites no @SCN and can be attributed to no scenario. A SIBLING of
+  // `cites-no-scenario` (both land in suspense because they name no scenario), distinguished by
+  // errored-vs-completed. The scenario whose proof lived in that file still reads `missing`
+  // (honest at its own resolution), but the RUN now carries the collection failure — so the
+  // reader is sent to fix the harness, not to write a test that already exists.
   | "undemanded" // a credit citing a REAL declared scenario at a quality-check that scenario
   // NEVER declared (@SCN-LDG-008) — the GENERAL case (it applies whether or not the
   // scenario carries other evidence obligations). A credit-side reconciling item ON THE REAL scenario's
@@ -190,6 +219,11 @@ export const OUTCOME_DESCRIPTION: Record<Outcome, string> = {
   missing: "Evidence Observation is missing",
   "cites-unknown-scenario": "Evidence Observation cites an unknown Scenario",
   "cites-no-scenario": "Evidence Observation cites no Scenario",
+  // REMEDY-NEUTRAL by design (@SCN-LDG-017): a collection error is equally a missing dependency,
+  // a syntax error, a bad import, or a top-level throw — the gloss names the FACT (the suite never
+  // ran), not a guessed cure. Contrast `missing`, whose remedy is "write the test": conflating the
+  // two is exactly the false-`missing` this outcome retires.
+  broken: "The proving suite failed to collect — the behaviour was never exercised",
   undemanded: "Evidence Observation cites a Scenario that did not demand it",
   "both-missing": "Evidence Observation and Evidence Obligation are both missing for the Scenario",
 };
@@ -231,6 +265,12 @@ export interface QualityCheckReconciliation {
    * phantom scenario); a debit-side evidence obligation carries none.
    */
   locator?: string;
+  /**
+   * The WHAT-BROKE payload of a `broken` credit-side reconciling item (@SCN-LDG-017) — the
+   * collection error the runner reported, carried alongside the `locator` (the file to fix).
+   * Present only on a `broken` item; every other outcome carries none.
+   */
+  message?: string;
 }
 
 /**

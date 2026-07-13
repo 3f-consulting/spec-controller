@@ -182,3 +182,87 @@ describe("[SCN-LDG-016] parseVitestEvidenceObservations attributes an assertion 
     ]);
   });
 });
+
+describe("[SCN-LDG-017] a collection-failed vitest file emits a broken observation naming the file and its error", () => {
+  // A vitest file that fails to COLLECT reports `status: "failed"` with a `message` and ZERO
+  // assertionResults — it named no test, so it cites no @SCN. The reader walked
+  // `assertionResults[]` only, so it emitted NOTHING and the run carried no trace of the failure
+  // (the scenario whose proof lived there reconciled `missing`, indistinguishable from an
+  // unwritten test — an adopter's repository CI dogfood's false-`missing`, 2026-07-13). The reader must now read
+  // the file-level `status` + `message` it previously discarded.
+  const collectionFailed: VitestJsonReport = {
+    testResults: [
+      {
+        name: "/r/harness.test.ts",
+        status: "failed",
+        message: "Error: Cannot find package '@cucumber/tag-expressions'",
+        assertionResults: [],
+      },
+    ],
+  };
+
+  it("emits ONE broken observation carrying the file locator and the collection message", () => {
+    // The where-to-fix payload is the whole point: the locator names the file to fix and the
+    // message says what broke. `scnId` is null — a collection failure names no test, so it cites
+    // no scenario and can post to no scenario's row. Reds with `[]` under the assertion-only
+    // reader.
+    expect(parseVitestEvidenceObservations(collectionFailed, "unit")).toEqual([
+      {
+        qualityCheck: "unit",
+        scnId: null,
+        status: "failed",
+        locator: "/r/harness.test.ts",
+        broken: true,
+        message: "Error: Cannot find package '@cucumber/tag-expressions'",
+      },
+    ]);
+  });
+
+  it("relativises the broken observation's locator to the run root, as it does every credit", () => {
+    // Uniform with the existing credits (portable paths): the locator is relative to the run root
+    // when one is given.
+    const out = parseVitestEvidenceObservations(collectionFailed, "unit", "/r");
+    expect(out).toHaveLength(1);
+    // The reader emits runtime observations only (a guard observation is the static reader's), so
+    // narrow off the `lint` discriminator to read the credit-side locator.
+    const observation = out[0]!;
+    expect(observation.qualityCheck).not.toBe("lint");
+    if (observation.qualityCheck === "lint") throw new Error("unreachable");
+    expect(observation.locator).toBe("harness.test.ts");
+  });
+
+  it("BOUNDARY: a failed file that DID collect emits its assertions and no broken observation", () => {
+    // The boundary the design draws: a runtime throw INSIDE a named `it` is ATTRIBUTABLE — vitest
+    // reports it with a name and `status: failed`, so it already lands as `failing` on the cited
+    // scenario's row. `broken` is specifically the CITATION-LESS collection failure. A file-level
+    // `status: "failed"` is therefore NOT sufficient on its own (every file with a failing test
+    // carries it) — the zero-assertions condition is what distinguishes the two. Reds if the
+    // reader keys on file status alone, which would post a spurious broken item on every ordinary
+    // red test run.
+    const failedButCollected: VitestJsonReport = {
+      testResults: [
+        {
+          name: "/r/a.test.ts",
+          status: "failed",
+          message: "1 test failed",
+          assertionResults: [{ fullName: "[SCN-FOO-003] throws at runtime", status: "failed" }],
+        },
+      ],
+    };
+    expect(parseVitestEvidenceObservations(failedButCollected, "unit")).toEqual([
+      { qualityCheck: "unit", scnId: "SCN-FOO-003", status: "failed", locator: "/r/a.test.ts" },
+    ]);
+  });
+
+  it("a PASSING file with zero assertions emits nothing — only a FAILED collection is broken", () => {
+    // The other half of the boundary: an empty-but-green file (no tests, no failure) is not a
+    // collection failure. Emitting a broken item for it would post a finding on every file vitest
+    // reports with no assertions.
+    expect(
+      parseVitestEvidenceObservations(
+        { testResults: [{ name: "/r/empty.test.ts", status: "passed", assertionResults: [] }] },
+        "unit"
+      )
+    ).toEqual([]);
+  });
+});

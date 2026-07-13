@@ -29,13 +29,19 @@ import {
   parseVitestEvidenceObservations,
   type VitestJsonReport,
 } from "@3f-consulting/spec-controller-core";
-import type { Scenario, EvidenceObservation } from "@3f-consulting/spec-controller-core";
+import type {
+  Scenario,
+  EvidenceObservation,
+  EvidenceReconciliation,
+} from "@3f-consulting/spec-controller-core";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
 
 // Fixtures shared across steps within a scenario (isolated per scenario by Cucumber).
 let scenarios: Scenario[];
 let evidenceObservations: EvidenceObservation[];
 let markdown: string;
+// The reconciliation the When produced, retained alongside its rendering (@SCN-LDG-017).
+let reconciliation: EvidenceReconciliation;
 
 // A RunContext fixture — the sibling provenance arg renderMarkdown now requires.
 // These @LDG assertions are ROW-SCOPED to the verdict table, so the
@@ -264,7 +270,14 @@ Given("a passing cucumber observation citing it", function () {
 
 // @SCN-LDG-011
 When("the ledger reconciles the target", function () {
-  markdown = renderMarkdown(reconcile(scenarios, evidenceObservations), CTX);
+  // The reconciliation is RETAINED alongside its rendering (@SCN-LDG-017): a `broken` item's
+  // where-to-fix payload (the collection-failed file's locator + the vitest message) lives on
+  // the reconciling item, and the markdown surface that NAMES it is a later sub-issue's work —
+  // so LDG-017's payload assertions read the reconciliation the pipeline produced, while its
+  // "still reads missing" assertion stays row-scoped on the rendered ledger, as every other
+  // @LDG scenario's. Every pre-existing step reads `markdown` exactly as before.
+  reconciliation = reconcile(scenarios, evidenceObservations);
+  markdown = renderMarkdown(reconciliation, CTX);
 });
 
 // @SCN-LDG-011
@@ -1018,5 +1031,132 @@ Then(
         `expected ${scnId}'s reconciling items to include "${type}"; got "${items}"`
       );
     }
+  }
+);
+
+// BROKEN, NOT ABSENT (@SCN-LDG-017) — the @integration arm, through the REAL parse→reconcile
+// pipeline (where the false-`missing` actually manifested). Distinct step wording throughout, so
+// LDG-001…016's steps stay byte-untouched; only the generic "the ledger reconciles the target"
+// When is shared.
+let ldg017ScnId: string;
+const LDG017_FILE = "packages/core/src/harness.test.ts";
+const LDG017_MESSAGE = "Error: Cannot find package '@cucumber/tag-expressions'";
+
+// @SCN-LDG-017
+Given(
+  "a declared scenario whose only proving test lived in a vitest file that failed to collect",
+  function () {
+    // ONE declared @unit scenario, built through the REAL declared reader. Its proof lives in the
+    // file that failed to collect — so NO observation citing it arrives, and its own row is
+    // honestly `missing` at its own resolution. What must change is the RUN: the collection
+    // failure has to be on the ledger, not swallowed.
+    ldg017ScnId = "SCN-HNS-017";
+    const feature = [
+      "@LDG",
+      "Feature: fixture",
+      "  Rule: a fixture rule",
+      `    @unit @${ldg017ScnId}`,
+      "    Scenario: the scenario whose proof was in the broken file",
+      "      Given a fixture step",
+    ].join("\n");
+    scenarios = parseScenarios(feature);
+  }
+);
+
+// @SCN-LDG-017
+Given("a vitest report whose file carries a collection failure and zero assertions", function () {
+  // A REAL-SHAPED vitest JSON report for a COLLECTION failure: the file reports
+  // `status: "failed"` with a `message`, and ZERO assertionResults (the file named no test — it
+  // never got that far). Run through the REAL vitest reader. Under the assertion-only reader this
+  // yields NOTHING at all, so the run carries no trace of the failure.
+  const report: VitestJsonReport = {
+    testResults: [
+      {
+        name: LDG017_FILE,
+        status: "failed",
+        message: LDG017_MESSAGE,
+        assertionResults: [],
+      },
+    ],
+  };
+  evidenceObservations = parseVitestEvidenceObservations(report, "unit");
+});
+
+// @SCN-LDG-017
+Then(
+  "the suspense scenario carries a broken reconciling item naming the collection-failed file and its error",
+  function () {
+    // The item is on the SUSPENSE row (sentinel id "(no scenario)") — a collection failure names
+    // no test, so it cites no @SCN and can post to no scenario's account. EXACTLY ONE item, and it
+    // carries the WHERE-TO-FIX: the file locator + the vitest message (the remedy payload — this
+    // is what sends the reader to the harness rather than to a blank test file). Reds with zero
+    // rows under the assertion-only reader (the suspense row is not posted at all).
+    const suspense = reconciliation.scenarioReconciliations.find(
+      (s) => s.kind === "suspense-scenario"
+    );
+    assert.ok(
+      suspense,
+      `expected a suspense-scenario row carrying the collection failure; got rows: ${reconciliation.scenarioReconciliations
+        .map((s) => `${s.scnId}(${s.kind})`)
+        .join(", ")}`
+    );
+    const broken = suspense.reconcilingItems.filter((i) => i.outcome === "broken");
+    assert.equal(
+      broken.length,
+      1,
+      `expected exactly one broken reconciling item on the suspense row; got ${broken.length} (items: ${JSON.stringify(suspense.reconcilingItems)})`
+    );
+    assert.equal(
+      broken[0]!.locator,
+      LDG017_FILE,
+      `expected the broken item to name the collection-failed file "${LDG017_FILE}"; got "${broken[0]!.locator}"`
+    );
+    assert.equal(
+      broken[0]!.message,
+      LDG017_MESSAGE,
+      `expected the broken item to carry the vitest collection error; got "${broken[0]!.message}"`
+    );
+  }
+);
+
+// @SCN-LDG-017
+Then("the broken item is not reported as cites-no-scenario", function () {
+  // The SIBLING it must not collapse into: both land in suspense because they name no scenario,
+  // but `cites-no-scenario` is a COMPLETED test that cited nothing, while `broken` is an ERRORED
+  // suite that never ran. Folding the collection failure into `cites-no-scenario` would hide the
+  // remedy (fix the harness) behind the wrong one (add a citation). Reds under a fold that
+  // reuses the existing uncited-credit mapping.
+  const suspense = reconciliation.scenarioReconciliations.find(
+    (s) => s.kind === "suspense-scenario"
+  );
+  assert.ok(suspense, "expected a suspense-scenario row");
+  assert.equal(
+    suspense.reconcilingItems.filter((i) => i.outcome === "cites-no-scenario").length,
+    0,
+    `expected the collection failure NOT to be folded into cites-no-scenario; got ${JSON.stringify(suspense.reconcilingItems)}`
+  );
+});
+
+// @SCN-LDG-017
+Then(
+  "the scenario whose proof was in the collection-failed file still reads missing",
+  function () {
+    // The scenario's OWN row is UNCHANGED and honest at its own resolution: no evidence citing it
+    // arrived, so its unit obligation is `missing`. The fix does NOT relabel the scenario's row —
+    // it adds the run-level finding that explains WHY the evidence is absent. Row-scoped to the
+    // scenario's own cells on the rendered ledger, as every other @LDG assertion.
+    const { verdict, items } = rowCells(ldg017ScnId);
+    assert.match(
+      verdict,
+      /out-of-balance/,
+      `expected ${ldg017ScnId} to stay out-of-balance; got "${verdict}"`
+    );
+    // The cell renders the outcome's CANON DESCRIPTION (3F-1626), so `missing` reads as
+    // "Evidence Observation is missing" — matched as the sibling "reconciling items for X are Y"
+    // steps do (a substring over the row's own items cell).
+    assert.ok(
+      items.includes("missing"),
+      `expected ${ldg017ScnId} to still read missing; got "${items}"`
+    );
   }
 );

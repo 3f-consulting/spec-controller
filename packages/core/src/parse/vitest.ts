@@ -33,6 +33,16 @@ export interface VitestJsonReport {
   testResults?: Array<{
     /** The test-file path — the locator for the evidenceObservations reconciliation. */
     name?: string;
+    /**
+     * The FILE-level status (@SCN-LDG-017) — previously read and discarded. A file that failed to
+     * COLLECT reports `"failed"` here WITH a `message` and ZERO `assertionResults`: it errored
+     * before naming a test. That pair (failed + zero assertions) is the collection-failure
+     * signature the reader now emits as a `broken` observation. (A file whose tests merely FAILED
+     * also reports `"failed"` here — but it carries assertions, so it is not broken.)
+     */
+    status?: string;
+    /** The FILE-level error message a collection failure reports (@SCN-LDG-017). */
+    message?: string;
     assertionResults?: Array<{
       fullName?: string;
       title?: string;
@@ -71,7 +81,34 @@ export function parseVitestEvidenceObservations(
     // The test-file locator (the where-to-fix) — carried on every credit (ruling
     // Q5), made portable relative to the run root (verbatim when no root given).
     const locator = relativizeToRoot(file.name ?? "(unknown vitest file)", root);
-    for (const assertion of file.assertionResults ?? []) {
+    // BROKEN, NOT ABSENT (@SCN-LDG-017) — the COLLECTION FAILURE. A file that failed to collect
+    // reports `status: "failed"` WITH a message and ZERO assertionResults: it errored before it
+    // named a test. Walking `assertionResults[]` alone saw nothing to emit, so the scenario whose
+    // proof lived here reconciled `missing` — indistinguishable from an unwritten test, and the
+    // wrong remedy (write a test vs fix the harness). Emit ONE observation carrying the collection
+    // failure: `broken: true`, the file locator (WHERE to fix), and the runner's message (WHAT
+    // broke). It cites NO scenario (`scnId: null`) — a suite that named no test cites no @SCN — so
+    // the reconciler posts it to the SUSPENSE row.
+    //
+    // The signature is the PAIR (failed + zero assertions), never file status alone: an ordinary
+    // red run also reports `status: "failed"` at file level, but its assertions ARE named and
+    // attributable, and already land as `failing` on the scenarios they cite (the boundary). A
+    // green file with zero assertions is likewise not broken — nothing errored.
+    const assertions = file.assertionResults ?? [];
+    if (file.status === "failed" && assertions.length === 0) {
+      results.push({
+        qualityCheck,
+        scnId: null,
+        // `status` is structurally required and the runner did report `failed`; the FAIL-SAFE in
+        // the reconciler checks `broken` BEFORE `status`, so this never reconciles as `failing`.
+        status: "failed",
+        locator,
+        broken: true,
+        ...(file.message !== undefined ? { message: file.message } : {}),
+      });
+      continue;
+    }
+    for (const assertion of assertions) {
       const status = assertion.status;
       // THREE-WAY (@SCN-PND-015): drop any inconclusive assertion (status ∉ {passed, failed}) —
       // skipped/todo/pending/undefined proved nothing, so the obligation reconciles missing by

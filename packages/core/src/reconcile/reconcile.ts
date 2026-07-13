@@ -72,9 +72,22 @@ function reconcileEvidenceObligation(
   // evidence observations (a guard evidence observation carries qualityCheck "lint" and no scnId, so it
   // never matches here). present+pass → satisfied; present+fail → failing;
   // absent → missing (a required ledger entry never recorded).
+  //
+  // THE FAIL-SAFE (@SCN-LDG-017, operator-mandated): `broken` is checked BEFORE `status`. A
+  // broken observation — a proving suite that FAILED TO COLLECT — is excluded from the match
+  // entirely, so it can NEVER reconcile as `satisfied` or `failing`: a suite that never ran can
+  // neither discharge an obligation nor fail it. The obligation then finds no match and
+  // reconciles `missing` — honest at its own resolution (no evidence citing it arrived); the
+  // collection failure itself posts to the SUSPENSE row below, where the reader is sent to fix
+  // the harness. The exclusion is structural rather than incidental: `broken` rides an OPTIONAL
+  // FLAG on RuntimeEvidenceObservation, so a broken credit CAN carry an scnId and a status — the
+  // guard is what makes the fail-safe hold whatever it carries.
   const match = evidenceObservations.find(
     (o): o is RuntimeEvidenceObservation =>
-      o.qualityCheck !== "lint" && o.qualityCheck === req.qualityCheck && o.scnId === scnId
+      o.qualityCheck !== "lint" &&
+      o.broken !== true &&
+      o.qualityCheck === req.qualityCheck &&
+      o.scnId === scnId
   );
   let outcome: Outcome;
   if (!match) {
@@ -195,6 +208,11 @@ export function reconcile(
   const byScn = new Map<string, RuntimeEvidenceObservation[]>();
   for (const o of evidenceObservations) {
     if (o.qualityCheck === "lint") continue;
+    // THE FAIL-SAFE, second arm (@SCN-LDG-017): a BROKEN credit is never indexed against a
+    // scenario — it named no test, so it cites no scenario, and it must post to no scenario's row
+    // (neither as a matched credit above nor as an `undemanded` one below). It posts EXACTLY ONCE,
+    // on the SUSPENSE row.
+    if (o.broken === true) continue;
     if (o.scnId === null) continue; // an uncited credit — it posts to the SUSPENSE scenario (below).
     const list = byScn.get(o.scnId) ?? [];
     list.push(o);
@@ -277,6 +295,9 @@ export function reconcile(
   const phantomIds: string[] = [];
   for (const o of evidenceObservations) {
     if (o.qualityCheck === "lint") continue;
+    // THE FAIL-SAFE, third arm (@SCN-LDG-017): a BROKEN credit never mints a phantom row either —
+    // an errored suite cites no scenario, real or phantom. SUSPENSE is its only account.
+    if (o.broken === true) continue;
     if (o.scnId === null) continue; // an uncited credit is SUSPENSE (below), never phantom.
     if (scenarioIds.has(o.scnId)) continue;
     if (!phantomIds.includes(o.scnId)) phantomIds.push(o.scnId);
@@ -311,8 +332,20 @@ export function reconcile(
   // evidence observation locator, ruling Q5), verdict ALWAYS out-of-balance. Grouped AFTER the
   // phantom rows (the last block of the Ledger). The suspense detail arrays dissolve
   // into this row — the counts survive in the summary balance-check identities.
+  //
+  // THE SPLIT (@SCN-LDG-017). The fold mapped EVERY uncited runtime credit to
+  // `cites-no-scenario`. A BROKEN credit is its SIBLING — both land here because they name no
+  // scenario — but they are distinguished by errored-vs-completed, and their remedies differ: a
+  // `cites-no-scenario` test RAN and forgot its citation (add the @SCN); a `broken` suite never
+  // ran at all (fix the harness). Folding the second into the first would hide the collection
+  // failure behind the wrong cure — the false-`missing` in a new costume. So `broken` is taken
+  // FIRST, on the flag (never on scnId/status, which it may structurally carry).
+  const brokenSuites = evidenceObservations.filter(
+    (o): o is RuntimeEvidenceObservation => o.qualityCheck !== "lint" && o.broken === true
+  );
   const uncited = evidenceObservations.filter(
-    (o): o is RuntimeEvidenceObservation => o.qualityCheck !== "lint" && o.scnId === null
+    (o): o is RuntimeEvidenceObservation =>
+      o.qualityCheck !== "lint" && o.broken !== true && o.scnId === null
   );
   // The undemanded static-guards — `lint` evidence observations no @lint obligation demands,
   // recovered from the completed stream, no longer a derive-and-diff param.
@@ -320,8 +353,17 @@ export function reconcile(
     (o): o is GuardEvidenceObservation =>
       o.qualityCheck === "lint" && !demandedGuards.has(o.guard)
   );
-  if (uncited.length > 0 || undemandedGuards.length > 0) {
+  if (brokenSuites.length > 0 || uncited.length > 0 || undemandedGuards.length > 0) {
     const items: QualityCheckReconciliation[] = [
+      // ONE `broken` item per collection-failed suite, carrying its WHERE-TO-FIX (the file
+      // locator) and its WHAT-BROKE (the runner's message) — the payload that sends the reader to
+      // the harness. Listed FIRST: a broken run's other suspense items are downstream noise.
+      ...brokenSuites.map((o) => ({
+        qualityCheck: o.qualityCheck,
+        outcome: "broken" as const,
+        ...(o.locator !== undefined ? { locator: o.locator } : {}),
+        ...(o.message !== undefined ? { message: o.message } : {}),
+      })),
       ...uncited.map((o) => ({
         qualityCheck: o.qualityCheck,
         outcome: "cites-no-scenario" as const,

@@ -57,6 +57,9 @@ const ITEM_GLYPH: Record<Outcome, string> = {
   // CREDIT-SIDE: a credit citing NO @SCN at all — the reconciling item on the
   // suspense scenario (@SCN-LDG-007).
   "cites-no-scenario": "❓",
+  // CREDIT-SIDE: a proving suite that FAILED TO COLLECT — it errored before naming a test,
+  // so it cites no @SCN and posts to the suspense row (@SCN-LDG-017).
+  "broken": "💥",
   // CREDIT-SIDE: a credit citing a REAL declared scenario at a quality-check it never
   // declared — the undemanded reconciling item on the real scenario's row (@SCN-LDG-008).
   "undemanded": "◇",

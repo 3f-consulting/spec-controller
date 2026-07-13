@@ -926,3 +926,107 @@ describe("[SCN-PND-022] a deferred scenario declaring no obligations is a Pendin
     expect(scenario?.pendingItems).toEqual([]);
   });
 });
+
+describe("[SCN-LDG-017] a broken observation posts a broken suspense item; the scenario it would have proven still reads missing", () => {
+  // The reconcile arm of BROKEN-NOT-ABSENT. A `broken` observation (the reader's collection-
+  // failure credit) names no test, so it cites no @SCN and can be attributed to no scenario: it is
+  // a SIBLING of `cites-no-scenario` — both land in suspense because they name no scenario —
+  // distinguished by errored-vs-completed. The suspense fold, which mapped EVERY uncited runtime
+  // credit to `cites-no-scenario`, must split.
+  const scenarios: Scenario[] = [
+    { scnId: "SCN-HNS-017", evidenceObligations: [{ qualityCheck: "unit" }] },
+  ];
+  const brokenObservation: EvidenceObservation = {
+    qualityCheck: "unit",
+    scnId: null,
+    status: "failed",
+    locator: "packages/core/src/harness.test.ts",
+    broken: true,
+    message: "Error: Cannot find package '@cucumber/tag-expressions'",
+  };
+
+  it("posts ONE broken reconciling item on the suspense row, carrying the file locator and the collection message", () => {
+    const balance = reconcile(scenarios, [brokenObservation]);
+    const suspense = balance.scenarioReconciliations.find((s) => s.kind === "suspense-scenario");
+
+    expect(suspense?.verdict).toBe("out-of-balance");
+    expect(suspense?.reconcilingItems).toEqual([
+      {
+        qualityCheck: "unit",
+        outcome: "broken",
+        locator: "packages/core/src/harness.test.ts",
+        message: "Error: Cannot find package '@cucumber/tag-expressions'",
+      },
+    ]);
+  });
+
+  it("is NOT cites-no-scenario — the sibling it would otherwise be indistinguishable from", () => {
+    // Folding the collection failure into `cites-no-scenario` would hide the remedy (fix the
+    // harness) behind the wrong one (add a citation). Reds under the unsplit fold.
+    const balance = reconcile(scenarios, [brokenObservation]);
+    const suspense = balance.scenarioReconciliations.find((s) => s.kind === "suspense-scenario");
+
+    expect(suspense?.reconcilingItems.some((i) => i.outcome === "cites-no-scenario")).toBe(false);
+  });
+
+  it("leaves the scenario whose proof was in that file reading missing — honest at its own resolution", () => {
+    // The scenario's OWN row is unchanged: no evidence citing it arrived, so its unit obligation is
+    // `missing`. The finding is at the RUN's resolution, not the scenario's.
+    const balance = reconcile(scenarios, [brokenObservation]);
+    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-HNS-017");
+
+    expect(scenario?.verdict).toBe("out-of-balance");
+    expect(scenario?.reconcilingItems).toEqual([{ qualityCheck: "unit", outcome: "missing" }]);
+  });
+
+  it("an ordinary uncited credit is STILL cites-no-scenario — the split does not swallow its sibling", () => {
+    // The non-regression contrast (@SCN-LDG-007 unchanged): a COMPLETED test that cited no @SCN
+    // still folds to `cites-no-scenario`. Only the errored (broken) credit takes the new outcome.
+    const balance = reconcile(scenarios, [
+      { qualityCheck: "unit", scnId: null, status: "passed", locator: "src/uncited.test.ts" },
+    ]);
+    const suspense = balance.scenarioReconciliations.find((s) => s.kind === "suspense-scenario");
+
+    expect(suspense?.reconcilingItems).toEqual([
+      { qualityCheck: "unit", outcome: "cites-no-scenario", locator: "src/uncited.test.ts" },
+    ]);
+  });
+
+  // THE FAIL-SAFE (operator-mandated, 3F-1642 decisions of record): `broken` is checked BEFORE
+  // `status`. A broken observation must NEVER reconcile as `failing` or `satisfied` — it names no
+  // test, so it cites no scenario and can post to NO scenario's row. The observation shape is the
+  // optional-flag one (`broken?: true` on RuntimeEvidenceObservation), so a `broken` credit
+  // structurally CAN carry a scnId and a status; the reconciler must refuse to credit it anyway.
+  // Pinned here under BOTH status values, and with a scnId that matches a DECLARED scenario — the
+  // adversarial shape that would otherwise discharge (or fail) an obligation off a suite that
+  // never ran. Not asserted in the code alone: this is the test.
+  it.each(["passed", "failed"] as const)(
+    "FAIL-SAFE: a broken observation citing a declared scenario with status %s never reconciles as satisfied or failing",
+    (status) => {
+      const balance = reconcile(scenarios, [
+        {
+          qualityCheck: "unit",
+          scnId: "SCN-HNS-017",
+          status,
+          locator: "packages/core/src/harness.test.ts",
+          broken: true,
+          message: "collection failed",
+        },
+      ]);
+      const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-HNS-017");
+
+      // The scenario's unit obligation is NOT discharged (nor failed) by a suite that never ran.
+      expect(scenario?.evidenceObligations).toEqual([{ qualityCheck: "unit", outcome: "missing" }]);
+      // And NOWHERE in the whole reconciliation does the broken credit surface as satisfied or
+      // failing — across every row, declared and credit-side alike.
+      const everyOutcome = balance.scenarioReconciliations.flatMap((s) =>
+        s.evidenceObligations.map((o) => o.outcome)
+      );
+      expect(everyOutcome).not.toContain("satisfied");
+      expect(everyOutcome).not.toContain("failing");
+      // It IS on the ledger — as a broken suspense item, the only place it can honestly post.
+      const suspense = balance.scenarioReconciliations.find((s) => s.kind === "suspense-scenario");
+      expect(suspense?.reconcilingItems.map((i) => i.outcome)).toEqual(["broken"]);
+    }
+  );
+});
