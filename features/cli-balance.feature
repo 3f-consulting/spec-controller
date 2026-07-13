@@ -113,6 +113,26 @@ Feature: spec-controller balance runs standalone
       And it prints the Evidence Reconciliation to stdout
       And the reconciliation reports a Pending Item
 
+  Rule: the printed verdict agrees with the process exit code
+
+    The bug was THREE VIEWS OF ONE RUN DISAGREEING: the scenario tally said 0 out-of-balance
+    (a pass), the obligation tally said 17, and the process exited 1. Each was internally
+    consistent; nothing pinned them TOGETHER, so they drifted and a failing run read as
+    clean for as long as anyone cared to look.
+
+    Once the tally counts every Scenario Reconciliation, the tally, `isBalanced` and the
+    exit code are three statements of one fact. Pin that they agree — so no future change
+    can move one without moving the others.
+
+    @unit @e2e @SCN-CLI-013
+    Scenario: the tally, the verdict headline and the process exit code name the same outcome
+      Given a target whose only out-of-balance row is the suspense reconciliation
+      When "spec-controller balance" is invoked over that target through the CLI binary
+      Then the trial-balance table counts 1 out-of-balance Scenario Reconciliation
+      And the verdict headline reads OUT-OF-BALANCE and names exit 1
+      And the command exits with status 1
+      And the tally, the verdict headline and the process exit code agree
+
   Rule: the CLI answers --help from a single command/flag registry, completeness-guarded.
 
     `spec-controller balance --help` (and `-h`) prints the balance command's flags —

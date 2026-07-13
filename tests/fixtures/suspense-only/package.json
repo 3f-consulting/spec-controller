@@ -1,0 +1,8 @@
+{
+  "name": "suspense-only-fixture-target",
+  "private": true,
+  "scripts": {
+    "lint:unattributed": "echo unattributed-guard",
+    "test": "vitest run"
+  }
+}

@@ -76,6 +76,27 @@ const BROKEN = {
   packageJson: "tests/fixtures/broken/package.json",
 };
 
+/**
+ * The SUSPENSE-ONLY fixture target (@SCN-CLI-013) — an adopter's repository `17-36-50Z` shape, the run that
+ * started 3F-1703. EVERY DECLARED SCENARIO BALANCES (both @unit obligations satisfied by the
+ * vitest report; no phantom; no collection failure, so the run is SOUND and exit 4 never
+ * pre-empts). The ONE reconciling item in the whole run sits on the SUSPENSE row: the target's
+ * CI runs `lint:unattributed` and no scenario declares `@lint=lint:unattributed`, so the guard
+ * is an unattributed static-guard — an uncited credit posted to the `(no scenario)` row.
+ *
+ * The shape no other fixture in the suite has, and the ONLY one that can catch the drift: the
+ * DECLARED-ONLY tally reads a clean `2 | 2 | 0` while the run genuinely exits 1. That is the
+ * false green the operator and Cowork both read as a clean board. Unlike BALANCED, it needs
+ * BOTH a guardFUL --package-json and a --ci that runs the guard — the guard must be RUNNING
+ * (declared as a script AND invoked by a CI step) to post its uncited credit.
+ */
+const SUSPENSE_ONLY = {
+  features: "tests/fixtures/suspense-only/features",
+  vitest: "tests/fixtures/suspense-only/vitest.json",
+  packageJson: "tests/fixtures/suspense-only/package.json",
+  ci: "tests/fixtures/suspense-only/ci.yml",
+};
+
 /** The `--flag value` pairs the shared When passes to `balance` (set by each Given). */
 let invocationArgs: string[] = [];
 /** The path CLI-002's Given points a flag at — asserted verbatim in stderr. */
@@ -453,6 +474,129 @@ Then("nothing is reconciled to stdout", function () {
   // The bounded parser rejects BEFORE runReconcile, so no Evidence Reconciliation is
   // emitted — the unregistered flag never runs balance against zero evidence.
   assert.doesNotMatch(cliResult.stdout, /Evidence Reconciliation/);
+});
+
+// @SCN-CLI-013
+// THE ANTI-DRIFT INVARIANT — the guard that would have CAUGHT 3F-1703 rather than fixed it.
+//
+// The bug was THREE VIEWS OF ONE RUN DISAGREEING. Each view was internally consistent, and
+// NOTHING pinned them together, so they drifted: the tally said `141 | 141 | 0` (a pass), the
+// verdict was out-of-balance, and the process exited 1. A failing run read as a clean board for
+// as long as anyone cared to look. The three views are:
+//
+//   1. THE TALLY      — the Evidence reconciliation table's Scenario Reconciliation row
+//                       (`summary.scenarioReconciliations.outOfBalance`, assemble/report.ts),
+//   2. THE HEADLINE   — the `### Run verdict` line and the exit code it NAMES
+//                       (`runVerdictSection`, render/markdown.ts),
+//   3. THE EXIT CODE  — what the PROCESS actually returns (the dominance ladder in
+//                       cli-balance/cli.ts).
+//
+// Three INDEPENDENT derivations, deliberately left independent — unifying them would make drift
+// impossible by construction but would also make this guard unable to see it. Pinning them
+// TOGETHER is the point: no future change can move one without moving the others.
+//
+// THE EXIT CODE IS CAPTURED DIRECTLY OFF THE CLI PROCESS — `spawnSync(...).status` is the status
+// of the `spec-controller` process ITSELF (see `spawnBalance`). It is NEVER read off a pipeline:
+// `cmd | head; echo $?` reports HEAD's status and reads 0 on a failing run, laundering a failure
+// into a pass (lived while verifying 3F-1642 — a piped check reported exit 0 for a run that
+// genuinely exits 4). A guard that cannot see a failure is the very thing this scenario exists
+// to prevent, so there is no pipe, no `tee`, no `grep` between the CLI and the status read.
+
+// @SCN-CLI-013
+Given("a target whose only out-of-balance row is the suspense reconciliation", function () {
+  const root = process.cwd();
+  // The SUSPENSE-ONLY fixture (an adopter's repository 17-36-50Z shape): every DECLARED scenario balances, and
+  // the run's ONLY reconciling item is the unattributed static-guard's uncited credit on the
+  // `(no scenario)` suspense row. --ci and --package-json are BOTH required: a guard posts its
+  // uncited credit only when it is RUNNING (a package.json script that a CI step invokes).
+  for (const path of Object.values(SUSPENSE_ONLY)) {
+    assert.ok(existsSync(join(root, path)), `missing fixture input: ${path}`);
+  }
+  invocationArgs = [
+    "--features",
+    SUSPENSE_ONLY.features,
+    "--vitest",
+    SUSPENSE_ONLY.vitest,
+    "--package-json",
+    SUSPENSE_ONLY.packageJson,
+    "--ci",
+    SUSPENSE_ONLY.ci,
+  ];
+});
+
+/**
+ * VIEW 1 — the tally. The Evidence reconciliation table's Scenario Reconciliation row, parsed out
+ * of the REAL binary's stdout: `| Scenario Reconciliation | <total> | <balanced> | <outOfBalance> |`.
+ */
+function tallyOutOfBalance(stdout: string): number {
+  const row = stdout.match(/^\| Scenario Reconciliation \| (\d+) \| (\d+) \| (\d+) \|/m);
+  assert.ok(row, `expected a Scenario Reconciliation tally row in stdout; got:\n${stdout}`);
+  return Number(row[3]);
+}
+
+/**
+ * VIEW 2 — the headline. The `### Run verdict` line: its VERDICT WORD and the EXIT CODE IT NAMES
+ * (`**OUT-OF-BALANCE** — … (exit 1)`). Both halves are parsed, because the drift this guard
+ * catches can move either one.
+ */
+function verdictHeadline(stdout: string): { word: string; exit: number } {
+  const headline = stdout.match(/^\*\*(BALANCED|OUT-OF-BALANCE|UNSOUND)\*\* — .*\(exit (\d+)\)$/m);
+  assert.ok(headline, `expected a run-verdict headline in stdout; got:\n${stdout}`);
+  return { word: String(headline[1]), exit: Number(headline[2]) };
+}
+
+// @SCN-CLI-013
+Then("the trial-balance table counts {int} out-of-balance Scenario Reconciliation", function (count: number) {
+  // The tally counts EVERY Scenario Reconciliation (@SCN-RMD-001, 3F-1724), so the suspense row
+  // — always out-of-balance — is IN the count. It reads 1, never the 0 the retracted declared-only
+  // tally gave, which is what made a failing run look like a pass.
+  assert.equal(
+    tallyOutOfBalance(cliResult.stdout),
+    count,
+    `expected the tally to count ${count} out-of-balance Scenario Reconciliation; got:\n${cliResult.stdout}`,
+  );
+});
+
+// @SCN-CLI-013
+Then("the verdict headline reads {word} and names exit {int}", function (word: string, exit: number) {
+  const headline = verdictHeadline(cliResult.stdout);
+  assert.equal(headline.word, word, `expected the headline to read ${word}; got ${headline.word}`);
+  assert.equal(headline.exit, exit, `expected the headline to name exit ${exit}; got exit ${headline.exit}`);
+});
+
+// @SCN-CLI-013
+Then("the tally, the verdict headline and the process exit code agree", function () {
+  // THE INVARIANT ITSELF — the cross-check the three literal assertions above cannot make. Each of
+  // them pins ONE view against a constant; this pins the views against EACH OTHER, so the guard
+  // reds if any ONE of the three is changed without the others (the drift it exists to catch).
+  const tally = tallyOutOfBalance(cliResult.stdout);
+  const headline = verdictHeadline(cliResult.stdout);
+  // `status` is the status of the CLI PROCESS ITSELF — spawnSync, never a pipeline (see the block
+  // comment above; a piped `$?` reads the LAST command's status and launders a failure into a pass).
+  const exitCode = cliResult.status;
+
+  // The headline names the code the process actually returns. Drift here is the 3F-1642 shape: a
+  // report saying exit 1 while the process exits 4.
+  assert.equal(
+    exitCode,
+    headline.exit,
+    `the headline names exit ${headline.exit} but the process exited ${exitCode}`,
+  );
+  // The tally agrees with the verdict: a run with a non-zero exit has an out-of-balance count that
+  // is non-zero, and a run that exits 0 has a tally of 0. Drift here is the 3F-1703 shape itself: a
+  // `141 | 141 | 0` tally on a run that exits 1.
+  assert.equal(
+    tally > 0,
+    exitCode !== 0,
+    `the tally counts ${tally} out-of-balance but the process exited ${exitCode} — the tally and the exit code disagree`,
+  );
+  // And the headline WORD agrees with the tally: a pass word ("BALANCED") can never sit above a
+  // non-zero out-of-balance count — the false green a reader takes at face value.
+  assert.equal(
+    headline.word === "BALANCED",
+    tally === 0,
+    `the headline reads ${headline.word} but the tally counts ${tally} out-of-balance`,
+  );
 });
 
 // @SCN-CLI-004

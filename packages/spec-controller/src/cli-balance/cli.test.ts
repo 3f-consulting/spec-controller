@@ -299,3 +299,147 @@ describe("[SCN-CLI-003] checkInputsExist treats an OMITTED optional flag as noth
     expect(checkInputsExist(args, exists)).toBeNull();
   });
 });
+
+/**
+ * THE ANTI-DRIFT INVARIANT (@SCN-CLI-013) — the guard that would have CAUGHT 3F-1703 rather
+ * than fixed it.
+ *
+ * The bug was THREE VIEWS OF ONE RUN DISAGREEING. Each view was internally consistent, and
+ * NOTHING pinned them together, so they drifted: the tally read `141 | 141 | 0` (a pass), the
+ * verdict was out-of-balance, and the process exited 1. A failing run read as a clean board for
+ * as long as anyone cared to look. The three views:
+ *
+ *   1. THE TALLY     — `summary.scenarioReconciliations.outOfBalance`, rendered as the Evidence
+ *                      reconciliation table's Scenario Reconciliation row (assemble/report.ts),
+ *   2. THE HEADLINE  — the `### Run verdict` line and the exit code it NAMES (render/markdown.ts),
+ *   3. THE EXIT CODE — what the process actually returns (the dominance ladder in this file's
+ *                      `runBalance`).
+ *
+ * They are three INDEPENDENT derivations, and this suite deliberately leaves them independent —
+ * folding them into one source would make drift impossible by construction but would also make
+ * this guard blind to it. Pinning them TOGETHER is the point: no future change can move one
+ * without moving the others.
+ *
+ * The @unit arm sees all three because `runBalance` is called IN-PROCESS (the established
+ * @SCN-CLI-004 / @SCN-CLI-012 pattern): stdout is spied for the tally + the headline, and the
+ * exit code is read off `process.exitCode` — the very variable the gate sets. The @e2e arm
+ * (tests/steps/cliBalance.steps.ts) proves the same three views over the REAL subprocess, where
+ * the exit code is the PROCESS's own status. Both arms are needed: only the subprocess proves the
+ * code actually leaves the process, and only that view drifted unnoticed in the first place.
+ *
+ * Bidirectional evidence: the describe string carries @SCN-CLI-013, matching
+ * features/cli-balance.feature.
+ */
+describe("[SCN-CLI-013] the tally, the verdict headline and the process exit code name the same outcome", () => {
+  /**
+   * The three run shapes whose verdicts are DETERMINATE from the reconciliation alone (exit 3 is
+   * excluded on purpose: it depends on the CLI-edge `--strict` flag the core cannot see, so the
+   * headline names it only conditionally — see `runVerdictSection`).
+   *
+   * The expectations are LITERAL, not re-derived from the predicates the code under test asks —
+   * a derived expectation would move WITH a mutation and prove nothing.
+   */
+  const RUNS = [
+    {
+      // BALANCED — the acceptance's second arm: `0`, BALANCED / exit 0, process exits 0.
+      name: "an all-balanced run",
+      argv: [
+        "--features", "tests/fixtures/balanced/features",
+        "--vitest", "tests/fixtures/balanced/vitest.json",
+        "--package-json", "tests/fixtures/balanced/package.json",
+      ],
+      outOfBalance: 0,
+      word: "BALANCED",
+      exit: 0,
+    },
+    {
+      // SUSPENSE-ONLY — the load-bearing arm: an adopter's repository 17-36-50Z shape, where every DECLARED
+      // scenario balances and the run's only reconciling item is the unattributed static-guard's
+      // uncited credit on the `(no scenario)` row. The declared-only tally read a clean `2 | 2 | 0`
+      // here; the tally that counts every Scenario Reconciliation reads 1 out-of-balance and
+      // agrees with the exit code.
+      name: "a run whose only out-of-balance row is the suspense reconciliation",
+      argv: [
+        "--features", "tests/fixtures/suspense-only/features",
+        "--vitest", "tests/fixtures/suspense-only/vitest.json",
+        "--package-json", "tests/fixtures/suspense-only/package.json",
+        "--ci", "tests/fixtures/suspense-only/ci.yml",
+      ],
+      outOfBalance: 1,
+      word: "OUT-OF-BALANCE",
+      exit: 1,
+    },
+    {
+      // UNSOUND — the dominance arm. This run is out-of-balance TOO (the `broken` item sits on the
+      // suspense row), so it pins that the headline follows the CLI's dominance order rather than
+      // asking `isBalanced` first: a headline saying exit 1 over a process that exits 4 is exactly
+      // the drift (lived: 3F-1642).
+      name: "an unsound run carrying a collection-failed suite",
+      argv: [
+        "--features", "tests/fixtures/broken/features",
+        "--vitest", "tests/fixtures/broken/vitest.json",
+        "--package-json", "tests/fixtures/broken/package.json",
+      ],
+      outOfBalance: 2,
+      word: "UNSOUND",
+      exit: 4,
+    },
+  ] as const;
+
+  /** Run `balance` in-process and return the three views of that one run. */
+  function threeViewsOf(argv: readonly string[]): { outOfBalance: number; word: string; headlineExit: number; exitCode: number } {
+    const savedExitCode = process.exitCode;
+    // Normalise so the reading reflects THIS run, not vitest's ambient state (a balanced run
+    // LEAVES the code untouched, so it must start at 0).
+    process.exitCode = 0;
+    const chunks: string[] = [];
+    const writeSpy = vi
+      .spyOn(process.stdout, "write")
+      .mockImplementation((chunk: string | Uint8Array): boolean => {
+        chunks.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
+        return true;
+      });
+    try {
+      runBalance([...argv]);
+      const emitted = chunks.join("");
+      // VIEW 1 — the tally: `| Scenario Reconciliation | <total> | <balanced> | <outOfBalance> |`.
+      const tally = emitted.match(/^\| Scenario Reconciliation \| (\d+) \| (\d+) \| (\d+) \|/m);
+      expect(tally, `expected a Scenario Reconciliation tally row; got:\n${emitted}`).not.toBeNull();
+      // VIEW 2 — the headline: `**OUT-OF-BALANCE** — … (exit 1)`. Both halves: the drift can move
+      // the verdict WORD or the exit code it NAMES.
+      const headline = emitted.match(/^\*\*(BALANCED|OUT-OF-BALANCE|UNSOUND)\*\* — .*\(exit (\d+)\)$/m);
+      expect(headline, `expected a run-verdict headline; got:\n${emitted}`).not.toBeNull();
+      return {
+        outOfBalance: Number(tally?.[3]),
+        word: String(headline?.[1]),
+        headlineExit: Number(headline?.[2]),
+        // VIEW 3 — the exit code: the very variable the gate sets. Read BEFORE the finally block
+        // restores it.
+        exitCode: Number(process.exitCode ?? 0),
+      };
+    } finally {
+      writeSpy.mockRestore();
+      // Never leak a non-zero exit code into the vitest run itself.
+      process.exitCode = savedExitCode;
+    }
+  }
+
+  for (const run of RUNS) {
+    it(`names one outcome across all three views for ${run.name}`, () => {
+      const views = threeViewsOf(run.argv);
+
+      // Each view against its LITERAL expectation — so a mutation of any ONE view reds here.
+      expect(views.outOfBalance).toBe(run.outOfBalance);
+      expect(views.word).toBe(run.word);
+      expect(views.headlineExit).toBe(run.exit);
+      expect(views.exitCode).toBe(run.exit);
+
+      // And the views against EACH OTHER — the invariant proper, which no single literal can
+      // state. A change that moves one view without the others reds here even if someone
+      // "helpfully" updated its literal above.
+      expect(views.headlineExit).toBe(views.exitCode);
+      expect(views.outOfBalance > 0).toBe(views.exitCode !== 0);
+      expect(views.word === "BALANCED").toBe(views.outOfBalance === 0);
+    });
+  }
+});
