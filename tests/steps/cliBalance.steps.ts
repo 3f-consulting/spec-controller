@@ -62,6 +62,20 @@ const PENDING_ONLY = {
   packageJson: "tests/fixtures/pending-only/package.json",
 };
 
+/**
+ * The BROKEN fixture target (@SCN-CLI-012) — one declared @unit scenario whose proving
+ * suite FAILED TO COLLECT: the vitest report carries that file with `status: "failed"`,
+ * a collection-error `message` and ZERO assertionResults (an adopter's repository dogfood fault,
+ * 3F-1642). The reader posts a `broken` suspense item; the scenario reads `missing`. A
+ * GUARDLESS --package-json so the ONLY suspense item is the broken one. The run is BOTH
+ * out-of-balance AND unsound — the exact collision the exit-4 pre-emption resolves.
+ */
+const BROKEN = {
+  features: "tests/fixtures/broken/features",
+  vitest: "tests/fixtures/broken/vitest.json",
+  packageJson: "tests/fixtures/broken/package.json",
+};
+
 /** The `--flag value` pairs the shared When passes to `balance` (set by each Given). */
 let invocationArgs: string[] = [];
 /** The path CLI-002's Given points a flag at — asserted verbatim in stderr. */
@@ -214,6 +228,29 @@ Given("a target that reconciles all-balanced", function () {
   assert.ok(existsSync(join(root, BALANCED.features)), `missing fixture features: ${BALANCED.features}`);
   assert.ok(existsSync(join(root, BALANCED.vitest)), `missing fixture vitest report: ${BALANCED.vitest}`);
   invocationArgs = ["--features", BALANCED.features, "--vitest", BALANCED.vitest, "--package-json", BALANCED.packageJson];
+});
+
+// @SCN-CLI-012
+Given("a target whose vitest report carries a collection-failed suite", function () {
+  const root = process.cwd();
+  // The BROKEN fixture (3F-1642): the declared scenario's proving suite FAILED TO COLLECT —
+  // the vitest report carries the file with `status: "failed"` and ZERO assertionResults, so
+  // the reader posts a `broken` suspense item and the scenario itself reads `missing`. The run
+  // is therefore BOTH out-of-balance (the broken item is a suspense-row reconciling item) and
+  // UNSOUND — which is precisely the trap: under the old dominance order it exited 1 and the
+  // collection failure was indistinguishable from an honest disagreement. A guardless
+  // --package-json keeps the ONLY suspense item the broken one, so exit 4 can only come from
+  // the broken evidence.
+  assert.ok(existsSync(join(root, BROKEN.features)), `missing fixture features: ${BROKEN.features}`);
+  assert.ok(existsSync(join(root, BROKEN.vitest)), `missing fixture vitest report: ${BROKEN.vitest}`);
+  invocationArgs = [
+    "--features",
+    BROKEN.features,
+    "--vitest",
+    BROKEN.vitest,
+    "--package-json",
+    BROKEN.packageJson,
+  ];
 });
 
 // @SCN-CLI-010

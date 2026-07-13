@@ -153,6 +153,53 @@ describe("[SCN-CLI-004] runBalance sets the out-of-balance exit code AFTER emitt
   });
 });
 
+describe("[SCN-CLI-012] runBalance exits 4 for a run carrying broken evidence, PRE-EMPTING the out-of-balance verdict", () => {
+  it("emits the report in full AND sets process.exitCode = 4 — not the 1 the same run's out-of-balance verdict would otherwise give", () => {
+    // THE DOMINANCE ORDER (@SCN-CLI-012). The broken fixture's run is out-of-balance TOO —
+    // its `broken` item sits on the suspense row, so `isBalanced` is already false. That is
+    // exactly why the order is load-bearing: unless `hasBrokenEvidence` is checked BEFORE
+    // `isBalanced`, exit 4 is unreachable and the collection failure stays masked as an
+    // honest disagreement (exit 1). Teeth: asserting EXACTLY 4 fails under the old order,
+    // which would give 1 over this very fixture.
+    //
+    // The report must still flush IN FULL before the code is set — process.exitCode, never
+    // process.exit (reaching these assertions at all is half the proof: a process.exit would
+    // tear the worker down and never return here). Same discipline as the CLI-004 gate.
+    const savedExitCode = process.exitCode;
+    process.exitCode = 0;
+    const chunks: string[] = [];
+    const writeSpy = vi
+      .spyOn(process.stdout, "write")
+      .mockImplementation((chunk: string | Uint8Array): boolean => {
+        chunks.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
+        return true;
+      });
+    try {
+      // The broken fixture: one declared @unit scenario whose proving suite failed to COLLECT
+      // (status "failed", zero assertionResults). Guardless --package-json, so the only
+      // suspense item is the broken one — exit 4 can only come from the broken evidence.
+      runBalance([
+        "--features",
+        "tests/fixtures/broken/features",
+        "--vitest",
+        "tests/fixtures/broken/vitest.json",
+        "--package-json",
+        "tests/fixtures/broken/package.json",
+      ]);
+
+      const emitted = chunks.join("");
+      expect(emitted).toMatch(/^# Evidence Reconciliation/m);
+      // The run genuinely IS out-of-balance as well — proof the 4 pre-empted a live 1 rather
+      // than filling a vacuum.
+      expect(emitted).toMatch(/out-of-balance/);
+      expect(process.exitCode).toBe(4);
+    } finally {
+      writeSpy.mockRestore();
+      process.exitCode = savedExitCode;
+    }
+  });
+});
+
 describe("[SCN-CLI-010] runBalance leaves the exit code 0 for an only-Pending-Items run when --strict is not given", () => {
   it("emits the balanced-with-pending report AND leaves process.exitCode at its default 0, returning normally", () => {
     // The LENIENT DEFAULT (@SCN-CLI-010): a reconciliation balanced except for Pending Items

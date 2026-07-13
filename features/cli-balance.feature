@@ -71,6 +71,24 @@ Feature: spec-controller balance runs standalone
       When "spec-controller balance" is invoked over that target through the CLI binary
       Then the command exits with status 0
 
+  Rule: an unsound run pre-empts the balance verdict
+
+    You cannot trust a reconciliation whose evidence never materialised, so unsound
+    DOMINATES. Exit 4 (taxonomy: 0 balanced / 1 out-of-balance / 2 usage / 3 pending-
+    under-strict / 4 unsound) even though a broken run is ALSO out-of-balance — the broken
+    item sits on the suspense row, so `isBalanced` is already false. Exit 1 says "the
+    ledger disagrees"; exit 4 says "the ledger could not be trusted to disagree". The
+    pre-emption is load-bearing, not cosmetic: unless broken evidence is checked BEFORE
+    the balance verdict, exit 4 is unreachable and the collection failure stays masked as
+    an honest disagreement.
+
+    @unit @e2e @SCN-CLI-012
+    Scenario: a run whose vitest report carries a collection-failed suite exits 4, not 1
+      Given a target whose vitest report carries a collection-failed suite
+      When "spec-controller balance" is invoked over that target through the CLI binary
+      Then the command exits with status 4
+      And it prints the Evidence Reconciliation to stdout
+
   Rule: --strict escalates Pending Items to a run failure
 
     Pending Items are run-neutral by default (the slice-2 partition, @SCN-PND-008); --strict

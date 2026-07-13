@@ -1,0 +1,7 @@
+{
+  "name": "broken-fixture-target",
+  "private": true,
+  "scripts": {
+    "test": "vitest run"
+  }
+}

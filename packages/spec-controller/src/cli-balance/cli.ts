@@ -21,7 +21,12 @@ import {
 } from "../ingest/ingestQualityChecks.js";
 import { planOutput } from "./emit/format.js";
 import { writeOutputs } from "./emit/writer.js";
-import { renderReportFromJson, isBalanced, hasPendingItems } from "@3f-consulting/spec-controller-core";
+import {
+  renderReportFromJson,
+  isBalanced,
+  hasPendingItems,
+  hasBrokenEvidence,
+} from "@3f-consulting/spec-controller-core";
 import { resolveSourceSha, resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 import { cliRegistry, renderBalanceHelp } from "../cli-registry.js";
 import type { CliRegistry } from "../cli-registry.js";
@@ -327,8 +332,26 @@ export function runBalance(argv: string[]): void {
   // CLI-004 gate this SETS process.exitCode (never process.exit) AFTER writeOutputs, so the
   // buffered report is flushed intact. `--strict` is a registry-declared boolean, recorded by
   // parseArgs as the string "true" — presence is what matters, so `!== undefined` reads it.
+  //
+  // The UNSOUND pre-emption (@SCN-CLI-012): a run carrying BROKEN evidence — a proving suite
+  // that failed to COLLECT, so the behaviour was never exercised — exits the DISTINCT code 4
+  // (taxonomy 0 balanced / 1 out-of-balance / 2 usage / 3 pending-under-strict / 4 unsound).
+  // Exit 1 says "the ledger disagrees"; exit 4 says "the ledger could not be TRUSTED to
+  // disagree" — you cannot trust a reconciliation whose evidence never materialised, so
+  // unsound DOMINATES.
+  //
+  // THE ORDER IS LOAD-BEARING, NOT COSMETIC. A broken run is ALWAYS out-of-balance: its
+  // `broken` item sits on the SUSPENSE row, so `isBalanced` is already false. Check it AFTER
+  // `isBalanced` and the branch is UNREACHABLE — every broken run would exit 1 and the
+  // collection failure would stay masked as an honest disagreement (an adopter's repository dogfood fault,
+  // 3F-1642). So `hasBrokenEvidence` is checked FIRST, PRE-EMPTING the balance verdict it
+  // would otherwise be swallowed by. @SCN-CLI-004 is a BYSTANDER, not an Update: its fixture
+  // is a SOUND out-of-balance run (no broken item), so it falls through this branch and still
+  // exits exactly 1 — the pre-emption fires only when evidence genuinely failed to collect.
   const strict = args["strict"] !== undefined;
-  if (!isBalanced(balance)) {
+  if (hasBrokenEvidence(balance)) {
+    process.exitCode = 4;
+  } else if (!isBalanced(balance)) {
     process.exitCode = 1;
   } else if (strict && hasPendingItems(balance)) {
     process.exitCode = 3;
