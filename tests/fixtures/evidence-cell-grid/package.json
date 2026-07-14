@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "guard:cell-grid": "echo cell-grid-guard"
+  }
+}

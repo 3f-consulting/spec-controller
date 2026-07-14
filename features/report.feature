@@ -274,22 +274,43 @@ Feature: The report renders the ledger as sectioned facts
     e2e, Performance; e2e/performance only when a run has them). Each cell is a four-way
     demand×evidence observation encoding: `N` (demanded, N evidence observations attributed — backing present,
     pass OR fail), `∅` (demanded, none — missing), `(N)` (NOT demanded but N
-    present — undeclared evidence observation, the case the reconciler never computed), `—` (neither).
+    present — evidence observations at a quality-check the scenario never demanded), `—` (neither).
     The cell counts BACKING, not quality — a failing evidence obligation shows its
     count, its failing-ness staying in the Verdict + Reconciling-items columns.
     The Lint cell reads the static evidence obligation outcomes (lint isn't a counted evidence observation):
     the count of guards present (balanced or the watermelon — the script exists; its
     inadequacy is the 🍉 in Reconciling-items); no `(N)` for lint. A fixed cell key
     (notation, not data — so facts-only) renders immediately before the table. Markdown-only
-    — the attributed atoms are already on JSON. Proven in isolation by Vitest
-    over a balance + evidence observation fixture spanning every cell case. The "count is backing, not
+    — the attributed atoms are already on JSON. The "count is backing, not
     quality — never rank by it" discipline is a documented rule, NOT rendered.
 
-    @unit @SCN-RPT-011
+    The `(N)` cell has TWO production shapes, and the cell must read demand off the ACTIVE
+    obligations to render both. (1) PENDING + ATTRIBUTED: `evidenceObligationPairs` is built over
+    ALL obligations INCLUDING pending, but the rows reconcile over the active ones only — so an
+    evidence observation citing a pending pair is not undemanded, posts NO row at that
+    quality-check, and IS attributed → not demanded, count > 0 → `(N)`. (2) UNDEMANDED
+    (@SCN-LDG-008): the reconciler posts a credit-side row ON the real scenario, outcome
+    `undemanded`, and the census keeps that observation OUT of `attributed` (it counts into
+    `undemandedCount`) — so the cell reads its count off the undemanded rows themselves. An
+    `undemanded` row is NOT a demand: reading it as one rendered `∅` (missing), which contradicts
+    the row's own Reconciling-items column and points at the OPPOSITE remedy — "write the test",
+    when the truth is "fix the attribution". The not-demanded branch therefore counts BOTH terms
+    (attributed PLUS undemanded rows at that quality-check); they are mutually exclusive per
+    (scenario, quality-check), so the sum is safe, and dropping either silently regresses one
+    shape to `—`. Proven in isolation by Vitest over a RECONCILER-TRUE fixture (the balance is
+    produced by `reconcile()` over a scenario + observation corpus, never hand-written, so a
+    fixture can no longer pin a shape the pipeline cannot emit — evidence-manifesto §11A), and
+    through a REAL reconcile + render over a fixture target — the cell-rendering class
+    (@SCN-RPT-017 / @SCN-RPT-018) needs both layers.
+
+    @unit @integration @SCN-RPT-011
     Scenario: the ledger row shows corpus-driven evidence columns with the four-way cell encoding
-      Given a reconciliation balance and evidence observation aggregate spanning met, missing, undeclared-evidence observation, and absent evidence across the lint and runtime columns
-      When the markdown report is rendered
-      Then each scenario row carries one cell per corpus column (Lint first, then the runtime levels present) with the four-way encoding — the count, ∅, (N), or — — and the fixed cell key renders immediately before the ledger table
+      Given a reconciliation over a corpus spanning every cell case — a satisfied obligation, a missing one, an undemanded observation citing a scenario that never demanded that quality-check, a pending obligation with attributed observations at that pair, and a column absent for the scenario
+      When the ledger is rendered
+      Then each scenario row carries one cell per corpus column (Lint first, then the runtime levels present) with the four-way encoding — the count, ∅, (N), or —
+      And the scenario whose only state at a quality-check is undemanded renders (N) there, not ∅
+      And the scenario whose obligation at a quality-check is pending, with attributed observations at that pair, renders (N) there
+      And the fixed cell key renders immediately before the ledger table
 
   Rule: Warnings flags the unattributed evidence observation tests with their file locators
 

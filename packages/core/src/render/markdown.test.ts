@@ -24,9 +24,11 @@ import { describe, it, expect } from "vitest";
 import { renderMarkdown } from "./markdown.js";
 import type { EvidenceReconciliation, Outcome, ScenarioReconciliation } from "../model.js";
 import { OUTCOME_DESCRIPTION } from "../model.js";
-import { isBalanced } from "../reconcile/reconcile.js";
+import { isBalanced, reconcile } from "../reconcile/reconcile.js";
 import type { RunContext } from "../provenance/provenance.js";
 import type { RuntimeEvidenceObservationKindCounts } from "../census/evidenceObservations.js";
+import { countRuntimeEvidenceObservationKinds } from "../census/evidenceObservations.js";
+import type { EvidenceObservation, Scenario } from "../model.js";
 
 /** A minimal balanced balance — enough for the renderer to produce a report. */
 const balance: EvidenceReconciliation = {
@@ -1045,75 +1047,96 @@ describe("[SCN-RPT-010] the markdown report renders the Test volume evidenceObse
  * aggregate is threaded, each scenario row gains columns (Lint first, then the runtime
  * levels present in demand or evidenceObservations — e2e/performance only when present) with the
  * four-way demand×evidenceObservations cell encoding (`N` backing present / `∅` missing /
- * `(N)` undeclared evidenceObservations / `—` neither), preceded by the fixed cell key. The cell counts
- * BACKING, not quality. Without provide the original three-column ledger is preserved.
+ * `(N)` observations at a quality-check never demanded / `—` neither), preceded by the fixed cell
+ * key. The cell counts BACKING, not quality. Without it the original three-column ledger is preserved.
+ *
+ * RECONCILER-TRUE FIXTURE (evidence-manifesto §11A, 3F-1808). The balance and the census are
+ * PRODUCED by `reconcile()` + `countRuntimeEvidenceObservationKinds()` over a scenario +
+ * observation corpus — never hand-written. The previous hand-built fixture pinned the `(N)` branch
+ * with an `attributed` entry at an UNDECLARED pair, a shape the census CANNOT emit (it defines
+ * `attributed` as credits matching a DECLARED pair; a credit at an undeclared pair is undemanded).
+ * The branch was pinned by impossible data, which is exactly why the undemanded bug survived a
+ * green suite. Building the fixture through the reconciler makes that shape UNCONSTRUCTIBLE, and
+ * forces the two REAL `(N)` shapes into the corpus:
+ *   - UNDEMANDED (SCN-C, @SCN-LDG-008): a credit citing a real scenario at a quality-check it never
+ *     declared. The reconciler posts a credit-side `undemanded` row ON the scenario; the census
+ *     keeps the credit OUT of `attributed` (into undemandedCount). The cell must NOT read that row
+ *     as a demand (it rendered ∅ — "missing" — pre-fix) and must count the (N) off the rows.
+ *   - PENDING + ATTRIBUTED (SCN-F, live in production today): a `<qc>pending` obligation partitions
+ *     to a one-sided Pending Item and posts NO reconciled row, yet the pending pair STAYS in
+ *     evidenceObligationPairs — so the credit citing it IS attributed. Not demanded, count > 0 →
+ *     (N). It is IN the fixture and asserted because the fix KEEPS the `attributed` term in the
+ *     not-demanded branch: keeping code alive on a rationale nothing asserts is §11A one level up.
  *
  * Parent: (@SCN-RPT-011) — per-scenario evidence columns.
  */
 describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence columns", () => {
-  // A balance spanning every cell case across Lint / Unit / Integration:
-  //   SCN-A: @unit (met, 2) + two lint guards present (balanced + watermelon) → Lint 2
-  //   SCN-B: @unit missing → Unit ∅
-  //   SCN-C: @unit met (1) + an UNDECLARED integration evidenceObservation → Integration (1)
-  //   SCN-D: @integration met (1), no @unit → Unit —
-  //   SCN-E: one lint guard missing → Lint ∅
-  const balance: EvidenceReconciliation = {
-    scenarioReconciliations: [
-      {
-        scnId: "SCN-A",
-        verdict: "out-of-balance",
-        evidenceObligations: [
-          { qualityCheck: "unit", outcome: "satisfied" },
-          { qualityCheck: "lint", guard: "guard-x", outcome: "satisfied" },
-          { qualityCheck: "lint", guard: "guard-y", outcome: "watermelon" },
-        ],
-        pendingItems: [],
-        reconcilingItems: [
-          { qualityCheck: "lint", guard: "guard-y", outcome: "watermelon" },
-        ],
-      },
-      {
-        scnId: "SCN-B",
-        verdict: "out-of-balance",
-        evidenceObligations: [{ qualityCheck: "unit", outcome: "missing" }],
-        pendingItems: [],
-        reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
-      },
-      {
-        scnId: "SCN-C",
-        verdict: "balanced",
-        evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
-        pendingItems: [],
-        reconcilingItems: [],
-      },
-      {
-        scnId: "SCN-D",
-        verdict: "balanced",
-        evidenceObligations: [{ qualityCheck: "integration", outcome: "satisfied" }],
-        pendingItems: [],
-        reconcilingItems: [],
-      },
-      {
-        scnId: "SCN-E",
-        verdict: "out-of-balance",
-        evidenceObligations: [{ qualityCheck: "lint", guard: "guard-z", outcome: "missing" }],
-        pendingItems: [],
-        reconcilingItems: [{ qualityCheck: "lint", guard: "guard-z", outcome: "missing" }],
-      },
-    ],
-  };
-  const evidenceObservations: RuntimeEvidenceObservationKindCounts = {
-    rawByRuntimeQualityCheck: { unit: 3, integration: 2, e2e: 0, performance: 0 },
-    attributed: [
-      { scnId: "SCN-A", qualityCheck: "unit", count: 2 },
-      { scnId: "SCN-C", qualityCheck: "unit", count: 1 },
-      { scnId: "SCN-C", qualityCheck: "integration", count: 1 }, // undeclared evidenceObservations → (1)
-      { scnId: "SCN-D", qualityCheck: "integration", count: 1 },
-    ],
-    undemandedCount: 0,
-    phantomCount: 0,
-    suspenseCount: 0,
-  };
+  // The CORPUS — declared scenarios + observed evidence, spanning every cell case across
+  // Lint / Unit / Integration. The balance below is RECONCILED from it, so every row is a shape
+  // the pipeline actually emits:
+  //   SCN-A: @unit (2 observations) + two lint guards, one wired (satisfied) one not (watermelon)
+  //          → Lint 2 (guards PRESENT), Unit 2
+  //   SCN-B: @unit, no observation → Unit ∅
+  //   SCN-C: @unit (1 observation) + an integration observation it NEVER demanded → Unit 1,
+  //          Integration (1) — the UNDEMANDED shape
+  //   SCN-D: @integration (1 observation), no @unit → Unit —, Integration 1
+  //   SCN-E: one lint guard, absent → Lint ∅
+  //   SCN-F: @unitpending with a unit observation attributed at the pending pair → Unit (1)
+  const scenarios: Scenario[] = [
+    {
+      scnId: "SCN-A",
+      evidenceObligations: [
+        { qualityCheck: "unit" },
+        { qualityCheck: "lint", guard: "guard-x" },
+        { qualityCheck: "lint", guard: "guard-y" },
+      ],
+    },
+    { scnId: "SCN-B", evidenceObligations: [{ qualityCheck: "unit" }] },
+    { scnId: "SCN-C", evidenceObligations: [{ qualityCheck: "unit" }] },
+    { scnId: "SCN-D", evidenceObligations: [{ qualityCheck: "integration" }] },
+    { scnId: "SCN-E", evidenceObligations: [{ qualityCheck: "lint", guard: "guard-z" }] },
+    { scnId: "SCN-F", evidenceObligations: [{ qualityCheck: "unit", pending: true }] },
+  ];
+  const observations: EvidenceObservation[] = [
+    { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
+    { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
+    // SCN-C's integration credit cites a quality-check SCN-C never declared → UNDEMANDED.
+    { qualityCheck: "unit", scnId: "SCN-C", status: "passed" },
+    { qualityCheck: "integration", scnId: "SCN-C", status: "passed" },
+    { qualityCheck: "integration", scnId: "SCN-D", status: "passed" },
+    // SCN-F's unit obligation is PENDING; the credit still lands at the (declared) pending pair,
+    // so the census counts it ATTRIBUTED while the reconciler posts no row → the (N) preserved path.
+    { qualityCheck: "unit", scnId: "SCN-F", status: "passed" },
+    // The guards: guard-x wired into CI over real source → satisfied; guard-y exists but is not
+    // wired → the watermelon (PRESENT, so it counts into the Lint cell); guard-z has no
+    // observation at all → missing (∅).
+    { qualityCheck: "lint", guard: "guard-x", exists: true, enforcedOverRealSource: true },
+    { qualityCheck: "lint", guard: "guard-y", exists: true, enforcedOverRealSource: false },
+  ];
+  const balance: EvidenceReconciliation = reconcile(scenarios, observations);
+  const evidenceObservations: RuntimeEvidenceObservationKindCounts =
+    countRuntimeEvidenceObservationKinds({ observations, scenarios });
+
+  it("builds the fixture through the reconciler — the undemanded credit is OUT of attributed, and the pending pair's credit is IN", () => {
+    // The fixture's own guard: it can only pin shapes the pipeline emits. The SCN-C integration
+    // credit is UNDEMANDED (never attributed — the shape the old hand-built fixture faked), while
+    // the SCN-F credit at the PENDING pair IS attributed.
+    expect(evidenceObservations.undemandedCount).toBe(1);
+    expect(evidenceObservations.attributed).not.toContainEqual({
+      scnId: "SCN-C",
+      qualityCheck: "integration",
+      count: 1,
+    });
+    expect(evidenceObservations.attributed).toContainEqual({
+      scnId: "SCN-F",
+      qualityCheck: "unit",
+      count: 1,
+    });
+    // And SCN-F's pending obligation posts a one-sided Pending Item, never a reconciled row.
+    const scnF = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-F");
+    expect(scnF?.pendingItems).toEqual([{ qualityCheck: "unit" }]);
+    expect(scnF?.evidenceObligations).toEqual([]);
+  });
 
   it("renders corpus-driven columns — Lint first, then the runtime levels present (e2e/performance absent)", () => {
     const md = renderMarkdown(balance, ctx, undefined, evidenceObservations);
@@ -1129,12 +1152,22 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     expect(md).toContain("| SCN-A | 2 | 2 | — |");
     // demanded & missing → ∅ (missing).
     expect(md).toContain("| SCN-B | — | ∅ | — |");
-    // not demanded but present → (N) — the undeclared-evidenceObservations case.
+    // not demanded but present → (N): SCN-C's integration credit is UNDEMANDED — the reconciler
+    // posts a credit-side row on SCN-C, which is NOT a demand. Pre-fix the cell read it as one and
+    // rendered ∅ ("missing" — write the test), contradicting its own Reconciling-items column.
     expect(md).toContain("| SCN-C | — | 1 | (1) |");
     // declared elsewhere, absent here → —.
     expect(md).toContain("| SCN-D | — | — | 1 |");
     // lint declared but its guard missing → ∅.
     expect(md).toContain("| SCN-E | ∅ | — | — |");
+  });
+
+  it("renders (N) for an observation attributed at a PENDING pair — the second, live-today (N) shape", () => {
+    const md = renderMarkdown(balance, ctx, undefined, evidenceObservations);
+    // SCN-F's unit obligation is deferred, so it posts no reconciled row (not demanded), but its
+    // credit IS attributed at the still-declared pending pair → (1). Dropping the `attributed`
+    // term from the not-demanded branch would silently regress this to —.
+    expect(md).toContain("| SCN-F | — | (1) | — |");
   });
 
   it("counts the lint cell by guards PRESENT (balanced or watermelon), not 0/1", () => {

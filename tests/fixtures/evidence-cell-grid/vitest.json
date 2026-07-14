@@ -1,0 +1,12 @@
+{
+  "testResults": [
+    {
+      "name": "tests/fixtures/evidence-cell-grid/widget.test.ts",
+      "assertionResults": [
+        { "fullName": "[SCN-CEL-001] the demanded unit obligation is discharged", "status": "passed" },
+        { "fullName": "[SCN-CEL-003] a unit test citing the e2e-only scenario — UNDEMANDED", "status": "passed" },
+        { "fullName": "[SCN-CEL-004] a unit test citing the scenario whose unit obligation is pending", "status": "passed" }
+      ]
+    }
+  ]
+}

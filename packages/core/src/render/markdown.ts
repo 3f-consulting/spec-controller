@@ -746,12 +746,31 @@ function evidenceCell(
     ).length;
     return present > 0 ? String(present) : "∅"; // ∅ = declared, all missing
   }
+  // DEMAND is read off the ACTIVE evidence obligations only. An `undemanded` row is a CREDIT-side
+  // row the reconciler posts ON the real scenario (@SCN-LDG-008) — an evidence observation citing a
+  // quality-check the scenario NEVER declared. It is the opposite of a demand, so it must not be
+  // counted as one: reading it as a demand found zero attributed evidence and rendered `∅`
+  // (declared-but-missing), which contradicts the row's own Reconciling-items column and points at
+  // the OPPOSITE remedy — "write the test", when the truth is "fix the attribution".
   const demanded = s.evidenceObligations.some(
-    (o) => o.qualityCheck === col.qualityCheck
+    (o) => o.qualityCheck === col.qualityCheck && o.outcome !== "undemanded"
   );
-  const count =
+  const attributedCount =
     attributed.find((a) => a.scnId === s.scnId && a.qualityCheck === col.qualityCheck)?.count ?? 0;
-  if (demanded) return count > 0 ? String(count) : "∅";
+  if (demanded) return attributedCount > 0 ? String(attributedCount) : "∅";
+  // NOT demanded — the `(N)` cell, which has TWO production shapes, so the count is the SUM of two
+  // terms (mutually exclusive per (scnId, quality-check), so the sum is safe — and dropping either
+  // silently regresses its shape to `—`):
+  //   1. PENDING + ATTRIBUTED — a `<qc>pending` obligation partitions off to a one-sided Pending
+  //      Item and posts NO reconciled row, yet the pending pair STAYS in `evidenceObligationPairs`,
+  //      so the census counts the observation citing it as ATTRIBUTED (never undemanded). Not
+  //      demanded, count > 0 → `(N)`. This shape is live in production.
+  //   2. UNDEMANDED — the census deliberately keeps the observation OUT of `attributed` (it counts
+  //      into `undemandedCount`), so the cell must count these off the undemanded ROWS themselves.
+  const undemandedCount = s.evidenceObligations.filter(
+    (o) => o.qualityCheck === col.qualityCheck && o.outcome === "undemanded"
+  ).length;
+  const count = attributedCount + undemandedCount;
   return count > 0 ? `(${count})` : "—";
 }
 

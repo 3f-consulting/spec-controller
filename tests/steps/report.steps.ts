@@ -669,6 +669,140 @@ After({ tags: "@SCN-RPT-018" }, function () {
   if (runsRoot018 && existsSync(runsRoot018)) rmSync(runsRoot018, { recursive: true, force: true });
 });
 
+// @SCN-RPT-011
+// The ledger cell's four-way encoding, driven through the REAL reconcile + render over a fixture
+// target spanning EVERY cell case (the class @SCN-RPT-017 / @SCN-RPT-018 established: a cell bug
+// is only caught by the real pipeline, never by a hand-built balance). The fixture corpus
+// (tests/fixtures/evidence-cell-grid) carries: SCN-CEL-001 demanded+met at unit and lint;
+// SCN-CEL-002 demanded+missing at integration (and absent at the other columns); SCN-CEL-003
+// @e2e-only, cited by a VITEST unit observation — the UNDEMANDED credit-side row (@SCN-LDG-008),
+// kept OUT of `attributed` by the census, so its Unit cell must read (1), NOT ∅ (the SCN-CLI-054
+// shape — RED before the fix); and SCN-CEL-004 whose unit obligation is @unitpending — deferred,
+// so it posts NO reconciled row, yet the pending pair stays in evidenceObligationPairs, so the
+// vitest observation citing it IS attributed → its Unit cell reads (1) (the second, live-today
+// production shape of `(N)`, preserved by keeping the attributed term in the not-demanded branch).
+const EVIDENCE_CELL_GRID_OPTS = {
+  features: "tests/fixtures/evidence-cell-grid/features",
+  vitest: "tests/fixtures/evidence-cell-grid/vitest.json",
+  cucumber: "tests/fixtures/evidence-cell-grid/cucumber.json",
+  ci: "tests/fixtures/evidence-cell-grid/ci.yml",
+  packageJson: "tests/fixtures/evidence-cell-grid/package.json",
+};
+let runsRoot011: string;
+let md011: string;
+
+/**
+ * The LEDGER's row for one scenario id — scoped to the ledger table (from its header row on), so
+ * it can never pick up the same scenario's row in an earlier section (the static-guards table
+ * lists SCN-CEL-001 too, and it renders BEFORE the ledger).
+ */
+function cellGridRow(scnId: string): string {
+  const ledger = md011.slice(md011.indexOf("| Scenario | Lint |"));
+  const row = ledger.split("\n").find((l) => l.startsWith(`| ${scnId} |`));
+  assert.ok(row, `expected a ledger row for ${scnId}; got:\n${md011}`);
+  return row!;
+}
+
+/**
+ * The four EVIDENCE cells of a ledger row (Lint, Unit, Integration, E2e) — the row's cells
+ * between the scenario id and the Verdict. Compared as an array so a failure diffs the cells
+ * themselves (`∅` vs `(1)`), not a bare true/false.
+ */
+function cellGridCells(scnId: string): string[] {
+  const parts = cellGridRow(scnId)
+    .split("|")
+    .map((c) => c.trim());
+  // parts: ["", scnId, Lint, Unit, Integration, E2e, Verdict, Reconciling items, ""]
+  return parts.slice(2, 6);
+}
+
+Given(
+  "a reconciliation over a corpus spanning every cell case — a satisfied obligation, a missing one, an undemanded observation citing a scenario that never demanded that quality-check, a pending obligation with attributed observations at that pair, and a column absent for the scenario",
+  function () {
+    runsRoot011 = mkdtempSync(join(tmpdir(), "spec-controller-rpt011-"));
+  }
+);
+
+When("the ledger is rendered", function () {
+  const balance = runReconcile(EVIDENCE_CELL_GRID_OPTS);
+  const evidenceObservations = readEvidenceObservations(EVIDENCE_CELL_GRID_OPTS);
+  const ctx011: RunContext = {
+    target: "evidence-cell-grid-fixture",
+    inputs: {},
+    runStart: new Date("2026-07-14T22:00:11.000Z"),
+    sourceSha: null,
+  };
+  const runDir = persistReport(runsRoot011, { balance, ctx: ctx011, evidenceObservations });
+  md011 = readFileSync(join(runDir, "spec-reconciliation.md"), "utf8");
+});
+
+Then(
+  /^each scenario row carries one cell per corpus column \(Lint first, then the runtime levels present\) with the four-way encoding — the count, ∅, \(N\), or —$/,
+  function () {
+    // The corpus declares lint + unit + integration + e2e (never performance), so the header is
+    // Lint first, then the runtime levels present in canonical order — no Performance column.
+    assert.ok(
+      md011.includes("| Scenario | Lint | Unit | Integration | E2e | Verdict | Reconciling items |"),
+      `expected the corpus-driven header (Lint, Unit, Integration, E2e); got:\n${md011}`
+    );
+    // demanded & met → the count (SCN-CEL-001: one lint guard present, one unit observation).
+    assert.deepStrictEqual(
+      cellGridCells("SCN-CEL-001"),
+      ["1", "1", "—", "—"],
+      "expected SCN-CEL-001 (demanded and met at lint + unit) to render Lint 1, Unit 1, then —"
+    );
+    // demanded & missing → ∅; the columns it neither declares nor is cited at → —.
+    assert.deepStrictEqual(
+      cellGridCells("SCN-CEL-002"),
+      ["—", "—", "∅", "—"],
+      "expected SCN-CEL-002 (demanded, no observation) to render Integration ∅ and — elsewhere"
+    );
+  }
+);
+
+Then(/^the scenario whose only state at a quality-check is undemanded renders \(N\) there, not ∅$/, function () {
+  // SCN-CEL-003 declares @e2e ONLY; a vitest unit test cites it → the reconciler posts an
+  // `undemanded` credit-side row at unit and the census counts it into undemandedCount (OUT of
+  // attributed). Pre-fix, the cell read that credit-side row as a DEMAND with zero attributed
+  // evidence → ∅ ("missing" — write the test), contradicting the row's own Reconciling-items
+  // column ("cites a Scenario that did not demand it" — fix the attribution). It must read (1).
+  assert.deepStrictEqual(
+    cellGridCells("SCN-CEL-003"),
+    ["—", "(1)", "—", "1"],
+    "expected SCN-CEL-003's Unit cell to render (1) — the undemanded observation — not ∅ (missing)"
+  );
+});
+
+Then(
+  /^the scenario whose obligation at a quality-check is pending, with attributed observations at that pair, renders \(N\) there$/,
+  function () {
+    // SCN-CEL-004's unit obligation is @unitpending — DEFERRED, so it partitions to a one-sided
+    // Pending Item and posts no reconciled row; but the pending pair STAYS in
+    // evidenceObligationPairs, so the vitest observation citing it is ATTRIBUTED (not undemanded).
+    // Not demanded, count > 0 → (1). This is live today; dropping the `attributed` term from the
+    // not-demanded branch would silently regress it to —.
+    assert.deepStrictEqual(
+      cellGridCells("SCN-CEL-004"),
+      ["—", "(1)", "—", "—"],
+      "expected SCN-CEL-004's Unit cell to render (1) — an observation attributed at a PENDING pair"
+    );
+  }
+);
+
+Then("the fixed cell key renders immediately before the ledger table", function () {
+  const iKey = md011.indexOf("| Cell | Meaning |");
+  const iTable = md011.indexOf("| Scenario | Lint |");
+  assert.ok(iKey >= 0, `expected the fixed cell key in the persisted report; got:\n${md011}`);
+  assert.ok(
+    iKey < iTable,
+    `expected the cell key to precede the ledger table (key at ${iKey}, table at ${iTable})`
+  );
+});
+
+After({ tags: "@SCN-RPT-011" }, function () {
+  if (runsRoot011 && existsSync(runsRoot011)) rmSync(runsRoot011, { recursive: true, force: true });
+});
+
 // @SCN-RPT-014
 // The untagged-scenarios @integration arm drives the REAL declared-side parse over a
 // fixture feature dir mixing @SCN-tagged and untagged scenarios: readEvidenceObligations runs

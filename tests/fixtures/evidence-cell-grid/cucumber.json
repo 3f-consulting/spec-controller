@@ -1,0 +1,8 @@
+[
+  {
+    "uri": "features/widget.feature",
+    "elements": [
+      { "tags": [{ "name": "@e2e" }, { "name": "@SCN-CEL-003" }], "steps": [{ "result": { "status": "passed" } }] }
+    ]
+  }
+]
