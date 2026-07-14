@@ -781,7 +781,7 @@ describe("[SCN-PND-011] the summary materialises a Pending Items tally, separate
     expect(report.summary.pending).not.toBe(report.summary.scenarioReconciliations.outOfBalance);
   });
 
-  it("NEVER folds a Pending Item into the evidence-obligation counts (not an eighth out-of-balance outcome)", () => {
+  it("NEVER folds a Pending Item into the evidence-obligation counts (never an out-of-balance outcome, at any count)", () => {
     const report = assembleReport(pendingBalance, ctx);
     // The evidence-obligation total counts the two REAL obligations (1 satisfied + 1 missing) —
     // the three Pending Items are NOT obligations, so they never inflate it.
