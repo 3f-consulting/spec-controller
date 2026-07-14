@@ -296,16 +296,16 @@ Feature: Ledger over declared-vs-observed evidence
   # collect on `Cannot find package '@cucumber/tag-expressions'`). The remedies differ — fix the
   # harness vs write a test — so the ledger must distinguish them.
   #
-  # A collection failure names no test, so it cites no @SCN and CANNOT be attributed to any
-  # scenario: it is a sibling of `cites-no-scenario` (both land in suspense because they name no
-  # scenario), distinguished by errored-vs-completed. The scenario whose proof was in that file
-  # STILL reads `missing` — honest at its own resolution (no evidence citing it arrived) — but the
-  # run now carries the collection failure, so the reader is sent to fix the harness rather than
-  # write a test that already exists.
+  # Broken evidence names no test, so it cites no @SCN and CANNOT be attributed to any scenario:
+  # it is a sibling of `cites-no-scenario` (both land in suspense because they name no scenario),
+  # distinguished by broken-vs-completed. The scenario whose proof was in that harness STILL reads
+  # `missing` — honest at its own resolution (no evidence citing it arrived) — but the run now
+  # carries the fault, so the reader is sent to fix the harness rather than write a test that
+  # already exists.
   #
   # BOUNDARY: a runtime throw INSIDE a named `it` is attributable (vitest reports it with a name
   # and status failed) and already lands as `failing`. `broken` is specifically the citation-less
-  # collection failure.
+  # case — the harness broke before the behaviour was ever exercised.
   #
   # FAIL-SAFE (operator-mandated): `broken` is checked BEFORE `status`. A broken observation must
   # NEVER reconcile as `failing` or `satisfied` — it names no scenario, so it can post to no
@@ -354,10 +354,11 @@ Feature: Ledger over declared-vs-observed evidence
       And the scenario whose proof was the ambiguous step still reads missing
       And the run reports broken evidence — an ambiguous harness makes the run unsound
 
-  # UNSOUND IS A PROPERTY OF THE RUN (SCN-LDG-018). @SCN-LDG-017 puts the collection failure ON
-  # the ledger as a `broken` suspense item; this Rule reads the WHOLE run off it. If any proving
-  # suite failed to collect, the evidence never fully materialised — so every `missing` in that
-  # run is SUSPECT: it may be a broken proof rather than an absent one. Soundness is therefore a
+  # UNSOUND IS A PROPERTY OF THE RUN (SCN-LDG-018). @SCN-LDG-017 and @SCN-LDG-019 put broken
+  # evidence ON the ledger as a `broken` suspense item; this Rule reads the WHOLE run off it. If
+  # any PROOF NEVER RAN — a vitest suite that failed to collect, or a cucumber step matched by two
+  # or more definitions — the evidence never fully materialised, so every `missing` in that run is
+  # SUSPECT: it may be a broken proof rather than an absent one. Soundness is therefore a
   # WHOLE-RUN predicate, `hasBrokenEvidence` — the existential twin of `hasPendingItems` (the same
   # `some(row => some(item => item.outcome === X))` scan) — and NOT a third ScenarioVerdict (a
   # scenario's own row stays honest at its own resolution) and NOT a stored flag.
@@ -374,7 +375,7 @@ Feature: Ledger over declared-vs-observed evidence
   #
   # "Unsound" is the RENDER HEADLINE word (@SCN-RPT-021), not the predicate's name — as
   # "out-of-balance" is the headline for `isBalanced`.
-  Rule: a run carrying a broken proving suite is unsound
+  Rule: a run carrying broken evidence is unsound
 
     @unit @integration @SCN-LDG-018
     Scenario: a reconciliation carrying a broken item is unsound, and one carrying none is sound

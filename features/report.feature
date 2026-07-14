@@ -593,6 +593,7 @@ Feature: The report renders the ledger as sectioned facts
       When the markdown report is rendered
       Then the summary opens with a verdict line naming the outcome and the exit code it maps to
       And a run carrying broken evidence reads UNSOUND and exit 4, pre-empting the balance verdict
+      And the UNSOUND gloss is reader-agnostic — a proof that never ran, not a vitest suite that failed to collect
       And an out-of-balance run reads OUT-OF-BALANCE and exit 1, never as a pass
       And a balanced run reads BALANCED and exit 0
       And a balanced run carrying Pending Items notes exit 3 under --strict, conditionally and unasserted

@@ -74,12 +74,12 @@ function reconcileEvidenceObligation(
   // absent → missing (a required ledger entry never recorded).
   //
   // THE FAIL-SAFE (@SCN-LDG-017, operator-mandated): `broken` is checked BEFORE `status`. A
-  // broken observation — a proving suite that FAILED TO COLLECT — is excluded from the match
-  // entirely, so it can NEVER reconcile as `satisfied` or `failing`: a suite that never ran can
-  // neither discharge an obligation nor fail it. The obligation then finds no match and
-  // reconciles `missing` — honest at its own resolution (no evidence citing it arrived); the
-  // collection failure itself posts to the SUSPENSE row below, where the reader is sent to fix
-  // the harness. The exclusion is structural rather than incidental: `broken` rides an OPTIONAL
+  // broken observation — one whose PROOF NEVER RAN — is excluded from the match entirely, so it
+  // can NEVER reconcile as `satisfied` or `failing`: a proof that never ran can neither discharge
+  // an obligation nor fail it. The obligation then finds no match and reconciles `missing` —
+  // honest at its own resolution (no evidence citing it arrived); the broken evidence itself
+  // posts to the SUSPENSE row below, where the reader is sent to fix the harness. The exclusion
+  // is structural rather than incidental: `broken` rides an OPTIONAL
   // FLAG on RuntimeEvidenceObservation, so a broken credit CAN carry an scnId and a status — the
   // guard is what makes the fail-safe hold whatever it carries.
   const match = evidenceObservations.find(
@@ -180,8 +180,9 @@ export function hasPendingItems(reconciliation: EvidenceReconciliation): boolean
  * whole-run predicate (@SCN-LDG-018), beside `isBalanced` and `hasPendingItems`, and the
  * EXISTENTIAL TWIN of the latter: the same `some(row => some(item => item.outcome === X))` scan.
  *
- * Soundness is a property of the RUN, not of a scenario. If any proving suite FAILED TO COLLECT
- * (@SCN-LDG-017), the evidence never fully materialised — so every `missing` in that run is
+ * Soundness is a property of the RUN, not of a scenario. If any PROOF NEVER RAN — a vitest suite
+ * that failed to collect (@SCN-LDG-017), or a cucumber step matched by two or more definitions
+ * (@SCN-LDG-019) — the evidence never fully materialised, so every `missing` in that run is
  * SUSPECT: it may be a broken proof rather than an absent one, and the remedies differ (fix the
  * harness vs write a test). The scenario's own row stays honest at its own resolution (`missing`);
  * the RUN is what is stamped unsound.
@@ -193,7 +194,7 @@ export function hasPendingItems(reconciliation: EvidenceReconciliation): boolean
  * never the predicate's name, exactly as "out-of-balance" is for `isBalanced`.
  *
  * Keyed on the `broken` OUTCOME specifically, never on `!isBalanced`: an ordinary out-of-balance
- * run (an honest `missing`, no collection failure) is perfectly SOUND. The three whole-run
+ * run (an honest `missing`, no broken evidence) is perfectly SOUND. The three whole-run
  * predicates are INDEPENDENT — a run may carry Pending Items and be sound; a run may carry broken
  * evidence and no Pending Items. (A broken run is ALWAYS out-of-balance, since the `broken` item
  * sits on the suspense row — which is why the CLI edge must consult THIS predicate BEFORE the
@@ -370,7 +371,7 @@ export function reconcile(
   // ran at all (fix the harness). Folding the second into the first would hide the collection
   // failure behind the wrong cure — the false-`missing` in a new costume. So `broken` is taken
   // FIRST, on the flag (never on scnId/status, which it may structurally carry).
-  const brokenSuites = evidenceObservations.filter(
+  const brokenEvidence = evidenceObservations.filter(
     (o): o is RuntimeEvidenceObservation => o.qualityCheck !== "lint" && o.broken === true
   );
   const uncited = evidenceObservations.filter(
@@ -383,12 +384,12 @@ export function reconcile(
     (o): o is GuardEvidenceObservation =>
       o.qualityCheck === "lint" && !demandedGuards.has(o.guard)
   );
-  if (brokenSuites.length > 0 || uncited.length > 0 || undemandedGuards.length > 0) {
+  if (brokenEvidence.length > 0 || uncited.length > 0 || undemandedGuards.length > 0) {
     const items: QualityCheckReconciliation[] = [
-      // ONE `broken` item per collection-failed suite, carrying its WHERE-TO-FIX (the file
-      // locator) and its WHAT-BROKE (the runner's message) — the payload that sends the reader to
-      // the harness. Listed FIRST: a broken run's other suspense items are downstream noise.
-      ...brokenSuites.map((o) => ({
+      // ONE `broken` item per proof that never ran, carrying its WHERE-TO-FIX (the locator) and
+      // its WHAT-BROKE (the runner's message) — the payload that sends the reader to the harness.
+      // Listed FIRST: a broken run's other suspense items are downstream noise.
+      ...brokenEvidence.map((o) => ({
         qualityCheck: o.qualityCheck,
         outcome: "broken" as const,
         ...(o.locator !== undefined ? { locator: o.locator } : {}),

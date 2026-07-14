@@ -523,8 +523,8 @@ const OUT_OF_BALANCE_OUTCOMES: readonly Outcome[] = [
   "watermelon",
   "cites-unknown-scenario",
   "cites-no-scenario",
-  // A credit whose proving SUITE FAILED TO COLLECT (@SCN-LDG-017) — a suspense-row sibling of
-  // `cites-no-scenario`, distinguished by errored-vs-completed. Its own leaf, never folded in.
+  // A credit whose PROOF NEVER RAN (@SCN-LDG-017 / @SCN-LDG-019) — a suspense-row sibling of
+  // `cites-no-scenario`, distinguished by broken-vs-completed. Its own leaf, never folded in.
   "broken",
   "undemanded",
   "both-missing",

@@ -294,10 +294,11 @@ describe("[SCN-CLI-011] hasPendingItems + the --strict exit-3 escalation", () =>
 
 /**
  * @unit for @SCN-LDG-018 — `hasBrokenEvidence`, the THIRD whole-run predicate, beside `isBalanced`
- * and `hasPendingItems`. @SCN-LDG-017 put the collection failure ON the ledger (a `broken` suspense
- * item); this reads the WHOLE RUN off it: if any proving suite failed to collect, the evidence
- * never fully materialised, so every `missing` in that run is SUSPECT — it may be a broken proof
- * rather than an absent one. The run is UNSOUND.
+ * and `hasPendingItems`. @SCN-LDG-017 and @SCN-LDG-019 put broken evidence ON the ledger (a
+ * `broken` suspense item); this reads the WHOLE RUN off it: if any PROOF NEVER RAN — a vitest
+ * suite that failed to collect, or a cucumber step matched by two or more definitions — the
+ * evidence never fully materialised, so every `missing` in that run is SUSPECT: it may be a broken
+ * proof rather than an absent one. The run is UNSOUND.
  *
  * Soundness is a property of the RUN, not of a scenario (no third ScenarioVerdict) and is DERIVED,
  * NEVER STORED (no flag on EvidenceReconciliation) — the same no-drift reason `isBalanced` and

@@ -2286,6 +2286,25 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
     expect(opening).not.toContain("exit 1");
   });
 
+  it("glosses UNSOUND in reader-agnostic terms — a proof that never ran, not a vitest suite that failed to collect", () => {
+    const opening = summaryOpening(renderMarkdown(broken, ctx));
+
+    // `broken` is READER-AGNOSTIC: it covers a vitest suite that failed to collect
+    // (@SCN-LDG-017) AND a cucumber step matched by two or more definitions (@SCN-LDG-019).
+    // The verdict line is read by the same reader in both cases, so it must name the FACT
+    // the two SHARE — a proof never ran — and leave the producer-specific detail to the
+    // run-integrity stamp above (@SCN-RPT-021).
+    expect(opening).toContain("could not be TRUSTED to reconcile");
+    expect(opening).toContain("A proof never ran");
+
+    // The TEETH (3F-1749): the gloss was generalised in 3F-1744 but nothing pinned the text,
+    // so it could silently drift BACK to the vitest idiom — which would misdescribe a cucumber
+    // ambiguity to the reader's face. An ambiguous step is not a "suite", and it did not fail
+    // to "collect". Forbid the vocabulary, not merely require the phrasing.
+    expect(opening).not.toMatch(/suite/i);
+    expect(opening).not.toMatch(/collect/i);
+  });
+
   it("notes exit 3 under --strict conditionally when a balanced run carries Pending Items — and never asserts it", () => {
     const opening = summaryOpening(renderMarkdown(balancedWithPending, ctx));
     // Balanced is still the verdict — the Pending Items note is a CONDITIONAL rider, because

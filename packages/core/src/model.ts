@@ -97,20 +97,25 @@ export interface RuntimeEvidenceObservation {
    */
   locator?: string;
   /**
-   * The proving suite FAILED TO COLLECT (@SCN-LDG-017) — it errored before it named a test, so
-   * it cites no @SCN and can be attributed to NO scenario. ABSENT (undefined) on an ordinary
-   * observation; `true` on a collection failure. The optional-flag shape, mirroring
+   * The PROOF NEVER RAN — the harness failed before it could exercise the behaviour, so the
+   * observation cites no @SCN and can be attributed to NO scenario. ABSENT (undefined) on an
+   * ordinary observation; `true` on broken evidence. The optional-flag shape, mirroring
    * `EvidenceObligation.pending?: true` (chosen over a third variant in the `EvidenceObservation`
    * union, which would touch every `qualityCheck === "lint"` narrowing site).
    *
+   * READER-AGNOSTIC. `broken` has two producers and belongs to neither: a vitest suite that
+   * failed to COLLECT (@SCN-LDG-017), and a cucumber step matched by two or more step
+   * definitions (@SCN-LDG-019). What they share is the fact this flag names — a proof that
+   * never ran — so the vocabulary here must not privilege either instance.
+   *
    * FAIL-SAFE: the reconciler checks `broken` BEFORE `status`. A broken observation NEVER
-   * reconciles as `failing` or `satisfied` — a suite that never ran cannot discharge (or fail) an
-   * obligation. It posts ONE `broken` reconciling item on the SUSPENSE row, whatever `scnId` /
+   * reconciles as `failing` or `satisfied` — a proof that never ran cannot discharge (or fail)
+   * an obligation. It posts ONE `broken` reconciling item on the SUSPENSE row, whatever `scnId` /
    * `status` it structurally carries.
    *
    * BOUNDARY: a runtime throw INSIDE a named `it` is attributable (vitest reports it with a name
    * and `status: failed`) and lands as `failing`, as before. `broken` is specifically the
-   * CITATION-LESS collection failure.
+   * CITATION-LESS case — the harness broke before the behaviour was ever exercised.
    */
   broken?: true;
   /**
@@ -175,12 +180,14 @@ export type Outcome =
   | "cites-no-scenario" // a credit citing NO @SCN at all — the reconciling item on the
   // SUSPENSE scenario (@SCN-LDG-007). Aggregates uncited runtime credits AND the
   // unattributed static-guard (a `lint` credit no evidence obligation declares, ruling Q4).
-  | "broken" // a credit whose proving SUITE FAILED TO COLLECT (@SCN-LDG-017) — it errored before
-  // naming a test, so it cites no @SCN and can be attributed to no scenario. A SIBLING of
-  // `cites-no-scenario` (both land in suspense because they name no scenario), distinguished by
-  // errored-vs-completed. The scenario whose proof lived in that file still reads `missing`
-  // (honest at its own resolution), but the RUN now carries the collection failure — so the
-  // reader is sent to fix the harness, not to write a test that already exists.
+  | "broken" // a credit whose PROOF NEVER RAN — the harness broke before the behaviour was
+  // exercised, so it cites no @SCN and can be attributed to no scenario. READER-AGNOSTIC: a
+  // vitest suite that failed to collect (@SCN-LDG-017) OR a cucumber step matched by two or
+  // more definitions (@SCN-LDG-019). A SIBLING of `cites-no-scenario` (both land in suspense
+  // because they name no scenario), distinguished by broken-vs-completed. The scenario whose
+  // proof was in that harness still reads `missing` (honest at its own resolution), but the RUN
+  // now carries the fault — so the reader is sent to fix the harness, not to write a test that
+  // already exists.
   | "undemanded" // a credit citing a REAL declared scenario at a quality-check that scenario
   // NEVER declared (@SCN-LDG-008) — the GENERAL case (it applies whether or not the
   // scenario carries other evidence obligations). A credit-side reconciling item ON THE REAL scenario's
