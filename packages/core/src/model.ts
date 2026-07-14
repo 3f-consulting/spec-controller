@@ -225,12 +225,19 @@ export type Outcome =
  * These phrasings ARE the original canon — later abbreviated to the handles; 3F-1626 restores
  * them. `satisfied` (the balanced outcome, excluded from the out-of-balance decomposition)
  * carries one for totality's sake.
+ *
+ * ⚠ KEY ORDER IS LOAD-BEARING (3F-1806). `OUT_OF_BALANCE_OUTCOMES` is DERIVED from these keys,
+ * and the renderer walks that list to emit the decomposition rows — so this map's key order IS
+ * the report's row order (`missing` first: the headline cause, the one carrying the bare-level
+ * split as Detail). Reordering these keys is a REPORT CHANGE, not a cosmetic tidy. The
+ * @SCN-RPT-019 exhaustiveness guard proves MEMBERSHIP, not order — it will not catch a reorder
+ * (order was untested before this refactor too; pinning it is a separate scenario if wanted).
  */
 export const OUTCOME_DESCRIPTION: Record<Outcome, string> = {
   satisfied: "Evidence Observation is present and passing",
+  missing: "Evidence Observation is missing",
   failing: "Evidence Observation is failing",
   watermelon: "Evidence Observation is passing but fabricated",
-  missing: "Evidence Observation is missing",
   "cites-unknown-scenario": "Evidence Observation cites an unknown Scenario",
   "cites-no-scenario": "Evidence Observation cites no Scenario",
   // The DEBIT TWIN of `cites-no-scenario` (@SCN-LDG-021): same missing LINK, opposite side. The
@@ -250,6 +257,30 @@ export const OUTCOME_DESCRIPTION: Record<Outcome, string> = {
   undemanded: "Evidence Observation cites a Scenario that did not demand it",
   "both-missing": "Evidence Observation and Evidence Obligation are both missing for the Scenario",
 };
+
+/**
+ * The out-of-balance reconciling-item outcomes, in report reading order — every `Outcome`
+ * except `satisfied` (the BALANCED outcome, not part of the OUT-of-balance decomposition).
+ * The renderer walks this to emit the summary's `↳` leaf rows (@SCN-RPT-019), each reconciling
+ * to the out-of-balance total exactly once (a FLAT list: the old debit/credit/neither grouping
+ * emitted a `↳ <group>-side` subtotal AND its leaves at the same indent, so a naive column-sum
+ * double-counted — the live 170 vs 85).
+ *
+ * DERIVED from the type-forced `OUTCOME_DESCRIPTION`, never hand-listed (3F-1806). It was a
+ * hand-maintained `readonly Outcome[]` in the renderer, which accepted a missing union member
+ * SILENTLY: `broken` (@SCN-LDG-017) joined the union, tallied into `byOutcome`, compiled clean,
+ * and would have been omitted from the table. Deriving the keys makes that omission IMPOSSIBLE
+ * rather than merely CAUGHT — a new `Outcome` cannot compile without a description, and the
+ * moment it has one it renders a leaf row with no change to the renderer.
+ *
+ * Lives in the model, not the renderer: which outcomes are out-of-balance is the model's rule,
+ * not a presentation choice (`entity-owns-its-behaviour`). The @SCN-RPT-019 guard remains as the
+ * end-to-end backstop — it renders real markdown and reads the rows back, deriving its
+ * expectation from its OWN type-forced record (`double-entry`, not a re-read of this source).
+ */
+export const OUT_OF_BALANCE_OUTCOMES: readonly Outcome[] = (
+  Object.keys(OUTCOME_DESCRIPTION) as Outcome[]
+).filter((outcome) => outcome !== "satisfied");
 
 /**
  * The scenario-level VERDICT — its OWN type, distinct from Outcome

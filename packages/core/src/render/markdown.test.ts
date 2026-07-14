@@ -1361,13 +1361,17 @@ describe("[SCN-USG-001] the markdown report renders the Static guards section", 
  * column-sum double-counted (the live 170 vs 85). Removing the grouping leaves exactly
  * nine counted "↳ <outcome>" rows reconciling to the out-of-balance total once.
  *
- * EXHAUSTIVENESS (3F-1649): OUT_OF_BALANCE_OUTCOMES is a hand-maintained readonly
- * Outcome[], NOT a type-forced Record — so it can fall behind the union silently, as it
- * did when `broken` (@SCN-LDG-017) joined: tallied in byOutcome, compiling clean, and
- * omitted from this table. The guard below derives its expectation from a
- * Record<Outcome, true> (type-forced — a new union member fails to compile until it is
- * listed) and asserts every member except `satisfied` renders a leaf row. Never a
- * hand-transcribed list, or the guard would inherit the very weakness it guards against.
+ * EXHAUSTIVENESS (3F-1649, superseded as the primary mechanism by 3F-1806):
+ * OUT_OF_BALANCE_OUTCOMES USED TO BE a hand-maintained readonly Outcome[] in the renderer, so
+ * it could fall behind the union silently — as it did when `broken` (@SCN-LDG-017) joined:
+ * tallied in byOutcome, compiling clean, and omitted from this table. It is now DERIVED in
+ * model.ts from the type-forced OUTCOME_DESCRIPTION, so omission is IMPOSSIBLE, not merely
+ * caught. This guard is retained as the END-TO-END backstop: it proves the derivation is
+ * actually WIRED INTO the rendered table, and it derives its expectation from its OWN
+ * Record<Outcome, true> (type-forced — a new union member fails to compile until it is listed),
+ * never a re-read of the renderer's source, or the guard would inherit the weakness it guards
+ * against. It proves MEMBERSHIP, not ORDER: row order now lives in OUTCOME_DESCRIPTION's key
+ * order (a reorder there is a report change), and pinning it is a separate scenario.
  *
  * Teeth: against the pre-fix renderer the three group-side subtotal rows still render,
  * so the "exactly nine ↳ rows" and "no group row" assertions red (the genuine
@@ -1476,8 +1480,8 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the nine leaf outc
         .filter((line) => line.includes("↳"))
         .map((line) => line.split("|")[1]?.trim().replace("↳ ", ""))
     );
-    // Every member of the union except satisfied MUST be there: the hand-maintained
-    // OUT_OF_BALANCE_OUTCOMES array can never again fall behind the Outcome union.
+    // Every member of the union except satisfied MUST be there: the derived (3F-1806)
+    // OUT_OF_BALANCE_OUTCOMES can never fall behind the Outcome union.
     for (const outcome of EXPECTED_LEAVES) {
       expect(rendered).toContain(OUTCOME_DESCRIPTION[outcome]);
     }

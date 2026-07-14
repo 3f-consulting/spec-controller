@@ -30,9 +30,10 @@ import type {
   PendingItem,
 } from "../model.js";
 // The single source for the human-readable outcome gloss — rendered in place of the bare
-// handle wherever an outcome surfaces to a reader (3F-1626). An internal core import (NOT on
-// the frozen v1 barrel), so the renderer and the map cannot drift.
-import { OUTCOME_DESCRIPTION } from "../model.js";
+// handle wherever an outcome surfaces to a reader (3F-1626) — and the DERIVED leaf list the
+// decomposition walks (3F-1806): both live in the model, so the renderer cannot drift from the
+// union. Internal core imports (NOT on the frozen v1 barrel).
+import { OUTCOME_DESCRIPTION, OUT_OF_BALANCE_OUTCOMES } from "../model.js";
 import {
   projectProvenanceObject,
   type RunContext,
@@ -482,7 +483,9 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
   ];
   // Decompose the evidence-obligation out-of-balance into its causes — a FLAT list of the
   // nine out-of-balance leaf outcomes in canonical order (@SCN-RPT-019, 3F-1453; the ninth,
-  // `no-scn-code`, added by @SCN-LDG-021, 3F-1774), each a
+  // `no-scn-code`, added by @SCN-LDG-021, 3F-1774). The list is DERIVED from the type-forced
+  // OUTCOME_DESCRIPTION (3F-1806), so a new Outcome renders here with no edit to this file;
+  // its ROW ORDER is that map's key order, which is therefore load-bearing. Each a
   // counted `↳ <outcome>` row (only the out-of-balance column populated) reconciling to the
   // total exactly once. No debit/credit/neither grouping: the grouping emitted a subtotal
   // `↳ <group>-side` row AND its leaf rows at the same `↳` indent, so a naive column-sum
@@ -512,39 +515,6 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
   lines.push("");
   return lines;
 };
-
-/**
- * The out-of-balance reconciling-item outcomes in canonical reading order (the `Outcome`
- * type's order in model.ts), `satisfied` excluded — it is the BALANCED outcome, not part of
- * the OUT-of-balance decomposition. A FLAT list (@SCN-RPT-019, 3F-1453): the earlier
- * debit/credit/neither grouping was removed because it emitted a `↳ <group>-side` subtotal
- * row AND its leaf rows at the same `↳` indent, so a naive column-sum double-counted (the
- * live 170 vs 85). The nine leaves reconcile to the out-of-balance total exactly once.
- *
- * ⚠ HAND-MAINTAINED (3F-1649). Unlike `OUTCOME_DESCRIPTION`, `ITEM_GLYPH` and
- * `summary.byOutcome` — all three type-forced `Record<Outcome, …>` maps that REFUSE TO
- * COMPILE when the union grows — this is a plain `readonly Outcome[]`, so it accepts a
- * missing member SILENTLY. `broken` (@SCN-LDG-017) is the lived case: it joined the union,
- * tallied into the JSON via `byOutcome.broken`, and would have been omitted from this table
- * with a clean build. A new `Outcome` member MUST be added here too. The @SCN-RPT-019
- * exhaustiveness guard (markdown.test.ts) derives its expectation from a type-forced
- * `Record<Outcome, true>` and reds if this array ever falls behind the union again.
- */
-const OUT_OF_BALANCE_OUTCOMES: readonly Outcome[] = [
-  "missing",
-  "failing",
-  "watermelon",
-  "cites-unknown-scenario",
-  "cites-no-scenario",
-  // The DEBIT twin of `cites-no-scenario` (@SCN-LDG-021): a real, ordinary scenario carrying no
-  // @SCN, so its obligation has no code for an observation to link to. Its own leaf.
-  "no-scn-code",
-  // A credit whose PROOF NEVER RAN (@SCN-LDG-017 / @SCN-LDG-019) — a suspense-row sibling of
-  // `cites-no-scenario`, distinguished by broken-vs-completed. Its own leaf, never folded in.
-  "broken",
-  "undemanded",
-  "both-missing",
-];
 
 /**
  * Test volume (@SCN-RPT-010) — the evidence-observation side under Summary views, the
