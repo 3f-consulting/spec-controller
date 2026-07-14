@@ -58,3 +58,24 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
       Given a fork-PR fixture whose head repo differs from the base repo, adding a behaviour-bearing @SCN code with no 3F ticket handle
       When the scenario sub-issue gate runs over the fork-PR fixture
       Then the gate is exempt and exits 0 with no violation
+
+  Rule: the cite check reads the checked-out test files, not the diff
+
+    The guard conflates two questions. WHICH @SCN codes changed is a question
+    about the DIFF — unchanged. Whether a changed @SCN is CITED is a question
+    about the TEST FILE AS IT NOW STANDS, and reading it from the diff mistakes
+    "the cite line wasn't in this hunk" for "the cite is absent". A rename-shaped
+    change is exactly that shape: the src rename churns the `it`-body while its
+    cite, on the enclosing describe/it, stays a CONTEXT line — so the
+    diff-only scan reads a cited scenario as uncited and reds a valid PR (lived:
+    3F-1725, the @SCN-API-001 rename; it erred safe but cost a CI cycle and would
+    fire on every future rename). The fix keeps the guard hermetic: the cite scan
+    reads the CHECKED-OUT content of the changed test files — still the local
+    tree, still no Linear call. The diff remains the CHANGE-DETECTOR; only the
+    cite check moves to live file state.
+
+    @unit @integration @SCN-SSM-004
+    Scenario: a rename inside a cited it-body, its @SCN cite line unchanged, passes the gate
+      Given a PR whose src rename edits the body of a test whose @SCN cite line is left unchanged, on a branch carrying a 3F ticket handle
+      When the scenario sub-issue gate runs over the rename-shaped fixture PR
+      Then the gate passes and exits 0, having read the @SCN as cited

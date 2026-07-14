@@ -7,7 +7,11 @@
  *   1. resolves the PR base ref (GITHUB_BASE_SHA, falling back to origin/main);
  *   2. computes the feature-file diff and the src/test diffs;
  *   3. parses the behaviour-bearing @SCN codes (added/updated/deleted + the
- *      unit-equivalent cite scan + discriminator);
+ *      unit-equivalent discriminator) from the DIFF, and the unit-equivalent
+ *      CITES from the CHECKED-OUT content of the changed test files — the diff
+ *      detects the change, live file state carries the cite (@SCN-SSM-004,
+ *      3F-1741: a cite on an unchanged line is invisible to a diff scan, which
+ *      false-positived a valid rename-shaped PR on 3F-1725);
  *   4. auto-detects renumber pairs and reads SCN-exempt trailers;
  *   5. reads the PR TICKET HANDLE from CI metadata — GITHUB_HEAD_REF and/or a
  *      "[3F-NNN]" commit-message prefix — NO Linear call;
@@ -35,7 +39,7 @@ import {
   detectUpdatedCodes,
   isUnitEquivalentBehaviourBearing,
   parseAddedCodes,
-  parseUnitCitedCodes,
+  parseCitedCodesInSource,
   type Exemption,
 } from "./scnSubIssueGate.js";
 
@@ -140,9 +144,67 @@ function featureFileDiff(base: string): string {
   return diffPaths(base, [FEATURE_FILE_PATHSPEC], "feature-file");
 }
 
-/** The changed `*.test.ts` diff — the @unit test surface the cite scan reads. */
+/** The pathspec for the `*.test.ts` surface — the @unit test layer. */
+const TEST_FILE_PATHSPEC = "**/*.test.ts";
+
+/** The changed `*.test.ts` diff — the CHANGE-DETECTOR for the unit-equivalent surface. */
 function testFileDiff(base: string): string {
-  return diffPaths(base, ["**/*.test.ts"], "test-file");
+  return diffPaths(base, [TEST_FILE_PATHSPEC], "test-file");
+}
+
+/** The `*.test.ts` files the PR touches, as repo-relative paths. */
+function changedTestFiles(base: string): string[] {
+  try {
+    const out = execFileSync(
+      "git",
+      ["diff", "--name-only", `${base}...HEAD`, "--", TEST_FILE_PATHSPEC],
+      { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 }
+    );
+    return out
+      .split(/\r?\n/)
+      .map((f) => f.trim())
+      .filter((f) => f !== "");
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(
+      `Failed to list the changed test files against base "${base}". ` +
+        `Ensure the checkout has enough history (fetch-depth: 0). Cause: ${message}`
+    );
+  }
+}
+
+/**
+ * The @SCN codes the changed test files CITE, read from their CHECKED-OUT content
+ * (@SCN-SSM-004, 3F-1741) — NOT from the diff. A cite is a property of the file as
+ * it now stands: a rename-shaped change churns an `it`-body while the cite on the
+ * enclosing `describe` stays a diff CONTEXT line, and a diff-only scan would read
+ * that live cite as absent and red a valid PR (lived: 3F-1725). The DIFF remains
+ * the change-detector (see `isUnitEquivalentBehaviourBearing`); only this check
+ * reads live state. Still hermetic — the checked-out tree, no Linear call.
+ *
+ * A test file DELETED by the PR has no live content to read; it contributes no
+ * cites and is skipped.
+ */
+function citedCodesInChangedTestFiles(base: string): string[] {
+  const seen = new Set<string>();
+  const codes: string[] = [];
+
+  for (const file of changedTestFiles(base)) {
+    let source: string;
+    try {
+      source = fs.readFileSync(file, "utf8");
+    } catch {
+      continue;
+    }
+    for (const code of parseCitedCodesInSource(source)) {
+      if (!seen.has(code)) {
+        seen.add(code);
+        codes.push(code);
+      }
+    }
+  }
+
+  return codes;
 }
 
 /** The production packages-src diff EXCLUDING test files — the unit-equivalent anchor. */
@@ -207,7 +269,8 @@ async function main(): Promise<void> {
   const srcDiff = srcFileDiff(base);
   const featureScnDelta =
     addedCodes.length > 0 || updatedCodes.length > 0 || deletedCodes.length > 0;
-  const unitEquivalentCitedCodes = parseUnitCitedCodes(testDiff);
+  // The DIFF detects the CHANGE; the CHECKED-OUT FILES carry the CITE (@SCN-SSM-004).
+  const unitEquivalentCitedCodes = citedCodesInChangedTestFiles(base);
   const unitEquivalentBehaviourBearing = isUnitEquivalentBehaviourBearing(
     testDiff,
     srcDiff,

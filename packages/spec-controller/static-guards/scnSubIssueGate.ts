@@ -426,20 +426,27 @@ function isQuotedStringLiteralLine(body: string): boolean {
 }
 
 /**
- * Scan a `*.test.ts` diff for the `@SCN-<FFF>-<NNN>` ids a CHANGED test cites in
- * its Vitest `describe(...)` / `it(...)` string literals (the bidirectional-link
- * rule). Both `@SCN-…` and bare `[SCN-…]` forms register. Returns bare codes.
+ * Scan the FULL CHECKED-OUT SOURCE of a `*.test.ts` file for the
+ * `@SCN-<FFF>-<NNN>` ids its Vitest `describe(...)` / `it(...)` strings cite (the
+ * bidirectional-link rule). Both `@SCN-…` and bare `[SCN-…]` forms register.
+ * Returns bare codes, in document order, de-duplicated.
+ *
+ * Reads FILE STATE, not a diff — the fix for 3F-1741. A cite is a property of the
+ * test file AS IT NOW STANDS: a rename-shaped change edits an `it`-body while the
+ * cite on the enclosing `describe` stays a diff CONTEXT line, so a diff scan
+ * mistakes "not in this hunk" for "absent" and reds a valid PR. Which @SCN codes
+ * CHANGED is still a question for the diff; whether a changed code is CITED is
+ * this one. Both stay hermetic — checked-out tree, no Linear call.
+ *
+ * @SCN-SSM-004 (3F-1750).
  */
-export function parseUnitCitedCodes(testDiff: string): string[] {
+export function parseCitedCodesInSource(source: string): string[] {
   const seen = new Set<string>();
   const codes: string[] = [];
 
-  for (const rawLine of testDiff.split(/\r?\n/)) {
-    const marker = rawLine[0];
-    if (marker !== "+" && marker !== "-") continue;
-    if (rawLine.startsWith("+++") || rawLine.startsWith("---")) continue;
-
-    const line = rawLine.slice(1);
+  for (const line of source.split(/\r?\n/)) {
+    // The gate's own fixtures embed describe/it-of-diff strings as test DATA;
+    // excluding quoted-literal lines keeps the scanner off its own fixtures.
     if (isQuotedStringLiteralLine(line)) continue;
     if (!/\b(?:describe|it|test)\s*(?:\.\w+)?\s*\(/.test(line)) continue;
 

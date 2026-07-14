@@ -10,7 +10,11 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { decideScnGate, type ScnGateInput } from "./scnSubIssueGate.js";
+import {
+  decideScnGate,
+  parseCitedCodesInSource,
+  type ScnGateInput,
+} from "./scnSubIssueGate.js";
 
 function baseInput(overrides: Partial<ScnGateInput> = {}): ScnGateInput {
   return {
@@ -68,5 +72,54 @@ describe("[SCN-SSM-003] a fork-sourced external PR is exempt from the gate", () 
     );
     expect(result.ok).toBe(false);
     expect(result.violations[0]!.kind).toBe("missing-ticket-handle");
+  });
+});
+
+describe("[SCN-SSM-004] the cite check reads the checked-out test files, not the diff", () => {
+  it("reads a cite off a plain describe line — no diff marker, because file state has none", () => {
+    const source = [
+      'import { describe, it, expect } from "vitest";',
+      "",
+      'describe("[SCN-API-001] the summary tally", () => {',
+      '  it("counts the reconciliations", () => {',
+      "    expect(makeSummary().scenarioReconciliations).toBe(1);",
+      "  });",
+      "});",
+    ].join("\n");
+
+    // The 3F-1741 fix: in live file content the cite carries NO leading +/-, so a
+    // scanner that requires a diff marker sees nothing. This one reads it.
+    expect(parseCitedCodesInSource(source)).toEqual(["SCN-API-001"]);
+  });
+
+  it("reads a cite off an it line, in the bare [SCN-…] and the @SCN-… form alike", () => {
+    const source = [
+      'it("[SCN-LDG-002] posts the suspense item", () => {});',
+      'it("@SCN-LDG-003 balances the ledger", () => {});',
+    ].join("\n");
+
+    expect(parseCitedCodesInSource(source)).toEqual(["SCN-LDG-002", "SCN-LDG-003"]);
+  });
+
+  it("skips a code embedded in a quoted string literal — the guard's own fixtures are test data, not cites", () => {
+    // A guard fixture holding diff text as data. Scanning file state rather than a
+    // diff widens what the scanner reads, so this exclusion has to keep holding.
+    const source = [
+      "const diffFixture = [",
+      '  "+describe(\\"[SCN-FIX-001] a fixture, not a cite\\", () => {});",',
+      "].join(\"\\n\");",
+    ].join("\n");
+
+    expect(parseCitedCodesInSource(source)).toEqual([]);
+  });
+
+  it("returns no codes for a test file that cites none", () => {
+    const source = [
+      'describe("the summary tally", () => {',
+      '  it("counts the reconciliations", () => {});',
+      "});",
+    ].join("\n");
+
+    expect(parseCitedCodesInSource(source)).toEqual([]);
   });
 });
