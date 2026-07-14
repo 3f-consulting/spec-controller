@@ -716,8 +716,9 @@ describe("[SCN-LDG-008] the two attributed counts stay distinct (ruling Q1)", ()
  * reconciliation (one per deferred `<quality-check>pending` obligation), SEPARATE from the
  * scenario balanced / out-of-balance counts and the evidence-obligation counts. Hard constraint
  * (3F-1453 line, endorsed): a Pending Item is deferred, NOT out-of-balance, so the tally is NEVER
- * folded into `evidenceObligations.byOutcome` (the seven out-of-balance leaf outcomes) nor into
- * the evidence-obligation total — it is its OWN count. It counts Pending ITEMS, not
+ * folded into `evidenceObligations.byOutcome` (the out-of-balance leaf outcomes — at any leaf
+ * count; the constraint is categorical, not arithmetic) nor into the evidence-obligation total —
+ * it is its OWN count. It counts Pending ITEMS, not
  * scenarios-carrying-pending (mirroring the out-of-balance decomposition, which counts
  * obligations, not scenarios). Being a pure balance derive (like the lint tally), it is ALWAYS
  * present. The glue-free JSON carries it with no renderer glue.
@@ -789,7 +790,7 @@ describe("[SCN-PND-011] the summary materialises a Pending Items tally, separate
     expect(report.summary.evidenceObligations.byOutcome.satisfied).toBe(1);
     expect(report.summary.evidenceObligations.byOutcome.missing).toBe(1);
     // There is NO `pending` key among the reconciliation outcomes — a Pending Item is a
-    // structurally distinct category, never one of the seven out-of-balance leaves.
+    // structurally distinct category, never one of the out-of-balance leaves, at any leaf count.
     expect(report.summary.evidenceObligations.byOutcome).not.toHaveProperty("pending");
   });
 

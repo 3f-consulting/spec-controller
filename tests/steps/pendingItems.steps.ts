@@ -998,7 +998,7 @@ Then(
 );
 
 Then(
-  "the rendered Evidence reconciliation shows the Pending Items tally, never an eighth out-of-balance leaf",
+  "the rendered Evidence reconciliation shows the Pending Items tally, never an out-of-balance leaf at any count",
   function () {
     // The `### Evidence reconciliation` view shows a distinct Pending Items tally carrying the
     // count (3). Reds before the renderer emits it.
@@ -1013,7 +1013,8 @@ Then(
       /⏳\s*3 Pending Item/,
       `the Evidence reconciliation section must show the Pending Items tally (3); got:\n${section}`
     );
-    // The seven out-of-balance leaves stay INTACT — the tally is not one of them. Each leaf
+    // The out-of-balance leaves stay INTACT — the tally is not one of them, at any leaf count
+    // (the constraint is categorical, not arithmetic). Each leaf
     // renders its canon description, not the bare handle (3F-1626).
     for (const leaf of [
       "Evidence Observation is missing",
@@ -1024,11 +1025,11 @@ Then(
       assert.match(
         section,
         new RegExp(`↳ ${leaf} `),
-        `the seven-leaf out-of-balance decomposition must stay intact (↳ ${leaf}); got:\n${section}`
+        `the out-of-balance leaf decomposition must stay intact (↳ ${leaf}); got:\n${section}`
       );
     }
-    // The Pending tally is NEVER an eighth out-of-balance leaf (3F-1453 line): no `↳ pending`
-    // row anywhere in the whole report.
+    // The Pending tally is NEVER an out-of-balance leaf of its own, at any leaf count (3F-1453
+    // line): no `↳ pending` row anywhere in the whole report.
     assert.doesNotMatch(
       summaryRendered,
       /↳ pending/,

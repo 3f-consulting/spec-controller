@@ -129,8 +129,9 @@ export interface Summary {
    * The Pending Items tally (@SCN-PND-011) — the count of Pending Items across the
    * reconciliation (one per deferred `<quality-check>pending` obligation, evidence-manifesto §11B),
    * SEPARATE from the scenario balanced / out-of-balance counts and the evidence-obligation counts.
-   * A Pending Item is deferred, NOT out-of-balance, so it is NEVER folded into the seven
-   * `OUT_OF_BALANCE_OUTCOMES` (never an eighth leaf) nor into `evidenceObligations` — its own tally.
+   * A Pending Item is deferred, NOT out-of-balance, so it is NEVER folded into
+   * `OUT_OF_BALANCE_OUTCOMES` (never a leaf of its own, at any leaf count — the constraint is
+   * categorical, not arithmetic) nor into `evidenceObligations` — its own tally.
    * Counts Pending ITEMS, not scenarios-carrying-pending (mirroring the out-of-balance
    * decomposition, which counts obligations, not scenarios). Always present (a pure balance derive,
    * like `lint`); reads 0 when no scenario declares a pending obligation.
@@ -241,7 +242,7 @@ function buildSummary(
   // scenarios-carrying-pending (a scenario may declare several), mirroring the out-of-balance
   // decomposition, which counts obligations, not scenarios. A Pending Item is a structurally
   // distinct category (never a reconciling item / evidence obligation), so it is tallied
-  // SEPARATELY here — never folded into `byOutcome` (the seven out-of-balance leaves) below.
+  // SEPARATELY here — never folded into `byOutcome` (the out-of-balance leaves) below.
   let pending = 0;
   for (const s of balance.scenarioReconciliations) {
     // Pending Items ride every row's `pendingItems` (only declared scenarios carry them; a
@@ -314,9 +315,9 @@ function buildSummary(
     },
     // The Pending Items tally (@SCN-PND-011) — its OWN summary count, SEPARATE from the
     // scenario verdict counts and the evidence-obligation counts. A Pending Item is deferred,
-    // not out-of-balance, so it is never one of the seven `OUT_OF_BALANCE_OUTCOMES` (never an
-    // eighth `byOutcome` leaf). Always present (a pure balance derive, like `lint`); reads 0
-    // when no scenario declares a pending obligation.
+    // not out-of-balance, so it is never one of the `OUT_OF_BALANCE_OUTCOMES` (never a `byOutcome`
+    // leaf of its own, at any leaf count). Always present (a pure balance derive, like `lint`);
+    // reads 0 when no scenario declares a pending obligation.
     pending,
     // The runtime test-volume kind-counts (RMD-005), materialised only when the evidenceObservations read is
     // threaded. Ruling Q1: this `attributed` is the TEST-VOLUME attributed — credits that

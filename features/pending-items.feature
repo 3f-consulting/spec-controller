@@ -133,16 +133,18 @@ Feature: A pending evidence obligation raises a Pending Item
     # and out-of-balance counts, materialised on report.summary and rendered in the
     # `### Evidence reconciliation` view. It counts Pending ITEMS (one per deferred obligation),
     # not scenarios-carrying-pending — mirroring the out-of-balance decomposition, which counts
-    # obligations, not scenarios. Hard constraint (3F-1453 line, endorsed): the Pending tally is
-    # NEVER an eighth out-of-balance leaf — a Pending Item is deferred, not out-of-balance, so it
-    # is tallied apart, never a row under the seven-leaf out-of-balance decomposition.
+    # obligations, not scenarios. Hard constraint (3F-1453 line, endorsed; re-endorsed at eight
+    # leaves, 3F-1649; the count is nine as of 3F-1774 — the constraint is categorical, not
+    # arithmetic): the Pending tally is NEVER an out-of-balance leaf of its own, at any leaf count
+    # — a Pending Item is deferred, not out-of-balance, so it is tallied apart, never a row under
+    # the out-of-balance decomposition.
     @unit @integration @SCN-PND-011
     Scenario: the Evidence Reconciliation Summary tallies Pending Items separately from balanced and out-of-balance
       Given a planted summary-tally fixture — scenarios carrying Pending Items alongside a genuinely-missing error, spanning balanced and out-of-balance
       When the report is assembled and rendered from the reconciled fixture
       Then the materialised summary tallies the Pending Items, a count apart from the scenario balanced and out-of-balance counts
       And the tally counts Pending Items, not scenarios carrying them — one deferred obligation is one Pending Item
-      And the rendered Evidence reconciliation shows the Pending Items tally, never an eighth out-of-balance leaf
+      And the rendered Evidence reconciliation shows the Pending Items tally, never an out-of-balance leaf at any count
 
     # The reviewer-legibility close-out: two BALANCED rows read differently at a glance. @SCN-PND-010
     # pinned the pending-vs-ERROR contrast (on an out-of-balance/mixed row); this pins the
