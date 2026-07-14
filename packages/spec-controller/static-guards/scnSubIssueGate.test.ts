@@ -11,8 +11,11 @@
 
 import { describe, it, expect } from "vitest";
 import {
+  attributeChangedBlockCites,
+  changedLinesByFile,
   decideScnGate,
   parseCitedCodesInSource,
+  parseTestBlocks,
   type ScnGateInput,
 } from "./scnSubIssueGate.js";
 
@@ -25,6 +28,7 @@ function baseInput(overrides: Partial<ScnGateInput> = {}): ScnGateInput {
     exemptions: [],
     unitEquivalentBehaviourBearing: false,
     unitEquivalentCitedCodes: [],
+    uncitedChangedTestBlocks: [],
     hasTicketHandle: false,
     isExternalPr: false,
     ...overrides,
@@ -121,5 +125,105 @@ describe("[SCN-SSM-004] the cite check reads the checked-out test files, not the
     ].join("\n");
 
     expect(parseCitedCodesInSource(source)).toEqual([]);
+  });
+});
+
+describe("[SCN-SSM-005] a changed test block carries its own cite — a sibling's does not vouch for it", () => {
+  /**
+   * A test file in the repo's own idiom: the cite sits on the `describe`, and the
+   * `it`s beneath inherit it. A SECOND, uncited block sits alongside — the sibling
+   * whose cite must not travel.
+   */
+  const source = [
+    'import { describe, it, expect } from "vitest";', // 1
+    "", // 2
+    'describe("[SCN-API-001] the tally", () => {', // 3
+    '  it("counts", () => {', // 4
+    "    expect(tally()).toBe(1);", // 5
+    "  });", // 6
+    "});", // 7
+    "", // 8
+    'describe("the doubling", () => {', // 9
+    '  it("doubles the tally", () => {', // 10
+    "    expect(doubled()).toBe(2);", // 11
+    "  });", // 12
+    "});", // 13
+  ].join("\n");
+
+  it("binds a cite to the block it annotates and inherits it down the ancestor chain", () => {
+    const blocks = parseTestBlocks(source);
+
+    const countsBlock = blocks.find((b) => b.title === "counts");
+    // The `it` carries no cite of its own — it INHERITS the describe's. This is the
+    // repo's convention (148 describe-cites vs 7 on it), so inheritance is forced.
+    expect(countsBlock?.citedCodes).toEqual(["SCN-API-001"]);
+    expect(countsBlock?.chain).toEqual(["[SCN-API-001] the tally", "counts"]);
+    expect(countsBlock?.isLeaf).toBe(true);
+
+    const doublesBlock = blocks.find((b) => b.title === "doubles the tally");
+    // The sibling's cite does NOT reach across into this chain.
+    expect(doublesBlock?.citedCodes).toEqual([]);
+    expect(doublesBlock?.startLine).toBe(10);
+  });
+
+  it("reads the touched new-file line numbers out of the diff's hunk headers", () => {
+    const diff = [
+      "diff --git a/packages/pkg/src/tally.test.ts b/packages/pkg/src/tally.test.ts",
+      "--- a/packages/pkg/src/tally.test.ts",
+      "+++ b/packages/pkg/src/tally.test.ts",
+      "@@ -7,3 +7,9 @@",
+      " });",
+      " ",
+      '+describe("the doubling", () => {',
+      '+  it("doubles the tally", () => {',
+      "+    expect(doubled()).toBe(2);",
+      "+  });",
+      "+});",
+    ].join("\n");
+
+    // Hunk starts at new-file line 7; the two context lines are 7 and 8, so the five
+    // added lines are 9-13. The diff is the CHANGE-DETECTOR — this is how we learn
+    // WHICH blocks the PR actually touched.
+    expect(changedLinesByFile(diff).get("packages/pkg/src/tally.test.ts")).toEqual([
+      9, 10, 11, 12, 13,
+    ]);
+  });
+
+  it("reds a touched block whose whole ancestor chain carries no cite — shape (b), the hole", () => {
+    // The PR added the second describe (lines 9-13) and touched nothing else.
+    const result = attributeChangedBlockCites(source, [9, 10, 11, 12, 13]);
+
+    // The uncited block is NAMED by its chain, so the engineer knows what to fix.
+    expect(result.uncitedBlocks).toEqual(["the doubling > doubles the tally"]);
+    // The sibling's cite is NOT counted as vouching for the touched block.
+    expect(result.citedCodes).toEqual([]);
+  });
+
+  it("passes a touched block that INHERITS its cite from an enclosing describe — shape (a), by design", () => {
+    // Operator ruling (2026-07-14): a new `it` inside a cited `describe` inherits that
+    // cite and is claiming that scenario. That is the convention working, not a hole —
+    // this arm PINS it green so a future tightening cannot silently reject it.
+    const result = attributeChangedBlockCites(source, [4, 5, 6]);
+
+    expect(result.uncitedBlocks).toEqual([]);
+    expect(result.citedCodes).toEqual(["SCN-API-001"]);
+  });
+
+  it("reds the gate when a changed test block cites nothing, even on a ticketed PR", () => {
+    const result = decideScnGate(
+      baseInput({
+        unitEquivalentBehaviourBearing: true,
+        unitEquivalentCitedCodes: ["SCN-API-001"],
+        uncitedChangedTestBlocks: ["the doubling > doubles the tally"],
+        // The handle must not rescue an uncited BLOCK, just as it never rescued an
+        // uncited FILE — being on a ticket proves a live work-unit, not which scenario.
+        hasTicketHandle: true,
+      })
+    );
+
+    expect(result.ok).toBe(false);
+    const violation = result.violations[0]!;
+    expect(violation.kind).toBe("uncited-unit-equivalent");
+    expect(violation.message).toContain("the doubling > doubles the tally");
   });
 });

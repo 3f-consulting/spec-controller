@@ -79,3 +79,28 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
       Given a PR whose src rename edits the body of a test whose @SCN cite line is left unchanged, on a branch carrying a 3F ticket handle
       When the scenario sub-issue gate runs over the rename-shaped fixture PR
       Then the gate passes and exits 0, having read the @SCN as cited
+
+  Rule: a changed test block carries its own cite — a sibling's cite does not vouch for it
+
+    SSM-004 moved the cite scan from the diff to live file state — correct, but it
+    coarsened the question to FILE level: "does this changed test FILE cite some
+    scenario?" rather than "does the CHANGED TEST cite one?". So new behaviour, proven
+    by a new UNCITED test block, slipped through whenever some OTHER untouched test in
+    the same file happened to carry a cite. That is a false negative in the gate whose
+    entire job is to catch exactly that (the 3F-805 leak).
+
+    A cite is attributed to the BLOCK it annotates, and a changed block must carry one
+    of its own — inherited from an enclosing describe, or on the block itself. A cite on
+    a SIBLING test does not vouch for it.
+
+    Inheritance is deliberate: this codebase cites on the describe (148 of them) and the
+    its beneath inherit it, so a test inside a cited describe IS claiming that scenario —
+    the convention working, not a hole. The rename fix (SSM-004) survives intact: a
+    churned it-body is a TOUCHED block whose cite, unchanged line and all, is still bound
+    to it.
+
+    @unit @integration @SCN-SSM-005
+    Scenario: a new uncited test block in a file that cites elsewhere reds the gate
+      Given a PR adding new src behaviour proven by a new UNCITED test block, in a test file whose other, untouched tests carry @SCN cites, on a branch carrying a 3F ticket handle
+      When the scenario sub-issue gate runs over the sibling-cited fixture PR
+      Then the gate reds, naming the uncited test block

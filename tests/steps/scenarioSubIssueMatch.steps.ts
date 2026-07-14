@@ -28,6 +28,7 @@ function baseInput(overrides: Partial<ScnGateInput> = {}): ScnGateInput {
     exemptions: [],
     unitEquivalentBehaviourBearing: false,
     unitEquivalentCitedCodes: [],
+    uncitedChangedTestBlocks: [],
     hasTicketHandle: false,
     isExternalPr: false,
     ...overrides,

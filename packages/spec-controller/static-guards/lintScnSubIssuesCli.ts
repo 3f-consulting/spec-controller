@@ -33,13 +33,15 @@
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import {
+  attributeChangedBlockCites,
+  changedLinesByFile,
   decideScnGate,
   detectDeletedCodes,
   detectRenumberPairs,
   detectUpdatedCodes,
   isUnitEquivalentBehaviourBearing,
   parseAddedCodes,
-  parseCitedCodesInSource,
+  type ChangedBlockCites,
   type Exemption,
 } from "./scnSubIssueGate.js";
 
@@ -185,9 +187,12 @@ function changedTestFiles(base: string): string[] {
  * A test file DELETED by the PR has no live content to read; it contributes no
  * cites and is skipped.
  */
-function citedCodesInChangedTestFiles(base: string): string[] {
-  const seen = new Set<string>();
-  const codes: string[] = [];
+function citedCodesInChangedTestFiles(base: string, testDiff: string): ChangedBlockCites {
+  const changedLines = changedLinesByFile(testDiff);
+
+  const seenCodes = new Set<string>();
+  const citedCodes: string[] = [];
+  const uncitedBlocks: string[] = [];
 
   for (const file of changedTestFiles(base)) {
     let source: string;
@@ -196,15 +201,21 @@ function citedCodesInChangedTestFiles(base: string): string[] {
     } catch {
       continue;
     }
-    for (const code of parseCitedCodesInSource(source)) {
-      if (!seen.has(code)) {
-        seen.add(code);
-        codes.push(code);
+
+    const attributed = attributeChangedBlockCites(source, changedLines.get(file) ?? []);
+    for (const code of attributed.citedCodes) {
+      if (!seenCodes.has(code)) {
+        seenCodes.add(code);
+        citedCodes.push(code);
       }
+    }
+    // Name each uncited block by its file, so the engineer knows where to look.
+    for (const block of attributed.uncitedBlocks) {
+      uncitedBlocks.push(`${file}: ${block}`);
     }
   }
 
-  return codes;
+  return { citedCodes, uncitedBlocks };
 }
 
 /** The production packages-src diff EXCLUDING test files — the unit-equivalent anchor. */
@@ -269,8 +280,10 @@ async function main(): Promise<void> {
   const srcDiff = srcFileDiff(base);
   const featureScnDelta =
     addedCodes.length > 0 || updatedCodes.length > 0 || deletedCodes.length > 0;
-  // The DIFF detects the CHANGE; the CHECKED-OUT FILES carry the CITE (@SCN-SSM-004).
-  const unitEquivalentCitedCodes = citedCodesInChangedTestFiles(base);
+  // The DIFF detects WHICH BLOCKS changed; the CHECKED-OUT FILES carry their CITES
+  // (@SCN-SSM-004), attributed per BLOCK, not per file (@SCN-SSM-005).
+  const { citedCodes: unitEquivalentCitedCodes, uncitedBlocks: uncitedChangedTestBlocks } =
+    citedCodesInChangedTestFiles(base, testDiff);
   const unitEquivalentBehaviourBearing = isUnitEquivalentBehaviourBearing(
     testDiff,
     srcDiff,
@@ -300,7 +313,7 @@ async function main(): Promise<void> {
   const isExternalPr = readIsExternalPr(process.env["GITHUB_EVENT_PATH"]);
 
   console.log(
-    `scn-subissue lint: ${addedCodes.length} added, ${updatedCodes.length} updated, ${deletedCodes.length} deleted @SCN code(s); unit-equivalent: ${unitEquivalentBehaviourBearing ? "behaviour-bearing" : "inert"}, cited [${unitEquivalentCitedCodes.join(", ")}]; ticket handle: ${hasTicketHandle ? "present" : "ABSENT"}${codesToCheck.length > 0 ? ` — checking: ${codesToCheck.join(", ")}` : ""}`
+    `scn-subissue lint: ${addedCodes.length} added, ${updatedCodes.length} updated, ${deletedCodes.length} deleted @SCN code(s); unit-equivalent: ${unitEquivalentBehaviourBearing ? "behaviour-bearing" : "inert"}, cited [${unitEquivalentCitedCodes.join(", ")}]${uncitedChangedTestBlocks.length > 0 ? `, UNCITED changed block(s): ${uncitedChangedTestBlocks.join("; ")}` : ""}; ticket handle: ${hasTicketHandle ? "present" : "ABSENT"}${codesToCheck.length > 0 ? ` — checking: ${codesToCheck.join(", ")}` : ""}`
   );
 
   const result = decideScnGate({
@@ -311,6 +324,7 @@ async function main(): Promise<void> {
     exemptions,
     unitEquivalentBehaviourBearing,
     unitEquivalentCitedCodes,
+    uncitedChangedTestBlocks,
     hasTicketHandle,
     isExternalPr,
   });
