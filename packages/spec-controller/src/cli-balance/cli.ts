@@ -182,6 +182,41 @@ export function checkInputsParse(
 }
 
 /**
+ * Guard the readability of `--render-from-json` at the CLI edge (@SCN-CLI-015). The
+ * render-from-saved-JSON branch RETURNS before the input guards ever run, so it honoured
+ * NEITHER: a missing path crashed to `ENOENT` and a malformed file to `SyntaxError`, both
+ * landing on Node's default exit 1 — the out-of-balance code (3F-1764).
+ *
+ * The missing-path case was a live violation of @SCN-CLI-002's own shipped principle: a
+ * supplied input path that does not exist is a hard error at exit 2, enforced for the five
+ * evidence flags and not for this one. The CLI shipped a guard that half-honoured its Rule.
+ *
+ * MISSING and UNPARSEABLE are two Examples of one boundary rule — an input the tool cannot
+ * read is a usage error, never a verdict — so one guard covers both. PURE and
+ * `@unit`-testable like its siblings: the parsed args + an injected `read` (no fs), which
+ * throws for an absent/unreadable path exactly as `readFileSync` does. An OMITTED flag is
+ * not an error (the ordinary reconcile path).
+ */
+export function checkRenderFromJson(
+  args: Record<string, string>,
+  read: (path: string) => string,
+): string | null {
+  const path = args["render-from-json"];
+  if (path === undefined) return null;
+
+  try {
+    JSON.parse(read(path));
+  } catch (err) {
+    // MISSING (read throws ENOENT) and UNPARSEABLE (JSON.parse throws) are the same input
+    // fault, caught in the same place. Anything escaping here lands on Node's default
+    // exit 1 — the out-of-balance code — which is the collision this closes.
+    const failure = err instanceof Error ? err.message : String(err);
+    return `The --render-from-json saved report could not be read: ${path} (${failure})`;
+  }
+  return null;
+}
+
+/**
  * The registry-bounded flag check at the CLI edge (@SCN-CLI-009). `balance` accepts ONLY
  * the flags its per-command registry scope declares (by `name` or `alias`); an unregistered
  * flag — a typo like `--strcit`, a stray `--bogus` — is a usage error, NOT silently
@@ -269,6 +304,20 @@ export function runBalance(argv: string[]): void {
   // the file, JSON.parses it back into the whole-document report model, renders the markdown via
   // renderReport, and writes it to stdout (the same trailing-newline convention as the writer's
   // stdout path). The load-bearing proof that the JSON IS the model — returns before any reconcile.
+  // Saved-report READABILITY guard (@SCN-CLI-015). This branch RETURNS before the input
+  // guards below ever run, so it honoured NEITHER: a missing path crashed to ENOENT and a
+  // malformed file to SyntaxError, both landing on Node's default exit 1 — the
+  // out-of-balance code. The missing-path case was a live violation of @SCN-CLI-002's own
+  // shipped principle, which the CLI enforced for the five evidence flags and not for this
+  // one. The guard therefore runs INSIDE this branch, ahead of the read (3F-1764).
+  const unreadableSavedReportError = checkRenderFromJson(args, (path) =>
+    readFileSync(path, "utf8"),
+  );
+  if (unreadableSavedReportError) {
+    process.stderr.write(unreadableSavedReportError + "\n");
+    process.exit(2);
+  }
+
   const rehydratePath = args["render-from-json"];
   if (rehydratePath !== undefined) {
     const savedReport = readFileSync(rehydratePath, "utf8");

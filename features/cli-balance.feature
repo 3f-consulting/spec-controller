@@ -151,6 +151,13 @@ Feature: spec-controller balance runs standalone
     scanned for run: steps) and --features is Gherkin-parsed tolerantly, so neither can crash
     the process: on garbage they reconcile normally and their exit 1 is a true verdict.
 
+    The rule reaches --render-from-json too (@SCN-CLI-015), the one flag the guard lane never
+    reached: it returns BEFORE the input guards run, so it honoured neither — a missing path
+    crashed to ENOENT and a malformed file to SyntaxError, both landing on exit 1. Its
+    missing-path case was a live violation of @SCN-CLI-002's own shipped principle, which the
+    CLI enforced for the five evidence flags and not for this one. MISSING and UNPARSEABLE
+    are two Examples of the one boundary rule.
+
     @unit @e2e @SCN-CLI-014
     Scenario: a present-but-unparseable evidence report exits 2, naming the file and the parse failure
       Given a target, and --vitest pointing at a report that exists but is not valid JSON
@@ -158,6 +165,19 @@ Feature: spec-controller balance runs standalone
       Then the command exits with status 2
       And stderr names the unparseable report and the parse failure
       And nothing is reconciled
+
+    @unit @e2e @SCN-CLI-015
+    Scenario Outline: a --render-from-json report the tool cannot read exits 2, naming the file
+      Given --render-from-json pointing at a saved report that is <defect>
+      When "spec-controller balance" is invoked over that target through the CLI binary
+      Then the command exits with status 2
+      And stderr names the unreadable saved report
+      And nothing is rendered
+
+      Examples:
+        | defect      |
+        | missing     |
+        | unparseable |
 
   Rule: the CLI answers --help from a single command/flag registry, completeness-guarded.
 

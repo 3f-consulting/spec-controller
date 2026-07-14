@@ -647,6 +647,60 @@ Given(
   },
 );
 
+/**
+ * @SCN-CLI-015 — the same rule on the one flag the guard lane never reached.
+ * `--render-from-json` returns at cli.ts:233, BEFORE the input guards at :242, so it
+ * honoured neither: a missing path crashed to ENOENT and a malformed file to SyntaxError,
+ * both landing on Node's default exit 1. The missing-path case was a live violation of
+ * @SCN-CLI-002's own shipped principle — enforced for the five evidence flags, not for this
+ * one. Missing and unparseable are two Examples of ONE boundary rule (3F-1764).
+ */
+
+/** The unreadable saved report CLI-015's Given points at — asserted verbatim in stderr. */
+let unreadableSavedReport = "";
+
+// @SCN-CLI-015
+Given(
+  "--render-from-json pointing at a saved report that is {word}",
+  function (defect: string) {
+    if (defect === "missing") {
+      // Never written — the ENOENT case. @SCN-CLI-002 already promises exit 2 for a
+      // supplied-but-absent input path; this flag simply never reached that guard.
+      unreadableSavedReport = join(tmpdir(), `scn-cli-015-missing-${process.pid}.json`);
+      assert.ok(
+        !existsSync(unreadableSavedReport),
+        "the missing-path fixture must NOT exist on disk",
+      );
+    } else {
+      // Written, but not JSON — the SyntaxError case, the same fault as CLI-014.
+      unreadableSavedReport = join(tmpdir(), `scn-cli-015-bad-${process.pid}.json`);
+      writeFileSync(unreadableSavedReport, "not a saved report at all {{{");
+      assert.ok(existsSync(unreadableSavedReport), "the unparseable fixture must EXIST");
+    }
+    invocationArgs = ["--render-from-json", unreadableSavedReport];
+  },
+);
+
+// @SCN-CLI-015
+Then("stderr names the unreadable saved report", function () {
+  assert.ok(
+    cliResult.stderr.includes(unreadableSavedReport),
+    `expected stderr to NAME the unreadable saved report ${unreadableSavedReport}; got:\n${cliResult.stderr}`,
+  );
+  // A usage error is a typed message, NOT an uncaught stack trace — the crash is the bug.
+  assert.doesNotMatch(
+    cliResult.stderr,
+    /^\s+at .*:\d+:\d+\)?$/m,
+    `expected a TYPED usage error, but the process crashed with a stack trace:\n${cliResult.stderr}`,
+  );
+});
+
+// @SCN-CLI-015
+Then("nothing is rendered", function () {
+  // The guard halts BEFORE the rehydrate-and-render branch, so no report reaches stdout.
+  assert.doesNotMatch(cliResult.stdout, /Evidence Reconciliation/);
+});
+
 // @SCN-CLI-014
 Then("stderr names the unparseable report and the parse failure", function () {
   assert.ok(

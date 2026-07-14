@@ -16,6 +16,7 @@ import {
   checkInputsExist,
   checkInputsParse,
   checkLegacyJson,
+  checkRenderFromJson,
   checkUnknownFlags,
   runBalance,
   sourceTarget,
@@ -183,6 +184,56 @@ describe("[SCN-CLI-014] checkInputsParse rejects a supplied report that exists b
     const error = checkInputsParse({ vitest: "reports/vitest.json" }, read);
     expect(error).not.toBeNull();
     expect(error).toContain("reports/vitest.json");
+  });
+});
+
+describe("[SCN-CLI-015] checkRenderFromJson rejects a saved report the tool cannot read", () => {
+  it("returns a typed error naming the path when the saved report is MISSING", () => {
+    // The ENOENT case. @SCN-CLI-002 already promises exit 2 for a supplied-but-absent input
+    // path — but --render-from-json returns before that guard ever runs, so the CLI shipped
+    // a guard that half-honoured its own Rule (3F-1764). A `read` that throws is exactly how
+    // readFileSync behaves on an absent path.
+    const missing = "saved/does-not-exist.json";
+    const read = (): string => {
+      throw new Error(`ENOENT: no such file or directory, open '${missing}'`);
+    };
+
+    const error = checkRenderFromJson({ "render-from-json": missing }, read);
+    expect(error).not.toBeNull();
+    expect(error).toContain("--render-from-json");
+    expect(error).toContain(missing);
+  });
+
+  it("returns a typed error naming the path when the saved report is UNPARSEABLE", () => {
+    // The SyntaxError case — the same fault as CLI-014, on the flag the lane never reached.
+    const path = "saved/spec-reconciliation.json";
+    const error = checkRenderFromJson(
+      { "render-from-json": path },
+      () => "not a saved report at all {{{",
+    );
+
+    expect(error).not.toBeNull();
+    expect(error).toContain("--render-from-json");
+    expect(error).toContain(path);
+    expect(error).toMatch(/JSON/i);
+  });
+
+  it("returns null when the saved report reads and parses, so the CLI proceeds to render", () => {
+    const error = checkRenderFromJson(
+      { "render-from-json": "saved/spec-reconciliation.json" },
+      () => '{"summary": {}}',
+    );
+    expect(error).toBeNull();
+  });
+
+  it("returns null when --render-from-json is omitted (the ordinary reconcile path)", () => {
+    // The boundary that keeps the rule honest: the flag is optional. Its absence must not
+    // fire the guard, and `read` must never even be consulted.
+    const read = (): string => {
+      throw new Error("checkRenderFromJson must not read when the flag is omitted");
+    };
+    expect(checkRenderFromJson({}, read)).toBeNull();
+    expect(checkRenderFromJson({ vitest: "reports/vitest.json" }, read)).toBeNull();
   });
 });
 
