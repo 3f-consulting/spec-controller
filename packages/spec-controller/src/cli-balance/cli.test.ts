@@ -12,7 +12,14 @@
  */
 
 import { describe, it, expect, vi } from "vitest";
-import { checkInputsExist, checkLegacyJson, checkUnknownFlags, runBalance, sourceTarget } from "./cli.js";
+import {
+  checkInputsExist,
+  checkInputsParse,
+  checkLegacyJson,
+  checkUnknownFlags,
+  runBalance,
+  sourceTarget,
+} from "./cli.js";
 import { cliRegistry } from "../cli-registry.js";
 
 describe("[SCN-FMT-006] checkLegacyJson rejects the removed --json flag with a migration hint", () => {
@@ -109,6 +116,73 @@ describe("[SCN-CLI-002] checkInputsExist rejects a supplied input path that does
       () => false,
     );
     expect(error).toContain("--cucumber");
+  });
+});
+
+describe("[SCN-CLI-014] checkInputsParse rejects a supplied report that exists but cannot be parsed", () => {
+  // The JSON-BEARING flags — the only ones whose CONTENT is parsed, and so the only ones
+  // whose content can throw. Readability is decided by the injected `read` fn — no fs.
+  const jsonFlags = ["vitest", "cucumber", "package-json"] as const;
+
+  it.each(jsonFlags)(
+    "returns a typed error naming --%s, the path and the parse failure when the report is not valid JSON",
+    (flag) => {
+      // Teeth: the file EXISTS (checkInputsExist passed it), so only a readability check
+      // can catch this. Without it the reader throws mid-parse and Node's default exit 1
+      // makes a CRASH indistinguishable from an out-of-balance VERDICT (3F-1742).
+      const path = `reports/${flag}.json`;
+      const error = checkInputsParse({ [flag]: path }, () => "not valid json at all {{{");
+
+      expect(error).not.toBeNull();
+      expect(error).toContain(`--${flag}`);
+      expect(error).toContain(path);
+      // The operator must be told WHY — the file name alone sends them hunting.
+      expect(error).toMatch(/JSON/i);
+    },
+  );
+
+  it("returns null when every supplied JSON input parses, so the CLI proceeds to reconcile", () => {
+    const args = {
+      vitest: "reports/vitest.json",
+      cucumber: "reports/cucumber.json",
+      "package-json": "package.json",
+    };
+    expect(checkInputsParse(args, () => '{"ok": true}')).toBeNull();
+  });
+
+  it("never reads --features or --ci: neither is JSON, and neither can crash the process", () => {
+    // Confirmed empirically at Discovery (3F-1742): --ci is read as raw TEXT and scanned
+    // for `run:` steps; --features is Gherkin-parsed tolerantly. On garbage input both
+    // reconcile normally and exit 1 as a TRUE verdict — they are not a third instance of
+    // the collision, so the guard must not touch them (a false exit 2 would be its own bug).
+    const read = (): string => {
+      throw new Error("checkInputsParse must not read --features or --ci");
+    };
+    expect(checkInputsParse({ features: "features", ci: ".github/workflows/ci.yml" }, read)).toBeNull();
+  });
+
+  it("returns null when no input flags are supplied (each is legitimately optional)", () => {
+    expect(checkInputsParse({}, () => "")).toBeNull();
+  });
+
+  it("reports an empty file as unparseable — the /dev/null case that surfaced the bug", () => {
+    // `--vitest /dev/null` reads as "" and JSON.parse("") throws. This is the exact
+    // invocation that crashed to exit 1 during the 3F-1703 verification.
+    const error = checkInputsParse({ vitest: "/dev/null" }, () => "");
+    expect(error).not.toBeNull();
+    expect(error).toContain("/dev/null");
+  });
+
+  it("reports an UNREADABLE file as the same input fault rather than letting it escape as a crash", () => {
+    // A read that throws (a race after the existence check, a permissions fault) must be
+    // caught by the same guard — anything that escapes here lands on Node's default exit 1,
+    // which is the collision this scenario exists to close.
+    const read = (): string => {
+      throw new Error("EACCES: permission denied");
+    };
+    const error = checkInputsParse({ vitest: "reports/vitest.json" }, read);
+    expect(error).not.toBeNull();
+    expect(error).toContain("reports/vitest.json");
   });
 });
 

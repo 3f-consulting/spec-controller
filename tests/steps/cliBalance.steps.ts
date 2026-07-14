@@ -24,7 +24,8 @@
 import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { cliRegistry } from "../../packages/spec-controller/src/cli-registry.js";
 
@@ -610,5 +611,59 @@ Then("the command exits with status {int}", function (code: number) {
     cliResult.status,
     code,
     `expected exit ${code}; got ${cliResult.status}\nstdout:\n${cliResult.stdout}\nstderr:\n${cliResult.stderr}`,
+  );
+});
+
+/**
+ * @SCN-CLI-014 — a present-but-UNPARSEABLE report is a usage error (exit 2), never the
+ * out-of-balance verdict (exit 1). Sibling of CLI-002's missing path: existence was
+ * already guarded, READABILITY was not, so the reader threw mid-parse and Node's default
+ * exit 1 made a crashed invocation indistinguishable from an honest disagreement (3F-1742).
+ *
+ * @e2e: spawns the REAL binary (the shared When), because the process exit code is the ONLY
+ * place the collision is observable — an in-process call cannot see it.
+ */
+
+/** The unparseable report CLI-014's Given writes — asserted verbatim in stderr. */
+let unparseablePath = "";
+
+// @SCN-CLI-014
+Given(
+  "a target, and --vitest pointing at a report that exists but is not valid JSON",
+  function () {
+    const root = process.cwd();
+    // A real reconcilable target — the ONLY problem is that the supplied report, though
+    // PRESENT (so CLI-002's existence guard passes it), holds content that is not JSON.
+    unparseablePath = join(tmpdir(), `scn-cli-014-${process.pid}.json`);
+    writeFileSync(unparseablePath, "not valid json at all {{{");
+
+    assert.ok(existsSync(unparseablePath), "the fixture report must EXIST — this is not the missing-path case");
+    invocationArgs = [
+      "--features",
+      join(root, BALANCED.features),
+      "--vitest",
+      unparseablePath,
+    ];
+  },
+);
+
+// @SCN-CLI-014
+Then("stderr names the unparseable report and the parse failure", function () {
+  assert.ok(
+    cliResult.stderr.includes(unparseablePath),
+    `expected stderr to NAME the unparseable report ${unparseablePath}; got:\n${cliResult.stderr}`,
+  );
+  // The operator must be told WHY it could not be read — "is not valid JSON" is the
+  // actionable half. A bare exit code sends them hunting.
+  assert.match(
+    cliResult.stderr,
+    /not valid JSON|JSON/i,
+    `expected stderr to name the PARSE failure, not merely the file; got:\n${cliResult.stderr}`,
+  );
+  // A usage error is a typed message, NOT an uncaught stack trace — the crash is the bug.
+  assert.doesNotMatch(
+    cliResult.stderr,
+    /^\s+at .*:\d+:\d+\)?$/m,
+    `expected a TYPED usage error, but the process crashed with a stack trace:\n${cliResult.stderr}`,
   );
 });

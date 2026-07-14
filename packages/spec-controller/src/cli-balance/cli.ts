@@ -139,6 +139,49 @@ export function checkInputsExist(
 }
 
 /**
+ * The JSON-BEARING input flags — the ones whose content is `JSON.parse`d, and so the only
+ * ones whose content can throw. `--features` is Gherkin (parsed tolerantly) and `--ci` is
+ * read as raw TEXT and scanned for `run:` steps — neither is JSON, neither can crash the
+ * process, and on garbage both reconcile normally (verified, 3F-1742 Discovery).
+ */
+const JSON_INPUT_FLAGS = ["vitest", "cucumber", "package-json"] as const;
+
+/**
+ * Guard the READABILITY of the supplied JSON inputs at the CLI edge (@SCN-CLI-014).
+ * `checkInputsExist` already guards their PRESENCE — but a path that is present yet
+ * UNPARSEABLE fell straight through it: the reader threw mid-parse, nothing caught it, and
+ * the process hit Node's default exit 1 — the code reserved for a genuine OUT-OF-BALANCE
+ * verdict. A crashed invocation was therefore indistinguishable, by exit code, from an
+ * honest disagreement (3F-1742). An input the tool cannot read is a USAGE fault: exit 2,
+ * sibling to a missing path (@SCN-CLI-002) and an unrecognised flag (@SCN-CLI-009).
+ *
+ * PURE and `@unit`-testable like its sibling guards: reads the parsed args + an injected
+ * `read` fn (no fs), returns the FIRST supplied-but-unparseable `(flag, path, failure)` as
+ * a typed error naming all three — routed to stderr + exit 2 by `runBalance` — else null.
+ * An omitted flag is not an error, and an unreadable file (a race after the existence
+ * check) reports as the same input fault rather than escaping as a crash.
+ */
+export function checkInputsParse(
+  args: Record<string, string>,
+  read: (path: string) => string,
+): string | null {
+  for (const flag of JSON_INPUT_FLAGS) {
+    const path = args[flag];
+    if (path === undefined) continue;
+
+    try {
+      JSON.parse(read(path));
+    } catch (err) {
+      // Both a parse failure and an unreadable file are the SAME input fault. Anything
+      // that escapes this catch lands on Node's default exit 1 — the collision itself.
+      const failure = err instanceof Error ? err.message : String(err);
+      return `The --${flag} report is not valid JSON: ${path} (${failure})`;
+    }
+  }
+  return null;
+}
+
+/**
  * The registry-bounded flag check at the CLI edge (@SCN-CLI-009). `balance` accepts ONLY
  * the flags its per-command registry scope declares (by `name` or `alias`); an unregistered
  * flag — a typo like `--strcit`, a stray `--bogus` — is a usage error, NOT silently
@@ -244,6 +287,20 @@ export function runBalance(argv: string[]): void {
     process.stderr.write(missingInputError + "\n");
     // Usage/input error → exit 2 (@SCN-CLI-002), distinct from the out-of-balance
     // verdict code 1 (@SCN-CLI-004).
+    process.exit(2);
+  }
+
+  // Input-READABILITY guard (@SCN-CLI-014): existence is not enough. A report that is
+  // PRESENT but UNPARSEABLE (`--vitest /dev/null`, truncated JSON, non-JSON) used to throw
+  // mid-parse inside reconcileWithCensus, uncaught — and Node's default exit code is 1, the
+  // code reserved for a genuine OUT-OF-BALANCE verdict (@SCN-CLI-004). So a tool that
+  // CRASHED before reconciling was indistinguishable, by exit code, from an honest
+  // disagreement (3F-1742). Runs immediately after the existence guard and BEFORE any
+  // reconcile, routing to the same stderr + exit 2 lane: an input the tool cannot read is a
+  // usage fault, sibling to a missing path and an unrecognised flag — never a verdict.
+  const unparseableInputError = checkInputsParse(args, (path) => readFileSync(path, "utf8"));
+  if (unparseableInputError) {
+    process.stderr.write(unparseableInputError + "\n");
     process.exit(2);
   }
 

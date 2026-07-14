@@ -133,6 +133,32 @@ Feature: spec-controller balance runs standalone
       And the command exits with status 1
       And the tally, the verdict headline and the process exit code agree
 
+  Rule: an input the tool cannot read is a usage error, never a verdict
+
+    exit 1 means OUT-OF-BALANCE — the accounts disagree — and nothing else. A tool that
+    CRASHED before reconciling must never reach for it: a broken invocation masquerading
+    as an honest disagreement is precisely the meaning-collision the exit taxonomy exists
+    to prevent (0 balanced / 1 out-of-balance / 2 usage / 3 pending-under-strict /
+    4 unsound). A present-but-unparseable report is an INPUT fault — sibling to a missing
+    path (@SCN-CLI-002) and an unrecognised flag (@SCN-CLI-009), both already exit 2 — so
+    it halts BEFORE reconciling, naming the file and the parse failure, and exits 2.
+
+    Not 4 (unsound): unsound is a VALID, parseable report whose evidence didn't fully
+    materialise — the reconciliation still runs and can be trusted to say so. A malformed
+    report cannot be reconciled at all.
+
+    Scope is the JSON-BEARING inputs. --ci is never JSON/YAML-parsed (it is read as text and
+    scanned for run: steps) and --features is Gherkin-parsed tolerantly, so neither can crash
+    the process: on garbage they reconcile normally and their exit 1 is a true verdict.
+
+    @unit @e2e @SCN-CLI-014
+    Scenario: a present-but-unparseable evidence report exits 2, naming the file and the parse failure
+      Given a target, and --vitest pointing at a report that exists but is not valid JSON
+      When "spec-controller balance" is invoked over that target through the CLI binary
+      Then the command exits with status 2
+      And stderr names the unparseable report and the parse failure
+      And nothing is reconciled
+
   Rule: the CLI answers --help from a single command/flag registry, completeness-guarded.
 
     `spec-controller balance --help` (and `-h`) prints the balance command's flags —
