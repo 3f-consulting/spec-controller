@@ -1355,11 +1355,11 @@ describe("[SCN-USG-001] the markdown report renders the Static guards section", 
  * both halves of the pair.
  *
  * Proves the evidenceReconciliationSection decomposes the evidence-obligation
- * out-of-balance into a FLAT list of the eight leaf outcomes — with NO
+ * out-of-balance into a FLAT list of the nine leaf outcomes — with NO
  * debit/credit/neither group-side subtotal rows. The former grouping emitted both a
  * "↳ <group>-side" subtotal row AND each leaf row at the same "↳" indent, so a naive
  * column-sum double-counted (the live 170 vs 85). Removing the grouping leaves exactly
- * eight counted "↳ <outcome>" rows reconciling to the out-of-balance total once.
+ * nine counted "↳ <outcome>" rows reconciling to the out-of-balance total once.
  *
  * EXHAUSTIVENESS (3F-1649): OUT_OF_BALANCE_OUTCOMES is a hand-maintained readonly
  * Outcome[], NOT a type-forced Record — so it can fall behind the union silently, as it
@@ -1370,12 +1370,12 @@ describe("[SCN-USG-001] the markdown report renders the Static guards section", 
  * hand-transcribed list, or the guard would inherit the very weakness it guards against.
  *
  * Teeth: against the pre-fix renderer the three group-side subtotal rows still render,
- * so the "exactly eight ↳ rows" and "no group row" assertions red (the genuine
+ * so the "exactly nine ↳ rows" and "no group row" assertions red (the genuine
  * red→green). Markdown-only — the derived view is NOT duplicated into JSON.
  *
  * Parent: (@SCN-RPT-019).
  */
-describe("[SCN-RPT-019] the markdown obligation summary lists the eight leaf outcomes with no group rows", () => {
+describe("[SCN-RPT-019] the markdown obligation summary lists the nine leaf outcomes with no group rows", () => {
   // A balance whose out-of-balance obligations span all three FORMER groups:
   //   DEBIT   — SCN-A carries a missing obligation.
   //   CREDIT  — the suspense row carries a cites-no-scenario credit.
@@ -1415,7 +1415,7 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the eight leaf out
     ],
   };
 
-  // The eight out-of-balance leaf outcomes in canonical (model.ts reading) order —
+  // The nine out-of-balance leaf outcomes in canonical (model.ts reading) order —
   // satisfied excluded (it is the balanced outcome, not in the out-of-balance decomposition).
   const LEAVES = [
     "missing",
@@ -1423,6 +1423,9 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the eight leaf out
     "watermelon",
     "cites-unknown-scenario",
     "cites-no-scenario",
+    // The DEBIT twin of cites-no-scenario (@SCN-LDG-021, 3F-1774) — a real, ordinary scenario
+    // carrying no @SCN, whose obligation has no code for an observation to link to. The ninth leaf.
+    "no-scn-code",
     "broken",
     "undemanded",
     "both-missing",
@@ -1440,6 +1443,7 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the eight leaf out
     missing: true,
     "cites-unknown-scenario": true,
     "cites-no-scenario": true,
+    "no-scn-code": true,
     broken: true,
     undemanded: true,
     "both-missing": true,
@@ -1448,18 +1452,18 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the eight leaf out
     (outcome) => outcome !== "satisfied"
   );
 
-  it("decomposes the evidence-obligation out-of-balance into exactly the eight leaf outcome rows", () => {
+  it("decomposes the evidence-obligation out-of-balance into exactly the nine leaf outcome rows", () => {
     const md = renderMarkdown(spanning, ctx);
     // Every leaf outcome renders as a counted "↳ <description>" row — the canon
     // description, not the bare handle (3F-1626), located via the single-sourced map.
     for (const leaf of LEAVES) {
       expect(md).toContain(`| ↳ ${OUTCOME_DESCRIPTION[leaf]} |`);
     }
-    // And there are EXACTLY eight "↳" rows in the decomposition — no more (the group-side
+    // And there are EXACTLY nine "↳" rows in the decomposition — no more (the group-side
     // subtotal rows are gone). Count every "↳ " marker across the rendered document; the
-    // only "↳" rows are the eight leaf decomposition rows.
+    // only "↳" rows are the nine leaf decomposition rows.
     const arrowRows = md.split("\n").filter((line) => line.includes("↳"));
-    expect(arrowRows.length).toBe(8);
+    expect(arrowRows.length).toBe(9);
   });
 
   it("renders a leaf row for EVERY Outcome member except satisfied (the exhaustiveness guard)", () => {
@@ -1535,7 +1539,7 @@ describe("[SCN-RPT-020] the markdown renders each outcome's canon description, n
   // (unit missing) and a lint watermelon (→ the lint table AND a per-scenario lint item);
   // SCN-B is the degenerate both-missing (neither-side) item; the suspense row carries a
   // credit-side cites-no-scenario item with a locator. The summary `↳` decomposition always
-  // renders all eight leaves (zero counts shown), so every outcome's description is on the page.
+  // renders all nine leaves (zero counts shown), so every outcome's description is on the page.
   const rich: EvidenceReconciliation = {
     scenarioReconciliations: [
       {
@@ -1577,8 +1581,9 @@ describe("[SCN-RPT-020] the markdown renders each outcome's canon description, n
 
   it("renders every summary ↳ decomposition row with the canon description, and no bare handle", () => {
     const md = renderMarkdown(rich, ctx);
-    // Each of the eight out-of-balance leaves carries its canon description in the Subject cell.
-    // (`broken` — @SCN-LDG-017, the eighth — is asserted by @SCN-RPT-019's exhaustiveness guard.)
+    // Each out-of-balance leaf carries its canon description in the Subject cell.
+    // (`broken` — @SCN-LDG-017 — and `no-scn-code` — @SCN-LDG-021 — are asserted by
+    // @SCN-RPT-019's exhaustiveness guard.)
     expect(md).toContain("| ↳ Evidence Observation is missing |");
     expect(md).toContain("| ↳ Evidence Observation is failing |");
     expect(md).toContain("| ↳ Evidence Observation is passing but fabricated |");
@@ -1761,7 +1766,7 @@ describe("[SCN-PND-010] the markdown report renders a Pending Item distinct from
  *
  * Proves the `### Evidence reconciliation` view carries a SEPARATE Pending Items tally, off the
  * materialised `summary.pending` count. Hard constraint (3F-1453 line, endorsed): the tally is
- * NEVER an out-of-balance leaf of its own — the eight-leaf `↳ <outcome>` decomposition stays intact
+ * NEVER an out-of-balance leaf of its own — the `↳ <outcome>` leaf decomposition stays intact
  * and unchanged, and no `↳ pending` row is ever emitted. The tally is its OWN line (a Pending
  * Item is deferred, not out-of-balance). Rendered only when the run genuinely carries Pending
  * Items (the omit-when-empty precedent), so a zero-pending report stays byte-identical.
@@ -1782,7 +1787,7 @@ describe("[SCN-PND-011] the markdown Summary tallies Pending Items separately fr
   };
 
   // A balance carrying 3 Pending Items (two on SCN-PDX-001, one on SCN-PDX-002) alongside a
-  // genuine missing-unit error — so the eight-leaf out-of-balance decomposition renders AND the
+  // genuine missing-unit error — so the out-of-balance leaf decomposition renders AND the
   // Pending tally is distinct from it.
   const pendingBalance: EvidenceReconciliation = {
     scenarioReconciliations: [
@@ -1811,7 +1816,7 @@ describe("[SCN-PND-011] the markdown Summary tallies Pending Items separately fr
     expect(section).toMatch(/⏳\s*3 Pending Item/);
   });
 
-  it("keeps the eight-leaf out-of-balance decomposition intact — the tally is NOT a ninth leaf", () => {
+  it("keeps the out-of-balance leaf decomposition intact — the tally is NOT a leaf of its own", () => {
     const md = renderMarkdown(pendingBalance, ctx);
     const section = evidenceReconciliationSection(md);
     // The `↳ <description>` leaves still render, unchanged — located by the canon

@@ -14,7 +14,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { reconcile, hasBrokenEvidence } from "./reconcile.js";
+import { reconcile, hasBrokenEvidence, isBalanced } from "./reconcile.js";
 import type {
   Scenario,
   EvidenceObservation,
@@ -1131,5 +1131,71 @@ describe("[SCN-LDG-019] THE FAIL-SAFE GETS TEETH: a broken observation that CITE
     expect(balance.scenarioReconciliations.some((s) => s.kind === "phantom-scenario")).toBe(false);
     const suspense = balance.scenarioReconciliations.find((s) => s.kind === "suspense-scenario");
     expect(suspense?.reconcilingItems.map((i) => i.outcome)).toEqual(["broken"]);
+  });
+});
+
+/**
+ * @unit for @SCN-LDG-021 (3F-1774) — undeclarable work is never invisible.
+ *
+ * Bidirectional evidence: the describe carries the @SCN-LDG-021 id matching
+ * features/ledger.feature and the @integration steps in tests/steps/ledger.steps.ts.
+ *
+ * A scenario carrying no @SCN declares no obligation, so it could reconcile NOTHING — not
+ * satisfied, not failing, not even `missing`: an obligation that was never DECLARED cannot be
+ * ABSENT. It was simply not there, and the run went green over work cucumber runs and nothing
+ * proves. The scenario is REAL and ORDINARY (not phantom, not suspense); what is absent is the
+ * @SCN CODE its obligation needs to link to an observation. Hence `no-scn-code`, debit-side, on
+ * its own out-of-balance row — the debit twin of `cites-no-scenario`.
+ */
+describe("[SCN-LDG-021] a scenario declaring no @SCN reconciles no-scn-code on its own row", () => {
+  it("gives the untagged scenario its own out-of-balance row carrying no-scn-code", () => {
+    const declared: Scenario[] = [
+      { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+    ];
+    const observed: EvidenceObservation[] = [
+      { scnId: "SCN-AAA-001", qualityCheck: "unit", status: "passed" },
+    ];
+
+    // The untagged scenario, by NAME — the only handle it has, since it carries no code.
+    const reconciliation = reconcile(declared, observed, ["beta must never lose the money"]);
+
+    const row = reconciliation.scenarioReconciliations.find(
+      (r) => r.scnId === "beta must never lose the money",
+    );
+    expect(row).toBeDefined();
+    // ORDINARY, not phantom and not suspense: the scenario exists and cucumber runs it.
+    expect(row!.kind).toBe("scenario");
+    expect(row!.verdict).toBe("out-of-balance");
+    expect(row!.evidenceObligations.map((o) => o.outcome)).toEqual(["no-scn-code"]);
+  });
+
+  it("makes the whole run out-of-balance — a scenario the ledger cannot link is never clean", () => {
+    // THE FALSE-GREEN. Before this, the tagged scenario reconciled satisfied, the untagged one
+    // contributed NOTHING, and isBalanced said BALANCED (exit 0) — the report printing
+    // "1 scenario(s) carry no @SCN tag" and certifying the run clean in the same breath.
+    const declared: Scenario[] = [
+      { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+    ];
+    const observed: EvidenceObservation[] = [
+      { scnId: "SCN-AAA-001", qualityCheck: "unit", status: "passed" },
+    ];
+
+    const clean = reconcile(declared, observed);
+    expect(isBalanced(clean)).toBe(true); // the control: nothing untagged, genuinely balanced
+
+    const withUntagged = reconcile(declared, observed, ["beta must never lose the money"]);
+    expect(isBalanced(withUntagged)).toBe(false);
+  });
+
+  it("is inert when nothing is untagged — the byte-identical bar (the param is additive)", () => {
+    const declared: Scenario[] = [
+      { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+    ];
+    const observed: EvidenceObservation[] = [
+      { scnId: "SCN-AAA-001", qualityCheck: "unit", status: "passed" },
+    ];
+
+    // Omitted, and explicitly empty, must both reconcile exactly as before.
+    expect(reconcile(declared, observed, [])).toEqual(reconcile(declared, observed));
   });
 });

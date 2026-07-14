@@ -18,7 +18,7 @@
 
 import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
-import { parseScenarios } from "@3f-consulting/spec-controller-core";
+import { parseScenarios, parseUntaggedScenarios } from "@3f-consulting/spec-controller-core";
 import { reconcile } from "@3f-consulting/spec-controller-core";
 import { renderMarkdown } from "@3f-consulting/spec-controller-core";
 import {
@@ -1555,6 +1555,102 @@ Then(
       false,
       `expected the run to be OUT-OF-BALANCE — cucumber demands an integration tier that nothing ` +
         `proves — but the ledger read it as BALANCED. That is the false-green this scenario exists to close.`,
+    );
+  },
+);
+
+/**
+ * @SCN-LDG-021 (3F-1774) — undeclarable work is never invisible.
+ *
+ * @integration is the TEETH. The @unit arm proves reconcile emits the row; only driving the real
+ * declared-corpus read (parseScenarios + parseUntaggedScenarios) THROUGH reconcile to a verdict
+ * shows what that fixes: the run flipping from BALANCED to OUT-OF-BALANCE. The bug was never in
+ * one function — it was that a scenario cucumber runs contributed NOTHING to the ledger, so the
+ * tool printed "1 scenario(s) carry no @SCN tag" and called the run clean in the same breath.
+ */
+
+let ldg021Reconciliation: EvidenceReconciliation;
+let ldg021UntaggedName: string;
+
+// @SCN-LDG-021
+Given(
+  "a corpus with one @SCN-tagged scenario, proven and passing, and one scenario carrying no @SCN",
+  function () {
+    // The untagged scenario describes REAL behaviour that NOTHING proves. Cucumber runs it.
+    const source = `@AAA
+Feature: alpha
+
+  @unit @SCN-AAA-001
+  Scenario: alpha works
+    Given a thing
+
+  Scenario: beta must never lose the customer's money
+    Given a payment
+    When it is processed twice
+    Then the customer is charged once
+`;
+    ldg021UntaggedName = "beta must never lose the customer's money";
+
+    scenarios = parseScenarios(source);
+    const untagged = parseUntaggedScenarios(source);
+    assert.deepEqual(
+      untagged,
+      [ldg021UntaggedName],
+      "the fixture must contain exactly the one untagged scenario",
+    );
+
+    // The tagged scenario is proven and PASSES. On its own, the run would be BALANCED — which is
+    // precisely why the untagged scenario's invisibility was a false-green and not a nuisance.
+    evidenceObservations = [
+      { scnId: "SCN-AAA-001", qualityCheck: "unit", status: "passed", locator: "a.test.ts" },
+    ];
+    ldg021Reconciliation = reconcile(scenarios, evidenceObservations, untagged);
+  },
+);
+
+// @SCN-LDG-021
+When("the ledger reconciles that corpus", function () {
+  // Reconciled in the Given (the corpus read and the reconcile are one act here); this step marks
+  // the boundary so the scenario reads as the ledger's own When, like its siblings.
+  assert.ok(ldg021Reconciliation, "the reconciliation must exist");
+});
+
+// @SCN-LDG-021
+Then(
+  "the untagged scenario has its own out-of-balance row, reconciling no-scn-code",
+  function () {
+    const row = ldg021Reconciliation.scenarioReconciliations.find(
+      (r: ScenarioReconciliation) => r.scnId === ldg021UntaggedName,
+    );
+    assert.ok(
+      row,
+      `expected the untagged scenario "${ldg021UntaggedName}" to have its OWN row — it is a real ` +
+        `scenario cucumber runs, not a phantom and not suspense — but the ledger has no row for it.`,
+    );
+    // ORDINARY, not phantom, not suspense: the suspense definition does not move.
+    assert.equal(row.kind, "scenario", "the untagged scenario is an ORDINARY Scenario Reconciliation");
+    assert.equal(row.verdict, "out-of-balance");
+    assert.deepEqual(
+      row.evidenceObligations.map((o: QualityCheckReconciliation) => o.outcome),
+      ["no-scn-code"],
+      "the obligation has no @SCN code for an observation to link to — the debit twin of cites-no-scenario",
+    );
+  },
+);
+
+// @SCN-LDG-021
+Then(
+  "the run is out-of-balance — a scenario the ledger cannot link is never a clean run",
+  function () {
+    // THE FALSE-GREEN, CLOSED. Before this, the tagged scenario reconciled satisfied, the untagged
+    // one contributed nothing, and the run exited 0 BALANCED — over a scenario that says "the
+    // customer is charged once" and that nothing proves.
+    assert.equal(
+      isBalanced(ldg021Reconciliation),
+      false,
+      `expected the run to be OUT-OF-BALANCE — a scenario carrying no @SCN can never be proven, so ` +
+        `the ledger cannot certify this run clean — but isBalanced read it as BALANCED. That is the ` +
+        `false-green this scenario exists to close.`,
     );
   },
 );

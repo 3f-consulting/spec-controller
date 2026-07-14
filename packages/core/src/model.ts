@@ -195,6 +195,13 @@ export type Outcome =
   // against no evidence obligation. Fixes the latent `attributed` mis-count — a stray credit at an
   // undeclared quality-check is no longer silently counted as reconciliation-matched-attributed.
   // NEITHER-SIDE (the bidirectional reconciler's final outcome):
+  | "no-scn-code" // a DEBIT outcome (@SCN-LDG-021): a real, declared scenario carrying no @SCN,
+  // so its Evidence Obligation has NO CODE for an Evidence Observation to link to. The scenario is
+  // ORDINARY — not phantom, not suspense; it exists and cucumber runs it — but its own Scenario
+  // Reconciliation is out-of-balance, because the obligation is UNLINKABLE. The DEBIT TWIN of
+  // `cites-no-scenario` (same missing link, opposite side); suspense stays credit-only. Undeclarable
+  // work: it can never reconcile satisfied, failing, or even `missing` — an obligation never
+  // DECLARED cannot be ABSENT — so without this it was invisible to the verdict entirely.
   | "both-missing"; // a declared scenario that reconciles to ZERO rows on BOTH sides (no
   // evidence obligation AND no citing evidence observation) — the ONE degenerate Quality Check Reconciliation it
   // posts, blank on both sides (label: "Evidence Observation and Evidence Obligation are both
@@ -226,6 +233,11 @@ export const OUTCOME_DESCRIPTION: Record<Outcome, string> = {
   missing: "Evidence Observation is missing",
   "cites-unknown-scenario": "Evidence Observation cites an unknown Scenario",
   "cites-no-scenario": "Evidence Observation cites no Scenario",
+  // The DEBIT TWIN of `cites-no-scenario` (@SCN-LDG-021): same missing LINK, opposite side. The
+  // scenario is real and ORDINARY — it exists and cucumber runs it — but it carries no @SCN, so its
+  // obligation has no code an observation could link to. Undeclarable work: it can never reconcile
+  // satisfied, failing, or even `missing`, so without this outcome it was invisible to the verdict.
+  "no-scn-code": "Evidence Obligation has no @SCN code for an Evidence Observation to link to",
   // GENERIC over its producers (@SCN-LDG-017 + @SCN-LDG-019, 3F-1654): `broken` has two instances
   // — a vitest suite that failed to COLLECT, and a cucumber step two or more step definitions
   // match, which therefore never ran. An ambiguous step is neither a "suite" nor a "collection

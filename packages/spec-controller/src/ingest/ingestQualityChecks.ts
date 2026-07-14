@@ -133,6 +133,28 @@ function scenariosFromFeatures(
 }
 
 /**
+ * The declared corpus's UNTAGGED half (@SCN-LDG-021, 3F-1774) — the scenarios `parseScenarios`
+ * discards because they carry no `@SCN`. They are REAL scenarios: cucumber runs them, so each
+ * owns a real Evidence Obligation — but the obligation has no code for an Evidence Observation to
+ * link to, so it can never be discharged. `reconcile` gives each its own out-of-balance row
+ * (`no-scn-code`); before this read they were invisible to the ledger, and a run whose only fault
+ * was an untagged scenario printed "N scenario(s) carry no @SCN tag" and exited 0 BALANCED.
+ *
+ * Each is handled by its `<feature> : <scenario>` locator — the SAME locator the untagged warning
+ * prints — because a bare scenario name is not unique across the corpus, and the row must say
+ * where to go.
+ */
+function untaggedScenariosFromFeatures(featuresDir: string | undefined): string[] {
+  const features =
+    featuresDir !== undefined ? discoverFeatures(featuresDir) : discoverFeatures();
+  return features.flatMap((f) =>
+    parseUntaggedScenarios(readFileSync(f.path, "utf8")).map(
+      (scenario) => `${f.slug}.feature : ${scenario}`
+    )
+  );
+}
+
+/**
  * The declared corpus's INTEGRITY CHECKPOINT (@SCN-CLI-016, 3F-1767) — validate every discovered
  * `.feature` with the REAL Gherkin parser and report the files it cannot read.
  *
@@ -324,7 +346,14 @@ export function reconcileWithCensus(opts: ReconcileOptions): {
   // — the demanded ones match their @lint obligation, the undemanded ones (a guard no @lint
   // declares) cite no scenario, so `reconcile` folds them into the SUSPENSE row itself. No
   // derive-and-diff, no `unattributedStaticGuards` param.
-  const balance = reconcile(scenarios, evidenceObservations);
+  // The declared corpus is BOTH halves: the @SCN-tagged scenarios AND the untagged ones
+  // (@SCN-LDG-021). An untagged scenario cannot be linked to an observation, so it reconciles
+  // `no-scn-code` on its own out-of-balance row — never silently dropped from the debit side.
+  const balance = reconcile(
+    scenarios,
+    evidenceObservations,
+    untaggedScenariosFromFeatures(opts.features)
+  );
 
   // The census PROJECTS the one parsed runtime set — no second raw-report walk, no re-derivation
   // of the level. The views (Test volume, attributed, E2e cell) therefore agree with the verdict.

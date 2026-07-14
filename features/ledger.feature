@@ -417,3 +417,27 @@ Feature: Ledger over declared-vs-observed evidence
         | ancestor |
         | Feature  |
         | Rule     |
+
+  # UNDECLARABLE WORK IS NEVER INVISIBLE (@SCN-LDG-021, 3F-1774). A scenario carrying no @SCN
+  # declares no obligation, so it cannot reconcile satisfied, failing, or even `missing` — an
+  # obligation that was never DECLARED cannot be ABSENT. It was simply not there.
+  #
+  # So the tool PRINTED the problem ("N scenario(s) carry no @SCN tag", @SCN-RPT-014) and then
+  # exited 0 BALANCED — naming a hole and certifying the run clean in the same breath, over a
+  # scenario cucumber runs and nothing proves.
+  #
+  # The scenario is REAL and ORDINARY — not phantom, not suspense: it exists, and cucumber runs it.
+  # What is absent is the @SCN CODE its Evidence Obligation needs in order to link to an Evidence
+  # Observation. So its OWN row reconciles out-of-balance, DEBIT-side, via `no-scn-code` — the debit
+  # twin of `cites-no-scenario` (same missing link, opposite side). Suspense stays credit-only.
+  #
+  # Exit 1, not 2: the corpus reads perfectly well. This is a FINDING about the corpus, not an
+  # input the tool cannot read (@SCN-CLI-014/015/016's lane).
+  Rule: a scenario declaring no @SCN reconciles no-scn-code — undeclarable work is never invisible
+
+    @unit @integration @SCN-LDG-021
+    Scenario: a scenario carrying no @SCN reconciles no-scn-code on its own row, and the run is out-of-balance
+      Given a corpus with one @SCN-tagged scenario, proven and passing, and one scenario carrying no @SCN
+      When the ledger reconciles that corpus
+      Then the untagged scenario has its own out-of-balance row, reconciling no-scn-code
+      And the run is out-of-balance — a scenario the ledger cannot link is never a clean run

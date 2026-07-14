@@ -264,6 +264,8 @@ function buildSummary(
     "watermelon": 0,
     "cites-unknown-scenario": 0,
     "cites-no-scenario": 0,
+    // The debit twin of cites-no-scenario (@SCN-LDG-021) — a scenario with no @SCN code to link.
+    "no-scn-code": 0,
     // The broken reconciling item — a proof that NEVER RAN: a vitest suite that failed to collect
     // (@SCN-LDG-017), or a cucumber step matched by two or more definitions (@SCN-LDG-019). A
     // machine consumer reads run-soundness off this count: `byOutcome.broken > 0` ⇒ any `missing`

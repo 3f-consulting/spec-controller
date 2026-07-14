@@ -208,7 +208,8 @@ export function hasBrokenEvidence(reconciliation: EvidenceReconciliation): boole
 
 export function reconcile(
   scenarios: Scenario[],
-  evidenceObservations: EvidenceObservation[]
+  evidenceObservations: EvidenceObservation[],
+  untaggedScenarios: readonly string[] = []
 ): EvidenceReconciliation {
   const scenarioReconciliations: ScenarioReconciliation[] = [];
 
@@ -413,6 +414,35 @@ export function reconcile(
       evidenceObligations: items,
       reconcilingItems: items,
       // The suspense scenario declares nothing, so it can carry no Pending Item.
+      pendingItems: [],
+    });
+  }
+
+  // UNDECLARABLE WORK (@SCN-LDG-021). A scenario carrying no @SCN declares no obligation, so it
+  // could reconcile NOTHING — not satisfied, not failing, not even `missing`: an obligation that
+  // was never DECLARED cannot be ABSENT. It contributed nothing to the verdict, so the run went
+  // GREEN over a scenario cucumber runs and nothing proves, while the report printed
+  // "N scenario(s) carry no @SCN tag" right above it.
+  //
+  // The scenario is REAL and ORDINARY — `kind: "scenario"`, NOT phantom and NOT suspense: it
+  // exists, and cucumber runs it. What is absent is the @SCN CODE its Evidence Obligation needs in
+  // order to LINK to an Evidence Observation. So it gets its OWN out-of-balance row carrying one
+  // `no-scn-code` item — the DEBIT TWIN of `cites-no-scenario` (same missing link, opposite side).
+  // The suspense definition does not move; suspense stays credit-only.
+  //
+  // The item carries NO `qualityCheck`: without a code, no observation can link at ANY tier, so
+  // the missing link is SCENARIO-scope, not tier-scope (the same shape `both-missing` uses).
+  // `isBalanced` needs no change — any reconciling item anywhere already reds the run (exit 1).
+  for (const name of untaggedScenarios) {
+    const items: QualityCheckReconciliation[] = [{ outcome: "no-scn-code" }];
+    scenarioReconciliations.push({
+      // The scenario's NAME is its only handle — it has no code. (Precedent: the suspense row's
+      // "(no scenario)" sentinel; `featureCodeOf` falls back to the raw id when it cannot parse.)
+      scnId: name,
+      kind: "scenario",
+      verdict: "out-of-balance",
+      evidenceObligations: items,
+      reconcilingItems: items,
       pendingItems: [],
     });
   }

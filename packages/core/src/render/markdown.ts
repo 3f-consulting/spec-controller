@@ -58,6 +58,11 @@ const ITEM_GLYPH: Record<Outcome, string> = {
   // into CI over the real source).
   "watermelon": "🍉",
   "missing": "∅",
+  // DEBIT-SIDE: a real, ordinary scenario carrying no @SCN, so its Evidence Obligation has no code
+  // for an Evidence Observation to LINK to (@SCN-LDG-021). Not phantom, not suspense — the scenario
+  // exists and cucumber runs it. The debit twin of `cites-no-scenario`: same missing link, opposite
+  // side. It can never be proven, so its row is always out-of-balance.
+  "no-scn-code": "🔗",
   // CREDIT-SIDE: a credit citing an @SCN no declared scenario matches — the
   // reconciling item on a phantom scenario (@SCN-LDG-006).
   "cites-unknown-scenario": "👻",
@@ -97,6 +102,12 @@ function renderItem(item: ScenarioReconciliation["reconcilingItems"][number]): s
   // its glyph + description alone, no leading subject.
   if (item.outcome === "both-missing") {
     return `${ITEM_GLYPH["both-missing"]} ${OUTCOME_DESCRIPTION["both-missing"]}`;
+  }
+  // The `no-scn-code` item (@SCN-LDG-021) is SCENARIO-scope, like both-missing: without an @SCN
+  // code no observation can link at ANY tier, so it names no quality-check and renders with its
+  // glyph + description alone. (Debit-side, but subject-less — the missing thing is the LINK.)
+  if (item.outcome === "no-scn-code") {
+    return `${ITEM_GLYPH["no-scn-code"]} ${OUTCOME_DESCRIPTION["no-scn-code"]}`;
   }
   const subject = item.qualityCheck;
   // A CREDIT-SIDE item surfaces its WHERE-TO-FIX in the reconciliation cell (ruling
@@ -152,7 +163,7 @@ function cellSafe(text: string): string {
  * a reconciling item: the ⏳ marker + the explicit "pending" word read as neither
  * balanced-clean (the `—` placeholder) nor an error (a reconciling item's ✗/∅/🍉 outcome). It
  * is NEVER run through `renderItem` and never enters the reconciling-item list — a Pending
- * Item is a structurally distinct category, never one of the eight out-of-balance outcomes.
+ * Item is a structurally distinct category, never one of the out-of-balance leaf outcomes.
  */
 function renderPendingItem(item: PendingItem): string {
   // A `qualityCheck`-less Pending Item (@SCN-PND-022) is SCENARIO-SCOPE — a whole-scenario
@@ -470,7 +481,8 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
     ]),
   ];
   // Decompose the evidence-obligation out-of-balance into its causes — a FLAT list of the
-  // eight out-of-balance leaf outcomes in canonical order (@SCN-RPT-019, 3F-1453), each a
+  // nine out-of-balance leaf outcomes in canonical order (@SCN-RPT-019, 3F-1453; the ninth,
+  // `no-scn-code`, added by @SCN-LDG-021, 3F-1774), each a
   // counted `↳ <outcome>` row (only the out-of-balance column populated) reconciling to the
   // total exactly once. No debit/credit/neither grouping: the grouping emitted a subtotal
   // `↳ <group>-side` row AND its leaf rows at the same `↳` indent, so a naive column-sum
@@ -482,10 +494,11 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
     // — single-sourced from OUTCOME_DESCRIPTION so it cannot drift from the outcome it names.
     lines.push(row([`↳ ${OUTCOME_DESCRIPTION[outcome]}`, "", "", String(evidenceObligations.byOutcome[outcome]), detail]));
   }
-  // The Pending Items tally (@SCN-PND-011) — a SEPARATE line, NEVER a ninth out-of-balance
-  // leaf (3F-1453 line, endorsed; still endorsed at eight leaves, 3F-1649): a Pending Item is
-  // deferred, not out-of-balance, so it is
-  // tallied apart from BOTH the balanced and out-of-balance counts and the eight-leaf `↳`
+  // The Pending Items tally (@SCN-PND-011) — a SEPARATE line, NEVER an out-of-balance leaf of
+  // its own, at any leaf count (3F-1453 line, endorsed; re-endorsed at eight leaves, 3F-1649;
+  // the count is now nine, 3F-1774 — the constraint is categorical, not arithmetic): a Pending
+  // Item is deferred, not out-of-balance, so it is
+  // tallied apart from BOTH the balanced and out-of-balance counts and the `↳` leaf
   // decomposition above — its own line, never a `↳` row under the out-of-balance table. Read
   // off the materialised `summary.pending`; rendered only when the run genuinely carries Pending
   // Items (the omit-when-empty precedent), so a zero-pending report stays byte-identical.
@@ -506,7 +519,7 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
  * the OUT-of-balance decomposition. A FLAT list (@SCN-RPT-019, 3F-1453): the earlier
  * debit/credit/neither grouping was removed because it emitted a `↳ <group>-side` subtotal
  * row AND its leaf rows at the same `↳` indent, so a naive column-sum double-counted (the
- * live 170 vs 85). The eight leaves reconcile to the out-of-balance total exactly once.
+ * live 170 vs 85). The nine leaves reconcile to the out-of-balance total exactly once.
  *
  * ⚠ HAND-MAINTAINED (3F-1649). Unlike `OUTCOME_DESCRIPTION`, `ITEM_GLYPH` and
  * `summary.byOutcome` — all three type-forced `Record<Outcome, …>` maps that REFUSE TO
@@ -523,6 +536,9 @@ const OUT_OF_BALANCE_OUTCOMES: readonly Outcome[] = [
   "watermelon",
   "cites-unknown-scenario",
   "cites-no-scenario",
+  // The DEBIT twin of `cites-no-scenario` (@SCN-LDG-021): a real, ordinary scenario carrying no
+  // @SCN, so its obligation has no code for an observation to link to. Its own leaf.
+  "no-scn-code",
   // A credit whose PROOF NEVER RAN (@SCN-LDG-017 / @SCN-LDG-019) — a suspense-row sibling of
   // `cites-no-scenario`, distinguished by broken-vs-completed. Its own leaf, never folded in.
   "broken",
