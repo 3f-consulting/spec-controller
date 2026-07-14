@@ -41,6 +41,12 @@ importers:
       '@3f-consulting/spec-controller-core':
         specifier: workspace:*
         version: link:../core
+      '@cucumber/gherkin':
+        specifier: ^41.0.0
+        version: 41.0.0
+      '@cucumber/messages':
+        specifier: ^34.0.1
+        version: 34.0.1
       yaml:
         specifier: ^2.9.0
         version: 2.9.0
@@ -85,6 +91,9 @@ packages:
   '@cucumber/gherkin@38.0.0':
     resolution: {integrity: sha512-duEXK+KDfQUzu3vsSzXjkxQ2tirF5PRsc1Xrts6THKHJO6mjw4RjM8RV+vliuDasmhhrmdLcOcM7d9nurNTJKw==}
 
+  '@cucumber/gherkin@41.0.0':
+    resolution: {integrity: sha512-pKGx1EzNjtWbpw74kEevKDMj71dF3ZSaFJpLYuWVvRZKe+Cwoq5iEkuMaELIg1jxIu8jH/A2HPMpMR8UBvdG0w==}
+
   '@cucumber/html-formatter@23.1.0':
     resolution: {integrity: sha512-DcCSFoGs6jbwzXPgX1CwgJKEE+ZMcIEzq/0Memg0o24maNn9NJizBFHmoFWG4iv/OxHza+mvc+56cTHetfHndw==}
     peerDependencies:
@@ -102,6 +111,9 @@ packages:
 
   '@cucumber/messages@32.3.1':
     resolution: {integrity: sha512-yNQq1KoXRYaEKrWMFmpUQX7TdeQuU9jeGgJAZ3dArTsC/T4NpJ6DnqaJIIgwPnz/wtQIQTNX7/h0rOuF5xY4qQ==}
+
+  '@cucumber/messages@34.0.1':
+    resolution: {integrity: sha512-Mvh8CkZD4TGykvXqM9qpnYVGy9cqMxYkImtghl2cF1hEuBtuDGU716zQk7KviLh0ssidM/phh9kdbJL/73dHpg==}
 
   '@cucumber/pretty-formatter@1.0.1':
     resolution: {integrity: sha512-A1lU4VVP0aUWdOTmpdzvXOyEYuPtBDI0xYwYJnmoMDplzxMdhcHk86lyyvYDoMoPzzq6OkOE3isuosvUU4X7IQ==}
@@ -1164,6 +1176,10 @@ snapshots:
     dependencies:
       '@cucumber/messages': 32.3.1
 
+  '@cucumber/gherkin@41.0.0':
+    dependencies:
+      '@cucumber/messages': 32.3.1
+
   '@cucumber/html-formatter@23.1.0(@cucumber/messages@32.3.1)':
     dependencies:
       '@cucumber/messages': 32.3.1
@@ -1185,6 +1201,8 @@ snapshots:
     dependencies:
       class-transformer: 0.5.1
       reflect-metadata: 0.2.2
+
+  '@cucumber/messages@34.0.1': {}
 
   '@cucumber/pretty-formatter@1.0.1(@cucumber/cucumber@12.9.0)(@cucumber/messages@32.3.1)':
     dependencies:

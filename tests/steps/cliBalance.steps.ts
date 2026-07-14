@@ -24,7 +24,7 @@
 import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
-import { existsSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { cliRegistry } from "../../packages/spec-controller/src/cli-registry.js";
@@ -646,6 +646,113 @@ Given(
     ];
   },
 );
+
+/**
+ * @SCN-CLI-016 — the DECLARED side of the same rule (3F-1767). The feature corpus is an input
+ * too: the ledger's DEBIT side. It was read by a hand-rolled TAG-LINE SCAN that never looked
+ * for a `Scenario:` header, so a malformed tag line stopped being a tag line and its scenario
+ * CEASED TO EXIST. One stray character — in a file cucumber itself rejects — deleted a failing
+ * row and turned an out-of-balance run (exit 1) into a clean BALANCED (exit 0).
+ *
+ * @e2e is the TEETH: only the subprocess EXIT CODE shows the false-green flipping to a refusal.
+ * A unit test on the validator cannot see it — the bug was that the corpus reader never
+ * consulted a parser at all.
+ */
+
+/** The corrupt feature file CLI-016's Given writes — asserted verbatim in stderr. */
+let unparseableFeature = "";
+
+// @SCN-CLI-016
+Given(
+  "--features containing a feature file that is a corrupt tag line",
+  function () {
+    // THE HEADLINE PROOF: one stray character. Valid to the old tag scan's eyes (it simply
+    // stopped seeing a tag line); a PARSE ERROR to cucumber ("A tag may not contain whitespace").
+    writeCorruptFeature(
+      "@AAA\nFeature: alpha\n\n  @unit @SCN-AAA-001\n  Scenario: alpha works\n    Given a thing\n\n" +
+        "  @unit @SCN-AAA-002 x\n  Scenario: beta works\n    Given another thing\n",
+    );
+  },
+);
+
+// @SCN-CLI-016
+Given(
+  "--features containing a feature file that is a corrupt scenario keyword",
+  function () {
+    // The old scan had no notion of a Scenario: header, so this was invisible ENTIRELY.
+    writeCorruptFeature(
+      "@AAA\nFeature: alpha\n\n  @unit @SCN-AAA-001\n  Scenario: alpha works\n    Given a thing\n\n" +
+        "  @unit @SCN-AAA-002\n  Scenari0: beta works\n    Given another thing\n",
+    );
+  },
+);
+
+// @SCN-CLI-016
+Given(
+  "--features containing a feature file that is wholly unparseable",
+  function () {
+    writeCorruptFeature("not gherkin at all {{{\n");
+  },
+);
+
+/**
+ * Write a corrupt feature file into a throwaway target, alongside a vitest report that PASSES
+ * for the surviving scenario. That pairing is what makes the fixture teeth-bearing: with the
+ * corpus corrupted, the run would otherwise reconcile clean and exit 0 — the false-green.
+ */
+function writeCorruptFeature(featureSource: string): void {
+  const dir = mkdtempSync(join(tmpdir(), `scn-cli-016-${process.pid}-`));
+  mkdirSync(join(dir, "features"), { recursive: true });
+  unparseableFeature = join(dir, "features", "target.feature");
+  writeFileSync(unparseableFeature, featureSource);
+
+  const vitestReport = join(dir, "vitest.json");
+  writeFileSync(
+    vitestReport,
+    JSON.stringify({
+      testResults: [
+        {
+          name: "/x/a.test.ts",
+          status: "passed",
+          assertionResults: [
+            { fullName: "[SCN-AAA-001] alpha works", title: "alpha works", status: "passed" },
+          ],
+        },
+      ],
+    }),
+  );
+  const packageJson = join(dir, "package.json");
+  writeFileSync(packageJson, JSON.stringify({ name: "fixture", scripts: {} }));
+
+  invocationArgs = [
+    "--features",
+    join(dir, "features"),
+    "--vitest",
+    vitestReport,
+    "--package-json",
+    packageJson,
+  ];
+}
+
+// @SCN-CLI-016
+Then("stderr names the unparseable feature file and the parse failure", function () {
+  assert.ok(
+    cliResult.stderr.includes(unparseableFeature),
+    `expected stderr to NAME the unparseable feature file ${unparseableFeature}; got:\n${cliResult.stderr}`,
+  );
+  // The operator must be told WHAT broke, in the parser's own words — a bare exit code sends
+  // them hunting through a corpus for a single stray character.
+  assert.ok(
+    cliResult.stderr.trim().length > unparseableFeature.length,
+    `expected stderr to carry the PARSE FAILURE alongside the file name; got:\n${cliResult.stderr}`,
+  );
+  // A usage error is a TYPED message, never an uncaught stack trace.
+  assert.doesNotMatch(
+    cliResult.stderr,
+    /^\s+at .*:\d+:\d+\)?$/m,
+    `expected a TYPED usage error, but the process crashed with a stack trace:\n${cliResult.stderr}`,
+  );
+});
 
 /**
  * @SCN-CLI-015 — the same rule on the one flag the guard lane never reached.

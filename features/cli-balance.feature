@@ -179,6 +179,42 @@ Feature: spec-controller balance runs standalone
         | missing     |
         | unparseable |
 
+  # THE DECLARED SIDE of the same rule (@SCN-CLI-016, 3F-1767). The tool's inputs are not only
+  # the evidence reports; the FEATURE CORPUS is an input too — the ledger's DEBIT side. It was
+  # read by a hand-rolled TAG-LINE SCAN that never looked for a Scenario: header, so a malformed
+  # tag line simply stopped being a tag line and its scenario CEASED TO EXIST. One stray
+  # character — in a file cucumber itself rejects — deleted a failing row and turned an
+  # out-of-balance run (exit 1) into a clean BALANCED (exit 0). A dropped scenario cannot even
+  # reconcile `missing`, because it was never DECLARED to be missing: the run reads CLEANER THAN
+  # REALITY. That is the exact false-green this tool exists to prevent, aimed at itself.
+  #
+  # Every feature file is now VALIDATED by the real Gherkin parser — cucumber's own — before any
+  # reconcile. A file the parser rejects is an input the tool cannot read: exit 2, halt before
+  # reconciling, name the file and the parse failure. Never a verdict, and never a green.
+  #
+  # VALIDATED, not yet EXTRACTED. The corpus is still read by the tag-line scan; only its
+  # WELL-FORMEDNESS is checked against the parser. Full parity — extracting the corpus from the
+  # AST so that what spec-controller reconciles IS what cucumber runs — is the follow-up (3F-1776),
+  # and it is not cosmetic: the tag scan ignores Gherkin's Feature/Rule TAG INHERITANCE, so even a
+  # cleanly-parsing file can still be read differently by the two. Validation cannot close that.
+  #
+  # A VALID scenario carrying no @SCN is NOT this fault — it parses cleanly. Whether undeclarable
+  # work should red a run is a policy question, deliberately kept out of this bug fix (3F-1774).
+
+    @unit @e2e @SCN-CLI-016
+    Scenario Outline: a feature file the tool cannot parse exits 2, naming the file and the parse failure
+      Given --features containing a feature file that is <defect>
+      When "spec-controller balance" is invoked over that target through the CLI binary
+      Then the command exits with status 2
+      And stderr names the unparseable feature file and the parse failure
+      And nothing is reconciled
+
+      Examples:
+        | defect                     |
+        | a corrupt tag line         |
+        | a corrupt scenario keyword |
+        | wholly unparseable         |
+
   Rule: the CLI answers --help from a single command/flag registry, completeness-guarded.
 
     `spec-controller balance --help` (and `-h`) prints the balance command's flags —

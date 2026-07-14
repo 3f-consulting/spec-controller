@@ -18,6 +18,7 @@ import {
   readEvidenceObligations,
   readStaticEvidenceObservationCounts,
   readFeatureNames,
+  featureCorpusParseErrors,
 } from "../ingest/ingestQualityChecks.js";
 import { planOutput } from "./emit/format.js";
 import { writeOutputs } from "./emit/writer.js";
@@ -350,6 +351,31 @@ export function runBalance(argv: string[]): void {
   const unparseableInputError = checkInputsParse(args, (path) => readFileSync(path, "utf8"));
   if (unparseableInputError) {
     process.stderr.write(unparseableInputError + "\n");
+    process.exit(2);
+  }
+
+  // The DECLARED-CORPUS integrity checkpoint (@SCN-CLI-016, 3F-1767). The feature corpus is an
+  // input too — the ledger's DEBIT side — and it was read by a hand-rolled TAG-LINE SCAN that
+  // never consulted a parser. So a malformed tag line simply stopped being a tag line and its
+  // scenario CEASED TO EXIST: one stray character deleted a failing row and turned an
+  // out-of-balance run (exit 1) into a clean BALANCED (exit 0). A dropped scenario cannot even
+  // reconcile `missing`, because it was never DECLARED to be missing — the run read cleaner than
+  // reality, the exact false-green this tool exists to prevent.
+  //
+  // Validated with the REAL Gherkin parser (cucumber's own), so a file the tool would reconcile is
+  // at least a file cucumber would RUN. A file it rejects is an input we CANNOT READ: exit 2,
+  // halting BEFORE any reconcile, naming the file and the parse failure — the same Rule as
+  // @SCN-CLI-014 and @SCN-CLI-015 ("an input the tool cannot read is a usage error, never a
+  // verdict"), now on the declared side. Never a verdict, and never a green.
+  //
+  // VALIDATED, NOT EXTRACTED: `parseScenarios` still reads the corpus with the tag-line scan, so
+  // this does NOT yet make the corpus identical to cucumber's (the scan ignores Feature/Rule tag
+  // inheritance). AST-based extraction is the follow-up, 3F-1776.
+  const featureParseErrors = featureCorpusParseErrors(args["features"]);
+  if (featureParseErrors.length > 0) {
+    for (const { file, message } of featureParseErrors) {
+      process.stderr.write(`The --features corpus contains a feature file that could not be parsed: ${file}\n${message}\n`);
+    }
     process.exit(2);
   }
 

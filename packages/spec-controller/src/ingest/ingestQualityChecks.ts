@@ -21,6 +21,7 @@ import {
   parseUntaggedScenarios,
   proseOnlyCodes,
 } from "@3f-consulting/spec-controller-core";
+import { parseErrorsIn, type GherkinParseError } from "./gherkinValidation.js";
 import { DEFAULT_DEFERRAL_TAGS } from "../deferralTags.js";
 import {
   evidenceObligations,
@@ -129,6 +130,22 @@ function scenariosFromFeatures(
   const features =
     featuresDir !== undefined ? discoverFeatures(featuresDir) : discoverFeatures();
   return features.flatMap((f) => parseScenarios(readFileSync(f.path, "utf8"), deferralTags));
+}
+
+/**
+ * The declared corpus's INTEGRITY CHECKPOINT (@SCN-CLI-016, 3F-1767) — validate every discovered
+ * `.feature` with the REAL Gherkin parser and report the files it cannot read.
+ *
+ * The impure edge (discover + read); the validation itself is the pure `parseErrorsIn`. The
+ * declared corpus is the ledger's DEBIT side, and it used to be read by a tag-line scan that
+ * never consulted a parser — so a malformed tag line silently deleted its scenario, and a corrupt
+ * spec could read BALANCED. A file the parser rejects is one cucumber would refuse to run: the
+ * CLI halts on it (exit 2) rather than reconciling a corpus that is a fiction.
+ */
+export function featureCorpusParseErrors(featuresDir: string | undefined): GherkinParseError[] {
+  const features =
+    featuresDir !== undefined ? discoverFeatures(featuresDir) : discoverFeatures();
+  return features.flatMap((f) => parseErrorsIn(f.path, readFileSync(f.path, "utf8")));
 }
 
 /**
