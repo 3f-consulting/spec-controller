@@ -28,8 +28,8 @@ Feature: a balanced-contrast fixture target
   a string via readFileSync. Its own @SCN ids are per-file (they never collide with the sibling
   target.feature @SCN-PDG-NNN / suffix-significance @SCN-PDS-NNN / unknown-pending @SCN-PDU-NNN /
   pending-with-observation @SCN-PDM-NNN / pending-with-error @SCN-PDE-NNN / only-pending-balanced
-  @SCN-PDB-NNN / run-neutral-pending @SCN-PDR-NNN / composition @SCN-PDC-NNN / render-pending
-  @SCN-PDL-NNN / summary-tally @SCN-PDT-NNN).
+  `@SCN-PDB-NNN` / run-neutral-pending @SCN-PDR-NNN / composition @SCN-PDC-NNN / render-pending
+  `@SCN-PDL-NNN` / summary-tally @SCN-PDT-NNN).
 
   Rule: a clean-balanced row and a balanced-with-pending row are visibly distinguished
 

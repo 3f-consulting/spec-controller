@@ -25,6 +25,8 @@
  * Parent: @SCN-LDG-001.
  */
 
+import { AstBuilder, GherkinClassicTokenMatcher, Parser } from "@cucumber/gherkin";
+import { IdGenerator, type FeatureChild, type GherkinDocument } from "@cucumber/messages";
 import type { Scenario, EvidenceObligation, QualityCheck, RuntimeQualityCheck } from "../model.js";
 
 const SCN_CODE = /^SCN-[A-Z0-9]+-\d+$/;
@@ -159,20 +161,18 @@ export function parseUntaggedScenarios(source: string): string[] {
   return untagged;
 }
 
-export function parseScenarios(
-  source: string,
-  deferralTags: readonly string[] = []
-): Scenario[] {
-  const scenarios: Scenario[] = [];
-
-  // Accumulate the contiguous tag block; when it carries an @SCN id, emit the
-  // scenario with the level tags found in that same block. A blank line or a
-  // non-tag line closes the block.
-  let blockTags: string[] = [];
-
-  const flush = (): void => {
-    const scnTag = blockTags.find((t) => SCN_CODE.test(t));
-    if (scnTag) {
+/**
+ * Derive a scenario's declared obligations from its EFFECTIVE tags — its own PLUS everything it
+ * inherits from its `Feature:` and any enclosing `Rule:` (@SCN-LDG-020). Unchanged in substance
+ * from the tag-block reading it replaces; what changed is WHICH tags reach it.
+ */
+function obligationsFromTags(
+  tags: readonly string[],
+  deferralTags: readonly string[]
+): EvidenceObligation[] {
+  const blockTags = tags;
+  {
+    {
       const evidenceObligations: EvidenceObligation[] = [];
       const seenQualityChecks = new Set<RuntimeQualityCheck>();
       const seenPending = new Set<QualityCheck>();
@@ -224,22 +224,92 @@ export function parseScenarios(
           for (const obligation of evidenceObligations) obligation.pending = true;
         }
       }
-      scenarios.push({ scnId: scnTag, evidenceObligations });
-    }
-    blockTags = [];
-  };
-
-  for (const rawLine of source.split(/\r?\n/)) {
-    const line = rawLine.trim();
-    const tags = line === "" ? null : tagLineTags(line);
-    if (tags) {
-      blockTags.push(...tags);
-    } else {
-      // A non-tag line (Scenario:/Given/blank/Feature:/Rule:) closes the block.
-      flush();
+      return evidenceObligations;
     }
   }
-  flush();
+}
+
+/**
+ * Parse the DECLARED CORPUS — the ledger's DEBIT side — from the REAL Gherkin AST (@SCN-LDG-020,
+ * 3F-1775), the same parser cucumber uses. So the scenarios spec-controller reconciles carry
+ * EXACTLY the tags cucumber gives them: one reading of the file, not two.
+ *
+ * WHY. This was a hand-rolled TAG-LINE SCAN that saw only the contiguous tag block directly above
+ * a `Scenario:`. Gherkin does not work that way — a scenario INHERITS the tags of its `Feature:`
+ * and of any enclosing `Rule:`. Two bugs followed, and both were false-greens:
+ *
+ *   UNDER-READ. An evidence tier hoisted to the Feature/Rule line — idiomatic, valid Gherkin,
+ *   exactly what an author does with a tier shared by every scenario beneath — was INVISIBLE. The
+ *   obligation was never DECLARED, so its missing evidence could never reconcile `missing`, and the
+ *   run read BALANCED (exit 0) while cucumber demanded a tier nothing proved. Unlike the corrupt-
+ *   file false-green (3F-1767), this one fires on WELL-WRITTEN files — which makes it likelier.
+ *
+ *   OVER-READ. Any non-tag line flushed the accumulated block, so a tag block above a `Rule:` was
+ *   emitted AS IF it were a scenario. The corpus did not merely miss scenarios — it INVENTED them.
+ *
+ * EVERY tag inherits, `@SCN` included: parity with cucumber is the goal, and excluding one would
+ * invent a rule cucumber does not have. A hoisted `@SCN` therefore gives every scenario beneath it
+ * the same id — a corpus-authoring fault, but a VISIBLE one (whether it should red is a deferred
+ * policy question, 3F-1774's sibling).
+ *
+ * The signature is UNCHANGED (`source`, `deferralTags`) — `parseScenarios` is on the frozen v1
+ * barrel (@SCN-API-001), so downstream consumers are untouched.
+ *
+ * An UNPARSEABLE source THROWS — it never yields an empty corpus. Silently returning zero scenarios
+ * is the precise shape of the false-green this tool exists to prevent: an empty debit side balances
+ * against anything. The app refuses an unreadable feature file at the ingest edge long before this
+ * (@SCN-CLI-016: exit 2, halting before any reconcile), so the throw is unreachable in a real run —
+ * it is the floor that keeps a future caller from re-opening the hole quietly.
+ */
+export function parseScenarios(
+  source: string,
+  deferralTags: readonly string[] = []
+): Scenario[] {
+  const parser = new Parser(new AstBuilder(IdGenerator.uuid()), new GherkinClassicTokenMatcher());
+
+  let document: GherkinDocument;
+  try {
+    document = parser.parse(source);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(
+      `The feature source is not valid Gherkin, so no declared corpus can be read from it. ` +
+        `Reconciling an empty corpus would balance against anything — so this fails loudly ` +
+        `rather than silently. Cause: ${message}`
+    );
+  }
+
+  const scenarios: Scenario[] = [];
+  const bare = (tags: readonly { name: string }[]): string[] =>
+    tags.map((t) => t.name.replace(/^@/, ""));
+
+  const featureTags = bare(document.feature?.tags ?? []);
+
+  const collect = (children: readonly FeatureChild[], inherited: string[]): void => {
+    for (const child of children) {
+      if (child.rule) {
+        // A Rule's tags cascade to every scenario beneath it — cucumber applies them, so we must.
+        collect(child.rule.children as FeatureChild[], [...inherited, ...bare(child.rule.tags)]);
+        continue;
+      }
+      if (!child.scenario) continue;
+
+      // The EFFECTIVE tag set: the scenario's OWN tags, then everything it inherits from its Rule
+      // and Feature. This is the whole fix — the old scan saw only the first of the three. Own
+      // tags lead so a scenario's declared obligations read in the order it declares them, and a
+      // file using NO inheritance yields a byte-identical corpus to the one the scan produced.
+      const effective = [...bare(child.scenario.tags), ...inherited];
+      const scnTag = effective.find((t) => SCN_CODE.test(t));
+      if (scnTag === undefined) continue;
+
+      scenarios.push({
+        scnId: scnTag,
+        evidenceObligations: obligationsFromTags(effective, deferralTags),
+      });
+    }
+  };
+
+  collect((document.feature?.children ?? []) as FeatureChild[], featureTags);
 
   return scenarios;
 }

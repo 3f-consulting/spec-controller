@@ -33,6 +33,8 @@ import type {
   Scenario,
   EvidenceObservation,
   EvidenceReconciliation,
+  ScenarioReconciliation,
+  QualityCheckReconciliation,
 } from "@3f-consulting/spec-controller-core";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
 // The whole-run soundness predicate (@SCN-LDG-018), imported by MODULE PATH rather than from the
@@ -40,7 +42,7 @@ import type { RunContext } from "@3f-consulting/spec-controller-core";
 // to it is 3F-1651's contract touch, sequenced immediately after this sub-issue. Deep module
 // imports into packages/ are the established shape in these step files (cliBalance.steps.ts,
 // report.steps.ts, pendingItems.steps.ts).
-import { hasBrokenEvidence } from "../../packages/core/src/reconcile/reconcile.js";
+import { hasBrokenEvidence, isBalanced } from "../../packages/core/src/reconcile/reconcile.js";
 
 // Fixtures shared across steps within a scenario (isolated per scenario by Cucumber).
 let scenarios: Scenario[];
@@ -1457,4 +1459,102 @@ Then(
       )}`
     );
   }
+);
+
+/**
+ * @SCN-LDG-020 (3F-1775) — the declared corpus is what CUCUMBER runs.
+ *
+ * @integration is the TEETH here. The @unit arm proves parseScenarios resolves inheritance; only
+ * driving the REAL reconciliation end-to-end (parse → reconcile → verdict) shows what that fixes:
+ * the run flipping from BALANCED to OUT-OF-BALANCE. The bug was never in one function — it was
+ * that an obligation cucumber demands was never DECLARED, so its absence could not reconcile
+ * `missing`, and the whole ledger balanced over a hole.
+ */
+
+/** The declared corpus + observations LDG-020's Given builds, and the verdict they reconcile to. */
+let ldg020Scenarios: Scenario[];
+let ldg020Reconciliation: EvidenceReconciliation;
+
+// @SCN-LDG-020
+Given(
+  "a scenario tagged @unit whose {word} carries @integration, with a passing unit test and no integration evidence",
+  function (ancestor: string) {
+    // The SAME meaning to cucumber in both shapes: the scenario demands unit AND integration.
+    // Only the line the tier is written on differs — and that is precisely what the old tag-line
+    // scan could not see.
+    const source =
+      ancestor === "Feature"
+        ? "@AAA @integration\nFeature: alpha\n\n  @unit @SCN-AAA-001\n  Scenario: alpha works\n    Given a thing\n"
+        : "@AAA\nFeature: alpha\n\n  @integration\n  Rule: alpha behaves\n\n    @unit @SCN-AAA-001\n    Scenario: alpha works\n      Given a thing\n";
+
+    ldg020Scenarios = parseScenarios(source);
+
+    // The unit tier is proven and PASSES. NOTHING proves the integration tier — so the run's
+    // truth is out-of-balance, and a tool that reads it as balanced is lying.
+    evidenceObservations = [
+      {
+        scnId: "SCN-AAA-001",
+        qualityCheck: "unit",
+        status: "passed",
+        locator: "packages/core/src/alpha.test.ts",
+      },
+    ];
+  },
+);
+
+// @SCN-LDG-020
+When("the ledger reconciles the run", function () {
+  ldg020Reconciliation = reconcile(ldg020Scenarios, evidenceObservations);
+});
+
+// @SCN-LDG-020
+Then("the scenario declares both the unit and the integration obligation", function () {
+  assert.equal(
+    ldg020Scenarios.length,
+    1,
+    `expected exactly ONE declared scenario (no phantom from the Rule's tag block); got ${ldg020Scenarios.length}`,
+  );
+  const declared = ldg020Scenarios[0]!.evidenceObligations.map((o) => o.qualityCheck).sort();
+  assert.deepEqual(
+    declared,
+    ["integration", "unit"],
+    `expected the scenario to declare BOTH tiers — cucumber demands both — but it declared [${declared.join(", ")}]. ` +
+      `The inherited tier is invisible: an obligation never declared can never reconcile missing.`,
+  );
+});
+
+// @SCN-LDG-020
+Then("the integration obligation reconciles missing", function () {
+  const row = ldg020Reconciliation.scenarioReconciliations.find(
+    (r: ScenarioReconciliation) => r.scnId === "SCN-AAA-001",
+  );
+  assert.ok(row, "expected a reconciliation row for SCN-AAA-001");
+  const integration = row.evidenceObligations.find(
+    (o: QualityCheckReconciliation) => o.qualityCheck === "integration",
+  );
+  assert.ok(
+    integration,
+    "expected an INTEGRATION reconciliation on the row — the inherited obligation must be reconciled, not dropped",
+  );
+  assert.equal(
+    integration.outcome,
+    "missing",
+    `expected the integration obligation to reconcile MISSING (nothing proves it); got ${integration.outcome}`,
+  );
+});
+
+// @SCN-LDG-020
+Then(
+  "the run is out-of-balance — never balanced on an obligation cucumber demands",
+  function () {
+    // THE FALSE-GREEN, CLOSED. Before the AST extraction this run reconciled BALANCED (exit 0):
+    // the integration obligation was never declared, so its missing evidence was invisible and
+    // the ledger balanced over a hole. The verdict is the only place that shows it.
+    assert.equal(
+      isBalanced(ldg020Reconciliation),
+      false,
+      `expected the run to be OUT-OF-BALANCE — cucumber demands an integration tier that nothing ` +
+        `proves — but the ledger read it as BALANCED. That is the false-green this scenario exists to close.`,
+    );
+  },
 );

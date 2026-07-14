@@ -3,7 +3,7 @@ Feature: a pending-tag fixture target
 
   A FIXTURE feature (NOT under features/) standing in for a spec whose scenarios carry
   the five `<quality-check>pending` tags. It is fed to the pure `parseScenarios` by the
-  @SCN-PND-001 @integration step so the tag is exercised through the real parser WITHOUT
+  `@SCN-PND-001` @integration step so the tag is exercised through the real parser WITHOUT
   planting a real `@<qc>pending` scenario in the scanned features/ corpus (fixture policy,
   evidence-manifesto §11B).
 

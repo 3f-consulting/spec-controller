@@ -33,6 +33,18 @@ import {
 // resolved (starter ∪ config) set at the ingest edge.
 const DEFERRAL_TAGS: readonly string[] = ["wip", "ignore", "skip", "todo", "pending"];
 
+
+/**
+ * Give a fixture the `Feature:` header every real feature file has.
+ *
+ * These fixtures were written as headerless FRAGMENTS, which the old hand-rolled tag-line scan
+ * tolerated because it never parsed Gherkin at all. The corpus is now read from the real Gherkin
+ * AST (@SCN-LDG-020), and a headerless fragment is NOT valid Gherkin — cucumber rejects it
+ * outright ("expected: #Tag..."), and @SCN-CLI-016 refuses such a file at the CLI edge. So the
+ * fixtures gain the header they always implicitly needed; every assertion below is unchanged.
+ */
+const asFeature = (source: string): string => `Feature: a fixture feature\n\n${source}`;
+
 describe("[SCN-RPT-008] countScnOccurrences counts every @SCN occurrence including non-tag context", () => {
   // Two tag-line declarations (@SCN-RPT-001, @SCN-LDG-003) plus two NON-tag mentions
   // (the same @SCN-RPT-001 in prose, @SCN-LNT-005 in a comment). Raw = 4; declared = 2.
@@ -52,7 +64,7 @@ describe("[SCN-RPT-008] countScnOccurrences counts every @SCN occurrence includi
 
   it("the delta over parseScenarios length is exactly the non-tag occurrences", () => {
     // parseScenarios reads 2 tag-line scenarios; raw counts 4; excluded = 2.
-    const scenarios = parseScenarios(source).length;
+    const scenarios = parseScenarios(asFeature(source)).length;
     expect(scenarios).toBe(2);
     expect(countScnOccurrences(source) - scenarios).toBe(2);
   });
@@ -104,7 +116,7 @@ describe("[SCN-RPT-014] parseUntaggedScenarios returns the scenarios with no @SC
   ].join("\n");
 
   it("returns the untagged scenario + outline names, excluding the @SCN-tagged ones", () => {
-    expect(parseUntaggedScenarios(source)).toEqual([
+    expect(parseUntaggedScenarios(asFeature(source))).toEqual([
       "an untagged scenario",
       "an untagged outline",
     ]);
@@ -247,7 +259,7 @@ describe("[SCN-PND-002] the pending suffix is significant at the parseScenarios 
       "Scenario: a bare integration scenario",
       "  Given a step",
     ].join("\n");
-    const [scenario] = parseScenarios(source);
+    const [scenario] = parseScenarios(asFeature(source));
     // Exactly the plain obligation — the object carries no `pending` key.
     expect(scenario!.evidenceObligations).toEqual([{ qualityCheck: "integration" }]);
     expect(scenario!.evidenceObligations.some((o) => o.pending)).toBe(false);
@@ -259,7 +271,7 @@ describe("[SCN-PND-002] the pending suffix is significant at the parseScenarios 
       "Scenario: a deferred integration scenario",
       "  Given a step",
     ].join("\n");
-    const [scenario] = parseScenarios(source);
+    const [scenario] = parseScenarios(asFeature(source));
     // Exactly the pending obligation — and crucially NOT also a plain integration one.
     expect(scenario!.evidenceObligations).toEqual([
       { qualityCheck: "integration", pending: true },
@@ -299,11 +311,9 @@ describe("[SCN-PND-003] an unrecognised <x>pending tag is passed through, ignore
   });
 
   it("an @foopending scenario derives no obligation — exactly like a plain unknown @foo", () => {
-    const foopending = parseScenarios(
-      ["@foopending @SCN-XXX-003", "Scenario: an unknown pending tag", "  Given a step"].join("\n")
+    const foopending = parseScenarios(asFeature(["@foopending @SCN-XXX-003", "Scenario: an unknown pending tag", "  Given a step"].join("\n"))
     );
-    const foo = parseScenarios(
-      ["@foo @SCN-XXX-004", "Scenario: a plain unknown tag", "  Given a step"].join("\n")
+    const foo = parseScenarios(asFeature(["@foo @SCN-XXX-004", "Scenario: a plain unknown tag", "  Given a step"].join("\n"))
     );
     // Both derive an EMPTY obligation set — the unknown `pending` suffix buys no special
     // treatment; the passthrough is identical to any unrecognised tag.
@@ -322,8 +332,7 @@ describe("[SCN-PND-003] an unrecognised <x>pending tag is passed through, ignore
     // The passthrough is silent and local: `@foopending` contributes nothing while a
     // co-located `@unit` still derives its obligation — no error, no diagnostic, no
     // interference with the recognised lexicon.
-    const [scenario] = parseScenarios(
-      ["@unit @foopending @SCN-XXX-006", "Scenario: a mix", "  Given a step"].join("\n")
+    const [scenario] = parseScenarios(asFeature(["@unit @foopending @SCN-XXX-006", "Scenario: a mix", "  Given a step"].join("\n"))
     );
     expect(scenario!.evidenceObligations).toEqual([{ qualityCheck: "unit" }]);
   });
@@ -358,7 +367,7 @@ describe("[SCN-PND-016] a recognised community deferral tag defers every declare
         "Scenario: a community-deferred scenario declaring unit and integration obligations",
         "  Given a step",
       ].join("\n");
-      const [scenario] = parseScenarios(source, DEFERRAL_TAGS);
+      const [scenario] = parseScenarios(asFeature(source), DEFERRAL_TAGS);
       // Every declared obligation is deferred pending — the community tag defers the whole
       // scenario. Reds today: a community tag is ignored, so the obligations are plain (no pending).
       expect(scenario!.evidenceObligations).toEqual([
@@ -370,8 +379,7 @@ describe("[SCN-PND-016] a recognised community deferral tag defers every declare
 
   it("defers a @lint=<guard> obligation too — the whole scenario is deferred", () => {
     // Scenario-scope deferral covers EVERY obligation kind, including a static-guard `@lint`.
-    const [scenario] = parseScenarios(
-      ["@wip @lint=lint:feature-codes @SCN-XXX-110", "Scenario: a deferred lint scenario", "  Given a step"].join("\n"),
+    const [scenario] = parseScenarios(asFeature(["@wip @lint=lint:feature-codes @SCN-XXX-110", "Scenario: a deferred lint scenario", "  Given a step"].join("\n")),
       DEFERRAL_TAGS
     );
     expect(scenario!.evidenceObligations).toEqual([
@@ -382,8 +390,7 @@ describe("[SCN-PND-016] a recognised community deferral tag defers every declare
   it("does not defer for an UNRECOGNISED community-shaped tag — the negative boundary", () => {
     // `@notadeferral` is not in the recognised set, so the obligations stay plain (non-pending):
     // recognition is gated on the set, not on any community-looking tag.
-    const [scenario] = parseScenarios(
-      ["@notadeferral @unit @integration @SCN-XXX-120", "Scenario: an unrecognised tag", "  Given a step"].join("\n")
+    const [scenario] = parseScenarios(asFeature(["@notadeferral @unit @integration @SCN-XXX-120", "Scenario: an unrecognised tag", "  Given a step"].join("\n"))
     );
     expect(scenario!.evidenceObligations).toEqual([
       { qualityCheck: "unit" },
@@ -392,7 +399,7 @@ describe("[SCN-PND-016] a recognised community deferral tag defers every declare
   });
 
   it("honours the injected deferralTags param — a custom tag defers, the built-in default does not", () => {
-    // parseScenarios(source, deferralTags) takes the recognised set as a defaulted param. Passing
+    // parseScenarios(asFeature(source), deferralTags) takes the recognised set as a defaulted param. Passing
     // a custom set makes `@deferme` defer; under the default set it is unrecognised and does not.
     // (This proves the param is honoured; config INJECTION from package.json is @SCN-PND-021.)
     const source = [
@@ -400,10 +407,10 @@ describe("[SCN-PND-016] a recognised community deferral tag defers every declare
       "Scenario: a custom-deferral-tag scenario",
       "  Given a step",
     ].join("\n");
-    expect(parseScenarios(source, ["deferme"])[0]!.evidenceObligations).toEqual([
+    expect(parseScenarios(asFeature(source), ["deferme"])[0]!.evidenceObligations).toEqual([
       { qualityCheck: "unit", pending: true },
     ]);
-    expect(parseScenarios(source)[0]!.evidenceObligations).toEqual([{ qualityCheck: "unit" }]);
+    expect(parseScenarios(asFeature(source))[0]!.evidenceObligations).toEqual([{ qualityCheck: "unit" }]);
   });
 });
 
@@ -435,7 +442,7 @@ describe("[SCN-PND-017] `@integrationpending` defers only its own obligation (ob
       "Scenario: an obligation-scope-deferred scenario, no community tag",
       "  Given a step",
     ].join("\n");
-    const [scenario] = parseScenarios(source);
+    const [scenario] = parseScenarios(asFeature(source));
     expect(scenario!.evidenceObligations).toEqual([
       { qualityCheck: "unit" },
       { qualityCheck: "integration", pending: true },
@@ -452,7 +459,7 @@ describe("[SCN-PND-017] `@integrationpending` defers only its own obligation (ob
       "Scenario: the same scenario, now scenario-scope deferred",
       "  Given a step",
     ].join("\n");
-    const [scenario] = parseScenarios(source, DEFERRAL_TAGS);
+    const [scenario] = parseScenarios(asFeature(source), DEFERRAL_TAGS);
     expect(scenario!.evidenceObligations).toEqual([
       { qualityCheck: "unit", pending: true },
       { qualityCheck: "integration", pending: true },
@@ -490,7 +497,7 @@ describe("[SCN-PND-018] a scenario-scope `@wip` and an obligation-scope `@integr
       "Scenario: a composition scenario — scenario-scope over obligation-scope",
       "  Given a step",
     ].join("\n");
-    const [scenario] = parseScenarios(source, DEFERRAL_TAGS);
+    const [scenario] = parseScenarios(asFeature(source), DEFERRAL_TAGS);
     expect(scenario!.evidenceObligations).toEqual([
       { qualityCheck: "unit", pending: true },
       { qualityCheck: "integration", pending: true },
@@ -506,7 +513,7 @@ describe("[SCN-PND-018] a scenario-scope `@wip` and an obligation-scope `@integr
       "Scenario: overlap on the integration obligation",
       "  Given a step",
     ].join("\n");
-    const [scenario] = parseScenarios(source, DEFERRAL_TAGS);
+    const [scenario] = parseScenarios(asFeature(source), DEFERRAL_TAGS);
     const integration = scenario!.evidenceObligations.filter((o) => o.qualityCheck === "integration");
     expect(integration).toEqual([{ qualityCheck: "integration", pending: true }]);
     expect(scenario!.evidenceObligations).toHaveLength(2);
@@ -543,18 +550,16 @@ describe("[SCN-PND-020] an unrecognised tag is given no special meaning — it d
       "Scenario: a scenario carrying an unrecognised tag alongside a declared unit obligation",
       "  Given a step",
     ].join("\n");
-    const [scenario] = parseScenarios(source);
+    const [scenario] = parseScenarios(asFeature(source));
     expect(scenario!.evidenceObligations).toEqual([{ qualityCheck: "unit" }]);
   });
 
   it("an unrecognised tag derives exactly what no extra tag would — the tag buys no special treatment", () => {
     // Passthrough PARITY: the `@foo` scenario derives exactly the obligation set a bare `@unit`
     // scenario (no extra tag at all) does — an unrecognised tag is inert, changing nothing.
-    const withFoo = parseScenarios(
-      ["@foo @unit @SCN-XXX-201", "Scenario: with an unrecognised tag", "  Given a step"].join("\n")
+    const withFoo = parseScenarios(asFeature(["@foo @unit @SCN-XXX-201", "Scenario: with an unrecognised tag", "  Given a step"].join("\n"))
     );
-    const withoutFoo = parseScenarios(
-      ["@unit @SCN-XXX-202", "Scenario: without any extra tag", "  Given a step"].join("\n")
+    const withoutFoo = parseScenarios(asFeature(["@unit @SCN-XXX-202", "Scenario: without any extra tag", "  Given a step"].join("\n"))
     );
     expect(withFoo[0]!.evidenceObligations).toEqual(withoutFoo[0]!.evidenceObligations);
     expect(withFoo[0]!.evidenceObligations).toEqual([{ qualityCheck: "unit" }]);
@@ -593,7 +598,7 @@ describe("[SCN-PND-022] a deferred scenario declaring no obligations synthesises
       "Scenario: a bare @wip scenario declaring no obligations",
       "  Given a step",
     ].join("\n");
-    const [scenario] = parseScenarios(source, DEFERRAL_TAGS);
+    const [scenario] = parseScenarios(asFeature(source), DEFERRAL_TAGS);
     expect(scenario!.evidenceObligations).toEqual([{ pending: true }]);
   });
 
@@ -601,8 +606,7 @@ describe("[SCN-PND-022] a deferred scenario declaring no obligations synthesises
     // Without a recognised deferral tag, a zero-obligation scenario stays zero-obligation (it
     // reconciles both-missing downstream, unchanged). The synthesis is gated on the deferral tag,
     // never fired for a bare scenario that merely happens to declare nothing.
-    const [scenario] = parseScenarios(
-      ["@SCN-XXX-211", "Scenario: a bare scenario, no deferral tag", "  Given a step"].join("\n")
+    const [scenario] = parseScenarios(asFeature(["@SCN-XXX-211", "Scenario: a bare scenario, no deferral tag", "  Given a step"].join("\n"))
     );
     expect(scenario!.evidenceObligations).toEqual([]);
   });
@@ -611,8 +615,7 @@ describe("[SCN-PND-022] a deferred scenario declaring no obligations synthesises
     // The synthesis is ONLY for the zero-obligation case. A `@wip` scenario that declares a `@unit`
     // obligation marks it pending (the @SCN-PND-016 scenario-scope path, unchanged) and adds NO
     // extra synthesised obligation — the list is exactly the one deferred obligation.
-    const [scenario] = parseScenarios(
-      ["@wip @unit @SCN-XXX-212", "Scenario: a @wip scenario declaring a unit obligation", "  Given a step"].join("\n"),
+    const [scenario] = parseScenarios(asFeature(["@wip @unit @SCN-XXX-212", "Scenario: a @wip scenario declaring a unit obligation", "  Given a step"].join("\n")),
       DEFERRAL_TAGS
     );
     expect(scenario!.evidenceObligations).toEqual([{ qualityCheck: "unit", pending: true }]);
@@ -627,8 +630,192 @@ describe("[SCN-PND-022] a deferred scenario declaring no obligations synthesises
       "Scenario: a custom-deferral-tag scenario declaring no obligations",
       "  Given a step",
     ].join("\n");
-    expect(parseScenarios(source, ["deferme"])[0]!.evidenceObligations).toEqual([{ pending: true }]);
+    expect(parseScenarios(asFeature(source), ["deferme"])[0]!.evidenceObligations).toEqual([{ pending: true }]);
     // Under the built-in default set, `@deferme` is unrecognised → no synthesis (zero obligations).
-    expect(parseScenarios(source)[0]!.evidenceObligations).toEqual([]);
+    expect(parseScenarios(asFeature(source))[0]!.evidenceObligations).toEqual([]);
+  });
+});
+
+/**
+ * @unit for @SCN-LDG-020 (3F-1775) — the declared corpus is what CUCUMBER runs.
+ *
+ * Bidirectional evidence: the describe carries the @SCN-LDG-020 id matching
+ * features/ledger.feature and the @integration steps in tests/steps/ledger.steps.ts.
+ *
+ * The corpus was read by a hand-rolled TAG-LINE SCAN that saw only the contiguous tag block
+ * directly above a `Scenario:`. Gherkin does not work that way: a scenario INHERITS the tags of
+ * its Feature and of any enclosing Rule, and cucumber applies them. A tier hoisted to the
+ * Feature/Rule line — idiomatic, valid Gherkin — was therefore INVISIBLE, so its obligation was
+ * never declared and its missing evidence could never reconcile `missing`: the run read BALANCED
+ * while cucumber demanded a tier nothing proved. Extraction now comes from the real AST.
+ */
+describe("[SCN-LDG-020] a scenario's declared tags include the ones it inherits from its Feature and Rule", () => {
+  it("inherits an evidence tier from the FEATURE — the false-green that reads BALANCED today", () => {
+    // THE HEADLINE. cucumber demands unit AND integration of this scenario. The scan saw only
+    // @unit, so the integration obligation was never declared — and an obligation that was never
+    // declared can never reconcile `missing`.
+    const source = `@AAA @integration
+Feature: alpha
+
+  @unit @SCN-AAA-001
+  Scenario: alpha works
+    Given a thing
+`;
+    const [scenario] = parseScenarios(source);
+
+    expect(scenario!.scnId).toBe("SCN-AAA-001");
+    expect(scenario!.evidenceObligations).toEqual([
+      { qualityCheck: "unit" },
+      { qualityCheck: "integration" },
+    ]);
+  });
+
+  it("inherits an evidence tier from an enclosing RULE", () => {
+    const source = `@AAA
+Feature: alpha
+
+  @integration
+  Rule: alpha behaves
+
+    @unit @SCN-AAA-001
+    Scenario: alpha works
+      Given a thing
+`;
+    const [scenario] = parseScenarios(source);
+
+    expect(scenario!.evidenceObligations).toEqual([
+      { qualityCheck: "unit" },
+      { qualityCheck: "integration" },
+    ]);
+  });
+
+  it("does NOT invent a phantom scenario from a tag block above a Rule — the over-read (operator: give it teeth)", () => {
+    // THE SECOND BUG. Any non-tag line FLUSHED the accumulated block, so a tag block above a
+    // `Rule:` was emitted AS IF it were a scenario. The corpus did not merely under-read — it
+    // INVENTED. Exactly one real scenario lives here, and the AST knows it.
+    const source = `@AAA
+Feature: alpha
+
+  @unit @SCN-AAA-001
+  Rule: alpha behaves
+
+    @SCN-AAA-002
+    Scenario: alpha works
+      Given a thing
+`;
+    const scenarios = parseScenarios(source);
+
+    expect(scenarios).toHaveLength(1);
+    // The one real scenario, carrying its OWN id and the tier inherited from the Rule.
+    expect(scenarios[0]!.scnId).toBe("SCN-AAA-002");
+    expect(scenarios[0]!.evidenceObligations).toEqual([{ qualityCheck: "unit" }]);
+  });
+
+  it("inherits a @lint=<guard> obligation and a community deferral tag, like any other tag", () => {
+    // Inheritance is not tier-only: EVERY tag inherits, exactly as cucumber resolves them.
+    const lintSource = `@AAA @lint=lint:feature-codes
+Feature: alpha
+
+  @SCN-AAA-001
+  Scenario: alpha works
+    Given a thing
+`;
+    expect(parseScenarios(lintSource)[0]!.evidenceObligations).toEqual([
+      { qualityCheck: "lint", guard: "lint:feature-codes" },
+    ]);
+
+    // A deferral tag on the Feature defers every scenario beneath it — the whole-file @wip.
+    const deferredSource = `@AAA @wip
+Feature: alpha
+
+  @unit @SCN-AAA-001
+  Scenario: alpha works
+    Given a thing
+`;
+    expect(parseScenarios(deferredSource, ["wip"])[0]!.evidenceObligations).toEqual([
+      { qualityCheck: "unit", pending: true },
+    ]);
+  });
+
+  it("inherits an @SCN from the Rule — parity with cucumber, which inherits EVERY tag", () => {
+    // Operator ruling: follow cucumber. Excluding @SCN would invent a rule cucumber does not
+    // have. Both scenarios beneath therefore carry the inherited id — a corpus-authoring fault,
+    // but a VISIBLE one (whether it should red is the deferred policy question, 3F-1774's sibling).
+    const source = `@AAA
+Feature: alpha
+
+  @unit @SCN-AAA-001
+  Rule: alpha behaves
+
+    Scenario: alpha works
+      Given a thing
+
+    Scenario: alpha also works
+      Given another thing
+`;
+    const scenarios = parseScenarios(source);
+
+    expect(scenarios).toHaveLength(2);
+    expect(scenarios.map((s) => s.scnId)).toEqual(["SCN-AAA-001", "SCN-AAA-001"]);
+  });
+
+  it("is BYTE-IDENTICAL on a file that uses no inheritance — the regression bar", () => {
+    // The whole existing corpus is of this shape (verified: no .feature hoists a tier), so the
+    // rewrite must not move a single obligation on it.
+    const source = `@AAA
+Feature: alpha
+
+  @unit @integration @SCN-AAA-001
+  Scenario: alpha works
+    Given a thing
+
+  @unit @lint=lint:scn-tags @SCN-AAA-002
+  Scenario: beta works
+    Given another thing
+`;
+    expect(parseScenarios(source)).toEqual([
+      {
+        scnId: "SCN-AAA-001",
+        evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }],
+      },
+      {
+        scnId: "SCN-AAA-002",
+        evidenceObligations: [
+          { qualityCheck: "unit" },
+          { qualityCheck: "lint", guard: "lint:scn-tags" },
+        ],
+      },
+    ]);
+  });
+  it("makes a duplicate scnId VISIBLE — two scenarios sharing an inherited @SCN are TWO scenarios, never deduped", () => {
+    // THE OPERATOR'S GUARDRAIL (3F-1775). A hoisted @SCN is inherited by every scenario beneath
+    // it, so two scenarios can carry one id. The parser must NOT quietly collapse them: if it did,
+    // the unproven scenario would vanish and the run would read balanced. It emits BOTH — and the
+    // CLI then REFUSES the corpus (exit 2), because evidence citing a duplicated id cannot be
+    // attributed to either scenario and any verdict over it would be a guess.
+    const source = `@AAA
+Feature: alpha
+
+  @unit @SCN-AAA-001
+  Rule: alpha behaves
+
+    Scenario: alpha works
+      Given a thing
+
+    Scenario: alpha also works, and NOTHING proves it
+      Given another thing
+`;
+    const scenarios = parseScenarios(source);
+
+    expect(scenarios).toHaveLength(2);
+    expect(scenarios.map((s) => s.scnId)).toEqual(["SCN-AAA-001", "SCN-AAA-001"]);
+  });
+
+  it("THROWS on unparseable source — an empty corpus balances against anything, so it never returns one", () => {
+    // The silent-empty-corpus is the false-green species itself: a debit side of zero balances
+    // against any evidence. @SCN-CLI-016 refuses such a file at the CLI edge long before this, so
+    // the throw is unreachable in a real run — it is the floor that stops a future caller
+    // re-opening the hole quietly.
+    expect(() => parseScenarios("not gherkin at all {{{")).toThrow(/not valid Gherkin/);
   });
 });

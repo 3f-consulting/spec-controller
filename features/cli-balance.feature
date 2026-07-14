@@ -192,11 +192,9 @@ Feature: spec-controller balance runs standalone
   # reconcile. A file the parser rejects is an input the tool cannot read: exit 2, halt before
   # reconciling, name the file and the parse failure. Never a verdict, and never a green.
   #
-  # VALIDATED, not yet EXTRACTED. The corpus is still read by the tag-line scan; only its
-  # WELL-FORMEDNESS is checked against the parser. Full parity — extracting the corpus from the
-  # AST so that what spec-controller reconciles IS what cucumber runs — is the follow-up (3F-1776),
-  # and it is not cosmetic: the tag scan ignores Gherkin's Feature/Rule TAG INHERITANCE, so even a
-  # cleanly-parsing file can still be read differently by the two. Validation cannot close that.
+  # Validation is half the story: it decides whether a file can be READ. The corpus is then
+  # EXTRACTED from that same real AST (@SCN-LDG-020), so what spec-controller reconciles IS what
+  # cucumber runs — Feature/Rule tag inheritance included. One reading of the file, not two.
   #
   # A VALID scenario carrying no @SCN is NOT this fault — it parses cleanly. Whether undeclarable
   # work should red a run is a policy question, deliberately kept out of this bug fix (3F-1774).

@@ -32,6 +32,12 @@ importers:
 
   packages/core:
     dependencies:
+      '@cucumber/gherkin':
+        specifier: ^41.0.0
+        version: 41.0.0
+      '@cucumber/messages':
+        specifier: ^34.0.1
+        version: 34.0.1
       yaml:
         specifier: ^2.9.0
         version: 2.9.0

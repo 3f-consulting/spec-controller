@@ -5,7 +5,7 @@ Feature: a deferred-scenario-declaring-no-obligations fixture target
   recognised community deferral tag (a bare `@wip` — drive-slice's convention for an authored
   scenario still awaiting its evidence: `@wip` + `@SCN`, NO evidence tag) and so declares ZERO
   evidence obligations. It is fed to the pure parse→reconcile→renderMarkdown pipeline by the
-  @SCN-PND-022 @integration step so INTERPRETATION 2 — a deferred scenario declaring no
+  `@SCN-PND-022` @integration step so INTERPRETATION 2 — a deferred scenario declaring no
   obligations synthesises ONE scenario-scope Pending Item, balanced NOT both-missing — is
   exercised through the real pipeline WITHOUT planting a real bare-`@wip` scenario in the scanned
   features/ corpus (fixture policy, evidence-manifesto §11B).

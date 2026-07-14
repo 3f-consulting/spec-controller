@@ -15,12 +15,10 @@
  * it: exit 2, halting before reconciling (@SCN-CLI-014/015's Rule — "an input the tool cannot read
  * is a usage error, never a verdict" — extended from the OBSERVED side to the DECLARED side).
  *
- * VALIDATED, NOT YET EXTRACTED. `parseScenarios` is unchanged: the corpus is still read by the
- * tag-line scan, and only its WELL-FORMEDNESS is checked here. So the tool does not yet reconcile
- * the same corpus cucumber runs — the tag scan ignores Gherkin's Feature/Rule TAG INHERITANCE, so
- * even a cleanly-parsing file can be read differently by the two. Validation cannot close that;
- * AST-based extraction is the follow-up (3F-1776). Claiming parity here would be a lie the tests
- * do not back.
+ * VALIDATION IS HALF THE STORY. This decides whether a feature file can be READ at all; the corpus
+ * is then EXTRACTED from the same real AST by `parseScenarios` (@SCN-LDG-020, 3F-1775), so the
+ * scenarios spec-controller reconciles carry exactly the tags cucumber gives them — Feature/Rule
+ * tag inheritance included. One reading of the file, not two.
  *
  * PURE: `string → parse errors`. No fs, no process — the file READ lives beside it at the ingest
  * edge, as it does for every other input.

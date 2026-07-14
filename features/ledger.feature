@@ -384,3 +384,36 @@ Feature: Ledger over declared-vs-observed evidence
       Then the run carrying the collection failure reports broken evidence
       And the run that merely defers an obligation reports no broken evidence — a Pending Item does not make a run unsound
       And soundness is derived from the reconciling items, never stored on the reconciliation
+
+  # THE DECLARED CORPUS IS WHAT CUCUMBER RUNS (@SCN-LDG-020, 3F-1775). The corpus is the ledger's
+  # DEBIT side, and it was read by a hand-rolled TAG-LINE SCAN that saw only the contiguous tag
+  # block directly above a Scenario:. Gherkin does not work that way — a scenario INHERITS the
+  # tags of its Feature and of any enclosing Rule, and cucumber applies them.
+  #
+  # So an evidence tier hoisted to the Feature or Rule line — IDIOMATIC, VALID Gherkin, exactly
+  # what an author does with a tier shared by every scenario beneath — was INVISIBLE to
+  # spec-controller. The obligation was never declared, so its missing evidence could never
+  # reconcile `missing`, and the run read BALANCED (exit 0) while cucumber demanded a tier that
+  # nothing proved. A FALSE-GREEN ON WELL-WRITTEN FILES: the same fault class as the corrupt-file
+  # false-green (3F-1767), but triggered by good practice rather than by corruption — which makes
+  # it the likelier of the two to fire in the wild.
+  #
+  # The corpus is now extracted from the REAL Gherkin AST, so the scenarios spec-controller
+  # reconciles carry EXACTLY the tags cucumber gives them — one reading of the file, not two.
+  # Every tag inherits (@SCN included): parity is the goal, and excluding one would invent a rule
+  # cucumber does not have. Whether a corpus SHOULD hoist an @SCN — every scenario beneath would
+  # then share one id — is a corpus-authoring-fault policy, deferred (3F-1774's sibling).
+  Rule: a scenario's declared tags include the ones it inherits from its Feature and Rule
+
+    @unit @integration @SCN-LDG-020
+    Scenario Outline: an evidence tier declared on the <ancestor> is demanded of the scenarios beneath it
+      Given a scenario tagged @unit whose <ancestor> carries @integration, with a passing unit test and no integration evidence
+      When the ledger reconciles the run
+      Then the scenario declares both the unit and the integration obligation
+      And the integration obligation reconciles missing
+      And the run is out-of-balance — never balanced on an obligation cucumber demands
+
+      Examples:
+        | ancestor |
+        | Feature  |
+        | Rule     |

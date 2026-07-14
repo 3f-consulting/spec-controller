@@ -19,6 +19,7 @@ import {
   readStaticEvidenceObservationCounts,
   readFeatureNames,
   featureCorpusParseErrors,
+  featureCorpusDuplicateScnIds,
 } from "../ingest/ingestQualityChecks.js";
 import { planOutput } from "./emit/format.js";
 import { writeOutputs } from "./emit/writer.js";
@@ -368,14 +369,36 @@ export function runBalance(argv: string[]): void {
   // @SCN-CLI-014 and @SCN-CLI-015 ("an input the tool cannot read is a usage error, never a
   // verdict"), now on the declared side. Never a verdict, and never a green.
   //
-  // VALIDATED, NOT EXTRACTED: `parseScenarios` still reads the corpus with the tag-line scan, so
-  // this does NOT yet make the corpus identical to cucumber's (the scan ignores Feature/Rule tag
-  // inheritance). AST-based extraction is the follow-up, 3F-1776.
+  // The corpus is EXTRACTED from the same real AST (@SCN-LDG-020), so what the tool reconciles is
+  // what cucumber runs — Feature/Rule tag inheritance included. This guard decides whether the file
+  // can be read at all; parseScenarios then reads it exactly as cucumber would.
   const featureParseErrors = featureCorpusParseErrors(args["features"]);
   if (featureParseErrors.length > 0) {
     for (const { file, message } of featureParseErrors) {
       process.stderr.write(`The --features corpus contains a feature file that could not be parsed: ${file}\n${message}\n`);
     }
+    process.exit(2);
+  }
+
+  // AMBIGUOUS-CORPUS guard (@SCN-LDG-020's guardrail, 3F-1775). An @SCN identifies exactly ONE
+  // scenario — that is the whole basis of attributing evidence to it. Tag inheritance makes a
+  // DUPLICATE reachable: an @SCN hoisted to a Feature:/Rule: is inherited by every scenario
+  // beneath it (cucumber does this, so we do). One passing test would then mark EVERY scenario
+  // sharing that id `balanced` — including scenarios nothing proves — a BALANCED-WHEN-BROKEN run
+  // at exit 0. A new silent false-green, introduced by the very fix that closed the last one.
+  //
+  // So the corpus is REFUSED, not reconciled: the tool cannot know which scenario a citing test
+  // proves, and any verdict over it would be a guess. Same Rule as @SCN-CLI-014/015/016 — an input
+  // the tool cannot read is a usage error, never a verdict.
+  const duplicateScnIds = featureCorpusDuplicateScnIds(args["features"]);
+  if (duplicateScnIds.length > 0) {
+    process.stderr.write(
+      `The --features corpus declares the same @SCN on more than one scenario: ` +
+        `${duplicateScnIds.join(", ")}.\n` +
+        `An @SCN identifies exactly one scenario — evidence citing a duplicated id cannot be ` +
+        `attributed, so no verdict over this corpus would be trustworthy. (An @SCN on a Feature: ` +
+        `or Rule: line is inherited by every scenario beneath it — declare it on the scenario.)\n`
+    );
     process.exit(2);
   }
 

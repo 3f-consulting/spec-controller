@@ -4,7 +4,7 @@ Feature: a pending-alongside-passing composition fixture target
   A FIXTURE feature (NOT under features/) standing in for a spec whose scenario declares BOTH
   a bare `@unit` obligation AND a deferred `@integrationpending` one, with a matching PASSING
   unit observation citing it. It is fed to the pure parse→reconcile pipeline by the
-  @SCN-PND-009 @integration step (which hand-builds the passing unit observation keyed to this
+  `@SCN-PND-009` @integration step (which hand-builds the passing unit observation keyed to this
   scenario's @SCN id) so the "`@unit @integrationpending` with a passing unit observation →
   verdict balanced, one Pending Item" COMPOSITION behaviour is exercised through the real
   reconciler WITHOUT planting a real `@<qc>pending` scenario in the scanned features/ corpus
@@ -25,7 +25,7 @@ Feature: a pending-alongside-passing composition fixture target
   a string via readFileSync. Its own @SCN ids are per-file (they never collide with the sibling
   target.feature @SCN-PDG-NNN / suffix-significance @SCN-PDS-NNN / unknown-pending @SCN-PDU-NNN /
   pending-with-observation @SCN-PDM-NNN / pending-with-error @SCN-PDE-NNN / only-pending-balanced
-  @SCN-PDB-NNN / run-neutral-pending @SCN-PDR-NNN).
+  `@SCN-PDB-NNN` / run-neutral-pending @SCN-PDR-NNN).
 
   Rule: a pending obligation coexists with a passing non-pending one on the same scenario
 

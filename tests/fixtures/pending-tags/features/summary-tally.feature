@@ -4,7 +4,7 @@ Feature: a summary-tally fixture target
   A FIXTURE feature (NOT under features/) standing in for specs whose Evidence Reconciliation
   Summary must tally Pending Items SEPARATELY from the scenario balanced and out-of-balance
   counts. It is fed to the pure parse→reconcile→assemble→render pipeline by the @SCN-PND-011
-  @integration step so the "the Evidence Reconciliation Summary tallies Pending Items separately
+  `@integration` step so the "the Evidence Reconciliation Summary tallies Pending Items separately
   from balanced and out-of-balance" behaviour is exercised through the real assemble→render
   surface WITHOUT planting a real `@<qc>pending` scenario in the scanned features/ corpus
   (fixture policy, evidence-manifesto §11B).
@@ -29,7 +29,7 @@ Feature: a summary-tally fixture target
   a string via readFileSync. Its own @SCN ids are per-file (they never collide with the sibling
   target.feature @SCN-PDG-NNN / suffix-significance @SCN-PDS-NNN / unknown-pending @SCN-PDU-NNN /
   pending-with-observation @SCN-PDM-NNN / pending-with-error @SCN-PDE-NNN / only-pending-balanced
-  @SCN-PDB-NNN / run-neutral-pending @SCN-PDR-NNN / composition @SCN-PDC-NNN / render-pending
+  `@SCN-PDB-NNN` / run-neutral-pending @SCN-PDR-NNN / composition @SCN-PDC-NNN / render-pending
   @SCN-PDL-NNN).
 
   Rule: the Summary tallies Pending Items apart from balanced and out-of-balance

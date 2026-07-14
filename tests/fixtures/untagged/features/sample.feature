@@ -3,7 +3,7 @@ Feature: an untagged-scenario fixture target
 
   A FIXTURE feature (NOT under features/) standing in for a target repo whose Gherkin
   the untagged-scenario audit parses (@SCN-RPT-014). It carries a mix of
-  @SCN-tagged and untagged scenarios so readEvidenceObligations's parse + file-pairing can
+  `@SCN-tagged` and untagged scenarios so readEvidenceObligations's parse + file-pairing can
   be exercised over real files: the untagged ones surface in the report's Warnings.
 
   This file lives under tests/fixtures/ (NOT features/), so neither the feature-code

@@ -5,7 +5,7 @@ Feature: an unrecognised-tag negative-boundary fixture target
   UNRECOGNISED tag (`@foo` — a tag absent from the recognised deferral set: neither a
   DEFAULT_DEFERRAL_TAGS community tag nor a `<qc>pending` obligation-scope tag) ALONGSIDE a
   declared `@unit` obligation. It is fed to the pure parse→reconcile pipeline by the @SCN-PND-020
-  @integration step (which hand-builds the passing unit observation keyed to this scenario's @SCN
+  `@integration` step (which hand-builds the passing unit observation keyed to this scenario's @SCN
   id) so the NEGATIVE BOUNDARY to @SCN-PND-016 is exercised through the real parser + reconciler
   WITHOUT planting a real community-tagged scenario in the scanned features/ corpus (fixture
   policy, evidence-manifesto §11B).

@@ -16,7 +16,7 @@ Feature: a pending-alongside-error fixture target
   only. cucumber.js runs features/** only, so it is never executed as a scenario; it is read
   as a string via readFileSync. Its own @SCN ids are per-file (they never collide with the
   sibling target.feature @SCN-PDG-NNN / suffix-significance @SCN-PDS-NNN / unknown-pending
-  @SCN-PDU-NNN / pending-with-observation @SCN-PDM-NNN).
+  `@SCN-PDU-NNN` / pending-with-observation @SCN-PDM-NNN).
 
   Rule: a scenario mixing a real error and a deferred obligation keeps them in separate categories
 

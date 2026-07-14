@@ -24,7 +24,7 @@ Feature: a render-the-Pending-Item fixture target
   a string via readFileSync. Its own @SCN ids are per-file (they never collide with the sibling
   target.feature @SCN-PDG-NNN / suffix-significance @SCN-PDS-NNN / unknown-pending @SCN-PDU-NNN /
   pending-with-observation @SCN-PDM-NNN / pending-with-error @SCN-PDE-NNN / only-pending-balanced
-  @SCN-PDB-NNN / run-neutral-pending @SCN-PDR-NNN / composition @SCN-PDC-NNN).
+  `@SCN-PDB-NNN` / run-neutral-pending @SCN-PDR-NNN / composition @SCN-PDC-NNN).
 
   Rule: a rendered row shows a Pending Item distinct from a reconciling item
 
