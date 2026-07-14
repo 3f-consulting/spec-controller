@@ -9,6 +9,7 @@
 
 import { describe, it, expect } from "vitest";
 import { parseCucumberEvidenceObservations, type CucumberJsonReport } from "./cucumber.js";
+import type { RuntimeEvidenceObservation } from "../model.js";
 
 describe("parseCucumberEvidenceObservations stamps the declared level", () => {
   const report: CucumberJsonReport = [
@@ -194,9 +195,15 @@ describe("[SCN-PND-013] parseCucumberEvidenceObservations classifies a scenario 
 
   // The three-way's teeth: each inconclusive status (a stub that RAN but proved nothing) emits
   // NOTHING — dropped at the reader, so the declared obligation reconciles missing BY ABSENCE.
-  // `ambiguous` is deliberately here (inconclusive, not failing). Reds today: each currently
-  // emits a single `failed` observation (the binary `passed ? "passed" : "failed"`).
-  for (const status of ["undefined", "pending", "skipped", "ambiguous"]) {
+  //
+  // `ambiguous` LEFT this list at @SCN-LDG-019: it is not a stub that proved nothing but a BROKEN
+  // HARNESS — two step definitions match one step, so the step CANNOT run — and the reader now
+  // emits a `broken` observation for it (see [SCN-LDG-019] below). PND-013's own Examples row
+  // `| ambiguous | missing |` still holds: the reconciler's fail-safe excludes a broken
+  // observation from the obligation match, so the declared obligation still reconciles missing BY
+  // ABSENCE. The statuses that STAY dropped stay honest: `undefined` (no step definition written —
+  // the test genuinely is absent), `pending` (explicitly deferred), `skipped` (never ran).
+  for (const status of ["undefined", "pending", "skipped"]) {
     it(`DROPS an inconclusive "${status}" scenario — emits no observation (→ missing by absence)`, () => {
       expect(parseCucumberEvidenceObservations(reportWithStep(status), "integration")).toEqual([]);
     });
@@ -235,5 +242,133 @@ describe("[SCN-PND-013] parseCucumberEvidenceObservations classifies a scenario 
     expect(parseCucumberEvidenceObservations(report, "integration")).toEqual([
       { qualityCheck: "integration", scnId: null, status: "failed", locator: "features/uncited.feature" },
     ]);
+  });
+});
+
+describe("[SCN-LDG-019] parseCucumberEvidenceObservations emits a broken observation for an ambiguous step — a broken harness, not an absent test", () => {
+  // BROKEN IS READER-AGNOSTIC. @SCN-LDG-017 established `broken` over vitest's instance of it (a
+  // file that failed to COLLECT); this is cucumber's, and its only one: a step matched by TWO step
+  // definitions is reported `ambiguous`, so the step CANNOT run. The inconclusive drop reported it
+  // as `missing` — sending the reader to write a test that already exists while two step
+  // definitions collide. Reds today: the drop emits NOTHING at all.
+  //
+  // Cucumber emits NO `error_message` for an ambiguous step (verified: the result object is
+  // exactly `{ status: "ambiguous", duration: 0 }` — the "Multiple step definitions match: …"
+  // detail is pretty-formatter-only), so the reader SYNTHESISES the what-broke message from the
+  // step it names. It states what broke; it prescribes no cure.
+  const ambiguousReport = (tags: Array<{ name?: string }>): CucumberJsonReport => [
+    {
+      uri: "features/ldg019.feature",
+      elements: [
+        {
+          tags,
+          steps: [
+            { keyword: "Given ", name: "a step two definitions both match", result: { status: "ambiguous", duration: 0 } },
+          ],
+        },
+      ],
+    },
+  ];
+
+  it("emits ONE broken observation carrying the scenario's scnId, the feature-file locator, and a synthesised message naming the ambiguous step", () => {
+    const observations = parseCucumberEvidenceObservations(
+      ambiguousReport([{ name: "@integration" }, { name: "@SCN-HNS-020" }]),
+      "integration"
+    );
+
+    expect(observations).toHaveLength(1);
+    // Narrowed to the runtime shape: the cucumber reader only ever emits runtime observations
+    // (a guard observation is the static reader's), and `broken` / `message` live there.
+    const [observation] = observations as RuntimeEvidenceObservation[];
+    expect(observation).toMatchObject({
+      qualityCheck: "integration",
+      // THE CITATION. This is the FIRST case in the codebase that emits a `broken` observation
+      // carrying an scnId — vitest's collection failure is citation-less by construction (a file
+      // that fails to collect names no test, so it cites no @SCN). The cucumber scenario DID cite
+      // its @SCN; the step just could not run. The reconciler's fail-safe is what keeps the credit
+      // off the obligation it cites (pinned in reconcile.test.ts [SCN-LDG-019]).
+      scnId: "SCN-HNS-020",
+      locator: "features/ldg019.feature",
+      broken: true,
+    });
+    // The WHAT-BROKE payload: it NAMES the ambiguous step and says two or more step definitions
+    // match it, so it never ran. No cure is prescribed.
+    expect(observation!.message).toContain("Given a step two definitions both match");
+    expect(observation!.message).toMatch(/step definitions match/i);
+    expect(observation!.message).toMatch(/never ran/i);
+  });
+
+  it("emits the broken observation ONCE for a multi-tier scenario — the harness broke once, not once per declared tier", () => {
+    // The whole-scenario shape, mirroring the inconclusive drop (which is whole-scenario, not
+    // per-tier): the ambiguity is a property of the STEP, so a scenario declaring @integration @e2e
+    // yields ONE broken item on the suspense row, not two. It is levelled at the scenario's first
+    // declared tier.
+    const observations = parseCucumberEvidenceObservations(
+      ambiguousReport([{ name: "@integration" }, { name: "@e2e" }, { name: "@SCN-HNS-021" }]),
+      "integration"
+    );
+
+    expect(observations).toHaveLength(1);
+    expect(observations[0]).toMatchObject({ qualityCheck: "integration", broken: true });
+  });
+
+  it("takes ambiguity BEFORE the inconclusive drop — an ambiguous step alongside skipped ones is still broken", () => {
+    // The fourth arm is checked BEFORE the drop: a cucumber run halts the scenario at the
+    // ambiguous step, so the steps after it read `skipped`. Under the drop-first ordering the
+    // whole scenario would vanish, ambiguity and all.
+    const report: CucumberJsonReport = [
+      {
+        uri: "features/ldg019.feature",
+        elements: [
+          {
+            tags: [{ name: "@integration" }, { name: "@SCN-HNS-022" }],
+            steps: [
+              { keyword: "Given ", name: "a step two definitions both match", result: { status: "ambiguous" } },
+              { keyword: "When ", name: "the run halts", result: { status: "skipped" } },
+            ],
+          },
+        ],
+      },
+    ];
+
+    expect(parseCucumberEvidenceObservations(report, "integration")).toMatchObject([
+      { scnId: "SCN-HNS-022", broken: true },
+    ]);
+  });
+
+  it("does NOT emit broken for a genuinely failing step — a step that RAN and failed is attributable, and stays `failing`", () => {
+    // THE BOUNDARY (mirroring @SCN-LDG-017's): `broken` is specifically the evidence that never
+    // materialised. A step that ran and failed is honest, attributable evidence — it must keep
+    // landing as an ordinary `failed` observation on the scenario it cites, never on the suspense
+    // row.
+    const report: CucumberJsonReport = [
+      {
+        uri: "features/ldg019.feature",
+        elements: [
+          {
+            tags: [{ name: "@integration" }, { name: "@SCN-HNS-023" }],
+            steps: [{ keyword: "Given ", name: "a step that ran and failed", result: { status: "failed" } }],
+          },
+        ],
+      },
+    ];
+
+    expect(parseCucumberEvidenceObservations(report, "integration")).toEqual([
+      { qualityCheck: "integration", scnId: "SCN-HNS-023", status: "failed", locator: "features/ldg019.feature" },
+    ]);
+  });
+
+  it("emits the broken observation for an UNCITED ambiguous scenario too — scnId null, still broken", () => {
+    // The citation is not what makes it broken: a scenario carrying no @SCN whose step is
+    // ambiguous is still a broken harness. It posts to the suspense row either way (a broken credit
+    // posts nowhere else) — but as `broken`, never folded into `cites-no-scenario`, whose remedy is
+    // the wrong one (add a citation, rather than fix the colliding step definitions).
+    const observations = parseCucumberEvidenceObservations(
+      ambiguousReport([{ name: "@integration" }]),
+      "integration"
+    );
+
+    expect(observations).toHaveLength(1);
+    expect(observations[0]).toMatchObject({ scnId: null, broken: true, locator: "features/ldg019.feature" });
   });
 });

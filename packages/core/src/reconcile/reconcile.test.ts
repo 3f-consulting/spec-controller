@@ -14,8 +14,12 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { reconcile } from "./reconcile.js";
-import type { Scenario, EvidenceObservation } from "../model.js";
+import { reconcile, hasBrokenEvidence } from "./reconcile.js";
+import type {
+  Scenario,
+  EvidenceObservation,
+  RuntimeEvidenceObservation,
+} from "../model.js";
 import { parseScenarios } from "../parse/scenarios.js";
 import { parseVitestEvidenceObservations, type VitestJsonReport } from "../parse/vitest.js";
 import { parseCucumberEvidenceObservations, type CucumberJsonReport } from "../parse/cucumber.js";
@@ -1029,4 +1033,103 @@ describe("[SCN-LDG-017] a broken observation posts a broken suspense item; the s
       expect(suspense?.reconcilingItems.map((i) => i.outcome)).toEqual(["broken"]);
     }
   );
+});
+
+describe("[SCN-LDG-019] THE FAIL-SAFE GETS TEETH: a broken observation that CITES its scenario still leaves that obligation missing", () => {
+  // THIS IS THE POINT OF THE SLICE, not a restatement of LDG-017.
+  //
+  // The cucumber reader's `broken` observation — an AMBIGUOUS step (two step definitions match, so
+  // the step cannot run) — is the FIRST case in the codebase that emits a broken observation
+  // CARRYING AN scnId. Vitest's collection failure is citation-less BY CONSTRUCTION (a file that
+  // fails to collect names no test, so it cites no @SCN), so the reconciler's guard — which
+  // excludes a broken observation from the obligation match WHATEVER scnId and status it carries
+  // (reconcile.ts, `o.broken !== true` before the (scnId, qualityCheck) match) — has been
+  // DEFENSIVE BUT NEVER EXERCISED BY A REAL READER since 3F-1642.
+  //
+  // A cucumber scenario DOES cite its @SCN; only its step could not run. So the guard now bites on
+  // production output: the broken credit must NEVER discharge (status "passed") or fail (status
+  // "failed") the obligation it cites. It folds to SUSPENSE, and the cited obligation reconciles
+  // `missing` BY ABSENCE — honest at its own resolution (no evidence that RAN cites it), while the
+  // RUN carries the ambiguity and is stamped unsound.
+  //
+  // The adversarial value is `status: "passed"`: without the guard, a harness that never executed
+  // a single step would DISCHARGE the obligation it cites — a green tick over a test that never
+  // ran, the exact false-benign reading `broken` exists to kill.
+  const scenarios: Scenario[] = [
+    { scnId: "SCN-HNS-020", evidenceObligations: [{ qualityCheck: "integration" }] },
+  ];
+  /** The cucumber reader's shape for an ambiguous step: broken, CITING, and structurally statused. */
+  const citingBrokenObservation = (status: "passed" | "failed"): RuntimeEvidenceObservation => ({
+    qualityCheck: "integration",
+    scnId: "SCN-HNS-020",
+    status,
+    locator: "features/ambiguous.feature",
+    broken: true,
+    message:
+      'The step "Given a step two definitions both match" is ambiguous — two or more step definitions match it, so the step never ran.',
+  });
+
+  it.each(["passed", "failed"] as const)(
+    "a broken observation citing SCN-HNS-020 with status %s leaves SCN-HNS-020's integration obligation missing",
+    (status) => {
+      const balance = reconcile(scenarios, [citingBrokenObservation(status)]);
+      const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-HNS-020");
+
+      // The cited obligation is NOT discharged, and NOT failed, by a step that never ran.
+      expect(scenario?.evidenceObligations).toEqual([
+        { qualityCheck: "integration", outcome: "missing" },
+      ]);
+      expect(scenario?.verdict).toBe("out-of-balance");
+    }
+  );
+
+  it.each(["passed", "failed"] as const)(
+    "the citing broken observation with status %s surfaces NOWHERE as satisfied or failing, and posts exactly once — on the suspense row",
+    (status) => {
+      const balance = reconcile(scenarios, [citingBrokenObservation(status)]);
+
+      // Across EVERY row — declared, phantom and suspense alike — the broken credit never reads as
+      // discharged or failed.
+      const everyOutcome = balance.scenarioReconciliations.flatMap((s) =>
+        s.evidenceObligations.map((o) => o.outcome)
+      );
+      expect(everyOutcome).not.toContain("satisfied");
+      expect(everyOutcome).not.toContain("failing");
+
+      // It posts EXACTLY ONCE, on the SUSPENSE row, carrying its where-to-fix (the feature file)
+      // and its what-broke (the synthesised ambiguity message) — never as `undemanded` on the
+      // scenario it cites (the byScn index skips it), never as a `cites-unknown-scenario` phantom.
+      expect(balance.scenarioReconciliations.map((s) => s.kind)).toEqual([
+        "scenario",
+        "suspense-scenario",
+      ]);
+      const suspense = balance.scenarioReconciliations.find((s) => s.kind === "suspense-scenario");
+      expect(suspense?.reconcilingItems).toEqual([
+        {
+          qualityCheck: "integration",
+          outcome: "broken",
+          locator: "features/ambiguous.feature",
+          message:
+            'The step "Given a step two definitions both match" is ambiguous — two or more step definitions match it, so the step never ran.',
+        },
+      ]);
+
+      // And the RUN is unsound — soundness is a property of the run (@SCN-LDG-018), reader-agnostic
+      // exactly as `broken` now is.
+      expect(hasBrokenEvidence(balance)).toBe(true);
+    }
+  );
+
+  it("a broken observation citing an UNDECLARED scenario mints no phantom row — suspense is a broken credit's only account", () => {
+    // The third arm of the fail-safe, over the citing shape: a cucumber @SCN that no declared
+    // scenario matches would ordinarily mint a `cites-unknown-scenario` phantom row. A broken
+    // credit never does — it errored, so its citation credits nothing anywhere.
+    const balance = reconcile(scenarios, [
+      { ...citingBrokenObservation("passed"), scnId: "SCN-NOT-DECLARED" },
+    ]);
+
+    expect(balance.scenarioReconciliations.some((s) => s.kind === "phantom-scenario")).toBe(false);
+    const suspense = balance.scenarioReconciliations.find((s) => s.kind === "suspense-scenario");
+    expect(suspense?.reconcilingItems.map((i) => i.outcome)).toEqual(["broken"]);
+  });
 });

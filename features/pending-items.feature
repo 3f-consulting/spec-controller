@@ -167,8 +167,18 @@ Feature: A pending evidence obligation raises a Pending Item
   # (undefined/pending/skipped/ambiguous, none failed) → the reader emits NOTHING, so the declared
   # obligation finds no observation and reconciles missing BY ABSENCE. `EvidenceStatus` stays
   # binary (passed/failed) — the drop realises inconclusive→missing with no new status and no
-  # reconciler change. `ambiguous` is deliberately inconclusive, not failing (no valid pass →
-  # missing, never its own category).
+  # reconciler change. `ambiguous` is deliberately not failing: no valid pass, so the declared
+  # obligation reconciles missing.
+  #
+  # AMBIGUOUS IS NO LONGER MERELY DROPPED (@SCN-LDG-019, superseding the earlier "never its own
+  # category" reading of this Rule). An ambiguous step — two step definitions matching one step —
+  # is a BROKEN HARNESS: the proof exists and cannot execute. The reader now ALSO emits a `broken`
+  # observation for it, which posts to the suspense row and stamps the run unsound. The row below
+  # (`| ambiguous | missing |`) STILL HOLDS and is unchanged — a bystander, not an Update: the
+  # reconciler's fail-safe excludes a broken observation from the obligation match whatever it
+  # carries, so the declared obligation still reconciles missing BY ABSENCE. What changed is where
+  # the reader is sent — to the colliding step definitions, not to a test file that already exists.
+  # The other inconclusive statuses (`undefined` / `pending` / `skipped`) keep dropping, silently.
   Rule: An observation status maps to an existing outcome — pending is never inferred from status
 
     @unit @integration @SCN-PND-013

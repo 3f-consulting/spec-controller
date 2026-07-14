@@ -1317,3 +1317,144 @@ Then(
     );
   }
 );
+
+// BROKEN IS READER-AGNOSTIC (@SCN-LDG-019) — the @integration arm, through the REAL
+// parse→reconcile pipeline (where the false-`missing` manifests). Cucumber's instance of `broken`:
+// a step matched by TWO step definitions is reported `ambiguous`, so the step CANNOT run — a
+// broken harness, not an absent test. Distinct step wording throughout, so LDG-001…018's steps
+// stay byte-untouched; the generic "the ledger reconciles the target" When and LDG-017's "the
+// broken item is not reported as cites-no-scenario" Then are SHARED (the latter is the same
+// assertion over the same suspense row — reader-agnostic, exactly as the Rule now is).
+let ldg019ScnId: string;
+const LDG019_FEATURE = "features/ambiguous.feature";
+const LDG019_STEP = "Given the step two definitions both match";
+
+// @SCN-LDG-019
+Given("a declared scenario whose only proving step is matched by two step definitions", function () {
+  // ONE declared @integration scenario, built through the REAL declared reader. Its proof is the
+  // cucumber scenario whose step is ambiguous — the step never runs, so NO passing/failing
+  // observation citing it can arrive, and its own row is honestly `missing` at its own resolution.
+  // What must change is the RUN: the ambiguity has to be ON the ledger, not swallowed by the
+  // inconclusive drop.
+  ldg019ScnId = "SCN-HNS-020";
+  const feature = [
+    "@LDG",
+    "Feature: fixture",
+    "  Rule: a fixture rule",
+    `    @integration @${ldg019ScnId}`,
+    "    Scenario: the scenario whose proving step is ambiguous",
+    "      Given a fixture step",
+  ].join("\n");
+  scenarios = parseScenarios(feature);
+});
+
+// @SCN-LDG-019
+Given("a cucumber report whose step for that scenario is ambiguous", function () {
+  // A REAL-SHAPED cucumber JSON report for an AMBIGUOUS step: the step's result object is exactly
+  // `{ status: "ambiguous", duration: 0 }` — cucumber emits NO `error_message` for it (the
+  // "Multiple step definitions match: …" detail is pretty-formatter-only), so the reader must
+  // SYNTHESISE the what-broke message from the step it names. Run through the REAL cucumber
+  // reader. Under the inconclusive-drop reader this yields NOTHING at all, so the run carries no
+  // trace of the ambiguity and the scenario reads as an unwritten test.
+  const report: CucumberJsonReport = [
+    {
+      uri: LDG019_FEATURE,
+      elements: [
+        {
+          tags: [{ name: "@integration" }, { name: `@${ldg019ScnId}` }],
+          steps: [
+            { keyword: "Given ", name: "the step two definitions both match", result: { status: "ambiguous", duration: 0 } },
+          ],
+        },
+      ],
+    },
+  ];
+  evidenceObservations = parseCucumberEvidenceObservations(report, "integration");
+});
+
+// @SCN-LDG-019
+Then(
+  "the suspense scenario carries a broken reconciling item naming the ambiguous step and its feature file",
+  function () {
+    // The item is on the SUSPENSE row (sentinel id "(no scenario)") — a broken credit posts to no
+    // scenario's account, whatever it cites (the fail-safe). EXACTLY ONE item, carrying the
+    // WHERE-TO-FIX (the feature file) and the WHAT-BROKE (the synthesised message naming the
+    // ambiguous step and saying two or more step definitions match it, so it never ran). The
+    // message states what broke; it prescribes no cure. Reds with zero rows under the
+    // inconclusive-drop reader (no suspense row is posted at all).
+    const suspense = reconciliation.scenarioReconciliations.find(
+      (s) => s.kind === "suspense-scenario"
+    );
+    assert.ok(
+      suspense,
+      `expected a suspense-scenario row carrying the ambiguous step; got rows: ${reconciliation.scenarioReconciliations
+        .map((s) => `${s.scnId}(${s.kind})`)
+        .join(", ")}`
+    );
+    const broken = suspense.reconcilingItems.filter((i) => i.outcome === "broken");
+    assert.equal(
+      broken.length,
+      1,
+      `expected exactly one broken reconciling item on the suspense row; got ${broken.length} (items: ${JSON.stringify(suspense.reconcilingItems)})`
+    );
+    assert.equal(
+      broken[0]!.locator,
+      LDG019_FEATURE,
+      `expected the broken item to name the feature file "${LDG019_FEATURE}"; got "${broken[0]!.locator}"`
+    );
+    const message = broken[0]!.message ?? "";
+    assert.ok(
+      message.includes(LDG019_STEP),
+      `expected the broken item's message to NAME the ambiguous step ("${LDG019_STEP}"); got "${message}"`
+    );
+    assert.match(
+      message,
+      /step definitions match/i,
+      `expected the broken item's message to say two or more step definitions match the step; got "${message}"`
+    );
+  }
+);
+
+// @SCN-LDG-019
+Then("the scenario whose proof was the ambiguous step still reads missing", function () {
+  // THE FAIL-SAFE'S TEETH, at the @integration resolution. This is the FIRST case in the codebase
+  // that emits a `broken` observation CARRYING AN scnId (vitest's collection failure is
+  // citation-less by construction), so the reconciler's guard — which excludes a broken
+  // observation from the obligation match WHATEVER scnId it carries — is finally exercised over a
+  // real reader's output. The scenario's OWN row stays honest at its own resolution: no evidence
+  // that RAN cites it, so its integration obligation is `missing` BY ABSENCE. The broken credit
+  // neither discharges it nor fails it. (Pinned under BOTH status values in the @unit arm,
+  // reconcile.test.ts [SCN-LDG-019].)
+  const { verdict, items } = rowCells(ldg019ScnId);
+  assert.match(
+    verdict,
+    /out-of-balance/,
+    `expected ${ldg019ScnId} to stay out-of-balance; got "${verdict}"`
+  );
+  assert.ok(
+    items.includes("missing"),
+    `expected ${ldg019ScnId} to still read missing; got "${items}"`
+  );
+});
+
+// @SCN-LDG-019
+Then(
+  "the run reports broken evidence — an ambiguous harness makes the run unsound",
+  function () {
+    // Soundness is a property of the RUN (@SCN-LDG-018), and it is reader-agnostic exactly as
+    // `broken` now is: an ambiguous cucumber step makes the whole run unsound, for the same reason
+    // a collection-failed vitest file does — evidence that never materialised leaves every
+    // `missing` in the run SUSPECT. Reds under the inconclusive drop (no broken item exists, so
+    // the run reads sound while a harness is broken).
+    assert.equal(
+      hasBrokenEvidence(reconciliation),
+      true,
+      `expected the ambiguous-step run to carry broken evidence; rows: ${JSON.stringify(
+        reconciliation.scenarioReconciliations.map((s) => ({
+          scnId: s.scnId,
+          items: s.reconcilingItems.map((i) => i.outcome),
+        }))
+      )}`
+    );
+  }
+);

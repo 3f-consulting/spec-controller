@@ -311,7 +311,29 @@ Feature: Ledger over declared-vs-observed evidence
   # NEVER reconcile as `failing` or `satisfied` — it names no scenario, so it can post to no
   # scenario's row. Pinned in the @unit arm (reconcile.test.ts) under BOTH status values, not in
   # the code alone.
-  Rule: a proving suite that failed to collect is broken, not absent
+  #
+  # BROKEN IS READER-AGNOSTIC (SCN-LDG-019). @SCN-LDG-017 established `broken` over vitest's
+  # instance of it — a file that failed to COLLECT. The concept is not vitest's: it is evidence
+  # that NEVER MATERIALISED, reported as evidence that was never written. Cucumber has its own
+  # instance, and exactly one: a step whose harness is AMBIGUOUS — two step definitions match, so
+  # the step cannot run. The scenario cites its @SCN, the runner reports `ambiguous`, and the
+  # reader today DROPS it as inconclusive: the obligation reconciles `missing`, sending the reader
+  # to write a test that already exists while two step definitions collide.
+  #
+  # THE OTHER INCONCLUSIVE STATUSES STAY DROPPED, and stay honest: `undefined` (no step definition
+  # is written — the test genuinely is absent), `pending` (explicitly deferred), `skipped` (never
+  # ran). Only `ambiguous` is a BROKEN HARNESS: the proof exists and cannot execute.
+  #
+  # @SCN-PND-013's row `| ambiguous | missing |` STILL HOLDS — a bystander, not an Update. The
+  # fail-safe excludes a broken observation from the match whatever it carries, so the obligation
+  # still reconciles missing BY ABSENCE. What changes is that the run now also carries the broken
+  # item and is stamped unsound, so the reader is sent to the step definitions, not the test file.
+  #
+  # NOT DETECTABLE, AND NOT OWED: a step-definition module that FAILS TO LOAD. Cucumber exits
+  # before the formatter runs and writes NO JSON at all (probed, 2026-07-14) — there is no report
+  # for a reader to read. Already caught loudly at the CLI edge: @SCN-CLI-002 makes a
+  # supplied-but-absent --cucumber path a hard usage error.
+  Rule: evidence that never materialised is broken, not absent
 
     @unit @integration @SCN-LDG-017
     Scenario: a collection-failed vitest file posts a broken suspense item naming the file and its error, while the scenario it would have proven still reads missing
@@ -321,6 +343,16 @@ Feature: Ledger over declared-vs-observed evidence
       Then the suspense scenario carries a broken reconciling item naming the collection-failed file and its error
       And the broken item is not reported as cites-no-scenario
       And the scenario whose proof was in the collection-failed file still reads missing
+
+    @unit @integration @SCN-LDG-019
+    Scenario: an ambiguous cucumber step posts a broken suspense item naming the step, while the scenario it would have proven still reads missing
+      Given a declared scenario whose only proving step is matched by two step definitions
+      And a cucumber report whose step for that scenario is ambiguous
+      When the ledger reconciles the target
+      Then the suspense scenario carries a broken reconciling item naming the ambiguous step and its feature file
+      And the broken item is not reported as cites-no-scenario
+      And the scenario whose proof was the ambiguous step still reads missing
+      And the run reports broken evidence — an ambiguous harness makes the run unsound
 
   # UNSOUND IS A PROPERTY OF THE RUN (SCN-LDG-018). @SCN-LDG-017 puts the collection failure ON
   # the ledger as a `broken` suspense item; this Rule reads the WHOLE run off it. If any proving

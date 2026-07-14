@@ -8,10 +8,12 @@
  * source (Cucumber-as-orchestrator-across-levels: the scenario declares its tier, cucumber
  * runs whichever). An @e2e scenario proven via cucumber yields an e2e observation. The
  * caller-declared level (the JS-ecosystem default, integration, declared at the CLI edge)
- * survives only as the fallback for an UNTAGGED scenario. The reader classifies THREE-WAY
- * (@SCN-PND-013): any failed step → a `failed` observation; all passed → a `passed` observation;
- * otherwise INCONCLUSIVE (undefined/pending/skipped/ambiguous) → the scenario is DROPPED (no
- * observation), so its obligation reconciles missing by absence — pending is never inferred from status.
+ * survives only as the fallback for an UNTAGGED scenario. The reader classifies FOUR-WAY
+ * (@SCN-PND-013, extended by @SCN-LDG-019): any AMBIGUOUS step → a `broken` observation (a broken
+ * harness — two step definitions match, so the step cannot run); any failed step → a `failed`
+ * observation; all passed → a `passed` observation; otherwise INCONCLUSIVE (undefined/pending/
+ * skipped) → the scenario is DROPPED (no observation), so its obligation reconciles missing by
+ * absence — pending is never inferred from status.
  *
  * Parent: @SCN-LDG-011 (the tag-derivation headline) over @SCN-LDG-001 (the foundation seam).
  */
@@ -26,7 +28,17 @@ export type CucumberJsonReport = Array<{
   name?: string;
   elements?: Array<{
     tags?: Array<{ name?: string }>;
-    steps?: Array<{ result?: { status?: string } }>;
+    steps?: Array<{
+      /**
+       * The step's Gherkin keyword and text (@SCN-LDG-019) — previously unread. An AMBIGUOUS step
+       * carries no `error_message` (its result object is exactly `{ status, duration }`), so the
+       * reader has nothing to quote: it must NAME the step itself, from these two fields, when it
+       * synthesises the broken observation's what-broke message.
+       */
+      keyword?: string;
+      name?: string;
+      result?: { status?: string; duration?: number };
+    }>;
   }>;
 }>;
 
@@ -77,6 +89,25 @@ function deriveLevels(
 }
 
 /**
+ * SYNTHESISE the what-broke message of an ambiguous step's `broken` observation (@SCN-LDG-019).
+ *
+ * Cucumber emits NO `error_message` for an ambiguous step — its result object is exactly
+ * `{ "status": "ambiguous", "duration": 0 }` (the "Multiple step definitions match: …" detail is
+ * PRETTY-FORMATTER-ONLY, never in the JSON). So the reader cannot quote the runner as the vitest
+ * reader does (which passes the collection error through VERBATIM); it must STATE THE DIAGNOSIS
+ * itself, from the one thing the report does give: the step's keyword and text.
+ *
+ * It names WHAT BROKE — this step, matched by two or more step definitions, so it never ran. It
+ * prescribes NO CURE: which of the colliding definitions is the wrong one is not the ledger's to
+ * say.
+ */
+function ambiguousMessage(step: { keyword?: string; name?: string }): string {
+  const text = `${(step.keyword ?? "").trim()} ${step.name ?? ""}`.trim();
+  const named = text.length > 0 ? `The step "${text}"` : "A step";
+  return `${named} is ambiguous — two or more step definitions match it, so the step never ran.`;
+}
+
+/**
  * Parse a Cucumber JSON report into observed results, each levelled by DERIVING it from the
  * cited scenario's declared tier tag (falling back to `fallbackQualityCheck` for an untagged
  * scenario). One result per scenario: those carrying an @SCN tag cite that scenario; those with
@@ -102,16 +133,55 @@ export function parseCucumberEvidenceObservations(
         .find((m): m is RegExpExecArray => m !== null);
 
       const steps = scenario.steps ?? [];
-      // THREE-WAY classification (@SCN-PND-013) — pending is NEVER inferred from status:
+      // FOUR-WAY classification (@SCN-PND-013, extended by @SCN-LDG-019) — pending is NEVER
+      // inferred from status:
+      //   - any step `ambiguous` → a `broken` observation → the SUSPENSE row (below).
       //   - any step `failed` → a `failed` observation → failing.
       //   - every step `passed` → a `passed` observation → satisfied.
-      //   - otherwise (any `undefined`/`pending`/`skipped`/`ambiguous`, none failed) →
-      //     INCONCLUSIVE: a stub that RAN but proved nothing. Emit NOTHING — the declared
-      //     obligation then finds no matching observation and reconciles missing BY ABSENCE.
-      // `ambiguous` is deliberately inconclusive, not failing (no valid pass → missing, never
-      // its own category). `EvidenceStatus` stays binary (no new status, no reconciler change):
-      // the DROP is what realises inconclusive→missing. The drop is WHOLE-SCENARIO — an
-      // inconclusive scenario emits no observation at ANY declared tier (the `continue` below).
+      //   - otherwise (any `undefined`/`pending`/`skipped`, none failed) → INCONCLUSIVE: a stub
+      //     that RAN but proved nothing. Emit NOTHING — the declared obligation then finds no
+      //     matching observation and reconciles missing BY ABSENCE.
+      // The remaining inconclusive statuses stay dropped, and stay honest: `undefined` (no step
+      // definition is written — the test genuinely IS absent), `pending` (explicitly deferred),
+      // `skipped` (never ran). `EvidenceStatus` stays binary (no new status, no reconciler
+      // change): the DROP is what realises inconclusive→missing, and the `broken` FLAG is what
+      // realises ambiguous→suspense. The drop is WHOLE-SCENARIO — an inconclusive scenario emits
+      // no observation at ANY declared tier (the `continue` below).
+      // THE FOURTH ARM (@SCN-LDG-019), taken BEFORE the inconclusive drop: an AMBIGUOUS step is
+      // not a stub that proved nothing — it is a BROKEN HARNESS. Two or more step definitions
+      // match one step, so the step CANNOT run: the proof exists and cannot execute. Dropped as
+      // inconclusive, its obligation reconciled `missing` — indistinguishable from an unwritten
+      // test, and the wrong remedy (write a test that already exists, rather than fix the
+      // colliding step definitions). It is cucumber's instance of the `broken` outcome vitest's
+      // collection failure established (@SCN-LDG-017): evidence that NEVER MATERIALISED.
+      //
+      // Ordered FIRST because cucumber halts the scenario at the ambiguous step — every step after
+      // it reads `skipped`, so the drop would otherwise swallow the ambiguity along with them.
+      //
+      // ONE observation for the whole scenario (never one per declared tier): the ambiguity is a
+      // property of the STEP — the harness broke ONCE — so a multi-tier scenario posts ONE broken
+      // item, levelled at its first declared tier. This mirrors the drop below, which is likewise
+      // whole-scenario. Unlike vitest's collection failure (citation-less by construction — a file
+      // that fails to collect names no test), this observation CARRIES the scenario's scnId: the
+      // cucumber scenario DID cite its @SCN; only its step could not run. The reconciler's
+      // fail-safe is what keeps the credit off the obligation it cites — `broken` is checked
+      // BEFORE `status`, so it can never discharge (or fail) that obligation; it posts to the
+      // SUSPENSE row and the obligation reconciles `missing` BY ABSENCE (pinned in
+      // reconcile.test.ts [SCN-LDG-019], under BOTH status values).
+      const ambiguous = steps.find((s) => s.result?.status === "ambiguous");
+      if (ambiguous) {
+        results.push({
+          qualityCheck: deriveLevels(tags, fallbackQualityCheck)[0]!,
+          scnId: scnTag ? scnTag[1]! : null,
+          // Structurally required, and the step certainly did not pass; the reconciler's fail-safe
+          // checks `broken` BEFORE `status`, so this never reconciles as `failing`.
+          status: "failed",
+          locator,
+          broken: true,
+          message: ambiguousMessage(ambiguous),
+        });
+        continue;
+      }
       const anyFailed = steps.some((s) => s.result?.status === "failed");
       const allPassed = steps.length > 0 && steps.every((s) => s.result?.status === "passed");
       if (!anyFailed && !allPassed) continue; // inconclusive → drop the whole scenario.
