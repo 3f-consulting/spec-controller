@@ -22,7 +22,7 @@
 
 import { describe, it, expect } from "vitest";
 import { renderMarkdown } from "./markdown.js";
-import type { EvidenceReconciliation, Outcome } from "../model.js";
+import type { EvidenceReconciliation, Outcome, ScenarioReconciliation } from "../model.js";
 import { OUTCOME_DESCRIPTION } from "../model.js";
 import { isBalanced } from "../reconcile/reconcile.js";
 import type { RunContext } from "../provenance/provenance.js";
@@ -1951,38 +1951,54 @@ describe("[SCN-PND-012] a balanced-with-pending row is visibly distinguished fro
 });
 
 /**
- * Unit test for the unsound run-integrity stamp (@SCN-RPT-021).
+ * Unit test for the unsound run-integrity stamp (@SCN-RPT-021), over BOTH broken kinds.
  *
  * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-RPT-021 id
  * matching features/report.feature, so a grep of the id returns both halves of the pair.
  * @unit ONLY (operator-endorsed): the renderer is a pure function over the report model, and the
- * pipeline manifestation is already carried by @SCN-LDG-017 / @SCN-LDG-018's @integration arms.
+ * pipeline manifestation is already carried by @SCN-LDG-017 / @SCN-LDG-018 / @SCN-LDG-019's arms.
  *
- * The customer-visible payoff of the whole `broken` slice (3F-1642). A `missing` row tells the
- * reader to WRITE A TEST; when the proof exists and its suite merely failed to COLLECT, that
- * instruction is wrong. So the markdown NAMES the collection-failed suite, PRINTS the runner's
- * own collection error verbatim, and STAMPS the run "unsound" — the render headline word (the
- * predicate is `hasBrokenEvidence`; predicate-name ≠ headline-word, per `isBalanced` vs
- * "balanced"). The stamp is what marks every `missing` outcome below it as suspect.
+ * The customer-visible payoff of the whole `broken` slice (3F-1642, generalised over cucumber by
+ * 3F-1654). A `missing` row tells the reader to WRITE A TEST; when the proof exists and merely
+ * NEVER RAN, that instruction is wrong. So the markdown NAMES the broken evidence, PRINTS what
+ * broke, and STAMPS the run "unsound" — the render headline word (the predicate is
+ * `hasBrokenEvidence`; predicate-name ≠ headline-word, per `isBalanced` vs "balanced").
  *
- * Remedy-NEUTRAL: a collection error is equally a missing dependency, a syntax error, a bad
- * import, or a top-level throw — the report never prescribes a cure (no `pnpm install`); the one
- * remedy it gives is the one that always holds, "fix the harness and regenerate".
+ * TWO INSTANCES, ONE SHAPE (3F-1654). `broken` now has two producers, and the copy must read
+ * truthfully over both:
+ *   - VITEST — a suite that failed to COLLECT. The runner gives its own message (multi-line, with
+ *     a stack), printed VERBATIM: the tool does not interpret it.
+ *   - CUCUMBER — a step two or more step definitions match, so it never ran. Cucumber emits NO
+ *     `error_message` for an ambiguous step, so there is nothing to quote: the reader SYNTHESISED
+ *     the diagnosis upstream (@SCN-LDG-019) and the renderer prints what the item CARRIES. No
+ *     per-reader branch here — the difference is already resolved before the renderer sees it.
+ * The bounded softening (operator-mandated): pass the runner's words through where it gives them;
+ * STATE the diagnosis where it gives none; PRESCRIBE NO CURE, either way. The renderer may name
+ * WHAT failed and WHERE. It may never say how to fix it.
  *
- * Teeth: before the emitter exists, `renderMarkdown` has no `## Run integrity` section at all —
- * the word "unsound", the suite locator, and the collection message are nowhere in the document,
- * and the suspense row's broken item renders bare (no locator suffix — @SCN-LDG-017 deliberately
- * left the credit-side suffix unextended for this scenario). So every assertion below reds.
+ * Teeth (the Update, 3F-1744): today's copy is vitest-shaped — "N proving suites failed to
+ * collect", "the collection error the runner reported", and an `OUTCOME_DESCRIPTION.broken` gloss
+ * that names a suite's collection. Rendered over a CUCUMBER-broken balance it MISCALLS a
+ * step-definition collision a collection failure — the tool lying about what broke. The
+ * no-miscall assertions below red against it.
  *
  * Parent: (@SCN-RPT-021).
  */
-describe("[SCN-RPT-021] the markdown names the collection-failed suite and its error, stamped unsound", () => {
-  const LOCATOR = "tests/harness/cucumber.trigger.test.ts";
+describe("[SCN-RPT-021] the markdown names the broken evidence and its error, stamped unsound", () => {
+  const VITEST_LOCATOR = "tests/harness/cucumber.trigger.test.ts";
   // A REAL vitest collection message: multi-line, with a stack — the shape that forces the
   // verbatim print into a fenced block rather than a table cell.
-  const MESSAGE =
+  const VITEST_MESSAGE =
     "Error: Cannot find package '@cucumber/tag-expressions' imported from " +
-    `${LOCATOR}\n    at packageResolve (node:internal/modules/esm/resolve:catch)\n    at moduleResolve (node:internal/modules/esm/resolve)`;
+    `${VITEST_LOCATOR}\n    at packageResolve (node:internal/modules/esm/resolve:catch)\n    at moduleResolve (node:internal/modules/esm/resolve)`;
+
+  const CUCUMBER_LOCATOR = "features/handover.feature";
+  // The message the CUCUMBER reader SYNTHESISES (@SCN-LDG-019, verbatim from `ambiguousMessage`):
+  // cucumber gives no error_message for an ambiguous step, so the reader states the diagnosis —
+  // what broke, and no cure.
+  const CUCUMBER_MESSAGE =
+    'The step "When the handover is accepted" is ambiguous — two or more step definitions match ' +
+    "it, so the step never ran.";
 
   /** The row (markdown table line) whose first cell is the given scnId. */
   const rowFor = (md: string, scnId: string): string => {
@@ -1991,11 +2007,14 @@ describe("[SCN-RPT-021] the markdown names the collection-failed suite and its e
     return row!;
   };
 
-  // The lived an adopter's repository shape (3F-1642): a declared scenario reconciling `missing` (its proof exists,
-  // but the suite that carries it never ran), alongside the suspense row carrying the `broken`
-  // credit for that collection-failed suite. The whole point of the slice is that a reader can
-  // tell these two rows apart.
-  const brokenBalance: EvidenceReconciliation = {
+  /**
+   * A declared scenario reconciling `missing` (its proof exists but never ran) alongside the
+   * suspense row carrying the `broken` credit for it. The whole point of the slice is that a
+   * reader can tell those two rows apart.
+   */
+  const balanceWithBroken = (
+    item: ScenarioReconciliation["reconcilingItems"][number]
+  ): EvidenceReconciliation => ({
     scenarioReconciliations: [
       {
         scnId: "SCN-HNS-002",
@@ -2010,58 +2029,108 @@ describe("[SCN-RPT-021] the markdown names the collection-failed suite and its e
         kind: "suspense-scenario",
         verdict: "out-of-balance",
         evidenceObligations: [],
-        reconcilingItems: [
-          { qualityCheck: "unit", outcome: "broken", locator: LOCATOR, message: MESSAGE },
-        ],
+        reconcilingItems: [item],
         pendingItems: [],
       },
     ],
-  };
-
-  it("stamps the run unsound, above the summary views", () => {
-    const md = renderMarkdown(brokenBalance, ctx);
-    // "Unsound" is the RENDER HEADLINE word — the reader's one-glance verdict on run integrity.
-    expect(md).toContain("## Run integrity: unsound");
-    // Sited between the provenance header and the summary views: the stamp qualifies every
-    // count below it (a `missing` in an unsound run may be a broken proof), so it must be read
-    // FIRST. @SCN-RPT-009's summary-first / ledger-last ordering is otherwise unchanged.
-    const iProvenance = md.indexOf("## Run provenance");
-    const iStamp = md.indexOf("## Run integrity: unsound");
-    const iSummary = md.indexOf("## Summary views");
-    expect(iProvenance).toBeLessThan(iStamp);
-    expect(iStamp).toBeLessThan(iSummary);
-    // The stamp explains what it INVALIDATES — that a `missing` below may be a broken proof,
-    // not an absent one. Without this the word "unsound" is a label with no consequence.
-    expect(md).toMatch(/unsound[\s\S]{0,400}missing/i);
   });
 
-  it("names the collection-failed suite and prints the runner's collection error verbatim", () => {
-    const md = renderMarkdown(brokenBalance, ctx);
-    // The WHERE-to-fix: the file that failed to collect.
-    expect(md).toContain(LOCATOR);
-    // The WHAT-broke: the runner's own message, VERBATIM (every line, stack included) — the
-    // reader diagnoses from it. A fenced block, because a vitest message is multi-line.
-    const fence = md.slice(md.indexOf("## Run integrity"));
-    expect(fence).toContain(MESSAGE);
-    expect(fence).toMatch(/```[\s\S]*Cannot find package[\s\S]*```/);
+  // The lived an adopter's repository shape (3F-1642): vitest's collection failure.
+  const vitestBroken = balanceWithBroken({
+    qualityCheck: "unit",
+    outcome: "broken",
+    locator: VITEST_LOCATOR,
+    message: VITEST_MESSAGE,
+  });
+
+  // The cucumber instance (3F-1654): an ambiguous step. The item's shape is identical — locator
+  // + message — which is exactly why the renderer needs no per-reader branch.
+  const cucumberBroken = balanceWithBroken({
+    qualityCheck: "integration",
+    outcome: "broken",
+    locator: CUCUMBER_LOCATOR,
+    message: CUCUMBER_MESSAGE,
+  });
+
+  /** The run-integrity section alone — where the stamp and the per-item lines live. */
+  const integrityOf = (md: string): string => md.slice(md.indexOf("## Run integrity"));
+
+  it("stamps each run unsound, above the summary views", () => {
+    for (const balance of [vitestBroken, cucumberBroken]) {
+      const md = renderMarkdown(balance, ctx);
+      // "Unsound" is the RENDER HEADLINE word — the reader's one-glance verdict on run integrity.
+      expect(md).toContain("## Run integrity: unsound");
+      // Sited between the provenance header and the summary views: the stamp qualifies every
+      // count below it (a `missing` in an unsound run may be a broken proof), so it must be read
+      // FIRST. @SCN-RPT-009's summary-first / ledger-last ordering is otherwise unchanged.
+      const iProvenance = md.indexOf("## Run provenance");
+      const iStamp = md.indexOf("## Run integrity: unsound");
+      const iSummary = md.indexOf("## Summary views");
+      expect(iProvenance).toBeLessThan(iStamp);
+      expect(iStamp).toBeLessThan(iSummary);
+      // The stamp explains what it INVALIDATES — that a `missing` below may be a broken proof,
+      // not an absent one. Without this the word "unsound" is a label with no consequence.
+      expect(md).toMatch(/unsound[\s\S]{0,400}missing/i);
+    }
+  });
+
+  it("names each run's own broken evidence — the file or the feature — and neither miscalls the other's failure a collection failure", () => {
+    const vitestMd = renderMarkdown(vitestBroken, ctx);
+    const cucumberMd = renderMarkdown(cucumberBroken, ctx);
+
+    // The WHERE-to-fix, each in its own idiom: a test file for vitest, a feature file for
+    // cucumber. Both come off the item's `locator` — one field, two producers.
+    expect(vitestMd).toContain(VITEST_LOCATOR);
+    expect(cucumberMd).toContain(CUCUMBER_LOCATOR);
+
+    // THE UPDATE (3F-1744). The copy is the whole point: an ambiguous cucumber step is neither a
+    // "suite" nor a "collection error", so a cucumber-broken report must NOWHERE call it one —
+    // not in the run-integrity stamp, not in the verdict gloss, not in the outcome description on
+    // the suspense row. That is the tool lying about what broke, in the one place the reader will
+    // ever see it.
+    expect(cucumberMd).not.toMatch(/collection|collect|proving suite/i);
+
+    // And symmetrically: the vitest report must not borrow cucumber's diagnosis either. The
+    // renderer states only what the item CARRIES.
+    expect(vitestMd).not.toMatch(/ambiguous|step definition/i);
+  });
+
+  it("prints the runner's error verbatim where the runner gives one, and states the diagnosis itself where it does not", () => {
+    // VITEST — the runner's own message, VERBATIM (every line, stack included), in a fenced block
+    // because it is multi-line. The tool does not interpret it; the reader diagnoses from it.
+    const vitestIntegrity = integrityOf(renderMarkdown(vitestBroken, ctx));
+    expect(vitestIntegrity).toContain(VITEST_MESSAGE);
+    expect(vitestIntegrity).toMatch(/```[\s\S]*Cannot find package[\s\S]*```/);
+
+    // CUCUMBER — the runner gives NOTHING to quote (an ambiguous step's result object is exactly
+    // `{ status, duration }`), so the item carries the diagnosis the reader synthesised: WHAT
+    // broke — this step, matched twice, never ran. The renderer prints it the same way.
+    const cucumberIntegrity = integrityOf(renderMarkdown(cucumberBroken, ctx));
+    expect(cucumberIntegrity).toContain(CUCUMBER_MESSAGE);
+    expect(cucumberIntegrity).toMatch(/```[\s\S]*is ambiguous[\s\S]*```/);
   });
 
   it("sends the reader to fix the harness and regenerate — prescribing no cure for the error itself", () => {
-    const md = renderMarkdown(brokenBalance, ctx);
-    // The one remedy that ALWAYS holds, whatever the collection error was.
-    expect(md).toMatch(/fix the harness and regenerate/i);
-    // REMEDY-NEUTRAL: the collection error is equally a missing dep, a syntax error, a bad
-    // import, or a top-level throw — the report must never guess the cure.
-    expect(md).not.toMatch(/pnpm install|npm install|yarn install|--frozen-lockfile/);
+    for (const balance of [vitestBroken, cucumberBroken]) {
+      const md = renderMarkdown(balance, ctx);
+      // The one remedy that ALWAYS holds, whatever broke. It POINTS; it does not diagnose a cure.
+      expect(md).toMatch(/fix the harness and regenerate/i);
+      // REMEDY-NEUTRAL, both kinds. A collection error is equally a missing dep, a syntax error, a
+      // bad import, or a top-level throw; an ambiguity is equally either colliding definition's
+      // fault. The report must never guess the cure — no `pnpm install`, and no "delete one of the
+      // step definitions" either.
+      expect(md).not.toMatch(/pnpm install|npm install|yarn install|--frozen-lockfile/i);
+      expect(md).not.toMatch(/delete |remove |rename |narrow |disambiguate/i);
+    }
   });
 
-  it("carries the suite locator on the suspense row's broken item — a broken proof, not an absent one", () => {
-    const md = renderMarkdown(brokenBalance, ctx);
-    const suspense = rowFor(md, "(no scenario)");
+  it("carries the locator on the suspense row's broken item — a broken proof, not an absent one", () => {
+    const vitestMd = renderMarkdown(vitestBroken, ctx);
+    const suspense = rowFor(vitestMd, "(no scenario)");
     // The credit-side locator suffix (ruling Q5), now extended to `broken`: glyph + the canon
     // description (single-sourced from OUTCOME_DESCRIPTION, 3F-1626) + the where-to-fix.
     expect(suspense).toContain(`💥 ${OUTCOME_DESCRIPTION.broken}`);
-    expect(suspense).toContain(LOCATOR);
+    expect(suspense).toContain(VITEST_LOCATOR);
     // The row cell carries the error's HEADLINE line only — the verbatim multi-line message
     // lives in the run-integrity section; a stack in a table cell would destroy the table.
     expect(suspense).toContain("Cannot find package '@cucumber/tag-expressions'");
@@ -2069,9 +2138,16 @@ describe("[SCN-RPT-021] the markdown names the collection-failed suite and its e
     // The DISTINCTION the slice exists for: the declared scenario still reads `missing` (honest
     // at its own resolution — no evidence cited it), and it is NOT the broken row. A reader
     // tells "the proof exists and is broken" from "no proof was written".
-    const declared = rowFor(md, "SCN-HNS-002");
+    const declared = rowFor(vitestMd, "SCN-HNS-002");
     expect(declared).toContain(`∅ ${OUTCOME_DESCRIPTION.missing}`);
     expect(declared).not.toContain("💥");
+
+    // The cucumber row carries the same two halves — the feature file and the synthesised
+    // diagnosis — through the identical code path.
+    const cucumberSuspense = rowFor(renderMarkdown(cucumberBroken, ctx), "(no scenario)");
+    expect(cucumberSuspense).toContain(`💥 ${OUTCOME_DESCRIPTION.broken}`);
+    expect(cucumberSuspense).toContain(CUCUMBER_LOCATOR);
+    expect(cucumberSuspense).toContain("is ambiguous");
   });
 
   it("omits the stamp entirely when the run carries no broken evidence (byte-identical regression)", () => {

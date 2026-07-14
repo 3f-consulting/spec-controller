@@ -517,18 +517,25 @@ Feature: The report renders the ledger as sectioned facts
       Then the summary decomposition rows, the per-scenario reconciling items, and the lint table each render the outcome's canon description, single-sourced from OUTCOME_DESCRIPTION
       And the bare outcome handle appears nowhere in the markdown
 
-  Rule: the report surfaces a broken proving suite as a harness failure, and stamps the run unsound
+  Rule: the report surfaces broken evidence as a harness failure, and stamps the run unsound
 
-    The customer-visible payoff of the broken reconciling item (@SCN-RPT-021, 3F-1642). A
-    "missing" row tells the reader to WRITE A TEST. When the proof already exists and its suite
-    simply failed to COLLECT, that instruction is wrong — and the report is the only place the
-    reader will ever see it. So the markdown does three things a "missing" row cannot.
+    The customer-visible payoff of the broken reconciling item (@SCN-RPT-021, 3F-1642; generalised
+    over cucumber by 3F-1654). A "missing" row tells the reader to WRITE A TEST. When the proof
+    already exists and simply NEVER RAN — a vitest suite that failed to collect, a cucumber step
+    two step definitions both match — that instruction is wrong, and the report is the only place
+    the reader will ever see it. So the markdown does three things a "missing" row cannot.
 
-    It NAMES the collection-failed suite (the file locator) and PRINTS the runner's own
-    collection error, so the reader knows what broke and where. The error is printed VERBATIM
-    in the run-integrity section (a fenced block — a vitest collection message is multi-line and
-    would destroy a table cell); the suspense row's "broken" reconciling item carries the same
-    locator plus the error's headline line, so the row is legible without leaving the table.
+    It NAMES the broken evidence — the locator the runner gave it, a test file or a feature file —
+    and PRINTS what broke, so the reader knows what and where. The message is printed VERBATIM in
+    the run-integrity section (a fenced block — a vitest collection message is multi-line and would
+    destroy a table cell); the suspense row's "broken" reconciling item carries the same locator
+    plus the message's headline line, so the row is legible without leaving the table.
+
+    The renderer needs NO per-reader branch — it renders what the item CARRIES. Where the runner
+    gives its own words (vitest's collection error) the message IS those words, passed through
+    unchanged; where the runner gives none (cucumber emits no error_message for an ambiguous step)
+    the reader synthesised the diagnosis upstream. Either way the renderer names WHAT failed and
+    WHERE, in one shape — and it never miscalls one kind of break as the other.
 
     It STAMPS the run "unsound" — the render headline word, and the only place that word appears
     (the predicate is hasBrokenEvidence: predicate-name ≠ headline-word, per isBalanced vs
@@ -536,10 +543,10 @@ Feature: The report renders the ledger as sectioned facts
     suspect: an unexercised behaviour reconciles missing whether its proof is absent or merely
     broken, so a "missing" row in an unsound run cannot be read as "write the test".
 
-    The gloss is REMEDY-NEUTRAL: a collection error is equally a missing dependency, a syntax
-    error, a bad import, or a top-level throw, so the report names the fact and prints the
-    runner's message — it never prescribes a cure. The one remedy it does give is the one that
-    always holds: fix the harness and regenerate.
+    The gloss is REMEDY-NEUTRAL: what broke is equally a missing dependency, a syntax error, a bad
+    import, a top-level throw, or two step definitions colliding, so the report names the fact and
+    prints the message it was given — it never prescribes a cure. The one remedy it does give is
+    the one that always holds: fix the harness and regenerate.
 
     Omit-when-empty (the Pending Items tally precedent): a run carrying no broken evidence
     renders BYTE-IDENTICAL to the pre-slice output — a sound run gains no stray empty section.
@@ -548,13 +555,15 @@ Feature: The report renders the ledger as sectioned facts
     proven in isolation by Vitest.
 
     @unit @SCN-RPT-021
-    Scenario: the markdown names the collection-failed suite and its collection error, and stamps the run unsound
-      Given a reconciliation balance whose suspense row carries a broken credit for a collection-failed suite
+    Scenario: the markdown names the broken evidence and its error, and stamps the run unsound
+      Given a balance whose suspense row carries a broken credit for a collection-failed vitest suite
+      And a balance whose suspense row carries a broken credit for an ambiguous cucumber step
       When the markdown report is rendered
-      Then the report is stamped unsound, above the summary views
-      And it names the collection-failed suite and prints the runner's collection error verbatim
+      Then each report is stamped unsound, above the summary views
+      And each names its own broken evidence — the file or the feature — and neither miscalls the other's failure a collection failure
+      And it prints the runner's error verbatim where the runner gives one, and states the diagnosis itself where it does not
       And it sends the reader to fix the harness and regenerate, prescribing no cure for the error itself
-      And the suspense row's broken item carries the same suite locator, distinguishing a broken proof from an absent one
+      And the suspense row's broken item carries the same locator, distinguishing a broken proof from an absent one
       And a balance carrying no broken credit renders byte-identically to the pre-slice output
 
   Rule: the summary opens with the run's verdict

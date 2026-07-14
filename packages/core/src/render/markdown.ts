@@ -64,8 +64,9 @@ const ITEM_GLYPH: Record<Outcome, string> = {
   // CREDIT-SIDE: a credit citing NO @SCN at all — the reconciling item on the
   // suspense scenario (@SCN-LDG-007).
   "cites-no-scenario": "❓",
-  // CREDIT-SIDE: a proving suite that FAILED TO COLLECT — it errored before naming a test,
-  // so it cites no @SCN and posts to the suspense row (@SCN-LDG-017).
+  // CREDIT-SIDE: evidence that NEVER RAN — a vitest suite that failed to collect before naming a
+  // test (@SCN-LDG-017), or a cucumber step two or more step definitions match (@SCN-LDG-019).
+  // Either way it posts to the suspense row: the credit can never discharge an obligation.
   "broken": "💥",
   // CREDIT-SIDE: a credit citing a REAL declared scenario at a quality-check it never
   // declared — the undemanded reconciling item on the real scenario's row (@SCN-LDG-008).
@@ -110,11 +111,12 @@ function renderItem(item: ScenarioReconciliation["reconcilingItems"][number]): s
     // evidence observation locator (ruling Q5) — surface the where-to-fix in the reconciliation cell.
     item.outcome === "undemanded";
   let suffix = "";
-  // The `broken` credit (@SCN-RPT-021) carries BOTH halves of its where-to-fix: the file that
-  // failed to collect AND what the runner said about it. The message's HEADLINE LINE only — a
-  // vitest collection message is multi-line (message + stack) and a stack in a table cell would
-  // destroy the table; the VERBATIM message is printed in the `## Run integrity` section above,
-  // which is where a reader diagnoses. Here the row stays legible without leaving the table.
+  // The `broken` credit (@SCN-RPT-021) carries BOTH halves of its where-to-fix: the locator of the
+  // evidence that never ran (a test file, or a feature file) AND the message it carries. The
+  // message's HEADLINE LINE only — a vitest collection message is multi-line (message + stack) and
+  // a stack in a table cell would destroy the table; the full message is printed in the
+  // `## Run integrity` section above, which is where a reader diagnoses. Here the row stays
+  // legible without leaving the table.
   if (item.outcome === "broken") {
     const where = [item.locator, item.message === undefined ? undefined : headlineOf(item.message)]
       .filter((part): part is string => part !== undefined && part.length > 0)
@@ -246,13 +248,29 @@ const provenanceSection: SectionEmitter = (report) => {
  * unsound run cannot be read as "write the test" — the reader must know that before reading a
  * single count. Every other section keeps its @SCN-RPT-009 summary-first / ledger-last position.
  *
- * WHAT IT PRINTS. The suite that failed to collect (the WHERE) and the runner's own message
- * VERBATIM in a fenced block (the WHAT) — multi-line, stack included, because that is what the
- * reader diagnoses from and a table cell cannot hold it. The gloss is REMEDY-NEUTRAL: a
- * collection error is equally a missing dependency, a syntax error, a bad import, or a
- * top-level throw, so the report never guesses the cure (never `pnpm install`). The one remedy
- * that always holds — fix the harness and regenerate — is the one it gives, carrying the
- * parent's fuller `OUTCOME_DESCRIPTION` gloss through to the reader.
+ * WHAT IT PRINTS. The broken evidence's locator (the WHERE) and its message in a fenced block
+ * (the WHAT) — multi-line, stack included where there is one, because that is what the reader
+ * diagnoses from and a table cell cannot hold it.
+ *
+ * TWO PRODUCERS, ONE SHAPE, NO BRANCH (3F-1654). `broken` now has two instances — a vitest suite
+ * that failed to COLLECT, and a cucumber step two or more step definitions match (@SCN-LDG-019) —
+ * so the copy here is GENERIC: an ambiguous step is neither a "suite" nor a "collection error",
+ * and a renderer that called it one would be the tool lying about what broke, in the one place the
+ * reader will ever see it. The renderer needs no per-reader branch: it prints what the ITEM
+ * CARRIES. Where the runner gives its own words (vitest's collection error) the message IS those
+ * words, passed through VERBATIM; where the runner gives none (cucumber emits no `error_message`
+ * for an ambiguous step) the READER synthesised the diagnosis upstream. The difference is resolved
+ * before the renderer sees it.
+ *
+ * THE BOUNDED SOFTENING of 3F-1642's "print verbatim — the tool does not interpret" stance
+ * (operator-mandated; exactly three clauses, no further): pass the runner's words through where it
+ * gives them; STATE the diagnosis — WHAT BROKE — where it does not; PRESCRIBE NO CURE, either way.
+ * The renderer may name WHAT failed and WHERE. It may never say how to fix it. The gloss stays
+ * REMEDY-NEUTRAL: what broke is equally a missing dependency, a syntax error, a bad import, a
+ * top-level throw, or two colliding step definitions, so the report never guesses the cure (never
+ * `pnpm install`, and never "delete one of the step definitions"). The one remedy that always
+ * holds — fix the harness and regenerate — is the one it gives, carrying the parent's fuller
+ * `OUTCOME_DESCRIPTION` gloss through to the reader; it POINTS, it does not diagnose a remedy.
  *
  * OMIT-WHEN-EMPTY (the Pending Items tally precedent): a run carrying no broken evidence
  * returns `[]`, so a SOUND report is byte-identical to the pre-slice output — no stray empty
@@ -268,23 +286,31 @@ const runIntegritySection: SectionEmitter = (report) => {
     s.reconcilingItems.filter((item) => item.outcome === "broken")
   );
   const count = brokenItems.length;
-  const suites = count === 1 ? "1 proving suite" : `${count} proving suites`;
+  // GENERIC over both producers — the count-phrase names what a collection-failed vitest suite and
+  // an ambiguous cucumber step have in common (the proof did not run), never one kind's idiom.
+  const proofs =
+    count === 1
+      ? "1 proof never ran, so the behaviour it proves was never exercised."
+      : `${count} proofs never ran, so the behaviours they prove were never exercised.`;
   const lines = [
     "## Run integrity: unsound",
     "",
-    `⚠ **This run is unsound.** ${suites} failed to collect, so the behaviour ` +
-      `${count === 1 ? "it proves was" : "they prove was"} never exercised. A \`missing\` outcome ` +
+    `⚠ **This run is unsound.** ${proofs} A \`missing\` outcome ` +
       "below may therefore be a BROKEN proof rather than an absent one — it cannot be read as " +
       `"write the test", because the test may already be there. Fix the harness and regenerate.`,
     "",
   ];
   for (const item of brokenItems) {
-    // The suite that failed to collect. A `broken` observation always carries its file locator
-    // (the reader's WHERE-to-fix); the fallback keeps the section honest if one ever does not.
-    lines.push(`- \`${item.locator ?? "(suite not named by the runner)"}\` — the collection error the runner reported:`);
+    // WHERE the evidence broke — a test file (vitest) or a feature file (cucumber). A `broken`
+    // observation always carries its locator (the reader's WHERE-to-fix); the fallback keeps the
+    // section honest if one ever does not.
+    lines.push(`- \`${item.locator ?? "(evidence not named by the runner)"}\` — what broke:`);
     lines.push("");
-    // VERBATIM — every line the runner gave, stack included, unedited. The tool does not
-    // interpret the error; the reader diagnoses it.
+    // WHAT broke, exactly as the item carries it: the runner's own words VERBATIM where the runner
+    // gave them (vitest — every line, stack included, unedited: the tool does not interpret the
+    // error), and the reader's synthesised diagnosis where it gave none (cucumber's ambiguous step
+    // has no `error_message` to quote). No branch — one shape, resolved upstream. Either way the
+    // line names what failed; it never prescribes the cure.
     lines.push("```text");
     lines.push(...(item.message ?? "(no message reported by the runner)").split("\n"));
     lines.push("```");
@@ -335,10 +361,13 @@ const runVerdictSection: SectionEmitter = (report) => {
     ? {
         headline: "**UNSOUND**",
         exit: "exit 4",
+        // GENERIC over both producers (3F-1654), for the same reason the run-integrity stamp is:
+        // a cucumber ambiguity is not a collection failure, and the verdict line is read by the
+        // same reader. It names the FACT the two share; the stamp above carries the detail.
         gloss:
-          "the evidence could not be TRUSTED to reconcile. A proving suite failed to collect, " +
-          "so the behaviour it proves was never exercised. Read the run-integrity stamp above " +
-          "before any count below it.",
+          "the evidence could not be TRUSTED to reconcile. A proof never ran, so the behaviour " +
+          "it proves was never exercised. Read the run-integrity stamp above before any count " +
+          "below it.",
       }
     : !isBalanced(reconciliation)
       ? {

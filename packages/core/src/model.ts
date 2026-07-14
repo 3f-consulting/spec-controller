@@ -219,11 +219,15 @@ export const OUTCOME_DESCRIPTION: Record<Outcome, string> = {
   missing: "Evidence Observation is missing",
   "cites-unknown-scenario": "Evidence Observation cites an unknown Scenario",
   "cites-no-scenario": "Evidence Observation cites no Scenario",
-  // REMEDY-NEUTRAL by design (@SCN-LDG-017): a collection error is equally a missing dependency,
-  // a syntax error, a bad import, or a top-level throw — the gloss names the FACT (the suite never
-  // ran), not a guessed cure. Contrast `missing`, whose remedy is "write the test": conflating the
-  // two is exactly the false-`missing` this outcome retires.
-  broken: "The proving suite failed to collect — the behaviour was never exercised",
+  // GENERIC over its producers (@SCN-LDG-017 + @SCN-LDG-019, 3F-1654): `broken` has two instances
+  // — a vitest suite that failed to COLLECT, and a cucumber step two or more step definitions
+  // match, which therefore never ran. An ambiguous step is neither a "suite" nor a "collection
+  // error", so the gloss names what BOTH have in common: the proof exists and did not run.
+  // REMEDY-NEUTRAL by design: what broke is equally a missing dependency, a syntax error, a bad
+  // import, a top-level throw, or two colliding step definitions — the gloss names the FACT, not a
+  // guessed cure. Contrast `missing`, whose remedy is "write the test": conflating the two is
+  // exactly the false-`missing` this outcome retires.
+  broken: "The proof never ran — the behaviour was never exercised",
   undemanded: "Evidence Observation cites a Scenario that did not demand it",
   "both-missing": "Evidence Observation and Evidence Obligation are both missing for the Scenario",
 };
