@@ -480,3 +480,33 @@ Feature: Ledger over declared-vs-observed evidence
       And each credit is findable in the account its citation names
       And the credit citing a pending quality-check is posted and findable, though it reconciles to no row
       And the run's verdict and reconciling items are unchanged — posting classifies nothing
+
+  # THE DEBIT HALF of the same posting (@SCN-LDG-023). Where the credit side at least existed
+  # unnamed (`byScn`, reconcile.ts), there is NO debit-side structure at all: `Scenario.
+  # evidenceObligations` is walked one scenario at a time in the `for (const d of scenarios)` loop
+  # and never indexed. The nearest thing is `evidenceObligationPairs` — a `Set<string>` of
+  # "<scnId> <qualityCheck>" MEMBERSHIP keys that carries no entries at all, existing only for the
+  # undemanded pair-check.
+  #
+  # So the ledger's two sides arrive by different routes and neither is the accounts-with-entries
+  # canon describes. This scenario posts the declared obligations onto the account, keyed by
+  # quality-check — the other half of "every entry posts somewhere".
+  #
+  # The debits post as `evidenceObligations` — canon's vocabulary, NEVER `debits`, which is the
+  # bookkeeping ROOT of the metaphor rather than the vocabulary. The name is free because the
+  # misnomer that held it (typed `QualityCheckReconciliation[]` — sub-rows, not debits) is now
+  # `qualityCheckReconciliations`.
+  #
+  # A PENDING obligation is a declared evidence obligation that partitions off to a one-sided
+  # Pending Item and earns NO reconciled row. It posts like any other: posting is not classifying,
+  # and what pending DOES on the ledger is unchanged by this scenario.
+  Rule: the evidence obligations a scenario declares post to its ledger account, keyed by quality-check
+
+    @unit @integration @SCN-LDG-023
+    Scenario: the evidence obligations a scenario declares post to its ledger account, keyed by quality-check
+      Given a run whose scenarios declare obligations of every shape — a runtime obligation, a lint obligation carrying its guard handle, and a pending one
+      When the ledger reconciles that run
+      Then every declared evidence obligation posts to its own scenario's account
+      And each debit is findable on its account, keyed by quality-check
+      And the pending obligation is posted and findable, though it earns no reconciled row
+      And the run's verdict and reconciling items are unchanged — debit-posting classifies nothing

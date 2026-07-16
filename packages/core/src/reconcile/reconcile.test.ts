@@ -17,6 +17,7 @@ import { describe, it, expect } from "vitest";
 import { reconcile, hasBrokenEvidence, isBalanced } from "./reconcile.js";
 import type {
   Scenario,
+  EvidenceObligation,
   EvidenceObservation,
   RuntimeEvidenceObservation,
   Ledger,
@@ -1300,6 +1301,95 @@ describe("[SCN-LDG-022] reconcile — every evidence observation posts to exactl
     const ledger = reconcile(declared, []);
     for (const account of ledger.scenarioReconciliations) {
       expect(account.evidenceObservations).toEqual([]);
+    }
+  });
+});
+
+/**
+ * @SCN-LDG-023 (3F-1847) — the evidence obligations a scenario declares post to its ledger account.
+ *
+ * The DEBIT half of @SCN-LDG-022's posting. The @unit arm: `reconcile` populates each account's
+ * `evidenceObligations` with the debits that scenario DECLARES, keyed by quality-check. The
+ * @integration arm (tests/steps/ledger.steps.ts) drives the whole declared corpus at once.
+ *
+ * Named `evidenceObligations` for canon's vocabulary — NEVER `debits`, the bookkeeping ROOT of the
+ * metaphor rather than the vocabulary. The name is free because 3F-1846 renamed the misnomer that
+ * held it (typed `QualityCheckReconciliation[]` — sub-rows, not debits) to
+ * `qualityCheckReconciliations`.
+ */
+describe("[SCN-LDG-023] reconcile — the evidence obligations a scenario declares post to its ledger account", () => {
+  const accountFor = (ledger: Ledger, scnId: string): ScenarioReconciliation | undefined =>
+    ledger.scenarioReconciliations.find((r) => r.scnId === scnId);
+
+  it("posts a declared runtime obligation to its own scenario's account, keyed by quality-check", () => {
+    const obligation: EvidenceObligation = { qualityCheck: "unit" };
+    const declared: Scenario[] = [{ scnId: "SCN-AAA-001", evidenceObligations: [obligation] }];
+    const ledger = reconcile(declared, [
+      { scnId: "SCN-AAA-001", qualityCheck: "unit", status: "passed" },
+    ]);
+    expect(accountFor(ledger, "SCN-AAA-001")?.evidenceObligations).toEqual([obligation]);
+  });
+
+  it("posts a declared lint obligation carrying its guard handle", () => {
+    // The other obligation shape: `lint` debits carry the `guard` handle that links them to a
+    // guard credit. The debit posts with its handle intact — the account records WHAT WAS
+    // DEMANDED, not merely that something was.
+    const obligation: EvidenceObligation = { qualityCheck: "lint", guard: "lint:x" };
+    const declared: Scenario[] = [{ scnId: "SCN-AAA-001", evidenceObligations: [obligation] }];
+    const ledger = reconcile(declared, []);
+    expect(accountFor(ledger, "SCN-AAA-001")?.evidenceObligations).toEqual([obligation]);
+  });
+
+  it("posts a PENDING obligation, though it earns no reconciled row", () => {
+    // The debit-side mirror of LDG-022's load-bearing credit. A pending obligation partitions off
+    // to a one-sided Pending Item BEFORE the observation match and earns no
+    // `QualityCheckReconciliation` at all. It posts ANYWAY: posting is not classifying.
+    const obligation: EvidenceObligation = { qualityCheck: "unit", pending: true };
+    const declared: Scenario[] = [{ scnId: "SCN-AAA-003", evidenceObligations: [obligation] }];
+    const account = accountFor(reconcile(declared, []), "SCN-AAA-003");
+    expect(account?.evidenceObligations).toEqual([obligation]);
+    // ...and it STILL earns no reconciled row. What pending DOES is unchanged by this slice.
+    expect(account?.qualityCheckReconciliations).toEqual([]);
+  });
+
+  it("posts every declared obligation of a multi-obligation scenario, in document order", () => {
+    const unit: EvidenceObligation = { qualityCheck: "unit" };
+    const lint: EvidenceObligation = { qualityCheck: "lint", guard: "lint:x" };
+    const declared: Scenario[] = [{ scnId: "SCN-AAA-001", evidenceObligations: [unit, lint] }];
+    const ledger = reconcile(declared, []);
+    expect(accountFor(ledger, "SCN-AAA-001")?.evidenceObligations).toEqual([unit, lint]);
+  });
+
+  it("posts each scenario's debits to ITS OWN account — never another's", () => {
+    const aaa: EvidenceObligation = { qualityCheck: "unit" };
+    const bbb: EvidenceObligation = { qualityCheck: "integration" };
+    const declared: Scenario[] = [
+      { scnId: "SCN-AAA-001", evidenceObligations: [aaa] },
+      { scnId: "SCN-AAA-002", evidenceObligations: [bbb] },
+    ];
+    const ledger = reconcile(declared, []);
+    expect(accountFor(ledger, "SCN-AAA-001")?.evidenceObligations).toEqual([aaa]);
+    expect(accountFor(ledger, "SCN-AAA-002")?.evidenceObligations).toEqual([bbb]);
+  });
+
+  it("posts no debits to the accounts no scenario declares — suspense and phantom", () => {
+    // A phantom/suspense account is MINTED BY A CREDIT: no scenario declares it, so nothing can
+    // have been demanded of it. Its debit side is empty by construction — the asymmetry is real,
+    // not an omission.
+    const declared: Scenario[] = [{ scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] }];
+    const ledger = reconcile(declared, [
+      { scnId: "SCN-ZZZ-999", qualityCheck: "unit", status: "passed" },
+      { scnId: null, qualityCheck: "unit", status: "passed" },
+    ]);
+    expect(accountFor(ledger, "SCN-ZZZ-999")?.evidenceObligations).toEqual([]);
+    expect(accountFor(ledger, "(no scenario)")?.evidenceObligations).toEqual([]);
+  });
+
+  it("sets evidenceObligations explicitly on every account, even when nothing is declared", () => {
+    const declared: Scenario[] = [{ scnId: "SCN-AAA-001", evidenceObligations: [] }];
+    const ledger = reconcile(declared, []);
+    for (const account of ledger.scenarioReconciliations) {
+      expect(account.evidenceObligations).toEqual([]);
     }
   });
 });

@@ -31,6 +31,7 @@ import {
 } from "@3f-consulting/spec-controller-core";
 import type {
   Scenario,
+  EvidenceObligation,
   EvidenceObservation,
   Ledger,
   ScenarioReconciliation,
@@ -1669,8 +1670,8 @@ Then(
  * account), not count-scoped: a count would pass under a double-post that cancelled a drop.
  */
 
-let ldg022Ledger: Ledger;
-let ldg022Observations: EvidenceObservation[];
+let ldgPostingLedger: Ledger;
+let ldgPostingObservations: EvidenceObservation[];
 /** The account each credit is EXPECTED to post to, keyed by the observation's identity. */
 let ldg022ExpectedAccount: Map<EvidenceObservation, string>;
 let ldg022PendingCredit: EvidenceObservation;
@@ -1736,10 +1737,10 @@ Feature: alpha
       qualityCheck: "lint", guard: "lint:undemanded", exists: true, enforcedOverRealSource: false,
     };
 
-    ldg022Observations = [
+    ldgPostingObservations = [
       satisfied, undemanded, ldg022PendingCredit, phantom, uncited, broken, demandedGuard, undemandedGuard,
     ];
-    evidenceObservations = ldg022Observations;
+    evidenceObservations = ldgPostingObservations;
 
     // THE POSTING RULE IS THE CITATION, never the outcome.
     ldg022ExpectedAccount = new Map<EvidenceObservation, string>([
@@ -1757,20 +1758,22 @@ Feature: alpha
   },
 );
 
-// @SCN-LDG-022
+// @SCN-LDG-022, @SCN-LDG-023 — the shared posting When: the credit half (LDG-022) and the debit
+// half (LDG-023) reconcile the same way; each Given stocks `scenarios` (the debits) and
+// `ldgPostingObservations` (the credits) with the corpus its property needs.
 When("the ledger reconciles that run", function () {
-  ldg022Ledger = reconcile(scenarios, ldg022Observations);
+  ldgPostingLedger = reconcile(scenarios, ldgPostingObservations);
 });
 
 /** Every account an observation posted to — the uniqueness/exhaustion probe. */
 const ldg022AccountsHolding = (obs: EvidenceObservation): string[] =>
-  ldg022Ledger.scenarioReconciliations
+  ldgPostingLedger.scenarioReconciliations
     .filter((r: ScenarioReconciliation) => (r.evidenceObservations ?? []).includes(obs))
     .map((r: ScenarioReconciliation) => r.scnId);
 
 // @SCN-LDG-022
 Then("every evidence observation posts to exactly one ledger account", function () {
-  for (const obs of ldg022Observations) {
+  for (const obs of ldgPostingObservations) {
     const accounts = ldg022AccountsHolding(obs);
     assert.equal(
       accounts.length,
@@ -1782,13 +1785,13 @@ Then("every evidence observation posts to exactly one ledger account", function 
     );
   }
   // EXHAUSTION the other way: no account invents a credit the run never produced.
-  const posted = ldg022Ledger.scenarioReconciliations.flatMap(
+  const posted = ldgPostingLedger.scenarioReconciliations.flatMap(
     (r: ScenarioReconciliation) => r.evidenceObservations ?? [],
   );
   assert.equal(
     posted.length,
-    ldg022Observations.length,
-    `expected the ledger to hold EXACTLY the ${ldg022Observations.length} credits the run ` +
+    ldgPostingObservations.length,
+    `expected the ledger to hold EXACTLY the ${ldgPostingObservations.length} credits the run ` +
       `produced; it holds ${posted.length}`,
   );
 });
@@ -1809,7 +1812,7 @@ Then("each credit is findable in the account its citation names", function () {
 Then(
   "the credit citing a pending quality-check is posted and findable, though it reconciles to no row",
   function () {
-    const account = ldg022Ledger.scenarioReconciliations.find(
+    const account = ldgPostingLedger.scenarioReconciliations.find(
       (r: ScenarioReconciliation) => r.scnId === "SCN-AAA-003",
     );
     assert.ok(account, "expected an account for the pending-declaring scenario SCN-AAA-003");
@@ -1843,7 +1846,7 @@ Then(
     // engine to itself and assert nothing). These are the outcomes this corpus produced BEFORE
     // posting existed, and posting must leave every one of them untouched.
     assert.deepEqual(
-      ldg022Ledger.scenarioReconciliations.map((r: ScenarioReconciliation) => [
+      ldgPostingLedger.scenarioReconciliations.map((r: ScenarioReconciliation) => [
         r.scnId,
         r.verdict,
         r.reconcilingItems.map((i: QualityCheckReconciliation) => i.outcome),
@@ -1861,7 +1864,192 @@ Then(
         "whatever it later reconciles to. Posting is NOT classifying.",
     );
     assert.equal(
-      isBalanced(ldg022Ledger),
+      isBalanced(ldgPostingLedger),
+      false,
+      "the whole-run verdict — and so the exit code — is unchanged by this slice",
+    );
+  },
+);
+
+/**
+ * @SCN-LDG-023 (3F-1847) — the evidence obligations a scenario declares post to its ledger account.
+ *
+ * The DEBIT half of LDG-022's posting. @integration is the TEETH here for the same reason: the
+ * @unit arm proves `reconcile` populates one account's `evidenceObligations`; only driving the FULL
+ * declared corpus through in one run shows EXHAUSTION and UNIQUENESS together — every declared
+ * debit posts, to its OWN account, and to exactly one.
+ *
+ * Assertions are IDENTITY-scoped (each declared obligation object must be found on exactly one
+ * account), never count-scoped: a count would pass under a double-post that cancelled a drop.
+ */
+
+/** The account each debit is EXPECTED to post to, keyed by the obligation's identity. */
+let ldg023ExpectedAccount: Map<EvidenceObligation, string>;
+let ldg023Obligations: EvidenceObligation[];
+let ldg023PendingObligation: EvidenceObligation;
+
+// @SCN-LDG-023
+Given(
+  "a run whose scenarios declare obligations of every shape — a runtime obligation, a lint obligation carrying its guard handle, and a pending one",
+  function () {
+    // SCN-AAA-003 declares @unitpending — a DEFERRED obligation that partitions off to a one-sided
+    // Pending Item and earns NO reconciled row. It is the debit-side mirror of LDG-022's
+    // load-bearing credit: it must post ANYWAY.
+    const source = `@AAA
+Feature: alpha
+
+  @unit @lint=lint:demanded @SCN-AAA-001
+  Scenario: a runtime obligation and a lint obligation carrying its guard handle
+    Given a thing
+
+  @integration @SCN-AAA-002
+  Scenario: a runtime obligation at another check
+    Given a thing
+
+  @unitpending @SCN-AAA-003
+  Scenario: a pending obligation that earns no reconciled row
+    Given a thing
+`;
+    scenarios = parseScenarios(source);
+
+    // Read the debits back off the PARSED scenarios by identity — never hand-built here, so the
+    // assertion is against what the engine was actually handed (evidence-manifesto §11A).
+    const declaredOf = (scnId: string): EvidenceObligation[] =>
+      scenarios.find((s: Scenario) => s.scnId === scnId)!.evidenceObligations;
+
+    const [aaa001Unit, aaa001Lint] = declaredOf("SCN-AAA-001");
+    const [aaa002Integration] = declaredOf("SCN-AAA-002");
+    ldg023PendingObligation = declaredOf("SCN-AAA-003")[0]!;
+
+    ldg023Obligations = [aaa001Unit!, aaa001Lint!, aaa002Integration!, ldg023PendingObligation];
+
+    // THE POSTING RULE IS THE DECLARATION: a debit posts to the account that DECLARED it. Unlike a
+    // credit there is no citation to follow and no suspense — a declared obligation always has a
+    // real account, by construction.
+    ldg023ExpectedAccount = new Map<EvidenceObligation, string>([
+      [aaa001Unit!, "SCN-AAA-001"],
+      [aaa001Lint!, "SCN-AAA-001"],
+      [aaa002Integration!, "SCN-AAA-002"],
+      [ldg023PendingObligation, "SCN-AAA-003"],
+    ]);
+
+    // A credit corpus that mints a PHANTOM and a SUSPENSE account — accounts no scenario declares,
+    // so nothing can have been demanded of them. Their debit side must stay empty.
+    ldgPostingObservations = [
+      { scnId: "SCN-AAA-001", qualityCheck: "unit", status: "passed", locator: "a.test.ts" },
+      { scnId: "SCN-ZZZ-999", qualityCheck: "unit", status: "passed", locator: "d.test.ts" },
+      { scnId: null, qualityCheck: "unit", status: "passed", locator: "e.test.ts" },
+    ];
+    evidenceObservations = ldgPostingObservations;
+  },
+);
+
+/** Every account a declared obligation posted to — the uniqueness/exhaustion probe. */
+const ldg023AccountsHolding = (obligation: EvidenceObligation): string[] =>
+  ldgPostingLedger.scenarioReconciliations
+    .filter((r: ScenarioReconciliation) => (r.evidenceObligations ?? []).includes(obligation))
+    .map((r: ScenarioReconciliation) => r.scnId);
+
+// @SCN-LDG-023
+Then("every declared evidence obligation posts to its own scenario's account", function () {
+  for (const obligation of ldg023Obligations) {
+    assert.deepEqual(
+      ldg023AccountsHolding(obligation),
+      [ldg023ExpectedAccount.get(obligation)],
+      `the debit ${JSON.stringify(obligation)} must post to EXACTLY ONE account — the scenario ` +
+        `that declared it. Every entry posts somewhere, and to one place.`,
+    );
+  }
+
+  // EXHAUSTION, the other direction: the ledger holds no debit the run did not declare, and drops
+  // none that it did. Identity-scoped, so a double-post cannot cancel a drop.
+  const posted = ldgPostingLedger.scenarioReconciliations.flatMap(
+    (r: ScenarioReconciliation) => r.evidenceObligations ?? [],
+  );
+  assert.equal(
+    posted.length,
+    ldg023Obligations.length,
+    `expected the ledger to hold EXACTLY the ${ldg023Obligations.length} debits the run declared`,
+  );
+});
+
+// @SCN-LDG-023
+Then("each debit is findable on its account, keyed by quality-check", function () {
+  // KEYED BY QUALITY-CHECK — canon's Ledger is the entries "organised by real or invented
+  // scenario, KEYED BY QUALITY-CHECK". So a reader with a scnId and a quality-check can find the
+  // debit, and a `lint` debit is findable WITH ITS GUARD HANDLE intact.
+  const accountFor = (scnId: string): ScenarioReconciliation | undefined =>
+    ldgPostingLedger.scenarioReconciliations.find((r: ScenarioReconciliation) => r.scnId === scnId);
+
+  const findDebit = (scnId: string, qualityCheck: string): EvidenceObligation | undefined =>
+    (accountFor(scnId)?.evidenceObligations ?? []).find(
+      (o: EvidenceObligation) => o.qualityCheck === qualityCheck,
+    );
+
+  assert.ok(findDebit("SCN-AAA-001", "unit"), "the runtime debit is findable by quality-check");
+  assert.equal(
+    findDebit("SCN-AAA-001", "lint")?.guard,
+    "lint:demanded",
+    "the lint debit is findable by quality-check AND carries its guard handle — the account " +
+      "records WHAT WAS DEMANDED, not merely that something was",
+  );
+  assert.ok(findDebit("SCN-AAA-002", "integration"), "each scenario's own debit is on its own account");
+
+  // The accounts no scenario declares — minted by a credit — have an empty debit side by
+  // construction. The asymmetry with the credit side is real, not an omission.
+  assert.deepEqual(accountFor("SCN-ZZZ-999")?.evidenceObligations, [], "a phantom demands nothing");
+  assert.deepEqual(accountFor("(no scenario)")?.evidenceObligations, [], "suspense demands nothing");
+});
+
+// @SCN-LDG-023
+Then(
+  "the pending obligation is posted and findable, though it earns no reconciled row",
+  function () {
+    const account = ldgPostingLedger.scenarioReconciliations.find(
+      (r: ScenarioReconciliation) => r.scnId === "SCN-AAA-003",
+    );
+    assert.deepEqual(
+      ldg023AccountsHolding(ldg023PendingObligation),
+      ["SCN-AAA-003"],
+      "THE DEBIT-SIDE MIRROR of the load-bearing credit: a pending obligation partitions off " +
+        "BEFORE the observation match and earns no QualityCheckReconciliation at all. It must " +
+        "post ANYWAY — posting is not classifying.",
+    );
+    assert.deepEqual(
+      account?.qualityCheckReconciliations,
+      [],
+      "...and it STILL earns no reconciled row. What pending DOES on the ledger is unchanged " +
+        "by this slice.",
+    );
+  },
+);
+
+// @SCN-LDG-023
+Then(
+  "the run's verdict and reconciling items are unchanged — debit-posting classifies nothing",
+  function () {
+    // Pinned as LITERALS, never as a re-reconcile of the same inputs (which would compare the
+    // engine to itself and assert nothing). These are the outcomes this corpus produced BEFORE
+    // debit-posting existed, and posting must leave every one of them untouched.
+    assert.deepEqual(
+      ldgPostingLedger.scenarioReconciliations.map((r: ScenarioReconciliation) => [
+        r.scnId,
+        r.verdict,
+        r.reconcilingItems.map((i: QualityCheckReconciliation) => i.outcome),
+      ]),
+      [
+        // The lint debit is demanded but no guard credit answers it → `missing`, exactly as before.
+        ["SCN-AAA-001", "out-of-balance", ["missing"]],
+        ["SCN-AAA-002", "out-of-balance", ["missing"]],
+        ["SCN-AAA-003", "balanced", []],
+        ["SCN-ZZZ-999", "out-of-balance", ["cites-unknown-scenario"]],
+        ["(no scenario)", "out-of-balance", ["cites-no-scenario"]],
+      ],
+      "posting must not add, drop or retype a single reconciling item — a debit posts here " +
+        "whatever it later reconciles to. Posting is NOT classifying.",
+    );
+    assert.equal(
+      isBalanced(ldgPostingLedger),
       false,
       "the whole-run verdict — and so the exit code — is unchanged by this slice",
     );

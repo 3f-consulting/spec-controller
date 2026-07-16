@@ -336,6 +336,12 @@ export function reconcile(
       // ANYWAY. Posting is not classifying; a misclassification must misfile an entry, never
       // vaporise it. Plus the guard credits this account DEMANDS, linked by handle (above).
       evidenceObservations: [...(byScn.get(d.scnId) ?? []), ...demandedGuardCredits],
+      // THE POSTED DEBITS (@SCN-LDG-023) — every obligation THIS scenario DECLARES, in document
+      // order, keyed by quality-check. The debit half of the same posting: where a credit is
+      // routed by its citation, a debit needs no routing at all — the account is the declaration.
+      // Includes a PENDING obligation, which partitioned off above and earns NO reconciled row: it
+      // posts ANYWAY. Posting is not classifying, on this side too.
+      evidenceObligations: [...d.evidenceObligations],
       qualityCheckReconciliations,
       reconcilingItems: reconcilingItemsOf(qualityCheckReconciliations),
       pendingItems,
@@ -373,6 +379,10 @@ export function reconcile(
       // The credits that CITE this invented scenario post to it — canon organises the ledger by
       // "real or INVENTED scenario", so a phantom account holds its postings like any other.
       evidenceObservations: [...citations],
+      // A phantom account is MINTED BY A CREDIT — no scenario declares it, so nothing can have
+      // been demanded of it. Its debit side is empty by construction (@SCN-LDG-023); the asymmetry
+      // with the credit side is real, not an omission.
+      evidenceObligations: [],
       qualityCheckReconciliations: items,
       reconcilingItems: items,
       // A phantom scenario declares nothing, so it can carry no Pending Item.
@@ -443,6 +453,9 @@ export function reconcile(
       // named no test, so it cites nothing whatever scnId it structurally carries), and the
       // undemanded guards. Together with `byScn` above this exhausts the credit stream.
       evidenceObservations: [...brokenEvidence, ...uncited, ...undemandedGuards],
+      // Suspense is MINTED BY A CREDIT too — it declares nothing, so it demands nothing
+      // (@SCN-LDG-023).
+      evidenceObligations: [],
       qualityCheckReconciliations: items,
       reconcilingItems: items,
       // The suspense scenario declares nothing, so it can carry no Pending Item.
@@ -475,6 +488,9 @@ export function reconcile(
       verdict: "out-of-balance",
       // An untagged scenario carries no @SCN, so no credit can cite it — nothing can post here.
       evidenceObservations: [],
+      // It reaches the ledger by NAME, carrying no parsed obligations — so it declares no debits
+      // either (@SCN-LDG-023).
+      evidenceObligations: [],
       qualityCheckReconciliations: items,
       reconcilingItems: items,
       pendingItems: [],

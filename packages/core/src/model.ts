@@ -403,6 +403,31 @@ export interface ScenarioReconciliation {
    */
   evidenceObservations?: EvidenceObservation[];
   /**
+   * The POSTED DEBITS — every evidence obligation THIS scenario declares (@SCN-LDG-023), keyed by
+   * quality-check. The debit half of `evidenceObservations` above: canon's Ledger is "the evidence
+   * obligations (debits) and evidence observations (credits) organised by real or invented
+   * scenario, KEYED BY QUALITY-CHECK", and this is where an account's debits SIT.
+   *
+   * Named for canon's vocabulary — NEVER `debits`, the bookkeeping ROOT of the metaphor rather than
+   * the vocabulary (the same reason Evidence Reconciliation rejects the alias "trial balance",
+   * "kept as the bookkeeping root of the metaphor"). The name is free because 3F-1846 renamed the
+   * misnomer that held it — see `qualityCheckReconciliations` below.
+   *
+   * POSTING IS NOT CLASSIFYING, on this side too. A `<quality-check>pending` obligation partitions
+   * off to a one-sided Pending Item BEFORE the observation match and earns NO
+   * `QualityCheckReconciliation` at all — and it posts here ANYWAY. So this array is NOT derivable
+   * from `qualityCheckReconciliations`; that is the whole point of the layer.
+   *
+   * THE ACCOUNT IS THE DECLARATION. Unlike a credit there is no citation to follow and no
+   * suspense: a declared obligation always has a real account, by construction. The accounts a
+   * CREDIT mints — phantom and suspense — declare nothing, so their debit side is empty. That
+   * asymmetry is real, not an omission.
+   *
+   * OPTIONAL for back-compat with hand-built fixtures — ABSENCE ≡ `[]` (nothing declared), the same
+   * reserved-default convention as `kind`. `reconcile` ALWAYS sets it explicitly.
+   */
+  evidenceObligations?: EvidenceObligation[];
+  /**
    * Every reconciled quality-check's outcome (the full per-quality-check breakdown) — the SUB-ROWS
    * of this account, typed `QualityCheckReconciliation[]`. Renamed from `evidenceObligations`
    * (3F-1846): it holds reconciled sub-rows, not posted debits, and canon lists "reconciled
