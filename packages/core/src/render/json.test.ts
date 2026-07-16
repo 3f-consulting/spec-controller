@@ -28,7 +28,7 @@ import type { RuntimeEvidenceObservationKindCounts } from "../census/evidenceObs
 /** A minimal balanced balance — enough for the renderer to serialise a report. */
 const balance: Ledger = {
   scenarioReconciliations: [
-    { scnId: "SCN-RPT-002", verdict: "balanced", qualityCheckReconciliations: [], pendingItems: [], reconcilingItems: [] },
+    { scnId: "SCN-RPT-002", kind: "scenario", evidenceObservations: [], evidenceObligations: [], verdict: "balanced", qualityCheckReconciliations: [], pendingItems: [], reconcilingItems: [] },
   ],
 };
 
@@ -312,6 +312,8 @@ describe("[SCN-PND-010] the JSON report carries a scenario's Pending Items", () 
       {
         scnId: "SCN-PDX-001",
         kind: "scenario",
+        evidenceObservations: [],
+        evidenceObligations: [],
         verdict: "balanced",
         qualityCheckReconciliations: [],
         reconcilingItems: [],
@@ -353,6 +355,8 @@ describe("[SCN-PND-011] the JSON summary carries the Pending Items tally", () =>
       {
         scnId: "SCN-PDX-001",
         kind: "scenario",
+        evidenceObservations: [],
+        evidenceObligations: [],
         verdict: "balanced",
         qualityCheckReconciliations: [],
         reconcilingItems: [],
@@ -361,6 +365,8 @@ describe("[SCN-PND-011] the JSON summary carries the Pending Items tally", () =>
       {
         scnId: "SCN-PDX-002",
         kind: "scenario",
+        evidenceObservations: [],
+        evidenceObligations: [],
         verdict: "out-of-balance",
         qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "missing" }],
         reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],

@@ -30,6 +30,8 @@ import type {
 const balancedScenario = (scnId: string): ScenarioReconciliation => ({
   scnId,
   kind: "scenario",
+  evidenceObservations: [],
+  evidenceObligations: [],
   verdict: "balanced",
   qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "satisfied" }],
   pendingItems: [],
@@ -53,6 +55,8 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
         {
           scnId: "SCN-TGT-002",
           kind: "scenario",
+          evidenceObservations: [],
+          evidenceObligations: [],
           verdict: "out-of-balance",
           qualityCheckReconciliations: [{ qualityCheck: "integration", outcome: "missing" }],
           pendingItems: [],
@@ -76,6 +80,8 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
         {
           scnId: "(no scenario)",
           kind: "suspense-scenario",
+          evidenceObservations: [],
+          evidenceObligations: [],
           verdict: "out-of-balance",
           qualityCheckReconciliations: [{ qualityCheck: "lint", guard: "guard:static", outcome: "cites-no-scenario" }],
           pendingItems: [],
@@ -96,6 +102,8 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
         {
           scnId: "SCN-PHANTOM-999",
           kind: "phantom-scenario",
+          evidenceObservations: [],
+          evidenceObligations: [],
           verdict: "out-of-balance",
           qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "cites-unknown-scenario" }],
           pendingItems: [],

@@ -367,12 +367,14 @@ export type ScenarioKind = "scenario" | "phantom-scenario" | "suspense-scenario"
 export interface ScenarioReconciliation {
   scnId: string;
   /**
-   * The scenario-kind this row is about. OPTIONAL for back-compat with
-   * hand-built fixtures — ABSENCE ≡ `scenario` (the declared kind), the reserved
-   * default. `reconcile` always sets it explicitly (`scenario` on a declared row,
-   * `phantom-scenario` on a cited-but-undeclared row).
+   * The scenario-kind this row is about — `scenario` on a declared row, `phantom-scenario` on a
+   * cited-but-undeclared row, `suspense-scenario` on the cites-nothing placeholder.
+   *
+   * REQUIRED (3F-1861). It was optional, defaulting to `scenario`, "for back-compat with
+   * hand-built fixtures" — the model made ambiguous to accommodate the test data. Stating the
+   * kind is now unskippable.
    */
-  kind?: ScenarioKind;
+  kind: ScenarioKind;
   /**
    * The binary scenario verdict: `balanced` iff EVERY required quality-check
    * balances; otherwise `out-of-balance`.
@@ -398,10 +400,12 @@ export interface ScenarioReconciliation {
    * scenario's account; one citing an unknown @SCN posts to that phantom account; one citing NO
    * scenario posts to suspense. Exactly one account each, jointly exhaustive over the input.
    *
-   * OPTIONAL for back-compat with hand-built fixtures — ABSENCE ≡ `[]` (nothing posted), the same
-   * reserved-default convention as `kind`. `reconcile` ALWAYS sets it explicitly.
+   * REQUIRED (3F-1861) — `[]` states "nothing posted" explicitly. It was optional, defaulting to
+   * `[]` "for back-compat with hand-built fixtures", which collapsed "nothing posted" and
+   * "unstated" into the same absence: a reader could not tell them apart, and a fold read 0 on a
+   * fixture that had merely never spoken.
    */
-  evidenceObservations?: EvidenceObservation[];
+  evidenceObservations: EvidenceObservation[];
   /**
    * The POSTED DEBITS — every evidence obligation THIS scenario declares (@SCN-LDG-023), keyed by
    * quality-check. The debit half of `evidenceObservations` above: canon's Ledger is "the evidence
@@ -423,10 +427,12 @@ export interface ScenarioReconciliation {
    * CREDIT mints — phantom and suspense — declare nothing, so their debit side is empty. That
    * asymmetry is real, not an omission.
    *
-   * OPTIONAL for back-compat with hand-built fixtures — ABSENCE ≡ `[]` (nothing declared), the same
-   * reserved-default convention as `kind`. `reconcile` ALWAYS sets it explicitly.
+   * REQUIRED (3F-1861) — `[]` states "nothing declared" explicitly, which is the honest value on a
+   * phantom or suspense account. It was optional, defaulting to `[]` "for back-compat with
+   * hand-built fixtures", which made the real asymmetry above indistinguishable from a fixture
+   * that had simply not said.
    */
-  evidenceObligations?: EvidenceObligation[];
+  evidenceObligations: EvidenceObligation[];
   /**
    * Every reconciled quality-check's outcome (the full per-quality-check breakdown) — the SUB-ROWS
    * of this account, typed `QualityCheckReconciliation[]`. Renamed from `evidenceObligations`
@@ -447,9 +453,9 @@ export interface ScenarioReconciliation {
    * scenario declared (evidence-manifesto §11B). PARTITIONED OFF before reconciliation:
    * a Pending Item is never a Reconciling Item (never in `evidenceObligations` /
    * `reconcilingItems`), so `verdictFor` / `reconcilingItemsOf` / `isBalanced` need no
-   * pending-awareness. OPTIONAL for back-compat with hand-built fixtures — ABSENCE ≡ `[]`
-   * (no pending items), the same reserved-default convention as `kind`. `reconcile`
-   * always sets it explicitly (`[]` when the scenario declared no pending obligation).
+   * pending-awareness. REQUIRED — `[]` when the scenario declared no pending obligation. (The
+   * comment here claimed it was OPTIONAL with an `ABSENCE ≡ []` default; the field never was.
+   * Corrected with 3F-1861, which removed that convention from the fields that really had it.)
    */
   pendingItems: PendingItem[];
 }

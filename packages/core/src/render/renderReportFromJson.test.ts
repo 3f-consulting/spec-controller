@@ -31,6 +31,9 @@ const balance: Ledger = {
   scenarioReconciliations: [
     {
       scnId: "SCN-CHK-001",
+      kind: "scenario",
+      evidenceObservations: [],
+      evidenceObligations: [],
       verdict: "balanced",
       qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "satisfied" }],
       pendingItems: [],
@@ -38,6 +41,9 @@ const balance: Ledger = {
     },
     {
       scnId: "SCN-CHK-002",
+      kind: "scenario",
+      evidenceObservations: [],
+      evidenceObligations: [],
       verdict: "out-of-balance",
       qualityCheckReconciliations: [{ qualityCheck: "integration", outcome: "missing" }],
       pendingItems: [],
@@ -50,6 +56,8 @@ const balance: Ledger = {
     {
       scnId: "(no scenario)",
       kind: "suspense-scenario",
+      evidenceObservations: [],
+      evidenceObligations: [],
       verdict: "out-of-balance",
       qualityCheckReconciliations: [
         { qualityCheck: "unit", outcome: "cites-no-scenario", locator: "src/b.test.ts" },

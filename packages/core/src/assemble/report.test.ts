@@ -33,6 +33,9 @@ const balance: Ledger = {
   scenarioReconciliations: [
     {
       scnId: "SCN-RMD-001",
+      kind: "scenario",
+      evidenceObservations: [],
+      evidenceObligations: [],
       verdict: "balanced",
       qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "satisfied" }],
       pendingItems: [],
@@ -40,6 +43,9 @@ const balance: Ledger = {
     },
     {
       scnId: "SCN-RMD-002",
+      kind: "scenario",
+      evidenceObservations: [],
+      evidenceObligations: [],
       verdict: "out-of-balance",
       qualityCheckReconciliations: [
         { qualityCheck: "unit", outcome: "missing" },
@@ -117,6 +123,9 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
     scenarioReconciliations: [
       {
         scnId: "SCN-TGT-001",
+        kind: "scenario",
+        evidenceObservations: [],
+        evidenceObligations: [],
         verdict: "balanced",
         qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "satisfied" }],
         pendingItems: [],
@@ -124,6 +133,9 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
       },
       {
         scnId: "SCN-TGT-002",
+        kind: "scenario",
+        evidenceObservations: [],
+        evidenceObligations: [],
         verdict: "balanced",
         qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "satisfied" }],
         pendingItems: [],
@@ -132,6 +144,8 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
       {
         scnId: "(no scenario)",
         kind: "suspense-scenario",
+        evidenceObservations: [],
+        evidenceObligations: [],
         verdict: "out-of-balance",
         qualityCheckReconciliations: [{ qualityCheck: "lint", guard: "guard:static", outcome: "cites-no-scenario" }],
         pendingItems: [],
@@ -172,6 +186,8 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
         {
           scnId: "SCN-PHANTOM-999",
           kind: "phantom-scenario",
+          evidenceObservations: [],
+          evidenceObligations: [],
           verdict: "out-of-balance",
           qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "cites-unknown-scenario" }],
           pendingItems: [],
@@ -421,6 +437,9 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
     scenarioReconciliations: [
       {
         scnId: "SCN-RMD-010",
+        kind: "scenario",
+        evidenceObservations: [],
+        evidenceObligations: [],
         verdict: "out-of-balance",
         qualityCheckReconciliations: [
           { qualityCheck: "lint", guard: "lint:foo", outcome: "satisfied" },
@@ -431,6 +450,9 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
       },
       {
         scnId: "SCN-RMD-011",
+        kind: "scenario",
+        evidenceObservations: [],
+        evidenceObligations: [],
         verdict: "out-of-balance",
         qualityCheckReconciliations: [
           { qualityCheck: "lint", guard: "lint:bar", outcome: "watermelon" },
@@ -521,6 +543,9 @@ describe("[SCN-RMD-006] the report model carries the feature titles", () => {
     scenarioReconciliations: [
       {
         scnId: "SCN-LDG-003",
+        kind: "scenario",
+        evidenceObservations: [],
+        evidenceObligations: [],
         verdict: "out-of-balance",
         qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "missing" }],
         pendingItems: [],
@@ -528,6 +553,9 @@ describe("[SCN-RMD-006] the report model carries the feature titles", () => {
       },
       {
         scnId: "SCN-LNT-002",
+        kind: "scenario",
+        evidenceObservations: [],
+        evidenceObligations: [],
         verdict: "out-of-balance",
         qualityCheckReconciliations: [
           { qualityCheck: "lint", guard: "guard-lint", outcome: "watermelon" },
@@ -711,6 +739,8 @@ describe("[SCN-LDG-008] the two attributed counts stay distinct (ruling Q1)", ()
       {
         scnId: "SCN-LDG-008",
         kind: "scenario",
+        evidenceObservations: [],
+        evidenceObligations: [],
         verdict: "out-of-balance",
         qualityCheckReconciliations: [
           { qualityCheck: "unit", outcome: "satisfied" },
@@ -788,6 +818,8 @@ describe("[SCN-PND-011] the summary materialises a Pending Items tally, separate
       {
         scnId: "SCN-PDX-001",
         kind: "scenario",
+        evidenceObservations: [],
+        evidenceObligations: [],
         verdict: "balanced",
         qualityCheckReconciliations: [],
         reconcilingItems: [],
@@ -796,6 +828,8 @@ describe("[SCN-PND-011] the summary materialises a Pending Items tally, separate
       {
         scnId: "SCN-PDX-002",
         kind: "scenario",
+        evidenceObservations: [],
+        evidenceObligations: [],
         verdict: "out-of-balance",
         qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "missing" }],
         reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
@@ -804,6 +838,8 @@ describe("[SCN-PND-011] the summary materialises a Pending Items tally, separate
       {
         scnId: "SCN-PDX-003",
         kind: "scenario",
+        evidenceObservations: [],
+        evidenceObligations: [],
         verdict: "balanced",
         qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "satisfied" }],
         reconcilingItems: [],
