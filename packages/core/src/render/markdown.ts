@@ -5,7 +5,7 @@
  * LIST of EVERY reconciling item that holds it out of balance (no single
  * picked winner; an out-of-balance scenario lists all its non-balanced items, typed).
  *
- * A PURE PRESENTATION of the shared whole-document `Report` model: the JSON
+ * A PURE PRESENTATION of the shared whole-document `EvidenceReconciliation` model: the JSON
  * renderer serialises that model, and this renderer projects the SAME model to markdown,
  * so the two outputs are one model in two renderings and cannot diverge. `renderMarkdown`
  * keeps its `(balance, ctx, …)` signature — it builds `assembleReport(...)` internally
@@ -26,7 +26,7 @@ import type {
   Outcome,
   ScenarioVerdict,
   RuntimeQualityCheck,
-  EvidenceReconciliation,
+  Ledger,
   PendingItem,
 } from "../model.js";
 // The single source for the human-readable outcome gloss — rendered in place of the bare
@@ -41,7 +41,7 @@ import {
 import type { EvidenceObligations } from "../census/evidenceObligations.js";
 import { RUNTIME_QUALITY_CHECKS, type AttributedCount, type RuntimeEvidenceObservationKindCounts } from "../census/evidenceObservations.js";
 import type { StaticEvidenceObservationKindCounts } from "../census/staticEvidenceObservations.js";
-import { assembleReport, type Report } from "../assemble/report.js";
+import { assembleReport, type EvidenceReconciliation } from "../assemble/report.js";
 // The run-integrity predicate (@SCN-LDG-018) — the existential scan for a `broken` reconciling
 // item. The renderer asks the predicate and prints the HEADLINE word: predicate-name ≠
 // headline-word (`hasBrokenEvidence` → "unsound"), exactly as `isBalanced` → "balanced".
@@ -199,17 +199,17 @@ function renderScenario(s: ScenarioReconciliation): string {
 }
 
 /**
- * A section-emitter — one ordered slab of the report over the shared `Report` model (+ the
+ * A section-emitter — one ordered slab of the report over the shared `EvidenceReconciliation` model (+ the
  * markdown-only `featureNames` label lookup). An empty array OMITS the section (so a cut
  * vanishes when its data is empty). Each emitter opens with its heading and ends with a
  * trailing blank line; `renderReport` flat-maps the ordered list and joins, so the blanks
  * separate the sections cleanly.
  */
-type SectionEmitter = (report: Report) => string[];
+type SectionEmitter = (report: EvidenceReconciliation) => string[];
 
 /**
  * The target-derived `feature-code → slug` map — a markdown-only render arg (NOT
- * serialised by `renderJson`, NOT part of the shared `Report` model). Built by
+ * serialised by `renderJson`, NOT part of the shared `EvidenceReconciliation` model). Built by
  * `readFeatureNames` over `discoverFeatures`: each coded feature file's `@<FFF>` header maps
  * to its filename slug. Display enrichment for the by-feature cut (keyed on the `FFF` already
  * in every `scnId`), not a non-derivable machine fact — so it stays off the JSON surface.
@@ -600,7 +600,7 @@ const lintSection: SectionEmitter = (report) => {
   const rows = report.evidenceReconciliation
     .filter((s) => s.kind !== "phantom-scenario" && s.kind !== "suspense-scenario")
     .flatMap((s) =>
-      s.evidenceObligations
+      s.qualityCheckReconciliations
         .filter((r) => r.qualityCheck === "lint")
         // The Outcome cell shows the canon DESCRIPTION, not the bare handle (3F-1626,
         // single-sourced from OUTCOME_DESCRIPTION); the ITEM_GLYPH glyph is retained.
@@ -693,11 +693,11 @@ function evidenceColumns(
     (s) => s.kind !== "phantom-scenario" && s.kind !== "suspense-scenario"
   );
   const hasStatic = scenarioRows.some((s) =>
-    s.evidenceObligations.some((o) => o.qualityCheck === "lint")
+    s.qualityCheckReconciliations.some((o) => o.qualityCheck === "lint")
   );
   const qualityChecksPresent = new Set<RuntimeQualityCheck>();
   for (const s of scenarioRows) {
-    for (const o of s.evidenceObligations) {
+    for (const o of s.qualityCheckReconciliations) {
       // A both-missing item carries no quality-check — it drives no column.
       if (o.qualityCheck && o.qualityCheck !== "lint") qualityChecksPresent.add(o.qualityCheck);
     }
@@ -737,7 +737,7 @@ function evidenceCell(
   // nor-a-matched-evidence obligation, so it reads `—`; the citation shows in Reconciling items.
   if (s.kind === "phantom-scenario" || s.kind === "suspense-scenario") return "—";
   if (col.kind === "lint") {
-    const statics = s.evidenceObligations.filter((o) => o.qualityCheck === "lint");
+    const statics = s.qualityCheckReconciliations.filter((o) => o.qualityCheck === "lint");
     if (statics.length === 0) return "—"; // not declared
     const present = statics.filter(
       (o) =>
@@ -752,7 +752,7 @@ function evidenceCell(
   // counted as one: reading it as a demand found zero attributed evidence and rendered `∅`
   // (declared-but-missing), which contradicts the row's own Reconciling-items column and points at
   // the OPPOSITE remedy — "write the test", when the truth is "fix the attribution".
-  const demanded = s.evidenceObligations.some(
+  const demanded = s.qualityCheckReconciliations.some(
     (o) => o.qualityCheck === col.qualityCheck && o.outcome !== "undemanded"
   );
   const attributedCount =
@@ -767,7 +767,7 @@ function evidenceCell(
   //      demanded, count > 0 → `(N)`. This shape is live in production.
   //   2. UNDEMANDED — the census deliberately keeps the observation OUT of `attributed` (it counts
   //      into `undemandedCount`), so the cell must count these off the undemanded ROWS themselves.
-  const undemandedCount = s.evidenceObligations.filter(
+  const undemandedCount = s.qualityCheckReconciliations.filter(
     (o) => o.qualityCheck === col.qualityCheck && o.outcome === "undemanded"
   ).length;
   const count = attributedCount + undemandedCount;
@@ -936,27 +936,27 @@ const SECTIONS: readonly SectionEmitter[] = [
 
 /**
  * Render the whole-document report model to markdown — the from-model pipeline,
- * a PURE PRESENTATION over the same `Report` the JSON serialises. Exposed for slice 3's
- * render-from-saved-JSON path: a consumer rebuilds a `Report` from banked JSON and
+ * a PURE PRESENTATION over the same `EvidenceReconciliation` the JSON serialises. Exposed for slice 3's
+ * render-from-saved-JSON path: a consumer rebuilds a `EvidenceReconciliation` from banked JSON and
  * renders the human view off it, with no `RunContext` in hand. Needs NO external map — the
  * feature titles are read off `report.metadata.featureNames` (@SCN-RMD-006; nested under
  * `metadata`), so the by-feature cut names each feature in full from the model alone.
  */
-export function renderReport(report: Report): string {
+export function renderReport(report: EvidenceReconciliation): string {
   return SECTIONS.flatMap((section) => section(report)).join("\n");
 }
 
 /**
  * Regenerate the markdown from a banked `spec-reconciliation.json` ALONE (@SCN-RMD-007)
  * — the render-from-saved-JSON seam. `JSON.parse` the stored whole-document report back into a
- * `Report` and render it via `renderReport`: no `RunContext`, no live inputs, the JSON is the
+ * `EvidenceReconciliation` and render it via `renderReport`: no `RunContext`, no live inputs, the JSON is the
  * whole document. Drift-equality is the acceptance — the markdown from the saved JSON equals the
  * markdown rendered directly from the same run (the by-feature titles included, which is why the
  * feature-title model-completion @SCN-RMD-006 is the enabling dependency). The load-bearing proof
  * that the JSON is the model, not a lossy projection.
  */
 export function renderReportFromJson(json: string): string {
-  return renderReport(JSON.parse(json) as Report);
+  return renderReport(JSON.parse(json) as EvidenceReconciliation);
 }
 
 /**
@@ -968,7 +968,7 @@ export function renderReportFromJson(json: string): string {
  * provably a presentation of the same model the JSON serialises.
  */
 export function renderMarkdown(
-  balance: EvidenceReconciliation,
+  balance: Ledger,
   ctx: RunContext,
   evidenceObligations?: EvidenceObligations,
   evidenceObservations?: RuntimeEvidenceObservationKindCounts,

@@ -53,7 +53,7 @@ import type {
   Scenario,
   RuntimeQualityCheck,
   EvidenceObservation,
-  EvidenceReconciliation,
+  Ledger,
 } from "@3f-consulting/spec-controller-core";
 
 /**
@@ -281,7 +281,7 @@ function parseRuntimeObservations(opts: ReconcileOptions, root: string | undefin
  * verdict (the drift bug this fixes). `runReconcile` / `readEvidenceObservations` are thin views.
  */
 export function reconcileWithCensus(opts: ReconcileOptions): {
-  balance: EvidenceReconciliation;
+  balance: Ledger;
   evidenceObservations: RuntimeEvidenceObservationKindCounts;
 } {
   // Read the target's package.json ONCE — its `specController.deferralTags` config extends the
@@ -370,7 +370,7 @@ export function reconcileWithCensus(opts: ReconcileOptions): {
  * `@integration` Cucumber arm) so the --package-json threading is proven without a
  * subprocess. A thin view onto `reconcileWithCensus` (the balance half).
  */
-export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
+export function runReconcile(opts: ReconcileOptions): Ledger {
   return reconcileWithCensus(opts).balance;
 }
 

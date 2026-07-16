@@ -25,7 +25,7 @@ import type { RunContext } from "@3f-consulting/spec-controller-core";
 import type { EvidenceObligations } from "@3f-consulting/spec-controller-core";
 import type { RuntimeEvidenceObservationKindCounts } from "@3f-consulting/spec-controller-core";
 import type { StaticEvidenceObservationKindCounts } from "@3f-consulting/spec-controller-core";
-import type { EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
+import type { Ledger } from "@3f-consulting/spec-controller-core";
 
 /**
  * The reconciliation payloads the writer renders — the balance plus its sibling reads
@@ -33,7 +33,7 @@ import type { EvidenceReconciliation } from "@3f-consulting/spec-controller-core
  * renderers take. Threaded from `cli.ts` (built once, rendered per planned output).
  */
 export interface OutputPayloads {
-  readonly balance: EvidenceReconciliation;
+  readonly balance: Ledger;
   readonly ctx: RunContext;
   readonly evidenceObligations?: EvidenceObligations;
   readonly evidenceObservations?: RuntimeEvidenceObservationKindCounts;

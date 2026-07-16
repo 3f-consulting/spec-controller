@@ -195,7 +195,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     Slice 1 of "[spec-controller] Reconciliation model — bidirectional reconciling items".
     The (kind, level) two-axis evidence coordinate collapses to ONE flat quality-check ∈
     {lint, unit, integration, e2e, performance}: @lint is one quality-check value, not a
-    second axis. So the JSON evidenceReconciliation[].evidenceObligations[] / reconcilingItems[] sub-row
+    second axis. So the JSON evidenceReconciliation[].qualityCheckReconciliations[] / reconcilingItems[] sub-row
     was { kind, level, outcome } (runtime) / { kind, guard, outcome } (static); it becomes
     { qualityCheck, outcome } (runtime) / { qualityCheck: "lint", guard, outcome } (static),
     and the summary's missing split is renamed to missingByQualityCheck

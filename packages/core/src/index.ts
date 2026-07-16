@@ -34,7 +34,7 @@ export type {
   ScenarioKind,
   QualityCheckReconciliation,
   ScenarioReconciliation,
-  EvidenceReconciliation,
+  Ledger,
 } from "./model.js";
 
 // --- Scenario parse (`parse/scenarios.ts`) ---
@@ -70,10 +70,10 @@ export { runningStaticGuards } from "./parse/runningStaticGuards.js";
 export { ciRunCommands, commandInvokesScript } from "./parse/checkScriptsRunInCI.js";
 export type { PackageJsonScripts } from "./parse/checkScriptsRunInCI.js";
 
-// --- Report model (`assemble/report.ts`) ---
+// --- EvidenceReconciliation model (`assemble/report.ts`) ---
 export { assembleReport } from "./assemble/report.js";
 export type {
-  Report,
+  EvidenceReconciliation,
   ReportMetadata,
   Summary,
   ScenarioReconciliationTotals,

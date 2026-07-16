@@ -8,7 +8,7 @@
  * @e2e Cucumber step-block (tests/steps/cliBalance.steps.ts). A grep of SCN-CLI-004
  * returns the scenario, this @unit, and the @e2e steps.
  *
- * The predicate is over the WHOLE EvidenceReconciliation — out-of-balance iff ANY
+ * The predicate is over the WHOLE Ledger — out-of-balance iff ANY
  * reconciling item exists on ANY row (declared, suspense, or phantom). The load-bearing
  * case is the WATERMELON-ONLY run: every DECLARED scenario is balanced, yet an undemanded
  * static-guard sits unreconciled in the suspense row — a scan of declared-scenario
@@ -20,7 +20,7 @@ import { describe, it, expect } from "vitest";
 
 import { isBalanced, hasPendingItems, hasBrokenEvidence, reconcile } from "./reconcile.js";
 import type {
-  EvidenceReconciliation,
+  Ledger,
   ScenarioReconciliation,
   Scenario,
   EvidenceObservation,
@@ -31,14 +31,14 @@ const balancedScenario = (scnId: string): ScenarioReconciliation => ({
   scnId,
   kind: "scenario",
   verdict: "balanced",
-  evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+  qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "satisfied" }],
   pendingItems: [],
   reconcilingItems: [],
 });
 
-describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the EvidenceReconciliation", () => {
+describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the Ledger", () => {
   it("is balanced when every row reconciles with zero reconciling items", () => {
-    const reconciliation: EvidenceReconciliation = {
+    const reconciliation: Ledger = {
       scenarioReconciliations: [balancedScenario("SCN-TGT-001"), balancedScenario("SCN-TGT-002")],
     };
     expect(isBalanced(reconciliation)).toBe(true);
@@ -47,14 +47,14 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
   it("is NOT balanced when a declared scenario carries an out-of-balance reconciling item", () => {
     // Teeth: a single missing obligation on one declared row makes the whole run
     // out-of-balance — the ordinary out-of-balance-scenario case the gate must red.
-    const reconciliation: EvidenceReconciliation = {
+    const reconciliation: Ledger = {
       scenarioReconciliations: [
         balancedScenario("SCN-TGT-001"),
         {
           scnId: "SCN-TGT-002",
           kind: "scenario",
           verdict: "out-of-balance",
-          evidenceObligations: [{ qualityCheck: "integration", outcome: "missing" }],
+          qualityCheckReconciliations: [{ qualityCheck: "integration", outcome: "missing" }],
           pendingItems: [],
           reconcilingItems: [{ qualityCheck: "integration", outcome: "missing" }],
         },
@@ -69,7 +69,7 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
     // undemanded static-guard (a `lint` credit no @lint obligation declares) posts a
     // `cites-no-scenario` reconciling item to the suspense row, so the WHOLE run is
     // out-of-balance. `isBalanced` consults every row's reconcilingItems and calls it false.
-    const reconciliation: EvidenceReconciliation = {
+    const reconciliation: Ledger = {
       scenarioReconciliations: [
         balancedScenario("SCN-TGT-001"),
         balancedScenario("SCN-TGT-002"),
@@ -77,7 +77,7 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
           scnId: "(no scenario)",
           kind: "suspense-scenario",
           verdict: "out-of-balance",
-          evidenceObligations: [{ qualityCheck: "lint", guard: "guard:static", outcome: "cites-no-scenario" }],
+          qualityCheckReconciliations: [{ qualityCheck: "lint", guard: "guard:static", outcome: "cites-no-scenario" }],
           pendingItems: [],
           reconcilingItems: [{ qualityCheck: "lint", guard: "guard:static", outcome: "cites-no-scenario" }],
         },
@@ -90,14 +90,14 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
     // A second suspense-family case: every declared scenario balanced, but a credit cites
     // an @SCN no feature declares → a phantom row, verdict always out-of-balance. The whole
     // run is out-of-balance even though no DECLARED scenario is.
-    const reconciliation: EvidenceReconciliation = {
+    const reconciliation: Ledger = {
       scenarioReconciliations: [
         balancedScenario("SCN-TGT-001"),
         {
           scnId: "SCN-PHANTOM-999",
           kind: "phantom-scenario",
           verdict: "out-of-balance",
-          evidenceObligations: [{ qualityCheck: "unit", outcome: "cites-unknown-scenario" }],
+          qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "cites-unknown-scenario" }],
           pendingItems: [],
           reconcilingItems: [{ qualityCheck: "unit", outcome: "cites-unknown-scenario" }],
         },
@@ -123,7 +123,7 @@ describe("[SCN-CLI-005] isBalanced — the positive boundary: a clean all-balanc
     // Mirrors the ALL-BALANCED FIXTURE the @e2e drives: two @unit declared scenarios both
     // satisfied and — crucially — NO suspense/phantom row at all (the guardless design).
     // isBalanced consults every row's reconcilingItems, finds none anywhere, and returns true.
-    const reconciliation: EvidenceReconciliation = {
+    const reconciliation: Ledger = {
       scenarioReconciliations: [balancedScenario("SCN-TGT-001"), balancedScenario("SCN-TGT-002")],
     };
     expect(isBalanced(reconciliation)).toBe(true);
@@ -135,7 +135,7 @@ describe("[SCN-CLI-005] isBalanced — the positive boundary: a clean all-balanc
     // the run leaves process.exitCode at its default 0. Expressing the gate's own condition
     // here makes the positive boundary explicit: isBalanced true → exit code 0. Inverting or
     // always-failing the predicate flips this to 1 (the mutation that proves this pin's teeth).
-    const reconciliation: EvidenceReconciliation = {
+    const reconciliation: Ledger = {
       scenarioReconciliations: [balancedScenario("SCN-TGT-001"), balancedScenario("SCN-TGT-002")],
     };
     const exitCode = !isBalanced(reconciliation) ? 1 : 0;
@@ -163,7 +163,7 @@ describe("[SCN-CLI-005] isBalanced — the positive boundary: a clean all-balanc
  * making `isBalanced` also fail on `pendingItems.length > 0` — that reds this pin because the
  * run genuinely carries Pending Items.
  */
-describe("[SCN-PND-008] isBalanced — an EvidenceReconciliation whose only exceptions are Pending Items does not fail", () => {
+describe("[SCN-PND-008] isBalanced — an Ledger whose only exceptions are Pending Items does not fail", () => {
   it("is balanced over a WHOLE run whose only exceptions are Pending Items — one-sided, run-neutral", () => {
     // A real run mixing the shapes: two scenarios whose SOLE obligation is deferred pending
     // (each reconciles to zero rows on both sides, balanced-with-pending) and one carrying a
@@ -227,7 +227,7 @@ describe("[SCN-CLI-011] hasPendingItems + the --strict exit-3 escalation", () =>
   // `runBalance`'s gate: out-of-balance DOMINATES (1); else strict-with-pending escalates
   // (3); else 0. Exercising the real `isBalanced` / `hasPendingItems` here is what makes
   // this a genuine @unit on the escalation logic, not a re-statement of a constant.
-  const exitCodeFor = (balance: EvidenceReconciliation, strict: boolean): number => {
+  const exitCodeFor = (balance: Ledger, strict: boolean): number => {
     if (!isBalanced(balance)) return 1;
     if (strict && hasPendingItems(balance)) return 3;
     return 0;
@@ -301,7 +301,7 @@ describe("[SCN-CLI-011] hasPendingItems + the --strict exit-3 escalation", () =>
  * proof rather than an absent one. The run is UNSOUND.
  *
  * Soundness is a property of the RUN, not of a scenario (no third ScenarioVerdict) and is DERIVED,
- * NEVER STORED (no flag on EvidenceReconciliation) — the same no-drift reason `isBalanced` and
+ * NEVER STORED (no flag on Ledger) — the same no-drift reason `isBalanced` and
  * `hasPendingItems` derive. The name is the existential twin of `hasPendingItems` (the same
  * `some(row => some(item => item.outcome === X))` scan); "unsound" is the RENDER HEADLINE word
  * (@SCN-RPT-021), as "out-of-balance" is for `isBalanced`.
@@ -383,7 +383,7 @@ describe("[SCN-LDG-018] hasBrokenEvidence — the whole-run soundness predicate"
   });
 
   it("soundness is DERIVED, never stored: the reconciliation carries no soundness field", () => {
-    // The no-drift ruling (parent 3F-1642): no flag on EvidenceReconciliation. Reds the moment a
+    // The no-drift ruling (parent 3F-1642): no flag on Ledger. Reds the moment a
     // `unsound` / `sound` / `hasBrokenEvidence` field is written onto the reconciliation instead of
     // being derived from its rows.
     const balance = reconcile(

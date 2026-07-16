@@ -243,7 +243,7 @@ Then(
     const evidenceReconciliation = rmd003Json.evidenceReconciliation as {
       scnId: string;
       kind?: string;
-      evidenceObligations: { outcome: string; locator?: string }[];
+      qualityCheckReconciliations: { outcome: string; locator?: string }[];
     }[];
     // The phantom detail array DISSOLVED into the phantom-scenario rows (@SCN-LDG-006).
     // The fixture's 1 phantom (SCN-PHANTOM-999) surfaces as a phantom row carrying the locator.
@@ -251,7 +251,7 @@ Then(
     const phantom = evidenceReconciliation.find((s) => s.scnId === "SCN-PHANTOM-999");
     assert.ok(phantom, "expected a phantom-scenario row for SCN-PHANTOM-999 in evidenceReconciliation");
     assert.equal(phantom!.kind, "phantom-scenario", "expected kind phantom-scenario");
-    const phantomItem = phantom!.evidenceObligations[0];
+    const phantomItem = phantom!.qualityCheckReconciliations[0];
     assert.equal(phantomItem?.outcome, "cites-unknown-scenario", "expected the cites-unknown-scenario outcome");
     assert.ok(
       typeof phantomItem?.locator === "string" && phantomItem.locator.length > 0,
@@ -264,8 +264,8 @@ Then(
     const suspense = evidenceReconciliation.find((s) => s.scnId === "(no scenario)");
     assert.ok(suspense, "expected a suspense-scenario row (no scenario) in evidenceReconciliation");
     assert.equal(suspense!.kind, "suspense-scenario", "expected kind suspense-scenario");
-    const uncited = suspense!.evidenceObligations.filter((o) => o.outcome === "cites-no-scenario");
-    assert.equal(uncited.length, 2, `expected 2 cites-no-scenario items on the suspense row; got ${JSON.stringify(suspense!.evidenceObligations)}`);
+    const uncited = suspense!.qualityCheckReconciliations.filter((o) => o.outcome === "cites-no-scenario");
+    assert.equal(uncited.length, 2, `expected 2 cites-no-scenario items on the suspense row; got ${JSON.stringify(suspense!.qualityCheckReconciliations)}`);
     for (const u of uncited) {
       assert.ok(typeof u.locator === "string" && u.locator.length > 0, `expected a file locator on the suspense item; got ${JSON.stringify(u)}`);
     }
@@ -627,11 +627,11 @@ When("the report is serialised to spec-reconciliation.json", function () {
 Then("each evidence sub-row is keyed by one quality-check field with no kind or level", function () {
   const evidenceReconciliation = rmd008Json.evidenceReconciliation as Array<{
     scnId: string;
-    evidenceObligations: Array<Record<string, unknown>>;
+    qualityCheckReconciliations: Array<Record<string, unknown>>;
     reconcilingItems: Array<Record<string, unknown>>;
   }>;
   assert.ok(Array.isArray(evidenceReconciliation) && evidenceReconciliation.length > 0, `expected a non-empty evidenceReconciliation; got ${JSON.stringify(rmd008Json.evidenceReconciliation)}`);
-  const qualityCheckReconciliations = evidenceReconciliation.flatMap((s) => [...s.evidenceObligations, ...s.reconcilingItems]);
+  const qualityCheckReconciliations = evidenceReconciliation.flatMap((s) => [...s.qualityCheckReconciliations, ...s.reconcilingItems]);
   assert.ok(qualityCheckReconciliations.length > 0, "expected at least one evidence sub-row");
   for (const row of qualityCheckReconciliations) {
     assert.ok(
@@ -644,9 +644,9 @@ Then("each evidence sub-row is keyed by one quality-check field with no kind or 
 });
 
 Then('a lint sub-row carries its quality-check "lint" alongside its guard', function () {
-  const evidenceReconciliation = rmd008Json.evidenceReconciliation as Array<{ evidenceObligations: Array<Record<string, unknown>> }>;
+  const evidenceReconciliation = rmd008Json.evidenceReconciliation as Array<{ qualityCheckReconciliations: Array<Record<string, unknown>> }>;
   const lintRows = evidenceReconciliation
-    .flatMap((s) => s.evidenceObligations)
+    .flatMap((s) => s.qualityCheckReconciliations)
     .filter((o) => o.qualityCheck === "lint");
   assert.ok(lintRows.length > 0, `expected at least one lint sub-row (the usg fixture declares @lint=lint:foo); got ${JSON.stringify(evidenceReconciliation)}`);
   for (const row of lintRows) {

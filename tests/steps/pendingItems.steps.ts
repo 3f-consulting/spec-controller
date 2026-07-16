@@ -36,9 +36,9 @@ import type {
   Scenario,
   EvidenceObligation,
   EvidenceObservation,
-  EvidenceReconciliation,
+  Ledger,
   ScenarioReconciliation,
-  Report,
+  EvidenceReconciliation,
   RunContext,
 } from "@3f-consulting/spec-controller-core";
 
@@ -61,7 +61,7 @@ let suffixScenarios: Scenario[];
 let unknownScenarios: Scenario[];
 // @SCN-PND-004 — the quality-check under test + the reconciliation of the planted fixture.
 let pendingCheck: string;
-let reconciliation: EvidenceReconciliation;
+let reconciliation: Ledger;
 
 // @SCN-PND-001
 Given("a planted fixture scenario tagged {string}", function (tag: string) {
@@ -308,7 +308,7 @@ Then(
     // both-missing guard is fixed (an only-pending scenario currently posts both-missing,
     // because the pending obligation partitions to zero reconciled rows).
     const bothMissing = reconciliation.scenarioReconciliations.flatMap((s) =>
-      s.evidenceObligations.filter((o) => o.outcome === "both-missing")
+      s.qualityCheckReconciliations.filter((o) => o.outcome === "both-missing")
     );
     assert.equal(
       bothMissing.length,
@@ -406,7 +406,7 @@ Then(
       } (rows: ${JSON.stringify(reconciliation.scenarioReconciliations)})`
     );
     const outcomeAtCheck = reconciliation.scenarioReconciliations.flatMap((s) =>
-      s.evidenceObligations.filter((r) => r.qualityCheck === pendingCheck)
+      s.qualityCheckReconciliations.filter((r) => r.qualityCheck === pendingCheck)
     );
     assert.equal(
       outcomeAtCheck.length,
@@ -709,10 +709,10 @@ Then(
     const scenario = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-PDC-001");
     assert.ok(scenario, "expected the composition fixture scenario (SCN-PDC-001)");
     assert.deepEqual(
-      scenario.evidenceObligations,
+      scenario.qualityCheckReconciliations,
       [{ qualityCheck: "unit", outcome: "satisfied" }],
       `the unit obligation must reconcile satisfied as the scenario's sole reconciled evidence obligation; got ${JSON.stringify(
-        scenario.evidenceObligations
+        scenario.qualityCheckReconciliations
       )}`
     );
   }
@@ -736,7 +736,7 @@ Then(
     );
     // The pending integration check names NO reconciled evidence-obligation outcome — it is a
     // structurally distinct category, never reconciled.
-    const integrationOutcomes = scenario.evidenceObligations.filter(
+    const integrationOutcomes = scenario.qualityCheckReconciliations.filter(
       (o) => o.qualityCheck === "integration"
     );
     assert.equal(
@@ -905,7 +905,7 @@ const SUMMARY_TALLY_FIXTURE = join(
 );
 
 // The assembled report + rendered markdown of the reconciled summary-tally fixture.
-let summaryReport: Report;
+let summaryReport: EvidenceReconciliation;
 let summaryRendered: string;
 
 Given(
@@ -1235,7 +1235,7 @@ Then(
     // / missing (any inconclusive, by absence). Reds while an inconclusive result maps to failing.
     const scenario = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-PDN-001");
     assert.ok(scenario, "expected the declared fixture scenario (SCN-PDN-001)");
-    const integrationOutcomes = scenario.evidenceObligations.filter(
+    const integrationOutcomes = scenario.qualityCheckReconciliations.filter(
       (o) => o.qualityCheck === "integration"
     );
     assert.equal(
@@ -1243,7 +1243,7 @@ Then(
       1,
       `expected exactly one reconciled integration obligation on SCN-PDN-001; got ${
         integrationOutcomes.length
-      } (${JSON.stringify(scenario.evidenceObligations)})`
+      } (${JSON.stringify(scenario.qualityCheckReconciliations)})`
     );
     assert.equal(
       integrationOutcomes[0]!.outcome,
@@ -1414,13 +1414,13 @@ Then(
     // inconclusive, by absence). Reds while an inconclusive result maps to failing.
     const scenario = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-PDV-001");
     assert.ok(scenario, "expected the declared fixture scenario (SCN-PDV-001)");
-    const unitOutcomes = scenario.evidenceObligations.filter((o) => o.qualityCheck === "unit");
+    const unitOutcomes = scenario.qualityCheckReconciliations.filter((o) => o.qualityCheck === "unit");
     assert.equal(
       unitOutcomes.length,
       1,
       `expected exactly one reconciled unit obligation on SCN-PDV-001; got ${
         unitOutcomes.length
-      } (${JSON.stringify(scenario.evidenceObligations)})`
+      } (${JSON.stringify(scenario.qualityCheckReconciliations)})`
     );
     assert.equal(
       unitOutcomes[0]!.outcome,
@@ -1603,10 +1603,10 @@ Then(
     const scenario = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-PDO-001");
     assert.ok(scenario, "expected the reconciled fixture scenario (SCN-PDO-001)");
     assert.deepEqual(
-      scenario.evidenceObligations,
+      scenario.qualityCheckReconciliations,
       [{ qualityCheck: "unit", outcome: "satisfied" }],
       `the un-deferred unit obligation must reconcile satisfied as the sole reconciled evidence obligation; got ${JSON.stringify(
-        scenario.evidenceObligations
+        scenario.qualityCheckReconciliations
       )}`
     );
     assert.deepEqual(
@@ -1729,10 +1729,10 @@ Then(
       )}`
     );
     assert.deepEqual(
-      scenario.evidenceObligations,
+      scenario.qualityCheckReconciliations,
       [],
       `no obligation reconciles — both are partitioned off as Pending Items; got ${JSON.stringify(
-        scenario.evidenceObligations
+        scenario.qualityCheckReconciliations
       )}`
     );
   }
@@ -1904,10 +1904,10 @@ Then(
         )}`
       );
       assert.deepEqual(
-        scenario.evidenceObligations,
+        scenario.qualityCheckReconciliations,
         [],
         `no obligation reconciles — the integration obligation is partitioned off as a Pending Item; got ${JSON.stringify(
-          scenario.evidenceObligations
+          scenario.qualityCheckReconciliations
         )}`
       );
     }
@@ -1991,10 +1991,10 @@ Then(
     const scenario = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-PDZ-001");
     assert.ok(scenario, "expected the reconciled fixture scenario (SCN-PDZ-001)");
     assert.deepEqual(
-      scenario.evidenceObligations,
+      scenario.qualityCheckReconciliations,
       [{ qualityCheck: "unit", outcome: "satisfied" }],
       `the un-deferred unit obligation must reconcile satisfied as the sole reconciled evidence obligation; got ${JSON.stringify(
-        scenario.evidenceObligations
+        scenario.qualityCheckReconciliations
       )}`
     );
     assert.deepEqual(
@@ -2193,9 +2193,9 @@ Then(
       `a deferred scenario is balanced-with-pending, not out-of-balance; got "${row.verdict}" (row: ${JSON.stringify(row)})`
     );
     assert.equal(
-      row.evidenceObligations.filter((o) => o.outcome === "both-missing").length,
+      row.qualityCheckReconciliations.filter((o) => o.outcome === "both-missing").length,
       0,
-      `the deferred scenario must NOT post a both-missing row; got ${JSON.stringify(row.evidenceObligations)}`
+      `the deferred scenario must NOT post a both-missing row; got ${JSON.stringify(row.qualityCheckReconciliations)}`
     );
   }
 );

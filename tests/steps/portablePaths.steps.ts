@@ -160,7 +160,7 @@ Then(
     );
     const parsed = JSON.parse(jsonText) as {
       runProvenance?: { inputs?: Record<string, string> };
-      evidenceReconciliation?: Array<{ scnId: string; kind?: string; evidenceObligations: Array<{ outcome: string; locator?: string }> }>;
+      evidenceReconciliation?: Array<{ scnId: string; kind?: string; qualityCheckReconciliations: Array<{ outcome: string; locator?: string }> }>;
     };
     // Input paths record relative to the target root ("features", "vitest.json"), not absolute.
     assert.equal(
@@ -177,7 +177,7 @@ Then(
     // repo-relative too (the where-to-fix survives the detail-into-rows move, ruling Q5).
     const suspense = (parsed.evidenceReconciliation ?? []).find((s) => s.kind === "suspense-scenario");
     assert.ok(suspense, `expected a suspense-scenario row carrying the uncited credits; got:\n${jsonText}`);
-    const locators = suspense!.evidenceObligations
+    const locators = suspense!.qualityCheckReconciliations
       .filter((o) => o.outcome === "cites-no-scenario" && typeof o.locator === "string")
       .map((o) => o.locator!);
     assert.ok(

@@ -45,7 +45,7 @@ describe("[SCN-LNT-001] a @lint scenario whose guard is wired into CI over the r
 
     expect(scenario?.verdict).toBe("balanced");
     expect(scenario?.reconcilingItems).toEqual([]);
-    expect(scenario?.evidenceObligations).toEqual([
+    expect(scenario?.qualityCheckReconciliations).toEqual([
       { qualityCheck: "lint", guard: REAL_GUARD, outcome: "satisfied" },
     ]);
   });
@@ -124,7 +124,7 @@ describe("[SCN-LNT-002] a @lint scenario whose guard is fixture-green but not wi
         outcome: "watermelon",
       },
     ]);
-    expect(scenario?.evidenceObligations).toEqual([
+    expect(scenario?.qualityCheckReconciliations).toEqual([
       {
         qualityCheck: "lint", guard: PLANTED_GUARD,
         outcome: "watermelon",
@@ -202,7 +202,7 @@ describe("[SCN-LNT-003] a @lint scenario whose named guard does not exist is rep
         outcome: "missing",
       },
     ]);
-    expect(scenario?.evidenceObligations).toEqual([
+    expect(scenario?.qualityCheckReconciliations).toEqual([
       {
         qualityCheck: "lint", guard: ABSENT_GUARD,
         outcome: "missing",
@@ -285,7 +285,7 @@ describe("[SCN-LNT-004] a scenario requiring both a @unit test and an unwired @l
     // each reconciled on its own axis — the runtime balanced AND the static
     // watermelon. arrayContaining + length 2 asserts membership order-independently
     // (no ranking claimed) and that it is NOT a single collapsed verdict.
-    expect(scenario?.evidenceObligations).toEqual(
+    expect(scenario?.qualityCheckReconciliations).toEqual(
       expect.arrayContaining([
         { qualityCheck: "unit", outcome: "satisfied" },
         {
@@ -294,7 +294,7 @@ describe("[SCN-LNT-004] a scenario requiring both a @unit test and an unwired @l
         },
       ])
     );
-    expect(scenario?.evidenceObligations).toHaveLength(2);
+    expect(scenario?.qualityCheckReconciliations).toHaveLength(2);
 
     // The balanced runtime evidenceObligation is OMITTED from the reconciling items; only
     // the non-balanced static watermelon remains.

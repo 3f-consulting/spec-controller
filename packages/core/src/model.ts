@@ -378,8 +378,39 @@ export interface ScenarioReconciliation {
    * balances; otherwise `out-of-balance`.
    */
   verdict: ScenarioVerdict;
-  /** Every evidenceObligation's reconciliation outcome (the full per-quality-check breakdown). */
-  evidenceObligations: QualityCheckReconciliation[];
+  /**
+   * The POSTED CREDITS — every evidence observation that posts to THIS account (@SCN-LDG-022).
+   * The account is the Scenario Reconciliation (canon: "bookkeeping term: Account"), and this is
+   * where its credits SIT: canon's Ledger is "the evidence obligations (debits) and evidence
+   * observations (credits) organised by real or invented scenario, keyed by quality-check".
+   * Named for canon's vocabulary — NEVER `credits`, which is the bookkeeping ROOT of the metaphor,
+   * not the vocabulary (the same reason Evidence Reconciliation rejects the alias "trial balance",
+   * "kept as the bookkeeping root of the metaphor").
+   *
+   * POSTING IS NOT CLASSIFYING. An observation posts here whatever it later reconciles to — or
+   * even when it reconciles to NOTHING. A credit citing a `<quality-check>pending` obligation
+   * produces no `QualityCheckReconciliation` at all (the obligation is partitioned off before the
+   * match, and the pending pair keeps the credit out of `undemanded`), and it posts here ANYWAY:
+   * a misclassification must MISFILE an entry, never vaporise it. So this array is NOT derivable
+   * from `qualityCheckReconciliations` — that is the whole point of the layer.
+   *
+   * THE ACCOUNT IS THE CITATION, never the outcome. A credit citing a declared @SCN posts to that
+   * scenario's account; one citing an unknown @SCN posts to that phantom account; one citing NO
+   * scenario posts to suspense. Exactly one account each, jointly exhaustive over the input.
+   *
+   * OPTIONAL for back-compat with hand-built fixtures — ABSENCE ≡ `[]` (nothing posted), the same
+   * reserved-default convention as `kind`. `reconcile` ALWAYS sets it explicitly.
+   */
+  evidenceObservations?: EvidenceObservation[];
+  /**
+   * Every reconciled quality-check's outcome (the full per-quality-check breakdown) — the SUB-ROWS
+   * of this account, typed `QualityCheckReconciliation[]`. Renamed from `evidenceObligations`
+   * (3F-1846): it holds reconciled sub-rows, not posted debits, and canon lists "reconciled
+   * evidence obligation" under Quality Check Reconciliation's REJECTED ALIASES — so the old name
+   * carried a rejected alias. The rename frees `evidenceObligations` for the real posted debits
+   * (3F-1847).
+   */
+  qualityCheckReconciliations: QualityCheckReconciliation[];
   /**
    * The non-balanced reconciling items — EMPTY when balanced; otherwise EVERY
    * non-balanced evidenceObligation (no prioritisation, no picked winner), in document
@@ -399,9 +430,25 @@ export interface ScenarioReconciliation {
 }
 
 /**
- * The trial balance — all scenario balances assembled, the per-scenario reconciliation
- * ("the per-scenario reconciliation is the trial
- * balance, not the ledger"). Renamed from `Ledger`.
+ * THE LEDGER — the accounts with their POSTED ENTRIES. Canon (double-entry-manifesto, chain
+ * step 4 + the Ledger entry): "the evidence obligations (debits) and evidence observations
+ * (credits) organised by real or invented scenario, keyed by quality-check — THIS IS WHERE
+ * RECONCILIATION HAPPENS."
+ *
+ * RENAMED FROM `Ledger` (3F-1846 / 3F-1830). 3F-1138 corrected a real error — the
+ * rendered report was titled `# Ledger`, and the per-scenario reconciliation is the trial balance,
+ * not the ledger — but corrected it by DELETING the concept rather than distinguishing it. The
+ * Ledger was never the report, so removing the report's wrong name should not have removed the
+ * Ledger. This restores it. `Ledger` is now canon's name for LAYER 1 — the
+ * assembled statement (`assemble/report.ts`, formerly `EvidenceReconciliation`); the four layers are
+ * `Ledger` → `Ledger` → `ScenarioReconciliation` → `QualityCheckReconciliation`,
+ * under canon's four names.
+ *
+ * The Ledger is NOT a second name for the Evidence Reconciliation, and NOT a pre-reconciliation
+ * input stage: the SAME accounts live in it before and after balancing off, gaining their verdict
+ * IN PLACE. It holds entries, so it is an OBJECT and never a bare array of rows — the code and the
+ * JSON are one vocabulary (`interface Ledger { scenarioReconciliations }` ↔
+ * `"ledger": { "scenarioReconciliations": [...] }`).
  *
  * `scenarioReconciliations` (renamed from `scenarios`) is the collection of Scenario
  * Reconciliation rows — declared (`kind: scenario`, including the degenerate `both-missing`
@@ -414,6 +461,6 @@ export interface ScenarioReconciliation {
  * by no evidence observation reconciles to a `both-missing` out-of-balance row, not a warning excluded
  * from the balance.
  */
-export interface EvidenceReconciliation {
+export interface Ledger {
   scenarioReconciliations: ScenarioReconciliation[];
 }

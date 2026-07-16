@@ -21,14 +21,14 @@
 
 import { describe, it, expect } from "vitest";
 import { renderJson } from "./json.js";
-import type { EvidenceReconciliation } from "../model.js";
+import type { Ledger } from "../model.js";
 import type { RunContext } from "../provenance/provenance.js";
 import type { RuntimeEvidenceObservationKindCounts } from "../census/evidenceObservations.js";
 
 /** A minimal balanced balance — enough for the renderer to serialise a report. */
-const balance: EvidenceReconciliation = {
+const balance: Ledger = {
   scenarioReconciliations: [
-    { scnId: "SCN-RPT-002", verdict: "balanced", evidenceObligations: [], pendingItems: [], reconcilingItems: [] },
+    { scnId: "SCN-RPT-002", verdict: "balanced", qualityCheckReconciliations: [], pendingItems: [], reconcilingItems: [] },
   ],
 };
 
@@ -307,13 +307,13 @@ describe("[SCN-RPT-015] the JSON evidenceObligations carries the prose-only code
  * Parent: (@SCN-PND-010).
  */
 describe("[SCN-PND-010] the JSON report carries a scenario's Pending Items", () => {
-  const pendingBalance: EvidenceReconciliation = {
+  const pendingBalance: Ledger = {
     scenarioReconciliations: [
       {
         scnId: "SCN-PDX-001",
         kind: "scenario",
         verdict: "balanced",
-        evidenceObligations: [],
+        qualityCheckReconciliations: [],
         reconcilingItems: [],
         pendingItems: [{ qualityCheck: "integration" }],
       },
@@ -348,13 +348,13 @@ describe("[SCN-PND-010] the JSON report carries a scenario's Pending Items", () 
  * Parent: (@SCN-PND-011).
  */
 describe("[SCN-PND-011] the JSON summary carries the Pending Items tally", () => {
-  const pendingBalance: EvidenceReconciliation = {
+  const pendingBalance: Ledger = {
     scenarioReconciliations: [
       {
         scnId: "SCN-PDX-001",
         kind: "scenario",
         verdict: "balanced",
-        evidenceObligations: [],
+        qualityCheckReconciliations: [],
         reconcilingItems: [],
         pendingItems: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }],
       },
@@ -362,7 +362,7 @@ describe("[SCN-PND-011] the JSON summary carries the Pending Items tally", () =>
         scnId: "SCN-PDX-002",
         kind: "scenario",
         verdict: "out-of-balance",
-        evidenceObligations: [{ qualityCheck: "unit", outcome: "missing" }],
+        qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "missing" }],
         reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
         pendingItems: [{ qualityCheck: "integration" }],
       },

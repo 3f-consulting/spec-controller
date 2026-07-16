@@ -20,7 +20,7 @@
  * Parent: (@SCN-RMD-001).
  */
 
-import type { EvidenceReconciliation, Outcome, ScenarioReconciliation } from "../model.js";
+import type { Ledger, Outcome, ScenarioReconciliation } from "../model.js";
 import { provenanceObject, type ProvenanceObject, type RunContext } from "../provenance/provenance.js";
 import type { EvidenceObligations, UntaggedScenario } from "../census/evidenceObligations.js";
 import { totalEvidenceObservations, type AttributedCount, type RuntimeEvidenceObservationKindCounts } from "../census/evidenceObservations.js";
@@ -192,7 +192,7 @@ export interface ReportMetadata {
  * key was RETIRED — a zero-evidence scenario is now a `both-missing` row in
  * `evidenceReconciliation`, not a separate axis.
  */
-export interface Report {
+export interface EvidenceReconciliation {
   runProvenance: ProvenanceObject;
   summary: Summary;
   evidenceObligations?: EvidenceObligationsSection;
@@ -224,7 +224,7 @@ const QUALITY_CHECK_ORDER: readonly string[] = ["lint", "unit", "integration", "
  * markdown.ts) so the markdown stays untouched this slice.
  */
 function buildSummary(
-  balance: EvidenceReconciliation,
+  balance: Ledger,
   evidenceObservations?: RuntimeEvidenceObservationKindCounts,
   guards?: StaticEvidenceObservationKindCounts
 ): Summary {
@@ -282,7 +282,7 @@ function buildSummary(
   };
   const missing = new Map<string, number>();
   for (const s of balance.scenarioReconciliations) {
-    for (const o of s.evidenceObligations) {
+    for (const o of s.qualityCheckReconciliations) {
       byOutcome[o.outcome]++;
       // The subject IS the flat quality-check — `lint` or a runtime quality-check. The
       // both-missing item carries no quality-check (it is not a `missing` evidence obligation), so the
@@ -361,7 +361,7 @@ function buildSummary(
  * with zero byte change. `summary.byOutcome` counts ALL kinds, so the static-only total is derived
  * here explicitly.
  */
-function buildLintTally(balance: EvidenceReconciliation): LintTally {
+function buildLintTally(balance: Ledger): LintTally {
   let satisfied = 0;
   let total = 0;
   for (const s of balance.scenarioReconciliations) {
@@ -369,7 +369,7 @@ function buildLintTally(balance: EvidenceReconciliation): LintTally {
     // credit (an unattributed static-guard, cites-no-scenario) is not an evidence obligation and
     // must not inflate the declared lint total.
     if (s.kind === "phantom-scenario" || s.kind === "suspense-scenario") continue;
-    for (const o of s.evidenceObligations) {
+    for (const o of s.qualityCheckReconciliations) {
       if (o.qualityCheck !== "lint") continue;
       total++;
       if (o.outcome === "satisfied") satisfied++;
@@ -389,13 +389,13 @@ function buildLintTally(balance: EvidenceReconciliation): LintTally {
  * read is threaded (the CLI always threads them; the narrower-arg tests exercise omission).
  */
 export function assembleReport(
-  balance: EvidenceReconciliation,
+  balance: Ledger,
   ctx: RunContext,
   evidenceObligations?: EvidenceObligations,
   evidenceObservations?: RuntimeEvidenceObservationKindCounts,
   guards?: StaticEvidenceObservationKindCounts,
   featureNames?: ReadonlyMap<string, string>
-): Report {
+): EvidenceReconciliation {
   return {
     runProvenance: provenanceObject(ctx),
     summary: buildSummary(balance, evidenceObservations, guards),

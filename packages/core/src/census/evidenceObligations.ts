@@ -1,6 +1,6 @@
 /**
  * The EvidenceObligations — the declared-corpus census carried ALONGSIDE the balance, a
- * sibling to both the pure EvidenceReconciliation (the declared-vs-observed verdict data) and
+ * sibling to both the pure Ledger (the declared-vs-observed verdict data) and
  * the RunContext (run metadata). It records how the declared corpus reconciles
  * against EVERY raw @SCN mention in the source: how many ids the source mentioned in
  * total (tag + non-tag context) vs how many were actually read as declared scenarios.

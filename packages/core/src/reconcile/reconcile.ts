@@ -31,7 +31,7 @@ import type {
   PendingItem,
   RuntimeEvidenceObservation,
   ScenarioVerdict,
-  EvidenceReconciliation,
+  Ledger,
 } from "../model.js";
 
 /**
@@ -138,7 +138,7 @@ function reconcilingItemsOf(
 
 /**
  * The WHOLE-RUN verdict — is the ENTIRE reconciliation balanced? A pure domain
- * derivation over the WHOLE `EvidenceReconciliation`: balanced IFF NO reconciling
+ * derivation over the WHOLE `Ledger`: balanced IFF NO reconciling
  * item exists ANYWHERE, across every Scenario Reconciliation row — declared,
  * phantom, and suspense alike. Out-of-balance iff ANY row carries a reconciling
  * item: a declared scenario's out-of-balance items (failing / missing /
@@ -155,7 +155,7 @@ function reconcilingItemsOf(
  * out-of-balance → EXACTLY 1 — an ENUMERATED status, never a count (a count would
  * 8-bit `& 0xFF` wrap → false pass).
  */
-export function isBalanced(reconciliation: EvidenceReconciliation): boolean {
+export function isBalanced(reconciliation: Ledger): boolean {
   return reconciliation.scenarioReconciliations.every(
     (row) => row.reconcilingItems.length === 0
   );
@@ -163,7 +163,7 @@ export function isBalanced(reconciliation: EvidenceReconciliation): boolean {
 
 /**
  * Does the WHOLE reconciliation carry any Pending Item? A pure domain predicate over the
- * WHOLE `EvidenceReconciliation`, SYMMETRIC with `isBalanced` — together they are the
+ * WHOLE `Ledger`, SYMMETRIC with `isBalanced` — together they are the
  * whole-run verdict surface. True iff ANY Scenario Reconciliation row carries a Pending
  * Item (a deferred `<quality-check>pending` obligation partitioned off before reconciliation,
  * @SCN-PND-004). Pending Items are run-neutral by default (@SCN-PND-008); the CLI edge
@@ -171,7 +171,7 @@ export function isBalanced(reconciliation: EvidenceReconciliation): boolean {
  * exit code 3 under `--strict` (@SCN-CLI-011) — an OPT-IN gate on deferred obligations,
  * checked only when `isBalanced` is true (out-of-balance dominates, exit 1).
  */
-export function hasPendingItems(reconciliation: EvidenceReconciliation): boolean {
+export function hasPendingItems(reconciliation: Ledger): boolean {
   return reconciliation.scenarioReconciliations.some((row) => row.pendingItems.length > 0);
 }
 
@@ -187,7 +187,7 @@ export function hasPendingItems(reconciliation: EvidenceReconciliation): boolean
  * harness vs write a test). The scenario's own row stays honest at its own resolution (`missing`);
  * the RUN is what is stamped unsound.
  *
- * DERIVED, NEVER STORED — no soundness flag is written onto `EvidenceReconciliation`, the same
+ * DERIVED, NEVER STORED — no soundness flag is written onto `Ledger`, the same
  * no-drift reason `isBalanced` and `hasPendingItems` derive. Machine consumers read soundness off
  * `summary.byOutcome.broken > 0` (type-forced into the JSON the moment `broken` joined the
  * `Outcome` union); the markdown renderer prints the HEADLINE word — "unsound" is the render word,
@@ -200,7 +200,7 @@ export function hasPendingItems(reconciliation: EvidenceReconciliation): boolean
  * sits on the suspense row — which is why the CLI edge must consult THIS predicate BEFORE the
  * balance verdict, @SCN-CLI-012, or its exit code would be unreachable.)
  */
-export function hasBrokenEvidence(reconciliation: EvidenceReconciliation): boolean {
+export function hasBrokenEvidence(reconciliation: Ledger): boolean {
   return reconciliation.scenarioReconciliations.some((row) =>
     row.reconcilingItems.some((item) => item.outcome === "broken")
   );
@@ -210,7 +210,7 @@ export function reconcile(
   scenarios: Scenario[],
   evidenceObservations: EvidenceObservation[],
   untaggedScenarios: readonly string[] = []
-): EvidenceReconciliation {
+): Ledger {
   const scenarioReconciliations: ScenarioReconciliation[] = [];
 
   // The credit-consuming SPINE: index the runtime evidence observations
@@ -305,14 +305,39 @@ export function reconcile(
     // spurious both-missing. (Forward-compatible with slice 4: a bare-empty scenario — no
     // obligation, no pending — stays both-missing.)
     const rows = [...reconciledEvidenceObligations, ...undemandedItems];
-    const evidenceObligations: QualityCheckReconciliation[] =
+    const qualityCheckReconciliations: QualityCheckReconciliation[] =
       rows.length === 0 && pendingItems.length === 0 ? [{ outcome: "both-missing" }] : rows;
+    // THE POSTED GUARD CREDITS (@SCN-LDG-022) — a guard credit carries no @SCN, so `byScn` (the
+    // citation index) cannot hold it: its link to an account is the GUARD HANDLE. This scenario's
+    // `@lint` obligations name the handles it demands, so the guard credits answering them post
+    // HERE — MIRRORING `reconcileEvidenceObligation`, which follows the SAME link (by handle) to
+    // put each lint outcome on this very row. The credit sits on the account its outcome already
+    // lands on. The complement — a guard NO obligation demands — belongs to no account and posts
+    // to SUSPENSE (`undemandedGuards`, below). Together: every guard credit, exactly one account.
+    const demandedGuardCredits: GuardEvidenceObservation[] = [];
+    for (const o of d.evidenceObligations) {
+      // Every `@lint` obligation, INCLUDING a pending one: posting is not classifying, so a credit
+      // posts whatever its obligation later reconciles to (or fails to).
+      if (o.qualityCheck !== "lint" || o.guard === undefined) continue;
+      const guard = o.guard;
+      const obs = evidenceObservations.find(
+        (c): c is GuardEvidenceObservation => c.qualityCheck === "lint" && c.guard === guard
+      );
+      // One credit answers one handle; a handle declared twice on one account still posts once.
+      if (obs !== undefined && !demandedGuardCredits.includes(obs)) demandedGuardCredits.push(obs);
+    }
     scenarioReconciliations.push({
       scnId: d.scnId,
       kind: "scenario",
-      verdict: verdictFor(evidenceObligations),
-      evidenceObligations,
-      reconcilingItems: reconcilingItemsOf(evidenceObligations),
+      verdict: verdictFor(qualityCheckReconciliations),
+      // THE POSTED CREDITS (@SCN-LDG-022) — every credit CITING this scenario, whatever it
+      // reconciles to above. `byScn` is the citation index, so this includes the credit citing a
+      // PENDING quality-check, which reconciles to NO ROW at all: it posts and is findable
+      // ANYWAY. Posting is not classifying; a misclassification must misfile an entry, never
+      // vaporise it. Plus the guard credits this account DEMANDS, linked by handle (above).
+      evidenceObservations: [...(byScn.get(d.scnId) ?? []), ...demandedGuardCredits],
+      qualityCheckReconciliations,
+      reconcilingItems: reconcilingItemsOf(qualityCheckReconciliations),
       pendingItems,
     });
   }
@@ -345,7 +370,10 @@ export function reconcile(
       scnId,
       kind: "phantom-scenario",
       verdict: "out-of-balance",
-      evidenceObligations: items,
+      // The credits that CITE this invented scenario post to it — canon organises the ledger by
+      // "real or INVENTED scenario", so a phantom account holds its postings like any other.
+      evidenceObservations: [...citations],
+      qualityCheckReconciliations: items,
       reconcilingItems: items,
       // A phantom scenario declares nothing, so it can carry no Pending Item.
       pendingItems: [],
@@ -411,7 +439,11 @@ export function reconcile(
       scnId: "(no scenario)",
       kind: "suspense-scenario",
       verdict: "out-of-balance",
-      evidenceObligations: items,
+      // The credits citing NO scenario post here (@SCN-LDG-022) — the uncited, the broken (it
+      // named no test, so it cites nothing whatever scnId it structurally carries), and the
+      // undemanded guards. Together with `byScn` above this exhausts the credit stream.
+      evidenceObservations: [...brokenEvidence, ...uncited, ...undemandedGuards],
+      qualityCheckReconciliations: items,
       reconcilingItems: items,
       // The suspense scenario declares nothing, so it can carry no Pending Item.
       pendingItems: [],
@@ -441,7 +473,9 @@ export function reconcile(
       scnId: name,
       kind: "scenario",
       verdict: "out-of-balance",
-      evidenceObligations: items,
+      // An untagged scenario carries no @SCN, so no credit can cite it — nothing can post here.
+      evidenceObservations: [],
+      qualityCheckReconciliations: items,
       reconcilingItems: items,
       pendingItems: [],
     });

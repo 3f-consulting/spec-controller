@@ -10,7 +10,7 @@
  * Parent: (@SCN-RMD-001).
  */
 
-import type { EvidenceReconciliation } from "../model.js";
+import type { Ledger } from "../model.js";
 import type { RunContext } from "../provenance/provenance.js";
 import type { EvidenceObligations } from "../census/evidenceObligations.js";
 import type { RuntimeEvidenceObservationKindCounts } from "../census/evidenceObservations.js";
@@ -19,7 +19,7 @@ import type { FeatureNames } from "./markdown.js";
 import { assembleReport } from "../assemble/report.js";
 
 export function renderJson(
-  balance: EvidenceReconciliation,
+  balance: Ledger,
   ctx: RunContext,
   evidenceObligations?: EvidenceObligations,
   evidenceObservations?: RuntimeEvidenceObservationKindCounts,

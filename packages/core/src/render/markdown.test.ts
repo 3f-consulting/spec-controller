@@ -22,7 +22,7 @@
 
 import { describe, it, expect } from "vitest";
 import { renderMarkdown } from "./markdown.js";
-import type { EvidenceReconciliation, Outcome, ScenarioReconciliation } from "../model.js";
+import type { Ledger, Outcome, ScenarioReconciliation } from "../model.js";
 import { OUTCOME_DESCRIPTION } from "../model.js";
 import { isBalanced, reconcile } from "../reconcile/reconcile.js";
 import type { RunContext } from "../provenance/provenance.js";
@@ -31,9 +31,9 @@ import { countRuntimeEvidenceObservationKinds } from "../census/evidenceObservat
 import type { EvidenceObservation, Scenario } from "../model.js";
 
 /** A minimal balanced balance — enough for the renderer to produce a report. */
-const balance: EvidenceReconciliation = {
+const balance: Ledger = {
   scenarioReconciliations: [
-    { scnId: "SCN-RPT-001", verdict: "balanced", evidenceObligations: [], pendingItems: [], reconcilingItems: [] },
+    { scnId: "SCN-RPT-001", verdict: "balanced", qualityCheckReconciliations: [], pendingItems: [], reconcilingItems: [] },
   ],
 };
 
@@ -114,12 +114,12 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
   // must never let the two counts coincide. Totals — scenarios: 3 (balanced 1,
   // out-of-balance 2); evidenceObligations: 5 (balanced 2, missing 2,
   // failing 1, watermelon 0 — out-of-balance 3). 2 ≠ 3.
-  const spanning: EvidenceReconciliation = {
+  const spanning: Ledger = {
     scenarioReconciliations: [
       {
         scnId: "SCN-A",
         verdict: "out-of-balance",
-        evidenceObligations: [
+        qualityCheckReconciliations: [
           { qualityCheck: "unit", outcome: "satisfied" },
           { qualityCheck: "integration", outcome: "failing" },
         ],
@@ -134,7 +134,7 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
         // 3-evidenceObligation divergence.
         scnId: "SCN-B",
         verdict: "out-of-balance",
-        evidenceObligations: [
+        qualityCheckReconciliations: [
           { qualityCheck: "unit", outcome: "missing" },
           { qualityCheck: "integration", outcome: "missing" },
         ],
@@ -147,7 +147,7 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
       {
         scnId: "SCN-C",
         verdict: "balanced",
-        evidenceObligations: [
+        qualityCheckReconciliations: [
           { qualityCheck: "unit", outcome: "satisfied" },
         ],
         pendingItems: [],
@@ -239,12 +239,12 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
     // arm. Two out-of-balance scenarios, but THREE missing evidenceObligations — the split must
     // count evidenceObligations (2 unit + 1 integration), the PST-035 double-arm case. Canonical
     // order puts unit before integration; bare evidence types (no @).
-    const multiMissing: EvidenceReconciliation = {
+    const multiMissing: Ledger = {
       scenarioReconciliations: [
         {
           scnId: "SCN-PST-035",
           verdict: "out-of-balance",
-          evidenceObligations: [
+          qualityCheckReconciliations: [
             { qualityCheck: "unit", outcome: "missing" },
             { qualityCheck: "integration", outcome: "missing" },
           ],
@@ -257,7 +257,7 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
         {
           scnId: "SCN-OTH-001",
           verdict: "out-of-balance",
-          evidenceObligations: [
+          qualityCheckReconciliations: [
             { qualityCheck: "unit", outcome: "missing" },
           ],
           pendingItems: [],
@@ -282,12 +282,12 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
     // missing. The split maps the static evidenceObligation to the bare word "lint"
     // (level-=-tag) and orders it FIRST (canonical order: lint, then the runtime
     // levels) regardless of declaration order.
-    const lintAndRuntime: EvidenceReconciliation = {
+    const lintAndRuntime: Ledger = {
       scenarioReconciliations: [
         {
           scnId: "SCN-LNT-099",
           verdict: "out-of-balance",
-          evidenceObligations: [
+          qualityCheckReconciliations: [
             { qualityCheck: "integration", outcome: "missing" },
             { qualityCheck: "lint", guard: "typecheck", outcome: "missing" },
           ],
@@ -322,26 +322,26 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
   // failed → exit 1. The subject row is the SCENARIO RECONCILIATION (the manifesto's
   // collection: declared + phantom + suspense), so the suspense row is IN the total and, being
   // always out-of-balance, in the out-of-balance column: N+1 | N | 1, never N | N | 0.
-  const threeDeclaredPlusSuspense: EvidenceReconciliation = {
+  const threeDeclaredPlusSuspense: Ledger = {
     scenarioReconciliations: [
       {
         scnId: "SCN-A",
         verdict: "balanced",
-        evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+        qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "satisfied" }],
         pendingItems: [],
         reconcilingItems: [],
       },
       {
         scnId: "SCN-B",
         verdict: "balanced",
-        evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+        qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "satisfied" }],
         pendingItems: [],
         reconcilingItems: [],
       },
       {
         scnId: "SCN-C",
         verdict: "balanced",
-        evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+        qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "satisfied" }],
         pendingItems: [],
         reconcilingItems: [],
       },
@@ -351,7 +351,7 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
         scnId: "(no scenario)",
         kind: "suspense-scenario",
         verdict: "out-of-balance",
-        evidenceObligations: [
+        qualityCheckReconciliations: [
           { qualityCheck: "unit", outcome: "cites-no-scenario" },
           { qualityCheck: "integration", outcome: "cites-no-scenario" },
         ],
@@ -427,12 +427,12 @@ describe("[SCN-RPT-005] the markdown report lists the lint evidence obligations 
   // scenarios, the static guards spanning balanced and the watermelon. Static
   // evidenceObligations in document order: SCN-A/guard-typecheck (balanced), then
   // SCN-B/guard-lint (the watermelon). Runtime evidenceObligations must NOT appear.
-  const spanning: EvidenceReconciliation = {
+  const spanning: Ledger = {
     scenarioReconciliations: [
       {
         scnId: "SCN-A",
         verdict: "out-of-balance",
-        evidenceObligations: [
+        qualityCheckReconciliations: [
           { qualityCheck: "unit", outcome: "satisfied" },
           { qualityCheck: "lint", guard: "guard-typecheck", outcome: "satisfied" },
           { qualityCheck: "integration", outcome: "failing" },
@@ -445,7 +445,7 @@ describe("[SCN-RPT-005] the markdown report lists the lint evidence obligations 
       {
         scnId: "SCN-B",
         verdict: "out-of-balance",
-        evidenceObligations: [
+        qualityCheckReconciliations: [
           {
             qualityCheck: "lint", guard: "guard-lint",
             outcome: "watermelon",
@@ -505,12 +505,12 @@ describe("[SCN-RPT-005] the markdown report lists the lint evidence obligations 
   });
 
   it("omits the section entirely (total line and all) when no scenario declares a lint evidenceObligation", () => {
-    const runtimeOnly: EvidenceReconciliation = {
+    const runtimeOnly: Ledger = {
       scenarioReconciliations: [
         {
           scnId: "SCN-A",
           verdict: "balanced",
-          evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+          qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "satisfied" }],
           pendingItems: [],
           reconcilingItems: [],
         },
@@ -563,26 +563,26 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
   // LNT ×1) interleaved with balanced scenarios that must NOT appear. Document
   // order of the out-of-balance scenarios: SCN-LDG-003, SCN-LNT-002, SCN-LDG-007 —
   // so first-appearance feature order is LDG (first seen at SCN-LDG-003), then LNT.
-  const spanning: EvidenceReconciliation = {
+  const spanning: Ledger = {
     scenarioReconciliations: [
       {
         scnId: "SCN-LDG-001",
         verdict: "balanced",
-        evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+        qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "satisfied" }],
         pendingItems: [],
         reconcilingItems: [],
       },
       {
         scnId: "SCN-LDG-003",
         verdict: "out-of-balance",
-        evidenceObligations: [{ qualityCheck: "unit", outcome: "missing" }],
+        qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "missing" }],
         pendingItems: [],
         reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
       },
       {
         scnId: "SCN-LNT-002",
         verdict: "out-of-balance",
-        evidenceObligations: [
+        qualityCheckReconciliations: [
           {
             qualityCheck: "lint", guard: "guard-lint",
             outcome: "watermelon",
@@ -599,14 +599,14 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
       {
         scnId: "SCN-LNT-009",
         verdict: "balanced",
-        evidenceObligations: [{ qualityCheck: "lint", guard: "guard-lint", outcome: "satisfied" }],
+        qualityCheckReconciliations: [{ qualityCheck: "lint", guard: "guard-lint", outcome: "satisfied" }],
         pendingItems: [],
         reconcilingItems: [],
       },
       {
         scnId: "SCN-LDG-007",
         verdict: "out-of-balance",
-        evidenceObligations: [{ qualityCheck: "integration", outcome: "failing" }],
+        qualityCheckReconciliations: [{ qualityCheck: "integration", outcome: "failing" }],
         pendingItems: [],
         reconcilingItems: [{ qualityCheck: "integration", outcome: "failing" }],
       },
@@ -651,12 +651,12 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
   });
 
   it("omits the section entirely (total line and all) when no scenario is out of balance", () => {
-    const allBalanced: EvidenceReconciliation = {
+    const allBalanced: Ledger = {
       scenarioReconciliations: [
         {
           scnId: "SCN-LDG-001",
           verdict: "balanced",
-          evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+          qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "satisfied" }],
           pendingItems: [],
           reconcilingItems: [],
         },
@@ -670,12 +670,12 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
   it("slots the by-feature section after the lint section and before the ledger (no warnings section)", () => {
     // A balance carrying static-guard evidenceObligations and an out-of-balance scenario — so
     // both summary-view sections render and their order can be asserted.
-    const withAll: EvidenceReconciliation = {
+    const withAll: Ledger = {
       scenarioReconciliations: [
         {
           scnId: "SCN-LNT-002",
           verdict: "out-of-balance",
-          evidenceObligations: [
+          qualityCheckReconciliations: [
             {
               qualityCheck: "lint", guard: "guard-lint",
               outcome: "watermelon",
@@ -753,19 +753,19 @@ describe("[SCN-RPT-007] the declared corpus census is recoverable from the ledge
   // A balance carrying three declared scenarios — one balanced, one out-of-balance, and one
   // zero-evidence (a both-missing row, the earlier no-evidence-declared warning). ALL three
   // are ledger rows now, so the declared total is the ledger scenario-count alone.
-  const reconciliationFixture: EvidenceReconciliation = {
+  const reconciliationFixture: Ledger = {
     scenarioReconciliations: [
       {
         scnId: "SCN-A",
         verdict: "balanced",
-        evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+        qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "satisfied" }],
         pendingItems: [],
         reconcilingItems: [],
       },
       {
         scnId: "SCN-B",
         verdict: "out-of-balance",
-        evidenceObligations: [{ qualityCheck: "integration", outcome: "missing" }],
+        qualityCheckReconciliations: [{ qualityCheck: "integration", outcome: "missing" }],
         pendingItems: [],
         reconcilingItems: [{ qualityCheck: "integration", outcome: "missing" }],
       },
@@ -773,7 +773,7 @@ describe("[SCN-RPT-007] the declared corpus census is recoverable from the ledge
         scnId: "SCN-C",
         kind: "scenario",
         verdict: "out-of-balance",
-        evidenceObligations: [{ outcome: "both-missing" }],
+        qualityCheckReconciliations: [{ outcome: "both-missing" }],
         pendingItems: [],
         reconcilingItems: [{ outcome: "both-missing" }],
       },
@@ -830,9 +830,9 @@ describe("[SCN-RPT-007] the declared corpus census is recoverable from the ledge
  * Parent: (@SCN-RPT-008).
  */
 describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN occurrences", () => {
-  const simple: EvidenceReconciliation = {
+  const simple: Ledger = {
     scenarioReconciliations: [
-      { scnId: "SCN-A", verdict: "balanced", evidenceObligations: [], pendingItems: [], reconcilingItems: [] },
+      { scnId: "SCN-A", verdict: "balanced", qualityCheckReconciliations: [], pendingItems: [], reconcilingItems: [] },
     ],
   };
   const evidenceObligations = { rawScnOccurrences: 10, scenarioCount: 7, excludedOccurrences: 3, untaggedScenarios: [], proseOnlyCodes: [] };
@@ -884,26 +884,26 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
   // A balance exercising every section: a balanced scenario, two out-of-balance
   // scenarios (one carrying a static-guard watermelon), and a no-evidence-declared
   // warning — so the full section set renders and the ordering can be asserted.
-  const reformatted: EvidenceReconciliation = {
+  const reformatted: Ledger = {
     scenarioReconciliations: [
       {
         scnId: "SCN-LDG-001",
         verdict: "balanced",
-        evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+        qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "satisfied" }],
         pendingItems: [],
         reconcilingItems: [],
       },
       {
         scnId: "SCN-LDG-002",
         verdict: "out-of-balance",
-        evidenceObligations: [{ qualityCheck: "unit", outcome: "missing" }],
+        qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "missing" }],
         pendingItems: [],
         reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
       },
       {
         scnId: "SCN-LNT-001",
         verdict: "out-of-balance",
-        evidenceObligations: [
+        qualityCheckReconciliations: [
           { qualityCheck: "lint", guard: "guard-lint", outcome: "watermelon" },
         ],
         pendingItems: [],
@@ -990,9 +990,9 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
  * Parent: (@SCN-RPT-010) — the evidenceObservations-reconciliation spine.
  */
 describe("[SCN-RPT-010] the markdown report renders the Test volume evidenceObservations reconciliation", () => {
-  const balance: EvidenceReconciliation = {
+  const balance: Ledger = {
     scenarioReconciliations: [
-      { scnId: "SCN-A", verdict: "balanced", evidenceObligations: [], pendingItems: [], reconcilingItems: [] },
+      { scnId: "SCN-A", verdict: "balanced", qualityCheckReconciliations: [], pendingItems: [], reconcilingItems: [] },
     ],
   };
   // A evidenceObservations fixture whose kind-counts sum cleanly: raw 5 unit + 3 integration = 8;
@@ -1113,7 +1113,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     { qualityCheck: "lint", guard: "guard-x", exists: true, enforcedOverRealSource: true },
     { qualityCheck: "lint", guard: "guard-y", exists: true, enforcedOverRealSource: false },
   ];
-  const balance: EvidenceReconciliation = reconcile(scenarios, observations);
+  const balance: Ledger = reconcile(scenarios, observations);
   const evidenceObservations: RuntimeEvidenceObservationKindCounts =
     countRuntimeEvidenceObservationKinds({ observations, scenarios });
 
@@ -1135,7 +1135,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     // And SCN-F's pending obligation posts a one-sided Pending Item, never a reconciled row.
     const scnF = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-F");
     expect(scnF?.pendingItems).toEqual([{ qualityCheck: "unit" }]);
-    expect(scnF?.evidenceObligations).toEqual([]);
+    expect(scnF?.qualityCheckReconciliations).toEqual([]);
   });
 
   it("renders corpus-driven columns — Lint first, then the runtime levels present (e2e/performance absent)", () => {
@@ -1233,9 +1233,9 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
  * Parent: (@SCN-RPT-014) — anchor audit: untagged scenarios.
  */
 describe("[SCN-RPT-014] the markdown report renders untagged scenarios in the declared-corpus census", () => {
-  const balanced: EvidenceReconciliation = {
+  const balanced: Ledger = {
     scenarioReconciliations: [
-      { scnId: "SCN-A", verdict: "balanced", evidenceObligations: [], pendingItems: [], reconcilingItems: [] },
+      { scnId: "SCN-A", verdict: "balanced", qualityCheckReconciliations: [], pendingItems: [], reconcilingItems: [] },
     ],
   };
   const evidenceObligations = {
@@ -1295,9 +1295,9 @@ describe("[SCN-RPT-014] the markdown report renders untagged scenarios in the de
  * Parent: (@SCN-RPT-015) — anchor audit: prose-only codes.
  */
 describe("[SCN-RPT-015] the markdown report renders prose-only @SCN codes in the declared-corpus census", () => {
-  const balanced: EvidenceReconciliation = {
+  const balanced: Ledger = {
     scenarioReconciliations: [
-      { scnId: "SCN-A", verdict: "balanced", evidenceObligations: [], pendingItems: [], reconcilingItems: [] },
+      { scnId: "SCN-A", verdict: "balanced", qualityCheckReconciliations: [], pendingItems: [], reconcilingItems: [] },
     ],
   };
   const evidenceObligations = {
@@ -1349,7 +1349,7 @@ describe("[SCN-RPT-015] the markdown report renders prose-only @SCN codes in the
  * and the whole section omitted on the back-compat (no-guards) call. Markdown-only.
  */
 describe("[SCN-USG-001] the markdown report renders the Static guards section", () => {
-  const emptyBalance: EvidenceReconciliation = { scenarioReconciliations: [] };
+  const emptyBalance: Ledger = { scenarioReconciliations: [] };
 
   it("renders '### Static guards' with the counts line ONLY — the per-guard detail dissolved to the suspense row", () => {
     const md = renderMarkdown(emptyBalance, ctx, undefined, undefined, undefined, {
@@ -1419,13 +1419,13 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the nine leaf outc
   //   NEITHER — SCN-C reconciles to zero on both sides (a both-missing row).
   // byOutcome (derived from every row's evidenceObligations[]): missing 1,
   // cites-no-scenario 1, both-missing 1, everything else 0 — out-of-balance = 3.
-  const spanning: EvidenceReconciliation = {
+  const spanning: Ledger = {
     scenarioReconciliations: [
       {
         scnId: "SCN-A",
         kind: "scenario",
         verdict: "out-of-balance",
-        evidenceObligations: [{ qualityCheck: "unit", outcome: "missing" }],
+        qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "missing" }],
         pendingItems: [],
         reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
       },
@@ -1433,7 +1433,7 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the nine leaf outc
         scnId: "(no scenario)",
         kind: "suspense-scenario",
         verdict: "out-of-balance",
-        evidenceObligations: [
+        qualityCheckReconciliations: [
           { qualityCheck: "unit", outcome: "cites-no-scenario", locator: "tests/stray.test.ts:1" },
         ],
         pendingItems: [],
@@ -1445,7 +1445,7 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the nine leaf outc
         scnId: "SCN-C",
         kind: "scenario",
         verdict: "out-of-balance",
-        evidenceObligations: [{ outcome: "both-missing" }],
+        qualityCheckReconciliations: [{ outcome: "both-missing" }],
         pendingItems: [],
         reconcilingItems: [{ outcome: "both-missing" }],
       },
@@ -1577,13 +1577,13 @@ describe("[SCN-RPT-020] the markdown renders each outcome's canon description, n
   // SCN-B is the degenerate both-missing (neither-side) item; the suspense row carries a
   // credit-side cites-no-scenario item with a locator. The summary `↳` decomposition always
   // renders all nine leaves (zero counts shown), so every outcome's description is on the page.
-  const rich: EvidenceReconciliation = {
+  const rich: Ledger = {
     scenarioReconciliations: [
       {
         scnId: "SCN-A",
         kind: "scenario",
         verdict: "out-of-balance",
-        evidenceObligations: [
+        qualityCheckReconciliations: [
           { qualityCheck: "unit", outcome: "missing" },
           { qualityCheck: "lint", guard: "typecheck", outcome: "watermelon" },
         ],
@@ -1597,7 +1597,7 @@ describe("[SCN-RPT-020] the markdown renders each outcome's canon description, n
         scnId: "SCN-B",
         kind: "scenario",
         verdict: "out-of-balance",
-        evidenceObligations: [{ outcome: "both-missing" }],
+        qualityCheckReconciliations: [{ outcome: "both-missing" }],
         pendingItems: [],
         reconcilingItems: [{ outcome: "both-missing" }],
       },
@@ -1605,7 +1605,7 @@ describe("[SCN-RPT-020] the markdown renders each outcome's canon description, n
         scnId: "(no scenario)",
         kind: "suspense-scenario",
         verdict: "out-of-balance",
-        evidenceObligations: [
+        qualityCheckReconciliations: [
           { qualityCheck: "integration", outcome: "cites-no-scenario", locator: "tests/stray.test.ts:1" },
         ],
         pendingItems: [],
@@ -1715,13 +1715,13 @@ describe("[SCN-PND-010] the markdown report renders a Pending Item distinct from
    *   - SCN-PDX-002 mixed — a genuine missing-unit reconciling item PLUS a deferred Pending Item.
    *   - SCN-PDX-003 clean-balanced — no reconciling items, no pending items (the regression row).
    */
-  const pendingBalance: EvidenceReconciliation = {
+  const pendingBalance: Ledger = {
     scenarioReconciliations: [
       {
         scnId: "SCN-PDX-001",
         kind: "scenario",
         verdict: "balanced",
-        evidenceObligations: [],
+        qualityCheckReconciliations: [],
         reconcilingItems: [],
         pendingItems: [{ qualityCheck: "integration" }],
       },
@@ -1729,7 +1729,7 @@ describe("[SCN-PND-010] the markdown report renders a Pending Item distinct from
         scnId: "SCN-PDX-002",
         kind: "scenario",
         verdict: "out-of-balance",
-        evidenceObligations: [{ qualityCheck: "unit", outcome: "missing" }],
+        qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "missing" }],
         reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
         pendingItems: [{ qualityCheck: "integration" }],
       },
@@ -1737,7 +1737,7 @@ describe("[SCN-PND-010] the markdown report renders a Pending Item distinct from
         scnId: "SCN-PDX-003",
         kind: "scenario",
         verdict: "balanced",
-        evidenceObligations: [],
+        qualityCheckReconciliations: [],
         reconcilingItems: [],
         pendingItems: [],
       },
@@ -1826,13 +1826,13 @@ describe("[SCN-PND-011] the markdown Summary tallies Pending Items separately fr
   // A balance carrying 3 Pending Items (two on SCN-PDX-001, one on SCN-PDX-002) alongside a
   // genuine missing-unit error — so the out-of-balance leaf decomposition renders AND the
   // Pending tally is distinct from it.
-  const pendingBalance: EvidenceReconciliation = {
+  const pendingBalance: Ledger = {
     scenarioReconciliations: [
       {
         scnId: "SCN-PDX-001",
         kind: "scenario",
         verdict: "balanced",
-        evidenceObligations: [],
+        qualityCheckReconciliations: [],
         reconcilingItems: [],
         pendingItems: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }],
       },
@@ -1840,7 +1840,7 @@ describe("[SCN-PND-011] the markdown Summary tallies Pending Items separately fr
         scnId: "SCN-PDX-002",
         kind: "scenario",
         verdict: "out-of-balance",
-        evidenceObligations: [{ qualityCheck: "unit", outcome: "missing" }],
+        qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "missing" }],
         reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
         pendingItems: [{ qualityCheck: "integration" }],
       },
@@ -1885,13 +1885,13 @@ describe("[SCN-PND-011] the markdown Summary tallies Pending Items separately fr
   });
 
   it("omits the tally line entirely when no scenario carries a Pending Item (byte-identical regression)", () => {
-    const noPending: EvidenceReconciliation = {
+    const noPending: Ledger = {
       scenarioReconciliations: [
         {
           scnId: "SCN-PDX-003",
           kind: "scenario",
           verdict: "balanced",
-          evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+          qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "satisfied" }],
           reconcilingItems: [],
           pendingItems: [],
         },
@@ -1943,13 +1943,13 @@ describe("[SCN-PND-012] a balanced-with-pending row is visibly distinguished fro
    *   - SCN-PDD-001 clean-balanced — no reconciling items, no pending items (the em-dash row).
    *   - SCN-PDD-002 balanced-with-pending — a sole deferred obligation, no reconciling items.
    */
-  const contrastBalance: EvidenceReconciliation = {
+  const contrastBalance: Ledger = {
     scenarioReconciliations: [
       {
         scnId: "SCN-PDD-001",
         kind: "scenario",
         verdict: "balanced",
-        evidenceObligations: [],
+        qualityCheckReconciliations: [],
         reconcilingItems: [],
         pendingItems: [],
       },
@@ -1957,7 +1957,7 @@ describe("[SCN-PND-012] a balanced-with-pending row is visibly distinguished fro
         scnId: "SCN-PDD-002",
         kind: "scenario",
         verdict: "balanced",
-        evidenceObligations: [],
+        qualityCheckReconciliations: [],
         reconcilingItems: [],
         pendingItems: [{ qualityCheck: "integration" }],
       },
@@ -2056,13 +2056,13 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
    */
   const balanceWithBroken = (
     item: ScenarioReconciliation["reconcilingItems"][number]
-  ): EvidenceReconciliation => ({
+  ): Ledger => ({
     scenarioReconciliations: [
       {
         scnId: "SCN-HNS-002",
         kind: "scenario",
         verdict: "out-of-balance",
-        evidenceObligations: [{ qualityCheck: "unit", outcome: "missing" }],
+        qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "missing" }],
         reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
         pendingItems: [],
       },
@@ -2070,7 +2070,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
         scnId: "(no scenario)",
         kind: "suspense-scenario",
         verdict: "out-of-balance",
-        evidenceObligations: [],
+        qualityCheckReconciliations: [],
         reconcilingItems: [item],
         pendingItems: [],
       },
@@ -2195,13 +2195,13 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
   it("omits the stamp entirely when the run carries no broken evidence (byte-identical regression)", () => {
     // The omit-when-empty precedent (the Pending Items tally): a SOUND run's report must not gain
     // a stray empty section — it renders byte-identically to the pre-slice output.
-    const sound: EvidenceReconciliation = {
+    const sound: Ledger = {
       scenarioReconciliations: [
         {
           scnId: "SCN-SND-001",
           kind: "scenario",
           verdict: "out-of-balance",
-          evidenceObligations: [{ qualityCheck: "unit", outcome: "missing" }],
+          qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "missing" }],
           reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
           pendingItems: [],
         },
@@ -2244,41 +2244,41 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
   const summaryOpening = (md: string): string =>
     md.slice(md.indexOf("## Summary views"), md.indexOf("### Evidence reconciliation"));
 
-  const balancedRow = (): EvidenceReconciliation["scenarioReconciliations"][number] => ({
+  const balancedRow = (): Ledger["scenarioReconciliations"][number] => ({
     scnId: "SCN-VRD-001",
     kind: "scenario",
     verdict: "balanced",
-    evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+    qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "satisfied" }],
     reconcilingItems: [],
     pendingItems: [],
   });
 
-  const balanced: EvidenceReconciliation = { scenarioReconciliations: [balancedRow()] };
+  const balanced: Ledger = { scenarioReconciliations: [balancedRow()] };
 
   // an adopter's repository 17-36-50Z shape in miniature: every DECLARED row balances, and the only
   // out-of-balance row is the SUSPENSE reconciliation — the run that read as a pass.
-  const outOfBalance: EvidenceReconciliation = {
+  const outOfBalance: Ledger = {
     scenarioReconciliations: [
       balancedRow(),
       {
         scnId: "(no scenario)",
         kind: "suspense-scenario",
         verdict: "out-of-balance",
-        evidenceObligations: [],
+        qualityCheckReconciliations: [],
         reconcilingItems: [{ qualityCheck: "unit", outcome: "cites-no-scenario", locator: "x.test.ts" }],
         pendingItems: [],
       },
     ],
   };
 
-  const broken: EvidenceReconciliation = {
+  const broken: Ledger = {
     scenarioReconciliations: [
       balancedRow(),
       {
         scnId: "(no scenario)",
         kind: "suspense-scenario",
         verdict: "out-of-balance",
-        evidenceObligations: [],
+        qualityCheckReconciliations: [],
         reconcilingItems: [
           { qualityCheck: "unit", outcome: "broken", locator: "tests/harness/x.test.ts", message: "Error: boom" },
         ],
@@ -2287,7 +2287,7 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
     ],
   };
 
-  const balancedWithPending: EvidenceReconciliation = {
+  const balancedWithPending: Ledger = {
     scenarioReconciliations: [
       {
         ...balancedRow(),

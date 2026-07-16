@@ -19,7 +19,7 @@
 import { describe, it, expect } from "vitest";
 import { renderJson } from "./json.js";
 import { renderReportFromJson, renderMarkdown } from "./markdown.js";
-import type { EvidenceReconciliation } from "../model.js";
+import type { Ledger } from "../model.js";
 import type { RunContext } from "../provenance/provenance.js";
 import type { RuntimeEvidenceObservationKindCounts } from "../census/evidenceObservations.js";
 import type { StaticEvidenceObservationKindCounts } from "../census/staticEvidenceObservations.js";
@@ -27,19 +27,19 @@ import type { EvidenceObligations } from "../census/evidenceObligations.js";
 
 // A balance whose CHK feature carries a balanced unit scenario and an out-of-balance integration
 // scenario, so the by-feature cut names "checkout (CHK)" — the coded-title path under test.
-const balance: EvidenceReconciliation = {
+const balance: Ledger = {
   scenarioReconciliations: [
     {
       scnId: "SCN-CHK-001",
       verdict: "balanced",
-      evidenceObligations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+      qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "satisfied" }],
       pendingItems: [],
       reconcilingItems: [],
     },
     {
       scnId: "SCN-CHK-002",
       verdict: "out-of-balance",
-      evidenceObligations: [{ qualityCheck: "integration", outcome: "missing" }],
+      qualityCheckReconciliations: [{ qualityCheck: "integration", outcome: "missing" }],
       pendingItems: [],
       reconcilingItems: [{ qualityCheck: "integration", outcome: "missing" }],
     },
@@ -51,7 +51,7 @@ const balance: EvidenceReconciliation = {
       scnId: "(no scenario)",
       kind: "suspense-scenario",
       verdict: "out-of-balance",
-      evidenceObligations: [
+      qualityCheckReconciliations: [
         { qualityCheck: "unit", outcome: "cites-no-scenario", locator: "src/b.test.ts" },
         { qualityCheck: "lint", guard: "lint:bar", outcome: "cites-no-scenario" },
       ],

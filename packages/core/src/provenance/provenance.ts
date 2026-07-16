@@ -1,6 +1,6 @@
 /**
  * The RunContext — run provenance threaded CLI→renderers as a SIBLING to the pure
- * EvidenceReconciliation, never folded into it. The EvidenceReconciliation model
+ * Ledger, never folded into it. The Ledger model
  * carries declared-vs-observed reconciliation only;
  * run metadata — the input paths/flags used, the target repo, the UTC run
  * timestamp, the source SHA — is a separate concern carried alongside.

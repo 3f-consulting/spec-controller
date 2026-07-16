@@ -32,7 +32,7 @@ import {
 import type {
   Scenario,
   EvidenceObservation,
-  EvidenceReconciliation,
+  Ledger,
   ScenarioReconciliation,
   QualityCheckReconciliation,
 } from "@3f-consulting/spec-controller-core";
@@ -49,7 +49,7 @@ let scenarios: Scenario[];
 let evidenceObservations: EvidenceObservation[];
 let markdown: string;
 // The reconciliation the When produced, retained alongside its rendering (@SCN-LDG-017).
-let reconciliation: EvidenceReconciliation;
+let reconciliation: Ledger;
 
 // A RunContext fixture — the sibling provenance arg renderMarkdown now requires.
 // These @LDG assertions are ROW-SCOPED to the verdict table, so the
@@ -1180,8 +1180,8 @@ const LDG018_BROKEN_FILE = "packages/core/src/collection-failed.test.ts";
 const LDG018_MESSAGE = "Error: Cannot find package '@cucumber/tag-expressions'";
 // The two reconciliations the When produces: the run whose suite failed to collect, and the
 // sound-but-deferring control.
-let ldg018BrokenRun: EvidenceReconciliation;
-let ldg018SoundRun: EvidenceReconciliation;
+let ldg018BrokenRun: Ledger;
+let ldg018SoundRun: Ledger;
 
 // @SCN-LDG-018
 Given(
@@ -1308,12 +1308,12 @@ Then(
   "soundness is derived from the reconciling items, never stored on the reconciliation",
   function () {
     // DERIVED, NEVER STORED (parent 3F-1642's decision of record): no soundness flag is written
-    // onto the EvidenceReconciliation — the same no-drift reason `isBalanced` and
+    // onto the Ledger — the same no-drift reason `isBalanced` and
     // `hasPendingItems` derive. The reconciliation carries EXACTLY its rows.
     assert.deepEqual(
       Object.keys(ldg018BrokenRun).sort(),
       ["scenarioReconciliations"],
-      `expected the EvidenceReconciliation to carry no stored soundness field; got keys ${JSON.stringify(
+      `expected the Ledger to carry no stored soundness field; got keys ${JSON.stringify(
         Object.keys(ldg018BrokenRun)
       )}`
     );
@@ -1473,7 +1473,7 @@ Then(
 
 /** The declared corpus + observations LDG-020's Given builds, and the verdict they reconcile to. */
 let ldg020Scenarios: Scenario[];
-let ldg020Reconciliation: EvidenceReconciliation;
+let ldg020Reconciliation: Ledger;
 
 // @SCN-LDG-020
 Given(
@@ -1529,7 +1529,7 @@ Then("the integration obligation reconciles missing", function () {
     (r: ScenarioReconciliation) => r.scnId === "SCN-AAA-001",
   );
   assert.ok(row, "expected a reconciliation row for SCN-AAA-001");
-  const integration = row.evidenceObligations.find(
+  const integration = row.qualityCheckReconciliations.find(
     (o: QualityCheckReconciliation) => o.qualityCheck === "integration",
   );
   assert.ok(
@@ -1569,7 +1569,7 @@ Then(
  * tool printed "1 scenario(s) carry no @SCN tag" and called the run clean in the same breath.
  */
 
-let ldg021Reconciliation: EvidenceReconciliation;
+let ldg021Reconciliation: Ledger;
 let ldg021UntaggedName: string;
 
 // @SCN-LDG-021
@@ -1631,7 +1631,7 @@ Then(
     assert.equal(row.kind, "scenario", "the untagged scenario is an ORDINARY Scenario Reconciliation");
     assert.equal(row.verdict, "out-of-balance");
     assert.deepEqual(
-      row.evidenceObligations.map((o: QualityCheckReconciliation) => o.outcome),
+      row.qualityCheckReconciliations.map((o: QualityCheckReconciliation) => o.outcome),
       ["no-scn-code"],
       "the obligation has no @SCN code for an observation to link to — the debit twin of cites-no-scenario",
     );
@@ -1651,6 +1651,219 @@ Then(
       `expected the run to be OUT-OF-BALANCE — a scenario carrying no @SCN can never be proven, so ` +
         `the ledger cannot certify this run clean — but isBalanced read it as BALANCED. That is the ` +
         `false-green this scenario exists to close.`,
+    );
+  },
+);
+
+/**
+ * @SCN-LDG-022 (3F-1846) — every evidence observation posts to exactly one ledger account.
+ *
+ * @integration is the TEETH. The @unit arm proves `reconcile` populates the account's
+ * `evidenceObservations`; only driving the FULL credit corpus through in one run shows the
+ * property that matters — EXHAUSTION and UNIQUENESS together, over every credit shape at once.
+ * The bug was never in one branch: it was that the model had nowhere for a posted entry to SIT, so
+ * a credit citing a pending quality-check reconciled to no row and CEASED TO EXIST. A
+ * misclassification should misfile an entry, not vaporise it.
+ *
+ * The assertions are IDENTITY-scoped (each input observation object must be found in exactly one
+ * account), not count-scoped: a count would pass under a double-post that cancelled a drop.
+ */
+
+let ldg022Ledger: Ledger;
+let ldg022Observations: EvidenceObservation[];
+/** The account each credit is EXPECTED to post to, keyed by the observation's identity. */
+let ldg022ExpectedAccount: Map<EvidenceObservation, string>;
+let ldg022PendingCredit: EvidenceObservation;
+
+// @SCN-LDG-022
+Given(
+  "a run whose credits span every shape — satisfied, undemanded, pending-cited, phantom, uncited, broken, a demanded guard and an undemanded guard",
+  function () {
+    // SCN-AAA-003 declares @unitpending — a DEFERRED obligation. The credit citing it below is the
+    // LOAD-BEARING case: it reconciles to NO ROW (the pending obligation is partitioned off before
+    // the match, and the pending pair keeps the credit out of `undemanded`), so before this
+    // scenario it vanished from the model entirely.
+    const source = `@AAA
+Feature: alpha
+
+  @unit @lint=lint:demanded @SCN-AAA-001
+  Scenario: a satisfied credit, and a guard it demands
+    Given a thing
+
+  @unit @SCN-AAA-002
+  Scenario: an undemanded credit at an undeclared check
+    Given a thing
+
+  @unitpending @SCN-AAA-003
+  Scenario: a pending-cited credit that reconciles to no row
+    Given a thing
+`;
+    scenarios = parseScenarios(source);
+
+    const satisfied: EvidenceObservation = {
+      scnId: "SCN-AAA-001", qualityCheck: "unit", status: "passed", locator: "a.test.ts",
+    };
+    // Cites a REAL scenario at a check it never declared → `undemanded`, on SCN-AAA-002's OWN row.
+    const undemanded: EvidenceObservation = {
+      scnId: "SCN-AAA-002", qualityCheck: "integration", status: "passed", locator: "b.test.ts",
+    };
+    // THE LOAD-BEARING CREDIT — cites a PENDING quality-check. Reconciles to no row; posts anyway.
+    ldg022PendingCredit = {
+      scnId: "SCN-AAA-003", qualityCheck: "unit", status: "passed", locator: "c.test.ts",
+    };
+    // Cites an @SCN no feature declares → posts to that PHANTOM account.
+    const phantom: EvidenceObservation = {
+      scnId: "SCN-ZZZ-999", qualityCheck: "unit", status: "passed", locator: "d.test.ts",
+    };
+    // Cites NO scenario → SUSPENSE.
+    const uncited: EvidenceObservation = {
+      scnId: null, qualityCheck: "unit", status: "passed", locator: "e.test.ts",
+    };
+    // The proof NEVER RAN — it named no test, so it cites no scenario → SUSPENSE (@SCN-LDG-017).
+    const broken: EvidenceObservation = {
+      scnId: null, qualityCheck: "unit", status: "failed", broken: true,
+      locator: "f.test.ts", message: "failed to collect",
+    };
+    // A DEMANDED guard credit carries no @SCN, but SCN-AAA-001's `@lint=lint:demanded` obligation
+    // links it by GUARD HANDLE — the same link the reconciler already follows to put the outcome
+    // on that row. It posts to the account that demands it.
+    const demandedGuard: EvidenceObservation = {
+      qualityCheck: "lint", guard: "lint:demanded", exists: true, enforcedOverRealSource: true,
+    };
+    // An UNDEMANDED guard credit: no @lint obligation demands this handle, so it belongs to no
+    // account → SUSPENSE. The other arm of the guard symmetry.
+    const undemandedGuard: EvidenceObservation = {
+      qualityCheck: "lint", guard: "lint:undemanded", exists: true, enforcedOverRealSource: false,
+    };
+
+    ldg022Observations = [
+      satisfied, undemanded, ldg022PendingCredit, phantom, uncited, broken, demandedGuard, undemandedGuard,
+    ];
+    evidenceObservations = ldg022Observations;
+
+    // THE POSTING RULE IS THE CITATION, never the outcome.
+    ldg022ExpectedAccount = new Map<EvidenceObservation, string>([
+      [satisfied, "SCN-AAA-001"],
+      [undemanded, "SCN-AAA-002"],
+      [ldg022PendingCredit, "SCN-AAA-003"],
+      [phantom, "SCN-ZZZ-999"],
+      [uncited, "(no scenario)"],
+      [broken, "(no scenario)"],
+      // The guard symmetry: demanded → the account that demands it; undemanded → suspense.
+      [demandedGuard, "SCN-AAA-001"],
+      [undemandedGuard, "(no scenario)"],
+    ]);
+
+  },
+);
+
+// @SCN-LDG-022
+When("the ledger reconciles that run", function () {
+  ldg022Ledger = reconcile(scenarios, ldg022Observations);
+});
+
+/** Every account an observation posted to — the uniqueness/exhaustion probe. */
+const ldg022AccountsHolding = (obs: EvidenceObservation): string[] =>
+  ldg022Ledger.scenarioReconciliations
+    .filter((r: ScenarioReconciliation) => (r.evidenceObservations ?? []).includes(obs))
+    .map((r: ScenarioReconciliation) => r.scnId);
+
+// @SCN-LDG-022
+Then("every evidence observation posts to exactly one ledger account", function () {
+  for (const obs of ldg022Observations) {
+    const accounts = ldg022AccountsHolding(obs);
+    assert.equal(
+      accounts.length,
+      1,
+      `expected the credit ${JSON.stringify(obs)} to post to EXACTLY ONE ledger account, but it ` +
+        `posted to ${accounts.length} (${JSON.stringify(accounts)}). An entry that posts nowhere ` +
+        `CEASES TO EXIST — the double-entry invariant "every entry posts somewhere" must be ` +
+        `structurally expressible, and a double-post is a second copy of the same fact.`,
+    );
+  }
+  // EXHAUSTION the other way: no account invents a credit the run never produced.
+  const posted = ldg022Ledger.scenarioReconciliations.flatMap(
+    (r: ScenarioReconciliation) => r.evidenceObservations ?? [],
+  );
+  assert.equal(
+    posted.length,
+    ldg022Observations.length,
+    `expected the ledger to hold EXACTLY the ${ldg022Observations.length} credits the run ` +
+      `produced; it holds ${posted.length}`,
+  );
+});
+
+// @SCN-LDG-022
+Then("each credit is findable in the account its citation names", function () {
+  for (const [obs, expected] of ldg022ExpectedAccount) {
+    assert.deepEqual(
+      ldg022AccountsHolding(obs),
+      [expected],
+      `expected the credit ${JSON.stringify(obs)} to be findable in account "${expected}" — the ` +
+        `account is what the credit CITES, never what it reconciles to.`,
+    );
+  }
+});
+
+// @SCN-LDG-022
+Then(
+  "the credit citing a pending quality-check is posted and findable, though it reconciles to no row",
+  function () {
+    const account = ldg022Ledger.scenarioReconciliations.find(
+      (r: ScenarioReconciliation) => r.scnId === "SCN-AAA-003",
+    );
+    assert.ok(account, "expected an account for the pending-declaring scenario SCN-AAA-003");
+    // POSTED — the whole point. Before this scenario, this credit existed nowhere in the model.
+    assert.deepEqual(
+      account.evidenceObservations,
+      [ldg022PendingCredit],
+      `expected the pending-cited credit to POST to SCN-AAA-003's account and be findable there. ` +
+        `This is the load-bearing case: it reconciles to NO ROW, so with nowhere for a posted ` +
+        `entry to sit it simply CEASED TO EXIST. A misclassification should MISFILE an entry, ` +
+        `not vaporise it.`,
+    );
+    // ...AND STILL RECONCILES TO NOTHING. Deliberately NOT fixed here (3F-1831 owns the
+    // false-green): posting is not classifying. The entry becomes VISIBLE before it becomes
+    // CORRECT.
+    assert.deepEqual(
+      account.qualityCheckReconciliations,
+      [],
+      "the pending-cited credit must STILL reconcile to no row — this slice makes it visible, not correct",
+    );
+    assert.deepEqual(account.reconcilingItems, [], "posting must raise no reconciling item");
+    assert.equal(account.verdict, "balanced", "the pending scenario's verdict is unchanged by posting");
+  },
+);
+
+// @SCN-LDG-022
+Then(
+  "the run's verdict and reconciling items are unchanged — posting classifies nothing",
+  function () {
+    // Pinned as LITERALS, never as a re-reconcile of the same inputs (which would compare the
+    // engine to itself and assert nothing). These are the outcomes this corpus produced BEFORE
+    // posting existed, and posting must leave every one of them untouched.
+    assert.deepEqual(
+      ldg022Ledger.scenarioReconciliations.map((r: ScenarioReconciliation) => [
+        r.scnId,
+        r.verdict,
+        r.reconcilingItems.map((i: QualityCheckReconciliation) => i.outcome),
+      ]),
+      [
+        // The demanded guard reconciles `satisfied` on this row — and posts here too.
+        ["SCN-AAA-001", "balanced", []],
+        ["SCN-AAA-002", "out-of-balance", ["missing", "undemanded"]],
+        // The pending-cited credit STILL reconciles to nothing — the false-green is 3F-1831's.
+        ["SCN-AAA-003", "balanced", []],
+        ["SCN-ZZZ-999", "out-of-balance", ["cites-unknown-scenario"]],
+        ["(no scenario)", "out-of-balance", ["broken", "cites-no-scenario", "cites-no-scenario"]],
+      ],
+      "posting must not add, drop or retype a single reconciling item — an entry posts here " +
+        "whatever it later reconciles to. Posting is NOT classifying.",
+    );
+    assert.equal(
+      isBalanced(ldg022Ledger),
+      false,
+      "the whole-run verdict — and so the exit code — is unchanged by this slice",
     );
   },
 );

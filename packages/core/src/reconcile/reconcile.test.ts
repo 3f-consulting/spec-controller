@@ -19,6 +19,8 @@ import type {
   Scenario,
   EvidenceObservation,
   RuntimeEvidenceObservation,
+  Ledger,
+  ScenarioReconciliation,
 } from "../model.js";
 import { parseScenarios } from "../parse/scenarios.js";
 import { parseVitestEvidenceObservations, type VitestJsonReport } from "../parse/vitest.js";
@@ -38,7 +40,7 @@ describe("[SCN-LDG-001] a scenario whose required evidence exists and passes is 
 
     expect(scenario?.verdict).toBe("balanced");
     expect(scenario?.reconcilingItems).toEqual([]);
-    expect(scenario?.evidenceObligations).toEqual([
+    expect(scenario?.qualityCheckReconciliations).toEqual([
       { qualityCheck: "unit", outcome: "satisfied" },
     ]);
   });
@@ -169,7 +171,7 @@ describe("[SCN-LDG-006] a credit citing an undeclared scenario becomes a phantom
     // evidence observation locator; the verdict is out-of-balance (a credit against no evidence obligation).
     expect(phantom?.kind).toBe("phantom-scenario");
     expect(phantom?.verdict).toBe("out-of-balance");
-    expect(phantom?.evidenceObligations).toEqual([
+    expect(phantom?.qualityCheckReconciliations).toEqual([
       { qualityCheck: "unit", outcome: "cites-unknown-scenario", locator: "src/phantom.test.ts" },
     ]);
     expect(phantom?.reconcilingItems).toEqual([
@@ -209,12 +211,12 @@ describe("[SCN-LDG-007] a credit citing no scenario becomes a suspense-scenario 
     expect(row.verdict).toBe("out-of-balance");
     // Every uncited runtime credit (with its locator) THEN each unattributed static-guard,
     // all outcome cites-no-scenario.
-    expect(row.evidenceObligations).toEqual([
+    expect(row.qualityCheckReconciliations).toEqual([
       { qualityCheck: "unit", outcome: "cites-no-scenario", locator: "src/a.test.ts" },
       { qualityCheck: "integration", outcome: "cites-no-scenario", locator: "features/b.feature" },
       { qualityCheck: "lint", guard: "lint:orphan", outcome: "cites-no-scenario" },
     ]);
-    expect(row.reconcilingItems).toEqual(row.evidenceObligations);
+    expect(row.reconcilingItems).toEqual(row.qualityCheckReconciliations);
 
     // The declared SCN-LDG-007 stays a DECLARED-kind row (its unit evidence obligation is missing —
     // the null credit does not match it), never a suspense row.
@@ -255,7 +257,7 @@ describe("[SCN-LDG-008] a credit at an undeclared quality-check on a real scenar
     expect(row?.verdict).toBe("out-of-balance");
     // Its declared unit evidence obligation is missing (no unit credit) AND the integration credit is
     // undemanded, carrying its locator. Both are reconciling items, none ranked.
-    expect(row?.evidenceObligations).toEqual([
+    expect(row?.qualityCheckReconciliations).toEqual([
       { qualityCheck: "unit", outcome: "missing" },
       { qualityCheck: "integration", outcome: "undemanded", locator: "src/undemanded.test.ts" },
     ]);
@@ -351,7 +353,7 @@ describe("[SCN-LDG-009] a declared scenario with zero rows on both sides is repo
     expect(row?.verdict).toBe("out-of-balance");
     // Blank on BOTH sides: the item carries the both-missing outcome and NOTHING else — no
     // qualityCheck (neither a debit evidence obligation nor a credit evidence observation), no guard, no locator.
-    expect(row?.evidenceObligations).toEqual([{ outcome: "both-missing" }]);
+    expect(row?.qualityCheckReconciliations).toEqual([{ outcome: "both-missing" }]);
     expect(row?.reconcilingItems).toEqual([{ outcome: "both-missing" }]);
   });
 
@@ -478,13 +480,13 @@ describe("[SCN-LDG-013] a @unit @e2e scenario proven by BOTH a vitest and a cucu
     expect(scenario?.reconcilingItems).toEqual([]);
     // BOTH obligations satisfied — order-independent (no ranking between tiers), and EXACTLY the
     // two tiers the scenario declared (no phantom third obligation).
-    expect(scenario?.evidenceObligations).toEqual(
+    expect(scenario?.qualityCheckReconciliations).toEqual(
       expect.arrayContaining([
         { qualityCheck: "unit", outcome: "satisfied" },
         { qualityCheck: "e2e", outcome: "satisfied" },
       ])
     );
-    expect(scenario?.evidenceObligations).toHaveLength(2);
+    expect(scenario?.qualityCheckReconciliations).toHaveLength(2);
   });
 });
 
@@ -513,7 +515,7 @@ describe("[SCN-PND-004] a declared-pending obligation reconciles as a one-sided 
       expect(scenario?.pendingItems).toEqual([{ qualityCheck }]);
       // The pending obligation is PARTITIONED OFF: it never becomes a reconciling item, and
       // an only-pending scenario is NOT the degenerate both-missing row (the guard fix).
-      expect(scenario?.evidenceObligations).toEqual([]);
+      expect(scenario?.qualityCheckReconciliations).toEqual([]);
       expect(scenario?.reconcilingItems).toEqual([]);
     });
   }
@@ -540,7 +542,7 @@ describe("[SCN-PND-004] a declared-pending obligation reconciles as a one-sided 
     const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-PND-004");
 
     // Only the unit obligation reconciles; the pending integration one is one-sided.
-    expect(scenario?.evidenceObligations).toEqual([
+    expect(scenario?.qualityCheckReconciliations).toEqual([
       { qualityCheck: "unit", outcome: "satisfied" },
     ]);
     expect(scenario?.pendingItems).toEqual([{ qualityCheck: "integration" }]);
@@ -581,7 +583,7 @@ describe("[SCN-PND-005] the pending declaration governs even when a matching obs
     expect(scenario?.pendingItems).toEqual([{ qualityCheck: "integration" }]);
     // The obligation never reconciled against the match — it did NOT become `satisfied`, and
     // posted no reconciling item (one-sided: nothing is reconciled).
-    expect(scenario?.evidenceObligations).toEqual([]);
+    expect(scenario?.qualityCheckReconciliations).toEqual([]);
     expect(scenario?.reconcilingItems).toEqual([]);
     // The matching observation is NOT flagged `undemanded` anywhere: the pending pair stays
     // DEMANDED (in evidenceObligationPairs), so the pending declaration owns that observation
@@ -638,7 +640,7 @@ describe("[SCN-PND-006] a Pending Item is not a Reconciling Item — a structura
       scenario?.reconcilingItems.some((r) => r.qualityCheck === "integration")
     ).toBe(false);
     expect(
-      scenario?.evidenceObligations.some((r) => r.qualityCheck === "integration")
+      scenario?.qualityCheckReconciliations.some((r) => r.qualityCheck === "integration")
     ).toBe(false);
     // Positive confirmation the deferred obligation IS in the pending category (not dropped).
     expect(scenario?.pendingItems).toEqual([{ qualityCheck: "integration" }]);
@@ -670,7 +672,7 @@ describe("[SCN-PND-007] a scenario whose only exception is a Pending Item has ve
     // returned out-of-balance (the vacuous verdict over an empty list).
     expect(scenario?.verdict).toBe("balanced");
     expect(scenario?.reconcilingItems).toEqual([]);
-    expect(scenario?.evidenceObligations).toEqual([]);
+    expect(scenario?.qualityCheckReconciliations).toEqual([]);
     expect(scenario?.pendingItems).toEqual([{ qualityCheck: "integration" }]);
   });
 
@@ -694,7 +696,7 @@ describe("[SCN-PND-007] a scenario whose only exception is a Pending Item has ve
 
     expect(scenario?.verdict).toBe("balanced");
     expect(scenario?.reconcilingItems).toEqual([]);
-    expect(scenario?.evidenceObligations).toEqual([{ qualityCheck: "unit", outcome: "satisfied" }]);
+    expect(scenario?.qualityCheckReconciliations).toEqual([{ qualityCheck: "unit", outcome: "satisfied" }]);
     expect(scenario?.pendingItems).toEqual([{ qualityCheck: "integration" }]);
   });
 
@@ -745,7 +747,7 @@ describe("[SCN-PND-009] a @unit @integrationpending scenario with a passing unit
     // Coexistence without interference, pinned sharply:
     //   - the unit obligation reconciles satisfied — the scenario's SOLE reconciled evidence
     //     obligation (the pending partition did NOT swallow it).
-    expect(scenario?.evidenceObligations).toEqual([{ qualityCheck: "unit", outcome: "satisfied" }]);
+    expect(scenario?.qualityCheckReconciliations).toEqual([{ qualityCheck: "unit", outcome: "satisfied" }]);
     //   - the deferred integration obligation is EXACTLY one one-sided Pending Item (the unit
     //     reconcile did NOT swallow it).
     expect(scenario?.pendingItems).toEqual([{ qualityCheck: "integration" }]);
@@ -912,8 +914,8 @@ describe("[SCN-PND-022] a deferred scenario declaring no obligations is a Pendin
     // no both-missing reconciling item, and the empty reconciled list reads balanced.
     expect(scenario?.verdict).toBe("balanced");
     expect(scenario?.reconcilingItems).toEqual([]);
-    expect(scenario?.evidenceObligations).toEqual([]);
-    expect(scenario?.evidenceObligations.some((o) => o.outcome === "both-missing")).toBe(false);
+    expect(scenario?.qualityCheckReconciliations).toEqual([]);
+    expect(scenario?.qualityCheckReconciliations.some((o) => o.outcome === "both-missing")).toBe(false);
   });
 
   it("the both-missing guard is unchanged: a truly zero-obligation scenario (no pending) still reconciles both-missing", () => {
@@ -1020,11 +1022,11 @@ describe("[SCN-LDG-017] a broken observation posts a broken suspense item; the s
       const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-HNS-017");
 
       // The scenario's unit obligation is NOT discharged (nor failed) by a suite that never ran.
-      expect(scenario?.evidenceObligations).toEqual([{ qualityCheck: "unit", outcome: "missing" }]);
+      expect(scenario?.qualityCheckReconciliations).toEqual([{ qualityCheck: "unit", outcome: "missing" }]);
       // And NOWHERE in the whole reconciliation does the broken credit surface as satisfied or
       // failing — across every row, declared and credit-side alike.
       const everyOutcome = balance.scenarioReconciliations.flatMap((s) =>
-        s.evidenceObligations.map((o) => o.outcome)
+        s.qualityCheckReconciliations.map((o) => o.outcome)
       );
       expect(everyOutcome).not.toContain("satisfied");
       expect(everyOutcome).not.toContain("failing");
@@ -1076,7 +1078,7 @@ describe("[SCN-LDG-019] THE FAIL-SAFE GETS TEETH: a broken observation that CITE
       const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-HNS-020");
 
       // The cited obligation is NOT discharged, and NOT failed, by a step that never ran.
-      expect(scenario?.evidenceObligations).toEqual([
+      expect(scenario?.qualityCheckReconciliations).toEqual([
         { qualityCheck: "integration", outcome: "missing" },
       ]);
       expect(scenario?.verdict).toBe("out-of-balance");
@@ -1091,7 +1093,7 @@ describe("[SCN-LDG-019] THE FAIL-SAFE GETS TEETH: a broken observation that CITE
       // Across EVERY row — declared, phantom and suspense alike — the broken credit never reads as
       // discharged or failed.
       const everyOutcome = balance.scenarioReconciliations.flatMap((s) =>
-        s.evidenceObligations.map((o) => o.outcome)
+        s.qualityCheckReconciliations.map((o) => o.outcome)
       );
       expect(everyOutcome).not.toContain("satisfied");
       expect(everyOutcome).not.toContain("failing");
@@ -1166,7 +1168,7 @@ describe("[SCN-LDG-021] a scenario declaring no @SCN reconciles no-scn-code on i
     // ORDINARY, not phantom and not suspense: the scenario exists and cucumber runs it.
     expect(row!.kind).toBe("scenario");
     expect(row!.verdict).toBe("out-of-balance");
-    expect(row!.evidenceObligations.map((o) => o.outcome)).toEqual(["no-scn-code"]);
+    expect(row!.qualityCheckReconciliations.map((o) => o.outcome)).toEqual(["no-scn-code"]);
   });
 
   it("makes the whole run out-of-balance — a scenario the ledger cannot link is never clean", () => {
@@ -1197,5 +1199,107 @@ describe("[SCN-LDG-021] a scenario declaring no @SCN reconciles no-scn-code on i
 
     // Omitted, and explicitly empty, must both reconcile exactly as before.
     expect(reconcile(declared, observed, [])).toEqual(reconcile(declared, observed));
+  });
+});
+
+/**
+ * @SCN-LDG-022 (3F-1846) — every evidence observation posts to exactly one ledger account.
+ *
+ * The @unit arm: `reconcile` populates each account's `evidenceObservations` with the credits that
+ * CITE it. The @integration arm (tests/steps/ledger.steps.ts) drives the whole credit corpus at
+ * once for the exhaustion/uniqueness property; these prove the per-shape routing in isolation.
+ */
+describe("[SCN-LDG-022] reconcile — every evidence observation posts to exactly one ledger account", () => {
+  const declared: Scenario[] = [
+    { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+    { scnId: "SCN-AAA-002", evidenceObligations: [{ qualityCheck: "unit" }] },
+    { scnId: "SCN-AAA-003", evidenceObligations: [{ qualityCheck: "unit", pending: true }] },
+  ];
+
+  const accountFor = (ledger: Ledger, scnId: string): ScenarioReconciliation | undefined =>
+    ledger.scenarioReconciliations.find((r) => r.scnId === scnId);
+
+  it("posts a matched credit to the account it cites", () => {
+    const credit: EvidenceObservation = { scnId: "SCN-AAA-001", qualityCheck: "unit", status: "passed" };
+    const ledger = reconcile(declared, [credit]);
+    expect(accountFor(ledger, "SCN-AAA-001")?.evidenceObservations).toEqual([credit]);
+  });
+
+  it("posts an undemanded credit to the real account it cites, not to suspense", () => {
+    // Cites a REAL scenario at a check it never declared. It reconciles `undemanded` — and posts
+    // to the account it CITES, because the account is the citation, never the outcome.
+    const credit: EvidenceObservation = { scnId: "SCN-AAA-002", qualityCheck: "integration", status: "passed" };
+    const ledger = reconcile(declared, [credit]);
+    expect(accountFor(ledger, "SCN-AAA-002")?.evidenceObservations).toEqual([credit]);
+    expect(accountFor(ledger, "(no scenario)")).toBeUndefined();
+  });
+
+  it("posts a credit citing a PENDING quality-check, though it reconciles to no row", () => {
+    // THE LOAD-BEARING CASE. This credit produces no QualityCheckReconciliation at all: the
+    // pending obligation is partitioned off before the match, and the pending pair keeps the
+    // credit out of `undemanded`. With nowhere for a posted entry to sit it CEASED TO EXIST.
+    const credit: EvidenceObservation = { scnId: "SCN-AAA-003", qualityCheck: "unit", status: "passed" };
+    const account = accountFor(reconcile(declared, [credit]), "SCN-AAA-003");
+    expect(account?.evidenceObservations).toEqual([credit]);
+    // ...and it STILL reconciles to nothing. Posting is not classifying; 3F-1831 owns the fix.
+    expect(account?.qualityCheckReconciliations).toEqual([]);
+    expect(account?.verdict).toBe("balanced");
+  });
+
+  it("posts a credit citing an unknown @SCN to that phantom account", () => {
+    const credit: EvidenceObservation = { scnId: "SCN-ZZZ-999", qualityCheck: "unit", status: "passed" };
+    const ledger = reconcile(declared, [credit]);
+    expect(accountFor(ledger, "SCN-ZZZ-999")?.evidenceObservations).toEqual([credit]);
+  });
+
+  it("posts an uncited credit to suspense", () => {
+    const credit: EvidenceObservation = { scnId: null, qualityCheck: "unit", status: "passed" };
+    const ledger = reconcile(declared, [credit]);
+    expect(accountFor(ledger, "(no scenario)")?.evidenceObservations).toEqual([credit]);
+  });
+
+  it("posts a broken credit to suspense, whatever scnId it structurally carries", () => {
+    // The fail-safe: `broken` is taken FIRST, on the flag — a proof that never ran cites no
+    // scenario even when it carries one. SUSPENSE is its only account.
+    const credit: RuntimeEvidenceObservation = {
+      scnId: "SCN-AAA-001", qualityCheck: "unit", status: "failed", broken: true,
+    };
+    const ledger = reconcile(declared, [credit]);
+    expect(accountFor(ledger, "(no scenario)")?.evidenceObservations).toEqual([credit]);
+    expect(accountFor(ledger, "SCN-AAA-001")?.evidenceObservations).toEqual([]);
+  });
+
+  it("posts a DEMANDED guard credit to the account that demands it", () => {
+    // A guard carries no @SCN, so `byScn` cannot hold it — its link to an account is the GUARD
+    // HANDLE, exactly the link `reconcileEvidenceObligation` already follows to reconcile a lint
+    // obligation onto this row. Posting it here MIRRORS the reconciler: the credit sits on the
+    // account the outcome already lands on.
+    const demanded: Scenario[] = [
+      { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "lint", guard: "lint:x" }] },
+    ];
+    const credit: EvidenceObservation = {
+      qualityCheck: "lint", guard: "lint:x", exists: true, enforcedOverRealSource: true,
+    };
+    const ledger = reconcile(demanded, [credit]);
+    expect(accountFor(ledger, "SCN-AAA-001")?.evidenceObservations).toEqual([credit]);
+    // A demanded guard is NOT suspense — suspense is for credits citing no scenario at all.
+    expect(accountFor(ledger, "(no scenario)")).toBeUndefined();
+  });
+
+  it("posts an UNDEMANDED guard credit to suspense — it cites no scenario", () => {
+    // The other arm of the symmetry: no @lint obligation demands this handle, so it belongs to no
+    // account and lands in suspense, where it already reconciles `cites-no-scenario`.
+    const credit: EvidenceObservation = {
+      qualityCheck: "lint", guard: "lint:nobody-demands-this", exists: true, enforcedOverRealSource: false,
+    };
+    const ledger = reconcile(declared, [credit]);
+    expect(accountFor(ledger, "(no scenario)")?.evidenceObservations).toEqual([credit]);
+  });
+
+  it("sets evidenceObservations explicitly on every account, even when nothing posts", () => {
+    const ledger = reconcile(declared, []);
+    for (const account of ledger.scenarioReconciliations) {
+      expect(account.evidenceObservations).toEqual([]);
+    }
   });
 });

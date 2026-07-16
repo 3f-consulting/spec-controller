@@ -135,7 +135,7 @@ Feature: Ledger over declared-vs-observed evidence
     # The negative twin (@SCN-LDG-010): a ZERO-evidence obligation declared scenario whose @SCN IS cited
     # by a stray credit. It has an evidence observation at an undeclared quality-check, so it is undemanded
     # — NOT both-missing. This pins the general case and the both-missing boundary: detection keys
-    # on rows-emitted, not on evidenceObligations.length === 0 (both-missing itself lands in LDG-009).
+    # on rows-emitted, not on qualityCheckReconciliations.length === 0 (both-missing itself lands in LDG-009).
     @unit @integration @SCN-LDG-010
     Scenario: a zero-evidence obligation scenario cited by a stray credit is undemanded, not both-missing
       Given a zero-evidence obligation declared scenario "SCN-LDG-010"
@@ -152,7 +152,7 @@ Feature: Ledger over declared-vs-observed evidence
     to balance in either direction. It posts one degenerate Quality Check Reconciliation,
     blank on both sides, outcome both-missing (label: "Evidence Observation and
     Evidence Obligation are both missing for the Scenario."), verdict out of balance. Detection keys
-    on the reconciler emitting NOTHING either way — NOT a hard evidenceObligations.length
+    on the reconciler emitting NOTHING either way — NOT a hard qualityCheckReconciliations.length
     === 0 map: a zero-evidence obligation scenario cited by a stray credit is undemanded (LDG-010),
     not both-missing. This retires the no-evidence-declared warning — the warnings section,
     JSON key, and ScenarioWarning type dissolve; the scenario's new home is this row.
@@ -441,3 +441,42 @@ Feature: Ledger over declared-vs-observed evidence
       When the ledger reconciles that corpus
       Then the untagged scenario has its own out-of-balance row, reconciling no-scn-code
       And the run is out-of-balance — a scenario the ledger cannot link is never a clean run
+
+  # EVERY ENTRY POSTS SOMEWHERE (@SCN-LDG-022, 3F-1846). The Ledger is the accounts with their
+  # POSTED ENTRIES — canon's "evidence obligations (debits) and evidence observations (credits)
+  # organised by real or invented scenario, keyed by quality-check" (double-entry-manifesto,
+  # Ledger entry + chain step 4). The model had inputs (scenarios, observations) and outputs (rows
+  # carrying outcomes) and NO ENTRIES IN BETWEEN: with nowhere for a posted entry to sit, an entry
+  # either became a Quality Check Reconciliation or CEASED TO EXIST.
+  #
+  # POSTING IS NOT CLASSIFYING. An entry posts here whatever it later reconciles to. The
+  # load-bearing case is the credit citing a PENDING quality-check, which reconciles to NO ROW: it
+  # posts and is findable ANYWAY. Its misclassification is DELIBERATELY NOT FIXED here — the
+  # verdict and exit code are unchanged by this scenario (3F-1831 folds the census over this
+  # ledger, and the false-green then has nowhere to live). A misclassification should MISFILE an
+  # entry, not vaporise it.
+  #
+  # THE ACCOUNT IS THE SCENARIO RECONCILIATION (canon: "bookkeeping term: Account"). The same
+  # accounts live in the ledger before and after balancing off, gaining their verdict IN PLACE —
+  # this is NOT a pre-reconciliation input stage.
+  #
+  # THE POSTING RULE IS THE LINK TO AN ACCOUNT, never the outcome. A credit citing a declared @SCN
+  # posts to that scenario's account; one citing an unknown @SCN posts to that phantom account; one
+  # citing NO scenario — uncited, or broken (it named no test, so it cites nothing whatever it
+  # structurally carries) — posts to SUSPENSE.
+  #
+  # A GUARD credit carries no @SCN, so its link is the GUARD HANDLE rather than a citation: the
+  # same link the reconciler already follows to put a lint obligation's outcome on the demanding
+  # row. So the symmetry completes — a DEMANDED guard posts to the account that demands it; an
+  # UNDEMANDED guard belongs to no account and posts to SUSPENSE, where it already reconciles
+  # `cites-no-scenario`. Every credit, exactly one account.
+  Rule: every evidence observation posts to exactly one ledger account, whatever its outcome
+
+    @unit @integration @SCN-LDG-022
+    Scenario: every evidence observation posts to exactly one ledger account and is findable there
+      Given a run whose credits span every shape — satisfied, undemanded, pending-cited, phantom, uncited, broken, a demanded guard and an undemanded guard
+      When the ledger reconciles that run
+      Then every evidence observation posts to exactly one ledger account
+      And each credit is findable in the account its citation names
+      And the credit citing a pending quality-check is posted and findable, though it reconciles to no row
+      And the run's verdict and reconciling items are unchanged — posting classifies nothing

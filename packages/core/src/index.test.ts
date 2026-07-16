@@ -105,7 +105,7 @@ const EXPECTED_TYPE_EXPORTS: readonly string[] = [
   "ScenarioKind",
   "QualityCheckReconciliation",
   "ScenarioReconciliation",
-  "EvidenceReconciliation",
+  "Ledger",
   // Evidence-obligation census (census/evidenceObligations.ts)
   "EvidenceObligations",
   "UntaggedScenario",
@@ -118,8 +118,8 @@ const EXPECTED_TYPE_EXPORTS: readonly string[] = [
   "VitestJsonReport",
   "CucumberJsonReport",
   "PackageJsonScripts",
-  // Report model (assemble/report.ts)
-  "Report",
+  // Evidence Reconciliation — layer 1, the assembled statement (assemble/report.ts)
+  "EvidenceReconciliation",
   "ReportMetadata",
   "Summary",
   "ScenarioReconciliationTotals",
@@ -174,7 +174,7 @@ const EXPECTED_VALUE_EXPORTS: readonly string[] = [
   "runningStaticGuards",
   "ciRunCommands",
   "commandInvokesScript",
-  // Report model (assemble/report.ts)
+  // Evidence Reconciliation — layer 1, the assembled statement (assemble/report.ts)
   "assembleReport",
   // Render (render/*)
   "renderJson",

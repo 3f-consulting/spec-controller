@@ -434,7 +434,7 @@ export function runBalance(argv: string[]): void {
   const featureNames = readFeatureNames(args["features"]);
 
   // Build the run provenance ONCE (project design §1) — a sibling RunContext, the
-  // EvidenceReconciliation staying pure — reusing the existing runStart. The target is the
+  // Ledger staying pure — reusing the existing runStart. The target is the
   // operator's --target VERBATIM (unknown-target on omit; Fork A — no
   // resolution, no basename guessing). Source SHA via the read-only target read, with
   // --source-sha as the override (resolveSourceSha).
