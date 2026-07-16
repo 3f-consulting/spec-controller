@@ -72,14 +72,14 @@ const evidenceObligations: EvidenceObligations = {
 describe("[SCN-RMD-001] assembleReport builds one whole-document report model", () => {
   it("carries the sections as top-level keys in document order", () => {
     const report = assembleReport(balance, ctx, evidenceObligations) as unknown as Record<string, unknown>;
-    // runProvenance opens; summary + evidenceObligations follow; evidenceReconciliation is the body.
-    // The retired `warnings` key is GONE — a zero-evidence scenario is a
-    // both-missing row in evidenceReconciliation, not a separate top-level axis.
+    // runProvenance opens; the summary's totals then the LEDGER's detail (chain step 6, RMD-002);
+    // the evidenceObligations census follows. The retired `warnings` key is GONE — a zero-evidence
+    // scenario is a both-missing row in the ledger, not a separate top-level axis.
     expect(Object.keys(report)).toEqual([
       "runProvenance",
       "summary",
+      "ledger",
       "evidenceObligations",
-      "evidenceReconciliation",
     ]);
     expect(report).not.toHaveProperty("warnings");
   });
@@ -196,7 +196,7 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
   it("carries no warnings key — the retired authoring-quality axis", () => {
     const report = assembleReport(balance, ctx) as unknown as Record<string, unknown>;
     expect(report).not.toHaveProperty("warnings");
-    expect((report.evidenceReconciliation as unknown[])).toHaveLength(2);
+    expect(((report.ledger as { scenarioReconciliations: unknown[] }).scenarioReconciliations)).toHaveLength(2);
   });
 
   it("renderJson is a glue-free JSON.stringify of the assembled report", () => {
@@ -211,33 +211,86 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
 });
 
 /**
- * Unit tests for the evidenceReconciliation section (@SCN-RMD-002) — the revert.
+ * Unit tests for the LEDGER section (@SCN-RMD-002) — stage 1's READER (3F-1848).
  *
  * Bidirectional evidence (Evidence Manifesto §9): the describe carries @SCN-RMD-002.
  *
- * The per-scenario reconciliation serialises under the top-level key `evidenceReconciliation` (the
- * manifesto's "per-scenario reconciliation is the trial balance"), NOT `scenarios`. HELD: each
- * reconciled evidenceObligation keeps its `outcome` field verbatim (the outcome → outcome rename is deferred
- * to slice 5), so this asserts `outcome` with the reconciliation-outcome literals survives.
+ * The 3F-1138 error ONE LAYER DOWN. The document IS the Evidence Reconciliation, so a root key
+ * named `evidenceReconciliation` was the layer naming itself inside itself — and the grid it names
+ * is, by canon, the LEDGER. Root now reads as chain step 6 literally: "The summary has the totals
+ * and the ledger the detail."
+ *
+ * The "not scenarios" half of the 3F-1138 revert HOLDS, kept verbatim — a phantom / suspense is
+ * not a scenario. HELD too: each quality check reconciliation keeps its `outcome` field verbatim
+ * (the outcome-value rationalisation is still deferred).
+ *
+ * Code identifiers and JSON keys are ONE vocabulary (manifesto line 3), so the model's
+ * `interface Ledger { scenarioReconciliations }` and the JSON `"ledger": { "scenarioReconciliations":
+ * [...] }` agree as OBJECTS — a Ledger that holds entries cannot serialise as a bare array of rows.
  */
-describe("[SCN-RMD-002] the per-scenario reconciliation serialises under evidenceReconciliation", () => {
-  it("carries the per-scenario reconciliation under evidenceReconciliation, not scenarios", () => {
+describe("[SCN-RMD-002] the ledger serialises under the top-level key ledger, beside summary", () => {
+  it("carries the grid of Scenario Reconciliations under ledger — never evidenceReconciliation, never scenarios", () => {
     const parsed = JSON.parse(renderJson(balance, ctx));
-    expect(Array.isArray(parsed.evidenceReconciliation)).toBe(true);
-    expect(parsed.evidenceReconciliation).toHaveLength(2);
-    expect(parsed.evidenceReconciliation[0].scnId).toBe("SCN-RMD-001");
-    // The 1138 revert: the per-scenario reconciliation is NOT under `scenarios` any more.
+    // ONE VOCABULARY: an OBJECT mirroring `interface Ledger { scenarioReconciliations }`, never a
+    // bare array of rows.
+    expect(Array.isArray(parsed.ledger)).toBe(false);
+    expect(Array.isArray(parsed.ledger.scenarioReconciliations)).toBe(true);
+    expect(parsed.ledger.scenarioReconciliations).toHaveLength(2);
+    expect(parsed.ledger.scenarioReconciliations[0].scnId).toBe("SCN-RMD-001");
+    // The layer no longer names itself inside itself.
+    expect(parsed).not.toHaveProperty("evidenceReconciliation");
+    // The 1138 revert's surviving half: the grid is NOT under `scenarios` — a phantom / suspense
+    // is not a scenario.
     expect(parsed).not.toHaveProperty("scenarios");
   });
 
-  it("carries each evidence obligation's outcome field with the reconciliation-outcome literals", () => {
+  it("carries the ledger BESIDE summary — chain step 6: the summary has the totals and the ledger the detail", () => {
     const parsed = JSON.parse(renderJson(balance, ctx));
-    const outOfBalance = parsed.evidenceReconciliation.find(
+    // Both at ROOT, and `ledger` follows `summary` in document order — the totals, then the detail.
+    const keys = Object.keys(parsed);
+    expect(keys).toContain("summary");
+    expect(keys).toContain("ledger");
+    expect(keys.indexOf("ledger")).toBeGreaterThan(keys.indexOf("summary"));
+  });
+
+  it("carries each account's posted evidence obligations and evidence observations alongside its reconciling items", () => {
+    // THE READER (parent ruling 2): the posted entries are visible ON THE ARTEFACT, so the
+    // double-entry invariant is checkable there — not inferred from which rows survived.
+    //
+    // Driven from REAL reconcile output, not the hand-built `balance` above (evidence-manifesto
+    // §11A): the posted entries are what `reconcile` puts on the account, and the shared fixture
+    // predates them (the fields are optional for exactly that back-compat, ABSENCE ≡ []). This is
+    // also the scenario's Given — "accounts CARRY posted entries" — so a fixture without them
+    // would not exercise it.
+    const feature = [
+      "@AAA",
+      "Feature: alpha",
+      "",
+      "  @unit @SCN-AAA-001",
+      "  Scenario: a satisfied credit",
+      "    Given a thing",
+    ].join("\n");
+    const credit = { scnId: "SCN-AAA-001", qualityCheck: "unit" as const, status: "passed" as const };
+    const real = reconcile(parseScenarios(feature), [credit]);
+    const parsed = JSON.parse(renderJson(real, ctx));
+    const account = parsed.ledger.scenarioReconciliations.find(
+      (s: { scnId: string }) => s.scnId === "SCN-AAA-001"
+    );
+    // The DEBIT it declared (@SCN-LDG-023) and the CREDIT that cites it (@SCN-LDG-022), both
+    // findable on the artefact, beside the reconciling items they balance off to.
+    expect(account.evidenceObligations).toEqual([{ qualityCheck: "unit" }]);
+    expect(account.evidenceObservations).toEqual([credit]);
+    expect(account.reconcilingItems).toEqual([]);
+  });
+
+  it("carries each quality check reconciliation's outcome field with the reconciliation-outcome literals", () => {
+    const parsed = JSON.parse(renderJson(balance, ctx));
+    const outOfBalance = parsed.ledger.scenarioReconciliations.find(
       (s: { scnId: string }) => s.scnId === "SCN-RMD-002"
     );
     // The flat quality-check coordinate: a runtime sub-row's keys are exactly
     // qualityCheck / outcome (the retired kind / level gone); the outcome literal survives
-    // (the outcome-value rename is deferred to slice 2).
+    // (the outcome-value rename is still deferred).
     expect(outOfBalance.qualityCheckReconciliations[0].outcome).toBe("missing");
     expect(Object.keys(outOfBalance.qualityCheckReconciliations[0]).sort()).toEqual(
       ["qualityCheck", "outcome"].sort()
@@ -585,16 +638,18 @@ describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single qualit
   ].join("\n");
   const report = () =>
     JSON.parse(JSON.stringify(assembleReport(reconcile(parseScenarios(feature), []), ctx))) as {
-      evidenceReconciliation: Array<{
-        qualityCheckReconciliations: Array<Record<string, unknown>>;
-        reconcilingItems: Array<Record<string, unknown>>;
-      }>;
+      ledger: {
+        scenarioReconciliations: Array<{
+          qualityCheckReconciliations: Array<Record<string, unknown>>;
+          reconcilingItems: Array<Record<string, unknown>>;
+        }>;
+      };
       summary: { evidenceObligations: Record<string, unknown> };
     };
 
   it("keys each evidence sub-row by a single qualityCheck field with no kind or level", () => {
     const r = report();
-    const qualityCheckReconciliations = r.evidenceReconciliation.flatMap((s) => [...s.qualityCheckReconciliations, ...s.reconcilingItems]);
+    const qualityCheckReconciliations = r.ledger.scenarioReconciliations.flatMap((s) => [...s.qualityCheckReconciliations, ...s.reconcilingItems]);
     expect(qualityCheckReconciliations.length).toBeGreaterThan(0);
     for (const row of qualityCheckReconciliations) {
       expect(typeof row.qualityCheck).toBe("string");
@@ -605,7 +660,7 @@ describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single qualit
 
   it("carries a lint sub-row's qualityCheck as 'lint' alongside its guard", () => {
     const r = report();
-    const lint = r.evidenceReconciliation
+    const lint = r.ledger.scenarioReconciliations
       .flatMap((s) => s.qualityCheckReconciliations)
       .find((o) => o.qualityCheck === "lint");
     expect(lint).toBeDefined();
@@ -615,7 +670,7 @@ describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single qualit
 
   it("keys a runtime sub-row by its level as the quality-check", () => {
     const r = report();
-    const runtime = r.evidenceReconciliation
+    const runtime = r.ledger.scenarioReconciliations
       .flatMap((s) => s.qualityCheckReconciliations)
       .find((o) => o.qualityCheck === "unit");
     expect(runtime).toBeDefined();

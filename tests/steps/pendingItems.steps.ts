@@ -974,8 +974,8 @@ Then(
     // The tally equals the TOTAL Pending Items across the reconciled rows (one per deferred
     // obligation), NOT the number of scenarios carrying pending. @SCN-PDT-001 alone carries two,
     // so items (3) exceeds scenarios-carrying-pending (2) — the load-bearing distinction.
-    const totalItems = summaryReport.evidenceReconciliation.flatMap((s) => s.pendingItems ?? []).length;
-    const scenariosCarryingPending = summaryReport.evidenceReconciliation.filter(
+    const totalItems = summaryReport.ledger.scenarioReconciliations.flatMap((s) => s.pendingItems ?? []).length;
+    const scenariosCarryingPending = summaryReport.ledger.scenarioReconciliations.filter(
       (s) => (s.pendingItems ?? []).length > 0
     ).length;
     assert.equal(

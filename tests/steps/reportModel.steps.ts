@@ -105,7 +105,7 @@ Then(
     assert.ok(!("provenance" in parsed), `expected NO legacy "provenance" key; got keys: ${Object.keys(parsed).join(", ")}`);
     assert.ok(parsed.evidenceObligations, `expected a evidenceObligations section`);
     // The `warnings` top-level key was RETIRED entirely — a zero-evidence scenario is
-    // a both-missing row in evidenceReconciliation, not a separate axis.
+    // a both-missing row in the ledger, not a separate axis.
     assert.ok(!("warnings" in parsed), `expected NO retired "warnings" key; got keys: ${Object.keys(parsed).join(", ")}`);
     // Document order: runProvenance and summary lead the document.
     const keys = Object.keys(parsed);
@@ -144,10 +144,10 @@ Then(
           suspense: number;
         };
       };
-      evidenceReconciliation: { kind?: string; verdict: string }[];
+      ledger: { scenarioReconciliations: { kind?: string; verdict: string }[] };
     };
     const totals = parsed.summary.scenarioReconciliations;
-    const rows = parsed.evidenceReconciliation;
+    const rows = parsed.ledger.scenarioReconciliations;
 
     // The total is EVERY row — declared + phantom + suspense — not the declared rows alone.
     assert.equal(
@@ -240,7 +240,7 @@ Then(
     };
     assert.ok(obs, `expected an evidenceObservations section (not "evidence observation"); got keys: ${Object.keys(rmd003Json).join(", ")}`);
     assert.ok(!("evidence observation" in rmd003Json), `expected NO legacy "evidence observation" key`);
-    const evidenceReconciliation = rmd003Json.evidenceReconciliation as {
+    const evidenceReconciliation = (rmd003Json.ledger as { scenarioReconciliations: unknown }).scenarioReconciliations as {
       scnId: string;
       kind?: string;
       qualityCheckReconciliations: { outcome: string; locator?: string }[];
@@ -249,7 +249,7 @@ Then(
     // The fixture's 1 phantom (SCN-PHANTOM-999) surfaces as a phantom row carrying the locator.
     assert.ok(!("phantomEvidenceObservations" in obs), "expected the phantom detail array to have dissolved from the section");
     const phantom = evidenceReconciliation.find((s) => s.scnId === "SCN-PHANTOM-999");
-    assert.ok(phantom, "expected a phantom-scenario row for SCN-PHANTOM-999 in evidenceReconciliation");
+    assert.ok(phantom, "expected a phantom-scenario row for SCN-PHANTOM-999 in the ledger");
     assert.equal(phantom!.kind, "phantom-scenario", "expected kind phantom-scenario");
     const phantomItem = phantom!.qualityCheckReconciliations[0];
     assert.equal(phantomItem?.outcome, "cites-unknown-scenario", "expected the cites-unknown-scenario outcome");
@@ -262,7 +262,7 @@ Then(
     // credits surface as cites-no-scenario items on the "(no scenario)" row, each with a locator.
     assert.ok(!("suspenseEvidenceObservations" in obs), "expected the suspense detail array to have dissolved from the section");
     const suspense = evidenceReconciliation.find((s) => s.scnId === "(no scenario)");
-    assert.ok(suspense, "expected a suspense-scenario row (no scenario) in evidenceReconciliation");
+    assert.ok(suspense, "expected a suspense-scenario row (no scenario) in the ledger");
     assert.equal(suspense!.kind, "suspense-scenario", "expected kind suspense-scenario");
     const uncited = suspense!.qualityCheckReconciliations.filter((o) => o.outcome === "cites-no-scenario");
     assert.equal(uncited.length, 2, `expected 2 cites-no-scenario items on the suspense row; got ${JSON.stringify(suspense!.qualityCheckReconciliations)}`);
@@ -625,12 +625,12 @@ When("the report is serialised to spec-reconciliation.json", function () {
 });
 
 Then("each evidence sub-row is keyed by one quality-check field with no kind or level", function () {
-  const evidenceReconciliation = rmd008Json.evidenceReconciliation as Array<{
+  const evidenceReconciliation = (rmd008Json.ledger as { scenarioReconciliations: unknown }).scenarioReconciliations as Array<{
     scnId: string;
     qualityCheckReconciliations: Array<Record<string, unknown>>;
     reconcilingItems: Array<Record<string, unknown>>;
   }>;
-  assert.ok(Array.isArray(evidenceReconciliation) && evidenceReconciliation.length > 0, `expected a non-empty evidenceReconciliation; got ${JSON.stringify(rmd008Json.evidenceReconciliation)}`);
+  assert.ok(Array.isArray(evidenceReconciliation) && evidenceReconciliation.length > 0, `expected a non-empty ledger; got ${JSON.stringify(rmd008Json.ledger)}`);
   const qualityCheckReconciliations = evidenceReconciliation.flatMap((s) => [...s.qualityCheckReconciliations, ...s.reconcilingItems]);
   assert.ok(qualityCheckReconciliations.length > 0, "expected at least one evidence sub-row");
   for (const row of qualityCheckReconciliations) {
@@ -644,7 +644,7 @@ Then("each evidence sub-row is keyed by one quality-check field with no kind or 
 });
 
 Then('a lint sub-row carries its quality-check "lint" alongside its guard', function () {
-  const evidenceReconciliation = rmd008Json.evidenceReconciliation as Array<{ qualityCheckReconciliations: Array<Record<string, unknown>> }>;
+  const evidenceReconciliation = (rmd008Json.ledger as { scenarioReconciliations: unknown }).scenarioReconciliations as Array<{ qualityCheckReconciliations: Array<Record<string, unknown>> }>;
   const lintRows = evidenceReconciliation
     .flatMap((s) => s.qualityCheckReconciliations)
     .filter((o) => o.qualityCheck === "lint");

@@ -53,23 +53,31 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
       And it parses to one object carrying runProvenance, summary, and evidenceObligations as top-level sections in document order
       And its summary totals count every Scenario Reconciliation, so the tally reads out-of-balance and agrees with the run's exit code
 
-  Rule: the per-scenario reconciliation is the trial balance
+  Rule: the ledger is the detail beside the summary's totals
 
-    The revert on the JSON surface (@SCN-RMD-002
-    — "the per-scenario reconciliation is the trial balance, not the ledger"). The per-scenario
-    reconciliation serialises under the top-level key evidenceReconciliation (was scenarios), and the model
-    type Ledger is renamed to EvidenceReconciliation (keeping its members). HELD (slice 5): each reconciled
-    evidence obligation keeps its outcome field UNCHANGED — the literals balanced / missing /
-    failing / watermelon survive verbatim (the
-    outcome → outcome rationalisation is deferred). A pure derive over the model, proven in isolation
-    by Vitest.
+    The 3F-1138 error ONE LAYER DOWN. The document IS the Evidence Reconciliation, so a root
+    key named `evidenceReconciliation` is the layer naming itself inside itself — and the grid
+    it names is, by canon, the LEDGER. Root then reads as chain step 6 literally: "The summary
+    has the totals and the ledger the detail."
+
+    Supersedes this scenario's own earlier framing. @SCN-RMD-002 was the 3F-1138 revert ("the
+    per-scenario reconciliation is the trial balance, not the ledger") and asserted the key
+    `evidenceReconciliation`, not `scenarios`. The "not scenarios" half HOLDS and is kept
+    verbatim — a phantom / suspense is not a scenario. The key itself is corrected to `ledger`:
+    an Update to canon, not a break routed around.
+
+    Code identifiers and JSON keys are ONE vocabulary (manifesto line 3), so the model's
+    `interface Ledger { scenarioReconciliations }` and the JSON `"ledger": { "scenarioReconciliations":
+    [...] }` agree as objects — a Ledger that holds entries cannot serialise as a bare array
+    of rows.
 
     @unit @SCN-RMD-002
-    Scenario: the per-scenario reconciliation serialises under evidenceReconciliation with each evidence obligation's outcome field unchanged
-      Given a reconciliation whose scenarios carry reconciled evidence obligations
+    Scenario: the ledger serialises under the top-level key ledger, beside summary, carrying each account's posted entries
+      Given a reconciliation whose accounts carry posted entries and their quality check reconciliations
       When the report is serialised to JSON
-      Then the per-scenario reconciliation is carried under the top-level key evidenceReconciliation, not scenarios
-      And each evidence obligation keeps its outcome field with the reconciliation-outcome literals unchanged
+      Then the grid of Scenario Reconciliations is carried under the top-level key ledger, beside summary — never under evidenceReconciliation, and never scenarios
+      And each account carries its posted evidence obligations and evidence observations alongside its reconciling items
+      And each quality check reconciliation keeps its outcome field with the reconciliation-outcome literals unchanged
 
   Rule: the observed evidence is evidence observations
 

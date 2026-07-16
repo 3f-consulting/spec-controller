@@ -293,8 +293,8 @@ const runIntegritySection: SectionEmitter = (report) => {
   // The predicate is the single source of the verdict — the renderer never re-derives
   // "is this run sound?" with its own scan, so the stamp cannot drift from the CLI's exit 4
   // (@SCN-CLI-012), which asks the same predicate.
-  if (!hasBrokenEvidence({ scenarioReconciliations: report.evidenceReconciliation })) return [];
-  const brokenItems = report.evidenceReconciliation.flatMap((s) =>
+  if (!hasBrokenEvidence({ scenarioReconciliations: report.ledger.scenarioReconciliations })) return [];
+  const brokenItems = report.ledger.scenarioReconciliations.flatMap((s) =>
     s.reconcilingItems.filter((item) => item.outcome === "broken")
   );
   const count = brokenItems.length;
@@ -365,7 +365,7 @@ const summaryViewsSection: SectionEmitter = () => ["## Summary views", ""];
  * under `--strict`") and never claims it; 0 / 1 / 4 are determinate from the reconciliation alone.
  */
 const runVerdictSection: SectionEmitter = (report) => {
-  const reconciliation = { scenarioReconciliations: report.evidenceReconciliation };
+  const reconciliation = { scenarioReconciliations: report.ledger.scenarioReconciliations };
   // The predicates, in the CLI's dominance order. Each headline word is the RENDER word, not the
   // predicate name (`hasBrokenEvidence` → "UNSOUND"), the `isBalanced` → "balanced" precedent —
   // and "UNSOUND" is coherent with the `## Run integrity: unsound` stamp above (@SCN-RPT-021).
@@ -591,13 +591,13 @@ const staticGuardsSection: SectionEmitter = (report) => {
  * balanced — read off the report's materialised `summary.lint` tally. The
  * heading/total label is the tag word "lint" (the internal kind "static" is never rendered).
  * Omitted entirely (returns `[]`) when no scenario declares a lint evidenceObligation.
- * The rows are a pure derive over `report.evidenceReconciliation[].evidenceObligations[]`; markdown-only.
+ * The rows are a pure derive over `report.ledger.scenarioReconciliations[].evidenceObligations[]`; markdown-only.
  */
 const lintSection: SectionEmitter = (report) => {
   // DECLARED rows only — a lint evidence obligation is a declared-side thing. The suspense row's
   // lint credit (an unattributed static-guard, cites-no-scenario) is NOT an evidence obligation, so
   // it stays out of this table + tally; it surfaces on the suspense row's reconciling items.
-  const rows = report.evidenceReconciliation
+  const rows = report.ledger.scenarioReconciliations
     .filter((s) => s.kind !== "phantom-scenario" && s.kind !== "suspense-scenario")
     .flatMap((s) =>
       s.qualityCheckReconciliations
@@ -632,13 +632,13 @@ const lintSection: SectionEmitter = (report) => {
  * `featureNames` map provides the slug for the code, else the bare `FFF` — the
  * fallback for an uncoded id (no file declares the code) or the no-map back-compat path.
  * Omitted entirely when no scenario is out of balance. A pure derive over
- * `report.evidenceReconciliation` (+ the model's `metadata.featureNames` title lookup);
+ * `report.ledger.scenarioReconciliations` (+ the model's `metadata.featureNames` title lookup);
  * markdown-only.
  */
 const byFeatureSection: SectionEmitter = (report) => {
   // DECLARED scenarios only (ruling Q3) — phantom/suspense rows are grouped at
   // the end of the Ledger, not folded into the declared out-of-balance-by-feature cut.
-  const scenarios = report.evidenceReconciliation.filter(
+  const scenarios = report.ledger.scenarioReconciliations.filter(
     (s) => s.kind !== "phantom-scenario" && s.kind !== "suspense-scenario"
   );
   const groups = new Map<string, string[]>();
@@ -805,11 +805,11 @@ const ledgerSection: SectionEmitter = (report) => {
   // Group DECLARED scenario rows first, then the PHANTOM rows, then the SUSPENSE row as
   // distinct blocks at the END (ruling Q3) — a phantom/suspense is not a
   // scenario, so it never mingles with the declared verdict rows.
-  const scenarioRows = report.evidenceReconciliation.filter(
+  const scenarioRows = report.ledger.scenarioReconciliations.filter(
     (s) => s.kind !== "phantom-scenario" && s.kind !== "suspense-scenario"
   );
-  const phantomRows = report.evidenceReconciliation.filter((s) => s.kind === "phantom-scenario");
-  const suspenseRows = report.evidenceReconciliation.filter((s) => s.kind === "suspense-scenario");
+  const phantomRows = report.ledger.scenarioReconciliations.filter((s) => s.kind === "phantom-scenario");
+  const suspenseRows = report.ledger.scenarioReconciliations.filter((s) => s.kind === "suspense-scenario");
   const scenarios = [...scenarioRows, ...phantomRows, ...suspenseRows];
   const evidenceObservations = report.evidenceObservations;
   const totals = report.summary.scenarioReconciliations;

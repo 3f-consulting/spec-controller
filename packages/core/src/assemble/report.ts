@@ -195,9 +195,21 @@ export interface ReportMetadata {
 export interface EvidenceReconciliation {
   runProvenance: ProvenanceObject;
   summary: Summary;
+  /**
+   * THE LEDGER — the accounts with their posted entries (@SCN-RMD-002, 3F-1848). Sits BESIDE
+   * `summary`, so root reads as chain step 6 literally: "The summary has the totals and the ledger
+   * the detail."
+   *
+   * Renamed from the member `evidenceReconciliation` — the 3F-1138 error ONE LAYER DOWN. This
+   * document IS the Evidence Reconciliation, so a key of that name was the layer naming itself
+   * inside itself, and the grid it named is by canon the LEDGER.
+   *
+   * Typed `Ledger`, NOT `ScenarioReconciliation[]`: code identifiers and JSON keys are ONE
+   * vocabulary (manifesto line 3), so this and `"ledger": { "scenarioReconciliations": [...] }`
+   * agree as OBJECTS — a Ledger that holds entries cannot serialise as a bare array of rows.
+   */
+  ledger: Ledger;
   evidenceObligations?: EvidenceObligationsSection;
-  /** The per-scenario reconciliation — the trial balance (the revert, RMD-002). */
-  evidenceReconciliation: ScenarioReconciliation[];
   /** The observed evidence — the credits (RMD-003, retiring "evidenceObservations"). */
   evidenceObservations?: EvidenceObservationsSection;
   /**
@@ -399,6 +411,13 @@ export function assembleReport(
   return {
     runProvenance: provenanceObject(ctx),
     summary: buildSummary(balance, evidenceObservations, guards),
+    // THE LEDGER, beside the summary (@SCN-RMD-002) — chain step 6 read literally: "The summary
+    // has the totals and the ledger the detail." An OBJECT mirroring `interface Ledger {
+    // scenarioReconciliations }`, never a bare array: the accounts arrive carrying the entries
+    // 3F-1846 and 3F-1847 posted, so every entry is visible ON THE ARTEFACT — including the
+    // pending credit that reconciles to nothing (3F-1831 makes it correct; here it becomes
+    // VISIBLE).
+    ledger: { scenarioReconciliations: balance.scenarioReconciliations },
     ...(evidenceObligations
       ? {
           evidenceObligations: {
@@ -411,7 +430,7 @@ export function assembleReport(
     // No staticGuards census SECTION (2.4): the guard member detail lives in the rows
     // (demanded → each scenario's `@lint` sub-row; undemanded → the suspense row), symmetric with
     // the runtime side. The counts survive in `summary.staticGuards` (the balance-check identity).
-    evidenceReconciliation: balance.scenarioReconciliations,
+
     ...(evidenceObservations
       ? {
           evidenceObservations: {

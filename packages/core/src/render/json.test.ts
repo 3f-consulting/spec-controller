@@ -9,7 +9,7 @@
  * renderJson(balance, ctx) parses to an object that grows a top-level `provenance`
  * carrying the same non-derivable run facts as the markdown header — target, source
  * SHA, the UTC run timestamp, and the input paths/flags actually used — while the
- * reconciliation body (evidenceReconciliation) is unchanged. The retired `warnings` key
+ * reconciliation body (the ledger) is unchanged. The retired `warnings` key
  * is absent — a zero-evidence scenario is a `both-missing` row, not a separate axis.
  *
  * Teeth: until renderJson projects the ctx, `provenance` is absent, so every
@@ -56,12 +56,12 @@ describe("[SCN-RPT-002] the JSON report carries a provenance object", () => {
     expect(parsed.runProvenance.inputs.vitest).toBe("../an-adopters-repository/vitest-report.json");
   });
 
-  it("keeps the reconciliation body (evidenceReconciliation) intact alongside provenance, with no retired warnings key", () => {
+  it("keeps the reconciliation body (the ledger) intact alongside provenance, with no retired warnings key", () => {
     const parsed = JSON.parse(renderJson(balance, ctx));
 
-    expect(parsed.evidenceReconciliation).toHaveLength(1);
-    expect(parsed.evidenceReconciliation[0].scnId).toBe("SCN-RPT-002");
-    expect(parsed.evidenceReconciliation[0].verdict).toBe("balanced");
+    expect(parsed.ledger.scenarioReconciliations).toHaveLength(1);
+    expect(parsed.ledger.scenarioReconciliations[0].scnId).toBe("SCN-RPT-002");
+    expect(parsed.ledger.scenarioReconciliations[0].verdict).toBe("balanced");
     // The `warnings` top-level key was RETIRED entirely.
     expect(parsed).not.toHaveProperty("warnings");
   });
@@ -120,7 +120,7 @@ describe("[SCN-RPT-008] the JSON report carries a evidenceObligations object wit
     const parsed = JSON.parse(renderJson(balance, ctx, evidenceObligations));
     expect(parsed.runProvenance).toBeDefined();
     expect(parsed.runProvenance).not.toHaveProperty("excludedOccurrences");
-    expect(parsed.evidenceReconciliation).toHaveLength(1);
+    expect(parsed.ledger.scenarioReconciliations).toHaveLength(1);
     expect(parsed).not.toHaveProperty("warnings");
   });
 
@@ -129,7 +129,7 @@ describe("[SCN-RPT-008] the JSON report carries a evidenceObligations object wit
     expect(parsed).not.toHaveProperty("evidenceObligations");
     // Provenance + body survive intact.
     expect(parsed.runProvenance).toBeDefined();
-    expect(parsed.evidenceReconciliation).toHaveLength(1);
+    expect(parsed.ledger.scenarioReconciliations).toHaveLength(1);
   });
 });
 
@@ -186,7 +186,7 @@ describe("[SCN-RPT-010] the JSON report carries an evidenceObservations object w
     expect(parsed.evidenceObligations.excludedOccurrences).toBe(3);
     expect(parsed.evidenceObservations).toBeDefined();
     expect(parsed.runProvenance).not.toHaveProperty("evidenceObservations");
-    expect(parsed.evidenceReconciliation).toHaveLength(1);
+    expect(parsed.ledger.scenarioReconciliations).toHaveLength(1);
   });
 
   it("omits evidenceObservations when none is threaded (the RPT-002 / RPT-008 guards stay green)", () => {
@@ -194,7 +194,7 @@ describe("[SCN-RPT-010] the JSON report carries an evidenceObservations object w
     expect(parsed).not.toHaveProperty("evidenceObservations");
     expect(parsed).not.toHaveProperty("evidenceObservations");
     expect(parsed.runProvenance).toBeDefined();
-    expect(parsed.evidenceReconciliation).toHaveLength(1);
+    expect(parsed.ledger.scenarioReconciliations).toHaveLength(1);
   });
 });
 
@@ -237,7 +237,7 @@ describe("[SCN-RPT-014] the JSON evidenceObligations carries the untagged scenar
     expect(parsed.evidenceObligations).toHaveProperty("untaggedScenarios");
     // Still distinct from provenance and the reconciliation body.
     expect(parsed.runProvenance).not.toHaveProperty("untaggedScenarios");
-    expect(parsed.evidenceReconciliation).toHaveLength(1);
+    expect(parsed.ledger.scenarioReconciliations).toHaveLength(1);
   });
 
   it("emits an empty untaggedScenarios array when there are none", () => {
@@ -298,7 +298,7 @@ describe("[SCN-RPT-015] the JSON evidenceObligations carries the prose-only code
  * The markdown side is the genuine red→green of @SCN-PND-010 (the human renderer must
  * learn to emit the ⏳ pending label). This JSON side is the glue-free CONSISTENCY pin:
  * `renderJson` is `JSON.stringify(assembleReport(...))`, and `assembleReport` passes the
- * scenario reconciliations through verbatim as `evidenceReconciliation`, so a scenario's
+ * scenario reconciliations through verbatim under `ledger`, so a scenario's
  * `pendingItems` reach the machine surface WITHOUT any renderer glue. This test pins that
  * the two renderings stay consistent — the machine surface carries the same Pending Items
  * the human surface labels. Green-first (the glue-free path already carries the field); its
@@ -320,9 +320,9 @@ describe("[SCN-PND-010] the JSON report carries a scenario's Pending Items", () 
     ],
   };
 
-  it("serialises a scenario's pendingItems on its evidenceReconciliation row (glue-free consistency with markdown)", () => {
+  it("serialises a scenario's pendingItems on its ledger account row (glue-free consistency with markdown)", () => {
     const parsed = JSON.parse(renderJson(pendingBalance, ctx));
-    const row = parsed.evidenceReconciliation.find((s: { scnId: string }) => s.scnId === "SCN-PDX-001");
+    const row = parsed.ledger.scenarioReconciliations.find((s: { scnId: string }) => s.scnId === "SCN-PDX-001");
     expect(row).toBeDefined();
     // The machine surface carries the same Pending Item the markdown labels — one IOU at
     // the deferred integration check, one-sided (no outcome, not a reconciling item).

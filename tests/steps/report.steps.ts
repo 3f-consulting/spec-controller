@@ -262,7 +262,7 @@ Then(
         runTimestamp?: string;
         inputs?: Record<string, string>;
       };
-      evidenceReconciliation?: unknown[];
+      ledger?: { scenarioReconciliations: unknown[] };
     };
 
     assert.ok(
@@ -292,8 +292,8 @@ Then(
     // The reconciliation body must survive intact alongside runProvenance. The retired
     // `warnings` key must be ABSENT — a zero-evidence scenario is a both-missing row.
     assert.ok(
-      Array.isArray(parsed.evidenceReconciliation),
-      `expected the evidenceReconciliation body to survive intact; got:\n${jsonText}`
+      Array.isArray(parsed.ledger?.scenarioReconciliations),
+      `expected the ledger body to survive intact; got:\n${jsonText}`
     );
     assert.ok(
       !("warnings" in (JSON.parse(jsonText) as object)),
