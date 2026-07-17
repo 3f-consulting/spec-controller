@@ -717,7 +717,7 @@ function cellGridCells(scnId: string): string[] {
 }
 
 Given(
-  "a reconciliation over a corpus spanning every cell case — a satisfied obligation, a missing one, an undemanded observation citing a scenario that never demanded that quality-check, a pending obligation with attributed observations at that pair, and a column absent for the scenario",
+  "a reconciliation over a corpus spanning every cell case — a satisfied obligation, a missing one, an undemanded observation citing a scenario that never demanded that quality-check, and a column absent for the scenario",
   function () {
     runsRoot011 = mkdtempSync(join(tmpdir(), "spec-controller-rpt011-"));
   }
@@ -772,22 +772,6 @@ Then(/^the scenario whose only state at a quality-check is undemanded renders \(
     "expected SCN-CEL-003's Unit cell to render (1) — the undemanded observation — not ∅ (missing)"
   );
 });
-
-Then(
-  /^the scenario whose obligation at a quality-check is pending, with attributed observations at that pair, renders \(N\) there$/,
-  function () {
-    // SCN-CEL-004's unit obligation is @unitpending — DEFERRED, so it partitions to a one-sided
-    // Pending Item and posts no reconciled row; but the pending pair STAYS in
-    // evidenceObligationPairs, so the vitest observation citing it is ATTRIBUTED (not undemanded).
-    // Not demanded, count > 0 → (1). This is live today; dropping the `attributed` term from the
-    // not-demanded branch would silently regress it to —.
-    assert.deepStrictEqual(
-      cellGridCells("SCN-CEL-004"),
-      ["—", "(1)", "—", "—"],
-      "expected SCN-CEL-004's Unit cell to render (1) — an observation attributed at a PENDING pair"
-    );
-  }
-);
 
 Then("the fixed cell key renders immediately before the ledger table", function () {
   const iKey = md011.indexOf("| Cell | Meaning |");

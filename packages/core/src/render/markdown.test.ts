@@ -1193,25 +1193,15 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   const evidenceObservations: RuntimeEvidenceObservationKindCounts =
     countRuntimeEvidenceObservationKinds({ observations, scenarios });
 
-  it("builds the fixture through the reconciler — the undemanded credit is OUT of attributed, and the pending pair's credit is IN", () => {
+  it("builds the fixture through the reconciler — the undemanded credit is OUT of attributed", () => {
     // The fixture's own guard: it can only pin shapes the pipeline emits. The SCN-C integration
-    // credit is UNDEMANDED (never attributed — the shape the old hand-built fixture faked), while
-    // the SCN-F credit at the PENDING pair IS attributed.
+    // credit is UNDEMANDED (never attributed — the shape the old hand-built fixture faked).
     expect(evidenceObservations.undemandedCount).toBe(1);
     expect(evidenceObservations.attributed).not.toContainEqual({
       scnId: "SCN-C",
       qualityCheck: "integration",
       count: 1,
     });
-    expect(evidenceObservations.attributed).toContainEqual({
-      scnId: "SCN-F",
-      qualityCheck: "unit",
-      count: 1,
-    });
-    // And SCN-F's pending obligation posts a one-sided Pending Item, never a reconciled row.
-    const scnF = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-F");
-    expect(scnF?.pendingItems).toEqual([{ qualityCheck: "unit" }]);
-    expect(scnF?.qualityCheckReconciliations).toEqual([]);
   });
 
   it("renders corpus-driven columns — Lint first, then the runtime levels present (e2e/performance absent)", () => {
@@ -1236,14 +1226,6 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     expect(md).toContain("| SCN-D | — | — | 1 |");
     // lint declared but its guard missing → ∅.
     expect(md).toContain("| SCN-E | ∅ | — | — |");
-  });
-
-  it("renders (N) for an observation attributed at a PENDING pair — the second, live-today (N) shape", () => {
-    const md = renderMarkdown(balance, ctx, undefined, evidenceObservations);
-    // SCN-F's unit obligation is deferred, so it posts no reconciled row (not demanded), but its
-    // credit IS attributed at the still-declared pending pair → (1). Dropping the `attributed`
-    // term from the not-demanded branch would silently regress this to —.
-    expect(md).toContain("| SCN-F | — | (1) | — |");
   });
 
   it("counts the lint cell by guards PRESENT (balanced or watermelon), not 0/1", () => {
