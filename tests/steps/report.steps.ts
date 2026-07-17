@@ -678,9 +678,10 @@ After({ tags: "@SCN-RPT-018" }, function () {
 // @e2e-only, cited by a VITEST unit observation — the UNDEMANDED credit-side row (@SCN-LDG-008),
 // kept OUT of `attributed` by the census, so its Unit cell must read (1), NOT ∅ (the SCN-CLI-054
 // shape — RED before the fix); and SCN-CEL-004 whose unit obligation is @unitpending — deferred,
-// so it posts NO reconciled row, yet the pending pair stays in evidenceObligationPairs, so the
-// vitest observation citing it IS attributed → its Unit cell reads (1) (the second, live-today
-// production shape of `(N)`, preserved by keeping the attributed term in the not-demanded branch).
+// so it demands NOTHING (3F-1858): the vitest observation citing it reconciles UNDEMANDED and posts
+// an undemanded row on SCN-CEL-004's account, so its Unit cell reads (1) off that undemanded row.
+// Both (N) shapes here are ONE shape now — an undemanded credit — since 3F-1858 folded the pending
+// pair out of the active set (the old "attributed at a pending pair" account no longer exists).
 const EVIDENCE_CELL_GRID_OPTS = {
   features: "tests/fixtures/evidence-cell-grid/features",
   vitest: "tests/fixtures/evidence-cell-grid/vitest.json",
@@ -717,7 +718,7 @@ function cellGridCells(scnId: string): string[] {
 }
 
 Given(
-  "a reconciliation over a corpus spanning every cell case — a satisfied obligation, a missing one, an undemanded observation citing a scenario that never demanded that quality-check, and a column absent for the scenario",
+  "a reconciliation over a corpus spanning every cell case — a satisfied obligation, a missing one, an undemanded observation citing a scenario that never demanded that quality-check, a pending obligation with observations citing it at that pair, and a column absent for the scenario",
   function () {
     runsRoot011 = mkdtempSync(join(tmpdir(), "spec-controller-rpt011-"));
   }
@@ -772,6 +773,22 @@ Then(/^the scenario whose only state at a quality-check is undemanded renders \(
     "expected SCN-CEL-003's Unit cell to render (1) — the undemanded observation — not ∅ (missing)"
   );
 });
+
+Then(
+  /^the scenario whose obligation at a quality-check is pending, with observations citing it at that pair, renders \(N\) there — because the credit is now undemanded, not attributed$/,
+  function () {
+    // SCN-CEL-004's unit obligation is @unitpending — deferred, so it demands NOTHING. Since 3F-1858
+    // folded the pending pair out of the active obligation set, the vitest observation citing it
+    // reconciles UNDEMANDED and posts an undemanded row on SCN-CEL-004 → not demanded, undemandedCount
+    // 1 → (1). The `attributed` term plays no part; this is the honest-provenance re-assertion of the
+    // arm 3F-1885 retired (it asserted the pre-1858 "attributed at a pending pair" account, now gone).
+    assert.deepStrictEqual(
+      cellGridCells("SCN-CEL-004"),
+      ["—", "(1)", "—", "—"],
+      "expected SCN-CEL-004's Unit cell to render (1) — a credit reconciling undemanded at a PENDING pair"
+    );
+  }
+);
 
 Then("the fixed cell key renders immediately before the ledger table", function () {
   const iKey = md011.indexOf("| Cell | Meaning |");

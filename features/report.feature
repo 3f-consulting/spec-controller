@@ -305,10 +305,11 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @integration @SCN-RPT-011
     Scenario: the ledger row shows corpus-driven evidence columns with the four-way cell encoding
-      Given a reconciliation over a corpus spanning every cell case — a satisfied obligation, a missing one, an undemanded observation citing a scenario that never demanded that quality-check, and a column absent for the scenario
+      Given a reconciliation over a corpus spanning every cell case — a satisfied obligation, a missing one, an undemanded observation citing a scenario that never demanded that quality-check, a pending obligation with observations citing it at that pair, and a column absent for the scenario
       When the ledger is rendered
       Then each scenario row carries one cell per corpus column (Lint first, then the runtime levels present) with the four-way encoding — the count, ∅, (N), or —
       And the scenario whose only state at a quality-check is undemanded renders (N) there, not ∅
+      And the scenario whose obligation at a quality-check is pending, with observations citing it at that pair, renders (N) there — because the credit is now undemanded, not attributed
       And the fixed cell key renders immediately before the ledger table
 
   Rule: Warnings flags the unattributed evidence observation tests with their file locators

@@ -746,31 +746,31 @@ function evidenceCell(
     ).length;
     return present > 0 ? String(present) : "∅"; // ∅ = declared, all missing
   }
-  // DEMAND is read off the ACTIVE evidence obligations only. An `undemanded` row is a CREDIT-side
-  // row the reconciler posts ON the real scenario (@SCN-LDG-008) — an evidence observation citing a
-  // quality-check the scenario NEVER declared. It is the opposite of a demand, so it must not be
-  // counted as one: reading it as a demand found zero attributed evidence and rendered `∅`
-  // (declared-but-missing), which contradicts the row's own Reconciling-items column and points at
-  // the OPPOSITE remedy — "write the test", when the truth is "fix the attribution".
-  const demanded = s.qualityCheckReconciliations.some(
-    (o) => o.qualityCheck === col.qualityCheck && o.outcome !== "undemanded"
+  // DEMAND is ASKED of the Ledger, not reconstructed. `s.evidenceObligations` is the debit side the
+  // scenario declared (@SCN-LDG-023) — the fact itself — filtered to the ACTIVE ones: a `<qc>pending`
+  // obligation demands NOTHING (it partitions off to a one-sided Pending Item), so it is not a demand.
+  // This replaces the old archaeology that read `qualityCheckReconciliations` and inferred demand from
+  // which rows happened to survive — provably the same boolean (a non-undemanded reconciled row at a
+  // check exists iff a declared non-pending obligation does), but a duplicate derivation of a fact the
+  // Ledger now holds. 3F-1831 collapses "demanded" to ONE classifier; this is the renderer's copy retiring.
+  const demanded = s.evidenceObligations.some(
+    (o) => o.qualityCheck === col.qualityCheck && !o.pending
   );
   const attributedCount =
     attributed.find((a) => a.scnId === s.scnId && a.qualityCheck === col.qualityCheck)?.count ?? 0;
   if (demanded) return attributedCount > 0 ? String(attributedCount) : "∅";
-  // NOT demanded — the `(N)` cell, which has TWO production shapes, so the count is the SUM of two
-  // terms (mutually exclusive per (scnId, quality-check), so the sum is safe — and dropping either
-  // silently regresses its shape to `—`):
-  //   1. PENDING + ATTRIBUTED — a `<qc>pending` obligation partitions off to a one-sided Pending
-  //      Item and posts NO reconciled row, yet the pending pair STAYS in `evidenceObligationPairs`,
-  //      so the census counts the observation citing it as ATTRIBUTED (never undemanded). Not
-  //      demanded, count > 0 → `(N)`. This shape is live in production.
-  //   2. UNDEMANDED — the census deliberately keeps the observation OUT of `attributed` (it counts
-  //      into `undemandedCount`), so the cell must count these off the undemanded ROWS themselves.
+  // NOT demanded — the `(N)` cell. A credit at a quality-check this scenario did not demand posts an
+  // `undemanded` row on its account (@SCN-LDG-008), whether the check was NEVER declared or declared
+  // `<qc>pending` — 3F-1858 folded the pending pair out of the active set, so a pending-cited credit
+  // is undemanded "exactly as when nothing was declared at all". The count is those undemanded rows.
+  // (`attributedCount` plays no part here: an attributed credit is BY DEFINITION demanded and never
+  // reaches this branch. It once carried a second, PENDING+ATTRIBUTED shape — the pending pair stayed
+  // in the pair set and its credit counted attributed — but 3F-1858 deleted that path, so the term is
+  // dead. Mutation-proven at delivery: dropping it moves nothing; dropping undemandedCount reds.)
   const undemandedCount = s.qualityCheckReconciliations.filter(
     (o) => o.qualityCheck === col.qualityCheck && o.outcome === "undemanded"
   ).length;
-  const count = attributedCount + undemandedCount;
+  const count = undemandedCount;
   return count > 0 ? `(${count})` : "—";
 }
 

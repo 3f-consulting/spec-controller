@@ -1037,6 +1037,16 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     expect(md).toContain("| SCN-E | ∅ | — | — |");
   });
 
+  it("renders (N) for a credit at a PENDING pair — undemanded (3F-1858), not attributed", () => {
+    const md = renderMarkdown(balance, ctx, undefined, evidenceObservations);
+    // SCN-F's unit obligation is @unitpending, so it demands NOTHING: the credit citing it reconciles
+    // UNDEMANDED (3F-1858) and posts an undemanded row on SCN-F → not demanded, undemandedCount 1 → (1).
+    // Green on first run — 1858 already carried the cell via undemandedCount; this re-asserts the arm
+    // 3F-1885 retired (which asserted the pre-1858 "attributed at a pending pair" shape, now gone),
+    // with honest provenance. It does NOT catch a regression; it pins the correct reason for the glyph.
+    expect(md).toContain("| SCN-F | — | (1) | — |");
+  });
+
   it("counts the lint cell by guards PRESENT (balanced or watermelon), not 0/1", () => {
     const md = renderMarkdown(balance, ctx, undefined, evidenceObservations);
     // SCN-A declares two static guards, both present (one balanced, one watermelon) → 2.
