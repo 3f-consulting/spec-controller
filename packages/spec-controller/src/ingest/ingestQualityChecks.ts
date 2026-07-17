@@ -355,12 +355,13 @@ export function reconcileWithCensus(opts: ReconcileOptions): {
     untaggedScenariosFromFeatures(opts.features)
   );
 
-  // The census PROJECTS the one parsed runtime set — no second raw-report walk, no re-derivation
-  // of the level. The views (Test volume, attributed, E2e cell) therefore agree with the verdict.
-  const census = countRuntimeEvidenceObservationKinds({
-    observations: runtimeObservations,
-    scenarios,
-  });
+  // The census is a FOLD over the Ledger the reconciler just produced (@SCN-RPT-023 / 3F-1859) —
+  // it reads each posted credit's kind off the row it posted to, rather than classifying the
+  // observation stream a second time. The views (Test volume, attributed, E2e cell) therefore
+  // agree with the verdict BY CONSTRUCTION: they are projections of the same rows, not a parallel
+  // opinion that has to be kept in step. The fold skips `lint` credits itself, so it no longer
+  // needs the narrower `runtimeObservations` array handed to it to enforce the runtime scoping.
+  const census = countRuntimeEvidenceObservationKinds(balance);
   return { balance, evidenceObservations: census };
 }
 

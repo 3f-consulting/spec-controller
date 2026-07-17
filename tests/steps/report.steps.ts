@@ -990,3 +990,100 @@ Then(
 After({ tags: "@SCN-RPT-006" }, function () {
   if (runsRoot006 && existsSync(runsRoot006)) rmSync(runsRoot006, { recursive: true, force: true });
 });
+
+// @SCN-RPT-023
+// The census-is-a-fold-over-the-Ledger @integration arm. It drives the REAL cucumber-report
+// read, which is where the `broken` + REAL-`scnId` shape is actually PRODUCED: the fixture's
+// cucumber.json carries an AMBIGUOUS step (@SCN-LDG-019) on a scenario that DID cite its @SCN,
+// so parseCucumberEvidenceObservations emits an observation with broken:true AND scnId
+// "SCN-AMB-001" — the shape no hand-built fixture would think to write.
+//
+// The census used to count that credit `attributed` (it had no `broken` branch at all; its only
+// suspense test was scnId === null) while the reconciler posted it to SUSPENSE. Canon settles it
+// for the reconciler: a proof that never ran cannot discharge or fail an obligation. Folding the
+// census over the Ledger therefore MOVES the count — attributed −1, suspense +1 — and this arm is
+// what names the move.
+//
+// NOTE the identity is asserted here as a COMPLETENESS check only, never as the proof of the
+// move: raw = attributed + undemanded + phantom + suspense balances identically BEFORE and AFTER
+// the fold, because the terms move and the sum does not. The load-bearing assertions are the two
+// that name WHICH bucket the credit is in.
+const BROKEN_ATTRIBUTION_OPTS = {
+  features: "tests/fixtures/broken-attribution/features",
+  cucumber: "tests/fixtures/broken-attribution/cucumber.json",
+};
+let runsRoot023: string;
+let md023: string;
+let census023: ReturnType<typeof readEvidenceObservations>;
+
+Given(
+  "a corpus whose cucumber run reports an ambiguous step for a scenario that cites a declared @SCN at a demanded quality-check",
+  function () {
+    runsRoot023 = mkdtempSync(join(tmpdir(), "spec-controller-rpt023-"));
+  }
+);
+
+When("the run reconciles and the report is rendered", function () {
+  const balance = runReconcile(BROKEN_ATTRIBUTION_OPTS);
+  census023 = readEvidenceObservations(BROKEN_ATTRIBUTION_OPTS);
+  const ctx023: RunContext = {
+    target: "broken-attribution-fixture",
+    inputs: {},
+    runStart: new Date("2026-07-17T09:00:00.000Z"),
+    sourceSha: null,
+  };
+  const runDir = persistReport(runsRoot023, { balance, ctx: ctx023, evidenceObservations: census023 });
+  md023 = readFileSync(join(runDir, "spec-reconciliation.md"), "utf8");
+});
+
+Then(
+  "the broken observation is not counted among that scenario's attributed evidence",
+  function () {
+    // THE MOVE, first half. SCN-AMB-001's credit carries its scnId — it cites the scenario, and
+    // the scenario DEMANDS integration — so every "cites a real scenario at a demanded pair" test
+    // says attributed. It is NOT, because the proof never ran.
+    assert.ok(
+      !census023.attributed.some((a) => a.scnId === "SCN-AMB-001"),
+      `expected SCN-AMB-001's broken credit to be attributed to NOTHING; got attributed: ${JSON.stringify(census023.attributed)}`
+    );
+    // ...and the fold did not simply empty the tally: SCN-AMB-002's clean credit, at the SAME
+    // quality-check, is still attributed. Without this the assertion above passes vacuously.
+    assert.deepEqual(
+      census023.attributed,
+      [{ scnId: "SCN-AMB-002", qualityCheck: "integration", count: 1 }],
+      `expected ONLY SCN-AMB-002's clean credit attributed; got: ${JSON.stringify(census023.attributed)}`
+    );
+  }
+);
+
+Then(
+  "it is counted once on the suspense scenario, and the Test volume identity still balances",
+  function () {
+    // THE MOVE, second half — the credit did not vanish, it MOVED: exactly one suspense credit,
+    // the broken one.
+    assert.equal(
+      census023.suspenseCount,
+      1,
+      `expected the broken credit counted ONCE on suspense; got ${census023.suspenseCount}`
+    );
+    // The rendered Test volume cut agrees with the atoms — the view cannot drift from the fold.
+    assert.ok(
+      md023.includes("2 evidence observations = 1 attributed + 0 cites-unknown-scenario + 1 cites-no-scenario"),
+      `expected the Test volume identity line "2 evidence observations = 1 attributed + 0 cites-unknown-scenario + 1 cites-no-scenario"; got:\n${md023}`
+    );
+    // COMPLETENESS ONLY (see the block comment): this balances identically before and after the
+    // fold. It proves no credit vanished; it can never prove the credit is in the right bucket.
+    const raw = Object.values(census023.rawByRuntimeQualityCheck).reduce((n, v) => n + v, 0);
+    const attributedTally = census023.attributed.reduce((n, a) => n + a.count, 0);
+    assert.equal(raw, 2, `expected 2 raw runtime observations; got ${raw}`);
+    assert.equal(
+      raw,
+      attributedTally + census023.undemandedCount + census023.phantomCount + census023.suspenseCount,
+      `the kind-count identity must balance: raw ${raw} != attributed ${attributedTally} + undemanded ${census023.undemandedCount} + phantom ${census023.phantomCount} + suspense ${census023.suspenseCount}`
+    );
+  }
+);
+
+After({ tags: "@SCN-RPT-023" }, function () {
+  if (runsRoot023 && existsSync(runsRoot023)) rmSync(runsRoot023, { recursive: true, force: true });
+});

@@ -1194,8 +1194,11 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     { qualityCheck: "lint", guard: "guard-y", exists: true, enforcedOverRealSource: false },
   ];
   const balance: Ledger = reconcile(scenarios, observations);
+  // The census is a FOLD over that very Ledger (@SCN-RPT-023 / 3F-1859) — it no longer takes the
+  // observation stream at all, so the fixture cannot state a census that disagrees with the
+  // balance beside it. The two were already built from one corpus here; now they cannot diverge.
   const evidenceObservations: RuntimeEvidenceObservationKindCounts =
-    countRuntimeEvidenceObservationKinds({ observations, scenarios });
+    countRuntimeEvidenceObservationKinds(balance);
 
   it("builds the fixture through the reconciler — the undemanded credit is OUT of attributed", () => {
     // The fixture's own guard: it can only pin shapes the pipeline emits. The SCN-C integration

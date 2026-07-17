@@ -21,7 +21,8 @@ import {
   attributedTotal,
   type RuntimeEvidenceObservationKindCounts,
 } from "./evidenceObservations.js";
-import type { Scenario } from "../model.js";
+import type { Scenario, RuntimeEvidenceObservation } from "../model.js";
+import { reconcile } from "../reconcile/reconcile.js";
 import { parseVitestEvidenceObservations, type VitestJsonReport } from "../parse/vitest.js";
 import { parseCucumberEvidenceObservations, type CucumberJsonReport } from "../parse/cucumber.js";
 
@@ -61,19 +62,22 @@ describe("[SCN-RPT-010] countRuntimeEvidenceObservationKinds counts the observed
     },
   ];
 
-  // The census now PROJECTS the already-parsed observation set the reconciler consumes
-  // (@SCN-RPT-017 / 3F-1452 FULL UNIFY) — parse each source at its declared FALLBACK
-  // (vitest⇒unit, cucumber⇒integration), the parser deriving the level from the scenario's tier
-  // tag (@SCN-LDG-011 / 3F-1434). These fixtures are tier-untagged, so the fallback stands and the
-  // counts are unchanged — a mechanical signature migration, not a value change.
+  // The census now FOLDS over the LEDGER (@SCN-RPT-023 / 3F-1859) — parse each source at its
+  // declared FALLBACK (vitest⇒unit, cucumber⇒integration), the parser deriving the level from the
+  // scenario's tier tag (@SCN-LDG-011 / 3F-1434), then RECONCILE, then fold. These fixtures are
+  // tier-untagged, so the fallback stands and the counts are unchanged — a mechanical signature
+  // migration, not a value change.
+  //
+  // The ledger is BUILT BY `reconcile()` over the corpus, never hand-written (evidence-manifesto
+  // §11A). A hand-built ledger feeding a fold over ledgers would test the typing, not the engine:
+  // it could state a posted-entry shape no run can produce, which the fold would then read as
+  // truth and report green. This file hand-builds zero rows and still does.
   const observations = [
     ...parseVitestEvidenceObservations(vitest, "unit"),
     ...parseCucumberEvidenceObservations(cucumber, "integration"),
   ];
-  const evidenceObservations: RuntimeEvidenceObservationKindCounts = countRuntimeEvidenceObservationKinds({
-    observations,
-    scenarios,
-  });
+  const evidenceObservations: RuntimeEvidenceObservationKindCounts =
+    countRuntimeEvidenceObservationKinds(reconcile(scenarios, observations));
 
   it("counts raw evidenceObservations per level over ALL results, regardless of @SCN", () => {
     // 4 unit assertions + 2 integration scenarios; e2e/performance have no reader.
@@ -111,10 +115,10 @@ describe("[SCN-RPT-010] countRuntimeEvidenceObservationKinds counts the observed
     // kind-counts follow the input's declaration, not a Vitest⇒unit hardcode. Every tally (raw
     // by-level, per-evidence observation kind, phantomEvidenceObservation) must read e2e. This is the
     // assertion that fails if anyone re-bakes the source→level mapping.
-    const evidenceObservationsAtE2e = countRuntimeEvidenceObservationKinds({
-      observations: parseVitestEvidenceObservations(vitest, "e2e"),
-      scenarios,
-    });
+    const e2eObservations = parseVitestEvidenceObservations(vitest, "e2e");
+    const evidenceObservationsAtE2e = countRuntimeEvidenceObservationKinds(
+      reconcile(scenarios, e2eObservations)
+    );
     expect(evidenceObservationsAtE2e.rawByRuntimeQualityCheck).toEqual({ unit: 0, integration: 0, e2e: 4, performance: 0 });
     // SCN-LDG-001 declares UNIT, so its two e2e credits now match no declared (scnId, e2e) pair
     // → UNDEMANDED at e2e (the mis-count fix; before, they were counted as attributed
@@ -127,7 +131,9 @@ describe("[SCN-RPT-010] countRuntimeEvidenceObservationKinds counts the observed
   });
 
   it("contributes nothing for a missing report (its level stays zero)", () => {
-    const unitOnly = countRuntimeEvidenceObservationKinds({ observations: parseVitestEvidenceObservations(vitest, "unit"), scenarios });
+    const unitOnly = countRuntimeEvidenceObservationKinds(
+      reconcile(scenarios, parseVitestEvidenceObservations(vitest, "unit"))
+    );
     expect(unitOnly.rawByRuntimeQualityCheck.integration).toBe(0);
     expect(unitOnly.rawByRuntimeQualityCheck.unit).toBe(4);
     // The identity still holds with a report absent.
@@ -177,10 +183,8 @@ describe("[SCN-LDG-008] the counter gains the (scnId, quality-check)-declared-pa
     ...parseVitestEvidenceObservations(vitest, "unit"),
     ...parseCucumberEvidenceObservations(cucumber, "integration"),
   ];
-  const evidenceObservations: RuntimeEvidenceObservationKindCounts = countRuntimeEvidenceObservationKinds({
-    observations,
-    scenarios,
-  });
+  const evidenceObservations: RuntimeEvidenceObservationKindCounts =
+    countRuntimeEvidenceObservationKinds(reconcile(scenarios, observations));
 
   it("counts the matched-pair credit as reconciliation-matched attributed, but NOT the undeclared-pair credit", () => {
     // ONLY the (SCN-LDG-008, unit) pair is attributed — the integration credit is NOT here.
@@ -236,10 +240,8 @@ describe("[SCN-RPT-017] the census PROJECTS the parsed observation set, levellin
   // Parse with the integration FALLBACK — the parser derives the level from the @e2e tag, so the
   // parsed observation is at e2e. The census merely PROJECTS this set; it re-derives nothing.
   const observations = parseCucumberEvidenceObservations(cucumber, "integration");
-  const census: RuntimeEvidenceObservationKindCounts = countRuntimeEvidenceObservationKinds({
-    observations,
-    scenarios,
-  });
+  const census: RuntimeEvidenceObservationKindCounts =
+    countRuntimeEvidenceObservationKinds(reconcile(scenarios, observations));
 
   it("counts the @e2e-via-cucumber observation under e2e, not the integration fallback", () => {
     expect(census.rawByRuntimeQualityCheck.e2e).toBe(1);
@@ -284,10 +286,8 @@ describe("[SCN-RPT-018] the census counts an @integration @e2e-via-cucumber obse
   // tags, so the SINGLE scenario yields TWO parsed observations (integration + e2e). The census
   // merely PROJECTS this set; it re-derives nothing and adds no multi-tag logic of its own.
   const observations = parseCucumberEvidenceObservations(cucumber, "integration");
-  const census: RuntimeEvidenceObservationKindCounts = countRuntimeEvidenceObservationKinds({
-    observations,
-    scenarios,
-  });
+  const census: RuntimeEvidenceObservationKindCounts =
+    countRuntimeEvidenceObservationKinds(reconcile(scenarios, observations));
 
   it("counts the one scenario under BOTH integration and e2e (per-tier emission, projected)", () => {
     expect(census.rawByRuntimeQualityCheck.integration).toBe(1);
@@ -308,5 +308,95 @@ describe("[SCN-RPT-018] the census counts an @integration @e2e-via-cucumber obse
     // raw (2) = attributed (2) + undemanded (0) + phantom (0) + suspense (0).
     expect(totalEvidenceObservations(census)).toBe(2);
     expect(totalEvidenceObservations(census)).toBe(attributedTotal(census) + census.suspenseCount);
+  });
+});
+
+describe("[SCN-RPT-023] a broken observation citing a real scenario is not attributed to it", () => {
+  // THE SECOND DIVERGENCE (3F-1831), and the reason the fold is not a no-op.
+  //
+  // An ambiguous cucumber step (@SCN-LDG-019) produces an observation with `broken: true` AND a
+  // REAL scnId: the cucumber scenario DID cite its @SCN — only its step could not run. So the
+  // credit passes every "cites a real scenario at a demanded pair" test there is:
+  //   - scnId is not null, so it is not suspense by the old test;
+  //   - the scenario IS declared, so it is not phantom;
+  //   - the (scnId, integration) pair IS demanded, so it is not undemanded.
+  // The census therefore counted it ATTRIBUTED. The reconciler posts it to SUSPENSE (the
+  // fail-safe takes `broken` FIRST, on the flag). Canon settles it for the reconciler: a proof
+  // that never ran can neither discharge nor fail an obligation, so it attributes to NOTHING.
+  //
+  // The corpus is built through the REAL cucumber parser, so the broken+scnId shape is the one
+  // the pipeline actually emits rather than one this test invented (evidence-manifesto §11A).
+  //
+  // SCN-AMB-002 is the control: a clean credit at the SAME quality-check, which MUST stay
+  // attributed. Without it, "SCN-AMB-001 is not attributed" would pass on an empty tally.
+  const scenarios: Scenario[] = [
+    { scnId: "SCN-AMB-001", evidenceObligations: [{ qualityCheck: "integration" }] },
+    { scnId: "SCN-AMB-002", evidenceObligations: [{ qualityCheck: "integration" }] },
+  ];
+  const cucumber: CucumberJsonReport = [
+    {
+      uri: "features/widget.feature",
+      elements: [
+        // The AMBIGUOUS step — two step definitions match, so it never ran. The parser emits
+        // broken:true carrying scnId SCN-AMB-001.
+        {
+          tags: [{ name: "@integration" }, { name: "@SCN-AMB-001" }],
+          steps: [{ keyword: "Given ", name: "the target repo's source", result: { status: "ambiguous" } }],
+        },
+        // The control: an ordinary passing scenario at the same quality-check.
+        {
+          tags: [{ name: "@integration" }, { name: "@SCN-AMB-002" }],
+          steps: [{ result: { status: "passed" } }],
+        },
+      ],
+    },
+  ];
+  const observations = parseCucumberEvidenceObservations(cucumber, "integration");
+  // Corpus in → `reconcile()` → fold. The reconciler is what puts the broken credit on the
+  // suspense row; the census simply reads the row. Both halves of the move are therefore the
+  // ENGINE's, not this test's arithmetic.
+  const census: RuntimeEvidenceObservationKindCounts =
+    countRuntimeEvidenceObservationKinds(reconcile(scenarios, observations));
+
+  it("emits the broken credit carrying a REAL scnId — the shape that fools every scnId-based test", () => {
+    // The premise, pinned: if the parser ever stopped carrying the scnId, this scenario would be
+    // testing nothing and would silently pass.
+    const broken = observations.filter(
+      (o): o is RuntimeEvidenceObservation => o.qualityCheck !== "lint" && o.broken === true
+    );
+    expect(broken).toHaveLength(1);
+    expect(broken[0]!.scnId).toBe("SCN-AMB-001");
+  });
+
+  it("does NOT attribute the broken credit to the scenario it cites", () => {
+    // THE MOVE: attributed −1. The census counted this `attributed`; the reconciler always posted
+    // it to suspense. One classifier now, and it is the reconciler's.
+    expect(census.attributed).not.toContainEqual(
+      expect.objectContaining({ scnId: "SCN-AMB-001" })
+    );
+    // The control still attributes — the fold moved the broken credit, it did not empty the tally.
+    expect(census.attributed).toEqual([
+      { scnId: "SCN-AMB-002", qualityCheck: "integration", count: 1 },
+    ]);
+  });
+
+  it("counts the broken credit ONCE on suspense — it moved, it did not vanish", () => {
+    // THE MOVE: suspense +1. It is not undemanded (its pair IS demanded) and not phantom (its
+    // scenario IS declared) — suspense is the only honest account for a proof that never ran.
+    expect(census.suspenseCount).toBe(1);
+    expect(census.undemandedCount).toBe(0);
+    expect(census.phantomCount).toBe(0);
+  });
+
+  it("balances the identity — which is COMPLETENESS, and could never have caught this", () => {
+    // Deliberately last, and deliberately glossed. raw = attributed + undemanded + phantom +
+    // suspense balanced BEFORE this fix (2 = 2+0+0+0) and balances after (2 = 1+0+0+1). The
+    // identity is INVARIANT under a misclassification between its own terms: it catches a credit
+    // VANISHING, never a credit in the wrong bucket. The two tests above are the correctness
+    // check; this one is the completeness check, and it is not evidence for them.
+    const raw = totalEvidenceObservations(census);
+    const attributedTally = census.attributed.reduce((n, a) => n + a.count, 0);
+    expect(raw).toBe(2);
+    expect(attributedTally + census.undemandedCount + census.phantomCount + census.suspenseCount).toBe(raw);
   });
 });

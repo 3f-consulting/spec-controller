@@ -619,3 +619,29 @@ Feature: The report renders the ledger as sectioned facts
       And an out-of-balance run reads OUT-OF-BALANCE and exit 1, never as a pass
       And a balanced run reads BALANCED and exit 0
       And a balanced run carrying Pending Items notes exit 3 under --strict, conditionally and unasserted
+
+  Rule: a proof that never ran is attributed to no scenario, even when it cites one
+
+    The census's second lie, and the reason the fold is not a no-op. A `broken` observation
+    can carry a REAL `scnId` — an ambiguous cucumber step (@SCN-LDG-019) cites its @SCN and
+    still never runs. The census counted it `attributed`; the reconciler posts it to suspense.
+    Canon settles it: a proof that never ran cannot discharge or fail an obligation, so it
+    attributes to nothing.
+
+    The count moves — `attributed` down, `suspense` up — and this scenario NAMES that move,
+    because nothing else can. The exhaustion identity is INVARIANT under a misclassification
+    between its own terms: it catches a credit VANISHING, never a credit in the wrong bucket.
+    It is a completeness check, and it has been misread as a correctness check. This is the
+    correctness check.
+
+    The census is now a FOLD over the Ledger: it walks the posted credits and reads each
+    credit's kind off the ROW it posted to, so the reconciler is the ONE classifier. The fold
+    keeps the RUNTIME scoping — a `lint` credit posts to every account demanding it, so a
+    naive walk would double-count the static axis the census must not see at all.
+
+    @unit @integration @SCN-RPT-023
+    Scenario: a broken observation citing a real scenario counts as suspense, not attributed to that scenario
+      Given a corpus whose cucumber run reports an ambiguous step for a scenario that cites a declared @SCN at a demanded quality-check
+      When the run reconciles and the report is rendered
+      Then the broken observation is not counted among that scenario's attributed evidence
+      And it is counted once on the suspense scenario, and the Test volume identity still balances

@@ -1,20 +1,23 @@
 /**
  * The evidence-observation reconciliation — the OBSERVED test evidence
- * evidence observations, counted by kind against the `@SCN` anchor in ONE shared pass so the
- * three-way identity holds BY CONSTRUCTION.
+ * evidence observations, counted by kind off the Ledger's own rows in ONE pass so the
+ * four-way completeness identity holds BY CONSTRUCTION.
  *
- * The reconcile core (`reconcile.ts`) records evidence EXISTENCE (`.find()`), never
- * counts, and the observed readers drop every result carrying no `@SCN`. The report's
- * evidence-observation side — how much evidence actually ran, and how it breaks down by kind —
- * needs the parsed evidence observations the pipeline otherwise throws away. `countRuntimeEvidenceObservationKinds`
- * is a PROJECTION of the ONE observation set the reconciler consumes (@SCN-RPT-017 / 3F-1452 FULL
- * UNIFY): it tallies the already-parsed `EvidenceObservation[]` — tag-derived and per-tier (per
- * @SCN-LDG-011 / 3F-1434) — into exactly one of {attributed-to-declared, undemanded,
- * attributed-to-undeclared (phantom), suspense} while summing the raw per-quality-check total, so
+ * The report's evidence-observation side — how much evidence actually ran, and how it breaks down
+ * by kind — is a FOLD OVER THE LEDGER (@SCN-RPT-023 / 3F-1859).
+ * `countRuntimeEvidenceObservationKinds` takes the `Ledger` the reconciler produced and walks the
+ * POSTED CREDITS on its rows (@SCN-LDG-022), reading each credit's kind off THE ROW IT POSTED TO
+ * and summing the raw per-quality-check total in lockstep, so
  * `Σ rawByRuntimeQualityCheck = Σ attributed.count + undemandedCount + phantomCount + suspenseCount`
- * can never drift. There is NO second raw-report walk and NO re-derivation of the level here — the
- * census reads the level off the parsed observation, so the views (Test volume, attributed, E2e
- * cell) always agree with the reconciler's verdict (the drift bug 3F-1452 fixed).
+ * can never drift.
+ *
+ * It does NOT classify, and it re-derives NOTHING: not the level (that rides the parsed
+ * observation, tag-derived per @SCN-LDG-011 / 3F-1434 — the drift bug 3F-1452 fixed), and no
+ * longer the KIND either. This module USED to hold a second implementation of the reconciler's
+ * classification — same inputs, same question, two codebases — and the two disagreed twice: on a
+ * credit citing a pending obligation (3F-1858) and on a `broken` credit carrying a real scnId
+ * (@SCN-RPT-023). The views (Test volume, attributed, E2e cell) now agree with the verdict because
+ * they are projections of the same rows, not because a parallel opinion is kept in step.
  *
  * The attributed counts (per `(scnId, quality-check)`) feed the per-scenario columns;
  * the undemanded/phantom/suspense counts feed the anchor-audit slices.
@@ -22,7 +25,7 @@
  * Parent: (@SCN-RPT-010) — the evidence-observation-reconciliation spine.
  */
 
-import type { Scenario, RuntimeQualityCheck, EvidenceObservation } from "../model.js";
+import type { RuntimeQualityCheck, Ledger } from "../model.js";
 import { evidenceObligationPairsOf } from "../model.js";
 
 /** An attributed-to-declared evidence observation tally: a `(scnId, quality-check)` with its count. */
@@ -68,37 +71,34 @@ export interface RuntimeEvidenceObservationKindCounts {
 export const RUNTIME_QUALITY_CHECKS: readonly RuntimeQualityCheck[] = ["unit", "integration", "e2e", "performance"];
 
 /**
- * Build the evidence-observation reconciliation as a PROJECTION of the ONE parsed observation
- * set the reconciler consumes (@SCN-RPT-017 / 3F-1452 FULL UNIFY). It tallies each observation by
- * kind against the `@SCN` anchor and sums the raw total in lockstep, so the kind-count identity
- * holds by construction. The level comes from the ALREADY-PARSED observation (tag-derived, per
- * @SCN-LDG-011 / 3F-1434) — there is NO second raw-report walk and NO re-derivation of the level
- * here, so the census can never drift from the reconciler's verdict. Guard (`lint`) observations
- * are skipped: this is the runtime axis. Runtime quality-checks no observation carries stay zero
- * and surface as facts in the tally.
+ * Build the evidence-observation reconciliation as a FOLD OVER THE LEDGER (@SCN-RPT-023 / 3F-1859).
+ *
+ * The census does not classify. It walks the POSTED CREDITS on each Scenario Reconciliation row
+ * (@SCN-LDG-022) and reads each credit's kind off THE ROW IT POSTED TO — suspense row ⇒ suspense,
+ * phantom row ⇒ phantom, real row ⇒ attributed or undemanded by the model's one demanded-pair rule.
+ * The reconciler is the single classifier; the census re-derives NOTHING (not the level, which
+ * rides the parsed observation per @SCN-LDG-011, and no longer the KIND either).
+ *
+ * This retires the second implementation of the reconciler's classification. Two classifiers over
+ * the same inputs can disagree, and did — twice: on a credit citing a pending obligation (3F-1858)
+ * and on a `broken` credit carrying a real scnId (@SCN-RPT-023). Correctness comes from there being
+ * ONE place that decides what a credit is; it does NOT come from the exhaustion identity below,
+ * which is invariant under a misclassification between its own terms and can only catch a credit
+ * that VANISHED.
+ *
+ * Guard (`lint`) credits are skipped: this is the runtime axis. Runtime quality-checks no
+ * observation carries stay zero and surface as facts in the tally.
  */
-export function countRuntimeEvidenceObservationKinds(args: {
-  /**
-   * The already-parsed runtime observations the reconciler derives (via
-   * `parseVitestEvidenceObservations` + `parseCucumberEvidenceObservations`) — tag-derived and
-   * per-tier. The census PROJECTS this set: each observation's level is read from the parsed
-   * observation, never re-derived. Guard (`lint`) observations are ignored (the static axis).
-   */
-  observations: EvidenceObservation[];
-  scenarios: Scenario[];
-}): RuntimeEvidenceObservationKindCounts {
-  const scenarioIds = new Set(args.scenarios.map((d) => d.scnId));
-  // The DEMANDED pairs — the model's rule, shared with `reconcile` (3F-1858). This module used to
-  // build its OWN character-identical copy of the loop, over ALL obligations INCLUDING pending.
-  // Two copies agreeing by copy-paste rather than by construction is what let the pending
-  // divergence exist at all: either could have grown a filter alone and nothing would have redded.
-  // There is ONE rule now, and it excludes pending — a pending obligation demands nothing, so a
-  // credit citing it counts `undemanded` here exactly as it reconciles `undemanded` on the ledger
-  // (@SCN-PND-005). The census can no longer disagree with the reconciler about what is demanded.
-  //
-  // The census still CLASSIFIES below; 3F-1859 turns it into a fold over the Ledger, at which
-  // point this call goes too.
-  const evidenceObligationPairs = evidenceObligationPairsOf(args.scenarios);
+export function countRuntimeEvidenceObservationKinds(
+  ledger: Ledger
+): RuntimeEvidenceObservationKindCounts {
+  // The DEMANDED pairs — the model's ONE rule (3F-1858), now asked of the LEDGER rather than of a
+  // separately-passed scenario corpus. A `ScenarioReconciliation` carries `scnId` and its POSTED
+  // DEBITS (`evidenceObligations`, @SCN-LDG-023), so it IS a `Scenario` structurally: the pair set
+  // is built over the ledger's own declarations, by the same function `reconcile` uses. Pending
+  // obligations are excluded there — a pending obligation demands nothing — so a credit citing one
+  // counts `undemanded` here exactly as it reconciles `undemanded` on its row (@SCN-PND-005).
+  const evidenceObligationPairs = evidenceObligationPairsOf(ledger.scenarioReconciliations);
   const rawByRuntimeQualityCheck: Record<RuntimeQualityCheck, number> = {
     unit: 0,
     integration: 0,
@@ -111,34 +111,55 @@ export function countRuntimeEvidenceObservationKinds(args: {
   let phantomCount = 0;
   let suspenseCount = 0;
 
-  /** Count one evidence observation into exactly one kind AND bump the raw total. */
-  const countKind = (qualityCheck: RuntimeQualityCheck, scnId: string | null): void => {
-    rawByRuntimeQualityCheck[qualityCheck]++;
-    if (scnId === null) {
-      suspenseCount++;
-    } else if (scenarioIds.has(scnId) && !evidenceObligationPairs.has(`${scnId} ${qualityCheck}`)) {
-      // Cites a REAL declared scenario, but at a quality-check it never declared → UNDEMANDED
-      // (@SCN-LDG-008), NOT reconciliation-matched-attributed. The pair-check is the
-      // latent `attributed` mis-count fix.
-      undemandedCount++;
-    } else if (scenarioIds.has(scnId)) {
-      const key = `${scnId} ${qualityCheck}`;
-      const existing = attributedByKey.get(key);
-      if (existing) existing.count++;
-      else attributedByKey.set(key, { scnId, qualityCheck, count: 1 });
-    } else {
-      phantomCount++;
+  // THE FOLD (@SCN-RPT-023 / 3F-1859). The census no longer CLASSIFIES — it walks the Ledger's
+  // POSTED CREDITS and reads each credit's kind off THE ROW IT POSTED TO. The reconciler already
+  // decided what every credit is; asking the row is asking that decision. There is now exactly ONE
+  // place that decides what a credit is, so the census can no longer disagree with the verdict —
+  // not because a second implementation was made to agree, but because the second implementation
+  // is GONE.
+  //
+  // What the old classifier got wrong, and why this is not a refactor no-op: it had NO `broken`
+  // branch at all. Its only suspense test was `scnId === null`, so a `broken` observation carrying
+  // a REAL scnId — an ambiguous cucumber step (@SCN-LDG-019) cites its @SCN and still never runs —
+  // passed every test: not null, scenario declared, pair demanded → counted ATTRIBUTED. The
+  // reconciler always posted it to SUSPENSE, and canon says the reconciler is right: a proof that
+  // never ran can neither discharge nor fail an obligation, so it attributes to NOTHING. Folding
+  // over the rows therefore MOVES the count — attributed −1, suspense +1 (@SCN-RPT-023 names it).
+  //
+  // NB the exhaustion identity below cannot see this and never could: it is INVARIANT under a
+  // misclassification between its own terms. It is a COMPLETENESS check (a credit vanished), never
+  // a correctness one (a credit is in the wrong bucket).
+  for (const row of ledger.scenarioReconciliations) {
+    for (const obs of row.evidenceObservations) {
+      // THE RUNTIME SCOPING, preserved exactly. The census is the RUNTIME axis:
+      // `rawByRuntimeQualityCheck` has no lint key and ingest never even passed guard observations
+      // to it. It matters MORE under the fold than it did under the walk: @SCN-LDG-022 posts the
+      // SAME guard object to EVERY account demanding it, so a naive walk of the rows would count
+      // one guard's single run once per demanding scenario — double-counting an axis the census
+      // must not see at all.
+      if (obs.qualityCheck === "lint") continue;
+      rawByRuntimeQualityCheck[obs.qualityCheck]++;
+      if (row.kind === "suspense-scenario") {
+        // The suspense account holds every credit that cites no scenario — the uncited (scnId
+        // null) AND the broken (it named no test, so it cites nothing whatever scnId it
+        // structurally carries). The reconciler's fail-safe took `broken` FIRST, on the flag; the
+        // fold inherits that ruling by reading the row rather than re-testing the credit.
+        suspenseCount++;
+      } else if (row.kind === "phantom-scenario") {
+        // A credit citing an @SCN no declared scenario matches, posted to the invented account.
+        phantomCount++;
+      } else if (evidenceObligationPairs.has(`${row.scnId} ${obs.qualityCheck}`)) {
+        // A real account, at a pair it DEMANDS → reconciliation-matched attributed.
+        const key = `${row.scnId} ${obs.qualityCheck}`;
+        const existing = attributedByKey.get(key);
+        if (existing) existing.count++;
+        else attributedByKey.set(key, { scnId: row.scnId, qualityCheck: obs.qualityCheck, count: 1 });
+      } else {
+        // A real account, at a quality-check it never demanded → UNDEMANDED (@SCN-LDG-008),
+        // including a credit citing a PENDING obligation (3F-1858 — pending demands nothing).
+        undemandedCount++;
+      }
     }
-  };
-
-  // PROJECT the one parsed observation set: each runtime observation's level is read from the
-  // already-parsed observation (tag-derived), NOT re-derived from a raw report. Guard (`lint`)
-  // observations are the static axis and are skipped here. This is the single-derivation
-  // discipline the FULL UNIFY ruling requires (3F-1452): the census can never drift from the
-  // reconciler because it consumes the SAME set.
-  for (const obs of args.observations) {
-    if (obs.qualityCheck === "lint") continue; // a guard observation — the static axis, not runtime
-    countKind(obs.qualityCheck, obs.scnId);
   }
 
   const result: RuntimeEvidenceObservationKindCounts = {
@@ -149,8 +170,13 @@ export function countRuntimeEvidenceObservationKinds(args: {
     suspenseCount,
   };
 
-  // Kind-count completeness identity, by construction (the single-walk drift-proofing): the raw
+  // Kind-count COMPLETENESS identity, by construction (the single-walk drift-proofing): the raw
   // per-quality-check total equals the sum of the four mutually-exclusive kind-counts.
+  //
+  // COMPLETENESS, and ONLY completeness — it is invariant under any misclassification BETWEEN its
+  // own terms (move a credit from attributed to suspense and the sum is unchanged), so it catches
+  // exactly one thing: a credit VANISHING. It was green through BOTH divergences 3F-1831 closed
+  // and could never have caught either. Do not read it as a correctness check; the `@SCN`s are that.
   const raw = RUNTIME_QUALITY_CHECKS.reduce((n, qualityCheck) => n + rawByRuntimeQualityCheck[qualityCheck], 0);
   const attributedTally = result.attributed.reduce((n, a) => n + a.count, 0);
   if (raw !== attributedTally + undemandedCount + phantomCount + suspenseCount) {
