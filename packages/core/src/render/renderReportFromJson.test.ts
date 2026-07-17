@@ -19,58 +19,35 @@
 import { describe, it, expect } from "vitest";
 import { renderJson } from "./json.js";
 import { renderReportFromJson, renderMarkdown } from "./markdown.js";
-import type { Ledger } from "../model.js";
+import type { Ledger, Scenario, EvidenceObservation } from "../model.js";
 import type { RunContext } from "../provenance/provenance.js";
 import type { RuntimeEvidenceObservationKindCounts } from "../census/evidenceObservations.js";
+import { countRuntimeEvidenceObservationKinds } from "../census/evidenceObservations.js";
+import { reconcile } from "../reconcile/reconcile.js";
 import type { StaticEvidenceObservationKindCounts } from "../census/staticEvidenceObservations.js";
 import type { EvidenceObligations } from "../census/evidenceObligations.js";
 
-// A balance whose CHK feature carries a balanced unit scenario and an out-of-balance integration
-// scenario, so the by-feature cut names "checkout (CHK)" — the coded-title path under test.
-const balance: Ledger = {
-  scenarioReconciliations: [
-    {
-      scnId: "SCN-CHK-001",
-      kind: "scenario",
-      evidenceObservations: [],
-      evidenceObligations: [],
-      verdict: "balanced",
-      qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "satisfied" }],
-      pendingItems: [],
-      reconcilingItems: [],
-    },
-    {
-      scnId: "SCN-CHK-002",
-      kind: "scenario",
-      evidenceObservations: [],
-      evidenceObligations: [],
-      verdict: "out-of-balance",
-      qualityCheckReconciliations: [{ qualityCheck: "integration", outcome: "missing" }],
-      pendingItems: [],
-      reconcilingItems: [{ qualityCheck: "integration", outcome: "missing" }],
-    },
-    // A SUSPENSE-scenario row — an uncited runtime credit + the suspense
-    // static-guard (lint:bar) folded onto one "(no scenario)" bucket. Gives the round-trip
-    // teeth on the suspense shape: it must render (ledger cell + S bullet + byOutcome
-    // cites-no-scenario) and re-parse from the JSON alone byte-identically.
-    {
-      scnId: "(no scenario)",
-      kind: "suspense-scenario",
-      evidenceObservations: [],
-      evidenceObligations: [],
-      verdict: "out-of-balance",
-      qualityCheckReconciliations: [
-        { qualityCheck: "unit", outcome: "cites-no-scenario", locator: "src/b.test.ts" },
-        { qualityCheck: "lint", guard: "lint:bar", outcome: "cites-no-scenario" },
-      ],
-      pendingItems: [],
-      reconcilingItems: [
-        { qualityCheck: "unit", outcome: "cites-no-scenario", locator: "src/b.test.ts" },
-        { qualityCheck: "lint", guard: "lint:bar", outcome: "cites-no-scenario" },
-      ],
-    },
-  ],
-};
+// RECONCILER-TRUE FIXTURE (evidence-manifesto §11A, 3F-1894). The balance is PRODUCED by
+// reconcile() over a corpus, and the runtime census (below) is a FOLD over it — so the census
+// cannot claim a phantom/suspense/attribution the ledger does not carry. The round-trip banks the
+// ledger to disk, so the phantom the census counts must exist as an actual ROW, not a bare count
+// (3F-1861). The CHK feature carries a balanced unit scenario and an out-of-balance integration
+// scenario, so the by-feature cut names "checkout (CHK)". The corpus:
+//   SCN-CHK-001: @unit, one passing unit credit → balanced, attributed 1
+//   SCN-CHK-002: @integration, no credit → integration missing (the coded out-of-balance feature)
+//   1 unit credit citing SCN-PHX-001 (undeclared) → a real phantom ROW, phantom 1
+//   1 uncited unit credit (src/b.test.ts) + the undemanded lint:bar guard → the suspense row
+const scenarios: Scenario[] = [
+  { scnId: "SCN-CHK-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+  { scnId: "SCN-CHK-002", evidenceObligations: [{ qualityCheck: "integration" }] },
+];
+const observations: EvidenceObservation[] = [
+  { qualityCheck: "unit", scnId: "SCN-CHK-001", status: "passed" },
+  { qualityCheck: "unit", scnId: "SCN-PHX-001", status: "passed" },
+  { qualityCheck: "unit", scnId: null, status: "passed", locator: "src/b.test.ts" },
+  { qualityCheck: "lint", guard: "lint:bar", exists: true, enforcedOverRealSource: true },
+];
+const balance: Ledger = reconcile(scenarios, observations);
 
 const ctx: RunContext = {
   target: "roundtrip-fixture",
@@ -80,13 +57,9 @@ const ctx: RunContext = {
 };
 
 // A three-way evidenceObservations: 3 raw = 1 attributed-to-declared + 1 phantom + 1 suspense.
-const evidenceObservations: RuntimeEvidenceObservationKindCounts = {
-  rawByRuntimeQualityCheck: { unit: 3, integration: 0, e2e: 0, performance: 0 },
-  attributed: [{ scnId: "SCN-CHK-001", qualityCheck: "unit", count: 1 }],
-  undemandedCount: 0,
-  phantomCount: 1,
-  suspenseCount: 1,
-};
+// FOLDED from the balance above (@SCN-RPT-023), so it cannot diverge from the rows it summarises.
+const evidenceObservations: RuntimeEvidenceObservationKindCounts =
+  countRuntimeEvidenceObservationKinds(balance);
 
 // The static-guard kind-counts: 2 running CI guards = 1 declared (lint:foo) + 1 unattributed (lint:bar).
 const guards: StaticEvidenceObservationKindCounts = { runningGuardCount: 2, unattributedStaticGuardCount: 1 };
