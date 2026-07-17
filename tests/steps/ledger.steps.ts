@@ -1663,8 +1663,8 @@ Then(
  * `evidenceObservations`; only driving the FULL credit corpus through in one run shows the
  * property that matters — EXHAUSTION and UNIQUENESS together, over every credit shape at once.
  * The bug was never in one branch: it was that the model had nowhere for a posted entry to SIT, so
- * a credit citing a pending quality-check reconciled to no row and CEASED TO EXIST. A
- * misclassification should misfile an entry, not vaporise it.
+ * a credit citing a pending quality-check CEASED TO EXIST. A misclassification should misfile an
+ * entry, not vaporise it — posting is indifferent to what the entry reconciles to.
  *
  * The assertions are IDENTITY-scoped (each input observation object must be found in exactly one
  * account), not count-scoped: a count would pass under a double-post that cancelled a drop.
@@ -1681,9 +1681,8 @@ Given(
   "a run whose credits span every shape — satisfied, undemanded, pending-cited, phantom, uncited, broken, a demanded guard and an undemanded guard",
   function () {
     // SCN-AAA-003 declares @unitpending — a DEFERRED obligation. The credit citing it below is the
-    // LOAD-BEARING case: it reconciles to NO ROW (the pending obligation is partitioned off before
-    // the match, and the pending pair keeps the credit out of `undemanded`), so before this
-    // scenario it vanished from the model entirely.
+    // LOAD-BEARING case: before this scenario it vanished from the model entirely, because there
+    // was nowhere for a posted entry to sit. It posts and is findable WHATEVER it reconciles to.
     const source = `@AAA
 Feature: alpha
 
@@ -1696,7 +1695,7 @@ Feature: alpha
     Given a thing
 
   @unitpending @SCN-AAA-003
-  Scenario: a pending-cited credit that reconciles to no row
+  Scenario: a pending-cited credit
     Given a thing
 `;
     scenarios = parseScenarios(source);
@@ -1708,7 +1707,7 @@ Feature: alpha
     const undemanded: EvidenceObservation = {
       scnId: "SCN-AAA-002", qualityCheck: "integration", status: "passed", locator: "b.test.ts",
     };
-    // THE LOAD-BEARING CREDIT — cites a PENDING quality-check. Reconciles to no row; posts anyway.
+    // THE LOAD-BEARING CREDIT — cites a PENDING quality-check. It posts whatever its outcome.
     ldg022PendingCredit = {
       scnId: "SCN-AAA-003", qualityCheck: "unit", status: "passed", locator: "c.test.ts",
     };
@@ -1810,31 +1809,22 @@ Then("each credit is findable in the account its citation names", function () {
 
 // @SCN-LDG-022
 Then(
-  "the credit citing a pending quality-check is posted and findable, though it reconciles to no row",
+  "the credit citing a pending quality-check is posted and findable",
   function () {
     const account = ldgPostingLedger.scenarioReconciliations.find(
       (r: ScenarioReconciliation) => r.scnId === "SCN-AAA-003",
     );
     assert.ok(account, "expected an account for the pending-declaring scenario SCN-AAA-003");
-    // POSTED — the whole point. Before this scenario, this credit existed nowhere in the model.
+    // POSTED — the whole point, and the WHOLE of this step's claim. Before this scenario, this
+    // credit existed nowhere in the model. It posts and is findable WHATEVER it reconciles to;
+    // what it reconciles to is the reconciler's business, asserted where that rule lives.
     assert.deepEqual(
       account.evidenceObservations,
       [ldg022PendingCredit],
       `expected the pending-cited credit to POST to SCN-AAA-003's account and be findable there. ` +
-        `This is the load-bearing case: it reconciles to NO ROW, so with nowhere for a posted ` +
-        `entry to sit it simply CEASED TO EXIST. A misclassification should MISFILE an entry, ` +
-        `not vaporise it.`,
+        `With nowhere for a posted entry to sit it simply CEASED TO EXIST. A misclassification ` +
+        `should MISFILE an entry, not vaporise it.`,
     );
-    // ...AND STILL RECONCILES TO NOTHING. Deliberately NOT fixed here (3F-1831 owns the
-    // false-green): posting is not classifying. The entry becomes VISIBLE before it becomes
-    // CORRECT.
-    assert.deepEqual(
-      account.qualityCheckReconciliations,
-      [],
-      "the pending-cited credit must STILL reconcile to no row — this slice makes it visible, not correct",
-    );
-    assert.deepEqual(account.reconcilingItems, [], "posting must raise no reconciling item");
-    assert.equal(account.verdict, "balanced", "the pending scenario's verdict is unchanged by posting");
   },
 );
 

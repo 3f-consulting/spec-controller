@@ -1235,16 +1235,13 @@ describe("[SCN-LDG-022] reconcile — every evidence observation posts to exactl
     expect(accountFor(ledger, "(no scenario)")).toBeUndefined();
   });
 
-  it("posts a credit citing a PENDING quality-check, though it reconciles to no row", () => {
-    // THE LOAD-BEARING CASE. This credit produces no QualityCheckReconciliation at all: the
-    // pending obligation is partitioned off before the match, and the pending pair keeps the
-    // credit out of `undemanded`. With nowhere for a posted entry to sit it CEASED TO EXIST.
+  it("posts a credit citing a PENDING quality-check", () => {
+    // THE LOAD-BEARING CASE. With nowhere for a posted entry to sit this credit CEASED TO EXIST.
+    // It posts to the account it cites WHATEVER it reconciles to — the posting rule is the
+    // citation, never the outcome, so this case asserts nothing about the outcome.
     const credit: EvidenceObservation = { scnId: "SCN-AAA-003", qualityCheck: "unit", status: "passed" };
     const account = accountFor(reconcile(declared, [credit]), "SCN-AAA-003");
     expect(account?.evidenceObservations).toEqual([credit]);
-    // ...and it STILL reconciles to nothing. Posting is not classifying; 3F-1831 owns the fix.
-    expect(account?.qualityCheckReconciliations).toEqual([]);
-    expect(account?.verdict).toBe("balanced");
   });
 
   it("posts a credit citing an unknown @SCN to that phantom account", () => {

@@ -449,12 +449,13 @@ Feature: Ledger over declared-vs-observed evidence
   # carrying outcomes) and NO ENTRIES IN BETWEEN: with nowhere for a posted entry to sit, an entry
   # either became a Quality Check Reconciliation or CEASED TO EXIST.
   #
-  # POSTING IS NOT CLASSIFYING. An entry posts here whatever it later reconciles to. The
-  # load-bearing case is the credit citing a PENDING quality-check, which reconciles to NO ROW: it
-  # posts and is findable ANYWAY. Its misclassification is DELIBERATELY NOT FIXED here — the
-  # verdict and exit code are unchanged by this scenario (3F-1831 folds the census over this
-  # ledger, and the false-green then has nowhere to live). A misclassification should MISFILE an
-  # entry, not vaporise it.
+  # POSTING IS NOT CLASSIFYING. An entry posts here WHATEVER IT RECONCILES TO — the posting claim
+  # is indifferent to the outcome, and never depended on that outcome being right or wrong. The
+  # load-bearing case is the credit citing a PENDING quality-check: it posts and is findable
+  # whatever its outcome turns out to be. What that outcome IS belongs to the reconciler, not to
+  # this scenario — 3F-1858 makes this particular credit reconcile honestly as `undemanded`, and
+  # this Rule reads identically on both sides of that change. That is the point: a
+  # misclassification should MISFILE an entry, not vaporise it.
   #
   # THE ACCOUNT IS THE SCENARIO RECONCILIATION (canon: "bookkeeping term: Account"). The same
   # accounts live in the ledger before and after balancing off, gaining their verdict IN PLACE —
@@ -478,7 +479,7 @@ Feature: Ledger over declared-vs-observed evidence
       When the ledger reconciles that run
       Then every evidence observation posts to exactly one ledger account
       And each credit is findable in the account its citation names
-      And the credit citing a pending quality-check is posted and findable, though it reconciles to no row
+      And the credit citing a pending quality-check is posted and findable
       And the run's verdict and reconciling items are unchanged — posting classifies nothing
 
   # THE DEBIT HALF of the same posting (@SCN-LDG-023). Where the credit side at least existed
