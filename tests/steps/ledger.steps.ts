@@ -1845,8 +1845,13 @@ Then(
         // The demanded guard reconciles `satisfied` on this row — and posts here too.
         ["SCN-AAA-001", "balanced", []],
         ["SCN-AAA-002", "out-of-balance", ["missing", "undemanded"]],
-        // The pending-cited credit STILL reconciles to nothing — the false-green is 3F-1831's.
-        ["SCN-AAA-003", "balanced", []],
+        // The pending-cited credit reconciles `undemanded` (3F-1858): a pending obligation
+        // raises no Evidence Obligation, so nothing is demanded at that pair and the credit is
+        // an ordinary undemanded one. It used to reconcile to NOTHING — posting to no account,
+        // run balanced, exit 0 — which was the false-green, not behaviour. Posting still
+        // classifies nothing: this row's outcome is the RECONCILER's, asserted where that rule
+        // lives (@SCN-PND-005); it is pinned here only to keep this exhaustion snapshot honest.
+        ["SCN-AAA-003", "out-of-balance", ["undemanded"]],
         ["SCN-ZZZ-999", "out-of-balance", ["cites-unknown-scenario"]],
         ["(no scenario)", "out-of-balance", ["broken", "cites-no-scenario", "cites-no-scenario"]],
       ],

@@ -71,9 +71,21 @@ Feature: A pending evidence obligation raises a Pending Item
 
   # A Pending Item is one-sided: the pending TAG's existence alone raises it — no observation
   # is sought. Even when a matching observation exists for the pending obligation's check, the
-  # pending declaration governs: the obligation never reconciles against the observation (never
-  # `satisfied`), and the observation is not flagged `undemanded` — the pending pair stays
-  # DEMANDED. (Verdict-neutral / run-neutral are @SCN-PND-006..008; this pins the one-sidedness.)
+  # pending declaration governs and the obligation never reconciles against it (never `satisfied`).
+  #
+  # A PENDING OBLIGATION DEMANDS NOTHING (3F-1858, correcting this Rule). Canon, Pending Item:
+  # a `pending` tag raises NO Evidence Obligation, so "an Evidence Observation citing that
+  # scenario at a pending quality-check is `undemanded` — exactly as when nothing was declared
+  # at all". This narrative used to assert the opposite — "the pending pair stays DEMANDED" —
+  # and that left the citing credit posting to NO ACCOUNT AT ALL: the pair-check excluded it
+  # from `undemanded`, and the pending partition excluded it from the debit side. Zero rows,
+  # verdict balanced, exit 0 — a run canon says must FAIL, passing.
+  #
+  # THE RULE ITSELF STILL HOLDS, and the distinction is exactly the point: the PENDING ITEM is
+  # verdict-neutral and run-neutral — it is never a reconciling item and flips nothing. The row
+  # below goes out of balance because of the CREDIT, which is an ordinary `undemanded`
+  # reconciling item. Two different things on one row. (@SCN-PND-006..008 pin the neutrality
+  # over a pending obligation NO observation cites; they stay green.)
   Rule: A Pending Item is one-sided and never affects the verdict or the run
 
     @unit @integration @SCN-PND-005
@@ -81,7 +93,8 @@ Feature: A pending evidence obligation raises a Pending Item
       Given a planted fixture scenario declaring a pending "integration" obligation, with a matching integration observation citing it
       When the reconciler reconciles the fixture against that matching observation
       Then the scenario raises exactly one Pending Item for "integration"
-      And the matching observation is not flagged undemanded — the pending pair stays demanded
+      And the matching observation IS flagged undemanded — a pending obligation demands nothing, so nothing is attributed to it
+      And the scenario's row is out of balance and the run exits 1
 
     @unit @integration @SCN-PND-006
     Scenario: a Pending Item is not a Reconciling Item (it is not an error)

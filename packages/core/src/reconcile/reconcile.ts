@@ -33,6 +33,7 @@ import type {
   ScenarioVerdict,
   Ledger,
 } from "../model.js";
+import { evidenceObligationPairsOf } from "../model.js";
 
 /**
  * Reconcile one declared evidenceObligation against the observed evidence, keyed on the
@@ -215,16 +216,15 @@ export function reconcile(
 
   // The credit-consuming SPINE: index the runtime evidence observations
   // (credits) the reconciler now consumes, alongside the declared side. `byScn` groups
-  // credits by the scnId they cite; `evidenceObligationPairs` is the set of declared
+  // credits by the scnId they cite; `evidenceObligationPairs` is the set of DEMANDED
   // `(scnId, qualityCheck)` evidence obligations. The spine is GENERAL — it indexes ALL credits so
   // LDG-007/008/009 build the suspense / undemanded / both-missing rows on it — even
   // though THIS sub-issue emits only the phantom case. Guard evidence observations carry no scnId
   // (qualityCheck "lint"), so only runtime evidence observations are indexed.
   const scenarioIds = new Set(scenarios.map((d) => d.scnId));
-  const evidenceObligationPairs = new Set<string>();
-  for (const d of scenarios) {
-    for (const o of d.evidenceObligations) evidenceObligationPairs.add(`${d.scnId} ${o.qualityCheck}`);
-  }
+  // The DEMANDED pairs — the model's rule, built ONCE and shared with the census (3F-1858).
+  // Pending obligations are excluded: a pending obligation demands nothing.
+  const evidenceObligationPairs = evidenceObligationPairsOf(scenarios);
   // The DEMANDED guard handles — every `@lint=<guard>` obligation across the corpus. A
   // `lint` evidence observation whose guard is NOT in this set is an UNDEMANDED guard: it
   // cites no scenario, so it posts to the SUSPENSE row. This replaces the
@@ -256,11 +256,18 @@ export function reconcile(
     // Split it OFF here, BEFORE the observation match: it becomes ONE one-sided Pending
     // Item, never flows through `reconcileEvidenceObligation`, never becomes a
     // QualityCheckReconciliation, never a reconciling item ("one-sided: nothing is
-    // reconciled"). Only the NON-pending obligations reconcile below. NOTE the pending
-    // pair STAYS in `evidenceObligationPairs` above (built over ALL obligations) — so a
-    // stray observation matching a pending pair is NOT `undemanded`: the pending
-    // declaration owns that pair (PND-005). The Pending Item is verdict-neutral and
-    // run-neutral: `verdictFor` / `reconcilingItemsOf` / `isBalanced` see none of it.
+    // reconciled"). Only the NON-pending obligations reconcile below.
+    //
+    // The pending pair is NOT in `evidenceObligationPairs` (3F-1858): a pending obligation
+    // demands nothing, so an observation citing that pair is `undemanded` — "exactly as when
+    // nothing was declared at all" (canon, Pending Item). It previously STAYED in the set, which
+    // left such a credit posting NOWHERE: excluded from `undemanded` by the pair-check AND from
+    // the debit side by this partition. Zero rows, balanced, exit 0 — a run canon says must fail.
+    //
+    // The Pending Item ITSELF stays verdict-neutral and run-neutral — it is not a reconciling
+    // item and `verdictFor` / `reconcilingItemsOf` / `isBalanced` see none of it. When such a row
+    // IS out of balance it is the CREDIT that did it, never the Pending Item; the two are
+    // different things that can sit on the same row (@SCN-PND-005 asserts exactly that).
     const pendingItems: PendingItem[] = d.evidenceObligations
       .filter((req) => req.pending)
       .map((req) => ({ qualityCheck: req.qualityCheck }));
@@ -332,9 +339,11 @@ export function reconcile(
       verdict: verdictFor(qualityCheckReconciliations),
       // THE POSTED CREDITS (@SCN-LDG-022) — every credit CITING this scenario, whatever it
       // reconciles to above. `byScn` is the citation index, so this includes the credit citing a
-      // PENDING quality-check, which reconciles to NO ROW at all: it posts and is findable
-      // ANYWAY. Posting is not classifying; a misclassification must misfile an entry, never
-      // vaporise it. Plus the guard credits this account DEMANDS, linked by handle (above).
+      // PENDING quality-check, which reconciles `undemanded` (3F-1858 — it used to reconcile to
+      // NO ROW AT ALL, the false-green this posting made visible without fixing). It posts and is
+      // findable WHATEVER it reconciles to; posting is not classifying, and a misclassification
+      // must misfile an entry, never vaporise it. Plus the guard credits this account DEMANDS,
+      // linked by handle (above).
       evidenceObservations: [...(byScn.get(d.scnId) ?? []), ...demandedGuardCredits],
       // THE POSTED DEBITS (@SCN-LDG-023) — every obligation THIS scenario DECLARES, in document
       // order, keyed by quality-check. The debit half of the same posting: where a credit is

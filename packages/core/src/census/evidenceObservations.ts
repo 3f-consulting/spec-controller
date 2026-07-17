@@ -23,6 +23,7 @@
  */
 
 import type { Scenario, RuntimeQualityCheck, EvidenceObservation } from "../model.js";
+import { evidenceObligationPairsOf } from "../model.js";
 
 /** An attributed-to-declared evidence observation tally: a `(scnId, quality-check)` with its count. */
 export interface AttributedCount {
@@ -87,14 +88,17 @@ export function countRuntimeEvidenceObservationKinds(args: {
   scenarios: Scenario[];
 }): RuntimeEvidenceObservationKindCounts {
   const scenarioIds = new Set(args.scenarios.map((d) => d.scnId));
-  // The declared `(scnId, quality-check)` PAIRS — a credit citing a declared scenario is
-  // reconciliation-matched only when its `(scnId, quality-check)` is a declared pair; otherwise it is
-  // UNDEMANDED (a real scenario, at a quality-check it never declared). A runtime credit's quality-check
-  // is a RuntimeQualityCheck, so a declared `lint` evidence obligation never matches one (as intended).
-  const evidenceObligationPairs = new Set<string>();
-  for (const d of args.scenarios) {
-    for (const o of d.evidenceObligations) evidenceObligationPairs.add(`${d.scnId} ${o.qualityCheck}`);
-  }
+  // The DEMANDED pairs — the model's rule, shared with `reconcile` (3F-1858). This module used to
+  // build its OWN character-identical copy of the loop, over ALL obligations INCLUDING pending.
+  // Two copies agreeing by copy-paste rather than by construction is what let the pending
+  // divergence exist at all: either could have grown a filter alone and nothing would have redded.
+  // There is ONE rule now, and it excludes pending — a pending obligation demands nothing, so a
+  // credit citing it counts `undemanded` here exactly as it reconciles `undemanded` on the ledger
+  // (@SCN-PND-005). The census can no longer disagree with the reconciler about what is demanded.
+  //
+  // The census still CLASSIFIES below; 3F-1859 turns it into a fold over the Ledger, at which
+  // point this call goes too.
+  const evidenceObligationPairs = evidenceObligationPairsOf(args.scenarios);
   const rawByRuntimeQualityCheck: Record<RuntimeQualityCheck, number> = {
     unit: 0,
     integration: 0,

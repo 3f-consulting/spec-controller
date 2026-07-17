@@ -551,18 +551,24 @@ describe("[SCN-PND-004] a declared-pending obligation reconciles as a one-sided 
   });
 });
 
-describe("[SCN-PND-005] the pending declaration governs even when a matching observation exists — the Pending Item is raised, the observation is not undemanded", () => {
+describe("[SCN-PND-005] the pending declaration governs even when a matching observation exists — the Pending Item is raised, the observation IS undemanded", () => {
   // A Pending Item is ONE-SIDED: the pending tag's existence ALONE raises it — no observation
   // is sought. Even when a MATCHING observation exists for the pending obligation's check, the
   // pending declaration governs: the obligation is NOT reconciled against the observation (it
-  // never becomes `satisfied`, never a reconciling item), AND the observation is NOT flagged
-  // `undemanded` — the pending obligation keeps its (scnId, qualityCheck) pair DEMANDED (it
-  // stays in evidenceObligationPairs). Pins the "partition-before-match, but the pair stays
-  // demanded" invariant PND-004 established (green-first regression pin over that foundation).
+  // never becomes `satisfied`, never a reconciling item).
+  //
+  // A PENDING OBLIGATION DEMANDS NOTHING (3F-1858). Canon, Pending Item: a `pending` tag raises
+  // NO Evidence Obligation, so the citing credit is `undemanded` — "exactly as when nothing was
+  // declared at all". This test used to assert the opposite ("the pair stays DEMANDED"), under
+  // which the credit posted to NO account: the pair-check excluded it from `undemanded`, the
+  // partition excluded it from the debit side. Zero rows, balanced, exit 0 — the false-green.
+  //
+  // The Pending Item ITSELF stays verdict-neutral (@SCN-PND-006..008); the row below is out of
+  // balance via the CREDIT, never via the Pending Item. Two different things on one row.
   // Asserts REAL reconcile output (evidence-manifesto §11A). The @integration arm
   // (tests/steps/pendingItems.steps.ts, @SCN-PND-005) proves the same through the
   // parse→reconcile pipeline over a planted fixture carrying a matching observation.
-  it("raises the Pending Item and leaves the matching observation demanded (obligation never satisfied, observation never undemanded)", () => {
+  it("raises the Pending Item and posts the matching observation as undemanded (obligation never satisfied; the row reds via the credit)", () => {
     const scenarios: Scenario[] = [
       {
         scnId: "SCN-PND-005",
@@ -582,22 +588,27 @@ describe("[SCN-PND-005] the pending declaration governs even when a matching obs
     // The pending declaration governs: exactly one Pending Item at the declared check,
     // regardless of the matching observation's presence.
     expect(scenario?.pendingItems).toEqual([{ qualityCheck: "integration" }]);
-    // The obligation never reconciled against the match — it did NOT become `satisfied`, and
-    // posted no reconciling item (one-sided: nothing is reconciled).
-    expect(scenario?.qualityCheckReconciliations).toEqual([]);
-    expect(scenario?.reconcilingItems).toEqual([]);
-    // The matching observation is NOT flagged `undemanded` anywhere: the pending pair stays
-    // DEMANDED (in evidenceObligationPairs), so the pending declaration owns that observation
-    // rather than it posting as a stray credit.
+    // The obligation never reconciled against the match — it did NOT become `satisfied`.
+    // (Partition-before-match: a pending obligation never reaches reconcileEvidenceObligation.)
+    expect(scenario?.qualityCheckReconciliations.some((r) => r.outcome === "satisfied")).toBe(false);
+    // The matching observation IS flagged `undemanded`: the pending obligation raises no Evidence
+    // Obligation, so its pair is NOT demanded and the citing credit posts as an ordinary
+    // undemanded credit on this real scenario's own row.
     const undemanded = balance.scenarioReconciliations.flatMap((s) =>
       s.reconcilingItems.filter((r) => r.outcome === "undemanded")
     );
-    expect(undemanded).toEqual([]);
-    // And the observation is not shunted to a suspense/phantom row either — it is simply
-    // owned by the pending pair and reconciled nowhere.
-    expect(
-      balance.scenarioReconciliations.every((s) => s.kind === "scenario" || s.kind === undefined)
-    ).toBe(true);
+    expect(undemanded).toEqual([{ qualityCheck: "integration", outcome: "undemanded" }]);
+    // The row reds VIA THE CREDIT, never via the Pending Item — which is not a reconciling item
+    // and stays verdict-neutral. Two different things on one row.
+    expect(scenario?.verdict).toBe("out-of-balance");
+    expect(scenario?.reconcilingItems).toEqual([
+      { qualityCheck: "integration", outcome: "undemanded" },
+    ]);
+    // The run fails: canon says a credit against a pending pair must not pass silently.
+    expect(isBalanced(balance)).toBe(false);
+    // And the observation is not shunted to a suspense/phantom row either — it posts to the real
+    // scenario it cites, which is the only account it ever names.
+    expect(balance.scenarioReconciliations.every((s) => s.kind === "scenario")).toBe(true);
   });
 });
 

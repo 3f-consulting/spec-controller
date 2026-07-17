@@ -1138,11 +1138,13 @@ describe("[SCN-RPT-010] the markdown report renders the Test volume evidenceObse
  *     declared. The reconciler posts a credit-side `undemanded` row ON the scenario; the census
  *     keeps the credit OUT of `attributed` (into undemandedCount). The cell must NOT read that row
  *     as a demand (it rendered ∅ — "missing" — pre-fix) and must count the (N) off the rows.
- *   - PENDING + ATTRIBUTED (SCN-F, live in production today): a `<qc>pending` obligation partitions
- *     to a one-sided Pending Item and posts NO reconciled row, yet the pending pair STAYS in
- *     evidenceObligationPairs — so the credit citing it IS attributed. Not demanded, count > 0 →
- *     (N). It is IN the fixture and asserted because the fix KEEPS the `attributed` term in the
- *     not-demanded branch: keeping code alive on a rationale nothing asserts is §11A one level up.
+ *   - PENDING (SCN-F): a `<qc>pending` obligation partitions to a one-sided Pending Item and posts
+ *     no RECONCILED row. This bullet used to read "PENDING + ATTRIBUTED … the pending pair STAYS
+ *     in evidenceObligationPairs — so the credit citing it IS attributed"; that was the divergence
+ *     canon contradicts, and 3F-1858 closed it. A pending obligation demands NOTHING, so the
+ *     credit citing it is UNDEMANDED — exactly as when nothing was declared at all — and the
+ *     reconciler now posts it as an `undemanded` credit on SCN-F's own row (@SCN-PND-005).
+ *     SCN-F therefore contributes to `undemandedCount`, not to `attributed`.
  *
  * Parent: (@SCN-RPT-011) — per-scenario evidence columns.
  */
@@ -1157,7 +1159,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   //          Integration (1) — the UNDEMANDED shape
   //   SCN-D: @integration (1 observation), no @unit → Unit —, Integration 1
   //   SCN-E: one lint guard, absent → Lint ∅
-  //   SCN-F: @unitpending with a unit observation attributed at the pending pair → Unit (1)
+  //   SCN-F: @unitpending with a unit observation citing the pending pair → UNDEMANDED (3F-1858)
   const scenarios: Scenario[] = [
     {
       scnId: "SCN-A",
@@ -1180,8 +1182,10 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     { qualityCheck: "unit", scnId: "SCN-C", status: "passed" },
     { qualityCheck: "integration", scnId: "SCN-C", status: "passed" },
     { qualityCheck: "integration", scnId: "SCN-D", status: "passed" },
-    // SCN-F's unit obligation is PENDING; the credit still lands at the (declared) pending pair,
-    // so the census counts it ATTRIBUTED while the reconciler posts no row → the (N) preserved path.
+    // SCN-F's unit obligation is PENDING, so it demands NOTHING: this credit is UNDEMANDED, and
+    // the reconciler posts it as an undemanded credit on SCN-F's row (3F-1858 / @SCN-PND-005). It
+    // used to count ATTRIBUTED here while the reconciler posted no row at all — two classifiers
+    // disagreeing, which is the divergence 3F-1831 collapses.
     { qualityCheck: "unit", scnId: "SCN-F", status: "passed" },
     // The guards: guard-x wired into CI over real source → satisfied; guard-y exists but is not
     // wired → the watermelon (PRESENT, so it counts into the Lint cell); guard-z has no
@@ -1196,7 +1200,13 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   it("builds the fixture through the reconciler — the undemanded credit is OUT of attributed", () => {
     // The fixture's own guard: it can only pin shapes the pipeline emits. The SCN-C integration
     // credit is UNDEMANDED (never attributed — the shape the old hand-built fixture faked).
-    expect(evidenceObservations.undemandedCount).toBe(1);
+    //
+    // TWO undemanded credits now, not one (3F-1858): SCN-C's integration credit (a real scenario
+    // at a check it never declared) AND SCN-F's unit credit (a real scenario at a check declared
+    // PENDING — which demands nothing, so it is undemanded "exactly as when nothing was declared
+    // at all"). SCN-F used to count ATTRIBUTED here; that was the divergence. This is a fixture
+    // guard, not this scenario's claim — the claim below is unchanged and still green.
+    expect(evidenceObservations.undemandedCount).toBe(2);
     expect(evidenceObservations.attributed).not.toContainEqual({
       scnId: "SCN-C",
       qualityCheck: "integration",

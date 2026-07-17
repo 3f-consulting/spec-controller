@@ -67,6 +67,45 @@ export interface Scenario {
   evidenceObligations: EvidenceObligation[];
 }
 
+/**
+ * The DEMANDED `(scnId, quality-check)` pairs — the ONE rule for what a scenario demands, keyed
+ * `"<scnId> <qualityCheck>"`. A credit citing a declared scenario is reconciliation-matched only
+ * when its pair is in this set; otherwise it is `undemanded` (a real scenario, at a quality-check
+ * it never declared).
+ *
+ * A `pending` obligation is EXCLUDED — it demands nothing. Canon, Pending Item: a
+ * `<quality-check>pending` tag raises **no Evidence Obligation**, so "an Evidence Observation
+ * citing that scenario at a pending quality-check is `undemanded` — exactly as when nothing was
+ * declared at all". Nothing is demanded, so nothing can be attributed to it. (This also drops the
+ * scenario-scope pending obligation, which carries no `qualityCheck` at all — it demands no
+ * specific check, so it never belonged in a pair set keyed by one.)
+ *
+ * ONE COPY, BY CONSTRUCTION (3F-1858). This loop existed TWICE, character-identical — in
+ * `reconcile` and in the observation census — each building the set over ALL obligations
+ * INCLUDING pending. They agreed by copy-paste, not by construction: either could have grown a
+ * filter alone and nothing would have redded. That is exactly what the pending divergence was —
+ * the pair-check excluded the credit from `undemanded` while the pending partition excluded it
+ * from the debit side, so it posted NOWHERE and the run read balanced, exit 0, over a fault canon
+ * says must fail (@SCN-PND-005).
+ *
+ * Lives in the model, not in either caller: what a scenario DEMANDS is the model's rule, not a
+ * reconciler's or a census's private business (`entity-owns-its-behaviour`) — the same reason
+ * `OUT_OF_BALANCE_OUTCOMES` lives here rather than in the renderer that walks it.
+ *
+ * A runtime credit's quality-check is a `RuntimeQualityCheck`, so a declared `lint` obligation
+ * never matches one — as intended; the static axis is matched by guard handle, not by pair.
+ */
+export function evidenceObligationPairsOf(scenarios: readonly Scenario[]): Set<string> {
+  const pairs = new Set<string>();
+  for (const scenario of scenarios) {
+    for (const obligation of scenario.evidenceObligations) {
+      if (obligation.pending === true) continue; // demands nothing — see above.
+      pairs.add(`${scenario.scnId} ${obligation.qualityCheck}`);
+    }
+  }
+  return pairs;
+}
+
 /** The pass/fail status an observed test result carries. */
 export type EvidenceStatus = "passed" | "failed";
 

@@ -247,8 +247,8 @@ Then(
 // scenario, @SCN-PDM-001) fed a hand-built MATCHING integration observation citing that very
 // scenario — never a real `@<qc>pending` scenario in the scanned features/ corpus (fixture
 // policy, evidence-manifesto §11B). The @unit arm
-// (packages/core/src/reconcile/reconcile.test.ts, [SCN-PND-005]) proves the same partition +
-// pair-stays-demanded invariant over the reconcile function in isolation.
+// (packages/core/src/reconcile/reconcile.test.ts, [SCN-PND-005]) proves the same
+// partition-before-match + pending-demands-nothing rule over the reconcile function in isolation.
 const MATCH_FIXTURE = join(
   process.cwd(),
   "tests/fixtures/pending-tags/features/pending-with-observation.feature"
@@ -267,8 +267,8 @@ When("the reconciler reconciles the fixture against that matching observation", 
   // Feed the PLANTED fixture through the REAL parse→reconcile pipeline, supplying a MATCHING
   // integration observation citing the fixture scenario (@SCN-PDM-001) at the very check the
   // pending obligation declares. A non-pending obligation would reconcile this to `satisfied`;
-  // the pending declaration must ignore it (partition-before-match) AND keep the pair demanded
-  // (so the observation is not flagged `undemanded`).
+  // the pending declaration must ignore it (partition-before-match) AND demand nothing — so the
+  // observation posts as an ordinary `undemanded` credit on the scenario's own row.
   assert.ok(pendingCheck, "expected a pending quality-check to have been recorded");
   const source = readFileSync(MATCH_FIXTURE, "utf8");
   const scenarios: Scenario[] = parseScenarios(source);
@@ -281,21 +281,55 @@ When("the reconciler reconciles the fixture against that matching observation", 
 });
 
 Then(
-  "the matching observation is not flagged undemanded — the pending pair stays demanded",
+  "the matching observation IS flagged undemanded — a pending obligation demands nothing, so nothing is attributed to it",
   function () {
-    // The pending obligation keeps its (scnId, quality-check) pair DEMANDED (in
-    // evidenceObligationPairs), so the matching observation is NOT posted as an `undemanded`
-    // credit anywhere in the reconciliation. Reds if the pending pair were dropped from the
-    // demanded set (the observation would then red as undemanded on the scenario's row).
+    // A pending obligation raises NO Evidence Obligation, so its (scnId, quality-check) pair is
+    // NOT demanded and the citing credit posts as `undemanded` — "exactly as when nothing was
+    // declared at all" (canon, Pending Item). Reds if the pending pair is kept in the demanded
+    // set: the credit would then post NOWHERE — excluded from `undemanded` by the pair-check and
+    // from the debit side by the pending partition — and the run would read balanced, exit 0.
+    // That is the false-green 3F-1858 closes.
     const undemanded = reconciliation.scenarioReconciliations.flatMap((s) =>
       s.reconcilingItems.filter((r) => r.outcome === "undemanded")
     );
     assert.equal(
       undemanded.length,
-      0,
-      `the matching observation must NOT be flagged undemanded — the pending pair stays demanded; got ${
+      1,
+      `the matching observation MUST be flagged undemanded — a pending obligation demands nothing; got ${
         undemanded.length
       } undemanded item(s) (rows: ${JSON.stringify(reconciliation.scenarioReconciliations)})`
+    );
+    assert.equal(
+      undemanded[0]!.qualityCheck,
+      "integration",
+      "the undemanded credit must be the integration one citing the pending pair"
+    );
+  }
+);
+
+Then(
+  "the scenario's row is out of balance and the run exits 1",
+  function () {
+    // THE DISTINCTION THE RULE TURNS ON. The Pending Item is verdict-neutral — never a
+    // reconciling item, it flips nothing (@SCN-PND-006..008 pin that). This row is out of
+    // balance because of the CREDIT, an ordinary `undemanded` reconciling item. Two different
+    // things on one row; asserting both together is what keeps the Rule honest.
+    const row = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-PDM-001");
+    assert.ok(row, "expected an account for the planted fixture scenario SCN-PDM-001");
+    assert.equal(row.verdict, "out-of-balance");
+    // The Pending Item is still raised, and is still NOT among the reconciling items.
+    assert.deepEqual(row.pendingItems, [{ qualityCheck: "integration" }]);
+    assert.deepEqual(
+      row.reconcilingItems.map((r) => r.outcome),
+      ["undemanded"],
+      `the row's ONLY reconciling item must be the undemanded credit — the Pending Item is never ` +
+        `one; got ${JSON.stringify(row.reconcilingItems)}`
+    );
+    // The run reds: isBalanced walks the reconciling items, so the exit code is 1.
+    assert.equal(
+      isBalanced(reconciliation),
+      false,
+      "the run must NOT be balanced — canon says this run must fail, so exit 1"
     );
   }
 );
