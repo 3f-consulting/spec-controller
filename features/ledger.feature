@@ -150,8 +150,8 @@ Feature: Ledger over declared-vs-observed evidence
     bidirectional reconciler emits. A declared scenario that reconciles to ZERO rows on
     BOTH sides — no declared evidence obligation AND no citing evidence observation — has nothing
     to balance in either direction. It posts one degenerate Quality Check Reconciliation,
-    blank on both sides, outcome both-missing (label: "Evidence Observation and
-    Evidence Obligation are both missing for the Scenario."), verdict out of balance. Detection keys
+    blank on both sides, outcome both-missing (label: "Evidence Obligation and
+    Evidence Observation are both missing — the Scenario is untagged and uncited"), verdict out of balance. Detection keys
     on the reconciler emitting NOTHING either way — NOT a hard qualityCheckReconciliations.length
     === 0 map: a zero-evidence obligation scenario cited by a stray credit is undemanded (LDG-010),
     not both-missing. This retires the no-evidence-declared warning — the warnings section,

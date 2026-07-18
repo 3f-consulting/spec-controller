@@ -102,7 +102,7 @@ Then(
     const { verdict, items } = ledgerRowCells(scnId);
     // The reconciling item renders the outcome's canon description, not the handle (3F-1626).
     assert.ok(
-      items.includes("Evidence Observation and Evidence Obligation are both missing for the Scenario"),
+      items.includes("Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited"),
       `expected ${scnId}'s reconciling items to include a both-missing item; got "${items}"`
     );
     assert.match(

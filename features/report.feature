@@ -542,6 +542,33 @@ Feature: The report renders the ledger as sectioned facts
       Then the summary decomposition rows, the per-scenario reconciling items, and the lint table each render the outcome's canon description, single-sourced from OUTCOME_DESCRIPTION
       And the bare outcome handle appears nowhere in the markdown
 
+  Rule: the canon gloss for every outcome is the manifesto's Outcome text, verbatim
+
+    The single owner of the outcome gloss text (3F-1832). OUTCOME_DESCRIPTION is what the renderer shows
+    in place of the bare handle everywhere an outcome surfaces to a reader, so its text IS the report's
+    gloss. This pins every handle to the manifesto Outcome column, verbatim, keyed by the type-forced
+    Outcome union so a new outcome cannot ship without its canon gloss — replacing the scattered
+    gloss-text landmarks that drifted from canon and each other. (The run-integrity stamp and verdict
+    line are governed by the manifesto's Unsound entry and stay reader-agnostic — RPT-021 / RPT-022 —
+    not this Rule's concern. RPT-020 owns render-single-sourcing; this owns value-equals-canon.)
+
+    @unit @SCN-RPT-025
+    Scenario Outline: the <handle> outcome glosses as the manifesto's canon text
+      Then the outcome "<handle>" glosses as "<canon text>"
+
+      Examples:
+        | handle                 | canon text                                                                                                               |
+        | satisfied              | Evidence Observation satisfies its Evidence Obligation                                                                    |
+        | missing                | Evidence Observation is missing                                                                                          |
+        | failing                | Evidence Observation is failing                                                                                          |
+        | watermelon             | Evidence Observation is passing but fabricated                                                                            |
+        | no-scn-code            | Evidence Obligation has no @SCN code for an Evidence Observation to link to                                               |
+        | cites-unknown-scenario | Evidence Observation cites an unknown Scenario                                                                            |
+        | cites-no-scenario      | Evidence Observation cites no Scenario                                                                                    |
+        | undemanded             | Evidence Observation cites a Scenario that did not demand it                                                              |
+        | broken                 | Evidence Observation ATTEMPT errored before it could cite a Scenario (the proving suite failed to collect; behaviour never exercised) |
+        | both-missing           | Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited                     |
+
   Rule: the report surfaces broken evidence as a harness failure, and stamps the run unsound
 
     The customer-visible payoff of the broken reconciling item (@SCN-RPT-021, 3F-1642; generalised

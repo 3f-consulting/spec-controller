@@ -5,8 +5,8 @@ Feature: A scenario declaring no evidence obligations is both-missing
   e2e, performance or lint), cited by NO evidence observation, reconciles to zero rows on BOTH
   sides — nothing was required and nothing was observed. The bidirectional reconciler
   posts it as ONE degenerate Quality Check Reconciliation, outcome
-  `both-missing` (label: "Evidence Observation and Evidence Obligation are both missing
-  for the Scenario."), verdict `out-of-balance`.
+  `both-missing` (label: "Evidence Obligation and Evidence Observation are both missing —
+  the Scenario is untagged and uncited"), verdict `out-of-balance`.
 
   This SUPERSEDES the earlier `no-evidence-declared` warning: the separate
   authoring-quality axis is retired. The `warnings` section, the `warnings` JSON key, and

@@ -1054,7 +1054,7 @@ Then(
       "Evidence Observation is missing",
       "Evidence Observation is failing",
       "Evidence Observation is passing but fabricated",
-      "Evidence Observation and Evidence Obligation are both missing for the Scenario",
+      "Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited",
     ]) {
       assert.match(
         section,

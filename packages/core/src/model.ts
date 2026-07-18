@@ -243,8 +243,8 @@ export type Outcome =
   // DECLARED cannot be ABSENT — so without this it was invisible to the verdict entirely.
   | "both-missing"; // a declared scenario that reconciles to ZERO rows on BOTH sides (no
   // evidence obligation AND no citing evidence observation) — the ONE degenerate Quality Check Reconciliation it
-  // posts, blank on both sides (label: "Evidence Observation and Evidence Obligation are both
-  // missing for the Scenario."). Detected by the reconciler emitting NOTHING either way (NOT a
+  // posts, blank on both sides (label: "Evidence Obligation and Evidence Observation are both
+  // missing — the Scenario is untagged and uncited"). Detected by the reconciler emitting NOTHING either way (NOT a
   // hard evidenceObligations.length === 0 map — a zero-evidence obligation scenario cited by a stray
   // credit is `undemanded`, @SCN-LDG-010). Retires the no-evidence-declared warning (@SCN-WRN-001
   // Update): the zero-evidence scenario is now this out-of-balance row, never a separate axis.
@@ -276,7 +276,7 @@ export type Outcome =
  * order, and used not to catch one (which is how the order drifted before it was pinned).
  */
 export const OUTCOME_DESCRIPTION: Record<Outcome, string> = {
-  satisfied: "Evidence Observation is present and passing",
+  satisfied: "Evidence Observation satisfies its Evidence Obligation",
   missing: "Evidence Observation is missing",
   failing: "Evidence Observation is failing",
   watermelon: "Evidence Observation is passing but fabricated",
@@ -296,8 +296,10 @@ export const OUTCOME_DESCRIPTION: Record<Outcome, string> = {
   // import, a top-level throw, or two colliding step definitions — the gloss names the FACT, not a
   // guessed cure. Contrast `missing`, whose remedy is "write the test": conflating the two is
   // exactly the false-`missing` this outcome retires.
-  broken: "The proof never ran — the behaviour was never exercised",
-  "both-missing": "Evidence Observation and Evidence Obligation are both missing for the Scenario",
+  broken:
+    "Evidence Observation ATTEMPT errored before it could cite a Scenario (the proving suite failed to collect; behaviour never exercised)",
+  "both-missing":
+    "Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited",
 };
 
 /**

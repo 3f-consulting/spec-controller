@@ -828,7 +828,7 @@ Then(
     const { items } = rowCells(scnId);
     // Reconciling items render the outcome's canon description, not the handle (3F-1626).
     assert.ok(
-      items.includes("Evidence Observation and Evidence Obligation are both missing for the Scenario"),
+      items.includes("Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited"),
       `expected ${scnId}'s reconciling items to include a both-missing item; got "${items}"`
     );
     // The warnings section has dissolved entirely — the both-missing row is its only home.
@@ -848,7 +848,7 @@ Then("{string} is not reported as both-missing", function (scnId: string) {
   // neither-side `both-missing` group at count 0 for every report.)
   const { items } = rowCells(scnId);
   assert.ok(
-    !items.includes("Evidence Observation and Evidence Obligation are both missing for the Scenario"),
+    !items.includes("Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited"),
     `expected ${scnId} not to be reported as both-missing; got "${items}"`
   );
 });

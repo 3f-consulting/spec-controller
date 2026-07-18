@@ -394,7 +394,7 @@ describe("[SCN-RPT-005] the markdown report lists the lint evidence obligations 
     // The table header.
     expect(md).toContain("| Scenario | Guard | Outcome |");
     // The satisfied static guard, glyphed — the outcome shown as its canon description (3F-1626).
-    expect(md).toContain("| SCN-A | guard-typecheck | ✓ Evidence Observation is present and passing |");
+    expect(md).toContain("| SCN-A | guard-typecheck | ✓ Evidence Observation satisfies its Evidence Obligation |");
     // The watermelon static guard, glyphed — the 🍉 reads at a glance.
     expect(md).toContain(
       "| SCN-B | guard-lint | 🍉 Evidence Observation is passing but fabricated |"
@@ -669,7 +669,7 @@ describe("[SCN-RPT-007] the declared corpus census is recoverable from the ledge
     expect(md).toContain("- 3 Scenario Reconciliation(s): 1 balanced, 2 out-of-balance.");
     // The zero-evidence scenario is a ledger row (a both-missing item), NOT a warnings entry.
     expect(md).toContain("SCN-C");
-    expect(md).toContain("⊘ Evidence Observation and Evidence Obligation are both missing for the Scenario");
+    expect(md).toContain("⊘ Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited");
     expect(md).not.toContain("## Warnings");
   });
 
@@ -1392,12 +1392,14 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the nine leaf outc
       /\| Evidence obligation \| \d+ \| \d+ \| (\d+) \|/.exec(md)?.[1]
     );
     expect(oblOutOfBalance).toBe(3);
-    // Each leaf row's own out-of-balance count, summed.
+    // Each leaf row's own out-of-balance count, summed. The gloss is REGEX-ESCAPED before
+    // interpolation — a canon description may carry regex metacharacters (the `broken` gloss
+    // names its producer in parentheses, "(the proving suite failed to collect; …)"), which
+    // unescaped would open a capture group and shift the count group.
     let leafSum = 0;
     for (const leaf of LEAVES) {
-      const n = Number(
-        new RegExp(`↳ ${OUTCOME_DESCRIPTION[leaf]} \\|[^\\d]*(\\d+) \\|`).exec(md)?.[1]
-      );
+      const gloss = OUTCOME_DESCRIPTION[leaf].replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const n = Number(new RegExp(`↳ ${gloss} \\|[^\\d]*(\\d+) \\|`).exec(md)?.[1]);
       expect(Number.isNaN(n)).toBe(false);
       leafSum += n;
     }
@@ -1505,7 +1507,7 @@ describe("[SCN-RPT-020] the markdown renders each outcome's canon description, n
     expect(md).toContain("| ↳ Evidence Observation cites no Scenario |");
     expect(md).toContain("| ↳ Evidence Observation cites a Scenario that did not demand it |");
     expect(md).toContain(
-      "| ↳ Evidence Observation and Evidence Obligation are both missing for the Scenario |"
+      "| ↳ Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited |"
     );
     // The bare handle is GONE from the summary Subject cells.
     for (const handle of [
@@ -1527,7 +1529,7 @@ describe("[SCN-RPT-020] the markdown renders each outcome's canon description, n
     expect(md).toContain("unit ∅ Evidence Observation is missing");
     expect(md).toContain("lint 🍉 Evidence Observation is passing but fabricated");
     expect(md).toContain(
-      "⊘ Evidence Observation and Evidence Obligation are both missing for the Scenario"
+      "⊘ Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited"
     );
     expect(md).toContain(
       "integration ❓ Evidence Observation cites no Scenario (tests/stray.test.ts:1)"
@@ -1552,6 +1554,57 @@ describe("[SCN-RPT-020] the markdown renders each outcome's canon description, n
     expect(md).toContain(`🍉 ${OUTCOME_DESCRIPTION.watermelon}`);
     expect(md).toContain(`⊘ ${OUTCOME_DESCRIPTION["both-missing"]}`);
   });
+});
+
+/**
+ * Unit test for the outcome-gloss canon pin (@SCN-RPT-025, 3F-1832).
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-RPT-025 id
+ * matching features/report.feature, so a grep of the id returns both halves of the pair.
+ *
+ * The SINGLE OWNER of the outcome gloss TEXT: OUTCOME_DESCRIPTION[handle] === the manifesto's
+ * Outcome column, for every handle. Orthogonal to @SCN-RPT-020 (which owns render-single-sourcing
+ * — the renderer shows the map's value and the bare handle appears nowhere); THIS owns
+ * value-equals-canon, the different subject that let three glosses (`satisfied`, `both-missing`,
+ * `broken`) drift from canon while RPT-020 stayed green.
+ *
+ * CANON is an INDEPENDENT literal here (never a re-read of OUTCOME_DESCRIPTION), so the assertion
+ * pins the value against the manifesto, not the source against itself (double-entry). Keyed by the
+ * type-forced `Outcome` union (a `Record<Outcome, string>`): a new union member cannot compile
+ * without a canon row here, so a new outcome can never ship without its manifesto gloss.
+ *
+ * Teeth: while `satisfied` reads "…is present and passing", `both-missing` "…are both missing for
+ * the Scenario", and `broken` "The proof never ran — the behaviour was never exercised", each of
+ * those three rows reds — the genuine red→green; correcting the three values in model.ts verbatim
+ * to the manifesto Outcome column greens it.
+ *
+ * Parent: (@SCN-RPT-025).
+ */
+describe("[SCN-RPT-025] every outcome glosses as the manifesto's canon Outcome text", () => {
+  // The manifesto Outcome column, verbatim — the INDEPENDENT source of truth (not a re-read of
+  // OUTCOME_DESCRIPTION). Type-forced over the whole Outcome union: a new member cannot join the
+  // union without a canon gloss here, so the pin can never fall behind the outcomes it governs.
+  const CANON_OUTCOME_TEXT: Record<Outcome, string> = {
+    satisfied: "Evidence Observation satisfies its Evidence Obligation",
+    missing: "Evidence Observation is missing",
+    failing: "Evidence Observation is failing",
+    watermelon: "Evidence Observation is passing but fabricated",
+    "no-scn-code": "Evidence Obligation has no @SCN code for an Evidence Observation to link to",
+    "cites-unknown-scenario": "Evidence Observation cites an unknown Scenario",
+    "cites-no-scenario": "Evidence Observation cites no Scenario",
+    undemanded: "Evidence Observation cites a Scenario that did not demand it",
+    broken:
+      "Evidence Observation ATTEMPT errored before it could cite a Scenario (the proving suite failed to collect; behaviour never exercised)",
+    "both-missing":
+      "Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited",
+  };
+
+  it.each(Object.entries(CANON_OUTCOME_TEXT) as [Outcome, string][])(
+    'the "%s" outcome glosses as the manifesto canon text',
+    (handle, canon) => {
+      expect(OUTCOME_DESCRIPTION[handle]).toBe(canon);
+    }
+  );
 });
 
 /**
