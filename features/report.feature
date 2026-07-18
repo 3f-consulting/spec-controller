@@ -88,11 +88,11 @@ Feature: The report renders the ledger as sectioned facts
       Then the explicit override is returned verbatim, not the git HEAD of that directory
       And resolving over a non-git target directory with no override returns a recorded unknown
 
-  Rule: the markdown report renders the trial balance as a subjects-rows table with balanced and out-of-balance columns
+  Rule: the markdown report renders the evidence reconciliation as a subjects-rows table with balanced and out-of-balance columns
 
-    The trial balance (@SCN-RPT-004; reshaped to subjects-rows,
+    The evidence reconciliation (@SCN-RPT-004; reshaped to subjects-rows,
     superseding the Axis-Count shape). Under "## Summary views", a
-    "### Trial balance" section renders ONE table whose SUBJECTS are rows — Scenario and
+    "### Evidence reconciliation" section renders ONE table whose SUBJECTS are rows — Scenario and
     Evidence obligation — each with its own Total, and balanced / out-of-balance as COLUMNS
     (both subjects report into the same binary, so the "Axis"/"Verdict"/"outcome" words
     retire). The Evidence-evidence obligation out-of-balance is decomposed in place into its
@@ -119,10 +119,10 @@ Feature: The report renders the ledger as sectioned facts
     views that disagreed in an adopter's repository 17-36-50Z run.
 
     @unit @SCN-RPT-004
-    Scenario: the markdown report renders the trial balance as subjects-rows with balanced and out-of-balance columns
+    Scenario: the markdown report renders the evidence reconciliation as subjects-rows with balanced and out-of-balance columns
       Given a reconciliation balance whose scenarios carry a double missing arm, so the out-of-balance scenario and evidence obligation counts diverge
       When the markdown report is rendered
-      Then it carries a "### Trial balance" section with a "Subject | Total | Balanced | Out-of-balance | Detail" table — a Scenario Reconciliation row and an Evidence obligation row each with its own total, the evidence-obligation out-of-balance decomposed into nested missing (with its bare-level split), failing, and watermelon rows that reconcile to it
+      Then it carries a "### Evidence reconciliation" section with a "Subject | Total | Balanced | Out-of-balance | Detail" table — a Scenario Reconciliation row and an Evidence obligation row each with its own total, the evidence-obligation out-of-balance decomposed into nested missing (with its bare-level split), failing, and watermelon rows that reconcile to it
       And a balance of N declared balanced scenarios plus one suspense reconciliation renders the Scenario Reconciliation row as N+1 total, N balanced, 1 out-of-balance — the suspense reconciliation counted, so the table cannot read a pass on a run isBalanced fails
 
   Rule: the markdown report surfaces the lint evidence obligations as their own section
@@ -222,8 +222,9 @@ Feature: The report renders the ledger as sectioned facts
     interim "# Spec reconciliation" — the report IS the reconciliation; "Ledger" names only
     the INPUT in canon, so the reconciled OUTPUT is never titled "Ledger"), keeps
     "## Run provenance" first, then groups the derived cuts under "## Summary views"
-    (### Trial balance → ### Lint evidence obligations → ### Out-of-balance by
-    feature), and moves the per-scenario "## Scenario Reconciliations" table to the END with its
+    (### Run verdict → ### Evidence reconciliation → ### Test volume → ### Static guards →
+    ### Lint evidence obligations → ### Out-of-balance by feature), and moves the per-scenario
+    "## Scenario Reconciliations" table to the END with its
     summary lines on top (the verdict tally and the relocated excluded-occurrence bullet),
     "## Warnings" last. So the digestible summary leads and the 500-row ledger trails, and
     the cuts read as cuts OF the ledger, not a separate ledger. A pure layout reorg
@@ -250,7 +251,7 @@ Feature: The report renders the ledger as sectioned facts
     — with raw per-level totals and file locators. Under "## Summary views", a
     "### Test volume" cut renders the balancing identity ("N evidence observations = M attributed +
     G phantom + K suspense", a derived view) then a by-level evidence observation table (all four levels,
-    e2e/performance zeros shown — a fixed tally like Trial balance). The identity holds
+    e2e/performance zeros shown — a fixed tally that always lists every level). The identity holds
     BY CONSTRUCTION: one pass counts each evidence observation into exactly one kind while
     summing the raw total, so the three terms can't drift. The non-derivable atoms
     (rawByRuntimeQualityCheck, attributed, phantom, unattributed evidence observation) persist on JSON (project design §3); the

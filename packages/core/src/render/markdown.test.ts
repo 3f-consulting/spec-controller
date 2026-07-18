@@ -261,7 +261,7 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
     expect(/↳ Evidence Observation is missing \|[^\d]*2 \|/.test(md)).toBe(true);
   });
 
-  it("renders the trial balance under the Summary views heading, before the ledger", () => {
+  it("renders the evidence reconciliation under the Summary views heading, before the ledger", () => {
     const md = renderMarkdown(spanning, ctx);
     const iSummary = md.indexOf("## Summary views");
     const iHeadline = md.indexOf("### Evidence reconciliation");
@@ -295,7 +295,7 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
     ]
   );
 
-  it("counts the suspense reconciliation in the trial balance's out-of-balance column (N+1 | N | 1, never N | N | 0)", () => {
+  it("counts the suspense reconciliation in the evidence reconciliation's out-of-balance column (N+1 | N | 1, never N | N | 0)", () => {
     const md = renderMarkdown(threeDeclaredPlusSuspense, ctx);
     // 3 declared (all balanced) + 1 suspense = 4 Scenario Reconciliations, 3 balanced,
     // 1 out-of-balance. The suspense row survives as a sub-count OF the total, never a
@@ -435,7 +435,7 @@ describe("[SCN-RPT-005] the markdown report lists the lint evidence obligations 
     expect(md).not.toContain("lint evidence obligations reconcile balanced");
   });
 
-  it("slots the lint section after the trial balance and before the ledger (no warnings section)", () => {
+  it("slots the lint section after the evidence reconciliation and before the ledger (no warnings section)", () => {
     const md = renderMarkdown(spanning, ctx);
     const iHeadline = md.indexOf("### Evidence reconciliation");
     const iStatic = md.indexOf("### Lint evidence obligations");
@@ -749,8 +749,9 @@ describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN o
  *
  * Proves the summary-first / ledger-last structure in isolation: renderMarkdown opens
  * with `# Evidence Reconciliation` (not `# Ledger`), keeps `## Run provenance`
- * first, groups the derived cuts under `## Summary views` (trial balance →
- * static-guard evidence obligations → out-of-balance by feature), and moves the
+ * first, groups the derived cuts under `## Summary views` (run verdict →
+ * evidence reconciliation → test volume → static guards → lint evidence obligations →
+ * out-of-balance by feature), and moves the
  * per-scenario `## Scenario Reconciliations` ledger to the END with its summary lines on top,
  * `## Warnings` last. A pure derive over the balance; markdown-only (the JSON surface
  * is unchanged by the reorg). The RPT-004/005/006/007 scenarios are updated in the
