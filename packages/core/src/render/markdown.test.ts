@@ -1915,6 +1915,17 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
   /** The run-integrity section alone — where the stamp and the per-item lines live. */
   const integrityOf = (md: string): string => md.slice(md.indexOf("## Run integrity"));
 
+  /**
+   * The run-integrity STAMP section, bounded — from `## Run integrity` up to the next heading
+   * (`## Summary views`), so it excludes the outcome-row gloss and the verdict line that follow.
+   * Manifesto → the Unsound entry governs the stamp; the Outcome column governs the outcome-row.
+   * The reader-agnostic ("neither miscalls the other's failure a collection failure") assertion is
+   * a pin on the STAMP the Unsound entry owns, so it is scoped to the stamp — not over-claimed onto
+   * the outcome-row surface, which the Outcome column governs and which this scenario does not pin.
+   */
+  const stampOf = (md: string): string =>
+    md.slice(md.indexOf("## Run integrity"), md.indexOf("## Summary views"));
+
   it("stamps each run unsound, above the summary views", () => {
     for (const balance of [vitestBroken, cucumberBroken]) {
       const md = renderMarkdown(balance, ctx);
@@ -1943,12 +1954,15 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
     expect(vitestMd).toContain(VITEST_LOCATOR);
     expect(cucumberMd).toContain(CUCUMBER_LOCATOR);
 
-    // THE UPDATE (3F-1744). The copy is the whole point: an ambiguous cucumber step is neither a
-    // "suite" nor a "collection error", so a cucumber-broken report must NOWHERE call it one —
-    // not in the run-integrity stamp, not in the verdict gloss, not in the outcome description on
-    // the suspense row. That is the tool lying about what broke, in the one place the reader will
-    // ever see it.
-    expect(cucumberMd).not.toMatch(/collection|collect|proving suite/i);
+    // THE UPDATE (3F-1744, narrowed 3F-1925). An ambiguous cucumber step is neither a "suite" nor
+    // a "collection error", so the run-integrity STAMP — reader-agnostic by design — must not call
+    // it one. Manifesto → the Unsound entry governs the stamp (a run may carry `broken` items of
+    // different producers, so the stamp names only what they share); the Outcome column governs the
+    // outcome-row gloss, which names the producer ("the proving suite failed to collect"). This
+    // assertion is the pin on the stamp's reader-agnosticism the Unsound entry owns, so it is scoped
+    // to the stamp — the whole-report match over-claimed onto the outcome-row surface the Outcome
+    // column owns, and would contradict that canon gloss.
+    expect(stampOf(cucumberMd)).not.toMatch(/collection|collect|proving suite/i);
 
     // And symmetrically: the vitest report must not borrow cucumber's diagnosis either. The
     // renderer states only what the item CARRIES.
