@@ -1312,17 +1312,21 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the nine leaf outc
 
   // The nine out-of-balance leaf outcomes in canonical (model.ts reading) order —
   // satisfied excluded (it is the balanced outcome, not in the out-of-balance decomposition).
+  // Canon groups by reconciling-item shape: a DEBIT block (missing, failing, watermelon,
+  // no-scn-code), a CREDIT block (cites-unknown-scenario, cites-no-scenario, undemanded), then
+  // NEITHER (broken, both-missing). Used below for membership/sum (order-agnostic); the ORDER
+  // itself is pinned by its own test against an independent canon literal.
   const LEAVES = [
     "missing",
     "failing",
     "watermelon",
+    // The DEBIT twin of cites-no-scenario (@SCN-LDG-021, 3F-1774) — a real, ordinary scenario
+    // carrying no @SCN, whose obligation has no code for an observation to link to.
+    "no-scn-code",
     "cites-unknown-scenario",
     "cites-no-scenario",
-    // The DEBIT twin of cites-no-scenario (@SCN-LDG-021, 3F-1774) — a real, ordinary scenario
-    // carrying no @SCN, whose obligation has no code for an observation to link to. The ninth leaf.
-    "no-scn-code",
-    "broken",
     "undemanded",
+    "broken",
     "both-missing",
   ] as const;
 
@@ -1405,6 +1409,42 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the nine leaf outc
     expect(md).not.toContain("↳ debit-side");
     expect(md).not.toContain("↳ credit-side");
     expect(md).not.toContain("↳ neither-side");
+  });
+
+  it("renders the leaf rows in the canon order — debit block, credit block, neither", () => {
+    const md = renderMarkdown(spanning, ctx);
+    // Canon reading order, hardcoded here as the INDEPENDENT source of truth for sequence:
+    // a DEBIT block (missing, failing, watermelon, no-scn-code), a CREDIT block
+    // (cites-unknown-scenario, cites-no-scenario, undemanded), then NEITHER (broken, both-missing).
+    // §11A: the expectation is this literal, asserted against the RENDERED ↳ sequence — NOT a
+    // re-read of OUTCOME_DESCRIPTION's key order (which would compare the source to itself and
+    // prove nothing; that circularity is exactly why the order drifted and 3F-1806 could reorder
+    // the map safely under a Set-only membership guard). This is the pin that closes it.
+    const CANON_LEAF_ORDER: Outcome[] = [
+      "missing",
+      "failing",
+      "watermelon",
+      "no-scn-code",
+      "cites-unknown-scenario",
+      "cites-no-scenario",
+      "undemanded",
+      "broken",
+      "both-missing",
+    ];
+    // Decode the rendered Subject-cell gloss back to its handle (reverse of the single-sourced
+    // map). This uses OUTCOME_DESCRIPTION's TEXT association only — never its key order — so the
+    // ORDER under test comes entirely from the rendered document.
+    const glossToHandle = new Map(
+      (Object.keys(OUTCOME_DESCRIPTION) as Outcome[]).map((handle) => [
+        OUTCOME_DESCRIPTION[handle],
+        handle,
+      ])
+    );
+    const renderedOrder = md
+      .split("\n")
+      .filter((line) => line.includes("↳"))
+      .map((line) => glossToHandle.get(line.split("|")[1]?.trim().replace("↳ ", "") ?? ""));
+    expect(renderedOrder).toEqual(CANON_LEAF_ORDER);
   });
 });
 

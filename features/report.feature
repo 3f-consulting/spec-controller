@@ -488,7 +488,7 @@ Feature: The report renders the ledger as sectioned facts
     The obligation-summary decomposition (@SCN-RPT-019, 3F-1453; extended 3F-1649). The Evidence
     reconciliation's evidence-obligation out-of-balance row decomposes into a FLAT list of the
     nine out-of-balance leaf outcomes — missing, failing, watermelon,
-    cites-unknown-scenario, cites-no-scenario, no-scn-code, broken, undemanded, both-missing — each a counted
+    no-scn-code, cites-unknown-scenario, cites-no-scenario, undemanded, broken, both-missing — each a counted
     "↳ <outcome>" row whose Out-of-balance counts SUM to the evidence-obligation out-of-balance
     total. The former debit/credit/neither grouping is removed entirely: no "↳ debit-side",
     "↳ credit-side", or "↳ neither-side" subtotal row is rendered. The grouping construct
@@ -516,6 +516,7 @@ Feature: The report renders the ledger as sectioned facts
       And the leaf rows cover every Outcome member except satisfied
       And their counts sum to the evidence-obligation out-of-balance total
       And no debit-side / credit-side / neither-side group row is present
+      And the leaf rows render in the canon order — missing, failing, watermelon, no-scn-code, cites-unknown-scenario, cites-no-scenario, undemanded, broken, both-missing — debit block, credit block, neither
 
   Rule: the markdown renders each outcome's canon description in place of the bare handle
 

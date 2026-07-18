@@ -268,22 +268,26 @@ export type Outcome =
  * ⚠ KEY ORDER IS LOAD-BEARING (3F-1806). `OUT_OF_BALANCE_OUTCOMES` is DERIVED from these keys,
  * and the renderer walks that list to emit the decomposition rows — so this map's key order IS
  * the report's row order (`missing` first: the headline cause, the one carrying the bare-level
- * split as Detail). Reordering these keys is a REPORT CHANGE, not a cosmetic tidy. The
- * @SCN-RPT-019 exhaustiveness guard proves MEMBERSHIP, not order — it will not catch a reorder
- * (order was untested before this refactor too; pinning it is a separate scenario if wanted).
+ * split as Detail). Reordering these keys is a REPORT CHANGE, not a cosmetic tidy. The order
+ * follows canon, grouped by reconciling-item shape: a DEBIT block (missing, failing, watermelon,
+ * no-scn-code), a CREDIT block (cites-unknown-scenario, cites-no-scenario, undemanded), then
+ * NEITHER (broken, both-missing). @SCN-RPT-019 now pins this SEQUENCE against the rendered `↳`
+ * rows (3F-1926), so a reorder reds — the exhaustiveness guard alone proved MEMBERSHIP, not
+ * order, and used not to catch one (which is how the order drifted before it was pinned).
  */
 export const OUTCOME_DESCRIPTION: Record<Outcome, string> = {
   satisfied: "Evidence Observation is present and passing",
   missing: "Evidence Observation is missing",
   failing: "Evidence Observation is failing",
   watermelon: "Evidence Observation is passing but fabricated",
-  "cites-unknown-scenario": "Evidence Observation cites an unknown Scenario",
-  "cites-no-scenario": "Evidence Observation cites no Scenario",
   // The DEBIT TWIN of `cites-no-scenario` (@SCN-LDG-021): same missing LINK, opposite side. The
   // scenario is real and ORDINARY — it exists and cucumber runs it — but it carries no @SCN, so its
   // obligation has no code an observation could link to. Undeclarable work: it can never reconcile
   // satisfied, failing, or even `missing`, so without this outcome it was invisible to the verdict.
   "no-scn-code": "Evidence Obligation has no @SCN code for an Evidence Observation to link to",
+  "cites-unknown-scenario": "Evidence Observation cites an unknown Scenario",
+  "cites-no-scenario": "Evidence Observation cites no Scenario",
+  undemanded: "Evidence Observation cites a Scenario that did not demand it",
   // GENERIC over its producers (@SCN-LDG-017 + @SCN-LDG-019, 3F-1654): `broken` has two instances
   // — a vitest suite that failed to COLLECT, and a cucumber step two or more step definitions
   // match, which therefore never ran. An ambiguous step is neither a "suite" nor a "collection
@@ -293,7 +297,6 @@ export const OUTCOME_DESCRIPTION: Record<Outcome, string> = {
   // guessed cure. Contrast `missing`, whose remedy is "write the test": conflating the two is
   // exactly the false-`missing` this outcome retires.
   broken: "The proof never ran — the behaviour was never exercised",
-  undemanded: "Evidence Observation cites a Scenario that did not demand it",
   "both-missing": "Evidence Observation and Evidence Obligation are both missing for the Scenario",
 };
 
