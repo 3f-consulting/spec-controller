@@ -179,7 +179,7 @@ Feature: The report renders the ledger as sectioned facts
     The corpus census (@SCN-RPT-007; the standalone "## Declared corpus"
     section DISSOLVED by the reformat, Q1a). The report no longer carries a
     dedicated "## Declared corpus" section. The declared count is NOT lost: it is
-    recoverable as the ledger scenario-count ("- N scenario(s): …") PLUS
+    recoverable as the ledger scenario-count ("- N Scenario Reconciliation(s): …") PLUS
     the "## Warnings" count — every declared scenario surfaces on exactly one axis (a
     balance verdict in the ledger or a no-evidence-declared warning). A pure markdown-only
     derive over the balance (project design §3), proven in isolation by Vitest. RPT-008's
@@ -646,3 +646,22 @@ Feature: The report renders the ledger as sectioned facts
       When the run reconciles and the report is rendered
       Then the broken observation is not counted among that scenario's attributed evidence
       And it is counted once on the suspense scenario, and the Test volume identity still balances
+
+  Rule: the reconciliation collection renders as "Scenario Reconciliation(s)", never "scenario(s)", on every surface that names it
+
+    The vocabulary rule for the reconciled OUTPUT collection (canon: Scenario Reconciliation;
+    "scenarios" is a Rejected alias — it holds Scenario Reconciliations, not scenarios). The report
+    names the collection on two rendered surfaces and both must read the same word: the Subject
+    CELL of the reconciliation-collection row, and the headline verdict tally under
+    "## Scenario Reconciliations". The tally counts EVERY row — declared, phantom and suspense
+    (@SCN-RMD-001, 3F-1724) — so it names Scenario Reconciliations, not scenarios. A term owned on
+    one surface but not the other is exactly how the tally drifted to "scenario(s)" while the
+    Subject cell and the field names stayed right (3F-1833). Asserts the rendered CELL VALUE and
+    the tally STRING, never their section headings — the heading is a separate concern.
+
+    @unit @SCN-RPT-024
+    Scenario: the reconciliation collection is named "Scenario Reconciliation(s)" on every surface, never "scenario(s)"
+      Given a reconciliation balance carrying declared, phantom and suspense reconciliation rows
+      When the markdown report is rendered
+      Then the reconciliation-collection Subject cell reads "Scenario Reconciliation"
+      And the headline verdict tally reads "N Scenario Reconciliation(s): X balanced, Y out-of-balance", never "N scenario(s):"

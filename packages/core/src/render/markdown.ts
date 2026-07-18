@@ -797,7 +797,9 @@ const CELL_KEY: readonly string[] = [
  * columns between Scenario and Verdict, each a four-way demand×evidence observation cell, preceded by the
  * fixed cell key; without it the original three-column ledger is preserved (the 2-/3-arg callers
  * stay green). Markdown-only (the JSON carries the raw scenario facts + the declared / observed
- * objects); the verdict-tally bullet keeps the `scenario(s):` phrasing other surfaces guard on.
+ * objects); the verdict-tally bullet names the collection "Scenario Reconciliation(s)" — canon's
+ * noun for the reconciled OUTPUT collection (declared + phantom + suspense), never "scenario(s)"
+ * (@SCN-RPT-024, 3F-1919; "scenarios" is a Rejected alias).
  * Reads the report's materialised `summary.scenarioReconciliations`, `evidenceObligations`, and
  * `evidenceObservations.attributed`.
  */
@@ -820,7 +822,7 @@ const ledgerSection: SectionEmitter = (report) => {
     "",
     // The headline verdict tally counts EVERY Scenario Reconciliation — declared, phantom and
     // suspense alike (@SCN-RMD-001, 3F-1724; the declared-only "ruling Q3" is retracted).
-    `- ${totals.total} scenario(s): ${totals.balanced} balanced, ` +
+    `- ${totals.total} Scenario Reconciliation(s): ${totals.balanced} balanced, ` +
       `${totals.outOfBalance} out-of-balance.`,
   ];
   // The phantom (P) count is broken out as a SUB-COUNT of the tally above — it is counted

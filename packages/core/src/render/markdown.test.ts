@@ -666,7 +666,7 @@ describe("[SCN-RPT-007] the declared corpus census is recoverable from the ledge
     const md = renderMarkdown(reconciliationFixture, ctx);
     // The ledger summary counts ALL three declared scenarios (1 balanced, 2 out-of-balance —
     // SCN-C's both-missing row is one of them), so the declared total is on the page directly.
-    expect(md).toContain("- 3 scenario(s): 1 balanced, 2 out-of-balance.");
+    expect(md).toContain("- 3 Scenario Reconciliation(s): 1 balanced, 2 out-of-balance.");
     // The zero-evidence scenario is a ledger row (a both-missing item), NOT a warnings entry.
     expect(md).toContain("SCN-C");
     expect(md).toContain("⊘ Evidence Observation and Evidence Obligation are both missing for the Scenario");
@@ -677,7 +677,7 @@ describe("[SCN-RPT-007] the declared corpus census is recoverable from the ledge
     const md = renderMarkdown(reconciliationFixture, ctx);
     const iSummary = md.indexOf("## Summary views");
     const iLedger = md.indexOf("## Scenario Reconciliations");
-    const iCount = md.indexOf("- 3 scenario(s):");
+    const iCount = md.indexOf("- 3 Scenario Reconciliation(s):");
     const iTable = md.indexOf("| Scenario | Verdict | Reconciling items |");
     expect(iSummary).toBeGreaterThanOrEqual(0);
     expect(iSummary).toBeLessThan(iLedger);
@@ -723,7 +723,7 @@ describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN o
 
   it("places the excluded bullet within the ledger summary, after the scenario-count bullet and above the ledger table", () => {
     const md = renderMarkdown(simple, ctx, evidenceObligations);
-    const iCount = md.indexOf("- 1 scenario(s):");
+    const iCount = md.indexOf("- 1 Scenario Reconciliation(s):");
     const iExcluded = md.indexOf("@SCN ids seen in non-tag context, excluded");
     expect(iCount).toBeGreaterThanOrEqual(0);
     expect(iExcluded).toBeGreaterThan(iCount);
@@ -733,7 +733,7 @@ describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN o
   it("omits the excluded bullet when no corpus is threaded (the 2-arg call still renders the ledger summary)", () => {
     const md = renderMarkdown(simple, ctx);
     // The ledger summary scenario-count still renders.
-    expect(md).toContain("- 1 scenario(s): 1 balanced, 0 out-of-balance.");
+    expect(md).toContain("- 1 Scenario Reconciliation(s): 1 balanced, 0 out-of-balance.");
     // But the excluded bullet is absent, and no standalone Declared-corpus section exists.
     expect(md).not.toContain("@SCN ids seen in non-tag context, excluded");
     expect(md).not.toContain("## Declared corpus");
@@ -813,7 +813,7 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
   it("moves the per-scenario ledger to the end, with its summary lines on top of the table", () => {
     const md = renderMarkdown(reformatted, ctx);
     const iLedger = md.indexOf("## Scenario Reconciliations");
-    const iSummaryLine = md.indexOf("- 3 scenario(s): 1 balanced, 2 out-of-balance.");
+    const iSummaryLine = md.indexOf("- 3 Scenario Reconciliation(s): 1 balanced, 2 out-of-balance.");
     const iTable = md.indexOf("| Scenario | Verdict | Reconciling items |");
     expect(iLedger).toBeLessThan(iSummaryLine);
     expect(iSummaryLine).toBeLessThan(iTable);
@@ -2165,5 +2165,85 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
     expect(opening).toMatch(/exit 3 under `--strict`/);
     // A balanced run WITHOUT Pending Items never mentions exit 3 at all.
     expect(summaryOpening(renderMarkdown(balanced, ctx))).not.toContain("exit 3");
+  });
+});
+
+/**
+ * Unit test for the reconciliation-collection noun (@SCN-RPT-024).
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries the
+ * @SCN-RPT-024 id matching features/report.feature, so a grep of the id returns
+ * both halves of the pair.
+ *
+ * Binds the vocabulary rule for the reconciled OUTPUT collection: canon names it
+ * "Scenario Reconciliation" ("scenarios" is a Rejected alias — it holds Scenario
+ * Reconciliations, not scenarios). The report names the collection on two rendered
+ * surfaces — the Subject CELL of the Evidence-reconciliation table's collection row,
+ * and the headline verdict tally under "## Scenario Reconciliations" — and both must
+ * read the same word. The tally counts EVERY row (declared + phantom + suspense;
+ * @SCN-RMD-001, 3F-1724), so it names Scenario Reconciliations, not scenarios.
+ *
+ * Teeth: the Subject-cell assertion passes against current code (markdown.ts already
+ * renders "Scenario Reconciliation" in the table cell); the tally assertion REDS —
+ * the tally renders "N scenario(s):" today. That is the genuine red→green (3F-1919):
+ * the tally noun is corrected to "Scenario Reconciliation(s)". Asserts the rendered
+ * CELL VALUE and the tally STRING, never their section headings (a separate concern).
+ *
+ * Parent: (@SCN-RPT-024).
+ */
+describe('[SCN-RPT-024] the reconciliation collection is named "Scenario Reconciliation(s)", never "scenario(s)"', () => {
+  // A balance carrying one declared (balanced) row, one phantom row, and one suspense row.
+  // The summary tally then reads total=3, balanced=1, out-of-balance=2 (phantom + suspense are
+  // both always out-of-balance), phantom=1, suspense=1 — so the headline names 3 of the
+  // collection. Counting is UNCHANGED by this scenario; only the rendered noun.
+  const declaredPhantomSuspense: Ledger = {
+    scenarioReconciliations: [
+      {
+        scnId: "SCN-A",
+        kind: "scenario",
+        evidenceObservations: [],
+        evidenceObligations: [],
+        verdict: "balanced",
+        qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+        pendingItems: [],
+        reconcilingItems: [],
+      },
+      {
+        scnId: "SCN-PHANTOM-999",
+        kind: "phantom-scenario",
+        evidenceObservations: [],
+        evidenceObligations: [],
+        verdict: "out-of-balance",
+        qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "cites-unknown-scenario" }],
+        pendingItems: [],
+        reconcilingItems: [{ qualityCheck: "unit", outcome: "cites-unknown-scenario" }],
+      },
+      {
+        scnId: "(no scenario)",
+        kind: "suspense-scenario",
+        evidenceObservations: [],
+        evidenceObligations: [],
+        verdict: "out-of-balance",
+        qualityCheckReconciliations: [{ qualityCheck: "lint", guard: "guard:static", outcome: "cites-no-scenario" }],
+        pendingItems: [],
+        reconcilingItems: [{ qualityCheck: "lint", guard: "guard:static", outcome: "cites-no-scenario" }],
+      },
+    ],
+  };
+
+  it('names the collection "Scenario Reconciliation" in the Evidence-reconciliation table Subject cell', () => {
+    const md = renderMarkdown(declaredPhantomSuspense, ctx);
+    // The Subject cell of the reconciliation-collection row — asserted as the CELL value
+    // (pipe-delimited), never the section heading. Passes against current code (markdown.ts:470).
+    expect(md).toContain("| Scenario Reconciliation |");
+  });
+
+  it('names the collection "Scenario Reconciliation(s)" in the headline verdict tally, never "scenario(s)"', () => {
+    const md = renderMarkdown(declaredPhantomSuspense, ctx);
+    // The headline tally counts every row and names the collection — Scenario Reconciliations,
+    // not scenarios. This REDS against current code (the tally renders "scenario(s):").
+    expect(md).toContain("- 3 Scenario Reconciliation(s): 1 balanced, 2 out-of-balance.");
+    // The banned noun never appears in the tally.
+    expect(md).not.toContain("- 3 scenario(s):");
   });
 });
