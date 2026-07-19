@@ -313,7 +313,7 @@ export function reconcileWithCensus(opts: ReconcileOptions): {
       scenarios.flatMap((d) =>
         d.evidenceObligations
           .filter((r) => r.qualityCheck === "lint")
-          .map((r) => r.guard!)
+          .map((r) => r.staticGuard!)
       )
     ),
   ];
@@ -338,7 +338,7 @@ export function reconcileWithCensus(opts: ReconcileOptions): {
   const demandedGuardSet = new Set(demandedGuards);
   evidenceObservations.push(
     ...runningStaticGuards(ciSource, packageJson, GUARD_SCRIPT_PREFIXES).filter(
-      (o) => !demandedGuardSet.has(o.guard)
+      (o) => !demandedGuardSet.has(o.staticGuard)
     )
   );
 
@@ -404,7 +404,7 @@ export function readStaticEvidenceObservationCounts(opts: ReconcileOptions): Sta
       scenarios.flatMap((d) =>
         d.evidenceObligations
           .filter((r) => r.qualityCheck === "lint")
-          .map((r) => r.guard!)
+          .map((r) => r.staticGuard!)
       )
     ),
   ];
@@ -416,7 +416,7 @@ export function readStaticEvidenceObservationCounts(opts: ReconcileOptions): Sta
   const observations = [
     ...checkStaticEvidenceObligations(demandedGuards, ciSource, packageJson),
     ...runningStaticGuards(ciSource, packageJson, GUARD_SCRIPT_PREFIXES).filter(
-      (o) => !demandedSet.has(o.guard)
+      (o) => !demandedSet.has(o.staticGuard)
     ),
   ];
   return countStaticEvidenceObservationKinds(observations, demandedGuards);

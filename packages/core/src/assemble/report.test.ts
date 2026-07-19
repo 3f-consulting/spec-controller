@@ -147,9 +147,9 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
         evidenceObservations: [],
         evidenceObligations: [],
         verdict: "out-of-balance",
-        qualityCheckReconciliations: [{ qualityCheck: "lint", guard: "guard:static", outcome: "cites-no-scenario" }],
+        qualityCheckReconciliations: [{ qualityCheck: "lint", staticGuard: "guard:static", outcome: "cites-no-scenario" }],
         pendingItems: [],
-        reconcilingItems: [{ qualityCheck: "lint", guard: "guard:static", outcome: "cites-no-scenario" }],
+        reconcilingItems: [{ qualityCheck: "lint", staticGuard: "guard:static", outcome: "cites-no-scenario" }],
       },
     ],
   };
@@ -442,7 +442,7 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
         evidenceObligations: [],
         verdict: "out-of-balance",
         qualityCheckReconciliations: [
-          { qualityCheck: "lint", guard: "lint:foo", outcome: "satisfied" },
+          { qualityCheck: "lint", staticGuard: "lint:foo", outcome: "satisfied" },
           { qualityCheck: "unit", outcome: "missing" },
         ],
         pendingItems: [],
@@ -455,11 +455,11 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
         evidenceObligations: [],
         verdict: "out-of-balance",
         qualityCheckReconciliations: [
-          { qualityCheck: "lint", guard: "lint:bar", outcome: "watermelon" },
+          { qualityCheck: "lint", staticGuard: "lint:bar", outcome: "watermelon" },
         ],
         pendingItems: [],
         reconcilingItems: [
-          { qualityCheck: "lint", guard: "lint:bar", outcome: "watermelon" },
+          { qualityCheck: "lint", staticGuard: "lint:bar", outcome: "watermelon" },
         ],
       },
     ],
@@ -558,11 +558,11 @@ describe("[SCN-RMD-006] the report model carries the feature titles", () => {
         evidenceObligations: [],
         verdict: "out-of-balance",
         qualityCheckReconciliations: [
-          { qualityCheck: "lint", guard: "guard-lint", outcome: "watermelon" },
+          { qualityCheck: "lint", staticGuard: "guard-lint", outcome: "watermelon" },
         ],
         pendingItems: [],
         reconcilingItems: [
-          { qualityCheck: "lint", guard: "guard-lint", outcome: "watermelon" },
+          { qualityCheck: "lint", staticGuard: "guard-lint", outcome: "watermelon" },
         ],
       },
     ],
@@ -693,7 +693,7 @@ describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single qualit
       .find((o) => o.qualityCheck === "lint");
     expect(lint).toBeDefined();
     expect(lint!.qualityCheck).toBe("lint");
-    expect(lint!.guard).toBe("lint:x");
+    expect(lint!.staticGuard).toBe("lint:x");
   });
 
   it("keys a runtime sub-row by its level as the quality-check", () => {
@@ -702,7 +702,7 @@ describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single qualit
       .flatMap((s) => s.qualityCheckReconciliations)
       .find((o) => o.qualityCheck === "unit");
     expect(runtime).toBeDefined();
-    expect(runtime).not.toHaveProperty("guard");
+    expect(runtime).not.toHaveProperty("staticGuard");
   });
 
   it("carries the missing split under missingByQualityCheck, keyed by quality-check", () => {

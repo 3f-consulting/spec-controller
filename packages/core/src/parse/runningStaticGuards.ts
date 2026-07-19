@@ -44,7 +44,7 @@ export function runningStaticGuards(
     .sort()
     .map((guard) => ({
       qualityCheck: "lint" as const,
-      guard,
+      staticGuard: guard,
       exists: true,
       enforcedOverRealSource: true,
     }));

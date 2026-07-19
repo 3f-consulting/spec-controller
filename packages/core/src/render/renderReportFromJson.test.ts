@@ -45,7 +45,7 @@ const observations: EvidenceObservation[] = [
   { qualityCheck: "unit", scnId: "SCN-CHK-001", status: "passed" },
   { qualityCheck: "unit", scnId: "SCN-PHX-001", status: "passed" },
   { qualityCheck: "unit", scnId: null, status: "passed", locator: "src/b.test.ts" },
-  { qualityCheck: "lint", guard: "lint:bar", exists: true, enforcedOverRealSource: true },
+  { qualityCheck: "lint", staticGuard: "lint:bar", exists: true, enforcedOverRealSource: true },
 ];
 const balance: Ledger = reconcile(scenarios, observations);
 

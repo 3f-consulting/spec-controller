@@ -16,7 +16,7 @@
  * tags found across the contiguous tag block.
  *
  * The `lint` quality-check: a `@lint=<guard>` tag in the same block
- * contributes a `{ qualityCheck: "lint", guard }` evidenceObligation — the guard handle is the
+ * contributes a `{ qualityCheck: "lint", staticGuard: guard }` evidenceObligation — the guard handle is the
  * exact npm-script name, taken as everything after the FIRST `=` (so
  * `@lint=lint:feature-codes` → guard `lint:feature-codes`). The `=` prefix
  * delimiter (operator ruling) replaced an earlier `@lint:` double-colon
@@ -199,7 +199,7 @@ function obligationsFromTags(
           const guard = lintMatch[1]!;
           if (!seenGuards.has(guard)) {
             seenGuards.add(guard);
-            evidenceObligations.push({ qualityCheck: "lint", guard });
+            evidenceObligations.push({ qualityCheck: "lint", staticGuard: guard });
           }
         }
       }

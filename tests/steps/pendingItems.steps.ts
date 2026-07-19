@@ -97,9 +97,9 @@ Then("it declares a pending {string} obligation", function (qualityCheck: string
   );
   // A pending obligation is one-sided: no guard payload (the guard doesn't exist yet).
   assert.equal(
-    pendingAtCheck[0]!.guard,
+    pendingAtCheck[0]!.staticGuard,
     undefined,
-    `a pending obligation carries no guard payload; got guard="${pendingAtCheck[0]!.guard}"`
+    `a pending obligation carries no guard payload; got guard="${pendingAtCheck[0]!.staticGuard}"`
   );
 });
 

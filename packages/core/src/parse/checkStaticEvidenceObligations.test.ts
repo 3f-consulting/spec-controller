@@ -39,7 +39,7 @@ describe("checkStaticEvidenceObligations — the static-guard enforcement reader
     expect(checkStaticEvidenceObligations(["lint:feature-codes"], ci, pkg)).toEqual([
       {
         qualityCheck: "lint",
-        guard: "lint:feature-codes",
+        staticGuard: "lint:feature-codes",
         exists: true,
         enforcedOverRealSource: true,
       },
@@ -58,7 +58,7 @@ describe("checkStaticEvidenceObligations — the static-guard enforcement reader
     expect(checkStaticEvidenceObligations(["lint:feature-codes"], ci, pkg)).toEqual([
       {
         qualityCheck: "lint",
-        guard: "lint:feature-codes",
+        staticGuard: "lint:feature-codes",
         exists: true,
         enforcedOverRealSource: false,
       },
@@ -76,7 +76,7 @@ describe("checkStaticEvidenceObligations — the static-guard enforcement reader
     expect(checkStaticEvidenceObligations(["lint:nonexistent"], ci, pkg)).toEqual([
       {
         qualityCheck: "lint",
-        guard: "lint:nonexistent",
+        staticGuard: "lint:nonexistent",
         exists: false,
         enforcedOverRealSource: true,
       },

@@ -29,7 +29,7 @@ export function checkStaticEvidenceObligations(
   const runCommands = ciRunCommands(ciSource);
   return guards.map((guard) => ({
     qualityCheck: "lint" as const,
-    guard,
+    staticGuard: guard,
     exists: Object.prototype.hasOwnProperty.call(scripts, guard),
     enforcedOverRealSource: runCommands.some((cmd) =>
       commandInvokesScript(cmd, guard)

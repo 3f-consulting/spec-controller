@@ -1728,12 +1728,12 @@ Feature: alpha
     // links it by GUARD HANDLE — the same link the reconciler already follows to put the outcome
     // on that row. It posts to the account that demands it.
     const demandedGuard: EvidenceObservation = {
-      qualityCheck: "lint", guard: "lint:demanded", exists: true, enforcedOverRealSource: true,
+      qualityCheck: "lint", staticGuard: "lint:demanded", exists: true, enforcedOverRealSource: true,
     };
     // An UNDEMANDED guard credit: no @lint obligation demands this handle, so it belongs to no
     // account → SUSPENSE. The other arm of the guard symmetry.
     const undemandedGuard: EvidenceObservation = {
-      qualityCheck: "lint", guard: "lint:undemanded", exists: true, enforcedOverRealSource: false,
+      qualityCheck: "lint", staticGuard: "lint:undemanded", exists: true, enforcedOverRealSource: false,
     };
 
     ldgPostingObservations = [
@@ -1983,7 +1983,7 @@ Then("each debit is findable on its account, keyed by quality-check", function (
 
   assert.ok(findDebit("SCN-AAA-001", "unit"), "the runtime debit is findable by quality-check");
   assert.equal(
-    findDebit("SCN-AAA-001", "lint")?.guard,
+    findDebit("SCN-AAA-001", "lint")?.staticGuard,
     "lint:demanded",
     "the lint debit is findable by quality-check AND carries its guard handle — the account " +
       "records WHAT WAS DEMANDED, not merely that something was",

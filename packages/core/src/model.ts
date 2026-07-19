@@ -47,7 +47,7 @@ export type RuntimeQualityCheck = Exclude<QualityCheck, "lint">;
 export interface EvidenceObligation {
   qualityCheck?: QualityCheck;
   /** The guard handle — present IFF `qualityCheck === 'lint'`. */
-  guard?: string;
+  staticGuard?: string;
   /**
    * The obligation is owed but deliberately DEFERRED to a later slice — a
    * `<quality-check>pending` tag (evidence-manifesto §11B). ABSENT (undefined) on a
@@ -175,7 +175,7 @@ export interface GuardEvidenceObservation {
   /** A guard evidence observation is the `lint` quality-check (the watermelon discriminator). */
   qualityCheck: "lint";
   /** The guard handle — the npm-script name a `@lint=<guard>` tag names. */
-  guard: string;
+  staticGuard: string;
   /** The guard's script/CLI is present (a `package.json` `scripts` entry). */
   exists: boolean;
   /**
@@ -353,7 +353,7 @@ export interface QualityCheckReconciliation {
    */
   qualityCheck?: QualityCheck;
   /** The guard handle — present IFF `qualityCheck === 'lint'`. */
-  guard?: string;
+  staticGuard?: string;
   outcome: Outcome;
   /**
    * The where-to-fix for a CREDIT-side reconciling item (ruling Q5) — the

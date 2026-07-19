@@ -54,9 +54,9 @@ function reconcileEvidenceObligation(
     //     green on the surface, red within — a guard that guards nothing.
     //   - absent (no package.json script) → missing: a required
     //     ledger entry never recorded, GENUINELY DIFFERENT from the watermelon.
-    const guard = req.guard!; // present by construction for a lint evidence obligation.
+    const guard = req.staticGuard!; // present by construction for a lint evidence obligation.
     const obs = evidenceObservations.find(
-      (o): o is GuardEvidenceObservation => o.qualityCheck === "lint" && o.guard === guard
+      (o): o is GuardEvidenceObservation => o.qualityCheck === "lint" && o.staticGuard === guard
     );
     let outcome: Outcome;
     if (obs && obs.enforcedOverRealSource) {
@@ -66,7 +66,7 @@ function reconcileEvidenceObligation(
     } else {
       outcome = "missing";
     }
-    return { qualityCheck: "lint", guard, outcome };
+    return { qualityCheck: "lint", staticGuard: guard, outcome };
   }
 
   // A runtime evidence obligation — matched by (scnId, quality-check) among the runtime
@@ -234,7 +234,7 @@ export function reconcile(
   const demandedGuards = new Set<string>();
   for (const d of scenarios) {
     for (const o of d.evidenceObligations) {
-      if (o.qualityCheck === "lint" && o.guard !== undefined) demandedGuards.add(o.guard);
+      if (o.qualityCheck === "lint" && o.staticGuard !== undefined) demandedGuards.add(o.staticGuard);
     }
   }
   const byScn = new Map<string, RuntimeEvidenceObservation[]>();
@@ -325,10 +325,10 @@ export function reconcile(
     for (const o of d.evidenceObligations) {
       // Every `@lint` obligation, INCLUDING a pending one: posting is not classifying, so a credit
       // posts whatever its obligation later reconciles to (or fails to).
-      if (o.qualityCheck !== "lint" || o.guard === undefined) continue;
-      const guard = o.guard;
+      if (o.qualityCheck !== "lint" || o.staticGuard === undefined) continue;
+      const guard = o.staticGuard;
       const obs = evidenceObservations.find(
-        (c): c is GuardEvidenceObservation => c.qualityCheck === "lint" && c.guard === guard
+        (c): c is GuardEvidenceObservation => c.qualityCheck === "lint" && c.staticGuard === guard
       );
       // One credit answers one handle; a handle declared twice on one account still posts once.
       if (obs !== undefined && !demandedGuardCredits.includes(obs)) demandedGuardCredits.push(obs);
@@ -430,7 +430,7 @@ export function reconcile(
   // recovered from the completed stream, no longer a derive-and-diff param.
   const undemandedGuards = evidenceObservations.filter(
     (o): o is GuardEvidenceObservation =>
-      o.qualityCheck === "lint" && !demandedGuards.has(o.guard)
+      o.qualityCheck === "lint" && !demandedGuards.has(o.staticGuard)
   );
   if (brokenEvidence.length > 0 || uncited.length > 0 || undemandedGuards.length > 0) {
     const items: QualityCheckReconciliation[] = [
@@ -450,7 +450,7 @@ export function reconcile(
       })),
       ...undemandedGuards.map((o) => ({
         qualityCheck: "lint" as const,
-        guard: o.guard,
+        staticGuard: o.staticGuard,
         outcome: "cites-no-scenario" as const,
       })),
     ];

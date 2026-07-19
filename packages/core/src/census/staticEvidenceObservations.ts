@@ -56,7 +56,7 @@ export function countStaticEvidenceObservationKinds(
   for (const o of guardObservations) {
     if (!(o.exists && o.enforcedOverRealSource)) continue; // not a RUNNING guard
     runningGuardCount++;
-    if (demandedSet.has(o.guard)) demandedCount++;
+    if (demandedSet.has(o.staticGuard)) demandedCount++;
     else unattributedStaticGuardCount++;
   }
   // Completeness invariant (INTERNAL): every running guard is demanded or unattributed.

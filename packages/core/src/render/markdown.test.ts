@@ -249,7 +249,7 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
       [
         {
           scnId: "SCN-LNT-099",
-          evidenceObligations: [{ qualityCheck: "integration" }, { qualityCheck: "lint", guard: "typecheck" }],
+          evidenceObligations: [{ qualityCheck: "integration" }, { qualityCheck: "lint", staticGuard: "typecheck" }],
         },
       ],
       []
@@ -368,20 +368,20 @@ describe("[SCN-RPT-005] the markdown report lists the lint evidence obligations 
         scnId: "SCN-A",
         evidenceObligations: [
           { qualityCheck: "unit" },
-          { qualityCheck: "lint", guard: "guard-typecheck" },
+          { qualityCheck: "lint", staticGuard: "guard-typecheck" },
           { qualityCheck: "integration" },
         ],
       },
       {
         scnId: "SCN-B",
-        evidenceObligations: [{ qualityCheck: "lint", guard: "guard-lint" }, { qualityCheck: "e2e" }],
+        evidenceObligations: [{ qualityCheck: "lint", staticGuard: "guard-lint" }, { qualityCheck: "e2e" }],
       },
     ],
     [
       { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
       { qualityCheck: "integration", scnId: "SCN-A", status: "failed" },
-      { qualityCheck: "lint", guard: "guard-typecheck", exists: true, enforcedOverRealSource: true },
-      { qualityCheck: "lint", guard: "guard-lint", exists: true, enforcedOverRealSource: false },
+      { qualityCheck: "lint", staticGuard: "guard-typecheck", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "lint", staticGuard: "guard-lint", exists: true, enforcedOverRealSource: false },
     ]
   );
 
@@ -507,11 +507,11 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
         evidenceObligations: [],
         verdict: "out-of-balance",
         qualityCheckReconciliations: [
-          { qualityCheck: "lint", guard: "guard-lint", outcome: "watermelon" },
+          { qualityCheck: "lint", staticGuard: "guard-lint", outcome: "watermelon" },
         ],
         pendingItems: [],
         reconcilingItems: [
-          { qualityCheck: "lint", guard: "guard-lint", outcome: "watermelon" },
+          { qualityCheck: "lint", staticGuard: "guard-lint", outcome: "watermelon" },
         ],
       },
       {
@@ -520,7 +520,7 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
         evidenceObservations: [],
         evidenceObligations: [],
         verdict: "balanced",
-        qualityCheckReconciliations: [{ qualityCheck: "lint", guard: "guard-lint", outcome: "satisfied" }],
+        qualityCheckReconciliations: [{ qualityCheck: "lint", staticGuard: "guard-lint", outcome: "satisfied" }],
         pendingItems: [],
         reconcilingItems: [],
       },
@@ -578,8 +578,8 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
     // A balance carrying static-guard evidenceObligations and an out-of-balance scenario — so
     // both summary-view sections render and their order can be asserted.
     const withAll: Ledger = reconcile(
-      [{ scnId: "SCN-LNT-002", evidenceObligations: [{ qualityCheck: "lint", guard: "guard-lint" }] }],
-      [{ qualityCheck: "lint", guard: "guard-lint", exists: true, enforcedOverRealSource: false }]
+      [{ scnId: "SCN-LNT-002", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "guard-lint" }] }],
+      [{ qualityCheck: "lint", staticGuard: "guard-lint", exists: true, enforcedOverRealSource: false }]
     );
     const md = renderMarkdown(withAll, ctx);
     const iStatic = md.indexOf("### Lint evidence obligations");
@@ -768,11 +768,11 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
     [
       { scnId: "SCN-LDG-001", evidenceObligations: [{ qualityCheck: "unit" }] },
       { scnId: "SCN-LDG-002", evidenceObligations: [{ qualityCheck: "unit" }] },
-      { scnId: "SCN-LNT-001", evidenceObligations: [{ qualityCheck: "lint", guard: "guard-lint" }] },
+      { scnId: "SCN-LNT-001", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "guard-lint" }] },
     ],
     [
       { qualityCheck: "unit", scnId: "SCN-LDG-001", status: "passed" },
-      { qualityCheck: "lint", guard: "guard-lint", exists: true, enforcedOverRealSource: false },
+      { qualityCheck: "lint", staticGuard: "guard-lint", exists: true, enforcedOverRealSource: false },
     ]
   );
 
@@ -962,14 +962,14 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
       scnId: "SCN-A",
       evidenceObligations: [
         { qualityCheck: "unit" },
-        { qualityCheck: "lint", guard: "guard-x" },
-        { qualityCheck: "lint", guard: "guard-y" },
+        { qualityCheck: "lint", staticGuard: "guard-x" },
+        { qualityCheck: "lint", staticGuard: "guard-y" },
       ],
     },
     { scnId: "SCN-B", evidenceObligations: [{ qualityCheck: "unit" }] },
     { scnId: "SCN-C", evidenceObligations: [{ qualityCheck: "unit" }] },
     { scnId: "SCN-D", evidenceObligations: [{ qualityCheck: "integration" }] },
-    { scnId: "SCN-E", evidenceObligations: [{ qualityCheck: "lint", guard: "guard-z" }] },
+    { scnId: "SCN-E", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "guard-z" }] },
     { scnId: "SCN-F", evidenceObligations: [{ qualityCheck: "unit", pending: true }] },
   ];
   const observations: EvidenceObservation[] = [
@@ -987,8 +987,8 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     // The guards: guard-x wired into CI over real source → satisfied; guard-y exists but is not
     // wired → the watermelon (PRESENT, so it counts into the Lint cell); guard-z has no
     // observation at all → missing (∅).
-    { qualityCheck: "lint", guard: "guard-x", exists: true, enforcedOverRealSource: true },
-    { qualityCheck: "lint", guard: "guard-y", exists: true, enforcedOverRealSource: false },
+    { qualityCheck: "lint", staticGuard: "guard-x", exists: true, enforcedOverRealSource: true },
+    { qualityCheck: "lint", staticGuard: "guard-y", exists: true, enforcedOverRealSource: false },
   ];
   const balance: Ledger = reconcile(scenarios, observations);
   // The census is a FOLD over that very Ledger (@SCN-RPT-023 / 3F-1859) — it no longer takes the
@@ -1485,12 +1485,12 @@ describe("[SCN-RPT-020] the markdown renders each outcome's canon description, n
     [
       {
         scnId: "SCN-A",
-        evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "lint", guard: "typecheck" }],
+        evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "lint", staticGuard: "typecheck" }],
       },
       { scnId: "SCN-B", evidenceObligations: [] },
     ],
     [
-      { qualityCheck: "lint", guard: "typecheck", exists: true, enforcedOverRealSource: false },
+      { qualityCheck: "lint", staticGuard: "typecheck", exists: true, enforcedOverRealSource: false },
       { qualityCheck: "integration", scnId: null, status: "passed", locator: "tests/stray.test.ts:1" },
     ]
   );
@@ -2332,9 +2332,9 @@ describe('[SCN-RPT-024] the reconciliation collection is named "Scenario Reconci
         evidenceObservations: [],
         evidenceObligations: [],
         verdict: "out-of-balance",
-        qualityCheckReconciliations: [{ qualityCheck: "lint", guard: "guard:static", outcome: "cites-no-scenario" }],
+        qualityCheckReconciliations: [{ qualityCheck: "lint", staticGuard: "guard:static", outcome: "cites-no-scenario" }],
         pendingItems: [],
-        reconcilingItems: [{ qualityCheck: "lint", guard: "guard:static", outcome: "cites-no-scenario" }],
+        reconcilingItems: [{ qualityCheck: "lint", staticGuard: "guard:static", outcome: "cites-no-scenario" }],
       },
     ],
   };

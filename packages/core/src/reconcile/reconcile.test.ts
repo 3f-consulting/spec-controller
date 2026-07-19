@@ -200,7 +200,7 @@ describe("[SCN-LDG-007] a credit citing no scenario becomes a suspense-scenario 
     const evidenceObservations: EvidenceObservation[] = [
       { qualityCheck: "unit", scnId: null, status: "passed", locator: "src/a.test.ts" },
       { qualityCheck: "integration", scnId: null, status: "failed", locator: "features/b.feature" },
-      { qualityCheck: "lint", guard: "lint:orphan", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "lint", staticGuard: "lint:orphan", exists: true, enforcedOverRealSource: true },
     ];
     const balance = reconcile(scenarios, evidenceObservations);
 
@@ -215,7 +215,7 @@ describe("[SCN-LDG-007] a credit citing no scenario becomes a suspense-scenario 
     expect(row.qualityCheckReconciliations).toEqual([
       { qualityCheck: "unit", outcome: "cites-no-scenario", locator: "src/a.test.ts" },
       { qualityCheck: "integration", outcome: "cites-no-scenario", locator: "features/b.feature" },
-      { qualityCheck: "lint", guard: "lint:orphan", outcome: "cites-no-scenario" },
+      { qualityCheck: "lint", staticGuard: "lint:orphan", outcome: "cites-no-scenario" },
     ]);
     expect(row.reconcilingItems).toEqual(row.qualityCheckReconciliations);
 
@@ -1284,10 +1284,10 @@ describe("[SCN-LDG-022] reconcile — every evidence observation posts to exactl
     // obligation onto this row. Posting it here MIRRORS the reconciler: the credit sits on the
     // account the outcome already lands on.
     const demanded: Scenario[] = [
-      { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "lint", guard: "lint:x" }] },
+      { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:x" }] },
     ];
     const credit: EvidenceObservation = {
-      qualityCheck: "lint", guard: "lint:x", exists: true, enforcedOverRealSource: true,
+      qualityCheck: "lint", staticGuard: "lint:x", exists: true, enforcedOverRealSource: true,
     };
     const ledger = reconcile(demanded, [credit]);
     expect(accountFor(ledger, "SCN-AAA-001")?.evidenceObservations).toEqual([credit]);
@@ -1299,7 +1299,7 @@ describe("[SCN-LDG-022] reconcile — every evidence observation posts to exactl
     // The other arm of the symmetry: no @lint obligation demands this handle, so it belongs to no
     // account and lands in suspense, where it already reconciles `cites-no-scenario`.
     const credit: EvidenceObservation = {
-      qualityCheck: "lint", guard: "lint:nobody-demands-this", exists: true, enforcedOverRealSource: false,
+      qualityCheck: "lint", staticGuard: "lint:nobody-demands-this", exists: true, enforcedOverRealSource: false,
     };
     const ledger = reconcile(declared, [credit]);
     expect(accountFor(ledger, "(no scenario)")?.evidenceObservations).toEqual([credit]);
@@ -1342,7 +1342,7 @@ describe("[SCN-LDG-023] reconcile — the evidence obligations a scenario declar
     // The other obligation shape: `lint` debits carry the `guard` handle that links them to a
     // guard credit. The debit posts with its handle intact — the account records WHAT WAS
     // DEMANDED, not merely that something was.
-    const obligation: EvidenceObligation = { qualityCheck: "lint", guard: "lint:x" };
+    const obligation: EvidenceObligation = { qualityCheck: "lint", staticGuard: "lint:x" };
     const declared: Scenario[] = [{ scnId: "SCN-AAA-001", evidenceObligations: [obligation] }];
     const ledger = reconcile(declared, []);
     expect(accountFor(ledger, "SCN-AAA-001")?.evidenceObligations).toEqual([obligation]);
@@ -1362,7 +1362,7 @@ describe("[SCN-LDG-023] reconcile — the evidence obligations a scenario declar
 
   it("posts every declared obligation of a multi-obligation scenario, in document order", () => {
     const unit: EvidenceObligation = { qualityCheck: "unit" };
-    const lint: EvidenceObligation = { qualityCheck: "lint", guard: "lint:x" };
+    const lint: EvidenceObligation = { qualityCheck: "lint", staticGuard: "lint:x" };
     const declared: Scenario[] = [{ scnId: "SCN-AAA-001", evidenceObligations: [unit, lint] }];
     const ledger = reconcile(declared, []);
     expect(accountFor(ledger, "SCN-AAA-001")?.evidenceObligations).toEqual([unit, lint]);

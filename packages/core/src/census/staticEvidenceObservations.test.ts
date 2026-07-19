@@ -17,7 +17,7 @@ import type { GuardEvidenceObservation } from "../model.js";
 /** A running CI guard observation — exists as a script AND enforced over real source. */
 const running = (guard: string): GuardEvidenceObservation => ({
   qualityCheck: "lint",
-  guard,
+  staticGuard: guard,
   exists: true,
   enforcedOverRealSource: true,
 });
@@ -39,7 +39,7 @@ describe("[SCN-USG-001] countStaticEvidenceObservationKinds — the unattributed
     // so it is not a running guard — the forward detection keys on real CI steps.
     const watermelon: GuardEvidenceObservation = {
       qualityCheck: "lint",
-      guard: "lint:planted-watermelon",
+      staticGuard: "lint:planted-watermelon",
       exists: true,
       enforcedOverRealSource: false,
     };
@@ -71,7 +71,7 @@ describe("[SCN-USG-003] non-running guard observations are not counted as runnin
   it("skips a missing guard (no script) — it does not run, so it is not a running guard", () => {
     const missing: GuardEvidenceObservation = {
       qualityCheck: "lint",
-      guard: "lint:absent-guard",
+      staticGuard: "lint:absent-guard",
       exists: false,
       enforcedOverRealSource: false,
     };

@@ -83,9 +83,9 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
           evidenceObservations: [],
           evidenceObligations: [],
           verdict: "out-of-balance",
-          qualityCheckReconciliations: [{ qualityCheck: "lint", guard: "guard:static", outcome: "cites-no-scenario" }],
+          qualityCheckReconciliations: [{ qualityCheck: "lint", staticGuard: "guard:static", outcome: "cites-no-scenario" }],
           pendingItems: [],
-          reconcilingItems: [{ qualityCheck: "lint", guard: "guard:static", outcome: "cites-no-scenario" }],
+          reconcilingItems: [{ qualityCheck: "lint", staticGuard: "guard:static", outcome: "cites-no-scenario" }],
         },
       ],
     };

@@ -383,7 +383,7 @@ describe("[SCN-PND-016] a recognised community deferral tag defers every declare
       DEFERRAL_TAGS
     );
     expect(scenario!.evidenceObligations).toEqual([
-      { qualityCheck: "lint", guard: "lint:feature-codes", pending: true },
+      { qualityCheck: "lint", staticGuard: "lint:feature-codes", pending: true },
     ]);
   });
 
@@ -721,7 +721,7 @@ Feature: alpha
     Given a thing
 `;
     expect(parseScenarios(lintSource)[0]!.evidenceObligations).toEqual([
-      { qualityCheck: "lint", guard: "lint:feature-codes" },
+      { qualityCheck: "lint", staticGuard: "lint:feature-codes" },
     ]);
 
     // A deferral tag on the Feature defers every scenario beneath it — the whole-file @wip.
@@ -782,7 +782,7 @@ Feature: alpha
         scnId: "SCN-AAA-002",
         evidenceObligations: [
           { qualityCheck: "unit" },
-          { qualityCheck: "lint", guard: "lint:scn-tags" },
+          { qualityCheck: "lint", staticGuard: "lint:scn-tags" },
         ],
       },
     ]);

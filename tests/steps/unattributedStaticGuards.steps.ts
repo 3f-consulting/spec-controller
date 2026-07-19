@@ -181,7 +181,7 @@ Then(
 
 // @SCN-USG-005 — the declared guard:* is attributed, not an unattributed static-guard. The
 // usg-guard-declared fixture runs guard:domain-purity in CI AND declares @lint=guard:domain-purity:
-// the demanded-guard filter (reconcile's !demandedGuardSet.has(o.guard)) removes it from the
+// the demanded-guard filter (reconcile's !demandedGuardSet.has(o.staticGuard)) removes it from the
 // running-observation stream so it is not folded onto the suspense row, and the counter attributes
 // it (1 run, 0 unattributed) — never double-counted as both demanded and unattributed. The guard:*
 // mirror of USG-002, keeping the USG-004 broadening honest.

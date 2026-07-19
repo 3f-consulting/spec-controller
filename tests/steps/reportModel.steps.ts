@@ -651,7 +651,7 @@ Then('a lint sub-row carries its quality-check "lint" alongside its guard', func
   assert.ok(lintRows.length > 0, `expected at least one lint sub-row (the usg fixture declares @lint=lint:foo); got ${JSON.stringify(evidenceReconciliation)}`);
   for (const row of lintRows) {
     assert.equal(row.qualityCheck, "lint", `expected a lint sub-row's quality-check to be "lint"; got ${JSON.stringify(row)}`);
-    assert.ok(typeof row.guard === "string" && row.guard.length > 0, `expected a lint sub-row to carry its guard handle; got ${JSON.stringify(row)}`);
+    assert.ok(typeof row.staticGuard === "string" && row.staticGuard.length > 0, `expected a lint sub-row to carry its guard handle; got ${JSON.stringify(row)}`);
   }
 });
 

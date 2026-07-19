@@ -134,7 +134,7 @@ function renderItem(item: ScenarioReconciliation["reconcilingItems"][number]): s
       .filter((part): part is string => part !== undefined && part.length > 0)
       .join(": ");
     if (where.length > 0) suffix = ` (${cellSafe(where)})`;
-  } else if (isCredit && item.guard) suffix = ` (${item.guard})`;
+  } else if (isCredit && item.staticGuard) suffix = ` (${item.staticGuard})`;
   else if (isCredit && item.locator !== undefined) suffix = ` (${item.locator})`;
   return `${subject} ${ITEM_GLYPH[item.outcome]} ${OUTCOME_DESCRIPTION[item.outcome]}${suffix}`;
 }
@@ -604,7 +604,7 @@ const lintSection: SectionEmitter = (report) => {
         .filter((r) => r.qualityCheck === "lint")
         // The Outcome cell shows the canon DESCRIPTION, not the bare handle (3F-1626,
         // single-sourced from OUTCOME_DESCRIPTION); the ITEM_GLYPH glyph is retained.
-        .map((r) => `| ${s.scnId} | ${r.guard!} | ${ITEM_GLYPH[r.outcome]} ${OUTCOME_DESCRIPTION[r.outcome]} |`)
+        .map((r) => `| ${s.scnId} | ${r.staticGuard!} | ${ITEM_GLYPH[r.outcome]} ${OUTCOME_DESCRIPTION[r.outcome]} |`)
     );
   if (rows.length === 0) return [];
   const { satisfied, total } = report.summary.lint;

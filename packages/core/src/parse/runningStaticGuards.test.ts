@@ -42,8 +42,8 @@ describe("[SCN-USG-001] runningStaticGuards — the running-guard observer (emit
   it("emits a GuardEvidenceObservation for each lint:* script a CI run step invokes (test / cucumber / install excluded)", () => {
     // test + cucumber are the runtime axis's observed evidence; install is not a script.
     expect(runningStaticGuards(usgCi, usgPkg, DEFAULT_PREFIXES)).toEqual([
-      { qualityCheck: "lint", guard: "lint:bar", exists: true, enforcedOverRealSource: true },
-      { qualityCheck: "lint", guard: "lint:foo", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "lint", staticGuard: "lint:bar", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "lint", staticGuard: "lint:foo", exists: true, enforcedOverRealSource: true },
     ]);
   });
 
@@ -52,8 +52,8 @@ describe("[SCN-USG-001] runningStaticGuards — the running-guard observer (emit
       scripts: { ...usgPkg.scripts, "lint:unwired": "echo unwired" },
     };
     expect(runningStaticGuards(usgCi, withUnwired, DEFAULT_PREFIXES)).toEqual([
-      { qualityCheck: "lint", guard: "lint:bar", exists: true, enforcedOverRealSource: true },
-      { qualityCheck: "lint", guard: "lint:foo", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "lint", staticGuard: "lint:bar", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "lint", staticGuard: "lint:foo", exists: true, enforcedOverRealSource: true },
     ]);
   });
 });
@@ -75,7 +75,7 @@ describe("[SCN-USG-003] non-lint CI steps are not observed as static guards", ()
     // Only lint:foo is a running guard; test + cucumber (the runtime axis's observed
     // evidence) and install (not a script) never enter the observed set.
     expect(runningStaticGuards(ci2, pkg2, DEFAULT_PREFIXES)).toEqual([
-      { qualityCheck: "lint", guard: "lint:foo", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "lint", staticGuard: "lint:foo", exists: true, enforcedOverRealSource: true },
     ]);
   });
 });
@@ -106,7 +106,7 @@ describe("[SCN-USG-004] runningStaticGuards observes guard:-prefixed CI scripts,
     expect(runningStaticGuards(guardCi, guardPkg, DEFAULT_PREFIXES)).toEqual([
       {
         qualityCheck: "lint",
-        guard: "guard:domain-purity",
+        staticGuard: "guard:domain-purity",
         exists: true,
         enforcedOverRealSource: true,
       },
@@ -132,8 +132,8 @@ describe("[SCN-USG-004] runningStaticGuards observes guard:-prefixed CI scripts,
       "      - run: pnpm cucumber",
     ].join("\n");
     expect(runningStaticGuards(mixedCi, mixedPkg, DEFAULT_PREFIXES)).toEqual([
-      { qualityCheck: "lint", guard: "guard:domain-purity", exists: true, enforcedOverRealSource: true },
-      { qualityCheck: "lint", guard: "lint:foo", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "lint", staticGuard: "guard:domain-purity", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "lint", staticGuard: "lint:foo", exists: true, enforcedOverRealSource: true },
     ]);
   });
 });

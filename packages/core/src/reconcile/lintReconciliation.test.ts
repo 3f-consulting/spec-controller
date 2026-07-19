@@ -36,7 +36,7 @@ describe("[SCN-LNT-001] a @lint scenario whose guard is wired into CI over the r
     ) as PackageJsonScripts;
 
     const scenarios: Scenario[] = [
-      { scnId: "SCN-LNT-001", evidenceObligations: [{ qualityCheck: "lint", guard: REAL_GUARD }] },
+      { scnId: "SCN-LNT-001", evidenceObligations: [{ qualityCheck: "lint", staticGuard: REAL_GUARD }] },
     ];
     const evidenceObservations = checkStaticEvidenceObligations([REAL_GUARD], ciSource, packageJson);
 
@@ -46,7 +46,7 @@ describe("[SCN-LNT-001] a @lint scenario whose guard is wired into CI over the r
     expect(scenario?.verdict).toBe("balanced");
     expect(scenario?.reconcilingItems).toEqual([]);
     expect(scenario?.qualityCheckReconciliations).toEqual([
-      { qualityCheck: "lint", guard: REAL_GUARD, outcome: "satisfied" },
+      { qualityCheck: "lint", staticGuard: REAL_GUARD, outcome: "satisfied" },
     ]);
   });
 });
@@ -97,14 +97,14 @@ describe("[SCN-LNT-002] a @lint scenario whose guard is fixture-green but not wi
     };
 
     const scenarios: Scenario[] = [
-      { scnId: "SCN-LNT-002", evidenceObligations: [{ qualityCheck: "lint", guard: PLANTED_GUARD }] },
+      { scnId: "SCN-LNT-002", evidenceObligations: [{ qualityCheck: "lint", staticGuard: PLANTED_GUARD }] },
     ];
     // Drive the real DETECTOR over the planted fixture — assert it reads the
     // watermelon precursor (exists, NOT enforced), not a hand-seeded evidenceObservation.
     const evidenceObservations = checkStaticEvidenceObligations([PLANTED_GUARD], plantedCi, plantedPackageJson);
     expect(evidenceObservations).toEqual([
       {
-        qualityCheck: "lint", guard: PLANTED_GUARD,
+        qualityCheck: "lint", staticGuard: PLANTED_GUARD,
         exists: true,
         enforcedOverRealSource: false,
       },
@@ -120,13 +120,13 @@ describe("[SCN-LNT-002] a @lint scenario whose guard is fixture-green but not wi
     expect(scenario?.verdict).toBe("out-of-balance");
     expect(scenario?.reconcilingItems).toEqual([
       {
-        qualityCheck: "lint", guard: PLANTED_GUARD,
+        qualityCheck: "lint", staticGuard: PLANTED_GUARD,
         outcome: "watermelon",
       },
     ]);
     expect(scenario?.qualityCheckReconciliations).toEqual([
       {
-        qualityCheck: "lint", guard: PLANTED_GUARD,
+        qualityCheck: "lint", staticGuard: PLANTED_GUARD,
         outcome: "watermelon",
       },
     ]);
@@ -175,14 +175,14 @@ describe("[SCN-LNT-003] a @lint scenario whose named guard does not exist is rep
     };
 
     const scenarios: Scenario[] = [
-      { scnId: "SCN-LNT-003", evidenceObligations: [{ qualityCheck: "lint", guard: ABSENT_GUARD }] },
+      { scnId: "SCN-LNT-003", evidenceObligations: [{ qualityCheck: "lint", staticGuard: ABSENT_GUARD }] },
     ];
     // Drive the real DETECTOR over the planted fixture — assert it reads the absent
     // guard (exists:false, NOT enforced), not a hand-seeded evidenceObservation.
     const evidenceObservations = checkStaticEvidenceObligations([ABSENT_GUARD], plantedCi, plantedPackageJson);
     expect(evidenceObservations).toEqual([
       {
-        qualityCheck: "lint", guard: ABSENT_GUARD,
+        qualityCheck: "lint", staticGuard: ABSENT_GUARD,
         exists: false,
         enforcedOverRealSource: false,
       },
@@ -198,13 +198,13 @@ describe("[SCN-LNT-003] a @lint scenario whose named guard does not exist is rep
     expect(scenario?.verdict).toBe("out-of-balance");
     expect(scenario?.reconcilingItems).toEqual([
       {
-        qualityCheck: "lint", guard: ABSENT_GUARD,
+        qualityCheck: "lint", staticGuard: ABSENT_GUARD,
         outcome: "missing",
       },
     ]);
     expect(scenario?.qualityCheckReconciliations).toEqual([
       {
-        qualityCheck: "lint", guard: ABSENT_GUARD,
+        qualityCheck: "lint", staticGuard: ABSENT_GUARD,
         outcome: "missing",
       },
     ]);
@@ -263,7 +263,7 @@ describe("[SCN-LNT-004] a scenario requiring both a @unit test and an unwired @l
         scnId: "SCN-LNT-004",
         evidenceObligations: [
           { qualityCheck: "unit" },
-          { qualityCheck: "lint", guard: UNWIRED_GUARD },
+          { qualityCheck: "lint", staticGuard: UNWIRED_GUARD },
         ],
       },
     ];
@@ -289,7 +289,7 @@ describe("[SCN-LNT-004] a scenario requiring both a @unit test and an unwired @l
       expect.arrayContaining([
         { qualityCheck: "unit", outcome: "satisfied" },
         {
-          qualityCheck: "lint", guard: UNWIRED_GUARD,
+          qualityCheck: "lint", staticGuard: UNWIRED_GUARD,
           outcome: "watermelon",
         },
       ])
@@ -300,7 +300,7 @@ describe("[SCN-LNT-004] a scenario requiring both a @unit test and an unwired @l
     // the non-balanced static watermelon remains.
     expect(scenario?.reconcilingItems).toEqual([
       {
-        qualityCheck: "lint", guard: UNWIRED_GUARD,
+        qualityCheck: "lint", staticGuard: UNWIRED_GUARD,
         outcome: "watermelon",
       },
     ]);

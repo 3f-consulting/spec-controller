@@ -45,7 +45,7 @@ describe("[SCN-LNT-005] guard enforcement is read from an externally-specified p
     expect(scenario?.verdict).toBe("out-of-balance");
     expect(scenario?.reconcilingItems).toEqual([
       {
-        qualityCheck: "lint", guard: EXTERNAL_GUARD,
+        qualityCheck: "lint", staticGuard: EXTERNAL_GUARD,
         outcome: "watermelon",
       },
     ]);
