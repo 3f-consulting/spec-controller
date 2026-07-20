@@ -38,8 +38,13 @@ export const RECONCILIATION_JSON = "spec-reconciliation.json";
 /** The manifest filename a kept run stamps in the run dir (RMG-002). */
 export const RUN_MANIFEST = "run.yaml";
 
-/** The run.yaml schema version this scaffold stamps. */
-export const RUN_MANIFEST_SCHEMA_VERSION = 1;
+/**
+ * The run.yaml schema version this scaffold stamps. Bumped 1 → 2 by 3F-1916, which added
+ * the tool identity (`tool_sha` / `tool_version`) — so a reader can tell a run that
+ * predates tool-identity recording (schema 1) from one that should carry it (schema 2).
+ * run.yaml is write-only (no production reader), so the bump breaks no read path.
+ */
+export const RUN_MANIFEST_SCHEMA_VERSION = 2;
 
 /** The stored-run modes (run.yaml `mode`). */
 export type RunMode = "balance" | "analyse" | "migrate";
@@ -50,6 +55,15 @@ export type RunMode = "balance" | "analyse" | "migrate";
  */
 export interface RunManifestMeta {
   readonly sourceSha: string;
+  /**
+   * The TOOL's own git SHA — which spec-controller produced this run (3F-1916), distinct
+   * from the target's `sourceSha`. A string ("unknown" when the tool is not a git
+   * checkout), mirroring `sourceSha`'s own "unknown" fallback — so run.yaml is internally
+   * consistent (both facts use the same absent-marker, never a bare null).
+   */
+  readonly toolSha: string;
+  /** The tool's package version — always present. */
+  readonly toolVersion: string;
   readonly mode: RunMode;
   readonly date: string;
 }
@@ -70,6 +84,9 @@ export interface RunManifest {
   readonly run_id: string;
   readonly target: string;
   readonly source_sha: string;
+  /** The TOOL's identity (3F-1916) — which spec-controller produced the run. */
+  readonly tool_sha: string;
+  readonly tool_version: string;
   readonly mode: RunMode;
   readonly date: string;
   readonly purpose: readonly string[];
@@ -172,6 +189,8 @@ export function planRunManifest(input: RunManifestInput): RunManifest {
     run_id: input.runId,
     target: input.target,
     source_sha: input.sourceSha,
+    tool_sha: input.toolSha,
+    tool_version: input.toolVersion,
     mode: input.mode,
     date: input.date,
     // EMPTY defaults — the ad-hoc run; slugs/links are added by operator hand-edit of

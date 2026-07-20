@@ -90,7 +90,7 @@ Then("that run directory holds spec-reconciliation.md, spec-reconciliation.json,
 // @SCN-RMG-004
 Then("its run.yaml parses with mode balance, the target, and the run-id", function () {
   const manifest = parse(readFileSync(join(runDir, "run.yaml"), "utf8")) as Record<string, unknown>;
-  assert.equal(manifest["schema_version"], 1);
+  assert.equal(manifest["schema_version"], 2);
   assert.equal(manifest["mode"], "balance");
   assert.equal(manifest["target"], TARGET);
   assert.equal(manifest["run_id"], RUN_ID);

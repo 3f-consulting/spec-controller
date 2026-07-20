@@ -71,6 +71,8 @@ describe("[SCN-RMG-002] planRunManifest: builds the run.yaml manifest from run m
     runId: "2026-07-01T09-30-00Z",
     target: "acme-web",
     sourceSha: "abc1234",
+    toolSha: "13ee47f",
+    toolVersion: "0.1.0",
     mode: "balance",
     date: "2026-07-01",
   };
@@ -78,10 +80,13 @@ describe("[SCN-RMG-002] planRunManifest: builds the run.yaml manifest from run m
   it("stamps the decided field set with values threaded from the metadata", () => {
     const manifest = planRunManifest(input);
 
-    expect(manifest.schema_version).toBe(1);
+    expect(manifest.schema_version).toBe(2);
     expect(manifest.run_id).toBe(input.runId);
     expect(manifest.target).toBe(input.target);
     expect(manifest.source_sha).toBe(input.sourceSha);
+    // The TOOL's identity (3F-1916) — which spec-controller produced the run.
+    expect(manifest.tool_sha).toBe(input.toolSha);
+    expect(manifest.tool_version).toBe(input.toolVersion);
     expect(manifest.mode).toBe(input.mode);
     expect(manifest.date).toBe(input.date);
     // The artefacts map carries the decided filenames (2026-06-30 vocabulary fold).
@@ -106,7 +111,7 @@ describe("[SCN-RMG-002] planRunManifest: builds the run.yaml manifest from run m
     // The emitted YAML must be VALID — the @integration parses the real on-disk file, so a
     // string-match would not do; prove the serialiser round-trips through a real parser here.
     const roundTripped = parse(yamlText) as Record<string, unknown>;
-    expect(roundTripped.schema_version).toBe(1);
+    expect(roundTripped.schema_version).toBe(2);
     expect(roundTripped.run_id).toBe(input.runId);
     expect(roundTripped.source_sha).toBe(input.sourceSha);
     expect(roundTripped.mode).toBe(input.mode);

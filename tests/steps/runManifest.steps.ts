@@ -42,7 +42,7 @@ const TARGET = "evidence observation-fixture";
 // Colon-free so it is a legal path segment on every OS (the timestamp default is RMG-003).
 const RUN_ID = "2026-07-01T00-00-00Z";
 // The run.yaml manifest metadata the runner stamps (not derivable from the path spec).
-const META: RunManifestMeta = { sourceSha: "abc1234", mode: "balance", date: "2026-07-01" };
+const META: RunManifestMeta = { sourceSha: "abc1234", toolSha: "13ee47f", toolVersion: "0.1.0", mode: "balance", date: "2026-07-01" };
 
 // @SCN-RMG-002 outcome (isolated per scenario by Cucumber).
 let storeRoot: string; // the INJECTED temp store root (outside the repo tree)
@@ -79,17 +79,20 @@ When("a kept run is executed with that metadata", function () {
 
 // @SCN-RMG-002
 Then(
-  "run.yaml in the run directory parses back to schema_version 1, the run_id, target, source_sha, mode, date, an empty purpose list, empty links, and the artefact filenames",
+  "run.yaml in the run directory parses back to schema_version 2, the run_id, target, source_sha, tool_sha, tool_version, mode, date, an empty purpose list, empty links, and the artefact filenames",
   function () {
     const manifestPath = join(plan.runDir, RUN_MANIFEST);
     assert.ok(existsSync(manifestPath), `expected run.yaml at ${manifestPath}; it does not exist`);
     // Anti-watermelon: parse the REAL file off disk with a REAL YAML parser, NEVER a
     // serialiseRunManifest re-run.
     const manifest = parse(readFileSync(manifestPath, "utf8")) as Record<string, unknown>;
-    assert.equal(manifest.schema_version, 1, "schema_version is not 1");
+    assert.equal(manifest.schema_version, 2, "schema_version is not 2");
     assert.equal(manifest.run_id, RUN_ID, "run_id is not the run-id");
     assert.equal(manifest.target, TARGET, "target is not the target name");
     assert.equal(manifest.source_sha, META.sourceSha, "source_sha is not the metadata SHA");
+    // The TOOL's identity (3F-1916).
+    assert.equal(manifest.tool_sha, META.toolSha, "tool_sha is not the metadata tool SHA");
+    assert.equal(manifest.tool_version, META.toolVersion, "tool_version is not the metadata tool version");
     assert.equal(manifest.mode, META.mode, "mode is not the metadata mode");
     assert.equal(manifest.date, META.date, "date is not the metadata date");
     assert.deepEqual(manifest.purpose, [], "purpose is not the empty ad-hoc default");

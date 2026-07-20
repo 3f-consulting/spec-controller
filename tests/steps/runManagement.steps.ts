@@ -52,7 +52,7 @@ const TARGET = "evidence observation-fixture";
 const RUN_ID = "2026-07-01T00-00-00Z";
 // The run.yaml manifest metadata (RMG-002 added the parameter; this scenario asserts the
 // dir + routed outputs, not run.yaml, but the runner requires the metadata to stamp it).
-const META: RunManifestMeta = { sourceSha: "unknown", mode: "balance", date: "2026-07-01" };
+const META: RunManifestMeta = { sourceSha: "unknown", toolSha: "unknown", toolVersion: "0.1.0", mode: "balance", date: "2026-07-01" };
 
 // @SCN-RMG-001 outcome (isolated per scenario by Cucumber).
 let storeRoot: string; // the INJECTED temp store root (outside the repo tree)

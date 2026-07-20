@@ -29,15 +29,16 @@ Feature: Keep a run — a named, metadata-stamped directory outside the repo
 
   Rule: a kept run stamps run.yaml with the decided fields
 
-    The run dir carries a run.yaml manifest: schema_version, run_id, target, source_sha,
+    The run dir carries a run.yaml manifest: schema_version (2 — 3F-1916 added the tool
+    identity), run_id, target, source_sha, tool_sha, tool_version,
     mode (balance / analyse / migrate), date, purpose (a list of grouping slugs — empty by
     default, an ad-hoc run, curated by hand afterward), links, and the artefact filenames.
 
     @unit @integration @SCN-RMG-002
-    Scenario: a kept run stamps run.yaml with schema_version, run_id, target, sha, mode, date, an empty purpose list, links, and artefacts
+    Scenario: a kept run stamps run.yaml with schema_version, run_id, target, sha, tool identity, mode, date, an empty purpose list, links, and artefacts
       Given an injected store root and the run metadata for a kept run
       When a kept run is executed with that metadata
-      Then run.yaml in the run directory parses back to schema_version 1, the run_id, target, source_sha, mode, date, an empty purpose list, empty links, and the artefact filenames
+      Then run.yaml in the run directory parses back to schema_version 2, the run_id, target, source_sha, tool_sha, tool_version, mode, date, an empty purpose list, empty links, and the artefact filenames
       And the repo working tree gains nothing from the run.yaml stamp
 
   Rule: the run-id defaults to a timestamp, an operator mnemonic overrides it

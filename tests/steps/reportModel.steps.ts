@@ -30,7 +30,7 @@ const FIXTURE = {
 };
 const TARGET = "evidence observation-fixture";
 const RUN_ID = "2026-07-02T00-00-00Z";
-const META: RunManifestMeta = { sourceSha: "unknown", mode: "balance", date: "2026-07-02" };
+const META: RunManifestMeta = { sourceSha: "unknown", toolSha: "unknown", toolVersion: "0.1.0", mode: "balance", date: "2026-07-02" };
 
 let rmdStoreRoot: string;
 let rmdPlan: KeptRunPlan;

@@ -22,7 +22,7 @@
 import { dirname } from "node:path";
 
 import { runBalance } from "./cli-balance/cli.js";
-import { resolveSourceSha } from "./run-management/resolveRunInputs.js";
+import { resolveSourceSha, resolveToolIdentity } from "./run-management/resolveRunInputs.js";
 import {
   executeKeptRun,
   resolveRunId,
@@ -79,7 +79,17 @@ function main(hostArgv: string[]): void {
   const spec: KeptRunSpec = { storeRoot: inv.store, target, runId };
   // `mode` is the command's run kind; only `balance` ships today (analyse/migrate are the
   // private engine's, added when it lands).
-  const meta: RunManifestMeta = { sourceSha, mode: "balance", date: new Date().toISOString() };
+  // The TOOL's own identity (3F-1916) — which spec-controller produced this run, read
+  // from the tool's OWN dir (never cwd, which is the target). "unknown" for a null SHA,
+  // matching sourceSha's own fallback so run.yaml is internally consistent.
+  const toolIdentity = resolveToolIdentity();
+  const meta: RunManifestMeta = {
+    sourceSha,
+    toolSha: toolIdentity.toolSha ?? "unknown",
+    toolVersion: toolIdentity.toolVersion,
+    mode: "balance",
+    date: new Date().toISOString(),
+  };
 
   const plan = executeKeptRun(spec, meta, (formatSpecs) =>
     runCommand(command, wrapCommandArgv(inv.commandArgs, [...formatSpecs])),
