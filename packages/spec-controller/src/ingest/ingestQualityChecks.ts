@@ -276,7 +276,7 @@ function parseRuntimeObservations(opts: ReconcileOptions, root: string | undefin
  * Reconcile declared-vs-observed evidence AND count the runtime evidence-observation census for a
  * target tree, from a SINGLE parse of the runtime observations (@SCN-RPT-017 / 3F-1452 FULL UNIFY).
  * The runtime observations are parsed ONCE (tag-derived) and the SAME set feeds both `reconcile`
- * (alongside the static-static guard observations) and `countRuntimeEvidenceObservationKinds` — so the
+ * (alongside the static-guard observations) and `countRuntimeEvidenceObservationKinds` — so the
  * census is a PROJECTION of the one ledger, never a second derivation that could drift from the
  * verdict (the drift bug this fixes). `runReconcile` / `readEvidenceObservations` are thin views.
  */
@@ -307,7 +307,7 @@ export function reconcileWithCensus(opts: ReconcileOptions): {
 
   // Static (guard) kind: observe each declared @lint=<guard> against the CI config
   // + package.json over the real tree. Read the CI + package.json ONCE — both
-  // the declared-static guard evidence observation AND the reverse CI-guard derivation (below) draw on them.
+  // the declared-guard evidence observation AND the reverse CI-guard derivation (below) draw on them.
   const demandedGuards = [
     ...new Set(
       scenarios.flatMap((d) =>

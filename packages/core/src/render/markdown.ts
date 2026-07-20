@@ -556,9 +556,9 @@ const testVolumeSection: SectionEmitter = (report) => {
 };
 
 /**
- * Static guards (@SCN-USG-001) — the STATIC-static guard evidence observation side under
+ * Static guards (@SCN-USG-001) — the STATIC-guard evidence observation side under
  * Summary views, the mirror of `### Test volume` on the runtime axis. Renders the counts line
- * (`N guard(s) run, K unattributed static-guard(s)`) alone — a pure counts summary, symmetric with
+ * (`N static guard(s) run, K unattributed static guard(s)`) alone — a pure counts summary, symmetric with
  * `### Test volume` (2.4). The demanded count is implicit (`running − unattributed`), so it
  * is no longer printed. The per-guard member detail lives in the rows (demanded → each
  * scenario's `@lint` sub-row; undemanded → the suspense row's `cites-no-scenario` credit items), so
@@ -576,7 +576,7 @@ const staticGuardsSection: SectionEmitter = (report) => {
   return [
     "### Static guards",
     "",
-    `${counts.runningGuardCount} guard(s) run, ${counts.unattributedStaticGuardCount} unattributed static-guard(s).`,
+    `${counts.runningGuardCount} static guard(s) run, ${counts.unattributedStaticGuardCount} unattributed static guard(s).`,
     "",
   ];
 };

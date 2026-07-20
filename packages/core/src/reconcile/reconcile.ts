@@ -6,7 +6,7 @@
  * item), present+pass → satisfied; present+fail → failing; absent →
  * missing. The one reconcile function branches on the `qualityCheck === "lint"`
  * watermelon discriminator (replacing the retired `kind === "static"` split): a `lint`
- * evidence obligation reconciles against a static-static guard evidence observation (exists+wired → satisfied;
+ * evidence obligation reconciles against a static-guard evidence observation (exists+wired → satisfied;
  * exists+unwired → watermelon; absent → missing); a runtime evidence obligation
  * reconciles against a test result matched by (scnId, quality-check).
  *

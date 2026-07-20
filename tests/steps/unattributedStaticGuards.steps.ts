@@ -128,8 +128,8 @@ Then(
       `expected a Static guards section; got:\n${activeMd}`
     );
     assert.ok(
-      activeMd.includes("2 guard(s) run, 1 unattributed static-guard(s)"),
-      `expected the guard counts "2 guard(s) run, 1 unattributed static-guard(s)"; got:\n${activeMd}`
+      activeMd.includes("2 static guard(s) run, 1 unattributed static guard(s)"),
+      `expected the guard counts "2 static guard(s) run, 1 unattributed static guard(s)"; got:\n${activeMd}`
     );
     assert.ok(
       activeMd.includes("lint ❓ Evidence Observation cites no Scenario (lint:bar)"),
@@ -152,8 +152,8 @@ Then(
       `expected a Static guards section; got:\n${activeMd}`
     );
     assert.ok(
-      activeMd.includes("1 guard(s) run, 1 unattributed static-guard(s)"),
-      `expected the guard counts "1 guard(s) run, 1 unattributed static-guard(s)"; got:\n${activeMd}`
+      activeMd.includes("1 static guard(s) run, 1 unattributed static guard(s)"),
+      `expected the guard counts "1 static guard(s) run, 1 unattributed static guard(s)"; got:\n${activeMd}`
     );
     assert.ok(
       activeMd.includes("lint ❓ Evidence Observation cites no Scenario (guard:domain-purity)"),
@@ -173,7 +173,7 @@ Then(
       `lint:foo is @lint-declared; it must not surface as an unattributed static-guard credit; got:\n${activeMd}`
     );
     assert.ok(
-      activeMd.includes("2 guard(s) run, 1 unattributed static-guard(s)"),
+      activeMd.includes("2 static guard(s) run, 1 unattributed static guard(s)"),
       `expected lint:foo folded into the running volume (2 run, 1 unattributed static-guard(s)); got:\n${activeMd}`
     );
   }
@@ -193,7 +193,7 @@ Then(
       `guard:domain-purity is @lint-declared; it must not surface as an unattributed static-guard credit; got:\n${activeMd}`
     );
     assert.ok(
-      activeMd.includes("1 guard(s) run, 0 unattributed static-guard(s)"),
+      activeMd.includes("1 static guard(s) run, 0 unattributed static guard(s)"),
       `expected guard:domain-purity attributed (1 run, 0 unattributed static-guard(s)); got:\n${activeMd}`
     );
   }
@@ -206,7 +206,7 @@ Then(
   "only lint:foo and lint:bar are counted as CI guards, not test or cucumber",
   function () {
     assert.ok(
-      activeMd.includes("2 guard(s) run, 1 unattributed static-guard(s)"),
+      activeMd.includes("2 static guard(s) run, 1 unattributed static guard(s)"),
       `expected exactly 2 running guards (test/cucumber excluded); got:\n${activeMd}`
     );
     assert.ok(

@@ -1235,7 +1235,7 @@ describe("[SCN-USG-001] the markdown report renders the Static guards section", 
       unattributedStaticGuardCount: 1,
     });
     expect(md).toContain("### Static guards");
-    expect(md).toContain("2 guard(s) run, 1 unattributed static-guard(s).");
+    expect(md).toContain("2 static guard(s) run, 1 unattributed static guard(s).");
     // The per-guard DETAIL list dissolved into the suspense-scenario row (@SCN-LDG-007,
     // ruling Q4) — the section carries only the summary-level counts now, no bullets.
     expect(md).not.toContain("- lint:bar");
@@ -1247,7 +1247,7 @@ describe("[SCN-USG-001] the markdown report renders the Static guards section", 
       runningGuardCount: 1,
       unattributedStaticGuardCount: 0,
     });
-    expect(md).toContain("1 guard(s) run, 0 unattributed static-guard(s).");
+    expect(md).toContain("1 static guard(s) run, 0 unattributed static guard(s).");
     // The counts summarise the volume; the itemised list (only shown when > 0) is omitted.
     expect(md).not.toContain("— a CI guard no @lint declares:");
   });
