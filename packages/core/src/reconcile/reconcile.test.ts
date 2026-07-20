@@ -1215,13 +1215,17 @@ describe("[SCN-LDG-021] a scenario declaring no @SCN reconciles no-scn-code on i
 });
 
 /**
- * @SCN-LDG-022 (3F-1846) — every evidence observation posts to exactly one ledger account.
+ * @SCN-LDG-022 (3F-1846) — every evidence observation posts to AT LEAST ONE ledger account, never
+ * to none (canon, double-entry-manifesto.md line 160). Over THIS single-demand corpus — no static
+ * guard is demanded twice — the never-zero invariant lands at exactly one, which is the teeth here
+ * against an erroneous double-post. The multi-demand instance (a static guard posting to every
+ * demander) is @SCN-LDG-024.
  *
  * The @unit arm: `reconcile` populates each account's `evidenceObservations` with the credits that
  * CITE it. The @integration arm (tests/steps/ledger.steps.ts) drives the whole credit corpus at
  * once for the exhaustion/uniqueness property; these prove the per-shape routing in isolation.
  */
-describe("[SCN-LDG-022] reconcile — every evidence observation posts to exactly one ledger account", () => {
+describe("[SCN-LDG-022] reconcile — every evidence observation posts to at least one account (exactly one over this single-demand corpus)", () => {
   const declared: Scenario[] = [
     { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] },
     { scnId: "SCN-AAA-002", evidenceObligations: [{ qualityCheck: "unit" }] },

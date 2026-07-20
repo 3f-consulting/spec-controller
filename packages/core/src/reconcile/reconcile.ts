@@ -320,7 +320,10 @@ export function reconcile(
     // HERE — MIRRORING `reconcileEvidenceObligation`, which follows the SAME link (by handle) to
     // put each lint outcome on this very row. The credit sits on the account its outcome already
     // lands on. The complement — a static guard NO obligation demands — belongs to no account and posts
-    // to SUSPENSE (`undemandedGuards`, below). Together: every static guard credit, exactly one account.
+    // to SUSPENSE (`undemandedGuards`, below). Together: every static guard credit posts to at
+    // least one account, never to none — to EVERY account that demands it (a run is evidence for
+    // all demanders), or to suspense if none does. NOT "exactly one" (canon,
+    // double-entry-manifesto.md line 160): that is the runtime property, over-generalised.
     const demandedGuardCredits: GuardEvidenceObservation[] = [];
     for (const o of d.evidenceObligations) {
       // Every `@lint` obligation, INCLUDING a pending one: posting is not classifying, so a credit

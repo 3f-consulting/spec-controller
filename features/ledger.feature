@@ -468,13 +468,16 @@ Feature: Ledger over declared-vs-observed evidence
   #
   # A GUARD credit carries no @SCN, so its link is the GUARD HANDLE rather than a citation: the
   # same link the reconciler already follows to put a lint obligation's outcome on the demanding
-  # row. So the symmetry completes — a DEMANDED guard posts to the account that demands it; an
+  # row. So the symmetry completes — a DEMANDED guard posts to EVERY account that demands it; an
   # UNDEMANDED guard belongs to no account and posts to SUSPENSE, where it already reconciles
-  # `cites-no-scenario`. Every credit, exactly one account.
-  Rule: every evidence observation posts to exactly one ledger account, whatever its outcome
+  # `cites-no-scenario`. Every credit posts to AT LEAST ONE account, never to none (canon,
+  # double-entry-manifesto.md line 160: "Not exactly one — a static guard posts to every account
+  # that demands it"). Exactly-one is a RUNTIME property (the credit cites, so it names one) — the
+  # single-demand instance below, not the universal. The multi-demand instance is @SCN-LDG-024.
+  Rule: every evidence observation posts to at least one ledger account, never to none — a runtime credit to the one it cites, a static guard to every account that demands it
 
     @unit @integration @SCN-LDG-022
-    Scenario: every evidence observation posts to exactly one ledger account and is findable there
+    Scenario: over a single-demand corpus every evidence observation posts to exactly one ledger account and is findable there — the never-zero invariant's instance where nothing is demanded twice
       Given a run whose credits span every shape — satisfied, undemanded, pending-cited, phantom, uncited, broken, a demanded guard and an undemanded guard
       When the ledger reconciles that run
       Then every evidence observation posts to exactly one ledger account

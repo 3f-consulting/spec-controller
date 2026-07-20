@@ -1657,7 +1657,11 @@ Then(
 );
 
 /**
- * @SCN-LDG-022 (3F-1846) — every evidence observation posts to exactly one ledger account.
+ * @SCN-LDG-022 (3F-1846) — every evidence observation posts to AT LEAST ONE ledger account, never
+ * to none (canon, double-entry-manifesto.md line 160). This corpus is SINGLE-DEMAND (no static
+ * guard demanded twice), so the never-zero invariant lands at exactly one — the teeth below against
+ * an erroneous double-post IN THIS CORPUS. The multi-demand instance (a static guard posting to
+ * every demander) is @SCN-LDG-024.
  *
  * @integration is the TEETH. The @unit arm proves `reconcile` populates the account's
  * `evidenceObservations`; only driving the FULL credit corpus through in one run shows the
@@ -1666,8 +1670,9 @@ Then(
  * a credit citing a pending quality-check CEASED TO EXIST. A misclassification should misfile an
  * entry, not vaporise it — posting is indifferent to what the entry reconciles to.
  *
- * The assertions are IDENTITY-scoped (each input observation object must be found in exactly one
- * account), not count-scoped: a count would pass under a double-post that cancelled a drop.
+ * The assertions are IDENTITY-scoped (each input observation object found in exactly one account
+ * over this single-demand corpus), not count-scoped: a count would pass under a double-post that
+ * cancelled a drop.
  */
 
 let ldgPostingLedger: Ledger;
