@@ -45,6 +45,20 @@ export interface RunContext {
   /** The target's source SHA, or null when unknown (non-git target). */
   sourceSha: string | null;
   /**
+   * The TOOL's own git SHA — which spec-controller produced this run (3F-1916),
+   * distinct from the target's `sourceSha`. Null when the tool is not a git checkout
+   * (an installed package). OPTIONAL on the ctx: fixtures that do not exercise
+   * tool-provenance omit it and the projection defaults it to null; the CLI always
+   * resolves it via `resolveToolIdentity`.
+   */
+  toolSha?: string | null;
+  /**
+   * The TOOL's package version — always resolvable (read from the tool's own
+   * package.json), so it attributes a run even when no git SHA is available. OPTIONAL
+   * on the ctx (defaults to "unknown" in the projection); the CLI always sets it.
+   */
+  toolVersion?: string;
+  /**
    * The run root the recorded input paths are made relative to — the exact
    * parallel of `countRuntimeEvidenceObservationKinds`'s root. Opt-in: when omitted, input paths are
    * recorded verbatim (existing ctx fixtures unchanged). The CLI sets it to the target
@@ -81,6 +95,10 @@ export interface ProvenanceFacts {
   inputs: ProvenanceInput[];
   runStartUtc: string;
   sourceSha: string | null;
+  /** The tool's own SHA — which spec-controller produced the run (3F-1916); null when not a git checkout. */
+  toolSha: string | null;
+  /** The tool's package version — always present. */
+  toolVersion: string;
 }
 
 /** Format an instant as second-precision UTC, e.g. `2026-06-27T08:17:53Z`. */
@@ -120,6 +138,10 @@ function presentInputs(inputs: RunInputs, root: string | undefined): RunInputs {
 export interface ProvenanceObject {
   target: string;
   sourceSha: string | null;
+  /** The tool's own SHA (3F-1916) — which spec-controller produced the run; null when not a git checkout. */
+  toolSha: string | null;
+  /** The tool's package version — always present. */
+  toolVersion: string;
   runTimestamp: string;
   inputs: RunInputs;
 }
@@ -134,6 +156,10 @@ export function provenanceObject(ctx: RunContext): ProvenanceObject {
   return {
     target: ctx.target,
     sourceSha: ctx.sourceSha,
+    // The tool identity (3F-1916), defaulted for ctx fixtures that omit it; the CLI
+    // always sets both via resolveToolIdentity.
+    toolSha: ctx.toolSha ?? null,
+    toolVersion: ctx.toolVersion ?? "unknown",
     runTimestamp: formatUtc(ctx.runStart),
     inputs: presentInputs(ctx.inputs, ctx.root),
   };
@@ -160,6 +186,8 @@ export function projectProvenanceObject(obj: ProvenanceObject): ProvenanceFacts 
     inputs,
     runStartUtc: obj.runTimestamp,
     sourceSha: obj.sourceSha,
+    toolSha: obj.toolSha,
+    toolVersion: obj.toolVersion,
   };
 }
 

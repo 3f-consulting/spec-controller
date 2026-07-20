@@ -10,7 +10,9 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { dirname } from "node:path";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 /**
  * Resolve the target's source SHA (project design §4). An explicit non-empty
@@ -36,6 +38,82 @@ export function resolveSourceSha(opts: { sourceSha?: string; targetDir?: string 
     return sha === "" ? null : sha;
   } catch {
     return null;
+  }
+}
+
+/** The tool's own identity — which spec-controller produced a run (3F-1916). */
+export interface ToolIdentity {
+  /** The tool's own git HEAD, or null when the tool is not a git checkout (an installed package). */
+  toolSha: string | null;
+  /** The tool's package version — always present (read from the tool's own package.json). */
+  toolVersion: string;
+}
+
+/**
+ * Resolve the TOOL's own identity (3F-1916) — which spec-controller produced this run,
+ * distinct from the TARGET's `sourceSha`. Two facts, one call, threaded to both the
+ * report provenance (RunContext) and the run.yaml manifest.
+ *
+ * **The correctness trap this exists to avoid:** at run time the process cwd is the
+ * TARGET repo (reconcile runs there), so a bare `git rev-parse HEAD` would re-record the
+ * TARGET's SHA — the exact bug this ticket fixes. So the SHA is read `git -C <the tool's
+ * OWN dir>`, derived from `import.meta.url`, never cwd.
+ *
+ * `toolSha` is `git -C <toolDir> rev-parse HEAD` (trimmed), or `null` on any throw — the
+ * tool installed as a package with no `.git`, git absent, or an empty answer — mirroring
+ * `resolveSourceSha`'s fail-soft. `toolVersion` is read from the tool's own
+ * `package.json` (walked up from `toolDir`), or `"unknown"` when none is found — so a run
+ * stays attributable by version even when no SHA can be read. `toolDir` /
+ * `packageJsonPath` are injectable for the `@unit` teeth (@SCN-RPT-026).
+ */
+export function resolveToolIdentity(opts: { toolDir?: string; packageJsonPath?: string } = {}): ToolIdentity {
+  const toolDir = opts.toolDir !== undefined && opts.toolDir.trim() !== ""
+    ? opts.toolDir
+    : dirname(fileURLToPath(import.meta.url));
+  return {
+    toolSha: resolveToolSha(toolDir),
+    toolVersion: resolveToolVersion(opts.packageJsonPath ?? findPackageJson(toolDir)),
+  };
+}
+
+/** The tool's own git HEAD, read `-C <toolDir>` (never cwd), null on any throw. */
+function resolveToolSha(toolDir: string): string | null {
+  try {
+    const out = execFileSync("git", ["-C", toolDir, "rev-parse", "HEAD"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    const sha = out.trim();
+    return sha === "" ? null : sha;
+  } catch {
+    return null;
+  }
+}
+
+/** Read the `version` from a package.json, or "unknown" when the path is null / unreadable / versionless. */
+function resolveToolVersion(packageJsonPath: string | null): string {
+  if (packageJsonPath === null) return "unknown";
+  try {
+    const pkg = JSON.parse(readFileSync(packageJsonPath, "utf8")) as { version?: unknown };
+    return typeof pkg.version === "string" && pkg.version !== "" ? pkg.version : "unknown";
+  } catch {
+    return "unknown";
+  }
+}
+
+/** Walk up from a dir to the nearest package.json, or null when the filesystem root is reached. */
+function findPackageJson(fromDir: string): string | null {
+  let dir = fromDir;
+  for (;;) {
+    const candidate = join(dir, "package.json");
+    try {
+      readFileSync(candidate, "utf8");
+      return candidate;
+    } catch {
+      const parent = dirname(dir);
+      if (parent === dir) return null;
+      dir = parent;
+    }
   }
 }
 

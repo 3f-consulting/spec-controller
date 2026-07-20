@@ -40,6 +40,8 @@ const ctx: RunContext = {
   },
   runStart: new Date("2026-06-27T08:17:53.000Z"),
   sourceSha: "905a987c0ffeeba110000000000000000deadbeef",
+  toolSha: "13ee47f271ace511efdb2511276284b4cb50c247",
+  toolVersion: "0.1.0",
 };
 
 describe("[SCN-RPT-002] the JSON report carries a provenance object", () => {
@@ -49,6 +51,10 @@ describe("[SCN-RPT-002] the JSON report carries a provenance object", () => {
     expect(parsed.runProvenance).toBeDefined();
     expect(parsed.runProvenance.target).toBe("an-adopters-repository");
     expect(parsed.runProvenance.sourceSha).toBe("905a987c0ffeeba110000000000000000deadbeef");
+    // The TOOL's identity, distinct from the target's sourceSha (3F-1916): which
+    // spec-controller produced this run.
+    expect(parsed.runProvenance.toolSha).toBe("13ee47f271ace511efdb2511276284b4cb50c247");
+    expect(parsed.runProvenance.toolVersion).toBe("0.1.0");
     // Second-precision UTC, the same projection the markdown header renders.
     expect(parsed.runProvenance.runTimestamp).toBe("2026-06-27T08:17:53Z");
     // The input paths/flags actually used, keyed by their canonical name.
@@ -77,6 +83,13 @@ describe("[SCN-RPT-002] the JSON report carries a provenance object", () => {
   it("preserves a null source SHA as JSON null (unknown, non-git target)", () => {
     const parsed = JSON.parse(renderJson(balance, { ...ctx, sourceSha: null }));
     expect(parsed.runProvenance.sourceSha).toBeNull();
+  });
+
+  it("preserves a null tool SHA as JSON null (the tool is not a git checkout)", () => {
+    const parsed = JSON.parse(renderJson(balance, { ...ctx, toolSha: null }));
+    expect(parsed.runProvenance.toolSha).toBeNull();
+    // The version is always present even when the SHA cannot be read.
+    expect(parsed.runProvenance.toolVersion).toBe("0.1.0");
   });
 });
 

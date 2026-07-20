@@ -29,7 +29,7 @@ import {
   hasPendingItems,
   hasBrokenEvidence,
 } from "@3f-consulting/spec-controller-core";
-import { resolveSourceSha, resolveTargetRoot } from "../run-management/resolveRunInputs.js";
+import { resolveSourceSha, resolveTargetRoot, resolveToolIdentity } from "../run-management/resolveRunInputs.js";
 import { cliRegistry, renderBalanceHelp } from "../cli-registry.js";
 import type { CliRegistry } from "../cli-registry.js";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
@@ -452,6 +452,11 @@ export function runBalance(argv: string[]): void {
     // --features, so a cross-repo reconcile records inputs relative (`features`) rather
     // than leaking the target's absolute path.
     root: resolveTargetRoot({ features: inputs.features }),
+    // The TOOL's own identity (@SCN-RPT-026, 3F-1916) — which spec-controller produced
+    // this run, distinct from the target's sourceSha. Read from the tool's OWN dir, never
+    // cwd (which is the target). One call, spread into the ctx; the same identity feeds
+    // the run.yaml manifest.
+    ...resolveToolIdentity(),
   };
 
   // Plan the outputs from the --format specs (no flag → md→stdout) and write them via

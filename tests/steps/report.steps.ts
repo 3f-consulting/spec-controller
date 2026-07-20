@@ -130,6 +130,11 @@ Given(
       inputs: { features: inputValue },
       runStart: new Date(iso),
       sourceSha,
+      // The TOOL's identity (3F-1916) — fixed fixture values; the real resolver is
+      // proven @unit by @SCN-RPT-026. Here the integration proves the ctx→renderer→disk
+      // thread carries them across the surfaces.
+      toolSha: "13ee47f271ace511efdb2511276284b4cb50c247",
+      toolVersion: "0.1.0",
     };
     // Inject the runs/ root as a temp dir, so the artifact is persisted without
     // writing into the repo's real runs/ tree.
@@ -250,7 +255,7 @@ When("the run writes its JSON artifact", function () {
 
 // @SCN-RPT-002
 Then(
-  "the persisted spec-reconciliation.json parses to an object whose runProvenance outcomes the target, source SHA, UTC timestamp, and input, with the evidenceReconciliation body intact",
+  "the persisted spec-reconciliation.json parses to an object whose runProvenance outcomes the target, source SHA, tool SHA, tool version, UTC timestamp, and input, with the evidenceReconciliation body intact",
   function () {
     // The persisted JSON must parse to a whole-document report whose provenance section is
     // now `runProvenance`. Each assertion has teeth: drop the provenance projection
@@ -259,6 +264,8 @@ Then(
       runProvenance?: {
         target?: string;
         sourceSha?: string | null;
+        toolSha?: string | null;
+        toolVersion?: string;
         runTimestamp?: string;
         inputs?: Record<string, string>;
       };
@@ -278,6 +285,17 @@ Then(
       parsed.runProvenance.sourceSha,
       ctx.sourceSha,
       `expected runProvenance.sourceSha "${ctx.sourceSha}"; got "${parsed.runProvenance.sourceSha}"`
+    );
+    // The TOOL's identity, distinct from the target's sourceSha (3F-1916).
+    assert.equal(
+      parsed.runProvenance.toolSha,
+      ctx.toolSha,
+      `expected runProvenance.toolSha "${ctx.toolSha}"; got "${parsed.runProvenance.toolSha}"`
+    );
+    assert.equal(
+      parsed.runProvenance.toolVersion,
+      ctx.toolVersion,
+      `expected runProvenance.toolVersion "${ctx.toolVersion}"; got "${parsed.runProvenance.toolVersion}"`
     );
     assert.match(
       parsed.runProvenance.runTimestamp ?? "",

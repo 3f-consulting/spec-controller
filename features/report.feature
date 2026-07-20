@@ -49,7 +49,8 @@ Feature: The report renders the ledger as sectioned facts
 
     The machine-readable surface (@SCN-RPT-002). The JSON report grows a
     top-level `provenance` object carrying the same non-derivable run facts as the
-    markdown header — target, source SHA, the UTC run timestamp, and the input
+    markdown header — target, source SHA, the TOOL's own SHA and version (which
+    spec-controller produced the run — 3F-1916), the UTC run timestamp, and the input
     paths/flags actually used — while the reconciliation body (scenarios, warnings)
     is unchanged: the serialised shape becomes { provenance, scenarios, warnings }.
     Provenance is not derivable from the Ledger, so it is persisted on the
@@ -61,10 +62,10 @@ Feature: The report renders the ledger as sectioned facts
     surface.
 
     @unit @integration @SCN-RPT-002
-    Scenario: the JSON report carries a provenance object stating target, source SHA, UTC timestamp, and inputs, with the reconciliation body intact
+    Scenario: the JSON report carries a provenance object stating target, source SHA, tool SHA, tool version, UTC timestamp, and inputs, with the reconciliation body intact
       Given a reconciliation run targeting "an-adopters-repository" with the input "--features ../an-adopters-repository/features" at the UTC instant "2026-06-27T08:17:53.000Z" and source SHA "905a987c0ffeeba110000000000000000deadbeef"
       When the run writes its JSON artifact
-      Then the persisted spec-reconciliation.json parses to an object whose runProvenance outcomes the target, source SHA, UTC timestamp, and input, with the evidenceReconciliation body intact
+      Then the persisted spec-reconciliation.json parses to an object whose runProvenance outcomes the target, source SHA, tool SHA, tool version, UTC timestamp, and input, with the evidenceReconciliation body intact
 
   Rule: an explicit source SHA wins, and a non-git target resolves to unknown
 
