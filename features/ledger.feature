@@ -500,6 +500,23 @@ Feature: Ledger over declared-vs-observed evidence
       Then both demanding scenarios' lint obligations reconcile satisfied
       And the one static-guard credit is findable on each demanding account, one object on both
 
+  # THE DEMANDED-ONLY CORPUS (@SCN-LDG-025, 3F-1851) — isolating the demanded-guard posting rule so
+  # it ALONE determines the verdict. Every other lint fixture mixes a demanded guard with another
+  # credit shape (broken / uncited / undemanded) that independently mints the suspense row, so the
+  # demanded-guard path never decides the outcome on its own — the rule was unfalsifiable (a rejected
+  # post-to-suspense treatment went 501/501 green). A corpus whose ONLY lint credit is one satisfied
+  # demanded guard removes every other cause: balanced, no suspense row, summary.outOfBalance 0
+  # AGREEING with the verdict. The rejected treatment would mint a spurious empty out-of-balance
+  # suspense row — summary.outOfBalance disagreeing with isBalanced, the 3F-1703 fault.
+  Rule: a corpus whose only lint credits are demanded guards reconciles balanced — the demanded-guard path alone determines the verdict
+
+    @unit @integration @SCN-LDG-025
+    Scenario: a demanded-guards-only corpus reconciles balanced with no suspense row, so summary.outOfBalance agrees with the balanced verdict
+      Given a corpus whose only lint credit is a demanded static guard, wired and green in CI
+      When the demanded-only corpus is reconciled
+      Then the demanding scenario reconciles satisfied and the run is balanced
+      And there is no suspense row, and summary.outOfBalance is 0 — agreeing with the balanced verdict
+
   # THE DEBIT HALF of the same posting (@SCN-LDG-023). Where the credit side at least existed
   # unnamed (`byScn`, reconcile.ts), there is NO debit-side structure at all: `Scenario.
   # evidenceObligations` is walked one scenario at a time in the `for (const d of scenarios)` loop

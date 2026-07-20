@@ -15,6 +15,8 @@
 
 import { describe, it, expect } from "vitest";
 import { reconcile, hasBrokenEvidence, isBalanced } from "./reconcile.js";
+import { assembleReport } from "../assemble/report.js";
+import type { RunContext } from "../provenance/provenance.js";
 import type {
   Scenario,
   EvidenceObligation,
@@ -1355,6 +1357,46 @@ describe("[SCN-LDG-024] reconcile — a static guard demanded by two scenarios p
     expect(a2?.qualityCheckReconciliations).toEqual([{ qualityCheck: "lint", staticGuard: "lint:double-demand", outcome: "satisfied" }]);
     // A DEMANDED guard is never suspense — no undemanded static guard here.
     expect(accountFor(ledger, "(no scenario)")).toBeUndefined();
+  });
+});
+
+/**
+ * @SCN-LDG-025 (3F-1851) — a demanded-guards-only corpus reconciles balanced; the demanded-guard
+ * posting rule ALONE determines the verdict.
+ *
+ * The coverage hole: every other lint fixture mixes a demanded guard with another credit shape
+ * (broken / uncited / undemanded) that independently mints the suspense row, so the demanded-guard
+ * path never determines the outcome on its own — the posting rule was unfalsifiable. A corpus whose
+ * ONLY lint credit is one satisfied demanded guard removes every other cause: balanced, no suspense
+ * row, summary.outOfBalance 0 AGREEING with the balanced verdict. The rejected post-to-suspense
+ * treatment would mint a spurious empty out-of-balance suspense row — summary.outOfBalance
+ * disagreeing with isBalanced, the 3F-1703 fault — which THIS corpus finally makes red.
+ */
+describe("[SCN-LDG-025] reconcile — a demanded-guards-only corpus reconciles balanced, no suspense row", () => {
+  const accountFor = (ledger: Ledger, scnId: string): ScenarioReconciliation | undefined =>
+    ledger.scenarioReconciliations.find((r) => r.scnId === scnId);
+  const ctx: RunContext = { target: "demanded-only", inputs: {}, runStart: new Date("2026-07-20T00:00:00.000Z"), sourceSha: null };
+
+  it("a satisfied demanded guard as the only credit → balanced, no suspense, summary.outOfBalance 0", () => {
+    const demanded: Scenario[] = [
+      { scnId: "SCN-DEM-001", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:demanded-only" }] },
+    ];
+    const credit: EvidenceObservation = {
+      qualityCheck: "lint", staticGuard: "lint:demanded-only", exists: true, enforcedOverRealSource: true,
+    };
+    const ledger = reconcile(demanded, [credit]);
+
+    // The demanding account reconciles satisfied and balanced.
+    expect(accountFor(ledger, "SCN-DEM-001")?.qualityCheckReconciliations).toEqual([
+      { qualityCheck: "lint", staticGuard: "lint:demanded-only", outcome: "satisfied" },
+    ]);
+    expect(accountFor(ledger, "SCN-DEM-001")?.verdict).toBe("balanced");
+    // NO suspense row — the only lint credit is the demanded one.
+    expect(accountFor(ledger, "(no scenario)")).toBeUndefined();
+    // The run is balanced, and the summary AGREES: outOfBalance 0 (the 3F-1703 identity — under
+    // the rejected post-to-suspense this becomes 1 while isBalanced stays true, and it reds).
+    expect(isBalanced(ledger)).toBe(true);
+    expect(assembleReport(ledger, ctx).summary.scenarioReconciliations.outOfBalance).toBe(0);
   });
 });
 
