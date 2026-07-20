@@ -8,7 +8,7 @@
  *
  * Teeth are proven two ways: over PLANTED violating sources (each arm reds — an
  * impure-layer import, a node IO import, a `process.` reference), so a no-op checker
- * fails the planted cases; then GREEN over the REAL `src/reconciliation-engine/` tree —
+ * fails the planted cases; then GREEN over the REAL `packages/core/src` tree —
  * the dogfood assertion that the seam holds today. Removing either detection branch in
  * enginePurity.ts reds the corresponding planted case (local-mutation teeth).
  *
@@ -71,14 +71,14 @@ describe("[SCN-EPG-001] the reconciliation engine imports nothing impure and ref
     // naming process.cwd() (portablePath.ts does exactly this) must not false-positive.
     const clean: EngineFile[] = [
       {
-        path: "src/reconciliation-engine/lib/portablePath.ts",
+        path: "packages/core/src/lib/portablePath.ts",
         source: `/* No IO: the caller provides the run root (the IO — process.cwd() — stays at\n * the caller). */\nimport { x } from "../model.js";\nimport { featureCodeOf } from "./featureCode.js";\nexport const y = 1;`,
       },
     ];
     expect(checkEnginePurity(clean)).toEqual([]);
   });
 
-  it("passes clean over the REAL reconciliation-engine/ tree (the seam holds today)", () => {
+  it("passes clean over the REAL packages/core/src tree (the seam holds today)", () => {
     // The dogfood green: the engine is pure; any future stray import or IO
     // reference in a production engine file reds this.
     const engineFiles = collectEngineFiles(ENGINE_ROOT);

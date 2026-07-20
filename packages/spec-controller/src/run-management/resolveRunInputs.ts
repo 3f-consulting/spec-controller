@@ -2,7 +2,7 @@
  * Resolve a run's git-derived inputs — the target's source SHA and repo root. The
  * IMPURE half of the old run/runContext.ts: both shell out to `git` over the
  * target tree, so they live in the app's run-management layer, apart from the pure
- * provenance projection (reconciliation-engine/provenance/provenance.ts) they feed. The
+ * provenance projection (packages/core/src/provenance/provenance.ts) they feed. The
  * CLI (cli-balance/cli.ts) calls these once to build the RunContext.
  *
  * Scenarios: @SCN-RPT-001 (the run-provenance slice); the --source-sha override;

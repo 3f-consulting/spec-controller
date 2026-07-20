@@ -5,7 +5,7 @@ Feature: The reconciliation engine is pure and self-contained
   self-contained" from a folder convention into a proof — the same discipline the barrel
   guard (SCN-API-001) applies to the exported surface one level up.
 
-  The pure core lives under src/reconciliation-engine/; the impure app layers
+  The pure core lives under packages/core/src; the impure app layers
   (ingest/, cli-balance/, run-management/) and the product quality checks (static-guards/)
   live outside it. Two properties make the core worth carving: it stays testable with data
   alone (no IO), and analyse/migrate (and any external consumer) can embed it without
@@ -22,7 +22,7 @@ Feature: The reconciliation engine is pure and self-contained
 
     @unit @SCN-EPG-001
     Scenario: the reconciliation engine imports nothing impure and references no IO
-      Given every production file under src/reconciliation-engine/ (excluding *.test.ts)
+      Given every production file under packages/core/src (excluding *.test.ts)
       When the engine-purity guard scans each file
       Then no file imports from ingest/, cli-balance/, run-management/, or static-guards/
       And no file imports node:fs / node:child_process / node:process, nor references the process global
