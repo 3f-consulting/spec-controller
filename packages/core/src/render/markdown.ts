@@ -585,7 +585,7 @@ const staticGuardsSection: SectionEmitter = (report) => {
  * Lint evidence obligations (@SCN-RPT-005; re-cut under Summary views with a
  * total line; labelled by the @lint TAG, not the kind) — lifts
  * every `kind === "static"` (`@lint`) evidence obligation out of the per-scenario trial
- * balance into its OWN `### Lint evidence obligations` table `| Scenario | Guard | Outcome |`,
+ * balance into its OWN `### Lint evidence obligations` table `| Scenario | Static guard | Outcome |`,
  * one row per evidenceObligation in document order, each `outcome` carrying its `ITEM_GLYPH` glyph (so a
  * 🍉 watermelon reads at a glance). The total line outcomes how many of them reconcile
  * balanced — read off the report's materialised `summary.lint` tally. The
@@ -613,7 +613,7 @@ const lintSection: SectionEmitter = (report) => {
     "",
     `${satisfied} of ${total} lint evidence obligations reconcile satisfied.`,
     "",
-    "| Scenario | Guard | Outcome |",
+    "| Scenario | Static guard | Outcome |",
     "| --- | --- | --- |",
     ...rows,
     "",

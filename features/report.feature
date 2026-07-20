@@ -133,7 +133,7 @@ Feature: The report renders the ledger as sectioned facts
     per-scenario ledger. This section lifts them out: under "## Summary views", a
     "### Lint evidence obligations" section opens with a total line ("N of M lint
     evidence obligations reconcile balanced.") then a table listing each kind === "static"
-    evidence obligation with its scenario, guard handle, and reconciliation outcome — so the lint
+    evidence obligation with its scenario, static guard handle, and reconciliation outcome — so the lint
     axis (incl. any 🍉 watermelon) reads on its own. The label is the tag word "lint" (the
     internal kind "static" is never rendered). Omitted entirely (total line and
     all) when no scenario declares a lint evidence obligation. A pure derive over
@@ -144,7 +144,7 @@ Feature: The report renders the ledger as sectioned facts
     Scenario: the markdown report lists the lint evidence obligations as their own section
       Given a reconciliation balance whose scenarios declare lint (@lint) evidence obligations spanning balanced and the watermelon, alongside runtime evidence obligations
       When the markdown report is rendered
-      Then it carries a "### Lint evidence obligations" section with a total line and a table listing each lint evidence obligation's scenario, guard handle, and reconciliation outcome — including the 🍉 watermelon — and excluding the runtime evidence obligations
+      Then it carries a "### Lint evidence obligations" section with a total line and a table listing each lint evidence obligation's scenario, static guard handle, and reconciliation outcome — including the 🍉 watermelon — and excluding the runtime evidence obligations
 
   Rule: the markdown report groups out-of-balance scenarios by feature
 

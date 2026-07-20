@@ -340,7 +340,7 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
  * Proves the staticGuardSection in isolation: renderMarkdown filters
  * balance.scenarios[].evidenceObligations[] on kind === "static", pairs each with its
  * enclosing scenario's scnId, and renders a "## Static-guard evidenceObligations" table
- * `| Scenario | Guard | Outcome |` — one row per static evidenceObligation in document
+ * `| Scenario | Static guard | Outcome |` — one row per static evidenceObligation in document
  * order, the outcome carrying its existing ITEM_GLYPH glyph (so the 🍉 watermelon
  * reads at a glance). Runtime evidenceObligations are excluded (the static slice on its
  * own). When no scenario declares a static guard, the section is OMITTED entirely
@@ -385,14 +385,14 @@ describe("[SCN-RPT-005] the markdown report lists the lint evidence obligations 
     ]
   );
 
-  it("renders a '### Lint evidence obligations' table with each static row's scenario, guard, and glyphed outcome — including the watermelon", () => {
+  it("renders a '### Lint evidence obligations' table with each static row's scenario, static guard, and glyphed outcome — including the watermelon", () => {
     const md = renderMarkdown(spanning, ctx);
 
     expect(md).toContain("### Lint evidence obligations");
     // The total line outcomes how many of the static evidenceObligations reconcile satisfied.
     expect(md).toContain("1 of 2 lint evidence obligations reconcile satisfied.");
     // The table header.
-    expect(md).toContain("| Scenario | Guard | Outcome |");
+    expect(md).toContain("| Scenario | Static guard | Outcome |");
     // The satisfied static guard, glyphed — the outcome shown as its canon description (3F-1626).
     expect(md).toContain("| SCN-A | guard-typecheck | ✓ Evidence Observation satisfies its Evidence Obligation |");
     // The watermelon static guard, glyphed — the 🍉 reads at a glance.
