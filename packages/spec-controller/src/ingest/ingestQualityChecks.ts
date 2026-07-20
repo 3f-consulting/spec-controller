@@ -84,7 +84,7 @@ const GUARD_SCRIPT_PREFIXES: readonly string[] = ["lint:", "guard:"];
  * simply absent). `packageJson` is the EXTERNALLY-SPECIFIED package.json the static
  * (guard) reader reads `exists` from (the --package-json seam, @SCN-LNT-005):
  * default the tool's own cwd `package.json`; set it to reconcile ANOTHER repo's
- * guards — required to render the historical watermelon correctly.
+ * static guards — required to render the historical watermelon correctly.
  */
 export interface ReconcileOptions {
   features?: string;
@@ -276,7 +276,7 @@ function parseRuntimeObservations(opts: ReconcileOptions, root: string | undefin
  * Reconcile declared-vs-observed evidence AND count the runtime evidence-observation census for a
  * target tree, from a SINGLE parse of the runtime observations (@SCN-RPT-017 / 3F-1452 FULL UNIFY).
  * The runtime observations are parsed ONCE (tag-derived) and the SAME set feeds both `reconcile`
- * (alongside the static-guard observations) and `countRuntimeEvidenceObservationKinds` — so the
+ * (alongside the static-static guard observations) and `countRuntimeEvidenceObservationKinds` — so the
  * census is a PROJECTION of the one ledger, never a second derivation that could drift from the
  * verdict (the drift bug this fixes). `runReconcile` / `readEvidenceObservations` are thin views.
  */
@@ -302,12 +302,12 @@ export function reconcileWithCensus(opts: ReconcileOptions): {
   const runtimeObservations = parseRuntimeObservations(opts, root);
 
   // The full observation stream `reconcile` consumes: the runtime observations PLUS the static
-  // (guard) observations. The census is the RUNTIME axis, so only `runtimeObservations` is projected.
+  // (static guard) observations. The census is the RUNTIME axis, so only `runtimeObservations` is projected.
   const evidenceObservations: EvidenceObservation[] = [...runtimeObservations];
 
   // Static (guard) kind: observe each declared @lint=<guard> against the CI config
   // + package.json over the real tree. Read the CI + package.json ONCE — both
-  // the declared-guard evidence observation AND the reverse CI-guard derivation (below) draw on them.
+  // the declared-static guard evidence observation AND the reverse CI-guard derivation (below) draw on them.
   const demandedGuards = [
     ...new Set(
       scenarios.flatMap((d) =>
@@ -317,9 +317,9 @@ export function reconcileWithCensus(opts: ReconcileOptions): {
       )
     ),
   ];
-  // The --package-json seam (@SCN-LNT-005): read the guard's `exists`
+  // The --package-json seam (@SCN-LNT-005): read the static guard's `exists`
   // from the EXTERNALLY-SPECIFIED package.json when given, else the tool's own
-  // cwd. Required to reconcile ANOTHER repo's guards — and to render the
+  // cwd. Required to reconcile ANOTHER repo's static guards — and to render the
   // historical watermelon (exists:true in the target's package.json, unwired in
   // its CI → watermelon, not missing).
   const ciPath = opts.ci ?? ".github/workflows/ci.yml";
@@ -328,13 +328,13 @@ export function reconcileWithCensus(opts: ReconcileOptions): {
     evidenceObservations.push(...checkStaticEvidenceObligations(demandedGuards, ciSource, packageJson));
   }
 
-  // The RUNNING-guard observer: every running CI guard is a
+  // The RUNNING-guard observer: every running CI static guard is a
   // GuardEvidenceObservation in the stream — the static analogue of the runner emitting
   // every test result — so the one reconcile engine sees the COMPLETE static stream.
-  // Combined with the demanded observations WITHOUT double-observing: a running guard the
+  // Combined with the demanded observations WITHOUT double-observing: a running static guard the
   // demanded set already covers carries its authoritative exists/enforcedOverRealSource
   // detail from `checkStaticEvidenceObligations` (the watermelon input), so only the UNDEMANDED
-  // running guards are added here. They cite no scenario — the reconciler folds them into the suspense row.
+  // running static guards are added here. They cite no scenario — the reconciler folds them into the suspense row.
   const demandedGuardSet = new Set(demandedGuards);
   evidenceObservations.push(
     ...runningStaticGuards(ciSource, packageJson, GUARD_SCRIPT_PREFIXES).filter(
@@ -342,8 +342,8 @@ export function reconcileWithCensus(opts: ReconcileOptions): {
     )
   );
 
-  // The stream is now COMPLETE: every running CI guard is a GuardEvidenceObservation
-  // — the demanded ones match their @lint obligation, the undemanded ones (a guard no @lint
+  // The stream is now COMPLETE: every running CI static guard is a GuardEvidenceObservation
+  // — the demanded ones match their @lint obligation, the undemanded ones (a static guard no @lint
   // declares) cite no scenario, so `reconcile` folds them into the SUSPENSE row itself. No
   // derive-and-diff, no `unattributedStaticGuards` param.
   // The declared corpus is BOTH halves: the @SCN-tagged scenarios AND the untagged ones
@@ -388,12 +388,12 @@ export function readEvidenceObservations(opts: ReconcileOptions): RuntimeEvidenc
 
 /**
  * Read the static-guard kind-counts alongside the balance (@SCN-USG-001) —
- * the static-axis sibling of `readEvidenceObservations`. Builds the SAME guard observations
+ * the static-axis sibling of `readEvidenceObservations`. Builds the SAME static guard observations
  * `runReconcile` pushes into `reconcile` — every demanded `@lint=<guard>` observed by
  * `checkStaticEvidenceObligations` PLUS every undemanded running CI guard (`runningStaticGuards`) — and
  * COUNTS them by kind (`countStaticEvidenceObservationKinds`), mirroring `readEvidenceObservations` →
- * `countRuntimeEvidenceObservationKinds`. Reconciling a guard to its scenario (or the suspense
- * row) is `reconcile`'s job (a guard that runs in CI with NO `@lint` folds to the suspense row);
+ * `countRuntimeEvidenceObservationKinds`. Reconciling a static guard to its scenario (or the suspense
+ * row) is `reconcile`'s job (a static guard that runs in CI with NO `@lint` folds to the suspense row);
  * the census only counts. Threaded to the
  * renderers via `writeOutputs` like ctx/evidenceObligations/evidenceObservations.
  */

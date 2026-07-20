@@ -55,7 +55,7 @@ import { featureCodeOf } from "../lib/featureCode.js";
 const ITEM_GLYPH: Record<Outcome, string> = {
   satisfied: "✓",
   "failing": "✗",
-  // The watermelon: green on the surface (a guard exists), red within (not wired
+  // The watermelon: green on the surface (a static guard exists), red within (not wired
   // into CI over the real source).
   "watermelon": "🍉",
   "missing": "∅",
@@ -113,7 +113,7 @@ function renderItem(item: ScenarioReconciliation["reconcilingItems"][number]): s
   const subject = item.qualityCheck;
   // A CREDIT-SIDE item surfaces its WHERE-TO-FIX in the reconciliation cell (ruling
   // Q5): a lint credit (the unattributed static-guard folded onto the suspense row, ruling
-  // Q4) shows its guard handle; a runtime credit (phantom `cites-unknown-scenario` or
+  // Q4) shows its static guard handle; a runtime credit (phantom `cites-unknown-scenario` or
   // suspense `cites-no-scenario`) shows its evidence observation locator. A DEBIT-side evidence obligation
   // (satisfied / missing / failing / watermelon) carries neither and renders bare, as before.
   const isCredit =
@@ -556,7 +556,7 @@ const testVolumeSection: SectionEmitter = (report) => {
 };
 
 /**
- * Static guards (@SCN-USG-001) — the STATIC-guard evidence observation side under
+ * Static guards (@SCN-USG-001) — the STATIC-static guard evidence observation side under
  * Summary views, the mirror of `### Test volume` on the runtime axis. Renders the counts line
  * (`N guard(s) run, K unattributed static-guard(s)`) alone — a pure counts summary, symmetric with
  * `### Test volume` (2.4). The demanded count is implicit (`running − unattributed`), so it
@@ -723,8 +723,8 @@ function columnHeader(col: EvidenceColumn): string {
  * failing-ness lives in the Verdict + Reconciling-items columns), so `∅` is
  * unambiguously missing (zero evidenceObservations). The lint cell reads the
  * scenario's static evidenceObligation outcomes (lint is not a counted evidence observation): the count of
- * guards PRESENT — `balanced` or the watermelon (the script exists; its inadequacy is
- * quality, in Reconciling-items 🍉). No `(N)` for lint (guards are observed only for
+ * static guards PRESENT — `balanced` or the watermelon (the script exists; its inadequacy is
+ * quality, in Reconciling-items 🍉). No `(N)` for lint (static guards are observed only for
  * declared `@lint`). The count exposes backing, not quality — never rank by it.
  */
 function evidenceCell(

@@ -6,7 +6,7 @@
  * item), present+pass → satisfied; present+fail → failing; absent →
  * missing. The one reconcile function branches on the `qualityCheck === "lint"`
  * watermelon discriminator (replacing the retired `kind === "static"` split): a `lint`
- * evidence obligation reconciles against a static-guard evidence observation (exists+wired → satisfied;
+ * evidence obligation reconciles against a static-static guard evidence observation (exists+wired → satisfied;
  * exists+unwired → watermelon; absent → missing); a runtime evidence obligation
  * reconciles against a test result matched by (scnId, quality-check).
  *
@@ -47,11 +47,11 @@ function reconcileEvidenceObligation(
   evidenceObservations: EvidenceObservation[]
 ): QualityCheckReconciliation {
   if (req.qualityCheck === "lint") {
-    // The lint (static-guard) evidence obligation — matched by guard handle among the guard
-    // evidence observations. Three mappings on the guard evidence observation:
+    // The lint (static-guard) evidence obligation — matched by static guard handle among the static guard
+    // evidence observations. Three mappings on the static guard evidence observation:
     //   - wired into CI over the real source → satisfied.
     //   - exists (a package.json script) but NOT wired → THE WATERMELON:
-    //     green on the surface, red within — a guard that guards nothing.
+    //     green on the surface, red within — a static guard that guards nothing.
     //   - absent (no package.json script) → missing: a required
     //     ledger entry never recorded, GENUINELY DIFFERENT from the watermelon.
     const guard = req.staticGuard!; // present by construction for a lint evidence obligation.
@@ -70,7 +70,7 @@ function reconcileEvidenceObligation(
   }
 
   // A runtime evidence obligation — matched by (scnId, quality-check) among the runtime
-  // evidence observations (a guard evidence observation carries qualityCheck "lint" and no scnId, so it
+  // evidence observations (a static guard evidence observation carries qualityCheck "lint" and no scnId, so it
   // never matches here). present+pass → satisfied; present+fail → failing;
   // absent → missing (a required ledger entry never recorded).
   //
@@ -219,17 +219,17 @@ export function reconcile(
   // credits by the scnId they cite; `evidenceObligationPairs` is the set of DEMANDED
   // `(scnId, qualityCheck)` evidence obligations. The spine is GENERAL — it indexes ALL credits so
   // LDG-007/008/009 build the suspense / undemanded / both-missing rows on it — even
-  // though THIS sub-issue emits only the phantom case. Guard evidence observations carry no scnId
+  // though THIS sub-issue emits only the phantom case. static guard evidence observations carry no scnId
   // (qualityCheck "lint"), so only runtime evidence observations are indexed.
   const scenarioIds = new Set(scenarios.map((d) => d.scnId));
   // The DEMANDED pairs — the model's rule, built ONCE and shared with the census (3F-1858).
   // Pending obligations are excluded: a pending obligation demands nothing.
   const evidenceObligationPairs = evidenceObligationPairsOf(scenarios);
-  // The DEMANDED guard handles — every `@lint=<guard>` obligation across the corpus. A
-  // `lint` evidence observation whose guard is NOT in this set is an UNDEMANDED guard: it
+  // The DEMANDED static guard handles — every `@lint=<guard>` obligation across the corpus. A
+  // `lint` evidence observation whose guard is NOT in this set is an UNDEMANDED static guard: it
   // cites no scenario, so it posts to the SUSPENSE row. This replaces the
   // removed `unattributedStaticGuards` derive-and-diff param — the stream is now complete
-  // (the running-guard observer emits every running CI guard), so the reconciler recovers
+  // (the running-guard observer emits every running CI static guard), so the reconciler recovers
   // the undemanded remainder itself, exactly as it does for an uncited runtime credit.
   const demandedGuards = new Set<string>();
   for (const d of scenarios) {
@@ -314,13 +314,13 @@ export function reconcile(
     const rows = [...reconciledEvidenceObligations, ...undemandedItems];
     const qualityCheckReconciliations: QualityCheckReconciliation[] =
       rows.length === 0 && pendingItems.length === 0 ? [{ outcome: "both-missing" }] : rows;
-    // THE POSTED GUARD CREDITS (@SCN-LDG-022) — a guard credit carries no @SCN, so `byScn` (the
-    // citation index) cannot hold it: its link to an account is the GUARD HANDLE. This scenario's
-    // `@lint` obligations name the handles it demands, so the guard credits answering them post
+    // THE POSTED static guard CREDITS (@SCN-LDG-022) — a static guard credit carries no @SCN, so `byScn` (the
+    // citation index) cannot hold it: its link to an account is the STATIC GUARD HANDLE. This scenario's
+    // `@lint` obligations name the handles it demands, so the static guard credits answering them post
     // HERE — MIRRORING `reconcileEvidenceObligation`, which follows the SAME link (by handle) to
     // put each lint outcome on this very row. The credit sits on the account its outcome already
-    // lands on. The complement — a guard NO obligation demands — belongs to no account and posts
-    // to SUSPENSE (`undemandedGuards`, below). Together: every guard credit, exactly one account.
+    // lands on. The complement — a static guard NO obligation demands — belongs to no account and posts
+    // to SUSPENSE (`undemandedGuards`, below). Together: every static guard credit, exactly one account.
     const demandedGuardCredits: GuardEvidenceObservation[] = [];
     for (const o of d.evidenceObligations) {
       // Every `@lint` obligation, INCLUDING a pending one: posting is not classifying, so a credit
@@ -342,7 +342,7 @@ export function reconcile(
       // PENDING quality-check, which reconciles `undemanded` (3F-1858 — it used to reconcile to
       // NO ROW AT ALL, the false-green this posting made visible without fixing). It posts and is
       // findable WHATEVER it reconciles to; posting is not classifying, and a misclassification
-      // must misfile an entry, never vaporise it. Plus the guard credits this account DEMANDS,
+      // must misfile an entry, never vaporise it. Plus the static guard credits this account DEMANDS,
       // linked by handle (above).
       evidenceObservations: [...(byScn.get(d.scnId) ?? []), ...demandedGuardCredits],
       // THE POSTED DEBITS (@SCN-LDG-023) — every obligation THIS scenario DECLARES, in document
@@ -404,8 +404,8 @@ export function reconcile(
   // (a suspense account holds postings that match no
   // real account). TWO credit sources cite nothing: an uncited runtime evidence observation (scnId
   // null — the parsers emit these), and an UNDEMANDED static-guard (a `lint` evidence
-  // observation whose guard no @lint obligation declares — the running-guard observer now
-  // emits every running CI guard into the stream). ALL of them aggregate into ONE
+  // observation whose static guard no @lint obligation declares — the running-guard observer now
+  // emits every running CI static guard into the stream). ALL of them aggregate into ONE
   // suspense Scenario Reconciliation (sentinel scnId `(no scenario)`), each Quality Check
   // Reconciliation carrying `cites-no-scenario` (uncited runtime credits keep the
   // evidence observation locator, ruling Q5), verdict ALWAYS out-of-balance. Grouped AFTER the
@@ -460,7 +460,7 @@ export function reconcile(
       verdict: "out-of-balance",
       // The credits citing NO scenario post here (@SCN-LDG-022) — the uncited, the broken (it
       // named no test, so it cites nothing whatever scnId it structurally carries), and the
-      // undemanded guards. Together with `byScn` above this exhausts the credit stream.
+      // undemanded static guards. Together with `byScn` above this exhausts the credit stream.
       evidenceObservations: [...brokenEvidence, ...uncited, ...undemandedGuards],
       // Suspense is MINTED BY A CREDIT too — it declares nothing, so it demands nothing
       // (@SCN-LDG-023).

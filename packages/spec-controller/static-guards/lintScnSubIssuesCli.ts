@@ -1,5 +1,5 @@
 /**
- * CLI entry point for the scenario ⟷ sub-issue match guard — ported HERMETICALLY
+ * CLI entry point for the scenario ⟷ sub-issue match static guard — ported HERMETICALLY
  * into spec-controller (from an earlier internal tool, itself ported from an adopter's repository 3F-834):
  * verifies the binding from the diff + the PR ticket handle alone, NO Linear call.
  *

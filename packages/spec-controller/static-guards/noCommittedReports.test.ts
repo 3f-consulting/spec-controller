@@ -1,5 +1,5 @@
 /**
- * Unit tests for the no-committed-reports guard logic (the @unit arm of
+ * Unit tests for the no-committed-reports static guard logic (the @unit arm of
  * @SCN-NCR-001). The tracked-file LIST is injected — no git shell — so the rule
  * is proven in isolation: a report path under runs/ reds (and is named); a clean
  * list passes.

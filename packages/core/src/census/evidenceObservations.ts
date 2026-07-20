@@ -86,7 +86,7 @@ export const RUNTIME_QUALITY_CHECKS: readonly RuntimeQualityCheck[] = ["unit", "
  * which is invariant under a misclassification between its own terms and can only catch a credit
  * that VANISHED.
  *
- * Guard (`lint`) credits are skipped: this is the runtime axis. Runtime quality-checks no
+ * Static guard (`lint`) credits are skipped: this is the runtime axis. Runtime quality-checks no
  * observation carries stay zero and surface as facts in the tally.
  */
 export function countRuntimeEvidenceObservationKinds(
@@ -132,10 +132,10 @@ export function countRuntimeEvidenceObservationKinds(
   for (const row of ledger.scenarioReconciliations) {
     for (const obs of row.evidenceObservations) {
       // THE RUNTIME SCOPING, preserved exactly. The census is the RUNTIME axis:
-      // `rawByRuntimeQualityCheck` has no lint key and ingest never even passed guard observations
+      // `rawByRuntimeQualityCheck` has no lint key and ingest never even passed static guard observations
       // to it. It matters MORE under the fold than it did under the walk: @SCN-LDG-022 posts the
-      // SAME guard object to EVERY account demanding it, so a naive walk of the rows would count
-      // one guard's single run once per demanding scenario — double-counting an axis the census
+      // SAME static guard object to EVERY account demanding it, so a naive walk of the rows would count
+      // one static guard's single run once per demanding scenario — double-counting an axis the census
       // must not see at all.
       if (obs.qualityCheck === "lint") continue;
       rawByRuntimeQualityCheck[obs.qualityCheck]++;

@@ -36,7 +36,7 @@ import type { EvidenceObligations } from "../census/evidenceObligations.js";
 //   SCN-CHK-001: @unit, one passing unit credit → balanced, attributed 1
 //   SCN-CHK-002: @integration, no credit → integration missing (the coded out-of-balance feature)
 //   1 unit credit citing SCN-PHX-001 (undeclared) → a real phantom ROW, phantom 1
-//   1 uncited unit credit (src/b.test.ts) + the undemanded lint:bar guard → the suspense row
+//   1 uncited unit credit (src/b.test.ts) + the undemanded lint:bar static guard → the suspense row
 const scenarios: Scenario[] = [
   { scnId: "SCN-CHK-001", evidenceObligations: [{ qualityCheck: "unit" }] },
   { scnId: "SCN-CHK-002", evidenceObligations: [{ qualityCheck: "integration" }] },
@@ -98,7 +98,7 @@ describe("[SCN-RMD-007] the markdown regenerates from a saved spec-reconciliatio
     // The static-guard counts line (a materialised summary total) survives too.
     expect(regenerated).toContain("2 guard(s) run, 1 unattributed static-guard(s).");
     // The SUSPENSE row survives the round-trip — its S bullet, its ledger cell
-    // (with the re-homed guard + the uncited-credit locator), and its cites-no-scenario items.
+    // (with the re-homed static guard + the uncited-credit locator), and its cites-no-scenario items.
     expect(regenerated).toContain('1 suspense-scenario(s): credits citing no scenario, aggregated into "(no scenario)".');
     expect(regenerated).toContain("lint ❓ Evidence Observation cites no Scenario (lint:bar)");
     expect(regenerated).toContain("unit ❓ Evidence Observation cites no Scenario (src/b.test.ts)");

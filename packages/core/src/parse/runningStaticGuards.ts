@@ -1,9 +1,9 @@
 /**
  * The running-guard observer — emit a `GuardEvidenceObservation` for
  * EVERY running CI guard, not just the demanded ones. This is the static analogue of the runner
- * emitting every test result: CI publishes no guard manifest, so the running set is DERIVED — a
+ * emitting every test result: CI publishes no static guard manifest, so the running set is DERIVED — a
  * `package.json` `lint:*` script that a CI `run:` step actually invokes (@SCN-USG-001).
- * It completes the static stream so the one reconcile engine sees every running guard (a demanded
+ * It completes the static stream so the one reconcile engine sees every running static guard (a demanded
  * one matches its `@lint` obligation; an undemanded one folds to the suspense row) — no
  * derive-and-diff patch.
  *
@@ -12,12 +12,12 @@
  * watermelon input). Both share the watermelon-critical CI-parse primitive (`ciRunCommands` /
  * `commandInvokesScript`) from `ingest/ciCommands`.
  *
- * A running guard is `exists: true` (a `package.json` script by construction — the
+ * A running static guard is `exists: true` (a `package.json` script by construction — the
  * `Object.keys(scripts)` source) and `enforcedOverRealSource: true` (a CI `run:` step invokes it
- * by construction — the `commandInvokesScript` filter). The demanded guards' watermelon detail
- * (exists / enforcedOverRealSource for a guard that does NOT run) is the OTHER observer's job.
+ * by construction — the `commandInvokesScript` filter). The demanded static guards' watermelon detail
+ * (exists / enforcedOverRealSource for a static guard that does NOT run) is the OTHER observer's job.
  *
- * A script counts as a guard when its name matches any configured `guardPrefixes` entry —
+ * A script counts as a static guard when its name matches any configured `guardPrefixes` entry —
  * the guard-prefix set is DECLARED at the CLI edge (`ingest/ingestQualityChecks.ts`, default
  * `["lint:", "guard:"]`) and INJECTED here, so the core makes no convention assumption
  * (@SCN-USG-004). `install`/`corepack`/`checkout` aren't scripts and never match; `test`/`cucumber`

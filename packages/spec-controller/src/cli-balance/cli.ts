@@ -423,7 +423,7 @@ export function runBalance(argv: string[]): void {
   const evidenceObligations = readEvidenceObligations(args["features"]);
 
   // Read the static-guard kind-counts alongside the balance (@SCN-USG-001) —
-  // the guard observations COUNTED by kind (a guard that runs in CI with no @lint is an
+  // the static guard observations COUNTED by kind (a guard that runs in CI with no @lint is an
   // unattributed static-guard). A 6th sibling, threaded to the renderers via writeOutputs like
   // ctx/evidenceObligations/evidenceObservations.
   const guards = readStaticEvidenceObservationCounts(inputs);

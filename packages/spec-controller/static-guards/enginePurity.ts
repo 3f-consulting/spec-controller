@@ -1,5 +1,5 @@
 /**
- * The engine-purity guard (@SCN-EPG-001) — makes "the reconciliation engine is pure
+ * The engine-purity static guard (@SCN-EPG-001) — makes "the reconciliation engine is pure
  * and self-contained" executable, the same discipline as the @SCN-API-001 barrel
  * guard one level up.
  *
@@ -26,7 +26,7 @@ export interface PurityViolation {
   /** The offending file, as given by the caller (repo-relative in the guard test). */
   path: string;
   kind: "impure-import" | "io-import" | "io-global";
-  /** The specifier or token that tripped the guard. */
+  /** The specifier or token that tripped the static guard. */
   detail: string;
 }
 
@@ -56,7 +56,7 @@ const PROCESS_GLOBAL = /\bprocess\s*\./;
 /**
  * Strip `//` line comments and block comments so a doc-comment that merely NAMES an IO
  * token (e.g. portablePath.ts's "the IO — `process.cwd()` — stays at the caller") is not
- * a false positive. Over-stripping the odd string literal is harmless here — the guard
+ * a false positive. Over-stripping the odd string literal is harmless here — the static guard
  * only cares about real imports and real `process.` references, never string contents.
  */
 function stripComments(source: string): string {

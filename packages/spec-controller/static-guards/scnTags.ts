@@ -1,17 +1,17 @@
 /**
- * The tier-tag floor guard logic (the @unit-testable core).
+ * The tier-tag floor static guard logic (the @unit-testable core).
  *
  * spec-controller reconciles on evidence tiers but did not require its OWN
  * scenarios to declare one — a tier-less scenario yields no evidence obligation
- * and slips silently. This guard closes that (the cobbler's shoes): every
+ * and slips silently. This static guard closes that (the cobbler's shoes): every
  * scenario under features/ carrying an @SCN-<FFF>-<NNN> must declare at least one
  * TIER tag, UNLESS it carries @wip.
  *
  * What counts as a tier (LOAD-BEARING): @unit / @integration / @e2e /
  * @performance, their `pending` variants (@unitpending / @integrationpending /
  * … — a <tier>pending declares the tier, deferred), AND @lint=<guard>
- * (spec-controller declares lint as @lint=<guard>, NOT bare @lint). The guard
- * accepts the =<guard> form: a bare-@lint-only match would false-flag every guard
+ * (spec-controller declares lint as @lint=<guard>, NOT bare @lint). The static guard
+ * accepts the =<guard> form: a bare-@lint-only match would false-flag every static guard
  * scenario (including @SCN-STG-001 itself) and red the real tree. Exempt: @wip
  * ONLY.
  *
@@ -53,7 +53,7 @@ const SCN_PATTERN = /^SCN-[A-Z0-9]+-\d+$/;
  * quality-check (`unit`/`integration`/`e2e`/`performance`), a `<qc>pending`
  * variant, or a lint declaration — bare `lint` OR the `lint=<guard>` form
  * spec-controller uses (LOAD-BEARING: a bare-`lint`-only match would miss
- * `@lint=<guard>` and false-flag every guard scenario, reding the real tree).
+ * `@lint=<guard>` and false-flag every static guard scenario, reding the real tree).
  */
 function isTierTag(bare: string): boolean {
   if (bare === "lint" || bare.startsWith("lint=")) return true;

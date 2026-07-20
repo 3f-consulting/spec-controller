@@ -375,7 +375,7 @@ describe("[SCN-RMD-003] observed evidence serialises as evidenceObservations", (
  *
  * The static-guard census is `summary.staticGuards` COUNTS alone (2.4) — the standalone
  * member-list section (`guards` → `staticGuards`, `{ciGuards[], demanded[]}`) COLLAPSED, symmetric
- * with the runtime side. The guard member detail now lives in the rows (demanded → each scenario's
+ * with the runtime side. The static guard member detail now lives in the rows (demanded → each scenario's
  * `@lint` sub-row; undemanded → the suspense row's `cites-no-scenario` credit items), so there is
  * no double-report and no census section on the JSON surface.
  */
@@ -410,7 +410,7 @@ describe("[SCN-RMD-004] the static-guard census is summary counts, no standalone
  * markdown's arithmetic so slice 2 can swap to reads with zero byte change: test-volume attributed
  * is the attributed-to-declared count (phantomEvidenceObservation carried separately); the lint tally counts static
  * evidenceObligations balanced / total (markdown's countStaticEvidenceObligations). testVolume / staticGuards are
- * present only when the evidenceObservations / guard sibling is threaded; the lint tally is always present.
+ * present only when the evidenceObservations / static guard sibling is threaded; the lint tally is always present.
  */
 describe("[SCN-RMD-005] the summary materialises the three report totals", () => {
   // A evidenceObservations fixture with teeth: 6 raw = 4 attributed-to-declared + 1 phantom + 1 unattributed evidence observation, so
@@ -646,7 +646,7 @@ describe("[SCN-RMD-006] the report model carries the feature titles", () => {
  * Slice 1 of the reconciliation-model restructure: the (kind, level) two-axis evidence coordinate
  * collapses to ONE flat quality-check. Each JSON evidence sub-row
  * (evidenceReconciliation[].qualityCheckReconciliations[] / reconcilingItems[]) is keyed by a single qualityCheck
- * field — no kind, no level; a lint sub-row carries qualityCheck "lint" alongside its guard — and
+ * field — no kind, no level; a lint sub-row carries qualityCheck "lint" alongside its static guard — and
  * the summary's missing split serialises under missingByQualityCheck. Built through the
  * REAL declared → reconcile → assemble pipeline (parseScenarios, not a hand-seeded balance) and read
  * off the glue-free JSON, so the assertion pins the emitted shape, not an internal type.
@@ -654,7 +654,7 @@ describe("[SCN-RMD-006] the report model carries the feature titles", () => {
 describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single quality-check coordinate", () => {
   // A scenario declaring BOTH a runtime (@unit) and a lint (@lint=lint:x) evidence obligation, parsed through
   // the real declared reader; reconciled against NO evidence observations → the runtime evidence obligation is
-  // missing and the lint evidence obligation is missing (guard retained). The
+  // missing and the lint evidence obligation is missing (static guard retained). The
   // glue-free JSON round-trip makes the assertions read the EMITTED shape, type-agnostic.
   const feature = [
     "@RMD",

@@ -2,7 +2,7 @@
  * Unit tests for the running-guard observer (src/ingest/ciGuards.ts) —
  * `runningStaticGuards` emits a GuardEvidenceObservation per running CI guard. The demanded-obligation
  * observer (`checkStaticEvidenceObligations`) is pinned in src/ingest/guard.test.ts; the shared CI-parse primitive both
- * use lives in src/ingest/ciCommands.ts. reconcile's folding of an undemanded running guard onto
+ * use lives in src/ingest/ciCommands.ts. reconcile's folding of an undemanded running static guard onto
  * the suspense row is pinned in src/reconcile/reconcile.test.ts.
  *
  * Parent: @SCN-USG-001 (the unattributed static-guard).
@@ -36,7 +36,7 @@ describe("[SCN-USG-001] runningStaticGuards — the running-guard observer (emit
     "      - run: pnpm cucumber",
   ].join("\n");
 
-  // A running CI guard is emitted as a GuardEvidenceObservation —
+  // A running CI static guard is emitted as a GuardEvidenceObservation —
   // exists + enforcedOverRealSource are true by construction (a package.json script a CI
   // run: step invokes). The static analogue of the runner emitting a passing test result.
   it("emits a GuardEvidenceObservation for each lint:* script a CI run step invokes (test / cucumber / install excluded)", () => {
@@ -72,7 +72,7 @@ describe("[SCN-USG-003] non-lint CI steps are not observed as static guards", ()
       "      - run: pnpm test",
       "      - run: pnpm cucumber",
     ].join("\n");
-    // Only lint:foo is a running guard; test + cucumber (the runtime axis's observed
+    // Only lint:foo is a running static guard; test + cucumber (the runtime axis's observed
     // evidence) and install (not a script) never enter the observed set.
     expect(runningStaticGuards(ci2, pkg2, DEFAULT_PREFIXES)).toEqual([
       { qualityCheck: "lint", staticGuard: "lint:foo", exists: true, enforcedOverRealSource: true },

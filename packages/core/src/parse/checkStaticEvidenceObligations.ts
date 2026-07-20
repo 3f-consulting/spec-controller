@@ -1,8 +1,8 @@
 /**
  * The `ingest/guard` reader — the DEMANDED-guard observer (the watermelon input).
- * Per declared `@lint=<guard>` handle it reports `{ guard, exists, enforcedOverRealSource }`,
- * where `enforcedOverRealSource` means the guard's command appears as a CI `run:` step over the
- * real tree — so a demanded guard that exists but is not wired reconciles as the WATERMELON.
+ * Per declared `@lint=<guard>` handle it reports `{ staticGuard, exists, enforcedOverRealSource }`,
+ * where `enforcedOverRealSource` means the static guard's command appears as a CI `run:` step over the
+ * real tree — so a demanded static guard that exists but is not wired reconciles as the WATERMELON.
  *
  * One of the two static-guard observers: this one reads the DECLARED demand side; the
  * running-guard observer (`runningStaticGuards`, `ingest/ciGuards`) reads every running CI guard. Both
@@ -16,8 +16,8 @@ import type { GuardEvidenceObservation } from "../model.js";
 import { ciRunCommands, commandInvokesScript, type PackageJsonScripts } from "./checkScriptsRunInCI.js";
 
 /**
- * Read each named guard's evidenceObservation from the CI config source + package.json:
- *   - `exists` — the guard is a `package.json` `scripts` entry.
+ * Read each named static guard's evidenceObservation from the CI config source + package.json:
+ *   - `exists` — the static guard is a `package.json` `scripts` entry.
  *   - `enforcedOverRealSource` — its command is a CI `run:` step over the real tree.
  */
 export function checkStaticEvidenceObligations(

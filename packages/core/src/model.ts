@@ -32,28 +32,28 @@ export type RuntimeQualityCheck = Exclude<QualityCheck, "lint">;
  * One evidence obligation a scenario declares — a SINGLE flat shape keyed on
  * `qualityCheck` (no `kind`/`level` discriminated union):
  *   - `@unit`/`@integration`/… → `{ qualityCheck: <level> }`.
- *   - `@lint=<guard>`           → `{ qualityCheck: 'lint', guard }`.
- * `guard` is present IFF `qualityCheck === 'lint'` (the guard handle a `@lint=<guard>`
- * tag names); a runtime evidence obligation carries no guard.
+ *   - `@lint=<guard>`           → `{ qualityCheck: 'lint', staticGuard }`.
+ * `staticGuard` is present IFF `qualityCheck === 'lint'` (the static guard handle a `@lint=<guard>`
+ * tag names); a runtime evidence obligation carries no `staticGuard`.
  *
  * `qualityCheck` is OPTIONAL (@SCN-PND-022) — `undefined` = SCENARIO-SCOPE: the
  * synthesised whole-scenario deferral a recognised deferral tag raises on a scenario
  * declaring ZERO obligations (a bare `@wip` — no evidence tag). It is always
- * `{ pending: true }` with no `qualityCheck` (nor `guard`): it owes no specific check,
+ * `{ pending: true }` with no `qualityCheck` (nor `staticGuard`): it owes no specific check,
  * so the reconcile partition routes it to ONE `qualityCheck`-less Pending Item rather
  * than a both-missing row. Every ordinary (tag-derived) obligation carries a
  * `qualityCheck`; only the synthesised scenario-scope pending omits it.
  */
 export interface EvidenceObligation {
   qualityCheck?: QualityCheck;
-  /** The guard handle — present IFF `qualityCheck === 'lint'`. */
+  /** The `staticGuard` handle — present IFF `qualityCheck === 'lint'`. */
   staticGuard?: string;
   /**
    * The obligation is owed but deliberately DEFERRED to a later slice — a
    * `<quality-check>pending` tag (evidence-manifesto §11B). ABSENT (undefined) on a
    * normal obligation; `true` on a pending one. A pending obligation is one-sided:
-   * `@lintpending` derives `{ qualityCheck: 'lint', pending: true }` with NO guard payload
-   * (the guard doesn't exist yet). PARSE only — what a pending obligation DOES on the ledger
+   * `@lintpending` derives `{ qualityCheck: 'lint', pending: true }` with NO `staticGuard` payload
+   * (the static guard doesn't exist yet). PARSE only — what a pending obligation DOES on the ledger
    * (the one-sided Pending Item) is a later slice.
    */
   pending?: boolean;
@@ -172,14 +172,14 @@ export interface RuntimeEvidenceObservation {
  * *config* of the real tree.
  */
 export interface GuardEvidenceObservation {
-  /** A guard evidence observation is the `lint` quality-check (the watermelon discriminator). */
+  /** A static guard evidence observation is the `lint` quality-check (the watermelon discriminator). */
   qualityCheck: "lint";
-  /** The guard handle — the npm-script name a `@lint=<guard>` tag names. */
+  /** The `staticGuard` handle — the npm-script name a `@lint=<guard>` tag names. */
   staticGuard: string;
-  /** The guard's script/CLI is present (a `package.json` `scripts` entry). */
+  /** The static guard's script/CLI is present (a `package.json` `scripts` entry). */
   exists: boolean;
   /**
-   * The guard's command appears as a CI `run:` step over the real tree — the v1
+   * The static guard's command appears as a CI `run:` step over the real tree — the v1
    * (COARSE) "enforced over real source" signal (v1 verifies the command IS a CI
    * step, NOT that it reads real source vs fixtures — the residual gap a later
    * evidenceObservation-based check closes).
@@ -210,7 +210,7 @@ export type Outcome =
   | "watermelon" // a static guard that exists but is NOT wired into CI over the
   // real source — green on the surface, red within; a "broken"-class
   // outcome unique to the static kind.
-  | "missing" // required, but no matching result/guard observed
+  | "missing" // required, but no matching result/static guard observed
   // CREDIT-SIDE (the bidirectional reconciler): an evidence observation
   // (credit) reconciling against no evidence obligation. The credit-side union grows
   // final-named across the LDG-006/007/008 sub-issues; LDG-006 lands the first:
@@ -352,7 +352,7 @@ export interface QualityCheckReconciliation {
    * every other outcome (debit and credit alike).
    */
   qualityCheck?: QualityCheck;
-  /** The guard handle — present IFF `qualityCheck === 'lint'`. */
+  /** The `staticGuard` handle — present IFF `qualityCheck === 'lint'`. */
   staticGuard?: string;
   outcome: Outcome;
   /**

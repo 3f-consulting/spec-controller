@@ -106,7 +106,7 @@ describe("[SCN-SSM-004] the cite check reads the checked-out test files, not the
   });
 
   it("skips a code embedded in a quoted string literal — the guard's own fixtures are test data, not cites", () => {
-    // A guard fixture holding diff text as data. Scanning file state rather than a
+    // A static guard fixture holding diff text as data. Scanning file state rather than a
     // diff widens what the scanner reads, so this exclusion has to keep holding.
     const source = [
       "const diffFixture = [",

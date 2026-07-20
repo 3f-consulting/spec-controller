@@ -223,7 +223,7 @@ describe("[SCN-LDG-017] a collection-failed vitest file emits a broken observati
     // when one is given.
     const out = parseVitestEvidenceObservations(collectionFailed, "unit", "/r");
     expect(out).toHaveLength(1);
-    // The reader emits runtime observations only (a guard observation is the static reader's), so
+    // The reader emits runtime observations only (a static guard observation is the static reader's), so
     // narrow off the `lint` discriminator to read the credit-side locator.
     const observation = out[0]!;
     expect(observation.qualityCheck).not.toBe("lint");

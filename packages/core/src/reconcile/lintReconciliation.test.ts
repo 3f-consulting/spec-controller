@@ -5,9 +5,9 @@
  * @SCN-LNT-001 id matching features/lint-reconciliation.feature, so a grep of the
  * id returns both halves of the pair.
  *
- * It reconciles spec-controller's OWN lint:feature-codes guard against its REAL,
+ * It reconciles spec-controller's OWN lint:feature-codes static guard against its REAL,
  * checked-out .github/workflows/ci.yml + package.json (NOT a fixture — acceptance
- * condition 1): the guard's command is genuinely a CI `run:` step over the real
+ * condition 1): the static guard's command is genuinely a CI `run:` step over the real
  * tree, so the static evidenceObligation reconciles BALANCED. Asserts REAL reconcile
  * output, not a hand-seeded fixture (evidence-manifesto §11A).
  *
@@ -22,13 +22,13 @@ import { checkStaticEvidenceObligations } from "../parse/checkStaticEvidenceObli
 import type { PackageJsonScripts } from "../parse/checkScriptsRunInCI.js";
 import type { Scenario, EvidenceObservation } from "../model.js";
 
-/** spec-controller's own, real wired guard — the dogfood subject (package.json script). */
+/** spec-controller's own, real wired static guard — the dogfood subject (package.json script). */
 const REAL_GUARD = "lint:feature-codes";
 
 describe("[SCN-LNT-001] a @lint scenario whose guard is wired into CI over the real source is reported as balanced", () => {
   it("reconciles the static evidenceObligation BALANCED when the guard's command is a CI run step over spec-controller's real tree", () => {
     // Read spec-controller's OWN, REAL CI config + package.json (cwd is the repo root
-    // under `pnpm test`) — the genuinely-wired guard, not a planted fixture.
+    // under `pnpm test`) — the genuinely-wired static guard, not a planted fixture.
     const root = process.cwd();
     const ciSource = readFileSync(join(root, ".github/workflows/ci.yml"), "utf8");
     const packageJson = JSON.parse(
@@ -52,17 +52,17 @@ describe("[SCN-LNT-001] a @lint scenario whose guard is wired into CI over the r
 });
 
 /**
- * The PLANTED watermelon — a guard that EXISTS (a package.json script) and is
+ * The PLANTED watermelon — a static guard that EXISTS (a package.json script) and is
  * fixture-green, but whose command is NOT a CI run: step over the real source, so
  * it guards nothing. This is the classic 609-violations-while-green failure class
  * made detectable (the slice's headline).
  *
  * Acceptance bar (operator, non-negotiable): the detector must CATCH the watermelon
  * over a PLANTED FIXTURE — not merely assert the outcome. So this drives the real
- * `checkStaticEvidenceObligations` DETECTOR over a planted fixture `ci.yml` (where the guard's command
- * is ABSENT) + a planted package.json (where the guard EXISTS), and asserts the
+ * `checkStaticEvidenceObligations` DETECTOR over a planted fixture `ci.yml` (where the static guard's command
+ * is ABSENT) + a planted package.json (where the static guard EXISTS), and asserts the
  * reconciler reports `watermelon`. The fixture is
- * TEST-ONLY — `lint:planted-watermelon` is never a real in-repo guard; spec-controller
+ * TEST-ONLY — `lint:planted-watermelon` is never a real in-repo static guard; spec-controller
  * cannot keep a permanent real watermelon in-repo (LNT-001 holds the real-source
  * SATISFIED attestation; this holds the planted-watermelon CAUGHT attestation).
  */
@@ -70,9 +70,9 @@ const PLANTED_GUARD = "lint:planted-watermelon";
 
 describe("[SCN-LNT-002] a @lint scenario whose guard is fixture-green but not wired into CI is reported as the watermelon", () => {
   it("reconciles the static evidenceObligation as watermelon when the detector reads a planted exists-but-unwired guard", () => {
-    // A planted CI config that wires OTHER steps but NOT the guard's command — the
-    // coarse watermelon (guard absent from CI entirely). A reputable structural
-    // parse (not a line-scan) reads it; the guard's command is genuinely absent.
+    // A planted CI config that wires OTHER steps but NOT the static guard's command — the
+    // coarse watermelon (static guard absent from CI entirely). A reputable structural
+    // parse (not a line-scan) reads it; the static guard's command is genuinely absent.
     const plantedCi = [
       "name: CI",
       "on: [push, pull_request]",
@@ -86,7 +86,7 @@ describe("[SCN-LNT-002] a @lint scenario whose guard is fixture-green but not wi
       "      - name: Test",
       "        run: pnpm test",
     ].join("\n");
-    // A planted package.json where the guard EXISTS as a script (fixture-green) —
+    // A planted package.json where the static guard EXISTS as a script (fixture-green) —
     // so `exists` is true but `enforcedOverRealSource` is false: the watermelon.
     const plantedPackageJson: PackageJsonScripts = {
       scripts: {
@@ -134,25 +134,25 @@ describe("[SCN-LNT-002] a @lint scenario whose guard is fixture-green but not wi
 });
 
 /**
- * The ABSENT guard — a @lint scenario names a guard that does not exist at all: no
+ * The ABSENT static guard — a @lint scenario names a static guard that does not exist at all: no
  * package.json script, no CLI, no CI run step. It is a required ledger entry that
  * was never recorded — missing — GENUINELY DIFFERENT from the
- * watermelon (a guard that EXISTS but is unenforced). Outcome parity with the runtime
+ * watermelon (a static guard that EXISTS but is unenforced). Outcome parity with the runtime
  * kind's missing path.
  *
  * This drives the real `checkStaticEvidenceObligations` DETECTOR over a planted fixture where the named
- * guard is absent from BOTH the package.json AND the CI config — so it reports
+ * static guard is absent from BOTH the package.json AND the CI config — so it reports
  * exists:false, enforcedOverRealSource:false — and asserts the reconciler reports
  * missing. The fixture is TEST-ONLY (`lint:absent-guard` is never a
- * real in-repo guard).
+ * real in-repo static guard).
  */
 const ABSENT_GUARD = "lint:absent-guard";
 
 describe("[SCN-LNT-003] a @lint scenario whose named guard does not exist is reported as missing", () => {
   it("reconciles the static evidenceObligation as missing when the detector reads a guard absent from both package.json and CI", () => {
-    // A planted CI config that wires OTHER steps but never the named guard, plus a
-    // planted package.json that defines OTHER scripts but not the named guard — so
-    // the guard is genuinely absent from BOTH inputs. The detector reports
+    // A planted CI config that wires OTHER steps but never the named static guard, plus a
+    // planted package.json that defines OTHER scripts but not the named static guard — so
+    // the static guard is genuinely absent from BOTH inputs. The detector reports
     // exists:false (distinct from the watermelon's exists:true).
     const plantedCi = [
       "name: CI",
@@ -178,7 +178,7 @@ describe("[SCN-LNT-003] a @lint scenario whose named guard does not exist is rep
       { scnId: "SCN-LNT-003", evidenceObligations: [{ qualityCheck: "lint", staticGuard: ABSENT_GUARD }] },
     ];
     // Drive the real DETECTOR over the planted fixture — assert it reads the absent
-    // guard (exists:false, NOT enforced), not a hand-seeded evidenceObservation.
+    // static guard (exists:false, NOT enforced), not a hand-seeded evidenceObservation.
     const evidenceObservations = checkStaticEvidenceObligations([ABSENT_GUARD], plantedCi, plantedPackageJson);
     expect(evidenceObservations).toEqual([
       {
@@ -193,7 +193,7 @@ describe("[SCN-LNT-003] a @lint scenario whose named guard does not exist is rep
 
     // Required-but-missing: out-of-balance, carrying exactly the missing
     // reconciling item (level-less static kind). Under the earlier coarse else
-    // (the absent guard folded into watermelon) the
+    // (the absent static guard folded into watermelon) the
     // item's outcome reads the WATERMELON instead, so this has teeth.
     expect(scenario?.verdict).toBe("out-of-balance");
     expect(scenario?.reconcilingItems).toEqual([
@@ -216,14 +216,14 @@ describe("[SCN-LNT-003] a @lint scenario whose named guard does not exist is rep
  * LDG-004 (the multi-LEVEL proof). A single declared scenario carries BOTH a
  * runtime evidenceObligation (@unit) AND a static evidenceObligation (@lint=<guard>); reconcile
  * reconciles each KIND independently, keyed by (kind, [level]). With the unit
- * result green but the guard not wired into CI, the runtime evidenceObligation balances
+ * result green but the static guard not wired into CI, the runtime evidenceObligation balances
  * (omitted from the reconciling items) while the static evidenceObligation is the
  * watermelon — so the scenario is out-of-balance carrying ONLY the static item.
  * This proves `kind` is a real second AXIS orthogonal to level, not a collapsed
  * single per-scenario verdict.
  *
  * The static arm drives the real `checkStaticEvidenceObligations` DETECTOR over a planted fixture
- * (guard exists but is unwired); the runtime arm is a green evidenceObservation. Asserts
+ * (static guard exists but is unwired); the runtime arm is a green evidenceObservation. Asserts
  * REAL reconcile output, not a hand-seeded fixture (evidence-manifesto §11A). The
  * reconciler already reconciles each evidenceObligation independently (the per-kind map
  * shipped with the runtime spine + the @lint kind), so this is green on first run
@@ -236,8 +236,8 @@ const UNWIRED_GUARD = "lint:unwired-guard";
 
 describe("[SCN-LNT-004] a scenario requiring both a @unit test and an unwired @lint guard reconciles each kind independently", () => {
   it("reconciles the runtime evidenceObligation balanced (omitted from the reconciling items) AND the static evidenceObligation as the watermelon, order-independent — not collapsed to one verdict", () => {
-    // A planted CI config that wires the test step but NOT the guard's command,
-    // plus a planted package.json where the guard EXISTS as a script — so the real
+    // A planted CI config that wires the test step but NOT the static guard's command,
+    // plus a planted package.json where the static guard EXISTS as a script — so the real
     // detector reports exists:true, enforcedOverRealSource:false (the watermelon).
     const plantedCi = [
       "name: CI",
@@ -268,7 +268,7 @@ describe("[SCN-LNT-004] a scenario requiring both a @unit test and an unwired @l
       },
     ];
     // Independent evidenceObservations of the two kinds: a GREEN runtime result + the
-    // planted-watermelon guard read through the real detector.
+    // planted-watermelon static guard read through the real detector.
     const evidenceObservations: EvidenceObservation[] = [
       { qualityCheck: "unit", scnId: "SCN-LNT-004", status: "passed" },
       ...checkStaticEvidenceObligations([UNWIRED_GUARD], plantedCi, plantedPackageJson),

@@ -5,7 +5,7 @@
  * src/ingest/ciCommands.ts.
  *
  * These pin the CORRECTNESS-critical parse: a mis-read could itself hide a
- * watermelon (read a wired guard as unwired, or the reverse). So the reader must
+ * watermelon (read a wired static guard as unwired, or the reverse). So the reader must
  * parse the CI YAML structurally (jobs → steps →
  * run), handling block-scalar `run:`, package-manager invocation forms, and
  * `if:`-gated / matrix steps without crashing — NOT line-scan.

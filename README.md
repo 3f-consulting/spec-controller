@@ -8,7 +8,7 @@ Give it your Gherkin scenarios plus the reports from the tools that ran (Vitest,
 
 ## Why
 
-Automated testing aspires to be the software equivalent of **double-entry accounting**: overhead in exchange for verifiable safety. Every scenario declares the evidence it requires (the **debit** — specification); every observed test or guard is attributed to a scenario (the **credit** — reality); and the report — the **Evidence Reconciliation** — shows whether the two records agree. Neither record is authoritative alone; a claim is trustworthy only where the two match.
+Automated testing aspires to be the software equivalent of **double-entry accounting**: overhead in exchange for verifiable safety. Every scenario declares the evidence it requires (the **debit** — specification); every observed test or static guard is attributed to a scenario (the **credit** — reality); and the report — the **Evidence Reconciliation** — shows whether the two records agree. Neither record is authoritative alone; a claim is trustworthy only where the two match.
 
 The failure mode it exists to prevent, from a real first experience of AI-assisted coding:
 

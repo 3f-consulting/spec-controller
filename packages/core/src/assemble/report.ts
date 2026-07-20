@@ -4,7 +4,7 @@
  * model in two renderings, not two dialects.
  *
  * `assembleReport` builds it from the existing reconcile pieces (the balance, the run
- * context, and the declared / observed / guard sibling reads). The JSON renderer collapses
+ * context, and the declared / observed / static guard sibling reads). The JSON renderer collapses
  * to a glue-free `JSON.stringify(assembleReport(...))`. The assembler is the ONLY place the
  * JSON-surface vocabulary lives — the manifesto-vocabulary key renames (the revert)
  * are MAPPED here so they never ripple into markdown.ts / evidenceObservations.ts internals, keeping the
@@ -101,9 +101,9 @@ export interface TestVolumeTotals {
 /**
  * The materialised static-guard totals (RMD-005) — the static-guard kind-counts the
  * markdown's `### Static guards` line derives, following the census shape exactly:
- * `runningGuardCount` (the volume of running guards) and `unattributedStaticGuardCount` (how many
+ * `runningGuardCount` (the volume of running static guards) and `unattributedStaticGuardCount` (how many
  * of them NO `@lint` declares). The demanded count is IMPLICIT (`running − unattributed`) and is
- * not carried (every demanded guard is already a reconciled `@lint` sub-row).
+ * not carried (every demanded static guard is already a reconciled `@lint` sub-row).
  */
 export interface StaticGuardTotals {
   runningGuardCount: number;

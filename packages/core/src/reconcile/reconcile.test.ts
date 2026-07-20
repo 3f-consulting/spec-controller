@@ -205,7 +205,7 @@ describe("[SCN-LDG-007] a credit citing no scenario becomes a suspense-scenario 
     const balance = reconcile(scenarios, evidenceObservations);
 
     const suspense = balance.scenarioReconciliations.filter((s) => s.kind === "suspense-scenario");
-    // ONE suspense row aggregates ALL uncited credits + suspense guards.
+    // ONE suspense row aggregates ALL uncited credits + suspense static guards.
     expect(suspense).toHaveLength(1);
     const row = suspense[0]!;
     expect(row.scnId).toBe("(no scenario)");
@@ -336,7 +336,7 @@ describe("[SCN-LDG-009] a declared scenario with zero rows on both sides is repo
   it("emits ONE degenerate both-missing reconciling item (blank on both sides), verdict out-of-balance, when a declared scenario reconciles to zero rows on BOTH sides", () => {
     // SCN-LDG-009 declares ZERO evidence obligations and is cited by NO evidence observation — it
     // reconciles to zero rows on BOTH sides (no evidence obligation, no credit). It posts one degenerate
-    // Quality Check Reconciliation, blank on both sides (no qualityCheck, no guard, no locator),
+    // Quality Check Reconciliation, blank on both sides (no qualityCheck, no `staticGuard`, no locator),
     // outcome both-missing, verdict out-of-balance. Detection keys on the reconciler emitting
     // NOTHING either way — NOT a hard evidenceObligations.length === 0 map (LDG-010's twin proves
     // a cited zero-evidence obligation scenario is undemanded, not both-missing).
@@ -353,7 +353,7 @@ describe("[SCN-LDG-009] a declared scenario with zero rows on both sides is repo
     expect(row?.kind).toBe("scenario");
     expect(row?.verdict).toBe("out-of-balance");
     // Blank on BOTH sides: the item carries the both-missing outcome and NOTHING else — no
-    // qualityCheck (neither a debit evidence obligation nor a credit evidence observation), no guard, no locator.
+    // qualityCheck (neither a debit evidence obligation nor a credit evidence observation), no `staticGuard`, no locator.
     expect(row?.qualityCheckReconciliations).toEqual([{ outcome: "both-missing" }]);
     expect(row?.reconcilingItems).toEqual([{ outcome: "both-missing" }]);
   });
@@ -1279,7 +1279,7 @@ describe("[SCN-LDG-022] reconcile — every evidence observation posts to exactl
   });
 
   it("posts a DEMANDED guard credit to the account that demands it", () => {
-    // A guard carries no @SCN, so `byScn` cannot hold it — its link to an account is the GUARD
+    // A static guard carries no @SCN, so `byScn` cannot hold it — its link to an account is the STATIC GUARD
     // HANDLE, exactly the link `reconcileEvidenceObligation` already follows to reconcile a lint
     // obligation onto this row. Posting it here MIRRORS the reconciler: the credit sits on the
     // account the outcome already lands on.
@@ -1291,7 +1291,7 @@ describe("[SCN-LDG-022] reconcile — every evidence observation posts to exactl
     };
     const ledger = reconcile(demanded, [credit]);
     expect(accountFor(ledger, "SCN-AAA-001")?.evidenceObservations).toEqual([credit]);
-    // A demanded guard is NOT suspense — suspense is for credits citing no scenario at all.
+    // A demanded static guard is NOT suspense — suspense is for credits citing no scenario at all.
     expect(accountFor(ledger, "(no scenario)")).toBeUndefined();
   });
 
@@ -1339,8 +1339,8 @@ describe("[SCN-LDG-023] reconcile — the evidence obligations a scenario declar
   });
 
   it("posts a declared lint obligation carrying its guard handle", () => {
-    // The other obligation shape: `lint` debits carry the `guard` handle that links them to a
-    // guard credit. The debit posts with its handle intact — the account records WHAT WAS
+    // The other obligation shape: `lint` debits carry the `staticGuard` handle that links them to a
+    // static guard credit. The debit posts with its handle intact — the account records WHAT WAS
     // DEMANDED, not merely that something was.
     const obligation: EvidenceObligation = { qualityCheck: "lint", staticGuard: "lint:x" };
     const declared: Scenario[] = [{ scnId: "SCN-AAA-001", evidenceObligations: [obligation] }];

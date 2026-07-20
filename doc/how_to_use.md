@@ -59,8 +59,8 @@ spec-controller balance --features ./features \
 | `--features <dir>` | Directory of Gherkin `.feature` files — the declared scenarios. |
 | `--vitest <report.json>` | A Vitest JSON report — runtime test evidence. |
 | `--cucumber <report.json>` | A Cucumber JSON report — runtime test evidence. |
-| `--ci <ci.yml>` | Your CI workflow — used to check whether `@lint` guards actually run over the real source. |
-| `--package-json <path>` | `package.json` — used to check a declared guard's script exists. |
+| `--ci <ci.yml>` | Your CI workflow — used to check whether `@lint` static guards actually run over the real source. |
+| `--package-json <path>` | `package.json` — used to check a declared static guard's script exists. |
 | `--target <name>` | A name recorded verbatim in the report's provenance (which project this run reconciled). |
 | `--source-sha <sha>` | Override the git commit SHA recorded in provenance (defaults to the resolved HEAD). |
 | `--format <fmt>[:<path>]` | Where to send output (`md` or `json`, optionally `:<path>` to write to a file). Repeatable. See below. |
@@ -138,7 +138,7 @@ The **Evidence Reconciliation** — the whole reconciliation — in two renderin
 
 Both carry a **provenance** header recording what was reconciled (target, source SHA, input paths), so a reconciliation is reproducible and attributable.
 
-The outcome you are watching for is the **watermelon**: a guard that is green but enforces nothing over the real source — the fabricated credit that makes a green CI lie.
+The outcome you are watching for is the **watermelon**: a static guard that is green but enforces nothing over the real source — the fabricated credit that makes a green CI lie.
 
 ---
 

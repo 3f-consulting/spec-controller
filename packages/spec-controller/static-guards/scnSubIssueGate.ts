@@ -1,9 +1,9 @@
 /**
- * The scenario ⟷ sub-issue match guard — ported HERMETICALLY into spec-controller
+ * The scenario ⟷ sub-issue match static guard — ported HERMETICALLY into spec-controller
  * (from an earlier internal tool's foundation, itself ported from an adopter's repository 3F-834). Parent 3F-1137;
  * this module lands with @SCN-SSM-001 (3F-1489).
  *
- * On each PR, the guard computes the behaviour-bearing @SCN-<FFF>-<NNN> codes the
+ * On each PR, the static guard computes the behaviour-bearing @SCN-<FFF>-<NNN> codes the
  * diff touches (added / updated / deleted Gherkin tag-line codes, plus the
  * unit-test-equivalent behaviour change — the 3F-805 surface) and verifies the
  * binding `scenario-binds-test-and-code` ENTIRELY INSIDE CI, with NO live Linear

@@ -1,10 +1,10 @@
 /**
  * Unit tests for the static-evidence-observation COUNTER
  * (src/staticEvidenceObservations.ts) — the static-axis analogue of
- * `countRuntimeEvidenceObservationKinds`. Proves the guard observations in the reconcile
- * stream count BY KIND (demanded / unattributed) over the RUNNING CI guard-set; the reader
+ * `countRuntimeEvidenceObservationKinds`. Proves the static guard observations in the reconcile
+ * stream count BY KIND (demanded / unattributed) over the RUNNING CI static-guard set; the reader
  * arms (checkStaticEvidenceObligations in src/ingest/guard.test.ts, runningStaticGuards in src/ingest/ciGuards.test.ts)
- * and reconcile folding an undemanded guard onto the suspense row (src/reconcile/reconcile.test.ts)
+ * and reconcile folding an undemanded static guard onto the suspense row (src/reconcile/reconcile.test.ts)
  * are pinned separately.
  *
  * Parent: (@SCN-USG-001 — the unattributed static-guard).
@@ -14,7 +14,7 @@ import { describe, it, expect } from "vitest";
 import { countStaticEvidenceObservationKinds } from "./staticEvidenceObservations.js";
 import type { GuardEvidenceObservation } from "../model.js";
 
-/** A running CI guard observation — exists as a script AND enforced over real source. */
+/** A running CI static guard observation — exists as a script AND enforced over real source. */
 const running = (guard: string): GuardEvidenceObservation => ({
   qualityCheck: "lint",
   staticGuard: guard,
@@ -35,8 +35,8 @@ describe("[SCN-USG-001] countStaticEvidenceObservationKinds — the unattributed
   });
 
   it("counts a demanded @lint handle that never runs in CI as neither running nor unattributed (the deferred inverse)", () => {
-    // A demanded guard whose script exists but is NOT enforced (a watermelon) does not RUN,
-    // so it is not a running guard — the forward detection keys on real CI steps.
+    // A demanded static guard whose script exists but is NOT enforced (a watermelon) does not RUN,
+    // so it is not a running static guard — the forward detection keys on real CI steps.
     const watermelon: GuardEvidenceObservation = {
       qualityCheck: "lint",
       staticGuard: "lint:planted-watermelon",

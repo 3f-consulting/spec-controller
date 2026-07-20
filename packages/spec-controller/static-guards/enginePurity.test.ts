@@ -1,5 +1,5 @@
 /**
- * Unit test for the engine-purity guard (@SCN-EPG-001).
+ * Unit test for the engine-purity static guard (@SCN-EPG-001).
  *
  * Bidirectional evidence (Evidence Manifesto §9 / the discipline): the
  * describe/it strings carry the @SCN-EPG-001 id matching features/engine-purity.feature,
@@ -12,7 +12,7 @@
  * the dogfood assertion that the seam holds today. Removing either detection branch in
  * enginePurity.ts reds the corresponding planted case (local-mutation teeth).
  *
- * Parent: @SCN-EPG-001 — the engine-purity guard slice.
+ * Parent: @SCN-EPG-001 — the engine-purity static guard slice.
  */
 
 import { describe, it, expect } from "vitest";

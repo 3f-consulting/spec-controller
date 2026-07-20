@@ -244,7 +244,7 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
     // (level-=-tag) and orders it FIRST (canonical order: lint, then the runtime
     // levels) regardless of declaration order.
     // Reconciler-built (§11A): the integration arm is declared BEFORE the lint arm, both missing
-    // (no runtime credit, no guard observation) — the split still orders lint first, canonically.
+    // (no runtime credit, no static guard observation) — the split still orders lint first, canonically.
     const lintAndRuntime: Ledger = reconcile(
       [
         {
@@ -1034,7 +1034,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     expect(md).toContain("| SCN-C | — | 1 | (1) |");
     // declared elsewhere, absent here → —.
     expect(md).toContain("| SCN-D | — | — | 1 |");
-    // lint declared but its guard missing → ∅.
+    // lint declared but its static guard missing → ∅.
     expect(md).toContain("| SCN-E | ∅ | — | — |");
   });
 

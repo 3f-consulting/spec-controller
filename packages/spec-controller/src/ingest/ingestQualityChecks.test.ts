@@ -7,8 +7,8 @@
  *
  * It drives the CLI read/reconcile core `runReconcile` over a PLANTED EXTERNAL repo
  * fixture (tests/fixtures/scn-lnt-005/): an external feature declaring `@lint=lint:vocab-check`,
- * an external package.json where that guard EXISTS, and an external ci.yml that does
- * NOT run it. The guard's `exists` MUST be read from the EXTERNAL package.json (via
+ * an external package.json where that static guard EXISTS, and an external ci.yml that does
+ * NOT run it. The static guard's `exists` MUST be read from the EXTERNAL package.json (via
  * --package-json), NOT the tool's own cwd package.json (which has no
  * `lint:vocab-check` script). So the scenario reconciles as the WATERMELON
  * (watermelon).
@@ -40,7 +40,7 @@ describe("[SCN-LNT-005] guard enforcement is read from an externally-specified p
 
     // The watermelon: out-of-balance, carrying exactly the present-but-not-enforced
     // -over-real-source static item for the external guard. This is only reachable
-    // when `exists` was read from the EXTERNAL package.json (the guard is absent
+    // when `exists` was read from the EXTERNAL package.json (the static guard is absent
     // from the tool's own, where it would be missing instead).
     expect(scenario?.verdict).toBe("out-of-balance");
     expect(scenario?.reconcilingItems).toEqual([

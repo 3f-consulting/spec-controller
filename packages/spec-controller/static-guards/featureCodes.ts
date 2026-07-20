@@ -10,7 +10,7 @@
  * slug.
  *
  * A product quality check, NOT part of the app — it lives in static-guards/ (a
- * sibling of src/), driven by the lint:feature-codes CI guard. The
+ * sibling of src/), driven by the lint:feature-codes CI static guard. The
  * feature-file discovery it reads (`discoverFeatures`) is the app's ingest reader;
  * the `scnId → feature-code` grammar helper is the engine's (featureCodeOf).
  *
