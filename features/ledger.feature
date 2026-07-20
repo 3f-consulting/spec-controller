@@ -485,6 +485,21 @@ Feature: Ledger over declared-vs-observed evidence
       And the credit citing a pending quality-check is posted and findable
       And the run's verdict and reconciling items are unchanged — posting classifies nothing
 
+  # THE MULTI-DEMAND INSTANCE (@SCN-LDG-024, 3F-1850) — where "exactly one" breaks and the
+  # never-zero invariant above lands at MORE than one. A static guard's run cites no scenario, so
+  # it is matched by handle and is evidence for EVERY demander: two scenarios demanding the same
+  # static guard both reconcile satisfied against the ONE run, which posts to each account BY
+  # REFERENCE (one object on both — never copied, so the 3F-1831 census fold cannot double-count).
+  # The case no corpus exercised until now (the coverage hole this closes).
+  Rule: a static guard demanded by two scenarios posts to each account
+
+    @unit @integration @SCN-LDG-024
+    Scenario: one static guard's run, demanded by two scenarios, reconciles satisfied on both and is findable on each
+      Given two scenarios that each demand the same static guard by @lint, wired and green in CI
+      When the shared-guard corpus is reconciled
+      Then both demanding scenarios' lint obligations reconcile satisfied
+      And the one static-guard credit is findable on each demanding account, one object on both
+
   # THE DEBIT HALF of the same posting (@SCN-LDG-023). Where the credit side at least existed
   # unnamed (`byScn`, reconcile.ts), there is NO debit-side structure at all: `Scenario.
   # evidenceObligations` is walked one scenario at a time in the `for (const d of scenarios)` loop

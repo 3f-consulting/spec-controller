@@ -1318,6 +1318,47 @@ describe("[SCN-LDG-022] reconcile — every evidence observation posts to at lea
 });
 
 /**
+ * @SCN-LDG-024 (3F-1850) — a static guard demanded by TWO scenarios posts to EACH.
+ *
+ * The multi-demand instance of the posting invariant LDG-022 states as the universal (at least
+ * one, never zero — canon, double-entry-manifesto.md line 160): a static guard's run cites no
+ * scenario, so it is matched by handle and is evidence for EVERY demander. One run, one object,
+ * posted BY REFERENCE onto each demanding account (never copied — the census walks the flat
+ * stream, so a copy would double-count). This is the case no corpus exercised, and where the
+ * "exactly one" over-generalisation breaks: here one observation posts to two accounts.
+ */
+describe("[SCN-LDG-024] reconcile — a static guard demanded by two scenarios posts to each account", () => {
+  const accountFor = (ledger: Ledger, scnId: string): ScenarioReconciliation | undefined =>
+    ledger.scenarioReconciliations.find((r) => r.scnId === scnId);
+
+  it("posts one static guard's run to BOTH demanding accounts, by reference, both satisfied", () => {
+    const demanders: Scenario[] = [
+      { scnId: "SCN-SHR-001", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:double-demand" }] },
+      { scnId: "SCN-SHR-002", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:double-demand" }] },
+    ];
+    const credit: EvidenceObservation = {
+      qualityCheck: "lint", staticGuard: "lint:double-demand", exists: true, enforcedOverRealSource: true,
+    };
+    const ledger = reconcile(demanders, [credit]);
+    const a1 = accountFor(ledger, "SCN-SHR-001");
+    const a2 = accountFor(ledger, "SCN-SHR-002");
+
+    // Posts to BOTH — one run is evidence for every demander (canon: posts to every account
+    // that demands it). This is where "exactly one" breaks and "at least one" holds.
+    expect(a1?.evidenceObservations).toEqual([credit]);
+    expect(a2?.evidenceObservations).toEqual([credit]);
+    // BY REFERENCE — the SAME object on each account, not a copy: safe under the 3F-1831 census
+    // fold, which counts the flat stream once.
+    expect(a1?.evidenceObservations[0]).toBe(a2?.evidenceObservations[0]);
+    // Both demanders reconcile satisfied (the static guard is wired + enforced).
+    expect(a1?.qualityCheckReconciliations).toEqual([{ qualityCheck: "lint", staticGuard: "lint:double-demand", outcome: "satisfied" }]);
+    expect(a2?.qualityCheckReconciliations).toEqual([{ qualityCheck: "lint", staticGuard: "lint:double-demand", outcome: "satisfied" }]);
+    // A DEMANDED guard is never suspense — no undemanded static guard here.
+    expect(accountFor(ledger, "(no scenario)")).toBeUndefined();
+  });
+});
+
+/**
  * @SCN-LDG-023 (3F-1847) — the evidence obligations a scenario declares post to its ledger account.
  *
  * The DEBIT half of @SCN-LDG-022's posting. The @unit arm: `reconcile` populates each account's

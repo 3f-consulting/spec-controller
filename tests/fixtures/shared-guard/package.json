@@ -1,0 +1,7 @@
+{
+  "scripts": {
+    "lint:double-demand": "echo double-demand-guard",
+    "test": "echo test",
+    "cucumber": "echo cucumber"
+  }
+}
