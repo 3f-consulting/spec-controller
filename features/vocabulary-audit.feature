@@ -30,12 +30,24 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
 
   Rule: a name whose word is outside the approved set flags; an all-approved name does not
 
+    `guard` is the discriminating case (canon L5 / L129). It is a DIFFERENT WORD — a check
+    protecting an invariant — so its qualified compounds keep it, while a bare `guard`
+    standing in for a static guard is the banned shortening. A qualifier need only
+    CO-OCCUR on the name or line (the `unattributed` precedent, not strict adjacency),
+    so anaphora — "the static guard ... the guard" — passes, and only a genuinely
+    standalone bare `guard` flags. Its action is `review`, never auto-`rename`: bare, it
+    may be the different word used alone rather than a shortening, so a human looks.
+    That is why it does not inherit obligation/observation's rename disposition.
+
     @unit @integration @SCN-VOC-001
     Scenario: the audit flags a non-conforming word across surfaces and passes an approved one
       Given a fixture corpus carrying a banned word in an identifier and an approved word in another
+      And the corpus carries a bare "guard" identifier and a qualified "static guard" identifier
       When the vocabulary audit runs over the corpus
       Then the manifest lists the banned name with its canonical replacement
       And the approved name is not flagged
+      And the bare "guard" is flagged for review, not rename
+      And the qualified "static guard" is not flagged
 
   Rule: the coverage matrix enumerates every surface, so a zero-flag surface still appears
 

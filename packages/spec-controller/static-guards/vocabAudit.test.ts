@@ -102,10 +102,65 @@ describe("[SCN-VOC-001] classifyWords — blessed canon verbs", () => {
     // piece of evidence") so the surface name `runningStaticGuards` no longer
     // flags. The bare noun `observation` is NOT blessed and still flags.
     expect(classifyWords(["observe"], "name")[0]!.flagged).toBe(false);
-    const surface = classifyWords(["observe", "running", "guards"], "name");
+    // Build the word list from the identifier itself, never a hand approximation: the
+    // real `runningStaticGuards` decomposes to ["running","static","guards"], and an
+    // earlier hand-written list omitted `static` — so it passed for the wrong reason
+    // (a 3F-1897-family lying fixture). It now passes because `static` co-occurs.
+    const surface = classifyWords(decomposeName("observeRunningStaticGuards"), "name");
     expect(surface.every((v) => !v.flagged)).toBe(true);
     expect(classifyWords(["observation"], "name")[0]!.flagged).toBe(true);
     expect(classifyWords(["observations"], "name")[0]!.flagged).toBe(true);
+  });
+});
+
+describe("[SCN-VOC-001] classifyWords — `guard`: the different word vs the banned shortening", () => {
+  // Canon rules BOTH halves, so the audit discriminates rather than blanket-banning:
+  // L5 — `guard` "is a different word" (a check protecting an invariant), so its
+  // qualified compounds keep it; L129 — bare `guard` is the banned shortening of
+  // `static guard`. The six qualifiers below are the ruled set (Steven, 2026-07-19),
+  // single-sourced with 3F-1930's prose skip-list.
+  const BLESSED_COMPOUNDS: [string, string[]][] = [
+    ["static guard", ["static", "guard"]],
+    ["both-missing guard", ["both", "missing", "guard"]],
+    ["exhaustiveness guard", ["exhaustiveness", "guard"]],
+    ["regression guard", ["regression", "guard"]],
+    ["existence guard", ["existence", "guard"]],
+    ["readability guard", ["readability", "guard"]],
+  ];
+
+  it.each(BLESSED_COMPOUNDS)("passes the different-word compound `%s`", (_label, words) => {
+    const guardVerdicts = classifyWords(words, "name").filter((v) => v.word.startsWith("guard"));
+    expect(guardVerdicts.length).toBeGreaterThan(0);
+    expect(guardVerdicts.every((v) => !v.flagged)).toBe(true);
+  });
+
+  it("flags a bare `guard` — and for REVIEW, not rename", () => {
+    // Bare, `guard` may be the different word standing alone rather than a shortening,
+    // so a human looks. It must NOT inherit obligation/observation's rename disposition.
+    const bare = classifyWords(["guard"], "name")[0]!;
+    expect(bare.flagged).toBe(true);
+    expect(bare.reason).toBe("bare-different-word");
+    expect(bare.reason).not.toBe("bare-shortening");
+  });
+
+  it("flags the plural `guards` too — the shortening is not escaped by inflection", () => {
+    const plural = classifyWords(["guards"], "name")[0]!;
+    expect(plural.flagged).toBe(true);
+    expect(plural.reason).toBe("bare-different-word");
+  });
+
+  it("passes anaphora by CO-OCCURRENCE, not strict adjacency", () => {
+    // "the static guard ... the guard" — the second, unqualified mention is the same
+    // referent. Adjacency would red it; co-occurrence (the `unattributed` precedent)
+    // passes it, so only a genuinely standalone bare `guard` flags.
+    const anaphora = classifyWords(["static", "guard", "the", "guard"], "prose");
+    expect(anaphora.filter((v) => v.word === "guard").every((v) => !v.flagged)).toBe(true);
+  });
+
+  it("does not change obligation/observation's rename disposition", () => {
+    // The new reason is `guard`-only; its siblings keep bare-shortening → rename.
+    expect(classifyWords(["obligation"], "name")[0]!.reason).toBe("bare-shortening");
+    expect(classifyWords(["observation"], "name")[0]!.reason).toBe("bare-shortening");
   });
 });
 

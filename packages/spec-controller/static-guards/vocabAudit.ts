@@ -33,7 +33,7 @@ export const DOMAIN_WORDS: ReadonlySet<string> = new Set([
   "scenario", "evidence", "attribution", "ledger", "kind", "sub",
   "balancing", "off", "balance", "summary", "balanced",
   "out", "reconciling", "reconciled", "reconciliation", "reconcile", "application",
-  "watermelon", "static", "guard", "verdict", "posting", "debit", "credit",
+  "watermelon", "static", "verdict", "posting", "debit", "credit",
   "journal", "demand", "provenance",
   // The outcome/verdict rationalisation (locked 2026-07-02): `state` → `outcome`.
   "outcome",
@@ -238,7 +238,27 @@ export const BANNED_WORDS: ReadonlySet<string> = new Set([
 /** Words approved only inside their full manifesto term; bare → flag. */
 export const FULL_TERM_ONLY: ReadonlySet<string> = new Set([
   "obligation", "observation", "unattributed", "ghost",
+  // `guard` is BOTH canon's different word (L5 — a check protecting an invariant)
+  // and its banned shortening (L129 — of `static guard`). So it is approved only
+  // when a ruled qualifier co-occurs; see GUARD_QUALIFIERS + fullTermSatisfied.
+  "guard",
 ]);
+
+/**
+ * The ruled qualifiers that make `guard` the DIFFERENT WORD rather than the banned
+ * shortening (Steven, 2026-07-19). Each entry is the set of words that must all
+ * co-occur — `both-missing` decomposes to two tokens, so it needs both.
+ *
+ * Single-sourced with 3F-1930's prose skip-list: change one, change the other.
+ */
+const GUARD_QUALIFIERS: readonly (readonly string[])[] = [
+  ["static"],
+  ["both", "missing"],
+  ["exhaustiveness"],
+  ["regression"],
+  ["existence"],
+  ["readability"],
+];
 
 /**
  * ECMAScript / TypeScript reserved words + language-level globals. These are
@@ -322,7 +342,14 @@ export const SURFACES: readonly Surface[] = [
 ];
 
 export type Mode = "name" | "prose";
-export type FlagReason = "banned" | "bare-shortening" | "unknown" | "entry-domain";
+export type FlagReason =
+  | "banned"
+  | "bare-shortening"
+  | "unknown"
+  | "entry-domain"
+  // A word that is canon's DIFFERENT WORD used bare, so it may be legitimate rather
+  // than a shortening — a human decides. Dispositioned `review`, never `rename`.
+  | "bare-different-word";
 
 // ---------------------------------------------------------------------------
 // Core classification
@@ -377,6 +404,13 @@ function fullTermSatisfied(word: string, words: string[], i: number, present: Se
       // Bare `unattributed` standing alone (neither context present) still flags.
       return (present.has("evidence") && present.has("observation")) ||
         (present.has("static") && present.has("guard"));
+    case "guard":
+      // CO-OCCURRENCE, not adjacency (the `unattributed` arm above is the precedent).
+      // Anaphora — "the static guard ... the guard" — is the same referent, so the
+      // second, unqualified mention passes; only a genuinely standalone bare `guard`
+      // flags. Its action is `review`, not `rename` (see FlagReason below): bare, it
+      // may be the different word used alone rather than a shortening.
+      return GUARD_QUALIFIERS.some((qualifier) => qualifier.every((w) => present.has(w)));
     case "ghost":
       return present.has("evidence") && present.has("observation");
     default:
@@ -407,7 +441,10 @@ export function classifyWords(words: string[], modes: Mode | Mode[]): WordVerdic
 
     if (FULL_TERM_ONLY.has(stem)) {
       if (fullTermSatisfied(stem, words, i, present)) return { word, flagged: false };
-      return { word, flagged: true, reason: "bare-shortening", canonical };
+      // `guard` gets its own disposition — it does NOT inherit obligation/observation's
+      // bare-shortening → rename, because bare it may be the different word standing alone.
+      const reason: FlagReason = stem === "guard" ? "bare-different-word" : "bare-shortening";
+      return { word, flagged: true, reason, canonical };
     }
 
     // Entry domain-use flags only when a debit/credit/evidence companion is

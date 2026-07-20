@@ -91,6 +91,50 @@ Then("the approved name is not flagged", function () {
   );
 });
 
+// @SCN-VOC-001
+Given(
+  'the corpus carries a bare "guard" identifier and a qualified "static guard" identifier',
+  function () {
+    // tests/fixtures/vocab/staticGuardVocabulary.ts — `runGuard` (bare) and
+    // `runStaticGuard` (qualified) on disk.
+  }
+);
+
+/** The manifest rows flagging the word `guard` inside the named symbol. */
+function guardRowsFor(csv: string, symbol: string): Record<string, string>[] {
+  return parseManifest(csv).filter(
+    (r) => r["current"] === "guard" && (r["symbol"] ?? "").includes(symbol)
+  );
+}
+
+// @SCN-VOC-001
+Then('the bare "guard" is flagged for review, not rename', function () {
+  const rows = guardRowsFor(manifestCsv, "runGuard").filter(
+    // `runStaticGuard` contains `runGuard` as a substring only under a loose match;
+    // pin the bare arm exactly so the qualified arm can never satisfy this assertion.
+    (r) => r["symbol"] === "runGuard"
+  );
+  assert.ok(
+    rows.length > 0,
+    `expected a manifest row flagging bare \`guard\` in runGuard; got:\n${manifestCsv}`
+  );
+  assert.equal(
+    rows[0]!["action"],
+    "review",
+    `a bare \`guard\` is the different word used alone, not necessarily a shortening, so it is flagged for REVIEW, never auto-renamed; got action "${rows[0]!["action"]}"`
+  );
+});
+
+// @SCN-VOC-001
+Then('the qualified "static guard" is not flagged', function () {
+  const rows = guardRowsFor(manifestCsv, "runStaticGuard");
+  assert.deepEqual(
+    rows,
+    [],
+    `expected the qualified compound runStaticGuard to pass — \`static\` co-occurs, so \`guard\` is the blessed different word; got:\n${JSON.stringify(rows)}`
+  );
+});
+
 // -------------------------------------------------------------------------
 // @SCN-VOC-002 — coverage-matrix completeness (a zero-flag surface still a row)
 // @SCN-VOC-002
