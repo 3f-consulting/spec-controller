@@ -153,10 +153,10 @@ When("the run writes its markdown artifact", function () {
 
 // @SCN-RPT-001
 Then(
-  "the persisted spec-reconciliation.md opens with a Run provenance header stating the target, the input, the UTC timestamp, and the source SHA",
+  "the persisted spec-reconciliation.md opens with a Run provenance header stating the target, the input, the UTC timestamp, the source SHA, the tool SHA, and the tool version",
   function () {
     // The persisted markdown must open with the provenance section carrying all
-    // four facts. Each assertion has teeth: drop the provenance emitter (or fail to
+    // facts. Each assertion has teeth: drop the provenance emitter (or fail to
     // thread ctx through writeOutputs) and the header is absent, so this reds.
     assert.match(
       markdown,
@@ -179,6 +179,15 @@ Then(
     assert.ok(
       typeof ctx.sourceSha === "string" && markdown.includes(ctx.sourceSha),
       `expected the provenance header to outcome the source SHA "${ctx.sourceSha}"; got:\n${markdown}`
+    );
+    // The TOOL's identity (3F-1916) — which spec-controller produced the run.
+    assert.ok(
+      typeof ctx.toolSha === "string" && markdown.includes(`- Tool SHA: ${ctx.toolSha}`),
+      `expected the provenance header to outcome the tool SHA "${ctx.toolSha}"; got:\n${markdown}`
+    );
+    assert.ok(
+      typeof ctx.toolVersion === "string" && markdown.includes(`- Tool version: ${ctx.toolVersion}`),
+      `expected the provenance header to outcome the tool version "${ctx.toolVersion}"; got:\n${markdown}`
     );
     // The provenance header opens the report — above the per-scenario table.
     assert.ok(

@@ -20,8 +20,10 @@ Feature: The report renders the ledger as sectioned facts
     The headline behaviour (foundation-bearing). The markdown report no
     longer opens straight into the per-scenario table: it opens with a "## Run
     provenance" section stating the target repo, the input paths/flags actually
-    used, the run-start timestamp in UTC, and the target's source SHA (a null SHA
-    rendered as an explicit "unknown (non-git target)"). The @integration arm drives
+    used, the run-start timestamp in UTC, the target's source SHA (a null SHA
+    rendered as an explicit "unknown (non-git target)"), and the TOOL's own SHA and
+    version — which spec-controller produced the run (3F-1916), a null tool SHA
+    rendered "unknown (not a git checkout)" with the version still shown. The @integration arm drives
     the REAL CLI pipeline (runReconcile → writeOutputs with a ctx) and asserts the
     PERSISTED spec-reconciliation.md carries the header — the cross-component ctx-threading
     is the critical-path wiring.
@@ -39,7 +41,7 @@ Feature: The report renders the ledger as sectioned facts
     Scenario: the markdown report opens with a Run provenance header whose Target repo is the --target value verbatim, defaulting to unknown-target
       Given a reconciliation run targeting "an-adopters-repository" with the input "--features ../an-adopters-repository/features" at the UTC instant "2026-06-27T08:17:53.000Z" and source SHA "905a987c0ffeeba110000000000000000deadbeef"
       When the run writes its markdown artifact
-      Then the persisted spec-reconciliation.md opens with a Run provenance header stating the target, the input, the UTC timestamp, and the source SHA
+      Then the persisted spec-reconciliation.md opens with a Run provenance header stating the target, the input, the UTC timestamp, the source SHA, the tool SHA, and the tool version
       When the real CLI writes a markdown report with --target "chosen-target-name"
       Then the persisted report's Run provenance outcomes "Target repo: chosen-target-name" verbatim
       When the real CLI writes a markdown report with no --target flag

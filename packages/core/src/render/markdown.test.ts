@@ -45,6 +45,8 @@ const ctx: RunContext = {
   },
   runStart: new Date("2026-06-27T08:17:53.000Z"),
   sourceSha: "905a987c0ffeeba110000000000000000deadbeef",
+  toolSha: "13ee47f271ace511efdb2511276284b4cb50c247",
+  toolVersion: "0.1.0",
 };
 
 describe("[SCN-RPT-001] the markdown report opens with a Run provenance header", () => {
@@ -62,6 +64,10 @@ describe("[SCN-RPT-001] the markdown report opens with a Run provenance header",
     expect(md).toContain("2026-06-27T08:17:53Z");
     // The target's source SHA.
     expect(md).toContain("905a987c0ffeeba110000000000000000deadbeef");
+    // The TOOL's identity (3F-1916) — which spec-controller produced the run,
+    // distinct from the target's source SHA.
+    expect(md).toContain("- Tool SHA: 13ee47f271ace511efdb2511276284b4cb50c247");
+    expect(md).toContain("- Tool version: 0.1.0");
   });
 
   it("renders a null source SHA as an explicit unknown (non-git target)", () => {
@@ -69,6 +75,14 @@ describe("[SCN-RPT-001] the markdown report opens with a Run provenance header",
     expect(md).toContain("unknown (non-git target)");
     // The literal "null" must NOT leak into the human surface.
     expect(md).not.toContain("Source SHA: null");
+  });
+
+  it("renders a null tool SHA as an explicit unknown (not a git checkout), version still shown", () => {
+    const md = renderMarkdown(balance, { ...ctx, toolSha: null });
+    expect(md).toContain("- Tool SHA: unknown (not a git checkout)");
+    expect(md).not.toContain("Tool SHA: null");
+    // The version is always present even when the SHA cannot be read.
+    expect(md).toContain("- Tool version: 0.1.0");
   });
 
   it("positions the provenance header above the per-scenario table (sectioned-renderer order)", () => {

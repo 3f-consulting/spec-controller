@@ -244,6 +244,12 @@ const provenanceSection: SectionEmitter = (report) => {
   }
   lines.push(`- Run timestamp (UTC): ${p.runStartUtc}`);
   lines.push(`- Source SHA: ${p.sourceSha ?? "unknown (non-git target)"}`);
+  // The TOOL's own identity (3F-1916) — which spec-controller produced this run,
+  // distinct from the target's Source SHA above. A null tool SHA renders the explicit
+  // "unknown (not a git checkout)" (mirroring Source SHA's null-rendering); the version
+  // is always present, so a run stays attributable even with no SHA.
+  lines.push(`- Tool SHA: ${p.toolSha ?? "unknown (not a git checkout)"}`);
+  lines.push(`- Tool version: ${p.toolVersion}`);
   lines.push("");
   return lines;
 };
