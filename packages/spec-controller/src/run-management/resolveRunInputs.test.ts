@@ -22,10 +22,62 @@
 
 import { describe, it, expect } from "vitest";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, rmSync, realpathSync } from "node:fs";
+import { mkdtempSync, mkdirSync, rmSync, realpathSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
-import { resolveSourceSha, resolveTargetRoot } from "./resolveRunInputs.js";
+import { resolveSourceSha, resolveTargetRoot, resolveToolIdentity } from "./resolveRunInputs.js";
+
+describe("[SCN-RPT-026] resolveToolIdentity: the tool's own checkout, and a non-git install resolves the SHA to null", () => {
+  it("reads the TOOL's own repo HEAD (via -C toolDir, never cwd) with the version present, when run from the checkout", () => {
+    // The dogfood case (3F-1916). process.cwd() is spec-controller's own checkout — a real
+    // git repo. The resolver reads its HEAD via `git -C toolDir`, so pointing toolDir at
+    // the repo yields the repo's real HEAD. The `-C toolDir` is load-bearing: at run time
+    // cwd is the TARGET, and reading cwd would re-record the target's SHA — the very bug.
+    const toolDir = process.cwd();
+    const realHead = execFileSync("git", ["-C", toolDir, "rev-parse", "HEAD"], {
+      encoding: "utf8",
+    }).trim();
+
+    const identity = resolveToolIdentity({ toolDir });
+
+    expect(identity.toolSha).toBe(realHead);
+    // The version is read from the tool's own package.json (walked up from toolDir) — always
+    // a non-empty string when the tool is a real package.
+    expect(typeof identity.toolVersion).toBe("string");
+    expect(identity.toolVersion).not.toBe("");
+  });
+
+  it("falls back to a NULL sha with the version still present when the tool is not a git checkout", () => {
+    // The released-install case: a directory with no .git. The git read throws, so the SHA
+    // resolves to null (not a crash) — and the version, read from a package.json, is STILL
+    // present, so a run stays attributable by version even with no SHA.
+    const nonGitDir = mkdtempSync(join(tmpdir(), "spec-controller-tool-nogit-"));
+    const pkgPath = join(nonGitDir, "package.json");
+    writeFileSync(pkgPath, JSON.stringify({ name: "spec-controller", version: "9.9.9-fixture" }));
+    try {
+      const identity = resolveToolIdentity({ toolDir: nonGitDir, packageJsonPath: pkgPath });
+
+      expect(identity.toolSha).toBeNull();
+      expect(identity.toolVersion).toBe("9.9.9-fixture");
+    } finally {
+      rmSync(nonGitDir, { recursive: true, force: true });
+    }
+  });
+
+  it("resolves the version to \"unknown\" when no package.json can be found (never crashes)", () => {
+    // The degenerate case: no git AND no readable package.json. Both facts fail soft — a
+    // null SHA and an "unknown" version — rather than throwing mid-run.
+    const bareDir = mkdtempSync(join(tmpdir(), "spec-controller-tool-bare-"));
+    try {
+      const identity = resolveToolIdentity({ toolDir: bareDir, packageJsonPath: join(bareDir, "does-not-exist.json") });
+
+      expect(identity.toolSha).toBeNull();
+      expect(identity.toolVersion).toBe("unknown");
+    } finally {
+      rmSync(bareDir, { recursive: true, force: true });
+    }
+  });
+});
 
 describe("[SCN-RPT-003] resolveSourceSha: an explicit override wins, a non-git target resolves to unknown", () => {
   it("returns an explicit source SHA verbatim, overriding the git HEAD of a real git target", () => {

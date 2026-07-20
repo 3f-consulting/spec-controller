@@ -697,3 +697,22 @@ Feature: The report renders the ledger as sectioned facts
       When the markdown report is rendered
       Then the reconciliation-collection Subject cell reads "Scenario Reconciliation"
       And the headline verdict tally reads "N Scenario Reconciliation(s): X balanced, Y out-of-balance", never "N scenario(s):"
+
+  Rule: the tool identity is the tool's own checkout, and a non-git install resolves the SHA to null
+
+    Which spec-controller produced a run (@SCN-RPT-026, 3F-1916). resolveToolIdentity
+    answers "which tool is this?" from the tool's OWN install, never the target: the git
+    SHA is read `git -C <the tool's own dir>` (derived from import.meta.url), NEVER cwd —
+    at run time cwd is the target repo, so a cwd read would re-record the target's SHA, the
+    exact bug this closes. Run from the checkout, the tool SHA is the spec-controller repo
+    HEAD; installed as a package with no .git, the git read cannot answer and the SHA
+    resolves to a recorded null — while the version, read from the tool's own package.json,
+    is STILL present, so a run stays attributable by version even with no SHA. A pure
+    resolution rule proven in isolation by Vitest — the resolver → ctx → rendered-surface
+    thread is already proven by RPT-001/RPT-002's integration arms (mirrors RPT-003).
+
+    @unit @SCN-RPT-026
+    Scenario: resolveToolIdentity reads the tool's own repo HEAD, and falls back to a null SHA with the version still present when the tool is not a git checkout
+      Given the tool resolves its own identity from its own directory
+      Then the tool SHA is the spec-controller checkout HEAD, and the version is present, when run from the repo
+      And the tool SHA is null but the tool version is still present when the tool is not a git checkout
