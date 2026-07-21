@@ -1,10 +1,16 @@
 /**
  * The reconcile core — the pure declared-vs-observed join, keyed by one flat
- * `qualityCheck` (the two-axis `(kind, level)` grid collapsed).
+ * `qualityCheck` (the two-axis `(kind, level)` grid collapsed). This module is now THIN
+ * COMPOSITION (index → reconcile → assemble): the domain RULES it once held moved to the
+ * concept modules that own them (3F-1994) — `reconcileEvidenceObligation` (the per-obligation
+ * outcome) to `domain/qualityCheckReconciliation`, `verdictFor` / `reconcilingItemsOf` (the
+ * account roll-up) to `domain/scenarioReconciliation`, `isBalanced` / `hasPendingItems` /
+ * `hasBrokenEvidence` (the whole-run predicates) to `domain/ledger`. `reconcile` is the fold
+ * that posts the entries and calls those rules; it is the orchestration, not their home.
  *
  * Per the slice design: for each declared quality-check evidenceObligation (a reconciling
  * item), present+pass → satisfied; present+fail → failing; absent →
- * missing. The one reconcile function branches on the `qualityCheck === "lint"`
+ * missing. `reconcileEvidenceObligation` branches on the `qualityCheck === "lint"`
  * watermelon discriminator (replacing the retired `kind === "static"` split): a `lint`
  * evidence obligation reconciles against a static-guard evidence observation (exists+wired → satisfied;
  * exists+unwired → watermelon; absent → missing); a runtime evidence obligation
@@ -22,190 +28,22 @@
 
 import type {
   Scenario,
-  EvidenceObligation,
   GuardEvidenceObservation,
   EvidenceObservation,
   ScenarioReconciliation,
   QualityCheckReconciliation,
-  Outcome,
   PendingItem,
   RuntimeEvidenceObservation,
-  ScenarioVerdict,
   Ledger,
 } from "../model.js";
 import { evidenceObligationPairsOf } from "../model.js";
+import { reconcileEvidenceObligation } from "../domain/qualityCheckReconciliation.js";
+import { verdictFor, reconcilingItemsOf } from "../domain/scenarioReconciliation.js";
 
-/**
- * Reconcile one declared evidenceObligation against the observed evidence, keyed on the
- * flat `qualityCheck`. `qualityCheck === "lint"` is the watermelon
- * discriminator: it routes to the STATIC-guard mapping;
- * every other value routes to the RUNTIME-result mapping.
- */
-function reconcileEvidenceObligation(
-  scnId: string,
-  req: EvidenceObligation,
-  evidenceObservations: EvidenceObservation[]
-): QualityCheckReconciliation {
-  if (req.qualityCheck === "lint") {
-    // The lint (static-guard) evidence obligation — matched by static guard handle among the static guard
-    // evidence observations. Three mappings on the static guard evidence observation:
-    //   - wired into CI over the real source → satisfied.
-    //   - exists (a package.json script) but NOT wired → THE WATERMELON:
-    //     green on the surface, red within — a static guard that guards nothing.
-    //   - absent (no package.json script) → missing: a required
-    //     ledger entry never recorded, GENUINELY DIFFERENT from the watermelon.
-    const guard = req.staticGuard!; // present by construction for a lint evidence obligation.
-    const obs = evidenceObservations.find(
-      (o): o is GuardEvidenceObservation => o.qualityCheck === "lint" && o.staticGuard === guard
-    );
-    let outcome: Outcome;
-    if (obs && obs.enforcedOverRealSource) {
-      outcome = "satisfied";
-    } else if (obs?.exists) {
-      outcome = "watermelon";
-    } else {
-      outcome = "missing";
-    }
-    return { qualityCheck: "lint", staticGuard: guard, outcome };
-  }
-
-  // A runtime evidence obligation — matched by (scnId, quality-check) among the runtime
-  // evidence observations (a static guard evidence observation carries qualityCheck "lint" and no scnId, so it
-  // never matches here). present+pass → satisfied; present+fail → failing;
-  // absent → missing (a required ledger entry never recorded).
-  //
-  // THE FAIL-SAFE (@SCN-LDG-017, operator-mandated): `broken` is checked BEFORE `status`. A
-  // broken observation — one whose PROOF NEVER RAN — is excluded from the match entirely, so it
-  // can NEVER reconcile as `satisfied` or `failing`: a proof that never ran can neither discharge
-  // an obligation nor fail it. The obligation then finds no match and reconciles `missing` —
-  // honest at its own resolution (no evidence citing it arrived); the broken evidence itself
-  // posts to the SUSPENSE row below, where the reader is sent to fix the harness. The exclusion
-  // is structural rather than incidental: `broken` rides an OPTIONAL
-  // FLAG on RuntimeEvidenceObservation, so a broken credit CAN carry an scnId and a status — the
-  // guard is what makes the fail-safe hold whatever it carries.
-  const match = evidenceObservations.find(
-    (o): o is RuntimeEvidenceObservation =>
-      o.qualityCheck !== "lint" &&
-      o.broken !== true &&
-      o.qualityCheck === req.qualityCheck &&
-      o.scnId === scnId
-  );
-  let outcome: Outcome;
-  if (!match) {
-    outcome = "missing";
-  } else if (match.status === "passed") {
-    outcome = "satisfied";
-  } else {
-    outcome = "failing";
-  }
-  return { qualityCheck: req.qualityCheck, outcome };
-}
-
-/**
- * Reduce a scenario's reconciling items to its binary VERDICT:
- * `balanced` IFF the scenario has NO reconciling item; otherwise `out-of-balance`,
- * carrying the FULL list of non-balanced items (no prioritisation, no picked
- * winner — `reconcilingItemsOf` carries them all, the renderers list them all).
- * The verdict is DERIVED from reconciling-item emptiness, so the two stay in lock
- * step by construction (an out-of-balance verdict always has ≥1 item; a balanced
- * one always has zero).
- *
- * Empty-list case (@SCN-PND-007): a scenario reconciling to an EMPTY
- * evidenceObligations set has no reconciling item, so it is `balanced` — verdict-neutral.
- * This is the ONLY-PENDING scenario: its sole obligation partitioned off to a
- * one-sided Pending Item upstream, leaving zero reconciled rows. A Pending Item
- * never contributes a reconciling item, so it never tips the verdict. (Deriving
- * from emptiness — not `every satisfied` over a non-empty list — is what makes the
- * empty list read `balanced` rather than the earlier vacuous `out-of-balance`.)
- *
- * Both-missing is NOT this case: the degenerate zero-rows-on-both-sides scenario
- * (no obligation, no pending, no citing observation) is posted ONE `both-missing`
- * reconciling item UPSTREAM by `reconcile`, so its list is NON-empty and it stays
- * `out-of-balance` — untouched by the emptiness derivation.
- */
-function verdictFor(evidenceObligations: QualityCheckReconciliation[]): ScenarioVerdict {
-  return reconcilingItemsOf(evidenceObligations).length === 0 ? "balanced" : "out-of-balance";
-}
-
-/**
- * The non-balanced reconciling items — EVERY one (no prioritisation, no picked
- * winner), in document order. Empty when the scenario is balanced.
- */
-function reconcilingItemsOf(
-  evidenceObligations: QualityCheckReconciliation[]
-): QualityCheckReconciliation[] {
-  return evidenceObligations.filter((r) => r.outcome !== "satisfied");
-}
-
-/**
- * The WHOLE-RUN verdict — is the ENTIRE reconciliation balanced? A pure domain
- * derivation over the WHOLE `Ledger`: balanced IFF NO reconciling
- * item exists ANYWHERE, across every Scenario Reconciliation row — declared,
- * phantom, and suspense alike. Out-of-balance iff ANY row carries a reconciling
- * item: a declared scenario's out-of-balance items (failing / missing /
- * undemanded / both-missing) AND the credit-side suspense/phantom rows (an
- * undemanded static-guard watermelon, an uncited credit, a phantom scenario).
- *
- * It is deliberately NOT a scan of DECLARED-scenario verdicts alone — that would
- * let a watermelon-only run (every declared scenario balanced, yet an undemanded
- * static guard sitting unreconciled in the suspense row) read as balanced, the
- * false pass a CI gate must never give. Every row's `reconcilingItems` is
- * consulted, so the suspense/phantom rows (verdict ALWAYS out-of-balance) count.
- *
- * The CLI edge maps this boolean to the process exit code — balanced → 0,
- * out-of-balance → EXACTLY 1 — an ENUMERATED status, never a count (a count would
- * 8-bit `& 0xFF` wrap → false pass).
- */
-export function isBalanced(reconciliation: Ledger): boolean {
-  return reconciliation.scenarioReconciliations.every(
-    (row) => row.reconcilingItems.length === 0
-  );
-}
-
-/**
- * Does the WHOLE reconciliation carry any Pending Item? A pure domain predicate over the
- * WHOLE `Ledger`, SYMMETRIC with `isBalanced` — together they are the
- * whole-run verdict surface. True iff ANY Scenario Reconciliation row carries a Pending
- * Item (a deferred `<quality-check>pending` obligation partitioned off before reconciliation,
- * @SCN-PND-004). Pending Items are run-neutral by default (@SCN-PND-008); the CLI edge
- * consults this ALONGSIDE `isBalanced` to escalate an otherwise-balanced run to the distinct
- * exit code 3 under `--strict` (@SCN-CLI-011) — an OPT-IN gate on deferred obligations,
- * checked only when `isBalanced` is true (out-of-balance dominates, exit 1).
- */
-export function hasPendingItems(reconciliation: Ledger): boolean {
-  return reconciliation.scenarioReconciliations.some((row) => row.pendingItems.length > 0);
-}
-
-/**
- * Does the WHOLE reconciliation carry BROKEN evidence — i.e. is the run UNSOUND? The THIRD
- * whole-run predicate (@SCN-LDG-018), beside `isBalanced` and `hasPendingItems`, and the
- * EXISTENTIAL TWIN of the latter: the same `some(row => some(item => item.outcome === X))` scan.
- *
- * Soundness is a property of the RUN, not of a scenario. If any PROOF NEVER RAN — a vitest suite
- * that failed to collect (@SCN-LDG-017), or a cucumber step matched by two or more definitions
- * (@SCN-LDG-019) — the evidence never fully materialised, so every `missing` in that run is
- * SUSPECT: it may be a broken proof rather than an absent one, and the remedies differ (fix the
- * harness vs write a test). The scenario's own row stays honest at its own resolution (`missing`);
- * the RUN is what is stamped unsound.
- *
- * DERIVED, NEVER STORED — no soundness flag is written onto `Ledger`, the same
- * no-drift reason `isBalanced` and `hasPendingItems` derive. Machine consumers read soundness off
- * `summary.byOutcome.broken > 0` (type-forced into the JSON the moment `broken` joined the
- * `Outcome` union); the markdown renderer prints the HEADLINE word — "unsound" is the render word,
- * never the predicate's name, exactly as "out-of-balance" is for `isBalanced`.
- *
- * Keyed on the `broken` OUTCOME specifically, never on `!isBalanced`: an ordinary out-of-balance
- * run (an honest `missing`, no broken evidence) is perfectly SOUND. The three whole-run
- * predicates are INDEPENDENT — a run may carry Pending Items and be sound; a run may carry broken
- * evidence and no Pending Items. (A broken run is ALWAYS out-of-balance, since the `broken` item
- * sits on the suspense row — which is why the CLI edge must consult THIS predicate BEFORE the
- * balance verdict, @SCN-CLI-012, or its exit code would be unreachable.)
- */
-export function hasBrokenEvidence(reconciliation: Ledger): boolean {
-  return reconciliation.scenarioReconciliations.some((row) =>
-    row.reconcilingItems.some((item) => item.outcome === "broken")
-  );
-}
+// The whole-run verdict surface lives WITH the Ledger concept (`domain/ledger`, 3F-1994);
+// re-exported here so the frozen v1 barrel (`index.ts`, @SCN-API-001) and every existing
+// `reconcile.js` importer keep the same surface — only the predicates' home moved.
+export { isBalanced, hasPendingItems, hasBrokenEvidence } from "../domain/ledger.js";
 
 export function reconcile(
   scenarios: Scenario[],
