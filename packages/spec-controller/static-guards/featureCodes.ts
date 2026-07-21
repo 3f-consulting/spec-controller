@@ -120,6 +120,12 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     note: "the engine-purity guard — a @unit guard that reds if any production file in the pure core imports from the app package or references IO (node:fs/child_process/process); makes the pure seam executable, the dogfood analogue of @SCN-API-001",
   },
   {
+    code: "DPG",
+    slug: "domain-purity",
+    status: "declared",
+    note: "the domain-purity guard — a @unit guard that reds if any production file under packages/core/src/domain imports from the core's adapter layers (parse/render/assemble/census) or the spec-controller app package; the INNER analogue of engine-purity (@SCN-EPG-001), keeping the reconciliation concepts a pure functional domain (the DDD retrofit, 3F-1994)",
+  },
+  {
     code: "SSM",
     slug: "scenario-sub-issue-match",
     status: "declared",
