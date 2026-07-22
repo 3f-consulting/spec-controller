@@ -1246,6 +1246,61 @@ describe("[SCN-LDG-021] a scenario declaring no @SCN reconciles no-scn-code on i
 });
 
 /**
+ * @unit for @SCN-LDG-029 (3F-2016 / corrects 3F-1995) — no-scn-code is DEBIT-side.
+ *
+ * Canon (double-entry-manifesto line 40): no-scn-code = Obligation Exists, Observation None — the
+ * debit twin of cites-no-scenario. The untagged scenario's obligation has no @SCN code to link to,
+ * so the reconciliation carries a SYNTHESIZED scenario-scope obligation ({}, no qualityCheck /
+ * staticGuard — the established scenario-scope degenerate shape, precedent: the scenario-scope
+ * pending obligation in journal.ts) and NO observation. The scenario-level `evidenceObligations`
+ * array STAYS empty — the synthesized {} lives only on the reconciling item, not the account's
+ * debit posting — so census + markdown are untouched.
+ */
+describe("[SCN-LDG-029] a no-scn-code reconciliation carries a scenario-scope obligation and no observation", () => {
+  it("carries the synthesized scenario-scope obligation {} on the reconciling item, and no observation", () => {
+    const declared: Scenario[] = [
+      { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+    ];
+    const observed: EvidenceObservation[] = [
+      { scnId: "SCN-AAA-001", qualityCheck: "unit", status: "passed" },
+    ];
+
+    const reconciliation = reconcile(declared, observed, ["beta must never lose the money"]);
+    const row = reconciliation.scenarioReconciliations.find(
+      (r) => r.scnId === "beta must never lose the money",
+    );
+    expect(row).toBeDefined();
+
+    const qcr = row!.qualityCheckReconciliations.find((o) => o.outcome === "no-scn-code");
+    expect(qcr).toBeDefined();
+    // DEBIT side: the synthesized scenario-scope obligation — empty {}, no qualityCheck / staticGuard.
+    // Its PRESENCE (Obligation Exists) is what makes no-scn-code debit-side, per canon line 40.
+    expect(qcr!.evidenceObligation).toEqual({});
+    // CREDIT side stays absent: no @SCN code means no observation can link at any tier.
+    expect(qcr!.evidenceObservation).toBeUndefined();
+  });
+
+  it("leaves the scenario-level evidenceObligations empty — the synthesized {} is item-scope, census untouched", () => {
+    const declared: Scenario[] = [
+      { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+    ];
+    const observed: EvidenceObservation[] = [
+      { scnId: "SCN-AAA-001", qualityCheck: "unit", status: "passed" },
+    ];
+
+    const reconciliation = reconcile(declared, observed, ["beta must never lose the money"]);
+    const row = reconciliation.scenarioReconciliations.find(
+      (r) => r.scnId === "beta must never lose the money",
+    );
+    expect(row).toBeDefined();
+    // The synthesized obligation lives ONLY on the reconciling item, NOT on the account's debit
+    // posting — an untagged scenario declares no parsed obligations, so this stays []. That is what
+    // keeps the census (and the markdown built from it) unchanged.
+    expect(row!.evidenceObligations).toEqual([]);
+  });
+});
+
+/**
  * @SCN-LDG-022 (3F-1846) — every evidence observation posts to AT LEAST ONE ledger account, never
  * to none (canon, double-entry-manifesto.md line 160). Over THIS single-demand corpus — no static
  * guard is demanded twice — the never-zero invariant lands at exactly one, which is the teeth here

@@ -2376,3 +2376,126 @@ Then(
     );
   },
 );
+
+// NO-SCN-CODE IS DEBIT-SIDE (@SCN-LDG-029, 3F-2016 / corrects 3F-1995) — a `no-scn-code` Quality
+// Check Reconciliation carries a SYNTHESIZED scenario-scope evidence obligation ({}, no
+// qualityCheck / staticGuard) and NO observation. Canon (double-entry-manifesto line 40):
+// no-scn-code = Obligation Exists, Observation None — the debit twin of cites-no-scenario. An
+// untagged scenario is real and ordinary but carries no @SCN, so its obligation has no code to link
+// to; the reconciliation carries the scenario-scope obligation (precedent: the scenario-scope
+// pending obligation, journal.ts). The scenario-level `evidenceObligations` array STAYS empty, so
+// the census — and the markdown the renderer builds from it — are untouched. The @integration arm
+// drives the real declared-corpus read (parseScenarios + parseUntaggedScenarios) THROUGH reconcile.
+// Reuses the shared "the ledger reconciles that corpus" When (@SCN-LDG-021): the Given sets the
+// shared corpus ledger; the Thens read it.
+let ldg029UntaggedName: string;
+
+// @SCN-LDG-029
+Given("a corpus with one scenario carrying no @SCN", function () {
+  // ONE ordinary scenario tagged with no @SCN — real behaviour cucumber runs but nothing proves. It
+  // reaches the ledger by NAME through the real untagged reader (parseUntaggedScenarios).
+  const source = `@LDG
+Feature: fixture
+
+  Scenario: an untagged scenario carrying no @SCN
+    Given a step
+`;
+  ldg029UntaggedName = "an untagged scenario carrying no @SCN";
+  scenarios = parseScenarios(source);
+  const untagged = parseUntaggedScenarios(source);
+  assert.deepEqual(
+    untagged,
+    [ldg029UntaggedName],
+    "the fixture must contain exactly the one untagged scenario",
+  );
+  // No observations — an untagged scenario carries no @SCN, so no credit can cite it.
+  ldg021Reconciliation = reconcile(scenarios, [], untagged);
+});
+
+/** The untagged scenario's OWN Quality Check Reconciliation, off the shared corpus ledger. */
+function ldg029Reconciliation(): QualityCheckReconciliation {
+  const row = ldg021Reconciliation.scenarioReconciliations.find(
+    (r: ScenarioReconciliation) => r.scnId === ldg029UntaggedName,
+  );
+  assert.ok(row, `expected a ledger row for the untagged scenario "${ldg029UntaggedName}"`);
+  const qcr = row.qualityCheckReconciliations.find(
+    (o: QualityCheckReconciliation) => o.outcome === "no-scn-code",
+  );
+  assert.ok(
+    qcr,
+    `expected a no-scn-code Quality Check Reconciliation on the untagged scenario; got ${JSON.stringify(row.qualityCheckReconciliations)}`,
+  );
+  return qcr;
+}
+
+// @SCN-LDG-029
+Then(
+  "the untagged scenario's Quality Check Reconciliation has outcome {string}",
+  function (outcome: string) {
+    const reconciliation = ldg029Reconciliation();
+    assert.equal(
+      reconciliation.outcome,
+      outcome,
+      `expected the untagged scenario's reconciliation to read "${outcome}"`,
+    );
+  },
+);
+
+// @SCN-LDG-029
+Then(
+  "it carries a scenario-scope evidence obligation — empty, with no qualityCheck and no staticGuard",
+  function () {
+    // The DEBIT side is carried ON the reconciliation: a SYNTHESIZED scenario-scope obligation — an
+    // empty {} (no qualityCheck, no staticGuard), canon-faithful (Obligation Exists) and the
+    // established scenario-scope degenerate shape (precedent: the scenario-scope pending obligation,
+    // journal.ts). Its PRESENCE — not its emptiness — is what makes no-scn-code debit-side.
+    const obligation = (ldg029Reconciliation() as { evidenceObligation?: unknown })
+      .evidenceObligation;
+    assert.deepEqual(
+      obligation,
+      {},
+      `expected the no-scn-code reconciliation to carry a scenario-scope evidence obligation {} (the debit side); got ${JSON.stringify(obligation)}`,
+    );
+  },
+);
+
+// @SCN-LDG-029
+Then("it carries no evidence observation", function () {
+  // The CREDIT side stays absent: without a @SCN code, no observation can link at ANY tier, so the
+  // missing link is scenario-scope. Obligation Exists, Observation None (canon line 40).
+  const observation = (ldg029Reconciliation() as { evidenceObservation?: unknown })
+    .evidenceObservation;
+  assert.equal(
+    observation,
+    undefined,
+    `expected the no-scn-code reconciliation to carry NO evidence observation; got ${JSON.stringify(observation)}`,
+  );
+});
+
+// @SCN-LDG-029
+Then(
+  "the scenario-level evidence obligations stay empty, so the census and markdown are unchanged",
+  function () {
+    // The synthesized {} lives ONLY on the reconciling item, NOT on the account's debit posting: an
+    // untagged scenario declares no parsed obligations, so its scenario-level `evidenceObligations`
+    // stays []. That is what keeps the census (and the markdown the renderer builds from it)
+    // unchanged — the renderer reads scenario-level obligations, not per-QCR carried sides.
+    const row = ldg021Reconciliation.scenarioReconciliations.find(
+      (r: ScenarioReconciliation) => r.scnId === ldg029UntaggedName,
+    );
+    assert.ok(row, `expected a ledger row for the untagged scenario "${ldg029UntaggedName}"`);
+    assert.deepEqual(
+      row.evidenceObligations,
+      [],
+      `expected the untagged scenario's scenario-level evidenceObligations to stay EMPTY (census untouched); got ${JSON.stringify(row.evidenceObligations)}`,
+    );
+    // The renderer produces markdown over the corpus, reaching the untagged scenario BY NAME and
+    // carrying no obligation line for it — a direct consequence of the empty scenario-level array,
+    // and proof the renderer reads no per-QCR carried side.
+    const markdown = renderMarkdown(ldg021Reconciliation, CTX);
+    assert.ok(
+      markdown.includes(ldg029UntaggedName),
+      "expected the renderer to carry the untagged scenario by name in the markdown",
+    );
+  },
+);

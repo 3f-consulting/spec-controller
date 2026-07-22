@@ -165,11 +165,14 @@ export interface QualityCheckReconciliation {
    * The DEBIT side of the two-sided reconciling item (@SCN-LDG-026): the evidence obligation
    * this item reconciles, carried on the reconciliation itself rather than joined from a
    * separate scenario-level array at print time. Present IFF the obligation Exists — every
-   * debit-bearing outcome (`satisfied` / `missing` / `failing` / `watermelon`). ABSENT on the
+   * debit-bearing outcome (`satisfied` / `missing` / `failing` / `watermelon`), AND `no-scn-code`,
+   * which carries a SYNTHESIZED scenario-scope obligation (an empty `{}`, no `qualityCheck` /
+   * `staticGuard`): canon (`double-entry-manifesto.md` line 40) marks `no-scn-code` Obligation
+   * Exists, Observation None — the debit twin of `cites-no-scenario` (@SCN-LDG-029). ABSENT on the
    * credit-only outcomes (`cites-unknown-scenario` / `cites-no-scenario` / `undemanded`) and the
-   * neither-side outcomes (`no-scn-code` / `broken` / `both-missing`), where no obligation is in
-   * scope. `JSON.stringify` omits it when undefined, so a byte-identical golden is preserved
-   * everywhere the obligation is absent.
+   * neither-side outcomes (`broken` / `both-missing`), where no obligation is in scope.
+   * `JSON.stringify` omits it when undefined, so a byte-identical golden is preserved everywhere the
+   * obligation is absent.
    */
   evidenceObligation?: EvidenceObligation;
   /**

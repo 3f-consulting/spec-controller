@@ -341,7 +341,14 @@ export function reconcile(
   // the missing link is SCENARIO-scope, not tier-scope (the same shape `both-missing` uses).
   // `isBalanced` needs no change — any reconciling item anywhere already reds the run (exit 1).
   for (const name of untaggedScenarios) {
-    const items: QualityCheckReconciliation[] = [{ outcome: "no-scn-code" }];
+    // no-scn-code is DEBIT-side (canon, double-entry-manifesto line 40: Obligation Exists,
+    // Observation None — the debit twin of `cites-no-scenario`). The scenario is real but carries
+    // no @SCN, so its obligation has no code to link to: the reconciling item carries a SYNTHESIZED
+    // scenario-scope obligation — an empty `{}` (no `qualityCheck` / `staticGuard`, the established
+    // scenario-scope degenerate shape — precedent: the scenario-scope pending obligation in
+    // journal.ts). It lives ONLY here, on the reconciling item; the scenario-level
+    // `evidenceObligations` below STAYS empty, so the census + markdown are untouched.
+    const items: QualityCheckReconciliation[] = [{ outcome: "no-scn-code", evidenceObligation: {} }];
     scenarioReconciliations.push({
       // The scenario's NAME is its only handle — it has no code. (Precedent: the suspense row's
       // "(no scenario)" sentinel; `featureCodeOf` falls back to the raw id when it cannot parse.)

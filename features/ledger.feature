@@ -596,3 +596,21 @@ Feature: Ledger over declared-vs-observed evidence
       Then its lint Quality Check Reconciliation has outcome "missing"
       And it carries the evidence obligation it reconciles (the debit side)
       And it carries no evidence observation — an absent guard's {exists:false} is an absence, not an observation
+
+  # NO-SCN-CODE IS DEBIT-SIDE (@SCN-LDG-029, 3F-2016 / corrects 3F-1995). Canon (double-entry-
+  # manifesto line 40): no-scn-code = Obligation Exists, Observation None — the debit twin of
+  # cites-no-scenario. The scenario is real and ordinary but carries no @SCN, so its obligation has
+  # no code to link to; the reconciliation carries a SYNTHESIZED scenario-scope obligation ({}, no
+  # qualityCheck / staticGuard — precedent: the scenario-scope pending obligation, journal.ts) and
+  # no observation. The scenario-level evidenceObligations array stays empty — census + markdown
+  # untouched.
+  Rule: a no-scn-code reconciliation carries a scenario-scope evidence obligation and no observation
+
+    @unit @integration @SCN-LDG-029
+    Scenario: a no-scn-code quality-check reconciliation carries a scenario-scope obligation and no observation
+      Given a corpus with one scenario carrying no @SCN
+      When the ledger reconciles that corpus
+      Then the untagged scenario's Quality Check Reconciliation has outcome "no-scn-code"
+      And it carries a scenario-scope evidence obligation — empty, with no qualityCheck and no staticGuard
+      And it carries no evidence observation
+      And the scenario-level evidence obligations stay empty, so the census and markdown are unchanged
