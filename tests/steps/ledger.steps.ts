@@ -2066,6 +2066,17 @@ Then(
 // `scenarios` and empties `ldgPostingObservations`; the Thens read `ldgPostingLedger`.
 let ldg026ScnId: string;
 
+/**
+ * The debit-side subject a preceding "…Quality Check Reconciliation has outcome" step establishes,
+ * paired with the evidence obligation it must carry. The shared "it carries the evidence obligation
+ * it reconciles (the debit side)" Then reads this, so both the runtime-debit (@SCN-LDG-026, unit)
+ * and the lint-debit (@SCN-LDG-028, an absent guard) cases route through one step definition
+ * without hardcoding a single quality-check. Set fresh by each scenario's outcome step.
+ */
+let ldgDebitSubject:
+  | { reconciliation: QualityCheckReconciliation; expectedObligation: EvidenceObligation }
+  | undefined;
+
 // @SCN-LDG-026
 Given(
   "a declared scenario {string} requiring @unit with no matching evidence observation",
@@ -2107,22 +2118,28 @@ function ldg026UnitReconciliation(): QualityCheckReconciliation {
 // @SCN-LDG-026
 Then("its unit Quality Check Reconciliation has outcome {string}", function (outcome: string) {
   // Row-scoped to the scenario's OWN unit reconciliation: the pure-debit `missing` outcome.
+  const reconciliation = ldg026UnitReconciliation();
+  ldgDebitSubject = { reconciliation, expectedObligation: { qualityCheck: "unit" } };
   assert.equal(
-    ldg026UnitReconciliation().outcome,
+    reconciliation.outcome,
     outcome,
     `expected ${ldg026ScnId}'s unit reconciliation to read "${outcome}"`,
   );
 });
 
-// @SCN-LDG-026
+// @SCN-LDG-026 / @SCN-LDG-028 — shared debit-side assertion, subject established by the
+// preceding outcome step (the runtime unit debit, or the lint absent-guard debit).
 Then("it carries the evidence obligation it reconciles \\(the debit side)", function () {
-  // The DEBIT side is carried ON the reconciliation itself — the very @unit obligation it
-  // reconciles — not joined from a separate scenario-level array at print time.
-  const qcr = ldg026UnitReconciliation();
+  // The DEBIT side is carried ON the reconciliation itself — the very obligation it reconciles —
+  // not joined from a separate scenario-level array at print time.
+  assert.ok(
+    ldgDebitSubject,
+    "the debit-side subject reconciliation must be established by a preceding outcome step",
+  );
   assert.deepEqual(
-    qcr.evidenceObligation,
-    { qualityCheck: "unit" },
-    `expected the missing unit reconciliation to carry its evidence obligation (the debit side); got ${JSON.stringify(qcr.evidenceObligation)}`,
+    ldgDebitSubject.reconciliation.evidenceObligation,
+    ldgDebitSubject.expectedObligation,
+    `expected the missing reconciliation to carry its evidence obligation (the debit side); got ${JSON.stringify(ldgDebitSubject.reconciliation.evidenceObligation)}`,
   );
 });
 
@@ -2267,3 +2284,95 @@ Then("the JSON projects that evidence observation on the reconciliation", functi
     `expected the JSON to project the evidence observation on the reconciliation; got ${JSON.stringify(qcr)}`,
   );
 });
+
+// LINT MISSING IS OBLIGATION-ONLY (@SCN-LDG-028, 3F-2016) — a lint `missing` Quality Check
+// Reconciliation carries its evidence obligation and NO observation. An absent static guard is
+// read as the negative fact {exists:false, enforcedOverRealSource:false}: an ABSENCE, not an
+// observed piece of evidence. Canon (double-entry-manifesto line 36): missing = Obligation Exists,
+// Observation None. The @integration arm drives the parse → reconcile pipeline over the absent-guard
+// case; the debit-side assertion reuses LDG-026's shared "carries the evidence obligation" Then.
+// Reuses the shared "the ledger reconciles that run" When (LDG-022/023/026/027).
+const LDG028_ABSENT_GUARD = "lint:ldg028-absent-guard";
+let ldg028ScnId: string;
+
+// @SCN-LDG-028
+Given(
+  "a declared scenario {string} requiring a @lint guard absent from both package.json and CI",
+  function (scnId: string) {
+    // A declared @lint scenario built through the REAL declared reader (the @lint=<guard> →
+    // static-obligation parse seam), and an absent-guard observation: the negative fact the real
+    // detector produces for a guard named in NEITHER package.json NOR CI — exists:false,
+    // enforcedOverRealSource:false. So its lint obligation reconciles `missing` by absence: the
+    // pure debit case (a required obligation present, its matching observation an ABSENCE).
+    ldg028ScnId = scnId;
+    const feature = [
+      "@LDG",
+      "Feature: fixture",
+      "  Rule: a fixture rule",
+      `    @lint=${LDG028_ABSENT_GUARD} @${scnId}`,
+      "    Scenario: a fixture scenario",
+      "      Given a fixture step",
+    ].join("\n");
+    scenarios = parseScenarios(feature);
+    // The absent-guard record: {exists:false} is an ABSENCE, the input the detector emits for a
+    // guard present in neither source. NOT a real observation (contrast the watermelon's
+    // exists:true). Stocked as the run's only observation.
+    ldgPostingObservations = [
+      {
+        qualityCheck: "lint",
+        staticGuard: LDG028_ABSENT_GUARD,
+        exists: false,
+        enforcedOverRealSource: false,
+      },
+    ];
+  },
+);
+
+/** The scenario's OWN lint Quality Check Reconciliation, off the ledger the shared When produced. */
+function ldg028LintReconciliation(): QualityCheckReconciliation {
+  const row = ldgPostingLedger.scenarioReconciliations.find(
+    (r: ScenarioReconciliation) => r.scnId === ldg028ScnId,
+  );
+  assert.ok(row, `expected a ledger row for ${ldg028ScnId}`);
+  const qcr = row.qualityCheckReconciliations.find(
+    (o: QualityCheckReconciliation) => o.qualityCheck === "lint",
+  );
+  assert.ok(
+    qcr,
+    `expected a lint Quality Check Reconciliation on ${ldg028ScnId}; got ${JSON.stringify(row.qualityCheckReconciliations)}`,
+  );
+  return qcr;
+}
+
+// @SCN-LDG-028
+Then("its lint Quality Check Reconciliation has outcome {string}", function (outcome: string) {
+  // Row-scoped to the scenario's OWN lint reconciliation: the pure-debit `missing` outcome.
+  // Establishes the debit subject the shared "carries the evidence obligation" Then reads.
+  const reconciliation = ldg028LintReconciliation();
+  ldgDebitSubject = {
+    reconciliation,
+    expectedObligation: { qualityCheck: "lint", staticGuard: LDG028_ABSENT_GUARD },
+  };
+  assert.equal(
+    reconciliation.outcome,
+    outcome,
+    `expected ${ldg028ScnId}'s lint reconciliation to read "${outcome}"`,
+  );
+});
+
+// @SCN-LDG-028
+Then(
+  "it carries no evidence observation — an absent guard's \\{exists:false} is an absence, not an observation",
+  function () {
+    // The CREDIT side stays absent on a lint `missing`: the found {exists:false} absent-guard record
+    // is an ABSENCE, not an observation, so nothing is carried (Obligation Exists, Observation None —
+    // canon line 36). Uniform with the runtime `missing` path, which already carries none.
+    const observation = (ldg028LintReconciliation() as { evidenceObservation?: unknown })
+      .evidenceObservation;
+    assert.equal(
+      observation,
+      undefined,
+      `expected the lint missing reconciliation to carry NO evidence observation — an absent guard's {exists:false} is an absence; got ${JSON.stringify(observation)}`,
+    );
+  },
+);

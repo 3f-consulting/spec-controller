@@ -199,13 +199,17 @@ describe("[SCN-LNT-003] a @lint scenario whose named guard does not exist is rep
     // reconciling item (level-less static kind). Under the earlier coarse else
     // (the absent static guard folded into watermelon) the
     // item's outcome reads the WATERMELON instead, so this has teeth.
+    // A lint `missing` carries its obligation and NO observation: the absent static guard is FOUND
+    // as the negative fact {exists:false} — an ABSENCE, not an observed piece of evidence. Canon
+    // (double-entry-manifesto.md line 36): missing = Obligation Exists, Observation None. The prior
+    // shape pinned the {exists:false} record here as an `evidenceObservation` — a wrong-shape green
+    // corrected to canon (@SCN-LDG-028), uniform with the runtime `missing` path.
     expect(scenario?.verdict).toBe("out-of-balance");
     expect(scenario?.reconcilingItems).toEqual([
       {
         qualityCheck: "lint", staticGuard: ABSENT_GUARD,
         outcome: "missing",
         evidenceObligation: { qualityCheck: "lint", staticGuard: ABSENT_GUARD },
-        evidenceObservation: { qualityCheck: "lint", staticGuard: ABSENT_GUARD, exists: false, enforcedOverRealSource: false },
       },
     ]);
     expect(scenario?.qualityCheckReconciliations).toEqual([
@@ -213,7 +217,6 @@ describe("[SCN-LNT-003] a @lint scenario whose named guard does not exist is rep
         qualityCheck: "lint", staticGuard: ABSENT_GUARD,
         outcome: "missing",
         evidenceObligation: { qualityCheck: "lint", staticGuard: ABSENT_GUARD },
-        evidenceObservation: { qualityCheck: "lint", staticGuard: ABSENT_GUARD, exists: false, enforcedOverRealSource: false },
       },
     ]);
   });

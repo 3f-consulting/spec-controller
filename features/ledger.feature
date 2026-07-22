@@ -581,3 +581,18 @@ Feature: Ledger over declared-vs-observed evidence
       And it carries the evidence observation it reconciles (the credit side)
       And it carries no evidence obligation (the debit side is absent)
       And the JSON projects that evidence observation on the reconciliation
+
+  # LINT MISSING IS OBLIGATION-ONLY (@SCN-LDG-028, 3F-2016 / corrects 3F-1995). An absent static
+  # guard is read as {exists:false} — an ABSENCE, not an observation. Canon (double-entry-manifesto
+  # line 36): missing = Obligation Exists, Observation None. Only a REAL observation (exists:true →
+  # satisfied/watermelon) is carried; the absent-guard record is not modelled as an observation.
+  # Uniform with the runtime missing path, which already carries none.
+  Rule: a lint missing reconciliation carries its obligation and no observation — an absent guard is an absence
+
+    @unit @integration @SCN-LDG-028
+    Scenario: a lint missing quality-check reconciliation carries its obligation and no observation
+      Given a declared scenario "SCN-LDG-028" requiring a @lint guard absent from both package.json and CI
+      When the ledger reconciles that run
+      Then its lint Quality Check Reconciliation has outcome "missing"
+      And it carries the evidence obligation it reconciles (the debit side)
+      And it carries no evidence observation — an absent guard's {exists:false} is an absence, not an observation

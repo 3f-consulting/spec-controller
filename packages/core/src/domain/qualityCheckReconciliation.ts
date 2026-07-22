@@ -181,8 +181,10 @@ export interface QualityCheckReconciliation {
    * (`cites-unknown-scenario` / `cites-no-scenario` / `undemanded`) the fold produces from a
    * citing observation. ABSENT on `missing` (obligation Exists, observation None) and the
    * neither-side outcomes (`no-scn-code` / `broken` / `both-missing`), where no observation is in
-   * scope. `JSON.stringify` omits it when undefined, so a byte-identical golden is preserved
-   * everywhere the observation is absent.
+   * scope. For a lint `missing` the absent static guard is FOUND as the negative fact
+   * `{exists:false}` — an ABSENCE, not an observation (@SCN-LDG-028) — so it is NOT carried here:
+   * only a REAL observation (`exists:true`) is the credit side. `JSON.stringify` omits it when
+   * undefined, so a byte-identical golden is preserved everywhere the observation is absent.
    */
   evidenceObservation?: EvidenceObservation;
   /**
@@ -232,15 +234,19 @@ export function reconcileEvidenceObligation(
     } else {
       outcome = "missing";
     }
-    // The CREDIT side (@SCN-LDG-027): the matched static-guard observation, present for the
-    // two-sided outcomes `satisfied` / `watermelon` and absent for `missing` — the conditional
-    // spread keeps `missing` observation-free (obligation Exists, observation None).
+    // The CREDIT side (@SCN-LDG-027/@SCN-LDG-028): the matched static-guard observation, carried
+    // ONLY when it is a REAL observation — `exists:true` (the two-sided `satisfied` / `watermelon`).
+    // A guard absent from both package.json and CI is FOUND as the negative fact
+    // `{exists:false}` — an ABSENCE, not an observed piece of evidence — so `missing` carries
+    // NOTHING on the credit side (Obligation Exists, Observation None; double-entry-manifesto line
+    // 36), uniform with the runtime `missing` path. `obs?.exists` (not `obs`) is the discriminator:
+    // `find` locating the absent-guard record must not be mistaken for an observation existing.
     return {
       qualityCheck: "lint",
       staticGuard: guard,
       outcome,
       evidenceObligation: req,
-      ...(obs ? { evidenceObservation: obs } : {}),
+      ...(obs?.exists ? { evidenceObservation: obs } : {}),
     };
   }
 
