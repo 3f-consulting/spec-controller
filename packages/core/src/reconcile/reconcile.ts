@@ -37,7 +37,10 @@ import type {
   Ledger,
 } from "../model.js";
 import { evidenceObligationPairsOf } from "../model.js";
-import { reconcileEvidenceObligation } from "../domain/qualityCheckReconciliation.js";
+import {
+  reconcileEvidenceObligation,
+  makeQualityCheckReconciliation,
+} from "../domain/qualityCheckReconciliation.js";
 import { verdictFor, reconcilingItemsOf } from "../domain/scenarioReconciliation.js";
 
 // The whole-run verdict surface lives WITH the Ledger concept (`domain/ledger`, 3F-1994);
@@ -126,14 +129,16 @@ export function reconcile(
     // reconciles as satisfied/failing above and is NOT re-listed here.
     const undemandedItems: QualityCheckReconciliation[] = (byScn.get(d.scnId) ?? [])
       .filter((o) => !evidenceObligationPairs.has(`${d.scnId} ${o.qualityCheck}`))
-      .map((o) => ({
-        qualityCheck: o.qualityCheck,
-        outcome: "undemanded" as const,
-        // The CREDIT side (@SCN-LDG-027): the citing observation this item reconciles, carried on
-        // the reconciliation itself. `undemanded` is credit-only — no obligation is in scope.
-        evidenceObservation: o,
-        ...(o.locator !== undefined ? { locator: o.locator } : {}),
-      }));
+      .map((o) =>
+        makeQualityCheckReconciliation({
+          qualityCheck: o.qualityCheck,
+          outcome: "undemanded" as const,
+          // The CREDIT side (@SCN-LDG-027): the citing observation this item reconciles, carried on
+          // the reconciliation itself. `undemanded` is credit-only — no obligation is in scope.
+          evidenceObservation: o,
+          ...(o.locator !== undefined ? { locator: o.locator } : {}),
+        }),
+      );
 
     // BOTH-MISSING (@SCN-LDG-009) — the NEITHER-side outcome. When the reconciler
     // emitted NOTHING either way (zero declared evidence obligations AND zero undemanded credits — the
@@ -154,7 +159,9 @@ export function reconcile(
     // obligation, no pending — stays both-missing.)
     const rows = [...reconciledEvidenceObligations, ...undemandedItems];
     const qualityCheckReconciliations: QualityCheckReconciliation[] =
-      rows.length === 0 && pendingItems.length === 0 ? [{ outcome: "both-missing" }] : rows;
+      rows.length === 0 && pendingItems.length === 0
+        ? [makeQualityCheckReconciliation({ outcome: "both-missing" })]
+        : rows;
     // THE POSTED static guard CREDITS (@SCN-LDG-022) — a static guard credit carries no @SCN, so `byScn` (the
     // citation index) cannot hold it: its link to an account is the STATIC GUARD HANDLE. This scenario's
     // `@lint` obligations name the handles it demands, so the static guard credits answering them post
@@ -220,14 +227,16 @@ export function reconcile(
   }
   for (const scnId of phantomIds) {
     const citations = byScn.get(scnId) ?? [];
-    const items: QualityCheckReconciliation[] = citations.map((o) => ({
-      qualityCheck: o.qualityCheck,
-      outcome: "cites-unknown-scenario",
-      // The CREDIT side (@SCN-LDG-027): the citing observation this phantom item reconciles.
-      // `cites-unknown-scenario` is credit-only — a phantom account demands nothing.
-      evidenceObservation: o,
-      ...(o.locator !== undefined ? { locator: o.locator } : {}),
-    }));
+    const items: QualityCheckReconciliation[] = citations.map((o) =>
+      makeQualityCheckReconciliation({
+        qualityCheck: o.qualityCheck,
+        outcome: "cites-unknown-scenario",
+        // The CREDIT side (@SCN-LDG-027): the citing observation this phantom item reconciles.
+        // `cites-unknown-scenario` is credit-only — a phantom account demands nothing.
+        evidenceObservation: o,
+        ...(o.locator !== undefined ? { locator: o.locator } : {}),
+      }),
+    );
     scenarioReconciliations.push({
       scnId,
       kind: "phantom-scenario",
@@ -284,28 +293,34 @@ export function reconcile(
       // ONE `broken` item per proof that never ran, carrying its WHERE-TO-FIX (the locator) and
       // its WHAT-BROKE (the runner's message) — the payload that sends the reader to the harness.
       // Listed FIRST: a broken run's other suspense items are downstream noise.
-      ...brokenEvidence.map((o) => ({
-        qualityCheck: o.qualityCheck,
-        outcome: "broken" as const,
-        ...(o.locator !== undefined ? { locator: o.locator } : {}),
-        ...(o.message !== undefined ? { message: o.message } : {}),
-      })),
-      ...uncited.map((o) => ({
-        qualityCheck: o.qualityCheck,
-        outcome: "cites-no-scenario" as const,
-        // The CREDIT side (@SCN-LDG-027): the uncited runtime observation this suspense item
-        // reconciles. `cites-no-scenario` is credit-only — suspense demands nothing.
-        evidenceObservation: o,
-        ...(o.locator !== undefined ? { locator: o.locator } : {}),
-      })),
-      ...undemandedGuards.map((o) => ({
-        qualityCheck: "lint" as const,
-        staticGuard: o.staticGuard,
-        outcome: "cites-no-scenario" as const,
-        // The CREDIT side (@SCN-LDG-027): the undemanded static-guard observation this suspense
-        // item reconciles — the lint half of the credit-only `cites-no-scenario`.
-        evidenceObservation: o,
-      })),
+      ...brokenEvidence.map((o) =>
+        makeQualityCheckReconciliation({
+          qualityCheck: o.qualityCheck,
+          outcome: "broken" as const,
+          ...(o.locator !== undefined ? { locator: o.locator } : {}),
+          ...(o.message !== undefined ? { message: o.message } : {}),
+        }),
+      ),
+      ...uncited.map((o) =>
+        makeQualityCheckReconciliation({
+          qualityCheck: o.qualityCheck,
+          outcome: "cites-no-scenario" as const,
+          // The CREDIT side (@SCN-LDG-027): the uncited runtime observation this suspense item
+          // reconciles. `cites-no-scenario` is credit-only — suspense demands nothing.
+          evidenceObservation: o,
+          ...(o.locator !== undefined ? { locator: o.locator } : {}),
+        }),
+      ),
+      ...undemandedGuards.map((o) =>
+        makeQualityCheckReconciliation({
+          qualityCheck: "lint" as const,
+          staticGuard: o.staticGuard,
+          outcome: "cites-no-scenario" as const,
+          // The CREDIT side (@SCN-LDG-027): the undemanded static-guard observation this suspense
+          // item reconciles — the lint half of the credit-only `cites-no-scenario`.
+          evidenceObservation: o,
+        }),
+      ),
     ];
     scenarioReconciliations.push({
       scnId: "(no scenario)",
@@ -348,7 +363,9 @@ export function reconcile(
     // scenario-scope degenerate shape — precedent: the scenario-scope pending obligation in
     // journal.ts). It lives ONLY here, on the reconciling item; the scenario-level
     // `evidenceObligations` below STAYS empty, so the census + markdown are untouched.
-    const items: QualityCheckReconciliation[] = [{ outcome: "no-scn-code", evidenceObligation: {} }];
+    const items: QualityCheckReconciliation[] = [
+      makeQualityCheckReconciliation({ outcome: "no-scn-code", evidenceObligation: {} }),
+    ];
     scenarioReconciliations.push({
       // The scenario's NAME is its only handle — it has no code. (Precedent: the suspense row's
       // "(no scenario)" sentinel; `featureCodeOf` falls back to the raw id when it cannot parse.)

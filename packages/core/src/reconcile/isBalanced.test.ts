@@ -19,12 +19,31 @@
 import { describe, it, expect } from "vitest";
 
 import { isBalanced, hasPendingItems, hasBrokenEvidence, reconcile } from "./reconcile.js";
+import { makeQualityCheckReconciliation, OUTCOME_SIDE_PROFILE } from "../model.js";
 import type {
   Ledger,
   ScenarioReconciliation,
   Scenario,
   EvidenceObservation,
 } from "../model.js";
+
+// @SCN-LDG-030: fixtures must mint branded Quality Check Reconciliations via the smart constructor.
+// This helper supplies canon-correct PLACEHOLDER sides (content is immaterial to this predicate —
+// only side PRESENCE is constrained by the invariant) so each fixture routes through the constructor.
+function qcr(
+  fields: Parameters<typeof makeQualityCheckReconciliation>[0],
+): ReturnType<typeof makeQualityCheckReconciliation> {
+  const profile = OUTCOME_SIDE_PROFILE[fields.outcome];
+  return makeQualityCheckReconciliation({
+    ...fields,
+    ...(profile.obligation === "Exists" && fields.evidenceObligation === undefined
+      ? { evidenceObligation: { qualityCheck: "unit" } }
+      : {}),
+    ...(profile.observation === "Exists" && fields.evidenceObservation === undefined
+      ? { evidenceObservation: { qualityCheck: "unit", scnId: "SCN-FIXTURE-001", status: "passed" } }
+      : {}),
+  });
+}
 
 /** A DECLARED scenario row that reconciles balanced — zero reconciling items. */
 const balancedScenario = (scnId: string): ScenarioReconciliation => ({
@@ -33,7 +52,7 @@ const balancedScenario = (scnId: string): ScenarioReconciliation => ({
   evidenceObservations: [],
   evidenceObligations: [],
   verdict: "balanced",
-  qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+  qualityCheckReconciliations: [qcr({ qualityCheck: "unit", outcome: "satisfied" })],
   pendingItems: [],
   reconcilingItems: [],
 });
@@ -58,9 +77,9 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
           evidenceObservations: [],
           evidenceObligations: [],
           verdict: "out-of-balance",
-          qualityCheckReconciliations: [{ qualityCheck: "integration", outcome: "missing" }],
+          qualityCheckReconciliations: [qcr({ qualityCheck: "integration", outcome: "missing" })],
           pendingItems: [],
-          reconcilingItems: [{ qualityCheck: "integration", outcome: "missing" }],
+          reconcilingItems: [qcr({ qualityCheck: "integration", outcome: "missing" })],
         },
       ],
     };
@@ -83,9 +102,9 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
           evidenceObservations: [],
           evidenceObligations: [],
           verdict: "out-of-balance",
-          qualityCheckReconciliations: [{ qualityCheck: "lint", staticGuard: "guard:static", outcome: "cites-no-scenario" }],
+          qualityCheckReconciliations: [qcr({ qualityCheck: "lint", staticGuard: "guard:static", outcome: "cites-no-scenario" })],
           pendingItems: [],
-          reconcilingItems: [{ qualityCheck: "lint", staticGuard: "guard:static", outcome: "cites-no-scenario" }],
+          reconcilingItems: [qcr({ qualityCheck: "lint", staticGuard: "guard:static", outcome: "cites-no-scenario" })],
         },
       ],
     };
@@ -105,9 +124,9 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
           evidenceObservations: [],
           evidenceObligations: [],
           verdict: "out-of-balance",
-          qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "cites-unknown-scenario" }],
+          qualityCheckReconciliations: [qcr({ qualityCheck: "unit", outcome: "cites-unknown-scenario" })],
           pendingItems: [],
-          reconcilingItems: [{ qualityCheck: "unit", outcome: "cites-unknown-scenario" }],
+          reconcilingItems: [qcr({ qualityCheck: "unit", outcome: "cites-unknown-scenario" })],
         },
       ],
     };

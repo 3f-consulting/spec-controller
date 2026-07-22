@@ -21,7 +21,26 @@
 
 import { describe, it, expect } from "vitest";
 import { renderJson } from "./json.js";
+import { makeQualityCheckReconciliation, OUTCOME_SIDE_PROFILE } from "../model.js";
 import type { Ledger } from "../model.js";
+
+// @SCN-LDG-030: fixtures must mint branded Quality Check Reconciliations via the smart constructor.
+// This helper supplies canon-correct PLACEHOLDER sides (content is immaterial to these tests — only
+// side PRESENCE is constrained by the invariant) so each fixture routes through the constructor.
+function qcr(
+  fields: Parameters<typeof makeQualityCheckReconciliation>[0],
+): ReturnType<typeof makeQualityCheckReconciliation> {
+  const profile = OUTCOME_SIDE_PROFILE[fields.outcome];
+  return makeQualityCheckReconciliation({
+    ...fields,
+    ...(profile.obligation === "Exists" && fields.evidenceObligation === undefined
+      ? { evidenceObligation: { qualityCheck: "unit" } }
+      : {}),
+    ...(profile.observation === "Exists" && fields.evidenceObservation === undefined
+      ? { evidenceObservation: { qualityCheck: "unit", scnId: "SCN-FIXTURE-001", status: "passed" } }
+      : {}),
+  });
+}
 import type { RunContext } from "../provenance/provenance.js";
 import type { RuntimeEvidenceObservationKindCounts } from "../census/evidenceObservations.js";
 
@@ -381,8 +400,8 @@ describe("[SCN-PND-011] the JSON summary carries the Pending Items tally", () =>
         evidenceObservations: [],
         evidenceObligations: [],
         verdict: "out-of-balance",
-        qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "missing" }],
-        reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
+        qualityCheckReconciliations: [qcr({ qualityCheck: "unit", outcome: "missing" })],
+        reconcilingItems: [qcr({ qualityCheck: "unit", outcome: "missing" })],
         pendingItems: [{ qualityCheck: "integration" }],
       },
     ],

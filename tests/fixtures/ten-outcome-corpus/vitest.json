@@ -1,0 +1,65 @@
+{
+  "testResults": [
+    {
+      "name": "tests/fixtures/ten-outcome-corpus/toc-001.test.ts",
+      "status": "passed",
+      "assertionResults": [
+        {
+          "fullName": "satisfied [SCN-TOC-001]",
+          "title": "[SCN-TOC-001] a passing unit obligation",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "name": "tests/fixtures/ten-outcome-corpus/toc-002.test.ts",
+      "status": "failed",
+      "assertionResults": [
+        {
+          "fullName": "failing [SCN-TOC-002]",
+          "title": "[SCN-TOC-002] a failing unit obligation",
+          "status": "failed"
+        }
+      ]
+    },
+    {
+      "name": "tests/fixtures/ten-outcome-corpus/toc-005-undemanded.test.ts",
+      "status": "passed",
+      "assertionResults": [
+        {
+          "fullName": "undemanded unit credit [SCN-TOC-005]",
+          "title": "[SCN-TOC-005] a unit credit at a quality-check the scenario never demanded",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "name": "tests/fixtures/ten-outcome-corpus/toc-phantom.test.ts",
+      "status": "passed",
+      "assertionResults": [
+        {
+          "fullName": "phantom [SCN-TOC-999]",
+          "title": "[SCN-TOC-999] a credit citing a scenario no feature declares",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "name": "tests/fixtures/ten-outcome-corpus/toc-uncited.test.ts",
+      "status": "passed",
+      "assertionResults": [
+        {
+          "fullName": "a passing test that names no scenario at all",
+          "title": "a passing test that carries no code marker",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "name": "tests/fixtures/ten-outcome-corpus/toc-broken.test.ts",
+      "status": "failed",
+      "message": "Failed to collect: SyntaxError: Unexpected token in tests/fixtures/ten-outcome-corpus/toc-broken.test.ts",
+      "assertionResults": []
+    }
+  ]
+}

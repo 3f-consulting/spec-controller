@@ -23,12 +23,31 @@
 import { describe, it, expect } from "vitest";
 import { renderMarkdown } from "./markdown.js";
 import type { Ledger, Outcome, ScenarioReconciliation } from "../model.js";
-import { OUTCOME_DESCRIPTION } from "../model.js";
+import { OUTCOME_DESCRIPTION, makeQualityCheckReconciliation, OUTCOME_SIDE_PROFILE } from "../model.js";
 import { isBalanced, reconcile } from "../reconcile/reconcile.js";
 import type { RunContext } from "../provenance/provenance.js";
 import type { RuntimeEvidenceObservationKindCounts } from "../census/evidenceObservations.js";
 import { countRuntimeEvidenceObservationKinds } from "../census/evidenceObservations.js";
 import type { EvidenceObservation, Scenario, RuntimeQualityCheck } from "../model.js";
+
+// @SCN-LDG-030: fixtures must mint branded Quality Check Reconciliations via the smart constructor.
+// This helper supplies canon-correct PLACEHOLDER sides (content is immaterial to the renderer, which
+// reads no per-QCR side — only side PRESENCE is constrained by the invariant) so each hand-built
+// fixture routes through the constructor.
+function qcr(
+  fields: Parameters<typeof makeQualityCheckReconciliation>[0],
+): ReturnType<typeof makeQualityCheckReconciliation> {
+  const profile = OUTCOME_SIDE_PROFILE[fields.outcome];
+  return makeQualityCheckReconciliation({
+    ...fields,
+    ...(profile.obligation === "Exists" && fields.evidenceObligation === undefined
+      ? { evidenceObligation: { qualityCheck: "unit" } }
+      : {}),
+    ...(profile.observation === "Exists" && fields.evidenceObservation === undefined
+      ? { evidenceObservation: { qualityCheck: "unit", scnId: "SCN-FIXTURE-001", status: "passed" } }
+      : {}),
+  });
+}
 
 /** A minimal balanced balance — enough for the renderer to produce a report. */
 const balance: Ledger = {
@@ -521,11 +540,11 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
         evidenceObligations: [],
         verdict: "out-of-balance",
         qualityCheckReconciliations: [
-          { qualityCheck: "lint", staticGuard: "guard-lint", outcome: "watermelon" },
+          qcr({ qualityCheck: "lint", staticGuard: "guard-lint", outcome: "watermelon" }),
         ],
         pendingItems: [],
         reconcilingItems: [
-          { qualityCheck: "lint", staticGuard: "guard-lint", outcome: "watermelon" },
+          qcr({ qualityCheck: "lint", staticGuard: "guard-lint", outcome: "watermelon" }),
         ],
       },
       {
@@ -534,7 +553,7 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
         evidenceObservations: [],
         evidenceObligations: [],
         verdict: "balanced",
-        qualityCheckReconciliations: [{ qualityCheck: "lint", staticGuard: "guard-lint", outcome: "satisfied" }],
+        qualityCheckReconciliations: [qcr({ qualityCheck: "lint", staticGuard: "guard-lint", outcome: "satisfied" })],
         pendingItems: [],
         reconcilingItems: [],
       },
@@ -2003,21 +2022,25 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
   };
 
   // The lived an adopter's repository shape (3F-1642): vitest's collection failure.
-  const vitestBroken = balanceWithBroken({
-    qualityCheck: "unit",
-    outcome: "broken",
-    locator: VITEST_LOCATOR,
-    message: VITEST_MESSAGE,
-  });
+  const vitestBroken = balanceWithBroken(
+    qcr({
+      qualityCheck: "unit",
+      outcome: "broken",
+      locator: VITEST_LOCATOR,
+      message: VITEST_MESSAGE,
+    }),
+  );
 
   // The cucumber instance (3F-1654): an ambiguous step. The item's shape is identical — locator
   // + message — which is exactly why the renderer needs no per-reader branch.
-  const cucumberBroken = balanceWithBroken({
-    qualityCheck: "integration",
-    outcome: "broken",
-    locator: CUCUMBER_LOCATOR,
-    message: CUCUMBER_MESSAGE,
-  });
+  const cucumberBroken = balanceWithBroken(
+    qcr({
+      qualityCheck: "integration",
+      outcome: "broken",
+      locator: CUCUMBER_LOCATOR,
+      message: CUCUMBER_MESSAGE,
+    }),
+  );
 
   /** The run-integrity section alone — where the stamp and the per-item lines live. */
   const integrityOf = (md: string): string => md.slice(md.indexOf("## Run integrity"));
@@ -2326,7 +2349,7 @@ describe('[SCN-RPT-024] the reconciliation collection is named "Scenario Reconci
         evidenceObservations: [],
         evidenceObligations: [],
         verdict: "balanced",
-        qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+        qualityCheckReconciliations: [qcr({ qualityCheck: "unit", outcome: "satisfied" })],
         pendingItems: [],
         reconcilingItems: [],
       },
@@ -2336,9 +2359,9 @@ describe('[SCN-RPT-024] the reconciliation collection is named "Scenario Reconci
         evidenceObservations: [],
         evidenceObligations: [],
         verdict: "out-of-balance",
-        qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "cites-unknown-scenario" }],
+        qualityCheckReconciliations: [qcr({ qualityCheck: "unit", outcome: "cites-unknown-scenario" })],
         pendingItems: [],
-        reconcilingItems: [{ qualityCheck: "unit", outcome: "cites-unknown-scenario" }],
+        reconcilingItems: [qcr({ qualityCheck: "unit", outcome: "cites-unknown-scenario" })],
       },
       {
         scnId: "(no scenario)",
@@ -2346,9 +2369,9 @@ describe('[SCN-RPT-024] the reconciliation collection is named "Scenario Reconci
         evidenceObservations: [],
         evidenceObligations: [],
         verdict: "out-of-balance",
-        qualityCheckReconciliations: [{ qualityCheck: "lint", staticGuard: "guard:static", outcome: "cites-no-scenario" }],
+        qualityCheckReconciliations: [qcr({ qualityCheck: "lint", staticGuard: "guard:static", outcome: "cites-no-scenario" })],
         pendingItems: [],
-        reconcilingItems: [{ qualityCheck: "lint", staticGuard: "guard:static", outcome: "cites-no-scenario" }],
+        reconcilingItems: [qcr({ qualityCheck: "lint", staticGuard: "guard:static", outcome: "cites-no-scenario" })],
       },
     ],
   };

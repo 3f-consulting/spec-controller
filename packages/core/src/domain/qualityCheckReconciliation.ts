@@ -146,11 +146,26 @@ export const OUT_OF_BALANCE_OUTCOMES: readonly Outcome[] = (
 ).filter((outcome) => outcome !== "satisfied");
 
 /**
+ * THE NOMINAL BRAND (@SCN-LDG-030, 3F-2016) — a module-private `unique symbol` phantom field.
+ * `QualityCheckReconciliation` is `QualityCheckReconciliationFields` PLUS a required field of this
+ * symbol's type, so no object literal typechecks as a `QualityCheckReconciliation` OUTSIDE this
+ * module — only `makeQualityCheckReconciliation` (which casts) can mint one. `declare const`: the
+ * symbol has no runtime presence; the field is a Symbol key, so `JSON.stringify` skips it (never
+ * serialised) and `.toEqual` sees no runtime key (value-literal comparisons stay green). The brand
+ * restricts CONSTRUCTION only — consumers only READ QCRs, so no read site changes.
+ */
+declare const qualityCheckReconciliationBrand: unique symbol;
+
+/**
  * A single evidenceObligation's reconciliation outcome — a reconciling item. A SINGLE
  * flat shape mirroring EvidenceObligation: keyed on `qualityCheck`, with
  * `guard` present IFF `qualityCheck === 'lint'` (the static-guard reconciling item).
+ *
+ * The un-branded FIELDS (module-internal). The exported `QualityCheckReconciliation` type is this
+ * intersected with the nominal brand; `makeQualityCheckReconciliation` takes these fields and mints
+ * the branded value.
  */
-export interface QualityCheckReconciliation {
+interface QualityCheckReconciliationFields {
   /**
    * The flat quality-check this reconciling item is about. ABSENT only for the degenerate
    * `both-missing` item — the neither-side shape, blank on both sides: it names no
@@ -207,6 +222,82 @@ export interface QualityCheckReconciliation {
 }
 
 /**
+ * A single evidenceObligation's reconciliation outcome — the branded reconciling item. The fields
+ * intersected with the nominal brand (@SCN-LDG-030): mintable ONLY by
+ * `makeQualityCheckReconciliation`, so every QCR in the system has passed the (outcome,
+ * side-presence) consistency check. The barrel (`index.ts`, @SCN-API-001) re-exports this TYPE via
+ * `model.ts`; the phantom field adds no exported symbol, so the frozen v1 surface is unchanged.
+ */
+export type QualityCheckReconciliation = QualityCheckReconciliationFields & {
+  readonly [qualityCheckReconciliationBrand]: typeof qualityCheckReconciliationBrand;
+};
+
+/**
+ * THE CANON OUTCOME-SIDE PROFILE (@SCN-LDG-030, 3F-2016) — the (outcome → side-presence) table
+ * transcribed from canon (`double-entry-manifesto.md` lines 35-44), keyed by EVERY `Outcome` (a
+ * `Record<Outcome, …>`), so a new outcome cannot join the union without declaring its side
+ * profile here — the type-forced totality that makes this map the SINGLE SOURCE the invariant is
+ * checked against (mirroring `OUTCOME_DESCRIPTION`).
+ *
+ * `obligation`/`observation` are `"Exists" | "None"` — whether a canon-correct reconciling item
+ * of that outcome CARRIES the debit (evidence obligation) and the credit (evidence observation)
+ * side respectively. NOT a naive function of side-presence: `missing` and `no-scn-code` share
+ * (Exists, None); the three credit outcomes (`cites-unknown-scenario` / `cites-no-scenario` /
+ * `undemanded`) share (None, Exists). So the invariant `makeQualityCheckReconciliation` enforces
+ * is (outcome, side-presence) CONSISTENCY against this row, never a derivation of outcome FROM the
+ * sides.
+ */
+export const OUTCOME_SIDE_PROFILE: Record<
+  Outcome,
+  { obligation: "Exists" | "None"; observation: "Exists" | "None" }
+> = {
+  satisfied: { obligation: "Exists", observation: "Exists" },
+  missing: { obligation: "Exists", observation: "None" },
+  failing: { obligation: "Exists", observation: "Exists" },
+  watermelon: { obligation: "Exists", observation: "Exists" },
+  "no-scn-code": { obligation: "Exists", observation: "None" },
+  "cites-unknown-scenario": { obligation: "None", observation: "Exists" },
+  "cites-no-scenario": { obligation: "None", observation: "Exists" },
+  undemanded: { obligation: "None", observation: "Exists" },
+  broken: { obligation: "None", observation: "None" },
+  "both-missing": { obligation: "None", observation: "None" },
+};
+
+/**
+ * THE SMART CONSTRUCTOR (@SCN-LDG-030, 3F-2016) — the ONLY way to mint a
+ * `QualityCheckReconciliation`. It takes `outcome` as GIVEN (a consistency check, NOT a
+ * derivation — `missing`/`no-scn-code` share a profile, so the outcome cannot be recovered from
+ * side-presence alone), looks up the canon row in `OUTCOME_SIDE_PROFILE`, and THROWS if the
+ * carried sides disagree with it: a divergent (outcome, side-presence) pair — the watermelon class
+ * this tool exists to catch, in its own output — is UNCONSTRUCTIBLE.
+ *
+ * Returns `fields` UNCHANGED (cast to the branded type): the producer's own key order is preserved
+ * verbatim, so every unchanged row stays byte-identical (no object is reconstructed).
+ */
+export function makeQualityCheckReconciliation(
+  fields: QualityCheckReconciliationFields
+): QualityCheckReconciliation {
+  const profile = OUTCOME_SIDE_PROFILE[fields.outcome];
+  // The DEBIT-side check: the obligation is carried IFF canon says it Exists for this outcome.
+  if ((fields.evidenceObligation !== undefined) !== (profile.obligation === "Exists")) {
+    throw new Error(
+      `QualityCheckReconciliation invariant (@SCN-LDG-030): outcome "${fields.outcome}" requires the ` +
+        `evidence obligation (debit) side to be ${profile.obligation}, but it was ` +
+        `${fields.evidenceObligation !== undefined ? "Exists" : "None"}.`,
+    );
+  }
+  // The CREDIT-side check: the observation is carried IFF canon says it Exists for this outcome.
+  if ((fields.evidenceObservation !== undefined) !== (profile.observation === "Exists")) {
+    throw new Error(
+      `QualityCheckReconciliation invariant (@SCN-LDG-030): outcome "${fields.outcome}" requires the ` +
+        `evidence observation (credit) side to be ${profile.observation}, but it was ` +
+        `${fields.evidenceObservation !== undefined ? "Exists" : "None"}.`,
+    );
+  }
+  return fields as QualityCheckReconciliation;
+}
+
+/**
  * Reconcile one declared evidenceObligation against the observed evidence, keyed on the
  * flat `qualityCheck`. `qualityCheck === "lint"` is the watermelon
  * discriminator: it routes to the STATIC-guard mapping;
@@ -244,13 +335,13 @@ export function reconcileEvidenceObligation(
     // NOTHING on the credit side (Obligation Exists, Observation None; double-entry-manifesto line
     // 36), uniform with the runtime `missing` path. `obs?.exists` (not `obs`) is the discriminator:
     // `find` locating the absent-guard record must not be mistaken for an observation existing.
-    return {
+    return makeQualityCheckReconciliation({
       qualityCheck: "lint",
       staticGuard: guard,
       outcome,
       evidenceObligation: req,
       ...(obs?.exists ? { evidenceObservation: obs } : {}),
-    };
+    });
   }
 
   // A runtime evidence obligation — matched by (scnId, quality-check) among the runtime
@@ -285,10 +376,10 @@ export function reconcileEvidenceObligation(
   // The CREDIT side (@SCN-LDG-027): the matched runtime observation, present for the two-sided
   // outcomes `satisfied` / `failing` and absent for `missing` — the conditional spread keeps
   // `missing` observation-free (obligation Exists, observation None).
-  return {
+  return makeQualityCheckReconciliation({
     qualityCheck: req.qualityCheck,
     outcome,
     evidenceObligation: req,
     ...(match ? { evidenceObservation: match } : {}),
-  };
+  });
 }

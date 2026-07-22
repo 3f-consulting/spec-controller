@@ -1,0 +1,7 @@
+{
+  "name": "ten-outcome-corpus-fixture",
+  "private": true,
+  "scripts": {
+    "guard:wm": "echo the watermelon guard exists as a script but CI never runs it"
+  }
+}

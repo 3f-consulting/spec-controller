@@ -614,3 +614,21 @@ Feature: Ledger over declared-vs-observed evidence
       And it carries a scenario-scope evidence obligation — empty, with no qualityCheck and no staticGuard
       And it carries no evidence observation
       And the scenario-level evidence obligations stay empty, so the census and markdown are unchanged
+
+  # THE (OUTCOME, SIDE-PRESENCE) INVARIANT (@SCN-LDG-030, 3F-2016). Slice B made the two sides
+  # optional and attached them procedurally, but nothing tied outcome to side-presence — so a QCR
+  # could (and did) carry a canon-divergent pair, pinned green (the watermelon class this tool
+  # exists to catch, in its own output). The fix: a QCR is UNCONSTRUCTIBLE except via
+  # makeQualityCheckReconciliation, which enforces (outcome, side-presence) consistency with the
+  # canon outcome table (double-entry-manifesto.md lines 35-44). NOT naive derivation — missing and
+  # no-scn-code share (Exists, None); the three credit outcomes share (None, Exists) — a
+  # consistency constraint against the type-forced OUTCOME_SIDE_PROFILE map.
+  Rule: a Quality Check Reconciliation's carried sides are consistent with its outcome
+
+    @unit @integration @SCN-LDG-030
+    Scenario: every outcome's sides match canon, a divergent pair is unconstructible, and the emitted report agrees
+      Given the canon outcome-side profile OUTCOME_SIDE_PROFILE
+      When a Quality Check Reconciliation is constructed for each outcome with its canon-correct sides
+      Then each reconciliation's side-presence matches its canon row
+      And constructing any outcome with a forbidden side throws — a divergent pair is unconstructible
+      And when the real tool balances a ten-outcome corpus, every emitted Quality Check Reconciliation's sides match its canon row

@@ -20,7 +20,27 @@ import { renderJson } from "../render/json.js";
 import { renderReport, renderMarkdown } from "../render/markdown.js";
 import { parseScenarios } from "../parse/scenarios.js";
 import { isBalanced, reconcile } from "../reconcile/reconcile.js";
+import { makeQualityCheckReconciliation, OUTCOME_SIDE_PROFILE } from "../model.js";
 import type { Ledger } from "../model.js";
+
+// @SCN-LDG-030: fixtures must mint branded Quality Check Reconciliations via the smart constructor.
+// This helper supplies canon-correct PLACEHOLDER sides (content is immaterial to these assembler
+// tests, which tally by OUTCOME, not by side presence — only side PRESENCE is constrained by the
+// invariant) so each fixture routes through the constructor.
+function qcr(
+  fields: Parameters<typeof makeQualityCheckReconciliation>[0],
+): ReturnType<typeof makeQualityCheckReconciliation> {
+  const profile = OUTCOME_SIDE_PROFILE[fields.outcome];
+  return makeQualityCheckReconciliation({
+    ...fields,
+    ...(profile.obligation === "Exists" && fields.evidenceObligation === undefined
+      ? { evidenceObligation: { qualityCheck: "unit" } }
+      : {}),
+    ...(profile.observation === "Exists" && fields.evidenceObservation === undefined
+      ? { evidenceObservation: { qualityCheck: "unit", scnId: "SCN-FIXTURE-001", status: "passed" } }
+      : {}),
+  });
+}
 import type { RunContext } from "../provenance/provenance.js";
 import type { EvidenceObligations } from "../census/evidenceObligations.js";
 import type { RuntimeEvidenceObservationKindCounts } from "../census/evidenceObservations.js";
@@ -37,7 +57,7 @@ const balance: Ledger = {
       evidenceObservations: [],
       evidenceObligations: [],
       verdict: "balanced",
-      qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+      qualityCheckReconciliations: [qcr({ qualityCheck: "unit", outcome: "satisfied" })],
       pendingItems: [],
       reconcilingItems: [],
     },
@@ -48,13 +68,13 @@ const balance: Ledger = {
       evidenceObligations: [],
       verdict: "out-of-balance",
       qualityCheckReconciliations: [
-        { qualityCheck: "unit", outcome: "missing" },
-        { qualityCheck: "integration", outcome: "missing" },
+        qcr({ qualityCheck: "unit", outcome: "missing" }),
+        qcr({ qualityCheck: "integration", outcome: "missing" }),
       ],
       pendingItems: [],
       reconcilingItems: [
-        { qualityCheck: "unit", outcome: "missing" },
-        { qualityCheck: "integration", outcome: "missing" },
+        qcr({ qualityCheck: "unit", outcome: "missing" }),
+        qcr({ qualityCheck: "integration", outcome: "missing" }),
       ],
     },
   ],
@@ -127,7 +147,7 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
         evidenceObservations: [],
         evidenceObligations: [],
         verdict: "balanced",
-        qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+        qualityCheckReconciliations: [qcr({ qualityCheck: "unit", outcome: "satisfied" })],
         pendingItems: [],
         reconcilingItems: [],
       },
@@ -137,7 +157,7 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
         evidenceObservations: [],
         evidenceObligations: [],
         verdict: "balanced",
-        qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+        qualityCheckReconciliations: [qcr({ qualityCheck: "unit", outcome: "satisfied" })],
         pendingItems: [],
         reconcilingItems: [],
       },
@@ -147,9 +167,9 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
         evidenceObservations: [],
         evidenceObligations: [],
         verdict: "out-of-balance",
-        qualityCheckReconciliations: [{ qualityCheck: "lint", staticGuard: "guard:static", outcome: "cites-no-scenario" }],
+        qualityCheckReconciliations: [qcr({ qualityCheck: "lint", staticGuard: "guard:static", outcome: "cites-no-scenario" })],
         pendingItems: [],
-        reconcilingItems: [{ qualityCheck: "lint", staticGuard: "guard:static", outcome: "cites-no-scenario" }],
+        reconcilingItems: [qcr({ qualityCheck: "lint", staticGuard: "guard:static", outcome: "cites-no-scenario" })],
       },
     ],
   };
@@ -189,9 +209,9 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
           evidenceObservations: [],
           evidenceObligations: [],
           verdict: "out-of-balance",
-          qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "cites-unknown-scenario" }],
+          qualityCheckReconciliations: [qcr({ qualityCheck: "unit", outcome: "cites-unknown-scenario" })],
           pendingItems: [],
-          reconcilingItems: [{ qualityCheck: "unit", outcome: "cites-unknown-scenario" }],
+          reconcilingItems: [qcr({ qualityCheck: "unit", outcome: "cites-unknown-scenario" })],
         },
       ],
     };
@@ -304,12 +324,13 @@ describe("[SCN-RMD-002] the ledger serialises under the top-level key ledger, be
     const outOfBalance = parsed.ledger.scenarioReconciliations.find(
       (s: { scnId: string }) => s.scnId === "SCN-RMD-002"
     );
-    // The flat quality-check coordinate: a runtime sub-row's keys are exactly
-    // qualityCheck / outcome (the retired kind / level gone); the outcome literal survives
-    // (the outcome-value rename is still deferred).
+    // The flat quality-check coordinate: a runtime sub-row's keys are the flat qualityCheck /
+    // outcome (the retired kind / level gone), plus the debit `evidenceObligation` a `missing`
+    // reconciliation carries (canon, @SCN-LDG-026 / @SCN-LDG-030 — Obligation Exists, Observation
+    // None); the outcome literal survives (the outcome-value rename is still deferred).
     expect(outOfBalance.qualityCheckReconciliations[0].outcome).toBe("missing");
     expect(Object.keys(outOfBalance.qualityCheckReconciliations[0]).sort()).toEqual(
-      ["qualityCheck", "outcome"].sort()
+      ["evidenceObligation", "qualityCheck", "outcome"].sort()
     );
   });
 });
@@ -442,11 +463,11 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
         evidenceObligations: [],
         verdict: "out-of-balance",
         qualityCheckReconciliations: [
-          { qualityCheck: "lint", staticGuard: "lint:foo", outcome: "satisfied" },
-          { qualityCheck: "unit", outcome: "missing" },
+          qcr({ qualityCheck: "lint", staticGuard: "lint:foo", outcome: "satisfied" }),
+          qcr({ qualityCheck: "unit", outcome: "missing" }),
         ],
         pendingItems: [],
-        reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
+        reconcilingItems: [qcr({ qualityCheck: "unit", outcome: "missing" })],
       },
       {
         scnId: "SCN-RMD-011",
@@ -455,11 +476,11 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
         evidenceObligations: [],
         verdict: "out-of-balance",
         qualityCheckReconciliations: [
-          { qualityCheck: "lint", staticGuard: "lint:bar", outcome: "watermelon" },
+          qcr({ qualityCheck: "lint", staticGuard: "lint:bar", outcome: "watermelon" }),
         ],
         pendingItems: [],
         reconcilingItems: [
-          { qualityCheck: "lint", staticGuard: "lint:bar", outcome: "watermelon" },
+          qcr({ qualityCheck: "lint", staticGuard: "lint:bar", outcome: "watermelon" }),
         ],
       },
     ],
@@ -547,9 +568,9 @@ describe("[SCN-RMD-006] the report model carries the feature titles", () => {
         evidenceObservations: [],
         evidenceObligations: [],
         verdict: "out-of-balance",
-        qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "missing" }],
+        qualityCheckReconciliations: [qcr({ qualityCheck: "unit", outcome: "missing" })],
         pendingItems: [],
-        reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
+        reconcilingItems: [qcr({ qualityCheck: "unit", outcome: "missing" })],
       },
       {
         scnId: "SCN-LNT-002",
@@ -558,11 +579,11 @@ describe("[SCN-RMD-006] the report model carries the feature titles", () => {
         evidenceObligations: [],
         verdict: "out-of-balance",
         qualityCheckReconciliations: [
-          { qualityCheck: "lint", staticGuard: "guard-lint", outcome: "watermelon" },
+          qcr({ qualityCheck: "lint", staticGuard: "guard-lint", outcome: "watermelon" }),
         ],
         pendingItems: [],
         reconcilingItems: [
-          { qualityCheck: "lint", staticGuard: "guard-lint", outcome: "watermelon" },
+          qcr({ qualityCheck: "lint", staticGuard: "guard-lint", outcome: "watermelon" }),
         ],
       },
     ],
@@ -743,12 +764,12 @@ describe("[SCN-LDG-008] the two attributed counts stay distinct (ruling Q1)", ()
         evidenceObligations: [],
         verdict: "out-of-balance",
         qualityCheckReconciliations: [
-          { qualityCheck: "unit", outcome: "satisfied" },
-          { qualityCheck: "integration", outcome: "undemanded", locator: "src/undemanded.test.ts" },
+          qcr({ qualityCheck: "unit", outcome: "satisfied" }),
+          qcr({ qualityCheck: "integration", outcome: "undemanded", locator: "src/undemanded.test.ts" }),
         ],
         pendingItems: [],
         reconcilingItems: [
-          { qualityCheck: "integration", outcome: "undemanded", locator: "src/undemanded.test.ts" },
+          qcr({ qualityCheck: "integration", outcome: "undemanded", locator: "src/undemanded.test.ts" }),
         ],
       },
     ],
@@ -831,8 +852,8 @@ describe("[SCN-PND-011] the summary materialises a Pending Items tally, separate
         evidenceObservations: [],
         evidenceObligations: [],
         verdict: "out-of-balance",
-        qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "missing" }],
-        reconcilingItems: [{ qualityCheck: "unit", outcome: "missing" }],
+        qualityCheckReconciliations: [qcr({ qualityCheck: "unit", outcome: "missing" })],
+        reconcilingItems: [qcr({ qualityCheck: "unit", outcome: "missing" })],
         pendingItems: [{ qualityCheck: "integration" }],
       },
       {
@@ -841,7 +862,7 @@ describe("[SCN-PND-011] the summary materialises a Pending Items tally, separate
         evidenceObservations: [],
         evidenceObligations: [],
         verdict: "balanced",
-        qualityCheckReconciliations: [{ qualityCheck: "unit", outcome: "satisfied" }],
+        qualityCheckReconciliations: [qcr({ qualityCheck: "unit", outcome: "satisfied" })],
         reconcilingItems: [],
         pendingItems: [],
       },

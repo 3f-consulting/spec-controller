@@ -1,0 +1,19 @@
+[
+  {
+    "uri": "tests/fixtures/ten-outcome-corpus/features/target.feature",
+    "name": "ten-outcome corpus",
+    "elements": [
+      {
+        "name": "undemanded — a real scenario cited at a quality-check it never demanded",
+        "tags": [{ "name": "@SCN-TOC-005" }, { "name": "@e2e" }],
+        "steps": [
+          {
+            "keyword": "Given ",
+            "name": "an e2e obligation discharged by an e2e observation",
+            "result": { "status": "passed" }
+          }
+        ]
+      }
+    ]
+  }
+]

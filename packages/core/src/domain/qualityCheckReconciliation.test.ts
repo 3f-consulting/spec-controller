@@ -11,7 +11,12 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { reconcileEvidenceObligation } from "./qualityCheckReconciliation.js";
+import {
+  reconcileEvidenceObligation,
+  makeQualityCheckReconciliation,
+  OUTCOME_SIDE_PROFILE,
+} from "./qualityCheckReconciliation.js";
+import type { Outcome } from "./qualityCheckReconciliation.js";
 import type { EvidenceObligation, EvidenceObservation } from "./journal.js";
 
 describe("[SCN-LDG-026] a Quality Check Reconciliation carries the evidence obligation it reconciles (the debit side)", () => {
@@ -63,4 +68,57 @@ describe("[SCN-LDG-028] a lint missing reconciliation carries its obligation and
       (reconciliation as { evidenceObservation?: unknown }).evidenceObservation
     ).toBeUndefined();
   });
+});
+
+describe("[SCN-LDG-030] a Quality Check Reconciliation's carried sides are consistent with its outcome (the invariant)", () => {
+  // A REAL debit and a REAL credit — the content is immaterial to the (outcome, side-presence)
+  // invariant, which turns only on PRESENCE. Reused across every outcome below.
+  const sampleObligation: EvidenceObligation = { qualityCheck: "unit" };
+  const sampleObservation: EvidenceObservation = {
+    qualityCheck: "unit",
+    scnId: "SCN-LDG-030",
+    status: "passed",
+  };
+
+  // Expectations are DERIVED from the type-forced profile map (iterating its entries), never a
+  // hand-copied list — a new outcome, forced to declare its row, is swept automatically.
+  for (const [outcomeKey, profile] of Object.entries(OUTCOME_SIDE_PROFILE)) {
+    const outcome = outcomeKey as Outcome;
+    const obligationExists = profile.obligation === "Exists";
+    const observationExists = profile.observation === "Exists";
+
+    it(`${outcome}: canon-correct sides construct and their presence matches the canon row`, () => {
+      const reconciliation = makeQualityCheckReconciliation({
+        outcome,
+        ...(obligationExists ? { evidenceObligation: sampleObligation } : {}),
+        ...(observationExists ? { evidenceObservation: sampleObservation } : {}),
+      });
+      // Side-PRESENCE — not content — matches the canon row for this outcome.
+      expect(reconciliation.evidenceObligation !== undefined).toBe(obligationExists);
+      expect(reconciliation.evidenceObservation !== undefined).toBe(observationExists);
+    });
+
+    it(`${outcome}: a forbidden obligation side is unconstructible — it throws`, () => {
+      // FLIP the obligation side away from canon: carry it where the row says None, omit it where
+      // the row says Exists. Either divergence is a canon-inconsistent pair the brand forbids.
+      expect(() =>
+        makeQualityCheckReconciliation({
+          outcome,
+          ...(obligationExists ? {} : { evidenceObligation: sampleObligation }),
+          ...(observationExists ? { evidenceObservation: sampleObservation } : {}),
+        })
+      ).toThrow();
+    });
+
+    it(`${outcome}: a forbidden observation side is unconstructible — it throws`, () => {
+      // FLIP the observation side away from canon (mirror of the obligation flip above).
+      expect(() =>
+        makeQualityCheckReconciliation({
+          outcome,
+          ...(obligationExists ? { evidenceObligation: sampleObligation } : {}),
+          ...(observationExists ? {} : { evidenceObservation: sampleObservation }),
+        })
+      ).toThrow();
+    });
+  }
 });
