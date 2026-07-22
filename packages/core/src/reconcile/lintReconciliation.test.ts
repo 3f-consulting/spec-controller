@@ -46,7 +46,7 @@ describe("[SCN-LNT-001] a @lint scenario whose guard is wired into CI over the r
     expect(scenario?.verdict).toBe("balanced");
     expect(scenario?.reconcilingItems).toEqual([]);
     expect(scenario?.qualityCheckReconciliations).toEqual([
-      { qualityCheck: "lint", staticGuard: REAL_GUARD, outcome: "satisfied", evidenceObligation: { qualityCheck: "lint", staticGuard: REAL_GUARD } },
+      { qualityCheck: "lint", staticGuard: REAL_GUARD, outcome: "satisfied", evidenceObligation: { qualityCheck: "lint", staticGuard: REAL_GUARD }, evidenceObservation: { qualityCheck: "lint", staticGuard: REAL_GUARD, exists: true, enforcedOverRealSource: true } },
     ]);
   });
 });
@@ -123,6 +123,7 @@ describe("[SCN-LNT-002] a @lint scenario whose guard is fixture-green but not wi
         qualityCheck: "lint", staticGuard: PLANTED_GUARD,
         outcome: "watermelon",
         evidenceObligation: { qualityCheck: "lint", staticGuard: PLANTED_GUARD },
+        evidenceObservation: { qualityCheck: "lint", staticGuard: PLANTED_GUARD, exists: true, enforcedOverRealSource: false },
       },
     ]);
     expect(scenario?.qualityCheckReconciliations).toEqual([
@@ -130,6 +131,7 @@ describe("[SCN-LNT-002] a @lint scenario whose guard is fixture-green but not wi
         qualityCheck: "lint", staticGuard: PLANTED_GUARD,
         outcome: "watermelon",
         evidenceObligation: { qualityCheck: "lint", staticGuard: PLANTED_GUARD },
+        evidenceObservation: { qualityCheck: "lint", staticGuard: PLANTED_GUARD, exists: true, enforcedOverRealSource: false },
       },
     ]);
   });
@@ -203,6 +205,7 @@ describe("[SCN-LNT-003] a @lint scenario whose named guard does not exist is rep
         qualityCheck: "lint", staticGuard: ABSENT_GUARD,
         outcome: "missing",
         evidenceObligation: { qualityCheck: "lint", staticGuard: ABSENT_GUARD },
+        evidenceObservation: { qualityCheck: "lint", staticGuard: ABSENT_GUARD, exists: false, enforcedOverRealSource: false },
       },
     ]);
     expect(scenario?.qualityCheckReconciliations).toEqual([
@@ -210,6 +213,7 @@ describe("[SCN-LNT-003] a @lint scenario whose named guard does not exist is rep
         qualityCheck: "lint", staticGuard: ABSENT_GUARD,
         outcome: "missing",
         evidenceObligation: { qualityCheck: "lint", staticGuard: ABSENT_GUARD },
+        evidenceObservation: { qualityCheck: "lint", staticGuard: ABSENT_GUARD, exists: false, enforcedOverRealSource: false },
       },
     ]);
   });
@@ -291,11 +295,12 @@ describe("[SCN-LNT-004] a scenario requiring both a @unit test and an unwired @l
     // (no ranking claimed) and that it is NOT a single collapsed verdict.
     expect(scenario?.qualityCheckReconciliations).toEqual(
       expect.arrayContaining([
-        { qualityCheck: "unit", outcome: "satisfied", evidenceObligation: { qualityCheck: "unit" } },
+        { qualityCheck: "unit", outcome: "satisfied", evidenceObligation: { qualityCheck: "unit" }, evidenceObservation: { qualityCheck: "unit", scnId: "SCN-LNT-004", status: "passed" } },
         {
           qualityCheck: "lint", staticGuard: UNWIRED_GUARD,
           outcome: "watermelon",
           evidenceObligation: { qualityCheck: "lint", staticGuard: UNWIRED_GUARD },
+          evidenceObservation: { qualityCheck: "lint", staticGuard: UNWIRED_GUARD, exists: true, enforcedOverRealSource: false },
         },
       ])
     );
@@ -308,6 +313,7 @@ describe("[SCN-LNT-004] a scenario requiring both a @unit test and an unwired @l
         qualityCheck: "lint", staticGuard: UNWIRED_GUARD,
         outcome: "watermelon",
         evidenceObligation: { qualityCheck: "lint", staticGuard: UNWIRED_GUARD },
+        evidenceObservation: { qualityCheck: "lint", staticGuard: UNWIRED_GUARD, exists: true, enforcedOverRealSource: false },
       },
     ]);
   });

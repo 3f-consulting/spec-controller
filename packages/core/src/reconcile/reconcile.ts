@@ -129,6 +129,9 @@ export function reconcile(
       .map((o) => ({
         qualityCheck: o.qualityCheck,
         outcome: "undemanded" as const,
+        // The CREDIT side (@SCN-LDG-027): the citing observation this item reconciles, carried on
+        // the reconciliation itself. `undemanded` is credit-only — no obligation is in scope.
+        evidenceObservation: o,
         ...(o.locator !== undefined ? { locator: o.locator } : {}),
       }));
 
@@ -220,6 +223,9 @@ export function reconcile(
     const items: QualityCheckReconciliation[] = citations.map((o) => ({
       qualityCheck: o.qualityCheck,
       outcome: "cites-unknown-scenario",
+      // The CREDIT side (@SCN-LDG-027): the citing observation this phantom item reconciles.
+      // `cites-unknown-scenario` is credit-only — a phantom account demands nothing.
+      evidenceObservation: o,
       ...(o.locator !== undefined ? { locator: o.locator } : {}),
     }));
     scenarioReconciliations.push({
@@ -287,12 +293,18 @@ export function reconcile(
       ...uncited.map((o) => ({
         qualityCheck: o.qualityCheck,
         outcome: "cites-no-scenario" as const,
+        // The CREDIT side (@SCN-LDG-027): the uncited runtime observation this suspense item
+        // reconciles. `cites-no-scenario` is credit-only — suspense demands nothing.
+        evidenceObservation: o,
         ...(o.locator !== undefined ? { locator: o.locator } : {}),
       })),
       ...undemandedGuards.map((o) => ({
         qualityCheck: "lint" as const,
         staticGuard: o.staticGuard,
         outcome: "cites-no-scenario" as const,
+        // The CREDIT side (@SCN-LDG-027): the undemanded static-guard observation this suspense
+        // item reconciles — the lint half of the credit-only `cites-no-scenario`.
+        evidenceObservation: o,
       })),
     ];
     scenarioReconciliations.push({

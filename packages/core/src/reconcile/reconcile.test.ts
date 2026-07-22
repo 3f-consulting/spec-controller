@@ -44,7 +44,7 @@ describe("[SCN-LDG-001] a scenario whose required evidence exists and passes is 
     expect(scenario?.verdict).toBe("balanced");
     expect(scenario?.reconcilingItems).toEqual([]);
     expect(scenario?.qualityCheckReconciliations).toEqual([
-      { qualityCheck: "unit", outcome: "satisfied", evidenceObligation: { qualityCheck: "unit" } },
+      { qualityCheck: "unit", outcome: "satisfied", evidenceObligation: { qualityCheck: "unit" }, evidenceObservation: { qualityCheck: "unit", scnId: "SCN-LDG-001", status: "passed" } },
     ]);
   });
 });
@@ -63,7 +63,7 @@ describe("[SCN-LDG-002] a scenario whose required test exists but fails is repor
 
     expect(scenario?.verdict).toBe("out-of-balance");
     expect(scenario?.reconcilingItems).toEqual([
-      { qualityCheck: "unit", outcome: "failing", evidenceObligation: { qualityCheck: "unit" } },
+      { qualityCheck: "unit", outcome: "failing", evidenceObligation: { qualityCheck: "unit" }, evidenceObservation: { qualityCheck: "unit", scnId: "SCN-LDG-002", status: "failed" } },
     ]);
   });
 });
@@ -121,7 +121,7 @@ describe("[SCN-LDG-004] a multi-evidenceObligation scenario failing one level an
     // items — NOT a single picked outcome collapsing the two distinct problems.
     expect(scenario?.reconcilingItems).toEqual(
       expect.arrayContaining([
-        { qualityCheck: "unit", outcome: "failing", evidenceObligation: { qualityCheck: "unit" } },
+        { qualityCheck: "unit", outcome: "failing", evidenceObligation: { qualityCheck: "unit" }, evidenceObservation: { qualityCheck: "unit", scnId: "SCN-LDG-004", status: "failed" } },
         { qualityCheck: "integration", outcome: "missing", evidenceObligation: { qualityCheck: "integration" } },
       ])
     );
@@ -149,7 +149,7 @@ describe("[SCN-LDG-005] an out-of-balance scenario carries its reconciling items
     expect(scenario?.verdict).toBe("out-of-balance");
     expect(Array.isArray(scenario?.reconcilingItems)).toBe(true);
     expect(scenario?.reconcilingItems).toEqual([
-      { qualityCheck: "unit", outcome: "failing", evidenceObligation: { qualityCheck: "unit" } },
+      { qualityCheck: "unit", outcome: "failing", evidenceObligation: { qualityCheck: "unit" }, evidenceObservation: { qualityCheck: "unit", scnId: "SCN-LDG-005", status: "failed" } },
     ]);
   });
 });
@@ -175,10 +175,10 @@ describe("[SCN-LDG-006] a credit citing an undeclared scenario becomes a phantom
     expect(phantom?.kind).toBe("phantom-scenario");
     expect(phantom?.verdict).toBe("out-of-balance");
     expect(phantom?.qualityCheckReconciliations).toEqual([
-      { qualityCheck: "unit", outcome: "cites-unknown-scenario", locator: "src/phantom.test.ts" },
+      { qualityCheck: "unit", outcome: "cites-unknown-scenario", locator: "src/phantom.test.ts", evidenceObservation: { qualityCheck: "unit", scnId: "SCN-PHANTOM-999", status: "passed", locator: "src/phantom.test.ts" } },
     ]);
     expect(phantom?.reconcilingItems).toEqual([
-      { qualityCheck: "unit", outcome: "cites-unknown-scenario", locator: "src/phantom.test.ts" },
+      { qualityCheck: "unit", outcome: "cites-unknown-scenario", locator: "src/phantom.test.ts", evidenceObservation: { qualityCheck: "unit", scnId: "SCN-PHANTOM-999", status: "passed", locator: "src/phantom.test.ts" } },
     ]);
 
     // The declared SCN-LDG-006 stays a DECLARED-kind row (reserve `scenario` for declared).
@@ -215,9 +215,9 @@ describe("[SCN-LDG-007] a credit citing no scenario becomes a suspense-scenario 
     // Every uncited runtime credit (with its locator) THEN each unattributed static-guard,
     // all outcome cites-no-scenario.
     expect(row.qualityCheckReconciliations).toEqual([
-      { qualityCheck: "unit", outcome: "cites-no-scenario", locator: "src/a.test.ts" },
-      { qualityCheck: "integration", outcome: "cites-no-scenario", locator: "features/b.feature" },
-      { qualityCheck: "lint", staticGuard: "lint:orphan", outcome: "cites-no-scenario" },
+      { qualityCheck: "unit", outcome: "cites-no-scenario", locator: "src/a.test.ts", evidenceObservation: { qualityCheck: "unit", scnId: null, status: "passed", locator: "src/a.test.ts" } },
+      { qualityCheck: "integration", outcome: "cites-no-scenario", locator: "features/b.feature", evidenceObservation: { qualityCheck: "integration", scnId: null, status: "failed", locator: "features/b.feature" } },
+      { qualityCheck: "lint", staticGuard: "lint:orphan", outcome: "cites-no-scenario", evidenceObservation: { qualityCheck: "lint", staticGuard: "lint:orphan", exists: true, enforcedOverRealSource: true } },
     ]);
     expect(row.reconcilingItems).toEqual(row.qualityCheckReconciliations);
 
@@ -262,11 +262,11 @@ describe("[SCN-LDG-008] a credit at an undeclared quality-check on a real scenar
     // undemanded, carrying its locator. Both are reconciling items, none ranked.
     expect(row?.qualityCheckReconciliations).toEqual([
       { qualityCheck: "unit", outcome: "missing", evidenceObligation: { qualityCheck: "unit" } },
-      { qualityCheck: "integration", outcome: "undemanded", locator: "src/undemanded.test.ts" },
+      { qualityCheck: "integration", outcome: "undemanded", locator: "src/undemanded.test.ts", evidenceObservation: { qualityCheck: "integration", scnId: "SCN-LDG-008", status: "passed", locator: "src/undemanded.test.ts" } },
     ]);
     expect(row?.reconcilingItems).toEqual([
       { qualityCheck: "unit", outcome: "missing", evidenceObligation: { qualityCheck: "unit" } },
-      { qualityCheck: "integration", outcome: "undemanded", locator: "src/undemanded.test.ts" },
+      { qualityCheck: "integration", outcome: "undemanded", locator: "src/undemanded.test.ts", evidenceObservation: { qualityCheck: "integration", scnId: "SCN-LDG-008", status: "passed", locator: "src/undemanded.test.ts" } },
     ]);
   });
 
@@ -285,6 +285,35 @@ describe("[SCN-LDG-008] a credit at an undeclared quality-check on a real scenar
 
     expect(row?.verdict).toBe("balanced");
     expect(row?.reconcilingItems).toEqual([]);
+  });
+});
+
+describe("[SCN-LDG-027] a Quality Check Reconciliation carries the evidence observation it reconciles (the credit side)", () => {
+  it("carries the citing observation on the undemanded reconciliation, with no obligation (the pure credit case)", () => {
+    // The mirror of LDG-026's pure debit: SCN-LDG-027 declares unit; a passing INTEGRATION credit
+    // cites it at a quality-check it never demanded → `undemanded` (observation present, obligation
+    // absent). The credit-side producer (the fold's `undemandedItems`) carries the citing
+    // observation `o` as `evidenceObservation`, and — being a credit against no obligation — the
+    // row carries NO `evidenceObligation`. That two-sidedness is the point of the slice.
+    const scenarios: Scenario[] = [
+      { scnId: "SCN-LDG-027", evidenceObligations: [{ qualityCheck: "unit" }] },
+    ];
+    const observation: EvidenceObservation = {
+      qualityCheck: "integration",
+      scnId: "SCN-LDG-027",
+      status: "passed",
+      locator: "src/undemanded.test.ts",
+    };
+    const evidenceObservations: EvidenceObservation[] = [observation];
+
+    const balance = reconcile(scenarios, evidenceObservations);
+    const row = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-LDG-027");
+
+    const undemanded = row?.qualityCheckReconciliations.find((o) => o.outcome === "undemanded");
+    // The CREDIT side is carried on the reconciliation itself — the very observation it reconciles.
+    expect(undemanded?.evidenceObservation).toEqual(observation);
+    // The DEBIT side is absent — an undemanded credit reconciles against no obligation.
+    expect(undemanded?.evidenceObligation).toBeUndefined();
   });
 });
 
@@ -309,7 +338,7 @@ describe("[SCN-LDG-010] a zero-evidence obligation scenario cited by a stray cre
     expect(row?.kind).toBe("scenario");
     expect(row?.verdict).toBe("out-of-balance");
     expect(row?.reconcilingItems).toEqual([
-      { qualityCheck: "unit", outcome: "undemanded" },
+      { qualityCheck: "unit", outcome: "undemanded", evidenceObservation: { qualityCheck: "unit", scnId: "SCN-LDG-010", status: "passed" } },
     ]);
     // It is undemanded, NOT both-missing — the evidence observation gives it a row on ONE side.
     expect(row?.reconcilingItems.some((r) => r.outcome === "both-missing")).toBe(false);
@@ -485,8 +514,8 @@ describe("[SCN-LDG-013] a @unit @e2e scenario proven by BOTH a vitest and a cucu
     // two tiers the scenario declared (no phantom third obligation).
     expect(scenario?.qualityCheckReconciliations).toEqual(
       expect.arrayContaining([
-        { qualityCheck: "unit", outcome: "satisfied", evidenceObligation: { qualityCheck: "unit" } },
-        { qualityCheck: "e2e", outcome: "satisfied", evidenceObligation: { qualityCheck: "e2e" } },
+        { qualityCheck: "unit", outcome: "satisfied", evidenceObligation: { qualityCheck: "unit" }, evidenceObservation: { qualityCheck: "unit", scnId: "SCN-LDG-013", status: "passed", locator: "src/unitAndE2e.test.ts" } },
+        { qualityCheck: "e2e", outcome: "satisfied", evidenceObligation: { qualityCheck: "e2e" }, evidenceObservation: { qualityCheck: "e2e", scnId: "SCN-LDG-013", status: "passed", locator: "features/fixture.feature" } },
       ])
     );
     expect(scenario?.qualityCheckReconciliations).toHaveLength(2);
@@ -546,7 +575,7 @@ describe("[SCN-PND-004] a declared-pending obligation reconciles as a one-sided 
 
     // Only the unit obligation reconciles; the pending integration one is one-sided.
     expect(scenario?.qualityCheckReconciliations).toEqual([
-      { qualityCheck: "unit", outcome: "satisfied", evidenceObligation: { qualityCheck: "unit" } },
+      { qualityCheck: "unit", outcome: "satisfied", evidenceObligation: { qualityCheck: "unit" }, evidenceObservation: { qualityCheck: "unit", scnId: "SCN-PND-004", status: "passed" } },
     ]);
     expect(scenario?.pendingItems).toEqual([{ qualityCheck: "integration" }]);
     expect(scenario?.reconcilingItems).toEqual([]);
@@ -599,12 +628,12 @@ describe("[SCN-PND-005] the pending declaration governs even when a matching obs
     const undemanded = balance.scenarioReconciliations.flatMap((s) =>
       s.reconcilingItems.filter((r) => r.outcome === "undemanded")
     );
-    expect(undemanded).toEqual([{ qualityCheck: "integration", outcome: "undemanded" }]);
+    expect(undemanded).toEqual([{ qualityCheck: "integration", outcome: "undemanded", evidenceObservation: { qualityCheck: "integration", scnId: "SCN-PND-005", status: "passed" } }]);
     // The row reds VIA THE CREDIT, never via the Pending Item — which is not a reconciling item
     // and stays verdict-neutral. Two different things on one row.
     expect(scenario?.verdict).toBe("out-of-balance");
     expect(scenario?.reconcilingItems).toEqual([
-      { qualityCheck: "integration", outcome: "undemanded" },
+      { qualityCheck: "integration", outcome: "undemanded", evidenceObservation: { qualityCheck: "integration", scnId: "SCN-PND-005", status: "passed" } },
     ]);
     // The run fails: canon says a credit against a pending pair must not pass silently.
     expect(isBalanced(balance)).toBe(false);
@@ -710,7 +739,7 @@ describe("[SCN-PND-007] a scenario whose only exception is a Pending Item has ve
 
     expect(scenario?.verdict).toBe("balanced");
     expect(scenario?.reconcilingItems).toEqual([]);
-    expect(scenario?.qualityCheckReconciliations).toEqual([{ qualityCheck: "unit", outcome: "satisfied", evidenceObligation: { qualityCheck: "unit" } }]);
+    expect(scenario?.qualityCheckReconciliations).toEqual([{ qualityCheck: "unit", outcome: "satisfied", evidenceObligation: { qualityCheck: "unit" }, evidenceObservation: { qualityCheck: "unit", scnId: "SCN-PND-007", status: "passed" } }]);
     expect(scenario?.pendingItems).toEqual([{ qualityCheck: "integration" }]);
   });
 
@@ -761,7 +790,7 @@ describe("[SCN-PND-009] a @unit @integrationpending scenario with a passing unit
     // Coexistence without interference, pinned sharply:
     //   - the unit obligation reconciles satisfied — the scenario's SOLE reconciled evidence
     //     obligation (the pending partition did NOT swallow it).
-    expect(scenario?.qualityCheckReconciliations).toEqual([{ qualityCheck: "unit", outcome: "satisfied", evidenceObligation: { qualityCheck: "unit" } }]);
+    expect(scenario?.qualityCheckReconciliations).toEqual([{ qualityCheck: "unit", outcome: "satisfied", evidenceObligation: { qualityCheck: "unit" }, evidenceObservation: { qualityCheck: "unit", scnId: "SCN-PND-009", status: "passed" } }]);
     //   - the deferred integration obligation is EXACTLY one one-sided Pending Item (the unit
     //     reconcile did NOT swallow it).
     expect(scenario?.pendingItems).toEqual([{ qualityCheck: "integration" }]);
@@ -1008,7 +1037,7 @@ describe("[SCN-LDG-017] a broken observation posts a broken suspense item; the s
     const suspense = balance.scenarioReconciliations.find((s) => s.kind === "suspense-scenario");
 
     expect(suspense?.reconcilingItems).toEqual([
-      { qualityCheck: "unit", outcome: "cites-no-scenario", locator: "src/uncited.test.ts" },
+      { qualityCheck: "unit", outcome: "cites-no-scenario", locator: "src/uncited.test.ts", evidenceObservation: { qualityCheck: "unit", scnId: null, status: "passed", locator: "src/uncited.test.ts" } },
     ]);
   });
 
@@ -1353,8 +1382,8 @@ describe("[SCN-LDG-024] reconcile — a static guard demanded by two scenarios p
     // fold, which counts the flat stream once.
     expect(a1?.evidenceObservations[0]).toBe(a2?.evidenceObservations[0]);
     // Both demanders reconcile satisfied (the static guard is wired + enforced).
-    expect(a1?.qualityCheckReconciliations).toEqual([{ qualityCheck: "lint", staticGuard: "lint:double-demand", outcome: "satisfied", evidenceObligation: { qualityCheck: "lint", staticGuard: "lint:double-demand" } }]);
-    expect(a2?.qualityCheckReconciliations).toEqual([{ qualityCheck: "lint", staticGuard: "lint:double-demand", outcome: "satisfied", evidenceObligation: { qualityCheck: "lint", staticGuard: "lint:double-demand" } }]);
+    expect(a1?.qualityCheckReconciliations).toEqual([{ qualityCheck: "lint", staticGuard: "lint:double-demand", outcome: "satisfied", evidenceObligation: { qualityCheck: "lint", staticGuard: "lint:double-demand" }, evidenceObservation: { qualityCheck: "lint", staticGuard: "lint:double-demand", exists: true, enforcedOverRealSource: true } }]);
+    expect(a2?.qualityCheckReconciliations).toEqual([{ qualityCheck: "lint", staticGuard: "lint:double-demand", outcome: "satisfied", evidenceObligation: { qualityCheck: "lint", staticGuard: "lint:double-demand" }, evidenceObservation: { qualityCheck: "lint", staticGuard: "lint:double-demand", exists: true, enforcedOverRealSource: true } }]);
     // A DEMANDED guard is never suspense — no undemanded static guard here.
     expect(accountFor(ledger, "(no scenario)")).toBeUndefined();
   });
@@ -1388,7 +1417,7 @@ describe("[SCN-LDG-025] reconcile — a demanded-guards-only corpus reconciles b
 
     // The demanding account reconciles satisfied and balanced.
     expect(accountFor(ledger, "SCN-DEM-001")?.qualityCheckReconciliations).toEqual([
-      { qualityCheck: "lint", staticGuard: "lint:demanded-only", outcome: "satisfied", evidenceObligation: { qualityCheck: "lint", staticGuard: "lint:demanded-only" } },
+      { qualityCheck: "lint", staticGuard: "lint:demanded-only", outcome: "satisfied", evidenceObligation: { qualityCheck: "lint", staticGuard: "lint:demanded-only" }, evidenceObservation: { qualityCheck: "lint", staticGuard: "lint:demanded-only", exists: true, enforcedOverRealSource: true } },
     ]);
     expect(accountFor(ledger, "SCN-DEM-001")?.verdict).toBe("balanced");
     // NO suspense row — the only lint credit is the demanded one.

@@ -744,7 +744,14 @@ Then(
     assert.ok(scenario, "expected the composition fixture scenario (SCN-PDC-001)");
     assert.deepEqual(
       scenario.qualityCheckReconciliations,
-      [{ qualityCheck: "unit", outcome: "satisfied", evidenceObligation: { qualityCheck: "unit" } }],
+      [
+        {
+          qualityCheck: "unit",
+          outcome: "satisfied",
+          evidenceObligation: { qualityCheck: "unit" },
+          evidenceObservation: { qualityCheck: "unit", scnId: "SCN-PDC-001", status: "passed" },
+        },
+      ],
       `the unit obligation must reconcile satisfied as the scenario's sole reconciled evidence obligation; got ${JSON.stringify(
         scenario.qualityCheckReconciliations
       )}`
@@ -1638,7 +1645,14 @@ Then(
     assert.ok(scenario, "expected the reconciled fixture scenario (SCN-PDO-001)");
     assert.deepEqual(
       scenario.qualityCheckReconciliations,
-      [{ qualityCheck: "unit", outcome: "satisfied", evidenceObligation: { qualityCheck: "unit" } }],
+      [
+        {
+          qualityCheck: "unit",
+          outcome: "satisfied",
+          evidenceObligation: { qualityCheck: "unit" },
+          evidenceObservation: { qualityCheck: "unit", scnId: "SCN-PDO-001", status: "passed" },
+        },
+      ],
       `the un-deferred unit obligation must reconcile satisfied as the sole reconciled evidence obligation; got ${JSON.stringify(
         scenario.qualityCheckReconciliations
       )}`
@@ -2026,7 +2040,14 @@ Then(
     assert.ok(scenario, "expected the reconciled fixture scenario (SCN-PDZ-001)");
     assert.deepEqual(
       scenario.qualityCheckReconciliations,
-      [{ qualityCheck: "unit", outcome: "satisfied", evidenceObligation: { qualityCheck: "unit" } }],
+      [
+        {
+          qualityCheck: "unit",
+          outcome: "satisfied",
+          evidenceObligation: { qualityCheck: "unit" },
+          evidenceObservation: { qualityCheck: "unit", scnId: "SCN-PDZ-001", status: "passed" },
+        },
+      ],
       `the un-deferred unit obligation must reconcile satisfied as the sole reconciled evidence obligation; got ${JSON.stringify(
         scenario.qualityCheckReconciliations
       )}`

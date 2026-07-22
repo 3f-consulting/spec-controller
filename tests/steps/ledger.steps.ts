@@ -2159,3 +2159,111 @@ Then("the JSON projects that evidence obligation on the reconciliation", functio
     `expected the JSON to project the evidence obligation on the reconciliation; got ${JSON.stringify(qcr)}`,
   );
 });
+
+// THE CREDIT SIDE OF THE RECONCILING ITEM (@SCN-LDG-027, 3F-2006) — a Quality Check Reconciliation
+// carries the evidence OBSERVATION it reconciles, the mirror of LDG-026's debit half. The
+// @integration arm drives the whole parse → reconcile → renderJson pipeline over the `undemanded`
+// credit case (a credit citing a real scenario at a quality-check it never demanded — observation
+// present, obligation absent): the reconciliation carries `evidenceObservation` and no
+// `evidenceObligation`, and the machine-readable JSON PROJECTS that observation on the row.
+// Reuses the shared "the ledger reconciles that run" When (LDG-022/023/026): the Given stocks
+// `scenarios` and `ldgPostingObservations`; the Thens read `ldgPostingLedger`.
+let ldg027ScnId: string;
+
+// @SCN-LDG-027
+Given(
+  "a declared scenario {string} cited by a credit at a quality-check it never demanded",
+  function (scnId: string) {
+    // A declared @unit scenario built through the REAL declared reader (the parse → declared
+    // seam), cited by an INTEGRATION credit — a quality-check the scenario never declared. The
+    // credit posts to a real account against no obligation → `undemanded`: the pure CREDIT case
+    // (observation present, obligation absent), the mirror of LDG-026's pure debit.
+    ldg027ScnId = scnId;
+    const feature = [
+      "@LDG",
+      "Feature: fixture",
+      "  Rule: a fixture rule",
+      `    @unit @${scnId}`,
+      "    Scenario: a fixture scenario",
+      "      Given a fixture step",
+    ].join("\n");
+    scenarios = parseScenarios(feature);
+    // The undemanded credit: a passing integration observation citing the real scenario at a
+    // quality-check it never demanded. Carries a locator (the where-to-fix, ruling Q5).
+    ldgPostingObservations = [
+      { qualityCheck: "integration", scnId, status: "passed", locator: "src/undemanded.test.ts" },
+    ];
+  },
+);
+
+/** The scenario's OWN undemanded Quality Check Reconciliation, off the ledger the shared When produced. */
+function ldg027UndemandedReconciliation(): QualityCheckReconciliation {
+  const row = ldgPostingLedger.scenarioReconciliations.find(
+    (r: ScenarioReconciliation) => r.scnId === ldg027ScnId,
+  );
+  assert.ok(row, `expected a ledger row for ${ldg027ScnId}`);
+  const qcr = row.qualityCheckReconciliations.find(
+    (o: QualityCheckReconciliation) => o.outcome === "undemanded",
+  );
+  assert.ok(
+    qcr,
+    `expected an undemanded Quality Check Reconciliation on ${ldg027ScnId}; got ${JSON.stringify(row.qualityCheckReconciliations)}`,
+  );
+  return qcr;
+}
+
+// @SCN-LDG-027
+Then("its Quality Check Reconciliation has outcome {string}", function (outcome: string) {
+  // Row-scoped to the scenario's OWN undemanded reconciliation: the pure-credit `undemanded` outcome.
+  assert.equal(
+    ldg027UndemandedReconciliation().outcome,
+    outcome,
+    `expected ${ldg027ScnId}'s reconciliation to read "${outcome}"`,
+  );
+});
+
+// @SCN-LDG-027
+Then("it carries the evidence observation it reconciles \\(the credit side)", function () {
+  // The CREDIT side is carried ON the reconciliation itself — the very integration observation it
+  // reconciles — not joined from a separate scenario-level array at print time.
+  const qcr = ldg027UndemandedReconciliation();
+  assert.deepEqual(
+    qcr.evidenceObservation,
+    { qualityCheck: "integration", scnId: ldg027ScnId, status: "passed", locator: "src/undemanded.test.ts" },
+    `expected the undemanded reconciliation to carry its evidence observation (the credit side); got ${JSON.stringify(qcr.evidenceObservation)}`,
+  );
+});
+
+// @SCN-LDG-027
+Then("it carries no evidence obligation \\(the debit side is absent)", function () {
+  // The DEBIT side stays absent on an `undemanded` outcome — a credit citing an undeclared
+  // quality-check reconciles against no obligation, so no `evidenceObligation` is in scope.
+  const obligation = (ldg027UndemandedReconciliation() as { evidenceObligation?: unknown })
+    .evidenceObligation;
+  assert.equal(
+    obligation,
+    undefined,
+    `expected the undemanded reconciliation to carry NO evidence obligation (debit side absent); got ${JSON.stringify(obligation)}`,
+  );
+});
+
+// @SCN-LDG-027
+Then("the JSON projects that evidence observation on the reconciliation", function () {
+  // The machine-readable projection: renderJson is a glueless JSON.stringify of the report model,
+  // so the reconciliation's `evidenceObservation` surfaces on the JSON row verbatim. This is the
+  // observable @integration behaviour — the machine output holds the reconciliation's credit side.
+  const json = JSON.parse(renderJson(ldgPostingLedger, CTX));
+  const row = json.ledger.scenarioReconciliations.find(
+    (r: { scnId: string }) => r.scnId === ldg027ScnId,
+  );
+  assert.ok(row, `expected the JSON to carry a row for ${ldg027ScnId}`);
+  const qcr = row.qualityCheckReconciliations.find(
+    (o: { outcome?: string }) => o.outcome === "undemanded",
+  );
+  assert.ok(qcr, `expected the JSON row to carry an undemanded Quality Check Reconciliation`);
+  assert.deepEqual(
+    qcr.evidenceObservation,
+    { qualityCheck: "integration", scnId: ldg027ScnId, status: "passed", locator: "src/undemanded.test.ts" },
+    `expected the JSON to project the evidence observation on the reconciliation; got ${JSON.stringify(qcr)}`,
+  );
+});

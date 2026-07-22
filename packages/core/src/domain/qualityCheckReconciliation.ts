@@ -173,6 +173,19 @@ export interface QualityCheckReconciliation {
    */
   evidenceObligation?: EvidenceObligation;
   /**
+   * The CREDIT side of the two-sided reconciling item (@SCN-LDG-027): the evidence observation
+   * this item reconciles, carried on the reconciliation itself rather than joined from a
+   * separate scenario-level array at print time. Present IFF the observation Exists — every
+   * observation-bearing outcome: the two-sided debit outcomes (`satisfied` / `failing` /
+   * `watermelon`) whose match `reconcileEvidenceObligation` found, AND the credit-only outcomes
+   * (`cites-unknown-scenario` / `cites-no-scenario` / `undemanded`) the fold produces from a
+   * citing observation. ABSENT on `missing` (obligation Exists, observation None) and the
+   * neither-side outcomes (`no-scn-code` / `broken` / `both-missing`), where no observation is in
+   * scope. `JSON.stringify` omits it when undefined, so a byte-identical golden is preserved
+   * everywhere the observation is absent.
+   */
+  evidenceObservation?: EvidenceObservation;
+  /**
    * The where-to-fix for a CREDIT-side reconciling item (ruling Q5) — the
    * evidence-observation locator (the test-file path the citing credit came from),
    * carried so it survives the detail-arrays-into-rows move. Present only on a
@@ -219,7 +232,16 @@ export function reconcileEvidenceObligation(
     } else {
       outcome = "missing";
     }
-    return { qualityCheck: "lint", staticGuard: guard, outcome, evidenceObligation: req };
+    // The CREDIT side (@SCN-LDG-027): the matched static-guard observation, present for the
+    // two-sided outcomes `satisfied` / `watermelon` and absent for `missing` — the conditional
+    // spread keeps `missing` observation-free (obligation Exists, observation None).
+    return {
+      qualityCheck: "lint",
+      staticGuard: guard,
+      outcome,
+      evidenceObligation: req,
+      ...(obs ? { evidenceObservation: obs } : {}),
+    };
   }
 
   // A runtime evidence obligation — matched by (scnId, quality-check) among the runtime
@@ -251,5 +273,13 @@ export function reconcileEvidenceObligation(
   } else {
     outcome = "failing";
   }
-  return { qualityCheck: req.qualityCheck, outcome, evidenceObligation: req };
+  // The CREDIT side (@SCN-LDG-027): the matched runtime observation, present for the two-sided
+  // outcomes `satisfied` / `failing` and absent for `missing` — the conditional spread keeps
+  // `missing` observation-free (obligation Exists, observation None).
+  return {
+    qualityCheck: req.qualityCheck,
+    outcome,
+    evidenceObligation: req,
+    ...(match ? { evidenceObservation: match } : {}),
+  };
 }

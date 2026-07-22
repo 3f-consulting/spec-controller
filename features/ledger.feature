@@ -563,3 +563,21 @@ Feature: Ledger over declared-vs-observed evidence
       And it carries the evidence obligation it reconciles (the debit side)
       And it carries no evidence observation (the credit side is absent)
       And the JSON projects that evidence obligation on the reconciliation
+
+  # THE CREDIT SIDE OF THE RECONCILING ITEM (@SCN-LDG-027, 3F-2006). The debit half
+  # (@SCN-LDG-026) brought the evidence obligation onto the reconciliation; this scenario completes
+  # the two-sidedness by bringing the CREDIT side — every observation-bearing outcome carries the
+  # `evidenceObservation` it reconciles, projected on the machine-readable JSON. The `undemanded`
+  # case isolates the pure credit — a credit citing a real scenario at a quality-check it never
+  # demanded — so the observation is carried while the obligation side stays absent (the mirror of
+  # LDG-026's pure debit). With both landed, `failing` vs `satisfied` vs `missing` is derivable
+  # BECAUSE the two-sided outcomes carry both — the point of the slice.
+  Rule: a Quality Check Reconciliation carries the evidence observation it reconciles (the credit side)
+    @unit @integration @SCN-LDG-027
+    Scenario: an undemanded quality-check reconciliation carries its evidence observation and no obligation
+      Given a declared scenario "SCN-LDG-027" cited by a credit at a quality-check it never demanded
+      When the ledger reconciles that run
+      Then its Quality Check Reconciliation has outcome "undemanded"
+      And it carries the evidence observation it reconciles (the credit side)
+      And it carries no evidence obligation (the debit side is absent)
+      And the JSON projects that evidence observation on the reconciliation
