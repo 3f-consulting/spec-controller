@@ -47,6 +47,7 @@ describe("[SCN-LNT-005] guard enforcement is read from an externally-specified p
       {
         qualityCheck: "lint", staticGuard: EXTERNAL_GUARD,
         outcome: "watermelon",
+        evidenceObligation: { qualityCheck: "lint", staticGuard: EXTERNAL_GUARD },
       },
     ]);
   });

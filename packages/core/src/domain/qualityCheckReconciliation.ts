@@ -162,6 +162,17 @@ export interface QualityCheckReconciliation {
   staticGuard?: string;
   outcome: Outcome;
   /**
+   * The DEBIT side of the two-sided reconciling item (@SCN-LDG-026): the evidence obligation
+   * this item reconciles, carried on the reconciliation itself rather than joined from a
+   * separate scenario-level array at print time. Present IFF the obligation Exists — every
+   * debit-bearing outcome (`satisfied` / `missing` / `failing` / `watermelon`). ABSENT on the
+   * credit-only outcomes (`cites-unknown-scenario` / `cites-no-scenario` / `undemanded`) and the
+   * neither-side outcomes (`no-scn-code` / `broken` / `both-missing`), where no obligation is in
+   * scope. `JSON.stringify` omits it when undefined, so a byte-identical golden is preserved
+   * everywhere the obligation is absent.
+   */
+  evidenceObligation?: EvidenceObligation;
+  /**
    * The where-to-fix for a CREDIT-side reconciling item (ruling Q5) — the
    * evidence-observation locator (the test-file path the citing credit came from),
    * carried so it survives the detail-arrays-into-rows move. Present only on a
@@ -208,7 +219,7 @@ export function reconcileEvidenceObligation(
     } else {
       outcome = "missing";
     }
-    return { qualityCheck: "lint", staticGuard: guard, outcome };
+    return { qualityCheck: "lint", staticGuard: guard, outcome, evidenceObligation: req };
   }
 
   // A runtime evidence obligation — matched by (scnId, quality-check) among the runtime
@@ -240,5 +251,5 @@ export function reconcileEvidenceObligation(
   } else {
     outcome = "failing";
   }
-  return { qualityCheck: req.qualityCheck, outcome };
+  return { qualityCheck: req.qualityCheck, outcome, evidenceObligation: req };
 }

@@ -546,3 +546,20 @@ Feature: Ledger over declared-vs-observed evidence
       And each debit is findable on its account, keyed by quality-check
       And the pending obligation is posted and findable, though it earns no reconciled row
       And the run's verdict and reconciling items are unchanged — debit-posting classifies nothing
+
+  # THE DEBIT SIDE OF THE RECONCILING ITEM (@SCN-LDG-026, 3F-2005). Today a Quality Check
+  # Reconciliation is an outcome LABEL only — the evidence obligation it reconciles sits in a
+  # separate scenario-level array, joined by the markdown renderer at print time. This scenario
+  # brings the debit side onto the reconciliation itself: every debit-bearing outcome carries the
+  # `evidenceObligation` it reconciles, projected on the machine-readable JSON. The `missing` case
+  # isolates the pure debit — a required @unit obligation present, its matching observation absent —
+  # so the obligation is carried while the credit side stays absent (@SCN-LDG-027 adds the credit).
+  Rule: a Quality Check Reconciliation carries the evidence obligation it reconciles (the debit side)
+    @unit @integration @SCN-LDG-026
+    Scenario: a missing quality-check reconciliation carries its evidence obligation and no observation
+      Given a declared scenario "SCN-LDG-026" requiring @unit with no matching evidence observation
+      When the ledger reconciles that run
+      Then its unit Quality Check Reconciliation has outcome "missing"
+      And it carries the evidence obligation it reconciles (the debit side)
+      And it carries no evidence observation (the credit side is absent)
+      And the JSON projects that evidence obligation on the reconciliation
