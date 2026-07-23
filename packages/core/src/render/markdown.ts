@@ -112,7 +112,7 @@ function renderItem(item: ScenarioReconciliation["reconcilingItems"][number]): s
   }
   const subject = item.qualityCheck;
   // A CREDIT-SIDE item surfaces its WHERE-TO-FIX in the reconciliation cell (ruling
-  // Q5): a lint credit (the unattributed static-guard folded onto the suspense row, ruling
+  // Q5): a lint credit (the uncited static-guard folded onto the suspense row, ruling
   // Q4) shows its static guard handle; a runtime credit (phantom `cites-unknown-scenario` or
   // suspense `cites-no-scenario`) shows its evidence observation locator. A DEBIT-side evidence obligation
   // (satisfied / missing / failing / watermelon) carries neither and renders bare, as before.
@@ -564,8 +564,8 @@ const testVolumeSection: SectionEmitter = (report) => {
 /**
  * Static guards (@SCN-USG-001) — the STATIC-guard evidence observation side under
  * Summary views, the mirror of `### Test volume` on the runtime axis. Renders the counts line
- * (`N static guard(s) run, K unattributed static guard(s)`) alone — a pure counts summary, symmetric with
- * `### Test volume` (2.4). The demanded count is implicit (`running − unattributed`), so it
+ * (`N static guard(s) run, K uncited static guard(s)`) alone — a pure counts summary, symmetric with
+ * `### Test volume` (2.4). The demanded count is implicit (`running − uncited`), so it
  * is no longer printed. The per-guard member detail lives in the rows (demanded → each
  * scenario's `@lint` sub-row; undemanded → the suspense row's `cites-no-scenario` credit items), so
  * no list renders here. Omitted only when no static-guard census is threaded (the back-compat path).
@@ -578,11 +578,11 @@ const staticGuardsSection: SectionEmitter = (report) => {
   // runtime `### Test volume` line. There is no census section: the per-guard DETAIL lives in
   // the rows (demanded → each scenario's `@lint` sub-row; the undemanded static-guards surface
   // as `cites-no-scenario` credit items on the `(no scenario)` suspense row). Only the running
-  // volume + the unattributed count render here; the demanded count is implicit.
+  // volume + the uncited count render here; the demanded count is implicit.
   return [
     "### Static guards",
     "",
-    `${counts.runningGuardCount} static guard(s) run, ${counts.unattributedStaticGuardCount} unattributed static guard(s).`,
+    `${counts.runningGuardCount} static guard(s) run, ${counts.uncitedStaticGuardCount} uncited static guard(s).`,
     "",
   ];
 };
@@ -601,7 +601,7 @@ const staticGuardsSection: SectionEmitter = (report) => {
  */
 const lintSection: SectionEmitter = (report) => {
   // DECLARED rows only — a lint evidence obligation is a declared-side thing. The suspense row's
-  // lint credit (an unattributed static-guard, cites-no-scenario) is NOT an evidence obligation, so
+  // lint credit (an uncited static-guard, cites-no-scenario) is NOT an evidence obligation, so
   // it stays out of this table + tally; it surfaces on the suspense row's reconciling items.
   const rows = report.ledger.scenarioReconciliations
     .filter((s) => s.kind !== "phantom-scenario" && s.kind !== "suspense-scenario")
@@ -840,7 +840,7 @@ const ledgerSection: SectionEmitter = (report) => {
     );
   }
   // The suspense (S) count is broken out the same way — credits citing no scenario at all
-  // (uncited evidence observations + unattributed static-guards), aggregated into one row,
+  // (uncited evidence observations + uncited static-guards), aggregated into one row,
   // counted INSIDE the tally above.
   if (totals.suspense > 0) {
     lines.push(

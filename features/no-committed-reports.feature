@@ -10,7 +10,7 @@ Feature: The repo commits no report artefact — actively enforced
 
   The guard is itself a CI static-guard over the real source, so it is DECLARED @lint
   (@lint=lint:no-committed-reports) — spec-controller's own ledger reconciles it, so it
-  is never an unattributed static-guard (the Unattributed-static-guards increment).
+  is never an uncited static-guard (the Uncited-static-guards increment).
 
   Rule: a committed report artefact reds the no-committed-reports guard
 

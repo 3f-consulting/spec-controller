@@ -5,5 +5,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: pnpm install --frozen-lockfile
-      - run: pnpm lint:unattributed
+      - run: pnpm lint:uncited
       - run: pnpm test

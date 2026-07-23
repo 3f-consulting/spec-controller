@@ -360,7 +360,7 @@ Then(
   function () {
     const summary = rmd005Json.summary as {
       testVolume?: { totalEvidenceObservations: number; attributed: number; citesUnknownScenario: number; citesNoScenario: number };
-      staticGuards?: { runningGuardCount: number; unattributedStaticGuardCount: number };
+      staticGuards?: { runningGuardCount: number; uncitedStaticGuardCount: number };
       lint?: { satisfied: number; total: number };
     };
     assert.ok(summary, `expected a summary section; got keys: ${Object.keys(rmd005Json).join(", ")}`);
@@ -368,10 +368,10 @@ Then(
     // cites-unknown-scenario + 2 cites-no-scenario (attributed EXCLUDES cites-unknown-scenario).
     assert.ok(summary.testVolume, `expected summary.testVolume; got summary keys: ${Object.keys(summary).join(", ")}`);
     assert.deepEqual(summary.testVolume, { totalEvidenceObservations: 5, attributed: 1, citesUnknownScenario: 2, citesNoScenario: 2 });
-    // Static-guard totals — the usg fixture: 2 guards run, 1 unattributed (lint:bar); the demanded
-    // one (lint:foo) is implicit (running − unattributed = 1).
+    // Static-guard totals — the usg fixture: 2 guards run, 1 uncited (lint:bar); the demanded
+    // one (lint:foo) is implicit (running − uncited = 1).
     assert.ok(summary.staticGuards, `expected summary.staticGuards; got summary keys: ${Object.keys(summary).join(", ")}`);
-    assert.deepEqual(summary.staticGuards, { runningGuardCount: 2, unattributedStaticGuardCount: 1 });
+    assert.deepEqual(summary.staticGuards, { runningGuardCount: 2, uncitedStaticGuardCount: 1 });
     // Lint tally — the static-only cut: lint:foo declared by SCN-TGT-001 and enforced in CI →
     // 1 of 1 satisfied (the runtime evidence obligations do NOT count).
     assert.ok(summary.lint, `expected summary.lint; got summary keys: ${Object.keys(summary).join(", ")}`);
@@ -394,17 +394,17 @@ Then(
 Then(
   "the persisted static-guard summary carries runningGuardCount and unattributedStaticGuardCount with demanded implicit",
   function () {
-    const sg = (rmd005Json.summary as { staticGuards: { runningGuardCount: number; unattributedStaticGuardCount: number } }).staticGuards;
-    // demanded is IMPLICIT: running − unattributed, and non-negative by the counter's
+    const sg = (rmd005Json.summary as { staticGuards: { runningGuardCount: number; uncitedStaticGuardCount: number } }).staticGuards;
+    // demanded is IMPLICIT: running − uncited, and non-negative by the counter's
     // internal completeness invariant. No `ciGuards` / `demanded` field on the persisted surface.
-    const demanded = sg.runningGuardCount - sg.unattributedStaticGuardCount;
+    const demanded = sg.runningGuardCount - sg.uncitedStaticGuardCount;
     assert.ok(
       demanded >= 0,
-      `the implicit demanded count must be non-negative: ${sg.runningGuardCount} running − ${sg.unattributedStaticGuardCount} unattributed = ${demanded}`
+      `the implicit demanded count must be non-negative: ${sg.runningGuardCount} running − ${sg.uncitedStaticGuardCount} uncited = ${demanded}`
     );
     assert.ok(
       !("ciGuards" in sg) && !("demanded" in sg),
-      `the persisted static-guard summary must carry only { runningGuardCount, unattributedStaticGuardCount }; got keys: ${Object.keys(sg).join(", ")}`
+      `the persisted static-guard summary must carry only { runningGuardCount, uncitedStaticGuardCount }; got keys: ${Object.keys(sg).join(", ")}`
     );
   }
 );

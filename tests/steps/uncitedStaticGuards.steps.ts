@@ -1,9 +1,9 @@
 /**
- * @SCN-USG-001 step defs — the unattributed-static-guard @integration arm.
+ * @SCN-USG-001 step defs — the uncited-static-guard @integration arm.
  * Drives the REAL CLI over the usg fixture target (ci.yml runs lint:foo + lint:bar +
  * test + cucumber; only lint:foo is @lint-declared) and asserts the persisted
  * spec-reconciliation.md carries the "### Static guards" cut reporting lint:bar as an
- * unattributed static-guard (reconcile folds the undemanded running guard to the suspense row) —
+ * uncited static-guard (reconcile folds the undemanded running guard to the suspense row) —
  * proving the runningStaticGuards → reconcile → countStaticEvidenceObservationKinds → render → disk
  * wiring over real files, not an in-memory re-run (the anti-watermelon rule).
  * // @SCN-USG-001
@@ -38,8 +38,8 @@ const USG_GUARD_FIXTURE: UsgFixture = {
 
 // @SCN-USG-005 — a third fixture target whose CI runs the SAME guard:* script (guard:domain-purity)
 // but which ALSO declares it via @lint=guard:domain-purity (the boundary keeping USG-004 honest).
-// Distinct from USG_GUARD_FIXTURE (which declares nothing) so the attributed vs unattributed
-// counts stay separable: here the guard is demanded → 1 run, 0 unattributed.
+// Distinct from USG_GUARD_FIXTURE (which declares nothing) so the attributed vs uncited
+// counts stay separable: here the guard is demanded → 1 run, 0 uncited.
 const USG_GUARD_DECLARED_FIXTURE: UsgFixture = {
   features: "tests/fixtures/usg-guard-declared/features",
   ci: "tests/fixtures/usg-guard-declared/ci.yml",
@@ -59,7 +59,7 @@ Given("a target whose CI runs the lint:foo and lint:bar guards", function () {
 
 Given("only lint:foo is declared by an @lint scenario", function () {
   // The fixture's target.feature declares @lint=lint:foo on @SCN-TGT-001; lint:bar is
-  // invoked in the fixture ci.yml but no @lint declares it — the unattributed evidence observation one.
+  // invoked in the fixture ci.yml but no @lint declares it — the uncited static-guard one.
 });
 
 // @SCN-USG-004
@@ -71,7 +71,7 @@ Given("a target whose CI runs the guard:domain-purity script", function () {
 // @SCN-USG-004
 Given("no @lint scenario declares guard:domain-purity", function () {
   // The usg-guard fixture's target.feature declares NO @lint at all; guard:domain-purity is
-  // invoked in the fixture ci.yml but nothing declares it — the unattributed guard:* one.
+  // invoked in the fixture ci.yml but nothing declares it — the uncited guard:* one.
 });
 
 // @SCN-USG-005
@@ -105,7 +105,7 @@ When("the reconciliation report is rendered for the target", function () {
   });
   assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
   // [3F-1460] fix-to-canon (3F-1414): balance is now an unconditional CI gate, so this
-  // out-of-balance fixture (an unattributed static-guard in the suspense row) exits 1 —
+  // out-of-balance fixture (an uncited static-guard in the suspense row) exits 1 —
   // the report is still written IN FULL first. Pure exit-expectation flip 0->1; every
   // rendered-content assertion is unchanged.
   assert.equal(
@@ -117,7 +117,7 @@ When("the reconciliation report is rendered for the target", function () {
 });
 
 Then(
-  "the Static guards section reports lint:bar as an unattributed static-guard",
+  "the Static guards section reports lint:bar as an uncited static-guard",
   function () {
     // The Static guards section keeps the summary-level COUNTS line (ruling Q4);
     // the per-guard DETAIL re-homed to the suspense-scenario row, where lint:bar surfaces as
@@ -128,8 +128,8 @@ Then(
       `expected a Static guards section; got:\n${activeMd}`
     );
     assert.ok(
-      activeMd.includes("2 static guard(s) run, 1 unattributed static guard(s)"),
-      `expected the guard counts "2 static guard(s) run, 1 unattributed static guard(s)"; got:\n${activeMd}`
+      activeMd.includes("2 static guard(s) run, 1 uncited static guard(s)"),
+      `expected the guard counts "2 static guard(s) run, 1 uncited static guard(s)"; got:\n${activeMd}`
     );
     assert.ok(
       activeMd.includes("lint ❓ Evidence Observation cites no Scenario (lint:bar)"),
@@ -139,12 +139,12 @@ Then(
 );
 
 // @SCN-USG-004 — a guard:-prefixed CI script (guard:domain-purity) that no @lint declares
-// surfaces as an unattributed static-guard, exactly as a lint:* one does. The report's Static
-// guards section reports 1 running guard / 1 unattributed, and the suspense row carries the
+// surfaces as an uncited static-guard, exactly as a lint:* one does. The report's Static
+// guards section reports 1 running guard / 1 uncited, and the suspense row carries the
 // guard:domain-purity handle as a cites-no-scenario credit under the "lint" axis (the axis name
 // is unchanged — it is the static-guard axis, not the script prefix).
 Then(
-  "the Static guards section reports guard:domain-purity as an unattributed static-guard",
+  "the Static guards section reports guard:domain-purity as an uncited static-guard",
   function () {
     assert.match(
       activeMd,
@@ -152,8 +152,8 @@ Then(
       `expected a Static guards section; got:\n${activeMd}`
     );
     assert.ok(
-      activeMd.includes("1 static guard(s) run, 1 unattributed static guard(s)"),
-      `expected the guard counts "1 static guard(s) run, 1 unattributed static guard(s)"; got:\n${activeMd}`
+      activeMd.includes("1 static guard(s) run, 1 uncited static guard(s)"),
+      `expected the guard counts "1 static guard(s) run, 1 uncited static guard(s)"; got:\n${activeMd}`
     );
     assert.ok(
       activeMd.includes("lint ❓ Evidence Observation cites no Scenario (guard:domain-purity)"),
@@ -162,39 +162,39 @@ Then(
   }
 );
 
-// @SCN-USG-002 — the declared guard is attributed, not an unattributed static-guard. Same fixture (lint:foo
-// is @lint-declared): it must NOT surface as an unattributed static-guard credit, and the
-// counts fold it into the running volume (not the unattributed count).
+// @SCN-USG-002 — the declared guard is attributed, not an uncited static-guard. Same fixture (lint:foo
+// is @lint-declared): it must NOT surface as an uncited static-guard credit, and the
+// counts fold it into the running volume (not the uncited count).
 Then(
-  "lint:foo is not reported as an unattributed static-guard",
+  "lint:foo is not reported as an uncited static-guard",
   function () {
     assert.ok(
       !activeMd.includes("Evidence Observation cites no Scenario (lint:foo)"),
-      `lint:foo is @lint-declared; it must not surface as an unattributed static-guard credit; got:\n${activeMd}`
+      `lint:foo is @lint-declared; it must not surface as an uncited static-guard credit; got:\n${activeMd}`
     );
     assert.ok(
-      activeMd.includes("2 static guard(s) run, 1 unattributed static guard(s)"),
-      `expected lint:foo folded into the running volume (2 run, 1 unattributed static-guard(s)); got:\n${activeMd}`
+      activeMd.includes("2 static guard(s) run, 1 uncited static guard(s)"),
+      `expected lint:foo folded into the running volume (2 run, 1 uncited static-guard(s)); got:\n${activeMd}`
     );
   }
 );
 
-// @SCN-USG-005 — the declared guard:* is attributed, not an unattributed static-guard. The
+// @SCN-USG-005 — the declared guard:* is attributed, not an uncited static-guard. The
 // usg-guard-declared fixture runs guard:domain-purity in CI AND declares @lint=guard:domain-purity:
 // the demanded-guard filter (reconcile's !demandedGuardSet.has(o.staticGuard)) removes it from the
 // running-observation stream so it is not folded onto the suspense row, and the counter attributes
-// it (1 run, 0 unattributed) — never double-counted as both demanded and unattributed. The guard:*
+// it (1 run, 0 uncited) — never double-counted as both demanded and uncited. The guard:*
 // mirror of USG-002, keeping the USG-004 broadening honest.
 Then(
-  "guard:domain-purity is not reported as an unattributed static-guard",
+  "guard:domain-purity is not reported as an uncited static-guard",
   function () {
     assert.ok(
       !activeMd.includes("Evidence Observation cites no Scenario (guard:domain-purity)"),
-      `guard:domain-purity is @lint-declared; it must not surface as an unattributed static-guard credit; got:\n${activeMd}`
+      `guard:domain-purity is @lint-declared; it must not surface as an uncited static-guard credit; got:\n${activeMd}`
     );
     assert.ok(
-      activeMd.includes("1 static guard(s) run, 0 unattributed static guard(s)"),
-      `expected guard:domain-purity attributed (1 run, 0 unattributed static-guard(s)); got:\n${activeMd}`
+      activeMd.includes("1 static guard(s) run, 0 uncited static guard(s)"),
+      `expected guard:domain-purity attributed (1 run, 0 uncited static-guard(s)); got:\n${activeMd}`
     );
   }
 );
@@ -206,7 +206,7 @@ Then(
   "only lint:foo and lint:bar are counted as CI guards, not test or cucumber",
   function () {
     assert.ok(
-      activeMd.includes("2 static guard(s) run, 1 unattributed static guard(s)"),
+      activeMd.includes("2 static guard(s) run, 1 uncited static guard(s)"),
       `expected exactly 2 running guards (test/cucumber excluded); got:\n${activeMd}`
     );
     assert.ok(

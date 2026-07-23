@@ -188,7 +188,7 @@ describe("[SCN-LDG-006] a credit citing an undeclared scenario becomes a phantom
 });
 
 describe("[SCN-LDG-007] a credit citing no scenario becomes a suspense-scenario reconciliation, out of balance", () => {
-  it("aggregates every uncited credit AND the unattributed static-guards into ONE suspense-scenario row, cites-no-scenario, out-of-balance", () => {
+  it("aggregates every uncited credit AND the uncited static-guards into ONE suspense-scenario row, cites-no-scenario, out-of-balance", () => {
     const scenarios: Scenario[] = [
       { scnId: "SCN-LDG-007", evidenceObligations: [{ qualityCheck: "unit" }] },
     ];
@@ -197,7 +197,7 @@ describe("[SCN-LDG-007] a credit citing no scenario becomes a suspense-scenario 
     // locator (the where-to-fix, ruling Q5).
     // An undemanded static-guard — a running CI guard no @lint declares,
     // now carried through the STREAM as a GuardEvidenceObservation (the removed
-    // `unattributedStaticGuards` param). It cites no scenario, so `reconcile` recovers it
+    // `uncitedStaticGuards` param). It cites no scenario, so `reconcile` recovers it
     // from the completed stream and folds it into the SAME suspense row as a lint credit item.
     const evidenceObservations: EvidenceObservation[] = [
       { qualityCheck: "unit", scnId: null, status: "passed", locator: "src/a.test.ts" },
@@ -212,7 +212,7 @@ describe("[SCN-LDG-007] a credit citing no scenario becomes a suspense-scenario 
     const row = suspense[0]!;
     expect(row.scnId).toBe("(no scenario)");
     expect(row.verdict).toBe("out-of-balance");
-    // Every uncited runtime credit (with its locator) THEN each unattributed static-guard,
+    // Every uncited runtime credit (with its locator) THEN each uncited static-guard,
     // all outcome cites-no-scenario.
     expect(row.qualityCheckReconciliations).toEqual([
       { qualityCheck: "unit", outcome: "cites-no-scenario", locator: "src/a.test.ts", evidenceObservation: { qualityCheck: "unit", scnId: null, status: "passed", locator: "src/a.test.ts" } },

@@ -345,7 +345,7 @@ export function reconcileWithCensus(opts: ReconcileOptions): {
   // The stream is now COMPLETE: every running CI static guard is a GuardEvidenceObservation
   // — the demanded ones match their @lint obligation, the undemanded ones (a static guard no @lint
   // declares) cite no scenario, so `reconcile` folds them into the SUSPENSE row itself. No
-  // derive-and-diff, no `unattributedStaticGuards` param.
+  // derive-and-diff, no `uncitedStaticGuards` param.
   // The declared corpus is BOTH halves: the @SCN-tagged scenarios AND the untagged ones
   // (@SCN-LDG-021). An untagged scenario cannot be linked to an observation, so it reconciles
   // `no-scn-code` on its own out-of-balance row — never silently dropped from the debit side.

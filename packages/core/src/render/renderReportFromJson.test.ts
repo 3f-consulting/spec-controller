@@ -61,8 +61,8 @@ const ctx: RunContext = {
 const evidenceObservations: RuntimeEvidenceObservationKindCounts =
   countRuntimeEvidenceObservationKinds(balance);
 
-// The static-guard kind-counts: 2 running CI guards = 1 declared (lint:foo) + 1 unattributed (lint:bar).
-const guards: StaticEvidenceObservationKindCounts = { runningGuardCount: 2, unattributedStaticGuardCount: 1 };
+// The static-guard kind-counts: 2 running CI guards = 1 declared (lint:foo) + 1 uncited (lint:bar).
+const guards: StaticEvidenceObservationKindCounts = { runningGuardCount: 2, uncitedStaticGuardCount: 1 };
 
 const evidenceObligations: EvidenceObligations = {
   rawScnOccurrences: 4,
@@ -96,7 +96,7 @@ describe("[SCN-RMD-007] the markdown regenerates from a saved spec-reconciliatio
     // The three-way test-volume identity survives the round-trip.
     expect(regenerated).toContain("3 evidence observations = 1 attributed + 1 cites-unknown-scenario + 1 cites-no-scenario.");
     // The static-guard counts line (a materialised summary total) survives too.
-    expect(regenerated).toContain("2 static guard(s) run, 1 unattributed static guard(s).");
+    expect(regenerated).toContain("2 static guard(s) run, 1 uncited static guard(s).");
     // The SUSPENSE row survives the round-trip — its S bullet, its ledger cell
     // (with the re-homed static guard + the uncited-credit locator), and its cites-no-scenario items.
     expect(regenerated).toContain('1 suspense-scenario(s): credits citing no scenario, aggregated into "(no scenario)".');

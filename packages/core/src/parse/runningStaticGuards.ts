@@ -25,7 +25,7 @@
  * construction (@SCN-USG-003); `tsc` is deferred with the multi-ecosystem config work.
  * `qualityCheck: "lint"` is the static-guard AXIS name (unchanged) — not the script prefix.
  *
- * Parent: @SCN-USG-001 (the unattributed static-guard); @SCN-USG-004 (the guard-prefix set).
+ * Parent: @SCN-USG-001 (the uncited static-guard); @SCN-USG-004 (the guard-prefix set).
  */
 
 import type { GuardEvidenceObservation } from "../model.js";

@@ -401,7 +401,7 @@ describe("[SCN-RMD-003] observed evidence serialises as evidenceObservations", (
  * no double-report and no census section on the JSON surface.
  */
 describe("[SCN-RMD-004] the static-guard census is summary counts, no standalone section", () => {
-  const guards: StaticEvidenceObservationKindCounts = { runningGuardCount: 2, unattributedStaticGuardCount: 1 };
+  const guards: StaticEvidenceObservationKindCounts = { runningGuardCount: 2, uncitedStaticGuardCount: 1 };
 
   it("carries NO standalone staticGuards (or guards) section — the census collapsed to summary counts", () => {
     const parsed = JSON.parse(renderJson(balance, ctx, undefined, undefined, guards));
@@ -411,9 +411,9 @@ describe("[SCN-RMD-004] the static-guard census is summary counts, no standalone
     expect(parsed).not.toHaveProperty("guards");
   });
 
-  it("materialises the counts under summary.staticGuards ({ runningGuardCount, unattributedStaticGuardCount })", () => {
+  it("materialises the counts under summary.staticGuards ({ runningGuardCount, uncitedStaticGuardCount })", () => {
     const parsed = JSON.parse(renderJson(balance, ctx, undefined, undefined, guards));
-    expect(parsed.summary.staticGuards).toEqual({ runningGuardCount: 2, unattributedStaticGuardCount: 1 });
+    expect(parsed.summary.staticGuards).toEqual({ runningGuardCount: 2, uncitedStaticGuardCount: 1 });
   });
 });
 
@@ -447,8 +447,8 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
     suspenseCount: 1,
   };
 
-  // Static-guard kind-counts with teeth: 2 running CI guards = 1 declared + 1 unattributed.
-  const guards: StaticEvidenceObservationKindCounts = { runningGuardCount: 2, unattributedStaticGuardCount: 1 };
+  // Static-guard kind-counts with teeth: 2 running CI guards = 1 declared + 1 uncited.
+  const guards: StaticEvidenceObservationKindCounts = { runningGuardCount: 2, uncitedStaticGuardCount: 1 };
 
   // A balance carrying static (@lint) evidenceObligations so the lint tally is non-trivial: 2 static
   // evidenceObligations, 1 balanced (satisfied) + 1 not — satisfied 1 of 2. The runtime evidenceObligations must
@@ -506,15 +506,15 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
     const report = assembleReport(balance, ctx, undefined, undefined, guards);
     expect(report.summary.staticGuards).toEqual({
       runningGuardCount: 2,
-      unattributedStaticGuardCount: 1,
+      uncitedStaticGuardCount: 1,
     });
   });
 
   it("carries the 2-field census shape with demanded implicit (no ciGuards/demanded on the surface)", () => {
     const report = assembleReport(balance, ctx, undefined, undefined, guards);
     const sg = report.summary.staticGuards!;
-    // demanded is IMPLICIT — running − unattributed, never a surface field.
-    expect(sg.runningGuardCount - sg.unattributedStaticGuardCount).toBe(1);
+    // demanded is IMPLICIT — running − uncited, never a surface field.
+    expect(sg.runningGuardCount - sg.uncitedStaticGuardCount).toBe(1);
     expect(sg).not.toHaveProperty("ciGuards");
     expect(sg).not.toHaveProperty("demanded");
   });
@@ -536,7 +536,7 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
   it("carries the three totals through the glue-free JSON serialisation", () => {
     const parsed = JSON.parse(renderJson(lintBalance, ctx, undefined, evidenceObservations, guards));
     expect(parsed.summary.testVolume).toEqual({ totalEvidenceObservations: 6, attributed: 4, citesUnknownScenario: 1, citesNoScenario: 1 });
-    expect(parsed.summary.staticGuards).toEqual({ runningGuardCount: 2, unattributedStaticGuardCount: 1 });
+    expect(parsed.summary.staticGuards).toEqual({ runningGuardCount: 2, uncitedStaticGuardCount: 1 });
     expect(parsed.summary.lint).toEqual({ satisfied: 1, total: 2 });
   });
 });

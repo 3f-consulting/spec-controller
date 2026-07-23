@@ -323,7 +323,7 @@ export function lintTally(balance: Ledger): LintTally {
   let total = 0;
   for (const s of balance.scenarioReconciliations) {
     // DECLARED rows only — a lint evidence obligation is declared-side. The suspense row's lint
-    // credit (an unattributed static-guard, cites-no-scenario) is not an evidence obligation and
+    // credit (an uncited static-guard, cites-no-scenario) is not an evidence obligation and
     // must not inflate the declared lint total.
     if (s.kind === "phantom-scenario" || s.kind === "suspense-scenario") continue;
     for (const o of s.qualityCheckReconciliations) {

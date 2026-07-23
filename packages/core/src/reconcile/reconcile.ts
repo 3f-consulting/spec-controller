@@ -69,7 +69,7 @@ export function reconcile(
   // The DEMANDED static guard handles — every `@lint=<guard>` obligation across the corpus. A
   // `lint` evidence observation whose guard is NOT in this set is an UNDEMANDED static guard: it
   // cites no scenario, so it posts to the SUSPENSE row. This replaces the
-  // removed `unattributedStaticGuards` derive-and-diff param — the stream is now complete
+  // removed `uncitedStaticGuards` derive-and-diff param — the stream is now complete
   // (the running-guard observer emits every running CI static guard), so the reconciler recovers
   // the undemanded remainder itself, exactly as it does for an uncited runtime credit.
   const demandedGuards = new Set<string>();

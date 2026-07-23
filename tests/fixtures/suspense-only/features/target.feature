@@ -6,8 +6,8 @@ Feature: a fixture target whose ONLY out-of-balance row is the suspense reconcil
   satisfied by a passing observation, no observation cites an undeclared scenario (no
   phantom), no suite failed to collect (no broken item, so the run is SOUND and exit 4
   never pre-empts). The one and only reconciling item in the whole run sits on the
-  SUSPENSE row: the target's CI runs `lint:unattributed` and NO scenario declares
-  `@lint=lint:unattributed`, so the guard is an unattributed static-guard — an uncited
+  SUSPENSE row: the target's CI runs `lint:uncited` and NO scenario declares
+  `@lint=lint:uncited`, so the guard is an uncited static-guard — an uncited
   credit, posted to the `(no scenario)` suspense reconciliation.
 
   This is the fixture the anti-drift invariant (@SCN-CLI-013) needs, and the one shape no

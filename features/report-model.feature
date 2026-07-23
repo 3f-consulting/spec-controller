@@ -108,8 +108,8 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     standalone member-list section (was guards, then staticGuards) COLLAPSED: the guard member
     detail lives in the rows now (demanded → each scenario's @lint sub-row; undemanded → the
     suspense row's cites-no-scenario credit items), so there is no double-report on the JSON
-    surface. The counts runningGuardCount and unattributedStaticGuardCount are carried on the
-    persisted summary; the demanded count is implicit, running − unattributed. A pure
+    surface. The counts runningGuardCount and uncitedStaticGuardCount are carried on the
+    persisted summary; the demanded count is implicit, running − uncited. A pure
     derive over the model, proven in isolation by Vitest.
 
     @unit @SCN-RMD-004
@@ -117,7 +117,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
       Given a reconciliation run whose derived running-guard set includes a guard no @lint scenario declares
       When the report is serialised to JSON
       Then the static-guard census carries no standalone staticGuards (or guards) section
-      And the static-guard counts are carried under summary.staticGuards as runningGuardCount and unattributedStaticGuardCount
+      And the static-guard counts are carried under summary.staticGuards as runningGuardCount and uncitedStaticGuardCount
 
   Rule: the summary materialises the three report totals a JSON consumer reads
 

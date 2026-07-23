@@ -5,7 +5,7 @@
  * use lives in src/ingest/ciCommands.ts. reconcile's folding of an undemanded running static guard onto
  * the suspense row is pinned in src/reconcile/reconcile.test.ts.
  *
- * Parent: @SCN-USG-001 (the unattributed static-guard).
+ * Parent: @SCN-USG-001 (the uncited static-guard).
  */
 
 import { describe, it, expect } from "vitest";

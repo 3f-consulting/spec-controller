@@ -11,7 +11,7 @@
  * Mirrors `lint:feature-codes` / `lint:no-committed-reports`: a pure function of
  * the checked-out tree, a full CI gate on every push. The static guard is @lint-declared
  * (`@lint=lint:scn-tags` on @SCN-STG-001) so the tool's own ledger reconciles it —
- * not an unattributed static-guard.
+ * not an uncited static-guard.
  *
  * An optional `--features <dir>` overrides the default features/ directory (the
  * @integration fixtures pass a planted dir; the real-tree gate takes the default).

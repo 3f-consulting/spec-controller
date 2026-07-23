@@ -62,13 +62,13 @@ export interface TestVolumeTotals {
 /**
  * The materialised static-guard totals (RMD-005) — the static-guard kind-counts the
  * markdown's `### Static guards` line derives, following the census shape exactly:
- * `runningGuardCount` (the volume of running static guards) and `unattributedStaticGuardCount` (how many
- * of them NO `@lint` declares). The demanded count is IMPLICIT (`running − unattributed`) and is
+ * `runningGuardCount` (the volume of running static guards) and `uncitedStaticGuardCount` (how many
+ * of them NO `@lint` declares). The demanded count is IMPLICIT (`running − uncited`) and is
  * not carried (every demanded static guard is already a reconciled `@lint` sub-row).
  */
 export interface StaticGuardTotals {
   runningGuardCount: number;
-  unattributedStaticGuardCount: number;
+  uncitedStaticGuardCount: number;
 }
 
 /** The materialised summary — the totals (manifesto: "the aggregate of the trial balance"). */
@@ -219,7 +219,7 @@ function buildSummary(
     // The static-guard kind-counts (RMD-005), materialised only when the guard
     // read is threaded — the pure COUNTER's output (`countStaticEvidenceObservationKinds`, computed
     // in cli), symmetric with the runtime `testVolume` counter. The surface follows the census
-    // shape exactly (`{ runningGuardCount, unattributedStaticGuardCount }`; demanded is implicit),
+    // shape exactly (`{ runningGuardCount, uncitedStaticGuardCount }`; demanded is implicit),
     // so it is a direct pass-through. The member detail lives in the rows (demanded → each
     // scenario's `@lint` sub-row; undemanded → the suspense row) — there is no census section
     // (2.4).

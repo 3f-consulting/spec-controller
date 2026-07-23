@@ -100,7 +100,7 @@ Feature: Ledger over declared-vs-observed evidence
     Reconciliation, sentinel id "(no scenario)", each Quality Check Reconciliation carrying
     the outcome cites-no-scenario (and the evidence observation's locator as the where-to-fix),
     verdict always out of balance. The suspense-evidence-observation and
-    unattributed-static-guard detail lists dissolve into this row (no double-report; the
+    uncited-static-guard detail lists dissolve into this row (no double-report; the
     counts survive in the summary balance-check identities).
 
     @unit @integration @SCN-LDG-007

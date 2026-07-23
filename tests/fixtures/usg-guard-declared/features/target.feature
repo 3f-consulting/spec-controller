@@ -6,7 +6,7 @@ Feature: a fixture target declaring the guard:-prefixed guard its CI runs
   (@lint=guard:domain-purity) — the USG-004 mirror keeping the guard:* broadening honest.
   So the derived CI guard-set is {guard:domain-purity}, the declared set is
   {guard:domain-purity}, and guard:domain-purity is attributed to its @lint scenario — NOT
-  an unattributed static-guard, and counted exactly once. `test` / `cucumber` run in CI but
+  an uncited static-guard, and counted exactly once. `test` / `cucumber` run in CI but
   are neither lint:* nor guard:* → never derived as guards.
 
   Rule: a rule guarded live by guard:domain-purity

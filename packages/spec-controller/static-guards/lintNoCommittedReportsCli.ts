@@ -8,7 +8,7 @@
  * Mirrors `lint:feature-codes` / `lint:scn-subissues`: a pure function of the
  * checked-out tree. The static guard is @lint-declared (`@lint=lint:no-committed-reports`
  * on @SCN-NCR-001) so the tool's own ledger reconciles it — not an
- * unattributed static-guard (the Unattributed-static-guards increment).
+ * uncited static-guard (the Uncited-static-guards increment).
  */
 
 import { execFileSync } from "node:child_process";

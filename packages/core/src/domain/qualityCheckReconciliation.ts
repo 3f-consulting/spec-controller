@@ -37,7 +37,7 @@ export type Outcome =
   // the reconciling item on a PHANTOM scenario (@SCN-LDG-006).
   | "cites-no-scenario" // a credit citing NO @SCN at all — the reconciling item on the
   // SUSPENSE scenario (@SCN-LDG-007). Aggregates uncited runtime credits AND the
-  // unattributed static-guard (a `lint` credit no evidence obligation declares, ruling Q4).
+  // uncited static-guard (a `lint` credit no evidence obligation declares, ruling Q4).
   | "broken" // a credit whose PROOF NEVER RAN — the harness broke before the behaviour was
   // exercised, so it cites no @SCN and can be attributed to no scenario. READER-AGNOSTIC: a
   // vitest suite that failed to collect (@SCN-LDG-017) OR a cucumber step matched by two or
