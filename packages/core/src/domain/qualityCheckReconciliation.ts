@@ -226,7 +226,11 @@ interface QualityCheckReconciliationFields {
  * intersected with the nominal brand (@SCN-LDG-030): mintable ONLY by
  * `makeQualityCheckReconciliation`, so every QCR in the system has passed the (outcome,
  * side-presence) consistency check. The barrel (`index.ts`, @SCN-API-001) re-exports this TYPE via
- * `model.ts`; the phantom field adds no exported symbol, so the frozen v1 surface is unchanged.
+ * `model.ts`; the phantom field adds no exported SYMBOL, so the symbol NAMES on the frozen v1
+ * surface are unchanged — but constructibility is deliberately NARROWED: QCRs are engine-minted,
+ * and the type is exported for READING the reconciliation the engine produced, not for external
+ * CONSTRUCTION (the smart constructor is unexported). That narrowed contract is stated executably
+ * by the type-level guard in `index.test.ts` (@SCN-API-002, 3F-2040), not merely asserted here.
  */
 export type QualityCheckReconciliation = QualityCheckReconciliationFields & {
   readonly [qualityCheckReconciliationBrand]: typeof qualityCheckReconciliationBrand;
