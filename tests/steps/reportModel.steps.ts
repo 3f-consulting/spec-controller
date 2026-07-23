@@ -392,7 +392,7 @@ Then(
 );
 
 Then(
-  "the persisted static-guard summary carries runningGuardCount and unattributedStaticGuardCount with demanded implicit",
+  "the persisted static-guard summary carries runningGuardCount and uncitedStaticGuardCount with demanded implicit",
   function () {
     const sg = (rmd005Json.summary as { staticGuards: { runningGuardCount: number; uncitedStaticGuardCount: number } }).staticGuards;
     // demanded is IMPLICIT: running − uncited, and non-negative by the counter's

@@ -131,8 +131,8 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
       Test volume — Σ rawByRuntimeQualityCheck = attributed + cites-unknown-scenario + cites-no-scenario.
 
-    The static-guard census carries runningGuardCount and unattributedStaticGuardCount; the
-    demanded count is implicit, running − unattributed, and the completeness invariant is
+    The static-guard census carries runningGuardCount and uncitedStaticGuardCount; the
+    demanded count is implicit, running − uncited, and the completeness invariant is
     asserted inside the counter rather than on the surface. The Lint tally is the static-only
     evidence obligation cut (satisfied of total) — summary.byOutcome is kind-agnostic and cannot
     provide the static-only lint total, so it is materialised explicitly. HELD (slice 5): the
@@ -149,7 +149,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
       When the reconciliation run persists spec-reconciliation.json
       Then the summary carries the test-volume totals, the static-guard totals, and the lint tally
       And the test-volume identity Σ rawByRuntimeQualityCheck = attributed + cites-unknown-scenario + cites-no-scenario holds on the persisted summary
-      And the persisted static-guard summary carries runningGuardCount and unattributedStaticGuardCount with demanded implicit
+      And the persisted static-guard summary carries runningGuardCount and uncitedStaticGuardCount with demanded implicit
 
   Rule: the report model carries the feature titles, published on the JSON and sourced by the markdown
 
