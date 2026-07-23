@@ -356,7 +356,7 @@ export function reconcile(
   // the missing link is SCENARIO-scope, not tier-scope (the same shape `both-missing` uses).
   // `isBalanced` needs no change — any reconciling item anywhere already reds the run (exit 1).
   for (const name of untaggedScenarios) {
-    // no-scn-code is DEBIT-side (canon, double-entry-manifesto line 40: Obligation Exists,
+    // no-scn-code is DEBIT-side (canon, double-entry-manifesto line 39: Obligation Exists,
     // Observation None — the debit twin of `cites-no-scenario`). The scenario is real but carries
     // no @SCN, so its obligation has no code to link to: the reconciling item carries a SYNTHESIZED
     // scenario-scope obligation — an empty `{}` (no `qualityCheck` / `staticGuard`, the established

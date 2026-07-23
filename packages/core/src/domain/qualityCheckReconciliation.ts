@@ -182,7 +182,7 @@ interface QualityCheckReconciliationFields {
    * separate scenario-level array at print time. Present IFF the obligation Exists — every
    * debit-bearing outcome (`satisfied` / `missing` / `failing` / `watermelon`), AND `no-scn-code`,
    * which carries a SYNTHESIZED scenario-scope obligation (an empty `{}`, no `qualityCheck` /
-   * `staticGuard`): canon (`double-entry-manifesto.md` line 40) marks `no-scn-code` Obligation
+   * `staticGuard`): canon (`double-entry-manifesto.md` line 39) marks `no-scn-code` Obligation
    * Exists, Observation None — the debit twin of `cites-no-scenario` (@SCN-LDG-029). ABSENT on the
    * credit-only outcomes (`cites-unknown-scenario` / `cites-no-scenario` / `undemanded`) and the
    * neither-side outcomes (`broken` / `both-missing`), where no obligation is in scope.

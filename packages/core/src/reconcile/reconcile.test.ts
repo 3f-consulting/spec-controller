@@ -1248,7 +1248,7 @@ describe("[SCN-LDG-021] a scenario declaring no @SCN reconciles no-scn-code on i
 /**
  * @unit for @SCN-LDG-029 (3F-2016 / corrects 3F-1995) — no-scn-code is DEBIT-side.
  *
- * Canon (double-entry-manifesto line 40): no-scn-code = Obligation Exists, Observation None — the
+ * Canon (double-entry-manifesto line 39): no-scn-code = Obligation Exists, Observation None — the
  * debit twin of cites-no-scenario. The untagged scenario's obligation has no @SCN code to link to,
  * so the reconciliation carries a SYNTHESIZED scenario-scope obligation ({}, no qualityCheck /
  * staticGuard — the established scenario-scope degenerate shape, precedent: the scenario-scope
@@ -1274,7 +1274,7 @@ describe("[SCN-LDG-029] a no-scn-code reconciliation carries a scenario-scope ob
     const qcr = row!.qualityCheckReconciliations.find((o) => o.outcome === "no-scn-code");
     expect(qcr).toBeDefined();
     // DEBIT side: the synthesized scenario-scope obligation — empty {}, no qualityCheck / staticGuard.
-    // Its PRESENCE (Obligation Exists) is what makes no-scn-code debit-side, per canon line 40.
+    // Its PRESENCE (Obligation Exists) is what makes no-scn-code debit-side, per canon line 39.
     expect(qcr!.evidenceObligation).toEqual({});
     // CREDIT side stays absent: no @SCN code means no observation can link at any tier.
     expect(qcr!.evidenceObservation).toBeUndefined();

@@ -598,7 +598,7 @@ Feature: Ledger over declared-vs-observed evidence
       And it carries no evidence observation — an absent guard's {exists:false} is an absence, not an observation
 
   # NO-SCN-CODE IS DEBIT-SIDE (@SCN-LDG-029, 3F-2016 / corrects 3F-1995). Canon (double-entry-
-  # manifesto line 40): no-scn-code = Obligation Exists, Observation None — the debit twin of
+  # manifesto line 39): no-scn-code = Obligation Exists, Observation None — the debit twin of
   # cites-no-scenario. The scenario is real and ordinary but carries no @SCN, so its obligation has
   # no code to link to; the reconciliation carries a SYNTHESIZED scenario-scope obligation ({}, no
   # qualityCheck / staticGuard — precedent: the scenario-scope pending obligation, journal.ts) and
