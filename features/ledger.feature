@@ -632,3 +632,21 @@ Feature: Ledger over declared-vs-observed evidence
       Then each reconciliation's side-presence matches its canon row
       And constructing any outcome with a forbidden side throws — a divergent pair is unconstructible
       And when the real tool balances a ten-outcome corpus, every emitted Quality Check Reconciliation's sides match its canon row
+
+  # PIN OUTCOME_SIDE_PROFILE TO CANON (@SCN-LDG-031, 3F-2039). @SCN-LDG-030 pins each emitted QCR to
+  # OUTCOME_SIDE_PROFILE — but nothing pinned OUTCOME_SIDE_PROFILE itself to the manifesto. So a
+  # profile row and a producer wrong IN THE SAME DIRECTION agree, throw nothing, and pass everything
+  # (the fault class that shipped one level up, 3F-2016). This closes the chain: constructor → profile
+  # → canon. The pin carries an INDEPENDENT hand-transcription of the manifesto's Evidence Obligation
+  # and Evidence Observation columns (double-entry-manifesto.md lines 35-44) — NEVER a re-read of
+  # OUTCOME_SIDE_PROFILE, or the assertion is the tautology it exists to retire (the @SCN-RPT-025
+  # idiom). The code is already canon-correct, so the pin is green on landing; its teeth are shown by
+  # mutation (flip any profile row → the pin reds), both directions.
+  Rule: OUTCOME_SIDE_PROFILE matches the manifesto's per-outcome side-presence columns
+
+    @unit @SCN-LDG-031
+    Scenario: every outcome's side-presence equals its manifesto row
+      Given an independent recording of the manifesto's Evidence Obligation and Evidence Observation columns (double-entry-manifesto.md lines 35-44)
+      When OUTCOME_SIDE_PROFILE is checked against it, keyed by the Outcome union
+      Then every outcome's (obligation, observation) presence equals its manifesto row
+      And flipping any profile row away from its manifesto value reds the pin

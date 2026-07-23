@@ -122,3 +122,59 @@ describe("[SCN-LDG-030] a Quality Check Reconciliation's carried sides are consi
     });
   }
 });
+
+/**
+ * The CANON-PIN on OUTCOME_SIDE_PROFILE itself (@SCN-LDG-031, 3F-2039).
+ *
+ * @SCN-LDG-030 (above) pins each EMITTED QualityCheckReconciliation to OUTCOME_SIDE_PROFILE — but
+ * that map is the code's OWN artefact, and nothing pinned IT to the manifesto. So a profile row and
+ * a producer wrong IN THE SAME DIRECTION agree, throw nothing, and pass everything (the exact fault
+ * shape that shipped one level up, 3F-2016). The only backstop for the map itself is an independent
+ * recording of canon — this pin. It closes the chain: constructor → profile → canon.
+ *
+ * The expectation below is an INDEPENDENT hand-transcription of the manifesto's Evidence Obligation
+ * and Evidence Observation columns (`the maintainers' private notes` lines 35-44) — the
+ * @SCN-RPT-025 idiom. It is a STANDALONE LITERAL: it is NOT OUTCOME_SIDE_PROFILE, NOT derived from
+ * it, NOT parsed from the manifesto file, NOT imported. A circular read (deriving the expectation
+ * from OUTCOME_SIDE_PROFILE) would reproduce the tautology this pin exists to retire — two
+ * independent recordings must AGREE for the assertion to mean anything (double-entry).
+ *
+ * Keyed by the type-forced `Outcome` union (a `Record<Outcome, …>`): a new union member cannot
+ * compile without a canon row here, so OUTCOME_SIDE_PROFILE can never grow an outcome the manifesto
+ * has not vouched for.
+ *
+ * Teeth: the code is already canon-correct, so this pin is GREEN on landing — there is no natural
+ * red→green. Its teeth are demonstrated by MUTATION (proven both directions in the PR): flip any
+ * OUTCOME_SIDE_PROFILE row's obligation Exists→None, or its observation None→Exists, and the
+ * matching `it.each` row reds. Without that demonstration the pin is itself a watermelon.
+ *
+ * Parent: (@SCN-LDG-031).
+ */
+describe("[SCN-LDG-031] OUTCOME_SIDE_PROFILE matches the manifesto's per-outcome side-presence columns", () => {
+  // The manifesto's Evidence Obligation / Evidence Observation columns, hand-transcribed from
+  // the maintainers' private notes lines 35-44 — the INDEPENDENT source of truth (never a
+  // re-read of OUTCOME_SIDE_PROFILE). Type-forced over the whole Outcome union: a new member cannot
+  // join without its canon row here, so the pin can never fall behind the outcomes it governs.
+  const CANON_SIDE_PROFILE: Record<
+    Outcome,
+    { obligation: "Exists" | "None"; observation: "Exists" | "None" }
+  > = {
+    satisfied: { obligation: "Exists", observation: "Exists" }, // manifesto line 35
+    missing: { obligation: "Exists", observation: "None" }, // manifesto line 36
+    failing: { obligation: "Exists", observation: "Exists" }, // manifesto line 37
+    watermelon: { obligation: "Exists", observation: "Exists" }, // manifesto line 38
+    "no-scn-code": { obligation: "Exists", observation: "None" }, // manifesto line 39
+    "cites-unknown-scenario": { obligation: "None", observation: "Exists" }, // manifesto line 40
+    "cites-no-scenario": { obligation: "None", observation: "Exists" }, // manifesto line 41
+    undemanded: { obligation: "None", observation: "Exists" }, // manifesto line 42
+    broken: { obligation: "None", observation: "None" }, // manifesto line 43
+    "both-missing": { obligation: "None", observation: "None" }, // manifesto line 44
+  };
+
+  it.each(Object.entries(CANON_SIDE_PROFILE) as [Outcome, (typeof CANON_SIDE_PROFILE)[Outcome]][])(
+    'the "%s" outcome\'s side-presence equals its manifesto row',
+    (outcome, canonRow) => {
+      expect(OUTCOME_SIDE_PROFILE[outcome]).toEqual(canonRow);
+    }
+  );
+});
