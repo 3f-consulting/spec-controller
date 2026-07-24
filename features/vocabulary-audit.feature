@@ -7,8 +7,8 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
   snake / dotted / path → words: rootProgramme → root, programme) and checks each word
   against the approved word-set (manifesto domain vocabulary + the endorsed generic-technical
   allowlist + the ruled-allowed-outright report/spec/feature). Burden flips: a word in
-  NEITHER set flags. The banned shortenings (supply, execution(s), state, and bare
-  obligation / observation / unattributed / ghost) always flag.
+  NEITHER set flags. The banned shortenings (supply, execution(s), state, unattributed) and
+  the bare full-term words (obligation / observation / ghost) always flag.
 
   Two scanning modes keep the audit useful without flooding on ordinary English: NAME mode
   (code identifiers, JSON/YAML keys, feature tags, filenames) applies the full closed
@@ -33,9 +33,9 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
     `guard` is the discriminating case (canon L5 / L129). It is a DIFFERENT WORD — a check
     protecting an invariant — so its qualified compounds keep it, while a bare `guard`
     standing in for a static guard is the banned shortening. A qualifier need only
-    CO-OCCUR on the name or line (the `unattributed` precedent, not strict adjacency),
-    so anaphora — "the static guard ... the guard" — passes, and only a genuinely
-    standalone bare `guard` flags. Its action is `review`, never auto-`rename`: bare, it
+    CO-OCCUR on the name or line (co-occurrence, not strict adjacency), so anaphora —
+    "the static guard ... the guard" — passes (the qualifier `static` co-occurs), and
+    only a genuinely standalone bare `guard` flags. Its action is `review`, never auto-`rename`: bare, it
     may be the different word used alone rather than a shortening, so a human looks.
     That is why it does not inherit obligation/observation's rename disposition.
 

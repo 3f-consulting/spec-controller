@@ -230,6 +230,13 @@ export const RULED_ALLOWED: ReadonlySet<string> = new Set(["report", "spec", "fe
 /** Banned shortenings + rejected aliases that ALWAYS flag (both modes). */
 export const BANNED_WORDS: ReadonlySet<string> = new Set([
   "supply", "execution", "executions", "state",
+  // `unattributed` is a FULLY banned word (operator, 2026-07-24 — treated like
+  // `state`, not a bespoke NAME-only home). It flags in every context, name AND
+  // prose, closing the prose regression hole the runtime-axis slice purged. No
+  // single canonical: the word split by meaning across the axes (`uncited` static /
+  // `suspense` account / `cites-no-scenario` outcome), so the rename target is
+  // by-meaning — the `banned`/`rename` verdict carries no `new` column.
+  "unattributed",
   // Rejected aliases: `requirement(s)` → evidence obligation;
   // `oob` → out-of-balance (opaque abbreviation of the verdict value).
   "requirement", "oob",
@@ -237,7 +244,7 @@ export const BANNED_WORDS: ReadonlySet<string> = new Set([
 
 /** Words approved only inside their full manifesto term; bare → flag. */
 export const FULL_TERM_ONLY: ReadonlySet<string> = new Set([
-  "obligation", "observation", "unattributed", "ghost",
+  "obligation", "observation", "ghost",
   // `guard` is BOTH canon's different word (L5 — a check protecting an invariant)
   // and its banned shortening (L129 — of `static guard`). So it is approved only
   // when a ruled qualifier co-occurs; see GUARD_QUALIFIERS + fullTermSatisfied.
@@ -302,7 +309,6 @@ export const REJECTED_ALIAS_TO_CANONICAL: Readonly<Record<string, string>> = {
   state: "outcome",
   obligation: "evidence obligation",
   observation: "evidence observation",
-  unattributed: "unattributed evidence observation",
   ghost: "ghost evidence observation",
   requirement: "evidence obligation",
   requirements: "evidence obligations",
@@ -395,17 +401,9 @@ function fullTermSatisfied(word: string, words: string[], i: number, present: Se
     case "obligation":
     case "observation":
       return singularise(words[i - 1] ?? "") === "evidence";
-    case "unattributed":
-      // Blessed in TWO bounded full-term contexts (tagged) — never a
-      // bare pass:
-      //  • "unattributed evidence observation" — the runtime attribution gap.
-      //  • "unattributed static-guard" (double-entry-manifesto.md line 42) —
-      //    blesses the surface name `unattributedStaticGuardCount`.
-      // Bare `unattributed` standing alone (neither context present) still flags.
-      return (present.has("evidence") && present.has("observation")) ||
-        (present.has("static") && present.has("guard"));
     case "guard":
-      // CO-OCCURRENCE, not adjacency (the `unattributed` arm above is the precedent).
+      // CO-OCCURRENCE, not adjacency (like the `ghost` arm below — a `present.has`
+      // set-membership test over the whole sequence, not a `words[i - 1]` neighbour).
       // Anaphora — "the static guard ... the guard" — is the same referent, so the
       // second, unqualified mention passes; only a genuinely standalone bare `guard`
       // flags. Its action is `review`, not `rename` (see FlagReason below): bare, it

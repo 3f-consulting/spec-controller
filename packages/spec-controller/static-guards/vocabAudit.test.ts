@@ -84,15 +84,39 @@ describe("[SCN-VOC-001] classifyWords — bare vs full-term shortenings", () => 
     const full = classifyWords(["ghost", "evidence", "observation"], "name");
     expect(full.every((v) => !v.flagged)).toBe(true);
   });
-  it("flags a bare `unattributed` but not `unattributed static guard`", () => {
-    // The static-guard context blesses `unattributedStaticGuardCount` (manifesto
-    // line 42) — alongside the original "unattributed evidence
-    // observation" context — while bare `unattributed` still flags.
+  it("flags `unattributed` as a banned word in every context — name and prose", () => {
+    // `unattributed` is now a FULLY banned word (operator, 2026-07-24 — treated
+    // like `state`): it flags in every context, name and prose. The two former
+    // blessings — "unattributed static-guard" and "unattributed evidence
+    // observation" — are removed, so a future `unattributed` reds either way.
+    // No single canonical (the word split by meaning across the axes), so the
+    // banned verdict carries no `new` target.
     expect(classifyWords(["unattributed"], "name")[0]!.flagged).toBe(true);
+
+    // Formerly blessed in the static-guard context — now flags (banned); the
+    // co-occurring `static`/`guard` still pass via `guard`'s own qualifier rule.
     const staticGuard = classifyWords(["unattributed", "static", "guard"], "name");
-    expect(staticGuard.every((v) => !v.flagged)).toBe(true);
+    const sgUnattr = staticGuard.find((v) => v.word === "unattributed")!;
+    expect(sgUnattr.flagged).toBe(true);
+    expect(sgUnattr.reason).toBe("banned");
+    expect(sgUnattr.canonical).toBeNull();
+    expect(staticGuard.filter((v) => v.word !== "unattributed").every((v) => !v.flagged)).toBe(true);
+
+    // Formerly blessed in the evidence-observation context — now flags (banned);
+    // `evidence`/`observation` still pass (the evidence-observation full term).
     const evObs = classifyWords(["unattributed", "evidence", "observation"], "name");
-    expect(evObs.every((v) => !v.flagged)).toBe(true);
+    const eoUnattr = evObs.find((v) => v.word === "unattributed")!;
+    expect(eoUnattr.flagged).toBe(true);
+    expect(eoUnattr.reason).toBe("banned");
+    expect(evObs.filter((v) => v.word !== "unattributed").every((v) => !v.flagged)).toBe(true);
+
+    // Banned words flag in PROSE too (both modes), like `state` — closing the
+    // prose regression hole (a future `unattributed` comment/Gherkin reds).
+    const prose = classifyWords(["the", "unattributed", "observation"], "prose").find(
+      (v) => v.word === "unattributed"
+    )!;
+    expect(prose.flagged).toBe(true);
+    expect(prose.reason).toBe("banned");
   });
 });
 
@@ -151,8 +175,8 @@ describe("[SCN-VOC-001] classifyWords — `guard`: the different word vs the ban
 
   it("passes anaphora by CO-OCCURRENCE, not strict adjacency", () => {
     // "the static guard ... the guard" — the second, unqualified mention is the same
-    // referent. Adjacency would red it; co-occurrence (the `unattributed` precedent)
-    // passes it, so only a genuinely standalone bare `guard` flags.
+    // referent. Adjacency would red it; `guard`'s own co-occurrence rule (a qualifier
+    // anywhere on the line) passes it, so only a genuinely standalone bare `guard` flags.
     const anaphora = classifyWords(["static", "guard", "the", "guard"], "prose");
     expect(anaphora.filter((v) => v.word === "guard").every((v) => !v.flagged)).toBe(true);
   });
