@@ -250,14 +250,14 @@ Feature: The report renders the ledger as sectioned facts
     the pipeline builds were consumed by reconcile() and thrown away. This retains the
     observed test evidence observation as a RuntimeEvidenceObservationKindCounts datum, counted by kind against the @SCN
     anchor in ONE shared pass — attributed-to-declared (per-(scnId, level) counts),
-    phantom-id (an @SCN no scenario declares), and unattributed evidence observation (no @SCN)
+    phantom-id (an @SCN no scenario declares), and cites-no-scenario evidence observation (no @SCN)
     — with raw per-level totals and file locators. Under "## Summary views", a
     "### Test volume" cut renders the balancing identity ("N evidence observations = M attributed +
     G phantom + K suspense", a derived view) then a by-level evidence observation table (all four levels,
     e2e/performance zeros shown — a fixed tally that always lists every level). The identity holds
     BY CONSTRUCTION: one pass counts each evidence observation into exactly one kind while
     summing the raw total, so the three terms can't drift. The non-derivable atoms
-    (rawByRuntimeQualityCheck, attributed, phantom, unattributed evidence observation) persist on JSON (project design §3); the
+    (rawByRuntimeQualityCheck, attributed, phantom, suspense) persist on JSON (project design §3); the
     identity line stays markdown-only. The @integration arm drives the REAL file-read
     pipeline (readEvidenceObservations over fixture Vitest/Cucumber reports → writeOutputs → both
     persisted surfaces) and asserts the JSON atoms balance by construction — the
@@ -266,7 +266,7 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @integration @SCN-RPT-010
     Scenario: the report renders the Test volume cut and the evidence observation identity balances by construction
-      Given a reconciliation run over a target whose Vitest and Cucumber reports span attributed, phantom-id, and unattributed evidence observations
+      Given a reconciliation run over a target whose Vitest and Cucumber reports span attributed, phantom-id, and cites-no-scenario evidence observations
       When the run writes its artifacts with the evidence observation reconciliation
       Then the persisted spec-reconciliation.md renders the Test volume cut with the balancing identity and spec-reconciliation.json carries evidence-observation atoms that balance by construction
 

@@ -410,7 +410,7 @@ After({ tags: "@SCN-RPT-008" }, function () {
 // The evidence observation-reconciliation @integration arm drives the REAL file-read pipeline over a
 // fixture target whose Vitest / Cucumber reports span every observation kind: an
 // evidence observation attributed to a DECLARED scenario, a phantom-id (an @SCN no scenario
-// declares), and unattributed evidence observation results (no @SCN). readEvidenceObservations reads the actual report
+// declares), and cites-no-scenario evidence observation results (no @SCN). readEvidenceObservations reads the actual report
 // FILES (readJsonIfPresent) → countRuntimeEvidenceObservationKinds, then writeOutputs threads the evidence observation to
 // BOTH renderers and PERSISTS spec-reconciliation.md + spec-reconciliation.json. The persisted
 // markdown must carry the ### Test volume cut + the identity line, and the persisted
@@ -427,7 +427,7 @@ let md010: string;
 let json010: string;
 
 Given(
-  "a reconciliation run over a target whose Vitest and Cucumber reports span attributed, phantom-id, and unattributed evidence observations",
+  "a reconciliation run over a target whose Vitest and Cucumber reports span attributed, phantom-id, and cites-no-scenario evidence observations",
   function () {
     runsRoot010 = mkdtempSync(join(tmpdir(), "spec-controller-rpt010-"));
   }
@@ -452,7 +452,7 @@ Then(
   function () {
     // The fixture spans the kinds: 3 unit (TGT-001 attributed, PHANTOM-999 phantom evidence observation, one
     // no-@SCN) + 2 integration (TGT-002 attributed, one @smoke no-@SCN) = 5 evidence observations;
-    // attributed-to-declared 2, phantom 1, unattributed evidence observation 2 ⇒ 5 = 2 + 1 + 2 (three-way).
+    // attributed-to-declared 2, phantom 1, suspense 2 ⇒ 5 = 2 + 1 + 2 (three-way).
     assert.match(
       md010,
       /### Test volume/,

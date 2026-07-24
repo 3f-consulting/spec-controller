@@ -2,7 +2,7 @@
 Feature: Detect uncited static-guards — a CI guard no @lint declares
 
   The static-guard (@lint) axis's UNCITED detection — the mirror of the
-  runtime axis's unattributed evidence observations. The @lint axis was declared→observed only
+  runtime axis's cites-no-scenario evidence observations. The @lint axis was declared→observed only
   (checkStaticEvidenceObligations observes each DECLARED @lint=<guard>), structurally blind to the reverse:
   a guard that runs in CI with NOTHING declaring it — an unposted credit.
 

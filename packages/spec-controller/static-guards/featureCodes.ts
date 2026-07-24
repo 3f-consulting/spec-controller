@@ -69,7 +69,7 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     code: "USG",
     slug: "uncited-static-guards",
     status: "declared",
-    note: "the uncited static-guard — a CI guard that runs with no @lint declaring it (the mirror of an unattributed runtime evidence observation); derives the CI guard-set + reconciles it against the declared @lint set",
+    note: "the uncited static-guard — a CI guard that runs with no @lint declaring it (the mirror of a cites-no-scenario runtime evidence observation); derives the CI guard-set + reconciles it against the declared @lint set",
   },
   {
     code: "WRN",

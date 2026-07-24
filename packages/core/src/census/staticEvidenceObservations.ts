@@ -22,7 +22,7 @@ import type { GuardEvidenceObservation } from "../model.js";
  * `RuntimeEvidenceObservationKindCounts`, one construction on both axes. `runningGuardCount` is the
  * VOLUME of running static guards (every `@lint=<guard>` a CI `run:` step invokes); `uncitedStaticGuardCount`
  * is how many of them NO `@lint` declares — a static guard that runs with nothing demanding it (an unposted
- * credit, the mirror of a runtime unattributed evidence observation). The demanded count is IMPLICIT
+ * credit, the mirror of a runtime cites-no-scenario evidence observation). The demanded count is IMPLICIT
  * (`runningGuardCount − uncitedStaticGuardCount`): every demanded static guard is already a reconciled
  * `@lint` sub-row and carries no multiplicity, so it adds nothing the rows do not already hold and is
  * NOT carried on the surface. The completeness invariant `running === demanded + uncited`

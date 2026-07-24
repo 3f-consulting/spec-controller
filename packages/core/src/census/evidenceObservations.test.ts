@@ -96,12 +96,12 @@ describe("[SCN-RPT-010] countRuntimeEvidenceObservationKinds counts the observed
     expect(evidenceObservations.phantomCount).toBe(1);
   });
 
-  it("counts the unattributed evidence observation evidenceObservations (no @SCN)", () => {
+  it("counts the cites-no-scenario evidence observation evidenceObservations (no @SCN)", () => {
     // Two suspense evidence observations: the unit assertion + the integration scenario, both carrying no @SCN.
     expect(evidenceObservations.suspenseCount).toBe(2);
   });
 
-  it("holds the evidenceObservations identity BY CONSTRUCTION: raw total = attributed + unattributed evidence observation", () => {
+  it("holds the evidenceObservations identity BY CONSTRUCTION: raw total = attributed + suspense", () => {
     // The thesis: one shared pass means the kind-counts can't drift. raw (6) =
     // attributed-to-declared (3) + phantom (1) + suspense (2); attributedTotal folds
     // the phantom in (every @SCN-bearing evidenceObservation), so total = attributedTotal + suspenseCount.

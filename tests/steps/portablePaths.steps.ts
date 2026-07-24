@@ -57,7 +57,7 @@ Given(
     );
 
     // Vitest report: an ABSOLUTE test-file locator under the target repo. One attributed
-    // assertion (SCN-TGT-001) + one carrying no @SCN → an unattributed evidence observation
+    // assertion (SCN-TGT-001) + one carrying no @SCN → a cites-no-scenario evidence observation
     // whose absolute locator surfaces in the report (the leak vector).
     const vitestLocator = join(targetRepo, "src", "widget.test.ts");
     writeFileSync(
@@ -76,7 +76,7 @@ Given(
     );
 
     // Cucumber report: an ABSOLUTE feature uri under the target repo, one @smoke element
-    // carrying no @SCN → an unattributed evidence observation whose absolute locator surfaces too.
+    // carrying no @SCN → a cites-no-scenario evidence observation whose absolute locator surfaces too.
     const cucumberLocator = join(targetRepo, "features", "sample.feature");
     writeFileSync(
       join(targetRepo, "cucumber.json"),
