@@ -4,7 +4,7 @@
  * test + cucumber; only lint:foo is @lint-declared) and asserts the persisted
  * spec-reconciliation.md carries the "### Static guards" cut reporting lint:bar as an
  * uncited static-guard (reconcile folds the undemanded running guard to the suspense row) —
- * proving the runningStaticGuards → reconcile → countStaticEvidenceObservationKinds → render → disk
+ * proving the runningStaticGuards → reconcile → staticObservationTally → render → disk
  * wiring over real files, not an in-memory re-run (the anti-watermelon rule).
  * // @SCN-USG-001
  */

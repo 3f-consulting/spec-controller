@@ -114,8 +114,10 @@ const EXPECTED_TYPE_EXPORTS: readonly string[] = [
   "UntaggedScenario",
   // The runtime observation counter (census/evidenceObservations.ts) is RETIRED (3F-2104) — its
   // types `RuntimeEvidenceObservationKindCounts` / `AttributedCount` left the frozen surface.
-  // Static observation counter (census/staticEvidenceObservations.ts)
-  "StaticEvidenceObservationKindCounts",
+  // The static observation counter (census/staticEvidenceObservations.ts) is RETIRED (3F-2119) — its
+  // type `StaticEvidenceObservationKindCounts` left the frozen surface (counting folds onto the
+  // Ledger, `staticObservationTally`). `StaticGuardTotals` (below) — the materialised headline, now
+  // Ledger-fold-sourced — STAYS.
   // Parse — result/CI readers (parse/*)
   "VitestJsonReport",
   "CucumberJsonReport",
@@ -165,8 +167,9 @@ const EXPECTED_VALUE_EXPORTS: readonly string[] = [
   // The runtime observation counter (census/evidenceObservations.ts) is RETIRED (3F-2104) — its
   // values `countRuntimeEvidenceObservationKinds` / `RUNTIME_QUALITY_CHECKS` /
   // `totalEvidenceObservations` / `attributedTotal` left the frozen surface.
-  // Static observation counter (census/staticEvidenceObservations.ts)
-  "countStaticEvidenceObservationKinds",
+  // The static observation counter (census/staticEvidenceObservations.ts) is RETIRED (3F-2119) — its
+  // value `countStaticEvidenceObservationKinds` left the frozen surface (counting folds onto the
+  // Ledger, `staticObservationTally`).
   // Parse — result/CI readers (parse/*)
   "parseVitestEvidenceObservations",
   "parseCucumberEvidenceObservations",
@@ -209,6 +212,17 @@ describe("[SCN-API-001] the core barrel exports exactly the frozen v1 contract s
   it("[SCN-API-001] retires ScenarioTotals from the actual type surface — the totals are the Scenario Reconciliations'", () => {
     expect(reflectBarrelTypeExports()).not.toContain("ScenarioTotals");
     expect(reflectBarrelTypeExports()).toContain("ScenarioReconciliationTotals");
+  });
+
+  // The static evidence-observation census is RETIRED (3F-2119) — its counting folds onto the
+  // Ledger (`staticObservationTally`). This pins the RETIREMENT of its 2 public symbols BY NAME on
+  // the actual surface (the value `countStaticEvidenceObservationKinds`, the type
+  // `StaticEvidenceObservationKindCounts`), so neither can creep back re-exported. `StaticGuardTotals`
+  // — the materialised headline type, now Ledger-fold-sourced — STAYS on the frozen surface.
+  it("[SCN-API-001] retires the static-census symbols from the actual surface, keeping StaticGuardTotals", () => {
+    expect(Object.keys(barrel)).not.toContain("countStaticEvidenceObservationKinds");
+    expect(reflectBarrelTypeExports()).not.toContain("StaticEvidenceObservationKindCounts");
+    expect(reflectBarrelTypeExports()).toContain("StaticGuardTotals");
   });
 
   it("names each frozen symbol exactly once (no accidental duplicate in the expected sets)", () => {

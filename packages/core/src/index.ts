@@ -52,9 +52,12 @@ export { reconcile, isBalanced, hasPendingItems, hasBrokenEvidence } from "./rec
 // 6 symbols + `EvidenceObservationsSection` left this frozen-in-intent surface. Pre-freeze, no
 // external consumer (unpublished package; only workspace dependents, all rewired). See @SCN-API-001.
 
-// --- Static observation counter (`census/staticEvidenceObservations.ts`) ---
-export { countStaticEvidenceObservationKinds } from "./census/staticEvidenceObservations.js";
-export type { StaticEvidenceObservationKindCounts } from "./census/staticEvidenceObservations.js";
+// The static evidence-observation census (`census/staticEvidenceObservations.ts`) is RETIRED
+// (3F-2119): its counting folds onto the Ledger (`staticObservationTally`, an internal domain fold),
+// and its 2 symbols (`countStaticEvidenceObservationKinds` value / `StaticEvidenceObservationKindCounts`
+// type) left this frozen-in-intent surface. `StaticGuardTotals` (the materialised headline, now
+// Ledger-fold-sourced) STAYS on the barrel. Pre-freeze, no external consumer (unpublished package;
+// only workspace dependents, all rewired). See @SCN-API-001.
 
 // --- Parse — result/CI readers (`parse/*`) ---
 export { parseVitestEvidenceObservations } from "./parse/vitest.js";
