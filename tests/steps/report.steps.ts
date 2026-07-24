@@ -23,7 +23,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { runReconcile, readEvidenceObligations, readEvidenceObservations, readFeatureNames } from "../../packages/spec-controller/src/ingest/ingestQualityChecks.js";
+import { runReconcile, readEvidenceObligations, readFeatureNames } from "../../packages/spec-controller/src/ingest/ingestQualityChecks.js";
 import { writeOutputs, type OutputPayloads } from "../../packages/spec-controller/src/cli-balance/emit/writer.js";
 import type { OutputPlan } from "../../packages/spec-controller/src/cli-balance/emit/format.js";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
@@ -435,14 +435,13 @@ Given(
 
 When("the run writes its artifacts with the evidence observation reconciliation", function () {
   const balance = runReconcile(EVIDENCE_OBSERVATION_OPTS);
-  const evidenceObservations = readEvidenceObservations(EVIDENCE_OBSERVATION_OPTS);
   const ctx010: RunContext = {
     target: "evidence observation-fixture",
     inputs: {},
     runStart: new Date("2026-06-27T08:17:53.000Z"),
     sourceSha: null,
   };
-  const runDir = persistReport(runsRoot010, { balance, ctx: ctx010, evidenceObservations });
+  const runDir = persistReport(runsRoot010, { balance, ctx: ctx010, withRuntimeObservations: true });
   md010 = readFileSync(join(runDir, "spec-reconciliation.md"), "utf8");
   json010 = readFileSync(join(runDir, "spec-reconciliation.json"), "utf8");
 });
@@ -467,28 +466,27 @@ Then(
       `expected the by-level evidence observation table (3 unit / 2 integration); got:\n${md010}`
     );
 
-    // JSON surface: the evidenceObservations atoms, and the identity holds BY CONSTRUCTION.
-    // BOTH the phantom DETAIL and the suspense DETAIL dissolved into
-    // rows; their COUNTS survive in summary.testVolume, which the identity now reads.
+    // JSON surface: the `evidenceObservations` section is RETIRED (3F-2103). The raw totals re-home
+    // onto `summary.rawByRuntimeQualityCheck`; the identity holds BY CONSTRUCTION off the Ledger
+    // fold (both the phantom and suspense counts live in `summary.testVolume`).
     const parsed = JSON.parse(json010) as {
-      summary: { testVolume: { citesUnknownScenario: number; citesNoScenario: number } };
-      evidenceObservations?: {
+      summary: {
         rawByRuntimeQualityCheck: Record<string, number>;
-        attributed: Array<{ count: number }>;
+        testVolume: { attributed: number; citesUnknownScenario: number; citesNoScenario: number };
       };
+      evidenceObservations?: unknown;
     };
-    const obs = parsed.evidenceObservations;
-    assert.ok(obs, `expected spec-reconciliation.json to carry an evidenceObservations object; got:\n${json010}`);
-    assert.ok(!("phantomEvidenceObservations" in obs!), "expected the phantom (cites-unknown-scenario) detail array to have dissolved from the section");
-    assert.ok(!("suspenseEvidenceObservations" in obs!), "expected the suspense (cites-no-scenario) detail array to have dissolved from the section");
-    const raw = Object.values(obs.rawByRuntimeQualityCheck).reduce((n, v) => n + v, 0);
-    const attributed =
-      obs.attributed.reduce((n, a) => n + a.count, 0) + parsed.summary.testVolume.citesUnknownScenario;
+    assert.ok(
+      !("evidenceObservations" in parsed),
+      `expected NO evidenceObservations section (retired); got:\n${json010}`
+    );
+    const raw = Object.values(parsed.summary.rawByRuntimeQualityCheck).reduce((n, v) => n + v, 0);
+    const tv = parsed.summary.testVolume;
     assert.equal(raw, 5, `expected 5 raw evidence observations; got ${raw}`);
     assert.equal(
       raw,
-      attributed + parsed.summary.testVolume.citesNoScenario,
-      `the evidence-observation identity must balance by construction: raw ${raw} = attributed ${attributed} + cites-no-scenario ${parsed.summary.testVolume.citesNoScenario}`
+      tv.attributed + tv.citesUnknownScenario + tv.citesNoScenario,
+      `the evidence-observation identity must balance by construction: raw ${raw} = attributed ${tv.attributed} + cites-unknown ${tv.citesUnknownScenario} + cites-no-scenario ${tv.citesNoScenario}`
     );
   }
 );
@@ -525,14 +523,13 @@ Given(
 
 When("the reconciliation report is rendered for that @e2e-via-cucumber target", function () {
   const balance = runReconcile(EVIDENCE_OBSERVATION_E2E_OPTS);
-  const evidenceObservations = readEvidenceObservations(EVIDENCE_OBSERVATION_E2E_OPTS);
   const ctx017: RunContext = {
     target: "evidence-observation-e2e-fixture",
     inputs: {},
     runStart: new Date("2026-07-08T20:30:17.000Z"),
     sourceSha: null,
   };
-  const runDir = persistReport(runsRoot017, { balance, ctx: ctx017, evidenceObservations });
+  const runDir = persistReport(runsRoot017, { balance, ctx: ctx017, withRuntimeObservations: true });
   md017 = readFileSync(join(runDir, "spec-reconciliation.md"), "utf8");
   json017 = readFileSync(join(runDir, "spec-reconciliation.json"), "utf8");
 });
@@ -556,15 +553,19 @@ Then("Test volume counts the observation under e2e, not integration", function (
 });
 
 Then("the scenario appears in attributed at e2e", function () {
+  // The retired census's `attributed[]` is gone; the e2e credit is visible where it POSTED —
+  // on SCN-TGT-101's ledger row (@SCN-LDG-022), the non-parallel-store source (retire, don't
+  // relocate). The tag-derived projection put it at e2e, not the integration fallback.
   const parsed = JSON.parse(json017) as {
-    evidenceObservations?: {
-      attributed: Array<{ scnId: string; qualityCheck: string; count: number }>;
-    };
+    ledger: { scenarioReconciliations: Array<{ scnId: string; evidenceObservations: Array<{ qualityCheck: string }> }> };
   };
-  const attributed = parsed.evidenceObservations?.attributed ?? [];
-  assert.ok(
-    attributed.some((a) => a.scnId === "SCN-TGT-101" && a.qualityCheck === "e2e" && a.count === 1),
-    `expected attributed to carry (SCN-TGT-101, e2e, 1); got: ${JSON.stringify(attributed)}`
+  const row = parsed.ledger.scenarioReconciliations.find((s) => s.scnId === "SCN-TGT-101");
+  assert.ok(row, `expected a ledger row for SCN-TGT-101; got:\n${json017}`);
+  const e2eCredits = row!.evidenceObservations.filter((o) => o.qualityCheck === "e2e");
+  assert.equal(
+    e2eCredits.length,
+    1,
+    `expected SCN-TGT-101's row to carry ONE e2e credit; got: ${JSON.stringify(row!.evidenceObservations)}`
   );
 });
 
@@ -624,14 +625,13 @@ When(
   "the reconciliation report is rendered for that @integration @e2e-via-cucumber target",
   function () {
     const balance = runReconcile(EVIDENCE_OBSERVATION_INTEGRATION_E2E_OPTS);
-    const evidenceObservations = readEvidenceObservations(EVIDENCE_OBSERVATION_INTEGRATION_E2E_OPTS);
     const ctx018: RunContext = {
       target: "evidence-observation-integration-e2e-fixture",
       inputs: {},
       runStart: new Date("2026-07-08T20:30:17.000Z"),
       sourceSha: null,
     };
-    const runDir = persistReport(runsRoot018, { balance, ctx: ctx018, evidenceObservations });
+    const runDir = persistReport(runsRoot018, { balance, ctx: ctx018, withRuntimeObservations: true });
     md018 = readFileSync(join(runDir, "spec-reconciliation.md"), "utf8");
     json018 = readFileSync(join(runDir, "spec-reconciliation.json"), "utf8");
   }
@@ -655,20 +655,23 @@ Then("Test volume counts the single observation under both integration and e2e",
     md018.includes("| e2e | 1 |"),
     `expected the Test volume by-level table to ALSO count the observation under e2e (| e2e | 1 |); got:\n${md018}`
   );
-  // Cross-check the JSON attributed carries BOTH tiers for the one scenario.
+  // Cross-check the posted credits carry BOTH tiers for the one scenario — read off the LEDGER row
+  // (@SCN-LDG-022), where they posted; the retired census's `attributed[]` re-represented them.
   const parsed = JSON.parse(json018) as {
-    evidenceObservations?: {
-      attributed: Array<{ scnId: string; qualityCheck: string; count: number }>;
-    };
+    ledger: { scenarioReconciliations: Array<{ scnId: string; evidenceObservations: Array<{ qualityCheck: string }> }> };
   };
-  const attributed = parsed.evidenceObservations?.attributed ?? [];
-  assert.ok(
-    attributed.some((a) => a.scnId === "SCN-TGT-102" && a.qualityCheck === "integration" && a.count === 1),
-    `expected attributed to carry (SCN-TGT-102, integration, 1); got: ${JSON.stringify(attributed)}`
+  const row = parsed.ledger.scenarioReconciliations.find((s) => s.scnId === "SCN-TGT-102");
+  assert.ok(row, `expected a ledger row for SCN-TGT-102; got:\n${json018}`);
+  const credits = row!.evidenceObservations;
+  assert.equal(
+    credits.filter((o) => o.qualityCheck === "integration").length,
+    1,
+    `expected SCN-TGT-102's row to carry ONE integration credit; got: ${JSON.stringify(credits)}`
   );
-  assert.ok(
-    attributed.some((a) => a.scnId === "SCN-TGT-102" && a.qualityCheck === "e2e" && a.count === 1),
-    `expected attributed to ALSO carry (SCN-TGT-102, e2e, 1); got: ${JSON.stringify(attributed)}`
+  assert.equal(
+    credits.filter((o) => o.qualityCheck === "e2e").length,
+    1,
+    `expected SCN-TGT-102's row to ALSO carry ONE e2e credit; got: ${JSON.stringify(credits)}`
   );
 });
 
@@ -753,14 +756,13 @@ Given(
 
 When("the ledger is rendered", function () {
   const balance = runReconcile(EVIDENCE_CELL_GRID_OPTS);
-  const evidenceObservations = readEvidenceObservations(EVIDENCE_CELL_GRID_OPTS);
   const ctx011: RunContext = {
     target: "evidence-cell-grid-fixture",
     inputs: {},
     runStart: new Date("2026-07-14T22:00:11.000Z"),
     sourceSha: null,
   };
-  const runDir = persistReport(runsRoot011, { balance, ctx: ctx011, evidenceObservations });
+  const runDir = persistReport(runsRoot011, { balance, ctx: ctx011, withRuntimeObservations: true });
   md011 = readFileSync(join(runDir, "spec-reconciliation.md"), "utf8");
 });
 
@@ -1058,7 +1060,7 @@ const BROKEN_ATTRIBUTION_OPTS = {
 };
 let runsRoot023: string;
 let md023: string;
-let census023: ReturnType<typeof readEvidenceObservations>;
+let json023: string;
 
 Given(
   "a corpus whose cucumber run reports an ambiguous step for a scenario that cites a declared @SCN at a demanded quality-check",
@@ -1069,33 +1071,47 @@ Given(
 
 When("the run reconciles and the report is rendered", function () {
   const balance = runReconcile(BROKEN_ATTRIBUTION_OPTS);
-  census023 = readEvidenceObservations(BROKEN_ATTRIBUTION_OPTS);
   const ctx023: RunContext = {
     target: "broken-attribution-fixture",
     inputs: {},
     runStart: new Date("2026-07-17T09:00:00.000Z"),
     sourceSha: null,
   };
-  const runDir = persistReport(runsRoot023, { balance, ctx: ctx023, evidenceObservations: census023 });
+  const runDir = persistReport(runsRoot023, { balance, ctx: ctx023, withRuntimeObservations: true });
   md023 = readFileSync(join(runDir, "spec-reconciliation.md"), "utf8");
+  json023 = readFileSync(join(runDir, "spec-reconciliation.json"), "utf8");
 });
+
+interface Rpt023Row {
+  scnId: string;
+  kind: string;
+  evidenceObservations: Array<{ scnId?: string | null; qualityCheck: string; broken?: boolean }>;
+}
 
 Then(
   "the broken observation is not counted among that scenario's attributed evidence",
   function () {
-    // THE MOVE, first half. SCN-AMB-001's credit carries its scnId — it cites the scenario, and
-    // the scenario DEMANDS integration — so every "cites a real scenario at a demanded pair" test
-    // says attributed. It is NOT, because the proof never ran.
-    assert.ok(
-      !census023.attributed.some((a) => a.scnId === "SCN-AMB-001"),
-      `expected SCN-AMB-001's broken credit to be attributed to NOTHING; got attributed: ${JSON.stringify(census023.attributed)}`
+    // THE MOVE, first half — read off the LEDGER (@SCN-LDG-022), the reconciler's own ruling, not a
+    // retired parallel census. SCN-AMB-001's credit carries its scnId and its scenario DEMANDS
+    // integration, so every "cites a real scenario at a demanded pair" test says attributed. It is
+    // NOT: the proof never ran, so it posts to SUSPENSE — and SCN-AMB-001's own row carries no
+    // credit at all.
+    const parsed = JSON.parse(json023) as { ledger: { scenarioReconciliations: Rpt023Row[] } };
+    const amb001 = parsed.ledger.scenarioReconciliations.find((s) => s.scnId === "SCN-AMB-001");
+    assert.ok(amb001, `expected a ledger row for SCN-AMB-001; got:\n${json023}`);
+    assert.equal(
+      amb001!.evidenceObservations.length,
+      0,
+      `expected SCN-AMB-001's broken credit posted to NOTHING on its row; got: ${JSON.stringify(amb001!.evidenceObservations)}`
     );
     // ...and the fold did not simply empty the tally: SCN-AMB-002's clean credit, at the SAME
-    // quality-check, is still attributed. Without this the assertion above passes vacuously.
+    // quality-check, is still on its own row. Without this the assertion above passes vacuously.
+    const amb002 = parsed.ledger.scenarioReconciliations.find((s) => s.scnId === "SCN-AMB-002");
+    assert.ok(amb002, `expected a ledger row for SCN-AMB-002; got:\n${json023}`);
     assert.deepEqual(
-      census023.attributed,
-      [{ scnId: "SCN-AMB-002", qualityCheck: "integration", count: 1 }],
-      `expected ONLY SCN-AMB-002's clean credit attributed; got: ${JSON.stringify(census023.attributed)}`
+      amb002!.evidenceObservations.map((o) => o.qualityCheck),
+      ["integration"],
+      `expected ONLY SCN-AMB-002's clean integration credit on its row; got: ${JSON.stringify(amb002!.evidenceObservations)}`
     );
   }
 );
@@ -1103,27 +1119,31 @@ Then(
 Then(
   "it is counted once on the suspense scenario, and the Test volume identity still balances",
   function () {
-    // THE MOVE, second half — the credit did not vanish, it MOVED: exactly one suspense credit,
-    // the broken one.
-    assert.equal(
-      census023.suspenseCount,
-      1,
-      `expected the broken credit counted ONCE on suspense; got ${census023.suspenseCount}`
-    );
-    // The rendered Test volume cut agrees with the atoms — the view cannot drift from the fold.
+    // THE MOVE, second half — the credit did not vanish, it MOVED: the suspense row carries exactly
+    // one broken credit.
+    const parsed = JSON.parse(json023) as {
+      ledger: { scenarioReconciliations: Rpt023Row[] };
+      summary: { rawByRuntimeQualityCheck: Record<string, number>; testVolume: { attributed: number; citesUnknownScenario: number; citesNoScenario: number } };
+    };
+    const suspense = parsed.ledger.scenarioReconciliations.find((s) => s.kind === "suspense-scenario");
+    assert.ok(suspense, `expected a suspense row; got:\n${json023}`);
+    const broken = suspense!.evidenceObservations.filter((o) => o.broken === true);
+    assert.equal(broken.length, 1, `expected the broken credit counted ONCE on suspense; got: ${JSON.stringify(suspense!.evidenceObservations)}`);
+    // The rendered Test volume cut agrees — the view cannot drift from the fold (they ARE the rows).
     assert.ok(
       md023.includes("2 evidence observations = 1 attributed + 0 cites-unknown-scenario + 1 cites-no-scenario"),
       `expected the Test volume identity line "2 evidence observations = 1 attributed + 0 cites-unknown-scenario + 1 cites-no-scenario"; got:\n${md023}`
     );
-    // COMPLETENESS ONLY (see the block comment): this balances identically before and after the
-    // fold. It proves no credit vanished; it can never prove the credit is in the right bucket.
-    const raw = Object.values(census023.rawByRuntimeQualityCheck).reduce((n, v) => n + v, 0);
-    const attributedTally = census023.attributed.reduce((n, a) => n + a.count, 0);
+    // COMPLETENESS ONLY: raw = attributed + cites-unknown + cites-no-scenario balances by
+    // construction off the Ledger fold. It proves no credit vanished; the two ledger assertions
+    // above prove the credit is in the right account.
+    const raw = Object.values(parsed.summary.rawByRuntimeQualityCheck).reduce((n, v) => n + v, 0);
+    const tv = parsed.summary.testVolume;
     assert.equal(raw, 2, `expected 2 raw runtime observations; got ${raw}`);
     assert.equal(
       raw,
-      attributedTally + census023.undemandedCount + census023.phantomCount + census023.suspenseCount,
-      `the kind-count identity must balance: raw ${raw} != attributed ${attributedTally} + undemanded ${census023.undemandedCount} + phantom ${census023.phantomCount} + suspense ${census023.suspenseCount}`
+      tv.attributed + tv.citesUnknownScenario + tv.citesNoScenario,
+      `the identity must balance: raw ${raw} != attributed ${tv.attributed} + cites-unknown ${tv.citesUnknownScenario} + cites-no-scenario ${tv.citesNoScenario}`
     );
   }
 );

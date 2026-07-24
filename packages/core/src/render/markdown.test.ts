@@ -912,13 +912,13 @@ describe("[SCN-RPT-010] the markdown report renders the Test volume evidenceObse
     countRuntimeEvidenceObservationKinds(balance);
 
   it("[SCN-RPT-010] renders a '### Test volume' section with the three-way balancing identity line", () => {
-    const md = renderMarkdown(balance, ctx, undefined, evidenceObservations);
+    const md = renderMarkdown(balance, ctx, undefined, true);
     expect(md).toContain("### Test volume");
     expect(md).toContain("8 evidence observations = 4 attributed + 1 cites-unknown-scenario + 3 cites-no-scenario.");
   });
 
   it("renders a by-level evidenceObservation table with all four levels, zeros shown, levels as lowercase tag words", () => {
-    const md = renderMarkdown(balance, ctx, undefined, evidenceObservations);
+    const md = renderMarkdown(balance, ctx, undefined, true);
     expect(md).toContain("| Quality-check | Evidence observations |");
     expect(md).toContain("| unit | 5 |");
     expect(md).toContain("| integration | 3 |");
@@ -927,7 +927,7 @@ describe("[SCN-RPT-010] the markdown report renders the Test volume evidenceObse
   });
 
   it("slots Test volume under Summary views, after Evidence reconciliation and before the ledger", () => {
-    const md = renderMarkdown(balance, ctx, undefined, evidenceObservations);
+    const md = renderMarkdown(balance, ctx, undefined, true);
     const iSummary = md.indexOf("## Summary views");
     const iHeadline = md.indexOf("### Evidence reconciliation");
     const iVolume = md.indexOf("### Test volume");
@@ -1048,7 +1048,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   });
 
   it("renders corpus-driven columns — Lint first, then the runtime levels present (e2e/performance absent)", () => {
-    const md = renderMarkdown(balance, ctx, undefined, evidenceObservations);
+    const md = renderMarkdown(balance, ctx, undefined, true);
     expect(md).toContain("| Scenario | Lint | Unit | Integration | Verdict | Reconciling items |");
     // e2e / performance are absent from this corpus, so they get no column.
     expect(md).not.toContain("| Performance |");
@@ -1056,7 +1056,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   });
 
   it("encodes the four cell cases — count, ∅, (N), and —", () => {
-    const md = renderMarkdown(balance, ctx, undefined, evidenceObservations);
+    const md = renderMarkdown(balance, ctx, undefined, true);
     // demanded & met → the count; SCN-A: Lint 2 (two guards present), Unit 2.
     expect(md).toContain("| SCN-A | 2 | 2 | — |");
     // demanded & missing → ∅ (missing).
@@ -1072,7 +1072,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   });
 
   it("renders (N) for a credit at a PENDING pair — undemanded (3F-1858), not attributed", () => {
-    const md = renderMarkdown(balance, ctx, undefined, evidenceObservations);
+    const md = renderMarkdown(balance, ctx, undefined, true);
     // SCN-F's unit obligation is @unitpending, so it demands NOTHING: the credit citing it reconciles
     // UNDEMANDED (3F-1858) and posts an undemanded row on SCN-F → not demanded, undemandedCount 1 → (1).
     // Green on first run — 1858 already carried the cell via undemandedCount; this re-asserts the arm
@@ -1082,13 +1082,13 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   });
 
   it("counts the lint cell by guards PRESENT (balanced or watermelon), not 0/1", () => {
-    const md = renderMarkdown(balance, ctx, undefined, evidenceObservations);
+    const md = renderMarkdown(balance, ctx, undefined, true);
     // SCN-A declares two static guards, both present (one balanced, one watermelon) → 2.
     expect(md).toContain("| SCN-A | 2 |");
   });
 
   it("renders the fixed cell key before the table, with row 1 reading 'attributed to' (backing, not balanced)", () => {
-    const md = renderMarkdown(balance, ctx, undefined, evidenceObservations);
+    const md = renderMarkdown(balance, ctx, undefined, true);
     expect(md).toContain("| `N` | N evidence observations attributed to a declared evidence obligation |");
     expect(md).toContain("| `∅` | evidence obligation declared, no evidence observation — missing |");
     expect(md).toContain("| `(N)` | N evidence observations present, no evidence obligation declared |");
@@ -1733,7 +1733,7 @@ describe("[SCN-PND-010] the markdown report renders a Pending Item distinct from
     // table — the OTHER row-render path — and assert the ⏳ pending label survives there.
     const evidenceObservations: RuntimeEvidenceObservationKindCounts =
       countRuntimeEvidenceObservationKinds(pendingBalance);
-    const md = renderMarkdown(pendingBalance, ctx, undefined, evidenceObservations);
+    const md = renderMarkdown(pendingBalance, ctx, undefined, true);
     expect(rowFor(md, "SCN-PDX-001")).toMatch(/⏳ pending: integration/);
     expect(rowFor(md, "SCN-PDX-002")).toMatch(/⏳ pending: integration/);
     // Still never rendered as a reconciling-item error anywhere (canon description; 3F-1626).

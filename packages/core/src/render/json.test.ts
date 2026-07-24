@@ -42,8 +42,6 @@ function qcr(
   });
 }
 import type { RunContext } from "../provenance/provenance.js";
-import type { RuntimeEvidenceObservationKindCounts } from "../census/evidenceObservations.js";
-import { countRuntimeEvidenceObservationKinds } from "../census/evidenceObservations.js";
 import { reconcile } from "../reconcile/reconcile.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
 
@@ -184,13 +182,12 @@ describe("[SCN-RPT-008] the JSON report carries a evidenceObligations object wit
  *
  * Parent: (@SCN-RPT-010) — the evidenceObservations-reconciliation spine.
  */
-describe("[SCN-RPT-010] the JSON report carries an evidenceObservations object with the non-derivable atoms", () => {
-  // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — the balance AND the census fold from ONE
-  // corpus, so the census cannot claim an attribution / phantom / suspense the ledger does not
-  // carry (the whole point of the runtime-observation tally re-homing onto the Ledger, 3F-2102):
-  //   SCN-A: @unit with 4 passing unit credits → attributed [{SCN-A, unit, 4}] (raw unit 4)
-  //   1 unit credit citing SCN-PHX-999 (no scenario declares it) → phantom 1 (raw unit 5)
-  //   1 integration credit citing NO scenario → suspense 1 (raw integration 1)
+describe("[SCN-RPT-010] the JSON report re-homes the runtime-observation totals onto summary (no evidenceObservations section)", () => {
+  // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — the balance carries the posted credits the
+  // renderers fold (3F-2103 — the `evidenceObservations` section + its `attributed[]` are RETIRED):
+  //   SCN-A: @unit with 4 passing unit credits (raw unit 4; onScenario 4)
+  //   1 unit credit citing SCN-PHX-999 (no scenario declares it) → phantom (raw unit 5)
+  //   1 integration credit citing NO scenario → suspense (raw integration 1)
   const rpt010Scenarios: Scenario[] = [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }];
   const rpt010Observations: EvidenceObservation[] = [
     { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
@@ -201,47 +198,41 @@ describe("[SCN-RPT-010] the JSON report carries an evidenceObservations object w
     { qualityCheck: "integration", scnId: null, status: "passed" },
   ];
   const rpt010Balance: Ledger = reconcile(rpt010Scenarios, rpt010Observations);
-  const evidenceObservations: RuntimeEvidenceObservationKindCounts =
-    countRuntimeEvidenceObservationKinds(rpt010Balance);
 
-  it("carries only the atoms (rawByRuntimeQualityCheck, attributed) when threaded; phantom + suspense detail dissolved into rows", () => {
-    const parsed = JSON.parse(renderJson(rpt010Balance, ctx, undefined, evidenceObservations));
-    expect(parsed.evidenceObservations).toBeDefined();
-    expect(parsed.evidenceObservations.rawByRuntimeQualityCheck).toEqual({ unit: 5, integration: 1, e2e: 0, performance: 0 });
-    expect(parsed.evidenceObservations.attributed).toContainEqual({ scnId: "SCN-A", qualityCheck: "unit", count: 4 });
-    // The PHANTOM detail array dissolved into the phantom-scenario rows; the
-    // SUSPENSE detail array dissolved into the suspense-scenario row — the
-    // section carries neither standalone array (no double-report).
-    expect(parsed.evidenceObservations).not.toHaveProperty("phantomCount");
-    expect(parsed.evidenceObservations).not.toHaveProperty("suspenseCount");
-    // The suspense COUNT survives in summary.testVolume (folded from the Ledger, 3F-2102) — the
-    // balance-check identity is kept.
+  it("carries NO evidenceObservations section — the raw totals re-home onto summary.rawByRuntimeQualityCheck", () => {
+    const parsed = JSON.parse(renderJson(rpt010Balance, ctx, undefined, true));
+    // The section (with its `attributed[]` parallel store) is GONE — retired, not relocated.
+    expect(parsed).not.toHaveProperty("evidenceObservations");
+    // Its raw per-quality-check totals re-home onto `summary` as a materialised Ledger fold.
+    expect(parsed.summary.rawByRuntimeQualityCheck).toEqual({ unit: 5, integration: 1, e2e: 0, performance: 0 });
+    // testVolume is present (the axis is in play), folded from the same Ledger.
     expect(parsed.summary.testVolume.citesNoScenario).toBe(1);
+    expect(parsed.summary.testVolume.citesUnknownScenario).toBe(1);
+    expect(parsed.summary.testVolume.attributed).toBe(4);
   });
 
-  it("does NOT serialise the derived identity (markdown-only) — only the atoms", () => {
-    const parsed = JSON.parse(renderJson(rpt010Balance, ctx, undefined, evidenceObservations));
-    // The "N evidenceObservations = M + K" line is a derived view; the JSON carries atoms only.
-    expect(parsed.evidenceObservations).not.toHaveProperty("identity");
-    expect(parsed.evidenceObservations).not.toHaveProperty("evidenceObservations");
+  it("the posted credits live on the ledger rows, not a parallel attributed[] store (retire, don't relocate)", () => {
+    const parsed = JSON.parse(renderJson(rpt010Balance, ctx, undefined, true));
+    // SCN-A's 4 unit credits are visible ON THE LEDGER ROW (@SCN-LDG-022) with full multiplicity —
+    // the attribution the retired `attributed[]` re-represented is checkable at its real source.
+    const scnA = parsed.ledger.scenarioReconciliations.find((s: { scnId: string }) => s.scnId === "SCN-A");
+    expect(scnA.evidenceObservations.filter((o: { qualityCheck: string }) => o.qualityCheck === "unit")).toHaveLength(4);
   });
 
-  it("keeps evidenceObservations distinct from provenance / evidenceObligations / the reconciliation body", () => {
-    const evidenceObligations = { rawScnOccurrences: 10, scenarioCount: 7, excludedOccurrences: 3, untaggedScenarios: [], proseOnlyCodes: [] };
-    const parsed = JSON.parse(renderJson(balance, ctx, evidenceObligations, evidenceObservations));
-    expect(parsed.runProvenance).toBeDefined();
-    expect(parsed.evidenceObligations.excludedOccurrences).toBe(3);
-    expect(parsed.evidenceObservations).toBeDefined();
-    expect(parsed.runProvenance).not.toHaveProperty("evidenceObservations");
-    expect(parsed.ledger.scenarioReconciliations).toHaveLength(1);
+  it("keeps the test-volume identity by construction (folded from the Ledger)", () => {
+    const parsed = JSON.parse(renderJson(rpt010Balance, ctx, undefined, true));
+    const raw = (Object.values(parsed.summary.rawByRuntimeQualityCheck) as number[]).reduce((a, b) => a + b, 0);
+    const tv = parsed.summary.testVolume;
+    expect(raw).toBe(tv.attributed + tv.citesUnknownScenario + tv.citesNoScenario);
+    expect(tv.totalEvidenceObservations).toBe(raw);
   });
 
-  it("omits evidenceObservations when none is threaded (the RPT-002 / RPT-008 guards stay green)", () => {
-    const parsed = JSON.parse(renderJson(balance, ctx));
+  it("omits testVolume + rawByRuntimeQualityCheck when the runtime-observation axis is not in play", () => {
+    const parsed = JSON.parse(renderJson(rpt010Balance, ctx));
     expect(parsed).not.toHaveProperty("evidenceObservations");
-    expect(parsed).not.toHaveProperty("evidenceObservations");
+    expect(parsed.summary).not.toHaveProperty("testVolume");
+    expect(parsed.summary).not.toHaveProperty("rawByRuntimeQualityCheck");
     expect(parsed.runProvenance).toBeDefined();
-    expect(parsed.ledger.scenarioReconciliations).toHaveLength(1);
   });
 });
 

@@ -39,7 +39,7 @@ import {
   type RunContext,
 } from "../provenance/provenance.js";
 import type { EvidenceObligations } from "../census/evidenceObligations.js";
-import { RUNTIME_QUALITY_CHECKS, type AttributedCount, type RuntimeEvidenceObservationKindCounts } from "../census/evidenceObservations.js";
+import { RUNTIME_QUALITY_CHECKS } from "../domain/ledger.js";
 import type { StaticEvidenceObservationKindCounts } from "../census/staticEvidenceObservations.js";
 import { assembleReport, type EvidenceReconciliation } from "../assemble/report.js";
 // The run-integrity predicate (@SCN-LDG-018) — the existential scan for a `broken` reconciling
@@ -532,12 +532,13 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
  * identity holds BY CONSTRUCTION (one shared pass in src/evidenceObservations.ts); the renderer
  * only sums what the aggregate already counted by kind. Quality-checks read as their tag words,
  * lowercase (the label-=-tag rule). The numbers read off the report's materialised
- * `summary.testVolume` + `evidenceObservations.rawByRuntimeQualityCheck`.
+ * `summary.testVolume` + `summary.rawByRuntimeQualityCheck` (both Ledger folds, 3F-2103 — the
+ * `evidenceObservations` section retired).
  */
 const testVolumeSection: SectionEmitter = (report) => {
-  const evidenceObservations = report.evidenceObservations;
   const volume = report.summary.testVolume;
-  if (!evidenceObservations || !volume) return [];
+  const raw = report.summary.rawByRuntimeQualityCheck;
+  if (!volume || !raw) return [];
   const total = volume.totalEvidenceObservations;
   // Three DIRECT reads off the materialised kind-counts — the renderer does no
   // arithmetic on this line. The two credit-side terms are surfaced as their OWN outcomes (a
@@ -555,7 +556,7 @@ const testVolumeSection: SectionEmitter = (report) => {
     "| --- | --- |",
   ];
   for (const qualityCheck of RUNTIME_QUALITY_CHECKS) {
-    lines.push(`| ${qualityCheck} | ${evidenceObservations.rawByRuntimeQualityCheck[qualityCheck]} |`);
+    lines.push(`| ${qualityCheck} | ${raw[qualityCheck]} |`);
   }
   lines.push("");
   return lines;
@@ -690,8 +691,7 @@ type EvidenceColumn = { kind: "lint" } | { kind: "runtime"; qualityCheck: Runtim
  * `evidenceReconciliation` scenarios + `evidenceObservations.attributed` counts.
  */
 function evidenceColumns(
-  scenarios: readonly ScenarioReconciliation[],
-  attributed: readonly AttributedCount[]
+  scenarios: readonly ScenarioReconciliation[]
 ): EvidenceColumn[] {
   // Only DECLARED rows carry evidence obligations that drive columns — a phantom / suspense
   // row's credit-side items are not evidence obligations, so they never add a column.
@@ -702,13 +702,21 @@ function evidenceColumns(
     s.qualityCheckReconciliations.some((o) => o.qualityCheck === "lint")
   );
   const qualityChecksPresent = new Set<RuntimeQualityCheck>();
+  // A column appears for every runtime quality-check present in DEMAND or OBSERVATION on a declared
+  // row. Both are read off the Ledger: a declared or undemanded quality-check surfaces as a
+  // `QualityCheckReconciliation` at that check; every observed credit surfaces as a posted credit on
+  // the row (@SCN-LDG-022). The retired census's `attributed[]` re-represented those posted credits
+  // — it added no quality-check the rows do not already carry (a matched/undemanded credit always
+  // has its `QualityCheckReconciliation`), so folding the rows keeps the column set byte-identical.
   for (const s of scenarioRows) {
     for (const o of s.qualityCheckReconciliations) {
       // A both-missing item carries no quality-check — it drives no column.
       if (o.qualityCheck && o.qualityCheck !== "lint") qualityChecksPresent.add(o.qualityCheck);
     }
+    for (const o of s.evidenceObservations) {
+      if (o.qualityCheck !== "lint") qualityChecksPresent.add(o.qualityCheck);
+    }
   }
-  for (const a of attributed) qualityChecksPresent.add(a.qualityCheck);
   const columns: EvidenceColumn[] = [];
   if (hasStatic) columns.push({ kind: "lint" });
   for (const qualityCheck of RUNTIME_QUALITY_CHECKS) {
@@ -735,8 +743,7 @@ function columnHeader(col: EvidenceColumn): string {
  */
 function evidenceCell(
   s: ScenarioReconciliation,
-  col: EvidenceColumn,
-  attributed: readonly AttributedCount[]
+  col: EvidenceColumn
 ): string {
   // A PHANTOM / suspense row has no evidence-obligation demand of its own — its
   // whole story is the credit-side reconciling item. Every evidence cell is neither-declared-
@@ -762,8 +769,14 @@ function evidenceCell(
   const demanded = s.evidenceObligations.some(
     (o) => o.qualityCheck === col.qualityCheck && !o.pending
   );
-  const attributedCount =
-    attributed.find((a) => a.scnId === s.scnId && a.qualityCheck === col.qualityCheck)?.count ?? 0;
+  // The attributed count is the MULTIPLICITY of POSTED CREDITS at this quality-check on THIS row
+  // (@SCN-LDG-022) — read straight off the Ledger, never from `qualityCheckReconciliations` (which
+  // collapse to ONE matched row however many credits cite the pair, and would undercount) nor from
+  // the retired census's `attributed[]` (which re-represented these very credits). On a demanded
+  // quality-check every credit citing this scenario is matched-attributed, so the count IS the cell.
+  const attributedCount = s.evidenceObservations.filter(
+    (o) => o.qualityCheck === col.qualityCheck
+  ).length;
   if (demanded) return attributedCount > 0 ? String(attributedCount) : "∅";
   // NOT demanded — the `(N)` cell. A credit at a quality-check this scenario did not demand posts an
   // `undemanded` row on its account (@SCN-LDG-008), whether the check was NEVER declared or declared
@@ -819,7 +832,10 @@ const ledgerSection: SectionEmitter = (report) => {
   const phantomRows = report.ledger.scenarioReconciliations.filter((s) => s.kind === "phantom-scenario");
   const suspenseRows = report.ledger.scenarioReconciliations.filter((s) => s.kind === "suspense-scenario");
   const scenarios = [...scenarioRows, ...phantomRows, ...suspenseRows];
-  const evidenceObservations = report.evidenceObservations;
+  // The runtime-observation axis is IN PLAY iff the summary carries the test-volume fold
+  // (@SCN-RPT-010 / 3F-2103 — the gate that was the retired `evidenceObservations` section's
+  // presence). When it is, the ledger gains the corpus-driven evidence columns.
+  const withObservations = report.summary.testVolume !== undefined;
   const totals = report.summary.scenarioReconciliations;
   const lines = [
     // The reconciled per-scenario OUTPUT table — "Scenario Reconciliations", not "Ledger"
@@ -880,10 +896,8 @@ const ledgerSection: SectionEmitter = (report) => {
   }
   lines.push("");
 
-  const columns = evidenceObservations
-    ? evidenceColumns(scenarios, evidenceObservations.attributed)
-    : [];
-  if (evidenceObservations && columns.length > 0) {
+  const columns = withObservations ? evidenceColumns(scenarios) : [];
+  if (withObservations && columns.length > 0) {
     // The cell key precedes the table (notation, not data).
     lines.push(...CELL_KEY, "");
     const headers = [
@@ -895,7 +909,7 @@ const ledgerSection: SectionEmitter = (report) => {
     lines.push(`| ${headers.join(" | ")} |`);
     lines.push(`| ${headers.map(() => "---").join(" | ")} |`);
     for (const s of scenarios) {
-      const cells = columns.map((col) => evidenceCell(s, col, evidenceObservations.attributed));
+      const cells = columns.map((col) => evidenceCell(s, col));
       const items = renderRowExceptions(s);
       lines.push(
         `| ${[s.scnId, ...cells, `${VERDICT_GLYPH[s.verdict]} ${s.verdict}`, items].join(" | ")} |`
@@ -979,10 +993,10 @@ export function renderMarkdown(
   balance: Ledger,
   ctx: RunContext,
   evidenceObligations?: EvidenceObligations,
-  evidenceObservations?: RuntimeEvidenceObservationKindCounts,
+  withRuntimeObservations: boolean = false,
   featureNames?: FeatureNames,
   guards?: StaticEvidenceObservationKindCounts
 ): string {
-  const report = assembleReport(balance, ctx, evidenceObligations, evidenceObservations, guards, featureNames);
+  const report = assembleReport(balance, ctx, evidenceObligations, withRuntimeObservations, guards, featureNames);
   return renderReport(report);
 }

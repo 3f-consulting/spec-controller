@@ -79,26 +79,27 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
       And each account carries its posted evidence obligations and evidence observations alongside its reconciling items
       And each quality check reconciliation keeps its outcome field with the reconciliation-outcome literals unchanged
 
-  Rule: the observed evidence is evidence observations
+  Rule: the runtime evidence-observation counting folds onto the Ledger, no evidenceObservations section
 
-    Retire "evidence observation" on the JSON surface (@SCN-RMD-003
-    — the observed side is evidence OBSERVATIONS, the credits; "evidence observation" was a made-up word). The
-    observed-evidence reconciliation serialises under evidenceObservations (was evidence observation), carrying
-    the fine grain: raw-by-level totals, per-scenario attributed counts, and the phantom evidence observation /
-    suspense evidence observations with their file locators, under phantomEvidenceObservations /
-    suspenseEvidenceObservations. The JSON-key renames live in the ASSEMBLER — the
-    RuntimeEvidenceObservationKindCounts model + evidence observation.ts internals stay untouched — so the markdown is
-    byte-identical. The balancing identity Σ rawByRuntimeQualityCheck = Σ attributed + cites-unknown-scenario + cites-no-scenario
-    holds on the persisted spec-reconciliation.json. The @unit proves the mapping in isolation;
-    the @integration drives the REAL file-read pipeline over a fixture spanning attributed,
-    phantom-id, and cites-no-scenario evidence observations and asserts the identity on the persisted file.
+    Retire the runtime evidence-observation CENSUS (@SCN-RMD-003, 3F-2103). The counting is now a
+    FOLD the Ledger owns (runtimeObservationTally): the raw per-quality-check totals re-home onto
+    summary.rawByRuntimeQualityCheck (a materialised headline), and the persisted JSON carries NO
+    evidenceObservations section. The per-(scnId, quality-check) attributed[] did NOT re-home — it
+    re-represented the posted credits the Ledger already carries (retire, don't relocate); the
+    phantom credit surfaces on its phantom-scenario row and the uncited credits on the
+    suspense-scenario row, each with its file locator, so every credit is visible ON THE LEDGER. The
+    markdown stays byte-identical (both the Test volume cut and the identity line read the re-homed
+    summary folds). The balancing identity Σ rawByRuntimeQualityCheck = attributed +
+    cites-unknown-scenario + cites-no-scenario holds by construction on the persisted file. The unit
+    arm proves the assembler in isolation; the integration arm drives the REAL file-read pipeline
+    over a fixture spanning attributed, phantom-id, and cites-no-scenario evidence observations.
 
     @unit @integration @SCN-RMD-003
-    Scenario: observed evidence serialises as evidenceObservations and the balancing identity holds on the persisted file
+    Scenario: the runtime-observation totals re-home onto summary and the balancing identity holds on the persisted file
       Given a reconciliation run whose observed evidence spans attributed, phantom-id, and cites-no-scenario evidence observations
       When the run persists spec-reconciliation.json
-      Then the observed evidence is carried under evidenceObservations with phantomEvidenceObservations and suspenseEvidenceObservations at fine grain with locators
-      And the sum of rawByRuntimeQualityCheck equals the attributed total plus the cites-unknown-scenario and cites-no-scenario counts
+      Then the phantom and suspense credits surface on their ledger rows and there is no evidenceObservations section
+      And the sum of summary rawByRuntimeQualityCheck equals the attributed total plus the cites-unknown-scenario and cites-no-scenario counts
 
   Rule: the static-guard census is summary counts, no standalone section
 

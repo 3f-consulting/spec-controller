@@ -44,10 +44,6 @@ import {
   type StaticEvidenceObservationKindCounts,
 } from "@3f-consulting/spec-controller-core";
 import { reconcile } from "@3f-consulting/spec-controller-core";
-import {
-  countRuntimeEvidenceObservationKinds,
-  type RuntimeEvidenceObservationKindCounts,
-} from "@3f-consulting/spec-controller-core";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 import type {
   Scenario,
@@ -273,17 +269,14 @@ function parseRuntimeObservations(opts: ReconcileOptions, root: string | undefin
 }
 
 /**
- * Reconcile declared-vs-observed evidence AND count the runtime evidence-observation census for a
- * target tree, from a SINGLE parse of the runtime observations (@SCN-RPT-017 / 3F-1452 FULL UNIFY).
- * The runtime observations are parsed ONCE (tag-derived) and the SAME set feeds both `reconcile`
- * (alongside the static-guard observations) and `countRuntimeEvidenceObservationKinds` — so the
- * census is a PROJECTION of the one ledger, never a second derivation that could drift from the
- * verdict (the drift bug this fixes). `runReconcile` / `readEvidenceObservations` are thin views.
+ * Reconcile declared-vs-observed evidence into the Ledger for a target tree, from a SINGLE parse of
+ * the runtime observations (@SCN-RPT-017 / 3F-1452 FULL UNIFY). The runtime evidence-observation
+ * VIEWS (Test volume, the evidence grid) are no longer counted here: they are FOLDS the renderers
+ * derive off THIS Ledger's posted credits (@SCN-RPT-010 / 3F-2103 — the runtime census is retired),
+ * so they cannot drift from the verdict (they ARE the same rows). This function's job is now just
+ * to produce the balance.
  */
-export function reconcileWithCensus(opts: ReconcileOptions): {
-  balance: Ledger;
-  evidenceObservations: RuntimeEvidenceObservationKindCounts;
-} {
+export function runReconcile(opts: ReconcileOptions): Ledger {
   // Read the target's package.json ONCE — its `specController.deferralTags` config extends the
   // recognised deferral-tag set (@SCN-PND-021), and its `scripts` back the static-guard `exists`
   // read (the --package-json seam, below). The disk read stays at this impure edge; the core parser
@@ -355,35 +348,7 @@ export function reconcileWithCensus(opts: ReconcileOptions): {
     untaggedScenariosFromFeatures(opts.features)
   );
 
-  // The census is a FOLD over the Ledger the reconciler just produced (@SCN-RPT-023 / 3F-1859) —
-  // it reads each posted credit's kind off the row it posted to, rather than classifying the
-  // observation stream a second time. The views (Test volume, attributed, E2e cell) therefore
-  // agree with the verdict BY CONSTRUCTION: they are projections of the same rows, not a parallel
-  // opinion that has to be kept in step. The fold skips `lint` credits itself, so it no longer
-  // needs the narrower `runtimeObservations` array handed to it to enforce the runtime scoping.
-  const census = countRuntimeEvidenceObservationKinds(balance);
-  return { balance, evidenceObservations: census };
-}
-
-/**
- * Reconcile declared-vs-observed evidence for a target tree, given resolved input
- * paths. The pure CLI core — exercised directly by @SCN-LNT-005 (`@unit` + the
- * `@integration` Cucumber arm) so the --package-json threading is proven without a
- * subprocess. A thin view onto `reconcileWithCensus` (the balance half).
- */
-export function runReconcile(opts: ReconcileOptions): Ledger {
-  return reconcileWithCensus(opts).balance;
-}
-
-/**
- * Read the runtime evidence-observation census over the same inputs `runReconcile` consumes
- * (@SCN-RPT-010) — a thin view onto `reconcileWithCensus` (the census half). The census is a
- * PROJECTION of the ONE parsed observation set the reconciler consumes (@SCN-RPT-017 / 3F-1452
- * FULL UNIFY), not an independent re-walk — so the evidence-observation views can never drift from
- * the verdict. Threaded to the renderers via `writeOutputs` like `ctx`/`corpus`.
- */
-export function readEvidenceObservations(opts: ReconcileOptions): RuntimeEvidenceObservationKindCounts {
-  return reconcileWithCensus(opts).evidenceObservations;
+  return balance;
 }
 
 /**

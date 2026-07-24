@@ -14,7 +14,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname } from "node:path";
 import {
-  reconcileWithCensus,
+  runReconcile,
   readEvidenceObligations,
   readStaticEvidenceObservationCounts,
   readFeatureNames,
@@ -410,12 +410,12 @@ export function runBalance(argv: string[]): void {
     packageJson: args["package-json"],
   };
 
-  // Parse the runtime observations ONCE and feed the SAME set to both the reconciler and the
-  // runtime census (@SCN-RPT-017 / 3F-1452 FULL UNIFY): the census is a PROJECTION of the one
-  // ledger, so the evidence-observation views (Test volume, attributed, E2e cell) can never drift
-  // from the reconciler's verdict. `evidenceObservations` is the by-kind census whose balancing
-  // identity holds by construction; threaded to the renderers via writeOutputs like ctx/corpus.
-  const { balance, evidenceObservations } = reconcileWithCensus(inputs);
+  // Reconcile the declared-vs-observed evidence into the Ledger. The runtime evidence-observation
+  // views (Test volume, the evidence grid) are FOLDS the renderers derive off this Ledger's posted
+  // credits (@SCN-RPT-010 / 3F-2103 — the census is retired), so they cannot drift from the
+  // reconciler's verdict: they ARE the same rows. `withRuntimeObservations: true` (below) tells the
+  // renderers the axis is in play.
+  const balance = runReconcile(inputs);
 
   // Read the declared-corpus census alongside the balance (@SCN-RPT-008) —
   // the raw-vs-declared @SCN-occurrence delta over the same discovered feature corpus.
@@ -472,7 +472,7 @@ export function runBalance(argv: string[]): void {
     // out-of-balance verdict code 1 (@SCN-CLI-004).
     process.exit(2);
   }
-  writeOutputs(planResult.plan, { balance, ctx, evidenceObligations, evidenceObservations, guards, featureNames });
+  writeOutputs(planResult.plan, { balance, ctx, evidenceObligations, withRuntimeObservations: true, guards, featureNames });
 
   // The CI gate (@SCN-CLI-004): `balance` is a GATE, not just a reporter. AFTER the report
   // is written in full, map the whole-run verdict to the process exit code. Out-of-balance

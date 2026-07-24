@@ -169,8 +169,10 @@ export interface EvidenceReconciliation {
    */
   ledger: Ledger;
   evidenceObligations?: EvidenceObligationsSection;
-  /** The observed evidence — the credits (RMD-003, retiring "evidenceObservations"). */
-  evidenceObservations?: EvidenceObservationsSection;
+  // The `evidenceObservations` section is RETIRED (@SCN-RPT-010, 3F-2103): the runtime
+  // evidence-observation counting folds onto the Ledger (`runtimeObservationTally`), its raw totals
+  // re-homed onto `summary.rawByRuntimeQualityCheck`; the posted credits live on the ledger rows.
+  // (`EvidenceObservationsSection` stays defined + barrel-exported until @SCN-API-001 / 3F-2104.)
   /**
    * The presentation metadata — the small top-level object carrying the feature
    * titles (`metadata.featureNames`, the `feature-code → slug` map the by-feature cut names each
@@ -197,15 +199,15 @@ export interface EvidenceReconciliation {
  */
 function buildSummary(
   balance: Ledger,
-  evidenceObservations?: RuntimeEvidenceObservationKindCounts,
+  withRuntimeObservations: boolean,
   guards?: StaticEvidenceObservationKindCounts
 ): Summary {
   const tally = ledgerTally(balance);
-  // The runtime evidence-observation totals are now a FOLD OVER THE LEDGER (@SCN-RMD-003, 3F-2102) —
-  // the Ledger counts its own posted credits, retiring the parallel census. `testVolume` and the
-  // re-homed `rawByRuntimeQualityCheck` derive from THIS fold; the `evidenceObservations` param is
-  // now only the GATE (was the observation read threaded?) + the source of the section's
-  // `attributed[]`, both of which retire in the following sub-issues.
+  // The runtime evidence-observation totals are a FOLD OVER THE LEDGER (@SCN-RMD-003, 3F-2102) —
+  // the Ledger counts its own posted credits; the parallel census is RETIRED. `testVolume` and the
+  // re-homed `rawByRuntimeQualityCheck` derive from THIS fold. The `withRuntimeObservations` flag is
+  // now only the GATE (is the runtime-observation axis in play?) — the caller no longer threads a
+  // census object at all (the assembler folds the Ledger it already has).
   const observations = runtimeObservationTally(balance);
   return {
     scenarioReconciliations: tally.scenarioReconciliations,
@@ -221,7 +223,7 @@ function buildSummary(
     // citesNoScenario` (undemanded is a subset here, NOT a 4th identity term) — the same shape the
     // markdown's `### Test volume` line derives. `citesUnknownScenario` / `citesNoScenario` are the
     // credits posted to the phantom / suspense accounts.
-    ...(evidenceObservations
+    ...(withRuntimeObservations
       ? {
           testVolume: {
             totalEvidenceObservations: RUNTIME_QUALITY_CHECKS.reduce(
@@ -265,13 +267,13 @@ export function assembleReport(
   balance: Ledger,
   ctx: RunContext,
   evidenceObligations?: EvidenceObligations,
-  evidenceObservations?: RuntimeEvidenceObservationKindCounts,
+  withRuntimeObservations: boolean = false,
   guards?: StaticEvidenceObservationKindCounts,
   featureNames?: ReadonlyMap<string, string>
 ): EvidenceReconciliation {
   return {
     runProvenance: provenanceObject(ctx),
-    summary: buildSummary(balance, evidenceObservations, guards),
+    summary: buildSummary(balance, withRuntimeObservations, guards),
     // THE LEDGER, beside the summary (@SCN-RMD-002) — chain step 6 read literally: "The summary
     // has the totals and the ledger the detail." An OBJECT mirroring `interface Ledger {
     // scenarioReconciliations }`, never a bare array: the accounts arrive carrying the entries
@@ -292,16 +294,12 @@ export function assembleReport(
     // (demanded → each scenario's `@lint` sub-row; undemanded → the suspense row), symmetric with
     // the runtime side. The counts survive in `summary.staticGuards` (the balance-check identity).
 
-    ...(evidenceObservations
-      ? {
-          evidenceObservations: {
-            rawByRuntimeQualityCheck: evidenceObservations.rawByRuntimeQualityCheck,
-            attributed: evidenceObservations.attributed,
-            // phantom dissolved into the phantom-scenario rows; suspense dissolved into
-            // the suspense-scenario row. Both counts kept in summary.testVolume.
-          },
-        }
-      : {}),
+    // No `evidenceObservations` SECTION (@SCN-RMD-003 / @SCN-RPT-010, 3F-2103): the runtime
+    // evidence-observation counting is RETIRED to the Ledger fold (`runtimeObservationTally`). Its
+    // raw totals re-home onto `summary.rawByRuntimeQualityCheck`; the per-`(scnId, quality-check)`
+    // `attributed[]` did NOT re-home — it re-represented the posted credits the Ledger already
+    // carries (`ledger.scenarioReconciliations[].evidenceObservations`), the parallel store the
+    // done-criterion deletes rather than relocates. The grid cell counts those credits off the rows.
     // The presentation metadata — the feature titles (@SCN-RMD-006), the by-feature
     // cut's `feature-code → slug` map, now nested under a small top-level `metadata` object
     // rather than a top-level `featureNames` sibling of the reconciliation records. It is

@@ -43,8 +43,6 @@ function qcr(
 }
 import type { RunContext } from "../provenance/provenance.js";
 import type { EvidenceObligations } from "../census/evidenceObligations.js";
-import type { RuntimeEvidenceObservationKindCounts } from "../census/evidenceObservations.js";
-import { countRuntimeEvidenceObservationKinds } from "../census/evidenceObservations.js";
 import type { StaticEvidenceObservationKindCounts } from "../census/staticEvidenceObservations.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
 
@@ -338,21 +336,20 @@ describe("[SCN-RMD-002] the ledger serialises under the top-level key ledger, be
 });
 
 /**
- * Unit tests for the evidenceObservations section (@SCN-RMD-003).
+ * Unit tests for the retired evidence-observation section (@SCN-RMD-003).
  *
  * Bidirectional evidence (Evidence Manifesto §9): the describe carries @SCN-RMD-003.
  *
- * The observed evidence serialises under `evidenceObservations` (was `evidenceObservations`), retiring the
- * made-up "evidenceObservations" word, with `phantom` → `phantomEvidenceObservations` and `suspense` →
- * `suspenseEvidenceObservations`, carrying the fine grain (raw-by-level, attributed counts,
- * phantom / suspense evidenceObservations WITH their file locators). The mapping lives in the
- * assembler; the balancing identity holds by construction.
+ * The `evidenceObservations` section is RETIRED (3F-2103): the runtime evidence-observation
+ * counting folds onto the Ledger (`runtimeObservationTally`), its raw totals re-homed onto
+ * `summary.rawByRuntimeQualityCheck`; the per-`(scnId, quality-check)` `attributed[]` did NOT
+ * re-home (it re-represented the posted credits the Ledger already carries — retire, don't
+ * relocate). The balancing identity holds by construction off the ledger fold.
  */
-describe("[SCN-RMD-003] observed evidence serialises as evidenceObservations", () => {
-  // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — the balance AND its runtime-observation
-  // tally fold from ONE corpus (3F-2102), so `summary.testVolume` / `rawByRuntimeQualityCheck` (now
-  // a Ledger fold) cannot disagree with the section the census still emits. It BALANCES: 5 unit (4
-  // attributed to SCN-RMD-001 + 1 phantom) + 1 integration (1 suspense) = 6 raw = 4 + 1 + 1.
+describe("[SCN-RMD-003] the runtime-observation totals re-home onto summary; no evidenceObservations section", () => {
+  // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — the balance carries the posted credits the
+  // renderers fold. It BALANCES: 5 unit (4 attributed to SCN-RMD-001 + 1 phantom) + 1 integration
+  // (1 suspense) = 6 raw = 4 + 1 + 1.
   const rmd003Scenarios: Scenario[] = [{ scnId: "SCN-RMD-001", evidenceObligations: [{ qualityCheck: "unit" }] }];
   const rmd003Observations: EvidenceObservation[] = [
     { qualityCheck: "unit", scnId: "SCN-RMD-001", status: "passed" },
@@ -363,51 +360,36 @@ describe("[SCN-RMD-003] observed evidence serialises as evidenceObservations", (
     { qualityCheck: "integration", scnId: null, status: "passed" },
   ];
   const rmd003Balance: Ledger = reconcile(rmd003Scenarios, rmd003Observations);
-  const evidenceObservations: RuntimeEvidenceObservationKindCounts =
-    countRuntimeEvidenceObservationKinds(rmd003Balance);
 
-  it("carries the observed evidence under the evidenceObservations key", () => {
-    const parsed = JSON.parse(renderJson(rmd003Balance, ctx, undefined, evidenceObservations));
-    expect(parsed.evidenceObservations).toBeDefined();
-    expect(parsed.evidenceObservations.rawByRuntimeQualityCheck).toEqual({ unit: 5, integration: 1, e2e: 0, performance: 0 });
-    expect(parsed.evidenceObservations.attributed).toContainEqual({ scnId: "SCN-RMD-001", qualityCheck: "unit", count: 4 });
+  it("carries NO evidenceObservations section — the raw totals re-home onto summary", () => {
+    const parsed = JSON.parse(renderJson(rmd003Balance, ctx, undefined, true));
+    expect(parsed).not.toHaveProperty("evidenceObservations");
+    expect(parsed.summary.rawByRuntimeQualityCheck).toEqual({ unit: 5, integration: 1, e2e: 0, performance: 0 });
   });
 
-  it("dissolves BOTH the phantom and the suspense detail arrays from the section (no double-report)", () => {
-    const parsed = JSON.parse(renderJson(rmd003Balance, ctx, undefined, evidenceObservations));
-    // The PHANTOM detail dissolved into the phantom rows (@SCN-LDG-006); the SUSPENSE
-    // detail dissolved into the suspense row (@SCN-LDG-007). Neither is a standalone array
-    // on the section any more. The retired shortenings are likewise gone.
-    expect(parsed.evidenceObservations).not.toHaveProperty("phantomCount");
-    expect(parsed.evidenceObservations).not.toHaveProperty("suspenseCount");
-    expect(parsed.evidenceObservations).not.toHaveProperty("phantom evidence observation");
-    expect(parsed.evidenceObservations).not.toHaveProperty("suspense evidence observation");
+  it("the phantom and suspense credits live on their ledger rows, not a section detail array", () => {
+    const parsed = JSON.parse(renderJson(rmd003Balance, ctx, undefined, true));
+    // The phantom credit surfaces as a phantom-scenario row (@SCN-LDG-006); the suspense credit as
+    // the suspense row (@SCN-LDG-007) — no standalone section array double-reports them.
+    const phantom = parsed.ledger.scenarioReconciliations.find((s: { kind: string }) => s.kind === "phantom-scenario");
+    const suspense = parsed.ledger.scenarioReconciliations.find((s: { kind: string }) => s.kind === "suspense-scenario");
+    expect(phantom.scnId).toBe("SCN-PHX-999");
+    expect(suspense.evidenceObservations).toHaveLength(1);
     // But BOTH counts survive in summary.testVolume — the balance-check identity is kept.
     expect(parsed.summary.testVolume.citesUnknownScenario).toBe(1);
     expect(parsed.summary.testVolume.citesNoScenario).toBe(1);
   });
 
-  it("keeps the balancing identity: Σ rawByRuntimeQualityCheck = Σ attributed + phantom + suspense (both counts from summary.testVolume)", () => {
-    const parsed = JSON.parse(renderJson(rmd003Balance, ctx, undefined, evidenceObservations));
-    const raw = (Object.values(parsed.evidenceObservations.rawByRuntimeQualityCheck) as number[]).reduce((a, b) => a + b, 0);
+  it("keeps the balancing identity: Σ rawByRuntimeQualityCheck = attributed + cites-unknown + cites-no-scenario (all summary folds)", () => {
+    const parsed = JSON.parse(renderJson(rmd003Balance, ctx, undefined, true));
+    const raw = (Object.values(parsed.summary.rawByRuntimeQualityCheck) as number[]).reduce((a, b) => a + b, 0);
     const tv = parsed.summary.testVolume;
-    const attributed =
-      parsed.evidenceObservations.attributed.reduce((n: number, a: { count: number }) => n + a.count, 0) +
-      tv.citesUnknownScenario;
-    expect(raw).toBe(attributed + tv.citesNoScenario);
+    expect(raw).toBe(tv.attributed + tv.citesUnknownScenario + tv.citesNoScenario);
   });
 
-  it("re-homes the raw per-quality-check totals onto summary (a materialised Ledger fold, 3F-2102)", () => {
-    // The raw totals the retired `evidenceObservations` section carried now live on `summary` as a
-    // materialised headline — folded from the Ledger (`runtimeObservationTally`), present exactly
-    // when the observation read is threaded, and byte-equal to the section's own raw this slice.
-    const parsed = JSON.parse(renderJson(rmd003Balance, ctx, undefined, evidenceObservations));
-    expect(parsed.summary.rawByRuntimeQualityCheck).toEqual({ unit: 5, integration: 1, e2e: 0, performance: 0 });
-    expect(parsed.summary.rawByRuntimeQualityCheck).toEqual(parsed.evidenceObservations.rawByRuntimeQualityCheck);
-  });
-
-  it("omits summary.rawByRuntimeQualityCheck when no observation read is threaded (gated with testVolume)", () => {
+  it("omits summary.rawByRuntimeQualityCheck + testVolume when the runtime-observation axis is not in play", () => {
     const parsed = JSON.parse(renderJson(rmd003Balance, ctx));
+    expect(parsed).not.toHaveProperty("evidenceObservations");
     expect(parsed.summary).not.toHaveProperty("rawByRuntimeQualityCheck");
     expect(parsed.summary).not.toHaveProperty("testVolume");
   });
@@ -481,8 +463,6 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
     { qualityCheck: "lint", staticGuard: "lint:bar", exists: true, enforcedOverRealSource: false },
   ];
   const rmd005Balance: Ledger = reconcile(rmd005Scenarios, rmd005Observations);
-  const evidenceObservations: RuntimeEvidenceObservationKindCounts =
-    countRuntimeEvidenceObservationKinds(rmd005Balance);
 
   // Static-guard kind-counts with teeth: 2 running CI guards = 1 declared + 1 uncited. The
   // static-guard census is a SEPARATE axis (Slice 2), still threaded as the `guards` param.
@@ -525,7 +505,7 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
   };
 
   it("materialises the test-volume totals (attributed excludes cites-unknown-scenario)", () => {
-    const report = assembleReport(rmd005Balance, ctx, undefined, evidenceObservations);
+    const report = assembleReport(rmd005Balance, ctx, undefined, true);
     expect(report.summary.testVolume).toEqual({
       totalEvidenceObservations: 6,
       attributed: 4,
@@ -535,14 +515,14 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
   });
 
   it("re-homes the raw per-quality-check totals onto summary (folded from the Ledger, 3F-2102)", () => {
-    const report = assembleReport(rmd005Balance, ctx, undefined, evidenceObservations);
+    const report = assembleReport(rmd005Balance, ctx, undefined, true);
     // A materialised Ledger fold (the retired section's raw totals, re-homed testVolume-adjacent):
     // 4 unit (3 attributed to SCN-RMD-001 + 1 phantom) + 2 integration (1 attributed + 1 suspense).
     expect(report.summary.rawByRuntimeQualityCheck).toEqual({ unit: 4, integration: 2, e2e: 0, performance: 0 });
   });
 
   it("keeps the test-volume identity Σ rawByRuntimeQualityCheck = attributed + phantomEvidenceObservation + suspenseEvidenceObservation", () => {
-    const report = assembleReport(rmd005Balance, ctx, undefined, evidenceObservations);
+    const report = assembleReport(rmd005Balance, ctx, undefined, true);
     const tv = report.summary.testVolume!;
     expect(tv.totalEvidenceObservations).toBe(tv.attributed + tv.citesUnknownScenario + tv.citesNoScenario);
   });
@@ -579,7 +559,7 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
   });
 
   it("carries the three totals through the glue-free JSON serialisation", () => {
-    const parsed = JSON.parse(renderJson(rmd005Balance, ctx, undefined, evidenceObservations, guards));
+    const parsed = JSON.parse(renderJson(rmd005Balance, ctx, undefined, true, guards));
     expect(parsed.summary.testVolume).toEqual({ totalEvidenceObservations: 6, attributed: 4, citesUnknownScenario: 1, citesNoScenario: 1 });
     expect(parsed.summary.staticGuards).toEqual({ runningGuardCount: 2, uncitedStaticGuardCount: 1 });
     expect(parsed.summary.lint).toEqual({ satisfied: 1, total: 2 });
@@ -786,14 +766,14 @@ describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single qualit
 /**
  * Unit test for the TWO "attributed" counts staying distinct (@SCN-LDG-008, ruling Q1).
  *
- * There are now two different "attributed" numbers, and a reader (JSON + markdown) must not
- * read them as the same number:
+ * There are two different "attributed" numbers, and a reader must not read them as the same:
  *  - Test-volume `attributed` (summary.testVolume.attributed) = credits that CITE A DECLARED
  *    SCENARIO — this INCLUDES undemanded (a subset), keeping the 3-termed identity
  *    `total = attributed + phantom + suspense`.
- *  - Reconciliation matched-`attributed` (Σ report.evidenceObservations.attributed[].count) =
- *    credits matching a declared (scnId, quality-check) PAIR — this SHRINKS as undemanded breaks
- *    out into its own outcome, which surfaces distinctly in summary.byOutcome.undemanded.
+ *  - The reconciliation MATCHED-attributed = credits matching a declared (scnId, quality-check)
+ *    PAIR — this EXCLUDES undemanded. The retired census materialised it as `attributed[]`; it is
+ *    now recovered from the Ledger (`testVolume.attributed − byOutcome.undemanded`) and checkable
+ *    against the demanded credits posted on the row.
  *
  * The load-bearing assertion: the two numbers DIFFER by exactly byOutcome.undemanded.
  */
@@ -809,32 +789,32 @@ describe("[SCN-LDG-008] the two attributed counts stay distinct (ruling Q1)", ()
       { qualityCheck: "integration", scnId: "SCN-LDG-008", status: "passed", locator: "src/undemanded.test.ts" },
     ],
   );
-  // The evidence-observation kind-counts fold from that very balance: ONE matched credit
-  // ((SCN-LDG-008, unit)) + ONE undemanded credit ((SCN-LDG-008, integration) — cites a declared
-  // scenario, at an undeclared quality-check).
-  const evidenceObservations: RuntimeEvidenceObservationKindCounts =
-    countRuntimeEvidenceObservationKinds(undemandedBalance);
 
   it("carries undemanded as its OWN entry in summary.byOutcome", () => {
-    const report = assembleReport(undemandedBalance, ctx, undefined, evidenceObservations);
+    const report = assembleReport(undemandedBalance, ctx, undefined, true);
     expect(report.summary.evidenceObligations.byOutcome.undemanded).toBe(1);
   });
 
-  it("keeps Test-volume attributed INCLUDING undemanded (cites a declared scenario), so it EXCEEDS the reconciliation matched-attributed by exactly byOutcome.undemanded", () => {
-    const report = assembleReport(undemandedBalance, ctx, undefined, evidenceObservations);
+  it("keeps Test-volume attributed INCLUDING undemanded (cites a declared scenario), so it EXCEEDS the matched-pair count by exactly byOutcome.undemanded", () => {
+    const report = assembleReport(undemandedBalance, ctx, undefined, true);
     // Test-volume attributed = credits citing a declared scenario = matched (1) + undemanded (1).
     expect(report.summary.testVolume!.attributed).toBe(2);
-    // Reconciliation matched-attributed = Σ over the per-(scnId, level) matched-pair array = 1.
-    const matched = report.evidenceObservations!.attributed.reduce((n, a) => n + a.count, 0);
+    // The MATCHED-pair count is recovered from the Ledger, not a parallel `attributed[]` store:
+    // testVolume.attributed − byOutcome.undemanded.
+    const undemanded = report.summary.evidenceObligations.byOutcome.undemanded;
+    const matched = report.summary.testVolume!.attributed - undemanded;
     expect(matched).toBe(1);
-    // The two are NOT the same number — they differ by exactly the undemanded count.
-    expect(report.summary.testVolume!.attributed - matched).toBe(
-      report.summary.evidenceObligations.byOutcome.undemanded
-    );
+    // And that recovered count equals the credits posted at the DEMANDED (unit) pair on the row —
+    // checkable straight off the ledger, where the retired census re-represented it.
+    const row = undemandedBalance.scenarioReconciliations.find((s) => s.scnId === "SCN-LDG-008")!;
+    const demandedUnitCredits = row.evidenceObservations.filter((o) => o.qualityCheck === "unit").length;
+    expect(demandedUnitCredits).toBe(matched);
+    // The two "attributed" numbers are NOT the same — they differ by exactly the undemanded count.
+    expect(report.summary.testVolume!.attributed - matched).toBe(undemanded);
   });
 
   it("keeps the Test-volume identity 3-termed (undemanded is a SUBSET of attributed, not a 4th term)", () => {
-    const report = assembleReport(undemandedBalance, ctx, undefined, evidenceObservations);
+    const report = assembleReport(undemandedBalance, ctx, undefined, true);
     const tv = report.summary.testVolume!;
     expect(tv.totalEvidenceObservations).toBe(
       tv.attributed + tv.citesUnknownScenario + tv.citesNoScenario

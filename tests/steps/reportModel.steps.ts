@@ -232,22 +232,21 @@ When("the run persists spec-reconciliation.json", function () {
 });
 
 Then(
-  "the observed evidence is carried under evidenceObservations with phantomEvidenceObservations and suspenseEvidenceObservations at fine grain with locators",
+  "the phantom and suspense credits surface on their ledger rows and there is no evidenceObservations section",
   function () {
-    const obs = rmd003Json.evidenceObservations as {
-      rawByRuntimeQualityCheck?: Record<string, number>;
-      attributed?: unknown[];
-    };
-    assert.ok(obs, `expected an evidenceObservations section (not "evidence observation"); got keys: ${Object.keys(rmd003Json).join(", ")}`);
+    // The evidenceObservations SECTION is RETIRED (3F-2103) — its raw totals re-home onto
+    // summary.rawByRuntimeQualityCheck; the posted credits live on the ledger rows.
+    assert.ok(!("evidenceObservations" in rmd003Json), `expected NO evidenceObservations section; got keys: ${Object.keys(rmd003Json).join(", ")}`);
     assert.ok(!("evidence observation" in rmd003Json), `expected NO legacy "evidence observation" key`);
+    const summary = rmd003Json.summary as { rawByRuntimeQualityCheck?: Record<string, number> };
+    assert.ok(summary.rawByRuntimeQualityCheck, `expected summary.rawByRuntimeQualityCheck (the re-homed headline); got summary keys: ${Object.keys(summary).join(", ")}`);
     const evidenceReconciliation = (rmd003Json.ledger as { scenarioReconciliations: unknown }).scenarioReconciliations as {
       scnId: string;
       kind?: string;
       qualityCheckReconciliations: { outcome: string; locator?: string }[];
     }[];
-    // The phantom detail array DISSOLVED into the phantom-scenario rows (@SCN-LDG-006).
-    // The fixture's 1 phantom (SCN-PHANTOM-999) surfaces as a phantom row carrying the locator.
-    assert.ok(!("phantomEvidenceObservations" in obs), "expected the phantom detail array to have dissolved from the section");
+    // The phantom credit surfaces as a phantom-scenario row (@SCN-LDG-006), never a section detail
+    // array. The fixture's 1 phantom (SCN-PHANTOM-999) surfaces as a phantom row carrying the locator.
     const phantom = evidenceReconciliation.find((s) => s.scnId === "SCN-PHANTOM-999");
     assert.ok(phantom, "expected a phantom-scenario row for SCN-PHANTOM-999 in the ledger");
     assert.equal(phantom!.kind, "phantom-scenario", "expected kind phantom-scenario");
@@ -257,10 +256,9 @@ Then(
       typeof phantomItem?.locator === "string" && phantomItem.locator.length > 0,
       `expected the phantom item to carry a file locator; got ${JSON.stringify(phantomItem)}`
     );
-    // The suspense detail array DISSOLVED into the suspense-scenario row
-    // (@SCN-LDG-007) — no longer a standalone array on the section. The fixture's 2 uncited
-    // credits surface as cites-no-scenario items on the "(no scenario)" row, each with a locator.
-    assert.ok(!("suspenseEvidenceObservations" in obs), "expected the suspense detail array to have dissolved from the section");
+    // The uncited credits surface as cites-no-scenario items on the suspense-scenario row
+    // (@SCN-LDG-007), never a section detail array. The fixture's 2 uncited credits surface on the
+    // "(no scenario)" row, each with a locator.
     const suspense = evidenceReconciliation.find((s) => s.scnId === "(no scenario)");
     assert.ok(suspense, "expected a suspense-scenario row (no scenario) in the ledger");
     assert.equal(suspense!.kind, "suspense-scenario", "expected kind suspense-scenario");
@@ -273,23 +271,21 @@ Then(
 );
 
 Then(
-  "the sum of rawByRuntimeQualityCheck equals the attributed total plus the cites-unknown-scenario and cites-no-scenario counts",
+  "the sum of summary rawByRuntimeQualityCheck equals the attributed total plus the cites-unknown-scenario and cites-no-scenario counts",
   function () {
-    const obs = rmd003Json.evidenceObservations as {
+    // The identity now holds off the re-homed summary folds (3F-2103): raw = attributed +
+    // cites-unknown-scenario + cites-no-scenario, all Ledger folds on summary — no section.
+    const summary = rmd003Json.summary as {
       rawByRuntimeQualityCheck: Record<string, number>;
-      attributed: { count: number }[];
+      testVolume: { attributed: number; citesUnknownScenario: number; citesNoScenario: number };
     };
-    // Both the cites-unknown-scenario AND the cites-no-scenario COUNTS survive in
-    // summary.testVolume (the balance-check identity is kept, even though both DETAIL arrays
-    // dissolved into phantom / suspense rows).
-    const testVolume = (rmd003Json.summary as { testVolume: { citesUnknownScenario: number; citesNoScenario: number } }).testVolume;
-    const raw = Object.values(obs.rawByRuntimeQualityCheck).reduce((n, v) => n + v, 0);
-    const attributed = obs.attributed.reduce((n, a) => n + a.count, 0) + testVolume.citesUnknownScenario;
+    const raw = Object.values(summary.rawByRuntimeQualityCheck).reduce((n, v) => n + v, 0);
+    const tv = summary.testVolume;
     assert.equal(raw, 5, `expected 5 raw evidence observations from the fixture; got ${raw}`);
     assert.equal(
       raw,
-      attributed + testVolume.citesNoScenario,
-      `the identity must balance on the persisted file: raw ${raw} = attributed ${attributed} + cites-no-scenario ${testVolume.citesNoScenario}`
+      tv.attributed + tv.citesUnknownScenario + tv.citesNoScenario,
+      `the identity must balance on the persisted file: raw ${raw} = attributed ${tv.attributed} + cites-unknown ${tv.citesUnknownScenario} + cites-no-scenario ${tv.citesNoScenario}`
     );
   }
 );

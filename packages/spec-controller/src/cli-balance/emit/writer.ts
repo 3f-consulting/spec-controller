@@ -23,29 +23,32 @@ import type { FeatureNames } from "@3f-consulting/spec-controller-core";
 import type { OutputFormat, OutputPlan } from "./format.js";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
 import type { EvidenceObligations } from "@3f-consulting/spec-controller-core";
-import type { RuntimeEvidenceObservationKindCounts } from "@3f-consulting/spec-controller-core";
 import type { StaticEvidenceObservationKindCounts } from "@3f-consulting/spec-controller-core";
 import type { Ledger } from "@3f-consulting/spec-controller-core";
 
 /**
  * The reconciliation payloads the writer renders — the balance plus its sibling reads
- * (ctx / corpus / evidenceObservations / guards / featureNames), exactly the arguments the pure
- * renderers take. Threaded from `cli.ts` (built once, rendered per planned output).
+ * (ctx / corpus / guards / featureNames), exactly the arguments the pure renderers take. Threaded
+ * from `cli.ts` (built once, rendered per planned output). `withRuntimeObservations` is the GATE
+ * for the runtime-observation axis (Test volume + the evidence grid): the renderers fold those off
+ * the Ledger themselves (3F-2103 — the census is retired), so the writer threads only whether the
+ * axis is in play, never a census object.
  */
 export interface OutputPayloads {
   readonly balance: Ledger;
   readonly ctx: RunContext;
   readonly evidenceObligations?: EvidenceObligations;
-  readonly evidenceObservations?: RuntimeEvidenceObservationKindCounts;
+  readonly withRuntimeObservations?: boolean;
   readonly guards?: StaticEvidenceObservationKindCounts;
   readonly featureNames?: FeatureNames;
 }
 
 /** Render one format from the payloads via the matching pure renderer. */
 function render(fmt: OutputFormat, p: OutputPayloads): string {
+  const withObs = p.withRuntimeObservations ?? false;
   return fmt === "json"
-    ? renderJson(p.balance, p.ctx, p.evidenceObligations, p.evidenceObservations, p.guards, p.featureNames)
-    : renderMarkdown(p.balance, p.ctx, p.evidenceObligations, p.evidenceObservations, p.featureNames, p.guards);
+    ? renderJson(p.balance, p.ctx, p.evidenceObligations, withObs, p.guards, p.featureNames)
+    : renderMarkdown(p.balance, p.ctx, p.evidenceObligations, withObs, p.featureNames, p.guards);
 }
 
 /**
