@@ -7,7 +7,7 @@
 
 import type { Outcome } from "./qualityCheckReconciliation.js";
 import type { ScenarioReconciliation } from "./scenarioReconciliation.js";
-import type { RuntimeQualityCheck } from "./journal.js";
+import type { RuntimeQualityCheck, GuardEvidenceObservation } from "./journal.js";
 
 /**
  * THE LEDGER — the accounts with their POSTED ENTRIES. Canon (double-entry-manifesto, chain
@@ -432,4 +432,91 @@ export function runtimeObservationTally(ledger: Ledger): RuntimeObservationTally
   }
 
   return { rawByRuntimeQualityCheck, onScenario, onPhantomScenario, onSuspenseScenario };
+}
+
+// ---------------------------------------------------------------------------
+// THE STATIC-OBSERVATION TALLY (3F-2118, Read) — the static-guard credit-side headline the
+// report's `### Static guards` cut derives, a FOLD OVER THE LEDGER beside `runtimeObservationTally`
+// for the same reason: "the summary is the totals" — the Ledger counts its OWN posted static-guard
+// credits because it IS the balance. This RETIRES the static evidence-observation census
+// (`census/staticEvidenceObservations.ts`, `countStaticEvidenceObservationKinds`): a parallel store
+// that re-derives the running / uncited split from a re-read of the CI config is not a manifesto
+// concept, so the counting folds onto the Ledger's posted credits rather than living beside it.
+//
+// The static fold is MORE CAREFUL than the runtime one — a plain count is wrong on BOTH axes the
+// posting rules differ on (@SCN-LDG-022, double-entry-manifesto.md line 160): a static guard is
+// posted to EVERY account demanding it (a run is evidence for all demanders — NOT the runtime
+// "exactly one"), so a guard demanded by N scenarios is the SAME object posted N times by reference
+// (@SCN-LDG-024), and it is posted whatever it reconciles to (posting is not classifying), so a
+// demanded watermelon/missing guard posts too though it does not RUN. Hence the two crux moves:
+//   - IDENTITY-DEDUPE the demanded side (a `Set` keyed by object identity), so an N-demanded guard
+//     counts ONCE, and
+//   - FILTER TO RUNNING (`exists && enforcedOverRealSource`), so a demanded watermelon/missing guard
+//     that still posts is excluded — exactly the running-only `continue` the retired census applied.
+// ---------------------------------------------------------------------------
+
+/**
+ * The materialised static-guard totals — the STATIC-axis analogue of `RuntimeObservationTally`,
+ * two counts read off the SAME posted static-guard credits: `runningGuardCount` (the volume of
+ * distinct running static guards — every `@lint=<guard>` a CI `run:` step invokes) and
+ * `uncitedStaticGuardCount` (how many of them NO `@lint` declares — a static guard running with
+ * nothing demanding it, the mirror of a runtime `cites-no-scenario` credit). The demanded count is
+ * IMPLICIT (`runningGuardCount − uncitedStaticGuardCount`) and NOT carried: every demanded static
+ * guard is already a reconciled `@lint` sub-row and adds nothing the rows do not already hold.
+ */
+export interface StaticObservationTally {
+  /** The running static-guard set volume — every `@lint=<guard>` a CI `run:` step invokes. */
+  runningGuardCount: number;
+  /** Running static guards NO `@lint` declares — the uncited static-guards (demanded is implicit). */
+  uncitedStaticGuardCount: number;
+}
+
+/**
+ * Tally the static-guard observations from the Ledger — a FOLD OVER THE POSTED static-guard CREDITS
+ * (3F-2118), the static-axis twin of `runtimeObservationTally`. It walks the POSTED CREDITS on each
+ * Scenario Reconciliation row (@SCN-LDG-022), reads each credit off THE ROW IT POSTED TO, and — like
+ * its runtime sibling — RE-DERIVES NOTHING: the reconciler already decided which account every credit
+ * posts to, so this can never disagree with the verdict.
+ *
+ * `uncitedStaticGuardCount` is the count of lint credits on the SUSPENSE row — the undemanded static
+ * guards the reconciler folded there (a static guard running with no `@lint` demanding it,
+ * `cites-no-scenario` on the credit side). By construction the app only pushes RUNNING guards into
+ * that undemanded stream (`runningStaticGuards`), so every suspense lint credit is running — the
+ * plain count is the census's running-and-uncited count.
+ *
+ * `runningGuardCount` is the count of DISTINCT-BY-OBJECT-IDENTITY RUNNING lint credits across ALL
+ * rows. Two care-moves the runtime axis does not need (see the block comment above):
+ *   - IDENTITY-DEDUPE: @SCN-LDG-022 posts the SAME static-guard object to EVERY account demanding it,
+ *     so a guard demanded by N scenarios appears N times by reference; a `Set` keyed by the object
+ *     identity collapses those to one, so the fold cannot double-count a multiply-demanded guard.
+ *   - FILTER TO RUNNING (`exists && enforcedOverRealSource`): a demanded watermelon (exists, unwired)
+ *     or missing (absent) guard STILL posts (posting is not classifying), but it does not RUN, so it
+ *     is not a running static guard — excluded here exactly as the retired census's running-only
+ *     `continue` excluded it.
+ *
+ * The demanded (implicit) count is `runningGuardCount − uncitedStaticGuardCount`.
+ */
+export function staticObservationTally(ledger: Ledger): StaticObservationTally {
+  // The distinct RUNNING static-guard credits across ALL rows, keyed by OBJECT IDENTITY so a guard
+  // demanded by N scenarios (posted N times by reference, @SCN-LDG-024) is counted once. Only
+  // running guards (`exists && enforcedOverRealSource`) join the set — a demanded watermelon/missing
+  // guard, which posts but does not run, is filtered out (the census's running-only `continue`).
+  const runningGuards = new Set<GuardEvidenceObservation>();
+  // The uncited static guards — the lint credits the reconciler folded onto the SUSPENSE row (an
+  // undemanded running guard, `cites-no-scenario`). A plain count: the app pushes only RUNNING
+  // guards into the undemanded stream, so every suspense lint credit is a running uncited guard.
+  let uncitedStaticGuardCount = 0;
+  for (const row of ledger.scenarioReconciliations) {
+    for (const obs of row.evidenceObservations) {
+      // THE STATIC SCOPING — only static-guard credits ride the `lint` quality-check; a runtime
+      // credit (the uncited/broken ones the suspense row also holds) is not a static observation.
+      if (obs.qualityCheck !== "lint") continue;
+      if (row.kind === "suspense-scenario") uncitedStaticGuardCount++;
+      // FILTER TO RUNNING, then IDENTITY-DEDUPE — a demanded watermelon/missing guard is excluded;
+      // a guard demanded by N scenarios (the same object N times) collapses to one set member.
+      if (obs.exists && obs.enforcedOverRealSource) runningGuards.add(obs);
+    }
+  }
+
+  return { runningGuardCount: runningGuards.size, uncitedStaticGuardCount };
 }

@@ -43,7 +43,6 @@ function qcr(
 }
 import type { RunContext } from "../provenance/provenance.js";
 import type { EvidenceObligations } from "../census/evidenceObligations.js";
-import type { StaticEvidenceObservationKindCounts } from "../census/staticEvidenceObservations.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
 
 // A balance spanning a balanced scenario and an out-of-balance one with a DOUBLE missing arm
@@ -407,10 +406,21 @@ describe("[SCN-RMD-003] the runtime-observation totals re-home onto summary; no 
  * no double-report and no census section on the JSON surface.
  */
 describe("[SCN-RMD-004] the static-guard census is summary counts, no standalone section", () => {
-  const guards: StaticEvidenceObservationKindCounts = { runningGuardCount: 2, uncitedStaticGuardCount: 1 };
+  // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — the static-guard counts are a FOLD OVER
+  // THE LEDGER now (3F-2118, `staticObservationTally`), so the numbers derive from the balance, not
+  // a hand-built census the assembler could disagree with. 2 running CI guards = 1 demanded
+  // (lint:foo, posts to its `@lint` row) + 1 uncited (lint:bar, undemanded-running → the suspense
+  // row) → the fold reads {runningGuardCount: 2, uncitedStaticGuardCount: 1}.
+  const staticGuardsBalance: Ledger = reconcile(
+    [{ scnId: "SCN-RMD-010", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:foo" }] }],
+    [
+      { qualityCheck: "lint", staticGuard: "lint:foo", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "lint", staticGuard: "lint:bar", exists: true, enforcedOverRealSource: true },
+    ]
+  );
 
   it("carries NO standalone staticGuards (or guards) section — the census collapsed to summary counts", () => {
-    const parsed = JSON.parse(renderJson(balance, ctx, undefined, undefined, guards));
+    const parsed = JSON.parse(renderJson(staticGuardsBalance, ctx, undefined, undefined, true));
     // The member-list section (was `guards`, then `staticGuards`) is gone: the guard detail now
     // lives in the rows, symmetric with the runtime side — no double-report on the JSON surface.
     expect(parsed).not.toHaveProperty("staticGuards");
@@ -418,7 +428,7 @@ describe("[SCN-RMD-004] the static-guard census is summary counts, no standalone
   });
 
   it("materialises the counts under summary.staticGuards ({ runningGuardCount, uncitedStaticGuardCount })", () => {
-    const parsed = JSON.parse(renderJson(balance, ctx, undefined, undefined, guards));
+    const parsed = JSON.parse(renderJson(staticGuardsBalance, ctx, undefined, undefined, true));
     expect(parsed.summary.staticGuards).toEqual({ runningGuardCount: 2, uncitedStaticGuardCount: 1 });
   });
 });
@@ -440,12 +450,17 @@ describe("[SCN-RMD-004] the static-guard census is summary counts, no standalone
  * present only when the evidenceObservations / static guard sibling is threaded; the lint tally is always present.
  */
 describe("[SCN-RMD-005] the summary materialises the three report totals", () => {
-  // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — the balance folds to BOTH the test-volume
-  // totals AND the lint tally (3F-2102: testVolume + rawByRuntimeQualityCheck are now a Ledger
-  // fold, so a hand-built census that disagrees with the balance is no longer constructible). It
-  // spans: 6 raw runtime observations = 4 attributed-to-declared + 1 phantom + 1 suspense (the
-  // 3-way test-volume identity is non-trivial, attributed excludes the phantom); and 2 lint
-  // obligations, 1 satisfied + 1 watermelon (the static-only lint tally reads 1 of 2).
+  // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — the balance folds to the test-volume
+  // totals, the lint tally, AND the static-guard totals (3F-2102 + 3F-2118: testVolume,
+  // rawByRuntimeQualityCheck AND staticGuards are now Ledger folds, so a hand-built census that
+  // disagrees with the balance is no longer constructible). It spans: 6 raw runtime observations =
+  // 4 attributed-to-declared + 1 phantom + 1 suspense (the 3-way test-volume identity is
+  // non-trivial, attributed excludes the phantom); 2 declared lint obligations, 1 satisfied
+  // (lint:foo, running) + 1 watermelon (lint:bar, exists-but-unwired — the static-only lint tally
+  // reads 1 of 2); and, on the CREDIT side, the static-guard fold — 2 running CI guards = 1
+  // demanded (lint:foo, running) + 1 uncited (lint:baz, undemanded-running → the suspense row). The
+  // demanded watermelon lint:bar does NOT run, so the running fold excludes it (matching the
+  // retired census's running-only filter).
   const rmd005Scenarios: Scenario[] = [
     { scnId: "SCN-RMD-001", evidenceObligations: [{ qualityCheck: "unit" }] },
     { scnId: "SCN-RMD-002", evidenceObligations: [{ qualityCheck: "integration" }] },
@@ -461,12 +476,11 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
     { qualityCheck: "integration", scnId: null, status: "passed" },
     { qualityCheck: "lint", staticGuard: "lint:foo", exists: true, enforcedOverRealSource: true },
     { qualityCheck: "lint", staticGuard: "lint:bar", exists: true, enforcedOverRealSource: false },
+    // The undemanded-running guard (no @lint declares it) — folds to the suspense row as the
+    // 1 uncited static guard, the credit-side teeth of the static-guard fold.
+    { qualityCheck: "lint", staticGuard: "lint:baz", exists: true, enforcedOverRealSource: true },
   ];
   const rmd005Balance: Ledger = reconcile(rmd005Scenarios, rmd005Observations);
-
-  // Static-guard kind-counts with teeth: 2 running CI guards = 1 declared + 1 uncited. The
-  // static-guard census is a SEPARATE axis (Slice 2), still threaded as the `guards` param.
-  const guards: StaticEvidenceObservationKindCounts = { runningGuardCount: 2, uncitedStaticGuardCount: 1 };
 
   // A balance carrying static (@lint) evidenceObligations so the lint tally is non-trivial: 2 static
   // evidenceObligations, 1 balanced (satisfied) + 1 not — satisfied 1 of 2. The runtime evidenceObligations must
@@ -528,7 +542,7 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
   });
 
   it("materialises the static-guard totals", () => {
-    const report = assembleReport(balance, ctx, undefined, undefined, guards);
+    const report = assembleReport(rmd005Balance, ctx, undefined, undefined, true);
     expect(report.summary.staticGuards).toEqual({
       runningGuardCount: 2,
       uncitedStaticGuardCount: 1,
@@ -536,7 +550,7 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
   });
 
   it("carries the 2-field census shape with demanded implicit (no ciGuards/demanded on the surface)", () => {
-    const report = assembleReport(balance, ctx, undefined, undefined, guards);
+    const report = assembleReport(rmd005Balance, ctx, undefined, undefined, true);
     const sg = report.summary.staticGuards!;
     // demanded is IMPLICIT — running − uncited, never a surface field.
     expect(sg.runningGuardCount - sg.uncitedStaticGuardCount).toBe(1);
@@ -559,7 +573,7 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
   });
 
   it("carries the three totals through the glue-free JSON serialisation", () => {
-    const parsed = JSON.parse(renderJson(rmd005Balance, ctx, undefined, true, guards));
+    const parsed = JSON.parse(renderJson(rmd005Balance, ctx, undefined, true, true));
     expect(parsed.summary.testVolume).toEqual({ totalEvidenceObservations: 6, attributed: 4, citesUnknownScenario: 1, citesNoScenario: 1 });
     expect(parsed.summary.staticGuards).toEqual({ runningGuardCount: 2, uncitedStaticGuardCount: 1 });
     expect(parsed.summary.lint).toEqual({ satisfied: 1, total: 2 });

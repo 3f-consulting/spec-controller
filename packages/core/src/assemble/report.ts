@@ -21,7 +21,7 @@
  */
 
 import type { Ledger, RuntimeQualityCheck } from "../model.js";
-import { ledgerTally, runtimeObservationTally, RUNTIME_QUALITY_CHECKS } from "../domain/ledger.js";
+import { ledgerTally, runtimeObservationTally, staticObservationTally, RUNTIME_QUALITY_CHECKS } from "../domain/ledger.js";
 import type {
   ScenarioReconciliationTotals,
   EvidenceObligationTotals,
@@ -30,7 +30,6 @@ import type {
 } from "../domain/ledger.js";
 import { provenanceObject, type ProvenanceObject, type RunContext } from "../provenance/provenance.js";
 import type { EvidenceObligations, UntaggedScenario } from "../census/evidenceObligations.js";
-import type { StaticEvidenceObservationKindCounts } from "../census/staticEvidenceObservations.js";
 
 // The Ledger-pure summary-tally types moved to `domain/ledger` (3F-2000, Read @SCN-RMD-001) —
 // "the summary is its totals". Re-exported here so the frozen v1 barrel (`index.ts`,
@@ -185,7 +184,7 @@ export interface EvidenceReconciliation {
 function buildSummary(
   balance: Ledger,
   withRuntimeObservations: boolean,
-  guards?: StaticEvidenceObservationKindCounts
+  withStaticGuards: boolean
 ): Summary {
   const tally = ledgerTally(balance);
   // The runtime evidence-observation totals are a FOLD OVER THE LEDGER (@SCN-RMD-003, 3F-2102) —
@@ -194,6 +193,11 @@ function buildSummary(
   // now only the GATE (is the runtime-observation axis in play?) — the caller no longer threads a
   // census object at all (the assembler folds the Ledger it already has).
   const observations = runtimeObservationTally(balance);
+  // The static-guard totals are a FOLD OVER THE LEDGER too (3F-2118) — the Ledger counts its own
+  // posted static-guard credits; the parallel static census is RETIRED. `staticGuards` derives from
+  // THIS fold. The `withStaticGuards` flag is now only the GATE (is the static-guard axis in play?) —
+  // the caller no longer threads a census object at all (the assembler folds the Ledger it holds).
+  const staticGuards = staticObservationTally(balance);
   return {
     scenarioReconciliations: tally.scenarioReconciliations,
     evidenceObligations: tally.evidenceObligations,
@@ -224,14 +228,13 @@ function buildSummary(
           rawByRuntimeQualityCheck: observations.rawByRuntimeQualityCheck,
         }
       : {}),
-    // The static-guard kind-counts (RMD-005), materialised only when the guard
-    // read is threaded — the pure COUNTER's output (`countStaticEvidenceObservationKinds`, computed
-    // in cli), symmetric with the runtime `testVolume` counter. The surface follows the census
-    // shape exactly (`{ runningGuardCount, uncitedStaticGuardCount }`; demanded is implicit),
-    // so it is a direct pass-through. The member detail lives in the rows (demanded → each
-    // scenario's `@lint` sub-row; undemanded → the suspense row) — there is no census section
-    // (2.4).
-    ...(guards ? { staticGuards: guards } : {}),
+    // The static-guard kind-counts (RMD-005), materialised only when the static-guard axis is in
+    // play — now a FOLD OVER THE LEDGER (3F-2118, `staticObservationTally`), symmetric with the
+    // runtime `testVolume` fold. The surface keeps the census shape exactly
+    // (`{ runningGuardCount, uncitedStaticGuardCount }`; demanded is implicit). The member detail
+    // lives in the rows (demanded → each scenario's `@lint` sub-row; undemanded → the suspense
+    // row) — there is no census section (2.4).
+    ...(withStaticGuards ? { staticGuards } : {}),
     // The static-only lint tally (RMD-005), a LEDGER-PURE derive from `ledgerTally` — LAST key in
     // document order (after the census pass-throughs).
     lint: tally.lint,
@@ -253,12 +256,12 @@ export function assembleReport(
   ctx: RunContext,
   evidenceObligations?: EvidenceObligations,
   withRuntimeObservations: boolean = false,
-  guards?: StaticEvidenceObservationKindCounts,
+  withStaticGuards: boolean = false,
   featureNames?: ReadonlyMap<string, string>
 ): EvidenceReconciliation {
   return {
     runProvenance: provenanceObject(ctx),
-    summary: buildSummary(balance, withRuntimeObservations, guards),
+    summary: buildSummary(balance, withRuntimeObservations, withStaticGuards),
     // THE LEDGER, beside the summary (@SCN-RMD-002) — chain step 6 read literally: "The summary
     // has the totals and the ledger the detail." An OBJECT mirroring `interface Ledger {
     // scenarioReconciliations }`, never a bare array: the accounts arrive carrying the entries

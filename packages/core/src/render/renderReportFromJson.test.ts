@@ -22,7 +22,6 @@ import { renderReportFromJson, renderMarkdown } from "./markdown.js";
 import type { Ledger, Scenario, EvidenceObservation } from "../model.js";
 import type { RunContext } from "../provenance/provenance.js";
 import { reconcile } from "../reconcile/reconcile.js";
-import type { StaticEvidenceObservationKindCounts } from "../census/staticEvidenceObservations.js";
 import type { EvidenceObligations } from "../census/evidenceObligations.js";
 
 // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A, 3F-1894). The balance is PRODUCED by
@@ -33,16 +32,22 @@ import type { EvidenceObligations } from "../census/evidenceObligations.js";
 // scenario, so the by-feature cut names "checkout (CHK)". The corpus:
 //   SCN-CHK-001: @unit, one passing unit credit → balanced, attributed 1
 //   SCN-CHK-002: @integration, no credit → integration missing (the coded out-of-balance feature)
+//   SCN-CHK-003: @lint=lint:foo, the guard running & wired → balanced, the demanded running guard
 //   1 unit credit citing SCN-PHX-001 (undeclared) → a real phantom ROW, phantom 1
 //   1 uncited unit credit (src/b.test.ts) + the undemanded lint:bar static guard → the suspense row
+// The static-guard counts are a FOLD over this ledger now (3F-2118, `staticObservationTally`): 2
+// running CI guards = 1 demanded (lint:foo, on SCN-CHK-003's `@lint` row) + 1 uncited (lint:bar,
+// undemanded-running, on the suspense row) → {runningGuardCount: 2, uncitedStaticGuardCount: 1}.
 const scenarios: Scenario[] = [
   { scnId: "SCN-CHK-001", evidenceObligations: [{ qualityCheck: "unit" }] },
   { scnId: "SCN-CHK-002", evidenceObligations: [{ qualityCheck: "integration" }] },
+  { scnId: "SCN-CHK-003", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:foo" }] },
 ];
 const observations: EvidenceObservation[] = [
   { qualityCheck: "unit", scnId: "SCN-CHK-001", status: "passed" },
   { qualityCheck: "unit", scnId: "SCN-PHX-001", status: "passed" },
   { qualityCheck: "unit", scnId: null, status: "passed", locator: "src/b.test.ts" },
+  { qualityCheck: "lint", staticGuard: "lint:foo", exists: true, enforcedOverRealSource: true },
   { qualityCheck: "lint", staticGuard: "lint:bar", exists: true, enforcedOverRealSource: true },
 ];
 const balance: Ledger = reconcile(scenarios, observations);
@@ -58,8 +63,9 @@ const ctx: RunContext = {
 // attributed-to-declared + 1 phantom + 1 suspense. `withRuntimeObservations: true` (the 4th render
 // arg) turns the axis on; the numbers derive from `balance` above.
 
-// The static-guard kind-counts: 2 running CI guards = 1 declared (lint:foo) + 1 uncited (lint:bar).
-const guards: StaticEvidenceObservationKindCounts = { runningGuardCount: 2, uncitedStaticGuardCount: 1 };
+// The static-guard axis is folded off the Ledger by the renderers too (3F-2118): 2 running CI
+// guards = 1 demanded (lint:foo) + 1 uncited (lint:bar). `withStaticGuards: true` (the 5th json /
+// 6th markdown render arg) turns the axis on; the numbers derive from `balance` above.
 
 const evidenceObligations: EvidenceObligations = {
   rawScnOccurrences: 4,
@@ -73,14 +79,14 @@ const featureNames = new Map([["CHK", "checkout"]]);
 
 describe("[SCN-RMD-007] the markdown regenerates from a saved spec-reconciliation.json alone", () => {
   it("regenerates markdown byte-identical to the direct render (drift-equality)", () => {
-    const savedJson = renderJson(balance, ctx, evidenceObligations, true, guards, featureNames);
+    const savedJson = renderJson(balance, ctx, evidenceObligations, true, true, featureNames);
     const regenerated = renderReportFromJson(savedJson);
-    const direct = renderMarkdown(balance, ctx, evidenceObligations, true, featureNames, guards);
+    const direct = renderMarkdown(balance, ctx, evidenceObligations, true, featureNames, true);
     expect(regenerated).toBe(direct);
   });
 
   it("names the coded out-of-balance feature in full from the JSON alone (the by-feature title teeth)", () => {
-    const savedJson = renderJson(balance, ctx, evidenceObligations, true, guards, featureNames);
+    const savedJson = renderJson(balance, ctx, evidenceObligations, true, true, featureNames);
     const regenerated = renderReportFromJson(savedJson);
     // The by-feature title comes from report.metadata.featureNames on the saved JSON (@SCN-RMD-006)
     // — a regenerate without the titles would name the bare "CHK".
@@ -88,7 +94,7 @@ describe("[SCN-RMD-007] the markdown regenerates from a saved spec-reconciliatio
   });
 
   it("carries the whole document — the three-way test-volume line and the materialised summary totals", () => {
-    const savedJson = renderJson(balance, ctx, evidenceObligations, true, guards, featureNames);
+    const savedJson = renderJson(balance, ctx, evidenceObligations, true, true, featureNames);
     const regenerated = renderReportFromJson(savedJson);
     // The three-way test-volume identity survives the round-trip.
     expect(regenerated).toContain("3 evidence observations = 1 attributed + 1 cites-unknown-scenario + 1 cites-no-scenario.");
@@ -104,7 +110,7 @@ describe("[SCN-RMD-007] the markdown regenerates from a saved spec-reconciliatio
   it("needs no RunContext — the JSON string alone reconstructs the report", () => {
     // The seam takes ONLY the JSON string; the run provenance header is rebuilt from the JSON's
     // runProvenance section, not a live RunContext.
-    const savedJson = renderJson(balance, ctx, evidenceObligations, true, guards, featureNames);
+    const savedJson = renderJson(balance, ctx, evidenceObligations, true, true, featureNames);
     const regenerated = renderReportFromJson(savedJson);
     expect(regenerated).toContain("## Run provenance");
     expect(regenerated).toContain("- Target repo: roundtrip-fixture");

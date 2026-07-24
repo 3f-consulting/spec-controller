@@ -13,7 +13,6 @@
 import type { Ledger } from "../model.js";
 import type { RunContext } from "../provenance/provenance.js";
 import type { EvidenceObligations } from "../census/evidenceObligations.js";
-import type { StaticEvidenceObservationKindCounts } from "../census/staticEvidenceObservations.js";
 import type { FeatureNames } from "./markdown.js";
 import { assembleReport } from "../assemble/report.js";
 
@@ -22,11 +21,11 @@ export function renderJson(
   ctx: RunContext,
   evidenceObligations?: EvidenceObligations,
   withRuntimeObservations: boolean = false,
-  guards?: StaticEvidenceObservationKindCounts,
+  withStaticGuards: boolean = false,
   featureNames?: FeatureNames
 ): string {
   return JSON.stringify(
-    assembleReport(balance, ctx, evidenceObligations, withRuntimeObservations, guards, featureNames),
+    assembleReport(balance, ctx, evidenceObligations, withRuntimeObservations, withStaticGuards, featureNames),
     null,
     2
   );

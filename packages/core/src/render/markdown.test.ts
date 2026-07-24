@@ -1254,11 +1254,26 @@ describe("[SCN-RPT-015] the markdown report renders prose-only @SCN codes in the
 describe("[SCN-USG-001] the markdown report renders the Static guards section", () => {
   const emptyBalance: Ledger = { scenarioReconciliations: [] };
 
+  // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — the Static guards counts are a FOLD OVER
+  // THE LEDGER now (3F-2118, `staticObservationTally`), so the numbers derive from `balance`, not a
+  // hand-built census the renderer could disagree with. Two running CI guards = 1 demanded
+  // (lint:foo, posts to its scenario's `@lint` row) + 1 uncited (lint:bar, undemanded-running,
+  // folds to the suspense row) → the fold reads {runningGuardCount: 2, uncitedStaticGuardCount: 1}.
+  const twoRunningOneUncited: Ledger = reconcile(
+    [{ scnId: "SCN-USG-001", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:foo" }] }],
+    [
+      { qualityCheck: "lint", staticGuard: "lint:foo", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "lint", staticGuard: "lint:bar", exists: true, enforcedOverRealSource: true },
+    ]
+  );
+  // One running CI guard, all demanded → the fold reads {runningGuardCount: 1, uncitedStaticGuardCount: 0}.
+  const oneRunningNoneUncited: Ledger = reconcile(
+    [{ scnId: "SCN-USG-001", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:foo" }] }],
+    [{ qualityCheck: "lint", staticGuard: "lint:foo", exists: true, enforcedOverRealSource: true }]
+  );
+
   it("renders '### Static guards' with the counts line ONLY — the per-guard detail dissolved to the suspense row", () => {
-    const md = renderMarkdown(emptyBalance, ctx, undefined, undefined, undefined, {
-      runningGuardCount: 2,
-      uncitedStaticGuardCount: 1,
-    });
+    const md = renderMarkdown(twoRunningOneUncited, ctx, undefined, undefined, undefined, true);
     expect(md).toContain("### Static guards");
     expect(md).toContain("2 static guard(s) run, 1 uncited static guard(s).");
     // The per-guard DETAIL list dissolved into the suspense-scenario row (@SCN-LDG-007,
@@ -1268,16 +1283,13 @@ describe("[SCN-USG-001] the markdown report renders the Static guards section", 
   });
 
   it("shows the counts line but omits the list when every running guard is declared", () => {
-    const md = renderMarkdown(emptyBalance, ctx, undefined, undefined, undefined, {
-      runningGuardCount: 1,
-      uncitedStaticGuardCount: 0,
-    });
+    const md = renderMarkdown(oneRunningNoneUncited, ctx, undefined, undefined, undefined, true);
     expect(md).toContain("1 static guard(s) run, 0 uncited static guard(s).");
     // The counts summarise the volume; the itemised list (only shown when > 0) is omitted.
     expect(md).not.toContain("— a CI guard no @lint declares:");
   });
 
-  it("omits the Static guards section when no guard reconciliation is threaded (back-compat)", () => {
+  it("omits the Static guards section when the static-guard axis is not in play (back-compat)", () => {
     const md = renderMarkdown(emptyBalance, ctx);
     expect(md).not.toContain("### Static guards");
   });

@@ -39,10 +39,6 @@ import {
 import { checkStaticEvidenceObligations } from "@3f-consulting/spec-controller-core";
 import { runningStaticGuards } from "@3f-consulting/spec-controller-core";
 import type { PackageJsonScripts } from "@3f-consulting/spec-controller-core";
-import {
-  countStaticEvidenceObservationKinds,
-  type StaticEvidenceObservationKindCounts,
-} from "@3f-consulting/spec-controller-core";
 import { reconcile } from "@3f-consulting/spec-controller-core";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 import type {
@@ -351,38 +347,9 @@ export function runReconcile(opts: ReconcileOptions): Ledger {
   return balance;
 }
 
-/**
- * Read the static-guard kind-counts alongside the balance (@SCN-USG-001) —
- * the static-axis sibling of `readEvidenceObservations`. Builds the SAME static guard observations
- * `runReconcile` pushes into `reconcile` — every demanded `@lint=<guard>` observed by
- * `checkStaticEvidenceObligations` PLUS every undemanded running CI guard (`runningStaticGuards`) — and
- * COUNTS them by kind (`countStaticEvidenceObservationKinds`), mirroring `readEvidenceObservations` →
- * `countRuntimeEvidenceObservationKinds`. Reconciling a static guard to its scenario (or the suspense
- * row) is `reconcile`'s job (a static guard that runs in CI with NO `@lint` folds to the suspense row);
- * the census only counts. Threaded to the
- * renderers via `writeOutputs` like ctx/evidenceObligations/evidenceObservations.
- */
-export function readStaticEvidenceObservationCounts(opts: ReconcileOptions): StaticEvidenceObservationKindCounts {
-  const scenarios = scenariosFromFeatures(opts.features);
-  const demandedGuards = [
-    ...new Set(
-      scenarios.flatMap((d) =>
-        d.evidenceObligations
-          .filter((r) => r.qualityCheck === "lint")
-          .map((r) => r.staticGuard!)
-      )
-    ),
-  ];
-  const ciPath = opts.ci ?? ".github/workflows/ci.yml";
-  const ciSource = existsSync(ciPath) ? readFileSync(ciPath, "utf8") : "";
-  const pkgPath = opts.packageJson ?? "package.json";
-  const packageJson = readJsonIfPresent<PackageJsonScripts>(pkgPath) ?? {};
-  const demandedSet = new Set(demandedGuards);
-  const observations = [
-    ...checkStaticEvidenceObligations(demandedGuards, ciSource, packageJson),
-    ...runningStaticGuards(ciSource, packageJson, GUARD_SCRIPT_PREFIXES).filter(
-      (o) => !demandedSet.has(o.staticGuard)
-    ),
-  ];
-  return countStaticEvidenceObservationKinds(observations, demandedGuards);
-}
+// The static-guard kind-counts are no longer read as a parallel census (@SCN-USG-001 / 3F-2118):
+// the former `readStaticEvidenceObservationCounts` re-built the static guard observations and
+// re-derived the running / uncited split from a second read of the CI config. That counting now
+// FOLDS onto the Ledger the reconciler already produced (`staticObservationTally`, an internal
+// domain fold the renderers apply), so it cannot drift from the verdict — it counts the SAME posted
+// static-guard credits `runReconcile` banked. The census read is deleted, not relocated.

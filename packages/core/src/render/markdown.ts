@@ -40,7 +40,6 @@ import {
 } from "../provenance/provenance.js";
 import type { EvidenceObligations } from "../census/evidenceObligations.js";
 import { RUNTIME_QUALITY_CHECKS } from "../domain/ledger.js";
-import type { StaticEvidenceObservationKindCounts } from "../census/staticEvidenceObservations.js";
 import { assembleReport, type EvidenceReconciliation } from "../assemble/report.js";
 // The run-integrity predicate (@SCN-LDG-018) — the existential scan for a `broken` reconciling
 // item. The renderer asks the predicate and prints the HEADLINE word: predicate-name ≠
@@ -995,8 +994,8 @@ export function renderMarkdown(
   evidenceObligations?: EvidenceObligations,
   withRuntimeObservations: boolean = false,
   featureNames?: FeatureNames,
-  guards?: StaticEvidenceObservationKindCounts
+  withStaticGuards: boolean = false
 ): string {
-  const report = assembleReport(balance, ctx, evidenceObligations, withRuntimeObservations, guards, featureNames);
+  const report = assembleReport(balance, ctx, evidenceObligations, withRuntimeObservations, withStaticGuards, featureNames);
   return renderReport(report);
 }
