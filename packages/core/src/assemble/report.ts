@@ -233,7 +233,7 @@ function buildSummary(
 /**
  * Assemble the whole-document report from the reconcile pieces. The JSON-surface vocabulary
  * lives HERE (mapped, not renamed at the model): `provenance` → `runProvenance`; `scenarios`
- * → `evidenceReconciliation`; `evidenceObservations` → `evidenceObservations` (+ `phantom`/`unattributed evidence observation` →
+ * → `evidenceReconciliation`; `evidenceObservations` → `evidenceObservations` (+ `phantom`/`suspense` →
  * `phantomEvidenceObservations`/`suspenseEvidenceObservations`); the static-guard census is the
  * materialised `summary.staticGuards` counts alone (2.4 — no standalone section, the
  * member detail lives in the rows); the summary is materialised. Sections are inserted in document

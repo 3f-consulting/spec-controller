@@ -188,7 +188,7 @@ After({ tags: "@SCN-RMD-001" }, function () {
 
 // @SCN-RMD-003
 // Drives the REAL file-read pipeline over the evidence observation fixture (whose Vitest/Cucumber reports
-// span attributed, phantom-id, and unattributed evidence observations) via the kept-run scaffold, then
+// span attributed, phantom-id, and cites-no-scenario evidence observations) via the kept-run scaffold, then
 // reads the persisted spec-reconciliation.json: the observed evidence must be under
 // evidenceObservations (with phantomEvidenceObservations / suspenseEvidenceObservations at
 // fine grain + locators), and the balancing identity must hold on the REAL file. Anti-watermelon:
@@ -196,7 +196,7 @@ After({ tags: "@SCN-RMD-001" }, function () {
 let rmd003StoreRoot: string;
 let rmd003Json: Record<string, unknown>;
 
-Given("a reconciliation run whose observed evidence spans attributed, phantom-id, and unattributed evidence observations", function () {
+Given("a reconciliation run whose observed evidence spans attributed, phantom-id, and cites-no-scenario evidence observations", function () {
   const repoRoot = process.cwd();
   rmd003StoreRoot = mkdtempSync(join(tmpdir(), "spec-controller-rmd003-"));
   assert.ok(!rmd003StoreRoot.startsWith(repoRoot), `store root must be OUTSIDE the repo; got ${rmd003StoreRoot}`);

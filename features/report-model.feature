@@ -85,17 +85,17 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     — the observed side is evidence OBSERVATIONS, the credits; "evidence observation" was a made-up word). The
     observed-evidence reconciliation serialises under evidenceObservations (was evidence observation), carrying
     the fine grain: raw-by-level totals, per-scenario attributed counts, and the phantom evidence observation /
-    unattributed evidence observations with their file locators, under phantomEvidenceObservations /
+    suspense evidence observations with their file locators, under phantomEvidenceObservations /
     suspenseEvidenceObservations. The JSON-key renames live in the ASSEMBLER — the
     RuntimeEvidenceObservationKindCounts model + evidence observation.ts internals stay untouched — so the markdown is
     byte-identical. The balancing identity Σ rawByRuntimeQualityCheck = Σ attributed + cites-unknown-scenario + cites-no-scenario
     holds on the persisted spec-reconciliation.json. The @unit proves the mapping in isolation;
     the @integration drives the REAL file-read pipeline over a fixture spanning attributed,
-    phantom-id, and unattributed evidence observations and asserts the identity on the persisted file.
+    phantom-id, and cites-no-scenario evidence observations and asserts the identity on the persisted file.
 
     @unit @integration @SCN-RMD-003
     Scenario: observed evidence serialises as evidenceObservations and the balancing identity holds on the persisted file
-      Given a reconciliation run whose observed evidence spans attributed, phantom-id, and unattributed evidence observations
+      Given a reconciliation run whose observed evidence spans attributed, phantom-id, and cites-no-scenario evidence observations
       When the run persists spec-reconciliation.json
       Then the observed evidence is carried under evidenceObservations with phantomEvidenceObservations and suspenseEvidenceObservations at fine grain with locators
       And the sum of rawByRuntimeQualityCheck equals the attributed total plus the cites-unknown-scenario and cites-no-scenario counts

@@ -341,14 +341,14 @@ describe("[SCN-RMD-002] the ledger serialises under the top-level key ledger, be
  * Bidirectional evidence (Evidence Manifesto §9): the describe carries @SCN-RMD-003.
  *
  * The observed evidence serialises under `evidenceObservations` (was `evidenceObservations`), retiring the
- * made-up "evidenceObservations" word, with `phantom` → `phantomEvidenceObservations` and `unattributed evidence observation` →
+ * made-up "evidenceObservations" word, with `phantom` → `phantomEvidenceObservations` and `suspense` →
  * `suspenseEvidenceObservations`, carrying the fine grain (raw-by-level, attributed counts,
- * phantom / unattributed evidence observation evidenceObservations WITH their file locators). The mapping lives in the
+ * phantom / suspense evidenceObservations WITH their file locators). The mapping lives in the
  * assembler; the balancing identity holds by construction.
  */
 describe("[SCN-RMD-003] observed evidence serialises as evidenceObservations", () => {
   // A countRuntimeEvidenceObservationKinds-shaped fixture that BALANCES: 5 unit (4 attributed + 1 phantomEvidenceObservation) + 1 integration
-  // (1 suspenseEvidenceObservation) = 6 raw = 4 attributed + 1 phantomEvidenceObservation + 1 unattributed evidence observation.
+  // (1 suspenseEvidenceObservation) = 6 raw = 4 attributed + 1 phantomEvidenceObservation + 1 suspense.
   const evidenceObservations: RuntimeEvidenceObservationKindCounts = {
     rawByRuntimeQualityCheck: { unit: 5, integration: 1, e2e: 0, performance: 0 },
     attributed: [{ scnId: "SCN-RMD-001", qualityCheck: "unit", count: 4 }],
@@ -372,7 +372,7 @@ describe("[SCN-RMD-003] observed evidence serialises as evidenceObservations", (
     expect(parsed.evidenceObservations).not.toHaveProperty("phantomCount");
     expect(parsed.evidenceObservations).not.toHaveProperty("suspenseCount");
     expect(parsed.evidenceObservations).not.toHaveProperty("phantom evidence observation");
-    expect(parsed.evidenceObservations).not.toHaveProperty("unattributed evidence observation");
+    expect(parsed.evidenceObservations).not.toHaveProperty("suspense evidence observation");
     // But BOTH counts survive in summary.testVolume — the balance-check identity is kept.
     expect(parsed.summary.testVolume.citesUnknownScenario).toBe(1);
     expect(parsed.summary.testVolume.citesNoScenario).toBe(1);
