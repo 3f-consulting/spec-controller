@@ -112,9 +112,8 @@ const EXPECTED_TYPE_EXPORTS: readonly string[] = [
   // Evidence-obligation census (census/evidenceObligations.ts)
   "EvidenceObligations",
   "UntaggedScenario",
-  // Runtime observation counter (census/evidenceObservations.ts)
-  "RuntimeEvidenceObservationKindCounts",
-  "AttributedCount",
+  // The runtime observation counter (census/evidenceObservations.ts) is RETIRED (3F-2104) — its
+  // types `RuntimeEvidenceObservationKindCounts` / `AttributedCount` left the frozen surface.
   // Static observation counter (census/staticEvidenceObservations.ts)
   "StaticEvidenceObservationKindCounts",
   // Parse — result/CI readers (parse/*)
@@ -132,7 +131,7 @@ const EXPECTED_TYPE_EXPORTS: readonly string[] = [
   "StaticGuardTotals",
   "LintTally",
   "EvidenceObligationsSection",
-  "EvidenceObservationsSection",
+  // `EvidenceObservationsSection` RETIRED (3F-2104) — the section is no longer emitted.
   // Render (render/*)
   "FeatureNames",
   // Provenance — pure subset (provenance/provenance.ts)
@@ -163,11 +162,9 @@ const EXPECTED_VALUE_EXPORTS: readonly string[] = [
   "isBalanced",
   "hasPendingItems",
   "hasBrokenEvidence",
-  // Runtime observation counter (census/evidenceObservations.ts)
-  "countRuntimeEvidenceObservationKinds",
-  "RUNTIME_QUALITY_CHECKS",
-  "totalEvidenceObservations",
-  "attributedTotal",
+  // The runtime observation counter (census/evidenceObservations.ts) is RETIRED (3F-2104) — its
+  // values `countRuntimeEvidenceObservationKinds` / `RUNTIME_QUALITY_CHECKS` /
+  // `totalEvidenceObservations` / `attributedTotal` left the frozen surface.
   // Static observation counter (census/staticEvidenceObservations.ts)
   "countStaticEvidenceObservationKinds",
   // Parse — result/CI readers (parse/*)

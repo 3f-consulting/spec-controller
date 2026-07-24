@@ -30,7 +30,6 @@ import type {
 } from "../domain/ledger.js";
 import { provenanceObject, type ProvenanceObject, type RunContext } from "../provenance/provenance.js";
 import type { EvidenceObligations, UntaggedScenario } from "../census/evidenceObligations.js";
-import type { AttributedCount, RuntimeEvidenceObservationKindCounts } from "../census/evidenceObservations.js";
 import type { StaticEvidenceObservationKindCounts } from "../census/staticEvidenceObservations.js";
 
 // The Ledger-pure summary-tally types moved to `domain/ledger` (3F-2000, Read @SCN-RMD-001) —
@@ -111,24 +110,10 @@ export interface EvidenceObligationsSection {
   proseOnlyCodes: string[];
 }
 
-/**
- * The observed-evidence section (RMD-003) — the credits, retiring the made-up "evidenceObservations" word.
- *
- * The PHANTOM detail array has DISSOLVED into the phantom-scenario rows (@SCN-LDG-006):
- * a credit citing an undeclared @SCN now surfaces as a `phantom-scenario` Scenario Reconciliation
- * in `evidenceReconciliation` (carrying the id + locator on its `cites-unknown-scenario` item), so it no
- * longer double-reports as a standalone `phantomEvidenceObservations` array here. The phantom COUNT
- * survives in `summary.testVolume` (the balance-check identity is kept).
- *
- * The SUSPENSE detail array has ALSO dissolved (@SCN-LDG-007): a credit citing
- * NO @SCN now surfaces as a `cites-no-scenario` item on the suspense-scenario `(no scenario)`
- * row in `evidenceReconciliation` (carrying its locator, ruling Q5), so it no longer double-reports as
- * a standalone `suspenseEvidenceObservations` array. Its COUNT survives in `summary.testVolume`.
- */
-export interface EvidenceObservationsSection {
-  rawByRuntimeQualityCheck: RuntimeEvidenceObservationKindCounts["rawByRuntimeQualityCheck"];
-  attributed: AttributedCount[];
-}
+// The observed-evidence `EvidenceObservationsSection` interface is RETIRED (@SCN-API-001, 3F-2104):
+// the section is no longer emitted (3F-2103), and its raw totals re-home onto
+// `summary.rawByRuntimeQualityCheck` (a Ledger fold). The per-`(scnId, quality-check)` `attributed[]`
+// re-represented the Ledger's posted credits and was deleted, not relocated.
 
 /**
  * Presentation metadata — a small top-level object holding the run's PRESENTATION

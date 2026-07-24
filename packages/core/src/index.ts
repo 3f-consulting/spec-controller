@@ -47,14 +47,10 @@ export type { EvidenceObligations, UntaggedScenario } from "./census/evidenceObl
 // --- Reconcile (`reconcile/reconcile.ts`) ---
 export { reconcile, isBalanced, hasPendingItems, hasBrokenEvidence } from "./reconcile/reconcile.js";
 
-// --- Runtime observation counter (`census/evidenceObservations.ts`) ---
-export {
-  countRuntimeEvidenceObservationKinds,
-  RUNTIME_QUALITY_CHECKS,
-  totalEvidenceObservations,
-  attributedTotal,
-} from "./census/evidenceObservations.js";
-export type { RuntimeEvidenceObservationKindCounts, AttributedCount } from "./census/evidenceObservations.js";
+// The runtime evidence-observation census (`census/evidenceObservations.ts`) is RETIRED (3F-2104):
+// its counting folds onto the Ledger (`runtimeObservationTally`, an internal domain fold), and its
+// 6 symbols + `EvidenceObservationsSection` left this frozen-in-intent surface. Pre-freeze, no
+// external consumer (unpublished package; only workspace dependents, all rewired). See @SCN-API-001.
 
 // --- Static observation counter (`census/staticEvidenceObservations.ts`) ---
 export { countStaticEvidenceObservationKinds } from "./census/staticEvidenceObservations.js";
@@ -83,7 +79,6 @@ export type {
   StaticGuardTotals,
   LintTally,
   EvidenceObligationsSection,
-  EvidenceObservationsSection,
 } from "./assemble/report.js";
 
 // --- Render — model→string (`render/*`) ---

@@ -26,8 +26,6 @@ import type { Ledger, Outcome, ScenarioReconciliation } from "../model.js";
 import { OUTCOME_DESCRIPTION, makeQualityCheckReconciliation, OUTCOME_SIDE_PROFILE } from "../model.js";
 import { isBalanced, reconcile } from "../reconcile/reconcile.js";
 import type { RunContext } from "../provenance/provenance.js";
-import type { RuntimeEvidenceObservationKindCounts } from "../census/evidenceObservations.js";
-import { countRuntimeEvidenceObservationKinds } from "../census/evidenceObservations.js";
 import type { EvidenceObservation, Scenario, RuntimeQualityCheck } from "../model.js";
 
 // @SCN-LDG-030: fixtures must mint branded Quality Check Reconciliations via the smart constructor.
@@ -908,8 +906,6 @@ describe("[SCN-RPT-010] the markdown report renders the Test volume evidenceObse
     { qualityCheck: "integration", scnId: null, status: "passed" },
   ];
   const balance: Ledger = reconcile(scenarios, observations);
-  const evidenceObservations: RuntimeEvidenceObservationKindCounts =
-    countRuntimeEvidenceObservationKinds(balance);
 
   it("[SCN-RPT-010] renders a '### Test volume' section with the three-way balancing identity line", () => {
     const md = renderMarkdown(balance, ctx, undefined, true);
@@ -1024,27 +1020,23 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     { qualityCheck: "lint", staticGuard: "guard-y", exists: true, enforcedOverRealSource: false },
   ];
   const balance: Ledger = reconcile(scenarios, observations);
-  // The census is a FOLD over that very Ledger (@SCN-RPT-023 / 3F-1859) — it no longer takes the
-  // observation stream at all, so the fixture cannot state a census that disagrees with the
-  // balance beside it. The two were already built from one corpus here; now they cannot diverge.
-  const evidenceObservations: RuntimeEvidenceObservationKindCounts =
-    countRuntimeEvidenceObservationKinds(balance);
 
-  it("builds the fixture through the reconciler — the undemanded credit is OUT of attributed", () => {
-    // The fixture's own guard: it can only pin shapes the pipeline emits. The SCN-C integration
-    // credit is UNDEMANDED (never attributed — the shape the old hand-built fixture faked).
+  it("builds the fixture through the reconciler — the undemanded credit is OUT of a demand", () => {
+    // The fixture's own guard, read off the LEDGER (the census is retired, 3F-2104): it can only
+    // pin shapes the pipeline emits. The SCN-C integration credit is UNDEMANDED — it posts an
+    // `undemanded` reconciling item on SCN-C's own row, NOT a matched demand.
     //
-    // TWO undemanded credits now, not one (3F-1858): SCN-C's integration credit (a real scenario
-    // at a check it never declared) AND SCN-F's unit credit (a real scenario at a check declared
-    // PENDING — which demands nothing, so it is undemanded "exactly as when nothing was declared
-    // at all"). SCN-F used to count ATTRIBUTED here; that was the divergence. This is a fixture
-    // guard, not this scenario's claim — the claim below is unchanged and still green.
-    expect(evidenceObservations.undemandedCount).toBe(2);
-    expect(evidenceObservations.attributed).not.toContainEqual({
-      scnId: "SCN-C",
-      qualityCheck: "integration",
-      count: 1,
-    });
+    // TWO undemanded credits (3F-1858): SCN-C's integration credit (a real scenario at a check it
+    // never declared) AND SCN-F's unit credit (a real scenario at a check declared PENDING — which
+    // demands nothing). Counted off the rows' `undemanded` reconciling items.
+    const undemanded = balance.scenarioReconciliations.flatMap((s) =>
+      s.qualityCheckReconciliations.filter((o) => o.outcome === "undemanded")
+    );
+    expect(undemanded).toHaveLength(2);
+    // SCN-C's integration credit is undemanded (never a demand), and it posted to SCN-C's row.
+    const scnC = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-C")!;
+    expect(scnC.qualityCheckReconciliations.some((o) => o.qualityCheck === "integration" && o.outcome === "undemanded")).toBe(true);
+    expect(scnC.qualityCheckReconciliations.some((o) => o.qualityCheck === "integration" && o.outcome === "satisfied")).toBe(false);
   });
 
   it("renders corpus-driven columns — Lint first, then the runtime levels present (e2e/performance absent)", () => {
@@ -1729,10 +1721,8 @@ describe("[SCN-PND-010] the markdown report renders a Pending Item distinct from
   });
 
   it("keeps the Pending Item distinct in the wide evidence-column ledger path too", () => {
-    // Thread an evidence-observation read so the ledger renders its wide (evidence-column)
+    // Turn the runtime-observation axis on so the ledger renders its wide (evidence-column)
     // table — the OTHER row-render path — and assert the ⏳ pending label survives there.
-    const evidenceObservations: RuntimeEvidenceObservationKindCounts =
-      countRuntimeEvidenceObservationKinds(pendingBalance);
     const md = renderMarkdown(pendingBalance, ctx, undefined, true);
     expect(rowFor(md, "SCN-PDX-001")).toMatch(/⏳ pending: integration/);
     expect(rowFor(md, "SCN-PDX-002")).toMatch(/⏳ pending: integration/);
