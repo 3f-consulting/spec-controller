@@ -316,27 +316,27 @@ Feature: The report renders the ledger as sectioned facts
       And the scenario whose obligation at a quality-check is pending, with observations citing it at that pair, renders (N) there — because the credit is now undemanded, not attributed
       And the fixed cell key renders immediately before the ledger table
 
-  Rule: Warnings flags the unattributed evidence observation tests with their file locators
+  Rule: Warnings flags the tests citing no scenario with their file locators
 
-    Anchor audit — unattributed evidence observation tests (@SCN-RPT-012), consuming the
+    Anchor audit — tests citing no scenario (@SCN-RPT-012), consuming the
     evidence observation aggregate's `suspense` array (already a term in the evidence observation identity, with
     the test-file locators retained). `## Warnings` gains a second sub-part listing the
-    unattributed evidence observation-test count + per-file locators (grouped by file, per-file counts, sorted
+    cites-no-scenario evidence observation-test count + per-file locators (grouped by file, per-file counts, sorted
     — so the per-file counts reconcile to the total). It renders `N test(s) carry no @SCN
     anchor:` then `- <count> in \`<file>\`` bullets. The section now renders when EITHER
-    no-evidence-declared warnings OR unattributed evidence observation tests are present; the no-evidence
+    no-evidence-declared warnings OR tests citing no scenario are present; the no-evidence
     sub-part is byte-unchanged and renders first. Facts-only — count + locator, no
-    interpretation; the count links the reader to the Test volume cut's `unattributed evidence observation`
+    interpretation; the count links the reader to the Test volume cut's `suspense`
     term. Markdown-only (the atoms are already on JSON). Proven in isolation
-    by Vitest over a evidence observation fixture with multi-file unattributed evidence observations. Completes the
+    by Vitest over a evidence observation fixture with multi-file cites-no-scenario evidence observations. Completes the
     evidence observation identity's visible accounting (raw = attributed + suspense, now with
     where-to-look); the phantom evidence observation-id case remains.
 
     @unit @SCN-RPT-012
-    Scenario: Warnings lists the unattributed evidence observation tests with per-file locators
-      Given a evidence observation aggregate carrying unattributed evidence observations (no @SCN anchor) across more than one test file
+    Scenario: Warnings lists the tests citing no scenario with per-file locators
+      Given a evidence observation aggregate carrying cites-no-scenario evidence observations (no @SCN anchor) across more than one test file
       When the markdown report is rendered
-      Then the "## Warnings" section lists the unattributed evidence observation-test count and the per-file locators with per-file counts, sorted, and renders whether or not any no-evidence-declared warnings are present
+      Then the "## Warnings" section lists the cites-no-scenario evidence observation-test count and the per-file locators with per-file counts, sorted, and renders whether or not any no-evidence-declared warnings are present
 
   # Rule: Warnings flags the phantom evidence observation-id tests — RETIRED (@SCN-LDG-006).
   # The phantom-id anchor audit (was @SCN-RPT-013) is superseded by the bidirectional
@@ -358,7 +358,7 @@ Feature: The report renders the ledger as sectioned facts
     on EvidenceObligations.untaggedScenarios (declared-side census, like excludedOccurrences) and
     — a NEW non-derivable datum — persists on the JSON evidenceObligations object beside
     excludedOccurrences (project design §3). The section gate now fires on no-evidence OR
-    unattributed evidence observation OR phantom OR untagged; the earlier sub-parts are byte-unchanged. Facts-only
+    cites-no-scenario evidence observation OR phantom OR untagged; the earlier sub-parts are byte-unchanged. Facts-only
     — count + locator. The @integration arm drives the REAL parse over a fixture feature
     dir (tagged + untagged) → both persisted surfaces, proving the header-parse + file-pairing.
 
@@ -383,7 +383,7 @@ Feature: The report renders the ledger as sectioned facts
     (sorted). The datum lives on EvidenceObligations.proseOnlyCodes and — a NEW non-derivable
     declared-side datum — persists on the JSON evidenceObligations object beside
     excludedOccurrences / untaggedScenarios (project design §3). The section gate now fires
-    on no-evidence OR unattributed evidence observation OR phantom OR untagged OR prose-only; the earlier sub-parts
+    on no-evidence OR cites-no-scenario evidence observation OR phantom OR untagged OR prose-only; the earlier sub-parts
     are byte-unchanged and render first. Facts-only — bare codes, no interpretation. The
     integration arm drives the REAL cross-corpus parse over a fixture feature dir (a tagged
     code also prosed, plus a dangling prose-only code) → both persisted surfaces, proving the
