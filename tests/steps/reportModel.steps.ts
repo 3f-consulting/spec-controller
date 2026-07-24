@@ -302,7 +302,7 @@ After({ tags: "@SCN-RMD-003" }, function () {
 // Drives the REAL CLI over a COMBINED fixture spanning all three totals: the usg features
 // (which declare @lint=lint:foo on SCN-TGT-001) + the usg ci.yml/package.json (CI runs lint:foo
 // + lint:bar, only lint:foo declared) + the evidence observation fixture's Vitest/Cucumber reports (attributed
-// + phantom + unattributed evidence observations). Reading the persisted spec-reconciliation.json back, the
+// + phantom + cites-no-scenario evidence observations). Reading the persisted spec-reconciliation.json back, the
 // summary must materialise all three totals AND both Σ = Σ identities must hold ON THE FILE.
 // Anti-watermelon: the identities are computed over the persisted summary numbers, never a re-run.
 const RMD005_FIXTURE = {
@@ -316,7 +316,7 @@ let rmd005StoreRoot: string;
 let rmd005Json: Record<string, unknown>;
 
 Given(
-  "a reconciliation run whose evidence spans attributed, phantom-id, and unattributed evidence observations and whose CI runs a guard no @lint declares",
+  "a reconciliation run whose evidence spans attributed, phantom-id, and cites-no-scenario evidence observations and whose CI runs a guard no @lint declares",
   function () {
     const repoRoot = process.cwd();
     rmd005StoreRoot = mkdtempSync(join(tmpdir(), "spec-controller-rmd005-"));

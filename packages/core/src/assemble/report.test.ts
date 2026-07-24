@@ -434,7 +434,7 @@ describe("[SCN-RMD-004] the static-guard census is summary counts, no standalone
  * present only when the evidenceObservations / static guard sibling is threaded; the lint tally is always present.
  */
 describe("[SCN-RMD-005] the summary materialises the three report totals", () => {
-  // A evidenceObservations fixture with teeth: 6 raw = 4 attributed-to-declared + 1 phantom + 1 unattributed evidence observation, so
+  // A evidenceObservations fixture with teeth: 6 raw = 4 attributed-to-declared + 1 phantom + 1 suspense, so
   // the 3-way test-volume identity is non-trivial (attributed excludes phantomEvidenceObservation).
   const evidenceObservations: RuntimeEvidenceObservationKindCounts = {
     rawByRuntimeQualityCheck: { unit: 5, integration: 1, e2e: 0, performance: 0 },

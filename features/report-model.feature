@@ -139,13 +139,13 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     evidence obligation outcome field is untouched. Markdown is not migrated here (slice 2) and stays
     byte-identical. The @unit arm proves buildSummary / assembleReport in isolation; the @integration
     arm drives the REAL CLI over a fixture spanning attributed / phantom evidence observation /
-    unattributed evidence observations AND a CI guard no @lint declares, then reads the persisted
+    cites-no-scenario evidence observations AND a CI guard no @lint declares, then reads the persisted
     spec-reconciliation.json and proves the test-volume Σ = Σ identity plus the static-guard shape on
     the file.
 
     @unit @integration @SCN-RMD-005
     Scenario: the summary materialises the test-volume, static-guard, and lint totals with the test-volume balance identity and the static-guard shape holding on the persisted file
-      Given a reconciliation run whose evidence spans attributed, phantom-id, and unattributed evidence observations and whose CI runs a guard no @lint declares
+      Given a reconciliation run whose evidence spans attributed, phantom-id, and cites-no-scenario evidence observations and whose CI runs a guard no @lint declares
       When the reconciliation run persists spec-reconciliation.json
       Then the summary carries the test-volume totals, the static-guard totals, and the lint tally
       And the test-volume identity Σ rawByRuntimeQualityCheck = attributed + cites-unknown-scenario + cites-no-scenario holds on the persisted summary
