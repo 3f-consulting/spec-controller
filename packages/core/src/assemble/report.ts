@@ -20,8 +20,8 @@
  * Parent: (@SCN-RMD-001).
  */
 
-import type { Ledger } from "../model.js";
-import { ledgerTally } from "../domain/ledger.js";
+import type { Ledger, RuntimeQualityCheck } from "../model.js";
+import { ledgerTally, runtimeObservationTally, RUNTIME_QUALITY_CHECKS } from "../domain/ledger.js";
 import type {
   ScenarioReconciliationTotals,
   EvidenceObligationTotals,
@@ -30,7 +30,7 @@ import type {
 } from "../domain/ledger.js";
 import { provenanceObject, type ProvenanceObject, type RunContext } from "../provenance/provenance.js";
 import type { EvidenceObligations, UntaggedScenario } from "../census/evidenceObligations.js";
-import { totalEvidenceObservations, type AttributedCount, type RuntimeEvidenceObservationKindCounts } from "../census/evidenceObservations.js";
+import type { AttributedCount, RuntimeEvidenceObservationKindCounts } from "../census/evidenceObservations.js";
 import type { StaticEvidenceObservationKindCounts } from "../census/staticEvidenceObservations.js";
 
 // The Ledger-pure summary-tally types moved to `domain/ledger` (3F-2000, Read @SCN-RMD-001) —
@@ -89,6 +89,15 @@ export interface Summary {
   pending: number;
   /** The runtime test-volume kind-counts (RMD-005) — present when the evidenceObservations read is threaded. */
   testVolume?: TestVolumeTotals;
+  /**
+   * The re-homed raw per-quality-check evidence-observation totals (@SCN-RMD-003, 3F-2102) — a
+   * materialised headline the Ledger folds (`runtimeObservationTally`), testVolume-adjacent. It
+   * RE-HOMES onto `summary` the raw totals the retired `evidenceObservations` section used to
+   * carry: a legitimate aggregate headline (per the done-criterion's fold-vs-store test — three
+   * derived totals, not a parallel store of the posted credits). Present exactly when `testVolume`
+   * is (both gated on the observation read being threaded).
+   */
+  rawByRuntimeQualityCheck?: Record<RuntimeQualityCheck, number>;
   /** The static-guard kind-counts (RMD-005) — present when the guard read is threaded. */
   staticGuards?: StaticGuardTotals;
   /** The static-only lint evidenceObligation tally (RMD-005) — always present (a pure balance derive). */
@@ -192,28 +201,40 @@ function buildSummary(
   guards?: StaticEvidenceObservationKindCounts
 ): Summary {
   const tally = ledgerTally(balance);
+  // The runtime evidence-observation totals are now a FOLD OVER THE LEDGER (@SCN-RMD-003, 3F-2102) —
+  // the Ledger counts its own posted credits, retiring the parallel census. `testVolume` and the
+  // re-homed `rawByRuntimeQualityCheck` derive from THIS fold; the `evidenceObservations` param is
+  // now only the GATE (was the observation read threaded?) + the source of the section's
+  // `attributed[]`, both of which retire in the following sub-issues.
+  const observations = runtimeObservationTally(balance);
   return {
     scenarioReconciliations: tally.scenarioReconciliations,
     evidenceObligations: tally.evidenceObligations,
     pending: tally.pending,
     // The runtime test-volume kind-counts (RMD-005), materialised only when the evidenceObservations read is
     // threaded. Ruling Q1: this `attributed` is the TEST-VOLUME attributed — credits that
-    // CITE A DECLARED SCENARIO, which INCLUDES undemanded as a subset (matched-pair + undemanded). It
-    // is a DIFFERENT number from the reconciliation-matched-attributed (Σ evidenceObservations.attributed[].count,
-    // which shrank as undemanded broke out into summary.byOutcome). Keeping undemanded inside this
-    // count preserves the 3-termed identity `totalEvidenceObservations = attributed +
-    // citesUnknownScenario + citesNoScenario` (undemanded is a subset here, NOT a 4th identity
-    // term) — the same shape the markdown's `### Test volume` line derives.
+    // CITE A DECLARED SCENARIO, which INCLUDES undemanded as a subset (matched-pair + undemanded) —
+    // i.e. every credit posted to a declared scenario's account, the fold's `onScenario`. It is a
+    // DIFFERENT number from the reconciliation-matched-attributed (the retired section's
+    // `attributed[]` sum, which excluded undemanded). Keeping undemanded inside this count preserves
+    // the 3-termed identity `totalEvidenceObservations = attributed + citesUnknownScenario +
+    // citesNoScenario` (undemanded is a subset here, NOT a 4th identity term) — the same shape the
+    // markdown's `### Test volume` line derives. `citesUnknownScenario` / `citesNoScenario` are the
+    // credits posted to the phantom / suspense accounts.
     ...(evidenceObservations
       ? {
           testVolume: {
-            totalEvidenceObservations: totalEvidenceObservations(evidenceObservations),
-            attributed:
-              evidenceObservations.attributed.reduce((n, a) => n + a.count, 0) +
-              evidenceObservations.undemandedCount,
-            citesUnknownScenario: evidenceObservations.phantomCount,
-            citesNoScenario: evidenceObservations.suspenseCount,
+            totalEvidenceObservations: RUNTIME_QUALITY_CHECKS.reduce(
+              (n, qc) => n + observations.rawByRuntimeQualityCheck[qc],
+              0
+            ),
+            attributed: observations.onScenario,
+            citesUnknownScenario: observations.onPhantomScenario,
+            citesNoScenario: observations.onSuspenseScenario,
           },
+          // The re-homed raw per-quality-check headline (@SCN-RMD-003) — a materialised Ledger
+          // fold, sibling of `testVolume` and present on the SAME gate.
+          rawByRuntimeQualityCheck: observations.rawByRuntimeQualityCheck,
         }
       : {}),
     // The static-guard kind-counts (RMD-005), materialised only when the guard

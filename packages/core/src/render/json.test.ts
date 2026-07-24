@@ -43,6 +43,9 @@ function qcr(
 }
 import type { RunContext } from "../provenance/provenance.js";
 import type { RuntimeEvidenceObservationKindCounts } from "../census/evidenceObservations.js";
+import { countRuntimeEvidenceObservationKinds } from "../census/evidenceObservations.js";
+import { reconcile } from "../reconcile/reconcile.js";
+import type { EvidenceObservation, Scenario } from "../model.js";
 
 /** A minimal balanced balance — enough for the renderer to serialise a report. */
 const balance: Ledger = {
@@ -182,30 +185,42 @@ describe("[SCN-RPT-008] the JSON report carries a evidenceObligations object wit
  * Parent: (@SCN-RPT-010) — the evidenceObservations-reconciliation spine.
  */
 describe("[SCN-RPT-010] the JSON report carries an evidenceObservations object with the non-derivable atoms", () => {
-  const evidenceObservations: RuntimeEvidenceObservationKindCounts = {
-    rawByRuntimeQualityCheck: { unit: 5, integration: 3, e2e: 0, performance: 0 },
-    attributed: [{ scnId: "SCN-A", qualityCheck: "unit", count: 4 }],
-    undemandedCount: 0,
-    phantomCount: 1,
-    suspenseCount: 1,
-  };
+  // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — the balance AND the census fold from ONE
+  // corpus, so the census cannot claim an attribution / phantom / suspense the ledger does not
+  // carry (the whole point of the runtime-observation tally re-homing onto the Ledger, 3F-2102):
+  //   SCN-A: @unit with 4 passing unit credits → attributed [{SCN-A, unit, 4}] (raw unit 4)
+  //   1 unit credit citing SCN-PHX-999 (no scenario declares it) → phantom 1 (raw unit 5)
+  //   1 integration credit citing NO scenario → suspense 1 (raw integration 1)
+  const rpt010Scenarios: Scenario[] = [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }];
+  const rpt010Observations: EvidenceObservation[] = [
+    { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
+    { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
+    { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
+    { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
+    { qualityCheck: "unit", scnId: "SCN-PHX-999", status: "passed" },
+    { qualityCheck: "integration", scnId: null, status: "passed" },
+  ];
+  const rpt010Balance: Ledger = reconcile(rpt010Scenarios, rpt010Observations);
+  const evidenceObservations: RuntimeEvidenceObservationKindCounts =
+    countRuntimeEvidenceObservationKinds(rpt010Balance);
 
   it("carries only the atoms (rawByRuntimeQualityCheck, attributed) when threaded; phantom + suspense detail dissolved into rows", () => {
-    const parsed = JSON.parse(renderJson(balance, ctx, undefined, evidenceObservations));
+    const parsed = JSON.parse(renderJson(rpt010Balance, ctx, undefined, evidenceObservations));
     expect(parsed.evidenceObservations).toBeDefined();
-    expect(parsed.evidenceObservations.rawByRuntimeQualityCheck).toEqual({ unit: 5, integration: 3, e2e: 0, performance: 0 });
+    expect(parsed.evidenceObservations.rawByRuntimeQualityCheck).toEqual({ unit: 5, integration: 1, e2e: 0, performance: 0 });
     expect(parsed.evidenceObservations.attributed).toContainEqual({ scnId: "SCN-A", qualityCheck: "unit", count: 4 });
     // The PHANTOM detail array dissolved into the phantom-scenario rows; the
     // SUSPENSE detail array dissolved into the suspense-scenario row — the
     // section carries neither standalone array (no double-report).
     expect(parsed.evidenceObservations).not.toHaveProperty("phantomCount");
     expect(parsed.evidenceObservations).not.toHaveProperty("suspenseCount");
-    // The suspense COUNT survives in summary.testVolume — the balance-check identity is kept.
+    // The suspense COUNT survives in summary.testVolume (folded from the Ledger, 3F-2102) — the
+    // balance-check identity is kept.
     expect(parsed.summary.testVolume.citesNoScenario).toBe(1);
   });
 
   it("does NOT serialise the derived identity (markdown-only) — only the atoms", () => {
-    const parsed = JSON.parse(renderJson(balance, ctx, undefined, evidenceObservations));
+    const parsed = JSON.parse(renderJson(rpt010Balance, ctx, undefined, evidenceObservations));
     // The "N evidenceObservations = M + K" line is a derived view; the JSON carries atoms only.
     expect(parsed.evidenceObservations).not.toHaveProperty("identity");
     expect(parsed.evidenceObservations).not.toHaveProperty("evidenceObservations");

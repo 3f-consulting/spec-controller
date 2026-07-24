@@ -7,6 +7,7 @@
 
 import type { Outcome } from "./qualityCheckReconciliation.js";
 import type { ScenarioReconciliation } from "./scenarioReconciliation.js";
+import type { RuntimeQualityCheck } from "./journal.js";
 
 /**
  * THE LEDGER — the accounts with their POSTED ENTRIES. Canon (double-entry-manifesto, chain
@@ -333,4 +334,102 @@ export function lintTally(balance: Ledger): LintTally {
     }
   }
   return { satisfied, total };
+}
+
+// ---------------------------------------------------------------------------
+// THE RUNTIME-OBSERVATION TALLY (3F-2102, Read @SCN-RMD-003) — the credit-side
+// headline the report's `### Test volume` cut derives, a FOLD OVER THE LEDGER co-located here
+// beside `ledgerTally` for the same reason: "the summary is the totals" — the Ledger counts its
+// OWN posted credits because it IS the balance. This RETIRES the runtime evidence-observation
+// census (`census/evidenceObservations.ts`): "census" and "collection of evidence observations"
+// are not manifesto concepts, so the counting folds onto the Ledger rather than living in a
+// parallel store. Only the AGGREGATE headlines survive (the raw per-quality-check totals and the
+// per-scenario-kind counts) — the per-`(scnId, quality-check)` `attributed[]` list did not, being
+// a re-representation of the Ledger's own posted credits (retire, don't relocate).
+// ---------------------------------------------------------------------------
+
+/** The canonical runtime quality-check order, in reading order. */
+export const RUNTIME_QUALITY_CHECKS: readonly RuntimeQualityCheck[] = ["unit", "integration", "e2e", "performance"];
+
+/**
+ * The materialised runtime-observation totals — the aggregate the markdown's `### Test volume`
+ * cut derives, carried AS DATA (the MATERIALISE ruling). Two keyings of the SAME posted credits:
+ *   - `rawByRuntimeQualityCheck` — the per-quality-check evidence-observation total over ALL
+ *     runtime credits, regardless of `@SCN` (the runtime axis; `lint` credits are not counted).
+ *   - the per-scenario-kind counts — how many credits posted to a declared scenario's account
+ *     (`onScenario`), to an invented `phantom-scenario` account (`onPhantomScenario`), and to the
+ *     `suspense-scenario` account (`onSuspenseScenario`).
+ * These jointly exhaust the raw total by construction:
+ * `Σ rawByRuntimeQualityCheck = onScenario + onPhantomScenario + onSuspenseScenario`.
+ */
+export interface RuntimeObservationTally {
+  /** Raw per-quality-check evidence-observation totals — ALL runtime credits, regardless of `@SCN`. */
+  rawByRuntimeQualityCheck: Record<RuntimeQualityCheck, number>;
+  /** Runtime credits posted to a DECLARED scenario's account (matched-attributed OR undemanded). */
+  onScenario: number;
+  /** Runtime credits posted to an invented `phantom-scenario` account (an `@SCN` no feature declares). */
+  onPhantomScenario: number;
+  /** Runtime credits posted to the `suspense-scenario` account (citing no scenario, or broken). */
+  onSuspenseScenario: number;
+}
+
+/**
+ * Tally the runtime evidence observations from the Ledger — a FOLD OVER THE POSTED CREDITS
+ * (@SCN-RMD-003), the credit-side twin of `ledgerTally`'s debit-side fold. It walks the POSTED
+ * CREDITS on each Scenario Reconciliation row (@SCN-LDG-022) and reads each credit's account off
+ * THE ROW IT POSTED TO — a declared-scenario row ⇒ `onScenario`, a phantom row ⇒ `onPhantomScenario`,
+ * the suspense row ⇒ `onSuspenseScenario` — summing the raw per-quality-check total in lockstep.
+ *
+ * It RE-DERIVES NOTHING and it does NOT classify: the reconciler already decided which account
+ * every credit posts to (the account IS the citation, @SCN-LDG-022), so asking the row is asking
+ * that decision. There is ONE place that decides what a credit is, so this tally can never disagree
+ * with the verdict — the views (Test volume, the per-quality-check table) are projections of the
+ * same rows, not a parallel opinion kept in step.
+ *
+ * Static guard (`lint`) credits are SKIPPED: this is the RUNTIME axis. @SCN-LDG-022 posts the SAME
+ * static guard object to EVERY account demanding it, so counting one would double-count an axis the
+ * runtime tally must not see at all — the same runtime scoping the retired census enforced.
+ *
+ * The per-scenario-kind counts feed `summary.testVolume` (`onScenario` is the test-volume
+ * attributed — credits citing a declared scenario, INCLUDING undemanded — so the 3-termed identity
+ * `total = attributed + citesUnknownScenario + citesNoScenario` holds); `rawByRuntimeQualityCheck`
+ * is the re-homed per-quality-check headline the by-level table renders.
+ */
+export function runtimeObservationTally(ledger: Ledger): RuntimeObservationTally {
+  const rawByRuntimeQualityCheck: Record<RuntimeQualityCheck, number> = {
+    unit: 0,
+    integration: 0,
+    e2e: 0,
+    performance: 0,
+  };
+  let onScenario = 0;
+  let onPhantomScenario = 0;
+  let onSuspenseScenario = 0;
+
+  // THE FOLD (@SCN-RMD-003). Walk the POSTED CREDITS and read each credit's ACCOUNT off the row it
+  // posted to — the reconciler's own ruling, never re-classified here.
+  for (const row of ledger.scenarioReconciliations) {
+    for (const obs of row.evidenceObservations) {
+      // THE RUNTIME SCOPING — a static guard credit rides the `lint` quality-check and is not a
+      // runtime observation, so it is not counted (see the docstring).
+      if (obs.qualityCheck === "lint") continue;
+      rawByRuntimeQualityCheck[obs.qualityCheck]++;
+      if (row.kind === "phantom-scenario") onPhantomScenario++;
+      else if (row.kind === "suspense-scenario") onSuspenseScenario++;
+      else onScenario++;
+    }
+  }
+
+  // COMPLETENESS identity, by construction (the single-walk drift-proofing): the raw
+  // per-quality-check total equals the sum of the three per-scenario-kind counts. COMPLETENESS
+  // ONLY — invariant under a misfile BETWEEN its own terms; it catches a credit VANISHING, never a
+  // credit in the wrong account (the `@SCN`s / the rows are that).
+  const raw = RUNTIME_QUALITY_CHECKS.reduce((n, qc) => n + rawByRuntimeQualityCheck[qc], 0);
+  if (raw !== onScenario + onPhantomScenario + onSuspenseScenario) {
+    throw new Error(
+      `runtime-observation tally drift: raw ${raw} != onScenario ${onScenario} + onPhantomScenario ${onPhantomScenario} + onSuspenseScenario ${onSuspenseScenario}`
+    );
+  }
+
+  return { rawByRuntimeQualityCheck, onScenario, onPhantomScenario, onSuspenseScenario };
 }
