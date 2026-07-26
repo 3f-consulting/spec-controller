@@ -108,6 +108,38 @@ export function evidenceObligationPairsOf(scenarios: readonly Scenario[]): Set<s
   return pairs;
 }
 
+/**
+ * The DEMANDED static guard handles — the STATIC-axis twin of `evidenceObligationPairsOf`. Every
+ * `@lint=<guard>` `staticGuard` a scenario's evidence obligations demand, deduped into one set. A
+ * `lint` evidence observation whose guard is NOT in this set is an UNDEMANDED static guard: it cites
+ * no scenario, so the reconciler folds it onto the SUSPENSE row (the static analogue of an uncited
+ * runtime credit).
+ *
+ * A `pending` obligation is EXCLUDED — it demands nothing (same rule, same reason as the pair set:
+ * canon, Pending Item — a `<quality-check>pending` tag raises no Evidence Obligation). A `@lintpending`
+ * obligation is `{ qualityCheck: 'lint', pending: true }` with NO `staticGuard`, so both the pending
+ * skip AND the `staticGuard` presence check drop it: a static guard that does not yet exist demands
+ * nothing.
+ *
+ * ONE COPY, BY CONSTRUCTION. This derivation existed TWICE — in `reconcile` and in the balance
+ * command's static-observation ingest — each rebuilding it inline. They agreed by copy, not by
+ * construction (either could have grown a filter alone). What a scenario DEMANDS is the model's rule,
+ * not a reconciler's or an ingest's private business (`entity-owns-its-behaviour`) — the same reason
+ * `evidenceObligationPairsOf` lives here.
+ */
+export function demandedStaticGuardsOf(scenarios: readonly Scenario[]): Set<string> {
+  const guards = new Set<string>();
+  for (const scenario of scenarios) {
+    for (const obligation of scenario.evidenceObligations) {
+      if (obligation.pending === true) continue; // demands nothing — see above.
+      if (obligation.qualityCheck === "lint" && obligation.staticGuard !== undefined) {
+        guards.add(obligation.staticGuard);
+      }
+    }
+  }
+  return guards;
+}
+
 /** The pass/fail status an observed test result carries. */
 export type EvidenceStatus = "passed" | "failed";
 

@@ -36,7 +36,7 @@ import type {
   RuntimeEvidenceObservation,
   Ledger,
 } from "../model.js";
-import { evidenceObligationPairsOf } from "../model.js";
+import { evidenceObligationPairsOf, demandedStaticGuardsOf } from "../model.js";
 import {
   reconcileEvidenceObligation,
   makeQualityCheckReconciliation,
@@ -72,12 +72,7 @@ export function reconcile(
   // removed `uncitedStaticGuards` derive-and-diff param — the stream is now complete
   // (the running-guard observer emits every running CI static guard), so the reconciler recovers
   // the undemanded remainder itself, exactly as it does for an uncited runtime credit.
-  const demandedGuards = new Set<string>();
-  for (const d of scenarios) {
-    for (const o of d.evidenceObligations) {
-      if (o.qualityCheck === "lint" && o.staticGuard !== undefined) demandedGuards.add(o.staticGuard);
-    }
-  }
+  const demandedGuards = demandedStaticGuardsOf(scenarios);
   const byScn = new Map<string, RuntimeEvidenceObservation[]>();
   for (const o of evidenceObservations) {
     if (o.qualityCheck === "lint") continue;

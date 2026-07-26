@@ -38,6 +38,11 @@ import {
 } from "@3f-consulting/spec-controller-core";
 import { checkStaticEvidenceObligations } from "@3f-consulting/spec-controller-core";
 import { runningStaticGuards } from "@3f-consulting/spec-controller-core";
+// The DEMANDED-static-guard rule lives ONCE on the journal (the static-axis twin of
+// `evidenceObligationPairsOf`); this command reads it rather than rebuilding the derivation inline.
+// Reached by relative path because the frozen v1 barrel (@SCN-API-001) does not — and must not —
+// export this core-internal helper; the app→core direction the purity guards permit.
+import { demandedStaticGuardsOf } from "../../../core/src/domain/journal.js";
 import type { PackageJsonScripts } from "@3f-consulting/spec-controller-core";
 import { reconcile } from "@3f-consulting/spec-controller-core";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
@@ -297,15 +302,8 @@ export function runReconcile(opts: ReconcileOptions): Ledger {
   // Static (guard) kind: observe each declared @lint=<guard> against the CI config
   // + package.json over the real tree. Read the CI + package.json ONCE — both
   // the declared-guard evidence observation AND the reverse CI-guard derivation (below) draw on them.
-  const demandedGuards = [
-    ...new Set(
-      scenarios.flatMap((d) =>
-        d.evidenceObligations
-          .filter((r) => r.qualityCheck === "lint")
-          .map((r) => r.staticGuard!)
-      )
-    ),
-  ];
+  const demandedGuardSet = demandedStaticGuardsOf(scenarios);
+  const demandedGuards = [...demandedGuardSet];
   // The --package-json seam (@SCN-LNT-005): read the static guard's `exists`
   // from the EXTERNALLY-SPECIFIED package.json when given, else the tool's own
   // cwd. Required to reconcile ANOTHER repo's static guards — and to render the
@@ -324,7 +322,7 @@ export function runReconcile(opts: ReconcileOptions): Ledger {
   // demanded set already covers carries its authoritative exists/enforcedOverRealSource
   // detail from `checkStaticEvidenceObligations` (the watermelon input), so only the UNDEMANDED
   // running static guards are added here. They cite no scenario — the reconciler folds them into the suspense row.
-  const demandedGuardSet = new Set(demandedGuards);
+  // (`demandedGuardSet` is the journal rule's Set, read once above.)
   evidenceObservations.push(
     ...runningStaticGuards(ciSource, packageJson, GUARD_SCRIPT_PREFIXES).filter(
       (o) => !demandedGuardSet.has(o.staticGuard)
