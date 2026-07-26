@@ -40,9 +40,10 @@ import { checkStaticEvidenceObligations } from "@3f-consulting/spec-controller-c
 import { runningStaticGuards } from "@3f-consulting/spec-controller-core";
 // The DEMANDED-static-guard rule lives ONCE on the journal (the static-axis twin of
 // `evidenceObligationPairsOf`); this command reads it rather than rebuilding the derivation inline.
-// Reached by relative path because the frozen v1 barrel (@SCN-API-001) does not — and must not —
-// export this core-internal helper; the app→core direction the purity guards permit.
-import { demandedStaticGuardsOf } from "../../../core/src/domain/journal.js";
+// Reached via the core package's `/internal` subpath export — the frozen v1 barrel (@SCN-API-001)
+// does not, and must not, carry this core-internal helper, so it is exposed on the sanctioned
+// monorepo-internal seam instead of by a deep `core/src` relative path.
+import { demandedStaticGuardsOf } from "@3f-consulting/spec-controller-core/internal";
 import type { PackageJsonScripts } from "@3f-consulting/spec-controller-core";
 import { reconcile } from "@3f-consulting/spec-controller-core";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";

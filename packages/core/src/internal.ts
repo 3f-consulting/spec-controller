@@ -1,0 +1,25 @@
+/**
+ * The MONOREPO-INTERNAL shared surface of `@3f-consulting/spec-controller-core`
+ * — reached by the sibling `spec-controller` app via the package's `/internal`
+ * subpath export (`@3f-consulting/spec-controller-core/internal`).
+ *
+ * NOT THE PUBLIC v1 CONTRACT. The frozen v1 surface is the `.` barrel
+ * (`index.ts`) alone — `@SCN-API-001` builds its drift-guard Program over
+ * `index.ts` only, so this entry is deliberately OUT of its scope. Do NOT put
+ * public API here: a symbol an external consumer should depend on belongs on the
+ * `.` barrel (and must then be added to `@SCN-API-001`'s frozen enumeration).
+ * This file exists solely so in-repo consumers get a SANCTIONED seam for a
+ * core-internal helper instead of reaching into `core/src` by a deep relative
+ * path.
+ *
+ * Kept deliberately small: it re-exports only the internal helpers the app
+ * genuinely shares, one at a time, each with the reason it is shared here rather
+ * than promoted to the public contract.
+ */
+
+// `demandedStaticGuardsOf` — the DEMANDED-static-guard derivation, the static-axis
+// twin of `evidenceObligationPairsOf`. It lives ONCE on the journal (the model's
+// rule for what a scenario demands); the balance command's static-guard ingest reads
+// it rather than rebuilding the derivation inline. Shared internally — NOT public API,
+// so it stays off the frozen `.` barrel and is reached here instead.
+export { demandedStaticGuardsOf } from "./domain/journal.js";
