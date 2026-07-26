@@ -390,9 +390,9 @@ export interface RuntimeObservationTally {
  * static guard object to EVERY account demanding it, so counting one would double-count an axis the
  * runtime tally must not see at all — the same runtime scoping the retired census enforced.
  *
- * The per-scenario-kind counts feed `summary.testVolume` (`onScenario` is the test-volume
- * attributed — credits citing a declared scenario, INCLUDING undemanded — so the 3-termed identity
- * `total = attributed + citesUnknownScenario + citesNoScenario` holds); `rawByRuntimeQualityCheck`
+ * The per-scenario-kind counts feed `summary.testVolume` directly (`onScenario` counts credits
+ * citing a declared scenario, INCLUDING undemanded — so the 3-termed identity
+ * `total = onScenario + onPhantomScenario + onSuspenseScenario` holds); `rawByRuntimeQualityCheck`
  * is the re-homed per-quality-check headline the by-level table renders.
  */
 export function runtimeObservationTally(ledger: Ledger): RuntimeObservationTally {

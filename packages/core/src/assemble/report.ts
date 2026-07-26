@@ -44,17 +44,18 @@ export type {
 /**
  * The materialised test-volume totals (RMD-005) — the runtime evidence-observation kind-counts
  * the markdown's `### Test volume` identity line derives, carried AS DATA. The identity
- * `totalEvidenceObservations = attributed + citesUnknownScenario + citesNoScenario` holds by
- * construction (one shared `countRuntimeEvidenceObservationKinds` pass), so a JSON consumer reads the balance
- * rather than re-deriving it. The two credit-side terms are named for their OUTCOME
- * (ruling Q1): `citesUnknownScenario` (on a phantom scenario) and `citesNoScenario` (on the
- * suspense scenario) — retiring the `phantom` / `suspense` identity words.
+ * `totalEvidenceObservations = onScenario + onPhantomScenario + onSuspenseScenario` holds by
+ * construction (one shared `runtimeObservationTally` fold), so a JSON consumer reads the balance
+ * rather than re-deriving it. The three terms are named for the SCENARIO-KIND the credit posted
+ * to (the canon grouping): `onScenario` (a declared scenario's account), `onPhantomScenario` (an
+ * invented phantom-scenario account) and `onSuspenseScenario` (the suspense scenario — includes
+ * `broken`). This is an identity read off the fold, not a re-map of the outcome handles.
  */
 export interface TestVolumeTotals {
   totalEvidenceObservations: number;
-  attributed: number;
-  citesUnknownScenario: number;
-  citesNoScenario: number;
+  onScenario: number;
+  onPhantomScenario: number;
+  onSuspenseScenario: number;
 }
 
 /**
@@ -202,16 +203,17 @@ function buildSummary(
     scenarioReconciliations: tally.scenarioReconciliations,
     evidenceObligations: tally.evidenceObligations,
     pending: tally.pending,
-    // The runtime test-volume kind-counts (RMD-005), materialised only when the evidenceObservations read is
-    // threaded. Ruling Q1: this `attributed` is the TEST-VOLUME attributed — credits that
-    // CITE A DECLARED SCENARIO, which INCLUDES undemanded as a subset (matched-pair + undemanded) —
-    // i.e. every credit posted to a declared scenario's account, the fold's `onScenario`. It is a
-    // DIFFERENT number from the reconciliation-matched-attributed (the retired section's
-    // `attributed[]` sum, which excluded undemanded). Keeping undemanded inside this count preserves
-    // the 3-termed identity `totalEvidenceObservations = attributed + citesUnknownScenario +
-    // citesNoScenario` (undemanded is a subset here, NOT a 4th identity term) — the same shape the
-    // markdown's `### Test volume` line derives. `citesUnknownScenario` / `citesNoScenario` are the
-    // credits posted to the phantom / suspense accounts.
+    // The runtime test-volume kind-counts (RMD-005), materialised only when the evidenceObservations
+    // read is threaded. The surface reads the fold's per-scenario-kind counts DIRECTLY (an identity
+    // — the fold already groups by the scenario-kind the credit posted to). `onScenario` is every
+    // credit posted to a declared scenario's account, which INCLUDES undemanded as a subset
+    // (matched-pair + undemanded) — a DIFFERENT number from the reconciliation-matched-attributed
+    // (the retired section's `attributed[]` sum, which excluded undemanded). Keeping undemanded
+    // inside this count preserves the 3-termed identity `totalEvidenceObservations = onScenario +
+    // onPhantomScenario + onSuspenseScenario` (undemanded is a subset here, NOT a 4th identity term)
+    // — the same shape the markdown's `### Test volume` line derives. `onPhantomScenario` /
+    // `onSuspenseScenario` are the credits posted to the phantom / suspense accounts (suspense
+    // includes `broken`).
     ...(withRuntimeObservations
       ? {
           testVolume: {
@@ -219,9 +221,9 @@ function buildSummary(
               (n, qc) => n + observations.rawByRuntimeQualityCheck[qc],
               0
             ),
-            attributed: observations.onScenario,
-            citesUnknownScenario: observations.onPhantomScenario,
-            citesNoScenario: observations.onSuspenseScenario,
+            onScenario: observations.onScenario,
+            onPhantomScenario: observations.onPhantomScenario,
+            onSuspenseScenario: observations.onSuspenseScenario,
           },
           // The re-homed raw per-quality-check headline (@SCN-RMD-003) — a materialised Ledger
           // fold, sibling of `testVolume` and present on the SAME gate.

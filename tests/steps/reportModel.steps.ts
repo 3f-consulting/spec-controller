@@ -277,15 +277,15 @@ Then(
     // cites-unknown-scenario + cites-no-scenario, all Ledger folds on summary — no section.
     const summary = rmd003Json.summary as {
       rawByRuntimeQualityCheck: Record<string, number>;
-      testVolume: { attributed: number; citesUnknownScenario: number; citesNoScenario: number };
+      testVolume: { onScenario: number; onPhantomScenario: number; onSuspenseScenario: number };
     };
     const raw = Object.values(summary.rawByRuntimeQualityCheck).reduce((n, v) => n + v, 0);
     const tv = summary.testVolume;
     assert.equal(raw, 5, `expected 5 raw evidence observations from the fixture; got ${raw}`);
     assert.equal(
       raw,
-      tv.attributed + tv.citesUnknownScenario + tv.citesNoScenario,
-      `the identity must balance on the persisted file: raw ${raw} = attributed ${tv.attributed} + cites-unknown ${tv.citesUnknownScenario} + cites-no-scenario ${tv.citesNoScenario}`
+      tv.onScenario + tv.onPhantomScenario + tv.onSuspenseScenario,
+      `the identity must balance on the persisted file: raw ${raw} = onScenario ${tv.onScenario} + onPhantomScenario ${tv.onPhantomScenario} + onSuspenseScenario ${tv.onSuspenseScenario}`
     );
   }
 );
@@ -355,15 +355,15 @@ Then(
   "the summary carries the test-volume totals, the static-guard totals, and the lint tally",
   function () {
     const summary = rmd005Json.summary as {
-      testVolume?: { totalEvidenceObservations: number; attributed: number; citesUnknownScenario: number; citesNoScenario: number };
+      testVolume?: { totalEvidenceObservations: number; onScenario: number; onPhantomScenario: number; onSuspenseScenario: number };
       staticGuards?: { runningGuardCount: number; uncitedStaticGuardCount: number };
       lint?: { satisfied: number; total: number };
     };
     assert.ok(summary, `expected a summary section; got keys: ${Object.keys(rmd005Json).join(", ")}`);
-    // Test-volume totals — the evidence observation fixture: 5 raw = 1 attributed-to-declared + 2
-    // cites-unknown-scenario + 2 cites-no-scenario (attributed EXCLUDES cites-unknown-scenario).
+    // Test-volume totals — the evidence observation fixture: 5 raw = 1 on a declared scenario + 2
+    // on phantom scenarios + 2 on the suspense scenario (onScenario EXCLUDES onPhantomScenario).
     assert.ok(summary.testVolume, `expected summary.testVolume; got summary keys: ${Object.keys(summary).join(", ")}`);
-    assert.deepEqual(summary.testVolume, { totalEvidenceObservations: 5, attributed: 1, citesUnknownScenario: 2, citesNoScenario: 2 });
+    assert.deepEqual(summary.testVolume, { totalEvidenceObservations: 5, onScenario: 1, onPhantomScenario: 2, onSuspenseScenario: 2 });
     // Static-guard totals — the usg fixture: 2 guards run, 1 uncited (lint:bar); the demanded
     // one (lint:foo) is implicit (running − uncited = 1).
     assert.ok(summary.staticGuards, `expected summary.staticGuards; got summary keys: ${Object.keys(summary).join(", ")}`);
@@ -376,13 +376,13 @@ Then(
 );
 
 Then(
-  "the test-volume identity Σ rawByRuntimeQualityCheck = attributed + cites-unknown-scenario + cites-no-scenario holds on the persisted summary",
+  "the test-volume identity Σ rawByRuntimeQualityCheck = onScenario + onPhantomScenario + onSuspenseScenario holds on the persisted summary",
   function () {
-    const tv = (rmd005Json.summary as { testVolume: { totalEvidenceObservations: number; attributed: number; citesUnknownScenario: number; citesNoScenario: number } }).testVolume;
+    const tv = (rmd005Json.summary as { testVolume: { totalEvidenceObservations: number; onScenario: number; onPhantomScenario: number; onSuspenseScenario: number } }).testVolume;
     assert.equal(
       tv.totalEvidenceObservations,
-      tv.attributed + tv.citesUnknownScenario + tv.citesNoScenario,
-      `the test-volume identity must balance on the file: ${tv.totalEvidenceObservations} = ${tv.attributed} + ${tv.citesUnknownScenario} + ${tv.citesNoScenario}`
+      tv.onScenario + tv.onPhantomScenario + tv.onSuspenseScenario,
+      `the test-volume identity must balance on the file: ${tv.totalEvidenceObservations} = ${tv.onScenario} + ${tv.onPhantomScenario} + ${tv.onSuspenseScenario}`
     );
   }
 );

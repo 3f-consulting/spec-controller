@@ -875,7 +875,7 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
  *
  * Proves the testVolumeSection in isolation: when a RuntimeEvidenceObservationKindCounts is threaded as
  * the 4th arg, renderMarkdown emits a "### Test volume" cut under Summary views — the
- * balancing identity line ("N evidenceObservations = M attributed + C cites-unknown-scenario + K cites-no-scenario", a derived
+ * balancing identity line ("N evidenceObservations = a on scenarios + b on phantom scenarios + c on the suspense scenario", a derived
  * view) then a by-level evidenceObservation table with ALL four levels (e2e/performance zeros
  * shown — a fixed tally like Evidence reconciliation), levels read as lowercase tag words. When
  * no evidenceObservations is threaded the 3-arg call omits the cut (the back-compat guard).
@@ -910,7 +910,7 @@ describe("[SCN-RPT-010] the markdown report renders the Test volume evidenceObse
   it("[SCN-RPT-010] renders a '### Test volume' section with the three-way balancing identity line", () => {
     const md = renderMarkdown(balance, ctx, undefined, true);
     expect(md).toContain("### Test volume");
-    expect(md).toContain("8 evidence observations = 4 attributed + 1 cites-unknown-scenario + 3 cites-no-scenario.");
+    expect(md).toContain("8 evidence observations = 4 on scenarios + 1 on phantom scenarios + 3 on the suspense scenario.");
   });
 
   it("renders a by-level evidenceObservation table with all four levels, zeros shown, levels as lowercase tag words", () => {

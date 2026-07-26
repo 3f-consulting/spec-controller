@@ -206,9 +206,9 @@ describe("[SCN-RPT-010] the JSON report re-homes the runtime-observation totals 
     // Its raw per-quality-check totals re-home onto `summary` as a materialised Ledger fold.
     expect(parsed.summary.rawByRuntimeQualityCheck).toEqual({ unit: 5, integration: 1, e2e: 0, performance: 0 });
     // testVolume is present (the axis is in play), folded from the same Ledger.
-    expect(parsed.summary.testVolume.citesNoScenario).toBe(1);
-    expect(parsed.summary.testVolume.citesUnknownScenario).toBe(1);
-    expect(parsed.summary.testVolume.attributed).toBe(4);
+    expect(parsed.summary.testVolume.onSuspenseScenario).toBe(1);
+    expect(parsed.summary.testVolume.onPhantomScenario).toBe(1);
+    expect(parsed.summary.testVolume.onScenario).toBe(4);
   });
 
   it("the posted credits live on the ledger rows, not a parallel attributed[] store (retire, don't relocate)", () => {
@@ -223,7 +223,7 @@ describe("[SCN-RPT-010] the JSON report re-homes the runtime-observation totals 
     const parsed = JSON.parse(renderJson(rpt010Balance, ctx, undefined, true));
     const raw = (Object.values(parsed.summary.rawByRuntimeQualityCheck) as number[]).reduce((a, b) => a + b, 0);
     const tv = parsed.summary.testVolume;
-    expect(raw).toBe(tv.attributed + tv.citesUnknownScenario + tv.citesNoScenario);
+    expect(raw).toBe(tv.onScenario + tv.onPhantomScenario + tv.onSuspenseScenario);
     expect(tv.totalEvidenceObservations).toBe(raw);
   });
 

@@ -524,8 +524,9 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
 /**
  * Test volume (@SCN-RPT-010) — the evidence-observation side under Summary views, the
  * counterpart to the Evidence reconciliation' demand side. Renders the balancing identity
- * (`N evidence observations = M attributed + C cites-unknown-scenario + K cites-no-scenario`, a
- * DERIVED view of the retained aggregate) then the per-quality-check evidence observation table
+ * (`N evidence observations = a on scenarios + b on phantom scenarios + c on the suspense scenario`,
+ * a DERIVED view of the retained aggregate, grouped by the SCENARIO-KIND each credit posted to)
+ * then the per-quality-check evidence observation table
  * (all four runtime quality-checks, zeros shown — a fixed tally like Evidence reconciliation).
  * Omitted only when no evidence-observation read is threaded (the 3-arg back-compat path). The
  * identity holds BY CONSTRUCTION (one shared pass in src/evidenceObservations.ts); the renderer
@@ -539,17 +540,17 @@ const testVolumeSection: SectionEmitter = (report) => {
   const raw = report.summary.rawByRuntimeQualityCheck;
   if (!volume || !raw) return [];
   const total = volume.totalEvidenceObservations;
-  // Three DIRECT reads off the materialised kind-counts — the renderer does no
-  // arithmetic on this line. The two credit-side terms are surfaced as their OWN outcomes (a
-  // defect signal): cites-unknown-scenario (an evidence observation citing an undeclared @SCN, on a
-  // phantom scenario) and cites-no-scenario (an evidence observation citing no @SCN, on the suspense
-  // scenario), not folded into attributed. The identity total = attributed +
-  // cites-unknown-scenario + cites-no-scenario holds BY CONSTRUCTION (one shared
-  // countRuntimeEvidenceObservationKinds pass), so the three printed terms cannot drift from the total.
+  // Three DIRECT reads off the materialised kind-counts — the renderer does no arithmetic on this
+  // line. The three terms are grouped by the SCENARIO-KIND each credit posted to (the canon
+  // grouping): on scenarios (a declared scenario's account), on phantom scenarios (invented
+  // phantom-scenario accounts — many can exist, hence the plural) and on the suspense scenario (the
+  // one suspense account, singular — includes broken). The identity total = onScenario +
+  // onPhantomScenario + onSuspenseScenario holds BY CONSTRUCTION (one shared runtimeObservationTally
+  // fold), so the three printed terms cannot drift from the total.
   const lines = [
     "### Test volume",
     "",
-    `${total} evidence observations = ${volume.attributed} attributed + ${volume.citesUnknownScenario} cites-unknown-scenario + ${volume.citesNoScenario} cites-no-scenario.`,
+    `${total} evidence observations = ${volume.onScenario} on scenarios + ${volume.onPhantomScenario} on phantom scenarios + ${volume.onSuspenseScenario} on the suspense scenario.`,
     "",
     "| Quality-check | Evidence observations |",
     "| --- | --- |",

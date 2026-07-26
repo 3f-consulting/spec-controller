@@ -97,7 +97,7 @@ describe("[SCN-RMD-007] the markdown regenerates from a saved spec-reconciliatio
     const savedJson = renderJson(balance, ctx, evidenceObligations, true, true, featureNames);
     const regenerated = renderReportFromJson(savedJson);
     // The three-way test-volume identity survives the round-trip.
-    expect(regenerated).toContain("3 evidence observations = 1 attributed + 1 cites-unknown-scenario + 1 cites-no-scenario.");
+    expect(regenerated).toContain("3 evidence observations = 1 on scenarios + 1 on phantom scenarios + 1 on the suspense scenario.");
     // The static-guard counts line (a materialised summary total) survives too.
     expect(regenerated).toContain("2 static guard(s) run, 1 uncited static guard(s).");
     // The SUSPENSE row survives the round-trip — its S bullet, its ledger cell

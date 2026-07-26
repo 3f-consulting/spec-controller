@@ -375,15 +375,15 @@ describe("[SCN-RMD-003] the runtime-observation totals re-home onto summary; no 
     expect(phantom.scnId).toBe("SCN-PHX-999");
     expect(suspense.evidenceObservations).toHaveLength(1);
     // But BOTH counts survive in summary.testVolume — the balance-check identity is kept.
-    expect(parsed.summary.testVolume.citesUnknownScenario).toBe(1);
-    expect(parsed.summary.testVolume.citesNoScenario).toBe(1);
+    expect(parsed.summary.testVolume.onPhantomScenario).toBe(1);
+    expect(parsed.summary.testVolume.onSuspenseScenario).toBe(1);
   });
 
-  it("keeps the balancing identity: Σ rawByRuntimeQualityCheck = attributed + cites-unknown + cites-no-scenario (all summary folds)", () => {
+  it("keeps the balancing identity: Σ rawByRuntimeQualityCheck = onScenario + onPhantomScenario + onSuspenseScenario (all summary folds)", () => {
     const parsed = JSON.parse(renderJson(rmd003Balance, ctx, undefined, true));
     const raw = (Object.values(parsed.summary.rawByRuntimeQualityCheck) as number[]).reduce((a, b) => a + b, 0);
     const tv = parsed.summary.testVolume;
-    expect(raw).toBe(tv.attributed + tv.citesUnknownScenario + tv.citesNoScenario);
+    expect(raw).toBe(tv.onScenario + tv.onPhantomScenario + tv.onSuspenseScenario);
   });
 
   it("omits summary.rawByRuntimeQualityCheck + testVolume when the runtime-observation axis is not in play", () => {
@@ -444,8 +444,8 @@ describe("[SCN-RMD-004] the static-guard census is summary counts, no standalone
  * the three printed numbers that were renderer arithmetic are now model data on report.summary —
  * the Test-volume totals, the Static-guard totals, and the Lint tally. The two Σ = Σ identity
  * lines are reconciliation facts (a balance check) carried in the model. Matched byte-for-byte to
- * markdown's arithmetic so slice 2 can swap to reads with zero byte change: test-volume attributed
- * is the attributed-to-declared count (phantomEvidenceObservation carried separately); the lint tally counts static
+ * markdown's arithmetic so slice 2 can swap to reads with zero byte change: test-volume onScenario
+ * is the on-a-declared-scenario count (onPhantomScenario carried separately); the lint tally counts static
  * evidenceObligations balanced / total (markdown's countStaticEvidenceObligations). testVolume / staticGuards are
  * present only when the evidenceObservations / static guard sibling is threaded; the lint tally is always present.
  */
@@ -455,7 +455,7 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
   // rawByRuntimeQualityCheck AND staticGuards are now Ledger folds, so a hand-built census that
   // disagrees with the balance is no longer constructible). It spans: 6 raw runtime observations =
   // 4 attributed-to-declared + 1 phantom + 1 suspense (the 3-way test-volume identity is
-  // non-trivial, attributed excludes the phantom); 2 declared lint obligations, 1 satisfied
+  // non-trivial, onScenario excludes the phantom); 2 declared lint obligations, 1 satisfied
   // (lint:foo, running) + 1 watermelon (lint:bar, exists-but-unwired — the static-only lint tally
   // reads 1 of 2); and, on the CREDIT side, the static-guard fold — 2 running CI guards = 1
   // demanded (lint:foo, running) + 1 uncited (lint:baz, undemanded-running → the suspense row). The
@@ -518,13 +518,13 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
     ],
   };
 
-  it("materialises the test-volume totals (attributed excludes cites-unknown-scenario)", () => {
+  it("materialises the test-volume totals (onScenario excludes onPhantomScenario)", () => {
     const report = assembleReport(rmd005Balance, ctx, undefined, true);
     expect(report.summary.testVolume).toEqual({
       totalEvidenceObservations: 6,
-      attributed: 4,
-      citesUnknownScenario: 1,
-      citesNoScenario: 1,
+      onScenario: 4,
+      onPhantomScenario: 1,
+      onSuspenseScenario: 1,
     });
   });
 
@@ -535,10 +535,10 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
     expect(report.summary.rawByRuntimeQualityCheck).toEqual({ unit: 4, integration: 2, e2e: 0, performance: 0 });
   });
 
-  it("keeps the test-volume identity Σ rawByRuntimeQualityCheck = attributed + phantomEvidenceObservation + suspenseEvidenceObservation", () => {
+  it("keeps the test-volume identity Σ rawByRuntimeQualityCheck = onScenario + onPhantomScenario + onSuspenseScenario", () => {
     const report = assembleReport(rmd005Balance, ctx, undefined, true);
     const tv = report.summary.testVolume!;
-    expect(tv.totalEvidenceObservations).toBe(tv.attributed + tv.citesUnknownScenario + tv.citesNoScenario);
+    expect(tv.totalEvidenceObservations).toBe(tv.onScenario + tv.onPhantomScenario + tv.onSuspenseScenario);
   });
 
   it("materialises the static-guard totals", () => {
@@ -574,7 +574,7 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
 
   it("carries the three totals through the glue-free JSON serialisation", () => {
     const parsed = JSON.parse(renderJson(rmd005Balance, ctx, undefined, true, true));
-    expect(parsed.summary.testVolume).toEqual({ totalEvidenceObservations: 6, attributed: 4, citesUnknownScenario: 1, citesNoScenario: 1 });
+    expect(parsed.summary.testVolume).toEqual({ totalEvidenceObservations: 6, onScenario: 4, onPhantomScenario: 1, onSuspenseScenario: 1 });
     expect(parsed.summary.staticGuards).toEqual({ runningGuardCount: 2, uncitedStaticGuardCount: 1 });
     expect(parsed.summary.lint).toEqual({ satisfied: 1, total: 2 });
   });
@@ -778,20 +778,21 @@ describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single qualit
 });
 
 /**
- * Unit test for the TWO "attributed" counts staying distinct (@SCN-LDG-008, ruling Q1).
+ * Unit test for the TWO scenario-backing counts staying distinct (@SCN-LDG-008, ruling Q1).
  *
- * There are two different "attributed" numbers, and a reader must not read them as the same:
- *  - Test-volume `attributed` (summary.testVolume.attributed) = credits that CITE A DECLARED
+ * There are two different numbers for "credits backing a declared scenario", and a reader must not
+ * read them as the same:
+ *  - Test-volume `onScenario` (summary.testVolume.onScenario) = credits that CITE A DECLARED
  *    SCENARIO — this INCLUDES undemanded (a subset), keeping the 3-termed identity
- *    `total = attributed + phantom + suspense`.
+ *    `total = onScenario + onPhantomScenario + onSuspenseScenario`.
  *  - The reconciliation MATCHED-attributed = credits matching a declared (scnId, quality-check)
  *    PAIR — this EXCLUDES undemanded. The retired census materialised it as `attributed[]`; it is
- *    now recovered from the Ledger (`testVolume.attributed − byOutcome.undemanded`) and checkable
+ *    now recovered from the Ledger (`testVolume.onScenario − byOutcome.undemanded`) and checkable
  *    against the demanded credits posted on the row.
  *
  * The load-bearing assertion: the two numbers DIFFER by exactly byOutcome.undemanded.
  */
-describe("[SCN-LDG-008] the two attributed counts stay distinct (ruling Q1)", () => {
+describe("[SCN-LDG-008] the two scenario-backing counts stay distinct (ruling Q1)", () => {
   // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — a real balance carrying an undemanded
   // credit-side item ON a declared scenario's row: SCN-LDG-008 declares ONLY unit; a unit credit
   // reconciles satisfied (matched), an integration credit citing it is undemanded (a check it never
@@ -809,29 +810,29 @@ describe("[SCN-LDG-008] the two attributed counts stay distinct (ruling Q1)", ()
     expect(report.summary.evidenceObligations.byOutcome.undemanded).toBe(1);
   });
 
-  it("keeps Test-volume attributed INCLUDING undemanded (cites a declared scenario), so it EXCEEDS the matched-pair count by exactly byOutcome.undemanded", () => {
+  it("keeps Test-volume onScenario INCLUDING undemanded (cites a declared scenario), so it EXCEEDS the matched-pair count by exactly byOutcome.undemanded", () => {
     const report = assembleReport(undemandedBalance, ctx, undefined, true);
-    // Test-volume attributed = credits citing a declared scenario = matched (1) + undemanded (1).
-    expect(report.summary.testVolume!.attributed).toBe(2);
+    // Test-volume onScenario = credits citing a declared scenario = matched (1) + undemanded (1).
+    expect(report.summary.testVolume!.onScenario).toBe(2);
     // The MATCHED-pair count is recovered from the Ledger, not a parallel `attributed[]` store:
-    // testVolume.attributed − byOutcome.undemanded.
+    // testVolume.onScenario − byOutcome.undemanded.
     const undemanded = report.summary.evidenceObligations.byOutcome.undemanded;
-    const matched = report.summary.testVolume!.attributed - undemanded;
+    const matched = report.summary.testVolume!.onScenario - undemanded;
     expect(matched).toBe(1);
     // And that recovered count equals the credits posted at the DEMANDED (unit) pair on the row —
     // checkable straight off the ledger, where the retired census re-represented it.
     const row = undemandedBalance.scenarioReconciliations.find((s) => s.scnId === "SCN-LDG-008")!;
     const demandedUnitCredits = row.evidenceObservations.filter((o) => o.qualityCheck === "unit").length;
     expect(demandedUnitCredits).toBe(matched);
-    // The two "attributed" numbers are NOT the same — they differ by exactly the undemanded count.
-    expect(report.summary.testVolume!.attributed - matched).toBe(undemanded);
+    // The two numbers are NOT the same — they differ by exactly the undemanded count.
+    expect(report.summary.testVolume!.onScenario - matched).toBe(undemanded);
   });
 
-  it("keeps the Test-volume identity 3-termed (undemanded is a SUBSET of attributed, not a 4th term)", () => {
+  it("keeps the Test-volume identity 3-termed (undemanded is a SUBSET of onScenario, not a 4th term)", () => {
     const report = assembleReport(undemandedBalance, ctx, undefined, true);
     const tv = report.summary.testVolume!;
     expect(tv.totalEvidenceObservations).toBe(
-      tv.attributed + tv.citesUnknownScenario + tv.citesNoScenario
+      tv.onScenario + tv.onPhantomScenario + tv.onSuspenseScenario
     );
   });
 });

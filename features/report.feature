@@ -252,8 +252,8 @@ Feature: The report renders the ledger as sectioned facts
     anchor in ONE shared pass — attributed-to-declared (per-(scnId, level) counts),
     phantom-id (an @SCN no scenario declares), and cites-no-scenario evidence observation (no @SCN)
     — with raw per-level totals and file locators. Under "## Summary views", a
-    "### Test volume" cut renders the balancing identity ("N evidence observations = M attributed +
-    G phantom + K suspense", a derived view) then a by-level evidence observation table (all four levels,
+    "### Test volume" cut renders the balancing identity ("N evidence observations = a on scenarios +
+    b on phantom scenarios + c on the suspense scenario", a derived view) then a by-level evidence observation table (all four levels,
     e2e/performance zeros shown — a fixed tally that always lists every level). The identity holds
     BY CONSTRUCTION: one pass counts each evidence observation into exactly one kind while
     summing the raw total, so the three terms can't drift. The non-derivable atoms

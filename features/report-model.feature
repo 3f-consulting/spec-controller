@@ -130,7 +130,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     computes them, byte-identical). The test-volume identity line is a reconciliation fact (a
     balance check, Σ = Σ) that belongs in the model, not asserted by the renderer:
 
-      Test volume — Σ rawByRuntimeQualityCheck = attributed + cites-unknown-scenario + cites-no-scenario.
+      Test volume — Σ rawByRuntimeQualityCheck = onScenario + onPhantomScenario + onSuspenseScenario.
 
     The static-guard census carries runningGuardCount and uncitedStaticGuardCount; the
     demanded count is implicit, running − uncited, and the completeness invariant is
@@ -149,7 +149,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
       Given a reconciliation run whose evidence spans attributed, phantom-id, and cites-no-scenario evidence observations and whose CI runs a guard no @lint declares
       When the reconciliation run persists spec-reconciliation.json
       Then the summary carries the test-volume totals, the static-guard totals, and the lint tally
-      And the test-volume identity Σ rawByRuntimeQualityCheck = attributed + cites-unknown-scenario + cites-no-scenario holds on the persisted summary
+      And the test-volume identity Σ rawByRuntimeQualityCheck = onScenario + onPhantomScenario + onSuspenseScenario holds on the persisted summary
       And the persisted static-guard summary carries runningGuardCount and uncitedStaticGuardCount with demanded implicit
 
   Rule: the report model carries the feature titles, published on the JSON and sourced by the markdown

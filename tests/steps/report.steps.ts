@@ -458,8 +458,8 @@ Then(
       `expected the persisted spec-reconciliation.md to carry the Test volume cut; got:\n${md010}`
     );
     assert.ok(
-      md010.includes("5 evidence observations = 2 attributed + 1 cites-unknown-scenario + 2 cites-no-scenario"),
-      `expected the evidence observation identity line "5 evidence observations = 2 attributed + 1 cites-unknown-scenario + 2 cites-no-scenario"; got:\n${md010}`
+      md010.includes("5 evidence observations = 2 on scenarios + 1 on phantom scenarios + 2 on the suspense scenario"),
+      `expected the evidence observation identity line "5 evidence observations = 2 on scenarios + 1 on phantom scenarios + 2 on the suspense scenario"; got:\n${md010}`
     );
     assert.ok(
       md010.includes("| unit | 3 |") && md010.includes("| integration | 2 |"),
@@ -472,7 +472,7 @@ Then(
     const parsed = JSON.parse(json010) as {
       summary: {
         rawByRuntimeQualityCheck: Record<string, number>;
-        testVolume: { attributed: number; citesUnknownScenario: number; citesNoScenario: number };
+        testVolume: { onScenario: number; onPhantomScenario: number; onSuspenseScenario: number };
       };
       evidenceObservations?: unknown;
     };
@@ -485,8 +485,8 @@ Then(
     assert.equal(raw, 5, `expected 5 raw evidence observations; got ${raw}`);
     assert.equal(
       raw,
-      tv.attributed + tv.citesUnknownScenario + tv.citesNoScenario,
-      `the evidence-observation identity must balance by construction: raw ${raw} = attributed ${tv.attributed} + cites-unknown ${tv.citesUnknownScenario} + cites-no-scenario ${tv.citesNoScenario}`
+      tv.onScenario + tv.onPhantomScenario + tv.onSuspenseScenario,
+      `the evidence-observation identity must balance by construction: raw ${raw} = onScenario ${tv.onScenario} + onPhantomScenario ${tv.onPhantomScenario} + onSuspenseScenario ${tv.onSuspenseScenario}`
     );
   }
 );
@@ -1123,7 +1123,7 @@ Then(
     // one broken credit.
     const parsed = JSON.parse(json023) as {
       ledger: { scenarioReconciliations: Rpt023Row[] };
-      summary: { rawByRuntimeQualityCheck: Record<string, number>; testVolume: { attributed: number; citesUnknownScenario: number; citesNoScenario: number } };
+      summary: { rawByRuntimeQualityCheck: Record<string, number>; testVolume: { onScenario: number; onPhantomScenario: number; onSuspenseScenario: number } };
     };
     const suspense = parsed.ledger.scenarioReconciliations.find((s) => s.kind === "suspense-scenario");
     assert.ok(suspense, `expected a suspense row; got:\n${json023}`);
@@ -1131,10 +1131,10 @@ Then(
     assert.equal(broken.length, 1, `expected the broken credit counted ONCE on suspense; got: ${JSON.stringify(suspense!.evidenceObservations)}`);
     // The rendered Test volume cut agrees — the view cannot drift from the fold (they ARE the rows).
     assert.ok(
-      md023.includes("2 evidence observations = 1 attributed + 0 cites-unknown-scenario + 1 cites-no-scenario"),
-      `expected the Test volume identity line "2 evidence observations = 1 attributed + 0 cites-unknown-scenario + 1 cites-no-scenario"; got:\n${md023}`
+      md023.includes("2 evidence observations = 1 on scenarios + 0 on phantom scenarios + 1 on the suspense scenario"),
+      `expected the Test volume identity line "2 evidence observations = 1 on scenarios + 0 on phantom scenarios + 1 on the suspense scenario"; got:\n${md023}`
     );
-    // COMPLETENESS ONLY: raw = attributed + cites-unknown + cites-no-scenario balances by
+    // COMPLETENESS ONLY: raw = onScenario + onPhantomScenario + onSuspenseScenario balances by
     // construction off the Ledger fold. It proves no credit vanished; the two ledger assertions
     // above prove the credit is in the right account.
     const raw = Object.values(parsed.summary.rawByRuntimeQualityCheck).reduce((n, v) => n + v, 0);
@@ -1142,8 +1142,8 @@ Then(
     assert.equal(raw, 2, `expected 2 raw runtime observations; got ${raw}`);
     assert.equal(
       raw,
-      tv.attributed + tv.citesUnknownScenario + tv.citesNoScenario,
-      `the identity must balance: raw ${raw} != attributed ${tv.attributed} + cites-unknown ${tv.citesUnknownScenario} + cites-no-scenario ${tv.citesNoScenario}`
+      tv.onScenario + tv.onPhantomScenario + tv.onSuspenseScenario,
+      `the identity must balance: raw ${raw} != onScenario ${tv.onScenario} + onPhantomScenario ${tv.onPhantomScenario} + onSuspenseScenario ${tv.onSuspenseScenario}`
     );
   }
 );
