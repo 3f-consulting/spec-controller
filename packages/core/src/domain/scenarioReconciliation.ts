@@ -29,14 +29,14 @@ export type ScenarioVerdict = "balanced" | "out-of-balance";
 /**
  * The scenario-kind discriminator — which KIND of scenario a Scenario
  * Reconciliation row is *about* (Account ≠ Scenario):
- *   - `scenario`          — a real, DECLARED scenario (the ordinary row).
+ *   - `scenario`          — a real scenario (the ordinary row).
  *   - `phantom-scenario`  — a cited-but-UNDECLARED scenario id: an evidence observation
  *                            cites an `@SCN` no feature declares (outcome
  *                            `cites-unknown-scenario`; @SCN-LDG-006).
  *   - `suspense-scenario` — the placeholder for credits citing NO scenario (outcome
  *                            `cites-no-scenario`; arrives with LDG-007).
  * The enum carries all three now; LDG-006 PRODUCES only `scenario` + `phantom-scenario`.
- * Reserve `scenario`/`scenarios` for the declared kind — the collection is the
+ * Reserve `scenario`/`scenarios` for the real kind — the collection is the
  * `scenarioReconciliations`, never `scenarios`.
  */
 export type ScenarioKind = "scenario" | "phantom-scenario" | "suspense-scenario";
@@ -45,7 +45,7 @@ export type ScenarioKind = "scenario" | "phantom-scenario" | "suspense-scenario"
 export interface ScenarioReconciliation {
   scnId: string;
   /**
-   * The scenario-kind this row is about — `scenario` on a declared row, `phantom-scenario` on a
+   * The scenario-kind this row is about — `scenario` on a real row, `phantom-scenario` on a
    * cited-but-undeclared row, `suspense-scenario` on the cites-nothing placeholder.
    *
    * REQUIRED (3F-1861). It was optional, defaulting to `scenario`, "for back-compat with

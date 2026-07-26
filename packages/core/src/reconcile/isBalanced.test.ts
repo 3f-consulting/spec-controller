@@ -9,9 +9,9 @@
  * returns the scenario, this @unit, and the @e2e steps.
  *
  * The predicate is over the WHOLE Ledger — out-of-balance iff ANY
- * reconciling item exists on ANY row (declared, suspense, or phantom). The load-bearing
- * case is the WATERMELON-ONLY run: every DECLARED scenario is balanced, yet an undemanded
- * static-guard sits unreconciled in the suspense row — a scan of declared-scenario
+ * reconciling item exists on ANY row (scenario, suspense, or phantom). The load-bearing
+ * case is the WATERMELON-ONLY run: every scenario is balanced, yet an undemanded
+ * static-guard sits unreconciled in the suspense row — a scan of scenario
  * verdicts alone would call it balanced (the false pass the CI gate must never give);
  * `isBalanced` must call it out-of-balance because it consults every row's reconcilingItems.
  */
@@ -45,7 +45,7 @@ function qcr(
   });
 }
 
-/** A DECLARED scenario row that reconciles balanced — zero reconciling items. */
+/** A scenario row that reconciles balanced — zero reconciling items. */
 const balancedScenario = (scnId: string): ScenarioReconciliation => ({
   scnId,
   kind: "scenario",
@@ -65,8 +65,8 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
     expect(isBalanced(reconciliation)).toBe(true);
   });
 
-  it("is NOT balanced when a declared scenario carries an out-of-balance reconciling item", () => {
-    // Teeth: a single missing obligation on one declared row makes the whole run
+  it("is NOT balanced when a scenario carries an out-of-balance reconciling item", () => {
+    // Teeth: a single missing obligation on one scenario row makes the whole run
     // out-of-balance — the ordinary out-of-balance-scenario case the gate must red.
     const reconciliation: Ledger = {
       scenarioReconciliations: [
@@ -86,9 +86,9 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
     expect(isBalanced(reconciliation)).toBe(false);
   });
 
-  it("is NOT balanced for a WATERMELON-ONLY run — every declared scenario balanced, yet an undemanded static-guard sits in the suspense row", () => {
-    // The load-bearing case (@SCN-CLI-004): NO declared scenario is out-of-balance, so a
-    // scan of declared-scenario verdicts alone would exit 0 — the false pass. But an
+  it("is NOT balanced for a WATERMELON-ONLY run — every scenario balanced, yet an undemanded static-guard sits in the suspense row", () => {
+    // The load-bearing case (@SCN-CLI-004): NO scenario is out-of-balance, so a
+    // scan of scenario verdicts alone would exit 0 — the false pass. But an
     // undemanded static-guard (a `lint` credit no @lint obligation declares) posts a
     // `cites-no-scenario` reconciling item to the suspense row, so the WHOLE run is
     // out-of-balance. `isBalanced` consults every row's reconcilingItems and calls it false.
@@ -112,9 +112,9 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
   });
 
   it("is NOT balanced when only a phantom-scenario row (a credit citing an undeclared @SCN) is out-of-balance", () => {
-    // A second suspense-family case: every declared scenario balanced, but a credit cites
+    // A second suspense-family case: every scenario balanced, but a credit cites
     // an @SCN no feature declares → a phantom row, verdict always out-of-balance. The whole
-    // run is out-of-balance even though no DECLARED scenario is.
+    // run is out-of-balance even though no scenario is.
     const reconciliation: Ledger = {
       scenarioReconciliations: [
         balancedScenario("SCN-TGT-001"),
@@ -146,8 +146,8 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
  * SCN-CLI-005 returns the scenario, this @unit, and the @e2e steps.
  */
 describe("[SCN-CLI-005] isBalanced — the positive boundary: a clean all-balanced run is not reded", () => {
-  it("is balanced for a clean run (every declared row balanced, no suspense or phantom row) → isBalanced true", () => {
-    // Mirrors the ALL-BALANCED FIXTURE the @e2e drives: two @unit declared scenarios both
+  it("is balanced for a clean run (every scenario row balanced, no suspense or phantom row) → isBalanced true", () => {
+    // Mirrors the ALL-BALANCED FIXTURE the @e2e drives: two @unit scenarios both
     // satisfied and — crucially — NO suspense/phantom row at all (the guardless design).
     // isBalanced consults every row's reconcilingItems, finds none anywhere, and returns true.
     const reconciliation: Ledger = {

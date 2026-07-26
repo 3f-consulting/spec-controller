@@ -222,7 +222,7 @@ export function readFeatureNames(featuresDir?: string): Map<string, string> {
 /**
  * Read the declared-corpus census over the discovered feature files (the same
  * `discoverFeatures` corpus `scenariosFromFeatures` reads): sum the raw @SCN
- * occurrences (`countScnOccurrences`) and the declared-scenario count
+ * occurrences (`countScnOccurrences`) and the scenario count
  * (`parseScenarios(...).length`) across every file, and build the `EvidenceObligations`
  * sibling (@SCN-RPT-008). Also collects the UNTAGGED scenarios
  * (@SCN-RPT-014) — `parseUntaggedScenarios` per file, each paired with its feature-file

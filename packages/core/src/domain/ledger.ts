@@ -31,12 +31,12 @@ import type { RuntimeQualityCheck, GuardEvidenceObservation } from "./journal.js
  * `"ledger": { "scenarioReconciliations": [...] }`).
  *
  * `scenarioReconciliations` (renamed from `scenarios`) is the collection of Scenario
- * Reconciliation rows — declared (`kind: scenario`, including the degenerate `both-missing`
+ * Reconciliation rows — real (`kind: scenario`, including the degenerate `both-missing`
  * row a zero-evidence scenario posts), cited-but-undeclared (`kind: phantom-scenario`), and
  * cites-nothing (`kind: suspense-scenario`). The name reserves `scenario`/`scenarios` for the
- * DECLARED kind (a phantom / suspense is NOT a scenario).
+ * real kind (a phantom / suspense is NOT a scenario).
  *
- * EVERY declared scenario is a row now: the separate-axis authoring-quality
+ * EVERY scenario is a row now: the separate-axis authoring-quality
  * `warnings` collection was RETIRED — a scenario declaring zero evidence obligations and cited
  * by no evidence observation reconciles to a `both-missing` out-of-balance row, not a warning excluded
  * from the balance.
@@ -48,14 +48,14 @@ export interface Ledger {
 /**
  * The WHOLE-RUN verdict — is the ENTIRE reconciliation balanced? A pure domain
  * derivation over the WHOLE `Ledger`: balanced IFF NO reconciling
- * item exists ANYWHERE, across every Scenario Reconciliation row — declared,
+ * item exists ANYWHERE, across every Scenario Reconciliation row — scenario,
  * phantom, and suspense alike. Out-of-balance iff ANY row carries a reconciling
- * item: a declared scenario's out-of-balance items (failing / missing /
+ * item: a scenario's out-of-balance items (failing / missing /
  * undemanded / both-missing) AND the credit-side suspense/phantom rows (an
  * undemanded static-guard watermelon, an uncited credit, a phantom scenario).
  *
- * It is deliberately NOT a scan of DECLARED-scenario verdicts alone — that would
- * let a watermelon-only run (every declared scenario balanced, yet an undemanded
+ * It is deliberately NOT a scan of scenario verdicts alone — that would
+ * let a watermelon-only run (every scenario balanced, yet an undemanded
  * static guard sitting unreconciled in the suspense row) read as balanced, the
  * false pass a CI gate must never give. Every row's `reconcilingItems` is
  * consulted, so the suspense/phantom rows (verdict ALWAYS out-of-balance) count.
@@ -130,20 +130,20 @@ export function hasBrokenEvidence(reconciliation: Ledger): boolean {
  * counted over EVERY row (@SCN-RMD-001, 3F-1724).
  *
  * The Evidence Reconciliation is ALL Scenario Reconciliations assembled, and the summary is
- * its totals (`the maintainers' private notes`). There are three row kinds — declared
+ * its totals (`the maintainers' private notes`). There are three row kinds — real
  * (`scenario`), `phantom-scenario` (cited by a credit, declared by no feature) and
  * `suspense-scenario` (credits citing no scenario at all) — and phantom / suspense
  * reconciliations are ALWAYS out-of-balance. So `total` / `balanced` / `outOfBalance` count
  * every row, phantom and suspense among them.
  *
- * (The earlier "ruling Q3" — a declared-only tally with phantom / suspense bucketed APART —
+ * (The earlier "ruling Q3" — a scenario-only tally with phantom / suspense bucketed APART —
  * was a divergence from the manifesto, not a decision: it let `isBalanced` (which correctly
  * walks every row's reconciling items → exit 1) disagree with a tally reading 0
  * out-of-balance, so a failing run rendered a headline that read as a pass. RETRACTED by the
  * operator, 2026-07-13; the bug it caused is 3F-1703.)
  */
 export interface ScenarioReconciliationTotals {
-  /** Every Scenario Reconciliation — declared, phantom and suspense rows alike. */
+  /** Every Scenario Reconciliation — scenario, phantom and suspense rows alike. */
   total: number;
   balanced: number;
   /** Every out-of-balance row — the phantom and suspense rows among them (they always are). */
@@ -156,7 +156,7 @@ export interface ScenarioReconciliationTotals {
   /**
    * Suspense-scenario rows — credits citing NO scenario, aggregated into the one
    * `(no scenario)` row. A SUB-COUNT like `phantom`: counted INSIDE `total` and
-   * `outOfBalance`, and surfaced separately so a reader recovers the declared count as
+   * `outOfBalance`, and surfaced separately so a reader recovers the scenario count as
    * `total − phantom − suspense`.
    */
   suspense: number;
@@ -218,7 +218,7 @@ export function ledgerTally(balance: Ledger): LedgerTally {
   // the summary is the totals over ALL rows (double-entry-manifesto), and phantom / suspense
   // reconciliations are ALWAYS out-of-balance, so they count into the tally like any other row.
   // `phantom` / `suspense` are kept as SUB-COUNTS — a breakdown OF the total, not a bucket
-  // outside it. (The retracted "ruling Q3" tallied declared rows only, which is what let the
+  // outside it. (The retracted "ruling Q3" tallied scenario rows only, which is what let the
   // tally read 0 out-of-balance on a run `isBalanced` correctly failed → exit 1: 3F-1703.)
   const verdict: Record<"balanced" | "out-of-balance", number> = { balanced: 0, "out-of-balance": 0 };
   let phantom = 0;
@@ -231,7 +231,7 @@ export function ledgerTally(balance: Ledger): LedgerTally {
   // SEPARATELY here — never folded into `byOutcome` (the out-of-balance leaves) below.
   let pending = 0;
   for (const s of balance.scenarioReconciliations) {
-    // Pending Items ride every row's `pendingItems` (only declared scenarios carry them; a
+    // Pending Items ride every row's `pendingItems` (only scenario rows carry them; a
     // phantom / suspense row has none), so the tally is a plain sum across all rows.
     pending += (s.pendingItems ?? []).length;
     // The kind sub-counts, tallied ALONGSIDE the verdict (never instead of it) — the row still
@@ -242,7 +242,7 @@ export function ledgerTally(balance: Ledger): LedgerTally {
     verdict[s.verdict]++;
   }
 
-  // byOutcome tallies EVERY Quality Check Reconciliation across ALL rows (declared AND
+  // byOutcome tallies EVERY Quality Check Reconciliation across ALL rows (scenario AND
   // phantom), so `cites-unknown-scenario` reflects the real phantom count.
   const byOutcome: Record<Outcome, number> = {
     satisfied: 0,
@@ -263,7 +263,7 @@ export function ledgerTally(balance: Ledger): LedgerTally {
     // the reconciliation-matched-attributed count (ruling Q1).
     "undemanded": 0,
     // The both-missing reconciling item (@SCN-LDG-009) — the NEITHER-side outcome:
-    // a declared scenario reconciling to zero rows on both sides. `byOutcome` is now 8-valued.
+    // a scenario reconciling to zero rows on both sides. `byOutcome` is now 8-valued.
     "both-missing": 0,
   };
   const missing = new Map<string, number>();
@@ -283,11 +283,11 @@ export function ledgerTally(balance: Ledger): LedgerTally {
   return {
     scenarioReconciliations: {
       // Every row's verdict is tallied, so this IS the count of all Scenario Reconciliations
-      // (declared + phantom + suspense) — the manifesto's "the summary is the totals".
+      // (scenario + phantom + suspense) — the manifesto's "the summary is the totals".
       total: verdict.balanced + verdict["out-of-balance"],
       balanced: verdict.balanced,
       outOfBalance: verdict["out-of-balance"],
-      // Sub-counts: a breakdown OF the totals above (declared = total − phantom − suspense).
+      // Sub-counts: a breakdown OF the totals above (scenario = total − phantom − suspense).
       phantom,
       suspense,
     },
@@ -323,7 +323,7 @@ export function lintTally(balance: Ledger): LintTally {
   let satisfied = 0;
   let total = 0;
   for (const s of balance.scenarioReconciliations) {
-    // DECLARED rows only — a lint evidence obligation is declared-side. The suspense row's lint
+    // Scenario rows only — a lint evidence obligation is declared-side. The suspense row's lint
     // credit (an uncited static-guard, cites-no-scenario) is not an evidence obligation and
     // must not inflate the declared lint total.
     if (s.kind === "phantom-scenario" || s.kind === "suspense-scenario") continue;
@@ -356,7 +356,7 @@ export const RUNTIME_QUALITY_CHECKS: readonly RuntimeQualityCheck[] = ["unit", "
  * cut derives, carried AS DATA (the MATERIALISE ruling). Two keyings of the SAME posted credits:
  *   - `rawByRuntimeQualityCheck` — the per-quality-check evidence-observation total over ALL
  *     runtime credits, regardless of `@SCN` (the runtime axis; `lint` credits are not counted).
- *   - the per-scenario-kind counts — how many credits posted to a declared scenario's account
+ *   - the per-scenario-kind counts — how many credits posted to a scenario's account
  *     (`onScenario`), to an invented `phantom-scenario` account (`onPhantomScenario`), and to the
  *     `suspense-scenario` account (`onSuspenseScenario`).
  * These jointly exhaust the raw total by construction:
@@ -365,7 +365,7 @@ export const RUNTIME_QUALITY_CHECKS: readonly RuntimeQualityCheck[] = ["unit", "
 export interface RuntimeObservationTally {
   /** Raw per-quality-check evidence-observation totals — ALL runtime credits, regardless of `@SCN`. */
   rawByRuntimeQualityCheck: Record<RuntimeQualityCheck, number>;
-  /** Runtime credits posted to a DECLARED scenario's account (matched-attributed OR undemanded). */
+  /** Runtime credits posted to a scenario's account (matched-attributed OR undemanded). */
   onScenario: number;
   /** Runtime credits posted to an invented `phantom-scenario` account (an `@SCN` no feature declares). */
   onPhantomScenario: number;
@@ -377,7 +377,7 @@ export interface RuntimeObservationTally {
  * Tally the runtime evidence observations from the Ledger — a FOLD OVER THE POSTED CREDITS
  * (@SCN-RMD-003), the credit-side twin of `ledgerTally`'s debit-side fold. It walks the POSTED
  * CREDITS on each Scenario Reconciliation row (@SCN-LDG-022) and reads each credit's account off
- * THE ROW IT POSTED TO — a declared-scenario row ⇒ `onScenario`, a phantom row ⇒ `onPhantomScenario`,
+ * THE ROW IT POSTED TO — a scenario row ⇒ `onScenario`, a phantom row ⇒ `onPhantomScenario`,
  * the suspense row ⇒ `onSuspenseScenario` — summing the raw per-quality-check total in lockstep.
  *
  * It RE-DERIVES NOTHING and it does NOT classify: the reconciler already decided which account
@@ -391,7 +391,7 @@ export interface RuntimeObservationTally {
  * runtime tally must not see at all — the same runtime scoping the retired census enforced.
  *
  * The per-scenario-kind counts feed `summary.testVolume` directly (`onScenario` counts credits
- * citing a declared scenario, INCLUDING undemanded — so the 3-termed identity
+ * citing a scenario, INCLUDING undemanded — so the 3-termed identity
  * `total = onScenario + onPhantomScenario + onSuspenseScenario` holds); `rawByRuntimeQualityCheck`
  * is the re-homed per-quality-check headline the by-level table renders.
  */

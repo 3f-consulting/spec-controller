@@ -47,7 +47,7 @@ export type {
  * `totalEvidenceObservations = onScenario + onPhantomScenario + onSuspenseScenario` holds by
  * construction (one shared `runtimeObservationTally` fold), so a JSON consumer reads the balance
  * rather than re-deriving it. The three terms are named for the SCENARIO-KIND the credit posted
- * to (the canon grouping): `onScenario` (a declared scenario's account), `onPhantomScenario` (an
+ * to (the canon grouping): `onScenario` (a scenario's account), `onPhantomScenario` (an
  * invented phantom-scenario account) and `onSuspenseScenario` (the suspense scenario — includes
  * `broken`). This is an identity read off the fold, not a re-map of the outcome handles.
  */
@@ -206,7 +206,7 @@ function buildSummary(
     // The runtime test-volume kind-counts (RMD-005), materialised only when the evidenceObservations
     // read is threaded. The surface reads the fold's per-scenario-kind counts DIRECTLY (an identity
     // — the fold already groups by the scenario-kind the credit posted to). `onScenario` is every
-    // credit posted to a declared scenario's account, which INCLUDES undemanded as a subset
+    // credit posted to a scenario's account, which INCLUDES undemanded as a subset
     // (matched-pair + undemanded) — a DIFFERENT number from the reconciliation-matched-attributed
     // (the retired section's `attributed[]` sum, which excluded undemanded). Keeping undemanded
     // inside this count preserves the 3-termed identity `totalEvidenceObservations = onScenario +

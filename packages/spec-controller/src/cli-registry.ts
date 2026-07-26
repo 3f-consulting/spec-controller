@@ -58,7 +58,7 @@ const balanceFlags: FlagSpec[] = [
   {
     name: "--features",
     arg: "<dir>",
-    description: "Directory of Gherkin .feature files — the declared scenarios.",
+    description: "Directory of Gherkin .feature files — the scenarios.",
   },
   {
     name: "--vitest",

@@ -71,7 +71,7 @@ export interface Scenario {
 
 /**
  * The DEMANDED `(scnId, quality-check)` pairs — the ONE rule for what a scenario demands, keyed
- * `"<scnId> <qualityCheck>"`. A credit citing a declared scenario is reconciliation-matched only
+ * `"<scnId> <qualityCheck>"`. A credit citing a scenario is reconciliation-matched only
  * when its pair is in this set; otherwise it is `undemanded` (a real scenario, at a quality-check
  * it never declared).
  *

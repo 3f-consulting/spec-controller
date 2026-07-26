@@ -33,7 +33,7 @@ export type Outcome =
   // CREDIT-SIDE (the bidirectional reconciler): an evidence observation
   // (credit) reconciling against no evidence obligation. The credit-side union grows
   // final-named across the LDG-006/007/008 sub-issues; LDG-006 lands the first:
-  | "cites-unknown-scenario" // a credit citing an @SCN no declared scenario matches —
+  | "cites-unknown-scenario" // a credit citing an @SCN no scenario matches —
   // the reconciling item on a PHANTOM scenario (@SCN-LDG-006).
   | "cites-no-scenario" // a credit citing NO @SCN at all — the reconciling item on the
   // SUSPENSE scenario (@SCN-LDG-007). Aggregates uncited runtime credits AND the
@@ -46,21 +46,21 @@ export type Outcome =
   // proof was in that harness still reads `missing` (honest at its own resolution), but the RUN
   // now carries the fault — so the reader is sent to fix the harness, not to write a test that
   // already exists.
-  | "undemanded" // a credit citing a REAL declared scenario at a quality-check that scenario
+  | "undemanded" // a credit citing a REAL scenario at a quality-check that scenario
   // NEVER declared (@SCN-LDG-008) — the GENERAL case (it applies whether or not the
   // scenario carries other evidence obligations). A credit-side reconciling item ON THE REAL scenario's
   // row (carrying the evidence observation locator, ruling Q5): the credit posts to a real account, but
   // against no evidence obligation. Fixes the latent `attributed` mis-count — a stray credit at an
   // undeclared quality-check is no longer silently counted as reconciliation-matched-attributed.
   // NEITHER-SIDE (the bidirectional reconciler's final outcome):
-  | "no-scn-code" // a DEBIT outcome (@SCN-LDG-021): a real, declared scenario carrying no @SCN,
+  | "no-scn-code" // a DEBIT outcome (@SCN-LDG-021): a real scenario carrying no @SCN,
   // so its Evidence Obligation has NO CODE for an Evidence Observation to link to. The scenario is
   // ORDINARY — not phantom, not suspense; it exists and cucumber runs it — but its own Scenario
   // Reconciliation is out-of-balance, because the obligation is UNLINKABLE. The DEBIT TWIN of
   // `cites-no-scenario` (same missing link, opposite side); suspense stays credit-only. Undeclarable
   // work: it can never reconcile satisfied, failing, or even `missing` — an obligation never
   // DECLARED cannot be ABSENT — so without this it was invisible to the verdict entirely.
-  | "both-missing"; // a declared scenario that reconciles to ZERO rows on BOTH sides (no
+  | "both-missing"; // a scenario that reconciles to ZERO rows on BOTH sides (no
   // evidence obligation AND no citing evidence observation) — the ONE degenerate Quality Check Reconciliation it
   // posts, blank on both sides (label: "Evidence Obligation and Evidence Observation are both
   // missing — the Scenario is untagged and uncited"). Detected by the reconciler emitting NOTHING either way (NOT a

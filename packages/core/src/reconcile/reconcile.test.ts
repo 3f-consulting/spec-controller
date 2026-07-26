@@ -159,7 +159,7 @@ describe("[SCN-LDG-006] a credit citing an undeclared scenario becomes a phantom
     const scenarios: Scenario[] = [
       { scnId: "SCN-LDG-006", evidenceObligations: [{ qualityCheck: "unit" }] },
     ];
-    // A passing unit credit citing SCN-PHANTOM-999 — an @SCN id NO declared scenario
+    // A passing unit credit citing SCN-PHANTOM-999 — an @SCN id NO scenario
     // matches. It posts to no real scenario, so it lands on a PHANTOM scenario. The
     // credit carries a locator (the where-to-fix, ruling Q5).
     const evidenceObservations: EvidenceObservation[] = [
@@ -169,7 +169,7 @@ describe("[SCN-LDG-006] a credit citing an undeclared scenario becomes a phantom
     const balance = reconcile(scenarios, evidenceObservations);
     const phantom = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-PHANTOM-999");
 
-    // A phantom-scenario reconciliation: kind discriminates it from a declared scenario;
+    // A phantom-scenario reconciliation: kind discriminates it from a scenario;
     // its single Quality Check Reconciliation is cites-unknown-scenario carrying the
     // evidence observation locator; the verdict is out-of-balance (a credit against no evidence obligation).
     expect(phantom?.kind).toBe("phantom-scenario");
@@ -181,7 +181,7 @@ describe("[SCN-LDG-006] a credit citing an undeclared scenario becomes a phantom
       { qualityCheck: "unit", outcome: "cites-unknown-scenario", locator: "src/phantom.test.ts", evidenceObservation: { qualityCheck: "unit", scnId: "SCN-PHANTOM-999", status: "passed", locator: "src/phantom.test.ts" } },
     ]);
 
-    // The declared SCN-LDG-006 stays a DECLARED-kind row (reserve `scenario` for declared).
+    // SCN-LDG-006 stays a scenario-kind row — `scenario` is reserved for the real kind.
     const scenarioRow = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-LDG-006");
     expect(scenarioRow?.kind).toBe("scenario");
   });
@@ -221,7 +221,7 @@ describe("[SCN-LDG-007] a credit citing no scenario becomes a suspense-scenario 
     ]);
     expect(row.reconcilingItems).toEqual(row.qualityCheckReconciliations);
 
-    // The declared SCN-LDG-007 stays a DECLARED-kind row (its unit evidence obligation is missing —
+    // SCN-LDG-007 stays a scenario-kind row (its unit evidence obligation is missing —
     // the null credit does not match it), never a suspense row.
     const scenarioRow = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-LDG-007");
     expect(scenarioRow?.kind).toBe("scenario");
@@ -255,7 +255,7 @@ describe("[SCN-LDG-008] a credit at an undeclared quality-check on a real scenar
     const balance = reconcile(scenarios, evidenceObservations);
     const row = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-LDG-008");
 
-    // A DECLARED-kind row (undemanded posts to the REAL scenario, not a phantom/suspense).
+    // A scenario-kind row (undemanded posts to the REAL scenario, not a phantom/suspense).
     expect(row?.kind).toBe("scenario");
     expect(row?.verdict).toBe("out-of-balance");
     // Its declared unit evidence obligation is missing (no unit credit) AND the integration credit is
@@ -318,7 +318,7 @@ describe("[SCN-LDG-027] a Quality Check Reconciliation carries the evidence obse
 });
 
 describe("[SCN-LDG-010] a zero-evidence obligation scenario cited by a stray credit is undemanded, not both-missing", () => {
-  it("emits an undemanded row (NOT a warning, NOT both-missing) when a zero-evidence obligation declared scenario is cited by a stray credit", () => {
+  it("emits an undemanded row (NOT a warning, NOT both-missing) when a zero-evidence obligation scenario is cited by a stray credit", () => {
     // The negative twin: SCN-LDG-010 declares ZERO evidence obligations, but its @SCN IS cited
     // by a passing unit credit. It has an evidence observation at an undeclared quality-check → undemanded,
     // NOT both-missing. This proves detection keys on rows-emitted, not evidenceObligations.length
@@ -332,7 +332,7 @@ describe("[SCN-LDG-010] a zero-evidence obligation scenario cited by a stray cre
 
     const balance = reconcile(scenarios, evidenceObservations);
 
-    // A row IS emitted for it (not swept to warnings) — a declared-kind row, out of balance
+    // A row IS emitted for it (not swept to warnings) — a scenario-kind row, out of balance
     // via its undemanded item at unit.
     const row = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-LDG-010");
     expect(row?.kind).toBe("scenario");
@@ -363,8 +363,8 @@ describe("[SCN-LDG-010] a zero-evidence obligation scenario cited by a stray cre
   });
 });
 
-describe("[SCN-LDG-009] a declared scenario with zero rows on both sides is reported as both-missing, out of balance", () => {
-  it("emits ONE degenerate both-missing reconciling item (blank on both sides), verdict out-of-balance, when a declared scenario reconciles to zero rows on BOTH sides", () => {
+describe("[SCN-LDG-009] a scenario with zero rows on both sides is reported as both-missing, out of balance", () => {
+  it("emits ONE degenerate both-missing reconciling item (blank on both sides), verdict out-of-balance, when a scenario reconciles to zero rows on BOTH sides", () => {
     // SCN-LDG-009 declares ZERO evidence obligations and is cited by NO evidence observation — it
     // reconciles to zero rows on BOTH sides (no evidence obligation, no credit). It posts one degenerate
     // Quality Check Reconciliation, blank on both sides (no qualityCheck, no `staticGuard`, no locator),
@@ -378,7 +378,7 @@ describe("[SCN-LDG-009] a declared scenario with zero rows on both sides is repo
 
     const balance = reconcile(scenarios, evidenceObservations);
 
-    // A row IS emitted (not swept to a warnings surface) — a declared-kind row, out of balance
+    // A row IS emitted (not swept to a warnings surface) — a scenario-kind row, out of balance
     // via its single degenerate both-missing item.
     const row = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-LDG-009");
     expect(row?.kind).toBe("scenario");
@@ -409,7 +409,7 @@ describe("[SCN-LDG-009] a declared scenario with zero rows on both sides is repo
 
 describe("[SCN-WRN-001] a scenario declaring no evidence obligations is reported as a both-missing reconciliation", () => {
   it("reconciles the zero-evidenceObligation scenario as a both-missing out-of-balance ROW, NOT a warning excluded from the balance", () => {
-    // A declared scenario with ZERO evidence-obligation tags:
+    // A scenario with ZERO evidence-obligation tags:
     // cited by no evidence observation, it reconciles to zero rows on BOTH sides → a both-missing
     // out-of-balance row IN the balance, not a warning on a separate axis. This reds against
     // the earlier code that swept it to `warnings` and emitted NO ScenarioReconciliation.
@@ -427,7 +427,7 @@ describe("[SCN-WRN-001] a scenario declaring no evidence obligations is reported
   it("keeps a scenario that DOES declare an evidenceObligation on the verdict axis, alongside a both-missing scenario (the WITH-evidenceObligations path is untouched)", () => {
     // Regression guard within the new behaviour: a scenario that declares evidence
     // reconciles as before (a balanced verdict), while the zero-evidenceObligation scenario
-    // becomes a both-missing row — BOTH are ordinary declared-kind rows in the balance now
+    // becomes a both-missing row — BOTH are ordinary scenario-kind rows in the balance now
     // (the warnings axis is gone).
     const scenarios: Scenario[] = [
       { scnId: "SCN-WRN-001", evidenceObligations: [] },
@@ -443,7 +443,7 @@ describe("[SCN-WRN-001] a scenario declaring no evidence obligations is reported
     expect(bothMissing?.reconcilingItems).toEqual([{ outcome: "both-missing" }]);
     const verdictScenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-WRN-002");
     expect(verdictScenario?.verdict).toBe("balanced");
-    // Both declared scenarios are rows now — none is excluded to a separate warnings axis.
+    // Both scenarios are rows now — none is excluded to a separate warnings axis.
     expect(balance.scenarioReconciliations.map((s) => s.scnId)).toEqual([
       "SCN-WRN-001",
       "SCN-WRN-002",
@@ -452,7 +452,7 @@ describe("[SCN-WRN-001] a scenario declaring no evidence obligations is reported
 });
 
 describe("[SCN-LDG-013] a @unit @e2e scenario proven by BOTH a vitest and a cucumber observation reconciles both tiers satisfied", () => {
-  it("balances both obligations — vitest discharges @unit, cucumber (derived) discharges @e2e — from a real declared scenario and both real readers", () => {
+  it("balances both obligations — vitest discharges @unit, cucumber (derived) discharges @e2e — from a real scenario and both real readers", () => {
     // The split ACROSS RUNNERS, composed through the REAL readers (evidence-manifesto §11A:
     // assert real output, not a hand-seeded fixture). The declared side: a real @unit @e2e
     // scenario through the real reader → TWO evidence obligations (unit + e2e).
@@ -1046,11 +1046,11 @@ describe("[SCN-LDG-017] a broken observation posts a broken suspense item; the s
   // test, so it cites no scenario and can post to NO scenario's row. The observation shape is the
   // optional-flag one (`broken?: true` on RuntimeEvidenceObservation), so a `broken` credit
   // structurally CAN carry a scnId and a status; the reconciler must refuse to credit it anyway.
-  // Pinned here under BOTH status values, and with a scnId that matches a DECLARED scenario — the
+  // Pinned here under BOTH status values, and with a scnId that matches a scenario — the
   // adversarial shape that would otherwise discharge (or fail) an obligation off a suite that
   // never ran. Not asserted in the code alone: this is the test.
   it.each(["passed", "failed"] as const)(
-    "FAIL-SAFE: a broken observation citing a declared scenario with status %s never reconciles as satisfied or failing",
+    "FAIL-SAFE: a broken observation citing a scenario with status %s never reconciles as satisfied or failing",
     (status) => {
       const balance = reconcile(scenarios, [
         {
@@ -1133,7 +1133,7 @@ describe("[SCN-LDG-019] THE FAIL-SAFE GETS TEETH: a broken observation that CITE
     (status) => {
       const balance = reconcile(scenarios, [citingBrokenObservation(status)]);
 
-      // Across EVERY row — declared, phantom and suspense alike — the broken credit never reads as
+      // Across EVERY row — scenario, phantom and suspense alike — the broken credit never reads as
       // discharged or failed.
       const everyOutcome = balance.scenarioReconciliations.flatMap((s) =>
         s.qualityCheckReconciliations.map((o) => o.outcome)

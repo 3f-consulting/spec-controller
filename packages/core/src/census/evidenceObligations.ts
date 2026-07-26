@@ -3,7 +3,7 @@
  * sibling to both the pure Ledger (the declared-vs-observed verdict data) and
  * the RunContext (run metadata). It records how the declared corpus reconciles
  * against EVERY raw @SCN mention in the source: how many ids the source mentioned in
- * total (tag + non-tag context) vs how many were actually read as declared scenarios.
+ * total (tag + non-tag context) vs how many were actually read as scenarios.
  *
  * The lone non-derivable corpus fact is `excludedOccurrences` (raw − declared): the
  * @SCN ids seen in prose, comments, or step text that the tag-line parser ignores.
@@ -31,7 +31,7 @@ export interface UntaggedScenario {
 export interface EvidenceObligations {
   /** Every @SCN-FFF-NNN occurrence in the whole source (tag-line + non-tag context). */
   rawScnOccurrences: number;
-  /** The @SCN ids actually read as declared scenarios (= declared.length). */
+  /** The @SCN ids actually read as scenarios (= declared.length). */
   scenarioCount: number;
   /** rawScnOccurrences − scenarioCount: ids seen in non-tag context, excluded. */
   excludedOccurrences: number;
@@ -51,9 +51,9 @@ export interface EvidenceObligations {
 }
 
 /**
- * Build a EvidenceObligations from the raw-occurrence count, the declared-scenario count,
+ * Build a EvidenceObligations from the raw-occurrence count, the scenario count,
  * and the untagged scenarios: `excludedOccurrences = raw − scenarioCount` — the ids
- * seen in non-tag context (each declared scenario contributes exactly one tag-line
+ * seen in non-tag context (each scenario contributes exactly one tag-line
  * occurrence). `untaggedScenarios` defaults to empty for callers that don't read them.
  */
 export function evidenceObligations(

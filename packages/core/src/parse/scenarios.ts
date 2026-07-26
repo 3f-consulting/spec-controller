@@ -87,7 +87,7 @@ const SCN_OCCURRENCE = /@SCN-[A-Z0-9]+-\d+/g;
  * Count every raw `@SCN-FFF-NNN` occurrence across the WHOLE source — including the
  * non-tag-line context (prose, comments, step text) the tag-line `parseScenarios`
  * deliberately ignores. A sibling read over the same source; `parseScenarios` is
- * unchanged. Each declared scenario contributes exactly one tag-line occurrence, so
+ * unchanged. Each scenario contributes exactly one tag-line occurrence, so
  * the delta against `parseScenarios(...).length` is precisely the ids seen in non-tag
  * context.
  */

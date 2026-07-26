@@ -27,7 +27,7 @@ describe("[SCN-RPT-008] evidenceObligations computes the excluded-occurrence del
     expect(evidenceObligations.excludedOccurrences).toBe(7);
   });
 
-  it("is zero excluded when every raw occurrence is a declared scenario", () => {
+  it("is zero excluded when every raw occurrence is a scenario", () => {
     expect(buildEvidenceObligations(5, 5).excludedOccurrences).toBe(0);
   });
 });

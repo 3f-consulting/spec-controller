@@ -345,7 +345,7 @@ describe("[SCN-CLI-010] runBalance leaves the exit code 0 for an only-Pending-It
         return true;
       });
     try {
-      // The pending-only fixture: two @*pending declared scenarios, guardless --package-json,
+      // The pending-only fixture: two @*pending scenarios, guardless --package-json,
       // no evidence report — balanced-with-pending, the only exception being Pending Items.
       runBalance([
         "--features",
@@ -480,7 +480,7 @@ describe("[SCN-CLI-013] the tally, the verdict headline and the process exit cod
     {
       // SUSPENSE-ONLY — the load-bearing arm: an adopter's repository 17-36-50Z shape, where every DECLARED
       // scenario balances and the run's only reconciling item is the uncited static-guard's
-      // uncited credit on the `(no scenario)` row. The declared-only tally read a clean `2 | 2 | 0`
+      // uncited credit on the `(no scenario)` row. The scenario-only tally read a clean `2 | 2 | 0`
       // here; the tally that counts every Scenario Reconciliation reads 1 out-of-balance and
       // agrees with the exit code.
       name: "a run whose only out-of-balance row is the suspense reconciliation",

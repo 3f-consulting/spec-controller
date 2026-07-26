@@ -5,7 +5,7 @@
  * Usage:
  *   spec-controller [--store <root>] [--run-id <id>] <command> [command-args]
  *
- * Commands: `balance` — the deterministic reconciliation of declared scenarios against
+ * Commands: `balance` — the deterministic reconciliation of scenarios against
  * observed evidence, standalone on the public core + app layer (no engine). The
  * `analyse` / `migrate` capabilities are a separate, closed offering built on the same
  * core.

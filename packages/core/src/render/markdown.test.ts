@@ -171,8 +171,8 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
     expect(md).toContain("| Subject | Total | Balanced | Out-of-balance | Detail |");
     expect(md).toContain("| --- | --- | --- | --- | --- |");
     // Scenario Reconciliation subject — total 3, balanced 1, out-of-balance 2. The subject
-    // is the manifesto's COLLECTION (declared + phantom + suspense), not `Scenario`, which
-    // names only the declared thing (3F-1726). The numbers are unchanged by the rename. The
+    // is the manifesto's COLLECTION (scenario + phantom + suspense), not `Scenario`, which
+    // names only the real thing (3F-1726). The numbers are unchanged by the rename. The
     // substring stops before the (empty) Detail cell, so the assertion is robust to that
     // cell's spacing.
     expect(md).toContain("| Scenario Reconciliation | 3 | 1 | 2 |");
@@ -303,12 +303,12 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
   });
 
   // The arm @SCN-RPT-004 never had (3F-1726): a fixture carrying a SUSPENSE reconciliation.
-  // The old fixtures are declared-only, so they never exercised the divergence that let the
+  // The old fixtures are scenario-only, so they never exercised the divergence that let the
   // an adopter's repository 17-36-50Z run render `141 | 141 | 0` — a clean-looking board — on a run `isBalanced`
   // failed → exit 1. The subject row is the SCENARIO RECONCILIATION (the manifesto's
-  // collection: declared + phantom + suspense), so the suspense row is IN the total and, being
+  // collection: scenario + phantom + suspense), so the suspense row is IN the total and, being
   // always out-of-balance, in the out-of-balance column: N+1 | N | 1, never N | N | 0.
-  // Reconciler-built (§11A): three declared scenarios each balanced (unit satisfied), plus two
+  // Reconciler-built (§11A): three scenarios each balanced (unit satisfied), plus two
   // uncited credits (unit + integration, scnId null) the reconciler aggregates into ONE suspense
   // row — ALWAYS out-of-balance (double-entry-manifesto); the 17-36-50Z `(no scenario)` row.
   const threeDeclaredPlusSuspense: Ledger = reconcile(
@@ -328,11 +328,11 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
 
   it("counts the suspense reconciliation in the evidence reconciliation's out-of-balance column (N+1 | N | 1, never N | N | 0)", () => {
     const md = renderMarkdown(threeDeclaredPlusSuspense, ctx);
-    // 3 declared (all balanced) + 1 suspense = 4 Scenario Reconciliations, 3 balanced,
+    // 3 scenario (all balanced) + 1 suspense = 4 Scenario Reconciliations, 3 balanced,
     // 1 out-of-balance. The suspense row survives as a sub-count OF the total, never a
     // bucket outside it.
     expect(md).toContain("| Scenario Reconciliation | 4 | 3 | 1 |");
-    // The regression the whole slice exists to kill: the declared-only tally rendered the
+    // The regression the whole slice exists to kill: the scenario-only tally rendered the
     // suspense row away, so a failing run's subject row read as a pass.
     expect(md).not.toContain("| Scenario Reconciliation | 3 | 3 | 0 |");
   });
@@ -663,7 +663,7 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
  * @SCN-RPT-007 id matching features/report.feature, so a grep of the id returns
  * both halves of the pair.
  *
- * Proves the declared-corpus census in isolation: since EVERY declared scenario is a
+ * Proves the declared-corpus census in isolation: since EVERY scenario is a
  * ledger row (a zero-evidence scenario is a both-missing row, not a warning excluded to a
  * separate axis), so the declared census is recoverable from the ledger scenario-count ALONE —
  * no `## Declared corpus` section, and no `## Warnings` axis to sum in.
@@ -671,7 +671,7 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
  * Parent: (@SCN-RPT-007).
  */
 describe("[SCN-RPT-007] the declared corpus census is recoverable from the ledger scenario-count", () => {
-  // A balance carrying three declared scenarios — one balanced, one out-of-balance, and one
+  // A balance carrying three scenarios — one balanced, one out-of-balance, and one
   // zero-evidence (a both-missing row, the earlier no-evidence-declared warning). ALL three
   // are ledger rows now, so the declared total is the ledger scenario-count alone.
   // Reconciler-built (§11A): SCN-A balanced (unit satisfied); SCN-B out-of-balance (integration
@@ -695,7 +695,7 @@ describe("[SCN-RPT-007] the declared corpus census is recoverable from the ledge
 
   it("recovers the declared census from the ledger scenario-count alone — the zero-evidence scenario is a both-missing row, not a warning", () => {
     const md = renderMarkdown(reconciliationFixture, ctx);
-    // The ledger summary counts ALL three declared scenarios (1 balanced, 2 out-of-balance —
+    // The ledger summary counts ALL three scenarios (1 balanced, 2 out-of-balance —
     // SCN-C's both-missing row is one of them), so the declared total is on the page directly.
     expect(md).toContain("- 3 Scenario Reconciliation(s): 1 balanced, 2 out-of-balance.");
     // The zero-evidence scenario is a ledger row (a both-missing item), NOT a warnings entry.
@@ -975,7 +975,7 @@ describe("[SCN-RPT-010] the markdown report renders the Test volume evidenceObse
  * Parent: (@SCN-RPT-011) — per-scenario evidence columns.
  */
 describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence columns", () => {
-  // The CORPUS — declared scenarios + observed evidence, spanning every cell case across
+  // The CORPUS — scenarios + observed evidence, spanning every cell case across
   // Lint / Unit / Integration. The balance below is RECONCILED from it, so every row is a shape
   // the pipeline actually emits:
   //   SCN-A: @unit (2 observations) + two lint guards, one wired (satisfied) one not (watermelon)
@@ -1993,7 +1993,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
   };
 
   /**
-   * A declared scenario reconciling `missing` (its proof exists but never ran) alongside the
+   * A scenario reconciling `missing` (its proof exists but never ran) alongside the
    * suspense row carrying the `broken` credit for it. The whole point of the slice is that a
    * reader can tell those two rows apart.
    */
@@ -2141,7 +2141,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
     // lives in the run-integrity section; a stack in a table cell would destroy the table.
     expect(suspense).toContain("Cannot find package '@cucumber/tag-expressions'");
     expect(suspense).not.toContain("at packageResolve");
-    // The DISTINCTION the slice exists for: the declared scenario still reads `missing` (honest
+    // The DISTINCTION the slice exists for: the scenario still reads `missing` (honest
     // at its own resolution — no evidence cited it), and it is NOT the broken row. A reader
     // tells "the proof exists and is broken" from "no proof was written".
     const declared = rowFor(vitestMd, "SCN-HNS-002");
@@ -2215,7 +2215,7 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
 
   const balanced: Ledger = reconcile([balancedScenario], [balancedObs]);
 
-  // an adopter's repository 17-36-50Z shape in miniature: every DECLARED row balances, and the only
+  // an adopter's repository 17-36-50Z shape in miniature: every scenario row balances, and the only
   // out-of-balance row is the SUSPENSE reconciliation (an uncited credit) — the run that read as a
   // pass.
   const outOfBalance: Ledger = reconcile(
@@ -2264,6 +2264,12 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
     const md = renderMarkdown(balanced, ctx);
     expect(summaryOpening(md)).toContain("**BALANCED**");
     expect(summaryOpening(md)).toContain("exit 0");
+    // The gloss names the three scenario-kinds by their canon names — `scenario` is the real
+    // kind (never the retired "declared"-as-kind-label).
+    expect(summaryOpening(md)).toContain(
+      "every Scenario Reconciliation balances: scenario, phantom and suspense alike."
+    );
+    expect(summaryOpening(md)).not.toContain("declared");
   });
 
   it("reads OUT-OF-BALANCE and exit 1 — never as a pass — when a row does not balance", () => {
@@ -2327,7 +2333,7 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
  * Reconciliations, not scenarios). The report names the collection on two rendered
  * surfaces — the Subject CELL of the Evidence-reconciliation table's collection row,
  * and the headline verdict tally under "## Scenario Reconciliations" — and both must
- * read the same word. The tally counts EVERY row (declared + phantom + suspense;
+ * read the same word. The tally counts EVERY row (scenario + phantom + suspense;
  * @SCN-RMD-001, 3F-1724), so it names Scenario Reconciliations, not scenarios.
  *
  * Teeth: the Subject-cell assertion passes against current code (markdown.ts already
@@ -2339,7 +2345,7 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
  * Parent: (@SCN-RPT-024).
  */
 describe('[SCN-RPT-024] the reconciliation collection is named "Scenario Reconciliation(s)", never "scenario(s)"', () => {
-  // A balance carrying one declared (balanced) row, one phantom row, and one suspense row.
+  // A balance carrying one scenario (balanced) row, one phantom row, and one suspense row.
   // The summary tally then reads total=3, balanced=1, out-of-balance=2 (phantom + suspense are
   // both always out-of-balance), phantom=1, suspense=1 — so the headline names 3 of the
   // collection. Counting is UNCHANGED by this scenario; only the rendered noun.

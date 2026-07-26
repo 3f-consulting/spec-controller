@@ -204,12 +204,12 @@ export function reconcile(
   }
 
   // CREDIT-SIDE — PHANTOM scenarios (@SCN-LDG-006). A credit citing an @SCN id
-  // that NO declared scenario matches posts to no real scenario — it lands on a PHANTOM
+  // that NO scenario matches posts to no real scenario — it lands on a PHANTOM
   // scenario (posting to a non-existent account). One
   // phantom Scenario Reconciliation per undeclared cited id, in first-seen order, its
   // Quality Check Reconciliation(s) carrying the outcome `cites-unknown-scenario` (and the
   // evidence observation's locator, ruling Q5), verdict ALWAYS out-of-balance. Grouped AFTER the
-  // declared rows. (Suspense / undemanded / both-missing are LDG-007/008/009.)
+  // scenario rows. (Suspense / undemanded / both-missing are LDG-007/008/009.)
   const phantomIds: string[] = [];
   for (const o of evidenceObservations) {
     if (o.qualityCheck === "lint") continue;

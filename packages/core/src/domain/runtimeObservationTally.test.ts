@@ -51,7 +51,7 @@ describe("[SCN-RMD-003] runtimeObservationTally folds the posted credits by scen
     expect(tally.rawByRuntimeQualityCheck).toEqual({ unit: 3, integration: 2, e2e: 1, performance: 0 });
   });
 
-  it("counts credits on a DECLARED scenario's account as onScenario (matched-attributed AND undemanded)", () => {
+  it("counts credits on a scenario's account as onScenario (matched-attributed AND undemanded)", () => {
     // SCN-A's account carries 2 unit (matched) + 1 integration (undemanded) = 3. onScenario is the
     // test-volume attributed, INCLUDING undemanded — the retired census's four-way split (attributed
     // vs undemanded) collapses to this one per-account count; the split lives on the ledger rows.

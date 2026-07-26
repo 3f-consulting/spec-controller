@@ -118,8 +118,8 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
 
   it("materialises the summary totals from the balance", () => {
     const report = assembleReport(balance, ctx);
-    // A declared-only balance: every row is a declared scenario, so the totals are the
-    // declared rows and the phantom / suspense sub-counts read 0.
+    // A scenario-only balance: every row is a scenario, so the totals are the
+    // scenario rows and the phantom / suspense sub-counts read 0.
     expect(report.summary.scenarioReconciliations).toEqual({ total: 2, balanced: 1, outOfBalance: 1, phantom: 0, suspense: 0 });
     expect(report.summary.evidenceObligations.total).toBe(3);
     expect(report.summary.evidenceObligations.outOfBalance).toBe(2);
@@ -136,7 +136,7 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
   // an adopter's repository dogfood shape (3F-1703, run 2026-07-13T17-36-50Z) in miniature: every DECLARED
   // scenario is balanced, yet a credit citing NO scenario posts a `cites-no-scenario` item to
   // the suspense `(no scenario)` row — so the run IS out-of-balance and exits 1. Under the
-  // declared-only tally the summary read `total 2, balanced 2, outOfBalance 0`: a failing run
+  // scenario-only tally the summary read `total 2, balanced 2, outOfBalance 0`: a failing run
   // rendering a headline that read as a clean pass.
   const balanceWithSuspense: Ledger = {
     scenarioReconciliations: [
@@ -177,9 +177,9 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
     const report = assembleReport(balanceWithSuspense, ctx);
     // The Evidence Reconciliation is ALL Scenario Reconciliations assembled and the summary is
     // its totals (the maintainers' private notes). A suspense reconciliation is ALWAYS
-    // out-of-balance, so it counts into the total AND into out-of-balance: 2 declared + 1
+    // out-of-balance, so it counts into the total AND into out-of-balance: 2 scenario + 1
     // suspense = 3 rows, 2 balanced, 1 out-of-balance. `suspense` survives as a sub-count — a
-    // BREAKDOWN of the total (declared = total − phantom − suspense), not a bucket outside it.
+    // BREAKDOWN of the total (scenario = total − phantom − suspense), not a bucket outside it.
     expect(report.summary.scenarioReconciliations).toEqual({
       total: 3,
       balanced: 2,
@@ -189,7 +189,7 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
     });
     // THE INVARIANT THE BUG BROKE (3F-1703): the tally agrees with `isBalanced` — the predicate
     // the CLI maps to the process exit code. `isBalanced` walks EVERY row's reconcilingItems, so
-    // it correctly calls this run out-of-balance (exit 1); the declared-only tally read 0
+    // it correctly calls this run out-of-balance (exit 1); the scenario-only tally read 0
     // out-of-balance and disagreed, rendering a failing run as a pass.
     expect(isBalanced(balanceWithSuspense)).toBe(false);
     expect(report.summary.scenarioReconciliations.outOfBalance).toBeGreaterThan(0);
@@ -222,7 +222,7 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
       phantom: 1,
       suspense: 1,
     });
-    // The sub-counts reconcile to the total: declared = total − phantom − suspense.
+    // The sub-counts reconcile to the total: scenario = total − phantom − suspense.
     const t = report.summary.scenarioReconciliations;
     expect(t.total - t.phantom - t.suspense).toBe(2);
     expect(isBalanced(balanceWithPhantom)).toBe(false);
@@ -445,7 +445,7 @@ describe("[SCN-RMD-004] the static-guard census is summary counts, no standalone
  * the Test-volume totals, the Static-guard totals, and the Lint tally. The two Σ = Σ identity
  * lines are reconciliation facts (a balance check) carried in the model. Matched byte-for-byte to
  * markdown's arithmetic so slice 2 can swap to reads with zero byte change: test-volume onScenario
- * is the on-a-declared-scenario count (onPhantomScenario carried separately); the lint tally counts static
+ * is the on-a-scenario count (onPhantomScenario carried separately); the lint tally counts static
  * evidenceObligations balanced / total (markdown's countStaticEvidenceObligations). testVolume / staticGuards are
  * present only when the evidenceObservations / static guard sibling is threaded; the lint tally is always present.
  */
@@ -454,7 +454,7 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
   // totals, the lint tally, AND the static-guard totals (3F-2102 + 3F-2118: testVolume,
   // rawByRuntimeQualityCheck AND staticGuards are now Ledger folds, so a hand-built census that
   // disagrees with the balance is no longer constructible). It spans: 6 raw runtime observations =
-  // 4 attributed-to-declared + 1 phantom + 1 suspense (the 3-way test-volume identity is
+  // 4 attributed-to-scenario + 1 phantom + 1 suspense (the 3-way test-volume identity is
   // non-trivial, onScenario excludes the phantom); 2 declared lint obligations, 1 satisfied
   // (lint:foo, running) + 1 watermelon (lint:bar, exists-but-unwired — the static-only lint tally
   // reads 1 of 2); and, on the CREDIT side, the static-guard fold — 2 running CI guards = 1
@@ -780,7 +780,7 @@ describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single qualit
 /**
  * Unit test for the TWO scenario-backing counts staying distinct (@SCN-LDG-008, ruling Q1).
  *
- * There are two different numbers for "credits backing a declared scenario", and a reader must not
+ * There are two different numbers for "credits backing a scenario", and a reader must not
  * read them as the same:
  *  - Test-volume `onScenario` (summary.testVolume.onScenario) = credits that CITE A DECLARED
  *    SCENARIO — this INCLUDES undemanded (a subset), keeping the 3-termed identity
@@ -794,7 +794,7 @@ describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single qualit
  */
 describe("[SCN-LDG-008] the two scenario-backing counts stay distinct (ruling Q1)", () => {
   // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — a real balance carrying an undemanded
-  // credit-side item ON a declared scenario's row: SCN-LDG-008 declares ONLY unit; a unit credit
+  // credit-side item ON a scenario's row: SCN-LDG-008 declares ONLY unit; a unit credit
   // reconciles satisfied (matched), an integration credit citing it is undemanded (a check it never
   // declared). Both credits POST to the row, so the Ledger fold (3F-2102) counts onScenario = 2.
   const undemandedBalance: Ledger = reconcile(
@@ -810,9 +810,9 @@ describe("[SCN-LDG-008] the two scenario-backing counts stay distinct (ruling Q1
     expect(report.summary.evidenceObligations.byOutcome.undemanded).toBe(1);
   });
 
-  it("keeps Test-volume onScenario INCLUDING undemanded (cites a declared scenario), so it EXCEEDS the matched-pair count by exactly byOutcome.undemanded", () => {
+  it("keeps Test-volume onScenario INCLUDING undemanded (cites a scenario), so it EXCEEDS the matched-pair count by exactly byOutcome.undemanded", () => {
     const report = assembleReport(undemandedBalance, ctx, undefined, true);
-    // Test-volume onScenario = credits citing a declared scenario = matched (1) + undemanded (1).
+    // Test-volume onScenario = credits citing a scenario = matched (1) + undemanded (1).
     expect(report.summary.testVolume!.onScenario).toBe(2);
     // The MATCHED-pair count is recovered from the Ledger, not a parallel `attributed[]` store:
     // testVolume.onScenario − byOutcome.undemanded.

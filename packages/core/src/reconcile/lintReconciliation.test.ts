@@ -224,7 +224,7 @@ describe("[SCN-LNT-003] a @lint scenario whose named guard does not exist is rep
 
 /**
  * The KIND-AXIS multi-evidenceObligation proof — the kind-axis analogue of
- * LDG-004 (the multi-LEVEL proof). A single declared scenario carries BOTH a
+ * LDG-004 (the multi-LEVEL proof). A single scenario carries BOTH a
  * runtime evidenceObligation (@unit) AND a static evidenceObligation (@lint=<guard>); reconcile
  * reconciles each KIND independently, keyed by (kind, [level]). With the unit
  * result green but the static guard not wired into CI, the runtime evidenceObligation balances

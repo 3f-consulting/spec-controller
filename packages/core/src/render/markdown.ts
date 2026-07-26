@@ -63,7 +63,7 @@ const ITEM_GLYPH: Record<Outcome, string> = {
   // exists and cucumber runs it. The debit twin of `cites-no-scenario`: same missing link, opposite
   // side. It can never be proven, so its row is always out-of-balance.
   "no-scn-code": "🔗",
-  // CREDIT-SIDE: a credit citing an @SCN no declared scenario matches — the
+  // CREDIT-SIDE: a credit citing an @SCN no scenario matches — the
   // reconciling item on a phantom scenario (@SCN-LDG-006).
   "cites-unknown-scenario": "👻",
   // CREDIT-SIDE: a credit citing NO @SCN at all — the reconciling item on the
@@ -73,10 +73,10 @@ const ITEM_GLYPH: Record<Outcome, string> = {
   // test (@SCN-LDG-017), or a cucumber step two or more step definitions match (@SCN-LDG-019).
   // Either way it posts to the suspense row: the credit can never discharge an obligation.
   "broken": "💥",
-  // CREDIT-SIDE: a credit citing a REAL declared scenario at a quality-check it never
+  // CREDIT-SIDE: a credit citing a REAL scenario at a quality-check it never
   // declared — the undemanded reconciling item on the real scenario's row (@SCN-LDG-008).
   "undemanded": "◇",
-  // NEITHER-SIDE: a declared scenario reconciling to zero rows on both sides — the
+  // NEITHER-SIDE: a scenario reconciling to zero rows on both sides — the
   // degenerate both-missing reconciling item, blank on both sides (@SCN-LDG-009).
   "both-missing": "⊘",
 };
@@ -397,7 +397,7 @@ const runVerdictSection: SectionEmitter = (report) => {
       : {
           headline: "**BALANCED**",
           exit: "exit 0",
-          gloss: "every Scenario Reconciliation balances: declared, phantom and suspense alike.",
+          gloss: "every Scenario Reconciliation balances: scenario, phantom and suspense alike.",
         };
   const lines = [
     "### Run verdict",
@@ -427,7 +427,7 @@ const runVerdictSection: SectionEmitter = (report) => {
  * subjects report into the same binary, so the "Verdict"/"outcome"/"Axis" words retire).
  *
  * The first subject is the SCENARIO RECONCILIATION — the manifesto's collection, ALL three row
- * kinds (declared, phantom, suspense) — not `Scenario`, which names only the declared thing
+ * kinds (scenario, phantom, suspense) — not `Scenario`, which names only the real thing
  * (3F-1726). Because the row is a pure presentation of `summary.scenarioReconciliations`, whose
  * totals count every row (@SCN-RMD-001, 3F-1724 — a phantom / suspense reconciliation is always
  * out-of-balance), a run whose only out-of-balance row is the suspense reconciliation renders
@@ -469,8 +469,8 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
     row(["Subject", "Total", "Balanced", "Out-of-balance", "Detail"]),
     row(["---", "---", "---", "---", "---"]),
     row([
-      // The subject is the SCENARIO RECONCILIATION — the manifesto's COLLECTION (declared,
-      // phantom and suspense rows alike), not `Scenario`, which names only the declared thing
+      // The subject is the SCENARIO RECONCILIATION — the manifesto's COLLECTION (scenario,
+      // phantom and suspense rows alike), not `Scenario`, which names only the real thing
       // (@SCN-RPT-004, 3F-1726; `scenarios` is in the manifesto's retired column).
       "Scenario Reconciliation",
       String(scenarioReconciliations.total),
@@ -542,7 +542,7 @@ const testVolumeSection: SectionEmitter = (report) => {
   const total = volume.totalEvidenceObservations;
   // Three DIRECT reads off the materialised kind-counts — the renderer does no arithmetic on this
   // line. The three terms are grouped by the SCENARIO-KIND each credit posted to (the canon
-  // grouping): on scenarios (a declared scenario's account), on phantom scenarios (invented
+  // grouping): on scenarios (a scenario's account), on phantom scenarios (invented
   // phantom-scenario accounts — many can exist, hence the plural) and on the suspense scenario (the
   // one suspense account, singular — includes broken). The identity total = onScenario +
   // onPhantomScenario + onSuspenseScenario holds BY CONSTRUCTION (one shared runtimeObservationTally
@@ -601,7 +601,7 @@ const staticGuardsSection: SectionEmitter = (report) => {
  * The rows are a pure derive over `report.ledger.scenarioReconciliations[].evidenceObligations[]`; markdown-only.
  */
 const lintSection: SectionEmitter = (report) => {
-  // DECLARED rows only — a lint evidence obligation is a declared-side thing. The suspense row's
+  // Scenario rows only — a lint evidence obligation is a declared-side thing. The suspense row's
   // lint credit (an uncited static-guard, cites-no-scenario) is NOT an evidence obligation, so
   // it stays out of this table + tally; it surfaces on the suspense row's reconciling items.
   const rows = report.ledger.scenarioReconciliations
@@ -643,8 +643,8 @@ const lintSection: SectionEmitter = (report) => {
  * markdown-only.
  */
 const byFeatureSection: SectionEmitter = (report) => {
-  // DECLARED scenarios only (ruling Q3) — phantom/suspense rows are grouped at
-  // the end of the Ledger, not folded into the declared out-of-balance-by-feature cut.
+  // Scenario rows only (ruling Q3) — phantom/suspense rows are grouped at
+  // the end of the Ledger, not folded into the scenario out-of-balance-by-feature cut.
   const scenarios = report.ledger.scenarioReconciliations.filter(
     (s) => s.kind !== "phantom-scenario" && s.kind !== "suspense-scenario"
   );
@@ -693,7 +693,7 @@ type EvidenceColumn = { kind: "lint" } | { kind: "runtime"; qualityCheck: Runtim
 function evidenceColumns(
   scenarios: readonly ScenarioReconciliation[]
 ): EvidenceColumn[] {
-  // Only DECLARED rows carry evidence obligations that drive columns — a phantom / suspense
+  // Only scenario rows carry evidence obligations that drive columns — a phantom / suspense
   // row's credit-side items are not evidence obligations, so they never add a column.
   const scenarioRows = scenarios.filter(
     (s) => s.kind !== "phantom-scenario" && s.kind !== "suspense-scenario"
@@ -702,7 +702,7 @@ function evidenceColumns(
     s.qualityCheckReconciliations.some((o) => o.qualityCheck === "lint")
   );
   const qualityChecksPresent = new Set<RuntimeQualityCheck>();
-  // A column appears for every runtime quality-check present in DEMAND or OBSERVATION on a declared
+  // A column appears for every runtime quality-check present in DEMAND or OBSERVATION on a scenario
   // row. Both are read off the Ledger: a declared or undemanded quality-check surfaces as a
   // `QualityCheckReconciliation` at that check; every observed credit surfaces as a posted credit on
   // the row (@SCN-LDG-022). The retired census's `attributed[]` re-represented those posted credits
@@ -817,15 +817,15 @@ const CELL_KEY: readonly string[] = [
  * fixed cell key; without it the original three-column ledger is preserved (the 2-/3-arg callers
  * stay green). Markdown-only (the JSON carries the raw scenario facts + the declared / observed
  * objects); the verdict-tally bullet names the collection "Scenario Reconciliation(s)" — canon's
- * noun for the reconciled OUTPUT collection (declared + phantom + suspense), never "scenario(s)"
+ * noun for the reconciled OUTPUT collection (scenario + phantom + suspense), never "scenario(s)"
  * (@SCN-RPT-024, 3F-1919; "scenarios" is a Rejected alias).
  * Reads the report's materialised `summary.scenarioReconciliations`, `evidenceObligations`, and
  * `evidenceObservations.attributed`.
  */
 const ledgerSection: SectionEmitter = (report) => {
-  // Group DECLARED scenario rows first, then the PHANTOM rows, then the SUSPENSE row as
+  // Group the scenario rows first, then the PHANTOM rows, then the SUSPENSE row as
   // distinct blocks at the END (ruling Q3) — a phantom/suspense is not a
-  // scenario, so it never mingles with the declared verdict rows.
+  // scenario, so it never mingles with the scenario verdict rows.
   const scenarioRows = report.ledger.scenarioReconciliations.filter(
     (s) => s.kind !== "phantom-scenario" && s.kind !== "suspense-scenario"
   );
@@ -842,8 +842,8 @@ const ledgerSection: SectionEmitter = (report) => {
     // ("Ledger" is the INPUT concept in canon; double-entry-manifesto).
     "## Scenario Reconciliations",
     "",
-    // The headline verdict tally counts EVERY Scenario Reconciliation — declared, phantom and
-    // suspense alike (@SCN-RMD-001, 3F-1724; the declared-only "ruling Q3" is retracted).
+    // The headline verdict tally counts EVERY Scenario Reconciliation — scenario, phantom and
+    // suspense alike (@SCN-RMD-001, 3F-1724; the scenario-only "ruling Q3" is retracted).
     `- ${totals.total} Scenario Reconciliation(s): ${totals.balanced} balanced, ` +
       `${totals.outOfBalance} out-of-balance.`,
   ];
@@ -932,7 +932,8 @@ const ledgerSection: SectionEmitter = (report) => {
  * unsound) → Summary views
  * (Evidence reconciliation, test volume, lint evidence obligations, out-of-balance by feature)
  * → the ledger. The `## Warnings` section was RETIRED entirely: the
- * no-evidence-declared scenario is now a `both-missing` ledger row, and the declared-corpus
+ * no-evidence scenario (the earlier no-evidence-declared warning) is now a `both-missing` ledger
+ * row, and the declared-corpus
  * census facts (untagged scenarios / prose-only codes) re-homed into the ledger summary.
  *
  * The run-integrity stamp (@SCN-RPT-021) precedes the summary views because it is a caveat ON
