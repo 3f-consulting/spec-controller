@@ -951,8 +951,8 @@ describe("[SCN-RPT-010] the markdown report renders the Test volume evidenceObse
  * aggregate is threaded, each scenario row gains columns (Lint first, then the runtime
  * levels present in demand or evidenceObservations — e2e/performance only when present) with the
  * four-way demand×evidenceObservations cell encoding (`N` backing present / `∅` missing /
- * `(N)` observations at a quality-check never demanded / `—` neither), preceded by the fixed cell
- * key. The cell counts BACKING, not quality. Without it the original three-column ledger is preserved.
+ * `(N)` observations at a quality-check never demanded / `—` neither). The cell counts BACKING, not
+ * quality. Without the aggregate the original three-column ledger is preserved.
  *
  * RECONCILER-TRUE FIXTURE (evidence-manifesto §11A, 3F-1808). The balance and the census are
  * PRODUCED by `reconcile()` + `countRuntimeEvidenceObservationKinds()` over a scenario +
@@ -1081,18 +1081,15 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     expect(md).toContain("| SCN-A | 2 |");
   });
 
-  it("renders the fixed cell key before the table, with row 1 reading 'attributed to' (backing, not balanced)", () => {
+  it("renders the grid with no Cell/Meaning legend — the grid speaks for itself", () => {
     const md = renderMarkdown(balance, ctx, undefined, true);
-    expect(md).toContain("| `N` | N evidence observations attributed to a declared evidence obligation |");
-    expect(md).toContain("| `∅` | evidence obligation declared, no evidence observation — missing |");
-    expect(md).toContain("| `(N)` | N evidence observations present, no evidence obligation declared |");
-    // The cell counts backing, not quality — the key must NOT claim "balanced".
-    expect(md).not.toContain("satisfy a declared evidence obligation (balanced)");
-    // The key precedes the ledger table.
-    const iKey = md.indexOf("| Cell | Meaning |");
-    const iTable = md.indexOf("| Scenario | Lint |");
-    expect(iKey).toBeGreaterThanOrEqual(0);
-    expect(iKey).toBeLessThan(iTable);
+    // The legend is gone: no heading, no rows, and none of the words it carried.
+    expect(md).not.toContain("| Cell | Meaning |");
+    expect(md).not.toContain("attributed to a declared evidence obligation");
+    expect(md).not.toContain("evidence obligation declared, no evidence observation");
+    expect(md).not.toContain("no evidence obligation declared");
+    // The grid table itself stays.
+    expect(md).toContain("| Scenario | Lint |");
   });
 
   it("preserves the original three-column ledger when no evidenceObservations is threaded (back-compat)", () => {

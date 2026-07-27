@@ -819,14 +819,11 @@ Then(
   }
 );
 
-Then("the fixed cell key renders immediately before the ledger table", function () {
+Then("no cell-key legend precedes the ledger table — the grid speaks for itself", function () {
   const iKey = md011.indexOf("| Cell | Meaning |");
   const iTable = md011.indexOf("| Scenario | Lint |");
-  assert.ok(iKey >= 0, `expected the fixed cell key in the persisted report; got:\n${md011}`);
-  assert.ok(
-    iKey < iTable,
-    `expected the cell key to precede the ledger table (key at ${iKey}, table at ${iTable})`
-  );
+  assert.ok(iKey < 0, `expected NO cell key legend in the persisted report; got:\n${md011}`);
+  assert.ok(iTable >= 0, `expected the ledger grid table in the persisted report; got:\n${md011}`);
 });
 
 After({ tags: "@SCN-RPT-011" }, function () {

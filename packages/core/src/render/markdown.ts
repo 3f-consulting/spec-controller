@@ -794,27 +794,13 @@ function evidenceCell(
 }
 
 /**
- * The fixed cell key — the same every run, so it is NOTATION, not data
- * (facts-only). Row 1 says "attributed to", not "satisfy/balanced": the cell counts
- * backing (pass+fail), and a failing test is attributed but not balanced.
- */
-const CELL_KEY: readonly string[] = [
-  "| Cell | Meaning |",
-  "| --- | --- |",
-  "| `N` | N evidence observations attributed to a declared evidence obligation |",
-  "| `∅` | evidence obligation declared, no evidence observation — missing |",
-  "| `(N)` | N evidence observations present, no evidence obligation declared |",
-  "| `—` | neither declared nor present |",
-];
-
-/**
  * The ledger (moved to the END) — the per-scenario
  * table, with its summary lines on top: the verdict tally bullet, and (when a
  * declared-evidence-obligations census is threaded) the excluded-occurrence bullet relocated
  * here from the dissolved `## Declared corpus` section (Q1a). When the
  * evidence-observation aggregate is threaded, the row gains corpus-driven evidence
- * columns between Scenario and Verdict, each a four-way demand×evidence observation cell, preceded by the
- * fixed cell key; without it the original three-column ledger is preserved (the 2-/3-arg callers
+ * columns between Scenario and Verdict, each a four-way demand×evidence observation cell; without the
+ * aggregate the original three-column ledger is preserved (the 2-/3-arg callers
  * stay green). Markdown-only (the JSON carries the raw scenario facts + the declared / observed
  * objects); the verdict-tally bullet names the collection "Scenario Reconciliation(s)" — canon's
  * noun for the reconciled OUTPUT collection (scenario + phantom + suspense), never "scenario(s)"
@@ -898,8 +884,6 @@ const ledgerSection: SectionEmitter = (report) => {
 
   const columns = withObservations ? evidenceColumns(scenarios) : [];
   if (withObservations && columns.length > 0) {
-    // The cell key precedes the table (notation, not data).
-    lines.push(...CELL_KEY, "");
     const headers = [
       "Scenario",
       ...columns.map(columnHeader),

@@ -283,8 +283,8 @@ Feature: The report renders the ledger as sectioned facts
     count, its failing-ness staying in the Verdict + Reconciling-items columns.
     The Lint cell reads the static evidence obligation outcomes (lint isn't a counted evidence observation):
     the count of guards present (balanced or the watermelon — the script exists; its
-    inadequacy is the 🍉 in Reconciling-items); no `(N)` for lint. A fixed cell key
-    (notation, not data — so facts-only) renders immediately before the table. Markdown-only
+    inadequacy is the 🍉 in Reconciling-items); no `(N)` for lint. No Cell/Meaning legend
+    precedes the table — the grid speaks for itself. Markdown-only
     — the attributed atoms are already on JSON. The "count is backing, not
     quality — never rank by it" discipline is a documented rule, NOT rendered.
 
@@ -314,7 +314,7 @@ Feature: The report renders the ledger as sectioned facts
       Then each scenario row carries one cell per corpus column (Lint first, then the runtime levels present) with the four-way encoding — the count, ∅, (N), or —
       And the scenario whose only state at a quality-check is undemanded renders (N) there, not ∅
       And the scenario whose obligation at a quality-check is pending, with observations citing it at that pair, renders (N) there — because the credit is now undemanded, not attributed
-      And the fixed cell key renders immediately before the ledger table
+      And no cell-key legend precedes the ledger table — the grid speaks for itself
 
   Rule: Warnings flags the tests citing no scenario with their file locators
 
