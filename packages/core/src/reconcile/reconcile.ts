@@ -5,8 +5,15 @@
  * concept modules that own them (3F-1994) — `reconcileEvidenceObligation` (the per-obligation
  * outcome) to `domain/qualityCheckReconciliation`, `verdictFor` / `reconcilingItemsOf` (the
  * account roll-up) to `domain/scenarioReconciliation`, `isBalanced` / `hasPendingItems` /
- * `hasBrokenEvidence` (the whole-run predicates) to `domain/ledger`. `reconcile` is the fold
- * that posts the entries and calls those rules; it is the orchestration, not their home.
+ * `hasBrokenEvidence` (the whole-run predicates) to `domain/ledger`. `reconcile` is the fold that
+ * WALKS the inputs, CALLS those rules, and BUILDS the rows; it is the orchestration, not their home.
+ *
+ * POSTING-DESTINATION left too (3F-2202) — WHERE an entry lands is canon's own glossary group
+ * ("### Posting") and now lives on `domain/posting`: `postingOf` (the citation-routed credits, plus
+ * the undemanded-static-guard arm) and `staticGuardCreditsPostingTo` (the by-name half, resolved
+ * per row in that row's obligation order). The fold no longer DECIDES a destination anywhere — it
+ * asks the rule once per credit and files the answer. What remains is assembly: which rows exist,
+ * in what order, holding which items.
  *
  * Per the slice design: for each declared quality-check evidenceObligation (a reconciling
  * item), present+pass → satisfied; present+fail → failing; absent →
@@ -42,6 +49,9 @@ import {
   makeQualityCheckReconciliation,
 } from "../domain/qualityCheckReconciliation.js";
 import { verdictFor, reconcilingItemsOf } from "../domain/scenarioReconciliation.js";
+// THE POSTING RULE (3F-2202) — where an entry lands is canon's own glossary group, so it lives on
+// its own concept module. `reconcile` no longer decides a destination; it ASKS.
+import { postingOf, staticGuardCreditsPostingTo } from "../domain/posting.js";
 
 // The whole-run verdict surface lives WITH the Ledger concept (`domain/ledger`, 3F-1994);
 // re-exported here so the frozen v1 barrel (`index.ts`, @SCN-API-001) and every existing
@@ -55,36 +65,75 @@ export function reconcile(
 ): Ledger {
   const scenarioReconciliations: ScenarioReconciliation[] = [];
 
-  // The credit-consuming SPINE: index the runtime evidence observations
-  // (credits) the reconciler now consumes, alongside the declared side. `byScn` groups
-  // credits by the scnId they cite; `evidenceObligationPairs` is the set of DEMANDED
-  // `(scnId, qualityCheck)` evidence obligations. The spine is GENERAL — it indexes ALL credits so
-  // LDG-007/008/009 build the suspense / undemanded / both-missing rows on it — even
-  // though THIS sub-issue emits only the phantom case. static guard evidence observations carry no scnId
-  // (qualityCheck "lint"), so only runtime evidence observations are indexed.
+  // THE DECLARED SIDE, prepared once — the three sets the posting rule and the outcome rules read.
+  // Each is already the MODEL's own rule (never re-derived here), and each is built ONCE and
+  // shared, so no two consumers can drift: `scenarioIds` is which scenarios exist,
+  // `evidenceObligationPairs` is what they demand at each quality-check (3F-1858), and
+  // `demandedGuards` is which static-guard handles they demand.
   const scenarioIds = new Set(scenarios.map((d) => d.scnId));
   // The DEMANDED pairs — the model's rule, built ONCE and shared with the census (3F-1858).
   // Pending obligations are excluded: a pending obligation demands nothing.
   const evidenceObligationPairs = evidenceObligationPairsOf(scenarios);
-  // The DEMANDED static guard handles — every `@lint=<guard>` obligation across the corpus. A
-  // `lint` evidence observation whose guard is NOT in this set is an UNDEMANDED static guard: it
-  // cites no scenario, so it posts to the SUSPENSE row. This replaces the
-  // removed `uncitedStaticGuards` derive-and-diff param — the stream is now complete
-  // (the running-guard observer emits every running CI static guard), so the reconciler recovers
-  // the undemanded remainder itself, exactly as it does for an uncited runtime credit.
+  // The DEMANDED static guard handles — every `@lint=<guard>` obligation across the corpus, the
+  // journal's rule. It is what `postingOf` consults to tell a demanded static guard from an
+  // undemanded one (which cites nothing, so it posts to SUSPENSE). This replaces the removed
+  // `uncitedStaticGuards` derive-and-diff param — the stream is now complete (the running-guard
+  // observer emits every running CI static guard), so the reconciler recovers the undemanded
+  // remainder itself, exactly as it does for an uncited runtime credit.
   const demandedGuards = demandedStaticGuardsOf(scenarios);
+  // THE ONE ROUTING PASS (3F-2202). Every credit is routed ONCE, by THE posting rule
+  // (`domain/posting`), into the structures the fold below reads. `reconcile` no longer DECIDES a
+  // destination anywhere — it asks, and files the answer.
+  //
+  // This replaces two passes that re-stated the SAME four routing decisions (the citation index
+  // here and the phantom-id scan further down) plus three stream filters. They agreed by
+  // copy-paste, not by construction: either could have grown an arm alone and nothing would have
+  // redded — the identical anaemia `evidenceObligationPairsOf` was extracted to cure.
   const byScn = new Map<string, RuntimeEvidenceObservation[]>();
+  // The PHANTOM rows, in FIRST-SEEN order (@SCN-LDG-006).
+  const phantomIds: string[] = [];
+  // The three SUSPENSE streams, kept separate and each in observation order — the suspense row's
+  // item order (broken first, then uncited, then the undemanded static guards) is row assembly,
+  // owned below, not a routing decision.
+  const brokenEvidence: RuntimeEvidenceObservation[] = [];
+  const uncited: RuntimeEvidenceObservation[] = [];
+  const undemandedGuards: GuardEvidenceObservation[] = [];
   for (const o of evidenceObservations) {
-    if (o.qualityCheck === "lint") continue;
-    // THE FAIL-SAFE, second arm (@SCN-LDG-017): a BROKEN credit is never indexed against a
-    // scenario — it named no test, so it cites no scenario, and it must post to no scenario's row
-    // (neither as a matched credit above nor as an `undemanded` one below). It posts EXACTLY ONCE,
-    // on the SUSPENSE row.
-    if (o.broken === true) continue;
-    if (o.scnId === null) continue; // an uncited credit — it posts to the SUSPENSE scenario (below).
-    const list = byScn.get(o.scnId) ?? [];
-    list.push(o);
-    byScn.set(o.scnId, list);
+    // The union NARROW — `qualityCheck === "lint"` is the `EvidenceObservation` union's TYPE TAG,
+    // not a posting decision. Which axis a credit rides is read here; where it LANDS is the rule's,
+    // on both branches.
+    if (o.qualityCheck === "lint") {
+      const posting = postingOf(o, scenarioIds, demandedGuards);
+      // A static guard no `@lint` demands cites nothing, so it posts to SUSPENSE — the static
+      // analogue of an uncited runtime credit.
+      if (posting.kind === "suspense-scenario") undemandedGuards.push(o);
+      // `every-demanding-scenario` is resolved PER ROW, in that row's own obligation order, by
+      // `staticGuardCreditsPostingTo` in the scenario loop below — a static guard posts to EVERY
+      // account demanding it, so it has no single destination to file here.
+      continue;
+    }
+    const posting = postingOf(o, scenarioIds, demandedGuards);
+    switch (posting.kind) {
+      case "scenario":
+      case "phantom-scenario": {
+        // THE CITATION INDEX holds real AND invented ids alike — a phantom row reads its posted
+        // credits from here too, so both citation-routed destinations file together.
+        const list = byScn.get(posting.scnId) ?? [];
+        list.push(o);
+        byScn.set(posting.scnId, list);
+        if (posting.kind === "phantom-scenario" && !phantomIds.includes(posting.scnId)) {
+          phantomIds.push(posting.scnId);
+        }
+        break;
+      }
+      case "suspense-scenario":
+        // THE SPLIT (@SCN-LDG-017) — `broken` and `cites-nothing` both land on suspense because
+        // neither names a scenario, but they are different facts with different remedies (fix the
+        // harness vs add the @SCN), so their streams stay apart. The rule already told them apart.
+        if (posting.posted === "broken") brokenEvidence.push(o);
+        else uncited.push(o);
+        break;
+    }
   }
   for (const d of scenarios) {
     // PENDING PARTITION (@SCN-PND-004) — a `<quality-check>pending` obligation (the
@@ -167,18 +216,9 @@ export function reconcile(
     // least one account, never to none — to EVERY account that demands it (a run is evidence for
     // all demanders), or to suspense if none does. NOT "exactly one" (canon,
     // double-entry-manifesto.md line 160): that is the runtime property, over-generalised.
-    const demandedGuardCredits: GuardEvidenceObservation[] = [];
-    for (const o of d.evidenceObligations) {
-      // Every `@lint` obligation, INCLUDING a pending one: posting is not classifying, so a credit
-      // posts whatever its obligation later reconciles to (or fails to).
-      if (o.qualityCheck !== "lint" || o.staticGuard === undefined) continue;
-      const guard = o.staticGuard;
-      const obs = evidenceObservations.find(
-        (c): c is GuardEvidenceObservation => c.qualityCheck === "lint" && c.staticGuard === guard
-      );
-      // One credit answers one handle; a handle declared twice on one account still posts once.
-      if (obs !== undefined && !demandedGuardCredits.includes(obs)) demandedGuardCredits.push(obs);
-    }
+    // ASKED, not decided (3F-2202): the by-name half of the posting rule, resolved for THIS row in
+    // THIS row's obligation document order — `domain/posting`'s `staticGuardCreditsPostingTo`.
+    const demandedGuardCredits = staticGuardCreditsPostingTo(d, evidenceObservations);
     scenarioReconciliations.push({
       scnId: d.scnId,
       kind: "scenario",
@@ -210,16 +250,11 @@ export function reconcile(
   // Quality Check Reconciliation(s) carrying the outcome `cites-unknown-scenario` (and the
   // evidence observation's locator, ruling Q5), verdict ALWAYS out-of-balance. Grouped AFTER the
   // scenario rows. (Suspense / undemanded / both-missing are LDG-007/008/009.)
-  const phantomIds: string[] = [];
-  for (const o of evidenceObservations) {
-    if (o.qualityCheck === "lint") continue;
-    // THE FAIL-SAFE, third arm (@SCN-LDG-017): a BROKEN credit never mints a phantom row either —
-    // an errored suite cites no scenario, real or phantom. SUSPENSE is its only account.
-    if (o.broken === true) continue;
-    if (o.scnId === null) continue; // an uncited credit is SUSPENSE (below), never phantom.
-    if (scenarioIds.has(o.scnId)) continue;
-    if (!phantomIds.includes(o.scnId)) phantomIds.push(o.scnId);
-  }
+  //
+  // `phantomIds` was ROUTED ABOVE (3F-2202) — this block only ASSEMBLES the rows. The scan that
+  // stood here re-stated the citation index's four routing decisions verbatim, including the
+  // fail-safe arms (a BROKEN credit mints no phantom row; an uncited credit is suspense, never
+  // phantom); both now come from the one `postingOf` call.
   for (const scnId of phantomIds) {
     const citations = byScn.get(scnId) ?? [];
     const items: QualityCheckReconciliation[] = citations.map((o) =>
@@ -270,19 +305,11 @@ export function reconcile(
   // ran at all (fix the harness). Folding the second into the first would hide the collection
   // failure behind the wrong cure — the false-`missing` in a new costume. So `broken` is taken
   // FIRST, on the flag (never on scnId/status, which it may structurally carry).
-  const brokenEvidence = evidenceObservations.filter(
-    (o): o is RuntimeEvidenceObservation => o.qualityCheck !== "lint" && o.broken === true
-  );
-  const uncited = evidenceObservations.filter(
-    (o): o is RuntimeEvidenceObservation =>
-      o.qualityCheck !== "lint" && o.broken !== true && o.scnId === null
-  );
-  // The undemanded static-guards — `lint` evidence observations no @lint obligation demands,
-  // recovered from the completed stream, no longer a derive-and-diff param.
-  const undemandedGuards = evidenceObservations.filter(
-    (o): o is GuardEvidenceObservation =>
-      o.qualityCheck === "lint" && !demandedGuards.has(o.staticGuard)
-  );
+  //
+  // All three streams were ROUTED ABOVE (3F-2202) — `postingOf` tells `broken` from
+  // `cites-nothing` on the flag, and tells an undemanded static guard from a demanded one by the
+  // journal's `demandedStaticGuardsOf`. What stays here is ASSEMBLY: whether the row exists at
+  // all, and the order its items sit in.
   if (brokenEvidence.length > 0 || uncited.length > 0 || undemandedGuards.length > 0) {
     const items: QualityCheckReconciliation[] = [
       // ONE `broken` item per proof that never ran, carrying its WHERE-TO-FIX (the locator) and
