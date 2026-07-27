@@ -5,8 +5,11 @@
  * they were the reconcile orchestration's exports and now live WITH the concept they fold over.
  */
 
-import type { Outcome } from "./qualityCheckReconciliation.js";
+import type { Outcome, QualityCheckReconciliation } from "./qualityCheckReconciliation.js";
 import type { ScenarioReconciliation } from "./scenarioReconciliation.js";
+// The row-level static-guard cut (3F-2203) — the Ledger-wide lint list is built ON it, so the
+// declared-side rule is stated once, at the row.
+import { staticGuardReconciliationsOf } from "./scenarioReconciliation.js";
 import type { RuntimeQualityCheck, GuardEvidenceObservation } from "./journal.js";
 
 /**
@@ -110,9 +113,49 @@ export function hasPendingItems(reconciliation: Ledger): boolean {
  * balance verdict, @SCN-CLI-012, or its exit code would be unreachable.)
  */
 export function hasBrokenEvidence(reconciliation: Ledger): boolean {
-  return reconciliation.scenarioReconciliations.some((row) =>
-    row.reconcilingItems.some((item) => item.outcome === "broken")
+  return brokenItemsOf(reconciliation).length > 0;
+}
+
+/**
+ * The BROKEN reconciling items across the WHOLE run (3F-2203) — every proof that never ran, in row
+ * order, each carrying its WHERE-to-fix (locator) and WHAT-broke (the runner's message).
+ *
+ * The QUANTITATIVE twin of `hasBrokenEvidence`, which is now derived FROM it: "is this run
+ * unsound?" and "which proofs never ran?" are one question at two resolutions, so they are one
+ * scan. The markdown's Run-integrity section listed these by re-deriving the scan itself — a model
+ * query living in the renderer, and a second statement of which outcome means broken.
+ *
+ * The renderer READS this list and takes its length for the count-phrase; asking a list you were
+ * given how long it is is projection, not derivation.
+ */
+export function brokenItemsOf(reconciliation: Ledger): QualityCheckReconciliation[] {
+  return reconciliation.scenarioReconciliations.flatMap((row) =>
+    row.reconcilingItems.filter((item) => item.outcome === "broken")
   );
+}
+
+/**
+ * The DECLARED static-guard sub-rows across the whole Ledger (3F-2203) — each `lint` Quality Check
+ * Reconciliation with the scnId of the row that declared it, in row-then-document order.
+ *
+ * SCENARIO ROWS ONLY. A `lint` obligation is declared-side, so a phantom or suspense row can carry
+ * none; the suspense row's lint CREDIT (an undemanded static guard, `cites-no-scenario`) is an
+ * observation, not an obligation, and must never inflate the declared lint total.
+ *
+ * ONE COPY, BY CONSTRUCTION. That scenario-rows-only filter plus the lint cut existed TWICE,
+ * character-identical — here in `lintTally` and in the markdown's `### Lint evidence obligations`
+ * table. They agreed by copy-paste, not construction: either could have grown a clause alone and
+ * nothing would have redded. Same anaemia, same cure as `evidenceObligationPairsOf` and
+ * `demandedStaticGuardsOf`; the tally and the table are now two readings of ONE list.
+ */
+export function lintReconciliationsOf(
+  reconciliation: Ledger
+): { scnId: string; reconciliation: QualityCheckReconciliation }[] {
+  return reconciliation.scenarioReconciliations
+    .filter((row) => row.kind !== "phantom-scenario" && row.kind !== "suspense-scenario")
+    .flatMap((row) =>
+      staticGuardReconciliationsOf(row).map((r) => ({ scnId: row.scnId, reconciliation: r }))
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -320,20 +363,14 @@ export function ledgerTally(balance: Ledger): LedgerTally {
  * here explicitly.
  */
 export function lintTally(balance: Ledger): LintTally {
-  let satisfied = 0;
-  let total = 0;
-  for (const s of balance.scenarioReconciliations) {
-    // Scenario rows only — a lint evidence obligation is declared-side. The suspense row's lint
-    // credit (an uncited static-guard, cites-no-scenario) is not an evidence obligation and
-    // must not inflate the declared lint total.
-    if (s.kind === "phantom-scenario" || s.kind === "suspense-scenario") continue;
-    for (const o of s.qualityCheckReconciliations) {
-      if (o.qualityCheck !== "lint") continue;
-      total++;
-      if (o.outcome === "satisfied") satisfied++;
-    }
-  }
-  return { satisfied, total };
+  // TWO READINGS OF ONE LIST (3F-2203) — the declared lint sub-rows come from
+  // `lintReconciliationsOf`, the same list the markdown's lint table renders. The
+  // scenario-rows-only cut lives there, once, so the tally and the table cannot disagree.
+  const lint = lintReconciliationsOf(balance);
+  return {
+    satisfied: lint.filter(({ reconciliation }) => reconciliation.outcome === "satisfied").length,
+    total: lint.length,
+  };
 }
 
 // ---------------------------------------------------------------------------

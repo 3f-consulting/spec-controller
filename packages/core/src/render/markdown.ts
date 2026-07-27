@@ -41,6 +41,13 @@ import {
 } from "../provenance/provenance.js";
 import type { EvidenceObligations } from "../census/evidenceObligations.js";
 import { RUNTIME_QUALITY_CHECKS } from "../domain/ledger.js";
+// THE MODEL DERIVATIONS THE RENDERER READS (3F-2203) — it projects these; it does not compute them.
+import { brokenItemsOf, lintReconciliationsOf } from "../domain/ledger.js";
+import {
+  staticGuardReconciliationsOf,
+  presentStaticGuardCountOf,
+} from "../domain/scenarioReconciliation.js";
+import { demandedEvidenceObligationsOf } from "../domain/journal.js";
 import { assembleReport, type EvidenceReconciliation } from "../assemble/report.js";
 // The run-integrity predicate (@SCN-LDG-018) — the existential scan for a `broken` reconciling
 // item. The renderer asks the predicate and prints the HEADLINE word: predicate-name ≠
@@ -300,9 +307,12 @@ const runIntegritySection: SectionEmitter = (report) => {
   // "is this run sound?" with its own scan, so the stamp cannot drift from the CLI's exit 4
   // (@SCN-CLI-012), which asks the same predicate.
   if (!hasBrokenEvidence({ scenarioReconciliations: report.ledger.scenarioReconciliations })) return [];
-  const brokenItems = report.ledger.scenarioReconciliations.flatMap((s) =>
-    s.reconcilingItems.filter((item) => item.outcome === "broken")
-  );
+  // ASKED, not derived (3F-2203) — which items are broken is a model query, and it is the same
+  // scan `hasBrokenEvidence` above is now derived from, so the stamp and the list cannot disagree.
+  // Taking `.length` of a list you were handed is projection, not derivation.
+  const brokenItems = brokenItemsOf({
+    scenarioReconciliations: report.ledger.scenarioReconciliations,
+  });
   const count = brokenItems.length;
   // GENERIC over both producers — the count-phrase names what a collection-failed vitest suite and
   // an ambiguous cucumber step have in common (the proof did not run), never one kind's idiom.
@@ -605,15 +615,18 @@ const lintSection: SectionEmitter = (report) => {
   // Scenario rows only — a lint evidence obligation is a declared-side thing. The suspense row's
   // lint credit (an uncited static-guard, cites-no-scenario) is NOT an evidence obligation, so
   // it stays out of this table + tally; it surfaces on the suspense row's reconciling items.
-  const rows = report.ledger.scenarioReconciliations
-    .filter((s) => s.kind !== "phantom-scenario" && s.kind !== "suspense-scenario")
-    .flatMap((s) =>
-      s.qualityCheckReconciliations
-        .filter((r) => r.qualityCheck === "lint")
-        // The Outcome cell shows the canon DESCRIPTION, not the bare handle (3F-1626,
-        // single-sourced from OUTCOME_DESCRIPTION); the ITEM_GLYPH glyph is retained.
-        .map((r) => `| ${s.scnId} | ${r.staticGuard!} | ${ITEM_GLYPH[r.outcome]} ${OUTCOME_DESCRIPTION[r.outcome]} |`)
-    );
+  // ASKED, not derived (3F-2203) — the declared lint sub-rows are a model list, and it is the SAME
+  // list `summary.lint` is tallied from, so the table and its total line cannot disagree. The
+  // scenario-rows-only cut (a suspense lint CREDIT is an observation, not an obligation) lives with
+  // the rule; it stood here and in `lintTally`, character-identical, agreeing by copy.
+  const rows = lintReconciliationsOf({
+    scenarioReconciliations: report.ledger.scenarioReconciliations,
+  }).map(
+    // The Outcome cell shows the canon DESCRIPTION, not the bare handle (3F-1626,
+    // single-sourced from OUTCOME_DESCRIPTION); the ITEM_GLYPH glyph is retained.
+    ({ scnId, reconciliation: r }) =>
+      `| ${scnId} | ${r.staticGuard!} | ${ITEM_GLYPH[r.outcome]} ${OUTCOME_DESCRIPTION[r.outcome]} |`
+  );
   if (rows.length === 0) return [];
   const { satisfied, total } = report.summary.lint;
   return [
@@ -699,9 +712,10 @@ function evidenceColumns(
   const scenarioRows = scenarios.filter(
     (s) => s.kind !== "phantom-scenario" && s.kind !== "suspense-scenario"
   );
-  const hasStatic = scenarioRows.some((s) =>
-    s.qualityCheckReconciliations.some((o) => o.qualityCheck === "lint")
-  );
+  // ASKED (3F-2203) — whether a row has static-guard sub-rows is the same model cut the grid cell
+  // and the lint table read. Whether a COLUMN then appears is the renderer's own business; what a
+  // row's lint sub-rows ARE is not.
+  const hasStatic = scenarioRows.some((s) => staticGuardReconciliationsOf(s).length > 0);
   const qualityChecksPresent = new Set<RuntimeQualityCheck>();
   // A column appears for every runtime quality-check present in DEMAND or OBSERVATION on a scenario
   // row. Both are read off the Ledger: a declared or undemanded quality-check surfaces as a
@@ -775,13 +789,15 @@ function evidenceCell(
     // lint QCR per `@lint=<guard>` obligation). RIGHT: the PRESENT-guard count — the
     // static guards `satisfied` or watermelon. Lint's right stays this static-outcome derivation
     // (NOT `evidenceObservations`): lint carries no credit multiplicity, so the count is exact.
-    const statics = s.qualityCheckReconciliations.filter((o) => o.qualityCheck === "lint");
+    // BOTH SIDES ASKED (3F-2203) — the demanded-guard sub-rows and the present-guard count are
+    // model facts, read off the row. "Present" spans satisfied AND watermelon (a watermelon guard
+    // EXISTS; its inadequacy is quality, shown in Reconciling items 🍉) — an outcome-vocabulary
+    // rule, which is why the renderer no longer states it.
+    const statics = staticGuardReconciliationsOf(s);
     const left = statics.length > 0
       ? QUALITY_CHECK_LETTER.lint + (statics.length > 1 ? String(statics.length) : "")
       : "-";
-    const present = statics.filter(
-      (o) => o.outcome === "satisfied" || o.outcome === "watermelon"
-    ).length;
+    const present = presentStaticGuardCountOf(s);
     const right = present > 0 ? String(present) : "-";
     return left === "-" && right === "-" ? "" : `${left}/${right}`;
   }
@@ -789,8 +805,12 @@ function evidenceCell(
   // side the scenario declared (@SCN-LDG-023) — the fact itself — filtered to the ACTIVE ones: a
   // `<qc>pending` obligation demands NOTHING (it partitions off to a one-sided Pending Item), so it
   // is not a demand. Demanded → the check's letter; else `-`.
-  const demanded = s.evidenceObligations.some(
-    (o) => o.qualityCheck === col.qualityCheck && !o.pending
+  // ASKED, not re-encoded (3F-2203). "A pending obligation demands nothing" is the model's rule
+  // (canon, Pending Item — a `<qc>pending` tag raises NO Evidence Obligation), and it is the SAME
+  // rule `evidenceObligationPairsOf` and `demandedStaticGuardsOf` apply. The renderer stated the
+  // `!pending` clause itself before: a fourth home for one rule, agreeing by copy.
+  const demanded = demandedEvidenceObligationsOf(s.evidenceObligations).some(
+    (o) => o.qualityCheck === col.qualityCheck
   );
   const left = demanded ? QUALITY_CHECK_LETTER[col.qualityCheck] : "-";
   // RIGHT — the OBSERVATION count is the MULTIPLICITY of POSTED CREDITS at this quality-check on THIS

@@ -153,9 +153,17 @@ export function demandedStaticGuardsOf(scenarios: readonly Scenario[]): Set<stri
  *
  * Lives here rather than in the reconciler: what a scenario DEMANDS is the model's rule, not the
  * reconciler's private business (`entity-owns-its-behaviour`).
+ *
+ * Takes the OBLIGATIONS rather than a `Scenario` (3F-2203) so the one rule serves both sides of the
+ * pipeline: `reconcile` passes a scenario's declared obligations, and the renderer passes a Ledger
+ * row's POSTED DEBITS (`ScenarioReconciliation.evidenceObligations`) to answer "does this row
+ * demand this quality-check?" for the grid. The renderer previously re-encoded the `!pending`
+ * clause itself — the same rule in a second home, agreeing by copy.
  */
-export function demandedEvidenceObligationsOf(scenario: Scenario): EvidenceObligation[] {
-  return scenario.evidenceObligations.filter((obligation) => !obligation.pending);
+export function demandedEvidenceObligationsOf(
+  evidenceObligations: readonly EvidenceObligation[]
+): EvidenceObligation[] {
+  return evidenceObligations.filter((obligation) => !obligation.pending);
 }
 
 /**

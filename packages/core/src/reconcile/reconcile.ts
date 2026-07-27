@@ -157,7 +157,7 @@ export function reconcile(
     const pendingItems: PendingItem[] = pendingItemsOf(d);
 
     // The DEBIT side — each DEMANDED obligation reconciled against the observed evidence.
-    const reconciledEvidenceObligations = demandedEvidenceObligationsOf(d).map((req) =>
+    const reconciledEvidenceObligations = demandedEvidenceObligationsOf(d.evidenceObligations).map((req) =>
       reconcileEvidenceObligation(d.scnId, req, evidenceObservations)
     );
 

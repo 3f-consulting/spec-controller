@@ -50,7 +50,7 @@ describe("[SCN-LDG-001] the pending partition splits a scenario's obligations ex
   };
 
   it("demands only the non-pending obligations, in document order", () => {
-    expect(demandedEvidenceObligationsOf(scenario)).toEqual([
+    expect(demandedEvidenceObligationsOf(scenario.evidenceObligations)).toEqual([
       { qualityCheck: "unit" },
       { qualityCheck: "integration" },
     ]);
@@ -63,7 +63,7 @@ describe("[SCN-LDG-001] the pending partition splits a scenario's obligations ex
   /** The two are EXACT complements — nothing dropped, nothing counted twice. */
   it("partitions with no overlap and no loss", () => {
     expect(
-      demandedEvidenceObligationsOf(scenario).length + pendingItemsOf(scenario).length
+      demandedEvidenceObligationsOf(scenario.evidenceObligations).length + pendingItemsOf(scenario).length
     ).toBe(scenario.evidenceObligations.length);
   });
 
