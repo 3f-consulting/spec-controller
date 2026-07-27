@@ -1271,7 +1271,7 @@ When(
 Then(
   "the declared integration obligation reconciles {string}",
   function (outcome: string) {
-    // Row-scoped to the declared SCN-PDN-001 scenario's OWN reconciled integration obligation.
+    // Row-scoped to the SCN-PDN-001 scenario's OWN reconciled integration obligation.
     // Its outcome is the three-way classification's result: satisfied (passed) / failing (failed)
     // / missing (any inconclusive, by absence). Reds while an inconclusive result maps to failing.
     const scenario = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-PDN-001");
@@ -1450,7 +1450,7 @@ When(
 Then(
   "the declared unit obligation reconciles {string}",
   function (outcome: string) {
-    // Row-scoped to the declared SCN-PDV-001 scenario's OWN reconciled unit obligation. Its outcome is
+    // Row-scoped to the SCN-PDV-001 scenario's OWN reconciled unit obligation. Its outcome is
     // the three-way classification's result: satisfied (passed) / failing (failed) / missing (any
     // inconclusive, by absence). Reds while an inconclusive result maps to failing.
     const scenario = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-PDV-001");

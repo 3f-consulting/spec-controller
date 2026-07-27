@@ -295,3 +295,63 @@ describe("[SCN-VOC-002] coverage-matrix completeness", () => {
     expect(md).toMatch(/\| json-keys \| 0 \|/);
   });
 });
+
+describe("[SCN-VOC-003] the forbidden kind-label phrase `declared scenario`", () => {
+  // The phrase rule: whole-word `declared` immediately before `scenario` reds, so the
+  // purged kind-label cannot reappear green. Whole-word — `undeclared` is one token — so
+  // canon "undeclared scenario" stays green.
+
+  it("reds on `declared scenario`, renaming to the bare canon `scenario`", () => {
+    const v = classifyWords(["declared", "scenario"], "prose").find((w) => w.word === "declared")!;
+    expect(v.flagged).toBe(true);
+    expect(v.reason).toBe("declared-scenario");
+    expect(v.canonical).toBe("scenario");
+  });
+
+  it("reds on the plural `declared scenarios` too (the phrase, not the inflection)", () => {
+    const v = classifyWords(["declared", "scenarios"], "prose").find((w) => w.word === "declared")!;
+    expect(v.flagged).toBe(true);
+    expect(v.reason).toBe("declared-scenario");
+  });
+
+  it("reds in NAME mode too — a `declaredScenario` composite identifier", () => {
+    const v = classifyWords(decomposeName("declaredScenario"), "name").find(
+      (w) => w.word === "declared"
+    )!;
+    expect(v.flagged).toBe(true);
+    expect(v.reason).toBe("declared-scenario");
+  });
+
+  it("STAYS GREEN on canon `undeclared scenario` — whole-word, not a substring", () => {
+    // `undeclared` decomposes to the single token "undeclared" (≠ "declared"), and it is
+    // an allowlisted domain-adjacent word, so nothing on the phrase flags.
+    const verdicts = classifyWords(decomposeName("undeclared"), "prose").concat(
+      classifyWords(["undeclared", "scenario"], "prose")
+    );
+    expect(verdicts.every((v) => v.reason !== "declared-scenario")).toBe(true);
+    expect(verdicts.every((v) => !v.flagged)).toBe(true);
+  });
+
+  it("does NOT over-guard: bare `declared` NOT before `scenario` earns no declared-scenario flag", () => {
+    // The deferred obligation-side uses ("declared evidence obligation",
+    // "declared-vs-observed") must not be swept by this phrase rule — adjacency to
+    // `scenario` is the whole trigger.
+    const v = classifyWords(["declared", "evidence", "obligation"], "prose").find(
+      (w) => w.word === "declared"
+    )!;
+    expect(v.reason).not.toBe("declared-scenario");
+  });
+
+  it("flags a real prose `declared scenario` with action rename, and passes `undeclared scenario`", () => {
+    const { manifest } = auditFiles([
+      { path: "src/notes.ts", content: "// a declared scenario reconciles here\n" },
+      { path: "src/ok.ts", content: "// an undeclared scenario is a phantom\n" },
+    ]);
+    const red = manifest.find((r) => r.current === "declared" && r.new === "scenario");
+    expect(red).toBeDefined();
+    expect(red!.action).toBe("rename");
+    expect(red!.file).toBe("src/notes.ts");
+    // "undeclared scenario" produced no declared-scenario rename row anywhere.
+    expect(manifest.some((r) => r.file === "src/ok.ts" && r.new === "scenario")).toBe(false);
+  });
+});

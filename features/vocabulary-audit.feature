@@ -58,3 +58,20 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
       Then the coverage matrix lists every scanned surface as a row
       And a surface with zero flagged words is present with a zero count
 
+  Rule: the forbidden kind-label phrase "declared scenario" reds; canon "undeclared scenario" stays green
+
+    The purge guard (@SCN-VOC-003, 3F-2147). Whole-word `declared` IMMEDIATELY before
+    `scenario` is the retired kind-label — so it reds wherever it hides (a comment, a
+    Gherkin line, a doc, a string), renamed to the bare canon `scenario` (which already
+    means the real, declared kind). Whole-word by construction: `undeclared` decomposes to
+    the single token "undeclared", so canon "undeclared scenario" stays green. Phrase-only,
+    honest scope: it does NOT catch a bare kind-label enumeration ("declared, phantom and
+    suspense") — that is a separate, deferred residual.
+
+    @unit @SCN-VOC-003
+    Scenario: the audit reds on "declared scenario" and stays green on "undeclared scenario"
+      Given a corpus carrying the phrase "declared scenario" and the canon phrase "undeclared scenario"
+      When the vocabulary audit runs over the corpus
+      Then the phrase "declared scenario" is flagged, renamed to the bare "scenario"
+      And the phrase "undeclared scenario" is not flagged
+

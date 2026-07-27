@@ -21,7 +21,7 @@
  * Design: the closed-vocabulary audit tool. Word-set authority: the double-entry
  * manifesto's mapping table.
  *
- * @SCN-VOC-001 / @SCN-VOC-002 — features/vocabulary-audit.feature.
+ * @SCN-VOC-001 / @SCN-VOC-002 / @SCN-VOC-003 — features/vocabulary-audit.feature.
  */
 
 // ---------------------------------------------------------------------------
@@ -355,7 +355,10 @@ export type FlagReason =
   | "entry-domain"
   // A word that is canon's DIFFERENT WORD used bare, so it may be legitimate rather
   // than a shortening — a human decides. Dispositioned `review`, never `rename`.
-  | "bare-different-word";
+  | "bare-different-word"
+  // @SCN-VOC-003 — the forbidden kind-label PHRASE: whole-word `declared` immediately
+  // before `scenario`. Renamed to the bare canon `scenario`.
+  | "declared-scenario";
 
 // ---------------------------------------------------------------------------
 // Core classification
@@ -435,6 +438,19 @@ export function classifyWords(words: string[], modes: Mode | Mode[]): WordVerdic
 
     if (BANNED_WORDS.has(word) || BANNED_WORDS.has(stem)) {
       return { word, flagged: true, reason: "banned", canonical };
+    }
+
+    // @SCN-VOC-003 — the forbidden kind-label PHRASE "declared scenario": whole-word
+    // `declared` IMMEDIATELY followed by `scenario` (singular or plural). It fires in
+    // BOTH modes (like a banned phrase), so the label reds wherever it hides — a comment,
+    // a Gherkin line, a doc, a string — not only in an identifier. Whole-word by
+    // construction: `undeclared` decomposes to the single token "undeclared" (≠ "declared"),
+    // so canon "undeclared scenario" stays green. The rename target is the bare canon
+    // `scenario` (which already means the real, declared kind). Precedes the isApproved /
+    // mode gates below so the phrase reds even though bare `scenario` is an approved word
+    // and bare `declared` passes in prose.
+    if (word === "declared" && singularise(words[i + 1] ?? "") === "scenario") {
+      return { word, flagged: true, reason: "declared-scenario", canonical: "scenario" };
     }
 
     if (FULL_TERM_ONLY.has(stem)) {
@@ -798,7 +814,9 @@ export interface AuditResult {
 }
 
 function actionFor(reason: FlagReason): string {
-  return reason === "banned" || reason === "bare-shortening" ? "rename" : "review";
+  return reason === "banned" || reason === "bare-shortening" || reason === "declared-scenario"
+    ? "rename"
+    : "review";
 }
 
 function decisionFor(reason: FlagReason): string {
