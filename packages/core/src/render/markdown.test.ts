@@ -1051,8 +1051,9 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
 
   it("encodes the four cell cases two-sided — demanded+met, demanded+missing, undemanded, and absent", () => {
     const md = renderMarkdown(balance, ctx, undefined, true);
-    // demanded & met → letter/count; SCN-A: Lint L/2 (two guards present), Unit U/2.
-    expect(md).toContain("| SCN-A | L/2 | U/2 |  |");
+    // demanded & met → letter/count; SCN-A: Lint L2/2 (TWO demanded guards on the left — the
+    // demanded-obligation count, @SCN-RPT-011 — both present on the right), Unit U/2.
+    expect(md).toContain("| SCN-A | L2/2 | U/2 |  |");
     // demanded & missing → letter/- (no observation).
     expect(md).toContain("| SCN-B |  | U/- |  |");
     // not demanded but present → -/N: SCN-C's integration credit is UNDEMANDED — the reconciler
@@ -1077,8 +1078,8 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   it("counts the lint cell's right side by guards PRESENT (balanced or watermelon), not 0/1", () => {
     const md = renderMarkdown(balance, ctx, undefined, true);
     // SCN-A declares two static guards, both present (one balanced, one watermelon) → right side 2,
-    // with the single demand letter L → L/2.
-    expect(md).toContain("| SCN-A | L/2 |");
+    // and the demand LEFT carries the demanded-obligation count (two lint QCRs) → L2 → L2/2.
+    expect(md).toContain("| SCN-A | L2/2 |");
   });
 
   it("renders the grid with no Cell/Meaning legend — the grid speaks for itself", () => {

@@ -1,5 +1,7 @@
 {
   "scripts": {
-    "guard:cell-grid": "echo cell-grid-guard"
+    "guard:cell-grid": "echo cell-grid-guard",
+    "guard:cell-grid-a": "echo cell-grid-guard-a",
+    "guard:cell-grid-b": "echo cell-grid-guard-b"
   }
 }

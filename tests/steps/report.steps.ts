@@ -788,6 +788,15 @@ Then(
       ["", "", "I/-", ""],
       "expected SCN-CEL-002 (demanded, no observation) to render Integration I/- and blank elsewhere"
     );
+    // TWO demanded static guards, both wired + discharged → the lint LEFT carries the
+    // demanded-obligation count (L2, @SCN-RPT-011): L2/2 — two lint QCRs on the row, two present
+    // guards. The ONLY >1-static-guard scenario, so the `L2` left-count path is exercised here;
+    // a one-guard row (SCN-CEL-001) stays the countless `L/…`.
+    assert.deepStrictEqual(
+      cellGridCells("SCN-CEL-005"),
+      ["L2/2", "", "", ""],
+      "expected SCN-CEL-005 (two demanded static guards, both present) to render Lint L2/2, blank elsewhere"
+    );
   }
 );
 

@@ -735,8 +735,9 @@ function columnHeader(col: EvidenceColumn): string {
 /**
  * The quality-check → single-letter obligation glyph, parallel to `columnHeader` — the LEFT side
  * of the two-sided cell (the demand). A single letter names WHICH check is obligated; the right
- * side (after the `/`) carries the OBSERVATION count (the credit). The `L2` left-count for lint is
- * a later slice — a lint obligation always shows the single `L` here.
+ * side (after the `/`) carries the OBSERVATION count (the credit). Lint's left MAY carry a count
+ * suffix (`L2`/`L3`) when a scenario demands more than one static guard — the demanded-obligation
+ * count; the runtime letters stay countless (one obligation per tier).
  */
 const QUALITY_CHECK_LETTER: Record<QualityCheck, string> = {
   lint: "L",
@@ -770,11 +771,14 @@ function evidenceCell(
   if (s.kind === "phantom-scenario" || s.kind === "suspense-scenario") return "—";
   if (col.kind === "lint") {
     // LEFT: a lint obligation is DECLARED iff a lint QualityCheckReconciliation exists on the row
-    // (a single `L` — the `L2` left-count is a later slice). RIGHT: the PRESENT-guard count — the
+    // (`L`; `L2`/`L3` when the row demands >1 static guard — the demanded-obligation count, one
+    // lint QCR per `@lint=<guard>` obligation). RIGHT: the PRESENT-guard count — the
     // static guards `satisfied` or watermelon. Lint's right stays this static-outcome derivation
     // (NOT `evidenceObservations`): lint carries no credit multiplicity, so the count is exact.
     const statics = s.qualityCheckReconciliations.filter((o) => o.qualityCheck === "lint");
-    const left = statics.length > 0 ? QUALITY_CHECK_LETTER.lint : "-";
+    const left = statics.length > 0
+      ? QUALITY_CHECK_LETTER.lint + (statics.length > 1 ? String(statics.length) : "")
+      : "-";
     const present = statics.filter(
       (o) => o.outcome === "satisfied" || o.outcome === "watermelon"
     ).length;
