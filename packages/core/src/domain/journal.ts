@@ -140,6 +140,41 @@ export function demandedStaticGuardsOf(scenarios: readonly Scenario[]): Set<stri
   return guards;
 }
 
+/**
+ * THE PENDING PARTITION, debit half (@SCN-PND-004, 3F-2204) — the evidence obligations a scenario
+ * actually DEMANDS: every non-pending one, in document order. These are the obligations that
+ * reconcile; the complement becomes one-sided Pending Items (`pendingItemsOf`, below).
+ *
+ * A pending obligation is EXCLUDED for the SAME reason, and by the same canon clause, as in
+ * `evidenceObligationPairsOf` and `demandedStaticGuardsOf`: a `<quality-check>pending` tag raises
+ * NO Evidence Obligation, so it demands nothing. This completes that family — the three now state
+ * one rule over three keyings (the whole obligations, the `(scnId, quality-check)` pairs, the
+ * static-guard handles) instead of two stating it and a third restating it inline in the fold.
+ *
+ * Lives here rather than in the reconciler: what a scenario DEMANDS is the model's rule, not the
+ * reconciler's private business (`entity-owns-its-behaviour`).
+ */
+export function demandedEvidenceObligationsOf(scenario: Scenario): EvidenceObligation[] {
+  return scenario.evidenceObligations.filter((obligation) => !obligation.pending);
+}
+
+/**
+ * THE PENDING PARTITION, deferred half (@SCN-PND-004, 3F-2204) — the one-sided Pending Items a
+ * scenario's deferred obligations raise, one per `<quality-check>pending` obligation, in document
+ * order. The exact complement of `demandedEvidenceObligationsOf`: together they partition the
+ * scenario's declared obligations, so nothing is dropped and nothing is counted twice.
+ *
+ * A Pending Item carries ONLY the quality-check owed — `undefined` for the scenario-scope deferral
+ * (@SCN-PND-022, a bare `@wip` declaring no obligations), which owes no specific check. It is
+ * partitioned off BEFORE the observation match, so it never becomes a Quality Check Reconciliation
+ * and never a reconciling item: "one-sided — nothing is reconciled".
+ */
+export function pendingItemsOf(scenario: Scenario): PendingItem[] {
+  return scenario.evidenceObligations
+    .filter((obligation) => obligation.pending)
+    .map((obligation) => ({ qualityCheck: obligation.qualityCheck }));
+}
+
 /** The pass/fail status an observed test result carries. */
 export type EvidenceStatus = "passed" | "failed";
 

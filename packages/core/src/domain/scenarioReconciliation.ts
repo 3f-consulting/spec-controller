@@ -12,6 +12,9 @@ import type {
   PendingItem,
 } from "./journal.js";
 import type { QualityCheckReconciliation } from "./qualityCheckReconciliation.js";
+// The degenerate item's CONSTRUCTION stays with the item concept; the rule for WHEN a row carries
+// it instead of its sub-rows is the ROW's, so it lives here (3F-2204).
+import { bothMissingReconciliation } from "./qualityCheckReconciliation.js";
 
 /**
  * The scenario-level VERDICT — its OWN type, distinct from Outcome
@@ -172,4 +175,35 @@ export function reconcilingItemsOf(
   evidenceObligations: QualityCheckReconciliation[]
 ): QualityCheckReconciliation[] {
   return evidenceObligations.filter((r) => r.outcome !== "satisfied");
+}
+
+/**
+ * A real scenario row's SUB-ROWS — the reconciled debits and the credit-side undemanded items
+ * together, degenerating to the ONE `both-missing` item when the row reconciled to nothing either
+ * way (@SCN-LDG-009, 3F-2204). The row-SHAPE rule, so it lives with the row.
+ *
+ * BOTH-MISSING is the NEITHER-side outcome: zero declared obligations AND zero undemanded credits.
+ * It is detected on ROWS-EMITTED — the concatenated set being empty — never on
+ * `evidenceObligations.length === 0`. That distinction is load-bearing: a zero-obligation scenario
+ * whose `@SCN` IS cited by a stray credit (@SCN-LDG-010, the twin) already produced an `undemanded`
+ * row above, so it falls through here and is never both-missing. Keying on the declaration count
+ * instead would post a spurious degenerate item beside a real one.
+ *
+ * THE PENDING CLAUSE (@SCN-PND-004) — the degenerate item fires only on zero rows AND zero Pending
+ * Items. A scenario whose ONLY obligation is pending reconciles to zero rows on both sides and is
+ * NOT both-missing: it is balanced-with-pending, the partition having made "nothing is reconciled"
+ * true by construction. Without the clause an only-pending scenario would post a spurious
+ * both-missing and red a run canon says is deferred, not broken. (A bare-empty scenario — no
+ * obligation, no pending, no citation — is still both-missing, which is the point of the rule.)
+ *
+ * This retires the no-evidence-declared warning (@SCN-WRN-001 Update): a zero-evidence scenario is
+ * an out-of-balance row now, not a separate authoring-quality axis excluded from the balance.
+ */
+export function qualityCheckReconciliationsOf(
+  reconciledEvidenceObligations: readonly QualityCheckReconciliation[],
+  undemandedItems: readonly QualityCheckReconciliation[],
+  pendingItems: readonly PendingItem[]
+): QualityCheckReconciliation[] {
+  const rows = [...reconciledEvidenceObligations, ...undemandedItems];
+  return rows.length === 0 && pendingItems.length === 0 ? [bothMissingReconciliation()] : rows;
 }

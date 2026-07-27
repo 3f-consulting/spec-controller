@@ -387,3 +387,154 @@ export function reconcileEvidenceObligation(
     ...(match ? { evidenceObservation: match } : {}),
   });
 }
+
+// ---------------------------------------------------------------------------
+// THE CREDIT-SIDE AND DEGENERATE ITEM RULES (3F-2204) — co-located here beside
+// `reconcileEvidenceObligation` because they answer the same question it does: what outcome does
+// an entry reconcile to, and which sides does that item carry? `reconcileEvidenceObligation`
+// answers it for a DEBIT matched against the observed evidence; these answer it for the entries
+// that match no obligation at all (the credit-side outcomes) and for the two degenerate rows
+// (no-scn-code, both-missing).
+//
+// They were inline `.map()` bodies in the `reconcile` fold. Posting-destination left in 3F-2202;
+// this is the sibling class — WHAT an entry reconciles to, as opposed to WHERE it lands. Both are
+// domain rules, so neither belongs in the orchestration. `reconcile` keeps the walk and builds the
+// rows; the outcomes are asked for.
+// ---------------------------------------------------------------------------
+
+/**
+ * The UNDEMANDED items on a real scenario's row (@SCN-LDG-008) — one per credit citing THIS
+ * scenario at a quality-check it never declared. The credit posts to a real row against NO
+ * evidence obligation, so the item is CREDIT-ONLY (no obligation is in scope).
+ *
+ * The pair-check is what distinguishes undemanded from a matched credit: a credit at a DECLARED
+ * `(scnId, quality-check)` pair reconciles satisfied/failing via `reconcileEvidenceObligation` and
+ * is NOT re-listed here. `evidenceObligationPairs` is the journal's rule (`evidenceObligationPairsOf`),
+ * built once and shared — which is what makes a credit citing a PENDING pair land here rather than
+ * nowhere (3F-1858: a pending obligation demands nothing, so such a credit is undemanded "exactly
+ * as when nothing was declared at all", and the run that used to read balanced over it now fails).
+ */
+export function undemandedReconciliationsOf(
+  scnId: string,
+  postedCredits: readonly RuntimeEvidenceObservation[],
+  evidenceObligationPairs: ReadonlySet<string>
+): QualityCheckReconciliation[] {
+  return postedCredits
+    .filter((o) => !evidenceObligationPairs.has(`${scnId} ${o.qualityCheck}`))
+    .map((o) =>
+      makeQualityCheckReconciliation({
+        qualityCheck: o.qualityCheck,
+        outcome: "undemanded" as const,
+        // The CREDIT side (@SCN-LDG-027): the citing observation this item reconciles.
+        evidenceObservation: o,
+        ...(o.locator !== undefined ? { locator: o.locator } : {}),
+      })
+    );
+}
+
+/**
+ * The items on a PHANTOM row (@SCN-LDG-006) — one `cites-unknown-scenario` per credit citing an
+ * `@SCN` no scenario declares, in citation order. CREDIT-ONLY: a phantom row is minted BY a credit,
+ * so nothing can ever have been demanded of it, and no obligation is in scope.
+ *
+ * The locator rides through (ruling Q5) — it is the reader's where-to-fix, and a phantom item has
+ * no obligation to point at instead.
+ */
+export function citesUnknownScenarioReconciliationsOf(
+  credits: readonly RuntimeEvidenceObservation[]
+): QualityCheckReconciliation[] {
+  return credits.map((o) =>
+    makeQualityCheckReconciliation({
+      qualityCheck: o.qualityCheck,
+      outcome: "cites-unknown-scenario",
+      evidenceObservation: o,
+      ...(o.locator !== undefined ? { locator: o.locator } : {}),
+    })
+  );
+}
+
+/**
+ * The items on the SUSPENSE row (@SCN-LDG-007) — every entry that names no scenario at all,
+ * in the ONE order canon fixes.
+ *
+ * THE ORDER IS THE RULE, not an accident of assembly. `broken` comes FIRST because a broken run's
+ * other suspense items are downstream noise: the reader must be sent to the harness before being
+ * asked to read anything the harness failed to produce.
+ *
+ * THE SPLIT (@SCN-LDG-017) is why `broken` and `cites-no-scenario` are separate arms rather than
+ * one map over "everything uncited". Both land here because they name no scenario, but they are
+ * distinguished by errored-vs-completed and their remedies differ: a `cites-no-scenario` test RAN
+ * and forgot its citation (add the `@SCN`); a `broken` suite never ran at all (fix the harness).
+ * Folding the second into the first would hide a collection failure behind the wrong cure.
+ *
+ * The three arms carry different payloads, each for a stated reason:
+ *   - `broken` carries its WHERE-to-fix (locator) and its WHAT-broke (the runner's message), and
+ *     NO `evidenceObservation` — a proof that never ran is not an observed piece of evidence.
+ *   - an uncited runtime credit carries the observation it reconciles, plus its locator.
+ *   - an undemanded static guard carries its handle and its observation; it has no locator (a
+ *     guard is read from config, not from a test file).
+ */
+export function suspenseReconciliationsOf(
+  brokenEvidence: readonly RuntimeEvidenceObservation[],
+  uncited: readonly RuntimeEvidenceObservation[],
+  undemandedGuards: readonly GuardEvidenceObservation[]
+): QualityCheckReconciliation[] {
+  return [
+    ...brokenEvidence.map((o) =>
+      makeQualityCheckReconciliation({
+        qualityCheck: o.qualityCheck,
+        outcome: "broken" as const,
+        ...(o.locator !== undefined ? { locator: o.locator } : {}),
+        ...(o.message !== undefined ? { message: o.message } : {}),
+      })
+    ),
+    ...uncited.map((o) =>
+      makeQualityCheckReconciliation({
+        qualityCheck: o.qualityCheck,
+        outcome: "cites-no-scenario" as const,
+        evidenceObservation: o,
+        ...(o.locator !== undefined ? { locator: o.locator } : {}),
+      })
+    ),
+    ...undemandedGuards.map((o) =>
+      makeQualityCheckReconciliation({
+        qualityCheck: "lint" as const,
+        staticGuard: o.staticGuard,
+        outcome: "cites-no-scenario" as const,
+        evidenceObservation: o,
+      })
+    ),
+  ];
+}
+
+/**
+ * The item on an UNTAGGED scenario's row (@SCN-LDG-021) — the DEBIT twin of `cites-no-scenario`
+ * (same missing link, opposite side; suspense stays credit-only).
+ *
+ * A scenario carrying no `@SCN` is REAL and ORDINARY — cucumber runs it — but its obligation has no
+ * CODE for an observation to link to, so it could reconcile NOTHING: not satisfied, not failing,
+ * not even `missing`, because an obligation never DECLARED cannot be ABSENT. Without this item it
+ * contributed nothing to the verdict and the run went green over work nothing proves.
+ *
+ * It carries NO `qualityCheck`: with no code, no observation can link at ANY tier, so the missing
+ * link is SCENARIO-scope, not tier-scope (the shape `both-missing` also uses). The synthesised
+ * scenario-scope obligation — an empty `{}` — lives ONLY on this item; the row's own
+ * `evidenceObligations` stays empty (canon citation: double-entry-manifesto line 39, Obligation
+ * Exists / Observation None).
+ */
+export function noScnCodeReconciliations(): QualityCheckReconciliation[] {
+  return [makeQualityCheckReconciliation({ outcome: "no-scn-code", evidenceObligation: {} })];
+}
+
+/**
+ * The degenerate BOTH-MISSING item (@SCN-LDG-009) — the NEITHER-side outcome, blank on both sides:
+ * no `qualityCheck` (it is neither a debit obligation nor a credit observation), no carried entry.
+ * A scenario that reconciled to zero rows on BOTH sides posts exactly one of these, and is
+ * out-of-balance through it.
+ *
+ * Construction lives here with the item; the rule for WHEN a row carries it instead of its sub-rows
+ * is the ROW's, and lives on `scenarioReconciliation` (`qualityCheckReconciliationsOf`).
+ */
+export function bothMissingReconciliation(): QualityCheckReconciliation {
+  return makeQualityCheckReconciliation({ outcome: "both-missing" });
+}
