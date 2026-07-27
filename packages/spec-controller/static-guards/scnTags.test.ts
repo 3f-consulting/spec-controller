@@ -27,7 +27,7 @@ Feature: a compliant fixture
     Given the target source
 
   @lint=lint:example @SCN-TGT-003
-  Scenario: a lint-declared scenario (the =<guard> form counts)
+  Scenario: a lint-tiered scenario (the =<guard> form counts)
     Given the target source
 
   @wip @SCN-TGT-004
@@ -70,7 +70,7 @@ Feature: a guard self-declaration
     expect(result.violations).toEqual([]);
   });
 
-  it("ignores a bare Scenario with no @SCN (not a declared scenario)", () => {
+  it("ignores a bare Scenario with no @SCN (an untagged scenario)", () => {
     const source = `@TGT
 Feature: a fixture with an undeclared scenario
 

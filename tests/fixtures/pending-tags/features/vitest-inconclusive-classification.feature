@@ -1,7 +1,7 @@
 @PND
 Feature: A planted declared-side fixture for the vitest reader's three-way classification (@SCN-PND-015)
 
-  A single declared scenario carrying a @unit obligation, cited by an UNREGISTERED SCN code
+  A single scenario carrying a @unit obligation, cited by an UNREGISTERED SCN code
   (SCN-PDV-001 — the distinct fixture convention, never a real scanned scenario per
   evidence-manifesto §11B). The OBSERVED side — the vitest JSON report whose assertion status
   varies per Examples row — is built in the step and fed to the REAL vitest reader (§11A), so the

@@ -6,7 +6,7 @@
  * silent zero-evidence all-red report a mistyped path used to produce.
  * @SCN-CLI-003 — the positive boundary that keeps CLI-002 honest: an OMITTED optional
  * flag (here --cucumber) is not an error — the binary exits zero and reconciles the
- * declared scenarios against whatever evidence WAS supplied.
+ * scenarios against whatever evidence WAS supplied.
  *
  * Bidirectional evidence: the Given/When/Then carry the SCN-CLI-001 / SCN-CLI-002 /
  * SCN-CLI-003 ids, matching features/cli-balance.feature.
@@ -29,7 +29,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { cliRegistry } from "../../packages/spec-controller/src/cli-registry.js";
 
-/** The reconcilable fixture target — declared scenarios + a Vitest report. */
+/** The reconcilable fixture target — scenarios + a Vitest report. */
 const FIXTURE = {
   features: "tests/fixtures/evidence-observation/features",
   vitest: "tests/fixtures/evidence-observation/vitest.json",
@@ -51,7 +51,7 @@ const BALANCED = {
 };
 
 /**
- * The PENDING-ONLY fixture target (@SCN-CLI-010) — two declared scenarios whose SOLE
+ * The PENDING-ONLY fixture target (@SCN-CLI-010) — two scenarios whose SOLE
  * obligation is a deferred `<quality-check>pending` one, so each partitions off to a
  * one-sided Pending Item (run-neutral by default — slice 2 / @SCN-PND-008), leaving ZERO
  * reconciled rows; no observation, no phantom, no uncited credit, and a GUARDLESS
@@ -79,7 +79,7 @@ const BROKEN = {
 
 /**
  * The SUSPENSE-ONLY fixture target (@SCN-CLI-013) — an adopter's repository `17-36-50Z` shape, the run that
- * started 3F-1703. EVERY DECLARED SCENARIO BALANCES (both @unit obligations satisfied by the
+ * started 3F-1703. EVERY SCENARIO BALANCES (both @unit obligations satisfied by the
  * vitest report; no phantom; no collection failure, so the run is SOUND and exit 4 never
  * pre-empts). The ONE reconciling item in the whole run sits on the SUSPENSE row: the target's
  * CI runs `lint:uncited` and no scenario declares `@lint=lint:uncited`, so the guard
@@ -122,7 +122,7 @@ function spawnBalance(args: string[]): SpawnSyncReturns<string> {
 }
 
 // @SCN-CLI-001
-Given("a target with declared scenarios and a Vitest report of what ran", function () {
+Given("a target with scenarios and a Vitest report of what ran", function () {
   const root = process.cwd();
   // [3F-1460] fix-to-canon (3F-1414): repointed to the ALL-BALANCED fixture so this clean
   // standalone run genuinely exits 0 under the new gate (was the deliberately out-of-balance
@@ -193,12 +193,12 @@ Then("nothing is reconciled", function () {
 });
 
 // @SCN-CLI-003
-Given("a target with declared scenarios and a Vitest report", function () {
+Given("a target with scenarios and a Vitest report", function () {
   const root = process.cwd();
-  // A real reconcilable target: declared scenarios (--features) + one evidence report
+  // A real reconcilable target: scenarios (--features) + one evidence report
   // (--vitest). --cucumber is DELIBERATELY omitted — the positive boundary under test.
   // [3F-1460] fix-to-canon (3F-1414): repointed to the ALL-BALANCED fixture so omitting
-  // --cucumber stays a clean exit-0 run under the gate (both declared scenarios are @unit,
+  // --cucumber stays a clean exit-0 run under the gate (both scenarios are @unit,
   // satisfied by --vitest; guardless --package-json so no suspense row). The omitted flag
   // is still not an error — the point of this scenario.
   assert.ok(existsSync(join(root, BALANCED.features)), `missing fixture features: ${BALANCED.features}`);
@@ -217,10 +217,10 @@ When("{string} is invoked with no --cucumber flag through the CLI binary", funct
 });
 
 // @SCN-CLI-003
-Then("it reconciles the declared scenarios against the supplied evidence", function () {
+Then("it reconciles the scenarios against the supplied evidence", function () {
   // Exit-zero alone isn't enough — the reconcile must actually have RUN against the
   // supplied evidence. The Evidence Reconciliation renders to stdout and its Summary
-  // counts the fixture's two declared scenarios (SCN-TGT-001 / SCN-TGT-002), proof the
+  // counts the fixture's two scenarios (SCN-TGT-001 / SCN-TGT-002), proof the
   // omitted --cucumber did not short-circuit the pipeline. (Subject label renamed by
   // 3F-1726; declared-only fixture, so the COUNT is unchanged — the same fact.)
   assert.match(cliResult.stdout, /^# Evidence Reconciliation/m);
@@ -244,7 +244,7 @@ Given("a target that reconciles out-of-balance", function () {
 Given("a target that reconciles all-balanced", function () {
   const root = process.cwd();
   // The POSITIVE BOUNDARY (@SCN-CLI-005) that keeps CLI-004 honest: the ALL-BALANCED
-  // fixture — two @unit declared scenarios BOTH satisfied by --vitest, no phantom, no
+  // fixture — two @unit scenarios BOTH satisfied by --vitest, no phantom, no
   // uncited credit, and a GUARDLESS --package-json so no suspense-row watermelon. The
   // WHOLE reconciliation is balanced, so the new fail-on-out-of-balance gate must NOT
   // over-fire: it leaves process.exitCode at its default 0. Reuses the shared When and
@@ -258,7 +258,7 @@ Given("a target that reconciles all-balanced", function () {
 // @SCN-CLI-012
 Given("a target whose vitest report carries a collection-failed suite", function () {
   const root = process.cwd();
-  // The BROKEN fixture (3F-1642): the declared scenario's proving suite FAILED TO COLLECT —
+  // The BROKEN fixture (3F-1642): the scenario's proving suite FAILED TO COLLECT —
   // the vitest report carries the file with `status: "failed"` and ZERO assertionResults, so
   // the reader posts a `broken` suspense item and the scenario itself reads `missing`. The run
   // is therefore BOTH out-of-balance (the broken item is a suspense-row reconciling item) and
@@ -281,7 +281,7 @@ Given("a target whose vitest report carries a collection-failed suite", function
 // @SCN-CLI-010
 Given("a target whose only exception is Pending Items", function () {
   const root = process.cwd();
-  // The PENDING-ONLY fixture: every declared scenario's sole obligation is a deferred
+  // The PENDING-ONLY fixture: every scenario's sole obligation is a deferred
   // `<quality-check>pending` one, so each partitions off to a one-sided Pending Item
   // (run-neutral by default — slice 2 / @SCN-PND-008), leaving ZERO reconciled rows. No
   // observation, no phantom, no uncited credit, and a GUARDLESS --package-json so no
@@ -506,7 +506,7 @@ Then("nothing is reconciled to stdout", function () {
 // @SCN-CLI-013
 Given("a target whose only out-of-balance row is the suspense reconciliation", function () {
   const root = process.cwd();
-  // The SUSPENSE-ONLY fixture (an adopter's repository 17-36-50Z shape): every DECLARED scenario balances, and
+  // The SUSPENSE-ONLY fixture (an adopter's repository 17-36-50Z shape): every scenario balances, and
   // the run's ONLY reconciling item is the uncited static-guard's uncited credit on the
   // `(no scenario)` suspense row. --ci and --package-json are BOTH required: a guard posts its
   // uncited credit only when it is RUNNING (a package.json script that a CI step invokes).

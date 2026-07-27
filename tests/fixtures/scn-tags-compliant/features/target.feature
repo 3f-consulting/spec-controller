@@ -17,7 +17,7 @@ Feature: a fixture target whose scenarios each declare a tier or are @wip
       Given the target source
 
     @lint=lint:example @SCN-TGT-003
-    Scenario: a lint-declared scenario (the =<guard> form counts)
+    Scenario: a lint-tiered scenario (the =<guard> form counts)
       Given the target source
 
     @wip @SCN-TGT-004

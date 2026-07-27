@@ -1,7 +1,7 @@
 @CLI
 Feature: spec-controller balance runs standalone
 
-  The `spec-controller balance` command reconciles a target's declared scenarios
+  The `spec-controller balance` command reconciles a target's scenarios
   against its observed evidence and emits the Evidence Reconciliation. It runs on
   the public core plus the application layer alone — no private engine, no
   `analyse` / `migrate` — so the open-source tool is complete and useful on its
@@ -10,7 +10,7 @@ Feature: spec-controller balance runs standalone
 
   @SCN-CLI-001 @e2e
   Scenario: balance reconciles a target and emits the Evidence Reconciliation to stdout
-    Given a target with declared scenarios and a Vitest report of what ran
+    Given a target with scenarios and a Vitest report of what ran
     When "spec-controller balance" is invoked over that target through the CLI binary
     Then the command exits zero
     And it prints the Evidence Reconciliation to stdout
@@ -42,10 +42,10 @@ Feature: spec-controller balance runs standalone
 
     @SCN-CLI-003 @unit @e2e
     Scenario: an omitted optional input flag is not an error
-      Given a target with declared scenarios and a Vitest report
+      Given a target with scenarios and a Vitest report
       When "spec-controller balance" is invoked with no --cucumber flag through the CLI binary
       Then the command exits zero
-      And it reconciles the declared scenarios against the supplied evidence
+      And it reconciles the scenarios against the supplied evidence
 
   Rule: balance's exit code reflects the reconciliation verdict.
 
@@ -55,7 +55,7 @@ Feature: spec-controller balance runs standalone
     derivation over the WHOLE reconciliation: out-of-balance iff ANY reconciling item
     exists anywhere — a scenario's out-of-balance items AND the suspense-row items
     (a static-guard watermelon, an undemanded credit, a phantom scenario) — NOT a scan
-    of declared-scenario verdicts alone, which would let a watermelon-only run (no
+    of scenario verdicts alone, which would let a watermelon-only run (no
     out-of-balance scenario) exit `0`, the false pass this gate must never give.
 
     @SCN-CLI-004 @unit @e2e

@@ -1,7 +1,7 @@
 @PDF
 Feature: A planted declared-side fixture for the deferral-overrides-observation case (@SCN-PND-019)
 
-  Two declared scenarios, each carrying a RECOGNISED community deferral tag over a single
+  Two scenarios, each carrying a RECOGNISED community deferral tag over a single
   `@integration` obligation, cited by UNREGISTERED SCN codes (SCN-PDF-001/002 — the distinct
   fixture convention, never a real @skip / @wip in the scanned features/ corpus per
   evidence-manifesto §11B). The declared side defers the integration obligation at parse

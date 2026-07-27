@@ -2,7 +2,7 @@
 Feature: an unsound reconciliation fixture target
 
   A FIXTURE feature (NOT under features/) standing in for a target repo whose proving
-  suite FAILED TO COLLECT — an adopter's repository dogfood fault (3F-1642). The declared scenario's
+  suite FAILED TO COLLECT — an adopter's repository dogfood fault (3F-1642). The scenario's
   test exists and cites it correctly, but the file errored before it named a single
   test (a missing dependency), so the vitest report carries the file with
   `status: "failed"` and ZERO assertionResults. The reader posts a `broken` suspense

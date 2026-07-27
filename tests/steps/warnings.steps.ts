@@ -66,7 +66,7 @@ function ledgerRowCells(scnId: string): { verdict: string; items: string } {
 
 // @SCN-WRN-001
 Given(
-  "a declared scenario {string} with no evidence-obligation tags",
+  "a scenario {string} with no evidence-obligation tags",
   function (scnId: string) {
     // Build the declared side through the REAL declared reader from a feature
     // snippet whose ONLY tag is the @SCN id — no @unit/@integration/@e2e/
@@ -87,7 +87,7 @@ Given(
 );
 
 // @SCN-WRN-001
-When("the reconciler runs over the declared scenarios", function () {
+When("the reconciler runs over the scenarios", function () {
   markdown = renderMarkdown(reconcile(scenarios, evidenceObservations), CTX);
 });
 

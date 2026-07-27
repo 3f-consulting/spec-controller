@@ -1,7 +1,7 @@
 @WRN
 Feature: A scenario declaring no evidence obligations is both-missing
 
-  A declared scenario with ZERO evidence-obligation tags (none of unit, integration,
+  A scenario with ZERO evidence-obligation tags (none of unit, integration,
   e2e, performance or lint), cited by NO evidence observation, reconciles to zero rows on BOTH
   sides — nothing was required and nothing was observed. The bidirectional reconciler
   posts it as ONE degenerate Quality Check Reconciliation, outcome
@@ -19,7 +19,7 @@ Feature: A scenario declaring no evidence obligations is both-missing
 
     @unit @integration @SCN-WRN-001
     Scenario: a scenario declaring no evidence obligations is reported as a both-missing reconciliation, out of balance
-      Given a declared scenario "SCN-WRN-001" with no evidence-obligation tags
-      When the reconciler runs over the declared scenarios
+      Given a scenario "SCN-WRN-001" with no evidence-obligation tags
+      When the reconciler runs over the scenarios
       Then the ledger reports "SCN-WRN-001" as a both-missing reconciliation, out of balance
       And the report carries no warnings section

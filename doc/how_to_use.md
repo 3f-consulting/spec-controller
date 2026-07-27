@@ -56,7 +56,7 @@ spec-controller balance --features ./features \
 
 | Flag | Purpose |
 |---|---|
-| `--features <dir>` | Directory of Gherkin `.feature` files — the declared scenarios. |
+| `--features <dir>` | Directory of Gherkin `.feature` files — the scenarios. |
 | `--vitest <report.json>` | A Vitest JSON report — runtime test evidence. |
 | `--cucumber <report.json>` | A Cucumber JSON report — runtime test evidence. |
 | `--ci <ci.yml>` | Your CI workflow — used to check whether `@lint` static guards actually run over the real source. |

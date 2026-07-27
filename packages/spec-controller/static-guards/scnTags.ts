@@ -109,7 +109,7 @@ export function lintScnTags(features: readonly FeatureFileSource[]): ScnTagsResu
   for (const feature of features) {
     for (const scenario of parseScenarios(feature.source)) {
       const scnId = scenario.tags.find((t) => SCN_PATTERN.test(t));
-      if (scnId === undefined) continue; // not a declared scenario — not checked
+      if (scnId === undefined) continue; // no @SCN tag — not checked
       if (scenario.tags.includes("wip")) continue; // exempt
       if (scenario.tags.some(isTierTag)) continue; // declares a tier — satisfied
       violations.push({

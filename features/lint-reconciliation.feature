@@ -71,7 +71,7 @@ Feature: Reconcile @lint static-guard evidence against CI wiring over the real s
   Rule: a scenario requiring both a @unit test and a @lint guard reconciles each kind independently
 
     The kind-axis analogue of LDG-004 — the proof that `kind` is a real
-    SECOND AXIS orthogonal to level, not just an asserted one. A declared scenario
+    SECOND AXIS orthogonal to level, not just an asserted one. A scenario
     can carry BOTH a runtime evidence obligation (@unit) AND a static evidence obligation
     (@lint=<guard>); the reconciler reconciles each KIND independently, keyed by
     (kind, [level]). With the unit result green but the guard NOT wired into CI, the
@@ -85,7 +85,7 @@ Feature: Reconcile @lint static-guard evidence against CI wiring over the real s
 
     @unit @integration @lint=lint:unwired-guard @SCN-LNT-004
     Scenario: a scenario requiring both a unit test and an unwired guard reports each kind independently
-      Given a declared scenario "SCN-LNT-004" requiring both a @unit runtime test and the static guard "lint:unwired-guard"
+      Given a scenario "SCN-LNT-004" requiring both a @unit runtime test and the static guard "lint:unwired-guard"
       And the unit result for "SCN-LNT-004" is green but the planted CI does not run the guard "lint:unwired-guard"
       When the lint reconciler runs
       Then the ledger reports the lint scenario "SCN-LNT-004" as out-of-balance, the runtime evidence obligation balanced and omitted, and the static guard "lint:unwired-guard" carried as a watermelon reconciling item

@@ -120,7 +120,7 @@ Then(
  * The Evidence Reconciliation is all Scenario Reconciliations assembled and the summary is
  * its totals (the maintainers' private notes); phantom / suspense reconciliations are
  * ALWAYS out-of-balance, so they count into the total and into out-of-balance. The fixture
- * corpus reconciles to 4 rows — 2 balanced declared scenarios, 1 phantom, 1 suspense — and
+ * corpus reconciles to 4 rows — 2 balanced scenarios, 1 phantom, 1 suspense — and
  * the run exits 1. Under the declared-only tally the summary read `total 2, balanced 2,
  * outOfBalance 0`: a FAILING run rendering a headline that reads as a clean pass, the exact
  * divergence 3F-1703 found in an adopter's repository dogfood.
@@ -360,7 +360,7 @@ Then(
       lint?: { satisfied: number; total: number };
     };
     assert.ok(summary, `expected a summary section; got keys: ${Object.keys(rmd005Json).join(", ")}`);
-    // Test-volume totals — the evidence observation fixture: 5 raw = 1 on a declared scenario + 2
+    // Test-volume totals — the evidence observation fixture: 5 raw = 1 on a scenario + 2
     // on phantom scenarios + 2 on the suspense scenario (onScenario EXCLUDES onPhantomScenario).
     assert.ok(summary.testVolume, `expected summary.testVolume; got summary keys: ${Object.keys(summary).join(", ")}`);
     assert.deepEqual(summary.testVolume, { totalEvidenceObservations: 5, onScenario: 1, onPhantomScenario: 2, onSuspenseScenario: 2 });

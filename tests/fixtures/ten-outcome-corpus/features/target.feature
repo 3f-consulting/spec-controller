@@ -39,7 +39,7 @@ Feature: ten-outcome corpus — a fixture shaped so the REAL reconcile emits all
     Then the unit credit reconciles undemanded
 
   @SCN-TOC-006
-  Scenario: both-missing — a declared scenario with no obligation and no citation
+  Scenario: both-missing — a scenario with no obligation and no citation
     Given a scenario declaring no obligation
     When nothing cites it
     Then it reconciles both-missing

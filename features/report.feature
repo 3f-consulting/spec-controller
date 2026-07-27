@@ -183,14 +183,14 @@ Feature: The report renders the ledger as sectioned facts
     section DISSOLVED by the reformat, Q1a). The report no longer carries a
     dedicated "## Declared corpus" section. The declared count is NOT lost: it is
     recoverable as the ledger scenario-count ("- N Scenario Reconciliation(s): …") PLUS
-    the "## Warnings" count — every declared scenario surfaces on exactly one axis (a
+    the "## Warnings" count — every scenario surfaces on exactly one axis (a
     balance verdict in the ledger or a no-evidence-declared warning). A pure markdown-only
     derive over the balance (project design §3), proven in isolation by Vitest. RPT-008's
     excluded-occurrence bullet relocates into the ledger summary.
 
     @unit @SCN-RPT-007
     Scenario: the declared corpus census is recoverable from the ledger summary and warnings
-      Given a reconciliation balance carrying declared scenarios alongside no-evidence-declared warnings
+      Given a reconciliation balance carrying scenarios alongside no-evidence-declared warnings
       When the markdown report is rendered
       Then it carries no standalone "## Declared corpus" section, and the declared census is recoverable as the ledger scenario-count plus the warnings count
 
@@ -199,7 +199,7 @@ Feature: The report renders the ledger as sectioned facts
     The corpus is reconciled against every raw mention (@SCN-RPT-008,
     slice 5). The report outcomes "N @SCN ids seen in non-tag context, excluded" — the
     delta between raw @SCN-FFF-NNN occurrences in the source (prose, comments, step
-    text) and the ids actually read as declared scenarios — on BOTH surfaces (the
+    text) and the ids actually read as scenarios — on BOTH surfaces (the
     markdown ledger-summary bullet, relocated there by the reformat, + a JSON
     evidenceObligations object). NEW corpus metadata, NOT
     derivable from Ledger, so it lands on both surfaces (project design §1, §3 —
@@ -214,7 +214,7 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @integration @SCN-RPT-008
     Scenario: the report outcomes the excluded non-tag @SCN occurrences on both surfaces
-      Given a reconciliation run whose source mentions @SCN ids in non-tag context beyond the declared scenarios
+      Given a reconciliation run whose source mentions @SCN ids in non-tag context beyond the scenarios
       When the run writes its markdown and JSON artifacts
       Then the persisted spec-reconciliation.md outcomes "N @SCN ids seen in non-tag context, excluded" and the persisted spec-reconciliation.json carries the same excluded count on a evidenceObligations object
 

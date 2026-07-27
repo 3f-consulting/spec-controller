@@ -20,7 +20,7 @@ Feature: Ledger over declared-vs-observed evidence
 
     @unit @integration @SCN-LDG-001
     Scenario: a scenario whose required evidence exists and passes is reported as balanced
-      Given a declared scenario "SCN-LDG-001" requiring unit-level evidence
+      Given a scenario "SCN-LDG-001" requiring unit-level evidence
       And a passing unit-level result for "SCN-LDG-001"
       When the reconciler runs
       Then the ledger reports "SCN-LDG-001" as balanced with no reconciling items
@@ -29,7 +29,7 @@ Feature: Ledger over declared-vs-observed evidence
 
     @unit @integration @SCN-LDG-002
     Scenario: a scenario whose required test exists but fails is reported as out of balance with a failing reconciling item
-      Given a declared scenario "SCN-LDG-002" requiring unit-level evidence
+      Given a scenario "SCN-LDG-002" requiring unit-level evidence
       And a failing unit-level result for "SCN-LDG-002"
       When the reconciler runs
       Then the ledger reports "SCN-LDG-002" as out of balance
@@ -39,7 +39,7 @@ Feature: Ledger over declared-vs-observed evidence
 
     @unit @integration @SCN-LDG-003
     Scenario: a scenario that requires a level with no matching result is reported as out of balance with a missing reconciling item
-      Given a declared scenario "SCN-LDG-003" requiring integration-level evidence
+      Given a scenario "SCN-LDG-003" requiring integration-level evidence
       And no result matches "SCN-LDG-003"
       When the reconciler runs
       Then the ledger reports "SCN-LDG-003" as out of balance
@@ -49,7 +49,7 @@ Feature: Ledger over declared-vs-observed evidence
 
     @unit @integration @SCN-LDG-005
     Scenario: an out-of-balance scenario lists its reconciling item rather than collapsing to one scenario outcome
-      Given a declared scenario "SCN-LDG-005" requiring unit-level evidence
+      Given a scenario "SCN-LDG-005" requiring unit-level evidence
       And a failing unit-level result for "SCN-LDG-005"
       When the reconciler runs
       Then the ledger reports "SCN-LDG-005" as out of balance
@@ -64,7 +64,7 @@ Feature: Ledger over declared-vs-observed evidence
     # no ranking, exercising the (kind, level) multi-level keying.
     @unit @integration @SCN-LDG-004
     Scenario: a multi-evidence obligation scenario failing one level and missing another lists both reconciling items
-      Given a declared scenario "SCN-LDG-004" requiring both unit-level and integration-level evidence
+      Given a scenario "SCN-LDG-004" requiring both unit-level and integration-level evidence
       And a failing unit-level result for "SCN-LDG-004"
       And no integration-level result for "SCN-LDG-004"
       When the reconciler runs
@@ -84,7 +84,7 @@ Feature: Ledger over declared-vs-observed evidence
 
     @unit @integration @SCN-LDG-006
     Scenario: a credit citing an undeclared scenario is reported as a phantom-scenario reconciliation, out of balance
-      Given a declared scenario "SCN-LDG-006" requiring unit-level evidence
+      Given a scenario "SCN-LDG-006" requiring unit-level evidence
       And a passing unit-level result for an undeclared scenario "SCN-PHANTOM-999"
       When the reconciler runs
       Then the ledger reports "SCN-PHANTOM-999" as a phantom-scenario reconciliation with a cites-unknown-scenario item
@@ -105,7 +105,7 @@ Feature: Ledger over declared-vs-observed evidence
 
     @unit @integration @SCN-LDG-007
     Scenario: a credit citing no scenario is reported as a suspense-scenario reconciliation, out of balance
-      Given a declared scenario "SCN-LDG-007" requiring unit-level evidence
+      Given a scenario "SCN-LDG-007" requiring unit-level evidence
       And a passing unit-level result carrying no scenario id
       When the reconciler runs
       Then the ledger reports a suspense-scenario reconciliation "(no scenario)" with a cites-no-scenario item
@@ -127,27 +127,27 @@ Feature: Ledger over declared-vs-observed evidence
 
     @unit @integration @SCN-LDG-008
     Scenario: a credit at an undeclared quality-check on a real scenario is reported as undemanded
-      Given a declared scenario "SCN-LDG-008" requiring unit-level evidence
+      Given a scenario "SCN-LDG-008" requiring unit-level evidence
       And a passing integration-level result for "SCN-LDG-008"
       When the reconciler runs
       Then the ledger reports "SCN-LDG-008" with an undemanded item at integration
 
-    # The negative twin (@SCN-LDG-010): a ZERO-evidence obligation declared scenario whose @SCN IS cited
+    # The negative twin (@SCN-LDG-010): a ZERO-evidence obligation scenario whose @SCN IS cited
     # by a stray credit. It has an evidence observation at an undeclared quality-check, so it is undemanded
     # — NOT both-missing. This pins the general case and the both-missing boundary: detection keys
     # on rows-emitted, not on qualityCheckReconciliations.length === 0 (both-missing itself lands in LDG-009).
     @unit @integration @SCN-LDG-010
     Scenario: a zero-evidence obligation scenario cited by a stray credit is undemanded, not both-missing
-      Given a zero-evidence obligation declared scenario "SCN-LDG-010"
+      Given a zero-evidence obligation scenario "SCN-LDG-010"
       And a passing unit-level result for "SCN-LDG-010"
       When the reconciler runs
       Then the ledger reports "SCN-LDG-010" with an undemanded item at unit
       And "SCN-LDG-010" is not reported as both-missing
 
-  Rule: a declared scenario with zero rows on both sides is both-missing
+  Rule: a scenario with zero rows on both sides is both-missing
 
     The neither-side reconciling item (@SCN-LDG-009) — the last shape the
-    bidirectional reconciler emits. A declared scenario that reconciles to ZERO rows on
+    bidirectional reconciler emits. A scenario that reconciles to ZERO rows on
     BOTH sides — no declared evidence obligation AND no citing evidence observation — has nothing
     to balance in either direction. It posts one degenerate Quality Check Reconciliation,
     blank on both sides, outcome both-missing (label: "Evidence Obligation and
@@ -158,8 +158,8 @@ Feature: Ledger over declared-vs-observed evidence
     JSON key, and ScenarioWarning type dissolve; the scenario's new home is this row.
 
     @unit @integration @SCN-LDG-009
-    Scenario: a declared scenario with zero evidence obligations and zero evidence observations is reported as both-missing, out of balance
-      Given a zero-evidence obligation declared scenario "SCN-LDG-009"
+    Scenario: a scenario with zero evidence obligations and zero evidence observations is reported as both-missing, out of balance
+      Given a zero-evidence obligation scenario "SCN-LDG-009"
       And no results are observed
       When the reconciler runs
       Then the ledger reports "SCN-LDG-009" with a both-missing item
@@ -337,7 +337,7 @@ Feature: Ledger over declared-vs-observed evidence
 
     @unit @integration @SCN-LDG-017
     Scenario: a collection-failed vitest file posts a broken suspense item naming the file and its error, while the scenario it would have proven still reads missing
-      Given a declared scenario whose only proving test lived in a vitest file that failed to collect
+      Given a scenario whose only proving test lived in a vitest file that failed to collect
       And a vitest report whose file carries a collection failure and zero assertions
       When the ledger reconciles the target
       Then the suspense scenario carries a broken reconciling item naming the collection-failed file and its error
@@ -346,7 +346,7 @@ Feature: Ledger over declared-vs-observed evidence
 
     @unit @integration @SCN-LDG-019
     Scenario: an ambiguous cucumber step posts a broken suspense item naming the step, while the scenario it would have proven still reads missing
-      Given a declared scenario whose only proving step is matched by two step definitions
+      Given a scenario whose only proving step is matched by two step definitions
       And a cucumber report whose step for that scenario is ambiguous
       When the ledger reconciles the target
       Then the suspense scenario carries a broken reconciling item naming the ambiguous step and its feature file
@@ -557,7 +557,7 @@ Feature: Ledger over declared-vs-observed evidence
   Rule: a Quality Check Reconciliation carries the evidence obligation it reconciles (the debit side)
     @unit @integration @SCN-LDG-026
     Scenario: a missing quality-check reconciliation carries its evidence obligation and no observation
-      Given a declared scenario "SCN-LDG-026" requiring @unit with no matching evidence observation
+      Given a scenario "SCN-LDG-026" requiring @unit with no matching evidence observation
       When the ledger reconciles that run
       Then its unit Quality Check Reconciliation has outcome "missing"
       And it carries the evidence obligation it reconciles (the debit side)
@@ -575,7 +575,7 @@ Feature: Ledger over declared-vs-observed evidence
   Rule: a Quality Check Reconciliation carries the evidence observation it reconciles (the credit side)
     @unit @integration @SCN-LDG-027
     Scenario: an undemanded quality-check reconciliation carries its evidence observation and no obligation
-      Given a declared scenario "SCN-LDG-027" cited by a credit at a quality-check it never demanded
+      Given a scenario "SCN-LDG-027" cited by a credit at a quality-check it never demanded
       When the ledger reconciles that run
       Then its Quality Check Reconciliation has outcome "undemanded"
       And it carries the evidence observation it reconciles (the credit side)
@@ -591,7 +591,7 @@ Feature: Ledger over declared-vs-observed evidence
 
     @unit @integration @SCN-LDG-028
     Scenario: a lint missing quality-check reconciliation carries its obligation and no observation
-      Given a declared scenario "SCN-LDG-028" requiring a @lint guard absent from both package.json and CI
+      Given a scenario "SCN-LDG-028" requiring a @lint guard absent from both package.json and CI
       When the ledger reconciles that run
       Then its lint Quality Check Reconciliation has outcome "missing"
       And it carries the evidence obligation it reconciles (the debit side)

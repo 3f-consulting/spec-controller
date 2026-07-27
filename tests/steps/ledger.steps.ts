@@ -90,7 +90,7 @@ function rowCells(scnId: string): { verdict: string; items: string } {
 }
 
 // @SCN-LDG-001
-Given("a declared scenario {string} requiring unit-level evidence", function (scnId: string) {
+Given("a scenario {string} requiring unit-level evidence", function (scnId: string) {
   // Build the declared side from a real feature snippet through the declared
   // reader, so the @integration arm exercises the parse → declared seam (not a
   // hand-seeded Scenario the reader never produced).
@@ -107,7 +107,7 @@ Given("a declared scenario {string} requiring unit-level evidence", function (sc
 
 // @SCN-LDG-003
 Given(
-  "a declared scenario {string} requiring integration-level evidence",
+  "a scenario {string} requiring integration-level evidence",
   function (scnId: string) {
     // Build the declared side from a real feature snippet through the declared
     // reader, so the @integration arm exercises the parse → declared seam.
@@ -125,7 +125,7 @@ Given(
 
 // @SCN-LDG-004
 Given(
-  "a declared scenario {string} requiring both unit-level and integration-level evidence",
+  "a scenario {string} requiring both unit-level and integration-level evidence",
   function (scnId: string) {
     // Build the declared side from a real feature snippet through the declared
     // reader, so the @integration arm exercises the parse → declared seam. The two
@@ -144,8 +144,8 @@ Given(
 );
 
 // @SCN-LDG-010
-Given("a zero-evidence obligation declared scenario {string}", function (scnId: string) {
-  // A declared scenario carrying ONLY its @SCN tag — no @unit/@integration/@lint level tag —
+Given("a zero-evidence obligation scenario {string}", function (scnId: string) {
+  // A scenario carrying ONLY its @SCN tag — no @unit/@integration/@lint level tag —
   // so it declares ZERO evidence obligations. Built through the declared reader so the
   // @integration arm exercises the parse → declared seam (a real zero-evidence obligation scenario,
   // not a hand-seeded empty Scenario). Its @SCN is nonetheless cited by a stray
@@ -168,7 +168,7 @@ Given("a passing unit-level result for {string}", function (scnId: string) {
 
 // @SCN-LDG-008
 Given("a passing integration-level result for {string}", function (scnId: string) {
-  // A passing integration credit citing a REAL declared scenario — but at the integration
+  // A passing integration credit citing a REAL scenario — but at the integration
   // quality-check, which the scenario did NOT declare (it declares unit). It posts to a real
   // account against no evidence obligation → undemanded. Carries a locator (the where-to-fix, ruling Q5).
   evidenceObservations = [
@@ -195,7 +195,7 @@ Given("no integration-level result for {string}", function (scnId: string) {
 // @SCN-LDG-009
 Given("no results are observed", function () {
   // The both-missing case: NO evidence observation cites this scenario — the observed
-  // side is entirely empty, so a zero-evidence obligation declared scenario reconciles to zero rows
+  // side is entirely empty, so a zero-evidence obligation scenario reconciles to zero rows
   // on BOTH sides. Distinct phrasing from "no result matches {string}" (which seeds a
   // stray credit for a DIFFERENT scenario) — here nothing is observed at all.
   evidenceObservations = [];
@@ -215,7 +215,7 @@ Given("no result matches {string}", function (scnId: string) {
 Given(
   "a passing unit-level result for an undeclared scenario {string}",
   function (scnId: string) {
-    // A credit citing an @SCN id that NO declared scenario matches — a phantom credit
+    // A credit citing an @SCN id that NO scenario matches — a phantom credit
     // (posting to a non-existent account). It carries a locator (the where-to-fix,
     // ruling Q5) so the phantom row can surface it on its cites-unknown-scenario item.
     evidenceObservations = [
@@ -240,7 +240,7 @@ let ldg011ScnId: string;
 
 // @SCN-LDG-011
 Given("a scenario declared @e2e", function () {
-  // A declared scenario carrying an @e2e tier tag (built through the real declared
+  // A scenario carrying an @e2e tier tag (built through the real declared
   // reader, so the @integration arm exercises the parse → declared seam). Its @e2e tag
   // sets a single e2e evidence obligation — the obligation a cucumber-sourced observation
   // must discharge once its level is DERIVED from this same tag.
@@ -342,7 +342,7 @@ let ldg012ScnId: string;
 
 // @SCN-LDG-012
 Given("a scenario declared @integration", function () {
-  // A declared scenario carrying an @integration tier tag, built through the REAL declared
+  // A scenario carrying an @integration tier tag, built through the REAL declared
   // reader (so the @integration arm exercises the parse → declared seam). Its @integration
   // tag sets a single integration evidence obligation — the obligation a cucumber-sourced
   // observation must discharge once its level is DERIVED from this same tag.
@@ -414,7 +414,7 @@ let ldg013ScnId: string;
 
 // @SCN-LDG-013
 Given("a scenario declared @unit @e2e", function () {
-  // A declared scenario carrying BOTH a @unit and an @e2e tier tag, built through the REAL
+  // A scenario carrying BOTH a @unit and an @e2e tier tag, built through the REAL
   // declared reader → TWO evidence obligations (unit + e2e). @unit is discharged by a vitest
   // observation; @e2e by a cucumber observation whose level is DERIVED from this same @e2e tag.
   // The single-non-unit-tag case of the multi-tag ruling — the split across runners.
@@ -510,7 +510,7 @@ let ldg014ScnId: string;
 
 // @SCN-LDG-014
 Given("a scenario declared @integration @e2e", function () {
-  // A declared scenario carrying BOTH an @integration and an @e2e tier tag, built through the
+  // A scenario carrying BOTH an @integration and an @e2e tier tag, built through the
   // REAL declared reader → TWO non-unit evidence obligations (integration + e2e). A SINGLE
   // cucumber run must discharge BOTH — the observation's per-tier emission is derived from these
   // same two tags. The multi-tag ruling's teeth: LDG-011/012/013 were single-tier instances.
@@ -584,7 +584,7 @@ let ldg015ScnId: string;
 
 // @SCN-LDG-015
 Given("a scenario declared @unit only", function () {
-  // A declared scenario carrying ONLY a @unit tier tag (no @integration/@e2e/@performance),
+  // A scenario carrying ONLY a @unit tier tag (no @integration/@e2e/@performance),
   // built through the REAL declared reader → exactly ONE evidence obligation: unit. There is NO
   // non-unit obligation for a cucumber observation to discharge — the negative boundary.
   ldg015ScnId = "SCN-LDG-015";
@@ -822,7 +822,7 @@ Then(
   "the ledger reports {string} with a both-missing item",
   function (scnId: string) {
     // Row-scoped to the scenario's OWN ledger row: its reconciling-items cell must carry a
-    // both-missing item — the degenerate Quality Check Reconciliation a declared scenario
+    // both-missing item — the degenerate Quality Check Reconciliation a scenario
     // emits when it reconciles to zero rows on BOTH sides (no evidence obligation, no evidence observation).
     // Reds if the scenario is instead swept to a warnings surface (the earlier behaviour)
     // and so carries NO ledger row at all, or if it is mis-reported as any other outcome.
@@ -880,7 +880,7 @@ function creditsFor(scnId: string): EvidenceObservation[] {
 Given(
   "a scenario cited by an ancestor describe and a scenario self-cited by a leaf beneath it",
   function () {
-    // TWO declared scenarios, both @unit (one unit obligation each), built through the REAL
+    // TWO scenarios, both @unit (one unit obligation each), built through the REAL
     // declared reader: the one a grouping `describe` cites in its bracket, and the one a child
     // `it` cites in its OWN title. Each must end up discharged by exactly the assertion that
     // cites it — the whole point of most-specific-wins.
@@ -1054,7 +1054,7 @@ const LDG017_MESSAGE = "Error: Cannot find package '@cucumber/tag-expressions'";
 
 // @SCN-LDG-017
 Given(
-  "a declared scenario whose only proving test lived in a vitest file that failed to collect",
+  "a scenario whose only proving test lived in a vitest file that failed to collect",
   function () {
     // ONE declared @unit scenario, built through the REAL declared reader. Its proof lives in the
     // file that failed to collect — so NO observation citing it arrives, and its own row is
@@ -1334,7 +1334,7 @@ const LDG019_FEATURE = "features/ambiguous.feature";
 const LDG019_STEP = "Given the step two definitions both match";
 
 // @SCN-LDG-019
-Given("a declared scenario whose only proving step is matched by two step definitions", function () {
+Given("a scenario whose only proving step is matched by two step definitions", function () {
   // ONE declared @integration scenario, built through the REAL declared reader. Its proof is the
   // cucumber scenario whose step is ambiguous — the step never runs, so NO passing/failing
   // observation citing it can arrive, and its own row is honestly `missing` at its own resolution.
@@ -1514,7 +1514,7 @@ Then("the scenario declares both the unit and the integration obligation", funct
   assert.equal(
     ldg020Scenarios.length,
     1,
-    `expected exactly ONE declared scenario (no phantom from the Rule's tag block); got ${ldg020Scenarios.length}`,
+    `expected exactly ONE scenario (no phantom from the Rule's tag block); got ${ldg020Scenarios.length}`,
   );
   const declared = ldg020Scenarios[0]!.evidenceObligations.map((o) => o.qualityCheck).sort();
   assert.deepEqual(
@@ -2079,7 +2079,7 @@ let ldgDebitSubject:
 
 // @SCN-LDG-026
 Given(
-  "a declared scenario {string} requiring @unit with no matching evidence observation",
+  "a scenario {string} requiring @unit with no matching evidence observation",
   function (scnId: string) {
     // A declared @unit scenario built through the REAL declared reader (the parse → declared seam),
     // and NO observation citing it — so its unit obligation reconciles `missing` by absence: the
@@ -2189,7 +2189,7 @@ let ldg027ScnId: string;
 
 // @SCN-LDG-027
 Given(
-  "a declared scenario {string} cited by a credit at a quality-check it never demanded",
+  "a scenario {string} cited by a credit at a quality-check it never demanded",
   function (scnId: string) {
     // A declared @unit scenario built through the REAL declared reader (the parse → declared
     // seam), cited by an INTEGRATION credit — a quality-check the scenario never declared. The
@@ -2297,7 +2297,7 @@ let ldg028ScnId: string;
 
 // @SCN-LDG-028
 Given(
-  "a declared scenario {string} requiring a @lint guard absent from both package.json and CI",
+  "a scenario {string} requiring a @lint guard absent from both package.json and CI",
   function (scnId: string) {
     // A declared @lint scenario built through the REAL declared reader (the @lint=<guard> →
     // static-obligation parse seam), and an absent-guard observation: the negative fact the real

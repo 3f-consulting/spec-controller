@@ -181,9 +181,9 @@ Given(
 
 // @SCN-LNT-004
 Given(
-  "a declared scenario {string} requiring both a @unit runtime test and the static guard {string}",
+  "a scenario {string} requiring both a @unit runtime test and the static guard {string}",
   function (scnId: string, guard: string) {
-    // The kind-axis multi-evidence obligation case: a SINGLE declared scenario
+    // The kind-axis multi-evidence obligation case: a SINGLE scenario
     // carries BOTH a @unit runtime evidence obligation AND a @lint=<guard> static
     // evidence obligation, built through the real declared reader so the dual-kind parse
     // seam is exercised — parseScenarios emits TWO evidence obligations from one tag block

@@ -2,7 +2,7 @@
 Feature: an all-balanced reconciliation fixture target
 
   A FIXTURE feature (NOT under features/) standing in for a target repo whose
-  reconciliation is fully in balance: every declared scenario's evidence obligation
+  reconciliation is fully in balance: every scenario's evidence obligation
   is satisfied by a passing observation, no observation cites an undeclared scenario
   (no phantom), no observation cites nothing (no suspense), and the target declares
   no static guards — so run with a guardless --package-json it reconciles with ZERO

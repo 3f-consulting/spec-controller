@@ -690,7 +690,9 @@ describe("[SCN-RPT-007] the declared corpus census is recoverable from the ledge
   it("no longer renders a standalone '## Declared corpus' section (dissolved)", () => {
     const md = renderMarkdown(reconciliationFixture, ctx);
     expect(md).not.toContain("## Declared corpus");
-    expect(md).not.toContain("Declared scenarios:");
+    // The retired declared-corpus vocabulary is purged from the render entirely —
+    // no "Declared …" heading or count-line survives (the census is the ledger count).
+    expect(md).not.toContain("Declared");
   });
 
   it("recovers the declared census from the ledger scenario-count alone — the zero-evidence scenario is a both-missing row, not a warning", () => {

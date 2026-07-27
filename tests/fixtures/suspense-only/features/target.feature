@@ -2,7 +2,7 @@
 Feature: a fixture target whose ONLY out-of-balance row is the suspense reconciliation
 
   A FIXTURE feature (NOT under features/) standing in for THE an adopter's repository 17-36-50Z SHAPE — the
-  run that started 3F-1703. EVERY DECLARED SCENARIO BALANCES: both @unit obligations are
+  run that started 3F-1703. EVERY SCENARIO BALANCES: both @unit obligations are
   satisfied by a passing observation, no observation cites an undeclared scenario (no
   phantom), no suite failed to collect (no broken item, so the run is SOUND and exit 4
   never pre-empts). The one and only reconciling item in the whole run sits on the

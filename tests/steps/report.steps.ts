@@ -348,7 +348,7 @@ let md008: string;
 let json008: string;
 
 Given(
-  "a reconciliation run whose source mentions @SCN ids in non-tag context beyond the declared scenarios",
+  "a reconciliation run whose source mentions @SCN ids in non-tag context beyond the scenarios",
   function () {
     // the tool's own feature corpus mentions @SCN ids in prose/comments beyond
     // the tag-line declarations; readEvidenceObligations reads the raw-vs-declared delta
@@ -409,7 +409,7 @@ After({ tags: "@SCN-RPT-008" }, function () {
 // @SCN-RPT-010
 // The evidence observation-reconciliation @integration arm drives the REAL file-read pipeline over a
 // fixture target whose Vitest / Cucumber reports span every observation kind: an
-// evidence observation attributed to a DECLARED scenario, a phantom-id (an @SCN no scenario
+// evidence observation attributed to a scenario, a phantom-id (an @SCN no scenario
 // declares), and cites-no-scenario evidence observation results (no @SCN). readEvidenceObservations reads the actual report
 // FILES (readJsonIfPresent) → countRuntimeEvidenceObservationKinds, then writeOutputs threads the evidence observation to
 // BOTH renderers and PERSISTS spec-reconciliation.md + spec-reconciliation.json. The persisted
