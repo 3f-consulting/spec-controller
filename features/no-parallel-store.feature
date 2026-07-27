@@ -33,3 +33,12 @@ Feature: No parallel store re-represents the Ledger's entries
       And no file declares a retired credit-list or section symbol
       And no file carries a parallel attributed credit-list field
       And the guard passes clean over the real packages/core/src tree
+
+  Rule: every materialised summary aggregate re-folds from the serialised Ledger
+
+    @unit @SCN-NPS-002
+    Scenario: a summary aggregate that stops equalling the Ledger fold reds the build
+      Given a report rendered to JSON over a spanning reconciler-true corpus
+      When each summary aggregate is independently re-folded from parsed.ledger.scenarioReconciliations
+      Then every re-derived value equals the materialised summary value
+      And drifting a summary value — or a Ledger row — off its fold reds the round-trip
