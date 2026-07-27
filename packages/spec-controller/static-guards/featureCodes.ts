@@ -143,6 +143,12 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     status: "declared",
     note: "the tier-tag floor over spec-controller's own scenarios (the cobbler's shoes) — the lint:scn-tags CI guard reds if any @SCN scenario declares no evidence tier (@unit/@integration/@e2e/@performance, a <tier>pending variant, or @lint=<guard>) and is not @wip; @lint-self-declared so the tool's own ledger reconciles it",
   },
+  {
+    code: "NPS",
+    slug: "no-parallel-store",
+    status: "declared",
+    note: "the no-parallel-store lock (the DDD retrofit capstone, Slice 8) — a @unit guard that reds if any production file in packages/core/src resurrects a retired evidence-observation census (its module file, a retired credit-list/section declaration, or a parallel `attributed` field), plus a @unit round-trip proving every summary aggregate re-folds from the serialised Ledger; makes 'the Ledger is the ONE source of truth' executable (3F-2101)",
+  },
 ];
 
 /** A single lint finding. */
