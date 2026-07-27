@@ -25,6 +25,7 @@ import type {
   ScenarioReconciliation,
   Outcome,
   ScenarioVerdict,
+  QualityCheck,
   RuntimeQualityCheck,
   Ledger,
   PendingItem,
@@ -732,14 +733,32 @@ function columnHeader(col: EvidenceColumn): string {
 }
 
 /**
- * One evidence cell — the four-way demand×evidence observation encoding. It counts BACKING
- * (presence), NOT quality: a failing runtime evidenceObligation shows its count (the
- * failing-ness lives in the Verdict + Reconciling-items columns), so `∅` is
- * unambiguously missing (zero evidenceObservations). The lint cell reads the
- * scenario's static evidenceObligation outcomes (lint is not a counted evidence observation): the count of
- * static guards PRESENT — `balanced` or the watermelon (the script exists; its inadequacy is
- * quality, in Reconciling-items 🍉). No `(N)` for lint (static guards are observed only for
- * declared `@lint`). The count exposes backing, not quality — never rank by it.
+ * The quality-check → single-letter obligation glyph, parallel to `columnHeader` — the LEFT side
+ * of the two-sided cell (the demand). A single letter names WHICH check is obligated; the right
+ * side (after the `/`) carries the OBSERVATION count (the credit). The `L2` left-count for lint is
+ * a later slice — a lint obligation always shows the single `L` here.
+ */
+const QUALITY_CHECK_LETTER: Record<QualityCheck, string> = {
+  lint: "L",
+  unit: "U",
+  integration: "I",
+  e2e: "E",
+  performance: "P",
+};
+
+/**
+ * One evidence cell — the two-sided `<obligation>/<observation>` encoding. The LEFT side is the
+ * DEMAND (a single quality-check letter iff the scenario obligated this check, else `-`); the RIGHT
+ * side is the OBSERVATION count (the multiplicity of posted credits at this check, else `-`). It
+ * projects the two-sided ledger row — it reconstructs nothing. It counts BACKING (presence), NOT
+ * quality: a failing runtime evidenceObligation still shows its credit count (the failing-ness lives
+ * in the Verdict + Reconciling-items columns), so `U/-` is unambiguously demanded-but-missing (zero
+ * evidenceObservations). A `-/N` cell is an UNDEMANDED observation (a credit at a check the scenario
+ * did not demand, @SCN-LDG-008); a doubly-empty `-/-` renders BLANK (`""`) — no demand, no credit.
+ * The lint cell reads the scenario's static evidenceObligation outcomes (lint is not a counted
+ * evidence observation): its right side is the count of static guards PRESENT — `balanced` or the
+ * watermelon (the script exists; its inadequacy is quality, in Reconciling-items 🍉), NOT a posted
+ * credit. The count exposes backing, not quality — never rank by it.
  */
 function evidenceCell(
   s: ScenarioReconciliation,
@@ -750,47 +769,42 @@ function evidenceCell(
   // nor-a-matched-evidence obligation, so it reads `—`; the citation shows in Reconciling items.
   if (s.kind === "phantom-scenario" || s.kind === "suspense-scenario") return "—";
   if (col.kind === "lint") {
+    // LEFT: a lint obligation is DECLARED iff a lint QualityCheckReconciliation exists on the row
+    // (a single `L` — the `L2` left-count is a later slice). RIGHT: the PRESENT-guard count — the
+    // static guards `satisfied` or watermelon. Lint's right stays this static-outcome derivation
+    // (NOT `evidenceObservations`): lint carries no credit multiplicity, so the count is exact.
     const statics = s.qualityCheckReconciliations.filter((o) => o.qualityCheck === "lint");
-    if (statics.length === 0) return "—"; // not declared
+    const left = statics.length > 0 ? QUALITY_CHECK_LETTER.lint : "-";
     const present = statics.filter(
-      (o) =>
-        o.outcome === "satisfied" ||
-        o.outcome === "watermelon"
+      (o) => o.outcome === "satisfied" || o.outcome === "watermelon"
     ).length;
-    return present > 0 ? String(present) : "∅"; // ∅ = declared, all missing
+    const right = present > 0 ? String(present) : "-";
+    return left === "-" && right === "-" ? "" : `${left}/${right}`;
   }
-  // DEMAND is ASKED of the Ledger, not reconstructed. `s.evidenceObligations` is the debit side the
-  // scenario declared (@SCN-LDG-023) — the fact itself — filtered to the ACTIVE ones: a `<qc>pending`
-  // obligation demands NOTHING (it partitions off to a one-sided Pending Item), so it is not a demand.
-  // This replaces the old archaeology that read `qualityCheckReconciliations` and inferred demand from
-  // which rows happened to survive — provably the same boolean (a non-undemanded reconciled row at a
-  // check exists iff a declared non-pending obligation does), but a duplicate derivation of a fact the
-  // Ledger now holds. 3F-1831 collapses "demanded" to ONE classifier; this is the renderer's copy retiring.
+  // LEFT — DEMAND is ASKED of the Ledger, not reconstructed. `s.evidenceObligations` is the debit
+  // side the scenario declared (@SCN-LDG-023) — the fact itself — filtered to the ACTIVE ones: a
+  // `<qc>pending` obligation demands NOTHING (it partitions off to a one-sided Pending Item), so it
+  // is not a demand. Demanded → the check's letter; else `-`.
   const demanded = s.evidenceObligations.some(
     (o) => o.qualityCheck === col.qualityCheck && !o.pending
   );
-  // The attributed count is the MULTIPLICITY of POSTED CREDITS at this quality-check on THIS row
-  // (@SCN-LDG-022) — read straight off the Ledger, never from `qualityCheckReconciliations` (which
-  // collapse to ONE matched row however many credits cite the pair, and would undercount) nor from
-  // the retired census's `attributed[]` (which re-represented these very credits). On a demanded
-  // quality-check every credit citing this scenario is matched-attributed, so the count IS the cell.
-  const attributedCount = s.evidenceObservations.filter(
+  const left = demanded ? QUALITY_CHECK_LETTER[col.qualityCheck] : "-";
+  // RIGHT — the OBSERVATION count is the MULTIPLICITY of POSTED CREDITS at this quality-check on THIS
+  // row (@SCN-LDG-022) — read straight off the Ledger's `evidenceObservations`, NEVER from
+  // `qualityCheckReconciliations` (which collapse to ONE matched row however many credits cite the
+  // pair, and would undercount duplicate citations). BOTH the demanded and undemanded arms read this
+  // one source: a demanded check's credits are matched-attributed, an undemanded check's credits post
+  // as undemanded rows — the same posted credits either way, so `evidenceObservations` is the single
+  // multiplicity-correct count. (Provably equal to the retired split off `qualityCheckReconciliations`
+  // for the undemanded arm — the reconciler posts one undemanded QCR per citing credit — but that
+  // derivation collapses duplicate citations, so the credits are the correct source.)
+  const observed = s.evidenceObservations.filter(
     (o) => o.qualityCheck === col.qualityCheck
   ).length;
-  if (demanded) return attributedCount > 0 ? String(attributedCount) : "∅";
-  // NOT demanded — the `(N)` cell. A credit at a quality-check this scenario did not demand posts an
-  // `undemanded` row on its account (@SCN-LDG-008), whether the check was NEVER declared or declared
-  // `<qc>pending` — 3F-1858 folded the pending pair out of the active set, so a pending-cited credit
-  // is undemanded "exactly as when nothing was declared at all". The count is those undemanded rows.
-  // (`attributedCount` plays no part here: an attributed credit is BY DEFINITION demanded and never
-  // reaches this branch. It once carried a second, PENDING+ATTRIBUTED shape — the pending pair stayed
-  // in the pair set and its credit counted attributed — but 3F-1858 deleted that path, so the term is
-  // dead. Mutation-proven at delivery: dropping it moves nothing; dropping undemandedCount reds.)
-  const undemandedCount = s.qualityCheckReconciliations.filter(
-    (o) => o.qualityCheck === col.qualityCheck && o.outcome === "undemanded"
-  ).length;
-  const count = undemandedCount;
-  return count > 0 ? `(${count})` : "—";
+  const right = observed > 0 ? String(observed) : "-";
+  // A doubly-empty cell (no demand, no credit) renders BLANK — the column is simply absent for this
+  // scenario. Otherwise the two-sided `<left>/<right>`.
+  return left === "-" && right === "-" ? "" : `${left}/${right}`;
 }
 
 /**

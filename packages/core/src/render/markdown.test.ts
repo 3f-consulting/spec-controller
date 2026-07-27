@@ -1049,36 +1049,36 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     expect(md).not.toContain(" E2e ");
   });
 
-  it("encodes the four cell cases — count, ∅, (N), and —", () => {
+  it("encodes the four cell cases two-sided — demanded+met, demanded+missing, undemanded, and absent", () => {
     const md = renderMarkdown(balance, ctx, undefined, true);
-    // demanded & met → the count; SCN-A: Lint 2 (two guards present), Unit 2.
-    expect(md).toContain("| SCN-A | 2 | 2 | — |");
-    // demanded & missing → ∅ (missing).
-    expect(md).toContain("| SCN-B | — | ∅ | — |");
-    // not demanded but present → (N): SCN-C's integration credit is UNDEMANDED — the reconciler
-    // posts a credit-side row on SCN-C, which is NOT a demand. Pre-fix the cell read it as one and
-    // rendered ∅ ("missing" — write the test), contradicting its own Reconciling-items column.
-    expect(md).toContain("| SCN-C | — | 1 | (1) |");
-    // declared elsewhere, absent here → —.
-    expect(md).toContain("| SCN-D | — | — | 1 |");
-    // lint declared but its static guard missing → ∅.
-    expect(md).toContain("| SCN-E | ∅ | — | — |");
+    // demanded & met → letter/count; SCN-A: Lint L/2 (two guards present), Unit U/2.
+    expect(md).toContain("| SCN-A | L/2 | U/2 |  |");
+    // demanded & missing → letter/- (no observation).
+    expect(md).toContain("| SCN-B |  | U/- |  |");
+    // not demanded but present → -/N: SCN-C's integration credit is UNDEMANDED — the reconciler
+    // posts a credit-side row on SCN-C, which is NOT a demand, so the left is `-` and the right is
+    // the observation count. The demanded Unit credit reads U/1 on the same row.
+    expect(md).toContain("| SCN-C |  | U/1 | -/1 |");
+    // declared elsewhere, absent here → blank left/right, and the demanded Integration reads I/1.
+    expect(md).toContain("| SCN-D |  |  | I/1 |");
+    // lint declared but its static guard missing → L/- (declared, no guard present).
+    expect(md).toContain("| SCN-E | L/- |  |  |");
   });
 
-  it("renders (N) for a credit at a PENDING pair — undemanded (3F-1858), not attributed", () => {
+  it("renders -/N for a credit at a PENDING pair — undemanded (3F-1858), no demand letter", () => {
     const md = renderMarkdown(balance, ctx, undefined, true);
     // SCN-F's unit obligation is @unitpending, so it demands NOTHING: the credit citing it reconciles
-    // UNDEMANDED (3F-1858) and posts an undemanded row on SCN-F → not demanded, undemandedCount 1 → (1).
-    // Green on first run — 1858 already carried the cell via undemandedCount; this re-asserts the arm
-    // 3F-1885 retired (which asserted the pre-1858 "attributed at a pending pair" shape, now gone),
-    // with honest provenance. It does NOT catch a regression; it pins the correct reason for the glyph.
-    expect(md).toContain("| SCN-F | — | (1) | — |");
+    // UNDEMANDED (3F-1858) and posts an undemanded row on SCN-F → no demand (left `-`), one observed
+    // credit (right 1) → -/1. Read straight off `evidenceObservations` (the multiplicity-correct
+    // source), the two-sided cell shows the credit with no demand letter beside it.
+    expect(md).toContain("| SCN-F |  | -/1 |  |");
   });
 
-  it("counts the lint cell by guards PRESENT (balanced or watermelon), not 0/1", () => {
+  it("counts the lint cell's right side by guards PRESENT (balanced or watermelon), not 0/1", () => {
     const md = renderMarkdown(balance, ctx, undefined, true);
-    // SCN-A declares two static guards, both present (one balanced, one watermelon) → 2.
-    expect(md).toContain("| SCN-A | 2 |");
+    // SCN-A declares two static guards, both present (one balanced, one watermelon) → right side 2,
+    // with the single demand letter L → L/2.
+    expect(md).toContain("| SCN-A | L/2 |");
   });
 
   it("renders the grid with no Cell/Meaning legend — the grid speaks for itself", () => {
