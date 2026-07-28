@@ -21,7 +21,7 @@ import { renderJson } from "./json.js";
 import { renderReportFromJson, renderMarkdown } from "./markdown.js";
 import type { Ledger, Scenario, EvidenceObservation } from "../model.js";
 import type { RunContext } from "../provenance/provenance.js";
-import { reconcile } from "../reconcile/reconcile.js";
+import { reconcile } from "../domain/evidenceReconciliation.js";
 import type { EvidenceObligations } from "../census/evidenceObligations.js";
 
 // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A, 3F-1894). The balance is PRODUCED by

@@ -18,7 +18,8 @@
 
 import { describe, it, expect } from "vitest";
 
-import { isBalanced, hasPendingItems, hasBrokenEvidence, reconcile } from "./reconcile.js";
+import { reconcile } from "./evidenceReconciliation.js";
+import { isBalanced, hasPendingItems, hasBrokenEvidence } from "./ledger.js";
 import { makeQualityCheckReconciliation, OUTCOME_SIDE_PROFILE } from "../model.js";
 import type {
   Ledger,

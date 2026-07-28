@@ -23,7 +23,7 @@
 import { describe, it, expect } from "vitest";
 
 import { runtimeObservationTally } from "./ledger.js";
-import { reconcile } from "../reconcile/reconcile.js";
+import { reconcile } from "./evidenceReconciliation.js";
 import type { EvidenceObservation, Ledger, Scenario } from "../model.js";
 
 describe("[SCN-RMD-003] runtimeObservationTally folds the posted credits by scenario-kind and quality-check", () => {

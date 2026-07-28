@@ -18,7 +18,7 @@
 
 import { describe, it, expect } from "vitest";
 
-import { reconcile } from "../reconcile/reconcile.js";
+import { reconcile } from "./evidenceReconciliation.js";
 import { brokenItemsOf, lintReconciliationsOf, lintTally, hasBrokenEvidence } from "./ledger.js";
 import {
   isScenario,

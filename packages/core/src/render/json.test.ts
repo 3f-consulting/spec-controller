@@ -42,7 +42,7 @@ function qcr(
   });
 }
 import type { RunContext } from "../provenance/provenance.js";
-import { reconcile } from "../reconcile/reconcile.js";
+import { reconcile } from "../domain/evidenceReconciliation.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
 
 /** A minimal balanced balance — enough for the renderer to serialise a report. */

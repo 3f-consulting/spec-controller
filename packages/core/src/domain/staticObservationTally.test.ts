@@ -24,7 +24,7 @@
 import { describe, it, expect } from "vitest";
 
 import { staticObservationTally } from "./ledger.js";
-import { reconcile } from "../reconcile/reconcile.js";
+import { reconcile } from "./evidenceReconciliation.js";
 import type { EvidenceObservation, Ledger, Scenario } from "../model.js";
 
 describe("[SCN-USG-001] staticObservationTally folds the posted static-guard credits, deduped and running-filtered", () => {

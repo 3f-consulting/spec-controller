@@ -19,7 +19,8 @@ import { assembleReport } from "./report.js";
 import { renderJson } from "../render/json.js";
 import { renderReport, renderMarkdown } from "../render/markdown.js";
 import { parseScenarios } from "../parse/scenarios.js";
-import { isBalanced, reconcile } from "../reconcile/reconcile.js";
+import { reconcile } from "../domain/evidenceReconciliation.js";
+import { isBalanced } from "../domain/ledger.js";
 import { makeQualityCheckReconciliation, OUTCOME_SIDE_PROFILE } from "../model.js";
 import type { Ledger } from "../model.js";
 

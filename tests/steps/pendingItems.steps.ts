@@ -197,7 +197,7 @@ When("the parser derives each unknown scenario's evidence obligations", function
 // pipeline over the PLANTED tests/fixtures/pending-tags/target.feature (one only-pending
 // scenario per `<qc>pending` tag, @SCN-PDG-001..005) — never a real `@<qc>pending` scenario
 // in the scanned features/ corpus (fixture policy, evidence-manifesto §11B). The @unit arm
-// (packages/core/src/reconcile/reconcile.test.ts, [SCN-PND-004]) proves the same partition
+// (packages/core/src/domain/evidenceReconciliation.test.ts, [SCN-PND-004]) proves the same partition
 // over the reconcile function in isolation.
 Given(
   "a planted fixture scenario declaring a pending {string} obligation",
@@ -247,7 +247,7 @@ Then(
 // scenario, @SCN-PDM-001) fed a hand-built MATCHING integration observation citing that very
 // scenario — never a real `@<qc>pending` scenario in the scanned features/ corpus (fixture
 // policy, evidence-manifesto §11B). The @unit arm
-// (packages/core/src/reconcile/reconcile.test.ts, [SCN-PND-005]) proves the same
+// (packages/core/src/domain/evidenceReconciliation.test.ts, [SCN-PND-005]) proves the same
 // partition-before-match + pending-demands-nothing rule over the reconcile function in isolation.
 const MATCH_FIXTURE = join(
   process.cwd(),
@@ -363,7 +363,7 @@ Then(
 // AND an `@integrationpending` one (which partitions to a one-sided Pending Item). The error
 // list carries ONLY the missing unit; the pending integration stays out of it. Never a real
 // `@<qc>pending` scenario in the scanned features/ corpus (fixture policy, evidence-manifesto
-// §11B). The @unit arm (packages/core/src/reconcile/reconcile.test.ts, [SCN-PND-006]) proves
+// §11B). The @unit arm (packages/core/src/domain/evidenceReconciliation.test.ts, [SCN-PND-006]) proves
 // the same category-distinctness over the reconcile function in isolation.
 const ERROR_FIXTURE = join(
   process.cwd(),
@@ -511,7 +511,7 @@ Then(
 // its unit obligation is satisfied. Both rows have verdict balanced and no reconciling item.
 // Never a real `@<qc>pending` scenario in the scanned features/ corpus (fixture policy,
 // evidence-manifesto §11B). The @unit arm
-// (packages/core/src/reconcile/reconcile.test.ts, [SCN-PND-007]) proves the same
+// (packages/core/src/domain/evidenceReconciliation.test.ts, [SCN-PND-007]) proves the same
 // verdict-neutrality over the reconcile function in isolation, plus the both-missing
 // non-regression guard.
 const BALANCED_FIXTURE = join(
@@ -699,7 +699,7 @@ Then(
 // tests/fixtures/pending-tags/composition.feature (@SCN-PDC-001) fed a hand-built PASSING unit
 // observation citing that very scenario — never a real `@<qc>pending` scenario in the scanned
 // features/ corpus (fixture policy, evidence-manifesto §11B). The @unit arm
-// (packages/core/src/reconcile/reconcile.test.ts, [SCN-PND-009]) proves the same composition
+// (packages/core/src/domain/evidenceReconciliation.test.ts, [SCN-PND-009]) proves the same composition
 // over the reconcile function in isolation. Green-first on the sibling partition (PND-004..007);
 // teeth proven by a pending-partition-swallows-unit mutation (reverted).
 const COMPOSITION_FIXTURE = join(
@@ -1307,7 +1307,7 @@ Then(
 // undefined step is NOT excused as pending (Cucumber's own leniency, the hole this tool must not
 // have). Pending is a DECLARATION (slice 1/4), never inferred from an inconclusive run's status.
 // Never a real scanned scenario (fixture policy, evidence-manifesto §11B). The @unit arm
-// (packages/core/src/reconcile/reconcile.test.ts, [SCN-PND-014]) sharpens the same assertion over
+// (packages/core/src/domain/evidenceReconciliation.test.ts, [SCN-PND-014]) sharpens the same assertion over
 // the real reader feeding the real reconciler in isolation.
 const UNDEFINED_NOT_PENDING_FIXTURE = join(
   process.cwd(),
@@ -1799,7 +1799,7 @@ Then(
 // pending-status side feeds the REAL parseCucumberEvidenceObservations (§11A), so the dropped
 // observation is the reader's own output, never a hand-built one. Never a real @skip / @wip
 // scenario in the scanned features/ corpus (fixture policy, evidence-manifesto §11B). The @unit
-// arm (packages/core/src/reconcile/reconcile.test.ts, [SCN-PND-019]) proves the same override
+// arm (packages/core/src/domain/evidenceReconciliation.test.ts, [SCN-PND-019]) proves the same override
 // from both observation sides over the reader + reconciler in isolation. Green-first over
 // @SCN-PND-016 (the parse-level deferral) + @SCN-PND-013 (the reader's inconclusive drop), both
 // already delivered; teeth proven by a local mutation removing the scenario-scope deferral

@@ -17,7 +17,7 @@ import assert from "node:assert/strict";
 import { join } from "node:path";
 import { runReconcile } from "../../packages/spec-controller/src/ingest/ingestQualityChecks.js";
 import { assembleReport } from "../../packages/core/src/assemble/report.js";
-import { isBalanced } from "../../packages/core/src/reconcile/reconcile.js";
+import { isBalanced } from "../../packages/core/src/domain/ledger.js";
 import type { Ledger } from "../../packages/core/src/model.js";
 import type { RunContext } from "../../packages/core/src/provenance/provenance.js";
 

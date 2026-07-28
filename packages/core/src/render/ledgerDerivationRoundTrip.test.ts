@@ -30,7 +30,7 @@ import {
   staticObservationTally,
   RUNTIME_QUALITY_CHECKS,
 } from "../domain/ledger.js";
-import { reconcile } from "../reconcile/reconcile.js";
+import { reconcile } from "../domain/evidenceReconciliation.js";
 import type { Ledger, Scenario, EvidenceObservation } from "../model.js";
 import type { RunContext } from "../provenance/provenance.js";
 

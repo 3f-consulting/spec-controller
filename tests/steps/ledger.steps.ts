@@ -44,7 +44,7 @@ import type { RunContext } from "@3f-consulting/spec-controller-core";
 // to it is 3F-1651's contract touch, sequenced immediately after this sub-issue. Deep module
 // imports into packages/ are the established shape in these step files (cliBalance.steps.ts,
 // report.steps.ts, pendingItems.steps.ts).
-import { hasBrokenEvidence, isBalanced } from "../../packages/core/src/reconcile/reconcile.js";
+import { hasBrokenEvidence, isBalanced } from "../../packages/core/src/domain/ledger.js";
 
 // Fixtures shared across steps within a scenario (isolated per scenario by Cucumber).
 let scenarios: Scenario[];

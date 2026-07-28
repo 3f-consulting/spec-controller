@@ -17,7 +17,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { reconcile } from "./reconcile.js";
+import { reconcile } from "./evidenceReconciliation.js";
 import { checkStaticEvidenceObligations } from "../parse/checkStaticEvidenceObligations.js";
 import type { PackageJsonScripts } from "../parse/checkScriptsRunInCI.js";
 import type { Scenario, EvidenceObservation } from "../model.js";

@@ -56,7 +56,7 @@ import { assembleReport, type EvidenceReconciliation } from "../assemble/report.
 // The three WHOLE-RUN predicates the verdict headline (@SCN-RPT-022) asks — the SAME three the
 // CLI asks to set its exit code, in the SAME dominance order. The renderer never re-scans the
 // reconciliation for a verdict of its own, so the headline cannot drift from the code it names.
-import { hasBrokenEvidence, isBalanced, hasPendingItems } from "../reconcile/reconcile.js";
+import { hasBrokenEvidence, isBalanced, hasPendingItems } from "../domain/ledger.js";
 import { featureCodeOf } from "../lib/featureCode.js";
 
 /** A short status glyph per reconciling-item outcome — a visual cue alongside the word. */

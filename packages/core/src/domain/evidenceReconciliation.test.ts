@@ -1,5 +1,5 @@
 /**
- * Unit tests for the reconcile core (src/reconcile/reconcile.ts).
+ * Unit tests for the reconcile core (src/domain/evidenceReconciliation.ts).
  *
  * Bidirectional evidence (discipline): the describe/it strings carry the
  * @SCN-LDG-NNN id matching features/ledger.feature, so a grep of the id
@@ -14,7 +14,8 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { reconcile, hasBrokenEvidence, isBalanced } from "./reconcile.js";
+import { reconcile } from "./evidenceReconciliation.js";
+import { hasBrokenEvidence, isBalanced } from "./ledger.js";
 import { assembleReport } from "../assemble/report.js";
 import type { RunContext } from "../provenance/provenance.js";
 import type {

@@ -159,7 +159,7 @@ const EXPECTED_VALUE_EXPORTS: readonly string[] = [
   "proseOnlyCodes",
   // Evidence-obligation census (census/evidenceObligations.ts)
   "evidenceObligations",
-  // Reconcile (reconcile/reconcile.ts)
+  // Evidence Reconciliation (domain/evidenceReconciliation.ts) + the Ledger predicates
   "reconcile",
   "isBalanced",
   "hasPendingItems",

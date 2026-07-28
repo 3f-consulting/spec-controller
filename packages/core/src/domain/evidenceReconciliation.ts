@@ -1,7 +1,22 @@
 /**
- * The reconcile core — the pure declared-vs-observed join, keyed by one flat
- * `qualityCheck` (the two-axis `(kind, level)` grid collapsed). This module is now THIN
- * COMPOSITION (index → reconcile → assemble): the domain RULES it once held moved to the
+ * THE EVIDENCE RECONCILIATION — canon's Layer 1, *"the whole reconciliation: all Scenario
+ * Reconciliations taken together"*, and **the key concept the domain models**
+ * (`double-entry-manifesto.md`). This module is its home.
+ *
+ * IT ARRIVED HERE FROM `reconcile/` (3F-2232). After 3F-2202/2203/2204 that module held no domain
+ * rule — but it was still a named layer beside the domain doing the concept's own work, which is
+ * the shape `functional-domain-modelling.md` rejects: *"orchestration is thin composition, not a
+ * named layer."* Constructing a concept is the concept's business. The module's residual tell was
+ * already visible — it re-exported `isBalanced` / `hasPendingItems` / `hasBrokenEvidence` FROM
+ * `domain/ledger` purely to preserve importers' paths, a shell around behaviour that had already
+ * gone home. Every importer now points at the module that declares the symbol.
+ *
+ * (3F-2233 completes the move: the concept's TYPE, its `Summary`, and the factory that fuses this
+ * fold with the summary tally. Today this module holds the fold alone.)
+ *
+ * The pure declared-vs-observed join, keyed by one flat
+ * `qualityCheck` (the two-axis `(kind, level)` grid collapsed). This module is THIN
+ * COMPOSITION: the domain RULES it once held moved to the
  * concept modules that own them (3F-1994) — `reconcileEvidenceObligation` (the per-obligation
  * outcome) to `domain/qualityCheckReconciliation`, `verdictFor` / `reconcilingItemsOf` (the
  * account roll-up) to `domain/scenarioReconciliation`, `isBalanced` / `hasPendingItems` /
@@ -57,21 +72,16 @@ import {
   citesUnknownScenarioReconciliationsOf,
   suspenseReconciliationsOf,
   noScnCodeReconciliations,
-} from "../domain/qualityCheckReconciliation.js";
+} from "./qualityCheckReconciliation.js";
 import {
   verdictFor,
   reconcilingItemsOf,
   // THE ROW-SHAPE RULE (3F-2204) — the both-missing degeneration and its pending clause.
   qualityCheckReconciliationsOf,
-} from "../domain/scenarioReconciliation.js";
+} from "./scenarioReconciliation.js";
 // THE POSTING RULE (3F-2202) — where an entry lands is canon's own glossary group, so it lives on
 // its own concept module. `reconcile` no longer decides a destination; it ASKS.
-import { postingOf, staticGuardCreditsPostingTo } from "../domain/posting.js";
-
-// The whole-run verdict surface lives WITH the Ledger concept (`domain/ledger`, 3F-1994);
-// re-exported here so the frozen v1 barrel (`index.ts`, @SCN-API-001) and every existing
-// `reconcile.js` importer keep the same surface — only the predicates' home moved.
-export { isBalanced, hasPendingItems, hasBrokenEvidence } from "../domain/ledger.js";
+import { postingOf, staticGuardCreditsPostingTo } from "./posting.js";
 
 export function reconcile(
   scenarios: Scenario[],

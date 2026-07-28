@@ -24,7 +24,8 @@ import { describe, it, expect } from "vitest";
 import { renderMarkdown } from "./markdown.js";
 import type { Ledger, Outcome, ScenarioReconciliation } from "../model.js";
 import { OUTCOME_DESCRIPTION, makeQualityCheckReconciliation, OUTCOME_SIDE_PROFILE } from "../model.js";
-import { isBalanced, reconcile } from "../reconcile/reconcile.js";
+import { reconcile } from "../domain/evidenceReconciliation.js";
+import { isBalanced } from "../domain/ledger.js";
 import type { RunContext } from "../provenance/provenance.js";
 import type { EvidenceObservation, Scenario, RuntimeQualityCheck } from "../model.js";
 
