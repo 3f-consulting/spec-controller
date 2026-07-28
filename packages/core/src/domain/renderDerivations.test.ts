@@ -21,6 +21,7 @@ import { describe, it, expect } from "vitest";
 import { reconcile } from "../reconcile/reconcile.js";
 import { brokenItemsOf, lintReconciliationsOf, lintTally, hasBrokenEvidence } from "./ledger.js";
 import {
+  isScenario,
   staticGuardReconciliationsOf,
   presentStaticGuardCountOf,
 } from "./scenarioReconciliation.js";
@@ -64,6 +65,49 @@ const evidenceObservations: EvidenceObservation[] = [
 const ledger: Ledger = reconcile(scenarios, evidenceObservations);
 const rowOf = (scnId: string) =>
   ledger.scenarioReconciliations.find((r) => r.scnId === scnId)!;
+
+describe("[SCN-LDG-001] isScenario names only the declared thing", () => {
+  /**
+   * Its own small Ledger, built through `reconcile()` so every row is a shape the pipeline emits —
+   * one real scenario, one phantom (a credit citing an `@SCN` nothing declares), one suspense (an
+   * uncited credit).
+   *
+   * THIS PINS A PREVIOUSLY-UNGUARDED RULE. Weakening the predicate to let phantom rows through
+   * (`kind !== "suspense-scenario"`) left all 626 tests green during 3F-2230; only the
+   * byte-identity corpus caught it. Canon is explicit — *"neither is a scenario"* — so the
+   * distinction is pinned here rather than resting on a capture diff.
+   */
+  const mixed = reconcile(
+    [{ scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
+    [
+      { qualityCheck: "unit", scnId: "SCN-AAA-001", status: "passed" },
+      { qualityCheck: "unit", scnId: "SCN-ZZZ-009", status: "passed" },
+      { qualityCheck: "unit", scnId: null, status: "passed" },
+    ]
+  );
+  const kindOf = (k: string) => mixed.scenarioReconciliations.find((r) => r.kind === k)!;
+
+  it("is true for a real scenario row", () => {
+    expect(isScenario(kindOf("scenario"))).toBe(true);
+  });
+
+  it("is FALSE for a phantom row — a cited-but-undeclared id is not a scenario", () => {
+    expect(isScenario(kindOf("phantom-scenario"))).toBe(false);
+  });
+
+  it("is FALSE for the suspense row — the bucket for uncited credits is not a scenario", () => {
+    expect(isScenario(kindOf("suspense-scenario"))).toBe(false);
+  });
+
+  /** All three kinds are present, so the two negatives above are real cases, not vacuous. */
+  it("spans all three row kinds in this fixture", () => {
+    expect(mixed.scenarioReconciliations.map((r) => r.kind).sort()).toEqual([
+      "phantom-scenario",
+      "scenario",
+      "suspense-scenario",
+    ]);
+  });
+});
 
 describe("[SCN-LDG-001] brokenItemsOf lists the proofs that never ran", () => {
   it("returns each broken item with its where-to-fix and what-broke", () => {

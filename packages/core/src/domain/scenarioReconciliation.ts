@@ -178,6 +178,29 @@ export function reconcilingItemsOf(
 }
 
 /**
+ * Is this row about a REAL scenario? (3F-2230.)
+ *
+ * Canon, Scenario: *"**Scenario** names **only the declared thing**: a cited-but-undeclared id is a
+ * **phantom scenario**, and the bucket for uncited credits is the **suspense scenario** — neither is
+ * a scenario."* This function is that sentence; every consumer that needs the real-scenario cut asks
+ * it rather than restating it.
+ *
+ * It had no home and was open-coded FIVE times — four in the renderer, one in the Ledger's lint
+ * fold — as the double negative `kind !== "phantom-scenario" && kind !== "suspense-scenario"`. They
+ * agreed by copy, not by construction: any one could have grown a clause alone and nothing would
+ * have redded.
+ *
+ * STATED POSITIVELY, which is not merely tidier. `ScenarioKind` has exactly three values, so the
+ * double negative is equivalent TODAY — but only by exhaustion. A fourth kind would silently fall
+ * into the real-scenario cut under the negative form and be excluded under this one, and canon is
+ * unambiguous about which is right: `scenario` is reserved for the declared thing, so a kind nobody
+ * has taught this function about is not one.
+ */
+export function isScenario(row: ScenarioReconciliation): boolean {
+  return row.kind === "scenario";
+}
+
+/**
  * A row's STATIC-GUARD sub-rows — its `lint` Quality Check Reconciliations, in document order, one
  * per `@lint=<guard>` obligation the scenario demanded (3F-2203).
  *

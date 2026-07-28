@@ -9,7 +9,7 @@ import type { Outcome, QualityCheckReconciliation } from "./qualityCheckReconcil
 import type { ScenarioReconciliation } from "./scenarioReconciliation.js";
 // The row-level static-guard cut (3F-2203) — the Ledger-wide lint list is built ON it, so the
 // declared-side rule is stated once, at the row.
-import { staticGuardReconciliationsOf } from "./scenarioReconciliation.js";
+import { staticGuardReconciliationsOf, isScenario } from "./scenarioReconciliation.js";
 import type { RuntimeQualityCheck, GuardEvidenceObservation } from "./journal.js";
 
 /**
@@ -152,7 +152,7 @@ export function lintReconciliationsOf(
   reconciliation: Ledger
 ): { scnId: string; reconciliation: QualityCheckReconciliation }[] {
   return reconciliation.scenarioReconciliations
-    .filter((row) => row.kind !== "phantom-scenario" && row.kind !== "suspense-scenario")
+    .filter(isScenario)
     .flatMap((row) =>
       staticGuardReconciliationsOf(row).map((r) => ({ scnId: row.scnId, reconciliation: r }))
     );

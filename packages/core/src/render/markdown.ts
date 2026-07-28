@@ -44,6 +44,7 @@ import { RUNTIME_QUALITY_CHECKS } from "../domain/ledger.js";
 // THE MODEL DERIVATIONS THE RENDERER READS (3F-2203) — it projects these; it does not compute them.
 import { brokenItemsOf, lintReconciliationsOf } from "../domain/ledger.js";
 import {
+  isScenario,
   staticGuardReconciliationsOf,
   presentStaticGuardCountOf,
 } from "../domain/scenarioReconciliation.js";
@@ -660,7 +661,7 @@ const byFeatureSection: SectionEmitter = (report) => {
   // Scenario rows only (ruling Q3) — phantom/suspense rows are grouped at
   // the end of the Ledger, not folded into the scenario out-of-balance-by-feature cut.
   const scenarios = report.ledger.scenarioReconciliations.filter(
-    (s) => s.kind !== "phantom-scenario" && s.kind !== "suspense-scenario"
+    isScenario
   );
   const groups = new Map<string, string[]>();
   for (const s of scenarios) {
@@ -710,7 +711,7 @@ function evidenceColumns(
   // Only scenario rows carry evidence obligations that drive columns — a phantom / suspense
   // row's credit-side items are not evidence obligations, so they never add a column.
   const scenarioRows = scenarios.filter(
-    (s) => s.kind !== "phantom-scenario" && s.kind !== "suspense-scenario"
+    isScenario
   );
   // ASKED (3F-2203) — whether a row has static-guard sub-rows is the same model cut the grid cell
   // and the lint table read. Whether a COLUMN then appears is the renderer's own business; what a
@@ -782,7 +783,7 @@ function evidenceCell(
   // A PHANTOM / suspense row has no evidence-obligation demand of its own — its
   // whole story is the credit-side reconciling item. Every evidence cell is neither-declared-
   // nor-a-matched-evidence obligation, so it reads `—`; the citation shows in Reconciling items.
-  if (s.kind === "phantom-scenario" || s.kind === "suspense-scenario") return "—";
+  if (!isScenario(s)) return "—";
   if (col.kind === "lint") {
     // LEFT: a lint obligation is DECLARED iff a lint QualityCheckReconciliation exists on the row
     // (`L`; `L2`/`L3` when the row demands >1 static guard — the demanded-obligation count, one
@@ -851,7 +852,7 @@ const ledgerSection: SectionEmitter = (report) => {
   // distinct blocks at the END (ruling Q3) — a phantom/suspense is not a
   // scenario, so it never mingles with the scenario verdict rows.
   const scenarioRows = report.ledger.scenarioReconciliations.filter(
-    (s) => s.kind !== "phantom-scenario" && s.kind !== "suspense-scenario"
+    isScenario
   );
   const phantomRows = report.ledger.scenarioReconciliations.filter((s) => s.kind === "phantom-scenario");
   const suspenseRows = report.ledger.scenarioReconciliations.filter((s) => s.kind === "suspense-scenario");
