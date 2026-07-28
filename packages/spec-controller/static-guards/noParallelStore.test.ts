@@ -20,11 +20,31 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { readdirSync, readFileSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { checkNoParallelStore, type SourceFile } from "./noParallelStore.js";
 
 const CORE_SRC_ROOT = join(process.cwd(), "packages", "core", "src");
+
+/**
+ * The anti-vacuity floor: how many production core files the walk must find before its clean
+ * verdict counts as a scan at all (a check that scanned nothing isn't a check).
+ *
+ * ONE name, not a literal per assertion — three assertions consult it, and three literals would
+ * drift apart, which is the agreeing-by-copy fault this file is being corrected for (3F-2201).
+ *
+ * The value is NOT tuned to today's tree. It matches `enginePurity.test.ts`'s floor over the
+ * IDENTICAL population — `collectEngineFiles` and `collectCoreFiles` are the same walk of every
+ * non-test `.ts` under `packages/core/src` — so the two sibling guards agree because they measure
+ * the same thing, not by hand-maintained coincidence. It must keep REAL headroom below the tree
+ * (asserted below): a floor a file or two under the current count reds on ordinary deletion and
+ * blames a parallel store for it.
+ */
+const MIN_CORE_FILES_SCANNED = 10;
+
+/** The headroom the floor must keep below the real tree, in files (3F-2201). */
+const REQUIRED_FLOOR_HEADROOM = 10;
 
 /** Walk the real core src tree, collecting every PRODUCTION file (excluding *.test.ts). */
 function collectCoreFiles(dir: string): SourceFile[] {
@@ -110,9 +130,48 @@ describe("[SCN-NPS-001] no parallel store re-represents the Ledger's entries", (
     // The dogfood green: the census modules stay retired, no retired symbol is re-declared, no
     // parallel `attributed` field exists. Any future resurrection reds this.
     const coreFiles = collectCoreFiles(CORE_SRC_ROOT);
-    // Sanity: we actually scanned the tree (not an empty walk masquerading as green). The core has
-    // dozens of production modules; a floor well above any accidental under-count.
-    expect(coreFiles.length).toBeGreaterThan(20);
+    // Sanity: we actually scanned the tree (not an empty walk masquerading as green). The floor sits
+    // well BELOW the real count, not just under it — a broken walk yields ~0, so catching it needs
+    // no tight margin, and a tight one only punishes ordinary deletion (3F-2201).
+    expect(coreFiles.length).toBeGreaterThan(MIN_CORE_FILES_SCANNED);
     expect(checkNoParallelStore(coreFiles)).toEqual([]);
+  });
+
+  it("[SCN-NPS-001] the anti-vacuity floor keeps real headroom below the tree — ordinary deletion must not red the lock", () => {
+    // THE FAULT, stated as the invariant it violates (3F-2201). A floor set a file or two under the
+    // current count reds the moment a normal refactor removes a file — and the red CLAIMS a parallel
+    // store violation when the truth is "a file was removed". A lock that cries wolf is how a guard
+    // gets distrusted, which is the watermelon culture it exists to prevent.
+    //
+    // Expressed as HEADROOM, deliberately, not as "delete N files and re-check": a fixed deletion
+    // count stops discriminating as the tree grows (at 30 files, dropping 2 clears even a floor of
+    // 20), so a slice-based test would quietly lose its teeth. Headroom is the property that
+    // actually matters, and it holds at any tree size.
+    //
+    // RESIDUAL, stated rather than shipped silently: this assertion itself reds if core/src ever
+    // falls BELOW 20 production files. That is a tripwire, deliberately — but it is not the fault
+    // being fixed here, because it names itself honestly ("the floor no longer keeps headroom —
+    // retune it") instead of blaming a parallel store for a deletion. A red that tells the truth
+    // about its own cause is a different animal from one that cries wolf.
+    const coreFiles = collectCoreFiles(CORE_SRC_ROOT);
+    expect(coreFiles.length - MIN_CORE_FILES_SCANNED).toBeGreaterThanOrEqual(REQUIRED_FLOOR_HEADROOM);
+  });
+
+  it("[SCN-NPS-001] the anti-vacuity floor still rejects an empty walk (0 files scanned is not a scan)", () => {
+    // The floor's REASON, pinned. This assertion is green on both sides of the 3F-2201 fix — it is
+    // not what drove it — and it is here precisely because a ticket that LOWERS a floor is the
+    // moment that floor is most likely to be loosened into meaninglessness later (> 0, >= 0, > -1).
+    // The property has never once been observed failing; this is what observes it.
+    //
+    // Driven over a REAL empty directory rather than a hand-seeded [] the collector never produces
+    // (evidence-manifesto.md §11A) — it exercises the walk, not a fixture.
+    const emptyDir = mkdtempSync(join(tmpdir(), "nps-empty-walk-"));
+    try {
+      const scanned = collectCoreFiles(emptyDir);
+      expect(scanned).toEqual([]);
+      expect(scanned.length > MIN_CORE_FILES_SCANNED).toBe(false);
+    } finally {
+      rmSync(emptyDir, { recursive: true, force: true });
+    }
   });
 });
