@@ -1,0 +1,13 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "packageManager": "pnpm",
+  "testRunner": "vitest",
+  "plugins": ["@stryker-mutator/vitest-runner"],
+  "coverageAnalysis": "perTest",
+  "mutate": ["packages/core/src/domain/**/*.ts", "!packages/core/src/domain/**/*.test.ts"],
+  "reporters": ["progress", "clear-text", "html"],
+  "htmlReporter": { "fileName": "reports/mutation/index.html" },
+  "tempDirName": ".stryker-tmp",
+  "timeoutMS": 30000,
+  "thresholds": { "high": 95, "low": 90, "break": 91.87 }
+}

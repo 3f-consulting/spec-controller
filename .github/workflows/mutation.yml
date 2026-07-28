@@ -1,0 +1,48 @@
+name: Mutation
+
+# Mutation testing over the domain core. NOT a per-push gate — it is a scheduled
+# sweep with a score threshold, deliberately kept OUT of ci.yml so the per-push
+# ladder stays fast and deterministic (3F-2178).
+#
+# The domain core is the only mutated scope: packages/core/src/domain/*.ts — the
+# posting / reconciliation / fold rules. The rest of the tree is not mutated; the
+# value concentrates in the pure logic and the run cost scales with the scope.
+#
+# Below the `break` threshold in stryker.config.json the run fails and the
+# scheduled workflow reports red.
+on:
+  schedule:
+    # 03:17 UTC nightly — an off-the-hour minute so the run does not queue behind
+    # the top-of-hour scheduling spike.
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  mutation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Mutation test the domain core
+        run: pnpm mutation
+
+      # The HTML report enumerates which domain lines no test kills — the same
+      # class of finding as a reconciliation report, so it is never committed
+      # (.gitignore) and is kept only as a build artefact for the operator.
+      - name: Upload mutation report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mutation-report
+          path: reports/mutation/
+          retention-days: 14

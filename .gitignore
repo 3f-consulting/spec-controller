@@ -13,3 +13,10 @@ build/
 # with NO re-includes, so no new in-repo run path can ever be committed by
 # accident. The lint:no-committed-reports CI guard enforces this over the real tree.
 runs/**
+
+# Mutation-testing output. `.stryker-tmp/` is the sandbox Stryker copies the tree
+# into per run; `reports/` holds the HTML/JSON mutation report, which enumerates
+# which domain lines no test kills — the same sensitivity class as a
+# reconciliation report, so it is never tracked either.
+.stryker-tmp/
+reports/

@@ -12,6 +12,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "mutation": "stryker run",
     "cucumber": "cucumber-js",
     "build": "pnpm -r build",
     "balance": "tsx packages/spec-controller/src/cli.ts",
@@ -24,6 +25,8 @@
   "devDependencies": {
     "@3f-consulting/spec-controller-core": "workspace:*",
     "@cucumber/cucumber": "^12.9.0",
+    "@stryker-mutator/core": "^9.6.1",
+    "@stryker-mutator/vitest-runner": "^9.6.1",
     "@types/node": "^22.0.0",
     "tsx": "^4.22.3",
     "typescript": "^5.8.3",
