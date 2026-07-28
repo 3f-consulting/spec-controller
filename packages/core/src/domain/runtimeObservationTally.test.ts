@@ -70,4 +70,21 @@ describe("[SCN-RMD-003] runtimeObservationTally folds the posted credits by scen
     expect(raw).toBe(6);
     expect(raw).toBe(tally.onScenario + tally.onPhantomScenario + tally.onSuspenseScenario);
   });
+
+  /**
+   * The RETURNED total (3F-2231) — the same number, now carried rather than left for each consumer
+   * to re-derive. Asserted against BOTH sides of the identity, so this is the test that holds the
+   * invariant now that the runtime `throw` inside the fold is gone: that throw could not fire (one
+   * walk moves both sides together), and an invariant belongs in a test rather than as dead
+   * defensive code in a pure domain function. If the fold is ever split into two walks, this reds.
+   */
+  it("returns the total, equal to both sides of the identity", () => {
+    expect(tally.total).toBe(6);
+    expect(tally.total).toBe(
+      Object.values(tally.rawByRuntimeQualityCheck).reduce((a, b) => a + b, 0)
+    );
+    expect(tally.total).toBe(
+      tally.onScenario + tally.onPhantomScenario + tally.onSuspenseScenario
+    );
+  });
 });

@@ -402,6 +402,17 @@ export const RUNTIME_QUALITY_CHECKS: readonly RuntimeQualityCheck[] = ["unit", "
 export interface RuntimeObservationTally {
   /** Raw per-quality-check evidence-observation totals — ALL runtime credits, regardless of `@SCN`. */
   rawByRuntimeQualityCheck: Record<RuntimeQualityCheck, number>;
+  /**
+   * The runtime credit total — `Σ rawByRuntimeQualityCheck`, and equally
+   * `onScenario + onPhantomScenario + onSuspenseScenario` (3F-2231).
+   *
+   * RETURNED, not left for the caller to re-derive. The fold computed this sum and discarded it,
+   * so the assembler summed the same record again to fill `summary.testVolume` — the identical
+   * `reduce`, in an adapter, for a number the Ledger already knew. Two homes for one total is the
+   * shape this domain model exists to remove: the Ledger counts its own posted credits because it
+   * IS the balance, and a consumer asks rather than counts.
+   */
+  total: number;
   /** Runtime credits posted to a scenario's account (matched-attributed OR undemanded). */
   onScenario: number;
   /** Runtime credits posted to an invented `phantom-scenario` account (an `@SCN` no feature declares). */
@@ -457,18 +468,23 @@ export function runtimeObservationTally(ledger: Ledger): RuntimeObservationTally
     }
   }
 
-  // COMPLETENESS identity, by construction (the single-walk drift-proofing): the raw
-  // per-quality-check total equals the sum of the three per-scenario-kind counts. COMPLETENESS
-  // ONLY — invariant under a misfile BETWEEN its own terms; it catches a credit VANISHING, never a
-  // credit in the wrong account (the `@SCN`s / the rows are that).
-  const raw = RUNTIME_QUALITY_CHECKS.reduce((n, qc) => n + rawByRuntimeQualityCheck[qc], 0);
-  if (raw !== onScenario + onPhantomScenario + onSuspenseScenario) {
-    throw new Error(
-      `runtime-observation tally drift: raw ${raw} != onScenario ${onScenario} + onPhantomScenario ${onPhantomScenario} + onSuspenseScenario ${onSuspenseScenario}`
-    );
-  }
+  // THE COMPLETENESS IDENTITY — `Σ raw = onScenario + onPhantomScenario + onSuspenseScenario` —
+  // holds BY CONSTRUCTION: the single walk above increments a per-quality-check counter and exactly
+  // one per-scenario-kind counter in the SAME iteration, so the two sides cannot diverge. It is
+  // COMPLETENESS ONLY: invariant under a misfile BETWEEN its own terms, so it catches a credit
+  // VANISHING, never a credit in the wrong account (the `@SCN`s and the rows are that).
+  //
+  // THE RUNTIME `throw` THAT STOOD HERE IS GONE (3F-2231). It could not fire — both sides move
+  // together in one loop — so it was dead code asserting an invariant the structure already
+  // guarantees, which is precisely the scar-tissue shape `why-ddd-for-spec-controller.md` names as
+  // the anemic tell ("kept honest by hand-written identity assertions"); the goal is that summing
+  // the wrong rows "stops being POSSIBLE, not merely asserted-against". The invariant is not
+  // unguarded by its removal: `runtimeObservationTally.test.ts` pins it over a spanning corpus,
+  // which is where an invariant belongs. If this fold is ever split into two walks the identity
+  // becomes a real risk again — and that test, not a throw in a pure function, is what will red.
+  const total = RUNTIME_QUALITY_CHECKS.reduce((n, qc) => n + rawByRuntimeQualityCheck[qc], 0);
 
-  return { rawByRuntimeQualityCheck, onScenario, onPhantomScenario, onSuspenseScenario };
+  return { rawByRuntimeQualityCheck, total, onScenario, onPhantomScenario, onSuspenseScenario };
 }
 
 // ---------------------------------------------------------------------------

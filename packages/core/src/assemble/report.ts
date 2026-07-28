@@ -21,7 +21,7 @@
  */
 
 import type { Ledger, RuntimeQualityCheck } from "../model.js";
-import { ledgerTally, runtimeObservationTally, staticObservationTally, RUNTIME_QUALITY_CHECKS } from "../domain/ledger.js";
+import { ledgerTally, runtimeObservationTally, staticObservationTally } from "../domain/ledger.js";
 import type {
   ScenarioReconciliationTotals,
   EvidenceObligationTotals,
@@ -217,10 +217,10 @@ function buildSummary(
     ...(withRuntimeObservations
       ? {
           testVolume: {
-            totalEvidenceObservations: RUNTIME_QUALITY_CHECKS.reduce(
-              (n, qc) => n + observations.rawByRuntimeQualityCheck[qc],
-              0
-            ),
+            // ASKED, not re-derived (3F-2231) — the Ledger's fold computes this total and now
+            // returns it. The assembler summed the same record again for it, which is an adapter
+            // owning a model number by copied arithmetic.
+            totalEvidenceObservations: observations.total,
             onScenario: observations.onScenario,
             onPhantomScenario: observations.onPhantomScenario,
             onSuspenseScenario: observations.onSuspenseScenario,
