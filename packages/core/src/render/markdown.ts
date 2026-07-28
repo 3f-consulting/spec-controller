@@ -8,7 +8,7 @@
  * A PURE PRESENTATION of the shared whole-document `EvidenceReconciliation` model: the JSON
  * renderer serialises that model, and this renderer projects the SAME model to markdown,
  * so the two outputs are one model in two renderings and cannot diverge. `renderMarkdown`
- * keeps its `(balance, ctx, …)` signature — it builds `assembleReport(...)` internally
+ * keeps its `(balance, ctx, …)` signature — it builds `assembleRenderInput(...)` internally
  * (mirroring `json.ts`) then delegates to `renderReport(report, featureNames)`, the
  * from-model pipeline (exposed for slice 3's render-from-saved-JSON path). Every section
  * emitter reads MATERIALISED fields off the report rather than recomputing them.
@@ -49,7 +49,7 @@ import {
   presentStaticGuardCountOf,
 } from "../domain/scenarioReconciliation.js";
 import { demandedEvidenceObligationsOf } from "../domain/journal.js";
-import { assembleReport, type RenderInput } from "../assemble/report.js";
+import { assembleRenderInput, type RenderInput } from "../assemble/renderInput.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 // The run-integrity predicate (@SCN-LDG-018) — the existential scan for a `broken` reconciling
 // item. The renderer asks the predicate and prints the HEADLINE word: predicate-name ≠
@@ -1009,7 +1009,7 @@ export function renderReportFromJson(json: string): string {
 /**
  * Render the reconciliation to markdown. Keeps its `(balance, ctx, …)` signature (mirroring
  * `json.ts`): it assembles the shared whole-document report from the reconcile pieces —
- * threading the live `featureNames` title source INTO `assembleReport`, so the titles
+ * threading the live `featureNames` title source INTO `assembleRenderInput`, so the titles
  * land on the model — then delegates to `renderReport`. So `writer.ts` and the unit tests are
  * untouched, the markdown stays byte-identical (same slugs, now model-sourced), and it is
  * provably a presentation of the same model the JSON serialises.
@@ -1020,5 +1020,5 @@ export function renderMarkdown(
   evidenceObligations?: EvidenceObligations,
   featureNames?: FeatureNames
 ): string {
-  return renderReport(assembleReport(evidenceReconciliation, ctx, evidenceObligations, featureNames));
+  return renderReport(assembleRenderInput(evidenceReconciliation, ctx, evidenceObligations, featureNames));
 }

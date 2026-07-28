@@ -16,7 +16,7 @@ import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { join } from "node:path";
 import { runReconcile } from "../../packages/spec-controller/src/ingest/ingestQualityChecks.js";
-import { assembleReport } from "../../packages/core/src/assemble/report.js";
+import { assembleRenderInput } from "../../packages/core/src/assemble/renderInput.js";
 import { isBalanced } from "../../packages/core/src/domain/ledger.js";
 import type { Ledger } from "../../packages/core/src/model.js";
 import type { RunContext } from "../../packages/core/src/provenance/provenance.js";
@@ -70,7 +70,7 @@ Then("there is no suspense row, and summary.outOfBalance is 0 — agreeing with 
   // The summary AGREES with the balanced verdict — the 3F-1703 identity. Under the rejected
   // post-to-suspense treatment a spurious out-of-balance suspense row would push this to 1 while
   // isBalanced stays true, and this assertion reds.
-  const report = assembleReport(demandedOnlyLedger, DEMANDED_ONLY_CTX);
+  const report = assembleRenderInput(demandedOnlyLedger, DEMANDED_ONLY_CTX);
   assert.equal(
     report.summary.scenarioReconciliations.outOfBalance,
     0,

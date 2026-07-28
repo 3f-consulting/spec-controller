@@ -74,10 +74,14 @@ export { runningStaticGuards } from "./parse/runningStaticGuards.js";
 export { ciRunCommands, commandInvokesScript } from "./parse/checkScriptsRunInCI.js";
 export type { PackageJsonScripts } from "./parse/checkScriptsRunInCI.js";
 
-// --- EvidenceReconciliation model (`assemble/report.ts`) ---
-export { assembleReport } from "./assemble/report.js";
+// --- Evidence Reconciliation (the concept, `domain/evidenceReconciliation.ts`) + the RENDER
+// INPUT the adapters frame around it (`assemble/renderInput.ts`). `RenderInput` is deliberately
+// NOT a canon word: canon reserves "the report" for the RENDERED ARTEFACT, so the payload a
+// renderer consumes must not borrow it (3F-2234). ---
+export { assembleRenderInput } from "./assemble/renderInput.js";
 export type {
   EvidenceReconciliation,
+  RenderInput,
   ReportMetadata,
   Summary,
   ScenarioReconciliationTotals,
@@ -87,7 +91,7 @@ export type {
   StaticGuardTotals,
   LintTally,
   EvidenceObligationsSection,
-} from "./assemble/report.js";
+} from "./assemble/renderInput.js";
 
 // --- Render — model→string (`render/*`) ---
 export { renderJson } from "./render/json.js";

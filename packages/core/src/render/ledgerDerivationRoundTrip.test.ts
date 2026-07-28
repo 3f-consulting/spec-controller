@@ -12,7 +12,7 @@
  * Distinct from @SCN-RMD-007 (`renderReportFromJson.test.ts`), which proves markdown byte-identity
  * (a different property): this proves the JSON summary re-derives from the Ledger rows alone.
  *
- * The method: `renderJson(__er(assembleReport(__er(...))))` over a spanning reconciler-true corpus → `JSON.parse`
+ * The method: `renderJson(__er(assembleRenderInput(__er(...))))` over a spanning reconciler-true corpus → `JSON.parse`
  * → INDEPENDENTLY re-fold `ledgerTally` / `runtimeObservationTally` / `staticObservationTally` (the
  * domain folds, imported from `../domain/ledger.js`) over `parsed.ledger.scenarioReconciliations`,
  * and assert each re-derived value equals the materialised `parsed.summary.*`. Teeth: drift a

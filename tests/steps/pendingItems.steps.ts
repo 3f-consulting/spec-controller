@@ -19,7 +19,7 @@ import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { parseScenarios, reconcile, isBalanced, renderMarkdown, assembleReport } from "@3f-consulting/spec-controller-core";
+import { parseScenarios, reconcile, isBalanced, renderMarkdown, assembleRenderInput } from "@3f-consulting/spec-controller-core";
 import { runReconcile } from "../../packages/spec-controller/src/ingest/ingestQualityChecks.js";
 // The starter community-deferral policy now lives in the APP, not the core barrel (@SCN-API-001).
 // These @integration steps pass it explicitly into the pure `parseScenarios` — the same resolved
@@ -32,17 +32,15 @@ import {
   parseVitestEvidenceObservations,
   type VitestJsonReport,
 } from "@3f-consulting/spec-controller-core";
-import type {
-  Scenario,
+import type { Scenario,
   EvidenceObligation,
   EvidenceObservation,
   Ledger,
   ScenarioReconciliation,
   EvidenceReconciliation,
-  RunContext,
-} from "@3f-consulting/spec-controller-core";
+  RunContext, RenderInput } from "@3f-consulting/spec-controller-core";
 import { summaryOf } from "../../packages/core/src/domain/evidenceReconciliation.js";
-import type { RenderInput } from "../../packages/core/src/assemble/report.js";
+
 
 /**
  * Compose the Evidence Reconciliation around a Ledger fixture (3F-2233). No rule of its own:
@@ -970,7 +968,7 @@ When("the report is assembled and rendered from the reconciled fixture", functio
   // pipeline. No observation is supplied: @SCN-PDT-001 is balanced-with-pending (two Pending
   // Items), @SCN-PDT-002 reconciles its bare unit to a `missing` error (out-of-balance) while
   // its `@integrationpending` partitions to a Pending Item, and @SCN-PDT-003's bare unit is a
-  // `missing` error (out-of-balance, no Pending Item). assembleReport materialises the summary
+  // `missing` error (out-of-balance, no Pending Item). assembleRenderInput materialises the summary
   // (the Pending Items tally under test) and renderMarkdown renders it. Reds before the tally is
   // materialised (summary.pending is undefined) and before the renderer emits its line.
   const source = readFileSync(SUMMARY_TALLY_FIXTURE, "utf8");
@@ -982,7 +980,7 @@ When("the report is assembled and rendered from the reconciled fixture", functio
     runStart: new Date("2026-07-10T00:00:00.000Z"),
     sourceSha: null,
   };
-  summaryReport = assembleReport(pendingConcept(reconciliation), ctx);
+  summaryReport = assembleRenderInput(pendingConcept(reconciliation), ctx);
   summaryRendered = renderMarkdown(pendingConcept(reconciliation), ctx);
 });
 

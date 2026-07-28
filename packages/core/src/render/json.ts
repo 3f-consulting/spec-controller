@@ -1,7 +1,7 @@
 /**
  * The JSON renderer — the machine-readable whole-document report, the sibling of the
  * markdown renderer. Now GLUE-FREE (@SCN-RMD-001): it serialises the ONE
- * whole-document report model (`assembleReport`) with `JSON.stringify`, no per-key
+ * whole-document report model (`assembleRenderInput`) with `JSON.stringify`, no per-key
  * hand-assembly. The report model — not this renderer — owns the section set, the
  * document order, and the manifesto-vocabulary key names. So the JSON is provably
  * the model, not a lossy projection: humans read the markdown; machines/CI read the json;
@@ -14,7 +14,7 @@ import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js
 import type { RunContext } from "../provenance/provenance.js";
 import type { EvidenceObligations } from "../census/evidenceObligations.js";
 import type { FeatureNames } from "./markdown.js";
-import { assembleReport } from "../assemble/report.js";
+import { assembleRenderInput } from "../assemble/renderInput.js";
 
 export function renderJson(
   evidenceReconciliation: EvidenceReconciliation,
@@ -23,7 +23,7 @@ export function renderJson(
   featureNames?: FeatureNames
 ): string {
   return JSON.stringify(
-    assembleReport(evidenceReconciliation, ctx, evidenceObligations, featureNames),
+    assembleRenderInput(evidenceReconciliation, ctx, evidenceObligations, featureNames),
     null,
     2
   );

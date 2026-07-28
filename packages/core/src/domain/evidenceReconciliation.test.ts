@@ -16,7 +16,7 @@
 import { describe, it, expect } from "vitest";
 import { reconcile } from "./evidenceReconciliation.js";
 import { hasBrokenEvidence, isBalanced } from "./ledger.js";
-import { assembleReport } from "../assemble/report.js";
+import { assembleRenderInput } from "../assemble/renderInput.js";
 import type { RunContext } from "../provenance/provenance.js";
 import type {
   Scenario,
@@ -1493,7 +1493,7 @@ describe("[SCN-LDG-025] reconcile — a demanded-guards-only corpus reconciles b
     // The run is balanced, and the summary AGREES: outOfBalance 0 (the 3F-1703 identity — under
     // the rejected post-to-suspense this becomes 1 while isBalanced stays true, and it reds).
     expect(isBalanced(ledger)).toBe(true);
-    expect(assembleReport(__er(ledger), ctx).summary.scenarioReconciliations.outOfBalance).toBe(0);
+    expect(assembleRenderInput(__er(ledger), ctx).summary.scenarioReconciliations.outOfBalance).toBe(0);
   });
 });
 

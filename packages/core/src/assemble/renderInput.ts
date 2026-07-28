@@ -3,9 +3,9 @@
  * both renderings consume, in document order, so the JSON and the markdown are one
  * model in two renderings, not two dialects.
  *
- * `assembleReport` builds it from the existing reconcile pieces (the balance, the run
+ * `assembleRenderInput` builds it from the existing reconcile pieces (the balance, the run
  * context, and the declared / observed / static guard sibling reads). The JSON renderer collapses
- * to a glue-free `JSON.stringify(assembleReport(...))`. The assembler is the ONLY place the
+ * to a glue-free `JSON.stringify(assembleRenderInput(...))`. The assembler is the ONLY place the
  * JSON-surface vocabulary lives — the manifesto-vocabulary key renames (the revert)
  * are MAPPED here so they never ripple into markdown.ts / evidenceObservations.ts internals, keeping the
  * markdown byte-identical this slice.
@@ -23,14 +23,14 @@
 import type { Ledger } from "../model.js";
 // The Evidence Reconciliation arrives WHOLE from the concept that owns it (3F-2233); this module
 // computes nothing. `Summary` and its sub-types are re-exported below so the frozen v1 barrel keeps
-// the same surface off `./assemble/report.js` — only their home moved.
+// the same surface off `./assemble/renderInput.js` — only their home moved.
 import type { EvidenceReconciliation, Summary } from "../domain/evidenceReconciliation.js";
 import { provenanceObject, type ProvenanceObject, type RunContext } from "../provenance/provenance.js";
 import type { EvidenceObligations, UntaggedScenario } from "../census/evidenceObligations.js";
 
 // The Ledger-pure summary-tally types moved to `domain/ledger` (3F-2000, Read @SCN-RMD-001) —
 // "the summary is its totals". Re-exported here so the frozen v1 barrel (`index.ts`,
-// @SCN-API-001) keeps the SAME surface off `./assemble/report.js`; only the types' home moved.
+// @SCN-API-001) keeps the SAME surface off `./assemble/renderInput.js`; only the types' home moved.
 export type {
   ScenarioReconciliationTotals,
   EvidenceObligationTotals,
@@ -123,7 +123,7 @@ export interface RenderInput {
  * order, so JSON.stringify preserves it. The optional sections are included only when their sibling
  * read is threaded (the CLI always threads them; the narrower-arg tests exercise omission).
  */
-export function assembleReport(
+export function assembleRenderInput(
   evidenceReconciliation: EvidenceReconciliation,
   ctx: RunContext,
   evidenceObligations?: EvidenceObligations,

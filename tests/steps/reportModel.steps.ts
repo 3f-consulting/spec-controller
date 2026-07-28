@@ -126,7 +126,7 @@ Then(
  * divergence 3F-1703 found in an adopter's repository dogfood.
  *
  * Anti-watermelon: every number is read off the REAL persisted spec-reconciliation.json and
- * the REAL process exit code — no re-run of assembleReport, no re-derivation. The final
+ * the REAL process exit code — no re-run of assembleRenderInput, no re-derivation. The final
  * assertion pins the invariant the bug broke: the tally AGREES with the exit code.
  */
 Then(

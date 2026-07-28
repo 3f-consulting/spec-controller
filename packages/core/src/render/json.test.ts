@@ -351,7 +351,7 @@ describe("[SCN-RPT-015] the JSON evidenceObligations carries the prose-only code
  *
  * The markdown side is the genuine red→green of @SCN-PND-010 (the human renderer must
  * learn to emit the ⏳ pending label). This JSON side is the glue-free CONSISTENCY pin:
- * `renderJson` is `JSON.stringify(assembleReport(__er(...)))`, and `assembleReport` passes the
+ * `renderJson` is `JSON.stringify(assembleRenderInput(__er(...)))`, and `assembleRenderInput` passes the
  * scenario reconciliations through verbatim under `ledger`, so a scenario's
  * `pendingItems` reach the machine surface WITHOUT any renderer glue. This test pins that
  * the two renderings stay consistent — the machine surface carries the same Pending Items
@@ -396,7 +396,7 @@ describe("[SCN-PND-010] the JSON report carries a scenario's Pending Items", () 
  *
  * The markdown side is the genuine red→green of @SCN-PND-011 (the human renderer must learn to
  * emit the Pending Items tally line). This JSON side is the glue-free CONSISTENCY pin: `renderJson`
- * is `JSON.stringify(assembleReport(__er(...)))`, and the materialised `summary.pending` tally reaches
+ * is `JSON.stringify(assembleRenderInput(__er(...)))`, and the materialised `summary.pending` tally reaches
  * the machine surface WITHOUT any renderer glue, so the two renderings stay consistent — the
  * machine surface carries the same count the human surface renders. Its teeth are the exact count
  * on the exact key, so a dropped/renamed field reds.

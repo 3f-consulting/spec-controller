@@ -124,6 +124,7 @@ const EXPECTED_TYPE_EXPORTS: readonly string[] = [
   "PackageJsonScripts",
   // Evidence Reconciliation — layer 1, the assembled statement (assemble/report.ts)
   "EvidenceReconciliation",
+  "RenderInput",
   "ReportMetadata",
   "Summary",
   "ScenarioReconciliationTotals",
@@ -179,7 +180,7 @@ const EXPECTED_VALUE_EXPORTS: readonly string[] = [
   "ciRunCommands",
   "commandInvokesScript",
   // Evidence Reconciliation — layer 1, the assembled statement (assemble/report.ts)
-  "assembleReport",
+  "assembleRenderInput",
   // Render (render/*)
   "renderJson",
   "renderMarkdown",

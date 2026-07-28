@@ -45,7 +45,7 @@ describe("[SCN-DPG-001] a domain module imports only the domain layer and pure s
       { path: "packages/core/src/domain/qualityCheckReconciliation.ts", source: `import { renderMarkdown } from "../render/markdown.js";` },
       { path: "packages/core/src/domain/ledger.ts", source: `import { evidenceObligations } from "../census/evidenceObligations.js";` },
       { path: "packages/core/src/domain/scenarioReconciliation.ts", source: `import { parseScenarios } from "../parse/scenarios.js";` },
-      { path: "packages/core/src/domain/journal.ts", source: `import { assembleReport } from "../assemble/report.js";` },
+      { path: "packages/core/src/domain/journal.ts", source: `import { assembleRenderInput } from "../assemble/renderInput.js";` },
     ];
     const violations = checkDomainPurity(planted);
     expect(violations.map((v) => v.kind)).toEqual([
@@ -58,7 +58,7 @@ describe("[SCN-DPG-001] a domain module imports only the domain layer and pure s
       "../render/markdown.js",
       "../census/evidenceObligations.js",
       "../parse/scenarios.js",
-      "../assemble/report.js",
+      "../assemble/renderInput.js",
     ]);
   });
 
