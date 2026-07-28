@@ -23,7 +23,7 @@ import type { FeatureNames } from "@3f-consulting/spec-controller-core";
 import type { OutputFormat, OutputPlan } from "./format.js";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
 import type { EvidenceObligations } from "@3f-consulting/spec-controller-core";
-import type { Ledger } from "@3f-consulting/spec-controller-core";
+import type { EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
 
 /**
  * The reconciliation payloads the writer renders — the balance plus its sibling reads
@@ -35,7 +35,7 @@ import type { Ledger } from "@3f-consulting/spec-controller-core";
  * never a census object.
  */
 export interface OutputPayloads {
-  readonly balance: Ledger;
+  readonly balance: EvidenceReconciliation;
   readonly ctx: RunContext;
   readonly evidenceObligations?: EvidenceObligations;
   readonly withRuntimeObservations?: boolean;
@@ -45,11 +45,11 @@ export interface OutputPayloads {
 
 /** Render one format from the payloads via the matching pure renderer. */
 function render(fmt: OutputFormat, p: OutputPayloads): string {
-  const withObs = p.withRuntimeObservations ?? false;
-  const withGuards = p.withStaticGuards ?? false;
+  // The axis gates moved onto the concept's factory (3F-2233) — by the time a payload reaches a
+  // renderer the totals are already folded, so there is nothing left here to switch on.
   return fmt === "json"
-    ? renderJson(p.balance, p.ctx, p.evidenceObligations, withObs, withGuards, p.featureNames)
-    : renderMarkdown(p.balance, p.ctx, p.evidenceObligations, withObs, p.featureNames, withGuards);
+    ? renderJson(p.balance, p.ctx, p.evidenceObligations, p.featureNames)
+    : renderMarkdown(p.balance, p.ctx, p.evidenceObligations, p.featureNames);
 }
 
 /**

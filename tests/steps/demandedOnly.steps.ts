@@ -20,6 +20,7 @@ import { assembleReport } from "../../packages/core/src/assemble/report.js";
 import { isBalanced } from "../../packages/core/src/domain/ledger.js";
 import type { Ledger } from "../../packages/core/src/model.js";
 import type { RunContext } from "../../packages/core/src/provenance/provenance.js";
+import type { EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
 
 const DEMANDED_ONLY_CTX: RunContext = {
   target: "demanded-only",
@@ -28,7 +29,7 @@ const DEMANDED_ONLY_CTX: RunContext = {
   sourceSha: null,
 };
 
-let demandedOnlyLedger: Ledger;
+let demandedOnlyLedger: EvidenceReconciliation;
 
 // @SCN-LDG-025
 Given("a corpus whose only lint credit is a demanded static guard, wired and green in CI", function () {
@@ -52,19 +53,19 @@ When("the demanded-only corpus is reconciled", function () {
 
 // @SCN-LDG-025
 Then("the demanding scenario reconciles satisfied and the run is balanced", function () {
-  const account = demandedOnlyLedger.scenarioReconciliations.find((r) => r.scnId === "SCN-DEM-001");
+  const account = demandedOnlyLedger.ledger.scenarioReconciliations.find((r) => r.scnId === "SCN-DEM-001");
   assert.ok(account, "expected a ledger account for SCN-DEM-001; got none");
   const lint = account.qualityCheckReconciliations.find((r) => r.qualityCheck === "lint");
   assert.ok(lint, `expected SCN-DEM-001 to carry a lint reconciliation; got ${JSON.stringify(account.qualityCheckReconciliations)}`);
   assert.equal(lint.outcome, "satisfied", `expected the demanded static guard to reconcile satisfied; got "${lint.outcome}"`);
   assert.equal(account.verdict, "balanced", `expected SCN-DEM-001 balanced; got "${account.verdict}"`);
-  assert.equal(isBalanced(demandedOnlyLedger), true, "expected the whole run to be balanced");
+  assert.equal(isBalanced(demandedOnlyLedger.ledger), true, "expected the whole run to be balanced");
 });
 
 // @SCN-LDG-025
 Then("there is no suspense row, and summary.outOfBalance is 0 — agreeing with the balanced verdict", function () {
   // NO suspense row: the only lint credit is the demanded one, so nothing lands on `(no scenario)`.
-  const suspense = demandedOnlyLedger.scenarioReconciliations.find((r) => r.scnId === "(no scenario)");
+  const suspense = demandedOnlyLedger.ledger.scenarioReconciliations.find((r) => r.scnId === "(no scenario)");
   assert.equal(suspense, undefined, "expected NO suspense row — the only lint credit is the demanded static guard");
   // The summary AGREES with the balanced verdict — the 3F-1703 identity. Under the rejected
   // post-to-suspense treatment a spurious out-of-balance suspense row would push this to 1 while

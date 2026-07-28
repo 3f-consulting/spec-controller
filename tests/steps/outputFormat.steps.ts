@@ -132,7 +132,6 @@ Then("the rendered markdown report is written to stdout", function () {
       payloads.balance,
       payloads.ctx,
       payloads.evidenceObligations,
-      payloads.withRuntimeObservations,
       payloads.featureNames
     ) + "\n";
   assert.ok(
@@ -178,7 +177,7 @@ Then("the rendered JSON report is written to that file and stdout stays empty", 
   );
   const fileContents = readFileSync(fmt002FilePath, "utf8");
   const expected =
-    renderJson(payloads.balance, payloads.ctx, payloads.evidenceObligations, payloads.withRuntimeObservations, payloads.withStaticGuards, payloads.featureNames) + "\n";
+    renderJson(payloads.balance, payloads.ctx, payloads.evidenceObligations, payloads.featureNames) + "\n";
   assert.equal(
     fileContents,
     expected,
@@ -229,7 +228,6 @@ Then("the rendered markdown report is written to that file and stdout stays empt
       payloads.balance,
       payloads.ctx,
       payloads.evidenceObligations,
-      payloads.withRuntimeObservations,
       payloads.featureNames
     ) + "\n";
   assert.ok(
@@ -289,7 +287,6 @@ Then(
         payloads.balance,
         payloads.ctx,
         payloads.evidenceObligations,
-        payloads.withRuntimeObservations,
         payloads.featureNames
       ) + "\n";
     assert.ok(
@@ -310,7 +307,7 @@ Then(
     );
     const fileContents = readFileSync(fmt004FilePath, "utf8");
     const expectedJson =
-      renderJson(payloads.balance, payloads.ctx, payloads.evidenceObligations, payloads.withRuntimeObservations, payloads.withStaticGuards, payloads.featureNames) + "\n";
+      renderJson(payloads.balance, payloads.ctx, payloads.evidenceObligations, payloads.featureNames) + "\n";
     assert.equal(
       fileContents,
       expectedJson,

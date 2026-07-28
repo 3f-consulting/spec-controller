@@ -507,11 +507,11 @@ export function runBalance(argv: string[]): void {
   // is a SOUND out-of-balance run (no broken item), so it falls through this branch and still
   // exits exactly 1 — the pre-emption fires only when evidence genuinely failed to collect.
   const strict = args["strict"] !== undefined;
-  if (hasBrokenEvidence(balance)) {
+  if (hasBrokenEvidence(balance.ledger)) {
     process.exitCode = 4;
-  } else if (!isBalanced(balance)) {
+  } else if (!isBalanced(balance.ledger)) {
     process.exitCode = 1;
-  } else if (strict && hasPendingItems(balance)) {
+  } else if (strict && hasPendingItems(balance.ledger)) {
     process.exitCode = 3;
   }
 }

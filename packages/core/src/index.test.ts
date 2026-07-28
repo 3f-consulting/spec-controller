@@ -161,6 +161,7 @@ const EXPECTED_VALUE_EXPORTS: readonly string[] = [
   "evidenceObligations",
   // Evidence Reconciliation (domain/evidenceReconciliation.ts) + the Ledger predicates
   "reconcile",
+  "evidenceReconciliationOf",
   "isBalanced",
   "hasPendingItems",
   "hasBrokenEvidence",

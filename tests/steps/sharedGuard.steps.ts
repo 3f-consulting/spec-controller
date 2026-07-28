@@ -17,8 +17,9 @@ import assert from "node:assert/strict";
 import { join } from "node:path";
 import { runReconcile } from "../../packages/spec-controller/src/ingest/ingestQualityChecks.js";
 import type { Ledger, ScenarioReconciliation } from "../../packages/core/src/model.js";
+import type { EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
 
-let sharedGuardLedger: Ledger;
+let sharedGuardLedger: EvidenceReconciliation;
 
 const sharedAccountFor = (ledger: Ledger, scnId: string): ScenarioReconciliation | undefined =>
   ledger.scenarioReconciliations.find((r) => r.scnId === scnId);
@@ -45,7 +46,7 @@ When("the shared-guard corpus is reconciled", function () {
 // @SCN-LDG-024
 Then("both demanding scenarios' lint obligations reconcile satisfied", function () {
   for (const scnId of ["SCN-SHR-001", "SCN-SHR-002"]) {
-    const account = sharedAccountFor(sharedGuardLedger, scnId);
+    const account = sharedAccountFor(sharedGuardLedger.ledger, scnId);
     assert.ok(account, `expected a ledger account for ${scnId}; got none`);
     const lint = account.qualityCheckReconciliations.find((r) => r.qualityCheck === "lint");
     assert.ok(lint, `expected ${scnId} to carry a lint reconciliation; got ${JSON.stringify(account.qualityCheckReconciliations)}`);
@@ -57,7 +58,7 @@ Then("both demanding scenarios' lint obligations reconcile satisfied", function 
   }
   // A DEMANDED static guard is never suspense — there is no undemanded guard in this corpus.
   assert.equal(
-    sharedAccountFor(sharedGuardLedger, "(no scenario)"),
+    sharedAccountFor(sharedGuardLedger.ledger, "(no scenario)"),
     undefined,
     "expected NO suspense row — the only lint credit is the demanded static guard"
   );
@@ -65,8 +66,8 @@ Then("both demanding scenarios' lint obligations reconcile satisfied", function 
 
 // @SCN-LDG-024
 Then("the one static-guard credit is findable on each demanding account, one object on both", function () {
-  const a1 = sharedAccountFor(sharedGuardLedger, "SCN-SHR-001");
-  const a2 = sharedAccountFor(sharedGuardLedger, "SCN-SHR-002");
+  const a1 = sharedAccountFor(sharedGuardLedger.ledger, "SCN-SHR-001");
+  const a2 = sharedAccountFor(sharedGuardLedger.ledger, "SCN-SHR-002");
   const c1 = a1?.evidenceObservations.find((o) => o.qualityCheck === "lint" && o.staticGuard === "lint:double-demand");
   const c2 = a2?.evidenceObservations.find((o) => o.qualityCheck === "lint" && o.staticGuard === "lint:double-demand");
   assert.ok(c1, "expected the static-guard credit findable on SCN-SHR-001's account");

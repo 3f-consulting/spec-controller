@@ -49,6 +49,7 @@
  */
 
 import type {
+  RuntimeQualityCheck,
   Scenario,
   GuardEvidenceObservation,
   EvidenceObservation,
@@ -73,6 +74,17 @@ import {
   suspenseReconciliationsOf,
   noScnCodeReconciliations,
 } from "./qualityCheckReconciliation.js";
+import {
+  ledgerTally,
+  runtimeObservationTally,
+  staticObservationTally,
+} from "./ledger.js";
+import type {
+  ScenarioReconciliationTotals,
+  EvidenceObligationTotals,
+  MissingByQualityCheck,
+  LintTally,
+} from "./ledger.js";
 import {
   verdictFor,
   reconcilingItemsOf,
@@ -312,4 +324,187 @@ export function reconcile(
   }
 
   return { scenarioReconciliations };
+}
+
+// -------------------------------------------------------------------------
+// THE CONCEPT AND ITS FACTORY (3F-2233) — canon's Layer 1 owns its type, its summary and its
+// construction. `reconcile` above builds the Ledger; `summaryOf` tallies it; `evidenceReconciliationOf`
+// is the two together, which is what the concept IS: "all Scenario Reconciliations taken together …
+// its summary carries the totals and its ledger the detail" (double-entry-manifesto L22/L60).
+//
+// This is `why-ddd-for-spec-controller.md`'s sentence made executable — "an Evidence Reconciliation
+// that computes 'how many balance' because it IS the balance" — and it is what makes summing the
+// wrong rows structurally unavailable rather than asserted-against: there is no seam at which a
+// caller holds a Ledger and derives its own totals.
+// -------------------------------------------------------------------------
+
+/**
+ * The materialised test-volume totals (RMD-005) — the runtime evidence-observation kind-counts
+ * the markdown's `### Test volume` identity line derives, carried AS DATA. The identity
+ * `totalEvidenceObservations = onScenario + onPhantomScenario + onSuspenseScenario` holds by
+ * construction (one shared `runtimeObservationTally` fold), so a JSON consumer reads the balance
+ * rather than re-deriving it. The three terms are named for the SCENARIO-KIND the credit posted
+ * to (the canon grouping): `onScenario` (a scenario's account), `onPhantomScenario` (an
+ * invented phantom-scenario account) and `onSuspenseScenario` (the suspense scenario — includes
+ * `broken`). This is an identity read off the fold, not a re-map of the outcome handles.
+ */
+export interface TestVolumeTotals {
+  totalEvidenceObservations: number;
+  onScenario: number;
+  onPhantomScenario: number;
+  onSuspenseScenario: number;
+}
+
+/**
+ * The materialised static-guard totals (RMD-005) — the static-guard kind-counts the
+ * markdown's `### Static guards` line derives, following the census shape exactly:
+ * `runningGuardCount` (the volume of running static guards) and `uncitedStaticGuardCount` (how many
+ * of them NO `@lint` declares). The demanded count is IMPLICIT (`running − uncited`) and is
+ * not carried (every demanded static guard is already a reconciled `@lint` sub-row).
+ */
+export interface StaticGuardTotals {
+  runningGuardCount: number;
+  uncitedStaticGuardCount: number;
+}
+
+/** The materialised summary — the totals (manifesto: "the aggregate of the trial balance"). */
+export interface Summary {
+  scenarioReconciliations: ScenarioReconciliationTotals;
+  evidenceObligations: EvidenceObligationTotals;
+  /**
+   * The Pending Items tally (@SCN-PND-011) — the count of Pending Items across the
+   * reconciliation (one per deferred `<quality-check>pending` obligation, evidence-manifesto §11B),
+   * SEPARATE from the scenario balanced / out-of-balance counts and the evidence-obligation counts.
+   * A Pending Item is deferred, NOT out-of-balance, so it is NEVER folded into
+   * `OUT_OF_BALANCE_OUTCOMES` (never a leaf of its own, at any leaf count — the constraint is
+   * categorical, not arithmetic) nor into `evidenceObligations` — its own tally.
+   * Counts Pending ITEMS, not scenarios-carrying-pending (mirroring the out-of-balance
+   * decomposition, which counts obligations, not scenarios). Always present (a pure balance derive,
+   * like `lint`); reads 0 when no scenario declares a pending obligation.
+   */
+  pending: number;
+  /** The runtime test-volume kind-counts (RMD-005) — present when the evidenceObservations read is threaded. */
+  testVolume?: TestVolumeTotals;
+  /**
+   * The re-homed raw per-quality-check evidence-observation totals (@SCN-RMD-003, 3F-2102) — a
+   * materialised headline the Ledger folds (`runtimeObservationTally`), testVolume-adjacent. It
+   * RE-HOMES onto `summary` the raw totals the retired `evidenceObservations` section used to
+   * carry: a legitimate aggregate headline (per the done-criterion's fold-vs-store test — three
+   * derived totals, not a parallel store of the posted credits). Present exactly when `testVolume`
+   * is (both gated on the observation read being threaded).
+   */
+  rawByRuntimeQualityCheck?: Record<RuntimeQualityCheck, number>;
+  /** The static-guard kind-counts (RMD-005) — present when the guard read is threaded. */
+  staticGuards?: StaticGuardTotals;
+  /** The static-only lint evidenceObligation tally (RMD-005) — always present (a pure balance derive). */
+  lint: LintTally;
+}
+
+/**
+ * THE EVIDENCE RECONCILIATION — canon's Layer 1. `summary` carries the totals, `ledger` the detail.
+ *
+ * NOT the report. The run's PROVENANCE (when, where, which SHA) and the presentation metadata
+ * (feature titles) are the report's framing and live on the render payload, not here: canon is
+ * explicit that rendering this concept into various formats PRODUCES the report, which "draws its
+ * substance from it". "Ledger" is a REJECTED ALIAS for this concept — the ledger is the grid
+ * WITHIN it, which is why both fields are named rather than the whole thing collapsing to one.
+ */
+export interface EvidenceReconciliation {
+  summary: Summary;
+  ledger: Ledger;
+}
+
+/**
+ * Materialise the summary totals from the balance — the aggregate the markdown's trial-balance
+ * table derives, carried AS DATA so a later render-from-saved-JSON rebuilds it with zero
+ * computation (the MATERIALISE ruling). THIN COMPOSITION (3F-2000): the LEDGER-PURE totals
+ * (`scenarioReconciliations`, `evidenceObligations`, `pending`, `lint`) come from `ledgerTally`
+ * — the Ledger owns its own totals ("the summary is its totals") — and are MERGED here with the
+ * census pass-throughs (`testVolume`, `staticGuards`), which are NOT Ledger-pure. The keys are
+ * assembled in DOCUMENT ORDER (…, testVolume?, staticGuards?, lint) so the JSON stays
+ * byte-identical.
+ */
+export function summaryOf(
+  ledger: Ledger,
+  withRuntimeObservations: boolean,
+  withStaticGuards: boolean
+): Summary {
+  const tally = ledgerTally(ledger);
+  // The runtime evidence-observation totals are a FOLD OVER THE LEDGER (@SCN-RMD-003, 3F-2102) —
+  // the Ledger counts its own posted credits; the parallel census is RETIRED. `testVolume` and the
+  // re-homed `rawByRuntimeQualityCheck` derive from THIS fold. The `withRuntimeObservations` flag is
+  // now only the GATE (is the runtime-observation axis in play?) — the caller no longer threads a
+  // census object at all (the assembler folds the Ledger it already has).
+  const observations = runtimeObservationTally(ledger);
+  // The static-guard totals are a FOLD OVER THE LEDGER too (3F-2118) — the Ledger counts its own
+  // posted static-guard credits; the parallel static census is RETIRED. `staticGuards` derives from
+  // THIS fold. The `withStaticGuards` flag is now only the GATE (is the static-guard axis in play?) —
+  // the caller no longer threads a census object at all (the assembler folds the Ledger it holds).
+  const staticGuards = staticObservationTally(ledger);
+  return {
+    scenarioReconciliations: tally.scenarioReconciliations,
+    evidenceObligations: tally.evidenceObligations,
+    pending: tally.pending,
+    // The runtime test-volume kind-counts (RMD-005), materialised only when the evidenceObservations
+    // read is threaded. The surface reads the fold's per-scenario-kind counts DIRECTLY (an identity
+    // — the fold already groups by the scenario-kind the credit posted to). `onScenario` is every
+    // credit posted to a scenario's account, which INCLUDES undemanded as a subset
+    // (matched-pair + undemanded) — a DIFFERENT number from the reconciliation-matched-attributed
+    // (the retired section's `attributed[]` sum, which excluded undemanded). Keeping undemanded
+    // inside this count preserves the 3-termed identity `totalEvidenceObservations = onScenario +
+    // onPhantomScenario + onSuspenseScenario` (undemanded is a subset here, NOT a 4th identity term)
+    // — the same shape the markdown's `### Test volume` line derives. `onPhantomScenario` /
+    // `onSuspenseScenario` are the credits posted to the phantom / suspense accounts (suspense
+    // includes `broken`).
+    ...(withRuntimeObservations
+      ? {
+          testVolume: {
+            // ASKED, not re-derived (3F-2231) — the Ledger's fold computes this total and now
+            // returns it. The assembler summed the same record again for it, which is an adapter
+            // owning a model number by copied arithmetic.
+            totalEvidenceObservations: observations.total,
+            onScenario: observations.onScenario,
+            onPhantomScenario: observations.onPhantomScenario,
+            onSuspenseScenario: observations.onSuspenseScenario,
+          },
+          // The re-homed raw per-quality-check headline (@SCN-RMD-003) — a materialised Ledger
+          // fold, sibling of `testVolume` and present on the SAME gate.
+          rawByRuntimeQualityCheck: observations.rawByRuntimeQualityCheck,
+        }
+      : {}),
+    // The static-guard kind-counts (RMD-005), materialised only when the static-guard axis is in
+    // play — now a FOLD OVER THE LEDGER (3F-2118, `staticObservationTally`), symmetric with the
+    // runtime `testVolume` fold. The surface keeps the census shape exactly
+    // (`{ runningGuardCount, uncitedStaticGuardCount }`; demanded is implicit). The member detail
+    // lives in the rows (demanded → each scenario's `@lint` sub-row; undemanded → the suspense
+    // row) — there is no census section (2.4).
+    ...(withStaticGuards ? { staticGuards } : {}),
+    // The static-only lint tally (RMD-005), a LEDGER-PURE derive from `ledgerTally` — LAST key in
+    // document order (after the census pass-throughs).
+    lint: tally.lint,
+  };
+}
+
+/**
+ * BUILD the Evidence Reconciliation from the journal — THE FACTORY (3F-2233).
+ *
+ * Journal inputs in, whole concept out: the fold posts every entry into the Ledger, and the tally
+ * totals it. They are ONE act, not two stages a caller sequences — which is the point. While
+ * `reconcile()` and `buildSummary()` were separate, an adapter held a Ledger and derived its own
+ * totals, so "the procedure can sum the wrong rows" (`why-ddd-for-spec-controller.md`) was a
+ * REACHABLE state. Here there is no such seam: you cannot obtain a summary except from the concept
+ * that owns the rows it counts.
+ *
+ * The two flags are GATES, not data — they state whether the runtime-observation and static-guard
+ * axes are in play for this run; the counts themselves are always folded from the Ledger.
+ */
+export function evidenceReconciliationOf(
+  scenarios: Scenario[],
+  evidenceObservations: EvidenceObservation[],
+  untaggedScenarios: readonly string[] = [],
+  withRuntimeObservations: boolean = false,
+  withStaticGuards: boolean = false
+): EvidenceReconciliation {
+  const ledger = reconcile(scenarios, evidenceObservations, untaggedScenarios);
+  return { summary: summaryOf(ledger, withRuntimeObservations, withStaticGuards), ledger };
 }

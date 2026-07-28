@@ -29,6 +29,18 @@ import type {
 import { parseScenarios } from "../parse/scenarios.js";
 import { parseVitestEvidenceObservations, type VitestJsonReport } from "../parse/vitest.js";
 import { parseCucumberEvidenceObservations, type CucumberJsonReport } from "../parse/cucumber.js";
+import { summaryOf } from "./evidenceReconciliation.js";
+import type { EvidenceReconciliation } from "./evidenceReconciliation.js";
+
+/**
+ * Test-local composition of the Evidence Reconciliation from a Ledger fixture (3F-2233).
+ * States NO rule of its own — `summaryOf` is the concept's own tally, the one its factory calls.
+ */
+const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation => ({
+  summary: summaryOf(ledger, wo, wg),
+  ledger,
+});
+
 
 describe("[SCN-LDG-001] a scenario whose required evidence exists and passes is reported as balanced", () => {
   it("returns the balanced verdict with no reconciling items when its required unit-level evidence is present and passing", () => {
@@ -1481,7 +1493,7 @@ describe("[SCN-LDG-025] reconcile — a demanded-guards-only corpus reconciles b
     // The run is balanced, and the summary AGREES: outOfBalance 0 (the 3F-1703 identity — under
     // the rejected post-to-suspense this becomes 1 while isBalanced stays true, and it reds).
     expect(isBalanced(ledger)).toBe(true);
-    expect(assembleReport(ledger, ctx).summary.scenarioReconciliations.outOfBalance).toBe(0);
+    expect(assembleReport(__er(ledger), ctx).summary.scenarioReconciliations.outOfBalance).toBe(0);
   });
 });
 

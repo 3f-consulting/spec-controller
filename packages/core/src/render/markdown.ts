@@ -49,7 +49,8 @@ import {
   presentStaticGuardCountOf,
 } from "../domain/scenarioReconciliation.js";
 import { demandedEvidenceObligationsOf } from "../domain/journal.js";
-import { assembleReport, type EvidenceReconciliation } from "../assemble/report.js";
+import { assembleReport, type RenderInput } from "../assemble/report.js";
+import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 // The run-integrity predicate (@SCN-LDG-018) — the existential scan for a `broken` reconciling
 // item. The renderer asks the predicate and prints the HEADLINE word: predicate-name ≠
 // headline-word (`hasBrokenEvidence` → "unsound"), exactly as `isBalanced` → "balanced".
@@ -213,7 +214,7 @@ function renderScenario(s: ScenarioReconciliation): string {
  * trailing blank line; `renderReport` flat-maps the ordered list and joins, so the blanks
  * separate the sections cleanly.
  */
-type SectionEmitter = (report: EvidenceReconciliation) => string[];
+type SectionEmitter = (report: RenderInput) => string[];
 
 /**
  * The target-derived `feature-code → slug` map — a markdown-only render arg (NOT
@@ -988,7 +989,7 @@ const SECTIONS: readonly SectionEmitter[] = [
  * feature titles are read off `report.metadata.featureNames` (@SCN-RMD-006; nested under
  * `metadata`), so the by-feature cut names each feature in full from the model alone.
  */
-export function renderReport(report: EvidenceReconciliation): string {
+export function renderReport(report: RenderInput): string {
   return SECTIONS.flatMap((section) => section(report)).join("\n");
 }
 
@@ -1002,7 +1003,7 @@ export function renderReport(report: EvidenceReconciliation): string {
  * that the JSON is the model, not a lossy projection.
  */
 export function renderReportFromJson(json: string): string {
-  return renderReport(JSON.parse(json) as EvidenceReconciliation);
+  return renderReport(JSON.parse(json) as RenderInput);
 }
 
 /**
@@ -1014,13 +1015,10 @@ export function renderReportFromJson(json: string): string {
  * provably a presentation of the same model the JSON serialises.
  */
 export function renderMarkdown(
-  balance: Ledger,
+  evidenceReconciliation: EvidenceReconciliation,
   ctx: RunContext,
   evidenceObligations?: EvidenceObligations,
-  withRuntimeObservations: boolean = false,
-  featureNames?: FeatureNames,
-  withStaticGuards: boolean = false
+  featureNames?: FeatureNames
 ): string {
-  const report = assembleReport(balance, ctx, evidenceObligations, withRuntimeObservations, withStaticGuards, featureNames);
-  return renderReport(report);
+  return renderReport(assembleReport(evidenceReconciliation, ctx, evidenceObligations, featureNames));
 }

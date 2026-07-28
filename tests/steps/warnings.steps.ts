@@ -23,7 +23,7 @@
 
 import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
-import { parseScenarios } from "@3f-consulting/spec-controller-core";
+import { parseScenarios, evidenceReconciliationOf } from "@3f-consulting/spec-controller-core";
 import { reconcile } from "@3f-consulting/spec-controller-core";
 import { renderMarkdown } from "@3f-consulting/spec-controller-core";
 import type { Scenario, EvidenceObservation } from "@3f-consulting/spec-controller-core";
@@ -88,7 +88,7 @@ Given(
 
 // @SCN-WRN-001
 When("the reconciler runs over the scenarios", function () {
-  markdown = renderMarkdown(reconcile(scenarios, evidenceObservations), CTX);
+  markdown = renderMarkdown(evidenceReconciliationOf(scenarios, evidenceObservations), CTX);
 });
 
 // @SCN-WRN-001

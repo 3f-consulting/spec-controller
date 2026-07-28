@@ -23,6 +23,22 @@ import type { Ledger, Scenario, EvidenceObservation } from "../model.js";
 import type { RunContext } from "../provenance/provenance.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import type { EvidenceObligations } from "../census/evidenceObligations.js";
+import { summaryOf } from "../domain/evidenceReconciliation.js";
+import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
+
+/**
+ * Test-local composition of the Evidence Reconciliation from a Ledger fixture (3F-2233).
+ *
+ * It states NO rule of its own: `summaryOf` is the concept's OWN tally — the very function its
+ * factory calls — so this duplicates nothing. Only the entry path differs. `evidenceReconciliationOf`
+ * builds from JOURNAL inputs (what production does); these fixtures already hold a Ledger, so they
+ * compose the concept around it rather than re-reconciling.
+ */
+const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation => ({
+  summary: summaryOf(ledger, wo, wg),
+  ledger,
+});
+
 
 // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A, 3F-1894). The balance is PRODUCED by
 // reconcile() over a corpus, and the runtime census (below) is a FOLD over it — so the census
@@ -79,14 +95,14 @@ const featureNames = new Map([["CHK", "checkout"]]);
 
 describe("[SCN-RMD-007] the markdown regenerates from a saved spec-reconciliation.json alone", () => {
   it("regenerates markdown byte-identical to the direct render (drift-equality)", () => {
-    const savedJson = renderJson(balance, ctx, evidenceObligations, true, true, featureNames);
+    const savedJson = renderJson(__er(balance, true, true), ctx, evidenceObligations, featureNames);
     const regenerated = renderReportFromJson(savedJson);
-    const direct = renderMarkdown(balance, ctx, evidenceObligations, true, featureNames, true);
+    const direct = renderMarkdown(__er(balance, true, true), ctx, evidenceObligations, featureNames);
     expect(regenerated).toBe(direct);
   });
 
   it("names the coded out-of-balance feature in full from the JSON alone (the by-feature title teeth)", () => {
-    const savedJson = renderJson(balance, ctx, evidenceObligations, true, true, featureNames);
+    const savedJson = renderJson(__er(balance, true, true), ctx, evidenceObligations, featureNames);
     const regenerated = renderReportFromJson(savedJson);
     // The by-feature title comes from report.metadata.featureNames on the saved JSON (@SCN-RMD-006)
     // — a regenerate without the titles would name the bare "CHK".
@@ -94,7 +110,7 @@ describe("[SCN-RMD-007] the markdown regenerates from a saved spec-reconciliatio
   });
 
   it("carries the whole document — the three-way test-volume line and the materialised summary totals", () => {
-    const savedJson = renderJson(balance, ctx, evidenceObligations, true, true, featureNames);
+    const savedJson = renderJson(__er(balance, true, true), ctx, evidenceObligations, featureNames);
     const regenerated = renderReportFromJson(savedJson);
     // The three-way test-volume identity survives the round-trip.
     expect(regenerated).toContain("3 evidence observations = 1 on scenarios + 1 on phantom scenarios + 1 on the suspense scenario.");
@@ -110,7 +126,7 @@ describe("[SCN-RMD-007] the markdown regenerates from a saved spec-reconciliatio
   it("needs no RunContext — the JSON string alone reconstructs the report", () => {
     // The seam takes ONLY the JSON string; the run provenance header is rebuilt from the JSON's
     // runProvenance section, not a live RunContext.
-    const savedJson = renderJson(balance, ctx, evidenceObligations, true, true, featureNames);
+    const savedJson = renderJson(__er(balance, true, true), ctx, evidenceObligations, featureNames);
     const regenerated = renderReportFromJson(savedJson);
     expect(regenerated).toContain("## Run provenance");
     expect(regenerated).toContain("- Target repo: roundtrip-fixture");

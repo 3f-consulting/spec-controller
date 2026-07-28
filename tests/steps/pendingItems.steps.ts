@@ -41,6 +41,14 @@ import type {
   EvidenceReconciliation,
   RunContext,
 } from "@3f-consulting/spec-controller-core";
+import { summaryOf } from "../../packages/core/src/domain/evidenceReconciliation.js";
+import type { RenderInput } from "../../packages/core/src/assemble/report.js";
+
+/**
+ * Compose the Evidence Reconciliation around a Ledger fixture (3F-2233). No rule of its own:
+ * `summaryOf` is the concept's own tally, the one its factory calls.
+ */
+const pendingConcept = (ledger: Ledger) => ({ summary: summaryOf(ledger, false, false), ledger });
 
 const FIXTURE = join(process.cwd(), "tests/fixtures/pending-tags/features/target.feature");
 const SUFFIX_FIXTURE = join(
@@ -867,7 +875,7 @@ When("the report is rendered from the reconciled fixture", function () {
     runStart: new Date("2026-07-10T00:00:00.000Z"),
     sourceSha: null,
   };
-  renderedReport = renderMarkdown(reconciliation, ctx);
+  renderedReport = renderMarkdown(pendingConcept(reconciliation), ctx);
 });
 
 Then(
@@ -946,7 +954,7 @@ const SUMMARY_TALLY_FIXTURE = join(
 );
 
 // The assembled report + rendered markdown of the reconciled summary-tally fixture.
-let summaryReport: EvidenceReconciliation;
+let summaryReport: RenderInput;
 let summaryRendered: string;
 
 Given(
@@ -974,8 +982,8 @@ When("the report is assembled and rendered from the reconciled fixture", functio
     runStart: new Date("2026-07-10T00:00:00.000Z"),
     sourceSha: null,
   };
-  summaryReport = assembleReport(reconciliation, ctx);
-  summaryRendered = renderMarkdown(reconciliation, ctx);
+  summaryReport = assembleReport(pendingConcept(reconciliation), ctx);
+  summaryRendered = renderMarkdown(pendingConcept(reconciliation), ctx);
 });
 
 Then(
@@ -1132,7 +1140,7 @@ When(
       runStart: new Date("2026-07-10T00:00:00.000Z"),
       sourceSha: null,
     };
-    balancedContrastReport = renderMarkdown(reconciliation, ctx);
+    balancedContrastReport = renderMarkdown(pendingConcept(reconciliation), ctx);
   }
 );
 
@@ -2115,8 +2123,8 @@ When(
       features: join(CONFIG_EXTENDS_FIXTURE, "features"),
       packageJson: join(CONFIG_EXTENDS_FIXTURE, "package.json"),
     });
-    configuredScenario = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-CFG-001");
-    builtinScenario = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-CFG-002");
+    configuredScenario = reconciliation.ledger.scenarioReconciliations.find((s) => s.scnId === "SCN-CFG-001");
+    builtinScenario = reconciliation.ledger.scenarioReconciliations.find((s) => s.scnId === "SCN-CFG-002");
   }
 );
 
@@ -2223,7 +2231,7 @@ When(
       runStart: new Date("2026-07-10T00:00:00.000Z"),
       sourceSha: null,
     };
-    noObligationsReport = renderMarkdown(rec, ctx);
+    noObligationsReport = renderMarkdown(pendingConcept(rec), ctx);
   }
 );
 

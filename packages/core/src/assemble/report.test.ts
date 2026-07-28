@@ -45,6 +45,22 @@ function qcr(
 import type { RunContext } from "../provenance/provenance.js";
 import type { EvidenceObligations } from "../census/evidenceObligations.js";
 import type { EvidenceObservation, Scenario } from "../model.js";
+import { summaryOf } from "../domain/evidenceReconciliation.js";
+import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
+
+/**
+ * Test-local composition of the Evidence Reconciliation from a Ledger fixture (3F-2233).
+ *
+ * It states NO rule of its own: `summaryOf` is the concept's OWN tally — the very function its
+ * factory calls — so this duplicates nothing. Only the entry path differs. `evidenceReconciliationOf`
+ * builds from JOURNAL inputs (what production does); these fixtures already hold a Ledger, so they
+ * compose the concept around it rather than re-reconciling.
+ */
+const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation => ({
+  summary: summaryOf(ledger, wo, wg),
+  ledger,
+});
+
 
 // A balance spanning a balanced scenario and an out-of-balance one with a DOUBLE missing arm
 // (unit + integration), so the summary totals have teeth (2 scenarios / 1 balanced; 3
@@ -97,7 +113,7 @@ const evidenceObligations: EvidenceObligations = {
 
 describe("[SCN-RMD-001] assembleReport builds one whole-document report model", () => {
   it("carries the sections as top-level keys in document order", () => {
-    const report = assembleReport(balance, ctx, evidenceObligations) as unknown as Record<string, unknown>;
+    const report = assembleReport(__er(balance, false, false), ctx, evidenceObligations) as unknown as Record<string, unknown>;
     // runProvenance opens; the summary's totals then the LEDGER's detail (chain step 6, RMD-002);
     // the evidenceObligations census follows. The retired `warnings` key is GONE — a zero-evidence
     // scenario is a both-missing row in the ledger, not a separate top-level axis.
@@ -111,14 +127,14 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
   });
 
   it("renames the provenance section to runProvenance carrying the run facts", () => {
-    const report = assembleReport(balance, ctx);
+    const report = assembleReport(__er(balance), ctx);
     expect(report.runProvenance.target).toBe("an-adopters-repository");
     expect(report.runProvenance.sourceSha).toBe("905a987c0ffeeba110000000000000000deadbeef");
     expect(report.runProvenance.runTimestamp).toBe("2026-07-02T08:17:53Z");
   });
 
   it("materialises the summary totals from the balance", () => {
-    const report = assembleReport(balance, ctx);
+    const report = assembleReport(__er(balance), ctx);
     // A scenario-only balance: every row is a scenario, so the totals are the
     // scenario rows and the phantom / suspense sub-counts read 0.
     expect(report.summary.scenarioReconciliations).toEqual({ total: 2, balanced: 1, outOfBalance: 1, phantom: 0, suspense: 0 });
@@ -175,7 +191,7 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
   };
 
   it("counts the suspense reconciliation in the summary totals — a run whose only out-of-balance row is the suspense row tallies 1 out-of-balance, not 0", () => {
-    const report = assembleReport(balanceWithSuspense, ctx);
+    const report = assembleReport(__er(balanceWithSuspense), ctx);
     // The Evidence Reconciliation is ALL Scenario Reconciliations assembled and the summary is
     // its totals (the maintainers' private notes). A suspense reconciliation is ALWAYS
     // out-of-balance, so it counts into the total AND into out-of-balance: 2 scenario + 1
@@ -215,7 +231,7 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
         },
       ],
     };
-    const report = assembleReport(balanceWithPhantom, ctx);
+    const report = assembleReport(__er(balanceWithPhantom), ctx);
     expect(report.summary.scenarioReconciliations).toEqual({
       total: 4,
       balanced: 2,
@@ -230,15 +246,15 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
   });
 
   it("carries no warnings key — the retired authoring-quality axis", () => {
-    const report = assembleReport(balance, ctx) as unknown as Record<string, unknown>;
+    const report = assembleReport(__er(balance), ctx) as unknown as Record<string, unknown>;
     expect(report).not.toHaveProperty("warnings");
     expect(((report.ledger as { scenarioReconciliations: unknown[] }).scenarioReconciliations)).toHaveLength(2);
   });
 
   it("renderJson is a glue-free JSON.stringify of the assembled report", () => {
-    const parsed = JSON.parse(renderJson(balance, ctx, evidenceObligations));
+    const parsed = JSON.parse(renderJson(__er(balance, false, false), ctx, evidenceObligations));
     // Glue-free: the parsed JSON EQUALS the assembled model (no divergent hand-assembly).
-    expect(parsed).toEqual(assembleReport(balance, ctx, evidenceObligations));
+    expect(parsed).toEqual(assembleReport(__er(balance, false, false), ctx, evidenceObligations));
     // And it carries the renamed provenance + materialised summary on the machine surface.
     expect(parsed.runProvenance).toBeDefined();
     expect(parsed.summary.scenarioReconciliations.total).toBe(2);
@@ -266,7 +282,7 @@ describe("[SCN-RMD-001] assembleReport builds one whole-document report model", 
  */
 describe("[SCN-RMD-002] the ledger serialises under the top-level key ledger, beside summary", () => {
   it("carries the grid of Scenario Reconciliations under ledger — never evidenceReconciliation, never scenarios", () => {
-    const parsed = JSON.parse(renderJson(balance, ctx));
+    const parsed = JSON.parse(renderJson(__er(balance), ctx));
     // ONE VOCABULARY: an OBJECT mirroring `interface Ledger { scenarioReconciliations }`, never a
     // bare array of rows.
     expect(Array.isArray(parsed.ledger)).toBe(false);
@@ -281,7 +297,7 @@ describe("[SCN-RMD-002] the ledger serialises under the top-level key ledger, be
   });
 
   it("carries the ledger BESIDE summary — chain step 6: the summary has the totals and the ledger the detail", () => {
-    const parsed = JSON.parse(renderJson(balance, ctx));
+    const parsed = JSON.parse(renderJson(__er(balance), ctx));
     // Both at ROOT, and `ledger` follows `summary` in document order — the totals, then the detail.
     const keys = Object.keys(parsed);
     expect(keys).toContain("summary");
@@ -308,7 +324,7 @@ describe("[SCN-RMD-002] the ledger serialises under the top-level key ledger, be
     ].join("\n");
     const credit = { scnId: "SCN-AAA-001", qualityCheck: "unit" as const, status: "passed" as const };
     const real = reconcile(parseScenarios(feature), [credit]);
-    const parsed = JSON.parse(renderJson(real, ctx));
+    const parsed = JSON.parse(renderJson(__er(real), ctx));
     const account = parsed.ledger.scenarioReconciliations.find(
       (s: { scnId: string }) => s.scnId === "SCN-AAA-001"
     );
@@ -320,7 +336,7 @@ describe("[SCN-RMD-002] the ledger serialises under the top-level key ledger, be
   });
 
   it("carries each quality check reconciliation's outcome field with the reconciliation-outcome literals", () => {
-    const parsed = JSON.parse(renderJson(balance, ctx));
+    const parsed = JSON.parse(renderJson(__er(balance), ctx));
     const outOfBalance = parsed.ledger.scenarioReconciliations.find(
       (s: { scnId: string }) => s.scnId === "SCN-RMD-002"
     );
@@ -362,13 +378,13 @@ describe("[SCN-RMD-003] the runtime-observation totals re-home onto summary; no 
   const rmd003Balance: Ledger = reconcile(rmd003Scenarios, rmd003Observations);
 
   it("carries NO evidenceObservations section — the raw totals re-home onto summary", () => {
-    const parsed = JSON.parse(renderJson(rmd003Balance, ctx, undefined, true));
+    const parsed = JSON.parse(renderJson(__er(rmd003Balance, true, false), ctx));
     expect(parsed).not.toHaveProperty("evidenceObservations");
     expect(parsed.summary.rawByRuntimeQualityCheck).toEqual({ unit: 5, integration: 1, e2e: 0, performance: 0 });
   });
 
   it("the phantom and suspense credits live on their ledger rows, not a section detail array", () => {
-    const parsed = JSON.parse(renderJson(rmd003Balance, ctx, undefined, true));
+    const parsed = JSON.parse(renderJson(__er(rmd003Balance, true, false), ctx));
     // The phantom credit surfaces as a phantom-scenario row (@SCN-LDG-006); the suspense credit as
     // the suspense row (@SCN-LDG-007) — no standalone section array double-reports them.
     const phantom = parsed.ledger.scenarioReconciliations.find((s: { kind: string }) => s.kind === "phantom-scenario");
@@ -381,14 +397,14 @@ describe("[SCN-RMD-003] the runtime-observation totals re-home onto summary; no 
   });
 
   it("keeps the balancing identity: Σ rawByRuntimeQualityCheck = onScenario + onPhantomScenario + onSuspenseScenario (all summary folds)", () => {
-    const parsed = JSON.parse(renderJson(rmd003Balance, ctx, undefined, true));
+    const parsed = JSON.parse(renderJson(__er(rmd003Balance, true, false), ctx));
     const raw = (Object.values(parsed.summary.rawByRuntimeQualityCheck) as number[]).reduce((a, b) => a + b, 0);
     const tv = parsed.summary.testVolume;
     expect(raw).toBe(tv.onScenario + tv.onPhantomScenario + tv.onSuspenseScenario);
   });
 
   it("omits summary.rawByRuntimeQualityCheck + testVolume when the runtime-observation axis is not in play", () => {
-    const parsed = JSON.parse(renderJson(rmd003Balance, ctx));
+    const parsed = JSON.parse(renderJson(__er(rmd003Balance), ctx));
     expect(parsed).not.toHaveProperty("evidenceObservations");
     expect(parsed.summary).not.toHaveProperty("rawByRuntimeQualityCheck");
     expect(parsed.summary).not.toHaveProperty("testVolume");
@@ -421,7 +437,7 @@ describe("[SCN-RMD-004] the static-guard census is summary counts, no standalone
   );
 
   it("carries NO standalone staticGuards (or guards) section — the census collapsed to summary counts", () => {
-    const parsed = JSON.parse(renderJson(staticGuardsBalance, ctx, undefined, undefined, true));
+    const parsed = JSON.parse(renderJson(__er(staticGuardsBalance, false, true), ctx, undefined, undefined));
     // The member-list section (was `guards`, then `staticGuards`) is gone: the guard detail now
     // lives in the rows, symmetric with the runtime side — no double-report on the JSON surface.
     expect(parsed).not.toHaveProperty("staticGuards");
@@ -429,7 +445,7 @@ describe("[SCN-RMD-004] the static-guard census is summary counts, no standalone
   });
 
   it("materialises the counts under summary.staticGuards ({ runningGuardCount, uncitedStaticGuardCount })", () => {
-    const parsed = JSON.parse(renderJson(staticGuardsBalance, ctx, undefined, undefined, true));
+    const parsed = JSON.parse(renderJson(__er(staticGuardsBalance, false, true), ctx, undefined, undefined));
     expect(parsed.summary.staticGuards).toEqual({ runningGuardCount: 2, uncitedStaticGuardCount: 1 });
   });
 });
@@ -520,7 +536,7 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
   };
 
   it("materialises the test-volume totals (onScenario excludes onPhantomScenario)", () => {
-    const report = assembleReport(rmd005Balance, ctx, undefined, true);
+    const report = assembleReport(__er(rmd005Balance, true, false), ctx);
     expect(report.summary.testVolume).toEqual({
       totalEvidenceObservations: 6,
       onScenario: 4,
@@ -530,20 +546,20 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
   });
 
   it("re-homes the raw per-quality-check totals onto summary (folded from the Ledger, 3F-2102)", () => {
-    const report = assembleReport(rmd005Balance, ctx, undefined, true);
+    const report = assembleReport(__er(rmd005Balance, true, false), ctx);
     // A materialised Ledger fold (the retired section's raw totals, re-homed testVolume-adjacent):
     // 4 unit (3 attributed to SCN-RMD-001 + 1 phantom) + 2 integration (1 attributed + 1 suspense).
     expect(report.summary.rawByRuntimeQualityCheck).toEqual({ unit: 4, integration: 2, e2e: 0, performance: 0 });
   });
 
   it("keeps the test-volume identity Σ rawByRuntimeQualityCheck = onScenario + onPhantomScenario + onSuspenseScenario", () => {
-    const report = assembleReport(rmd005Balance, ctx, undefined, true);
+    const report = assembleReport(__er(rmd005Balance, true, false), ctx);
     const tv = report.summary.testVolume!;
     expect(tv.totalEvidenceObservations).toBe(tv.onScenario + tv.onPhantomScenario + tv.onSuspenseScenario);
   });
 
   it("materialises the static-guard totals", () => {
-    const report = assembleReport(rmd005Balance, ctx, undefined, undefined, true);
+    const report = assembleReport(__er(rmd005Balance, false, true), ctx, undefined, undefined);
     expect(report.summary.staticGuards).toEqual({
       runningGuardCount: 2,
       uncitedStaticGuardCount: 1,
@@ -551,7 +567,7 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
   });
 
   it("carries the 2-field census shape with demanded implicit (no ciGuards/demanded on the surface)", () => {
-    const report = assembleReport(rmd005Balance, ctx, undefined, undefined, true);
+    const report = assembleReport(__er(rmd005Balance, false, true), ctx, undefined, undefined);
     const sg = report.summary.staticGuards!;
     // demanded is IMPLICIT — running − uncited, never a surface field.
     expect(sg.runningGuardCount - sg.uncitedStaticGuardCount).toBe(1);
@@ -560,12 +576,12 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
   });
 
   it("materialises the static-only lint tally (satisfied / total), ignoring runtime evidenceObligations", () => {
-    const report = assembleReport(lintBalance, ctx);
+    const report = assembleReport(__er(lintBalance), ctx);
     expect(report.summary.lint).toEqual({ satisfied: 1, total: 2 });
   });
 
   it("omits testVolume / staticGuards when their sibling read is not threaded, but always carries lint", () => {
-    const report = assembleReport(balance, ctx);
+    const report = assembleReport(__er(balance), ctx);
     expect(report.summary).not.toHaveProperty("testVolume");
     expect(report.summary).not.toHaveProperty("staticGuards");
     // The lint tally is a pure balance derive — always present (this balance declares no static
@@ -574,7 +590,7 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
   });
 
   it("carries the three totals through the glue-free JSON serialisation", () => {
-    const parsed = JSON.parse(renderJson(rmd005Balance, ctx, undefined, true, true));
+    const parsed = JSON.parse(renderJson(__er(rmd005Balance, true, true), ctx));
     expect(parsed.summary.testVolume).toEqual({ totalEvidenceObservations: 6, onScenario: 4, onPhantomScenario: 1, onSuspenseScenario: 1 });
     expect(parsed.summary.staticGuards).toEqual({ runningGuardCount: 2, uncitedStaticGuardCount: 1 });
     expect(parsed.summary.lint).toEqual({ satisfied: 1, total: 2 });
@@ -634,7 +650,7 @@ describe("[SCN-RMD-006] the report model carries the feature titles", () => {
   ]);
 
   it("materialises the feature titles under metadata as a plain object", () => {
-    const report = assembleReport(codedBalance, ctx, undefined, undefined, undefined, featureNames);
+    const report = assembleReport(__er(codedBalance, false, false), ctx, undefined, featureNames);
     // The titles now live under the small top-level `metadata` object (presentation
     // metadata), not as a top-level `featureNames` sibling of the reconciliation records.
     expect(report.metadata?.featureNames).toEqual({ LDG: "ledger", LNT: "lint-evidence" });
@@ -643,14 +659,14 @@ describe("[SCN-RMD-006] the report model carries the feature titles", () => {
 
   it("serialises the feature titles under metadata through the glue-free JSON", () => {
     const parsed = JSON.parse(
-      renderJson(codedBalance, ctx, undefined, undefined, undefined, featureNames)
+      renderJson(__er(codedBalance, false, false), ctx, undefined, featureNames)
     );
     expect(parsed.metadata.featureNames).toEqual({ LDG: "ledger", LNT: "lint-evidence" });
     expect(parsed).not.toHaveProperty("featureNames");
   });
 
   it("renderReport names each feature in full sourced from the model, no external map", () => {
-    const report = assembleReport(codedBalance, ctx, undefined, undefined, undefined, featureNames);
+    const report = assembleReport(__er(codedBalance, false, false), ctx, undefined, featureNames);
     const md = renderReport(report);
     expect(md).toContain("| ledger (LDG) | 1 | SCN-LDG-003 |");
     expect(md).toContain("| lint-evidence (LNT) | 1 | SCN-LNT-002 |");
@@ -658,31 +674,24 @@ describe("[SCN-RMD-006] the report model carries the feature titles", () => {
 
   it("keeps the markdown byte-identical: the model-sourced render equals the map-threaded render", () => {
     const modelSourced = renderReport(
-      assembleReport(codedBalance, ctx, undefined, undefined, undefined, featureNames)
+      assembleReport(__er(codedBalance, false, false), ctx, undefined, featureNames)
     );
-    const mapThreaded = renderMarkdown(codedBalance, ctx, undefined, undefined, featureNames);
+    const mapThreaded = renderMarkdown(__er(codedBalance, false, false), ctx, undefined, featureNames);
     expect(modelSourced).toBe(mapThreaded);
   });
 
   it("omits metadata when no coded feature is declared (no map, or an empty map)", () => {
     // With no feature titles, the whole `metadata` object is omitted (present only
     // when the run declares ≥1 coded feature), and no top-level `featureNames` key appears.
-    expect(assembleReport(codedBalance, ctx)).not.toHaveProperty("metadata");
-    expect(assembleReport(codedBalance, ctx)).not.toHaveProperty("featureNames");
+    expect(assembleReport(__er(codedBalance), ctx)).not.toHaveProperty("metadata");
+    expect(assembleReport(__er(codedBalance), ctx)).not.toHaveProperty("featureNames");
     expect(
-      assembleReport(codedBalance, ctx, undefined, undefined, undefined, new Map())
+      assembleReport(__er(codedBalance, false, false), ctx, undefined, new Map())
     ).not.toHaveProperty("metadata");
   });
 
   it("places metadata last, carrying featureNames — no top-level featureNames sibling", () => {
-    const report = assembleReport(
-      codedBalance,
-      ctx,
-      undefined,
-      undefined,
-      undefined,
-      featureNames
-    ) as unknown as Record<string, unknown>;
+    const report = assembleReport(__er(codedBalance, false, false), ctx, undefined, featureNames) as unknown as Record<string, unknown>;
     const keys = Object.keys(report);
     // The titles now nest under `metadata` (presentation metadata), which is the LAST document
     // key — NOT a top-level `featureNames` sibling of the reconciliation records.
@@ -726,7 +735,7 @@ describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single qualit
     "      Given a fixture step",
   ].join("\n");
   const report = () =>
-    JSON.parse(JSON.stringify(assembleReport(reconcile(parseScenarios(feature), []), ctx))) as {
+    JSON.parse(JSON.stringify(assembleReport(__er(reconcile(parseScenarios(feature), [])), ctx))) as {
       ledger: {
         scenarioReconciliations: Array<{
           qualityCheckReconciliations: Array<Record<string, unknown>>;
@@ -807,12 +816,12 @@ describe("[SCN-LDG-008] the two scenario-backing counts stay distinct (ruling Q1
   );
 
   it("carries undemanded as its OWN entry in summary.byOutcome", () => {
-    const report = assembleReport(undemandedBalance, ctx, undefined, true);
+    const report = assembleReport(__er(undemandedBalance, true, false), ctx);
     expect(report.summary.evidenceObligations.byOutcome.undemanded).toBe(1);
   });
 
   it("keeps Test-volume onScenario INCLUDING undemanded (cites a scenario), so it EXCEEDS the matched-pair count by exactly byOutcome.undemanded", () => {
-    const report = assembleReport(undemandedBalance, ctx, undefined, true);
+    const report = assembleReport(__er(undemandedBalance, true, false), ctx);
     // Test-volume onScenario = credits citing a scenario = matched (1) + undemanded (1).
     expect(report.summary.testVolume!.onScenario).toBe(2);
     // The MATCHED-pair count is recovered from the Ledger, not a parallel `attributed[]` store:
@@ -830,7 +839,7 @@ describe("[SCN-LDG-008] the two scenario-backing counts stay distinct (ruling Q1
   });
 
   it("keeps the Test-volume identity 3-termed (undemanded is a SUBSET of onScenario, not a 4th term)", () => {
-    const report = assembleReport(undemandedBalance, ctx, undefined, true);
+    const report = assembleReport(__er(undemandedBalance, true, false), ctx);
     const tv = report.summary.testVolume!;
     expect(tv.totalEvidenceObservations).toBe(
       tv.onScenario + tv.onPhantomScenario + tv.onSuspenseScenario
@@ -897,13 +906,13 @@ describe("[SCN-PND-011] the summary materialises a Pending Items tally, separate
   };
 
   it("materialises summary.pending counting Pending Items across the rows", () => {
-    const report = assembleReport(pendingBalance, ctx);
+    const report = assembleReport(__er(pendingBalance), ctx);
     // 2 (SCN-PDX-001) + 1 (SCN-PDX-002) + 0 (SCN-PDX-003) = 3 Pending Items.
     expect(report.summary.pending).toBe(3);
   });
 
   it("counts Pending ITEMS, not scenarios carrying them (SCN-PDX-001 alone carries two)", () => {
-    const report = assembleReport(pendingBalance, ctx);
+    const report = assembleReport(__er(pendingBalance), ctx);
     const scenariosCarryingPending = pendingBalance.scenarioReconciliations.filter(
       (s) => (s.pendingItems ?? []).length > 0
     ).length;
@@ -913,7 +922,7 @@ describe("[SCN-PND-011] the summary materialises a Pending Items tally, separate
   });
 
   it("keeps the tally SEPARATE from the scenario balanced / out-of-balance counts", () => {
-    const report = assembleReport(pendingBalance, ctx);
+    const report = assembleReport(__er(pendingBalance), ctx);
     expect(report.summary.scenarioReconciliations).toEqual({ total: 3, balanced: 2, outOfBalance: 1, phantom: 0, suspense: 0 });
     // The tally is its own number — it coincides with neither verdict count.
     expect(report.summary.pending).not.toBe(report.summary.scenarioReconciliations.balanced);
@@ -921,7 +930,7 @@ describe("[SCN-PND-011] the summary materialises a Pending Items tally, separate
   });
 
   it("NEVER folds a Pending Item into the evidence-obligation counts (never an out-of-balance outcome, at any count)", () => {
-    const report = assembleReport(pendingBalance, ctx);
+    const report = assembleReport(__er(pendingBalance), ctx);
     // The evidence-obligation total counts the two REAL obligations (1 satisfied + 1 missing) —
     // the three Pending Items are NOT obligations, so they never inflate it.
     expect(report.summary.evidenceObligations.total).toBe(2);
@@ -934,13 +943,13 @@ describe("[SCN-PND-011] the summary materialises a Pending Items tally, separate
   });
 
   it("is always present — a pure balance derive reading 0 when no scenario declares a pending obligation", () => {
-    const report = assembleReport(balance, ctx);
+    const report = assembleReport(__er(balance), ctx);
     // The `balance` fixture (top of file) declares no pending obligations, so the tally reads 0.
     expect(report.summary.pending).toBe(0);
   });
 
   it("carries the tally through the glue-free JSON serialisation", () => {
-    const parsed = JSON.parse(renderJson(pendingBalance, ctx));
+    const parsed = JSON.parse(renderJson(__er(pendingBalance), ctx));
     expect(parsed.summary.pending).toBe(3);
   });
 });

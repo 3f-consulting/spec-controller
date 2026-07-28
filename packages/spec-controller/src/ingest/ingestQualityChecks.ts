@@ -45,13 +45,13 @@ import { runningStaticGuards } from "@3f-consulting/spec-controller-core";
 // monorepo-internal seam instead of by a deep `core/src` relative path.
 import { demandedStaticGuardsOf } from "@3f-consulting/spec-controller-core/internal";
 import type { PackageJsonScripts } from "@3f-consulting/spec-controller-core";
-import { reconcile } from "@3f-consulting/spec-controller-core";
+import { evidenceReconciliationOf } from "@3f-consulting/spec-controller-core";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
 import type {
   Scenario,
   RuntimeQualityCheck,
   EvidenceObservation,
-  Ledger,
+  EvidenceReconciliation,
 } from "@3f-consulting/spec-controller-core";
 
 /**
@@ -278,7 +278,7 @@ function parseRuntimeObservations(opts: ReconcileOptions, root: string | undefin
  * so they cannot drift from the verdict (they ARE the same rows). This function's job is now just
  * to produce the balance.
  */
-export function runReconcile(opts: ReconcileOptions): Ledger {
+export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
   // Read the target's package.json ONCE — its `specController.deferralTags` config extends the
   // recognised deferral-tag set (@SCN-PND-021), and its `scripts` back the static-guard `exists`
   // read (the --package-json seam, below). The disk read stays at this impure edge; the core parser
@@ -337,13 +337,16 @@ export function runReconcile(opts: ReconcileOptions): Ledger {
   // The declared corpus is BOTH halves: the @SCN-tagged scenarios AND the untagged ones
   // (@SCN-LDG-021). An untagged scenario cannot be linked to an observation, so it reconciles
   // `no-scn-code` on its own out-of-balance row — never silently dropped from the debit side.
-  const balance = reconcile(
+  // THE CONCEPT, BUILT BY ITS OWN FACTORY (3F-2233) — the app no longer assembles a Ledger and
+  // leaves someone downstream to total it. The two axis GATES are always on at this edge: the CLI
+  // threads both the runtime-observation and the static-guard reads.
+  return evidenceReconciliationOf(
     scenarios,
     evidenceObservations,
-    untaggedScenariosFromFeatures(opts.features)
+    untaggedScenariosFromFeatures(opts.features),
+    true,
+    true
   );
-
-  return balance;
 }
 
 // The static-guard kind-counts are no longer read as a parallel census (@SCN-USG-001 / 3F-2118):

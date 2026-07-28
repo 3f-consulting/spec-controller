@@ -18,7 +18,7 @@
 
 import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
-import { parseScenarios, parseUntaggedScenarios } from "@3f-consulting/spec-controller-core";
+import { parseScenarios, parseUntaggedScenarios, evidenceReconciliationOf } from "@3f-consulting/spec-controller-core";
 import { reconcile } from "@3f-consulting/spec-controller-core";
 import { renderMarkdown } from "@3f-consulting/spec-controller-core";
 import { renderJson } from "@3f-consulting/spec-controller-core";
@@ -30,14 +30,7 @@ import {
   parseVitestEvidenceObservations,
   type VitestJsonReport,
 } from "@3f-consulting/spec-controller-core";
-import type {
-  Scenario,
-  EvidenceObligation,
-  EvidenceObservation,
-  Ledger,
-  ScenarioReconciliation,
-  QualityCheckReconciliation,
-} from "@3f-consulting/spec-controller-core";
+import type { Scenario, EvidenceObligation, EvidenceObservation, Ledger, ScenarioReconciliation, QualityCheckReconciliation, EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
 // The whole-run soundness predicate (@SCN-LDG-018), imported by MODULE PATH rather than from the
 // package barrel: the barrel is the FROZEN v1 surface (@SCN-API-001), and adding `hasBrokenEvidence`
@@ -287,7 +280,7 @@ When("the ledger reconciles the target", function () {
   // "still reads missing" assertion stays row-scoped on the rendered ledger, as every other
   // @LDG scenario's. Every pre-existing step reads `markdown` exactly as before.
   reconciliation = reconcile(scenarios, evidenceObservations);
-  markdown = renderMarkdown(reconciliation, CTX);
+  markdown = renderMarkdown(evidenceReconciliationOf(scenarios, evidenceObservations), CTX);
 });
 
 // @SCN-LDG-011
@@ -680,7 +673,7 @@ Then("the @unit obligation remains the scenario's only required evidence", funct
 
 // @SCN-LDG-001
 When("the reconciler runs", function () {
-  markdown = renderMarkdown(reconcile(scenarios, evidenceObservations), CTX);
+  markdown = renderMarkdown(evidenceReconciliationOf(scenarios, evidenceObservations), CTX);
 });
 
 // @SCN-LDG-001
@@ -1571,7 +1564,7 @@ Then(
  * tool printed "1 scenario(s) carry no @SCN tag" and called the run clean in the same breath.
  */
 
-let ldg021Reconciliation: Ledger;
+let ldg021Reconciliation: EvidenceReconciliation;
 let ldg021UntaggedName: string;
 
 // @SCN-LDG-021
@@ -1606,7 +1599,7 @@ Feature: alpha
     evidenceObservations = [
       { scnId: "SCN-AAA-001", qualityCheck: "unit", status: "passed", locator: "a.test.ts" },
     ];
-    ldg021Reconciliation = reconcile(scenarios, evidenceObservations, untagged);
+    ldg021Reconciliation = evidenceReconciliationOf(scenarios, evidenceObservations, untagged);
   },
 );
 
@@ -1621,7 +1614,7 @@ When("the ledger reconciles that corpus", function () {
 Then(
   "the untagged scenario has its own out-of-balance row, reconciling no-scn-code",
   function () {
-    const row = ldg021Reconciliation.scenarioReconciliations.find(
+    const row = ldg021Reconciliation.ledger.scenarioReconciliations.find(
       (r: ScenarioReconciliation) => r.scnId === ldg021UntaggedName,
     );
     assert.ok(
@@ -1648,7 +1641,7 @@ Then(
     // one contributed nothing, and the run exited 0 BALANCED — over a scenario that says "the
     // customer is charged once" and that nothing proves.
     assert.equal(
-      isBalanced(ldg021Reconciliation),
+      isBalanced(ldg021Reconciliation.ledger),
       false,
       `expected the run to be OUT-OF-BALANCE — a scenario carrying no @SCN can never be proven, so ` +
         `the ledger cannot certify this run clean — but isBalanced read it as BALANCED. That is the ` +
@@ -1676,7 +1669,7 @@ Then(
  * cancelled a drop.
  */
 
-let ldgPostingLedger: Ledger;
+let ldgPostingLedger: EvidenceReconciliation;
 let ldgPostingObservations: EvidenceObservation[];
 /** The account each credit is EXPECTED to post to, keyed by the observation's identity. */
 let ldg022ExpectedAccount: Map<EvidenceObservation, string>;
@@ -1767,12 +1760,12 @@ Feature: alpha
 // half (LDG-023) reconcile the same way; each Given stocks `scenarios` (the debits) and
 // `ldgPostingObservations` (the credits) with the corpus its property needs.
 When("the ledger reconciles that run", function () {
-  ldgPostingLedger = reconcile(scenarios, ldgPostingObservations);
+  ldgPostingLedger = evidenceReconciliationOf(scenarios, ldgPostingObservations);
 });
 
 /** Every account an observation posted to — the uniqueness/exhaustion probe. */
 const ldg022AccountsHolding = (obs: EvidenceObservation): string[] =>
-  ldgPostingLedger.scenarioReconciliations
+  ldgPostingLedger.ledger.scenarioReconciliations
     .filter((r: ScenarioReconciliation) => (r.evidenceObservations ?? []).includes(obs))
     .map((r: ScenarioReconciliation) => r.scnId);
 
@@ -1790,7 +1783,7 @@ Then("every evidence observation posts to exactly one ledger account", function 
     );
   }
   // EXHAUSTION the other way: no account invents a credit the run never produced.
-  const posted = ldgPostingLedger.scenarioReconciliations.flatMap(
+  const posted = ldgPostingLedger.ledger.scenarioReconciliations.flatMap(
     (r: ScenarioReconciliation) => r.evidenceObservations ?? [],
   );
   assert.equal(
@@ -1817,7 +1810,7 @@ Then("each credit is findable in the account its citation names", function () {
 Then(
   "the credit citing a pending quality-check is posted and findable",
   function () {
-    const account = ldgPostingLedger.scenarioReconciliations.find(
+    const account = ldgPostingLedger.ledger.scenarioReconciliations.find(
       (r: ScenarioReconciliation) => r.scnId === "SCN-AAA-003",
     );
     assert.ok(account, "expected an account for the pending-declaring scenario SCN-AAA-003");
@@ -1842,7 +1835,7 @@ Then(
     // engine to itself and assert nothing). These are the outcomes this corpus produced BEFORE
     // posting existed, and posting must leave every one of them untouched.
     assert.deepEqual(
-      ldgPostingLedger.scenarioReconciliations.map((r: ScenarioReconciliation) => [
+      ldgPostingLedger.ledger.scenarioReconciliations.map((r: ScenarioReconciliation) => [
         r.scnId,
         r.verdict,
         r.reconcilingItems.map((i: QualityCheckReconciliation) => i.outcome),
@@ -1865,7 +1858,7 @@ Then(
         "whatever it later reconciles to. Posting is NOT classifying.",
     );
     assert.equal(
-      isBalanced(ldgPostingLedger),
+      isBalanced(ldgPostingLedger.ledger),
       false,
       "the whole-run verdict — and so the exit code — is unchanged by this slice",
     );
@@ -1947,7 +1940,7 @@ Feature: alpha
 
 /** Every account a declared obligation posted to — the uniqueness/exhaustion probe. */
 const ldg023AccountsHolding = (obligation: EvidenceObligation): string[] =>
-  ldgPostingLedger.scenarioReconciliations
+  ldgPostingLedger.ledger.scenarioReconciliations
     .filter((r: ScenarioReconciliation) => (r.evidenceObligations ?? []).includes(obligation))
     .map((r: ScenarioReconciliation) => r.scnId);
 
@@ -1964,7 +1957,7 @@ Then("every declared evidence obligation posts to its own scenario's account", f
 
   // EXHAUSTION, the other direction: the ledger holds no debit the run did not declare, and drops
   // none that it did. Identity-scoped, so a double-post cannot cancel a drop.
-  const posted = ldgPostingLedger.scenarioReconciliations.flatMap(
+  const posted = ldgPostingLedger.ledger.scenarioReconciliations.flatMap(
     (r: ScenarioReconciliation) => r.evidenceObligations ?? [],
   );
   assert.equal(
@@ -1980,7 +1973,7 @@ Then("each debit is findable on its account, keyed by quality-check", function (
   // scenario, KEYED BY QUALITY-CHECK". So a reader with a scnId and a quality-check can find the
   // debit, and a `lint` debit is findable WITH ITS GUARD HANDLE intact.
   const accountFor = (scnId: string): ScenarioReconciliation | undefined =>
-    ldgPostingLedger.scenarioReconciliations.find((r: ScenarioReconciliation) => r.scnId === scnId);
+    ldgPostingLedger.ledger.scenarioReconciliations.find((r: ScenarioReconciliation) => r.scnId === scnId);
 
   const findDebit = (scnId: string, qualityCheck: string): EvidenceObligation | undefined =>
     (accountFor(scnId)?.evidenceObligations ?? []).find(
@@ -2006,7 +1999,7 @@ Then("each debit is findable on its account, keyed by quality-check", function (
 Then(
   "the pending obligation is posted and findable, though it earns no reconciled row",
   function () {
-    const account = ldgPostingLedger.scenarioReconciliations.find(
+    const account = ldgPostingLedger.ledger.scenarioReconciliations.find(
       (r: ScenarioReconciliation) => r.scnId === "SCN-AAA-003",
     );
     assert.deepEqual(
@@ -2033,7 +2026,7 @@ Then(
     // engine to itself and assert nothing). These are the outcomes this corpus produced BEFORE
     // debit-posting existed, and posting must leave every one of them untouched.
     assert.deepEqual(
-      ldgPostingLedger.scenarioReconciliations.map((r: ScenarioReconciliation) => [
+      ldgPostingLedger.ledger.scenarioReconciliations.map((r: ScenarioReconciliation) => [
         r.scnId,
         r.verdict,
         r.reconcilingItems.map((i: QualityCheckReconciliation) => i.outcome),
@@ -2050,7 +2043,7 @@ Then(
         "whatever it later reconciles to. Posting is NOT classifying.",
     );
     assert.equal(
-      isBalanced(ldgPostingLedger),
+      isBalanced(ldgPostingLedger.ledger),
       false,
       "the whole-run verdict — and so the exit code — is unchanged by this slice",
     );
@@ -2101,7 +2094,7 @@ Given(
 
 /** The scenario's OWN unit Quality Check Reconciliation, off the ledger the shared When produced. */
 function ldg026UnitReconciliation(): QualityCheckReconciliation {
-  const row = ldgPostingLedger.scenarioReconciliations.find(
+  const row = ldgPostingLedger.ledger.scenarioReconciliations.find(
     (r: ScenarioReconciliation) => r.scnId === ldg026ScnId,
   );
   assert.ok(row, `expected a ledger row for ${ldg026ScnId}`);
@@ -2215,7 +2208,7 @@ Given(
 
 /** The scenario's OWN undemanded Quality Check Reconciliation, off the ledger the shared When produced. */
 function ldg027UndemandedReconciliation(): QualityCheckReconciliation {
-  const row = ldgPostingLedger.scenarioReconciliations.find(
+  const row = ldgPostingLedger.ledger.scenarioReconciliations.find(
     (r: ScenarioReconciliation) => r.scnId === ldg027ScnId,
   );
   assert.ok(row, `expected a ledger row for ${ldg027ScnId}`);
@@ -2330,7 +2323,7 @@ Given(
 
 /** The scenario's OWN lint Quality Check Reconciliation, off the ledger the shared When produced. */
 function ldg028LintReconciliation(): QualityCheckReconciliation {
-  const row = ldgPostingLedger.scenarioReconciliations.find(
+  const row = ldgPostingLedger.ledger.scenarioReconciliations.find(
     (r: ScenarioReconciliation) => r.scnId === ldg028ScnId,
   );
   assert.ok(row, `expected a ledger row for ${ldg028ScnId}`);
@@ -2409,12 +2402,12 @@ Feature: fixture
     "the fixture must contain exactly the one untagged scenario",
   );
   // No observations — an untagged scenario carries no @SCN, so no credit can cite it.
-  ldg021Reconciliation = reconcile(scenarios, [], untagged);
+  ldg021Reconciliation = evidenceReconciliationOf(scenarios, [], untagged);
 });
 
 /** The untagged scenario's OWN Quality Check Reconciliation, off the shared corpus ledger. */
 function ldg029Reconciliation(): QualityCheckReconciliation {
-  const row = ldg021Reconciliation.scenarioReconciliations.find(
+  const row = ldg021Reconciliation.ledger.scenarioReconciliations.find(
     (r: ScenarioReconciliation) => r.scnId === ldg029UntaggedName,
   );
   assert.ok(row, `expected a ledger row for the untagged scenario "${ldg029UntaggedName}"`);
@@ -2480,7 +2473,7 @@ Then(
     // untagged scenario declares no parsed obligations, so its scenario-level `evidenceObligations`
     // stays []. That is what keeps the census (and the markdown the renderer builds from it)
     // unchanged — the renderer reads scenario-level obligations, not per-QCR carried sides.
-    const row = ldg021Reconciliation.scenarioReconciliations.find(
+    const row = ldg021Reconciliation.ledger.scenarioReconciliations.find(
       (r: ScenarioReconciliation) => r.scnId === ldg029UntaggedName,
     );
     assert.ok(row, `expected a ledger row for the untagged scenario "${ldg029UntaggedName}"`);

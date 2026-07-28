@@ -10,22 +10,20 @@
  * Parent: (@SCN-RMD-001).
  */
 
-import type { Ledger } from "../model.js";
+import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 import type { RunContext } from "../provenance/provenance.js";
 import type { EvidenceObligations } from "../census/evidenceObligations.js";
 import type { FeatureNames } from "./markdown.js";
 import { assembleReport } from "../assemble/report.js";
 
 export function renderJson(
-  balance: Ledger,
+  evidenceReconciliation: EvidenceReconciliation,
   ctx: RunContext,
   evidenceObligations?: EvidenceObligations,
-  withRuntimeObservations: boolean = false,
-  withStaticGuards: boolean = false,
   featureNames?: FeatureNames
 ): string {
   return JSON.stringify(
-    assembleReport(balance, ctx, evidenceObligations, withRuntimeObservations, withStaticGuards, featureNames),
+    assembleReport(evidenceReconciliation, ctx, evidenceObligations, featureNames),
     null,
     2
   );

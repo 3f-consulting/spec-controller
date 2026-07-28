@@ -12,7 +12,7 @@
  * Distinct from @SCN-RMD-007 (`renderReportFromJson.test.ts`), which proves markdown byte-identity
  * (a different property): this proves the JSON summary re-derives from the Ledger rows alone.
  *
- * The method: `renderJson(assembleReport(...))` over a spanning reconciler-true corpus → `JSON.parse`
+ * The method: `renderJson(__er(assembleReport(__er(...))))` over a spanning reconciler-true corpus → `JSON.parse`
  * → INDEPENDENTLY re-fold `ledgerTally` / `runtimeObservationTally` / `staticObservationTally` (the
  * domain folds, imported from `../domain/ledger.js`) over `parsed.ledger.scenarioReconciliations`,
  * and assert each re-derived value equals the materialised `parsed.summary.*`. Teeth: drift a
@@ -33,6 +33,22 @@ import {
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import type { Ledger, Scenario, EvidenceObservation } from "../model.js";
 import type { RunContext } from "../provenance/provenance.js";
+import { summaryOf } from "../domain/evidenceReconciliation.js";
+import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
+
+/**
+ * Test-local composition of the Evidence Reconciliation from a Ledger fixture (3F-2233).
+ *
+ * It states NO rule of its own: `summaryOf` is the concept's OWN tally — the very function its
+ * factory calls — so this duplicates nothing. Only the entry path differs. `evidenceReconciliationOf`
+ * builds from JOURNAL inputs (what production does); these fixtures already hold a Ledger, so they
+ * compose the concept around it rather than re-reconciling.
+ */
+const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation => ({
+  summary: summaryOf(ledger, wo, wg),
+  ledger,
+});
+
 
 // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — the Ledger is PRODUCED by reconcile() over a
 // SPANNING corpus, so every summary aggregate has a non-trivial value to re-fold (an all-zero corpus
@@ -102,7 +118,7 @@ function refoldFromSerialisedLedger(parsed: {
 // The full report as the CI emits it — runtime-observation axis + static-guard axis in play, so
 // `testVolume` / `rawByRuntimeQualityCheck` / `staticGuards` are all materialised on `summary`.
 function renderParsed() {
-  return JSON.parse(renderJson(balance, ctx, undefined, true, true));
+  return JSON.parse(renderJson(__er(balance, true, true), ctx));
 }
 
 describe("[SCN-NPS-002] every summary aggregate re-folds from the serialised Ledger", () => {

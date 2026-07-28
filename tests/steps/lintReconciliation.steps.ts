@@ -23,7 +23,7 @@ import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { parseScenarios } from "@3f-consulting/spec-controller-core";
+import { parseScenarios, evidenceReconciliationOf } from "@3f-consulting/spec-controller-core";
 import { checkStaticEvidenceObligations } from "@3f-consulting/spec-controller-core";
 import type { PackageJsonScripts } from "@3f-consulting/spec-controller-core";
 import { reconcile } from "@3f-consulting/spec-controller-core";
@@ -31,6 +31,7 @@ import { runReconcile } from "../../packages/spec-controller/src/ingest/ingestQu
 import { renderMarkdown } from "@3f-consulting/spec-controller-core";
 import type { Scenario, EvidenceObservation } from "@3f-consulting/spec-controller-core";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
+import { summaryOf } from "../../packages/core/src/domain/evidenceReconciliation.js";
 
 // Fixtures shared across steps within a scenario (isolated per scenario by Cucumber).
 let scenarios: Scenario[];
@@ -240,7 +241,7 @@ Given(
 // @SCN-LNT-003
 // @SCN-LNT-004
 When("the lint reconciler runs", function () {
-  markdown = renderMarkdown(reconcile(scenarios, evidenceObservations), CTX);
+  markdown = renderMarkdown(evidenceReconciliationOf(scenarios, evidenceObservations), CTX);
 });
 
 // @SCN-LNT-005
@@ -269,7 +270,17 @@ When(
     // paths → declared read → static guard read against the EXTERNAL package.json +
     // CI → reconcile → render. Until --package-json is threaded, runReconcile reads
     // the tool's own package.json and the guard reconciles missing.
-    markdown = renderMarkdown(runReconcile(externalOpts), CTX);
+    // THE AXIS GATES ARE THE CONCEPT'S NOW (3F-2233), so they are stated here rather than at the
+    // render call. This scenario is authored against the gates OFF — with the static-guard axis on,
+    // the ledger row gains its lint evidence column and `rowCells` (which picks by POSITION) reads
+    // that cell as the verdict. The reconciliation is identical either way: same `out-of-balance`
+    // verdict, same 🍉 item. Restoring the authored input keeps the scenario testing the
+    // `--package-json` seam it was written for, rather than the column set.
+    const external = runReconcile(externalOpts);
+    markdown = renderMarkdown(
+      { summary: summaryOf(external.ledger, false, false), ledger: external.ledger },
+      CTX
+    );
   }
 );
 

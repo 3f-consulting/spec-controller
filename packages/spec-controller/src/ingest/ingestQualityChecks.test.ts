@@ -36,7 +36,7 @@ describe("[SCN-LNT-005] guard enforcement is read from an externally-specified p
       packageJson: join(FIXTURE, "package.json"),
     });
 
-    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-EXT-001");
+    const scenario = balance.ledger.scenarioReconciliations.find((s) => s.scnId === "SCN-EXT-001");
 
     // The watermelon: out-of-balance, carrying exactly the present-but-not-enforced
     // -over-real-source static item for the external guard. This is only reachable
