@@ -33,11 +33,10 @@ import { join } from "node:path";
  * THE element type the guards take, being collapsed onto one guard at a time (3F-2274 — the DRY
  * completion tidy-kiwi deferred, because it changes guard modules' public signatures and that is a
  * different change with a different risk profile from moving test scaffolding). `noParallelStore`
- * takes it directly as of that ticket's first sub-issue.
+ * and `enginePurity` take it directly as of that ticket's first two sub-issues.
  *
- * `enginePurity` and `domainPurity` still declare their own structurally-identical aliases
- * (`EngineFile` / `DomainFile`), so a `CollectedFile[]` still passes into `checkEnginePurity` and
- * `checkDomainPurity` with no cast until their sub-issues land.
+ * `domainPurity` still declares its own structurally-identical alias (`DomainFile`), so a
+ * `CollectedFile[]` still passes into `checkDomainPurity` with no cast until its sub-issue lands.
  *
  * A guard imports it with `import type`, never a value import: this module reads `node:fs`, and the
  * guards are pure by construction. The type import erases at compile, so no `check…()` acquires a

@@ -16,8 +16,14 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { checkEnginePurity, type EngineFile } from "./enginePurity.js";
-import { collectSourceFiles, CORE_SRC_ROOT, DOMAIN_ROOT, MIN_CORE_SRC_FILES_SCANNED } from "./sourceFiles.js";
+import { checkEnginePurity } from "./enginePurity.js";
+import {
+  collectSourceFiles,
+  CORE_SRC_ROOT,
+  DOMAIN_ROOT,
+  MIN_CORE_SRC_FILES_SCANNED,
+  type CollectedFile,
+} from "./sourceFiles.js";
 
 /**
  * The production core-src population, as of 3F-2266. Asserted, not assumed — see the pin below.
@@ -31,7 +37,7 @@ const CORE_SRC_FILE_COUNT = 22;
 describe("[SCN-EPG-001] the reconciliation engine imports nothing impure and references no IO", () => {
   it("flags an engine file that imports from an impure sibling layer", () => {
     // Teeth (impure-import arm): an engine file reaching into the app layer must red.
-    const planted: EngineFile[] = [
+    const planted: CollectedFile[] = [
       { path: "packages/core/src/render/markdown.ts", source: `import { readEvidenceObligations } from "spec-controller/ingest/ingestQualityChecks.js";` },
       { path: "packages/core/src/assemble/report.ts", source: `import { keptRun } from "spec-controller/run-management/keptRun.js";` },
       { path: "packages/core/src/lib/featureCode.ts", source: `import { REGISTRY } from "../../../spec-controller/static-guards/featureCodes.js";` },
@@ -43,7 +49,7 @@ describe("[SCN-EPG-001] the reconciliation engine imports nothing impure and ref
 
   it("flags an engine file that imports a node IO builtin", () => {
     // Teeth (io-import arm): fs / child_process / process imports drag IO into the engine.
-    const planted: EngineFile[] = [
+    const planted: CollectedFile[] = [
       { path: "a.ts", source: `import { readFileSync } from "node:fs";` },
       { path: "b.ts", source: `import { execFileSync } from "node:child_process";` },
       { path: "c.ts", source: `import process from "node:process";` },
@@ -53,7 +59,7 @@ describe("[SCN-EPG-001] the reconciliation engine imports nothing impure and ref
 
   it("flags an engine file that references the process global", () => {
     // Teeth (io-global arm): `process.cwd()` is IO with no import to catch.
-    const planted: EngineFile[] = [{ path: "d.ts", source: `export const root = process.cwd();` }];
+    const planted: CollectedFile[] = [{ path: "d.ts", source: `export const root = process.cwd();` }];
     const violations = checkEnginePurity(planted);
     expect(violations).toEqual([{ path: "d.ts", kind: "io-global", detail: "process" }]);
   });
@@ -61,7 +67,7 @@ describe("[SCN-EPG-001] the reconciliation engine imports nothing impure and ref
   it("does NOT flag a doc-comment that merely names an IO token, nor an engine-internal import", () => {
     // The seam's real shape: engine-internal relative imports are fine, and a comment
     // naming process.cwd() (portablePath.ts does exactly this) must not false-positive.
-    const clean: EngineFile[] = [
+    const clean: CollectedFile[] = [
       {
         path: "packages/core/src/lib/portablePath.ts",
         source: `/* No IO: the caller provides the run root (the IO — process.cwd() — stays at\n * the caller). */\nimport { x } from "../model.js";\nimport { featureCodeOf } from "./featureCode.js";\nexport const y = 1;`,

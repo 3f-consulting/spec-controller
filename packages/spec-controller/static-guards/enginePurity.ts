@@ -21,6 +21,8 @@
  *     the engine testable with data alone.
  */
 
+import type { CollectedFile } from "./sourceFiles.js";
+
 /** A single engine-purity violation. */
 export interface PurityViolation {
   /** The offending file, as given by the caller (repo-relative in the guard test). */
@@ -28,12 +30,6 @@ export interface PurityViolation {
   kind: "impure-import" | "io-import" | "io-global";
   /** The specifier or token that tripped the static guard. */
   detail: string;
-}
-
-/** An engine source file to check — its path (for reporting) and its raw source. */
-export interface EngineFile {
-  path: string;
-  source: string;
 }
 
 /**
@@ -68,7 +64,7 @@ function stripComments(source: string): string {
  * offending import/reference, in file-then-source order; an empty array means the
  * engine seam holds.
  */
-export function checkEnginePurity(files: readonly EngineFile[]): PurityViolation[] {
+export function checkEnginePurity(files: readonly CollectedFile[]): PurityViolation[] {
   const violations: PurityViolation[] = [];
   for (const file of files) {
     const code = stripComments(file.source);
