@@ -23,13 +23,14 @@ import { describe, it, expect } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { checkNoParallelStore, type SourceFile } from "./noParallelStore.js";
+import { checkNoParallelStore } from "./noParallelStore.js";
 import {
   collectSourceFiles,
   CORE_SRC_ROOT,
   DOMAIN_ROOT,
   MIN_CORE_SRC_FILES_SCANNED,
   REQUIRED_FLOOR_HEADROOM,
+  type CollectedFile,
 } from "./sourceFiles.js";
 
 /**
@@ -44,7 +45,7 @@ describe("[SCN-NPS-001] no parallel store re-represents the Ledger's entries", (
   it("flags a re-added retired census module file (evidenceObservations.ts / staticEvidenceObservations.ts)", () => {
     // Teeth (retired-module-file arm): the retired runtime/static evidence-observation census
     // modules stay deleted — re-adding either (their counting is now a Ledger fold) must red.
-    const planted: SourceFile[] = [
+    const planted: CollectedFile[] = [
       { path: "packages/core/src/census/evidenceObservations.ts", source: `export const x = 1;` },
       { path: "packages/core/src/census/staticEvidenceObservations.ts", source: `export const y = 2;` },
     ];
@@ -57,7 +58,7 @@ describe("[SCN-NPS-001] no parallel store re-represents the Ledger's entries", (
     // Teeth (retired-declaration arm): a real DECLARATION of any retired symbol must red — the
     // parallel-store types the census used to carry. Comment-stripped, so a doc-comment NAMING the
     // symbol (as the real retirement notes do) does not self-trip.
-    const planted: SourceFile[] = [
+    const planted: CollectedFile[] = [
       { path: "packages/core/src/assemble/report.ts", source: `export interface AttributedCount { qualityCheck: string; count: number; }` },
       { path: "packages/core/src/assemble/report.ts", source: `export interface EvidenceObservationsSection { kinds: number[]; }` },
       { path: "packages/core/src/census/x.ts", source: `export interface RuntimeEvidenceObservationKindCounts { unit: number; }` },
@@ -85,7 +86,7 @@ describe("[SCN-NPS-001] no parallel store re-represents the Ledger's entries", (
     // Teeth (parallel-store-field arm): the per-(scnId, quality-check) `attributed[]` credit-list
     // the retired section re-represented must red — the posted credits live on the Ledger rows
     // (`evidenceObservations`, @SCN-LDG-022), the ONE source; a parallel `attributed` re-represents.
-    const planted: SourceFile[] = [
+    const planted: CollectedFile[] = [
       { path: "packages/core/src/assemble/report.ts", source: `export interface SectionModel { attributed: { qualityCheck: string; count: number }[]; }` },
     ];
     const violations = checkNoParallelStore(planted);
@@ -97,7 +98,7 @@ describe("[SCN-NPS-001] no parallel store re-represents the Ledger's entries", (
     // The lock's real shape: the Ledger row legitimately carries `evidenceObservations` (the ONE
     // store, @SCN-LDG-022); a retirement doc-comment legitimately NAMES the retired symbols. Neither
     // is a parallel store — the field arm targets `attributed`, and comments are stripped.
-    const clean: SourceFile[] = [
+    const clean: CollectedFile[] = [
       {
         path: "packages/core/src/domain/scenarioReconciliation.ts",
         source: `export interface ScenarioReconciliation {\n  evidenceObservations: EvidenceObservation[];\n}\n// EvidenceObservationsSection + AttributedCount are RETIRED (3F-2104); their counting folds onto the Ledger.\n/* countStaticEvidenceObservationKinds is gone; see staticObservationTally. */`,

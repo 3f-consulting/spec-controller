@@ -33,6 +33,8 @@
  * name-matchable and remains a driver's-eye judgement at review — stated in the feature prose.
  */
 
+import type { CollectedFile } from "./sourceFiles.js";
+
 /** A single no-parallel-store violation. */
 export interface NoParallelStoreViolation {
   /** The offending file, as given by the caller (repo-relative in the guard test). */
@@ -40,12 +42,6 @@ export interface NoParallelStoreViolation {
   kind: "retired-module-file" | "retired-declaration" | "parallel-store-field";
   /** The file basename, declared symbol, or field name that tripped the static guard. */
   detail: string;
-}
-
-/** A core source file to check — its path (for reporting + the basename arm) and its raw source. */
-export interface SourceFile {
-  path: string;
-  source: string;
 }
 
 /**
@@ -86,7 +82,7 @@ function stripComments(source: string): string {
  * empty array means the lock holds — the Ledger is the ONE store. The file-basename arm reads the
  * path (not the source); the declaration and field arms read the comment-stripped source.
  */
-export function checkNoParallelStore(files: readonly SourceFile[]): NoParallelStoreViolation[] {
+export function checkNoParallelStore(files: readonly CollectedFile[]): NoParallelStoreViolation[] {
   const violations: NoParallelStoreViolation[] = [];
   for (const file of files) {
     const moduleMatch = RETIRED_MODULE_BASENAME.exec(file.path);

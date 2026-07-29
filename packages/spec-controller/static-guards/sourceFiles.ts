@@ -30,11 +30,18 @@ import { join } from "node:path";
 /**
  * A file the walk collected — its repo-relative path and its raw source.
  *
- * Structurally identical to each guard's own exported element type (`SourceFile` / `EngineFile` /
- * `DomainFile`), so a `CollectedFile[]` passes straight into `checkNoParallelStore`,
- * `checkEnginePurity` and `checkDomainPurity` with no cast. Those three types are deliberately NOT
- * collapsed into this one: that would change three guard modules' public signatures, which is a
- * different change with a different risk profile from moving test scaffolding.
+ * THE element type the guards take, being collapsed onto one guard at a time (3F-2274 — the DRY
+ * completion tidy-kiwi deferred, because it changes guard modules' public signatures and that is a
+ * different change with a different risk profile from moving test scaffolding). `noParallelStore`
+ * takes it directly as of that ticket's first sub-issue.
+ *
+ * `enginePurity` and `domainPurity` still declare their own structurally-identical aliases
+ * (`EngineFile` / `DomainFile`), so a `CollectedFile[]` still passes into `checkEnginePurity` and
+ * `checkDomainPurity` with no cast until their sub-issues land.
+ *
+ * A guard imports it with `import type`, never a value import: this module reads `node:fs`, and the
+ * guards are pure by construction. The type import erases at compile, so no `check…()` acquires a
+ * runtime edge to the collector — observed per sub-issue via an esbuild emit, not assumed.
  */
 export interface CollectedFile {
   path: string;
