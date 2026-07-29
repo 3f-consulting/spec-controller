@@ -17,25 +17,20 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
 import { checkDomainPurity, type DomainFile } from "./domainPurity.js";
+import { collectSourceFiles, CORE_SRC_ROOT, DOMAIN_ROOT } from "./sourceFiles.js";
 
-const DOMAIN_ROOT = join(process.cwd(), "packages", "core", "src", "domain");
-
-/** Walk the real domain tree, collecting every PRODUCTION file (excluding *.test.ts). */
-function collectDomainFiles(dir: string): DomainFile[] {
-  const out: DomainFile[] = [];
-  for (const entry of readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
-    const abs = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      out.push(...collectDomainFiles(abs));
-    } else if (entry.name.endsWith(".ts") && !entry.name.endsWith(".test.ts")) {
-      out.push({ path: abs.slice(process.cwd().length + 1), source: readFileSync(abs, "utf8") });
-    }
-  }
-  return out;
-}
+/**
+ * The production domain population, as of 3F-2266. Asserted, not assumed — see the pin below.
+ *
+ * NOTE the floor below stays LOCAL at `> 0` and does NOT read the shared
+ * `MIN_CORE_SRC_FILES_SCANNED`. This guard walks the domain subtree, a different and much smaller
+ * population than the ~22 files `noParallelStore` and `enginePurity` share; adopting their floor of
+ * 10 would invent a constraint that does not exist and red this guard the moment the domain had
+ * fewer than ten modules. The WALK is shared three ways; the FLOOR is shared two ways. The
+ * asymmetry is the point, not an oversight.
+ */
+const DOMAIN_FILE_COUNT = 6;
 
 describe("[SCN-DPG-001] a domain module imports only the domain layer and pure standard types", () => {
   it("flags a domain file that imports from an adapter layer (parse/render/assemble/census)", () => {
@@ -90,9 +85,30 @@ describe("[SCN-DPG-001] a domain module imports only the domain layer and pure s
   it("passes clean over the REAL packages/core/src/domain tree (the seam holds today)", () => {
     // The dogfood green: the domain is pure; any future stray adapter or app import in a
     // production domain file reds this.
-    const domainFiles = collectDomainFiles(DOMAIN_ROOT);
-    // Sanity: we actually scanned the tree (not an empty walk masquerading as green).
+    const domainFiles = collectSourceFiles(DOMAIN_ROOT);
+    // Sanity: we actually scanned the tree (not an empty walk masquerading as green). This floor is
+    // LOCAL and stays local — a different population from the core-src one the other two guards
+    // share (3F-2266).
     expect(domainFiles.length).toBeGreaterThan(0);
     expect(checkDomainPurity(domainFiles)).toEqual([]);
+  });
+
+  it("[SCN-DPG-001] the shared collector walks exactly the domain population, not the whole engine", () => {
+    // The most plausible way this refactor could go wrong: pass the WRONG ROOT and collect all of
+    // core/src instead of just domain/.
+    //
+    // The assertion above DOES catch that — verified by plant, not assumed: swapping DOMAIN_ROOT
+    // for CORE_SRC_ROOT there reds it with 21 `adapter-import` violations. But look at what that
+    // red SAYS. It reports "the domain imports adapters" — a false and alarming diagnosis — when
+    // the truth is "the walk collected the wrong tree". That is the cries-wolf failure 3F-2201 was
+    // raised about, one layer up: a red whose stated cause is not its actual cause sends the reader
+    // hunting a purity violation that does not exist.
+    //
+    // This pin exists to name the real fault first and unambiguously.
+    const domainFiles = collectSourceFiles(DOMAIN_ROOT);
+    expect(domainFiles).toHaveLength(DOMAIN_FILE_COUNT);
+    expect(domainFiles.every((f) => f.path.startsWith("packages/core/src/domain/"))).toBe(true);
+    // Scoped, not the whole tree: the same collector over the engine root returns strictly more.
+    expect(collectSourceFiles(CORE_SRC_ROOT).length).toBeGreaterThan(domainFiles.length);
   });
 });
