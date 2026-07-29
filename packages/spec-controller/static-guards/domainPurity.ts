@@ -24,6 +24,8 @@
  * mirroring engine-purity's forbidden-layer shape exactly.
  */
 
+import type { CollectedFile } from "./sourceFiles.js";
+
 /** A single domain-purity violation. */
 export interface DomainPurityViolation {
   /** The offending file, as given by the caller (repo-relative in the guard test). */
@@ -31,12 +33,6 @@ export interface DomainPurityViolation {
   kind: "adapter-import" | "app-import";
   /** The specifier that tripped the static guard. */
   detail: string;
-}
-
-/** A domain source file to check — its path (for reporting) and its raw source. */
-export interface DomainFile {
-  path: string;
-  source: string;
 }
 
 /**
@@ -74,7 +70,7 @@ function stripComments(source: string): string {
  * The app-layer check is applied FIRST, so an import that escapes into the app package is
  * reported as `app-import` even if its path happens to contain an adapter-named segment.
  */
-export function checkDomainPurity(files: readonly DomainFile[]): DomainPurityViolation[] {
+export function checkDomainPurity(files: readonly CollectedFile[]): DomainPurityViolation[] {
   const violations: DomainPurityViolation[] = [];
   for (const file of files) {
     const code = stripComments(file.source);

@@ -1,6 +1,6 @@
 /**
- * The ONE source-tree walk the static-guard tests share, and the ONE anti-vacuity floor for the
- * core-src population (3F-2266).
+ * The ONE source-tree walk the static guards share, the ONE element type they take (3F-2274), and
+ * the ONE anti-vacuity floor for the core-src population (3F-2266).
  *
  * Three guard tests — `noParallelStore` (@SCN-NPS-001), `enginePurity` (@SCN-EPG-001) and
  * `domainPurity` (@SCN-DPG-001) — each carried a byte-identical copy of this walk, differing only
@@ -17,7 +17,8 @@
  * construction; it is where the guards it serves already live (product-not-app, reads the tree).
  *
  * WHAT IS SHARED AND WHAT IS NOT. The WALK is shared three ways — all three guards collect the same
- * way, differing only in root. The FLOOR is shared TWO ways: only `noParallelStore` and
+ * way, differing only in root. The ELEMENT TYPE is shared three ways too (3F-2274): one shape, one
+ * declaration. The FLOOR is shared TWO ways: only `noParallelStore` and
  * `enginePurity` walk the same population (`CORE_SRC_ROOT`), so only they can share a floor.
  * `domainPurity` walks a smaller subtree and keeps its own floor locally — a different population
  * is a different floor, and unifying them would be a behaviour change dressed as a tidy-up. The
@@ -30,17 +31,23 @@ import { join } from "node:path";
 /**
  * A file the walk collected — its repo-relative path and its raw source.
  *
- * THE element type the guards take, being collapsed onto one guard at a time (3F-2274 — the DRY
- * completion tidy-kiwi deferred, because it changes guard modules' public signatures and that is a
- * different change with a different risk profile from moving test scaffolding). `noParallelStore`
- * and `enginePurity` take it directly as of that ticket's first two sub-issues.
- *
- * `domainPurity` still declares its own structurally-identical alias (`DomainFile`), so a
- * `CollectedFile[]` still passes into `checkDomainPurity` with no cast until its sub-issue lands.
+ * THE element type — `checkNoParallelStore`, `checkEnginePurity` and `checkDomainPurity` all take
+ * this one, so `{ path, source }` is declared exactly ONCE in the repo (3F-2274). Each guard used
+ * to export its own structurally-identical alias, which meant the shape agreed by COINCIDENCE: add
+ * a field to one and the other three carry on compiling while describing a different file. The
+ * walk was unified first (3F-2266); this is the same argument applied to the walk's ELEMENT.
  *
  * A guard imports it with `import type`, never a value import: this module reads `node:fs`, and the
- * guards are pure by construction. The type import erases at compile, so no `check…()` acquires a
- * runtime edge to the collector — observed per sub-issue via an esbuild emit, not assumed.
+ * guards are pure by construction — that is the whole reason the collector sits in `static-guards/`
+ * rather than in the engine, since @SCN-EPG-001 reds an IO import under `packages/core/src`. The
+ * type import erases at compile, so no `check…()` acquires a runtime edge to the collector.
+ *
+ * That erasure was OBSERVED, not assumed — each guard's emitted module was checked to carry zero
+ * runtime imports, and the check was itself proven to fire on a planted runtime-used import. Worth
+ * knowing if you touch this: esbuild elides a type-only-USED import in any syntax, so a bare
+ * `import { CollectedFile }` also emits nothing TODAY. `import type` is still the form to write —
+ * it states the intent, and it is the only one that stays safe if `verbatimModuleSyntax` is ever
+ * enabled, where the bare form WOULD emit a real runtime import into a pure guard.
  */
 export interface CollectedFile {
   path: string;

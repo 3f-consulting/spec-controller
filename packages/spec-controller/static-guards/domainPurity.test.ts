@@ -17,8 +17,8 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { checkDomainPurity, type DomainFile } from "./domainPurity.js";
-import { collectSourceFiles, CORE_SRC_ROOT, DOMAIN_ROOT } from "./sourceFiles.js";
+import { checkDomainPurity } from "./domainPurity.js";
+import { collectSourceFiles, CORE_SRC_ROOT, DOMAIN_ROOT, type CollectedFile } from "./sourceFiles.js";
 
 /**
  * The production domain population, as of 3F-2266. Asserted, not assumed — see the pin below.
@@ -36,7 +36,7 @@ describe("[SCN-DPG-001] a domain module imports only the domain layer and pure s
   it("flags a domain file that imports from an adapter layer (parse/render/assemble/census)", () => {
     // Teeth (adapter-import arm): a domain file reaching into any of the core's adapter layers
     // must red — the concept parses/renders/assembles/censuses nothing.
-    const planted: DomainFile[] = [
+    const planted: CollectedFile[] = [
       { path: "packages/core/src/domain/qualityCheckReconciliation.ts", source: `import { renderMarkdown } from "../render/markdown.js";` },
       { path: "packages/core/src/domain/ledger.ts", source: `import { evidenceObligations } from "../census/evidenceObligations.js";` },
       { path: "packages/core/src/domain/scenarioReconciliation.ts", source: `import { parseScenarios } from "../parse/scenarios.js";` },
@@ -60,7 +60,7 @@ describe("[SCN-DPG-001] a domain module imports only the domain layer and pure s
   it("flags a domain file that imports the spec-controller app package", () => {
     // Teeth (app-import arm): a domain file reaching into the app layer must red — the same
     // package boundary the engine-purity guard enforces one level up.
-    const planted: DomainFile[] = [
+    const planted: CollectedFile[] = [
       { path: "packages/core/src/domain/ledger.ts", source: `import { keptRun } from "spec-controller/run-management/keptRun.js";` },
       { path: "packages/core/src/domain/journal.ts", source: `import { REGISTRY } from "../../../spec-controller/static-guards/featureCodes.js";` },
     ];
@@ -73,7 +73,7 @@ describe("[SCN-DPG-001] a domain module imports only the domain layer and pure s
     // The seam's real shape: a domain module imports its sibling domain modules (and the
     // pure aggregation roots — model.js, provenance, lib) freely. Only the ADAPTER layers and
     // the APP package are forbidden.
-    const clean: DomainFile[] = [
+    const clean: CollectedFile[] = [
       {
         path: "packages/core/src/domain/ledger.ts",
         source: `import type { Outcome } from "./qualityCheckReconciliation.js";\nimport type { ScenarioReconciliation } from "./scenarioReconciliation.js";\nexport const y = 1;`,
