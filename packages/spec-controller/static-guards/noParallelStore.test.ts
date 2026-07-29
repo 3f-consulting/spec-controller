@@ -20,45 +20,25 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { checkNoParallelStore, type SourceFile } from "./noParallelStore.js";
-
-const CORE_SRC_ROOT = join(process.cwd(), "packages", "core", "src");
+import {
+  collectSourceFiles,
+  CORE_SRC_ROOT,
+  DOMAIN_ROOT,
+  MIN_CORE_SRC_FILES_SCANNED,
+  REQUIRED_FLOOR_HEADROOM,
+} from "./sourceFiles.js";
 
 /**
- * The anti-vacuity floor: how many production core files the walk must find before its clean
- * verdict counts as a scan at all (a check that scanned nothing isn't a check).
- *
- * ONE name, not a literal per assertion — three assertions consult it, and three literals would
- * drift apart, which is the agreeing-by-copy fault this file is being corrected for (3F-2201).
- *
- * The value is NOT tuned to today's tree. It matches `enginePurity.test.ts`'s floor over the
- * IDENTICAL population — `collectEngineFiles` and `collectCoreFiles` are the same walk of every
- * non-test `.ts` under `packages/core/src` — so the two sibling guards agree because they measure
- * the same thing, not by hand-maintained coincidence. It must keep REAL headroom below the tree
- * (asserted below): a floor a file or two under the current count reds on ordinary deletion and
- * blames a parallel store for it.
+ * The production core-src population, as of 3F-2266. Asserted, not assumed: the risk in moving a
+ * walk into shared scaffolding is that it silently collects a DIFFERENT set — the guard stays green
+ * over the wrong files and proves less than it claims, which is the vacuous green the floor exists
+ * to catch. A count the walk has to hit makes that failure loud.
  */
-const MIN_CORE_FILES_SCANNED = 10;
-
-/** The headroom the floor must keep below the real tree, in files (3F-2201). */
-const REQUIRED_FLOOR_HEADROOM = 10;
-
-/** Walk the real core src tree, collecting every PRODUCTION file (excluding *.test.ts). */
-function collectCoreFiles(dir: string): SourceFile[] {
-  const out: SourceFile[] = [];
-  for (const entry of readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
-    const abs = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      out.push(...collectCoreFiles(abs));
-    } else if (entry.name.endsWith(".ts") && !entry.name.endsWith(".test.ts")) {
-      out.push({ path: abs.slice(process.cwd().length + 1), source: readFileSync(abs, "utf8") });
-    }
-  }
-  return out;
-}
+const CORE_SRC_FILE_COUNT = 22;
 
 describe("[SCN-NPS-001] no parallel store re-represents the Ledger's entries", () => {
   it("flags a re-added retired census module file (evidenceObservations.ts / staticEvidenceObservations.ts)", () => {
@@ -126,14 +106,29 @@ describe("[SCN-NPS-001] no parallel store re-represents the Ledger's entries", (
     expect(checkNoParallelStore(clean)).toEqual([]);
   });
 
+  it("[SCN-NPS-001] the shared collector walks exactly the core-src production population", () => {
+    // The pin the rest of this file rests on (3F-2266). Moving the walk into shared scaffolding
+    // risks it collecting a DIFFERENT set — the guard stays green over the wrong files, proving
+    // less than it claims. Every other assertion here consumes this walk's output, so if the
+    // population is wrong they are all vacuous together and none of them says so.
+    const coreFiles = collectSourceFiles(CORE_SRC_ROOT);
+    expect(coreFiles).toHaveLength(CORE_SRC_FILE_COUNT);
+    // It excludes tests by construction, and reports repo-relative paths.
+    expect(coreFiles.every((f) => f.path.endsWith(".ts") && !f.path.endsWith(".test.ts"))).toBe(true);
+    expect(coreFiles.every((f) => f.path.startsWith("packages/core/src/"))).toBe(true);
+    // And it DISCRIMINATES by root — the same collector over the domain subtree returns a strictly
+    // smaller set. A collector that ignored its argument would pass every assertion above.
+    expect(collectSourceFiles(DOMAIN_ROOT).length).toBeLessThan(coreFiles.length);
+  });
+
   it("passes clean over the REAL packages/core/src tree (the lock holds today)", () => {
     // The dogfood green: the census modules stay retired, no retired symbol is re-declared, no
     // parallel `attributed` field exists. Any future resurrection reds this.
-    const coreFiles = collectCoreFiles(CORE_SRC_ROOT);
+    const coreFiles = collectSourceFiles(CORE_SRC_ROOT);
     // Sanity: we actually scanned the tree (not an empty walk masquerading as green). The floor sits
     // well BELOW the real count, not just under it — a broken walk yields ~0, so catching it needs
     // no tight margin, and a tight one only punishes ordinary deletion (3F-2201).
-    expect(coreFiles.length).toBeGreaterThan(MIN_CORE_FILES_SCANNED);
+    expect(coreFiles.length).toBeGreaterThan(MIN_CORE_SRC_FILES_SCANNED);
     expect(checkNoParallelStore(coreFiles)).toEqual([]);
   });
 
@@ -153,8 +148,8 @@ describe("[SCN-NPS-001] no parallel store re-represents the Ledger's entries", (
     // being fixed here, because it names itself honestly ("the floor no longer keeps headroom —
     // retune it") instead of blaming a parallel store for a deletion. A red that tells the truth
     // about its own cause is a different animal from one that cries wolf.
-    const coreFiles = collectCoreFiles(CORE_SRC_ROOT);
-    expect(coreFiles.length - MIN_CORE_FILES_SCANNED).toBeGreaterThanOrEqual(REQUIRED_FLOOR_HEADROOM);
+    const coreFiles = collectSourceFiles(CORE_SRC_ROOT);
+    expect(coreFiles.length - MIN_CORE_SRC_FILES_SCANNED).toBeGreaterThanOrEqual(REQUIRED_FLOOR_HEADROOM);
   });
 
   it("[SCN-NPS-001] the anti-vacuity floor still rejects an empty walk (0 files scanned is not a scan)", () => {
@@ -167,9 +162,9 @@ describe("[SCN-NPS-001] no parallel store re-represents the Ledger's entries", (
     // (evidence-manifesto.md §11A) — it exercises the walk, not a fixture.
     const emptyDir = mkdtempSync(join(tmpdir(), "nps-empty-walk-"));
     try {
-      const scanned = collectCoreFiles(emptyDir);
+      const scanned = collectSourceFiles(emptyDir);
       expect(scanned).toEqual([]);
-      expect(scanned.length > MIN_CORE_FILES_SCANNED).toBe(false);
+      expect(scanned.length > MIN_CORE_SRC_FILES_SCANNED).toBe(false);
     } finally {
       rmSync(emptyDir, { recursive: true, force: true });
     }
