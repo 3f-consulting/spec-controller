@@ -16,25 +16,17 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
 import { checkEnginePurity, type EngineFile } from "./enginePurity.js";
+import { collectSourceFiles, CORE_SRC_ROOT, DOMAIN_ROOT, MIN_CORE_SRC_FILES_SCANNED } from "./sourceFiles.js";
 
-const ENGINE_ROOT = join(process.cwd(), "packages", "core", "src");
-
-/** Walk the real engine tree, collecting every PRODUCTION file (excluding *.test.ts). */
-function collectEngineFiles(dir: string): EngineFile[] {
-  const out: EngineFile[] = [];
-  for (const entry of readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
-    const abs = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      out.push(...collectEngineFiles(abs));
-    } else if (entry.name.endsWith(".ts") && !entry.name.endsWith(".test.ts")) {
-      out.push({ path: abs.slice(process.cwd().length + 1), source: readFileSync(abs, "utf8") });
-    }
-  }
-  return out;
-}
+/**
+ * The production core-src population, as of 3F-2266. Asserted, not assumed — see the pin below.
+ *
+ * The engine root IS `CORE_SRC_ROOT`: this guard and `noParallelStore` walk the SAME population,
+ * which is exactly why they may share a floor. `domainPurity` walks a smaller subtree and keeps its
+ * own floor; the asymmetry is deliberate.
+ */
+const CORE_SRC_FILE_COUNT = 22;
 
 describe("[SCN-EPG-001] the reconciliation engine imports nothing impure and references no IO", () => {
   it("flags an engine file that imports from an impure sibling layer", () => {
@@ -81,9 +73,25 @@ describe("[SCN-EPG-001] the reconciliation engine imports nothing impure and ref
   it("passes clean over the REAL packages/core/src tree (the seam holds today)", () => {
     // The dogfood green: the engine is pure; any future stray import or IO
     // reference in a production engine file reds this.
-    const engineFiles = collectEngineFiles(ENGINE_ROOT);
-    // Sanity: we actually scanned the tree (not an empty walk masquerading as green).
-    expect(engineFiles.length).toBeGreaterThan(10);
+    const engineFiles = collectSourceFiles(CORE_SRC_ROOT);
+    // Sanity: we actually scanned the tree (not an empty walk masquerading as green). The floor is
+    // the SHARED one — this guard and noParallelStore walk the same population, so a bare literal
+    // here would be a second copy of the same rule, drifting the moment either is retuned (3F-2266).
+    expect(engineFiles.length).toBeGreaterThan(MIN_CORE_SRC_FILES_SCANNED);
     expect(checkEnginePurity(engineFiles)).toEqual([]);
+  });
+
+  it("[SCN-EPG-001] the shared collector walks exactly the core-src production population", () => {
+    // Pinned because the purity claim is only as wide as the set it was checked over: a walk that
+    // silently collected fewer files would leave this guard green while proving less than it says,
+    // and nothing else in this file would notice. The count was NOT asserted here before 3F-2266.
+    //
+    // Green on both sides of that change — it is a characterisation pin, not the driver of the
+    // refactor, and its teeth come from a plant rather than from having once been red.
+    const engineFiles = collectSourceFiles(CORE_SRC_ROOT);
+    expect(engineFiles).toHaveLength(CORE_SRC_FILE_COUNT);
+    // It DISCRIMINATES by root: the same collector over the domain subtree returns strictly fewer.
+    // A collector that ignored its argument would satisfy every other assertion in this file.
+    expect(collectSourceFiles(DOMAIN_ROOT).length).toBeLessThan(engineFiles.length);
   });
 });
