@@ -66,6 +66,12 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     note: "the @lint static-guard quality-check — reconciling @lint:<guard> scenarios against CI wiring over the real source; flags the watermelon",
   },
   {
+    code: "CPX",
+    slug: "complexity-budget",
+    status: "declared",
+    note: "the complexity + module-size budgets — eslint complexity/max-lines/max-lines-per-function over the real tree, per-scope budgets seeded at the measured max with the p90 recorded as the ratchet target",
+  },
+  {
     code: "USG",
     slug: "uncited-static-guards",
     status: "declared",

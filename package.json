@@ -18,6 +18,7 @@
     "balance": "tsx packages/spec-controller/src/cli.ts",
     "audit:vocab": "tsx packages/spec-controller/static-guards/vocabAuditCli.ts",
     "lint:feature-codes": "tsx packages/spec-controller/static-guards/lintFeatureCodesCli.ts",
+    "lint:complexity": "eslint",
     "lint:no-committed-reports": "tsx packages/spec-controller/static-guards/lintNoCommittedReportsCli.ts",
     "lint:scn-tags": "tsx packages/spec-controller/static-guards/lintScnTagsCli.ts",
     "lint:scn-subissues": "tsx packages/spec-controller/static-guards/lintScnSubIssuesCli.ts"
@@ -28,8 +29,10 @@
     "@stryker-mutator/core": "^9.6.1",
     "@stryker-mutator/vitest-runner": "^9.6.1",
     "@types/node": "^22.0.0",
+    "eslint": "^9.39.5",
     "tsx": "^4.22.3",
     "typescript": "^5.8.3",
+    "typescript-eslint": "^8.65.0",
     "vitest": "^4.1.7",
     "yaml": "^2.9.0"
   }

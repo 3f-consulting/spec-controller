@@ -51,6 +51,18 @@ jobs:
       - name: Lint scn-tags
         run: pnpm lint:scn-tags
 
+      # The complexity + module-size budgets over the REAL tree (@SCN-CPX-001, 3F-2177) —
+      # eslint's complexity / max-lines / max-lines-per-function, per-scope budgets seeded
+      # at the measured maximum so the gate catches REGRESSION without reddening today's
+      # code. Blocking on every push: cheap and deterministic, so it earns a per-push slot.
+      # A red means optimise, or bump the budget as a conscious edit carrying its reason —
+      # never disable the step. The budgets and their p90 ratchet targets live in
+      # static-guards/complexityBudgets.mjs. @lint-declared (@lint=lint:complexity on
+      # @SCN-CPX-001) so the tool's own ledger reconciles it rather than reporting it as an
+      # uncited static guard.
+      - name: Lint complexity
+        run: pnpm lint:complexity
+
       - name: Type-check
         run: pnpm typecheck
 
