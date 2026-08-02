@@ -27,287 +27,38 @@
 
 // ---------------------------------------------------------------------------
 // Word-sets (the approved vocabulary + the banned shortenings)
+//
+// The sets THEMSELVES live in `vocabWordSets.ts` (3F-2311, @SCN-VOC-001 Read).
+// The split is along the seam that actually moves: the vocabulary is a RULING
+// RECORD that grows every time the operator rules a word in or out, while this
+// file is the ENGINE and changes only when a MATCHER changes. Both are re-exported
+// here unchanged, so every call site still imports them from `vocabAudit.js` —
+// the move is invisible from the outside, which is what makes it a Read.
 // ---------------------------------------------------------------------------
 
-/** Manifesto domain vocabulary — the mapping-table terms, decomposed to words. */
-export const DOMAIN_WORDS: ReadonlySet<string> = new Set([
-  "scenario", "evidence", "attribution", "ledger", "kind", "sub",
-  "balancing", "off", "balance", "summary", "balanced",
-  "out", "reconciling", "reconciled", "reconciliation", "reconcile", "application",
-  "watermelon", "static", "verdict", "posting", "debit", "credit",
-  "journal", "provenance",
-  // The outcome/verdict rationalisation (locked 2026-07-02): `state` → `outcome`.
-  "outcome",
-  // The three-grain Reconciliation re-term: `quality-check` replaces the retired `(kind,
-  // level)` grid; `phantom`/`suspense` kinds; `undemanded` (KEPT by @SCN-VOC-004 — canon,
-  // and load-bearing) and the `cites-*` outcomes join the reconciler. `trial`, `account`
-  // and `level` retire with the container re-term (Evidence/Scenario/Quality-Check
-  // Reconciliation replace trial-balance / account / sub-account). `kind` and `sub`
-  // are KEPT (legitimate reuse: `ScenarioKind`; `qualityCheckReconciliations` / the sub-issue-gate).
-  "quality", "check", "phantom", "suspense", "undemanded", "cites",
-]);
+import {
+  BANNED_WORDS,
+  DOMAIN_WORDS,
+  ENTRY_DOMAIN_COMPANIONS,
+  FULL_TERM_ONLY,
+  GENERIC_ALLOWLIST,
+  GUARD_QUALIFIERS,
+  REJECTED_ALIAS_TO_CANONICAL,
+  RESERVED_WORDS,
+  RULED_ALLOWED,
+} from "./vocabWordSets.js";
 
-/** The endorsed generic-technical allowlist (starter set, 2026-07-02). */
-export const GENERIC_ALLOWLIST: ReadonlySet<string> = new Set([
-  // structure / access
-  "root", "id", "list", "get", "set", "node", "index", "key", "value", "name",
-  "map", "entry", "item",
-  // io / format
-  "path", "dir", "file", "read", "write", "json", "md", "yaml", "csv", "format",
-  "serialise", "parse", "render", "emit",
-  // cli / run plumbing
-  "cli", "run", "arg", "flag", "option", "config", "cwd", "target", "source",
-  "input", "output",
-  // test plumbing
-  "test", "fixture", "golden", "snapshot", "step", "mock",
-  // counting / connectives
-  "count", "total", "raw", "delta", "by", "is", "has", "to", "from", "of",
-  "build", "add", "check",
-  // -------------------------------------------------------------------------
-  // The comprehensive generic batch-allowlist (operator-endorsed 2026-07-02).
-  // Every remaining generic / plumbing / language / config / process
-  // word in the audit residual tail.
-  // -------------------------------------------------------------------------
-  // test / BDD-step / assertion plumbing
-  "ok", "not", "with", "than", "less", "greater", "exists", "expected", "defined",
-  "property", "ends", "or", "and", "does", "containing", "passed", "warned", "force",
-  "tagged", "block", "tag", "tags", "gherkin", "gwt", "bdd", "sb", "world", "runner",
-  "phrase", "capture", "captured", "obs", "tv", "sg", "thunk", "bind", "bbalanced",
-  "bunit", "regen", "chunk", "chunks", "original", "byfeature", "proseonly", "sample",
-  "foo", "bar", "planted", "spanning", "volume", "ticket", "typecheck", "failing", "gate",
-  // JS/TS language + stdlib ops
-  "each", "flat", "sort", "sorted", "replace", "pop", "size", "every", "some", "search",
-  "char", "upper", "lower", "last", "locale", "compare", "iso", "val", "obj", "elements",
-  "groups", "columns", "column", "cell", "table", "col", "part", "buffer", "max", "bound",
-  "spaced", "sequence", "promise", "stat", "uint", "directory", "define", "partial", "own",
-  "empty", "single", "multi", "non", "quote", "quoted", "literal", "pascal", "camel",
-  "snake", "acronym", "shaped", "composite", "stem", "ident", "distinct", "collect", "scan",
-  "call",
-  // node / fs / process / path / io
-  "readdir", "mkdir", "dirname", "basename", "ext", "without", "stdio", "child", "env",
-  "cmd", "walk", "mk", "sep", "url", "uri", "ur", "ls", "io", "absolute", "relative",
-  "rooted", "prefix",
-  // reader-layer technical words — the ingest seam (readers of runner reports + CI config)
-  "ingest",
-  // git / CI / diff plumbing
-  "git", "github", "hub", "head", "ref", "pull", "request", "event", "branches", "fetch",
-  "depth", "jobs", "job", "uses", "on", "workflows", "porcelain", "hunk", "checkout",
-  "commit", "committed", "since", "pathspec", "pathspecs", "tracked", "deleted", "added",
-  "removed", "updated", "held", "renumber", "diff", "offenders", "violation", "violations",
-  "change",
-  // dates / time
-  "date", "timestamp", "utc", "instant", "time", "now",
-  // short var-names / abbreviations
-  "rec", "ds", "seg", "segs", "za", "rbm", "pbf", "wm", "ldg", "nf", "rs", "req", "reg",
-  "exp", "obl", "st", "tok", "prev", "prior", "err", "idx", "bmd", "bjson", "bfrom", "scen",
-  "sl", "ses", "xes", "zes", "ches", "shes", "es", "re",
-  // report / model structure (generic)
-  // `metadata`: the small top-level presentation-metadata object holding the
-  // feature titles — a generic-technical structure word (sibling of `meta` / `model` /
-  // `document`), NOT a reconciliation/bookkeeping term.
-  "metadata",
-  "document", "headline", "views", "emitter", "route", "marker", "glyph", "order", "note",
-  "title", "label", "detail", "coverage", "schema", "version", "legacy", "saved",
-  "rehydrate", "roundtrip", "round", "tripped", "derive", "assemble", "sourced", "sourcing",
-  "override", "overrides", "threaded", "persist", "writer", "renderer", "rendered",
-  "reformatted", "template", "outline", "example", "purpose", "links", "facts", "reason",
-  "reasons", "current", "pattern", "occurrence",
-  // the audit tool's OWN identifiers (self-scan)
-  "prose", "surface", "surfaces", "classify", "decompose", "singularise", "canonical",
-  "alias", "rejected", "reserved", "banned", "generic", "allowlist", "allowed", "ruled",
-  "term", "domain", "word", "words", "heading", "flagged", "approved", "segment", "segments",
-  "shortening", "scoping", "conforming", "decision", "breakdown", "grand", "exempt", "exempted",
-  // project / process meta (docs)
-  "issue", "issues", "pr", "project", "projects", "management", "ruling", "operator",
-  "review", "rename", "candidate", "technical", "decisions", "assumptions", "questions",
-  "goals", "ideas", "blog", "competitors", "scope", "discover", "discovered", "detect",
-  "invoked", "invokes", "directly", "direct", "main", "execute", "performance", "comment",
-  "comments", "command", "commands", "marks", "register", "registry",
-  // external tool / lang / config tokens (docs + config surfaces)
-  "java", "typescript", "webdriver", "flow", "rail", "portal", "python", "users", "steven",
-  "story", "saver", "pnpm", "workspace", "tsconfig", "esbuild", "ecma", "engines", "manager",
-  "dev", "dependencies", "declaration", "compiler", "resolution", "indexed", "unchecked",
-  "access", "skip", "exclude", "include", "lib", "strict", "allow", "description", "use",
-  "ai", "driven", "readme", "support", "supported", "subissues", "ui", "response", "rate",
-  "verb", "vs", "programme", "portable", "session", "lockfiles", "relates", "companions",
-  // plain-English connectives escalated on non-D prose
-  "all", "no", "only", "over", "but", "are", "at", "here", "there", "we", "yet", "the",
-  "per", "other", "existing", "full", "bare", "next", "first", "simple", "across", "point",
-  "starting", "compared",
-  // -------------------------------------------------------------------------
-  // Approved domain-adjacent tail (operator ruling 2026-07-02): each
-  // COULD be a reconciliation/attribution concept but is ruled generic/allowlist.
-  // -------------------------------------------------------------------------
-  "unit", "integration", "runtime", "lint", "real", "exemption", "exemptions",
-  "unwired", "absent", "external", "enforced", "cited", "coded", "uncoded", "equivalent",
-  "behaviour", "bearing", "subject", "missing", "required", "tally", "tallies",
-  // Outcome/level VALUE words (domain-by-reference in the manifesto; allowlisting harmless).
-  "satisfied", "present",
-  // NB: `declared` / `observed` / `anomaly` were REMOVED from this allowlist.
-  // They are non-canon side-adjectives / an invented synonym, not generics: the sides
-  // are DEBIT / CREDIT (never "declared side" / "observed side"), and a non-`satisfied`
-  // credit-side Quality Check Reconciliation is a RECONCILING ITEM, not an "anomaly".
-  // They were swept from every identifier surface, so they now reach an HONEST zero
-  // (not an allowlisted one). `declared` may still appear as a plain VERB in prose —
-  // that is fine; the audit only flags identifier-shaped / composite tokens.
-  // -------------------------------------------------------------------------
-  // Refined-wordset operator-endorsed core (2026-07-02) — the
-  // test-framework, generic-code and tooling words the operator ruled generic
-  // Full list; a handful overlap the batch above.
-  // -------------------------------------------------------------------------
-  // test-framework (vitest / chai / cucumber)
-  "expect", "describe", "assert", "equal", "be", "given", "when", "then", "before",
-  "contain", "includes", "deep", "have", "cucumber", "vitest",
-  // generic-code (general-purpose programming / plumbing / ops)
-  "spawn", "opts", "stderr", "exit", "payload", "occurrences", "bin", "message",
-  "cells", "starts",
-  // tooling (the audit tool's own naming)
-  "vocab", "vocabulary",
-  // the double-entry metaphor
-  "double",
-  // -------------------------------------------------------------------------
-  // Residual generic tail (2026-07-02) — the remaining plumbing /
-  // structure / abbreviation words in the audit residual, all ruled generic
-  // (none carry a reconciliation / bookkeeping meaning). Closes to the endorsed
-  // 41-word residual (13 rename-spine + 28 domain-adjacent).
-  // -------------------------------------------------------------------------
-  "abs", "action", "after", "argv", "array", "artefacts", "artifacts", "assertion",
-  "attributed", "audit", "bad", "base", "body", "buf", "checking", "ci",
-  "code", "codes", "colon", "content", "contents", "context", "ctx", "decide",
-  "dest", "directive", "doc", "docs", "encoding", "error", "ex", "excluded",
-  "exec", "extract", "filename", "filter", "find", "flush", "fmt", "fmts",
-  "handle", "header", "headers", "ids", "it", "join", "kept", "length",
-  "line", "lines", "lnt", "locator", "log", "manifest", "markdown", "match",
-  "matrix", "meta", "mkdtemp", "mode", "model", "modes", "package", "pair",
-  "pairs", "parsed", "pkg", "plan", "planned", "push", "record", "recursive",
-  "reduce", "regenerated", "region", "regions", "rel", "relativize", "repo", "resolve",
-  "rest", "result", "results", "rm", "rmd", "row", "rows", "script",
-  "scripts", "section", "sections", "seen", "sha", "slice", "slug", "split",
-  "src", "start", "status", "stdout", "store", "stringify", "sync", "text",
-  "tmpdir", "token", "tokens", "trb", "trim", "untagged", "usg", "warning",
-  "warnings", "companion", "companions",
-  // Residual generics surfaced by the slice-5 sweep (2026-07-02).
-  "zero", "based", "undeclared",
-  // -------------------------------------------------------------------------
-  // Portable-paths plumbing generics (2026-07-02 drift-restore).
-  // Legitimate cross-repo path machinery, not domain drift:
-  //   realpath — fs.realpathSync (resolve symlinks so /var → /private/var matches)
-  //   os       — node:os (tmpdir)
-  //   foreign  — the "foreign cwd" test concept (cwd ≠ target repo)
-  //   mac      — macOS (the /var → /private/var symlink note)
-  // -------------------------------------------------------------------------
-  "realpath", "os", "foreign", "mac",
-  // -------------------------------------------------------------------------
-  // The three-grain re-term generics — plumbing/structure words surfaced
-  // by the container re-term + the bidirectional-reconciler sweep, ruled generic (no
-  // bookkeeping meaning): `group`/`suffix` (renderer grouping); `uncited`/`matched`
-  // (reconciler predicates); `eo` (evidence-obligation short var); `both` (both-missing
-  // adjective); `citations` (the byScn credit list).
-  // -------------------------------------------------------------------------
-  "group", "suffix", "uncited", "matched", "eo", "both", "citations",
-  // -------------------------------------------------------------------------
-  // "running" — deliberate descriptor: the running-guard observer,
-  // `runningStaticChecks` / `runningStaticCheckCount`. It names the guards that RUN (the
-  // demanded-versus-running distinction that replaced the `CI` mechanism leak), NOT a silent
-  // pass — a tagged, endorsed allowlist entry, not an incidental generic.
-  // -------------------------------------------------------------------------
-  "running",
-  // -------------------------------------------------------------------------
-  // "observe" — deliberate verb: the running-guard OBSERVER,
-  // `runningStaticChecks`. The manifesto defines an evidence
-  // observation as "an OBSERVED piece of evidence" (double-entry-manifesto.md
-  // line 25); `observe` is that verb form — the act of reading the running CI
-  // guards into evidence observations. A tagged, endorsed allowlist entry, NOT a
-  // silent pass. Distinct from the retired past-adjective `observed` (swept above:
-  // the sides are DEBIT / CREDIT, never an "observed side") and from the bare noun
-  // `observation` (still flags per operator ruling — report-only).
-  // -------------------------------------------------------------------------
-  "observe",
-  // -------------------------------------------------------------------------
-  // @SCN-VOC-007 — `threshold` is the CANON metric word that replaces the retired
-  // `budget` (a threshold is a ceiling, not something spent down). It is allowlisted
-  // rather than left to pass by accident: the rename target of a banned word must be
-  // APPROVED, or the purge trades a flagged word for an `unknown` one and the audit's
-  // green means nothing. Before this entry it flagged `unknown` on stryker.config.json's
-  // `thresholds` key — a green nobody chose. The plural folds onto this stem.
-  // -------------------------------------------------------------------------
-  "threshold",
-]);
-
-/** Ruled allowed OUTRIGHT (2026-07-02): report, spec, feature. */
-export const RULED_ALLOWED: ReadonlySet<string> = new Set(["report", "spec", "feature"]);
-
-/** Banned shortenings + rejected aliases that ALWAYS flag (both modes). */
-export const BANNED_WORDS: ReadonlySet<string> = new Set([
-  "supply", "execution", "executions", "state",
-  // `unattributed` is a FULLY banned word (operator, 2026-07-24 — treated like
-  // `state`, not a bespoke NAME-only home). It flags in every context, name AND
-  // prose, closing the prose regression hole the runtime-axis slice purged. No
-  // single canonical: the word split by meaning across the axes (`uncited` static /
-  // `suspense` account / `cites-no-scenario` outcome), so the rename target is
-  // by-meaning — the `banned`/`rename` verdict carries no `new` column.
-  "unattributed",
-  // Rejected aliases: `requirement(s)` → evidence obligation;
-  // `oob` → out-of-balance (opaque abbreviation of the verdict value).
-  "requirement", "oob",
-  // @SCN-VOC-007 — the retired CI/metric word `budget` → `threshold`. A plain banned
-  // word, deliberately NOT the phrase rule @SCN-VOC-003 / @SCN-VOC-006 needed: `budget`
-  // has no canon homograph anywhere in this vocabulary, so the strongest matcher is
-  // also the correct one. Banned reds in BOTH modes, so the word cannot survive in a
-  // comment, a Gherkin line or a config key while the identifiers are swept; and the
-  // naive singulariser folds `budgets` onto this stem, so the plural — the real
-  // filename was `complexityBudgets.mjs` — needs no second entry.
-  "budget",
-  // @SCN-VOC-004 — the retired evidence-obligation word (full why: the feature's Rule block).
-  // FOUR entries: the singulariser folds `demands`→`demand`, `demanders`→`demander`, nothing else.
-  "demand", "demanded", "demanding", "demander",
-]);
-
-/** Words approved only inside their full manifesto term; bare → flag. */
-export const FULL_TERM_ONLY: ReadonlySet<string> = new Set([
-  "obligation", "observation", "ghost",
-  // `guard` is BOTH canon's different word (L5 — a check protecting an invariant)
-  // and its banned shortening (L129 — of `static guard`). So it is approved only
-  // when a ruled qualifier co-occurs; see GUARD_QUALIFIERS + fullTermSatisfied.
-  "guard",
-]);
-
-/**
- * The ruled qualifiers that make `guard` the DIFFERENT WORD rather than the banned
- * shortening (Steven, 2026-07-19). Each entry is the set of words that must all
- * co-occur — `both-missing` decomposes to two tokens, so it needs both.
- *
- * Single-sourced with 3F-1930's prose skip-list: change one, change the other.
- */
-const GUARD_QUALIFIERS: readonly (readonly string[])[] = [
-  ["static"],
-  ["both", "missing"],
-  ["exhaustiveness"],
-  ["regression"],
-  ["existence"],
-  ["readability"],
-];
-
-/**
- * ECMAScript / TypeScript reserved words + language-level globals. These are
- * grammar, not author-chosen names — the extractor does not treat them as
- * vocabulary (the same class of scanning-scope exclusion as punctuation, file
- * extensions, and structural feature-tags). NOT an allowlist of domain-adjacent
- * or stdlib semantic words — those still flag as operator allowlist-candidates.
- */
-const RESERVED_WORDS = new Set([
-  "const", "let", "var", "function", "return", "export", "import", "as", "default",
-  "type", "interface", "class", "extends", "implements", "new", "this", "super",
-  "void", "null", "undefined", "true", "false", "if", "else", "for", "while", "do",
-  "switch", "case", "break", "continue", "throw", "try", "catch", "finally",
-  "typeof", "instanceof", "in", "await", "async", "yield", "public", "private",
-  "protected", "abstract", "enum", "namespace", "declare", "module", "exports",
-  "require", "delete", "keyof", "infer", "satisfies", "readonly", "string",
-  "number", "boolean", "object", "any", "unknown", "never", "symbol", "bigint",
-  "console", "process", "nan", "globalthis", "constructor", "prototype", "arguments",
-  // structural: the scenario-ID scheme abbreviation + source file extensions (not vocabulary)
-  "scn", "ts", "js", "tsx", "jsx", "mjs", "cjs", "yml",
-]);
+export {
+  BANNED_WORDS,
+  DOMAIN_WORDS,
+  ENTRY_DOMAIN_COMPANIONS,
+  FULL_TERM_ONLY,
+  GENERIC_ALLOWLIST,
+  GUARD_QUALIFIERS,
+  REJECTED_ALIAS_TO_CANONICAL,
+  RESERVED_WORDS,
+  RULED_ALLOWED,
+};
 
 /** Naive singulariser — plural of an approved/domain word is the same vocabulary. */
 function singularise(word: string): string {
@@ -316,30 +67,6 @@ function singularise(word: string): string {
   if (word.endsWith("s") && !word.endsWith("ss") && word.length > 3) return word.slice(0, -1);
   return word;
 }
-
-/** Domain words whose presence in a name makes a co-occurring `entry` a domain use. */
-const ENTRY_DOMAIN_COMPANIONS = new Set([
-  "evidence", "debit", "credit", "obligation", "observation", "supply",
-]);
-
-/** Rejected-alias → canonical (the manifest `new` column). */
-export const REJECTED_ALIAS_TO_CANONICAL: Readonly<Record<string, string>> = {
-  supply: "evidence observation",
-  execution: "evidence observation",
-  executions: "evidence observations",
-  state: "outcome",
-  obligation: "evidence obligation",
-  observation: "evidence observation",
-  ghost: "ghost evidence observation",
-  requirement: "evidence obligation",
-  requirements: "evidence obligations",
-  oob: "out of balance",
-  // @SCN-VOC-007 — singular only: `budgets` resolves through the singulariser stem
-  // lookup in classifyWords, so a plural entry would be a second copy to drift.
-  budget: "threshold",
-  // @SCN-VOC-004 — nouns take the canon term; VERBS take `names`/`naming`, NOT retired `declare`.
-  demand: "evidence obligation", demanded: "evidence obligation", demanding: "naming", demander: "naming scenario",
-};
 
 // ---------------------------------------------------------------------------
 // Surfaces (coverage-matrix rows — always all present)

@@ -36,9 +36,16 @@ const EXCLUDED_FILES = new Set(["pnpm-lock.yaml", "package-lock.json", "yarn.loc
  * guaranteed false positive, so the whole-repo scan skips them (matched by
  * repo-relative path — a narrower `--root` over the fixture corpus still scans them,
  * which is exactly what the integration arm needs). Everything else is swept to zero.
+ *
+ * `vocabWordSets.ts` joined the list when 3F-2311 split the word-sets out of
+ * `vocabAudit.ts`. It is the ONE place that split is not transparent: the file IS
+ * the enumeration of banned tokens, so an entry here is not housekeeping — leaving
+ * it out floods the manifest with 65 guaranteed false-positive rows (measured, not
+ * assumed). Any future file that names the rejected vocabulary belongs here too.
  */
 const SELF_EXEMPT_PATHS = new Set([
   "packages/spec-controller/static-guards/vocabAudit.ts",
+  "packages/spec-controller/static-guards/vocabWordSets.ts",
   "packages/spec-controller/static-guards/vocabAudit.test.ts",
   "packages/spec-controller/static-guards/vocabAuditCli.ts",
   "features/vocabulary-audit.feature",
