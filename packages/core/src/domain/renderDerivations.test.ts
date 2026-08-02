@@ -29,8 +29,8 @@ import type { Scenario, EvidenceObservation, Ledger } from "../model.js";
 
 /**
  * A SPANNING corpus:
- *   SCN-AAA-001 — demands a WIRED guard (satisfied) and an UNWIRED one (watermelon): both PRESENT.
- *   SCN-AAA-002 — demands an ABSENT guard (missing): not present.
+ *   SCN-AAA-001 — names a WIRED guard (satisfied) and an UNWIRED one (watermelon): both PRESENT.
+ *   SCN-AAA-002 — names an ABSENT guard (missing): not present.
  *   SCN-AAA-003 — a runtime obligation only: no static sub-rows at all.
  * Plus an undemanded running guard (folds to the SUSPENSE row as a lint CREDIT — the shape that
  * must never inflate the DECLARED lint list) and a broken suite (the suspense `broken` item).
@@ -149,7 +149,7 @@ describe("[SCN-LDG-001] presentStaticGuardCountOf counts PRESENCE, not quality",
     expect(presentStaticGuardCountOf(row)).toBe(0);
   });
 
-  it("reads zero on a row demanding no static guard", () => {
+  it("reads zero on a row naming no static guard", () => {
     expect(staticGuardReconciliationsOf(rowOf("SCN-AAA-003"))).toEqual([]);
     expect(presentStaticGuardCountOf(rowOf("SCN-AAA-003"))).toBe(0);
   });

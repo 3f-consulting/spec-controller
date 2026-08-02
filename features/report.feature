@@ -246,7 +246,7 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the report reconciles the test evidence observation — raw = attributed + suspense
 
     The evidence observation-reconciliation spine (@SCN-RPT-010). The report's evidence obligation
-    (demand) side has a Headline tally; its evidence observation side had nothing — the evidence observations
+    (evidence obligation) side has a Headline tally; its evidence observation side had nothing — the evidence observations
     the pipeline builds were consumed by reconcile() and thrown away. This retains the
     observed test evidence observation as a RuntimeEvidenceObservationKindCounts datum, counted by kind against the @SCN
     anchor in ONE shared pass — attributed-to-declared (per-(scnId, level) counts),
@@ -274,14 +274,14 @@ Feature: The report renders the ledger as sectioned facts
 
     Per-scenario evidence columns (@SCN-RPT-011), consuming the evidence observation
     aggregate. The ledger row gains corpus-driven columns between Scenario and Verdict —
-    Lint first, then the runtime levels present in demand or evidence observation (Unit, Integration,
+    Lint first, then the runtime levels present in evidence obligation or evidence observation (Unit, Integration,
     e2e, Performance; e2e/performance only when a run has them). Each cell is two-sided,
-    `<obligation>/<observation>`: the LEFT is the demand — a single quality-check letter (L, U, I,
+    `<obligation>/<observation>`: the LEFT is the evidence obligation — a single quality-check letter (L, U, I,
     E, P) iff the scenario obligated this check, else `-`; the RIGHT is the observation count — the
     multiplicity of posted credits at this check (backing present, pass OR fail), else `-`. So a
-    demanded-and-met cell reads `letter/N`; a demanded-and-missing cell reads `letter/-`; an
-    UNDEMANDED observation (a credit at a quality-check the scenario never demanded) reads `-/N`;
-    a doubly-empty cell (no demand, no credit) renders BLANK.
+    named-and-met cell reads `letter/N`; a named-and-missing cell reads `letter/-`; an
+    UNDEMANDED observation (a credit at a quality-check the scenario never named) reads `-/N`;
+    a doubly-empty cell (no evidence obligation, no credit) renders BLANK.
     The cell counts BACKING, not quality — a failing evidence obligation shows its
     count, its failing-ness staying in the Verdict + Reconciling-items columns.
     The Lint cell reads the static evidence obligation outcomes (lint isn't a counted evidence observation):
@@ -296,9 +296,9 @@ Feature: The report renders the ledger as sectioned facts
     on its `evidenceObservations`. The cell reads its right-side count STRAIGHT off those posted
     credits (multiplicity-correct, @SCN-LDG-022) — never off `qualityCheckReconciliations`, which
     collapse to one matched row per obligation and would undercount duplicate citations. An
-    `undemanded` row is NOT a demand: its left side is `-`, so the cell cannot be mistaken for a
-    demanded-and-missing one (`letter/-`), which points at the OPPOSITE remedy — "write the test",
-    when the truth is "fix the attribution". A pending obligation (@unitpending) demands nothing —
+    `undemanded` row is NOT an evidence obligation: its left side is `-`, so the cell cannot be mistaken for a
+    named-and-missing one (`letter/-`), which points at the OPPOSITE remedy — "write the test",
+    when the truth is "fix the attribution". A pending obligation (@unitpending) names nothing —
     3F-1858 folds the pending pair out of the active set — so a credit citing it reconciles the same
     UNDEMANDED way and renders `-/N` too. Proven in isolation by Vitest over a RECONCILER-TRUE
     fixture (the balance is produced by `reconcile()` over a scenario + observation corpus, never
@@ -308,10 +308,10 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @integration @SCN-RPT-011
     Scenario: the ledger row shows corpus-driven evidence columns with the two-sided cell encoding
-      Given a reconciliation over a corpus spanning every cell case — a satisfied obligation, a missing one, an undemanded observation citing a scenario that never demanded that quality-check, a pending obligation with observations citing it at that pair, and a column absent for the scenario
+      Given a reconciliation over a corpus spanning every cell case — a satisfied obligation, a missing one, an undemanded observation citing a scenario that never named that quality-check, a pending obligation with observations citing it at that pair, and a column absent for the scenario
       When the ledger is rendered
-      Then each scenario row carries one cell per corpus column (Lint first, then the runtime levels present) with the two-sided obligation-then-observation encoding — a demand letter, an observation count, or blank
-      And the scenario whose only state at a quality-check is undemanded renders an undemanded observation there — a dash for the demand, the count for the observation
+      Then each scenario row carries one cell per corpus column (Lint first, then the runtime levels present) with the two-sided obligation-then-observation encoding — an evidence-obligation letter, an observation count, or blank
+      And the scenario whose only state at a quality-check is undemanded renders an undemanded observation there — a dash for the evidence obligation, the count for the observation
       And the scenario whose obligation at a quality-check is pending, with observations citing it at that pair, renders an undemanded observation there — because the credit is now undemanded, not attributed
       And no cell-key legend precedes the ledger table — the grid speaks for itself
 
@@ -668,12 +668,12 @@ Feature: The report renders the ledger as sectioned facts
 
     The census is now a FOLD over the Ledger: it walks the posted credits and reads each
     credit's kind off the ROW it posted to, so the reconciler is the ONE classifier. The fold
-    keeps the RUNTIME scoping — a `lint` credit posts to every account demanding it, so a
+    keeps the RUNTIME scoping — a `lint` credit posts to every account naming it, so a
     naive walk would double-count the static axis the census must not see at all.
 
     @unit @integration @SCN-RPT-023
     Scenario: a broken observation citing a real scenario counts as suspense, not attributed to that scenario
-      Given a corpus whose cucumber run reports an ambiguous step for a scenario that cites a declared @SCN at a demanded quality-check
+      Given a corpus whose cucumber run reports an ambiguous step for a scenario that cites a declared @SCN at a named quality-check
       When the run reconciles and the report is rendered
       Then the broken observation is not counted among that scenario's attributed evidence
       And it is counted once on the suspense scenario, and the Test volume identity still balances

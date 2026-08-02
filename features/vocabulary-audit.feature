@@ -118,3 +118,29 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
       When the vocabulary audit runs over the corpus
       Then "budget" is flagged, renamed to "threshold"
       And "threshold" is not flagged
+
+  Rule: the retired evidence-obligation word "demand" reds; the canon outcome "undemanded" stays green
+
+    The third regrowth guard (@SCN-VOC-004, 3F-2291), and the largest purge on the list:
+    the debit side is an EVIDENCE OBLIGATION, not a "demand", so every inflection of the
+    retired word is retired with it. Like @SCN-VOC-007, and unlike the phrase rules
+    of @SCN-VOC-003 and @SCN-VOC-006, this one needs no adjacency: `demand` carries
+    no canon homograph, so it is a plain BANNED WORD, the strongest matcher — it
+    reds in BOTH modes, in an identifier and in prose alike. The singulariser folds one
+    inflection only (`demands` → `demand`, `demanders` → `demander`), so `demanded`,
+    `demanding` and `demander` each carry their own entry — asserted, not assumed.
+
+    The load-bearing constraint is the NEGATIVE: the canon outcome `undemanded` — the
+    handle for a credit with no matching obligation (double-entry-manifesto.md line 42) —
+    must stay green throughout, on every one of its occurrences. It is whole-word by
+    construction: `decomposeName` yields the single token "undemanded" (≠ "demanded"),
+    exactly as canon `undeclared` survives @SCN-VOC-003, and it stays a DOMAIN word so its
+    green is APPROVED rather than merely un-matched. A rule that reds the canon outcome
+    is the failure this scenario exists to prevent, so it is asserted explicitly.
+
+    @unit @SCN-VOC-004
+    Scenario: the audit reds "demanded" and stays green on the canon "undemanded"
+      Given a corpus carrying the retired "demanded" and the canon outcome "undemanded"
+      When the vocabulary audit runs over the corpus
+      Then "demanded" is flagged, renamed to "evidence obligation"
+      And "undemanded" is not flagged

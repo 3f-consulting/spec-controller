@@ -202,10 +202,10 @@ export function isScenario(row: ScenarioReconciliation): boolean {
 
 /**
  * A row's STATIC-GUARD sub-rows — its `lint` Quality Check Reconciliations, in document order, one
- * per `@lint=<guard>` obligation the scenario demanded (3F-2203).
+ * per `@lint=<guard>` obligation the scenario named (3F-2203).
  *
  * The DECLARED-side cut: `lint` reconciliations only ever arise from a declared obligation, so this
- * is the row's demanded-static-guard count as well as its list. It is the single source both the
+ * is the row's named-static-guard count as well as its list. It is the single source both the
  * renderer's grid cell and the Ledger's `lintTally` read — they each re-derived it before, agreeing
  * by copy.
  */
@@ -216,7 +216,7 @@ export function staticGuardReconciliationsOf(
 }
 
 /**
- * How many of a row's demanded static guards are PRESENT (3F-2203) — the count of `lint`
+ * How many of a row's named static guards are PRESENT (3F-2203) — the count of `lint`
  * reconciliations that found a real script, whether or not it is wired.
  *
  * PRESENCE IS NOT QUALITY, and that is the whole rule: `satisfied` (wired into CI over the real

@@ -48,11 +48,11 @@ const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation =>
 // scenario, so the by-feature cut names "checkout (CHK)". The corpus:
 //   SCN-CHK-001: @unit, one passing unit credit → balanced, attributed 1
 //   SCN-CHK-002: @integration, no credit → integration missing (the coded out-of-balance feature)
-//   SCN-CHK-003: @lint=lint:foo, the guard running & wired → balanced, the demanded running guard
+//   SCN-CHK-003: @lint=lint:foo, the guard running & wired → balanced, the named running guard
 //   1 unit credit citing SCN-PHX-001 (undeclared) → a real phantom ROW, phantom 1
 //   1 uncited unit credit (src/b.test.ts) + the undemanded lint:bar static guard → the suspense row
 // The static-guard counts are a FOLD over this ledger now (3F-2118, `staticObservationTally`): 2
-// running CI guards = 1 demanded (lint:foo, on SCN-CHK-003's `@lint` row) + 1 uncited (lint:bar,
+// running CI guards = 1 named (lint:foo, on SCN-CHK-003's `@lint` row) + 1 uncited (lint:bar,
 // undemanded-running, on the suspense row) → {runningGuardCount: 2, uncitedStaticGuardCount: 1}.
 const scenarios: Scenario[] = [
   { scnId: "SCN-CHK-001", evidenceObligations: [{ qualityCheck: "unit" }] },
@@ -80,7 +80,7 @@ const ctx: RunContext = {
 // arg) turns the axis on; the numbers derive from `balance` above.
 
 // The static-guard axis is folded off the Ledger by the renderers too (3F-2118): 2 running CI
-// guards = 1 demanded (lint:foo) + 1 uncited (lint:bar). `withStaticGuards: true` (the 5th json /
+// guards = 1 named (lint:foo) + 1 uncited (lint:bar). `withStaticGuards: true` (the 5th json /
 // 6th markdown render arg) turns the axis on; the numbers derive from `balance` above.
 
 const evidenceObligations: EvidenceObligations = {

@@ -14,7 +14,7 @@
  * the per-scenario reconciliation under `evidenceReconciliation` (RMD-002), and the observed
  * evidence under `evidenceObservations` (RMD-003) — every JSON section reads in the manifesto's
  * vocabulary. The static-guard census is `summary.staticGuards` counts alone (2.4): its
- * member detail lives in the rows (demanded → `@lint` sub-rows; undemanded → the suspense row),
+ * member detail lives in the rows (named → `@lint` sub-rows; undemanded → the suspense row),
  * so there is no standalone `staticGuards` section — symmetric with the runtime side.
  *
  * Parent: (@SCN-RMD-001).
@@ -146,7 +146,7 @@ export function assembleRenderInput(
         }
       : {}),
     // No staticGuards census SECTION (2.4): the guard member detail lives in the rows
-    // (demanded → each scenario's `@lint` sub-row; undemanded → the suspense row), symmetric with
+    // (named → each scenario's `@lint` sub-row; undemanded → the suspense row), symmetric with
     // the runtime side. The counts survive in `summary.staticGuards` (the balance-check identity).
 
     // No `evidenceObservations` SECTION (@SCN-RMD-003 / @SCN-RPT-010, 3F-2103): the runtime

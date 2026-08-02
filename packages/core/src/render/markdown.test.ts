@@ -544,7 +544,7 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
     scenarioReconciliations: [
       ...reconciledDeclared.scenarioReconciliations,
       // OUT OF SCOPE (3F-1894 ruling → 3F-1897): the guard-handle collision. SCN-LNT-002 and
-      // SCN-LNT-009 both demand the `guard-lint` handle at DIFFERENT outcomes (watermelon vs
+      // SCN-LNT-009 both name the `guard-lint` handle at DIFFERENT outcomes (watermelon vs
       // satisfied) — a shape one reconcile pass cannot emit (a handle reconciles to exactly one
       // outcome). Left HAND-BUILT verbatim per the ruling; not reconciler-true, and not this
       // slice's to fix. RPT-006 threads no census, so these never reach evidenceCell.
@@ -966,9 +966,9 @@ describe("[SCN-RPT-010] the markdown report renders the Test volume evidenceObse
  *
  * Proves the ledger's corpus-driven evidence columns in isolation: when the evidenceObservations
  * aggregate is threaded, each scenario row gains columns (Lint first, then the runtime
- * levels present in demand or evidenceObservations — e2e/performance only when present) with the
- * four-way demand×evidenceObservations cell encoding (`N` backing present / `∅` missing /
- * `(N)` observations at a quality-check never demanded / `—` neither). The cell counts BACKING, not
+ * levels present in evidence obligation or evidenceObservations — e2e/performance only when present) with the
+ * four-way evidence-obligation×evidenceObservations cell encoding (`N` backing present / `∅` missing /
+ * `(N)` observations at a quality-check never named / `—` neither). The cell counts BACKING, not
  * quality. Without the aggregate the original three-column ledger is preserved.
  *
  * RECONCILER-TRUE FIXTURE (evidence-manifesto §11A, 3F-1808). The balance and the census are
@@ -982,11 +982,11 @@ describe("[SCN-RPT-010] the markdown report renders the Test volume evidenceObse
  *   - UNDEMANDED (SCN-C, @SCN-LDG-008): a credit citing a real scenario at a quality-check it never
  *     declared. The reconciler posts a credit-side `undemanded` row ON the scenario; the census
  *     keeps the credit OUT of `attributed` (into undemandedCount). The cell must NOT read that row
- *     as a demand (it rendered ∅ — "missing" — pre-fix) and must count the (N) off the rows.
+ *     as an evidence obligation (it rendered ∅ — "missing" — pre-fix) and must count the (N) off the rows.
  *   - PENDING (SCN-F): a `<qc>pending` obligation partitions to a one-sided Pending Item and posts
  *     no RECONCILED row. This bullet used to read "PENDING + ATTRIBUTED … the pending pair STAYS
  *     in evidenceObligationPairs — so the credit citing it IS attributed"; that was the divergence
- *     canon contradicts, and 3F-1858 closed it. A pending obligation demands NOTHING, so the
+ *     canon contradicts, and 3F-1858 closed it. A pending obligation names NOTHING, so the
  *     credit citing it is UNDEMANDED — exactly as when nothing was declared at all — and the
  *     reconciler now posts it as an `undemanded` credit on SCN-F's own row (@SCN-PND-005).
  *     SCN-F therefore contributes to `undemandedCount`, not to `attributed`.
@@ -1000,7 +1000,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   //   SCN-A: @unit (2 observations) + two lint guards, one wired (satisfied) one not (watermelon)
   //          → Lint 2 (guards PRESENT), Unit 2
   //   SCN-B: @unit, no observation → Unit ∅
-  //   SCN-C: @unit (1 observation) + an integration observation it NEVER demanded → Unit 1,
+  //   SCN-C: @unit (1 observation) + an integration observation it NEVER named → Unit 1,
   //          Integration (1) — the UNDEMANDED shape
   //   SCN-D: @integration (1 observation), no @unit → Unit —, Integration 1
   //   SCN-E: one lint guard, absent → Lint ∅
@@ -1027,7 +1027,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     { qualityCheck: "unit", scnId: "SCN-C", status: "passed" },
     { qualityCheck: "integration", scnId: "SCN-C", status: "passed" },
     { qualityCheck: "integration", scnId: "SCN-D", status: "passed" },
-    // SCN-F's unit obligation is PENDING, so it demands NOTHING: this credit is UNDEMANDED, and
+    // SCN-F's unit obligation is PENDING, so it names NOTHING: this credit is UNDEMANDED, and
     // the reconciler posts it as an undemanded credit on SCN-F's row (3F-1858 / @SCN-PND-005). It
     // used to count ATTRIBUTED here while the reconciler posted no row at all — two classifiers
     // disagreeing, which is the divergence 3F-1831 collapses.
@@ -1040,19 +1040,19 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   ];
   const balance: Ledger = reconcile(scenarios, observations);
 
-  it("builds the fixture through the reconciler — the undemanded credit is OUT of a demand", () => {
+  it("builds the fixture through the reconciler — the undemanded credit is OUT of an evidence obligation", () => {
     // The fixture's own guard, read off the LEDGER (the census is retired, 3F-2104): it can only
     // pin shapes the pipeline emits. The SCN-C integration credit is UNDEMANDED — it posts an
-    // `undemanded` reconciling item on SCN-C's own row, NOT a matched demand.
+    // `undemanded` reconciling item on SCN-C's own row, NOT a matched evidence obligation.
     //
     // TWO undemanded credits (3F-1858): SCN-C's integration credit (a real scenario at a check it
     // never declared) AND SCN-F's unit credit (a real scenario at a check declared PENDING — which
-    // demands nothing). Counted off the rows' `undemanded` reconciling items.
+    // names nothing). Counted off the rows' `undemanded` reconciling items.
     const undemanded = balance.scenarioReconciliations.flatMap((s) =>
       s.qualityCheckReconciliations.filter((o) => o.outcome === "undemanded")
     );
     expect(undemanded).toHaveLength(2);
-    // SCN-C's integration credit is undemanded (never a demand), and it posted to SCN-C's row.
+    // SCN-C's integration credit is undemanded (never an evidence obligation), and it posted to SCN-C's row.
     const scnC = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-C")!;
     expect(scnC.qualityCheckReconciliations.some((o) => o.qualityCheck === "integration" && o.outcome === "undemanded")).toBe(true);
     expect(scnC.qualityCheckReconciliations.some((o) => o.qualityCheck === "integration" && o.outcome === "satisfied")).toBe(false);
@@ -1066,36 +1066,36 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     expect(md).not.toContain(" E2e ");
   });
 
-  it("encodes the four cell cases two-sided — demanded+met, demanded+missing, undemanded, and absent", () => {
+  it("encodes the four cell cases two-sided — named+met, named+missing, undemanded, and absent", () => {
     const md = renderMarkdown(__er(balance, true, false), ctx);
-    // demanded & met → letter/count; SCN-A: Lint L2/2 (TWO demanded guards on the left — the
-    // demanded-obligation count, @SCN-RPT-011 — both present on the right), Unit U/2.
+    // named & met → letter/count; SCN-A: Lint L2/2 (TWO named guards on the left — the
+    // evidence-obligation count, @SCN-RPT-011 — both present on the right), Unit U/2.
     expect(md).toContain("| SCN-A | L2/2 | U/2 |  |");
-    // demanded & missing → letter/- (no observation).
+    // named & missing → letter/- (no observation).
     expect(md).toContain("| SCN-B |  | U/- |  |");
-    // not demanded but present → -/N: SCN-C's integration credit is UNDEMANDED — the reconciler
-    // posts a credit-side row on SCN-C, which is NOT a demand, so the left is `-` and the right is
-    // the observation count. The demanded Unit credit reads U/1 on the same row.
+    // not named but present → -/N: SCN-C's integration credit is UNDEMANDED — the reconciler
+    // posts a credit-side row on SCN-C, which is NOT an evidence obligation, so the left is `-` and the right is
+    // the observation count. The named Unit credit reads U/1 on the same row.
     expect(md).toContain("| SCN-C |  | U/1 | -/1 |");
-    // declared elsewhere, absent here → blank left/right, and the demanded Integration reads I/1.
+    // declared elsewhere, absent here → blank left/right, and the named Integration reads I/1.
     expect(md).toContain("| SCN-D |  |  | I/1 |");
     // lint declared but its static guard missing → L/- (declared, no guard present).
     expect(md).toContain("| SCN-E | L/- |  |  |");
   });
 
-  it("renders -/N for a credit at a PENDING pair — undemanded (3F-1858), no demand letter", () => {
+  it("renders -/N for a credit at a PENDING pair — undemanded (3F-1858), no evidence-obligation letter", () => {
     const md = renderMarkdown(__er(balance, true, false), ctx);
-    // SCN-F's unit obligation is @unitpending, so it demands NOTHING: the credit citing it reconciles
-    // UNDEMANDED (3F-1858) and posts an undemanded row on SCN-F → no demand (left `-`), one observed
+    // SCN-F's unit obligation is @unitpending, so it names NOTHING: the credit citing it reconciles
+    // UNDEMANDED (3F-1858) and posts an undemanded row on SCN-F → no evidence obligation (left `-`), one observed
     // credit (right 1) → -/1. Read straight off `evidenceObservations` (the multiplicity-correct
-    // source), the two-sided cell shows the credit with no demand letter beside it.
+    // source), the two-sided cell shows the credit with no evidence-obligation letter beside it.
     expect(md).toContain("| SCN-F |  | -/1 |  |");
   });
 
   it("counts the lint cell's right side by guards PRESENT (balanced or watermelon), not 0/1", () => {
     const md = renderMarkdown(__er(balance, true, false), ctx);
     // SCN-A declares two static guards, both present (one balanced, one watermelon) → right side 2,
-    // and the demand LEFT carries the demanded-obligation count (two lint QCRs) → L2 → L2/2.
+    // and the evidence-obligation LEFT carries the evidence-obligation count (two lint QCRs) → L2 → L2/2.
     expect(md).toContain("| SCN-A | L2/2 |");
   });
 
@@ -1273,7 +1273,7 @@ describe("[SCN-USG-001] the markdown report renders the Static guards section", 
 
   // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — the Static guards counts are a FOLD OVER
   // THE LEDGER now (3F-2118, `staticObservationTally`), so the numbers derive from `balance`, not a
-  // hand-built census the renderer could disagree with. Two running CI guards = 1 demanded
+  // hand-built census the renderer could disagree with. Two running CI guards = 1 named
   // (lint:foo, posts to its scenario's `@lint` row) + 1 uncited (lint:bar, undemanded-running,
   // folds to the suspense row) → the fold reads {runningGuardCount: 2, uncitedStaticGuardCount: 1}.
   const twoRunningOneUncited: Ledger = reconcile(
@@ -1283,7 +1283,7 @@ describe("[SCN-USG-001] the markdown report renders the Static guards section", 
       { qualityCheck: "lint", staticGuard: "lint:bar", exists: true, enforcedOverRealSource: true },
     ]
   );
-  // One running CI guard, all demanded → the fold reads {runningGuardCount: 1, uncitedStaticGuardCount: 0}.
+  // One running CI guard, all named → the fold reads {runningGuardCount: 1, uncitedStaticGuardCount: 0}.
   const oneRunningNoneUncited: Ledger = reconcile(
     [{ scnId: "SCN-USG-001", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:foo" }] }],
     [{ qualityCheck: "lint", staticGuard: "lint:foo", exists: true, enforcedOverRealSource: true }]

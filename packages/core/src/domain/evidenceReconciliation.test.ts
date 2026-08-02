@@ -304,7 +304,7 @@ describe("[SCN-LDG-008] a credit at an undeclared quality-check on a real scenar
 describe("[SCN-LDG-027] a Quality Check Reconciliation carries the evidence observation it reconciles (the credit side)", () => {
   it("carries the citing observation on the undemanded reconciliation, with no obligation (the pure credit case)", () => {
     // The mirror of LDG-026's pure debit: SCN-LDG-027 declares unit; a passing INTEGRATION credit
-    // cites it at a quality-check it never demanded → `undemanded` (observation present, obligation
+    // cites it at a quality-check it never named → `undemanded` (observation present, obligation
     // absent). The credit-side producer (the fold's `undemandedItems`) carries the citing
     // observation `o` as `evidenceObservation`, and — being a credit against no obligation — the
     // row carries NO `evidenceObligation`. That two-sidedness is the point of the slice.
@@ -601,9 +601,9 @@ describe("[SCN-PND-005] the pending declaration governs even when a matching obs
   // pending declaration governs: the obligation is NOT reconciled against the observation (it
   // never becomes `satisfied`, never a reconciling item).
   //
-  // A PENDING OBLIGATION DEMANDS NOTHING (3F-1858). Canon, Pending Item: a `pending` tag raises
+  // A PENDING OBLIGATION NAMES NOTHING (3F-1858). Canon, Pending Item: a `pending` tag raises
   // NO Evidence Obligation, so the citing credit is `undemanded` — "exactly as when nothing was
-  // declared at all". This test used to assert the opposite ("the pair stays DEMANDED"), under
+  // declared at all". This test used to assert the opposite ("the pair stays NAMED"), under
   // which the credit posted to NO account: the pair-check excluded it from `undemanded`, the
   // partition excluded it from the debit side. Zero rows, balanced, exit 0 — the false-green.
   //
@@ -636,7 +636,7 @@ describe("[SCN-PND-005] the pending declaration governs even when a matching obs
     // (Partition-before-match: a pending obligation never reaches reconcileEvidenceObligation.)
     expect(scenario?.qualityCheckReconciliations.some((r) => r.outcome === "satisfied")).toBe(false);
     // The matching observation IS flagged `undemanded`: the pending obligation raises no Evidence
-    // Obligation, so its pair is NOT demanded and the citing credit posts as an ordinary
+    // Obligation, so its pair is NOT named and the citing credit posts as an ordinary
     // undemanded credit on this real scenario's own row.
     const undemanded = balance.scenarioReconciliations.flatMap((s) =>
       s.reconcilingItems.filter((r) => r.outcome === "undemanded")
@@ -1315,16 +1315,16 @@ describe("[SCN-LDG-029] a no-scn-code reconciliation carries a scenario-scope ob
 
 /**
  * @SCN-LDG-022 (3F-1846) — every evidence observation posts to AT LEAST ONE ledger account, never
- * to none (canon, double-entry-manifesto.md line 160). Over THIS single-demand corpus — no static
- * guard is demanded twice — the never-zero invariant lands at exactly one, which is the teeth here
- * against an erroneous double-post. The multi-demand instance (a static guard posting to every
- * demander) is @SCN-LDG-024.
+ * to none (canon, double-entry-manifesto.md line 160). Over THIS single-obligation corpus — no static
+ * guard is named twice — the never-zero invariant lands at exactly one, which is the teeth here
+ * against an erroneous double-post. The multi-obligation instance (a static guard posting to every
+ * naming scenario) is @SCN-LDG-024.
  *
  * The @unit arm: `reconcile` populates each account's `evidenceObservations` with the credits that
  * CITE it. The @integration arm (tests/steps/ledger.steps.ts) drives the whole credit corpus at
  * once for the exhaustion/uniqueness property; these prove the per-shape routing in isolation.
  */
-describe("[SCN-LDG-022] reconcile — every evidence observation posts to at least one account (exactly one over this single-demand corpus)", () => {
+describe("[SCN-LDG-022] reconcile — every evidence observation posts to at least one account (exactly one over this single-obligation corpus)", () => {
   const declared: Scenario[] = [
     { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] },
     { scnId: "SCN-AAA-002", evidenceObligations: [{ qualityCheck: "unit" }] },
@@ -1381,28 +1381,28 @@ describe("[SCN-LDG-022] reconcile — every evidence observation posts to at lea
     expect(accountFor(ledger, "SCN-AAA-001")?.evidenceObservations).toEqual([]);
   });
 
-  it("posts a DEMANDED guard credit to the account that demands it", () => {
+  it("posts a NAMED guard credit to the account that names it", () => {
     // A static guard carries no @SCN, so `byScn` cannot hold it — its link to an account is the STATIC GUARD
     // HANDLE, exactly the link `reconcileEvidenceObligation` already follows to reconcile a lint
     // obligation onto this row. Posting it here MIRRORS the reconciler: the credit sits on the
     // account the outcome already lands on.
-    const demanded: Scenario[] = [
+    const named: Scenario[] = [
       { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:x" }] },
     ];
     const credit: EvidenceObservation = {
       qualityCheck: "lint", staticGuard: "lint:x", exists: true, enforcedOverRealSource: true,
     };
-    const ledger = reconcile(demanded, [credit]);
+    const ledger = reconcile(named, [credit]);
     expect(accountFor(ledger, "SCN-AAA-001")?.evidenceObservations).toEqual([credit]);
-    // A demanded static guard is NOT suspense — suspense is for credits citing no scenario at all.
+    // A named static guard is NOT suspense — suspense is for credits citing no scenario at all.
     expect(accountFor(ledger, "(no scenario)")).toBeUndefined();
   });
 
   it("posts an UNDEMANDED guard credit to suspense — it cites no scenario", () => {
-    // The other arm of the symmetry: no @lint obligation demands this handle, so it belongs to no
+    // The other arm of the symmetry: no @lint obligation names this handle, so it belongs to no
     // account and lands in suspense, where it already reconciles `cites-no-scenario`.
     const credit: EvidenceObservation = {
-      qualityCheck: "lint", staticGuard: "lint:nobody-demands-this", exists: true, enforcedOverRealSource: false,
+      qualityCheck: "lint", staticGuard: "lint:nobody-names-this", exists: true, enforcedOverRealSource: false,
     };
     const ledger = reconcile(declared, [credit]);
     expect(accountFor(ledger, "(no scenario)")?.evidenceObservations).toEqual([credit]);
@@ -1417,78 +1417,78 @@ describe("[SCN-LDG-022] reconcile — every evidence observation posts to at lea
 });
 
 /**
- * @SCN-LDG-024 (3F-1850) — a static guard demanded by TWO scenarios posts to EACH.
+ * @SCN-LDG-024 (3F-1850) — a static guard named by TWO scenarios posts to EACH.
  *
- * The multi-demand instance of the posting invariant LDG-022 states as the universal (at least
+ * The multi-obligation instance of the posting invariant LDG-022 states as the universal (at least
  * one, never zero — canon, double-entry-manifesto.md line 160): a static guard's run cites no
- * scenario, so it is matched by handle and is evidence for EVERY demander. One run, one object,
- * posted BY REFERENCE onto each demanding account (never copied — the census walks the flat
+ * scenario, so it is matched by handle and is evidence for EVERY naming scenario. One run, one object,
+ * posted BY REFERENCE onto each naming account (never copied — the census walks the flat
  * stream, so a copy would double-count). This is the case no corpus exercised, and where the
  * "exactly one" over-generalisation breaks: here one observation posts to two accounts.
  */
-describe("[SCN-LDG-024] reconcile — a static guard demanded by two scenarios posts to each account", () => {
+describe("[SCN-LDG-024] reconcile — a static guard named by two scenarios posts to each account", () => {
   const accountFor = (ledger: Ledger, scnId: string): ScenarioReconciliation | undefined =>
     ledger.scenarioReconciliations.find((r) => r.scnId === scnId);
 
-  it("posts one static guard's run to BOTH demanding accounts, by reference, both satisfied", () => {
-    const demanders: Scenario[] = [
-      { scnId: "SCN-SHR-001", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:double-demand" }] },
-      { scnId: "SCN-SHR-002", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:double-demand" }] },
+  it("posts one static guard's run to BOTH naming accounts, by reference, both satisfied", () => {
+    const namingScenarios: Scenario[] = [
+      { scnId: "SCN-SHR-001", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:double-obligation" }] },
+      { scnId: "SCN-SHR-002", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:double-obligation" }] },
     ];
     const credit: EvidenceObservation = {
-      qualityCheck: "lint", staticGuard: "lint:double-demand", exists: true, enforcedOverRealSource: true,
+      qualityCheck: "lint", staticGuard: "lint:double-obligation", exists: true, enforcedOverRealSource: true,
     };
-    const ledger = reconcile(demanders, [credit]);
+    const ledger = reconcile(namingScenarios, [credit]);
     const a1 = accountFor(ledger, "SCN-SHR-001");
     const a2 = accountFor(ledger, "SCN-SHR-002");
 
-    // Posts to BOTH — one run is evidence for every demander (canon: posts to every account
-    // that demands it). This is where "exactly one" breaks and "at least one" holds.
+    // Posts to BOTH — one run is evidence for every naming scenario (canon: posts to every account
+    // that names it). This is where "exactly one" breaks and "at least one" holds.
     expect(a1?.evidenceObservations).toEqual([credit]);
     expect(a2?.evidenceObservations).toEqual([credit]);
     // BY REFERENCE — the SAME object on each account, not a copy: safe under the 3F-1831 census
     // fold, which counts the flat stream once.
     expect(a1?.evidenceObservations[0]).toBe(a2?.evidenceObservations[0]);
-    // Both demanders reconcile satisfied (the static guard is wired + enforced).
-    expect(a1?.qualityCheckReconciliations).toEqual([{ qualityCheck: "lint", staticGuard: "lint:double-demand", outcome: "satisfied", evidenceObligation: { qualityCheck: "lint", staticGuard: "lint:double-demand" }, evidenceObservation: { qualityCheck: "lint", staticGuard: "lint:double-demand", exists: true, enforcedOverRealSource: true } }]);
-    expect(a2?.qualityCheckReconciliations).toEqual([{ qualityCheck: "lint", staticGuard: "lint:double-demand", outcome: "satisfied", evidenceObligation: { qualityCheck: "lint", staticGuard: "lint:double-demand" }, evidenceObservation: { qualityCheck: "lint", staticGuard: "lint:double-demand", exists: true, enforcedOverRealSource: true } }]);
-    // A DEMANDED guard is never suspense — no undemanded static guard here.
+    // Both naming scenarios reconcile satisfied (the static guard is wired + enforced).
+    expect(a1?.qualityCheckReconciliations).toEqual([{ qualityCheck: "lint", staticGuard: "lint:double-obligation", outcome: "satisfied", evidenceObligation: { qualityCheck: "lint", staticGuard: "lint:double-obligation" }, evidenceObservation: { qualityCheck: "lint", staticGuard: "lint:double-obligation", exists: true, enforcedOverRealSource: true } }]);
+    expect(a2?.qualityCheckReconciliations).toEqual([{ qualityCheck: "lint", staticGuard: "lint:double-obligation", outcome: "satisfied", evidenceObligation: { qualityCheck: "lint", staticGuard: "lint:double-obligation" }, evidenceObservation: { qualityCheck: "lint", staticGuard: "lint:double-obligation", exists: true, enforcedOverRealSource: true } }]);
+    // A NAMED guard is never suspense — no undemanded static guard here.
     expect(accountFor(ledger, "(no scenario)")).toBeUndefined();
   });
 });
 
 /**
- * @SCN-LDG-025 (3F-1851) — a demanded-guards-only corpus reconciles balanced; the demanded-guard
+ * @SCN-LDG-025 (3F-1851) — a named-guards-only corpus reconciles balanced; the named-guard
  * posting rule ALONE determines the verdict.
  *
- * The coverage hole: every other lint fixture mixes a demanded guard with another credit shape
- * (broken / uncited / undemanded) that independently mints the suspense row, so the demanded-guard
+ * The coverage hole: every other lint fixture mixes a named guard with another credit shape
+ * (broken / uncited / undemanded) that independently mints the suspense row, so the named-guard
  * path never determines the outcome on its own — the posting rule was unfalsifiable. A corpus whose
- * ONLY lint credit is one satisfied demanded guard removes every other cause: balanced, no suspense
+ * ONLY lint credit is one satisfied named guard removes every other cause: balanced, no suspense
  * row, summary.outOfBalance 0 AGREEING with the balanced verdict. The rejected post-to-suspense
  * treatment would mint a spurious empty out-of-balance suspense row — summary.outOfBalance
  * disagreeing with isBalanced, the 3F-1703 fault — which THIS corpus finally makes red.
  */
-describe("[SCN-LDG-025] reconcile — a demanded-guards-only corpus reconciles balanced, no suspense row", () => {
+describe("[SCN-LDG-025] reconcile — a named-guards-only corpus reconciles balanced, no suspense row", () => {
   const accountFor = (ledger: Ledger, scnId: string): ScenarioReconciliation | undefined =>
     ledger.scenarioReconciliations.find((r) => r.scnId === scnId);
-  const ctx: RunContext = { target: "demanded-only", inputs: {}, runStart: new Date("2026-07-20T00:00:00.000Z"), sourceSha: null };
+  const ctx: RunContext = { target: "obligations-only", inputs: {}, runStart: new Date("2026-07-20T00:00:00.000Z"), sourceSha: null };
 
-  it("a satisfied demanded guard as the only credit → balanced, no suspense, summary.outOfBalance 0", () => {
-    const demanded: Scenario[] = [
-      { scnId: "SCN-DEM-001", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:demanded-only" }] },
+  it("a satisfied named guard as the only credit → balanced, no suspense, summary.outOfBalance 0", () => {
+    const named: Scenario[] = [
+      { scnId: "SCN-DEM-001", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:obligations-only" }] },
     ];
     const credit: EvidenceObservation = {
-      qualityCheck: "lint", staticGuard: "lint:demanded-only", exists: true, enforcedOverRealSource: true,
+      qualityCheck: "lint", staticGuard: "lint:obligations-only", exists: true, enforcedOverRealSource: true,
     };
-    const ledger = reconcile(demanded, [credit]);
+    const ledger = reconcile(named, [credit]);
 
-    // The demanding account reconciles satisfied and balanced.
+    // The naming account reconciles satisfied and balanced.
     expect(accountFor(ledger, "SCN-DEM-001")?.qualityCheckReconciliations).toEqual([
-      { qualityCheck: "lint", staticGuard: "lint:demanded-only", outcome: "satisfied", evidenceObligation: { qualityCheck: "lint", staticGuard: "lint:demanded-only" }, evidenceObservation: { qualityCheck: "lint", staticGuard: "lint:demanded-only", exists: true, enforcedOverRealSource: true } },
+      { qualityCheck: "lint", staticGuard: "lint:obligations-only", outcome: "satisfied", evidenceObligation: { qualityCheck: "lint", staticGuard: "lint:obligations-only" }, evidenceObservation: { qualityCheck: "lint", staticGuard: "lint:obligations-only", exists: true, enforcedOverRealSource: true } },
     ]);
     expect(accountFor(ledger, "SCN-DEM-001")?.verdict).toBe("balanced");
-    // NO suspense row — the only lint credit is the demanded one.
+    // NO suspense row — the only lint credit is the named one.
     expect(accountFor(ledger, "(no scenario)")).toBeUndefined();
     // The run is balanced, and the summary AGREES: outOfBalance 0 (the 3F-1703 identity — under
     // the rejected post-to-suspense this becomes 1 while isBalanced stays true, and it reds).
@@ -1525,7 +1525,7 @@ describe("[SCN-LDG-023] reconcile — the evidence obligations a scenario declar
   it("posts a declared lint obligation carrying its guard handle", () => {
     // The other obligation shape: `lint` debits carry the `staticGuard` handle that links them to a
     // static guard credit. The debit posts with its handle intact — the account records WHAT WAS
-    // DEMANDED, not merely that something was.
+    // NAMED, not merely that something was.
     const obligation: EvidenceObligation = { qualityCheck: "lint", staticGuard: "lint:x" };
     const declared: Scenario[] = [{ scnId: "SCN-AAA-001", evidenceObligations: [obligation] }];
     const ledger = reconcile(declared, []);
@@ -1566,7 +1566,7 @@ describe("[SCN-LDG-023] reconcile — the evidence obligations a scenario declar
 
   it("posts no debits to the accounts no scenario declares — suspense and phantom", () => {
     // A phantom/suspense account is MINTED BY A CREDIT: no scenario declares it, so nothing can
-    // have been demanded of it. Its debit side is empty by construction — the asymmetry is real,
+    // have been named of it. Its debit side is empty by construction — the asymmetry is real,
     // not an omission.
     const declared: Scenario[] = [{ scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] }];
     const ledger = reconcile(declared, [

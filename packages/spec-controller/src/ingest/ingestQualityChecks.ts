@@ -38,12 +38,12 @@ import {
 } from "@3f-consulting/spec-controller-core";
 import { checkStaticEvidenceObligations } from "@3f-consulting/spec-controller-core";
 import { runningStaticGuards } from "@3f-consulting/spec-controller-core";
-// The DEMANDED-static-guard rule lives ONCE on the journal (the static-axis twin of
+// The NAMED-static-guard rule lives ONCE on the journal (the static-axis twin of
 // `evidenceObligationPairsOf`); this command reads it rather than rebuilding the derivation inline.
 // Reached via the core package's `/internal` subpath export — the frozen v1 barrel (@SCN-API-001)
 // does not, and must not, carry this core-internal helper, so it is exposed on the sanctioned
 // monorepo-internal seam instead of by a deep `core/src` relative path.
-import { demandedStaticGuardsOf } from "@3f-consulting/spec-controller-core/internal";
+import { staticCheckEvidenceObligationsOf } from "@3f-consulting/spec-controller-core/internal";
 import type { PackageJsonScripts } from "@3f-consulting/spec-controller-core";
 import { evidenceReconciliationOf } from "@3f-consulting/spec-controller-core";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
@@ -303,8 +303,8 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
   // Static (guard) kind: observe each declared @lint=<guard> against the CI config
   // + package.json over the real tree. Read the CI + package.json ONCE — both
   // the declared-guard evidence observation AND the reverse CI-guard derivation (below) draw on them.
-  const demandedGuardSet = demandedStaticGuardsOf(scenarios);
-  const demandedGuards = [...demandedGuardSet];
+  const staticCheckEvidenceObligationSet = staticCheckEvidenceObligationsOf(scenarios);
+  const staticCheckEvidenceObligations = [...staticCheckEvidenceObligationSet];
   // The --package-json seam (@SCN-LNT-005): read the static guard's `exists`
   // from the EXTERNALLY-SPECIFIED package.json when given, else the tool's own
   // cwd. Required to reconcile ANOTHER repo's static guards — and to render the
@@ -312,26 +312,26 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
   // its CI → watermelon, not missing).
   const ciPath = opts.ci ?? ".github/workflows/ci.yml";
   const ciSource = existsSync(ciPath) ? readFileSync(ciPath, "utf8") : "";
-  if (demandedGuards.length > 0) {
-    evidenceObservations.push(...checkStaticEvidenceObligations(demandedGuards, ciSource, packageJson));
+  if (staticCheckEvidenceObligations.length > 0) {
+    evidenceObservations.push(...checkStaticEvidenceObligations(staticCheckEvidenceObligations, ciSource, packageJson));
   }
 
   // The RUNNING-guard observer: every running CI static guard is a
   // GuardEvidenceObservation in the stream — the static analogue of the runner emitting
   // every test result — so the one reconcile engine sees the COMPLETE static stream.
-  // Combined with the demanded observations WITHOUT double-observing: a running static guard the
-  // demanded set already covers carries its authoritative exists/enforcedOverRealSource
+  // Combined with the named observations WITHOUT double-observing: a running static guard the
+  // named set already covers carries its authoritative exists/enforcedOverRealSource
   // detail from `checkStaticEvidenceObligations` (the watermelon input), so only the UNDEMANDED
   // running static guards are added here. They cite no scenario — the reconciler folds them into the suspense row.
-  // (`demandedGuardSet` is the journal rule's Set, read once above.)
+  // (`staticCheckEvidenceObligationSet` is the journal rule's Set, read once above.)
   evidenceObservations.push(
     ...runningStaticGuards(ciSource, packageJson, GUARD_SCRIPT_PREFIXES).filter(
-      (o) => !demandedGuardSet.has(o.staticGuard)
+      (o) => !staticCheckEvidenceObligationSet.has(o.staticGuard)
     )
   );
 
   // The stream is now COMPLETE: every running CI static guard is a GuardEvidenceObservation
-  // — the demanded ones match their @lint obligation, the undemanded ones (a static guard no @lint
+  // — the named ones match their @lint obligation, the undemanded ones (a static guard no @lint
   // declares) cite no scenario, so `reconcile` folds them into the SUSPENSE row itself. No
   // derive-and-diff, no `uncitedStaticGuards` param.
   // The declared corpus is BOTH halves: the @SCN-tagged scenarios AND the untagged ones

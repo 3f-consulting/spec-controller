@@ -146,7 +146,7 @@ export function brokenItemsOf(reconciliation: Ledger): QualityCheckReconciliatio
  * character-identical — here in `lintTally` and in the markdown's `### Lint evidence obligations`
  * table. They agreed by copy-paste, not construction: either could have grown a clause alone and
  * nothing would have redded. Same anaemia, same cure as `evidenceObligationPairsOf` and
- * `demandedStaticGuardsOf`; the tally and the table are now two readings of ONE list.
+ * `staticCheckEvidenceObligationsOf`; the tally and the table are now two readings of ONE list.
  */
 export function lintReconciliationsOf(
   reconciliation: Ledger
@@ -435,7 +435,7 @@ export interface RuntimeObservationTally {
  * same rows, not a parallel opinion kept in step.
  *
  * Static guard (`lint`) credits are SKIPPED: this is the RUNTIME axis. @SCN-LDG-022 posts the SAME
- * static guard object to EVERY account demanding it, so counting one would double-count an axis the
+ * static guard object to EVERY account naming it, so counting one would double-count an axis the
  * runtime tally must not see at all — the same runtime scoping the retired census enforced.
  *
  * The per-scenario-kind counts feed `summary.testVolume` directly (`onScenario` counts credits
@@ -498,13 +498,13 @@ export function runtimeObservationTally(ledger: Ledger): RuntimeObservationTally
 //
 // The static fold is MORE CAREFUL than the runtime one — a plain count is wrong on BOTH axes the
 // posting rules differ on (@SCN-LDG-022, double-entry-manifesto.md line 160): a static guard is
-// posted to EVERY account demanding it (a run is evidence for all demanders — NOT the runtime
-// "exactly one"), so a guard demanded by N scenarios is the SAME object posted N times by reference
+// posted to EVERY account naming it (a run is evidence for all naming scenarios — NOT the runtime
+// "exactly one"), so a guard named by N scenarios is the SAME object posted N times by reference
 // (@SCN-LDG-024), and it is posted whatever it reconciles to (posting is not classifying), so a
-// demanded watermelon/missing guard posts too though it does not RUN. Hence the two crux moves:
-//   - IDENTITY-DEDUPE the demanded side (a `Set` keyed by object identity), so an N-demanded guard
+// named watermelon/missing guard posts too though it does not RUN. Hence the two crux moves:
+//   - IDENTITY-DEDUPE the named side (a `Set` keyed by object identity), so an N-named guard
 //     counts ONCE, and
-//   - FILTER TO RUNNING (`exists && enforcedOverRealSource`), so a demanded watermelon/missing guard
+//   - FILTER TO RUNNING (`exists && enforcedOverRealSource`), so a named watermelon/missing guard
 //     that still posts is excluded — exactly the running-only `continue` the retired census applied.
 // ---------------------------------------------------------------------------
 
@@ -513,14 +513,14 @@ export function runtimeObservationTally(ledger: Ledger): RuntimeObservationTally
  * two counts read off the SAME posted static-guard credits: `runningGuardCount` (the volume of
  * distinct running static guards — every `@lint=<guard>` a CI `run:` step invokes) and
  * `uncitedStaticGuardCount` (how many of them NO `@lint` declares — a static guard running with
- * nothing demanding it, the mirror of a runtime `cites-no-scenario` credit). The demanded count is
- * IMPLICIT (`runningGuardCount − uncitedStaticGuardCount`) and NOT carried: every demanded static
+ * nothing naming it, the mirror of a runtime `cites-no-scenario` credit). The named count is
+ * IMPLICIT (`runningGuardCount − uncitedStaticGuardCount`) and NOT carried: every named static
  * guard is already a reconciled `@lint` sub-row and adds nothing the rows do not already hold.
  */
 export interface StaticObservationTally {
   /** The running static-guard set volume — every `@lint=<guard>` a CI `run:` step invokes. */
   runningGuardCount: number;
-  /** Running static guards NO `@lint` declares — the uncited static-guards (demanded is implicit). */
+  /** Running static guards NO `@lint` declares — the uncited static-guards (named is implicit). */
   uncitedStaticGuardCount: number;
 }
 
@@ -532,27 +532,27 @@ export interface StaticObservationTally {
  * posts to, so this can never disagree with the verdict.
  *
  * `uncitedStaticGuardCount` is the count of lint credits on the SUSPENSE row — the undemanded static
- * guards the reconciler folded there (a static guard running with no `@lint` demanding it,
+ * guards the reconciler folded there (a static guard running with no `@lint` naming it,
  * `cites-no-scenario` on the credit side). By construction the app only pushes RUNNING guards into
  * that undemanded stream (`runningStaticGuards`), so every suspense lint credit is running — the
  * plain count is the census's running-and-uncited count.
  *
  * `runningGuardCount` is the count of DISTINCT-BY-OBJECT-IDENTITY RUNNING lint credits across ALL
  * rows. Two care-moves the runtime axis does not need (see the block comment above):
- *   - IDENTITY-DEDUPE: @SCN-LDG-022 posts the SAME static-guard object to EVERY account demanding it,
- *     so a guard demanded by N scenarios appears N times by reference; a `Set` keyed by the object
- *     identity collapses those to one, so the fold cannot double-count a multiply-demanded guard.
- *   - FILTER TO RUNNING (`exists && enforcedOverRealSource`): a demanded watermelon (exists, unwired)
+ *   - IDENTITY-DEDUPE: @SCN-LDG-022 posts the SAME static-guard object to EVERY account naming it,
+ *     so a guard named by N scenarios appears N times by reference; a `Set` keyed by the object
+ *     identity collapses those to one, so the fold cannot double-count a multiply-named guard.
+ *   - FILTER TO RUNNING (`exists && enforcedOverRealSource`): a named watermelon (exists, unwired)
  *     or missing (absent) guard STILL posts (posting is not classifying), but it does not RUN, so it
  *     is not a running static guard — excluded here exactly as the retired census's running-only
  *     `continue` excluded it.
  *
- * The demanded (implicit) count is `runningGuardCount − uncitedStaticGuardCount`.
+ * The named (implicit) count is `runningGuardCount − uncitedStaticGuardCount`.
  */
 export function staticObservationTally(ledger: Ledger): StaticObservationTally {
   // The distinct RUNNING static-guard credits across ALL rows, keyed by OBJECT IDENTITY so a guard
-  // demanded by N scenarios (posted N times by reference, @SCN-LDG-024) is counted once. Only
-  // running guards (`exists && enforcedOverRealSource`) join the set — a demanded watermelon/missing
+  // named by N scenarios (posted N times by reference, @SCN-LDG-024) is counted once. Only
+  // running guards (`exists && enforcedOverRealSource`) join the set — a named watermelon/missing
   // guard, which posts but does not run, is filtered out (the census's running-only `continue`).
   const runningGuards = new Set<GuardEvidenceObservation>();
   // The uncited static guards — the lint credits the reconciler folded onto the SUSPENSE row (an
@@ -565,8 +565,8 @@ export function staticObservationTally(ledger: Ledger): StaticObservationTally {
       // credit (the uncited/broken ones the suspense row also holds) is not a static observation.
       if (obs.qualityCheck !== "lint") continue;
       if (row.kind === "suspense-scenario") uncitedStaticGuardCount++;
-      // FILTER TO RUNNING, then IDENTITY-DEDUPE — a demanded watermelon/missing guard is excluded;
-      // a guard demanded by N scenarios (the same object N times) collapses to one set member.
+      // FILTER TO RUNNING, then IDENTITY-DEDUPE — a named watermelon/missing guard is excluded;
+      // a guard named by N scenarios (the same object N times) collapses to one set member.
       if (obs.exists && obs.enforcedOverRealSource) runningGuards.add(obs);
     }
   }

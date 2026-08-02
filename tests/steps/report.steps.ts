@@ -579,11 +579,11 @@ Then("the scenario's E2e cell renders a count, not ∅", function () {
     !row!.includes("∅"),
     `expected SCN-TGT-101's E2e cell to render a count, not ∅; got row:\n${row}`
   );
-  // The E2e column carries the two-sided cell — demanded (E) with one observed credit → E/1.
+  // The E2e column carries the two-sided cell — named (E) with one observed credit → E/1.
   assert.match(
     row!,
     /\| SCN-TGT-101 \| E\/1 \|/,
-    `expected SCN-TGT-101's E2e cell to render E/1 (demanded, one observation); got row:\n${row}`
+    `expected SCN-TGT-101's E2e cell to render E/1 (named, one observation); got row:\n${row}`
   );
 });
 
@@ -678,7 +678,7 @@ Then("Test volume counts the single observation under both integration and e2e",
 Then("SCN-TGT-102's Integration and E2e cells each render a count, not ∅", function () {
   // The ledger row for SCN-TGT-102 declares BOTH the integration and e2e obligations (its tier
   // tags), and both are discharged by the one cucumber pass. So the Integration column AND the E2e
-  // column each render their two-sided cell — demanded (I / E) with one observed credit → the row
+  // column each render their two-sided cell — named (I / E) with one observed credit → the row
   // reads `| SCN-TGT-102 | I/1 | E/1 | ...`. If the second tier's credit were lost (census dedup, or
   // a one-per-scenario parse), that cell would collapse to E/- (declared, no observation) → RED.
   const row = md018.split("\n").find((l) => l.includes("| SCN-TGT-102 |"));
@@ -687,7 +687,7 @@ Then("SCN-TGT-102's Integration and E2e cells each render a count, not ∅", fun
     !row!.includes("∅"),
     `expected SCN-TGT-102's Integration and E2e cells to each render a count, not ∅; got row:\n${row}`
   );
-  // Columns are in canonical order (integration, then e2e) — both cells demanded with one observed
+  // Columns are in canonical order (integration, then e2e) — both cells named with one observed
   // credit each → I/1 then E/1.
   assert.match(
     row!,
@@ -704,12 +704,12 @@ After({ tags: "@SCN-RPT-018" }, function () {
 // The ledger cell's four-way encoding, driven through the REAL reconcile + render over a fixture
 // target spanning EVERY cell case (the class @SCN-RPT-017 / @SCN-RPT-018 established: a cell bug
 // is only caught by the real pipeline, never by a hand-built balance). The fixture corpus
-// (tests/fixtures/evidence-cell-grid) carries: SCN-CEL-001 demanded+met at unit and lint;
-// SCN-CEL-002 demanded+missing at integration (and absent at the other columns); SCN-CEL-003
+// (tests/fixtures/evidence-cell-grid) carries: SCN-CEL-001 named+met at unit and lint;
+// SCN-CEL-002 named+missing at integration (and absent at the other columns); SCN-CEL-003
 // @e2e-only, cited by a VITEST unit observation — the UNDEMANDED credit-side row (@SCN-LDG-008),
 // kept OUT of `attributed` by the census, so its Unit cell must read (1), NOT ∅ (the SCN-CLI-054
 // shape — RED before the fix); and SCN-CEL-004 whose unit obligation is @unitpending — deferred,
-// so it demands NOTHING (3F-1858): the vitest observation citing it reconciles UNDEMANDED and posts
+// so it names NOTHING (3F-1858): the vitest observation citing it reconciles UNDEMANDED and posts
 // an undemanded row on SCN-CEL-004's account, so its Unit cell reads (1) off that undemanded row.
 // Both (N) shapes here are ONE shape now — an undemanded credit — since 3F-1858 folded the pending
 // pair out of the active set (the old "attributed at a pending pair" account no longer exists).
@@ -749,7 +749,7 @@ function cellGridCells(scnId: string): string[] {
 }
 
 Given(
-  "a reconciliation over a corpus spanning every cell case — a satisfied obligation, a missing one, an undemanded observation citing a scenario that never demanded that quality-check, a pending obligation with observations citing it at that pair, and a column absent for the scenario",
+  "a reconciliation over a corpus spanning every cell case — a satisfied obligation, a missing one, an undemanded observation citing a scenario that never named that quality-check, a pending obligation with observations citing it at that pair, and a column absent for the scenario",
   function () {
     runsRoot011 = mkdtempSync(join(tmpdir(), "spec-controller-rpt011-"));
   }
@@ -768,7 +768,7 @@ When("the ledger is rendered", function () {
 });
 
 Then(
-  /^each scenario row carries one cell per corpus column \(Lint first, then the runtime levels present\) with the two-sided obligation-then-observation encoding — a demand letter, an observation count, or blank$/,
+  /^each scenario row carries one cell per corpus column \(Lint first, then the runtime levels present\) with the two-sided obligation-then-observation encoding — an evidence-obligation letter, an observation count, or blank$/,
   function () {
     // The corpus declares lint + unit + integration + e2e (never performance), so the header is
     // Lint first, then the runtime levels present in canonical order — no Performance column.
@@ -776,51 +776,51 @@ Then(
       md011.includes("| Scenario | Lint | Unit | Integration | E2e | Verdict | Reconciling items |"),
       `expected the corpus-driven header (Lint, Unit, Integration, E2e); got:\n${md011}`
     );
-    // demanded & met → letter/count (SCN-CEL-001: one lint guard present, one unit observation).
+    // named & met → letter/count (SCN-CEL-001: one lint guard present, one unit observation).
     assert.deepStrictEqual(
       cellGridCells("SCN-CEL-001"),
       ["L/1", "U/1", "", ""],
-      "expected SCN-CEL-001 (demanded and met at lint + unit) to render Lint L/1, Unit U/1, then blank"
+      "expected SCN-CEL-001 (named and met at lint + unit) to render Lint L/1, Unit U/1, then blank"
     );
-    // demanded & missing → letter/-; the columns it neither declares nor is cited at → blank.
+    // named & missing → letter/-; the columns it neither declares nor is cited at → blank.
     assert.deepStrictEqual(
       cellGridCells("SCN-CEL-002"),
       ["", "", "I/-", ""],
-      "expected SCN-CEL-002 (demanded, no observation) to render Integration I/- and blank elsewhere"
+      "expected SCN-CEL-002 (named, no observation) to render Integration I/- and blank elsewhere"
     );
-    // TWO demanded static guards, both wired + discharged → the lint LEFT carries the
-    // demanded-obligation count (L2, @SCN-RPT-011): L2/2 — two lint QCRs on the row, two present
+    // TWO named static guards, both wired + discharged → the lint LEFT carries the
+    // evidence-obligation count (L2, @SCN-RPT-011): L2/2 — two lint QCRs on the row, two present
     // guards. The ONLY >1-static-guard scenario, so the `L2` left-count path is exercised here;
     // a one-guard row (SCN-CEL-001) stays the countless `L/…`.
     assert.deepStrictEqual(
       cellGridCells("SCN-CEL-005"),
       ["L2/2", "", "", ""],
-      "expected SCN-CEL-005 (two demanded static guards, both present) to render Lint L2/2, blank elsewhere"
+      "expected SCN-CEL-005 (two named static guards, both present) to render Lint L2/2, blank elsewhere"
     );
   }
 );
 
-Then(/^the scenario whose only state at a quality-check is undemanded renders an undemanded observation there — a dash for the demand, the count for the observation$/, function () {
+Then(/^the scenario whose only state at a quality-check is undemanded renders an undemanded observation there — a dash for the evidence obligation, the count for the observation$/, function () {
   // SCN-CEL-003 declares @e2e ONLY; a vitest unit test cites it → the reconciler posts an
   // `undemanded` credit-side row at unit, carried on the row's evidenceObservations. The two-sided
-  // cell reads NO demand (left `-`) and ONE observed credit (right 1) → -/1. Its E2e demand is met
-  // by an e2e credit → E/1. A cell that mistook the undemanded credit for a demand would read E/-
+  // cell reads NO evidence obligation (left `-`) and ONE observed credit (right 1) → -/1. Its E2e evidence obligation is met
+  // by an e2e credit → E/1. A cell that mistook the undemanded credit for an evidence obligation would read E/-
   // ("missing" — write the test), contradicting the row's own Reconciling-items column.
   assert.deepStrictEqual(
     cellGridCells("SCN-CEL-003"),
     ["", "-/1", "", "E/1"],
-    "expected SCN-CEL-003's Unit cell to render -/1 — the undemanded observation — not a demanded-and-missing cell"
+    "expected SCN-CEL-003's Unit cell to render -/1 — the undemanded observation — not a named-and-missing cell"
   );
 });
 
 Then(
   /^the scenario whose obligation at a quality-check is pending, with observations citing it at that pair, renders an undemanded observation there — because the credit is now undemanded, not attributed$/,
   function () {
-    // SCN-CEL-004's unit obligation is @unitpending — deferred, so it demands NOTHING. Since 3F-1858
+    // SCN-CEL-004's unit obligation is @unitpending — deferred, so it names NOTHING. Since 3F-1858
     // folded the pending pair out of the active obligation set, the vitest observation citing it
-    // reconciles UNDEMANDED and posts an undemanded row on SCN-CEL-004 → no demand (left `-`), one
+    // reconciles UNDEMANDED and posts an undemanded row on SCN-CEL-004 → no evidence obligation (left `-`), one
     // observed credit (right 1) → -/1. Read straight off evidenceObservations (multiplicity-correct),
-    // the cell shows the credit with no demand letter — the same shape as any other undemanded credit.
+    // the cell shows the credit with no evidence-obligation letter — the same shape as any other undemanded credit.
     assert.deepStrictEqual(
       cellGridCells("SCN-CEL-004"),
       ["", "-/1", "", ""],
@@ -1070,7 +1070,7 @@ let md023: string;
 let json023: string;
 
 Given(
-  "a corpus whose cucumber run reports an ambiguous step for a scenario that cites a declared @SCN at a demanded quality-check",
+  "a corpus whose cucumber run reports an ambiguous step for a scenario that cites a declared @SCN at a named quality-check",
   function () {
     runsRoot023 = mkdtempSync(join(tmpdir(), "spec-controller-rpt023-"));
   }
@@ -1099,8 +1099,8 @@ Then(
   "the broken observation is not counted among that scenario's attributed evidence",
   function () {
     // THE MOVE, first half — read off the LEDGER (@SCN-LDG-022), the reconciler's own ruling, not a
-    // retired parallel census. SCN-AMB-001's credit carries its scnId and its scenario DEMANDS
-    // integration, so every "cites a real scenario at a demanded pair" test says attributed. It is
+    // retired parallel census. SCN-AMB-001's credit carries its scnId and its scenario NAMES
+    // integration, so every "cites a real scenario at a named pair" test says attributed. It is
     // NOT: the proof never ran, so it posts to SUSPENSE — and SCN-AMB-001's own row carries no
     // credit at all.
     const parsed = JSON.parse(json023) as { ledger: { scenarioReconciliations: Rpt023Row[] } };

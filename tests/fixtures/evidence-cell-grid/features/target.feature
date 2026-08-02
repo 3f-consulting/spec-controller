@@ -2,15 +2,15 @@
 Feature: an evidence-cell-grid fixture target spanning every four-way cell case
 
   A FIXTURE feature (NOT under features/) standing in for a target repo whose reconciliation
-  spans EVERY cell of the ledger's four-way demand×evidence-observation encoding (@SCN-RPT-011) —
+  spans EVERY cell of the ledger's four-way evidence-obligation×evidence-observation encoding (@SCN-RPT-011) —
   so the @integration arm can drive the REAL reconcile + render and hold the cell honest against
   the shapes the pipeline ACTUALLY emits (the class @SCN-RPT-017 / @SCN-RPT-018 established: a
   cell bug is only caught by the real pipeline, never by a hand-built balance).
 
   The five scenarios, and the cells they pin:
     - @SCN-CEL-001 — @unit + @lint=guard:cell-grid, both discharged → Lint `1`, Unit `1`
-      (demanded and met — the count).
-    - @SCN-CEL-002 — @integration, NO cucumber observation → Integration `∅` (demanded, missing),
+      (named and met — the count).
+    - @SCN-CEL-002 — @integration, NO cucumber observation → Integration `∅` (named, missing),
       and Unit / E2e `—` (a column absent for this scenario — neither declared nor present).
     - @SCN-CEL-003 — @e2e ONLY, discharged by a passing cucumber observation → E2e `1`; a VITEST
       unit test nonetheless cites it, which the reconciler posts as an UNDEMANDED credit-side row
@@ -21,9 +21,9 @@ Feature: an evidence-cell-grid fixture target spanning every four-way cell case
       evidenceObligationPairs, so the vitest observation citing it is ATTRIBUTED, not undemanded →
       its Unit cell must read `(1)`. The second, live-today production shape of `(N)`.
     - @SCN-CEL-005 — two @lint guards (@lint=guard:cell-grid-a @lint=guard:cell-grid-b), BOTH wired
-      into CI and discharged → Lint `L2/2`: the LEFT count is the demanded-obligation count (two
+      into CI and discharged → Lint `L2/2`: the LEFT count is the evidence-obligation count (two
       lint QCRs on the row, @SCN-RPT-011), the RIGHT the present-guard count. The ONLY scenario
-      demanding >1 static guard — it exercises the `L2` left-count path.
+      naming >1 static guard — it exercises the `L2` left-count path.
 
   This file lives under tests/fixtures/ (NOT features/), so neither the feature-code registry
   lint nor the scenario↔sub-issue gate sees @CEL / @SCN-CEL-NNN — they scan features/*.feature
@@ -32,11 +32,11 @@ Feature: an evidence-cell-grid fixture target spanning every four-way cell case
   Rule: the fixture target spans every cell case
 
     @unit @lint=guard:cell-grid @SCN-CEL-001
-    Scenario: a demanded, met obligation at unit and lint
+    Scenario: a named, met obligation at unit and lint
       Given the target repo's source
 
     @integration @SCN-CEL-002
-    Scenario: a demanded obligation with no evidence observation
+    Scenario: a named obligation with no evidence observation
       Given the target repo's source
 
     @e2e @SCN-CEL-003
@@ -48,5 +48,5 @@ Feature: an evidence-cell-grid fixture target spanning every four-way cell case
       Given the target repo's source
 
     @lint=guard:cell-grid-a @lint=guard:cell-grid-b @SCN-CEL-005
-    Scenario: a scenario demanding two static guards, both wired and discharged
+    Scenario: a scenario naming two static guards, both wired and discharged
       Given the target repo's source

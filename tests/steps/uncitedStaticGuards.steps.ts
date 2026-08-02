@@ -39,7 +39,7 @@ const USG_GUARD_FIXTURE: UsgFixture = {
 // @SCN-USG-005 — a third fixture target whose CI runs the SAME guard:* script (guard:domain-purity)
 // but which ALSO declares it via @lint=guard:domain-purity (the boundary keeping USG-004 honest).
 // Distinct from USG_GUARD_FIXTURE (which declares nothing) so the attributed vs uncited
-// counts stay separable: here the guard is demanded → 1 run, 0 uncited.
+// counts stay separable: here the guard is named → 1 run, 0 uncited.
 const USG_GUARD_DECLARED_FIXTURE: UsgFixture = {
   features: "tests/fixtures/usg-guard-declared/features",
   ci: "tests/fixtures/usg-guard-declared/ci.yml",
@@ -84,7 +84,7 @@ Given("a target whose CI runs the guard:domain-purity script it declares", funct
 Given("an @lint scenario declares guard:domain-purity", function () {
   // The usg-guard-declared fixture's target.feature declares @lint=guard:domain-purity on
   // @SCN-TGD-001; the same guard:* script is invoked in the fixture ci.yml — so it is a
-  // DEMANDED running guard, attributed to its scenario, not folded onto the suspense row.
+  // NAMED running guard, attributed to its scenario, not folded onto the suspense row.
 });
 
 When("the reconciliation report is rendered for the target", function () {
@@ -181,9 +181,9 @@ Then(
 
 // @SCN-USG-005 — the declared guard:* is attributed, not an uncited static-guard. The
 // usg-guard-declared fixture runs guard:domain-purity in CI AND declares @lint=guard:domain-purity:
-// the demanded-guard filter (reconcile's !demandedGuardSet.has(o.staticGuard)) removes it from the
+// the named-guard filter (reconcile's !staticCheckEvidenceObligationSet.has(o.staticGuard)) removes it from the
 // running-observation stream so it is not folded onto the suspense row, and the counter attributes
-// it (1 run, 0 uncited) — never double-counted as both demanded and uncited. The guard:*
+// it (1 run, 0 uncited) — never double-counted as both named and uncited. The guard:*
 // mirror of USG-002, keeping the USG-004 broadening honest.
 Then(
   "guard:domain-purity is not reported as an uncited static-guard",

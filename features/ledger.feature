@@ -393,7 +393,7 @@ Feature: Ledger over declared-vs-observed evidence
   # So an evidence tier hoisted to the Feature or Rule line — IDIOMATIC, VALID Gherkin, exactly
   # what an author does with a tier shared by every scenario beneath — was INVISIBLE to
   # spec-controller. The obligation was never declared, so its missing evidence could never
-  # reconcile `missing`, and the run read BALANCED (exit 0) while cucumber demanded a tier that
+  # reconcile `missing`, and the run read BALANCED (exit 0) while cucumber named a tier that
   # nothing proved. A FALSE-GREEN ON WELL-WRITTEN FILES: the same fault class as the corrupt-file
   # false-green (3F-1767), but triggered by good practice rather than by corruption — which makes
   # it the likelier of the two to fire in the wild.
@@ -406,12 +406,12 @@ Feature: Ledger over declared-vs-observed evidence
   Rule: a scenario's declared tags include the ones it inherits from its Feature and Rule
 
     @unit @integration @SCN-LDG-020
-    Scenario Outline: an evidence tier declared on the <ancestor> is demanded of the scenarios beneath it
+    Scenario Outline: an evidence tier declared on the <ancestor> is named of the scenarios beneath it
       Given a scenario tagged @unit whose <ancestor> carries @integration, with a passing unit test and no integration evidence
       When the ledger reconciles the run
       Then the scenario declares both the unit and the integration obligation
       And the integration obligation reconciles missing
-      And the run is out-of-balance — never balanced on an obligation cucumber demands
+      And the run is out-of-balance — never balanced on an obligation cucumber names
 
       Examples:
         | ancestor |
@@ -467,54 +467,54 @@ Feature: Ledger over declared-vs-observed evidence
   # structurally carries) — posts to SUSPENSE.
   #
   # A GUARD credit carries no @SCN, so its link is the GUARD HANDLE rather than a citation: the
-  # same link the reconciler already follows to put a lint obligation's outcome on the demanding
-  # row. So the symmetry completes — a DEMANDED guard posts to EVERY account that demands it; an
+  # same link the reconciler already follows to put a lint obligation's outcome on the naming
+  # row. So the symmetry completes — a NAMED guard posts to EVERY account that names it; an
   # UNDEMANDED guard belongs to no account and posts to SUSPENSE, where it already reconciles
   # `cites-no-scenario`. Every credit posts to AT LEAST ONE account, never to none (canon,
   # double-entry-manifesto.md line 160: "Not exactly one — a static guard posts to every account
-  # that demands it"). Exactly-one is a RUNTIME property (the credit cites, so it names one) — the
-  # single-demand instance below, not the universal. The multi-demand instance is @SCN-LDG-024.
-  Rule: every evidence observation posts to at least one ledger account, never to none — a runtime credit to the one it cites, a static guard to every account that demands it
+  # that names it"). Exactly-one is a RUNTIME property (the credit cites, so it names one) — the
+  # single-obligation instance below, not the universal. The multi-obligation instance is @SCN-LDG-024.
+  Rule: every evidence observation posts to at least one ledger account, never to none — a runtime credit to the one it cites, a static guard to every account that names it
 
     @unit @integration @SCN-LDG-022
-    Scenario: over a single-demand corpus every evidence observation posts to exactly one ledger account and is findable there — the never-zero invariant's instance where nothing is demanded twice
-      Given a run whose credits span every shape — satisfied, undemanded, pending-cited, phantom, uncited, broken, a demanded guard and an undemanded guard
+    Scenario: over a single-obligation corpus every evidence observation posts to exactly one ledger account and is findable there — the never-zero invariant's instance where nothing is named twice
+      Given a run whose credits span every shape — satisfied, undemanded, pending-cited, phantom, uncited, broken, a named guard and an undemanded guard
       When the ledger reconciles that run
       Then every evidence observation posts to exactly one ledger account
       And each credit is findable in the account its citation names
       And the credit citing a pending quality-check is posted and findable
       And the run's verdict and reconciling items are unchanged — posting classifies nothing
 
-  # THE MULTI-DEMAND INSTANCE (@SCN-LDG-024, 3F-1850) — where "exactly one" breaks and the
+  # THE MULTI-OBLIGATION INSTANCE (@SCN-LDG-024, 3F-1850) — where "exactly one" breaks and the
   # never-zero invariant above lands at MORE than one. A static guard's run cites no scenario, so
-  # it is matched by handle and is evidence for EVERY demander: two scenarios demanding the same
+  # it is matched by handle and is evidence for EVERY naming scenario: two scenarios naming the same
   # static guard both reconcile satisfied against the ONE run, which posts to each account BY
   # REFERENCE (one object on both — never copied, so the 3F-1831 census fold cannot double-count).
   # The case no corpus exercised until now (the coverage hole this closes).
-  Rule: a static guard demanded by two scenarios posts to each account
+  Rule: a static guard named by two scenarios posts to each account
 
     @unit @integration @SCN-LDG-024
-    Scenario: one static guard's run, demanded by two scenarios, reconciles satisfied on both and is findable on each
-      Given two scenarios that each demand the same static guard by @lint, wired and green in CI
+    Scenario: one static guard's run, named by two scenarios, reconciles satisfied on both and is findable on each
+      Given two scenarios that each name the same static guard by @lint, wired and green in CI
       When the shared-guard corpus is reconciled
-      Then both demanding scenarios' lint obligations reconcile satisfied
-      And the one static-guard credit is findable on each demanding account, one object on both
+      Then both naming scenarios' lint obligations reconcile satisfied
+      And the one static-guard credit is findable on each naming account, one object on both
 
-  # THE DEMANDED-ONLY CORPUS (@SCN-LDG-025, 3F-1851) — isolating the demanded-guard posting rule so
-  # it ALONE determines the verdict. Every other lint fixture mixes a demanded guard with another
+  # THE OBLIGATIONS-ONLY CORPUS (@SCN-LDG-025, 3F-1851) — isolating the named-guard posting rule so
+  # it ALONE determines the verdict. Every other lint fixture mixes a named guard with another
   # credit shape (broken / uncited / undemanded) that independently mints the suspense row, so the
-  # demanded-guard path never decides the outcome on its own — the rule was unfalsifiable (a rejected
+  # named-guard path never decides the outcome on its own — the rule was unfalsifiable (a rejected
   # post-to-suspense treatment went 501/501 green). A corpus whose ONLY lint credit is one satisfied
-  # demanded guard removes every other cause: balanced, no suspense row, summary.outOfBalance 0
+  # named guard removes every other cause: balanced, no suspense row, summary.outOfBalance 0
   # AGREEING with the verdict. The rejected treatment would mint a spurious empty out-of-balance
   # suspense row — summary.outOfBalance disagreeing with isBalanced, the 3F-1703 fault.
-  Rule: a corpus whose only lint credits are demanded guards reconciles balanced — the demanded-guard path alone determines the verdict
+  Rule: a corpus whose only lint credits are named guards reconciles balanced — the named-guard path alone determines the verdict
 
     @unit @integration @SCN-LDG-025
-    Scenario: a demanded-guards-only corpus reconciles balanced with no suspense row, so summary.outOfBalance agrees with the balanced verdict
-      Given a corpus whose only lint credit is a demanded static guard, wired and green in CI
-      When the demanded-only corpus is reconciled
-      Then the demanding scenario reconciles satisfied and the run is balanced
+    Scenario: a named-guards-only corpus reconciles balanced with no suspense row, so summary.outOfBalance agrees with the balanced verdict
+      Given a corpus whose only lint credit is a named static guard, wired and green in CI
+      When the obligations-only corpus is reconciled
+      Then the naming scenario reconciles satisfied and the run is balanced
       And there is no suspense row, and summary.outOfBalance is 0 — agreeing with the balanced verdict
 
   # THE DEBIT HALF of the same posting (@SCN-LDG-023). Where the credit side at least existed
@@ -569,13 +569,13 @@ Feature: Ledger over declared-vs-observed evidence
   # the two-sidedness by bringing the CREDIT side — every observation-bearing outcome carries the
   # `evidenceObservation` it reconciles, projected on the machine-readable JSON. The `undemanded`
   # case isolates the pure credit — a credit citing a real scenario at a quality-check it never
-  # demanded — so the observation is carried while the obligation side stays absent (the mirror of
+  # named — so the observation is carried while the obligation side stays absent (the mirror of
   # LDG-026's pure debit). With both landed, `failing` vs `satisfied` vs `missing` is derivable
   # BECAUSE the two-sided outcomes carry both — the point of the slice.
   Rule: a Quality Check Reconciliation carries the evidence observation it reconciles (the credit side)
     @unit @integration @SCN-LDG-027
     Scenario: an undemanded quality-check reconciliation carries its evidence observation and no obligation
-      Given a scenario "SCN-LDG-027" cited by a credit at a quality-check it never demanded
+      Given a scenario "SCN-LDG-027" cited by a credit at a quality-check it never named
       When the ledger reconciles that run
       Then its Quality Check Reconciliation has outcome "undemanded"
       And it carries the evidence observation it reconciles (the credit side)

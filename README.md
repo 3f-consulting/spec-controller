@@ -22,7 +22,7 @@ That is the difference from spec-driven development. A spec is a *moment* of dis
 
 ## How it works
 
-Each `@`-tag on a scenario declares one **evidence obligation** — a demand for one **quality-check**'s evidence. Quality-check is a single flat, mutually-exclusive key, not a grid:
+Each `@`-tag on a scenario declares one **evidence obligation** — naming one **quality-check**'s evidence. Quality-check is a single flat, mutually-exclusive key, not a grid:
 
 `@lint` · `@unit` · `@integration` · `@e2e` · `@performance`
 

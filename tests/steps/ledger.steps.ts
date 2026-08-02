@@ -645,10 +645,10 @@ Then("the cucumber observation is reported undemanded", function () {
 
 // @SCN-LDG-015
 Then("the @unit obligation remains the scenario's only required evidence", function () {
-  // Row-scoped: the scenario's ONLY demanded (required) obligation is unit — and it is
+  // Row-scoped: the scenario's ONLY named (required) obligation is unit — and it is
   // required-but-MISSING here (no vitest observation was supplied; the cucumber observation
   // discharged NOTHING). No non-unit obligation was manufactured: the only non-unit tier present
-  // is the UNDEMANDED cucumber credit (a credit, not a demanded obligation). Reds under a mutation
+  // is the UNDEMANDED cucumber credit (a credit, not a named obligation). Reds under a mutation
   // that derives unit for cucumber (the unit obligation would be wrongly satisfied — no missing).
   const { items } = rowCells(ldg015ScnId);
   const missing = items
@@ -663,7 +663,7 @@ Then("the @unit obligation remains the scenario's only required evidence", funct
     missing.includes("unit"),
     `expected the missing (required) obligation to be unit; got "${missing}"`
   );
-  // Unit is the ONLY required evidence: no non-unit tier appears as a demanded (missing) obligation
+  // Unit is the ONLY required evidence: no non-unit tier appears as a named (missing) obligation
   // — integration is present only as the undemanded credit, not manufactured into an obligation.
   assert.ok(
     !missing.includes("integration") && !missing.includes("e2e"),
@@ -1462,7 +1462,7 @@ Then(
  * @integration is the TEETH here. The @unit arm proves parseScenarios resolves inheritance; only
  * driving the REAL reconciliation end-to-end (parse → reconcile → verdict) shows what that fixes:
  * the run flipping from BALANCED to OUT-OF-BALANCE. The bug was never in one function — it was
- * that an obligation cucumber demands was never DECLARED, so its absence could not reconcile
+ * that an obligation cucumber names was never DECLARED, so its absence could not reconcile
  * `missing`, and the whole ledger balanced over a hole.
  */
 
@@ -1474,7 +1474,7 @@ let ldg020Reconciliation: Ledger;
 Given(
   "a scenario tagged @unit whose {word} carries @integration, with a passing unit test and no integration evidence",
   function (ancestor: string) {
-    // The SAME meaning to cucumber in both shapes: the scenario demands unit AND integration.
+    // The SAME meaning to cucumber in both shapes: the scenario names unit AND integration.
     // Only the line the tier is written on differs — and that is precisely what the old tag-line
     // scan could not see.
     const source =
@@ -1513,7 +1513,7 @@ Then("the scenario declares both the unit and the integration obligation", funct
   assert.deepEqual(
     declared,
     ["integration", "unit"],
-    `expected the scenario to declare BOTH tiers — cucumber demands both — but it declared [${declared.join(", ")}]. ` +
+    `expected the scenario to declare BOTH tiers — cucumber names both — but it declared [${declared.join(", ")}]. ` +
       `The inherited tier is invisible: an obligation never declared can never reconcile missing.`,
   );
 });
@@ -1540,7 +1540,7 @@ Then("the integration obligation reconciles missing", function () {
 
 // @SCN-LDG-020
 Then(
-  "the run is out-of-balance — never balanced on an obligation cucumber demands",
+  "the run is out-of-balance — never balanced on an obligation cucumber names",
   function () {
     // THE FALSE-GREEN, CLOSED. Before the AST extraction this run reconciled BALANCED (exit 0):
     // the integration obligation was never declared, so its missing evidence was invisible and
@@ -1548,7 +1548,7 @@ Then(
     assert.equal(
       isBalanced(ldg020Reconciliation),
       false,
-      `expected the run to be OUT-OF-BALANCE — cucumber demands an integration tier that nothing ` +
+      `expected the run to be OUT-OF-BALANCE — cucumber names an integration tier that nothing ` +
         `proves — but the ledger read it as BALANCED. That is the false-green this scenario exists to close.`,
     );
   },
@@ -1652,10 +1652,10 @@ Then(
 
 /**
  * @SCN-LDG-022 (3F-1846) — every evidence observation posts to AT LEAST ONE ledger account, never
- * to none (canon, double-entry-manifesto.md line 160). This corpus is SINGLE-DEMAND (no static
- * guard demanded twice), so the never-zero invariant lands at exactly one — the teeth below against
- * an erroneous double-post IN THIS CORPUS. The multi-demand instance (a static guard posting to
- * every demander) is @SCN-LDG-024.
+ * to none (canon, double-entry-manifesto.md line 160). This corpus is SINGLE-OBLIGATION (no static
+ * guard named twice), so the never-zero invariant lands at exactly one — the teeth below against
+ * an erroneous double-post IN THIS CORPUS. The multi-obligation instance (a static guard posting to
+ * every naming scenario) is @SCN-LDG-024.
  *
  * @integration is the TEETH. The @unit arm proves `reconcile` populates the account's
  * `evidenceObservations`; only driving the FULL credit corpus through in one run shows the
@@ -1665,7 +1665,7 @@ Then(
  * entry, not vaporise it — posting is indifferent to what the entry reconciles to.
  *
  * The assertions are IDENTITY-scoped (each input observation object found in exactly one account
- * over this single-demand corpus), not count-scoped: a count would pass under a double-post that
+ * over this single-obligation corpus), not count-scoped: a count would pass under a double-post that
  * cancelled a drop.
  */
 
@@ -1677,7 +1677,7 @@ let ldg022PendingCredit: EvidenceObservation;
 
 // @SCN-LDG-022
 Given(
-  "a run whose credits span every shape — satisfied, undemanded, pending-cited, phantom, uncited, broken, a demanded guard and an undemanded guard",
+  "a run whose credits span every shape — satisfied, undemanded, pending-cited, phantom, uncited, broken, a named guard and an undemanded guard",
   function () {
     // SCN-AAA-003 declares @unitpending — a DEFERRED obligation. The credit citing it below is the
     // LOAD-BEARING case: before this scenario it vanished from the model entirely, because there
@@ -1685,8 +1685,8 @@ Given(
     const source = `@AAA
 Feature: alpha
 
-  @unit @lint=lint:demanded @SCN-AAA-001
-  Scenario: a satisfied credit, and a guard it demands
+  @unit @lint=lint:named @SCN-AAA-001
+  Scenario: a satisfied credit, and a guard it names
     Given a thing
 
   @unit @SCN-AAA-002
@@ -1723,20 +1723,20 @@ Feature: alpha
       scnId: null, qualityCheck: "unit", status: "failed", broken: true,
       locator: "f.test.ts", message: "failed to collect",
     };
-    // A DEMANDED guard credit carries no @SCN, but SCN-AAA-001's `@lint=lint:demanded` obligation
+    // A NAMED guard credit carries no @SCN, but SCN-AAA-001's `@lint=lint:named` obligation
     // links it by GUARD HANDLE — the same link the reconciler already follows to put the outcome
-    // on that row. It posts to the account that demands it.
-    const demandedGuard: EvidenceObservation = {
-      qualityCheck: "lint", staticGuard: "lint:demanded", exists: true, enforcedOverRealSource: true,
+    // on that row. It posts to the account that names it.
+    const staticCheckEvidenceObligation: EvidenceObservation = {
+      qualityCheck: "lint", staticGuard: "lint:named", exists: true, enforcedOverRealSource: true,
     };
-    // An UNDEMANDED guard credit: no @lint obligation demands this handle, so it belongs to no
+    // An UNDEMANDED guard credit: no @lint obligation names this handle, so it belongs to no
     // account → SUSPENSE. The other arm of the guard symmetry.
     const undemandedGuard: EvidenceObservation = {
       qualityCheck: "lint", staticGuard: "lint:undemanded", exists: true, enforcedOverRealSource: false,
     };
 
     ldgPostingObservations = [
-      satisfied, undemanded, ldg022PendingCredit, phantom, uncited, broken, demandedGuard, undemandedGuard,
+      satisfied, undemanded, ldg022PendingCredit, phantom, uncited, broken, staticCheckEvidenceObligation, undemandedGuard,
     ];
     evidenceObservations = ldgPostingObservations;
 
@@ -1748,8 +1748,8 @@ Feature: alpha
       [phantom, "SCN-ZZZ-999"],
       [uncited, "(no scenario)"],
       [broken, "(no scenario)"],
-      // The guard symmetry: demanded → the account that demands it; undemanded → suspense.
-      [demandedGuard, "SCN-AAA-001"],
+      // The guard symmetry: named → the account that names it; undemanded → suspense.
+      [staticCheckEvidenceObligation, "SCN-AAA-001"],
       [undemandedGuard, "(no scenario)"],
     ]);
 
@@ -1841,11 +1841,11 @@ Then(
         r.reconcilingItems.map((i: QualityCheckReconciliation) => i.outcome),
       ]),
       [
-        // The demanded guard reconciles `satisfied` on this row — and posts here too.
+        // The named guard reconciles `satisfied` on this row — and posts here too.
         ["SCN-AAA-001", "balanced", []],
         ["SCN-AAA-002", "out-of-balance", ["missing", "undemanded"]],
         // The pending-cited credit reconciles `undemanded` (3F-1858): a pending obligation
-        // raises no Evidence Obligation, so nothing is demanded at that pair and the credit is
+        // raises no Evidence Obligation, so nothing is named at that pair and the credit is
         // an ordinary undemanded one. It used to reconcile to NOTHING — posting to no account,
         // run balanced, exit 0 — which was the false-green, not behaviour. Posting still
         // classifies nothing: this row's outcome is the RECONCILER's, asserted where that rule
@@ -1892,7 +1892,7 @@ Given(
     const source = `@AAA
 Feature: alpha
 
-  @unit @lint=lint:demanded @SCN-AAA-001
+  @unit @lint=lint:named @SCN-AAA-001
   Scenario: a runtime obligation and a lint obligation carrying its guard handle
     Given a thing
 
@@ -1928,7 +1928,7 @@ Feature: alpha
     ]);
 
     // A credit corpus that mints a PHANTOM and a SUSPENSE account — accounts no scenario declares,
-    // so nothing can have been demanded of them. Their debit side must stay empty.
+    // so nothing can have been named of them. Their debit side must stay empty.
     ldgPostingObservations = [
       { scnId: "SCN-AAA-001", qualityCheck: "unit", status: "passed", locator: "a.test.ts" },
       { scnId: "SCN-ZZZ-999", qualityCheck: "unit", status: "passed", locator: "d.test.ts" },
@@ -1983,16 +1983,16 @@ Then("each debit is findable on its account, keyed by quality-check", function (
   assert.ok(findDebit("SCN-AAA-001", "unit"), "the runtime debit is findable by quality-check");
   assert.equal(
     findDebit("SCN-AAA-001", "lint")?.staticGuard,
-    "lint:demanded",
+    "lint:named",
     "the lint debit is findable by quality-check AND carries its guard handle — the account " +
-      "records WHAT WAS DEMANDED, not merely that something was",
+      "records WHAT WAS NAMED, not merely that something was",
   );
   assert.ok(findDebit("SCN-AAA-002", "integration"), "each scenario's own debit is on its own account");
 
   // The accounts no scenario declares — minted by a credit — have an empty debit side by
   // construction. The asymmetry with the credit side is real, not an omission.
-  assert.deepEqual(accountFor("SCN-ZZZ-999")?.evidenceObligations, [], "a phantom demands nothing");
-  assert.deepEqual(accountFor("(no scenario)")?.evidenceObligations, [], "suspense demands nothing");
+  assert.deepEqual(accountFor("SCN-ZZZ-999")?.evidenceObligations, [], "a phantom names nothing");
+  assert.deepEqual(accountFor("(no scenario)")?.evidenceObligations, [], "suspense names nothing");
 });
 
 // @SCN-LDG-023
@@ -2032,7 +2032,7 @@ Then(
         r.reconcilingItems.map((i: QualityCheckReconciliation) => i.outcome),
       ]),
       [
-        // The lint debit is demanded but no guard credit answers it → `missing`, exactly as before.
+        // The lint debit is named but no guard credit answers it → `missing`, exactly as before.
         ["SCN-AAA-001", "out-of-balance", ["missing"]],
         ["SCN-AAA-002", "out-of-balance", ["missing"]],
         ["SCN-AAA-003", "balanced", []],
@@ -2173,7 +2173,7 @@ Then("the JSON projects that evidence obligation on the reconciliation", functio
 // THE CREDIT SIDE OF THE RECONCILING ITEM (@SCN-LDG-027, 3F-2006) — a Quality Check Reconciliation
 // carries the evidence OBSERVATION it reconciles, the mirror of LDG-026's debit half. The
 // @integration arm drives the whole parse → reconcile → renderJson pipeline over the `undemanded`
-// credit case (a credit citing a real scenario at a quality-check it never demanded — observation
+// credit case (a credit citing a real scenario at a quality-check it never named — observation
 // present, obligation absent): the reconciliation carries `evidenceObservation` and no
 // `evidenceObligation`, and the machine-readable JSON PROJECTS that observation on the row.
 // Reuses the shared "the ledger reconciles that run" When (LDG-022/023/026): the Given stocks
@@ -2182,7 +2182,7 @@ let ldg027ScnId: string;
 
 // @SCN-LDG-027
 Given(
-  "a scenario {string} cited by a credit at a quality-check it never demanded",
+  "a scenario {string} cited by a credit at a quality-check it never named",
   function (scnId: string) {
     // A declared @unit scenario built through the REAL declared reader (the parse → declared
     // seam), cited by an INTEGRATION credit — a quality-check the scenario never declared. The
@@ -2199,7 +2199,7 @@ Given(
     ].join("\n");
     scenarios = parseScenarios(feature);
     // The undemanded credit: a passing integration observation citing the real scenario at a
-    // quality-check it never demanded. Carries a locator (the where-to-fix, ruling Q5).
+    // quality-check it never named. Carries a locator (the where-to-fix, ruling Q5).
     ldgPostingObservations = [
       { qualityCheck: "integration", scnId, status: "passed", locator: "src/undemanded.test.ts" },
     ];

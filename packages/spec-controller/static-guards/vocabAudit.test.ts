@@ -477,3 +477,84 @@ describe("[SCN-VOC-007] the retired metric word `budget`", () => {
     expect(manifest.some((r) => r.file === "src/ok.ts")).toBe(false);
   });
 });
+
+describe("[SCN-VOC-004] the retired evidence-obligation word `demand`", () => {
+  // The third regrowth guard, and the largest purge. Like @SCN-VOC-007 this is a plain
+  // BANNED WORD, not a phrase rule: `demand` has no canon homograph, so the strongest
+  // matcher is also the correct one, and it reds in BOTH modes. The singulariser folds
+  // only `demands` → `demand` and `demanders` → `demander`, so the remaining inflections
+  // each need their own entry — asserted below rather than assumed.
+  //
+  // The LOAD-BEARING assertion is the last one: canon `undemanded` must stay green.
+
+  it("[SCN-VOC-004] reds a bare `demanded` in PROSE, renaming to `evidence obligation`", () => {
+    const v = classifyWords(["demanded"], "prose").find((w) => w.word === "demanded")!;
+    expect(v.flagged).toBe(true);
+    expect(v.reason).toBe("banned");
+    expect(v.canonical).toBe("evidence obligation");
+  });
+
+  it("[SCN-VOC-004] reds in NAME mode too — a `demandedStaticGuards` composite identifier", () => {
+    const v = classifyWords(decomposeName("demandedStaticGuards"), "name").find(
+      (w) => w.word === "demanded"
+    )!;
+    expect(v.flagged).toBe(true);
+    expect(v.reason).toBe("banned");
+    expect(v.canonical).toBe("evidence obligation");
+  });
+
+  it("[SCN-VOC-004] reds the bare noun `demand`, and the plural `demands` folds onto its stem", () => {
+    // `demands` is the ONE inflection the naive singulariser folds onto `demand`; every
+    // assertion in this block is what tells the entries apart from the folds.
+    for (const word of ["demand", "demands"]) {
+      const v = classifyWords([word], "prose").find((w) => w.word === word)!;
+      expect(v.flagged, word).toBe(true);
+      expect(v.reason, word).toBe("banned");
+      expect(v.canonical, word).toBe("evidence obligation");
+    }
+  });
+
+  it("[SCN-VOC-004] `demanded` / `demanding` / `demander` do NOT fold — each needs its own entry", () => {
+    // Proven, not read: the singulariser strips a trailing `s` and nothing else, so
+    // `demanded` and `demanding` reach classifyWords as their own stems, and `demanders`
+    // folds to `demander` — which must itself be banned, or the plural lands on a stem
+    // that is in no word-set and flags the wrong reason (`unknown`, action `review`).
+    for (const word of ["demanded", "demanding", "demander", "demanders"]) {
+      const v = classifyWords([word], "prose").find((w) => w.word === word)!;
+      expect(v.flagged, word).toBe(true);
+      expect(v.reason, word).toBe("banned");
+    }
+  });
+
+  it("[SCN-VOC-004] STAYS GREEN on the canon outcome `undemanded` — whole-word, not a substring", () => {
+    // THE load-bearing assertion. `undemanded` is canon (double-entry-manifesto.md line
+    // 42 — the outcome handle for a credit with no matching obligation) and occurs
+    // hundreds of times in this tree; a rule that reds it is the exact failure this
+    // scenario exists to prevent. It survives by construction, exactly as `undeclared`
+    // survives @SCN-VOC-003: decomposeName yields the single token "undemanded", which is
+    // neither "demanded" nor any banned stem.
+    expect(decomposeName("undemanded")).toEqual(["undemanded"]);
+    // NAME mode is the discriminating one — an unapproved word flags `unknown` there, so
+    // this green can only come from `undemanded` still being a DOMAIN word.
+    expect(classifyWords(["undemanded"], "name").every((v) => !v.flagged)).toBe(true);
+    expect(classifyWords(["undemanded"], "prose").every((v) => !v.flagged)).toBe(true);
+    // …and inside the real composites it lives in.
+    for (const name of ["undemandedGuards", "undemandedBalance", "byOutcome.undemanded", "undemanded-static-guard"]) {
+      const v = classifyWords(decomposeName(name), "name").find((w) => w.word === "undemanded")!;
+      expect(v.flagged, name).toBe(false);
+    }
+  });
+
+  it("[SCN-VOC-004] flags a real prose `demanded` with action rename, and passes `undemanded`", () => {
+    const { manifest } = auditFiles([
+      { path: "src/notes.ts", content: "// the demanded static guard is retired here\n" },
+      { path: "src/ok.ts", content: "// the undemanded outcome is canon and stays\n" },
+    ]);
+    const red = manifest.find((r) => r.current === "demanded" && r.new === "evidence obligation");
+    expect(red).toBeDefined();
+    expect(red!.action).toBe("rename");
+    expect(red!.file).toBe("src/notes.ts");
+    // `undemanded` produced no row of any kind, on any surface.
+    expect(manifest.some((r) => r.current === "undemanded")).toBe(false);
+  });
+});

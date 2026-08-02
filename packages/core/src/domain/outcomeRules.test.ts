@@ -25,7 +25,7 @@ import {
   noScnCodeReconciliations,
 } from "./qualityCheckReconciliation.js";
 import { qualityCheckReconciliationsOf } from "./scenarioReconciliation.js";
-import { demandedEvidenceObligationsOf, pendingItemsOf } from "./journal.js";
+import { evidenceObligationsOf, pendingItemsOf } from "./journal.js";
 import type {
   Scenario,
   RuntimeEvidenceObservation,
@@ -49,8 +49,8 @@ describe("[SCN-LDG-001] the pending partition splits a scenario's obligations ex
     ],
   };
 
-  it("demands only the non-pending obligations, in document order", () => {
-    expect(demandedEvidenceObligationsOf(scenario.evidenceObligations)).toEqual([
+  it("names only the non-pending obligations, in document order", () => {
+    expect(evidenceObligationsOf(scenario.evidenceObligations)).toEqual([
       { qualityCheck: "unit" },
       { qualityCheck: "integration" },
     ]);
@@ -63,7 +63,7 @@ describe("[SCN-LDG-001] the pending partition splits a scenario's obligations ex
   /** The two are EXACT complements — nothing dropped, nothing counted twice. */
   it("partitions with no overlap and no loss", () => {
     expect(
-      demandedEvidenceObligationsOf(scenario.evidenceObligations).length + pendingItemsOf(scenario).length
+      evidenceObligationsOf(scenario.evidenceObligations).length + pendingItemsOf(scenario).length
     ).toBe(scenario.evidenceObligations.length);
   });
 

@@ -1,10 +1,10 @@
 /**
- * The `ingest/guard` reader — the DEMANDED-guard observer (the watermelon input).
+ * The `ingest/guard` reader — the NAMED-guard observer (the watermelon input).
  * Per declared `@lint=<guard>` handle it reports `{ staticGuard, exists, enforcedOverRealSource }`,
  * where `enforcedOverRealSource` means the static guard's command appears as a CI `run:` step over the
- * real tree — so a demanded static guard that exists but is not wired reconciles as the WATERMELON.
+ * real tree — so a named static guard that exists but is not wired reconciles as the WATERMELON.
  *
- * One of the two static-guard observers: this one reads the DECLARED demand side; the
+ * One of the two static-guard observers: this one reads the DECLARED evidence-obligation side; the
  * running-guard observer (`runningStaticGuards`, `ingest/ciGuards`) reads every running CI guard. Both
  * share the watermelon-critical CI-parse primitive (`ciRunCommands` / `commandInvokesScript`) from
  * `ingest/ciCommands`, so the structural parse lives in ONE place.

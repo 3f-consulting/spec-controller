@@ -417,15 +417,15 @@ describe("[SCN-RMD-003] the runtime-observation totals re-home onto summary; no 
  * Bidirectional evidence (Evidence Manifesto §9): the describe carries @SCN-RMD-004.
  *
  * The static-guard census is `summary.staticGuards` COUNTS alone (2.4) — the standalone
- * member-list section (`guards` → `staticGuards`, `{ciGuards[], demanded[]}`) COLLAPSED, symmetric
- * with the runtime side. The static guard member detail now lives in the rows (demanded → each scenario's
+ * member-list section (`guards` → `staticGuards`, `{ciGuards[], named[]}`) COLLAPSED, symmetric
+ * with the runtime side. The static guard member detail now lives in the rows (named → each scenario's
  * `@lint` sub-row; undemanded → the suspense row's `cites-no-scenario` credit items), so there is
  * no double-report and no census section on the JSON surface.
  */
 describe("[SCN-RMD-004] the static-guard census is summary counts, no standalone section", () => {
   // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — the static-guard counts are a FOLD OVER
   // THE LEDGER now (3F-2118, `staticObservationTally`), so the numbers derive from the balance, not
-  // a hand-built census the assembler could disagree with. 2 running CI guards = 1 demanded
+  // a hand-built census the assembler could disagree with. 2 running CI guards = 1 named
   // (lint:foo, posts to its `@lint` row) + 1 uncited (lint:bar, undemanded-running → the suspense
   // row) → the fold reads {runningGuardCount: 2, uncitedStaticGuardCount: 1}.
   const staticGuardsBalance: Ledger = reconcile(
@@ -475,8 +475,8 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
   // non-trivial, onScenario excludes the phantom); 2 declared lint obligations, 1 satisfied
   // (lint:foo, running) + 1 watermelon (lint:bar, exists-but-unwired — the static-only lint tally
   // reads 1 of 2); and, on the CREDIT side, the static-guard fold — 2 running CI guards = 1
-  // demanded (lint:foo, running) + 1 uncited (lint:baz, undemanded-running → the suspense row). The
-  // demanded watermelon lint:bar does NOT run, so the running fold excludes it (matching the
+  // named (lint:foo, running) + 1 uncited (lint:baz, undemanded-running → the suspense row). The
+  // named watermelon lint:bar does NOT run, so the running fold excludes it (matching the
   // retired census's running-only filter).
   const rmd005Scenarios: Scenario[] = [
     { scnId: "SCN-RMD-001", evidenceObligations: [{ qualityCheck: "unit" }] },
@@ -566,13 +566,18 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
     });
   });
 
-  it("carries the 2-field census shape with demanded implicit (no ciGuards/demanded on the surface)", () => {
+  it("carries the 2-field census shape, with the evidence-obligation count implicit", () => {
     const report = assembleRenderInput(__er(rmd005Balance, false, true), ctx, undefined, undefined);
     const sg = report.summary.staticGuards!;
-    // demanded is IMPLICIT — running − uncited, never a surface field.
+    // The evidence-obligation count is IMPLICIT — running − uncited, never a surface field.
     expect(sg.runningGuardCount - sg.uncitedStaticGuardCount).toBe(1);
-    expect(sg).not.toHaveProperty("ciGuards");
-    expect(sg).not.toHaveProperty("demanded");
+    // 3F-2291 (@SCN-VOC-004): this pin was two `not.toHaveProperty` negatives naming the
+    // fields the 2-field census must NOT carry, one of them a word retired by that ticket.
+    // Renaming a word inside a negative assertion empties it silently — it would then pin
+    // the absence of a field that never existed at all — so the pin is restated POSITIVELY
+    // over the exact key set. Strictly stronger: it now excludes every extra field, not
+    // only the two that happened to be named.
+    expect(Object.keys(sg).sort()).toEqual(["runningGuardCount", "uncitedStaticGuardCount"]);
   });
 
   it("materialises the static-only lint tally (satisfied / total), ignoring runtime evidenceObligations", () => {
@@ -798,7 +803,7 @@ describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single qualit
  *  - The reconciliation MATCHED-attributed = credits matching a declared (scnId, quality-check)
  *    PAIR — this EXCLUDES undemanded. The retired census materialised it as `attributed[]`; it is
  *    now recovered from the Ledger (`testVolume.onScenario − byOutcome.undemanded`) and checkable
- *    against the demanded credits posted on the row.
+ *    against the named credits posted on the row.
  *
  * The load-bearing assertion: the two numbers DIFFER by exactly byOutcome.undemanded.
  */
@@ -829,11 +834,11 @@ describe("[SCN-LDG-008] the two scenario-backing counts stay distinct (ruling Q1
     const undemanded = report.summary.evidenceObligations.byOutcome.undemanded;
     const matched = report.summary.testVolume!.onScenario - undemanded;
     expect(matched).toBe(1);
-    // And that recovered count equals the credits posted at the DEMANDED (unit) pair on the row —
+    // And that recovered count equals the credits posted at the NAMED (unit) pair on the row —
     // checkable straight off the ledger, where the retired census re-represented it.
     const row = undemandedBalance.scenarioReconciliations.find((s) => s.scnId === "SCN-LDG-008")!;
-    const demandedUnitCredits = row.evidenceObservations.filter((o) => o.qualityCheck === "unit").length;
-    expect(demandedUnitCredits).toBe(matched);
+    const unitEvidenceObligationCredits = row.evidenceObservations.filter((o) => o.qualityCheck === "unit").length;
+    expect(unitEvidenceObligationCredits).toBe(matched);
     // The two numbers are NOT the same — they differ by exactly the undemanded count.
     expect(report.summary.testVolume!.onScenario - matched).toBe(undemanded);
   });

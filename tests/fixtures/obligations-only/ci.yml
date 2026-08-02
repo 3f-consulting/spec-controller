@@ -5,6 +5,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: pnpm install --frozen-lockfile
-      - run: pnpm lint:demanded-only
+      - run: pnpm lint:obligations-only
       - run: pnpm test
       - run: pnpm cucumber

@@ -81,7 +81,7 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     code: "WRN",
     slug: "warnings",
     status: "declared",
-    note: "a scenario declaring zero evidence obligations is both-missing — no evidence demanded, none observed",
+    note: "a scenario declaring zero evidence obligations is both-missing — no evidence named, none observed",
   },
   {
     code: "RPT",

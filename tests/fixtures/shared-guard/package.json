@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "lint:double-demand": "echo double-demand-guard",
+    "lint:double-obligation": "echo double-obligation-guard",
     "test": "echo test",
     "cucumber": "echo cucumber"
   }

@@ -1,20 +1,20 @@
 /**
  * The running-guard observer — emit a `GuardEvidenceObservation` for
- * EVERY running CI guard, not just the demanded ones. This is the static analogue of the runner
+ * EVERY running CI guard, not just the named ones. This is the static analogue of the runner
  * emitting every test result: CI publishes no static guard manifest, so the running set is DERIVED — a
  * `package.json` `lint:*` script that a CI `run:` step actually invokes (@SCN-USG-001).
- * It completes the static stream so the one reconcile engine sees every running static guard (a demanded
+ * It completes the static stream so the one reconcile engine sees every running static guard (a named
  * one matches its `@lint` obligation; an undemanded one folds to the suspense row) — no
  * derive-and-diff patch.
  *
  * One of the two static-guard observers: this one reads every RUNNING CI guard; the
- * demanded-guard observer (`checkStaticEvidenceObligations`, `ingest/guard`) reads the declared demand side (the
+ * named-guard observer (`checkStaticEvidenceObligations`, `ingest/guard`) reads the declared evidence-obligation side (the
  * watermelon input). Both share the watermelon-critical CI-parse primitive (`ciRunCommands` /
  * `commandInvokesScript`) from `ingest/ciCommands`.
  *
  * A running static guard is `exists: true` (a `package.json` script by construction — the
  * `Object.keys(scripts)` source) and `enforcedOverRealSource: true` (a CI `run:` step invokes it
- * by construction — the `commandInvokesScript` filter). The demanded static guards' watermelon detail
+ * by construction — the `commandInvokesScript` filter). The named static guards' watermelon detail
  * (exists / enforcedOverRealSource for a static guard that does NOT run) is the OTHER observer's job.
  *
  * A script counts as a static guard when its name matches any configured `guardPrefixes` entry —

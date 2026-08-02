@@ -21,8 +21,8 @@
  * Design: the closed-vocabulary audit tool. Word-set authority: the double-entry
  * manifesto's mapping table.
  *
- * @SCN-VOC-001 / @SCN-VOC-002 / @SCN-VOC-003 / @SCN-VOC-006 / @SCN-VOC-007 —
- * features/vocabulary-audit.feature.
+ * @SCN-VOC-001 / @SCN-VOC-002 / @SCN-VOC-003 / @SCN-VOC-004 / @SCN-VOC-006 /
+ * @SCN-VOC-007 — features/vocabulary-audit.feature.
  */
 
 // ---------------------------------------------------------------------------
@@ -35,12 +35,12 @@ export const DOMAIN_WORDS: ReadonlySet<string> = new Set([
   "balancing", "off", "balance", "summary", "balanced",
   "out", "reconciling", "reconciled", "reconciliation", "reconcile", "application",
   "watermelon", "static", "verdict", "posting", "debit", "credit",
-  "journal", "demand", "provenance",
+  "journal", "provenance",
   // The outcome/verdict rationalisation (locked 2026-07-02): `state` → `outcome`.
   "outcome",
-  // The three-grain Reconciliation re-term: `quality-check` replaces the
-  // retired `(kind, level)` grid; `phantom`/`suspense` scenario kinds; `undemanded`
-  // and the `cites-*` outcomes join the bidirectional reconciler. `trial`, `account`
+  // The three-grain Reconciliation re-term: `quality-check` replaces the retired `(kind,
+  // level)` grid; `phantom`/`suspense` kinds; `undemanded` (KEPT by @SCN-VOC-004 — canon,
+  // and load-bearing) and the `cites-*` outcomes join the reconciler. `trial`, `account`
   // and `level` retire with the container re-term (Evidence/Scenario/Quality-Check
   // Reconciliation replace trial-balance / account / sub-account). `kind` and `sub`
   // are KEPT (legitimate reuse: `ScenarioKind`; `qualityCheckReconciliations` / the sub-issue-gate).
@@ -138,7 +138,7 @@ export const GENERIC_ALLOWLIST: ReadonlySet<string> = new Set([
   // Approved domain-adjacent tail (operator ruling 2026-07-02): each
   // COULD be a reconciliation/attribution concept but is ruled generic/allowlist.
   // -------------------------------------------------------------------------
-  "unit", "integration", "runtime", "lint", "real", "demanded", "exemption", "exemptions",
+  "unit", "integration", "runtime", "lint", "real", "exemption", "exemptions",
   "unwired", "absent", "external", "enforced", "cited", "coded", "uncoded", "equivalent",
   "behaviour", "bearing", "subject", "missing", "required", "tally", "tallies",
   // Outcome/level VALUE words (domain-by-reference in the manifesto; allowlisting harmless).
@@ -258,6 +258,9 @@ export const BANNED_WORDS: ReadonlySet<string> = new Set([
   // naive singulariser folds `budgets` onto this stem, so the plural — the real
   // filename was `complexityBudgets.mjs` — needs no second entry.
   "budget",
+  // @SCN-VOC-004 — the retired evidence-obligation word (full why: the feature's Rule block).
+  // FOUR entries: the singulariser folds `demands`→`demand`, `demanders`→`demander`, nothing else.
+  "demand", "demanded", "demanding", "demander",
 ]);
 
 /** Words approved only inside their full manifesto term; bare → flag. */
@@ -334,6 +337,8 @@ export const REJECTED_ALIAS_TO_CANONICAL: Readonly<Record<string, string>> = {
   // @SCN-VOC-007 — singular only: `budgets` resolves through the singulariser stem
   // lookup in classifyWords, so a plural entry would be a second copy to drift.
   budget: "threshold",
+  // @SCN-VOC-004 — nouns take the canon term; VERBS take `names`/`naming`, NOT retired `declare`.
+  demand: "evidence obligation", demanded: "evidence obligation", demanding: "naming", demander: "naming scenario",
 };
 
 // ---------------------------------------------------------------------------

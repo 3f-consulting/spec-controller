@@ -28,7 +28,7 @@
       "assertionResults": [
         {
           "fullName": "undemanded unit credit [SCN-TOC-005]",
-          "title": "[SCN-TOC-005] a unit credit at a quality-check the scenario never demanded",
+          "title": "[SCN-TOC-005] a unit credit at a quality-check the scenario never named",
           "status": "passed"
         }
       ]

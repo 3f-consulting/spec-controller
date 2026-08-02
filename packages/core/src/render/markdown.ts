@@ -48,7 +48,7 @@ import {
   staticGuardReconciliationsOf,
   presentStaticGuardCountOf,
 } from "../domain/scenarioReconciliation.js";
-import { demandedEvidenceObligationsOf } from "../domain/journal.js";
+import { evidenceObligationsOf } from "../domain/journal.js";
 import { assembleRenderInput, type RenderInput } from "../assemble/renderInput.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
 // The run-integrity predicate (@SCN-LDG-018) — the existential scan for a `broken` reconciling
@@ -536,7 +536,7 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
 
 /**
  * Test volume (@SCN-RPT-010) — the evidence-observation side under Summary views, the
- * counterpart to the Evidence reconciliation' demand side. Renders the balancing identity
+ * counterpart to the Evidence reconciliation' evidence-obligation side. Renders the balancing identity
  * (`N evidence observations = a on scenarios + b on phantom scenarios + c on the suspense scenario`,
  * a DERIVED view of the retained aggregate, grouped by the SCENARIO-KIND each credit posted to)
  * then the per-quality-check evidence observation table
@@ -579,8 +579,8 @@ const testVolumeSection: SectionEmitter = (report) => {
  * Static guards (@SCN-USG-001) — the STATIC-guard evidence observation side under
  * Summary views, the mirror of `### Test volume` on the runtime axis. Renders the counts line
  * (`N static guard(s) run, K uncited static guard(s)`) alone — a pure counts summary, symmetric with
- * `### Test volume` (2.4). The demanded count is implicit (`running − uncited`), so it
- * is no longer printed. The per-guard member detail lives in the rows (demanded → each
+ * `### Test volume` (2.4). The named count is implicit (`running − uncited`), so it
+ * is no longer printed. The per-guard member detail lives in the rows (named → each
  * scenario's `@lint` sub-row; undemanded → the suspense row's `cites-no-scenario` credit items), so
  * no list renders here. Omitted only when no static-guard census is threaded (the back-compat path).
  * The counts read off the report's materialised `summary.staticGuards`.
@@ -590,9 +590,9 @@ const staticGuardsSection: SectionEmitter = (report) => {
   if (!counts) return [];
   // A pure counts summary off `summary.staticGuards` (2.4) — symmetric with the
   // runtime `### Test volume` line. There is no census section: the per-guard DETAIL lives in
-  // the rows (demanded → each scenario's `@lint` sub-row; the undemanded static-guards surface
+  // the rows (named → each scenario's `@lint` sub-row; the undemanded static-guards surface
   // as `cites-no-scenario` credit items on the `(no scenario)` suspense row). Only the running
-  // volume + the uncited count render here; the demanded count is implicit.
+  // volume + the uncited count render here; the named count is implicit.
   return [
     "### Static guards",
     "",
@@ -702,7 +702,7 @@ type EvidenceColumn = { kind: "lint" } | { kind: "runtime"; qualityCheck: Runtim
 
 /**
  * The corpus-driven evidence columns: lint first (when any scenario declares a
- * static evidenceObligation), then each runtime quality-check present in DEMAND (a declared evidenceObligation)
+ * static evidenceObligation), then each runtime quality-check present in EVIDENCE OBLIGATION (a declared evidenceObligation)
  * or evidence-observation (an attributed evidenceObservation), in canonical quality-check order. Reads the report's
  * `evidenceReconciliation` scenarios + `evidenceObservations.attributed` counts.
  */
@@ -719,7 +719,7 @@ function evidenceColumns(
   // row's lint sub-rows ARE is not.
   const hasStatic = scenarioRows.some((s) => staticGuardReconciliationsOf(s).length > 0);
   const qualityChecksPresent = new Set<RuntimeQualityCheck>();
-  // A column appears for every runtime quality-check present in DEMAND or OBSERVATION on a scenario
+  // A column appears for every runtime quality-check present in EVIDENCE OBLIGATION or OBSERVATION on a scenario
   // row. Both are read off the Ledger: a declared or undemanded quality-check surfaces as a
   // `QualityCheckReconciliation` at that check; every observed credit surfaces as a posted credit on
   // the row (@SCN-LDG-022). The retired census's `attributed[]` re-represented those posted credits
@@ -750,9 +750,9 @@ function columnHeader(col: EvidenceColumn): string {
 
 /**
  * The quality-check → single-letter obligation glyph, parallel to `columnHeader` — the LEFT side
- * of the two-sided cell (the demand). A single letter names WHICH check is obligated; the right
+ * of the two-sided cell (the evidence obligation). A single letter names WHICH check is obligated; the right
  * side (after the `/`) carries the OBSERVATION count (the credit). Lint's left MAY carry a count
- * suffix (`L2`/`L3`) when a scenario demands more than one static guard — the demanded-obligation
+ * suffix (`L2`/`L3`) when a scenario names more than one static guard — the evidence-obligation
  * count; the runtime letters stay countless (one obligation per tier).
  */
 const QUALITY_CHECK_LETTER: Record<QualityCheck, string> = {
@@ -765,13 +765,13 @@ const QUALITY_CHECK_LETTER: Record<QualityCheck, string> = {
 
 /**
  * One evidence cell — the two-sided `<obligation>/<observation>` encoding. The LEFT side is the
- * DEMAND (a single quality-check letter iff the scenario obligated this check, else `-`); the RIGHT
+ * EVIDENCE OBLIGATION (a single quality-check letter iff the scenario obligated this check, else `-`); the RIGHT
  * side is the OBSERVATION count (the multiplicity of posted credits at this check, else `-`). It
  * projects the two-sided ledger row — it reconstructs nothing. It counts BACKING (presence), NOT
  * quality: a failing runtime evidenceObligation still shows its credit count (the failing-ness lives
- * in the Verdict + Reconciling-items columns), so `U/-` is unambiguously demanded-but-missing (zero
+ * in the Verdict + Reconciling-items columns), so `U/-` is unambiguously named-but-missing (zero
  * evidenceObservations). A `-/N` cell is an UNDEMANDED observation (a credit at a check the scenario
- * did not demand, @SCN-LDG-008); a doubly-empty `-/-` renders BLANK (`""`) — no demand, no credit.
+ * did not name, @SCN-LDG-008); a doubly-empty `-/-` renders BLANK (`""`) — no evidence obligation, no credit.
  * The lint cell reads the scenario's static evidenceObligation outcomes (lint is not a counted
  * evidence observation): its right side is the count of static guards PRESENT — `balanced` or the
  * watermelon (the script exists; its inadequacy is quality, in Reconciling-items 🍉), NOT a posted
@@ -781,17 +781,17 @@ function evidenceCell(
   s: ScenarioReconciliation,
   col: EvidenceColumn
 ): string {
-  // A PHANTOM / suspense row has no evidence-obligation demand of its own — its
+  // A PHANTOM / suspense row has no evidence obligation of its own — its
   // whole story is the credit-side reconciling item. Every evidence cell is neither-declared-
   // nor-a-matched-evidence obligation, so it reads `—`; the citation shows in Reconciling items.
   if (!isScenario(s)) return "—";
   if (col.kind === "lint") {
     // LEFT: a lint obligation is DECLARED iff a lint QualityCheckReconciliation exists on the row
-    // (`L`; `L2`/`L3` when the row demands >1 static guard — the demanded-obligation count, one
+    // (`L`; `L2`/`L3` when the row names >1 static guard — the evidence-obligation count, one
     // lint QCR per `@lint=<guard>` obligation). RIGHT: the PRESENT-guard count — the
     // static guards `satisfied` or watermelon. Lint's right stays this static-outcome derivation
     // (NOT `evidenceObservations`): lint carries no credit multiplicity, so the count is exact.
-    // BOTH SIDES ASKED (3F-2203) — the demanded-guard sub-rows and the present-guard count are
+    // BOTH SIDES ASKED (3F-2203) — the named-guard sub-rows and the present-guard count are
     // model facts, read off the row. "Present" spans satisfied AND watermelon (a watermelon guard
     // EXISTS; its inadequacy is quality, shown in Reconciling items 🍉) — an outcome-vocabulary
     // rule, which is why the renderer no longer states it.
@@ -803,23 +803,23 @@ function evidenceCell(
     const right = present > 0 ? String(present) : "-";
     return left === "-" && right === "-" ? "" : `${left}/${right}`;
   }
-  // LEFT — DEMAND is ASKED of the Ledger, not reconstructed. `s.evidenceObligations` is the debit
+  // LEFT — EVIDENCE OBLIGATION is ASKED of the Ledger, not reconstructed. `s.evidenceObligations` is the debit
   // side the scenario declared (@SCN-LDG-023) — the fact itself — filtered to the ACTIVE ones: a
-  // `<qc>pending` obligation demands NOTHING (it partitions off to a one-sided Pending Item), so it
-  // is not a demand. Demanded → the check's letter; else `-`.
-  // ASKED, not re-encoded (3F-2203). "A pending obligation demands nothing" is the model's rule
+  // `<qc>pending` obligation names NOTHING (it partitions off to a one-sided Pending Item), so it
+  // is not an evidence obligation. Named → the check's letter; else `-`.
+  // ASKED, not re-encoded (3F-2203). "A pending obligation names nothing" is the model's rule
   // (canon, Pending Item — a `<qc>pending` tag raises NO Evidence Obligation), and it is the SAME
-  // rule `evidenceObligationPairsOf` and `demandedStaticGuardsOf` apply. The renderer stated the
+  // rule `evidenceObligationPairsOf` and `staticCheckEvidenceObligationsOf` apply. The renderer stated the
   // `!pending` clause itself before: a fourth home for one rule, agreeing by copy.
-  const demanded = demandedEvidenceObligationsOf(s.evidenceObligations).some(
+  const named = evidenceObligationsOf(s.evidenceObligations).some(
     (o) => o.qualityCheck === col.qualityCheck
   );
-  const left = demanded ? QUALITY_CHECK_LETTER[col.qualityCheck] : "-";
+  const left = named ? QUALITY_CHECK_LETTER[col.qualityCheck] : "-";
   // RIGHT — the OBSERVATION count is the MULTIPLICITY of POSTED CREDITS at this quality-check on THIS
   // row (@SCN-LDG-022) — read straight off the Ledger's `evidenceObservations`, NEVER from
   // `qualityCheckReconciliations` (which collapse to ONE matched row however many credits cite the
-  // pair, and would undercount duplicate citations). BOTH the demanded and undemanded arms read this
-  // one source: a demanded check's credits are matched-attributed, an undemanded check's credits post
+  // pair, and would undercount duplicate citations). BOTH the named and undemanded arms read this
+  // one source: a named check's credits are matched-attributed, an undemanded check's credits post
   // as undemanded rows — the same posted credits either way, so `evidenceObservations` is the single
   // multiplicity-correct count. (Provably equal to the retired split off `qualityCheckReconciliations`
   // for the undemanded arm — the reconciler posts one undemanded QCR per citing credit — but that
@@ -828,7 +828,7 @@ function evidenceCell(
     (o) => o.qualityCheck === col.qualityCheck
   ).length;
   const right = observed > 0 ? String(observed) : "-";
-  // A doubly-empty cell (no demand, no credit) renders BLANK — the column is simply absent for this
+  // A doubly-empty cell (no evidence obligation, no credit) renders BLANK — the column is simply absent for this
   // scenario. Otherwise the two-sided `<left>/<right>`.
   return left === "-" && right === "-" ? "" : `${left}/${right}`;
 }
@@ -839,7 +839,7 @@ function evidenceCell(
  * declared-evidence-obligations census is threaded) the excluded-occurrence bullet relocated
  * here from the dissolved `## Declared corpus` section (Q1a). When the
  * evidence-observation aggregate is threaded, the row gains corpus-driven evidence
- * columns between Scenario and Verdict, each a four-way demand×evidence observation cell; without the
+ * columns between Scenario and Verdict, each a four-way evidence-obligation×evidence-observation cell; without the
  * aggregate the original three-column ledger is preserved (the 2-/3-arg callers
  * stay green). Markdown-only (the JSON carries the raw scenario facts + the declared / observed
  * objects); the verdict-tally bullet names the collection "Scenario Reconciliation(s)" — canon's

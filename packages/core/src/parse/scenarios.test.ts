@@ -647,11 +647,11 @@ describe("[SCN-PND-022] a deferred scenario declaring no obligations synthesises
  * its Feature and of any enclosing Rule, and cucumber applies them. A tier hoisted to the
  * Feature/Rule line — idiomatic, valid Gherkin — was therefore INVISIBLE, so its obligation was
  * never declared and its missing evidence could never reconcile `missing`: the run read BALANCED
- * while cucumber demanded a tier nothing proved. Extraction now comes from the real AST.
+ * while cucumber named a tier nothing proved. Extraction now comes from the real AST.
  */
 describe("[SCN-LDG-020] a scenario's declared tags include the ones it inherits from its Feature and Rule", () => {
   it("inherits an evidence tier from the FEATURE — the false-green that reads BALANCED today", () => {
-    // THE HEADLINE. cucumber demands unit AND integration of this scenario. The scan saw only
+    // THE HEADLINE. cucumber names unit AND integration of this scenario. The scan saw only
     // @unit, so the integration obligation was never declared — and an obligation that was never
     // declared can never reconcile `missing`.
     const source = `@AAA @integration

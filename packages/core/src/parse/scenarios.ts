@@ -241,7 +241,7 @@ function obligationsFromTags(
  *   UNDER-READ. An evidence tier hoisted to the Feature/Rule line — idiomatic, valid Gherkin,
  *   exactly what an author does with a tier shared by every scenario beneath — was INVISIBLE. The
  *   obligation was never DECLARED, so its missing evidence could never reconcile `missing`, and the
- *   run read BALANCED (exit 0) while cucumber demanded a tier nothing proved. Unlike the corrupt-
+ *   run read BALANCED (exit 0) while cucumber named a tier nothing proved. Unlike the corrupt-
  *   file false-green (3F-1767), this one fires on WELL-WRITTEN files — which makes it likelier.
  *
  *   OVER-READ. Any non-tag line flushed the accumulated block, so a tag block above a `Rule:` was

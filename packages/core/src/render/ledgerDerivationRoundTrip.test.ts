@@ -52,13 +52,13 @@ const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation =>
 
 // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — the Ledger is PRODUCED by reconcile() over a
 // SPANNING corpus, so every summary aggregate has a non-trivial value to re-fold (an all-zero corpus
-// could not make the round-trip vacuous). No static guard is demanded by more than one scenario, so
+// could not make the round-trip vacuous). No static guard is named by more than one scenario, so
 // the identity-deduped `staticObservationTally` re-folds cleanly across the JSON boundary (JSON has
-// no shared references — a guard demanded twice would appear as two objects and inflate the re-fold;
+// no shared references — a guard named twice would appear as two objects and inflate the re-fold;
 // this corpus deliberately avoids that). The corpus:
 //   SCN-CHK-001: @unit, one passing unit credit                → balanced scenario row (onScenario)
 //   SCN-CHK-002: @integration, no credit                       → a missing evidence obligation
-//   SCN-CHK-003: @lint=lint:foo, running & wired               → the demanded running static guard
+//   SCN-CHK-003: @lint=lint:foo, running & wired               → the named running static guard
 //   SCN-CHK-004: @integrationpending                           → a Pending Item (pending = 1)
 //   1 unit credit citing SCN-PHX-001 (no feature declares it)  → a phantom row (onPhantomScenario)
 //   1 uncited unit credit + the undemanded running lint:bar    → the suspense row (onSuspenseScenario)

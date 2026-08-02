@@ -33,7 +33,7 @@ Feature: ten-outcome corpus — a fixture shaped so the REAL reconcile emits all
     Then it reconciles watermelon
 
   @e2e @SCN-TOC-005
-  Scenario: undemanded — a real scenario cited at a quality-check it never demanded
+  Scenario: undemanded — a real scenario cited at a quality-check it never named
     Given an e2e obligation discharged by an e2e observation
     When a unit observation also cites this scenario
     Then the unit credit reconciles undemanded

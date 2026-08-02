@@ -107,10 +107,10 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     summary.staticGuards COUNTS alone — a pure counter over the guard observations
     (countStaticEvidenceObservationKinds), symmetric with the runtime testVolume counter. The
     standalone member-list section (was guards, then staticGuards) COLLAPSED: the guard member
-    detail lives in the rows now (demanded → each scenario's @lint sub-row; undemanded → the
+    detail lives in the rows now (named → each scenario's @lint sub-row; undemanded → the
     suspense row's cites-no-scenario credit items), so there is no double-report on the JSON
     surface. The counts runningGuardCount and uncitedStaticGuardCount are carried on the
-    persisted summary; the demanded count is implicit, running − uncited. A pure
+    persisted summary; the named count is implicit, running − uncited. A pure
     derive over the model, proven in isolation by Vitest.
 
     @unit @SCN-RMD-004
@@ -133,7 +133,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
       Test volume — Σ rawByRuntimeQualityCheck = onScenario + onPhantomScenario + onSuspenseScenario.
 
     The static-guard census carries runningGuardCount and uncitedStaticGuardCount; the
-    demanded count is implicit, running − uncited, and the completeness invariant is
+    named count is implicit, running − uncited, and the completeness invariant is
     asserted inside the counter rather than on the surface. The Lint tally is the static-only
     evidence obligation cut (satisfied of total) — summary.byOutcome is kind-agnostic and cannot
     provide the static-only lint total, so it is materialised explicitly. HELD (slice 5): the
@@ -150,7 +150,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
       When the reconciliation run persists spec-reconciliation.json
       Then the summary carries the test-volume totals, the static-guard totals, and the lint tally
       And the test-volume identity Σ rawByRuntimeQualityCheck = onScenario + onPhantomScenario + onSuspenseScenario holds on the persisted summary
-      And the persisted static-guard summary carries runningGuardCount and uncitedStaticGuardCount with demanded implicit
+      And the persisted static-guard summary carries runningGuardCount and uncitedStaticGuardCount with named implicit
 
   Rule: the report model carries the feature titles, published on the JSON and sourced by the markdown
 

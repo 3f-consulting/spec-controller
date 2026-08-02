@@ -30,7 +30,7 @@ describe("[SCN-RMD-003] runtimeObservationTally folds the posted credits by scen
   // A SPANNING corpus reconciling to every credit account: SCN-A declares unit (2 matched credits)
   // and is ALSO cited at integration it never declared (1 undemanded); SCN-PHX-999 is undeclared (1
   // phantom); a null-scnId credit cites no scenario (1 suspense); an ambiguous cucumber step is
-  // broken (1 suspense — it named no test); a demanded static-guard credit rides the lint axis (must
+  // broken (1 suspense — it named no test); a named static-guard credit rides the lint axis (must
   // be SKIPPED). Built through reconcile(), so every row is a shape the pipeline actually emits.
   const scenarios: Scenario[] = [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }];
   const observations: EvidenceObservation[] = [

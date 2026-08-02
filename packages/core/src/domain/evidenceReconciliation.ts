@@ -60,9 +60,9 @@ import type {
 } from "../model.js";
 import {
   evidenceObligationPairsOf,
-  demandedStaticGuardsOf,
+  staticCheckEvidenceObligationsOf,
   // THE PENDING PARTITION (3F-2204) — the two exact complements over a scenario's obligations.
-  demandedEvidenceObligationsOf,
+  evidenceObligationsOf,
   pendingItemsOf,
 } from "../model.js";
 import {
@@ -105,19 +105,19 @@ export function reconcile(
   // THE DECLARED SIDE, prepared once — the three sets the posting rule and the outcome rules read.
   // Each is already the MODEL's own rule (never re-derived here), and each is built ONCE and
   // shared, so no two consumers can drift: `scenarioIds` is which scenarios exist,
-  // `evidenceObligationPairs` is what they demand at each quality-check (3F-1858), and
-  // `demandedGuards` is which static-guard handles they demand.
+  // `evidenceObligationPairs` is what they name at each quality-check (3F-1858), and
+  // `staticCheckEvidenceObligations` is which static-guard handles they name.
   const scenarioIds = new Set(scenarios.map((d) => d.scnId));
-  // The DEMANDED pairs — the model's rule, built ONCE and shared with the census (3F-1858).
-  // Pending obligations are excluded: a pending obligation demands nothing.
+  // The NAMED pairs — the model's rule, built ONCE and shared with the census (3F-1858).
+  // Pending obligations are excluded: a pending obligation names nothing.
   const evidenceObligationPairs = evidenceObligationPairsOf(scenarios);
-  // The DEMANDED static guard handles — every `@lint=<guard>` obligation across the corpus, the
-  // journal's rule. It is what `postingOf` consults to tell a demanded static guard from an
+  // The NAMED static guard handles — every `@lint=<guard>` obligation across the corpus, the
+  // journal's rule. It is what `postingOf` consults to tell a named static guard from an
   // undemanded one (which cites nothing, so it posts to SUSPENSE). This replaces the removed
   // `uncitedStaticGuards` derive-and-diff param — the stream is now complete (the running-guard
   // observer emits every running CI static guard), so the reconciler recovers the undemanded
   // remainder itself, exactly as it does for an uncited runtime credit.
-  const demandedGuards = demandedStaticGuardsOf(scenarios);
+  const staticCheckEvidenceObligations = staticCheckEvidenceObligationsOf(scenarios);
   // THE ONE ROUTING PASS (3F-2202). Every credit is routed ONCE, by THE posting rule
   // (`domain/posting`), into the structures the fold below reads. `reconcile` no longer DECIDES a
   // destination anywhere — it asks, and files the answer.
@@ -140,16 +140,16 @@ export function reconcile(
     // not a posting decision. Which axis a credit rides is read here; where it LANDS is the rule's,
     // on both branches.
     if (o.qualityCheck === "lint") {
-      const posting = postingOf(o, scenarioIds, demandedGuards);
-      // A static guard no `@lint` demands cites nothing, so it posts to SUSPENSE — the static
+      const posting = postingOf(o, scenarioIds, staticCheckEvidenceObligations);
+      // A static guard no `@lint` names cites nothing, so it posts to SUSPENSE — the static
       // analogue of an uncited runtime credit.
       if (posting.kind === "suspense-scenario") undemandedGuards.push(o);
-      // `every-demanding-scenario` is resolved PER ROW, in that row's own obligation order, by
+      // `every-naming-scenario` is resolved PER ROW, in that row's own obligation order, by
       // `staticGuardCreditsPostingTo` in the scenario loop below — a static guard posts to EVERY
-      // account demanding it, so it has no single destination to file here.
+      // account naming it, so it has no single destination to file here.
       continue;
     }
-    const posting = postingOf(o, scenarioIds, demandedGuards);
+    const posting = postingOf(o, scenarioIds, staticCheckEvidenceObligations);
     switch (posting.kind) {
       case "scenario":
       case "phantom-scenario": {
@@ -173,13 +173,13 @@ export function reconcile(
     }
   }
   for (const d of scenarios) {
-    // THE PENDING PARTITION (@SCN-PND-004) — `pendingItemsOf` and `demandedEvidenceObligationsOf`
+    // THE PENDING PARTITION (@SCN-PND-004) — `pendingItemsOf` and `evidenceObligationsOf`
     // are exact complements over the scenario's obligations, so nothing is dropped and nothing is
     // counted twice. Rule + rationale: `domain/journal`.
     const pendingItems: PendingItem[] = pendingItemsOf(d);
 
-    // The DEBIT side — each DEMANDED obligation reconciled against the observed evidence.
-    const reconciledEvidenceObligations = demandedEvidenceObligationsOf(d.evidenceObligations).map((req) =>
+    // The DEBIT side — each NAMED obligation reconciled against the observed evidence.
+    const reconciledEvidenceObligations = evidenceObligationsOf(d.evidenceObligations).map((req) =>
       reconcileEvidenceObligation(d.scnId, req, evidenceObservations)
     );
 
@@ -199,9 +199,9 @@ export function reconcile(
       pendingItems
     );
     // THE POSTED static-guard CREDITS (@SCN-LDG-022) — a static guard carries no @SCN, so `byScn`
-    // cannot hold it: it is linked by HANDLE, to every row demanding it. Rule + rationale:
+    // cannot hold it: it is linked by HANDLE, to every row naming it. Rule + rationale:
     // `domain/posting`'s `staticGuardCreditsPostingTo` (3F-2202).
-    const demandedGuardCredits = staticGuardCreditsPostingTo(d, evidenceObservations);
+    const staticCheckEvidenceObligationCredits = staticGuardCreditsPostingTo(d, evidenceObservations);
     scenarioReconciliations.push({
       scnId: d.scnId,
       kind: "scenario",
@@ -211,9 +211,9 @@ export function reconcile(
       // PENDING quality-check, which reconciles `undemanded` (3F-1858 — it used to reconcile to
       // NO ROW AT ALL, the false-green this posting made visible without fixing). It posts and is
       // findable WHATEVER it reconciles to; posting is not classifying, and a misclassification
-      // must misfile an entry, never vaporise it. Plus the static guard credits this account DEMANDS,
+      // must misfile an entry, never vaporise it. Plus the static guard credits this account NAMES,
       // linked by handle (above).
-      evidenceObservations: [...(byScn.get(d.scnId) ?? []), ...demandedGuardCredits],
+      evidenceObservations: [...(byScn.get(d.scnId) ?? []), ...staticCheckEvidenceObligationCredits],
       // THE POSTED DEBITS (@SCN-LDG-023) — every obligation THIS scenario DECLARES, in document
       // order, keyed by quality-check. The debit half of the same posting: where a credit is
       // routed by its citation, a debit needs no routing at all — the account is the declaration.
@@ -256,7 +256,7 @@ export function reconcile(
       // "real or INVENTED scenario", so a phantom account holds its postings like any other.
       evidenceObservations: [...citations],
       // A phantom account is MINTED BY A CREDIT — no scenario declares it, so nothing can have
-      // been demanded of it. Its debit side is empty by construction (@SCN-LDG-023); the asymmetry
+      // been named of it. Its debit side is empty by construction (@SCN-LDG-023); the asymmetry
       // with the credit side is real, not an omission.
       evidenceObligations: [],
       qualityCheckReconciliations: items,
@@ -285,7 +285,7 @@ export function reconcile(
       // named no test, so it cites nothing whatever scnId it structurally carries), and the
       // undemanded static guards. Together with `byScn` above this exhausts the credit stream.
       evidenceObservations: [...brokenEvidence, ...uncited, ...undemandedGuards],
-      // Suspense is MINTED BY A CREDIT too — it declares nothing, so it demands nothing
+      // Suspense is MINTED BY A CREDIT too — it declares nothing, so it names nothing
       // (@SCN-LDG-023).
       evidenceObligations: [],
       qualityCheckReconciliations: items,
@@ -359,8 +359,8 @@ export interface TestVolumeTotals {
  * The materialised static-guard totals (RMD-005) — the static-guard kind-counts the
  * markdown's `### Static guards` line derives, following the census shape exactly:
  * `runningGuardCount` (the volume of running static guards) and `uncitedStaticGuardCount` (how many
- * of them NO `@lint` declares). The demanded count is IMPLICIT (`running − uncited`) and is
- * not carried (every demanded static guard is already a reconciled `@lint` sub-row).
+ * of them NO `@lint` declares). The named count is IMPLICIT (`running − uncited`) and is
+ * not carried (every named static guard is already a reconciled `@lint` sub-row).
  */
 export interface StaticGuardTotals {
   runningGuardCount: number;
@@ -475,8 +475,8 @@ export function summaryOf(
     // The static-guard kind-counts (RMD-005), materialised only when the static-guard axis is in
     // play — now a FOLD OVER THE LEDGER (3F-2118, `staticObservationTally`), symmetric with the
     // runtime `testVolume` fold. The surface keeps the census shape exactly
-    // (`{ runningGuardCount, uncitedStaticGuardCount }`; demanded is implicit). The member detail
-    // lives in the rows (demanded → each scenario's `@lint` sub-row; undemanded → the suspense
+    // (`{ runningGuardCount, uncitedStaticGuardCount }`; named is implicit). The member detail
+    // lives in the rows (named → each scenario's `@lint` sub-row; undemanded → the suspense
     // row) — there is no census section (2.4).
     ...(withStaticGuards ? { staticGuards } : {}),
     // The static-only lint tally (RMD-005), a LEDGER-PURE derive from `ledgerTally` — LAST key in

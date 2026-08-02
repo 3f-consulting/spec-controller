@@ -1,14 +1,14 @@
 /**
- * @SCN-LDG-024 (3F-1850) — a static guard demanded by TWO scenarios posts to EACH.
+ * @SCN-LDG-024 (3F-1850) — a static guard named by TWO scenarios posts to EACH.
  *
  * Bidirectional evidence (Evidence Manifesto §9): the step markers carry the @SCN-LDG-024 id
  * matching features/ledger.feature, so a grep of the id returns both halves of the pair.
  *
  * The @integration arm drives the REAL parse→reconcile pipeline over a fixture corpus
- * (tests/fixtures/shared-guard/) whose ci.yml runs `lint:double-demand`, whose package.json
- * defines it, and whose two scenarios BOTH declare @lint=lint:double-demand. One static guard's
- * run is evidence for both demanders: the credit posts to each demanding account, and both
- * reconcile satisfied — the multi-demand instance of the posting invariant (@SCN-LDG-022), the
+ * (tests/fixtures/shared-guard/) whose ci.yml runs `lint:double-obligation`, whose package.json
+ * defines it, and whose two scenarios BOTH declare @lint=lint:double-obligation. One static guard's
+ * run is evidence for both naming scenarios: the credit posts to each naming account, and both
+ * reconcile satisfied — the multi-obligation instance of the posting invariant (@SCN-LDG-022), the
  * case no corpus exercised.
  */
 
@@ -25,9 +25,9 @@ const sharedAccountFor = (ledger: Ledger, scnId: string): ScenarioReconciliation
   ledger.scenarioReconciliations.find((r) => r.scnId === scnId);
 
 // @SCN-LDG-024
-Given("two scenarios that each demand the same static guard by @lint, wired and green in CI", function () {
+Given("two scenarios that each name the same static guard by @lint, wired and green in CI", function () {
   // The shared-guard fixture: two scenarios (SCN-SHR-001, SCN-SHR-002) both declaring
-  // @lint=lint:double-demand; a ci.yml that RUNS lint:double-demand; a package.json that
+  // @lint=lint:double-obligation; a ci.yml that RUNS lint:double-obligation; a package.json that
   // DEFINES it. So the static guard exists and is enforced over the real source — wired-and-green.
   const fixture = join(process.cwd(), "tests/fixtures/shared-guard");
   sharedGuardLedger = runReconcile({
@@ -44,7 +44,7 @@ When("the shared-guard corpus is reconciled", function () {
 });
 
 // @SCN-LDG-024
-Then("both demanding scenarios' lint obligations reconcile satisfied", function () {
+Then("both naming scenarios' lint obligations reconcile satisfied", function () {
   for (const scnId of ["SCN-SHR-001", "SCN-SHR-002"]) {
     const account = sharedAccountFor(sharedGuardLedger.ledger, scnId);
     assert.ok(account, `expected a ledger account for ${scnId}; got none`);
@@ -56,20 +56,20 @@ Then("both demanding scenarios' lint obligations reconcile satisfied", function 
       `expected ${scnId}'s lint obligation to reconcile satisfied (the static guard is wired + enforced); got "${lint.outcome}"`
     );
   }
-  // A DEMANDED static guard is never suspense — there is no undemanded guard in this corpus.
+  // A NAMED static guard is never suspense — there is no undemanded guard in this corpus.
   assert.equal(
     sharedAccountFor(sharedGuardLedger.ledger, "(no scenario)"),
     undefined,
-    "expected NO suspense row — the only lint credit is the demanded static guard"
+    "expected NO suspense row — the only lint credit is the named static guard"
   );
 });
 
 // @SCN-LDG-024
-Then("the one static-guard credit is findable on each demanding account, one object on both", function () {
+Then("the one static-guard credit is findable on each naming account, one object on both", function () {
   const a1 = sharedAccountFor(sharedGuardLedger.ledger, "SCN-SHR-001");
   const a2 = sharedAccountFor(sharedGuardLedger.ledger, "SCN-SHR-002");
-  const c1 = a1?.evidenceObservations.find((o) => o.qualityCheck === "lint" && o.staticGuard === "lint:double-demand");
-  const c2 = a2?.evidenceObservations.find((o) => o.qualityCheck === "lint" && o.staticGuard === "lint:double-demand");
+  const c1 = a1?.evidenceObservations.find((o) => o.qualityCheck === "lint" && o.staticGuard === "lint:double-obligation");
+  const c2 = a2?.evidenceObservations.find((o) => o.qualityCheck === "lint" && o.staticGuard === "lint:double-obligation");
   assert.ok(c1, "expected the static-guard credit findable on SCN-SHR-001's account");
   assert.ok(c2, "expected the static-guard credit findable on SCN-SHR-002's account");
   // BY REFERENCE — the SAME observation object on each account, not a copy. A copy would

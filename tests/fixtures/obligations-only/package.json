@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "lint:demanded-only": "echo demanded-only-guard",
+    "lint:obligations-only": "echo obligations-only-guard",
     "test": "echo test",
     "cucumber": "echo cucumber"
   }

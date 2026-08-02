@@ -70,16 +70,16 @@ export interface Scenario {
 }
 
 /**
- * The DEMANDED `(scnId, quality-check)` pairs — the ONE rule for what a scenario demands, keyed
+ * The NAMED `(scnId, quality-check)` pairs — the ONE rule for what a scenario names, keyed
  * `"<scnId> <qualityCheck>"`. A credit citing a scenario is reconciliation-matched only
  * when its pair is in this set; otherwise it is `undemanded` (a real scenario, at a quality-check
  * it never declared).
  *
- * A `pending` obligation is EXCLUDED — it demands nothing. Canon, Pending Item: a
+ * A `pending` obligation is EXCLUDED — it names nothing. Canon, Pending Item: a
  * `<quality-check>pending` tag raises **no Evidence Obligation**, so "an Evidence Observation
  * citing that scenario at a pending quality-check is `undemanded` — exactly as when nothing was
- * declared at all". Nothing is demanded, so nothing can be attributed to it. (This also drops the
- * scenario-scope pending obligation, which carries no `qualityCheck` at all — it demands no
+ * declared at all". Nothing is named, so nothing can be attributed to it. (This also drops the
+ * scenario-scope pending obligation, which carries no `qualityCheck` at all — it names no
  * specific check, so it never belonged in a pair set keyed by one.)
  *
  * ONE COPY, BY CONSTRUCTION (3F-1858). This loop existed TWICE, character-identical — in
@@ -90,7 +90,7 @@ export interface Scenario {
  * from the debit side, so it posted NOWHERE and the run read balanced, exit 0, over a fault canon
  * says must fail (@SCN-PND-005).
  *
- * Lives in the model, not in either caller: what a scenario DEMANDS is the model's rule, not a
+ * Lives in the model, not in either caller: what a scenario NAMES is the model's rule, not a
  * reconciler's or a census's private business (`entity-owns-its-behaviour`) — the same reason
  * `OUT_OF_BALANCE_OUTCOMES` lives here rather than in the renderer that walks it.
  *
@@ -101,7 +101,7 @@ export function evidenceObligationPairsOf(scenarios: readonly Scenario[]): Set<s
   const pairs = new Set<string>();
   for (const scenario of scenarios) {
     for (const obligation of scenario.evidenceObligations) {
-      if (obligation.pending === true) continue; // demands nothing — see above.
+      if (obligation.pending === true) continue; // names nothing — see above.
       pairs.add(`${scenario.scnId} ${obligation.qualityCheck}`);
     }
   }
@@ -109,29 +109,29 @@ export function evidenceObligationPairsOf(scenarios: readonly Scenario[]): Set<s
 }
 
 /**
- * The DEMANDED static guard handles — the STATIC-axis twin of `evidenceObligationPairsOf`. Every
- * `@lint=<guard>` `staticGuard` a scenario's evidence obligations demand, deduped into one set. A
+ * The NAMED static guard handles — the STATIC-axis twin of `evidenceObligationPairsOf`. Every
+ * `@lint=<guard>` `staticGuard` a scenario's evidence obligations name, deduped into one set. A
  * `lint` evidence observation whose guard is NOT in this set is an UNDEMANDED static guard: it cites
  * no scenario, so the reconciler folds it onto the SUSPENSE row (the static analogue of an uncited
  * runtime credit).
  *
- * A `pending` obligation is EXCLUDED — it demands nothing (same rule, same reason as the pair set:
+ * A `pending` obligation is EXCLUDED — it names nothing (same rule, same reason as the pair set:
  * canon, Pending Item — a `<quality-check>pending` tag raises no Evidence Obligation). A `@lintpending`
  * obligation is `{ qualityCheck: 'lint', pending: true }` with NO `staticGuard`, so both the pending
- * skip AND the `staticGuard` presence check drop it: a static guard that does not yet exist demands
+ * skip AND the `staticGuard` presence check drop it: a static guard that does not yet exist names
  * nothing.
  *
  * ONE COPY, BY CONSTRUCTION. This derivation existed TWICE — in `reconcile` and in the balance
  * command's static-observation ingest — each rebuilding it inline. They agreed by copy, not by
- * construction (either could have grown a filter alone). What a scenario DEMANDS is the model's rule,
+ * construction (either could have grown a filter alone). What a scenario NAMES is the model's rule,
  * not a reconciler's or an ingest's private business (`entity-owns-its-behaviour`) — the same reason
  * `evidenceObligationPairsOf` lives here.
  */
-export function demandedStaticGuardsOf(scenarios: readonly Scenario[]): Set<string> {
+export function staticCheckEvidenceObligationsOf(scenarios: readonly Scenario[]): Set<string> {
   const guards = new Set<string>();
   for (const scenario of scenarios) {
     for (const obligation of scenario.evidenceObligations) {
-      if (obligation.pending === true) continue; // demands nothing — see above.
+      if (obligation.pending === true) continue; // names nothing — see above.
       if (obligation.qualityCheck === "lint" && obligation.staticGuard !== undefined) {
         guards.add(obligation.staticGuard);
       }
@@ -142,25 +142,25 @@ export function demandedStaticGuardsOf(scenarios: readonly Scenario[]): Set<stri
 
 /**
  * THE PENDING PARTITION, debit half (@SCN-PND-004, 3F-2204) — the evidence obligations a scenario
- * actually DEMANDS: every non-pending one, in document order. These are the obligations that
+ * actually NAMES: every non-pending one, in document order. These are the obligations that
  * reconcile; the complement becomes one-sided Pending Items (`pendingItemsOf`, below).
  *
  * A pending obligation is EXCLUDED for the SAME reason, and by the same canon clause, as in
- * `evidenceObligationPairsOf` and `demandedStaticGuardsOf`: a `<quality-check>pending` tag raises
- * NO Evidence Obligation, so it demands nothing. This completes that family — the three now state
+ * `evidenceObligationPairsOf` and `staticCheckEvidenceObligationsOf`: a `<quality-check>pending` tag raises
+ * NO Evidence Obligation, so it names nothing. This completes that family — the three now state
  * one rule over three keyings (the whole obligations, the `(scnId, quality-check)` pairs, the
  * static-guard handles) instead of two stating it and a third restating it inline in the fold.
  *
- * Lives here rather than in the reconciler: what a scenario DEMANDS is the model's rule, not the
+ * Lives here rather than in the reconciler: what a scenario NAMES is the model's rule, not the
  * reconciler's private business (`entity-owns-its-behaviour`).
  *
  * Takes the OBLIGATIONS rather than a `Scenario` (3F-2203) so the one rule serves both sides of the
  * pipeline: `reconcile` passes a scenario's declared obligations, and the renderer passes a Ledger
  * row's POSTED DEBITS (`ScenarioReconciliation.evidenceObligations`) to answer "does this row
- * demand this quality-check?" for the grid. The renderer previously re-encoded the `!pending`
+ * name this quality-check?" for the grid. The renderer previously re-encoded the `!pending`
  * clause itself — the same rule in a second home, agreeing by copy.
  */
-export function demandedEvidenceObligationsOf(
+export function evidenceObligationsOf(
   evidenceObligations: readonly EvidenceObligation[]
 ): EvidenceObligation[] {
   return evidenceObligations.filter((obligation) => !obligation.pending);
@@ -169,7 +169,7 @@ export function demandedEvidenceObligationsOf(
 /**
  * THE PENDING PARTITION, deferred half (@SCN-PND-004, 3F-2204) — the one-sided Pending Items a
  * scenario's deferred obligations raise, one per `<quality-check>pending` obligation, in document
- * order. The exact complement of `demandedEvidenceObligationsOf`: together they partition the
+ * order. The exact complement of `evidenceObligationsOf`: together they partition the
  * scenario's declared obligations, so nothing is dropped and nothing is counted twice.
  *
  * A Pending Item carries ONLY the quality-check owed — `undefined` for the scenario-scope deferral

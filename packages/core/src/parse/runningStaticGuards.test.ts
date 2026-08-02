@@ -1,6 +1,6 @@
 /**
  * Unit tests for the running-guard observer (src/ingest/ciGuards.ts) —
- * `runningStaticGuards` emits a GuardEvidenceObservation per running CI guard. The demanded-obligation
+ * `runningStaticGuards` emits a GuardEvidenceObservation per running CI guard. The evidence-obligation
  * observer (`checkStaticEvidenceObligations`) is pinned in src/ingest/guard.test.ts; the shared CI-parse primitive both
  * use lives in src/ingest/ciCommands.ts. reconcile's folding of an undemanded running static guard onto
  * the suspense row is pinned in src/domain/evidenceReconciliation.test.ts.

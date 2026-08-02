@@ -4,7 +4,7 @@
     "name": "ten-outcome corpus",
     "elements": [
       {
-        "name": "undemanded — a real scenario cited at a quality-check it never demanded",
+        "name": "undemanded — a real scenario cited at a quality-check it never named",
         "tags": [{ "name": "@SCN-TOC-005" }, { "name": "@e2e" }],
         "steps": [
           {

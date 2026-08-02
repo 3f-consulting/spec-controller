@@ -411,7 +411,7 @@ export function reconcileEvidenceObligation(
  * `(scnId, quality-check)` pair reconciles satisfied/failing via `reconcileEvidenceObligation` and
  * is NOT re-listed here. `evidenceObligationPairs` is the journal's rule (`evidenceObligationPairsOf`),
  * built once and shared — which is what makes a credit citing a PENDING pair land here rather than
- * nowhere (3F-1858: a pending obligation demands nothing, so such a credit is undemanded "exactly
+ * nowhere (3F-1858: a pending obligation names nothing, so such a credit is undemanded "exactly
  * as when nothing was declared at all", and the run that used to read balanced over it now fails).
  */
 export function undemandedReconciliationsOf(
@@ -435,7 +435,7 @@ export function undemandedReconciliationsOf(
 /**
  * The items on a PHANTOM row (@SCN-LDG-006) — one `cites-unknown-scenario` per credit citing an
  * `@SCN` no scenario declares, in citation order. CREDIT-ONLY: a phantom row is minted BY a credit,
- * so nothing can ever have been demanded of it, and no obligation is in scope.
+ * so nothing can ever have been named of it, and no obligation is in scope.
  *
  * The locator rides through (ruling Q5) — it is the reader's where-to-fix, and a phantom item has
  * no obligation to point at instead.

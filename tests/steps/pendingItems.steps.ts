@@ -254,7 +254,7 @@ Then(
 // scenario — never a real `@<qc>pending` scenario in the scanned features/ corpus (fixture
 // policy, evidence-manifesto §11B). The @unit arm
 // (packages/core/src/domain/evidenceReconciliation.test.ts, [SCN-PND-005]) proves the same
-// partition-before-match + pending-demands-nothing rule over the reconcile function in isolation.
+// partition-before-match + pending-names-nothing rule over the reconcile function in isolation.
 const MATCH_FIXTURE = join(
   process.cwd(),
   "tests/fixtures/pending-tags/features/pending-with-observation.feature"
@@ -273,7 +273,7 @@ When("the reconciler reconciles the fixture against that matching observation", 
   // Feed the PLANTED fixture through the REAL parse→reconcile pipeline, supplying a MATCHING
   // integration observation citing the fixture scenario (@SCN-PDM-001) at the very check the
   // pending obligation declares. A non-pending obligation would reconcile this to `satisfied`;
-  // the pending declaration must ignore it (partition-before-match) AND demand nothing — so the
+  // the pending declaration must ignore it (partition-before-match) AND name nothing — so the
   // observation posts as an ordinary `undemanded` credit on the scenario's own row.
   assert.ok(pendingCheck, "expected a pending quality-check to have been recorded");
   const source = readFileSync(MATCH_FIXTURE, "utf8");
@@ -287,11 +287,11 @@ When("the reconciler reconciles the fixture against that matching observation", 
 });
 
 Then(
-  "the matching observation IS flagged undemanded — a pending obligation demands nothing, so nothing is attributed to it",
+  "the matching observation IS flagged undemanded — a pending obligation names nothing, so nothing is attributed to it",
   function () {
     // A pending obligation raises NO Evidence Obligation, so its (scnId, quality-check) pair is
-    // NOT demanded and the citing credit posts as `undemanded` — "exactly as when nothing was
-    // declared at all" (canon, Pending Item). Reds if the pending pair is kept in the demanded
+    // NOT named and the citing credit posts as `undemanded` — "exactly as when nothing was
+    // declared at all" (canon, Pending Item). Reds if the pending pair is kept in the named
     // set: the credit would then post NOWHERE — excluded from `undemanded` by the pair-check and
     // from the debit side by the pending partition — and the run would read balanced, exit 0.
     // That is the false-green 3F-1858 closes.
@@ -301,7 +301,7 @@ Then(
     assert.equal(
       undemanded.length,
       1,
-      `the matching observation MUST be flagged undemanded — a pending obligation demands nothing; got ${
+      `the matching observation MUST be flagged undemanded — a pending obligation names nothing; got ${
         undemanded.length
       } undemanded item(s) (rows: ${JSON.stringify(reconciliation.scenarioReconciliations)})`
     );
