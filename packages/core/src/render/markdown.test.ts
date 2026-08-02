@@ -433,14 +433,14 @@ describe("[SCN-RPT-005] the markdown report lists the lint evidence obligations 
     ]
   );
 
-  it("renders a '### Lint evidence obligations' table with each static row's scenario, static guard, and glyphed outcome — including the watermelon", () => {
+  it("renders a '### Lint evidence obligations' table with each static row's scenario, static check, and glyphed outcome — including the watermelon", () => {
     const md = renderMarkdown(__er(spanning), ctx);
 
     expect(md).toContain("### Lint evidence obligations");
     // The total line outcomes how many of the static evidenceObligations reconcile satisfied.
     expect(md).toContain("1 of 2 lint evidence obligations reconcile satisfied.");
     // The table header.
-    expect(md).toContain("| Scenario | Static guard | Outcome |");
+    expect(md).toContain("| Scenario | Static check | Outcome |");
     // The satisfied static guard, glyphed — the outcome shown as its canon description (3F-1626).
     expect(md).toContain("| SCN-A | guard-typecheck | ✓ Evidence Observation satisfies its Evidence Obligation |");
     // The watermelon static guard, glyphed — the 🍉 reads at a glance.
