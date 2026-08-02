@@ -62,8 +62,8 @@ Feature: Detect uncited static-guards — a CI guard no @lint declares
   Rule: a guard:-prefixed CI script an @lint scenario declares is attributed, not uncited
 
     @unit @integration @SCN-USG-005
-    Scenario: a declared guard:-prefixed script is attributed, not an uncited static-guard
+    Scenario: a declared guard:-prefixed script is attributed, not an uncited static check
       Given a target whose CI runs the guard:domain-purity script it declares
       And an @lint scenario declares guard:domain-purity
       When the reconciliation report is rendered for the target
-      Then guard:domain-purity is not reported as an uncited static-guard
+      Then guard:domain-purity is not reported as an uncited static check

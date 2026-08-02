@@ -185,18 +185,23 @@ Then(
   }
 );
 
-// @SCN-USG-005 — the declared guard:* is attributed, not an uncited static-guard. The
+// @SCN-USG-005 — the declared guard:* is attributed, not an uncited static check. The
 // usg-guard-declared fixture runs guard:domain-purity in CI AND declares @lint=guard:domain-purity:
-// the named-guard filter (reconcile's !staticCheckEvidenceObligationSet.has(o.staticGuard)) removes it from the
+// the named-check filter (reconcile's !staticCheckEvidenceObligationSet.has(o.staticGuard)) removes it from the
 // running-observation stream so it is not folded onto the suspense row, and the counter attributes
 // it (1 run, 0 uncited) — never double-counted as both named and uncited. The guard:*
 // mirror of USG-002, keeping the USG-004 broadening honest.
+//
+// That handle itself is a CI script NAME — a value the derivation matches on, not
+// vocabulary — so it is deliberately untouched by the static-check rename (3F-1929; 3F-1852
+// owns script names). This scenario exists to prove that prefix is recognised on the
+// DECLARED side; renaming the handle would destroy exactly that.
 Then(
-  "guard:domain-purity is not reported as an uncited static-guard",
+  "guard:domain-purity is not reported as an uncited static check",
   function () {
     assert.ok(
       !activeMd.includes("Evidence Observation cites no Scenario (guard:domain-purity)"),
-      `guard:domain-purity is @lint-declared; it must not surface as an uncited static-guard credit; got:\n${activeMd}`
+      `guard:domain-purity is @lint-declared; it must not surface as an uncited static-check credit; got:\n${activeMd}`
     );
     assert.ok(
       activeMd.includes("1 static check(s) run, 0 uncited static check(s)"),
