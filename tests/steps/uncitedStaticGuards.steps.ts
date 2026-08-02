@@ -53,8 +53,8 @@ let activeDir: string;
 let activeMd: string;
 
 // Cucumber-expression alternation ("guards/checks") spans the vocabulary transition: @SCN-USG-001
-// says "checks" from here on; its siblings @SCN-USG-002 / @SCN-USG-003 still say "guards" until
-// 3F-2293 / 3F-2294 flip them, at which point the "guards/" alternative is dropped.
+// and @SCN-USG-002 say "checks" from here on; the last sibling still on the old wording is
+// @SCN-USG-003, which 3F-2294 flips — at which point the "guards/" alternative is dropped.
 Given("a target whose CI runs the lint:foo and lint:bar guards/checks", function () {
   activeFixture = USG_FIXTURE;
   activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg001-"));
@@ -165,15 +165,15 @@ Then(
   }
 );
 
-// @SCN-USG-002 — the declared guard is attributed, not an uncited static-guard. Same fixture (lint:foo
-// is @lint-declared): it must NOT surface as an uncited static-guard credit, and the
+// @SCN-USG-002 — the declared check is attributed, not an uncited static check. Same fixture (lint:foo
+// is @lint-declared): it must NOT surface as an uncited static-check credit, and the
 // counts fold it into the running volume (not the uncited count).
 Then(
-  "lint:foo is not reported as an uncited static-guard",
+  "lint:foo is not reported as an uncited static check",
   function () {
     assert.ok(
       !activeMd.includes("Evidence Observation cites no Scenario (lint:foo)"),
-      `lint:foo is @lint-declared; it must not surface as an uncited static-guard credit; got:\n${activeMd}`
+      `lint:foo is @lint-declared; it must not surface as an uncited static-check credit; got:\n${activeMd}`
     );
     assert.ok(
       activeMd.includes("2 static check(s) run, 1 uncited static check(s)"),

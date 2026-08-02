@@ -32,14 +32,14 @@ Feature: Detect uncited static-guards — a CI guard no @lint declares
       When the reconciliation report is rendered for the target
       Then the Static checks section reports lint:bar as an uncited static check
 
-  Rule: a guard an @lint scenario declares is not reported as an uncited static-guard
+  Rule: a check an @lint scenario declares is not reported as an uncited static check
 
     @unit @integration @SCN-USG-002
-    Scenario: a guard declared by an @lint scenario is attributed, not an uncited static-guard
-      Given a target whose CI runs the lint:foo and lint:bar guards
+    Scenario: a check declared by an @lint scenario is attributed, not an uncited static check
+      Given a target whose CI runs the lint:foo and lint:bar checks
       And only lint:foo is declared by an @lint scenario
       When the reconciliation report is rendered for the target
-      Then lint:foo is not reported as an uncited static-guard
+      Then lint:foo is not reported as an uncited static check
 
   Rule: non-lint CI steps are not treated as static guards
 
