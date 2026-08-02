@@ -6,33 +6,46 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
   complexity / max-lines / max-lines-per-function over the REAL source, wired as a
   BLOCKING per-push CI step beside the existing lint family (3F-2177).
 
-  TWO SCOPES, because one set of numbers would be dishonest. Production and test code
-  have genuinely different distributions in BOTH directions: test files run 2.4x longer
-  at the file level (2419 vs 1024 lines) yet are 3.5x SIMPLER at the function level
-  (complexity 7 vs 25). A single shared threshold would take the max of each pair, making
-  max-lines vacuous for production while leaving complexity slack for tests.
+  THE THRESHOLD COMES FROM OUTSIDE THE TREE (3F-2286, superseding 3F-2177's seeding
+  rule). complexity 10 is NIST / McCabe's stated refactor line; max-lines-per-function
+  40 is Google's; max-lines 400 is a reasoned chosen ceiling, named as a choice because
+  no industry body publishes a hard file-length cap. 3F-2177 seeded each threshold at
+  this tree's OWN measured maximum instead — complexity 25, function 261 lines, file
+  1024 — which is "measure the current state, call it good". Those maxima sit well
+  inside the industry high-risk band, so a threshold seeded there certifies whatever
+  the code already does. A fitness function's line must be stated independently of the
+  code it judges, or it is not a fitness function.
 
-  SEEDED AT TODAY'S MEASURED MAX, not the 90th percentile. The two are not
-  interchangeable: a p90 seed reds the top decile BY CONSTRUCTION (measured: 33
-  functions, 4 files), so it cannot also "not redden the existing tree". eslint reds on
-  `value > max`, so seeding AT the max is the strictest seed that leaves the tree green
-  — zero headroom, so any growth past today's worst reds immediately. The p90 survives
-  as the recorded RATCHET TARGET in the threshold module: a stated destination, not a
-  silent ceiling.
+  TWO SCOPES, ONE STANDARD. Production and test code are held to the SAME numbers —
+  complexity 10, max-lines 400 — because an external standard does not bend to the
+  population it is applied to. Identical numbers over two populations that differ by
+  2.4x at the file level and 3.5x at the function level is itself the evidence that
+  nothing here was measured off this tree. The single asymmetry is that
+  max-lines-per-function is OFF for test files: that rule measures production-function
+  tractability, and a describe/it callback is a CONTAINER, not a function in the sense
+  the rule addresses. No substitute number is invented for it, because none exists
+  outside this tree — and inventing one from the tree's own maximum (the retired 221)
+  is the exact self-certification this feature just removed. Not a carve-out: test
+  scope stays held to the two metrics that genuinely apply.
 
-  WHY THE GUARD IS NAMED `lint:complexity`. `runningStaticChecks` observes a script only
-  when its name carries a guard prefix (`lint:` / `guard:`). A name outside that set
+  TODAY'S EXCEEDANCES ARE DATED DEBT, NOT A RAISED CEILING. Every file already over the
+  standard is enumerated per rule in complexityExceptions.mjs, carrying the value
+  measured on the day it was recorded. The list reads as a refactor backlog rather than
+  as headroom, and it can only shrink.
+
+  WHY THE CHECK IS NAMED `lint:complexity`. `runningStaticChecks` observes a script only
+  when its name carries an observed prefix (`lint:` / `guard:`). A name outside that set
   would run in CI while being structurally invisible to the ledger — a real quality
   check kept off the books, which is exactly where a watermelon hides. Named so it IS
   observed; the `@lint=lint:complexity` tag below is then what keeps it out of the
   suspense row as an uncited static check. Observed AND declared is the balanced state.
 
-  Rule: a module or function over its complexity or size threshold reds the build
+  Rule: code outside the exception list reds when it exceeds the external standard
 
     @unit @integration @lint=lint:complexity @SCN-CPX-001
-    Scenario: a function or module over its complexity or size threshold reds the build
-      Given each scope declares a complexity, module-size and function-size threshold
-      When the complexity guard scans the real tree
-      Then no production or test module exceeds its scope's threshold
-      And a function pushed past its scope's complexity threshold is reported against that rule
-      And a module pushed past its scope's size threshold is reported against that rule
+    Scenario: a function or module over the external standard reds the build
+      Given the thresholds are the external standard, not a measurement of this tree
+      When the complexity fitness function scans the real tree
+      Then a function over complexity 10 outside the exception list reds
+      And a function over 40 lines outside the exception list reds
+      And a module over 400 lines outside the exception list reds

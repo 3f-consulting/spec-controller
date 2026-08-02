@@ -69,7 +69,7 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     code: "CPX",
     slug: "complexity-threshold",
     status: "declared",
-    note: "the complexity + module-size thresholds — eslint complexity/max-lines/max-lines-per-function over the real tree, per-scope thresholds seeded at the measured max with the p90 recorded as the ratchet target",
+    note: "the complexity + module-size thresholds — eslint complexity/max-lines/max-lines-per-function over the real tree, held to an EXTERNAL standard (10/40/400, cited) rather than the tree's own measured maximum, with today's exceedances enumerated as dated debt",
   },
   {
     code: "USG",
