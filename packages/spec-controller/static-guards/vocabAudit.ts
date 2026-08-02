@@ -207,7 +207,7 @@ export const GENERIC_ALLOWLIST: ReadonlySet<string> = new Set([
   "group", "suffix", "uncited", "matched", "eo", "both", "citations",
   // -------------------------------------------------------------------------
   // "running" — deliberate descriptor: the running-guard observer,
-  // `runningStaticGuards` / `runningGuardCount`. It names the guards that RUN (the
+  // `runningStaticGuards` / `runningStaticCheckCount`. It names the guards that RUN (the
   // demanded-versus-running distinction that replaced the `CI` mechanism leak), NOT a silent
   // pass — a tagged, endorsed allowlist entry, not an incidental generic.
   // -------------------------------------------------------------------------

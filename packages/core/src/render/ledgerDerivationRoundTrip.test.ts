@@ -135,8 +135,8 @@ describe("[SCN-NPS-002] every summary aggregate re-folds from the serialised Led
     expect(parsed.summary.testVolume.onScenario).toBeGreaterThan(0);
     expect(parsed.summary.testVolume.onPhantomScenario).toBe(1);
     expect(parsed.summary.testVolume.onSuspenseScenario).toBe(1);
-    expect(parsed.summary.staticGuards.runningGuardCount).toBeGreaterThan(0);
-    expect(parsed.summary.staticGuards.uncitedStaticGuardCount).toBe(1);
+    expect(parsed.summary.staticGuards.runningStaticCheckCount).toBeGreaterThan(0);
+    expect(parsed.summary.staticGuards.uncitedStaticCheckCount).toBe(1);
     expect(parsed.summary.pending).toBe(1);
 
     // THE PROPERTY: summary = fold-of-serialised-Ledger, aggregate by aggregate. `deepStrictEqual`

@@ -109,7 +109,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     standalone member-list section (was guards, then staticGuards) COLLAPSED: the guard member
     detail lives in the rows now (named → each scenario's @lint sub-row; undemanded → the
     suspense row's cites-no-scenario credit items), so there is no double-report on the JSON
-    surface. The counts runningGuardCount and uncitedStaticGuardCount are carried on the
+    surface. The counts runningStaticCheckCount and uncitedStaticCheckCount are carried on the
     persisted summary; the named count is implicit, running − uncited. A pure
     derive over the model, proven in isolation by Vitest.
 
@@ -118,7 +118,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
       Given a reconciliation run whose derived running-guard set includes a guard no @lint scenario declares
       When the report is serialised to JSON
       Then the static-guard census carries no standalone staticGuards (or guards) section
-      And the static-guard counts are carried under summary.staticGuards as runningGuardCount and uncitedStaticGuardCount
+      And the static-guard counts are carried under summary.staticGuards as runningStaticCheckCount and uncitedStaticCheckCount
 
   Rule: the summary materialises the three report totals a JSON consumer reads
 
@@ -132,7 +132,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
       Test volume — Σ rawByRuntimeQualityCheck = onScenario + onPhantomScenario + onSuspenseScenario.
 
-    The static-guard census carries runningGuardCount and uncitedStaticGuardCount; the
+    The static-guard census carries runningStaticCheckCount and uncitedStaticCheckCount; the
     named count is implicit, running − uncited, and the completeness invariant is
     asserted inside the counter rather than on the surface. The Lint tally is the static-only
     evidence obligation cut (satisfied of total) — summary.byOutcome is kind-agnostic and cannot
@@ -150,7 +150,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
       When the reconciliation run persists spec-reconciliation.json
       Then the summary carries the test-volume totals, the static-guard totals, and the lint tally
       And the test-volume identity Σ rawByRuntimeQualityCheck = onScenario + onPhantomScenario + onSuspenseScenario holds on the persisted summary
-      And the persisted static-guard summary carries runningGuardCount and uncitedStaticGuardCount with named implicit
+      And the persisted static-guard summary carries runningStaticCheckCount and uncitedStaticCheckCount with named implicit
 
   Rule: the report model carries the feature titles, published on the JSON and sourced by the markdown
 

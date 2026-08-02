@@ -489,7 +489,7 @@ export function runtimeObservationTally(ledger: Ledger): RuntimeObservationTally
 
 // ---------------------------------------------------------------------------
 // THE STATIC-OBSERVATION TALLY (3F-2118, Read) — the static-guard credit-side headline the
-// report's `### Static guards` cut derives, a FOLD OVER THE LEDGER beside `runtimeObservationTally`
+// report's `### Static checks` cut derives, a FOLD OVER THE LEDGER beside `runtimeObservationTally`
 // for the same reason: "the summary is the totals" — the Ledger counts its OWN posted static-guard
 // credits because it IS the balance. This RETIRES the static evidence-observation census
 // (`census/staticEvidenceObservations.ts`, `countStaticEvidenceObservationKinds`): a parallel store
@@ -510,18 +510,18 @@ export function runtimeObservationTally(ledger: Ledger): RuntimeObservationTally
 
 /**
  * The materialised static-guard totals — the STATIC-axis analogue of `RuntimeObservationTally`,
- * two counts read off the SAME posted static-guard credits: `runningGuardCount` (the volume of
+ * two counts read off the SAME posted static-guard credits: `runningStaticCheckCount` (the volume of
  * distinct running static guards — every `@lint=<guard>` a CI `run:` step invokes) and
- * `uncitedStaticGuardCount` (how many of them NO `@lint` declares — a static guard running with
+ * `uncitedStaticCheckCount` (how many of them NO `@lint` declares — a static guard running with
  * nothing naming it, the mirror of a runtime `cites-no-scenario` credit). The named count is
- * IMPLICIT (`runningGuardCount − uncitedStaticGuardCount`) and NOT carried: every named static
+ * IMPLICIT (`runningStaticCheckCount − uncitedStaticCheckCount`) and NOT carried: every named static
  * guard is already a reconciled `@lint` sub-row and adds nothing the rows do not already hold.
  */
 export interface StaticObservationTally {
   /** The running static-guard set volume — every `@lint=<guard>` a CI `run:` step invokes. */
-  runningGuardCount: number;
+  runningStaticCheckCount: number;
   /** Running static guards NO `@lint` declares — the uncited static-guards (named is implicit). */
-  uncitedStaticGuardCount: number;
+  uncitedStaticCheckCount: number;
 }
 
 /**
@@ -531,13 +531,13 @@ export interface StaticObservationTally {
  * its runtime sibling — RE-DERIVES NOTHING: the reconciler already decided which account every credit
  * posts to, so this can never disagree with the verdict.
  *
- * `uncitedStaticGuardCount` is the count of lint credits on the SUSPENSE row — the undemanded static
+ * `uncitedStaticCheckCount` is the count of lint credits on the SUSPENSE row — the undemanded static
  * guards the reconciler folded there (a static guard running with no `@lint` naming it,
  * `cites-no-scenario` on the credit side). By construction the app only pushes RUNNING guards into
  * that undemanded stream (`runningStaticGuards`), so every suspense lint credit is running — the
  * plain count is the census's running-and-uncited count.
  *
- * `runningGuardCount` is the count of DISTINCT-BY-OBJECT-IDENTITY RUNNING lint credits across ALL
+ * `runningStaticCheckCount` is the count of DISTINCT-BY-OBJECT-IDENTITY RUNNING lint credits across ALL
  * rows. Two care-moves the runtime axis does not need (see the block comment above):
  *   - IDENTITY-DEDUPE: @SCN-LDG-022 posts the SAME static-guard object to EVERY account naming it,
  *     so a guard named by N scenarios appears N times by reference; a `Set` keyed by the object
@@ -547,7 +547,7 @@ export interface StaticObservationTally {
  *     is not a running static guard — excluded here exactly as the retired census's running-only
  *     `continue` excluded it.
  *
- * The named (implicit) count is `runningGuardCount − uncitedStaticGuardCount`.
+ * The named (implicit) count is `runningStaticCheckCount − uncitedStaticCheckCount`.
  */
 export function staticObservationTally(ledger: Ledger): StaticObservationTally {
   // The distinct RUNNING static-guard credits across ALL rows, keyed by OBJECT IDENTITY so a guard
@@ -558,18 +558,18 @@ export function staticObservationTally(ledger: Ledger): StaticObservationTally {
   // The uncited static guards — the lint credits the reconciler folded onto the SUSPENSE row (an
   // undemanded running guard, `cites-no-scenario`). A plain count: the app pushes only RUNNING
   // guards into the undemanded stream, so every suspense lint credit is a running uncited guard.
-  let uncitedStaticGuardCount = 0;
+  let uncitedStaticCheckCount = 0;
   for (const row of ledger.scenarioReconciliations) {
     for (const obs of row.evidenceObservations) {
       // THE STATIC SCOPING — only static-guard credits ride the `lint` quality-check; a runtime
       // credit (the uncited/broken ones the suspense row also holds) is not a static observation.
       if (obs.qualityCheck !== "lint") continue;
-      if (row.kind === "suspense-scenario") uncitedStaticGuardCount++;
+      if (row.kind === "suspense-scenario") uncitedStaticCheckCount++;
       // FILTER TO RUNNING, then IDENTITY-DEDUPE — a named watermelon/missing guard is excluded;
       // a guard named by N scenarios (the same object N times) collapses to one set member.
       if (obs.exists && obs.enforcedOverRealSource) runningGuards.add(obs);
     }
   }
 
-  return { runningGuardCount: runningGuards.size, uncitedStaticGuardCount };
+  return { runningStaticCheckCount: runningGuards.size, uncitedStaticCheckCount };
 }

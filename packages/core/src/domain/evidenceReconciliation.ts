@@ -357,14 +357,14 @@ export interface TestVolumeTotals {
 
 /**
  * The materialised static-guard totals (RMD-005) — the static-guard kind-counts the
- * markdown's `### Static guards` line derives, following the census shape exactly:
- * `runningGuardCount` (the volume of running static guards) and `uncitedStaticGuardCount` (how many
+ * markdown's `### Static checks` line derives, following the census shape exactly:
+ * `runningStaticCheckCount` (the volume of running static guards) and `uncitedStaticCheckCount` (how many
  * of them NO `@lint` declares). The named count is IMPLICIT (`running − uncited`) and is
  * not carried (every named static guard is already a reconciled `@lint` sub-row).
  */
 export interface StaticGuardTotals {
-  runningGuardCount: number;
-  uncitedStaticGuardCount: number;
+  runningStaticCheckCount: number;
+  uncitedStaticCheckCount: number;
 }
 
 /** The materialised summary — the totals (manifesto: "the aggregate of the trial balance"). */
@@ -475,7 +475,7 @@ export function summaryOf(
     // The static-guard kind-counts (RMD-005), materialised only when the static-guard axis is in
     // play — now a FOLD OVER THE LEDGER (3F-2118, `staticObservationTally`), symmetric with the
     // runtime `testVolume` fold. The surface keeps the census shape exactly
-    // (`{ runningGuardCount, uncitedStaticGuardCount }`; named is implicit). The member detail
+    // (`{ runningStaticCheckCount, uncitedStaticCheckCount }`; named is implicit). The member detail
     // lives in the rows (named → each scenario's `@lint` sub-row; undemanded → the suspense
     // row) — there is no census section (2.4).
     ...(withStaticGuards ? { staticGuards } : {}),

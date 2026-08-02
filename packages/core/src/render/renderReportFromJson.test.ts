@@ -53,7 +53,7 @@ const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation =>
 //   1 uncited unit credit (src/b.test.ts) + the undemanded lint:bar static guard → the suspense row
 // The static-guard counts are a FOLD over this ledger now (3F-2118, `staticObservationTally`): 2
 // running CI guards = 1 named (lint:foo, on SCN-CHK-003's `@lint` row) + 1 uncited (lint:bar,
-// undemanded-running, on the suspense row) → {runningGuardCount: 2, uncitedStaticGuardCount: 1}.
+// undemanded-running, on the suspense row) → {runningStaticCheckCount: 2, uncitedStaticCheckCount: 1}.
 const scenarios: Scenario[] = [
   { scnId: "SCN-CHK-001", evidenceObligations: [{ qualityCheck: "unit" }] },
   { scnId: "SCN-CHK-002", evidenceObligations: [{ qualityCheck: "integration" }] },
@@ -115,7 +115,7 @@ describe("[SCN-RMD-007] the markdown regenerates from a saved spec-reconciliatio
     // The three-way test-volume identity survives the round-trip.
     expect(regenerated).toContain("3 evidence observations = 1 on scenarios + 1 on phantom scenarios + 1 on the suspense scenario.");
     // The static-guard counts line (a materialised summary total) survives too.
-    expect(regenerated).toContain("2 static guard(s) run, 1 uncited static guard(s).");
+    expect(regenerated).toContain("2 static check(s) run, 1 uncited static check(s).");
     // The SUSPENSE row survives the round-trip — its S bullet, its ledger cell
     // (with the re-homed static guard + the uncited-credit locator), and its cites-no-scenario items.
     expect(regenerated).toContain('1 suspense-scenario(s): credits citing no scenario, aggregated into "(no scenario)".');

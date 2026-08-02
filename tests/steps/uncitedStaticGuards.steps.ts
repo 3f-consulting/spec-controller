@@ -2,8 +2,8 @@
  * @SCN-USG-001 step defs — the uncited-static-guard @integration arm.
  * Drives the REAL CLI over the usg fixture target (ci.yml runs lint:foo + lint:bar +
  * test + cucumber; only lint:foo is @lint-declared) and asserts the persisted
- * spec-reconciliation.md carries the "### Static guards" cut reporting lint:bar as an
- * uncited static-guard (reconcile folds the undemanded running guard to the suspense row) —
+ * spec-reconciliation.md carries the "### Static checks" cut reporting lint:bar as an
+ * uncited static check (reconcile folds the undemanded running guard to the suspense row) —
  * proving the runningStaticGuards → reconcile → staticObservationTally → render → disk
  * wiring over real files, not an in-memory re-run (the anti-watermelon rule).
  * // @SCN-USG-001
@@ -52,7 +52,10 @@ let activeFixture: UsgFixture;
 let activeDir: string;
 let activeMd: string;
 
-Given("a target whose CI runs the lint:foo and lint:bar guards", function () {
+// Cucumber-expression alternation ("guards/checks") spans the vocabulary transition: @SCN-USG-001
+// says "checks" from here on; its siblings @SCN-USG-002 / @SCN-USG-003 still say "guards" until
+// 3F-2293 / 3F-2294 flip them, at which point the "guards/" alternative is dropped.
+Given("a target whose CI runs the lint:foo and lint:bar guards/checks", function () {
   activeFixture = USG_FIXTURE;
   activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg001-"));
 });
@@ -117,19 +120,19 @@ When("the reconciliation report is rendered for the target", function () {
 });
 
 Then(
-  "the Static guards section reports lint:bar as an uncited static-guard",
+  "the Static checks section reports lint:bar as an uncited static check",
   function () {
-    // The Static guards section keeps the summary-level COUNTS line (ruling Q4);
-    // the per-guard DETAIL re-homed to the suspense-scenario row, where lint:bar surfaces as
+    // The Static checks section keeps the summary-level COUNTS line (ruling Q4);
+    // the per-check DETAIL re-homed to the suspense-scenario row, where lint:bar surfaces as
     // a cites-no-scenario credit item (with its guard handle). Both are asserted.
     assert.match(
       activeMd,
-      /### Static guards/,
-      `expected a Static guards section; got:\n${activeMd}`
+      /### Static checks/,
+      `expected a Static checks section; got:\n${activeMd}`
     );
     assert.ok(
-      activeMd.includes("2 static guard(s) run, 1 uncited static guard(s)"),
-      `expected the guard counts "2 static guard(s) run, 1 uncited static guard(s)"; got:\n${activeMd}`
+      activeMd.includes("2 static check(s) run, 1 uncited static check(s)"),
+      `expected the counts "2 static check(s) run, 1 uncited static check(s)"; got:\n${activeMd}`
     );
     assert.ok(
       activeMd.includes("lint ❓ Evidence Observation cites no Scenario (lint:bar)"),
@@ -140,7 +143,7 @@ Then(
 
 // @SCN-USG-004 — a guard:-prefixed CI script (guard:domain-purity) that no @lint declares
 // surfaces as an uncited static-guard, exactly as a lint:* one does. The report's Static
-// guards section reports 1 running guard / 1 uncited, and the suspense row carries the
+// checks section reports 1 running guard / 1 uncited, and the suspense row carries the
 // guard:domain-purity handle as a cites-no-scenario credit under the "lint" axis (the axis name
 // is unchanged — it is the static-guard axis, not the script prefix).
 Then(
@@ -148,12 +151,12 @@ Then(
   function () {
     assert.match(
       activeMd,
-      /### Static guards/,
-      `expected a Static guards section; got:\n${activeMd}`
+      /### Static checks/,
+      `expected a Static checks section; got:\n${activeMd}`
     );
     assert.ok(
-      activeMd.includes("1 static guard(s) run, 1 uncited static guard(s)"),
-      `expected the guard counts "1 static guard(s) run, 1 uncited static guard(s)"; got:\n${activeMd}`
+      activeMd.includes("1 static check(s) run, 1 uncited static check(s)"),
+      `expected the counts "1 static check(s) run, 1 uncited static check(s)"; got:\n${activeMd}`
     );
     assert.ok(
       activeMd.includes("lint ❓ Evidence Observation cites no Scenario (guard:domain-purity)"),
@@ -173,8 +176,8 @@ Then(
       `lint:foo is @lint-declared; it must not surface as an uncited static-guard credit; got:\n${activeMd}`
     );
     assert.ok(
-      activeMd.includes("2 static guard(s) run, 1 uncited static guard(s)"),
-      `expected lint:foo folded into the running volume (2 run, 1 uncited static-guard(s)); got:\n${activeMd}`
+      activeMd.includes("2 static check(s) run, 1 uncited static check(s)"),
+      `expected lint:foo folded into the running volume (2 run, 1 uncited static check(s)); got:\n${activeMd}`
     );
   }
 );
@@ -193,8 +196,8 @@ Then(
       `guard:domain-purity is @lint-declared; it must not surface as an uncited static-guard credit; got:\n${activeMd}`
     );
     assert.ok(
-      activeMd.includes("1 static guard(s) run, 0 uncited static guard(s)"),
-      `expected guard:domain-purity attributed (1 run, 0 uncited static-guard(s)); got:\n${activeMd}`
+      activeMd.includes("1 static check(s) run, 0 uncited static check(s)"),
+      `expected guard:domain-purity attributed (1 run, 0 uncited static check(s)); got:\n${activeMd}`
     );
   }
 );
@@ -206,7 +209,7 @@ Then(
   "only lint:foo and lint:bar are counted as CI guards, not test or cucumber",
   function () {
     assert.ok(
-      activeMd.includes("2 static guard(s) run, 1 uncited static guard(s)"),
+      activeMd.includes("2 static check(s) run, 1 uncited static check(s)"),
       `expected exactly 2 running guards (test/cucumber excluded); got:\n${activeMd}`
     );
     assert.ok(

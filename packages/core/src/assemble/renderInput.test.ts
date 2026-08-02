@@ -427,7 +427,7 @@ describe("[SCN-RMD-004] the static-guard census is summary counts, no standalone
   // THE LEDGER now (3F-2118, `staticObservationTally`), so the numbers derive from the balance, not
   // a hand-built census the assembler could disagree with. 2 running CI guards = 1 named
   // (lint:foo, posts to its `@lint` row) + 1 uncited (lint:bar, undemanded-running → the suspense
-  // row) → the fold reads {runningGuardCount: 2, uncitedStaticGuardCount: 1}.
+  // row) → the fold reads {runningStaticCheckCount: 2, uncitedStaticCheckCount: 1}.
   const staticGuardsBalance: Ledger = reconcile(
     [{ scnId: "SCN-RMD-010", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:foo" }] }],
     [
@@ -444,9 +444,9 @@ describe("[SCN-RMD-004] the static-guard census is summary counts, no standalone
     expect(parsed).not.toHaveProperty("guards");
   });
 
-  it("materialises the counts under summary.staticGuards ({ runningGuardCount, uncitedStaticGuardCount })", () => {
+  it("materialises the counts under summary.staticGuards ({ runningStaticCheckCount, uncitedStaticCheckCount })", () => {
     const parsed = JSON.parse(renderJson(__er(staticGuardsBalance, false, true), ctx, undefined, undefined));
-    expect(parsed.summary.staticGuards).toEqual({ runningGuardCount: 2, uncitedStaticGuardCount: 1 });
+    expect(parsed.summary.staticGuards).toEqual({ runningStaticCheckCount: 2, uncitedStaticCheckCount: 1 });
   });
 });
 
@@ -561,8 +561,8 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
   it("materialises the static-guard totals", () => {
     const report = assembleRenderInput(__er(rmd005Balance, false, true), ctx, undefined, undefined);
     expect(report.summary.staticGuards).toEqual({
-      runningGuardCount: 2,
-      uncitedStaticGuardCount: 1,
+      runningStaticCheckCount: 2,
+      uncitedStaticCheckCount: 1,
     });
   });
 
@@ -570,14 +570,14 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
     const report = assembleRenderInput(__er(rmd005Balance, false, true), ctx, undefined, undefined);
     const sg = report.summary.staticGuards!;
     // The evidence-obligation count is IMPLICIT — running − uncited, never a surface field.
-    expect(sg.runningGuardCount - sg.uncitedStaticGuardCount).toBe(1);
+    expect(sg.runningStaticCheckCount - sg.uncitedStaticCheckCount).toBe(1);
     // 3F-2291 (@SCN-VOC-004): this pin was two `not.toHaveProperty` negatives naming the
     // fields the 2-field census must NOT carry, one of them a word retired by that ticket.
     // Renaming a word inside a negative assertion empties it silently — it would then pin
     // the absence of a field that never existed at all — so the pin is restated POSITIVELY
     // over the exact key set. Strictly stronger: it now excludes every extra field, not
     // only the two that happened to be named.
-    expect(Object.keys(sg).sort()).toEqual(["runningGuardCount", "uncitedStaticGuardCount"]);
+    expect(Object.keys(sg).sort()).toEqual(["runningStaticCheckCount", "uncitedStaticCheckCount"]);
   });
 
   it("materialises the static-only lint tally (satisfied / total), ignoring runtime evidenceObligations", () => {
@@ -597,7 +597,7 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
   it("carries the three totals through the glue-free JSON serialisation", () => {
     const parsed = JSON.parse(renderJson(__er(rmd005Balance, true, true), ctx));
     expect(parsed.summary.testVolume).toEqual({ totalEvidenceObservations: 6, onScenario: 4, onPhantomScenario: 1, onSuspenseScenario: 1 });
-    expect(parsed.summary.staticGuards).toEqual({ runningGuardCount: 2, uncitedStaticGuardCount: 1 });
+    expect(parsed.summary.staticGuards).toEqual({ runningStaticCheckCount: 2, uncitedStaticCheckCount: 1 });
     expect(parsed.summary.lint).toEqual({ satisfied: 1, total: 2 });
   });
 });

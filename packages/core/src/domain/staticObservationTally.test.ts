@@ -56,21 +56,21 @@ describe("[SCN-USG-001] staticObservationTally folds the posted static-guard cre
     // lint:foo is named by SCN-A AND SCN-B — the SAME object posted to both rows by reference — so
     // it counts ONCE; lint:bar is the undemanded running guard on suspense. lint:water (watermelon)
     // and lint:absent (missing) post but do NOT run, so the running filter excludes them. → 2.
-    expect(tally.runningGuardCount).toBe(2);
+    expect(tally.runningStaticCheckCount).toBe(2);
   });
 
   it("counts the lint credits on the SUSPENSE row as the uncited static guards", () => {
     // lint:bar cites no scenario — the reconciler folded it to the suspense row (@SCN-LDG-007). It is
     // the only uncited static guard; every named guard sits on its own scenario's @lint row.
-    expect(tally.uncitedStaticGuardCount).toBe(1);
+    expect(tally.uncitedStaticCheckCount).toBe(1);
   });
 
-  it("keeps named implicit — runningGuardCount − uncitedStaticGuardCount (the running named count)", () => {
+  it("keeps named implicit — runningStaticCheckCount − uncitedStaticCheckCount (the running named count)", () => {
     // named is not on the surface; it is the implied remainder — here lint:foo (counted once).
-    expect(tally.runningGuardCount - tally.uncitedStaticGuardCount).toBe(1);
+    expect(tally.runningStaticCheckCount - tally.uncitedStaticCheckCount).toBe(1);
   });
 
   it("returns EXACTLY the two-field surface (named is never materialised)", () => {
-    expect(tally).toEqual({ runningGuardCount: 2, uncitedStaticGuardCount: 1 });
+    expect(tally).toEqual({ runningStaticCheckCount: 2, uncitedStaticCheckCount: 1 });
   });
 });

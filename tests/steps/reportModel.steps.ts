@@ -356,7 +356,7 @@ Then(
   function () {
     const summary = rmd005Json.summary as {
       testVolume?: { totalEvidenceObservations: number; onScenario: number; onPhantomScenario: number; onSuspenseScenario: number };
-      staticGuards?: { runningGuardCount: number; uncitedStaticGuardCount: number };
+      staticGuards?: { runningStaticCheckCount: number; uncitedStaticCheckCount: number };
       lint?: { satisfied: number; total: number };
     };
     assert.ok(summary, `expected a summary section; got keys: ${Object.keys(rmd005Json).join(", ")}`);
@@ -367,7 +367,7 @@ Then(
     // Static-guard totals — the usg fixture: 2 guards run, 1 uncited (lint:bar); the named
     // one (lint:foo) is implicit (running − uncited = 1).
     assert.ok(summary.staticGuards, `expected summary.staticGuards; got summary keys: ${Object.keys(summary).join(", ")}`);
-    assert.deepEqual(summary.staticGuards, { runningGuardCount: 2, uncitedStaticGuardCount: 1 });
+    assert.deepEqual(summary.staticGuards, { runningStaticCheckCount: 2, uncitedStaticCheckCount: 1 });
     // Lint tally — the static-only cut: lint:foo declared by SCN-TGT-001 and enforced in CI →
     // 1 of 1 satisfied (the runtime evidence obligations do NOT count).
     assert.ok(summary.lint, `expected summary.lint; got summary keys: ${Object.keys(summary).join(", ")}`);
@@ -388,19 +388,19 @@ Then(
 );
 
 Then(
-  "the persisted static-guard summary carries runningGuardCount and uncitedStaticGuardCount with named implicit",
+  "the persisted static-guard summary carries runningStaticCheckCount and uncitedStaticCheckCount with named implicit",
   function () {
-    const sg = (rmd005Json.summary as { staticGuards: { runningGuardCount: number; uncitedStaticGuardCount: number } }).staticGuards;
+    const sg = (rmd005Json.summary as { staticGuards: { runningStaticCheckCount: number; uncitedStaticCheckCount: number } }).staticGuards;
     // named is IMPLICIT: running − uncited, and non-negative by the counter's
     // internal completeness invariant. No `ciGuards` / `named` field on the persisted surface.
-    const named = sg.runningGuardCount - sg.uncitedStaticGuardCount;
+    const named = sg.runningStaticCheckCount - sg.uncitedStaticCheckCount;
     assert.ok(
       named >= 0,
-      `the implicit named count must be non-negative: ${sg.runningGuardCount} running − ${sg.uncitedStaticGuardCount} uncited = ${named}`
+      `the implicit named count must be non-negative: ${sg.runningStaticCheckCount} running − ${sg.uncitedStaticCheckCount} uncited = ${named}`
     );
     assert.ok(
       !("ciGuards" in sg) && !("named" in sg),
-      `the persisted static-guard summary must carry only { runningGuardCount, uncitedStaticGuardCount }; got keys: ${Object.keys(sg).join(", ")}`
+      `the persisted static-guard summary must carry only { runningStaticCheckCount, uncitedStaticCheckCount }; got keys: ${Object.keys(sg).join(", ")}`
     );
   }
 );

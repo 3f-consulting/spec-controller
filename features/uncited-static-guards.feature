@@ -12,10 +12,10 @@ Feature: Detect uncited static-guards — a CI guard no @lint declares
   guard that runs in CI with NO @lint declaring it — cites no scenario, so reconcile folds it to
   the suspense row (an UNCITED static-guard). The report's static census is a pure counter
   over the stream (countStaticEvidenceObservationKinds → StaticEvidenceObservationKindCounts
-  { runningGuardCount, uncitedStaticGuardCount }; the named count is implicit, running −
+  { runningStaticCheckCount, uncitedStaticCheckCount }; the named count is implicit, running −
   uncited, and the completeness invariant is asserted inside the counter), the static-axis
   mirror of RuntimeEvidenceObservationKindCounts. The report surfaces the counts under
-  "### Static guards", mirroring "### Test volume"; the guard member detail lives in the rows. Only lint:* scripts are guards — install/checkout aren't
+  "### Static checks", mirroring "### Test volume"; the guard member detail lives in the rows. Only lint:* scripts are guards — install/checkout aren't
   scripts, and test/cucumber are the runtime axis's observed evidence (never double-counted);
   tsc deferred.
 
@@ -23,14 +23,14 @@ Feature: Detect uncited static-guards — a CI guard no @lint declares
   in isolation; the integration arm drives the real file reads (ci.yml + package.json + features)
   over a fixture target and asserts the rendered report surface.
 
-  Rule: a CI guard with no @lint scenario is reported as an uncited static-guard
+  Rule: a CI check with no @lint scenario is reported as an uncited static check
 
     @unit @integration @SCN-USG-001
-    Scenario: a CI guard no @lint declares is reported as an uncited static-guard
-      Given a target whose CI runs the lint:foo and lint:bar guards
+    Scenario: a CI check no @lint declares is reported as an uncited static check
+      Given a target whose CI runs the lint:foo and lint:bar checks
       And only lint:foo is declared by an @lint scenario
       When the reconciliation report is rendered for the target
-      Then the Static guards section reports lint:bar as an uncited static-guard
+      Then the Static checks section reports lint:bar as an uncited static check
 
   Rule: a guard an @lint scenario declares is not reported as an uncited static-guard
 

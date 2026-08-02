@@ -1263,19 +1263,19 @@ describe("[SCN-RPT-015] the markdown report renders prose-only @SCN codes in the
 });
 
 /**
- * Unit test for the markdown Static guards section (@SCN-USG-001) — the
+ * Unit test for the markdown Static checks section (@SCN-USG-001) — the
  * static-axis mirror of ### Test volume. Proves renderMarkdown surfaces the guard
  * reconciliation: the identity line always, the suspenseEvidenceObservation list only when non-empty,
  * and the whole section omitted on the back-compat (no-guards) call. Markdown-only.
  */
-describe("[SCN-USG-001] the markdown report renders the Static guards section", () => {
+describe("[SCN-USG-001] the markdown report renders the Static checks section", () => {
   const emptyBalance: Ledger = { scenarioReconciliations: [] };
 
-  // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — the Static guards counts are a FOLD OVER
+  // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — the Static checks counts are a FOLD OVER
   // THE LEDGER now (3F-2118, `staticObservationTally`), so the numbers derive from `balance`, not a
   // hand-built census the renderer could disagree with. Two running CI guards = 1 named
   // (lint:foo, posts to its scenario's `@lint` row) + 1 uncited (lint:bar, undemanded-running,
-  // folds to the suspense row) → the fold reads {runningGuardCount: 2, uncitedStaticGuardCount: 1}.
+  // folds to the suspense row) → the fold reads {runningStaticCheckCount: 2, uncitedStaticCheckCount: 1}.
   const twoRunningOneUncited: Ledger = reconcile(
     [{ scnId: "SCN-USG-001", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:foo" }] }],
     [
@@ -1283,16 +1283,16 @@ describe("[SCN-USG-001] the markdown report renders the Static guards section", 
       { qualityCheck: "lint", staticGuard: "lint:bar", exists: true, enforcedOverRealSource: true },
     ]
   );
-  // One running CI guard, all named → the fold reads {runningGuardCount: 1, uncitedStaticGuardCount: 0}.
+  // One running CI guard, all named → the fold reads {runningStaticCheckCount: 1, uncitedStaticCheckCount: 0}.
   const oneRunningNoneUncited: Ledger = reconcile(
     [{ scnId: "SCN-USG-001", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:foo" }] }],
     [{ qualityCheck: "lint", staticGuard: "lint:foo", exists: true, enforcedOverRealSource: true }]
   );
 
-  it("renders '### Static guards' with the counts line ONLY — the per-guard detail dissolved to the suspense row", () => {
+  it("renders '### Static checks' with the counts line ONLY — the per-guard detail dissolved to the suspense row", () => {
     const md = renderMarkdown(__er(twoRunningOneUncited, false, true), ctx);
-    expect(md).toContain("### Static guards");
-    expect(md).toContain("2 static guard(s) run, 1 uncited static guard(s).");
+    expect(md).toContain("### Static checks");
+    expect(md).toContain("2 static check(s) run, 1 uncited static check(s).");
     // The per-guard DETAIL list dissolved into the suspense-scenario row (@SCN-LDG-007,
     // ruling Q4) — the section carries only the summary-level counts now, no bullets.
     expect(md).not.toContain("- lint:bar");
@@ -1301,14 +1301,14 @@ describe("[SCN-USG-001] the markdown report renders the Static guards section", 
 
   it("shows the counts line but omits the list when every running guard is declared", () => {
     const md = renderMarkdown(__er(oneRunningNoneUncited, false, true), ctx);
-    expect(md).toContain("1 static guard(s) run, 0 uncited static guard(s).");
+    expect(md).toContain("1 static check(s) run, 0 uncited static check(s).");
     // The counts summarise the volume; the itemised list (only shown when > 0) is omitted.
     expect(md).not.toContain("— a CI guard no @lint declares:");
   });
 
-  it("omits the Static guards section when the static-guard axis is not in play (back-compat)", () => {
+  it("omits the Static checks section when the static-guard axis is not in play (back-compat)", () => {
     const md = renderMarkdown(__er(emptyBalance), ctx);
-    expect(md).not.toContain("### Static guards");
+    expect(md).not.toContain("### Static checks");
   });
 });
 

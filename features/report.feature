@@ -225,7 +225,7 @@ Feature: The report renders the ledger as sectioned facts
     interim "# Spec reconciliation" — the report IS the reconciliation; "Ledger" names only
     the INPUT in canon, so the reconciled OUTPUT is never titled "Ledger"), keeps
     "## Run provenance" first, then groups the derived cuts under "## Summary views"
-    (### Run verdict → ### Evidence reconciliation → ### Test volume → ### Static guards →
+    (### Run verdict → ### Evidence reconciliation → ### Test volume → ### Static checks →
     ### Lint evidence obligations → ### Out-of-balance by feature), and moves the per-scenario
     "## Scenario Reconciliations" table to the END with its
     summary lines on top (the verdict tally and the relocated excluded-occurrence bullet),
