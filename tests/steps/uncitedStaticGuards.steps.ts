@@ -4,7 +4,7 @@
  * test + cucumber; only lint:foo is @lint-declared) and asserts the persisted
  * spec-reconciliation.md carries the "### Static checks" cut reporting lint:bar as an
  * uncited static check (reconcile folds the undemanded running guard to the suspense row) —
- * proving the runningStaticGuards → reconcile → staticObservationTally → render → disk
+ * proving the runningStaticChecks → reconcile → staticObservationTally → render → disk
  * wiring over real files, not an in-memory re-run (the anti-watermelon rule).
  * // @SCN-USG-001
  */
@@ -52,10 +52,11 @@ let activeFixture: UsgFixture;
 let activeDir: string;
 let activeMd: string;
 
-// Cucumber-expression alternation ("guards/checks") spans the vocabulary transition: @SCN-USG-001
-// and @SCN-USG-002 say "checks" from here on; the last sibling still on the old wording is
-// @SCN-USG-003, which 3F-2294 flips — at which point the "guards/" alternative is dropped.
-Given("a target whose CI runs the lint:foo and lint:bar guards/checks", function () {
+// The vocabulary transition is complete: @SCN-USG-001, @SCN-USG-002 and (as of 3F-2294)
+// @SCN-USG-003 all say "checks", so the Cucumber-expression alternation ("guards/checks")
+// that spanned the flip has been dropped — this is plain step text again. (@SCN-USG-004 /
+// @SCN-USG-005 drive a different Given over the guard:domain-purity fixture and never used it.)
+Given("a target whose CI runs the lint:foo and lint:bar checks", function () {
   activeFixture = USG_FIXTURE;
   activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg001-"));
 });
@@ -202,19 +203,19 @@ Then(
   }
 );
 
-// @SCN-USG-003 — non-lint CI steps are not derived as guards. The usg fixture ci.yml runs
-// pnpm test + pnpm cucumber alongside the two lint guards; runningStaticGuards includes only
-// lint:* → exactly 2 running guards, and test/cucumber never surface as static guards.
+// @SCN-USG-003 — non-lint CI steps are not derived as static checks. The usg fixture ci.yml runs
+// pnpm test + pnpm cucumber alongside the two lint checks; runningStaticChecks includes only
+// lint:* → exactly 2 running static checks, and test/cucumber never surface as static checks.
 Then(
-  "only lint:foo and lint:bar are counted as CI guards, not test or cucumber",
+  "only lint:foo and lint:bar are counted as CI checks, not test or cucumber",
   function () {
     assert.ok(
       activeMd.includes("2 static check(s) run, 1 uncited static check(s)"),
-      `expected exactly 2 running guards (test/cucumber excluded); got:\n${activeMd}`
+      `expected exactly 2 running static checks (test/cucumber excluded); got:\n${activeMd}`
     );
     assert.ok(
       !activeMd.includes("(test)") && !activeMd.includes("(cucumber)"),
-      `test/cucumber must not surface as static-guard credits; got:\n${activeMd}`
+      `test/cucumber must not surface as static-check credits; got:\n${activeMd}`
     );
   }
 );

@@ -176,7 +176,7 @@ const EXPECTED_VALUE_EXPORTS: readonly string[] = [
   "parseVitestEvidenceObservations",
   "parseCucumberEvidenceObservations",
   "checkStaticEvidenceObligations",
-  "runningStaticGuards",
+  "runningStaticChecks",
   "ciRunCommands",
   "commandInvokesScript",
   // Evidence Reconciliation — layer 1, the assembled statement (assemble/report.ts)

@@ -37,7 +37,7 @@ import {
   type CucumberJsonReport,
 } from "@3f-consulting/spec-controller-core";
 import { checkStaticEvidenceObligations } from "@3f-consulting/spec-controller-core";
-import { runningStaticGuards } from "@3f-consulting/spec-controller-core";
+import { runningStaticChecks } from "@3f-consulting/spec-controller-core";
 // The NAMED-static-guard rule lives ONCE on the journal (the static-axis twin of
 // `evidenceObligationPairsOf`); this command reads it rather than rebuilding the derivation inline.
 // Reached via the core package's `/internal` subpath export — the frozen v1 barrel (@SCN-API-001)
@@ -66,7 +66,7 @@ const CUCUMBER_QUALITY_CHECK: RuntimeQualityCheck = "integration";
 
 /**
  * The static-guard script-prefix convention set — which package.json script names the
- * running-guard observer (`runningStaticGuards`) recognises as static guards, DECLARED at the
+ * running-guard observer (`runningStaticChecks`) recognises as static guards, DECLARED at the
  * CLI edge rather than hardcoded in the core parser. `lint:*` is an earlier internal tool's own convention;
  * `guard:*` is an adopter's repository's (four `guard:*` guards run in an adopter's repository's CI). A third convention adds its
  * prefix here; the core never assumes the set. No CLI override flag yet — that earns its place
@@ -325,7 +325,7 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
   // running static guards are added here. They cite no scenario — the reconciler folds them into the suspense row.
   // (`staticCheckEvidenceObligationSet` is the journal rule's Set, read once above.)
   evidenceObservations.push(
-    ...runningStaticGuards(ciSource, packageJson, GUARD_SCRIPT_PREFIXES).filter(
+    ...runningStaticChecks(ciSource, packageJson, GUARD_SCRIPT_PREFIXES).filter(
       (o) => !staticCheckEvidenceObligationSet.has(o.staticGuard)
     )
   );

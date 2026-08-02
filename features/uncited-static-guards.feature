@@ -7,7 +7,7 @@ Feature: Detect uncited static-guards — a CI guard no @lint declares
   a guard that runs in CI with NOTHING declaring it — an unposted credit.
 
   The running-guard observer emits every running CI guard (the lint:* scripts a CI run: step
-  invokes — runningStaticGuards) into the reconcile stream, so the ONE reconcile engine sees the
+  invokes — runningStaticChecks) into the reconcile stream, so the ONE reconcile engine sees the
   complete static stream: a named guard matches its @lint obligation; an undemanded one — a
   guard that runs in CI with NO @lint declaring it — cites no scenario, so reconcile folds it to
   the suspense row (an UNCITED static-guard). The report's static census is a pure counter
@@ -19,7 +19,7 @@ Feature: Detect uncited static-guards — a CI guard no @lint declares
   scripts, and test/cucumber are the runtime axis's observed evidence (never double-counted);
   tsc deferred.
 
-  The unit arm proves runningStaticGuards + countStaticEvidenceObservationKinds + the render section
+  The unit arm proves runningStaticChecks + countStaticEvidenceObservationKinds + the render section
   in isolation; the integration arm drives the real file reads (ci.yml + package.json + features)
   over a fixture target and asserts the rendered report surface.
 
@@ -41,14 +41,14 @@ Feature: Detect uncited static-guards — a CI guard no @lint declares
       When the reconciliation report is rendered for the target
       Then lint:foo is not reported as an uncited static check
 
-  Rule: non-lint CI steps are not treated as static guards
+  Rule: non-lint CI steps are not treated as static checks
 
     @unit @integration @SCN-USG-003
-    Scenario: test and cucumber CI steps are not derived as static guards
-      Given a target whose CI runs the lint:foo and lint:bar guards
+    Scenario: test and cucumber CI steps are not derived as static checks
+      Given a target whose CI runs the lint:foo and lint:bar checks
       And only lint:foo is declared by an @lint scenario
       When the reconciliation report is rendered for the target
-      Then only lint:foo and lint:bar are counted as CI guards, not test or cucumber
+      Then only lint:foo and lint:bar are counted as CI checks, not test or cucumber
 
   Rule: a guard:-prefixed CI script no @lint scenario declares is reported as an uncited static-guard
 

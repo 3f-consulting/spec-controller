@@ -70,7 +70,7 @@ export type { VitestJsonReport } from "./parse/vitest.js";
 export { parseCucumberEvidenceObservations } from "./parse/cucumber.js";
 export type { CucumberJsonReport } from "./parse/cucumber.js";
 export { checkStaticEvidenceObligations } from "./parse/checkStaticEvidenceObligations.js";
-export { runningStaticGuards } from "./parse/runningStaticGuards.js";
+export { runningStaticChecks } from "./parse/runningStaticChecks.js";
 export { ciRunCommands, commandInvokesScript } from "./parse/checkScriptsRunInCI.js";
 export type { PackageJsonScripts } from "./parse/checkScriptsRunInCI.js";
 

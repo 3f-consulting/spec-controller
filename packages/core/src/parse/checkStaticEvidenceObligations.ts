@@ -5,7 +5,7 @@
  * real tree — so a named static guard that exists but is not wired reconciles as the WATERMELON.
  *
  * One of the two static-guard observers: this one reads the DECLARED evidence-obligation side; the
- * running-guard observer (`runningStaticGuards`, `ingest/ciGuards`) reads every running CI guard. Both
+ * running-guard observer (`runningStaticChecks`, `ingest/ciGuards`) reads every running CI guard. Both
  * share the watermelon-critical CI-parse primitive (`ciRunCommands` / `commandInvokesScript`) from
  * `ingest/ciCommands`, so the structural parse lives in ONE place.
  *

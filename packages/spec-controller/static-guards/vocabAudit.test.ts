@@ -123,14 +123,15 @@ describe("[SCN-VOC-001] classifyWords — bare vs full-term shortenings", () => 
 describe("[SCN-VOC-001] classifyWords — blessed canon verbs", () => {
   it("does not flag `observe` (the running-guard observer verb)", () => {
     // `observe` is blessed as a verb (manifesto line 25, "an observed
-    // piece of evidence") so the surface name `runningStaticGuards` no longer
+    // piece of evidence") so the surface name `runningStaticChecks` no longer
     // flags. The bare noun `observation` is NOT blessed and still flags.
     expect(classifyWords(["observe"], "name")[0]!.flagged).toBe(false);
     // Build the word list from the identifier itself, never a hand approximation: the
-    // real `runningStaticGuards` decomposes to ["running","static","guards"], and an
+    // real `runningStaticChecks` decomposes to ["running","static","checks"], and an
     // earlier hand-written list omitted `static` — so it passed for the wrong reason
-    // (a 3F-1897-family lying fixture). It now passes because `static` co-occurs.
-    const surface = classifyWords(decomposeName("observeRunningStaticGuards"), "name");
+    // (a 3F-1897-family lying fixture). Tracking the identifier through 3F-2294's
+    // `runningStaticGuards` → `runningStaticChecks` rename is that same rule applied.
+    const surface = classifyWords(decomposeName("observeRunningStaticChecks"), "name");
     expect(surface.every((v) => !v.flagged)).toBe(true);
     expect(classifyWords(["observation"], "name")[0]!.flagged).toBe(true);
     expect(classifyWords(["observations"], "name")[0]!.flagged).toBe(true);

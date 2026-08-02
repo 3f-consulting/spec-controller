@@ -1,6 +1,6 @@
 /**
  * Unit tests for the ingest/guard reader (src/ingest/guard.ts) — the EVIDENCE-OBLIGATION
- * observer (the watermelon input). The running-guard observer (`runningStaticGuards`) is
+ * observer (the watermelon input). The running-guard observer (`runningStaticChecks`) is
  * pinned in src/ingest/ciGuards.test.ts; the shared CI-parse primitive both use lives in
  * src/ingest/ciCommands.ts.
  *

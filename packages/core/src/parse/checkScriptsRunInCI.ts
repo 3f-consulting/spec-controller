@@ -3,7 +3,7 @@
  * observers import: walk the CI config STRUCTURALLY to its `run:` commands (`ciRunCommands`), and
  * test whether a command invokes a given npm script by an EXACT package-manager invocation
  * (`commandInvokesScript`). `checkStaticEvidenceObligations` (the named-guard observer, `ingest/guard`) and
- * `runningStaticGuards` (the running-guard observer, `ingest/ciGuards`) both read a guard's
+ * `runningStaticChecks` (the running-guard observer, `ingest/ciGuards`) both read a guard's
  * enforcement off these, so the watermelon-critical parse lives in ONE place — a mis-read could
  * itself HIDE a watermelon (read a wired static guard as unwired, or the reverse).
  *

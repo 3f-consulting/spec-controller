@@ -207,14 +207,14 @@ export const GENERIC_ALLOWLIST: ReadonlySet<string> = new Set([
   "group", "suffix", "uncited", "matched", "eo", "both", "citations",
   // -------------------------------------------------------------------------
   // "running" — deliberate descriptor: the running-guard observer,
-  // `runningStaticGuards` / `runningStaticCheckCount`. It names the guards that RUN (the
+  // `runningStaticChecks` / `runningStaticCheckCount`. It names the guards that RUN (the
   // demanded-versus-running distinction that replaced the `CI` mechanism leak), NOT a silent
   // pass — a tagged, endorsed allowlist entry, not an incidental generic.
   // -------------------------------------------------------------------------
   "running",
   // -------------------------------------------------------------------------
   // "observe" — deliberate verb: the running-guard OBSERVER,
-  // `runningStaticGuards`. The manifesto defines an evidence
+  // `runningStaticChecks`. The manifesto defines an evidence
   // observation as "an OBSERVED piece of evidence" (double-entry-manifesto.md
   // line 25); `observe` is that verb form — the act of reading the running CI
   // guards into evidence observations. A tagged, endorsed allowlist entry, NOT a

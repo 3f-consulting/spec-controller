@@ -20,7 +20,7 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
   as the recorded RATCHET TARGET in the threshold module: a stated destination, not a
   silent ceiling.
 
-  WHY THE GUARD IS NAMED `lint:complexity`. `runningStaticGuards` observes a script only
+  WHY THE GUARD IS NAMED `lint:complexity`. `runningStaticChecks` observes a script only
   when its name carries a guard prefix (`lint:` / `guard:`). A name outside that set
   would run in CI while being structurally invisible to the ledger — a real quality
   check kept off the books, which is exactly where a watermelon hides. Named so it IS

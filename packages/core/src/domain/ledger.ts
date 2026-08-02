@@ -534,7 +534,7 @@ export interface StaticObservationTally {
  * `uncitedStaticCheckCount` is the count of lint credits on the SUSPENSE row — the undemanded static
  * guards the reconciler folded there (a static guard running with no `@lint` naming it,
  * `cites-no-scenario` on the credit side). By construction the app only pushes RUNNING guards into
- * that undemanded stream (`runningStaticGuards`), so every suspense lint credit is running — the
+ * that undemanded stream (`runningStaticChecks`), so every suspense lint credit is running — the
  * plain count is the census's running-and-uncited count.
  *
  * `runningStaticCheckCount` is the count of DISTINCT-BY-OBJECT-IDENTITY RUNNING lint credits across ALL

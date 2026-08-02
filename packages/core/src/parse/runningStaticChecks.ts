@@ -31,7 +31,7 @@
 import type { GuardEvidenceObservation } from "../model.js";
 import { ciRunCommands, commandInvokesScript, type PackageJsonScripts } from "./checkScriptsRunInCI.js";
 
-export function runningStaticGuards(
+export function runningStaticChecks(
   ciSource: string,
   packageJson: PackageJsonScripts,
   guardPrefixes: readonly string[]
