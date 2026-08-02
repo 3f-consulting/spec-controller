@@ -120,3 +120,37 @@ export const TEST_THRESHOLD = {
   maxLines: 400,
   maxLinesPerFunction: "off",
 };
+
+/**
+ * One eslint rule declared at one ceiling, in the shape THAT rule takes (@SCN-CPX-002, 3F-2317).
+ *
+ * WHY THIS LIVES IN THE MODULE WHOSE NUMBERS ALL COME FROM OUTSIDE. It takes a ceiling and holds
+ * none: the SHAPE is a property of eslint's rules, which are as external as the standard itself, so
+ * this file's guarantee is untouched. That is what lets ONE emitter serve both callers — the scope
+ * blocks, whose ceilings are stated from outside, and the exception blocks, whose ceilings are
+ * measured from this tree. Two emitters would be the agreeing-by-copy this codebase keeps removing:
+ * they would agree on the shapes today and drift the first time eslint changed one.
+ *
+ * THE SHAPE IS NOT UNIFORM, AND GETTING IT WRONG IS SILENT. `complexity` takes a bare number
+ * (`["error", 10]`); `max-lines` and `max-lines-per-function` take an options object
+ * (`["error", { max, … }]`). Hand eslint the wrong one and it does not complain — it mis-reads the
+ * option and applies no ceiling at all, which looks exactly like a file that is under its ceiling.
+ * The @unit pin exists for that failure mode specifically, because nothing else would notice it.
+ *
+ * `skipBlankLines: false, skipComments: false` RIDES ON EVERY EMITTED LINE RULE. Every value in
+ * `complexityExceptions.mjs` was measured in that mode; any other mode changes every number in the
+ * debt list at once and in silence — a file that fits under 400 counted-without-comments does not
+ * fit under 400 counted-with.
+ *
+ * A `"off"` ceiling passes straight through to eslint's own severity vocabulary, so the test scope's
+ * `max-lines-per-function` ABSTENTION survives unchanged. Inventing a number for it here would
+ * reinstate the self-certification 3F-2286 exists to remove.
+ *
+ * @type {typeof import("./complexityThresholds.d.mts").ruleAtCeiling}
+ */
+export const ruleAtCeiling = (rule, ceiling) => {
+  if (ceiling === "off") return "off";
+  return rule === "complexity"
+    ? ["error", ceiling]
+    : ["error", { max: ceiling, skipBlankLines: false, skipComments: false }];
+};

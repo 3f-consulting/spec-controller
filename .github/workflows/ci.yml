@@ -51,15 +51,18 @@ jobs:
       - name: Lint scn-tags
         run: pnpm lint:scn-tags
 
-      # The complexity + module-size thresholds over the REAL tree (@SCN-CPX-001, 3F-2177) —
-      # eslint's complexity / max-lines / max-lines-per-function, per-scope thresholds seeded
-      # at the measured maximum so the gate catches REGRESSION without reddening today's
-      # code. Blocking on every push: cheap and deterministic, so it earns a per-push slot.
-      # A red means optimise, or bump the threshold as a conscious edit carrying its reason —
-      # never disable the step. The thresholds and their p90 ratchet targets live in
-      # static-checks/complexityThresholds.mjs. @lint-declared (@lint=lint:complexity on
-      # @SCN-CPX-001) so the tool's own ledger reconciles it rather than reporting it as an
-      # uncited static check.
+      # The complexity + module-size thresholds over the REAL tree (@SCN-CPX-001/002, 3F-2286
+      # superseding 3F-2177) — eslint's complexity / max-lines / max-lines-per-function held to
+      # an EXTERNAL standard: 10 (NIST/McCabe), 40 (Google), 400 (a reasoned chosen ceiling),
+      # in static-checks/complexityThresholds.mjs. Never seeded at what this tree measures —
+      # that was 3F-2177's rule, and it certified whatever the code already did. Today's
+      # exceedances are dated per-file debt in static-checks/complexityExceptions.mjs, each
+      # entry FREEZING its file at the recorded value: an exemption excuses existing debt and
+      # buys no headroom. Blocking on every push: cheap and deterministic, so it earns a
+      # per-push slot. A red means refactor, or record a dated exception at the measured value
+      # — never disable the step, and never add slack in advance. @lint-declared
+      # (@lint=lint:complexity on @SCN-CPX-001 and @SCN-CPX-002) so the tool's own ledger
+      # reconciles it rather than reporting it as an uncited static check.
       - name: Lint complexity
         run: pnpm lint:complexity
 

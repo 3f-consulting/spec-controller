@@ -43,6 +43,9 @@ interface Exception {
 /** The external standard, as the feature states it — 10 / 40 / 400. */
 const STANDARD = { complexity: 10, maxLinesPerFunction: 40, maxLines: 400 } as const;
 
+/** The three rules an exception can freeze. Each takes a DIFFERENT plant shape — see `sourceAt`. */
+const RULES = ["complexity", "max-lines", "max-lines-per-function"] as const;
+
 /** A production path the exception list does not cover; the plants that MUST red go here. */
 const UNEXEMPT_PATH = "packages/core/src/planted/overStandard.ts";
 
@@ -143,3 +146,78 @@ Then("a function over 40 lines outside the exception list reds", async function 
 Then("a module over 400 lines outside the exception list reds", async function () {
   await redsOutsideButNotInside(moduleOfLines(STANDARD.maxLines + 1), "max-lines");
 });
+
+// @SCN-CPX-002
+/**
+ * A source that measures EXACTLY `value` against `rule` — the plant shape differs per rule because
+ * the three rules measure different things, and a single shape would silently measure 1 against two
+ * of them. `complexity` counts decision points (a function of complexity V has V-1 branches), the two
+ * line rules count lines of a function and of a module respectively.
+ */
+const sourceAt = (rule: (typeof RULES)[number], value: number): string => {
+  switch (rule) {
+    case "complexity":
+      return functionOfComplexity(value - 1);
+    case "max-lines-per-function":
+      return functionOfLines(value);
+    case "max-lines":
+      return moduleOfLines(value);
+  }
+};
+
+Given("a file on the exception list at its recorded value", async function () {
+  const exceptionModule = await import(
+    "../../packages/spec-controller/static-checks/complexityExceptions.mjs"
+  );
+  exceptions = exceptionModule.COMPLEXITY_EXCEPTIONS as readonly Exception[];
+
+  // Vacuity floor: an empty list would make both Thens below pass over nothing.
+  assert.ok(exceptions.length > 0, "the exception list must record the tree's exceedances");
+
+  // Every rule must actually be represented. The three do NOT share an options shape — `complexity`
+  // takes a bare number, the line rules an object — so an unrepresented rule is exactly the emitter
+  // bug this scenario exists to catch, and it would otherwise be skipped in silence.
+  for (const rule of RULES) {
+    assert.ok(
+      exceptions.some((entry) => entry.rule === rule),
+      `the exception list must exercise \`${rule}\`, or its emitted shape goes untested`,
+    );
+  }
+});
+
+Then("the file at its recorded value does not red", async function () {
+  // The positive half, and it is not decoration: a ceiling emitted at the wrong number — or in the
+  // wrong shape, or without `skipBlankLines: false` — would red EVERY exempt file, and this is what
+  // catches that. Asserted over every entry, so no shape and no file is taken on trust.
+  for (const entry of exceptions) {
+    const findings = await lintAs(sourceAt(entry.rule, entry.value), entry.path);
+    assert.ok(
+      !findings.includes(entry.rule),
+      `${entry.path} at its recorded ${entry.rule} value of ${entry.value} must NOT red — an ` +
+        `exception excuses the debt already there (found: ${findings.join(", ") || "none"})`,
+    );
+  }
+});
+
+Then(
+  "the same file one line past its recorded value reds against that rule",
+  async function () {
+    // The half that only exists from @SCN-CPX-002 onward. Under @SCN-CPX-001 an exception switched
+    // the rule OFF, so this same plant produced no finding at all and the file could grow without
+    // limit. The ceiling is what turns the recorded value from a note into a line.
+    //
+    // WHAT THIS DOES AND DOES NOT PIN. eslint holds these rules per FILE, so each entry carries that
+    // file's WORST offender and freezes the file there. So this asserts the worst offender growing
+    // past the recorded value reds — NOT that any function in the file reds when it grows.
+    for (const entry of exceptions) {
+      const findings = await lintAs(sourceAt(entry.rule, entry.value + 1), entry.path);
+      assert.ok(
+        findings.includes(entry.rule),
+        `${entry.path} one past its recorded ${entry.rule} value of ${entry.value} must red ` +
+          `against \`${entry.rule}\` — an exception buys no headroom (found: ${
+            findings.join(", ") || "none"
+          })`,
+      );
+    }
+  },
+);

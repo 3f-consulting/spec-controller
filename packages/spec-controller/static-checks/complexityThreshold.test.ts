@@ -43,7 +43,15 @@ import {
   STANDARD_SOURCES,
   TEST_THRESHOLD,
   type ComplexityThreshold,
+  type EslintRuleId,
+  type RuleDeclaration,
+  type RuleThreshold,
 } from "./complexityThresholds.mjs";
+// A NAMESPACE import, deliberately: `ruleAtCeiling` is asserted to exist below, and a named import of
+// a missing export is an ESM link error that takes this whole file — and with it @SCN-CPX-001's
+// evidence — down before a single assertion runs. Through the namespace, its absence is a failing
+// assertion with a sentence, which is what a red is supposed to be.
+import * as thresholdModule from "./complexityThresholds.mjs";
 import { COMPLEXITY_EXCEPTIONS } from "./complexityExceptions.mjs";
 
 /**
@@ -191,5 +199,75 @@ describe("[SCN-CPX-001] the exception list records today's exceedances as dated 
       (entry) => scopeOf(entry.path)[RULE_TO_KEY[entry.rule]] === "off",
     );
     expect(deadEntries).toEqual([]);
+  });
+});
+
+/**
+ * @SCN-CPX-002 (3F-2317) — the emitter that turns a recorded value into a frozen ceiling.
+ *
+ * DIVISION OF LABOUR WITH THE @integration ARM. Whether eslint actually reds at value+1 is eslint's
+ * behaviour, proven there by planting against the REAL config. What is ours, and what this pins, is
+ * the DECLARATION the config hands eslint: the right shape per rule, the counting mode the recorded
+ * values were measured in, and a ceiling at exactly the recorded number for every entry. Those are
+ * silent failures — eslint mis-reads a wrong-shaped option rather than complaining — so they need a
+ * pin that does not depend on noticing an absent red.
+ */
+describe("[SCN-CPX-002] an exempt file that grows past its recorded value reds the build", () => {
+  const emit = (rule: EslintRuleId, ceiling: RuleThreshold): RuleDeclaration =>
+    thresholdModule.ruleAtCeiling(rule, ceiling);
+
+  it("[SCN-CPX-002] the threshold module emits rule declarations — one emitter serves both scopes and the debt list", () => {
+    // Stated first and on its own so its absence reads as a sentence. One emitter is what stops the
+    // exception blocks re-deciding a rule's option shape in a second place and drifting from the
+    // scope blocks — the agreeing-by-copy this codebase keeps removing.
+    expect(typeof thresholdModule.ruleAtCeiling).toBe("function");
+  });
+
+  it("[SCN-CPX-002] `complexity` is emitted as a bare number — the one rule with no options object", () => {
+    // The trap the ticket names: eslint takes `["error", 10]` for complexity and `["error", {max}]`
+    // for the line rules. Hand it the wrong one and it SILENTLY mis-reads the config — no error, no
+    // red, just a ceiling that is not there. A shape mistake here is invisible everywhere else.
+    expect(emit("complexity", 21)).toEqual(["error", 21]);
+  });
+
+  it("[SCN-CPX-002] both line rules are emitted as an options object carrying the ceiling as `max`", () => {
+    expect(emit("max-lines", 510)).toEqual([
+      "error",
+      { max: 510, skipBlankLines: false, skipComments: false },
+    ]);
+    expect(emit("max-lines-per-function", 44)).toEqual([
+      "error",
+      { max: 44, skipBlankLines: false, skipComments: false },
+    ]);
+  });
+
+  it("[SCN-CPX-002] every emitted line rule counts blank lines and comments — the mode the values were measured in", () => {
+    // Not a default worth leaving implicit. Every recorded value was measured with both false, and
+    // any other mode changes every number in the debt list at once and in silence.
+    for (const rule of ["max-lines", "max-lines-per-function"] as const) {
+      const [, options] = emit(rule, 100) as readonly ["error", Record<string, unknown>];
+      expect(options.skipBlankLines).toBe(false);
+      expect(options.skipComments).toBe(false);
+    }
+  });
+
+  it("[SCN-CPX-002] an `off` ceiling passes straight through to eslint's own severity vocabulary", () => {
+    // The test scope's max-lines-per-function abstention has to survive the emitter unchanged; a
+    // number invented for it here would reinstate the self-certification 3F-2286 removed.
+    expect(emit("max-lines-per-function", "off")).toBe("off");
+  });
+
+  it("[SCN-CPX-002] every exception entry emits a ceiling at exactly its recorded value — never an `off`", () => {
+    // The load-bearing one, and the difference from @SCN-CPX-001. There an entry emitted `"off"` and
+    // the file could grow without limit; here it emits a ceiling AT the recorded number, so the
+    // exemption excuses the debt already present and buys not one line of headroom.
+    expect(COMPLEXITY_EXCEPTIONS.length).toBeGreaterThan(0);
+    for (const entry of COMPLEXITY_EXCEPTIONS) {
+      const declaration = emit(entry.rule, entry.value);
+      expect(declaration, `${entry.path} (${entry.rule}) must not be switched off`).not.toBe("off");
+      const [severity, options] = declaration as ["error", number | { max: number }];
+      expect(severity).toBe("error");
+      expect(typeof options === "number" ? options : options.max).toBe(entry.value);
+    }
   });
 });

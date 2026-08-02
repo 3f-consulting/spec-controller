@@ -49,3 +49,22 @@ export declare const TEST_THRESHOLD: ComplexityThreshold;
  * re-typing the retired values into the test and calling that an independent check.
  */
 export declare const RETIRED_TREE_DERIVED_SEEDS: readonly number[];
+
+/** The three eslint rule ids the two scopes and the exception list share. */
+export type EslintRuleId = "complexity" | "max-lines" | "max-lines-per-function";
+
+/** One eslint rule declaration: `"off"`, or `["error", …]` in the shape that rule takes. */
+export type RuleDeclaration =
+  | "off"
+  | readonly ["error", number]
+  | readonly ["error", { max: number; skipBlankLines: false; skipComments: false }];
+
+/**
+ * One rule declared at one ceiling, in the shape THAT rule takes (@SCN-CPX-002, 3F-2317).
+ *
+ * The ceiling may come from either side of the provenance line — a scope threshold stated from
+ * outside this tree, or an exception's value measured from it — because the SHAPE is a property of
+ * eslint's rules and not of any number. That is what lets one emitter serve both without either
+ * module's guarantee bending.
+ */
+export declare function ruleAtCeiling(rule: EslintRuleId, ceiling: RuleThreshold): RuleDeclaration;

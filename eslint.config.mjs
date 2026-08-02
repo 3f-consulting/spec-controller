@@ -21,18 +21,27 @@
  * threshold and thereby overrides the production block for test files. That is the whole exclusion
  * mechanism — there is no `ignores` entry for tests, and adding one would silently un-hold them.
  *
- * ═══ THE EXCEPTION BLOCKS, AND WHAT THEY DO *TODAY* ═══
+ * ═══ THE EXCEPTION BLOCKS — A FROZEN CEILING PER FILE PER RULE (@SCN-CPX-002, 3F-2317) ═══
  *
  * ORDER IS LOAD-BEARING. The exception blocks are emitted LAST, after both scope blocks, for exactly
  * the same reason the test block follows the production one: later wins. Moving them above either
  * scope block would silently restore the standard over every exempt file and red the tree.
  *
- * AT THIS STAGE AN EXCEPTION SWITCHES ITS RULE **OFF** FOR THAT FILE. The `value` each entry carries is
- * WRITTEN BUT NOT YET ENFORCED — an exempt file could double in size today and nothing would red. That
- * is deliberate and temporary: freezing a file at exactly its recorded number is `@SCN-CPX-002`'s
- * behaviour (3F-2317), and implementing it here would leave that sub-issue with no genuine red to
- * drive it. Do NOT read the current state as the finished mechanism — the ratchet arrives in two more
- * steps, and until it does the list is a debt REGISTER rather than a ceiling.
+ * AN EXCEPTION FREEZES ITS FILE AT EXACTLY THE RECORDED NUMBER. It excuses the debt the file already
+ * carries and buys not one line of headroom: at the recorded value the file is green, one past it
+ * reds. `@SCN-CPX-001` switched the rule OFF instead, so an exempt file could double in size and
+ * nothing would notice — that stage is over.
+ *
+ * WHAT THE CEILING DOES AND DOES NOT GUARANTEE. eslint holds these rules per FILE, not per function,
+ * so each entry carries that file's WORST offender for the rule and the whole file is frozen there.
+ * The guarantee is "the file reds when its WORST offender for that rule grows past the recorded
+ * value" — NOT "any function in it reds when it grows". A file frozen at 72 is frozen at 72 for every
+ * function in it, so a 41-line function there can reach 72 unnoticed. Said plainly because a gate
+ * must not certify more than it checks; closing it needs a different mechanism and its own @SCN.
+ *
+ * A FILE UNDER ITS RECORDED VALUE STILL PASSES. Banking that improvement — reding a list that has
+ * stopped matching the tree, in EITHER direction — is `@SCN-CPX-003`'s reconciliation (3F-2318), and
+ * it is what turns this ceiling into a ratchet. Until then an entry can go stale downward in silence.
  */
 
 import tseslint from "typescript-eslint";
@@ -40,27 +49,24 @@ import { COMPLEXITY_EXCEPTIONS } from "./packages/spec-controller/static-checks/
 import {
   PRODUCTION_THRESHOLD,
   TEST_THRESHOLD,
+  ruleAtCeiling,
 } from "./packages/spec-controller/static-checks/complexityThresholds.mjs";
 
 /**
- * One rule at one scope's threshold, in the shape that rule takes.
+ * All three rules at one scope's thresholds.
  *
- * The three rules do NOT share an options shape — `complexity` takes a bare number, the two line rules
- * take an options object — so the shape is chosen per rule rather than assumed uniform. A threshold of
- * `"off"` passes straight through to eslint's own severity vocabulary.
- *
- * `skipBlankLines: false, skipComments: false` is load-bearing, not a default worth leaving implicit:
- * every recorded exception value was MEASURED in this mode, and any other mode changes every number
- * silently — a file that fits under 400 counted-without-comments does not fit under 400
- * counted-with.
+ * The per-rule option SHAPE is not decided here — `ruleAtCeiling` owns it, and the exception blocks
+ * below call the same function. That is deliberate: a ceiling emitted in the wrong shape is read by
+ * eslint as no ceiling at all, silently, so the two callers must not each decide it. One emitter, one
+ * @unit pin over it, no copy to drift.
  */
-const lineRule = (max) =>
-  max === "off" ? "off" : ["error", { max, skipBlankLines: false, skipComments: false }];
-
 const thresholdRules = (threshold) => ({
-  complexity: threshold.complexity === "off" ? "off" : ["error", threshold.complexity],
-  "max-lines": lineRule(threshold.maxLines),
-  "max-lines-per-function": lineRule(threshold.maxLinesPerFunction),
+  complexity: ruleAtCeiling("complexity", threshold.complexity),
+  "max-lines": ruleAtCeiling("max-lines", threshold.maxLines),
+  "max-lines-per-function": ruleAtCeiling(
+    "max-lines-per-function",
+    threshold.maxLinesPerFunction,
+  ),
 });
 
 /** TypeScript needs a parser; none of the three rules is type-aware, so no `project` is required. */
@@ -87,9 +93,10 @@ export default [
     languageOptions: tsLanguageOptions,
     rules: thresholdRules(TEST_THRESHOLD),
   },
-  // Today's dated debt, one block per file per rule. LAST, so they win over both scope blocks.
-  ...COMPLEXITY_EXCEPTIONS.map(({ path, rule }) => ({
+  // Today's dated debt, one block per file per rule, each FROZEN at its recorded value. LAST, so
+  // they win over both scope blocks.
+  ...COMPLEXITY_EXCEPTIONS.map(({ path, rule, value }) => ({
     files: [path],
-    rules: { [rule]: "off" },
+    rules: { [rule]: ruleAtCeiling(rule, value) },
   })),
 ];

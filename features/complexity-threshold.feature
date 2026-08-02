@@ -49,3 +49,35 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
       Then a function over complexity 10 outside the exception list reds
       And a function over 40 lines outside the exception list reds
       And a module over 400 lines outside the exception list reds
+
+  Rule: an exempt file reds when it worsens past its recorded value
+
+    An exception excuses the debt a file already carries and buys not one line of
+    headroom. @SCN-CPX-001 recorded each exceedance's measured value but switched the
+    rule OFF for that file, so an exempt file could grow without limit; here each entry
+    becomes a FROZEN CEILING at exactly the recorded number. Both halves of the rule are
+    load-bearing: the file AT its recorded value must stay green — if the generated
+    ceilings were wrong the whole tree would red, and that is what the green half
+    catches — and one line past it must red naming that file and that rule.
+
+    THE GUARANTEE, STATED AT ITS ACTUAL STRENGTH. eslint applies max-lines-per-function
+    per FILE, not per function, so a per-function ceiling is not expressible and each
+    entry carries that file's WORST offender for the rule. The guarantee is therefore
+    precisely: an exempt file reds when its WORST offender for that rule grows past the
+    recorded value — NOT that any function in it reds when it grows. A file frozen at 72
+    is frozen at 72 for every function in it, so a 41-line function there can reach 72
+    unnoticed. Said plainly because a gate must not certify more than it checks, which is
+    the whole point of 3F-2286. Closing that gap needs a different mechanism (a custom
+    rule, or the reconciliation reading per-function values) and is a separate behaviour
+    with its own @SCN — deliberately not folded in here.
+
+    An exempt file UNDER its recorded value stays green at this stage. Banking that
+    improvement is @SCN-CPX-003's behaviour, and implementing it here would leave that
+    scenario with no genuine red to drive it.
+
+    @unit @integration @lint=lint:complexity @SCN-CPX-002
+    Scenario: an exempt file that grows past its recorded value reds the build
+      Given a file on the exception list at its recorded value
+      When the complexity fitness function scans the real tree
+      Then the file at its recorded value does not red
+      And the same file one line past its recorded value reds against that rule
