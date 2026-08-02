@@ -97,3 +97,24 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
       When the vocabulary audit runs over the corpus
       Then "ci-performance" is flagged, renamed to "ci-run-time"
       And "ci-run-time" is not flagged
+
+  Rule: the retired metric word "budget" reds; the canon "threshold" stays green
+
+    The second regrowth guard (@SCN-VOC-007, 3F-2290), and the first that also PURGES:
+    a threshold is a ceiling, not something spent down, so the CI/metric sense of
+    `budget` is retired in favour of `threshold`. Unlike @SCN-VOC-003 / @SCN-VOC-006
+    this needs no phrase rule and no adjacency — `budget` carries no canon homograph
+    anywhere in this vocabulary, so it is a plain BANNED WORD, which is the strongest
+    matcher available: it reds in BOTH modes, in an identifier and in prose alike, and
+    the naive singulariser folds `budgets` onto the same stem, so the plural is covered
+    by construction rather than by a second entry. `threshold` is held green POSITIVELY —
+    it joins the endorsed generic allowlist, so the canon word is APPROVED rather than
+    merely un-flagged (before this rule it flagged as `unknown` on a Stryker JSON key,
+    which is a green nobody chose).
+
+    @unit @SCN-VOC-007
+    Scenario: the audit reds a metric "budget" and stays green on "threshold"
+      Given a corpus carrying a metric "budget" and the canon "threshold"
+      When the vocabulary audit runs over the corpus
+      Then "budget" is flagged, renamed to "threshold"
+      And "threshold" is not flagged

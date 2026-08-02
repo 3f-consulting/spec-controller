@@ -6,40 +6,40 @@
  * `max-lines-per-function`. Deliberately no `recommended` preset and no style rules: the ticket
  * declared three, and a preset would smuggle in a large ruleset nobody endorsed (`zero-shape`).
  *
- * The budgets are NOT written here — they live in `static-guards/complexityBudgets.mjs`, the one
+ * The thresholds are NOT written here — they live in `static-guards/complexityThresholds.mjs`, the one
  * source the @unit pin also reads. See that file for why they are seeded at the measured maximum
  * rather than the p90, and for the ratchet targets.
  *
- * SCOPE MATCHES WHAT WAS MEASURED. The production block covers exactly the population the budgets were
+ * SCOPE MATCHES WHAT WAS MEASURED. The production block covers exactly the population the thresholds were
  * measured over — `packages/<pkg>/src` and `packages/<pkg>/static-guards`. Widening these globs without
- * re-measuring would let the guard red over files no budget was ever calibrated against, which is how
+ * re-measuring would let the guard red over files no threshold was ever calibrated against, which is how
  * a gate starts crying wolf.
  *
  * HOW THE TEST SCOPE IS CARVED OUT. Flat config applies blocks in order and later blocks win for the
  * files they match, so the `**\/*.test.ts` block below re-declares the same three rules at the test
- * budget and thereby overrides the production block for test files. That is the whole exclusion
+ * threshold and thereby overrides the production block for test files. That is the whole exclusion
  * mechanism — there is no `ignores` entry for tests, and adding one would silently un-gate them.
  */
 
 import tseslint from "typescript-eslint";
 import {
-  PRODUCTION_BUDGET,
-  TEST_BUDGET,
-} from "./packages/spec-controller/static-guards/complexityBudgets.mjs";
+  PRODUCTION_THRESHOLD,
+  TEST_THRESHOLD,
+} from "./packages/spec-controller/static-guards/complexityThresholds.mjs";
 
 /**
- * The three rules at one scope's budget.
+ * The three rules at one scope's threshold.
  *
  * `skipBlankLines: false, skipComments: false` is load-bearing, not a default worth leaving implicit:
- * the budgets were MEASURED in this mode, and any other mode changes every number silently — a file
+ * the thresholds were MEASURED in this mode, and any other mode changes every number silently — a file
  * that fits under 1024 counted-with-comments does not fit under 1024 counted-without.
  */
-const budgetRules = (budget) => ({
-  complexity: ["error", budget.complexity],
-  "max-lines": ["error", { max: budget.maxLines, skipBlankLines: false, skipComments: false }],
+const thresholdRules = (threshold) => ({
+  complexity: ["error", threshold.complexity],
+  "max-lines": ["error", { max: threshold.maxLines, skipBlankLines: false, skipComments: false }],
   "max-lines-per-function": [
     "error",
-    { max: budget.maxLinesPerFunction, skipBlankLines: false, skipComments: false },
+    { max: threshold.maxLinesPerFunction, skipBlankLines: false, skipComments: false },
   ],
 });
 
@@ -59,12 +59,12 @@ export default [
     // Production: the measured population.
     files: ["packages/*/src/**/*.ts", "packages/*/static-guards/**/*.ts"],
     languageOptions: tsLanguageOptions,
-    rules: budgetRules(PRODUCTION_BUDGET),
+    rules: thresholdRules(PRODUCTION_THRESHOLD),
   },
   {
-    // Tests: same three rules, own budget. Must come AFTER the production block to win.
+    // Tests: same three rules, own threshold. Must come AFTER the production block to win.
     files: ["**/*.test.ts"],
     languageOptions: tsLanguageOptions,
-    rules: budgetRules(TEST_BUDGET),
+    rules: thresholdRules(TEST_THRESHOLD),
   },
 ];

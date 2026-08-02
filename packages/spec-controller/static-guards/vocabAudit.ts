@@ -21,7 +21,7 @@
  * Design: the closed-vocabulary audit tool. Word-set authority: the double-entry
  * manifesto's mapping table.
  *
- * @SCN-VOC-001 / @SCN-VOC-002 / @SCN-VOC-003 / @SCN-VOC-006 —
+ * @SCN-VOC-001 / @SCN-VOC-002 / @SCN-VOC-003 / @SCN-VOC-006 / @SCN-VOC-007 —
  * features/vocabulary-audit.feature.
  */
 
@@ -223,6 +223,15 @@ export const GENERIC_ALLOWLIST: ReadonlySet<string> = new Set([
   // `observation` (still flags per operator ruling — report-only).
   // -------------------------------------------------------------------------
   "observe",
+  // -------------------------------------------------------------------------
+  // @SCN-VOC-007 — `threshold` is the CANON metric word that replaces the retired
+  // `budget` (a threshold is a ceiling, not something spent down). It is allowlisted
+  // rather than left to pass by accident: the rename target of a banned word must be
+  // APPROVED, or the purge trades a flagged word for an `unknown` one and the audit's
+  // green means nothing. Before this entry it flagged `unknown` on stryker.config.json's
+  // `thresholds` key — a green nobody chose. The plural folds onto this stem.
+  // -------------------------------------------------------------------------
+  "threshold",
 ]);
 
 /** Ruled allowed OUTRIGHT (2026-07-02): report, spec, feature. */
@@ -241,6 +250,14 @@ export const BANNED_WORDS: ReadonlySet<string> = new Set([
   // Rejected aliases: `requirement(s)` → evidence obligation;
   // `oob` → out-of-balance (opaque abbreviation of the verdict value).
   "requirement", "oob",
+  // @SCN-VOC-007 — the retired CI/metric word `budget` → `threshold`. A plain banned
+  // word, deliberately NOT the phrase rule @SCN-VOC-003 / @SCN-VOC-006 needed: `budget`
+  // has no canon homograph anywhere in this vocabulary, so the strongest matcher is
+  // also the correct one. Banned reds in BOTH modes, so the word cannot survive in a
+  // comment, a Gherkin line or a config key while the identifiers are swept; and the
+  // naive singulariser folds `budgets` onto this stem, so the plural — the real
+  // filename was `complexityBudgets.mjs` — needs no second entry.
+  "budget",
 ]);
 
 /** Words approved only inside their full manifesto term; bare → flag. */
@@ -314,6 +331,9 @@ export const REJECTED_ALIAS_TO_CANONICAL: Readonly<Record<string, string>> = {
   requirement: "evidence obligation",
   requirements: "evidence obligations",
   oob: "out of balance",
+  // @SCN-VOC-007 — singular only: `budgets` resolves through the singulariser stem
+  // lookup in classifyWords, so a plural entry would be a second copy to drift.
+  budget: "threshold",
 };
 
 // ---------------------------------------------------------------------------

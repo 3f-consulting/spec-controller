@@ -389,7 +389,7 @@ describe("[SCN-VOC-006] the retired tag `ci-performance`", () => {
     // so `performance` standing alone (or preceded by anything but `ci`) is untouched.
     expect(classifyWords(["performance"], "name").every((v) => !v.flagged)).toBe(true);
     expect(
-      classifyWords(decomposeName("performance-budget-check"), "name").every(
+      classifyWords(decomposeName("performance-threshold-check"), "name").every(
         (v) => v.reason !== "ci-performance"
       )
     ).toBe(true);
@@ -414,6 +414,66 @@ describe("[SCN-VOC-006] the retired tag `ci-performance`", () => {
     expect(red!.action).toBe("rename");
     expect(red!.file).toBe("src/notes.ts");
     // `ci-run-time` produced no rename row anywhere.
+    expect(manifest.some((r) => r.file === "src/ok.ts")).toBe(false);
+  });
+});
+
+describe("[SCN-VOC-007] the retired metric word `budget`", () => {
+  // The second regrowth guard, and the first that also purges. Unlike @SCN-VOC-003 /
+  // @SCN-VOC-006 this is NOT a phrase rule: `budget` has no canon homograph anywhere in
+  // this vocabulary, so it is a plain BANNED WORD — the strongest matcher available. It
+  // reds in BOTH modes, and the naive singulariser folds `budgets` onto the same stem.
+
+  it("[SCN-VOC-007] reds a bare `budget` in PROSE, renaming to the canon `threshold`", () => {
+    const v = classifyWords(["budget"], "prose").find((w) => w.word === "budget")!;
+    expect(v.flagged).toBe(true);
+    expect(v.reason).toBe("banned");
+    expect(v.canonical).toBe("threshold");
+  });
+
+  it("[SCN-VOC-007] reds in NAME mode too — a `complexityBudget` composite identifier", () => {
+    const v = classifyWords(decomposeName("complexityBudget"), "name").find(
+      (w) => w.word === "budget"
+    )!;
+    expect(v.flagged).toBe(true);
+    expect(v.reason).toBe("banned");
+    expect(v.canonical).toBe("threshold");
+  });
+
+  it("[SCN-VOC-007] the plural `budgets` folds onto the same stem — no second entry needed", () => {
+    // The singulariser is what makes one BANNED_WORDS entry cover the inflection, so the
+    // plural is proven rather than assumed: `complexityBudgets.mjs` was the real filename.
+    const v = classifyWords(["budgets"], "prose").find((w) => w.word === "budgets")!;
+    expect(v.flagged).toBe(true);
+    expect(v.reason).toBe("banned");
+    expect(v.canonical).toBe("threshold");
+  });
+
+  it("[SCN-VOC-007] STAYS GREEN on the canon `threshold` — APPROVED, not merely un-flagged", () => {
+    // NAME mode is the discriminating one: an unapproved word flags `unknown` there, so a
+    // green in NAME mode can only come from `threshold` actually being in the allowlist.
+    // Before this rule it flagged `unknown` on stryker.config.json's `thresholds` key.
+    expect(classifyWords(["threshold"], "name").every((v) => !v.flagged)).toBe(true);
+    expect(classifyWords(["thresholds"], "name").every((v) => !v.flagged)).toBe(true);
+    // …and inside the real renamed filename. Scoped to the `thresholds` word rather than
+    // asserted over the whole composite: `complexity` is its own, pre-existing `unknown`
+    // and is not this rule's business.
+    const inFilename = classifyWords(decomposeName("complexityThresholds.mjs"), "name").find(
+      (v) => v.word === "thresholds"
+    )!;
+    expect(inFilename.flagged).toBe(false);
+  });
+
+  it("[SCN-VOC-007] flags a real prose `budget` with action rename, and passes `threshold`", () => {
+    const { manifest } = auditFiles([
+      { path: "src/notes.ts", content: "// the complexity budget is retired here\n" },
+      { path: "src/ok.ts", content: "// the complexity threshold is the canon replacement\n" },
+    ]);
+    const red = manifest.find((r) => r.current === "budget" && r.new === "threshold");
+    expect(red).toBeDefined();
+    expect(red!.action).toBe("rename");
+    expect(red!.file).toBe("src/notes.ts");
+    // `threshold` produced no row of any kind.
     expect(manifest.some((r) => r.file === "src/ok.ts")).toBe(false);
   });
 });
