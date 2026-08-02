@@ -143,12 +143,14 @@ Then(
 );
 
 // @SCN-USG-004 — a guard:-prefixed CI script (guard:domain-purity) that no @lint declares
-// surfaces as an uncited static-guard, exactly as a lint:* one does. The report's Static
-// checks section reports 1 running guard / 1 uncited, and the suspense row carries the
+// surfaces as an uncited static check, exactly as a lint:* one does. The report's Static
+// checks section reports 1 running check / 1 uncited, and the suspense row carries the
 // guard:domain-purity handle as a cites-no-scenario credit under the "lint" axis (the axis name
-// is unchanged — it is the static-guard axis, not the script prefix).
+// is unchanged — it is the static-check axis, not the script prefix). `guard:domain-purity`
+// itself is a CI script NAME — a value the derivation matches on, not vocabulary — so it is
+// deliberately untouched by the static-check rename (3F-1929; 3F-1852 owns script names).
 Then(
-  "the Static guards section reports guard:domain-purity as an uncited static-guard",
+  "the Static checks section reports guard:domain-purity as an uncited static check",
   function () {
     assert.match(
       activeMd,

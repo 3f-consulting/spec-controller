@@ -50,14 +50,14 @@ Feature: Detect uncited static-guards — a CI guard no @lint declares
       When the reconciliation report is rendered for the target
       Then only lint:foo and lint:bar are counted as CI checks, not test or cucumber
 
-  Rule: a guard:-prefixed CI script no @lint scenario declares is reported as an uncited static-guard
+  Rule: a guard:-prefixed CI script no @lint scenario declares is reported as an uncited static check
 
     @unit @integration @SCN-USG-004
-    Scenario: an undeclared guard:-prefixed script running in CI is an uncited static-guard
+    Scenario: an undeclared guard:-prefixed script running in CI is an uncited static check
       Given a target whose CI runs the guard:domain-purity script
       And no @lint scenario declares guard:domain-purity
       When the reconciliation report is rendered for the target
-      Then the Static guards section reports guard:domain-purity as an uncited static-guard
+      Then the Static checks section reports guard:domain-purity as an uncited static check
 
   Rule: a guard:-prefixed CI script an @lint scenario declares is attributed, not uncited
 
