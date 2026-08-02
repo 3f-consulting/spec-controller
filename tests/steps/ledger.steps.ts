@@ -322,7 +322,7 @@ Then(
       `expected ${ldg011ScnId} not to carry a missing item; got "${items}"`
     );
     assert.ok(
-      !items.includes("Evidence Observation cites a Scenario that did not demand it"),
+      !items.includes("Evidence Observation cites a Scenario with no matching Evidence Obligation"),
       `expected ${ldg011ScnId} not to carry an undemanded item; got "${items}"`
     );
   }
@@ -627,7 +627,7 @@ Then("the cucumber observation is reported undemanded", function () {
     .split(";")
     .map((s) => s.trim())
     // The item renders the outcome's canon description, not the handle (3F-1626).
-    .find((s) => s.includes("Evidence Observation cites a Scenario that did not demand it"));
+    .find((s) => s.includes("Evidence Observation cites a Scenario with no matching Evidence Obligation"));
   assert.ok(
     undemanded,
     `expected ${ldg015ScnId} to carry an undemanded cucumber observation; got "${items}"`
@@ -795,7 +795,7 @@ Then(
     // verdict is out-of-balance (an undemanded item is a non-satisfied reconciling item).
     const { verdict, items } = rowCells(scnId);
     assert.ok(
-      items.includes("Evidence Observation cites a Scenario that did not demand it"),
+      items.includes("Evidence Observation cites a Scenario with no matching Evidence Obligation"),
       `expected ${scnId}'s reconciling items to include an undemanded item; got "${items}"`
     );
     assert.ok(

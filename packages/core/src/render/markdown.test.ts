@@ -1559,7 +1559,7 @@ describe("[SCN-RPT-020] the markdown renders each outcome's canon description, n
     expect(md).toContain("| ↳ Evidence Observation is passing but fabricated |");
     expect(md).toContain("| ↳ Evidence Observation cites an unknown Scenario |");
     expect(md).toContain("| ↳ Evidence Observation cites no Scenario |");
-    expect(md).toContain("| ↳ Evidence Observation cites a Scenario that did not demand it |");
+    expect(md).toContain("| ↳ Evidence Observation cites a Scenario with no matching Evidence Obligation |");
     expect(md).toContain(
       "| ↳ Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited |"
     );
@@ -1646,7 +1646,7 @@ describe("[SCN-RPT-025] every outcome glosses as the manifesto's canon Outcome t
     "no-scn-code": "Evidence Obligation has no @SCN code for an Evidence Observation to link to",
     "cites-unknown-scenario": "Evidence Observation cites an unknown Scenario",
     "cites-no-scenario": "Evidence Observation cites no Scenario",
-    undemanded: "Evidence Observation cites a Scenario that did not demand it",
+    undemanded: "Evidence Observation cites a Scenario with no matching Evidence Obligation",
     broken:
       "Evidence Observation ATTEMPT errored before it could cite a Scenario (the proving suite failed to collect; behaviour never exercised)",
     "both-missing":

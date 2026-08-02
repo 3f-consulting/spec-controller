@@ -106,7 +106,12 @@ export const OUTCOME_DESCRIPTION: Record<Outcome, string> = {
   "no-scn-code": "Evidence Obligation has no @SCN code for an Evidence Observation to link to",
   "cites-unknown-scenario": "Evidence Observation cites an unknown Scenario",
   "cites-no-scenario": "Evidence Observation cites no Scenario",
-  undemanded: "Evidence Observation cites a Scenario that did not demand it",
+  // CANON VERBATIM — double-entry-manifesto.md:42, the Outcome column. The gloss is the outcome
+  // SENTENCE, canon's checkably-true half where the handle is only a label, so it states the
+  // credit-side fact rather than echoing the handle's root. The HANDLE is deliberately untouched
+  // (3F-2308 changes the sentence only); renaming it to `no-evidence-obligation` is 3F-2300's, and
+  // moves the emitted JSON `byOutcome` key plus every @SCN-LDG scenario that reads it.
+  undemanded: "Evidence Observation cites a Scenario with no matching Evidence Obligation",
   // GENERIC over its producers (@SCN-LDG-017 + @SCN-LDG-019, 3F-1654): `broken` has two instances
   // — a vitest suite that failed to COLLECT, and a cucumber step two or more step definitions
   // match, which therefore never ran. An ambiguous step is neither a "suite" nor a "collection

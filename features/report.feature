@@ -567,7 +567,7 @@ Feature: The report renders the ledger as sectioned facts
         | no-scn-code            | Evidence Obligation has no @SCN code for an Evidence Observation to link to                                               |
         | cites-unknown-scenario | Evidence Observation cites an unknown Scenario                                                                            |
         | cites-no-scenario      | Evidence Observation cites no Scenario                                                                                    |
-        | undemanded             | Evidence Observation cites a Scenario that did not demand it                                                              |
+        | undemanded             | Evidence Observation cites a Scenario with no matching Evidence Obligation                                                |
         | broken                 | Evidence Observation ATTEMPT errored before it could cite a Scenario (the proving suite failed to collect; behaviour never exercised) |
         | both-missing           | Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited                     |
 
