@@ -355,3 +355,65 @@ describe("[SCN-VOC-003] the forbidden kind-label phrase `declared scenario`", ()
     expect(manifest.some((r) => r.file === "src/ok.ts" && r.new === "scenario")).toBe(false);
   });
 });
+
+describe("[SCN-VOC-006] the retired tag `ci-performance`", () => {
+  // The regrowth guard: whole-word `ci` immediately before `performance` reds, so the
+  // retired tag cannot appear in a tree that today carries zero occurrences of it. It
+  // MUST be the phrase, not a banned word — `ci` and `performance` are both approved
+  // words, and the canon `ci-run-time` decomposes entirely into approved words.
+
+  it("reds on `ci-performance`, renaming to the canon `ci-run-time`", () => {
+    const v = classifyWords(["ci", "performance"], "prose").find((w) => w.word === "ci")!;
+    expect(v.flagged).toBe(true);
+    expect(v.reason).toBe("ci-performance");
+    expect(v.canonical).toBe("ci-run-time");
+  });
+
+  it("reds in NAME mode too — a `ciPerformance` composite identifier", () => {
+    const v = classifyWords(decomposeName("ciPerformance"), "name").find((w) => w.word === "ci")!;
+    expect(v.flagged).toBe(true);
+    expect(v.reason).toBe("ci-performance");
+    expect(v.canonical).toBe("ci-run-time");
+  });
+
+  it("STAYS GREEN on the canon `ci-run-time` — every word approved, no phrase match", () => {
+    // `ci` / `run` / `time` are each allowlisted, and `run` is not `performance`, so the
+    // canon tag earns no flag of any kind.
+    const verdicts = classifyWords(decomposeName("ci-run-time"), "name");
+    expect(verdicts.map((v) => v.word)).toEqual(["ci", "run", "time"]);
+    expect(verdicts.every((v) => !v.flagged)).toBe(true);
+  });
+
+  it("STAYS GREEN on the bare canon quality check `performance`", () => {
+    // Bare `@performance` is the canon runtime quality check — the rule is the PHRASE,
+    // so `performance` standing alone (or preceded by anything but `ci`) is untouched.
+    expect(classifyWords(["performance"], "name").every((v) => !v.flagged)).toBe(true);
+    expect(
+      classifyWords(decomposeName("performance-budget-check"), "name").every(
+        (v) => v.reason !== "ci-performance"
+      )
+    ).toBe(true);
+  });
+
+  it("does NOT over-guard: bare `ci` NOT before `performance` earns no ci-performance flag", () => {
+    // `ci.yml`, `ciRun`, "the CI workflow" must all stay green — adjacency to
+    // `performance` is the whole trigger.
+    const verdicts = classifyWords(decomposeName("ci.yml"), "name").concat(
+      classifyWords(["the", "ci", "workflow"], "prose")
+    );
+    expect(verdicts.every((v) => v.reason !== "ci-performance")).toBe(true);
+  });
+
+  it("flags a real prose `ci-performance` with action rename, and passes `ci-run-time`", () => {
+    const { manifest } = auditFiles([
+      { path: "src/notes.ts", content: "// the ci-performance tag is retired here\n" },
+      { path: "src/ok.ts", content: "// the ci-run-time tag is the canon replacement\n" },
+    ]);
+    const red = manifest.find((r) => r.current === "ci" && r.new === "ci-run-time");
+    expect(red).toBeDefined();
+    expect(red!.action).toBe("rename");
+    expect(red!.file).toBe("src/notes.ts");
+    // `ci-run-time` produced no rename row anywhere.
+    expect(manifest.some((r) => r.file === "src/ok.ts")).toBe(false);
+  });
+});

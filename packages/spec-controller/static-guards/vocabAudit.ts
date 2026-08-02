@@ -21,7 +21,8 @@
  * Design: the closed-vocabulary audit tool. Word-set authority: the double-entry
  * manifesto's mapping table.
  *
- * @SCN-VOC-001 / @SCN-VOC-002 / @SCN-VOC-003 — features/vocabulary-audit.feature.
+ * @SCN-VOC-001 / @SCN-VOC-002 / @SCN-VOC-003 / @SCN-VOC-006 —
+ * features/vocabulary-audit.feature.
  */
 
 // ---------------------------------------------------------------------------
@@ -358,7 +359,10 @@ export type FlagReason =
   | "bare-different-word"
   // @SCN-VOC-003 — the forbidden kind-label PHRASE: whole-word `declared` immediately
   // before `scenario`. Renamed to the bare canon `scenario`.
-  | "declared-scenario";
+  | "declared-scenario"
+  // @SCN-VOC-006 — the retired tag PHRASE: whole-word `ci` immediately before
+  // `performance`. Renamed to the canon `ci-run-time`.
+  | "ci-performance";
 
 // ---------------------------------------------------------------------------
 // Core classification
@@ -451,6 +455,24 @@ export function classifyWords(words: string[], modes: Mode | Mode[]): WordVerdic
     // and bare `declared` passes in prose.
     if (word === "declared" && singularise(words[i + 1] ?? "") === "scenario") {
       return { word, flagged: true, reason: "declared-scenario", canonical: "scenario" };
+    }
+
+    // @SCN-VOC-006 — the retired tag PHRASE "ci-performance": whole-word `ci`
+    // IMMEDIATELY followed by `performance`. A REGROWTH guard — the tree carries zero
+    // occurrences, so this rule exists to keep the retired tag out, not to purge it.
+    // It must be the PHRASE, never a banned word: `ci` and `performance` are BOTH
+    // individually allowlisted, and banning either would red the canon — bare
+    // `@performance` is the runtime quality check, and `ci.yml` / `ciRun` are ordinary.
+    // Fires in BOTH modes (a retired tag hides in a comment, a doc, an identifier, a
+    // string, a filename or a config key alike; a bare Gherkin TAG LINE is out of reach
+    // because scanFile skips tag lines wholesale as structural — an all-rules
+    // segmentation decision `declared-scenario` shares). The rename target is `ci-run-time`,
+    // which decomposes to `ci` / `run` / `time` — all approved, and `run` is not
+    // `performance`, so canon stays green by construction. Sits beside the
+    // `declared-scenario` arm, AHEAD of the isApproved / mode gates below: that
+    // ordering is exactly what lets a phrase of two approved words red at all.
+    if (word === "ci" && singularise(words[i + 1] ?? "") === "performance") {
+      return { word, flagged: true, reason: "ci-performance", canonical: "ci-run-time" };
     }
 
     if (FULL_TERM_ONLY.has(stem)) {
@@ -814,7 +836,10 @@ export interface AuditResult {
 }
 
 function actionFor(reason: FlagReason): string {
-  return reason === "banned" || reason === "bare-shortening" || reason === "declared-scenario"
+  return reason === "banned" ||
+    reason === "bare-shortening" ||
+    reason === "declared-scenario" ||
+    reason === "ci-performance"
     ? "rename"
     : "review";
 }

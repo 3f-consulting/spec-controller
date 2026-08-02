@@ -75,3 +75,25 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
       Then the phrase "declared scenario" is flagged, renamed to the bare "scenario"
       And the phrase "undeclared scenario" is not flagged
 
+  Rule: the retired tag "ci-performance" reds; the canon "ci-run-time" stays green
+
+    The first regrowth guard (@SCN-VOC-006, 3F-2289). The retired tag `@ci-performance`
+    is renamed to `@ci-run-time`, and it has ZERO occurrences in this tree — so the rule
+    is a REGROWTH guard only: nothing to purge, everything to keep out. Whole-word `ci`
+    IMMEDIATELY before `performance` is the retired tag, so it reds wherever it hides (a
+    comment, a doc, an identifier, a string, a filename, a config key), renamed to
+    `ci-run-time`. It must be the PHRASE, not a banned word: `ci` and `performance` are
+    BOTH individually allowlisted — bare `@performance` is the canon runtime quality
+    check and stays green, and canon `ci-run-time` decomposes to `ci` / `run` / `time`,
+    all approved. Sibling in shape to @SCN-VOC-003, and ordered with it AHEAD of the
+    approved-word and mode gates, which is what lets a phrase of two approved words red
+    at all. Honest scope: a bare Gherkin TAG LINE is not reached, because the scanner
+    skips tag lines wholesale as structural — a pre-existing, all-rules segmentation
+    decision that @SCN-VOC-003 shares, not a property of this arm.
+
+    @unit @SCN-VOC-006
+    Scenario: the audit reds "ci-performance" and stays green on "ci-run-time"
+      Given a corpus carrying the retired tag "ci-performance" and the canon tag "ci-run-time"
+      When the vocabulary audit runs over the corpus
+      Then "ci-performance" is flagged, renamed to "ci-run-time"
+      And "ci-run-time" is not flagged
