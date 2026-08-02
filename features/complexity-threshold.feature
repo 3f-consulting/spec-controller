@@ -81,3 +81,51 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
       When the complexity fitness function scans the real tree
       Then the file at its recorded value does not red
       And the same file one line past its recorded value reds against that rule
+
+  Rule: the exception list must state the measured truth, so it can only tighten
+
+    THE RATCHET. @SCN-CPX-002 froze each exempt file at its recorded value, which stops
+    the debt growing. It does not stop the LIST going stale: a file improves, nobody
+    edits the entry, and the recorded number silently becomes headroom again. This Rule
+    makes the list a claim that must stay true — reconciled against the real tree, in
+    BOTH directions.
+
+    THREE REDS, THREE DIFFERENT SENTENCES. Measured ABOVE recorded is a regression, which
+    the @SCN-CPX-002 frozen ceiling also reds — both firing is correct, and each names
+    its own cause. Measured BELOW recorded is an improvement nobody banked, and it is the
+    half that makes this a ratchet rather than a ceiling that quietly stops descending.
+    No longer over the standard at all is a stale entry, and deleting it shrinks the list.
+    Each red names the file, the rule, the recorded value and the measured value, so its
+    stated cause IS its actual cause.
+
+    WHY THIS IS A SECOND NAMED CHECK, NOT MORE eslint. eslint can only red on
+    `value > max`; the load-bearing case here is `value < recorded`, which it cannot
+    express at all. So the reconciliation is its own CI script, `lint:complexity-exceptions`.
+    The `lint:` prefix is required rather than cosmetic: `runningStaticChecks` observes a
+    CI script only when its name carries an observed prefix, so a name outside that set
+    would run in CI while being invisible to spec-controller's own ledger — a real quality
+    check kept off the books, which is exactly where a watermelon hides. The
+    `@lint=lint:complexity-exceptions` tag below is then what keeps it out of the suspense
+    row as an uncited static check. Observed AND declared is the balanced state.
+
+    MEASURED WITH eslint, NEVER REIMPLEMENTED. The reconciliation runs the `ESLint` API at
+    the BARE standard — the same scope blocks the config uses, with the exception blocks
+    left off — and reads the actual values out of its messages. A second line/complexity
+    counter would agree with eslint by coincidence and drift the moment either changed.
+    The parse is PER RULE, because the three do not report uniformly: the two line rules
+    emit "too many lines (575)" while `complexity` emits "has a complexity of 21" with no
+    parenthesised number at all. A single parenthesis regex silently yields null for every
+    complexity entry — a third of the list reconciled against nothing, and passing — so
+    extraction is asserted non-null for every message.
+
+    ONE ENTRY PER FILE PER RULE, at that file's WORST offender, because that is the shape
+    that @SCN-CPX-002 froze. The reconciliation compares like with like: the worst measured
+    value for a file and rule against the value recorded for that same file and rule.
+
+    @unit @integration @lint=lint:complexity-exceptions @SCN-CPX-003
+    Scenario: an exception list that disagrees with the measured tree reds the build
+      Given an exception list recording each exempt file's measured value
+      When the exception list is reconciled against the real tree
+      Then a file measuring above its recorded value reds as a regression
+      And a file measuring below its recorded value reds as an improvement not banked
+      And a file no longer over the standard reds as a stale entry

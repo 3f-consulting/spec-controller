@@ -75,7 +75,30 @@ const tsLanguageOptions = {
   parserOptions: { ecmaVersion: "latest", sourceType: "module" },
 };
 
-export default [
+/**
+ * The measured population — the globs the production block holds AND the globs the reconciliation
+ * hands to `lintFiles`. ONE list, exported, because a second copy would be a second measurement
+ * scope: the reconciliation would read a population the config never judged, and every file in the
+ * difference would reconcile as a stale entry or escape unmeasured, silently. Test files live under
+ * these same globs — the test block below re-declares rules for them, it does not add files.
+ *
+ * @type {string[]}
+ */
+export const MEASURED_GLOBS = ["packages/*/src/**/*.ts", "packages/*/static-checks/**/*.ts"];
+
+/**
+ * The standard, held over both scopes, with NO exception applied (@SCN-CPX-003, 3F-2318).
+ *
+ * Exported so `complexityExceptionsReconciliation.mjs` can measure the tree through eslint at the
+ * BARE standard — the values every entry in the debt list claims — instead of re-declaring the
+ * thresholds, the scope split and the globs a second time. A second declaration would agree with
+ * this one by coincidence and drift the moment either changed, which is exactly the agreeing-by-copy
+ * this codebase keeps removing; and the reconciliation's whole contract is that its numbers are the
+ * ones THIS config produces.
+ *
+ * @type {import("eslint").Linter.Config[]}
+ */
+export const BARE_STANDARD_CONFIG = [
   {
     // Build output and the mutation sandbox are COPIES of the tree — linting them would double-count
     // every finding and red on generated code nobody edits.
@@ -83,7 +106,7 @@ export default [
   },
   {
     // Production: the measured population.
-    files: ["packages/*/src/**/*.ts", "packages/*/static-checks/**/*.ts"],
+    files: MEASURED_GLOBS,
     languageOptions: tsLanguageOptions,
     rules: thresholdRules(PRODUCTION_THRESHOLD),
   },
@@ -93,6 +116,10 @@ export default [
     languageOptions: tsLanguageOptions,
     rules: thresholdRules(TEST_THRESHOLD),
   },
+];
+
+export default [
+  ...BARE_STANDARD_CONFIG,
   // Today's dated debt, one block per file per rule, each FROZEN at its recorded value. LAST, so
   // they win over both scope blocks.
   ...COMPLEXITY_EXCEPTIONS.map(({ path, rule, value }) => ({

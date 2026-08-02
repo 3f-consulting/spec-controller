@@ -221,3 +221,167 @@ Then(
     }
   },
 );
+
+// @SCN-CPX-003
+/**
+ * THE RATCHET (@SCN-CPX-003, 3F-2318). @SCN-CPX-002 above froze each entry as a ceiling, which stops
+ * the debt growing; these steps prove the other direction — that the LIST itself must keep stating
+ * the measured truth, or the check reds.
+ *
+ * WHY THIS ARM MEASURES THE REAL TREE AND THEN PERTURBS THE LIST IN MEMORY. The three reds need a
+ * disagreement, and the shipped tree has none by construction. Editing `complexityExceptions.mjs` on
+ * disk is the plant done on the PR; here the recorded side is perturbed in memory against the REAL
+ * measured values, so each red is driven by an actual eslint measurement of an actual file rather
+ * than by a fixture pair invented to agree. The When's clean reconciliation is what makes each red
+ * attributable: the only thing that changed between green and red is the one perturbed entry.
+ */
+type MeasuredValue = { path: string; rule: ExceptionRule; value: number };
+type Disagreement = {
+  path: string;
+  rule: ExceptionRule;
+  recorded: number;
+  measured: number | null;
+  kind: "regression" | "improvement-not-banked" | "stale-entry";
+  message: string;
+};
+
+/** A real, in-scope production file that is UNDER the standard — the stale-entry plant's subject. */
+const UNDER_STANDARD_PATH = "packages/spec-controller/static-checks/sourceFiles.ts";
+
+let measuredTree: readonly MeasuredValue[];
+let reconcile: (
+  recorded: readonly Exception[],
+  measured: readonly MeasuredValue[],
+) => readonly Disagreement[];
+
+/** The reconciliation module, loaded lazily so a missing build reds THIS scenario and no other. */
+async function reconciliationModule(): Promise<Record<string, unknown>> {
+  return (await import(
+    "../../packages/spec-controller/static-checks/complexityExceptionsReconciliation.mjs"
+  )) as Record<string, unknown>;
+}
+
+/** One runtime export, asserted present with a sentence rather than dying as an undefined call. */
+async function reconciliationExport(name: string): Promise<(...args: never[]) => unknown> {
+  const candidate = (await reconciliationModule())[name];
+  assert.equal(
+    typeof candidate,
+    "function",
+    `@SCN-CPX-003 needs \`${name}\` exported from complexityExceptionsReconciliation`,
+  );
+  return candidate as (...args: never[]) => unknown;
+}
+
+/** The recorded list with ONE entry's value replaced — the perturbation each Then drives. */
+const listWithValueAt = (index: number, value: number): readonly Exception[] =>
+  exceptions.map((candidate, i) => (i === index ? { ...candidate, value } : candidate));
+
+/** The single disagreement a perturbed list must produce, asserted to be exactly one. */
+function soleDisagreement(found: readonly Disagreement[], expectedPath: string): Disagreement {
+  assert.equal(
+    found.length,
+    1,
+    `exactly one disagreement expected, got ${found.length}: ${found.map((d) => d.message).join(" | ")}`,
+  );
+  const [only] = found;
+  assert.ok(only && only.path === expectedPath, `the disagreement must name ${expectedPath}`);
+  return only;
+}
+
+/** Every red must name the file, the rule, the recorded value and the measured value. */
+function assertNamesItsCause(found: Disagreement): void {
+  assert.ok(found.message.includes(found.path), "the red must name the file");
+  assert.ok(found.message.includes(found.rule), "the red must name the rule");
+  assert.ok(found.message.includes(String(found.recorded)), "the red must name the recorded value");
+  if (found.measured !== null) {
+    assert.ok(found.message.includes(String(found.measured)), "the red must name the measured value");
+  }
+}
+
+Given("an exception list recording each exempt file's measured value", async function () {
+  const exceptionModule = await import(
+    "../../packages/spec-controller/static-checks/complexityExceptions.mjs"
+  );
+  exceptions = exceptionModule.COMPLEXITY_EXCEPTIONS as readonly Exception[];
+
+  // Vacuity floor: an empty list would let every Then below pass over nothing.
+  assert.ok(exceptions.length > 0, "the exception list must record the tree's exceedances");
+  for (const entry of exceptions) {
+    assert.equal(typeof entry.value, "number", `${entry.path} must record a measured value`);
+    assert.match(entry.since, /^\d{4}-\d{2}-\d{2}$/, `${entry.path} must record the date measured`);
+  }
+  // One entry per file per rule — the shape @SCN-CPX-002 froze, and the shape this join assumes.
+  const keys = exceptions.map((entry) => `${entry.path} ${entry.rule}`);
+  assert.equal(new Set(keys).size, keys.length, "the list must hold one entry per file per rule");
+});
+
+When("the exception list is reconciled against the real tree", async function () {
+  const measure = await reconciliationExport("measureTreeAtBareStandard");
+  reconcile = (await reconciliationExport("reconcileExceptions")) as typeof reconcile;
+  measuredTree = (await (measure as (root: string) => Promise<readonly MeasuredValue[]>)(
+    process.cwd(),
+  )) as readonly MeasuredValue[];
+
+  // The measurement must have found the tree's real exceedances, or every perturbation below would
+  // reconcile against an empty measurement and "red" for the wrong reason.
+  assert.ok(measuredTree.length > 0, "the bare-standard measurement must find this tree's exceedances");
+  assert.ok(
+    !measuredTree.some((m) => m.path === UNDER_STANDARD_PATH),
+    `${UNDER_STANDARD_PATH} must be under the standard for the stale-entry plant to mean anything`,
+  );
+
+  // The green half, and it is load-bearing twice over: it proves the shipped list states the measured
+  // truth TODAY, and it is what makes each red below attributable to its one perturbed entry.
+  const clean = reconcile(exceptions, measuredTree);
+  assert.deepEqual(
+    clean.map((d) => d.message),
+    [],
+    "the shipped exception list must already agree with the measured tree",
+  );
+});
+
+Then("a file measuring above its recorded value reds as a regression", function () {
+  // Recorded one BELOW the measured value: the smallest possible disagreement, so this pins the
+  // boundary rather than merely that something wildly wrong is caught.
+  const target = exceptions[0];
+  assert.ok(target, "the exception list must hold at least one entry");
+  const found = soleDisagreement(
+    reconcile(listWithValueAt(0, target.value - 1), measuredTree),
+    target.path,
+  );
+  assert.equal(found.kind, "regression");
+  assert.equal(found.measured, target.value);
+  assert.equal(found.recorded, target.value - 1);
+  assertNamesItsCause(found);
+});
+
+Then("a file measuring below its recorded value reds as an improvement not banked", function () {
+  // THE RATCHET. Under @SCN-CPX-002 alone this case is silent: the file is comfortably under its
+  // frozen ceiling, so eslint says nothing and the improvement evaporates.
+  const target = exceptions[0];
+  assert.ok(target, "the exception list must hold at least one entry");
+  const found = soleDisagreement(
+    reconcile(listWithValueAt(0, target.value + 1), measuredTree),
+    target.path,
+  );
+  assert.equal(found.kind, "improvement-not-banked");
+  assert.equal(found.measured, target.value);
+  assert.equal(found.recorded, target.value + 1);
+  assertNamesItsCause(found);
+});
+
+Then("a file no longer over the standard reds as a stale entry", function () {
+  // A REAL in-scope file that eslint found nothing in — so the absence of a measured value is the
+  // measurement's own verdict, not a path invented to be absent.
+  const stale: Exception = {
+    path: UNDER_STANDARD_PATH,
+    rule: "max-lines",
+    value: 401,
+    since: "2026-08-02",
+  };
+  const found = soleDisagreement(reconcile([...exceptions, stale], measuredTree), stale.path);
+  assert.equal(found.kind, "stale-entry");
+  assert.equal(found.measured, null);
+  assert.equal(found.recorded, 401);
+  assertNamesItsCause(found);
+});

@@ -66,6 +66,23 @@ jobs:
       - name: Lint complexity
         run: pnpm lint:complexity
 
+      # THE RATCHET (@SCN-CPX-003, 3F-2318) — reconciles static-checks/complexityExceptions.mjs
+      # against the tree it describes. The step above freezes each exempt file at its recorded
+      # value, which stops the debt growing; it cannot notice the list going stale downward,
+      # because eslint only reds on value > max. So this step measures the tree with eslint at
+      # the BARE standard (no exception blocks) and reds when the list no longer states what
+      # that measurement found: ABOVE the recorded value is a regression, BELOW it is an
+      # improvement nobody banked (the half that makes the list a ratchet rather than a ceiling
+      # that quietly stops descending), and no longer over the standard at all is a stale entry
+      # to delete. Each red names the file, the rule, the recorded value and the measured value.
+      # The `lint:` prefix is required, not cosmetic: runningStaticChecks observes a CI script
+      # only when its name carries an observed prefix, so a name outside that set would run here
+      # while being invisible to spec-controller's own ledger — a real quality check kept off the
+      # books. @lint-declared (@lint=lint:complexity-exceptions on @SCN-CPX-003) so the tool's
+      # own ledger reconciles it rather than reporting it as an uncited static check.
+      - name: Lint complexity exceptions
+        run: pnpm lint:complexity-exceptions
+
       - name: Type-check
         run: pnpm typecheck
 
