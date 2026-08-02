@@ -42,17 +42,17 @@ describe("[SCN-LDG-026] a Quality Check Reconciliation carries the evidence obli
 
 describe("[SCN-LDG-028] a lint missing reconciliation carries its obligation and no observation — an absent guard is an absence", () => {
   it("a lint missing reconciliation carries its obligation and no observation — an absent guard's {exists:false} is not an observation", () => {
-    // The lint (static-guard) branch, the ISOLATING absent-guard case: a required @lint obligation
+    // The lint (static-check) branch, the ISOLATING absent-guard case: a required @lint obligation
     // whose guard is read as the negative fact {exists:false, enforcedOverRealSource:false} — an
     // ABSENCE, not an observed piece of evidence. reconcileEvidenceObligation FINDS that record (so
     // it can distinguish absent from watermelon), but an absence is not an observation: it must NOT
     // be carried as the credit side. Canon (double-entry-manifesto.md line 36): missing = Obligation
     // Exists, Observation None. This is the lint analogue of the runtime pure-debit (@SCN-LDG-026),
     // which already carries none — the two producers must be symmetric.
-    const obligation: EvidenceObligation = { qualityCheck: "lint", staticGuard: "lint:absent-guard" };
+    const obligation: EvidenceObligation = { qualityCheck: "lint", staticCheck: "lint:absent-guard" };
     const absentGuard: EvidenceObservation = {
       qualityCheck: "lint",
-      staticGuard: "lint:absent-guard",
+      staticCheck: "lint:absent-guard",
       exists: false,
       enforcedOverRealSource: false,
     };

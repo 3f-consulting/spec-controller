@@ -44,10 +44,10 @@ const EXCLUDED_FILES = new Set(["pnpm-lock.yaml", "package-lock.json", "yarn.loc
  * assumed). Any future file that names the rejected vocabulary belongs here too.
  */
 const SELF_EXEMPT_PATHS = new Set([
-  "packages/spec-controller/static-guards/vocabAudit.ts",
-  "packages/spec-controller/static-guards/vocabWordSets.ts",
-  "packages/spec-controller/static-guards/vocabAudit.test.ts",
-  "packages/spec-controller/static-guards/vocabAuditCli.ts",
+  "packages/spec-controller/static-checks/vocabAudit.ts",
+  "packages/spec-controller/static-checks/vocabWordSets.ts",
+  "packages/spec-controller/static-checks/vocabAudit.test.ts",
+  "packages/spec-controller/static-checks/vocabAuditCli.ts",
   "features/vocabulary-audit.feature",
   "tests/steps/vocabularyAudit.steps.ts",
 ]);

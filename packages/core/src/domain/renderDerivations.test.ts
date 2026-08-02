@@ -7,7 +7,7 @@
  *
  * The criterion these serve: the renderer PROJECTS — any model fact it shows is read, not computed.
  * Each rule here had a second home in the renderer, agreeing by copy: `brokenItemsOf` (the
- * Run-integrity list), `presentStaticGuardCountOf` (the grid cell's right side),
+ * Run-integrity list), `presentStaticCheckCountOf` (the grid cell's right side),
  * `lintReconciliationsOf` (the lint table AND `lintTally`, character-identical).
  *
  * The Ledger is BUILT BY `reconcile()` over a spanning corpus, never hand-written
@@ -22,8 +22,8 @@ import { reconcile } from "./evidenceReconciliation.js";
 import { brokenItemsOf, lintReconciliationsOf, lintTally, hasBrokenEvidence } from "./ledger.js";
 import {
   isScenario,
-  staticGuardReconciliationsOf,
-  presentStaticGuardCountOf,
+  staticCheckReconciliationsOf,
+  presentStaticCheckCountOf,
 } from "./scenarioReconciliation.js";
 import type { Scenario, EvidenceObservation, Ledger } from "../model.js";
 
@@ -39,18 +39,18 @@ const scenarios: Scenario[] = [
   {
     scnId: "SCN-AAA-001",
     evidenceObligations: [
-      { qualityCheck: "lint", staticGuard: "lint:wired" },
-      { qualityCheck: "lint", staticGuard: "lint:unwired" },
+      { qualityCheck: "lint", staticCheck: "lint:wired" },
+      { qualityCheck: "lint", staticCheck: "lint:unwired" },
     ],
   },
-  { scnId: "SCN-AAA-002", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:absent" }] },
+  { scnId: "SCN-AAA-002", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint:absent" }] },
   { scnId: "SCN-AAA-003", evidenceObligations: [{ qualityCheck: "unit" }] },
 ];
 
 const evidenceObservations: EvidenceObservation[] = [
-  { qualityCheck: "lint", staticGuard: "lint:wired", exists: true, enforcedOverRealSource: true },
-  { qualityCheck: "lint", staticGuard: "lint:unwired", exists: true, enforcedOverRealSource: false },
-  { qualityCheck: "lint", staticGuard: "lint:undemanded", exists: true, enforcedOverRealSource: true },
+  { qualityCheck: "lint", staticCheck: "lint:wired", exists: true, enforcedOverRealSource: true },
+  { qualityCheck: "lint", staticCheck: "lint:unwired", exists: true, enforcedOverRealSource: false },
+  { qualityCheck: "lint", staticCheck: "lint:undemanded", exists: true, enforcedOverRealSource: true },
   { qualityCheck: "unit", scnId: "SCN-AAA-003", status: "passed" },
   {
     qualityCheck: "unit",
@@ -127,7 +127,7 @@ describe("[SCN-LDG-001] brokenItemsOf lists the proofs that never ran", () => {
   });
 });
 
-describe("[SCN-LDG-001] presentStaticGuardCountOf counts PRESENCE, not quality", () => {
+describe("[SCN-LDG-001] presentStaticCheckCountOf counts PRESENCE, not quality", () => {
   /**
    * THE RULE — a watermelon guard EXISTS (the script is there; it simply guards nothing), so it
    * counts as present. Its inadequacy is quality, reported in the reconciling items 🍉, never by
@@ -136,26 +136,26 @@ describe("[SCN-LDG-001] presentStaticGuardCountOf counts PRESENCE, not quality",
    */
   it("counts a watermelon as present alongside a satisfied guard", () => {
     const row = rowOf("SCN-AAA-001");
-    expect(staticGuardReconciliationsOf(row).map((r) => r.outcome)).toEqual([
+    expect(staticCheckReconciliationsOf(row).map((r) => r.outcome)).toEqual([
       "satisfied",
       "watermelon",
     ]);
-    expect(presentStaticGuardCountOf(row)).toBe(2);
+    expect(presentStaticCheckCountOf(row)).toBe(2);
   });
 
   it("does NOT count a missing guard — no script at all is a real absence", () => {
     const row = rowOf("SCN-AAA-002");
-    expect(staticGuardReconciliationsOf(row).map((r) => r.outcome)).toEqual(["missing"]);
-    expect(presentStaticGuardCountOf(row)).toBe(0);
+    expect(staticCheckReconciliationsOf(row).map((r) => r.outcome)).toEqual(["missing"]);
+    expect(presentStaticCheckCountOf(row)).toBe(0);
   });
 
-  it("reads zero on a row naming no static guard", () => {
-    expect(staticGuardReconciliationsOf(rowOf("SCN-AAA-003"))).toEqual([]);
-    expect(presentStaticGuardCountOf(rowOf("SCN-AAA-003"))).toBe(0);
+  it("reads zero on a row naming no static check", () => {
+    expect(staticCheckReconciliationsOf(rowOf("SCN-AAA-003"))).toEqual([]);
+    expect(presentStaticCheckCountOf(rowOf("SCN-AAA-003"))).toBe(0);
   });
 });
 
-describe("[SCN-LDG-001] lintReconciliationsOf is the ONE declared static-guard list", () => {
+describe("[SCN-LDG-001] lintReconciliationsOf is the ONE declared static-check list", () => {
   /**
    * SCENARIO ROWS ONLY. The suspense row carries a lint CREDIT (the undemanded running guard,
    * `cites-no-scenario`) — an observation, not an obligation. Including it would inflate the
@@ -163,7 +163,7 @@ describe("[SCN-LDG-001] lintReconciliationsOf is the ONE declared static-guard l
    */
   it("excludes the suspense row's lint credit from the declared list", () => {
     const declared = lintReconciliationsOf(ledger);
-    expect(declared.map((d) => `${d.scnId}:${d.reconciliation.staticGuard}`)).toEqual([
+    expect(declared.map((d) => `${d.scnId}:${d.reconciliation.staticCheck}`)).toEqual([
       "SCN-AAA-001:lint:wired",
       "SCN-AAA-001:lint:unwired",
       "SCN-AAA-002:lint:absent",

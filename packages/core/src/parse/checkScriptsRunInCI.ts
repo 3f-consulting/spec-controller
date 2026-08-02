@@ -5,20 +5,20 @@
  * (`commandInvokesScript`). `checkStaticEvidenceObligations` (the named-guard observer, `ingest/guard`) and
  * `runningStaticChecks` (the running-guard observer, `ingest/ciGuards`) both read a guard's
  * enforcement off these, so the watermelon-critical parse lives in ONE place — a mis-read could
- * itself HIDE a watermelon (read a wired static guard as unwired, or the reverse).
+ * itself HIDE a watermelon (read a wired static check as unwired, or the reverse).
  *
  * The CI config is parsed with the reputable `yaml` parser (jobs → steps → run, including
- * block-scalar `run:` and `if:`/matrix steps) — never line-scanned. A static guard's
+ * block-scalar `run:` and `if:`/matrix steps) — never line-scanned. A static check's
  * command counts as enforced only on an EXACT
  * package-manager invocation of its script name (`pnpm <guard>` / `pnpm run <guard>` /
- * `npm run <guard>` / `yarn <guard>`), so a sibling static guard's run step never falsely enforces it.
+ * `npm run <guard>` / `yarn <guard>`), so a sibling static check's run step never falsely enforces it.
  *
  * Parent: @SCN-LNT-001.
  */
 
 import { parse } from "yaml";
 
-/** The minimal shape of `package.json` the static guard observers depend on. */
+/** The minimal shape of `package.json` the static check observers depend on. */
 export interface PackageJsonScripts {
   scripts?: Record<string, string>;
 }
@@ -31,7 +31,7 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 /**
  * Every CI `run:` step command, walked STRUCTURALLY from the parsed CI config
  * (jobs → steps → run). A malformed config that fails to parse yields no commands
- * — the SAFE direction: it reports static guards as unenforced (flagged), never falsely
+ * — the SAFE direction: it reports static checks as unenforced (flagged), never falsely
  * enforced (hidden).
  */
 export function ciRunCommands(ciSource: string): string[] {
@@ -59,7 +59,7 @@ export function ciRunCommands(ciSource: string): string[] {
  * Does a single command LINE invoke the given npm script via a package manager?
  * Matches `pnpm <guard>`, `pnpm run <guard>`, `npm run <guard>`, `yarn <guard>`
  * on an EXACT script-name token — no fuzzy substring (a fuzzy match could hide a
- * watermelon by treating a sibling static guard's step as this static guard's).
+ * watermelon by treating a sibling static check's step as this static check's).
  */
 function lineInvokesScript(line: string, guard: string): boolean {
   const tokens = line.trim().split(/\s+/);

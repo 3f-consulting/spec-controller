@@ -60,7 +60,7 @@ export { isBalanced, hasPendingItems, hasBrokenEvidence } from "./domain/ledger.
 // The static evidence-observation census (`census/staticEvidenceObservations.ts`) is RETIRED
 // (3F-2119): its counting folds onto the Ledger (`staticObservationTally`, an internal domain fold),
 // and its 2 symbols (`countStaticEvidenceObservationKinds` value / `StaticEvidenceObservationKindCounts`
-// type) left this frozen-in-intent surface. `StaticGuardTotals` (the materialised headline, now
+// type) left this frozen-in-intent surface. `StaticCheckTotals` (the materialised headline, now
 // Ledger-fold-sourced) STAYS on the barrel. Pre-freeze, no external consumer (unpublished package;
 // only workspace dependents, all rewired). See @SCN-API-001.
 
@@ -88,7 +88,7 @@ export type {
   EvidenceObligationTotals,
   MissingByQualityCheck,
   TestVolumeTotals,
-  StaticGuardTotals,
+  StaticCheckTotals,
   LintTally,
   EvidenceObligationsSection,
 } from "./assemble/renderInput.js";

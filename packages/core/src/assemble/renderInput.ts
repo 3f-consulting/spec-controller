@@ -4,7 +4,7 @@
  * model in two renderings, not two dialects.
  *
  * `assembleRenderInput` builds it from the existing reconcile pieces (the balance, the run
- * context, and the declared / observed / static guard sibling reads). The JSON renderer collapses
+ * context, and the declared / observed / static check sibling reads). The JSON renderer collapses
  * to a glue-free `JSON.stringify(assembleRenderInput(...))`. The assembler is the ONLY place the
  * JSON-surface vocabulary lives — the manifesto-vocabulary key renames (the revert)
  * are MAPPED here so they never ripple into markdown.ts / evidenceObservations.ts internals, keeping the
@@ -13,9 +13,9 @@
  * The sections are in document order with `runProvenance` renamed, a materialised `summary`,
  * the per-scenario reconciliation under `evidenceReconciliation` (RMD-002), and the observed
  * evidence under `evidenceObservations` (RMD-003) — every JSON section reads in the manifesto's
- * vocabulary. The static-guard census is `summary.staticGuards` counts alone (2.4): its
+ * vocabulary. The static-check census is `summary.staticChecks` counts alone (2.4): its
  * member detail lives in the rows (named → `@lint` sub-rows; undemanded → the suspense row),
- * so there is no standalone `staticGuards` section — symmetric with the runtime side.
+ * so there is no standalone `staticChecks` section — symmetric with the runtime side.
  *
  * Parent: (@SCN-RMD-001).
  */
@@ -40,7 +40,7 @@ export type {
 export type {
   Summary,
   TestVolumeTotals,
-  StaticGuardTotals,
+  StaticCheckTotals,
   EvidenceReconciliation,
 } from "../domain/evidenceReconciliation.js";
 
@@ -59,7 +59,7 @@ export interface EvidenceObligationsSection {
 /**
  * Presentation metadata — a small top-level object holding the run's PRESENTATION
  * facts (names/titles), kept cleanly SEPARATE from the reconciliation records (`summary` /
- * `evidenceReconciliation` / `evidenceObservations` / `staticGuards`). It carries the feature
+ * `evidenceReconciliation` / `evidenceObservations` / `staticChecks`). It carries the feature
  * titles (the `feature-code → slug` map the by-feature cut names each feature from); it is
  * NOT a reconciliation record, so it does not sit as a sibling of the records. Present only
  * when the run declares ≥1 coded feature (i.e. when `featureNames` is non-empty).
@@ -72,8 +72,8 @@ export interface ReportMetadata {
 /**
  * The whole-document report — the ordered sections as data. RMD-002 / RMD-003 rename the interim
  * `scenarios` / `evidenceObservations` keys to `evidenceReconciliation` / `evidenceObservations`;
- * the static-guard census is `summary.staticGuards` counts alone (2.4 — the standalone
- * `staticGuards` section collapsed, its member detail now in the rows). The `warnings` top-level
+ * the static-check census is `summary.staticChecks` counts alone (2.4 — the standalone
+ * `staticChecks` section collapsed, its member detail now in the rows). The `warnings` top-level
  * key was RETIRED — a zero-evidence scenario is now a `both-missing` row in
  * `evidenceReconciliation`, not a separate axis.
  */
@@ -104,7 +104,7 @@ export interface RenderInput {
    * titles (`metadata.featureNames`, the `feature-code → slug` map the by-feature cut names each
    * feature in full from). MOVED out from under a top-level `featureNames` key: it is presentation
    * *metadata* (names), NOT a reconciliation record, so it is cleanly separated from the records
-   * (`summary` / `evidenceReconciliation` / `evidenceObservations` / `staticGuards`) rather than
+   * (`summary` / `evidenceReconciliation` / `evidenceObservations` / `staticChecks`) rather than
    * sitting as their sibling. A render from the saved report alone reconstructs the
    * by-feature names from `metadata.featureNames` with no external map. Present only when the run
    * declares ≥1 coded feature. The last document key (the retired `warnings` key no longer trails
@@ -117,8 +117,8 @@ export interface RenderInput {
  * Assemble the whole-document report from the reconcile pieces. The JSON-surface vocabulary
  * lives HERE (mapped, not renamed at the model): `provenance` → `runProvenance`; `scenarios`
  * → `evidenceReconciliation`; `evidenceObservations` → `evidenceObservations` (+ `phantom`/`suspense` →
- * `phantomEvidenceObservations`/`suspenseEvidenceObservations`); the static-guard census is the
- * materialised `summary.staticGuards` counts alone (2.4 — no standalone section, the
+ * `phantomEvidenceObservations`/`suspenseEvidenceObservations`); the static-check census is the
+ * materialised `summary.staticChecks` counts alone (2.4 — no standalone section, the
  * member detail lives in the rows); the summary is materialised. Sections are inserted in document
  * order, so JSON.stringify preserves it. The optional sections are included only when their sibling
  * read is threaded (the CLI always threads them; the narrower-arg tests exercise omission).
@@ -145,9 +145,9 @@ export function assembleRenderInput(
           },
         }
       : {}),
-    // No staticGuards census SECTION (2.4): the guard member detail lives in the rows
+    // No staticChecks census SECTION (2.4): the guard member detail lives in the rows
     // (named → each scenario's `@lint` sub-row; undemanded → the suspense row), symmetric with
-    // the runtime side. The counts survive in `summary.staticGuards` (the balance-check identity).
+    // the runtime side. The counts survive in `summary.staticChecks` (the balance-check identity).
 
     // No `evidenceObservations` SECTION (@SCN-RMD-003 / @SCN-RPT-010, 3F-2103): the runtime
     // evidence-observation counting is RETIRED to the Ledger fold (`runtimeObservationTally`). Its

@@ -1,5 +1,5 @@
 /**
- * The ONE source-tree walk the static guards share, the ONE element type they take (3F-2274), and
+ * The ONE source-tree walk the static checks share, the ONE element type they take (3F-2274), and
  * the ONE anti-vacuity floor for the core-src population (3F-2266).
  *
  * Three guard tests — `noParallelStore` (@SCN-NPS-001), `enginePurity` (@SCN-EPG-001) and
@@ -13,7 +13,7 @@
  * WHY IT LIVES HERE AND NOT IN THE ENGINE. It imports `node:fs`, and @SCN-EPG-001 reds any file
  * under `packages/core/src` that imports a node IO builtin — siting it in the engine would make the
  * purity guard fail on its own scaffolding. It must also stay OUT of the walked population, or it
- * would shift the very counts it is used to assert. `static-guards/` satisfies both by
+ * would shift the very counts it is used to assert. `static-checks/` satisfies both by
  * construction; it is where the guards it serves already live (product-not-app, reads the tree).
  *
  * WHAT IS SHARED AND WHAT IS NOT. The WALK is shared three ways — all three guards collect the same
@@ -38,7 +38,7 @@ import { join } from "node:path";
  * walk was unified first (3F-2266); this is the same argument applied to the walk's ELEMENT.
  *
  * A guard imports it with `import type`, never a value import: this module reads `node:fs`, and the
- * guards are pure by construction — that is the whole reason the collector sits in `static-guards/`
+ * guards are pure by construction — that is the whole reason the collector sits in `static-checks/`
  * rather than in the engine, since @SCN-EPG-001 reds an IO import under `packages/core/src`. The
  * type import erases at compile, so no `check…()` acquires a runtime edge to the collector.
  *

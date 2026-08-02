@@ -1,5 +1,5 @@
 /**
- * Unit test for the no-parallel-store static guard (@SCN-NPS-001) — the capstone lock of the DDD
+ * Unit test for the no-parallel-store static check (@SCN-NPS-001) — the capstone lock of the DDD
  * retrofit (Slice 8): the Ledger is the ONE source of truth; nothing re-represents its entries in
  * a parallel store.
  *
@@ -16,7 +16,7 @@
  * stay retired, their counting a Ledger fold), with a >N-files-scanned floor so an empty walk can't
  * masquerade as green.
  *
- * Parent: @SCN-NPS-001 — the no-parallel-store static guard (3F-2199, DDD retrofit Slice 8 ①).
+ * Parent: @SCN-NPS-001 — the no-parallel-store static check (3F-2199, DDD retrofit Slice 8 ①).
  */
 
 import { describe, it, expect } from "vitest";

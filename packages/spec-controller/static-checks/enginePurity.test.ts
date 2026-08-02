@@ -1,5 +1,5 @@
 /**
- * Unit test for the engine-purity static guard (@SCN-EPG-001).
+ * Unit test for the engine-purity static check (@SCN-EPG-001).
  *
  * Bidirectional evidence (Evidence Manifesto §9 / the discipline): the
  * describe/it strings carry the @SCN-EPG-001 id matching features/engine-purity.feature,
@@ -12,7 +12,7 @@
  * the dogfood assertion that the seam holds today. Removing either detection branch in
  * enginePurity.ts reds the corresponding planted case (local-mutation teeth).
  *
- * Parent: @SCN-EPG-001 — the engine-purity static guard slice.
+ * Parent: @SCN-EPG-001 — the engine-purity static check slice.
  */
 
 import { describe, it, expect } from "vitest";
@@ -40,7 +40,7 @@ describe("[SCN-EPG-001] the reconciliation engine imports nothing impure and ref
     const planted: CollectedFile[] = [
       { path: "packages/core/src/render/markdown.ts", source: `import { readEvidenceObligations } from "spec-controller/ingest/ingestQualityChecks.js";` },
       { path: "packages/core/src/assemble/report.ts", source: `import { keptRun } from "spec-controller/run-management/keptRun.js";` },
-      { path: "packages/core/src/lib/featureCode.ts", source: `import { REGISTRY } from "../../../spec-controller/static-guards/featureCodes.js";` },
+      { path: "packages/core/src/lib/featureCode.ts", source: `import { REGISTRY } from "../../../spec-controller/static-checks/featureCodes.js";` },
     ];
     const violations = checkEnginePurity(planted);
     expect(violations.map((v) => v.kind)).toEqual(["impure-import", "impure-import", "impure-import"]);

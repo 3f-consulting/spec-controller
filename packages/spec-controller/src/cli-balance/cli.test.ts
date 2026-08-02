@@ -479,7 +479,7 @@ describe("[SCN-CLI-013] the tally, the verdict headline and the process exit cod
     },
     {
       // SUSPENSE-ONLY — the load-bearing arm: an adopter's repository 17-36-50Z shape, where every DECLARED
-      // scenario balances and the run's only reconciling item is the uncited static-guard's
+      // scenario balances and the run's only reconciling item is the uncited static-check's
       // uncited credit on the `(no scenario)` row. The scenario-only tally read a clean `2 | 2 | 0`
       // here; the tally that counts every Scenario Reconciliation reads 1 out-of-balance and
       // agrees with the exit code.

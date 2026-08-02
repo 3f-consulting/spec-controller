@@ -13,7 +13,7 @@ import { spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { SURFACES } from "../../packages/spec-controller/static-guards/vocabAudit.js";
+import { SURFACES } from "../../packages/spec-controller/static-checks/vocabAudit.js";
 
 const VOCAB_FIXTURE_ROOT = "tests/fixtures/vocab";
 let manifestCsv: string;
@@ -34,7 +34,7 @@ When("the vocabulary audit runs over the corpus", function () {
   const outDir = mkdtempSync(join(tmpdir(), "spec-controller-voc001-"));
   const manifestPath = join(outDir, "manifest.csv");
   const argv = [
-    join(repoRoot, "packages", "spec-controller", "static-guards", "vocabAuditCli.ts"),
+    join(repoRoot, "packages", "spec-controller", "static-checks", "vocabAuditCli.ts"),
     "--root",
     join(repoRoot, VOCAB_FIXTURE_ROOT),
     "--manifest",
@@ -152,7 +152,7 @@ When("the vocabulary audit renders the coverage matrix over the corpus", functio
   const outDir = mkdtempSync(join(tmpdir(), "spec-controller-voc002-"));
   const matrixPath = join(outDir, "matrix.md");
   const argv = [
-    join(repoRoot, "packages", "spec-controller", "static-guards", "vocabAuditCli.ts"),
+    join(repoRoot, "packages", "spec-controller", "static-checks", "vocabAuditCli.ts"),
     "--root",
     join(repoRoot, VOCAB_FIXTURE_ROOT),
     "--matrix",

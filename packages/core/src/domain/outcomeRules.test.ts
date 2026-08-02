@@ -123,7 +123,7 @@ describe("[SCN-LDG-001] suspenseReconciliationsOf orders the suspense row's item
   const uncited = credit("unit", null, { locator: "tests/orphan.test.ts" });
   const guard: GuardEvidenceObservation = {
     qualityCheck: "lint",
-    staticGuard: "lint:nobody-asked",
+    staticCheck: "lint:nobody-asked",
     exists: true,
     enforcedOverRealSource: true,
   };
@@ -133,10 +133,10 @@ describe("[SCN-LDG-001] suspenseReconciliationsOf orders the suspense row's item
    * assertion that was missing from the repo entirely: reordering the arms left every other test
    * green.
    */
-  it("lists broken FIRST, then the uncited runtime credits, then the undemanded static guards", () => {
+  it("lists broken FIRST, then the uncited runtime credits, then the undemanded static checks", () => {
     const items = suspenseReconciliationsOf([broken], [uncited], [guard]);
     expect(items.map((i) => i.outcome)).toEqual(["broken", "cites-no-scenario", "cites-no-scenario"]);
-    expect(items[2]!.staticGuard).toBe("lint:nobody-asked");
+    expect(items[2]!.staticCheck).toBe("lint:nobody-asked");
   });
 
   /**
@@ -150,7 +150,7 @@ describe("[SCN-LDG-001] suspenseReconciliationsOf orders the suspense row's item
     expect(item!.evidenceObservation).toBeUndefined();
   });
 
-  it("carries no locator on an undemanded static guard — a guard is read from config, not a test file", () => {
+  it("carries no locator on an undemanded static check — a guard is read from config, not a test file", () => {
     const [item] = suspenseReconciliationsOf([], [], [guard]);
     expect(item!.locator).toBeUndefined();
     expect(item!.evidenceObservation).toBe(guard);

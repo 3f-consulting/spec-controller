@@ -16,7 +16,7 @@ export default defineConfig({
   test: {
     include: [
       "packages/*/src/**/*.test.ts",
-      "packages/spec-controller/static-guards/**/*.test.ts",
+      "packages/spec-controller/static-checks/**/*.test.ts",
     ],
   },
 });

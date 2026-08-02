@@ -9,7 +9,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
   This feature builds the ONE whole-document report model — the ordered sections of
   the document as data (runProvenance → summary → evidenceObligations →
-  staticGuards → evidenceReconciliation → evidenceObservations) — and serialises the
+  staticChecks → evidenceReconciliation → evidenceObservations) — and serialises the
   JSON glue-free FROM it (render/json.ts collapses to JSON.stringify(assembleReport)).
   (The `warnings` key was RETIRED entirely — a zero-evidence scenario is a
   both-missing row in evidenceReconciliation, not a separate axis.)
@@ -101,12 +101,12 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
       Then the phantom and suspense credits surface on their ledger rows and there is no evidenceObservations section
       And the sum of summary rawByRuntimeQualityCheck equals the attributed total plus the cites-unknown-scenario and cites-no-scenario counts
 
-  Rule: the static-guard census is summary counts, no standalone section
+  Rule: the static-check census is summary counts, no standalone section
 
-    The static-axis manifesto landing on the JSON surface (@SCN-RMD-004). The static-guard census is
-    summary.staticGuards COUNTS alone — a pure counter over the guard observations
+    The static-axis manifesto landing on the JSON surface (@SCN-RMD-004). The static-check census is
+    summary.staticChecks COUNTS alone — a pure counter over the guard observations
     (countStaticEvidenceObservationKinds), symmetric with the runtime testVolume counter. The
-    standalone member-list section (was guards, then staticGuards) COLLAPSED: the guard member
+    standalone member-list section (was guards, then staticChecks) COLLAPSED: the guard member
     detail lives in the rows now (named → each scenario's @lint sub-row; undemanded → the
     suspense row's cites-no-scenario credit items), so there is no double-report on the JSON
     surface. The counts runningStaticCheckCount and uncitedStaticCheckCount are carried on the
@@ -114,25 +114,25 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     derive over the model, proven in isolation by Vitest.
 
     @unit @SCN-RMD-004
-    Scenario: the static-guard census is summary counts with no standalone section
+    Scenario: the static-check census is summary counts with no standalone section
       Given a reconciliation run whose derived running-guard set includes a guard no @lint scenario declares
       When the report is serialised to JSON
-      Then the static-guard census carries no standalone staticGuards (or guards) section
-      And the static-guard counts are carried under summary.staticGuards as runningStaticCheckCount and uncitedStaticCheckCount
+      Then the static-check census carries no standalone staticChecks (or guards) section
+      And the static-check counts are carried under summary.staticChecks as runningStaticCheckCount and uncitedStaticCheckCount
 
   Rule: the summary materialises the three report totals a JSON consumer reads
 
     Completing "the whole document as one report model" (@SCN-RMD-005;
     operator ruling 2026-07-02 — MATERIALISE). Slice 1 (RMD-001) materialised most of the
     document, but three printed numbers were still renderer arithmetic, not model data: the
-    Test-volume totals, the Static-guard totals, and the Lint tally. This scenario materialises
+    Test-volume totals, the Static-check totals, and the Lint tally. This scenario materialises
     all three into report.summary so a JSON consumer reads them (slice 2 later reads rather than
     computes them, byte-identical). The test-volume identity line is a reconciliation fact (a
     balance check, Σ = Σ) that belongs in the model, not asserted by the renderer:
 
       Test volume — Σ rawByRuntimeQualityCheck = onScenario + onPhantomScenario + onSuspenseScenario.
 
-    The static-guard census carries runningStaticCheckCount and uncitedStaticCheckCount; the
+    The static-check census carries runningStaticCheckCount and uncitedStaticCheckCount; the
     named count is implicit, running − uncited, and the completeness invariant is
     asserted inside the counter rather than on the surface. The Lint tally is the static-only
     evidence obligation cut (satisfied of total) — summary.byOutcome is kind-agnostic and cannot
@@ -141,16 +141,16 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     byte-identical. The @unit arm proves buildSummary / assembleReport in isolation; the @integration
     arm drives the REAL CLI over a fixture spanning attributed / phantom evidence observation /
     cites-no-scenario evidence observations AND a CI guard no @lint declares, then reads the persisted
-    spec-reconciliation.json and proves the test-volume Σ = Σ identity plus the static-guard shape on
+    spec-reconciliation.json and proves the test-volume Σ = Σ identity plus the static-check shape on
     the file.
 
     @unit @integration @SCN-RMD-005
-    Scenario: the summary materialises the test-volume, static-guard, and lint totals with the test-volume balance identity and the static-guard shape holding on the persisted file
+    Scenario: the summary materialises the test-volume, static-check, and lint totals with the test-volume balance identity and the static-check shape holding on the persisted file
       Given a reconciliation run whose evidence spans attributed, phantom-id, and cites-no-scenario evidence observations and whose CI runs a guard no @lint declares
       When the reconciliation run persists spec-reconciliation.json
-      Then the summary carries the test-volume totals, the static-guard totals, and the lint tally
+      Then the summary carries the test-volume totals, the static-check totals, and the lint tally
       And the test-volume identity Σ rawByRuntimeQualityCheck = onScenario + onPhantomScenario + onSuspenseScenario holds on the persisted summary
-      And the persisted static-guard summary carries runningStaticCheckCount and uncitedStaticCheckCount with named implicit
+      And the persisted static-check summary carries runningStaticCheckCount and uncitedStaticCheckCount with named implicit
 
   Rule: the report model carries the feature titles, published on the JSON and sourced by the markdown
 
@@ -159,7 +159,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     `featureNames` key, a sibling of the reconciliation records; a later change MOVES them under a small
     top-level `metadata` object (report.metadata.featureNames) — presentation *metadata* (names),
     cleanly separated from the reconciliation records (summary / evidenceReconciliation /
-    evidenceObservations / staticGuards), before the public contract freezes. assembleReport takes
+    evidenceObservations / staticChecks), before the public contract freezes. assembleReport takes
     the code→slug source and stores it under metadata.featureNames as a plain object (only when
     non-empty; the metadata object is the LAST document key), the published JSON GAINS the titles
     nested there (the deliberate JSON-shape change that enables round-trip), and renderReport reads

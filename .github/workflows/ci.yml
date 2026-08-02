@@ -57,9 +57,9 @@ jobs:
       # code. Blocking on every push: cheap and deterministic, so it earns a per-push slot.
       # A red means optimise, or bump the threshold as a conscious edit carrying its reason —
       # never disable the step. The thresholds and their p90 ratchet targets live in
-      # static-guards/complexityThresholds.mjs. @lint-declared (@lint=lint:complexity on
+      # static-checks/complexityThresholds.mjs. @lint-declared (@lint=lint:complexity on
       # @SCN-CPX-001) so the tool's own ledger reconciles it rather than reporting it as an
-      # uncited static guard.
+      # uncited static check.
       - name: Lint complexity
         run: pnpm lint:complexity
 

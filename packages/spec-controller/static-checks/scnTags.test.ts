@@ -1,5 +1,5 @@
 /**
- * Unit tests for the tier-tag floor static guard logic (the @unit arm of @SCN-STG-001).
+ * Unit tests for the tier-tag floor static check logic (the @unit arm of @SCN-STG-001).
  * The feature-file SOURCES are injected as feature-strings — no disk read — so the
  * rule is proven in isolation: a tier-less non-@wip @SCN scenario reds (and is
  * named); a scenario declaring a tier, a pending tier variant, a @lint=<guard>, or
@@ -57,7 +57,7 @@ Feature: a fixture with a tier-less scenario
 
   it("accepts the @lint=<guard> form specifically (a bare-@lint regex would miss it)", () => {
     // The #1 correctness trap: spec-controller declares lint as @lint=<guard>, so a
-    // static guard that only matched bare @lint would false-flag every static guard scenario.
+    // static check that only matched bare @lint would false-flag every static check scenario.
     const source = `@STG
 Feature: a guard self-declaration
 

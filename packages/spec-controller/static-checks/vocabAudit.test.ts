@@ -87,20 +87,26 @@ describe("[SCN-VOC-001] classifyWords — bare vs full-term shortenings", () => 
   it("flags `unattributed` as a banned word in every context — name and prose", () => {
     // `unattributed` is now a FULLY banned word (operator, 2026-07-24 — treated
     // like `state`): it flags in every context, name and prose. The two former
-    // blessings — "unattributed static-guard" and "unattributed evidence
+    // blessings — "unattributed static check" and "unattributed evidence
     // observation" — are removed, so a future `unattributed` reds either way.
     // No single canonical (the word split by meaning across the axes), so the
     // banned verdict carries no `new` target.
     expect(classifyWords(["unattributed"], "name")[0]!.flagged).toBe(true);
 
-    // Formerly blessed in the static-guard context — now flags (banned); the
-    // co-occurring `static`/`guard` still pass via `guard`'s own qualifier rule.
-    const staticGuard = classifyWords(["unattributed", "static", "guard"], "name");
-    const sgUnattr = staticGuard.find((v) => v.word === "unattributed")!;
+    // Formerly blessed in the qualified-guard context — now flags (banned); the
+    // co-occurring `both`/`missing`/`guard` still pass via `guard`'s own qualifier rule.
+    // The qualifier here was `static` until @SCN-VOC-005 retired "static guard" as a
+    // phrase; `both-missing` is the surviving ruled qualifier whose own words are BOTH
+    // allowlisted, so the probe still proves exactly what it did in NAME mode — a banned
+    // word reds while every other word beside it, the qualified `guard` included, does not.
+    const qualifiedGuard = classifyWords(["unattributed", "both", "missing", "guard"], "name");
+    const sgUnattr = qualifiedGuard.find((v) => v.word === "unattributed")!;
     expect(sgUnattr.flagged).toBe(true);
     expect(sgUnattr.reason).toBe("banned");
     expect(sgUnattr.canonical).toBeNull();
-    expect(staticGuard.filter((v) => v.word !== "unattributed").every((v) => !v.flagged)).toBe(true);
+    expect(qualifiedGuard.filter((v) => v.word !== "unattributed").every((v) => !v.flagged)).toBe(
+      true
+    );
 
     // Formerly blessed in the evidence-observation context — now flags (banned);
     // `evidence`/`observation` still pass (the evidence-observation full term).
@@ -130,7 +136,7 @@ describe("[SCN-VOC-001] classifyWords — blessed canon verbs", () => {
     // real `runningStaticChecks` decomposes to ["running","static","checks"], and an
     // earlier hand-written list omitted `static` — so it passed for the wrong reason
     // (a 3F-1897-family lying fixture). Tracking the identifier through 3F-2294's
-    // `runningStaticGuards` → `runningStaticChecks` rename is that same rule applied.
+    // rename to `runningStaticChecks` is that same rule applied.
     const surface = classifyWords(decomposeName("observeRunningStaticChecks"), "name");
     expect(surface.every((v) => !v.flagged)).toBe(true);
     expect(classifyWords(["observation"], "name")[0]!.flagged).toBe(true);
@@ -540,7 +546,7 @@ describe("[SCN-VOC-004] the retired evidence-obligation word `demand`", () => {
     expect(classifyWords(["undemanded"], "name").every((v) => !v.flagged)).toBe(true);
     expect(classifyWords(["undemanded"], "prose").every((v) => !v.flagged)).toBe(true);
     // …and inside the real composites it lives in.
-    for (const name of ["undemandedGuards", "undemandedBalance", "byOutcome.undemanded", "undemanded-static-guard"]) {
+    for (const name of ["undemandedGuards", "undemandedBalance", "byOutcome.undemanded", "undemanded-static-check"]) {
       const v = classifyWords(decomposeName(name), "name").find((w) => w.word === "undemanded")!;
       expect(v.flagged, name).toBe(false);
     }
@@ -548,7 +554,7 @@ describe("[SCN-VOC-004] the retired evidence-obligation word `demand`", () => {
 
   it("[SCN-VOC-004] flags a real prose `demanded` with action rename, and passes `undemanded`", () => {
     const { manifest } = auditFiles([
-      { path: "src/notes.ts", content: "// the demanded static guard is retired here\n" },
+      { path: "src/notes.ts", content: "// the demanded static check is retired here\n" },
       { path: "src/ok.ts", content: "// the undemanded outcome is canon and stays\n" },
     ]);
     const red = manifest.find((r) => r.current === "demanded" && r.new === "evidence obligation");
@@ -557,5 +563,126 @@ describe("[SCN-VOC-004] the retired evidence-obligation word `demand`", () => {
     expect(red!.file).toBe("src/notes.ts");
     // `undemanded` produced no row of any kind, on any surface.
     expect(manifest.some((r) => r.current === "undemanded")).toBe(false);
+  });
+});
+
+describe("[SCN-VOC-005] the retired class name `static guard`", () => {
+  // The fourth regrowth guard, and the one that closes the retired-term slice. A PHRASE
+  // rule like @SCN-VOC-003 / @SCN-VOC-006 and unlike the banned words @SCN-VOC-004 /
+  // @SCN-VOC-007: NEITHER half can be banned. `static` is a manifesto DOMAIN word (the
+  // static axis) and `guard` is canon's DIFFERENT WORD, kept deliberately by the Rule at
+  // the top of features/vocabulary-audit.feature.
+  //
+  // The ORDERING is the rule. `static` is APPROVED, so an arm placed after the
+  // FULL_TERM_ONLY / isApproved gates would never be reached and the whole class would
+  // stay green by accident. The last three assertions are the negatives that make the
+  // arm honest: canon `static check`, bare `guard` under its REMAINING qualifiers, and a
+  // `guard:`-prefixed CI script NAME (a value, not vocabulary — 3F-1852's scope).
+
+  it("[SCN-VOC-005] reds `static guard` in PROSE, renaming to the canon `static check`", () => {
+    const v = classifyWords(["static", "guard"], "prose").find((w) => w.word === "static")!;
+    expect(v.flagged).toBe(true);
+    expect(v.reason).toBe("static-guard");
+    expect(v.canonical).toBe("static check");
+  });
+
+  it("[SCN-VOC-005] reds the plural `static guards` too (the phrase, not the inflection)", () => {
+    const v = classifyWords(["static", "guards"], "prose").find((w) => w.word === "static")!;
+    expect(v.flagged).toBe(true);
+    expect(v.reason).toBe("static-guard");
+    expect(v.canonical).toBe("static check");
+  });
+
+  it("[SCN-VOC-005] reds in NAME mode too — a `staticGuard` composite identifier", () => {
+    for (const name of ["staticGuard", "staticGuards", "static-guards", "StaticGuardTotals"]) {
+      const v = classifyWords(decomposeName(name), "name").find((w) => w.word === "static")!;
+      expect(v.flagged, name).toBe(true);
+      expect(v.reason, name).toBe("static-guard");
+      expect(v.canonical, name).toBe("static check");
+    }
+  });
+
+  it("[SCN-VOC-005] ORDERING: the arm fires even though `static` is an APPROVED domain word", () => {
+    // The teeth of the placement. `static` is in DOMAIN_WORDS, so bare it is green — which
+    // is precisely why an arm sitting after the FULL_TERM_ONLY / isApproved gates would
+    // never be reached and the whole class would stay green by accident. Bare-green plus
+    // phrase-red is the pair that can only hold if the arm precedes those gates.
+    expect(classifyWords(["static"], "name").every((v) => !v.flagged)).toBe(true);
+    expect(classifyWords(["static", "guard"], "name")[0]!.flagged).toBe(true);
+  });
+
+  it("[SCN-VOC-005] leaves the following `guard` GREEN — one occurrence, one row", () => {
+    // The arm flags the `static` token and returns, so `guard` is judged by the unchanged
+    // full-term machinery, where `["static"]` still co-occurs as a GUARD_QUALIFIERS entry.
+    // Removing that entry would produce a SECOND row per occurrence, dispositioned
+    // `review` — the accidental double-report this assertion forecloses.
+    const verdicts = classifyWords(["static", "guard"], "prose");
+    expect(verdicts.find((v) => v.word === "guard")!.flagged).toBe(false);
+    expect(verdicts.filter((v) => v.flagged)).toHaveLength(1);
+  });
+
+  it("[SCN-VOC-005] STAYS GREEN on the canon `static check` — both words already approved", () => {
+    // NAME mode is the discriminating one: an unapproved word flags `unknown` there, so
+    // this green can only come from `static` and `check` both being in the word-sets.
+    expect(classifyWords(["static", "check"], "name").every((v) => !v.flagged)).toBe(true);
+    expect(classifyWords(["static", "checks"], "name").every((v) => !v.flagged)).toBe(true);
+    expect(
+      classifyWords(decomposeName("staticCheckEvidenceObligations"), "name").every(
+        (v) => v.reason !== "static-guard"
+      )
+    ).toBe(true);
+  });
+
+  it("[SCN-VOC-005] STAYS GREEN on bare `guard` under EVERY remaining ruled qualifier", () => {
+    // The rule reds the CLASS NAME, never the word. Canon's different sense — a check
+    // protecting an invariant — survives under the five qualifiers that are not `static`.
+    for (const qualified of [
+      ["both", "missing", "guard"],
+      ["exhaustiveness", "guard"],
+      ["regression", "guard"],
+      ["existence", "guard"],
+      ["readability", "guard"],
+    ]) {
+      const v = classifyWords(qualified, "prose").find((w) => w.word === "guard")!;
+      expect(v.flagged, qualified.join("-")).toBe(false);
+    }
+  });
+
+  it("[SCN-VOC-005] does NOT touch a `guard:`-prefixed CI script NAME — a value, not vocabulary", () => {
+    // `guard:domain-purity` is a script name (3F-1852's scope). This rule must not reach
+    // it: no `static` precedes the `guard`, so no phrase matches and the word keeps its
+    // PRE-EXISTING disposition — flagged for `review`, never escalated to a `rename`.
+    const verdicts = classifyWords(decomposeName("guard:domain-purity"), "name");
+    expect(verdicts.every((v) => v.reason !== "static-guard")).toBe(true);
+    const guard = verdicts.find((v) => v.word === "guard")!;
+    expect(guard.reason).toBe("bare-different-word");
+  });
+
+  it("[SCN-VOC-005] does NOT over-guard: bare `static` NOT before `guard` earns no flag", () => {
+    // `staticObservationTally`, "the static axis", `{ kind: 'static' }` must all stay
+    // green — adjacency to `guard` is the whole trigger.
+    for (const name of ["staticObservationTally", "static-evidence-obligation"]) {
+      expect(
+        classifyWords(decomposeName(name), "name").every((v) => v.reason !== "static-guard"),
+        name
+      ).toBe(true);
+    }
+    expect(
+      classifyWords(["the", "static", "axis"], "prose").every((v) => v.reason !== "static-guard")
+    ).toBe(true);
+  });
+
+  it("[SCN-VOC-005] flags a real prose `static guard` with action rename, and passes `static check`", () => {
+    const { manifest } = auditFiles([
+      { path: "src/notes.ts", content: "// the static guard is the retired class name\n" },
+      { path: "src/ok.ts", content: "// the static check is the canon replacement\n" },
+    ]);
+    const red = manifest.find((r) => r.current === "static" && r.new === "static check");
+    expect(red).toBeDefined();
+    expect(red!.action).toBe("rename");
+    expect(red!.file).toBe("src/notes.ts");
+    // `static check` produced no row of any kind, and neither did the trailing `guard`.
+    expect(manifest.some((r) => r.file === "src/ok.ts")).toBe(false);
+    expect(manifest.some((r) => r.current === "guard")).toBe(false);
   });
 });

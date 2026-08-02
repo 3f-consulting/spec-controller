@@ -292,12 +292,12 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
     // (level-=-tag) and orders it FIRST (canonical order: lint, then the runtime
     // levels) regardless of declaration order.
     // Reconciler-built (§11A): the integration arm is declared BEFORE the lint arm, both missing
-    // (no runtime credit, no static guard observation) — the split still orders lint first, canonically.
+    // (no runtime credit, no static check observation) — the split still orders lint first, canonically.
     const lintAndRuntime: Ledger = reconcile(
       [
         {
           scnId: "SCN-LNT-099",
-          evidenceObligations: [{ qualityCheck: "integration" }, { qualityCheck: "lint", staticGuard: "typecheck" }],
+          evidenceObligations: [{ qualityCheck: "integration" }, { qualityCheck: "lint", staticCheck: "typecheck" }],
         },
       ],
       []
@@ -379,31 +379,31 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
 });
 
 /**
- * Unit test for the markdown static-guard section (@SCN-RPT-005).
+ * Unit test for the markdown static-check section (@SCN-RPT-005).
  *
  * Bidirectional evidence (Evidence Manifesto §9): the describe carries the
  * @SCN-RPT-005 id matching features/report.feature, so a grep of the id returns
  * both halves of the pair.
  *
- * Proves the staticGuardSection in isolation: renderMarkdown filters
+ * Proves the staticCheckSection in isolation: renderMarkdown filters
  * balance.scenarios[].evidenceObligations[] on kind === "static", pairs each with its
- * enclosing scenario's scnId, and renders a "## Static-guard evidenceObligations" table
- * `| Scenario | Static guard | Outcome |` — one row per static evidenceObligation in document
+ * enclosing scenario's scnId, and renders a "## Static-check evidenceObligations" table
+ * `| Scenario | Static check | Outcome |` — one row per static evidenceObligation in document
  * order, the outcome carrying its existing ITEM_GLYPH glyph (so the 🍉 watermelon
  * reads at a glance). Runtime evidenceObligations are excluded (the static slice on its
- * own). When no scenario declares a static guard, the section is OMITTED entirely
+ * own). When no scenario declares a static check, the section is OMITTED entirely
  * (the warningsSection precedent). Slotted after evidenceObligationCountSection, before
  * warningsSection.
  *
- * Teeth: until the emitter lands and is slotted into SECTIONS, every "## Static-guard
+ * Teeth: until the emitter lands and is slotted into SECTIONS, every "## Static-check
  * evidenceObligations" / row / placement assertion reds (the genuine red→green). Markdown-only
  * — the derived view is NOT duplicated into JSON (project design §3).
  *
  * Parent: (@SCN-RPT-005).
  */
 describe("[SCN-RPT-005] the markdown report lists the lint evidence obligations as their own section", () => {
-  // A balance whose evidenceObligations mix static-guard and runtime kinds across two
-  // scenarios, the static guards spanning balanced and the watermelon. Static
+  // A balance whose evidenceObligations mix static-check and runtime kinds across two
+  // scenarios, the static checks spanning balanced and the watermelon. Static
   // evidenceObligations in document order: SCN-A/guard-typecheck (balanced), then
   // SCN-B/guard-lint (the watermelon). Runtime evidenceObligations must NOT appear.
   // Reconciler-built (§11A): SCN-A declares unit + the guard-typecheck lint guard + integration
@@ -416,20 +416,20 @@ describe("[SCN-RPT-005] the markdown report lists the lint evidence obligations 
         scnId: "SCN-A",
         evidenceObligations: [
           { qualityCheck: "unit" },
-          { qualityCheck: "lint", staticGuard: "guard-typecheck" },
+          { qualityCheck: "lint", staticCheck: "guard-typecheck" },
           { qualityCheck: "integration" },
         ],
       },
       {
         scnId: "SCN-B",
-        evidenceObligations: [{ qualityCheck: "lint", staticGuard: "guard-lint" }, { qualityCheck: "e2e" }],
+        evidenceObligations: [{ qualityCheck: "lint", staticCheck: "guard-lint" }, { qualityCheck: "e2e" }],
       },
     ],
     [
       { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
       { qualityCheck: "integration", scnId: "SCN-A", status: "failed" },
-      { qualityCheck: "lint", staticGuard: "guard-typecheck", exists: true, enforcedOverRealSource: true },
-      { qualityCheck: "lint", staticGuard: "guard-lint", exists: true, enforcedOverRealSource: false },
+      { qualityCheck: "lint", staticCheck: "guard-typecheck", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "lint", staticCheck: "guard-lint", exists: true, enforcedOverRealSource: false },
     ]
   );
 
@@ -441,9 +441,9 @@ describe("[SCN-RPT-005] the markdown report lists the lint evidence obligations 
     expect(md).toContain("1 of 2 lint evidence obligations reconcile satisfied.");
     // The table header.
     expect(md).toContain("| Scenario | Static check | Outcome |");
-    // The satisfied static guard, glyphed — the outcome shown as its canon description (3F-1626).
+    // The satisfied static check, glyphed — the outcome shown as its canon description (3F-1626).
     expect(md).toContain("| SCN-A | guard-typecheck | ✓ Evidence Observation satisfies its Evidence Obligation |");
-    // The watermelon static guard, glyphed — the 🍉 reads at a glance.
+    // The watermelon static check, glyphed — the 🍉 reads at a glance.
     expect(md).toContain(
       "| SCN-B | guard-lint | 🍉 Evidence Observation is passing but fabricated |"
     );
@@ -511,8 +511,8 @@ describe("[SCN-RPT-005] the markdown report lists the lint evidence obligations 
  * reused, not re-derived) into a "## Out-of-balance by feature" section, one bullet
  * per feature in first-appearance (document) order with a per-feature count, the
  * balanced scenarios excluded. When no scenario is out of balance the section is
- * OMITTED entirely (the warningsSection / staticGuardSection precedent). Slotted
- * after staticGuardSection, before warningsSection.
+ * OMITTED entirely (the warningsSection / staticCheckSection precedent). Slotted
+ * after staticCheckSection, before warningsSection.
  *
  * Teeth: until the emitter lands and is slotted into SECTIONS, every "## Out-of-balance
  * by feature" / grouping / placement assertion reds (the genuine red→green). Markdown-only
@@ -555,11 +555,11 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
         evidenceObligations: [],
         verdict: "out-of-balance",
         qualityCheckReconciliations: [
-          qcr({ qualityCheck: "lint", staticGuard: "guard-lint", outcome: "watermelon" }),
+          qcr({ qualityCheck: "lint", staticCheck: "guard-lint", outcome: "watermelon" }),
         ],
         pendingItems: [],
         reconcilingItems: [
-          qcr({ qualityCheck: "lint", staticGuard: "guard-lint", outcome: "watermelon" }),
+          qcr({ qualityCheck: "lint", staticCheck: "guard-lint", outcome: "watermelon" }),
         ],
       },
       {
@@ -568,7 +568,7 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
         evidenceObservations: [],
         evidenceObligations: [],
         verdict: "balanced",
-        qualityCheckReconciliations: [qcr({ qualityCheck: "lint", staticGuard: "guard-lint", outcome: "satisfied" })],
+        qualityCheckReconciliations: [qcr({ qualityCheck: "lint", staticCheck: "guard-lint", outcome: "satisfied" })],
         pendingItems: [],
         reconcilingItems: [],
       },
@@ -623,11 +623,11 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
   });
 
   it("slots the by-feature section after the lint section and before the ledger (no warnings section)", () => {
-    // A balance carrying static-guard evidenceObligations and an out-of-balance scenario — so
+    // A balance carrying static-check evidenceObligations and an out-of-balance scenario — so
     // both summary-view sections render and their order can be asserted.
     const withAll: Ledger = reconcile(
-      [{ scnId: "SCN-LNT-002", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "guard-lint" }] }],
-      [{ qualityCheck: "lint", staticGuard: "guard-lint", exists: true, enforcedOverRealSource: false }]
+      [{ scnId: "SCN-LNT-002", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "guard-lint" }] }],
+      [{ qualityCheck: "lint", staticCheck: "guard-lint", exists: true, enforcedOverRealSource: false }]
     );
     const md = renderMarkdown(__er(withAll), ctx);
     const iStatic = md.indexOf("### Lint evidence obligations");
@@ -800,7 +800,7 @@ describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN o
  * Proves the summary-first / ledger-last structure in isolation: renderMarkdown opens
  * with `# Evidence Reconciliation` (not `# Ledger`), keeps `## Run provenance`
  * first, groups the derived cuts under `## Summary views` (run verdict →
- * evidence reconciliation → test volume → static guards → lint evidence obligations →
+ * evidence reconciliation → test volume → static checks → lint evidence obligations →
  * out-of-balance by feature), and moves the
  * per-scenario `## Scenario Reconciliations` ledger to the END with its summary lines on top,
  * `## Warnings` last. A pure derive over the balance; markdown-only (the JSON surface
@@ -809,20 +809,20 @@ describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN o
  */
 describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last", () => {
   // A balance exercising every section: a balanced scenario, two out-of-balance
-  // scenarios (one carrying a static-guard watermelon), and a no-evidence-declared
+  // scenarios (one carrying a static-check watermelon), and a no-evidence-declared
   // warning — so the full section set renders and the ordering can be asserted.
   // Reconciler-built (§11A): a balanced scenario (unit satisfied), an out-of-balance one (unit
-  // missing), and one carrying a static-guard watermelon — so the full section set renders and the
+  // missing), and one carrying a static-check watermelon — so the full section set renders and the
   // summary-first / ledger-last ordering can be asserted.
   const reformatted: Ledger = reconcile(
     [
       { scnId: "SCN-LDG-001", evidenceObligations: [{ qualityCheck: "unit" }] },
       { scnId: "SCN-LDG-002", evidenceObligations: [{ qualityCheck: "unit" }] },
-      { scnId: "SCN-LNT-001", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "guard-lint" }] },
+      { scnId: "SCN-LNT-001", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "guard-lint" }] },
     ],
     [
       { qualityCheck: "unit", scnId: "SCN-LDG-001", status: "passed" },
-      { qualityCheck: "lint", staticGuard: "guard-lint", exists: true, enforcedOverRealSource: false },
+      { qualityCheck: "lint", staticCheck: "guard-lint", exists: true, enforcedOverRealSource: false },
     ]
   );
 
@@ -1010,14 +1010,14 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
       scnId: "SCN-A",
       evidenceObligations: [
         { qualityCheck: "unit" },
-        { qualityCheck: "lint", staticGuard: "guard-x" },
-        { qualityCheck: "lint", staticGuard: "guard-y" },
+        { qualityCheck: "lint", staticCheck: "guard-x" },
+        { qualityCheck: "lint", staticCheck: "guard-y" },
       ],
     },
     { scnId: "SCN-B", evidenceObligations: [{ qualityCheck: "unit" }] },
     { scnId: "SCN-C", evidenceObligations: [{ qualityCheck: "unit" }] },
     { scnId: "SCN-D", evidenceObligations: [{ qualityCheck: "integration" }] },
-    { scnId: "SCN-E", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "guard-z" }] },
+    { scnId: "SCN-E", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "guard-z" }] },
     { scnId: "SCN-F", evidenceObligations: [{ qualityCheck: "unit", pending: true }] },
   ];
   const observations: EvidenceObservation[] = [
@@ -1035,8 +1035,8 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     // The guards: guard-x wired into CI over real source → satisfied; guard-y exists but is not
     // wired → the watermelon (PRESENT, so it counts into the Lint cell); guard-z has no
     // observation at all → missing (∅).
-    { qualityCheck: "lint", staticGuard: "guard-x", exists: true, enforcedOverRealSource: true },
-    { qualityCheck: "lint", staticGuard: "guard-y", exists: true, enforcedOverRealSource: false },
+    { qualityCheck: "lint", staticCheck: "guard-x", exists: true, enforcedOverRealSource: true },
+    { qualityCheck: "lint", staticCheck: "guard-y", exists: true, enforcedOverRealSource: false },
   ];
   const balance: Ledger = reconcile(scenarios, observations);
 
@@ -1079,7 +1079,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     expect(md).toContain("| SCN-C |  | U/1 | -/1 |");
     // declared elsewhere, absent here → blank left/right, and the named Integration reads I/1.
     expect(md).toContain("| SCN-D |  |  | I/1 |");
-    // lint declared but its static guard missing → L/- (declared, no guard present).
+    // lint declared but its static check missing → L/- (declared, no guard present).
     expect(md).toContain("| SCN-E | L/- |  |  |");
   });
 
@@ -1094,7 +1094,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
 
   it("counts the lint cell's right side by guards PRESENT (balanced or watermelon), not 0/1", () => {
     const md = renderMarkdown(__er(balance, true, false), ctx);
-    // SCN-A declares two static guards, both present (one balanced, one watermelon) → right side 2,
+    // SCN-A declares two static checks, both present (one balanced, one watermelon) → right side 2,
     // and the evidence-obligation LEFT carries the evidence-obligation count (two lint QCRs) → L2 → L2/2.
     expect(md).toContain("| SCN-A | L2/2 |");
   });
@@ -1277,16 +1277,16 @@ describe("[SCN-USG-001] the markdown report renders the Static checks section", 
   // (lint:foo, posts to its scenario's `@lint` row) + 1 uncited (lint:bar, undemanded-running,
   // folds to the suspense row) → the fold reads {runningStaticCheckCount: 2, uncitedStaticCheckCount: 1}.
   const twoRunningOneUncited: Ledger = reconcile(
-    [{ scnId: "SCN-USG-001", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:foo" }] }],
+    [{ scnId: "SCN-USG-001", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint:foo" }] }],
     [
-      { qualityCheck: "lint", staticGuard: "lint:foo", exists: true, enforcedOverRealSource: true },
-      { qualityCheck: "lint", staticGuard: "lint:bar", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "lint", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "lint", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
     ]
   );
   // One running CI guard, all named → the fold reads {runningStaticCheckCount: 1, uncitedStaticCheckCount: 0}.
   const oneRunningNoneUncited: Ledger = reconcile(
-    [{ scnId: "SCN-USG-001", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:foo" }] }],
-    [{ qualityCheck: "lint", staticGuard: "lint:foo", exists: true, enforcedOverRealSource: true }]
+    [{ scnId: "SCN-USG-001", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint:foo" }] }],
+    [{ qualityCheck: "lint", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true }]
   );
 
   it("renders '### Static checks' with the counts line ONLY — the per-guard detail dissolved to the suspense row", () => {
@@ -1306,7 +1306,7 @@ describe("[SCN-USG-001] the markdown report renders the Static checks section", 
     expect(md).not.toContain("— a CI guard no @lint declares:");
   });
 
-  it("omits the Static checks section when the static-guard axis is not in play (back-compat)", () => {
+  it("omits the Static checks section when the static-check axis is not in play (back-compat)", () => {
     const md = renderMarkdown(__er(emptyBalance), ctx);
     expect(md).not.toContain("### Static checks");
   });
@@ -1539,12 +1539,12 @@ describe("[SCN-RPT-020] the markdown renders each outcome's canon description, n
     [
       {
         scnId: "SCN-A",
-        evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "lint", staticGuard: "typecheck" }],
+        evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "lint", staticCheck: "typecheck" }],
       },
       { scnId: "SCN-B", evidenceObligations: [] },
     ],
     [
-      { qualityCheck: "lint", staticGuard: "typecheck", exists: true, enforcedOverRealSource: false },
+      { qualityCheck: "lint", staticCheck: "typecheck", exists: true, enforcedOverRealSource: false },
       { qualityCheck: "integration", scnId: null, status: "passed", locator: "tests/stray.test.ts:1" },
     ]
   );
@@ -2394,9 +2394,9 @@ describe('[SCN-RPT-024] the reconciliation collection is named "Scenario Reconci
         evidenceObservations: [],
         evidenceObligations: [],
         verdict: "out-of-balance",
-        qualityCheckReconciliations: [qcr({ qualityCheck: "lint", staticGuard: "guard:static", outcome: "cites-no-scenario" })],
+        qualityCheckReconciliations: [qcr({ qualityCheck: "lint", staticCheck: "guard:static", outcome: "cites-no-scenario" })],
         pendingItems: [],
-        reconcilingItems: [qcr({ qualityCheck: "lint", staticGuard: "guard:static", outcome: "cites-no-scenario" })],
+        reconcilingItems: [qcr({ qualityCheck: "lint", staticCheck: "guard:static", outcome: "cites-no-scenario" })],
       },
     ],
   };

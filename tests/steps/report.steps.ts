@@ -725,7 +725,7 @@ let md011: string;
 
 /**
  * The LEDGER's row for one scenario id — scoped to the ledger table (from its header row on), so
- * it can never pick up the same scenario's row in an earlier section (the static-guards table
+ * it can never pick up the same scenario's row in an earlier section (the static-checks table
  * lists SCN-CEL-001 too, and it renders BEFORE the ledger).
  */
 function cellGridRow(scnId: string): string {
@@ -788,14 +788,14 @@ Then(
       ["", "", "I/-", ""],
       "expected SCN-CEL-002 (named, no observation) to render Integration I/- and blank elsewhere"
     );
-    // TWO named static guards, both wired + discharged → the lint LEFT carries the
+    // TWO named static checks, both wired + discharged → the lint LEFT carries the
     // evidence-obligation count (L2, @SCN-RPT-011): L2/2 — two lint QCRs on the row, two present
-    // guards. The ONLY >1-static-guard scenario, so the `L2` left-count path is exercised here;
+    // guards. The ONLY >1-static-check scenario, so the `L2` left-count path is exercised here;
     // a one-guard row (SCN-CEL-001) stays the countless `L/…`.
     assert.deepStrictEqual(
       cellGridCells("SCN-CEL-005"),
       ["L2/2", "", "", ""],
-      "expected SCN-CEL-005 (two named static guards, both present) to render Lint L2/2, blank elsewhere"
+      "expected SCN-CEL-005 (two named static checks, both present) to render Lint L2/2, blank elsewhere"
     );
   }
 );

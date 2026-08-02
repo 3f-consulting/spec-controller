@@ -36,7 +36,7 @@
  */
 
 /**
- * Production code — `packages/<pkg>/src` and `packages/<pkg>/static-guards`, excluding test files.
+ * Production code — `packages/<pkg>/src` and `packages/<pkg>/static-checks`, excluding test files.
  *
  * `max-lines` 1024 is `render/markdown.ts`; `max-lines-per-function` 261 is the argv handler in
  * `cli-balance/cli.ts`; `complexity` 25 is `vocabAudit.ts`'s largest classifier. Those three files are

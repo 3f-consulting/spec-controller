@@ -23,7 +23,7 @@ Feature: an evidence-cell-grid fixture target spanning every four-way cell case
     - @SCN-CEL-005 — two @lint guards (@lint=guard:cell-grid-a @lint=guard:cell-grid-b), BOTH wired
       into CI and discharged → Lint `L2/2`: the LEFT count is the evidence-obligation count (two
       lint QCRs on the row, @SCN-RPT-011), the RIGHT the present-guard count. The ONLY scenario
-      naming >1 static guard — it exercises the `L2` left-count path.
+      naming >1 static check — it exercises the `L2` left-count path.
 
   This file lives under tests/fixtures/ (NOT features/), so neither the feature-code registry
   lint nor the scenario↔sub-issue gate sees @CEL / @SCN-CEL-NNN — they scan features/*.feature
@@ -48,5 +48,5 @@ Feature: an evidence-cell-grid fixture target spanning every four-way cell case
       Given the target repo's source
 
     @lint=guard:cell-grid-a @lint=guard:cell-grid-b @SCN-CEL-005
-    Scenario: a scenario naming two static guards, both wired and discharged
+    Scenario: a scenario naming two static checks, both wired and discharged
       Given the target repo's source

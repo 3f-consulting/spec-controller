@@ -1,5 +1,5 @@
 /**
- * Step definitions for features/lint-reconciliation.feature (the @LNT static-guard
+ * Step definitions for features/lint-reconciliation.feature (the @LNT static-check
  * kind).
  *
  * @SCN-LNT-001 — the bidirectional @integration evidence marker (Evidence
@@ -78,7 +78,7 @@ function rowCells(scnId: string): { verdict: string; items: string } {
 
 // @SCN-LNT-001
 Given(
-  "a declared @lint scenario {string} requiring the static guard {string}",
+  "a declared @lint scenario {string} requiring the static check {string}",
   function (scnId: string, guard: string) {
     // Build the declared side from a real feature snippet through the declared
     // reader, so this arm exercises the @lint=<guard> → {kind:"static"} parse seam
@@ -182,13 +182,13 @@ Given(
 
 // @SCN-LNT-004
 Given(
-  "a scenario {string} requiring both a @unit runtime test and the static guard {string}",
+  "a scenario {string} requiring both a @unit runtime test and the static check {string}",
   function (scnId: string, guard: string) {
     // The kind-axis multi-evidence obligation case: a SINGLE scenario
     // carries BOTH a @unit runtime evidence obligation AND a @lint=<guard> static
     // evidence obligation, built through the real declared reader so the dual-kind parse
     // seam is exercised — parseScenarios emits TWO evidence obligations from one tag block
-    // ({qualityCheck: "unit"} + {kind:"static",guard}). Not a hand-seeded
+    // ({qualityCheck: "unit"} + {kind:"static", staticCheck}). Not a hand-seeded
     // Scenario the reader never produced.
     const feature = [
       "@LNT",
@@ -267,11 +267,11 @@ When(
   "the reconciler runs against the external repo via --package-json and --ci",
   function () {
     // Drive the CLI core end-to-end (the cross-component arm): arg-resolved input
-    // paths → declared read → static guard read against the EXTERNAL package.json +
+    // paths → declared read → static check read against the EXTERNAL package.json +
     // CI → reconcile → render. Until --package-json is threaded, runReconcile reads
     // the tool's own package.json and the guard reconciles missing.
     // THE AXIS GATES ARE THE CONCEPT'S NOW (3F-2233), so they are stated here rather than at the
-    // render call. This scenario is authored against the gates OFF — with the static-guard axis on,
+    // render call. This scenario is authored against the gates OFF — with the static-check axis on,
     // the ledger row gains its lint evidence column and `rowCells` (which picks by POSITION) reads
     // that cell as the verdict. The reconciliation is identical either way: same `out-of-balance`
     // verdict, same 🍉 item. Restoring the authored input keeps the scenario testing the
@@ -370,7 +370,7 @@ Then(
 
 // @SCN-LNT-004
 Then(
-  "the ledger reports the lint scenario {string} as out-of-balance, the runtime evidence obligation balanced and omitted, and the static guard {string} carried as a watermelon reconciling item",
+  "the ledger reports the lint scenario {string} as out-of-balance, the runtime evidence obligation balanced and omitted, and the static check {string} carried as a watermelon reconciling item",
   function (scnId: string, guard: string) {
     // Row-scoped + has teeth, proving INDEPENDENCE PER KIND on the rendered report:
     // the scenario's OWN verdict CELL reads out-of-balance, and its reconciling-items

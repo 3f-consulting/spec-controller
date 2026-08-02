@@ -1,5 +1,5 @@
 /**
- * Unit test for the domain-purity static guard (@SCN-DPG-001).
+ * Unit test for the domain-purity static check (@SCN-DPG-001).
  *
  * Bidirectional evidence (Evidence Manifesto §9 / the discipline): the
  * describe/it strings carry the @SCN-DPG-001 id matching features/domain-purity.feature,
@@ -13,7 +13,7 @@
  * Removing either detection branch in domainPurity.ts reds the corresponding planted case
  * (local-mutation teeth).
  *
- * Parent: @SCN-DPG-001 — the domain-purity static guard slice (3F-2001, DDD retrofit Slice A).
+ * Parent: @SCN-DPG-001 — the domain-purity static check slice (3F-2001, DDD retrofit Slice A).
  */
 
 import { describe, it, expect } from "vitest";
@@ -62,7 +62,7 @@ describe("[SCN-DPG-001] a domain module imports only the domain layer and pure s
     // package boundary the engine-purity guard enforces one level up.
     const planted: CollectedFile[] = [
       { path: "packages/core/src/domain/ledger.ts", source: `import { keptRun } from "spec-controller/run-management/keptRun.js";` },
-      { path: "packages/core/src/domain/journal.ts", source: `import { REGISTRY } from "../../../spec-controller/static-guards/featureCodes.js";` },
+      { path: "packages/core/src/domain/journal.ts", source: `import { REGISTRY } from "../../../spec-controller/static-checks/featureCodes.js";` },
     ];
     const violations = checkDomainPurity(planted);
     expect(violations.map((v) => v.kind)).toEqual(["app-import", "app-import"]);

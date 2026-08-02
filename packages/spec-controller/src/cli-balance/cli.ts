@@ -421,10 +421,10 @@ export function runBalance(argv: string[]): void {
   // A sibling to the balance, threaded to the renderers via writeOutputs like ctx.
   const evidenceObligations = readEvidenceObligations(args["features"]);
 
-  // The static-guard kind-counts are a FOLD OVER THE LEDGER (@SCN-USG-001 / 3F-2118) — the
-  // renderers count the balance's own posted static-guard credits (`staticObservationTally`), so
+  // The static-check kind-counts are a FOLD OVER THE LEDGER (@SCN-USG-001 / 3F-2118) — the
+  // renderers count the balance's own posted static-check credits (`staticObservationTally`), so
   // they cannot drift from the reconciler's verdict: they ARE the same rows. The parallel static
-  // census is RETIRED; `withStaticGuards: true` (below) tells the renderers the axis is in play.
+  // census is RETIRED; `withStaticChecks: true` (below) tells the renderers the axis is in play.
 
   // Read the target's feature-code→slug map alongside the balance (@SCN-RPT-006)
   // — the by-feature cut's full-name labels. The 5th sibling, threaded to the MARKDOWN
@@ -470,12 +470,12 @@ export function runBalance(argv: string[]): void {
     // out-of-balance verdict code 1 (@SCN-CLI-004).
     process.exit(2);
   }
-  writeOutputs(planResult.plan, { balance, ctx, evidenceObligations, withRuntimeObservations: true, withStaticGuards: true, featureNames });
+  writeOutputs(planResult.plan, { balance, ctx, evidenceObligations, withRuntimeObservations: true, withStaticChecks: true, featureNames });
 
   // The CI gate (@SCN-CLI-004): `balance` is a GATE, not just a reporter. AFTER the report
   // is written in full, map the whole-run verdict to the process exit code. Out-of-balance
   // (ANY reconciling item anywhere: an out-of-balance scenario OR a suspense-row item such
-  // as an undemanded static-guard watermelon) sets process.exitCode = 1 and RETURNS — set,
+  // as an undemanded static-check watermelon) sets process.exitCode = 1 and RETURNS — set,
   // never `process.exit(1)`, so the buffered report is flushed intact rather than truncated
   // mid-write. It exits EXACTLY 1 so it reds a CI build and can't masquerade as the usage
   // error (2, above). An ENUMERATED status, never a count (8-bit wrap → false pass). A

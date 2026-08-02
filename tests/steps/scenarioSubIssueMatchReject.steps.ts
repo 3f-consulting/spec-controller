@@ -11,11 +11,11 @@
  * the CLI EXITS NON-ZERO and its output NAMES the unbound code. This exercises the
  * live wiring end-to-end (git diff parse → handle read → decideScnGate → exit
  * code), NOT a re-run of decideScnGate in-process (that is the @unit arm, in
- * packages/spec-controller/static-guards/scnSubIssueGate.test.ts).
+ * packages/spec-controller/static-checks/scnSubIssueGate.test.ts).
  *
  * @SCN-SSM-002 — bidirectional evidence marker. Grepping SCN-SSM-002 returns the
  * scenario, this step block, and the @unit test in
- * packages/spec-controller/static-guards/scnSubIssueGate.test.ts.
+ * packages/spec-controller/static-checks/scnSubIssueGate.test.ts.
  *
  * Parent: 3F-1137 (the port + fork-exemption design); sibling SSM-001 (3F-1489)
  * landed the ported gate whose reject path this pins.
@@ -34,7 +34,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 const tsxBin = path.join(repoRoot, "node_modules/.bin/tsx");
 const cliPath = path.join(
   repoRoot,
-  "packages/spec-controller/static-guards/lintScnSubIssuesCli.ts"
+  "packages/spec-controller/static-checks/lintScnSubIssuesCli.ts"
 );
 
 /** The bare @SCN code the fixture PR adds without binding it to a ticket. */

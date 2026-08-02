@@ -1,14 +1,14 @@
 /**
- * CLI entry point for the no-committed-reports static guard. Run via
+ * CLI entry point for the no-committed-reports static check. Run via
  * `pnpm lint:no-committed-reports` in CI: it reads the repo's TRACKED files
  * under `runs/` (via `git ls-files -- runs/`, the precise in-repo leak vector),
  * and exits non-zero — naming every offending path — if any is tracked. Over a
  * clean tree (nothing tracked under runs/) it exits 0.
  *
  * Mirrors `lint:feature-codes` / `lint:scn-subissues`: a pure function of the
- * checked-out tree. The static guard is @lint-declared (`@lint=lint:no-committed-reports`
+ * checked-out tree. The static check is @lint-declared (`@lint=lint:no-committed-reports`
  * on @SCN-NCR-001) so the tool's own ledger reconciles it — not an
- * uncited static-guard (the Uncited-static-guards increment).
+ * uncited static-check (the Uncited-static-checks increment).
  */
 
 import { execFileSync } from "node:child_process";

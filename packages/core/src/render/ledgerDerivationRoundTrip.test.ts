@@ -52,28 +52,28 @@ const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation =>
 
 // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — the Ledger is PRODUCED by reconcile() over a
 // SPANNING corpus, so every summary aggregate has a non-trivial value to re-fold (an all-zero corpus
-// could not make the round-trip vacuous). No static guard is named by more than one scenario, so
+// could not make the round-trip vacuous). No static check is named by more than one scenario, so
 // the identity-deduped `staticObservationTally` re-folds cleanly across the JSON boundary (JSON has
 // no shared references — a guard named twice would appear as two objects and inflate the re-fold;
 // this corpus deliberately avoids that). The corpus:
 //   SCN-CHK-001: @unit, one passing unit credit                → balanced scenario row (onScenario)
 //   SCN-CHK-002: @integration, no credit                       → a missing evidence obligation
-//   SCN-CHK-003: @lint=lint:foo, running & wired               → the named running static guard
+//   SCN-CHK-003: @lint=lint:foo, running & wired               → the named running static check
 //   SCN-CHK-004: @integrationpending                           → a Pending Item (pending = 1)
 //   1 unit credit citing SCN-PHX-001 (no feature declares it)  → a phantom row (onPhantomScenario)
 //   1 uncited unit credit + the undemanded running lint:bar    → the suspense row (onSuspenseScenario)
 const scenarios: Scenario[] = [
   { scnId: "SCN-CHK-001", evidenceObligations: [{ qualityCheck: "unit" }] },
   { scnId: "SCN-CHK-002", evidenceObligations: [{ qualityCheck: "integration" }] },
-  { scnId: "SCN-CHK-003", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:foo" }] },
+  { scnId: "SCN-CHK-003", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint:foo" }] },
   { scnId: "SCN-CHK-004", evidenceObligations: [{ qualityCheck: "integration", pending: true }] },
 ];
 const observations: EvidenceObservation[] = [
   { qualityCheck: "unit", scnId: "SCN-CHK-001", status: "passed" },
   { qualityCheck: "unit", scnId: "SCN-PHX-001", status: "passed" },
   { qualityCheck: "unit", scnId: null, status: "passed", locator: "src/b.test.ts" },
-  { qualityCheck: "lint", staticGuard: "lint:foo", exists: true, enforcedOverRealSource: true },
-  { qualityCheck: "lint", staticGuard: "lint:bar", exists: true, enforcedOverRealSource: true },
+  { qualityCheck: "lint", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
+  { qualityCheck: "lint", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
 ];
 const balance: Ledger = reconcile(scenarios, observations);
 
@@ -95,7 +95,7 @@ function refoldFromSerialisedLedger(parsed: {
   const serialised: Ledger = { scenarioReconciliations: parsed.ledger.scenarioReconciliations };
   const led = ledgerTally(serialised);
   const runtime = runtimeObservationTally(serialised);
-  const staticGuards = staticObservationTally(serialised);
+  const staticChecks = staticObservationTally(serialised);
   return {
     scenarioReconciliations: led.scenarioReconciliations,
     evidenceObligations: led.evidenceObligations,
@@ -111,12 +111,12 @@ function refoldFromSerialisedLedger(parsed: {
       onPhantomScenario: runtime.onPhantomScenario,
       onSuspenseScenario: runtime.onSuspenseScenario,
     },
-    staticGuards,
+    staticChecks,
   };
 }
 
-// The full report as the CI emits it — runtime-observation axis + static-guard axis in play, so
-// `testVolume` / `rawByRuntimeQualityCheck` / `staticGuards` are all materialised on `summary`.
+// The full report as the CI emits it — runtime-observation axis + static-check axis in play, so
+// `testVolume` / `rawByRuntimeQualityCheck` / `staticChecks` are all materialised on `summary`.
 function renderParsed() {
   return JSON.parse(renderJson(__er(balance, true, true), ctx));
 }
@@ -135,8 +135,8 @@ describe("[SCN-NPS-002] every summary aggregate re-folds from the serialised Led
     expect(parsed.summary.testVolume.onScenario).toBeGreaterThan(0);
     expect(parsed.summary.testVolume.onPhantomScenario).toBe(1);
     expect(parsed.summary.testVolume.onSuspenseScenario).toBe(1);
-    expect(parsed.summary.staticGuards.runningStaticCheckCount).toBeGreaterThan(0);
-    expect(parsed.summary.staticGuards.uncitedStaticCheckCount).toBe(1);
+    expect(parsed.summary.staticChecks.runningStaticCheckCount).toBeGreaterThan(0);
+    expect(parsed.summary.staticChecks.uncitedStaticCheckCount).toBe(1);
     expect(parsed.summary.pending).toBe(1);
 
     // THE PROPERTY: summary = fold-of-serialised-Ledger, aggregate by aggregate. `deepStrictEqual`
@@ -149,7 +149,7 @@ describe("[SCN-NPS-002] every summary aggregate re-folds from the serialised Led
     deepStrictEqual(parsed.summary.lint, refold.lint);
     deepStrictEqual(parsed.summary.testVolume, refold.testVolume);
     deepStrictEqual(parsed.summary.rawByRuntimeQualityCheck, refold.rawByRuntimeQualityCheck);
-    deepStrictEqual(parsed.summary.staticGuards, refold.staticGuards);
+    deepStrictEqual(parsed.summary.staticChecks, refold.staticChecks);
   });
 
   it("has teeth: a drifted summary aggregate — or a mutated Ledger row — reds the round-trip", () => {

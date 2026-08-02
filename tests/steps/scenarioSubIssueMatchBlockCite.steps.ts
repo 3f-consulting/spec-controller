@@ -41,7 +41,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 const tsxBin = path.join(repoRoot, "node_modules/.bin/tsx");
 const cliPath = path.join(
   repoRoot,
-  "packages/spec-controller/static-guards/lintScnSubIssuesCli.ts"
+  "packages/spec-controller/static-checks/lintScnSubIssuesCli.ts"
 );
 
 /** The @SCN cited by the file's OTHER, UNTOUCHED test — the sibling that must NOT vouch. */

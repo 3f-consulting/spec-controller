@@ -2,10 +2,10 @@
  * Unit tests for the running-guard observer (src/ingest/ciGuards.ts) —
  * `runningStaticChecks` emits a GuardEvidenceObservation per running CI guard. The evidence-obligation
  * observer (`checkStaticEvidenceObligations`) is pinned in src/ingest/guard.test.ts; the shared CI-parse primitive both
- * use lives in src/ingest/ciCommands.ts. reconcile's folding of an undemanded running static guard onto
+ * use lives in src/ingest/ciCommands.ts. reconcile's folding of an undemanded running static check onto
  * the suspense row is pinned in src/domain/evidenceReconciliation.test.ts.
  *
- * Parent: @SCN-USG-001 (the uncited static-guard).
+ * Parent: @SCN-USG-001 (the uncited static-check).
  */
 
 import { describe, it, expect } from "vitest";
@@ -36,14 +36,14 @@ describe("[SCN-USG-001] runningStaticChecks — the running-guard observer (emit
     "      - run: pnpm cucumber",
   ].join("\n");
 
-  // A running CI static guard is emitted as a GuardEvidenceObservation —
+  // A running CI static check is emitted as a GuardEvidenceObservation —
   // exists + enforcedOverRealSource are true by construction (a package.json script a CI
   // run: step invokes). The static analogue of the runner emitting a passing test result.
   it("emits a GuardEvidenceObservation for each lint:* script a CI run step invokes (test / cucumber / install excluded)", () => {
     // test + cucumber are the runtime axis's observed evidence; install is not a script.
     expect(runningStaticChecks(usgCi, usgPkg, DEFAULT_PREFIXES)).toEqual([
-      { qualityCheck: "lint", staticGuard: "lint:bar", exists: true, enforcedOverRealSource: true },
-      { qualityCheck: "lint", staticGuard: "lint:foo", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "lint", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "lint", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
     ]);
   });
 
@@ -52,8 +52,8 @@ describe("[SCN-USG-001] runningStaticChecks — the running-guard observer (emit
       scripts: { ...usgPkg.scripts, "lint:unwired": "echo unwired" },
     };
     expect(runningStaticChecks(usgCi, withUnwired, DEFAULT_PREFIXES)).toEqual([
-      { qualityCheck: "lint", staticGuard: "lint:bar", exists: true, enforcedOverRealSource: true },
-      { qualityCheck: "lint", staticGuard: "lint:foo", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "lint", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "lint", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
     ]);
   });
 });
@@ -75,7 +75,7 @@ describe("[SCN-USG-003] non-lint CI steps are not observed as static checks", ()
     // Only lint:foo is a running static check; test + cucumber (the runtime axis's observed
     // evidence) and install (not a script) never enter the observed set.
     expect(runningStaticChecks(ci2, pkg2, DEFAULT_PREFIXES)).toEqual([
-      { qualityCheck: "lint", staticGuard: "lint:foo", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "lint", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
     ]);
   });
 });
@@ -108,7 +108,7 @@ describe("[SCN-USG-004] runningStaticChecks observes guard:-prefixed CI scripts 
     expect(runningStaticChecks(guardCi, guardPkg, DEFAULT_PREFIXES)).toEqual([
       {
         qualityCheck: "lint",
-        staticGuard: "guard:domain-purity",
+        staticCheck: "guard:domain-purity",
         exists: true,
         enforcedOverRealSource: true,
       },
@@ -134,8 +134,8 @@ describe("[SCN-USG-004] runningStaticChecks observes guard:-prefixed CI scripts 
       "      - run: pnpm cucumber",
     ].join("\n");
     expect(runningStaticChecks(mixedCi, mixedPkg, DEFAULT_PREFIXES)).toEqual([
-      { qualityCheck: "lint", staticGuard: "guard:domain-purity", exists: true, enforcedOverRealSource: true },
-      { qualityCheck: "lint", staticGuard: "lint:foo", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "lint", staticCheck: "guard:domain-purity", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "lint", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
     ]);
   });
 });

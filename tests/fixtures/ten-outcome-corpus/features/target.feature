@@ -27,7 +27,7 @@ Feature: ten-outcome corpus — a fixture shaped so the REAL reconcile emits all
     Then it reconciles missing
 
   @lint=guard:wm @SCN-TOC-004
-  Scenario: watermelon — a static guard that exists but is not wired into CI
+  Scenario: watermelon — a static check that exists but is not wired into CI
     Given a lint guard that exists as a package.json script
     When CI does not run it
     Then it reconciles watermelon

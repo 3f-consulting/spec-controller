@@ -1,5 +1,5 @@
 /**
- * The no-committed-reports static guard logic (the @unit-testable core).
+ * The no-committed-reports static check logic (the @unit-testable core).
  *
  * A spec-controller reconciliation report enumerates a codebase's gaps, dangling
  * anchors and watermelons — more sensitive than the code itself — so it lives
@@ -21,7 +21,7 @@ export const RUNS_PREFIX = "runs/";
 /**
  * Given the repo's tracked files, return those that are committed report
  * artefacts — any path under `runs/`. An empty result means the tree is clean
- * and the static guard passes; a non-empty result names every offending path.
+ * and the static check passes; a non-empty result names every offending path.
  */
 export function findCommittedReports(trackedFiles: readonly string[]): string[] {
   return trackedFiles.filter((path) => path.startsWith(RUNS_PREFIX));

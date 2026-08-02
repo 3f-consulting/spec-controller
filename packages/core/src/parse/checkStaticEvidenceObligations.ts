@@ -1,10 +1,10 @@
 /**
  * The `ingest/guard` reader — the NAMED-guard observer (the watermelon input).
- * Per declared `@lint=<guard>` handle it reports `{ staticGuard, exists, enforcedOverRealSource }`,
- * where `enforcedOverRealSource` means the static guard's command appears as a CI `run:` step over the
- * real tree — so a named static guard that exists but is not wired reconciles as the WATERMELON.
+ * Per declared `@lint=<guard>` handle it reports `{ staticCheck, exists, enforcedOverRealSource }`,
+ * where `enforcedOverRealSource` means the static check's command appears as a CI `run:` step over the
+ * real tree — so a named static check that exists but is not wired reconciles as the WATERMELON.
  *
- * One of the two static-guard observers: this one reads the DECLARED evidence-obligation side; the
+ * One of the two static-check observers: this one reads the DECLARED evidence-obligation side; the
  * running-guard observer (`runningStaticChecks`, `ingest/ciGuards`) reads every running CI guard. Both
  * share the watermelon-critical CI-parse primitive (`ciRunCommands` / `commandInvokesScript`) from
  * `ingest/ciCommands`, so the structural parse lives in ONE place.
@@ -16,8 +16,8 @@ import type { GuardEvidenceObservation } from "../model.js";
 import { ciRunCommands, commandInvokesScript, type PackageJsonScripts } from "./checkScriptsRunInCI.js";
 
 /**
- * Read each named static guard's evidenceObservation from the CI config source + package.json:
- *   - `exists` — the static guard is a `package.json` `scripts` entry.
+ * Read each named static check's evidenceObservation from the CI config source + package.json:
+ *   - `exists` — the static check is a `package.json` `scripts` entry.
  *   - `enforcedOverRealSource` — its command is a CI `run:` step over the real tree.
  */
 export function checkStaticEvidenceObligations(
@@ -29,7 +29,7 @@ export function checkStaticEvidenceObligations(
   const runCommands = ciRunCommands(ciSource);
   return guards.map((guard) => ({
     qualityCheck: "lint" as const,
-    staticGuard: guard,
+    staticCheck: guard,
     exists: Object.prototype.hasOwnProperty.call(scripts, guard),
     enforcedOverRealSource: runCommands.some((cmd) =>
       commandInvokesScript(cmd, guard)

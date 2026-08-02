@@ -378,12 +378,12 @@ describe("[SCN-PND-016] a recognised community deferral tag defers every declare
   });
 
   it("defers a @lint=<guard> obligation too — the whole scenario is deferred", () => {
-    // Scenario-scope deferral covers EVERY obligation kind, including a static-guard `@lint`.
+    // Scenario-scope deferral covers EVERY obligation kind, including a static-check `@lint`.
     const [scenario] = parseScenarios(asFeature(["@wip @lint=lint:feature-codes @SCN-XXX-110", "Scenario: a deferred lint scenario", "  Given a step"].join("\n")),
       DEFERRAL_TAGS
     );
     expect(scenario!.evidenceObligations).toEqual([
-      { qualityCheck: "lint", staticGuard: "lint:feature-codes", pending: true },
+      { qualityCheck: "lint", staticCheck: "lint:feature-codes", pending: true },
     ]);
   });
 
@@ -721,7 +721,7 @@ Feature: alpha
     Given a thing
 `;
     expect(parseScenarios(lintSource)[0]!.evidenceObligations).toEqual([
-      { qualityCheck: "lint", staticGuard: "lint:feature-codes" },
+      { qualityCheck: "lint", staticCheck: "lint:feature-codes" },
     ]);
 
     // A deferral tag on the Feature defers every scenario beneath it — the whole-file @wip.
@@ -782,7 +782,7 @@ Feature: alpha
         scnId: "SCN-AAA-002",
         evidenceObligations: [
           { qualityCheck: "unit" },
-          { qualityCheck: "lint", staticGuard: "lint:scn-tags" },
+          { qualityCheck: "lint", staticCheck: "lint:scn-tags" },
         ],
       },
     ]);

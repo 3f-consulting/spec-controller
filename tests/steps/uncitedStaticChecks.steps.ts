@@ -1,5 +1,5 @@
 /**
- * @SCN-USG-001 step defs — the uncited-static-guard @integration arm.
+ * @SCN-USG-001 step defs — the uncited-static-check @integration arm.
  * Drives the REAL CLI over the usg fixture target (ci.yml runs lint:foo + lint:bar +
  * test + cucumber; only lint:foo is @lint-declared) and asserts the persisted
  * spec-reconciliation.md carries the "### Static checks" cut reporting lint:bar as an
@@ -63,7 +63,7 @@ Given("a target whose CI runs the lint:foo and lint:bar checks", function () {
 
 Given("only lint:foo is declared by an @lint scenario", function () {
   // The fixture's target.feature declares @lint=lint:foo on @SCN-TGT-001; lint:bar is
-  // invoked in the fixture ci.yml but no @lint declares it — the uncited static-guard one.
+  // invoked in the fixture ci.yml but no @lint declares it — the uncited static-check one.
 });
 
 // @SCN-USG-004
@@ -109,7 +109,7 @@ When("the reconciliation report is rendered for the target", function () {
   });
   assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
   // [3F-1460] fix-to-canon (3F-1414): balance is now an unconditional CI gate, so this
-  // out-of-balance fixture (an uncited static-guard in the suspense row) exits 1 —
+  // out-of-balance fixture (an uncited static-check in the suspense row) exits 1 —
   // the report is still written IN FULL first. Pure exit-expectation flip 0->1; every
   // rendered-content assertion is unchanged.
   assert.equal(
@@ -187,7 +187,7 @@ Then(
 
 // @SCN-USG-005 — the declared guard:* is attributed, not an uncited static check. The
 // usg-guard-declared fixture runs guard:domain-purity in CI AND declares @lint=guard:domain-purity:
-// the named-check filter (reconcile's !staticCheckEvidenceObligationSet.has(o.staticGuard)) removes it from the
+// the named-check filter (reconcile's !staticCheckEvidenceObligationSet.has(o.staticCheck)) removes it from the
 // running-observation stream so it is not folded onto the suspense row, and the counter attributes
 // it (1 run, 0 uncited) — never double-counted as both named and uncited. The guard:*
 // mirror of USG-002, keeping the USG-004 broadening honest.

@@ -29,7 +29,7 @@ import type { EvidenceReconciliation } from "@3f-consulting/spec-controller-core
  * The reconciliation payloads the writer renders — the balance plus its sibling reads
  * (ctx / corpus / guards / featureNames), exactly the arguments the pure renderers take. Threaded
  * from `cli.ts` (built once, rendered per planned output). `withRuntimeObservations` and
- * `withStaticGuards` are the GATES for the two observation axes (Test volume + the evidence grid;
+ * `withStaticChecks` are the GATES for the two observation axes (Test volume + the evidence grid;
  * the Static checks cut): the renderers fold BOTH off the Ledger themselves (3F-2103 / 3F-2118 —
  * the parallel censuses are retired), so the writer threads only whether each axis is in play,
  * never a census object.
@@ -39,7 +39,7 @@ export interface OutputPayloads {
   readonly ctx: RunContext;
   readonly evidenceObligations?: EvidenceObligations;
   readonly withRuntimeObservations?: boolean;
-  readonly withStaticGuards?: boolean;
+  readonly withStaticChecks?: boolean;
   readonly featureNames?: FeatureNames;
 }
 

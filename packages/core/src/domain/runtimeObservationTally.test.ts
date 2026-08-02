@@ -30,7 +30,7 @@ describe("[SCN-RMD-003] runtimeObservationTally folds the posted credits by scen
   // A SPANNING corpus reconciling to every credit account: SCN-A declares unit (2 matched credits)
   // and is ALSO cited at integration it never declared (1 undemanded); SCN-PHX-999 is undeclared (1
   // phantom); a null-scnId credit cites no scenario (1 suspense); an ambiguous cucumber step is
-  // broken (1 suspense — it named no test); a named static-guard credit rides the lint axis (must
+  // broken (1 suspense — it named no test); a named static-check credit rides the lint axis (must
   // be SKIPPED). Built through reconcile(), so every row is a shape the pipeline actually emits.
   const scenarios: Scenario[] = [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }];
   const observations: EvidenceObservation[] = [
@@ -40,7 +40,7 @@ describe("[SCN-RMD-003] runtimeObservationTally folds the posted credits by scen
     { qualityCheck: "unit", scnId: "SCN-PHX-999", status: "passed" }, // PHANTOM
     { qualityCheck: "integration", scnId: null, status: "passed" }, // SUSPENSE (uncited)
     { qualityCheck: "e2e", scnId: "SCN-A", status: "failed", broken: true, locator: "features/x.feature" }, // SUSPENSE (broken)
-    { qualityCheck: "lint", staticGuard: "guard-x", exists: true, enforcedOverRealSource: true }, // SKIPPED (lint axis)
+    { qualityCheck: "lint", staticCheck: "guard-x", exists: true, enforcedOverRealSource: true }, // SKIPPED (lint axis)
   ];
   const ledger: Ledger = reconcile(scenarios, observations);
   const tally = runtimeObservationTally(ledger);

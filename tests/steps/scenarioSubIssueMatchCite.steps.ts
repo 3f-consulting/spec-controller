@@ -15,7 +15,7 @@
  * This arm is the TEETH: the bug was the CLI's CHOICE OF INPUT (it handed the
  * cite scan a diff), not the scanner itself, so only a test that drives the live
  * wiring end-to-end (git diff → file read → decideScnGate → exit code) can catch
- * it. The @unit arm in packages/spec-controller/static-guards/scnSubIssueGate.test.ts
+ * it. The @unit arm in packages/spec-controller/static-checks/scnSubIssueGate.test.ts
  * proves the scanner in isolation and would have stayed green through the bug.
  *
  * @SCN-SSM-004 — bidirectional evidence marker. Grepping SCN-SSM-004 returns the
@@ -38,7 +38,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 const tsxBin = path.join(repoRoot, "node_modules/.bin/tsx");
 const cliPath = path.join(
   repoRoot,
-  "packages/spec-controller/static-guards/lintScnSubIssuesCli.ts"
+  "packages/spec-controller/static-checks/lintScnSubIssuesCli.ts"
 );
 
 /** The @SCN code the fixture's test CITES — on a describe line the rename never touches. */

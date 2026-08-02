@@ -1652,9 +1652,9 @@ Then(
 
 /**
  * @SCN-LDG-022 (3F-1846) — every evidence observation posts to AT LEAST ONE ledger account, never
- * to none (canon, double-entry-manifesto.md line 160). This corpus is SINGLE-OBLIGATION (no static
- * guard named twice), so the never-zero invariant lands at exactly one — the teeth below against
- * an erroneous double-post IN THIS CORPUS. The multi-obligation instance (a static guard posting to
+ * to none (canon, double-entry-manifesto.md line 160). This corpus is SINGLE-OBLIGATION (no
+ * static check named twice), so the never-zero invariant lands at exactly one — the teeth below against
+ * an erroneous double-post IN THIS CORPUS. The multi-obligation instance (a static check posting to
  * every naming scenario) is @SCN-LDG-024.
  *
  * @integration is the TEETH. The @unit arm proves `reconcile` populates the account's
@@ -1727,12 +1727,12 @@ Feature: alpha
     // links it by GUARD HANDLE — the same link the reconciler already follows to put the outcome
     // on that row. It posts to the account that names it.
     const staticCheckEvidenceObligation: EvidenceObservation = {
-      qualityCheck: "lint", staticGuard: "lint:named", exists: true, enforcedOverRealSource: true,
+      qualityCheck: "lint", staticCheck: "lint:named", exists: true, enforcedOverRealSource: true,
     };
     // An UNDEMANDED guard credit: no @lint obligation names this handle, so it belongs to no
     // account → SUSPENSE. The other arm of the guard symmetry.
     const undemandedGuard: EvidenceObservation = {
-      qualityCheck: "lint", staticGuard: "lint:undemanded", exists: true, enforcedOverRealSource: false,
+      qualityCheck: "lint", staticCheck: "lint:undemanded", exists: true, enforcedOverRealSource: false,
     };
 
     ldgPostingObservations = [
@@ -1982,7 +1982,7 @@ Then("each debit is findable on its account, keyed by quality-check", function (
 
   assert.ok(findDebit("SCN-AAA-001", "unit"), "the runtime debit is findable by quality-check");
   assert.equal(
-    findDebit("SCN-AAA-001", "lint")?.staticGuard,
+    findDebit("SCN-AAA-001", "lint")?.staticCheck,
     "lint:named",
     "the lint debit is findable by quality-check AND carries its guard handle — the account " +
       "records WHAT WAS NAMED, not merely that something was",
@@ -2279,7 +2279,7 @@ Then("the JSON projects that evidence observation on the reconciliation", functi
 });
 
 // LINT MISSING IS OBLIGATION-ONLY (@SCN-LDG-028, 3F-2016) — a lint `missing` Quality Check
-// Reconciliation carries its evidence obligation and NO observation. An absent static guard is
+// Reconciliation carries its evidence obligation and NO observation. An absent static check is
 // read as the negative fact {exists:false, enforcedOverRealSource:false}: an ABSENCE, not an
 // observed piece of evidence. Canon (double-entry-manifesto line 36): missing = Obligation Exists,
 // Observation None. The @integration arm drives the parse → reconcile pipeline over the absent-guard
@@ -2313,7 +2313,7 @@ Given(
     ldgPostingObservations = [
       {
         qualityCheck: "lint",
-        staticGuard: LDG028_ABSENT_GUARD,
+        staticCheck: LDG028_ABSENT_GUARD,
         exists: false,
         enforcedOverRealSource: false,
       },
@@ -2344,7 +2344,7 @@ Then("its lint Quality Check Reconciliation has outcome {string}", function (out
   const reconciliation = ldg028LintReconciliation();
   ldgDebitSubject = {
     reconciliation,
-    expectedObligation: { qualityCheck: "lint", staticGuard: LDG028_ABSENT_GUARD },
+    expectedObligation: { qualityCheck: "lint", staticCheck: LDG028_ABSENT_GUARD },
   };
   assert.equal(
     reconciliation.outcome,
@@ -2372,7 +2372,7 @@ Then(
 
 // NO-SCN-CODE IS DEBIT-SIDE (@SCN-LDG-029, 3F-2016 / corrects 3F-1995) — a `no-scn-code` Quality
 // Check Reconciliation carries a SYNTHESIZED scenario-scope evidence obligation ({}, no
-// qualityCheck / staticGuard) and NO observation. Canon (double-entry-manifesto line 40):
+// qualityCheck / staticCheck) and NO observation. Canon (double-entry-manifesto line 40):
 // no-scn-code = Obligation Exists, Observation None — the debit twin of cites-no-scenario. An
 // untagged scenario is real and ordinary but carries no @SCN, so its obligation has no code to link
 // to; the reconciliation carries the scenario-scope obligation (precedent: the scenario-scope
@@ -2436,10 +2436,10 @@ Then(
 
 // @SCN-LDG-029
 Then(
-  "it carries a scenario-scope evidence obligation — empty, with no qualityCheck and no staticGuard",
+  "it carries a scenario-scope evidence obligation — empty, with no qualityCheck and no staticCheck",
   function () {
     // The DEBIT side is carried ON the reconciliation: a SYNTHESIZED scenario-scope obligation — an
-    // empty {} (no qualityCheck, no staticGuard), canon-faithful (Obligation Exists) and the
+    // empty {} (no qualityCheck, no staticCheck), canon-faithful (Obligation Exists) and the
     // established scenario-scope degenerate shape (precedent: the scenario-scope pending obligation,
     // journal.ts). Its PRESENCE — not its emptiness — is what makes no-scn-code debit-side.
     const obligation = (ldg029Reconciliation() as { evidenceObligation?: unknown })

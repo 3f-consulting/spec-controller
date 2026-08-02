@@ -183,9 +183,9 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
         evidenceObservations: [],
         evidenceObligations: [],
         verdict: "out-of-balance",
-        qualityCheckReconciliations: [qcr({ qualityCheck: "lint", staticGuard: "guard:static", outcome: "cites-no-scenario" })],
+        qualityCheckReconciliations: [qcr({ qualityCheck: "lint", staticCheck: "guard:static", outcome: "cites-no-scenario" })],
         pendingItems: [],
-        reconcilingItems: [qcr({ qualityCheck: "lint", staticGuard: "guard:static", outcome: "cites-no-scenario" })],
+        reconcilingItems: [qcr({ qualityCheck: "lint", staticCheck: "guard:static", outcome: "cites-no-scenario" })],
       },
     ],
   };
@@ -412,41 +412,41 @@ describe("[SCN-RMD-003] the runtime-observation totals re-home onto summary; no 
 });
 
 /**
- * Unit tests for the static-guard census collapse (@SCN-RMD-004).
+ * Unit tests for the static-check census collapse (@SCN-RMD-004).
  *
  * Bidirectional evidence (Evidence Manifesto §9): the describe carries @SCN-RMD-004.
  *
- * The static-guard census is `summary.staticGuards` COUNTS alone (2.4) — the standalone
- * member-list section (`guards` → `staticGuards`, `{ciGuards[], named[]}`) COLLAPSED, symmetric
- * with the runtime side. The static guard member detail now lives in the rows (named → each scenario's
+ * The static-check census is `summary.staticChecks` COUNTS alone (2.4) — the standalone
+ * member-list section (`guards` → `staticChecks`, `{ciGuards[], named[]}`) COLLAPSED, symmetric
+ * with the runtime side. The static check member detail now lives in the rows (named → each scenario's
  * `@lint` sub-row; undemanded → the suspense row's `cites-no-scenario` credit items), so there is
  * no double-report and no census section on the JSON surface.
  */
-describe("[SCN-RMD-004] the static-guard census is summary counts, no standalone section", () => {
-  // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — the static-guard counts are a FOLD OVER
+describe("[SCN-RMD-004] the static-check census is summary counts, no standalone section", () => {
+  // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — the static-check counts are a FOLD OVER
   // THE LEDGER now (3F-2118, `staticObservationTally`), so the numbers derive from the balance, not
   // a hand-built census the assembler could disagree with. 2 running CI guards = 1 named
   // (lint:foo, posts to its `@lint` row) + 1 uncited (lint:bar, undemanded-running → the suspense
   // row) → the fold reads {runningStaticCheckCount: 2, uncitedStaticCheckCount: 1}.
-  const staticGuardsBalance: Ledger = reconcile(
-    [{ scnId: "SCN-RMD-010", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:foo" }] }],
+  const staticChecksBalance: Ledger = reconcile(
+    [{ scnId: "SCN-RMD-010", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint:foo" }] }],
     [
-      { qualityCheck: "lint", staticGuard: "lint:foo", exists: true, enforcedOverRealSource: true },
-      { qualityCheck: "lint", staticGuard: "lint:bar", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "lint", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "lint", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
     ]
   );
 
-  it("carries NO standalone staticGuards (or guards) section — the census collapsed to summary counts", () => {
-    const parsed = JSON.parse(renderJson(__er(staticGuardsBalance, false, true), ctx, undefined, undefined));
-    // The member-list section (was `guards`, then `staticGuards`) is gone: the guard detail now
+  it("carries NO standalone staticChecks (or guards) section — the census collapsed to summary counts", () => {
+    const parsed = JSON.parse(renderJson(__er(staticChecksBalance, false, true), ctx, undefined, undefined));
+    // The member-list section (was `guards`, then `staticChecks`) is gone: the guard detail now
     // lives in the rows, symmetric with the runtime side — no double-report on the JSON surface.
-    expect(parsed).not.toHaveProperty("staticGuards");
+    expect(parsed).not.toHaveProperty("staticChecks");
     expect(parsed).not.toHaveProperty("guards");
   });
 
-  it("materialises the counts under summary.staticGuards ({ runningStaticCheckCount, uncitedStaticCheckCount })", () => {
-    const parsed = JSON.parse(renderJson(__er(staticGuardsBalance, false, true), ctx, undefined, undefined));
-    expect(parsed.summary.staticGuards).toEqual({ runningStaticCheckCount: 2, uncitedStaticCheckCount: 1 });
+  it("materialises the counts under summary.staticChecks ({ runningStaticCheckCount, uncitedStaticCheckCount })", () => {
+    const parsed = JSON.parse(renderJson(__er(staticChecksBalance, false, true), ctx, undefined, undefined));
+    expect(parsed.summary.staticChecks).toEqual({ runningStaticCheckCount: 2, uncitedStaticCheckCount: 1 });
   });
 });
 
@@ -459,30 +459,30 @@ describe("[SCN-RMD-004] the static-guard census is summary counts, no standalone
  *
  * Completing "the whole document as one report model" (operator ruling — MATERIALISE):
  * the three printed numbers that were renderer arithmetic are now model data on report.summary —
- * the Test-volume totals, the Static-guard totals, and the Lint tally. The two Σ = Σ identity
+ * the Test-volume totals, the Static-check totals, and the Lint tally. The two Σ = Σ identity
  * lines are reconciliation facts (a balance check) carried in the model. Matched byte-for-byte to
  * markdown's arithmetic so slice 2 can swap to reads with zero byte change: test-volume onScenario
  * is the on-a-scenario count (onPhantomScenario carried separately); the lint tally counts static
- * evidenceObligations balanced / total (markdown's countStaticEvidenceObligations). testVolume / staticGuards are
- * present only when the evidenceObservations / static guard sibling is threaded; the lint tally is always present.
+ * evidenceObligations balanced / total (markdown's countStaticEvidenceObligations). testVolume / staticChecks are
+ * present only when the evidenceObservations / static check sibling is threaded; the lint tally is always present.
  */
 describe("[SCN-RMD-005] the summary materialises the three report totals", () => {
   // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — the balance folds to the test-volume
-  // totals, the lint tally, AND the static-guard totals (3F-2102 + 3F-2118: testVolume,
-  // rawByRuntimeQualityCheck AND staticGuards are now Ledger folds, so a hand-built census that
+  // totals, the lint tally, AND the static-check totals (3F-2102 + 3F-2118: testVolume,
+  // rawByRuntimeQualityCheck AND staticChecks are now Ledger folds, so a hand-built census that
   // disagrees with the balance is no longer constructible). It spans: 6 raw runtime observations =
   // 4 attributed-to-scenario + 1 phantom + 1 suspense (the 3-way test-volume identity is
   // non-trivial, onScenario excludes the phantom); 2 declared lint obligations, 1 satisfied
   // (lint:foo, running) + 1 watermelon (lint:bar, exists-but-unwired — the static-only lint tally
-  // reads 1 of 2); and, on the CREDIT side, the static-guard fold — 2 running CI guards = 1
+  // reads 1 of 2); and, on the CREDIT side, the static-check fold — 2 running CI guards = 1
   // named (lint:foo, running) + 1 uncited (lint:baz, undemanded-running → the suspense row). The
   // named watermelon lint:bar does NOT run, so the running fold excludes it (matching the
   // retired census's running-only filter).
   const rmd005Scenarios: Scenario[] = [
     { scnId: "SCN-RMD-001", evidenceObligations: [{ qualityCheck: "unit" }] },
     { scnId: "SCN-RMD-002", evidenceObligations: [{ qualityCheck: "integration" }] },
-    { scnId: "SCN-RMD-010", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:foo" }] },
-    { scnId: "SCN-RMD-011", evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:bar" }] },
+    { scnId: "SCN-RMD-010", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint:foo" }] },
+    { scnId: "SCN-RMD-011", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint:bar" }] },
   ];
   const rmd005Observations: EvidenceObservation[] = [
     { qualityCheck: "unit", scnId: "SCN-RMD-001", status: "passed" },
@@ -491,11 +491,11 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
     { qualityCheck: "integration", scnId: "SCN-RMD-002", status: "passed" },
     { qualityCheck: "unit", scnId: "SCN-PHX-999", status: "passed" },
     { qualityCheck: "integration", scnId: null, status: "passed" },
-    { qualityCheck: "lint", staticGuard: "lint:foo", exists: true, enforcedOverRealSource: true },
-    { qualityCheck: "lint", staticGuard: "lint:bar", exists: true, enforcedOverRealSource: false },
+    { qualityCheck: "lint", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
+    { qualityCheck: "lint", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: false },
     // The undemanded-running guard (no @lint declares it) — folds to the suspense row as the
-    // 1 uncited static guard, the credit-side teeth of the static-guard fold.
-    { qualityCheck: "lint", staticGuard: "lint:baz", exists: true, enforcedOverRealSource: true },
+    // 1 uncited static check, the credit-side teeth of the static-check fold.
+    { qualityCheck: "lint", staticCheck: "lint:baz", exists: true, enforcedOverRealSource: true },
   ];
   const rmd005Balance: Ledger = reconcile(rmd005Scenarios, rmd005Observations);
 
@@ -512,7 +512,7 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
         evidenceObligations: [],
         verdict: "out-of-balance",
         qualityCheckReconciliations: [
-          qcr({ qualityCheck: "lint", staticGuard: "lint:foo", outcome: "satisfied" }),
+          qcr({ qualityCheck: "lint", staticCheck: "lint:foo", outcome: "satisfied" }),
           qcr({ qualityCheck: "unit", outcome: "missing" }),
         ],
         pendingItems: [],
@@ -525,11 +525,11 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
         evidenceObligations: [],
         verdict: "out-of-balance",
         qualityCheckReconciliations: [
-          qcr({ qualityCheck: "lint", staticGuard: "lint:bar", outcome: "watermelon" }),
+          qcr({ qualityCheck: "lint", staticCheck: "lint:bar", outcome: "watermelon" }),
         ],
         pendingItems: [],
         reconcilingItems: [
-          qcr({ qualityCheck: "lint", staticGuard: "lint:bar", outcome: "watermelon" }),
+          qcr({ qualityCheck: "lint", staticCheck: "lint:bar", outcome: "watermelon" }),
         ],
       },
     ],
@@ -558,9 +558,9 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
     expect(tv.totalEvidenceObservations).toBe(tv.onScenario + tv.onPhantomScenario + tv.onSuspenseScenario);
   });
 
-  it("materialises the static-guard totals", () => {
+  it("materialises the static-check totals", () => {
     const report = assembleRenderInput(__er(rmd005Balance, false, true), ctx, undefined, undefined);
-    expect(report.summary.staticGuards).toEqual({
+    expect(report.summary.staticChecks).toEqual({
       runningStaticCheckCount: 2,
       uncitedStaticCheckCount: 1,
     });
@@ -568,7 +568,7 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
 
   it("carries the 2-field census shape, with the evidence-obligation count implicit", () => {
     const report = assembleRenderInput(__er(rmd005Balance, false, true), ctx, undefined, undefined);
-    const sg = report.summary.staticGuards!;
+    const sg = report.summary.staticChecks!;
     // The evidence-obligation count is IMPLICIT — running − uncited, never a surface field.
     expect(sg.runningStaticCheckCount - sg.uncitedStaticCheckCount).toBe(1);
     // 3F-2291 (@SCN-VOC-004): this pin was two `not.toHaveProperty` negatives naming the
@@ -585,10 +585,10 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
     expect(report.summary.lint).toEqual({ satisfied: 1, total: 2 });
   });
 
-  it("omits testVolume / staticGuards when their sibling read is not threaded, but always carries lint", () => {
+  it("omits testVolume / staticChecks when their sibling read is not threaded, but always carries lint", () => {
     const report = assembleRenderInput(__er(balance), ctx);
     expect(report.summary).not.toHaveProperty("testVolume");
-    expect(report.summary).not.toHaveProperty("staticGuards");
+    expect(report.summary).not.toHaveProperty("staticChecks");
     // The lint tally is a pure balance derive — always present (this balance declares no static
     // evidenceObligations, so it reads 0 of 0).
     expect(report.summary.lint).toEqual({ satisfied: 0, total: 0 });
@@ -597,7 +597,7 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
   it("carries the three totals through the glue-free JSON serialisation", () => {
     const parsed = JSON.parse(renderJson(__er(rmd005Balance, true, true), ctx));
     expect(parsed.summary.testVolume).toEqual({ totalEvidenceObservations: 6, onScenario: 4, onPhantomScenario: 1, onSuspenseScenario: 1 });
-    expect(parsed.summary.staticGuards).toEqual({ runningStaticCheckCount: 2, uncitedStaticCheckCount: 1 });
+    expect(parsed.summary.staticChecks).toEqual({ runningStaticCheckCount: 2, uncitedStaticCheckCount: 1 });
     expect(parsed.summary.lint).toEqual({ satisfied: 1, total: 2 });
   });
 });
@@ -640,11 +640,11 @@ describe("[SCN-RMD-006] the report model carries the feature titles", () => {
         evidenceObligations: [],
         verdict: "out-of-balance",
         qualityCheckReconciliations: [
-          qcr({ qualityCheck: "lint", staticGuard: "guard-lint", outcome: "watermelon" }),
+          qcr({ qualityCheck: "lint", staticCheck: "guard-lint", outcome: "watermelon" }),
         ],
         pendingItems: [],
         reconcilingItems: [
-          qcr({ qualityCheck: "lint", staticGuard: "guard-lint", outcome: "watermelon" }),
+          qcr({ qualityCheck: "lint", staticCheck: "guard-lint", outcome: "watermelon" }),
         ],
       },
     ],
@@ -721,7 +721,7 @@ describe("[SCN-RMD-006] the report model carries the feature titles", () => {
  * Slice 1 of the reconciliation-model restructure: the (kind, level) two-axis evidence coordinate
  * collapses to ONE flat quality-check. Each JSON evidence sub-row
  * (evidenceReconciliation[].qualityCheckReconciliations[] / reconcilingItems[]) is keyed by a single qualityCheck
- * field — no kind, no level; a lint sub-row carries qualityCheck "lint" alongside its static guard — and
+ * field — no kind, no level; a lint sub-row carries qualityCheck "lint" alongside its static check — and
  * the summary's missing split serialises under missingByQualityCheck. Built through the
  * REAL declared → reconcile → assemble pipeline (parseScenarios, not a hand-seeded balance) and read
  * off the glue-free JSON, so the assertion pins the emitted shape, not an internal type.
@@ -729,7 +729,7 @@ describe("[SCN-RMD-006] the report model carries the feature titles", () => {
 describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single quality-check coordinate", () => {
   // A scenario declaring BOTH a runtime (@unit) and a lint (@lint=lint:x) evidence obligation, parsed through
   // the real declared reader; reconciled against NO evidence observations → the runtime evidence obligation is
-  // missing and the lint evidence obligation is missing (static guard retained). The
+  // missing and the lint evidence obligation is missing (static check retained). The
   // glue-free JSON round-trip makes the assertions read the EMITTED shape, type-agnostic.
   const feature = [
     "@RMD",
@@ -768,7 +768,7 @@ describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single qualit
       .find((o) => o.qualityCheck === "lint");
     expect(lint).toBeDefined();
     expect(lint!.qualityCheck).toBe("lint");
-    expect(lint!.staticGuard).toBe("lint:x");
+    expect(lint!.staticCheck).toBe("lint:x");
   });
 
   it("keys a runtime sub-row by its level as the quality-check", () => {
@@ -777,7 +777,7 @@ describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single qualit
       .flatMap((s) => s.qualityCheckReconciliations)
       .find((o) => o.qualityCheck === "unit");
     expect(runtime).toBeDefined();
-    expect(runtime).not.toHaveProperty("staticGuard");
+    expect(runtime).not.toHaveProperty("staticCheck");
   });
 
   it("carries the missing split under missingByQualityCheck, keyed by quality-check", () => {

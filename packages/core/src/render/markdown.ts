@@ -45,8 +45,8 @@ import { RUNTIME_QUALITY_CHECKS } from "../domain/ledger.js";
 import { brokenItemsOf, lintReconciliationsOf } from "../domain/ledger.js";
 import {
   isScenario,
-  staticGuardReconciliationsOf,
-  presentStaticGuardCountOf,
+  staticCheckReconciliationsOf,
+  presentStaticCheckCountOf,
 } from "../domain/scenarioReconciliation.js";
 import { evidenceObligationsOf } from "../domain/journal.js";
 import { assembleRenderInput, type RenderInput } from "../assemble/renderInput.js";
@@ -64,7 +64,7 @@ import { featureCodeOf } from "../lib/featureCode.js";
 const ITEM_GLYPH: Record<Outcome, string> = {
   satisfied: "✓",
   "failing": "✗",
-  // The watermelon: green on the surface (a static guard exists), red within (not wired
+  // The watermelon: green on the surface (a static check exists), red within (not wired
   // into CI over the real source).
   "watermelon": "🍉",
   "missing": "∅",
@@ -121,8 +121,8 @@ function renderItem(item: ScenarioReconciliation["reconcilingItems"][number]): s
   }
   const subject = item.qualityCheck;
   // A CREDIT-SIDE item surfaces its WHERE-TO-FIX in the reconciliation cell (ruling
-  // Q5): a lint credit (the uncited static-guard folded onto the suspense row, ruling
-  // Q4) shows its static guard handle; a runtime credit (phantom `cites-unknown-scenario` or
+  // Q5): a lint credit (the uncited static-check folded onto the suspense row, ruling
+  // Q4) shows its static check handle; a runtime credit (phantom `cites-unknown-scenario` or
   // suspense `cites-no-scenario`) shows its evidence observation locator. A DEBIT-side evidence obligation
   // (satisfied / missing / failing / watermelon) carries neither and renders bare, as before.
   const isCredit =
@@ -143,7 +143,7 @@ function renderItem(item: ScenarioReconciliation["reconcilingItems"][number]): s
       .filter((part): part is string => part !== undefined && part.length > 0)
       .join(": ");
     if (where.length > 0) suffix = ` (${cellSafe(where)})`;
-  } else if (isCredit && item.staticGuard) suffix = ` (${item.staticGuard})`;
+  } else if (isCredit && item.staticCheck) suffix = ` (${item.staticCheck})`;
   else if (isCredit && item.locator !== undefined) suffix = ` (${item.locator})`;
   return `${subject} ${ITEM_GLYPH[item.outcome]} ${OUTCOME_DESCRIPTION[item.outcome]}${suffix}`;
 }
@@ -576,21 +576,21 @@ const testVolumeSection: SectionEmitter = (report) => {
 };
 
 /**
- * Static checks (@SCN-USG-001) — the STATIC-guard evidence observation side under
+ * Static checks (@SCN-USG-001) — the STATIC-check evidence observation side under
  * Summary views, the mirror of `### Test volume` on the runtime axis. Renders the counts line
  * (`N static check(s) run, K uncited static check(s)`) alone — a pure counts summary, symmetric with
  * `### Test volume` (2.4). The named count is implicit (`running − uncited`), so it
  * is no longer printed. The per-guard member detail lives in the rows (named → each
  * scenario's `@lint` sub-row; undemanded → the suspense row's `cites-no-scenario` credit items), so
- * no list renders here. Omitted only when no static-guard census is threaded (the back-compat path).
- * The counts read off the report's materialised `summary.staticGuards`.
+ * no list renders here. Omitted only when no static-check census is threaded (the back-compat path).
+ * The counts read off the report's materialised `summary.staticChecks`.
  */
-const staticGuardsSection: SectionEmitter = (report) => {
-  const counts = report.summary.staticGuards;
+const staticChecksSection: SectionEmitter = (report) => {
+  const counts = report.summary.staticChecks;
   if (!counts) return [];
-  // A pure counts summary off `summary.staticGuards` (2.4) — symmetric with the
+  // A pure counts summary off `summary.staticChecks` (2.4) — symmetric with the
   // runtime `### Test volume` line. There is no census section: the per-guard DETAIL lives in
-  // the rows (named → each scenario's `@lint` sub-row; the undemanded static-guards surface
+  // the rows (named → each scenario's `@lint` sub-row; the undemanded static-checks surface
   // as `cites-no-scenario` credit items on the `(no scenario)` suspense row). Only the running
   // volume + the uncited count render here; the named count is implicit.
   return [
@@ -615,7 +615,7 @@ const staticGuardsSection: SectionEmitter = (report) => {
  */
 const lintSection: SectionEmitter = (report) => {
   // Scenario rows only — a lint evidence obligation is a declared-side thing. The suspense row's
-  // lint credit (an uncited static-guard, cites-no-scenario) is NOT an evidence obligation, so
+  // lint credit (an uncited static-check, cites-no-scenario) is NOT an evidence obligation, so
   // it stays out of this table + tally; it surfaces on the suspense row's reconciling items.
   // ASKED, not derived (3F-2203) — the declared lint sub-rows are a model list, and it is the SAME
   // list `summary.lint` is tallied from, so the table and its total line cannot disagree. The
@@ -627,7 +627,7 @@ const lintSection: SectionEmitter = (report) => {
     // The Outcome cell shows the canon DESCRIPTION, not the bare handle (3F-1626,
     // single-sourced from OUTCOME_DESCRIPTION); the ITEM_GLYPH glyph is retained.
     ({ scnId, reconciliation: r }) =>
-      `| ${scnId} | ${r.staticGuard!} | ${ITEM_GLYPH[r.outcome]} ${OUTCOME_DESCRIPTION[r.outcome]} |`
+      `| ${scnId} | ${r.staticCheck!} | ${ITEM_GLYPH[r.outcome]} ${OUTCOME_DESCRIPTION[r.outcome]} |`
   );
   if (rows.length === 0) return [];
   const { satisfied, total } = report.summary.lint;
@@ -714,10 +714,10 @@ function evidenceColumns(
   const scenarioRows = scenarios.filter(
     isScenario
   );
-  // ASKED (3F-2203) — whether a row has static-guard sub-rows is the same model cut the grid cell
+  // ASKED (3F-2203) — whether a row has static-check sub-rows is the same model cut the grid cell
   // and the lint table read. Whether a COLUMN then appears is the renderer's own business; what a
   // row's lint sub-rows ARE is not.
-  const hasStatic = scenarioRows.some((s) => staticGuardReconciliationsOf(s).length > 0);
+  const hasStatic = scenarioRows.some((s) => staticCheckReconciliationsOf(s).length > 0);
   const qualityChecksPresent = new Set<RuntimeQualityCheck>();
   // A column appears for every runtime quality-check present in EVIDENCE OBLIGATION or OBSERVATION on a scenario
   // row. Both are read off the Ledger: a declared or undemanded quality-check surfaces as a
@@ -752,7 +752,7 @@ function columnHeader(col: EvidenceColumn): string {
  * The quality-check → single-letter obligation glyph, parallel to `columnHeader` — the LEFT side
  * of the two-sided cell (the evidence obligation). A single letter names WHICH check is obligated; the right
  * side (after the `/`) carries the OBSERVATION count (the credit). Lint's left MAY carry a count
- * suffix (`L2`/`L3`) when a scenario names more than one static guard — the evidence-obligation
+ * suffix (`L2`/`L3`) when a scenario names more than one static check — the evidence-obligation
  * count; the runtime letters stay countless (one obligation per tier).
  */
 const QUALITY_CHECK_LETTER: Record<QualityCheck, string> = {
@@ -773,7 +773,7 @@ const QUALITY_CHECK_LETTER: Record<QualityCheck, string> = {
  * evidenceObservations). A `-/N` cell is an UNDEMANDED observation (a credit at a check the scenario
  * did not name, @SCN-LDG-008); a doubly-empty `-/-` renders BLANK (`""`) — no evidence obligation, no credit.
  * The lint cell reads the scenario's static evidenceObligation outcomes (lint is not a counted
- * evidence observation): its right side is the count of static guards PRESENT — `balanced` or the
+ * evidence observation): its right side is the count of static checks PRESENT — `balanced` or the
  * watermelon (the script exists; its inadequacy is quality, in Reconciling-items 🍉), NOT a posted
  * credit. The count exposes backing, not quality — never rank by it.
  */
@@ -787,19 +787,19 @@ function evidenceCell(
   if (!isScenario(s)) return "—";
   if (col.kind === "lint") {
     // LEFT: a lint obligation is DECLARED iff a lint QualityCheckReconciliation exists on the row
-    // (`L`; `L2`/`L3` when the row names >1 static guard — the evidence-obligation count, one
+    // (`L`; `L2`/`L3` when the row names >1 static check — the evidence-obligation count, one
     // lint QCR per `@lint=<guard>` obligation). RIGHT: the PRESENT-guard count — the
-    // static guards `satisfied` or watermelon. Lint's right stays this static-outcome derivation
+    // static checks `satisfied` or watermelon. Lint's right stays this static-outcome derivation
     // (NOT `evidenceObservations`): lint carries no credit multiplicity, so the count is exact.
     // BOTH SIDES ASKED (3F-2203) — the named-guard sub-rows and the present-guard count are
     // model facts, read off the row. "Present" spans satisfied AND watermelon (a watermelon guard
     // EXISTS; its inadequacy is quality, shown in Reconciling items 🍉) — an outcome-vocabulary
     // rule, which is why the renderer no longer states it.
-    const statics = staticGuardReconciliationsOf(s);
+    const statics = staticCheckReconciliationsOf(s);
     const left = statics.length > 0
       ? QUALITY_CHECK_LETTER.lint + (statics.length > 1 ? String(statics.length) : "")
       : "-";
-    const present = presentStaticGuardCountOf(s);
+    const present = presentStaticCheckCountOf(s);
     const right = present > 0 ? String(present) : "-";
     return left === "-" && right === "-" ? "" : `${left}/${right}`;
   }
@@ -882,7 +882,7 @@ const ledgerSection: SectionEmitter = (report) => {
     );
   }
   // The suspense (S) count is broken out the same way — credits citing no scenario at all
-  // (uncited evidence observations + uncited static-guards), aggregated into one row,
+  // (uncited evidence observations + uncited static-checks), aggregated into one row,
   // counted INSIDE the tally above.
   if (totals.suspense > 0) {
     lines.push(
@@ -975,7 +975,7 @@ const SECTIONS: readonly SectionEmitter[] = [
   runVerdictSection,
   evidenceReconciliationSection,
   testVolumeSection,
-  staticGuardsSection,
+  staticChecksSection,
   lintSection,
   byFeatureSection,
   ledgerSection,

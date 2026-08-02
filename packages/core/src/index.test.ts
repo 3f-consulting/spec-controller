@@ -116,7 +116,7 @@ const EXPECTED_TYPE_EXPORTS: readonly string[] = [
   // types `RuntimeEvidenceObservationKindCounts` / `AttributedCount` left the frozen surface.
   // The static observation counter (census/staticEvidenceObservations.ts) is RETIRED (3F-2119) — its
   // type `StaticEvidenceObservationKindCounts` left the frozen surface (counting folds onto the
-  // Ledger, `staticObservationTally`). `StaticGuardTotals` (below) — the materialised headline, now
+  // Ledger, `staticObservationTally`). `StaticCheckTotals` (below) — the materialised headline, now
   // Ledger-fold-sourced — STAYS.
   // Parse — result/CI readers (parse/*)
   "VitestJsonReport",
@@ -131,7 +131,7 @@ const EXPECTED_TYPE_EXPORTS: readonly string[] = [
   "EvidenceObligationTotals",
   "MissingByQualityCheck",
   "TestVolumeTotals",
-  "StaticGuardTotals",
+  "StaticCheckTotals",
   "LintTally",
   "EvidenceObligationsSection",
   // `EvidenceObservationsSection` RETIRED (3F-2104) — the section is no longer emitted.
@@ -219,12 +219,12 @@ describe("[SCN-API-001] the core barrel exports exactly the frozen v1 contract s
   // The static evidence-observation census is RETIRED (3F-2119) — its counting folds onto the
   // Ledger (`staticObservationTally`). This pins the RETIREMENT of its 2 public symbols BY NAME on
   // the actual surface (the value `countStaticEvidenceObservationKinds`, the type
-  // `StaticEvidenceObservationKindCounts`), so neither can creep back re-exported. `StaticGuardTotals`
+  // `StaticEvidenceObservationKindCounts`), so neither can creep back re-exported. `StaticCheckTotals`
   // — the materialised headline type, now Ledger-fold-sourced — STAYS on the frozen surface.
-  it("[SCN-API-001] retires the static-census symbols from the actual surface, keeping StaticGuardTotals", () => {
+  it("[SCN-API-001] retires the static-census symbols from the actual surface, keeping StaticCheckTotals", () => {
     expect(Object.keys(barrel)).not.toContain("countStaticEvidenceObservationKinds");
     expect(reflectBarrelTypeExports()).not.toContain("StaticEvidenceObservationKindCounts");
-    expect(reflectBarrelTypeExports()).toContain("StaticGuardTotals");
+    expect(reflectBarrelTypeExports()).toContain("StaticCheckTotals");
   });
 
   it("names each frozen symbol exactly once (no accidental duplicate in the expected sets)", () => {

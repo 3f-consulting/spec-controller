@@ -83,7 +83,7 @@ const BROKEN = {
  * vitest report; no phantom; no collection failure, so the run is SOUND and exit 4 never
  * pre-empts). The ONE reconciling item in the whole run sits on the SUSPENSE row: the target's
  * CI runs `lint:uncited` and no scenario declares `@lint=lint:uncited`, so the guard
- * is an uncited static-guard — an uncited credit posted to the `(no scenario)` row.
+ * is an uncited static-check — an uncited credit posted to the `(no scenario)` row.
  *
  * The shape no other fixture in the suite has, and the ONLY one that can catch the drift: the
  * DECLARED-ONLY tally reads a clean `2 | 2 | 0` while the run genuinely exits 1. That is the
@@ -507,7 +507,7 @@ Then("nothing is reconciled to stdout", function () {
 Given("a target whose only out-of-balance row is the suspense reconciliation", function () {
   const root = process.cwd();
   // The SUSPENSE-ONLY fixture (an adopter's repository 17-36-50Z shape): every scenario balances, and
-  // the run's ONLY reconciling item is the uncited static-guard's uncited credit on the
+  // the run's ONLY reconciling item is the uncited static-check's uncited credit on the
   // `(no scenario)` suspense row. --ci and --package-json are BOTH required: a guard posts its
   // uncited credit only when it is RUNNING (a package.json script that a CI step invokes).
   for (const path of Object.values(SUSPENSE_ONLY)) {

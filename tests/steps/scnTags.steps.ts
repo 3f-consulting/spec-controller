@@ -22,7 +22,7 @@ const CLI = path.join(
   repoRoot,
   "packages",
   "spec-controller",
-  "static-guards",
+  "static-checks",
   "lintScnTagsCli.ts"
 );
 const TSX = path.join(repoRoot, "node_modules", ".bin", "tsx");

@@ -8,7 +8,7 @@
  * `@lint` is one quality-check VALUE, not a second axis; `qualityCheck === "lint"` is the
  * watermelon discriminator (replacing the retired `kind === "static"`). The runtime
  * quality-checks (@unit/@integration/@e2e/@performance) reconcile against emitted test
- * results; the `lint` quality-check reconciles a static guard over the source artifact.
+ * results; the `lint` quality-check reconciles a static check over the source artifact.
  *
  * The reconciled OUTCOMES these entries produce live in the sibling concept modules
  * (`qualityCheckReconciliation`, `scenarioReconciliation`, `ledger`), which import this one.
@@ -16,7 +16,7 @@
 
 /**
  * The flat quality-check — the single evidence coordinate. One
- * mutually-exclusive value per evidence obligation: `lint` (a static guard over the
+ * mutually-exclusive value per evidence obligation: `lint` (a static check over the
  * source) or a runtime test level (`unit`/`integration`/`e2e`/`performance`).
  * Retires the two-axis `Kind` × `Level` grid.
  */
@@ -34,28 +34,28 @@ export type RuntimeQualityCheck = Exclude<QualityCheck, "lint">;
  * One evidence obligation a scenario declares — a SINGLE flat shape keyed on
  * `qualityCheck` (no `kind`/`level` discriminated union):
  *   - `@unit`/`@integration`/… → `{ qualityCheck: <level> }`.
- *   - `@lint=<guard>`           → `{ qualityCheck: 'lint', staticGuard }`.
- * `staticGuard` is present IFF `qualityCheck === 'lint'` (the static guard handle a `@lint=<guard>`
- * tag names); a runtime evidence obligation carries no `staticGuard`.
+ *   - `@lint=<guard>`           → `{ qualityCheck: 'lint', staticCheck }`.
+ * `staticCheck` is present IFF `qualityCheck === 'lint'` (the static check handle a `@lint=<guard>`
+ * tag names); a runtime evidence obligation carries no `staticCheck`.
  *
  * `qualityCheck` is OPTIONAL (@SCN-PND-022) — `undefined` = SCENARIO-SCOPE: the
  * synthesised whole-scenario deferral a recognised deferral tag raises on a scenario
  * declaring ZERO obligations (a bare `@wip` — no evidence tag). It is always
- * `{ pending: true }` with no `qualityCheck` (nor `staticGuard`): it owes no specific check,
+ * `{ pending: true }` with no `qualityCheck` (nor `staticCheck`): it owes no specific check,
  * so the reconcile partition routes it to ONE `qualityCheck`-less Pending Item rather
  * than a both-missing row. Every ordinary (tag-derived) obligation carries a
  * `qualityCheck`; only the synthesised scenario-scope pending omits it.
  */
 export interface EvidenceObligation {
   qualityCheck?: QualityCheck;
-  /** The `staticGuard` handle — present IFF `qualityCheck === 'lint'`. */
-  staticGuard?: string;
+  /** The `staticCheck` handle — present IFF `qualityCheck === 'lint'`. */
+  staticCheck?: string;
   /**
    * The obligation is owed but deliberately DEFERRED to a later slice — a
    * `<quality-check>pending` tag (evidence-manifesto §11B). ABSENT (undefined) on a
    * normal obligation; `true` on a pending one. A pending obligation is one-sided:
-   * `@lintpending` derives `{ qualityCheck: 'lint', pending: true }` with NO `staticGuard` payload
-   * (the static guard doesn't exist yet). PARSE only — what a pending obligation DOES on the ledger
+   * `@lintpending` derives `{ qualityCheck: 'lint', pending: true }` with NO `staticCheck` payload
+   * (the static check doesn't exist yet). PARSE only — what a pending obligation DOES on the ledger
    * (the one-sided Pending Item) is a later slice.
    */
   pending?: boolean;
@@ -109,16 +109,16 @@ export function evidenceObligationPairsOf(scenarios: readonly Scenario[]): Set<s
 }
 
 /**
- * The NAMED static guard handles — the STATIC-axis twin of `evidenceObligationPairsOf`. Every
- * `@lint=<guard>` `staticGuard` a scenario's evidence obligations name, deduped into one set. A
- * `lint` evidence observation whose guard is NOT in this set is an UNDEMANDED static guard: it cites
+ * The NAMED static check handles — the STATIC-axis twin of `evidenceObligationPairsOf`. Every
+ * `@lint=<guard>` `staticCheck` a scenario's evidence obligations name, deduped into one set. A
+ * `lint` evidence observation whose guard is NOT in this set is an UNDEMANDED static check: it cites
  * no scenario, so the reconciler folds it onto the SUSPENSE row (the static analogue of an uncited
  * runtime credit).
  *
  * A `pending` obligation is EXCLUDED — it names nothing (same rule, same reason as the pair set:
  * canon, Pending Item — a `<quality-check>pending` tag raises no Evidence Obligation). A `@lintpending`
- * obligation is `{ qualityCheck: 'lint', pending: true }` with NO `staticGuard`, so both the pending
- * skip AND the `staticGuard` presence check drop it: a static guard that does not yet exist names
+ * obligation is `{ qualityCheck: 'lint', pending: true }` with NO `staticCheck`, so both the pending
+ * skip AND the `staticCheck` presence check drop it: a static check that does not yet exist names
  * nothing.
  *
  * ONE COPY, BY CONSTRUCTION. This derivation existed TWICE — in `reconcile` and in the balance
@@ -132,8 +132,8 @@ export function staticCheckEvidenceObligationsOf(scenarios: readonly Scenario[])
   for (const scenario of scenarios) {
     for (const obligation of scenario.evidenceObligations) {
       if (obligation.pending === true) continue; // names nothing — see above.
-      if (obligation.qualityCheck === "lint" && obligation.staticGuard !== undefined) {
-        guards.add(obligation.staticGuard);
+      if (obligation.qualityCheck === "lint" && obligation.staticCheck !== undefined) {
+        guards.add(obligation.staticCheck);
       }
     }
   }
@@ -149,7 +149,7 @@ export function staticCheckEvidenceObligationsOf(scenarios: readonly Scenario[])
  * `evidenceObligationPairsOf` and `staticCheckEvidenceObligationsOf`: a `<quality-check>pending` tag raises
  * NO Evidence Obligation, so it names nothing. This completes that family — the three now state
  * one rule over three keyings (the whole obligations, the `(scnId, quality-check)` pairs, the
- * static-guard handles) instead of two stating it and a third restating it inline in the fold.
+ * static-check handles) instead of two stating it and a third restating it inline in the fold.
  *
  * Lives here rather than in the reconciler: what a scenario NAMES is the model's rule, not the
  * reconciler's private business (`entity-owns-its-behaviour`).
@@ -243,20 +243,20 @@ export interface RuntimeEvidenceObservation {
 }
 
 /**
- * One observed STATIC-guard fact, read from the CI config + package.json by the
+ * One observed STATIC-check fact, read from the CI config + package.json by the
  * `ingest/guard` seam. NOT a result-JSON fact: the watermelon is an
  * ABSENCE of wiring no emitted test result can carry, so this is read from the
  * *config* of the real tree.
  */
 export interface GuardEvidenceObservation {
-  /** A static guard evidence observation is the `lint` quality-check (the watermelon discriminator). */
+  /** A static check evidence observation is the `lint` quality-check (the watermelon discriminator). */
   qualityCheck: "lint";
-  /** The `staticGuard` handle — the npm-script name a `@lint=<guard>` tag names. */
-  staticGuard: string;
-  /** The static guard's script/CLI is present (a `package.json` `scripts` entry). */
+  /** The `staticCheck` handle — the npm-script name a `@lint=<guard>` tag names. */
+  staticCheck: string;
+  /** The static check's script/CLI is present (a `package.json` `scripts` entry). */
   exists: boolean;
   /**
-   * The static guard's command appears as a CI `run:` step over the real tree — the v1
+   * The static check's command appears as a CI `run:` step over the real tree — the v1
    * (COARSE) "enforced over real source" signal (v1 verifies the command IS a CI
    * step, NOT that it reads real source vs fixtures — the residual gap a later
    * evidenceObservation-based check closes).
@@ -267,7 +267,7 @@ export interface GuardEvidenceObservation {
 /**
  * One observed evidence fact — a DISCRIMINATED UNION on `qualityCheck === "lint"`:
  * a runtime test result (keyed by scnId + its runtime quality-check) or a
- * static-guard evidenceObservation (`qualityCheck: "lint"`, keyed by guard). The
+ * static-check evidenceObservation (`qualityCheck: "lint"`, keyed by guard). The
  * reconciler matches each declared evidenceObligation against evidenceObservations of the
  * same quality-check.
  */

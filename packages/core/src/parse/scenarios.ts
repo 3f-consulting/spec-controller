@@ -6,7 +6,7 @@
  * runtime/performance — the evidence-obligation reading).
  *
  * One of the three separated inputs to the reconciler (declared / observed /
- * static guard) — the embryonic declared-side adapter, deliberately not a registry (v1).
+ * static check) — the embryonic declared-side adapter, deliberately not a registry (v1).
  *
  * Approach: scan TAG LINES (a line whose first non-blank char is `@` and whose
  * every whitespace-separated token is a tag) for an @SCN-<FFF>-<NNN> id and any
@@ -16,9 +16,9 @@
  * tags found across the contiguous tag block.
  *
  * The `lint` quality-check: a `@lint=<guard>` tag in the same block
- * contributes a `{ qualityCheck: "lint", staticGuard: guard }` evidenceObligation — the static guard handle is the
+ * contributes a `{ qualityCheck: "lint", staticCheck: guard }` evidenceObligation — the static check handle is the
  * exact npm-script name, taken as everything after the FIRST `=` (so
- * `@lint=lint:feature-codes` → static guard `lint:feature-codes`). The `=` prefix
+ * `@lint=lint:feature-codes` → static check `lint:feature-codes`). The `=` prefix
  * delimiter (operator ruling) replaced an earlier `@lint:` double-colon
  * form, keeping exact-match while removing the double-colon wart.
  *
@@ -37,7 +37,7 @@ const SCN_CODE = /^SCN-[A-Z0-9]+-\d+$/;
  * `pending` suffix is significant: `integrationpending` is NOT `integration`, and an
  * unrecognised `<x>pending` (or bare `pending`) is absent from the map → ignored. Unlike
  * `TAG_TO_QUALITY_CHECK`, this covers ALL FIVE quality-checks including `lint` (a pending
- * lint obligation is one-sided — no `staticGuard` payload).
+ * lint obligation is one-sided — no `staticCheck` payload).
  */
 const PENDING_TAG_TO_QUALITY_CHECK: Record<string, QualityCheck> = {
   lintpending: "lint",
@@ -57,7 +57,7 @@ export function pendingQualityCheck(tag: string): QualityCheck | null {
   return PENDING_TAG_TO_QUALITY_CHECK[tag] ?? null;
 }
 /**
- * `lint=<guard>` — the static-guard handle. Split on the FIRST `=`; the guard is
+ * `lint=<guard>` — the static-check handle. Split on the FIRST `=`; the guard is
  * everything after it (the exact npm-script name, which may itself contain `:`).
  */
 const LINT_TAG = /^lint=(.+)$/;
@@ -179,7 +179,7 @@ function obligationsFromTags(
       const seenGuards = new Set<string>();
       for (const t of blockTags) {
         // A `<quality-check>pending` tag derives a DEFERRED, one-sided obligation
-        // `{ qualityCheck, pending: true }` (no `staticGuard` payload). Tracked in its own set so
+        // `{ qualityCheck, pending: true }` (no `staticCheck` payload). Tracked in its own set so
         // it is neither blocked by nor blocks a bare tier of the same quality-check, and
         // recognised SEPARATELY from the bare tier tag (the `pending` suffix is significant).
         const pendingCheck = pendingQualityCheck(t);
@@ -199,7 +199,7 @@ function obligationsFromTags(
           const guard = lintMatch[1]!;
           if (!seenGuards.has(guard)) {
             seenGuards.add(guard);
-            evidenceObligations.push({ qualityCheck: "lint", staticGuard: guard });
+            evidenceObligations.push({ qualityCheck: "lint", staticCheck: guard });
           }
         }
       }
@@ -215,7 +215,7 @@ function obligationsFromTags(
         if (evidenceObligations.length === 0) {
           // INTERPRETATION 2 (@SCN-PND-022): a deferred scenario declaring ZERO obligations (a
           // bare `@wip` — no evidence tag) synthesises ONE scenario-scope pending obligation:
-          // `{ pending: true }` with NO `qualityCheck` (undefined = scenario-scope) and no `staticGuard`.
+          // `{ pending: true }` with NO `qualityCheck` (undefined = scenario-scope) and no `staticCheck`.
           // The reconcile partition routes it to one `qualityCheck`-less Pending Item, so the
           // scenario is deferred (pending) — the both-missing guard (fires only on zero pending
           // items) leaves it balanced, not the degenerate both-missing row.

@@ -14,7 +14,7 @@ Feature: A domain module imports nothing outside the domain layer
   CC's failure mode. A convention would be reasoned past; a guard reds the build.
 
   The guard is a pure checker (checkDomainPurity — given the domain's source files as data, it
-  returns the violations) driven over the real tree by a unit test. It lives in static-guards/
+  returns the violations) driven over the real tree by a unit test. It lives in static-checks/
   (product-not-app) precisely because it reads the tree via fs — it cannot live inside the pure
   domain it checks. Unit-only, mirroring engine-purity EXACTLY: Vitest is the observed evidence,
   Cucumber skips it, and CI enforces it via pnpm test — no @lint corpus tag, no npm script, no

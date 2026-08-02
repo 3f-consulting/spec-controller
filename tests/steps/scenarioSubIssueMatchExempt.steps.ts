@@ -13,8 +13,8 @@
  * base.repo.full_name). It asserts the CLI EXITS 0 (exempt), proving the live
  * fork read (GITHUB_EVENT_PATH → JSON → head!=base) end-to-end, NOT a re-run of
  * decideScnGate in-process (that is the @unit arm, in
- * packages/spec-controller/static-guards/scnSubIssueGate.test.ts and
- * packages/spec-controller/static-guards/lintScnSubIssuesCli.test.ts).
+ * packages/spec-controller/static-checks/scnSubIssueGate.test.ts and
+ * packages/spec-controller/static-checks/lintScnSubIssuesCli.test.ts).
  *
  * The COUNTERPOINT — the same no-handle diff with NO fork payload STILL reds —
  * is pinned by SSM-002; fork status is the only exemption signal.
@@ -39,7 +39,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 const tsxBin = path.join(repoRoot, "node_modules/.bin/tsx");
 const cliPath = path.join(
   repoRoot,
-  "packages/spec-controller/static-guards/lintScnSubIssuesCli.ts"
+  "packages/spec-controller/static-checks/lintScnSubIssuesCli.ts"
 );
 
 /** The bare @SCN code the fork PR adds without binding it to a ticket. */

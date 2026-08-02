@@ -10,16 +10,16 @@ Feature: No parallel store re-represents the Ledger's entries
   Ledger rows (scenarioReconciliations[].evidenceObservations, SCN-LDG-022) — one store, no parallel.
 
   A parallel store is CC's failure mode here: a second structure re-representing what the Ledger
-  already carries, drifting silently out of step. The lock closes it from two sides — a static guard
+  already carries, drifting silently out of step. The lock closes it from two sides — a static check
   that reds if a retired census creeps back into the pure core (this scenario), and a round-trip that
   reds if any materialised summary aggregate stops equalling the fold of the serialised Ledger.
 
   Both are pure checkers driven over real data by unit tests, mirroring engine-purity / domain-purity
   EXACTLY: Vitest is the observed evidence, Cucumber skips it, and CI enforces it via pnpm test — with
   no @lint corpus tag, no npm script, and no added CI step (which would self-trip the
-  uncited-static-guard guard).
+  uncited-static-check guard).
 
-  By-hand residual (the manifesto call): the static guard catches the KNOWN retired names + the
+  By-hand residual (the manifesto call): the static check catches the KNOWN retired names + the
   attributed field shape. A future parallel store smuggled in under a FRESH name is not name-matchable
   and remains a driver's-eye judgement at review — the guard is the floor, not the ceiling.
 

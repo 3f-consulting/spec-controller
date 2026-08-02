@@ -2,7 +2,7 @@
 Feature: Reconcile the complexity and module-size thresholds over the real tree
 
   Mechanism over honour. entity-owns-its-behaviour, small-modules and DRY are honour
-  rules until something reds — this is the static guard that reds. eslint's
+  rules until something reds — this is the static check that reds. eslint's
   complexity / max-lines / max-lines-per-function over the REAL source, wired as a
   BLOCKING per-push CI step beside the existing lint family (3F-2177).
 
@@ -25,7 +25,7 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
   would run in CI while being structurally invisible to the ledger — a real quality
   check kept off the books, which is exactly where a watermelon hides. Named so it IS
   observed; the `@lint=lint:complexity` tag below is then what keeps it out of the
-  suspense row as an uncited static guard. Observed AND declared is the balanced state.
+  suspense row as an uncited static check. Observed AND declared is the balanced state.
 
   Rule: a module or function over its complexity or size threshold reds the build
 

@@ -2,13 +2,13 @@
  * Ingest the target's quality-check inputs — the IMPURE reads behind the balance
  * command (split out of the old cli.ts). Reads declared evidence
  * obligations from the repo's feature files, observed evidence from the Vitest +
- * Cucumber result JSON, and the static-guard evidence from the CI config + package.json,
+ * Cucumber result JSON, and the static-check evidence from the CI config + package.json,
  * turning each into the engine's in-memory model. The orchestration (arg parsing, the
  * output plan/write, main) stays in cli-balance/cli.ts; these are the file reads it calls.
  *
  * Configurable input paths (no adapter registry in v1 — the readers are named, not
  * registered). Missing result files are tolerated: their evidence is simply absent
- * (the scenario reconciles as missing for that level). The static (guard) kind reads
+ * (the scenario reconciles as missing for that level). The static check kind reads
  * `--ci` (default `.github/workflows/ci.yml`) + `package.json` to observe each declared
  * `@lint=<guard>`.
  */
@@ -38,7 +38,7 @@ import {
 } from "@3f-consulting/spec-controller-core";
 import { checkStaticEvidenceObligations } from "@3f-consulting/spec-controller-core";
 import { runningStaticChecks } from "@3f-consulting/spec-controller-core";
-// The NAMED-static-guard rule lives ONCE on the journal (the static-axis twin of
+// The NAMED-static-check rule lives ONCE on the journal (the static-axis twin of
 // `evidenceObligationPairsOf`); this command reads it rather than rebuilding the derivation inline.
 // Reached via the core package's `/internal` subpath export — the frozen v1 barrel (@SCN-API-001)
 // does not, and must not, carry this core-internal helper, so it is exposed on the sanctioned
@@ -65,13 +65,13 @@ const VITEST_QUALITY_CHECK: RuntimeQualityCheck = "unit";
 const CUCUMBER_QUALITY_CHECK: RuntimeQualityCheck = "integration";
 
 /**
- * The static-guard script-prefix convention set — which package.json script names the
- * running-guard observer (`runningStaticChecks`) recognises as static guards, DECLARED at the
+ * The static-check script-prefix convention set — which package.json script names the
+ * running-guard observer (`runningStaticChecks`) recognises as static checks, DECLARED at the
  * CLI edge rather than hardcoded in the core parser. `lint:*` is an earlier internal tool's own convention;
  * `guard:*` is an adopter's repository's (four `guard:*` guards run in an adopter's repository's CI). A third convention adds its
  * prefix here; the core never assumes the set. No CLI override flag yet — that earns its place
  * at a third ecosystem, not now (mirrors the VITEST_QUALITY_CHECK stance above).
- * `qualityCheck: "lint"` (the static-guard axis name) is unchanged — this is the script prefix,
+ * `qualityCheck: "lint"` (the static-check axis name) is unchanged — this is the script prefix,
  * not the axis.
  */
 const GUARD_SCRIPT_PREFIXES: readonly string[] = ["lint:", "guard:"];
@@ -82,7 +82,7 @@ const GUARD_SCRIPT_PREFIXES: readonly string[] = ["lint:", "guard:"];
  * simply absent). `packageJson` is the EXTERNALLY-SPECIFIED package.json the static
  * (guard) reader reads `exists` from (the --package-json seam, @SCN-LNT-005):
  * default the tool's own cwd `package.json`; set it to reconcile ANOTHER repo's
- * static guards — required to render the historical watermelon correctly.
+ * static checks — required to render the historical watermelon correctly.
  */
 export interface ReconcileOptions {
   features?: string;
@@ -280,7 +280,7 @@ function parseRuntimeObservations(opts: ReconcileOptions, root: string | undefin
  */
 export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
   // Read the target's package.json ONCE — its `specController.deferralTags` config extends the
-  // recognised deferral-tag set (@SCN-PND-021), and its `scripts` back the static-guard `exists`
+  // recognised deferral-tag set (@SCN-PND-021), and its `scripts` back the static-check `exists`
   // read (the --package-json seam, below). The disk read stays at this impure edge; the core parser
   // takes the resolved set as its injected `deferralTags` param, staying pure.
   const pkgPath = opts.packageJson ?? "package.json";
@@ -297,17 +297,17 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
   const runtimeObservations = parseRuntimeObservations(opts, root);
 
   // The full observation stream `reconcile` consumes: the runtime observations PLUS the static
-  // (static guard) observations. The census is the RUNTIME axis, so only `runtimeObservations` is projected.
+  // (static check) observations. The census is the RUNTIME axis, so only `runtimeObservations` is projected.
   const evidenceObservations: EvidenceObservation[] = [...runtimeObservations];
 
-  // Static (guard) kind: observe each declared @lint=<guard> against the CI config
+  // Static check kind: observe each declared @lint=<guard> against the CI config
   // + package.json over the real tree. Read the CI + package.json ONCE — both
   // the declared-guard evidence observation AND the reverse CI-guard derivation (below) draw on them.
   const staticCheckEvidenceObligationSet = staticCheckEvidenceObligationsOf(scenarios);
   const staticCheckEvidenceObligations = [...staticCheckEvidenceObligationSet];
-  // The --package-json seam (@SCN-LNT-005): read the static guard's `exists`
+  // The --package-json seam (@SCN-LNT-005): read the static check's `exists`
   // from the EXTERNALLY-SPECIFIED package.json when given, else the tool's own
-  // cwd. Required to reconcile ANOTHER repo's static guards — and to render the
+  // cwd. Required to reconcile ANOTHER repo's static checks — and to render the
   // historical watermelon (exists:true in the target's package.json, unwired in
   // its CI → watermelon, not missing).
   const ciPath = opts.ci ?? ".github/workflows/ci.yml";
@@ -316,30 +316,30 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
     evidenceObservations.push(...checkStaticEvidenceObligations(staticCheckEvidenceObligations, ciSource, packageJson));
   }
 
-  // The RUNNING-guard observer: every running CI static guard is a
+  // The RUNNING-guard observer: every running CI static check is a
   // GuardEvidenceObservation in the stream — the static analogue of the runner emitting
   // every test result — so the one reconcile engine sees the COMPLETE static stream.
-  // Combined with the named observations WITHOUT double-observing: a running static guard the
+  // Combined with the named observations WITHOUT double-observing: a running static check the
   // named set already covers carries its authoritative exists/enforcedOverRealSource
   // detail from `checkStaticEvidenceObligations` (the watermelon input), so only the UNDEMANDED
-  // running static guards are added here. They cite no scenario — the reconciler folds them into the suspense row.
+  // running static checks are added here. They cite no scenario — the reconciler folds them into the suspense row.
   // (`staticCheckEvidenceObligationSet` is the journal rule's Set, read once above.)
   evidenceObservations.push(
     ...runningStaticChecks(ciSource, packageJson, GUARD_SCRIPT_PREFIXES).filter(
-      (o) => !staticCheckEvidenceObligationSet.has(o.staticGuard)
+      (o) => !staticCheckEvidenceObligationSet.has(o.staticCheck)
     )
   );
 
-  // The stream is now COMPLETE: every running CI static guard is a GuardEvidenceObservation
-  // — the named ones match their @lint obligation, the undemanded ones (a static guard no @lint
+  // The stream is now COMPLETE: every running CI static check is a GuardEvidenceObservation
+  // — the named ones match their @lint obligation, the undemanded ones (a static check no @lint
   // declares) cite no scenario, so `reconcile` folds them into the SUSPENSE row itself. No
-  // derive-and-diff, no `uncitedStaticGuards` param.
+  // derive-and-diff, no `uncitedStaticChecks` param.
   // The declared corpus is BOTH halves: the @SCN-tagged scenarios AND the untagged ones
   // (@SCN-LDG-021). An untagged scenario cannot be linked to an observation, so it reconciles
   // `no-scn-code` on its own out-of-balance row — never silently dropped from the debit side.
   // THE CONCEPT, BUILT BY ITS OWN FACTORY (3F-2233) — the app no longer assembles a Ledger and
   // leaves someone downstream to total it. The two axis GATES are always on at this edge: the CLI
-  // threads both the runtime-observation and the static-guard reads.
+  // threads both the runtime-observation and the static-check reads.
   return evidenceReconciliationOf(
     scenarios,
     evidenceObservations,
@@ -349,9 +349,9 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
   );
 }
 
-// The static-guard kind-counts are no longer read as a parallel census (@SCN-USG-001 / 3F-2118):
-// the former `readStaticEvidenceObservationCounts` re-built the static guard observations and
+// The static-check kind-counts are no longer read as a parallel census (@SCN-USG-001 / 3F-2118):
+// the former `readStaticEvidenceObservationCounts` re-built the static check observations and
 // re-derived the running / uncited split from a second read of the CI config. That counting now
 // FOLDS onto the Ledger the reconciler already produced (`staticObservationTally`, an internal
 // domain fold the renderers apply), so it cannot drift from the verdict — it counts the SAME posted
-// static-guard credits `runReconcile` banked. The census read is deleted, not relocated.
+// static-check credits `runReconcile` banked. The census read is deleted, not relocated.

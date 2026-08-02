@@ -13,9 +13,9 @@
  *   - the RUNTIME quality-checks — the CREDIT cites. A test carries `@SCN-XXX`, so one credit
  *     names one scenario and posts to EXACTLY ONE row. A credit posting to no real scenario is
  *     PHANTOM (its `@SCN` is undeclared) or SUSPENSE (it cites nothing).
- *   - `lint` — the DEBIT cites. The scenario carries `@lint=<static-guard>`, so the static guard's
+ *   - `lint` — the DEBIT cites. The scenario carries `@lint=<static-check>`, so the static check's
  *     run cites nothing and is matched BY NAME — to EVERY row whose evidence obligation names it
- *     (manifesto, Static Guard: "one run is evidence for all of them"), or to SUSPENSE if none
+ *     (manifesto, Static Check: "one run is evidence for all of them"), or to SUSPENSE if none
  *     does.
  *
  * "Every evidence observation posts to at least one account, never to none" (manifesto line 160) —
@@ -38,8 +38,8 @@ import type {
  * WHERE an entry lands — the posting destination, one variant per route canon names.
  *
  * The three `kind` values that name a row match `ScenarioKind` exactly, because they ARE the row
- * kind the entry posts to. `every-naming-scenario` is the fourth and is NOT a row kind: a static
- * guard is not citation-routed at all, so its destination is a SET of rows resolved by name, and
+ * kind the entry posts to. `every-naming-scenario` is the fourth and is NOT a row kind: a
+ * static check is not citation-routed at all, so its destination is a SET of rows resolved by name, and
  * naming it as a row-kind would flatten canon's central asymmetry between the two axes.
  *
  * Named for the ROW, never `Account`: `account` is RETIRED vocabulary (the container re-term —
@@ -52,11 +52,11 @@ export type Posting =
   /** BY CITATION → an INVENTED row: the credit's `@SCN` is one no scenario declares. */
   | { kind: "phantom-scenario"; scnId: string }
   /**
-   * BY NAME → every row whose evidence obligation names this static guard handle. NOT a row
+   * BY NAME → every row whose evidence obligation names this static check handle. NOT a row
    * kind: the destination is a set, and `reconcile` resolves the members per row (in that row's
-   * own obligation order) via `staticGuardCreditsPostingTo`.
+   * own obligation order) via `staticCheckCreditsPostingTo`.
    */
-  | { kind: "every-naming-scenario"; staticGuard: string }
+  | { kind: "every-naming-scenario"; staticCheck: string }
   /**
    * → the SUSPENSE row: the entry names no row at all. `posted` carries WHICH of the three
    * routes brought it here — they are genuinely different facts with different remedies, and the
@@ -64,9 +64,9 @@ export type Posting =
    *   - `broken`                   — a proof that NEVER RAN, so it names no test and cites
    *                                  nothing, WHATEVER `scnId` / `status` it structurally carries.
    *   - `cites-nothing`            — a runtime credit that RAN and carried no `@SCN`.
-   *   - `undemanded-static-guard`  — a static guard that ran with no `@lint` naming it.
+   *   - `undemanded-static-check`  — a static check that ran with no `@lint` naming it.
    */
-  | { kind: "suspense-scenario"; posted: "broken" | "cites-nothing" | "undemanded-static-guard" };
+  | { kind: "suspense-scenario"; posted: "broken" | "cites-nothing" | "undemanded-static-check" };
 
 /** The destinations a RUNTIME credit can reach — it is citation-routed, so never by name. */
 export type RuntimePosting =
@@ -74,10 +74,10 @@ export type RuntimePosting =
   | { kind: "phantom-scenario"; scnId: string }
   | { kind: "suspense-scenario"; posted: "broken" | "cites-nothing" };
 
-/** The destinations a STATIC-GUARD credit can reach — it is name-routed, so never by citation. */
-export type StaticGuardPosting =
-  | { kind: "every-naming-scenario"; staticGuard: string }
-  | { kind: "suspense-scenario"; posted: "undemanded-static-guard" };
+/** The destinations a STATIC-CHECK credit can reach — it is name-routed, so never by citation. */
+export type StaticCheckPosting =
+  | { kind: "every-naming-scenario"; staticCheck: string }
+  | { kind: "suspense-scenario"; posted: "undemanded-static-check" };
 
 /**
  * WHERE does this evidence observation post? THE posting rule, in one place.
@@ -109,7 +109,7 @@ export function postingOf(
   observation: GuardEvidenceObservation,
   scenarioIds: ReadonlySet<string>,
   staticCheckEvidenceObligations: ReadonlySet<string>
-): StaticGuardPosting;
+): StaticCheckPosting;
 export function postingOf(
   observation: EvidenceObservation,
   scenarioIds: ReadonlySet<string>,
@@ -120,13 +120,13 @@ export function postingOf(
   scenarioIds: ReadonlySet<string>,
   staticCheckEvidenceObligations: ReadonlySet<string>
 ): Posting {
-  // THE STATIC AXIS — the DEBIT cites, so a static guard's run is matched BY NAME, never by
+  // THE STATIC AXIS — the DEBIT cites, so a static check's run is matched BY NAME, never by
   // attribution. Named → every naming row; named by nobody → suspense (the static
   // analogue of an uncited runtime credit).
   if (observation.qualityCheck === "lint") {
-    return staticCheckEvidenceObligations.has(observation.staticGuard)
-      ? { kind: "every-naming-scenario", staticGuard: observation.staticGuard }
-      : { kind: "suspense-scenario", posted: "undemanded-static-guard" };
+    return staticCheckEvidenceObligations.has(observation.staticCheck)
+      ? { kind: "every-naming-scenario", staticCheck: observation.staticCheck }
+      : { kind: "suspense-scenario", posted: "undemanded-static-check" };
   }
   // THE RUNTIME AXIS — the CREDIT cites, so exactly one row, resolved from the `@SCN` it carries.
   // The fail-safe first: broken is taken on the FLAG, before scnId is ever consulted.
@@ -139,9 +139,9 @@ export function postingOf(
 }
 
 /**
- * The static-guard credits posting to THIS scenario's row — the BY-NAME half of the posting rule,
- * resolved for one row (canon, Static Guard: a static guard "posts to every account whose evidence
- * obligation names it"). `postingOf` answers WHETHER a static guard posts to naming rows at all;
+ * The static-check credits posting to THIS scenario's row — the BY-NAME half of the posting rule,
+ * resolved for one row (canon, Static Check: a static check "posts to every account whose evidence
+ * obligation names it"). `postingOf` answers WHETHER a static check posts to naming rows at all;
  * this answers WHICH credits land on a given row, and IN WHAT ORDER.
  *
  * The order is the ROW'S OWN obligation document order, not the observation stream's: the row's
@@ -159,21 +159,21 @@ export function postingOf(
  * whatever its obligation later reconciles to, or fails to. `staticCheckEvidenceObligationsOf` — which
  * `postingOf` consults for the undemanded/suspense arm — EXCLUDES pending obligations. The two
  * therefore disagree in principle. In practice they cannot: a `@lintpending` obligation carries NO
- * `staticGuard` payload (the guard does not exist yet, `journal.ts`), so the `staticGuard ===
+ * `staticCheck` payload (the guard does not exist yet, `journal.ts`), so the `staticCheck ===
  * undefined` skip below drops it before the disagreement can be observed. Reproduced here exactly
- * as the fold had it; if a hand-built obligation ever carries both `pending` and a `staticGuard`,
+ * as the fold had it; if a hand-built obligation ever carries both `pending` and a `staticCheck`,
  * this is the seam that decides it, and the decision is then owed a ruling against canon.
  */
-export function staticGuardCreditsPostingTo(
+export function staticCheckCreditsPostingTo(
   scenario: Scenario,
   observations: readonly EvidenceObservation[]
 ): GuardEvidenceObservation[] {
   const posted: GuardEvidenceObservation[] = [];
   for (const obligation of scenario.evidenceObligations) {
-    if (obligation.qualityCheck !== "lint" || obligation.staticGuard === undefined) continue;
-    const handle = obligation.staticGuard;
+    if (obligation.qualityCheck !== "lint" || obligation.staticCheck === undefined) continue;
+    const handle = obligation.staticCheck;
     const observed = observations.find(
-      (o): o is GuardEvidenceObservation => o.qualityCheck === "lint" && o.staticGuard === handle
+      (o): o is GuardEvidenceObservation => o.qualityCheck === "lint" && o.staticCheck === handle
     );
     if (observed !== undefined && !posted.includes(observed)) posted.push(observed);
   }

@@ -5,7 +5,7 @@
  * src/ingest/ciCommands.ts.
  *
  * These pin the CORRECTNESS-critical parse: a mis-read could itself hide a
- * watermelon (read a wired static guard as unwired, or the reverse). So the reader must
+ * watermelon (read a wired static check as unwired, or the reverse). So the reader must
  * parse the CI YAML structurally (jobs → steps →
  * run), handling block-scalar `run:`, package-manager invocation forms, and
  * `if:`-gated / matrix steps without crashing — NOT line-scan.
@@ -26,7 +26,7 @@ const pkg: PackageJsonScripts = {
   },
 };
 
-describe("checkStaticEvidenceObligations — the static-guard enforcement reader", () => {
+describe("checkStaticEvidenceObligations — the static-check enforcement reader", () => {
   it("reports a guard whose command is a CI run step as enforced over real source", () => {
     const ci = [
       "jobs:",
@@ -39,7 +39,7 @@ describe("checkStaticEvidenceObligations — the static-guard enforcement reader
     expect(checkStaticEvidenceObligations(["lint:feature-codes"], ci, pkg)).toEqual([
       {
         qualityCheck: "lint",
-        staticGuard: "lint:feature-codes",
+        staticCheck: "lint:feature-codes",
         exists: true,
         enforcedOverRealSource: true,
       },
@@ -58,7 +58,7 @@ describe("checkStaticEvidenceObligations — the static-guard enforcement reader
     expect(checkStaticEvidenceObligations(["lint:feature-codes"], ci, pkg)).toEqual([
       {
         qualityCheck: "lint",
-        staticGuard: "lint:feature-codes",
+        staticCheck: "lint:feature-codes",
         exists: true,
         enforcedOverRealSource: false,
       },
@@ -76,7 +76,7 @@ describe("checkStaticEvidenceObligations — the static-guard enforcement reader
     expect(checkStaticEvidenceObligations(["lint:nonexistent"], ci, pkg)).toEqual([
       {
         qualityCheck: "lint",
-        staticGuard: "lint:nonexistent",
+        staticCheck: "lint:nonexistent",
         exists: false,
         enforcedOverRealSource: true,
       },

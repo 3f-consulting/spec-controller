@@ -201,34 +201,34 @@ export function isScenario(row: ScenarioReconciliation): boolean {
 }
 
 /**
- * A row's STATIC-GUARD sub-rows — its `lint` Quality Check Reconciliations, in document order, one
+ * A row's STATIC-CHECK sub-rows — its `lint` Quality Check Reconciliations, in document order, one
  * per `@lint=<guard>` obligation the scenario named (3F-2203).
  *
  * The DECLARED-side cut: `lint` reconciliations only ever arise from a declared obligation, so this
- * is the row's named-static-guard count as well as its list. It is the single source both the
+ * is the row's named-static-check count as well as its list. It is the single source both the
  * renderer's grid cell and the Ledger's `lintTally` read — they each re-derived it before, agreeing
  * by copy.
  */
-export function staticGuardReconciliationsOf(
+export function staticCheckReconciliationsOf(
   row: ScenarioReconciliation
 ): QualityCheckReconciliation[] {
   return row.qualityCheckReconciliations.filter((r) => r.qualityCheck === "lint");
 }
 
 /**
- * How many of a row's named static guards are PRESENT (3F-2203) — the count of `lint`
+ * How many of a row's named static checks are PRESENT (3F-2203) — the count of `lint`
  * reconciliations that found a real script, whether or not it is wired.
  *
  * PRESENCE IS NOT QUALITY, and that is the whole rule: `satisfied` (wired into CI over the real
  * source) and `watermelon` (the script exists but guards nothing) BOTH count, because both mean a
- * static guard is THERE. Only `missing` — no script at all — is absent. The watermelon's inadequacy
+ * static check is THERE. Only `missing` — no script at all — is absent. The watermelon's inadequacy
  * is quality, and quality is reported in the reconciling items (🍉), never by shrinking this count.
  *
  * A domain fact, not a rendering choice: which outcomes imply the guard exists is the outcome
  * vocabulary's business, the same class as `OUT_OF_BALANCE_OUTCOMES`. The renderer READS it.
  */
-export function presentStaticGuardCountOf(row: ScenarioReconciliation): number {
-  return staticGuardReconciliationsOf(row).filter(
+export function presentStaticCheckCountOf(row: ScenarioReconciliation): number {
+  return staticCheckReconciliationsOf(row).filter(
     (r) => r.outcome === "satisfied" || r.outcome === "watermelon"
   ).length;
 }

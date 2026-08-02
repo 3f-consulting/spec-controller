@@ -8,9 +8,9 @@ Feature: The repo commits no report artefact — actively enforced
   CI-enforced invariant, not just a documented rule: a lint guard fails if any report
   artefact is tracked in the repo.
 
-  The guard is itself a CI static-guard over the real source, so it is DECLARED @lint
+  The guard is itself a CI static-check over the real source, so it is DECLARED @lint
   (@lint=lint:no-committed-reports) — spec-controller's own ledger reconciles it, so it
-  is never an uncited static-guard (the Uncited-static-guards increment).
+  is never an uncited static-check (the Uncited-static-checks increment).
 
   Rule: a committed report artefact reds the no-committed-reports guard
 

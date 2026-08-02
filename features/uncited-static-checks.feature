@@ -1,7 +1,7 @@
 @USG
-Feature: Detect uncited static-guards — a CI guard no @lint declares
+Feature: Detect uncited static-checks — a CI guard no @lint declares
 
-  The static-guard (@lint) axis's UNCITED detection — the mirror of the
+  The static-check (@lint) axis's UNCITED detection — the mirror of the
   runtime axis's cites-no-scenario evidence observations. The @lint axis was declared→observed only
   (checkStaticEvidenceObligations observes each DECLARED @lint=<guard>), structurally blind to the reverse:
   a guard that runs in CI with NOTHING declaring it — an unposted credit.
@@ -10,7 +10,7 @@ Feature: Detect uncited static-guards — a CI guard no @lint declares
   invokes — runningStaticChecks) into the reconcile stream, so the ONE reconcile engine sees the
   complete static stream: a named guard matches its @lint obligation; an undemanded one — a
   guard that runs in CI with NO @lint declaring it — cites no scenario, so reconcile folds it to
-  the suspense row (an UNCITED static-guard). The report's static census is a pure counter
+  the suspense row (an UNCITED static-check). The report's static census is a pure counter
   over the stream (countStaticEvidenceObservationKinds → StaticEvidenceObservationKindCounts
   { runningStaticCheckCount, uncitedStaticCheckCount }; the named count is implicit, running −
   uncited, and the completeness invariant is asserted inside the counter), the static-axis

@@ -8,7 +8,7 @@
  *
  * The rule under test decides WHERE an entry lands, never what it reconciles TO. Canon sets the
  * cardinality per axis: a RUNTIME credit cites, so it posts to exactly one row (its scenario, a
- * phantom, or suspense); a STATIC GUARD's run cites nothing and is matched BY NAME, so it posts to
+ * phantom, or suspense); a STATIC CHECK's run cites nothing and is matched BY NAME, so it posts to
  * EVERY row naming it, or to suspense if none does ("one run is evidence for all of them").
  *
  * Parent: (@SCN-LDG-001) — posting is the Ledger's assembly; the rule is its own concept.
@@ -16,7 +16,7 @@
 
 import { describe, it, expect } from "vitest";
 
-import { postingOf, staticGuardCreditsPostingTo } from "./posting.js";
+import { postingOf, staticCheckCreditsPostingTo } from "./posting.js";
 import type { Scenario, EvidenceObservation, GuardEvidenceObservation } from "../model.js";
 
 const declared = new Set(["SCN-AAA-001", "SCN-AAA-002"]);
@@ -68,39 +68,39 @@ describe("[SCN-LDG-001] postingOf routes a RUNTIME credit by its citation", () =
   });
 });
 
-describe("[SCN-LDG-001] postingOf routes a STATIC-GUARD credit by its name", () => {
-  const guard = (staticGuard: string): GuardEvidenceObservation => ({
+describe("[SCN-LDG-001] postingOf routes a STATIC-CHECK credit by its name", () => {
+  const guard = (staticCheck: string): GuardEvidenceObservation => ({
     qualityCheck: "lint",
-    staticGuard,
+    staticCheck,
     exists: true,
     enforcedOverRealSource: true,
   });
 
-  it("posts a NAMED static guard to every naming scenario — a set, not one row", () => {
+  it("posts a NAMED static check to every naming scenario — a set, not one row", () => {
     expect(postingOf(guard("lint:named"), declared, named)).toEqual({
       kind: "every-naming-scenario",
-      staticGuard: "lint:named",
+      staticCheck: "lint:named",
     });
   });
 
-  it("posts an UNDEMANDED static guard to suspense — the static analogue of an uncited credit", () => {
+  it("posts an UNDEMANDED static check to suspense — the static analogue of an uncited credit", () => {
     expect(postingOf(guard("lint:nobody-asked"), declared, named)).toEqual({
       kind: "suspense-scenario",
-      posted: "undemanded-static-guard",
+      posted: "undemanded-static-check",
     });
   });
 });
 
-describe("[SCN-LDG-001] staticGuardCreditsPostingTo resolves the by-name half per row", () => {
+describe("[SCN-LDG-001] staticCheckCreditsPostingTo resolves the by-name half per row", () => {
   const shared: GuardEvidenceObservation = {
     qualityCheck: "lint",
-    staticGuard: "lint:shared",
+    staticCheck: "lint:shared",
     exists: true,
     enforcedOverRealSource: true,
   };
   const other: GuardEvidenceObservation = {
     qualityCheck: "lint",
-    staticGuard: "lint:other",
+    staticCheck: "lint:other",
     exists: true,
     enforcedOverRealSource: true,
   };
@@ -114,25 +114,25 @@ describe("[SCN-LDG-001] staticGuardCreditsPostingTo resolves the by-name half pe
   it("posts the SAME guard object to each of two naming rows", () => {
     const a: Scenario = {
       scnId: "SCN-AAA-001",
-      evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:shared" }],
+      evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint:shared" }],
     };
     const b: Scenario = {
       scnId: "SCN-AAA-002",
-      evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:shared" }],
+      evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint:shared" }],
     };
-    expect(staticGuardCreditsPostingTo(a, observations)[0]).toBe(shared);
-    expect(staticGuardCreditsPostingTo(b, observations)[0]).toBe(shared);
+    expect(staticCheckCreditsPostingTo(a, observations)[0]).toBe(shared);
+    expect(staticCheckCreditsPostingTo(b, observations)[0]).toBe(shared);
   });
 
   it("posts ONCE when one row declares the same handle twice", () => {
     const twice: Scenario = {
       scnId: "SCN-AAA-001",
       evidenceObligations: [
-        { qualityCheck: "lint", staticGuard: "lint:shared" },
-        { qualityCheck: "lint", staticGuard: "lint:shared" },
+        { qualityCheck: "lint", staticCheck: "lint:shared" },
+        { qualityCheck: "lint", staticCheck: "lint:shared" },
       ],
     };
-    expect(staticGuardCreditsPostingTo(twice, observations)).toEqual([shared]);
+    expect(staticCheckCreditsPostingTo(twice, observations)).toEqual([shared]);
   });
 
   /**
@@ -144,32 +144,32 @@ describe("[SCN-LDG-001] staticGuardCreditsPostingTo resolves the by-name half pe
     const reversed: Scenario = {
       scnId: "SCN-AAA-001",
       evidenceObligations: [
-        { qualityCheck: "lint", staticGuard: "lint:other" },
-        { qualityCheck: "lint", staticGuard: "lint:shared" },
+        { qualityCheck: "lint", staticCheck: "lint:other" },
+        { qualityCheck: "lint", staticCheck: "lint:shared" },
       ],
     };
-    expect(staticGuardCreditsPostingTo(reversed, observations)).toEqual([other, shared]);
+    expect(staticCheckCreditsPostingTo(reversed, observations)).toEqual([other, shared]);
   });
 
   it("posts nothing for a named handle no observation answers", () => {
     const absent: Scenario = {
       scnId: "SCN-AAA-001",
-      evidenceObligations: [{ qualityCheck: "lint", staticGuard: "lint:absent" }],
+      evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint:absent" }],
     };
-    expect(staticGuardCreditsPostingTo(absent, observations)).toEqual([]);
+    expect(staticCheckCreditsPostingTo(absent, observations)).toEqual([]);
   });
 
   /**
    * The documented pending asymmetry (3F-2202), pinned so it cannot drift silently: a
-   * `@lintpending` obligation carries NO `staticGuard`, so it posts nothing here — which is what
+   * `@lintpending` obligation carries NO `staticCheck`, so it posts nothing here — which is what
    * keeps this pending-INCLUSIVE walk from disagreeing with the pending-EXCLUDING
    * `staticCheckEvidenceObligationsOf` that `postingOf` consults.
    */
-  it("posts nothing for a pending lint obligation, which carries no static guard handle", () => {
+  it("posts nothing for a pending lint obligation, which carries no static check handle", () => {
     const pending: Scenario = {
       scnId: "SCN-AAA-001",
       evidenceObligations: [{ qualityCheck: "lint", pending: true }],
     };
-    expect(staticGuardCreditsPostingTo(pending, observations)).toEqual([]);
+    expect(staticCheckCreditsPostingTo(pending, observations)).toEqual([]);
   });
 });

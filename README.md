@@ -8,7 +8,7 @@ Give it your Gherkin scenarios plus the reports from the tools that ran (Vitest,
 
 ## Why
 
-Automated testing aspires to be the software equivalent of **double-entry accounting**: overhead in exchange for verifiable safety. Every scenario declares the evidence it requires (the **debit** — specification); every observed test or static guard is attributed to a scenario (the **credit** — reality); and the report — the **Evidence Reconciliation** — shows whether the two records agree. Neither record is authoritative alone; a claim is trustworthy only where the two match.
+Automated testing aspires to be the software equivalent of **double-entry accounting**: overhead in exchange for verifiable safety. Every scenario declares the evidence it requires (the **debit** — specification); every observed test or static check is attributed to a scenario (the **credit** — reality); and the report — the **Evidence Reconciliation** — shows whether the two records agree. Neither record is authoritative alone; a claim is trustworthy only where the two match.
 
 The failure mode it exists to prevent, from a real first experience of AI-assisted coding:
 
@@ -26,7 +26,7 @@ Each `@`-tag on a scenario declares one **evidence obligation** — naming one *
 
 `@lint` · `@unit` · `@integration` · `@e2e` · `@performance`
 
-`@unit` / `@integration` / `@e2e` / `@performance` are runtime tests; `@lint` is a **static guard** over the source artefact. `@lint` isn't a second axis — it's one quality-check value, the one whose evidence is *enforcement over the real source* rather than a passing test. So a scenario tagged `@lint @unit @integration` declares three obligations, not one combined thing. Each tag asserts *"to prove this scenario, evidence of this quality-check must exist and hold"* — for a runtime test, that it exists and passes; for `@lint`, that the guard is wired into CI and green over the real source, not merely fixture-green. `spec-controller` reconciles those declarations against the evidence that actually ran and catches the **watermelon**: a guard that is green but enforces nothing.
+`@unit` / `@integration` / `@e2e` / `@performance` are runtime tests; `@lint` is a **static check** over the source artefact. `@lint` isn't a second axis — it's one quality-check value, the one whose evidence is *enforcement over the real source* rather than a passing test. So a scenario tagged `@lint @unit @integration` declares three obligations, not one combined thing. Each tag asserts *"to prove this scenario, evidence of this quality-check must exist and hold"* — for a runtime test, that it exists and passes; for `@lint`, that the guard is wired into CI and green over the real source, not merely fixture-green. `spec-controller` reconciles those declarations against the evidence that actually ran and catches the **watermelon**: a guard that is green but enforces nothing.
 
 ## Install
 

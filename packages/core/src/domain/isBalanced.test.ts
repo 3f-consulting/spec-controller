@@ -11,7 +11,7 @@
  * The predicate is over the WHOLE Ledger — out-of-balance iff ANY
  * reconciling item exists on ANY row (scenario, suspense, or phantom). The load-bearing
  * case is the WATERMELON-ONLY run: every scenario is balanced, yet an undemanded
- * static-guard sits unreconciled in the suspense row — a scan of scenario
+ * static-check sits unreconciled in the suspense row — a scan of scenario
  * verdicts alone would call it balanced (the false pass the CI gate must never give);
  * `isBalanced` must call it out-of-balance because it consults every row's reconcilingItems.
  */
@@ -87,10 +87,10 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
     expect(isBalanced(reconciliation)).toBe(false);
   });
 
-  it("is NOT balanced for a WATERMELON-ONLY run — every scenario balanced, yet an undemanded static-guard sits in the suspense row", () => {
+  it("is NOT balanced for a WATERMELON-ONLY run — every scenario balanced, yet an undemanded static-check sits in the suspense row", () => {
     // The load-bearing case (@SCN-CLI-004): NO scenario is out-of-balance, so a
     // scan of scenario verdicts alone would exit 0 — the false pass. But an
-    // undemanded static-guard (a `lint` credit no @lint obligation declares) posts a
+    // undemanded static-check (a `lint` credit no @lint obligation declares) posts a
     // `cites-no-scenario` reconciling item to the suspense row, so the WHOLE run is
     // out-of-balance. `isBalanced` consults every row's reconcilingItems and calls it false.
     const reconciliation: Ledger = {
@@ -103,9 +103,9 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
           evidenceObservations: [],
           evidenceObligations: [],
           verdict: "out-of-balance",
-          qualityCheckReconciliations: [qcr({ qualityCheck: "lint", staticGuard: "guard:static", outcome: "cites-no-scenario" })],
+          qualityCheckReconciliations: [qcr({ qualityCheck: "lint", staticCheck: "guard:static", outcome: "cites-no-scenario" })],
           pendingItems: [],
-          reconcilingItems: [qcr({ qualityCheck: "lint", staticGuard: "guard:static", outcome: "cites-no-scenario" })],
+          reconcilingItems: [qcr({ qualityCheck: "lint", staticCheck: "guard:static", outcome: "cites-no-scenario" })],
         },
       ],
     };

@@ -21,7 +21,7 @@
  * Design: the closed-vocabulary audit tool. Word-set authority: the double-entry
  * manifesto's mapping table.
  *
- * @SCN-VOC-001 / @SCN-VOC-002 / @SCN-VOC-003 / @SCN-VOC-004 / @SCN-VOC-006 /
+ * @SCN-VOC-001 / @SCN-VOC-002 / @SCN-VOC-003 / @SCN-VOC-004 / @SCN-VOC-005 / @SCN-VOC-006 /
  * @SCN-VOC-007 — features/vocabulary-audit.feature.
  */
 
@@ -114,7 +114,10 @@ export type FlagReason =
   | "declared-scenario"
   // @SCN-VOC-006 — the retired tag PHRASE: whole-word `ci` immediately before
   // `performance`. Renamed to the canon `ci-run-time`.
-  | "ci-performance";
+  | "ci-performance"
+  // @SCN-VOC-005 — the retired CLASS-NAME PHRASE: whole-word `static` immediately before
+  // `guard`. Renamed to the canon `static check`.
+  | "static-guard";
 
 // ---------------------------------------------------------------------------
 // Core classification
@@ -176,6 +179,63 @@ function fullTermSatisfied(word: string, words: string[], i: number, present: Se
 }
 
 /**
+ * The retired ADJACENT-PAIR phrase rules — the three matchers that judge a word by the
+ * word that FOLLOWS it. Returns the flagging verdict, or `null` when no phrase matches.
+ *
+ * WHY THEY LIVE TOGETHER, AND WHY THE CALL SITE IS AHEAD OF THE GATES. Each of these
+ * phrases is built from words that are INDIVIDUALLY APPROVED — that is the whole reason
+ * none of them can be a `BANNED_WORDS` entry, and the whole reason the single call to this
+ * function must precede `classifyWords`'s FULL_TERM_ONLY and `isApproved` gates. Reached
+ * after those gates, every rule here would return green and the retired phrase would pass
+ * silently — a green nobody chose. Collapsing the three arms to ONE call site is what makes
+ * that ordering a single thing to keep right rather than three.
+ *
+ * Each rule flags the FIRST word of the pair and returns, so the second word is judged
+ * afterwards by the unmodified machinery and keeps its own verdict: one occurrence, one
+ * row, one rename.
+ *
+ * @SCN-VOC-003 — "declared scenario", the forbidden kind-label. Whole-word `declared`
+ * immediately before `scenario` (singular or plural), renamed to the bare canon `scenario`
+ * (which already means the real, declared kind). Whole-word by construction: `undeclared`
+ * decomposes to the single token "undeclared" (≠ "declared"), so canon "undeclared
+ * scenario" stays green, and bare `scenario` — an approved word — stays green too.
+ *
+ * @SCN-VOC-006 — "ci-performance", the retired tag. Whole-word `ci` immediately before
+ * `performance`, renamed to `ci-run-time`. A REGROWTH guard: the tree carries zero
+ * occurrences, so the rule keeps the tag out rather than purging it. `ci` and `performance`
+ * are BOTH individually allowlisted and banning either would red canon — bare
+ * `@performance` is the runtime quality check, `ci.yml` / `ciRun` are ordinary — while
+ * `ci-run-time` decomposes to `ci` / `run` / `time`, all approved.
+ *
+ * @SCN-VOC-005 — "static guard", the retired CLASS NAME. Whole-word `static` immediately
+ * before `guard` (the singulariser folds the plural onto the stem), renamed to the canon
+ * `static check`. `static` is a manifesto DOMAIN word (the static axis, the static evidence
+ * observation) and `guard` is canon's DIFFERENT WORD, deliberately kept — so this reds the
+ * CLASS NAME, never the word. The following `guard` stays green because `["static"]`
+ * remains a GUARD_QUALIFIERS entry and co-occurs; dropping that entry would emit a SECOND
+ * row per occurrence dispositioned `review`, and would red @SCN-VOC-001's `runStaticGuard`
+ * fixture — which is why it is kept rather than "cleaned up" alongside this rule.
+ *
+ * ALL THREE fire in BOTH modes: a retired phrase hides in a comment, a doc, an identifier,
+ * a string, a filename or a config key alike. A bare Gherkin TAG LINE is out of reach for
+ * all of them, because `scanFile` skips tag lines wholesale as structural — a pre-existing,
+ * all-rules segmentation decision, not a property of any one arm.
+ */
+function retiredPhraseVerdict(word: string, following: string): WordVerdict | null {
+  const next = singularise(following);
+  if (word === "declared" && next === "scenario") {
+    return { word, flagged: true, reason: "declared-scenario", canonical: "scenario" };
+  }
+  if (word === "ci" && next === "performance") {
+    return { word, flagged: true, reason: "ci-performance", canonical: "ci-run-time" };
+  }
+  if (word === "static" && next === "guard") {
+    return { word, flagged: true, reason: "static-guard", canonical: "static check" };
+  }
+  return null;
+}
+
+/**
  * Classify a decomposed word sequence. `modes` is one mode for the whole
  * sequence, or a per-word array. Full-term words (obligation/observation/…) are
  * judged by adjacency within the sequence; `entry` domain-use by co-occurrence.
@@ -196,36 +256,14 @@ export function classifyWords(words: string[], modes: Mode | Mode[]): WordVerdic
       return { word, flagged: true, reason: "banned", canonical };
     }
 
-    // @SCN-VOC-003 — the forbidden kind-label PHRASE "declared scenario": whole-word
-    // `declared` IMMEDIATELY followed by `scenario` (singular or plural). It fires in
-    // BOTH modes (like a banned phrase), so the label reds wherever it hides — a comment,
-    // a Gherkin line, a doc, a string — not only in an identifier. Whole-word by
-    // construction: `undeclared` decomposes to the single token "undeclared" (≠ "declared"),
-    // so canon "undeclared scenario" stays green. The rename target is the bare canon
-    // `scenario` (which already means the real, declared kind). Precedes the isApproved /
-    // mode gates below so the phrase reds even though bare `scenario` is an approved word
-    // and bare `declared` passes in prose.
-    if (word === "declared" && singularise(words[i + 1] ?? "") === "scenario") {
-      return { word, flagged: true, reason: "declared-scenario", canonical: "scenario" };
-    }
-
-    // @SCN-VOC-006 — the retired tag PHRASE "ci-performance": whole-word `ci`
-    // IMMEDIATELY followed by `performance`. A REGROWTH guard — the tree carries zero
-    // occurrences, so this rule exists to keep the retired tag out, not to purge it.
-    // It must be the PHRASE, never a banned word: `ci` and `performance` are BOTH
-    // individually allowlisted, and banning either would red the canon — bare
-    // `@performance` is the runtime quality check, and `ci.yml` / `ciRun` are ordinary.
-    // Fires in BOTH modes (a retired tag hides in a comment, a doc, an identifier, a
-    // string, a filename or a config key alike; a bare Gherkin TAG LINE is out of reach
-    // because scanFile skips tag lines wholesale as structural — an all-rules
-    // segmentation decision `declared-scenario` shares). The rename target is `ci-run-time`,
-    // which decomposes to `ci` / `run` / `time` — all approved, and `run` is not
-    // `performance`, so canon stays green by construction. Sits beside the
-    // `declared-scenario` arm, AHEAD of the isApproved / mode gates below: that
-    // ordering is exactly what lets a phrase of two approved words red at all.
-    if (word === "ci" && singularise(words[i + 1] ?? "") === "performance") {
-      return { word, flagged: true, reason: "ci-performance", canonical: "ci-run-time" };
-    }
+    // THE RETIRED PHRASE RULES (@SCN-VOC-003 / @SCN-VOC-006 / @SCN-VOC-005) — see
+    // `retiredPhraseVerdict` for each rule and its reasoning. THIS CALL SITE'S POSITION IS
+    // LOAD-BEARING: every one of those phrases is built from INDIVIDUALLY APPROVED words,
+    // so the call must stay AHEAD of the FULL_TERM_ONLY gate below and the `isApproved`
+    // gate under it. Moved after either, all three rules become unreachable and the
+    // retired phrases pass silently. Do not reorder.
+    const phrase = retiredPhraseVerdict(word, words[i + 1] ?? "");
+    if (phrase) return phrase;
 
     if (FULL_TERM_ONLY.has(stem)) {
       if (fullTermSatisfied(stem, words, i, present)) return { word, flagged: false };
@@ -591,7 +629,8 @@ function actionFor(reason: FlagReason): string {
   return reason === "banned" ||
     reason === "bare-shortening" ||
     reason === "declared-scenario" ||
-    reason === "ci-performance"
+    reason === "ci-performance" ||
+    reason === "static-guard"
     ? "rename"
     : "review";
 }

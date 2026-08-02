@@ -144,3 +144,37 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
       When the vocabulary audit runs over the corpus
       Then "demanded" is flagged, renamed to "evidence obligation"
       And "undemanded" is not flagged
+
+  Rule: the retired class name "static guard" reds; the canon "static check" stays green
+
+    The fourth regrowth guard (@SCN-VOC-005, 3F-2299), and the one that closes the retired-term
+    slice. The class of checks that run in CI over the committed source is a STATIC CHECK —
+    industry-legible — so the retired class name is retired with its purge. Like @SCN-VOC-003
+    and @SCN-VOC-006, and unlike the plain banned words @SCN-VOC-004 / @SCN-VOC-007, this MUST
+    be a PHRASE rule: whole-word `static` IMMEDIATELY before `guard` (singular or plural).
+    Neither half can be banned — `static` is a manifesto DOMAIN word (the static axis, the
+    static evidence observation), and `guard` is canon's DIFFERENT WORD, kept deliberately by
+    the Rule at the top of this file.
+
+    ORDERING IS THE WHOLE RULE. The arm sits with its phrase siblings AHEAD of the
+    FULL_TERM_ONLY gate and the approved-word gate, because `static` is an APPROVED domain
+    word: reached by `isApproved` first, the phrase would pass and the entire class would stay
+    green by accident — a green nobody chose. The same ordering is what leaves `guard` alone:
+    the arm flags the `static` token and returns, so the following word is judged by the
+    unchanged `guard` machinery, where `["static"]` still co-occurs as a GUARD_QUALIFIERS
+    entry and holds it green. One occurrence, one row, one rename — exactly the
+    `declared scenario` shape, where `declared` reds and canon `scenario` does not.
+
+    The load-bearing NEGATIVES, each asserted rather than left unmentioned: the canon
+    `static check` decomposes to `static` / `check`, both already approved, so it earns no
+    flag of any kind; bare `guard` keeps passing under its remaining ruled qualifiers
+    (`both-missing`, `exhaustiveness`, `regression`, `existence`, `readability`); and a
+    `guard:`-prefixed CI SCRIPT NAME (`guard:domain-purity`) is a VALUE, not vocabulary, so
+    it is untouched by this rule. This arm reds the retired CLASS NAME, never the word.
+
+    @unit @SCN-VOC-005
+    Scenario: the audit reds "static guard" and stays green on "static check"
+      Given a corpus carrying the retired phrase "static guard" and the canon "static check"
+      When the vocabulary audit runs over the corpus
+      Then the phrase "static guard" is flagged, renamed to "static check"
+      And the phrase "static check" is not flagged

@@ -278,7 +278,7 @@ describe("[SCN-LDG-019] parseCucumberEvidenceObservations emits a broken observa
 
     expect(observations).toHaveLength(1);
     // Narrowed to the runtime shape: the cucumber reader only ever emits runtime observations
-    // (a static guard observation is the static reader's), and `broken` / `message` live there.
+    // (a static check observation is the static reader's), and `broken` / `message` live there.
     const [observation] = observations as RuntimeEvidenceObservation[];
     expect(observation).toMatchObject({
       qualityCheck: "integration",

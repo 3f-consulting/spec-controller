@@ -19,7 +19,7 @@ node --version   # must be v22.x or higher
 - Gherkin `.feature` files (your scenarios and their evidence-obligation tags).
 - A Vitest JSON report (runtime test evidence).
 - A Cucumber JSON report (runtime test evidence).
-- Your CI config (`ci.yml`) and `package.json` — used to check that `@lint` static guards are actually wired into CI over the real source.
+- Your CI config (`ci.yml`) and `package.json` — used to check that `@lint` static checks are actually wired into CI over the real source.
 
 ---
 
@@ -48,7 +48,7 @@ spec-controller balance --features ./features \
 ### What it does
 
 1. Parses your Gherkin scenarios and their `@`-tags into **evidence obligations** — the debit (what's specified).
-2. Parses the evidence reports you passed — Vitest, Cucumber, and the CI/`package.json` static-guard checks — into **evidence observations** — the credit (what actually ran).
+2. Parses the evidence reports you passed — Vitest, Cucumber, and the CI/`package.json` static-check checks — into **evidence observations** — the credit (what actually ran).
 3. Reconciles evidence obligations against evidence observations, per scenario, quality-check by quality-check.
 4. Assembles the **Evidence Reconciliation** and renders it.
 
@@ -59,8 +59,8 @@ spec-controller balance --features ./features \
 | `--features <dir>` | Directory of Gherkin `.feature` files — the scenarios. |
 | `--vitest <report.json>` | A Vitest JSON report — runtime test evidence. |
 | `--cucumber <report.json>` | A Cucumber JSON report — runtime test evidence. |
-| `--ci <ci.yml>` | Your CI workflow — used to check whether `@lint` static guards actually run over the real source. |
-| `--package-json <path>` | `package.json` — used to check a declared static guard's script exists. |
+| `--ci <ci.yml>` | Your CI workflow — used to check whether `@lint` static checks actually run over the real source. |
+| `--package-json <path>` | `package.json` — used to check a declared static check's script exists. |
 | `--target <name>` | A name recorded verbatim in the report's provenance (which project this run reconciled). |
 | `--source-sha <sha>` | Override the git commit SHA recorded in provenance (defaults to the resolved HEAD). |
 | `--format <fmt>[:<path>]` | Where to send output (`md` or `json`, optionally `:<path>` to write to a file). Repeatable. See below. |
@@ -138,7 +138,7 @@ The **Evidence Reconciliation** — the whole reconciliation — in two renderin
 
 Both carry a **provenance** header recording what was reconciled (target, source SHA, input paths), so a reconciliation is reproducible and attributable.
 
-The outcome you are watching for is the **watermelon**: a static guard that is green but enforces nothing over the real source — the fabricated credit that makes a green CI lie.
+The outcome you are watching for is the **watermelon**: a static check that is green but enforces nothing over the real source — the fabricated credit that makes a green CI lie.
 
 ---
 

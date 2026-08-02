@@ -352,11 +352,11 @@ When("the reconciliation run persists spec-reconciliation.json", function () {
 });
 
 Then(
-  "the summary carries the test-volume totals, the static-guard totals, and the lint tally",
+  "the summary carries the test-volume totals, the static-check totals, and the lint tally",
   function () {
     const summary = rmd005Json.summary as {
       testVolume?: { totalEvidenceObservations: number; onScenario: number; onPhantomScenario: number; onSuspenseScenario: number };
-      staticGuards?: { runningStaticCheckCount: number; uncitedStaticCheckCount: number };
+      staticChecks?: { runningStaticCheckCount: number; uncitedStaticCheckCount: number };
       lint?: { satisfied: number; total: number };
     };
     assert.ok(summary, `expected a summary section; got keys: ${Object.keys(rmd005Json).join(", ")}`);
@@ -364,10 +364,10 @@ Then(
     // on phantom scenarios + 2 on the suspense scenario (onScenario EXCLUDES onPhantomScenario).
     assert.ok(summary.testVolume, `expected summary.testVolume; got summary keys: ${Object.keys(summary).join(", ")}`);
     assert.deepEqual(summary.testVolume, { totalEvidenceObservations: 5, onScenario: 1, onPhantomScenario: 2, onSuspenseScenario: 2 });
-    // Static-guard totals — the usg fixture: 2 guards run, 1 uncited (lint:bar); the named
+    // Static-check totals — the usg fixture: 2 guards run, 1 uncited (lint:bar); the named
     // one (lint:foo) is implicit (running − uncited = 1).
-    assert.ok(summary.staticGuards, `expected summary.staticGuards; got summary keys: ${Object.keys(summary).join(", ")}`);
-    assert.deepEqual(summary.staticGuards, { runningStaticCheckCount: 2, uncitedStaticCheckCount: 1 });
+    assert.ok(summary.staticChecks, `expected summary.staticChecks; got summary keys: ${Object.keys(summary).join(", ")}`);
+    assert.deepEqual(summary.staticChecks, { runningStaticCheckCount: 2, uncitedStaticCheckCount: 1 });
     // Lint tally — the static-only cut: lint:foo declared by SCN-TGT-001 and enforced in CI →
     // 1 of 1 satisfied (the runtime evidence obligations do NOT count).
     assert.ok(summary.lint, `expected summary.lint; got summary keys: ${Object.keys(summary).join(", ")}`);
@@ -388,9 +388,9 @@ Then(
 );
 
 Then(
-  "the persisted static-guard summary carries runningStaticCheckCount and uncitedStaticCheckCount with named implicit",
+  "the persisted static-check summary carries runningStaticCheckCount and uncitedStaticCheckCount with named implicit",
   function () {
-    const sg = (rmd005Json.summary as { staticGuards: { runningStaticCheckCount: number; uncitedStaticCheckCount: number } }).staticGuards;
+    const sg = (rmd005Json.summary as { staticChecks: { runningStaticCheckCount: number; uncitedStaticCheckCount: number } }).staticChecks;
     // named is IMPLICIT: running − uncited, and non-negative by the counter's
     // internal completeness invariant. No `ciGuards` / `named` field on the persisted surface.
     const named = sg.runningStaticCheckCount - sg.uncitedStaticCheckCount;
@@ -400,7 +400,7 @@ Then(
     );
     assert.ok(
       !("ciGuards" in sg) && !("named" in sg),
-      `the persisted static-guard summary must carry only { runningStaticCheckCount, uncitedStaticCheckCount }; got keys: ${Object.keys(sg).join(", ")}`
+      `the persisted static-check summary must carry only { runningStaticCheckCount, uncitedStaticCheckCount }; got keys: ${Object.keys(sg).join(", ")}`
     );
   }
 );
@@ -647,7 +647,7 @@ Then('a lint sub-row carries its quality-check "lint" alongside its guard', func
   assert.ok(lintRows.length > 0, `expected at least one lint sub-row (the usg fixture declares @lint=lint:foo); got ${JSON.stringify(evidenceReconciliation)}`);
   for (const row of lintRows) {
     assert.equal(row.qualityCheck, "lint", `expected a lint sub-row's quality-check to be "lint"; got ${JSON.stringify(row)}`);
-    assert.ok(typeof row.staticGuard === "string" && row.staticGuard.length > 0, `expected a lint sub-row to carry its guard handle; got ${JSON.stringify(row)}`);
+    assert.ok(typeof row.staticCheck === "string" && row.staticCheck.length > 0, `expected a lint sub-row to carry its guard handle; got ${JSON.stringify(row)}`);
   }
 });
 

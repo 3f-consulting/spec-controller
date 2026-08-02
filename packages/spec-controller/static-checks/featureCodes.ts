@@ -9,8 +9,8 @@
  * share a code, and that each declared code is registered against the expected
  * slug.
  *
- * A product quality check, NOT part of the app — it lives in static-guards/ (a
- * sibling of src/), driven by the lint:feature-codes CI static guard. The
+ * A product quality check, NOT part of the app — it lives in static-checks/ (a
+ * sibling of src/), driven by the lint:feature-codes CI static check. The
  * feature-file discovery it reads (`discoverFeatures`) is the app's ingest reader;
  * the `scnId → feature-code` grammar helper is the engine's (featureCodeOf).
  *
@@ -63,7 +63,7 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     code: "LNT",
     slug: "lint-reconciliation",
     status: "declared",
-    note: "the @lint static-guard quality-check — reconciling @lint:<guard> scenarios against CI wiring over the real source; flags the watermelon",
+    note: "the @lint static-check quality-check — reconciling @lint:<guard> scenarios against CI wiring over the real source; flags the watermelon",
   },
   {
     code: "CPX",
@@ -73,9 +73,9 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
   },
   {
     code: "USG",
-    slug: "uncited-static-guards",
+    slug: "uncited-static-checks",
     status: "declared",
-    note: "the uncited static-guard — a CI guard that runs with no @lint declaring it (the mirror of a cites-no-scenario runtime evidence observation); derives the CI guard-set + reconciles it against the declared @lint set",
+    note: "the uncited static-check — a CI guard that runs with no @lint declaring it (the mirror of a cites-no-scenario runtime evidence observation); derives the CI guard-set + reconciles it against the declared @lint set",
   },
   {
     code: "WRN",
@@ -244,7 +244,7 @@ export function lintFeatureCodes(
     if (!entry) {
       violations.push({
         kind: "unknown-code",
-        message: `Feature "${feature.slug}" declares code "${code}", which is not in the registry (static-guards/featureCodes.ts). Allocate it there first.`,
+        message: `Feature "${feature.slug}" declares code "${code}", which is not in the registry (static-checks/featureCodes.ts). Allocate it there first.`,
       });
     } else if (entry.slug !== feature.slug) {
       violations.push({

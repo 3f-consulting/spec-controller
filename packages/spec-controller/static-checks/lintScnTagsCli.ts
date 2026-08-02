@@ -1,5 +1,5 @@
 /**
- * CLI entry point for the tier-tag floor static guard. Run via `pnpm lint:scn-tags` in
+ * CLI entry point for the tier-tag floor static check. Run via `pnpm lint:scn-tags` in
  * CI: it discovers the repo's feature files (via `discoverFeatures`), reads each
  * file's SOURCE — since `DiscoveredFeature.scenarioCodes` carries only the @SCN
  * ids, not the per-scenario tag blocks the floor needs — and flags every scenario
@@ -9,9 +9,9 @@
  *
  * The tier-tag floor over spec-controller's OWN scenarios (the cobbler's shoes).
  * Mirrors `lint:feature-codes` / `lint:no-committed-reports`: a pure function of
- * the checked-out tree, a full CI gate on every push. The static guard is @lint-declared
+ * the checked-out tree, a full CI gate on every push. The static check is @lint-declared
  * (`@lint=lint:scn-tags` on @SCN-STG-001) so the tool's own ledger reconciles it —
- * not an uncited static-guard.
+ * not an uncited static-check.
  *
  * An optional `--features <dir>` overrides the default features/ directory (the
  * @integration fixtures pass a planted dir; the real-tree gate takes the default).

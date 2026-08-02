@@ -54,7 +54,7 @@ async function rulesFiredOn(source: string, threshold: Threshold): Promise<strin
 
 Given("each scope declares a complexity, module-size and function-size threshold", async function () {
   const thresholds = await import(
-    "../../packages/spec-controller/static-guards/complexityThresholds.mjs"
+    "../../packages/spec-controller/static-checks/complexityThresholds.mjs"
   );
   productionThreshold = thresholds.PRODUCTION_THRESHOLD as Threshold;
   testThreshold = thresholds.TEST_THRESHOLD as Threshold;

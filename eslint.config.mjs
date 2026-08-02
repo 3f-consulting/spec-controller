@@ -1,17 +1,17 @@
 /**
- * The complexity + module-size static guard (@SCN-CPX-001, 3F-2177) — `pnpm lint:complexity`.
+ * The complexity + module-size static check (@SCN-CPX-001, 3F-2177) — `pnpm lint:complexity`.
  *
  * Mechanism over honour: small-modules, entity-owns-its-behaviour and DRY are honour rules until
  * something reds. This is the something. THREE rules only — `complexity`, `max-lines`,
  * `max-lines-per-function`. Deliberately no `recommended` preset and no style rules: the ticket
  * declared three, and a preset would smuggle in a large ruleset nobody endorsed (`zero-shape`).
  *
- * The thresholds are NOT written here — they live in `static-guards/complexityThresholds.mjs`, the one
+ * The thresholds are NOT written here — they live in `static-checks/complexityThresholds.mjs`, the one
  * source the @unit pin also reads. See that file for why they are seeded at the measured maximum
  * rather than the p90, and for the ratchet targets.
  *
  * SCOPE MATCHES WHAT WAS MEASURED. The production block covers exactly the population the thresholds were
- * measured over — `packages/<pkg>/src` and `packages/<pkg>/static-guards`. Widening these globs without
+ * measured over — `packages/<pkg>/src` and `packages/<pkg>/static-checks`. Widening these globs without
  * re-measuring would let the guard red over files no threshold was ever calibrated against, which is how
  * a gate starts crying wolf.
  *
@@ -25,7 +25,7 @@ import tseslint from "typescript-eslint";
 import {
   PRODUCTION_THRESHOLD,
   TEST_THRESHOLD,
-} from "./packages/spec-controller/static-guards/complexityThresholds.mjs";
+} from "./packages/spec-controller/static-checks/complexityThresholds.mjs";
 
 /**
  * The three rules at one scope's threshold.
@@ -57,7 +57,7 @@ export default [
   },
   {
     // Production: the measured population.
-    files: ["packages/*/src/**/*.ts", "packages/*/static-guards/**/*.ts"],
+    files: ["packages/*/src/**/*.ts", "packages/*/static-checks/**/*.ts"],
     languageOptions: tsLanguageOptions,
     rules: thresholdRules(PRODUCTION_THRESHOLD),
   },

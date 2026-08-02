@@ -1,12 +1,12 @@
 /**
- * The domain-purity static guard (@SCN-DPG-001) — makes "the reconciliation domain is pure and
+ * The domain-purity static check (@SCN-DPG-001) — makes "the reconciliation domain is pure and
  * self-contained" executable: the INNER analogue of the engine-purity guard (@SCN-EPG-001, the
  * package edge) one level down. Engine-purity keeps the whole core free of the app and IO; this
  * keeps the domain (`packages/core/src/domain`) free of the core's own ADAPTERS.
  *
  * PURE: `checkDomainPurity` takes the domain's source files as data and returns the violations;
  * the impure file-read (walking `packages/core/src/domain`) lives in the `@unit` test that drives
- * this over the real tree. The guard lives in `static-guards/` (product-not-app) precisely because
+ * this over the real tree. The guard lives in `static-checks/` (product-not-app) precisely because
  * it reads the tree via `fs` — it cannot live inside the pure domain it checks.
  *
  * Two properties, two violation arms:
@@ -31,7 +31,7 @@ export interface DomainPurityViolation {
   /** The offending file, as given by the caller (repo-relative in the guard test). */
   path: string;
   kind: "adapter-import" | "app-import";
-  /** The specifier that tripped the static guard. */
+  /** The specifier that tripped the static check. */
   detail: string;
 }
 
@@ -58,7 +58,7 @@ const FROM_SPECIFIER = /\bfrom\s*['"]([^'"]+)['"]/g;
 /**
  * Strip `//` line comments and block comments so a doc-comment that merely NAMES a forbidden
  * layer (this file's own header does) is not a false positive. Over-stripping the odd string
- * literal is harmless here — the static guard only cares about real `from` specifiers.
+ * literal is harmless here — the static check only cares about real `from` specifiers.
  */
 function stripComments(source: string): string {
   return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");

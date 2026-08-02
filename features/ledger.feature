@@ -93,14 +93,14 @@ Feature: Ledger over declared-vs-observed evidence
   Rule: a credit citing no scenario is a suspense-scenario reconciliation
 
     The bidirectional reconciler also consumes credits that cite NO scenario at
-    all — a runtime result carrying no @SCN anchor, or a CI static guard no @lint declares
+    all — a runtime result carrying no @SCN anchor, or a CI static check no @lint declares
     (ruling Q4). A credit that posts to no scenario lands on the SUSPENSE scenario
     (a suspense account holds postings that match no
     real account). ALL uncited credits aggregate into ONE suspense-scenario Scenario
     Reconciliation, sentinel id "(no scenario)", each Quality Check Reconciliation carrying
     the outcome cites-no-scenario (and the evidence observation's locator as the where-to-fix),
     verdict always out of balance. The suspense-evidence-observation and
-    uncited-static-guard detail lists dissolve into this row (no double-report; the
+    uncited-static-check detail lists dissolve into this row (no double-report; the
     counts survive in the summary balance-check identities).
 
     @unit @integration @SCN-LDG-007
@@ -471,10 +471,10 @@ Feature: Ledger over declared-vs-observed evidence
   # row. So the symmetry completes — a NAMED guard posts to EVERY account that names it; an
   # UNDEMANDED guard belongs to no account and posts to SUSPENSE, where it already reconciles
   # `cites-no-scenario`. Every credit posts to AT LEAST ONE account, never to none (canon,
-  # double-entry-manifesto.md line 160: "Not exactly one — a static guard posts to every account
+  # double-entry-manifesto.md line 160: "Not exactly one — a static check posts to every account
   # that names it"). Exactly-one is a RUNTIME property (the credit cites, so it names one) — the
   # single-obligation instance below, not the universal. The multi-obligation instance is @SCN-LDG-024.
-  Rule: every evidence observation posts to at least one ledger account, never to none — a runtime credit to the one it cites, a static guard to every account that names it
+  Rule: every evidence observation posts to at least one ledger account, never to none — a runtime credit to the one it cites, a static check to every account that names it
 
     @unit @integration @SCN-LDG-022
     Scenario: over a single-obligation corpus every evidence observation posts to exactly one ledger account and is findable there — the never-zero invariant's instance where nothing is named twice
@@ -486,19 +486,19 @@ Feature: Ledger over declared-vs-observed evidence
       And the run's verdict and reconciling items are unchanged — posting classifies nothing
 
   # THE MULTI-OBLIGATION INSTANCE (@SCN-LDG-024, 3F-1850) — where "exactly one" breaks and the
-  # never-zero invariant above lands at MORE than one. A static guard's run cites no scenario, so
+  # never-zero invariant above lands at MORE than one. A static check's run cites no scenario, so
   # it is matched by handle and is evidence for EVERY naming scenario: two scenarios naming the same
-  # static guard both reconcile satisfied against the ONE run, which posts to each account BY
+  # static check both reconcile satisfied against the ONE run, which posts to each account BY
   # REFERENCE (one object on both — never copied, so the 3F-1831 census fold cannot double-count).
   # The case no corpus exercised until now (the coverage hole this closes).
-  Rule: a static guard named by two scenarios posts to each account
+  Rule: a static check named by two scenarios posts to each account
 
     @unit @integration @SCN-LDG-024
-    Scenario: one static guard's run, named by two scenarios, reconciles satisfied on both and is findable on each
-      Given two scenarios that each name the same static guard by @lint, wired and green in CI
+    Scenario: one static check's run, named by two scenarios, reconciles satisfied on both and is findable on each
+      Given two scenarios that each name the same static check by @lint, wired and green in CI
       When the shared-guard corpus is reconciled
       Then both naming scenarios' lint obligations reconcile satisfied
-      And the one static-guard credit is findable on each naming account, one object on both
+      And the one static-check credit is findable on each naming account, one object on both
 
   # THE OBLIGATIONS-ONLY CORPUS (@SCN-LDG-025, 3F-1851) — isolating the named-guard posting rule so
   # it ALONE determines the verdict. Every other lint fixture mixes a named guard with another
@@ -512,7 +512,7 @@ Feature: Ledger over declared-vs-observed evidence
 
     @unit @integration @SCN-LDG-025
     Scenario: a named-guards-only corpus reconciles balanced with no suspense row, so summary.outOfBalance agrees with the balanced verdict
-      Given a corpus whose only lint credit is a named static guard, wired and green in CI
+      Given a corpus whose only lint credit is a named static check, wired and green in CI
       When the obligations-only corpus is reconciled
       Then the naming scenario reconciles satisfied and the run is balanced
       And there is no suspense row, and summary.outOfBalance is 0 — agreeing with the balanced verdict
@@ -582,8 +582,8 @@ Feature: Ledger over declared-vs-observed evidence
       And it carries no evidence obligation (the debit side is absent)
       And the JSON projects that evidence observation on the reconciliation
 
-  # LINT MISSING IS OBLIGATION-ONLY (@SCN-LDG-028, 3F-2016 / corrects 3F-1995). An absent static
-  # guard is read as {exists:false} — an ABSENCE, not an observation. Canon (double-entry-manifesto
+  # LINT MISSING IS OBLIGATION-ONLY (@SCN-LDG-028, 3F-2016 / corrects 3F-1995). An absent
+  # static check is read as {exists:false} — an ABSENCE, not an observation. Canon (double-entry-manifesto
   # line 36): missing = Obligation Exists, Observation None. Only a REAL observation (exists:true →
   # satisfied/watermelon) is carried; the absent-guard record is not modelled as an observation.
   # Uniform with the runtime missing path, which already carries none.
@@ -601,7 +601,7 @@ Feature: Ledger over declared-vs-observed evidence
   # manifesto line 39): no-scn-code = Obligation Exists, Observation None — the debit twin of
   # cites-no-scenario. The scenario is real and ordinary but carries no @SCN, so its obligation has
   # no code to link to; the reconciliation carries a SYNTHESIZED scenario-scope obligation ({}, no
-  # qualityCheck / staticGuard — precedent: the scenario-scope pending obligation, journal.ts) and
+  # qualityCheck / staticCheck — precedent: the scenario-scope pending obligation, journal.ts) and
   # no observation. The scenario-level evidenceObligations array stays empty — census + markdown
   # untouched.
   Rule: a no-scn-code reconciliation carries a scenario-scope evidence obligation and no observation
@@ -611,7 +611,7 @@ Feature: Ledger over declared-vs-observed evidence
       Given a corpus with one scenario carrying no @SCN
       When the ledger reconciles that corpus
       Then the untagged scenario's Quality Check Reconciliation has outcome "no-scn-code"
-      And it carries a scenario-scope evidence obligation — empty, with no qualityCheck and no staticGuard
+      And it carries a scenario-scope evidence obligation — empty, with no qualityCheck and no staticCheck
       And it carries no evidence observation
       And the scenario-level evidence obligations stay empty, so the census and markdown are unchanged
 

@@ -1,8 +1,8 @@
 @LNT
-Feature: Reconcile @lint static-guard evidence against CI wiring over the real source
+Feature: Reconcile @lint static-check evidence against CI wiring over the real source
 
   The second evidence axis. Alongside the runtime KIND (the unit
-  / integration tests, keyed by level), a scenario can declare a STATIC-guard
+  / integration tests, keyed by level), a scenario can declare a STATIC-check
   evidence obligation via an explicit lint:<guard> tag handle — a lint/guard over the
   source artifact, keyed by its guard, carrying no level.
 
@@ -25,7 +25,7 @@ Feature: Reconcile @lint static-guard evidence against CI wiring over the real s
 
     @unit @integration @lint=lint:feature-codes @SCN-LNT-001
     Scenario: a @lint scenario whose guard is a CI run step over the real tree is reported as balanced
-      Given a declared @lint scenario "SCN-LNT-001" requiring the static guard "lint:feature-codes"
+      Given a declared @lint scenario "SCN-LNT-001" requiring the static check "lint:feature-codes"
       And spec-controller's real CI config and package.json wire "lint:feature-codes" as a run step over the real tree
       When the lint reconciler runs
       Then the ledger reports the lint scenario "SCN-LNT-001" as balanced with no reconciling items
@@ -43,7 +43,7 @@ Feature: Reconcile @lint static-guard evidence against CI wiring over the real s
 
     @unit @integration @lint=lint:planted-watermelon @SCN-LNT-002
     Scenario: a @lint scenario whose guard exists but is absent from CI is reported as the watermelon
-      Given a declared @lint scenario "SCN-LNT-002" requiring the static guard "lint:planted-watermelon"
+      Given a declared @lint scenario "SCN-LNT-002" requiring the static check "lint:planted-watermelon"
       And a planted package.json defines the guard "lint:planted-watermelon" but the planted CI config does not run it
       When the lint reconciler runs
       Then the ledger reports the lint scenario "SCN-LNT-002" as out-of-balance with a watermelon reconciling item for the guard "lint:planted-watermelon"
@@ -63,7 +63,7 @@ Feature: Reconcile @lint static-guard evidence against CI wiring over the real s
 
     @unit @integration @lint=lint:absent-guard @SCN-LNT-003
     Scenario: a @lint scenario whose named guard does not exist is reported as missing
-      Given a declared @lint scenario "SCN-LNT-003" requiring the static guard "lint:absent-guard"
+      Given a declared @lint scenario "SCN-LNT-003" requiring the static check "lint:absent-guard"
       And a planted package.json and CI config that name no such guard "lint:absent-guard"
       When the lint reconciler runs
       Then the ledger reports the lint scenario "SCN-LNT-003" as out-of-balance with a missing reconciling item for the guard "lint:absent-guard"
@@ -85,16 +85,16 @@ Feature: Reconcile @lint static-guard evidence against CI wiring over the real s
 
     @unit @integration @lint=lint:unwired-guard @SCN-LNT-004
     Scenario: a scenario requiring both a unit test and an unwired guard reports each kind independently
-      Given a scenario "SCN-LNT-004" requiring both a @unit runtime test and the static guard "lint:unwired-guard"
+      Given a scenario "SCN-LNT-004" requiring both a @unit runtime test and the static check "lint:unwired-guard"
       And the unit result for "SCN-LNT-004" is green but the planted CI does not run the guard "lint:unwired-guard"
       When the lint reconciler runs
-      Then the ledger reports the lint scenario "SCN-LNT-004" as out-of-balance, the runtime evidence obligation balanced and omitted, and the static guard "lint:unwired-guard" carried as a watermelon reconciling item
+      Then the ledger reports the lint scenario "SCN-LNT-004" as out-of-balance, the runtime evidence obligation balanced and omitted, and the static check "lint:unwired-guard" carried as a watermelon reconciling item
 
   Rule: a guard's existence is read from an externally-specified package.json, not spec-controller's own
 
     The cross-repo guard read (@SCN-LNT-005) — the seam that makes
     reconciling ANOTHER repo's guards first-class. A new --package-json
-    <path> CLI flag (mirroring --ci) points the static (guard) reader at the TARGET
+    <path> CLI flag (mirroring --ci) points the static check reader at the TARGET
     repo's package.json, so a guard's `exists` is read there, not from spec-controller's
     own cwd. This is what renders the historical watermelon correctly: a guard that
     exists:true in the target repo's package.json but is unwired in its CI reconciles

@@ -17,9 +17,9 @@
  * than promoted to the public contract.
  */
 
-// `staticCheckEvidenceObligationsOf` — the NAMED-static-guard derivation, the static-axis
+// `staticCheckEvidenceObligationsOf` — the NAMED-static-check derivation, the static-axis
 // twin of `evidenceObligationPairsOf`. It lives ONCE on the journal (the model's
-// rule for what a scenario names); the balance command's static-guard ingest reads
+// rule for what a scenario names); the balance command's static-check ingest reads
 // it rather than rebuilding the derivation inline. Shared internally — NOT public API,
 // so it stays off the frozen `.` barrel and is reached here instead.
 export { staticCheckEvidenceObligationsOf } from "./domain/journal.js";

@@ -26,10 +26,10 @@ import type {
 export type Outcome =
   | "satisfied" // required, present, and passing
   | "failing" // required, present, but failing (runtime)
-  | "watermelon" // a static guard that exists but is NOT wired into CI over the
+  | "watermelon" // a static check that exists but is NOT wired into CI over the
   // real source — green on the surface, red within; a "broken"-class
   // outcome unique to the static kind.
-  | "missing" // required, but no matching result/static guard observed
+  | "missing" // required, but no matching result/static check observed
   // CREDIT-SIDE (the bidirectional reconciler): an evidence observation
   // (credit) reconciling against no evidence obligation. The credit-side union grows
   // final-named across the LDG-006/007/008 sub-issues; LDG-006 lands the first:
@@ -37,7 +37,7 @@ export type Outcome =
   // the reconciling item on a PHANTOM scenario (@SCN-LDG-006).
   | "cites-no-scenario" // a credit citing NO @SCN at all — the reconciling item on the
   // SUSPENSE scenario (@SCN-LDG-007). Aggregates uncited runtime credits AND the
-  // uncited static-guard (a `lint` credit no evidence obligation declares, ruling Q4).
+  // uncited static-check (a `lint` credit no evidence obligation declares, ruling Q4).
   | "broken" // a credit whose PROOF NEVER RAN — the harness broke before the behaviour was
   // exercised, so it cites no @SCN and can be attributed to no scenario. READER-AGNOSTIC: a
   // vitest suite that failed to collect (@SCN-LDG-017) OR a cucumber step matched by two or
@@ -164,7 +164,7 @@ declare const qualityCheckReconciliationBrand: unique symbol;
 /**
  * A single evidenceObligation's reconciliation outcome — a reconciling item. A SINGLE
  * flat shape mirroring EvidenceObligation: keyed on `qualityCheck`, with
- * `guard` present IFF `qualityCheck === 'lint'` (the static-guard reconciling item).
+ * `guard` present IFF `qualityCheck === 'lint'` (the static-check reconciling item).
  *
  * The un-branded FIELDS (module-internal). The exported `QualityCheckReconciliation` type is this
  * intersected with the nominal brand; `makeQualityCheckReconciliation` takes these fields and mints
@@ -178,8 +178,8 @@ interface QualityCheckReconciliationFields {
    * every other outcome (debit and credit alike).
    */
   qualityCheck?: QualityCheck;
-  /** The `staticGuard` handle — present IFF `qualityCheck === 'lint'`. */
-  staticGuard?: string;
+  /** The `staticCheck` handle — present IFF `qualityCheck === 'lint'`. */
+  staticCheck?: string;
   outcome: Outcome;
   /**
    * The DEBIT side of the two-sided reconciling item (@SCN-LDG-026): the evidence obligation
@@ -187,7 +187,7 @@ interface QualityCheckReconciliationFields {
    * separate scenario-level array at print time. Present IFF the obligation Exists — every
    * debit-bearing outcome (`satisfied` / `missing` / `failing` / `watermelon`), AND `no-scn-code`,
    * which carries a SYNTHESIZED scenario-scope obligation (an empty `{}`, no `qualityCheck` /
-   * `staticGuard`): canon (`double-entry-manifesto.md` line 39) marks `no-scn-code` Obligation
+   * `staticCheck`): canon (`double-entry-manifesto.md` line 39) marks `no-scn-code` Obligation
    * Exists, Observation None — the debit twin of `cites-no-scenario` (@SCN-LDG-029). ABSENT on the
    * credit-only outcomes (`cites-unknown-scenario` / `cites-no-scenario` / `undemanded`) and the
    * neither-side outcomes (`broken` / `both-missing`), where no obligation is in scope.
@@ -204,7 +204,7 @@ interface QualityCheckReconciliationFields {
    * (`cites-unknown-scenario` / `cites-no-scenario` / `undemanded`) the fold produces from a
    * citing observation. ABSENT on `missing` (obligation Exists, observation None) and the
    * neither-side outcomes (`no-scn-code` / `broken` / `both-missing`), where no observation is in
-   * scope. For a lint `missing` the absent static guard is FOUND as the negative fact
+   * scope. For a lint `missing` the absent static check is FOUND as the negative fact
    * `{exists:false}` — an ABSENCE, not an observation (@SCN-LDG-028) — so it is NOT carried here:
    * only a REAL observation (`exists:true`) is the credit side. `JSON.stringify` omits it when
    * undefined, so a byte-identical golden is preserved everywhere the observation is absent.
@@ -309,7 +309,7 @@ export function makeQualityCheckReconciliation(
 /**
  * Reconcile one declared evidenceObligation against the observed evidence, keyed on the
  * flat `qualityCheck`. `qualityCheck === "lint"` is the watermelon
- * discriminator: it routes to the STATIC-guard mapping;
+ * discriminator: it routes to the STATIC-check mapping;
  * every other value routes to the RUNTIME-result mapping.
  */
 export function reconcileEvidenceObligation(
@@ -318,16 +318,16 @@ export function reconcileEvidenceObligation(
   evidenceObservations: EvidenceObservation[]
 ): QualityCheckReconciliation {
   if (req.qualityCheck === "lint") {
-    // The lint (static-guard) evidence obligation — matched by static guard handle among the static guard
-    // evidence observations. Three mappings on the static guard evidence observation:
+    // The lint (static-check) evidence obligation — matched by static check handle among the static check
+    // evidence observations. Three mappings on the static check evidence observation:
     //   - wired into CI over the real source → satisfied.
     //   - exists (a package.json script) but NOT wired → THE WATERMELON:
-    //     green on the surface, red within — a static guard that guards nothing.
+    //     green on the surface, red within — a static check that guards nothing.
     //   - absent (no package.json script) → missing: a required
     //     ledger entry never recorded, GENUINELY DIFFERENT from the watermelon.
-    const guard = req.staticGuard!; // present by construction for a lint evidence obligation.
+    const guard = req.staticCheck!; // present by construction for a lint evidence obligation.
     const obs = evidenceObservations.find(
-      (o): o is GuardEvidenceObservation => o.qualityCheck === "lint" && o.staticGuard === guard
+      (o): o is GuardEvidenceObservation => o.qualityCheck === "lint" && o.staticCheck === guard
     );
     let outcome: Outcome;
     if (obs && obs.enforcedOverRealSource) {
@@ -337,7 +337,7 @@ export function reconcileEvidenceObligation(
     } else {
       outcome = "missing";
     }
-    // The CREDIT side (@SCN-LDG-027/@SCN-LDG-028): the matched static-guard observation, carried
+    // The CREDIT side (@SCN-LDG-027/@SCN-LDG-028): the matched static-check observation, carried
     // ONLY when it is a REAL observation — `exists:true` (the two-sided `satisfied` / `watermelon`).
     // A guard absent from both package.json and CI is FOUND as the negative fact
     // `{exists:false}` — an ABSENCE, not an observed piece of evidence — so `missing` carries
@@ -346,7 +346,7 @@ export function reconcileEvidenceObligation(
     // `find` locating the absent-guard record must not be mistaken for an observation existing.
     return makeQualityCheckReconciliation({
       qualityCheck: "lint",
-      staticGuard: guard,
+      staticCheck: guard,
       outcome,
       evidenceObligation: req,
       ...(obs?.exists ? { evidenceObservation: obs } : {}),
@@ -354,7 +354,7 @@ export function reconcileEvidenceObligation(
   }
 
   // A runtime evidence obligation — matched by (scnId, quality-check) among the runtime
-  // evidence observations (a static guard evidence observation carries qualityCheck "lint" and no scnId, so it
+  // evidence observations (a static check evidence observation carries qualityCheck "lint" and no scnId, so it
   // never matches here). present+pass → satisfied; present+fail → failing;
   // absent → missing (a required ledger entry never recorded).
   //
@@ -476,7 +476,7 @@ export function citesUnknownScenarioReconciliationsOf(
  *   - `broken` carries its WHERE-to-fix (locator) and its WHAT-broke (the runner's message), and
  *     NO `evidenceObservation` — a proof that never ran is not an observed piece of evidence.
  *   - an uncited runtime credit carries the observation it reconciles, plus its locator.
- *   - an undemanded static guard carries its handle and its observation; it has no locator (a
+ *   - an undemanded static check carries its handle and its observation; it has no locator (a
  *     guard is read from config, not from a test file).
  */
 export function suspenseReconciliationsOf(
@@ -504,7 +504,7 @@ export function suspenseReconciliationsOf(
     ...undemandedGuards.map((o) =>
       makeQualityCheckReconciliation({
         qualityCheck: "lint" as const,
-        staticGuard: o.staticGuard,
+        staticCheck: o.staticCheck,
         outcome: "cites-no-scenario" as const,
         evidenceObservation: o,
       })

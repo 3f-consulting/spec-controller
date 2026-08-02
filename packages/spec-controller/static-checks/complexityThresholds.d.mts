@@ -23,7 +23,7 @@ export interface ComplexityThreshold {
   };
 }
 
-/** Production code: `packages/<pkg>/src`, `packages/<pkg>/static-guards`; excludes test files. */
+/** Production code: `packages/<pkg>/src`, `packages/<pkg>/static-checks`; excludes test files. */
 export declare const PRODUCTION_THRESHOLD: ComplexityThreshold;
 
 /** Test code: the `.test.ts` files — a separate threshold; the populations differ in both directions. */

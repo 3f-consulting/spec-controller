@@ -7,7 +7,7 @@ Feature: a fixture target whose ONLY out-of-balance row is the suspense reconcil
   phantom), no suite failed to collect (no broken item, so the run is SOUND and exit 4
   never pre-empts). The one and only reconciling item in the whole run sits on the
   SUSPENSE row: the target's CI runs `lint:uncited` and NO scenario declares
-  `@lint=lint:uncited`, so the guard is an uncited static-guard — an uncited
+  `@lint=lint:uncited`, so the guard is an uncited static-check — an uncited
   credit, posted to the `(no scenario)` suspense reconciliation.
 
   This is the fixture the anti-drift invariant (@SCN-CLI-013) needs, and the one shape no
@@ -22,7 +22,7 @@ Feature: a fixture target whose ONLY out-of-balance row is the suspense reconcil
   registry lint nor the scenario↔sub-issue gate sees @SUS / @SCN-SUS-NNN — they scan
   features/*.feature only.
 
-  Rule: the fixture target declares two satisfied unit-level scenarios and no static guard
+  Rule: the fixture target declares two satisfied unit-level scenarios and no static check
 
     @unit @SCN-SUS-001
     Scenario: the target declares a first satisfied unit-level scenario

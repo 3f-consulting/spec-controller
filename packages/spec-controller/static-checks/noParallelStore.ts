@@ -1,5 +1,5 @@
 /**
- * The no-parallel-store static guard (@SCN-NPS-001) — makes "the Ledger is the ONE source of
+ * The no-parallel-store static check (@SCN-NPS-001) — makes "the Ledger is the ONE source of
  * truth; nothing re-represents its entries in a parallel store" executable. The capstone lock of
  * the DDD retrofit (Slice 8): the census modules that once counted evidence into their own
  * `attributed[]`/section shapes are RETIRED (their counting folded onto the Ledger as the
@@ -9,7 +9,7 @@
  *
  * PURE: `checkNoParallelStore` takes the core's production source files as data and returns the
  * violations; the impure file-read (walking `packages/core/src`) lives in the `@unit` test that
- * drives this over the real tree. The guard lives in `static-guards/` (product-not-app) precisely
+ * drives this over the real tree. The guard lives in `static-checks/` (product-not-app) precisely
  * because it reads the tree via `fs` — it cannot live inside the pure core it checks. Mirrors
  * `domainPurity` / `enginePurity` exactly (a pure `check…()` over `{ path, source }` files).
  *
@@ -40,7 +40,7 @@ export interface NoParallelStoreViolation {
   /** The offending file, as given by the caller (repo-relative in the guard test). */
   path: string;
   kind: "retired-module-file" | "retired-declaration" | "parallel-store-field";
-  /** The file basename, declared symbol, or field name that tripped the static guard. */
+  /** The file basename, declared symbol, or field name that tripped the static check. */
   detail: string;
 }
 
@@ -69,7 +69,7 @@ const PARALLEL_STORE_FIELD = /\battributed\s*\??\s*:/g;
 /**
  * Strip `//` line comments and block comments so a doc-comment that merely NAMES a retired symbol
  * (the retirement notes in `assemble/report.ts` / `index.ts` do) is not a false positive. Over-
- * stripping the odd string literal is harmless here — the static guard only cares about real
+ * stripping the odd string literal is harmless here — the static check only cares about real
  * declarations and real field keys, never string contents. (Mirrors domainPurity / enginePurity.)
  */
 function stripComments(source: string): string {
