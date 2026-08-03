@@ -178,3 +178,37 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
       When the vocabulary audit runs over the corpus
       Then the phrase "static guard" is flagged, renamed to "static check"
       And the phrase "static check" is not flagged
+
+  Rule: the audit scans the project git tracks, never build output
+
+    The scope fix (@SCN-VOC-008, 3F-2324). The audit used to descend the tree itself,
+    excluding only `.git`, `node_modules` and lockfiles by name — so it read every
+    gitignored copy of the project as though it were the project. Measured 2026-08-03:
+    735 files, of which 364 `.stryker-tmp/` + 136 `dist/` + 2 `reports/` carried 40,767
+    of the 48,361 manifest rows — 84.3% of the headline, all of it STALE, since those
+    trees regenerate from already-purged source after any build or mutation run. A
+    headline whose meaning depends on when you last built is not a measurement.
+
+    GIT IS THE AUTHORITY ON WHAT THE PROJECT IS, and the rule is a substitution, not an
+    addition: `git ls-files --cached --others --exclude-standard` with `cwd` at the
+    resolved root replaces the descent, and every judgement downstream is untouched.
+    Reimplementing `.gitignore` was the alternative and is rejected outright —
+    negations, nested ignore files and glob precedence are subtle enough that a second
+    implementation agrees with git by COINCIDENCE and then drifts, which is the
+    agreeing-by-copy this codebase has spent several slices removing.
+
+    `--others --exclude-standard` IS LOAD-BEARING, and invisible to any run: plain
+    `--cached` returns the same 244 paths on this tree, so no green could tell them
+    apart — but tracked-only would make a NEW, UNCOMMITTED source file invisible to the
+    audit, trading a coverage hole for a noise fix. The form is pinned by the @unit arm
+    for exactly that reason. The audit's own filters survive the substitution unchanged:
+    `pnpm-lock.yaml` is TRACKED, so git hands it back where the old walk excluded it by
+    name, and the self-exemption stays repo-relative — which is what keeps the narrow
+    fixture root of @SCN-VOC-001/002 scanning its 3 files.
+
+    @unit @integration @SCN-VOC-008
+    Scenario: a banned word in gitignored build output is not reported
+      Given a corpus carrying a banned word in a tracked file and the same word under a gitignored path
+      When the vocabulary audit runs over the corpus
+      Then the tracked occurrence is reported
+      And the occurrence under the gitignored path is not

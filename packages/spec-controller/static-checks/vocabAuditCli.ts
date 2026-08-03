@@ -1,28 +1,29 @@
 /**
  * CLI entry point for the one-time closed-vocabulary audit. Run via
  * `pnpm audit:vocab` (report-only — NOT a CI gate, NOT in any lint aggregate;
- * operator ruling 2026-07-02). It walks a root by default the cwd, scanning
- * EVERY file (the only exclusions — node_modules, .git, lockfiles, and the
- * audit's OWN detection machinery: the meta-mention exemption in
- * `SELF_EXEMPT_PATHS`, the files whose purpose is to name the rejected
- * vocabulary), runs the audit engine, and emits the two artefacts for review:
+ * operator ruling 2026-07-02). It asks GIT what the project is under a root
+ * (default the cwd), scanning every file git returns except the audit's own
+ * exclusions — lockfiles, and the audit's OWN detection machinery: the
+ * meta-mention exemption in `SELF_EXEMPT_PATHS`, the files whose purpose is to
+ * name the rejected vocabulary — runs the audit engine, and emits the two
+ * artefacts for review:
  *
  *   --manifest <path>   the per-name manifest CSV
  *   --matrix <path>     the coverage matrix (markdown)
  *   --root <dir>        the tree to scan (default ".")
  *
- * With no output paths it prints a summary to stdout. Exit is always 0 — the
- * audit reports, it never fails a build.
+ * With no output paths it prints a summary to stdout. Exit is always 0 for a
+ * SUCCESSFUL scan, however many words it flags — the audit reports, it never
+ * fails a build on a finding.
  *
- * @SCN-VOC-001 / @SCN-VOC-002 — features/vocabulary-audit.feature.
+ * @SCN-VOC-001 / @SCN-VOC-002 / @SCN-VOC-008 — features/vocabulary-audit.feature.
  */
 
-import { readdirSync, readFileSync, writeFileSync, statSync } from "node:fs";
-import { join, relative, sep } from "node:path";
+import { execFileSync } from "node:child_process";
+import { readFileSync, writeFileSync, statSync } from "node:fs";
+import { join } from "node:path";
 import { auditFiles, renderManifestCsv, renderCoverageMatrixMarkdown } from "./vocabAudit.js";
 
-/** Directory names never descended into. */
-const EXCLUDED_DIRS = new Set([".git", "node_modules"]);
 /** Lockfile names excluded from the scan. */
 const EXCLUDED_FILES = new Set(["pnpm-lock.yaml", "package-lock.json", "yarn.lock"]);
 
@@ -53,25 +54,95 @@ const SELF_EXEMPT_PATHS = new Set([
 ]);
 const SELF_EXEMPT_PREFIX = "tests/fixtures/vocab/";
 
-/** Recursively list every scannable file under `root`, relative to `root`. */
-export function walkFiles(root: string): string[] {
-  const out: string[] = [];
-  const walk = (dir: string): void => {
-    for (const name of readdirSync(dir).sort()) {
-      if (EXCLUDED_DIRS.has(name)) continue;
-      const abs = join(dir, name);
-      const st = statSync(abs);
-      if (st.isDirectory()) {
-        walk(abs);
-      } else if (st.isFile() && !EXCLUDED_FILES.has(name)) {
-        const rel = relative(root, abs).split(sep).join("/");
-        if (SELF_EXEMPT_PATHS.has(rel) || rel.startsWith(SELF_EXEMPT_PREFIX)) continue;
-        out.push(rel);
-      }
-    }
-  };
-  walk(root);
-  return out;
+/**
+ * The question put to git: what is the project under this root? (@SCN-VOC-008, 3F-2324)
+ *
+ * `--others --exclude-standard` IS THE POINT, and it is invisible to any run. Plain `--cached`
+ * returns the same 244 paths on this tree, so no green could tell the two apart — but tracked-only
+ * would make a NEW, UNCOMMITTED source file invisible to the audit: a banned word could be
+ * introduced and go unseen until after commit. That trades a coverage hole for a noise fix, which
+ * is a bad trade (operator-ruled). Exported so the @unit arm can pin the form, since nothing else
+ * can.
+ *
+ * `-z` is an output-format flag, not a scope one: git otherwise C-quotes paths containing non-ASCII
+ * or control characters, and a quoted path would be read back as a file that does not exist. NUL
+ * separation removes the ambiguity rather than parsing around it.
+ *
+ * WHAT IS DELIBERATELY ABSENT: any re-implementation of `.gitignore`. Negations, nested ignore
+ * files and glob precedence are subtle enough that a second implementation agrees with git by
+ * COINCIDENCE and then drifts — the agreeing-by-copy this codebase has spent several slices
+ * removing. Git is the authority on git. The old `EXCLUDED_DIRS` set (`.git`, `node_modules`) went
+ * with the walk for the same reason: git never lists `.git`, and `node_modules` is ignored, so
+ * keeping the set would be this module asserting an answer git already owns.
+ */
+export const GIT_LS_FILES_ARGS = [
+  "ls-files",
+  "-z",
+  "--cached",
+  "--others",
+  "--exclude-standard",
+] as const;
+
+/**
+ * SELECTION — the audit's own exclusions over git's answer, pure and injectable (@SCN-VOC-008).
+ *
+ * Separated from the walking and the reading deliberately: this is the half whose rules are ours
+ * rather than git's, and it is the half whose failure modes CANNOT be observed on this tree. There
+ * are zero deleted-but-tracked paths today and the lockfile is a single file among 244, so a green
+ * run is consistent with both filters being broken. Against an injected list, with no fs and no
+ * git, they are provable.
+ *
+ * Three rules, each surviving the substitution for its own reason:
+ *
+ *  1. LOCKFILES. `pnpm-lock.yaml` is TRACKED, so git hands it back where the old walk excluded it
+ *     by name. Drop the filter and the manifest gains a large file of pure noise.
+ *  2. THE SELF-EXEMPTION, unchanged and still repo-relative — matching when the root IS the repo,
+ *     and deliberately NOT matching when a narrower `--root` makes the corpus files top-level,
+ *     which is what @SCN-VOC-001/002 need in order to read them.
+ *  3. DELETED-BUT-TRACKED. `--cached` lists files deleted from the working tree; reading one throws
+ *     ENOENT and takes the whole run down. Filtered by construction via the injected predicate, not
+ *     by the luck of there being none today.
+ *
+ * The result is SORTED, which git's own output is not: `--cached --others` prints the index first
+ * and the untracked files after, each sorted within itself but not across the join, so an
+ * uncommitted file would land mid-list and the manifest's row order would depend on what happened
+ * to be uncommitted at the time.
+ */
+export function filesInScope(
+  paths: readonly string[],
+  isFile: (path: string) => boolean
+): string[] {
+  const selected = paths.filter((path) => {
+    const name = path.slice(path.lastIndexOf("/") + 1);
+    if (EXCLUDED_FILES.has(name)) return false;
+    if (SELF_EXEMPT_PATHS.has(path) || path.startsWith(SELF_EXEMPT_PREFIX)) return false;
+    return isFile(path);
+  });
+  return selected.sort();
+}
+
+/** True when `abs` is a file on disk — false for a deleted path, and for a directory (a submodule). */
+function isExistingFile(abs: string): boolean {
+  try {
+    return statSync(abs).isFile();
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Every scannable file under `root`, relative to `root` — git's answer, filtered.
+ *
+ * `cwd` is the resolved root, so git returns root-relative paths exactly as the old recursive walk
+ * produced them, and everything downstream — `scanFile`, `auditSegments`, both renderers — is
+ * untouched. Outside a git work tree this THROWS, which is deliberate and is @SCN-VOC-009's
+ * (3F-2325) subject: there is no silent fallback to a recursive walk, because a number whose
+ * meaning depends on an unstated scanning mode is the exact fault this change removes.
+ */
+export function scanFiles(root: string): string[] {
+  const out = execFileSync("git", [...GIT_LS_FILES_ARGS], { cwd: root, encoding: "utf8" });
+  const paths = out.split("\0").filter((path) => path !== "");
+  return filesInScope(paths, (path) => isExistingFile(join(root, path)));
 }
 
 function argValue(argv: string[], flag: string): string | undefined {
@@ -85,7 +156,7 @@ function main(): void {
   const manifestPath = argValue(argv, "--manifest");
   const matrixPath = argValue(argv, "--matrix");
 
-  const relPaths = walkFiles(root);
+  const relPaths = scanFiles(root);
   const files = relPaths.map((path) => ({ path, content: readFileSync(join(root, path), "utf8") }));
   const { manifest, matrix } = auditFiles(files);
 
