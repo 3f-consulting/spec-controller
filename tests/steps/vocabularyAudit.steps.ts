@@ -23,6 +23,7 @@ import { dirname, join } from "node:path";
 import { SURFACES } from "../../packages/spec-controller/static-checks/vocabAudit.js";
 import {
   BLOCKED_VOCABULARY_ROWS,
+  VENDORED_TABLE_PATH,
   type BlockedVocabularyRow,
 } from "../../packages/spec-controller/static-checks/blockedVocabulary.js";
 
@@ -525,5 +526,130 @@ Then("the deferred term is not flagged", function () {
     `the vendored table records \`${VOC010_DEFERRED_TERM}\` DEFERRED, so it must NOT be ` +
       `enforced — a parser that enforced every row would red this tree on 2,272 occurrences; ` +
       `got:\n${JSON.stringify(rows)}`
+  );
+});
+
+// -------------------------------------------------------------------------
+// @SCN-VOC-011 — a table row with no adoption status reds the build
+// @SCN-VOC-011
+// -------------------------------------------------------------------------
+
+/**
+ * The row this arm blanks, NAMED rather than picked by position — the @SCN-VOC-010
+ * reasoning, for the same reason: reading "the first row" would make the assertion depend
+ * on table ORDER, so a re-ordered table would silently change what the scenario proves.
+ */
+const VOC011_BLANKED_ROW = "budget";
+
+/** What the real `lint:blocked-vocabulary` CLI did over the table it was pointed at. */
+let statusCheckRun: { status: number | null; stdout: string; stderr: string };
+
+/** The planted table — a COPY, so the run never mutates the repository it runs inside. */
+let plantedTablePath: string;
+
+/**
+ * Drive the REAL check over `tablePath` and return the whole run.
+ *
+ * A real spawn of the real CLI, never an in-memory re-run of `checkAdoptionStatuses` — the
+ * anti-watermelon rule. An in-memory re-run would green even if the CLI never called the
+ * check, exited 0 on a fault, or printed a sentence naming nothing.
+ */
+function spawnStatusCheck(tablePath: string): {
+  status: number | null;
+  stdout: string;
+  stderr: string;
+} {
+  const repoRoot = process.cwd();
+  const argv = [
+    join(repoRoot, "packages", "spec-controller", "static-checks", "lintBlockedVocabularyCli.ts"),
+    "--table",
+    tablePath,
+  ];
+  const result = spawnSync(join(repoRoot, "node_modules", ".bin", "tsx"), argv, {
+    cwd: repoRoot,
+    encoding: "utf8",
+  });
+  assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
+  return { status: result.status, stdout: result.stdout, stderr: result.stderr };
+}
+
+/** The vendored table's markdown with `term`'s Adoption status cell emptied. */
+function tableWithBlankedStatus(markdown: string, term: string): string {
+  const planted = markdown
+    .split("\n")
+    .map((line) => {
+      const cells = line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|");
+      if (cells.length !== 5) return line;
+      if (!cells[0]!.toLowerCase().includes(term)) return line;
+      cells[3] = "  ";
+      return `|${cells.join("|")}|`;
+    })
+    .join("\n");
+  assert.notEqual(planted, markdown, `the plant must change the \`${term}\` row`);
+  return planted;
+}
+
+// @SCN-VOC-011
+Given(
+  "the vendored blocked-vocabulary table carries a row with no adoption status",
+  function () {
+    // THE CONTROL, RUN FIRST. The vendored table as committed must PASS, so the red below
+    // can only come from the blanked cell. Without this, a check that reds on everything
+    // and a check that reds on the right thing are indistinguishable — and a silently
+    // broken check looks exactly like a valid table.
+    const control = spawnStatusCheck(VENDORED_TABLE_PATH);
+    assert.equal(
+      control.status,
+      0,
+      `the vendored table as committed must PASS the status check, so that the red this ` +
+        `scenario asserts can only come from the blanked cell; it exited ${control.status}\n` +
+        `stdout:\n${control.stdout}\nstderr:\n${control.stderr}`
+    );
+    // THE PREMISE, ASSERTED. The blanked row must exist and must be triaged BEFORE the
+    // plant, or the scenario would be blanking nothing and proving nothing.
+    const before = BLOCKED_VOCABULARY_ROWS.find((row) => row.terms.includes(VOC011_BLANKED_ROW));
+    assert.ok(
+      before,
+      `the vendored table must carry a row for \`${VOC011_BLANKED_ROW}\`; it carries ` +
+        `${BLOCKED_VOCABULARY_ROWS.length} row(s)`
+    );
+    assert.notEqual(before!.status, null, `\`${VOC011_BLANKED_ROW}\` must be triaged before the plant`);
+
+    const dir = mkdtempSync(join(tmpdir(), "spec-controller-voc011-"));
+    plantedTablePath = join(dir, "blockedVocabulary.md");
+    writeFileSync(
+      plantedTablePath,
+      tableWithBlankedStatus(readFileSync(VENDORED_TABLE_PATH, "utf8"), VOC011_BLANKED_ROW)
+    );
+  }
+);
+
+// @SCN-VOC-011
+When("the blocked-vocabulary status check runs", function () {
+  statusCheckRun = spawnStatusCheck(plantedTablePath);
+});
+
+// @SCN-VOC-011
+Then("it reds naming the row that has no status", function () {
+  assert.notEqual(
+    statusCheckRun.status,
+    0,
+    `a row with no adoption status enforces nothing, so it must RED; the check exited 0\n` +
+      `stdout:\n${statusCheckRun.stdout}`
+  );
+  const said = `${statusCheckRun.stdout}${statusCheckRun.stderr}`;
+  assert.ok(
+    said.includes(VOC011_BLANKED_ROW),
+    `the red must name WHICH row, not "the table is invalid"; it never said ` +
+      `\`${VOC011_BLANKED_ROW}\`:\n${said}`
+  );
+  assert.ok(
+    said.includes("no adoption status"),
+    `the red must name WHAT is missing from that row; it did not:\n${said}`
+  );
+  assert.ok(
+    said.includes("1 row(s)"),
+    `only the blanked row must red — every other row of the vendored table is triaged, so a ` +
+      `wider red would mean the check is not reading the cell it claims to:\n${said}`
   );
 });

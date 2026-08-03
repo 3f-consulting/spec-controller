@@ -19,6 +19,7 @@
     "audit:vocab": "tsx packages/spec-controller/static-checks/vocabAuditCli.ts",
     "lint:feature-codes": "tsx packages/spec-controller/static-checks/lintFeatureCodesCli.ts",
     "lint:complexity": "eslint",
+    "lint:blocked-vocabulary": "tsx packages/spec-controller/static-checks/lintBlockedVocabularyCli.ts",
     "lint:complexity-exceptions": "tsx packages/spec-controller/static-checks/lintComplexityExceptionsCli.ts",
     "lint:no-committed-reports": "tsx packages/spec-controller/static-checks/lintNoCommittedReportsCli.ts",
     "lint:scn-tags": "tsx packages/spec-controller/static-checks/lintScnTagsCli.ts",

@@ -167,14 +167,135 @@ export function bannedWordsOf(rows: readonly BlockedVocabularyRow[]): ReadonlySe
 }
 
 /**
+ * What is wrong with one row's triage — the vocabulary of `lint:blocked-vocabulary`
+ * (@SCN-VOC-011, 3F-2331). The kind is for a reader grouping reds; the message is the red.
+ */
+export type AdoptionFaultKind =
+  | "no-status"
+  | "unrecognised-status"
+  | "deferral-without-ticket"
+  | "deferral-without-date"
+  | "no-rows";
+
+/** One thing the triage record fails to say, and which row fails to say it. */
+export interface AdoptionFault {
+  readonly kind: AdoptionFaultKind;
+  /** The row, as the table spells its terms — never an index, which moves when rows do. */
+  readonly row: string;
+  /** Names WHICH row and WHAT is missing. Never "the table is invalid". */
+  readonly message: string;
+}
+
+/**
+ * A ticket handle. The lookahead demands a LETTER, which is the whole point: `2026-08-03`
+ * is a hyphenated handle-shaped token, and a pattern loose enough to accept it would green
+ * every dated deferral that names nobody — the exact failure this check exists to catch.
+ */
+const TICKET_HANDLE = /\b(?=[A-Z0-9]*[A-Z])[A-Z0-9]{2,}-\d+\b/;
+
+/** The day a deferral was taken, ISO — so debt can be aged rather than merely listed. */
+const DEFERRAL_DATE = /\b\d{4}-\d{2}-\d{2}\b/;
+
+/** The row's identity in a red: its terms, as the table spells them. Never an index. */
+function rowName(row: BlockedVocabularyRow): string {
+  return row.terms.length === 0 ? "(a row naming no term)" : row.terms.join(" / ");
+}
+
+/** What a deferral must say, and why — the sentence a reader gets back when it doesn't. */
+const MISSING_FROM_DEFERRAL = {
+  ticket: "no ticket — a deferral without a ticket is an intention, not a decision, and " +
+    "nobody is holding it",
+  date: "no date — undated debt never resurfaces, and cannot be aged",
+} as const;
+
+/** The fault a deferral's note carries, or undefined when it names both ticket and date. */
+function deferralFault(row: BlockedVocabularyRow): AdoptionFault | undefined {
+  const noTicket = !TICKET_HANDLE.test(row.statusNote);
+  const noDate = !DEFERRAL_DATE.test(row.statusNote);
+  if (!noTicket && !noDate) return undefined;
+  const missing = [
+    ...(noTicket ? [MISSING_FROM_DEFERRAL.ticket] : []),
+    ...(noDate ? [MISSING_FROM_DEFERRAL.date] : []),
+  ];
+  return {
+    kind: noTicket ? "deferral-without-ticket" : "deferral-without-date",
+    row: rowName(row),
+    message:
+      `the \`${rowName(row)}\` row is deferred but records ${missing.join("; and ")}. ` +
+      `Its Adoption status cell reads "deferred ${row.statusNote}".`,
+  };
+}
+
+/** The fault a row's triage carries, or undefined when the row says what was decided. */
+function faultOf(row: BlockedVocabularyRow): AdoptionFault | undefined {
+  if (row.status === "deferred") return deferralFault(row);
+  if (row.status !== null) return undefined;
+  if (row.statusNote === "") {
+    return {
+      kind: "no-status",
+      row: rowName(row),
+      message:
+        `the \`${rowName(row)}\` row records no adoption status. Every row must carry ` +
+        `exactly one of \`adopted\` / \`deferred\` / \`not-applicable\`, or a canon row ` +
+        `nobody has looked at is indistinguishable from one deliberately deferred — and it ` +
+        `enforces nothing either way.`,
+    };
+  }
+  return {
+    kind: "unrecognised-status",
+    row: rowName(row),
+    message:
+      `the \`${rowName(row)}\` row's adoption status reads "${row.statusNote}", which is ` +
+      `none of \`adopted\` / \`deferred\` / \`not-applicable\`. The derivation cannot ` +
+      `classify it, so the row enforces nothing — as quietly as a blank cell would.`,
+  };
+}
+
+/**
+ * Every fault in the table's triage record, or an empty list when every row is triaged
+ * (@SCN-VOC-011, 3F-2331).
+ *
+ * THE DEGENERATE CASE IS CHECKED FIRST, and it is not a formality. "Every row is triaged"
+ * is vacuously true of no rows at all, so a table this parser reads nothing out of — a lost
+ * header, a changed column count — would otherwise report all clear while checking nothing.
+ * A check that cannot tell "all clear" from "I did not run" is the failure this whole
+ * scenario exists to remove, so it must not have that shape itself.
+ */
+export function checkAdoptionStatuses(
+  rows: readonly BlockedVocabularyRow[]
+): readonly AdoptionFault[] {
+  if (rows.length === 0) {
+    return [
+      {
+        kind: "no-rows",
+        row: "(the table)",
+        message:
+          "no row parsed out of the table at all, so nothing was checked. A lost header or " +
+          "a changed column count would otherwise report all clear — and this check must " +
+          "not be readable as a green when it did not run.",
+      },
+    ];
+  }
+  return rows.flatMap((row) => {
+    const fault = faultOf(row);
+    return fault === undefined ? [] : [fault];
+  });
+}
+
+/**
  * The vendored table as committed beside this file.
  *
  * Resolved through `import.meta.url`, never through `cwd`: the audit is driven over
  * foreign roots by its own integration arm, and a table found relative to the working
  * directory would be a different table — or none — depending on where the tool was run.
+ *
+ * Exported so `lintBlockedVocabularyCli.ts` names the same file this module parsed rather
+ * than re-deriving the path — a second derivation is a second table waiting to disagree.
  */
-const TABLE_PATH = fileURLToPath(new URL("./blockedVocabulary.md", import.meta.url));
+export const VENDORED_TABLE_PATH = fileURLToPath(
+  new URL("./blockedVocabulary.md", import.meta.url)
+);
 
 export const BLOCKED_VOCABULARY_ROWS: readonly BlockedVocabularyRow[] = parseBlockedVocabulary(
-  readFileSync(TABLE_PATH, "utf8")
+  readFileSync(VENDORED_TABLE_PATH, "utf8")
 );

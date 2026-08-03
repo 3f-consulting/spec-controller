@@ -24,6 +24,7 @@ import { describe, it, expect } from "vitest";
 import {
   BLOCKED_VOCABULARY_ROWS,
   bannedWordsOf,
+  checkAdoptionStatuses,
   parseBlockedVocabulary,
 } from "./blockedVocabulary.js";
 import { classifyWords, decomposeName } from "./vocabAudit.js";
@@ -155,6 +156,130 @@ describe("[SCN-VOC-010] the vendored table as committed", () => {
     expect(phraseRow?.[1], `rows: ${[...matchers.keys()].join(" ; ")}`).toBe("phrase-adjacency");
     const guardRow = [...matchers].find(([terms]) => terms === "guard");
     expect(guardRow?.[1]).toBe("qualifier-gated");
+  });
+});
+
+/**
+ * A table whose every row is triaged — the CONTROL for the faulted tables below.
+ *
+ * Each fault case is this table with ONE cell changed, so a red can only come from that
+ * cell. Without the control, a check that reds on everything and a check that reds on the
+ * right thing are indistinguishable — which is the same "all clear vs I did not run"
+ * confusion @SCN-VOC-011 exists to remove.
+ */
+const TRIAGED_TABLE = `
+| Never write | Always write | Why | Adoption status | Matcher |
+|---|---|---|---|---|
+| frobnicate | \`fettle\` | a throwaway adopted row | adopted — 3F-0001 | whole-word |
+| quuxify | \`fettle\` | a throwaway deferred row | deferred 2026-08-03 — 3F-0002 | whole-word |
+| plughward (of anything) | \`fettle\` | a throwaway inapplicable row | not-applicable — no model here | n/a |
+`;
+
+/** The same table with the named row's Adoption status cell replaced. */
+function withStatus(term: string, cell: string): string {
+  const replaced = TRIAGED_TABLE.split("\n").map((line) => {
+    if (!line.startsWith(`| ${term} `)) return line;
+    const cells = line.replace(/^\|/, "").replace(/\|$/, "").split("|");
+    cells[3] = ` ${cell} `;
+    return `|${cells.join("|")}|`;
+  });
+  const table = replaced.join("\n");
+  expect(table, `the plant must change ${term}'s row`).not.toBe(TRIAGED_TABLE);
+  return table;
+}
+
+/** The faults a table produces, by kind — the assertion shape every case below shares. */
+function faultKinds(markdown: string): string[] {
+  return checkAdoptionStatuses(parseBlockedVocabulary(markdown)).map((f) => f.kind);
+}
+
+/** The one fault a single-fault table produces — asserted to be exactly one first. */
+function soleFault(markdown: string) {
+  const faults = checkAdoptionStatuses(parseBlockedVocabulary(markdown));
+  expect(faults.map((f) => f.message)).toHaveLength(1);
+  return faults[0]!;
+}
+
+describe("[SCN-VOC-011] checkAdoptionStatuses — the table is a triage record", () => {
+  it("[SCN-VOC-011] THE CONTROL: a table whose every row is triaged produces no fault", () => {
+    // Run FIRST and asserted separately, because a silently-broken check and a valid table
+    // look identical from the outside. Every red below is this table minus one cell.
+    expect(faultKinds(TRIAGED_TABLE)).toEqual([]);
+  });
+
+  it("[SCN-VOC-011] a row with NO status reds, naming that row and what is missing", () => {
+    const fault = soleFault(withStatus("frobnicate", ""));
+    expect(fault.kind).toBe("no-status");
+    expect(fault.row).toBe("frobnicate");
+    // "which row" and "what is missing" — never "the table is invalid".
+    expect(fault.message).toContain("frobnicate");
+    expect(fault.message).toContain("no adoption status");
+  });
+
+  it("[SCN-VOC-011] a row with an UNRECOGNISED status reds, quoting the cell back", () => {
+    // A cell the DERIVATION cannot classify enforces nothing, exactly as a blank one does,
+    // so it must not be a quieter failure than a blank one.
+    const fault = soleFault(withStatus("frobnicate", "probably fine"));
+    expect(fault.kind).toBe("unrecognised-status");
+    expect(fault.row).toBe("frobnicate");
+    expect(fault.message).toContain("probably fine");
+  });
+
+  it("[SCN-VOC-011] a DEFERRED row naming no ticket reds — an intention, not a decision", () => {
+    const fault = soleFault(withStatus("quuxify", "deferred 2026-08-03"));
+    expect(fault.kind).toBe("deferral-without-ticket");
+    expect(fault.row).toBe("quuxify");
+    expect(fault.message).toContain("quuxify");
+    expect(fault.message).toContain("ticket");
+  });
+
+  it("[SCN-VOC-011] a DEFERRED row naming no date reds too — undated debt never resurfaces", () => {
+    const fault = soleFault(withStatus("quuxify", "deferred — 3F-0002"));
+    expect(fault.kind).toBe("deferral-without-date");
+    expect(fault.message).toContain("date");
+  });
+
+  it("[SCN-VOC-011] the date is not accepted as the ticket, nor the ticket as the date", () => {
+    // `2026-08-03` is a hyphenated handle-shaped token; a ticket pattern loose enough to
+    // accept it would green every dated deferral that names nobody.
+    expect(faultKinds(withStatus("quuxify", "deferred 2026-08-03"))).toEqual([
+      "deferral-without-ticket",
+    ]);
+    expect(faultKinds(withStatus("quuxify", "deferred — 3F-0002"))).toEqual([
+      "deferral-without-date",
+    ]);
+  });
+
+  it("[SCN-VOC-011] an ADOPTED or NOT-APPLICABLE row needs no ticket or date", () => {
+    // Only a deferral books debt somebody must come back for. Demanding a ticket of the
+    // other two verdicts would turn the check into paperwork and it would be switched off.
+    expect(faultKinds(withStatus("frobnicate", "adopted"))).toEqual([]);
+    expect(faultKinds(withStatus("plughward", "not-applicable"))).toEqual([]);
+  });
+
+  it("[SCN-VOC-011] a table nothing parses out of reds rather than reporting all clear", () => {
+    // "Every row is triaged" is vacuously true of no rows, so a lost header or a changed
+    // column count would exit 0 while checking nothing — a check that cannot tell "all
+    // clear" from "I did not run" is the failure this scenario exists to remove.
+    expect(faultKinds("no table here at all")).toEqual(["no-rows"]);
+  });
+});
+
+describe("[SCN-VOC-011] the vendored table as committed", () => {
+  it("[SCN-VOC-011] passes the check — every canon row has been triaged", () => {
+    expect(checkAdoptionStatuses(BLOCKED_VOCABULARY_ROWS).map((f) => f.message)).toEqual([]);
+  });
+
+  it("[SCN-VOC-011] each of the three deferrals names its date and its ticket", () => {
+    // The three the operator ruled on 2026-08-03: the retired-evidence-credit family
+    // (3F-2329), the outcome handle (3F-2300) and the bare shortening (3F-1852). Asserted
+    // as a COUNT and per-row, so a table that quietly dropped one fails here.
+    const deferred = BLOCKED_VOCABULARY_ROWS.filter((r) => r.status === "deferred");
+    expect(deferred).toHaveLength(3);
+    for (const row of deferred) {
+      expect(row.statusNote, row.terms.join("/")).toMatch(/\d{4}-\d{2}-\d{2}/);
+      expect(row.statusNote, row.terms.join("/")).toMatch(/3F-\d+/);
+    }
   });
 });
 

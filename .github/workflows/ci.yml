@@ -83,6 +83,24 @@ jobs:
       - name: Lint complexity exceptions
         run: pnpm lint:complexity-exceptions
 
+      # The vendored canon table's TRIAGE RECORD (@SCN-VOC-011, 3F-2331) — reds when a row of
+      # static-checks/blockedVocabulary.md does not say what this repository decided about it.
+      # @SCN-VOC-010 made the enforced word set a DERIVATION of that table and gave each row an
+      # adoption status, which is what lets this repository ship green against a canon table
+      # whose unadopted rows carry 2,272 occurrences — and is also the obvious way to smuggle a
+      # row past everybody: leave the status cell out and the row enforces nothing, in silence.
+      # So every row must carry exactly one of adopted / deferred / not-applicable, and a
+      # deferred row must name the ticket that pays it and the date it was taken: a deferral
+      # without a ticket is an intention, not a decision. Each red names WHICH row and WHAT is
+      # missing from it, never "the table is invalid". The `lint:` prefix is required, not
+      # cosmetic: runningStaticChecks observes a CI script only when its name carries an observed
+      # prefix, so a name outside that set would run here while being invisible to
+      # spec-controller's own ledger. @lint-declared (@lint=lint:blocked-vocabulary on
+      # @SCN-VOC-011) so the tool's own ledger reconciles it rather than reporting it as an
+      # uncited static check.
+      - name: Lint blocked vocabulary
+        run: pnpm lint:blocked-vocabulary
+
       - name: Type-check
         run: pnpm typecheck
 

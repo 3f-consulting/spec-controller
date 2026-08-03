@@ -300,3 +300,44 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
       When the vocabulary audit runs over a corpus carrying both terms
       Then the adopted term is flagged
       And the deferred term is not flagged
+
+  Rule: a canon row carrying no adoption status reds rather than passing unnoticed
+
+    THE HALF THAT MAKES THE DEFERRAL HONEST (@SCN-VOC-011, 3F-2331). @SCN-VOC-010 above
+    lets a row be marked deferred and stay green — the only reason this repository can
+    ship against a canon table whose unadopted rows carry 2,272 occurrences. It is also
+    the obvious way to smuggle a canon row past everybody: leave the status cell out and
+    the row enforces nothing, silently. Without this Rule "deferred" is indistinguishable
+    from "nobody looked", and the whole mechanism degrades into the honour system it was
+    built to replace.
+
+    SO THE TABLE IS A TRIAGE RECORD, NOT A LIST. Every row must carry exactly one of
+    `adopted` / `deferred` / `not-applicable`, and the check reds on a row that carries
+    none, a row whose cell reads something else, and a `deferred` row that names no ticket
+    and no date. A DEFERRAL WITHOUT A TICKET IS AN INTENTION, NOT A DECISION: nobody is
+    holding it, nothing will ever surface it again, and the debt is invisible in exactly
+    the way an omitted row is.
+
+    WHAT THE RED HAS TO SAY. It names WHICH row and WHAT is missing from it — never "the
+    table is invalid", which sends a reader back to a table they have just read and tells
+    them nothing about where to look.
+
+    THE CHECK IS ITS OWN NAMED CI SCRIPT, AND THE `lint:` PREFIX IS NOT COSMETIC.
+    `runningStaticChecks` observes a CI script only when its name carries an observed
+    prefix (`lint:` / `guard:`), so a name outside that set would run in CI while being
+    structurally invisible to spec-controller's own ledger — a real quality check kept off
+    the books, which is where a watermelon hides. The `@lint=lint:blocked-vocabulary` tag
+    below is then what keeps it out of the suspense row as an uncited static check.
+    Observed AND declared is the balanced state (the @SCN-CPX-003 precedent).
+
+    THE DEGENERATE CASE IS PART OF THE SAME BEHAVIOUR. "Every row is triaged" is vacuously
+    true of no rows at all, so a table the parser reads nothing out of — a lost header, a
+    changed column count — would exit 0 while checking nothing. A check that cannot tell
+    "all clear" from "I did not run" is the failure this Rule exists to remove, so an empty
+    parse reds too.
+
+    @unit @integration @lint=lint:blocked-vocabulary @SCN-VOC-011
+    Scenario: a table row with no adoption status reds the build
+      Given the vendored blocked-vocabulary table carries a row with no adoption status
+      When the blocked-vocabulary status check runs
+      Then it reds naming the row that has no status
