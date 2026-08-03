@@ -916,7 +916,7 @@ describe("[SCN-PND-011] the summary materialises a Pending Items tally, separate
     expect(report.summary.pending).toBe(3);
   });
 
-  it("counts Pending ITEMS, not scenarios carrying them (SCN-PDX-001 alone carries two)", () => {
+  it("counts Pending ITEMS, not scenarios carrying them (one row alone carries two)", () => {
     const report = assembleRenderInput(__er(pendingBalance), ctx);
     const scenariosCarryingPending = pendingBalance.scenarioReconciliations.filter(
       (s) => (s.pendingItems ?? []).length > 0
