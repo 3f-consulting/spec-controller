@@ -1119,16 +1119,6 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
 });
 
 /*
- * [SCN-RPT-012] — the suspense-tests Warnings sub-part — RETIRED (@SCN-LDG-007).
- * A credit citing NO @SCN anchor no longer renders as a Warnings sub-part; it now surfaces as
- * a SUSPENSE-scenario reconciliation row `(no scenario)` in the Ledger (with its locator on a
- * cites-no-scenario item), so its detail lives in exactly one place (no double-report). The
- * suspense render is proven by [SCN-LDG-007] (reconcile.test.ts + ledger.steps.ts); the
- * section-dissolve by report.test.ts [SCN-RMD-003] / json.test.ts [SCN-RPT-010]. The
- * suspense COUNT survives in summary.testVolume (the balance-check identity is kept).
- */
-
-/*
  * [SCN-RPT-013] — the phantom-id Warnings sub-part — RETIRED (@SCN-LDG-006).
  * A credit citing an undeclared @SCN no longer renders as a Warnings sub-part; it now
  * surfaces as a PHANTOM-scenario reconciliation row in the Ledger (with its id + locator),

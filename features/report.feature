@@ -315,27 +315,15 @@ Feature: The report renders the ledger as sectioned facts
       And the scenario whose obligation at a quality-check is pending, with observations citing it at that pair, renders a no-evidence-obligation observation there — because the credit is now no-evidence-obligation, not attributed
       And no cell-key legend precedes the ledger table — the grid speaks for itself
 
-  Rule: Warnings flags the tests citing no scenario with their file locators
-
-    Anchor audit — tests citing no scenario (@SCN-RPT-012), consuming the
-    evidence observation aggregate's `suspense` array (already a term in the evidence observation identity, with
-    the test-file locators retained). `## Warnings` gains a second sub-part listing the
-    cites-no-scenario evidence observation-test count + per-file locators (grouped by file, per-file counts, sorted
-    — so the per-file counts reconcile to the total). It renders `N test(s) carry no @SCN
-    anchor:` then `- <count> in \`<file>\`` bullets. The section now renders when EITHER
-    no-evidence-declared warnings OR tests citing no scenario are present; the no-evidence
-    sub-part is byte-unchanged and renders first. Facts-only — count + locator, no
-    interpretation; the count links the reader to the Test volume cut's `suspense`
-    term. Markdown-only (the atoms are already on JSON). Proven in isolation
-    by Vitest over a evidence observation fixture with multi-file cites-no-scenario evidence observations. Completes the
-    evidence observation identity's visible accounting (raw = attributed + suspense, now with
-    where-to-look); the phantom evidence observation-id case remains.
-
-    @unit @SCN-RPT-012
-    Scenario: Warnings lists the tests citing no scenario with per-file locators
-      Given a evidence observation aggregate carrying cites-no-scenario evidence observations (no @SCN anchor) across more than one test file
-      When the markdown report is rendered
-      Then the "## Warnings" section lists the cites-no-scenario evidence observation-test count and the per-file locators with per-file counts, sorted, and renders whether or not any no-evidence-declared warnings are present
+  # Rule: Warnings flags the tests citing no scenario — RETIRED (@SCN-LDG-007).
+  # The cites-no-scenario anchor audit (was @SCN-RPT-012) is superseded by the bidirectional
+  # reconciler: a credit citing NO @SCN anchor now surfaces as a SUSPENSE-scenario
+  # reconciliation row `(no scenario)` in the Ledger, carrying its locator on a
+  # cites-no-scenario item, not a Warnings sub-part — so the detail lives in exactly one place
+  # (no double-report). The `## Warnings` section itself has since dissolved entirely
+  # (markdown.ts SECTIONS). The suspense render is proven by @SCN-LDG-007
+  # (features/ledger.feature); the suspense COUNT survives in the Test volume balance-check
+  # identity (summary.testVolume).
 
   # Rule: Warnings flags the phantom evidence observation-id tests — RETIRED (@SCN-LDG-006).
   # The phantom-id anchor audit (was @SCN-RPT-013) is superseded by the bidirectional
