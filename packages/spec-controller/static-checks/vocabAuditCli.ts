@@ -54,6 +54,24 @@ const EXCLUDED_FILES = new Set(["pnpm-lock.yaml", "package-lock.json", "yarn.loc
  * be. Its parser and that parser's unit tests join it for the same reason they always
  * have — one discusses the retired terms, the other passes them to the classifier.
  *
+ * `vocabTagGrammar.ts` (3F-2313, @SCN-VOC-013) is the narrowest case of all: it IS
+ * `vocabAudit.ts`'s tag-grammar half, split out only because that file's `max-lines` exception
+ * is frozen at 790 and buys no headroom. Its entry is a FILE BOUNDARY DRAWN THROUGH THE MIDDLE
+ * OF LINE 1 OF THIS LIST, not a second policy. Left out it contributed 21 MEASURED rows: the
+ * docblock quotes the retired tag `@ci-performance` to say what the module exists to catch, and
+ * `authored` / `structural` / `trimmed` are its own API names. THE COST THIS LIST WARNS OF IS
+ * PAID HERE — an adopted retired word in that file is now invisible — so it was swept BEFORE
+ * the entry landed, and the one genuine hit (a banned `state` in a docblock) was REWORDED
+ * rather than hidden behind the exemption.
+ *
+ * `vocabAuditTagLines.test.ts` (3F-2313, @SCN-VOC-013) joins on the ORIGINAL ground rather
+ * than the narrower one below it: it feeds a banned-word corpus — the retired tag
+ * `@ci-performance`, a planted `supply`, a bare `guard` handle — straight to the classifier,
+ * exactly as `vocabAudit.test.ts` does. It is a SEPARATE FILE only because `vocabAudit.test.ts`
+ * carries a `max-lines` exception frozen at 801 and an exception buys no headroom, so the new
+ * arm could not be appended there; the file boundary is the complexity ratchet's, not a
+ * second policy.
+ *
  * `vocabAuditCli.test.ts` (3F-2327) is the ONE entry that earns its place on a DIFFERENT
  * ground, and the difference is stated rather than left to be inferred from the company it
  * keeps. It holds no banned-word corpus at all — it is a pure unit test over `filesInScope`,
@@ -86,8 +104,10 @@ const EXCLUDED_FILES = new Set(["pnpm-lock.yaml", "package-lock.json", "yarn.loc
  */
 const SELF_EXEMPT_PATHS = new Set([
   "packages/spec-controller/static-checks/vocabAudit.ts",
+  "packages/spec-controller/static-checks/vocabTagGrammar.ts",
   "packages/spec-controller/static-checks/vocabWordSets.ts",
   "packages/spec-controller/static-checks/vocabAudit.test.ts",
+  "packages/spec-controller/static-checks/vocabAuditTagLines.test.ts",
   "packages/spec-controller/static-checks/vocabAuditCli.ts",
   "packages/spec-controller/static-checks/vocabAuditCli.test.ts",
   "packages/spec-controller/static-checks/blockedVocabulary.md",

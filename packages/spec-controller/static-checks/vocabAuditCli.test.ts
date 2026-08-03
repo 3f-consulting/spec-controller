@@ -89,8 +89,10 @@ describe("[SCN-VOC-008] the audit reads what git says the project is, minus its 
     // assertion goes red naming the path that came back.
     const machinery = [
       "packages/spec-controller/static-checks/vocabAudit.ts",
+      "packages/spec-controller/static-checks/vocabTagGrammar.ts",
       "packages/spec-controller/static-checks/vocabWordSets.ts",
       "packages/spec-controller/static-checks/vocabAudit.test.ts",
+      "packages/spec-controller/static-checks/vocabAuditTagLines.test.ts",
       "packages/spec-controller/static-checks/vocabAuditCli.ts",
       "packages/spec-controller/static-checks/vocabAuditCli.test.ts",
       "features/vocabulary-audit.feature",

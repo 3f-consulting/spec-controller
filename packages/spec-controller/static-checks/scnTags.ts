@@ -54,8 +54,15 @@ const SCN_PATTERN = /^SCN-[A-Z0-9]+-\d+$/;
  * variant, or a lint declaration — bare `lint` OR the `lint=<guard>` form
  * spec-controller uses (LOAD-BEARING: a bare-`lint`-only match would miss
  * `@lint=<guard>` and false-flag every static check scenario, reding the real tree).
+ *
+ * EXPORTED for `vocabAudit.ts` (@SCN-VOC-013, 3F-2313), which needs the same answer to
+ * decide what on a Gherkin tag line is GRAMMAR rather than authored vocabulary. It is
+ * imported rather than copied on purpose: a second tier list over there would agree with
+ * this one by diligence and then drift — the agreeing-by-copy @SCN-VOC-008 removed for
+ * `.gitignore` and @SCN-VOC-010 for the canon table. This module imports nothing, so the
+ * dependency is one-way and cycle-free.
  */
-function isTierTag(bare: string): boolean {
+export function isTierTag(bare: string): boolean {
   if (bare === "lint" || bare.startsWith("lint=")) return true;
   for (const qc of QUALITY_CHECKS) {
     if (bare === qc || bare === `${qc}pending`) return true;

@@ -11,8 +11,9 @@
  * domain vocabulary nor the endorsed generic-technical allowlist FLAGS.
  *
  * Two scanning modes keep the audit useful without flooding on ordinary English:
- * NAME mode (identifiers / keys / tags / filenames) applies the full closed
- * vocabulary; PROSE mode (comments / docs / strings / titles) examines only the
+ * NAME mode (identifiers / keys / filenames) applies the full closed vocabulary;
+ * PROSE mode (comments / docs / strings / titles, and every `.feature` line — its
+ * author-chosen tags included, @SCN-VOC-013) examines only the
  * controlled domain vocabulary, leaving ordinary English alone — but any
  * COMPOSITE token embedded in prose is escalated to NAME mode. Banned words,
  * bare-shortenings and rejected-aliases flag in BOTH modes; unknown words flag
@@ -22,7 +23,7 @@
  * manifesto's mapping table.
  *
  * @SCN-VOC-001 / @SCN-VOC-002 / @SCN-VOC-003 / @SCN-VOC-004 / @SCN-VOC-005 / @SCN-VOC-006 /
- * @SCN-VOC-007 — features/vocabulary-audit.feature.
+ * @SCN-VOC-007 / @SCN-VOC-013 — features/vocabulary-audit.feature.
  */
 
 // ---------------------------------------------------------------------------
@@ -36,6 +37,7 @@
 // the move is invisible from the outside, which is what makes it a Read.
 // ---------------------------------------------------------------------------
 
+import { authoredTags, SCN_TOKEN_RE, tagLineTokens } from "./vocabTagGrammar.js";
 import {
   BANNED_WORDS,
   DOMAIN_WORDS,
@@ -217,9 +219,7 @@ function fullTermSatisfied(word: string, words: string[], i: number, present: Se
  * fixture — which is why it is kept rather than "cleaned up" alongside this rule.
  *
  * ALL THREE fire in BOTH modes: a retired phrase hides in a comment, a doc, an identifier,
- * a string, a filename or a config key alike. A bare Gherkin TAG LINE is out of reach for
- * all of them, because `scanFile` skips tag lines wholesale as structural — a pre-existing,
- * all-rules segmentation decision, not a property of any one arm.
+ * a string, a filename or a config key alike — and, since @SCN-VOC-013, on a TAG LINE too.
  */
 function retiredPhraseVerdict(word: string, following: string): WordVerdict | null {
   const next = singularise(following);
@@ -476,13 +476,9 @@ function filenameSegment(relPath: string): Segment {
   return { surface: "filenames", file: relPath, line: 0, mode: "name", text: withoutExt };
 }
 
-/** Structural scenario-ID tokens (@SCN-FFF-NNN) — an ID scheme, not vocabulary. */
-const SCN_TOKEN_RE = /@?SCN-[A-Z0-9]{2,5}-\d+/g;
-
 /**
- * The HISTORICAL-RECORD exemption (operator ruling 2026-07-02)
- * — the SECOND scoped meta-mention exemption, a doc-scale sibling of the whole-file
- * `SELF_EXEMPT_PATHS` in vocabAuditCli.ts.
+ * The HISTORICAL-RECORD exemption (operator ruling 2026-07-02) — the SECOND scoped
+ * meta-mention exemption, a doc-scale sibling of vocabAuditCli.ts's `SELF_EXEMPT_PATHS`.
  *
  * A decision log is an append-only historical record. Some
  * of its rows exist *to name superseded vocabulary*: the rename-mapping / rejected-
@@ -530,9 +526,13 @@ export function scanFile(relPath: string, rawContent: string): Segment[] {
 
   if (kind === "feature") {
     lines.forEach((text, idx) => {
-      if (text.trim() === "") return;
-      if (text.trim().startsWith("@")) return; // structural tags — not vocabulary
-      segs.push({ surface: override("feature"), file: relPath, line: idx + 1, mode: "prose", text });
+      const trimmed = text.trim();
+      if (trimmed === "") return;
+      // A TAG LINE yields one prose segment per AUTHOR-CHOSEN tag, the grammar dropped
+      // (@SCN-VOC-013); it used to be skipped whole. Any other line is prose, as before.
+      const tokens = tagLineTokens(trimmed);
+      for (const value of tokens === null ? [text] : authoredTags(tokens))
+        segs.push({ surface: override("feature"), file: relPath, line: idx + 1, mode: "prose", text: value });
     });
     return segs;
   }

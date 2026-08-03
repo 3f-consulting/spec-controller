@@ -662,3 +662,140 @@ Then("it reds naming the row that has no status", function () {
       `wider red would mean the check is not reading the cell it claims to:\n${said}`
   );
 });
+
+// -------------------------------------------------------------------------
+// @SCN-VOC-013 — the Gherkin tag line: author-chosen vocabulary vs the tag grammar
+// @SCN-VOC-013
+// -------------------------------------------------------------------------
+
+/** The planted feature file, TRACKED so git returns it to the audit. */
+const VOC013_FEATURE_PATH = "features/tag-shapes.feature";
+
+/**
+ * ONE tag line carrying every shape the measured tree actually contains — the retired tag
+ * `@ci-performance` beside the four protected shapes. They share a line deliberately: the
+ * red half and the four green halves must be produced by the SAME walk over the SAME line,
+ * or each could be true of a different code path.
+ */
+const VOC013_FEATURE = [
+  "@TGT",
+  "Feature: a corpus whose tag lines carry every measured shape",
+  "",
+  "  Rule: the shapes coexist on one tag line",
+  "",
+  "    @unit @lint=guard:domain-purity @ci-performance @SCN-TGT-001",
+  "    Scenario: the shapes coexist",
+  "      Given a step",
+  "",
+].join("\n");
+
+// @SCN-VOC-013
+Given(
+  "a feature corpus whose tag lines carry a retired term alongside a scenario id, a feature code, a tier tag and a lint handle",
+  function () {
+    const dir = mkdtempSync(join(tmpdir(), "spec-controller-voc013-"));
+    mkdirSync(join(dir, "features"));
+    writeFileSync(join(dir, VOC013_FEATURE_PATH), VOC013_FEATURE);
+    gitIn(dir, "init", "-q", "-b", "main");
+    gitIn(dir, "add", VOC013_FEATURE_PATH);
+    gitIn(
+      dir,
+      "-c",
+      "user.email=corpus@example.invalid",
+      "-c",
+      "user.name=corpus",
+      "-c",
+      "commit.gpgsign=false",
+      "commit",
+      "-q",
+      "-m",
+      "corpus"
+    );
+
+    // CONTROL PROBE — the premise, asserted rather than assumed. Four of this scenario's
+    // five assertions are NEGATIVE, and a corpus git never returned would satisfy every one
+    // of them for the wrong reason. (The positive assertion below reads the SAME file, so it
+    // is the running control that the file was scanned at all.)
+    const tracked = gitIn(dir, "ls-files", "--cached", "--others", "--exclude-standard")
+      .split("\n")
+      .filter((l) => l !== "");
+    assert.ok(
+      tracked.includes(VOC013_FEATURE_PATH),
+      `git must return the planted feature file; it returned:\n${tracked.join("\n")}`
+    );
+
+    corpusRoot = dir;
+  }
+);
+
+/** The manifest rows the planted feature file produced, whatever their surface. */
+function voc013Rows(): Record<string, string>[] {
+  return parseManifest(manifestCsv()).filter((r) => r["file"] === VOC013_FEATURE_PATH);
+}
+
+// @SCN-VOC-013
+Then("the retired term on the tag line is flagged", function () {
+  // THE WHOLE POINT, and the ONLY assertion a plant can make: the tree carries zero retired
+  // terms on tag lines, so a green run over it proves nothing — the surface returned zero
+  // either way. `pnpm audit:vocab` also always exits 0, so its status is no evidence here.
+  const rows = voc013Rows().filter((r) => r["current"] === "ci");
+  assert.ok(
+    rows.length > 0,
+    `the retired tag \`@ci-performance\` sits on a Gherkin tag line and must reach the ` +
+      `manifest; the audit reported:\n${manifestCsv()}`
+  );
+  assert.equal(
+    rows[0]!["new"],
+    "ci-run-time",
+    `the retired tag renames to the canon \`ci-run-time\`; got "${rows[0]!["new"]}"`
+  );
+});
+
+// @SCN-VOC-013
+Then("the scenario id is not flagged", function () {
+  const rows = voc013Rows().filter((r) => (r["symbol"] ?? "").toUpperCase().includes("SCN"));
+  assert.deepEqual(
+    rows,
+    [],
+    `an @SCN-<FFF>-<NNN> id is an ID scheme, not vocabulary, and must earn no row; got:\n` +
+      `${JSON.stringify(rows)}`
+  );
+});
+
+// @SCN-VOC-013
+Then("the feature-code header tag is not flagged", function () {
+  const rows = voc013Rows().filter((r) => (r["symbol"] ?? "").toUpperCase() === "TGT");
+  assert.deepEqual(
+    rows,
+    [],
+    `the @<FFF> feature-code header tag is the same ID scheme one slot up — allocated in ` +
+      `featureCodes.ts's REGISTRY — and must earn no row; got:\n${JSON.stringify(rows)}`
+  );
+});
+
+// @SCN-VOC-013
+Then("the tier tag is not flagged", function () {
+  const rows = voc013Rows().filter((r) => r["current"] === "unit");
+  assert.deepEqual(
+    rows,
+    [],
+    `a tier tag is Gherkin grammar (scnTags.ts's own isTierTag) and must earn no row; got:\n` +
+      `${JSON.stringify(rows)}`
+  );
+});
+
+// @SCN-VOC-013
+Then("the lint handle value is not flagged", function () {
+  // The measured one. `guard` is a FULL_TERM_ONLY word and `domain` / `purity` are not among
+  // its ruled qualifiers, so a SCANNED handle would flag as `bare-different-word` — a row
+  // per handle across the tree. 3F-1929 ruled the handle a value; 3F-1852 owns them.
+  const rows = voc013Rows().filter(
+    (r) => r["current"] === "guard" || (r["symbol"] ?? "").includes("guard")
+  );
+  assert.deepEqual(
+    rows,
+    [],
+    `an @lint=<handle> value is a CI script name, not vocabulary, and must earn no row; ` +
+      `got:\n${JSON.stringify(rows)}`
+  );
+});

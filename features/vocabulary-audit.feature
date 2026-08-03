@@ -11,9 +11,10 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
   the bare full-term words (obligation / observation / ghost) always flag.
 
   Two scanning modes keep the audit useful without flooding on ordinary English: NAME mode
-  (code identifiers, JSON/YAML keys, feature tags, filenames) applies the full closed
+  (code identifiers, JSON/YAML keys, filenames) applies the full closed
   vocabulary — every word must prove it is approved; PROSE mode (comments, doc/markdown
-  prose, string literals, titles) examines only the controlled domain vocabulary — a banned
+  prose, string literals, titles, and every line of a .feature file INCLUDING the
+  author-chosen tags on its tag lines) examines only the controlled domain vocabulary — a banned
   or rejected-alias word flags, ordinary English is left alone, and any COMPOSITE token
   (a deliberate multi-word name embedded in prose) is escalated to NAME mode.
 
@@ -87,9 +88,11 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
     check and stays green, and canon `ci-run-time` decomposes to `ci` / `run` / `time`,
     all approved. Sibling in shape to @SCN-VOC-003, and ordered with it AHEAD of the
     approved-word and mode gates, which is what lets a phrase of two approved words red
-    at all. Honest scope: a bare Gherkin TAG LINE is not reached, because the scanner
-    skips tag lines wholesale as structural — a pre-existing, all-rules segmentation
-    decision that @SCN-VOC-003 shares, not a property of this arm.
+    at all. SCOPE, AS OF @SCN-VOC-013: a bare Gherkin TAG LINE used NOT to be reached —
+    the scanner skipped tag lines wholesale as structural, which was exactly wrong for a
+    term whose canonical form IS a tag. That segmentation decision was never a property of
+    this arm, and it is not this arm that fixed it: @SCN-VOC-013 below now walks a tag
+    line per token, so `@ci-performance` reds here like anywhere else.
 
     @unit @SCN-VOC-006
     Scenario: the audit reds "ci-performance" and stays green on "ci-run-time"
@@ -419,3 +422,83 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
       Then "no-evidence-obligation" is not flagged
       And the bare "obligation" is flagged as a bare shortening
       And an occurrence the scan reads one word at a time still flags its "obligation"
+
+  Rule: an author-chosen Gherkin tag is vocabulary and is audited; the tag GRAMMAR around it is not
+
+    THE SURFACE THE SCANNER COULD NOT SEE (@SCN-VOC-013, 3F-2313). Every `.feature` line
+    whose trimmed form began with `@` was skipped WHOLESALE — `if (text.trim().startsWith("@"))
+    return;`. Defensible for an ID scheme, and exactly WRONG for a term whose canonical form
+    IS A TAG: `@ci-performance` → `@ci-run-time` is a TAG rename, so the one surface most
+    worth policing was the one surface that was invisible. Proven, not inferred — 3F-2289
+    planted `@ci-performance` on a tag line and got NO manifest row, while the identical
+    token in a comment, an identifier, a string and a doc all fired.
+
+    A LATENT HOLE, NOT A LIVE MISS, WHICH IS WHY THE PLANT IS THE EVIDENCE. 3F-2299 grepped
+    every `^@` line and found ZERO occurrences of the retired terms, so a green run over this
+    tree proves NOTHING — the surface returned zero either way. `pnpm audit:vocab` also always
+    exits 0 (it is a report, not a gate), so its exit code is worthless here too. The only
+    thing that can distinguish "clean" from "unread" is a PLANT, in both directions, which is
+    what this scenario is.
+
+    THE WORK IS DECIDING WHAT ON A TAG LINE IS VOCABULARY AND WHAT IS GRAMMAR, because
+    deleting the skip naively floods the audit. MEASURED over every tracked `.feature` file
+    (58 of them — 19 under features/, 39 more under tests/fixtures/, none self-exempt), the
+    population is FIVE shapes, not the four the ticket guessed:
+
+      * `@SCN-<FFF>-<NNN>` (234) — an ID scheme, already blanked by SCN_TOKEN_RE before a
+        single line is read. GRAMMAR, and it gets NO ARM in the tag walk: an id can never
+        reach it, so an arm would be unreachable code that no mutation could kill. An earlier
+        draft carried one and the probe proved it dead. The BLANKING is the exemption, and
+        that is what the assertion below pins.
+      * `@<FFF>` the feature-code header tag (57) — the SAME ID scheme, one slot up: it IS
+        the `<FFF>` inside every scenario id, allocated in featureCodes.ts's REGISTRY and
+        held unique by lint:feature-codes. GRAMMAR. This category was missed entirely by the
+        ticket's taxonomy and is the second largest.
+      * the tier tags (359) — `@unit` / `@integration` / `@e2e`, their `pending` variants and
+        `@wip`. GRAMMAR, and single-sourced: the predicate is scnTags.ts's OWN `isTierTag`,
+        imported rather than copied, because a second list would agree by diligence and then
+        drift (the agreeing-by-copy @SCN-VOC-008 and @SCN-VOC-010 each removed one level up).
+        Note the tags the ticket named as the flood risk — bare `@lint`, `@performance` —
+        have ZERO occurrences, while five `pending` variants it did not name have 25.
+      * `@lint=<handle>` (18) — a `key=value` tag whose VALUE is a CI script name, not
+        vocabulary (3F-1929; 3F-1852 owns the handles). The value is dropped and the key
+        judged alone. WHAT ACTUALLY HOLDS THESE 18 GREEN IS `isTierTag`, which recognises the
+        whole `lint=<handle>` FORM — a rule scnTags.ts already owned so a bare-`lint`-only
+        match would not false-flag every static-check scenario. Said plainly because the first
+        draft of this Rule claimed the value-drop was worth ~10 rows here and a MUTATION PROBE
+        disproved it: deleting the value-drop leaves this tree's headline untouched. The rule
+        is kept for the `key=value` tag whose key is NOT a tier (`@owner=…`), of which the
+        tree has zero — so it is pinned by a constructed case, the only thing that can.
+      * ANYTHING ELSE — author-chosen, and the thing this Rule reaches.
+
+    PROSE MODE, NOT NAME MODE, and the preamble above is CORRECTED rather than implemented —
+    it claimed feature tags were NAME-scanned, which was aspirational and never true, since
+    the lines were skipped outright. Only ONE flag tier is mode-gated (`unknown`); banned
+    words, bare-shortenings, `bare-different-word`, `entry-domain` and all three retired-phrase
+    arms fire in BOTH modes. So PROSE delivers the whole red half of this Rule, while NAME
+    would buy only `unknown` — a question about whether a tag is a legitimate community tag,
+    which is lint:scn-tags' ground, not this audit's — at a cost of 9 permanent false
+    positives over deliberately-meaningless fixture tags (`@foo`, `@skip`, `@todo`, …). Every
+    OTHER line of a `.feature` is already prose-scanned, so NAME here would also red a word on
+    the tag line and green the same word in the scenario title one line below it.
+
+    A LINE IS A TAG LINE ONLY WHEN EVERY TOKEN ON IT STARTS WITH `@` — scnTags.ts →
+    parseScenarios' existing definition, reused. The old `trim().startsWith("@")` was looser
+    and swallowed prose lines that merely OPEN with a tag reference; two live in
+    tests/fixtures/pending-tags/, silently unscanned until now.
+
+    ALL FIVE ASSERTIONS ARE ONE SCENARIO, and splitting them would destroy both halves. "The
+    grammar is not flagged" stays true with the ENTIRE tag walk deleted; "the retired term
+    reds" stays true with every grammar exemption removed, flooding the manifest. An
+    unasserted green is the erosion trap — it survives the deletion of the very exemption it
+    depends on — so each protected shape is asserted OUT LOUD rather than left unmentioned.
+
+    @unit @integration @SCN-VOC-013
+    Scenario: a retired term on a Gherkin tag line is flagged while the tag grammar is not
+      Given a feature corpus whose tag lines carry a retired term alongside a scenario id, a feature code, a tier tag and a lint handle
+      When the vocabulary audit runs over the corpus
+      Then the retired term on the tag line is flagged
+      And the scenario id is not flagged
+      And the feature-code header tag is not flagged
+      And the tier tag is not flagged
+      And the lint handle value is not flagged
