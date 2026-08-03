@@ -118,3 +118,76 @@ describe("[SCN-VOC-008] the audit reads what git says the project is, minus its 
     expect(args).toContain("--exclude-standard");
   });
 });
+
+/**
+ * The PRECONDITION @SCN-VOC-008 introduced, and its refusal (@SCN-VOC-009, 3F-2325).
+ *
+ * Asking git what the project is means git must have an answer. The @integration arm proves the
+ * refusal end to end over a real directory outside any work tree; what is pinned HERE is everything
+ * that arm cannot reach — the QUERY FORM and the two answers this repository can never produce.
+ * Every one of these is invisible to a run inside spec-controller:
+ *
+ *  - a `.git` DIRECTORY probe would agree with git on this tree and every ordinary clone, and
+ *    disagree exactly where it matters (a `.git` FILE is a valid work tree — git worktrees and
+ *    submodules — and a `.git` directory further up may not be the right one);
+ *  - git's `false` answer, which is what a path INSIDE a `.git` directory returns: a repository,
+ *    but not a work tree. Nothing in a normal run stands there;
+ *  - the message's own content, which is the whole deliverable — "scan failed" would satisfy the
+ *    exit code and tell the operator nothing.
+ *
+ * THE EXIT-CODE SPLIT, recorded so it is not "fixed" later: a SUCCESSFUL scan stays exit 0 however
+ * many words it flags (the audit is a report, not a gate — operator ruling 2026-07-02). The non-zero
+ * exit belongs to THIS precondition failure alone, and a finding must never join it.
+ *
+ * Parent: @SCN-VOC-009 (3F-2325) — the audit errors when its root is not in a git work tree (3F-2310).
+ */
+describe("[SCN-VOC-009] outside a git work tree the audit refuses to scan rather than guess", () => {
+  /** The pure ruling over git's answer: the string git printed, or `undefined` if it failed. */
+  type InsideWorkTree = (gitAnswer: string | undefined) => boolean;
+
+  const insideWorkTree = (answer: string | undefined): boolean =>
+    (exported("insideWorkTree") as InsideWorkTree)(answer);
+
+  it("asks git whether this is a work tree, and never probes for a .git directory", () => {
+    // The slice's principle, in one assertion: git answers questions about git. A `.git` path
+    // probe is the plausible alternative and it is wrong in both directions — blind to a `.git`
+    // FILE, and fooled by an unrelated `.git` directory further up. No run on this tree can tell
+    // the two apart, so the argv is the only place the choice can be held.
+    expect(exported("GIT_REV_PARSE_ARGS")).toEqual(["rev-parse", "--is-inside-work-tree"]);
+  });
+
+  it("scans when git answers true", () => {
+    expect(insideWorkTree("true\n")).toBe(true);
+  });
+
+  it("refuses when git answers false — a .git directory is a repository, not a work tree", () => {
+    // Unreachable from any run inside this repository, and not a hypothetical: `--is-inside-work-tree`
+    // prints `false` with exit 0 for a path inside `.git`. Reading the exit code alone would scan.
+    expect(insideWorkTree("false\n")).toBe(false);
+  });
+
+  it("refuses when the query itself failed, rather than reading nothing as consent", () => {
+    expect(insideWorkTree(undefined)).toBe(false);
+  });
+
+  it("refuses on an answer it does not recognise", () => {
+    expect(insideWorkTree("")).toBe(false);
+  });
+
+  /** The refusal message for a root, pure — the deliverable the exit code cannot carry. */
+  const message = (root: string): string =>
+    (exported("notAWorkTreeMessage") as (root: string) => string)(root);
+
+  it("names the actual problem — the project's file set — never a bare 'scan failed'", () => {
+    expect(message("/nowhere/not-a-repo")).toContain("cannot determine the project's file set");
+    expect(message("/nowhere/not-a-repo")).not.toMatch(/scan failed/i);
+  });
+
+  it("names the root it tried, so the operator knows which path is not in a work tree", () => {
+    expect(message("/nowhere/not-a-repo")).toContain("/nowhere/not-a-repo");
+  });
+
+  it("says no artefact was written, so an absent manifest is not read as a clean scan", () => {
+    expect(message("/nowhere/not-a-repo")).toMatch(/no manifest/i);
+  });
+});

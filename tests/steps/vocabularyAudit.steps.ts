@@ -10,13 +10,19 @@
 import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { SURFACES } from "../../packages/spec-controller/static-checks/vocabAudit.js";
 
 const VOCAB_FIXTURE_ROOT = "tests/fixtures/vocab";
-let manifestCsv: string;
 let matrixMd: string;
 
 /**
@@ -24,10 +30,14 @@ let matrixMd: string;
  *
  * The `When` step text is shared by every scenario in this feature, so the root cannot be
  * baked into it: @SCN-VOC-001/002 drive the on-disk fixture corpus, @SCN-VOC-008 drives a
- * throwaway git repository built by its own `Given`. Each `Given` states its own root, so
- * no scenario inherits a leftover from the one before it.
+ * throwaway git repository built by its own `Given`, and @SCN-VOC-009 drives a directory
+ * that is deliberately NOT one. Each `Given` states its own root, so no scenario inherits a
+ * leftover from the one before it.
  */
 let corpusRoot: string;
+
+/** What the last shared `When` observed — read by the success arms AND by the refusal arm. */
+let auditRun: AuditRun;
 
 /** The on-disk fixture corpus, absolute — the root @SCN-VOC-001/002 audit. */
 function fixtureCorpusRoot(): string {
@@ -35,12 +45,30 @@ function fixtureCorpusRoot(): string {
 }
 
 /**
- * Drive the REAL CLI over `root`, writing one artefact, and return its contents.
+ * One real CLI run, observed whole: the exit status, both streams, and the artefact path it
+ * was asked to write to.
+ *
+ * The shape exists because @SCN-VOC-009 asserts on a run that must NOT succeed, so the
+ * exit-0 assertion cannot live in the spawn any more — it moves to `artefactOf`, where the
+ * success arms read their artefact. Nothing is weakened: a non-zero exit still fails
+ * @SCN-VOC-001/002/008, just one call later and with the same sentence.
+ */
+type AuditRun = {
+  readonly status: number | null;
+  readonly stdout: string;
+  readonly stderr: string;
+  readonly outPath: string;
+};
+
+/**
+ * Drive the REAL CLI over `root`, asking it for one artefact, and return the whole run.
  *
  * A real spawn over real files on disk, never an in-memory re-run of the engine — the
- * anti-watermelon rule, and the only thing that proves the CLI's own file-selection.
+ * anti-watermelon rule, and the only thing that proves the CLI's own file-selection. The
+ * artefact directory is FRESH per run, so "the audit emitted nothing" is a readable
+ * property of the directory rather than a guess about leftovers.
  */
-function runAudit(root: string, flag: "--manifest" | "--matrix", outName: string): string {
+function spawnAudit(root: string, flag: "--manifest" | "--matrix", outName: string): AuditRun {
   const repoRoot = process.cwd();
   const outDir = mkdtempSync(join(tmpdir(), "spec-controller-vocab-out-"));
   const outPath = join(outDir, outName);
@@ -56,12 +84,27 @@ function runAudit(root: string, flag: "--manifest" | "--matrix", outName: string
     encoding: "utf8",
   });
   assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
+  return {
+    status: result.status,
+    stdout: result.stdout,
+    stderr: result.stderr,
+    outPath,
+  };
+}
+
+/** The artefact a SUCCESSFUL run wrote — the exit-0 expectation asserted before the read. */
+function artefactOf(run: AuditRun): string {
   assert.equal(
-    result.status,
+    run.status,
     0,
-    `expected exit 0 running the audit; got ${result.status}\nstderr:\n${result.stderr}`
+    `expected exit 0 running the audit; got ${run.status}\nstderr:\n${run.stderr}`
   );
-  return readFileSync(outPath, "utf8");
+  return readFileSync(run.outPath, "utf8");
+}
+
+/** The manifest the shared `When` produced — read only by the arms that expect a scan. */
+function manifestCsv(): string {
+  return artefactOf(auditRun);
 }
 
 // @SCN-VOC-001
@@ -76,8 +119,9 @@ Given(
 
 // @SCN-VOC-001
 // @SCN-VOC-008
+// @SCN-VOC-009
 When("the vocabulary audit runs over the corpus", function () {
-  manifestCsv = runAudit(corpusRoot, "--manifest", "manifest.csv");
+  auditRun = spawnAudit(corpusRoot, "--manifest", "manifest.csv");
 });
 
 /** Parse the manifest CSV into header-keyed row objects. */
@@ -92,13 +136,13 @@ function parseManifest(csv: string): Record<string, string>[] {
 
 // @SCN-VOC-001
 Then("the manifest lists the banned name with its canonical replacement", function () {
-  const rows = parseManifest(manifestCsv);
+  const rows = parseManifest(manifestCsv());
   const supplyRow = rows.find(
     (r) => r["current"] === "supply" && (r["symbol"] ?? "").includes("buildSupply")
   );
   assert.ok(
     supplyRow,
-    `expected a manifest row flagging \`supply\` in buildSupply; got:\n${manifestCsv}`
+    `expected a manifest row flagging \`supply\` in buildSupply; got:\n${manifestCsv()}`
   );
   assert.equal(
     supplyRow!["new"],
@@ -109,7 +153,7 @@ Then("the manifest lists the banned name with its canonical replacement", functi
 
 // @SCN-VOC-001
 Then("the approved name is not flagged", function () {
-  const rows = parseManifest(manifestCsv);
+  const rows = parseManifest(manifestCsv());
   const approved = rows.filter((r) => r["symbol"] === "renderScenarioLedger");
   assert.deepEqual(
     approved,
@@ -136,14 +180,14 @@ function guardRowsFor(csv: string, symbol: string): Record<string, string>[] {
 
 // @SCN-VOC-001
 Then('the bare "guard" is flagged for review, not rename', function () {
-  const rows = guardRowsFor(manifestCsv, "runGuard").filter(
+  const rows = guardRowsFor(manifestCsv(), "runGuard").filter(
     // `runStaticGuard` contains `runGuard` as a substring only under a loose match;
     // pin the bare arm exactly so the qualified arm can never satisfy this assertion.
     (r) => r["symbol"] === "runGuard"
   );
   assert.ok(
     rows.length > 0,
-    `expected a manifest row flagging bare \`guard\` in runGuard; got:\n${manifestCsv}`
+    `expected a manifest row flagging bare \`guard\` in runGuard; got:\n${manifestCsv()}`
   );
   assert.equal(
     rows[0]!["action"],
@@ -154,7 +198,7 @@ Then('the bare "guard" is flagged for review, not rename', function () {
 
 // @SCN-VOC-001
 Then('the qualified "static guard" is not flagged', function () {
-  const rows = guardRowsFor(manifestCsv, "runStaticGuard");
+  const rows = guardRowsFor(manifestCsv(), "runStaticGuard");
   assert.deepEqual(
     rows,
     [],
@@ -176,7 +220,7 @@ Given("a fixture corpus that flags a word on one surface only", function () {
 
 // @SCN-VOC-002
 When("the vocabulary audit renders the coverage matrix over the corpus", function () {
-  matrixMd = runAudit(corpusRoot, "--matrix", "matrix.md");
+  matrixMd = artefactOf(spawnAudit(corpusRoot, "--matrix", "matrix.md"));
 });
 
 // @SCN-VOC-002
@@ -272,21 +316,97 @@ Given(
 
 // @SCN-VOC-008
 Then("the tracked occurrence is reported", function () {
-  const rows = parseManifest(manifestCsv).filter(
+  const rows = parseManifest(manifestCsv()).filter(
     (r) => r["current"] === "supply" && r["file"] === VOC008_TRACKED_PATH
   );
   assert.ok(
     rows.length > 0,
-    `expected the banned word in the TRACKED file ${VOC008_TRACKED_PATH} to be reported; manifest:\n${manifestCsv}`
+    `expected the banned word in the TRACKED file ${VOC008_TRACKED_PATH} to be reported; manifest:\n${manifestCsv()}`
   );
 });
 
 // @SCN-VOC-008
 Then("the occurrence under the gitignored path is not", function () {
-  const rows = parseManifest(manifestCsv).filter((r) => (r["file"] ?? "").startsWith("dist/"));
+  const rows = parseManifest(manifestCsv()).filter((r) => (r["file"] ?? "").startsWith("dist/"));
   assert.deepEqual(
     rows,
     [],
     `the audit scans the project git tracks, so the same word under the gitignored ${VOC008_IGNORED_PATH} must never reach the manifest; got:\n${JSON.stringify(rows)}`
+  );
+});
+
+// -------------------------------------------------------------------------
+// @SCN-VOC-009 — outside a git work tree the audit refuses to scan rather than guess
+// @SCN-VOC-009
+// -------------------------------------------------------------------------
+
+/** A banned `supply`, planted so the refusal is a REFUSAL and not merely an empty tree. */
+const VOC009_PLANT_PATH = "src/buildSupply.ts";
+const VOC009_PLANT = 'export function buildSupply(): string {\n  return "supply";\n}\n';
+
+// @SCN-VOC-009
+Given("a corpus directory that is not inside a git work tree", function () {
+  const dir = mkdtempSync(join(tmpdir(), "spec-controller-voc009-"));
+  mkdirSync(join(dir, "src"));
+  // PLANTED ON PURPOSE. An empty directory would make the empty manifest ambiguous: nothing
+  // to report and refusing to report are the same absence. With a banned word sitting in it,
+  // the only way to emit no manifest is to have refused.
+  writeFileSync(join(dir, VOC009_PLANT_PATH), VOC009_PLANT);
+
+  // CONTROL PROBE — the fixture's PREMISE, asserted rather than assumed. `mkdtemp` writes
+  // under $TMPDIR, which on macOS is a symlinked path resolving through /private/var; a
+  // stray repository anywhere above it would make this directory a work tree after all and
+  // the scenario would then pass for entirely the wrong reason. Ask git, once, here.
+  const probe = spawnSync("git", ["rev-parse", "--is-inside-work-tree"], {
+    cwd: dir,
+    encoding: "utf8",
+  });
+  assert.notEqual(
+    probe.status,
+    0,
+    `the fixture root ${dir} must NOT be inside a git work tree, or this scenario proves nothing; ` +
+      `git answered "${probe.stdout.trim()}" with status ${probe.status}`
+  );
+
+  corpusRoot = dir;
+});
+
+// @SCN-VOC-009
+Then("it reports that it cannot determine the project's file set", function () {
+  const output = auditRun.stdout + auditRun.stderr;
+  // REAL OUTPUT, not merely an exit code. A CLI copied to, or invoked through, a path that
+  // does not match `import.meta.url` no-ops silently and still exits 0/1 for its own
+  // reasons (lived on 3F-2324) — so the message itself is the proof the tool ran and ruled.
+  assert.ok(
+    output.includes("cannot determine the project's file set"),
+    `the audit must name the ACTUAL problem — it could not determine the project's file set — ` +
+      `never a bare "scan failed"; it printed:\n${output}`
+  );
+  assert.ok(
+    output.includes(corpusRoot),
+    `the audit must name the ROOT IT TRIED (${corpusRoot}), so the operator knows which path ` +
+      `is not in a work tree; it printed:\n${output}`
+  );
+});
+
+// @SCN-VOC-009
+Then("it exits non-zero without emitting a manifest", function () {
+  assert.notEqual(
+    auditRun.status,
+    0,
+    `a precondition failure exits NON-ZERO — distinct from a successful scan, which stays exit 0 ` +
+      `however many words it flags; got ${auditRun.status}\nstdout:\n${auditRun.stdout}`
+  );
+  assert.ok(
+    !existsSync(auditRun.outPath),
+    `no manifest may exist at ${auditRun.outPath} — NOT EVEN AN EMPTY ONE, which anything reading ` +
+      `the file afterwards cannot tell apart from a clean scan`
+  );
+  // The artefact directory is created fresh per run, so an empty listing is the strongest
+  // available statement: no manifest, no matrix, nothing partially written.
+  assert.deepEqual(
+    readdirSync(dirname(auditRun.outPath)),
+    [],
+    `the audit must emit NO artefact at all when it refuses to scan`
   );
 });

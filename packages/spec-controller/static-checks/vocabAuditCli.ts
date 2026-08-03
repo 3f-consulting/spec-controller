@@ -14,14 +14,18 @@
  *
  * With no output paths it prints a summary to stdout. Exit is always 0 for a
  * SUCCESSFUL scan, however many words it flags — the audit reports, it never
- * fails a build on a finding.
+ * fails a build on a finding. The ONE non-zero exit is the PRECONDITION failure
+ * of @SCN-VOC-009: outside a git work tree there is no honest file set, so the
+ * audit refuses to scan, names the root it tried, and writes NOTHING — not an
+ * empty artefact. A finding must never be made to share that exit code.
  *
- * @SCN-VOC-001 / @SCN-VOC-002 / @SCN-VOC-008 — features/vocabulary-audit.feature.
+ * @SCN-VOC-001 / @SCN-VOC-002 / @SCN-VOC-008 / @SCN-VOC-009 —
+ * features/vocabulary-audit.feature.
  */
 
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { readFileSync, writeFileSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { auditFiles, renderManifestCsv, renderCoverageMatrixMarkdown } from "./vocabAudit.js";
 
 /** Lockfile names excluded from the scan. */
@@ -84,6 +88,67 @@ export const GIT_LS_FILES_ARGS = [
 ] as const;
 
 /**
+ * The question put to git BEFORE the file set: is this a work tree at all? (@SCN-VOC-009, 3F-2325)
+ *
+ * Asking git what the project is buys an honest headline, and it buys a PRECONDITION the audit never
+ * used to have — git must have an answer. This is how its absence is detected, and the form is the
+ * whole ruling: `rev-parse --is-inside-work-tree`, NEVER a `.git` path probe. A `.git` FILE is a
+ * valid work tree (git worktrees — this repository is driven from one — and submodules) and a probe
+ * for a DIRECTORY would miss it; a `.git` directory further up may not be the right one and would be
+ * a false pass. Both mistakes are invisible on an ordinary clone, so the argv is pinned by the @unit
+ * arm rather than by any run. Git answers questions about git, here as everywhere else in this file.
+ */
+export const GIT_REV_PARSE_ARGS = ["rev-parse", "--is-inside-work-tree"] as const;
+
+/**
+ * The ruling over git's answer, pure: git's stdout, or `undefined` when the command itself failed.
+ *
+ * ONLY an explicit `true` scans. The two other answers each look like success from the wrong angle:
+ *
+ *  - `false` — what a path INSIDE a `.git` directory returns. It is a repository, but not a work
+ *    tree, and git EXITS 0 to say so, so a caller reading the status alone would go on to scan.
+ *  - a failure — no output at all. Read as consent, an unavailable or broken `git` would scan.
+ *
+ * Neither is reachable from a run inside this repository, which is exactly why they are pinned.
+ */
+export function insideWorkTree(gitAnswer: string | undefined): boolean {
+  return gitAnswer?.trim() === "true";
+}
+
+/**
+ * What the operator is told when the precondition fails, pure — and it is the DELIVERABLE, not
+ * decoration: the exit code says something went wrong, the message says what and where.
+ *
+ * It names the ACTUAL problem (the project's file set could not be determined) and the ROOT IT
+ * TRIED, resolved, so the operator knows which path is not in a work tree. A bare "scan failed"
+ * would satisfy the exit code and tell them nothing. It also states that NOTHING was written, so an
+ * absent manifest is never read as a clean scan.
+ */
+export function notAWorkTreeMessage(root: string): string {
+  return (
+    `vocab audit: cannot determine the project's file set — ${resolve(root)} is not inside a ` +
+    `git work tree.\n` +
+    `  The audit asks git which files make up the project, so its headline never counts gitignored ` +
+    `build output.\n` +
+    `  Outside a work tree git has no answer, and falling back to a recursive walk would emit a ` +
+    `manifest whose meaning\n` +
+    `  depends on an unstated scanning mode — the exact fault this tool was changed to remove. ` +
+    `Refusing is honest; guessing is not.\n` +
+    `  No manifest and no coverage matrix were written.`
+  );
+}
+
+/** Git's answer for `root`, or `undefined` when the query failed — git's own noise stays off stderr. */
+function gitWorkTreeAnswer(root: string): string | undefined {
+  const probe = spawnSync("git", [...GIT_REV_PARSE_ARGS], {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"],
+  });
+  return probe.status === 0 ? probe.stdout : undefined;
+}
+
+/**
  * SELECTION — the audit's own exclusions over git's answer, pure and injectable (@SCN-VOC-008).
  *
  * Separated from the walking and the reading deliberately: this is the half whose rules are ours
@@ -135,9 +200,12 @@ function isExistingFile(abs: string): boolean {
  *
  * `cwd` is the resolved root, so git returns root-relative paths exactly as the old recursive walk
  * produced them, and everything downstream — `scanFile`, `auditSegments`, both renderers — is
- * untouched. Outside a git work tree this THROWS, which is deliberate and is @SCN-VOC-009's
- * (3F-2325) subject: there is no silent fallback to a recursive walk, because a number whose
- * meaning depends on an unstated scanning mode is the exact fault this change removes.
+ * untouched. There is still NO SILENT FALLBACK to a recursive walk here — a number whose meaning
+ * depends on an unstated scanning mode is the exact fault this change removes — but the ruling on
+ * that is no longer this function's bare throw: `refusesToScan` gates the run before `main` ever
+ * reaches here (@SCN-VOC-009, 3F-2325), so the operator gets a sentence naming the root instead of
+ * git's stack. Called directly outside a work tree this still throws, which is the honest default
+ * for a helper whose precondition its one caller checks.
  */
 export function scanFiles(root: string): string[] {
   const out = execFileSync("git", [...GIT_LS_FILES_ARGS], { cwd: root, encoding: "utf8" });
@@ -150,11 +218,50 @@ function argValue(argv: string[], flag: string): string | undefined {
   return i >= 0 && i + 1 < argv.length ? argv[i + 1] : undefined;
 }
 
+/**
+ * The precondition gate (@SCN-VOC-009, 3F-2325) — true when the audit must NOT scan `root`.
+ *
+ * Called FIRST, before a single file is read and long before either artefact could be opened.
+ * Position is the mechanism: "no manifest, not even an empty one" holds by CONSTRUCTION rather than
+ * by a cleanup, because there is no path from here to a write. An empty CSV sitting at the path the
+ * operator asked for is indistinguishable from a clean scan to anything that reads the file
+ * afterwards, and the caller must not be left to tidy that up.
+ *
+ * The exit code set here is THE ONLY NON-ZERO EXIT IN THIS TOOL, and it signals a PRECONDITION
+ * FAILURE, not a finding. A successful scan stays exit 0 however many words it flags — the audit is
+ * a report, not a gate (operator ruling 2026-07-02, unchanged). Do not unify the two.
+ */
+function refusesToScan(root: string): boolean {
+  if (insideWorkTree(gitWorkTreeAnswer(root))) return false;
+  console.error(notAWorkTreeMessage(root));
+  process.exitCode = 1;
+  return true;
+}
+
+/**
+ * The headline, which now names its own authority (3F-2310, non-negotiable 2 — the scan mode is
+ * never silent).
+ *
+ * With no fallback there is only one scanning mode, so that rule is satisfied structurally — but a
+ * bare count still leaves the reader to infer WHICH files were counted, and having to infer that is
+ * exactly what made the old 735 unreadable. Prose on an existing line, no behaviour: a number read
+ * months from now carries its scope with it.
+ */
+function summarise(scanned: number, root: string, flagged: number, distinct: number): string {
+  return (
+    `vocab audit: scanned ${scanned} file(s) under ${root} — the file set git reports for ` +
+    `the project, gitignored paths excluded; ` +
+    `${flagged} flagged name(s), ${distinct} distinct flagged word(s).`
+  );
+}
+
 function main(): void {
   const argv = process.argv.slice(2);
   const root = argValue(argv, "--root") ?? ".";
   const manifestPath = argValue(argv, "--manifest");
   const matrixPath = argValue(argv, "--matrix");
+
+  if (refusesToScan(root)) return;
 
   const relPaths = scanFiles(root);
   const files = relPaths.map((path) => ({ path, content: readFileSync(join(root, path), "utf8") }));
@@ -167,10 +274,7 @@ function main(): void {
   if (matrixPath) writeFileSync(matrixPath, md);
 
   const distinct = new Set(manifest.map((r) => r.current));
-  console.log(
-    `vocab audit: scanned ${files.length} file(s) under ${root}; ` +
-      `${manifest.length} flagged name(s), ${distinct.size} distinct flagged word(s).`
-  );
+  console.log(summarise(files.length, root, manifest.length, distinct.size));
   if (manifestPath) console.log(`  manifest → ${manifestPath}`);
   if (matrixPath) console.log(`  coverage matrix → ${matrixPath}`);
   if (!manifestPath && !matrixPath) {

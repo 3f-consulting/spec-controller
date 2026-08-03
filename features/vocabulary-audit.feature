@@ -3,7 +3,7 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
 
   The closed-vocabulary completeness audit (slice 4 of [spec-controller] Outputs
   & vocabulary). Prior sweeps failed two ways — scope was GUESSED and the sweeper had
-  DISCRETION. This removes both. The tool scans every file by default (the only exclusions:  node_modules, .git, lockfiles, and the audit's own detection machinery — the meta-mention exemption, the files that name the rejected vocabulary), decomposes every name into words (camelCase / kebab /
+  DISCRETION. This removes both. The tool scans THE FILE SET GIT REPORTS FOR THE PROJECT — every gitignored path excluded, and beyond that only lockfiles and the audit's own detection machinery (the meta-mention exemption, the files that name the rejected vocabulary) — decomposes every name into words (camelCase / kebab /
   snake / dotted / path → words: rootProgramme → root, programme) and checks each word
   against the approved word-set (manifesto domain vocabulary + the endorsed generic-technical
   allowlist + the ruled-allowed-outright report/spec/feature). Burden flips: a word in
@@ -212,3 +212,43 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
       When the vocabulary audit runs over the corpus
       Then the tracked occurrence is reported
       And the occurrence under the gitignored path is not
+
+  Rule: outside a git work tree the audit refuses to scan rather than guess
+
+    The precondition (@SCN-VOC-009, 3F-2325), and the close of the scope fix. Asking git
+    what the project is buys an honest headline, and it buys a PRECONDITION the audit never
+    used to have: git must have an answer. This arm rules on its absence — operator-ruled
+    2026-08-03, FAIL LOUD.
+
+    THE FALLBACK IS THE BUG, NOT THE FIX. "No git? use the old recursive walk" is the
+    obvious implementation and it re-creates @SCN-VOC-008's fault exactly, only quieter: the
+    run would appear to succeed, emit a manifest, and leave the reader no way to know build
+    output was counted. That is a number whose meaning depends on an UNSTATED SCANNING MODE
+    — the whole fault this Rule's sibling removes. Refusing is honest; guessing is not.
+
+    NO ARTEFACT AT ALL, not an empty one. An empty CSV sitting at the path the operator
+    asked for is indistinguishable from a clean scan to anything that reads the file
+    afterwards, and this codebase has been bitten by that false-identical before. So the
+    refusal happens BEFORE any write, and the message names the actual problem and the ROOT
+    IT TRIED — it could not determine the project's file set, because THAT path is not in a
+    git work tree. Never a bare "scan failed".
+
+    GIT ANSWERS QUESTIONS ABOUT GIT here too: `git rev-parse --is-inside-work-tree`, never a
+    `.git` DIRECTORY probe. A `.git` FILE is a valid work tree (git worktrees, submodules)
+    and would be missed; a `.git` directory further up may not be the right one and would be
+    a false pass. Both cases are invisible on this tree, so the query form is pinned by the
+    unit arm rather than by any run — as is git's `false` answer, which is what a path INSIDE
+    a `.git` directory returns: a repository, but not a work tree.
+
+    THE EXIT-CODE SPLIT IS DELIBERATE, and easy to "fix" wrongly. A SUCCESSFUL scan stays
+    exit 0 however many words it flags — the audit is a report, not a gate (operator ruling
+    2026-07-02, unchanged). This scenario introduces the ONLY non-zero exit in the tool, and
+    it signals a PRECONDITION FAILURE, not a finding. A later reader must not unify them by
+    making flagged words fail too.
+
+    @unit @integration @SCN-VOC-009
+    Scenario: the audit errors when its root is not in a git work tree
+      Given a corpus directory that is not inside a git work tree
+      When the vocabulary audit runs over the corpus
+      Then it reports that it cannot determine the project's file set
+      And it exits non-zero without emitting a manifest
