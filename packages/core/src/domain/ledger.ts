@@ -54,11 +54,11 @@ export interface Ledger {
  * item exists ANYWHERE, across every Scenario Reconciliation row — scenario,
  * phantom, and suspense alike. Out-of-balance iff ANY row carries a reconciling
  * item: a scenario's out-of-balance items (failing / missing /
- * undemanded / both-missing) AND the credit-side suspense/phantom rows (an
- * undemanded static-check watermelon, an uncited credit, a phantom scenario).
+ * no-evidence-obligation / both-missing) AND the credit-side suspense/phantom rows (a
+ * no-evidence-obligation static-check watermelon, an uncited credit, a phantom scenario).
  *
  * It is deliberately NOT a scan of scenario verdicts alone — that would
- * let a watermelon-only run (every scenario balanced, yet an undemanded
+ * let a watermelon-only run (every scenario balanced, yet a no-evidence-obligation
  * static check sitting unreconciled in the suspense row) read as balanced, the
  * false pass a CI gate must never give. Every row's `reconcilingItems` is
  * consulted, so the suspense/phantom rows (verdict ALWAYS out-of-balance) count.
@@ -139,7 +139,7 @@ export function brokenItemsOf(reconciliation: Ledger): QualityCheckReconciliatio
  * Reconciliation with the scnId of the row that declared it, in row-then-document order.
  *
  * SCENARIO ROWS ONLY. A `lint` obligation is declared-side, so a phantom or suspense row can carry
- * none; the suspense row's lint CREDIT (an undemanded static check, `cites-no-scenario`) is an
+ * none; the suspense row's lint CREDIT (a no-evidence-obligation static check, `cites-no-scenario`) is an
  * observation, not an obligation, and must never inflate the declared lint total.
  *
  * ONE COPY, BY CONSTRUCTION. That scenario-rows-only filter plus the lint cut existed TWICE,
@@ -301,10 +301,10 @@ export function ledgerTally(balance: Ledger): LedgerTally {
     // machine consumer reads run-soundness off this count: `byOutcome.broken > 0` ⇒ any `missing`
     // in the run may be a BROKEN proof rather than an absent one.
     "broken": 0,
-    // The undemanded reconciling item (@SCN-LDG-008) — a credit citing a real
+    // The no-evidence-obligation reconciling item (@SCN-LDG-008) — a credit citing a real
     // scenario at an undeclared quality-check. Shown here so a reader sees it break out of
     // the reconciliation-matched-attributed count (ruling Q1).
-    "undemanded": 0,
+    "no-evidence-obligation": 0,
     // The both-missing reconciling item (@SCN-LDG-009) — the NEITHER-side outcome:
     // a scenario reconciling to zero rows on both sides. `byOutcome` is now 8-valued.
     "both-missing": 0,
@@ -413,7 +413,7 @@ export interface RuntimeObservationTally {
    * IS the balance, and a consumer asks rather than counts.
    */
   total: number;
-  /** Runtime credits posted to a scenario's account (matched-attributed OR undemanded). */
+  /** Runtime credits posted to a scenario's account (matched-attributed OR no-evidence-obligation). */
   onScenario: number;
   /** Runtime credits posted to an invented `phantom-scenario` account (an `@SCN` no feature declares). */
   onPhantomScenario: number;
@@ -439,7 +439,7 @@ export interface RuntimeObservationTally {
  * runtime tally must not see at all — the same runtime scoping the retired census enforced.
  *
  * The per-scenario-kind counts feed `summary.testVolume` directly (`onScenario` counts credits
- * citing a scenario, INCLUDING undemanded — so the 3-termed identity
+ * citing a scenario, INCLUDING no-evidence-obligation — so the 3-termed identity
  * `total = onScenario + onPhantomScenario + onSuspenseScenario` holds); `rawByRuntimeQualityCheck`
  * is the re-homed per-quality-check headline the by-level table renders.
  */
@@ -531,10 +531,10 @@ export interface StaticObservationTally {
  * its runtime sibling — RE-DERIVES NOTHING: the reconciler already decided which account every credit
  * posts to, so this can never disagree with the verdict.
  *
- * `uncitedStaticCheckCount` is the count of lint credits on the SUSPENSE row — the undemanded
+ * `uncitedStaticCheckCount` is the count of lint credits on the SUSPENSE row — the no-evidence-obligation
  * static checks the reconciler folded there (a static check running with no `@lint` naming it,
  * `cites-no-scenario` on the credit side). By construction the app only pushes RUNNING guards into
- * that undemanded stream (`runningStaticChecks`), so every suspense lint credit is running — the
+ * that no-evidence-obligation stream (`runningStaticChecks`), so every suspense lint credit is running — the
  * plain count is the census's running-and-uncited count.
  *
  * `runningStaticCheckCount` is the count of DISTINCT-BY-OBJECT-IDENTITY RUNNING lint credits across ALL
@@ -555,9 +555,9 @@ export function staticObservationTally(ledger: Ledger): StaticObservationTally {
   // running guards (`exists && enforcedOverRealSource`) join the set — a named watermelon/missing
   // guard, which posts but does not run, is filtered out (the census's running-only `continue`).
   const runningGuards = new Set<GuardEvidenceObservation>();
-  // The uncited static checks — the lint credits the reconciler folded onto the SUSPENSE row (an
-  // undemanded running guard, `cites-no-scenario`). A plain count: the app pushes only RUNNING
-  // guards into the undemanded stream, so every suspense lint credit is a running uncited guard.
+  // The uncited static checks — the lint credits the reconciler folded onto the SUSPENSE row (a
+  // no-evidence-obligation running guard, `cites-no-scenario`). A plain count: the app pushes only RUNNING
+  // guards into the no-evidence-obligation stream, so every suspense lint credit is a running uncited guard.
   let uncitedStaticCheckCount = 0;
   for (const row of ledger.scenarioReconciliations) {
     for (const obs of row.evidenceObservations) {

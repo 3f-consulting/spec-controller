@@ -32,7 +32,7 @@ import type { Scenario, EvidenceObservation, Ledger } from "../model.js";
  *   SCN-AAA-001 — names a WIRED guard (satisfied) and an UNWIRED one (watermelon): both PRESENT.
  *   SCN-AAA-002 — names an ABSENT guard (missing): not present.
  *   SCN-AAA-003 — a runtime obligation only: no static sub-rows at all.
- * Plus an undemanded running guard (folds to the SUSPENSE row as a lint CREDIT — the shape that
+ * Plus a no-evidence-obligation running guard (folds to the SUSPENSE row as a lint CREDIT — the shape that
  * must never inflate the DECLARED lint list) and a broken suite (the suspense `broken` item).
  */
 const scenarios: Scenario[] = [
@@ -50,7 +50,7 @@ const scenarios: Scenario[] = [
 const evidenceObservations: EvidenceObservation[] = [
   { qualityCheck: "lint", staticCheck: "lint:wired", exists: true, enforcedOverRealSource: true },
   { qualityCheck: "lint", staticCheck: "lint:unwired", exists: true, enforcedOverRealSource: false },
-  { qualityCheck: "lint", staticCheck: "lint:undemanded", exists: true, enforcedOverRealSource: true },
+  { qualityCheck: "lint", staticCheck: "lint:no-evidence-obligation", exists: true, enforcedOverRealSource: true },
   { qualityCheck: "unit", scnId: "SCN-AAA-003", status: "passed" },
   {
     qualityCheck: "unit",
@@ -157,7 +157,7 @@ describe("[SCN-LDG-001] presentStaticCheckCountOf counts PRESENCE, not quality",
 
 describe("[SCN-LDG-001] lintReconciliationsOf is the ONE declared static-check list", () => {
   /**
-   * SCENARIO ROWS ONLY. The suspense row carries a lint CREDIT (the undemanded running guard,
+   * SCENARIO ROWS ONLY. The suspense row carries a lint CREDIT (the no-evidence-obligation running guard,
    * `cites-no-scenario`) — an observation, not an obligation. Including it would inflate the
    * declared lint total, and would do so in the table and the tally alike.
    */
@@ -168,7 +168,7 @@ describe("[SCN-LDG-001] lintReconciliationsOf is the ONE declared static-check l
       "SCN-AAA-001:lint:unwired",
       "SCN-AAA-002:lint:absent",
     ]);
-    // The undemanded guard IS on the ledger — it just is not a declared obligation.
+    // The no-evidence-obligation guard IS on the ledger — it just is not a declared obligation.
     expect(
       ledger.scenarioReconciliations.some((r) => r.kind === "suspense-scenario")
     ).toBe(true);

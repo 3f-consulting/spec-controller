@@ -4,7 +4,7 @@
  * emitting every test result: CI publishes no static check manifest, so the running set is DERIVED — a
  * `package.json` `lint:*` script that a CI `run:` step actually invokes (@SCN-USG-001).
  * It completes the static stream so the one reconcile engine sees every running static check (a named
- * one matches its `@lint` obligation; an undemanded one folds to the suspense row) — no
+ * one matches its `@lint` obligation; a no-evidence-obligation one folds to the suspense row) — no
  * derive-and-diff patch.
  *
  * One of the two static-check observers: this one reads every RUNNING CI guard; the

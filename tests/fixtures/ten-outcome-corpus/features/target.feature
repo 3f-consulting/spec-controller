@@ -33,10 +33,10 @@ Feature: ten-outcome corpus — a fixture shaped so the REAL reconcile emits all
     Then it reconciles watermelon
 
   @e2e @SCN-TOC-005
-  Scenario: undemanded — a real scenario cited at a quality-check it never named
+  Scenario: no-evidence-obligation — a real scenario cited at a quality-check it never named
     Given an e2e obligation discharged by an e2e observation
     When a unit observation also cites this scenario
-    Then the unit credit reconciles undemanded
+    Then the unit credit reconciles no-evidence-obligation
 
   @SCN-TOC-006
   Scenario: both-missing — a scenario with no obligation and no citation

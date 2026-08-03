@@ -8,7 +8,7 @@ Feature: Detect uncited static-checks — a CI guard no @lint declares
 
   The running-guard observer emits every running CI guard (the lint:* scripts a CI run: step
   invokes — runningStaticChecks) into the reconcile stream, so the ONE reconcile engine sees the
-  complete static stream: a named guard matches its @lint obligation; an undemanded one — a
+  complete static stream: a named guard matches its @lint obligation; a no-evidence-obligation one — a
   guard that runs in CI with NO @lint declaring it — cites no scenario, so reconcile folds it to
   the suspense row (an UNCITED static-check). The report's static census is a pure counter
   over the stream (countStaticEvidenceObservationKinds → StaticEvidenceObservationKindCounts

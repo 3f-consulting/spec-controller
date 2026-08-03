@@ -279,8 +279,8 @@ Feature: The report renders the ledger as sectioned facts
     `<obligation>/<observation>`: the LEFT is the evidence obligation — a single quality-check letter (L, U, I,
     E, P) iff the scenario obligated this check, else `-`; the RIGHT is the observation count — the
     multiplicity of posted credits at this check (backing present, pass OR fail), else `-`. So a
-    named-and-met cell reads `letter/N`; a named-and-missing cell reads `letter/-`; an
-    UNDEMANDED observation (a credit at a quality-check the scenario never named) reads `-/N`;
+    named-and-met cell reads `letter/N`; a named-and-missing cell reads `letter/-`; a
+    NO-EVIDENCE-OBLIGATION observation (a credit at a quality-check the scenario never named) reads `-/N`;
     a doubly-empty cell (no evidence obligation, no credit) renders BLANK.
     The cell counts BACKING, not quality — a failing evidence obligation shows its
     count, its failing-ness staying in the Verdict + Reconciling-items columns.
@@ -291,16 +291,16 @@ Feature: The report renders the ledger as sectioned facts
     — the observation atoms are already on JSON. The "count is backing, not
     quality — never rank by it" discipline is a documented rule, NOT rendered.
 
-    The undemanded cell (`-/N`) posts from ONE production shape (@SCN-LDG-008): the reconciler posts
-    a credit-side row ON the real scenario, outcome `undemanded`, and that row carries the observation
+    The no-evidence-obligation cell (`-/N`) posts from ONE production shape (@SCN-LDG-008): the reconciler posts
+    a credit-side row ON the real scenario, outcome `no-evidence-obligation`, and that row carries the observation
     on its `evidenceObservations`. The cell reads its right-side count STRAIGHT off those posted
     credits (multiplicity-correct, @SCN-LDG-022) — never off `qualityCheckReconciliations`, which
     collapse to one matched row per obligation and would undercount duplicate citations. An
-    `undemanded` row is NOT an evidence obligation: its left side is `-`, so the cell cannot be mistaken for a
+    `no-evidence-obligation` row is NOT an evidence obligation: its left side is `-`, so the cell cannot be mistaken for a
     named-and-missing one (`letter/-`), which points at the OPPOSITE remedy — "write the test",
     when the truth is "fix the attribution". A pending obligation (@unitpending) names nothing —
     3F-1858 folds the pending pair out of the active set — so a credit citing it reconciles the same
-    UNDEMANDED way and renders `-/N` too. Proven in isolation by Vitest over a RECONCILER-TRUE
+    NO-EVIDENCE-OBLIGATION way and renders `-/N` too. Proven in isolation by Vitest over a RECONCILER-TRUE
     fixture (the balance is produced by `reconcile()` over a scenario + observation corpus, never
     hand-written, so a fixture can no longer pin a shape the pipeline cannot emit —
     evidence-manifesto §11A), and through a REAL reconcile + render over a fixture target — the
@@ -308,11 +308,11 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @integration @SCN-RPT-011
     Scenario: the ledger row shows corpus-driven evidence columns with the two-sided cell encoding
-      Given a reconciliation over a corpus spanning every cell case — a satisfied obligation, a missing one, an undemanded observation citing a scenario that never named that quality-check, a pending obligation with observations citing it at that pair, and a column absent for the scenario
+      Given a reconciliation over a corpus spanning every cell case — a satisfied obligation, a missing one, a no-evidence-obligation observation citing a scenario that never named that quality-check, a pending obligation with observations citing it at that pair, and a column absent for the scenario
       When the ledger is rendered
       Then each scenario row carries one cell per corpus column (Lint first, then the runtime levels present) with the two-sided obligation-then-observation encoding — an evidence-obligation letter, an observation count, or blank
-      And the scenario whose only state at a quality-check is undemanded renders an undemanded observation there — a dash for the evidence obligation, the count for the observation
-      And the scenario whose obligation at a quality-check is pending, with observations citing it at that pair, renders an undemanded observation there — because the credit is now undemanded, not attributed
+      And the scenario whose only state at a quality-check is no-evidence-obligation renders a no-evidence-obligation observation there — a dash for the evidence obligation, the count for the observation
+      And the scenario whose obligation at a quality-check is pending, with observations citing it at that pair, renders a no-evidence-obligation observation there — because the credit is now no-evidence-obligation, not attributed
       And no cell-key legend precedes the ledger table — the grid speaks for itself
 
   Rule: Warnings flags the tests citing no scenario with their file locators
@@ -444,11 +444,11 @@ Feature: The report renders the ledger as sectioned facts
     The fix removes the second derivation: the census becomes a PROJECTION of the one observation
     set the reconciler consumes. `countRuntimeEvidenceObservationKinds` tallies the already-parsed
     `EvidenceObservation[]` (tag-derived, per-tier), classifying each by `(scnId, qualityCheck)`
-    into raw / attributed / undemanded / phantom / suspense exactly as before — only the SOURCE of
+    into raw / attributed / no-evidence-obligation / phantom / suspense exactly as before — only the SOURCE of
     the level changes (the parsed set, not the hardcode). The CLI parses the runtime observations
     ONCE and feeds the same set to both `reconcile` and the census. The renderer is untouched — it
     reads `attributed` + `rawByRuntimeQualityCheck` from the census, so the three views fix
-    together. The identity (`Σ raw = attributed + undemanded + phantom + suspense`) holds by
+    together. The identity (`Σ raw = attributed + no-evidence-obligation + phantom + suspense`) holds by
     construction over the projected set (the parsed set retains null-scnId → suspense and
     unknown-scnId → phantom observations WITH levels).
 
@@ -490,7 +490,7 @@ Feature: The report renders the ledger as sectioned facts
     The obligation-summary decomposition (@SCN-RPT-019, 3F-1453; extended 3F-1649). The Evidence
     reconciliation's evidence-obligation out-of-balance row decomposes into a FLAT list of the
     nine out-of-balance leaf outcomes — missing, failing, watermelon,
-    no-scn-code, cites-unknown-scenario, cites-no-scenario, undemanded, broken, both-missing — each a counted
+    no-scn-code, cites-unknown-scenario, cites-no-scenario, no-evidence-obligation, broken, both-missing — each a counted
     "↳ <outcome>" row whose Out-of-balance counts SUM to the evidence-obligation out-of-balance
     total. The former debit/credit/neither grouping is removed entirely: no "↳ debit-side",
     "↳ credit-side", or "↳ neither-side" subtotal row is rendered. The grouping construct
@@ -518,12 +518,12 @@ Feature: The report renders the ledger as sectioned facts
       And the leaf rows cover every Outcome member except satisfied
       And their counts sum to the evidence-obligation out-of-balance total
       And no debit-side / credit-side / neither-side group row is present
-      And the leaf rows render in the canon order — missing, failing, watermelon, no-scn-code, cites-unknown-scenario, cites-no-scenario, undemanded, broken, both-missing — debit block, credit block, neither
+      And the leaf rows render in the canon order — missing, failing, watermelon, no-scn-code, cites-unknown-scenario, cites-no-scenario, no-evidence-obligation, broken, both-missing — debit block, credit block, neither
 
   Rule: the markdown renders each outcome's canon description in place of the bare handle
 
     The outcome gloss (@SCN-RPT-020, 3F-1626). A reconciling-item outcome handle
-    (missing, cites-no-scenario, undemanded, both-missing, …) is meaningless to a human
+    (missing, cites-no-scenario, no-evidence-obligation, both-missing, …) is meaningless to a human
     reading the report in a CI log. So the markdown renders each outcome's full CANON
     DESCRIPTION in place of the handle, EVERYWHERE an outcome surfaces to a reader: the
     Evidence-reconciliation summary's "↳" decomposition rows (Subject cell), the per-scenario
@@ -567,7 +567,7 @@ Feature: The report renders the ledger as sectioned facts
         | no-scn-code            | Evidence Obligation has no @SCN code for an Evidence Observation to link to                                               |
         | cites-unknown-scenario | Evidence Observation cites an unknown Scenario                                                                            |
         | cites-no-scenario      | Evidence Observation cites no Scenario                                                                                    |
-        | undemanded             | Evidence Observation cites a Scenario with no matching Evidence Obligation                                                |
+        | no-evidence-obligation             | Evidence Observation cites a Scenario with no matching Evidence Obligation                                                |
         | broken                 | Evidence Observation ATTEMPT errored before it could cite a Scenario (the proving suite failed to collect; behaviour never exercised) |
         | both-missing           | Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited                     |
 

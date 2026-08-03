@@ -6,7 +6,7 @@ Feature: two scenarios name one static check
   exists as a script, so it is wired-and-green. One run of one static check is evidence for
   BOTH naming scenarios (@SCN-LDG-024, 3F-1850): the credit posts to each naming account, by
   reference — canon's "posts to every account that names it". The only lint credit is the
-  named one; there is no undemanded static check here.
+  named one; there is no no-evidence-obligation static check here.
 
   Rule: two scenarios name the same static check
 

@@ -46,7 +46,7 @@ export type Outcome =
   // proof was in that harness still reads `missing` (honest at its own resolution), but the RUN
   // now carries the fault — so the reader is sent to fix the harness, not to write a test that
   // already exists.
-  | "undemanded" // a credit citing a REAL scenario at a quality-check that scenario
+  | "no-evidence-obligation" // a credit citing a REAL scenario at a quality-check that scenario
   // NEVER declared (@SCN-LDG-008) — the GENERAL case (it applies whether or not the
   // scenario carries other evidence obligations). A credit-side reconciling item ON THE REAL scenario's
   // row (carrying the evidence observation locator, ruling Q5): the credit posts to a real account, but
@@ -65,7 +65,7 @@ export type Outcome =
   // posts, blank on both sides (label: "Evidence Obligation and Evidence Observation are both
   // missing — the Scenario is untagged and uncited"). Detected by the reconciler emitting NOTHING either way (NOT a
   // hard evidenceObligations.length === 0 map — a zero-evidence obligation scenario cited by a stray
-  // credit is `undemanded`, @SCN-LDG-010). Retires the no-evidence-declared warning (@SCN-WRN-001
+  // credit is `no-evidence-obligation`, @SCN-LDG-010). Retires the no-evidence-declared warning (@SCN-WRN-001
   // Update): the zero-evidence scenario is now this out-of-balance row, never a separate axis.
   // The verdict stays two-valued (out-of-balance VIA this reconciling item, never a third verdict).
 
@@ -89,7 +89,7 @@ export type Outcome =
  * the report's row order (`missing` first: the headline cause, the one carrying the bare-level
  * split as Detail). Reordering these keys is a REPORT CHANGE, not a cosmetic tidy. The order
  * follows canon, grouped by reconciling-item shape: a DEBIT block (missing, failing, watermelon,
- * no-scn-code), a CREDIT block (cites-unknown-scenario, cites-no-scenario, undemanded), then
+ * no-scn-code), a CREDIT block (cites-unknown-scenario, cites-no-scenario, no-evidence-obligation), then
  * NEITHER (broken, both-missing). @SCN-RPT-019 now pins this SEQUENCE against the rendered `↳`
  * rows (3F-1926), so a reorder reds — the exhaustiveness guard alone proved MEMBERSHIP, not
  * order, and used not to catch one (which is how the order drifted before it was pinned).
@@ -108,10 +108,10 @@ export const OUTCOME_DESCRIPTION: Record<Outcome, string> = {
   "cites-no-scenario": "Evidence Observation cites no Scenario",
   // CANON VERBATIM — double-entry-manifesto.md:42, the Outcome column. The gloss is the outcome
   // SENTENCE, canon's checkably-true half where the handle is only a label, so it states the
-  // credit-side fact rather than echoing the handle's root. The HANDLE is deliberately untouched
-  // (3F-2308 changes the sentence only); renaming it to `no-evidence-obligation` is 3F-2300's, and
-  // moves the emitted JSON `byOutcome` key plus every @SCN-LDG scenario that reads it.
-  undemanded: "Evidence Observation cites a Scenario with no matching Evidence Obligation",
+  // credit-side fact rather than echoing the handle's root. 3F-2308 landed the sentence; 3F-2300
+  // then renamed the HANDLE to match it — the old one was the last survivor of a word canon has
+  // retired — moving the emitted `byOutcome` key and every @SCN-LDG scenario that reads it.
+  "no-evidence-obligation": "Evidence Observation cites a Scenario with no matching Evidence Obligation",
   // GENERIC over its producers (@SCN-LDG-017 + @SCN-LDG-019, 3F-1654): `broken` has two instances
   // — a vitest suite that failed to COLLECT, and a cucumber step two or more step definitions
   // match, which therefore never ran. An ambiguous step is neither a "suite" nor a "collection
@@ -189,7 +189,7 @@ interface QualityCheckReconciliationFields {
    * which carries a SYNTHESIZED scenario-scope obligation (an empty `{}`, no `qualityCheck` /
    * `staticCheck`): canon (`double-entry-manifesto.md` line 39) marks `no-scn-code` Obligation
    * Exists, Observation None — the debit twin of `cites-no-scenario` (@SCN-LDG-029). ABSENT on the
-   * credit-only outcomes (`cites-unknown-scenario` / `cites-no-scenario` / `undemanded`) and the
+   * credit-only outcomes (`cites-unknown-scenario` / `cites-no-scenario` / `no-evidence-obligation`) and the
    * neither-side outcomes (`broken` / `both-missing`), where no obligation is in scope.
    * `JSON.stringify` omits it when undefined, so a byte-identical golden is preserved everywhere the
    * obligation is absent.
@@ -201,7 +201,7 @@ interface QualityCheckReconciliationFields {
    * separate scenario-level array at print time. Present IFF the observation Exists — every
    * observation-bearing outcome: the two-sided debit outcomes (`satisfied` / `failing` /
    * `watermelon`) whose match `reconcileEvidenceObligation` found, AND the credit-only outcomes
-   * (`cites-unknown-scenario` / `cites-no-scenario` / `undemanded`) the fold produces from a
+   * (`cites-unknown-scenario` / `cites-no-scenario` / `no-evidence-obligation`) the fold produces from a
    * citing observation. ABSENT on `missing` (obligation Exists, observation None) and the
    * neither-side outcomes (`no-scn-code` / `broken` / `both-missing`), where no observation is in
    * scope. For a lint `missing` the absent static check is FOUND as the negative fact
@@ -252,7 +252,7 @@ export type QualityCheckReconciliation = QualityCheckReconciliationFields & {
  * of that outcome CARRIES the debit (evidence obligation) and the credit (evidence observation)
  * side respectively. NOT a naive function of side-presence: `missing` and `no-scn-code` share
  * (Exists, None); the three credit outcomes (`cites-unknown-scenario` / `cites-no-scenario` /
- * `undemanded`) share (None, Exists). So the invariant `makeQualityCheckReconciliation` enforces
+ * `no-evidence-obligation`) share (None, Exists). So the invariant `makeQualityCheckReconciliation` enforces
  * is (outcome, side-presence) CONSISTENCY against this row, never a derivation of outcome FROM the
  * sides.
  */
@@ -267,7 +267,7 @@ export const OUTCOME_SIDE_PROFILE: Record<
   "no-scn-code": { obligation: "Exists", observation: "None" },
   "cites-unknown-scenario": { obligation: "None", observation: "Exists" },
   "cites-no-scenario": { obligation: "None", observation: "Exists" },
-  undemanded: { obligation: "None", observation: "Exists" },
+  "no-evidence-obligation": { obligation: "None", observation: "Exists" },
   broken: { obligation: "None", observation: "None" },
   "both-missing": { obligation: "None", observation: "None" },
 };
@@ -408,18 +408,18 @@ export function reconcileEvidenceObligation(
 // ---------------------------------------------------------------------------
 
 /**
- * The UNDEMANDED items on a real scenario's row (@SCN-LDG-008) — one per credit citing THIS
+ * The NO-EVIDENCE-OBLIGATION items on a real scenario's row (@SCN-LDG-008) — one per credit citing THIS
  * scenario at a quality-check it never declared. The credit posts to a real row against NO
  * evidence obligation, so the item is CREDIT-ONLY (no obligation is in scope).
  *
- * The pair-check is what distinguishes undemanded from a matched credit: a credit at a DECLARED
+ * The pair-check is what distinguishes no-evidence-obligation from a matched credit: a credit at a DECLARED
  * `(scnId, quality-check)` pair reconciles satisfied/failing via `reconcileEvidenceObligation` and
  * is NOT re-listed here. `evidenceObligationPairs` is the journal's rule (`evidenceObligationPairsOf`),
  * built once and shared — which is what makes a credit citing a PENDING pair land here rather than
- * nowhere (3F-1858: a pending obligation names nothing, so such a credit is undemanded "exactly
+ * nowhere (3F-1858: a pending obligation names nothing, so such a credit is no-evidence-obligation "exactly
  * as when nothing was declared at all", and the run that used to read balanced over it now fails).
  */
-export function undemandedReconciliationsOf(
+export function noEvidenceObligationReconciliationsOf(
   scnId: string,
   postedCredits: readonly RuntimeEvidenceObservation[],
   evidenceObligationPairs: ReadonlySet<string>
@@ -429,7 +429,7 @@ export function undemandedReconciliationsOf(
     .map((o) =>
       makeQualityCheckReconciliation({
         qualityCheck: o.qualityCheck,
-        outcome: "undemanded" as const,
+        outcome: "no-evidence-obligation" as const,
         // The CREDIT side (@SCN-LDG-027): the citing observation this item reconciles.
         evidenceObservation: o,
         ...(o.locator !== undefined ? { locator: o.locator } : {}),
@@ -476,13 +476,13 @@ export function citesUnknownScenarioReconciliationsOf(
  *   - `broken` carries its WHERE-to-fix (locator) and its WHAT-broke (the runner's message), and
  *     NO `evidenceObservation` — a proof that never ran is not an observed piece of evidence.
  *   - an uncited runtime credit carries the observation it reconciles, plus its locator.
- *   - an undemanded static check carries its handle and its observation; it has no locator (a
+ *   - a no-evidence-obligation static check carries its handle and its observation; it has no locator (a
  *     guard is read from config, not from a test file).
  */
 export function suspenseReconciliationsOf(
   brokenEvidence: readonly RuntimeEvidenceObservation[],
   uncited: readonly RuntimeEvidenceObservation[],
-  undemandedGuards: readonly GuardEvidenceObservation[]
+  noEvidenceObligationGuards: readonly GuardEvidenceObservation[]
 ): QualityCheckReconciliation[] {
   return [
     ...brokenEvidence.map((o) =>
@@ -501,7 +501,7 @@ export function suspenseReconciliationsOf(
         ...(o.locator !== undefined ? { locator: o.locator } : {}),
       })
     ),
-    ...undemandedGuards.map((o) =>
+    ...noEvidenceObligationGuards.map((o) =>
       makeQualityCheckReconciliation({
         qualityCheck: "lint" as const,
         staticCheck: o.staticCheck,

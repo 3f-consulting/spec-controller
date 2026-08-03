@@ -56,7 +56,7 @@ Then("both naming scenarios' lint obligations reconcile satisfied", function () 
       `expected ${scnId}'s lint obligation to reconcile satisfied (the static check is wired + enforced); got "${lint.outcome}"`
     );
   }
-  // A NAMED static check is never suspense — there is no undemanded guard in this corpus.
+  // A NAMED static check is never suspense — there is no no-evidence-obligation guard in this corpus.
   assert.equal(
     sharedAccountFor(sharedGuardLedger.ledger, "(no scenario)"),
     undefined,

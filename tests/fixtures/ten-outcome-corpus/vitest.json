@@ -23,11 +23,11 @@
       ]
     },
     {
-      "name": "tests/fixtures/ten-outcome-corpus/toc-005-undemanded.test.ts",
+      "name": "tests/fixtures/ten-outcome-corpus/toc-005-no-evidence-obligation.test.ts",
       "status": "passed",
       "assertionResults": [
         {
-          "fullName": "undemanded unit credit [SCN-TOC-005]",
+          "fullName": "no-evidence-obligation unit credit [SCN-TOC-005]",
           "title": "[SCN-TOC-005] a unit credit at a quality-check the scenario never named",
           "status": "passed"
         }

@@ -13,12 +13,12 @@ Feature: an evidence-cell-grid fixture target spanning every four-way cell case
     - @SCN-CEL-002 — @integration, NO cucumber observation → Integration `∅` (named, missing),
       and Unit / E2e `—` (a column absent for this scenario — neither declared nor present).
     - @SCN-CEL-003 — @e2e ONLY, discharged by a passing cucumber observation → E2e `1`; a VITEST
-      unit test nonetheless cites it, which the reconciler posts as an UNDEMANDED credit-side row
-      (@SCN-LDG-008) and the census counts into `undemandedCount`, OUT of `attributed` → its Unit
+      unit test nonetheless cites it, which the reconciler posts as a NO-EVIDENCE-OBLIGATION credit-side row
+      (@SCN-LDG-008) and the census counts into `noEvidenceObligationCount`, OUT of `attributed` → its Unit
       cell must read `(1)`, NOT `∅`. This is the SCN-CLI-054 shape — the bug this scenario fixes.
     - @SCN-CEL-004 — @unitpending: the unit obligation is DEFERRED, so it partitions to a one-sided
       Pending Item and posts NO reconciled row; but the pending pair STAYS in
-      evidenceObligationPairs, so the vitest observation citing it is ATTRIBUTED, not undemanded →
+      evidenceObligationPairs, so the vitest observation citing it is ATTRIBUTED, not no-evidence-obligation →
       its Unit cell must read `(1)`. The second, live-today production shape of `(N)`.
     - @SCN-CEL-005 — two @lint guards (@lint=guard:cell-grid-a @lint=guard:cell-grid-b), BOTH wired
       into CI and discharged → Lint `L2/2`: the LEFT count is the evidence-obligation count (two

@@ -163,9 +163,9 @@ Given("a passing unit-level result for {string}", function (scnId: string) {
 Given("a passing integration-level result for {string}", function (scnId: string) {
   // A passing integration credit citing a REAL scenario — but at the integration
   // quality-check, which the scenario did NOT declare (it declares unit). It posts to a real
-  // account against no evidence obligation → undemanded. Carries a locator (the where-to-fix, ruling Q5).
+  // account against no evidence obligation → no-evidence-obligation. Carries a locator (the where-to-fix, ruling Q5).
   evidenceObservations = [
-    { qualityCheck: "integration", scnId, status: "passed", locator: "src/undemanded.test.ts" },
+    { qualityCheck: "integration", scnId, status: "passed", locator: "src/no-evidence-obligation.test.ts" },
   ];
 });
 
@@ -256,7 +256,7 @@ Given("a passing cucumber observation citing it", function () {
   // exercises the tag-derivation seam end-to-end: the observation's level is DERIVED from
   // the scenario's declared @e2e tag, NOT stamped from the fallback source level. Before the
   // fix the parser stamped "integration", so the e2e obligation went missing and the
-  // integration observation was undemanded.
+  // integration observation was no-evidence-obligation.
   const report: CucumberJsonReport = [
     {
       uri: "features/fixture.feature",
@@ -288,7 +288,7 @@ Then("the scenario is balanced", function () {
   // Row-scoped to the @e2e scenario's OWN row: its verdict cell reads balanced (and NOT
   // out-of-balance), and it carries no reconciling items — the e2e obligation is discharged
   // by the derived-e2e observation. Reds while the observation is stamped integration (the
-  // obligation is then missing and the observation undemanded → out-of-balance).
+  // obligation is then missing and the observation no-evidence-obligation → out-of-balance).
   const { verdict, items } = rowCells(ldg011ScnId);
   assert.match(
     verdict,
@@ -309,10 +309,10 @@ Then("the scenario is balanced", function () {
 
 // @SCN-LDG-011
 Then(
-  "it is not reported e2e-missing with an undemanded integration observation",
+  "it is not reported e2e-missing with a no-evidence-obligation integration observation",
   function () {
     // The specific false-red this fix retires: row-scoped to the @e2e scenario's items cell,
-    // it must carry NEITHER a missing item (the e2e obligation unmet) NOR an undemanded item
+    // it must carry NEITHER a missing item (the e2e obligation unmet) NOR a no-evidence-obligation item
     // (the integration observation with no obligation). Both appear together while the level is
     // taken from the source rather than the tag.
     const { items } = rowCells(ldg011ScnId);
@@ -323,7 +323,7 @@ Then(
     );
     assert.ok(
       !items.includes("Evidence Observation cites a Scenario with no matching Evidence Obligation"),
-      `expected ${ldg011ScnId} not to carry an undemanded item; got "${items}"`
+      `expected ${ldg011ScnId} not to carry a no-evidence-obligation item; got "${items}"`
     );
   }
 );
@@ -380,8 +380,8 @@ Then("the integration obligation is satisfied and the scenario is balanced", fun
   // Row-scoped to the @integration scenario's OWN row: its verdict reads balanced (and NOT
   // out-of-balance) and it carries no reconciling items — the integration obligation is
   // discharged by the derived-integration observation, with NO missing item (obligation unmet)
-  // and NO undemanded item (an observation at the wrong level). Reds if the observation is
-  // levelled anything but integration (missing + undemanded → out of balance).
+  // and NO no-evidence-obligation item (an observation at the wrong level). Reds if the observation is
+  // levelled anything but integration (missing + no-evidence-obligation → out of balance).
   const { verdict, items } = rowCells(ldg012ScnId);
   assert.match(
     verdict,
@@ -474,7 +474,7 @@ Then(
     // Row-scoped to the @unit @e2e scenario's OWN row: verdict reads balanced (and NOT
     // out-of-balance) with NO reconciling items — BOTH obligations discharged, the @unit by the
     // vitest observation and the @e2e by the derived-e2e cucumber observation. Reds if deriveLevel
-    // stops deriving @e2e (e2e missing + integration undemanded → out of balance) or if the vitest
+    // stops deriving @e2e (e2e missing + integration no-evidence-obligation → out of balance) or if the vitest
     // observation is levelled off unit (@unit missing → out of balance).
     const { verdict, items } = rowCells(ldg013ScnId);
     assert.match(
@@ -526,7 +526,7 @@ Given("a single passing cucumber observation citing it", function () {
   // emit ONE observation PER declared non-unit tier — an integration observation AND an e2e
   // observation, same scnId — so BOTH obligations are discharged and the scenario balances.
   // Before per-tier emission the parser emitted ONE observation (the first tier), so the OTHER
-  // tier went missing (and the emitted tier, when it was the wrong one, undemanded) → out of
+  // tier went missing (and the emitted tier, when it was the wrong one, no-evidence-obligation) → out of
   // balance: exactly the red this scenario pins.
   const report: CucumberJsonReport = [
     {
@@ -550,7 +550,7 @@ Then(
     // out-of-balance) with NO reconciling items — BOTH non-unit obligations discharged from the
     // ONE cucumber run (integration by the integration observation, e2e by the e2e observation).
     // Reds while the parser emits a single observation: the un-emitted tier is then missing
-    // (and any wrong-tier observation undemanded) → out of balance.
+    // (and any wrong-tier observation no-evidence-obligation) → out of balance.
     const { verdict, items } = rowCells(ldg014ScnId);
     assert.match(
       verdict,
@@ -598,7 +598,7 @@ Given("a passing cucumber observation citing the @unit-only scenario", function 
   // with the JS-ecosystem "integration" fallback. deriveLevels finds NO non-unit tier tag (@unit
   // is inert for cucumber — unit is vitest's substrate, never derived), so it falls back to the
   // single caller-declared level (integration) — a level this @unit-only scenario never declared.
-  // The observation therefore discharges NO obligation and is UNDEMANDED. Crucially it does NOT
+  // The observation therefore discharges NO obligation and is NO-EVIDENCE-OBLIGATION. Crucially it does NOT
   // discharge the @unit obligation: cucumber must never manufacture a unit discharge.
   const report: CucumberJsonReport = [
     {
@@ -615,31 +615,31 @@ Given("a passing cucumber observation citing the @unit-only scenario", function 
 });
 
 // @SCN-LDG-015
-Then("the cucumber observation is reported undemanded", function () {
+Then("the cucumber observation is reported no-evidence-obligation", function () {
   // Row-scoped to the @unit-only scenario's OWN row: the cucumber observation posts to this
-  // scenario's account (it cites it) at a level the scenario never declared → an UNDEMANDED
+  // scenario's account (it cites it) at a level the scenario never declared → a NO-EVIDENCE-OBLIGATION
   // credit-side item (at the fallback integration level). The row's verdict is out-of-balance
-  // (an undemanded item is a non-satisfied reconciling item). Reds under a mutation that lets
+  // (a no-evidence-obligation item is a non-satisfied reconciling item). Reds under a mutation that lets
   // cucumber DERIVE a unit level from the @unit tag — the observation would then DISCHARGE the
-  // unit obligation (satisfied, balanced) and no undemanded item would appear.
+  // unit obligation (satisfied, balanced) and no no-evidence-obligation item would appear.
   const { verdict, items } = rowCells(ldg015ScnId);
-  const undemanded = items
+  const noEvidenceObligation = items
     .split(";")
     .map((s) => s.trim())
     // The item renders the outcome's canon description, not the handle (3F-1626).
     .find((s) => s.includes("Evidence Observation cites a Scenario with no matching Evidence Obligation"));
   assert.ok(
-    undemanded,
-    `expected ${ldg015ScnId} to carry an undemanded cucumber observation; got "${items}"`
+    noEvidenceObligation,
+    `expected ${ldg015ScnId} to carry a no-evidence-obligation cucumber observation; got "${items}"`
   );
   assert.ok(
-    undemanded.includes("integration"),
-    `expected the undemanded observation at the fallback integration level; got "${undemanded}"`
+    noEvidenceObligation.includes("integration"),
+    `expected the no-evidence-obligation observation at the fallback integration level; got "${noEvidenceObligation}"`
   );
   assert.match(
     verdict,
     /out-of-balance/,
-    `expected ${ldg015ScnId} out-of-balance (undemanded observation); got "${verdict}"`
+    `expected ${ldg015ScnId} out-of-balance (no-evidence-obligation observation); got "${verdict}"`
   );
 });
 
@@ -648,7 +648,7 @@ Then("the @unit obligation remains the scenario's only required evidence", funct
   // Row-scoped: the scenario's ONLY named (required) obligation is unit — and it is
   // required-but-MISSING here (no vitest observation was supplied; the cucumber observation
   // discharged NOTHING). No non-unit obligation was manufactured: the only non-unit tier present
-  // is the UNDEMANDED cucumber credit (a credit, not a named obligation). Reds under a mutation
+  // is the NO-EVIDENCE-OBLIGATION cucumber credit (a credit, not a named obligation). Reds under a mutation
   // that derives unit for cucumber (the unit obligation would be wrongly satisfied — no missing).
   const { items } = rowCells(ldg015ScnId);
   const missing = items
@@ -664,7 +664,7 @@ Then("the @unit obligation remains the scenario's only required evidence", funct
     `expected the missing (required) obligation to be unit; got "${missing}"`
   );
   // Unit is the ONLY required evidence: no non-unit tier appears as a named (missing) obligation
-  // — integration is present only as the undemanded credit, not manufactured into an obligation.
+  // — integration is present only as the no-evidence-obligation credit, not manufactured into an obligation.
   assert.ok(
     !missing.includes("integration") && !missing.includes("e2e"),
     `expected unit to be the scenario's only required evidence; got "${missing}"`
@@ -786,21 +786,21 @@ Then("the suspense-scenario is out of balance", function () {
 
 // @SCN-LDG-008, @SCN-LDG-010
 Then(
-  "the ledger reports {string} with an undemanded item at {word}",
+  "the ledger reports {string} with a no-evidence-obligation item at {word}",
   function (scnId: string, qualityCheck: string) {
     // Row-scoped to the REAL scenario's OWN ledger row: its reconciling-items cell must carry
-    // an undemanded item at the named quality-check (a credit citing this real scenario at a
-    // level it never declared). Reds if the undemanded credit is silently swallowed (counted as
+    // a no-evidence-obligation item at the named quality-check (a credit citing this real scenario at a
+    // level it never declared). Reds if the no-evidence-obligation credit is silently swallowed (counted as
     // attributed) rather than surfaced as a credit-side reconciling item on the row. The row's
-    // verdict is out-of-balance (an undemanded item is a non-satisfied reconciling item).
+    // verdict is out-of-balance (a no-evidence-obligation item is a non-satisfied reconciling item).
     const { verdict, items } = rowCells(scnId);
     assert.ok(
       items.includes("Evidence Observation cites a Scenario with no matching Evidence Obligation"),
-      `expected ${scnId}'s reconciling items to include an undemanded item; got "${items}"`
+      `expected ${scnId}'s reconciling items to include a no-evidence-obligation item; got "${items}"`
     );
     assert.ok(
       items.includes(qualityCheck),
-      `expected ${scnId}'s undemanded item to be at ${qualityCheck}; got "${items}"`
+      `expected ${scnId}'s no-evidence-obligation item to be at ${qualityCheck}; got "${items}"`
     );
     assert.match(
       verdict,
@@ -836,7 +836,7 @@ Then(
 // @SCN-LDG-010
 Then("{string} is not reported as both-missing", function (scnId: string) {
   // The both-missing boundary (@SCN-LDG-009): a zero-evidence obligation scenario CITED by a stray
-  // credit has an evidence observation, so it is undemanded, NOT both-missing. Row-scoped to the
+  // credit has an evidence observation, so it is no-evidence-obligation, NOT both-missing. Row-scoped to the
   // scenario's OWN ledger row — its reconciling-items cell carries no both-missing marker.
   // (NOT a whole-report check: the trial-balance cause table legitimately names the
   // neither-side `both-missing` group at count 0 for every report.)
@@ -1677,7 +1677,7 @@ let ldg022PendingCredit: EvidenceObservation;
 
 // @SCN-LDG-022
 Given(
-  "a run whose credits span every shape — satisfied, undemanded, pending-cited, phantom, uncited, broken, a named guard and an undemanded guard",
+  "a run whose credits span every shape — satisfied, no-evidence-obligation, pending-cited, phantom, uncited, broken, a named guard and a no-evidence-obligation guard",
   function () {
     // SCN-AAA-003 declares @unitpending — a DEFERRED obligation. The credit citing it below is the
     // LOAD-BEARING case: before this scenario it vanished from the model entirely, because there
@@ -1690,7 +1690,7 @@ Feature: alpha
     Given a thing
 
   @unit @SCN-AAA-002
-  Scenario: an undemanded credit at an undeclared check
+  Scenario: a no-evidence-obligation credit at an undeclared check
     Given a thing
 
   @unitpending @SCN-AAA-003
@@ -1702,8 +1702,8 @@ Feature: alpha
     const satisfied: EvidenceObservation = {
       scnId: "SCN-AAA-001", qualityCheck: "unit", status: "passed", locator: "a.test.ts",
     };
-    // Cites a REAL scenario at a check it never declared → `undemanded`, on SCN-AAA-002's OWN row.
-    const undemanded: EvidenceObservation = {
+    // Cites a REAL scenario at a check it never declared → `no-evidence-obligation`, on SCN-AAA-002's OWN row.
+    const noEvidenceObligation: EvidenceObservation = {
       scnId: "SCN-AAA-002", qualityCheck: "integration", status: "passed", locator: "b.test.ts",
     };
     // THE LOAD-BEARING CREDIT — cites a PENDING quality-check. It posts whatever its outcome.
@@ -1729,28 +1729,28 @@ Feature: alpha
     const staticCheckEvidenceObligation: EvidenceObservation = {
       qualityCheck: "lint", staticCheck: "lint:named", exists: true, enforcedOverRealSource: true,
     };
-    // An UNDEMANDED guard credit: no @lint obligation names this handle, so it belongs to no
+    // A NO-EVIDENCE-OBLIGATION guard credit: no @lint obligation names this handle, so it belongs to no
     // account → SUSPENSE. The other arm of the guard symmetry.
-    const undemandedGuard: EvidenceObservation = {
-      qualityCheck: "lint", staticCheck: "lint:undemanded", exists: true, enforcedOverRealSource: false,
+    const noEvidenceObligationGuard: EvidenceObservation = {
+      qualityCheck: "lint", staticCheck: "lint:no-evidence-obligation", exists: true, enforcedOverRealSource: false,
     };
 
     ldgPostingObservations = [
-      satisfied, undemanded, ldg022PendingCredit, phantom, uncited, broken, staticCheckEvidenceObligation, undemandedGuard,
+      satisfied, noEvidenceObligation, ldg022PendingCredit, phantom, uncited, broken, staticCheckEvidenceObligation, noEvidenceObligationGuard,
     ];
     evidenceObservations = ldgPostingObservations;
 
     // THE POSTING RULE IS THE CITATION, never the outcome.
     ldg022ExpectedAccount = new Map<EvidenceObservation, string>([
       [satisfied, "SCN-AAA-001"],
-      [undemanded, "SCN-AAA-002"],
+      [noEvidenceObligation, "SCN-AAA-002"],
       [ldg022PendingCredit, "SCN-AAA-003"],
       [phantom, "SCN-ZZZ-999"],
       [uncited, "(no scenario)"],
       [broken, "(no scenario)"],
-      // The guard symmetry: named → the account that names it; undemanded → suspense.
+      // The guard symmetry: named → the account that names it; no-evidence-obligation → suspense.
       [staticCheckEvidenceObligation, "SCN-AAA-001"],
-      [undemandedGuard, "(no scenario)"],
+      [noEvidenceObligationGuard, "(no scenario)"],
     ]);
 
   },
@@ -1843,14 +1843,14 @@ Then(
       [
         // The named guard reconciles `satisfied` on this row — and posts here too.
         ["SCN-AAA-001", "balanced", []],
-        ["SCN-AAA-002", "out-of-balance", ["missing", "undemanded"]],
-        // The pending-cited credit reconciles `undemanded` (3F-1858): a pending obligation
+        ["SCN-AAA-002", "out-of-balance", ["missing", "no-evidence-obligation"]],
+        // The pending-cited credit reconciles `no-evidence-obligation` (3F-1858): a pending obligation
         // raises no Evidence Obligation, so nothing is named at that pair and the credit is
-        // an ordinary undemanded one. It used to reconcile to NOTHING — posting to no account,
+        // an ordinary no-evidence-obligation one. It used to reconcile to NOTHING — posting to no account,
         // run balanced, exit 0 — which was the false-green, not behaviour. Posting still
         // classifies nothing: this row's outcome is the RECONCILER's, asserted where that rule
         // lives (@SCN-PND-005); it is pinned here only to keep this exhaustion snapshot honest.
-        ["SCN-AAA-003", "out-of-balance", ["undemanded"]],
+        ["SCN-AAA-003", "out-of-balance", ["no-evidence-obligation"]],
         ["SCN-ZZZ-999", "out-of-balance", ["cites-unknown-scenario"]],
         ["(no scenario)", "out-of-balance", ["broken", "cites-no-scenario", "cites-no-scenario"]],
       ],
@@ -2172,7 +2172,7 @@ Then("the JSON projects that evidence obligation on the reconciliation", functio
 
 // THE CREDIT SIDE OF THE RECONCILING ITEM (@SCN-LDG-027, 3F-2006) — a Quality Check Reconciliation
 // carries the evidence OBSERVATION it reconciles, the mirror of LDG-026's debit half. The
-// @integration arm drives the whole parse → reconcile → renderJson pipeline over the `undemanded`
+// @integration arm drives the whole parse → reconcile → renderJson pipeline over the `no-evidence-obligation`
 // credit case (a credit citing a real scenario at a quality-check it never named — observation
 // present, obligation absent): the reconciliation carries `evidenceObservation` and no
 // `evidenceObligation`, and the machine-readable JSON PROJECTS that observation on the row.
@@ -2186,7 +2186,7 @@ Given(
   function (scnId: string) {
     // A declared @unit scenario built through the REAL declared reader (the parse → declared
     // seam), cited by an INTEGRATION credit — a quality-check the scenario never declared. The
-    // credit posts to a real account against no obligation → `undemanded`: the pure CREDIT case
+    // credit posts to a real account against no obligation → `no-evidence-obligation`: the pure CREDIT case
     // (observation present, obligation absent), the mirror of LDG-026's pure debit.
     ldg027ScnId = scnId;
     const feature = [
@@ -2198,35 +2198,35 @@ Given(
       "      Given a fixture step",
     ].join("\n");
     scenarios = parseScenarios(feature);
-    // The undemanded credit: a passing integration observation citing the real scenario at a
+    // The no-evidence-obligation credit: a passing integration observation citing the real scenario at a
     // quality-check it never named. Carries a locator (the where-to-fix, ruling Q5).
     ldgPostingObservations = [
-      { qualityCheck: "integration", scnId, status: "passed", locator: "src/undemanded.test.ts" },
+      { qualityCheck: "integration", scnId, status: "passed", locator: "src/no-evidence-obligation.test.ts" },
     ];
   },
 );
 
-/** The scenario's OWN undemanded Quality Check Reconciliation, off the ledger the shared When produced. */
-function ldg027UndemandedReconciliation(): QualityCheckReconciliation {
+/** The scenario's OWN no-evidence-obligation Quality Check Reconciliation, off the ledger the shared When produced. */
+function ldg027NoEvidenceObligationReconciliation(): QualityCheckReconciliation {
   const row = ldgPostingLedger.ledger.scenarioReconciliations.find(
     (r: ScenarioReconciliation) => r.scnId === ldg027ScnId,
   );
   assert.ok(row, `expected a ledger row for ${ldg027ScnId}`);
   const qcr = row.qualityCheckReconciliations.find(
-    (o: QualityCheckReconciliation) => o.outcome === "undemanded",
+    (o: QualityCheckReconciliation) => o.outcome === "no-evidence-obligation",
   );
   assert.ok(
     qcr,
-    `expected an undemanded Quality Check Reconciliation on ${ldg027ScnId}; got ${JSON.stringify(row.qualityCheckReconciliations)}`,
+    `expected a no-evidence-obligation Quality Check Reconciliation on ${ldg027ScnId}; got ${JSON.stringify(row.qualityCheckReconciliations)}`,
   );
   return qcr;
 }
 
 // @SCN-LDG-027
 Then("its Quality Check Reconciliation has outcome {string}", function (outcome: string) {
-  // Row-scoped to the scenario's OWN undemanded reconciliation: the pure-credit `undemanded` outcome.
+  // Row-scoped to the scenario's OWN no-evidence-obligation reconciliation: the pure-credit `no-evidence-obligation` outcome.
   assert.equal(
-    ldg027UndemandedReconciliation().outcome,
+    ldg027NoEvidenceObligationReconciliation().outcome,
     outcome,
     `expected ${ldg027ScnId}'s reconciliation to read "${outcome}"`,
   );
@@ -2236,24 +2236,24 @@ Then("its Quality Check Reconciliation has outcome {string}", function (outcome:
 Then("it carries the evidence observation it reconciles \\(the credit side)", function () {
   // The CREDIT side is carried ON the reconciliation itself — the very integration observation it
   // reconciles — not joined from a separate scenario-level array at print time.
-  const qcr = ldg027UndemandedReconciliation();
+  const qcr = ldg027NoEvidenceObligationReconciliation();
   assert.deepEqual(
     qcr.evidenceObservation,
-    { qualityCheck: "integration", scnId: ldg027ScnId, status: "passed", locator: "src/undemanded.test.ts" },
-    `expected the undemanded reconciliation to carry its evidence observation (the credit side); got ${JSON.stringify(qcr.evidenceObservation)}`,
+    { qualityCheck: "integration", scnId: ldg027ScnId, status: "passed", locator: "src/no-evidence-obligation.test.ts" },
+    `expected the no-evidence-obligation reconciliation to carry its evidence observation (the credit side); got ${JSON.stringify(qcr.evidenceObservation)}`,
   );
 });
 
 // @SCN-LDG-027
 Then("it carries no evidence obligation \\(the debit side is absent)", function () {
-  // The DEBIT side stays absent on an `undemanded` outcome — a credit citing an undeclared
+  // The DEBIT side stays absent on a `no-evidence-obligation` outcome — a credit citing an undeclared
   // quality-check reconciles against no obligation, so no `evidenceObligation` is in scope.
-  const obligation = (ldg027UndemandedReconciliation() as { evidenceObligation?: unknown })
+  const obligation = (ldg027NoEvidenceObligationReconciliation() as { evidenceObligation?: unknown })
     .evidenceObligation;
   assert.equal(
     obligation,
     undefined,
-    `expected the undemanded reconciliation to carry NO evidence obligation (debit side absent); got ${JSON.stringify(obligation)}`,
+    `expected the no-evidence-obligation reconciliation to carry NO evidence obligation (debit side absent); got ${JSON.stringify(obligation)}`,
   );
 });
 
@@ -2268,12 +2268,12 @@ Then("the JSON projects that evidence observation on the reconciliation", functi
   );
   assert.ok(row, `expected the JSON to carry a row for ${ldg027ScnId}`);
   const qcr = row.qualityCheckReconciliations.find(
-    (o: { outcome?: string }) => o.outcome === "undemanded",
+    (o: { outcome?: string }) => o.outcome === "no-evidence-obligation",
   );
-  assert.ok(qcr, `expected the JSON row to carry an undemanded Quality Check Reconciliation`);
+  assert.ok(qcr, `expected the JSON row to carry a no-evidence-obligation Quality Check Reconciliation`);
   assert.deepEqual(
     qcr.evidenceObservation,
-    { qualityCheck: "integration", scnId: ldg027ScnId, status: "passed", locator: "src/undemanded.test.ts" },
+    { qualityCheck: "integration", scnId: ldg027ScnId, status: "passed", locator: "src/no-evidence-obligation.test.ts" },
     `expected the JSON to project the evidence observation on the reconciliation; got ${JSON.stringify(qcr)}`,
   );
 });

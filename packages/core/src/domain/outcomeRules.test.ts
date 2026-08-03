@@ -19,7 +19,7 @@
 import { describe, it, expect } from "vitest";
 
 import {
-  undemandedReconciliationsOf,
+  noEvidenceObligationReconciliationsOf,
   citesUnknownScenarioReconciliationsOf,
   suspenseReconciliationsOf,
   noScnCodeReconciliations,
@@ -75,23 +75,23 @@ describe("[SCN-LDG-001] the pending partition splits a scenario's obligations ex
   });
 });
 
-describe("[SCN-LDG-001] undemandedReconciliationsOf lists credits at undeclared quality-checks", () => {
+describe("[SCN-LDG-001] noEvidenceObligationReconciliationsOf lists credits at undeclared quality-checks", () => {
   const pairs = new Set(["SCN-AAA-001 unit"]);
 
   it("skips a credit at a DECLARED pair — that one reconciles as a matched obligation", () => {
     expect(
-      undemandedReconciliationsOf("SCN-AAA-001", [credit("unit", "SCN-AAA-001")], pairs)
+      noEvidenceObligationReconciliationsOf("SCN-AAA-001", [credit("unit", "SCN-AAA-001")], pairs)
     ).toEqual([]);
   });
 
   it("lists a credit at an UNDECLARED quality-check, credit-only, carrying its locator", () => {
-    const items = undemandedReconciliationsOf(
+    const items = noEvidenceObligationReconciliationsOf(
       "SCN-AAA-001",
       [credit("e2e", "SCN-AAA-001", { locator: "tests/a.e2e.ts" })],
       pairs
     );
     expect(items).toHaveLength(1);
-    expect(items[0]!.outcome).toBe("undemanded");
+    expect(items[0]!.outcome).toBe("no-evidence-obligation");
     expect(items[0]!.locator).toBe("tests/a.e2e.ts");
     // CREDIT-ONLY — a credit at an undeclared check reconciles against no obligation.
     expect(items[0]!.evidenceObligation).toBeUndefined();
@@ -133,7 +133,7 @@ describe("[SCN-LDG-001] suspenseReconciliationsOf orders the suspense row's item
    * assertion that was missing from the repo entirely: reordering the arms left every other test
    * green.
    */
-  it("lists broken FIRST, then the uncited runtime credits, then the undemanded static checks", () => {
+  it("lists broken FIRST, then the uncited runtime credits, then the no-evidence-obligation static checks", () => {
     const items = suspenseReconciliationsOf([broken], [uncited], [guard]);
     expect(items.map((i) => i.outcome)).toEqual(["broken", "cites-no-scenario", "cites-no-scenario"]);
     expect(items[2]!.staticCheck).toBe("lint:nobody-asked");
@@ -150,7 +150,7 @@ describe("[SCN-LDG-001] suspenseReconciliationsOf orders the suspense row's item
     expect(item!.evidenceObservation).toBeUndefined();
   });
 
-  it("carries no locator on an undemanded static check — a guard is read from config, not a test file", () => {
+  it("carries no locator on a no-evidence-obligation static check — a guard is read from config, not a test file", () => {
     const [item] = suspenseReconciliationsOf([], [], [guard]);
     expect(item!.locator).toBeUndefined();
     expect(item!.evidenceObservation).toBe(guard);
@@ -177,11 +177,11 @@ describe("[SCN-LDG-001] qualityCheckReconciliationsOf degenerates a row to both-
   });
 
   /**
-   * @SCN-LDG-010, the twin — a zero-obligation scenario CITED by a stray credit already has an
-   * undemanded row, so it must fall through rather than post a degenerate item beside it. This is
+   * @SCN-LDG-010, the twin — a zero-obligation scenario CITED by a stray credit already has a
+   * no-evidence-obligation row, so it must fall through rather than post a degenerate item beside it. This is
    * why detection keys on rows-emitted, never on the declaration count.
    */
-  it("does NOT degenerate when an undemanded credit already produced a row", () => {
+  it("does NOT degenerate when a no-evidence-obligation credit already produced a row", () => {
     const items = qualityCheckReconciliationsOf([], [anItem()], []);
     expect(items.map((i) => i.outcome)).toEqual(["cites-unknown-scenario"]);
   });

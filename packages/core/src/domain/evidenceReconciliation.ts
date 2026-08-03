@@ -25,7 +25,7 @@
  *
  * POSTING-DESTINATION left too (3F-2202) — WHERE an entry lands is canon's own glossary group
  * ("### Posting") and now lives on `domain/posting`: `postingOf` (the citation-routed credits, plus
- * the undemanded-static-check arm) and `staticCheckCreditsPostingTo` (the by-name half, resolved
+ * the no-evidence-obligation-static-check arm) and `staticCheckCreditsPostingTo` (the by-name half, resolved
  * per row in that row's obligation order). The fold no longer DECIDES a destination anywhere — it
  * asks the rule once per credit and files the answer. What remains is assembly: which rows exist,
  * in what order, holding which items.
@@ -69,7 +69,7 @@ import {
   reconcileEvidenceObligation,
   // THE CREDIT-SIDE AND DEGENERATE OUTCOME RULES (3F-2204) — what an entry reconciles TO, as
   // opposed to where it lands. `reconcile` asks; it no longer maps outcomes itself.
-  undemandedReconciliationsOf,
+  noEvidenceObligationReconciliationsOf,
   citesUnknownScenarioReconciliationsOf,
   suspenseReconciliationsOf,
   noScnCodeReconciliations,
@@ -112,10 +112,10 @@ export function reconcile(
   // Pending obligations are excluded: a pending obligation names nothing.
   const evidenceObligationPairs = evidenceObligationPairsOf(scenarios);
   // The NAMED static check handles — every `@lint=<guard>` obligation across the corpus, the
-  // journal's rule. It is what `postingOf` consults to tell a named static check from an
-  // undemanded one (which cites nothing, so it posts to SUSPENSE). This replaces the removed
+  // journal's rule. It is what `postingOf` consults to tell a named static check from a
+  // no-evidence-obligation one (which cites nothing, so it posts to SUSPENSE). This replaces the removed
   // `uncitedStaticChecks` derive-and-diff param — the stream is now complete (the running-guard
-  // observer emits every running CI static check), so the reconciler recovers the undemanded
+  // observer emits every running CI static check), so the reconciler recovers the no-evidence-obligation
   // remainder itself, exactly as it does for an uncited runtime credit.
   const staticCheckEvidenceObligations = staticCheckEvidenceObligationsOf(scenarios);
   // THE ONE ROUTING PASS (3F-2202). Every credit is routed ONCE, by THE posting rule
@@ -130,11 +130,11 @@ export function reconcile(
   // The PHANTOM rows, in FIRST-SEEN order (@SCN-LDG-006).
   const phantomIds: string[] = [];
   // The three SUSPENSE streams, kept separate and each in observation order — the suspense row's
-  // item order (broken first, then uncited, then the undemanded static checks) is row assembly,
+  // item order (broken first, then uncited, then the no-evidence-obligation static checks) is row assembly,
   // owned below, not a routing decision.
   const brokenEvidence: RuntimeEvidenceObservation[] = [];
   const uncited: RuntimeEvidenceObservation[] = [];
-  const undemandedGuards: GuardEvidenceObservation[] = [];
+  const noEvidenceObligationGuards: GuardEvidenceObservation[] = [];
   for (const o of evidenceObservations) {
     // The union NARROW — `qualityCheck === "lint"` is the `EvidenceObservation` union's TYPE TAG,
     // not a posting decision. Which axis a credit rides is read here; where it LANDS is the rule's,
@@ -143,7 +143,7 @@ export function reconcile(
       const posting = postingOf(o, scenarioIds, staticCheckEvidenceObligations);
       // A static check no `@lint` names cites nothing, so it posts to SUSPENSE — the static
       // analogue of an uncited runtime credit.
-      if (posting.kind === "suspense-scenario") undemandedGuards.push(o);
+      if (posting.kind === "suspense-scenario") noEvidenceObligationGuards.push(o);
       // `every-naming-scenario` is resolved PER ROW, in that row's own obligation order, by
       // `staticCheckCreditsPostingTo` in the scenario loop below — a static check posts to EVERY
       // account naming it, so it has no single destination to file here.
@@ -183,9 +183,9 @@ export function reconcile(
       reconcileEvidenceObligation(d.scnId, req, evidenceObservations)
     );
 
-    // The CREDIT side — UNDEMANDED (@SCN-LDG-008): a credit citing THIS real scenario at a
+    // The CREDIT side — NO-EVIDENCE-OBLIGATION (@SCN-LDG-008): a credit citing THIS real scenario at a
     // quality-check it never declared. Rule + rationale: `domain/qualityCheckReconciliation`.
-    const undemandedItems = undemandedReconciliationsOf(
+    const noEvidenceObligationItems = noEvidenceObligationReconciliationsOf(
       d.scnId,
       byScn.get(d.scnId) ?? [],
       evidenceObligationPairs
@@ -195,7 +195,7 @@ export function reconcile(
     // nothing either way (@SCN-LDG-009). Rule + rationale: `domain/scenarioReconciliation`.
     const qualityCheckReconciliations = qualityCheckReconciliationsOf(
       reconciledEvidenceObligations,
-      undemandedItems,
+      noEvidenceObligationItems,
       pendingItems
     );
     // THE POSTED static-check CREDITS (@SCN-LDG-022) — a static check carries no @SCN, so `byScn`
@@ -208,7 +208,7 @@ export function reconcile(
       verdict: verdictFor(qualityCheckReconciliations),
       // THE POSTED CREDITS (@SCN-LDG-022) — every credit CITING this scenario, whatever it
       // reconciles to above. `byScn` is the citation index, so this includes the credit citing a
-      // PENDING quality-check, which reconciles `undemanded` (3F-1858 — it used to reconcile to
+      // PENDING quality-check, which reconciles `no-evidence-obligation` (3F-1858 — it used to reconcile to
       // NO ROW AT ALL, the false-green this posting made visible without fixing). It posts and is
       // findable WHATEVER it reconciles to; posting is not classifying, and a misclassification
       // must misfile an entry, never vaporise it. Plus the static check credits this account NAMES,
@@ -232,7 +232,7 @@ export function reconcile(
   // phantom Scenario Reconciliation per undeclared cited id, in first-seen order, its
   // Quality Check Reconciliation(s) carrying the outcome `cites-unknown-scenario` (and the
   // evidence observation's locator, ruling Q5), verdict ALWAYS out-of-balance. Grouped AFTER the
-  // scenario rows. (Suspense / undemanded / both-missing are LDG-007/008/009.)
+  // scenario rows. (Suspense / no-evidence-obligation / both-missing are LDG-007/008/009.)
   //
   // `phantomIds` was ROUTED ABOVE (3F-2202) — this block only ASSEMBLES the rows. The scan that
   // stood here re-stated the citation index's four routing decisions verbatim, including the
@@ -273,8 +273,8 @@ export function reconcile(
   // are the item concept's (3F-2204, `suspenseReconciliationsOf` — rule + rationale there). What
   // is decided HERE is only whether the row exists at all: suspense is minted by a credit landing
   // on it, so no credit means no row.
-  if (brokenEvidence.length > 0 || uncited.length > 0 || undemandedGuards.length > 0) {
-    const items = suspenseReconciliationsOf(brokenEvidence, uncited, undemandedGuards);
+  if (brokenEvidence.length > 0 || uncited.length > 0 || noEvidenceObligationGuards.length > 0) {
+    const items = suspenseReconciliationsOf(brokenEvidence, uncited, noEvidenceObligationGuards);
     scenarioReconciliations.push({
       scnId: "(no scenario)",
       kind: "suspense-scenario",
@@ -283,8 +283,8 @@ export function reconcile(
       verdict: verdictFor(items),
       // The credits citing NO scenario post here (@SCN-LDG-022) — the uncited, the broken (it
       // named no test, so it cites nothing whatever scnId it structurally carries), and the
-      // undemanded static checks. Together with `byScn` above this exhausts the credit stream.
-      evidenceObservations: [...brokenEvidence, ...uncited, ...undemandedGuards],
+      // no-evidence-obligation static checks. Together with `byScn` above this exhausts the credit stream.
+      evidenceObservations: [...brokenEvidence, ...uncited, ...noEvidenceObligationGuards],
       // Suspense is MINTED BY A CREDIT too — it declares nothing, so it names nothing
       // (@SCN-LDG-023).
       evidenceObligations: [],
@@ -448,11 +448,11 @@ export function summaryOf(
     // The runtime test-volume kind-counts (RMD-005), materialised only when the evidenceObservations
     // read is threaded. The surface reads the fold's per-scenario-kind counts DIRECTLY (an identity
     // — the fold already groups by the scenario-kind the credit posted to). `onScenario` is every
-    // credit posted to a scenario's account, which INCLUDES undemanded as a subset
-    // (matched-pair + undemanded) — a DIFFERENT number from the reconciliation-matched-attributed
-    // (the retired section's `attributed[]` sum, which excluded undemanded). Keeping undemanded
+    // credit posted to a scenario's account, which INCLUDES no-evidence-obligation as a subset
+    // (matched-pair + no-evidence-obligation) — a DIFFERENT number from the reconciliation-matched-attributed
+    // (the retired section's `attributed[]` sum, which excluded no-evidence-obligation). Keeping no-evidence-obligation
     // inside this count preserves the 3-termed identity `totalEvidenceObservations = onScenario +
-    // onPhantomScenario + onSuspenseScenario` (undemanded is a subset here, NOT a 4th identity term)
+    // onPhantomScenario + onSuspenseScenario` (no-evidence-obligation is a subset here, NOT a 4th identity term)
     // — the same shape the markdown's `### Test volume` line derives. `onPhantomScenario` /
     // `onSuspenseScenario` are the credits posted to the phantom / suspense accounts (suspense
     // includes `broken`).
@@ -476,7 +476,7 @@ export function summaryOf(
     // play — now a FOLD OVER THE LEDGER (3F-2118, `staticObservationTally`), symmetric with the
     // runtime `testVolume` fold. The surface keeps the census shape exactly
     // (`{ runningStaticCheckCount, uncitedStaticCheckCount }`; named is implicit). The member detail
-    // lives in the rows (named → each scenario's `@lint` sub-row; undemanded → the suspense
+    // lives in the rows (named → each scenario's `@lint` sub-row; no-evidence-obligation → the suspense
     // row) — there is no census section (2.4).
     ...(withStaticChecks ? { staticChecks } : {}),
     // The static-only lint tally (RMD-005), a LEDGER-PURE derive from `ledgerTally` — LAST key in

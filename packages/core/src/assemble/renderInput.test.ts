@@ -419,14 +419,14 @@ describe("[SCN-RMD-003] the runtime-observation totals re-home onto summary; no 
  * The static-check census is `summary.staticChecks` COUNTS alone (2.4) — the standalone
  * member-list section (`guards` → `staticChecks`, `{ciGuards[], named[]}`) COLLAPSED, symmetric
  * with the runtime side. The static check member detail now lives in the rows (named → each scenario's
- * `@lint` sub-row; undemanded → the suspense row's `cites-no-scenario` credit items), so there is
+ * `@lint` sub-row; no-evidence-obligation → the suspense row's `cites-no-scenario` credit items), so there is
  * no double-report and no census section on the JSON surface.
  */
 describe("[SCN-RMD-004] the static-check census is summary counts, no standalone section", () => {
   // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — the static-check counts are a FOLD OVER
   // THE LEDGER now (3F-2118, `staticObservationTally`), so the numbers derive from the balance, not
   // a hand-built census the assembler could disagree with. 2 running CI guards = 1 named
-  // (lint:foo, posts to its `@lint` row) + 1 uncited (lint:bar, undemanded-running → the suspense
+  // (lint:foo, posts to its `@lint` row) + 1 uncited (lint:bar, no-evidence-obligation, running → the suspense
   // row) → the fold reads {runningStaticCheckCount: 2, uncitedStaticCheckCount: 1}.
   const staticChecksBalance: Ledger = reconcile(
     [{ scnId: "SCN-RMD-010", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint:foo" }] }],
@@ -475,7 +475,7 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
   // non-trivial, onScenario excludes the phantom); 2 declared lint obligations, 1 satisfied
   // (lint:foo, running) + 1 watermelon (lint:bar, exists-but-unwired — the static-only lint tally
   // reads 1 of 2); and, on the CREDIT side, the static-check fold — 2 running CI guards = 1
-  // named (lint:foo, running) + 1 uncited (lint:baz, undemanded-running → the suspense row). The
+  // named (lint:foo, running) + 1 uncited (lint:baz, no-evidence-obligation, running → the suspense row). The
   // named watermelon lint:bar does NOT run, so the running fold excludes it (matching the
   // retired census's running-only filter).
   const rmd005Scenarios: Scenario[] = [
@@ -493,7 +493,7 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
     { qualityCheck: "integration", scnId: null, status: "passed" },
     { qualityCheck: "lint", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
     { qualityCheck: "lint", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: false },
-    // The undemanded-running guard (no @lint declares it) — folds to the suspense row as the
+    // The no-evidence-obligation running guard (no @lint declares it) — folds to the suspense row as the
     // 1 uncited static check, the credit-side teeth of the static-check fold.
     { qualityCheck: "lint", staticCheck: "lint:baz", exists: true, enforcedOverRealSource: true },
   ];
@@ -798,53 +798,53 @@ describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single qualit
  * There are two different numbers for "credits backing a scenario", and a reader must not
  * read them as the same:
  *  - Test-volume `onScenario` (summary.testVolume.onScenario) = credits that CITE A DECLARED
- *    SCENARIO — this INCLUDES undemanded (a subset), keeping the 3-termed identity
+ *    SCENARIO — this INCLUDES no-evidence-obligation (a subset), keeping the 3-termed identity
  *    `total = onScenario + onPhantomScenario + onSuspenseScenario`.
  *  - The reconciliation MATCHED-attributed = credits matching a declared (scnId, quality-check)
- *    PAIR — this EXCLUDES undemanded. The retired census materialised it as `attributed[]`; it is
- *    now recovered from the Ledger (`testVolume.onScenario − byOutcome.undemanded`) and checkable
+ *    PAIR — this EXCLUDES no-evidence-obligation. The retired census materialised it as `attributed[]`; it is
+ *    now recovered from the Ledger (`testVolume.onScenario − byOutcome.no-evidence-obligation`) and checkable
  *    against the named credits posted on the row.
  *
- * The load-bearing assertion: the two numbers DIFFER by exactly byOutcome.undemanded.
+ * The load-bearing assertion: the two numbers DIFFER by exactly byOutcome.no-evidence-obligation.
  */
 describe("[SCN-LDG-008] the two scenario-backing counts stay distinct (ruling Q1)", () => {
-  // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — a real balance carrying an undemanded
+  // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — a real balance carrying a no-evidence-obligation
   // credit-side item ON a scenario's row: SCN-LDG-008 declares ONLY unit; a unit credit
-  // reconciles satisfied (matched), an integration credit citing it is undemanded (a check it never
+  // reconciles satisfied (matched), an integration credit citing it is no-evidence-obligation (a check it never
   // declared). Both credits POST to the row, so the Ledger fold (3F-2102) counts onScenario = 2.
-  const undemandedBalance: Ledger = reconcile(
+  const noEvidenceObligationBalance: Ledger = reconcile(
     [{ scnId: "SCN-LDG-008", evidenceObligations: [{ qualityCheck: "unit" }] }],
     [
       { qualityCheck: "unit", scnId: "SCN-LDG-008", status: "passed" },
-      { qualityCheck: "integration", scnId: "SCN-LDG-008", status: "passed", locator: "src/undemanded.test.ts" },
+      { qualityCheck: "integration", scnId: "SCN-LDG-008", status: "passed", locator: "src/no-evidence-obligation.test.ts" },
     ],
   );
 
-  it("carries undemanded as its OWN entry in summary.byOutcome", () => {
-    const report = assembleRenderInput(__er(undemandedBalance, true, false), ctx);
-    expect(report.summary.evidenceObligations.byOutcome.undemanded).toBe(1);
+  it("carries no-evidence-obligation as its OWN entry in summary.byOutcome", () => {
+    const report = assembleRenderInput(__er(noEvidenceObligationBalance, true, false), ctx);
+    expect(report.summary.evidenceObligations.byOutcome["no-evidence-obligation"]).toBe(1);
   });
 
-  it("keeps Test-volume onScenario INCLUDING undemanded (cites a scenario), so it EXCEEDS the matched-pair count by exactly byOutcome.undemanded", () => {
-    const report = assembleRenderInput(__er(undemandedBalance, true, false), ctx);
-    // Test-volume onScenario = credits citing a scenario = matched (1) + undemanded (1).
+  it("keeps Test-volume onScenario INCLUDING no-evidence-obligation (cites a scenario), so it EXCEEDS the matched-pair count by exactly byOutcome.no-evidence-obligation", () => {
+    const report = assembleRenderInput(__er(noEvidenceObligationBalance, true, false), ctx);
+    // Test-volume onScenario = credits citing a scenario = matched (1) + no-evidence-obligation (1).
     expect(report.summary.testVolume!.onScenario).toBe(2);
     // The MATCHED-pair count is recovered from the Ledger, not a parallel `attributed[]` store:
-    // testVolume.onScenario − byOutcome.undemanded.
-    const undemanded = report.summary.evidenceObligations.byOutcome.undemanded;
-    const matched = report.summary.testVolume!.onScenario - undemanded;
+    // testVolume.onScenario − byOutcome.no-evidence-obligation.
+    const noEvidenceObligation = report.summary.evidenceObligations.byOutcome["no-evidence-obligation"];
+    const matched = report.summary.testVolume!.onScenario - noEvidenceObligation;
     expect(matched).toBe(1);
     // And that recovered count equals the credits posted at the NAMED (unit) pair on the row —
     // checkable straight off the ledger, where the retired census re-represented it.
-    const row = undemandedBalance.scenarioReconciliations.find((s) => s.scnId === "SCN-LDG-008")!;
+    const row = noEvidenceObligationBalance.scenarioReconciliations.find((s) => s.scnId === "SCN-LDG-008")!;
     const unitEvidenceObligationCredits = row.evidenceObservations.filter((o) => o.qualityCheck === "unit").length;
     expect(unitEvidenceObligationCredits).toBe(matched);
-    // The two numbers are NOT the same — they differ by exactly the undemanded count.
-    expect(report.summary.testVolume!.onScenario - matched).toBe(undemanded);
+    // The two numbers are NOT the same — they differ by exactly the no-evidence-obligation count.
+    expect(report.summary.testVolume!.onScenario - matched).toBe(noEvidenceObligation);
   });
 
-  it("keeps the Test-volume identity 3-termed (undemanded is a SUBSET of onScenario, not a 4th term)", () => {
-    const report = assembleRenderInput(__er(undemandedBalance, true, false), ctx);
+  it("keeps the Test-volume identity 3-termed (no-evidence-obligation is a SUBSET of onScenario, not a 4th term)", () => {
+    const report = assembleRenderInput(__er(noEvidenceObligationBalance, true, false), ctx);
     const tv = report.summary.testVolume!;
     expect(tv.totalEvidenceObservations).toBe(
       tv.onScenario + tv.onPhantomScenario + tv.onSuspenseScenario

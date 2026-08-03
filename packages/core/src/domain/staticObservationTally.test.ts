@@ -34,7 +34,7 @@ describe("[SCN-USG-001] staticObservationTally folds the posted static-check cre
   //   lint:water — a named WATERMELON (exists, unwired): posts to SCN-C but does NOT run → the
   //                running filter excludes it.
   //   lint:absent — a named MISSING guard (absent): posts to SCN-D but does NOT run → excluded.
-  //   lint:bar — RUNNING, undemanded (no @lint declares it): the reconciler folds it to the SUSPENSE
+  //   lint:bar — RUNNING, no-evidence-obligation (no @lint declares it): the reconciler folds it to the SUSPENSE
   //              row → the 1 uncited static check.
   // Built through reconcile(), so every row is a shape the pipeline actually emits.
   const scenarios: Scenario[] = [
@@ -47,14 +47,14 @@ describe("[SCN-USG-001] staticObservationTally folds the posted static-check cre
     { qualityCheck: "lint", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true }, // RUNNING, named ×2
     { qualityCheck: "lint", staticCheck: "lint:water", exists: true, enforcedOverRealSource: false }, // watermelon (posts, not running)
     { qualityCheck: "lint", staticCheck: "lint:absent", exists: false, enforcedOverRealSource: false }, // missing (posts, not running)
-    { qualityCheck: "lint", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true }, // RUNNING, undemanded → suspense
+    { qualityCheck: "lint", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true }, // RUNNING, no-evidence-obligation → suspense
   ];
   const ledger: Ledger = reconcile(scenarios, observations);
   const tally = staticObservationTally(ledger);
 
   it("counts the DISTINCT running guards, identity-deduping a guard named by two scenarios (@SCN-LDG-024)", () => {
     // lint:foo is named by SCN-A AND SCN-B — the SAME object posted to both rows by reference — so
-    // it counts ONCE; lint:bar is the undemanded running guard on suspense. lint:water (watermelon)
+    // it counts ONCE; lint:bar is the no-evidence-obligation running guard on suspense. lint:water (watermelon)
     // and lint:absent (missing) post but do NOT run, so the running filter excludes them. → 2.
     expect(tally.runningStaticCheckCount).toBe(2);
   });

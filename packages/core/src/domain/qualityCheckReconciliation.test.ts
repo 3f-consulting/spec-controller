@@ -166,7 +166,7 @@ describe("[SCN-LDG-031] OUTCOME_SIDE_PROFILE matches the manifesto's per-outcome
     "no-scn-code": { obligation: "Exists", observation: "None" }, // manifesto line 39
     "cites-unknown-scenario": { obligation: "None", observation: "Exists" }, // manifesto line 40
     "cites-no-scenario": { obligation: "None", observation: "Exists" }, // manifesto line 41
-    undemanded: { obligation: "None", observation: "Exists" }, // manifesto line 42
+    "no-evidence-obligation": { obligation: "None", observation: "Exists" }, // manifesto line 42
     broken: { obligation: "None", observation: "None" }, // manifesto line 43
     "both-missing": { obligation: "None", observation: "None" }, // manifesto line 44
   };

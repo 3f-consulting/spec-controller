@@ -274,7 +274,7 @@ When("the reconciler reconciles the fixture against that matching observation", 
   // integration observation citing the fixture scenario (@SCN-PDM-001) at the very check the
   // pending obligation declares. A non-pending obligation would reconcile this to `satisfied`;
   // the pending declaration must ignore it (partition-before-match) AND name nothing — so the
-  // observation posts as an ordinary `undemanded` credit on the scenario's own row.
+  // observation posts as an ordinary `no-evidence-obligation` credit on the scenario's own row.
   assert.ok(pendingCheck, "expected a pending quality-check to have been recorded");
   const source = readFileSync(MATCH_FIXTURE, "utf8");
   const scenarios: Scenario[] = parseScenarios(source);
@@ -287,28 +287,28 @@ When("the reconciler reconciles the fixture against that matching observation", 
 });
 
 Then(
-  "the matching observation IS flagged undemanded — a pending obligation names nothing, so nothing is attributed to it",
+  "the matching observation IS flagged no-evidence-obligation — a pending obligation names nothing, so nothing is attributed to it",
   function () {
     // A pending obligation raises NO Evidence Obligation, so its (scnId, quality-check) pair is
-    // NOT named and the citing credit posts as `undemanded` — "exactly as when nothing was
+    // NOT named and the citing credit posts as `no-evidence-obligation` — "exactly as when nothing was
     // declared at all" (canon, Pending Item). Reds if the pending pair is kept in the named
-    // set: the credit would then post NOWHERE — excluded from `undemanded` by the pair-check and
+    // set: the credit would then post NOWHERE — excluded from `no-evidence-obligation` by the pair-check and
     // from the debit side by the pending partition — and the run would read balanced, exit 0.
     // That is the false-green 3F-1858 closes.
-    const undemanded = reconciliation.scenarioReconciliations.flatMap((s) =>
-      s.reconcilingItems.filter((r) => r.outcome === "undemanded")
+    const noEvidenceObligation = reconciliation.scenarioReconciliations.flatMap((s) =>
+      s.reconcilingItems.filter((r) => r.outcome === "no-evidence-obligation")
     );
     assert.equal(
-      undemanded.length,
+      noEvidenceObligation.length,
       1,
-      `the matching observation MUST be flagged undemanded — a pending obligation names nothing; got ${
-        undemanded.length
-      } undemanded item(s) (rows: ${JSON.stringify(reconciliation.scenarioReconciliations)})`
+      `the matching observation MUST be flagged no-evidence-obligation — a pending obligation names nothing; got ${
+        noEvidenceObligation.length
+      } no-evidence-obligation item(s) (rows: ${JSON.stringify(reconciliation.scenarioReconciliations)})`
     );
     assert.equal(
-      undemanded[0]!.qualityCheck,
+      noEvidenceObligation[0]!.qualityCheck,
       "integration",
-      "the undemanded credit must be the integration one citing the pending pair"
+      "the no-evidence-obligation credit must be the integration one citing the pending pair"
     );
   }
 );
@@ -318,7 +318,7 @@ Then(
   function () {
     // THE DISTINCTION THE RULE TURNS ON. The Pending Item is verdict-neutral — never a
     // reconciling item, it flips nothing (@SCN-PND-006..008 pin that). This row is out of
-    // balance because of the CREDIT, an ordinary `undemanded` reconciling item. Two different
+    // balance because of the CREDIT, an ordinary `no-evidence-obligation` reconciling item. Two different
     // things on one row; asserting both together is what keeps the Rule honest.
     const row = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-PDM-001");
     assert.ok(row, "expected an account for the planted fixture scenario SCN-PDM-001");
@@ -327,8 +327,8 @@ Then(
     assert.deepEqual(row.pendingItems, [{ qualityCheck: "integration" }]);
     assert.deepEqual(
       row.reconcilingItems.map((r) => r.outcome),
-      ["undemanded"],
-      `the row's ONLY reconciling item must be the undemanded credit — the Pending Item is never ` +
+      ["no-evidence-obligation"],
+      `the row's ONLY reconciling item must be the no-evidence-obligation credit — the Pending Item is never ` +
         `one; got ${JSON.stringify(row.reconcilingItems)}`
     );
     // The run reds: isBalanced walks the reconciling items, so the exit code is 1.

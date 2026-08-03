@@ -975,21 +975,21 @@ describe("[SCN-RPT-010] the markdown report renders the Test volume evidenceObse
  * PRODUCED by `reconcile()` + `countRuntimeEvidenceObservationKinds()` over a scenario +
  * observation corpus — never hand-written. The previous hand-built fixture pinned the `(N)` branch
  * with an `attributed` entry at an UNDECLARED pair, a shape the census CANNOT emit (it defines
- * `attributed` as credits matching a DECLARED pair; a credit at an undeclared pair is undemanded).
- * The branch was pinned by impossible data, which is exactly why the undemanded bug survived a
+ * `attributed` as credits matching a DECLARED pair; a credit at an undeclared pair is no-evidence-obligation).
+ * The branch was pinned by impossible data, which is exactly why the no-evidence-obligation bug survived a
  * green suite. Building the fixture through the reconciler makes that shape UNCONSTRUCTIBLE, and
  * forces the two REAL `(N)` shapes into the corpus:
- *   - UNDEMANDED (SCN-C, @SCN-LDG-008): a credit citing a real scenario at a quality-check it never
- *     declared. The reconciler posts a credit-side `undemanded` row ON the scenario; the census
- *     keeps the credit OUT of `attributed` (into undemandedCount). The cell must NOT read that row
+ *   - NO-EVIDENCE-OBLIGATION (SCN-C, @SCN-LDG-008): a credit citing a real scenario at a quality-check it never
+ *     declared. The reconciler posts a credit-side `no-evidence-obligation` row ON the scenario; the census
+ *     keeps the credit OUT of `attributed` (into noEvidenceObligationCount). The cell must NOT read that row
  *     as an evidence obligation (it rendered ∅ — "missing" — pre-fix) and must count the (N) off the rows.
  *   - PENDING (SCN-F): a `<qc>pending` obligation partitions to a one-sided Pending Item and posts
  *     no RECONCILED row. This bullet used to read "PENDING + ATTRIBUTED … the pending pair STAYS
  *     in evidenceObligationPairs — so the credit citing it IS attributed"; that was the divergence
  *     canon contradicts, and 3F-1858 closed it. A pending obligation names NOTHING, so the
- *     credit citing it is UNDEMANDED — exactly as when nothing was declared at all — and the
- *     reconciler now posts it as an `undemanded` credit on SCN-F's own row (@SCN-PND-005).
- *     SCN-F therefore contributes to `undemandedCount`, not to `attributed`.
+ *     credit citing it is NO-EVIDENCE-OBLIGATION — exactly as when nothing was declared at all — and the
+ *     reconciler now posts it as a `no-evidence-obligation` credit on SCN-F's own row (@SCN-PND-005).
+ *     SCN-F therefore contributes to `noEvidenceObligationCount`, not to `attributed`.
  *
  * Parent: (@SCN-RPT-011) — per-scenario evidence columns.
  */
@@ -1001,10 +1001,10 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   //          → Lint 2 (guards PRESENT), Unit 2
   //   SCN-B: @unit, no observation → Unit ∅
   //   SCN-C: @unit (1 observation) + an integration observation it NEVER named → Unit 1,
-  //          Integration (1) — the UNDEMANDED shape
+  //          Integration (1) — the NO-EVIDENCE-OBLIGATION shape
   //   SCN-D: @integration (1 observation), no @unit → Unit —, Integration 1
   //   SCN-E: one lint guard, absent → Lint ∅
-  //   SCN-F: @unitpending with a unit observation citing the pending pair → UNDEMANDED (3F-1858)
+  //   SCN-F: @unitpending with a unit observation citing the pending pair → NO-EVIDENCE-OBLIGATION (3F-1858)
   const scenarios: Scenario[] = [
     {
       scnId: "SCN-A",
@@ -1023,12 +1023,12 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   const observations: EvidenceObservation[] = [
     { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
     { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
-    // SCN-C's integration credit cites a quality-check SCN-C never declared → UNDEMANDED.
+    // SCN-C's integration credit cites a quality-check SCN-C never declared → NO-EVIDENCE-OBLIGATION.
     { qualityCheck: "unit", scnId: "SCN-C", status: "passed" },
     { qualityCheck: "integration", scnId: "SCN-C", status: "passed" },
     { qualityCheck: "integration", scnId: "SCN-D", status: "passed" },
-    // SCN-F's unit obligation is PENDING, so it names NOTHING: this credit is UNDEMANDED, and
-    // the reconciler posts it as an undemanded credit on SCN-F's row (3F-1858 / @SCN-PND-005). It
+    // SCN-F's unit obligation is PENDING, so it names NOTHING: this credit is NO-EVIDENCE-OBLIGATION, and
+    // the reconciler posts it as a no-evidence-obligation credit on SCN-F's row (3F-1858 / @SCN-PND-005). It
     // used to count ATTRIBUTED here while the reconciler posted no row at all — two classifiers
     // disagreeing, which is the divergence 3F-1831 collapses.
     { qualityCheck: "unit", scnId: "SCN-F", status: "passed" },
@@ -1040,21 +1040,21 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   ];
   const balance: Ledger = reconcile(scenarios, observations);
 
-  it("builds the fixture through the reconciler — the undemanded credit is OUT of an evidence obligation", () => {
+  it("builds the fixture through the reconciler — the no-evidence-obligation credit is OUT of an evidence obligation", () => {
     // The fixture's own guard, read off the LEDGER (the census is retired, 3F-2104): it can only
-    // pin shapes the pipeline emits. The SCN-C integration credit is UNDEMANDED — it posts an
-    // `undemanded` reconciling item on SCN-C's own row, NOT a matched evidence obligation.
+    // pin shapes the pipeline emits. The SCN-C integration credit is NO-EVIDENCE-OBLIGATION — it posts an
+    // `no-evidence-obligation` reconciling item on SCN-C's own row, NOT a matched evidence obligation.
     //
-    // TWO undemanded credits (3F-1858): SCN-C's integration credit (a real scenario at a check it
+    // TWO no-evidence-obligation credits (3F-1858): SCN-C's integration credit (a real scenario at a check it
     // never declared) AND SCN-F's unit credit (a real scenario at a check declared PENDING — which
-    // names nothing). Counted off the rows' `undemanded` reconciling items.
-    const undemanded = balance.scenarioReconciliations.flatMap((s) =>
-      s.qualityCheckReconciliations.filter((o) => o.outcome === "undemanded")
+    // names nothing). Counted off the rows' `no-evidence-obligation` reconciling items.
+    const noEvidenceObligation = balance.scenarioReconciliations.flatMap((s) =>
+      s.qualityCheckReconciliations.filter((o) => o.outcome === "no-evidence-obligation")
     );
-    expect(undemanded).toHaveLength(2);
-    // SCN-C's integration credit is undemanded (never an evidence obligation), and it posted to SCN-C's row.
+    expect(noEvidenceObligation).toHaveLength(2);
+    // SCN-C's integration credit is no-evidence-obligation (never an evidence obligation), and it posted to SCN-C's row.
     const scnC = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-C")!;
-    expect(scnC.qualityCheckReconciliations.some((o) => o.qualityCheck === "integration" && o.outcome === "undemanded")).toBe(true);
+    expect(scnC.qualityCheckReconciliations.some((o) => o.qualityCheck === "integration" && o.outcome === "no-evidence-obligation")).toBe(true);
     expect(scnC.qualityCheckReconciliations.some((o) => o.qualityCheck === "integration" && o.outcome === "satisfied")).toBe(false);
   });
 
@@ -1066,14 +1066,14 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     expect(md).not.toContain(" E2e ");
   });
 
-  it("encodes the four cell cases two-sided — named+met, named+missing, undemanded, and absent", () => {
+  it("encodes the four cell cases two-sided — named+met, named+missing, no-evidence-obligation, and absent", () => {
     const md = renderMarkdown(__er(balance, true, false), ctx);
     // named & met → letter/count; SCN-A: Lint L2/2 (TWO named guards on the left — the
     // evidence-obligation count, @SCN-RPT-011 — both present on the right), Unit U/2.
     expect(md).toContain("| SCN-A | L2/2 | U/2 |  |");
     // named & missing → letter/- (no observation).
     expect(md).toContain("| SCN-B |  | U/- |  |");
-    // not named but present → -/N: SCN-C's integration credit is UNDEMANDED — the reconciler
+    // not named but present → -/N: SCN-C's integration credit is NO-EVIDENCE-OBLIGATION — the reconciler
     // posts a credit-side row on SCN-C, which is NOT an evidence obligation, so the left is `-` and the right is
     // the observation count. The named Unit credit reads U/1 on the same row.
     expect(md).toContain("| SCN-C |  | U/1 | -/1 |");
@@ -1083,10 +1083,10 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     expect(md).toContain("| SCN-E | L/- |  |  |");
   });
 
-  it("renders -/N for a credit at a PENDING pair — undemanded (3F-1858), no evidence-obligation letter", () => {
+  it("renders -/N for a credit at a PENDING pair — no-evidence-obligation (3F-1858), no evidence-obligation letter", () => {
     const md = renderMarkdown(__er(balance, true, false), ctx);
     // SCN-F's unit obligation is @unitpending, so it names NOTHING: the credit citing it reconciles
-    // UNDEMANDED (3F-1858) and posts an undemanded row on SCN-F → no evidence obligation (left `-`), one observed
+    // NO-EVIDENCE-OBLIGATION (3F-1858) and posts a no-evidence-obligation row on SCN-F → no evidence obligation (left `-`), one observed
     // credit (right 1) → -/1. Read straight off `evidenceObservations` (the multiplicity-correct
     // source), the two-sided cell shows the credit with no evidence-obligation letter beside it.
     expect(md).toContain("| SCN-F |  | -/1 |  |");
@@ -1274,7 +1274,7 @@ describe("[SCN-USG-001] the markdown report renders the Static checks section", 
   // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — the Static checks counts are a FOLD OVER
   // THE LEDGER now (3F-2118, `staticObservationTally`), so the numbers derive from `balance`, not a
   // hand-built census the renderer could disagree with. Two running CI guards = 1 named
-  // (lint:foo, posts to its scenario's `@lint` row) + 1 uncited (lint:bar, undemanded-running,
+  // (lint:foo, posts to its scenario's `@lint` row) + 1 uncited (lint:bar, no-evidence-obligation, running,
   // folds to the suspense row) → the fold reads {runningStaticCheckCount: 2, uncitedStaticCheckCount: 1}.
   const twoRunningOneUncited: Ledger = reconcile(
     [{ scnId: "SCN-USG-001", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint:foo" }] }],
@@ -1367,7 +1367,7 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the nine leaf outc
   // The nine out-of-balance leaf outcomes in canonical (model.ts reading) order —
   // satisfied excluded (it is the balanced outcome, not in the out-of-balance decomposition).
   // Canon groups by reconciling-item shape: a DEBIT block (missing, failing, watermelon,
-  // no-scn-code), a CREDIT block (cites-unknown-scenario, cites-no-scenario, undemanded), then
+  // no-scn-code), a CREDIT block (cites-unknown-scenario, cites-no-scenario, no-evidence-obligation), then
   // NEITHER (broken, both-missing). Used below for membership/sum (order-agnostic); the ORDER
   // itself is pinned by its own test against an independent canon literal.
   const LEAVES = [
@@ -1379,7 +1379,7 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the nine leaf outc
     "no-scn-code",
     "cites-unknown-scenario",
     "cites-no-scenario",
-    "undemanded",
+    "no-evidence-obligation",
     "broken",
     "both-missing",
   ] as const;
@@ -1398,7 +1398,7 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the nine leaf outc
     "cites-no-scenario": true,
     "no-scn-code": true,
     broken: true,
-    undemanded: true,
+    "no-evidence-obligation": true,
     "both-missing": true,
   };
   const EXPECTED_LEAVES = (Object.keys(ALL_OUTCOMES) as Outcome[]).filter(
@@ -1471,7 +1471,7 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the nine leaf outc
     const md = renderMarkdown(__er(spanning), ctx);
     // Canon reading order, hardcoded here as the INDEPENDENT source of truth for sequence:
     // a DEBIT block (missing, failing, watermelon, no-scn-code), a CREDIT block
-    // (cites-unknown-scenario, cites-no-scenario, undemanded), then NEITHER (broken, both-missing).
+    // (cites-unknown-scenario, cites-no-scenario, no-evidence-obligation), then NEITHER (broken, both-missing).
     // §11A: the expectation is this literal, asserted against the RENDERED ↳ sequence — NOT a
     // re-read of OUTCOME_DESCRIPTION's key order (which would compare the source to itself and
     // prove nothing; that circularity is exactly why the order drifted and 3F-1806 could reorder
@@ -1483,7 +1483,7 @@ describe("[SCN-RPT-019] the markdown obligation summary lists the nine leaf outc
       "no-scn-code",
       "cites-unknown-scenario",
       "cites-no-scenario",
-      "undemanded",
+      "no-evidence-obligation",
       "broken",
       "both-missing",
     ];
@@ -1570,7 +1570,7 @@ describe("[SCN-RPT-020] the markdown renders each outcome's canon description, n
       "watermelon",
       "cites-unknown-scenario",
       "cites-no-scenario",
-      "undemanded",
+      "no-evidence-obligation",
       "both-missing",
     ]) {
       expect(md).not.toContain(`| ↳ ${handle} |`);
@@ -1646,7 +1646,7 @@ describe("[SCN-RPT-025] every outcome glosses as the manifesto's canon Outcome t
     "no-scn-code": "Evidence Obligation has no @SCN code for an Evidence Observation to link to",
     "cites-unknown-scenario": "Evidence Observation cites an unknown Scenario",
     "cites-no-scenario": "Evidence Observation cites no Scenario",
-    undemanded: "Evidence Observation cites a Scenario with no matching Evidence Obligation",
+    "no-evidence-obligation": "Evidence Observation cites a Scenario with no matching Evidence Obligation",
     broken:
       "Evidence Observation ATTEMPT errored before it could cite a Scenario (the proving suite failed to collect; behaviour never exercised)",
     "both-missing":
@@ -1828,7 +1828,7 @@ describe("[SCN-PND-011] the markdown Summary tallies Pending Items separately fr
       "watermelon",
       "cites-unknown-scenario",
       "cites-no-scenario",
-      "undemanded",
+      "no-evidence-obligation",
       "both-missing",
     ] as const) {
       expect(section).toContain(`↳ ${OUTCOME_DESCRIPTION[leaf]} `);

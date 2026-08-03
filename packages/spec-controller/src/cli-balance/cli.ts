@@ -475,7 +475,7 @@ export function runBalance(argv: string[]): void {
   // The CI gate (@SCN-CLI-004): `balance` is a GATE, not just a reporter. AFTER the report
   // is written in full, map the whole-run verdict to the process exit code. Out-of-balance
   // (ANY reconciling item anywhere: an out-of-balance scenario OR a suspense-row item such
-  // as an undemanded static-check watermelon) sets process.exitCode = 1 and RETURNS — set,
+  // as a no-evidence-obligation static-check watermelon) sets process.exitCode = 1 and RETURNS — set,
   // never `process.exit(1)`, so the buffered report is flushed intact rather than truncated
   // mid-write. It exits EXACTLY 1 so it reds a CI build and can't masquerade as the usage
   // error (2, above). An ENUMERATED status, never a count (8-bit wrap → false pass). A

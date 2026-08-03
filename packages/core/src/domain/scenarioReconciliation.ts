@@ -73,7 +73,7 @@ export interface ScenarioReconciliation {
    * POSTING IS NOT CLASSIFYING. An observation posts here whatever it later reconciles to — or
    * even when it reconciles to NOTHING. A credit citing a `<quality-check>pending` obligation
    * produces no `QualityCheckReconciliation` at all (the obligation is partitioned off before the
-   * match, and the pending pair keeps the credit out of `undemanded`), and it posts here ANYWAY:
+   * match, and the pending pair keeps the credit out of `no-evidence-obligation`), and it posts here ANYWAY:
    * a misclassification must MISFILE an entry, never vaporise it. So this array is NOT derivable
    * from `qualityCheckReconciliations` — that is the whole point of the layer.
    *
@@ -234,14 +234,14 @@ export function presentStaticCheckCountOf(row: ScenarioReconciliation): number {
 }
 
 /**
- * A real scenario row's SUB-ROWS — the reconciled debits and the credit-side undemanded items
+ * A real scenario row's SUB-ROWS — the reconciled debits and the credit-side no-evidence-obligation items
  * together, degenerating to the ONE `both-missing` item when the row reconciled to nothing either
  * way (@SCN-LDG-009, 3F-2204). The row-SHAPE rule, so it lives with the row.
  *
- * BOTH-MISSING is the NEITHER-side outcome: zero declared obligations AND zero undemanded credits.
+ * BOTH-MISSING is the NEITHER-side outcome: zero declared obligations AND zero no-evidence-obligation credits.
  * It is detected on ROWS-EMITTED — the concatenated set being empty — never on
  * `evidenceObligations.length === 0`. That distinction is load-bearing: a zero-obligation scenario
- * whose `@SCN` IS cited by a stray credit (@SCN-LDG-010, the twin) already produced an `undemanded`
+ * whose `@SCN` IS cited by a stray credit (@SCN-LDG-010, the twin) already produced a `no-evidence-obligation`
  * row above, so it falls through here and is never both-missing. Keying on the declaration count
  * instead would post a spurious degenerate item beside a real one.
  *
@@ -257,9 +257,9 @@ export function presentStaticCheckCountOf(row: ScenarioReconciliation): number {
  */
 export function qualityCheckReconciliationsOf(
   reconciledEvidenceObligations: readonly QualityCheckReconciliation[],
-  undemandedItems: readonly QualityCheckReconciliation[],
+  noEvidenceObligationItems: readonly QualityCheckReconciliation[],
   pendingItems: readonly PendingItem[]
 ): QualityCheckReconciliation[] {
-  const rows = [...reconciledEvidenceObligations, ...undemandedItems];
+  const rows = [...reconciledEvidenceObligations, ...noEvidenceObligationItems];
   return rows.length === 0 && pendingItems.length === 0 ? [bothMissingReconciliation()] : rows;
 }

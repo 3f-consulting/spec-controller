@@ -111,37 +111,37 @@ Feature: Ledger over declared-vs-observed evidence
       Then the ledger reports a suspense-scenario reconciliation "(no scenario)" with a cites-no-scenario item
       And the suspense-scenario is out of balance
 
-  Rule: a credit at an undeclared quality-check on a real scenario is undemanded
+  Rule: a credit at an undeclared quality-check on a real scenario is no-evidence-obligation
 
     The bidirectional reconciler also consumes credits that cite a REAL declared
     scenario at a quality-check that scenario NEVER declared — a runtime result attributed to
     a scenario, but at a level the scenario has no evidence obligation for. Such a credit posts
-    to a real account, but against no evidence obligation on it: outcome undemanded (the GENERAL case —
+    to a real account, but against no evidence obligation on it: outcome no-evidence-obligation (the GENERAL case —
     it applies whether or not the scenario carries other evidence obligations). It becomes a credit-side
     Quality Check Reconciliation ON THE REAL scenario's row (carrying the evidence observation locator as
     the where-to-fix, ruling Q5); the row's own declared evidence obligations reconcile as normal. This
     fixes the latent attributed mis-count: countRuntimeEvidenceObservationKinds no longer silently counts a
-    stray credit at an undeclared quality-check as reconciliation-matched-attributed — undemanded
+    stray credit at an undeclared quality-check as reconciliation-matched-attributed — no-evidence-obligation
     appears in summary.byOutcome, while the Test-volume attributed (credits citing a declared
     scenario) still INCLUDES it as a subset. The two attributed counts stay distinct.
 
     @unit @integration @SCN-LDG-008
-    Scenario: a credit at an undeclared quality-check on a real scenario is reported as undemanded
+    Scenario: a credit at an undeclared quality-check on a real scenario is reported as no-evidence-obligation
       Given a scenario "SCN-LDG-008" requiring unit-level evidence
       And a passing integration-level result for "SCN-LDG-008"
       When the reconciler runs
-      Then the ledger reports "SCN-LDG-008" with an undemanded item at integration
+      Then the ledger reports "SCN-LDG-008" with a no-evidence-obligation item at integration
 
     # The negative twin (@SCN-LDG-010): a ZERO-evidence obligation scenario whose @SCN IS cited
-    # by a stray credit. It has an evidence observation at an undeclared quality-check, so it is undemanded
+    # by a stray credit. It has an evidence observation at an undeclared quality-check, so it is no-evidence-obligation
     # — NOT both-missing. This pins the general case and the both-missing boundary: detection keys
     # on rows-emitted, not on qualityCheckReconciliations.length === 0 (both-missing itself lands in LDG-009).
     @unit @integration @SCN-LDG-010
-    Scenario: a zero-evidence obligation scenario cited by a stray credit is undemanded, not both-missing
+    Scenario: a zero-evidence obligation scenario cited by a stray credit is no-evidence-obligation, not both-missing
       Given a zero-evidence obligation scenario "SCN-LDG-010"
       And a passing unit-level result for "SCN-LDG-010"
       When the reconciler runs
-      Then the ledger reports "SCN-LDG-010" with an undemanded item at unit
+      Then the ledger reports "SCN-LDG-010" with a no-evidence-obligation item at unit
       And "SCN-LDG-010" is not reported as both-missing
 
   Rule: a scenario with zero rows on both sides is both-missing
@@ -153,7 +153,7 @@ Feature: Ledger over declared-vs-observed evidence
     blank on both sides, outcome both-missing (label: "Evidence Obligation and
     Evidence Observation are both missing — the Scenario is untagged and uncited"), verdict out of balance. Detection keys
     on the reconciler emitting NOTHING either way — NOT a hard qualityCheckReconciliations.length
-    === 0 map: a zero-evidence obligation scenario cited by a stray credit is undemanded (LDG-010),
+    === 0 map: a zero-evidence obligation scenario cited by a stray credit is no-evidence-obligation (LDG-010),
     not both-missing. This retires the no-evidence-declared warning — the warnings section,
     JSON key, and ScenarioWarning type dissolve; the scenario's new home is this row.
 
@@ -174,7 +174,7 @@ Feature: Ledger over declared-vs-observed evidence
     whichever — so an e2e scenario proven via cucumber must yield an e2e observation,
     discharging its e2e obligation and reconciling balanced. Before the fix the cucumber
     source was hardcoded to integration, so an e2e-via-cucumber scenario false-red:
-    e2e missing PLUS integration undemanded (an adopter's repository 12-scenario false-red). The
+    e2e missing PLUS integration no-evidence-obligation (an adopter's repository 12-scenario false-red). The
     caller-declared source level survives only as the fallback for an untagged scenario;
     the reconciler's existing (scnId, level) matching does the rest, untouched.
 
@@ -184,7 +184,7 @@ Feature: Ledger over declared-vs-observed evidence
       And a passing cucumber observation citing it
       When the ledger reconciles the target
       Then the scenario is balanced
-      And it is not reported e2e-missing with an undemanded integration observation
+      And it is not reported e2e-missing with a no-evidence-obligation integration observation
 
     # The regression pin (SCN-LDG-012): the integration tier used to be correct by
     # ACCIDENT — the old CUCUMBER_QUALITY_CHECK="integration" hardcode happened to agree
@@ -239,22 +239,22 @@ Feature: Ledger over declared-vs-observed evidence
     # cucumber observation. @unit is NOT a cucumber-derivable tier (unit is vitest's substrate,
     # never derived from the cucumber report), so the observation derives NO non-unit level from
     # the scenario and falls back to the JS-ecosystem default (integration) — a level the
-    # @unit-only scenario never declared, so the observation is UNDEMANDED on the scenario's OWN
+    # @unit-only scenario never declared, so the observation is NO-EVIDENCE-OBLIGATION on the scenario's OWN
     # row (a cited credit against no obligation; contrast the null-scnId suspense row of LDG-007).
     # It discharges NOTHING: the @unit obligation is NOT manufactured-discharged by cucumber — it
     # remains the scenario's only required evidence, unmet here because no vitest observation was
     # supplied. Pins that "a cucumber observation discharges the cited scenario's NON-UNIT
     # obligations" never manufactures a unit (or any) discharge where none is declared. Distinct
     # step wording ("declared @unit only", "citing the @unit-only scenario", "the cucumber
-    # observation is reported undemanded", "the @unit obligation remains the scenario's only
+    # observation is reported no-evidence-obligation", "the @unit obligation remains the scenario's only
     # required evidence") leaves LDG-011/012/013/014's steps byte-untouched; only the generic
     # "the ledger reconciles the target" When is shared.
     @unit @integration @SCN-LDG-015
-    Scenario: a cucumber observation for a @unit-only scenario discharges nothing and is undemanded
+    Scenario: a cucumber observation for a @unit-only scenario discharges nothing and is no-evidence-obligation
       Given a scenario declared @unit only
       And a passing cucumber observation citing the @unit-only scenario
       When the ledger reconciles the target
-      Then the cucumber observation is reported undemanded
+      Then the cucumber observation is reported no-evidence-obligation
       And the @unit obligation remains the scenario's only required evidence
 
   # MOST-SPECIFIC-CITATION-WINS (SCN-LDG-016). Vitest's `fullName` is the ANCESTOR PATH
@@ -453,7 +453,7 @@ Feature: Ledger over declared-vs-observed evidence
   # is indifferent to the outcome, and never depended on that outcome being right or wrong. The
   # load-bearing case is the credit citing a PENDING quality-check: it posts and is findable
   # whatever its outcome turns out to be. What that outcome IS belongs to the reconciler, not to
-  # this scenario — 3F-1858 makes this particular credit reconcile honestly as `undemanded`, and
+  # this scenario — 3F-1858 makes this particular credit reconcile honestly as `no-evidence-obligation`, and
   # this Rule reads identically on both sides of that change. That is the point: a
   # misclassification should MISFILE an entry, not vaporise it.
   #
@@ -468,8 +468,8 @@ Feature: Ledger over declared-vs-observed evidence
   #
   # A GUARD credit carries no @SCN, so its link is the GUARD HANDLE rather than a citation: the
   # same link the reconciler already follows to put a lint obligation's outcome on the naming
-  # row. So the symmetry completes — a NAMED guard posts to EVERY account that names it; an
-  # UNDEMANDED guard belongs to no account and posts to SUSPENSE, where it already reconciles
+  # row. So the symmetry completes — a NAMED guard posts to EVERY account that names it; a
+  # NO-EVIDENCE-OBLIGATION guard belongs to no account and posts to SUSPENSE, where it already reconciles
   # `cites-no-scenario`. Every credit posts to AT LEAST ONE account, never to none (canon,
   # double-entry-manifesto.md line 160: "Not exactly one — a static check posts to every account
   # that names it"). Exactly-one is a RUNTIME property (the credit cites, so it names one) — the
@@ -478,7 +478,7 @@ Feature: Ledger over declared-vs-observed evidence
 
     @unit @integration @SCN-LDG-022
     Scenario: over a single-obligation corpus every evidence observation posts to exactly one ledger account and is findable there — the never-zero invariant's instance where nothing is named twice
-      Given a run whose credits span every shape — satisfied, undemanded, pending-cited, phantom, uncited, broken, a named guard and an undemanded guard
+      Given a run whose credits span every shape — satisfied, no-evidence-obligation, pending-cited, phantom, uncited, broken, a named guard and a no-evidence-obligation guard
       When the ledger reconciles that run
       Then every evidence observation posts to exactly one ledger account
       And each credit is findable in the account its citation names
@@ -502,7 +502,7 @@ Feature: Ledger over declared-vs-observed evidence
 
   # THE OBLIGATIONS-ONLY CORPUS (@SCN-LDG-025, 3F-1851) — isolating the named-guard posting rule so
   # it ALONE determines the verdict. Every other lint fixture mixes a named guard with another
-  # credit shape (broken / uncited / undemanded) that independently mints the suspense row, so the
+  # credit shape (broken / uncited / no-evidence-obligation) that independently mints the suspense row, so the
   # named-guard path never decides the outcome on its own — the rule was unfalsifiable (a rejected
   # post-to-suspense treatment went 501/501 green). A corpus whose ONLY lint credit is one satisfied
   # named guard removes every other cause: balanced, no suspense row, summary.outOfBalance 0
@@ -522,7 +522,7 @@ Feature: Ledger over declared-vs-observed evidence
   # evidenceObligations` is walked one scenario at a time in the `for (const d of scenarios)` loop
   # and never indexed. The nearest thing is `evidenceObligationPairs` — a `Set<string>` of
   # "<scnId> <qualityCheck>" MEMBERSHIP keys that carries no entries at all, existing only for the
-  # undemanded pair-check.
+  # no-evidence-obligation pair-check.
   #
   # So the ledger's two sides arrive by different routes and neither is the accounts-with-entries
   # canon describes. This scenario posts the declared obligations onto the account, keyed by
@@ -567,17 +567,17 @@ Feature: Ledger over declared-vs-observed evidence
   # THE CREDIT SIDE OF THE RECONCILING ITEM (@SCN-LDG-027, 3F-2006). The debit half
   # (@SCN-LDG-026) brought the evidence obligation onto the reconciliation; this scenario completes
   # the two-sidedness by bringing the CREDIT side — every observation-bearing outcome carries the
-  # `evidenceObservation` it reconciles, projected on the machine-readable JSON. The `undemanded`
+  # `evidenceObservation` it reconciles, projected on the machine-readable JSON. The `no-evidence-obligation`
   # case isolates the pure credit — a credit citing a real scenario at a quality-check it never
   # named — so the observation is carried while the obligation side stays absent (the mirror of
   # LDG-026's pure debit). With both landed, `failing` vs `satisfied` vs `missing` is derivable
   # BECAUSE the two-sided outcomes carry both — the point of the slice.
   Rule: a Quality Check Reconciliation carries the evidence observation it reconciles (the credit side)
     @unit @integration @SCN-LDG-027
-    Scenario: an undemanded quality-check reconciliation carries its evidence observation and no obligation
+    Scenario: a no-evidence-obligation quality-check reconciliation carries its evidence observation and no obligation
       Given a scenario "SCN-LDG-027" cited by a credit at a quality-check it never named
       When the ledger reconciles that run
-      Then its Quality Check Reconciliation has outcome "undemanded"
+      Then its Quality Check Reconciliation has outcome "no-evidence-obligation"
       And it carries the evidence observation it reconciles (the credit side)
       And it carries no evidence obligation (the debit side is absent)
       And the JSON projects that evidence observation on the reconciliation

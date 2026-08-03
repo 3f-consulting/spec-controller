@@ -38,7 +38,7 @@ const FIXTURE = {
 /**
  * The ALL-BALANCED fixture target ([3F-1460] fix-to-canon, 3F-1414) — two @unit scenarios
  * BOTH satisfied by the Vitest report, no phantom, no uncited credit, and a GUARDLESS
- * --package-json so the tool's own lint:* guards don't post an undemanded suspense row.
+ * --package-json so the tool's own lint:* guards don't post a no-evidence-obligation suspense row.
  * The whole reconciliation is balanced, so `balance` exits 0. Used by CLI-001/003, whose
  * intent is a CLEAN standalone run (exit 0) — now that the gate makes exit 0 mean
  * genuinely balanced, their target must actually be balanced (it used to exit 0 only

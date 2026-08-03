@@ -5,7 +5,7 @@ Feature: a corpus whose only lint credit is a named static check
   NAMED static check: one scenario declares @lint=lint:obligations-only; CI runs
   lint:obligations-only; package.json defines it. So the guard EXISTS and is ENFORCED over the real
   source → satisfied → the run is BALANCED. There is NO other credit shape — no broken, no
-  uncited, no undemanded guard — so nothing else can mint the suspense row. The named-guard
+  uncited, no no-evidence-obligation guard — so nothing else can mint the suspense row. The named-guard
   posting rule ALONE determines the verdict (@SCN-LDG-025, 3F-1851): the credit posts to its
   naming account, so summary.outOfBalance is 0 and agrees with the balanced verdict. Under the
   REJECTED post-to-suspense treatment this corpus would mint a spurious out-of-balance suspense

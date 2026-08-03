@@ -706,12 +706,12 @@ After({ tags: "@SCN-RPT-018" }, function () {
 // is only caught by the real pipeline, never by a hand-built balance). The fixture corpus
 // (tests/fixtures/evidence-cell-grid) carries: SCN-CEL-001 named+met at unit and lint;
 // SCN-CEL-002 named+missing at integration (and absent at the other columns); SCN-CEL-003
-// @e2e-only, cited by a VITEST unit observation — the UNDEMANDED credit-side row (@SCN-LDG-008),
+// @e2e-only, cited by a VITEST unit observation — the NO-EVIDENCE-OBLIGATION credit-side row (@SCN-LDG-008),
 // kept OUT of `attributed` by the census, so its Unit cell must read (1), NOT ∅ (the SCN-CLI-054
 // shape — RED before the fix); and SCN-CEL-004 whose unit obligation is @unitpending — deferred,
-// so it names NOTHING (3F-1858): the vitest observation citing it reconciles UNDEMANDED and posts
-// an undemanded row on SCN-CEL-004's account, so its Unit cell reads (1) off that undemanded row.
-// Both (N) shapes here are ONE shape now — an undemanded credit — since 3F-1858 folded the pending
+// so it names NOTHING (3F-1858): the vitest observation citing it reconciles NO-EVIDENCE-OBLIGATION and posts
+// a no-evidence-obligation row on SCN-CEL-004's account, so its Unit cell reads (1) off that no-evidence-obligation row.
+// Both (N) shapes here are ONE shape now — a no-evidence-obligation credit — since 3F-1858 folded the pending
 // pair out of the active set (the old "attributed at a pending pair" account no longer exists).
 const EVIDENCE_CELL_GRID_OPTS = {
   features: "tests/fixtures/evidence-cell-grid/features",
@@ -749,7 +749,7 @@ function cellGridCells(scnId: string): string[] {
 }
 
 Given(
-  "a reconciliation over a corpus spanning every cell case — a satisfied obligation, a missing one, an undemanded observation citing a scenario that never named that quality-check, a pending obligation with observations citing it at that pair, and a column absent for the scenario",
+  "a reconciliation over a corpus spanning every cell case — a satisfied obligation, a missing one, a no-evidence-obligation observation citing a scenario that never named that quality-check, a pending obligation with observations citing it at that pair, and a column absent for the scenario",
   function () {
     runsRoot011 = mkdtempSync(join(tmpdir(), "spec-controller-rpt011-"));
   }
@@ -800,31 +800,31 @@ Then(
   }
 );
 
-Then(/^the scenario whose only state at a quality-check is undemanded renders an undemanded observation there — a dash for the evidence obligation, the count for the observation$/, function () {
+Then(/^the scenario whose only state at a quality-check is no-evidence-obligation renders a no-evidence-obligation observation there — a dash for the evidence obligation, the count for the observation$/, function () {
   // SCN-CEL-003 declares @e2e ONLY; a vitest unit test cites it → the reconciler posts an
-  // `undemanded` credit-side row at unit, carried on the row's evidenceObservations. The two-sided
+  // `no-evidence-obligation` credit-side row at unit, carried on the row's evidenceObservations. The two-sided
   // cell reads NO evidence obligation (left `-`) and ONE observed credit (right 1) → -/1. Its E2e evidence obligation is met
-  // by an e2e credit → E/1. A cell that mistook the undemanded credit for an evidence obligation would read E/-
+  // by an e2e credit → E/1. A cell that mistook the no-evidence-obligation credit for an evidence obligation would read E/-
   // ("missing" — write the test), contradicting the row's own Reconciling-items column.
   assert.deepStrictEqual(
     cellGridCells("SCN-CEL-003"),
     ["", "-/1", "", "E/1"],
-    "expected SCN-CEL-003's Unit cell to render -/1 — the undemanded observation — not a named-and-missing cell"
+    "expected SCN-CEL-003's Unit cell to render -/1 — the no-evidence-obligation observation — not a named-and-missing cell"
   );
 });
 
 Then(
-  /^the scenario whose obligation at a quality-check is pending, with observations citing it at that pair, renders an undemanded observation there — because the credit is now undemanded, not attributed$/,
+  /^the scenario whose obligation at a quality-check is pending, with observations citing it at that pair, renders a no-evidence-obligation observation there — because the credit is now no-evidence-obligation, not attributed$/,
   function () {
     // SCN-CEL-004's unit obligation is @unitpending — deferred, so it names NOTHING. Since 3F-1858
     // folded the pending pair out of the active obligation set, the vitest observation citing it
-    // reconciles UNDEMANDED and posts an undemanded row on SCN-CEL-004 → no evidence obligation (left `-`), one
+    // reconciles NO-EVIDENCE-OBLIGATION and posts a no-evidence-obligation row on SCN-CEL-004 → no evidence obligation (left `-`), one
     // observed credit (right 1) → -/1. Read straight off evidenceObservations (multiplicity-correct),
-    // the cell shows the credit with no evidence-obligation letter — the same shape as any other undemanded credit.
+    // the cell shows the credit with no evidence-obligation letter — the same shape as any other no-evidence-obligation credit.
     assert.deepStrictEqual(
       cellGridCells("SCN-CEL-004"),
       ["", "-/1", "", ""],
-      "expected SCN-CEL-004's Unit cell to render -/1 — a credit reconciling undemanded at a PENDING pair"
+      "expected SCN-CEL-004's Unit cell to render -/1 — a credit reconciling no-evidence-obligation at a PENDING pair"
     );
   }
 );
@@ -1058,7 +1058,7 @@ After({ tags: "@SCN-RPT-006" }, function () {
 // what names the move.
 //
 // NOTE the identity is asserted here as a COMPLETENESS check only, never as the proof of the
-// move: raw = attributed + undemanded + phantom + suspense balances identically BEFORE and AFTER
+// move: raw = attributed + no-evidence-obligation + phantom + suspense balances identically BEFORE and AFTER
 // the fold, because the terms move and the sum does not. The load-bearing assertions are the two
 // that name WHICH bucket the credit is in.
 const BROKEN_ATTRIBUTION_OPTS = {

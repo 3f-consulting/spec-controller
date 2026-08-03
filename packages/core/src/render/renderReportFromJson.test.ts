@@ -50,10 +50,10 @@ const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation =>
 //   SCN-CHK-002: @integration, no credit → integration missing (the coded out-of-balance feature)
 //   SCN-CHK-003: @lint=lint:foo, the guard running & wired → balanced, the named running guard
 //   1 unit credit citing SCN-PHX-001 (undeclared) → a real phantom ROW, phantom 1
-//   1 uncited unit credit (src/b.test.ts) + the undemanded lint:bar static check → the suspense row
+//   1 uncited unit credit (src/b.test.ts) + the no-evidence-obligation lint:bar static check → the suspense row
 // The static-check counts are a FOLD over this ledger now (3F-2118, `staticObservationTally`): 2
 // running CI guards = 1 named (lint:foo, on SCN-CHK-003's `@lint` row) + 1 uncited (lint:bar,
-// undemanded-running, on the suspense row) → {runningStaticCheckCount: 2, uncitedStaticCheckCount: 1}.
+// no-evidence-obligation, running, on the suspense row) → {runningStaticCheckCount: 2, uncitedStaticCheckCount: 1}.
 const scenarios: Scenario[] = [
   { scnId: "SCN-CHK-001", evidenceObligations: [{ qualityCheck: "unit" }] },
   { scnId: "SCN-CHK-002", evidenceObligations: [{ qualityCheck: "integration" }] },

@@ -321,7 +321,7 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
   // every test result — so the one reconcile engine sees the COMPLETE static stream.
   // Combined with the named observations WITHOUT double-observing: a running static check the
   // named set already covers carries its authoritative exists/enforcedOverRealSource
-  // detail from `checkStaticEvidenceObligations` (the watermelon input), so only the UNDEMANDED
+  // detail from `checkStaticEvidenceObligations` (the watermelon input), so only the NO-EVIDENCE-OBLIGATION
   // running static checks are added here. They cite no scenario — the reconciler folds them into the suspense row.
   // (`staticCheckEvidenceObligationSet` is the journal rule's Set, read once above.)
   evidenceObservations.push(
@@ -331,7 +331,7 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
   );
 
   // The stream is now COMPLETE: every running CI static check is a GuardEvidenceObservation
-  // — the named ones match their @lint obligation, the undemanded ones (a static check no @lint
+  // — the named ones match their @lint obligation, the no-evidence-obligation ones (a static check no @lint
   // declares) cite no scenario, so `reconcile` folds them into the SUSPENSE row itself. No
   // derive-and-diff, no `uncitedStaticChecks` param.
   // The declared corpus is BOTH halves: the @SCN-tagged scenarios AND the untagged ones

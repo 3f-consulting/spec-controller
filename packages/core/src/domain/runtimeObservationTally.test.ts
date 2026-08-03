@@ -14,7 +14,7 @@
  * §11A): the fixture can only state posted-entry shapes the pipeline emits.
  *
  * This re-homes the retired census's identity coverage (@SCN-LDG-008 / @SCN-RPT-017/023) onto the
- * fold: the undemanded credit posts to its real scenario's account (onScenario), the broken credit
+ * fold: the no-evidence-obligation credit posts to its real scenario's account (onScenario), the broken credit
  * moves to suspense, the phantom to its invented account, and the lint credit is skipped.
  *
  * Parent: (@SCN-RMD-003) — the runtime-observation tally is the Ledger's own fold.
@@ -28,7 +28,7 @@ import type { EvidenceObservation, Ledger, Scenario } from "../model.js";
 
 describe("[SCN-RMD-003] runtimeObservationTally folds the posted credits by scenario-kind and quality-check", () => {
   // A SPANNING corpus reconciling to every credit account: SCN-A declares unit (2 matched credits)
-  // and is ALSO cited at integration it never declared (1 undemanded); SCN-PHX-999 is undeclared (1
+  // and is ALSO cited at integration it never declared (1 no-evidence-obligation); SCN-PHX-999 is undeclared (1
   // phantom); a null-scnId credit cites no scenario (1 suspense); an ambiguous cucumber step is
   // broken (1 suspense — it named no test); a named static-check credit rides the lint axis (must
   // be SKIPPED). Built through reconcile(), so every row is a shape the pipeline actually emits.
@@ -36,7 +36,7 @@ describe("[SCN-RMD-003] runtimeObservationTally folds the posted credits by scen
   const observations: EvidenceObservation[] = [
     { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
     { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
-    { qualityCheck: "integration", scnId: "SCN-A", status: "passed" }, // UNDEMANDED (posts to SCN-A)
+    { qualityCheck: "integration", scnId: "SCN-A", status: "passed" }, // NO-EVIDENCE-OBLIGATION (posts to SCN-A)
     { qualityCheck: "unit", scnId: "SCN-PHX-999", status: "passed" }, // PHANTOM
     { qualityCheck: "integration", scnId: null, status: "passed" }, // SUSPENSE (uncited)
     { qualityCheck: "e2e", scnId: "SCN-A", status: "failed", broken: true, locator: "features/x.feature" }, // SUSPENSE (broken)
@@ -46,15 +46,15 @@ describe("[SCN-RMD-003] runtimeObservationTally folds the posted credits by scen
   const tally = runtimeObservationTally(ledger);
 
   it("counts raw per quality-check over ALL runtime credits, SKIPPING the lint credit", () => {
-    // unit: 2 (SCN-A) + 1 (phantom) = 3; integration: 1 (undemanded) + 1 (suspense) = 2; e2e: 1
+    // unit: 2 (SCN-A) + 1 (phantom) = 3; integration: 1 (no-evidence-obligation) + 1 (suspense) = 2; e2e: 1
     // (broken, on suspense). The lint guard credit is not counted — this is the runtime axis.
     expect(tally.rawByRuntimeQualityCheck).toEqual({ unit: 3, integration: 2, e2e: 1, performance: 0 });
   });
 
-  it("counts credits on a scenario's account as onScenario (matched-attributed AND undemanded)", () => {
-    // SCN-A's account carries 2 unit (matched) + 1 integration (undemanded) = 3. onScenario is the
-    // test-volume attributed, INCLUDING undemanded — the retired census's four-way split (attributed
-    // vs undemanded) collapses to this one per-account count; the split lives on the ledger rows.
+  it("counts credits on a scenario's account as onScenario (matched-attributed AND no-evidence-obligation)", () => {
+    // SCN-A's account carries 2 unit (matched) + 1 integration (no-evidence-obligation) = 3. onScenario is the
+    // test-volume attributed, INCLUDING no-evidence-obligation — the retired census's four-way split (attributed
+    // vs no-evidence-obligation) collapses to this one per-account count; the split lives on the ledger rows.
     expect(tally.onScenario).toBe(3);
   });
 

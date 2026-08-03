@@ -107,7 +107,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     summary.staticChecks COUNTS alone — a pure counter over the guard observations
     (countStaticEvidenceObservationKinds), symmetric with the runtime testVolume counter. The
     standalone member-list section (was guards, then staticChecks) COLLAPSED: the guard member
-    detail lives in the rows now (named → each scenario's @lint sub-row; undemanded → the
+    detail lives in the rows now (named → each scenario's @lint sub-row; no-evidence-obligation → the
     suspense row's cites-no-scenario credit items), so there is no double-report on the JSON
     surface. The counts runningStaticCheckCount and uncitedStaticCheckCount are carried on the
     persisted summary; the named count is implicit, running − uncited. A pure

@@ -83,10 +83,10 @@ describe("[SCN-LDG-001] postingOf routes a STATIC-CHECK credit by its name", () 
     });
   });
 
-  it("posts an UNDEMANDED static check to suspense — the static analogue of an uncited credit", () => {
+  it("posts a NO-EVIDENCE-OBLIGATION static check to suspense — the static analogue of an uncited credit", () => {
     expect(postingOf(guard("lint:nobody-asked"), declared, named)).toEqual({
       kind: "suspense-scenario",
-      posted: "undemanded-static-check",
+      posted: "no-evidence-obligation-static-check",
     });
   });
 });

@@ -3,7 +3,7 @@
  * Drives the REAL CLI over the usg fixture target (ci.yml runs lint:foo + lint:bar +
  * test + cucumber; only lint:foo is @lint-declared) and asserts the persisted
  * spec-reconciliation.md carries the "### Static checks" cut reporting lint:bar as an
- * uncited static check (reconcile folds the undemanded running guard to the suspense row) —
+ * uncited static check (reconcile folds the no-evidence-obligation running guard to the suspense row) —
  * proving the runningStaticChecks → reconcile → staticObservationTally → render → disk
  * wiring over real files, not an in-memory re-run (the anti-watermelon rule).
  * // @SCN-USG-001

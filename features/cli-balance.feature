@@ -54,7 +54,7 @@ Feature: spec-controller balance runs standalone
     masquerade as the usage error (`2`, @SCN-CLI-002). Out-of-balance is a domain
     derivation over the WHOLE reconciliation: out-of-balance iff ANY reconciling item
     exists anywhere — a scenario's out-of-balance items AND the suspense-row items
-    (a static-check watermelon, an undemanded credit, a phantom scenario) — NOT a scan
+    (a static-check watermelon, a no-evidence-obligation credit, a phantom scenario) — NOT a scan
     of scenario verdicts alone, which would let a watermelon-only run (no
     out-of-balance scenario) exit `0`, the false pass this gate must never give.
 

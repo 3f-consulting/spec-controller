@@ -72,12 +72,12 @@ export interface Scenario {
 /**
  * The NAMED `(scnId, quality-check)` pairs — the ONE rule for what a scenario names, keyed
  * `"<scnId> <qualityCheck>"`. A credit citing a scenario is reconciliation-matched only
- * when its pair is in this set; otherwise it is `undemanded` (a real scenario, at a quality-check
+ * when its pair is in this set; otherwise it is `no-evidence-obligation` (a real scenario, at a quality-check
  * it never declared).
  *
  * A `pending` obligation is EXCLUDED — it names nothing. Canon, Pending Item: a
  * `<quality-check>pending` tag raises **no Evidence Obligation**, so "an Evidence Observation
- * citing that scenario at a pending quality-check is `undemanded` — exactly as when nothing was
+ * citing that scenario at a pending quality-check is `no-evidence-obligation` — exactly as when nothing was
  * declared at all". Nothing is named, so nothing can be attributed to it. (This also drops the
  * scenario-scope pending obligation, which carries no `qualityCheck` at all — it names no
  * specific check, so it never belonged in a pair set keyed by one.)
@@ -86,7 +86,7 @@ export interface Scenario {
  * `reconcile` and in the observation census — each building the set over ALL obligations
  * INCLUDING pending. They agreed by copy-paste, not by construction: either could have grown a
  * filter alone and nothing would have redded. That is exactly what the pending divergence was —
- * the pair-check excluded the credit from `undemanded` while the pending partition excluded it
+ * the pair-check excluded the credit from `no-evidence-obligation` while the pending partition excluded it
  * from the debit side, so it posted NOWHERE and the run read balanced, exit 0, over a fault canon
  * says must fail (@SCN-PND-005).
  *
@@ -111,7 +111,7 @@ export function evidenceObligationPairsOf(scenarios: readonly Scenario[]): Set<s
 /**
  * The NAMED static check handles — the STATIC-axis twin of `evidenceObligationPairsOf`. Every
  * `@lint=<guard>` `staticCheck` a scenario's evidence obligations name, deduped into one set. A
- * `lint` evidence observation whose guard is NOT in this set is an UNDEMANDED static check: it cites
+ * `lint` evidence observation whose guard is NOT in this set is a NO-EVIDENCE-OBLIGATION static check: it cites
  * no scenario, so the reconciler folds it onto the SUSPENSE row (the static analogue of an uncited
  * runtime credit).
  *

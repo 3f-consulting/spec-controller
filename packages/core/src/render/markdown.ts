@@ -84,8 +84,8 @@ const ITEM_GLYPH: Record<Outcome, string> = {
   // Either way it posts to the suspense row: the credit can never discharge an obligation.
   "broken": "💥",
   // CREDIT-SIDE: a credit citing a REAL scenario at a quality-check it never
-  // declared — the undemanded reconciling item on the real scenario's row (@SCN-LDG-008).
-  "undemanded": "◇",
+  // declared — the no-evidence-obligation reconciling item on the real scenario's row (@SCN-LDG-008).
+  "no-evidence-obligation": "◇",
   // NEITHER-SIDE: a scenario reconciling to zero rows on both sides — the
   // degenerate both-missing reconciling item, blank on both sides (@SCN-LDG-009).
   "both-missing": "⊘",
@@ -128,9 +128,9 @@ function renderItem(item: ScenarioReconciliation["reconcilingItems"][number]): s
   const isCredit =
     item.outcome === "cites-no-scenario" ||
     item.outcome === "cites-unknown-scenario" ||
-    // The undemanded credit also posts to a real scenario's row carrying its
+    // The no-evidence-obligation credit also posts to a real scenario's row carrying its
     // evidence observation locator (ruling Q5) — surface the where-to-fix in the reconciliation cell.
-    item.outcome === "undemanded";
+    item.outcome === "no-evidence-obligation";
   let suffix = "";
   // The `broken` credit (@SCN-RPT-021) carries BOTH halves of its where-to-fix: the locator of the
   // evidence that never ran (a test file, or a feature file) AND the message it carries. The
@@ -581,7 +581,7 @@ const testVolumeSection: SectionEmitter = (report) => {
  * (`N static check(s) run, K uncited static check(s)`) alone — a pure counts summary, symmetric with
  * `### Test volume` (2.4). The named count is implicit (`running − uncited`), so it
  * is no longer printed. The per-guard member detail lives in the rows (named → each
- * scenario's `@lint` sub-row; undemanded → the suspense row's `cites-no-scenario` credit items), so
+ * scenario's `@lint` sub-row; no-evidence-obligation → the suspense row's `cites-no-scenario` credit items), so
  * no list renders here. Omitted only when no static-check census is threaded (the back-compat path).
  * The counts read off the report's materialised `summary.staticChecks`.
  */
@@ -590,7 +590,7 @@ const staticChecksSection: SectionEmitter = (report) => {
   if (!counts) return [];
   // A pure counts summary off `summary.staticChecks` (2.4) — symmetric with the
   // runtime `### Test volume` line. There is no census section: the per-guard DETAIL lives in
-  // the rows (named → each scenario's `@lint` sub-row; the undemanded static-checks surface
+  // the rows (named → each scenario's `@lint` sub-row; the no-evidence-obligation static-checks surface
   // as `cites-no-scenario` credit items on the `(no scenario)` suspense row). Only the running
   // volume + the uncited count render here; the named count is implicit.
   return [
@@ -720,10 +720,10 @@ function evidenceColumns(
   const hasStatic = scenarioRows.some((s) => staticCheckReconciliationsOf(s).length > 0);
   const qualityChecksPresent = new Set<RuntimeQualityCheck>();
   // A column appears for every runtime quality-check present in EVIDENCE OBLIGATION or OBSERVATION on a scenario
-  // row. Both are read off the Ledger: a declared or undemanded quality-check surfaces as a
+  // row. Both are read off the Ledger: a declared or no-evidence-obligation quality-check surfaces as a
   // `QualityCheckReconciliation` at that check; every observed credit surfaces as a posted credit on
   // the row (@SCN-LDG-022). The retired census's `attributed[]` re-represented those posted credits
-  // — it added no quality-check the rows do not already carry (a matched/undemanded credit always
+  // — it added no quality-check the rows do not already carry (a matched/no-evidence-obligation credit always
   // has its `QualityCheckReconciliation`), so folding the rows keeps the column set byte-identical.
   for (const s of scenarioRows) {
     for (const o of s.qualityCheckReconciliations) {
@@ -770,7 +770,7 @@ const QUALITY_CHECK_LETTER: Record<QualityCheck, string> = {
  * projects the two-sided ledger row — it reconstructs nothing. It counts BACKING (presence), NOT
  * quality: a failing runtime evidenceObligation still shows its credit count (the failing-ness lives
  * in the Verdict + Reconciling-items columns), so `U/-` is unambiguously named-but-missing (zero
- * evidenceObservations). A `-/N` cell is an UNDEMANDED observation (a credit at a check the scenario
+ * evidenceObservations). A `-/N` cell is a NO-EVIDENCE-OBLIGATION observation (a credit at a check the scenario
  * did not name, @SCN-LDG-008); a doubly-empty `-/-` renders BLANK (`""`) — no evidence obligation, no credit.
  * The lint cell reads the scenario's static evidenceObligation outcomes (lint is not a counted
  * evidence observation): its right side is the count of static checks PRESENT — `balanced` or the
@@ -818,11 +818,11 @@ function evidenceCell(
   // RIGHT — the OBSERVATION count is the MULTIPLICITY of POSTED CREDITS at this quality-check on THIS
   // row (@SCN-LDG-022) — read straight off the Ledger's `evidenceObservations`, NEVER from
   // `qualityCheckReconciliations` (which collapse to ONE matched row however many credits cite the
-  // pair, and would undercount duplicate citations). BOTH the named and undemanded arms read this
-  // one source: a named check's credits are matched-attributed, an undemanded check's credits post
-  // as undemanded rows — the same posted credits either way, so `evidenceObservations` is the single
+  // pair, and would undercount duplicate citations). BOTH the named and no-evidence-obligation arms read this
+  // one source: a named check's credits are matched-attributed, a no-evidence-obligation check's credits post
+  // as no-evidence-obligation rows — the same posted credits either way, so `evidenceObservations` is the single
   // multiplicity-correct count. (Provably equal to the retired split off `qualityCheckReconciliations`
-  // for the undemanded arm — the reconciler posts one undemanded QCR per citing credit — but that
+  // for the no-evidence-obligation arm — the reconciler posts one no-evidence-obligation QCR per citing credit — but that
   // derivation collapses duplicate citations, so the credits are the correct source.)
   const observed = s.evidenceObservations.filter(
     (o) => o.qualityCheck === col.qualityCheck

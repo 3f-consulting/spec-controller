@@ -64,9 +64,9 @@ export type Posting =
    *   - `broken`                   — a proof that NEVER RAN, so it names no test and cites
    *                                  nothing, WHATEVER `scnId` / `status` it structurally carries.
    *   - `cites-nothing`            — a runtime credit that RAN and carried no `@SCN`.
-   *   - `undemanded-static-check`  — a static check that ran with no `@lint` naming it.
+   *   - `no-evidence-obligation-static-check`  — a static check that ran with no `@lint` naming it.
    */
-  | { kind: "suspense-scenario"; posted: "broken" | "cites-nothing" | "undemanded-static-check" };
+  | { kind: "suspense-scenario"; posted: "broken" | "cites-nothing" | "no-evidence-obligation-static-check" };
 
 /** The destinations a RUNTIME credit can reach — it is citation-routed, so never by name. */
 export type RuntimePosting =
@@ -77,7 +77,7 @@ export type RuntimePosting =
 /** The destinations a STATIC-CHECK credit can reach — it is name-routed, so never by citation. */
 export type StaticCheckPosting =
   | { kind: "every-naming-scenario"; staticCheck: string }
-  | { kind: "suspense-scenario"; posted: "undemanded-static-check" };
+  | { kind: "suspense-scenario"; posted: "no-evidence-obligation-static-check" };
 
 /**
  * WHERE does this evidence observation post? THE posting rule, in one place.
@@ -126,7 +126,7 @@ export function postingOf(
   if (observation.qualityCheck === "lint") {
     return staticCheckEvidenceObligations.has(observation.staticCheck)
       ? { kind: "every-naming-scenario", staticCheck: observation.staticCheck }
-      : { kind: "suspense-scenario", posted: "undemanded-static-check" };
+      : { kind: "suspense-scenario", posted: "no-evidence-obligation-static-check" };
   }
   // THE RUNTIME AXIS — the CREDIT cites, so exactly one row, resolved from the `@SCN` it carries.
   // The fail-safe first: broken is taken on the FLAG, before scnId is ever consulted.
@@ -157,7 +157,7 @@ export function postingOf(
  * PENDING, and a documented asymmetry (preserved, not normalised — 3F-2202). This walks EVERY
  * `@lint` obligation INCLUDING a pending one, because posting is not classifying: a credit posts
  * whatever its obligation later reconciles to, or fails to. `staticCheckEvidenceObligationsOf` — which
- * `postingOf` consults for the undemanded/suspense arm — EXCLUDES pending obligations. The two
+ * `postingOf` consults for the no-evidence-obligation/suspense arm — EXCLUDES pending obligations. The two
  * therefore disagree in principle. In practice they cannot: a `@lintpending` obligation carries NO
  * `staticCheck` payload (the guard does not exist yet, `journal.ts`), so the `staticCheck ===
  * undefined` skip below drops it before the disagreement can be observed. Reproduced here exactly
