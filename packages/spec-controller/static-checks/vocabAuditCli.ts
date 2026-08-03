@@ -47,12 +47,21 @@ const EXCLUDED_FILES = new Set(["pnpm-lock.yaml", "package-lock.json", "yarn.loc
  * the enumeration of banned tokens, so an entry here is not housekeeping — leaving
  * it out floods the manifest with 65 guaranteed false-positive rows (measured, not
  * assumed). Any future file that names the rejected vocabulary belongs here too.
+ *
+ * `blockedVocabulary.md` is the sharpest case of that rule (3F-2330, @SCN-VOC-010): it IS
+ * the retired-word table, so every row in it is a guaranteed false positive, and the
+ * derivation reading it means the file is now the enumeration `vocabWordSets.ts` used to
+ * be. Its parser and that parser's unit tests join it for the same reason they always
+ * have — one discusses the retired terms, the other passes them to the classifier.
  */
 const SELF_EXEMPT_PATHS = new Set([
   "packages/spec-controller/static-checks/vocabAudit.ts",
   "packages/spec-controller/static-checks/vocabWordSets.ts",
   "packages/spec-controller/static-checks/vocabAudit.test.ts",
   "packages/spec-controller/static-checks/vocabAuditCli.ts",
+  "packages/spec-controller/static-checks/blockedVocabulary.md",
+  "packages/spec-controller/static-checks/blockedVocabulary.ts",
+  "packages/spec-controller/static-checks/blockedVocabulary.test.ts",
   "features/vocabulary-audit.feature",
   "tests/steps/vocabularyAudit.steps.ts",
 ]);

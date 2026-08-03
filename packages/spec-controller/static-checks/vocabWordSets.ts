@@ -6,9 +6,21 @@
  * when a matcher changes; this file is a ruling record and changes every time the
  * operator rules a word in or out.
  *
- * BEHAVIOUR-PRESERVING BY CONSTRUCTION. Every set below is byte-for-byte what
- * `vocabAudit.ts` held, and `vocabAudit.ts` re-exports all nine, so no call site
- * moved. The word-order inside each set is not cosmetic — it is the order the
+ * THE RETIRED WORDS THEMSELVES ARE NO LONGER HERE (@SCN-VOC-010, 3F-2330). `BANNED_WORDS`
+ * now DERIVES canon's blocked-vocabulary rows from `blockedVocabulary.md`, the vendored
+ * copy of the canon table, so this file holds no list for canon to drift from. What stays
+ * is what canon's appendix does not carry: the glossary-level rejected aliases, the
+ * approved sets, the qualifier tables, and the per-inflection rename targets.
+ *
+ * BEHAVIOUR-PRESERVING BY CONSTRUCTION, with ONE stated exception. Every set below is
+ * byte-for-byte what `vocabAudit.ts` held, and `vocabAudit.ts` re-exports all nine, so no
+ * call site moved. The exception is `BANNED_WORDS`, which is now derived: it gains
+ * `demands`, because the vendored table spells the inflection canon spells and the parser
+ * does not fold plurals. The naive singulariser already folded `demands` onto `demand`, so
+ * the extra member changes no verdict — said out loud rather than left for a reader to
+ * discover the sets are no longer identical.
+ *
+ * The word-order inside each set is not cosmetic — it is the order the
  * rulings arrived in, and the tagged comment blocks are the audit trail for those
  * rulings (why `observe` / `running` are allowlisted; why `declared` / `observed` /
  * `anomaly` were REMOVED). Moving a word without its reason destroys the record,
@@ -20,8 +32,10 @@
  * the very words it exists to name is a guaranteed false positive.
  *
  * @SCN-VOC-001 / @SCN-VOC-002 / @SCN-VOC-003 / @SCN-VOC-004 / @SCN-VOC-006 /
- * @SCN-VOC-007 — features/vocabulary-audit.feature.
+ * @SCN-VOC-007 / @SCN-VOC-010 — features/vocabulary-audit.feature.
  */
+
+import { BLOCKED_VOCABULARY_ROWS, bannedWordsOf } from "./blockedVocabulary.js";
 
 /** Manifesto domain vocabulary — the mapping-table terms, decomposed to words. */
 export const DOMAIN_WORDS: ReadonlySet<string> = new Set([
@@ -231,8 +245,15 @@ export const GENERIC_ALLOWLIST: ReadonlySet<string> = new Set([
 /** Ruled allowed OUTRIGHT (2026-07-02): report, spec, feature. */
 export const RULED_ALLOWED: ReadonlySet<string> = new Set(["report", "spec", "feature"]);
 
-/** Banned shortenings + rejected aliases that ALWAYS flag (both modes). */
-export const BANNED_WORDS: ReadonlySet<string> = new Set([
+/**
+ * The rejected aliases canon records under its GLOSSARY entries — a different section
+ * from the blocked-vocabulary appendix, and deliberately so: the appendix says it holds
+ * "the repeat offenders — the verbs and coinages that regrow", while "the rarer,
+ * context-specific bans" stay with the term they belong to. So these are not a second
+ * copy of the vendored table; they are the other half of canon, which has no table to
+ * vendor. Adding one here is still a ruling that belongs in this file.
+ */
+const GLOSSARY_ALIAS_BANS: readonly string[] = [
   "supply", "execution", "executions", "state",
   // `unattributed` is a FULLY banned word (operator, 2026-07-24 — treated like
   // `state`, not a bespoke NAME-only home). It flags in every context, name AND
@@ -244,17 +265,28 @@ export const BANNED_WORDS: ReadonlySet<string> = new Set([
   // Rejected aliases: `requirement(s)` → evidence obligation;
   // `oob` → out-of-balance (opaque abbreviation of the verdict value).
   "requirement", "oob",
-  // @SCN-VOC-007 — the retired CI/metric word `budget` → `threshold`. A plain banned
-  // word, deliberately NOT the phrase rule @SCN-VOC-003 / @SCN-VOC-006 needed: `budget`
-  // has no canon homograph anywhere in this vocabulary, so the strongest matcher is
-  // also the correct one. Banned reds in BOTH modes, so the word cannot survive in a
-  // comment, a Gherkin line or a config key while the identifiers are swept; and the
-  // naive singulariser folds `budgets` onto this stem, so the plural — the real
-  // filename was `complexityBudgets.mjs` — needs no second entry.
-  "budget",
-  // @SCN-VOC-004 — the retired evidence-obligation word (full why: the feature's Rule block).
-  // FOUR entries: the singulariser folds `demands`→`demand`, `demanders`→`demander`, nothing else.
-  "demand", "demanded", "demanding", "demander",
+];
+
+/**
+ * Banned shortenings + rejected aliases that ALWAYS flag (both modes).
+ *
+ * DERIVED, NOT WRITTEN (@SCN-VOC-010, 3F-2330). The canon-appendix half of this set is
+ * PARSED OUT OF `blockedVocabulary.md`, the vendored copy of canon's table, so there is no
+ * code-side list of retired words for canon to disagree with. Retiring a plain word is an
+ * edit to that table and nothing else — not a promise this file keeps, a fact it cannot
+ * break. Only rows the operator marked `adopted` enter the set, which is what lets this
+ * repository ship green while the deferred rows' 2,272 occurrences are paid off by their
+ * own tickets.
+ *
+ * THE MATCHERS ARE NOT DERIVED, and must not become so. The table names the arm each row
+ * takes; `bannedWordsOf` feeds only the `whole-word` rows, so the phrase-adjacency arms of
+ * @SCN-VOC-005 / @SCN-VOC-006 and the qualifier-gated `guard` arm below keep judging their
+ * own terms in `vocabAudit.ts`, in their existing order. Canon owns which words are
+ * retired; this code owns how each one matches.
+ */
+export const BANNED_WORDS: ReadonlySet<string> = new Set([
+  ...GLOSSARY_ALIAS_BANS,
+  ...bannedWordsOf(BLOCKED_VOCABULARY_ROWS),
 ]);
 
 /** Words approved only inside their full manifesto term; bare → flag. */

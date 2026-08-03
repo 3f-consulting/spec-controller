@@ -252,3 +252,51 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
       When the vocabulary audit runs over the corpus
       Then it reports that it cannot determine the project's file set
       And it exits non-zero without emitting a manifest
+
+  Rule: the enforced term set is the vendored canon table's adopted rows
+
+    The source fix (@SCN-VOC-010, 3F-2330). Until now the retired words lived in a
+    hand-maintained set inside `vocabWordSets.ts` — a COPY of canon's
+    `double-entry-manifesto.md` → *Appendix — Blocked vocabulary*, agreeing with it by
+    diligence. Canon lives in a DIFFERENT REPOSITORY that this repository's CI never
+    checks out and a public consumer would not have, so no check here could ever read
+    it. That leaves two hops, and only one is ours: code ↔ a VENDORED copy of the table,
+    in-repo; and vendored copy ↔ canon, which belongs to the maintainers' private repository's CI
+    across every product and is deliberately NOT built here.
+
+    DERIVATION, NOT COMPARISON. The in-repo hop is not checked, it is DISSOLVED: the
+    table is committed at `static-checks/blockedVocabulary.md` and the enforced word set
+    is PARSED OUT OF IT, so there is no second list left to drift. "A new plain adopted
+    row is a table edit only" stops being a promise and becomes a structural fact — the
+    throwaway-term proof in this scenario's PR adds a nonsense row to the table with no
+    `.ts` edit at all and watches the audit red on it.
+
+    THE ADOPTION-STATUS COLUMN IS WHAT LETS THE TREE STAY GREEN. Adopting all seven canon
+    rows verbatim would red 2,272 occurrences this slice does not own, so each row carries
+    a triaged status and ONLY `adopted` rows enter the enforced set. `deferred` rows name
+    their date and their ticket — the debt is visible, never silently omitted;
+    `not-applicable` is a DIFFERENT verdict, for the work-item `tree`/`root`/`branch` row
+    that this repository has no model for at all (its occurrences are filesystem, git and
+    CLI senses — `--root`, `repoRoot`, the git work tree @SCN-VOC-009 added one slice
+    ago). Deferring that row would book debt nobody should ever pay; adopting it would red
+    correct code.
+
+    BOTH HALVES ARE LOAD-BEARING. "An adopted row reds" alone would still pass if the
+    parser enforced EVERY row — the very mistake that would red the tree wholesale. The
+    deferred-stays-green half is what makes the status column mean anything, so it is
+    asserted rather than assumed.
+
+    CANON OWNS *WHICH*; CODE OWNS *HOW*. The table supplies the words; the matcher per
+    term stays in code and is NOT collapsed — whole-word for a plain row (the default),
+    per-inflection entries for the retired evidence-obligation family, and the
+    phrase-adjacency arms of @SCN-VOC-005 / @SCN-VOC-006, whose ordering ahead of the
+    approved-word gate remains exactly as those Rules describe. The table names which
+    rows are the documented matcher exceptions; only whole-word adopted rows join the
+    banned set.
+
+    @unit @integration @SCN-VOC-010
+    Scenario: an adopted row reds a planted usage; a deferred row does not
+      Given the vendored blocked-vocabulary table marks one term adopted and another deferred
+      When the vocabulary audit runs over a corpus carrying both terms
+      Then the adopted term is flagged
+      And the deferred term is not flagged

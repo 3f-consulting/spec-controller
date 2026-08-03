@@ -21,6 +21,10 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { SURFACES } from "../../packages/spec-controller/static-checks/vocabAudit.js";
+import {
+  BLOCKED_VOCABULARY_ROWS,
+  type BlockedVocabularyRow,
+} from "../../packages/spec-controller/static-checks/blockedVocabulary.js";
 
 const VOCAB_FIXTURE_ROOT = "tests/fixtures/vocab";
 let matrixMd: string;
@@ -408,5 +412,118 @@ Then("it exits non-zero without emitting a manifest", function () {
     readdirSync(dirname(auditRun.outPath)),
     [],
     `the audit must emit NO artefact at all when it refuses to scan`
+  );
+});
+
+// -------------------------------------------------------------------------
+// @SCN-VOC-010 — the enforced term set is the vendored canon table's adopted rows
+// @SCN-VOC-010
+// -------------------------------------------------------------------------
+
+/**
+ * The two terms this arm plants, NAMED rather than picked by position.
+ *
+ * Reading "the first adopted row" out of the table would make the corpus depend on row
+ * ORDER, so a re-ordered table would silently change what the scenario proves. Naming
+ * them keeps the premise checkable: the `Given` asserts the vendored table records these
+ * exact statuses before anything is planted, so a table that stopped saying so fails at
+ * the premise instead of quietly proving something else.
+ */
+const VOC010_ADOPTED_TERM = "budget";
+const VOC010_DEFERRED_TERM = "undemanded";
+
+/** Both terms in NAME position — the discriminating mode, where an unapproved word flags. */
+const VOC010_PLANT_PATH = "src/vendoredTerms.ts";
+const VOC010_PLANT =
+  "export const complexityBudget = 1;\nexport const undemandedOutcome = 2;\n";
+
+/** The vendored row carrying `term`, or undefined — the premise each assertion below states. */
+function vendoredRowFor(term: string): BlockedVocabularyRow | undefined {
+  return BLOCKED_VOCABULARY_ROWS.find((row) => row.terms.includes(term));
+}
+
+// @SCN-VOC-010
+Given(
+  "the vendored blocked-vocabulary table marks one term adopted and another deferred",
+  function () {
+    // THE PREMISE, ASSERTED. Both halves of this scenario are read off the committed
+    // table, so if the table stopped recording these statuses the arm must fail HERE —
+    // never pass on a corpus that no longer demonstrates anything.
+    const adopted = vendoredRowFor(VOC010_ADOPTED_TERM);
+    assert.ok(
+      adopted,
+      `the vendored table must carry a row for \`${VOC010_ADOPTED_TERM}\`; it carries ` +
+        `${BLOCKED_VOCABULARY_ROWS.length} row(s)`
+    );
+    assert.equal(
+      adopted!.status,
+      "adopted",
+      `\`${VOC010_ADOPTED_TERM}\` must be recorded ADOPTED for this arm to prove anything; ` +
+        `the table records "${adopted!.status}"`
+    );
+    const deferred = vendoredRowFor(VOC010_DEFERRED_TERM);
+    assert.ok(
+      deferred,
+      `the vendored table must carry a row for \`${VOC010_DEFERRED_TERM}\`; it carries ` +
+        `${BLOCKED_VOCABULARY_ROWS.length} row(s)`
+    );
+    assert.equal(
+      deferred!.status,
+      "deferred",
+      `\`${VOC010_DEFERRED_TERM}\` must be recorded DEFERRED — the half that makes the status ` +
+        `column mean anything; the table records "${deferred!.status}"`
+    );
+
+    const dir = mkdtempSync(join(tmpdir(), "spec-controller-voc010-"));
+    mkdirSync(join(dir, "src"));
+    writeFileSync(join(dir, VOC010_PLANT_PATH), VOC010_PLANT);
+    gitIn(dir, "init", "-q", "-b", "main");
+    gitIn(dir, "add", VOC010_PLANT_PATH);
+    gitIn(
+      dir,
+      "-c",
+      "user.email=corpus@example.invalid",
+      "-c",
+      "user.name=corpus",
+      "-c",
+      "commit.gpgsign=false",
+      "commit",
+      "-q",
+      "-m",
+      "corpus"
+    );
+    corpusRoot = dir;
+  }
+);
+
+// @SCN-VOC-010
+When("the vocabulary audit runs over a corpus carrying both terms", function () {
+  auditRun = spawnAudit(corpusRoot, "--manifest", "manifest.csv");
+});
+
+// @SCN-VOC-010
+Then("the adopted term is flagged", function () {
+  const rows = parseManifest(manifestCsv()).filter(
+    (r) => r["current"] === VOC010_ADOPTED_TERM && r["file"] === VOC010_PLANT_PATH
+  );
+  assert.ok(
+    rows.length > 0,
+    `the vendored table records \`${VOC010_ADOPTED_TERM}\` ADOPTED, so a planted usage must ` +
+      `reach the manifest; it did not:\n${manifestCsv()}`
+  );
+});
+
+// @SCN-VOC-010
+Then("the deferred term is not flagged", function () {
+  // CONTROL PROBE — the plant's presence is proven by the assertion above, which reads the
+  // SAME file. So an absent row here is the audit's verdict on a term it really scanned,
+  // never a corpus that failed to land.
+  const rows = parseManifest(manifestCsv()).filter((r) => r["current"] === VOC010_DEFERRED_TERM);
+  assert.deepEqual(
+    rows,
+    [],
+    `the vendored table records \`${VOC010_DEFERRED_TERM}\` DEFERRED, so it must NOT be ` +
+      `enforced — a parser that enforced every row would red this tree on 2,272 occurrences; ` +
+      `got:\n${JSON.stringify(rows)}`
   );
 });
