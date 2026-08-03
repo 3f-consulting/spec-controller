@@ -102,12 +102,14 @@ describe("[SCN-VOC-010] the vendored table as committed", () => {
   });
 
   it("[SCN-VOC-010] derives exactly the operator-adopted plain words, and nothing else", () => {
-    // The four adopted rows are 3F-2281's. Two of them are matcher EXCEPTIONS — the
-    // phrase-adjacency arms — so they are adopted WITHOUT joining the plain banned set;
-    // that split is what "canon owns which, code owns how" means in one assertion.
+    // Four adopted rows are 3F-2281's; `undemanded` joined them at 3F-2342 when 3F-2300
+    // finished renaming the outcome handle to `no-evidence-obligation`. Two of the adopted
+    // rows are matcher EXCEPTIONS — the phrase-adjacency arms — so they are adopted WITHOUT
+    // joining the plain banned set; that split is what "canon owns which, code owns how"
+    // means in one assertion.
     const derived = [...bannedWordsOf(BLOCKED_VOCABULARY_ROWS)].sort();
     expect(derived).toEqual(
-      ["budget", "demand", "demanded", "demander", "demanding", "demands"].sort()
+      ["budget", "demand", "demanded", "demander", "demanding", "demands", "undemanded"].sort()
     );
   });
 
@@ -128,7 +130,6 @@ describe("[SCN-VOC-010] the vendored table as committed", () => {
       "declaring",
       "declares",
       "undeclared",
-      "undemanded",
       "guard",
       "tree",
       "subtree",
@@ -270,12 +271,14 @@ describe("[SCN-VOC-011] the vendored table as committed", () => {
     expect(checkAdoptionStatuses(BLOCKED_VOCABULARY_ROWS).map((f) => f.message)).toEqual([]);
   });
 
-  it("[SCN-VOC-011] each of the three deferrals names its date and its ticket", () => {
-    // The three the operator ruled on 2026-08-03: the retired-evidence-credit family
-    // (3F-2329), the outcome handle (3F-2300) and the bare shortening (3F-1852). Asserted
-    // as a COUNT and per-row, so a table that quietly dropped one fails here.
+  it("[SCN-VOC-011] each of the two remaining deferrals names its date and its ticket", () => {
+    // The two still owed: the retired-evidence-credit family (3F-2329) and the bare
+    // shortening (3F-1852). The third — the outcome handle — was ALSO deferred on
+    // 2026-08-03 and was PAID at 3F-2342, so it is `adopted` now and carries no deferral
+    // note; the count moves down as debt is settled. Asserted as a COUNT and per-row, so a
+    // table that quietly dropped one fails here.
     const deferred = BLOCKED_VOCABULARY_ROWS.filter((r) => r.status === "deferred");
-    expect(deferred).toHaveLength(3);
+    expect(deferred).toHaveLength(2);
     for (const row of deferred) {
       expect(row.statusNote, row.terms.join("/")).toMatch(/\d{4}-\d{2}-\d{2}/);
       expect(row.statusNote, row.terms.join("/")).toMatch(/3F-\d+/);
@@ -295,7 +298,12 @@ describe("[SCN-VOC-010] end to end through the classifier", () => {
   it("[SCN-VOC-010] a deferred term does not", () => {
     // NAME mode is the discriminating one: an unapproved word flags `unknown` there, so
     // this green is a positive approval rather than an accident of prose mode.
-    expect(classifyWords(decomposeName("undemandedOutcome"), "name").every((v) => !v.flagged)).toBe(
+    //
+    // The example term is `undeclared`, not `undemanded`: 3F-2342 ADOPTED the `undemanded`
+    // row, so it is enforced now and would red here. `undeclared` is the same shape one row
+    // up — a term on a still-deferred row (3F-2329 pays it) that is independently APPROVED,
+    // so its green says "the deferral holds", not "the word happens to be unknown".
+    expect(classifyWords(decomposeName("undeclaredOutcome"), "name").every((v) => !v.flagged)).toBe(
       true
     );
   });

@@ -50,7 +50,7 @@ collapsed into the word list (3F-2281's four-matcher finding):
 | budget (of a metric or CI target) | `threshold` | a `threshold` is a ceiling; a budget is spent down | adopted — 3F-2281 | whole-word |
 | ci-performance | `ci-run-time` | the retired tag for the pipeline's own timing quality-check | adopted — 3F-2281 | phrase-adjacency |
 | tree / subtree / root / branch (of work items) | the `work hierarchy`: progenitor, parent, child, descendants, ancestor, level | tree language was purged from the model | not-applicable — this repository has no work-item model. Its 670 occurrences are filesystem, git and CLI senses: `--root`, `repoRoot`, the git **work tree** 3F-2325 added deliberately, git `branch` | n/a |
-| `undemanded` (outcome handle) | `no-evidence-obligation` | removes the demand-root (2026-08-02) | deferred 2026-08-03 — 3F-2300 pays it; 390 occurrences, and the handle is still canon in the shipped model | whole-word |
+| `undemanded` (outcome handle) | `no-evidence-obligation` | removes the demand-root (2026-08-02) | adopted — 3F-2300 | whole-word |
 
 ## Known divergences from canon, recorded rather than silent
 

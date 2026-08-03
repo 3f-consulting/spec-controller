@@ -119,7 +119,7 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
       Then "budget" is flagged, renamed to "threshold"
       And "threshold" is not flagged
 
-  Rule: the retired evidence-obligation word "demand" reds; the canon outcome "undemanded" stays green
+  Rule: the retired evidence-obligation words "demand" and "undemanded" red; the canon outcome "no-evidence-obligation" stays green
 
     The third regrowth guard (@SCN-VOC-004, 3F-2291), and the largest purge on the list:
     the debit side is an EVIDENCE OBLIGATION, not a "demand", so every inflection of the
@@ -130,20 +130,37 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
     inflection only (`demands` → `demand`, `demanders` → `demander`), so `demanded`,
     `demanding` and `demander` each carry their own entry — asserted, not assumed.
 
-    The load-bearing constraint is the NEGATIVE: the canon outcome `undemanded` — the
-    handle for a credit with no matching obligation (double-entry-manifesto.md line 42) —
-    must stay green throughout, on every one of its occurrences. It is whole-word by
-    construction: `decomposeName` yields the single token "undemanded" (≠ "demanded"),
-    exactly as canon `undeclared` survives @SCN-VOC-003, and it stays a DOMAIN word so its
-    green is APPROVED rather than merely un-matched. A rule that reds the canon outcome
-    is the failure this scenario exists to prevent, so it is asserted explicitly.
+    WHICH WORD IS CANON IS EXACTLY WHAT MOVED (3F-2300, superseding 3F-2281). This Rule used
+    to hold `undemanded` GREEN and called that its load-bearing half: the handle for a credit
+    with no matching obligation was canon, so a rule that redded it was the failure the
+    scenario existed to prevent. 3F-2300 renamed that handle to `no-evidence-obligation` and
+    swept all 431 occurrences, so `undemanded` is a RETIRED word now — its vendored row moves
+    deferred → adopted with this scenario, and the derivation of @SCN-VOC-010 turns that row
+    into a ban with no code edit. The scenario's SUBJECT never moved; the word underneath it
+    did, which is what makes this an Update rather than a new guard.
+
+    BOTH HALVES, OR THE UPDATE IS GREEN BY EROSION. Swapping the word inside the old negative
+    — "`no-evidence-obligation` is not flagged" — is TRUE, and green, and throws away
+    everything the scenario protects: it would pass just as well with the whole `demand`
+    matcher deleted. So the retired word is asserted FLAGGED, naming `no-evidence-obligation`
+    as its replacement, and the new canon word is asserted GREEN, in the one scenario. The
+    same trap as the `demand` → `declare` swap 3F-2281 caught, one rename later.
+
+    THE ADOPTION IS THE COMPLETENESS PROOF, NOT BOOKKEEPING. `undemanded` is whole-word by
+    construction — `decomposeName` yields the single token "undemanded" (≠ "demanded") — so
+    the flip cannot half-match, and any occurrence surviving the sweep flags. The ones that
+    remain are the files whose PURPOSE is to name the retired vocabulary, and they are the
+    self-exempt set, not an allowance made for this word. The green half stands on the
+    adjacency @SCN-VOC-012 pins — `evidence` immediately before `obligation` — not on
+    `no-evidence-obligation` being unguarded.
 
     @unit @SCN-VOC-004
-    Scenario: the audit reds "demanded" and stays green on the canon "undemanded"
-      Given a corpus carrying the retired "demanded" and the canon outcome "undemanded"
+    Scenario: the audit reds "demanded" and "undemanded", and stays green on the canon "no-evidence-obligation"
+      Given a corpus carrying the retired "demanded" and "undemanded" and the canon "no-evidence-obligation"
       When the vocabulary audit runs over the corpus
       Then "demanded" is flagged, renamed to "evidence obligation"
-      And "undemanded" is not flagged
+      And "undemanded" is flagged, renamed to "no-evidence-obligation"
+      And "no-evidence-obligation" is not flagged
 
   Rule: the retired class name "static guard" reds; the canon "static check" stays green
 

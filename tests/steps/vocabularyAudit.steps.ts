@@ -431,12 +431,21 @@ Then("it exits non-zero without emitting a manifest", function () {
  * the premise instead of quietly proving something else.
  */
 const VOC010_ADOPTED_TERM = "budget";
-const VOC010_DEFERRED_TERM = "undemanded";
+/**
+ * `undeclared` replaced `undemanded` here at 3F-2342. The `undemanded` row was ADOPTED by
+ * that ticket once 3F-2300 finished renaming the outcome handle, so it is enforced now and
+ * this arm's deferred half would have failed at its own `Given` — loudly, on the asserted
+ * premise, which is the behaviour that made the swap safe to make rather than a silent
+ * green. `undeclared` is the same shape one row up: a term on a still-deferred row (3F-2329
+ * pays it) that is independently APPROVED, so its green means "the deferral holds" rather
+ * than "the word is merely unrecognised".
+ */
+const VOC010_DEFERRED_TERM = "undeclared";
 
 /** Both terms in NAME position — the discriminating mode, where an unapproved word flags. */
 const VOC010_PLANT_PATH = "src/vendoredTerms.ts";
 const VOC010_PLANT =
-  "export const complexityBudget = 1;\nexport const undemandedOutcome = 2;\n";
+  "export const complexityBudget = 1;\nexport const undeclaredOutcome = 2;\n";
 
 /** The vendored row carrying `term`, or undefined — the premise each assertion below states. */
 function vendoredRowFor(term: string): BlockedVocabularyRow | undefined {

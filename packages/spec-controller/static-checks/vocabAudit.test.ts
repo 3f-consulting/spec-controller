@@ -493,7 +493,10 @@ describe("[SCN-VOC-004] the retired evidence-obligation word `demand`", () => {
   // only `demands` → `demand` and `demanders` → `demander`, so the remaining inflections
   // each need their own entry — asserted below rather than assumed.
   //
-  // The LOAD-BEARING assertion is the last one: canon `undemanded` must stay green.
+  // WHICH WORD IS CANON IS WHAT MOVED (3F-2300, superseding 3F-2281). This block used to
+  // close on "canon `undemanded` must stay green"; 3F-2300 renamed that handle to
+  // `no-evidence-obligation`, so the retired word is now asserted FLAGGED and the NEW canon
+  // word is asserted GREEN — both, because either alone is green by erosion.
 
   it("[SCN-VOC-004] reds a bare `demanded` in PROSE, renaming to `evidence obligation`", () => {
     const v = classifyWords(["demanded"], "prose").find((w) => w.word === "demanded")!;
@@ -534,36 +537,59 @@ describe("[SCN-VOC-004] the retired evidence-obligation word `demand`", () => {
     }
   });
 
-  it("[SCN-VOC-004] STAYS GREEN on the canon outcome `undemanded` — whole-word, not a substring", () => {
-    // THE load-bearing assertion. `undemanded` is canon (double-entry-manifesto.md line
-    // 42 — the outcome handle for a credit with no matching obligation) and occurs
-    // hundreds of times in this tree; a rule that reds it is the exact failure this
-    // scenario exists to prevent. It survives by construction, exactly as `undeclared`
-    // survives @SCN-VOC-003: decomposeName yields the single token "undemanded", which is
-    // neither "demanded" nor any banned stem.
+  it("[SCN-VOC-004] REDS the RETIRED outcome handle `undemanded`, renaming to `no-evidence-obligation`", () => {
+    // THE HALF THAT MOVED. `undemanded` was canon until 3F-2300 and this assertion held it
+    // GREEN; the handle for a credit with no matching obligation is `no-evidence-obligation`
+    // now, so the vendored row is ADOPTED and @SCN-VOC-010's derivation makes the old word
+    // banned with no edit to any word-list. Whole-word by construction: decomposeName yields
+    // the single token "undemanded", so the ban lands on the whole word and cannot be a
+    // substring hit on "demanded".
     expect(decomposeName("undemanded")).toEqual(["undemanded"]);
-    // NAME mode is the discriminating one — an unapproved word flags `unknown` there, so
-    // this green can only come from `undemanded` still being a DOMAIN word.
-    expect(classifyWords(["undemanded"], "name").every((v) => !v.flagged)).toBe(true);
-    expect(classifyWords(["undemanded"], "prose").every((v) => !v.flagged)).toBe(true);
-    // …and inside the real composites it lives in.
+    // BOTH MODES — a retired word hides in an identifier and in a comment alike.
+    for (const mode of ["name", "prose"] as const) {
+      const v = classifyWords(["undemanded"], mode).find((w) => w.word === "undemanded")!;
+      expect(v.flagged, mode).toBe(true);
+      expect(v.reason, mode).toBe("banned");
+      expect(v.canonical, mode).toBe("no-evidence-obligation");
+    }
+    // …and inside the real composites it used to live in, each of which the sweep removed.
     for (const name of ["undemandedGuards", "undemandedBalance", "byOutcome.undemanded", "undemanded-static-check"]) {
       const v = classifyWords(decomposeName(name), "name").find((w) => w.word === "undemanded")!;
-      expect(v.flagged, name).toBe(false);
+      expect(v.flagged, name).toBe(true);
+      expect(v.reason, name).toBe("banned");
     }
   });
 
-  it("[SCN-VOC-004] flags a real prose `demanded` with action rename, and passes `undemanded`", () => {
+  it("[SCN-VOC-004] STAYS GREEN on the canon outcome `no-evidence-obligation`, in both its forms", () => {
+    // THE OTHER HALF — and NOT the interesting one alone. "The canon word is not flagged" is
+    // equally true of a tree with the whole `demand` matcher deleted, which is the green-by-
+    // erosion shape a one-sided swap of this scenario would have produced. It earns its place
+    // only PAIRED with the flagged assertions above.
+    expect(decomposeName("no-evidence-obligation")).toEqual(["no", "evidence", "obligation"]);
+    // NAME mode is the discriminating one — an unapproved word flags `unknown` there.
+    for (const name of ["no-evidence-obligation", "noEvidenceObligation"]) {
+      expect(classifyWords(decomposeName(name), "name").every((v) => !v.flagged), name).toBe(true);
+    }
+  });
+
+  it("[SCN-VOC-004] over a corpus: `demanded` AND `undemanded` both rename; the canon handle yields no row", () => {
     const { manifest } = auditFiles([
       { path: "src/notes.ts", content: "// the demanded static check is retired here\n" },
-      { path: "src/ok.ts", content: "// the undemanded outcome is canon and stays\n" },
+      { path: "src/retired.ts", content: "// the undemanded outcome was renamed away\n" },
+      { path: "src/ok.ts", content: "// the no-evidence-obligation outcome is canon and stays\n" },
     ]);
     const red = manifest.find((r) => r.current === "demanded" && r.new === "evidence obligation");
     expect(red).toBeDefined();
     expect(red!.action).toBe("rename");
     expect(red!.file).toBe("src/notes.ts");
-    // `undemanded` produced no row of any kind, on any surface.
-    expect(manifest.some((r) => r.current === "undemanded")).toBe(false);
+    // The retired handle names its replacement — a `rename` row, not a bare `review`.
+    const retired = manifest.find((r) => r.current === "undemanded");
+    expect(retired).toBeDefined();
+    expect(retired!.new).toBe("no-evidence-obligation");
+    expect(retired!.action).toBe("rename");
+    expect(retired!.file).toBe("src/retired.ts");
+    // The canon handle produced no row of any kind, on any surface.
+    expect(manifest.some((r) => r.file === "src/ok.ts")).toBe(false);
   });
 });
 

@@ -47,12 +47,20 @@ export const DOMAIN_WORDS: ReadonlySet<string> = new Set([
   // The outcome/verdict rationalisation (locked 2026-07-02): `state` → `outcome`.
   "outcome",
   // The three-grain Reconciliation re-term: `quality-check` replaces the retired `(kind,
-  // level)` grid; `phantom`/`suspense` kinds; `undemanded` (KEPT by @SCN-VOC-004 — canon,
-  // and load-bearing) and the `cites-*` outcomes join the reconciler. `trial`, `account`
-  // and `level` retire with the container re-term (Evidence/Scenario/Quality-Check
+  // level)` grid; `phantom`/`suspense` kinds; and the `cites-*` outcomes join the
+  // reconciler. `trial`, `account` and `level` retire with the container re-term (Evidence/Scenario/Quality-Check
   // Reconciliation replace trial-balance / account / sub-account). `kind` and `sub`
   // are KEPT (legitimate reuse: `ScenarioKind`; `qualityCheckReconciliations` / the sub-issue-gate).
-  "quality", "check", "phantom", "suspense", "undemanded", "cites",
+  //
+  // `undemanded` WAS HERE, kept by @SCN-VOC-004 as the canon credit-side outcome handle.
+  // 3F-2300 renamed that handle to `no-evidence-obligation` and @SCN-VOC-004 now asserts the
+  // old word FLAGGED, so its vendored row is `adopted` and the derivation bans it. The entry
+  // is removed rather than left: `BANNED_WORDS` is consulted ahead of `isApproved`, so it was
+  // already unreachable — a word listed as approved that can never be reached is a false
+  // record of a ruling this scenario reversed. The canon handle needs no entry of its own; it
+  // decomposes to `no` / `evidence` / `obligation` and stays green by the adjacency
+  // @SCN-VOC-012 pins.
+  "quality", "check", "phantom", "suspense", "cites",
 ]);
 
 /** The endorsed generic-technical allowlist (starter set, 2026-07-02). */
@@ -357,4 +365,11 @@ export const REJECTED_ALIAS_TO_CANONICAL: Readonly<Record<string, string>> = {
   budget: "threshold",
   // @SCN-VOC-004 — nouns take the canon term; VERBS take `names`/`naming`, NOT retired `declare`.
   demand: "evidence obligation", demanded: "evidence obligation", demanding: "naming", demander: "naming scenario",
+  // @SCN-VOC-004 — the retired credit-side outcome HANDLE (3F-2300). Its target is the
+  // hyphenated handle, not the prose term, because that is what an occurrence must become.
+  // Recorded HERE rather than derived from the table's "Always write" column, per the
+  // divergence `blockedVocabulary.md` states: canon owns which words are retired, this file
+  // owns what each one becomes. Without it the row still flags — the ban is derived — but
+  // names no replacement, which is a `rename` row with an empty `new` cell.
+  undemanded: "no-evidence-obligation",
 };
