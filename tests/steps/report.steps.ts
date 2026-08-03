@@ -498,13 +498,16 @@ After({ tags: "@SCN-RPT-010" }, function () {
 // @SCN-RPT-017
 // The FULL-UNIFY view fix (3F-1452): the report's evidence-observation views must level a
 // runtime observation by the cited scenario's declared tier tag — the SAME rule the reconciler
-// uses (@SCN-LDG-011 / 3F-1434) — because the census is now a PROJECTION of the one parsed
-// observation set, not a second raw-report walk. The @integration arm drives the REAL reconcile +
-// render over a fixture whose cucumber report proves a passing @e2e scenario (SCN-TGT-101) with NO
-// vitest evidence: the persisted Test volume must count it under e2e (not the caller-declared
-// integration fallback), the JSON `attributed` must carry (SCN-TGT-101, e2e), and the scenario's
-// E2e cell must render a count, not ∅. RED on the census's own raw-report walk (which stamps
-// cucumber ⇒ integration); GREEN once the census projects the tag-derived parsed set.
+// uses (@SCN-LDG-011 / 3F-1434) — because the counting is a FOLD OVER THE LEDGER'S POSTED CREDITS
+// (`runtimeObservationTally`, @SCN-RMD-003), not a second raw-report walk. The census module that
+// did that second walk is RETIRED (3F-2102/3F-2104), and its `attributed[]` went with it. The
+// @integration arm drives the REAL reconcile + render over a fixture whose cucumber report proves a
+// passing @e2e scenario (SCN-TGT-101) with NO vitest evidence: the persisted Test volume must count
+// it under e2e (not the caller-declared integration fallback), the JSON must show the e2e credit
+// POSTED to SCN-TGT-101's ledger row, and the scenario's E2e cell must render a count, not ∅. RED
+// on a level taken from the caller-declared quality-check (cucumber ⇒ integration); GREEN on the
+// tag-derived level the parse carries and the fold counts. The unit arm lives on the fold's own
+// spanning corpus — `runtimeObservationTally.test.ts`'s raw-per-quality-check leaf (3F-2357).
 const EVIDENCE_OBSERVATION_E2E_OPTS = {
   features: "tests/fixtures/evidence-observation-e2e/features",
   cucumber: "tests/fixtures/evidence-observation-e2e/cucumber.json",
@@ -552,10 +555,10 @@ Then("Test volume counts the observation under e2e, not integration", function (
   );
 });
 
-Then("the scenario appears in attributed at e2e", function () {
+Then("the e2e credit posts to that scenario's ledger row", function () {
   // The retired census's `attributed[]` is gone; the e2e credit is visible where it POSTED —
   // on SCN-TGT-101's ledger row (@SCN-LDG-022), the non-parallel-store source (retire, don't
-  // relocate). The tag-derived projection put it at e2e, not the integration fallback.
+  // relocate). The tag-derived level put it at e2e, not the caller-declared integration fallback.
   const parsed = JSON.parse(json017) as {
     ledger: { scenarioReconciliations: Array<{ scnId: string; evidenceObservations: Array<{ qualityCheck: string }> }> };
   };
@@ -570,9 +573,10 @@ Then("the scenario appears in attributed at e2e", function () {
 });
 
 Then("the scenario's E2e cell renders a count, not ∅", function () {
-  // The ledger row for SCN-TGT-101 — the E2e cell reads the attributed (SCN-TGT-101, e2e)
-  // count. Pre-fix, the census stamped the integration fallback, so the e2e credit landed
-  // nowhere the cell reads → ∅. Post-fix (tag-derived projection) it renders the count.
+  // The ledger row for SCN-TGT-101 — the E2e cell reads its observation count STRAIGHT off the
+  // posted credits (@SCN-RPT-011 / @SCN-LDG-022). Pre-fix, the census stamped the integration
+  // fallback, so the e2e credit landed nowhere the cell reads → ∅. Post-fix (the tag-derived
+  // level, counted by the fold) it renders the count.
   const row = md017.split("\n").find((l) => l.includes("| SCN-TGT-101 |"));
   assert.ok(row, `expected a ledger row for SCN-TGT-101; got:\n${md017}`);
   assert.ok(

@@ -422,37 +422,46 @@ Feature: The report renders the ledger as sectioned facts
     The FULL-UNIFY view fix (@SCN-RPT-017, 3F-1452). @SCN-LDG-011 / 3F-1434 made the
     RECONCILER level a runtime observation by the cited scenario's declared tier tag, so a
     cucumber run of an @e2e scenario discharges an e2e obligation. But the report's
-    evidence-observation views — Test volume `rawByRuntimeQualityCheck`, `attributed`, and the
-    per-scenario E2e cell — were fed by a SECOND, independent derivation: the census
+    evidence-observation views — Test volume's `rawByRuntimeQualityCheck` and the per-scenario
+    E2e cell — were fed by a SECOND, independent derivation: the census
     (`countRuntimeEvidenceObservationKinds`) did its OWN raw-report walk and stamped the single
     caller-declared quality-check (cucumber ⇒ integration), so an @e2e-via-cucumber observation
     surfaced as `e2e: 0` in the views while the reconciler correctly reported the e2e obligation
     satisfied — the report contradicting itself.
 
-    The fix removes the second derivation: the census becomes a PROJECTION of the one observation
-    set the reconciler consumes. `countRuntimeEvidenceObservationKinds` tallies the already-parsed
-    `EvidenceObservation[]` (tag-derived, per-tier), classifying each by `(scnId, qualityCheck)`
-    into raw / attributed / no-evidence-obligation / phantom / suspense exactly as before — only the SOURCE of
-    the level changes (the parsed set, not the hardcode). The CLI parses the runtime observations
-    ONCE and feeds the same set to both `reconcile` and the census. The renderer is untouched — it
-    reads `attributed` + `rawByRuntimeQualityCheck` from the census, so the three views fix
-    together. The identity (`Σ raw = attributed + no-evidence-obligation + phantom + suspense`) holds by
-    construction over the projected set (the parsed set retains null-scnId → suspense and
-    unknown-scnId → phantom observations WITH levels).
+    The fix removed the second derivation, and 3F-2102/3F-2104 finished it: the census module is
+    RETIRED, and the counting is `runtimeObservationTally` (@SCN-RMD-003), a FOLD OVER THE LEDGER'S
+    POSTED CREDITS. It walks the credits on each Scenario Reconciliation row, taking each credit's
+    LEVEL off the credit the parse emitted and its ACCOUNT off the row it posted to (@SCN-LDG-022)
+    — the reconciler's own ruling, re-derived nowhere. No second walk survives to disagree with the
+    first: the one parsed `EvidenceObservation[]` (tag-derived, per-tier) is what `reconcile()`
+    posts, and the fold counts what was posted, so the level the parse derived IS the level the
+    views render. The E2e cell likewise reads its observation count STRAIGHT off those posted
+    credits (@SCN-RPT-011), never off a parallel tally.
 
-    The unit arm proves the census, projecting a parsed set that contains an @e2e-via-cucumber
-    observation, counts it under e2e (not integration) with `attributed` carrying `(scnId, e2e)`.
-    The integration arm drives the REAL reconcile + render over a fixture whose cucumber report has
-    a passing @e2e scenario with no vitest evidence: the rendered Test volume counts it under e2e,
-    and the scenario's E2e cell renders a count, not ∅. RED on the census's own raw-report walk
-    (which hardcodes integration); GREEN once the census projects the tag-derived parsed set.
+    The census's own four-way split went WITH the module: `attributed[]` no longer exists. The fold
+    carries `rawByRuntimeQualityCheck` beside three per-account counts — `onScenario` (which absorbs
+    both the matched-attributed and the no-evidence-obligation credits the census split apart),
+    `onPhantomScenario` and `onSuspenseScenario` — and the per-credit outcome split now lives on the
+    ledger rows themselves, where the reconciler ruled it. The completeness identity is
+    correspondingly `Σ raw = onScenario + onPhantomScenario + onSuspenseScenario`, holding by
+    construction over the single walk.
+
+    The unit arm proves the fold: over a reconciler-built spanning corpus carrying an e2e-levelled
+    credit, `rawByRuntimeQualityCheck` counts it under e2e and not integration
+    (`runtimeObservationTally.test.ts`, the leaf co-cited beneath @SCN-RMD-003). The integration arm
+    drives the REAL reconcile + render over a fixture whose cucumber report has a passing @e2e
+    scenario with no vitest evidence: the rendered Test volume counts it under e2e, the e2e credit
+    posts to that scenario's ledger row, and the scenario's E2e cell renders a count, not ∅. Both
+    arms RED on a level taken from the caller-declared quality-check (Test volume reads `e2e: 0`
+    with integration inflated); GREEN on the tag-derived level the parse carries and the fold counts.
 
     @unit @integration @SCN-RPT-017
     Scenario: an @e2e-via-cucumber observation is counted at e2e across the report views
       Given a target whose cucumber report has a passing @e2e scenario with no vitest evidence
       When the reconciliation report is rendered for that @e2e-via-cucumber target
       Then Test volume counts the observation under e2e, not integration
-      And the scenario appears in attributed at e2e
+      And the e2e credit posts to that scenario's ledger row
       And the scenario's E2e cell renders a count, not ∅
 
     # The MULTI-TAG view mirror (@SCN-RPT-018, 3F-1452). The view-side mirror of the reconciler's

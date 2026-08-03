@@ -3,7 +3,10 @@
  * that OWNS the runtime evidence-observation counting (the retired census's home).
  *
  * Bidirectional evidence (Evidence Manifesto §9): the describe carries @SCN-RMD-003, matching
- * features/report-model.feature, so a grep of the id returns both halves.
+ * features/report-model.feature, so a grep of the id returns both halves. The raw-per-quality-check
+ * leaf ALSO self-cites @SCN-RPT-017 (3F-2357) — the FULL-UNIFY view fix, whose unit arm died with
+ * the census module and is discharged here; most-specific-citation-wins (@SCN-LDG-016) posts that
+ * one credit to RPT-017, and the remaining four leaves stay on RMD-003.
  *
  * `runtimeObservationTally` walks the POSTED CREDITS on the Ledger rows and reads each credit's
  * ACCOUNT off the row it posted to (@SCN-LDG-022) — the reconciler's own ruling, never
@@ -45,7 +48,17 @@ describe("[SCN-RMD-003] runtimeObservationTally folds the posted credits by scen
   const ledger: Ledger = reconcile(scenarios, observations);
   const tally = runtimeObservationTally(ledger);
 
-  it("counts raw per quality-check over ALL runtime credits, SKIPPING the lint credit", () => {
+  // CO-CITED to @SCN-RPT-017 (3F-2357) — this assertion is ALSO the unit arm of the FULL-UNIFY view
+  // fix. RPT-017's rule is that the report's evidence-observation views LEVEL a runtime observation
+  // by the cited scenario's tag, never by the caller-declared quality-check the retired census
+  // hardcoded (cucumber ⇒ integration). The corpus above carries an e2e-levelled credit, and this is
+  // the assertion that pins it counted under e2e rather than folded into integration. Teeth proven
+  // by mutation (3F-2357): levelling every non-unit credit `integration` in `runtimeObservationTally`
+  // reds THIS assertion alone of the five — `e2e: 0, integration: 3` — which is verbatim the `e2e: 0`
+  // symptom RPT-017 names, and reds RPT-017's own @integration arm at the same step. The leaf
+  // citation WINS over the describe's (@SCN-LDG-016, most-specific-citation-wins), so this credit
+  // posts to RPT-017; @SCN-RMD-003 keeps the other four `it`s.
+  it("[SCN-RPT-017] counts raw per quality-check over ALL runtime credits, SKIPPING the lint credit", () => {
     // unit: 2 (SCN-A) + 1 (phantom) = 3; integration: 1 (no-evidence-obligation) + 1 (suspense) = 2; e2e: 1
     // (broken, on suspense). The lint guard credit is not counted — this is the runtime axis.
     expect(tally.rawByRuntimeQualityCheck).toEqual({ unit: 3, integration: 2, e2e: 1, performance: 0 });
