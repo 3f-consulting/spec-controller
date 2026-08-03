@@ -223,6 +223,26 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
     name, and the self-exemption stays repo-relative — which is what keeps the narrow
     fixture root of @SCN-VOC-001/002 scanning its 3 files.
 
+    THE SELF-EXEMPT SET IS NOW SYMMETRIC (3F-2327). `vocabAuditCli.test.ts` was the last
+    of the three unit-test files over the detection subsystem still outside the set, while
+    the module it tests was already inside it — so the audit could not see `insideWorkTree`
+    where it is DEFINED and counted it 24 times where it is REFERENCED. Measured on this
+    tree: 56 rows, 55 of them `review` (generic-technical candidates) and exactly 1
+    `rename`, itself a reference to the already-exempt fixture corpus. Moving that content
+    to fixtures was the alternative and was rejected on the numbers: the file holds NO
+    banned-word corpus at all — its flagged words are the subject-under-test's own API
+    names and the test's local helpers — so at most 5 of the 56 rows could relocate and
+    every edit would still move the headline.
+
+    AND THE EXEMPTION IS A BLIND SPOT, said out loud because this codebase has been bitten
+    by it: an adopted retired word in an exempt file goes unreported, which is why 3F-2300's
+    `undemanded` rename looked complete when it was merely unmeasured. The trade is taken
+    here because the measured cost is ZERO adopted words hidden today, and because 56
+    permanent false positives that move on every edit train a reader to stop reading the
+    headline — a signal nobody reads is not a safeguard. Sweeping the exempt set itself for
+    ADOPTED words is the mechanism that closes this properly, and it has its own ticket
+    (3F-2345) rather than riding in under a membership change.
+
     @unit @integration @SCN-VOC-008
     Scenario: a banned word in gitignored build output is not reported
       Given a corpus carrying a banned word in a tracked file and the same word under a gitignored path

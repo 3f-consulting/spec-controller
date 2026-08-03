@@ -23,6 +23,17 @@
  * single assertion runs. Through the namespace, a missing export is a failing assertion with a
  * sentence.
  *
+ * SELF-EXEMPT (3F-2327). This file is listed in `vocabAuditCli.ts`'s `SELF_EXEMPT_PATHS`
+ * alongside `vocabAudit.test.ts` and `blockedVocabulary.test.ts` — the same meta-mention
+ * exemption (operator ruling 2026-07-02). It earns its place differently from those two,
+ * and the difference is worth stating rather than glossing: they feed banned-word corpora
+ * to the classifier, while this file names the SUBJECT under test — `insideWorkTree`,
+ * `notAWorkTreeMessage`, `filesInScope` — whose own module is already exempt. Without the
+ * entry the audit could not see `insideWorkTree` where it is DEFINED and counted it 24
+ * times where it is REFERENCED, which is not a policy but a file boundary drawn through
+ * the middle of one. THE ENTRY IS PINNED BELOW, in the machinery list of the exact-path
+ * case, so deleting it from the set reds this file rather than passing unnoticed.
+ *
  * Parent: @SCN-VOC-008 (3F-2324) — the audit scans the project git tracks (3F-2310).
  */
 
@@ -71,11 +82,17 @@ describe("[SCN-VOC-008] the audit reads what git says the project is, minus its 
   });
 
   it("drops the audit's own detection machinery by exact path", () => {
+    // THIS FILE IS IN THE LIST, and that is the point of its being here (3F-2327). A
+    // `SELF_EXEMPT_PATHS` entry is otherwise an honour convention — nothing reds when one
+    // is deleted, which is exactly how an exemption becomes an unnoticed blind spot. Fed
+    // through `filesInScope`, the entry is load-bearing: remove it from the set and this
+    // assertion goes red naming the path that came back.
     const machinery = [
       "packages/spec-controller/static-checks/vocabAudit.ts",
       "packages/spec-controller/static-checks/vocabWordSets.ts",
       "packages/spec-controller/static-checks/vocabAudit.test.ts",
       "packages/spec-controller/static-checks/vocabAuditCli.ts",
+      "packages/spec-controller/static-checks/vocabAuditCli.test.ts",
       "features/vocabulary-audit.feature",
       "tests/steps/vocabularyAudit.steps.ts",
     ];

@@ -53,12 +53,43 @@ const EXCLUDED_FILES = new Set(["pnpm-lock.yaml", "package-lock.json", "yarn.loc
  * derivation reading it means the file is now the enumeration `vocabWordSets.ts` used to
  * be. Its parser and that parser's unit tests join it for the same reason they always
  * have — one discusses the retired terms, the other passes them to the classifier.
+ *
+ * `vocabAuditCli.test.ts` (3F-2327) is the ONE entry that earns its place on a DIFFERENT
+ * ground, and the difference is stated rather than left to be inferred from the company it
+ * keeps. It holds no banned-word corpus at all — it is a pure unit test over `filesInScope`,
+ * `insideWorkTree` and `notAWorkTreeMessage`, over injected path lists, and it never reaches
+ * `classifyWords`. What it names is the SUBJECT UNDER TEST, whose own module is two lines up
+ * this list: without the entry the audit could not see `insideWorkTree` where it is DEFINED
+ * and counted it 24 times where it is REFERENCED — a file boundary drawn through the middle
+ * of one exemption, not a second policy. Measured before the entry landed: 56 rows, 55 of
+ * them `review` (generic-technical candidates) and exactly 1 `rename`, itself a mention of
+ * the already-exempt fixture corpus. Relocating that content to `tests/fixtures/vocab/` was
+ * the alternative and the numbers rejected it: at most 5 of the 56 rows could move, and the
+ * headline would still shift on every edit.
+ *
+ * ═══ WHAT AN ENTRY HERE COSTS, SAID OUT LOUD ═══
+ *
+ * An exemption is a BLIND SPOT, and this codebase has been bitten by one: 3F-2300's rename
+ * of `undemanded` looked complete because the audit reported nothing, when in truth all six
+ * files naming the word were already on this list — the sweep was unmeasured, not clean. So
+ * every entry here also hides an ADOPTED retired word appearing in that file, and nothing
+ * else catches it (`lint:blocked-vocabulary` validates the TABLE, not the tree). The trade is
+ * taken because the measured cost is ZERO adopted words hidden today, and because permanent
+ * false positives that move on every edit train a reader to stop reading the headline — a
+ * signal nobody reads is not a safeguard. Sweeping THIS SET for adopted words is the
+ * mechanism that closes the gap properly and has its own ticket (3F-2345); until it lands,
+ * a new entry here is a judgement, not a formality.
+ *
+ * Every entry is PINNED by `vocabAuditCli.test.ts`'s exact-path case, which feeds the list
+ * through `filesInScope` — so deleting one from this set reds `pnpm test` instead of quietly
+ * widening the blind spot.
  */
 const SELF_EXEMPT_PATHS = new Set([
   "packages/spec-controller/static-checks/vocabAudit.ts",
   "packages/spec-controller/static-checks/vocabWordSets.ts",
   "packages/spec-controller/static-checks/vocabAudit.test.ts",
   "packages/spec-controller/static-checks/vocabAuditCli.ts",
+  "packages/spec-controller/static-checks/vocabAuditCli.test.ts",
   "packages/spec-controller/static-checks/blockedVocabulary.md",
   "packages/spec-controller/static-checks/blockedVocabulary.ts",
   "packages/spec-controller/static-checks/blockedVocabulary.test.ts",
