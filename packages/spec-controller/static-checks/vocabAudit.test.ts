@@ -13,6 +13,7 @@ import {
   auditFiles,
   renderManifestCsv,
   renderCoverageMatrixMarkdown,
+  scanFile,
   SURFACES,
 } from "./vocabAudit.js";
 
@@ -684,5 +685,91 @@ describe("[SCN-VOC-005] the retired class name `static guard`", () => {
     // `static check` produced no row of any kind, and neither did the trailing `guard`.
     expect(manifest.some((r) => r.file === "src/ok.ts")).toBe(false);
     expect(manifest.some((r) => r.current === "guard")).toBe(false);
+  });
+});
+
+describe("[SCN-VOC-012] the canon handle `no-evidence-obligation`", () => {
+  // 3F-2300 renamed the credit-side outcome `undemanded` → `no-evidence-obligation`. The new
+  // handle decomposes to `no` / `evidence` / `obligation`, and bare `obligation` is a
+  // FULL_TERM_ONLY word — so the handle is green for exactly ONE reason: `fullTermSatisfied`
+  // reads `words[i - 1]` and finds `evidence`. It is in no word-set of its own.
+  //
+  // BOTH HALVES ARE THE POINT, in every assertion below. "the handle is not flagged" alone
+  // stays true in a world where `obligation` had been dropped from FULL_TERM_ONLY or
+  // allowlisted — the green-by-erosion shape @SCN-VOC-004 exists to prevent. It is therefore
+  // paired throughout with a bare `obligation` that must STILL flag `bare-shortening`.
+  //
+  // The last two assertions are the honest scope: adjacency, not mere co-presence, and one
+  // SCANNED UNIT, not the file.
+
+  it("[SCN-VOC-012] is GREEN in both modes — hyphenated and camelCase decompose identically", () => {
+    for (const form of ["no-evidence-obligation", "noEvidenceObligation"]) {
+      expect(decomposeName(form), form).toEqual(["no", "evidence", "obligation"]);
+      // NAME mode is the discriminating one: an unapproved word flags `unknown` there.
+      expect(classifyWords(decomposeName(form), "name").every((v) => !v.flagged), form).toBe(true);
+      expect(classifyWords(decomposeName(form), "prose").every((v) => !v.flagged), form).toBe(true);
+    }
+  });
+
+  it("[SCN-VOC-012] THE OTHER HALF: a bare `obligation` still flags as a bare shortening", () => {
+    // Without this, the green above would be indistinguishable from `obligation` having been
+    // quietly retired out of FULL_TERM_ONLY. It reds in BOTH modes, renamed to the full term.
+    for (const mode of ["name", "prose"] as const) {
+      const v = classifyWords(["obligation"], mode)[0]!;
+      expect(v.flagged, mode).toBe(true);
+      expect(v.reason, mode).toBe("bare-shortening");
+      expect(v.canonical, mode).toBe("evidence obligation");
+    }
+  });
+
+  it("[SCN-VOC-012] it is the ADJACENCY, not co-presence: the reordered handle flags", () => {
+    // `obligation-with-no-evidence` carries every word the canon handle carries and says the
+    // same thing in English. It flags, because `words[i - 1]` is `no`, not `evidence` — which
+    // is what "one word-order away from reddening" means, asserted rather than described.
+    const reordered = classifyWords(decomposeName("obligation-with-no-evidence"), "name");
+    expect(reordered.find((v) => v.word === "obligation")!.flagged).toBe(true);
+    expect(reordered.find((v) => v.word === "obligation")!.reason).toBe("bare-shortening");
+    // And it must be `evidence` SPECIFICALLY that satisfies it — any other neighbour fails.
+    expect(classifyWords(["no", "obligation"], "name").find((v) => v.word === "obligation")!.flagged).toBe(true);
+    expect(classifyWords(["evidence", "obligation"], "name").every((v) => !v.flagged)).toBe(true);
+  });
+
+  it("[SCN-VOC-012] over a real corpus: the handle produces no row, a bare `obligation` does", () => {
+    const { manifest } = auditFiles([
+      { path: "src/notes.ts", content: "// a bare obligation stands alone on this line\n" },
+      { path: "src/ok.ts", content: "// the no-evidence-obligation outcome is canon here\n" },
+    ]);
+    const red = manifest.find((r) => r.current === "obligation");
+    expect(red).toBeDefined();
+    expect(red!.file).toBe("src/notes.ts");
+    expect(red!.action).toBe("rename");
+    expect(red!.new).toBe("evidence obligation");
+    // The handle produced NO row of any kind, on any surface.
+    expect(manifest.some((r) => r.file === "src/ok.ts")).toBe(false);
+  });
+
+  it("[SCN-VOC-012] the exemption reaches ONE SCANNED UNIT — a regex literal splits it and reds", () => {
+    // The honest scope, and narrower than "the phrase is exempt". Adjacency is judged inside
+    // the sequence `classifyWords` is handed: one identifier in NAME mode, one line in PROSE
+    // mode. A REGEX LITERAL is code rather than a string, so `identSegments` emits one
+    // single-word NAME segment per identifier run — `no`, `evidence` and `obligation` never
+    // meet and `words[i - 1]` is empty. LIVE IN THIS TREE at tests/steps/report.steps.ts,
+    // where the handle sits inside two `Then(/…/)` patterns and each flags its `obligation`.
+    // The STRING control carries the identical words on ONE prose segment and stays green,
+    // which is what proves the SEGMENTATION is the cause rather than anything about steps
+    // files. Widening the matcher across segments is a different behaviour, not this one's.
+    const path = "tests/steps/probe.steps.ts";
+    const inRegex = "Then(/^a no-evidence-obligation observation$/, () => {});\n";
+    const inString = 'Then("a no-evidence-obligation observation", () => {});\n';
+
+    const nameSegments = scanFile(path, inRegex).filter((s) => s.mode === "name").map((s) => s.text);
+    expect(nameSegments).toEqual(expect.arrayContaining(["no", "evidence", "obligation"]));
+
+    expect(
+      auditFiles([{ path, content: inRegex }]).manifest.some((r) => r.current === "obligation")
+    ).toBe(true);
+    expect(
+      auditFiles([{ path, content: inString }]).manifest.some((r) => r.current === "obligation")
+    ).toBe(false);
   });
 });

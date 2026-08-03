@@ -86,7 +86,7 @@ export const COMPLEXITY_EXCEPTIONS = [
   { path: "packages/spec-controller/static-checks/scnSubIssueGate.ts",     rule: "complexity",             value:   17, since: "2026-08-02" },
   { path: "packages/spec-controller/static-checks/scnSubIssueGate.ts",     rule: "max-lines",              value:  728, since: "2026-08-02" },
   { path: "packages/spec-controller/static-checks/scnSubIssueGate.ts",     rule: "max-lines-per-function", value:  110, since: "2026-08-02" },
-  { path: "packages/spec-controller/static-checks/vocabAudit.test.ts",     rule: "max-lines",              value:  688, since: "2026-08-02" },
+  { path: "packages/spec-controller/static-checks/vocabAudit.test.ts",     rule: "max-lines",              value:  775, since: "2026-08-03" },
   { path: "packages/spec-controller/static-checks/vocabAudit.ts",          rule: "complexity",             value:   25, since: "2026-08-02" },
   { path: "packages/spec-controller/static-checks/vocabAudit.ts",          rule: "max-lines",              value:  790, since: "2026-08-02" },
   { path: "packages/spec-controller/static-checks/vocabAudit.ts",          rule: "max-lines-per-function", value:  115, since: "2026-08-02" },

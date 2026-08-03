@@ -341,3 +341,44 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
       Given the vendored blocked-vocabulary table carries a row with no adoption status
       When the blocked-vocabulary status check runs
       Then it reds naming the row that has no status
+
+  Rule: the canon handle "no-evidence-obligation" passes because "evidence" precedes "obligation" in the same scanned unit, not because "obligation" is unguarded
+
+    THE REASON THE NEW HANDLE IS GREEN, WRITTEN DOWN (@SCN-VOC-012, 3F-2341). 3F-2300 renamed
+    the credit-side outcome `undemanded` → `no-evidence-obligation`. The new handle decomposes
+    to `no` / `evidence` / `obligation`, and bare `obligation` is a FULL_TERM_ONLY word — the
+    strongest matcher after the banned set. It passes for exactly ONE reason: `fullTermSatisfied`
+    reads the IMMEDIATELY PRECEDING word and finds `evidence`. Nothing else holds it green — it
+    is in no word-set of its own. The camelCase `noEvidenceObligation` decomposes identically,
+    so it is green by the same rule rather than by a second one, which is why both forms are
+    asserted here and neither is left to be assumed from the other.
+
+    SO THE HANDLE IS ONE WORD-ORDER AWAY FROM REDDENING. `obligation-with-no-evidence` says the
+    same thing in English and flags, because the adjacency is gone. Anyone rewording the handle
+    needs to know that BEFORE a manifest diff tells them.
+
+    BOTH HALVES, OR THE SCENARIO EARNS NOTHING. "The handle is not flagged" is equally true of a
+    world where `obligation` had been quietly dropped from FULL_TERM_ONLY or allowlisted — the
+    green-by-erosion shape @SCN-VOC-004 exists to prevent, one Rule over. Pairing it with "a
+    bare `obligation` still flags as a bare shortening" is what makes the first half mean GREEN
+    BY ADJACENCY rather than GREEN BECAUSE NOTHING GUARDS IT. A one-sided version of this
+    scenario would stay green with the whole matcher deleted.
+
+    THE EXEMPTION REACHES EXACTLY ONE SCANNED UNIT, WHICH IS NARROWER THAN "the phrase is
+    exempt". Adjacency is judged inside the word sequence `classifyWords` is handed — ONE
+    identifier in NAME mode, ONE line in PROSE mode — never across the file. Where the scanner
+    splits the handle across units the exemption cannot apply and the `obligation` flags: a
+    REGEX LITERAL is code rather than a string, so `identSegments` emits one single-word segment
+    per identifier run and `no`, `evidence` and `obligation` never meet. That is live in this
+    tree, not hypothetical — `tests/steps/report.steps.ts` carries the handle inside two
+    `Then(/…/)` patterns and each flags its `obligation`. Recorded because the wider reading is
+    a promise the code does not keep. Widening the matcher to span segments is a DIFFERENT
+    behaviour and deliberately NOT this scenario's.
+
+    @unit @SCN-VOC-012
+    Scenario: no-evidence-obligation is green while a bare obligation still flags
+      Given a corpus carrying "no-evidence-obligation" and a bare "obligation"
+      When the vocabulary audit runs over the corpus
+      Then "no-evidence-obligation" is not flagged
+      And the bare "obligation" is flagged as a bare shortening
+      And an occurrence the scan reads one word at a time still flags its "obligation"
