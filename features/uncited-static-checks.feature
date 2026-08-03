@@ -34,7 +34,7 @@ Feature: Detect uncited static-checks — a CI guard no @lint declares
 
   Rule: a check an @lint scenario declares is not reported as an uncited static check
 
-    @unit @integration @SCN-USG-002
+    @integration @SCN-USG-002
     Scenario: a check declared by an @lint scenario is attributed, not an uncited static check
       Given a target whose CI runs the lint:foo and lint:bar checks
       And only lint:foo is declared by an @lint scenario
