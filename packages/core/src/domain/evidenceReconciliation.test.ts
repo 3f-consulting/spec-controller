@@ -1128,7 +1128,7 @@ describe("[SCN-LDG-019] THE FAIL-SAFE GETS TEETH: a broken observation that CITE
   });
 
   it.each(["passed", "failed"] as const)(
-    "a broken observation citing SCN-HNS-020 with status %s leaves SCN-HNS-020's integration obligation missing",
+    "a broken observation citing the fixture scenario with status %s leaves its integration obligation missing",
     (status) => {
       const balance = reconcile(scenarios, [citingBrokenObservation(status)]);
       const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-HNS-020");
