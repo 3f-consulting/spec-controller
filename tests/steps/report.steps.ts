@@ -599,15 +599,18 @@ After({ tags: "@SCN-RPT-017" }, function () {
 // The MULTI-TAG view mirror (3F-1452): the view-side mirror of the reconciler's @SCN-LDG-014.
 // A scenario declaring @integration @e2e proven by a SINGLE passing cucumber observation must be
 // counted in BOTH tiers across the views — because parseCucumber emits one observation per declared
-// non-unit tier (per-tier emission, @SCN-LDG-014) and the census PROJECTS that parsed set
-// (@SCN-RPT-017), tallying the integration and e2e observations for the one scenario independently
-// with NO multi-tag-specific census logic. The @integration arm drives the REAL reconcile + render
-// over a fixture whose cucumber report proves a passing @integration @e2e scenario (SCN-TGT-102)
-// with NO vitest evidence: the persisted Test volume must count it under BOTH integration and e2e,
-// and the scenario declares both obligations, so both the Integration and E2e cells must render
-// their attributed count, not ∅. Per-tier counting is INHERITED from the parsed set — green on the
-// full-unify census; teeth proven by the census unit arm + local mutation (collapsing the parsed
-// set to one-per-scenario reds the second tier).
+// non-unit tier (per-tier emission, @SCN-LDG-014) and each emitted observation POSTS AS ITS OWN
+// CREDIT on the scenario's ledger row (@SCN-LDG-022). The census that once re-derived these counts
+// is RETIRED (3F-2102/3F-2104), and `attributed[]` went with it: Test volume is the fold over the
+// posted credits (`runtimeObservationTally`, @SCN-RMD-003) and the cell reads its count straight off
+// those same credits (@SCN-RPT-011), so the integration and e2e observations for the one scenario
+// are tallied independently with NO multi-tag-specific logic and no second derivation to disagree.
+// The @integration arm drives the REAL reconcile + render over a fixture whose cucumber report
+// proves a passing @integration @e2e scenario (SCN-TGT-102) with NO vitest evidence: the persisted
+// Test volume must count it under BOTH integration and e2e, and the scenario declares both
+// obligations, so both the Integration and E2e cells must render their credit count, not ∅.
+// Per-tier counting is INHERITED from the parsed set. The @unit arm is the renderer's half, proven
+// in isolation over the cell-grid corpus in markdown.test.ts (the leaf cited [SCN-RPT-018]).
 const EVIDENCE_OBSERVATION_INTEGRATION_E2E_OPTS = {
   features: "tests/fixtures/evidence-observation-integration-e2e/features",
   cucumber: "tests/fixtures/evidence-observation-integration-e2e/cucumber.json",

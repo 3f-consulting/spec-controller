@@ -467,14 +467,27 @@ Feature: The report renders the ledger as sectioned facts
     # The MULTI-TAG view mirror (@SCN-RPT-018, 3F-1452). The view-side mirror of the reconciler's
     # @SCN-LDG-014: a scenario declaring @integration @e2e proven by a SINGLE passing cucumber
     # observation is counted in BOTH tiers across the views — because parseCucumber emits one
-    # observation per declared non-unit tier (the per-tier emission, @SCN-LDG-014), and the census is
-    # now a PROJECTION of that parsed set (@SCN-RPT-017), so the two observations (integration + e2e)
-    # for the one scenario are tallied independently with NO multi-tag-specific census logic. Test
-    # volume counts the scenario's single cucumber pass under integration AND under e2e; the scenario
-    # declares both obligations (its tier tags), so both the Integration and E2e cells read their
-    # attributed count and render it — neither collapses to ∅. Per-tier counting is INHERITED from the
-    # parsed set, not re-implemented; this scenario pins that the multi-tier credit survives the
-    # census projection into the views (the second tier is not lost).
+    # observation per declared non-unit tier (the per-tier emission, @SCN-LDG-014) and each emitted
+    # observation POSTS AS ITS OWN CREDIT on the scenario's ledger row (@SCN-LDG-022).
+    #
+    # The census that once re-derived these counts is RETIRED (3F-2102/3F-2104), and with it went the
+    # `attributed[]` projection this preamble used to name. Test volume is now `runtimeObservationTally`
+    # (@SCN-RMD-003), a fold over the posted credits, and the per-scenario cell reads its observation
+    # count STRAIGHT off those same credits (@SCN-RPT-011). So the two observations (integration +
+    # e2e) for the one scenario are tallied independently with NO multi-tag-specific logic anywhere —
+    # there is no second derivation left to lose the second tier. Test volume counts the scenario's
+    # single cucumber pass under integration AND under e2e; the scenario declares both obligations
+    # (its tier tags), so both the Integration and E2e cells read their credit count and render it —
+    # neither collapses to ∅.
+    #
+    # The unit arm proves the RENDERER's half in isolation: over the reconciler-built cell-grid corpus
+    # (`markdown.test.ts`, the leaf cited [SCN-RPT-018] beneath [SCN-RPT-011]), a row declaring TWO
+    # runtime tiers with one credit at each renders BOTH cells with their own count — a renderer that
+    # levelled the row by a single quality-check would blank one. The integration arm drives the REAL
+    # reconcile + render over a fixture whose cucumber report proves one passing @integration @e2e
+    # scenario with no vitest evidence, and pins the rendered row at `I/1 | E/1`. Per-tier counting is
+    # INHERITED from the parsed set, not re-implemented; this scenario pins that the multi-tier credit
+    # survives into the views (the second tier is not lost).
     @unit @integration @SCN-RPT-018
     Scenario: an @integration @e2e-via-cucumber observation is counted in both tiers across the views
       Given a target whose cucumber report has a single passing @integration @e2e scenario tagged SCN-TGT-102

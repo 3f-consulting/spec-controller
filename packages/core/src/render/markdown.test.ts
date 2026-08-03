@@ -1005,6 +1005,8 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   //   SCN-D: @integration (1 observation), no @unit → Unit —, Integration 1
   //   SCN-E: one lint guard, absent → Lint ∅
   //   SCN-F: @unitpending with a unit observation citing the pending pair → NO-EVIDENCE-OBLIGATION (3F-1858)
+  //   SCN-G: TWO runtime tiers (@unit + @integration), one credit at each → Unit 1, Integration 1
+  //          — the MULTI-TIER shape (@SCN-RPT-018): both cells must render their own count
   const scenarios: Scenario[] = [
     {
       scnId: "SCN-A",
@@ -1019,6 +1021,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     { scnId: "SCN-D", evidenceObligations: [{ qualityCheck: "integration" }] },
     { scnId: "SCN-E", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "guard-z" }] },
     { scnId: "SCN-F", evidenceObligations: [{ qualityCheck: "unit", pending: true }] },
+    { scnId: "SCN-G", evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }] },
   ];
   const observations: EvidenceObservation[] = [
     { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
@@ -1037,6 +1040,10 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     // observation at all → missing (∅).
     { qualityCheck: "lint", staticCheck: "guard-x", exists: true, enforcedOverRealSource: true },
     { qualityCheck: "lint", staticCheck: "guard-y", exists: true, enforcedOverRealSource: false },
+    // SCN-G's two credits — one at each tier it declared (@SCN-RPT-018). The reconciler posts each
+    // as its own credit on SCN-G's row (@SCN-LDG-022), which is what the two cells read.
+    { qualityCheck: "unit", scnId: "SCN-G", status: "passed" },
+    { qualityCheck: "integration", scnId: "SCN-G", status: "passed" },
   ];
   const balance: Ledger = reconcile(scenarios, observations);
 
@@ -1081,6 +1088,19 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     expect(md).toContain("| SCN-D |  |  | I/1 |");
     // lint declared but its static check missing → L/- (declared, no guard present).
     expect(md).toContain("| SCN-E | L/- |  |  |");
+  });
+
+  // The MULTI-TIER view mirror (@SCN-RPT-018). The view-side half of the reconciler's
+  // @SCN-LDG-014 per-tier emission: a scenario declaring TWO runtime tiers, each carrying one
+  // posted credit, renders BOTH cells with their attributed count — the second tier is not lost
+  // to the first, and neither cell collapses to ∅. Cited on the `it` (most-specific-citation-wins,
+  // @SCN-LDG-016), so this is a NEW leaf: @SCN-RPT-011 keeps every credit it already held.
+  it("[SCN-RPT-018] renders both cells for a scenario declaring two runtime tiers — neither collapses to ∅", () => {
+    const md = renderMarkdown(__er(balance, true, false), ctx);
+    // SCN-G declares @unit AND @integration and has one credit at each. Both cells must read
+    // their own count: U/1 on the left tier, I/1 on the right. A renderer that levelled the row
+    // by a single quality-check would blank one of them.
+    expect(md).toContain("| SCN-G |  | U/1 | I/1 |");
   });
 
   it("renders -/N for a credit at a PENDING pair — no-evidence-obligation (3F-1858), no evidence-obligation letter", () => {
