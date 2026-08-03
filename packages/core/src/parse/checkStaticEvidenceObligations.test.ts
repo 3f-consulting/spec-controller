@@ -10,8 +10,11 @@
  * run), handling block-scalar `run:`, package-manager invocation forms, and
  * `if:`-gated / matrix steps without crashing — NOT line-scan.
  *
- * Helper-level coverage for the seam this sub-issue carries (alongside the
- * @SCN-LNT-001 reconcile test); not @SCN-tagged.
+ * Helper-level coverage for the seam @SCN-LNT-001 carries — the Rule preamble at
+ * features/lint-reconciliation.feature names "the ingest/guard reader" as part of the
+ * static-kind foundation that scenario is seam-bearing for. These pin that reader
+ * directly (its GuardEvidenceObservation output), alongside the @SCN-LNT-001 reconcile
+ * test in src/domain/lintReconciliation.test.ts which pins the ledger verdict it feeds.
  */
 
 import { describe, it, expect } from "vitest";
@@ -26,7 +29,7 @@ const pkg: PackageJsonScripts = {
   },
 };
 
-describe("checkStaticEvidenceObligations — the static-check enforcement reader", () => {
+describe("[SCN-LNT-001] checkStaticEvidenceObligations — the static-check enforcement reader", () => {
   it("reports a guard whose command is a CI run step as enforced over real source", () => {
     const ci = [
       "jobs:",
