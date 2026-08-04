@@ -101,13 +101,13 @@ export type FlagReason =
   | "bare-different-word"
   // @SCN-VOC-003 — the forbidden kind-label PHRASE: whole-word `declared` immediately
   // before `scenario`. Renamed to the bare canon `scenario`.
-  | "declared-scenario"
+  | "retired-kind-label-phrase"
   // @SCN-VOC-006 — the retired tag PHRASE: whole-word `ci` immediately before
   // `performance`. Renamed to the canon `ci-run-time`.
-  | "ci-performance"
+  | "retired-tag-phrase"
   // @SCN-VOC-005 — the retired CLASS-NAME PHRASE: whole-word `static` immediately before
   // `guard`. Renamed to the canon `static check`.
-  | "static-guard";
+  | "retired-class-name-phrase";
 
 // ---------------------------------------------------------------------------
 // Core classification
@@ -156,10 +156,10 @@ function fullTermSatisfied(word: string, words: string[], i: number, present: Se
     case "guard":
       // CO-OCCURRENCE, not adjacency (like the `ghost` arm below — a `present.has`
       // set-membership test over the whole sequence, not a `words[i - 1]` neighbour).
-      // Anaphora — "the static guard ... the guard" — is the same referent, so the
-      // second, unqualified mention passes; only a genuinely standalone bare `guard`
-      // flags. Its action is `review`, not `rename` (see FlagReason below): bare, it
-      // may be the different word used alone rather than a shortening.
+      // Anaphora — the retired class-name phrase, then a later bare `guard` — is the same
+      // referent, so the second, unqualified mention passes; only a genuinely standalone
+      // bare `guard` flags. Its action is `review`, not `rename` (see FlagReason below):
+      // bare, it may be the different word used alone rather than a shortening.
       return GUARD_QUALIFIERS.some((qualifier) => qualifier.every((w) => present.has(w)));
     case "ghost":
       return present.has("evidence") && present.has("observation");
@@ -184,41 +184,41 @@ function fullTermSatisfied(word: string, words: string[], i: number, present: Se
  * afterwards by the unmodified machinery and keeps its own verdict: one occurrence, one
  * row, one rename.
  *
- * @SCN-VOC-003 — "declared scenario", the forbidden kind-label. Whole-word `declared`
- * immediately before `scenario` (singular or plural), renamed to the bare canon `scenario`
- * (which already means the real, declared kind). Whole-word by construction: `undeclared`
- * decomposes to the single token "undeclared" (≠ "declared"), so canon "undeclared
- * scenario" stays green, and bare `scenario` — an approved word — stays green too.
+ * @SCN-VOC-003 — the forbidden KIND LABEL. Whole-word `declared` immediately before
+ * `scenario` (singular or plural), renamed to the bare canon `scenario` (which already means
+ * the real, declared kind). Whole-word by construction: `undeclared` decomposes to the single
+ * token "undeclared" (≠ "declared"), so canon "undeclared scenario" stays green.
  *
- * @SCN-VOC-006 — "ci-performance", the retired tag. Whole-word `ci` immediately before
- * `performance`, renamed to `ci-run-time`. A REGROWTH guard: the tree carries zero
+ * @SCN-VOC-006 — the retired TAG for the pipeline's own timing check. Whole-word `ci` immediately
+ * before `performance`, renamed to `ci-run-time`. A REGROWTH guard: the tree carries zero
  * occurrences, so the rule keeps the tag out rather than purging it. `ci` and `performance`
  * are BOTH individually allowlisted and banning either would red canon — bare
  * `@performance` is the runtime quality check, `ci.yml` / `ciRun` are ordinary — while
  * `ci-run-time` decomposes to `ci` / `run` / `time`, all approved.
  *
- * @SCN-VOC-005 — "static guard", the retired CLASS NAME. Whole-word `static` immediately
+ * @SCN-VOC-005 — the retired CLASS NAME for this family of checks. Whole-word `static` immediately
  * before `guard` (the singulariser folds the plural onto the stem), renamed to the canon
  * `static check`. `static` is a manifesto DOMAIN word (the static axis, the static evidence
- * observation) and `guard` is canon's DIFFERENT WORD, deliberately kept — so this reds the
- * CLASS NAME, never the word. The following `guard` stays green because `["static"]`
- * remains a GUARD_QUALIFIERS entry and co-occurs; dropping that entry would emit a SECOND
- * row per occurrence dispositioned `review`, and would red @SCN-VOC-001's `runStaticGuard`
- * fixture — which is why it is kept rather than "cleaned up" alongside this rule.
+ * observation) and `guard` is canon's DIFFERENT WORD, deliberately kept — so this reds the CLASS
+ * NAME, never the word. The following `guard` stays green because `["static"]` remains a
+ * GUARD_QUALIFIERS entry and co-occurs; dropping that entry would emit a SECOND row per
+ * occurrence dispositioned `review`, and would red @SCN-VOC-001's retired-class-name fixture.
  *
  * ALL THREE fire in BOTH modes: a retired phrase hides in a comment, a doc, an identifier,
  * a string, a filename or a config key alike — and, since @SCN-VOC-013, on a TAG LINE too.
+ * Each arm's `FlagReason` names its RULE, never the coinage it catches (3F-2392) — the
+ * detector's own API was the last place a retired term still lived as an exported name.
  */
 function retiredPhraseVerdict(word: string, following: string): WordVerdict | null {
   const next = singularise(following);
   if (word === "declared" && next === "scenario") {
-    return { word, flagged: true, reason: "declared-scenario", canonical: "scenario" };
+    return { word, flagged: true, reason: "retired-kind-label-phrase", canonical: "scenario" };
   }
   if (word === "ci" && next === "performance") {
-    return { word, flagged: true, reason: "ci-performance", canonical: "ci-run-time" };
+    return { word, flagged: true, reason: "retired-tag-phrase", canonical: "ci-run-time" };
   }
   if (word === "static" && next === "guard") {
-    return { word, flagged: true, reason: "static-guard", canonical: "static check" };
+    return { word, flagged: true, reason: "retired-class-name-phrase", canonical: "static check" };
   }
   return null;
 }
@@ -616,9 +616,9 @@ export interface AuditResult {
 function actionFor(reason: FlagReason): string {
   return reason === "banned" ||
     reason === "bare-shortening" ||
-    reason === "declared-scenario" ||
-    reason === "ci-performance" ||
-    reason === "static-guard"
+    reason === "retired-kind-label-phrase" ||
+    reason === "retired-tag-phrase" ||
+    reason === "retired-class-name-phrase"
     ? "rename"
     : "review";
 }

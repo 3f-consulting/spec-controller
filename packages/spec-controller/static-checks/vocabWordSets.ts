@@ -332,9 +332,9 @@ export const APPROVED_WORDS: ReadonlySet<string> = new Set([
 /** Words approved only inside their full manifesto term; bare → flag. */
 export const FULL_TERM_ONLY: ReadonlySet<string> = new Set([
   "obligation", "observation", "ghost",
-  // `guard` is BOTH canon's different word (L5 — a check protecting an invariant)
-  // and its banned shortening (L129 — of `static guard`). So it is approved only
-  // when a ruled qualifier co-occurs; see GUARD_QUALIFIERS + fullTermSatisfied.
+  // `guard` is BOTH canon's different word (L5 — a check protecting an invariant) and
+  // its banned shortening (L129 — of the retired class-name phrase @SCN-VOC-005 owns).
+  // Approved only when a ruled qualifier co-occurs; see GUARD_QUALIFIERS + fullTermSatisfied.
   "guard",
 ]);
 

@@ -86,6 +86,10 @@ export const RETIRED_COMPOSITE = {
   metricPluralFilename: "complexityBudgets.mjs",
   /** @SCN-VOC-004 — the past participle inside a camelCase identifier. */
   obligationPastIdentifier: "demandedStaticGuards",
+  /** @SCN-VOC-005 — the class-name phrase's NAME-mode spellings: camel, plural, kebab, Pascal. */
+  classNameIdentifiers: ["staticGuard", "staticGuards", "static-guards", "StaticGuardTotals"],
+  /** @SCN-VOC-006 — the tag phrase inside a camelCase identifier. */
+  tagIdentifier: "ciPerformance",
 } as const;
 
 /**

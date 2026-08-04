@@ -20,6 +20,17 @@
  * deferral without a ticket is an intention, not a decision) and the shape the complexity
  * exception list has. The point is that "we could not fix this yet" and "this is fine
  * forever" stop looking identical on the page — which, in a bare set of paths, they did.
+ *
+ * THE LIST HOLDS NO RESIDUAL TODAY (3F-2392). The four this file shipped with are gone:
+ * their data moved to the fixture corpus, their comments name the ROLE rather than the
+ * word, and `FlagReason`'s members are named after their rules rather than the coinages
+ * they catch. So no CODE file is exempt — the end state 3F-2378 set.
+ *
+ * The `residual` kind stays anyway, and that is deliberate. It is the mechanism for the
+ * next piece of declared debt, and @SCN-VOC-016/017 prove it over INJECTED lists precisely
+ * so a healthy tree cannot make it unobservable. Deleting a proven mechanism because
+ * today's list happens not to use it is how the next exemption gets granted with no shape
+ * to grant it in.
  */
 
 /** Why a path is exempt. */
@@ -57,30 +68,7 @@ export const SELF_EXEMPT: ReadonlyMap<string, ExemptionKind> = new Map<string, E
     { kind: "pure-data", note: "as above, for the tree-enforcement gate's scenarios" },
   ],
 
-  // ─── RESIDUAL — code, carried explicitly, each naming the ticket that frees it ──────
-  //
-  // All four are tied to ONE cause: two of `FlagReason`'s values are exported identifiers
-  // that NAME the retired coinages they catch — the tag phrase and the class-name phrase —
-  // because a reason names its rule. They cannot be reworded like a comment, and keeping the
-  // files blanket-exempt to preserve them would enshrine a code exemption to hide the exact
-  // drift this effort retires. 3F-2392 renames the enum as its own product-surface Update
-  // and removes these four, closing the "no code file is exempt" end state.
-  [
-    "packages/spec-controller/static-checks/vocabAudit.ts",
-    { kind: "residual", pending: "3F-2392", note: "FlagReason's values name the retired phrases they catch" },
-  ],
-  [
-    "packages/spec-controller/static-checks/vocabWordSets.ts",
-    { kind: "residual", pending: "3F-2392", note: "GUARD_QUALIFIERS carries the phrase's first token as data" },
-  ],
-  [
-    "packages/spec-controller/static-checks/vocabAudit.test.ts",
-    { kind: "residual", pending: "3F-2392", note: "asserts the two phrase arms by the reason values they return" },
-  ],
-  [
-    "packages/spec-controller/static-checks/vocabAuditTagLines.test.ts",
-    { kind: "residual", pending: "3F-2392", note: "drives the retired tag through the tag-line scanner" },
-  ],
+  // ─── RESIDUAL — none. 3F-2392 removed the last four; see the docblock above. ─────────
 ]);
 
 /**

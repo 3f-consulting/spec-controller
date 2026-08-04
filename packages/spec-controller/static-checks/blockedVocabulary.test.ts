@@ -15,9 +15,9 @@
  * of the rows the operator deferred. The deferred / not-applicable rows are therefore
  * asserted ABSENT from the enforced set, by name.
  *
- * SELF-EXEMPT. This file passes the retired vocabulary to the classifier, so it is listed
- * in `vocabAuditCli.ts`'s `SELF_EXEMPT_PATHS` alongside `vocabAudit.test.ts` — the same
- * meta-mention exemption (operator ruling 2026-07-02).
+ * NOT EXEMPT. This file passes the retired vocabulary to the classifier, but takes it from
+ * `tests/fixtures/vocab/retiredTerms.ts` rather than inlining it, so it is audited like any
+ * other code (3F-2378).
  */
 
 import { describe, it, expect } from "vitest";

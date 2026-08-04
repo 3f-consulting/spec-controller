@@ -9,25 +9,24 @@
  * new scanning surface earns a file, and the pressure to create one is exactly what a frozen
  * ceiling is for.
  *
- * SELF-EXEMPT (3F-2313). This file is listed in `vocabAuditCli.ts`'s `SELF_EXEMPT_PATHS` on
- * the ORIGINAL meta-mention ground (operator ruling 2026-07-02) rather than
- * `vocabAuditCli.test.ts`'s narrower one: it feeds a banned-word corpus — the retired tag
- * `@ci-performance`, a planted `supply`, a bare `guard` handle — straight to the classifier,
- * exactly as `vocabAudit.test.ts` does. Auditing it for the words it must name is a
- * guaranteed false positive. The entry is PINNED in `vocabAuditCli.test.ts`'s exact-path
- * case, so deleting it reds rather than quietly widening the blind spot.
+ * NOT EXEMPT (3F-2399). This file was on the audit's exempt list from 3F-2313 until the
+ * corpus it feeds the classifier — the retired tag, a planted `supply`, a bare `guard`
+ * handle — moved to `tests/fixtures/vocab/retiredTerms.ts`, where every banned word is a
+ * mention by construction. It is now audited like any other code, which is the end state
+ * 3F-2378 set and this sub-issue closes: no CODE file is exempt.
  *
  * Parent: 3F-2313 — audit the vocabulary on Gherkin tag lines.
  */
 
 import { describe, it, expect } from "vitest";
 import { auditFiles, scanFile } from "./vocabAudit.js";
+import { CANONICAL, RETIRED, RETIRED_TAG_PHRASE } from "../../../tests/fixtures/vocab/retiredTerms.js";
 
 
 describe("[SCN-VOC-013] the Gherkin tag line — author-chosen vocabulary vs the tag grammar", () => {
   // THE SURFACE THE SCANNER COULD NOT SEE. Every `.feature` line whose trimmed form began
   // with `@` was skipped WHOLESALE, so the one surface where a retired TAG lives was the one
-  // surface the audit could not read (3F-2289 planted `@ci-performance` there and got no row,
+  // surface the audit could not read (3F-2289 planted the retired tag there and got no row,
   // while the same token in a comment, an identifier, a string and a doc all fired).
   //
   // WHY THESE ASSERT ON `scanFile`'s SEGMENTS AND NOT ONLY ON THE MANIFEST. A manifest-only
@@ -46,7 +45,7 @@ describe("[SCN-VOC-013] the Gherkin tag line — author-chosen vocabulary vs the
     "",
     "  Rule: the shapes coexist",
     "",
-    "    @unit @integration @wip @lint=guard:domain-purity @ci-performance @SCN-TGT-001",
+    `    @unit @integration @wip @lint=guard:domain-purity @${RETIRED_TAG_PHRASE} @SCN-TGT-001`,
     "    Scenario: the shapes coexist on one tag line",
     "      Given a step",
     "",
@@ -56,14 +55,14 @@ describe("[SCN-VOC-013] the Gherkin tag line — author-chosen vocabulary vs the
   const segmentTexts = (source: string): string[] =>
     scanFile(path, source).map((s) => s.text);
 
-  it("[SCN-VOC-013] REDS the retired tag `@ci-performance`, renaming it to the canon `ci-run-time`", () => {
-    // The whole point of the Rule, and the case 3F-2289 proved invisible. `ci` and
-    // `performance` are BOTH individually approved, so this reds only because the phrase arm
+  it("[SCN-VOC-013] REDS the retired tag on a tag line, renaming it to the canon", () => {
+    // The whole point of the Rule, and the case 3F-2289 proved invisible. Both halves of the
+    // phrase are individually approved, so this reds only because the phrase arm
     // (@SCN-VOC-006) is reached at all — which it now is, on a tag line, in PROSE mode.
     const { manifest } = auditFiles([{ path, content: everyShape }]);
-    const row = manifest.find((r) => r.current === "ci" && r.file === path);
+    const row = manifest.find((r) => r.current === RETIRED.tagPhraseFirst && r.file === path);
     expect(row).toBeDefined();
-    expect(row!.new).toBe("ci-run-time");
+    expect(row!.new).toBe(CANONICAL.tag);
     expect(row!.action).toBe("rename");
     expect(row!.surface).toBe("feature");
     expect(row!.line).toBe(6);
