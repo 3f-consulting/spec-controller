@@ -104,3 +104,37 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
       Given a PR adding new src behaviour proven by a new UNCITED test block, in a test file whose other, untouched tests carry @SCN cites, on a branch carrying a 3F ticket handle
       When the scenario sub-issue gate runs over the sibling-cited fixture PR
       Then the gate reds, naming the uncited test block
+
+  Rule: the scn-subissues static check's own CI run reconciles on spec-controller's Ledger
+
+    THE COBBLER'S SHOES, THE LAST PAIR. lint:scn-subissues runs in spec-controller's own
+    CI over its own source and exists as a package.json script, so the running-static-check
+    observer emits its run into the evidence stream on every reconcile. The other side was
+    missing: no scenario NAMED it. A run nothing names has no Evidence Obligation to settle
+    against, so it folded onto the suspense scenario as an uncited static check — an
+    instance, on the tool's own books, of exactly the class uncited-static-checks.feature
+    exists to name. A gate that is not reconciled on its own Ledger is honour, not
+    mechanism.
+
+    The @lint=lint:scn-subissues tag below is what closes it. The tag raises the Evidence
+    Obligation the CI run settles, so the run is credited to THIS scenario instead of the
+    suspense row — the @SCN-CPX-003 / @SCN-VOC-011 / @SCN-NCR-001 precedent, where observed
+    AND declared is the balanced state. The `lint:` prefix is load-bearing on the other
+    side of the same pairing: runningStaticChecks observes a CI script only when its name
+    carries an observed prefix, so a name outside that set would run in CI while being
+    invisible to spec-controller's own ledger.
+
+    WHAT THIS ASSERTS THAT SSM-001..005 DO NOT. The siblings above pin the gate's DECISION
+    over fixtures — what it passes and what it reds. This one pins the check's own
+    RECONCILIATION over the real tree, and asserts it FIRES rather than merely exists: the
+    script being present in package.json is only half the observation, and a check that
+    exists but that no CI step invokes is the WATERMELON, not a green. So both halves are
+    asserted — exists AND enforced over real source — and then that the reconcile posts
+    that run to this scenario, leaving no static check uncited on the suspense row.
+
+    @unit @integration @lint=lint:scn-subissues @SCN-SSM-006
+    Scenario: the scenario sub-issue check's own CI run is credited to the scenario declaring it
+      Given the scn-subissues static check, wired over spec-controller's own source
+      When spec-controller's own tree is reconciled
+      Then the check's run is credited to the scenario that declares it
+      And no static check run is left uncited on the suspense scenario
