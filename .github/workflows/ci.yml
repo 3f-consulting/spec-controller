@@ -104,6 +104,26 @@ jobs:
       - name: Type-check
         run: pnpm typecheck
 
+      # THE TREE-ENFORCEMENT HALF OF THE VOCABULARY ARC (@SCN-VOC-014, 3F-2343). The third
+      # vocabulary check, and the one with teeth over the TREE. `audit:vocab` reports and
+      # exits 0 however much it finds — its one non-zero exit is reserved for "I could not
+      # scan" (@SCN-VOC-009) and must not be shared with a finding. `lint:blocked-vocabulary`
+      # above judges the vendored TABLE's triage. Neither says the tree obeys that triage, so
+      # until this step existed an adopted retired word could silently regrow — and one
+      # nearly did, caught by a hand-run manifest diff rather than by CI.
+      #
+      # It reds ONLY on rows the table marks `adopted`. A `deferred` row is dated, ticketed
+      # debt carrying 2,272 occurrences in this tree (@SCN-VOC-015 pins that green out loud);
+      # enforcing those would red main permanently on work the operator has chosen not to pay
+      # yet. The code-side rejected aliases are 3F-2369's, which canon-sources them first.
+      #
+      # @lint-declared (@lint=lint:adopted-vocabulary on @SCN-VOC-014) so the tool's own
+      # ledger reconciles this step rather than reporting it as an uncited static check. The
+      # `lint:` prefix is required, not cosmetic: runningStaticChecks observes a CI script
+      # only when its name carries an observed prefix.
+      - name: Lint adopted vocabulary
+        run: pnpm lint:adopted-vocabulary
+
       # STEP 1 OF THE SELF-RECONCILIATION CHAIN — the observed @unit stream. The run is
       # unchanged; it now also writes the machine-readable report the gate below reads.
       # runs/ is gitignored with no re-includes and lint:no-committed-reports enforces it,

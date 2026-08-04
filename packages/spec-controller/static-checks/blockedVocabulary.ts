@@ -167,6 +167,51 @@ export function bannedWordsOf(rows: readonly BlockedVocabularyRow[]): ReadonlySe
 }
 
 /**
+ * The words the tree-enforcement gate reds on — every ADOPTED row's trigger token
+ * (@SCN-VOC-014, 3F-2343).
+ *
+ * WHY A TRIGGER-WORD SET RATHER THAN A FLAG REASON. The gate needs to tell an adopted-row
+ * hit from the two flag classes it must NOT enforce, and the manifest's `action` is lossy —
+ * `banned`, `bare-shortening` and the three phrase reasons all render as `rename`. Carrying
+ * the reason through `ManifestRow` was the first design and is rejected: `vocabAudit.ts` is
+ * frozen at its `max-lines` exception, an exception buys no headroom, and growing it to
+ * carry a field would be a refactor this slice did not scope. The set below settles the
+ * same question from the table alone, so that file is untouched.
+ *
+ * TWO ARMS, BOTH DERIVED FROM THE STATUS COLUMN — never a second list to keep in step:
+ *
+ *  - `whole-word` rows contribute via `bannedWordsOf`, which already filters to `adopted`.
+ *    So the CODE-SIDE half of `BANNED_WORDS` (`GLOSSARY_ALIAS_BANS` — `state`, `supply`,
+ *    `execution`, `unattributed`, `requirement`, `oob`) is excluded BY DERIVATION. Those
+ *    are 3F-2369's, which canon-sources them before enforcing.
+ *  - `phrase-adjacency` rows contribute their term's FIRST token, because the phrase arms
+ *    flag the first word of the pair and leave the second to the unmodified machinery
+ *    (`static guard` → `static`, `ci-performance` → `ci`).
+ *
+ * A `deferred` or `not-applicable` row contributes NOTHING, which is what lets this
+ * repository ship green against the unadopted rows' 2,272 occurrences — and when 3F-2329
+ * flips the `declare` row to adopted, `declared` joins this set with no code change here.
+ */
+export function adoptedTriggerWords(
+  rows: readonly BlockedVocabularyRow[] = BLOCKED_VOCABULARY_ROWS,
+): ReadonlySet<string> {
+  const words = new Set<string>(bannedWordsOf(rows));
+  for (const row of rows) {
+    if (row.status !== "adopted" || row.matcher !== "phrase-adjacency") continue;
+    for (const term of row.terms) {
+      // Only a term that actually SEPARATES into tokens contributes a trigger. The table
+      // spells a phrase row's variants several ways (`static guard`, `static-guard`,
+      // `staticguard`); the run-together form is one token and names no first word, so it
+      // would add a trigger the engine can never flag.
+      const tokens = term.split(/[\s-]+/).filter((token) => token !== "");
+      const first = tokens[0];
+      if (tokens.length > 1 && first !== undefined) words.add(first);
+    }
+  }
+  return words;
+}
+
+/**
  * What is wrong with one row's triage — the vocabulary of `lint:blocked-vocabulary`
  * (@SCN-VOC-011, 3F-2331). The kind is for a reader grouping reds; the message is the red.
  */

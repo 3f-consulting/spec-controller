@@ -85,6 +85,20 @@ const EXCLUDED_FILES = new Set(["pnpm-lock.yaml", "package-lock.json", "yarn.loc
  * the alternative and the numbers rejected it: at most 5 of the 56 rows could move, and the
  * headline would still shift on every edit.
  *
+ * The two `adopted-vocabulary` entries (3F-2343, @SCN-VOC-014) join on the ORIGINAL ground,
+ * and the split between what was exempted and what was NOT is the judgement this list asks
+ * for. The @unit test asserts the exact adopted term set — it must write `demand`,
+ * `undemanded` and `budget` to say which words the gate enforces — and the step definitions
+ * plant those same words in fixture trees to drive the gate. Both are `vocabAudit.test.ts`'s
+ * case exactly: a banned-word corpus fed to the machinery under test.
+ *
+ * The gate's OWN module, `lintAdoptedVocabularyCli.ts`, is deliberately ABSENT. Its single
+ * hit was one retired word in a docblock, and it was REWORDED rather than exempted — the
+ * same call `vocabTagGrammar.ts` records above, and for the same reason: the module that
+ * enforces the vocabulary is the last file that should be invisible to it. Measured before
+ * the entries landed: 21 occurrences, 20 in the two exempted files as fixture data and
+ * prose about them, 1 in the module, now gone.
+ *
  * ═══ WHAT AN ENTRY HERE COSTS, SAID OUT LOUD ═══
  *
  * An exemption is a BLIND SPOT, and this codebase has been bitten by one: 3F-2300's rename
@@ -115,6 +129,8 @@ const SELF_EXEMPT_PATHS = new Set([
   "packages/spec-controller/static-checks/blockedVocabulary.test.ts",
   "features/vocabulary-audit.feature",
   "tests/steps/vocabularyAudit.steps.ts",
+  "packages/spec-controller/static-checks/lintAdoptedVocabularyCli.test.ts",
+  "tests/steps/adoptedVocabulary.steps.ts",
 ]);
 const SELF_EXEMPT_PREFIX = "tests/fixtures/vocab/";
 
@@ -198,8 +214,12 @@ export function notAWorkTreeMessage(root: string): string {
   );
 }
 
-/** Git's answer for `root`, or `undefined` when the query failed — git's own noise stays off stderr. */
-function gitWorkTreeAnswer(root: string): string | undefined {
+/**
+ * Git's answer for `root`, or `undefined` when the query failed — git's own noise stays off
+ * stderr. Exported so the adopted-vocabulary gate (@SCN-VOC-014) reuses this precondition
+ * rather than asking git the same question a second, drifting way.
+ */
+export function gitWorkTreeAnswer(root: string): string | undefined {
   const probe = spawnSync("git", [...GIT_REV_PARSE_ARGS], {
     cwd: root,
     encoding: "utf8",

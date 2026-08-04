@@ -97,6 +97,8 @@ describe("[SCN-VOC-008] the audit reads what git says the project is, minus its 
       "packages/spec-controller/static-checks/vocabAuditCli.test.ts",
       "features/vocabulary-audit.feature",
       "tests/steps/vocabularyAudit.steps.ts",
+      "packages/spec-controller/static-checks/lintAdoptedVocabularyCli.test.ts",
+      "tests/steps/adoptedVocabulary.steps.ts",
     ];
     expect(select([...machinery, "src/a.ts"])).toEqual(["src/a.ts"]);
   });

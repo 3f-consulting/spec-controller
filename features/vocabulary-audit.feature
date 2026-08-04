@@ -502,3 +502,56 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
       And the feature-code header tag is not flagged
       And the tier tag is not flagged
       And the lint handle value is not flagged
+
+  Rule: an adopted row's term occurring in the tracked tree reds the build
+
+    THE HALF THAT MAKES ADOPTION MEAN SOMETHING (@SCN-VOC-014, 3F-2343). @SCN-VOC-010 made
+    the enforced word set a derivation of the vendored table's adopted rows, and every row
+    states its triage under @SCN-VOC-011. Between them, "adopted" became a fact the
+    repository RECORDS. It is still not a fact the repository ENFORCES: `audit:vocab` is a
+    report and exits 0 however many words it flags — deliberately, so a finding never shares
+    the can't-scan exit code — and `lint:blocked-vocabulary` validates the TABLE, never the
+    tree. So every adopted word can silently regrow, and one nearly did: 3F-2340's comment
+    rewrite reintroduced a demand-root, caught by a hand-run manifest diff against
+    origin/main rather than by CI. A purge that only a human diff protects is honour, which
+    is the thing the whole vocabulary arc was built to stop being.
+
+    This Rule is the tree half. It is a THIRD check with a distinct subject, not a widening
+    of either sibling: the report says what is there, the table lint says the triage is
+    honest, and this says the tree obeys the triage.
+
+    IT REUSES THE AUDIT'S FILE SET RATHER THAN DERIVING ONE. `filesInScope` already answers
+    "what is the project, minus the audit's own machinery" (@SCN-VOC-008), and a second
+    implementation of that question would agree with the first by coincidence and then
+    drift — the agreeing-by-copy this feature has removed twice already. So the self-exempt
+    blind spot is inherited, not re-declared here; 3F-2345 is the ticket that sweeps it.
+
+    @unit @integration @lint=lint:adopted-vocabulary @SCN-VOC-014
+    Scenario: an adopted retired term in a non-exempt file reds the gate, and a tree carrying none passes
+      Given a tree whose canon table adopts a retired term
+      When the adopted-vocabulary gate runs over a copy of that tree carrying the term in an ordinary source file
+      Then the gate fails, naming the file, the line and the term
+      When the adopted-vocabulary gate runs over a copy carrying no adopted term at all
+      Then the gate passes, reporting nothing to enforce
+
+  Rule: a deferred row's term is visible in the report and does not red the build
+
+    THE FILTER THAT MAKES THE GATE LANDABLE (@SCN-VOC-015, 3F-2343), and it is load-bearing
+    rather than a detail of the one above. The vendored table's unadopted rows carry 2,272
+    measured occurrences in this tree — the `declare` family alone is 1,212 across 133 files,
+    which is why 3F-2329 owns it and why the row says `deferred` rather than `adopted`. A
+    gate that read the table's terms without reading its STATUS column would red `main`
+    permanently on debt the operator has already dated, ticketed and chosen not to pay yet.
+
+    So the status column is the gate's authority, exactly as it is the enforced word set's
+    (@SCN-VOC-010): `adopted` reds, `deferred` and `not-applicable` do not. Asserting the
+    green out loud is the point — an unasserted green survives the deletion of the very
+    filter it depends on, the erosion trap @SCN-VOC-013 names one Rule over. Without this
+    scenario, collapsing the filter would look like a passing build until the next run.
+
+    @unit @integration @SCN-VOC-015
+    Scenario: a deferred row's term occurring in the tree leaves the gate green
+      Given a canon table whose retired terms are split between an adopted row and a deferred one
+      When the adopted-vocabulary gate runs over a tree carrying the deferred row's term
+      Then the gate passes, because a deferred row records debt rather than an enforced ban
+      And the adopted row's term would still have failed that same tree
