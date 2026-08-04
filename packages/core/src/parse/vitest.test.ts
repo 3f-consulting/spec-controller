@@ -11,7 +11,35 @@
 import { describe, it, expect } from "vitest";
 import { parseVitestEvidenceObservations, type VitestJsonReport } from "./vitest.js";
 
-describe("parseVitestEvidenceObservations stamps the declared level", () => {
+/**
+ * THE NOT-THE-INPUT-SOURCE HALF of @SCN-LDG-011's rule, on the vitest reader. The scenario's Rule
+ * (`features/ledger.feature:168`) reads: "a runtime observation's level is the cited scenario's
+ * declared tag, NOT THE INPUT SOURCE", and its preamble adds that "the caller-declared source level
+ * survives only as the fallback for an untagged scenario". Vitest never derives — unit is vitest's
+ * substrate, so no tier tag is ever read from a vitest report (canon states this twice inside the
+ * same Rule: @SCN-LDG-013's preamble, "its level is not derived", and @SCN-LDG-015's, "never derived
+ * from the cucumber report"). The caller-declared source level is therefore what stands here
+ * UNCONDITIONALLY, and this block is what proves it genuinely stands — that the parameter is stamped
+ * verbatim and not quietly replaced by a reinstated Vitest⇒unit hardcode. The cucumber reader's
+ * sibling block proves the same seam on its side (3F-2364, same @SCN).
+ *
+ * WHY THIS BLOCK IS NOT REDUNDANT WITH ITS CITED SIBLINGS, established by mutation (3F-2365):
+ *   - NARROW — reinstating the retired hardcode (`qualityCheck` → `"unit"` at both `results.push`
+ *     sites in `vitest.ts`) reds EXACTLY ONE test in the whole tree, out of 756 unit tests and 151
+ *     cucumber scenarios: the NON-default `it` below. Every cited sibling stays green — `[SCN-PND-015]`,
+ *     `[SCN-LDG-016]` and `[SCN-LDG-017]` all call the reader at "unit", so the old hardcode agrees
+ *     with them by COINCIDENCE. This block is the only place that coincidence is broken.
+ *   - WIDE — hardcoding a wholly wrong level (`qualityCheck` → `"integration"`) reds TWELVE: both of
+ *     this block's `it`s PLUS cited siblings `[SCN-PND-015]`, `[SCN-LDG-016]`, `[SCN-LDG-017]`,
+ *     `[SCN-LDG-013]` and `[SCN-CLI-013]`. Run alone that reads as "a sibling reds too → superseded
+ *     → delete" — the WRONG ruling. Only the narrow polarity separates them.
+ *
+ * The first `it` is the CONTROL arm: the wide mutation shows its assertion is also covered by
+ * `[SCN-PND-015]`'s passed/failed `it`s. It is kept because the non-default `it`'s contrast is only
+ * legible against an in-block default baseline — deleting it would resolve the same 2 obligations
+ * and lose the contrast, so it earns nothing.
+ */
+describe("[SCN-LDG-011] parseVitestEvidenceObservations stamps the caller-declared level — vitest derives none", () => {
   const report: VitestJsonReport = {
     testResults: [
       {
