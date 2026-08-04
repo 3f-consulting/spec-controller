@@ -4,7 +4,7 @@
  * (features/vocabulary-audit.feature).
  *
  * WHAT THIS FILE HAS TO PROVE, and why the obvious test is not enough. Asserting that
- * `budget` reds would pass just as well against the hand-maintained set this scenario
+ * a retired term reds would pass just as well against the hand-maintained set this scenario
  * replaces — a copy that AGREES with canon proves nothing about where the words came
  * from. So the load-bearing assertions here are the two that only a DERIVATION can
  * satisfy: a synthetic table with a word that appears nowhere in this codebase produces
@@ -21,6 +21,9 @@
  */
 
 import { describe, it, expect } from "vitest";
+import {
+  RETIRED, RETIRED_COMPOSITE, ADOPTED_PLAIN_TERMS,
+} from "../../../tests/fixtures/vocab/retiredTerms.js";
 import {
   BLOCKED_VOCABULARY_ROWS,
   bannedWordsOf,
@@ -102,15 +105,13 @@ describe("[SCN-VOC-010] the vendored table as committed", () => {
   });
 
   it("[SCN-VOC-010] derives exactly the operator-adopted plain words, and nothing else", () => {
-    // Four adopted rows are 3F-2281's; `undemanded` joined them at 3F-2342 when 3F-2300
+    // Four adopted rows are 3F-2281's; the outcome handle joined at 3F-2342 when 3F-2300
     // finished renaming the outcome handle to `no-evidence-obligation`. Two of the adopted
     // rows are matcher EXCEPTIONS — the phrase-adjacency arms — so they are adopted WITHOUT
     // joining the plain banned set; that split is what "canon owns which, code owns how"
     // means in one assertion.
     const derived = [...bannedWordsOf(BLOCKED_VOCABULARY_ROWS)].sort();
-    expect(derived).toEqual(
-      ["budget", "demand", "demanded", "demander", "demanding", "demands", "undemanded"].sort()
-    );
+    expect(derived).toEqual([...ADOPTED_PLAIN_TERMS].sort());
   });
 
   it("[SCN-VOC-010] every derived word is what the engine actually enforces", () => {
@@ -252,7 +253,7 @@ describe("[SCN-VOC-011] checkAdoptionStatuses — the table is a triage record",
   });
 
   it("[SCN-VOC-011] an ADOPTED or NOT-APPLICABLE row needs no ticket or date", () => {
-    // Only a deferral books debt somebody must come back for. Demanding a ticket of the
+    // Only a deferral books debt somebody must come back for. Requiring a ticket of the
     // other two verdicts would turn the check into paperwork and it would be switched off.
     expect(faultKinds(withStatus("frobnicate", "adopted"))).toEqual([]);
     expect(faultKinds(withStatus("plughward", "not-applicable"))).toEqual([]);
@@ -288,9 +289,8 @@ describe("[SCN-VOC-011] the vendored table as committed", () => {
 
 describe("[SCN-VOC-010] end to end through the classifier", () => {
   it("[SCN-VOC-010] an adopted term reds a planted usage", () => {
-    const v = classifyWords(decomposeName("complexityBudget"), "name").find(
-      (w) => w.word === "budget"
-    )!;
+    const composite = decomposeName(RETIRED_COMPOSITE.metricIdentifier);
+    const v = classifyWords(composite, "name").find((w) => w.word === RETIRED.metric)!;
     expect(v.flagged).toBe(true);
     expect(v.reason).toBe("banned");
   });
@@ -299,7 +299,7 @@ describe("[SCN-VOC-010] end to end through the classifier", () => {
     // NAME mode is the discriminating one: an unapproved word flags `unknown` there, so
     // this green is a positive approval rather than an accident of prose mode.
     //
-    // The example term is `undeclared`, not `undemanded`: 3F-2342 ADOPTED the `undemanded`
+    // The example term is `undeclared`, not the retired outcome handle: 3F-2342 ADOPTED that
     // row, so it is enforced now and would red here. `undeclared` is the same shape one row
     // up — a term on a still-deferred row (3F-2329 pays it) that is independently APPROVED,
     // so its green says "the deferral holds", not "the word happens to be unknown".

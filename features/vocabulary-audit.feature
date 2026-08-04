@@ -555,3 +555,44 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
       When the adopted-vocabulary gate runs over a tree carrying the deferred row's term
       Then the gate passes, because a deferred row records debt rather than an enforced ban
       And the adopted row's term would still have failed that same tree
+
+  Rule: no code file is invisible to the audit — only pure data is exempt
+
+    THE CURE RATHER THAN THE PATCH (@SCN-VOC-016, 3F-2378). A whole-file exemption is
+    honest for a PURE-DATA file — the vendored table, the fixture corpus — where every
+    banned word is a MENTION, the definition of what is banned. It is dishonest for a
+    MIXED file, code with data inlined, because there the same exemption hides a USE
+    behind a mention. That is what hid 3F-2300: the renamed handle survived as an
+    identifier in files nobody could see into.
+
+    So the exemption is not scoped, it is REMOVED, by taking away the reason for it. The
+    inlined ban data moves to the canon table and the fixture corpus and the code reads it
+    from there; what is left in a code file is code, which the audit may see in full.
+    "No code file is exempt" is also the better rule to teach, because a reader can check
+    it — where "this file declares its legitimate surfaces" can only be trusted.
+
+    @unit @integration @lint=lint:exempt-data-floor @SCN-VOC-016
+    Scenario: a code file carrying an inlined retired term is not exempt, and the audit sees it
+      Given the set of files the audit is told to skip
+      When each is judged on whether every banned word in it is a mention rather than a use
+      Then a file that also holds live vocabulary is refused the exemption
+      And a file whose every banned word is data keeps it
+
+  Rule: an exemption that covers no banned-word mention is stale and reds
+
+    THE RATCHET (@SCN-VOC-017, 3F-2378), and without it the floor is a floor only on the
+    day it is laid. An exemption records that a file held banned words as data AT THE TIME
+    IT WAS GRANTED. Relocation, a rename, or a deleted fixture can empty it, and nothing
+    notices, because an exemption covering nothing reds nothing by construction — it just
+    sits there as licence for the next file that happens to match the path.
+
+    So an entry covering no current occurrence is a stale entry to delete, exactly as the
+    complexity ratchet (@SCN-CPX-003) reds an exception the tree no longer needs. The set
+    can then only shrink.
+
+    @unit @integration @SCN-VOC-017
+    Scenario: an exemption whose file holds no banned-word mention reds as a stale entry
+      Given an exemption granted for a file that held banned words as data
+      When the file no longer holds any
+      Then the exemption reds as stale, so the list can only shrink
+      And a residual entry says which ticket it was still waiting on

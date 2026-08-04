@@ -22,6 +22,9 @@ import { fileURLToPath } from "node:url";
 
 import { adoptedOccurrences, adoptedOccurrenceReport } from "./lintAdoptedVocabularyCli.js";
 import {
+  RETIRED, ADOPTED_PLAIN_TERMS, ADOPTED_TRIGGER_WORDS,
+} from "../../../tests/fixtures/vocab/retiredTerms.js";
+import {
   adoptedTriggerWords,
   parseBlockedVocabulary,
   BLOCKED_VOCABULARY_ROWS,
@@ -51,7 +54,7 @@ function row(over: Partial<ManifestRow>): ManifestRow {
     file: "packages/core/src/domain/ledger.ts",
     line: 42,
     symbol: "someSymbol",
-    current: "demand",
+    current: RETIRED.obligationNoun,
     new: "",
     action: "rename",
     decision: "",
@@ -89,21 +92,11 @@ describe("[SCN-VOC-014] the trigger set is derived from the table's status colum
   });
 });
 
-describe("[SCN-VOC-014] the real table's adopted rows are the demand family, undemanded, budget and the two phrases", () => {
+describe("[SCN-VOC-014] the real table's adopted rows are the obligation family, the outcome handle, the metric word and the two phrases", () => {
   const triggers = adoptedTriggerWords();
 
   it("enforces every adopted term this repository has taken on", () => {
-    expect([...triggers].sort()).toEqual([
-      "budget",
-      "ci",
-      "demand",
-      "demanded",
-      "demander",
-      "demanding",
-      "demands",
-      "static",
-      "undemanded",
-    ]);
+    expect([...triggers].sort()).toEqual([...ADOPTED_TRIGGER_WORDS].sort());
   });
 
   it("leaves the code-side rejected aliases alone — they are 3F-2369's, and unswept", () => {
@@ -144,14 +137,14 @@ describe("[SCN-VOC-014] a phrase trigger word cannot be flagged for any other re
 });
 
 describe("[SCN-VOC-014] the gate keeps the manifest rows an adopted row bans", () => {
-  const triggers = new Set(["demand", "static"]);
+  const triggers = new Set([RETIRED.obligationNoun, RETIRED.classNamePhraseFirst]);
 
   it("keeps a row whose flagged word is an adopted trigger", () => {
-    expect(adoptedOccurrences([row({ current: "demand" })], triggers)).toEqual([
+    expect(adoptedOccurrences([row({ current: RETIRED.obligationNoun })], triggers)).toEqual([
       {
         file: "packages/core/src/domain/ledger.ts",
         line: 42,
-        word: "demand",
+        word: RETIRED.obligationNoun,
         symbol: "someSymbol",
       },
     ]);
@@ -164,7 +157,8 @@ describe("[SCN-VOC-014] the gate keeps the manifest rows an adopted row bans", (
   it("keeps every offending row rather than stopping at the first", () => {
     // A gate that reported one occurrence per run turns a sweep into N round trips.
     const kept = adoptedOccurrences(
-      [row({ current: "demand", line: 1 }), row({ current: "static", line: 2 })],
+      [row({ current: RETIRED.obligationNoun, line: 1 }),
+       row({ current: RETIRED.classNamePhraseFirst, line: 2 })],
       triggers,
     );
 
@@ -177,12 +171,13 @@ describe("[SCN-VOC-014] a red names the file, the line and the term", () => {
     // A bare exit code says a purge regressed without saying where, which sends the reader
     // back to run the audit by hand — the manual step this gate exists to remove.
     const report = adoptedOccurrenceReport([
-      { file: "packages/core/src/domain/ledger.ts", line: 42, word: "demand", symbol: "demandCount" },
+      { file: "packages/core/src/domain/ledger.ts", line: 42, word: RETIRED.obligationNoun,
+        symbol: `${RETIRED.obligationNoun}Count` },
     ]);
 
     expect(report).toContain("packages/core/src/domain/ledger.ts");
     expect(report).toContain("42");
-    expect(report).toContain("demand");
+    expect(report).toContain(RETIRED.obligationNoun);
   });
 
   it("says nothing to enforce when the tree is clean", () => {

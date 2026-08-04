@@ -15,8 +15,8 @@
  * BEHAVIOUR-PRESERVING BY CONSTRUCTION, with ONE stated exception. Every set below is
  * byte-for-byte what `vocabAudit.ts` held, and `vocabAudit.ts` re-exports all nine, so no
  * call site moved. The exception is `BANNED_WORDS`, which is now derived: it gains
- * `demands`, because the vendored table spells the inflection canon spells and the parser
- * does not fold plurals. The naive singulariser already folded `demands` onto `demand`, so
+ * the plural, because the vendored table spells the inflection canon spells and the parser
+ * does not fold plurals. The naive singulariser already folds that plural onto its stem, so
  * the extra member changes no verdict — said out loud rather than left for a reader to
  * discover the sets are no longer identical.
  *
@@ -36,6 +36,7 @@
  */
 
 import { BLOCKED_VOCABULARY_ROWS, bannedWordsOf } from "./blockedVocabulary.js";
+import { renameTargets } from "./renameTargets.js";
 
 /** Manifesto domain vocabulary — the mapping-table terms, decomposed to words. */
 export const DOMAIN_WORDS: ReadonlySet<string> = new Set([
@@ -52,7 +53,7 @@ export const DOMAIN_WORDS: ReadonlySet<string> = new Set([
   // Reconciliation replace trial-balance / account / sub-account). `kind` and `sub`
   // are KEPT (legitimate reuse: `ScenarioKind`; `qualityCheckReconciliations` / the sub-issue-gate).
   //
-  // `undemanded` WAS HERE, kept by @SCN-VOC-004 as the canon credit-side outcome handle.
+  // The retired outcome handle WAS HERE, kept by @SCN-VOC-004 as the canon credit-side one.
   // 3F-2300 renamed that handle to `no-evidence-obligation` and @SCN-VOC-004 now asserts the
   // old word FLAGGED, so its vendored row is `adopted` and the derivation bans it. The entry
   // is removed rather than left: `BANNED_WORDS` is consulted ahead of `isApproved`, so it was
@@ -224,7 +225,7 @@ export const GENERIC_ALLOWLIST: ReadonlySet<string> = new Set([
   // -------------------------------------------------------------------------
   // "running" — deliberate descriptor: the running-guard observer,
   // `runningStaticChecks` / `runningStaticCheckCount`. It names the guards that RUN (the
-  // demanded-versus-running distinction that replaced the `CI` mechanism leak), NOT a silent
+  // required-versus-running distinction that replaced the `CI` mechanism leak), NOT a silent
   // pass — a tagged, endorsed allowlist entry, not an incidental generic.
   // -------------------------------------------------------------------------
   "running",
@@ -241,7 +242,7 @@ export const GENERIC_ALLOWLIST: ReadonlySet<string> = new Set([
   "observe",
   // -------------------------------------------------------------------------
   // @SCN-VOC-007 — `threshold` is the CANON metric word that replaces the retired
-  // `budget` (a threshold is a ceiling, not something spent down). It is allowlisted
+  // the retired metric word (a threshold is a ceiling, not something spent down). Allowlisted
   // rather than left to pass by accident: the rename target of a banned word must be
   // APPROVED, or the purge trades a flagged word for an `unknown` one and the audit's
   // green means nothing. Before this entry it flagged `unknown` on stryker.config.json's
@@ -297,6 +298,37 @@ export const BANNED_WORDS: ReadonlySet<string> = new Set([
   ...bannedWordsOf(BLOCKED_VOCABULARY_ROWS),
 ]);
 
+/**
+ * The VOCABULARY-AUDIT SUBSYSTEM's own vocabulary (@SCN-VOC-016, 3F-2378).
+ *
+ * A NAMED SET OF ITS OWN, deliberately not folded into `DOMAIN_WORDS` — that set is the
+ * RECONCILIATION domain (Evidence Obligation, Ledger, Scenario), while these are the words
+ * the vocabulary CHECKER reasons about: adoption statuses, matchers, corpora, the vendored
+ * table. An allowlist holding both stops answering "why is this word allowed?", the only
+ * question it exists to answer (operator ruling, 2026-08-04).
+ *
+ * They needed ruling because the files using them stopped being exempt: until 3F-2378 the
+ * subsystem was invisible to the audit, so its own vocabulary was never judged.
+ */
+export const VOCAB_AUDIT_WORDS: ReadonlySet<string> = new Set([
+  // the vendored canon table and its triage
+  "blocked", "vendored", "glossary", "bans", "adopted", "adoption", "adopt",
+  "deferred", "deferral", "triage", "triaged", "retired", "applicable",
+  // the matchers, the grammar they judge, and the corpora/surfaces read
+  "matcher", "matchers", "qualifier", "qualifiers", "qualified", "grammar",
+  "adjacency", "anaphora", "compounds", "plural", "noun", "decoration",
+  "corpus", "authored", "structural", "trimmed", "blanked", "tier",
+]);
+
+/**
+ * EVERY word this repository approves, from all four sources at once (@SCN-VOC-016). One
+ * named thing rather than an OR-chain at the call site: the engine asks "is this approved?"
+ * and WHICH list says so is this module's business. A fifth source is an edit here alone.
+ */
+export const APPROVED_WORDS: ReadonlySet<string> = new Set([
+  ...DOMAIN_WORDS, ...GENERIC_ALLOWLIST, ...RULED_ALLOWED, ...VOCAB_AUDIT_WORDS,
+]);
+
 /** Words approved only inside their full manifesto term; bare → flag. */
 export const FULL_TERM_ONLY: ReadonlySet<string> = new Set([
   "obligation", "observation", "ghost",
@@ -341,6 +373,10 @@ export const RESERVED_WORDS: ReadonlySet<string> = new Set([
   "console", "process", "nan", "globalthis", "constructor", "prototype", "arguments",
   // structural: the scenario-ID scheme abbreviation + source file extensions (not vocabulary)
   "scn", "ts", "js", "tsx", "jsx", "mjs", "cjs", "yml",
+  // Ruled generic-technical (@SCN-VOC-016, 3F-2378), surfaced when the vocabulary
+  // subsystem's files stopped being exempt. Each is a word any codebase would use for the
+  // same thing — which is what "generic" means here, not "we could not classify it".
+  "inside", "work", "select", "selected", "exported", "form", "shape", "answer", "end", "clean", "following", "concat", "placeholder", "summarise", "machinery", "disk", "always", "plain", "whole", "derived", "replaced", "named", "scanned", "failed", "why", "refuses", "reordered", "splice", "control", "complexity", "exceptions", "artefact", "probe", "sole", "said", "leaked", "blessed", "historical", "synthetic", "violating", "ignored", "fault", "faults", "self",
 ]);
 
 /** Domain words whose presence in a name makes a co-occurring `entry` a domain use. */
@@ -348,28 +384,17 @@ export const ENTRY_DOMAIN_COMPANIONS: ReadonlySet<string> = new Set([
   "evidence", "debit", "credit", "obligation", "observation", "supply",
 ]);
 
-/** Rejected-alias → canonical (the manifest `new` column). */
-export const REJECTED_ALIAS_TO_CANONICAL: Readonly<Record<string, string>> = {
-  supply: "evidence observation",
-  execution: "evidence observation",
-  executions: "evidence observations",
-  state: "outcome",
-  obligation: "evidence obligation",
-  observation: "evidence observation",
-  ghost: "ghost evidence observation",
-  requirement: "evidence obligation",
-  requirements: "evidence obligations",
-  oob: "out of balance",
-  // @SCN-VOC-007 — singular only: `budgets` resolves through the singulariser stem
-  // lookup in classifyWords, so a plural entry would be a second copy to drift.
-  budget: "threshold",
-  // @SCN-VOC-004 — nouns take the canon term; VERBS take `names`/`naming`, NOT retired `declare`.
-  demand: "evidence obligation", demanded: "evidence obligation", demanding: "naming", demander: "naming scenario",
-  // @SCN-VOC-004 — the retired credit-side outcome HANDLE (3F-2300). Its target is the
-  // hyphenated handle, not the prose term, because that is what an occurrence must become.
-  // Recorded HERE rather than derived from the table's "Always write" column, per the
-  // divergence `blockedVocabulary.md` states: canon owns which words are retired, this file
-  // owns what each one becomes. Without it the row still flags — the ban is derived — but
-  // names no replacement, which is a `rename` row with an empty `new` cell.
-  undemanded: "no-evidence-obligation",
-};
+/**
+ * Rejected-alias → canonical (the manifest `new` column), PARSED FROM `renameTargets.md`.
+ *
+ * The map used to be written here as an object literal whose KEYS were the retired words —
+ * inlined data in a code file, which is what kept this module on the audit's exempt list.
+ * A whole-file exemption over a mixed file hides a USE behind a MENTION, and that is what
+ * let 3F-2300's renamed handle survive unseen. Relocating the data to a pure-data table is
+ * what lets this file be audited like any other (@SCN-VOC-016, 3F-2378).
+ *
+ * Not the canon table: `blockedVocabulary.md` is a vendored copy stating one replacement per
+ * row, while these targets are per-inflection. `blockedVocabulary.ts` records the division —
+ * canon owns which words are retired, this repository owns what each one becomes.
+ */
+export const REJECTED_ALIAS_TO_CANONICAL: Readonly<Record<string, string>> = renameTargets();

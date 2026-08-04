@@ -124,6 +124,23 @@ jobs:
       - name: Lint adopted vocabulary
         run: pnpm lint:adopted-vocabulary
 
+      # THE DATA FLOOR (@SCN-VOC-016 / @SCN-VOC-017, 3F-2378). An exemption makes a file
+      # wholly invisible to the vocabulary audit; that is honest for a PURE-DATA file, where
+      # every banned word is a MENTION, and dishonest for a MIXED file, where the same
+      # exemption hides a USE behind a mention. That is what hid 3F-2300 — a renamed handle
+      # survived as an identifier in files nobody could see into.
+      #
+      # So every entry states its KIND. `pure-data` is permanent; `residual` is temporary
+      # debt that must NAME THE TICKET that removes it, the same shape a deferred canon row
+      # has. A code file claiming pure-data reds. So does an entry covering no banned word at
+      # all — an exemption covering nothing reds nothing by construction, so without the
+      # stale check it sits on as licence for the next file that matches the path.
+      #
+      # @lint-declared (@lint=lint:exempt-data-floor on @SCN-VOC-016) so the tool's own
+      # ledger reconciles this step rather than reporting it as an uncited static check.
+      - name: Lint exempt data floor
+        run: pnpm lint:exempt-data-floor
+
       # STEP 1 OF THE SELF-RECONCILIATION CHAIN — the observed @unit stream. The run is
       # unchanged; it now also writes the machine-readable report the gate below reads.
       # runs/ is gitignored with no re-includes and lint:no-committed-reports enforces it,

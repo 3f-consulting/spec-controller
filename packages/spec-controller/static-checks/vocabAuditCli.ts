@@ -27,112 +27,12 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { readFileSync, writeFileSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { auditFiles, renderManifestCsv, renderCoverageMatrixMarkdown } from "./vocabAudit.js";
+import { SELF_EXEMPT_PATHS, SELF_EXEMPT_PREFIX } from "./selfExempt.js";
 
 /** Lockfile names excluded from the scan. */
 const EXCLUDED_FILES = new Set(["pnpm-lock.yaml", "package-lock.json", "yarn.lock"]);
 
-/**
- * The audit's OWN detection machinery — the ONE meta-mention exemption (operator
- * ruling 2026-07-02). These files exist to ENUMERATE and EXERCISE the
- * rejected vocabulary: the word-set encoder literally lists the banned tokens, its
- * unit tests pass them to `classifyWords`, the feature documents them, the
- * integration step-defs drive them, and the `tests/fixtures/vocab/` corpus carries
- * them as detection fixtures. Auditing them for the very words they must name is a
- * guaranteed false positive, so the whole-repo scan skips them (matched by
- * repo-relative path — a narrower `--root` over the fixture corpus still scans them,
- * which is exactly what the integration arm needs). Everything else is swept to zero.
- *
- * `vocabWordSets.ts` joined the list when 3F-2311 split the word-sets out of
- * `vocabAudit.ts`. It is the ONE place that split is not transparent: the file IS
- * the enumeration of banned tokens, so an entry here is not housekeeping — leaving
- * it out floods the manifest with 65 guaranteed false-positive rows (measured, not
- * assumed). Any future file that names the rejected vocabulary belongs here too.
- *
- * `blockedVocabulary.md` is the sharpest case of that rule (3F-2330, @SCN-VOC-010): it IS
- * the retired-word table, so every row in it is a guaranteed false positive, and the
- * derivation reading it means the file is now the enumeration `vocabWordSets.ts` used to
- * be. Its parser and that parser's unit tests join it for the same reason they always
- * have — one discusses the retired terms, the other passes them to the classifier.
- *
- * `vocabTagGrammar.ts` (3F-2313, @SCN-VOC-013) is the narrowest case of all: it IS
- * `vocabAudit.ts`'s tag-grammar half, split out only because that file's `max-lines` exception
- * is frozen at 790 and buys no headroom. Its entry is a FILE BOUNDARY DRAWN THROUGH THE MIDDLE
- * OF LINE 1 OF THIS LIST, not a second policy. Left out it contributed 21 MEASURED rows: the
- * docblock quotes the retired tag `@ci-performance` to say what the module exists to catch, and
- * `authored` / `structural` / `trimmed` are its own API names. THE COST THIS LIST WARNS OF IS
- * PAID HERE — an adopted retired word in that file is now invisible — so it was swept BEFORE
- * the entry landed, and the one genuine hit (a banned `state` in a docblock) was REWORDED
- * rather than hidden behind the exemption.
- *
- * `vocabAuditTagLines.test.ts` (3F-2313, @SCN-VOC-013) joins on the ORIGINAL ground rather
- * than the narrower one below it: it feeds a banned-word corpus — the retired tag
- * `@ci-performance`, a planted `supply`, a bare `guard` handle — straight to the classifier,
- * exactly as `vocabAudit.test.ts` does. It is a SEPARATE FILE only because `vocabAudit.test.ts`
- * carries a `max-lines` exception frozen at 801 and an exception buys no headroom, so the new
- * arm could not be appended there; the file boundary is the complexity ratchet's, not a
- * second policy.
- *
- * `vocabAuditCli.test.ts` (3F-2327) is the ONE entry that earns its place on a DIFFERENT
- * ground, and the difference is stated rather than left to be inferred from the company it
- * keeps. It holds no banned-word corpus at all — it is a pure unit test over `filesInScope`,
- * `insideWorkTree` and `notAWorkTreeMessage`, over injected path lists, and it never reaches
- * `classifyWords`. What it names is the SUBJECT UNDER TEST, whose own module is two lines up
- * this list: without the entry the audit could not see `insideWorkTree` where it is DEFINED
- * and counted it 24 times where it is REFERENCED — a file boundary drawn through the middle
- * of one exemption, not a second policy. Measured before the entry landed: 56 rows, 55 of
- * them `review` (generic-technical candidates) and exactly 1 `rename`, itself a mention of
- * the already-exempt fixture corpus. Relocating that content to `tests/fixtures/vocab/` was
- * the alternative and the numbers rejected it: at most 5 of the 56 rows could move, and the
- * headline would still shift on every edit.
- *
- * The two `adopted-vocabulary` entries (3F-2343, @SCN-VOC-014) join on the ORIGINAL ground,
- * and the split between what was exempted and what was NOT is the judgement this list asks
- * for. The @unit test asserts the exact adopted term set — it must write `demand`,
- * `undemanded` and `budget` to say which words the gate enforces — and the step definitions
- * plant those same words in fixture trees to drive the gate. Both are `vocabAudit.test.ts`'s
- * case exactly: a banned-word corpus fed to the machinery under test.
- *
- * The gate's OWN module, `lintAdoptedVocabularyCli.ts`, is deliberately ABSENT. Its single
- * hit was one retired word in a docblock, and it was REWORDED rather than exempted — the
- * same call `vocabTagGrammar.ts` records above, and for the same reason: the module that
- * enforces the vocabulary is the last file that should be invisible to it. Measured before
- * the entries landed: 21 occurrences, 20 in the two exempted files as fixture data and
- * prose about them, 1 in the module, now gone.
- *
- * ═══ WHAT AN ENTRY HERE COSTS, SAID OUT LOUD ═══
- *
- * An exemption is a BLIND SPOT, and this codebase has been bitten by one: 3F-2300's rename
- * of `undemanded` looked complete because the audit reported nothing, when in truth all six
- * files naming the word were already on this list — the sweep was unmeasured, not clean. So
- * every entry here also hides an ADOPTED retired word appearing in that file, and nothing
- * else catches it (`lint:blocked-vocabulary` validates the TABLE, not the tree). The trade is
- * taken because the measured cost is ZERO adopted words hidden today, and because permanent
- * false positives that move on every edit train a reader to stop reading the headline — a
- * signal nobody reads is not a safeguard. Sweeping THIS SET for adopted words is the
- * mechanism that closes the gap properly and has its own ticket (3F-2345); until it lands,
- * a new entry here is a judgement, not a formality.
- *
- * Every entry is PINNED by `vocabAuditCli.test.ts`'s exact-path case, which feeds the list
- * through `filesInScope` — so deleting one from this set reds `pnpm test` instead of quietly
- * widening the blind spot.
- */
-const SELF_EXEMPT_PATHS = new Set([
-  "packages/spec-controller/static-checks/vocabAudit.ts",
-  "packages/spec-controller/static-checks/vocabTagGrammar.ts",
-  "packages/spec-controller/static-checks/vocabWordSets.ts",
-  "packages/spec-controller/static-checks/vocabAudit.test.ts",
-  "packages/spec-controller/static-checks/vocabAuditTagLines.test.ts",
-  "packages/spec-controller/static-checks/vocabAuditCli.ts",
-  "packages/spec-controller/static-checks/vocabAuditCli.test.ts",
-  "packages/spec-controller/static-checks/blockedVocabulary.md",
-  "packages/spec-controller/static-checks/blockedVocabulary.ts",
-  "packages/spec-controller/static-checks/blockedVocabulary.test.ts",
-  "features/vocabulary-audit.feature",
-  "tests/steps/vocabularyAudit.steps.ts",
-  "packages/spec-controller/static-checks/lintAdoptedVocabularyCli.test.ts",
-  "tests/steps/adoptedVocabulary.steps.ts",
-]);
-const SELF_EXEMPT_PREFIX = "tests/fixtures/vocab/";
+
 
 /**
  * The question put to git: what is the project under this root? (@SCN-VOC-008, 3F-2324)

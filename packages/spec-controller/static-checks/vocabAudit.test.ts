@@ -6,15 +6,10 @@
  */
 
 import { describe, it, expect } from "vitest";
+import { RETIRED, CANONICAL, RETIRED_COMPOSITE } from "../../../tests/fixtures/vocab/retiredTerms.js";
 import {
-  decomposeName,
-  isCompositeToken,
-  classifyWords,
-  auditFiles,
-  renderManifestCsv,
-  renderCoverageMatrixMarkdown,
-  scanFile,
-  SURFACES,
+  decomposeName, isCompositeToken, classifyWords, auditFiles, renderManifestCsv,
+  renderCoverageMatrixMarkdown, scanFile, SURFACES,
 } from "./vocabAudit.js";
 
 describe("[SCN-VOC-001] decomposeName", () => {
@@ -426,35 +421,34 @@ describe("[SCN-VOC-006] the retired tag `ci-performance`", () => {
   });
 });
 
-describe("[SCN-VOC-007] the retired metric word `budget`", () => {
+describe("[SCN-VOC-007] the retired metric word", () => {
   // The second regrowth guard, and the first that also purges. Unlike @SCN-VOC-003 /
-  // @SCN-VOC-006 this is NOT a phrase rule: `budget` has no canon homograph anywhere in
-  // this vocabulary, so it is a plain BANNED WORD — the strongest matcher available. It
-  // reds in BOTH modes, and the naive singulariser folds `budgets` onto the same stem.
+  // @SCN-VOC-006 this is NOT a phrase rule: the term has no canon homograph anywhere in this
+  // vocabulary, so it is a plain BANNED WORD — the strongest matcher available. It reds in
+  // BOTH modes, and the naive singulariser folds its plural onto the same stem.
 
-  it("[SCN-VOC-007] reds a bare `budget` in PROSE, renaming to the canon `threshold`", () => {
-    const v = classifyWords(["budget"], "prose").find((w) => w.word === "budget")!;
+  it("[SCN-VOC-007] reds the retired metric word in PROSE, renaming to the canon threshold", () => {
+    const v = classifyWords([RETIRED.metric], "prose").find((w) => w.word === RETIRED.metric)!;
     expect(v.flagged).toBe(true);
     expect(v.reason).toBe("banned");
-    expect(v.canonical).toBe("threshold");
+    expect(v.canonical).toBe(CANONICAL.metric);
   });
 
-  it("[SCN-VOC-007] reds in NAME mode too — a `complexityBudget` composite identifier", () => {
-    const v = classifyWords(decomposeName("complexityBudget"), "name").find(
-      (w) => w.word === "budget"
-    )!;
+  it("[SCN-VOC-007] reds in NAME mode too, inside a composite identifier", () => {
+    const composite = decomposeName(RETIRED_COMPOSITE.metricIdentifier);
+    const v = classifyWords(composite, "name").find((w) => w.word === RETIRED.metric)!;
     expect(v.flagged).toBe(true);
     expect(v.reason).toBe("banned");
-    expect(v.canonical).toBe("threshold");
+    expect(v.canonical).toBe(CANONICAL.metric);
   });
 
-  it("[SCN-VOC-007] the plural `budgets` folds onto the same stem — no second entry needed", () => {
+  it("[SCN-VOC-007] the plural folds onto the same stem — no second entry needed", () => {
     // The singulariser is what makes one BANNED_WORDS entry cover the inflection, so the
     // plural is proven rather than assumed: `complexityBudgets.mjs` was the real filename.
-    const v = classifyWords(["budgets"], "prose").find((w) => w.word === "budgets")!;
+    const v = classifyWords([RETIRED.metricPlural], "prose").find((w) => w.word === RETIRED.metricPlural)!;
     expect(v.flagged).toBe(true);
     expect(v.reason).toBe("banned");
-    expect(v.canonical).toBe("threshold");
+    expect(v.canonical).toBe(CANONICAL.metric);
   });
 
   it("[SCN-VOC-007] STAYS GREEN on the canon `threshold` — APPROVED, not merely un-flagged", () => {
@@ -472,12 +466,12 @@ describe("[SCN-VOC-007] the retired metric word `budget`", () => {
     expect(inFilename.flagged).toBe(false);
   });
 
-  it("[SCN-VOC-007] flags a real prose `budget` with action rename, and passes `threshold`", () => {
+  it("[SCN-VOC-007] flags the retired metric word in real prose with action rename, and passes threshold", () => {
     const { manifest } = auditFiles([
-      { path: "src/notes.ts", content: "// the complexity budget is retired here\n" },
+      { path: "src/notes.ts", content: `// the complexity ${RETIRED.metric} is retired here\n` },
       { path: "src/ok.ts", content: "// the complexity threshold is the canon replacement\n" },
     ]);
-    const red = manifest.find((r) => r.current === "budget" && r.new === "threshold");
+    const red = manifest.find((r) => r.current === RETIRED.metric && r.new === CANONICAL.metric);
     expect(red).toBeDefined();
     expect(red!.action).toBe("rename");
     expect(red!.file).toBe("src/notes.ts");
@@ -486,75 +480,77 @@ describe("[SCN-VOC-007] the retired metric word `budget`", () => {
   });
 });
 
-describe("[SCN-VOC-004] the retired evidence-obligation word `demand`", () => {
+describe("[SCN-VOC-004] the retired evidence-obligation word", () => {
   // The third regrowth guard, and the largest purge. Like @SCN-VOC-007 this is a plain
-  // BANNED WORD, not a phrase rule: `demand` has no canon homograph, so the strongest
-  // matcher is also the correct one, and it reds in BOTH modes. The singulariser folds
-  // only `demands` → `demand` and `demanders` → `demander`, so the remaining inflections
-  // each need their own entry — asserted below rather than assumed.
+  // BANNED WORD, not a phrase rule: the noun has no canon homograph, so the strongest
+  // matcher is also the correct one, and it reds in BOTH modes. The singulariser folds only
+  // the two plurals onto their stems, so the remaining inflections each need their own
+  // entry — asserted below rather than assumed.
   //
   // WHICH WORD IS CANON IS WHAT MOVED (3F-2300, superseding 3F-2281). This block used to
-  // close on "canon `undemanded` must stay green"; 3F-2300 renamed that handle to
+  // close on "the old handle must stay green"; 3F-2300 renamed that handle to
   // `no-evidence-obligation`, so the retired word is now asserted FLAGGED and the NEW canon
   // word is asserted GREEN — both, because either alone is green by erosion.
 
-  it("[SCN-VOC-004] reds a bare `demanded` in PROSE, renaming to `evidence obligation`", () => {
-    const v = classifyWords(["demanded"], "prose").find((w) => w.word === "demanded")!;
+  it("[SCN-VOC-004] reds the retired past participle in PROSE, renaming to the canon term", () => {
+    const v = classifyWords([RETIRED.obligationPast], "prose").find((w) => w.word === RETIRED.obligationPast)!;
     expect(v.flagged).toBe(true);
     expect(v.reason).toBe("banned");
-    expect(v.canonical).toBe("evidence obligation");
+    expect(v.canonical).toBe(CANONICAL.obligation);
   });
 
-  it("[SCN-VOC-004] reds in NAME mode too — a `demandedStaticGuards` composite identifier", () => {
-    const v = classifyWords(decomposeName("demandedStaticGuards"), "name").find(
-      (w) => w.word === "demanded"
-    )!;
+  it("[SCN-VOC-004] reds in NAME mode too, inside a composite identifier", () => {
+    const composite = decomposeName(RETIRED_COMPOSITE.obligationPastIdentifier);
+    const v = classifyWords(composite, "name").find((w) => w.word === RETIRED.obligationPast)!;
     expect(v.flagged).toBe(true);
     expect(v.reason).toBe("banned");
-    expect(v.canonical).toBe("evidence obligation");
+    expect(v.canonical).toBe(CANONICAL.obligation);
   });
 
-  it("[SCN-VOC-004] reds the bare noun `demand`, and the plural `demands` folds onto its stem", () => {
-    // `demands` is the ONE inflection the naive singulariser folds onto `demand`; every
-    // assertion in this block is what tells the entries apart from the folds.
-    for (const word of ["demand", "demands"]) {
+  it("[SCN-VOC-004] reds the bare noun, and its plural folds onto the same stem", () => {
+    // The plural is the ONE inflection the singulariser folds onto the noun; every assertion
+    // in this block is what tells the entries apart from the folds.
+    for (const word of [RETIRED.obligationNoun, RETIRED.obligationNounPlural]) {
       const v = classifyWords([word], "prose").find((w) => w.word === word)!;
       expect(v.flagged, word).toBe(true);
       expect(v.reason, word).toBe("banned");
-      expect(v.canonical, word).toBe("evidence obligation");
+      expect(v.canonical, word).toBe(CANONICAL.obligation);
     }
   });
 
-  it("[SCN-VOC-004] `demanded` / `demanding` / `demander` do NOT fold — each needs its own entry", () => {
+  it("[SCN-VOC-004] the past, present and agent forms do NOT fold — each needs its own entry", () => {
     // Proven, not read: the singulariser strips a trailing `s` and nothing else, so
-    // `demanded` and `demanding` reach classifyWords as their own stems, and `demanders`
-    // folds to `demander` — which must itself be banned, or the plural lands on a stem
-    // that is in no word-set and flags the wrong reason (`unknown`, action `review`).
-    for (const word of ["demanded", "demanding", "demander", "demanders"]) {
+    // the past and present participles reach classifyWords as their own stems, and the agent
+    // plural folds to its stem — which must itself be banned, or it lands on a stem in no
+    // word-set and flags the wrong reason (`unknown`, action `review`).
+    const forms = [RETIRED.obligationPast, RETIRED.obligationVerb,
+      RETIRED.obligationAgent, RETIRED.obligationAgentPlural];
+    for (const word of forms) {
       const v = classifyWords([word], "prose").find((w) => w.word === word)!;
       expect(v.flagged, word).toBe(true);
       expect(v.reason, word).toBe("banned");
     }
   });
 
-  it("[SCN-VOC-004] REDS the RETIRED outcome handle `undemanded`, renaming to `no-evidence-obligation`", () => {
-    // THE HALF THAT MOVED. `undemanded` was canon until 3F-2300 and this assertion held it
+  it("[SCN-VOC-004] REDS the retired outcome handle, renaming to the canon handle", () => {
+    // THE HALF THAT MOVED. The handle was canon until 3F-2300 and this assertion held it
     // GREEN; the handle for a credit with no matching obligation is `no-evidence-obligation`
     // now, so the vendored row is ADOPTED and @SCN-VOC-010's derivation makes the old word
     // banned with no edit to any word-list. Whole-word by construction: decomposeName yields
-    // the single token "undemanded", so the ban lands on the whole word and cannot be a
-    // substring hit on "demanded".
-    expect(decomposeName("undemanded")).toEqual(["undemanded"]);
+    // a single token, so the ban cannot be a substring hit on the past participle.
+    expect(decomposeName(RETIRED.outcomeHandle)).toEqual([RETIRED.outcomeHandle]);
     // BOTH MODES — a retired word hides in an identifier and in a comment alike.
     for (const mode of ["name", "prose"] as const) {
-      const v = classifyWords(["undemanded"], mode).find((w) => w.word === "undemanded")!;
+      const v = classifyWords([RETIRED.outcomeHandle], mode).find((w) => w.word === RETIRED.outcomeHandle)!;
       expect(v.flagged, mode).toBe(true);
       expect(v.reason, mode).toBe("banned");
-      expect(v.canonical, mode).toBe("no-evidence-obligation");
+      expect(v.canonical, mode).toBe(CANONICAL.outcomeHandle);
     }
     // …and inside the real composites it used to live in, each of which the sweep removed.
-    for (const name of ["undemandedGuards", "undemandedBalance", "byOutcome.undemanded", "undemanded-static-check"]) {
-      const v = classifyWords(decomposeName(name), "name").find((w) => w.word === "undemanded")!;
+    const composites = [`${RETIRED.outcomeHandle}Guards`, `${RETIRED.outcomeHandle}Balance`,
+      `byOutcome.${RETIRED.outcomeHandle}`, `${RETIRED.outcomeHandle}-static-check`];
+    for (const name of composites) {
+      const v = classifyWords(decomposeName(name), "name").find((w) => w.word === RETIRED.outcomeHandle)!;
       expect(v.flagged, name).toBe(true);
       expect(v.reason, name).toBe("banned");
     }
@@ -562,7 +558,7 @@ describe("[SCN-VOC-004] the retired evidence-obligation word `demand`", () => {
 
   it("[SCN-VOC-004] STAYS GREEN on the canon outcome `no-evidence-obligation`, in both its forms", () => {
     // THE OTHER HALF — and NOT the interesting one alone. "The canon word is not flagged" is
-    // equally true of a tree with the whole `demand` matcher deleted, which is the green-by-
+    // equally true of a tree with the whole matcher deleted, which is the green-by-
     // erosion shape a one-sided swap of this scenario would have produced. It earns its place
     // only PAIRED with the flagged assertions above.
     expect(decomposeName("no-evidence-obligation")).toEqual(["no", "evidence", "obligation"]);
@@ -572,18 +568,18 @@ describe("[SCN-VOC-004] the retired evidence-obligation word `demand`", () => {
     }
   });
 
-  it("[SCN-VOC-004] over a corpus: `demanded` AND `undemanded` both rename; the canon handle yields no row", () => {
+  it("[SCN-VOC-004] over a corpus: the past participle AND the outcome handle both rename; the canon handle yields no row", () => {
     const { manifest } = auditFiles([
-      { path: "src/notes.ts", content: "// the demanded static check is retired here\n" },
-      { path: "src/retired.ts", content: "// the undemanded outcome was renamed away\n" },
+      { path: "src/notes.ts", content: `// the ${RETIRED.obligationPast} static check is retired here\n` },
+      { path: "src/retired.ts", content: `// the ${RETIRED.outcomeHandle} outcome was renamed away\n` },
       { path: "src/ok.ts", content: "// the no-evidence-obligation outcome is canon and stays\n" },
     ]);
-    const red = manifest.find((r) => r.current === "demanded" && r.new === "evidence obligation");
+    const red = manifest.find((r) => r.current === RETIRED.obligationPast && r.new === CANONICAL.obligation);
     expect(red).toBeDefined();
     expect(red!.action).toBe("rename");
     expect(red!.file).toBe("src/notes.ts");
     // The retired handle names its replacement — a `rename` row, not a bare `review`.
-    const retired = manifest.find((r) => r.current === "undemanded");
+    const retired = manifest.find((r) => r.current === RETIRED.outcomeHandle);
     expect(retired).toBeDefined();
     expect(retired!.new).toBe("no-evidence-obligation");
     expect(retired!.action).toBe("rename");
@@ -715,7 +711,7 @@ describe("[SCN-VOC-005] the retired class name `static guard`", () => {
 });
 
 describe("[SCN-VOC-012] the canon handle `no-evidence-obligation`", () => {
-  // 3F-2300 renamed the credit-side outcome `undemanded` → `no-evidence-obligation`. The new
+  // 3F-2300 renamed the credit-side outcome handle to `no-evidence-obligation`. The new
   // handle decomposes to `no` / `evidence` / `obligation`, and bare `obligation` is a
   // FULL_TERM_ONLY word — so the handle is green for exactly ONE reason: `fullTermSatisfied`
   // reads `words[i - 1]` and finds `evidence`. It is in no word-set of its own.

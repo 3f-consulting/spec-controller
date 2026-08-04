@@ -65,7 +65,7 @@ const PARENTHETICAL = /\([^)]*\)/g;
  * The "Never write" cell → its terms.
  *
  * The parenthetical goes because canon uses it for two things the matcher cannot use: an
- * inflection suffix (`demander(s)`) and the SENSE a ban is scoped to (`(of work items)`,
+ * inflection suffix — the agent noun's `(s)` — and the SENSE a ban is scoped to (`(of work items)`,
  * `(bare noun, for a static check)`). Neither is a word to match; the sense-scoped rows
  * are precisely the ones this repository does not adopt, and the reason travels in the
  * status cell where a reader will look for it.
@@ -232,7 +232,7 @@ export interface AdoptionFault {
 }
 
 /**
- * A ticket handle. The lookahead demands a LETTER, which is the whole point: `2026-08-03`
+ * A ticket handle. The lookahead requires a LETTER, which is the whole point: `2026-08-03`
  * is a hyphenated handle-shaped token, and a pattern loose enough to accept it would green
  * every dated deferral that names nobody — the exact failure this check exists to catch.
  */

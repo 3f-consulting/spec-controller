@@ -88,17 +88,17 @@ describe("[SCN-VOC-008] the audit reads what git says the project is, minus its 
     // through `filesInScope`, the entry is load-bearing: remove it from the set and this
     // assertion goes red naming the path that came back.
     const machinery = [
+      // pure data — permanent
+      "packages/spec-controller/static-checks/blockedVocabulary.md",
+      "packages/spec-controller/static-checks/renameTargets.md",
+      "features/vocabulary-audit.feature",
+      "tests/steps/vocabularyAudit.steps.ts",
+      "tests/steps/adoptedVocabulary.steps.ts",
+      // residual, pending 3F-2392 — the FlagReason values name the retired phrases
       "packages/spec-controller/static-checks/vocabAudit.ts",
-      "packages/spec-controller/static-checks/vocabTagGrammar.ts",
       "packages/spec-controller/static-checks/vocabWordSets.ts",
       "packages/spec-controller/static-checks/vocabAudit.test.ts",
       "packages/spec-controller/static-checks/vocabAuditTagLines.test.ts",
-      "packages/spec-controller/static-checks/vocabAuditCli.ts",
-      "packages/spec-controller/static-checks/vocabAuditCli.test.ts",
-      "features/vocabulary-audit.feature",
-      "tests/steps/vocabularyAudit.steps.ts",
-      "packages/spec-controller/static-checks/lintAdoptedVocabularyCli.test.ts",
-      "tests/steps/adoptedVocabulary.steps.ts",
     ];
     expect(select([...machinery, "src/a.ts"])).toEqual(["src/a.ts"]);
   });

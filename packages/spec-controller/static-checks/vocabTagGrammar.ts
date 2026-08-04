@@ -4,7 +4,7 @@
  *
  * `vocabAudit.ts` → `scanFile` used to skip every `.feature` line whose trimmed form began
  * with `@`, WHOLESALE. Defensible for an ID scheme, and exactly WRONG for a term whose
- * canonical form IS A TAG: `@ci-performance` → `@ci-run-time` is a TAG rename, so the surface
+ * canonical form IS A TAG: the retired timing tag → `@ci-run-time` is a TAG rename, so the surface
  * most worth policing was the only one that was invisible (3F-2289 planted the retired tag
  * there and got NO manifest row, while the same token in a comment, an identifier, a string
  * and a doc all fired).

@@ -39,27 +39,15 @@
 
 import { authoredTags, SCN_TOKEN_RE, tagLineTokens } from "./vocabTagGrammar.js";
 import {
-  BANNED_WORDS,
-  DOMAIN_WORDS,
-  ENTRY_DOMAIN_COMPANIONS,
-  FULL_TERM_ONLY,
-  GENERIC_ALLOWLIST,
-  GUARD_QUALIFIERS,
-  REJECTED_ALIAS_TO_CANONICAL,
-  RESERVED_WORDS,
-  RULED_ALLOWED,
+  APPROVED_WORDS, BANNED_WORDS, DOMAIN_WORDS, ENTRY_DOMAIN_COMPANIONS, FULL_TERM_ONLY,
+  GENERIC_ALLOWLIST, GUARD_QUALIFIERS, REJECTED_ALIAS_TO_CANONICAL, RESERVED_WORDS,
+  RULED_ALLOWED, VOCAB_AUDIT_WORDS,
 } from "./vocabWordSets.js";
 
 export {
-  BANNED_WORDS,
-  DOMAIN_WORDS,
-  ENTRY_DOMAIN_COMPANIONS,
-  FULL_TERM_ONLY,
-  GENERIC_ALLOWLIST,
-  GUARD_QUALIFIERS,
-  REJECTED_ALIAS_TO_CANONICAL,
-  RESERVED_WORDS,
-  RULED_ALLOWED,
+  APPROVED_WORDS, BANNED_WORDS, DOMAIN_WORDS, ENTRY_DOMAIN_COMPANIONS, FULL_TERM_ONLY,
+  GENERIC_ALLOWLIST, GUARD_QUALIFIERS, REJECTED_ALIAS_TO_CANONICAL, RESERVED_WORDS,
+  RULED_ALLOWED, VOCAB_AUDIT_WORDS,
 };
 
 /** Naive singulariser — plural of an approved/domain word is the same vocabulary. */
@@ -157,7 +145,7 @@ export interface WordVerdict {
 }
 
 function isApproved(word: string): boolean {
-  return DOMAIN_WORDS.has(word) || GENERIC_ALLOWLIST.has(word) || RULED_ALLOWED.has(word);
+  return APPROVED_WORDS.has(word);
 }
 
 function fullTermSatisfied(word: string, words: string[], i: number, present: Set<string>): boolean {

@@ -25,7 +25,8 @@
     "lint:scn-tags": "tsx packages/spec-controller/static-checks/lintScnTagsCli.ts",
     "lint:scn-subissues": "tsx packages/spec-controller/static-checks/lintScnSubIssuesCli.ts",
     "lint:self-balance": "tsx packages/spec-controller/static-checks/lintSelfBalanceCli.ts",
-    "lint:adopted-vocabulary": "tsx packages/spec-controller/static-checks/lintAdoptedVocabularyCli.ts"
+    "lint:adopted-vocabulary": "tsx packages/spec-controller/static-checks/lintAdoptedVocabularyCli.ts",
+    "lint:exempt-data-floor": "tsx packages/spec-controller/static-checks/lintExemptDataFloorCli.ts"
   },
   "devDependencies": {
     "@3f-consulting/spec-controller-core": "workspace:*",
