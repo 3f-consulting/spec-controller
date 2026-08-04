@@ -11,7 +11,29 @@ import { describe, it, expect } from "vitest";
 import { parseCucumberEvidenceObservations, type CucumberJsonReport } from "./cucumber.js";
 import type { RuntimeEvidenceObservation } from "../model.js";
 
-describe("parseCucumberEvidenceObservations stamps the declared level", () => {
+/**
+ * THE FALLBACK HALF of @SCN-LDG-011's rule. The scenario's Rule preamble
+ * (`features/ledger.feature`) states both halves: a runtime observation's level is DERIVED from the
+ * cited scenario's declared tier tag, and "the caller-declared source level survives only as the
+ * fallback for an untagged scenario". The sibling block below proves the derivation half; this block
+ * proves the fallback half — that the fallback is genuinely the CALLER's parameter and not a
+ * reinstated Cucumber⇒integration hardcode.
+ *
+ * WHY THIS BLOCK IS NOT REDUNDANT WITH ITS SIBLING, established by mutation (3F-2364):
+ *   - Hardcoding the untagged fallback to "integration" (`: ["integration"]` in `deriveLevels`)
+ *     reds EXACTLY ONE test in the whole tree — the NON-default `it` below. Every cited sibling,
+ *     unit and cucumber alike, stays green: they all either take the tag path or happen to declare
+ *     "integration" as their fallback, so the old hardcode agrees with them by COINCIDENCE. This
+ *     block is the only place that coincidence is broken.
+ *   - Breaking the fallback path wholesale (`: ["e2e"]`) reds four tests — both of this block's,
+ *     plus `[SCN-LDG-011]`'s "falls back to the caller-declared level…" and `[SCN-LDG-015]`'s. That
+ *     wider mutation makes the block LOOK superseded; only the narrower one above separates them.
+ *
+ * The first `it` is the CONTROL arm (its assertion is indeed also covered by `[SCN-LDG-011]`'s
+ * "falls back to the caller-declared level…" below); it is kept because the non-default `it`'s
+ * contrast is only legible against a default-case baseline in the same block.
+ */
+describe("[SCN-LDG-011] parseCucumberEvidenceObservations stamps the caller-declared level as the untagged fallback", () => {
   const report: CucumberJsonReport = [
     {
       uri: "features/x.feature",
