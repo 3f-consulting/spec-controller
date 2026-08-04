@@ -150,6 +150,12 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     note: "the tier-tag floor over spec-controller's own scenarios (the cobbler's shoes) — the lint:scn-tags CI guard reds if any @SCN scenario declares no evidence tier (@unit/@integration/@e2e/@performance, a <tier>pending variant, or @lint=<guard>) and is not @wip; @lint-self-declared so the tool's own ledger reconciles it",
   },
   {
+    code: "SLF",
+    slug: "self-reconciliation",
+    status: "declared",
+    note: "the self-reconciliation gate (the cobbler's shoes, the whole pair) — lint:self-balance runs the product's own balance over spec-controller's own tree on every push and PR and exits on the verdict, so the tool's own out-of-balance reds the build rather than printing a report nobody must read; @lint-self-declared so the gate is not itself an uncited static check (3F-2351)",
+  },
+  {
     code: "NPS",
     slug: "no-parallel-store",
     status: "declared",

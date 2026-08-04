@@ -23,7 +23,8 @@
     "lint:complexity-exceptions": "tsx packages/spec-controller/static-checks/lintComplexityExceptionsCli.ts",
     "lint:no-committed-reports": "tsx packages/spec-controller/static-checks/lintNoCommittedReportsCli.ts",
     "lint:scn-tags": "tsx packages/spec-controller/static-checks/lintScnTagsCli.ts",
-    "lint:scn-subissues": "tsx packages/spec-controller/static-checks/lintScnSubIssuesCli.ts"
+    "lint:scn-subissues": "tsx packages/spec-controller/static-checks/lintScnSubIssuesCli.ts",
+    "lint:self-balance": "tsx packages/spec-controller/static-checks/lintSelfBalanceCli.ts"
   },
   "devDependencies": {
     "@3f-consulting/spec-controller-core": "workspace:*",

@@ -21,6 +21,22 @@ Feature: Reconcile @lint static-check evidence against CI wiring over the real s
   reconciles balanced. The watermelon (LNT-002), absent-guard (LNT-003) and
   multi-kind-axis (LNT-004) paths grow this feature in later sub-issues.
 
+  WHY LNT-001 CARRIES AN @lint= TAG AND LNT-002/003/004 DO NOT. An @lint=<guard> tag
+  declares an evidence obligation THIS repository owes: a real guard that must be found
+  wired over the real source, or the scenario reds. LNT-001 owes one — lint:feature-codes
+  genuinely runs here. The other three name FIXTURE data: lint:planted-watermelon,
+  lint:absent-guard and lint:unwired-guard must never exist as real scripts, because these
+  scenarios exist to prove spec-controller DETECTS an absent or unwired guard. Tagging
+  them declared an obligation this repo could never discharge, so all three reconciled
+  out-of-balance — permanently, and correctly, given what the tag said. Nothing ever read
+  the handle from the tag: it is defined as a constant in lintReconciliation.test.ts and
+  fed through planted package.json / ci.yml fixtures, so the tag was decorative and
+  actively misleading. Dropping it follows @SCN-LDG-028, which tests the identical shape
+  through the fixture handle lint:ldg028-absent-guard, carries no @lint= tag, and
+  reconciles balanced. Their @unit and @integration obligations are untouched and still
+  reconcile — the distinction from a deferral tag, which would have taken every obligation
+  these scenarios declare dark to silence one row each (3F-2351).
+
   Rule: a @lint scenario whose guard is wired into CI over the real source is balanced
 
     @unit @integration @lint=lint:feature-codes @SCN-LNT-001
@@ -41,7 +57,7 @@ Feature: Reconcile @lint static-check evidence against CI wiring over the real s
     guard fed through the ingest/guard seam); spec-controller cannot keep a permanent
     real watermelon in-repo, and the planted guard is never a real in-repo script.
 
-    @unit @integration @lint=lint:planted-watermelon @SCN-LNT-002
+    @unit @integration @SCN-LNT-002
     Scenario: a @lint scenario whose guard exists but is absent from CI is reported as the watermelon
       Given a declared @lint scenario "SCN-LNT-002" requiring the static check "lint:planted-watermelon"
       And a planted package.json defines the guard "lint:planted-watermelon" but the planted CI config does not run it
@@ -61,7 +77,7 @@ Feature: Reconcile @lint static-check evidence against CI wiring over the real s
     fixture package.json and the fixture CI config, so ingest/guard reports
     exists:false.
 
-    @unit @integration @lint=lint:absent-guard @SCN-LNT-003
+    @unit @integration @SCN-LNT-003
     Scenario: a @lint scenario whose named guard does not exist is reported as missing
       Given a declared @lint scenario "SCN-LNT-003" requiring the static check "lint:absent-guard"
       And a planted package.json and CI config that name no such guard "lint:absent-guard"
@@ -83,7 +99,7 @@ Feature: Reconcile @lint static-check evidence against CI wiring over the real s
     reader, which emits TWO evidence obligations from one tag block), a green unit
     evidence observation, and a planted guard the planted CI does not run.
 
-    @unit @integration @lint=lint:unwired-guard @SCN-LNT-004
+    @unit @integration @SCN-LNT-004
     Scenario: a scenario requiring both a unit test and an unwired guard reports each kind independently
       Given a scenario "SCN-LNT-004" requiring both a @unit runtime test and the static check "lint:unwired-guard"
       And the unit result for "SCN-LNT-004" is green but the planted CI does not run the guard "lint:unwired-guard"

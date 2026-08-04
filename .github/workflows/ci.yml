@@ -104,11 +104,50 @@ jobs:
       - name: Type-check
         run: pnpm typecheck
 
+      # STEP 1 OF THE SELF-RECONCILIATION CHAIN — the observed @unit stream. The run is
+      # unchanged; it now also writes the machine-readable report the gate below reads.
+      # runs/ is gitignored with no re-includes and lint:no-committed-reports enforces it,
+      # so the artefact exists for the length of the job and is never committed: a
+      # reconciliation report enumerates this codebase's gaps and is more sensitive than
+      # the code. The default reporter is kept alongside so a failure is still readable in
+      # the log rather than only in JSON.
       - name: Test
-        run: pnpm test
+        run: pnpm test --reporter=default --reporter=json --outputFile.json=runs/self-balance/vitest.json
 
+      # STEP 2 — the observed @integration / @e2e stream. `--format json:<path>` adds a
+      # file formatter; the progress formatter stays on stdout.
       - name: Cucumber
-        run: pnpm cucumber
+        run: pnpm cucumber --format json:runs/self-balance/cucumber.json
+
+      # STEP 3 — THE SELF-RECONCILIATION GATE (@SCN-SLF-001, 3F-2351). spec-controller's
+      # own tree, put through spec-controller: the declared evidence in features/
+      # reconciled against the two streams above plus this file and package.json, with the
+      # build depending on the verdict.
+      #
+      # This closes a gap the tool itself is built to name. The reconciler could always
+      # report this repository's own one-way evidence claims — a tier declared and never
+      # observed, an observation citing nothing, a guard running that no scenario names —
+      # and no step ever ran it, so that defect class had to be found twice by accident,
+      # here. A report nobody is obliged to read is not a check.
+      #
+      # It EXITS on the verdict rather than printing one (@SCN-CLI-004 / 3F-1414: 0
+      # balanced, 1 out-of-balance, 2 usage). Report mode was the pre-agreed first rung and
+      # is deliberately not where this stops: a step that exits 0 regardless is the
+      # watermelon it exists to detect.
+      #
+      # It runs AFTER both suites because it consumes their output — a gate over reports
+      # that were never emitted reports every obligation unobserved, which means "the suite
+      # did not run", not "the code is wrong", so the script reds that as a usage fault
+      # (exit 2) instead of dressing it as a verdict.
+      #
+      # @lint-declared (@lint=lint:self-balance on @SCN-SLF-001) so the tool's own ledger
+      # reconciles this step rather than reporting it as an uncited static check — which it
+      # would otherwise be, on its own books, on its own introduction. The `lint:` prefix is
+      # required, not cosmetic: runningStaticChecks observes a CI script only when its name
+      # carries an observed prefix, so a name outside that set would run here while being
+      # invisible to spec-controller's own ledger.
+      - name: Self-reconciliation balance
+        run: pnpm lint:self-balance
 
       # The hermetic scenario ⟷ sub-issue gate (ported from an earlier internal tool / an adopter's repository
       # 3F-834), wired over spec-controller's REAL source on every PR. Every
