@@ -42,6 +42,12 @@ export interface FeatureCodeEntry {
  */
 export const REGISTRY: readonly FeatureCodeEntry[] = [
   {
+    code: "ANM",
+    slug: "anemic-domain",
+    status: "feature-code-used",
+    note: "a concept owns its own behaviour — the static check reds a domain module named for a procedural layer (*-operations / *-service / *-manager), fencing the door 3F-2416's module-size scope exclusion opened",
+  },
+  {
     code: "API",
     slug: "public-api",
     status: "feature-code-used",

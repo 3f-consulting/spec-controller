@@ -140,6 +140,27 @@ jobs:
       - name: Lint exempt data floor
         run: pnpm lint:exempt-data-floor
 
+      # THE ANEMIC-DOMAIN CHECK (@SCN-ANM-001, 3F-2417) — the counterpart to 3F-2416's
+      # module-size scope exclusion. That slice removed the one force actively PUSHING a rich
+      # aggregate's behaviour out of its concept module (under the ceiling, hiving the
+      # operations into a second module was the cheapest route to green); this reds the module
+      # that would receive them. A concept owns its own behaviour — canon,
+      # technical-design/functional-domain-modelling.md, and the fitness-functions.md ruling of
+      # 2026-08-05, which asks for exactly this much mechanism.
+      #
+      # The scope is a DOMAIN DIRECTORY, not the word: a renderService under render/ is
+      # ordinary and legitimate. And what a green here does NOT establish is written down —
+      # it reds a NAME, so behaviour can still drain into a module called anything at all.
+      # It fences the obvious case and no more.
+      #
+      # @lint-cited (@lint=lint:anemic-domain on @SCN-ANM-001) so the tool's own ledger
+      # reconciles this step rather than reporting it as an uncited static check. The `lint:`
+      # prefix is required, not cosmetic: runningStaticChecks observes a CI script only when
+      # its name carries an observed prefix, so a name outside that set would run here while
+      # being invisible to spec-controller's own ledger.
+      - name: Lint anemic domain
+        run: pnpm lint:anemic-domain
+
       # STEP 1 OF THE SELF-RECONCILIATION CHAIN — the observed @unit stream. The run is
       # unchanged; it now also writes the machine-readable report the gate below reads.
       # runs/ is gitignored with no re-includes and lint:no-committed-reports enforces it,
