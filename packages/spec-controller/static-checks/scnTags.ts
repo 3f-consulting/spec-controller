@@ -30,9 +30,17 @@ export interface FeatureFileSource {
   source: string;
 }
 
-/** A single scn-tags lint finding. */
+/**
+ * A single scn-tags lint finding.
+ *
+ * TWO KINDS, NOT ONE, because they are two faults with two different fixes
+ * (@SCN-STG-002): `missing-tier-tag` says *add a tier*, `unrecognised-tag` says *this
+ * tag means nothing here*. Collapsing them would print "names no evidence tier" at an
+ * author whose real problem is a typo in the tier they did name — which is precisely
+ * how `@untit` stayed invisible.
+ */
 export interface ScnTagsViolation {
-  kind: "missing-tier-tag";
+  kind: "missing-tier-tag" | "unrecognised-tag";
   message: string;
 }
 
@@ -68,6 +76,55 @@ export function isTierTag(bare: string): boolean {
     if (bare === qc || bare === `${qc}pending`) return true;
   }
   return false;
+}
+
+/**
+ * The tag that exempts a scenario from the tier floor. Named once and used for both
+ * questions it answers — the exemption, and its own membership of the grammar — so the
+ * unrecognised-tag check cannot come to disagree with the floor about `@wip`.
+ */
+const WIP = "wip";
+
+/** The tier tags a near-miss is measured against, bare. */
+const TIER_TAGS: readonly string[] = [
+  ...QUALITY_CHECKS,
+  ...QUALITY_CHECKS.map((qc) => `${qc}pending`),
+  "lint",
+];
+
+/** Levenshtein distance, capped by nothing — the strings here are tag-length. */
+function editDistance(a: string, b: string): number {
+  let previous = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i += 1) {
+    const current = [i];
+    for (let j = 1; j <= b.length; j += 1) {
+      const substitution = previous[j - 1]! + (a[i - 1] === b[j - 1] ? 0 : 1);
+      current[j] = Math.min(current[j - 1]! + 1, previous[j]! + 1, substitution);
+    }
+    previous = current;
+  }
+  return previous[b.length]!;
+}
+
+/**
+ * The tier an unrecognised tag was probably meant to be, or undefined when none is
+ * close. A COURTESY, never the verdict (@SCN-STG-002): the tag reds whether or not a
+ * suggestion is found, so a wrong guess costs a poor message and nothing else.
+ *
+ * Distance 2 rather than 1 catches the drop-plus-transpose shapes (`@untegration`);
+ * wider than that and `@e2e` starts attracting every short tag in the tree.
+ */
+function nearestTier(bare: string): string | undefined {
+  let best: string | undefined;
+  let bestDistance = 3;
+  for (const tier of TIER_TAGS) {
+    const distance = editDistance(bare.toLowerCase(), tier);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      best = tier;
+    }
+  }
+  return best;
 }
 
 /** A scenario parsed from a feature source: its title and its own tag block. */
@@ -106,18 +163,56 @@ function parseScenarios(source: string): ParsedScenario[] {
 }
 
 /**
+ * The tags on one scenario that are not part of the grammar at all (@SCN-STG-002) —
+ * neither the `@SCN` id, nor a tier, nor a member of the recognised deferral set.
+ *
+ * A SEPARATE FUNCTION, not an inlined loop, because the two questions this module now
+ * asks have no shared state beyond the tag block: the floor asks about the scenario,
+ * this asks about each tag on it.
+ */
+function unrecognisedTagViolations(
+  feature: FeatureFileSource,
+  scenario: ParsedScenario,
+  scnId: string,
+  recognised: ReadonlySet<string>
+): ScnTagsViolation[] {
+  const violations: ScnTagsViolation[] = [];
+  for (const tag of scenario.tags) {
+    if (SCN_PATTERN.test(tag) || isTierTag(tag) || recognised.has(tag)) continue;
+    const suggestion = nearestTier(tag);
+    violations.push({
+      kind: "unrecognised-tag",
+      message:
+        `Feature "${feature.slug}" scenario @${scnId} ("${scenario.title}") carries ` +
+        `@${tag}, which is neither an evidence tier nor a recognised deferral tag` +
+        (suggestion === undefined ? "" : ` — did you mean @${suggestion}?`),
+    });
+  }
+  return violations;
+}
+
+/**
  * Lint the feature sources for the tier-tag floor: every scenario carrying an
  * @SCN must NAME a tier tag unless it is @wip. Returns a LintResult-shaped
  * `{ ok, violations }` — an empty `violations` (and `ok: true`) means the tree
  * satisfies the floor; each violation names a tier-less non-@wip @SCN scenario.
  */
-export function lintScnTags(features: readonly FeatureFileSource[]): ScnTagsResult {
+export function lintScnTags(
+  features: readonly FeatureFileSource[],
+  recognisedDeferralTags: readonly string[] = []
+): ScnTagsResult {
   const violations: ScnTagsViolation[] = [];
+  const recognised = new Set([WIP, ...recognisedDeferralTags]);
   for (const feature of features) {
     for (const scenario of parseScenarios(feature.source)) {
       const scnId = scenario.tags.find((t) => SCN_PATTERN.test(t));
       if (scnId === undefined) continue; // no @SCN tag — not checked
-      if (scenario.tags.includes("wip")) continue; // exempt
+
+      // The GRAMMAR question, asked before the floor and independently of it: a
+      // scenario can name a tier AND carry a typo, and the typo is the interesting half.
+      violations.push(...unrecognisedTagViolations(feature, scenario, scnId, recognised));
+
+      if (scenario.tags.includes(WIP)) continue; // exempt
       if (scenario.tags.some(isTierTag)) continue; // names a tier — satisfied
       violations.push({
         kind: "missing-tier-tag",

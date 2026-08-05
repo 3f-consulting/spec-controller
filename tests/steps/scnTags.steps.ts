@@ -77,3 +77,45 @@ Then("it passes", function () {
     `expected the scn-tags guard to pass (exit 0) over the fully tiered tree, but it exited ${exitCode}. Output:\n${output}`
   );
 });
+
+// @SCN-STG-002
+Given("the scn-tags static check", function () {
+  // No fixture yet — each When drives the real CLI over a planted tree.
+});
+
+// @SCN-STG-002
+When(
+  "it runs over a features tree whose @SCN scenario carries a mistyped tier tag",
+  function () {
+    runGuardOver("tests/fixtures/scn-tags-unrecognised/features");
+  }
+);
+
+// @SCN-STG-002
+Then("it fails, naming the unrecognised tag and the tier it resembles", function () {
+  assert.equal(
+    exitCode,
+    1,
+    `expected the scn-tags static check to fail (exit 1) over a tree whose @SCN scenario ` +
+      `carries @untit, but it exited ${exitCode}. Output:\n${output}`
+  );
+  assert.match(
+    output,
+    /@untit/,
+    `expected the offending tag to be NAMED — "something is wrong in this file" is not a ` +
+      `usable message; got:\n${output}`
+  );
+  assert.match(
+    output,
+    /@unit/,
+    `expected the near-miss tier (@unit) to be named alongside @untit; got:\n${output}`
+  );
+});
+
+// @SCN-STG-003
+When(
+  "it runs over a features tree whose tiered @SCN scenario also carries a recognised community deferral tag",
+  function () {
+    runGuardOver("tests/fixtures/scn-tags-community/features");
+  }
+);

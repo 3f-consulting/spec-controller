@@ -17,9 +17,27 @@
  * @integration fixtures pass a planted dir; the real-tree gate takes the default).
  */
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { discoverFeatures } from "../src/ingest/ingestScenarios.js";
+import { resolveDeferralTags } from "../src/ingest/ingestQualityChecks.js";
 import { lintScnTags, type FeatureFileSource } from "./scnTags.js";
+
+/**
+ * The recognised community deferral tags for the tree being checked (@SCN-STG-002) —
+ * `DEFAULT_DEFERRAL_TAGS` extended by the target's `specController.deferralTags`, via the
+ * SAME resolver the ingest edge uses (@SCN-PND-021). The unrecognised-tag question must
+ * not answer differently from the product's own policy, so the set is resolved rather
+ * than restated, and the disk read stays HERE: `scnTags.ts` imports nothing, which is
+ * what keeps its dependency from `vocabAudit` (@SCN-VOC-013) one-way and cycle-free.
+ */
+function recognisedDeferralTags(): readonly string[] {
+  const packageJson = existsSync("package.json")
+    ? (JSON.parse(readFileSync("package.json", "utf8")) as {
+        specController?: { deferralTags?: unknown };
+      })
+    : {};
+  return resolveDeferralTags(packageJson);
+}
 
 /** The features dir from an optional `--features <dir>` flag, or undefined. */
 function featuresDirArg(argv: readonly string[]): string | undefined {
@@ -38,17 +56,17 @@ const sources: FeatureFileSource[] = discovered.map((f) => ({
   source: readFileSync(f.path, "utf8"),
 }));
 
-const result = lintScnTags(sources);
+const result = lintScnTags(sources, recognisedDeferralTags());
 
 if (result.ok) {
   console.log(
-    "scn-tags lint: OK — every @SCN scenario names an evidence tier (or is @wip)."
+    "scn-tags lint: OK — every @SCN scenario names an evidence tier (or is @wip), and every tag on it is grammar."
   );
   process.exit(0);
 }
 
 console.error(
-  `scn-tags lint: FAILED — ${result.violations.length} scenario(s) name an @SCN but no evidence tier (and are not @wip):`
+  `scn-tags lint: FAILED — ${result.violations.length} finding(s): a scenario naming an @SCN but no evidence tier (and not @wip), or a tag that is neither a tier nor a recognised deferral tag:`
 );
 for (const v of result.violations) {
   console.error(`  ${v.message}`);
