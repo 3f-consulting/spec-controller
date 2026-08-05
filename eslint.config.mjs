@@ -53,6 +53,7 @@
 
 import tseslint from "typescript-eslint";
 import { COMPLEXITY_EXCEPTIONS } from "./packages/spec-controller/static-checks/complexityExceptions.mjs";
+import { DOMAIN_ENTITY_ROOTS } from "./packages/spec-controller/static-checks/domainEntityRoots.mjs";
 import {
   PRODUCTION_THRESHOLD,
   TEST_THRESHOLD,
@@ -122,6 +123,24 @@ export const BARE_STANDARD_CONFIG = [
     files: ["**/*.test.ts"],
     languageOptions: tsLanguageOptions,
     rules: thresholdRules(TEST_THRESHOLD),
+  },
+  {
+    // The domain's concept modules: `max-lines` does not govern them (@SCN-CPX-004, 3F-2416). LAST of
+    // the three, so it wins over both scope blocks — the same later-wins rule the test block rides on.
+    //
+    // INSIDE THE BARE STANDARD, NOT BESIDE THE EXCEPTION BLOCKS. `complexityExceptionsReconciliation`
+    // imports `BARE_STANDARD_CONFIG` precisely so its measurement is the one this config makes — this
+    // block is inside that export, so the exclusion travels with it. Leaving the
+    // exclusion out of it would have the reconciliation judge a population the check does not, which
+    // is the second-measurement-scope failure `MEASURED_GLOBS` exists as one export to avoid. It also
+    // buys the no-overlap rule for free: a `max-lines` entry added for one of these paths measures
+    // under the standard here, so the ratchet reds it as a stale entry with no pin involved.
+    //
+    // ONLY `max-lines`. `complexity` and `max-lines-per-function` are not restated, so the scope
+    // blocks' values stand — a fat or complex function in a concept module reds exactly as elsewhere,
+    // which is what makes exempting module size safe. See `domainEntityRoots.mjs` for why it yields.
+    files: [...DOMAIN_ENTITY_ROOTS],
+    rules: { "max-lines": "off" },
   },
 ];
 

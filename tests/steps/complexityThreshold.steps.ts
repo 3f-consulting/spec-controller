@@ -426,3 +426,109 @@ Then("a file no longer over the standard reds as a stale entry", function () {
   assert.equal(found.recorded, 401);
   assertNamesItsCause(found);
 });
+
+// @SCN-CPX-004
+/**
+ * THE DOMAIN'S CONCEPT MODULES (@SCN-CPX-004, 3F-2416) — the files `max-lines` does not govern.
+ *
+ * WHY EVERY PLANT HERE IS PAIRED WITH ITS LIMIT, as elsewhere in this file. A permitting Then alone
+ * would pass just as well against a config that had switched `max-lines` off everywhere, or that had
+ * quietly switched the per-unit rules off on these paths too. The non-root plant is what pins the word
+ * "concept module", and the two per-unit plants are what pin "only module size yields".
+ *
+ * THE NON-ROOT PATH IS PLANTED, NEVER A REAL FILE. It has to live in the SAME directory as the roots
+ * for the pairing to mean anything — a path outside `src/domain` would prove only that the exclusion
+ * is not repo-wide, which is a much weaker claim.
+ */
+let entityRoots: readonly string[];
+
+/** A production path inside the domain directory that the excluded set does NOT name. */
+const NON_ROOT_DOMAIN_PATH = "packages/core/src/domain/notAConceptModule.ts";
+
+/**
+ * The ceiling a per-unit rule ACTUALLY holds `path` to — its exception value where the debt list
+ * carries one, the external standard where it does not.
+ *
+ * Not a detail. Three of these modules carry a `max-lines-per-function` or `complexity` exception
+ * today, so a plant at standard+1 sits comfortably under their frozen ceiling and produces no finding
+ * — which would read as "the per-unit gate stopped biting" when what actually happened is that the
+ * gate bit at the file's own recorded number, exactly as @SCN-CPX-002 says it should. Planting at the
+ * effective ceiling asserts the stronger and true thing: the scope exclusion took module size and
+ * nothing else, at whatever number each module is really held to.
+ */
+const perUnitCeilingFor = (path: string, rule: ExceptionRule, standard: number): number =>
+  exceptions.find((entry) => entry.path === path && entry.rule === rule)?.value ?? standard;
+
+Given("the concept modules the module-size rule does not govern", async function () {
+  const module = await import("../../packages/spec-controller/static-checks/domainEntityRoots.mjs");
+  entityRoots = module.DOMAIN_ENTITY_ROOTS as readonly string[];
+  const exceptionModule = await import(
+    "../../packages/spec-controller/static-checks/complexityExceptions.mjs"
+  );
+  exceptions = exceptionModule.COMPLEXITY_EXCEPTIONS as readonly Exception[];
+
+  // Vacuity floor: an empty set would make the permitting Then below pass over nothing.
+  assert.ok(entityRoots.length > 0, "the excluded set must name at least one concept module");
+  assert.ok(
+    !entityRoots.includes(NON_ROOT_DOMAIN_PATH),
+    `${NON_ROOT_DOMAIN_PATH} must be OUTSIDE the excluded set for the paired plant to mean anything`,
+  );
+
+  // The overlap the exclusion must never acquire — a module cannot be both scope-excluded and
+  // `max-lines`-exempt, or the entry records debt against a rule that no longer applies to it.
+  assert.ok(
+    !exceptions.some((entry) => entry.rule === "max-lines" && entityRoots.includes(entry.path)),
+    "no concept module may carry a `max-lines` exception — the rule does not govern it at all",
+  );
+});
+
+Then("an entity root far past the file ceiling does not red", async function () {
+  // Three times the ceiling, in CODE, at every listed path — not one sampled path, because an
+  // exclusion that covers five of six modules looks identical to one that covers all six until the
+  // sixth grows.
+  const source = moduleOfLines(STANDARD.maxLines * 3);
+  for (const path of entityRoots) {
+    const findings = await lintAs(source, path);
+    assert.ok(
+      !findings.includes("max-lines"),
+      `${path} is a concept module: ${STANDARD.maxLines * 3} code lines must NOT red against ` +
+        `\`max-lines\` (found: ${findings.join(", ") || "none"})`,
+    );
+  }
+});
+
+Then("a non-root module in the same directory past the file ceiling still reds", async function () {
+  // The pairing. Same source, same directory, one line past the ceiling rather than three times it —
+  // so this pins the BOUNDARY for an unlisted module, and pins that the exclusion follows the set
+  // rather than the directory.
+  const findings = await lintAs(moduleOfLines(STANDARD.maxLines + 1), NON_ROOT_DOMAIN_PATH);
+  assert.ok(
+    findings.includes("max-lines"),
+    `${NON_ROOT_DOMAIN_PATH} is not a concept module: it must still red against \`max-lines\` — the ` +
+      `exclusion names modules, not a directory (found: ${findings.join(", ") || "none"})`,
+  );
+});
+
+Then("a function past its length ceiling in an entity root still reds", async function () {
+  for (const path of entityRoots) {
+    const ceiling = perUnitCeilingFor(path, "max-lines-per-function", STANDARD.maxLinesPerFunction);
+    const findings = await lintAs(functionOfLines(ceiling + 1), path);
+    assert.ok(
+      findings.includes("max-lines-per-function"),
+      `${path}: only module size yields — a ${ceiling + 1}-line function must still red against ` +
+        `\`max-lines-per-function\` (found: ${findings.join(", ") || "none"})`,
+    );
+  }
+});
+
+Then("a function past its complexity ceiling in an entity root still reds", async function () {
+  for (const path of entityRoots) {
+    const ceiling = perUnitCeilingFor(path, "complexity", STANDARD.complexity);
+    const findings = await lintAs(functionOfComplexity(ceiling), path);
+    assert.ok(
+      findings.includes("complexity"),
+      `${path}: only module size yields — a complexity-${ceiling + 1} function must still red ` +
+        `against \`complexity\` (found: ${findings.join(", ") || "none"})`,
+    );
+  }
+});

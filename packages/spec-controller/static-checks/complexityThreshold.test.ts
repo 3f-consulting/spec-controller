@@ -53,6 +53,9 @@ import {
 // assertion with a sentence, which is what a red is supposed to be.
 import * as thresholdModule from "./complexityThresholds.mjs";
 import { COMPLEXITY_EXCEPTIONS } from "./complexityExceptions.mjs";
+import { DOMAIN_ENTITY_ROOTS } from "./domainEntityRoots.mjs";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 
 /**
  * The external standard, written out here as the literal numbers the sources state.
@@ -274,5 +277,73 @@ describe("[SCN-CPX-002] an exempt file that grows past its recorded value reds t
       expect(severity).toBe("error");
       expect(typeof options === "number" ? options : options.max).toBe(entry.value);
     }
+  });
+});
+
+/**
+ * @SCN-CPX-004 (3F-2416) — the domain's concept modules, which `max-lines` does not govern.
+ *
+ * DIVISION OF LABOUR WITH THE @integration ARM, as above. Whether eslint actually stops reding on an
+ * excluded path is eslint's behaviour, proven there by planting against the REAL config. What is ours
+ * is the SET itself: that it names real files, that it stays as narrow as it claims, and that it never
+ * overlaps the debt list. Those are the ways a scope statement quietly turns into the per-file
+ * exemption canon rules out, and none of them would show up as a red anywhere else.
+ */
+describe("[SCN-CPX-004] a domain entity root outgrows the file ceiling without reding", () => {
+  it("[SCN-CPX-004] the set is not empty — an empty one would make every assertion here pass over nothing", () => {
+    expect(DOMAIN_ENTITY_ROOTS.length).toBeGreaterThan(0);
+  });
+
+  it("[SCN-CPX-004] every path exists on disk — a stale entry silently excludes nothing", () => {
+    // A renamed or deleted module leaves a path matching no file. eslint says nothing about a
+    // `files` pattern that matches nothing, so the entry would read as an active exclusion while
+    // excluding nothing at all — and the module it was meant to cover would be back under the
+    // ceiling with no one told. The repo root is four levels up from this file.
+    const root = resolve(import.meta.dirname, "../../..");
+    for (const path of DOMAIN_ENTITY_ROOTS) {
+      expect(existsSync(resolve(root, path)), `${path} is listed but does not exist`).toBe(true);
+    }
+  });
+
+  it("[SCN-CPX-004] every path is a domain module, and none is a test file", () => {
+    // The scope claim is about the DOMAIN's concept modules. A path outside a domain directory
+    // would be an ordinary file quietly excused, which is exactly the per-file exemption this set
+    // is not. A `.test.ts` would be worse still — test files are already held at their own scope.
+    for (const path of DOMAIN_ENTITY_ROOTS) {
+      expect(path, `${path} is not under a domain directory`).toMatch(/^packages\/[^/]+\/src\/domain\//);
+      expect(path.endsWith(".test.ts"), `${path} is a test file`).toBe(false);
+    }
+  });
+
+  it("[SCN-CPX-004] no module is listed twice — one entry is one claim about one module", () => {
+    expect(new Set(DOMAIN_ENTITY_ROOTS).size).toBe(DOMAIN_ENTITY_ROOTS.length);
+  });
+
+  it("[SCN-CPX-004] no excluded module also carries a `max-lines` exception", () => {
+    // The overlap is the hiding place. An entry would record debt against a rule that no longer
+    // applies to the file, so it could never be paid down and would sit there reading as debt for
+    // good. This is the SECOND of two mechanisms: because the exclusion lives inside
+    // BARE_STANDARD_CONFIG, @SCN-CPX-003's reconciliation measures through it and reds such an
+    // entry as a stale one on its own. Neither mechanism relies on the other.
+    const excluded = new Set(DOMAIN_ENTITY_ROOTS);
+    const both = COMPLEXITY_EXCEPTIONS.filter(
+      (entry) => entry.rule === "max-lines" && excluded.has(entry.path),
+    );
+    expect(both).toEqual([]);
+  });
+
+  it("[SCN-CPX-004] the exclusion block switches off `max-lines` and nothing else", async () => {
+    // The whole reason exempting module size is safe, read off the REAL config rather than restated.
+    // If a future edit reached for `complexity` or `max-lines-per-function` in this block too, the
+    // exclusion would stop being about coherence and start being cover — and nothing else would
+    // notice, because a rule switched off produces no finding to miss. Three of these modules carry
+    // a per-unit exception today; they stay gated as the smells they are.
+    const { BARE_STANDARD_CONFIG } = await import("../../../eslint.config.mjs");
+    const block = BARE_STANDARD_CONFIG.find(
+      (candidate) => candidate.files?.[0] === DOMAIN_ENTITY_ROOTS[0],
+    );
+    expect(block, "the bare standard must carry the concept-module exclusion block").toBeDefined();
+    expect(block?.files).toEqual([...DOMAIN_ENTITY_ROOTS]);
+    expect(block?.rules).toEqual({ "max-lines": "off" });
   });
 });

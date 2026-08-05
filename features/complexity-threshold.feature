@@ -65,6 +65,47 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
       And a module over 400 code lines outside the exception list reds
       And a module of pure documentation past the file ceiling does not red
 
+  Rule: the module-size ceiling does not govern the domain's concept modules
+
+    THE GUARD STATES ITS SCOPE, RATHER THAN THE MODEL BENDING TO IT (3F-2416; canon:
+    functional-domain-modelling.md → "The aggregate root outgrows the module ceiling",
+    and the fitness-functions.md ruling of 2026-08-05). A concept module co-locates a
+    type with the pure functions over it, and it grows WITH the concept — that is the
+    model working, not bloat. A file-size ceiling assumes the opposite, and the only
+    move that satisfies it is hiving the concept's behaviour into an *-operations layer:
+    the anemic shape the model forbids, arrived at not by anyone's bad instinct but
+    because the gate forced it. For an entity module coherence IS the tractability —
+    read one module, see the whole concept — so max-lines yields to it.
+
+    NOT A BLANKET DOMAIN EXEMPTION, AND NOT A PER-FILE ONE. The excluded set names the
+    concept modules; a value object, a composition or a helper living in the same
+    directory stays under the ceiling, because nothing adds it to the set by living
+    there. And the set carries no measured value and no date — an exception entry says
+    "this file measures 575 today", a fact about debt; this says "this module is a
+    concept root", a fact about kind. The two never overlap, which is pinned.
+
+    ONLY MODULE SIZE YIELDS. complexity and max-lines-per-function apply to a concept
+    module exactly as they do anywhere else, and that is what makes the exclusion safe
+    to grant: a long module of small, simple, well-named functions is coherent, while a
+    fat or complex FUNCTION is debt whatever module holds it. "Its ceiling" in the last
+    two examples is each module's own — the standard, or the frozen value where the debt
+    list already records one, since three of these modules do. Planting at the standard
+    alone would sit under those frozen ceilings and read as the gate having stopped
+    biting, when it is biting at exactly the number @SCN-CPX-002 froze.
+
+    The last three examples are the fence, and they are stated in the same scenario as
+    the permission — a permitting rule whose limits live nowhere is indistinguishable
+    from a hole, and this is precisely the rule that could become a hiding place.
+
+    @unit @integration @lint=lint:complexity @SCN-CPX-004
+    Scenario: a domain entity root outgrows the file ceiling without reding
+      Given the concept modules the module-size rule does not govern
+      When the complexity fitness function scans the real tree
+      Then an entity root far past the file ceiling does not red
+      And a non-root module in the same directory past the file ceiling still reds
+      And a function past its length ceiling in an entity root still reds
+      And a function past its complexity ceiling in an entity root still reds
+
   Rule: an exempt file reds when it worsens past its recorded value
 
     An exception excuses the debt a file already carries and buys not one line of
