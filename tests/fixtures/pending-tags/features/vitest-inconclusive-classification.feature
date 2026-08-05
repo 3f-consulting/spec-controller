@@ -1,5 +1,5 @@
 @PND
-Feature: A planted declared-side fixture for the vitest reader's three-way classification (@SCN-PND-015)
+Feature: A planted named-side fixture for the vitest reader's three-way classification (@SCN-PND-015)
 
   A single scenario carrying a @unit obligation, cited by an UNREGISTERED SCN code
   (SCN-PDV-001 — the distinct fixture convention, never a real scanned scenario per
@@ -10,5 +10,5 @@ Feature: A planted declared-side fixture for the vitest reader's three-way class
   Rule: a fixture rule
 
     @unit @SCN-PDV-001
-    Scenario: a declared unit obligation
+    Scenario: a named unit obligation
       Given a fixture step

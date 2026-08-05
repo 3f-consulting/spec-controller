@@ -10,7 +10,7 @@ Feature: an unknown-pending fixture target
 
   (Bare `@pending` was formerly a third witness here — but it is INSIDE the recognised community
   deferral lexicon (a DEFAULT_DEFERRAL_TAG), not an unknown tag: a bare `@pending` scenario
-  declaring zero obligations synthesises a scenario-scope Pending Item (@SCN-PND-022), so it no
+  naming zero obligations synthesises a scenario-scope Pending Item (@SCN-PND-022), so it no
   longer belongs in this "outside the lexicon" set. Its obligation-scope absence is proven by the
   `pendingQualityCheck("pending")` helper unit test; its synthesis by the @SCN-PND-022 arms.)
 

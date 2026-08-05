@@ -7,7 +7,7 @@
  * diff touches (added / updated / deleted Gherkin tag-line codes, plus the
  * unit-test-equivalent behaviour change — the 3F-805 surface) and verifies the
  * binding `scenario-binds-test-and-code` ENTIRELY INSIDE CI, with NO live Linear
- * call: the diff carries the declared @SCN cite (the test+code), AND the PR
+ * call: the diff carries its @SCN cite (the test+code), AND the PR
  * carries its own TICKET HANDLE (the Linear-auto-named source branch
  * `steven/3f-NNN-…` and/or the `[3F-NNN]` commit-message prefix). The Linear–
  * GitHub integration guarantees that handle maps to a real, in-flight ticket BY
@@ -46,7 +46,7 @@ export interface RenumberPair {
   added: string;
 }
 
-/** A declared exemption parsed from a `SCN-exempt: <code> (<reason>)` trailer / PR-body line. */
+/** An exemption parsed from a `SCN-exempt: <code> (<reason>)` trailer / PR-body line. */
 export interface Exemption {
   /** The @SCN code the trailer exempts (without the leading @). */
   code: string;
@@ -68,7 +68,7 @@ export interface ScnGateInput {
   deletedCodes: string[];
   /** Auto-detected renumber pairs (removed+added on an unchanged scenario body). */
   renumberPairs: RenumberPair[];
-  /** Exemptions declared via SCN-exempt trailers / PR-body lines. */
+  /** Exemptions given via SCN-exempt trailers / PR-body lines. */
   exemptions: Exemption[];
   /**
    * Whether the diff is a behaviour-bearing UNIT-EQUIVALENT change (the 3F-805
@@ -120,7 +120,7 @@ export interface ScnGateResult {
  * HERMETICALLY: from the diff + the PR ticket handle alone, NO Linear call.
  *
  * For each behaviour-bearing code: an auto-detected renumber → pass; the PR's own
- * ticket handle → pass; else a valid declared SCN-exempt → pass; else a malformed
+ * ticket handle → pass; else a valid SCN-exempt directive → pass; else a malformed
  * exemption → red; else the change must be ON A TICKET — `hasTicketHandle` → pass,
  * no handle → red with a `missing-ticket-handle` violation.
  *
@@ -157,7 +157,7 @@ export function decideScnGate(input: ScnGateInput): ScnGateResult {
       violations.push({
         kind: "malformed-exemption",
         code,
-        message: `${verb} scenario code @${code} carries a malformed SCN-exempt declaration — its reason is missing or not in {${EXEMPTION_REASONS.join(", ")}}. A malformed exemption is a failure, not a silent pass: correct the reason to one of {${EXEMPTION_REASONS.join(", ")}}, or remove the SCN-exempt trailer and put the change on a ticketed PR.`,
+        message: `${verb} scenario code @${code} carries a malformed SCN-exempt trailer — its reason is missing or not in {${EXEMPTION_REASONS.join(", ")}}. A malformed exemption is a failure, not a silent pass: correct the reason to one of {${EXEMPTION_REASONS.join(", ")}}, or remove the SCN-exempt trailer and put the change on a ticketed PR.`,
       });
       return;
     }
@@ -165,7 +165,7 @@ export function decideScnGate(input: ScnGateInput): ScnGateResult {
     violations.push({
       kind: "missing-ticket-handle",
       code,
-      message: `${verb} scenario code @${code} is a behaviour-bearing change on a PR that carries no ticket handle (no Linear-auto-named branch "steven/3f-NNN-…" and no "[3F-NNN]" commit-message prefix), so it can't be bound to a live tracked work-unit. Open the PR from its Linear-auto-named branch (or carry a [3F-NNN] commit prefix), or declare a SCN-exempt: ${code} (<reason>) trailer with reason ∈ {${EXEMPTION_REASONS.join(", ")}}.`,
+      message: `${verb} scenario code @${code} is a behaviour-bearing change on a PR that carries no ticket handle (no Linear-auto-named branch "steven/3f-NNN-…" and no "[3F-NNN]" commit-message prefix), so it can't be bound to a live tracked work-unit. Open the PR from its Linear-auto-named branch (or carry a [3F-NNN] commit prefix), or add a SCN-exempt: ${code} (<reason>) trailer with reason ∈ {${EXEMPTION_REASONS.join(", ")}}.`,
     });
   };
 

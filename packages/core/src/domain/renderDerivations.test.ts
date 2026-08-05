@@ -33,7 +33,7 @@ import type { Scenario, EvidenceObservation, Ledger } from "../model.js";
  *   SCN-AAA-002 — names an ABSENT guard (missing): not present.
  *   SCN-AAA-003 — a runtime obligation only: no static sub-rows at all.
  * Plus a no-evidence-obligation running guard (folds to the SUSPENSE row as a lint CREDIT — the shape that
- * must never inflate the DECLARED lint list) and a broken suite (the suspense `broken` item).
+ * must never inflate the OBLIGATION-side lint list) and a broken suite (the suspense `broken` item).
  */
 const scenarios: Scenario[] = [
   {
@@ -66,10 +66,10 @@ const ledger: Ledger = reconcile(scenarios, evidenceObservations);
 const rowOf = (scnId: string) =>
   ledger.scenarioReconciliations.find((r) => r.scnId === scnId)!;
 
-describe("[SCN-LDG-001] isScenario names only the declared thing", () => {
+describe("[SCN-LDG-001] isScenario names only the named thing", () => {
   /**
    * Its own small Ledger, built through `reconcile()` so every row is a shape the pipeline emits —
-   * one real scenario, one phantom (a credit citing an `@SCN` nothing declares), one suspense (an
+   * one real scenario, one phantom (a credit citing an `@SCN` nothing carries), one suspense (an
    * uncited credit).
    *
    * THIS PINS A PREVIOUSLY-UNGUARDED RULE. Weakening the predicate to let phantom rows through
@@ -91,7 +91,7 @@ describe("[SCN-LDG-001] isScenario names only the declared thing", () => {
     expect(isScenario(kindOf("scenario"))).toBe(true);
   });
 
-  it("is FALSE for a phantom row — a cited-but-undeclared id is not a scenario", () => {
+  it("is FALSE for a phantom row — a cited-but-phantom id is not a scenario", () => {
     expect(isScenario(kindOf("phantom-scenario"))).toBe(false);
   });
 
@@ -155,20 +155,20 @@ describe("[SCN-LDG-001] presentStaticCheckCountOf counts PRESENCE, not quality",
   });
 });
 
-describe("[SCN-LDG-001] lintReconciliationsOf is the ONE declared static-check list", () => {
+describe("[SCN-LDG-001] lintReconciliationsOf is the ONE named static-check list", () => {
   /**
    * SCENARIO ROWS ONLY. The suspense row carries a lint CREDIT (the no-evidence-obligation running guard,
    * `cites-no-scenario`) — an observation, not an obligation. Including it would inflate the
-   * declared lint total, and would do so in the table and the tally alike.
+   * obligation-side lint total, and would do so in the table and the tally alike.
    */
-  it("excludes the suspense row's lint credit from the declared list", () => {
-    const declared = lintReconciliationsOf(ledger);
-    expect(declared.map((d) => `${d.scnId}:${d.reconciliation.staticCheck}`)).toEqual([
+  it("excludes the suspense row's lint credit from the named list", () => {
+    const named = lintReconciliationsOf(ledger);
+    expect(named.map((d) => `${d.scnId}:${d.reconciliation.staticCheck}`)).toEqual([
       "SCN-AAA-001:lint:wired",
       "SCN-AAA-001:lint:unwired",
       "SCN-AAA-002:lint:absent",
     ]);
-    // The no-evidence-obligation guard IS on the ledger — it just is not a declared obligation.
+    // The no-evidence-obligation guard IS on the ledger — it just is not an obligation.
     expect(
       ledger.scenarioReconciliations.some((r) => r.kind === "suspense-scenario")
     ).toBe(true);
@@ -176,10 +176,10 @@ describe("[SCN-LDG-001] lintReconciliationsOf is the ONE declared static-check l
 
   /** The tally is a READING of the same list, so the table and its total line cannot disagree. */
   it("is the source the lint tally folds", () => {
-    const declared = lintReconciliationsOf(ledger);
+    const named = lintReconciliationsOf(ledger);
     expect(lintTally(ledger)).toEqual({
-      satisfied: declared.filter((d) => d.reconciliation.outcome === "satisfied").length,
-      total: declared.length,
+      satisfied: named.filter((d) => d.reconciliation.outcome === "satisfied").length,
+      total: named.length,
     });
     expect(lintTally(ledger)).toEqual({ satisfied: 1, total: 3 });
   });

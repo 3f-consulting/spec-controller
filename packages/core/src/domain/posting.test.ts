@@ -19,49 +19,49 @@ import { describe, it, expect } from "vitest";
 import { postingOf, staticCheckCreditsPostingTo } from "./posting.js";
 import type { Scenario, EvidenceObservation, GuardEvidenceObservation } from "../model.js";
 
-const declared = new Set(["SCN-AAA-001", "SCN-AAA-002"]);
+const namedScenarioIds = new Set(["SCN-AAA-001", "SCN-AAA-002"]);
 const named = new Set(["lint:named"]);
 
 describe("[SCN-LDG-001] postingOf routes a RUNTIME credit by its citation", () => {
-  it("posts a credit citing a declared @SCN to that scenario's row", () => {
+  it("posts a credit citing a named @SCN to that scenario's row", () => {
     expect(
-      postingOf({ qualityCheck: "unit", scnId: "SCN-AAA-001", status: "passed" }, declared, named)
+      postingOf({ qualityCheck: "unit", scnId: "SCN-AAA-001", status: "passed" }, namedScenarioIds, named)
     ).toEqual({ kind: "scenario", scnId: "SCN-AAA-001" });
   });
 
-  it("posts a credit citing an UNDECLARED @SCN to a phantom row", () => {
+  it("posts a credit citing a PHANTOM @SCN to a phantom row", () => {
     expect(
-      postingOf({ qualityCheck: "unit", scnId: "SCN-ZZZ-009", status: "passed" }, declared, named)
+      postingOf({ qualityCheck: "unit", scnId: "SCN-ZZZ-009", status: "passed" }, namedScenarioIds, named)
     ).toEqual({ kind: "phantom-scenario", scnId: "SCN-ZZZ-009" });
   });
 
   it("posts an UNCITED credit (scnId null) to suspense, never phantom", () => {
     expect(
-      postingOf({ qualityCheck: "unit", scnId: null, status: "passed" }, declared, named)
+      postingOf({ qualityCheck: "unit", scnId: null, status: "passed" }, namedScenarioIds, named)
     ).toEqual({ kind: "suspense-scenario", posted: "cites-nothing" });
   });
 
   /**
    * THE FAIL-SAFE (@SCN-LDG-017) — the arm order is the point, so this states it with an
-   * observation that would route somewhere ELSE on every other arm: it carries a DECLARED scnId
+   * observation that would route somewhere ELSE on every other arm: it carries a REAL scnId
    * and a status, either of which would win if `broken` were checked later. A proof that never ran
    * names no test, so it cites nothing whatever it structurally carries.
    */
-  it("posts a BROKEN credit to suspense on the FLAG, though it carries a declared scnId", () => {
+  it("posts a BROKEN credit to suspense on the FLAG, though it carries a named scnId", () => {
     expect(
       postingOf(
         { qualityCheck: "unit", scnId: "SCN-AAA-001", status: "failed", broken: true },
-        declared,
+        namedScenarioIds,
         named
       )
     ).toEqual({ kind: "suspense-scenario", posted: "broken" });
   });
 
-  it("posts a BROKEN credit carrying an UNDECLARED scnId to suspense too — it mints no phantom row", () => {
+  it("posts a BROKEN credit carrying a PHANTOM scnId to suspense too — it mints no phantom row", () => {
     expect(
       postingOf(
         { qualityCheck: "unit", scnId: "SCN-ZZZ-009", status: "failed", broken: true },
-        declared,
+        namedScenarioIds,
         named
       )
     ).toEqual({ kind: "suspense-scenario", posted: "broken" });
@@ -77,14 +77,14 @@ describe("[SCN-LDG-001] postingOf routes a STATIC-CHECK credit by its name", () 
   });
 
   it("posts a NAMED static check to every naming scenario — a set, not one row", () => {
-    expect(postingOf(guard("lint:named"), declared, named)).toEqual({
+    expect(postingOf(guard("lint:named"), namedScenarioIds, named)).toEqual({
       kind: "every-naming-scenario",
       staticCheck: "lint:named",
     });
   });
 
   it("posts a NO-EVIDENCE-OBLIGATION static check to suspense — the static analogue of an uncited credit", () => {
-    expect(postingOf(guard("lint:nobody-asked"), declared, named)).toEqual({
+    expect(postingOf(guard("lint:nobody-asked"), namedScenarioIds, named)).toEqual({
       kind: "suspense-scenario",
       posted: "no-evidence-obligation-static-check",
     });
@@ -124,7 +124,7 @@ describe("[SCN-LDG-001] staticCheckCreditsPostingTo resolves the by-name half pe
     expect(staticCheckCreditsPostingTo(b, observations)[0]).toBe(shared);
   });
 
-  it("posts ONCE when one row declares the same handle twice", () => {
+  it("posts ONCE when one row names the same handle twice", () => {
     const twice: Scenario = {
       scnId: "SCN-AAA-001",
       evidenceObligations: [
@@ -137,7 +137,7 @@ describe("[SCN-LDG-001] staticCheckCreditsPostingTo resolves the by-name half pe
 
   /**
    * The ORDER is the ROW'S obligation document order, NOT the observation stream's — stated with a
-   * row that declares the two handles in the OPPOSITE order to the stream, so an
+   * row that NAMES the two handles in the OPPOSITE order to the stream, so an
    * observation-order implementation would fail this and only this.
    */
   it("orders the posted guards by the row's own obligation order, not the observation order", () => {

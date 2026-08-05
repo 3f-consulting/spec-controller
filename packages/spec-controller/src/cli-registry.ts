@@ -1,5 +1,5 @@
 /**
- * The declarative command/flag registry — the single source the CLI answers `--help`
+ * The data-driven command/flag registry — the single source the CLI answers `--help`
  * from (@SCN-CLI-006). Two scopes mirror the two help surfaces:
  *
  *   - `global`   — the host modifiers recognised BEFORE the command (`--store`,
@@ -31,7 +31,7 @@ export interface FlagSpec {
   description: string;
 }
 
-/** A command's declaration: its token, a one-line summary, and its per-command flag scope. */
+/** A command: its token, a one-line summary, and its per-command flag scope. */
 export interface CommandSpec {
   /** The command token (e.g. "balance"). */
   name: string;
@@ -78,7 +78,7 @@ const balanceFlags: FlagSpec[] = [
   {
     name: "--package-json",
     arg: "<path>",
-    description: "package.json — used to check a declared guard's script exists.",
+    description: "package.json — used to check a named guard's script exists.",
   },
   {
     name: "--target",
@@ -170,7 +170,7 @@ export function renderBalanceHelp(registry: CliRegistry): string {
     "Configuration (in the target repo's package.json):",
     "  specController.deferralTags: string[]",
     "      Extra recognised deferral tags. A scenario carrying one defers every obligation it",
-    "      declares to a Pending Item, extending (never replacing) the built-in set.",
+    "      names to a Pending Item, extending (never replacing) the built-in set.",
     `      Built-in deferral tags: ${starterSet}`,
   ];
   return [
@@ -206,7 +206,7 @@ export function renderTopLevelHelp(registry: CliRegistry): string {
   );
   const modifierUsage = registry.global.map((flag) => `[${flagLabel(flag)}]`).join(" ");
   return [
-    "spec-controller — reconcile declared behaviour against observed evidence",
+    "spec-controller — reconcile scenarios against observed evidence",
     "",
     "Usage:",
     `  spec-controller ${modifierUsage} <command> [command-args]`,

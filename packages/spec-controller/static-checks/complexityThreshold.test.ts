@@ -30,7 +30,7 @@
  * TABLE and the DEBT LIST: the numbers, their provenance, the scope split, and the shape of every
  * exception. Those are the values a future edit could silently loosen with nothing else noticing.
  *
- * Both are read from the REAL modules the eslint config consumes, never re-declared here. A copy would
+ * Both are read from the REAL modules the eslint config consumes, never restated here. A copy would
  * agree by coincidence and drift the moment either side is retuned.
  *
  * Parent: @SCN-CPX-001 (3F-2316) — the complexity/module-size fitness function (3F-2286).
@@ -44,7 +44,7 @@ import {
   TEST_THRESHOLD,
   type ComplexityThreshold,
   type EslintRuleId,
-  type RuleDeclaration,
+  type RuleEntry,
   type RuleThreshold,
 } from "./complexityThresholds.mjs";
 // A NAMESPACE import, deliberately: `ruleAtCeiling` is asserted to exist below, and a named import of
@@ -145,8 +145,8 @@ describe("[SCN-CPX-001] a function or module over the external standard reds the
     }
   });
 
-  it("[SCN-CPX-001] both scopes declare all three rules — no rule is silently unheld", () => {
-    // An absent key is indistinguishable from an oversight. A declared "off" had to be written on
+  it("[SCN-CPX-001] both scopes name all three rules — no rule is silently unheld", () => {
+    // An absent key is indistinguishable from an oversight. An explicit "off" had to be written on
     // purpose, so the two are held apart rather than collapsed into "not a number".
     for (const threshold of [PRODUCTION_THRESHOLD, TEST_THRESHOLD] as ComplexityThreshold[]) {
       for (const rule of RULES) {
@@ -207,16 +207,16 @@ describe("[SCN-CPX-001] the exception list records today's exceedances as dated 
  *
  * DIVISION OF LABOUR WITH THE @integration ARM. Whether eslint actually reds at value+1 is eslint's
  * behaviour, proven there by planting against the REAL config. What is ours, and what this pins, is
- * the DECLARATION the config hands eslint: the right shape per rule, the counting mode the recorded
+ * the RULE ENTRY the config hands eslint: the right shape per rule, the counting mode the recorded
  * values were measured in, and a ceiling at exactly the recorded number for every entry. Those are
  * silent failures — eslint mis-reads a wrong-shaped option rather than complaining — so they need a
  * pin that does not depend on noticing an absent red.
  */
 describe("[SCN-CPX-002] an exempt file that grows past its recorded value reds the build", () => {
-  const emit = (rule: EslintRuleId, ceiling: RuleThreshold): RuleDeclaration =>
+  const emit = (rule: EslintRuleId, ceiling: RuleThreshold): RuleEntry =>
     thresholdModule.ruleAtCeiling(rule, ceiling);
 
-  it("[SCN-CPX-002] the threshold module emits rule declarations — one emitter serves both scopes and the debt list", () => {
+  it("[SCN-CPX-002] the threshold module emits rule entries — one emitter serves both scopes and the debt list", () => {
     // Stated first and on its own so its absence reads as a sentence. One emitter is what stops the
     // exception blocks re-deciding a rule's option shape in a second place and drifting from the
     // scope blocks — the agreeing-by-copy this codebase keeps removing.
@@ -263,9 +263,9 @@ describe("[SCN-CPX-002] an exempt file that grows past its recorded value reds t
     // exemption excuses the debt already present and buys not one line of headroom.
     expect(COMPLEXITY_EXCEPTIONS.length).toBeGreaterThan(0);
     for (const entry of COMPLEXITY_EXCEPTIONS) {
-      const declaration = emit(entry.rule, entry.value);
-      expect(declaration, `${entry.path} (${entry.rule}) must not be switched off`).not.toBe("off");
-      const [severity, options] = declaration as ["error", number | { max: number }];
+      const ruleEntry = emit(entry.rule, entry.value);
+      expect(ruleEntry, `${entry.path} (${entry.rule}) must not be switched off`).not.toBe("off");
+      const [severity, options] = ruleEntry as ["error", number | { max: number }];
       expect(severity).toBe("error");
       expect(typeof options === "number" ? options : options.max).toBe(entry.value);
     }

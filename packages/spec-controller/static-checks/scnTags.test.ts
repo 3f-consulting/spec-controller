@@ -2,7 +2,7 @@
  * Unit tests for the tier-tag floor static check logic (the @unit arm of @SCN-STG-001).
  * The feature-file SOURCES are injected as feature-strings — no disk read — so the
  * rule is proven in isolation: a tier-less non-@wip @SCN scenario reds (and is
- * named); a scenario declaring a tier, a pending tier variant, a @lint=<guard>, or
+ * named); a scenario naming a tier, a pending tier variant, a @lint=<guard>, or
  * carrying @wip passes; a bare Scenario with no @SCN is not checked.
  *
  * Bidirectional evidence (the discipline): the describe string carries the
@@ -14,7 +14,7 @@ import { describe, it, expect } from "vitest";
 import { lintScnTags } from "./scnTags.js";
 
 describe("[SCN-STG-001] the scn-tags tier-tag floor over injected feature sources", () => {
-  it("does not flag scenarios declaring a tier, a pending variant, a @lint=<guard>, or @wip", () => {
+  it("does not flag scenarios naming a tier, a pending variant, a @lint=<guard>, or @wip", () => {
     const source = `@TGT
 Feature: a compliant fixture
 
@@ -44,7 +44,7 @@ Feature: a compliant fixture
 Feature: a fixture with a tier-less scenario
 
   @SCN-TGT-001
-  Scenario: a scenario that declares no evidence tier
+  Scenario: a scenario that names no evidence tier
     Given the target source
 `;
     const result = lintScnTags([{ slug: "tierless", source }]);
@@ -56,13 +56,13 @@ Feature: a fixture with a tier-less scenario
   });
 
   it("accepts the @lint=<guard> form specifically (a bare-@lint regex would miss it)", () => {
-    // The #1 correctness trap: spec-controller declares lint as @lint=<guard>, so a
+    // The #1 correctness trap: spec-controller WRITES lint as @lint=<guard>, so a
     // static check that only matched bare @lint would false-flag every static check scenario.
     const source = `@STG
-Feature: a guard self-declaration
+Feature: a guard naming its own lint tier
 
   @lint=lint:scn-tags @SCN-STG-001
-  Scenario: a guard scenario declaring its lint tier as @lint=<guard>
+  Scenario: a guard scenario naming its lint tier as @lint=<guard>
     Given the target source
 `;
     const result = lintScnTags([{ slug: "guard", source }]);
@@ -72,7 +72,7 @@ Feature: a guard self-declaration
 
   it("ignores a bare Scenario with no @SCN (an untagged scenario)", () => {
     const source = `@TGT
-Feature: a fixture with an undeclared scenario
+Feature: a fixture with an untagged scenario
 
   Scenario: a bare scenario with no @SCN id
     Given the target source

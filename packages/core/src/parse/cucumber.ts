@@ -2,12 +2,12 @@
  * The `ingest/cucumber` reader — the second named observed-evidence reader.
  * Reads Cucumber-JS's JSON formatter output and normalises each scenario that
  * carries an @SCN tag into an EvidenceObservation, LEVELLED by the scenario's own
- * declared tier tag (@integration / @e2e / @performance).
+ * tier tag (@integration / @e2e / @performance).
  *
- * The level is DERIVED from the cited scenario's declared tier tag, NOT from the input
- * source (Cucumber-as-orchestrator-across-levels: the scenario declares its tier, cucumber
+ * The level is DERIVED from the cited scenario's own tier tag, NOT from the input
+ * source (Cucumber-as-orchestrator-across-levels: the scenario NAMES its tier by tag, cucumber
  * runs whichever). An @e2e scenario proven via cucumber yields an e2e observation. The
- * caller-declared level (the JS-ecosystem default, integration, declared at the CLI edge)
+ * caller-supplied level (the JS-ecosystem default, integration, set at the CLI edge)
  * survives only as the fallback for an UNTAGGED scenario. The reader classifies FOUR-WAY
  * (@SCN-PND-013, extended by @SCN-LDG-019): any AMBIGUOUS step → a `broken` observation (a broken
  * harness — two step definitions match, so the step cannot run); any failed step → a `failed`
@@ -45,23 +45,23 @@ export type CucumberJsonReport = Array<{
 const SCN_TAG = /^@?(SCN-[A-Z0-9]+-\d+)$/;
 
 /**
- * The non-unit runtime tiers a scenario can declare by tag. A cucumber observation's
- * level is DERIVED from the cited scenario's own declared tier tag — the product thesis
- * of Cucumber-as-orchestrator-ACROSS-levels: the scenario declares its tier (@integration /
+ * The non-unit runtime tiers a scenario can NAME by tag. A cucumber observation's
+ * level is DERIVED from the cited scenario's own tier tag — the product thesis
+ * of Cucumber-as-orchestrator-ACROSS-levels: the scenario names its tier (@integration /
  * @e2e / @performance) and cucumber runs whichever, so an @e2e scenario proven via cucumber
  * yields an e2e observation. `@unit` is deliberately NOT here: unit is the vitest substrate,
- * and a cucumber run genuinely exercises the integrated tiers, not isolation. The caller-declared
+ * and a cucumber run genuinely exercises the integrated tiers, not isolation. The caller-supplied
  * `fallbackQualityCheck` survives only for a scenario carrying NO tier tag (the JS-ecosystem
- * default, declared at the CLI edge).
+ * default, set at the CLI edge).
  */
 const TIER_TAG = /^@?(integration|e2e|performance)$/;
 
 /**
- * Derive the SET of levels a cucumber observation discharges from the cited scenario's declared
- * tier tag(s), falling back to a single caller-declared level when the scenario carries none.
+ * Derive the SET of levels a cucumber observation discharges from the cited scenario's own
+ * tier tag(s), falling back to a single caller-supplied level when the scenario carries none.
  *
  * The MULTI-TAG RULE (@SCN-LDG-014, generalising @SCN-LDG-011): a cucumber observation discharges
- * EVERY non-unit runtime obligation its cited scenario declares. So a scenario declaring
+ * EVERY non-unit runtime obligation its cited scenario raises. So a scenario naming
  * `@integration @e2e` yields TWO levels from a SINGLE cucumber pass (integration + e2e); the caller
  * emits one observation per level. A single-tier scenario yields exactly ONE level (LDG-011/012/013
  * — the single-tier instances of this rule); an untagged scenario yields the single fallback tier.
@@ -109,7 +109,7 @@ function ambiguousMessage(step: { keyword?: string; name?: string }): string {
 
 /**
  * Parse a Cucumber JSON report into observed results, each levelled by DERIVING it from the
- * cited scenario's declared tier tag (falling back to `fallbackQualityCheck` for an untagged
+ * cited scenario's own tier tag (falling back to `fallbackQualityCheck` for an untagged
  * scenario). One result per scenario: those carrying an @SCN tag cite that scenario; those with
  * NO @SCN tag emit a null-scnId credit (@SCN-LDG-007 — previously DROPPED). A null-scnId credit
  * cites no scenario, so the reconciler folds it into the SUSPENSE row. A scenario is classified
@@ -134,38 +134,28 @@ export function parseCucumberEvidenceObservations(
 
       const steps = scenario.steps ?? [];
       // FOUR-WAY classification (@SCN-PND-013, extended by @SCN-LDG-019) — pending is NEVER
-      // inferred from status:
-      //   - any step `ambiguous` → a `broken` observation → the SUSPENSE row (below).
-      //   - any step `failed` → a `failed` observation → failing.
-      //   - every step `passed` → a `passed` observation → satisfied.
-      //   - otherwise (any `undefined`/`pending`/`skipped`, none failed) → INCONCLUSIVE: a stub
-      //     that RAN but proved nothing. Emit NOTHING — the declared obligation then finds no
-      //     matching observation and reconciles missing BY ABSENCE.
-      // The remaining inconclusive statuses stay dropped, and stay honest: `undefined` (no step
-      // definition is written — the test genuinely IS absent), `pending` (explicitly deferred),
-      // `skipped` (never ran). `EvidenceStatus` stays binary (no new status, no reconciler
-      // change): the DROP is what realises inconclusive→missing, and the `broken` FLAG is what
-      // realises ambiguous→suspense. The drop is WHOLE-SCENARIO — an inconclusive scenario emits
-      // no observation at ANY declared tier (the `continue` below).
-      // THE FOURTH ARM (@SCN-LDG-019), taken BEFORE the inconclusive drop: an AMBIGUOUS step is
-      // not a stub that proved nothing — it is a BROKEN HARNESS. Two or more step definitions
-      // match one step, so the step CANNOT run: the proof exists and cannot execute. Dropped as
-      // inconclusive, its obligation reconciled `missing` — indistinguishable from an unwritten
-      // test, and the wrong remedy (write a test that already exists, rather than fix the
-      // colliding step definitions). It is cucumber's instance of the `broken` outcome vitest's
-      // collection failure established (@SCN-LDG-017): evidence that NEVER MATERIALISED.
+      // inferred from status. The DROP is what realises inconclusive→missing and the `broken`
+      // FLAG is what realises ambiguous→suspense, so `EvidenceStatus` stays binary: no new
+      // status, no reconciler change. The drop is WHOLE-SCENARIO — an inconclusive scenario emits
+      // no observation at ANY named tier (the `continue` below). The statuses that stay dropped
+      // stay honest: `undefined` (no step definition is written — the test genuinely IS absent),
+      // `pending` (explicitly deferred), `skipped` (never ran).
       //
-      // Ordered FIRST because cucumber halts the scenario at the ambiguous step — every step after
-      // it reads `skipped`, so the drop would otherwise swallow the ambiguity along with them.
+      // THE AMBIGUOUS ARM IS ORDERED FIRST (@SCN-LDG-019) because cucumber halts the scenario at
+      // the ambiguous step — every step after it reads `skipped`, so the inconclusive drop would
+      // otherwise swallow the ambiguity along with them. An ambiguous step is not a stub that
+      // proved nothing but a BROKEN HARNESS: two step definitions match one step, so the proof
+      // exists and cannot execute. Dropping it as inconclusive sent the reader the WRONG remedy —
+      // write a test that already exists, rather than fix the colliding step definitions. It is
+      // cucumber's instance of the `broken` outcome vitest's collection failure established
+      // (@SCN-LDG-017): evidence that NEVER MATERIALISED.
       //
-      // ONE observation for the whole scenario (never one per declared tier): the ambiguity is a
-      // property of the STEP — the harness broke ONCE — so a multi-tier scenario posts ONE broken
-      // item, levelled at its first declared tier. This mirrors the drop below, which is likewise
-      // whole-scenario. Unlike vitest's collection failure (citation-less by construction — a file
-      // that fails to collect names no test), this observation CARRIES the scenario's scnId: the
-      // cucumber scenario DID cite its @SCN; only its step could not run. The reconciler's
-      // fail-safe is what keeps the credit off the obligation it cites — `broken` is checked
-      // BEFORE `status`, so it can never discharge (or fail) that obligation; it posts to the
+      // ONE observation for the whole scenario (never one per named tier): the harness broke ONCE,
+      // so a multi-tier scenario posts ONE broken item, levelled at its first named tier. Unlike
+      // vitest's collection failure (citation-less by construction — a file that fails to collect
+      // names no test), this observation CARRIES the scnId: the cucumber scenario DID cite its
+      // @SCN; only its step could not run. The reconciler's fail-safe checks `broken` BEFORE
+      // `status`, so it can never discharge (or fail) the obligation it cites; it posts to the
       // SUSPENSE row and the obligation reconciles `missing` BY ABSENCE (pinned in
       // reconcile.test.ts [SCN-LDG-019], under BOTH status values).
       const ambiguous = steps.find((s) => s.result?.status === "ambiguous");
@@ -186,11 +176,11 @@ export function parseCucumberEvidenceObservations(
       const allPassed = steps.length > 0 && steps.every((s) => s.result?.status === "passed");
       if (!anyFailed && !allPassed) continue; // inconclusive → drop the whole scenario.
       const status: EvidenceStatus = anyFailed ? "failed" : "passed";
-      // One observation PER declared non-unit tier: a cucumber run of an @integration @e2e
+      // One observation PER named non-unit tier: a cucumber run of an @integration @e2e
       // scenario discharges BOTH obligations, so it emits an integration AND an e2e observation
       // (the multi-tag ruling's teeth, @SCN-LDG-014). A single-tier or untagged scenario emits
-      // exactly one. The levels are DERIVED from the scenario's declared tier tags, not the input
-      // source; the caller-declared level is the fallback for an untagged scenario.
+      // exactly one. The levels are DERIVED from the scenario's own tier tags, not the input
+      // source; the caller-supplied level is the fallback for an untagged scenario.
       for (const level of deriveLevels(tags, fallbackQualityCheck)) {
         results.push({
           qualityCheck: level,

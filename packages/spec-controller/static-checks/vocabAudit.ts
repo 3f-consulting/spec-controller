@@ -29,34 +29,29 @@
 // ---------------------------------------------------------------------------
 // Word-sets (the approved vocabulary + the banned shortenings)
 //
-// The sets THEMSELVES live in `vocabWordSets.ts` (3F-2311, @SCN-VOC-001 Read).
-// The split is along the seam that actually moves: the vocabulary is a RULING
-// RECORD that grows every time the operator rules a word in or out, while this
-// file is the ENGINE and changes only when a MATCHER changes. Both are re-exported
-// here unchanged, so every call site still imports them from `vocabAudit.js` —
-// the move is invisible from the outside, which is what makes it a Read.
+// The sets THEMSELVES live in `vocabWordSets.ts` (3F-2311, @SCN-VOC-001 Read), and
+// the generic-technical allowlist in `vocabAllowlist.ts` (3F-2419). The split is along
+// the seam that actually moves: the vocabulary is a RULING RECORD that grows every time
+// the operator rules a word in or out, while this file is the ENGINE and changes only
+// when a MATCHER changes. All are re-exported here unchanged, so no call site moved.
 // ---------------------------------------------------------------------------
 
 import { authoredTags, SCN_TOKEN_RE, tagLineTokens } from "./vocabTagGrammar.js";
+import { configKeySegments } from "./configKeys.js";
+import { homographSense, singularise } from "./wordForms.js";
+import { GENERIC_ALLOWLIST } from "./vocabAllowlist.js";
 import {
   APPROVED_WORDS, BANNED_WORDS, DOMAIN_WORDS, ENTRY_DOMAIN_COMPANIONS, FULL_TERM_ONLY,
-  GENERIC_ALLOWLIST, GUARD_QUALIFIERS, REJECTED_ALIAS_TO_CANONICAL, RESERVED_WORDS,
+  GUARD_QUALIFIERS, HOMOGRAPH_QUALIFIERS, REJECTED_ALIAS_TO_CANONICAL, RESERVED_WORDS,
   RULED_ALLOWED, VOCAB_AUDIT_WORDS,
 } from "./vocabWordSets.js";
 
 export {
+  homographSense, singularise,
   APPROVED_WORDS, BANNED_WORDS, DOMAIN_WORDS, ENTRY_DOMAIN_COMPANIONS, FULL_TERM_ONLY,
-  GENERIC_ALLOWLIST, GUARD_QUALIFIERS, REJECTED_ALIAS_TO_CANONICAL, RESERVED_WORDS,
-  RULED_ALLOWED, VOCAB_AUDIT_WORDS,
+  GENERIC_ALLOWLIST, GUARD_QUALIFIERS, HOMOGRAPH_QUALIFIERS, REJECTED_ALIAS_TO_CANONICAL,
+  RESERVED_WORDS, RULED_ALLOWED, VOCAB_AUDIT_WORDS,
 };
-
-/** Naive singulariser — plural of an approved/domain word is the same vocabulary. */
-function singularise(word: string): string {
-  if (word.endsWith("ies") && word.length > 4) return word.slice(0, -3) + "y";
-  if (/(ses|xes|zes|ches|shes)$/.test(word) && word.length > 4) return word.slice(0, -2);
-  if (word.endsWith("s") && !word.endsWith("ss") && word.length > 3) return word.slice(0, -1);
-  return word;
-}
 
 // ---------------------------------------------------------------------------
 // Surfaces (coverage-matrix rows — always all present)
@@ -99,9 +94,6 @@ export type FlagReason =
   // A word that is canon's DIFFERENT WORD used bare, so it may be legitimate rather
   // than a shortening — a human decides. Dispositioned `review`, never `rename`.
   | "bare-different-word"
-  // @SCN-VOC-003 — the forbidden kind-label PHRASE: whole-word `declared` immediately
-  // before `scenario`. Renamed to the bare canon `scenario`.
-  | "retired-kind-label-phrase"
   // @SCN-VOC-006 — the retired tag PHRASE: whole-word `ci` immediately before
   // `performance`. Renamed to the canon `ci-run-time`.
   | "retired-tag-phrase"
@@ -169,7 +161,7 @@ function fullTermSatisfied(word: string, words: string[], i: number, present: Se
 }
 
 /**
- * The retired ADJACENT-PAIR phrase rules — the three matchers that judge a word by the
+ * The retired ADJACENT-PAIR phrase rules — the two matchers that judge a word by the
  * word that FOLLOWS it. Returns the flagging verdict, or `null` when no phrase matches.
  *
  * WHY THEY LIVE TOGETHER, AND WHY THE CALL SITE IS AHEAD OF THE GATES. Each of these
@@ -177,17 +169,19 @@ function fullTermSatisfied(word: string, words: string[], i: number, present: Se
  * none of them can be a `BANNED_WORDS` entry, and the whole reason the single call to this
  * function must precede `classifyWords`'s FULL_TERM_ONLY and `isApproved` gates. Reached
  * after those gates, every rule here would return green and the retired phrase would pass
- * silently — a green nobody chose. Collapsing the three arms to ONE call site is what makes
- * that ordering a single thing to keep right rather than three.
+ * silently — a green nobody chose. Collapsing the arms to ONE call site is what makes that
+ * ordering a single thing to keep right rather than one per arm.
  *
  * Each rule flags the FIRST word of the pair and returns, so the second word is judged
  * afterwards by the unmodified machinery and keeps its own verdict: one occurrence, one
  * row, one rename.
  *
- * @SCN-VOC-003 — the forbidden KIND LABEL. Whole-word `declared` immediately before
- * `scenario` (singular or plural), renamed to the bare canon `scenario` (which already means
- * the real, declared kind). Whole-word by construction: `undeclared` decomposes to the single
- * token "undeclared" (≠ "declared"), so canon "undeclared scenario" stays green.
+ * @SCN-VOC-003's kind-label arm WAS HERE and is GONE (3F-2329). It redded the retired past
+ * participle only immediately before `scenario`; the canon row is now adopted, so the word is
+ * a plain BANNED entry that reds anywhere, in either mode. A ban strictly subsumes the
+ * adjacency rule, and keeping the weaker one alongside it would leave two rules where one
+ * judges, with the wrong one looking load-bearing. Its `FlagReason` member went with it, by
+ * 3F-2392's rule: the reason names the RULE, and the rule no longer exists.
  *
  * @SCN-VOC-006 — the retired TAG for the pipeline's own timing check. Whole-word `ci` immediately
  * before `performance`, renamed to `ci-run-time`. A REGROWTH guard: the tree carries zero
@@ -204,16 +198,13 @@ function fullTermSatisfied(word: string, words: string[], i: number, present: Se
  * GUARD_QUALIFIERS entry and co-occurs; dropping that entry would emit a SECOND row per
  * occurrence dispositioned `review`, and would red @SCN-VOC-001's retired-class-name fixture.
  *
- * ALL THREE fire in BOTH modes: a retired phrase hides in a comment, a doc, an identifier,
+ * BOTH fire in BOTH modes: a retired phrase hides in a comment, a doc, an identifier,
  * a string, a filename or a config key alike — and, since @SCN-VOC-013, on a TAG LINE too.
  * Each arm's `FlagReason` names its RULE, never the coinage it catches (3F-2392) — the
  * detector's own API was the last place a retired term still lived as an exported name.
  */
 function retiredPhraseVerdict(word: string, following: string): WordVerdict | null {
   const next = singularise(following);
-  if (word === "declared" && next === "scenario") {
-    return { word, flagged: true, reason: "retired-kind-label-phrase", canonical: "scenario" };
-  }
   if (word === "ci" && next === "performance") {
     return { word, flagged: true, reason: "retired-tag-phrase", canonical: "ci-run-time" };
   }
@@ -228,7 +219,7 @@ function retiredPhraseVerdict(word: string, following: string): WordVerdict | nu
  * sequence, or a per-word array. Full-term words (obligation/observation/…) are
  * judged by adjacency within the sequence; `entry` domain-use by co-occurrence.
  */
-export function classifyWords(words: string[], modes: Mode | Mode[]): WordVerdict[] {
+export function classifyWords(words: string[], modes: Mode | Mode[], following?: string): WordVerdict[] {
   const modeAt = (i: number): Mode => (Array.isArray(modes) ? (modes[i] ?? "prose") : modes);
   const present = new Set(words.map(singularise));
   const companionAt = (j: number): boolean =>
@@ -238,17 +229,24 @@ export function classifyWords(words: string[], modes: Mode | Mode[]): WordVerdic
     const stem = singularise(word);
     const canonical = REJECTED_ALIAS_TO_CANONICAL[word] ?? REJECTED_ALIAS_TO_CANONICAL[stem] ?? null;
     if (word.length < 2) return { word, flagged: false };
-    if (RESERVED_WORDS.has(word) || RESERVED_WORDS.has(stem)) return { word, flagged: false };
+
+    // @SCN-VOC-018 — AHEAD of the reserved and approved gates, and that position is
+    // load-bearing: both would green a homograph before the ban could see it.
+    const sense = homographSense(words, i, following);
+    if (sense === "grammar") return { word, flagged: false };
+    const asVocabulary = sense === "vocabulary";
+    const reserved = RESERVED_WORDS.has(word) || RESERVED_WORDS.has(stem);
+    if (!asVocabulary && reserved) return { word, flagged: false };
 
     if (BANNED_WORDS.has(word) || BANNED_WORDS.has(stem)) {
       return { word, flagged: true, reason: "banned", canonical };
     }
 
-    // THE RETIRED PHRASE RULES (@SCN-VOC-003 / @SCN-VOC-006 / @SCN-VOC-005) — see
+    // THE RETIRED PHRASE RULES (@SCN-VOC-006 / @SCN-VOC-005) — see
     // `retiredPhraseVerdict` for each rule and its reasoning. THIS CALL SITE'S POSITION IS
     // LOAD-BEARING: every one of those phrases is built from INDIVIDUALLY APPROVED words,
     // so the call must stay AHEAD of the FULL_TERM_ONLY gate below and the `isApproved`
-    // gate under it. Moved after either, all three rules become unreachable and the
+    // gate under it. Moved after either, both rules become unreachable and the
     // retired phrases pass silently. Do not reorder.
     const phrase = retiredPhraseVerdict(word, words[i + 1] ?? "");
     if (phrase) return phrase;
@@ -269,7 +267,7 @@ export function classifyWords(words: string[], modes: Mode | Mode[]): WordVerdic
       return { word, flagged: true, reason: "entry-domain", canonical: null };
     }
 
-    if (isApproved(word) || isApproved(stem)) return { word, flagged: false };
+    if (!asVocabulary && (isApproved(word) || isApproved(stem))) return { word, flagged: false };
 
     if (modeAt(i) === "name") return { word, flagged: true, reason: "unknown", canonical: null };
     return { word, flagged: false };
@@ -287,6 +285,8 @@ export interface Segment {
   mode: Mode;
   /** The raw name (name mode) or prose text (prose mode) of this segment. */
   text: string;
+  /** Code identifiers only: the next name on the source line — see `identSegments`. */
+  following?: string;
 }
 
 interface TsRegion {
@@ -414,18 +414,16 @@ export function splitTsRegions(content: string): TsRegion[] {
 
 const IDENT_RE = /[A-Za-z_$][A-Za-z0-9_$]*/g;
 
-/** Emit a name segment per identifier in a code region. */
+/**
+ * Emit a name segment per identifier in a code region, each carrying the NEXT identifier on
+ * its line. One name is one judged sequence, so a `follows` qualifier standing beside the
+ * word is not in it and @SCN-VOC-018 could not fire in TypeScript source at all (3F-2432).
+ */
 function identSegments(region: TsRegion, file: string, surface: Surface): Segment[] {
-  const segs: Segment[] = [];
-  const lines = region.text.split("\n");
-  lines.forEach((text, idx) => {
-    let m: RegExpExecArray | null;
-    IDENT_RE.lastIndex = 0;
-    while ((m = IDENT_RE.exec(text)) !== null) {
-      segs.push({ surface, file, line: region.line + idx, mode: "name", text: m[0] });
-    }
-  });
-  return segs;
+  return region.text.split("\n").flatMap((text, idx) =>
+    (text.match(IDENT_RE) ?? []).map((name, i, names): Segment =>
+      ({ surface, file, line: region.line + idx, mode: "name", text: name, following: names[i + 1] })),
+  );
 }
 
 /** Emit a prose segment per non-blank line of a comment/string/prose region. */
@@ -471,8 +469,8 @@ function filenameSegment(relPath: string): Segment {
  * A decision log is an append-only historical record. Some
  * of its rows exist *to name superseded vocabulary*: the rename-mapping / rejected-
  * alias tables (`supply → evidence observation`, `state → outcome`, `requirement →
- * evidence obligation`, …) and the design entries that record now-renamed
- * identifiers (`DeclaredCorpus`, `declaredCorpusSection`, …). Auditing those rows
+ * evidence obligation`, …) and the design entries that record identifiers this
+ * repository has since renamed. Auditing those rows
  * for the very old terms they document is a guaranteed false positive — and no
  * future vocabulary sweep should flatten them (that is what mangled the mapping
  * tables into tautologies and destroyed the record they carry).
@@ -539,17 +537,7 @@ export function scanFile(relPath: string, rawContent: string): Segment[] {
 
   if (kind === "json" || kind === "docs" && (relPath.split("/").pop() === "package.json")) {
     const surface: Surface = kind === "json" ? "json-keys" : "docs";
-    lines.forEach((text, idx) => {
-      const keyMatch = /^\s*"([^"]+)"\s*:/.exec(text);
-      if (keyMatch) segs.push({ surface: override(surface), file: relPath, line: idx + 1, mode: "name", text: keyMatch[1]! });
-      // string values on the line → prose
-      const rest = keyMatch ? text.slice(keyMatch[0].length) : text;
-      const valMatch = /:\s*"([^"]*)"/.exec(text) ?? /"([^"]*)"/.exec(rest);
-      if (valMatch && valMatch[1]!.trim() !== "") {
-        segs.push({ surface: override(surface), file: relPath, line: idx + 1, mode: "prose", text: valMatch[1]! });
-      }
-    });
-    return segs;
+    return configKeySegments(lines, relPath, override(surface));
   }
 
   if (kind === "yaml") {
@@ -616,7 +604,6 @@ export interface AuditResult {
 function actionFor(reason: FlagReason): string {
   return reason === "banned" ||
     reason === "bare-shortening" ||
-    reason === "retired-kind-label-phrase" ||
     reason === "retired-tag-phrase" ||
     reason === "retired-class-name-phrase"
     ? "rename"
@@ -674,7 +661,7 @@ export function auditSegments(segments: Segment[]): AuditResult {
   for (const seg of segments) {
     if (seg.mode === "name") {
       const words = decomposeName(seg.text);
-      classifyWords(words, "name").forEach((v) => {
+      classifyWords(words, "name", seg.following).forEach((v) => {
         if (!v.flagged) return;
         manifest.push({
           surface: seg.surface,

@@ -46,14 +46,14 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 const readRepoFile = (relative: string): string =>
   fs.readFileSync(path.join(repoRoot, relative), "utf8");
 
-/** The static check this scenario both DECLARES and IS. */
+/** The static check this scenario both NAMES and IS. */
 const OWN_STATIC_CHECK = "lint:self-balance";
 
-/** The guard-prefix set the balance CLI declares at its edge and injects into the core. */
+/** The guard-prefix set the balance CLI SETS at its edge and injects into the core. */
 const GUARD_PREFIXES = ["lint:", "guard:"] as const;
 
 describe("[SCN-SLF-001] the self-balance gate's scan scope is stated, whole, in one place", () => {
-  it("reaches exactly the five surfaces a reconciliation reads — declared, observed, and wired", () => {
+  it("reaches exactly the five surfaces a reconciliation reads — named, observed, and wired", () => {
     // EXHAUSTIVE by design. A sixth surface, or a fifth quietly removed, must red here:
     // this object is the only statement of what spec-controller's own tree is judged on.
     expect(SELF_BALANCE_SCOPE).toEqual({

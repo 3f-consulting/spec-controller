@@ -262,13 +262,10 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
   });
 
   it("splits missing by evidenceObligation subject — counting evidenceObligations, not scenarios, in canonical order", () => {
-    // SCN-PST-035 carries BOTH a unit and an integration missing arm; SCN-OTH a unit
-    // arm. Two out-of-balance scenarios, but THREE missing evidenceObligations — the split must
-    // count evidenceObligations (2 unit + 1 integration), the PST-035 double-arm case. Canonical
-    // order puts unit before integration; bare evidence types (no @).
-    // Reconciler-built (§11A): SCN-PST-035 declares unit + integration, SCN-OTH-001 unit; no
-    // credits, so all three obligations reconcile `missing` — 2 out-of-balance scenarios, 3 missing
-    // obligations (2 unit + 1 integration), the double-arm divergence.
+    // Reconciler-built (§11A): SCN-PST-035 raises unit + integration, SCN-OTH-001 unit; no
+    // credits, so all three obligations reconcile `missing` — 2 out-of-balance scenarios but 3
+    // missing obligations (2 unit + 1 integration). The split must count OBLIGATIONS, which is
+    // what the PST-035 double-arm case separates. Bare evidence types (no @), unit before integration.
     const multiMissing: Ledger = reconcile(
       [
         { scnId: "SCN-PST-035", evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }] },
@@ -287,12 +284,9 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
   });
 
   it("renders a missing static evidenceObligation as the bare 'lint' bucket, lint-first in the split", () => {
-    // A scenario with an integration arm declared BEFORE a static (lint) arm, both
-    // missing. The split maps the static evidenceObligation to the bare word "lint"
-    // (level-=-tag) and orders it FIRST (canonical order: lint, then the runtime
-    // levels) regardless of declaration order.
-    // Reconciler-built (§11A): the integration arm is declared BEFORE the lint arm, both missing
-    // (no runtime credit, no static check observation) — the split still orders lint first, canonically.
+    // Reconciler-built (§11A): the integration arm is RAISED BEFORE the lint arm, both missing
+    // (no runtime credit, no static-check observation) — the split still orders lint FIRST,
+    // canonically, whatever order the tags name them in.
     const lintAndRuntime: Ledger = reconcile(
       [
         {
@@ -328,7 +322,7 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
   // Reconciler-built (§11A): three scenarios each balanced (unit satisfied), plus two
   // uncited credits (unit + integration, scnId null) the reconciler aggregates into ONE suspense
   // row — ALWAYS out-of-balance (double-entry-manifesto); the 17-36-50Z `(no scenario)` row.
-  const threeDeclaredPlusSuspense: Ledger = reconcile(
+  const threeNamedPlusSuspense: Ledger = reconcile(
     [
       { scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] },
       { scnId: "SCN-B", evidenceObligations: [{ qualityCheck: "unit" }] },
@@ -344,7 +338,7 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
   );
 
   it("counts the suspense reconciliation in the evidence reconciliation's out-of-balance column (N+1 | N | 1, never N | N | 0)", () => {
-    const md = renderMarkdown(__er(threeDeclaredPlusSuspense), ctx);
+    const md = renderMarkdown(__er(threeNamedPlusSuspense), ctx);
     // 3 scenario (all balanced) + 1 suspense = 4 Scenario Reconciliations, 3 balanced,
     // 1 out-of-balance. The suspense row survives as a sub-count OF the total, never a
     // bucket outside it.
@@ -355,14 +349,14 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
   });
 
   it("agrees with isBalanced and with the evidence-obligation row's own out-of-balance count", () => {
-    const md = renderMarkdown(__er(threeDeclaredPlusSuspense), ctx);
+    const md = renderMarkdown(__er(threeNamedPlusSuspense), ctx);
     const scenOutOfBalance = Number(
       /\| Scenario Reconciliation \| \d+ \| \d+ \| (\d+) \|/.exec(md)?.[1]
     );
     const oblOutOfBalance = Number(/\| Evidence obligation \| \d+ \| \d+ \| (\d+) \|/.exec(md)?.[1]);
     // The three views that DISAGREED in an adopter's repository 17-36-50Z run — the scenario line, the
     // obligation line, and the actual verdict — now agree that the run is out-of-balance.
-    expect(isBalanced(threeDeclaredPlusSuspense)).toBe(false);
+    expect(isBalanced(threeNamedPlusSuspense)).toBe(false);
     expect(scenOutOfBalance).toBe(1);
     expect(oblOutOfBalance).toBe(2);
     // Both non-zero: neither view can read as a pass while the other fails. (They differ by
@@ -379,35 +373,19 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
 });
 
 /**
- * Unit test for the markdown static-check section (@SCN-RPT-005).
+ * Unit test for the markdown lint-obligation section (@SCN-RPT-005).
  *
  * Bidirectional evidence (Evidence Manifesto §9): the describe carries the
  * @SCN-RPT-005 id matching features/report.feature, so a grep of the id returns
  * both halves of the pair.
  *
- * Proves the staticCheckSection in isolation: renderMarkdown filters
- * balance.scenarios[].evidenceObligations[] on kind === "static", pairs each with its
- * enclosing scenario's scnId, and renders a "## Static-check evidenceObligations" table
- * `| Scenario | Static check | Outcome |` — one row per static evidenceObligation in document
- * order, the outcome carrying its existing ITEM_GLYPH glyph (so the 🍉 watermelon
- * reads at a glance). Runtime evidenceObligations are excluded (the static slice on its
- * own). When no scenario declares a static check, the section is OMITTED entirely
- * (the warningsSection precedent). Slotted after evidenceObligationCountSection, before
- * warningsSection.
- *
- * Teeth: until the emitter lands and is slotted into SECTIONS, every "## Static-check
- * evidenceObligations" / row / placement assertion reds (the genuine red→green). Markdown-only
- * — the derived view is NOT duplicated into JSON (project design §3).
+ * Markdown-only — the derived view is deliberately NOT duplicated into JSON (project design §3).
  *
  * Parent: (@SCN-RPT-005).
  */
 describe("[SCN-RPT-005] the markdown report lists the lint evidence obligations as their own section", () => {
-  // A balance whose evidenceObligations mix static-check and runtime kinds across two
-  // scenarios, the static checks spanning balanced and the watermelon. Static
-  // evidenceObligations in document order: SCN-A/guard-typecheck (balanced), then
-  // SCN-B/guard-lint (the watermelon). Runtime evidenceObligations must NOT appear.
-  // Reconciler-built (§11A): SCN-A declares unit + the guard-typecheck lint guard + integration
-  // (unit passing, guard wired → satisfied, integration failing); SCN-B declares the guard-lint
+  // Reconciler-built (§11A): SCN-A raises unit + the guard-typecheck lint guard + integration
+  // (unit passing, guard wired → satisfied, integration failing); SCN-B raises the guard-lint
   // lint guard (exists-but-unwired → the watermelon) + e2e (no credit → missing). Runtime
   // obligations must NOT leak into the lint-only section.
   const spanning: Ledger = reconcile(
@@ -473,7 +451,7 @@ describe("[SCN-RPT-005] the markdown report lists the lint evidence obligations 
     expect(iTypecheck).toBeLessThan(iLint);
   });
 
-  it("omits the section entirely (total line and all) when no scenario declares a lint evidenceObligation", () => {
+  it("omits the section entirely (total line and all) when no scenario names a lint evidenceObligation", () => {
     const runtimeOnly: Ledger = reconcile(
       [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }],
       [{ qualityCheck: "unit", scnId: "SCN-A", status: "passed" }]
@@ -529,7 +507,7 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
   // out-of-balance (unit missing), SCN-LDG-007 out-of-balance (integration failing). Document order
   // of the out-of-balance scenarios stays SCN-LDG-003, SCN-LNT-002, SCN-LDG-007 → first-appearance
   // feature order LDG then LNT (RPT-006 threads no census, so no row here reaches evidenceCell).
-  const reconciledDeclared = reconcile(
+  const reconciledNamed = reconcile(
     [
       { scnId: "SCN-LDG-001", evidenceObligations: [{ qualityCheck: "unit" }] },
       { scnId: "SCN-LDG-003", evidenceObligations: [{ qualityCheck: "unit" }] },
@@ -542,7 +520,7 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
   );
   const spanning: Ledger = {
     scenarioReconciliations: [
-      ...reconciledDeclared.scenarioReconciliations,
+      ...reconciledNamed.scenarioReconciliations,
       // OUT OF SCOPE (3F-1894 ruling → 3F-1897): the guard-handle collision. SCN-LNT-002 and
       // SCN-LNT-009 both name the `guard-lint` handle at DIFFERENT outcomes (watermelon vs
       // satisfied) — a shape one reconcile pass cannot emit (a handle reconciles to exactly one
@@ -656,7 +634,7 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
 
   it("falls back to the bare FFF for an uncoded id the map doesn't cover", () => {
     // The map covers LDG but NOT LNT — LNT stands in for an uncoded feature (an
-    // @SCN-LNT-* id whose LNT no file declares). featureCodeOf yields the FFF; the map
+    // @SCN-LNT-* id whose LNT no file registers). featureCodeOf yields the FFF; the map
     // misses; the cell renders the bare FFF (the earlier behaviour, preserved).
     const featureNames = new Map([["LDG", "ledger"]]);
     const md = renderMarkdown(__er(spanning, false, false), ctx, undefined, featureNames);
@@ -674,27 +652,27 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
 });
 
 /**
- * Unit test for the markdown declared-corpus census (@SCN-RPT-007).
+ * Unit test for the markdown corpus census (@SCN-RPT-007).
  *
  * Bidirectional evidence (Evidence Manifesto §9): the describe carries the
  * @SCN-RPT-007 id matching features/report.feature, so a grep of the id returns
  * both halves of the pair.
  *
- * Proves the declared-corpus census in isolation: since EVERY scenario is a
- * ledger row (a zero-evidence scenario is a both-missing row, not a warning excluded to a
- * separate axis), so the declared census is recoverable from the ledger scenario-count ALONE —
- * no `## Declared corpus` section, and no `## Warnings` axis to sum in.
+ * Proves the census in isolation: EVERY scenario is a ledger row (a zero-obligation
+ * scenario is a both-missing row, not a second axis), so the census is recoverable from
+ * the ledger scenario-count ALONE. The dissolved census section is guarded POSITIVELY over
+ * the whole top-level section set (3F-2418): one returning under ANY name reds as unexpected.
  *
  * Parent: (@SCN-RPT-007).
  */
-describe("[SCN-RPT-007] the declared corpus census is recoverable from the ledger scenario-count", () => {
-  // A balance carrying three scenarios — one balanced, one out-of-balance, and one
-  // zero-evidence (a both-missing row, the earlier no-evidence-declared warning). ALL three
-  // are ledger rows now, so the declared total is the ledger scenario-count alone.
-  // Reconciler-built (§11A): SCN-A balanced (unit satisfied); SCN-B out-of-balance (integration
-  // missing); SCN-C a genuine zero-obligation scenario cited by no credit → a both-missing row (the
-  // earlier no-evidence-declared warning, now a ledger row). All three are ledger rows, so the
-  // declared total is the ledger scenario-count alone.
+describe("[SCN-RPT-007] the corpus census is recoverable from the ledger scenario-count", () => {
+  // Reconciler-built (§11A): SCN-A balanced (unit satisfied); SCN-B out-of-balance
+  // (integration missing); SCN-C a genuine zero-obligation scenario cited by no credit →
+  // a both-missing row. All three are ledger rows — there is no second axis a scenario can
+  // land on — so the census total IS the ledger scenario-count, with nothing to sum in.
+  // The section list below is this renderer's FULL top-level emission for this fixture,
+  // transcribed from the render and re-proved by mutation when it moves: plant a standalone
+  // section into markdown.ts and this describe reds (3F-2418).
   const reconciliationFixture: Ledger = reconcile(
     [
       { scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] },
@@ -704,23 +682,22 @@ describe("[SCN-RPT-007] the declared corpus census is recoverable from the ledge
     [{ qualityCheck: "unit", scnId: "SCN-A", status: "passed" }]
   );
 
-  it("no longer renders a standalone '## Declared corpus' section (dissolved)", () => {
+  it("emits exactly its known top-level sections, so a dissolved census section cannot return unnamed", () => {
     const md = renderMarkdown(__er(reconciliationFixture), ctx);
-    expect(md).not.toContain("## Declared corpus");
-    // The retired declared-corpus vocabulary is purged from the render entirely —
-    // no "Declared …" heading or count-line survives (the census is the ledger count).
-    expect(md).not.toContain("Declared");
+    const sections = md.split("\n").filter((line) => line.startsWith("## "));
+    expect(sections).toEqual(["## Run provenance", "## Summary views", "## Scenario Reconciliations"]);
   });
 
-  it("recovers the declared census from the ledger scenario-count alone — the zero-evidence scenario is a both-missing row, not a warning", () => {
+  it("recovers the census from the ledger scenario-count alone — the zero-obligation scenario is a both-missing row, not a second axis", () => {
     const md = renderMarkdown(__er(reconciliationFixture), ctx);
     // The ledger summary counts ALL three scenarios (1 balanced, 2 out-of-balance —
-    // SCN-C's both-missing row is one of them), so the declared total is on the page directly.
+    // SCN-C's both-missing row is one of them), so the census total is on the page directly.
     expect(md).toContain("- 3 Scenario Reconciliation(s): 1 balanced, 2 out-of-balance.");
-    // The zero-evidence scenario is a ledger row (a both-missing item), NOT a warnings entry.
+    // The zero-obligation scenario is a ledger row (a both-missing item), not a separate axis;
+    // that there is no second axis at all is the section-list assertion's job, not a second
+    // not-toContain here — the positive list forbids "## Warnings" by not listing it.
     expect(md).toContain("SCN-C");
     expect(md).toContain("⊘ Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited");
-    expect(md).not.toContain("## Warnings");
   });
 
   it("places the ledger summary under the '## Scenario Reconciliations' heading at the end, after Summary views", () => {
@@ -745,9 +722,9 @@ describe("[SCN-RPT-007] the declared corpus census is recoverable from the ledge
  *
  * Proves the evidenceObligationsSection extension in isolation: when a EvidenceObligations is
  * threaded as the optional third arg, renderMarkdown(__er(balance, false, false), ctx, corpus) appends
- * "- M @SCN ids seen in non-tag context, excluded" to the "## Declared corpus"
- * section, after the RPT-007 declared-count bullet. When no corpus is threaded the
- * 2-arg call is byte-green (the RPT-007 section renders without the excluded bullet).
+ * "- M @SCN ids seen in non-tag context, excluded" to the LEDGER SUMMARY, after the
+ * scenario-count bullet (the standalone census section dissolved). When no corpus is
+ * threaded the 2-arg call is byte-green (the summary renders without the excluded bullet).
  *
  * Teeth: until the emitter reads the corpus arg, the excluded bullet is absent, so
  * its assertions red (the genuine red→green). The 2-arg omission case is the
@@ -765,7 +742,7 @@ describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN o
 
   it("appends a '- M @SCN ids seen in non-tag context, excluded' bullet to the ledger summary when a corpus is threaded", () => {
     const md = renderMarkdown(__er(simple, false, false), ctx, evidenceObligations);
-    // The bullet now rides in the ledger summary (the Declared-corpus section
+    // The bullet now rides in the ledger summary (the standalone census section
     // was dissolved).
     expect(md).toContain("## Scenario Reconciliations");
     expect(md).toContain("- 3 @SCN ids seen in non-tag context, excluded");
@@ -784,9 +761,10 @@ describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN o
     const md = renderMarkdown(__er(simple), ctx);
     // The ledger summary scenario-count still renders.
     expect(md).toContain("- 1 Scenario Reconciliation(s): 1 balanced, 0 out-of-balance.");
-    // But the excluded bullet is absent, and no standalone Declared-corpus section exists.
+    // But the excluded bullet is absent, and the top-level section set is the renderer's
+    // known three — the dissolved census section has not returned under any name (3F-2418).
     expect(md).not.toContain("@SCN ids seen in non-tag context, excluded");
-    expect(md).not.toContain("## Declared corpus");
+    expect(md.split("\n").filter((line) => line.startsWith("## "))).toEqual(["## Run provenance", "## Summary views", "## Scenario Reconciliations"]);
   });
 });
 
@@ -808,9 +786,6 @@ describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN o
  * same change to the new heading levels / total lines / table form / dissolution.
  */
 describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last", () => {
-  // A balance exercising every section: a balanced scenario, two out-of-balance
-  // scenarios (one carrying a static-check watermelon), and a no-evidence-declared
-  // warning — so the full section set renders and the ordering can be asserted.
   // Reconciler-built (§11A): a balanced scenario (unit satisfied), an out-of-balance one (unit
   // missing), and one carrying a static-check watermelon — so the full section set renders and the
   // summary-first / ledger-last ordering can be asserted.
@@ -909,7 +884,7 @@ describe("[SCN-RPT-010] the markdown report renders the Test volume evidenceObse
   // attributed 4 / phantom 1 / suspense 3, with NO phantom row anywhere). The corpus folds to the
   // same kind-counts (raw 5 unit + 3 integration = 8; 4 attributed + 1 phantom + 3 suspense = 8):
   //   SCN-A: @unit with 4 passing unit credits → attributed [{SCN-A, unit, 4}]
-  //   1 unit credit citing SCN-PHX-001 (no scenario declares it) → phantom 1 (raw unit 5)
+  //   1 unit credit citing SCN-PHX-001 (no scenario carries it) → phantom 1 (raw unit 5)
   //   3 integration credits citing NO scenario → suspense 3 (raw integration 3)
   const scenarios: Scenario[] = [
     { scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] },
@@ -974,20 +949,20 @@ describe("[SCN-RPT-010] the markdown report renders the Test volume evidenceObse
  * RECONCILER-TRUE FIXTURE (evidence-manifesto §11A, 3F-1808). The balance and the census are
  * PRODUCED by `reconcile()` + `countRuntimeEvidenceObservationKinds()` over a scenario +
  * observation corpus — never hand-written. The previous hand-built fixture pinned the `(N)` branch
- * with an `attributed` entry at an UNDECLARED pair, a shape the census CANNOT emit (it defines
- * `attributed` as credits matching a DECLARED pair; a credit at an undeclared pair is no-evidence-obligation).
+ * with an `attributed` entry at a pair NO scenario names — a shape the census CANNOT emit (it
+ * defines `attributed` as credits matching a NAMED pair; a credit at an unnamed pair is no-evidence-obligation).
  * The branch was pinned by impossible data, which is exactly why the no-evidence-obligation bug survived a
  * green suite. Building the fixture through the reconciler makes that shape UNCONSTRUCTIBLE, and
  * forces the two REAL `(N)` shapes into the corpus:
  *   - NO-EVIDENCE-OBLIGATION (SCN-C, @SCN-LDG-008): a credit citing a real scenario at a quality-check it never
- *     declared. The reconciler posts a credit-side `no-evidence-obligation` row ON the scenario; the census
+ *     named. The reconciler posts a credit-side `no-evidence-obligation` row ON the scenario; the census
  *     keeps the credit OUT of `attributed` (into noEvidenceObligationCount). The cell must NOT read that row
  *     as an evidence obligation (it rendered ∅ — "missing" — pre-fix) and must count the (N) off the rows.
  *   - PENDING (SCN-F): a `<qc>pending` obligation partitions to a one-sided Pending Item and posts
  *     no RECONCILED row. This bullet used to read "PENDING + ATTRIBUTED … the pending pair STAYS
  *     in evidenceObligationPairs — so the credit citing it IS attributed"; that was the divergence
  *     canon contradicts, and 3F-1858 closed it. A pending obligation names NOTHING, so the
- *     credit citing it is NO-EVIDENCE-OBLIGATION — exactly as when nothing was declared at all — and the
+ *     credit citing it is NO-EVIDENCE-OBLIGATION — exactly as when nothing was raised at all — and the
  *     reconciler now posts it as a `no-evidence-obligation` credit on SCN-F's own row (@SCN-PND-005).
  *     SCN-F therefore contributes to `noEvidenceObligationCount`, not to `attributed`.
  *
@@ -1026,7 +1001,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   const observations: EvidenceObservation[] = [
     { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
     { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
-    // SCN-C's integration credit cites a quality-check SCN-C never declared → NO-EVIDENCE-OBLIGATION.
+    // SCN-C's integration credit cites a quality-check SCN-C never named → NO-EVIDENCE-OBLIGATION.
     { qualityCheck: "unit", scnId: "SCN-C", status: "passed" },
     { qualityCheck: "integration", scnId: "SCN-C", status: "passed" },
     { qualityCheck: "integration", scnId: "SCN-D", status: "passed" },
@@ -1040,7 +1015,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     // observation at all → missing (∅).
     { qualityCheck: "lint", staticCheck: "guard-x", exists: true, enforcedOverRealSource: true },
     { qualityCheck: "lint", staticCheck: "guard-y", exists: true, enforcedOverRealSource: false },
-    // SCN-G's two credits — one at each tier it declared (@SCN-RPT-018). The reconciler posts each
+    // SCN-G's two credits — one at each tier it names (@SCN-RPT-018). The reconciler posts each
     // as its own credit on SCN-G's row (@SCN-LDG-022), which is what the two cells read.
     { qualityCheck: "unit", scnId: "SCN-G", status: "passed" },
     { qualityCheck: "integration", scnId: "SCN-G", status: "passed" },
@@ -1053,7 +1028,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     // `no-evidence-obligation` reconciling item on SCN-C's own row, NOT a matched evidence obligation.
     //
     // TWO no-evidence-obligation credits (3F-1858): SCN-C's integration credit (a real scenario at a check it
-    // never declared) AND SCN-F's unit credit (a real scenario at a check declared PENDING — which
+    // never named) AND SCN-F's unit credit (a real scenario at a check tagged PENDING — which
     // names nothing). Counted off the rows' `no-evidence-obligation` reconciling items.
     const noEvidenceObligation = balance.scenarioReconciliations.flatMap((s) =>
       s.qualityCheckReconciliations.filter((o) => o.outcome === "no-evidence-obligation")
@@ -1084,20 +1059,20 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     // posts a credit-side row on SCN-C, which is NOT an evidence obligation, so the left is `-` and the right is
     // the observation count. The named Unit credit reads U/1 on the same row.
     expect(md).toContain("| SCN-C |  | U/1 | -/1 |");
-    // declared elsewhere, absent here → blank left/right, and the named Integration reads I/1.
+    // named elsewhere, absent here → blank left/right, and the named Integration reads I/1.
     expect(md).toContain("| SCN-D |  |  | I/1 |");
-    // lint declared but its static check missing → L/- (declared, no guard present).
+    // lint named but its static check missing → L/- (named, no guard present).
     expect(md).toContain("| SCN-E | L/- |  |  |");
   });
 
   // The MULTI-TIER view mirror (@SCN-RPT-018). The view-side half of the reconciler's
-  // @SCN-LDG-014 per-tier emission: a scenario declaring TWO runtime tiers, each carrying one
+  // @SCN-LDG-014 per-tier emission: a scenario NAMING TWO runtime tiers, each carrying one
   // posted credit, renders BOTH cells with their attributed count — the second tier is not lost
   // to the first, and neither cell collapses to ∅. Cited on the `it` (most-specific-citation-wins,
   // @SCN-LDG-016), so this is a NEW leaf: @SCN-RPT-011 keeps every credit it already held.
-  it("[SCN-RPT-018] renders both cells for a scenario declaring two runtime tiers — neither collapses to ∅", () => {
+  it("[SCN-RPT-018] renders both cells for a scenario naming two runtime tiers — neither collapses to ∅", () => {
     const md = renderMarkdown(__er(balance, true, false), ctx);
-    // SCN-G declares @unit AND @integration and has one credit at each. Both cells must read
+    // SCN-G names @unit AND @integration and has one credit at each. Both cells must read
     // their own count: U/1 on the left tier, I/1 on the right. A renderer that levelled the row
     // by a single quality-check would blank one of them.
     expect(md).toContain("| SCN-G |  | U/1 | I/1 |");
@@ -1114,19 +1089,17 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
 
   it("counts the lint cell's right side by guards PRESENT (balanced or watermelon), not 0/1", () => {
     const md = renderMarkdown(__er(balance, true, false), ctx);
-    // SCN-A declares two static checks, both present (one balanced, one watermelon) → right side 2,
+    // SCN-A names two static checks, both present (one balanced, one watermelon) → right side 2,
     // and the evidence-obligation LEFT carries the evidence-obligation count (two lint QCRs) → L2 → L2/2.
     expect(md).toContain("| SCN-A | L2/2 |");
   });
 
   it("renders the grid with no Cell/Meaning legend — the grid speaks for itself", () => {
     const md = renderMarkdown(__er(balance, true, false), ctx);
-    // The legend is gone: no heading, no rows, and none of the words it carried.
+    // The legend's own table header, which no legend renders without. Three negatives quoting
+    // its ROW WORDING went at 3F-2329: subsumed by this one, blind to a legend returning in
+    // canon words, and the last retired spelling here — now forbidden tree-wide. Grid stays.
     expect(md).not.toContain("| Cell | Meaning |");
-    expect(md).not.toContain("attributed to a declared evidence obligation");
-    expect(md).not.toContain("evidence obligation declared, no evidence observation");
-    expect(md).not.toContain("no evidence obligation declared");
-    // The grid table itself stays.
     expect(md).toContain("| Scenario | Lint |");
   });
 
@@ -1140,7 +1113,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
 
 /*
  * [SCN-RPT-013] — the phantom-id Warnings sub-part — RETIRED (@SCN-LDG-006).
- * A credit citing an undeclared @SCN no longer renders as a Warnings sub-part; it now
+ * A credit citing an UNKNOWN @SCN no longer renders as a Warnings sub-part; it now
  * surfaces as a PHANTOM-scenario reconciliation row in the Ledger (with its id + locator),
  * so its detail lives in exactly one place (no double-report). The phantom render is
  * proven by [SCN-LDG-006] (reconcile.test.ts + ledger.steps.ts); the section-dissolve by
@@ -1153,16 +1126,16 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
  * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-RPT-014
  * id matching features/report.feature, so a grep of the id returns both halves.
  *
- * The `## Warnings` section dissolved entirely — untagged scenarios are a
- * declared-side CENSUS fact (on report.evidenceObligations), NOT a warning and NOT a
- * reconciling item, so they re-home into the ledger-summary declared-corpus census
+ * The `## Warnings` section dissolved entirely — untagged scenarios are an
+ * obligation-side CENSUS fact (on report.evidenceObligations), NOT a warning and NOT a
+ * reconciling item, so they re-home into the ledger-summary scenario-corpus census
  * (co-located with the excluded-occurrence bullet), listing the count + `feature :
  * scenario` locators (sorted). They render when a corpus is threaded; there is NO
  * `## Warnings` heading anywhere.
  *
  * Parent: (@SCN-RPT-014) — anchor audit: untagged scenarios.
  */
-describe("[SCN-RPT-014] the markdown report renders untagged scenarios in the declared-corpus census", () => {
+describe("[SCN-RPT-014] the markdown report renders untagged scenarios in the named-corpus census", () => {
   const balanced: Ledger = {
     scenarioReconciliations: [
       { scnId: "SCN-A", kind: "scenario", evidenceObservations: [], evidenceObligations: [], verdict: "balanced", qualityCheckReconciliations: [], pendingItems: [], reconcilingItems: [] },
@@ -1187,7 +1160,7 @@ describe("[SCN-RPT-014] the markdown report renders untagged scenarios in the de
     expect(md).toContain("- beta.feature : another untagged scenario");
   });
 
-  it("renders the census inside the ledger summary (co-located with the declared corpus), not a warnings surface", () => {
+  it("renders the census inside the ledger summary (co-located with the named corpus), not a warnings surface", () => {
     const md = renderMarkdown(__er(balanced, false, false), ctx, evidenceObligations);
     const iLedger = md.indexOf("## Scenario Reconciliations");
     const iUntagged = md.indexOf("2 scenario(s) carry no @SCN tag:");
@@ -1217,14 +1190,14 @@ describe("[SCN-RPT-014] the markdown report renders untagged scenarios in the de
  * id matching features/report.feature, so a grep of the id returns both halves.
  *
  * The `## Warnings` section dissolved entirely — prose-only codes (@SCN ids
- * mentioned in prose but never tagged anywhere) are a declared-side CENSUS fact (on
+ * mentioned in prose but never tagged anywhere) are an obligation-side CENSUS fact (on
  * report.evidenceObligations), NOT a warning, so they re-home into the ledger-summary
- * declared-corpus census, listing the count + the bare codes (sorted), AFTER the untagged
+ * scenario-corpus census, listing the count + the bare codes (sorted), AFTER the untagged
  * sub-part. There is NO `## Warnings` heading anywhere.
  *
  * Parent: (@SCN-RPT-015) — anchor audit: prose-only codes.
  */
-describe("[SCN-RPT-015] the markdown report renders prose-only @SCN codes in the declared-corpus census", () => {
+describe("[SCN-RPT-015] the markdown report renders prose-only @SCN codes in the named-corpus census", () => {
   const balanced: Ledger = {
     scenarioReconciliations: [
       { scnId: "SCN-A", kind: "scenario", evidenceObservations: [], evidenceObligations: [], verdict: "balanced", qualityCheckReconciliations: [], pendingItems: [], reconcilingItems: [] },
@@ -1304,16 +1277,17 @@ describe("[SCN-USG-001] the markdown report renders the Static checks section", 
     expect(md).toContain("### Static checks");
     expect(md).toContain("2 static check(s) run, 1 uncited static check(s).");
     // The per-guard DETAIL list dissolved into the suspense-scenario row (@SCN-LDG-007,
-    // ruling Q4) — the section carries only the summary-level counts now, no bullets.
+    // ruling Q4) — the section carries only the summary-level counts now, no bullets. Pinned
+    // on the ITEM this fixture would list, not the list's old header prose: the item is what a
+    // returning list emits whatever it calls itself (that header pin went at 3F-2329).
     expect(md).not.toContain("- lint:bar");
-    expect(md).not.toContain("— a CI guard no @lint declares:");
   });
 
-  it("shows the counts line but omits the list when every running guard is declared", () => {
+  it("shows the counts line but omits the list when every running guard is named", () => {
     const md = renderMarkdown(__er(oneRunningNoneUncited, false, true), ctx);
     expect(md).toContain("1 static check(s) run, 0 uncited static check(s).");
-    // The counts summarise the volume; the itemised list (only shown when > 0) is omitted.
-    expect(md).not.toContain("— a CI guard no @lint declares:");
+    // The list (shown only when > 0) is omitted; pinned on the item, per the note above.
+    expect(md).not.toContain("- lint:foo");
   });
 
   it("omits the Static checks section when the static-check axis is not in play (back-compat)", () => {
@@ -2027,7 +2001,7 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
   const balanceWithBroken = (
     item: ScenarioReconciliation["reconcilingItems"][number]
   ): Ledger => {
-    // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A, 3F-1894). SCN-HNS-002 declares a unit
+    // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A, 3F-1894). SCN-HNS-002 raises a unit
     // obligation whose proof never ran (no non-broken credit cites it → `missing`); the broken
     // observation names no test, so it cites nothing and posts to SUSPENSE carrying its locator +
     // message. The suspense item is DERIVED from `item` (a broken credit built from its fields) —
@@ -2171,9 +2145,9 @@ describe("[SCN-RPT-021] the markdown names the broken evidence and its error, st
     // The DISTINCTION the slice exists for: the scenario still reads `missing` (honest
     // at its own resolution — no evidence cited it), and it is NOT the broken row. A reader
     // tells "the proof exists and is broken" from "no proof was written".
-    const declared = rowFor(vitestMd, "SCN-HNS-002");
-    expect(declared).toContain(`∅ ${OUTCOME_DESCRIPTION.missing}`);
-    expect(declared).not.toContain("💥");
+    const namedRow = rowFor(vitestMd, "SCN-HNS-002");
+    expect(namedRow).toContain(`∅ ${OUTCOME_DESCRIPTION.missing}`);
+    expect(namedRow).not.toContain("💥");
 
     // The cucumber row carries the same two halves — the feature file and the synthesised
     // diagnosis — through the identical code path.
@@ -2229,7 +2203,7 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
 
   // RECONCILER-TRUE FIXTURES (evidence-manifesto §11A, 3F-1894). Every ledger is PRODUCED by
   // reconcile() over a corpus, so the whole-run verdict predicates read a ledger the pipeline emits.
-  // The shared balanced declaration + its passing unit credit.
+  // The shared balanced scenario + its passing unit credit.
   const balancedScenario: Scenario = {
     scnId: "SCN-VRD-001",
     evidenceObligations: [{ qualityCheck: "unit" }],
@@ -2291,12 +2265,13 @@ describe("[SCN-RPT-022] the summary opens with the run verdict and the exit code
     const md = renderMarkdown(__er(balanced), ctx);
     expect(summaryOpening(md)).toContain("**BALANCED**");
     expect(summaryOpening(md)).toContain("exit 0");
-    // The gloss names the three scenario-kinds by their canon names — `scenario` is the real
-    // kind (never the retired "declared"-as-kind-label).
+    // The gloss names the three scenario-kinds by canon, pinned as the WHOLE sentence — so the
+    // retired kind-label once emitted in `scenario`'s place cannot return without failing here.
+    // A companion negative naming it went at 3F-2329: subsumed, and renaming it to canon would
+    // invert it into "`scenario` is absent" — green for the wrong reason.
     expect(summaryOpening(md)).toContain(
       "every Scenario Reconciliation balances: scenario, phantom and suspense alike."
     );
-    expect(summaryOpening(md)).not.toContain("declared");
   });
 
   it("reads OUT-OF-BALANCE and exit 1 — never as a pass — when a row does not balance", () => {
@@ -2376,7 +2351,7 @@ describe('[SCN-RPT-024] the reconciliation collection is named "Scenario Reconci
   // The summary tally then reads total=3, balanced=1, out-of-balance=2 (phantom + suspense are
   // both always out-of-balance), phantom=1, suspense=1 — so the headline names 3 of the
   // collection. Counting is UNCHANGED by this scenario; only the rendered noun.
-  const declaredPhantomSuspense: Ledger = {
+  const namedPhantomSuspense: Ledger = {
     scenarioReconciliations: [
       {
         scnId: "SCN-A",
@@ -2412,14 +2387,14 @@ describe('[SCN-RPT-024] the reconciliation collection is named "Scenario Reconci
   };
 
   it('names the collection "Scenario Reconciliation" in the Evidence-reconciliation table Subject cell', () => {
-    const md = renderMarkdown(__er(declaredPhantomSuspense), ctx);
+    const md = renderMarkdown(__er(namedPhantomSuspense), ctx);
     // The Subject cell of the reconciliation-collection row — asserted as the CELL value
     // (pipe-delimited), never the section heading. Passes against current code (markdown.ts:470).
     expect(md).toContain("| Scenario Reconciliation |");
   });
 
   it('names the collection "Scenario Reconciliation(s)" in the headline verdict tally, never "scenario(s)"', () => {
-    const md = renderMarkdown(__er(declaredPhantomSuspense), ctx);
+    const md = renderMarkdown(__er(namedPhantomSuspense), ctx);
     // The headline tally counts every row and names the collection — Scenario Reconciliations,
     // not scenarios. This REDS against current code (the tally renders "scenario(s):").
     expect(md).toContain("- 3 Scenario Reconciliation(s): 1 balanced, 2 out-of-balance.");

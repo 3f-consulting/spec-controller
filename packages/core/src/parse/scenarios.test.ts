@@ -46,8 +46,8 @@ const DEFERRAL_TAGS: readonly string[] = ["wip", "ignore", "skip", "todo", "pend
 const asFeature = (source: string): string => `Feature: a fixture feature\n\n${source}`;
 
 describe("[SCN-RPT-008] countScnOccurrences counts every @SCN occurrence including non-tag context", () => {
-  // Two tag-line declarations (@SCN-RPT-001, @SCN-LDG-003) plus two NON-tag mentions
-  // (the same @SCN-RPT-001 in prose, @SCN-LNT-005 in a comment). Raw = 4; declared = 2.
+  // Two TAG-LINE occurrences (@SCN-RPT-001, @SCN-LDG-003) plus two NON-tag mentions
+  // (the same @SCN-RPT-001 in prose, @SCN-LNT-005 in a comment). Raw = 4; read as scenarios = 2.
   const source = [
     "@RPT @SCN-RPT-001",
     "Scenario: a thing",
@@ -80,7 +80,7 @@ describe("[SCN-RPT-008] countScnOccurrences counts every @SCN occurrence includi
  * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-RPT-014
  * id matching features/report.feature, so a grep of the id returns both halves.
  *
- * Proves the new declared-side parse: it counts Gherkin scenario headers (Scenario /
+ * Proves the new obligation-side parse: it counts Gherkin scenario headers (Scenario /
  * Scenario Outline / Scenario Template / Example — NOT Examples:) and returns the names
  * of those whose preceding contiguous tag block carries no @SCN, mirroring parseScenarios's
  * block logic. Asserts REAL parser output, not a hand-seeded list (evidence-manifesto §11A).
@@ -348,7 +348,7 @@ describe("[SCN-PND-003] an unrecognised <x>pending tag is passed through, ignore
  *
  * Proves the slice-4 foundation: when a scenario's tag block contains a RECOGNISED community
  * deferral tag (bare name ∈ the recognised set — the five DEFAULT_DEFERRAL_TAGS starter tags
- * @wip / @ignore / @skip / @todo / @pending), EVERY declared evidence obligation is marked
+ * @wip / @ignore / @skip / @todo / @pending), EVERY evidence obligation the scenario raises is marked
  * `pending: true`, reusing the slice-1/2 pending flag. So `@wip @unit @integration` derives two
  * PENDING obligations — the community tag defers the whole scenario, overriding the
  * observation-derived outcome. An UNRECOGNISED tag defers nothing (the negative boundary); and
@@ -357,18 +357,18 @@ describe("[SCN-PND-003] an unrecognised <x>pending tag is passed through, ignore
  *
  * Parent: @SCN-PND-016.
  */
-describe("[SCN-PND-016] a recognised community deferral tag defers every declared obligation on its scenario", () => {
+describe("[SCN-PND-016] a recognised community deferral tag defers every named obligation on its scenario", () => {
   const COMMUNITY_TAGS = ["@wip", "@ignore", "@skip", "@todo", "@pending"] as const;
 
   COMMUNITY_TAGS.forEach((tag, i) => {
     it(`${tag} marks both the @unit and @integration obligation pending`, () => {
       const source = [
         `${tag} @unit @integration @SCN-XXX-${100 + i}`,
-        "Scenario: a community-deferred scenario declaring unit and integration obligations",
+        "Scenario: a community-deferred scenario naming unit and integration obligations",
         "  Given a step",
       ].join("\n");
       const [scenario] = parseScenarios(asFeature(source), DEFERRAL_TAGS);
-      // Every declared obligation is deferred pending — the community tag defers the whole
+      // Every obligation the scenario raises is deferred pending — the community tag defers the whole
       // scenario. Reds today: a community tag is ignored, so the obligations are plain (no pending).
       expect(scenario!.evidenceObligations).toEqual([
         { qualityCheck: "unit", pending: true },
@@ -547,7 +547,7 @@ describe("[SCN-PND-020] an unrecognised tag is given no special meaning — it d
     // over-reach into a tag that merely looks community-shaped.
     const source = [
       "@foo @unit @SCN-XXX-200",
-      "Scenario: a scenario carrying an unrecognised tag alongside a declared unit obligation",
+      "Scenario: a scenario carrying an unrecognised tag alongside a named unit obligation",
       "  Given a step",
     ].join("\n");
     const [scenario] = parseScenarios(asFeature(source));
@@ -577,45 +577,45 @@ describe("[SCN-PND-020] an unrecognised tag is given no special meaning — it d
  * planted tests/fixtures/ feature-string).
  *
  * Pins the close-out of the slice-4 Rule: a scenario carrying a recognised deferral tag but
- * declaring ZERO evidence obligations (a bare `@wip` — no evidence tag) synthesises ONE
+ * raising ZERO evidence obligations (a bare `@wip` — no evidence tag) synthesises ONE
  * scenario-scope pending obligation `{ pending: true }` with NO `qualityCheck` (undefined =
  * scenario-scope). The reconcile partition (reconcile.test.ts) then routes it to one
  * `qualityCheck`-less Pending Item — so the scenario is deferred (pending), not both-missing.
  * The synthesis is GATED on a recognised deferral tag (the negative boundary) and fires ONLY on
- * the zero-obligation case (a `@wip` declaring obligations keeps marking each pending, no extra
+ * the zero-obligation case (a `@wip` that DOES raise obligations keeps marking each pending, no extra
  * synthesised one — the @SCN-PND-016 path, unchanged).
  *
  * Parent: @SCN-PND-022.
  */
-describe("[SCN-PND-022] a deferred scenario declaring no obligations synthesises one scenario-scope pending obligation", () => {
+describe("[SCN-PND-022] a deferred scenario naming no obligations synthesises one scenario-scope pending obligation", () => {
   it("a bare @wip scenario (no evidence tag) derives ONE scenario-scope pending obligation with no qualityCheck", () => {
-    // A bare `@wip` scenario declares zero obligations. Reds today: the scenario-scope post-pass
+    // A bare `@wip` scenario raises zero obligations. Reds today: the scenario-scope post-pass
     // is a no-op on an empty obligation list, so parseScenarios emits `[]` and the scenario
     // reconciles both-missing downstream. Interpretation 2 synthesises ONE `qualityCheck`-less
     // pending obligation instead — the whole scenario is deferred.
     const source = [
       "@wip @SCN-XXX-210",
-      "Scenario: a bare @wip scenario declaring no obligations",
+      "Scenario: a bare @wip scenario naming no obligations",
       "  Given a step",
     ].join("\n");
     const [scenario] = parseScenarios(asFeature(source), DEFERRAL_TAGS);
     expect(scenario!.evidenceObligations).toEqual([{ pending: true }]);
   });
 
-  it("does NOT synthesise for a NON-deferred scenario declaring no obligations — the negative boundary", () => {
+  it("does NOT synthesise for a NON-deferred scenario naming no obligations — the negative boundary", () => {
     // Without a recognised deferral tag, a zero-obligation scenario stays zero-obligation (it
     // reconciles both-missing downstream, unchanged). The synthesis is gated on the deferral tag,
-    // never fired for a bare scenario that merely happens to declare nothing.
+    // never fired for a bare scenario that merely happens to raise nothing.
     const [scenario] = parseScenarios(asFeature(["@SCN-XXX-211", "Scenario: a bare scenario, no deferral tag", "  Given a step"].join("\n"))
     );
     expect(scenario!.evidenceObligations).toEqual([]);
   });
 
-  it("still marks declared obligations pending when the @wip scenario DOES declare them — no spurious synthesised obligation", () => {
-    // The synthesis is ONLY for the zero-obligation case. A `@wip` scenario that declares a `@unit`
+  it("still marks named obligations pending when the @wip scenario DOES name them — no spurious synthesised obligation", () => {
+    // The synthesis is ONLY for the zero-obligation case. A `@wip` scenario that RAISES a `@unit`
     // obligation marks it pending (the @SCN-PND-016 scenario-scope path, unchanged) and adds NO
     // extra synthesised obligation — the list is exactly the one deferred obligation.
-    const [scenario] = parseScenarios(asFeature(["@wip @unit @SCN-XXX-212", "Scenario: a @wip scenario declaring a unit obligation", "  Given a step"].join("\n")),
+    const [scenario] = parseScenarios(asFeature(["@wip @unit @SCN-XXX-212", "Scenario: a @wip scenario naming a unit obligation", "  Given a step"].join("\n")),
       DEFERRAL_TAGS
     );
     expect(scenario!.evidenceObligations).toEqual([{ qualityCheck: "unit", pending: true }]);
@@ -627,7 +627,7 @@ describe("[SCN-PND-022] a deferred scenario declaring no obligations synthesises
     // scenario-scope pending obligation, exactly like a built-in `@wip`.
     const source = [
       "@deferme @SCN-XXX-213",
-      "Scenario: a custom-deferral-tag scenario declaring no obligations",
+      "Scenario: a custom-deferral-tag scenario naming no obligations",
       "  Given a step",
     ].join("\n");
     expect(parseScenarios(asFeature(source), ["deferme"])[0]!.evidenceObligations).toEqual([{ pending: true }]);
@@ -637,7 +637,7 @@ describe("[SCN-PND-022] a deferred scenario declaring no obligations synthesises
 });
 
 /**
- * @unit for @SCN-LDG-020 (3F-1775) — the declared corpus is what CUCUMBER runs.
+ * @unit for @SCN-LDG-020 (3F-1775) — the PARSED corpus is what CUCUMBER runs.
  *
  * Bidirectional evidence: the describe carries the @SCN-LDG-020 id matching
  * features/ledger.feature and the @integration steps in tests/steps/ledger.steps.ts.
@@ -646,14 +646,14 @@ describe("[SCN-PND-022] a deferred scenario declaring no obligations synthesises
  * directly above a `Scenario:`. Gherkin does not work that way: a scenario INHERITS the tags of
  * its Feature and of any enclosing Rule, and cucumber applies them. A tier hoisted to the
  * Feature/Rule line — idiomatic, valid Gherkin — was therefore INVISIBLE, so its obligation was
- * never declared and its missing evidence could never reconcile `missing`: the run read BALANCED
+ * never RAISED and its missing evidence could never reconcile `missing`: the run read BALANCED
  * while cucumber named a tier nothing proved. Extraction now comes from the real AST.
  */
-describe("[SCN-LDG-020] a scenario's declared tags include the ones it inherits from its Feature and Rule", () => {
+describe("[SCN-LDG-020] a scenario's named tags include the ones it inherits from its Feature and Rule", () => {
   it("inherits an evidence tier from the FEATURE — the false-green that reads BALANCED today", () => {
     // THE HEADLINE. cucumber names unit AND integration of this scenario. The scan saw only
-    // @unit, so the integration obligation was never declared — and an obligation that was never
-    // declared can never reconcile `missing`.
+    // @unit, so the integration obligation was never RAISED — and an obligation that was never
+    // raised can never reconcile `missing`.
     const source = `@AAA @integration
 Feature: alpha
 

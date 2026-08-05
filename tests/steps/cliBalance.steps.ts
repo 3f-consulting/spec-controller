@@ -64,7 +64,7 @@ const PENDING_ONLY = {
 };
 
 /**
- * The BROKEN fixture target (@SCN-CLI-012) — one declared @unit scenario whose proving
+ * The BROKEN fixture target (@SCN-CLI-012) — one @unit scenario whose proving
  * suite FAILED TO COLLECT: the vitest report carries that file with `status: "failed"`,
  * a collection-error `message` and ZERO assertionResults (an adopter's repository dogfood fault,
  * 3F-1642). The reader posts a `broken` suspense item; the scenario reads `missing`. A
@@ -82,14 +82,14 @@ const BROKEN = {
  * started 3F-1703. EVERY SCENARIO BALANCES (both @unit obligations satisfied by the
  * vitest report; no phantom; no collection failure, so the run is SOUND and exit 4 never
  * pre-empts). The ONE reconciling item in the whole run sits on the SUSPENSE row: the target's
- * CI runs `lint:uncited` and no scenario declares `@lint=lint:uncited`, so the guard
+ * CI runs `lint:uncited` and no scenario NAMES `@lint=lint:uncited`, so the guard
  * is an uncited static-check — an uncited credit posted to the `(no scenario)` row.
  *
  * The shape no other fixture in the suite has, and the ONLY one that can catch the drift: the
- * DECLARED-ONLY tally reads a clean `2 | 2 | 0` while the run genuinely exits 1. That is the
+ * SCENARIO-ONLY tally reads a clean `2 | 2 | 0` while the run genuinely exits 1. That is the
  * false green the operator and Cowork both read as a clean board. Unlike BALANCED, it needs
  * BOTH a guardFUL --package-json and a --ci that runs the guard — the guard must be RUNNING
- * (declared as a script AND invoked by a CI step) to post its uncited credit.
+ * (present as a script AND invoked by a CI step) to post its uncited credit.
  */
 const SUSPENSE_ONLY = {
   features: "tests/fixtures/suspense-only/features",
@@ -163,10 +163,8 @@ Then("it prints the Evidence Reconciliation to stdout", function () {
 });
 
 Then("the reconciliation reports the target's scenarios", function () {
-  // The fixture declares SCN-TGT-001 / SCN-TGT-002; the Summary's Scenario Reconciliation
+  // The fixture carries SCN-TGT-001 / SCN-TGT-002; the Summary's Scenario Reconciliation
   // row must count them — proof the whole reconcile ran end-to-end through the binary.
-  // (Subject label renamed by 3F-1726; the fixture is declared-only, so the COUNT is
-  // unchanged — the same fact, the manifesto's spelling.)
   assert.match(cliResult.stdout, /\| Scenario Reconciliation \| 2 \|/);
 });
 
@@ -221,8 +219,7 @@ Then("it reconciles the scenarios against the supplied evidence", function () {
   // Exit-zero alone isn't enough — the reconcile must actually have RUN against the
   // supplied evidence. The Evidence Reconciliation renders to stdout and its Summary
   // counts the fixture's two scenarios (SCN-TGT-001 / SCN-TGT-002), proof the
-  // omitted --cucumber did not short-circuit the pipeline. (Subject label renamed by
-  // 3F-1726; declared-only fixture, so the COUNT is unchanged — the same fact.)
+  // omitted --cucumber did not short-circuit the pipeline.
   assert.match(cliResult.stdout, /^# Evidence Reconciliation/m);
   assert.match(cliResult.stdout, /\| Scenario Reconciliation \| 2 \|/);
 });
@@ -230,7 +227,7 @@ Then("it reconciles the scenarios against the supplied evidence", function () {
 // @SCN-CLI-004
 Given("a target that reconciles out-of-balance", function () {
   const root = process.cwd();
-  // The shared out-of-balance fixture: it declares SCN-TGT-002 at @integration but the
+  // The shared out-of-balance fixture: it NAMES SCN-TGT-002 at @integration but the
   // run supplies only --vitest (no --cucumber), so that obligation reconciles as MISSING;
   // it also carries a phantom (SCN-PHANTOM-999) and uncited credits (the suspense row) —
   // so the whole reconciliation is out-of-balance many times over. Reconcilable end-to-end:
@@ -549,7 +546,7 @@ function verdictHeadline(stdout: string): { word: string; exit: number } {
 // @SCN-CLI-013
 Then("the trial-balance table counts {int} out-of-balance Scenario Reconciliation", function (count: number) {
   // The tally counts EVERY Scenario Reconciliation (@SCN-RMD-001, 3F-1724), so the suspense row
-  // — always out-of-balance — is IN the count. It reads 1, never the 0 the retracted declared-only
+  // — always out-of-balance — is IN the count. It reads 1, never the 0 the retracted scenario-only
   // tally gave, which is what made a failing run look like a pass.
   assert.equal(
     tallyOutOfBalance(cliResult.stdout),
@@ -648,7 +645,7 @@ Given(
 );
 
 /**
- * @SCN-CLI-016 — the DECLARED side of the same rule (3F-1767). The feature corpus is an input
+ * @SCN-CLI-016 — the OBLIGATION side of the same rule (3F-1767). The feature corpus is an input
  * too: the ledger's DEBIT side. It was read by a hand-rolled TAG-LINE SCAN that never looked
  * for a `Scenario:` header, so a malformed tag line stopped being a tag line and its scenario
  * CEASED TO EXIST. One stray character — in a file cucumber itself rejects — deleted a failing

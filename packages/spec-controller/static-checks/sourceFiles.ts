@@ -17,8 +17,8 @@
  * construction; it is where the guards it serves already live (product-not-app, reads the tree).
  *
  * WHAT IS SHARED AND WHAT IS NOT. The WALK is shared three ways — all three guards collect the same
- * way, differing only in root. The ELEMENT TYPE is shared three ways too (3F-2274): one shape, one
- * declaration. The FLOOR is shared TWO ways: only `noParallelStore` and
+ * way, differing only in root. The ELEMENT TYPE is shared three ways too (3F-2274): one shape,
+ * stated once. The FLOOR is shared TWO ways: only `noParallelStore` and
  * `enginePurity` walk the same population (`CORE_SRC_ROOT`), so only they can share a floor.
  * `domainPurity` walks a smaller subtree and keeps its own floor locally — a different population
  * is a different floor, and unifying them would be a behaviour change dressed as a tidy-up. The
@@ -32,7 +32,7 @@ import { join } from "node:path";
  * A file the walk collected — its repo-relative path and its raw source.
  *
  * THE element type — `checkNoParallelStore`, `checkEnginePurity` and `checkDomainPurity` all take
- * this one, so `{ path, source }` is declared exactly ONCE in the repo (3F-2274). Each guard used
+ * this one, so `{ path, source }` is stated exactly ONCE in the repo (3F-2274). Each guard used
  * to export its own structurally-identical alias, which meant the shape agreed by COINCIDENCE: add
  * a field to one and the other three carry on compiling while describing a different file. The
  * walk was unified first (3F-2266); this is the same argument applied to the walk's ELEMENT.

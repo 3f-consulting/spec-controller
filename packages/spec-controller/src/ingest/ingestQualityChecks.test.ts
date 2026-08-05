@@ -6,7 +6,7 @@
  * id returns both halves of the pair.
  *
  * It drives the CLI read/reconcile core `runReconcile` over a PLANTED EXTERNAL repo
- * fixture (tests/fixtures/scn-lnt-005/): an external feature declaring `@lint=lint:vocab-check`,
+ * fixture (tests/fixtures/scn-lnt-005/): an external feature NAMING `@lint=lint:vocab-check`,
  * an external package.json where that static check EXISTS, and an external ci.yml that does
  * NOT run it. The static check's `exists` MUST be read from the EXTERNAL package.json (via
  * --package-json), NOT the tool's own cwd package.json (which has no

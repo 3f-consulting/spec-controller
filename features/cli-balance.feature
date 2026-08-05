@@ -179,13 +179,13 @@ Feature: spec-controller balance runs standalone
         | missing     |
         | unparseable |
 
-  # THE DECLARED SIDE of the same rule (@SCN-CLI-016, 3F-1767). The tool's inputs are not only
+  # THE OBLIGATION SIDE of the same rule (@SCN-CLI-016, 3F-1767). The tool's inputs are not only
   # the evidence reports; the FEATURE CORPUS is an input too — the ledger's DEBIT side. It was
   # read by a hand-rolled TAG-LINE SCAN that never looked for a Scenario: header, so a malformed
   # tag line simply stopped being a tag line and its scenario CEASED TO EXIST. One stray
   # character — in a file cucumber itself rejects — deleted a failing row and turned an
   # out-of-balance run (exit 1) into a clean BALANCED (exit 0). A dropped scenario cannot even
-  # reconcile `missing`, because it was never DECLARED to be missing: the run reads CLEANER THAN
+  # reconcile `missing`, because it was never RAISED to be missing: the run reads CLEANER THAN
   # REALITY. That is the exact false-green this tool exists to prevent, aimed at itself.
   #
   # Every feature file is now VALIDATED by the real Gherkin parser — cucumber's own — before any
@@ -196,8 +196,8 @@ Feature: spec-controller balance runs standalone
   # EXTRACTED from that same real AST (@SCN-LDG-020), so what spec-controller reconciles IS what
   # cucumber runs — Feature/Rule tag inheritance included. One reading of the file, not two.
   #
-  # A VALID scenario carrying no @SCN is NOT this fault — it parses cleanly. Whether undeclarable
-  # work should red a run is a policy question, deliberately kept out of this bug fix (3F-1774).
+  # A VALID scenario carrying no @SCN is NOT this fault — it parses cleanly. Whether UNCODED work
+  # should red a run is a policy question, deliberately kept out of this bug fix (3F-1774).
 
     @unit @e2e @SCN-CLI-016
     Scenario Outline: a feature file the tool cannot parse exits 2, naming the file and the parse failure
@@ -216,7 +216,7 @@ Feature: spec-controller balance runs standalone
   Rule: the CLI answers --help from a single command/flag registry, completeness-guarded.
 
     `spec-controller balance --help` (and `-h`) prints the balance command's flags —
-    each name + arg-placeholder + description — rendered from the declarative
+    each name + arg-placeholder + description — rendered from the data-driven
     command/flag registry, and exits 0. It is handled in `runBalance` BEFORE any
     parse/reconcile, so `--help` never falls through as a stray flag while balance runs
     anyway. The registry is the single source: a flag exists ⇒ a registry entry ⇒ it
@@ -237,7 +237,7 @@ Feature: spec-controller balance runs standalone
     @SCN-CLI-008 @unit
     Scenario: every registered flag, command and modifier reaches its help surface (completeness guard)
       Given the two-scope command/flag registry and its two help renderers
-      Then no per-command flag the registry declares is missing from the balance --help render
+      Then no per-command flag the registry carries is missing from the balance --help render
       And no global modifier and no registered command is missing from the top-level --help render
       And a registry entry that its help surface omits reds the guard
 

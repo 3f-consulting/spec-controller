@@ -2,9 +2,9 @@
  * @unit guard for the source→level seam.
  *
  * Strict coverage gain: parseCucumberEvidenceObservations had no dedicated unit test — its level was
- * a hardcoded "integration". This proves the level is now the CALLER-DECLARED one, so the
+ * a hardcoded "integration". This proves the level is now the CALLER-SUPPLIED one, so the
  * implicit Cucumber⇒integration assumption is gone (the Read's positive guard). The
- * JS-ecosystem default (integration) is declared at the CLI edge, not here.
+ * JS-ecosystem default (integration) is set at the CLI edge, not here.
  */
 
 import { describe, it, expect } from "vitest";
@@ -13,27 +13,27 @@ import type { RuntimeEvidenceObservation } from "../model.js";
 
 /**
  * THE FALLBACK HALF of @SCN-LDG-011's rule. The scenario's Rule preamble
- * (`features/ledger.feature`) states both halves: a runtime observation's level is DERIVED from the
- * cited scenario's declared tier tag, and "the caller-declared source level survives only as the
- * fallback for an untagged scenario". The sibling block below proves the derivation half; this block
+ * (`features/ledger.feature`) states both halves: a runtime observation's level comes from the
+ * cited scenario's own tier tag, and the source level the caller passes survives only as the
+ * fallback for an untagged scenario. The sibling block below proves the derivation half; this block
  * proves the fallback half — that the fallback is genuinely the CALLER's parameter and not a
  * reinstated Cucumber⇒integration hardcode.
  *
  * WHY THIS BLOCK IS NOT REDUNDANT WITH ITS SIBLING, established by mutation (3F-2364):
  *   - Hardcoding the untagged fallback to "integration" (`: ["integration"]` in `deriveLevels`)
  *     reds EXACTLY ONE test in the whole tree — the NON-default `it` below. Every cited sibling,
- *     unit and cucumber alike, stays green: they all either take the tag path or happen to declare
+ *     unit and cucumber alike, stays green: they all either take the tag path or happen to PASS
  *     "integration" as their fallback, so the old hardcode agrees with them by COINCIDENCE. This
  *     block is the only place that coincidence is broken.
  *   - Breaking the fallback path wholesale (`: ["e2e"]`) reds four tests — both of this block's,
- *     plus `[SCN-LDG-011]`'s "falls back to the caller-declared level…" and `[SCN-LDG-015]`'s. That
+ *     plus `[SCN-LDG-011]`'s "falls back to the caller-named level…" and `[SCN-LDG-015]`'s. That
  *     wider mutation makes the block LOOK superseded; only the narrower one above separates them.
  *
  * The first `it` is the CONTROL arm (its assertion is indeed also covered by `[SCN-LDG-011]`'s
- * "falls back to the caller-declared level…" below); it is kept because the non-default `it`'s
+ * "falls back to the caller-named level…" below); it is kept because the non-default `it`'s
  * contrast is only legible against a default-case baseline in the same block.
  */
-describe("[SCN-LDG-011] parseCucumberEvidenceObservations stamps the caller-declared level as the untagged fallback", () => {
+describe("[SCN-LDG-011] parseCucumberEvidenceObservations stamps the caller-named level as the untagged fallback", () => {
   const report: CucumberJsonReport = [
     {
       uri: "features/x.feature",
@@ -43,21 +43,21 @@ describe("[SCN-LDG-011] parseCucumberEvidenceObservations stamps the caller-decl
     },
   ];
 
-  it("attributes results at the declared level (integration — the JS-ecosystem default declared by the CLI)", () => {
+  it("attributes results at the named level (integration — the JS-ecosystem default named by the CLI)", () => {
     // Each credit carries its feature-file locator (the where-to-fix, ruling Q5).
     expect(parseCucumberEvidenceObservations(report, "integration")).toEqual([
       { qualityCheck: "integration", scnId: "SCN-FOO-003", status: "passed", locator: "features/x.feature" },
     ]);
   });
 
-  it("honors a NON-default declared level — the assumption is gone (no Cucumber⇒integration hardcode)", () => {
+  it("honors a NON-default named level — the assumption is gone (no Cucumber⇒integration hardcode)", () => {
     const out = parseCucumberEvidenceObservations(report, "unit");
     expect(out).toHaveLength(1);
     expect(out.every((r) => r.qualityCheck === "unit")).toBe(true);
   });
 });
 
-describe("[SCN-LDG-011] parseCucumberEvidenceObservations derives the level from the scenario's declared tier tag", () => {
+describe("[SCN-LDG-011] parseCucumberEvidenceObservations derives the level from the scenario's named tier tag", () => {
   it("stamps an @e2e-tagged scenario's observation e2e — the tag, not the fallback source level", () => {
     const report: CucumberJsonReport = [
       {
@@ -70,14 +70,14 @@ describe("[SCN-LDG-011] parseCucumberEvidenceObservations derives the level from
         ],
       },
     ];
-    // Fallback "integration" is the JS-ecosystem default the CLI declares; the scenario's
+    // Fallback "integration" is the JS-ecosystem default the CLI passes; the scenario's
     // own @e2e tag overrides it, so the observation is levelled e2e (an adopter's repository fix).
     expect(parseCucumberEvidenceObservations(report, "integration")).toEqual([
       { qualityCheck: "e2e", scnId: "SCN-LDG-011", status: "passed", locator: "features/e2e.feature" },
     ]);
   });
 
-  it("falls back to the caller-declared level for a scenario with no tier tag", () => {
+  it("falls back to the caller-named level for a scenario with no tier tag", () => {
     const report: CucumberJsonReport = [
       {
         uri: "features/x.feature",
@@ -107,7 +107,7 @@ describe("[SCN-LDG-012] parseCucumberEvidenceObservations derives integration fr
       },
     ];
     // Fallback "e2e" is deliberately NOT "integration": the integration level can only come
-    // from DERIVING the scenario's declared @integration tag. The retired
+    // from DERIVING the scenario's @integration tag. The retired
     // CUCUMBER_QUALITY_CHECK="integration" hardcode agreed for this case by COINCIDENCE; this
     // proves the tier is now reached by derivation. If the parser ignored the tag and used the
     // fallback, the level would be e2e — the mutation that proves this pin's teeth.
@@ -117,10 +117,10 @@ describe("[SCN-LDG-012] parseCucumberEvidenceObservations derives integration fr
   });
 });
 
-describe("[SCN-LDG-014] parseCucumberEvidenceObservations emits one observation per declared non-unit tier", () => {
+describe("[SCN-LDG-014] parseCucumberEvidenceObservations emits one observation per named non-unit tier", () => {
   it("emits BOTH an integration and an e2e observation from ONE cucumber pass of an @integration @e2e scenario", () => {
-    // The multi-tag ruling's teeth: a SINGLE cucumber run of a scenario declaring two non-unit
-    // tiers discharges BOTH obligations, so the parser must emit ONE observation per declared
+    // The multi-tag ruling's teeth: a SINGLE cucumber run of a scenario NAMING two non-unit
+    // tiers discharges BOTH obligations, so the parser must emit ONE observation per named
     // tier (integration + e2e), same scnId, same passed status. Before per-tier emission the
     // parser emitted a SINGLE observation (the first matched tier), so this reds at length 1.
     const report: CucumberJsonReport = [
@@ -134,7 +134,7 @@ describe("[SCN-LDG-014] parseCucumberEvidenceObservations emits one observation 
         ],
       },
     ];
-    // One observation per declared tier, in declaration order (@integration then @e2e), same
+    // One observation per named tier, in tag order (@integration then @e2e), same
     // scnId / status / locator. Today's single-observation parser emits only the first tier, so
     // toEqual reds on the length-1 vs length-2 mismatch.
     expect(parseCucumberEvidenceObservations(report, "integration")).toEqual([
@@ -165,13 +165,13 @@ describe("[SCN-LDG-014] parseCucumberEvidenceObservations emits one observation 
 });
 
 describe("[SCN-LDG-015] parseCucumberEvidenceObservations derives NO non-unit level from a @unit-only scenario and never manufactures a unit discharge", () => {
-  it("falls back to the single caller-declared level for a @unit-only scenario — never a unit observation (unit is vitest's substrate, not cucumber-derivable)", () => {
+  it("falls back to the single caller-named level for a @unit-only scenario — never a unit observation (unit is vitest's substrate, not cucumber-derivable)", () => {
     // The NEGATIVE BOUNDARY of the derivation rule: @unit is NOT a cucumber-derivable tier, so
-    // deriveLevels finds no non-unit tier tag and falls back to the SINGLE caller-declared level
+    // deriveLevels finds no non-unit tier tag and falls back to the SINGLE caller-supplied level
     // (integration). Exactly ONE observation, at the fallback level — and crucially NOT levelled
     // unit: cucumber must never manufacture a unit discharge for a @unit-only scenario (unit is
     // the vitest substrate). Reds if @unit is added to the derivable tiers — a spurious unit
-    // observation would then discharge the scenario's unit obligation where none is declared.
+    // observation would then discharge the scenario's unit obligation where none is named.
     const report: CucumberJsonReport = [
       {
         uri: "features/unitOnly.feature",
@@ -216,13 +216,13 @@ describe("[SCN-PND-013] parseCucumberEvidenceObservations classifies a scenario 
   });
 
   // The three-way's teeth: each inconclusive status (a stub that RAN but proved nothing) emits
-  // NOTHING — dropped at the reader, so the declared obligation reconciles missing BY ABSENCE.
+  // NOTHING — dropped at the reader, so the evidence obligation reconciles missing BY ABSENCE.
   //
   // `ambiguous` LEFT this list at @SCN-LDG-019: it is not a stub that proved nothing but a BROKEN
   // HARNESS — two step definitions match one step, so the step CANNOT run — and the reader now
   // emits a `broken` observation for it (see [SCN-LDG-019] below). PND-013's own Examples row
   // `| ambiguous | missing |` still holds: the reconciler's fail-safe excludes a broken
-  // observation from the obligation match, so the declared obligation still reconciles missing BY
+  // observation from the obligation match, so the evidence obligation still reconciles missing BY
   // ABSENCE. The statuses that STAY dropped stay honest: `undefined` (no step definition written —
   // the test genuinely is absent), `pending` (explicitly deferred), `skipped` (never ran).
   for (const status of ["undefined", "pending", "skipped"]) {
@@ -231,10 +231,10 @@ describe("[SCN-PND-013] parseCucumberEvidenceObservations classifies a scenario 
     });
   }
 
-  it("drops an inconclusive scenario at EVERY declared tier — the drop is whole-scenario, not per-tier", () => {
-    // The multi-tier note: a scenario declaring @integration @e2e that reads inconclusive emits
+  it("drops an inconclusive scenario at EVERY named tier — the drop is whole-scenario, not per-tier", () => {
+    // The multi-tier note: a scenario NAMING @integration @e2e that reads inconclusive emits
     // NO observation at ANY tier (not integration-dropped-but-e2e-kept). Reds today: the binary
-    // reader would emit a `failed` observation per declared tier (two observations).
+    // reader would emit a `failed` observation per named tier (two observations).
     const report: CucumberJsonReport = [
       {
         uri: "features/multi.feature",
@@ -320,11 +320,11 @@ describe("[SCN-LDG-019] parseCucumberEvidenceObservations emits a broken observa
     expect(observation!.message).toMatch(/never ran/i);
   });
 
-  it("emits the broken observation ONCE for a multi-tier scenario — the harness broke once, not once per declared tier", () => {
+  it("emits the broken observation ONCE for a multi-tier scenario — the harness broke once, not once per named tier", () => {
     // The whole-scenario shape, mirroring the inconclusive drop (which is whole-scenario, not
-    // per-tier): the ambiguity is a property of the STEP, so a scenario declaring @integration @e2e
+    // per-tier): the ambiguity is a property of the STEP, so a scenario NAMING @integration @e2e
     // yields ONE broken item on the suspense row, not two. It is levelled at the scenario's first
-    // declared tier.
+    // named tier.
     const observations = parseCucumberEvidenceObservations(
       ambiguousReport([{ name: "@integration" }, { name: "@e2e" }, { name: "@SCN-HNS-021" }]),
       "integration"

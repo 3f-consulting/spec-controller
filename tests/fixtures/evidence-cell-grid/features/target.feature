@@ -11,7 +11,7 @@ Feature: an evidence-cell-grid fixture target spanning every four-way cell case
     - @SCN-CEL-001 — @unit + @lint=guard:cell-grid, both discharged → Lint `1`, Unit `1`
       (named and met — the count).
     - @SCN-CEL-002 — @integration, NO cucumber observation → Integration `∅` (named, missing),
-      and Unit / E2e `—` (a column absent for this scenario — neither declared nor present).
+      and Unit / E2e `—` (a column absent for this scenario — neither named nor present).
     - @SCN-CEL-003 — @e2e ONLY, discharged by a passing cucumber observation → E2e `1`; a VITEST
       unit test nonetheless cites it, which the reconciler posts as a NO-EVIDENCE-OBLIGATION credit-side row
       (@SCN-LDG-008) and the census counts into `noEvidenceObligationCount`, OUT of `attributed` → its Unit

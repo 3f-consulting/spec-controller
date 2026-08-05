@@ -41,7 +41,7 @@ describe("[SCN-USG-001] staticObservationTally folds the posted static-check cre
   //   lint:water — a named WATERMELON (exists, unwired): posts to SCN-C but does NOT run → the
   //                running filter excludes it.
   //   lint:absent — a named MISSING guard (absent): posts to SCN-D but does NOT run → excluded.
-  //   lint:bar — RUNNING, no-evidence-obligation (no @lint declares it): the reconciler folds it to the SUSPENSE
+  //   lint:bar — RUNNING, no-evidence-obligation (no @lint cites it): the reconciler folds it to the SUSPENSE
   //              row → the 1 uncited static check.
   // Built through reconcile(), so every row is a shape the pipeline actually emits.
   const scenarios: Scenario[] = [
@@ -89,7 +89,7 @@ describe("[SCN-USG-001] staticObservationTally folds the posted static-check cre
  * THE SEAM THIS OWNS, and why @SCN-USG-004 does not already cover it. The two sides are
  * prefix-sensitive in DIFFERENT ways, and only their COMPOSITION is this scenario's subject:
  *   - the OBSERVED side IS prefix-sensitive — `runningStaticChecks` admits a script only when its
- *     name matches an injected prefix (`["lint:", "guard:"]`, declared at the CLI edge);
+ *     name matches an injected prefix (`["lint:", "guard:"]`, set at the CLI edge);
  *   - the NAMED side is NOT — `postingOf` does a `Set.has()` on the full opaque handle.
  * @SCN-USG-004 pins the first half ALONE (the observer, in isolation). Nothing pinned that the two
  * halves MEET: that a `guard:`-prefixed script CI runs and a scenario names reconciles `satisfied`
@@ -118,7 +118,7 @@ describe("[SCN-USG-005] a named guard:-prefixed static check is attributed to it
   const accountFor = (ledger: Ledger, scnId: string): ScenarioReconciliation | undefined =>
     ledger.scenarioReconciliations.find((r) => r.scnId === scnId);
 
-  // The guard-prefix set is DECLARED at the CLI edge and INJECTED, so the core assumes no
+  // The guard-prefix set is SET at the CLI edge and INJECTED, so the core assumes no
   // convention; this fixture injects the portfolio default exactly as the edge does.
   const guardPkg: PackageJsonScripts = {
     scripts: {

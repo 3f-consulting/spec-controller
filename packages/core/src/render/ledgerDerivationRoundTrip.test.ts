@@ -60,7 +60,7 @@ const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation =>
 //   SCN-CHK-002: @integration, no credit                       → a missing evidence obligation
 //   SCN-CHK-003: @lint=lint:foo, running & wired               → the named running static check
 //   SCN-CHK-004: @integrationpending                           → a Pending Item (pending = 1)
-//   1 unit credit citing SCN-PHX-001 (no feature declares it)  → a phantom row (onPhantomScenario)
+//   1 unit credit citing SCN-PHX-001 (no feature carries it)   → a phantom row (onPhantomScenario)
 //   1 uncited unit credit + the no-evidence-obligation running lint:bar    → the suspense row (onSuspenseScenario)
 const scenarios: Scenario[] = [
   { scnId: "SCN-CHK-001", evidenceObligations: [{ qualityCheck: "unit" }] },

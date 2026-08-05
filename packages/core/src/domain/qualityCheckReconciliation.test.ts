@@ -81,7 +81,7 @@ describe("[SCN-LDG-030] a Quality Check Reconciliation's carried sides are consi
   };
 
   // Expectations are DERIVED from the type-forced profile map (iterating its entries), never a
-  // hand-copied list — a new outcome, forced to declare its row, is swept automatically.
+  // hand-copied list — a new outcome, forced to STATE its row, is swept automatically.
   for (const [outcomeKey, profile] of Object.entries(OUTCOME_SIDE_PROFILE)) {
     const outcome = outcomeKey as Outcome;
     const obligationExists = profile.obligation === "Exists";

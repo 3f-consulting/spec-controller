@@ -1,7 +1,7 @@
 @PND
 Feature: A pending evidence obligation raises a Pending Item
 
-  A `<quality-check>pending` tag (evidence-manifesto §11B) declares an evidence
+  A `<quality-check>pending` tag (evidence-manifesto §11B) raises an evidence
   obligation that is owed but deliberately deferred to a later slice. This slice is
   the PARSE only: it recognises the tag and derives a pending obligation. What a
   pending obligation *does* on the ledger — the one-sided Pending Item — is slice 2.
@@ -22,10 +22,10 @@ Feature: A pending evidence obligation raises a Pending Item
   Rule: A `<quality-check>pending` tag parses as a pending evidence obligation
 
     @unit @integration @SCN-PND-001
-    Scenario Outline: <tag> declares a pending <quality-check> obligation
+    Scenario Outline: <tag> raises a pending <quality-check> obligation
       Given a planted fixture scenario tagged "<tag>"
       When the parser derives its evidence obligations
-      Then it declares a pending "<quality-check>" obligation
+      Then it raises a pending "<quality-check>" obligation
 
       Examples:
         | tag                 | quality-check |
@@ -39,14 +39,14 @@ Feature: A pending evidence obligation raises a Pending Item
     Scenario: `@integrationpending` is not read as `@integration` — the suffix is significant
       Given the planted suffix-significance fixture — a bare `@integration` scenario alongside an `@integrationpending` one
       When the parser derives each scenario's evidence obligations
-      Then the bare `@integration` scenario declares a plain "integration" obligation and no pending one
-      And the `@integrationpending` scenario declares a pending "integration" obligation and no plain one
+      Then the bare `@integration` scenario raises a plain "integration" obligation and no pending one
+      And the `@integrationpending` scenario raises a pending "integration" obligation and no plain one
 
     @unit @integration @SCN-PND-003
     Scenario: an unrecognised `<x>pending` (no such quality-check) is passed through, ignored like any unrecognised tag
       Given the planted unknown-pending fixture — an `@foopending` scenario and a plain unknown `@foo` scenario
       When the parser derives each unknown scenario's evidence obligations
-      Then every scenario declares no evidence obligation — the unknown `<x>pending` is ignored exactly like the plain unknown tag
+      Then every scenario raises no evidence obligation — the unknown `<x>pending` is ignored exactly like the plain unknown tag
 
   # The met→balanced and neither→missing results are the established @LDG baselines
   # (@SCN-LDG-001 satisfied→balanced; @SCN-LDG-003 absent→missing). This Rule adds the third:
@@ -55,8 +55,8 @@ Feature: A pending evidence obligation raises a Pending Item
   Rule: The pending result of an obligation
 
     @unit @integration @SCN-PND-004
-    Scenario Outline: <quality-check> — obligation declared pending → Pending Item (owed IOU)
-      Given a planted fixture scenario declaring a pending "<quality-check>" obligation
+    Scenario Outline: <quality-check> — obligation raised pending → Pending Item (owed IOU)
+      Given a planted fixture scenario raising a pending "<quality-check>" obligation
       When the reconciler reconciles it against no observation
       Then the scenario raises exactly one Pending Item for "<quality-check>"
       And the scenario posts no both-missing reconciling item — nothing is reconciled
@@ -71,12 +71,12 @@ Feature: A pending evidence obligation raises a Pending Item
 
   # A Pending Item is one-sided: the pending TAG's existence alone raises it — no observation
   # is sought. Even when a matching observation exists for the pending obligation's check, the
-  # pending declaration governs and the obligation never reconciles against it (never `satisfied`).
+  # pending tag governs and the obligation never reconciles against it (never `satisfied`).
   #
-  # A PENDING OBLIGATION NAMES NOTHING (3F-1858, correcting this Rule). Canon, Pending Item:
-  # a `pending` tag raises NO Evidence Obligation, so "an Evidence Observation citing that
-  # scenario at a pending quality-check is `no-evidence-obligation` — exactly as when nothing was declared
-  # at all". This narrative used to assert the opposite — "the pending pair stays NAMED" —
+  # A PENDING OBLIGATION NAMES NOTHING (3F-1858, correcting this Rule). Canon, Pending Item: a
+  # `pending` tag raises NO Evidence Obligation, so an Evidence Observation citing that scenario
+  # at a pending quality-check is `no-evidence-obligation` — exactly as when nothing was raised at
+  # all. This narrative used to assert the opposite — "the pending pair stays NAMED" —
   # and that left the citing credit posting to NO ACCOUNT AT ALL: the pair-check excluded it
   # from `no-evidence-obligation`, and the pending partition excluded it from the debit side. Zero rows,
   # verdict balanced, exit 0 — a run canon says must FAIL, passing.
@@ -90,7 +90,7 @@ Feature: A pending evidence obligation raises a Pending Item
 
     @unit @integration @SCN-PND-005
     Scenario: the pending tag's existence alone raises the Pending Item — no observation is sought
-      Given a planted fixture scenario declaring a pending "integration" obligation, with a matching integration observation citing it
+      Given a planted fixture scenario raising a pending "integration" obligation, with a matching integration observation citing it
       When the reconciler reconciles the fixture against that matching observation
       Then the scenario raises exactly one Pending Item for "integration"
       And the matching observation IS flagged no-evidence-obligation — a pending obligation names nothing, so nothing is attributed to it
@@ -98,7 +98,7 @@ Feature: A pending evidence obligation raises a Pending Item
 
     @unit @integration @SCN-PND-006
     Scenario: a Pending Item is not a Reconciling Item (it is not an error)
-      Given a planted fixture scenario declaring a pending "integration" obligation alongside a genuinely missing "unit" obligation
+      Given a planted fixture scenario raising a pending "integration" obligation alongside a genuinely missing "unit" obligation
       When the reconciler reconciles the mixed fixture against no observation
       Then the missing "unit" obligation is the scenario's only reconciling item — its one error
       And the pending "integration" check names no reconciling item and no evidence-obligation outcome — the Pending Item is a structurally distinct category, never counted as an error
@@ -119,7 +119,7 @@ Feature: A pending evidence obligation raises a Pending Item
 
     @unit @integration @SCN-PND-009
     Scenario: `@unit @integrationpending` with a passing unit observation → verdict balanced, one Pending Item
-      Given a planted fixture scenario declaring `@unit @integrationpending`, with a passing unit observation citing it
+      Given a planted fixture scenario raising `@unit @integrationpending`, with a passing unit observation citing it
       When the reconciler reconciles the composition fixture against that passing unit observation
       Then the unit obligation reconciles satisfied — a genuine reconciling-side balance
       And the deferred integration obligation is the scenario's one Pending Item, partitioned off
@@ -179,10 +179,10 @@ Feature: A pending evidence obligation raises a Pending Item
   # refactored, distinct from @LDG which tests the reconciler over hand-built observations). The
   # cucumber reader classifies THREE-WAY: any failing step → a `failed` observation (failing);
   # all steps passed → a `passed` observation (satisfied); otherwise INCONCLUSIVE
-  # (undefined/pending/skipped/ambiguous, none failed) → the reader emits NOTHING, so the declared
+  # (undefined/pending/skipped/ambiguous, none failed) → the reader emits NOTHING, so the evidence
   # obligation finds no observation and reconciles missing BY ABSENCE. `EvidenceStatus` stays
   # binary (passed/failed) — the drop realises inconclusive→missing with no new status and no
-  # reconciler change. `ambiguous` is deliberately not failing: no valid pass, so the declared
+  # reconciler change. `ambiguous` is deliberately not failing: no valid pass, so the evidence
   # obligation reconciles missing.
   #
   # AMBIGUOUS IS NO LONGER MERELY DROPPED (@SCN-LDG-019, superseding the earlier "never its own
@@ -191,16 +191,16 @@ Feature: A pending evidence obligation raises a Pending Item
   # observation for it, which posts to the suspense row and stamps the run unsound. The row below
   # (`| ambiguous | missing |`) STILL HOLDS and is unchanged — a bystander, not an Update: the
   # reconciler's fail-safe excludes a broken observation from the obligation match whatever it
-  # carries, so the declared obligation still reconciles missing BY ABSENCE. What changed is where
+  # carries, so the evidence obligation still reconciles missing BY ABSENCE. What changed is where
   # the reader is sent — to the colliding step definitions, not to a test file that already exists.
   # The other inconclusive statuses (`undefined` / `pending` / `skipped`) keep dropping, silently.
   Rule: An observation status maps to an existing outcome — pending is never inferred from status
 
     @unit @integration @SCN-PND-013
     Scenario Outline: a <result> cucumber observation for a non-deferred obligation → <outcome>
-      Given a planted declared integration obligation and a cucumber report whose step status is "<result>"
-      When the cucumber reader parses the report and the reconciler reconciles the declared obligation
-      Then the declared integration obligation reconciles "<outcome>"
+      Given a planted integration evidence obligation and a cucumber report whose step status is "<result>"
+      When the cucumber reader parses the report and the reconciler reconciles the obligation
+      Then the integration evidence obligation reconciles "<outcome>"
 
       Examples:
         | result    | outcome   |
@@ -211,35 +211,24 @@ Feature: A pending evidence obligation raises a Pending Item
         | skipped   | missing   |
         | ambiguous | missing   |
 
-    # The anti-leniency corollary of PND-013, at the VERDICT level: PND-013 pinned the reader's
-    # per-status outcome; this pins what an undefined step DOES to a scenario that declared an
-    # obligation but NO `<qc>pending`. Cucumber's own leniency would silently excuse an undefined
-    # step (the hole this tool must not have); here the dropped observation leaves the declared
-    # `@integration` obligation MISSING, so the scenario verdict is out-of-balance — a real gap,
-    # never a Pending Item. A Pending Item requires a `<qc>pending` DECLARATION (slice 1/4); it is
-    # never inferred from an inconclusive run's status. This is the observation-side assertion that
-    # makes "pending is a declaration, never inferred from status" bite.
+    # Cucumber's own leniency would silently EXCUSE an undefined step — the hole this tool must
+    # not have. A Pending Item requires a `<qc>pending` tag; it is never inferred from an
+    # inconclusive run's status, so the dropped observation leaves the obligation MISSING.
     @unit @integration @SCN-PND-014
-    Scenario: an undeclared undefined step is reported out-of-balance (missing), not excused as pending
-      Given a planted declared integration obligation carrying no pending declaration, and a cucumber report whose step is undefined
-      When the cucumber reader drops the undefined step and the reconciler reconciles the declared obligation
+    Scenario: an undefined step with no pending flag is reported out-of-balance (missing), not excused as pending
+      Given a planted integration evidence obligation carrying no pending flag, and a cucumber report whose step is undefined
+      When the cucumber reader drops the undefined step and the reconciler reconciles the obligation
       Then the scenario verdict is out-of-balance, its integration obligation a missing reconciling item
       And the scenario raises no Pending Item — the undefined step is not excused as pending
 
-    # The uniformity scenario: inconclusive→missing is reader-AGNOSTIC, so the vitest reader
-    # classifies THREE-WAY exactly as the cucumber reader (PND-013) does — over vitest's own status
-    # vocabulary. A `passed` assertion → a `passed` observation (satisfied); a `failed` assertion →
-    # a `failed` observation (failing); an inconclusive vitest status (`skipped`/`todo`, and any
-    # status ∉ {passed, failed}) → the reader emits NOTHING, so the declared obligation finds no
-    # observation and reconciles missing BY ABSENCE. A dedicated scenario (not a PND-013 row)
-    # because the readers have DISTINCT status vocabularies; the same reader-agnostic Rule houses
-    # both. Cucumber-only would leave a skipped unit test read as a FAILURE — the exact per-reader
-    # inconsistency this uniformity scenario exists to catch. A skipped/todo unit test is a gap.
+    # A dedicated scenario rather than a @SCN-PND-013 row, because the two readers have DISTINCT
+    # status vocabularies. Cucumber-only would leave a skipped unit test read as a FAILURE — the
+    # exact per-reader inconsistency this uniformity scenario exists to catch.
     @unit @integration @SCN-PND-015
     Scenario Outline: a vitest <result> observation for a non-deferred obligation → <outcome>
-      Given a planted declared unit obligation and a vitest report whose assertion status is "<result>"
-      When the vitest reader parses the report and the reconciler reconciles the declared obligation
-      Then the declared unit obligation reconciles "<outcome>"
+      Given a planted unit evidence obligation and a vitest report whose assertion status is "<result>"
+      When the vitest reader parses the report and the reconciler reconciles the obligation
+      Then the unit evidence obligation reconciles "<outcome>"
 
       Examples:
         | result  | outcome   |
@@ -250,14 +239,14 @@ Feature: A pending evidence obligation raises a Pending Item
 
   # Slice 4 — SCENARIO-SCOPE community deferral (foundation). A recognised community
   # deferral tag — @wip / @ignore / @skip / @todo / @pending, the established Cucumber
-  # conventions — on a scenario defers EVERY obligation the scenario declares: each becomes
+  # conventions — on a scenario defers EVERY obligation the scenario raises: each becomes
   # a Pending Item, overriding the observation-derived outcome (slice 3). It reuses the
   # slice-1/2 pending machinery (the `pending` flag → the reconcile partition → Pending
   # Item), so a `@wip @unit @integration` scenario carries TWO Pending Items and verdict
   # balanced. The recognised set is the single-sourced starter constant DEFAULT_DEFERRAL_TAGS
   # (bare names; the `@` is tag-line syntax); parseScenarios takes the set as a defaulted
   # param, so config-EXTENSION is @SCN-PND-021's job, not this one. This sub-issue covers
-  # scenarios WITH declared obligations; the zero-obligation bare-`@wip` case (a synthesised
+  # scenarios that RAISE obligations; the zero-obligation bare-`@wip` case (a synthesised
   # scenario-level Pending Item) is @SCN-PND-022.
   Rule: A recognised deferral tag raises a Pending Item, overriding the observation-derived outcome
 
@@ -265,7 +254,7 @@ Feature: A pending evidence obligation raises a Pending Item
     Scenario Outline: a recognised community tag <tag> defers every obligation on its scenario (scenario-scope)
       Given a planted fixture scenario carrying the community tag "<tag>" alongside a `@unit` and an `@integration` obligation
       When the parser derives the scenario's evidence obligations and the reconciler reconciles it against no observation
-      Then both the declared unit and integration obligations are deferred — pending, overriding their observation-derived outcome
+      Then both the unit and integration evidence obligations are deferred — pending, overriding their observation-derived outcome
       And the scenario raises two Pending Items and has verdict balanced — no reconciling item
 
       Examples:
@@ -307,37 +296,25 @@ Feature: A pending evidence obligation raises a Pending Item
       Then the unit obligation is deferred by the scenario-scope `@wip` and the integration obligation by the obligation-scope `@integrationpending` — both pending, one from each source
       And the scenario raises two Pending Items and has verdict balanced — no reconciling item, the two deferral sources composing without interference
 
-    # The DECLARATION-OVERRIDES-OBSERVATION close-out of the slice-4 Rule: the recognised
-    # deferral tag raises the Pending Item REGARDLESS of the observation side (slice 3 — the
-    # declaration overrides the observation-derived outcome). The pending flag is set at PARSE,
-    # before any observation match, so the obligation partitions to a Pending Item whatever the
-    # observed side would otherwise derive. Pinned over the two sides that would ELSE reconcile
-    # `missing`: a `@skip` scenario FILTERED OUT of the run (no observation at all → missing by
-    # absence) and a `@wip` scenario REPORTING A PENDING STATUS (a cucumber `pending`-status step
-    # the reader drops → again missing by absence). Both are instead Pending Items — never a
-    # missing reconciling item — so the declaration is proven to govern from either observation
-    # side, not merely against no observation (@SCN-PND-016's angle).
+    # The pending flag is set at PARSE, before any observation match, so the obligation partitions
+    # to a Pending Item whatever the observed side would otherwise derive. Pinned over the two
+    # sides that would ELSE reconcile `missing` — a `@skip` scenario filtered out of the run, and a
+    # `@wip` scenario whose cucumber `pending`-status step the reader drops.
     @unit @integration @SCN-PND-019
     Scenario: a community deferral tag raises the Pending Item whether its scenario is filtered out (absent from the report) or reports a pending status
       Given a planted fixture — a `@skip @integration` scenario filtered out of the run, and a `@wip @integration` scenario reporting a cucumber pending status
       When the parser derives each scenario's obligations and the reconciler reconciles each against its observation side — the filtered-out one against no observation, the pending-status one against the reader's dropped output
       Then the filtered-out scenario's integration obligation is a Pending Item, not a missing reconciling item — the deferral overrides the absent observation
       And the pending-status scenario's integration obligation is a Pending Item, not a missing reconciling item — the deferral overrides the dropped observation
-      And each scenario has verdict balanced and names no reconciling item — the declaration governs regardless of the observation side
+      And each scenario has verdict balanced and names no reconciling item — the pending flag governs regardless of the observation side
 
-    # The NEGATIVE BOUNDARY of the slice-4 Rule: a tag NOT in the recognised deferral set — an
-    # unregistered project tag like `@foo` — is given NO special meaning and does NOT defer. The
-    # scenario-scope deferral is gated on membership of the recognised set (the DEFAULT_DEFERRAL_TAGS
-    # starter tags, or a project's configured extension @SCN-PND-021), never on any tag that merely
-    # LOOKS like a deferral. So a scenario carrying `@foo` alongside a declared `@unit` obligation
-    # reconciles that obligation ON ITS OBSERVATION (satisfied / failing / missing per slice 3) — here
-    # a passing unit observation reconciles it satisfied — and raises NO Pending Item. This is the
-    # slice-1 lexicon principle at scenario-scope: special meaning only for the recognised set;
-    # everything else passes through untouched, exactly like the obligation-scope `<x>pending`
-    # passthrough (@SCN-PND-003).
+    # The scenario-scope deferral is gated on MEMBERSHIP of the recognised set (DEFAULT_DEFERRAL_TAGS,
+    # or a project's configured extension @SCN-PND-021) — never on a tag that merely LOOKS like a
+    # deferral. The slice-1 lexicon principle at scenario scope, mirroring the obligation-scope
+    # `<x>pending` passthrough (@SCN-PND-003).
     @unit @integration @SCN-PND-020
     Scenario: an unrecognised tag is not treated as pending — the obligation reconciles on its observation
-      Given a planted fixture scenario carrying an unrecognised `@foo` tag alongside a declared `@unit` obligation, with a passing unit observation citing it
+      Given a planted fixture scenario carrying an unrecognised `@foo` tag alongside a `@unit` evidence obligation, with a passing unit observation citing it
       When the parser derives the unrecognised-tag scenario's evidence obligations and the reconciler reconciles it against that passing unit observation
       Then the unit obligation is not deferred — the unrecognised tag carries no special meaning, so it has no pending flag
       And the unit obligation reconciles satisfied and the scenario raises no Pending Item — verdict balanced, no reconciling item
@@ -359,28 +336,19 @@ Feature: A pending evidence obligation raises a Pending Item
     # features/ corpus (fixture policy, evidence-manifesto §11B).
     @unit @integration @SCN-PND-021
     Scenario: the recognised deferral-tag set is configuration — a project-configured tag defers like the built-in set
-      Given a planted target repo whose package.json configures the deferral tag "@deferred", alongside a feature declaring a `@deferred @integration` scenario and a built-in `@wip @integration` one
+      Given a planted target repo whose package.json configures the deferral tag "@deferred", alongside a feature carrying a `@deferred @integration` scenario and a built-in `@wip @integration` one
       When the balance reconciler ingests the target — reading specController.deferralTags from its package.json and threading the extended set through the parser
       Then the project-configured `@deferred` scenario's integration obligation is a Pending Item — deferred like a built-in, verdict balanced, no reconciling item
       And the built-in `@wip` scenario still defers its integration obligation as a Pending Item — config extends the recognised set, never replaces it
 
-    # INTERPRETATION 2 — the bare-`@wip` close-out of the slice-4 Rule. A scenario carrying a
-    # recognised deferral tag (a bare `@wip` — drive-slice's convention for an authored scenario
-    # awaiting its evidence: `@wip` + `@SCN`, NO evidence tag) declares ZERO evidence obligations.
-    # Before this, it reconciled as BOTH-MISSING (out-of-balance) — the degenerate zero-rows-on-
-    # both-sides row. Now the deferral tag synthesises ONE scenario-scope Pending Item (a
-    # `qualityCheck`-less IOU — the whole scenario is deferred, owing no specific check), so the
-    # scenario is deferred (pending), verdict balanced, NOT both-missing. The model change:
-    # `PendingItem.qualityCheck` (and the `EvidenceObligation.qualityCheck` that feeds it) becomes
-    # optional — `undefined` = scenario-scope. The render (slice 2's `⏳ pending: <check>`) handles
-    # the check-less item → a bare `⏳ pending` marker; the Summary tally counts it like any Pending
-    # Item. The @unit arm proves the parse synthesis + the reconcile partition in isolation; this
-    # @integration arm proves the full parse→reconcile→render pipeline over a PLANTED bare-`@wip`
-    # feature-string. Never a real bare-`@wip` scenario in the scanned features/ corpus (fixture
-    # policy, evidence-manifesto §11B).
+    # A bare `@wip` — drive-slice's convention for an authored scenario awaiting its evidence —
+    # raises ZERO evidence obligations, so the deferral tag synthesises ONE scenario-scope Pending
+    # Item: `PendingItem.qualityCheck` is `undefined`, the whole scenario deferred, owing no
+    # specific check. The fixture is PLANTED — never a real bare-`@wip` scenario in the scanned
+    # features/ corpus (fixture policy, evidence-manifesto §11B).
     @unit @integration @SCN-PND-022
-    Scenario: a deferred scenario declaring no obligations is a Pending Item, not both-missing
-      Given a planted fixture scenario carrying a bare `@wip` deferral tag and declaring no evidence obligations
+    Scenario: a deferred scenario raising no obligations is a Pending Item, not both-missing
+      Given a planted fixture scenario carrying a bare `@wip` deferral tag and raising no evidence obligations
       When the parser derives its obligations and the reconciler and renderer run the full pipeline over it
       Then the scenario synthesises one scenario-scope Pending Item and has verdict balanced — not the both-missing out-of-balance row
       And the rendered row shows a check-less `⏳ pending` marker — scenario-scope, naming no specific quality-check

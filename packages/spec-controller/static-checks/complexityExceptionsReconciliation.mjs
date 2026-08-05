@@ -89,7 +89,7 @@ const ruleOf = (message, path) => {
   if (rule !== null && Object.hasOwn(VALUE_PATTERNS, rule)) return rule;
   throw new Error(
     `@SCN-CPX-003: cannot attribute an eslint finding in ${path} to one of the three rules ` +
-      `(ruleId ${String(rule)}): ${message.message}. The bare-standard config declares only ` +
+      `(ruleId ${String(rule)}): ${message.message}. The bare-standard config names only ` +
       `complexity / max-lines / max-lines-per-function, so this means the config or the parse moved.`,
   );
 };

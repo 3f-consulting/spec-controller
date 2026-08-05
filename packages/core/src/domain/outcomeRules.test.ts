@@ -75,16 +75,16 @@ describe("[SCN-LDG-001] the pending partition splits a scenario's obligations ex
   });
 });
 
-describe("[SCN-LDG-001] noEvidenceObligationReconciliationsOf lists credits at undeclared quality-checks", () => {
+describe("[SCN-LDG-001] noEvidenceObligationReconciliationsOf lists credits at quality-checks with no evidence obligation", () => {
   const pairs = new Set(["SCN-AAA-001 unit"]);
 
-  it("skips a credit at a DECLARED pair — that one reconciles as a matched obligation", () => {
+  it("skips a credit at a NAMED pair — that one reconciles as a matched obligation", () => {
     expect(
       noEvidenceObligationReconciliationsOf("SCN-AAA-001", [credit("unit", "SCN-AAA-001")], pairs)
     ).toEqual([]);
   });
 
-  it("lists a credit at an UNDECLARED quality-check, credit-only, carrying its locator", () => {
+  it("lists a credit at a quality-check with NO evidence obligation, credit-only, carrying its locator", () => {
     const items = noEvidenceObligationReconciliationsOf(
       "SCN-AAA-001",
       [credit("e2e", "SCN-AAA-001", { locator: "tests/a.e2e.ts" })],
@@ -93,7 +93,7 @@ describe("[SCN-LDG-001] noEvidenceObligationReconciliationsOf lists credits at u
     expect(items).toHaveLength(1);
     expect(items[0]!.outcome).toBe("no-evidence-obligation");
     expect(items[0]!.locator).toBe("tests/a.e2e.ts");
-    // CREDIT-ONLY — a credit at an undeclared check reconciles against no obligation.
+    // CREDIT-ONLY — a credit at a check the scenario never named reconciles against no obligation.
     expect(items[0]!.evidenceObligation).toBeUndefined();
     expect(items[0]!.evidenceObservation).toBeDefined();
   });
@@ -179,7 +179,7 @@ describe("[SCN-LDG-001] qualityCheckReconciliationsOf degenerates a row to both-
   /**
    * @SCN-LDG-010, the twin — a zero-obligation scenario CITED by a stray credit already has a
    * no-evidence-obligation row, so it must fall through rather than post a degenerate item beside it. This is
-   * why detection keys on rows-emitted, never on the declaration count.
+   * why detection keys on rows-emitted, never on the obligation count.
    */
   it("does NOT degenerate when a no-evidence-obligation credit already produced a row", () => {
     const items = qualityCheckReconciliationsOf([], [anItem()], []);

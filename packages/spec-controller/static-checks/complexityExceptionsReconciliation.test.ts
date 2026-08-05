@@ -33,7 +33,7 @@ import type {
 /** The repo root, from this file's location — the tests run with cwd at the workspace root. */
 const ROOT = process.cwd();
 
-/** The named check this scenario declares, and the prefix that makes the ledger observe it. */
+/** The static check this scenario NAMES, and the prefix that makes the ledger observe it. */
 const CHECK_NAME = "lint:complexity-exceptions";
 const OBSERVED_PREFIX = "lint:";
 

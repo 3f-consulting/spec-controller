@@ -17,7 +17,7 @@
  *      EXPECTED_VALUE_EXPORTS, so a value symbol added to OR dropped from the
  *      barrel reds this test.
  *
- *   2. COMPILED-DECLARATION TYPE arm — the TypeScript compiler API
+ *   2. COMPILED-TYPE-SURFACE arm — the TypeScript compiler API
  *      (`typescript`, already a dep) is asked, at test time, for the barrel's
  *      exported TYPE names: it builds a Program over index.ts, resolves each
  *      module export (through its `export type { … }` alias) and keeps the
@@ -25,7 +25,7 @@
  *      asserted EQUAL to EXPECTED_TYPE_EXPORTS, both directions — so a type
  *      added, dropped, OR renamed on the barrel reds this test. (Runtime
  *      reflection cannot see type-only exports; reading them off the compiled
- *      declaration surface closes the type-add / type-rename hole a pure
+ *      type surface closes the type-add / type-rename hole a pure
  *      `import type` check leaves open.)
  */
 
@@ -40,18 +40,18 @@ import * as barrel from "./index.js";
 import type { QualityCheckReconciliation } from "./index.js";
 
 // -----------------------------------------------------------------------------
-// COMPILED-DECLARATION TYPE arm — reflect the barrel's type-only export names.
+// COMPILED-TYPE-SURFACE arm — reflect the barrel's type-only export names.
 // -----------------------------------------------------------------------------
 
 const BARREL_PATH = fileURLToPath(new URL("./index.ts", import.meta.url));
 
 /**
  * Reflect the TYPE-only export names of the core barrel via the TypeScript
- * compiler API — the compiled-declaration surface, independent of any runtime
+ * compiler API — the compiled TYPE SURFACE, independent of any runtime
  * namespace. A Program is built over index.ts with the repo's resolution
  * settings; each module export is resolved through its (`export type { … }`)
  * alias, and the ones carrying TYPE meaning but NOT value meaning are the
- * declared type exports. Deterministic (reads the on-disk source) and fast
+ * type-only exports. Deterministic (reads the on-disk source) and fast
  * (bind + symbol resolution only — no full type-check; ~0.3s locally).
  */
 function reflectBarrelTypeExports(): string[] {

@@ -18,9 +18,10 @@
  * does it derive rename targets: canon states one sentence per row, while this
  * repository's targets are per-inflection, so that mapping stays in `vocabWordSets.ts`.
  *
- * SELF-EXEMPT. The table beside this file enumerates the banned vocabulary, so both are
- * listed in `vocabAuditCli.ts`'s `SELF_EXEMPT_PATHS` alongside `vocabWordSets.ts` — the
- * same meta-mention exemption (operator ruling 2026-07-02).
+ * NOT EXEMPT. The TABLE beside this file (`blockedVocabulary.md`) is on `SELF_EXEMPT` — it
+ * IS the list of retired words, so every hit in it is a mention. This MODULE is not: it
+ * parses the table rather than enumerating it, and 3F-2392 cleared the last residual, so no
+ * code file is exempt and this one is audited like any other.
  */
 
 import { readFileSync } from "node:fs";
@@ -190,7 +191,8 @@ export function bannedWordsOf(rows: readonly BlockedVocabularyRow[]): ReadonlySe
  *
  * A `deferred` or `not-applicable` row contributes NOTHING, which is what lets this
  * repository ship green against the unadopted rows' 2,272 occurrences — and when 3F-2329
- * flips the `declare` row to adopted, `declared` joins this set with no code change here.
+ * flips its last deferred row to adopted, that row's trigger word joins this set with no code
+ * change here.
  */
 export function adoptedTriggerWords(
   rows: readonly BlockedVocabularyRow[] = BLOCKED_VOCABULARY_ROWS,

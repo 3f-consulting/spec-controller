@@ -18,12 +18,12 @@ Feature: a broken-attribution reconciliation fixture target
   registry lint nor the scenario↔sub-issue gate sees @AMB / @SCN-AMB-NNN — they scan
   features/*.feature only.
 
-  Rule: the fixture target declares two integration-level scenarios, one of them broken
+  Rule: the fixture target names two integration-level scenarios, one of them broken
 
     @integration @SCN-AMB-001
-    Scenario: the target declares a scenario whose step is ambiguous
+    Scenario: the target names a scenario whose step is ambiguous
       Given the target repo's source
 
     @integration @SCN-AMB-002
-    Scenario: the target declares a scenario that runs cleanly
+    Scenario: the target names a scenario that runs cleanly
       Given the target repo's source

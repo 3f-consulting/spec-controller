@@ -33,8 +33,8 @@ export type ScenarioVerdict = "balanced" | "out-of-balance";
  * The scenario-kind discriminator — which KIND of scenario a Scenario
  * Reconciliation row is *about* (Account ≠ Scenario):
  *   - `scenario`          — a real scenario (the ordinary row).
- *   - `phantom-scenario`  — a cited-but-UNDECLARED scenario id: an evidence observation
- *                            cites an `@SCN` no feature declares (outcome
+ *   - `phantom-scenario`  — a cited-but-UNKNOWN scenario id: an evidence observation
+ *                            cites an `@SCN` no feature carries (outcome
  *                            `cites-unknown-scenario`; @SCN-LDG-006).
  *   - `suspense-scenario` — the placeholder for credits citing NO scenario (outcome
  *                            `cites-no-scenario`; arrives with LDG-007).
@@ -49,7 +49,7 @@ export interface ScenarioReconciliation {
   scnId: string;
   /**
    * The scenario-kind this row is about — `scenario` on a real row, `phantom-scenario` on a
-   * cited-but-undeclared row, `suspense-scenario` on the cites-nothing placeholder.
+   * cited-but-unknown row, `suspense-scenario` on the cites-nothing placeholder.
    *
    * REQUIRED (3F-1861). It was optional, defaulting to `scenario`, "for back-compat with
    * hand-built fixtures" — the model made ambiguous to accommodate the test data. Stating the
@@ -77,7 +77,7 @@ export interface ScenarioReconciliation {
    * a misclassification must MISFILE an entry, never vaporise it. So this array is NOT derivable
    * from `qualityCheckReconciliations` — that is the whole point of the layer.
    *
-   * THE ACCOUNT IS THE CITATION, never the outcome. A credit citing a declared @SCN posts to that
+   * THE ACCOUNT IS THE CITATION, never the outcome. A credit citing a REAL @SCN posts to that
    * scenario's account; one citing an unknown @SCN posts to that phantom account; one citing NO
    * scenario posts to suspense. Exactly one account each, jointly exhaustive over the input.
    *
@@ -88,7 +88,7 @@ export interface ScenarioReconciliation {
    */
   evidenceObservations: EvidenceObservation[];
   /**
-   * The POSTED DEBITS — every evidence obligation THIS scenario declares (@SCN-LDG-023), keyed by
+   * The POSTED DEBITS — every evidence obligation THIS scenario RAISES (@SCN-LDG-023), keyed by
    * quality-check. The debit half of `evidenceObservations` above: canon's Ledger is "the evidence
    * obligations (debits) and evidence observations (credits) organised by real or invented
    * scenario, KEYED BY QUALITY-CHECK", and this is where an account's debits SIT.
@@ -103,12 +103,12 @@ export interface ScenarioReconciliation {
    * `QualityCheckReconciliation` at all — and it posts here ANYWAY. So this array is NOT derivable
    * from `qualityCheckReconciliations`; that is the whole point of the layer.
    *
-   * THE ACCOUNT IS THE DECLARATION. Unlike a credit there is no citation to follow and no
-   * suspense: a declared obligation always has a real account, by construction. The accounts a
-   * CREDIT mints — phantom and suspense — declare nothing, so their debit side is empty. That
-   * asymmetry is real, not an omission.
+   * THE ACCOUNT IS THE SCENARIO ITSELF. Unlike a credit there is no citation to follow and no
+   * suspense: an obligation always has a real account, by construction. The accounts a CREDIT
+   * mints — phantom and suspense — raise nothing, so their debit side is empty. That asymmetry
+   * is real, not an omission.
    *
-   * REQUIRED (3F-1861) — `[]` states "nothing declared" explicitly, which is the honest value on a
+   * REQUIRED (3F-1861) — `[]` states "nothing raised" explicitly, which is the honest value on a
    * phantom or suspense account. It was optional, defaulting to `[]` "for back-compat with
    * hand-built fixtures", which made the real asymmetry above indistinguishable from a fixture
    * that had simply not said.
@@ -131,10 +131,10 @@ export interface ScenarioReconciliation {
   reconcilingItems: QualityCheckReconciliation[];
   /**
    * The one-sided PENDING ITEMS — one per `<quality-check>pending` obligation the
-   * scenario declared (evidence-manifesto §11B). PARTITIONED OFF before reconciliation:
+   * scenario carries (evidence-manifesto §11B). PARTITIONED OFF before reconciliation:
    * a Pending Item is never a Reconciling Item (never in `evidenceObligations` /
    * `reconcilingItems`), so `verdictFor` / `reconcilingItemsOf` / `isBalanced` need no
-   * pending-awareness. REQUIRED — `[]` when the scenario declared no pending obligation. (The
+   * pending-awareness. REQUIRED — `[]` when the scenario raised no pending obligation. (The
    * comment here claimed it was OPTIONAL with an `ABSENCE ≡ []` default; the field never was.
    * Corrected with 3F-1861, which removed that convention from the fields that really had it.)
    */
@@ -180,10 +180,10 @@ export function reconcilingItemsOf(
 /**
  * Is this row about a REAL scenario? (3F-2230.)
  *
- * Canon, Scenario: *"**Scenario** names **only the declared thing**: a cited-but-undeclared id is a
- * **phantom scenario**, and the bucket for uncited credits is the **suspense scenario** — neither is
- * a scenario."* This function is that sentence; every consumer that needs the real-scenario cut asks
- * it rather than restating it.
+ * Canon, Scenario: a `Scenario` names only the REAL thing — a cited-but-unknown id is a
+ * **phantom scenario**, and the bucket for uncited credits is the **suspense scenario**; neither
+ * is a scenario. This function is that sentence; every consumer that needs the real-scenario cut
+ * asks it rather than restating it.
  *
  * It had no home and was open-coded FIVE times — four in the renderer, one in the Ledger's lint
  * fold — as the double negative `kind !== "phantom-scenario" && kind !== "suspense-scenario"`. They
@@ -193,7 +193,7 @@ export function reconcilingItemsOf(
  * STATED POSITIVELY, which is not merely tidier. `ScenarioKind` has exactly three values, so the
  * double negative is equivalent TODAY — but only by exhaustion. A fourth kind would silently fall
  * into the real-scenario cut under the negative form and be excluded under this one, and canon is
- * unambiguous about which is right: `scenario` is reserved for the declared thing, so a kind nobody
+ * unambiguous about which is right: `scenario` is reserved for the REAL thing, so a kind nobody
  * has taught this function about is not one.
  */
 export function isScenario(row: ScenarioReconciliation): boolean {
@@ -204,7 +204,7 @@ export function isScenario(row: ScenarioReconciliation): boolean {
  * A row's STATIC-CHECK sub-rows — its `lint` Quality Check Reconciliations, in document order, one
  * per `@lint=<guard>` obligation the scenario named (3F-2203).
  *
- * The DECLARED-side cut: `lint` reconciliations only ever arise from a declared obligation, so this
+ * The OBLIGATION-side cut: `lint` reconciliations only ever arise from an obligation, so this
  * is the row's named-static-check count as well as its list. It is the single source both the
  * renderer's grid cell and the Ledger's `lintTally` read — they each re-derived it before, agreeing
  * by copy.
@@ -238,11 +238,11 @@ export function presentStaticCheckCountOf(row: ScenarioReconciliation): number {
  * together, degenerating to the ONE `both-missing` item when the row reconciled to nothing either
  * way (@SCN-LDG-009, 3F-2204). The row-SHAPE rule, so it lives with the row.
  *
- * BOTH-MISSING is the NEITHER-side outcome: zero declared obligations AND zero no-evidence-obligation credits.
+ * BOTH-MISSING is the NEITHER-side outcome: zero obligations AND zero no-evidence-obligation credits.
  * It is detected on ROWS-EMITTED — the concatenated set being empty — never on
  * `evidenceObligations.length === 0`. That distinction is load-bearing: a zero-obligation scenario
  * whose `@SCN` IS cited by a stray credit (@SCN-LDG-010, the twin) already produced a `no-evidence-obligation`
- * row above, so it falls through here and is never both-missing. Keying on the declaration count
+ * row above, so it falls through here and is never both-missing. Keying on the obligation count
  * instead would post a spurious degenerate item beside a real one.
  *
  * THE PENDING CLAUSE (@SCN-PND-004) — the degenerate item fires only on zero rows AND zero Pending
@@ -252,7 +252,7 @@ export function presentStaticCheckCountOf(row: ScenarioReconciliation): number {
  * both-missing and red a run canon says is deferred, not broken. (A bare-empty scenario — no
  * obligation, no pending, no citation — is still both-missing, which is the point of the rule.)
  *
- * This retires the no-evidence-declared warning (@SCN-WRN-001 Update): a zero-evidence scenario is
+ * This retires the zero-evidence-scenario warning (@SCN-WRN-001 Update): a zero-evidence scenario is
  * an out-of-balance row now, not a separate authoring-quality axis excluded from the balance.
  */
 export function qualityCheckReconciliationsOf(

@@ -30,7 +30,7 @@ Feature: No parallel store re-represents the Ledger's entries
       Given every production file under packages/core/src (excluding *.test.ts)
       When the no-parallel-store guard scans each file
       Then no file is a retired census module (evidenceObservations.ts / staticEvidenceObservations.ts)
-      And no file declares a retired credit-list or section symbol
+      And no file carries a retired credit-list or section symbol
       And no file carries a parallel attributed credit-list field
       And the guard passes clean over the real packages/core/src tree
 

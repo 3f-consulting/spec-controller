@@ -119,7 +119,7 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
     The @lint=lint:scn-subissues tag below is what closes it. The tag raises the Evidence
     Obligation the CI run settles, so the run is credited to THIS scenario instead of the
     suspense row — the @SCN-CPX-003 / @SCN-VOC-011 / @SCN-NCR-001 precedent, where observed
-    AND declared is the balanced state. The `lint:` prefix is load-bearing on the other
+    AND required is the balanced state. The `lint:` prefix is load-bearing on the other
     side of the same pairing: runningStaticChecks observes a CI script only when its name
     carries an observed prefix, so a name outside that set would run in CI while being
     invisible to spec-controller's own ledger.
@@ -133,8 +133,8 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
     that run to this scenario, leaving no static check uncited on the suspense row.
 
     @unit @integration @lint=lint:scn-subissues @SCN-SSM-006
-    Scenario: the scenario sub-issue check's own CI run is credited to the scenario declaring it
+    Scenario: the scenario sub-issue check's own CI run is credited to the scenario naming it
       Given the scn-subissues static check, wired over spec-controller's own source
       When spec-controller's own tree is reconciled
-      Then the check's run is credited to the scenario that declares it
+      Then the check's run is credited to the scenario that names it
       And no static check run is left uncited on the suspense scenario

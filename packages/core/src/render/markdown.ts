@@ -84,7 +84,7 @@ const ITEM_GLYPH: Record<Outcome, string> = {
   // Either way it posts to the suspense row: the credit can never discharge an obligation.
   "broken": "💥",
   // CREDIT-SIDE: a credit citing a REAL scenario at a quality-check it never
-  // declared — the no-evidence-obligation reconciling item on the real scenario's row (@SCN-LDG-008).
+  // named — the no-evidence-obligation reconciling item on the real scenario's row (@SCN-LDG-008).
   "no-evidence-obligation": "◇",
   // NEITHER-SIDE: a scenario reconciling to zero rows on both sides — the
   // degenerate both-missing reconciling item, blank on both sides (@SCN-LDG-009).
@@ -177,7 +177,7 @@ function cellSafe(text: string): string {
  */
 function renderPendingItem(item: PendingItem): string {
   // A `qualityCheck`-less Pending Item (@SCN-PND-022) is SCENARIO-SCOPE — a whole-scenario
-  // deferral (a bare `@wip` declaring no obligations) owing NO specific check. Render `⏳ pending`
+  // deferral (a bare `@wip` raising no obligations) owing NO specific check. Render `⏳ pending`
   // alone; an obligation-scope Pending Item names its owed check (`⏳ pending: <check>`).
   return item.qualityCheck === undefined ? "⏳ pending" : `⏳ pending: ${item.qualityCheck}`;
 }
@@ -602,22 +602,19 @@ const staticChecksSection: SectionEmitter = (report) => {
 };
 
 /**
- * Lint evidence obligations (@SCN-RPT-005; re-cut under Summary views with a
- * total line; labelled by the @lint TAG, not the kind) — lifts
- * every `kind === "static"` (`@lint`) evidence obligation out of the per-scenario trial
+ * Lint evidence obligations (@SCN-RPT-005; re-cut under Summary views with a total line, labelled
+ * by the @lint TAG) — lifts every `@lint` evidence obligation out of the per-scenario trial
  * balance into its OWN `### Lint evidence obligations` table `| Scenario | Static check | Outcome |`,
- * one row per evidenceObligation in document order, each `outcome` carrying its `ITEM_GLYPH` glyph (so a
- * 🍉 watermelon reads at a glance). The total line outcomes how many of them reconcile
- * balanced — read off the report's materialised `summary.lint` tally. The
- * heading/total label is the tag word "lint" (the internal kind "static" is never rendered).
- * Omitted entirely (returns `[]`) when no scenario declares a lint evidenceObligation.
- * The rows are a pure derive over `report.ledger.scenarioReconciliations[].evidenceObligations[]`; markdown-only.
+ * one row per obligation in document order, each `outcome` carrying its `ITEM_GLYPH` glyph (so a
+ * 🍉 watermelon reads at a glance). The total line STATES how many of them reconcile balanced —
+ * read off the report's materialised `summary.lint` tally. Omitted entirely (returns `[]`) when no
+ * scenario names a lint obligation. A pure derive over the ledger rows; markdown-only.
  */
 const lintSection: SectionEmitter = (report) => {
-  // Scenario rows only — a lint evidence obligation is a declared-side thing. The suspense row's
+  // Scenario rows only — a lint evidence obligation is an obligation-side thing. The suspense row's
   // lint credit (an uncited static-check, cites-no-scenario) is NOT an evidence obligation, so
   // it stays out of this table + tally; it surfaces on the suspense row's reconciling items.
-  // ASKED, not derived (3F-2203) — the declared lint sub-rows are a model list, and it is the SAME
+  // ASKED, not derived (3F-2203) — the obligation-side lint sub-rows are a model list, and it is the SAME
   // list `summary.lint` is tallied from, so the table and its total line cannot disagree. The
   // scenario-rows-only cut (a suspense lint CREDIT is an observation, not an obligation) lives with
   // the rule; it stood here and in `lintTally`, character-identical, agreeing by copy.
@@ -653,7 +650,7 @@ const lintSection: SectionEmitter = (report) => {
  * A malformed/unparseable scnId (`featureCodeOf` → null) falls back to its raw id as the
  * group key, so no discrepancy is dropped. The Feature cell reads `<slug> (<FFF>)` when a
  * `featureNames` map provides the slug for the code, else the bare `FFF` — the
- * fallback for an uncoded id (no file declares the code) or the no-map back-compat path.
+ * fallback for an uncoded id (no file registers the code) or the no-map back-compat path.
  * Omitted entirely when no scenario is out of balance. A pure derive over
  * `report.ledger.scenarioReconciliations` (+ the model's `metadata.featureNames` title lookup);
  * markdown-only.
@@ -696,15 +693,14 @@ const byFeatureSection: SectionEmitter = (report) => {
 /**
  * One corpus-driven evidence column in the ledger: the lint (static) column,
  * or a runtime quality-check column. The column SET is corpus-driven — only the quality-checks
- * the run declares or observes appear, so e2e / performance show up only when present.
+ * the run raises or observes appear, so e2e / performance show up only when present.
  */
 type EvidenceColumn = { kind: "lint" } | { kind: "runtime"; qualityCheck: RuntimeQualityCheck };
 
 /**
- * The corpus-driven evidence columns: lint first (when any scenario declares a
- * static evidenceObligation), then each runtime quality-check present in EVIDENCE OBLIGATION (a declared evidenceObligation)
- * or evidence-observation (an attributed evidenceObservation), in canonical quality-check order. Reads the report's
- * `evidenceReconciliation` scenarios + `evidenceObservations.attributed` counts.
+ * The corpus-driven evidence columns: lint first (when any scenario names a static check), then
+ * each runtime quality-check present as an EVIDENCE OBLIGATION or as a posted EVIDENCE OBSERVATION
+ * on a scenario row, in canonical quality-check order.
  */
 function evidenceColumns(
   scenarios: readonly ScenarioReconciliation[]
@@ -720,7 +716,7 @@ function evidenceColumns(
   const hasStatic = scenarioRows.some((s) => staticCheckReconciliationsOf(s).length > 0);
   const qualityChecksPresent = new Set<RuntimeQualityCheck>();
   // A column appears for every runtime quality-check present in EVIDENCE OBLIGATION or OBSERVATION on a scenario
-  // row. Both are read off the Ledger: a declared or no-evidence-obligation quality-check surfaces as a
+  // row. Both are read off the Ledger: a named or no-evidence-obligation quality-check surfaces as a
   // `QualityCheckReconciliation` at that check; every observed credit surfaces as a posted credit on
   // the row (@SCN-LDG-022). The retired census's `attributed[]` re-represented those posted credits
   // — it added no quality-check the rows do not already carry (a matched/no-evidence-obligation credit always
@@ -782,11 +778,11 @@ function evidenceCell(
   col: EvidenceColumn
 ): string {
   // A PHANTOM / suspense row has no evidence obligation of its own — its
-  // whole story is the credit-side reconciling item. Every evidence cell is neither-declared-
-  // nor-a-matched-evidence obligation, so it reads `—`; the citation shows in Reconciling items.
+  // whole story is the credit-side reconciling item. Every evidence cell is neither-named-nor-
+  // matched, so it reads `—`; the citation shows in Reconciling items.
   if (!isScenario(s)) return "—";
   if (col.kind === "lint") {
-    // LEFT: a lint obligation is DECLARED iff a lint QualityCheckReconciliation exists on the row
+    // LEFT: a lint obligation is NAMED iff a lint QualityCheckReconciliation exists on the row
     // (`L`; `L2`/`L3` when the row names >1 static check — the evidence-obligation count, one
     // lint QCR per `@lint=<guard>` obligation). RIGHT: the PRESENT-guard count — the
     // static checks `satisfied` or watermelon. Lint's right stays this static-outcome derivation
@@ -804,7 +800,7 @@ function evidenceCell(
     return left === "-" && right === "-" ? "" : `${left}/${right}`;
   }
   // LEFT — EVIDENCE OBLIGATION is ASKED of the Ledger, not reconstructed. `s.evidenceObligations` is the debit
-  // side the scenario declared (@SCN-LDG-023) — the fact itself — filtered to the ACTIVE ones: a
+  // side the scenario RAISED (@SCN-LDG-023) — the fact itself — filtered to the ACTIVE ones: a
   // `<qc>pending` obligation names NOTHING (it partitions off to a one-sided Pending Item), so it
   // is not an evidence obligation. Named → the check's letter; else `-`.
   // ASKED, not re-encoded (3F-2203). "A pending obligation names nothing" is the model's rule
@@ -834,19 +830,15 @@ function evidenceCell(
 }
 
 /**
- * The ledger (moved to the END) — the per-scenario
- * table, with its summary lines on top: the verdict tally bullet, and (when a
- * declared-evidence-obligations census is threaded) the excluded-occurrence bullet relocated
- * here from the dissolved `## Declared corpus` section (Q1a). When the
- * evidence-observation aggregate is threaded, the row gains corpus-driven evidence
- * columns between Scenario and Verdict, each a four-way evidence-obligation×evidence-observation cell; without the
- * aggregate the original three-column ledger is preserved (the 2-/3-arg callers
- * stay green). Markdown-only (the JSON carries the raw scenario facts + the declared / observed
- * objects); the verdict-tally bullet names the collection "Scenario Reconciliation(s)" — canon's
- * noun for the reconciled OUTPUT collection (scenario + phantom + suspense), never "scenario(s)"
+ * The ledger (moved to the END) — the per-scenario table, with its summary lines on top: the
+ * verdict tally bullet, and (when an evidence-obligation census is threaded) the
+ * excluded-occurrence bullet relocated here from the dissolved corpus-census section (Q1a). When
+ * the evidence-observation aggregate is threaded, the row gains corpus-driven evidence columns
+ * between Scenario and Verdict, each a four-way obligation×observation cell; without the aggregate
+ * the original three-column ledger is preserved (the 2-/3-arg callers stay green). Markdown-only.
+ * The verdict-tally bullet names the collection "Scenario Reconciliation(s)" — canon's noun for
+ * the reconciled OUTPUT collection (scenario + phantom + suspense), never "scenario(s)"
  * (@SCN-RPT-024, 3F-1919; "scenarios" is a Rejected alias).
- * Reads the report's materialised `summary.scenarioReconciliations`, `evidenceObligations`, and
- * `evidenceObservations.attributed`.
  */
 const ledgerSection: SectionEmitter = (report) => {
   // Group the scenario rows first, then the PHANTOM rows, then the SUSPENSE row as
@@ -878,7 +870,7 @@ const ledgerSection: SectionEmitter = (report) => {
   // named here so a reader sees what makes up the total.
   if (totals.phantom > 0) {
     lines.push(
-      `- ${totals.phantom} phantom-scenario(s): cited by an evidence observation, declared by no feature.`
+      `- ${totals.phantom} phantom-scenario(s): cited by an evidence observation, named by no feature.`
     );
   }
   // The suspense (S) count is broken out the same way — credits citing no scenario at all
@@ -890,7 +882,7 @@ const ledgerSection: SectionEmitter = (report) => {
     );
   }
   if (report.evidenceObligations) {
-    // The declared-corpus CENSUS — declared-side facts on report.evidenceObligations.
+    // The scenario-corpus CENSUS — obligation-side facts on report.evidenceObligations.
     // These re-homed here from the dissolved `## Warnings` section: they are census
     // facts, NOT warnings and NOT reconciling items, so they ride in the ledger summary co-located
     // with the excluded-occurrence bullet (the evidenceObligations census view). Facts only —
@@ -956,8 +948,8 @@ const ledgerSection: SectionEmitter = (report) => {
  * unsound) → Summary views
  * (Evidence reconciliation, test volume, lint evidence obligations, out-of-balance by feature)
  * → the ledger. The `## Warnings` section was RETIRED entirely: the
- * no-evidence scenario (the earlier no-evidence-declared warning) is now a `both-missing` ledger
- * row, and the declared-corpus
+ * no-evidence scenario (the earlier zero-evidence warning) is now a `both-missing` ledger
+ * row, and the scenario-corpus
  * census facts (untagged scenarios / prose-only codes) re-homed into the ledger summary.
  *
  * The run-integrity stamp (@SCN-RPT-021) precedes the summary views because it is a caveat ON

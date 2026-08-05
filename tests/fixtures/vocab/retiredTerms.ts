@@ -16,10 +16,11 @@
  * it is exercising and the word itself stays here. When a term is re-retired under a
  * different spelling, one row changes and every test follows.
  *
- * ONLY the adopted tier lives here. The code-side glossary aliases (3F-2369), the deferred
- * canon rows (3F-2329) and the bare shortenings are gate-inert today and stay where the
- * tests already hold them — un-exemption makes them visible for their own sweeps, which is
- * the point of 3F-2378 rather than an omission from it.
+ * ONLY the adopted tier lives here. The code-side glossary aliases (3F-2369) and the one
+ * remaining deferred canon row (the bare shortening, 3F-1852) are gate-inert today and stay
+ * where the tests already hold them — un-exemption makes them visible for their own sweeps,
+ * which is the point of 3F-2378 rather than an omission from it. The evidence family joined
+ * this file when 3F-2329 adopted its row, which is the move that entry is for.
  */
 
 /** The retired words, by the role each plays in the rule that retired it. */
@@ -52,6 +53,42 @@ export const RETIRED = {
   /** @SCN-VOC-006 — the retired tag PHRASE, first word then second. */
   tagPhraseFirst: "ci",
   tagPhraseSecond: "performance",
+
+  /** @SCN-VOC-018 — the homograph verb: retired evidence vocabulary AND a TypeScript keyword. */
+  homographVerb: "declare",
+  /** Its third person, which the naive singulariser folds onto the verb's stem. */
+  homographVerbThirdPerson: "declares",
+  /** @SCN-VOC-018 — the homograph noun: retired evidence vocabulary AND a tsconfig compiler option. */
+  homographNoun: "declaration",
+
+  // @SCN-VOC-003 — the rest of the same family, the inflections no external tool owns.
+  // The base verb, its third person and its nominalisation are the three homograph entries
+  // ABOVE: one spelling, two rules, and duplicating it under a second role name is how the
+  // two would drift apart. Everything below is vocabulary in every position.
+  /** @SCN-VOC-003 — the past participle: the retired kind-label's word, and the family's commonest form. */
+  evidencePast: "declared",
+  /** Its present participle — a VERB, so its replacement is a verb too. */
+  evidenceVerb: "declaring",
+  /** @SCN-VOC-003 — the retired NEGATIVE. No single canon target: a by-meaning verdict per occurrence. */
+  evidenceNegative: "undeclared",
+  /** The adjective. Zero occurrences in this tree — banned as a REGROWTH guard, the `ci-performance` shape. */
+  evidenceAdjective: "declarative",
+  /** The agent noun, likewise a regrowth guard. */
+  evidenceAgent: "declarer",
+  /** The negative adjective, likewise. */
+  evidenceNegativeAdjective: "undeclarable",
+} as const;
+
+/**
+ * The qualifiers that make a @SCN-VOC-018 homograph the external tool's GRAMMAR rather than
+ * authored vocabulary. Data, not spelling, for the same reason as `RETIRED`: the rule is
+ * "this position means grammar", and the position is what a test should name.
+ */
+export const GRAMMAR_CONTEXT = {
+  /** What must FOLLOW the verb for it to be TypeScript's keyword rather than the retired word. */
+  tsGrammarQualifier: "const",
+  /** What must CO-OCCUR with the noun for it to be a compiler option rather than the retired word. */
+  compilerOptionParent: "compiler",
 } as const;
 
 /** What each retired term must become — the canon replacement the manifest reports. */
@@ -90,6 +127,12 @@ export const RETIRED_COMPOSITE = {
   classNameIdentifiers: ["staticGuard", "staticGuards", "static-guards", "StaticGuardTotals"],
   /** @SCN-VOC-006 — the tag phrase inside a camelCase identifier. */
   tagIdentifier: "ciPerformance",
+  /** @SCN-VOC-003 — the retired kind-label inside the composite identifier it lived in. */
+  kindLabelIdentifier: "declaredScenario",
+  /** @SCN-VOC-003 — the retired negative inside the outcome handle it lived in. */
+  negativeIdentifier: "undeclaredOutcome",
+  /** @SCN-VOC-003 — the past participle inside a Pascal-case name a decision log records as history. */
+  evidencePastIdentifier: "DeclaredCorpus",
 } as const;
 
 /**
@@ -106,6 +149,18 @@ export const ADOPTED_PLAIN_TERMS: readonly string[] = [
   RETIRED.obligationVerb,
   RETIRED.obligationNounPlural,
   RETIRED.outcomeHandle,
+  // @SCN-VOC-003, 3F-2329 — the whole evidence family, every inflection. The homograph
+  // three are plain banned words like the rest: `homographSense` exonerates them by
+  // POSITION, ahead of the ban, so the row need make no exception for them.
+  RETIRED.homographVerb,
+  RETIRED.evidencePast,
+  RETIRED.homographVerbThirdPerson,
+  RETIRED.evidenceVerb,
+  RETIRED.homographNoun,
+  RETIRED.evidenceAdjective,
+  RETIRED.evidenceAgent,
+  RETIRED.evidenceNegative,
+  RETIRED.evidenceNegativeAdjective,
 ];
 
 /**

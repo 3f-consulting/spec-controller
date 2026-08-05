@@ -10,7 +10,7 @@
  * CI step, NO @lint tag — that would self-trip the USG guard).
  *
  * Teeth are proven over PLANTED violating sources (each arm reds — a re-added
- * `census/evidenceObservations.ts` file; a re-declared `interface AttributedCount`; a re-added
+ * `census/evidenceObservations.ts` file; a re-defined `interface AttributedCount`; a re-added
  * `attributed` credit-list field), so a no-op checker fails the planted cases; then GREEN over the
  * REAL packages/core/src tree (the dogfood assertion that the lock holds today — the census modules
  * stay retired, their counting a Ledger fold), with a >N-files-scanned floor so an empty walk can't
@@ -54,8 +54,8 @@ describe("[SCN-NPS-001] no parallel store re-represents the Ledger's entries", (
     expect(violations.map((v) => v.detail)).toEqual(["evidenceObservations.ts", "staticEvidenceObservations.ts"]);
   });
 
-  it("flags a re-declared retired credit-list / section symbol (AttributedCount, EvidenceObservationsSection, …)", () => {
-    // Teeth (retired-declaration arm): a real DECLARATION of any retired symbol must red — the
+  it("flags a re-defined retired credit-list / section symbol (AttributedCount, EvidenceObservationsSection, …)", () => {
+    // Teeth (retired-symbol arm): a real DEFINITION of any retired symbol must red — the
     // parallel-store types the census used to carry. Comment-stripped, so a doc-comment NAMING the
     // symbol (as the real retirement notes do) does not self-trip.
     const planted: CollectedFile[] = [
@@ -67,11 +67,11 @@ describe("[SCN-NPS-001] no parallel store re-represents the Ledger's entries", (
     ];
     const violations = checkNoParallelStore(planted);
     expect(violations.map((v) => v.kind)).toEqual([
-      "retired-declaration",
-      "retired-declaration",
-      "retired-declaration",
-      "retired-declaration",
-      "retired-declaration",
+      "retired-symbol",
+      "retired-symbol",
+      "retired-symbol",
+      "retired-symbol",
+      "retired-symbol",
     ]);
     expect(violations.map((v) => v.detail)).toEqual([
       "AttributedCount",
@@ -123,7 +123,7 @@ describe("[SCN-NPS-001] no parallel store re-represents the Ledger's entries", (
   });
 
   it("passes clean over the REAL packages/core/src tree (the lock holds today)", () => {
-    // The dogfood green: the census modules stay retired, no retired symbol is re-declared, no
+    // The dogfood green: the census modules stay retired, no retired symbol is re-defined, no
     // parallel `attributed` field exists. Any future resurrection reds this.
     const coreFiles = collectSourceFiles(CORE_SRC_ROOT);
     // Sanity: we actually scanned the tree (not an empty walk masquerading as green). The floor sits

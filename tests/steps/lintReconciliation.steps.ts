@@ -4,8 +4,8 @@
  *
  * @SCN-LNT-001 — the bidirectional @integration evidence marker (Evidence
  * Manifesto §9). This arm exercises the static-kind wiring END-TO-END over the
- * REAL tree: parseScenarios reads a @lint=<guard> tag → a {kind:"static"} declared
- * evidence obligation; ingest/guard reads the tool's OWN .github/workflows/ci.yml +
+ * REAL tree: parseScenarios reads a @lint=<guard> tag → a `lint` evidence obligation;
+ * ingest/guard reads the tool's OWN .github/workflows/ci.yml +
  * package.json (NOT a fixture — acceptance condition 1); reconcile + renderMarkdown
  * produce the ledger. It complements the @unit test that proves reconcile
  * over a constructed guard evidence observation in isolation.
@@ -78,11 +78,10 @@ function rowCells(scnId: string): { verdict: string; items: string } {
 
 // @SCN-LNT-001
 Given(
-  "a declared @lint scenario {string} requiring the static check {string}",
+  "an @lint scenario {string} requiring the static check {string}",
   function (scnId: string, guard: string) {
-    // Build the declared side from a real feature snippet through the declared
-    // reader, so this arm exercises the @lint=<guard> → {kind:"static"} parse seam
-    // (not a hand-seeded Scenario the reader never produced).
+    // Built from a real feature snippet through parseScenarios, so this arm exercises the
+    // @lint=<guard> → lint-obligation parse seam rather than a hand-seeded Scenario.
     const feature = [
       "@LNT",
       "Feature: fixture",
@@ -184,12 +183,9 @@ Given(
 Given(
   "a scenario {string} requiring both a @unit runtime test and the static check {string}",
   function (scnId: string, guard: string) {
-    // The kind-axis multi-evidence obligation case: a SINGLE scenario
-    // carries BOTH a @unit runtime evidence obligation AND a @lint=<guard> static
-    // evidence obligation, built through the real declared reader so the dual-kind parse
-    // seam is exercised — parseScenarios emits TWO evidence obligations from one tag block
-    // ({qualityCheck: "unit"} + {kind:"static", staticCheck}). Not a hand-seeded
-    // Scenario the reader never produced.
+    // The multi-obligation case: ONE scenario carries BOTH a @unit runtime obligation and a
+    // @lint=<guard> static one, so parseScenarios emits TWO evidence obligations from one tag
+    // block — `{ qualityCheck: "unit" }` + `{ qualityCheck: "lint", staticCheck }`.
     const feature = [
       "@LNT",
       "Feature: fixture",
@@ -246,10 +242,10 @@ When("the lint reconciler runs", function () {
 
 // @SCN-LNT-005
 Given(
-  "an externally-specified package.json declaring the guard {string} and an external CI config that does not run it",
+  "an externally-specified package.json naming the guard {string} and an external CI config that does not run it",
   function (_guard: string) {
     // Point at the PLANTED EXTERNAL fixture (tests/fixtures/scn-lnt-005/) — an
-    // external feature declaring @lint=lint:vocab-check, an external package.json
+    // external feature NAMING @lint=lint:vocab-check, an external package.json
     // where the guard EXISTS, and an external ci.yml that does NOT run it. The guard
     // is absent from the tool's OWN package.json, so reading it as the watermelon
     // proves `exists` came from the EXTERNAL package.json (the --package-json seam).
@@ -267,9 +263,8 @@ When(
   "the reconciler runs against the external repo via --package-json and --ci",
   function () {
     // Drive the CLI core end-to-end (the cross-component arm): arg-resolved input
-    // paths → declared read → static check read against the EXTERNAL package.json +
-    // CI → reconcile → render. Until --package-json is threaded, runReconcile reads
-    // the tool's own package.json and the guard reconciles missing.
+    // paths → scenario read → static check read against the EXTERNAL package.json +
+    // CI → reconcile → render.
     // THE AXIS GATES ARE THE CONCEPT'S NOW (3F-2233), so they are stated here rather than at the
     // render call. This scenario is authored against the gates OFF — with the static-check axis on,
     // the ledger row gains its lint evidence column and `rowCells` (which picks by POSITION) reads

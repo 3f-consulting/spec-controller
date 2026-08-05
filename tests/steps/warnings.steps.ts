@@ -1,10 +1,9 @@
 /**
- * Step definitions for features/warnings.feature (a scenario declaring no evidence
- * evidence obligations is both-missing, superseding the retired no-evidence-declared
- * warning).
+ * Step definitions for features/warnings.feature (a scenario raising no evidence
+ * obligations is both-missing, superseding the retired zero-evidence warning).
  *
  * @SCN-WRN-001 — bidirectional evidence marker for features/warnings.feature
- * (Evidence Manifesto §9). The @integration arm exercises the declared → reconcile
+ * (Evidence Manifesto §9). The @integration arm exercises the parse → reconcile
  * → render markdown wiring end-to-end (cross-component), complementing the @unit
  * test that proves reconcile()'s both-missing shape in isolation.
  *
@@ -68,11 +67,9 @@ function ledgerRowCells(scnId: string): { verdict: string; items: string } {
 Given(
   "a scenario {string} with no evidence-obligation tags",
   function (scnId: string) {
-    // Build the declared side through the REAL declared reader from a feature
-    // snippet whose ONLY tag is the @SCN id — no @unit/@integration/@e2e/
-    // @performance/@lint — so the reader emits `evidence obligations: []` (the zero-evidence obligation
-    // case). The @integration arm thereby exercises the parse → declared seam, not
-    // a hand-seeded Scenario the reader never produces.
+    // A feature snippet whose ONLY tag is the @SCN id — no @unit/@integration/@e2e/
+    // @performance/@lint — so the REAL reader emits `evidenceObligations: []`, the
+    // zero-obligation case.
     const feature = [
       "@WRN",
       "Feature: fixture",

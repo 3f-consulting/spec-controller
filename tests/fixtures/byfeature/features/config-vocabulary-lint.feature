@@ -2,7 +2,7 @@
 Feature: config vocabulary lint
 
   A FIXTURE feature (NOT under features/) standing in for a target repo whose by-feature
-  cut the full-name mapping labels (@SCN-RPT-006). It declares the @CVL header
+  cut the full-name mapping labels (@SCN-RPT-006). It names the @CVL header
   code, so discoverFeatures maps CVL → its filename slug "config-vocabulary-lint" — the
   by-feature cut renders "config-vocabulary-lint (CVL)". The lone scenario is
   missing (no test report in this fixture run) → out-of-balance → it surfaces

@@ -12,7 +12,7 @@ Feature: a render-the-Pending-Item fixture target
 
   It carries the TWO shapes the render behaviour contrasts: a scenario whose SOLE obligation is
   deferred (@SCN-PDL-001 — balanced-with-pending, its row's only exception the Pending Item) and
-  a MIXED scenario declaring BOTH a genuinely-missing bare `@unit` obligation (which reconciles
+  a MIXED scenario naming BOTH a genuinely-missing bare `@unit` obligation (which reconciles
   to a `missing` error — a reconciling item) AND a deferred `@integrationpending` one (which
   partitions to a one-sided Pending Item). The mixed row is where the render must keep the two
   categories visibly apart: the error rendered as a reconciling item, the Pending Item labelled

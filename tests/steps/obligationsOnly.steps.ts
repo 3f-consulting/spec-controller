@@ -33,7 +33,7 @@ let obligationsOnlyLedger: EvidenceReconciliation;
 
 // @SCN-LDG-025
 Given("a corpus whose only lint credit is a named static check, wired and green in CI", function () {
-  // The obligations-only fixture: one scenario (SCN-DEM-001) declaring @lint=lint:obligations-only; a
+  // The obligations-only fixture: one scenario (SCN-DEM-001) NAMING @lint=lint:obligations-only; a
   // ci.yml running lint:obligations-only; a package.json defining it. The static check exists and is
   // enforced over the real source → satisfied. There is NO other credit shape, so nothing but the
   // named-guard path can determine the verdict.

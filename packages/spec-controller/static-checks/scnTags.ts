@@ -2,15 +2,15 @@
  * The tier-tag floor static check logic (the @unit-testable core).
  *
  * spec-controller reconciles on evidence tiers but did not require its OWN
- * scenarios to declare one — a tier-less scenario yields no evidence obligation
+ * scenarios to NAME one — a tier-less scenario yields no evidence obligation
  * and slips silently. This static check closes that (the cobbler's shoes): every
- * scenario under features/ carrying an @SCN-<FFF>-<NNN> must declare at least one
+ * scenario under features/ carrying an @SCN-<FFF>-<NNN> must NAME at least one
  * TIER tag, UNLESS it carries @wip.
  *
  * What counts as a tier (LOAD-BEARING): @unit / @integration / @e2e /
  * @performance, their `pending` variants (@unitpending / @integrationpending /
- * … — a <tier>pending declares the tier, deferred), AND @lint=<guard>
- * (spec-controller declares lint as @lint=<guard>, NOT bare @lint). The static check
+ * … — a <tier>pending NAMES the tier, deferred), AND @lint=<guard>
+ * (spec-controller WRITES lint as @lint=<guard>, NOT bare @lint). The static check
  * accepts the =<guard> form: a bare-@lint-only match would false-flag every static check
  * scenario (including @SCN-STG-001 itself) and red the real tree. Exempt: @wip
  * ONLY.
@@ -42,16 +42,16 @@ export interface ScnTagsResult {
   violations: ScnTagsViolation[];
 }
 
-/** The quality-check tiers whose bare (and `pending`) forms declare a tier. */
+/** The quality-check tiers whose bare (and `pending`) forms NAME a tier. */
 const QUALITY_CHECKS = ["unit", "integration", "e2e", "performance"] as const;
 
 /** A scenario code is `SCN-<FFF>-<NNN>` (matches ingest's parseScenarioCodes). */
 const SCN_PATTERN = /^SCN-[A-Z0-9]+-\d+$/;
 
 /**
- * True when a bare tag (no leading @) declares an evidence tier: a plain
+ * True when a bare tag (no leading @) NAMES an evidence tier: a plain
  * quality-check (`unit`/`integration`/`e2e`/`performance`), a `<qc>pending`
- * variant, or a lint declaration — bare `lint` OR the `lint=<guard>` form
+ * variant, or a lint TAG — bare `lint` OR the `lint=<guard>` form
  * spec-controller uses (LOAD-BEARING: a bare-`lint`-only match would miss
  * `@lint=<guard>` and false-flag every static check scenario, reding the real tree).
  *
@@ -107,7 +107,7 @@ function parseScenarios(source: string): ParsedScenario[] {
 
 /**
  * Lint the feature sources for the tier-tag floor: every scenario carrying an
- * @SCN must declare a tier tag unless it is @wip. Returns a LintResult-shaped
+ * @SCN must NAME a tier tag unless it is @wip. Returns a LintResult-shaped
  * `{ ok, violations }` — an empty `violations` (and `ok: true`) means the tree
  * satisfies the floor; each violation names a tier-less non-@wip @SCN scenario.
  */
@@ -118,12 +118,12 @@ export function lintScnTags(features: readonly FeatureFileSource[]): ScnTagsResu
       const scnId = scenario.tags.find((t) => SCN_PATTERN.test(t));
       if (scnId === undefined) continue; // no @SCN tag — not checked
       if (scenario.tags.includes("wip")) continue; // exempt
-      if (scenario.tags.some(isTierTag)) continue; // declares a tier — satisfied
+      if (scenario.tags.some(isTierTag)) continue; // names a tier — satisfied
       violations.push({
         kind: "missing-tier-tag",
         message:
-          `Feature "${feature.slug}" scenario @${scnId} ("${scenario.title}") declares ` +
-          `no evidence tier and is not @wip — every @SCN scenario must declare at least ` +
+          `Feature "${feature.slug}" scenario @${scnId} ("${scenario.title}") names ` +
+          `no evidence tier and is not @wip — every @SCN scenario must name at least ` +
           `one tier (@unit/@integration/@e2e/@performance, a <tier>pending variant, or ` +
           `@lint=<guard>) unless it carries @wip.`,
       });

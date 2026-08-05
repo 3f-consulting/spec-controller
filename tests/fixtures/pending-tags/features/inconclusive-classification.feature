@@ -1,5 +1,5 @@
 @PND
-Feature: A planted declared-side fixture for the cucumber reader's three-way classification (@SCN-PND-013)
+Feature: A planted named-side fixture for the cucumber reader's three-way classification (@SCN-PND-013)
 
   A single scenario carrying an @integration obligation, cited by an UNREGISTERED SCN
   code (SCN-PDN-001 — the distinct fixture convention, never a real scanned scenario per
@@ -10,5 +10,5 @@ Feature: A planted declared-side fixture for the cucumber reader's three-way cla
   Rule: a fixture rule
 
     @integration @SCN-PDN-001
-    Scenario: a declared integration obligation
+    Scenario: a named integration obligation
       Given a fixture step

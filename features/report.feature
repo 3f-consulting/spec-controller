@@ -113,8 +113,8 @@ Feature: The report renders the ledger as sectioned facts
     isolation by Vitest.
 
     The subject row is the SCENARIO RECONCILIATION (3F-1726) — the manifesto's collection, all
-    three row kinds (declared, phantom, suspense) — not "Scenario", which names only the
-    declared thing. The table is a pure presentation of summary.scenarioReconciliations, whose
+    three row kinds (real, phantom, suspense) — not "Scenario", which names only the
+    real thing. The table is a pure presentation of summary.scenarioReconciliations, whose
     totals count EVERY row (@SCN-RMD-001, 3F-1724; phantom / suspense reconciliations are
     always out-of-balance), so on a run whose only out-of-balance row is the suspense
     reconciliation the table renders N+1 | N | 1 — never N | N | 0. The subject's
@@ -126,7 +126,7 @@ Feature: The report renders the ledger as sectioned facts
       Given a reconciliation balance whose scenarios carry a double missing arm, so the out-of-balance scenario and evidence obligation counts diverge
       When the markdown report is rendered
       Then it carries a "### Evidence reconciliation" section with a "Subject | Total | Balanced | Out-of-balance | Detail" table — a Scenario Reconciliation row and an Evidence obligation row each with its own total, the evidence-obligation out-of-balance decomposed into nested missing (with its bare-level split), failing, and watermelon rows that reconcile to it
-      And a balance of N declared balanced scenarios plus one suspense reconciliation renders the Scenario Reconciliation row as N+1 total, N balanced, 1 out-of-balance — the suspense reconciliation counted, so the table cannot read a pass on a run isBalanced fails
+      And a balance of N real balanced scenarios plus one suspense reconciliation renders the Scenario Reconciliation row as N+1 total, N balanced, 1 out-of-balance — the suspense reconciliation counted, so the table cannot read a pass on a run isBalanced fails
 
   Rule: the markdown report surfaces the lint evidence obligations as their own section
 
@@ -139,13 +139,13 @@ Feature: The report renders the ledger as sectioned facts
     evidence obligation with its scenario, static check handle, and reconciliation outcome — so the lint
     axis (incl. any 🍉 watermelon) reads on its own. The label is the tag word "lint" (the
     internal kind "static" is never rendered). Omitted entirely (total line and
-    all) when no scenario declares a lint evidence obligation. A pure derive over
+    all) when no scenario raises a lint evidence obligation. A pure derive over
     balance.scenarios[].evidenceObligations[] filtered on kind === "static" —
     markdown-only (project design §3), proven in isolation by Vitest.
 
     @unit @SCN-RPT-005
     Scenario: the markdown report lists the lint evidence obligations as their own section
-      Given a reconciliation balance whose scenarios declare lint (@lint) evidence obligations spanning balanced and the watermelon, alongside runtime evidence obligations
+      Given a reconciliation balance whose scenarios raise lint (@lint) evidence obligations spanning balanced and the watermelon, alongside runtime evidence obligations
       When the markdown report is rendered
       Then it carries a "### Lint evidence obligations" section with a total line and a table listing each lint evidence obligation's scenario, static check handle, and reconciliation outcome — including the 🍉 watermelon — and excluding the runtime evidence obligations
 
@@ -162,7 +162,7 @@ Feature: The report renders the ledger as sectioned facts
     so a reader sees the discrepancy CONCENTRATION by feature. The Feature cell reads
     "<full-name> (<FFF>)" — the full name is the feature file's filename slug, looked up via
     a target-derived code→slug map (readFeatureNames over discoverFeatures, the 5th sibling
-    renderer arg, markdown-only). An UNCODED id (an @SCN-XYZ-* whose XYZ no file declares)
+    renderer arg, markdown-only). An UNCODED id (an @SCN-XYZ-* whose XYZ no file carries)
     falls back to the bare FFF (the map misses) — as does the no-map back-compat path.
     Balanced scenarios are excluded (this is the discrepancy view). The scnId → <FFF> parse
     REUSES the shared featureCodeOf helper rather than a fresh regex. Omitted entirely when
@@ -173,26 +173,28 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @integration @SCN-RPT-006
     Scenario: the by-feature cut names each out-of-balance feature in full, falling back to the bare code when uncoded
-      Given a target feature directory whose features declare codes alongside an uncoded one
+      Given a target feature directory whose features carry codes alongside an uncoded one
       When the run writes its artifacts with the feature-name map
       Then the persisted spec-reconciliation.md by-feature cut names the coded feature in full and falls back to the bare code for the uncoded id
 
-  Rule: the declared corpus census survives the Declared-corpus section's dissolution
+  Rule: the corpus census survives its own section's dissolution
 
-    The corpus census (@SCN-RPT-007; the standalone "## Declared corpus"
-    section DISSOLVED by the reformat, Q1a). The report no longer carries a
-    dedicated "## Declared corpus" section. The declared count is NOT lost: it is
-    recoverable as the ledger scenario-count ("- N Scenario Reconciliation(s): …") PLUS
-    the "## Warnings" count — every scenario surfaces on exactly one axis (a
-    balance verdict in the ledger or a no-evidence-declared warning). A pure markdown-only
-    derive over the balance (project design §3), proven in isolation by Vitest. RPT-008's
-    excluded-occurrence bullet relocates into the ledger summary.
+    The corpus census (@SCN-RPT-007; the standalone census section DISSOLVED by
+    the reformat, Q1a). The count is NOT lost: EVERY scenario is a ledger row — a
+    zero-obligation scenario is a both-missing row, not a second axis — so the census
+    is recoverable as the ledger scenario-count ("- N Scenario Reconciliation(s): …")
+    alone. The dissolution is guarded POSITIVELY, over the report's whole set of
+    top-level sections (3F-2418): a census section that came back under ANY name reds
+    by being unexpected, where naming one retired heading guarded only that spelling.
+    A pure markdown-only derive over the balance (project design §3), proven in
+    isolation by Vitest. RPT-008's excluded-occurrence bullet relocates into the
+    ledger summary.
 
     @unit @SCN-RPT-007
-    Scenario: the declared corpus census is recoverable from the ledger summary and warnings
-      Given a reconciliation balance carrying scenarios alongside no-evidence-declared warnings
+    Scenario: the corpus census is recoverable from the ledger summary alone
+      Given a reconciliation balance carrying scenarios alongside zero-obligation scenarios
       When the markdown report is rendered
-      Then it carries no standalone "## Declared corpus" section, and the declared census is recoverable as the ledger scenario-count plus the warnings count
+      Then it emits exactly its known top-level sections — run provenance, summary views and scenario reconciliations — and the census is recoverable as the ledger scenario-count
 
   Rule: the report outcomes the excluded non-tag @SCN occurrences on both surfaces
 
@@ -205,7 +207,7 @@ Feature: The report renders the ledger as sectioned facts
     derivable from Ledger, so it lands on both surfaces (project design §1, §3 —
     the same non-derivable rule that put provenance on both surfaces). The producer is
     a new countScnOccurrences(source) in scenarios.ts (parseScenarios unchanged); the
-    datum is a EvidenceObligations sibling (src/declared/corpus.ts) threaded CLI→renderers
+    datum is an EvidenceObligations field (src/census/evidenceObligations.ts) threaded CLI→renderers
     exactly like RunContext (an optional third renderer argument). The @integration arm
     drives the REAL CLI pipeline (runReconcile → readEvidenceObligations → writeOutputs
     with a corpus) over spec-controller's own corpus and asserts BOTH persisted artifacts
@@ -239,7 +241,7 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @SCN-RPT-009
     Scenario: the markdown report renders summary-first with the scenario reconciliations last
-      Given a reconciliation balance spanning balanced and out-of-balance scenarios, a lint evidence obligation, and a no-evidence-declared warning
+      Given a reconciliation balance spanning balanced and out-of-balance scenarios, a lint evidence obligation, and a zero-evidence warning
       When the markdown report is rendered
       Then it opens with "# Evidence Reconciliation" and "## Run provenance", groups the derived cuts under "## Summary views", and renders the "## Scenario Reconciliations" table last with its summary lines on top
 
@@ -249,8 +251,8 @@ Feature: The report renders the ledger as sectioned facts
     (evidence obligation) side has a Headline tally; its evidence observation side had nothing — the evidence observations
     the pipeline builds were consumed by reconcile() and thrown away. This retains the
     observed test evidence observation as a RuntimeEvidenceObservationKindCounts datum, counted by kind against the @SCN
-    anchor in ONE shared pass — attributed-to-declared (per-(scnId, level) counts),
-    phantom-id (an @SCN no scenario declares), and cites-no-scenario evidence observation (no @SCN)
+    anchor in ONE shared pass — attributed-to-obligation (per-(scnId, level) counts),
+    phantom-id (an @SCN no scenario carries), and cites-no-scenario evidence observation (no @SCN)
     — with raw per-level totals and file locators. Under "## Summary views", a
     "### Test volume" cut renders the balancing identity ("N evidence observations = a on scenarios +
     b on phantom scenarios + c on the suspense scenario", a derived view) then a by-level evidence observation table (all four levels,
@@ -327,7 +329,7 @@ Feature: The report renders the ledger as sectioned facts
 
   # Rule: Warnings flags the phantom evidence observation-id tests — RETIRED (@SCN-LDG-006).
   # The phantom-id anchor audit (was @SCN-RPT-013) is superseded by the bidirectional
-  # reconciler: a credit citing an undeclared @SCN now surfaces as a PHANTOM-scenario
+  # reconciler: a credit citing an UNKNOWN @SCN now surfaces as a PHANTOM-scenario
   # reconciliation row in the Ledger (outcome cites-unknown-scenario, carrying its id +
   # locator), not a Warnings sub-part — so the phantom detail lives in exactly one place (no
   # double-report). The behaviour is proven by @SCN-LDG-006 (features/ledger.feature); the
@@ -335,14 +337,14 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: Warnings flags the untagged scenarios with their feature locators
 
-    Anchor audit — untagged scenarios (@SCN-RPT-014), the declared-side
+    Anchor audit — untagged scenarios (@SCN-RPT-014), the obligation-side
     counterpart to the evidence observation anomalies. `parseScenarios` only emits
     scenarios WITH an @SCN; a new `parseUntaggedScenarios` counts Gherkin scenario
     headers (Scenario / Scenario Outline / Scenario Template / Example — NOT the
     Examples: data table) and subtracts those whose preceding tag block carries an @SCN
     — the 514-headers-vs-512-tags gap. `## Warnings` gains a fourth sub-part listing the
     untagged-scenario count + `feature-file : scenario` locators (sorted). The datum lives
-    on EvidenceObligations.untaggedScenarios (declared-side census, like excludedOccurrences) and
+    on EvidenceObligations.untaggedScenarios (obligation-side census, like excludedOccurrences) and
     — a NEW non-derivable datum — persists on the JSON evidenceObligations object beside
     excludedOccurrences (project design §3). The section gate now fires on no-evidence OR
     cites-no-scenario evidence observation OR phantom OR untagged; the earlier sub-parts are byte-unchanged. Facts-only
@@ -352,7 +354,7 @@ Feature: The report renders the ledger as sectioned facts
     @unit @integration @SCN-RPT-014
     Scenario: Warnings lists the untagged scenarios with their feature locators
       Given a target feature directory mixing @SCN-tagged and untagged scenarios
-      When the run writes its artifacts with the declared corpus
+      When the run writes its artifacts with the scenario corpus
       Then the persisted spec-reconciliation.md lists the untagged scenarios with feature locators and spec-reconciliation.json carries them on evidenceObligations
 
   Rule: Warnings flags the prose-only @SCN codes — mentioned but never tagged
@@ -368,7 +370,7 @@ Feature: The report renders the ledger as sectioned facts
     untagged difference) — so it reads as a refinement, not a contradiction. `## Warnings`
     gains a fifth sub-part listing the prose-only-code count + bare `- SCN-FOO-001` codes
     (sorted). The datum lives on EvidenceObligations.proseOnlyCodes and — a NEW non-derivable
-    declared-side datum — persists on the JSON evidenceObligations object beside
+    obligation-side datum — persists on the JSON evidenceObligations object beside
     excludedOccurrences / untaggedScenarios (project design §3). The section gate now fires
     on no-evidence OR cites-no-scenario evidence observation OR phantom OR untagged OR prose-only; the earlier sub-parts
     are byte-unchanged and render first. Facts-only — bare codes, no interpretation. The
@@ -379,7 +381,7 @@ Feature: The report renders the ledger as sectioned facts
     @unit @integration @SCN-RPT-015
     Scenario: Warnings lists the prose-only @SCN codes mentioned but never tagged
       Given a target feature directory mentioning an @SCN code only in prose
-      When the run writes its artifacts with the declared corpus over that directory
+      When the run writes its artifacts with the scenario corpus over that directory
       Then the persisted spec-reconciliation.md lists the prose-only code and spec-reconciliation.json carries it on evidenceObligations
 
   Rule: a cross-repo reconcile relativises paths against the target repo root, not the run cwd
@@ -420,12 +422,12 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the report's evidence-observation views level a runtime observation by the cited scenario's tag
 
     The FULL-UNIFY view fix (@SCN-RPT-017, 3F-1452). @SCN-LDG-011 / 3F-1434 made the
-    RECONCILER level a runtime observation by the cited scenario's declared tier tag, so a
+    RECONCILER level a runtime observation by the cited scenario's own tier tag, so a
     cucumber run of an @e2e scenario discharges an e2e obligation. But the report's
     evidence-observation views — Test volume's `rawByRuntimeQualityCheck` and the per-scenario
     E2e cell — were fed by a SECOND, independent derivation: the census
     (`countRuntimeEvidenceObservationKinds`) did its OWN raw-report walk and stamped the single
-    caller-declared quality-check (cucumber ⇒ integration), so an @e2e-via-cucumber observation
+    caller-given quality-check (cucumber ⇒ integration), so an @e2e-via-cucumber observation
     surfaced as `e2e: 0` in the views while the reconciler correctly reported the e2e obligation
     satisfied — the report contradicting itself.
 
@@ -453,7 +455,7 @@ Feature: The report renders the ledger as sectioned facts
     drives the REAL reconcile + render over a fixture whose cucumber report has a passing @e2e
     scenario with no vitest evidence: the rendered Test volume counts it under e2e, the e2e credit
     posts to that scenario's ledger row, and the scenario's E2e cell renders a count, not ∅. Both
-    arms RED on a level taken from the caller-declared quality-check (Test volume reads `e2e: 0`
+    arms RED on a level taken from the caller-given quality-check (Test volume reads `e2e: 0`
     with integration inflated); GREEN on the tag-derived level the parse carries and the fold counts.
 
     @unit @integration @SCN-RPT-017
@@ -464,30 +466,10 @@ Feature: The report renders the ledger as sectioned facts
       And the e2e credit posts to that scenario's ledger row
       And the scenario's E2e cell renders a count, not ∅
 
-    # The MULTI-TAG view mirror (@SCN-RPT-018, 3F-1452). The view-side mirror of the reconciler's
-    # @SCN-LDG-014: a scenario declaring @integration @e2e proven by a SINGLE passing cucumber
-    # observation is counted in BOTH tiers across the views — because parseCucumber emits one
-    # observation per declared non-unit tier (the per-tier emission, @SCN-LDG-014) and each emitted
-    # observation POSTS AS ITS OWN CREDIT on the scenario's ledger row (@SCN-LDG-022).
-    #
-    # The census that once re-derived these counts is RETIRED (3F-2102/3F-2104), and with it went the
-    # `attributed[]` projection this preamble used to name. Test volume is now `runtimeObservationTally`
-    # (@SCN-RMD-003), a fold over the posted credits, and the per-scenario cell reads its observation
-    # count STRAIGHT off those same credits (@SCN-RPT-011). So the two observations (integration +
-    # e2e) for the one scenario are tallied independently with NO multi-tag-specific logic anywhere —
-    # there is no second derivation left to lose the second tier. Test volume counts the scenario's
-    # single cucumber pass under integration AND under e2e; the scenario declares both obligations
-    # (its tier tags), so both the Integration and E2e cells read their credit count and render it —
-    # neither collapses to ∅.
-    #
-    # The unit arm proves the RENDERER's half in isolation: over the reconciler-built cell-grid corpus
-    # (`markdown.test.ts`, the leaf cited [SCN-RPT-018] beneath [SCN-RPT-011]), a row declaring TWO
-    # runtime tiers with one credit at each renders BOTH cells with their own count — a renderer that
-    # levelled the row by a single quality-check would blank one. The integration arm drives the REAL
-    # reconcile + render over a fixture whose cucumber report proves one passing @integration @e2e
-    # scenario with no vitest evidence, and pins the rendered row at `I/1 | E/1`. Per-tier counting is
-    # INHERITED from the parsed set, not re-implemented; this scenario pins that the multi-tier credit
-    # survives into the views (the second tier is not lost).
+    # The view-side mirror of @SCN-LDG-014. parseCucumber emits ONE observation per non-unit tier
+    # and each posts as its own credit (@SCN-LDG-022), so the two tiers are tallied independently
+    # with NO multi-tag-specific logic anywhere — there is no second derivation left to lose the
+    # second tier. The census that once re-derived these counts is RETIRED (3F-2102/3F-2104).
     @unit @integration @SCN-RPT-018
     Scenario: an @integration @e2e-via-cucumber observation is counted in both tiers across the views
       Given a target whose cucumber report has a single passing @integration @e2e scenario tagged SCN-TGT-102
@@ -683,7 +665,7 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @integration @SCN-RPT-023
     Scenario: a broken observation citing a real scenario counts as suspense, not attributed to that scenario
-      Given a corpus whose cucumber run reports an ambiguous step for a scenario that cites a declared @SCN at a named quality-check
+      Given a corpus whose cucumber run reports an ambiguous step for a scenario that cites a real @SCN at a named quality-check
       When the run reconciles and the report is rendered
       Then the broken observation is not counted among that scenario's attributed evidence
       And it is counted once on the suspense scenario, and the Test volume identity still balances
@@ -694,7 +676,7 @@ Feature: The report renders the ledger as sectioned facts
     "scenarios" is a Rejected alias — it holds Scenario Reconciliations, not scenarios). The report
     names the collection on two rendered surfaces and both must read the same word: the Subject
     CELL of the reconciliation-collection row, and the headline verdict tally under
-    "## Scenario Reconciliations". The tally counts EVERY row — declared, phantom and suspense
+    "## Scenario Reconciliations". The tally counts EVERY row — real, phantom and suspense
     (@SCN-RMD-001, 3F-1724) — so it names Scenario Reconciliations, not scenarios. A term owned on
     one surface but not the other is exactly how the tally drifted to "scenario(s)" while the
     Subject cell and the field names stayed right (3F-1833). Asserts the rendered CELL VALUE and
@@ -702,7 +684,7 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @SCN-RPT-024
     Scenario: the reconciliation collection is named "Scenario Reconciliation(s)" on every surface, never "scenario(s)"
-      Given a reconciliation balance carrying declared, phantom and suspense reconciliation rows
+      Given a reconciliation balance carrying real, phantom and suspense reconciliation rows
       When the markdown report is rendered
       Then the reconciliation-collection Subject cell reads "Scenario Reconciliation"
       And the headline verdict tally reads "N Scenario Reconciliation(s): X balanced, Y out-of-balance", never "N scenario(s):"

@@ -4,7 +4,7 @@ Feature: a pending-tag-with-matching-observation fixture target
   A FIXTURE feature (NOT under features/) standing in for a spec whose `@integrationpending`
   scenario ALSO has a matching integration observation citing it. It is fed to the pure
   parse→reconcile pipeline by the @SCN-PND-005 @integration step (which hand-builds the
-  matching observation keyed to this scenario's @SCN id) so the "pending declaration governs
+  matching observation keyed to this scenario's @SCN id) so the "pending deferral governs
   even when a match exists" behaviour is exercised through the real reconciler WITHOUT
   planting a real `@<qc>pending` scenario in the scanned features/ corpus (fixture policy,
   evidence-manifesto §11B).

@@ -49,7 +49,7 @@ const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation =>
 //   SCN-CHK-001: @unit, one passing unit credit → balanced, attributed 1
 //   SCN-CHK-002: @integration, no credit → integration missing (the coded out-of-balance feature)
 //   SCN-CHK-003: @lint=lint:foo, the guard running & wired → balanced, the named running guard
-//   1 unit credit citing SCN-PHX-001 (undeclared) → a real phantom ROW, phantom 1
+//   1 unit credit citing SCN-PHX-001 (no scenario carries it) → a real phantom ROW, phantom 1
 //   1 uncited unit credit (src/b.test.ts) + the no-evidence-obligation lint:bar static check → the suspense row
 // The static-check counts are a FOLD over this ledger now (3F-2118, `staticObservationTally`): 2
 // running CI guards = 1 named (lint:foo, on SCN-CHK-003's `@lint` row) + 1 uncited (lint:bar,
@@ -76,7 +76,7 @@ const ctx: RunContext = {
 };
 
 // The runtime-observation axis is folded off the Ledger by the renderers (3F-2103): 3 raw = 1
-// attributed-to-declared + 1 phantom + 1 suspense. `withRuntimeObservations: true` (the 4th render
+// attributed-to-scenario + 1 phantom + 1 suspense. `withRuntimeObservations: true` (the 4th render
 // arg) turns the axis on; the numbers derive from `balance` above.
 
 // The static-check axis is folded off the Ledger by the renderers too (3F-2118): 2 running CI

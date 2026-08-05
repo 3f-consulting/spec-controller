@@ -300,7 +300,7 @@ describe("[SCN-CLI-012] runBalance exits 4 for a run carrying broken evidence, P
         return true;
       });
     try {
-      // The broken fixture: one declared @unit scenario whose proving suite failed to COLLECT
+      // The broken fixture: one @unit scenario whose proving suite failed to COLLECT
       // (status "failed", zero assertionResults). Guardless --package-json, so the only
       // suspense item is the broken one — exit 4 can only come from the broken evidence.
       runBalance([
@@ -369,7 +369,7 @@ describe("[SCN-CLI-010] runBalance leaves the exit code 0 for an only-Pending-It
   });
 });
 
-describe("[SCN-CLI-009] checkUnknownFlags bounds balance to the flags the registry declares", () => {
+describe("[SCN-CLI-009] checkUnknownFlags bounds balance to the flags the registry names", () => {
   // The registry-bounded parser (operator constraint 1): `balance` accepts ONLY registered
   // flags. parseArgs strips the `--`, so the predicate reads the bare-name keys and compares
   // them against the balance command's registered flag names (+ aliases). Pure and
@@ -478,7 +478,7 @@ describe("[SCN-CLI-013] the tally, the verdict headline and the process exit cod
       exit: 0,
     },
     {
-      // SUSPENSE-ONLY — the load-bearing arm: an adopter's repository 17-36-50Z shape, where every DECLARED
+      // SUSPENSE-ONLY — the load-bearing arm: an adopter's repository 17-36-50Z shape, where every REAL
       // scenario balances and the run's only reconciling item is the uncited static-check's
       // uncited credit on the `(no scenario)` row. The scenario-only tally read a clean `2 | 2 | 0`
       // here; the tally that counts every Scenario Reconciliation reads 1 out-of-balance and

@@ -60,7 +60,7 @@ describe("[SCN-SSM-003] the fork-read helper decides external-PR status from the
 /**
  * @SCN-SSM-006 (3F-2366) — the check's own reconciliation, read over the REAL tree.
  *
- * The @unit half of the self-declaration: the two sides of the credit, read from
+ * The @unit half of the self-reconciliation: the two sides of the credit, read from
  * spec-controller's own ci.yml / package.json / features with the SAME production readers the
  * reconciler uses — never a hand-rolled grep, which would agree with the reconciler by
  * coincidence and drift the moment either changed.
@@ -78,7 +78,7 @@ const readRepoFile = (relative: string): string =>
 /** The static check whose own books this block reconciles. */
 const OWN_STATIC_CHECK = "lint:scn-subissues";
 
-/** The guard-prefix set the balance CLI declares at its edge and injects into the core. */
+/** The guard-prefix set the balance CLI SETS at its edge and injects into the core. */
 const GUARD_PREFIXES = ["lint:", "guard:"] as const;
 
 // The title is a PLAIN string, not a template literal: `parseTestBlocks` brace-tracks to find

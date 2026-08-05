@@ -2,7 +2,7 @@
 Feature: a corpus whose only lint credit is a named static check
 
   A FIXTURE target (NOT under features/) standing in for a codebase whose ONLY lint credit is a
-  NAMED static check: one scenario declares @lint=lint:obligations-only; CI runs
+  NAMED static check: one scenario names @lint=lint:obligations-only; CI runs
   lint:obligations-only; package.json defines it. So the guard EXISTS and is ENFORCED over the real
   source → satisfied → the run is BALANCED. There is NO other credit shape — no broken, no
   uncited, no no-evidence-obligation guard — so nothing else can mint the suspense row. The named-guard
@@ -13,7 +13,7 @@ Feature: a corpus whose only lint credit is a named static check
 
   Rule: one scenario names a wired-and-green static check
 
-    # ONLY @lint — no runtime (@unit/@integration/…) tier. A runtime tier would declare a runtime
+    # ONLY @lint — no runtime (@unit/@integration/…) tier. A runtime tier would raise a runtime
     # obligation with no credit (there is no vitest/cucumber report here) → missing → out-of-balance,
     # and the named-guard path would no longer ALONE determine the verdict. The @lint tag alone
     # satisfies the target's obligation set: one named static check, which its CI runs green.

@@ -12,7 +12,7 @@
  * CANON, in two clauses that set the cardinality (manifesto "Attribution / attributed (by `@SCN`)"):
  *   - the RUNTIME quality-checks — the CREDIT cites. A test carries `@SCN-XXX`, so one credit
  *     names one scenario and posts to EXACTLY ONE row. A credit posting to no real scenario is
- *     PHANTOM (its `@SCN` is undeclared) or SUSPENSE (it cites nothing).
+ *     PHANTOM (its `@SCN` matches no scenario) or SUSPENSE (it cites nothing).
  *   - `lint` — the DEBIT cites. The scenario carries `@lint=<static-check>`, so the static check's
  *     run cites nothing and is matched BY NAME — to EVERY row whose evidence obligation names it
  *     (manifesto, Static Check: "one run is evidence for all of them"), or to SUSPENSE if none
@@ -49,7 +49,7 @@ import type {
 export type Posting =
   /** BY CITATION → the row of the one real scenario this credit's `@SCN` names. */
   | { kind: "scenario"; scnId: string }
-  /** BY CITATION → an INVENTED row: the credit's `@SCN` is one no scenario declares. */
+  /** BY CITATION → an INVENTED row: the credit's `@SCN` is one no scenario carries. */
   | { kind: "phantom-scenario"; scnId: string }
   /**
    * BY NAME → every row whose evidence obligation names this static check handle. NOT a row
@@ -82,7 +82,7 @@ export type StaticCheckPosting =
 /**
  * WHERE does this evidence observation post? THE posting rule, in one place.
  *
- * The two set parameters are the DECLARED side, each already the model's own rule built once by
+ * The two set parameters are the OBLIGATION side, each already the model's own rule built once by
  * the caller: `scenarioIds` is which scenarios exist, and `staticCheckEvidenceObligations` is
  * `staticCheckEvidenceObligationsOf(scenarios)` (the journal's rule for which handles are named). They
  * are passed rather than re-derived here so the rule stays a pure decision over prepared inputs
@@ -94,7 +94,7 @@ export type StaticCheckPosting =
  *      real row, not to a phantom one. It structurally MAY carry an `scnId` and a `status`; both
  *      are ignored here. Checking `broken` after either would misfile it.
  *   2. an uncited credit (`scnId === null`) → suspense, never phantom.
- *   3. a cited credit whose `@SCN` no scenario declares → phantom.
+ *   3. a cited credit whose `@SCN` no scenario carries → phantom.
  *   4. otherwise → that scenario's row.
  *
  * The overloads keep the two axes' destinations apart at the type level, so a caller that has
@@ -150,7 +150,7 @@ export function postingOf(
  * so this walks the OBLIGATIONS, never the observations.
  *
  * `find` takes the FIRST observation per handle: one credit answers one handle. The
- * identity-dedupe then keeps a handle declared TWICE on one row posting ONCE, while the SAME
+ * identity-dedupe then keeps a handle NAMED TWICE on one row posting ONCE, while the SAME
  * object still posts to every OTHER row naming it (@SCN-LDG-024) — which is what makes the
  * downstream identity-dedupe in `staticObservationTally` both necessary and correct.
  *

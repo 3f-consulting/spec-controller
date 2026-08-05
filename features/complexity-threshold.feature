@@ -38,7 +38,7 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
   would run in CI while being structurally invisible to the ledger — a real quality
   check kept off the books, which is exactly where a watermelon hides. Named so it IS
   observed; the `@lint=lint:complexity` tag below is then what keeps it out of the
-  suspense row as an uncited static check. Observed AND declared is the balanced state.
+  suspense row as an uncited static check. Observed AND required is the balanced state.
 
   Rule: code outside the exception list reds when it exceeds the external standard
 
@@ -106,7 +106,7 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
     would run in CI while being invisible to spec-controller's own ledger — a real quality
     check kept off the books, which is exactly where a watermelon hides. The
     `@lint=lint:complexity-exceptions` tag below is then what keeps it out of the suspense
-    row as an uncited static check. Observed AND declared is the balanced state.
+    row as an uncited static check. Observed AND required is the balanced state.
 
     MEASURED WITH eslint, NEVER REIMPLEMENTED. The reconciliation runs the `ESLint` API at
     the BARE standard — the same scope blocks the config uses, with the exception blocks

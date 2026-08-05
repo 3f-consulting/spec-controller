@@ -3,13 +3,13 @@
  * CI: it discovers the repo's feature files (via `discoverFeatures`), reads each
  * file's SOURCE — since `DiscoveredFeature.scenarioCodes` carries only the @SCN
  * ids, not the per-scenario tag blocks the floor needs — and flags every scenario
- * that carries an @SCN-<FFF>-<NNN> but declares no evidence tier and is not @wip.
+ * that carries an @SCN-<FFF>-<NNN> but NAMES no evidence tier and is not @wip.
  * Exits non-zero, naming every tier-less offender, if any is found; exits 0 over a
  * compliant tree.
  *
  * The tier-tag floor over spec-controller's OWN scenarios (the cobbler's shoes).
  * Mirrors `lint:feature-codes` / `lint:no-committed-reports`: a pure function of
- * the checked-out tree, a full CI gate on every push. The static check is @lint-declared
+ * the checked-out tree, a full CI gate on every push. The static check is @lint-cited
  * (`@lint=lint:scn-tags` on @SCN-STG-001) so the tool's own ledger reconciles it —
  * not an uncited static-check.
  *
@@ -42,13 +42,13 @@ const result = lintScnTags(sources);
 
 if (result.ok) {
   console.log(
-    "scn-tags lint: OK — every @SCN scenario declares an evidence tier (or is @wip)."
+    "scn-tags lint: OK — every @SCN scenario names an evidence tier (or is @wip)."
   );
   process.exit(0);
 }
 
 console.error(
-  `scn-tags lint: FAILED — ${result.violations.length} scenario(s) declare an @SCN but no evidence tier (and are not @wip):`
+  `scn-tags lint: FAILED — ${result.violations.length} scenario(s) name an @SCN but no evidence tier (and are not @wip):`
 );
 for (const v of result.violations) {
   console.error(`  ${v.message}`);

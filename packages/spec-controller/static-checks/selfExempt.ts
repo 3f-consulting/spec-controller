@@ -27,7 +27,7 @@
  * they catch. So no CODE file is exempt — the end state 3F-2378 set.
  *
  * The `residual` kind stays anyway, and that is deliberate. It is the mechanism for the
- * next piece of declared debt, and @SCN-VOC-016/017 prove it over INJECTED lists precisely
+ * next piece of recorded debt, and @SCN-VOC-016/017 prove it over INJECTED lists precisely
  * so a healthy tree cannot make it unobservable. Deleting a proven mechanism because
  * today's list happens not to use it is how the next exemption gets granted with no shape
  * to grant it in.

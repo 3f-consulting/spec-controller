@@ -1,19 +1,19 @@
 /**
- * The Gherkin VALIDATOR — the declared corpus's integrity checkpoint (@SCN-CLI-016, 3F-1767).
+ * The Gherkin VALIDATOR — the feature corpus's integrity checkpoint (@SCN-CLI-016, 3F-1767).
  *
- * WHY THIS EXISTS. The declared corpus is the ledger's DEBIT side, and it was read by a
+ * WHY THIS EXISTS. The feature corpus is the ledger's DEBIT side, and it was read by a
  * hand-rolled TAG-LINE SCAN (`parseScenarios`) that never looked for a `Scenario:` header at
- * all: a scenario was "declared" purely because an `@SCN-FFF-NNN` tag line existed. So a
+ * all: a scenario EXISTED purely because an `@SCN-FFF-NNN` tag line did. So a
  * malformed tag line simply STOPPED BEING A TAG LINE, and its scenario ceased to exist —
  * silently. One stray character, in a file cucumber itself rejects, deleted a failing row and
  * turned an out-of-balance run (exit 1) into a clean BALANCED (exit 0). A dropped scenario
- * cannot even reconcile `missing`, because it was never declared to be missing: the run reads
+ * cannot even reconcile `missing`, because it was never raised to be missing: the run reads
  * CLEANER THAN REALITY. That is the false-green this tool exists to prevent, aimed at itself.
  *
  * THE FIX (this slice). VALIDATE every feature file with the REAL Gherkin parser — the same one
  * cucumber uses. A file the parser rejects is an input the tool CANNOT READ, and the CLI refuses
  * it: exit 2, halting before reconciling (@SCN-CLI-014/015's Rule — "an input the tool cannot read
- * is a usage error, never a verdict" — extended from the OBSERVED side to the DECLARED side).
+ * is a usage error, never a verdict" — extended from the OBSERVATION side to the OBLIGATION side).
  *
  * VALIDATION IS HALF THE STORY. This decides whether a feature file can be READ at all; the corpus
  * is then EXTRACTED from the same real AST by `parseScenarios` (@SCN-LDG-020, 3F-1775), so the
@@ -46,12 +46,12 @@ export interface GherkinParseError {
  * reports — empty when the file is well-formed Gherkin.
  *
  * The parser is authoritative BY CONSTRUCTION: it is cucumber's own. A file it rejects is one
- * cucumber would refuse to RUN, so a declared corpus built from it would be a FICTION — which is
+ * cucumber would refuse to RUN, so a scenario corpus built from it would be a FICTION — which is
  * precisely how a corrupt spec used to read balanced.
  *
  * A parse failure is reported, never thrown: the CLI edge routes it to stderr + exit 2 (the
  * shared typed-error surface), so it can never reach Node's default exit 1 and masquerade as an
- * out-of-balance verdict (@SCN-CLI-014's collision, on the declared side).
+ * out-of-balance verdict (@SCN-CLI-014's collision, on the obligation side).
  *
  * @SCN-CLI-016 (3F-1773).
  */

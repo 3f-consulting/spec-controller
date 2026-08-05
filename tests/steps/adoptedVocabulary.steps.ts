@@ -145,11 +145,18 @@ Then("the gate passes, reporting nothing to enforce", function () {
 });
 
 /**
- * A term from a canon row this repository marks `deferred` — the `declare` family, whose
- * 1,212 occurrences 3F-2329 pays. The gate must leave it alone, and the tree really does
+ * A term from the canon row this repository still marks `deferred` — the bare shortening,
+ * whose 774 occurrences 3F-1852 pays. The gate must leave it alone, and the tree really does
  * carry it, so the green below is discriminating rather than vacuous.
+ *
+ * THE EXEMPLAR MOVED WHEN ITS ROW WAS PAID (3F-2329). It was the retired evidence family
+ * until that ticket ADOPTED the row — at which point this arm redded, correctly and loudly,
+ * rather than quietly proving nothing. Re-pointing it at the row still deferred is the fix;
+ * relaxing the assertion would have been the erosion.
  */
-const DEFERRED_TERM = "declared";
+const DEFERRED_TERM = "guard";
+/** The term in a NAME the audit greens through its RULED QUALIFIER, so nothing else flags. */
+const DEFERRED_PLANT = "bothMissingGuard";
 
 let deferredRun: GateRun;
 let deferredControlRun: GateRun;
@@ -159,7 +166,7 @@ Given(
   "a canon table whose retired terms are split between an adopted row and a deferred one",
   function () {
     // The REAL vendored table, not a fixture: the split under test is the one this
-    // repository actually ships, and the @unit arm pins that `declare` is the deferred row.
+    // repository actually ships, and the @unit arm pins WHICH row is the deferred one.
   },
 );
 
@@ -167,7 +174,7 @@ Given(
 When(
   "the adopted-vocabulary gate runs over a tree carrying the deferred row's term",
   function () {
-    deferredRun = runGate(plantTree(`export const ${DEFERRED_TERM}Tier = 1;\n`));
+    deferredRun = runGate(plantTree(`export const ${DEFERRED_PLANT} = 1;\n`));
     // The control, over the SAME shape of tree with the ADOPTED term instead. Without it a
     // green proves only that this fixture cannot red — the gate could be enforcing nothing
     // at all and the deferred arm would still pass.
@@ -184,7 +191,7 @@ Then(
       0,
       `expected the gate to PASS over a tree carrying the DEFERRED term "${DEFERRED_TERM}"; ` +
         `it exited ${deferredRun.exitCode}. A deferred row is dated, ticketed debt — the ` +
-        `unadopted rows carry 2,272 occurrences here, so enforcing them would block main ` +
+        `unadopted row carries 774 occurrences here, so enforcing it would block main ` +
         `permanently. Output:\n${deferredRun.output}`,
     );
   },

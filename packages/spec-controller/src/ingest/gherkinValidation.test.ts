@@ -1,10 +1,10 @@
 /**
- * @unit for the Gherkin validator (@SCN-CLI-016) — the declared corpus's integrity checkpoint.
+ * @unit for the Gherkin validator (@SCN-CLI-016) — the feature corpus's integrity checkpoint.
  *
  * Bidirectional evidence: the describe carries the @SCN-CLI-016 id matching
  * features/cli-balance.feature and the @e2e steps in tests/steps/cliBalance.steps.ts.
  *
- * Parent: 3F-1767 (the declared-side false-green).
+ * Parent: 3F-1767 (the obligation-side false-green).
  */
 
 import { describe, it, expect } from "vitest";
@@ -31,7 +31,7 @@ describe("[SCN-CLI-016] the Gherkin validator refuses a feature file the parser 
   it("reports a parse error for a CORRUPT TAG LINE — the one-character false-green (3F-1767)", () => {
     // THE HEADLINE PROOF. `@unit @SCN-AAA-002 x` is not valid Gherkin — cucumber rejects it
     // ("A tag may not contain whitespace"). Under the old tag-line SCAN it was simply "not a
-    // tag line", so SCN-AAA-002 vanished from the declared corpus and its failing row was
+    // tag line", so SCN-AAA-002 vanished from the parsed corpus and its failing row was
     // DELETED — an out-of-balance run read BALANCED, exit 0.
     const source = WELL_FORMED.replace("@unit @SCN-AAA-002", "@unit @SCN-AAA-002 x");
 
@@ -61,7 +61,7 @@ describe("[SCN-CLI-016] the Gherkin validator refuses a feature file the parser 
 
   it("reports NO error for a VALID scenario carrying no @SCN tag — that is 3F-1774, not a parse fault", () => {
     // THE BOUNDARY that keeps this slice honest. An untagged scenario is valid Gherkin: the
-    // parser accepts it, so this validator MUST NOT red it. Whether undeclarable work should
+    // parser accepts it, so this validator MUST NOT red it. Whether UNCODED work should
     // fail a run is a POLICY question (3F-1774), deliberately not smuggled into this bug fix.
     const untagged = `@AAA
 Feature: alpha

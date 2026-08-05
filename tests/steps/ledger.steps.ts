@@ -3,7 +3,7 @@
  *
  * @SCN-LDG-001 / @SCN-LDG-002 / @SCN-LDG-003 / @SCN-LDG-005 — bidirectional
  * evidence markers for features/ledger.feature (Evidence Manifesto §9). The
- * @integration arm exercises the declared → reconcile → render wiring end-to-end
+ * @integration arm exercises the parse → reconcile → render wiring end-to-end
  * (cross-component), complementing the @unit tests that prove reconcile() in
  * isolation.
  *
@@ -84,9 +84,6 @@ function rowCells(scnId: string): { verdict: string; items: string } {
 
 // @SCN-LDG-001
 Given("a scenario {string} requiring unit-level evidence", function (scnId: string) {
-  // Build the declared side from a real feature snippet through the declared
-  // reader, so the @integration arm exercises the parse → declared seam (not a
-  // hand-seeded Scenario the reader never produced).
   const feature = [
     "@LDG",
     "Feature: fixture",
@@ -102,8 +99,6 @@ Given("a scenario {string} requiring unit-level evidence", function (scnId: stri
 Given(
   "a scenario {string} requiring integration-level evidence",
   function (scnId: string) {
-    // Build the declared side from a real feature snippet through the declared
-    // reader, so the @integration arm exercises the parse → declared seam.
     const feature = [
       "@LDG",
       "Feature: fixture",
@@ -120,10 +115,7 @@ Given(
 Given(
   "a scenario {string} requiring both unit-level and integration-level evidence",
   function (scnId: string) {
-    // Build the declared side from a real feature snippet through the declared
-    // reader, so the @integration arm exercises the parse → declared seam. The two
-    // co-located level tags produce TWO (kind, level) evidence obligations — the multi-
-    // evidence obligation case that exercises the (kind, level) keying.
+    // The two co-located tier tags produce TWO evidence obligations — the multi-obligation case.
     const feature = [
       "@LDG",
       "Feature: fixture",
@@ -138,11 +130,8 @@ Given(
 
 // @SCN-LDG-010
 Given("a zero-evidence obligation scenario {string}", function (scnId: string) {
-  // A scenario carrying ONLY its @SCN tag — no @unit/@integration/@lint level tag —
-  // so it declares ZERO evidence obligations. Built through the declared reader so the
-  // @integration arm exercises the parse → declared seam (a real zero-evidence obligation scenario,
-  // not a hand-seeded empty Scenario). Its @SCN is nonetheless cited by a stray
-  // credit (the next Given) — the negative twin: an evidence observation at an undeclared quality-check.
+  // No tier tag at all → ZERO evidence obligations. Its @SCN is nonetheless cited by a stray
+  // credit (the next Given) — the negative twin of both-missing.
   const feature = [
     "@LDG",
     "Feature: fixture",
@@ -162,7 +151,7 @@ Given("a passing unit-level result for {string}", function (scnId: string) {
 // @SCN-LDG-008
 Given("a passing integration-level result for {string}", function (scnId: string) {
   // A passing integration credit citing a REAL scenario — but at the integration
-  // quality-check, which the scenario did NOT declare (it declares unit). It posts to a real
+  // quality-check, which the scenario did NOT name (it names unit). It posts to a real
   // account against no evidence obligation → no-evidence-obligation. Carries a locator (the where-to-fix, ruling Q5).
   evidenceObservations = [
     { qualityCheck: "integration", scnId, status: "passed", locator: "src/no-evidence-obligation.test.ts" },
@@ -206,7 +195,7 @@ Given("no result matches {string}", function (scnId: string) {
 
 // @SCN-LDG-006
 Given(
-  "a passing unit-level result for an undeclared scenario {string}",
+  "a passing unit-level result citing the phantom scenario {string}",
   function (scnId: string) {
     // A credit citing an @SCN id that NO scenario matches — a phantom credit
     // (posting to a non-existent account). It carries a locator (the where-to-fix,
@@ -232,11 +221,9 @@ Given("a passing unit-level result carrying no scenario id", function () {
 let ldg011ScnId: string;
 
 // @SCN-LDG-011
-Given("a scenario declared @e2e", function () {
-  // A scenario carrying an @e2e tier tag (built through the real declared
-  // reader, so the @integration arm exercises the parse → declared seam). Its @e2e tag
-  // sets a single e2e evidence obligation — the obligation a cucumber-sourced observation
-  // must discharge once its level is DERIVED from this same tag.
+Given("a scenario tagged @e2e", function () {
+  // Its @e2e tag raises a single e2e evidence obligation — the obligation a cucumber-sourced
+  // observation must discharge once its level is DERIVED from this same tag.
   ldg011ScnId = "SCN-LDG-011";
   const feature = [
     "@LDG",
@@ -254,7 +241,7 @@ Given("a passing cucumber observation citing it", function () {
   // A passing cucumber JSON report citing the @e2e scenario, run through the REAL
   // parser with the JS-ecosystem fallback ("integration") — so this @integration arm
   // exercises the tag-derivation seam end-to-end: the observation's level is DERIVED from
-  // the scenario's declared @e2e tag, NOT stamped from the fallback source level. Before the
+  // the scenario's own @e2e tag, NOT stamped from the fallback source level. Before the
   // fix the parser stamped "integration", so the e2e obligation went missing and the
   // integration observation was no-evidence-obligation.
   const report: CucumberJsonReport = [
@@ -334,11 +321,9 @@ Then(
 let ldg012ScnId: string;
 
 // @SCN-LDG-012
-Given("a scenario declared @integration", function () {
-  // A scenario carrying an @integration tier tag, built through the REAL declared
-  // reader (so the @integration arm exercises the parse → declared seam). Its @integration
-  // tag sets a single integration evidence obligation — the obligation a cucumber-sourced
-  // observation must discharge once its level is DERIVED from this same tag.
+Given("a scenario tagged @integration", function () {
+  // Its @integration tag raises a single integration evidence obligation — the obligation a
+  // cucumber-sourced observation must discharge once its level is DERIVED from this same tag.
   ldg012ScnId = "SCN-LDG-012";
   const feature = [
     "@LDG",
@@ -356,7 +341,7 @@ Given("a passing cucumber observation citing the @integration scenario", functio
   // A passing cucumber JSON report citing the @integration scenario, run through the REAL
   // parser with a CONTRASTING non-integration fallback ("e2e") — deliberately NOT the
   // JS-ecosystem "integration". This is the whole point of LDG-012 over the old hardcode:
-  // the observation's integration level can ONLY come from DERIVING the scenario's declared
+  // the observation's integration level can ONLY come from DERIVING the scenario's own
   // @integration tag, never from the source fallback (the retired CUCUMBER_QUALITY_CHECK=
   // "integration" hardcode supplied integration by COINCIDENCE). If the parser ignored the tag
   // and used the fallback, the level would be e2e and the integration obligation would go
@@ -406,11 +391,10 @@ Then("the integration obligation is satisfied and the scenario is balanced", fun
 let ldg013ScnId: string;
 
 // @SCN-LDG-013
-Given("a scenario declared @unit @e2e", function () {
-  // A scenario carrying BOTH a @unit and an @e2e tier tag, built through the REAL
-  // declared reader → TWO evidence obligations (unit + e2e). @unit is discharged by a vitest
-  // observation; @e2e by a cucumber observation whose level is DERIVED from this same @e2e tag.
-  // The single-non-unit-tag case of the multi-tag ruling — the split across runners.
+Given("a scenario tagged @unit @e2e", function () {
+  // BOTH a @unit and an @e2e tier tag → TWO evidence obligations. @unit is discharged by a vitest
+  // observation; @e2e by a cucumber observation whose level is DERIVED from this same @e2e tag —
+  // the single-non-unit-tag case of the multi-tag ruling, the split across runners.
   ldg013ScnId = "SCN-LDG-013";
   const feature = [
     "@LDG",
@@ -447,7 +431,7 @@ Given("a passing vitest observation citing the @unit @e2e scenario", function ()
 Given("a passing cucumber observation citing the @unit @e2e scenario", function () {
   // A passing cucumber JSON report citing the SAME @unit @e2e scenario, run through the REAL
   // cucumber reader with the JS-ecosystem "integration" fallback. deriveLevel reads the
-  // scenario's declared @e2e tier tag (the @unit tag is NOT a non-unit tier → inert for cucumber;
+  // scenario's own @e2e tier tag (the @unit tag is NOT a non-unit tier → inert for cucumber;
   // unit is vitest's job) → exactly ONE e2e observation. APPENDED to the vitest unit observation
   // so the observed side carries BOTH tiers: vitest→unit, cucumber→e2e — the split across runners.
   const report: CucumberJsonReport = [
@@ -495,16 +479,14 @@ Then(
   }
 );
 
-// @SCN-LDG-014 — the cited scenario for the multi-tag ruling's teeth. Its own fixtures
-// (distinct step text: "declared @integration @e2e", "a single passing cucumber observation
-// citing it") leave LDG-011/012/013's steps byte-untouched; only the generic "the ledger
-// reconciles the target" When is shared.
+// @SCN-LDG-014 — the cited scenario for the multi-tag ruling's teeth. Distinct step text keeps
+// LDG-011/012/013's steps byte-untouched; only the generic "the ledger reconciles the target"
+// When is shared.
 let ldg014ScnId: string;
 
 // @SCN-LDG-014
-Given("a scenario declared @integration @e2e", function () {
-  // A scenario carrying BOTH an @integration and an @e2e tier tag, built through the
-  // REAL declared reader → TWO non-unit evidence obligations (integration + e2e). A SINGLE
+Given("a scenario tagged @integration @e2e", function () {
+  // BOTH an @integration and an @e2e tier tag → TWO non-unit evidence obligations. A SINGLE
   // cucumber run must discharge BOTH — the observation's per-tier emission is derived from these
   // same two tags. The multi-tag ruling's teeth: LDG-011/012/013 were single-tier instances.
   ldg014ScnId = "SCN-LDG-014";
@@ -523,7 +505,7 @@ Given("a scenario declared @integration @e2e", function () {
 Given("a single passing cucumber observation citing it", function () {
   // ONE passing cucumber JSON report citing the @integration @e2e scenario, run through the REAL
   // parser with the JS-ecosystem "integration" fallback. From this SINGLE pass the parser must
-  // emit ONE observation PER declared non-unit tier — an integration observation AND an e2e
+  // emit ONE observation PER named non-unit tier — an integration observation AND an e2e
   // observation, same scnId — so BOTH obligations are discharged and the scenario balances.
   // Before per-tier emission the parser emitted ONE observation (the first tier), so the OTHER
   // tier went missing (and the emitted tier, when it was the wrong one, no-evidence-obligation) → out of
@@ -570,16 +552,14 @@ Then(
   }
 );
 
-// @SCN-LDG-015 — the NEGATIVE BOUNDARY of the general rule. Its own fixtures (distinct step
-// text: "declared @unit only", "citing the @unit-only scenario") leave LDG-011/012/013/014's
-// steps byte-untouched; only the generic "the ledger reconciles the target" When is shared.
+// @SCN-LDG-015 — the NEGATIVE BOUNDARY of the general rule. Distinct step text keeps
+// LDG-011/012/013/014's steps byte-untouched; only the generic When is shared.
 let ldg015ScnId: string;
 
 // @SCN-LDG-015
-Given("a scenario declared @unit only", function () {
-  // A scenario carrying ONLY a @unit tier tag (no @integration/@e2e/@performance),
-  // built through the REAL declared reader → exactly ONE evidence obligation: unit. There is NO
-  // non-unit obligation for a cucumber observation to discharge — the negative boundary.
+Given("a scenario tagged @unit only", function () {
+  // ONLY a @unit tier tag → exactly ONE evidence obligation: unit. There is NO non-unit
+  // obligation for a cucumber observation to discharge — the negative boundary.
   ldg015ScnId = "SCN-LDG-015";
   const feature = [
     "@LDG",
@@ -597,7 +577,7 @@ Given("a passing cucumber observation citing the @unit-only scenario", function 
   // A passing cucumber JSON report citing the @unit-only scenario, run through the REAL parser
   // with the JS-ecosystem "integration" fallback. deriveLevels finds NO non-unit tier tag (@unit
   // is inert for cucumber — unit is vitest's substrate, never derived), so it falls back to the
-  // single caller-declared level (integration) — a level this @unit-only scenario never declared.
+  // single caller-supplied level (integration) — a check this @unit-only scenario never named.
   // The observation therefore discharges NO obligation and is NO-EVIDENCE-OBLIGATION. Crucially it does NOT
   // discharge the @unit obligation: cucumber must never manufacture a unit discharge.
   const report: CucumberJsonReport = [
@@ -617,7 +597,7 @@ Given("a passing cucumber observation citing the @unit-only scenario", function 
 // @SCN-LDG-015
 Then("the cucumber observation is reported no-evidence-obligation", function () {
   // Row-scoped to the @unit-only scenario's OWN row: the cucumber observation posts to this
-  // scenario's account (it cites it) at a level the scenario never declared → a NO-EVIDENCE-OBLIGATION
+  // scenario's account (it cites it) at a check the scenario never named → a NO-EVIDENCE-OBLIGATION
   // credit-side item (at the fallback integration level). The row's verdict is out-of-balance
   // (a no-evidence-obligation item is a non-satisfied reconciling item). Reds under a mutation that lets
   // cucumber DERIVE a unit level from the @unit tag — the observation would then DISCHARGE the
@@ -790,7 +770,7 @@ Then(
   function (scnId: string, qualityCheck: string) {
     // Row-scoped to the REAL scenario's OWN ledger row: its reconciling-items cell must carry
     // a no-evidence-obligation item at the named quality-check (a credit citing this real scenario at a
-    // level it never declared). Reds if the no-evidence-obligation credit is silently swallowed (counted as
+    // level it never named). Reds if the no-evidence-obligation credit is silently swallowed (counted as
     // attributed) rather than surfaced as a credit-side reconciling item on the row. The row's
     // verdict is out-of-balance (a no-evidence-obligation item is a non-satisfied reconciling item).
     const { verdict, items } = rowCells(scnId);
@@ -873,8 +853,8 @@ function creditsFor(scnId: string): EvidenceObservation[] {
 Given(
   "a scenario cited by an ancestor describe and a scenario self-cited by a leaf beneath it",
   function () {
-    // TWO scenarios, both @unit (one unit obligation each), built through the REAL
-    // declared reader: the one a grouping `describe` cites in its bracket, and the one a child
+    // TWO scenarios, both @unit (one unit obligation each): the one a grouping `describe` cites
+    // in its bracket, and the one a child
     // `it` cites in its OWN title. Each must end up discharged by exactly the assertion that
     // cites it — the whole point of most-specific-wins.
     ldg016AncestorScnId = "SCN-ANC-016";
@@ -943,7 +923,7 @@ Then(
     // reconciles `missing`: this reds with `got 0`. (A "the leaf scenario is balanced" check would
     // red too, but says nothing about WHOSE credit balanced it — the count is what pins the
     // attribution.) Its `status`/`qualityCheck` are pinned too: a `passed` unit credit, so the
-    // scenario's declared unit obligation is genuinely DISCHARGED by this assertion.
+    // scenario's unit obligation is genuinely DISCHARGED by this assertion.
     const leafCredits = creditsFor(ldg016LeafScnId);
     assert.equal(
       leafCredits.length,
@@ -1049,7 +1029,7 @@ const LDG017_MESSAGE = "Error: Cannot find package '@cucumber/tag-expressions'";
 Given(
   "a scenario whose only proving test lived in a vitest file that failed to collect",
   function () {
-    // ONE declared @unit scenario, built through the REAL declared reader. Its proof lives in the
+    // ONE @unit scenario, built through the REAL scenario reader. Its proof lives in the
     // file that failed to collect — so NO observation citing it arrives, and its own row is
     // honestly `missing` at its own resolution. What must change is the RUN: the collection
     // failure has to be on the ledger, not swallowed.
@@ -1182,9 +1162,9 @@ let ldg018SoundRun: Ledger;
 Given(
   "a run whose vitest report carries a collection-failed file, and a second run whose report collects cleanly but defers an obligation",
   function () {
-    // TWO runs, both built through the REAL declared reader + the REAL vitest reader.
+    // TWO runs, both built through the REAL scenario reader + the REAL vitest reader.
     //
-    // Run A (UNSOUND): one declared @unit scenario whose proof lived in a file that failed to
+    // Run A (UNSOUND): one @unit scenario whose proof lived in a file that failed to
     // collect — the file reports `status: "failed"` with a message and ZERO assertionResults, so
     // it names no test, cites no @SCN, and posts a `broken` item to the suspense row.
     //
@@ -1328,7 +1308,7 @@ const LDG019_STEP = "Given the step two definitions both match";
 
 // @SCN-LDG-019
 Given("a scenario whose only proving step is matched by two step definitions", function () {
-  // ONE declared @integration scenario, built through the REAL declared reader. Its proof is the
+  // ONE @integration scenario, built through the REAL scenario reader. Its proof is the
   // cucumber scenario whose step is ambiguous — the step never runs, so NO passing/failing
   // observation citing it can arrive, and its own row is honestly `missing` at its own resolution.
   // What must change is the RUN: the ambiguity has to be ON the ledger, not swallowed by the
@@ -1457,16 +1437,16 @@ Then(
 );
 
 /**
- * @SCN-LDG-020 (3F-1775) — the declared corpus is what CUCUMBER runs.
+ * @SCN-LDG-020 (3F-1775) — the PARSED corpus is what CUCUMBER runs.
  *
  * @integration is the TEETH here. The @unit arm proves parseScenarios resolves inheritance; only
  * driving the REAL reconciliation end-to-end (parse → reconcile → verdict) shows what that fixes:
  * the run flipping from BALANCED to OUT-OF-BALANCE. The bug was never in one function — it was
- * that an obligation cucumber names was never DECLARED, so its absence could not reconcile
+ * that an obligation cucumber names was never RAISED, so its absence could not reconcile
  * `missing`, and the whole ledger balanced over a hole.
  */
 
-/** The declared corpus + observations LDG-020's Given builds, and the verdict they reconcile to. */
+/** The scenario corpus + observations LDG-020's Given builds, and the verdict they reconcile to. */
 let ldg020Scenarios: Scenario[];
 let ldg020Reconciliation: Ledger;
 
@@ -1503,18 +1483,18 @@ When("the ledger reconciles the run", function () {
 });
 
 // @SCN-LDG-020
-Then("the scenario declares both the unit and the integration obligation", function () {
+Then("the scenario raises both the unit and the integration obligation", function () {
   assert.equal(
     ldg020Scenarios.length,
     1,
     `expected exactly ONE scenario (no phantom from the Rule's tag block); got ${ldg020Scenarios.length}`,
   );
-  const declared = ldg020Scenarios[0]!.evidenceObligations.map((o) => o.qualityCheck).sort();
+  const named = ldg020Scenarios[0]!.evidenceObligations.map((o) => o.qualityCheck).sort();
   assert.deepEqual(
-    declared,
+    named,
     ["integration", "unit"],
-    `expected the scenario to declare BOTH tiers — cucumber names both — but it declared [${declared.join(", ")}]. ` +
-      `The inherited tier is invisible: an obligation never declared can never reconcile missing.`,
+    `expected the scenario to name BOTH tiers — cucumber names both — but it named [${named.join(", ")}]. ` +
+      `The inherited tier is invisible: an obligation never named can never reconcile missing.`,
   );
 });
 
@@ -1543,7 +1523,7 @@ Then(
   "the run is out-of-balance — never balanced on an obligation cucumber names",
   function () {
     // THE FALSE-GREEN, CLOSED. Before the AST extraction this run reconciled BALANCED (exit 0):
-    // the integration obligation was never declared, so its missing evidence was invisible and
+    // the integration obligation was never raised, so its missing evidence was invisible and
     // the ledger balanced over a hole. The verdict is the only place that shows it.
     assert.equal(
       isBalanced(ldg020Reconciliation),
@@ -1555,10 +1535,10 @@ Then(
 );
 
 /**
- * @SCN-LDG-021 (3F-1774) — undeclarable work is never invisible.
+ * @SCN-LDG-021 (3F-1774) — uncoded work is never invisible.
  *
  * @integration is the TEETH. The @unit arm proves reconcile emits the row; only driving the real
- * declared-corpus read (parseScenarios + parseUntaggedScenarios) THROUGH reconcile to a verdict
+ * scenario-corpus read (parseScenarios + parseUntaggedScenarios) THROUGH reconcile to a verdict
  * shows what that fixes: the run flipping from BALANCED to OUT-OF-BALANCE. The bug was never in
  * one function — it was that a scenario cucumber runs contributed NOTHING to the ledger, so the
  * tool printed "1 scenario(s) carry no @SCN tag" and called the run clean in the same breath.
@@ -1679,7 +1659,7 @@ let ldg022PendingCredit: EvidenceObservation;
 Given(
   "a run whose credits span every shape — satisfied, no-evidence-obligation, pending-cited, phantom, uncited, broken, a named guard and a no-evidence-obligation guard",
   function () {
-    // SCN-AAA-003 declares @unitpending — a DEFERRED obligation. The credit citing it below is the
+    // SCN-AAA-003 carries @unitpending — a DEFERRED obligation. The credit citing it below is the
     // LOAD-BEARING case: before this scenario it vanished from the model entirely, because there
     // was nowhere for a posted entry to sit. It posts and is findable WHATEVER it reconciles to.
     const source = `@AAA
@@ -1690,7 +1670,7 @@ Feature: alpha
     Given a thing
 
   @unit @SCN-AAA-002
-  Scenario: a no-evidence-obligation credit at an undeclared check
+  Scenario: a no-evidence-obligation credit at a check no scenario names
     Given a thing
 
   @unitpending @SCN-AAA-003
@@ -1702,7 +1682,7 @@ Feature: alpha
     const satisfied: EvidenceObservation = {
       scnId: "SCN-AAA-001", qualityCheck: "unit", status: "passed", locator: "a.test.ts",
     };
-    // Cites a REAL scenario at a check it never declared → `no-evidence-obligation`, on SCN-AAA-002's OWN row.
+    // Cites a REAL scenario at a check it never named → `no-evidence-obligation`, on SCN-AAA-002's OWN row.
     const noEvidenceObligation: EvidenceObservation = {
       scnId: "SCN-AAA-002", qualityCheck: "integration", status: "passed", locator: "b.test.ts",
     };
@@ -1710,7 +1690,7 @@ Feature: alpha
     ldg022PendingCredit = {
       scnId: "SCN-AAA-003", qualityCheck: "unit", status: "passed", locator: "c.test.ts",
     };
-    // Cites an @SCN no feature declares → posts to that PHANTOM account.
+    // Cites an @SCN no feature carries → posts to that PHANTOM account.
     const phantom: EvidenceObservation = {
       scnId: "SCN-ZZZ-999", qualityCheck: "unit", status: "passed", locator: "d.test.ts",
     };
@@ -1813,7 +1793,7 @@ Then(
     const account = ldgPostingLedger.ledger.scenarioReconciliations.find(
       (r: ScenarioReconciliation) => r.scnId === "SCN-AAA-003",
     );
-    assert.ok(account, "expected an account for the pending-declaring scenario SCN-AAA-003");
+    assert.ok(account, "expected an account for the pending-naming scenario SCN-AAA-003");
     // POSTED — the whole point, and the WHOLE of this step's claim. Before this scenario, this
     // credit existed nowhere in the model. It posts and is findable WHATEVER it reconciles to;
     // what it reconciles to is the reconciler's business, asserted where that rule lives.
@@ -1866,14 +1846,14 @@ Then(
 );
 
 /**
- * @SCN-LDG-023 (3F-1847) — the evidence obligations a scenario declares post to its ledger account.
+ * @SCN-LDG-023 (3F-1847) — the evidence obligations a scenario raises post to its ledger account.
  *
  * The DEBIT half of LDG-022's posting. @integration is the TEETH here for the same reason: the
  * @unit arm proves `reconcile` populates one account's `evidenceObligations`; only driving the FULL
- * declared corpus through in one run shows EXHAUSTION and UNIQUENESS together — every declared
+ * scenario corpus through in one run shows EXHAUSTION and UNIQUENESS together — every raised
  * debit posts, to its OWN account, and to exactly one.
  *
- * Assertions are IDENTITY-scoped (each declared obligation object must be found on exactly one
+ * Assertions are IDENTITY-scoped (each raised obligation object must be found on exactly one
  * account), never count-scoped: a count would pass under a double-post that cancelled a drop.
  */
 
@@ -1884,9 +1864,9 @@ let ldg023PendingObligation: EvidenceObligation;
 
 // @SCN-LDG-023
 Given(
-  "a run whose scenarios declare obligations of every shape — a runtime obligation, a lint obligation carrying its guard handle, and a pending one",
+  "a run whose scenarios raise obligations of every shape — a runtime obligation, a lint obligation carrying its guard handle, and a pending one",
   function () {
-    // SCN-AAA-003 declares @unitpending — a DEFERRED obligation that partitions off to a one-sided
+    // SCN-AAA-003 carries @unitpending — a DEFERRED obligation that partitions off to a one-sided
     // Pending Item and earns NO reconciled row. It is the debit-side mirror of LDG-022's
     // load-bearing credit: it must post ANYWAY.
     const source = `@AAA
@@ -1908,17 +1888,17 @@ Feature: alpha
 
     // Read the debits back off the PARSED scenarios by identity — never hand-built here, so the
     // assertion is against what the engine was actually handed (evidence-manifesto §11A).
-    const declaredOf = (scnId: string): EvidenceObligation[] =>
+    const namedOf = (scnId: string): EvidenceObligation[] =>
       scenarios.find((s: Scenario) => s.scnId === scnId)!.evidenceObligations;
 
-    const [aaa001Unit, aaa001Lint] = declaredOf("SCN-AAA-001");
-    const [aaa002Integration] = declaredOf("SCN-AAA-002");
-    ldg023PendingObligation = declaredOf("SCN-AAA-003")[0]!;
+    const [aaa001Unit, aaa001Lint] = namedOf("SCN-AAA-001");
+    const [aaa002Integration] = namedOf("SCN-AAA-002");
+    ldg023PendingObligation = namedOf("SCN-AAA-003")[0]!;
 
     ldg023Obligations = [aaa001Unit!, aaa001Lint!, aaa002Integration!, ldg023PendingObligation];
 
-    // THE POSTING RULE IS THE DECLARATION: a debit posts to the account that DECLARED it. Unlike a
-    // credit there is no citation to follow and no suspense — a declared obligation always has a
+    // THE POSTING RULE IS THE SCENARIO ITSELF: a debit posts to the account that RAISED it. Unlike
+    // a credit there is no citation to follow and no suspense — a raised obligation always has a
     // real account, by construction.
     ldg023ExpectedAccount = new Map<EvidenceObligation, string>([
       [aaa001Unit!, "SCN-AAA-001"],
@@ -1927,7 +1907,7 @@ Feature: alpha
       [ldg023PendingObligation, "SCN-AAA-003"],
     ]);
 
-    // A credit corpus that mints a PHANTOM and a SUSPENSE account — accounts no scenario declares,
+    // A credit corpus that mints a PHANTOM and a SUSPENSE account — accounts no scenario raises,
     // so nothing can have been named of them. Their debit side must stay empty.
     ldgPostingObservations = [
       { scnId: "SCN-AAA-001", qualityCheck: "unit", status: "passed", locator: "a.test.ts" },
@@ -1938,24 +1918,24 @@ Feature: alpha
   },
 );
 
-/** Every account a declared obligation posted to — the uniqueness/exhaustion probe. */
+/** Every account a raised obligation posted to — the uniqueness/exhaustion probe. */
 const ldg023AccountsHolding = (obligation: EvidenceObligation): string[] =>
   ldgPostingLedger.ledger.scenarioReconciliations
     .filter((r: ScenarioReconciliation) => (r.evidenceObligations ?? []).includes(obligation))
     .map((r: ScenarioReconciliation) => r.scnId);
 
 // @SCN-LDG-023
-Then("every declared evidence obligation posts to its own scenario's account", function () {
+Then("every evidence obligation posts to its own scenario's account", function () {
   for (const obligation of ldg023Obligations) {
     assert.deepEqual(
       ldg023AccountsHolding(obligation),
       [ldg023ExpectedAccount.get(obligation)],
       `the debit ${JSON.stringify(obligation)} must post to EXACTLY ONE account — the scenario ` +
-        `that declared it. Every entry posts somewhere, and to one place.`,
+        `that named it. Every entry posts somewhere, and to one place.`,
     );
   }
 
-  // EXHAUSTION, the other direction: the ledger holds no debit the run did not declare, and drops
+  // EXHAUSTION, the other direction: the ledger holds no debit the run did not raise, and drops
   // none that it did. Identity-scoped, so a double-post cannot cancel a drop.
   const posted = ldgPostingLedger.ledger.scenarioReconciliations.flatMap(
     (r: ScenarioReconciliation) => r.evidenceObligations ?? [],
@@ -1963,7 +1943,7 @@ Then("every declared evidence obligation posts to its own scenario's account", f
   assert.equal(
     posted.length,
     ldg023Obligations.length,
-    `expected the ledger to hold EXACTLY the ${ldg023Obligations.length} debits the run declared`,
+    `expected the ledger to hold EXACTLY the ${ldg023Obligations.length} debits the run named`,
   );
 });
 
@@ -1989,7 +1969,7 @@ Then("each debit is findable on its account, keyed by quality-check", function (
   );
   assert.ok(findDebit("SCN-AAA-002", "integration"), "each scenario's own debit is on its own account");
 
-  // The accounts no scenario declares — minted by a credit — have an empty debit side by
+  // The accounts no scenario raises — minted by a credit — have an empty debit side by
   // construction. The asymmetry with the credit side is real, not an omission.
   assert.deepEqual(accountFor("SCN-ZZZ-999")?.evidenceObligations, [], "a phantom names nothing");
   assert.deepEqual(accountFor("(no scenario)")?.evidenceObligations, [], "suspense names nothing");
@@ -2074,9 +2054,9 @@ let ldgDebitSubject:
 Given(
   "a scenario {string} requiring @unit with no matching evidence observation",
   function (scnId: string) {
-    // A declared @unit scenario built through the REAL declared reader (the parse → declared seam),
-    // and NO observation citing it — so its unit obligation reconciles `missing` by absence: the
-    // pure debit case (a required obligation present, its matching observation absent).
+    // A @unit scenario built through the REAL scenario reader, and NO observation citing it — so
+    // its unit obligation reconciles `missing` by absence: the pure debit case (a required
+    // obligation present, its matching observation absent).
     ldg026ScnId = scnId;
     const feature = [
       "@LDG",
@@ -2184,9 +2164,9 @@ let ldg027ScnId: string;
 Given(
   "a scenario {string} cited by a credit at a quality-check it never named",
   function (scnId: string) {
-    // A declared @unit scenario built through the REAL declared reader (the parse → declared
-    // seam), cited by an INTEGRATION credit — a quality-check the scenario never declared. The
-    // credit posts to a real account against no obligation → `no-evidence-obligation`: the pure CREDIT case
+    // A @unit scenario built through the REAL scenario reader, cited by an INTEGRATION credit — a
+    // quality-check the scenario never named. The credit posts to a real account against no
+    // obligation → `no-evidence-obligation`: the pure CREDIT case
     // (observation present, obligation absent), the mirror of LDG-026's pure debit.
     ldg027ScnId = scnId;
     const feature = [
@@ -2246,8 +2226,8 @@ Then("it carries the evidence observation it reconciles \\(the credit side)", fu
 
 // @SCN-LDG-027
 Then("it carries no evidence obligation \\(the debit side is absent)", function () {
-  // The DEBIT side stays absent on a `no-evidence-obligation` outcome — a credit citing an undeclared
-  // quality-check reconciles against no obligation, so no `evidenceObligation` is in scope.
+  // The DEBIT side stays absent on a `no-evidence-obligation` outcome — a credit citing a check
+  // the scenario never named reconciles against no obligation, so no `evidenceObligation` is in scope.
   const obligation = (ldg027NoEvidenceObligationReconciliation() as { evidenceObligation?: unknown })
     .evidenceObligation;
   assert.equal(
@@ -2292,7 +2272,7 @@ let ldg028ScnId: string;
 Given(
   "a scenario {string} requiring a @lint guard absent from both package.json and CI",
   function (scnId: string) {
-    // A declared @lint scenario built through the REAL declared reader (the @lint=<guard> →
+    // A @lint scenario built through the REAL scenario reader (the @lint=<guard> →
     // static-obligation parse seam), and an absent-guard observation: the negative fact the real
     // detector produces for a guard named in NEITHER package.json NOR CI — exists:false,
     // enforcedOverRealSource:false. So its lint obligation reconciles `missing` by absence: the
@@ -2378,7 +2358,7 @@ Then(
 // to; the reconciliation carries the scenario-scope obligation (precedent: the scenario-scope
 // pending obligation, journal.ts). The scenario-level `evidenceObligations` array STAYS empty, so
 // the census — and the markdown the renderer builds from it — are untouched. The @integration arm
-// drives the real declared-corpus read (parseScenarios + parseUntaggedScenarios) THROUGH reconcile.
+// drives the real scenario-corpus read (parseScenarios + parseUntaggedScenarios) THROUGH reconcile.
 // Reuses the shared "the ledger reconciles that corpus" When (@SCN-LDG-021): the Given sets the
 // shared corpus ledger; the Thens read it.
 let ldg029UntaggedName: string;
@@ -2470,7 +2450,7 @@ Then(
   "the scenario-level evidence obligations stay empty, so the census and markdown are unchanged",
   function () {
     // The synthesized {} lives ONLY on the reconciling item, NOT on the account's debit posting: an
-    // untagged scenario declares no parsed obligations, so its scenario-level `evidenceObligations`
+    // untagged scenario raises no parsed obligations, so its scenario-level `evidenceObligations`
     // stays []. That is what keeps the census (and the markdown the renderer builds from it)
     // unchanged — the renderer reads scenario-level obligations, not per-QCR carried sides.
     const row = ldg021Reconciliation.ledger.scenarioReconciliations.find(

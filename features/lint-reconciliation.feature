@@ -2,7 +2,7 @@
 Feature: Reconcile @lint static-check evidence against CI wiring over the real source
 
   The second evidence axis. Alongside the runtime KIND (the unit
-  / integration tests, keyed by level), a scenario can declare a STATIC-check
+  / integration tests, keyed by level), a scenario can name a STATIC-check
   evidence obligation via an explicit lint:<guard> tag handle — a lint/guard over the
   source artifact, keyed by its guard, carrying no level.
 
@@ -22,12 +22,12 @@ Feature: Reconcile @lint static-check evidence against CI wiring over the real s
   multi-kind-axis (LNT-004) paths grow this feature in later sub-issues.
 
   WHY LNT-001 CARRIES AN @lint= TAG AND LNT-002/003/004 DO NOT. An @lint=<guard> tag
-  declares an evidence obligation THIS repository owes: a real guard that must be found
+  raises an evidence obligation THIS repository owes: a real guard that must be found
   wired over the real source, or the scenario reds. LNT-001 owes one — lint:feature-codes
   genuinely runs here. The other three name FIXTURE data: lint:planted-watermelon,
   lint:absent-guard and lint:unwired-guard must never exist as real scripts, because these
   scenarios exist to prove spec-controller DETECTS an absent or unwired guard. Tagging
-  them declared an obligation this repo could never discharge, so all three reconciled
+  them raised an obligation this repo could never discharge, so all three reconciled
   out-of-balance — permanently, and correctly, given what the tag said. Nothing ever read
   the handle from the tag: it is defined as a constant in lintReconciliation.test.ts and
   fed through planted package.json / ci.yml fixtures, so the tag was decorative and
@@ -35,13 +35,13 @@ Feature: Reconcile @lint static-check evidence against CI wiring over the real s
   through the fixture handle lint:ldg028-absent-guard, carries no @lint= tag, and
   reconciles balanced. Their @unit and @integration obligations are untouched and still
   reconcile — the distinction from a deferral tag, which would have taken every obligation
-  these scenarios declare dark to silence one row each (3F-2351).
+  these scenarios name dark to silence one row each (3F-2351).
 
   Rule: a @lint scenario whose guard is wired into CI over the real source is balanced
 
     @unit @integration @lint=lint:feature-codes @SCN-LNT-001
     Scenario: a @lint scenario whose guard is a CI run step over the real tree is reported as balanced
-      Given a declared @lint scenario "SCN-LNT-001" requiring the static check "lint:feature-codes"
+      Given an @lint scenario "SCN-LNT-001" requiring the static check "lint:feature-codes"
       And spec-controller's real CI config and package.json wire "lint:feature-codes" as a run step over the real tree
       When the lint reconciler runs
       Then the ledger reports the lint scenario "SCN-LNT-001" as balanced with no reconciling items
@@ -59,7 +59,7 @@ Feature: Reconcile @lint static-check evidence against CI wiring over the real s
 
     @unit @integration @SCN-LNT-002
     Scenario: a @lint scenario whose guard exists but is absent from CI is reported as the watermelon
-      Given a declared @lint scenario "SCN-LNT-002" requiring the static check "lint:planted-watermelon"
+      Given an @lint scenario "SCN-LNT-002" requiring the static check "lint:planted-watermelon"
       And a planted package.json defines the guard "lint:planted-watermelon" but the planted CI config does not run it
       When the lint reconciler runs
       Then the ledger reports the lint scenario "SCN-LNT-002" as out-of-balance with a watermelon reconciling item for the guard "lint:planted-watermelon"
@@ -79,7 +79,7 @@ Feature: Reconcile @lint static-check evidence against CI wiring over the real s
 
     @unit @integration @SCN-LNT-003
     Scenario: a @lint scenario whose named guard does not exist is reported as missing
-      Given a declared @lint scenario "SCN-LNT-003" requiring the static check "lint:absent-guard"
+      Given an @lint scenario "SCN-LNT-003" requiring the static check "lint:absent-guard"
       And a planted package.json and CI config that name no such guard "lint:absent-guard"
       When the lint reconciler runs
       Then the ledger reports the lint scenario "SCN-LNT-003" as out-of-balance with a missing reconciling item for the guard "lint:absent-guard"
@@ -95,7 +95,7 @@ Feature: Reconcile @lint static-check evidence against CI wiring over the real s
     static evidence obligation is the watermelon — so the scenario is out-of-balance carrying
     ONLY the static item. The two kinds are reconciled on their own axes, never
     collapsed to a single per-scenario verdict. Exercised over a PLANTED fixture: a
-    fixture feature declaring both evidence obligations (read through the real declared
+    fixture feature raising both evidence obligations (read through the real
     reader, which emits TWO evidence obligations from one tag block), a green unit
     evidence observation, and a planted guard the planted CI does not run.
 
@@ -116,13 +116,13 @@ Feature: Reconcile @lint static-check evidence against CI wiring over the real s
     exists:true in the target repo's package.json but is unwired in its CI reconciles
     as watermelon (🍉), NOT missing.
     Exercised over a PLANTED EXTERNAL fixture (tests/fixtures/scn-lnt-005/): an
-    external feature declaring @lint=lint:vocab-check, an external package.json where
+    external feature naming @lint=lint:vocab-check, an external package.json where
     the guard EXISTS, and an external ci.yml that does NOT run it. The guard
     (lint:vocab-check) is absent from spec-controller's OWN package.json, so reading it as
     the watermelon proves the existence was read from the external package.json.
 
     @unit @integration @SCN-LNT-005
     Scenario: a guard read from an external package.json but absent from the external CI is the watermelon
-      Given an externally-specified package.json declaring the guard "lint:vocab-check" and an external CI config that does not run it
+      Given an externally-specified package.json naming the guard "lint:vocab-check" and an external CI config that does not run it
       When the reconciler runs against the external repo via --package-json and --ci
       Then the ledger reports the external scenario "SCN-EXT-001" as out-of-balance with a watermelon reconciling item for the guard "lint:vocab-check"

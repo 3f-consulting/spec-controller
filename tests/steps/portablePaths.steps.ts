@@ -40,17 +40,17 @@ Given(
     targetRepo = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-rpt016-target-")));
     mkdirSync(join(targetRepo, "features"), { recursive: true });
 
-    // A minimal declared corpus — one @SCN-tagged scenario so runReconcile produces a balance.
+    // A minimal feature corpus — one @SCN-tagged scenario so runReconcile produces a balance.
     writeFileSync(
       join(targetRepo, "features", "sample.feature"),
       [
         "@TGT",
         "Feature: a portable-paths fixture target",
         "",
-        "  Rule: the target declares a unit scenario",
+        "  Rule: the target names a unit scenario",
         "",
         "    @unit @SCN-TGT-001",
-        "    Scenario: the target declares a unit-level scenario",
+        "    Scenario: the target names a unit-level scenario",
         "      Given the target repo's source",
         "",
       ].join("\n")

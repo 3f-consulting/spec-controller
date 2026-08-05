@@ -2,7 +2,7 @@
 Feature: an only-Pending-Items reconciliation fixture target
 
   A FIXTURE feature (NOT under features/) standing in for a target repo whose ONLY
-  non-satisfied element is a deferred `<quality-check>pending` obligation. Every declared
+  non-satisfied element is a deferred `<quality-check>pending` obligation. Every named
   scenario's sole obligation is deferred pending, so each partitions off to a one-sided
   Pending Item (run-neutral by default — the slice-2 partition) leaving ZERO reconciled
   rows; there is no observation, no phantom, no uncited credit, and — run with a guardless
@@ -16,12 +16,12 @@ Feature: an only-Pending-Items reconciliation fixture target
   scan features/*.feature only. cucumber.js runs features/** only, so it is never executed
   as a scenario; it is fed to the real binary as a --features target dir.
 
-  Rule: the fixture target declares only deferred-pending scenarios
+  Rule: the fixture target names only deferred-pending scenarios
 
     @unitpending @SCN-PDO-001
-    Scenario: the target declares a unit obligation deferred pending
+    Scenario: the target names a unit obligation deferred pending
       Given the target repo's source
 
     @integrationpending @SCN-PDO-002
-    Scenario: the target declares an integration obligation deferred pending
+    Scenario: the target names an integration obligation deferred pending
       Given the target repo's source

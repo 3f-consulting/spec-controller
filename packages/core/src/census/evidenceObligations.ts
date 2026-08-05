@@ -1,11 +1,11 @@
 /**
- * The EvidenceObligations — the declared-corpus census carried ALONGSIDE the balance, a
- * sibling to both the pure Ledger (the declared-vs-observed verdict data) and
- * the RunContext (run metadata). It records how the declared corpus reconciles
+ * The EvidenceObligations — the obligation-corpus census carried ALONGSIDE the balance, a
+ * sibling to both the pure Ledger (the obligation-vs-observation verdict data) and
+ * the RunContext (run metadata). It records how the parsed corpus reconciles
  * against EVERY raw @SCN mention in the source: how many ids the source mentioned in
  * total (tag + non-tag context) vs how many were actually read as scenarios.
  *
- * The lone non-derivable corpus fact is `excludedOccurrences` (raw − declared): the
+ * The lone non-derivable corpus fact is `excludedOccurrences` (raw − scenarioCount): the
  * @SCN ids seen in prose, comments, or step text that the tag-line parser ignores.
  * `scenarioCount` is derivable from the balance and `rawScnOccurrences` is derivable
  * as scenarioCount + excludedOccurrences, so only `excludedOccurrences` is persisted
@@ -27,24 +27,24 @@ export interface UntaggedScenario {
   scenario: string;
 }
 
-/** The declared-corpus census — a reconciliation-read fact carried beside the balance. */
+/** The scenario-corpus census — a reconciliation-read fact carried beside the balance. */
 export interface EvidenceObligations {
   /** Every @SCN-FFF-NNN occurrence in the whole source (tag-line + non-tag context). */
   rawScnOccurrences: number;
-  /** The @SCN ids actually read as scenarios (= declared.length). */
+  /** The @SCN ids actually read as scenarios. */
   scenarioCount: number;
   /** rawScnOccurrences − scenarioCount: ids seen in non-tag context, excluded. */
   excludedOccurrences: number;
   /**
    * Gherkin scenarios with no @SCN tag — feature:scenario locators, sorted.
-   * A NEW non-derivable declared-side datum, so it persists on JSON beside
+   * A NEW non-derivable obligation-side datum, so it persists on JSON beside
    * `excludedOccurrences` (project design §3).
    */
   untaggedScenarios: UntaggedScenario[];
   /**
    * @SCN codes that appear only in prose, never as a tag anywhere — the
    * dangling references, sorted. A cross-corpus `proseCodes − tagCodes` difference,
-   * distinct from `excludedOccurrences` (raw occurrences). Non-derivable declared-side
+   * distinct from `excludedOccurrences` (raw occurrences). Non-derivable obligation-side
    * datum → persists on JSON beside the others (project design §3).
    */
   proseOnlyCodes: string[];

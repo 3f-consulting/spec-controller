@@ -17,8 +17,8 @@ Feature: an unsound reconciliation fixture target
   registry lint nor the scenario↔sub-issue gate sees @BRK / @SCN-BRK-NNN — they scan
   features/*.feature only.
 
-  Rule: the fixture target declares one unit-level scenario whose proving suite is broken
+  Rule: the fixture target names one unit-level scenario whose proving suite is broken
 
     @unit @SCN-BRK-001
-    Scenario: the target declares a scenario whose proof failed to collect
+    Scenario: the target names a scenario whose proof failed to collect
       Given the target repo's source

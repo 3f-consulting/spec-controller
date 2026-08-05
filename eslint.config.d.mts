@@ -1,6 +1,6 @@
 /**
  * Types for `eslint.config.mjs` — so the exception-list reconciliation can import the BARE standard
- * out of the real config rather than re-declaring it (@SCN-CPX-003, 3F-2318).
+ * out of the real config rather than restating it (@SCN-CPX-003, 3F-2318).
  *
  * eslint reads only the `default` export and needs no types at all; this file exists purely so the
  * TypeScript side of the tree (`lintComplexityExceptionsCli.ts` and the @unit evidence, through

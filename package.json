@@ -10,6 +10,7 @@
   },
   "packageManager": "pnpm@11.2.2",
   "scripts": {
+    "verify": "bash scripts/verify.sh",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "mutation": "stryker run",

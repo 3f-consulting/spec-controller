@@ -15,8 +15,8 @@ Feature: an @integration @e2e-via-cucumber evidence-observation fixture target
   registry lint nor the scenario↔sub-issue gate sees @TGT / @SCN-TGT-NNN — they scan
   features/*.feature only.
 
-  Rule: the fixture target declares a single integration+e2e scenario
+  Rule: the fixture target names a single integration+e2e scenario
 
     @integration @e2e @SCN-TGT-102
-    Scenario: the target declares an integration-and-e2e-level scenario proven via cucumber
+    Scenario: the target names an integration-and-e2e-level scenario proven via cucumber
       Given the target repo's source

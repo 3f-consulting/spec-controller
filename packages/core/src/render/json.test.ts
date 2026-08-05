@@ -202,7 +202,7 @@ describe("[SCN-RPT-010] the JSON report re-homes the runtime-observation totals 
   // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — the balance carries the posted credits the
   // renderers fold (3F-2103 — the `evidenceObservations` section + its `attributed[]` are RETIRED):
   //   SCN-A: @unit with 4 passing unit credits (raw unit 4; onScenario 4)
-  //   1 unit credit citing SCN-PHX-999 (no scenario declares it) → phantom (raw unit 5)
+  //   1 unit credit citing SCN-PHX-999 (no scenario carries it) → phantom (raw unit 5)
   //   1 integration credit citing NO scenario → suspense (raw integration 1)
   const rpt010Scenarios: Scenario[] = [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }];
   const rpt010Observations: EvidenceObservation[] = [
@@ -259,7 +259,7 @@ describe("[SCN-RPT-010] the JSON report re-homes the runtime-observation totals 
  * id matching features/report.feature, so a grep of the id returns both halves.
  *
  * Proves the renderJson untagged-scenarios projection: `untaggedScenarios` is a NEW
- * non-derivable declared-side datum, so (per §3, like `excludedOccurrences`) it persists
+ * non-derivable obligation-side datum, so (per §3, like `excludedOccurrences`) it persists
  * on the `evidenceObligations` object beside `excludedOccurrences`. The full {feature,
  * scenario} locators round-trip for machine consumers.
  *
@@ -308,7 +308,7 @@ describe("[SCN-RPT-014] the JSON evidenceObligations carries the untagged scenar
  * Bidirectional evidence (Evidence Manifesto §9): the describe carries the @SCN-RPT-015
  * id matching features/report.feature, so a grep of the id returns both halves.
  *
- * Proves the renderJson prose-only-codes projection: a NEW non-derivable declared-side
+ * Proves the renderJson prose-only-codes projection: a NEW non-derivable obligation-side
  * datum, so (per §3, like excludedOccurrences / untaggedScenarios) it persists on the
  * evidenceObligations object. The codes round-trip for machine consumers.
  *

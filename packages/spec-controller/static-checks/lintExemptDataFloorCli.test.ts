@@ -32,10 +32,10 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 const readRepoFile = (relative: string): string =>
   fs.readFileSync(path.join(repoRoot, relative), "utf8");
 
-/** The static check this scenario both declares and is. */
+/** The static check this scenario both NAMES and IS. */
 const OWN_STATIC_CHECK = "lint:exempt-data-floor";
 
-/** The guard-prefix set the balance CLI declares at its edge and injects into the core. */
+/** The guard-prefix set the balance CLI SETS at its edge and injects into the core. */
 const GUARD_PREFIXES = ["lint:", "guard:"] as const;
 
 describe("[SCN-VOC-016] a pure-data path is one whose banned words can only be mentions", () => {
@@ -86,7 +86,7 @@ describe("[SCN-VOC-016] a code file on the exempt list is a fault", () => {
     expect(faults).toEqual([]);
   });
 
-  it("allows a CODE file only as a declared residual naming the ticket that frees it", () => {
+  it("allows a CODE file only as a named residual naming the ticket that frees it", () => {
     // The operator's ruling: never a blanket exemption to preserve a code file. A residual
     // is the shape a DEFERRED canon row already has — debt that names who pays it.
     const code = "packages/spec-controller/static-checks/vocabAudit.ts";

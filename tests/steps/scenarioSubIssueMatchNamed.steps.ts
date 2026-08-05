@@ -1,5 +1,5 @@
 /**
- * Step definitions for the @SCN-SSM-006 self-declaration arm of
+ * Step definitions for the @SCN-SSM-006 self-reconciliation arm of
  * features/scenario-sub-issue-match.feature — the check's own run reconciling on
  * spec-controller's OWN Ledger rather than folding onto the suspense scenario as an
  * uncited static check.
@@ -28,8 +28,8 @@ import type { EvidenceReconciliation } from "@3f-consulting/spec-controller-core
 /** The static check whose own reconciliation this scenario pins. */
 const OWN_STATIC_CHECK = "lint:scn-subissues";
 
-/** The scenario that declares it — this very scenario, the self-declaration. */
-const DECLARING_SCENARIO = "SCN-SSM-006";
+/** The scenario that NAMES it — this very scenario, the self-reconciliation. */
+const NAMING_SCENARIO = "SCN-SSM-006";
 
 /** The suspense scenario's account id: where a credit citing no scenario lands. */
 const SUSPENSE_SCENARIO = "(no scenario)";
@@ -56,11 +56,11 @@ When("spec-controller's own tree is reconciled", function () {
 });
 
 // @SCN-SSM-006
-Then("the check's run is credited to the scenario that declares it", function () {
-  const account = accountFor(ownLedger.ledger, DECLARING_SCENARIO);
+Then("the check's run is credited to the scenario that names it", function () {
+  const account = accountFor(ownLedger.ledger, NAMING_SCENARIO);
   assert.ok(
     account,
-    `expected a Ledger account for ${DECLARING_SCENARIO} — the scenario declaring ` +
+    `expected a Ledger account for ${NAMING_SCENARIO} — the scenario naming ` +
       `${OWN_STATIC_CHECK}; got none. Without the @lint=${OWN_STATIC_CHECK} tag the check ` +
       `names no scenario and its run has nothing to settle against.`
   );
@@ -70,20 +70,20 @@ Then("the check's run is credited to the scenario that declares it", function ()
   );
   assert.ok(
     credit,
-    `expected ${OWN_STATIC_CHECK}'s run posted to ${DECLARING_SCENARIO}'s account; got ` +
+    `expected ${OWN_STATIC_CHECK}'s run posted to ${NAMING_SCENARIO}'s account; got ` +
       `${JSON.stringify(account.evidenceObservations)}`
   );
 
   const lint = account.qualityCheckReconciliations.find((r) => r.qualityCheck === "lint");
   assert.ok(
     lint,
-    `expected ${DECLARING_SCENARIO} to carry a lint reconciliation; got ` +
+    `expected ${NAMING_SCENARIO} to carry a lint reconciliation; got ` +
       `${JSON.stringify(account.qualityCheckReconciliations)}`
   );
   assert.equal(
     lint.outcome,
     "satisfied",
-    `expected ${DECLARING_SCENARIO}'s lint obligation to reconcile satisfied — the check ` +
+    `expected ${NAMING_SCENARIO}'s lint obligation to reconcile satisfied — the check ` +
       `exists AND is enforced over real source; got "${lint.outcome}"`
   );
 });
@@ -99,6 +99,6 @@ Then("no static check run is left uncited on the suspense scenario", function ()
     uncitedStaticChecks,
     [],
     `expected NO static check folded onto the suspense scenario — every running check is ` +
-      `named by an @lint declaration; got uncited: ${uncitedStaticChecks.join(", ")}`
+      `named by an @lint tag; got uncited: ${uncitedStaticChecks.join(", ")}`
   );
 });

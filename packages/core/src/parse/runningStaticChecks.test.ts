@@ -12,7 +12,7 @@ import { describe, it, expect } from "vitest";
 import { runningStaticChecks } from "./runningStaticChecks.js";
 import type { PackageJsonScripts } from "./checkScriptsRunInCI.js";
 
-// The guard-prefix set is DECLARED at the CLI edge (ingest/ingestQualityChecks.ts) and
+// The guard-prefix set is SET at the CLI edge (ingest/ingestQualityChecks.ts) and
 // injected into the pure function. These tests inject the portfolio default explicitly.
 const DEFAULT_PREFIXES = ["lint:", "guard:"] as const;
 
@@ -83,7 +83,7 @@ describe("[SCN-USG-003] non-lint CI steps are not observed as static checks", ()
 describe("[SCN-USG-004] runningStaticChecks observes guard:-prefixed CI scripts as static checks, not just lint:*", () => {
   // an adopter's repository-shaped case: a guard:domain-purity script (guard:*, not lint:*) a CI run: step
   // invokes must be observed as a running static check under the default prefix set, so the
-  // reconciler can fold an undeclared one to the suspense row as an uncited static check.
+  // reconciler can fold one that no @lint names to the suspense row as an uncited static check.
   // test/cucumber (neither prefix) stay excluded by construction — preserving @SCN-USG-003.
   // `guard:domain-purity` is a script NAME — a value, not vocabulary — so the handle itself
   // is deliberately untouched by the static-check rename (3F-1929; 3F-1852 owns script names).

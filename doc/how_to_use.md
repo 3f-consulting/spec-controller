@@ -1,6 +1,6 @@
 # spec-controller balance — how to use
 
-This document is for anyone running `spec-controller balance` against a project — a developer wiring it into CI, a tech lead adopting the reconciliation discipline, or an auditor checking whether a codebase's declared behaviour is actually backed by evidence. The tool behaves the same regardless of who runs it.
+This document is for anyone running `spec-controller balance` against a project — a developer wiring it into CI, a tech lead adopting the reconciliation discipline, or an auditor checking whether a codebase's scenarios are actually backed by evidence. The tool behaves the same regardless of who runs it.
 
 ---
 
@@ -60,7 +60,7 @@ spec-controller balance --features ./features \
 | `--vitest <report.json>` | A Vitest JSON report — runtime test evidence. |
 | `--cucumber <report.json>` | A Cucumber JSON report — runtime test evidence. |
 | `--ci <ci.yml>` | Your CI workflow — used to check whether `@lint` static checks actually run over the real source. |
-| `--package-json <path>` | `package.json` — used to check a declared static check's script exists. |
+| `--package-json <path>` | `package.json` — used to check a named static check's script exists. |
 | `--target <name>` | A name recorded verbatim in the report's provenance (which project this run reconciled). |
 | `--source-sha <sha>` | Override the git commit SHA recorded in provenance (defaults to the resolved HEAD). |
 | `--format <fmt>[:<path>]` | Where to send output (`md` or `json`, optionally `:<path>` to write to a file). Repeatable. See below. |
@@ -165,7 +165,7 @@ Keep the reports as build artefacts — but do **not** commit them into the repo
 
 **No scenarios found / empty report** — check `--features` points at the directory holding your `.feature` files, and that the scenarios carry `@SCN-…` ids and evidence-obligation tags.
 
-**A guard shows as `missing` or `watermelon` you didn't expect** — `missing` means a declared `@lint` guard's script isn't in `package.json`; `watermelon` means the script exists but no CI `run:` step actually invokes it over the real source. Both are real findings, not tool errors — that is the point.
+**A guard shows as `missing` or `watermelon` you didn't expect** — `missing` means a named `@lint` guard's script isn't in `package.json`; `watermelon` means the script exists but no CI `run:` step actually invokes it over the real source. Both are real findings, not tool errors — that is the point.
 
 **`--json` rejected** — the legacy flag was removed; use `--format json:<path>`.
 

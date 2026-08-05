@@ -150,7 +150,7 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
     ]);
   });
 
-  // an adopter's repository dogfood shape (3F-1703, run 2026-07-13T17-36-50Z) in miniature: every DECLARED
+  // an adopter's repository dogfood shape (3F-1703, run 2026-07-13T17-36-50Z) in miniature: every REAL
   // scenario is balanced, yet a credit citing NO scenario posts a `cites-no-scenario` item to
   // the suspense `(no scenario)` row — so the run IS out-of-balance and exits 1. Under the
   // scenario-only tally the summary read `total 2, balanced 2, outOfBalance 0`: a failing run
@@ -212,10 +212,9 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
     expect(report.summary.scenarioReconciliations.outOfBalance).toBeGreaterThan(0);
   });
 
-  it("counts the phantom reconciliation in the summary totals too — cited-but-undeclared is out-of-balance, not a bucket apart", () => {
-    // The phantom row (a credit citing an @SCN no feature declares) is the suspense row's
-    // sibling: also ALWAYS out-of-balance, so it also counts into the total and into
-    // out-of-balance, with `phantom` surviving as its sub-count.
+  it("counts the phantom reconciliation in the summary totals too — a phantom scenario is out-of-balance, not a bucket apart", () => {
+    // The phantom row is the suspense row's sibling: also ALWAYS out-of-balance, so it also
+    // counts into the total and into out-of-balance, with `phantom` surviving as its sub-count.
     const balanceWithPhantom: Ledger = {
       scenarioReconciliations: [
         ...balanceWithSuspense.scenarioReconciliations,
@@ -328,7 +327,7 @@ describe("[SCN-RMD-002] the ledger serialises under the top-level key ledger, be
     const account = parsed.ledger.scenarioReconciliations.find(
       (s: { scnId: string }) => s.scnId === "SCN-AAA-001"
     );
-    // The DEBIT it declared (@SCN-LDG-023) and the CREDIT that cites it (@SCN-LDG-022), both
+    // The DEBIT it raised (@SCN-LDG-023) and the CREDIT that cites it (@SCN-LDG-022), both
     // findable on the artefact, beside the reconciling items they balance off to.
     expect(account.evidenceObligations).toEqual([{ qualityCheck: "unit" }]);
     expect(account.evidenceObservations).toEqual([credit]);
@@ -472,7 +471,7 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
   // rawByRuntimeQualityCheck AND staticChecks are now Ledger folds, so a hand-built census that
   // disagrees with the balance is no longer constructible). It spans: 6 raw runtime observations =
   // 4 attributed-to-scenario + 1 phantom + 1 suspense (the 3-way test-volume identity is
-  // non-trivial, onScenario excludes the phantom); 2 declared lint obligations, 1 satisfied
+  // non-trivial, onScenario excludes the phantom); 2 lint obligations, 1 satisfied
   // (lint:foo, running) + 1 watermelon (lint:bar, exists-but-unwired — the static-only lint tally
   // reads 1 of 2); and, on the CREDIT side, the static-check fold — 2 running CI guards = 1
   // named (lint:foo, running) + 1 uncited (lint:baz, no-evidence-obligation, running → the suspense row). The
@@ -493,8 +492,8 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
     { qualityCheck: "integration", scnId: null, status: "passed" },
     { qualityCheck: "lint", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
     { qualityCheck: "lint", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: false },
-    // The no-evidence-obligation running guard (no @lint declares it) — folds to the suspense row as the
-    // 1 uncited static check, the credit-side teeth of the static-check fold.
+    // The no-evidence-obligation running guard — no @lint cites it — folds to the suspense row as
+    // the 1 uncited static check, the credit-side teeth of the static-check fold.
     { qualityCheck: "lint", staticCheck: "lint:baz", exists: true, enforcedOverRealSource: true },
   ];
   const rmd005Balance: Ledger = reconcile(rmd005Scenarios, rmd005Observations);
@@ -589,8 +588,8 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
     const report = assembleRenderInput(__er(balance), ctx);
     expect(report.summary).not.toHaveProperty("testVolume");
     expect(report.summary).not.toHaveProperty("staticChecks");
-    // The lint tally is a pure balance derive — always present (this balance declares no static
-    // evidenceObligations, so it reads 0 of 0).
+    // The lint tally is a pure balance derive — always present (this balance carries no static
+    // obligations, so it reads 0 of 0).
     expect(report.summary.lint).toEqual({ satisfied: 0, total: 0 });
   });
 
@@ -685,9 +684,9 @@ describe("[SCN-RMD-006] the report model carries the feature titles", () => {
     expect(modelSourced).toBe(mapThreaded);
   });
 
-  it("omits metadata when no coded feature is declared (no map, or an empty map)", () => {
+  it("omits metadata when no coded feature is named (no map, or an empty map)", () => {
     // With no feature titles, the whole `metadata` object is omitted (present only
-    // when the run declares ≥1 coded feature), and no top-level `featureNames` key appears.
+    // when the run carries ≥1 coded feature), and no top-level `featureNames` key appears.
     expect(assembleRenderInput(__er(codedBalance), ctx)).not.toHaveProperty("metadata");
     expect(assembleRenderInput(__er(codedBalance), ctx)).not.toHaveProperty("featureNames");
     expect(
@@ -718,19 +717,11 @@ describe("[SCN-RMD-006] the report model carries the feature titles", () => {
  * features/report-model.feature, so a grep of the id returns both halves (this @unit + the
  * Cucumber @integration step-block).
  *
- * Slice 1 of the reconciliation-model restructure: the (kind, level) two-axis evidence coordinate
- * collapses to ONE flat quality-check. Each JSON evidence sub-row
- * (evidenceReconciliation[].qualityCheckReconciliations[] / reconcilingItems[]) is keyed by a single qualityCheck
- * field — no kind, no level; a lint sub-row carries qualityCheck "lint" alongside its static check — and
- * the summary's missing split serialises under missingByQualityCheck. Built through the
- * REAL declared → reconcile → assemble pipeline (parseScenarios, not a hand-seeded balance) and read
- * off the glue-free JSON, so the assertion pins the emitted shape, not an internal type.
+ * Built through the REAL parse → reconcile → assemble pipeline (parseScenarios, not a
+ * hand-seeded balance) and read off the glue-free JSON, so the assertion pins the EMITTED
+ * shape, not an internal type.
  */
 describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single quality-check coordinate", () => {
-  // A scenario declaring BOTH a runtime (@unit) and a lint (@lint=lint:x) evidence obligation, parsed through
-  // the real declared reader; reconciled against NO evidence observations → the runtime evidence obligation is
-  // missing and the lint evidence obligation is missing (static check retained). The
-  // glue-free JSON round-trip makes the assertions read the EMITTED shape, type-agnostic.
   const feature = [
     "@RMD",
     "Feature: fixture",
@@ -797,10 +788,10 @@ describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single qualit
  *
  * There are two different numbers for "credits backing a scenario", and a reader must not
  * read them as the same:
- *  - Test-volume `onScenario` (summary.testVolume.onScenario) = credits that CITE A DECLARED
+ *  - Test-volume `onScenario` (summary.testVolume.onScenario) = credits that CITE A REAL
  *    SCENARIO — this INCLUDES no-evidence-obligation (a subset), keeping the 3-termed identity
  *    `total = onScenario + onPhantomScenario + onSuspenseScenario`.
- *  - The reconciliation MATCHED-attributed = credits matching a declared (scnId, quality-check)
+ *  - The reconciliation MATCHED-attributed = credits matching a NAMED (scnId, quality-check)
  *    PAIR — this EXCLUDES no-evidence-obligation. The retired census materialised it as `attributed[]`; it is
  *    now recovered from the Ledger (`testVolume.onScenario − byOutcome.no-evidence-obligation`) and checkable
  *    against the named credits posted on the row.
@@ -809,9 +800,9 @@ describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single qualit
  */
 describe("[SCN-LDG-008] the two scenario-backing counts stay distinct (ruling Q1)", () => {
   // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — a real balance carrying a no-evidence-obligation
-  // credit-side item ON a scenario's row: SCN-LDG-008 declares ONLY unit; a unit credit
+  // credit-side item ON a scenario's row: SCN-LDG-008 raises ONLY unit; a unit credit
   // reconciles satisfied (matched), an integration credit citing it is no-evidence-obligation (a check it never
-  // declared). Both credits POST to the row, so the Ledger fold (3F-2102) counts onScenario = 2.
+  // named). Both credits POST to the row, so the Ledger fold (3F-2102) counts onScenario = 2.
   const noEvidenceObligationBalance: Ledger = reconcile(
     [{ scnId: "SCN-LDG-008", evidenceObligations: [{ qualityCheck: "unit" }] }],
     [
@@ -947,9 +938,9 @@ describe("[SCN-PND-011] the summary materialises a Pending Items tally, separate
     expect(report.summary.evidenceObligations.byOutcome).not.toHaveProperty("pending");
   });
 
-  it("is always present — a pure balance derive reading 0 when no scenario declares a pending obligation", () => {
+  it("is always present — a pure balance derive reading 0 when no scenario names a pending obligation", () => {
     const report = assembleRenderInput(__er(balance), ctx);
-    // The `balance` fixture (top of file) declares no pending obligations, so the tally reads 0.
+    // The `balance` fixture (top of file) raises no pending obligations, so the tally reads 0.
     expect(report.summary.pending).toBe(0);
   });
 

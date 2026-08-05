@@ -4,9 +4,9 @@
  * JSON reporter output and normalises each assertion that cites an @SCN id into
  * an EvidenceObservation at the `unit` level.
  *
- * The level is a DECLARED property of the input: the caller outcomes the level
- * this Vitest source yields, and the reader stamps it — no Vitest⇒unit assumption baked
- * into the parser. The JS-ecosystem default (unit) is declared at the CLI edge.
+ * The level is supplied by the CALLER, not inferred: the caller states the level this Vitest
+ * source yields, and the reader stamps it — no Vitest⇒unit assumption baked into the parser. The
+ * JS-ecosystem default (unit) is set at the CLI edge.
  *
  * The @SCN id is the bracketed `[SCN-<FFF>-<NNN>]` token carried in the test's
  * `describe`/`it` name (the bidirectional-link rule). Vitest surfaces the assertion's OWN
@@ -54,7 +54,7 @@ export interface VitestJsonReport {
 const SCN_IN_NAME = /\bSCN-[A-Z0-9]+-\d+\b/;
 
 /**
- * Parse a Vitest JSON report into observed results at the DECLARED level. One result per
+ * Parse a Vitest JSON report into observed results at the CALLER-SUPPLIED level. One result per
  * EMITTED assertion: those carrying an @SCN id cite that scenario; those with NO id emit a
  * null-scnId credit (@SCN-LDG-007 — previously DROPPED). A null-scnId credit cites no scenario,
  * so the reconciler folds it into the SUSPENSE row. Every result carries its test-file locator.
@@ -64,7 +64,7 @@ const SCN_IN_NAME = /\bSCN-[A-Z0-9]+-\d+\b/;
  *   - `passed` → a `passed` observation → satisfied.
  *   - `failed` → a `failed` observation → failing.
  *   - otherwise (`skipped`/`todo`, and any status ∉ {passed, failed}) → INCONCLUSIVE: an assertion
- *     that RAN but proved nothing. Emit NOTHING — the declared obligation then finds no matching
+ *     that RAN but proved nothing. Emit NOTHING — the evidence obligation then finds no matching
  *     observation and reconciles missing BY ABSENCE.
  * Treating any non-pass-non-fail status as inconclusive keeps the reader robust to vitest's status
  * spelling (`skipped`/`todo`/`pending`). `EvidenceStatus` stays binary (no new status, no reconciler

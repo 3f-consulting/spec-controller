@@ -9,12 +9,12 @@
  * named layer."* Constructing a concept is the concept's business. The module's residual tell was
  * already visible — it re-exported `isBalanced` / `hasPendingItems` / `hasBrokenEvidence` FROM
  * `domain/ledger` purely to preserve importers' paths, a shell around behaviour that had already
- * gone home. Every importer now points at the module that declares the symbol.
+ * gone home. Every importer now points at the module that OWNS the symbol.
  *
  * (3F-2233 completes the move: the concept's TYPE, its `Summary`, and the factory that fuses this
  * fold with the summary tally. Today this module holds the fold alone.)
  *
- * The pure declared-vs-observed join, keyed by one flat
+ * The pure obligation-vs-observation join, keyed by one flat
  * `qualityCheck` (the two-axis `(kind, level)` grid collapsed). This module is THIN
  * COMPOSITION: the domain RULES it once held moved to the
  * concept modules that own them (3F-1994) — `reconcileEvidenceObligation` (the per-obligation
@@ -30,7 +30,7 @@
  * asks the rule once per credit and files the answer. What remains is assembly: which rows exist,
  * in what order, holding which items.
  *
- * Per the slice design: for each declared quality-check evidenceObligation (a reconciling
+ * Per the slice design: for each evidence obligation a scenario raises (a reconciling
  * item), present+pass → satisfied; present+fail → failing; absent →
  * missing. `reconcileEvidenceObligation` branches on the `qualityCheck === "lint"`
  * watermelon discriminator (replacing the retired `kind === "static"` split): a `lint`
@@ -102,7 +102,7 @@ export function reconcile(
 ): Ledger {
   const scenarioReconciliations: ScenarioReconciliation[] = [];
 
-  // THE DECLARED SIDE, prepared once — the three sets the posting rule and the outcome rules read.
+  // THE OBLIGATION SIDE, prepared once — the three sets the posting rule and the outcome rules read.
   // Each is already the MODEL's own rule (never re-derived here), and each is built ONCE and
   // shared, so no two consumers can drift: `scenarioIds` is which scenarios exist,
   // `evidenceObligationPairs` is what they name at each quality-check (3F-1858), and
@@ -184,7 +184,7 @@ export function reconcile(
     );
 
     // The CREDIT side — NO-EVIDENCE-OBLIGATION (@SCN-LDG-008): a credit citing THIS real scenario at a
-    // quality-check it never declared. Rule + rationale: `domain/qualityCheckReconciliation`.
+    // quality-check it never named. Rule + rationale: `domain/qualityCheckReconciliation`.
     const noEvidenceObligationItems = noEvidenceObligationReconciliationsOf(
       d.scnId,
       byScn.get(d.scnId) ?? [],
@@ -214,9 +214,9 @@ export function reconcile(
       // must misfile an entry, never vaporise it. Plus the static check credits this account NAMES,
       // linked by handle (above).
       evidenceObservations: [...(byScn.get(d.scnId) ?? []), ...staticCheckEvidenceObligationCredits],
-      // THE POSTED DEBITS (@SCN-LDG-023) — every obligation THIS scenario DECLARES, in document
+      // THE POSTED DEBITS (@SCN-LDG-023) — every obligation THIS scenario RAISES, in document
       // order, keyed by quality-check. The debit half of the same posting: where a credit is
-      // routed by its citation, a debit needs no routing at all — the account is the declaration.
+      // routed by its citation, a debit needs no routing at all — the account IS the scenario.
       // Includes a PENDING obligation, which partitioned off above and earns NO reconciled row: it
       // posts ANYWAY. Posting is not classifying, on this side too.
       evidenceObligations: [...d.evidenceObligations],
@@ -226,13 +226,10 @@ export function reconcile(
     });
   }
 
-  // CREDIT-SIDE — PHANTOM scenarios (@SCN-LDG-006). A credit citing an @SCN id
-  // that NO scenario matches posts to no real scenario — it lands on a PHANTOM
-  // scenario (posting to a non-existent account). One
-  // phantom Scenario Reconciliation per undeclared cited id, in first-seen order, its
-  // Quality Check Reconciliation(s) carrying the outcome `cites-unknown-scenario` (and the
-  // evidence observation's locator, ruling Q5), verdict ALWAYS out-of-balance. Grouped AFTER the
-  // scenario rows. (Suspense / no-evidence-obligation / both-missing are LDG-007/008/009.)
+  // CREDIT-SIDE — PHANTOM scenarios (@SCN-LDG-006). One phantom Scenario Reconciliation per
+  // UNKNOWN cited id, in first-seen order, its Quality Check Reconciliation(s) carrying the
+  // outcome `cites-unknown-scenario` (and the evidence observation's locator, ruling Q5), verdict
+  // ALWAYS out-of-balance. Grouped AFTER the scenario rows.
   //
   // `phantomIds` was ROUTED ABOVE (3F-2202) — this block only ASSEMBLES the rows. The scan that
   // stood here re-stated the citation index's four routing decisions verbatim, including the
@@ -255,13 +252,12 @@ export function reconcile(
       // The credits that CITE this invented scenario post to it — canon organises the ledger by
       // "real or INVENTED scenario", so a phantom account holds its postings like any other.
       evidenceObservations: [...citations],
-      // A phantom account is MINTED BY A CREDIT — no scenario declares it, so nothing can have
+      // A phantom account is MINTED BY A CREDIT — no scenario raises it, so nothing can have
       // been named of it. Its debit side is empty by construction (@SCN-LDG-023); the asymmetry
       // with the credit side is real, not an omission.
       evidenceObligations: [],
       qualityCheckReconciliations: items,
       reconcilingItems: items,
-      // A phantom scenario declares nothing, so it can carry no Pending Item.
       pendingItems: [],
     });
   }
@@ -285,17 +281,16 @@ export function reconcile(
       // named no test, so it cites nothing whatever scnId it structurally carries), and the
       // no-evidence-obligation static checks. Together with `byScn` above this exhausts the credit stream.
       evidenceObservations: [...brokenEvidence, ...uncited, ...noEvidenceObligationGuards],
-      // Suspense is MINTED BY A CREDIT too — it declares nothing, so it names nothing
-      // (@SCN-LDG-023).
+      // Suspense is MINTED BY A CREDIT too — it raises nothing, so it names nothing
+      // (@SCN-LDG-023). It can therefore carry no Pending Item either.
       evidenceObligations: [],
       qualityCheckReconciliations: items,
       reconcilingItems: items,
-      // The suspense scenario declares nothing, so it can carry no Pending Item.
       pendingItems: [],
     });
   }
 
-  // UNDECLARABLE WORK (@SCN-LDG-021) — a scenario carrying no @SCN. It is REAL and ORDINARY
+  // UNCODED WORK (@SCN-LDG-021) — a scenario carrying no @SCN. It is REAL and ORDINARY
   // (`kind: "scenario"`, never phantom or suspense: it exists, and cucumber runs it); what is
   // absent is the CODE its obligation needs in order to link to an observation. It gets its own
   // out-of-balance row so the verdict can see it at all.
@@ -314,7 +309,7 @@ export function reconcile(
       verdict: verdictFor(items),
       // An untagged scenario carries no @SCN, so no credit can cite it — nothing can post here.
       evidenceObservations: [],
-      // It reaches the ledger by NAME, carrying no parsed obligations — so it declares no debits
+      // It reaches the ledger by NAME, carrying no parsed obligations — so it posts no debits
       // either (@SCN-LDG-023).
       evidenceObligations: [],
       qualityCheckReconciliations: items,
@@ -359,7 +354,7 @@ export interface TestVolumeTotals {
  * The materialised static-check totals (RMD-005) — the static-check kind-counts the
  * markdown's `### Static checks` line derives, following the census shape exactly:
  * `runningStaticCheckCount` (the volume of running static checks) and `uncitedStaticCheckCount` (how many
- * of them NO `@lint` declares). The named count is IMPLICIT (`running − uncited`) and is
+ * of them NO `@lint` cites). The named count is IMPLICIT (`running − uncited`) and is
  * not carried (every named static check is already a reconciled `@lint` sub-row).
  */
 export interface StaticCheckTotals {
@@ -380,7 +375,7 @@ export interface Summary {
    * categorical, not arithmetic) nor into `evidenceObligations` — its own tally.
    * Counts Pending ITEMS, not scenarios-carrying-pending (mirroring the out-of-balance
    * decomposition, which counts obligations, not scenarios). Always present (a pure balance derive,
-   * like `lint`); reads 0 when no scenario declares a pending obligation.
+   * like `lint`); reads 0 when no scenario raises a pending obligation.
    */
   pending: number;
   /** The runtime test-volume kind-counts (RMD-005) — present when the evidenceObservations read is threaded. */

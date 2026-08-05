@@ -1,6 +1,6 @@
 /**
  * Ingest the target's quality-check inputs — the IMPURE reads behind the balance
- * command (split out of the old cli.ts). Reads declared evidence
+ * command (split out of the old cli.ts). Reads evidence
  * obligations from the repo's feature files, observed evidence from the Vitest +
  * Cucumber result JSON, and the static-check evidence from the CI config + package.json,
  * turning each into the engine's in-memory model. The orchestration (arg parsing, the
@@ -9,7 +9,7 @@
  * Configurable input paths (no adapter registry in v1 — the readers are named, not
  * registered). Missing result files are tolerated: their evidence is simply absent
  * (the scenario reconciles as missing for that level). The static check kind reads
- * `--ci` (default `.github/workflows/ci.yml`) + `package.json` to observe each declared
+ * `--ci` (default `.github/workflows/ci.yml`) + `package.json` to observe each NAMED
  * `@lint=<guard>`.
  */
 
@@ -55,9 +55,9 @@ import type {
 } from "@3f-consulting/spec-controller-core";
 
 /**
- * The declared per-input quality-check for each JS-ecosystem result source — the
- * source→quality-check mapping, DECLARED at the CLI edge rather than hardcoded in the core
- * parsers / countRuntimeEvidenceObservationKinds. A second ecosystem (pytest / JUnit) declares its own here (or
+ * The per-input FALLBACK quality-check for each JS-ecosystem result source — the
+ * source→quality-check mapping, SET at the CLI edge rather than hardcoded in the core
+ * parsers / countRuntimeEvidenceObservationKinds. A second ecosystem (pytest / JUnit) sets its own here (or
  * via an adapter); the core never assumes a mapping. No CLI override flag yet — that
  * earns its place at the second ecosystem, not now.
  */
@@ -66,7 +66,7 @@ const CUCUMBER_QUALITY_CHECK: RuntimeQualityCheck = "integration";
 
 /**
  * The static-check script-prefix convention set — which package.json script names the
- * running-guard observer (`runningStaticChecks`) recognises as static checks, DECLARED at the
+ * running-guard observer (`runningStaticChecks`) recognises as static checks, SET at the
  * CLI edge rather than hardcoded in the core parser. `lint:*` is an earlier internal tool's own convention;
  * `guard:*` is an adopter's repository's (four `guard:*` guards run in an adopter's repository's CI). A third convention adds its
  * prefix here; the core never assumes the set. No CLI override flag yet — that earns its place
@@ -131,7 +131,7 @@ function scenariosFromFeatures(
 }
 
 /**
- * The declared corpus's UNTAGGED half (@SCN-LDG-021, 3F-1774) — the scenarios `parseScenarios`
+ * The feature corpus's UNTAGGED half (@SCN-LDG-021, 3F-1774) — the scenarios `parseScenarios`
  * discards because they carry no `@SCN`. They are REAL scenarios: cucumber runs them, so each
  * owns a real Evidence Obligation — but the obligation has no code for an Evidence Observation to
  * link to, so it can never be discharged. `reconcile` gives each its own out-of-balance row
@@ -153,11 +153,11 @@ function untaggedScenariosFromFeatures(featuresDir: string | undefined): string[
 }
 
 /**
- * The declared corpus's INTEGRITY CHECKPOINT (@SCN-CLI-016, 3F-1767) — validate every discovered
+ * The feature corpus's INTEGRITY CHECKPOINT (@SCN-CLI-016, 3F-1767) — validate every discovered
  * `.feature` with the REAL Gherkin parser and report the files it cannot read.
  *
  * The impure edge (discover + read); the validation itself is the pure `parseErrorsIn`. The
- * declared corpus is the ledger's DEBIT side, and it used to be read by a tag-line scan that
+ * feature corpus is the ledger's DEBIT side, and it used to be read by a tag-line scan that
  * never consulted a parser — so a malformed tag line silently deleted its scenario, and a corrupt
  * spec could read BALANCED. A file the parser rejects is one cucumber would refuse to run: the
  * CLI halts on it (exit 2) rather than reconciling a corpus that is a fiction.
@@ -169,7 +169,7 @@ export function featureCorpusParseErrors(featuresDir: string | undefined): Gherk
 }
 
 /**
- * The `@SCN` ids the declared corpus DECLARES MORE THAN ONCE (@SCN-LDG-020's guardrail, 3F-1775).
+ * The `@SCN` ids the feature corpus CARRIES MORE THAN ONCE (@SCN-LDG-020's guardrail, 3F-1775).
  *
  * An `@SCN` identifies exactly ONE scenario — that is the whole basis of attributing evidence to
  * it. If two scenarios carry the same id, a test citing it could be proving EITHER, and the tool
@@ -206,7 +206,7 @@ export function featureCorpusDuplicateScnIds(featuresDir: string | undefined): s
  * the balance, threaded to `renderMarkdown` (via `writeOutputs`) as the 5th sibling arg
  * (markdown-only — the by-feature cut is markdown-only, so it is NOT serialised to JSON).
  * Uncoded files (`featureCode === null`) are omitted, so the by-feature emitter falls
- * back to the bare `FFF` for any id whose code no file declares. One-prefix-one-file holds
+ * back to the bare `FFF` for any id whose code no file registers. One-prefix-one-file holds
  * by invariant (`lintFeatureCodes` flags a duplicate code), so the map is unambiguous.
  */
 export function readFeatureNames(featuresDir?: string): Map<string, string> {
@@ -220,7 +220,7 @@ export function readFeatureNames(featuresDir?: string): Map<string, string> {
 }
 
 /**
- * Read the declared-corpus census over the discovered feature files (the same
+ * Read the scenario-corpus census over the discovered feature files (the same
  * `discoverFeatures` corpus `scenariosFromFeatures` reads): sum the raw @SCN
  * occurrences (`countScnOccurrences`) and the scenario count
  * (`parseScenarios(...).length`) across every file, and build the `EvidenceObligations`
@@ -256,7 +256,7 @@ export function readEvidenceObligations(features?: string): EvidenceObligations 
 /**
  * Parse the target's RUNTIME observations ONCE — the tag-derived, per-tier observation set
  * (@SCN-RPT-017 / 3F-1452 FULL UNIFY) fed to BOTH the reconciler and the runtime census, so the
- * two can never disagree. Each source declares its FALLBACK quality-check at the CLI edge
+ * two can never disagree. Each source's FALLBACK quality-check is set at the CLI edge
  * (vitest⇒unit, cucumber⇒integration); the parsers DERIVE the level from the cited scenario's tier
  * tag (@SCN-LDG-011 / 3F-1434), using the fallback only for an untagged scenario. A missing report
  * contributes nothing. Root-relative so a phantom-scenario row's where-to-fix stays portable.
@@ -271,7 +271,7 @@ function parseRuntimeObservations(opts: ReconcileOptions, root: string | undefin
 }
 
 /**
- * Reconcile declared-vs-observed evidence into the Ledger for a target tree, from a SINGLE parse of
+ * Reconcile obligation-vs-observation evidence into the Ledger for a target tree, from a SINGLE parse of
  * the runtime observations (@SCN-RPT-017 / 3F-1452 FULL UNIFY). The runtime evidence-observation
  * VIEWS (Test volume, the evidence grid) are no longer counted here: they are FOLDS the renderers
  * derive off THIS Ledger's posted credits (@SCN-RPT-010 / 3F-2103 — the runtime census is retired),
@@ -300,9 +300,9 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
   // (static check) observations. The census is the RUNTIME axis, so only `runtimeObservations` is projected.
   const evidenceObservations: EvidenceObservation[] = [...runtimeObservations];
 
-  // Static check kind: observe each declared @lint=<guard> against the CI config
+  // Static check kind: observe each NAMED @lint=<guard> against the CI config
   // + package.json over the real tree. Read the CI + package.json ONCE — both
-  // the declared-guard evidence observation AND the reverse CI-guard derivation (below) draw on them.
+  // the named-guard evidence observation AND the reverse CI-guard derivation (below) draw on them.
   const staticCheckEvidenceObligationSet = staticCheckEvidenceObligationsOf(scenarios);
   const staticCheckEvidenceObligations = [...staticCheckEvidenceObligationSet];
   // The --package-json seam (@SCN-LNT-005): read the static check's `exists`
@@ -332,9 +332,9 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
 
   // The stream is now COMPLETE: every running CI static check is a GuardEvidenceObservation
   // — the named ones match their @lint obligation, the no-evidence-obligation ones (a static check no @lint
-  // declares) cite no scenario, so `reconcile` folds them into the SUSPENSE row itself. No
+  // cites) cite no scenario, so `reconcile` folds them into the SUSPENSE row itself. No
   // derive-and-diff, no `uncitedStaticChecks` param.
-  // The declared corpus is BOTH halves: the @SCN-tagged scenarios AND the untagged ones
+  // The feature corpus is BOTH halves: the @SCN-tagged scenarios AND the untagged ones
   // (@SCN-LDG-021). An untagged scenario cannot be linked to an observation, so it reconciles
   // `no-scn-code` on its own out-of-balance row — never silently dropped from the debit side.
   // THE CONCEPT, BUILT BY ITS OWN FACTORY (3F-2233) — the app no longer assembles a Ledger and

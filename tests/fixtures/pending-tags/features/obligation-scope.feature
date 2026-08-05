@@ -1,7 +1,7 @@
 @PDO
 Feature: an obligation-scope-vs-scenario-scope contrast fixture target
 
-  A FIXTURE feature (NOT under features/) standing in for a spec whose scenario declares BOTH a
+  A FIXTURE feature (NOT under features/) standing in for a spec whose scenario names BOTH a
   bare `@unit` obligation AND an obligation-scope-deferred `@integrationpending` one, and carries
   NO recognised community deferral tag. It is fed to the pure parse→reconcile pipeline by the
   `@SCN-PND-017` @integration step (which hand-builds the passing unit observation keyed to this

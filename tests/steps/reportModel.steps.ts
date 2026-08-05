@@ -121,7 +121,7 @@ Then(
  * its totals (the maintainers' private notes); phantom / suspense reconciliations are
  * ALWAYS out-of-balance, so they count into the total and into out-of-balance. The fixture
  * corpus reconciles to 4 rows — 2 balanced scenarios, 1 phantom, 1 suspense — and
- * the run exits 1. Under the declared-only tally the summary read `total 2, balanced 2,
+ * the run exits 1. Under the scenario-only tally the summary read `total 2, balanced 2,
  * outOfBalance 0`: a FAILING run rendering a headline that reads as a clean pass, the exact
  * divergence 3F-1703 found in an adopter's repository dogfood.
  *
@@ -149,7 +149,7 @@ Then(
     const totals = parsed.summary.scenarioReconciliations;
     const rows = parsed.ledger.scenarioReconciliations;
 
-    // The total is EVERY row — declared + phantom + suspense — not the declared rows alone.
+    // The total is EVERY row — scenario + phantom + suspense — not the scenario rows alone.
     assert.equal(
       totals.total,
       rows.length,
@@ -296,8 +296,8 @@ After({ tags: "@SCN-RMD-003" }, function () {
 
 // @SCN-RMD-005
 // Drives the REAL CLI over a COMBINED fixture spanning all three totals: the usg features
-// (which declare @lint=lint:foo on SCN-TGT-001) + the usg ci.yml/package.json (CI runs lint:foo
-// + lint:bar, only lint:foo declared) + the evidence observation fixture's Vitest/Cucumber reports (attributed
+// (which NAME @lint=lint:foo on SCN-TGT-001) + the usg ci.yml/package.json (CI runs lint:foo
+// + lint:bar, only lint:foo named) + the evidence observation fixture's Vitest/Cucumber reports (attributed
 // + phantom + cites-no-scenario evidence observations). Reading the persisted spec-reconciliation.json back, the
 // summary must materialise all three totals AND both Σ = Σ identities must hold ON THE FILE.
 // Anti-watermelon: the identities are computed over the persisted summary numbers, never a re-run.
@@ -312,7 +312,7 @@ let rmd005StoreRoot: string;
 let rmd005Json: Record<string, unknown>;
 
 Given(
-  "a reconciliation run whose evidence spans attributed, phantom-id, and cites-no-scenario evidence observations and whose CI runs a guard no @lint declares",
+  "a reconciliation run whose evidence spans attributed, phantom-id, and cites-no-scenario evidence observations and whose CI runs a guard no @lint names",
   function () {
     const repoRoot = process.cwd();
     rmd005StoreRoot = mkdtempSync(join(tmpdir(), "spec-controller-rmd005-"));
@@ -368,7 +368,7 @@ Then(
     // one (lint:foo) is implicit (running − uncited = 1).
     assert.ok(summary.staticChecks, `expected summary.staticChecks; got summary keys: ${Object.keys(summary).join(", ")}`);
     assert.deepEqual(summary.staticChecks, { runningStaticCheckCount: 2, uncitedStaticCheckCount: 1 });
-    // Lint tally — the static-only cut: lint:foo declared by SCN-TGT-001 and enforced in CI →
+    // Lint tally — the static-only cut: lint:foo NAMED by SCN-TGT-001 and enforced in CI →
     // 1 of 1 satisfied (the runtime evidence obligations do NOT count).
     assert.ok(summary.lint, `expected summary.lint; got summary keys: ${Object.keys(summary).join(", ")}`);
     assert.deepEqual(summary.lint, { satisfied: 1, total: 1 });
@@ -411,7 +411,7 @@ After({ tags: "@SCN-RMD-005" }, function () {
 
 // @SCN-RMD-006
 // Drives the REAL CLI over the byfeature fixture (a @CVL-coded feature with an out-of-balance
-// SCN-CVL-001 + an uncoded feature declaring SCN-XYZ-001), persisting BOTH machine artefacts via
+// SCN-CVL-001 + an uncoded feature carrying SCN-XYZ-001), persisting BOTH machine artefacts via
 // --format json:<path> + md:<path>. The persisted spec-reconciliation.json must carry the feature
 // titles keyed by feature code (CVL→config-vocabulary-lint; the uncoded feature omitted) — the
 // slice-3 JSON-shape change — and the persisted spec-reconciliation.md must name the coded
@@ -422,7 +422,7 @@ let rmd006Dir: string;
 let rmd006Json: Record<string, unknown>;
 let rmd006Md: string;
 
-Given("a reconciliation over a target corpus whose feature files declare their feature codes", function () {
+Given("a reconciliation over a target corpus whose feature files carry their feature codes", function () {
   rmd006Dir = mkdtempSync(join(tmpdir(), "spec-controller-rmd006-"));
 });
 
@@ -569,7 +569,7 @@ After({ tags: "@SCN-RMD-007" }, function () {
 });
 
 // @SCN-RMD-008
-// Drives the REAL CLI over the usg fixture (SCN-TGT-001 declares @unit + @lint=lint:foo) with the
+// Drives the REAL CLI over the usg fixture (SCN-TGT-001 NAMES @unit + @lint=lint:foo) with the
 // usg ci.yml/package.json but NO runner reports, so the runtime unit evidence obligation reconciles
 // missing and the lint:foo guard reconciles satisfied — a corpus with BOTH a runtime
 // sub-row AND a lint sub-row, and a non-empty missing split. Reading the persisted
@@ -585,7 +585,7 @@ const RMD008_FIXTURE = {
 let rmd008StoreRoot: string;
 let rmd008Json: Record<string, unknown>;
 
-Given("a reconciliation whose scenarios declare runtime and lint evidence obligations", function () {
+Given("a reconciliation whose scenarios raise runtime and lint evidence obligations", function () {
   const repoRoot = process.cwd();
   rmd008StoreRoot = mkdtempSync(join(tmpdir(), "spec-controller-rmd008-"));
   assert.ok(!rmd008StoreRoot.startsWith(repoRoot), `store root must be OUTSIDE the repo; got ${rmd008StoreRoot}`);
@@ -644,7 +644,7 @@ Then('a lint sub-row carries its quality-check "lint" alongside its guard', func
   const lintRows = evidenceReconciliation
     .flatMap((s) => s.qualityCheckReconciliations)
     .filter((o) => o.qualityCheck === "lint");
-  assert.ok(lintRows.length > 0, `expected at least one lint sub-row (the usg fixture declares @lint=lint:foo); got ${JSON.stringify(evidenceReconciliation)}`);
+  assert.ok(lintRows.length > 0, `expected at least one lint sub-row (the usg fixture names @lint=lint:foo); got ${JSON.stringify(evidenceReconciliation)}`);
   for (const row of lintRows) {
     assert.equal(row.qualityCheck, "lint", `expected a lint sub-row's quality-check to be "lint"; got ${JSON.stringify(row)}`);
     assert.ok(typeof row.staticCheck === "string" && row.staticCheck.length > 0, `expected a lint sub-row to carry its guard handle; got ${JSON.stringify(row)}`);

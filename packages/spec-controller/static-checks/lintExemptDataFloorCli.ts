@@ -72,7 +72,7 @@ export function exemptionFaults(
 ): ExemptionFault[] {
   const faults: ExemptionFault[] = [];
   for (const [path, why] of entries) {
-    // @SCN-VOC-016 — a code file may be exempt ONLY as a declared residual naming the
+    // @SCN-VOC-016 — a code file may be exempt ONLY as a `residual` naming the
     // ticket that frees it. `pure-data` over a code path is the blanket exemption the
     // floor exists to remove.
     if (why.kind === "pure-data" && !isPureDataPath(path)) {
@@ -143,7 +143,7 @@ export function runExemptDataFloorLint(argv: string[]): void {
     const residuals = [...SELF_EXEMPT.values()].filter((w) => w.kind === "residual").length;
     console.log(
       `exempt-data-floor lint: OK — ${SELF_EXEMPT.size} exemption(s), ` +
-        `${SELF_EXEMPT.size - residuals} pure-data and ${residuals} declared residual(s), ` +
+        `${SELF_EXEMPT.size - residuals} pure-data and ${residuals} named residual(s), ` +
         `each covering at least one banned-word mention.`,
     );
     return;

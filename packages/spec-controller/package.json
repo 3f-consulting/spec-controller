@@ -1,7 +1,7 @@
 {
   "name": "spec-controller",
   "version": "0.1.0",
-  "description": "Reconcile the behaviour you declared against the evidence that actually ran — the deterministic `balance` CLI.",
+  "description": "Reconcile the behaviour your scenarios name against the evidence that actually ran — the deterministic `balance` CLI.",
   "keywords": [
     "reconciliation",
     "gherkin",

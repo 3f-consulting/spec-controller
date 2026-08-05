@@ -14,7 +14,7 @@
  * its manifest rows and keeps the ones an ADOPTED canon row bans (`isAdoptedOccurrence`).
  * The file set is `vocabAuditCli`'s `scanFiles` — git's answer minus the audit's own
  * machinery — so the self-exempt blind spot is inherited from @SCN-VOC-008 rather than
- * re-declared, and there is no second answer to "what is the project" to drift from the
+ * restated, and there is no second answer to "what is the project" to drift from the
  * first. Both re-implementations are the agreeing-by-copy this feature has removed twice.
  *
  * Parent: 3F-2343.

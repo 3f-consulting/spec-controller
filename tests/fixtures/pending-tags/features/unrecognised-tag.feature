@@ -4,7 +4,7 @@ Feature: an unrecognised-tag negative-boundary fixture target
   A FIXTURE feature (NOT under features/) standing in for a spec whose scenario carries an
   UNRECOGNISED tag (`@foo` — a tag absent from the recognised deferral set: neither a
   DEFAULT_DEFERRAL_TAGS community tag nor a `<qc>pending` obligation-scope tag) ALONGSIDE a
-  declared `@unit` obligation. It is fed to the pure parse→reconcile pipeline by the @SCN-PND-020
+  named `@unit` obligation. It is fed to the pure parse→reconcile pipeline by the @SCN-PND-020
   `@integration` step (which hand-builds the passing unit observation keyed to this scenario's @SCN
   id) so the NEGATIVE BOUNDARY to @SCN-PND-016 is exercised through the real parser + reconciler
   WITHOUT planting a real community-tagged scenario in the scanned features/ corpus (fixture
@@ -28,5 +28,5 @@ Feature: an unrecognised-tag negative-boundary fixture target
   Rule: an unrecognised tag is given no special meaning — it defers nothing
 
     @foo @unit @SCN-PDZ-001
-    Scenario: a scenario carrying an unrecognised @foo tag alongside a declared unit obligation
+    Scenario: a scenario carrying an unrecognised @foo tag alongside a named unit obligation
       Given a fixture step

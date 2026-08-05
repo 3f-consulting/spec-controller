@@ -1,7 +1,7 @@
 @PDC
 Feature: a pending-alongside-passing composition fixture target
 
-  A FIXTURE feature (NOT under features/) standing in for a spec whose scenario declares BOTH
+  A FIXTURE feature (NOT under features/) standing in for a spec whose scenario names BOTH
   a bare `@unit` obligation AND a deferred `@integrationpending` one, with a matching PASSING
   unit observation citing it. It is fed to the pure parse→reconcile pipeline by the
   `@SCN-PND-009` @integration step (which hand-builds the passing unit observation keyed to this

@@ -5,11 +5,11 @@
  * coverage, centralised here when the rule was extracted out of evidenceObservations.ts.
  *
  * CITED TO @SCN-RPT-016 (3F-2362) — "a cross-repo reconcile run from a foreign cwd yields
- * zero absolute paths on both surfaces". RPT-016 is the scenario that declares this rule:
+ * zero absolute paths on both surfaces". RPT-016 is the scenario that OWNS this rule:
  * its Then names BOTH surfaces this transform serves (the evidence-observation locators via
  * parse/vitest.ts + parse/cucumber.ts, and the provenance inputs via provenance.ts), and the
  * "never escapes via .." arm below is the exact leak its integration arm drives out. RPT-010
- * and RPT-001 above are the CONSUMERS of the relativized strings, not the declarers of the
+ * and RPT-001 above are the CONSUMERS of the relativized strings, not the OWNERS of the
  * relativization semantics — hence the single describe-level cite to RPT-016, which every `it`
  * in this file inherits.
  */

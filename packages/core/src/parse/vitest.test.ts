@@ -2,9 +2,9 @@
  * @unit guard for the source→level seam.
  *
  * Strict coverage gain: parseVitestEvidenceObservations had no dedicated unit test — its level was
- * a hardcoded "unit". This proves the level is now the CALLER-DECLARED one, so the
+ * a hardcoded "unit". This proves the level is now the CALLER-SUPPLIED one, so the
  * implicit Vitest⇒unit assumption is gone (the Read's positive guard — what fails if
- * anyone re-hardcodes the level). The JS-ecosystem default (unit) is declared at the
+ * anyone re-hardcodes the level). The JS-ecosystem default (unit) is set at the
  * CLI edge, not here.
  */
 
@@ -12,16 +12,15 @@ import { describe, it, expect } from "vitest";
 import { parseVitestEvidenceObservations, type VitestJsonReport } from "./vitest.js";
 
 /**
- * THE NOT-THE-INPUT-SOURCE HALF of @SCN-LDG-011's rule, on the vitest reader. The scenario's Rule
- * (`features/ledger.feature:168`) reads: "a runtime observation's level is the cited scenario's
- * declared tag, NOT THE INPUT SOURCE", and its preamble adds that "the caller-declared source level
- * survives only as the fallback for an untagged scenario". Vitest never derives — unit is vitest's
- * substrate, so no tier tag is ever read from a vitest report (canon states this twice inside the
- * same Rule: @SCN-LDG-013's preamble, "its level is not derived", and @SCN-LDG-015's, "never derived
- * from the cucumber report"). The caller-declared source level is therefore what stands here
- * UNCONDITIONALLY, and this block is what proves it genuinely stands — that the parameter is stamped
- * verbatim and not quietly replaced by a reinstated Vitest⇒unit hardcode. The cucumber reader's
- * sibling block proves the same seam on its side (3F-2364, same @SCN).
+ * THE NOT-THE-INPUT-SOURCE HALF of @SCN-LDG-011's rule, on the vitest reader. Its Rule in
+ * `features/ledger.feature` reads: a runtime observation's level is the cited scenario's own tier
+ * tag, not the input source — and the source level the caller passes survives only as the fallback
+ * for an untagged scenario. Vitest never derives: unit is vitest's substrate, so no tier tag is
+ * ever read from a vitest report (canon states this twice inside the same Rule, in @SCN-LDG-013's
+ * and @SCN-LDG-015's preambles). The caller-supplied level therefore stands here UNCONDITIONALLY,
+ * and this block is what proves it genuinely stands — that the parameter is stamped verbatim and
+ * not quietly replaced by a reinstated Vitest⇒unit hardcode. The cucumber reader's sibling block
+ * proves the same seam on its side (3F-2364, same @SCN).
  *
  * WHY THIS BLOCK IS NOT REDUNDANT WITH ITS CITED SIBLINGS, established by mutation (3F-2365):
  *   - NARROW — reinstating the retired hardcode (`qualityCheck` → `"unit"` at both `results.push`
@@ -39,7 +38,7 @@ import { parseVitestEvidenceObservations, type VitestJsonReport } from "./vitest
  * legible against an in-block default baseline — deleting it would resolve the same 2 obligations
  * and lose the contrast, so it earns nothing.
  */
-describe("[SCN-LDG-011] parseVitestEvidenceObservations stamps the caller-declared level — vitest derives none", () => {
+describe("[SCN-LDG-011] parseVitestEvidenceObservations stamps the caller-named level — vitest derives none", () => {
   const report: VitestJsonReport = {
     testResults: [
       {
@@ -52,7 +51,7 @@ describe("[SCN-LDG-011] parseVitestEvidenceObservations stamps the caller-declar
     ],
   };
 
-  it("attributes results at the declared level (unit — the JS-ecosystem default declared by the CLI)", () => {
+  it("attributes results at the named level (unit — the JS-ecosystem default named by the CLI)", () => {
     // Each credit carries its test-file locator (the where-to-fix, ruling Q5) —
     // verbatim here (no run root passed), portable-relative at the CLI edge.
     expect(parseVitestEvidenceObservations(report, "unit")).toEqual([
@@ -61,11 +60,11 @@ describe("[SCN-LDG-011] parseVitestEvidenceObservations stamps the caller-declar
     ]);
   });
 
-  it("honors a NON-default declared level — the assumption is gone (no Vitest⇒unit hardcode)", () => {
+  it("honors a NON-default named level — the assumption is gone (no Vitest⇒unit hardcode)", () => {
     const out = parseVitestEvidenceObservations(report, "e2e");
     expect(out).toHaveLength(2);
     expect(out.every((r) => r.qualityCheck === "e2e")).toBe(true);
-    // The status pass-through is unchanged by the quality-check declaration.
+    // The status pass-through is unchanged by the quality-check parameter.
     expect(out.map((r) => (r.qualityCheck !== "lint" ? r.status : null))).toEqual([
       "passed",
       "failed",
@@ -76,7 +75,7 @@ describe("[SCN-LDG-011] parseVitestEvidenceObservations stamps the caller-declar
 describe("[SCN-PND-015] parseVitestEvidenceObservations classifies three-way — inconclusive is dropped", () => {
   // Uniform with the cucumber reader (@SCN-PND-013): pending is NEVER inferred from an assertion's
   // status. `passed`/`failed` emit an observation (satisfied/failing downstream); an inconclusive
-  // vitest status (`skipped`/`todo`, and any status ∉ {passed, failed}) is DROPPED — the declared
+  // vitest status (`skipped`/`todo`, and any status ∉ {passed, failed}) is DROPPED — the evidence
   // obligation then reconciles missing BY ABSENCE. This proves the emitted-or-dropped classification
   // over the reader in ISOLATION; the @integration arm (tests/steps/pendingItems.steps.ts,
   // [SCN-PND-015]) proves it through the parse→reconcile pipeline. The status strings below are the

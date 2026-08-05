@@ -1,7 +1,7 @@
 /**
  * The JOURNAL — the debit/credit input concepts of the reconciliation domain, co-located
- * as one module (module, not class). These are the raw entries a run declares (evidence
- * obligations, the scenarios that declare them) and observes (evidence observations, runtime
+ * as one module (module, not class). These are the raw entries a run RAISES (evidence
+ * obligations, and the scenarios that raise them) and OBSERVES (evidence observations, runtime
  * and static), keyed by one flat `qualityCheck` per evidence obligation — the two-axis
  * `(kind, level)` grid collapsed to a single mutually-exclusive coordinate.
  *
@@ -24,14 +24,14 @@ export type QualityCheck = "lint" | "unit" | "integration" | "e2e" | "performanc
 
 /**
  * The runtime quality-checks — the flat coordinate MINUS `lint`, i.e. the value-set the
- * retired `Level` type named. Types the runtime-only surfaces (the observed readers'
- * declared quality-check, the test-volume `rawByRuntimeQualityCheck` keying) without re-admitting
+ * retired `Level` type named. Types the runtime-only surfaces (the observed readers' stamped
+ * quality-check, the test-volume `rawByRuntimeQualityCheck` keying) without re-admitting
  * the two-axis grid.
  */
 export type RuntimeQualityCheck = Exclude<QualityCheck, "lint">;
 
 /**
- * One evidence obligation a scenario declares — a SINGLE flat shape keyed on
+ * One evidence obligation a scenario raises — a SINGLE flat shape keyed on
  * `qualityCheck` (no `kind`/`level` discriminated union):
  *   - `@unit`/`@integration`/… → `{ qualityCheck: <level> }`.
  *   - `@lint=<guard>`           → `{ qualityCheck: 'lint', staticCheck }`.
@@ -40,7 +40,7 @@ export type RuntimeQualityCheck = Exclude<QualityCheck, "lint">;
  *
  * `qualityCheck` is OPTIONAL (@SCN-PND-022) — `undefined` = SCENARIO-SCOPE: the
  * synthesised whole-scenario deferral a recognised deferral tag raises on a scenario
- * declaring ZERO obligations (a bare `@wip` — no evidence tag). It is always
+ * raising ZERO obligations (a bare `@wip` — no evidence tag). It is always
  * `{ pending: true }` with no `qualityCheck` (nor `staticCheck`): it owes no specific check,
  * so the reconcile partition routes it to ONE `qualityCheck`-less Pending Item rather
  * than a both-missing row. Every ordinary (tag-derived) obligation carries a
@@ -61,11 +61,10 @@ export interface EvidenceObligation {
   pending?: boolean;
 }
 
-/** A scenario's declared evidence obligations, read from its @SCN tags. */
+/** A scenario — its @SCN id, and the evidence obligations its evidence tags raise. */
 export interface Scenario {
   /** The bare scenario id, e.g. `SCN-LDG-001` (no leading @). */
   scnId: string;
-  /** The quality-check evidence obligations the scenario's evidence tags declare. */
   evidenceObligations: EvidenceObligation[];
 }
 
@@ -73,12 +72,12 @@ export interface Scenario {
  * The NAMED `(scnId, quality-check)` pairs — the ONE rule for what a scenario names, keyed
  * `"<scnId> <qualityCheck>"`. A credit citing a scenario is reconciliation-matched only
  * when its pair is in this set; otherwise it is `no-evidence-obligation` (a real scenario, at a quality-check
- * it never declared).
+ * it never named).
  *
  * A `pending` obligation is EXCLUDED — it names nothing. Canon, Pending Item: a
- * `<quality-check>pending` tag raises **no Evidence Obligation**, so "an Evidence Observation
- * citing that scenario at a pending quality-check is `no-evidence-obligation` — exactly as when nothing was
- * declared at all". Nothing is named, so nothing can be attributed to it. (This also drops the
+ * `<quality-check>pending` tag raises **no Evidence Obligation**, so an Evidence Observation
+ * citing that scenario at a pending quality-check is `no-evidence-obligation` — exactly as when
+ * nothing was raised at all. Nothing is named, so nothing can be attributed to it. (This also drops the
  * scenario-scope pending obligation, which carries no `qualityCheck` at all — it names no
  * specific check, so it never belonged in a pair set keyed by one.)
  *
@@ -94,7 +93,7 @@ export interface Scenario {
  * reconciler's or a census's private business (`entity-owns-its-behaviour`) — the same reason
  * `OUT_OF_BALANCE_OUTCOMES` lives here rather than in the renderer that walks it.
  *
- * A runtime credit's quality-check is a `RuntimeQualityCheck`, so a declared `lint` obligation
+ * A runtime credit's quality-check is a `RuntimeQualityCheck`, so a `lint` obligation
  * never matches one — as intended; the static axis is matched by guard handle, not by pair.
  */
 export function evidenceObligationPairsOf(scenarios: readonly Scenario[]): Set<string> {
@@ -155,7 +154,7 @@ export function staticCheckEvidenceObligationsOf(scenarios: readonly Scenario[])
  * reconciler's private business (`entity-owns-its-behaviour`).
  *
  * Takes the OBLIGATIONS rather than a `Scenario` (3F-2203) so the one rule serves both sides of the
- * pipeline: `reconcile` passes a scenario's declared obligations, and the renderer passes a Ledger
+ * pipeline: `reconcile` passes the obligations a scenario raises, and the renderer passes a Ledger
  * row's POSTED DEBITS (`ScenarioReconciliation.evidenceObligations`) to answer "does this row
  * name this quality-check?" for the grid. The renderer previously re-encoded the `!pending`
  * clause itself — the same rule in a second home, agreeing by copy.
@@ -170,10 +169,10 @@ export function evidenceObligationsOf(
  * THE PENDING PARTITION, deferred half (@SCN-PND-004, 3F-2204) — the one-sided Pending Items a
  * scenario's deferred obligations raise, one per `<quality-check>pending` obligation, in document
  * order. The exact complement of `evidenceObligationsOf`: together they partition the
- * scenario's declared obligations, so nothing is dropped and nothing is counted twice.
+ * scenario's obligations, so nothing is dropped and nothing is counted twice.
  *
  * A Pending Item carries ONLY the quality-check owed — `undefined` for the scenario-scope deferral
- * (@SCN-PND-022, a bare `@wip` declaring no obligations), which owes no specific check. It is
+ * (@SCN-PND-022, a bare `@wip` raising no obligations), which owes no specific check. It is
  * partitioned off BEFORE the observation match, so it never becomes a Quality Check Reconciliation
  * and never a reconciling item: "one-sided — nothing is reconciled".
  */
@@ -188,10 +187,10 @@ export type EvidenceStatus = "passed" | "failed";
 
 /**
  * One observed RUNTIME evidence result, normalised from a runner's output. The
- * quality-check is a DECLARED property of the ingestion input: the caller
- * declares the quality-check a source yields and the reader stamps it — the core makes
- * no source→quality-check assumption (the JS-ecosystem default is declared at the CLI
- * edge: vitest⇒unit, cucumber⇒integration). A runtime evidence observation never carries `lint`.
+ * quality-check is supplied by the CALLER, not inferred: the caller states the quality-check a
+ * source yields and the reader stamps it — the core makes no source→quality-check assumption (the
+ * JS-ecosystem default is set at the CLI edge: vitest⇒unit, cucumber⇒integration). A runtime
+ * evidence observation never carries `lint`.
  */
 export interface RuntimeEvidenceObservation {
   qualityCheck: RuntimeQualityCheck;
@@ -268,23 +267,23 @@ export interface GuardEvidenceObservation {
  * One observed evidence fact — a DISCRIMINATED UNION on `qualityCheck === "lint"`:
  * a runtime test result (keyed by scnId + its runtime quality-check) or a
  * static-check evidenceObservation (`qualityCheck: "lint"`, keyed by guard). The
- * reconciler matches each declared evidenceObligation against evidenceObservations of the
+ * reconciler matches each evidence obligation against evidence observations of the
  * same quality-check.
  */
 export type EvidenceObservation = RuntimeEvidenceObservation | GuardEvidenceObservation;
 
 /**
  * A PENDING ITEM — the one-sided ledger entry a deliberately-DEFERRED evidence
- * obligation raises. A `<quality-check>pending` tag (evidence-manifesto §11B) declares
+ * obligation raises. A `<quality-check>pending` tag (evidence-manifesto §11B) records
  * an obligation owed but deferred to a later slice; on the ledger it is NOT a Reconciling
  * Item — nothing is reconciled (no observation is sought, none is matched), so it never
  * becomes a `QualityCheckReconciliation` and never enters `evidenceObligations` /
  * `reconcilingItems`. It records only WHICH quality-check is owed-but-deferred: an IOU on
  * the report, verdict-neutral and run-neutral. One Pending Item per `<qc>pending`
- * obligation the scenario declared.
+ * obligation the scenario carries.
  *
  * `qualityCheck` is OPTIONAL (@SCN-PND-022) — `undefined` = SCENARIO-SCOPE: the whole
- * scenario is deferred (a bare `@wip` declaring no obligations) and owes NO specific
+ * scenario is deferred (a bare `@wip` raising no obligations) and owes NO specific
  * check. An obligation-scope Pending Item (a `<qc>pending` tag) names its owed
  * `qualityCheck`; a scenario-scope one names none. Kept ONE `PendingItem` type — the
  * `undefined` `qualityCheck` is the scenario-scope discriminator, not a parallel flag.

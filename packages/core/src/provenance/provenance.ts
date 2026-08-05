@@ -1,9 +1,8 @@
 /**
  * The RunContext — run provenance threaded CLI→renderers as a SIBLING to the pure
- * Ledger, never folded into it. The Ledger model
- * carries declared-vs-observed reconciliation only;
- * run metadata — the input paths/flags used, the target repo, the UTC run
- * timestamp, the source SHA — is a separate concern carried alongside.
+ * Ledger, never folded into it. The Ledger model carries obligation-vs-observation
+ * reconciliation only; run metadata — the input paths/flags used, the target repo, the
+ * UTC run timestamp, the source SHA — is a separate concern carried alongside.
  *
  * Built once in the CLI (reusing the existing runStart; the target is the verbatim
  * --target) and threaded renderMarkdown(balance, ctx) / writeOutputs(... ctx);

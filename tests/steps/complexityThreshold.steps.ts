@@ -5,7 +5,7 @@
  * @SCN-CPX-001 — the bidirectional @integration evidence marker (Evidence Manifesto §9).
  *
  * THIS ARM DRIVES THE REAL `eslint.config.mjs`, not a hand-rebuilt copy of its rules. Until 3F-2316 it
- * re-declared `complexity` / `max-lines` / `max-lines-per-function` from the threshold module and lint
+ * restated `complexity` / `max-lines` / `max-lines-per-function` from the threshold module and lint
  * against THAT — which proved the numbers had teeth while proving nothing about the config CI actually
  * runs. With an exception list in play that gap stops being academic: the exceptions live in the
  * config's block ordering, so a copy of the rules cannot see them at all. Loading the real config file
@@ -64,7 +64,7 @@ const functionOfComplexity = (branches: number): string =>
 const functionOfLines = (lines: number): string =>
   `export function planted() {\n${"  void 0;\n".repeat(lines - 2)}}\n`;
 
-/** A module spanning exactly `lines` lines and declaring no function at all. */
+/** A module spanning exactly `lines` lines and containing no function at all. */
 const moduleOfLines = (lines: number): string =>
   `${"// filler\n".repeat(lines - 1)}export const x = 1;\n`;
 

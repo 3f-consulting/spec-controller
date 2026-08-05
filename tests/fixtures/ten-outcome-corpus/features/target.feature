@@ -40,7 +40,7 @@ Feature: ten-outcome corpus — a fixture shaped so the REAL reconcile emits all
 
   @SCN-TOC-006
   Scenario: both-missing — a scenario with no obligation and no citation
-    Given a scenario declaring no obligation
+    Given a scenario naming no obligation
     When nothing cites it
     Then it reconciles both-missing
 

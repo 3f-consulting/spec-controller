@@ -1,6 +1,6 @@
 /**
  * Types for `complexityThresholds.mjs` (@SCN-CPX-001). The runtime module is plain ESM so eslint's own
- * loader can read it with no `jiti`; these declarations keep every TypeScript consumer — the @unit
+ * loader can read it with no `jiti`; these types keep every TypeScript consumer — the @unit
  * pin and the Cucumber steps — fully typed against the same one source.
  *
  * `ratchet` was DELETED here by 3F-2286, which superseded 3F-2177's seed-at-measured-maximum rule.
@@ -13,12 +13,12 @@
  * One rule's threshold: a number, or the literal `"off"` when the rule does not apply to that scope.
  *
  * `"off"` is EXPLICIT rather than an absent key. An absent key is indistinguishable from an oversight,
- * and the @unit pin exists precisely to catch a rule that goes silently unheld; a declared `"off"` has
+ * and the @unit pin exists precisely to catch a rule that goes silently unheld; an explicit `"off"` has
  * to be written on purpose and can be asserted against.
  */
 export type RuleThreshold = number | "off";
 
-/** The three rule thresholds a scope declares. */
+/** The three rule thresholds a scope holds. */
 export interface ComplexityThreshold {
   /** eslint `complexity` — the per-function cyclomatic ceiling. */
   complexity: RuleThreshold;
@@ -53,18 +53,18 @@ export declare const RETIRED_TREE_DERIVED_SEEDS: readonly number[];
 /** The three eslint rule ids the two scopes and the exception list share. */
 export type EslintRuleId = "complexity" | "max-lines" | "max-lines-per-function";
 
-/** One eslint rule declaration: `"off"`, or `["error", …]` in the shape that rule takes. */
-export type RuleDeclaration =
+/** One eslint rule entry: `"off"`, or `["error", …]` in the shape that rule takes. */
+export type RuleEntry =
   | "off"
   | readonly ["error", number]
   | readonly ["error", { max: number; skipBlankLines: false; skipComments: false }];
 
 /**
- * One rule declared at one ceiling, in the shape THAT rule takes (@SCN-CPX-002, 3F-2317).
+ * One rule HELD at one ceiling, in the shape THAT rule takes (@SCN-CPX-002, 3F-2317).
  *
  * The ceiling may come from either side of the provenance line — a scope threshold stated from
  * outside this tree, or an exception's value measured from it — because the SHAPE is a property of
  * eslint's rules and not of any number. That is what lets one emitter serve both without either
  * module's guarantee bending.
  */
-export declare function ruleAtCeiling(rule: EslintRuleId, ceiling: RuleThreshold): RuleDeclaration;
+export declare function ruleAtCeiling(rule: EslintRuleId, ceiling: RuleThreshold): RuleEntry;

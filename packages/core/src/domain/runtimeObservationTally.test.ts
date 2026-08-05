@@ -32,8 +32,8 @@ import { reconcile } from "./evidenceReconciliation.js";
 import type { EvidenceObservation, Ledger, Scenario } from "../model.js";
 
 describe("[SCN-RMD-003] runtimeObservationTally folds the posted credits by scenario-kind and quality-check", () => {
-  // A SPANNING corpus reconciling to every credit account: SCN-A declares unit (2 matched credits)
-  // and is ALSO cited at integration it never declared (1 no-evidence-obligation); SCN-PHX-999 is undeclared (1
+  // A SPANNING corpus reconciling to every credit account: SCN-A raises unit (2 matched credits)
+  // and is ALSO cited at integration it never named (1 no-evidence-obligation); SCN-PHX-999 matches no scenario (1
   // phantom); a null-scnId credit cites no scenario (1 suspense); an ambiguous cucumber step is
   // broken (1 suspense — it named no test); a named static-check credit rides the lint axis (must
   // be SKIPPED). Built through reconcile(), so every row is a shape the pipeline actually emits.
@@ -52,7 +52,7 @@ describe("[SCN-RMD-003] runtimeObservationTally folds the posted credits by scen
 
   // CO-CITED to @SCN-RPT-017 (3F-2357) — this assertion is ALSO the unit arm of the FULL-UNIFY view
   // fix. RPT-017's rule is that the report's evidence-observation views LEVEL a runtime observation
-  // by the cited scenario's tag, never by the caller-declared quality-check the retired census
+  // by the cited scenario's tag, never by the caller-supplied quality-check the retired census
   // hardcoded (cucumber ⇒ integration). The corpus above carries an e2e-levelled credit, and this is
   // the assertion that pins it counted under e2e rather than folded into integration. Teeth proven
   // by mutation (3F-2357): levelling every non-unit credit `integration` in `runtimeObservationTally`

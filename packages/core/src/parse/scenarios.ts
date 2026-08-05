@@ -1,12 +1,12 @@
 /**
- * The `declared` reader — parse spec-controller's own `features/**\/*.feature` source
- * into declared evidence obligations: per scenario, `{ scnId, evidenceObligations }`, with
+ * The SCENARIO reader — parse spec-controller's own `features/**\/*.feature` source
+ * into evidence obligations: per scenario, `{ scnId, evidenceObligations }`, with
  * each (kind, level) drawn from the scenario's evidence tags (@unit → runtime/unit,
  * @integration → runtime/integration, @e2e → runtime/e2e, @performance →
  * runtime/performance — the evidence-obligation reading).
  *
- * One of the three separated inputs to the reconciler (declared / observed /
- * static check) — the embryonic declared-side adapter, deliberately not a registry (v1).
+ * One of the three separated inputs to the reconciler (obligations / observations /
+ * static checks) — the embryonic obligation-side adapter, deliberately not a registry (v1).
  *
  * Approach: scan TAG LINES (a line whose first non-blank char is `@` and whose
  * every whitespace-separated token is a tag) for an @SCN-<FFF>-<NNN> id and any
@@ -138,7 +138,7 @@ const SCENARIO_HEADER =
  * tag block carries no `@SCN` id (@SCN-RPT-014). Mirrors `parseScenarios`'s
  * tag-block accumulation: a tag line accumulates the block; any non-tag line closes it.
  * At each scenario header, the just-accumulated block is checked for an `@SCN` — if it
- * has none, the scenario is untagged (returns its name). The declared-side counterpart
+ * has none, the scenario is untagged (returns its name). The obligation-side counterpart
  * to the evidenceObservations aggregate's anomaly terms: a scenario with no evidence anchor.
  */
 export function parseUntaggedScenarios(source: string): string[] {
@@ -162,7 +162,7 @@ export function parseUntaggedScenarios(source: string): string[] {
 }
 
 /**
- * Derive a scenario's declared obligations from its EFFECTIVE tags — its own PLUS everything it
+ * Derive a scenario's evidence obligations from its EFFECTIVE tags — its own PLUS everything it
  * inherits from its `Feature:` and any enclosing `Rule:` (@SCN-LDG-020). Unchanged in substance
  * from the tag-block reading it replaces; what changed is WHICH tags reach it.
  */
@@ -206,14 +206,14 @@ function obligationsFromTags(
       // SCENARIO-SCOPE community deferral (@SCN-PND-016): when the tag block carries a
       // RECOGNISED community deferral tag (a bare tag ∈ the injected `deferralTags` set —
       // empty by default; the app passes its starter policy ∪ config), the whole scenario is
-      // deferred: mark EVERY declared
-      // obligation `pending: true`, overriding its observation-derived outcome. Applied AFTER the
+      // deferred: mark EVERY obligation `pending: true`, overriding its observation-derived
+      // outcome. Applied AFTER the
       // obligation list is built, so it composes with the `<qc>pending` recognition and covers
       // every obligation kind (runtime tiers AND `@lint=<guard>`). Idempotent on an
       // already-pending obligation.
       if (blockTags.some((t) => deferralTags.includes(t))) {
         if (evidenceObligations.length === 0) {
-          // INTERPRETATION 2 (@SCN-PND-022): a deferred scenario declaring ZERO obligations (a
+          // INTERPRETATION 2 (@SCN-PND-022): a deferred scenario raising ZERO obligations (a
           // bare `@wip` — no evidence tag) synthesises ONE scenario-scope pending obligation:
           // `{ pending: true }` with NO `qualityCheck` (undefined = scenario-scope) and no `staticCheck`.
           // The reconcile partition routes it to one `qualityCheck`-less Pending Item, so the
@@ -230,7 +230,7 @@ function obligationsFromTags(
 }
 
 /**
- * Parse the DECLARED CORPUS — the ledger's DEBIT side — from the REAL Gherkin AST (@SCN-LDG-020,
+ * Parse the SCENARIO CORPUS — the ledger's DEBIT side — from the REAL Gherkin AST (@SCN-LDG-020,
  * 3F-1775), the same parser cucumber uses. So the scenarios spec-controller reconciles carry
  * EXACTLY the tags cucumber gives them: one reading of the file, not two.
  *
@@ -240,7 +240,7 @@ function obligationsFromTags(
  *
  *   UNDER-READ. An evidence tier hoisted to the Feature/Rule line — idiomatic, valid Gherkin,
  *   exactly what an author does with a tier shared by every scenario beneath — was INVISIBLE. The
- *   obligation was never DECLARED, so its missing evidence could never reconcile `missing`, and the
+ *   obligation was never RAISED, so its missing evidence could never reconcile `missing`, and the
  *   run read BALANCED (exit 0) while cucumber named a tier nothing proved. Unlike the corrupt-
  *   file false-green (3F-1767), this one fires on WELL-WRITTEN files — which makes it likelier.
  *
@@ -273,7 +273,7 @@ export function parseScenarios(
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     throw new Error(
-      `The feature source is not valid Gherkin, so no declared corpus can be read from it. ` +
+      `The feature source is not valid Gherkin, so no scenario corpus can be read from it. ` +
         `Reconciling an empty corpus would balance against anything — so this fails loudly ` +
         `rather than silently. Cause: ${message}`
     );
@@ -296,7 +296,7 @@ export function parseScenarios(
 
       // The EFFECTIVE tag set: the scenario's OWN tags, then everything it inherits from its Rule
       // and Feature. This is the whole fix — the old scan saw only the first of the three. Own
-      // tags lead so a scenario's declared obligations read in the order it declares them, and a
+      // tags lead so a scenario's obligations read in the order its tags name them, and a
       // file using NO inheritance yields a byte-identical corpus to the one the scan produced.
       const effective = [...bare(child.scenario.tags), ...inherited];
       const scnTag = effective.find((t) => SCN_CODE.test(t));

@@ -116,7 +116,7 @@ describe("[SCN-VOC-013] the Gherkin tag line — author-chosen vocabulary vs the
   it("[SCN-VOC-013] the `@lint=<handle>` tag yields NO segment — via isTierTag's `lint=` FORM", () => {
     // WHICH RULE HOLDS IT GREEN, measured rather than assumed. Mutating `isTierTag` out reds
     // this case; mutating the value-drop out does NOT. So the whole `lint=<handle>` token is
-    // recognised as a tier declaration by scnTags.ts's own predicate — a rule it already
+    // recognised as a tier TAG by scnTags.ts's own predicate — a rule it already
     // owned so that a bare-`lint`-only match would not false-flag every static-check
     // scenario. Asserted here because that is the rule a future edit would break.
     const texts = segmentTexts(everyShape);

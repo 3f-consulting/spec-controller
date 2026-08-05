@@ -1,7 +1,7 @@
 /**
  * The single-sourced STARTER set of recognised community deferral tags — bare names
  * (the `@` is tag-line syntax). A scenario whose tag block carries one of these DEFERS
- * every obligation it declares to a Pending Item (scenario-scope). These are the
+ * every obligation it raises to a Pending Item (scenario-scope). These are the
  * established Cucumber deferral conventions.
  *
  * This is **product policy, not a core-domain invariant** — an evolvable list of tag

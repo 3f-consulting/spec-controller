@@ -1,6 +1,6 @@
 /**
  * Ingest the target's feature files — the IMPURE reader that walks features/ on disk
- * and parses each file's declared feature code + scenario codes into DiscoveredFeature
+ * and parses each file's feature code + scenario codes into DiscoveredFeature
  * records (split out of the old spec/featureCodes.ts). The pure per-source
  * parsers (extractFeatureCode / parseScenarioCodes) live here with their sole consumer;
  * the `scnId → feature-code` grammar helper is engine-side (packages/core/src/lib/
@@ -16,13 +16,12 @@ import { dirname, join } from "node:path";
 /** A code is valid when it is 2–5 uppercase alphanumerics. */
 const CODE_PATTERN = /^[A-Z0-9]{2,5}$/;
 
-/** A feature file discovered on disk, with its declared code (if any). */
+/** A feature file discovered on disk, with its `@<FFF>` header code (if any). */
 export interface DiscoveredFeature {
   /** The feature-file basename without the .feature extension. */
   slug: string;
   /** Absolute path to the feature file. */
   path: string;
-  /** The declared @<FFF> header code, or null if none is present. */
   featureCode: string | null;
   /** Every @SCN-<FFF>-<NNN> scenario code in the file, in order, duplicates kept. */
   scenarioCodes: string[];
@@ -90,7 +89,7 @@ function featuresDir(): string {
   return join(process.cwd(), "features");
 }
 
-/** Discover every feature file on disk and its declared code. */
+/** Discover every feature file on disk and its header code. */
 export function discoverFeatures(dir: string = featuresDir()): DiscoveredFeature[] {
   return readdirSync(dir)
     .filter((name) => name.endsWith(".feature"))

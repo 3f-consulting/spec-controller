@@ -11,7 +11,7 @@
  * WHY PLANTED TREES RATHER THAN THIS ONE. The gate reads a Cucumber report, and this
  * scenario IS a Cucumber run — a live report of itself does not exist while it executes.
  * So both arms run over trees planted in a temp dir: two complete miniature targets, one
- * whose declared evidence is all observed and one declaring a tier nothing observes. The
+ * whose evidence obligations are all observed and one naming a tier nothing observes. The
  * gate's `--root` moves the whole scan scope to a tree; it never narrows which surfaces
  * are read, so the guard under test here is the guard that runs in CI. The LNT trio use
  * the same planted-fixture shape and for the same reason: a repository cannot keep a
@@ -45,9 +45,9 @@ let balancedRun: GuardRun;
 let outOfBalanceRun: GuardRun;
 
 /**
- * Plant a complete miniature target: a feature declaring `@unit`, a CI config and a
+ * Plant a complete miniature target: a feature NAMING `@unit`, a CI config and a
  * package manifest, and the two runtime report streams. `observed` decides whether the
- * Vitest report carries a test citing the scenario — i.e. whether the declared obligation
+ * Vitest report carries a test citing the scenario — i.e. whether the obligation
  * has anything to settle against.
  */
 // @SCN-SLF-001
@@ -79,7 +79,7 @@ function plantTree(observed: boolean): string {
   writeFileSync(path.join(root, "package.json"), JSON.stringify({ name: "planted" }) + "\n");
 
   // The Vitest stream. When `observed` is false the suite ran and cited nothing, which is
-  // the one-way evidence claim the gate exists to catch: a tier declared, never observed.
+  // the one-way evidence claim the gate exists to catch: a tier named, never observed.
   const assertionResults = observed
     ? [
         {
@@ -130,7 +130,7 @@ Given("the self-balance gate, wired over spec-controller's own source", function
 
 // @SCN-SLF-001
 When(
-  "the gate reconciles a tree whose declared evidence is all observed, and a tree declaring evidence that nothing observes",
+  "the gate reconciles a tree whose named evidence is all observed, and a tree naming evidence that nothing observes",
   function () {
     balancedRun = runGuard(plantTree(true));
     outOfBalanceRun = runGuard(plantTree(false));
@@ -142,7 +142,7 @@ Then("the gate passes over the tree whose accounts agree", function () {
   assert.equal(
     balancedRun.exitCode,
     0,
-    `expected the self-balance gate to PASS over a tree whose declared evidence is all ` +
+    `expected the self-balance gate to PASS over a tree whose named evidence is all ` +
       `observed; it exited ${balancedRun.exitCode}. A gate that reds on everything is as ` +
       `useless as one that reds on nothing. Output:\n${balancedRun.output}`,
   );
@@ -155,7 +155,7 @@ Then(
     assert.notEqual(
       outOfBalanceRun.exitCode,
       0,
-      `expected the self-balance gate to FAIL over a tree declaring evidence nothing ` +
+      `expected the self-balance gate to FAIL over a tree naming evidence nothing ` +
         `observes; it exited 0. A report that passes regardless is a non-check — the ` +
         `whole defect this scenario closes. Output:\n${outOfBalanceRun.output}`,
     );

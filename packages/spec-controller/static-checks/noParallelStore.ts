@@ -4,7 +4,7 @@
  * the DDD retrofit (Slice 8): the census modules that once counted evidence into their own
  * `attributed[]`/section shapes are RETIRED (their counting folded onto the Ledger as the
  * `runtimeObservationTally` / `staticObservationTally` domain folds); this guard reds the build if
- * any of them — by file, by declared type/value, or by a re-added parallel credit-list field —
+ * any of them — by file, by re-defined type/value, or by a re-added parallel credit-list field —
  * creeps back into the pure core.
  *
  * PURE: `checkNoParallelStore` takes the core's production source files as data and returns the
@@ -17,7 +17,7 @@
  *   - **retired-module-file** — a source file whose basename is `evidenceObservations.ts` or
  *     `staticEvidenceObservations.ts` (the retired runtime/static evidence-observation census
  *     modules, 3F-2104 / 3F-2119). They stay deleted; re-adding either reds here.
- *   - **retired-declaration** — a DECLARATION (interface/type/class/enum/const/let/var/function)
+ *   - **retired-symbol** — a DEFINITION (interface/type/class/enum/const/let/var/function)
  *     of a retired credit-list/section symbol: `AttributedCount`, `EvidenceObservationsSection`,
  *     `RuntimeEvidenceObservationKindCounts`, `StaticEvidenceObservationKindCounts`, or
  *     `countStaticEvidenceObservationKinds`. Comment-stripped first, so the retirement
@@ -39,8 +39,8 @@ import type { CollectedFile } from "./sourceFiles.js";
 export interface NoParallelStoreViolation {
   /** The offending file, as given by the caller (repo-relative in the guard test). */
   path: string;
-  kind: "retired-module-file" | "retired-declaration" | "parallel-store-field";
-  /** The file basename, declared symbol, or field name that tripped the static check. */
+  kind: "retired-module-file" | "retired-symbol" | "parallel-store-field";
+  /** The file basename, defined symbol, or field name that tripped the static check. */
   detail: string;
 }
 
@@ -51,12 +51,12 @@ export interface NoParallelStoreViolation {
 const RETIRED_MODULE_BASENAME = /(?:^|\/)(evidenceObservations|staticEvidenceObservations)\.ts$/;
 
 /**
- * A DECLARATION of a retired credit-list/section symbol — the `interface`/`type`/`class`/`enum`/
+ * A DEFINITION of a retired credit-list/section symbol — the `interface`/`type`/`class`/`enum`/
  * `const`/`let`/`var`/`function` keyword immediately before the retired name. A bare MENTION (a
- * comment, an import specifier's tail) does not match: this fires only on a real declaration, and
+ * comment, an import specifier's tail) does not match: this fires only on a real definition, and
  * comments are stripped before the scan.
  */
-const RETIRED_DECLARATION =
+const RETIRED_SYMBOL =
   /\b(?:interface|type|class|enum|const|let|var|function)\s+(AttributedCount|EvidenceObservationsSection|RuntimeEvidenceObservationKindCounts|StaticEvidenceObservationKindCounts|countStaticEvidenceObservationKinds)\b/g;
 
 /**
@@ -70,7 +70,7 @@ const PARALLEL_STORE_FIELD = /\battributed\s*\??\s*:/g;
  * Strip `//` line comments and block comments so a doc-comment that merely NAMES a retired symbol
  * (the retirement notes in `assemble/report.ts` / `index.ts` do) is not a false positive. Over-
  * stripping the odd string literal is harmless here — the static check only cares about real
- * declarations and real field keys, never string contents. (Mirrors domainPurity / enginePurity.)
+ * definitions and real field keys, never string contents. (Mirrors domainPurity / enginePurity.)
  */
 function stripComments(source: string): string {
   return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
@@ -78,9 +78,9 @@ function stripComments(source: string): string {
 
 /**
  * Check every core source file for a resurrected parallel store. Returns one
- * `NoParallelStoreViolation` per offending file/declaration/field, in file-then-source order; an
+ * `NoParallelStoreViolation` per offending file/definition/field, in file-then-source order; an
  * empty array means the lock holds — the Ledger is the ONE store. The file-basename arm reads the
- * path (not the source); the declaration and field arms read the comment-stripped source.
+ * path (not the source); the definition and field arms read the comment-stripped source.
  */
 export function checkNoParallelStore(files: readonly CollectedFile[]): NoParallelStoreViolation[] {
   const violations: NoParallelStoreViolation[] = [];
@@ -92,8 +92,8 @@ export function checkNoParallelStore(files: readonly CollectedFile[]): NoParalle
 
     const code = stripComments(file.source);
 
-    for (const match of code.matchAll(RETIRED_DECLARATION)) {
-      violations.push({ path: file.path, kind: "retired-declaration", detail: match[1]! });
+    for (const match of code.matchAll(RETIRED_SYMBOL)) {
+      violations.push({ path: file.path, kind: "retired-symbol", detail: match[1]! });
     }
 
     for (const _match of code.matchAll(PARALLEL_STORE_FIELD)) {

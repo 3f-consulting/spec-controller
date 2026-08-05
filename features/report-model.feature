@@ -25,7 +25,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     glue-free (JSON.stringify(assembleReport(...))) — no per-key hand-assembly. The
     published machine artefact is spec-reconciliation.json. The report opens with
     runProvenance (the run facts), then a materialised summary (the totals the markdown's
-    trial-balance table derives), then the declared evidence obligations, then the
+    trial-balance table derives), then the evidence obligations, then the
     remaining sections. The retired `warnings` key is absent — a zero-evidence
     scenario is a both-missing row in evidenceReconciliation, not a separate axis. The @integration
     arm drives the REAL kept-run scaffold — which names
@@ -36,11 +36,11 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     And its summary totals count EVERY Scenario Reconciliation (3F-1724). The Evidence
     Reconciliation is all Scenario Reconciliations assembled, and the summary is its
-    totals (the maintainers' private notes). Three row kinds — declared, phantom,
+    totals (the maintainers' private notes). Three row kinds — real, phantom,
     suspense — and phantom / suspense reconciliations are ALWAYS out-of-balance, so they
     count into the total and into out-of-balance; `phantom` / `suspense` survive as
-    sub-counts, a BREAKDOWN of the total rather than a bucket outside it (declared =
-    total − phantom − suspense). Tallying declared rows only is what let isBalanced —
+    sub-counts, a BREAKDOWN of the total rather than a bucket outside it (real =
+    total − phantom − suspense). Tallying real rows only is what let isBalanced —
     which correctly walks the suspense row → exit 1 — disagree with a tally reading 0
     out-of-balance, so a failing run rendered a headline that read as a pass. The tally
     now fails on its own and AGREES with the exit code.
@@ -115,7 +115,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     @unit @SCN-RMD-004
     Scenario: the static-check census is summary counts with no standalone section
-      Given a reconciliation run whose derived running-guard set includes a guard no @lint scenario declares
+      Given a reconciliation run whose derived running-guard set includes a guard no @lint scenario names
       When the report is serialised to JSON
       Then the static-check census carries no standalone staticChecks (or guards) section
       And the static-check counts are carried under summary.staticChecks as runningStaticCheckCount and uncitedStaticCheckCount
@@ -140,13 +140,13 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     evidence obligation outcome field is untouched. Markdown is not migrated here (slice 2) and stays
     byte-identical. The @unit arm proves buildSummary / assembleReport in isolation; the @integration
     arm drives the REAL CLI over a fixture spanning attributed / phantom evidence observation /
-    cites-no-scenario evidence observations AND a CI guard no @lint declares, then reads the persisted
+    cites-no-scenario evidence observations AND a CI guard no @lint names, then reads the persisted
     spec-reconciliation.json and proves the test-volume Σ = Σ identity plus the static-check shape on
     the file.
 
     @unit @integration @SCN-RMD-005
     Scenario: the summary materialises the test-volume, static-check, and lint totals with the test-volume balance identity and the static-check shape holding on the persisted file
-      Given a reconciliation run whose evidence spans attributed, phantom-id, and cites-no-scenario evidence observations and whose CI runs a guard no @lint declares
+      Given a reconciliation run whose evidence spans attributed, phantom-id, and cites-no-scenario evidence observations and whose CI runs a guard no @lint names
       When the reconciliation run persists spec-reconciliation.json
       Then the summary carries the test-volume totals, the static-check totals, and the lint tally
       And the test-volume identity Σ rawByRuntimeQualityCheck = onScenario + onPhantomScenario + onSuspenseScenario holds on the persisted summary
@@ -172,7 +172,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     @unit @integration @SCN-RMD-006
     Scenario: the published spec-reconciliation.json carries the feature titles under metadata, keyed by feature code
-      Given a reconciliation over a target corpus whose feature files declare their feature codes
+      Given a reconciliation over a target corpus whose feature files carry their feature codes
       When the coded-corpus reconciliation run persists its machine artefacts
       Then the persisted spec-reconciliation.json carries the feature titles keyed by feature code
       And the persisted spec-reconciliation.md names each out-of-balance feature in full, sourced from the model
@@ -214,13 +214,13 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     quality-check value), so the @SCN-RMD-007 round-trip still holds. HELD (slice 2):
     the outcome VALUES; (slice 4): the interim container terms (EvidenceReconciliation, trial balance).
     The @unit arm proves the reconcile → assemble shape in isolation; the @integration arm drives
-    the REAL CLI over a corpus declaring BOTH a runtime and a lint evidence obligation, persists
+    the REAL CLI over a corpus raising BOTH a runtime and a lint evidence obligation, persists
     spec-reconciliation.json, and asserts the flat coordinate (and the ABSENCE of kind / level)
     on the persisted file.
 
     @unit @integration @SCN-RMD-008
     Scenario: each reconciled evidence sub-row carries a single quality-check coordinate, not a (kind, level) grid
-      Given a reconciliation whose scenarios declare runtime and lint evidence obligations
+      Given a reconciliation whose scenarios raise runtime and lint evidence obligations
       When the report is serialised to spec-reconciliation.json
       Then each evidence sub-row is keyed by one quality-check field with no kind or level
       And a lint sub-row carries its quality-check "lint" alongside its guard

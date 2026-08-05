@@ -2,7 +2,7 @@
 Feature: spec-controller reconciles its own tree, and the build depends on the answer
 
   THE COBBLER'S SHOES, THE WHOLE PAIR. spec-controller exists to report a codebase's
-  one-way evidence claims — a tier declared and never observed, an observation citing
+  one-way evidence claims — a tier named and never observed, an observation citing
   nothing, a guard that runs while no scenario names it. It has been able to report
   those about ITSELF since the reconciler shipped, and nobody ran it: no CI step invoked
   `balance` over spec-controller's own tree. So the defect class the tool is built to
@@ -27,7 +27,7 @@ Feature: spec-controller reconciles its own tree, and the build depends on the a
     THIS scenario instead of folding onto the suspense row as an uncited static check —
     the @SCN-NCR-001 / @SCN-CPX-003 / @SCN-SSM-006 precedent. Without it the gate would
     red on its own introduction, which is the tool grading its own homework and finding
-    it wanting: correct behaviour, and the reason the declaration and the wiring land
+    it wanting: correct behaviour, and the reason the obligation and the wiring land
     together. Self-citation is a property of the tagging, not a second behaviour, so
     there is no second @SCN here.
 
@@ -40,6 +40,6 @@ Feature: spec-controller reconciles its own tree, and the build depends on the a
     @unit @integration @lint=lint:self-balance @SCN-SLF-001
     Scenario: the self-reconciliation gate reds an out-of-balance tree and passes over a balanced one
       Given the self-balance gate, wired over spec-controller's own source
-      When the gate reconciles a tree whose declared evidence is all observed, and a tree declaring evidence that nothing observes
+      When the gate reconciles a tree whose named evidence is all observed, and a tree naming evidence that nothing observes
       Then the gate passes over the tree whose accounts agree
       And the gate fails over the tree carrying an obligation nothing settles, naming that obligation

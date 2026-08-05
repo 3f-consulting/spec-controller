@@ -8,7 +8,7 @@
  * derive-and-diff patch.
  *
  * One of the two static-check observers: this one reads every RUNNING CI guard; the
- * named-guard observer (`checkStaticEvidenceObligations`, `ingest/guard`) reads the declared evidence-obligation side (the
+ * named-guard observer (`checkStaticEvidenceObligations`, `ingest/guard`) reads the OBLIGATION side (the
  * watermelon input). Both share the watermelon-critical CI-parse primitive (`ciRunCommands` /
  * `commandInvokesScript`) from `ingest/ciCommands`.
  *
@@ -18,7 +18,7 @@
  * (exists / enforcedOverRealSource for a static check that does NOT run) is the OTHER observer's job.
  *
  * A script counts as a static check when its name matches any configured `guardPrefixes` entry —
- * the guard-prefix set is DECLARED at the CLI edge (`ingest/ingestQualityChecks.ts`, default
+ * the guard-prefix set is SET at the CLI edge (`ingest/ingestQualityChecks.ts`, default
  * `["lint:", "guard:"]`) and INJECTED here, so the core makes no convention assumption
  * (@SCN-USG-004). `install`/`corepack`/`checkout` aren't scripts and never match; `test`/`cucumber`
  * are the RUNTIME axis's observed evidence and carry no guard prefix, so they are excluded by

@@ -1,12 +1,12 @@
 @TGT
-Feature: a fixture target whose scenarios each declare a tier or are @wip
+Feature: a fixture target whose scenarios each name a tier or are @wip
 
   A FIXTURE target (NOT under features/) standing in for a codebase whose @SCN scenarios
-  each declare an evidence tier — a plain tier, a pending variant, or the @lint=<guard>
+  each name an evidence tier — a plain tier, a pending variant, or the @lint=<guard>
   form — or are @wip (exempt). The scn-tags guard passes (exit 0). Never a real features/
   scenario — a planted fixture only.
 
-  Rule: every scenario declares a tier or is exempt
+  Rule: every scenario names a tier or is exempt
 
     @unit @SCN-TGT-001
     Scenario: a unit-tiered scenario

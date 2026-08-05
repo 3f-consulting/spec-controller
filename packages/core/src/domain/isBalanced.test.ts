@@ -90,7 +90,7 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
   it("is NOT balanced for a WATERMELON-ONLY run — every scenario balanced, yet a no-evidence-obligation static-check sits in the suspense row", () => {
     // The load-bearing case (@SCN-CLI-004): NO scenario is out-of-balance, so a
     // scan of scenario verdicts alone would exit 0 — the false pass. But a
-    // no-evidence-obligation static-check (a `lint` credit no @lint obligation declares) posts a
+    // no-evidence-obligation static-check (a `lint` credit no @lint obligation names) posts a
     // `cites-no-scenario` reconciling item to the suspense row, so the WHOLE run is
     // out-of-balance. `isBalanced` consults every row's reconcilingItems and calls it false.
     const reconciliation: Ledger = {
@@ -112,9 +112,9 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
     expect(isBalanced(reconciliation)).toBe(false);
   });
 
-  it("is NOT balanced when only a phantom-scenario row (a credit citing an undeclared @SCN) is out-of-balance", () => {
+  it("is NOT balanced when only a phantom-scenario row (a credit citing a phantom @SCN) is out-of-balance", () => {
     // A second suspense-family case: every scenario balanced, but a credit cites
-    // an @SCN no feature declares → a phantom row, verdict always out-of-balance. The whole
+    // an @SCN no feature carries → a phantom row, verdict always out-of-balance. The whole
     // run is out-of-balance even though no scenario is.
     const reconciliation: Ledger = {
       scenarioReconciliations: [

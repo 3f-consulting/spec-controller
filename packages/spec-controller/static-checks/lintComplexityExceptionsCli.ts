@@ -16,7 +16,7 @@
  * would run in CI while being structurally invisible to spec-controller's own ledger — a real quality
  * check kept off the books, which is exactly where a watermelon hides. The
  * `@lint=lint:complexity-exceptions` tag on @SCN-CPX-003 is then what keeps it out of the suspense
- * row as an uncited static check. Observed AND declared is the balanced state.
+ * row as an uncited static check. Observed AND NAMED is the balanced state.
  *
  * Mirrors `lint:complexity` / `lint:scn-tags` / `lint:no-committed-reports`: a pure function of the
  * checked-out tree, a full CI gate on every push.

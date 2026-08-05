@@ -22,7 +22,7 @@
  * A name outside that set would run in CI while being structurally invisible to
  * spec-controller's own ledger — a real quality check kept off the books. The
  * `@lint=lint:blocked-vocabulary` tag on @SCN-VOC-011 is then what keeps it out of the
- * suspense row as an uncited static check. Observed AND declared is what balances
+ * suspense row as an uncited static check. Observed AND NAMED is what balances
  * (the @SCN-CPX-003 precedent, 3F-2318).
  *
  * FLAGS: `--table <path>` reads a table other than the vendored one. CI passes nothing, so

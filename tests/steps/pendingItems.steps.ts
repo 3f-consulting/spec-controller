@@ -87,7 +87,7 @@ When("the parser derives its evidence obligations", function () {
 });
 
 // @SCN-PND-001
-Then("it declares a pending {string} obligation", function (qualityCheck: string) {
+Then("it raises a pending {string} obligation", function (qualityCheck: string) {
   // Scope to the pending obligation at this row's quality-check: parseScenarios must have
   // derived exactly one `{ qualityCheck, pending: true }` obligation from the planted
   // fixture. Reds before the parser recognises `<qc>pending` (no obligation carries pending).
@@ -129,7 +129,7 @@ When("the parser derives each scenario's evidence obligations", function () {
 });
 
 Then(
-  "the bare `@integration` scenario declares a plain {string} obligation and no pending one",
+  "the bare `@integration` scenario raises a plain {string} obligation and no pending one",
   function (qualityCheck: string) {
     const scenario = suffixScenarios.find((s) => s.scnId === "SCN-PDS-001");
     assert.ok(scenario, "expected the bare-integration fixture scenario (SCN-PDS-001)");
@@ -151,7 +151,7 @@ Then(
 );
 
 Then(
-  "the `@integrationpending` scenario declares a pending {string} obligation and no plain one",
+  "the `@integrationpending` scenario raises a pending {string} obligation and no plain one",
   function (qualityCheck: string) {
     const scenario = suffixScenarios.find((s) => s.scnId === "SCN-PDS-002");
     assert.ok(scenario, "expected the integration-pending fixture scenario (SCN-PDS-002)");
@@ -183,7 +183,7 @@ Then(
 //
 // Bare `@pending` was formerly a third witness (@SCN-PDU-002) — but it is INSIDE the recognised
 // community deferral lexicon (a DEFAULT_DEFERRAL_TAG), not an unknown tag: a bare `@pending`
-// scenario declaring zero obligations synthesises a scenario-scope Pending Item (@SCN-PND-022),
+// scenario raising zero obligations synthesises a scenario-scope Pending Item (@SCN-PND-022),
 // so it no longer belongs in this "outside the lexicon" set (its obligation-scope absence stays
 // proven by the pendingQualityCheck helper unit test).
 Given(
@@ -206,7 +206,7 @@ When("the parser derives each unknown scenario's evidence obligations", function
 // (packages/core/src/domain/evidenceReconciliation.test.ts, [SCN-PND-004]) proves the same partition
 // over the reconcile function in isolation.
 Given(
-  "a planted fixture scenario declaring a pending {string} obligation",
+  "a planted fixture scenario raising a pending {string} obligation",
   function (qualityCheck: string) {
     // Record the quality-check under test; the parse+reconcile happens in the When over the
     // planted fixture (which carries a scenario per `<qc>pending` tag).
@@ -231,7 +231,7 @@ Then(
   function (qualityCheck: string) {
     // Exactly one Pending Item at this quality-check across the reconciled rows — the
     // fixture carries one only-pending scenario per `<qc>pending` tag, so the row that
-    // declared `<qc>pending` raises exactly one Pending Item for it. Reds before reconcile
+    // TAGGED `<qc>pending` raises exactly one Pending Item for it. Reds before reconcile
     // populates pendingItems.
     const pendingAtCheck = reconciliation.scenarioReconciliations.flatMap((s) =>
       (s.pendingItems ?? []).filter((p) => p.qualityCheck === qualityCheck)
@@ -246,7 +246,7 @@ Then(
   }
 );
 
-// @SCN-PND-005 — the pending declaration governs EVEN WHEN a matching observation exists.
+// @SCN-PND-005 — the pending TAG governs EVEN WHEN a matching observation exists.
 // A Pending Item is one-sided: the tag's existence alone raises it — no observation is sought.
 // Proved through the REAL parse→reconcile pipeline over the PLANTED
 // tests/fixtures/pending-tags/pending-with-observation.feature (an `@integrationpending`
@@ -261,7 +261,7 @@ const MATCH_FIXTURE = join(
 );
 
 Given(
-  "a planted fixture scenario declaring a pending {string} obligation, with a matching integration observation citing it",
+  "a planted fixture scenario raising a pending {string} obligation, with a matching integration observation citing it",
   function (qualityCheck: string) {
     // Record the check under test; the parse+reconcile (with the matching observation)
     // happens in the When over the planted fixture.
@@ -272,8 +272,8 @@ Given(
 When("the reconciler reconciles the fixture against that matching observation", function () {
   // Feed the PLANTED fixture through the REAL parse→reconcile pipeline, supplying a MATCHING
   // integration observation citing the fixture scenario (@SCN-PDM-001) at the very check the
-  // pending obligation declares. A non-pending obligation would reconcile this to `satisfied`;
-  // the pending declaration must ignore it (partition-before-match) AND name nothing — so the
+  // pending obligation names. A non-pending obligation would reconcile this to `satisfied`;
+  // the pending TAG must ignore it (partition-before-match) AND name nothing — so the
   // observation posts as an ordinary `no-evidence-obligation` credit on the scenario's own row.
   assert.ok(pendingCheck, "expected a pending quality-check to have been recorded");
   const source = readFileSync(MATCH_FIXTURE, "utf8");
@@ -290,8 +290,8 @@ Then(
   "the matching observation IS flagged no-evidence-obligation — a pending obligation names nothing, so nothing is attributed to it",
   function () {
     // A pending obligation raises NO Evidence Obligation, so its (scnId, quality-check) pair is
-    // NOT named and the citing credit posts as `no-evidence-obligation` — "exactly as when nothing was
-    // declared at all" (canon, Pending Item). Reds if the pending pair is kept in the named
+    // NOT named and the citing credit posts as `no-evidence-obligation` — exactly as when nothing was
+    // raised at all (canon, Pending Item). Reds if the pending pair is kept in the named
     // set: the credit would then post NOWHERE — excluded from `no-evidence-obligation` by the pair-check and
     // from the debit side by the pending partition — and the run would read balanced, exit 0.
     // That is the false-green 3F-1858 closes.
@@ -365,7 +365,7 @@ Then(
 // outcome (never in `evidenceObligations`), so it is never counted among, or rendered as, an
 // error/discrepancy. Proved through the REAL parse→reconcile pipeline over the PLANTED
 // tests/fixtures/pending-tags/pending-with-error.feature — a MIXED scenario (@SCN-PDE-001)
-// declaring BOTH a bare `@unit` obligation (which reconciles to a genuine `missing` error)
+// RAISING BOTH a bare `@unit` obligation (which reconciles to a genuine `missing` error)
 // AND an `@integrationpending` one (which partitions to a one-sided Pending Item). The error
 // list carries ONLY the missing unit; the pending integration stays out of it. Never a real
 // `@<qc>pending` scenario in the scanned features/ corpus (fixture policy, evidence-manifesto
@@ -381,7 +381,7 @@ let pendingCheckMixed: string;
 let missingCheckMixed: string;
 
 Given(
-  "a planted fixture scenario declaring a pending {string} obligation alongside a genuinely missing {string} obligation",
+  "a planted fixture scenario raising a pending {string} obligation alongside a genuinely missing {string} obligation",
   function (pendingCheck: string, missingCheck: string) {
     // Record the two checks under test; the parse+reconcile happens in the When over the
     // planted mixed fixture (one scenario tagged `@unit @integrationpending`).
@@ -471,7 +471,7 @@ Then(
 );
 
 Then(
-  "every scenario declares no evidence obligation — the unknown `<x>pending` is ignored exactly like the plain unknown tag",
+  "every scenario raises no evidence obligation — the unknown `<x>pending` is ignored exactly like the plain unknown tag",
   function () {
     // Both fixture scenarios are emitted (each carries an @SCN id), and every one derives an
     // EMPTY obligation set: the unknown `@foopending` is ignored EXACTLY like the plain unknown
@@ -714,7 +714,7 @@ const COMPOSITION_FIXTURE = join(
 );
 
 Given(
-  "a planted fixture scenario declaring `@unit @integrationpending`, with a passing unit observation citing it",
+  "a planted fixture scenario raising `@unit @integrationpending`, with a passing unit observation citing it",
   function () {
     // The fixture (@SCN-PDC-001) is the source; the parse+reconcile (with the passing unit
     // observation) happens in the When.
@@ -726,7 +726,7 @@ When(
   function () {
     // Feed the PLANTED composition fixture through the REAL parse→reconcile pipeline, supplying a
     // PASSING unit observation citing @SCN-PDC-001 at the very check the bare `@unit` obligation
-    // declares. The unit obligation reconciles `satisfied`; the `@integrationpending` one
+    // names. The unit obligation reconciles `satisfied`; the `@integrationpending` one
     // partitions to a one-sided Pending Item BEFORE the observation match.
     const source = readFileSync(COMPOSITION_FIXTURE, "utf8");
     const scenarios: Scenario[] = parseScenarios(source);
@@ -826,7 +826,7 @@ Then(
 // a reconciling item, never mixed into the reconciling-item list. Proved through the REAL
 // parse→reconcile→renderMarkdown (assemble→render) pipeline over the PLANTED
 // tests/fixtures/pending-tags/render-pending.feature — a balanced-with-pending scenario
-// (@SCN-PDL-001) and a MIXED one declaring `@unit @integrationpending` (@SCN-PDL-002 — the
+// (@SCN-PDL-001) and a MIXED one NAMING `@unit @integrationpending` (@SCN-PDL-002 — the
 // bare unit reconciles to a `missing` error, a reconciling item; the integration one
 // partitions to a Pending Item). Never a real `@<qc>pending` scenario in the scanned features/
 // corpus (fixture policy, evidence-manifesto §11B). The @unit arm
@@ -1218,14 +1218,14 @@ Then(
 );
 
 // @SCN-PND-013 — the cucumber reader's THREE-WAY classification, proved through the REAL
-// parse→reconcile pipeline. The DECLARED side is the planted
+// parse→reconcile pipeline. The OBLIGATION side is the planted
 // tests/fixtures/pending-tags/features/inconclusive-classification.feature (a single
 // @integration @SCN-PDN-001 obligation, an UNREGISTERED fixture code). The OBSERVED side is a
 // cucumber JSON report built per Examples row and fed to the REAL
 // parseCucumberEvidenceObservations (§11A — the reader's own emitted-or-dropped output, never a
 // hand-built observation). A `passed`/`failed` step emits a passed/failed observation →
 // satisfied/failing; an inconclusive step (`undefined`/`pending`/`skipped`/`ambiguous`, none
-// failed) is DROPPED, so the declared obligation finds no observation and reconciles missing BY
+// failed) is DROPPED, so the evidence obligation finds no observation and reconciles missing BY
 // ABSENCE. Reds today: an inconclusive result currently emits a `failed` observation, so the
 // obligation reconciles `failing`, not `missing`. Never a real scanned scenario (fixture policy,
 // evidence-manifesto §11B). The @unit arm (packages/core/src/parse/cucumber.test.ts,
@@ -1235,15 +1235,15 @@ const INCONCLUSIVE_FIXTURE = join(
   "tests/fixtures/pending-tags/features/inconclusive-classification.feature"
 );
 
-// The row's step status, the parsed declared side, and the built observed-side report.
+// The row's step status, the parsed obligation side, and the built observed-side report.
 let classificationResult: string;
 let classificationScenarios: Scenario[];
 let classificationReport: CucumberJsonReport;
 
 Given(
-  "a planted declared integration obligation and a cucumber report whose step status is {string}",
+  "a planted integration evidence obligation and a cucumber report whose step status is {string}",
   function (result: string) {
-    // Parse the DECLARED side from the planted fixture (one @integration @SCN-PDN-001 obligation)
+    // Parse the OBLIGATION side from the planted fixture (one @integration @SCN-PDN-001 obligation)
     // and build the OBSERVED side — a cucumber JSON report whose single step carries this row's
     // status. The reader runs in the When.
     classificationResult = result;
@@ -1264,10 +1264,10 @@ Given(
 );
 
 When(
-  "the cucumber reader parses the report and the reconciler reconciles the declared obligation",
+  "the cucumber reader parses the report and the reconciler reconciles the obligation",
   function () {
     // The REAL cucumber reader (§11A): its emitted-or-dropped output IS the observation set the
-    // reconciler joins the declared obligation against. An inconclusive result emits nothing, so
+    // reconciler joins the evidence obligation against. An inconclusive result emits nothing, so
     // the join finds no observation → missing by absence.
     const observations = parseCucumberEvidenceObservations(classificationReport, "integration");
     reconciliation = reconcile(classificationScenarios, observations);
@@ -1275,13 +1275,13 @@ When(
 );
 
 Then(
-  "the declared integration obligation reconciles {string}",
+  "the integration evidence obligation reconciles {string}",
   function (outcome: string) {
     // Row-scoped to the SCN-PDN-001 scenario's OWN reconciled integration obligation.
     // Its outcome is the three-way classification's result: satisfied (passed) / failing (failed)
     // / missing (any inconclusive, by absence). Reds while an inconclusive result maps to failing.
     const scenario = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-PDN-001");
-    assert.ok(scenario, "expected the declared fixture scenario (SCN-PDN-001)");
+    assert.ok(scenario, "expected the named fixture scenario (SCN-PDN-001)");
     const integrationOutcomes = scenario.qualityCheckReconciliations.filter(
       (o) => o.qualityCheck === "integration"
     );
@@ -1295,7 +1295,7 @@ Then(
     assert.equal(
       integrationOutcomes[0]!.outcome,
       outcome,
-      `the declared integration obligation for a "${classificationResult}" observation must reconcile "${outcome}"; got "${
+      `the named integration obligation for a "${classificationResult}" observation must reconcile "${outcome}"; got "${
         integrationOutcomes[0]!.outcome
       }" (row: ${JSON.stringify(scenario)})`
     );
@@ -1303,15 +1303,15 @@ Then(
 );
 
 // @SCN-PND-014 — the anti-leniency corollary of PND-013, at the VERDICT level, proved through the
-// REAL parse→reconcile pipeline. The DECLARED side is the planted
+// REAL parse→reconcile pipeline. The OBLIGATION side is the planted
 // tests/fixtures/pending-tags/features/undefined-not-pending.feature (a single @integration
-// @SCN-PDA-001 obligation, an UNREGISTERED fixture code, carrying NO `<qc>pending` declaration).
+// @SCN-PDA-001 obligation, an UNREGISTERED fixture code, carrying NO `<qc>pending` tag).
 // The OBSERVED side is a cucumber JSON report whose one step is `undefined`, fed to the REAL
 // parseCucumberEvidenceObservations (§11A): the reader drops the inconclusive scenario, so the
-// declared obligation finds no observation and reconciles MISSING by absence — the scenario verdict
-// is out-of-balance. Because no `<qc>pending` was declared, the scenario raises NO Pending Item: an
+// evidence obligation finds no observation and reconciles MISSING by absence — the scenario verdict
+// is out-of-balance. Because no `<qc>pending` was TAGGED, the scenario raises NO Pending Item: an
 // undefined step is NOT excused as pending (Cucumber's own leniency, the hole this tool must not
-// have). Pending is a DECLARATION (slice 1/4), never inferred from an inconclusive run's status.
+// have). Pending is a TAG (slice 1/4), never inferred from an inconclusive run's status.
 // Never a real scanned scenario (fixture policy, evidence-manifesto §11B). The @unit arm
 // (packages/core/src/domain/evidenceReconciliation.test.ts, [SCN-PND-014]) sharpens the same assertion over
 // the real reader feeding the real reconciler in isolation.
@@ -1324,9 +1324,9 @@ let antiLeniencyScenarios: Scenario[];
 let antiLeniencyReport: CucumberJsonReport;
 
 Given(
-  "a planted declared integration obligation carrying no pending declaration, and a cucumber report whose step is undefined",
+  "a planted integration evidence obligation carrying no pending flag, and a cucumber report whose step is undefined",
   function () {
-    // Parse the DECLARED side from the planted fixture (one @integration @SCN-PDA-001 obligation,
+    // Parse the OBLIGATION side from the planted fixture (one @integration @SCN-PDA-001 obligation,
     // no `<qc>pending`) and build the OBSERVED side — a cucumber JSON report whose single step is
     // `undefined`. The reader runs in the When.
     const source = readFileSync(UNDEFINED_NOT_PENDING_FIXTURE, "utf8");
@@ -1346,10 +1346,10 @@ Given(
 );
 
 When(
-  "the cucumber reader drops the undefined step and the reconciler reconciles the declared obligation",
+  "the cucumber reader drops the undefined step and the reconciler reconciles the obligation",
   function () {
     // The REAL cucumber reader (§11A): the `undefined` step is inconclusive, so the reader emits
-    // NOTHING — the declared obligation joins against an empty observation set and reconciles
+    // NOTHING — the evidence obligation joins against an empty observation set and reconciles
     // missing by absence.
     const observations = parseCucumberEvidenceObservations(antiLeniencyReport, "integration");
     reconciliation = reconcile(antiLeniencyScenarios, observations);
@@ -1360,11 +1360,11 @@ Then(
   "the scenario verdict is out-of-balance, its integration obligation a missing reconciling item",
   function () {
     const scenario = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-PDA-001");
-    assert.ok(scenario, "expected the declared fixture scenario (SCN-PDA-001)");
+    assert.ok(scenario, "expected the named fixture scenario (SCN-PDA-001)");
     assert.equal(
       scenario.verdict,
       "out-of-balance",
-      `an undefined step for a declared, non-pending integration obligation must leave the scenario out-of-balance; got "${
+      `an undefined step for a named, non-pending integration obligation must leave the scenario out-of-balance; got "${
         scenario.verdict
       }" (row: ${JSON.stringify(scenario)})`
     );
@@ -1385,13 +1385,13 @@ Then(
   "the scenario raises no Pending Item — the undefined step is not excused as pending",
   function () {
     const scenario = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-PDA-001");
-    assert.ok(scenario, "expected the declared fixture scenario (SCN-PDA-001)");
+    assert.ok(scenario, "expected the named fixture scenario (SCN-PDA-001)");
     // The anti-leniency teeth: an inconclusive run raises NO Pending Item. A Pending Item requires
-    // a `<qc>pending` DECLARATION (slice 1/4) — it is never inferred from an observation's status.
+    // a `<qc>pending` TAG (slice 1/4) — it is never inferred from an observation's status.
     assert.deepEqual(
       scenario.pendingItems,
       [],
-      `an undefined step with no <qc>pending declaration must raise no Pending Item — it is not excused as pending; got ${JSON.stringify(
+      `an undefined step with no <qc>pending deferral must raise no Pending Item — it is not excused as pending; got ${JSON.stringify(
         scenario.pendingItems
       )}`
     );
@@ -1399,13 +1399,13 @@ Then(
 );
 
 // @SCN-PND-015 — the vitest reader's THREE-WAY classification, uniform with the cucumber reader
-// (@SCN-PND-013), proved through the REAL parse→reconcile pipeline. The DECLARED side is the planted
+// (@SCN-PND-013), proved through the REAL parse→reconcile pipeline. The OBLIGATION side is the planted
 // tests/fixtures/pending-tags/features/vitest-inconclusive-classification.feature (a single @unit
 // @SCN-PDV-001 obligation, an UNREGISTERED fixture code). The OBSERVED side is a VITEST JSON report
 // built per Examples row and fed to the REAL parseVitestEvidenceObservations (§11A — the reader's own
 // emitted-or-dropped output, never a hand-built observation). A `passed`/`failed` assertion emits a
 // passed/failed observation → satisfied/failing; an inconclusive vitest status (`skipped`/`todo`, any
-// status ∉ {passed, failed}) is DROPPED, so the declared obligation finds no observation and reconciles
+// status ∉ {passed, failed}) is DROPPED, so the evidence obligation finds no observation and reconciles
 // missing BY ABSENCE. The status strings are the real vitest JSON reporter's actual assertion statuses
 // (§11A), never hand-seeded. Reds today: an inconclusive result currently maps to a `failed` observation,
 // so the obligation reconciles `failing`, not `missing`. Never a real scanned scenario (fixture policy,
@@ -1416,15 +1416,15 @@ const VITEST_INCONCLUSIVE_FIXTURE = join(
   "tests/fixtures/pending-tags/features/vitest-inconclusive-classification.feature"
 );
 
-// The row's assertion status, the parsed declared side, and the built observed-side vitest report.
+// The row's assertion status, the parsed obligation side, and the built observed-side vitest report.
 let vitestClassificationResult: string;
 let vitestClassificationScenarios: Scenario[];
 let vitestClassificationReport: VitestJsonReport;
 
 Given(
-  "a planted declared unit obligation and a vitest report whose assertion status is {string}",
+  "a planted unit evidence obligation and a vitest report whose assertion status is {string}",
   function (result: string) {
-    // Parse the DECLARED side from the planted fixture (one @unit @SCN-PDV-001 obligation) and build
+    // Parse the OBLIGATION side from the planted fixture (one @unit @SCN-PDV-001 obligation) and build
     // the OBSERVED side — a vitest JSON report whose single assertion carries this row's status. The
     // reader runs in the When.
     vitestClassificationResult = result;
@@ -1434,7 +1434,7 @@ Given(
       testResults: [
         {
           name: "packages/core/src/parse/vitest-inconclusive.test.ts",
-          assertionResults: [{ fullName: "[SCN-PDV-001] a declared unit obligation", status: result }],
+          assertionResults: [{ fullName: "[SCN-PDV-001] a named unit obligation", status: result }],
         },
       ],
     };
@@ -1442,25 +1442,25 @@ Given(
 );
 
 When(
-  "the vitest reader parses the report and the reconciler reconciles the declared obligation",
+  "the vitest reader parses the report and the reconciler reconciles the obligation",
   function () {
     // The REAL vitest reader (§11A): its emitted-or-dropped output IS the observation set the
-    // reconciler joins the declared @unit obligation against. An inconclusive result emits nothing, so
-    // the join finds no observation → missing by absence. The declared level (unit — the JS-ecosystem
-    // default at the CLI edge) is passed as the reader's caller-declared level.
+    // reconciler joins the @unit obligation against. An inconclusive result emits nothing, so
+    // the join finds no observation → missing by absence. The unit level (the JS-ecosystem
+    // default at the CLI edge) is passed as the reader's caller-supplied level.
     const observations = parseVitestEvidenceObservations(vitestClassificationReport, "unit");
     reconciliation = reconcile(vitestClassificationScenarios, observations);
   }
 );
 
 Then(
-  "the declared unit obligation reconciles {string}",
+  "the unit evidence obligation reconciles {string}",
   function (outcome: string) {
     // Row-scoped to the SCN-PDV-001 scenario's OWN reconciled unit obligation. Its outcome is
     // the three-way classification's result: satisfied (passed) / failing (failed) / missing (any
     // inconclusive, by absence). Reds while an inconclusive result maps to failing.
     const scenario = reconciliation.scenarioReconciliations.find((s) => s.scnId === "SCN-PDV-001");
-    assert.ok(scenario, "expected the declared fixture scenario (SCN-PDV-001)");
+    assert.ok(scenario, "expected the named fixture scenario (SCN-PDV-001)");
     const unitOutcomes = scenario.qualityCheckReconciliations.filter((o) => o.qualityCheck === "unit");
     assert.equal(
       unitOutcomes.length,
@@ -1472,7 +1472,7 @@ Then(
     assert.equal(
       unitOutcomes[0]!.outcome,
       outcome,
-      `the declared unit obligation for a "${vitestClassificationResult}" observation must reconcile "${outcome}"; got "${
+      `the named unit obligation for a "${vitestClassificationResult}" observation must reconcile "${outcome}"; got "${
         unitOutcomes[0]!.outcome
       }" (row: ${JSON.stringify(scenario)})`
     );
@@ -1481,7 +1481,7 @@ Then(
 
 // @SCN-PND-016 — SCENARIO-SCOPE community deferral: a recognised community deferral tag (@wip /
 // @ignore / @skip / @todo / @pending — the DEFAULT_DEFERRAL_TAGS starter set) on a scenario
-// defers EVERY obligation the scenario declares. Proved through the REAL parse→reconcile pipeline
+// defers EVERY obligation the scenario raises. Proved through the REAL parse→reconcile pipeline
 // over the PLANTED tests/fixtures/pending-tags/community-tags.feature — each fixture scenario
 // carries one community tag alongside a `@unit` and an `@integration` obligation, so both must be
 // marked pending → two Pending Items, verdict balanced. Never a real community-tagged scenario in
@@ -1494,7 +1494,7 @@ const COMMUNITY_TAGS_FIXTURE = join(
   "tests/fixtures/pending-tags/features/community-tags.feature"
 );
 // Each recognised community deferral tag → the @SCN id of the planted fixture scenario carrying
-// it (each declares a @unit + @integration obligation).
+// it (each raises a @unit + @integration obligation).
 const COMMUNITY_TAG_TO_SCN: Record<string, string> = {
   "@wip": "SCN-PDW-001",
   "@ignore": "SCN-PDW-002",
@@ -1530,7 +1530,7 @@ When(
 );
 
 Then(
-  "both the declared unit and integration obligations are deferred — pending, overriding their observation-derived outcome",
+  "both the unit and integration evidence obligations are deferred — pending, overriding their observation-derived outcome",
   function () {
     const obligations = communityScenario!.evidenceObligations;
     const unit = obligations.find((o) => o.qualityCheck === "unit");
@@ -1792,12 +1792,12 @@ Then(
   }
 );
 
-// @SCN-PND-019 — the DECLARATION-OVERRIDES-OBSERVATION close-out: a recognised community
+// @SCN-PND-019 — the TAG-OVERRIDES-OBSERVATION close-out: a recognised community
 // deferral tag raises the Pending Item REGARDLESS of the observation side (slice 3 — the
-// declaration overrides the observation-derived outcome). The pending flag is set at PARSE,
+// tag overrides the observation-derived outcome). The pending flag is set at PARSE,
 // before any observation match, so the obligation partitions to a Pending Item whatever the
 // observed side would ELSE derive. Proved through the REAL parse→(reader)→reconcile pipeline over
-// the PLANTED tests/fixtures/pending-tags/declaration-overrides-observation.feature — a `@skip
+// the PLANTED tests/fixtures/pending-tags/deferral-overrides-observation.feature — a `@skip
 // @integration` scenario FILTERED OUT of the run (@SCN-PDF-001 — no observation at all, missing
 // by absence without the deferral) and a `@wip @integration` scenario REPORTING A PENDING STATUS
 // (@SCN-PDF-002 — a cucumber `pending`-status step the REAL reader drops as inconclusive, again
@@ -1812,7 +1812,7 @@ Then(
 // (reverted) — both sides then reconcile missing.
 const OVERRIDE_FIXTURE = join(
   process.cwd(),
-  "tests/fixtures/pending-tags/features/declaration-overrides-observation.feature"
+  "tests/fixtures/pending-tags/features/deferral-overrides-observation.feature"
 );
 
 // The two reconciled rows — one per observation side — keyed by fixture @SCN id.
@@ -1854,7 +1854,7 @@ When(
     // without the deferral.
     const pendingStatusReport: CucumberJsonReport = [
       {
-        uri: "features/declaration-overrides-observation.feature",
+        uri: "features/deferral-overrides-observation.feature",
         elements: [
           {
             tags: [{ name: "@wip" }, { name: "@integration" }, { name: "@SCN-PDF-002" }],
@@ -1881,8 +1881,8 @@ When(
 Then(
   "the filtered-out scenario's integration obligation is a Pending Item, not a missing reconciling item — the deferral overrides the absent observation",
   function () {
-    // The @skip deferral governs: the declared integration obligation partitions to EXACTLY one
-    // one-sided Pending Item, and names NO `missing` reconciling item — the declaration overriding
+    // The @skip deferral governs: the integration obligation partitions to EXACTLY one
+    // one-sided Pending Item, and names NO `missing` reconciling item — the TAG overriding
     // the absent observation that would ELSE derive `missing`. Reds under a mutation removing the
     // scenario-scope deferral (the obligation would then reconcile `missing`, no Pending Item).
     assert.ok(filteredOutScenario, "expected the reconciled filtered-out row (SCN-PDF-001)");
@@ -1910,8 +1910,8 @@ Then(
   "the pending-status scenario's integration obligation is a Pending Item, not a missing reconciling item — the deferral overrides the dropped observation",
   function () {
     // The @wip deferral governs the OTHER observation side identically: the reader dropped the
-    // pending-status step (missing by absence), yet the declared integration obligation is a
-    // Pending Item, not a `missing` reconciling item — the declaration overriding the dropped
+    // pending-status step (missing by absence), yet the integration obligation is a
+    // Pending Item, not a `missing` reconciling item — the TAG overriding the dropped
     // observation. Reds under the same deferral-removal mutation.
     assert.ok(pendingStatusScenario, "expected the reconciled pending-status row (SCN-PDF-002)");
     assert.deepEqual(
@@ -1935,11 +1935,11 @@ Then(
 );
 
 Then(
-  "each scenario has verdict balanced and names no reconciling item — the declaration governs regardless of the observation side",
+  "each scenario has verdict balanced and names no reconciling item — the pending flag governs regardless of the observation side",
   function () {
     // Both observation sides land the same verdict: the deferred obligation is a one-sided Pending
     // Item (verdict-neutral), so each scenario is balanced with an empty reconciling-item list. The
-    // declaration governs from either side — the filtered-out absence and the dropped pending-status
+    // TAG governs from either side — the filtered-out absence and the dropped pending-status
     // observation alike.
     for (const scenario of [filteredOutScenario, pendingStatusScenario]) {
       assert.ok(scenario, "expected both reconciled fixture rows");
@@ -1990,7 +1990,7 @@ const UNRECOGNISED_TAG_FIXTURE = join(
 let unrecognisedTagScenario: Scenario | undefined;
 
 Given(
-  "a planted fixture scenario carrying an unrecognised `@foo` tag alongside a declared `@unit` obligation, with a passing unit observation citing it",
+  "a planted fixture scenario carrying an unrecognised `@foo` tag alongside a `@unit` evidence obligation, with a passing unit observation citing it",
   function () {
     // The fixture (@SCN-PDZ-001) is the source; the parse+reconcile (with the passing unit
     // observation) happens in the When.
@@ -2084,7 +2084,7 @@ Then(
 // defers like a built-in. Proved through the REAL ingest→parse→reconcile pipeline (runReconcile,
 // the impure CLI edge that reads `package.json`) over a PLANTED target repo
 // tests/fixtures/pending-tags/config-extends/ — its package.json configures
-// `specController.deferralTags: ["deferred"]`, and its feature declares a `@deferred @integration`
+// `specController.deferralTags: ["deferred"]`, and its feature carries a `@deferred @integration`
 // scenario (@SCN-CFG-001) alongside a built-in `@wip @integration` one (@SCN-CFG-002). runReconcile
 // reads the configured set, unions it with DEFAULT_DEFERRAL_TAGS, and threads DEFAULT ∪ configured
 // into parseScenarios — so the `@deferred` scenario's integration obligation defers to a Pending
@@ -2102,7 +2102,7 @@ let configuredScenario: ScenarioReconciliation | undefined;
 let builtinScenario: ScenarioReconciliation | undefined;
 
 Given(
-  'a planted target repo whose package.json configures the deferral tag "@deferred", alongside a feature declaring a `@deferred @integration` scenario and a built-in `@wip @integration` one',
+  'a planted target repo whose package.json configures the deferral tag "@deferred", alongside a feature carrying a `@deferred @integration` scenario and a built-in `@wip @integration` one',
   function () {
     // The planted target repo (tests/fixtures/pending-tags/config-extends/) is the source; the
     // ingest→parse→reconcile happens in the When over its --features + --package-json.
@@ -2189,14 +2189,14 @@ Then(
   }
 );
 
-// @SCN-PND-022 — INTERPRETATION 2: a deferred scenario declaring ZERO obligations (a bare `@wip`
+// @SCN-PND-022 — INTERPRETATION 2: a deferred scenario raising ZERO obligations (a bare `@wip`
 // — @wip + @SCN, NO evidence tag) synthesises ONE scenario-scope Pending Item (a `qualityCheck`-
 // less IOU) rather than reconciling BOTH-MISSING (out-of-balance). Proved through the REAL
 // parse→reconcile→renderMarkdown pipeline over the PLANTED
 // tests/fixtures/pending-tags/features/scenario-scope-no-obligations.feature. Never a real bare-
 // `@wip` scenario in the scanned features/ corpus (fixture policy, evidence-manifesto §11B). The
 // @unit arm (packages/core/src/parse/scenarios.test.ts + reconcile.test.ts, [SCN-PND-022]) proves
-// the parse synthesis + the reconcile partition in isolation. Reds today: a bare `@wip` declares
+// the parse synthesis + the reconcile partition in isolation. Reds today: a bare `@wip` raises
 // zero obligations → both-missing (out-of-balance), rendered as an em-dash, no ⏳ pending.
 const NO_OBLIGATIONS_FIXTURE = join(
   process.cwd(),
@@ -2206,7 +2206,7 @@ let noObligationsReport: string;
 let noObligationsRow: ScenarioReconciliation | undefined;
 
 Given(
-  "a planted fixture scenario carrying a bare `@wip` deferral tag and declaring no evidence obligations",
+  "a planted fixture scenario carrying a bare `@wip` deferral tag and raising no evidence obligations",
   function () {
     // The fixture (the bare-@wip scenario) is the source; parse+reconcile+render happens in the When.
   }

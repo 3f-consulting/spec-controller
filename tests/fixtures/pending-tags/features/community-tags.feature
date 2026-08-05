@@ -3,12 +3,12 @@ Feature: a community-deferral-tag fixture target
 
   A FIXTURE feature (NOT under features/) standing in for a spec whose scenarios each carry a
   recognised community deferral tag (@wip / @ignore / @skip / @todo / @pending — the established
-  Cucumber conventions) ALONGSIDE a declared `@unit` and `@integration` obligation. It is fed to
+  Cucumber conventions) ALONGSIDE a named `@unit` and `@integration` obligation. It is fed to
   the pure parse→reconcile pipeline by the @SCN-PND-016 @integration step so the SCENARIO-SCOPE
   deferral is exercised through the real parser + reconciler WITHOUT planting a real community-
   tagged scenario in the scanned features/ corpus (fixture policy, evidence-manifesto §11B).
 
-  Each scenario declares BOTH a `@unit` and an `@integration` obligation and carries exactly one
+  Each scenario names BOTH a `@unit` and an `@integration` obligation and carries exactly one
   community deferral tag, so a scenario-scope deferral must mark BOTH obligations pending → two
   Pending Items, verdict balanced (the Pending Item is verdict-neutral). One scenario per
   recognised tag (the five DEFAULT_DEFERRAL_TAGS starter set), so every recognised tag is proven.
@@ -23,21 +23,21 @@ Feature: a community-deferral-tag fixture target
   Rule: a recognised community tag defers every obligation on its scenario
 
     @wip @unit @integration @SCN-PDW-001
-    Scenario: a @wip scenario declaring a unit and an integration obligation
+    Scenario: a @wip scenario naming a unit and an integration obligation
       Given a fixture step
 
     @ignore @unit @integration @SCN-PDW-002
-    Scenario: an @ignore scenario declaring a unit and an integration obligation
+    Scenario: an @ignore scenario naming a unit and an integration obligation
       Given a fixture step
 
     @skip @unit @integration @SCN-PDW-003
-    Scenario: a @skip scenario declaring a unit and an integration obligation
+    Scenario: a @skip scenario naming a unit and an integration obligation
       Given a fixture step
 
     @todo @unit @integration @SCN-PDW-004
-    Scenario: a @todo scenario declaring a unit and an integration obligation
+    Scenario: a @todo scenario naming a unit and an integration obligation
       Given a fixture step
 
     @pending @unit @integration @SCN-PDW-005
-    Scenario: a @pending scenario declaring a unit and an integration obligation
+    Scenario: a @pending scenario naming a unit and an integration obligation
       Given a fixture step

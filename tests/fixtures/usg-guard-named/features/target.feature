@@ -1,10 +1,10 @@
 @TGD
-Feature: a fixture target declaring the guard:-prefixed guard its CI runs
+Feature: a fixture target naming the guard:-prefixed guard its CI runs
 
   A FIXTURE target (NOT under features/) standing in for a codebase whose CI runs a
-  guard:domain-purity guard (a guard:* script, not lint:*) AND declares @lint on it
+  guard:domain-purity guard (a guard:* script, not lint:*) AND names @lint on it
   (@lint=guard:domain-purity) — the USG-004 mirror keeping the guard:* broadening honest.
-  So the derived CI guard-set is {guard:domain-purity}, the declared set is
+  So the derived CI guard-set is {guard:domain-purity}, the named set is
   {guard:domain-purity}, and guard:domain-purity is attributed to its @lint scenario — NOT
   an uncited static-check, and counted exactly once. `test` / `cucumber` run in CI but
   are neither lint:* nor guard:* → never derived as guards.

@@ -125,18 +125,14 @@ describe("[SCN-VOC-010] the vendored table as committed", () => {
   it("[SCN-VOC-010] the deferred and not-applicable terms are absent from the enforced set", () => {
     // Named individually rather than derived from the same table that produced them —
     // a loop over `status !== "adopted"` would agree with a broken parser by construction.
-    for (const word of [
-      "declare",
-      "declared",
-      "declaring",
-      "declares",
-      "undeclared",
-      "guard",
-      "tree",
-      "subtree",
-      "root",
-      "branch",
-    ]) {
+    //
+    // THE EXEMPLARS MOVED, THE ASSERTION DID NOT (3F-2329). The retired evidence family was
+    // this list's deferred half until its row was ADOPTED, so it is enforced now and would
+    // red here. The point — that the STATUS COLUMN is what the derivation obeys — survives
+    // on the rows still unadopted: the bare shortening (deferred, 3F-1852 pays it) and the
+    // work-item row (not-applicable). Editing the family's entries to match the code instead
+    // would have kept the shape of the test and thrown away what it proves.
+    for (const word of ["guard", "tree", "subtree", "root", "branch"]) {
       expect(BANNED_WORDS.has(word), word).toBe(false);
     }
   });
@@ -272,14 +268,14 @@ describe("[SCN-VOC-011] the vendored table as committed", () => {
     expect(checkAdoptionStatuses(BLOCKED_VOCABULARY_ROWS).map((f) => f.message)).toEqual([]);
   });
 
-  it("[SCN-VOC-011] each of the two remaining deferrals names its date and its ticket", () => {
-    // The two still owed: the retired-evidence-credit family (3F-2329) and the bare
-    // shortening (3F-1852). The third — the outcome handle — was ALSO deferred on
-    // 2026-08-03 and was PAID at 3F-2342, so it is `adopted` now and carries no deferral
-    // note; the count moves down as debt is settled. Asserted as a COUNT and per-row, so a
-    // table that quietly dropped one fails here.
+  it("[SCN-VOC-011] the one remaining deferral names its date and its ticket", () => {
+    // One still owed: the bare shortening (3F-1852). Two others were deferred on the same
+    // day and have since been PAID — the outcome handle at 3F-2342 and the retired evidence
+    // family at 3F-2329 — so both are `adopted` now and carry no deferral note. The count
+    // moves DOWN as debt is settled, which is the number worth watching. Asserted as a COUNT
+    // and per-row, so a table that quietly dropped one fails here.
     const deferred = BLOCKED_VOCABULARY_ROWS.filter((r) => r.status === "deferred");
-    expect(deferred).toHaveLength(2);
+    expect(deferred).toHaveLength(1);
     for (const row of deferred) {
       expect(row.statusNote, row.terms.join("/")).toMatch(/\d{4}-\d{2}-\d{2}/);
       expect(row.statusNote, row.terms.join("/")).toMatch(/3F-\d+/);
@@ -299,13 +295,15 @@ describe("[SCN-VOC-010] end to end through the classifier", () => {
     // NAME mode is the discriminating one: an unapproved word flags `unknown` there, so
     // this green is a positive approval rather than an accident of prose mode.
     //
-    // The example term is `undeclared`, not the retired outcome handle: 3F-2342 ADOPTED that
-    // row, so it is enforced now and would red here. `undeclared` is the same shape one row
-    // up — a term on a still-deferred row (3F-2329 pays it) that is independently APPROVED,
-    // so its green says "the deferral holds", not "the word happens to be unknown".
-    expect(classifyWords(decomposeName("undeclaredOutcome"), "name").every((v) => !v.flagged)).toBe(
-      true
-    );
+    // THE EXEMPLAR MOVED, THE ASSERTION DID NOT (3F-2329). This was the retired negative
+    // until its row was adopted, and rewriting the assertion to match the code would have
+    // thrown away the point. The bare shortening is the same shape one row down: a term on a
+    // still-deferred row (3F-1852 pays it) that is independently approved — here by a ruled
+    // qualifier co-occurring — so its green says "the deferral holds" rather than "the word
+    // is merely unrecognised".
+    expect(
+      classifyWords(decomposeName("bothMissingGuard"), "name").every((v) => !v.flagged)
+    ).toBe(true);
   });
 
   it("[SCN-VOC-010] a not-applicable term does not either — the git and CLI senses stay green", () => {

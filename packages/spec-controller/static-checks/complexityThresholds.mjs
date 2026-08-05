@@ -2,7 +2,7 @@
  * The complexity and module-size thresholds — the ONE place the numbers live (@SCN-CPX-001, 3F-2286).
  *
  * Consumed by `eslint.config.mjs` (the static check) and pinned by `complexityThreshold.test.ts` (the
- * @unit evidence). Neither re-declares them: a second copy would agree by COINCIDENCE and drift the
+ * @unit evidence). Neither restates them: a second copy would agree by COINCIDENCE and drift the
  * moment either side is retuned, which is the agreeing-by-copy this codebase has spent several slices
  * removing from the domain and the static checks.
  *
@@ -122,7 +122,7 @@ export const TEST_THRESHOLD = {
 };
 
 /**
- * One eslint rule declared at one ceiling, in the shape THAT rule takes (@SCN-CPX-002, 3F-2317).
+ * One eslint rule HELD at one ceiling, in the shape THAT rule takes (@SCN-CPX-002, 3F-2317).
  *
  * WHY THIS LIVES IN THE MODULE WHOSE NUMBERS ALL COME FROM OUTSIDE. It takes a ceiling and holds
  * none: the SHAPE is a property of eslint's rules, which are as external as the standard itself, so

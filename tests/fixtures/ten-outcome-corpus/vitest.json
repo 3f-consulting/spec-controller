@@ -39,7 +39,7 @@
       "assertionResults": [
         {
           "fullName": "phantom [SCN-TOC-999]",
-          "title": "[SCN-TOC-999] a credit citing a scenario no feature declares",
+          "title": "[SCN-TOC-999] a credit citing a scenario no feature names",
           "status": "passed"
         }
       ]

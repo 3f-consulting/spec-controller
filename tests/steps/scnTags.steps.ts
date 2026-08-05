@@ -64,7 +64,7 @@ Then("it fails, naming the offending scenario", function () {
 });
 
 When(
-  "it runs over a fully tiered tree where every @SCN scenario declares a tier or is @wip",
+  "it runs over a fully tiered tree where every @SCN scenario names a tier or is @wip",
   function () {
     runGuardOver("tests/fixtures/scn-tags-compliant/features");
   }

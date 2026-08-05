@@ -61,7 +61,7 @@ let targetSourcingDir: string;
 let targetSourcingReport: string;
 
 // A reconcilable fixture corpus (reused from the @FMT / evidence observation steps) — the REAL CLI needs a
-// declared corpus + result reports to produce a balance whose provenance header we read back.
+// feature corpus + result reports to produce a balance whose provenance header we read back.
 const TARGET_FIXTURE = {
   features: "tests/fixtures/evidence-observation/features",
   vitest: "tests/fixtures/evidence-observation/vitest.json",
@@ -336,7 +336,7 @@ After({ tags: "@SCN-RPT-002" }, function () {
 // @SCN-RPT-008
 // The excluded-occurrence arm drives the REAL CLI pipeline END-TO-END over
 // the tool's own corpus: readEvidenceObligations reconciles raw @SCN occurrences
-// (countScnOccurrences) against the declared count (parseScenarios), then
+// (countScnOccurrences) against the parsed scenario count (parseScenarios), then
 // writeOutputs threads the EvidenceObligations to BOTH renderers and PERSISTS
 // spec-reconciliation.md + spec-reconciliation.json. Both persisted artifacts must carry the
 // excluded fact and AGREE on the number — proving the scenarios.ts→corpus→
@@ -351,7 +351,7 @@ Given(
   "a reconciliation run whose source mentions @SCN ids in non-tag context beyond the scenarios",
   function () {
     // the tool's own feature corpus mentions @SCN ids in prose/comments beyond
-    // the tag-line declarations; readEvidenceObligations reads the raw-vs-declared delta
+    // the tag lines; readEvidenceObligations reads the raw-vs-parsed delta
     // over that real corpus (the same discoverFeatures corpus runReconcile reads).
     evidenceObligations008 = readEvidenceObligations();
     runsRoot008 = mkdtempSync(join(tmpdir(), "spec-controller-rpt008-"));
@@ -410,7 +410,7 @@ After({ tags: "@SCN-RPT-008" }, function () {
 // The evidence observation-reconciliation @integration arm drives the REAL file-read pipeline over a
 // fixture target whose Vitest / Cucumber reports span every observation kind: an
 // evidence observation attributed to a scenario, a phantom-id (an @SCN no scenario
-// declares), and cites-no-scenario evidence observation results (no @SCN). readEvidenceObservations reads the actual report
+// carries), and cites-no-scenario evidence observation results (no @SCN). readEvidenceObservations reads the actual report
 // FILES (readJsonIfPresent) → countRuntimeEvidenceObservationKinds, then writeOutputs threads the evidence observation to
 // BOTH renderers and PERSISTS spec-reconciliation.md + spec-reconciliation.json. The persisted
 // markdown must carry the ### Test volume cut + the identity line, and the persisted
@@ -451,7 +451,7 @@ Then(
   function () {
     // The fixture spans the kinds: 3 unit (TGT-001 attributed, PHANTOM-999 phantom evidence observation, one
     // no-@SCN) + 2 integration (TGT-002 attributed, one @smoke no-@SCN) = 5 evidence observations;
-    // attributed-to-declared 2, phantom 1, suspense 2 ⇒ 5 = 2 + 1 + 2 (three-way).
+    // attributed-to-scenario 2, phantom 1, suspense 2 ⇒ 5 = 2 + 1 + 2 (three-way).
     assert.match(
       md010,
       /### Test volume/,
@@ -497,15 +497,15 @@ After({ tags: "@SCN-RPT-010" }, function () {
 
 // @SCN-RPT-017
 // The FULL-UNIFY view fix (3F-1452): the report's evidence-observation views must level a
-// runtime observation by the cited scenario's declared tier tag — the SAME rule the reconciler
+// runtime observation by the cited scenario's own tier tag — the SAME rule the reconciler
 // uses (@SCN-LDG-011 / 3F-1434) — because the counting is a FOLD OVER THE LEDGER'S POSTED CREDITS
 // (`runtimeObservationTally`, @SCN-RMD-003), not a second raw-report walk. The census module that
 // did that second walk is RETIRED (3F-2102/3F-2104), and its `attributed[]` went with it. The
 // @integration arm drives the REAL reconcile + render over a fixture whose cucumber report proves a
 // passing @e2e scenario (SCN-TGT-101) with NO vitest evidence: the persisted Test volume must count
-// it under e2e (not the caller-declared integration fallback), the JSON must show the e2e credit
+// it under e2e (not the caller-supplied integration fallback), the JSON must show the e2e credit
 // POSTED to SCN-TGT-101's ledger row, and the scenario's E2e cell must render a count, not ∅. RED
-// on a level taken from the caller-declared quality-check (cucumber ⇒ integration); GREEN on the
+// on a level taken from the caller-supplied quality-check (cucumber ⇒ integration); GREEN on the
 // tag-derived level the parse carries and the fold counts. The unit arm lives on the fold's own
 // spanning corpus — `runtimeObservationTally.test.ts`'s raw-per-quality-check leaf (3F-2357).
 const EVIDENCE_OBSERVATION_E2E_OPTS = {
@@ -539,7 +539,7 @@ When("the reconciliation report is rendered for that @e2e-via-cucumber target", 
 
 Then("Test volume counts the observation under e2e, not integration", function () {
   // The by-level evidence-observation table must count the single cucumber observation under
-  // e2e (its cited scenario's declared tier), NOT the caller-declared integration fallback.
+  // e2e (its cited scenario's own tier tag), NOT the caller-supplied integration fallback.
   assert.match(
     md017,
     /### Test volume/,
@@ -558,7 +558,7 @@ Then("Test volume counts the observation under e2e, not integration", function (
 Then("the e2e credit posts to that scenario's ledger row", function () {
   // The retired census's `attributed[]` is gone; the e2e credit is visible where it POSTED —
   // on SCN-TGT-101's ledger row (@SCN-LDG-022), the non-parallel-store source (retire, don't
-  // relocate). The tag-derived level put it at e2e, not the caller-declared integration fallback.
+  // relocate). The tag-derived level put it at e2e, not the caller-supplied integration fallback.
   const parsed = JSON.parse(json017) as {
     ledger: { scenarioReconciliations: Array<{ scnId: string; evidenceObservations: Array<{ qualityCheck: string }> }> };
   };
@@ -597,8 +597,8 @@ After({ tags: "@SCN-RPT-017" }, function () {
 
 // @SCN-RPT-018
 // The MULTI-TAG view mirror (3F-1452): the view-side mirror of the reconciler's @SCN-LDG-014.
-// A scenario declaring @integration @e2e proven by a SINGLE passing cucumber observation must be
-// counted in BOTH tiers across the views — because parseCucumber emits one observation per declared
+// A scenario NAMING @integration @e2e proven by a SINGLE passing cucumber observation must be
+// counted in BOTH tiers across the views — because parseCucumber emits one observation per named
 // non-unit tier (per-tier emission, @SCN-LDG-014) and each emitted observation POSTS AS ITS OWN
 // CREDIT on the scenario's ledger row (@SCN-LDG-022). The census that once re-derived these counts
 // is RETIRED (3F-2102/3F-2104), and `attributed[]` went with it: Test volume is the fold over the
@@ -607,7 +607,7 @@ After({ tags: "@SCN-RPT-017" }, function () {
 // are tallied independently with NO multi-tag-specific logic and no second derivation to disagree.
 // The @integration arm drives the REAL reconcile + render over a fixture whose cucumber report
 // proves a passing @integration @e2e scenario (SCN-TGT-102) with NO vitest evidence: the persisted
-// Test volume must count it under BOTH integration and e2e, and the scenario declares both
+// Test volume must count it under BOTH integration and e2e, and the scenario NAMES both
 // obligations, so both the Integration and E2e cells must render their credit count, not ∅.
 // Per-tier counting is INHERITED from the parsed set. The @unit arm is the renderer's half, proven
 // in isolation over the cell-grid corpus in markdown.test.ts (the leaf cited [SCN-RPT-018]).
@@ -645,7 +645,7 @@ When(
 );
 
 Then("Test volume counts the single observation under both integration and e2e", function () {
-  // parseCucumber emits ONE observation per declared tier from the single scenario pass, and the
+  // parseCucumber emits ONE observation per named tier from the single scenario pass, and the
   // census projects both — so the by-level Test volume table counts the scenario under integration
   // AND e2e (each 1). A census that deduped by scnId (ignoring level) or a parse that collapsed the
   // multi-tag scenario to one tier would leave the second tier at 0 → RED here.
@@ -683,11 +683,11 @@ Then("Test volume counts the single observation under both integration and e2e",
 });
 
 Then("SCN-TGT-102's Integration and E2e cells each render a count, not ∅", function () {
-  // The ledger row for SCN-TGT-102 declares BOTH the integration and e2e obligations (its tier
+  // The ledger row for SCN-TGT-102 NAMES BOTH the integration and e2e obligations (its tier
   // tags), and both are discharged by the one cucumber pass. So the Integration column AND the E2e
   // column each render their two-sided cell — named (I / E) with one observed credit → the row
   // reads `| SCN-TGT-102 | I/1 | E/1 | ...`. If the second tier's credit were lost (census dedup, or
-  // a one-per-scenario parse), that cell would collapse to E/- (declared, no observation) → RED.
+  // a one-per-scenario parse), that cell would collapse to E/- (named, no observation) → RED.
   const row = md018.split("\n").find((l) => l.includes("| SCN-TGT-102 |"));
   assert.ok(row, `expected a ledger row for SCN-TGT-102; got:\n${md018}`);
   assert.ok(
@@ -777,7 +777,7 @@ When("the ledger is rendered", function () {
 Then(
   /^each scenario row carries one cell per corpus column \(Lint first, then the runtime levels present\) with the two-sided obligation-then-observation encoding — an evidence-obligation letter, an observation count, or blank$/,
   function () {
-    // The corpus declares lint + unit + integration + e2e (never performance), so the header is
+    // The corpus NAMES lint + unit + integration + e2e (never performance), so the header is
     // Lint first, then the runtime levels present in canonical order — no Performance column.
     assert.ok(
       md011.includes("| Scenario | Lint | Unit | Integration | E2e | Verdict | Reconciling items |"),
@@ -789,7 +789,7 @@ Then(
       ["L/1", "U/1", "", ""],
       "expected SCN-CEL-001 (named and met at lint + unit) to render Lint L/1, Unit U/1, then blank"
     );
-    // named & missing → letter/-; the columns it neither declares nor is cited at → blank.
+    // named & missing → letter/-; the columns it neither names nor is cited at → blank.
     assert.deepStrictEqual(
       cellGridCells("SCN-CEL-002"),
       ["", "", "I/-", ""],
@@ -808,7 +808,7 @@ Then(
 );
 
 Then(/^the scenario whose only state at a quality-check is no-evidence-obligation renders a no-evidence-obligation observation there — a dash for the evidence obligation, the count for the observation$/, function () {
-  // SCN-CEL-003 declares @e2e ONLY; a vitest unit test cites it → the reconciler posts an
+  // SCN-CEL-003 NAMES @e2e ONLY; a vitest unit test cites it → the reconciler posts an
   // `no-evidence-obligation` credit-side row at unit, carried on the row's evidenceObservations. The two-sided
   // cell reads NO evidence obligation (left `-`) and ONE observed credit (right 1) → -/1. Its E2e evidence obligation is met
   // by an e2e credit → E/1. A cell that mistook the no-evidence-obligation credit for an evidence obligation would read E/-
@@ -848,7 +848,7 @@ After({ tags: "@SCN-RPT-011" }, function () {
 });
 
 // @SCN-RPT-014
-// The untagged-scenarios @integration arm drives the REAL declared-side parse over a
+// The untagged-scenarios @integration arm drives the REAL obligation-side parse over a
 // fixture feature dir mixing @SCN-tagged and untagged scenarios: readEvidenceObligations runs
 // the new parseUntaggedScenarios over the actual files and pairs each untagged scenario
 // with its feature-file locator, then writeOutputs threads the EvidenceObligations to BOTH
@@ -868,7 +868,7 @@ Given(
   }
 );
 
-When("the run writes its artifacts with the declared corpus", function () {
+When("the run writes its artifacts with the scenario corpus", function () {
   const opts = { features: UNTAGGED_FEATURES };
   const balance = runReconcile(opts);
   const evidenceObligations = readEvidenceObligations(UNTAGGED_FEATURES);
@@ -888,7 +888,7 @@ Then(
   function () {
     // The fixture has two untagged scenarios (a plain Scenario and a Scenario Outline);
     // its @SCN-tagged scenario and the Examples: data table must NOT be counted. The census
-    // re-homed into the ledger-summary declared corpus — there is NO warnings section.
+    // re-homed into the ledger-summary scenario corpus — there is NO warnings section.
     assert.ok(
       !md014.includes("## Warnings"),
       `expected NO "## Warnings" section (dissolved); got:\n${md014}`
@@ -944,7 +944,7 @@ Given("a target feature directory mentioning an @SCN code only in prose", functi
   runsRoot015 = mkdtempSync(join(tmpdir(), "spec-controller-rpt015-"));
 });
 
-When("the run writes its artifacts with the declared corpus over that directory", function () {
+When("the run writes its artifacts with the scenario corpus over that directory", function () {
   const opts = { features: PROSEONLY_FEATURES };
   const balance = runReconcile(opts);
   const evidenceObligations = readEvidenceObligations(PROSEONLY_FEATURES);
@@ -964,7 +964,7 @@ Then(
   function () {
     // The fixture mentions SCN-POC-999 only in prose (never tagged) — the one dangling
     // code; the tagged SCN-POC-001 (also mentioned in prose) must NOT be flagged. The census
-    // re-homed into the ledger-summary declared corpus — there is NO warnings section.
+    // re-homed into the ledger-summary scenario corpus — there is NO warnings section.
     assert.ok(
       !md015.includes("## Warnings"),
       `expected NO "## Warnings" section (dissolved); got:\n${md015}`
@@ -1007,7 +1007,7 @@ let runsRoot006: string;
 let md006: string;
 
 Given(
-  "a target feature directory whose features declare codes alongside an uncoded one",
+  "a target feature directory whose features carry codes alongside an uncoded one",
   function () {
     runsRoot006 = mkdtempSync(join(tmpdir(), "spec-controller-rpt006-"));
   }
@@ -1039,7 +1039,7 @@ Then(
       !md006.includes("| CVL |"),
       `expected NO bare "| CVL |" row (the full name replaces it); got:\n${md006}`
     );
-    // The uncoded XYZ id (no file declares XYZ) falls back to the bare code.
+    // The uncoded XYZ id (no file registers XYZ) falls back to the bare code.
     assert.ok(
       md006.includes("| XYZ | 1 | SCN-XYZ-001 |"),
       `expected the uncoded id to fall back to the bare FFF; got:\n${md006}`
@@ -1077,7 +1077,7 @@ let md023: string;
 let json023: string;
 
 Given(
-  "a corpus whose cucumber run reports an ambiguous step for a scenario that cites a declared @SCN at a named quality-check",
+  "a corpus whose cucumber run reports an ambiguous step for a scenario that cites a real @SCN at a named quality-check",
   function () {
     runsRoot023 = mkdtempSync(join(tmpdir(), "spec-controller-rpt023-"));
   }

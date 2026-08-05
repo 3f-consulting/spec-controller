@@ -1,7 +1,7 @@
 /**
  * @SCN-USG-001 step defs — the uncited-static-check @integration arm.
  * Drives the REAL CLI over the usg fixture target (ci.yml runs lint:foo + lint:bar +
- * test + cucumber; only lint:foo is @lint-declared) and asserts the persisted
+ * test + cucumber; only lint:foo is @lint-cited) and asserts the persisted
  * spec-reconciliation.md carries the "### Static checks" cut reporting lint:bar as an
  * uncited static check (reconcile folds the no-evidence-obligation running guard to the suspense row) —
  * proving the runningStaticChecks → reconcile → staticObservationTally → render → disk
@@ -28,7 +28,7 @@ const USG_FIXTURE: UsgFixture = {
 };
 
 // @SCN-USG-004 — a second fixture target whose CI runs a guard:* script (guard:domain-purity)
-// declared by NO @lint at all (an adopter's repository-shaped case). Distinct from USG_FIXTURE so the
+// NAMED by NO @lint at all (an adopter's repository-shaped case). Distinct from USG_FIXTURE so the
 // exact counts USG-001/002/003 assert over the lint:* fixture stay intact.
 const USG_GUARD_FIXTURE: UsgFixture = {
   features: "tests/fixtures/usg-guard/features",
@@ -37,13 +37,13 @@ const USG_GUARD_FIXTURE: UsgFixture = {
 };
 
 // @SCN-USG-005 — a third fixture target whose CI runs the SAME guard:* script (guard:domain-purity)
-// but which ALSO declares it via @lint=guard:domain-purity (the boundary keeping USG-004 honest).
-// Distinct from USG_GUARD_FIXTURE (which declares nothing) so the attributed vs uncited
+// but which ALSO NAMES it via @lint=guard:domain-purity (the boundary keeping USG-004 honest).
+// Distinct from USG_GUARD_FIXTURE (which names nothing) so the attributed vs uncited
 // counts stay separable: here the guard is named → 1 run, 0 uncited.
-const USG_GUARD_DECLARED_FIXTURE: UsgFixture = {
-  features: "tests/fixtures/usg-guard-declared/features",
-  ci: "tests/fixtures/usg-guard-declared/ci.yml",
-  packageJson: "tests/fixtures/usg-guard-declared/package.json",
+const USG_GUARD_NAMED_FIXTURE: UsgFixture = {
+  features: "tests/fixtures/usg-guard-named/features",
+  ci: "tests/fixtures/usg-guard-named/ci.yml",
+  packageJson: "tests/fixtures/usg-guard-named/package.json",
 };
 
 // The active fixture + its tmp target dir + the rendered report — set by each Given, so the
@@ -61,9 +61,9 @@ Given("a target whose CI runs the lint:foo and lint:bar checks", function () {
   activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg001-"));
 });
 
-Given("only lint:foo is declared by an @lint scenario", function () {
-  // The fixture's target.feature declares @lint=lint:foo on @SCN-TGT-001; lint:bar is
-  // invoked in the fixture ci.yml but no @lint declares it — the uncited static-check one.
+Given("only lint:foo is named by an @lint scenario", function () {
+  // The fixture's target.feature NAMES @lint=lint:foo on @SCN-TGT-001; lint:bar is
+  // invoked in the fixture ci.yml but no @lint cites it — the uncited static-check one.
 });
 
 // @SCN-USG-004
@@ -73,20 +73,20 @@ Given("a target whose CI runs the guard:domain-purity script", function () {
 });
 
 // @SCN-USG-004
-Given("no @lint scenario declares guard:domain-purity", function () {
-  // The usg-guard fixture's target.feature declares NO @lint at all; guard:domain-purity is
-  // invoked in the fixture ci.yml but nothing declares it — the uncited guard:* one.
+Given("no @lint scenario names guard:domain-purity", function () {
+  // The usg-guard fixture's target.feature carries NO @lint at all; guard:domain-purity is
+  // invoked in the fixture ci.yml but nothing names it — the uncited guard:* one.
 });
 
 // @SCN-USG-005
-Given("a target whose CI runs the guard:domain-purity script it declares", function () {
-  activeFixture = USG_GUARD_DECLARED_FIXTURE;
+Given("a target whose CI runs the guard:domain-purity script it names", function () {
+  activeFixture = USG_GUARD_NAMED_FIXTURE;
   activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg005-"));
 });
 
 // @SCN-USG-005
-Given("an @lint scenario declares guard:domain-purity", function () {
-  // The usg-guard-declared fixture's target.feature declares @lint=guard:domain-purity on
+Given("an @lint scenario names guard:domain-purity", function () {
+  // The usg-guard-named fixture's target.feature names @lint=guard:domain-purity on
   // @SCN-TGD-001; the same guard:* script is invoked in the fixture ci.yml — so it is a
   // NAMED running guard, attributed to its scenario, not folded onto the suspense row.
 });
@@ -142,7 +142,7 @@ Then(
   }
 );
 
-// @SCN-USG-004 — a guard:-prefixed CI script (guard:domain-purity) that no @lint declares
+// @SCN-USG-004 — a guard:-prefixed CI script (guard:domain-purity) that no @lint NAMES
 // surfaces as an uncited static check, exactly as a lint:* one does. The report's Static
 // checks section reports 1 running check / 1 uncited, and the suspense row carries the
 // guard:domain-purity handle as a cites-no-scenario credit under the "lint" axis (the axis name
@@ -168,15 +168,15 @@ Then(
   }
 );
 
-// @SCN-USG-002 — the declared check is attributed, not an uncited static check. Same fixture (lint:foo
-// is @lint-declared): it must NOT surface as an uncited static-check credit, and the
+// @SCN-USG-002 — the NAMED check is attributed, not an uncited static check. Same fixture (lint:foo
+// is @lint-cited): it must NOT surface as an uncited static-check credit, and the
 // counts fold it into the running volume (not the uncited count).
 Then(
   "lint:foo is not reported as an uncited static check",
   function () {
     assert.ok(
       !activeMd.includes("Evidence Observation cites no Scenario (lint:foo)"),
-      `lint:foo is @lint-declared; it must not surface as an uncited static-check credit; got:\n${activeMd}`
+      `lint:foo is @lint-cited; it must not surface as an uncited static-check credit; got:\n${activeMd}`
     );
     assert.ok(
       activeMd.includes("2 static check(s) run, 1 uncited static check(s)"),
@@ -185,8 +185,8 @@ Then(
   }
 );
 
-// @SCN-USG-005 — the declared guard:* is attributed, not an uncited static check. The
-// usg-guard-declared fixture runs guard:domain-purity in CI AND declares @lint=guard:domain-purity:
+// @SCN-USG-005 — the NAMED guard:* is attributed, not an uncited static check. The
+// usg-guard-named fixture runs guard:domain-purity in CI AND names @lint=guard:domain-purity:
 // the named-check filter (reconcile's !staticCheckEvidenceObligationSet.has(o.staticCheck)) removes it from the
 // running-observation stream so it is not folded onto the suspense row, and the counter attributes
 // it (1 run, 0 uncited) — never double-counted as both named and uncited. The guard:*
@@ -195,13 +195,13 @@ Then(
 // That handle itself is a CI script NAME — a value the derivation matches on, not
 // vocabulary — so it is deliberately untouched by the static-check rename (3F-1929; 3F-1852
 // owns script names). This scenario exists to prove that prefix is recognised on the
-// DECLARED side; renaming the handle would destroy exactly that.
+// OBLIGATION side; renaming the handle would destroy exactly that.
 Then(
   "guard:domain-purity is not reported as an uncited static check",
   function () {
     assert.ok(
       !activeMd.includes("Evidence Observation cites no Scenario (guard:domain-purity)"),
-      `guard:domain-purity is @lint-declared; it must not surface as an uncited static-check credit; got:\n${activeMd}`
+      `guard:domain-purity is @lint-cited; it must not surface as an uncited static-check credit; got:\n${activeMd}`
     );
     assert.ok(
       activeMd.includes("1 static check(s) run, 0 uncited static check(s)"),

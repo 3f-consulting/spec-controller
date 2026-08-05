@@ -88,7 +88,7 @@ describe("[SCN-CLI-007] renderTopLevelHelp renders the commands and the global s
 /**
  * @SCN-CLI-008 (@unit) — the completeness guard. Where @SCN-CLI-006/007 pin each
  * renderer against a KNOWN set, this guard is the structural capstone: it walks the
- * registry itself and asserts NOTHING it declares is missing from its help surface,
+ * registry itself and asserts NOTHING it LISTS is missing from its help surface,
  * per scope. Adding a flag/command/modifier to `cliRegistry` without it reaching the
  * matching renderer leaves a non-empty `missing` set — the guard reds. That is the
  * mechanism that makes "all further additions reach help" structural, not a note (the

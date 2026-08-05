@@ -36,7 +36,7 @@ import { runBalance } from "../src/cli-balance/cli.js";
  * rot the first time the fixture is renamed.
  */
 export interface SelfBalanceScope {
-  /** The Gherkin corpus — the DECLARED side of every evidence obligation. */
+  /** The Gherkin corpus — the OBLIGATION side of every reconciliation. */
   features: string;
   /** The Vitest JSON report — the observed `@unit` stream. */
   vitest: string;
@@ -134,14 +134,14 @@ export function checkEvidenceReportsPresent(
 ): string | null {
   const resolved = resolveScope(root, overrides, scope);
   const streams = [
-    { path: resolved.vitest, declared: scope.vitest, emit: `pnpm test --reporter=json --outputFile=${scope.vitest}` },
-    { path: resolved.cucumber, declared: scope.cucumber, emit: `pnpm cucumber --format json:${scope.cucumber}` },
+    { path: resolved.vitest, named: scope.vitest, emit: `pnpm test --reporter=json --outputFile=${scope.vitest}` },
+    { path: resolved.cucumber, named: scope.cucumber, emit: `pnpm cucumber --format json:${scope.cucumber}` },
   ];
 
   for (const stream of streams) {
     if (!exists(stream.path)) {
       return (
-        `lint:self-balance: the evidence report ${stream.declared} was never emitted ` +
+        `lint:self-balance: the evidence report ${stream.named} was never emitted ` +
         `(looked in ${stream.path}).\n` +
         `This is a setup fault, not a verdict — reconciling against a report that does ` +
         `not exist would report every obligation as unobserved, which means "the suite ` +

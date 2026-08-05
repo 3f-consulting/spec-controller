@@ -224,7 +224,7 @@ function srcFileDiff(base: string): string {
 }
 
 /**
- * SCN-exempt declarations parsed from the PR's commit messages + PR body. Each
+ * SCN-exempt DIRECTIVES parsed from the PR's commit messages + PR body. Each
  * `SCN-exempt: <SCN-code> (<reason>)` line yields a `{ code, reason }`; a missing
  * reason parses as `null` and an unrecognised reason as the raw string, so the
  * engine emits the `malformed-exemption` violation.

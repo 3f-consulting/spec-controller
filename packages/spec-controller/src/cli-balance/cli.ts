@@ -126,7 +126,7 @@ export function checkInputsExist(
   args: Record<string, string>,
   exists: (path: string) => boolean,
 ): string | null {
-  // The five input flags in declared order — the FIRST supplied-but-absent one is the
+  // The five input flags in a fixed order — the FIRST supplied-but-absent one is the
   // reported error (deterministic; the operator fixes and re-runs). Keys are the
   // parseArgs form (the `--` stripped); the message names the flag WITH its dashes.
   const flags = ["vitest", "cucumber", "features", "ci", "package-json"] as const;
@@ -219,7 +219,7 @@ export function checkRenderFromJson(
 
 /**
  * The registry-bounded flag check at the CLI edge (@SCN-CLI-009). `balance` accepts ONLY
- * the flags its per-command registry scope declares (by `name` or `alias`); an unregistered
+ * the flags its per-command registry scope LISTS (by `name` or `alias`); an unregistered
  * flag — a typo like `--strcit`, a stray `--bogus` — is a usage error, NOT silently
  * swallowed the way the old permissive `parseArgs` did. This is the structural teeth behind
  * "accepted = registry = help": a flag can't affect behaviour without a registry entry (and
@@ -286,7 +286,7 @@ export function runBalance(argv: string[]): void {
   }
 
   // Registry-bounded parse (@SCN-CLI-009): `balance` accepts ONLY the flags its registry
-  // scope declares. An unregistered flag — a typo `--strcit`, a stray `--bogus` — is a
+  // scope LISTS. An unregistered flag — a typo `--strcit`, a stray `--bogus` — is a
   // USAGE error: name it on stderr, set process.exitCode = 2 (the enumerated usage code,
   // 3F-1414's 0/1/2 taxonomy — never 1, never a silent swallow), and RETURN before any
   // reconcile. Runs AFTER the legacy-`--json` guard so `--json` keeps its specific migration
@@ -354,19 +354,19 @@ export function runBalance(argv: string[]): void {
     process.exit(2);
   }
 
-  // The DECLARED-CORPUS integrity checkpoint (@SCN-CLI-016, 3F-1767). The feature corpus is an
+  // The FEATURE-CORPUS integrity checkpoint (@SCN-CLI-016, 3F-1767). The feature corpus is an
   // input too — the ledger's DEBIT side — and it was read by a hand-rolled TAG-LINE SCAN that
   // never consulted a parser. So a malformed tag line simply stopped being a tag line and its
   // scenario CEASED TO EXIST: one stray character deleted a failing row and turned an
   // out-of-balance run (exit 1) into a clean BALANCED (exit 0). A dropped scenario cannot even
-  // reconcile `missing`, because it was never DECLARED to be missing — the run read cleaner than
+  // reconcile `missing`, because it was never RAISED to be missing — the run read cleaner than
   // reality, the exact false-green this tool exists to prevent.
   //
   // Validated with the REAL Gherkin parser (cucumber's own), so a file the tool would reconcile is
   // at least a file cucumber would RUN. A file it rejects is an input we CANNOT READ: exit 2,
   // halting BEFORE any reconcile, naming the file and the parse failure — the same Rule as
   // @SCN-CLI-014 and @SCN-CLI-015 ("an input the tool cannot read is a usage error, never a
-  // verdict"), now on the declared side. Never a verdict, and never a green.
+  // verdict"), now on the obligation side. Never a verdict, and never a green.
   //
   // The corpus is EXTRACTED from the same real AST (@SCN-LDG-020), so what the tool reconciles is
   // what cucumber runs — Feature/Rule tag inheritance included. This guard decides whether the file
@@ -392,11 +392,11 @@ export function runBalance(argv: string[]): void {
   const duplicateScnIds = featureCorpusDuplicateScnIds(args["features"]);
   if (duplicateScnIds.length > 0) {
     process.stderr.write(
-      `The --features corpus declares the same @SCN on more than one scenario: ` +
+      `The --features corpus names the same @SCN on more than one scenario: ` +
         `${duplicateScnIds.join(", ")}.\n` +
         `An @SCN identifies exactly one scenario — evidence citing a duplicated id cannot be ` +
         `attributed, so no verdict over this corpus would be trustworthy. (An @SCN on a Feature: ` +
-        `or Rule: line is inherited by every scenario beneath it — declare it on the scenario.)\n`
+        `or Rule: line is inherited by every scenario beneath it — name it on the scenario.)\n`
     );
     process.exit(2);
   }
@@ -409,15 +409,15 @@ export function runBalance(argv: string[]): void {
     packageJson: args["package-json"],
   };
 
-  // Reconcile the declared-vs-observed evidence into the Ledger. The runtime evidence-observation
+  // Reconcile the obligation-vs-observation evidence into the Ledger. The runtime evidence-observation
   // views (Test volume, the evidence grid) are FOLDS the renderers derive off this Ledger's posted
   // credits (@SCN-RPT-010 / 3F-2103 — the census is retired), so they cannot drift from the
   // reconciler's verdict: they ARE the same rows. `withRuntimeObservations: true` (below) tells the
   // renderers the axis is in play.
   const balance = runReconcile(inputs);
 
-  // Read the declared-corpus census alongside the balance (@SCN-RPT-008) —
-  // the raw-vs-declared @SCN-occurrence delta over the same discovered feature corpus.
+  // Read the scenario-corpus census alongside the balance (@SCN-RPT-008) —
+  // the raw-vs-parsed @SCN-occurrence delta over the same discovered feature corpus.
   // A sibling to the balance, threaded to the renderers via writeOutputs like ctx.
   const evidenceObligations = readEvidenceObligations(args["features"]);
 
@@ -488,7 +488,7 @@ export function runBalance(argv: string[]): void {
   // so it must NEVER share code 1). Out-of-balance DOMINATES: the escalation is checked ONLY in
   // the `isBalanced` branch, so an out-of-balance run exits 1 regardless of --strict. Like the
   // CLI-004 gate this SETS process.exitCode (never process.exit) AFTER writeOutputs, so the
-  // buffered report is flushed intact. `--strict` is a registry-declared boolean, recorded by
+  // buffered report is flushed intact. `--strict` is a registry-LISTED boolean, recorded by
   // parseArgs as the string "true" — presence is what matters, so `!== undefined` reads it.
   //
   // The UNSOUND pre-emption (@SCN-CLI-012): a run carrying BROKEN evidence — a proving suite

@@ -41,10 +41,10 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 const readRepoFile = (relative: string): string =>
   fs.readFileSync(path.join(repoRoot, relative), "utf8");
 
-/** The static check this scenario both declares and is. */
+/** The static check this scenario both NAMES and IS. */
 const OWN_STATIC_CHECK = "lint:adopted-vocabulary";
 
-/** The guard-prefix set the balance CLI declares at its edge and injects into the core. */
+/** The guard-prefix set the balance CLI SETS at its edge and injects into the core. */
 const GUARD_PREFIXES = ["lint:", "guard:"] as const;
 
 /** A manifest row with the fields the gate reads; the rest are the engine's, not ours. */
@@ -115,9 +115,14 @@ describe("[SCN-VOC-014] the real table's adopted rows are the obligation family,
     }
   });
 
-  it("leaves the deferred declare family alone until 3F-2329 adopts it", () => {
-    for (const word of ["declare", "declared", "declaring", "declares", "undeclared"]) {
-      expect(triggers.has(word)).toBe(false);
+  it("leaves an UNADOPTED row's terms alone — the status column is the gate's authority", () => {
+    // THE EXEMPLARS MOVED, THE ASSERTION DID NOT (3F-2329). The retired evidence family was
+    // this test's exemplar; its row is ADOPTED now, so those words ARE triggers and editing
+    // the list to match the code would have kept the test's shape and dropped its point. The
+    // rows still unadopted make it just as well: the work-item row (not-applicable — this
+    // repository has no work-item model) and the bare shortening (deferred, 3F-1852).
+    for (const word of ["tree", "subtree", "root", "branch", "guard"]) {
+      expect(triggers.has(word), word).toBe(false);
     }
   });
 });
@@ -221,9 +226,9 @@ describe("[SCN-VOC-014] the gate is reconciled on spec-controller's own Ledger",
 describe("[SCN-VOC-015] a deferred row's term is visible to the audit and invisible to the gate", () => {
   // The filter that makes the gate LANDABLE, asserted out loud. Its failure mode is the
   // opposite of VOC-014's: VOC-014 breaking leaves a ban unenforced, this breaking blocks
-  // main — the vendored table's unadopted rows carry 2,272 occurrences in this tree, the
-  // `declare` family alone 1,212 across 133 files (3F-2329). An unasserted green survives
-  // the deletion of the very filter it depends on.
+  // main — the vendored table's one remaining unadopted row carries 774 occurrences in this
+  // tree (the bare shortening, 3F-1852). An unasserted green survives the deletion of the
+  // very filter it depends on.
   const table = [
     "| Never write | Always write | Why | Adoption | Matcher |",
     "| -- | -- | -- | -- | -- |",
@@ -244,15 +249,18 @@ describe("[SCN-VOC-015] a deferred row's term is visible to the audit and invisi
     expect(kept.map((occurrence) => occurrence.word)).toEqual(["widget"]);
   });
 
-  it("reads `declare` as deferred in the REAL table, so the fixture above mirrors this repo", () => {
-    // Without this the block would prove a property of an invented table. The real row is
-    // deferred with 1,212 occurrences outstanding, which is exactly why the gate must not
-    // enforce it yet — and why it will start to, with no code change, when 3F-2329 lands.
-    const real = BLOCKED_VOCABULARY_ROWS.find((candidate) =>
-      candidate.terms.includes("declare"),
-    );
+  it("reads the bare shortening as deferred in the REAL table, so the fixture above mirrors this repo", () => {
+    // Without this the block would prove a property of an invented table.
+    //
+    // THE EXEMPLAR MOVED, THE ASSERTION DID NOT (3F-2329). The retired evidence family was
+    // the real deferred row this pointed at, and 3F-2329 ADOPTED it — the gate started
+    // enforcing it with no code change here, which is the property this block exists to
+    // state. So the pin moves to the row still deferred (the bare shortening, 3F-1852, 774
+    // occurrences outstanding) rather than being edited to expect `adopted`, which would
+    // have deleted the deferred half of the discrimination the fixture above demonstrates.
+    const real = BLOCKED_VOCABULARY_ROWS.find((candidate) => candidate.terms.includes("guard"));
 
     expect(real?.status).toBe("deferred");
-    expect(adoptedTriggerWords().has("declare")).toBe(false);
+    expect(adoptedTriggerWords().has("guard")).toBe(false);
   });
 });

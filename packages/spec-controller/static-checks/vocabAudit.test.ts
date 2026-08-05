@@ -240,7 +240,7 @@ describe("[SCN-VOC-001] historical-record exemption — bracketed decision-log r
     "A live row naming supply must flag.\n\n" +
     "<!-- vocab-audit-exempt:start — historical rename-record -->\n" +
     "The `supply -> evidence observation` rename (state -> outcome) is history.\n\n" +
-    "The old `DeclaredCorpus` sibling named the census.\n" +
+    `The old \`${RETIRED_COMPOSITE.evidencePastIdentifier}\` sibling named the census.\n` +
     "<!-- vocab-audit-exempt:end -->\n\n" +
     "Another live row naming state must flag.\n";
   const files = [{ path: "docs/notes.md", content: doc }];
@@ -301,63 +301,63 @@ describe("[SCN-VOC-002] coverage-matrix completeness", () => {
   });
 });
 
-describe("[SCN-VOC-003] the forbidden kind-label phrase", () => {
-  // The phrase rule: whole-word `declared` immediately before `scenario` reds, so the purged
-  // kind-label cannot reappear green. Whole-word — `undeclared` is one token — so canon
-  // "undeclared scenario" stays green.
-  it("reds on `declared scenario`, renaming to the bare canon `scenario`", () => {
-    const v = classifyWords(["declared", "scenario"], "prose").find((w) => w.word === "declared")!;
+describe("[SCN-VOC-003] the retired evidence words red wherever they occur", () => {
+  // The whole-word ban that SUBSUMED the kind-label phrase arm (3F-2329) — strictly stronger
+  // than an arm redding the past participle only before `scenario`, so the arm is gone rather
+  // than left beside it looking load-bearing. BOTH HALVES, or the green one passes alone.
+  const verdictFor = (words: string[], word: string, mode: "name" | "prose" = "prose") =>
+    classifyWords(words, mode).find((w) => w.word === word)!;
+
+  it("reds the past participle in prose, plainly banned rather than gated on a following word", () => {
+    // The case the phrase arm could not reach — no `scenario` after it, so green by design.
+    const v = verdictFor([RETIRED.evidencePast, "evidence", "obligation"], RETIRED.evidencePast);
     expect(v.flagged).toBe(true);
-    expect(v.reason).toBe("retired-kind-label-phrase");
-    expect(v.canonical).toBe("scenario");
+    expect(v.reason).toBe("banned");
   });
 
-  it("reds on the plural `declared scenarios` too (the phrase, not the inflection)", () => {
-    const v = classifyWords(["declared", "scenarios"], "prose").find((w) => w.word === "declared")!;
+  it("reds the negative form, which the phrase arm deliberately held GREEN as canon", () => {
+    // An APPROVED word one commit ago; its verdict is by-meaning, so it carries no canonical.
+    const v = verdictFor([RETIRED.evidenceNegative, "static", "check"], RETIRED.evidenceNegative);
     expect(v.flagged).toBe(true);
-    expect(v.reason).toBe("retired-kind-label-phrase");
-    expect(v.canonical).toBe("scenario");
+    expect(v.reason).toBe("banned");
+    expect(v.canonical).toBeNull();
   });
 
-  it("reds in NAME mode too — a `declaredScenario` composite identifier", () => {
-    const v = classifyWords(decomposeName("declaredScenario"), "name").find(
-      (w) => w.word === "declared"
-    )!;
-    expect(v.flagged).toBe(true);
-    expect(v.reason).toBe("retired-kind-label-phrase");
-    expect(v.canonical).toBe("scenario");
+  it("reds every other inflection too — a row naming four forms greens the fifth", () => {
+    for (const inflection of [RETIRED.evidenceVerb, RETIRED.homographNoun]) {
+      const v = verdictFor(["the", "pending", inflection], inflection);
+      expect(v.flagged, inflection).toBe(true);
+      expect(v.reason, inflection).toBe("banned");
+    }
   });
 
-  it("STAYS GREEN on canon `undeclared scenario` — whole-word, not a substring", () => {
-    // `undeclared` decomposes to the single token "undeclared" (≠ "declared"), and it is
-    // an allowlisted domain-adjacent word, so nothing on the phrase flags.
-    const verdicts = classifyWords(decomposeName("undeclared"), "prose").concat(
-      classifyWords(["undeclared", "scenario"], "prose")
-    );
-    expect(verdicts.every((v) => v.reason !== "retired-kind-label-phrase")).toBe(true);
-    expect(verdicts.every((v) => !v.flagged)).toBe(true);
+  it("reds in NAME mode as readily as in prose — the composites the family lived in", () => {
+    const pairs = [
+      [RETIRED_COMPOSITE.kindLabelIdentifier, RETIRED.evidencePast],
+      [RETIRED_COMPOSITE.negativeIdentifier, RETIRED.evidenceNegative],
+    ] as const;
+    for (const [id, word] of pairs) {
+      expect(verdictFor(decomposeName(id), word, "name").reason, id).toBe("banned");
+    }
   });
 
-  it("does NOT over-guard: bare `declared` NOT before `scenario` earns no flag", () => {
-    // The deferred obligation-side uses ("declared evidence obligation",
-    // "declared-vs-observed") must not be swept — adjacency to `scenario` is the trigger.
-    const v = classifyWords(["declared", "evidence", "obligation"], "prose").find(
-      (w) => w.word === "declared"
-    )!;
-    expect(v.reason).not.toBe("retired-kind-label-phrase");
+  it("STAYS GREEN on the bare canon `scenario` — the real kind the retired label reached for", () => {
+    for (const id of ["scenario", "scenarioReconciliation"]) {
+      expect(classifyWords(decomposeName(id), "name").every((v) => !v.flagged), id).toBe(true);
+    }
   });
 
-  it("flags a real prose `declared scenario` with action rename, and passes `undeclared scenario`", () => {
+  it("reds a real prose occurrence with action rename, and leaves the canon `scenario` unflagged", () => {
     const { manifest } = auditFiles([
-      { path: "src/notes.ts", content: "// a declared scenario reconciles here\n" },
-      { path: "src/ok.ts", content: "// an undeclared scenario is a phantom\n" },
+      { path: "src/notes.ts", content: `// a ${RETIRED.evidencePast} scenario reconciles here\n` },
+      { path: "src/ok.ts", content: "// a phantom scenario reconciles here\n" },
     ]);
-    const red = manifest.find((r) => r.current === "declared" && r.new === "scenario");
+    const red = manifest.find((r) => r.current === RETIRED.evidencePast);
     expect(red).toBeDefined();
     expect(red!.action).toBe("rename");
     expect(red!.file).toBe("src/notes.ts");
-    // "undeclared scenario" produced no kind-label rename row anywhere.
-    expect(manifest.some((r) => r.file === "src/ok.ts" && r.new === "scenario")).toBe(false);
+    // The canon file produced no row at all — `scenario` is the word to write, not a hit.
+    expect(manifest.some((r) => r.file === "src/ok.ts")).toBe(false);
   });
 });
 

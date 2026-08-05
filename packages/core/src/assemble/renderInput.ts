@@ -4,7 +4,7 @@
  * model in two renderings, not two dialects.
  *
  * `assembleRenderInput` builds it from the existing reconcile pieces (the balance, the run
- * context, and the declared / observed / static check sibling reads). The JSON renderer collapses
+ * context, and the obligation / observation / static-check sibling reads). The JSON renderer collapses
  * to a glue-free `JSON.stringify(assembleRenderInput(...))`. The assembler is the ONLY place the
  * JSON-surface vocabulary lives — the manifesto-vocabulary key renames (the revert)
  * are MAPPED here so they never ripple into markdown.ts / evidenceObservations.ts internals, keeping the
@@ -44,7 +44,7 @@ export type {
   EvidenceReconciliation,
 } from "../domain/evidenceReconciliation.js";
 
-/** The declared-evidence-obligation census section, as serialised on the report. */
+/** The evidence-obligation census section, as serialised on the report. */
 export interface EvidenceObligationsSection {
   excludedOccurrences: number;
   untaggedScenarios: UntaggedScenario[];
@@ -62,7 +62,7 @@ export interface EvidenceObligationsSection {
  * `evidenceReconciliation` / `evidenceObservations` / `staticChecks`). It carries the feature
  * titles (the `feature-code → slug` map the by-feature cut names each feature from); it is
  * NOT a reconciliation record, so it does not sit as a sibling of the records. Present only
- * when the run declares ≥1 coded feature (i.e. when `featureNames` is non-empty).
+ * when the run carries ≥1 coded feature (i.e. when `featureNames` is non-empty).
  */
 export interface ReportMetadata {
   /** The feature titles — the `feature-code → slug` map (@SCN-RMD-006). */
@@ -100,15 +100,11 @@ export interface RenderInput {
   // re-homed onto `summary.rawByRuntimeQualityCheck`; the posted credits live on the ledger rows.
   // (`EvidenceObservationsSection` stays defined + barrel-exported until @SCN-API-001 / 3F-2104.)
   /**
-   * The presentation metadata — the small top-level object carrying the feature
-   * titles (`metadata.featureNames`, the `feature-code → slug` map the by-feature cut names each
-   * feature in full from). MOVED out from under a top-level `featureNames` key: it is presentation
-   * *metadata* (names), NOT a reconciliation record, so it is cleanly separated from the records
-   * (`summary` / `evidenceReconciliation` / `evidenceObservations` / `staticChecks`) rather than
-   * sitting as their sibling. A render from the saved report alone reconstructs the
-   * by-feature names from `metadata.featureNames` with no external map. Present only when the run
-   * declares ≥1 coded feature. The last document key (the retired `warnings` key no longer trails
-   * it).
+   * The presentation metadata — the feature titles (`metadata.featureNames`, the
+   * `feature-code → slug` map the by-feature cut names each feature in full from). It is
+   * presentation *metadata* (names), NOT a reconciliation record, so it is cleanly separated
+   * from the records rather than sitting as their sibling. The LAST document key (the retired
+   * `warnings` key no longer trails it).
    */
   metadata?: ReportMetadata;
 }
@@ -155,13 +151,6 @@ export function assembleRenderInput(
     // `attributed[]` did NOT re-home — it re-represented the posted credits the Ledger already
     // carries (`ledger.scenarioReconciliations[].evidenceObservations`), the parallel store the
     // done-criterion deletes rather than relocates. The grid cell counts those credits off the rows.
-    // The presentation metadata — the feature titles (@SCN-RMD-006), the by-feature
-    // cut's `feature-code → slug` map, now nested under a small top-level `metadata` object
-    // rather than a top-level `featureNames` sibling of the reconciliation records. It is
-    // presentation metadata (names), not a reconciliation record, so it sits apart from the
-    // records; a render from the saved report alone reconstructs the by-feature names
-    // from `metadata.featureNames` with no external map. Included only when the run declares ≥1
-    // coded feature — the LAST document key (the retired `warnings` key no longer trails it).
     ...(featureNames && featureNames.size > 0
       ? { metadata: { featureNames: Object.fromEntries(featureNames) } }
       : {}),

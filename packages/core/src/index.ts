@@ -46,10 +46,10 @@ export type { EvidenceObligations, UntaggedScenario } from "./census/evidenceObl
 
 // --- Evidence Reconciliation (`domain/evidenceReconciliation.ts`) + the Ledger predicates ---
 export { reconcile, evidenceReconciliationOf } from "./domain/evidenceReconciliation.js";
-// The whole-run predicates come DIRECT from the concept that declares them (3F-2232). They used to
+// The whole-run predicates come DIRECT from the concept that OWNS them (3F-2232). They used to
 // be re-exported through `reconcile/reconcile.js` — a shell kept alive purely to preserve importer
 // paths after 3F-1994 sent the behaviour home. No symbol is re-exported through a module that does
-// not declare it.
+// not own it.
 export { isBalanced, hasPendingItems, hasBrokenEvidence } from "./domain/ledger.js";
 
 // The runtime evidence-observation census (`census/evidenceObservations.ts`) is RETIRED (3F-2104):

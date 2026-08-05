@@ -4,7 +4,7 @@
  * Mechanism over honour: small-modules, entity-owns-its-behaviour and DRY are honour rules until
  * something reds. This is the something. THREE rules only — `complexity`, `max-lines`,
  * `max-lines-per-function`. Deliberately no `recommended` preset and no style rules: the ticket
- * declared three, and a preset would smuggle in a large ruleset nobody endorsed (`zero-shape`).
+ * ruled three, and a preset would smuggle in a large ruleset nobody endorsed (`zero-shape`).
  *
  * The thresholds are NOT written here — they live in `static-checks/complexityThresholds.mjs`, the one
  * source the @unit pin also reads. See that file for the external sources each number is cited to, and
@@ -17,7 +17,7 @@
  * green tree, which is how a fitness function starts crying wolf.
  *
  * HOW THE TEST SCOPE IS CARVED OUT. Flat config applies blocks in order and later blocks win for the
- * files they match, so the `**\/*.test.ts` block below re-declares the same three rules at the test
+ * files they match, so the `**\/*.test.ts` block below restates the same three rules at the test
  * threshold and thereby overrides the production block for test files. That is the whole exclusion
  * mechanism — there is no `ignores` entry for tests, and adding one would silently un-hold them.
  *
@@ -80,7 +80,7 @@ const tsLanguageOptions = {
  * hands to `lintFiles`. ONE list, exported, because a second copy would be a second measurement
  * scope: the reconciliation would read a population the config never judged, and every file in the
  * difference would reconcile as a stale entry or escape unmeasured, silently. Test files live under
- * these same globs — the test block below re-declares rules for them, it does not add files.
+ * these same globs — the test block below restates rules for them, it does not add files.
  *
  * @type {string[]}
  */
@@ -90,8 +90,8 @@ export const MEASURED_GLOBS = ["packages/*/src/**/*.ts", "packages/*/static-chec
  * The standard, held over both scopes, with NO exception applied (@SCN-CPX-003, 3F-2318).
  *
  * Exported so `complexityExceptionsReconciliation.mjs` can measure the tree through eslint at the
- * BARE standard — the values every entry in the debt list claims — instead of re-declaring the
- * thresholds, the scope split and the globs a second time. A second declaration would agree with
+ * BARE standard — the values every entry in the debt list claims — instead of restating the
+ * thresholds, the scope split and the globs a second time. A second statement would agree with
  * this one by coincidence and drift the moment either changed, which is exactly the agreeing-by-copy
  * this codebase keeps removing; and the reconciliation's whole contract is that its numbers are the
  * ones THIS config produces.

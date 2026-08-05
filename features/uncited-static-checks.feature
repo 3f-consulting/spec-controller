@@ -1,15 +1,15 @@
 @USG
-Feature: Detect uncited static-checks — a CI guard no @lint declares
+Feature: Detect uncited static-checks — a CI guard no @lint names
 
   The static-check (@lint) axis's UNCITED detection — the mirror of the
-  runtime axis's cites-no-scenario evidence observations. The @lint axis was declared→observed only
-  (checkStaticEvidenceObligations observes each DECLARED @lint=<guard>), structurally blind to the reverse:
-  a guard that runs in CI with NOTHING declaring it — an unposted credit.
+  runtime axis's cites-no-scenario evidence observations. The @lint axis was obligation→observation only
+  (checkStaticEvidenceObligations observes each NAMED @lint=<guard>), structurally blind to the reverse:
+  a guard that runs in CI with NOTHING naming it — an unposted credit.
 
   The running-guard observer emits every running CI guard (the lint:* scripts a CI run: step
   invokes — runningStaticChecks) into the reconcile stream, so the ONE reconcile engine sees the
   complete static stream: a named guard matches its @lint obligation; a no-evidence-obligation one — a
-  guard that runs in CI with NO @lint declaring it — cites no scenario, so reconcile folds it to
+  guard that runs in CI with NO @lint naming it — cites no scenario, so reconcile folds it to
   the suspense row (an UNCITED static-check). The report's static census is a pure counter
   over the stream (countStaticEvidenceObservationKinds → StaticEvidenceObservationKindCounts
   { runningStaticCheckCount, uncitedStaticCheckCount }; the named count is implicit, running −
@@ -26,18 +26,18 @@ Feature: Detect uncited static-checks — a CI guard no @lint declares
   Rule: a CI check with no @lint scenario is reported as an uncited static check
 
     @unit @integration @SCN-USG-001
-    Scenario: a CI check no @lint declares is reported as an uncited static check
+    Scenario: a CI check no @lint names is reported as an uncited static check
       Given a target whose CI runs the lint:foo and lint:bar checks
-      And only lint:foo is declared by an @lint scenario
+      And only lint:foo is named by an @lint scenario
       When the reconciliation report is rendered for the target
       Then the Static checks section reports lint:bar as an uncited static check
 
-  Rule: a check an @lint scenario declares is not reported as an uncited static check
+  Rule: a check an @lint scenario names is not reported as an uncited static check
 
     @integration @SCN-USG-002
-    Scenario: a check declared by an @lint scenario is attributed, not an uncited static check
+    Scenario: a check named by an @lint scenario is attributed, not an uncited static check
       Given a target whose CI runs the lint:foo and lint:bar checks
-      And only lint:foo is declared by an @lint scenario
+      And only lint:foo is named by an @lint scenario
       When the reconciliation report is rendered for the target
       Then lint:foo is not reported as an uncited static check
 
@@ -46,24 +46,24 @@ Feature: Detect uncited static-checks — a CI guard no @lint declares
     @unit @integration @SCN-USG-003
     Scenario: test and cucumber CI steps are not derived as static checks
       Given a target whose CI runs the lint:foo and lint:bar checks
-      And only lint:foo is declared by an @lint scenario
+      And only lint:foo is named by an @lint scenario
       When the reconciliation report is rendered for the target
       Then only lint:foo and lint:bar are counted as CI checks, not test or cucumber
 
-  Rule: a guard:-prefixed CI script no @lint scenario declares is reported as an uncited static check
+  Rule: a guard:-prefixed CI script no @lint scenario names is reported as an uncited static check
 
     @unit @integration @SCN-USG-004
-    Scenario: an undeclared guard:-prefixed script running in CI is an uncited static check
+    Scenario: an uncited guard:-prefixed script running in CI is an uncited static check
       Given a target whose CI runs the guard:domain-purity script
-      And no @lint scenario declares guard:domain-purity
+      And no @lint scenario names guard:domain-purity
       When the reconciliation report is rendered for the target
       Then the Static checks section reports guard:domain-purity as an uncited static check
 
-  Rule: a guard:-prefixed CI script an @lint scenario declares is attributed, not uncited
+  Rule: a guard:-prefixed CI script an @lint scenario names is attributed, not uncited
 
     @unit @integration @SCN-USG-005
-    Scenario: a declared guard:-prefixed script is attributed, not an uncited static check
-      Given a target whose CI runs the guard:domain-purity script it declares
-      And an @lint scenario declares guard:domain-purity
+    Scenario: a named guard:-prefixed script is attributed, not an uncited static check
+      Given a target whose CI runs the guard:domain-purity script it names
+      And an @lint scenario names guard:domain-purity
       When the reconciliation report is rendered for the target
       Then guard:domain-purity is not reported as an uncited static check

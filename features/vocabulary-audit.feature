@@ -59,22 +59,33 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
       Then the coverage matrix lists every scanned surface as a row
       And a surface with zero flagged words is present with a zero count
 
-  Rule: the forbidden kind-label phrase "declared scenario" reds; canon "undeclared scenario" stays green
+  Rule: the retired "declared" and "undeclared" red wherever they occur; the canon "scenario" stays green
 
-    The purge guard (@SCN-VOC-003, 3F-2147). Whole-word `declared` IMMEDIATELY before
-    `scenario` is the retired kind-label — so it reds wherever it hides (a comment, a
-    Gherkin line, a doc, a string), renamed to the bare canon `scenario` (which already
-    means the real, declared kind). Whole-word by construction: `undeclared` decomposes to
-    the single token "undeclared", so canon "undeclared scenario" stays green. Phrase-only,
-    honest scope: it does NOT catch a bare kind-label enumeration ("declared, phantom and
-    suspense") — that is a separate, deferred residual.
+    The purge, gate-enforced (@SCN-VOC-003, 3F-2147 then 3F-2329). Every inflection of the
+    retired evidence verb is a PLAIN BANNED WORD — the strongest matcher, flagging in BOTH
+    modes, in an identifier and in prose alike. "undeclared" retires with the family: it
+    named the absence of what the model now calls an Evidence Obligation, and it has no
+    single replacement, so its verdict is by-meaning per occurrence.
+
+    THE PHRASE ARM IS SUBSUMED, NOT KEPT ALONGSIDE. This Rule used to red only the
+    kind-label PHRASE — "declared" immediately before "scenario" — and hold "undeclared
+    scenario" green as canon. A phrase rule is strictly weaker than a ban on the word
+    anywhere, so keeping both would leave two rules where one judges and the weaker one
+    looking load-bearing. The arm is gone, and its `FlagReason` member with it (3F-2392's
+    rule: the reason names the RULE, and the rule no longer exists).
+
+    BOTH HALVES, OR IT IS GREEN BY EROSION. The green half moves from "undeclared scenario"
+    to the bare canon "scenario" — the real kind, which is what the retired kind-label was
+    ever trying to say. Asserting only that "scenario" is green is true, and passes with
+    the whole matcher deleted.
 
     @unit @SCN-VOC-003
-    Scenario: the audit reds on "declared scenario" and stays green on "undeclared scenario"
-      Given a corpus carrying the phrase "declared scenario" and the canon phrase "undeclared scenario"
+    Scenario: the audit reds "declared" and "undeclared" wherever they occur, and stays green on the canon "scenario"
+      Given a corpus carrying the retired "declared" and "undeclared" and the canon "scenario"
       When the vocabulary audit runs over the corpus
-      Then the phrase "declared scenario" is flagged, renamed to the bare "scenario"
-      And the phrase "undeclared scenario" is not flagged
+      Then "declared" is flagged
+      And "undeclared" is flagged
+      And "scenario" is not flagged
 
   Rule: the retired tag "ci-performance" reds; the canon "ci-run-time" stays green
 
@@ -368,7 +379,8 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
     structurally invisible to spec-controller's own ledger — a real quality check kept off
     the books, which is where a watermelon hides. The `@lint=lint:blocked-vocabulary` tag
     below is then what keeps it out of the suspense row as an uncited static check.
-    Observed AND declared is the balanced state (the @SCN-CPX-003 precedent).
+    An observation matched to a NAMED evidence obligation is the balanced state (the
+    precedent @SCN-CPX-003 sets).
 
     THE DEGENERATE CASE IS PART OF THE SAME BEHAVIOUR. "Every row is triaged" is vacuously
     true of no rows at all, so a table the parser reads nothing out of — a lost header, a
@@ -524,7 +536,7 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
     "what is the project, minus the audit's own machinery" (@SCN-VOC-008), and a second
     implementation of that question would agree with the first by coincidence and then
     drift — the agreeing-by-copy this feature has removed twice already. So the self-exempt
-    blind spot is inherited, not re-declared here; 3F-2345 is the ticket that sweeps it.
+    blind spot is inherited, not restated here; 3F-2345 is the ticket that sweeps it.
 
     @unit @integration @lint=lint:adopted-vocabulary @SCN-VOC-014
     Scenario: an adopted retired term in a non-exempt file reds the gate, and a tree carrying none passes
@@ -569,7 +581,7 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
     inlined ban data moves to the canon table and the fixture corpus and the code reads it
     from there; what is left in a code file is code, which the audit may see in full.
     "No code file is exempt" is also the better rule to teach, because a reader can check
-    it — where "this file declares its legitimate surfaces" can only be trusted.
+    it — where "this file names its own legitimate surfaces" can only be trusted.
 
     @unit @integration @lint=lint:exempt-data-floor @SCN-VOC-016
     Scenario: a code file carrying an inlined retired term is not exempt, and the audit sees it
@@ -596,3 +608,64 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
       When the file no longer holds any
       Then the exemption reds as stale, so the list can only shrink
       And a residual entry says which ticket it was still waiting on
+
+  Rule: a retired word that is also an external tool's grammar is judged by POSITION, not by spelling
+
+    THE HOMOGRAPH RULE (@SCN-VOC-018, 3F-2329). Some retired words are also grammar this
+    repository does not own: `declare` is the retired evidence verb AND a TypeScript keyword
+    (`export declare const`); `declaration` is the retired evidence noun AND a tsconfig
+    compiler option. Both senses are really in this tree, so neither a blanket ban nor a
+    blanket pass is honest — a ban reds code that cannot be written any other way, and a pass
+    greens the retired word everywhere it IS vocabulary.
+
+    TODAY THE PASS WINS, SILENTLY, AND THAT IS THE DEFECT THIS RULE EXISTS FOR. `classifyWords`
+    consults the reserved-word set BEFORE the ban, and the verb is in that set — so adopting
+    its canon row cannot red it, and cannot red the third person either, whose stem IS the
+    verb. The noun is allowlisted outright as a config token. Measured before this Rule:
+    adopting the row redded 963 occurrences and left 441 green with nothing saying so. A ban
+    that silently misses a third of its family is the failure this feature exists to end, one
+    level deeper: the tree reads clean to the gate while the words are still in it.
+
+    SO THE DISCRIMINATOR IS POSITION. The verb is grammar when a TypeScript declaration
+    keyword FOLLOWS it, and vocabulary otherwise; the noun is grammar when the compiler-option
+    parent CO-OCCURS with it, and vocabulary otherwise. Those are the two matcher shapes this
+    engine already has — @SCN-VOC-003's adjacency and `guard`'s co-occurrence — so this adds a
+    ruling record, not a fourth kind of rule. Of the bare verb in this tree 13 occurrences are
+    the keyword and ~54 are evidence prose; of the noun, exactly one is the compiler option.
+
+    WHY A CONFIG KEY NEEDS ITS PARENT. A JSON key is extracted alone, so the compiler-option
+    parent was not in the judged sequence at all and no co-occurrence rule could see it. A
+    nested key now carries its key path, which is what makes the qualifier reachable — and is
+    truer besides: a key's meaning is its path, not its last segment.
+
+    AND A TYPESCRIPT NAME NEEDS ITS NEIGHBOUR, FOR THE SAME REASON (3F-2432). A code region
+    yields ONE SEGMENT PER NAME, so the keyword is judged alone and the word that qualifies it
+    is not in the sequence either — the `follows` qualifier cannot be satisfied in TypeScript
+    source AT ALL. It looked satisfied only because the ambient declarations this repository
+    ships sit in `.d.mts` files, which no rule reads as TypeScript, so their whole line is read
+    as prose and the qualifier happens to land beside the verb. In real `.ts` source both the
+    line-initial and the exported form red. So a name segment now carries the NEXT name on its
+    line, and the qualifier is resolved against the SOURCE where the judged sequence has run
+    out. That is a one-word lookahead, not a widening: the qualifier list is unchanged, so the
+    verb still earns grammar only when a declaration keyword genuinely follows it.
+
+    THE RULING IS DIRECTIONAL, AND ONLY ONE DIRECTION IS SAFE. Reading grammar as vocabulary
+    reds honest code and someone fixes it that morning. Reading vocabulary as grammar greens a
+    retired word forever and nothing ever says so. So the qualifier is stated positively — the
+    grammar sense must EARN its pass by its position — and the scenario asserts both
+    directions, because an assertion in one direction alone would survive a matcher that
+    always answered grammar.
+
+    @unit @SCN-VOC-018
+    Scenario: a retired homograph is read as grammar in its grammar position and as vocabulary everywhere else
+      Given the retired verb in TypeScript keyword position and the same verb as an evidence verb
+      And the retired noun as a nested compiler-option key and the same noun in prose
+      And TypeScript source carrying the verb in keyword position, where every name is judged alone
+      When the vocabulary audit judges which sense each occurrence carries
+      Then the verb in keyword position is read as grammar
+      And the verb as an evidence verb is read as vocabulary
+      And the noun as a compiler-option key is read as grammar
+      And the noun in prose is read as vocabulary
+      And a word carrying no homograph ruling is read as neither
+      And the verb in keyword position in TypeScript source is read as grammar, the keyword qualifying it from the next name on the line
+      And the verb as a bare name in TypeScript source, with no keyword after it, is still read as vocabulary

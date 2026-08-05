@@ -3,15 +3,15 @@ Feature: a fixture target whose ONLY out-of-balance row is the suspense reconcil
 
   A FIXTURE feature (NOT under features/) standing in for THE an adopter's repository 17-36-50Z SHAPE — the
   run that started 3F-1703. EVERY SCENARIO BALANCES: both @unit obligations are
-  satisfied by a passing observation, no observation cites an undeclared scenario (no
+  satisfied by a passing observation, no observation cites a phantom scenario (no
   phantom), no suite failed to collect (no broken item, so the run is SOUND and exit 4
   never pre-empts). The one and only reconciling item in the whole run sits on the
-  SUSPENSE row: the target's CI runs `lint:uncited` and NO scenario declares
+  SUSPENSE row: the target's CI runs `lint:uncited` and NO scenario names
   `@lint=lint:uncited`, so the guard is an uncited static-check — an uncited
   credit, posted to the `(no scenario)` suspense reconciliation.
 
   This is the fixture the anti-drift invariant (@SCN-CLI-013) needs, and the one shape no
-  other fixture in the suite has: the declared-only tally reads a CLEAN 2/2/0 while the run
+  other fixture in the suite has: the named-only tally reads a CLEAN 2/2/0 while the run
   is genuinely out-of-balance and exits 1. Under the retracted "ruling Q3" the three views
   disagreed here — tally says PASS, headline says FAIL, process exits 1 — which is exactly
   the false green the operator and Cowork both read as a clean board. Now the summary counts
@@ -22,12 +22,12 @@ Feature: a fixture target whose ONLY out-of-balance row is the suspense reconcil
   registry lint nor the scenario↔sub-issue gate sees @SUS / @SCN-SUS-NNN — they scan
   features/*.feature only.
 
-  Rule: the fixture target declares two satisfied unit-level scenarios and no static check
+  Rule: the fixture target names two satisfied unit-level scenarios and no static check
 
     @unit @SCN-SUS-001
-    Scenario: the target declares a first satisfied unit-level scenario
+    Scenario: the target names a first satisfied unit-level scenario
       Given the target repo's source
 
     @unit @SCN-SUS-002
-    Scenario: the target declares a second satisfied unit-level scenario
+    Scenario: the target names a second satisfied unit-level scenario
       Given the target repo's source

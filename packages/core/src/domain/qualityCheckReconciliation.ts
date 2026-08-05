@@ -1,6 +1,6 @@
 /**
  * THE QUALITY CHECK RECONCILIATION — one reconciling item in the accounting frame: the
- * per-evidence-obligation line explaining why declared and observed disagree. This module
+ * per-evidence-obligation line explaining why obligation and observation disagree. This module
  * co-locates the concept's type with its OWN behaviour — the outcome vocabulary, the canon
  * descriptions, and `reconcileEvidenceObligation`, the pure derivation that computes a single
  * obligation's outcome from the observed evidence (module, not class; the rule lives WITH the
@@ -18,7 +18,7 @@ import type {
 /**
  * The reconciled OUTCOME of a single quality-check evidence obligation — one
  * RECONCILING ITEM in the accounting frame (the per-evidenceObligation line explaining
- * why declared and observed disagree). The rationalisation: the
+ * why obligation and observation disagree). The rationalisation: the
  * per-evidenceObligation axis is the OUTCOME — `satisfied` (its `balanced` retired,
  * `balanced` being the scenario VERDICT's word), and the watermelon reads plainly
  * as `watermelon`.
@@ -37,7 +37,7 @@ export type Outcome =
   // the reconciling item on a PHANTOM scenario (@SCN-LDG-006).
   | "cites-no-scenario" // a credit citing NO @SCN at all — the reconciling item on the
   // SUSPENSE scenario (@SCN-LDG-007). Aggregates uncited runtime credits AND the
-  // uncited static-check (a `lint` credit no evidence obligation declares, ruling Q4).
+  // uncited static-check (a `lint` credit no evidence obligation names, ruling Q4).
   | "broken" // a credit whose PROOF NEVER RAN — the harness broke before the behaviour was
   // exercised, so it cites no @SCN and can be attributed to no scenario. READER-AGNOSTIC: a
   // vitest suite that failed to collect (@SCN-LDG-017) OR a cucumber step matched by two or
@@ -47,25 +47,25 @@ export type Outcome =
   // now carries the fault — so the reader is sent to fix the harness, not to write a test that
   // already exists.
   | "no-evidence-obligation" // a credit citing a REAL scenario at a quality-check that scenario
-  // NEVER declared (@SCN-LDG-008) — the GENERAL case (it applies whether or not the
+  // NEVER NAMED (@SCN-LDG-008) — the GENERAL case (it applies whether or not the
   // scenario carries other evidence obligations). A credit-side reconciling item ON THE REAL scenario's
-  // row (carrying the evidence observation locator, ruling Q5): the credit posts to a real account, but
-  // against no evidence obligation. Fixes the latent `attributed` mis-count — a stray credit at an
-  // undeclared quality-check is no longer silently counted as reconciliation-matched-attributed.
+  // row (carrying the evidence observation locator, ruling Q5): the credit posts to a real account,
+  // but against no evidence obligation. Fixes the latent `attributed` mis-count — a stray credit at a
+  // quality-check the scenario never named is no longer silently counted as reconciliation-matched-attributed.
   // NEITHER-SIDE (the bidirectional reconciler's final outcome):
   | "no-scn-code" // a DEBIT outcome (@SCN-LDG-021): a real scenario carrying no @SCN,
   // so its Evidence Obligation has NO CODE for an Evidence Observation to link to. The scenario is
   // ORDINARY — not phantom, not suspense; it exists and cucumber runs it — but its own Scenario
   // Reconciliation is out-of-balance, because the obligation is UNLINKABLE. The DEBIT TWIN of
-  // `cites-no-scenario` (same missing link, opposite side); suspense stays credit-only. Undeclarable
+  // `cites-no-scenario` (same missing link, opposite side); suspense stays credit-only. UNCODED
   // work: it can never reconcile satisfied, failing, or even `missing` — an obligation never
-  // DECLARED cannot be ABSENT — so without this it was invisible to the verdict entirely.
+  // RAISED cannot be ABSENT — so without this it was invisible to the verdict entirely.
   | "both-missing"; // a scenario that reconciles to ZERO rows on BOTH sides (no
   // evidence obligation AND no citing evidence observation) — the ONE degenerate Quality Check Reconciliation it
   // posts, blank on both sides (label: "Evidence Obligation and Evidence Observation are both
   // missing — the Scenario is untagged and uncited"). Detected by the reconciler emitting NOTHING either way (NOT a
   // hard evidenceObligations.length === 0 map — a zero-evidence obligation scenario cited by a stray
-  // credit is `no-evidence-obligation`, @SCN-LDG-010). Retires the no-evidence-declared warning (@SCN-WRN-001
+  // credit is `no-evidence-obligation`, @SCN-LDG-010). Retires the zero-evidence-scenario warning (@SCN-WRN-001
   // Update): the zero-evidence scenario is now this out-of-balance row, never a separate axis.
   // The verdict stays two-valued (out-of-balance VIA this reconciling item, never a third verdict).
 
@@ -99,10 +99,8 @@ export const OUTCOME_DESCRIPTION: Record<Outcome, string> = {
   missing: "Evidence Observation is missing",
   failing: "Evidence Observation is failing",
   watermelon: "Evidence Observation is passing but fabricated",
-  // The DEBIT TWIN of `cites-no-scenario` (@SCN-LDG-021): same missing LINK, opposite side. The
-  // scenario is real and ORDINARY — it exists and cucumber runs it — but it carries no @SCN, so its
-  // obligation has no code an observation could link to. Undeclarable work: it can never reconcile
-  // satisfied, failing, or even `missing`, so without this outcome it was invisible to the verdict.
+  // The DEBIT TWIN of `cites-no-scenario` (@SCN-LDG-021): same missing LINK, opposite side — the
+  // scenario is real and ORDINARY, but carries no @SCN for an observation to link to.
   "no-scn-code": "Evidence Obligation has no @SCN code for an Evidence Observation to link to",
   "cites-unknown-scenario": "Evidence Observation cites an unknown Scenario",
   "cites-no-scenario": "Evidence Observation cites no Scenario",
@@ -154,8 +152,8 @@ export const OUT_OF_BALANCE_OUTCOMES: readonly Outcome[] = (
  * THE NOMINAL BRAND (@SCN-LDG-030, 3F-2016) — a module-private `unique symbol` phantom field.
  * `QualityCheckReconciliation` is `QualityCheckReconciliationFields` PLUS a required field of this
  * symbol's type, so no object literal typechecks as a `QualityCheckReconciliation` OUTSIDE this
- * module — only `makeQualityCheckReconciliation` (which casts) can mint one. `declare const`: the
- * symbol has no runtime presence; the field is a Symbol key, so `JSON.stringify` skips it (never
+ * module — only `makeQualityCheckReconciliation` (which casts) can mint one. The brand symbol has
+ * no runtime presence; the field is a Symbol key, so `JSON.stringify` skips it (never
  * serialised) and `.toEqual` sees no runtime key (value-literal comparisons stay green). The brand
  * restricts CONSTRUCTION only — consumers only READ QCRs, so no read site changes.
  */
@@ -244,7 +242,7 @@ export type QualityCheckReconciliation = QualityCheckReconciliationFields & {
 /**
  * THE CANON OUTCOME-SIDE PROFILE (@SCN-LDG-030, 3F-2016) — the (outcome → side-presence) table
  * transcribed from canon (`double-entry-manifesto.md` lines 35-44), keyed by EVERY `Outcome` (a
- * `Record<Outcome, …>`), so a new outcome cannot join the union without declaring its side
+ * `Record<Outcome, …>`), so a new outcome cannot join the union without STATING its side
  * profile here — the type-forced totality that makes this map the SINGLE SOURCE the invariant is
  * checked against (mirroring `OUTCOME_DESCRIPTION`).
  *
@@ -307,7 +305,7 @@ export function makeQualityCheckReconciliation(
 }
 
 /**
- * Reconcile one declared evidenceObligation against the observed evidence, keyed on the
+ * Reconcile one evidence obligation against the observed evidence, keyed on the
  * flat `qualityCheck`. `qualityCheck === "lint"` is the watermelon
  * discriminator: it routes to the STATIC-check mapping;
  * every other value routes to the RUNTIME-result mapping.
@@ -409,15 +407,15 @@ export function reconcileEvidenceObligation(
 
 /**
  * The NO-EVIDENCE-OBLIGATION items on a real scenario's row (@SCN-LDG-008) — one per credit citing THIS
- * scenario at a quality-check it never declared. The credit posts to a real row against NO
+ * scenario at a quality-check it never named. The credit posts to a real row against NO
  * evidence obligation, so the item is CREDIT-ONLY (no obligation is in scope).
  *
- * The pair-check is what distinguishes no-evidence-obligation from a matched credit: a credit at a DECLARED
+ * The pair-check is what distinguishes no-evidence-obligation from a matched credit: a credit at a NAMED
  * `(scnId, quality-check)` pair reconciles satisfied/failing via `reconcileEvidenceObligation` and
  * is NOT re-listed here. `evidenceObligationPairs` is the journal's rule (`evidenceObligationPairsOf`),
  * built once and shared — which is what makes a credit citing a PENDING pair land here rather than
- * nowhere (3F-1858: a pending obligation names nothing, so such a credit is no-evidence-obligation "exactly
- * as when nothing was declared at all", and the run that used to read balanced over it now fails).
+ * nowhere (3F-1858: a pending obligation names nothing, so such a credit is no-evidence-obligation exactly
+ * as when nothing was raised at all, and the run that used to read balanced over it now fails).
  */
 export function noEvidenceObligationReconciliationsOf(
   scnId: string,
@@ -439,7 +437,7 @@ export function noEvidenceObligationReconciliationsOf(
 
 /**
  * The items on a PHANTOM row (@SCN-LDG-006) — one `cites-unknown-scenario` per credit citing an
- * `@SCN` no scenario declares, in citation order. CREDIT-ONLY: a phantom row is minted BY a credit,
+ * `@SCN` no scenario carries, in citation order. CREDIT-ONLY: a phantom row is minted BY a credit,
  * so nothing can ever have been named of it, and no obligation is in scope.
  *
  * The locator rides through (ruling Q5) — it is the reader's where-to-fix, and a phantom item has
@@ -518,7 +516,7 @@ export function suspenseReconciliationsOf(
  *
  * A scenario carrying no `@SCN` is REAL and ORDINARY — cucumber runs it — but its obligation has no
  * CODE for an observation to link to, so it could reconcile NOTHING: not satisfied, not failing,
- * not even `missing`, because an obligation never DECLARED cannot be ABSENT. Without this item it
+ * not even `missing`, because an obligation never RAISED cannot be ABSENT. Without this item it
  * contributed nothing to the verdict and the run went green over work nothing proves.
  *
  * It carries NO `qualityCheck`: with no code, no observation can link at ANY tier, so the missing

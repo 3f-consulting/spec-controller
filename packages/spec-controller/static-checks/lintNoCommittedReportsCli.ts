@@ -6,7 +6,7 @@
  * clean tree (nothing tracked under runs/) it exits 0.
  *
  * Mirrors `lint:feature-codes` / `lint:scn-subissues`: a pure function of the
- * checked-out tree. The static check is @lint-declared (`@lint=lint:no-committed-reports`
+ * checked-out tree. The static check is @lint-cited (`@lint=lint:no-committed-reports`
  * on @SCN-NCR-001) so the tool's own ledger reconciles it — not an
  * uncited static-check (the Uncited-static-checks increment).
  */

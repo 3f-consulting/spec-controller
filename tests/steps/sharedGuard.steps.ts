@@ -6,7 +6,7 @@
  *
  * The @integration arm drives the REAL parse→reconcile pipeline over a fixture corpus
  * (tests/fixtures/shared-guard/) whose ci.yml runs `lint:double-obligation`, whose package.json
- * defines it, and whose two scenarios BOTH declare @lint=lint:double-obligation. One static check's
+ * defines it, and whose two scenarios BOTH NAME @lint=lint:double-obligation. One static check's
  * run is evidence for both naming scenarios: the credit posts to each naming account, and both
  * reconcile satisfied — the multi-obligation instance of the posting invariant (@SCN-LDG-022), the
  * case no corpus exercised.
@@ -26,7 +26,7 @@ const sharedAccountFor = (ledger: Ledger, scnId: string): ScenarioReconciliation
 
 // @SCN-LDG-024
 Given("two scenarios that each name the same static check by @lint, wired and green in CI", function () {
-  // The shared-guard fixture: two scenarios (SCN-SHR-001, SCN-SHR-002) both declaring
+  // The shared-guard fixture: two scenarios (SCN-SHR-001, SCN-SHR-002) both NAMING
   // @lint=lint:double-obligation; a ci.yml that RUNS lint:double-obligation; a package.json that
   // DEFINES it. So the static check exists and is enforced over the real source — wired-and-green.
   const fixture = join(process.cwd(), "tests/fixtures/shared-guard");

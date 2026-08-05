@@ -1,7 +1,7 @@
 @PDE
 Feature: a pending-alongside-error fixture target
 
-  A FIXTURE feature (NOT under features/) standing in for a spec whose scenario declares BOTH
+  A FIXTURE feature (NOT under features/) standing in for a spec whose scenario names BOTH
   a genuinely-missing bare `@unit` obligation AND a deferred `@integrationpending` one. It is
   fed to the pure parse→reconcile pipeline by the @SCN-PND-006 @integration step so the "a
   Pending Item is not a Reconciling Item (it is not an error)" behaviour is exercised through

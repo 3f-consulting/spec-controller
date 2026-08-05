@@ -77,7 +77,7 @@ export interface RunManifestInput extends RunManifestMeta {
 /**
  * The run.yaml manifest — the decided light field set. `purpose`/`links` default EMPTY (the ad-hoc default; slugs are
  * added by operator hand-edit afterward). `category`/`use_case` are NOT stamped (`purpose`
- * subsumes them). Keys are declared in the decided stamp order.
+ * subsumes them). Keys are listed in the decided stamp order.
  */
 export interface RunManifest {
   readonly schema_version: number;
