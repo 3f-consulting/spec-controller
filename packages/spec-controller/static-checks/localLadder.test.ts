@@ -148,7 +148,7 @@ describe("[SCN-LAD-003] a CI step invoking no package.json script is not a gate"
   });
 });
 
-describe("[SCN-LAD-004] a named CI-only step is not a gate, and its reason is printed", () => {
+describe("[SCN-LAD-004] an excluded CI-only step is not a gate, and its reason is printed", () => {
   const excluded = [
     { script: "lint:beta", reason: "reads a pull request's diff and has no answer outside one" },
   ];

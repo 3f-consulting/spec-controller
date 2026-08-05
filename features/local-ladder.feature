@@ -57,7 +57,7 @@ Feature: The local green-check runs the ladder CI runs, derived rather than list
   Rule: a step left out of the local ladder names why, and the reason must still hold
 
     @unit @integration @SCN-LAD-004
-    Scenario: a named CI-only step is not a gate, and its reason is printed
+    Scenario: an excluded CI-only step is not a gate, and its reason is printed
       Given a CI config running a step this repository excludes from the local ladder
       When the local ladder is built over it
       Then the excluded step is not a gate
@@ -72,9 +72,9 @@ Feature: The local green-check runs the ladder CI runs, derived rather than list
   Rule: the derived ladder holds over the real repository
 
     @integration @SCN-LAD-006
-    Scenario: pnpm verify lists every CI script but the named exclusion, lint:anemic-domain among them
+    Scenario: pnpm verify lists every CI script but the one excluded step, lint:anemic-domain among them
       Given the real spec-controller repository
       When the local green-check lists the ladder it would run
-      Then it lists every script the real CI runs but the one named exclusion, in CI's order
+      Then it lists every script the real CI runs but the one excluded step, in CI's order
       And lint:anemic-domain is one of them
       And the count it reports is the number of gates it listed

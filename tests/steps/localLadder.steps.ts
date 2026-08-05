@@ -246,7 +246,7 @@ When("the local green-check lists the ladder it would run", function () {
 });
 
 Then(
-  "it lists every script the real CI runs but the one named exclusion, in CI's order",
+  "it lists every script the real CI runs but the one excluded step, in CI's order",
   function () {
     assert.equal(listing.exitCode, 0, `--list must succeed. It said:\n${listing.stderr}`);
 
