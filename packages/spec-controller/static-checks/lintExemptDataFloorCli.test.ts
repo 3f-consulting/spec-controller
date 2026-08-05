@@ -5,8 +5,6 @@
  * code file left on the exempt list and no stale entry either, so a passing run over the
  * real tree is consistent with either check being broken. Both are pinned here over lists
  * built in the test; the @integration arm then proves the real list satisfies them.
- *
- * Titles are PLAIN strings (the parseTestBlocks brace-tracking lesson, 3F-2366).
  */
 
 import { describe, it, expect } from "vitest";

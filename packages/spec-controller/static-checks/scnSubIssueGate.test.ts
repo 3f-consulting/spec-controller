@@ -209,8 +209,7 @@ describe("[SCN-SSM-005] a changed test block carries its own cite — a sibling'
     expect(result.citedCodes).toEqual(["SCN-API-001"]);
   });
 
-  it("reds the gate when a changed test block cites nothing, even on a ticketed PR", () => {
-    const result = decideScnGate(
+  it("reds the gate when a changed test block cites nothing, even on a ticketed PR", () => {    const result = decideScnGate(
       baseInput({
         unitEquivalentBehaviourBearing: true,
         unitEquivalentCitedCodes: ["SCN-API-001"],
@@ -225,5 +224,87 @@ describe("[SCN-SSM-005] a changed test block carries its own cite — a sibling'
     const violation = result.violations[0]!;
     expect(violation.kind).toBe("uncited-unit-equivalent");
     expect(violation.message).toContain("the doubling > doubles the tally");
+  });
+});
+
+describe("[SCN-SSM-007] a describe whose title carries braces stays open over the its beneath it", () => {
+  /**
+   * The two brace-carrying title forms, side by side. Both are written here as
+   * quoted fixture LINES, so the scanner reads them as data rather than as this
+   * file's own cites — the same convention the SSM-004 fixture relies on.
+   */
+  const templateLiteralTitle = [
+    'import { describe, it, expect } from "vitest";', // 1
+    "", // 2
+    "const suite = \"the tally\";", // 3
+    "describe(`[SCN-API-001] ${suite}`, () => {", // 4
+    '  it("counts", () => {', // 5
+    "    expect(tally()).toBe(1);", // 6
+    "  });", // 7
+    "});", // 8
+  ].join("\n");
+
+  const quotedBraceTitle = [
+    'describe("[SCN-RMG-001] planKeptRun: the paths from { storeRoot, target, runId }", () => {', // 1
+    '  it("nests the run dir", () => {', // 2
+    "    expect(planKeptRun(input).runDir).toBe(expected);", // 3
+    "  });", // 4
+    "});", // 5
+  ].join("\n");
+
+  it("keeps the describe open past a template-literal interpolation in its title", () => {
+    const blocks = parseTestBlocks(templateLiteralTitle);
+
+    const describeBlock = blocks.find((b) => b.startLine === 4);
+    // Counting raw characters closed this block on line 4: the `${` and `}` of the
+    // interpolation net out before the arrow's `{` ever opens the body.
+    expect(describeBlock?.endLine).toBe(8);
+    expect(describeBlock?.isLeaf).toBe(false);
+  });
+
+  it("reads the it beneath a template-literal-titled describe as carrying the describe's cite", () => {
+    const countsBlock = parseTestBlocks(templateLiteralTitle).find((b) => b.title === "counts");
+
+    expect(countsBlock?.citedCodes).toEqual(["SCN-API-001"]);
+    expect(countsBlock?.chain).toEqual(["[SCN-API-001] ${suite}", "counts"]);
+  });
+
+  it("does the same for a plain-quoted title that names an object shape", () => {
+    // Not a hypothetical form: this is keptRun.test.ts's real title, and its three
+    // its were parsing as uncited top-level blocks before this fix.
+    const blocks = parseTestBlocks(quotedBraceTitle);
+
+    const describeBlock = blocks[0];
+    expect(describeBlock?.endLine).toBe(5);
+    expect(describeBlock?.isLeaf).toBe(false);
+
+    const nestsBlock = blocks.find((b) => b.title === "nests the run dir");
+    expect(nestsBlock?.citedCodes).toEqual(["SCN-RMG-001"]);
+  });
+
+  it("reports no uncited block when the touched it sits under a brace-titled cited describe", () => {
+    // The whole point at the gate's boundary: touching lines 5-7 (the `it`) must not
+    // be read as a violation, because the cite is one line above the it's own.
+    const result = attributeChangedBlockCites(templateLiteralTitle, [5, 6, 7]);
+
+    expect(result.uncitedBlocks).toEqual([]);
+    expect(result.citedCodes).toEqual(["SCN-API-001"]);
+  });
+
+  it("still reds a touched block whose brace-titled ancestor carries no cite — SSM-005's teeth intact", () => {
+    const uncitedAncestor = [
+      "describe(`${suite} the doubling`, () => {", // 1
+      '  it("doubles the tally", () => {', // 2
+      "    expect(doubled()).toBe(2);", // 3
+      "  });", // 4
+      "});", // 5
+    ].join("\n");
+
+    // Finding the ancestor chain is not the same as excusing it. An open-but-uncited
+    // describe still leaves its it with an empty chain, which is the violation.
+    const result = attributeChangedBlockCites(uncitedAncestor, [2, 3, 4]);
+
+    expect(result.uncitedBlocks).toEqual(["${suite} the doubling > doubles the tally"]);
+    expect(result.citedCodes).toEqual([]);
   });
 });

@@ -81,11 +81,6 @@ const OWN_STATIC_CHECK = "lint:scn-subissues";
 /** The guard-prefix set the balance CLI SETS at its edge and injects into the core. */
 const GUARD_PREFIXES = ["lint:", "guard:"] as const;
 
-// The title is a PLAIN string, not a template literal: `parseTestBlocks` brace-tracks to find
-// where a block closes, and a `${…}` interpolation's own closing brace pops the block on its
-// opening line — so every `it` beneath it reads as an UNCITED top-level block and the cite
-// convention (cite the describe, the its inherit) silently stops holding. Observed on this very
-// block during 3F-2366; it did not red only because this PR's unit-equivalent surface is inert.
 describe("[SCN-SSM-006] lint:scn-subissues is reconciled on spec-controller's own Ledger", () => {
   const ciSource = readRepoFile(".github/workflows/ci.yml");
   const packageJson = JSON.parse(readRepoFile("package.json")) as { scripts?: Record<string, string> };

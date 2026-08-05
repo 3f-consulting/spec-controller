@@ -10,9 +10,6 @@
  * The exclusions each get their own case rather than one combined "does not flag", because
  * they are excluded for DIFFERENT reasons and a single assertion would keep passing if two
  * of them collapsed into the third.
- *
- * Titles are PLAIN strings, not template literals (the parseTestBlocks brace-tracking
- * lesson, 3F-2366).
  */
 
 import { describe, it, expect } from "vitest";

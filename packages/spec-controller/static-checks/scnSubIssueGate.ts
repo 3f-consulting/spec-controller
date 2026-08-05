@@ -36,6 +36,8 @@
  * spec-controller parent 3F-1137 (port + fork-exemption design, endorsed 2026-07-09).
  */
 
+import { isQuotedStringLiteralLine, structuralBraces } from "./testSourceLexer.js";
+
 /** The recognised exemption reasons (enumerated; a missing/unknown reason reds). */
 export const EXEMPTION_REASONS = ["renumber", "regression", "evidence-§8A"] as const;
 export type ExemptionReason = (typeof EXEMPTION_REASONS)[number];
@@ -438,16 +440,6 @@ export function detectDeletedCodes(diff: string): string[] {
 }
 
 /**
- * Is a line's content (after the diff marker) a QUOTED string literal in code
- * position? The gate's own fixtures embed describe/it-of-diff strings as test
- * data; excluding these keeps the scanner from over-firing on its own fixtures.
- */
-function isQuotedStringLiteralLine(body: string): boolean {
-  const t = body.trim();
-  return t.startsWith('"') || t.startsWith("'") || t.startsWith("`");
-}
-
-/**
  * Scan the FULL CHECKED-OUT SOURCE of a `*.test.ts` file for the
  * `@SCN-<FFF>-<NNN>` ids its Vitest `describe(...)` / `it(...)` strings cite (the
  * bidirectional-link rule). Both `@SCN-…` and bare `[SCN-…]` forms register.
@@ -548,9 +540,12 @@ export function parseTestBlocks(source: string): TestBlock[] {
       }
     }
 
-    // Brace-track to find where each block closes. Counting braces on the line the
-    // block opened on is correct: its own `(... , () => {` nets +1.
-    for (const ch of line) {
+    // Brace-track to find where each block closes, over the braces that nest CODE
+    // (`testSourceLexer`) rather than every character. A block's opening line nets +1
+    // from its own `(... , () => {` — but only once the braces inside the TITLE are
+    // out of the count, or a `${…}` interpolation closes the block where it opened
+    // and the `it`s beneath lose the cite they inherit (3F-2367).
+    for (const ch of structuralBraces(line)) {
       if (ch === "{") depth += 1;
       else if (ch === "}") {
         depth -= 1;

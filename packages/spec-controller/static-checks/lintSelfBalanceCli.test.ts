@@ -18,11 +18,6 @@
  * @integration arm's (tests/steps/selfReconciliation.steps.ts), which runs the real
  * guard end-to-end over two planted trees. Asserting a verdict here would only re-run
  * the reconciler in isolation.
- *
- * Titles are PLAIN strings, not template literals: `parseTestBlocks` brace-tracks to find
- * where a block closes, and a `${…}` interpolation's own closing brace pops the block on
- * its opening line, so every `it` beneath reads as an UNCITED top-level block (observed
- * on 3F-2366).
  */
 
 import { describe, it, expect } from "vitest";

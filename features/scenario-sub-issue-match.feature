@@ -138,3 +138,38 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
       When spec-controller's own tree is reconciled
       Then the check's run is credited to the scenario that names it
       And no static check run is left uncited on the suspense scenario
+
+  Rule: a describe whose title carries braces stays open over the its beneath it
+
+    A PARSER FAULT WEARING THE COSTUME OF A VIOLATION. Block nesting is found by
+    counting braces, and the count reads the whole line — including the braces
+    inside the title string itself. The parser's own note says why that was
+    thought safe: a block's opening line "nets +1" from its `() => {`. It does,
+    until the title carries braces of its own. A template-literal title with an
+    interpolation puts `{`, `}` on the line BEFORE the arrow's `{`, so the count
+    returns to the enclosing depth and the block is closed on the very line it
+    opened; a plain-quoted title naming an object shape does the same.
+
+    Everything beneath then parses as a top-level block with an empty ancestor
+    chain, so the describe's @SCN never reaches its `it`s and a properly cited
+    test is reported as uncited. That is the gate's teeth pointed at a compliant
+    author — the failure mode most likely to get a gate switched off. It is live
+    in this tree today (a describe naming `{ storeRoot, target, runId }` over
+    three `it`s), and masked only while a feature @SCN delta routes the decision
+    down the other arm; under the self-reconciliation CI gate the false row reds
+    a valid build.
+
+    Braces inside a string are not block structure. The line is read as a lexer
+    rather than counted as characters — a `{` or `}` inside a quoted string, a
+    template literal, or a `${…}` interpolation nests nothing — so the describe
+    stays open across its children and the its beneath inherit its cite.
+
+    WHAT THIS ASSERTS THAT SSM-005 DOES NOT. SSM-005 pins that a cite INHERITS
+    down an ancestor chain the parser found; this pins that the chain is found at
+    all. The inheritance rule is worth nothing if the ancestor was never open.
+
+    @unit @integration @SCN-SSM-007
+    Scenario: an it beneath a brace-titled cited describe reads as cited
+      Given a PR touching an it beneath a cited describe whose title literal carries braces, on a branch carrying a 3F ticket handle
+      When the scenario sub-issue gate runs over the brace-titled fixture PR
+      Then the gate passes and exits 0, the it having inherited the describe's cite
