@@ -31,19 +31,30 @@ pnpm install --frozen-lockfile
 pnpm verify
 ```
 
-`pnpm verify` (`scripts/verify.sh`) runs every gate ci.yml runs except the one named
-below, in ci.yml's order, stopping at the first red and naming the gate that died. Read
-the script's header for why the order is load-bearing; do not reproduce the gate list
-here — the script is the list. This document used
-to list five of them and claim CI ran the same steps — CI ran thirteen, so an
-implementer who followed it correctly still skipped `lint:complexity`, and a red build
-was reported green (3F-2402). A hand-copied list drifts every time a gate is added; a
-command cannot.
+`pnpm verify` (`scripts/verify.sh`) runs every gate ci.yml runs except the ones it names
+as it goes, in ci.yml's order and on ci.yml's own command lines, stopping at the first red
+and naming the gate that died. Read the script's header for why both the order and the
+command strings are load-bearing.
 
-**The one gate `pnpm verify` leaves out is `lint:scn-subissues`**, which reconciles the
-pull request's diff against its ticket. It reads `GITHUB_BASE_SHA` / `GITHUB_HEAD_REF`
-and has no answer outside a PR context, so it is CI-only by construction and runs on
-your PR rather than on your machine. Nothing else is excluded.
+**Nobody maintains that list, including this document.** The gates are *derived* from
+`.github/workflows/ci.yml` on every run: each `run:` step invoking a `package.json` script
+becomes a local gate (3F-2444). A step added to CI is gated locally with no edit here and
+none to the script.
+
+That is the second attempt at this. This document once listed five gates and said CI ran
+the same steps — CI ran thirteen, so an implementer who followed it correctly still skipped
+`lint:complexity`, and a red build was reported green (3F-2402). 3F-2420 replaced the prose
+list with a list inside the script, which then drifted the same way: `lint:anemic-domain`
+arrived with a CI step and no gate line, leaving `pnpm verify` a proper subset of CI for four
+commits. A hand-maintained list drifts wherever it is kept; a derivation has nothing to keep.
+
+**What `pnpm verify` leaves out, it prints** — the step and the reason, every run, rather
+than in prose somebody has to keep true. Today that is `lint:scn-subissues`, which
+reconciles the pull request's diff against its ticket: it reads `GITHUB_BASE_SHA` /
+`GITHUB_HEAD_REF` and has no answer outside a PR context, so it runs on your PR rather than
+on your machine. An exclusion excusing a step CI no longer runs reds the ladder.
+
+`bash scripts/verify.sh --list` prints the gates without running them.
 
 ## Reports live outside the repo
 

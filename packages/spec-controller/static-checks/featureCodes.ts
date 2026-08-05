@@ -60,6 +60,12 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     note: "the spec-controller balance command runs standalone (core + app, no engine) and emits the Evidence Reconciliation",
   },
   {
+    code: "LAD",
+    slug: "local-ladder",
+    status: "feature-code-used",
+    note: "the local green-check's gate list, derived from ci.yml rather than typed beside it — pnpm verify runs every CI script step, in CI's order, on CI's command line, so the ladder cannot silently narrow the way it did between 1f7977f and 3F-2444",
+  },
+  {
     code: "LDG",
     slug: "ledger",
     status: "feature-code-used",

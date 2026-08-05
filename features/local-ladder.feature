@@ -1,0 +1,80 @@
+@LAD
+Feature: The local green-check runs the ladder CI runs, derived rather than listed
+
+  `pnpm verify` is this repository's single local green-check (3F-2420). It was built
+  because CONTRIBUTING.md listed five gates while CI ran thirteen, and an implementer
+  who followed that document CORRECTLY still shipped a red — "a green-check assembled
+  by hand from prose is a green-check that silently narrows".
+
+  THE SAME FAILURE RECURRED ONE LAYER IN. The list moved out of prose and into a
+  script, and the script still drifted by hand: lint:anemic-domain landed with a CI
+  step and no matching gate line, so pnpm verify has been a proper SUBSET of CI ever
+  since. Moving a hand-maintained list somewhere tidier does not stop it being
+  hand-maintained.
+
+  SO THE LADDER IS DERIVED, NOT LISTED. Every ci.yml run: step that invokes a
+  package.json script is a gate, in ci.yml's order, running ci.yml's command verbatim.
+  A gate cannot be forgotten, because nobody adds one. The order is not a convenience:
+  lint:self-balance reconciles this repository against the two JSON reports test and
+  cucumber emit, so both must run ahead of it and must write the paths ci.yml writes.
+  Carrying the command string rather than re-typing it is what holds those paths
+  together — a check reconciling gate NAMES would green while a flag drifted.
+
+  WHAT IS LEFT OUT MUST SAY WHY, AND THE REASON MUST STILL HOLD. Naming the omission
+  out loud was already the header's rule; it moves from a comment into a value the
+  emitter prints. An exclusion whose script CI no longer runs reds as stale — the
+  ratchet shape lint:complexity-exceptions and lint:exempt-data-floor already use.
+
+  WHAT A GREEN HERE DOES NOT ESTABLISH. That the ladder is SUFFICIENT — it says the
+  local ladder is CI's ladder, and whether CI's ladder is the right one is a separate
+  judgement this makes no claim about. And one hand-maintained artefact survives on
+  purpose: the exclusion list. Adding to it narrows the local ladder deliberately,
+  with a written reason, in a reviewed diff — a decision, not drift. It never narrows
+  CI, so a gate it dodges still reds on the pull request. Fencing that too would be
+  mechanism for a case nobody has hit.
+
+  Rule: every CI step that invokes a package.json script is a local gate
+
+    @unit @integration @SCN-LAD-001
+    Scenario: the ladder is every CI script step, in ci.yml's order
+      Given a CI config whose steps invoke three package.json scripts in a fixed order
+      When the local ladder is derived from it
+      Then the ladder gates exactly those three scripts, in the CI config's order
+
+    @unit @SCN-LAD-002
+    Scenario: a gate runs CI's command verbatim, flags and report paths included
+      Given a CI config whose test step carries reporter flags and a report path
+      When the local ladder is derived from it
+      Then the gate's command is the CI step's command, character for character
+      And a step spanning lines or invoking two scripts is named unsupported, never dropped
+
+    @unit @SCN-LAD-003
+    Scenario: a CI step invoking no package.json script is not a gate
+      Given a CI config that installs dependencies and enables corepack before its gates
+      When the local ladder is derived from it
+      Then neither setup step is a gate, and neither is recorded as an exclusion
+
+  Rule: a step left out of the local ladder names why, and the reason must still hold
+
+    @unit @integration @SCN-LAD-004
+    Scenario: a named CI-only step is not a gate, and its reason is printed
+      Given a CI config running a step this repository excludes from the local ladder
+      When the local ladder is built over it
+      Then the excluded step is not a gate
+      And the ladder names it, with the reason it cannot run locally
+
+    @unit @integration @SCN-LAD-005
+    Scenario: an exclusion naming a script CI does not run reds as stale
+      Given a CI config that no longer runs the step the exclusion excuses
+      When the local ladder is built over it
+      Then the ladder reds, naming the stale entry
+
+  Rule: the derived ladder holds over the real repository
+
+    @integration @SCN-LAD-006
+    Scenario: pnpm verify lists every CI script but the named exclusion, lint:anemic-domain among them
+      Given the real spec-controller repository
+      When the local green-check lists the ladder it would run
+      Then it lists every script the real CI runs but the one named exclusion, in CI's order
+      And lint:anemic-domain is one of them
+      And the count it reports is the number of gates it listed

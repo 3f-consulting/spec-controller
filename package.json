@@ -11,6 +11,7 @@
   "packageManager": "pnpm@11.2.2",
   "scripts": {
     "verify": "bash scripts/verify.sh",
+    "ladder": "tsx packages/spec-controller/static-checks/localLadderCli.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "mutation": "stryker run",
