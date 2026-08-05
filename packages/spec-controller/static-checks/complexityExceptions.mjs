@@ -16,9 +16,12 @@
  * ceiling that quietly stops descending. Do not read the current state as the finished mechanism.
  *
  * HOW THESE WERE MEASURED, AND HOW TO RE-MEASURE. eslint's own `ESLint` API at the bare standard
- * (10 / 40 / 400) with `skipBlankLines: false, skipComments: false`, over the same scope globs the
- * config uses, and NEVER a hand-rolled line or complexity counter — a second counter would agree with
- * eslint by coincidence and drift the moment either changed.
+ * (10 / 40 / 400) with `skipBlankLines: true, skipComments: true` — CODE lines, per 3F-2395 — over
+ * the same scope globs the config uses, and NEVER a hand-rolled line or complexity counter: a second
+ * counter would agree with eslint by coincidence and drift the moment either changed. The counting
+ * mode is not a detail of how these were taken; it is part of what every number here MEANS, and
+ * changing it changes all of them at once. The one command that re-measures correctly is
+ * `pnpm lint:complexity-exceptions`, which reads the mode out of the config rather than restating it.
  *
  * The parse is PER RULE, because the three rules do not report uniformly: `max-lines` and
  * `max-lines-per-function` emit "too many lines (575)", while `complexity` emits "has a complexity of
@@ -39,54 +42,53 @@
  * @SCN. Written here because a gate that certifies more than it checks is the failure 3F-2286 exists
  * to remove, and an unstated residual is how one gets built.
  *
- * Measured 2026-08-02: **43 entries across 25 files** (8 test) — max-lines 15,
- * max-lines-per-function 16, complexity 12. The production files here are the domain core
- * (markdown.ts 1024 lines, vocabAudit.ts complexity 25, evidenceReconciliation.ts's 230-line reconcile),
- * so the list doubles as a refactor backlog — which is what visible debt should look like.
+ * Re-measured 2026-08-05 in CODE lines (3F-2395): **31 entries across 18 files** (5 test) —
+ * max-lines 8, max-lines-per-function 11, complexity 12. Down from 42 across 24 files: eleven
+ * entries went because their files are no longer over the standard once documentation stops counting
+ * (ledger.ts 575, qualityCheckReconciliation.ts 543, cli-balance/cli.ts 524, evidenceReconciliation.ts
+ * 505 on max-lines among them), and every surviving line-rule value banked down — the largest fall
+ * being cli-balance/cli.ts's max-lines-per-function, 261 → 95. All twelve `complexity` values are
+ * untouched by construction: that rule counts decision points, not lines. Which is why entries keep
+ * their original `since` where the value did not move — a date records when a number was measured,
+ * not when the file was last read.
+ *
+ * The production files that remain are the domain core (markdown.ts, vocabAudit.ts's complexity 25,
+ * evidenceReconciliation.ts's 107-line reconcile), so the list still doubles as a refactor backlog —
+ * a shorter and more honest one, now that it names files carrying too much CODE rather than files
+ * carrying explanation.
  *
  * @type {readonly import("./complexityExceptions.d.mts").ComplexityException[]}
  */
 export const COMPLEXITY_EXCEPTIONS = [
-  { path: "packages/core/src/assemble/renderInput.test.ts",                rule: "max-lines",              value:  951, since: "2026-08-05" },
-  { path: "packages/core/src/domain/evidenceReconciliation.test.ts",       rule: "max-lines",              value: 1558, since: "2026-08-05" },
-  { path: "packages/core/src/domain/evidenceReconciliation.ts",            rule: "complexity",             value:   21, since: "2026-08-02" },
-  { path: "packages/core/src/domain/evidenceReconciliation.ts",            rule: "max-lines",              value:  505, since: "2026-08-05" },
-  { path: "packages/core/src/domain/evidenceReconciliation.ts",            rule: "max-lines-per-function", value:  225, since: "2026-08-05" },
-  { path: "packages/core/src/domain/isBalanced.test.ts",                   rule: "max-lines",              value:  423, since: "2026-08-02" },
-  { path: "packages/core/src/domain/ledger.ts",                            rule: "max-lines",              value:  575, since: "2026-08-02" },
-  { path: "packages/core/src/domain/ledger.ts",                            rule: "max-lines-per-function", value:   98, since: "2026-08-02" },
-  { path: "packages/core/src/domain/qualityCheckReconciliation.ts",        rule: "complexity",             value:   11, since: "2026-08-02" },
-  { path: "packages/core/src/domain/qualityCheckReconciliation.ts",        rule: "max-lines",              value:  543, since: "2026-08-05" },
-  { path: "packages/core/src/domain/qualityCheckReconciliation.ts",        rule: "max-lines-per-function", value:   80, since: "2026-08-02" },
-  { path: "packages/core/src/parse/cucumber.ts",                           rule: "complexity",             value:   16, since: "2026-08-02" },
-  { path: "packages/core/src/parse/cucumber.ts",                           rule: "max-lines-per-function", value:   77, since: "2026-08-05" },
-  { path: "packages/core/src/parse/scenarios.test.ts",                     rule: "max-lines",              value:  821, since: "2026-08-02" },
-  { path: "packages/core/src/parse/scenarios.ts",                          rule: "complexity",             value:   11, since: "2026-08-02" },
-  { path: "packages/core/src/parse/scenarios.ts",                          rule: "max-lines-per-function", value:   62, since: "2026-08-02" },
-  { path: "packages/core/src/parse/vitest.ts",                             rule: "complexity",             value:   15, since: "2026-08-02" },
-  { path: "packages/core/src/parse/vitest.ts",                             rule: "max-lines-per-function", value:   65, since: "2026-08-02" },
-  { path: "packages/core/src/render/json.test.ts",                         rule: "max-lines",              value:  441, since: "2026-08-02" },
-  { path: "packages/core/src/render/markdown.test.ts",                     rule: "max-lines",              value: 2404, since: "2026-08-05" },
-  { path: "packages/core/src/render/markdown.ts",                          rule: "complexity",             value:   13, since: "2026-08-02" },
-  { path: "packages/core/src/render/markdown.ts",                          rule: "max-lines",              value: 1016, since: "2026-08-05" },
-  { path: "packages/core/src/render/markdown.ts",                          rule: "max-lines-per-function", value:  101, since: "2026-08-02" },
-  { path: "packages/spec-controller/src/cli-balance/cli.test.ts",          rule: "max-lines",              value:  570, since: "2026-08-02" },
-  { path: "packages/spec-controller/src/cli-balance/cli.ts",               rule: "complexity",             value:   18, since: "2026-08-02" },
-  { path: "packages/spec-controller/src/cli-balance/cli.ts",               rule: "max-lines",              value:  524, since: "2026-08-02" },
-  { path: "packages/spec-controller/src/cli-balance/cli.ts",               rule: "max-lines-per-function", value:  261, since: "2026-08-02" },
-  { path: "packages/spec-controller/src/cli-balance/emit/format.ts",       rule: "max-lines-per-function", value:   57, since: "2026-08-02" },
-  { path: "packages/spec-controller/src/cli.ts",                           rule: "max-lines-per-function", value:   52, since: "2026-08-02" },
-  { path: "packages/spec-controller/src/ingest/ingestQualityChecks.ts",    rule: "max-lines-per-function", value:   70, since: "2026-08-02" },
-  { path: "packages/spec-controller/src/ingest/ingestScenarios.ts",        rule: "complexity",             value:   12, since: "2026-08-02" },
-  { path: "packages/spec-controller/static-checks/featureCodes.ts",        rule: "complexity",             value:   17, since: "2026-08-02" },
-  { path: "packages/spec-controller/static-checks/featureCodes.ts",        rule: "max-lines-per-function", value:   86, since: "2026-08-02" },
-  { path: "packages/spec-controller/static-checks/lintScnSubIssuesCli.ts", rule: "complexity",             value:   12, since: "2026-08-02" },
-  { path: "packages/spec-controller/static-checks/lintScnSubIssuesCli.ts", rule: "max-lines-per-function", value:   73, since: "2026-08-02" },
-  { path: "packages/spec-controller/static-checks/scnSubIssueGate.ts",     rule: "complexity",             value:   17, since: "2026-08-02" },
-  { path: "packages/spec-controller/static-checks/scnSubIssueGate.ts",     rule: "max-lines",              value:  728, since: "2026-08-02" },
-  { path: "packages/spec-controller/static-checks/scnSubIssueGate.ts",     rule: "max-lines-per-function", value:  110, since: "2026-08-02" },
-  { path: "packages/spec-controller/static-checks/vocabAudit.test.ts",     rule: "max-lines",              value:  797, since: "2026-08-04" },
-  { path: "packages/spec-controller/static-checks/vocabAudit.ts",          rule: "complexity",             value:   25, since: "2026-08-02" },
-  { path: "packages/spec-controller/static-checks/vocabAudit.ts",          rule: "max-lines",              value:  765, since: "2026-08-05" },
-  { path: "packages/spec-controller/static-checks/vocabAudit.ts",          rule: "max-lines-per-function", value:  115, since: "2026-08-02" },
+  { path: "packages/core/src/assemble/renderInput.test.ts",                 rule: "max-lines",               value:  627, since: "2026-08-05" },
+  { path: "packages/core/src/domain/evidenceReconciliation.test.ts",        rule: "max-lines",               value:  986, since: "2026-08-05" },
+  { path: "packages/core/src/domain/evidenceReconciliation.ts",             rule: "complexity",              value:   21, since: "2026-08-02" },
+  { path: "packages/core/src/domain/evidenceReconciliation.ts",             rule: "max-lines-per-function",  value:  107, since: "2026-08-05" },
+  { path: "packages/core/src/domain/ledger.ts",                             rule: "max-lines-per-function",  value:   53, since: "2026-08-05" },
+  { path: "packages/core/src/domain/qualityCheckReconciliation.ts",         rule: "complexity",              value:   11, since: "2026-08-02" },
+  { path: "packages/core/src/domain/qualityCheckReconciliation.ts",         rule: "max-lines-per-function",  value:   48, since: "2026-08-05" },
+  { path: "packages/core/src/parse/cucumber.ts",                            rule: "complexity",              value:   16, since: "2026-08-02" },
+  { path: "packages/core/src/parse/cucumber.ts",                            rule: "max-lines-per-function",  value:   42, since: "2026-08-05" },
+  { path: "packages/core/src/parse/scenarios.test.ts",                      rule: "max-lines",               value:  450, since: "2026-08-05" },
+  { path: "packages/core/src/parse/scenarios.ts",                           rule: "complexity",              value:   11, since: "2026-08-02" },
+  { path: "packages/core/src/parse/scenarios.ts",                           rule: "max-lines-per-function",  value:   44, since: "2026-08-05" },
+  { path: "packages/core/src/parse/vitest.ts",                              rule: "complexity",              value:   15, since: "2026-08-02" },
+  { path: "packages/core/src/render/markdown.test.ts",                      rule: "max-lines",               value: 1341, since: "2026-08-05" },
+  { path: "packages/core/src/render/markdown.ts",                           rule: "complexity",              value:   13, since: "2026-08-02" },
+  { path: "packages/core/src/render/markdown.ts",                           rule: "max-lines",               value:  458, since: "2026-08-05" },
+  { path: "packages/core/src/render/markdown.ts",                           rule: "max-lines-per-function",  value:   75, since: "2026-08-05" },
+  { path: "packages/spec-controller/src/cli-balance/cli.ts",                rule: "complexity",              value:   18, since: "2026-08-02" },
+  { path: "packages/spec-controller/src/cli-balance/cli.ts",                rule: "max-lines-per-function",  value:   95, since: "2026-08-05" },
+  { path: "packages/spec-controller/src/ingest/ingestScenarios.ts",         rule: "complexity",              value:   12, since: "2026-08-02" },
+  { path: "packages/spec-controller/static-checks/featureCodes.ts",         rule: "complexity",              value:   17, since: "2026-08-02" },
+  { path: "packages/spec-controller/static-checks/featureCodes.ts",         rule: "max-lines-per-function",  value:   76, since: "2026-08-05" },
+  { path: "packages/spec-controller/static-checks/lintScnSubIssuesCli.ts",  rule: "complexity",              value:   12, since: "2026-08-02" },
+  { path: "packages/spec-controller/static-checks/lintScnSubIssuesCli.ts",  rule: "max-lines-per-function",  value:   59, since: "2026-08-05" },
+  { path: "packages/spec-controller/static-checks/scnSubIssueGate.ts",      rule: "complexity",              value:   17, since: "2026-08-02" },
+  { path: "packages/spec-controller/static-checks/scnSubIssueGate.ts",      rule: "max-lines",               value:  440, since: "2026-08-05" },
+  { path: "packages/spec-controller/static-checks/scnSubIssueGate.ts",      rule: "max-lines-per-function",  value:   93, since: "2026-08-05" },
+  { path: "packages/spec-controller/static-checks/vocabAudit.test.ts",      rule: "max-lines",               value:  560, since: "2026-08-05" },
+  { path: "packages/spec-controller/static-checks/vocabAudit.ts",           rule: "complexity",              value:   25, since: "2026-08-02" },
+  { path: "packages/spec-controller/static-checks/vocabAudit.ts",           rule: "max-lines",               value:  508, since: "2026-08-05" },
+  { path: "packages/spec-controller/static-checks/vocabAudit.ts",           rule: "max-lines-per-function",  value:  107, since: "2026-08-05" },
 ];

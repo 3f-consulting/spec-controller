@@ -64,9 +64,35 @@ const functionOfComplexity = (branches: number): string =>
 const functionOfLines = (lines: number): string =>
   `export function planted() {\n${"  void 0;\n".repeat(lines - 2)}}\n`;
 
-/** A module spanning exactly `lines` lines and containing no function at all. */
+/**
+ * A module spanning exactly `lines` CODE lines and containing no function at all.
+ *
+ * The filler is CODE, not comments, and that is load-bearing rather than incidental (3F-2395). Both
+ * line rules skip comments and blank lines, so a module of `// filler` measures 1 however long it is
+ * and every `max-lines` plant below stops planting anything.
+ *
+ * That failure is LOUD, and it is loud because of `redsOutsideButNotInside`'s pairing rather than by
+ * luck: its "must red outside the list" half fails on a plant that no longer exceeds anything, so
+ * @SCN-CPX-001 and @SCN-CPX-002 both red and name the file. Verified by reverting this helper to the
+ * comment filler on 3F-2438 — 2 scenarios red, both on that half. Had only the "must NOT red inside
+ * the list" half existed, the same dead plant would have passed and proven nothing, which is what
+ * the pairing is for.
+ */
 const moduleOfLines = (lines: number): string =>
-  `${"// filler\n".repeat(lines - 1)}export const x = 1;\n`;
+  `${Array.from({ length: lines }, (_, i) => `export const x${i} = ${i};`).join("\n")}\n`;
+
+/**
+ * A module spanning `lines` lines of which exactly ONE is code — the rest documentation and blank.
+ *
+ * The counterpart to `moduleOfLines`, and the pair is the point: the two plants differ only in what
+ * their lines ARE, so the gate's answer to them is attributable to the counting mode and to nothing
+ * else. Blank lines are mixed in rather than left out because `skipBlankLines` rides alongside
+ * `skipComments` and would otherwise go unexercised.
+ */
+const moduleOfDocumentation = (lines: number): string =>
+  `${Array.from({ length: lines - 1 }, (_, i) => (i % 4 === 3 ? "" : `// line ${i}`)).join(
+    "\n",
+  )}\nexport const documented = 1;\n`;
 
 /** The first file the list exempts from `rule` — read from the list, never named here. */
 const exemptPathFor = (rule: ExceptionRule): string => {
@@ -136,15 +162,30 @@ Then("a function over complexity 10 outside the exception list reds", async func
   await redsOutsideButNotInside(functionOfComplexity(STANDARD.complexity), "complexity");
 });
 
-Then("a function over 40 lines outside the exception list reds", async function () {
+Then("a function over 40 code lines outside the exception list reds", async function () {
   await redsOutsideButNotInside(
     functionOfLines(STANDARD.maxLinesPerFunction + 1),
     "max-lines-per-function",
   );
 });
 
-Then("a module over 400 lines outside the exception list reds", async function () {
+Then("a module over 400 code lines outside the exception list reds", async function () {
   await redsOutsideButNotInside(moduleOfLines(STANDARD.maxLines + 1), "max-lines");
+});
+
+Then("a module of pure documentation past the file ceiling does not red", async function () {
+  // The permitting half (3F-2395). Planted at THREE TIMES the ceiling and against the same unexempt
+  // path the reding plants use, so a pass cannot be explained by the module being short or the file
+  // being exempt — the only thing separating this plant from the one above is what its lines ARE.
+  const source = moduleOfDocumentation(STANDARD.maxLines * 3);
+  const findings = await lintAs(source, UNEXEMPT_PATH);
+  assert.ok(
+    !findings.includes("max-lines"),
+    `a module of ${STANDARD.maxLines * 3} lines carrying one line of code must NOT red against ` +
+      `\`max-lines\` — explaining the code is free, growing it is not (found: ${
+        findings.join(", ") || "none"
+      })`,
+  );
 });
 
 // @SCN-CPX-002

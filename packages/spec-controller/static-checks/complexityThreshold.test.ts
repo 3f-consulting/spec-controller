@@ -233,21 +233,26 @@ describe("[SCN-CPX-002] an exempt file that grows past its recorded value reds t
   it("[SCN-CPX-002] both line rules are emitted as an options object carrying the ceiling as `max`", () => {
     expect(emit("max-lines", 510)).toEqual([
       "error",
-      { max: 510, skipBlankLines: false, skipComments: false },
+      { max: 510, skipBlankLines: true, skipComments: true },
     ]);
     expect(emit("max-lines-per-function", 44)).toEqual([
       "error",
-      { max: 44, skipBlankLines: false, skipComments: false },
+      { max: 44, skipBlankLines: true, skipComments: true },
     ]);
   });
 
-  it("[SCN-CPX-002] every emitted line rule counts blank lines and comments — the mode the values were measured in", () => {
-    // Not a default worth leaving implicit. Every recorded value was measured with both false, and
-    // any other mode changes every number in the debt list at once and in silence.
+  it("[SCN-CPX-002] every emitted line rule counts CODE lines — documentation does not count against the ceiling", () => {
+    // FIX-TO-CANON (3F-2395, `fitness-functions.md` promoted from an adopter's repository 2026-08-04), not green-by-
+    // erosion. This assertion previously pinned both flags FALSE, which held the file's bytes rather
+    // than its code: the cheapest route under a ceiling was deleting the comment that explains why
+    // the code is the shape it is, so the gate pushed against the thing it exists to protect. The
+    // canon now rules the threshold counts code. Every recorded value in the debt list was re-measured
+    // in this mode in the same commit — any OTHER mode changes every number in the list at once and
+    // in silence, which is why the mode is pinned literally rather than left to eslint's defaults.
     for (const rule of ["max-lines", "max-lines-per-function"] as const) {
       const [, options] = emit(rule, 100) as readonly ["error", Record<string, unknown>];
-      expect(options.skipBlankLines).toBe(false);
-      expect(options.skipComments).toBe(false);
+      expect(options.skipBlankLines).toBe(true);
+      expect(options.skipComments).toBe(true);
     }
   });
 

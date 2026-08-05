@@ -137,10 +137,15 @@ export const TEST_THRESHOLD = {
  * option and applies no ceiling at all, which looks exactly like a file that is under its ceiling.
  * The @unit pin exists for that failure mode specifically, because nothing else would notice it.
  *
- * `skipBlankLines: false, skipComments: false` RIDES ON EVERY EMITTED LINE RULE. Every value in
- * `complexityExceptions.mjs` was measured in that mode; any other mode changes every number in the
- * debt list at once and in silence — a file that fits under 400 counted-without-comments does not
- * fit under 400 counted-with.
+ * `skipBlankLines: true, skipComments: true` RIDES ON EVERY EMITTED LINE RULE (3F-2395). The
+ * threshold holds the CODE a reader must hold in their head, not the file's bytes. Counting
+ * documentation put the cheapest route under a ceiling on DELETING the comment that explains why the
+ * code is the shape it is — a fitness function pushing against what it exists to protect, and one
+ * this tree has already paid (vocabWordSets.ts 443→400, vocabAudit.test.ts 815→797, partly comment
+ * compactions banked as line count). `fitness-functions.md`, the portfolio standard promoted from
+ * an adopter's repository 2026-08-04, rules the counting mode; it is stated here rather than left to eslint's defaults
+ * because every value in `complexityExceptions.mjs` is measured in this mode, and any other mode
+ * changes every number in the debt list at once and in silence.
  *
  * A `"off"` ceiling passes straight through to eslint's own severity vocabulary, so the test scope's
  * `max-lines-per-function` ABSTENTION survives unchanged. Inventing a number for it here would
@@ -152,5 +157,5 @@ export const ruleAtCeiling = (rule, ceiling) => {
   if (ceiling === "off") return "off";
   return rule === "complexity"
     ? ["error", ceiling]
-    : ["error", { max: ceiling, skipBlankLines: false, skipComments: false }];
+    : ["error", { max: ceiling, skipBlankLines: true, skipComments: true }];
 };

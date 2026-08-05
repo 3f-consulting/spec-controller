@@ -42,13 +42,28 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
 
   Rule: code outside the exception list reds when it exceeds the external standard
 
+    THE TWO LINE RULES COUNT CODE, NOT DOCUMENTATION (3F-2395). 40 and 400 are held
+    against the code a reader has to hold in their head, not against the file's bytes:
+    comments and blank lines are skipped. Counting documentation put the cheapest route
+    under a ceiling on DELETING the comment that explains why the code is the shape it
+    is — a fitness function pushing against the thing it exists to protect, and one this
+    tree has already paid (vocabWordSets.ts 443→400, vocabAudit.test.ts 815→797 were
+    partly comment compactions banked as line count). Under this counting the pressure
+    inverts: explaining the code is free, growing the code is not.
+
+    The last example below is the half that pins it, and it is not decoration. A module
+    can now be three times the file ceiling long and still green, provided the length is
+    explanation; the same length in code reds. Both halves are stated, because a rule
+    that only ever shows what it rejects leaves what it permits to be inferred.
+
     @unit @integration @lint=lint:complexity @SCN-CPX-001
     Scenario: a function or module over the external standard reds the build
       Given the thresholds are the external standard, not a measurement of this tree
       When the complexity fitness function scans the real tree
       Then a function over complexity 10 outside the exception list reds
-      And a function over 40 lines outside the exception list reds
-      And a module over 400 lines outside the exception list reds
+      And a function over 40 code lines outside the exception list reds
+      And a module over 400 code lines outside the exception list reds
+      And a module of pure documentation past the file ceiling does not red
 
   Rule: an exempt file reds when it worsens past its recorded value
 

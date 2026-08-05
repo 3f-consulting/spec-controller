@@ -6,6 +6,13 @@
  * `max-lines-per-function`. Deliberately no `recommended` preset and no style rules: the ticket
  * ruled three, and a preset would smuggle in a large ruleset nobody endorsed (`zero-shape`).
  *
+ * THE TWO LINE RULES COUNT CODE, NOT DOCUMENTATION (3F-2395). `skipComments` and `skipBlankLines`
+ * ride on every emitted line rule, so the threshold holds the code a reader must hold in their head.
+ * Counting documentation made the cheapest route under a ceiling DELETING the comment that explains
+ * why the code is the shape it is — the gate pushing against the thing it exists to protect. The mode
+ * is emitted from one place, `ruleAtCeiling`, because a second statement of it would silently
+ * re-measure the whole debt list.
+ *
  * The thresholds are NOT written here — they live in `static-checks/complexityThresholds.mjs`, the one
  * source the @unit pin also reads. See that file for the external sources each number is cited to, and
  * for why nothing measured off this tree may enter it. The exceedances that exist TODAY live in

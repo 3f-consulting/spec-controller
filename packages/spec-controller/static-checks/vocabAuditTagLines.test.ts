@@ -3,7 +3,8 @@
  * (features/vocabulary-audit.feature), which is the surface `scanFile` could not see.
  *
  * WHY THIS IS ITS OWN FILE rather than another block in `vocabAudit.test.ts`. That file
- * carries a `max-lines` exception frozen at 801 (@SCN-CPX-002), and an exception excuses the
+ * carries a `max-lines` exception frozen at its measured code-line count (@SCN-CPX-002), and
+ * an exception excuses the
  * debt already there and buys NOT ONE LINE of headroom — appending here would have redded the
  * reconciliation as a regression. The split is the ratchet doing its job, not a workaround: a
  * new scanning surface earns a file, and the pressure to create one is exactly what a frozen
