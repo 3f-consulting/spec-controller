@@ -38,7 +38,7 @@ describe("[SCN-LNT-001] a @lint scenario whose guard is wired into CI over the r
     const scenarios: Scenario[] = [
       { scnId: "SCN-LNT-001", evidenceObligations: [{ qualityCheck: "lint", staticCheck: REAL_GUARD }] },
     ];
-    const evidenceObservations = checkStaticEvidenceObligations([REAL_GUARD], ciSource, packageJson);
+    const evidenceObservations = checkStaticEvidenceObligations([REAL_GUARD], [ciSource], packageJson);
 
     const balance = reconcile(scenarios, evidenceObservations);
     const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-LNT-001");
@@ -101,7 +101,7 @@ describe("[SCN-LNT-002] a @lint scenario whose guard is fixture-green but not wi
     ];
     // Drive the real DETECTOR over the planted fixture — assert it reads the
     // watermelon precursor (exists, NOT enforced), not a hand-seeded evidenceObservation.
-    const evidenceObservations = checkStaticEvidenceObligations([PLANTED_GUARD], plantedCi, plantedPackageJson);
+    const evidenceObservations = checkStaticEvidenceObligations([PLANTED_GUARD], [plantedCi], plantedPackageJson);
     expect(evidenceObservations).toEqual([
       {
         qualityCheck: "lint", staticCheck: PLANTED_GUARD,
@@ -183,7 +183,7 @@ describe("[SCN-LNT-003] a @lint scenario whose named guard does not exist is rep
     ];
     // Drive the real DETECTOR over the planted fixture — assert it reads the absent
     // static check (exists:false, NOT enforced), not a hand-seeded evidenceObservation.
-    const evidenceObservations = checkStaticEvidenceObligations([ABSENT_GUARD], plantedCi, plantedPackageJson);
+    const evidenceObservations = checkStaticEvidenceObligations([ABSENT_GUARD], [plantedCi], plantedPackageJson);
     expect(evidenceObservations).toEqual([
       {
         qualityCheck: "lint", staticCheck: ABSENT_GUARD,
@@ -282,7 +282,7 @@ describe("[SCN-LNT-004] a scenario requiring both a @unit test and an unwired @l
     // planted-watermelon static check read through the real detector.
     const evidenceObservations: EvidenceObservation[] = [
       { qualityCheck: "unit", scnId: "SCN-LNT-004", status: "passed" },
-      ...checkStaticEvidenceObligations([UNWIRED_GUARD], plantedCi, plantedPackageJson),
+      ...checkStaticEvidenceObligations([UNWIRED_GUARD], [plantedCi], plantedPackageJson),
     ];
 
     const balance = reconcile(scenarios, evidenceObservations);

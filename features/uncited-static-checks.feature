@@ -59,6 +59,56 @@ Feature: Detect uncited static-checks — a CI guard no @lint names
       When the reconciliation report is rendered for the target
       Then the Static checks section reports guard:domain-purity as an uncited static check
 
+  Rule: a static check is observed wherever in the workflows it runs
+
+    BOTH observers read a target's CI from ONE source. A check enforced from a sibling
+    workflow — a nightly sweep, a security scan, an ordinary split of a pipeline — is
+    therefore read as not enforced, and the two axes then fail it in OPPOSITE directions:
+    a NAMED one is accused of being a watermelon it is not, an UNNAMED one leaves the
+    books entirely.
+
+    THE FIRST IS A FALSE ACCUSATION, which is why it leads. An omission under-reports;
+    an invention tells a consultant their client's real, running gate is fabricated. The
+    reconciler's word for a named-but-unenforced check is watermelon, and a check running
+    in nightly.yml earns it today for no reason but where it was written down.
+
+    The plural stops at SOURCES. ciRunCommands takes strings of CI config so a second
+    ecosystem can supply its own; the walk from a directory to those strings is the
+    ingest edge's, which already knows where GitHub keeps workflows and after this knows
+    exactly the same amount.
+
+    @unit @integration @SCN-USG-006
+    Scenario: a named static check enforced from a sibling workflow is satisfied, not a watermelon
+      Given a target whose ci.yml runs no static check and whose nightly.yml runs lint:nightly
+      And an @lint scenario names lint:nightly
+      When the reconciliation report is rendered over the target's workflow directory
+      Then lint:nightly reconciles satisfied, with no watermelon raised against it
+
+    @unit @integration @SCN-USG-007
+    Scenario: an uncited static check running in a sibling workflow is reported uncited
+      Given a target whose nightly.yml runs lint:sweep and whose ci.yml does not
+      And no @lint scenario names lint:sweep
+      When the reconciliation report is rendered over the target's workflow directory
+      Then the Static checks section reports lint:sweep as an uncited static check
+
+  Rule: an explicitly supplied CI file narrows observation to that file
+
+    THE ANSWER TO WIDENING THE DEFAULT. Reading the whole workflow directory by default
+    changes what an existing target's report says without its author asking for it, and
+    the answer given was that the narrowing survives: name one file and you observe one
+    file. An answer nobody tests is a promise.
+
+    Every other scenario here asserts what IS found, so a change making an explicit
+    input sweep its parent directory too would leave all of them green while silently
+    widening a caller's deliberate scope — the direction that produces a surprise red on
+    a client's tree. This is the arm that reds instead.
+
+    @integration @SCN-USG-008
+    Scenario: an explicitly supplied CI file narrows observation to that file alone
+      Given a target whose nightly.yml runs lint:sweep and whose ci.yml does not
+      When the reconciliation report is rendered for that target's ci.yml alone
+      Then lint:sweep is not counted among the running static checks
+
   Rule: a guard:-prefixed CI script an @lint scenario names is attributed, not uncited
 
     @unit @integration @SCN-USG-005

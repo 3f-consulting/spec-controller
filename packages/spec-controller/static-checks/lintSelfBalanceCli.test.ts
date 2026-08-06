@@ -55,7 +55,10 @@ describe("[SCN-SLF-001] the self-balance gate's scan scope is stated, whole, in 
       features: "features",
       vitest: "runs/self-balance/vitest.json",
       cucumber: "runs/self-balance/cucumber.json",
-      ci: ".github/workflows/ci.yml",
+      // The workflow DIRECTORY, not one file (3F-2500): the product's own default reads
+      // every workflow, and a gate that read fewer would be spec-controller declining to
+      // use the capability it ships — the shape @SCN-SLF-002 closed one level down.
+      ci: ".github/workflows",
       packageJson: "package.json",
     });
   });
@@ -82,7 +85,7 @@ describe("[SCN-SLF-001] the self-balance gate's scan scope is stated, whole, in 
       "--cucumber",
       path.join("/tmp/target", "runs/self-balance/cucumber.json"),
       "--ci",
-      path.join("/tmp/target", ".github/workflows/ci.yml"),
+      path.join("/tmp/target", ".github/workflows"),
       "--package-json",
       path.join("/tmp/target", "package.json"),
       "--target",
@@ -101,7 +104,7 @@ describe("[SCN-SLF-001] the self-balance gate's scan scope is stated, whole, in 
     expect(argv).toContain("/elsewhere/vitest.json");
     expect(argv).toContain("/elsewhere/cucumber.json");
     expect(argv).toContain(path.join("/tmp/target", "features"));
-    expect(argv).toContain(path.join("/tmp/target", ".github/workflows/ci.yml"));
+    expect(argv).toContain(path.join("/tmp/target", ".github/workflows"));
     expect(argv).toContain(path.join("/tmp/target", "package.json"));
   });
 });
@@ -139,7 +142,7 @@ describe("[SCN-SLF-001] the gate is reconciled on spec-controller's own Ledger",
   it("exists as a script AND is enforced over real source — it fires, it is not merely present", () => {
     // Exists-without-enforcement is the WATERMELON: a gate present in package.json that no
     // CI step invokes reds nothing while reading as a check. Both halves, or neither.
-    expect(checkStaticEvidenceObligations([OWN_STATIC_CHECK], ciSource, packageJson)).toEqual([
+    expect(checkStaticEvidenceObligations([OWN_STATIC_CHECK], [ciSource], packageJson)).toEqual([
       {
         qualityCheck: "lint",
         staticCheck: OWN_STATIC_CHECK,
@@ -154,7 +157,7 @@ describe("[SCN-SLF-001] the gate is reconciled on spec-controller's own Ledger",
     // runningStaticChecks observes a CI script only when its name carries an observed
     // prefix, so a name outside that set would run in CI while being invisible to
     // spec-controller's own ledger — a real gate kept off the books.
-    const running = runningStaticChecks(ciSource, packageJson, GUARD_PREFIXES).map(
+    const running = runningStaticChecks([ciSource], packageJson, GUARD_PREFIXES).map(
       (observation) => observation.staticCheck,
     );
 

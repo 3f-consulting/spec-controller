@@ -239,7 +239,7 @@ describe("[SCN-CPX-003] the check is observed by the ledger, not kept off the bo
       scripts?: Record<string, string>;
     };
     const ci = readFileSync(`${ROOT}/.github/workflows/ci.yml`, "utf8");
-    const observed = runningStaticChecks(ci, packageJson, [OBSERVED_PREFIX]).map((o) => o.staticCheck);
+    const observed = runningStaticChecks([ci], packageJson, [OBSERVED_PREFIX]).map((o) => o.staticCheck);
     expect(observed).toContain(CHECK_NAME);
   });
 });

@@ -41,7 +41,7 @@ describe("[SCN-USG-001] runningStaticChecks — the running-guard observer (emit
   // run: step invokes). The static analogue of the runner emitting a passing test result.
   it("emits a GuardEvidenceObservation for each lint:* script a CI run step invokes (test / cucumber / install excluded)", () => {
     // test + cucumber are the runtime axis's observed evidence; install is not a script.
-    expect(runningStaticChecks(usgCi, usgPkg, DEFAULT_PREFIXES)).toEqual([
+    expect(runningStaticChecks([usgCi], usgPkg, DEFAULT_PREFIXES)).toEqual([
       { qualityCheck: "lint", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
       { qualityCheck: "lint", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
     ]);
@@ -51,7 +51,7 @@ describe("[SCN-USG-001] runningStaticChecks — the running-guard observer (emit
     const withUnwired: PackageJsonScripts = {
       scripts: { ...usgPkg.scripts, "lint:unwired": "echo unwired" },
     };
-    expect(runningStaticChecks(usgCi, withUnwired, DEFAULT_PREFIXES)).toEqual([
+    expect(runningStaticChecks([usgCi], withUnwired, DEFAULT_PREFIXES)).toEqual([
       { qualityCheck: "lint", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
       { qualityCheck: "lint", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
     ]);
@@ -74,7 +74,7 @@ describe("[SCN-USG-003] non-lint CI steps are not observed as static checks", ()
     ].join("\n");
     // Only lint:foo is a running static check; test + cucumber (the runtime axis's observed
     // evidence) and install (not a script) never enter the observed set.
-    expect(runningStaticChecks(ci2, pkg2, DEFAULT_PREFIXES)).toEqual([
+    expect(runningStaticChecks([ci2], pkg2, DEFAULT_PREFIXES)).toEqual([
       { qualityCheck: "lint", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
     ]);
   });
@@ -105,7 +105,7 @@ describe("[SCN-USG-004] runningStaticChecks observes guard:-prefixed CI scripts 
   ].join("\n");
 
   it("emits a GuardEvidenceObservation for a guard:* script a CI run step invokes", () => {
-    expect(runningStaticChecks(guardCi, guardPkg, DEFAULT_PREFIXES)).toEqual([
+    expect(runningStaticChecks([guardCi], guardPkg, DEFAULT_PREFIXES)).toEqual([
       {
         qualityCheck: "lint",
         staticCheck: "guard:domain-purity",
@@ -133,9 +133,53 @@ describe("[SCN-USG-004] runningStaticChecks observes guard:-prefixed CI scripts 
       "      - run: pnpm test",
       "      - run: pnpm cucumber",
     ].join("\n");
-    expect(runningStaticChecks(mixedCi, mixedPkg, DEFAULT_PREFIXES)).toEqual([
+    expect(runningStaticChecks([mixedCi], mixedPkg, DEFAULT_PREFIXES)).toEqual([
       { qualityCheck: "lint", staticCheck: "guard:domain-purity", exists: true, enforcedOverRealSource: true },
       { qualityCheck: "lint", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
+    ]);
+  });
+});
+
+describe("[SCN-USG-007] a static check running in ANY of a target's workflows is observed", () => {
+  // A pipeline split across files is ordinary — a slow sweep moved off the per-push
+  // ladder, a security scan on its own trigger. The observer reads a LIST of sources
+  // for exactly that reason; reading one document would let a check leave the books by
+  // being written down somewhere else, which since 3F-2306 is a way to make a red go
+  // away without fixing anything.
+  const pkg: PackageJsonScripts = {
+    scripts: { "lint:sweep": "echo sweep", test: "vitest run" },
+  };
+  const ci = ["jobs:", "  ci:", "    steps:", "      - run: pnpm test"].join("\n");
+  const nightly = [
+    "jobs:",
+    "  nightly:",
+    "    steps:",
+    "      - run: pnpm lint:sweep",
+  ].join("\n");
+
+  it("emits the check invoked by the SECOND source, which reading the first alone would miss", () => {
+    expect(runningStaticChecks([ci, nightly], pkg, DEFAULT_PREFIXES)).toEqual([
+      { qualityCheck: "lint", staticCheck: "lint:sweep", exists: true, enforcedOverRealSource: true },
+    ]);
+  });
+
+  it("emits it exactly once when more than one workflow invokes it", () => {
+    // The observation is per CHECK, not per invocation: a check wired into both the
+    // per-push and the nightly pipeline is one running check, and counting it twice
+    // would inflate the running tally the report prints.
+    expect(runningStaticChecks([nightly, nightly], pkg, DEFAULT_PREFIXES)).toEqual([
+      { qualityCheck: "lint", staticCheck: "lint:sweep", exists: true, enforcedOverRealSource: true },
+    ]);
+  });
+
+  it("keeps a malformed workflow from discarding the commands of the ones beside it", () => {
+    // Parse tolerance is PER SOURCE. Joining the sources before parsing would let one
+    // unparseable file hide every other file's checks — a wider watermelon-hiding
+    // surface than the one the fail-safe parse was built to keep narrow.
+    const malformed = "jobs:\n  - this: [is not\n    valid yaml";
+
+    expect(runningStaticChecks([malformed, nightly], pkg, DEFAULT_PREFIXES)).toEqual([
+      { qualityCheck: "lint", staticCheck: "lint:sweep", exists: true, enforcedOverRealSource: true },
     ]);
   });
 });

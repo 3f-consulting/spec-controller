@@ -32,10 +32,16 @@ Feature: spec-controller reconciles its own tree, and the build depends on the a
     there is no second @SCN here.
 
     WHAT THE GATE SCANS is stated once, in `SELF_BALANCE_SCOPE`, and is the whole of it:
-    `features/`, the Vitest report, the Cucumber report, the CI config, `package.json`.
-    Five surfaces resolved against one root — the repository in CI, a planted tree under
-    test. A path reaches the gate only by entering one of the five, which is what makes
-    the boundary deliberate rather than inherited.
+    `features/`, the Vitest report, the Cucumber report, the WORKFLOW DIRECTORY,
+    `package.json`. Five surfaces resolved against one root — the repository in CI, a
+    planted tree under test. A path reaches the gate only by entering one of the five,
+    which is what makes the boundary deliberate rather than inherited.
+
+    THE CI SURFACE IS THE DIRECTORY, NOT ONE FILE (3F-2500). The product's own default
+    reads every workflow, because a check enforced from a sibling file is otherwise
+    called a watermelon it is not, or leaves the books entirely. A gate that read fewer
+    files than the product does would be spec-controller declining to use the capability
+    it ships — the same shape @SCN-SLF-002 closed one level down.
 
     @unit @integration @lint=lint:self-balance @SCN-SLF-001
     Scenario: the self-reconciliation gate reds an out-of-balance tree and passes over a balanced one

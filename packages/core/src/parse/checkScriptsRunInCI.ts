@@ -29,12 +29,12 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 }
 
 /**
- * Every CI `run:` step command, walked STRUCTURALLY from the parsed CI config
- * (jobs → steps → run). A malformed config that fails to parse yields no commands
+ * Every CI `run:` step command of ONE config source, walked STRUCTURALLY from the parsed
+ * document (jobs → steps → run). A malformed config that fails to parse yields no commands
  * — the SAFE direction: it reports static checks as unenforced (flagged), never falsely
  * enforced (hidden).
  */
-export function ciRunCommands(ciSource: string): string[] {
+function runCommandsOf(ciSource: string): string[] {
   let doc: unknown;
   try {
     doc = parse(ciSource);
@@ -53,6 +53,22 @@ export function ciRunCommands(ciSource: string): string[] {
     }
   }
   return commands;
+}
+
+/**
+ * Every CI `run:` step command across ALL of a target's config sources.
+ *
+ * A pipeline split across files — a nightly sweep, a security scan — enforces its checks
+ * just as a single file does, so "does this check run in CI" is a question about the whole
+ * set (3F-2238). Per-source, not joined: parse tolerance stays per document, so one
+ * malformed workflow costs only its own commands instead of discarding every other file's
+ * — joining first would widen the watermelon-hiding surface this parse exists to keep narrow.
+ *
+ * Sources, never paths: the caller reads the files, so no filesystem and no CI-provider
+ * layout enters the core.
+ */
+export function ciRunCommands(ciSources: readonly string[]): string[] {
+  return ciSources.flatMap(runCommandsOf);
 }
 
 /**

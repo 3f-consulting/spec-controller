@@ -39,7 +39,7 @@ describe("[SCN-LNT-001] checkStaticEvidenceObligations — the static-check enfo
       "        run: pnpm lint:feature-codes",
     ].join("\n");
 
-    expect(checkStaticEvidenceObligations(["lint:feature-codes"], ci, pkg)).toEqual([
+    expect(checkStaticEvidenceObligations(["lint:feature-codes"], [ci], pkg)).toEqual([
       {
         qualityCheck: "lint",
         staticCheck: "lint:feature-codes",
@@ -58,7 +58,7 @@ describe("[SCN-LNT-001] checkStaticEvidenceObligations — the static-check enfo
       "        run: pnpm test",
     ].join("\n");
 
-    expect(checkStaticEvidenceObligations(["lint:feature-codes"], ci, pkg)).toEqual([
+    expect(checkStaticEvidenceObligations(["lint:feature-codes"], [ci], pkg)).toEqual([
       {
         qualityCheck: "lint",
         staticCheck: "lint:feature-codes",
@@ -76,7 +76,7 @@ describe("[SCN-LNT-001] checkStaticEvidenceObligations — the static-check enfo
       "      - run: pnpm lint:nonexistent",
     ].join("\n");
 
-    expect(checkStaticEvidenceObligations(["lint:nonexistent"], ci, pkg)).toEqual([
+    expect(checkStaticEvidenceObligations(["lint:nonexistent"], [ci], pkg)).toEqual([
       {
         qualityCheck: "lint",
         staticCheck: "lint:nonexistent",
@@ -98,7 +98,7 @@ describe("[SCN-LNT-001] checkStaticEvidenceObligations — the static-check enfo
       "          pnpm test",
     ].join("\n");
 
-    expect(checkStaticEvidenceObligations(["lint:feature-codes"], ci, pkg)[0]?.enforcedOverRealSource).toBe(
+    expect(checkStaticEvidenceObligations(["lint:feature-codes"], [ci], pkg)[0]?.enforcedOverRealSource).toBe(
       true
     );
   });
@@ -111,7 +111,7 @@ describe("[SCN-LNT-001] checkStaticEvidenceObligations — the static-check enfo
       "      - run: npm run lint:feature-codes",
     ].join("\n");
 
-    expect(checkStaticEvidenceObligations(["lint:feature-codes"], ci, pkg)[0]?.enforcedOverRealSource).toBe(
+    expect(checkStaticEvidenceObligations(["lint:feature-codes"], [ci], pkg)[0]?.enforcedOverRealSource).toBe(
       true
     );
   });
@@ -131,7 +131,7 @@ describe("[SCN-LNT-001] checkStaticEvidenceObligations — the static-check enfo
       "        run: pnpm lint:feature-codes",
     ].join("\n");
 
-    expect(checkStaticEvidenceObligations(["lint:feature-codes"], ci, pkg)[0]?.enforcedOverRealSource).toBe(
+    expect(checkStaticEvidenceObligations(["lint:feature-codes"], [ci], pkg)[0]?.enforcedOverRealSource).toBe(
       true
     );
   });
@@ -146,7 +146,7 @@ describe("[SCN-LNT-001] checkStaticEvidenceObligations — the static-check enfo
 
     // lint:feature-codes is NOT wired here (only lint:scn-subissues is); a fuzzy
     // "contains lint" match would falsely enforce it and hide a watermelon.
-    expect(checkStaticEvidenceObligations(["lint:feature-codes"], ci, pkg)[0]?.enforcedOverRealSource).toBe(
+    expect(checkStaticEvidenceObligations(["lint:feature-codes"], [ci], pkg)[0]?.enforcedOverRealSource).toBe(
       false
     );
   });

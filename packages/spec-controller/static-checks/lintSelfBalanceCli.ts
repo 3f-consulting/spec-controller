@@ -42,7 +42,7 @@ export interface SelfBalanceScope {
   vitest: string;
   /** The Cucumber JSON report — the observed `@integration` / `@e2e` stream. */
   cucumber: string;
-  /** The CI config — where a static check is observed to FIRE, not merely to exist. */
+  /** The CI configs — where a static check is observed to FIRE, not merely to exist. */
   ci: string;
   /** The package manifest — where a static check is observed to EXIST. */
   packageJson: string;
@@ -62,7 +62,7 @@ export const SELF_BALANCE_SCOPE: SelfBalanceScope = {
   features: "features",
   vitest: "runs/self-balance/vitest.json",
   cucumber: "runs/self-balance/cucumber.json",
-  ci: ".github/workflows/ci.yml",
+  ci: ".github/workflows",
   packageJson: "package.json",
 };
 

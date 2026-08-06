@@ -22,11 +22,11 @@ import { ciRunCommands, commandInvokesScript, type PackageJsonScripts } from "./
  */
 export function checkStaticEvidenceObligations(
   guards: string[],
-  ciSource: string,
+  ciSources: readonly string[],
   packageJson: PackageJsonScripts
 ): GuardEvidenceObservation[] {
   const scripts = packageJson.scripts ?? {};
-  const runCommands = ciRunCommands(ciSource);
+  const runCommands = ciRunCommands(ciSources);
   return guards.map((guard) => ({
     qualityCheck: "lint" as const,
     staticCheck: guard,

@@ -9,11 +9,12 @@
  * Configurable input paths (no adapter registry in v1 — the readers are named, not
  * registered). Missing result files are tolerated: their evidence is simply absent
  * (the scenario reconciles as missing for that level). The static check kind reads
- * `--ci` (default `.github/workflows/ci.yml`) + `package.json` to observe each NAMED
- * `@lint=<guard>`.
+ * `--ci` (a workflow file or a directory of them, default `.github/workflows`) +
+ * `package.json` to observe each NAMED `@lint=<guard>`.
  */
 
 import { readFileSync, existsSync } from "node:fs";
+import { ciSourcePathsOf } from "./ciSourcePaths.js";
 import { discoverFeatures } from "./ingestScenarios.js";
 import {
   parseScenarios,
@@ -310,10 +311,16 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
   // cwd. Required to reconcile ANOTHER repo's static checks — and to render the
   // historical watermelon (exists:true in the target's package.json, unwired in
   // its CI → watermelon, not missing).
-  const ciPath = opts.ci ?? ".github/workflows/ci.yml";
-  const ciSource = existsSync(ciPath) ? readFileSync(ciPath, "utf8") : "";
+  // `--ci` names a workflow FILE or a DIRECTORY of them, and defaults to the directory
+  // (@SCN-USG-006, 3F-2238): a pipeline split across files enforces its checks just as one
+  // file does, and reading only ci.yml both invents watermelons for named checks enforced
+  // elsewhere and drops uncited ones off the books entirely. Path semantics carry the
+  // file-vs-directory distinction, so one flag stays one flag and an explicit file is still
+  // a narrowing (@SCN-USG-008).
+  const ciPath = opts.ci ?? ".github/workflows";
+  const ciSources = ciSourcePathsOf(ciPath).map((path) => readFileSync(path, "utf8"));
   if (staticCheckEvidenceObligations.length > 0) {
-    evidenceObservations.push(...checkStaticEvidenceObligations(staticCheckEvidenceObligations, ciSource, packageJson));
+    evidenceObservations.push(...checkStaticEvidenceObligations(staticCheckEvidenceObligations, ciSources, packageJson));
   }
 
   // The RUNNING-guard observer: every running CI static check is a
@@ -325,7 +332,7 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
   // running static checks are added here. They cite no scenario — the reconciler folds them into the suspense row.
   // (`staticCheckEvidenceObligationSet` is the journal rule's Set, read once above.)
   evidenceObservations.push(
-    ...runningStaticChecks(ciSource, packageJson, GUARD_SCRIPT_PREFIXES).filter(
+    ...runningStaticChecks(ciSources, packageJson, GUARD_SCRIPT_PREFIXES).filter(
       (o) => !staticCheckEvidenceObligationSet.has(o.staticCheck)
     )
   );

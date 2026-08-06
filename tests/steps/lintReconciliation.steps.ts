@@ -107,7 +107,7 @@ Given(
     const packageJson = JSON.parse(
       readFileSync(join(root, "package.json"), "utf8")
     ) as PackageJsonScripts;
-    evidenceObservations = checkStaticEvidenceObligations([guard], ciSource, packageJson);
+    evidenceObservations = checkStaticEvidenceObligations([guard], [ciSource], packageJson);
   }
 );
 
@@ -141,7 +141,7 @@ Given(
         typecheck: "tsc --noEmit",
       },
     };
-    evidenceObservations = checkStaticEvidenceObligations([guard], plantedCi, plantedPackageJson);
+    evidenceObservations = checkStaticEvidenceObligations([guard], [plantedCi], plantedPackageJson);
   }
 );
 
@@ -175,7 +175,7 @@ Given(
         typecheck: "tsc --noEmit",
       },
     };
-    evidenceObservations = checkStaticEvidenceObligations([guard], plantedCi, plantedPackageJson);
+    evidenceObservations = checkStaticEvidenceObligations([guard], [plantedCi], plantedPackageJson);
   }
 );
 
@@ -227,7 +227,7 @@ Given(
     };
     evidenceObservations = [
       { qualityCheck: "unit", scnId, status: "passed" },
-      ...checkStaticEvidenceObligations([guard], plantedCi, plantedPackageJson),
+      ...checkStaticEvidenceObligations([guard], [plantedCi], plantedPackageJson),
     ];
   }
 );

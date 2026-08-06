@@ -128,7 +128,7 @@ export function deriveLocalLadder(
   const omitted: LadderExclusion[] = [];
   const unsupported: UnsupportedStep[] = [];
 
-  for (const rawCommand of ciRunCommands(ciSource)) {
+  for (const rawCommand of ciRunCommands([ciSource])) {
     const command = rawCommand.trim();
     const invoked = scripts.filter((name) => commandInvokesScript(command, name));
     const script = invoked[0];

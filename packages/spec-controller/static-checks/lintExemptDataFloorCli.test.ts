@@ -131,7 +131,7 @@ describe("[SCN-VOC-016] the gate is reconciled on spec-controller's own Ledger",
   });
 
   it("exists as a script AND is enforced over real source — it fires, it is not merely present", () => {
-    expect(checkStaticEvidenceObligations([OWN_STATIC_CHECK], ciSource, packageJson)).toEqual([
+    expect(checkStaticEvidenceObligations([OWN_STATIC_CHECK], [ciSource], packageJson)).toEqual([
       {
         qualityCheck: "lint",
         staticCheck: OWN_STATIC_CHECK,
@@ -143,7 +143,7 @@ describe("[SCN-VOC-016] the gate is reconciled on spec-controller's own Ledger",
 
   it("is one of the running static checks the observer emits into the evidence stream", () => {
     expect(
-      runningStaticChecks(ciSource, packageJson, GUARD_PREFIXES).map((o) => o.staticCheck),
+      runningStaticChecks([ciSource], packageJson, GUARD_PREFIXES).map((o) => o.staticCheck),
     ).toContain(OWN_STATIC_CHECK);
   });
 });

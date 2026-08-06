@@ -138,7 +138,7 @@ describe("[SCN-USG-005] a named guard:-prefixed static check is attributed to it
   ].join("\n");
 
   // THE OBSERVED HALF — derived by the observer over the CI source above, not hand-seeded.
-  const observed: EvidenceObservation[] = runningStaticChecks(guardCi, guardPkg, ["lint:", "guard:"]);
+  const observed: EvidenceObservation[] = runningStaticChecks([guardCi], guardPkg, ["lint:", "guard:"]);
   // THE NAMED HALF — one scenario whose `@lint` obligation names the SAME handle.
   const naming: Scenario[] = [
     {

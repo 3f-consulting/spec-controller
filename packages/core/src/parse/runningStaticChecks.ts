@@ -32,12 +32,12 @@ import type { GuardEvidenceObservation } from "../model.js";
 import { ciRunCommands, commandInvokesScript, type PackageJsonScripts } from "./checkScriptsRunInCI.js";
 
 export function runningStaticChecks(
-  ciSource: string,
+  ciSources: readonly string[],
   packageJson: PackageJsonScripts,
   guardPrefixes: readonly string[]
 ): GuardEvidenceObservation[] {
   const scripts = packageJson.scripts ?? {};
-  const runCommands = ciRunCommands(ciSource);
+  const runCommands = ciRunCommands(ciSources);
   return Object.keys(scripts)
     .filter((name) => guardPrefixes.some((prefix) => name.startsWith(prefix)))
     .filter((name) => runCommands.some((cmd) => commandInvokesScript(cmd, name)))

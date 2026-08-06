@@ -1,0 +1,7 @@
+{
+  "scripts": {
+    "lint:nightly": "echo nightly-check",
+    "test": "echo test",
+    "cucumber": "echo cucumber"
+  }
+}
