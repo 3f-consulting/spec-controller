@@ -169,6 +169,145 @@ Then(
   },
 );
 
+// ---------------------------------------------------------------------------
+// @SCN-SLF-002 — the CREDIT side of the same gate.
+//
+// @SCN-SLF-001 above plants trees with NO static check at all, so the gate has never
+// been driven over the static axis. These steps plant trees that RUN one, differing in
+// exactly one tag: the named arm carries `@lint=lint:foo`, the uncited arm does not. One
+// tag apart is the point — the uncited tree's only out-of-balance item is the check, so
+// a passing assertion attributes the red to it and to nothing else.
+//
+// `plantTree` above is deliberately NOT generalised to serve both. Its `jobs: {}` and
+// name-only manifest are what keep SLF-001's trees clean on the static axis; putting a
+// parameter between that scenario and its own fixture invites a later change made for
+// SLF-002's benefit to weaken SLF-001's assertions silently.
+// ---------------------------------------------------------------------------
+
+/** The planted static check both arms run — a script name, not vocabulary. */
+// @SCN-SLF-002
+const PLANTED_CHECK = "lint:foo";
+
+let uncitedCheckRun: GuardRun;
+let namedCheckRun: GuardRun;
+
+/**
+ * Plant a tree that RUNS `lint:foo`. `named` decides whether a scenario names the check
+ * via `@lint=` — i.e. whether the running check has an Evidence Obligation to be credited
+ * against, or folds onto the suspense row citing no scenario.
+ *
+ * The planted scenario carries `@unit` and is observed in the Vitest stream on BOTH arms,
+ * so the obligation side is settled either way and cannot contribute a second reason to
+ * red. In the named arm its tag shape (`@unit @lint=… @SCN-…`) is the one SLF-001 itself
+ * carries in this repository — a real self-citing check, not an arrangement invented here.
+ */
+// @SCN-SLF-002
+function plantStaticCheckTree(named: boolean): string {
+  const root = mkdtempSync(path.join(tmpdir(), "spec-controller-slf002-"));
+  plantedRoots.push(root);
+
+  mkdirSync(path.join(root, "features"), { recursive: true });
+  mkdirSync(path.join(root, ".github/workflows"), { recursive: true });
+  mkdirSync(path.join(root, "runs/self-balance"), { recursive: true });
+
+  const tags = named ? `@unit @lint=${PLANTED_CHECK} @SCN-PLT-002` : "@unit @SCN-PLT-002";
+  writeFileSync(
+    path.join(root, "features/planted.feature"),
+    [
+      "@PLT",
+      "Feature: a planted target that runs a static check",
+      "",
+      "  Rule: the planted rule",
+      "",
+      `    ${tags}`,
+      "    Scenario: the planted behaviour holds",
+      "      Given a planted precondition",
+      "      Then the planted outcome follows",
+      "",
+    ].join("\n"),
+  );
+
+  // The manifest is where a static check is observed to EXIST.
+  writeFileSync(
+    path.join(root, "package.json"),
+    JSON.stringify({ name: "planted", scripts: { [PLANTED_CHECK]: "node -e \"\"" } }) + "\n",
+  );
+
+  // The CI config is where it is observed to FIRE — the surface that separates a check
+  // that EXISTS from one that RUNS. Only a firing check raises the Evidence Observation
+  // that can then cite no scenario, which is why this `run:` step is the whole of this
+  // scenario's green: withhold it and the tree balances however uncited the script is.
+  writeFileSync(
+    path.join(root, ".github/workflows/ci.yml"),
+    ["name: CI", "jobs:", "  ci:", "    steps:", `      - run: pnpm ${PLANTED_CHECK}`, ""].join("\n"),
+  );
+
+  writeFileSync(
+    path.join(root, "runs/self-balance/vitest.json"),
+    JSON.stringify({
+      testResults: [
+        {
+          name: path.join(root, "planted.test.ts"),
+          assertionResults: [
+            {
+              fullName: "[SCN-PLT-002] the planted behaviour holds",
+              title: "the planted behaviour holds",
+              status: "passed",
+            },
+          ],
+        },
+      ],
+    }) + "\n",
+  );
+
+  writeFileSync(path.join(root, "runs/self-balance/cucumber.json"), JSON.stringify([]) + "\n");
+
+  return root;
+}
+
+// @SCN-SLF-002
+When(
+  "the gate reconciles a tree running a static check no scenario names, and a tree naming the check it runs",
+  function () {
+    uncitedCheckRun = runGuard(plantStaticCheckTree(false));
+    namedCheckRun = runGuard(plantStaticCheckTree(true));
+  },
+);
+
+// @SCN-SLF-002
+Then(
+  "the gate fails over the tree whose static check nothing names, naming that check",
+  function () {
+    assert.notEqual(
+      uncitedCheckRun.exitCode,
+      0,
+      `expected the self-balance gate to FAIL over a tree running a static check no ` +
+        `scenario names; it exited 0. A quality check that can be added to a repository ` +
+        `and run green while nothing names it is a check kept off the books — the whole ` +
+        `defect this scenario closes. Output:\n${uncitedCheckRun.output}`,
+    );
+
+    assert.match(
+      uncitedCheckRun.output,
+      new RegExp(PLANTED_CHECK),
+      `expected the failure to NAME the uncited check, so the red is actionable rather ` +
+        `than a bare exit code. Output:\n${uncitedCheckRun.output}`,
+    );
+  },
+);
+
+// @SCN-SLF-002
+Then("the gate passes over the tree whose static check is named", function () {
+  assert.equal(
+    namedCheckRun.exitCode,
+    0,
+    `expected the self-balance gate to PASS over a tree whose static check a scenario ` +
+      `names via @lint= — the same tree as the red arm but for that one tag. A gate that ` +
+      `reds on everything is as useless as one that reds on nothing. ` +
+      `Output:\n${namedCheckRun.output}`,
+  );
+});
+
 // @SCN-SLF-001
 After(function () {
   for (const root of plantedRoots.splice(0)) rmSync(root, { recursive: true, force: true });

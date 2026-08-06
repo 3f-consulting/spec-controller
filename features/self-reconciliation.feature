@@ -43,3 +43,30 @@ Feature: spec-controller reconciles its own tree, and the build depends on the a
       When the gate reconciles a tree whose named evidence is all observed, and a tree naming evidence that nothing observes
       Then the gate passes over the tree whose accounts agree
       And the gate fails over the tree carrying an obligation nothing settles, naming that obligation
+
+  Rule: a static check nothing names reds the gate, on the gate's own books
+
+    THE CREDIT SIDE OF THE SAME GATE. @SCN-SLF-001 proves the gate reds an obligation
+    nothing settles — a tier named, never observed. Its planted trees carry no static
+    check at all, so the mirror case reaches the gate nowhere: a check that RUNS while
+    no scenario names it, the unposted credit.
+
+    That the reconciler NOTICES such a check is @SCN-USG-001's, proven over a fixture
+    target through `balance`. That the GATE reds this repository's build over one is
+    nobody's until here — and it is the case a new quality check actually arrives as:
+    added to package.json and ci.yml, named by nothing, passing green and off the books.
+    The two halves were proven piecewise and nowhere as the claim itself.
+
+    THE TWO TREES DIFFER IN EXACTLY ONE TAG. Both run the same check; only the named
+    arm carries @lint= on the planted scenario. So the red arm's ONLY out-of-balance
+    item is the check, which is what makes the red attributable to it rather than to
+    some other flaw in a differently-built fixture, and the green arm is its control.
+    Both arms belong to ONE scenario, the @SCN-NCR-001 / @SCN-SLF-001 shape — a gate
+    that reds is only half a gate.
+
+    @integration @SCN-SLF-002
+    Scenario: the gate reds a tree running a static check no scenario names, and passes when the check is named
+      Given the self-balance gate, wired over spec-controller's own source
+      When the gate reconciles a tree running a static check no scenario names, and a tree naming the check it runs
+      Then the gate fails over the tree whose static check nothing names, naming that check
+      And the gate passes over the tree whose static check is named
