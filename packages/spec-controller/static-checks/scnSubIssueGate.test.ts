@@ -96,13 +96,24 @@ describe("[SCN-SSM-004] the cite check reads the checked-out test files, not the
     expect(parseCitedCodesInSource(source)).toEqual(["SCN-API-001"]);
   });
 
-  it("reads a cite off an it line, in the bare [SCN-…] and the @SCN-… form alike", () => {
+  it("reads a cite off an it line, not only off a describe line", () => {
+    // FIX TO CANON (@SCN-SSM-008, 3F-2368). This assertion used to read "in the bare
+    // [SCN-…] and the @SCN-… form alike" and expected BOTH lines to register. Canon
+    // assigns the forms per backend — evidence-manifesto.md: "The Vitest describe/it
+    // string includes [SCN-007]; the Cucumber-JS step block carries a // @SCN-007
+    // marker comment" — so the @ form was never a Vitest cite, and accepting it here
+    // is what let a prose mention vouch for a block (the false green @SCN-SSM-008
+    // retires; @SCN-LDG-033 is the same widening on the runtime reader).
+    //
+    // The assertion's OWN subject is unchanged and still proved: a cite is read off an
+    // `it` line, not only off a `describe` line. Only the sigil question moves, and it
+    // moves to @SCN-SSM-008, which owns it with both arms.
     const source = [
       'it("[SCN-LDG-002] posts the suspense item", () => {});',
       'it("@SCN-LDG-003 balances the ledger", () => {});',
     ].join("\n");
 
-    expect(parseCitedCodesInSource(source)).toEqual(["SCN-LDG-002", "SCN-LDG-003"]);
+    expect(parseCitedCodesInSource(source)).toEqual(["SCN-LDG-002"]);
   });
 
   it("skips a code embedded in a quoted string literal — the guard's own fixtures are test data, not cites", () => {
@@ -306,5 +317,73 @@ describe("[SCN-SSM-007] a describe whose title carries braces stays open over th
 
     expect(result.uncitedBlocks).toEqual(["${suite} the doubling > doubles the tally"]);
     expect(result.citedCodes).toEqual([]);
+  });
+});
+
+describe("[SCN-SSM-008] the cite scan counts the bracketed token — a prose mention does not vouch", () => {
+  /**
+   * The gate's half of the false-citation class. The scan matched any SCN-shaped token
+   * on a test-call line, sigil optional, so a title that merely NAMED a scenario read as
+   * cited — a false green on the check whose job is proving scenario-binds-test-and-code.
+   * The ledger's arm ([SCN-LDG-032], [SCN-LDG-033]) is the same root pointing the other
+   * way, and both now read one matcher (core's `lib/scnCitation.ts`).
+   *
+   * Written as quoted fixture LINES so the scanner reads them as data rather than as this
+   * file's own cites — the convention [SCN-SSM-004] and [SCN-SSM-007] already rely on.
+   */
+  const proseTitledBlock = [
+    'describe("mirrors what SCN-PDX-008 does, per @SCN-PDR-008", () => {', // 1
+    '  it("doubles the tally", () => {', // 2
+    "    expect(doubled()).toBe(2);", // 3
+    "  });", // 4
+    "});", // 5
+  ].join("\n");
+
+  const bracketedAmidProse = [
+    'describe("[SCN-API-001] unlike SCN-PDX-008, this one is genuinely bound", () => {', // 1
+    '  it("counts", () => {', // 2
+    "    expect(tally()).toBe(1);", // 3
+    "  });", // 4
+    "});", // 5
+  ].join("\n");
+
+  it("attributes no code to a block whose title only mentions scenario ids", () => {
+    // Reds under the sigil-optional scan with ["SCN-PDX-008", "SCN-PDR-008"] — two codes
+    // vouching for a block bound to neither. Both non-bracket shapes are on the one line:
+    // a bare fixture id and an @-prefixed cross-reference.
+    const blocks = parseTestBlocks(proseTitledBlock);
+
+    expect(blocks[0]?.citedCodes).toEqual([]);
+    expect(blocks.find((b) => b.title === "doubles the tally")?.citedCodes).toEqual([]);
+  });
+
+  it("reds the touched block as uncited — the mention does not stand in for a cite", () => {
+    // The gate boundary, not just the parser: a mention leaves the chain empty, so the
+    // touched it is a violation and is NAMED. Reds with `uncitedBlocks: []` under the
+    // sigil-optional scan — the silent false green this scenario exists to retire.
+    const result = attributeChangedBlockCites(proseTitledBlock, [2, 3, 4]);
+
+    expect(result.uncitedBlocks).toEqual([
+      "mirrors what SCN-PDX-008 does, per @SCN-PDR-008 > doubles the tally",
+    ]);
+    expect(result.citedCodes).toEqual([]);
+  });
+
+  it("still reads a bracketed cite out of a title that also names other ids in prose", () => {
+    // The positive half — narrowing the FORM must not cost a genuine cite its standing,
+    // even with a bare id in the same sentence. Reds if the scan required the bracket at
+    // the title's start, or took the first SCN-shaped token whatever its wrapper.
+    const blocks = parseTestBlocks(bracketedAmidProse);
+
+    expect(blocks[0]?.citedCodes).toEqual(["SCN-API-001"]);
+    expect(attributeChangedBlockCites(bracketedAmidProse, [2, 3, 4]).uncitedBlocks).toEqual([]);
+  });
+
+  it("holds the same rule in the full-source scan the file-state read uses", () => {
+    // `parseCitedCodesInSource` is the second matcher site ([SCN-SSM-004]'s file-state
+    // read) and drifted from the block scan's answer before both took one definition.
+    // The two must agree, or a PR's verdict depends on which read reached it first.
+    expect(parseCitedCodesInSource(proseTitledBlock)).toEqual([]);
+    expect(parseCitedCodesInSource(bracketedAmidProse)).toEqual(["SCN-API-001"]);
   });
 });

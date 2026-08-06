@@ -173,3 +173,30 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
       Given a PR touching an it beneath a cited describe whose title literal carries braces, on a branch carrying a 3F ticket handle
       When the scenario sub-issue gate runs over the brace-titled fixture PR
       Then the gate passes and exits 0, the it having inherited the describe's cite
+
+  Rule: the cite scan counts the bracketed token — a prose mention does not vouch for a block
+
+    THE GATE'S HALF OF THE FALSE-CITATION CLASS. The cite scan matched
+    `/@?(SCN-[A-Z0-9]+-\d+)/g` on any test-call line, so a block whose title merely
+    NAMED a scenario id read as cited. The ledger's arm (SCN-LDG-032, SCN-LDG-033)
+    is the same root pointing the other way: there a mention minted a phantom
+    scenario and redded; here it vouches for a block nobody bound to anything, and
+    NOTHING reds. A false green on the one check whose job is proving
+    scenario-binds-test-and-code.
+
+    It is the easier half to miss for exactly that reason. A phantom scenario
+    announces itself in the next balance run; a block wrongly counted as cited
+    announces nothing, and the leak it was built to catch — new behaviour shipped
+    with no scenario behind it — ships green. The two arms are one rule and land
+    together, over one shared matcher, because two copies of "what a citation looks
+    like" is how these readers drifted apart to begin with.
+
+    The bracket is canon's vitest form. A mention of a scenario id in a title —
+    comparing against it, naming the fixture it came from, crediting the ruling it
+    implements — is ordinary prose in this repository and stays free to write.
+
+    @unit @integration @SCN-SSM-008
+    Scenario: a changed test block whose title names a scenario id only in prose reds as uncited
+      Given a PR whose new behaviour is proven by a test block naming a scenario id only in its title's prose, on a branch carrying a 3F ticket handle
+      When the scenario sub-issue gate runs over the prose-titled fixture PR
+      Then the gate reds, naming the block whose title only mentions a scenario id

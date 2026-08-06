@@ -36,6 +36,7 @@
  * spec-controller parent 3F-1137 (port + fork-exemption design, endorsed 2026-07-09).
  */
 
+import { parseScnCitations } from "@3f-consulting/spec-controller-core/internal";
 import { isQuotedStringLiteralLine, structuralBraces } from "./testSourceLexer.js";
 
 /** The recognised exemption reasons (enumerated; a missing/unknown reason reds). */
@@ -441,8 +442,12 @@ export function detectDeletedCodes(diff: string): string[] {
 
 /**
  * Scan the FULL CHECKED-OUT SOURCE of a `*.test.ts` file for the
- * `@SCN-<FFF>-<NNN>` ids its Vitest `describe(...)` / `it(...)` strings cite (the
- * bidirectional-link rule). Both `@SCN-…` and bare `[SCN-…]` forms register.
+ * `[SCN-<FFF>-<NNN>]` ids its Vitest `describe(...)` / `it(...)` strings cite (the
+ * bidirectional-link rule). The BRACKET is what makes it a cite: this scan used to
+ * match any SCN-shaped token on the line, sigil optional, so a title that merely
+ * NAMED a scenario vouched for its block — a false green on the very check that
+ * proves `scenario-binds-test-and-code` (@SCN-SSM-008, 3F-2368). The form lives in
+ * core's `lib/scnCitation.ts`, shared with the vitest reader.
  * Returns bare codes, in document order, de-duplicated.
  *
  * Reads FILE STATE, not a diff — the fix for 3F-1741. A cite is a property of the
@@ -464,8 +469,7 @@ export function parseCitedCodesInSource(source: string): string[] {
     if (isQuotedStringLiteralLine(line)) continue;
     if (!/\b(?:describe|it|test)\s*(?:\.\w+)?\s*\(/.test(line)) continue;
 
-    for (const m of line.matchAll(/@?(SCN-[A-Z0-9]+-\d+)/g)) {
-      const bare = m[1]!;
+    for (const bare of parseScnCitations(line)) {
       if (!seen.has(bare)) {
         seen.add(bare);
         codes.push(bare);
@@ -523,7 +527,10 @@ export function parseTestBlocks(source: string): TestBlock[] {
       const m = TEST_CALL.exec(line);
       if (m) {
         const title = m[2]!;
-        const ownCodes = [...line.matchAll(/@?(SCN-[A-Z0-9]+-\d+)/g)].map((c) => c[1]!);
+        // Bracketed cites only (@SCN-SSM-008) — a title that merely NAMES a scenario
+        // vouches for nothing. Same matcher as the full-source scan above, so the two
+        // reads cannot disagree about which cites a PR carries.
+        const ownCodes = parseScnCitations(line);
         const inherited = open.flatMap((o) => o.block.citedCodes);
         const block: TestBlock = {
           title,

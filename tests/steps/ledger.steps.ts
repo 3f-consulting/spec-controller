@@ -896,8 +896,13 @@ Given(
           name: "packages/core/src/citation.test.ts",
           assertionResults: [
             {
-              fullName: `[${ldg016AncestorScnId}] the grouping describe > @${ldg016LeafScnId} the leaf proves its own scenario`,
-              title: `@${ldg016LeafScnId} the leaf proves its own scenario`,
+              // FIX TO CANON (3F-2368): the leaf's self-citation was written `@SCN-…` —
+              // Cucumber's step-block marker form — in a fixture standing for a VITEST title,
+              // where canon's form is the bracket (evidence-manifesto.md). Only the
+              // sigil-agnostic reader made the fixture pass. The assertions below are
+              // unchanged; the property proved is unchanged.
+              fullName: `[${ldg016AncestorScnId}] the grouping describe > [${ldg016LeafScnId}] the leaf proves its own scenario`,
+              title: `[${ldg016LeafScnId}] the leaf proves its own scenario`,
               status: "passed",
             },
             {
@@ -995,6 +1000,213 @@ Then("both scenarios are balanced", function () {
       items,
       "—",
       `expected ${scnId} to carry no reconciling items; got "${items}"`
+    );
+  }
+});
+
+// @SCN-LDG-032 — the ancestor's cited scenario and the id the leaf names only in prose.
+let ldg032AncestorScnId: string;
+let ldg032ProseScnId: string;
+
+// @SCN-LDG-032
+Given(
+  "a scenario cited by an ancestor describe and a second scenario named only in a leaf's prose",
+  function () {
+    // BOTH are real corpus scenarios, each raising one unit obligation — deliberately, so the
+    // prose-named one has a genuine account the reader COULD have posted to. That is what makes
+    // the shadowing symptom legible: under the sigil-free reader the mention did not mint a
+    // phantom, it moved a real credit onto the wrong real row, which no phantom check catches.
+    ldg032AncestorScnId = "SCN-ANC-032";
+    ldg032ProseScnId = "SCN-PDX-032";
+    const feature = [
+      "@LDG",
+      "Feature: fixture",
+      "  Rule: a fixture rule",
+      `    @unit @${ldg032AncestorScnId}`,
+      "    Scenario: the scenario the grouping describe cites",
+      "      Given a fixture step",
+      "",
+      `    @unit @${ldg032ProseScnId}`,
+      "    Scenario: the scenario the leaf only mentions",
+      "      Given a fixture step",
+    ].join("\n");
+    scenarios = parseScenarios(feature);
+  }
+);
+
+// @SCN-LDG-032
+Given(
+  "a passing vitest report whose one leaf names the second scenario in prose beneath the citing describe",
+  function () {
+    // A REAL-SHAPED report through the REAL reader: the describe carries the bracket, the leaf
+    // carries only prose that happens to name another scenario — the ordinary shape of a test
+    // whose subject is a comparison. Under the sigil-free reader the leaf's mention won the
+    // first match and the ancestor's bracket never got read.
+    const report: VitestJsonReport = {
+      testResults: [
+        {
+          name: "packages/core/src/prose.test.ts",
+          assertionResults: [
+            {
+              fullName: `[${ldg032AncestorScnId}] the grouping describe > mirrors what ${ldg032ProseScnId} does`,
+              title: `mirrors what ${ldg032ProseScnId} does`,
+              status: "passed",
+            },
+          ],
+        },
+      ],
+    };
+    evidenceObservations = parseVitestEvidenceObservations(report, "unit");
+  }
+);
+
+// @SCN-LDG-032
+Then(
+  "the leaf is attributed to the ancestor-cited scenario, not to the one its prose names",
+  function () {
+    // Attribution-set IDENTITY, not a balance boolean — @SCN-LDG-016's reason, which applies
+    // with more force here: the ancestor reads `balanced` under BOTH readers, because under the
+    // old one the stolen credit balanced it just as well. Only WHOSE credit it is has teeth.
+    // Reds with 0 under the sigil-free reader.
+    const ancestorCredits = creditsFor(ldg032AncestorScnId);
+    assert.equal(
+      ancestorCredits.length,
+      1,
+      `expected ${ldg032AncestorScnId} to carry exactly one crediting observation (the leaf falling through to it); got ${ancestorCredits.length} — the leaf's prose mention shadowed the describe's citation`
+    );
+    assert.deepEqual(
+      ancestorCredits[0],
+      {
+        qualityCheck: "unit",
+        scnId: ldg032AncestorScnId,
+        status: "passed",
+        locator: "packages/core/src/prose.test.ts",
+      },
+      `expected the leaf's credit to be a passing unit observation citing ${ldg032AncestorScnId}`
+    );
+  }
+);
+
+// @SCN-LDG-032
+Then("the prose-named scenario carries no crediting observation", function () {
+  // The MIRROR symptom, and the one a phantom check cannot see: the prose-named scenario is
+  // REAL, so the stolen credit landed on a legitimate row and the ledger read balanced while
+  // both attributions were wrong. Zero credits ⇒ a mention earns nothing. Reds with 1 under the
+  // sigil-free reader. Its unit obligation now goes `missing`, which is the honest verdict — no
+  // assertion proves it.
+  const proseCredits = creditsFor(ldg032ProseScnId);
+  assert.equal(
+    proseCredits.length,
+    0,
+    `expected ${ldg032ProseScnId} to carry no crediting observation — the leaf only NAMES it; got ${proseCredits.length}`
+  );
+});
+
+// @SCN-LDG-033 — the two ids the prose-only assertion names, neither of them bracketed. The
+// first is a fixture id no corpus scenario matches (the shape the defect was filed against);
+// the second is an @-prefixed cross-reference (the shape that was live in the repository).
+let ldg033CorpusScnId: string;
+const LDG033_PROSE_FIXTURE_ID = "SCN-PDX-033";
+const LDG033_PROSE_CROSS_REFERENCE_ID = "SCN-PDR-033";
+
+// @SCN-LDG-033
+Given(
+  "a scenario in the corpus and a fixture id that names nothing in it",
+  function () {
+    // ONE real scenario, so the corpus has an account the reader could have posted to, and a
+    // second id present only as fixture data. The contrast is the point: after the change the
+    // prose-named ids reach no row at all, real or phantom.
+    ldg033CorpusScnId = "SCN-LDG-033";
+    const feature = [
+      "@LDG",
+      "Feature: fixture",
+      "  Rule: a fixture rule",
+      `    @unit @${ldg033CorpusScnId}`,
+      "    Scenario: the one scenario the corpus holds",
+      "      Given a fixture step",
+    ].join("\n");
+    scenarios = parseScenarios(feature);
+  }
+);
+
+// @SCN-LDG-033
+Given(
+  "a passing vitest report whose one assertion names both ids in prose, bracketing neither",
+  function () {
+    // A REAL-SHAPED vitest report run through the REAL reader. The assertion's title reads the
+    // way this repository's own titles read — a fixture id named in the sentence, a cross-
+    // reference in parentheses — and neither is bracketed, so neither is a citation. Under the
+    // sigil-free reader the FIRST prose token won, and the assertion credited an id no corpus
+    // scenario carries: a phantom scenario, out of balance, from a test that was doing nothing
+    // wrong.
+    const report: VitestJsonReport = {
+      testResults: [
+        {
+          name: "packages/core/src/prose.test.ts",
+          assertionResults: [
+            {
+              fullName: `the tally block > drops ${LDG033_PROSE_FIXTURE_ID} when the check is not running (@${LDG033_PROSE_CROSS_REFERENCE_ID})`,
+              title: `drops ${LDG033_PROSE_FIXTURE_ID} when the check is not running (@${LDG033_PROSE_CROSS_REFERENCE_ID})`,
+              status: "passed",
+            },
+          ],
+        },
+      ],
+    };
+    evidenceObservations = parseVitestEvidenceObservations(report, "unit");
+  }
+);
+
+// @SCN-LDG-033
+Then(
+  "the assertion cites no scenario and its credit posts to the suspense row",
+  function () {
+    // The credit itself carries `scnId: null` — an uncited observation, which the ledger already
+    // knows how to carry (@SCN-LDG-007) — and the reconciliation posts it to the suspense row.
+    // Reds under the sigil-free reader with the first prose token as the scnId.
+    assert.deepEqual(
+      evidenceObservations,
+      [
+        {
+          qualityCheck: "unit",
+          scnId: null,
+          status: "passed",
+          locator: "packages/core/src/prose.test.ts",
+        },
+      ],
+      "expected the prose-only assertion to emit one uncited credit"
+    );
+    const suspense = reconciliation.scenarioReconciliations.find(
+      (s) => s.kind === "suspense-scenario"
+    );
+    assert.ok(
+      suspense,
+      `expected a suspense-scenario row carrying the uncited credit; got rows: ${reconciliation.scenarioReconciliations
+        .map((s) => s.scnId)
+        .join(", ")}`
+    );
+  }
+);
+
+// @SCN-LDG-033
+Then("neither prose-named id mints a phantom scenario", function () {
+  // The mirror assertion, and the one that names the symptom the class produced: a phantom row
+  // is what a promoted prose token creates, and under the sigil-free reader the fixture id got
+  // exactly that. Row identity is asserted over the WHOLE reconciliation, not just the phantom
+  // kind, so a prose id reaching ANY row — phantom, or a real one it does not prove — reds here.
+  // The corpus scenario itself must still be there, or the assertion would pass vacuously on an
+  // empty ledger.
+  const posted = reconciliation.scenarioReconciliations
+    .map((s) => s.scnId)
+    .filter((id): id is string => id !== null && id !== undefined);
+  assert.ok(
+    posted.includes(ldg033CorpusScnId),
+    `expected the corpus scenario ${ldg033CorpusScnId} to hold a row; got rows: ${posted.join(", ")}`
+  );
+  for (const proseId of [LDG033_PROSE_FIXTURE_ID, LDG033_PROSE_CROSS_REFERENCE_ID]) {
+    assert.ok(
+      !posted.includes(proseId),
+      `expected ${proseId} to reach no ledger row — it is named in prose, not cited; got rows: ${posted.join(", ")}`
     );
   }
 });

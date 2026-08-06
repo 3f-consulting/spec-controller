@@ -624,3 +624,58 @@ Feature: Ledger over obligation-vs-observation evidence
       When OUTCOME_SIDE_PROFILE is checked against it, keyed by the Outcome union
       Then every outcome's (obligation, observation) presence equals its manifesto row
       And flipping any profile row away from its manifesto value reds the pin
+
+  # A CITATION IS BRACKETED (SCN-LDG-033, 3F-2368). The vitest reader matched
+  # /\bSCN-[A-Z0-9]+-\d+\b/ ANYWHERE in a describe/it title, so any SCN-shaped token was a
+  # citation whatever it was doing there. spec-controller's own corpus names scenario ids
+  # constantly — fixture data, cross-references, the prose of a test ABOUT citations — and
+  # each mention became a citation nobody wrote: a phantom scenario when the id names
+  # nothing real, a stolen credit when it names something else. 3F-2353 reworded the two
+  # instances that surfaced; the mechanism stayed, so the next prose mention re-opened it.
+  #
+  # The canon form is the BRACKET — evidence-manifesto.md: the Vitest describe/it string
+  # includes [SCN-007], while the // @SCN-007 marker is Cucumber's. vitest.ts's own module
+  # header has claimed the bracket since it was written; only its regex disagreed. Measured
+  # over the self-balance run before the change: 845 of 846 citations were already
+  # bracketed, 1 was a parenthesised prose cross-reference, 0 were bare. So the bracket
+  # costs one live mis-attribution to correct and closes the class for every fixture id,
+  # present and future — no fixture needs renaming, because prose is prose at the reader.
+  #
+  # THE @-FORM IS DELIBERATELY EXCLUDED, and that is the whole teeth of the rule: @SCN- is
+  # how this repository writes EVERY prose cross-reference, in comments, headers and ticket
+  # references. Accepting it in a title would leave the class half-open on the one form
+  # most likely to appear by accident.
+  #
+  # This scenario is the SUSPENSE arm — no citation anywhere in the chain. SCN-LDG-032 is
+  # the ancestor arm, where a citation does exist one level up.
+  Rule: a vitest citation is the bracketed token — an SCN-shaped token in prose is prose
+
+    @unit @integration @SCN-LDG-033
+    Scenario: an assertion whose only SCN-shaped token is prose cites no scenario — the credit posts to suspense
+      Given a scenario in the corpus and a fixture id that names nothing in it
+      And a passing vitest report whose one assertion names both ids in prose, bracketing neither
+      When the ledger reconciles the target
+      Then the assertion cites no scenario and its credit posts to the suspense row
+      And neither prose-named id mints a phantom scenario
+
+    # THE ANCESTOR ARM (SCN-LDG-032). SCN-LDG-033 covers the chain with no citation
+    # anywhere; this covers the chain where one DOES exist, one level up. SCN-LDG-016
+    # established most-specific-citation-wins — a self-citing leaf overrides its ancestor —
+    # and the sigil-free reader let a leaf that merely MENTIONED an id in prose count as
+    # self-citing. So the mention SHADOWED the describe's real citation: the ancestor lost
+    # the credit it had earned and the prose-named id took one it had not. That is the very
+    # symptom SCN-LDG-016 retired, re-entering through the citation FORM rather than the
+    # match POSITION. Under the bracket rule a mention is invisible, so the leaf falls
+    # through to its ancestor exactly as a leaf naming nothing does — SCN-LDG-016's
+    # fallback half, now reached by a leaf whose title is full of scenario ids.
+    #
+    # The Thens count credits rather than reading a verdict, for SCN-LDG-016's reason: the
+    # ancestor renders `balanced` under both readers (by the shadowed leaf's stolen credit
+    # under the old one), so only attribution identity has teeth here.
+    @unit @integration @SCN-LDG-032
+    Scenario: a leaf naming a scenario id in prose does not override its describe's bracketed citation
+      Given a scenario cited by an ancestor describe and a second scenario named only in a leaf's prose
+      And a passing vitest report whose one leaf names the second scenario in prose beneath the citing describe
+      When the ledger reconciles the target
+      Then the leaf is attributed to the ancestor-cited scenario, not to the one its prose names
+      And the prose-named scenario carries no crediting observation

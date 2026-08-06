@@ -72,7 +72,7 @@ export const COMPLEXITY_EXCEPTIONS = [
   { path: "packages/core/src/parse/scenarios.test.ts",                      rule: "max-lines",               value:  450, since: "2026-08-05" },
   { path: "packages/core/src/parse/scenarios.ts",                           rule: "complexity",              value:   11, since: "2026-08-02" },
   { path: "packages/core/src/parse/scenarios.ts",                           rule: "max-lines-per-function",  value:   44, since: "2026-08-05" },
-  { path: "packages/core/src/parse/vitest.ts",                              rule: "complexity",              value:   15, since: "2026-08-02" },
+  { path: "packages/core/src/parse/vitest.ts",                              rule: "complexity",              value:   14, since: "2026-08-06" },
   { path: "packages/core/src/render/markdown.test.ts",                      rule: "max-lines",               value: 1341, since: "2026-08-05" },
   { path: "packages/core/src/render/markdown.ts",                           rule: "complexity",              value:   13, since: "2026-08-02" },
   { path: "packages/core/src/render/markdown.ts",                           rule: "max-lines",               value:  458, since: "2026-08-05" },

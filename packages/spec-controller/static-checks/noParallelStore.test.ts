@@ -34,12 +34,12 @@ import {
 } from "./sourceFiles.js";
 
 /**
- * The production core-src population, as of 3F-2266. Asserted, not assumed: the risk in moving a
+ * The production core-src population, as of 3F-2368 (lib/scnCitation.ts). Asserted, not assumed: the risk in moving a
  * walk into shared scaffolding is that it silently collects a DIFFERENT set — the guard stays green
  * over the wrong files and proves less than it claims, which is the vacuous green the floor exists
  * to catch. A count the walk has to hit makes that failure loud.
  */
-const CORE_SRC_FILE_COUNT = 22;
+const CORE_SRC_FILE_COUNT = 23;
 
 describe("[SCN-NPS-001] no parallel store re-represents the Ledger's entries", () => {
   it("flags a re-added retired census module file (evidenceObservations.ts / staticEvidenceObservations.ts)", () => {

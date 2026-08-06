@@ -23,3 +23,11 @@
 // it rather than rebuilding the derivation inline. Shared internally — NOT public API,
 // so it stays off the frozen `.` barrel and is reached here instead.
 export { staticCheckEvidenceObligationsOf } from "./domain/journal.js";
+
+// `parseScnCitation` / `parseScnCitations` — the ONE definition of the bracketed citation
+// form. Shared because the two citation readers previously carried their own sigil-optional
+// regexes and drifted from canon and from each other (3F-2368): the runtime reader minted a
+// phantom scenario from fixture data, the scn-subissue gate let a prose mention vouch for a
+// changed block. A second copy is exactly the fault, so the gate imports this one. Internal,
+// not public — the form is spec-controller's own reading convention, not a v1 contract.
+export { parseScnCitation, parseScnCitations } from "./lib/scnCitation.js";

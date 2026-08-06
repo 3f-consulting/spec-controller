@@ -155,8 +155,13 @@ describe("[SCN-LDG-016] parseVitestEvidenceObservations attributes an assertion 
         name: "/r/citation.test.ts",
         assertionResults: [
           {
-            fullName: "[SCN-ANC-016] the grouping describe > @SCN-LEA-016 the leaf proves its own scenario",
-            title: "@SCN-LEA-016 the leaf proves its own scenario",
+            // FIX TO CANON (3F-2368): the leaf's self-citation was written `@SCN-LEA-016` —
+            // Cucumber's step-block marker form — in a fixture standing for a VITEST title,
+            // where canon's form is the bracket (evidence-manifesto.md). Only the
+            // sigil-agnostic reader made the fixture pass. The assertions below are unchanged;
+            // the property proved (most-specific-citation-wins) is unchanged.
+            fullName: "[SCN-ANC-016] the grouping describe > [SCN-LEA-016] the leaf proves its own scenario",
+            title: "[SCN-LEA-016] the leaf proves its own scenario",
             status: "passed",
           },
           {
@@ -206,6 +211,125 @@ describe("[SCN-LDG-016] parseVitestEvidenceObservations attributes an assertion 
     );
     expect(out).toEqual([
       { qualityCheck: "unit", scnId: "SCN-ANC-016", status: "passed", locator: "/r/citation.test.ts" },
+    ]);
+  });
+});
+
+describe("[SCN-LDG-033] parseVitestEvidenceObservations reads the bracketed token — an id in prose is prose", () => {
+  // The reader matched any SCN-shaped token ANYWHERE in a title, so this repository's own
+  // corpus — which names scenario ids constantly, as fixture data and as cross-references —
+  // minted citations nobody wrote. The canon form is the bracket (evidence-manifesto.md: the
+  // Vitest describe/it string includes [SCN-007]); the `@` marker belongs to Cucumber's step
+  // blocks, and is deliberately NOT accepted here because it is how every prose cross-reference
+  // in this repository is written.
+  //
+  // Both non-bracket shapes are exercised in the one report: a BARE fixture id (the shape the
+  // original defect was filed against) and an `@`-prefixed cross-reference (the shape that was
+  // live in staticObservationTally.test.ts). Neither may cite.
+  const proseOnly: VitestJsonReport = {
+    testResults: [
+      {
+        name: "/r/prose.test.ts",
+        assertionResults: [
+          {
+            fullName: "the tally block > drops SCN-PDX-001 when the guard is not running (@SCN-PDR-002)",
+            title: "drops SCN-PDX-001 when the guard is not running (@SCN-PDR-002)",
+            status: "passed",
+          },
+        ],
+      },
+    ],
+  };
+
+  it("emits an uncited credit — neither the bare id nor the @-prefixed one cites", () => {
+    // `scnId: null` is the SUSPENSE credit the ledger already carries (@SCN-LDG-007). Under the
+    // sigil-free reader this reds with `scnId: "SCN-PDX-001"` — the first prose token, promoted
+    // to a citation and minting a phantom scenario for an id no corpus scenario carries.
+    expect(parseVitestEvidenceObservations(proseOnly, "unit")).toEqual([
+      { qualityCheck: "unit", scnId: null, status: "passed", locator: "/r/prose.test.ts" },
+    ]);
+  });
+
+  it("still reads a bracketed citation out of prose that also names other ids", () => {
+    // The positive half, and the reason the rule is a FORM rule rather than a position rule: the
+    // bracket wins wherever it sits, and the prose tokens around it stay invisible — including a
+    // bare id that PRECEDES it, which a first-match-anywhere reader would have taken instead.
+    const out = parseVitestEvidenceObservations(
+      {
+        testResults: [
+          {
+            name: "/r/prose.test.ts",
+            assertionResults: [
+              {
+                fullName: "unlike SCN-PDX-001, [SCN-PDR-003] is genuinely proved here (cf. @SCN-PDR-002)",
+                title: "unlike SCN-PDX-001, [SCN-PDR-003] is genuinely proved here (cf. @SCN-PDR-002)",
+                status: "passed",
+              },
+            ],
+          },
+        ],
+      },
+      "unit"
+    );
+    expect(out).toEqual([
+      { qualityCheck: "unit", scnId: "SCN-PDR-003", status: "passed", locator: "/r/prose.test.ts" },
+    ]);
+  });
+});
+
+describe("[SCN-LDG-032] a leaf's prose mention does not override its describe's bracketed citation", () => {
+  // The ANCESTOR arm of the bracket rule, and the mirror of [SCN-LDG-033]'s suspense arm.
+  // [SCN-LDG-016] made a self-citing leaf beat its ancestor; the sigil-free reader let a leaf
+  // that merely MENTIONED an id count as self-citing, so the mention SHADOWED the describe's
+  // real citation — the ancestor lost its credit, the mentioned id gained one it never earned.
+  // Under the bracket rule the leaf falls through to its ancestor, as a leaf naming nothing does.
+  const report: VitestJsonReport = {
+    testResults: [
+      {
+        name: "/r/prose.test.ts",
+        assertionResults: [
+          {
+            fullName: "[SCN-ANC-032] the grouping describe > mirrors what SCN-PDX-032 does, per @SCN-PDR-032",
+            title: "mirrors what SCN-PDX-032 does, per @SCN-PDR-032",
+            status: "passed",
+          },
+        ],
+      },
+    ],
+  };
+
+  it("credits the ancestor describe — the leaf's prose mentions are not citations", () => {
+    // Reds under the sigil-free reader with `scnId: "SCN-PDX-032"`: the leaf's first prose token
+    // shadowed the ancestor's bracket. The whole-observation equality is deliberate — it pins the
+    // fall-through AND that nothing else about the credit shifted.
+    expect(parseVitestEvidenceObservations(report, "unit")).toEqual([
+      { qualityCheck: "unit", scnId: "SCN-ANC-032", status: "passed", locator: "/r/prose.test.ts" },
+    ]);
+  });
+
+  it("still lets a BRACKETED leaf citation override the ancestor — the fall-through is not a blanket", () => {
+    // The boundary [SCN-LDG-016] drew, re-asserted against this rule: narrowing the FORM must not
+    // narrow the PRECEDENCE. A leaf that genuinely cites still wins, even with prose ids around it.
+    // Reds if the bracket rule were mis-implemented as "the ancestor always wins".
+    const out = parseVitestEvidenceObservations(
+      {
+        testResults: [
+          {
+            name: "/r/prose.test.ts",
+            assertionResults: [
+              {
+                fullName: "[SCN-ANC-032] the grouping describe > [SCN-LEA-032] proves its own, unlike SCN-PDX-032",
+                title: "[SCN-LEA-032] proves its own, unlike SCN-PDX-032",
+                status: "passed",
+              },
+            ],
+          },
+        ],
+      },
+      "unit"
+    );
+    expect(out).toEqual([
+      { qualityCheck: "unit", scnId: "SCN-LEA-032", status: "passed", locator: "/r/prose.test.ts" },
     ]);
   });
 });

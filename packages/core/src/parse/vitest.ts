@@ -9,8 +9,14 @@
  * JS-ecosystem default (unit) is set at the CLI edge.
  *
  * The @SCN id is the bracketed `[SCN-<FFF>-<NNN>]` token carried in the test's
- * `describe`/`it` name (the bidirectional-link rule). Vitest surfaces the assertion's OWN
- * name as `assertionResults[].title` and its ANCESTOR PATH (describe → it) as `fullName`;
+ * `describe`/`it` name (the bidirectional-link rule). The bracket is what makes it a
+ * citation and not a mention: this module's regex used to match any SCN-shaped token
+ * anywhere in the name, so fixture data and prose cross-references cited scenarios nobody
+ * meant to cite (@SCN-LDG-033, 3F-2368). The form now lives in `lib/scnCitation.ts`,
+ * shared with the scn-subissue gate's cite scan so one answer serves both readers.
+ *
+ * Vitest surfaces the assertion's OWN name as `assertionResults[].title` and its
+ * ANCESTOR PATH (describe → it) as `fullName`;
  * the citation belongs to the assertion, so the reader reads the leaf's title FIRST and
  * falls back to the ancestor path only when the leaf does not self-cite — most-specific-
  * citation-wins (@SCN-LDG-016).
@@ -27,6 +33,7 @@
 
 import type { RuntimeQualityCheck, EvidenceObservation } from "../model.js";
 import { relativizeToRoot } from "../lib/portablePath.js";
+import { parseScnCitation } from "../lib/scnCitation.js";
 
 /** The minimal shape of Vitest's JSON reporter output this reader depends on. */
 export interface VitestJsonReport {
@@ -50,8 +57,6 @@ export interface VitestJsonReport {
     }>;
   }>;
 }
-
-const SCN_IN_NAME = /\bSCN-[A-Z0-9]+-\d+\b/;
 
 /**
  * Parse a Vitest JSON report into observed results at the CALLER-SUPPLIED level. One result per
@@ -124,11 +129,11 @@ export function parseVitestEvidenceObservations(
       // self-citing child, so the leaf's scenario reconciled missing while the ancestor took a
       // spurious SECOND credit. Semantic, not positional — last-match on the concatenation would
       // misfire when a leaf's prose names a second scenario after its own.
-      const m =
-        SCN_IN_NAME.exec(assertion.title ?? "") ?? SCN_IN_NAME.exec(assertion.fullName ?? "");
+      const scnId =
+        parseScnCitation(assertion.title ?? "") ?? parseScnCitation(assertion.fullName ?? "");
       results.push({
         qualityCheck,
-        scnId: m ? m[0] : null, // no @SCN → an uncited credit (SUSPENSE).
+        scnId, // no BRACKETED @SCN → an uncited credit (SUSPENSE).
         status,
         locator,
       });
