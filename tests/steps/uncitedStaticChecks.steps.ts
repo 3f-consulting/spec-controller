@@ -412,6 +412,110 @@ Then(
   },
 );
 
+// ---------------------------------------------------------------------------
+// @SCN-USG-009 — the CONFIGURED static check. Its own fixture because every other @USG
+// target is discovered by a PREFIX, and the whole claim here is that discovery no longer
+// depends on one: sharing a fixture would let a prefix do the finding and leave the
+// configuration proving nothing.
+// ---------------------------------------------------------------------------
+const USG_CONFIGURED_FIXTURE: UsgFixture = {
+  features: "tests/fixtures/usg-configured/features",
+  ci: "tests/fixtures/usg-configured/ci.yml",
+  packageJson: "tests/fixtures/usg-configured/package.json",
+};
+
+// @SCN-USG-009
+Given("a target that configures typecheck a static check and runs it in CI", function () {
+  activeFixture = USG_CONFIGURED_FIXTURE;
+  activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg009-"));
+});
+
+// @SCN-USG-009
+Given("no @lint scenario names typecheck", function () {
+  // The usg-configured fixture's target.feature carries NO @lint at all. `typecheck` is
+  // invoked by its ci.yml and CONFIGURED in its package.json (specController.staticChecks),
+  // so the discovery direction can see it — and nothing cites it, so it is the uncited one.
+});
+
+// @SCN-USG-009
+Then(
+  "the Static checks section reports typecheck as an uncited static check",
+  function () {
+    assert.match(
+      activeMd,
+      /### Static checks/,
+      `expected a Static checks section; got:\n${activeMd}`,
+    );
+    assert.ok(
+      activeMd.includes("1 static check(s) run, 1 uncited static check(s)"),
+      `expected typecheck counted as RUNNING and UNCITED. Before 3F-2495 it was neither: ` +
+        `tsc --noEmit reds the build on a violation and is static analysis by any reading, ` +
+        `and the observer could not see it because it is not called lint:typecheck — so the ` +
+        `unattributed check this feature file exists to surface was invisible exactly when ` +
+        `it was unattributed. Got:\n${activeMd}`,
+    );
+    assert.ok(
+      activeMd.includes("lint ❓ Evidence Observation cites no Scenario (typecheck)"),
+      `expected typecheck folded onto the suspense row as a cites-no-scenario credit — the ` +
+        `same landing a prefix-discovered check gets, because a configuration buys no ` +
+        `exemption. Got:\n${activeMd}`,
+    );
+    // test / cucumber run in this fixture's CI too. They are the runtime axis's own
+    // sources and must not be dragged onto the static axis by the widened discovery.
+    assert.ok(
+      !activeMd.includes("(test)") && !activeMd.includes("(cucumber)"),
+      `expected test/cucumber NOT counted as static checks; got:\n${activeMd}`,
+    );
+  },
+);
+
+// ---------------------------------------------------------------------------
+// @SCN-USG-010 — the boundary keeping @SCN-USG-009 honest. Same script, same configuration;
+// the ONLY difference from usg-configured is the @lint tag on the fixture scenario, so the
+// pair isolates the citation as the thing that moves the verdict.
+//
+// TEETH, DEMONSTRATED RATHER THAN ASSUMED (@SCN-LDG-031's precedent). This arm was GREEN on
+// arrival, so its sensitivity had to be shown. Removing the ingest edge's de-duplicating
+// `.filter(...)` does NOT red it — duplicate observations collapse, because reconciliation
+// is per-OBLIGATION, not per-observation, so the double-count that filter reads as guarding
+// against is not reachable from here. What DOES red both arms is deleting `@lint=typecheck`
+// from the fixture: the citation is the discriminator, and the assertion is sensitive to
+// exactly the thing the scenario is about. (3F-2510, proven both directions in the PR.)
+// ---------------------------------------------------------------------------
+const USG_CONFIGURED_NAMED_FIXTURE: UsgFixture = {
+  features: "tests/fixtures/usg-configured-named/features",
+  ci: "tests/fixtures/usg-configured-named/ci.yml",
+  packageJson: "tests/fixtures/usg-configured-named/package.json",
+};
+
+// @SCN-USG-010
+Given("a target that configures typecheck a static check and names it", function () {
+  activeFixture = USG_CONFIGURED_NAMED_FIXTURE;
+  activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg010-"));
+});
+
+// @SCN-USG-010
+Then("typecheck is counted once and attributed, not reported uncited", function () {
+  assert.ok(
+    activeMd.includes("1 static check(s) run, 0 uncited static check(s)"),
+    `expected typecheck counted ONCE and attributed — the configuration widened DISCOVERY, ` +
+      `and discovery is not attribution. Got:\n${activeMd}`,
+  );
+  assert.ok(
+    activeMd.includes(
+      "| SCN-TGN-001 | typecheck | ✓ Evidence Observation satisfies its Evidence Obligation |",
+    ),
+    `expected typecheck attributed to the scenario naming it; got:\n${activeMd}`,
+  );
+  assert.ok(
+    !activeMd.includes("cites no Scenario (typecheck)"),
+    `expected NO uncited credit for typecheck: a scenario names it. Accusing an attributed ` +
+      `gate of being unattributed is an INVENTION, and an invention is worse than an ` +
+      `omission — it sends a consultant to fix something that is not broken. ` +
+      `Got:\n${activeMd}`,
+  );
+});
+
 After({ tags: "@USG" }, function () {
   if (activeDir && existsSync(activeDir)) rmSync(activeDir, { recursive: true, force: true });
 });

@@ -22,7 +22,7 @@
 
 import { describe, it, expect } from "vitest";
 import { join } from "node:path";
-import { runReconcile, resolveDeferralTags } from "./ingestQualityChecks.js";
+import { runReconcile, resolveDeferralTags, resolveStaticChecks } from "./ingestQualityChecks.js";
 import { DEFAULT_DEFERRAL_TAGS } from "../deferralTags.js";
 
 const FIXTURE = join(process.cwd(), "tests/fixtures/scn-lnt-005");
@@ -109,5 +109,81 @@ describe("[SCN-PND-021] resolveDeferralTags extends the starter set with specCon
     expect(new Set(resolveDeferralTags({ specController: { deferralTags: "nope" as unknown } }))).toEqual(
       new Set(DEFAULT_DEFERRAL_TAGS)
     );
+  });
+});
+
+/**
+ * @SCN-USG-009 (@unit) — the target's static-check CONFIGURATION, the reader half.
+ * `specController.staticChecks` extends the prefix discovery; the observer half is pinned in
+ * packages/core/src/parse/runningStaticChecks.test.ts.
+ */
+describe("[SCN-USG-009] resolveStaticChecks reads specController.staticChecks", () => {
+  it("returns the configured script names", () => {
+    expect(resolveStaticChecks({ specController: { staticChecks: ["typecheck"] } })).toEqual([
+      "typecheck",
+    ]);
+  });
+
+  it("returns nothing when the target configures none", () => {
+    // The default is EMPTY, not a starter set: unlike deferral tags there is no built-in a
+    // project would inherit, because the built-in discovery IS the prefix set. A default here
+    // would put a check on a target's books that its own conventions never claimed.
+    expect(resolveStaticChecks({})).toEqual([]);
+    expect(resolveStaticChecks({ specController: {} })).toEqual([]);
+  });
+
+  it("ignores non-array and non-string config defensively", () => {
+    // Consistent with resolveDeferralTags: malformed config degrades to "configured nothing",
+    // never to a crash — the reader is the impure edge and a target's manifest is not ours.
+    expect(resolveStaticChecks({ specController: { staticChecks: "typecheck" } })).toEqual([]);
+    expect(resolveStaticChecks({ specController: { staticChecks: [1, "typecheck", null] } })).toEqual([
+      "typecheck",
+    ]);
+  });
+
+  it("de-duplicates, so a repeated configuration cannot double-count its check", () => {
+    expect(
+      resolveStaticChecks({ specController: { staticChecks: ["typecheck", "typecheck"] } })
+    ).toEqual(["typecheck"]);
+  });
+
+  it("takes bare script names, NOT @-prefixed tags", () => {
+    // These are package.json manifest KEYS, not tags, so there is no `@` to strip — the one
+    // place this reader deliberately differs from resolveDeferralTags beside it.
+    expect(resolveStaticChecks({ specController: { staticChecks: ["@typecheck"] } })).toEqual([
+      "@typecheck",
+    ]);
+  });
+});
+
+/**
+ * @SCN-USG-010 (@unit) — the de-duplication boundary the widened discovery makes reachable.
+ * Drives the real `runReconcile` over the usg-configured-named fixture; the @integration arm
+ * drives the same tree through the CLI and reads the rendered report.
+ */
+describe("[SCN-USG-010] a configured static check a scenario names is counted once, not twice", () => {
+  const CONFIGURED_NAMED = join(process.cwd(), "tests/fixtures/usg-configured-named");
+
+  it("posts one static-check credit, attributed, with no uncited twin", () => {
+    const balance = runReconcile({
+      features: join(CONFIGURED_NAMED, "features"),
+      ci: join(CONFIGURED_NAMED, "ci.yml"),
+      packageJson: join(CONFIGURED_NAMED, "package.json"),
+    });
+
+    // Both observers see a configured check now — the named-obligation one and the discovery
+    // one this slice widened. Without the de-duplication the discovery copy lands on the
+    // SUSPENSE row as an uncited credit: a phantom twin of a check that is perfectly fine.
+    const suspense = balance.ledger.scenarioReconciliations.find(
+      (s) => s.kind === "suspense-scenario"
+    );
+    expect(suspense).toBeUndefined();
+
+    // And the citation still discharges the obligation on the scenario's own row.
+    const scenario = balance.ledger.scenarioReconciliations.find((s) => s.scnId === "SCN-TGN-001");
+    const lintItems = scenario?.qualityCheckReconciliations.filter((r) => r.qualityCheck === "lint");
+    expect(lintItems).toHaveLength(1);
+    expect(lintItems?.[0]?.outcome).toBe("satisfied");
+    expect(lintItems?.[0]?.staticCheck).toBe("typecheck");
   });
 });

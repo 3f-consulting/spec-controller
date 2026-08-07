@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "echo test",
+    "cucumber": "echo cucumber"
+  },
+  "specController": {
+    "staticChecks": ["typecheck"]
+  }
+}

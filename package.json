@@ -31,6 +31,9 @@
     "lint:anemic-domain": "tsx packages/spec-controller/static-checks/lintAnemicDomainCli.ts",
     "lint:exempt-data-floor": "tsx packages/spec-controller/static-checks/lintExemptDataFloorCli.ts"
   },
+  "specController": {
+    "staticChecks": ["typecheck"]
+  },
   "devDependencies": {
     "@3f-consulting/spec-controller-core": "workspace:*",
     "@cucumber/cucumber": "^12.9.0",

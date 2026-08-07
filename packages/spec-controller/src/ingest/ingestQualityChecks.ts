@@ -74,8 +74,38 @@ const CUCUMBER_QUALITY_CHECK: RuntimeQualityCheck = "integration";
  * at a third ecosystem, not now (mirrors the VITEST_QUALITY_CHECK stance above).
  * `qualityCheck: "lint"` (the static-check axis name) is unchanged — this is the script prefix,
  * not the axis.
+ *
+ * A HEURISTIC FOR FINDING CHECKS, NEVER THE DEFINITION OF ONE (@SCN-USG-009, 3F-2495). Membership
+ * is a property of the CHECK — does it analyse source without executing it — so a target whose
+ * gate this set misses configures it by name via `specController.staticChecks` (below) rather than
+ * renaming its scripts to our convention, which is not a thing the tool can ask of a client.
  */
 const GUARD_SCRIPT_PREFIXES: readonly string[] = ["lint:", "guard:"];
+
+/**
+ * The scripts the TARGET configures AS static checks (@SCN-USG-009, 3F-2495) — read from
+ * `specController.staticChecks`, EXTENDING the prefix discovery above.
+ *
+ * WHY A CONFIGURATION AND NOT A RENAME. `tsc --noEmit` is static analysis on any reading and reds
+ * the build on a violation, and no prefix recognises it. Renaming the script fixes one repository;
+ * a client's scripts are not ours to rename, so the tool has to be able to be TOLD.
+ *
+ * EXTENDS, NEVER REPLACES — the `resolveDeferralTags` contract one function up, and for the same
+ * reason: a target cannot un-recognise a check the convention already finds. Bare script names
+ * (no `@`-stripping — these are manifest keys, not tags); non-string / non-array config ignored
+ * defensively, consistent with the deferral-tag reader.
+ *
+ * It widens only the DISCOVERY direction. The named-obligation observer never consulted the
+ * prefixes, so `@lint=<anything>` always reconciled; what this buys is finding a check NOBODY
+ * named — the unattributed check, which was invisible exactly when it was unattributed.
+ */
+export function resolveStaticChecks(packageJson: {
+  specController?: { staticChecks?: unknown };
+}): readonly string[] {
+  const configured = packageJson.specController?.staticChecks;
+  if (!Array.isArray(configured)) return [];
+  return [...new Set(configured.filter((name): name is string => typeof name === "string"))];
+}
 
 /**
  * The reconciler's resolved input paths — the CLI options threaded to the readers.
@@ -286,7 +316,11 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
   // takes the resolved set as its injected `deferralTags` param, staying pure.
   const pkgPath = opts.packageJson ?? "package.json";
   const packageJson =
-    readJsonIfPresent<PackageJsonScripts & { specController?: { deferralTags?: unknown } }>(pkgPath) ?? {};
+    readJsonIfPresent<
+      PackageJsonScripts & {
+        specController?: { deferralTags?: unknown; staticChecks?: unknown };
+      }
+    >(pkgPath) ?? {};
   const deferralTags = resolveDeferralTags(packageJson);
   const scenarios = scenariosFromFeatures(opts.features, deferralTags);
 
@@ -332,7 +366,15 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
   // running static checks are added here. They cite no scenario — the reconciler folds them into the suspense row.
   // (`staticCheckEvidenceObligationSet` is the journal rule's Set, read once above.)
   evidenceObservations.push(
-    ...runningStaticChecks(ciSources, packageJson, GUARD_SCRIPT_PREFIXES).filter(
+    ...runningStaticChecks(
+      ciSources,
+      packageJson,
+      GUARD_SCRIPT_PREFIXES,
+      // The target's own configurations (@SCN-USG-009) — the checks its gates run under names our
+      // conventions do not reach. Read here, at the edge that already owns the prefix set, so the
+      // core still assumes neither.
+      resolveStaticChecks(packageJson)
+    ).filter(
       (o) => !staticCheckEvidenceObligationSet.has(o.staticCheck)
     )
   );

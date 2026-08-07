@@ -34,12 +34,28 @@ import { ciRunCommands, commandInvokesScript, type PackageJsonScripts } from "./
 export function runningStaticChecks(
   ciSources: readonly string[],
   packageJson: PackageJsonScripts,
-  guardPrefixes: readonly string[]
+  guardPrefixes: readonly string[],
+  // @SCN-USG-009 (3F-2495) — scripts the TARGET configures AS static checks, EXTENDING the prefix
+  // discovery rather than replacing it. The prefix set is a heuristic for FINDING checks, never
+  // the definition of one: membership is a property of the check (does it analyse source without
+  // executing it), and `tsc --noEmit` has that property whatever its script is called.
+  //
+  // Only the DISCOVERY direction ever needed this. `checkStaticEvidenceObligations` — the
+  // named-obligation observer — has never consulted the prefixes, so a scenario carrying
+  // `@lint=typecheck` always reconciled. What could not happen was finding a non-prefixed check
+  // NOBODY named: the unattributed check was invisible exactly when it was unattributed.
+  //
+  // Trailing and optional, so the frozen v1 barrel's symbol surface is untouched.
+  configuredStaticChecks: readonly string[] = []
 ): GuardEvidenceObservation[] {
   const scripts = packageJson.scripts ?? {};
   const runCommands = ciRunCommands(ciSources);
   return Object.keys(scripts)
-    .filter((name) => guardPrefixes.some((prefix) => name.startsWith(prefix)))
+    .filter(
+      (name) =>
+        guardPrefixes.some((prefix) => name.startsWith(prefix)) ||
+        configuredStaticChecks.includes(name)
+    )
     .filter((name) => runCommands.some((cmd) => commandInvokesScript(cmd, name)))
     .sort()
     .map((guard) => ({

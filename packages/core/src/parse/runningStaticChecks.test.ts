@@ -183,3 +183,72 @@ describe("[SCN-USG-007] a static check running in ANY of a target's workflows is
     ]);
   });
 });
+
+/**
+ * @SCN-USG-009 (@unit) — the CONFIGURED static check. The prefix set is a discovery
+ * heuristic, never a definition: a target names the scripts its own convention missed,
+ * and the observer finds them exactly as it finds a prefixed one.
+ *
+ * Bidirectional back-reference: grepping `SCN-USG-009` returns this block AND the
+ * features/uncited-static-checks.feature scenario.
+ */
+describe("[SCN-USG-009] runningStaticChecks observes a script the target CONFIGURES a static check", () => {
+  const pkg: PackageJsonScripts = {
+    scripts: {
+      typecheck: "tsc --noEmit",
+      test: "vitest run",
+      cucumber: "cucumber-js",
+    },
+  };
+  const ci = [
+    "jobs:\n  ci:\n    steps:\n      - run: pnpm typecheck\n      - run: pnpm test\n",
+  ];
+
+  it("finds a configured script no prefix recognises", () => {
+    expect(runningStaticChecks(ci, pkg, DEFAULT_PREFIXES, ["typecheck"])).toEqual([
+      { qualityCheck: "lint", staticCheck: "typecheck", exists: true, enforcedOverRealSource: true },
+    ]);
+  });
+
+  it("finds nothing without the configuration — the false negative this closes", () => {
+    // The state of the world before 3F-2495: `tsc --noEmit` reds the build on a violation
+    // and is static analysis by any reading, and the observer cannot see it, because it is
+    // not called lint:typecheck. Silence, not a verdict.
+    expect(runningStaticChecks(ci, pkg, DEFAULT_PREFIXES)).toEqual([]);
+  });
+
+  it("EXTENDS the prefixes rather than replacing them", () => {
+    // Config extends, never replaces (the resolveDeferralTags contract): a configuration
+    // cannot un-recognise a check the convention already found.
+    const both: PackageJsonScripts = {
+      scripts: { ...pkg.scripts, "lint:foo": "echo foo" },
+    };
+    const ciBoth = ["jobs:\n  ci:\n    steps:\n      - run: pnpm typecheck\n      - run: pnpm lint:foo\n"];
+
+    expect(runningStaticChecks(ciBoth, both, DEFAULT_PREFIXES, ["typecheck"]).map((o) => o.staticCheck))
+      .toEqual(["lint:foo", "typecheck"]);
+  });
+
+  it("still requires the check to RUN in CI — the manifest is not the source", () => {
+    // A configured script CI does not run is not a gate. Without this, configuring a helper
+    // would red a repository for owning it — the call deriveLocalLadder already makes.
+    const ciWithout = ["jobs:\n  ci:\n    steps:\n      - run: pnpm test\n"];
+
+    expect(runningStaticChecks(ciWithout, pkg, DEFAULT_PREFIXES, ["typecheck"])).toEqual([]);
+  });
+
+  it("ignores a configuration naming a script the manifest does not define", () => {
+    expect(runningStaticChecks(ci, pkg, DEFAULT_PREFIXES, ["nonexistent"])).toEqual([]);
+  });
+
+  it("emits a configured check exactly once even if it is also prefix-recognised", () => {
+    // Belt and braces against the double-count @SCN-USG-010 guards one layer up: a target
+    // that both names a lint: script AND configures it must not get two observations.
+    const pkgPrefixed: PackageJsonScripts = { scripts: { "lint:foo": "echo foo" } };
+    const ciPrefixed = ["jobs:\n  ci:\n    steps:\n      - run: pnpm lint:foo\n"];
+
+    expect(runningStaticChecks(ciPrefixed, pkgPrefixed, DEFAULT_PREFIXES, ["lint:foo"])).toEqual([
+      { qualityCheck: "lint", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
+    ]);
+  });
+});

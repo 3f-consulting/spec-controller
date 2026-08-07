@@ -18,7 +18,7 @@ Feature: The public core exports exactly the frozen v1 contract surface
 
   Rule: the v1 barrel exposes QualityCheckReconciliation for reading, not construction
 
-    @unit @SCN-API-002
+    @unit @lint=typecheck @SCN-API-002
     Scenario: an external consumer cannot construct a QualityCheckReconciliation
       Given the frozen v1 barrel exports the QualityCheckReconciliation type but not its constructor
       When external code assembles a QCR-shaped object literal and assigns it to QualityCheckReconciliation
