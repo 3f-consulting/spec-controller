@@ -10,7 +10,7 @@
  * registered). Missing result files are tolerated: their evidence is simply absent
  * (the scenario reconciles as missing for that level). The static check kind reads
  * `--ci` (a workflow file or a directory of them, default `.github/workflows`) +
- * `package.json` to observe each NAMED `@lint=<guard>`.
+ * `package.json` to observe each fitness check the corpus cites.
  */
 
 import { readFileSync, existsSync } from "node:fs";
@@ -39,12 +39,19 @@ import {
 } from "@3f-consulting/spec-controller-core";
 import { checkStaticEvidenceObligations } from "@3f-consulting/spec-controller-core";
 import { runningStaticChecks } from "@3f-consulting/spec-controller-core";
-// The NAMED-static-check rule lives ONCE on the journal (the static-axis twin of
-// `evidenceObligationPairsOf`); this command reads it rather than rebuilding the derivation inline.
-// Reached via the core package's `/internal` subpath export — the frozen v1 barrel (@SCN-API-001)
-// does not, and must not, carry this core-internal helper, so it is exposed on the sanctioned
-// monorepo-internal seam instead of by a deep `core/src` relative path.
-import { staticCheckEvidenceObligationsOf } from "@3f-consulting/spec-controller-core/internal";
+// The citation seam (@SCN-LNT-005) — the registry read, the corpus hop, and the two composed.
+// Core-internal rather than public: where a target's registry is AUTHORED is still open (the
+// registry-home question, increment D), so the seam's shape is not a v1 contract yet.
+import {
+  checkRegistryOf,
+  registeredCheckTags,
+  fitnessCitations,
+  citationOfScript,
+  parseTaggedScenarios,
+  type CheckRegistry,
+  type FitnessCitations,
+  type ScriptCitation,
+} from "@3f-consulting/spec-controller-core/internal";
 import type { PackageJsonScripts } from "@3f-consulting/spec-controller-core";
 import { evidenceReconciliationOf } from "@3f-consulting/spec-controller-core";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
@@ -96,8 +103,8 @@ const GUARD_SCRIPT_PREFIXES: readonly string[] = ["lint:", "guard:"];
  * defensively, consistent with the deferral-tag reader.
  *
  * It widens only the DISCOVERY direction. The named-obligation observer never consulted the
- * prefixes, so `@lint=<anything>` always reconciled; what this buys is finding a check NOBODY
- * named — the unattributed check, which was invisible exactly when it was unattributed.
+ * prefixes, so any named check always reconciled; what this buys is finding a check NOBODY
+ * cites — the unattributed check, which was invisible exactly when it was unattributed.
  */
 export function resolveStaticChecks(packageJson: {
   specController?: { staticChecks?: unknown };
@@ -105,6 +112,114 @@ export function resolveStaticChecks(packageJson: {
   const configured = packageJson.specController?.staticChecks;
   if (!Array.isArray(configured)) return [];
   return [...new Set(configured.filter((name): name is string => typeof name === "string"))];
+}
+
+/**
+ * The TARGET's check registry (@SCN-LNT-005) — `specController.checkRegistry`, read as
+ * `script handle → bare check tag` through the engine's own `checkRegistryOf`.
+ *
+ * IT IS THE TARGET'S, AND THAT IS THE WHOLE POINT. spec-controller reconciles a tree that is
+ * usually not its own, and a bare check tag means what the target says it means. Resolved from the
+ * tool's own manifest instead, a target registering nothing raises no fitness obligation at all,
+ * and one registering the same word for a different script credits the wrong row — so the registry
+ * travels with the scripts and the CI config it is read alongside, and every one of them comes from
+ * `--package-json`.
+ *
+ * The third of this edge's `specController.*` resolvers, and defensive like the two above it: a
+ * missing, non-object or array-shaped config resolves EMPTY, and a malformed entry is dropped by
+ * `checkRegistryOf` rather than thrown. There is no starter set — unlike deferral tags there is no
+ * built-in a target would inherit, and a registry entry the target did not write would put a
+ * fitness obligation on its books under a word it never used.
+ *
+ * Where a registry is AUTHORED is still open (the registry-home question, increment D); this key is
+ * the seam it is read from today, and the tier-tag floor reads it through THIS function so the
+ * floor admits exactly the tags the obligation rule raises against.
+ */
+export function resolveCheckRegistry(packageJson: {
+  specController?: { checkRegistry?: unknown };
+}): CheckRegistry {
+  const configured = packageJson.specController?.checkRegistry;
+  if (typeof configured !== "object" || configured === null || Array.isArray(configured)) {
+    return checkRegistryOf({});
+  }
+  return checkRegistryOf(configured as Record<string, unknown>);
+}
+
+/**
+ * The runnable script handles the OBLIGATION-side observer is asked about — the reader that carries
+ * exists-but-unwired, and so the only one able to produce a watermelon.
+ *
+ * THE REGISTRY'S INVERSE, NARROWED BY THE CORPUS. A fitness obligation names the BARE check tag its
+ * stepless scenario carries, which is not a script and would be observed as one nobody wrote; the
+ * runnable handle for it is what the registry maps onto that tag. A handle joins only when the
+ * corpus actually carries a scenario for its check, because a registered check nobody wrote a
+ * scenario for is the UNCITED case — it must reach no row and surface in suspense, not be asked
+ * about here as though something obliged it.
+ *
+ * A SECOND SOURCE STOOD HERE and is gone with the by-name route (3F-2590): the corpus's named
+ * HANDLES, from the retired `@lint=<handle>` form. That form raises no obligation at all now
+ * (@SCN-LNT-007), so the set it contributed is empty by construction — and every bare check a
+ * fitness obligation names is a REGISTERED tag, which the old filter dropped anyway.
+ *
+ * It doubles as the no-double-observe key: the running-check stream drops whatever appears here,
+ * because a check this reader covers already carries the authoritative exists / enforced detail.
+ */
+function observedCheckHandles(
+  registry: CheckRegistry,
+  citations: FitnessCitations
+): Set<string> {
+  const handles = new Set<string>();
+  for (const [handle, tag] of registry) {
+    if (citations.has(tag)) handles.add(handle);
+  }
+  return handles;
+}
+
+/**
+ * The target's feature corpus as ONE run reads it — the obligations it raises, the runnable check
+ * handles those obligations reach, and the `@SCN` a run of any handle cites.
+ *
+ * THE THREE ARE ONE READING, which is why they are produced together. All three are derived from
+ * the same bytes and the same registry, and the fault they exist to foreclose is precisely their
+ * disagreeing: a citation resolved against a corpus the ledger was not built from names a row
+ * nobody wrote (@SCN-LNT-009), and a handle set derived from a second discovery observes checks the
+ * obligations never asked about. Returning them separately would leave a caller free to assemble
+ * them from different reads.
+ *
+ * EVERY INPUT IS THE TARGET'S (@SCN-LNT-005). `registry` came from the target's manifest and the
+ * sources from the target's features directory, so a bare check tag means what that target says it
+ * means and the scenario carrying it is one that target wrote.
+ */
+interface TargetCorpus {
+  /** The `@SCN`-carrying scenarios, with their evidence obligations raised. */
+  scenarios: Scenario[];
+  /** The runnable script handles the obligation-side observer is asked about. */
+  checkHandles: ReadonlySet<string>;
+  /**
+   * What a run of this script handle cites — the bare check tag it IS and the `@SCN` carrying that
+   * check — or `null` where the seam reaches none. Both terms, because the `@SCN` picks the ROW and
+   * the tag picks which of that row's fitness obligations the credit answers (@SCN-LNT-012).
+   */
+  citedScn: (script: string) => ScriptCitation | null;
+}
+
+function readTargetCorpus(
+  featuresDir: string | undefined,
+  deferralTags: readonly string[],
+  registry: CheckRegistry
+): TargetCorpus {
+  const checkTags = registeredCheckTags(registry);
+  const sources = featureSources(featuresDir);
+  const scenarios = sources.flatMap((source) => parseScenarios(source, deferralTags, checkTags));
+  const citations = fitnessCitations(
+    sources.flatMap((source) => parseTaggedScenarios(source)),
+    checkTags
+  );
+  return {
+    scenarios,
+    checkHandles: observedCheckHandles(registry, citations),
+    citedScn: (script) => citationOfScript(script, registry, citations),
+  };
 }
 
 /**
@@ -152,13 +267,23 @@ export function resolveDeferralTags(packageJson: {
   return [...new Set([...DEFAULT_DEFERRAL_TAGS, ...extras])];
 }
 
+/**
+ * The discovered feature corpus's SOURCES — read once so the two readings a citing run needs (the
+ * obligations, and the corpus hop's `check tag → @SCN`) are taken from the same bytes. Two
+ * discoveries could disagree about the corpus, and a citation resolved against a corpus the ledger
+ * was not built from is exactly the phantom-row fault (@SCN-LNT-009).
+ */
+function featureSources(featuresDir: string | undefined): string[] {
+  const features =
+    featuresDir !== undefined ? discoverFeatures(featuresDir) : discoverFeatures();
+  return features.map((f) => readFileSync(f.path, "utf8"));
+}
+
 function scenariosFromFeatures(
   featuresDir: string | undefined,
   deferralTags: readonly string[] = DEFAULT_DEFERRAL_TAGS
 ): Scenario[] {
-  const features =
-    featuresDir !== undefined ? discoverFeatures(featuresDir) : discoverFeatures();
-  return features.flatMap((f) => parseScenarios(readFileSync(f.path, "utf8"), deferralTags));
+  return featureSources(featuresDir).flatMap((source) => parseScenarios(source, deferralTags));
 }
 
 /**
@@ -310,41 +435,31 @@ function parseRuntimeObservations(opts: ReconcileOptions, root: string | undefin
  * to produce the balance.
  */
 export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
-  // Read the target's package.json ONCE — its `specController.deferralTags` config extends the
-  // recognised deferral-tag set (@SCN-PND-021), and its `scripts` back the static-check `exists`
-  // read (the --package-json seam, below). The disk read stays at this impure edge; the core parser
-  // takes the resolved set as its injected `deferralTags` param, staying pure.
+  // Read the target's package.json ONCE — its `specController.*` config supplies the deferral-tag
+  // extension (@SCN-PND-021), the check registry (@SCN-LNT-005) and the configured check names
+  // (@SCN-USG-009), and its `scripts` back the `exists` read. The disk read stays at this impure
+  // edge; the core parsers take the resolved values as injected params, staying pure.
   const pkgPath = opts.packageJson ?? "package.json";
   const packageJson =
     readJsonIfPresent<
       PackageJsonScripts & {
-        specController?: { deferralTags?: unknown; staticChecks?: unknown };
+        specController?: {
+          deferralTags?: unknown;
+          staticChecks?: unknown;
+          checkRegistry?: unknown;
+        };
       }
     >(pkgPath) ?? {};
-  const deferralTags = resolveDeferralTags(packageJson);
-  const scenarios = scenariosFromFeatures(opts.features, deferralTags);
+  const corpus = readTargetCorpus(
+    opts.features,
+    resolveDeferralTags(packageJson),
+    resolveCheckRegistry(packageJson)
+  );
 
   // The TARGET repo root the credit locators are made relative to, so a
   // phantom-scenario row's where-to-fix (ruling Q5) stays portable in a banked artefact.
   const root = resolveTargetRoot({ features: opts.features });
 
-  // Parse the runtime observations ONCE — the SAME set feeds both the reconciler and the census.
-  const runtimeObservations = parseRuntimeObservations(opts, root);
-
-  // The full observation stream `reconcile` consumes: the runtime observations PLUS the static
-  // (static check) observations. The census is the RUNTIME axis, so only `runtimeObservations` is projected.
-  const evidenceObservations: EvidenceObservation[] = [...runtimeObservations];
-
-  // Static check kind: observe each NAMED @lint=<guard> against the CI config
-  // + package.json over the real tree. Read the CI + package.json ONCE — both
-  // the named-guard evidence observation AND the reverse CI-guard derivation (below) draw on them.
-  const staticCheckEvidenceObligationSet = staticCheckEvidenceObligationsOf(scenarios);
-  const staticCheckEvidenceObligations = [...staticCheckEvidenceObligationSet];
-  // The --package-json seam (@SCN-LNT-005): read the static check's `exists`
-  // from the EXTERNALLY-SPECIFIED package.json when given, else the tool's own
-  // cwd. Required to reconcile ANOTHER repo's static checks — and to render the
-  // historical watermelon (exists:true in the target's package.json, unwired in
-  // its CI → watermelon, not missing).
   // `--ci` names a workflow FILE or a DIRECTORY of them, and defaults to the directory
   // (@SCN-USG-006, 3F-2238): a pipeline split across files enforces its checks just as one
   // file does, and reading only ci.yml both invents watermelons for named checks enforced
@@ -353,19 +468,50 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
   // a narrowing (@SCN-USG-008).
   const ciPath = opts.ci ?? ".github/workflows";
   const ciSources = ciSourcePathsOf(ciPath).map((path) => readFileSync(path, "utf8"));
-  if (staticCheckEvidenceObligations.length > 0) {
-    evidenceObservations.push(...checkStaticEvidenceObligations(staticCheckEvidenceObligations, ciSources, packageJson));
-  }
 
-  // The RUNNING-guard observer: every running CI static check is a
-  // GuardEvidenceObservation in the stream — the static analogue of the runner emitting
-  // every test result — so the one reconcile engine sees the COMPLETE static stream.
-  // Combined with the named observations WITHOUT double-observing: a running static check the
-  // named set already covers carries its authoritative exists/enforcedOverRealSource
-  // detail from `checkStaticEvidenceObligations` (the watermelon input), so only the NO-EVIDENCE-OBLIGATION
-  // running static checks are added here. They cite no scenario — the reconciler folds them into the suspense row.
-  // (`staticCheckEvidenceObligationSet` is the journal rule's Set, read once above.)
-  evidenceObservations.push(
+  // The feature corpus is BOTH halves: the @SCN-tagged scenarios AND the untagged ones
+  // (@SCN-LDG-021). An untagged scenario cannot be linked to an observation, so it reconciles
+  // `no-scn-code` on its own out-of-balance row — never silently dropped from the debit side.
+  // THE CONCEPT, BUILT BY ITS OWN FACTORY (3F-2233) — the app no longer assembles a Ledger and
+  // leaves someone downstream to total it. The two axis GATES are always on at this edge: the CLI
+  // threads both the runtime-observation and the static-check reads.
+  return evidenceReconciliationOf(
+    corpus.scenarios,
+    // Parse the runtime observations ONCE — the SAME set feeds both the reconciler and the census.
+    [...parseRuntimeObservations(opts, root), ...checkObservations(corpus, ciSources, packageJson)],
+    untaggedScenariosFromFeatures(opts.features),
+    true,
+    true
+  );
+}
+
+/**
+ * The COMPLETE static stream `reconcile` consumes, from the two observers that produce it.
+ *
+ * The OBLIGATION-side reader answers for every check the corpus obliges (`corpus.checkHandles`),
+ * carrying the authoritative exists / enforced-over-real-source detail — and so the only one able
+ * to report the watermelon, since a check that runs nowhere is exactly what the other observer
+ * filters out. Both the `exists` read and the CI read come from the TARGET (@SCN-LNT-005): a check
+ * present in another repository's package.json and absent from its CI is the watermelon there
+ * exactly as it is here, and reading either from spec-controller's own tree would answer for a
+ * repository this run never looked at.
+ *
+ * The RUNNING-check observer then adds every running CI check the first did not cover — the static
+ * analogue of a runner emitting every test result, so nothing a gate runs is off the books. The
+ * exclusion is what keeps them from double-observing one check; the survivors cite no scenario, and
+ * `reconcile` folds them into the suspense row (@SCN-USG-001), which is where an unattributed check
+ * is meant to surface.
+ */
+function checkObservations(
+  corpus: TargetCorpus,
+  ciSources: readonly string[],
+  packageJson: PackageJsonScripts & { specController?: { staticChecks?: unknown } }
+): EvidenceObservation[] {
+  const obligated = [...corpus.checkHandles];
+  return [
+    ...(obligated.length > 0
+      ? checkStaticEvidenceObligations(obligated, ciSources, packageJson, corpus.citedScn)
+      : []),
     ...runningStaticChecks(
       ciSources,
       packageJson,
@@ -374,28 +520,8 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
       // conventions do not reach. Read here, at the edge that already owns the prefix set, so the
       // core still assumes neither.
       resolveStaticChecks(packageJson)
-    ).filter(
-      (o) => !staticCheckEvidenceObligationSet.has(o.staticCheck)
-    )
-  );
-
-  // The stream is now COMPLETE: every running CI static check is a GuardEvidenceObservation
-  // — the named ones match their @lint obligation, the no-evidence-obligation ones (a static check no @lint
-  // cites) cite no scenario, so `reconcile` folds them into the SUSPENSE row itself. No
-  // derive-and-diff, no `uncitedStaticChecks` param.
-  // The feature corpus is BOTH halves: the @SCN-tagged scenarios AND the untagged ones
-  // (@SCN-LDG-021). An untagged scenario cannot be linked to an observation, so it reconciles
-  // `no-scn-code` on its own out-of-balance row — never silently dropped from the debit side.
-  // THE CONCEPT, BUILT BY ITS OWN FACTORY (3F-2233) — the app no longer assembles a Ledger and
-  // leaves someone downstream to total it. The two axis GATES are always on at this edge: the CLI
-  // threads both the runtime-observation and the static-check reads.
-  return evidenceReconciliationOf(
-    scenarios,
-    evidenceObservations,
-    untaggedScenariosFromFeatures(opts.features),
-    true,
-    true
-  );
+    ).filter((o) => !corpus.checkHandles.has(o.staticCheck)),
+  ];
 }
 
 // The static-check kind-counts are no longer read as a parallel census (@SCN-USG-001 / 3F-2118):

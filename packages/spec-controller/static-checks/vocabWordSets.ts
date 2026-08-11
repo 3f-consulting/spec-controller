@@ -172,6 +172,42 @@ export const GUARD_QUALIFIERS: readonly (readonly string[])[] = [
 ];
 
 /**
+ * THE REGROWTH GUARD for `lint` AS A CLASS NOUN (3F-2588) — the words that, standing
+ * immediately after it, make `lint` the name of a whole class of fitness functions.
+ *
+ * Canon retired `lint` as the CLASS noun on 2026-08-07 (`fitness-functions.md`): the class is
+ * `static check`, and `@lint` is ONE member of it — the style-lint check. Nothing in this tree
+ * enforced that. `3F-2591`'s prose sweep clears today's instances; without a mechanism the coinage
+ * simply regrows, which is the honour-over-mechanism gap this repository exists to close.
+ *
+ * PHRASE-SCOPED, AND THAT IS THE WHOLE DESIGN. `lint` is LEGITIMATE in three senses that must stay
+ * green, and a blanket ban on the word would red all three and be worse than nothing:
+ *   - `@lint` — the bare style-lint check tag (@SCN-LNT-010);
+ *   - `lint:*` — every npm script name (`lint:complexity`, `lint:self-balance`, …), in
+ *     `package.json` and in `ci.yml`;
+ *   - ESLint as a tool, in prose.
+ * None of the three puts a class noun after the word, so none is reachable by this list.
+ *
+ * MEASURED, NOT GUESSED. Every follower here was counted across the tracked tree before adoption:
+ * each is either ZERO-occurrence (the `ci-run-time` row's REGROWTH shape — the rule keeps a
+ * coinage out rather than purging one) or occurs only in the class-noun sense this ticket swept. The
+ * followers with LEGITIMATE homonyms were deliberately LEFT OUT and are named in the residual:
+ * `check` (the `style-lint check` is what `@lint` IS), `obligation` (the `lint:obligations-only`
+ * fixture script), `guard` (the `lint:` / `guard:` discovery-prefix pair) and `evidence` (30+
+ * occurrences 3F-2591 sweeps as prose). A phrase guard also cannot reach a NOVEL spelling of the
+ * class sense — the residual of the mechanism, stated rather than left to be discovered.
+ *
+ * Written as canon spells them, singular AND plural. The engine stems them once at its own call
+ * site (`vocabAudit.ts`), which is where `singularise` already lives — a ruling record naming an
+ * engine helper would be a cycle between the two halves this file was split out to keep apart.
+ */
+export const CLASS_NOUN_PHRASE_WORDS: readonly string[] = [
+  "axis", "axes", "kind", "kinds", "class", "classes", "category", "categories",
+  "type", "types", "family", "families", "group", "groups", "dimension", "dimensions",
+  "concept", "concepts",
+];
+
+/**
  * ECMAScript / TypeScript reserved words + language-level globals. These are
  * grammar, not author-chosen names — the extractor does not treat them as
  * vocabulary (the same class of scanning-scope exclusion as punctuation, file

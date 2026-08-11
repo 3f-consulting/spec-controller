@@ -146,7 +146,7 @@ export function brokenItemsOf(reconciliation: Ledger): QualityCheckReconciliatio
  * character-identical — here in `lintTally` and in the markdown's `### Lint evidence obligations`
  * table. They agreed by copy-paste, not construction: either could have grown a clause alone and
  * nothing would have redded. Same anaemia, same cure as `evidenceObligationPairsOf` and
- * `staticCheckEvidenceObligationsOf`; the tally and the table are now two readings of ONE list.
+ * the corpus's own fitness obligations; the tally and the table are now two readings of ONE list.
  */
 export function lintReconciliationsOf(
   reconciliation: Ledger
@@ -434,9 +434,11 @@ export interface RuntimeObservationTally {
  * with the verdict — the views (Test volume, the per-quality-check table) are projections of the
  * same rows, not a parallel opinion kept in step.
  *
- * Static check (`lint`) credits are SKIPPED: this is the RUNTIME axis. @SCN-LDG-022 posts the SAME
- * static check object to EVERY account naming it, so counting one would double-count an axis the
- * runtime tally must not see at all — the same runtime scoping the retired census enforced.
+ * Static check (`lint`) credits are SKIPPED, ON THE CHECK and never on the absence of a citation
+ * (@SCN-RPT-023). A fitness credit now CITES its own stepless scenario and posts to an ordinary
+ * scenario row, so to a naive walk it is indistinguishable from a runtime credit by the account it
+ * landed on; the `qualityCheck` is the only thing that tells them apart. Counting one would fold
+ * the static axis into the Test volume, which must not see it at all.
  *
  * The per-scenario-kind counts feed `summary.testVolume` directly (`onScenario` counts credits
  * citing a scenario, INCLUDING no-evidence-obligation — so the 3-termed identity
@@ -496,29 +498,30 @@ export function runtimeObservationTally(ledger: Ledger): RuntimeObservationTally
 // that re-derives the running / uncited split from a re-read of the CI config is not a manifesto
 // concept, so the counting folds onto the Ledger's posted credits rather than living beside it.
 //
-// The static fold is MORE CAREFUL than the runtime one — a plain count is wrong on BOTH axes the
-// posting rules differ on (@SCN-LDG-022, double-entry-manifesto.md line 160): a static check is
-// posted to EVERY account naming it (a run is evidence for all naming scenarios — NOT the runtime
-// "exactly one"), so a guard named by N scenarios is the SAME object posted N times by reference
-// (@SCN-LDG-024), and it is posted whatever it reconciles to (posting is not classifying), so a
-// named watermelon/missing guard posts too though it does not RUN. Hence the two crux moves:
-//   - IDENTITY-DEDUPE the named side (a `Set` keyed by object identity), so an N-named guard
-//     counts ONCE, and
-//   - FILTER TO RUNNING (`exists && enforcedOverRealSource`), so a named watermelon/missing guard
+// ONE CARE-MOVE LEFT, AND THE OTHER IS GONE (3F-2590). This fold used to need TWO, because the
+// posting rules differed per axis: a static check was posted to EVERY account naming it, so a
+// check named by N scenarios was the SAME object posted N times by reference and had to be
+// IDENTITY-DEDUPED (a `Set` keyed by object identity). That route is deleted — a fitness credit
+// cites, so it posts to exactly one row like every other credit — and the dedupe went with it: a
+// `Set` collapsing objects that can no longer repeat is a guard against an unreachable state, and
+// keeping it would leave a reader inferring a cardinality the model no longer has. What SURVIVES
+// is the axis the two folds still differ on: a credit is posted whatever it reconciles to
+// (posting is not classifying), so a watermelon/missing check posts too though it does not RUN —
+//   - FILTER TO RUNNING (`exists && enforcedOverRealSource`), so a watermelon/missing check
 //     that still posts is excluded — exactly the running-only `continue` the retired census applied.
 // ---------------------------------------------------------------------------
 
 /**
  * The materialised static-check totals — the STATIC-axis analogue of `RuntimeObservationTally`,
  * two counts read off the SAME posted static-check credits: `runningStaticCheckCount` (the volume of
- * distinct running static checks — every `@lint=<guard>` a CI `run:` step invokes) and
- * `uncitedStaticCheckCount` (how many of them NO `@lint` cites — a static check running with
+ * distinct running static checks — every static-check script a CI `run:` step invokes) and
+ * `uncitedStaticCheckCount` (how many of them NO scenario cites — a static check running with
  * nothing naming it, the mirror of a runtime `cites-no-scenario` credit). The named count is
- * IMPLICIT (`runningStaticCheckCount − uncitedStaticCheckCount`) and NOT carried: every named
- * static check is already a reconciled `@lint` sub-row and adds nothing the rows do not already hold.
+ * IMPLICIT (`runningStaticCheckCount − uncitedStaticCheckCount`) and NOT carried: every cited
+ * static check is already a reconciled `lint` sub-row and adds nothing the rows do not already hold.
  */
 export interface StaticObservationTally {
-  /** The running static-check set volume — every `@lint=<guard>` a CI `run:` step invokes. */
+  /** The running static-check set volume — every static-check script a CI `run:` step invokes. */
   runningStaticCheckCount: number;
   /** Running static checks NO `@lint` cites — the uncited static-checks (named is implicit). */
   uncitedStaticCheckCount: number;
@@ -532,32 +535,28 @@ export interface StaticObservationTally {
  * posts to, so this can never disagree with the verdict.
  *
  * `uncitedStaticCheckCount` is the count of lint credits on the SUSPENSE row — the no-evidence-obligation
- * static checks the reconciler folded there (a static check running with no `@lint` naming it,
+ * static checks the reconciler folded there (a static check running with no scenario citing it,
  * `cites-no-scenario` on the credit side). By construction the app only pushes RUNNING guards into
  * that no-evidence-obligation stream (`runningStaticChecks`), so every suspense lint credit is running — the
  * plain count is the census's running-and-uncited count.
  *
- * `runningStaticCheckCount` is the count of DISTINCT-BY-OBJECT-IDENTITY RUNNING lint credits across ALL
- * rows. Two care-moves the runtime axis does not need (see the block comment above):
- *   - IDENTITY-DEDUPE: @SCN-LDG-022 posts the SAME static-check object to EVERY account naming it,
- *     so a guard named by N scenarios appears N times by reference; a `Set` keyed by the object
- *     identity collapses those to one, so the fold cannot double-count a multiply-named guard.
- *   - FILTER TO RUNNING (`exists && enforcedOverRealSource`): a named watermelon (exists, unwired)
- *     or missing (absent) guard STILL posts (posting is not classifying), but it does not RUN, so it
+ * `runningStaticCheckCount` is the count of RUNNING lint credits across ALL rows. One care-move the
+ * runtime axis does not need (see the block comment above):
+ *   - FILTER TO RUNNING (`exists && enforcedOverRealSource`): a watermelon (exists, unwired) or
+ *     missing (absent) check STILL posts (posting is not classifying), but it does not RUN, so it
  *     is not a running static check — excluded here exactly as the retired census's running-only
  *     `continue` excluded it.
  *
  * The named (implicit) count is `runningStaticCheckCount − uncitedStaticCheckCount`.
  */
 export function staticObservationTally(ledger: Ledger): StaticObservationTally {
-  // The distinct RUNNING static-check credits across ALL rows, keyed by OBJECT IDENTITY so a guard
-  // named by N scenarios (posted N times by reference, @SCN-LDG-024) is counted once. Only
-  // running guards (`exists && enforcedOverRealSource`) join the set — a named watermelon/missing
-  // guard, which posts but does not run, is filtered out (the census's running-only `continue`).
-  const runningGuards = new Set<GuardEvidenceObservation>();
+  // The RUNNING static-check credits across ALL rows. Only running checks
+  // (`exists && enforcedOverRealSource`) are counted — a watermelon/missing check, which posts but
+  // does not run, is filtered out (the census's running-only `continue`).
+  let runningStaticCheckCount = 0;
   // The uncited static checks — the lint credits the reconciler folded onto the SUSPENSE row (a
-  // no-evidence-obligation running guard, `cites-no-scenario`). A plain count: the app pushes only RUNNING
-  // guards into the no-evidence-obligation stream, so every suspense lint credit is a running uncited guard.
+  // no-evidence-obligation running check, `cites-no-scenario`). A plain count: the app pushes only RUNNING
+  // checks into the no-evidence-obligation stream, so every suspense lint credit is a running uncited check.
   let uncitedStaticCheckCount = 0;
   for (const row of ledger.scenarioReconciliations) {
     for (const obs of row.evidenceObservations) {
@@ -565,11 +564,9 @@ export function staticObservationTally(ledger: Ledger): StaticObservationTally {
       // credit (the uncited/broken ones the suspense row also holds) is not a static observation.
       if (obs.qualityCheck !== "lint") continue;
       if (row.kind === "suspense-scenario") uncitedStaticCheckCount++;
-      // FILTER TO RUNNING, then IDENTITY-DEDUPE — a named watermelon/missing guard is excluded;
-      // a guard named by N scenarios (the same object N times) collapses to one set member.
-      if (obs.exists && obs.enforcedOverRealSource) runningGuards.add(obs);
+      if (obs.exists && obs.enforcedOverRealSource) runningStaticCheckCount++;
     }
   }
 
-  return { runningStaticCheckCount: runningGuards.size, uncitedStaticCheckCount };
+  return { runningStaticCheckCount, uncitedStaticCheckCount };
 }

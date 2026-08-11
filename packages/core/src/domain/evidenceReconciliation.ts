@@ -24,9 +24,9 @@
  * WALKS the inputs, CALLS those rules, and BUILDS the rows; it is the orchestration, not their home.
  *
  * POSTING-DESTINATION left too (3F-2202) — WHERE an entry lands is canon's own glossary group
- * ("### Posting") and now lives on `domain/posting`: `postingOf` (the citation-routed credits, plus
- * the no-evidence-obligation-static-check arm) and `staticCheckCreditsPostingTo` (the by-name half, resolved
- * per row in that row's obligation order). The fold no longer DECIDES a destination anywhere — it
+ * ("### Posting") and now lives on `domain/posting`: `postingOf`, the one citation route over both
+ * axes (plus the no-evidence-obligation-static-check arm). The by-name half is gone (3F-2590).
+ * The fold no longer DECIDES a destination anywhere — it
  * asks the rule once per credit and files the answer. What remains is assembly: which rows exist,
  * in what order, holding which items.
  *
@@ -60,7 +60,6 @@ import type {
 } from "../model.js";
 import {
   evidenceObligationPairsOf,
-  staticCheckEvidenceObligationsOf,
   // THE PENDING PARTITION (3F-2204) — the two exact complements over a scenario's obligations.
   evidenceObligationsOf,
   pendingItemsOf,
@@ -93,7 +92,47 @@ import {
 } from "./scenarioReconciliation.js";
 // THE POSTING RULE (3F-2202) — where an entry lands is canon's own glossary group, so it lives on
 // its own concept module. `reconcile` no longer decides a destination; it ASKS.
-import { postingOf, staticCheckCreditsPostingTo } from "./posting.js";
+import { postingOf } from "./posting.js";
+
+/** A destination that names ONE row — the two citation-routed `Posting` kinds. */
+type CitedPosting = { kind: "scenario" | "phantom-scenario"; scnId: string };
+
+/**
+ * THE CITATION INDEX — the credits routed BY CITATION, held by the row each one names, plus the
+ * phantom ids those credits MINTED, in first-seen order (@SCN-LDG-006).
+ *
+ * It became a thing of its own when the static axis started citing (@SCN-LNT-001). Before that
+ * only test results filed here, and the filing could sit inline in the fold; now both axes file
+ * the same way, and two blocks doing it would agree by copy — either could grow the
+ * phantom-minting clause alone, which is the drift `evidenceObligationPairsOf` was extracted to
+ * cure. Real and invented ids are held together deliberately: a phantom row reads its posted
+ * credits from here too, so both citation-routed destinations file once.
+ */
+interface CitationIndex {
+  /** File one citation-routed credit, minting the phantom id if the row is an invented one. */
+  file(posting: CitedPosting, observation: EvidenceObservation): void;
+  /** The credits citing this row — real or invented; empty when none did. */
+  creditsFor(scnId: string): EvidenceObservation[];
+  /** The invented ids credits minted, in first-seen order. */
+  readonly phantomIds: readonly string[];
+}
+
+function citationIndex(): CitationIndex {
+  const byScn = new Map<string, EvidenceObservation[]>();
+  const phantomIds: string[] = [];
+  return {
+    file(posting, observation) {
+      const list = byScn.get(posting.scnId) ?? [];
+      list.push(observation);
+      byScn.set(posting.scnId, list);
+      if (posting.kind === "phantom-scenario" && !phantomIds.includes(posting.scnId)) {
+        phantomIds.push(posting.scnId);
+      }
+    },
+    creditsFor: (scnId) => byScn.get(scnId) ?? [],
+    phantomIds,
+  };
+}
 
 export function reconcile(
   scenarios: Scenario[],
@@ -105,19 +144,11 @@ export function reconcile(
   // THE OBLIGATION SIDE, prepared once — the three sets the posting rule and the outcome rules read.
   // Each is already the MODEL's own rule (never re-derived here), and each is built ONCE and
   // shared, so no two consumers can drift: `scenarioIds` is which scenarios exist,
-  // `evidenceObligationPairs` is what they name at each quality-check (3F-1858), and
-  // `staticCheckEvidenceObligations` is which static-check handles they name.
+  // and `evidenceObligationPairs` is what they name at each quality-check (3F-1858).
   const scenarioIds = new Set(scenarios.map((d) => d.scnId));
   // The NAMED pairs — the model's rule, built ONCE and shared with the census (3F-1858).
   // Pending obligations are excluded: a pending obligation names nothing.
   const evidenceObligationPairs = evidenceObligationPairsOf(scenarios);
-  // The NAMED static check handles — every `@lint=<guard>` obligation across the corpus, the
-  // journal's rule. It is what `postingOf` consults to tell a named static check from a
-  // no-evidence-obligation one (which cites nothing, so it posts to SUSPENSE). This replaces the removed
-  // `uncitedStaticChecks` derive-and-diff param — the stream is now complete (the running-guard
-  // observer emits every running CI static check), so the reconciler recovers the no-evidence-obligation
-  // remainder itself, exactly as it does for an uncited runtime credit.
-  const staticCheckEvidenceObligations = staticCheckEvidenceObligationsOf(scenarios);
   // THE ONE ROUTING PASS (3F-2202). Every credit is routed ONCE, by THE posting rule
   // (`domain/posting`), into the structures the fold below reads. `reconcile` no longer DECIDES a
   // destination anywhere — it asks, and files the answer.
@@ -126,9 +157,9 @@ export function reconcile(
   // here and the phantom-id scan further down) plus three stream filters. They agreed by
   // copy-paste, not by construction: either could have grown an arm alone and nothing would have
   // redded — the identical anaemia `evidenceObligationPairsOf` was extracted to cure.
-  const byScn = new Map<string, RuntimeEvidenceObservation[]>();
-  // The PHANTOM rows, in FIRST-SEEN order (@SCN-LDG-006).
-  const phantomIds: string[] = [];
+  // THE CITATION INDEX holds BOTH axes now (@SCN-LNT-001): a fitness check's run cites the
+  // scenario that raises its obligation, so it files here exactly as a test result does.
+  const citations = citationIndex();
   // The three SUSPENSE streams, kept separate and each in observation order — the suspense row's
   // item order (broken first, then uncited, then the no-evidence-obligation static checks) is row assembly,
   // owned below, not a routing decision.
@@ -140,27 +171,22 @@ export function reconcile(
     // not a posting decision. Which axis a credit rides is read here; where it LANDS is the rule's,
     // on both branches.
     if (o.qualityCheck === "lint") {
-      const posting = postingOf(o, scenarioIds, staticCheckEvidenceObligations);
-      // A static check no `@lint` names cites nothing, so it posts to SUSPENSE — the static
+      const posting = postingOf(o, scenarioIds);
+      // A check whose run reached no `@SCN` cites nothing, so it posts to SUSPENSE — the static
       // analogue of an uncited runtime credit.
       if (posting.kind === "suspense-scenario") noEvidenceObligationGuards.push(o);
-      // `every-naming-scenario` is resolved PER ROW, in that row's own obligation order, by
-      // `staticCheckCreditsPostingTo` in the scenario loop below — a static check posts to EVERY
-      // account naming it, so it has no single destination to file here.
+      // A CITING run files into the citation index like any other credit (@SCN-LNT-001) —
+      // exactly one row, real or invented. There is no third destination left (3F-2590).
+      else citations.file(posting, o);
       continue;
     }
-    const posting = postingOf(o, scenarioIds, staticCheckEvidenceObligations);
+    const posting = postingOf(o, scenarioIds);
     switch (posting.kind) {
       case "scenario":
       case "phantom-scenario": {
         // THE CITATION INDEX holds real AND invented ids alike — a phantom row reads its posted
         // credits from here too, so both citation-routed destinations file together.
-        const list = byScn.get(posting.scnId) ?? [];
-        list.push(o);
-        byScn.set(posting.scnId, list);
-        if (posting.kind === "phantom-scenario" && !phantomIds.includes(posting.scnId)) {
-          phantomIds.push(posting.scnId);
-        }
+        citations.file(posting, o);
         break;
       }
       case "suspense-scenario":
@@ -187,7 +213,7 @@ export function reconcile(
     // quality-check it never named. Rule + rationale: `domain/qualityCheckReconciliation`.
     const noEvidenceObligationItems = noEvidenceObligationReconciliationsOf(
       d.scnId,
-      byScn.get(d.scnId) ?? [],
+      citations.creditsFor(d.scnId),
       evidenceObligationPairs
     );
 
@@ -198,22 +224,18 @@ export function reconcile(
       noEvidenceObligationItems,
       pendingItems
     );
-    // THE POSTED static-check CREDITS (@SCN-LDG-022) — a static check carries no @SCN, so `byScn`
-    // cannot hold it: it is linked by HANDLE, to every row naming it. Rule + rationale:
-    // `domain/posting`'s `staticCheckCreditsPostingTo` (3F-2202).
-    const staticCheckEvidenceObligationCredits = staticCheckCreditsPostingTo(d, evidenceObservations);
     scenarioReconciliations.push({
       scnId: d.scnId,
       kind: "scenario",
       verdict: verdictFor(qualityCheckReconciliations),
       // THE POSTED CREDITS (@SCN-LDG-022) — every credit CITING this scenario, whatever it
-      // reconciles to above. `byScn` is the citation index, so this includes the credit citing a
+      // reconciles to above. The citation index holds every citing credit, so this includes one citing a
       // PENDING quality-check, which reconciles `no-evidence-obligation` (3F-1858 — it used to reconcile to
       // NO ROW AT ALL, the false-green this posting made visible without fixing). It posts and is
       // findable WHATEVER it reconciles to; posting is not classifying, and a misclassification
-      // must misfile an entry, never vaporise it. Plus the static check credits this account NAMES,
-      // linked by handle (above).
-      evidenceObservations: [...(byScn.get(d.scnId) ?? []), ...staticCheckEvidenceObligationCredits],
+      // must misfile an entry, never vaporise it. A fitness check's run is in here too and by the
+      // SAME route (3F-2590): it cites this scenario, so the citation index holds it like any other.
+      evidenceObservations: citations.creditsFor(d.scnId),
       // THE POSTED DEBITS (@SCN-LDG-023) — every obligation THIS scenario RAISES, in document
       // order, keyed by quality-check. The debit half of the same posting: where a credit is
       // routed by its citation, a debit needs no routing at all — the account IS the scenario.
@@ -235,10 +257,10 @@ export function reconcile(
   // stood here re-stated the citation index's four routing decisions verbatim, including the
   // fail-safe arms (a BROKEN credit mints no phantom row; an uncited credit is suspense, never
   // phantom); both now come from the one `postingOf` call.
-  for (const scnId of phantomIds) {
-    const citations = byScn.get(scnId) ?? [];
+  for (const scnId of citations.phantomIds) {
+    const credits = citations.creditsFor(scnId);
     // ASKED, not decided (3F-2204).
-    const items = citesUnknownScenarioReconciliationsOf(citations);
+    const items = citesUnknownScenarioReconciliationsOf(credits);
     scenarioReconciliations.push({
       scnId,
       kind: "phantom-scenario",
@@ -251,7 +273,7 @@ export function reconcile(
       verdict: verdictFor(items),
       // The credits that CITE this invented scenario post to it — canon organises the ledger by
       // "real or INVENTED scenario", so a phantom account holds its postings like any other.
-      evidenceObservations: [...citations],
+      evidenceObservations: [...credits],
       // A phantom account is MINTED BY A CREDIT — no scenario raises it, so nothing can have
       // been named of it. Its debit side is empty by construction (@SCN-LDG-023); the asymmetry
       // with the credit side is real, not an omission.
@@ -279,7 +301,7 @@ export function reconcile(
       verdict: verdictFor(items),
       // The credits citing NO scenario post here (@SCN-LDG-022) — the uncited, the broken (it
       // named no test, so it cites nothing whatever scnId it structurally carries), and the
-      // no-evidence-obligation static checks. Together with `byScn` above this exhausts the credit stream.
+      // no-evidence-obligation static checks. With the citation index this exhausts the credit stream.
       evidenceObservations: [...brokenEvidence, ...uncited, ...noEvidenceObligationGuards],
       // Suspense is MINTED BY A CREDIT too — it raises nothing, so it names nothing
       // (@SCN-LDG-023). It can therefore carry no Pending Item either.

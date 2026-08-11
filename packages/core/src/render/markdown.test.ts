@@ -406,8 +406,8 @@ describe("[SCN-RPT-005] the markdown report lists the lint evidence obligations 
     [
       { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
       { qualityCheck: "integration", scnId: "SCN-A", status: "failed" },
-      { qualityCheck: "lint", staticCheck: "guard-typecheck", exists: true, enforcedOverRealSource: true },
-      { qualityCheck: "lint", staticCheck: "guard-lint", exists: true, enforcedOverRealSource: false },
+      { qualityCheck: "lint", staticCheck: "lint:guard-typecheck", checkTag: "guard-typecheck", scnId: "SCN-A", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "lint", staticCheck: "lint:guard-lint", checkTag: "guard-lint", scnId: "SCN-B", exists: true, enforcedOverRealSource: false },
     ]
   );
 
@@ -797,7 +797,7 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
     ],
     [
       { qualityCheck: "unit", scnId: "SCN-LDG-001", status: "passed" },
-      { qualityCheck: "lint", staticCheck: "guard-lint", exists: true, enforcedOverRealSource: false },
+      { qualityCheck: "lint", staticCheck: "lint:guard-lint", checkTag: "guard-lint", scnId: "SCN-LNT-001", exists: true, enforcedOverRealSource: false },
     ]
   );
 
@@ -1013,8 +1013,12 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     // The guards: guard-x wired into CI over real source → satisfied; guard-y exists but is not
     // wired → the watermelon (PRESENT, so it counts into the Lint cell); guard-z has no
     // observation at all → missing (∅).
-    { qualityCheck: "lint", staticCheck: "guard-x", exists: true, enforcedOverRealSource: true },
-    { qualityCheck: "lint", staticCheck: "guard-y", exists: true, enforcedOverRealSource: false },
+    // BOTH CITE SCN-A (3F-2625) — they answered its two obligations by handle until the by-handle
+    // arm was deleted. Each carries the bare check it IS, which is what tells the row's two fitness
+    // obligations apart (@SCN-LNT-012); the @SCN alone would hand guard-x's credit to both and turn
+    // the guard-y watermelon `satisfied`.
+    { qualityCheck: "lint", staticCheck: "guard-x", checkTag: "guard-x", scnId: "SCN-A", exists: true, enforcedOverRealSource: true },
+    { qualityCheck: "lint", staticCheck: "guard-y", checkTag: "guard-y", scnId: "SCN-A", exists: true, enforcedOverRealSource: false },
     // SCN-G's two credits — one at each tier it names (@SCN-RPT-018). The reconciler posts each
     // as its own credit on SCN-G's row (@SCN-LDG-022), which is what the two cells read.
     { qualityCheck: "unit", scnId: "SCN-G", status: "passed" },
@@ -1260,16 +1264,16 @@ describe("[SCN-USG-001] the markdown report renders the Static checks section", 
   // (lint:foo, posts to its scenario's `@lint` row) + 1 uncited (lint:bar, no-evidence-obligation, running,
   // folds to the suspense row) → the fold reads {runningStaticCheckCount: 2, uncitedStaticCheckCount: 1}.
   const twoRunningOneUncited: Ledger = reconcile(
-    [{ scnId: "SCN-USG-001", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint:foo" }] }],
+    [{ scnId: "SCN-USG-001", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "foo" }] }],
     [
-      { qualityCheck: "lint", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "lint", staticCheck: "lint:foo", checkTag: "foo", scnId: "SCN-USG-001", exists: true, enforcedOverRealSource: true },
       { qualityCheck: "lint", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
     ]
   );
   // One running CI guard, all named → the fold reads {runningStaticCheckCount: 1, uncitedStaticCheckCount: 0}.
   const oneRunningNoneUncited: Ledger = reconcile(
-    [{ scnId: "SCN-USG-001", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint:foo" }] }],
-    [{ qualityCheck: "lint", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true }]
+    [{ scnId: "SCN-USG-001", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "foo" }] }],
+    [{ qualityCheck: "lint", staticCheck: "lint:foo", checkTag: "foo", scnId: "SCN-USG-001", exists: true, enforcedOverRealSource: true }]
   );
 
   it("renders '### Static checks' with the counts line ONLY — the per-guard detail dissolved to the suspense row", () => {
@@ -1528,7 +1532,10 @@ describe("[SCN-RPT-020] the markdown renders each outcome's canon description, n
       { scnId: "SCN-B", evidenceObligations: [] },
     ],
     [
-      { qualityCheck: "lint", staticCheck: "typecheck", exists: true, enforcedOverRealSource: false },
+      // CITES SCN-A (3F-2625) — it answered that obligation by handle until the by-handle arm was
+      // deleted, which `typecheck` was uniquely able to do: it is the one check whose runnable
+      // handle and bare check tag are the same word.
+      { qualityCheck: "lint", staticCheck: "typecheck", checkTag: "typecheck", scnId: "SCN-A", exists: true, enforcedOverRealSource: false },
       { qualityCheck: "integration", scnId: null, status: "passed", locator: "tests/stray.test.ts:1" },
     ]
   );

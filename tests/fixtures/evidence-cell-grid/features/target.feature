@@ -8,7 +8,7 @@ Feature: an evidence-cell-grid fixture target spanning every four-way cell case
   cell bug is only caught by the real pipeline, never by a hand-built balance).
 
   The five scenarios, and the cells they pin:
-    - @SCN-CEL-001 — @unit + @lint=guard:cell-grid, both discharged → Lint `1`, Unit `1`
+    - @SCN-CEL-001 — @unit + the bare check @cell-grid, both discharged → Lint `1`, Unit `1`
       (named and met — the count).
     - @SCN-CEL-002 — @integration, NO cucumber observation → Integration `∅` (named, missing),
       and Unit / E2e `—` (a column absent for this scenario — neither named nor present).
@@ -20,7 +20,7 @@ Feature: an evidence-cell-grid fixture target spanning every four-way cell case
       Pending Item and posts NO reconciled row; but the pending pair STAYS in
       evidenceObligationPairs, so the vitest observation citing it is ATTRIBUTED, not no-evidence-obligation →
       its Unit cell must read `(1)`. The second, live-today production shape of `(N)`.
-    - @SCN-CEL-005 — two @lint guards (@lint=guard:cell-grid-a @lint=guard:cell-grid-b), BOTH wired
+    - @SCN-CEL-005 — two bare checks (@cell-grid-a @cell-grid-b), BOTH wired
       into CI and discharged → Lint `L2/2`: the LEFT count is the evidence-obligation count (two
       lint QCRs on the row, @SCN-RPT-011), the RIGHT the present-guard count. The ONLY scenario
       naming >1 static check — it exercises the `L2` left-count path.
@@ -31,9 +31,10 @@ Feature: an evidence-cell-grid fixture target spanning every four-way cell case
 
   Rule: the fixture target spans every cell case
 
-    @unit @lint=guard:cell-grid @SCN-CEL-001
+    # STEPLESS, so the bare check raises its fitness obligation (@SCN-LNT-006); the runtime tier
+    # rides alongside, which is the only shape a two-axis row can be read from (@SCN-LNT-004).
+    @unit @cell-grid @SCN-CEL-001
     Scenario: a named, met obligation at unit and lint
-      Given the target repo's source
 
     @integration @SCN-CEL-002
     Scenario: a named obligation with no evidence observation
@@ -47,6 +48,5 @@ Feature: an evidence-cell-grid fixture target spanning every four-way cell case
     Scenario: a pending unit obligation an observation is nonetheless attributed to
       Given the target repo's source
 
-    @lint=guard:cell-grid-a @lint=guard:cell-grid-b @SCN-CEL-005
+    @cell-grid-a @cell-grid-b @SCN-CEL-005
     Scenario: a scenario naming two static checks, both wired and discharged
-      Given the target repo's source

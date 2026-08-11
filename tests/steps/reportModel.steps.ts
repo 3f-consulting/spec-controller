@@ -296,7 +296,7 @@ After({ tags: "@SCN-RMD-003" }, function () {
 
 // @SCN-RMD-005
 // Drives the REAL CLI over a COMBINED fixture spanning all three totals: the usg features
-// (which NAME @lint=lint:foo on SCN-TGT-001) + the usg ci.yml/package.json (CI runs lint:foo
+// (whose stepless SCN-TGT-001 carries the bare check @foo) + the usg ci.yml/package.json (CI runs lint:foo
 // + lint:bar, only lint:foo named) + the evidence observation fixture's Vitest/Cucumber reports (attributed
 // + phantom + cites-no-scenario evidence observations). Reading the persisted spec-reconciliation.json back, the
 // summary must materialise all three totals AND both Σ = Σ identities must hold ON THE FILE.
@@ -312,7 +312,7 @@ let rmd005StoreRoot: string;
 let rmd005Json: Record<string, unknown>;
 
 Given(
-  "a reconciliation run whose evidence spans attributed, phantom-id, and cites-no-scenario evidence observations and whose CI runs a guard no @lint names",
+  "a reconciliation run whose evidence spans attributed, phantom-id, and cites-no-scenario evidence observations and whose CI runs a check no fitness scenario cites",
   function () {
     const repoRoot = process.cwd();
     rmd005StoreRoot = mkdtempSync(join(tmpdir(), "spec-controller-rmd005-"));
@@ -352,7 +352,7 @@ When("the reconciliation run persists spec-reconciliation.json", function () {
 });
 
 Then(
-  "the summary carries the test-volume totals, the static-check totals, and the lint tally",
+  "the summary carries the test-volume totals, the static-check totals, and the fitness-obligation tally",
   function () {
     const summary = rmd005Json.summary as {
       testVolume?: { totalEvidenceObservations: number; onScenario: number; onPhantomScenario: number; onSuspenseScenario: number };
@@ -569,12 +569,12 @@ After({ tags: "@SCN-RMD-007" }, function () {
 });
 
 // @SCN-RMD-008
-// Drives the REAL CLI over the usg fixture (SCN-TGT-001 NAMES @unit + @lint=lint:foo) with the
+// Drives the REAL CLI over the usg fixture (SCN-TGT-001 carries @unit + the bare check @foo) with the
 // usg ci.yml/package.json but NO runner reports, so the runtime unit evidence obligation reconciles
 // missing and the lint:foo guard reconciles satisfied — a corpus with BOTH a runtime
 // sub-row AND a lint sub-row, and a non-empty missing split. Reading the persisted
 // spec-reconciliation.json back, every evidence sub-row must be keyed by ONE flat quality-check
-// (no kind / no level), a lint sub-row must carry qualityCheck "lint" alongside its guard, and the
+// (no kind / no level), a lint sub-row must carry qualityCheck "lint" alongside its check, and the
 // summary's missing split must be under missingByQualityCheck (the retired grid key is gone).
 // Anti-watermelon: the assertions read the REAL persisted file.
 const RMD008_FIXTURE = {
@@ -585,7 +585,7 @@ const RMD008_FIXTURE = {
 let rmd008StoreRoot: string;
 let rmd008Json: Record<string, unknown>;
 
-Given("a reconciliation whose scenarios raise runtime and lint evidence obligations", function () {
+Given("a reconciliation whose scenarios raise runtime and fitness evidence obligations", function () {
   const repoRoot = process.cwd();
   rmd008StoreRoot = mkdtempSync(join(tmpdir(), "spec-controller-rmd008-"));
   assert.ok(!rmd008StoreRoot.startsWith(repoRoot), `store root must be OUTSIDE the repo; got ${rmd008StoreRoot}`);
@@ -639,15 +639,15 @@ Then("each evidence sub-row is keyed by one quality-check field with no kind or 
   }
 });
 
-Then('a lint sub-row carries its quality-check "lint" alongside its guard', function () {
+Then('a lint sub-row carries its quality-check "lint" alongside its check', function () {
   const evidenceReconciliation = (rmd008Json.ledger as { scenarioReconciliations: unknown }).scenarioReconciliations as Array<{ qualityCheckReconciliations: Array<Record<string, unknown>> }>;
   const lintRows = evidenceReconciliation
     .flatMap((s) => s.qualityCheckReconciliations)
     .filter((o) => o.qualityCheck === "lint");
-  assert.ok(lintRows.length > 0, `expected at least one lint sub-row (the usg fixture names @lint=lint:foo); got ${JSON.stringify(evidenceReconciliation)}`);
+  assert.ok(lintRows.length > 0, `expected at least one lint sub-row (the usg fixture carries the bare check @foo); got ${JSON.stringify(evidenceReconciliation)}`);
   for (const row of lintRows) {
     assert.equal(row.qualityCheck, "lint", `expected a lint sub-row's quality-check to be "lint"; got ${JSON.stringify(row)}`);
-    assert.ok(typeof row.staticCheck === "string" && row.staticCheck.length > 0, `expected a lint sub-row to carry its guard handle; got ${JSON.stringify(row)}`);
+    assert.ok(typeof row.staticCheck === "string" && row.staticCheck.length > 0, `expected a lint sub-row to carry its check identity; got ${JSON.stringify(row)}`);
   }
 });
 

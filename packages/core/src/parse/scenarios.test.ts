@@ -377,13 +377,17 @@ describe("[SCN-PND-016] a recognised community deferral tag defers every named o
     });
   });
 
-  it("defers a @lint=<guard> obligation too — the whole scenario is deferred", () => {
-    // Scenario-scope deferral covers EVERY obligation kind, including a static-check `@lint`.
-    const [scenario] = parseScenarios(asFeature(["@wip @lint=lint:feature-codes @SCN-XXX-110", "Scenario: a deferred lint scenario", "  Given a step"].join("\n")),
-      DEFERRAL_TAGS
+  it("defers a FITNESS obligation too — the whole scenario is deferred", () => {
+    // Scenario-scope deferral covers EVERY obligation kind, the fitness one included. STEPLESS,
+    // because that is the shape a registered bare check tag is read off (@SCN-LNT-006); the
+    // retired `@lint=<handle>` form this case used to carry raises nothing at all now
+    // (@SCN-LNT-007), so it could no longer say whether deferral reached the fitness axis.
+    const [scenario] = parseScenarios(asFeature(["@wip @feature-codes @SCN-XXX-110", "Scenario: a deferred fitness scenario"].join("\n")),
+      DEFERRAL_TAGS,
+      ["feature-codes"]
     );
     expect(scenario!.evidenceObligations).toEqual([
-      { qualityCheck: "lint", staticCheck: "lint:feature-codes", pending: true },
+      { qualityCheck: "lint", staticCheck: "feature-codes", pending: true },
     ]);
   });
 
@@ -711,17 +715,17 @@ Feature: alpha
     expect(scenarios[0]!.evidenceObligations).toEqual([{ qualityCheck: "unit" }]);
   });
 
-  it("inherits a @lint=<guard> obligation and a community deferral tag, like any other tag", () => {
-    // Inheritance is not tier-only: EVERY tag inherits, exactly as cucumber resolves them.
-    const lintSource = `@AAA @lint=lint:feature-codes
+  it("inherits a FITNESS obligation and a community deferral tag, like any other tag", () => {
+    // Inheritance is not tier-only: EVERY tag inherits, exactly as cucumber resolves them. The
+    // scenario beneath is STEPLESS, which is what admits the bare check tag it inherits.
+    const fitnessSource = `@AAA @feature-codes
 Feature: alpha
 
   @SCN-AAA-001
-  Scenario: alpha works
-    Given a thing
+  Scenario: alpha stays inside its threshold
 `;
-    expect(parseScenarios(lintSource)[0]!.evidenceObligations).toEqual([
-      { qualityCheck: "lint", staticCheck: "lint:feature-codes" },
+    expect(parseScenarios(fitnessSource, [], ["feature-codes"])[0]!.evidenceObligations).toEqual([
+      { qualityCheck: "lint", staticCheck: "feature-codes" },
     ]);
 
     // A deferral tag on the Feature defers every scenario beneath it — the whole-file @wip.
@@ -769,21 +773,17 @@ Feature: alpha
   Scenario: alpha works
     Given a thing
 
-  @unit @lint=lint:scn-tags @SCN-AAA-002
-  Scenario: beta works
-    Given another thing
+  @scn-tags @SCN-AAA-002
+  Scenario: beta stays inside its threshold
 `;
-    expect(parseScenarios(source)).toEqual([
+    expect(parseScenarios(source, [], ["scn-tags"])).toEqual([
       {
         scnId: "SCN-AAA-001",
         evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }],
       },
       {
         scnId: "SCN-AAA-002",
-        evidenceObligations: [
-          { qualityCheck: "unit" },
-          { qualityCheck: "lint", staticCheck: "lint:scn-tags" },
-        ],
+        evidenceObligations: [{ qualityCheck: "lint", staticCheck: "scn-tags" }],
       },
     ]);
   });

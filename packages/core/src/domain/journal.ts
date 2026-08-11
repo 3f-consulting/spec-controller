@@ -108,44 +108,12 @@ export function evidenceObligationPairsOf(scenarios: readonly Scenario[]): Set<s
 }
 
 /**
- * The NAMED static check handles — the STATIC-axis twin of `evidenceObligationPairsOf`. Every
- * `@lint=<guard>` `staticCheck` a scenario's evidence obligations name, deduped into one set. A
- * `lint` evidence observation whose guard is NOT in this set is a NO-EVIDENCE-OBLIGATION static check: it cites
- * no scenario, so the reconciler folds it onto the SUSPENSE row (the static analogue of an uncited
- * runtime credit).
- *
- * A `pending` obligation is EXCLUDED — it names nothing (same rule, same reason as the pair set:
- * canon, Pending Item — a `<quality-check>pending` tag raises no Evidence Obligation). A `@lintpending`
- * obligation is `{ qualityCheck: 'lint', pending: true }` with NO `staticCheck`, so both the pending
- * skip AND the `staticCheck` presence check drop it: a static check that does not yet exist names
- * nothing.
- *
- * ONE COPY, BY CONSTRUCTION. This derivation existed TWICE — in `reconcile` and in the balance
- * command's static-observation ingest — each rebuilding it inline. They agreed by copy, not by
- * construction (either could have grown a filter alone). What a scenario NAMES is the model's rule,
- * not a reconciler's or an ingest's private business (`entity-owns-its-behaviour`) — the same reason
- * `evidenceObligationPairsOf` lives here.
- */
-export function staticCheckEvidenceObligationsOf(scenarios: readonly Scenario[]): Set<string> {
-  const guards = new Set<string>();
-  for (const scenario of scenarios) {
-    for (const obligation of scenario.evidenceObligations) {
-      if (obligation.pending === true) continue; // names nothing — see above.
-      if (obligation.qualityCheck === "lint" && obligation.staticCheck !== undefined) {
-        guards.add(obligation.staticCheck);
-      }
-    }
-  }
-  return guards;
-}
-
-/**
  * THE PENDING PARTITION, debit half (@SCN-PND-004, 3F-2204) — the evidence obligations a scenario
  * actually NAMES: every non-pending one, in document order. These are the obligations that
  * reconcile; the complement becomes one-sided Pending Items (`pendingItemsOf`, below).
  *
  * A pending obligation is EXCLUDED for the SAME reason, and by the same canon clause, as in
- * `evidenceObligationPairsOf` and `staticCheckEvidenceObligationsOf`: a `<quality-check>pending` tag raises
+ * `evidenceObligationPairsOf`: a `<quality-check>pending` tag raises
  * NO Evidence Obligation, so it names nothing. This completes that family — the three now state
  * one rule over three keyings (the whole obligations, the `(scnId, quality-check)` pairs, the
  * static-check handles) instead of two stating it and a third restating it inline in the fold.
@@ -252,6 +220,43 @@ export interface GuardEvidenceObservation {
   qualityCheck: "lint";
   /** The `staticCheck` handle — the npm-script name a `@lint=<guard>` tag names. */
   staticCheck: string;
+  /**
+   * The `@SCN` this run CITES — the fitness scenario whose bare check tag the citation seam
+   * resolved this handle to (`parse/fitnessCitations`), stamped by the observer.
+   *
+   * ABSENT when the seam reached none: the handle is unregistered, or no scenario carries its
+   * check. That absence is now the WHOLE routing decision, no flag needed — a citing credit posts
+   * to the one row it names, and a credit that cites nothing posts to suspense and answers no
+   * obligation at all (3F-2590 removed the by-name posting arm; 3F-2625 the by-handle half that
+   * outlived it in `qualityCheckReconciliation`). Optional rather than `string | null` (the runtime
+   * twin's shape) so every existing construction site and every JSON golden is untouched: an
+   * observation that cites nothing serialises exactly as it did.
+   */
+  scnId?: string;
+  /**
+   * The BARE CHECK TAG this run IS (`complexity`) — the observation's own characteristic, resolved
+   * by the same citation seam that stamped `scnId` and stamped with it.
+   *
+   * WHAT THE LEDGER RECONCILES ON, which is why the observation carries it. `staticCheck` above is
+   * the RUNNABLE HANDLE (`lint:complexity`) — where-to-fix, the command a reader has to invoke —
+   * while an Evidence Obligation names the bare tag its stepless scenario carries. Those are two
+   * vocabularies by design, and matching one against the other is name-match wearing a new coat: it
+   * agrees only where the spellings coincide, which is `typecheck`, the one unprefixed check. The
+   * bare tag is what makes the comparison compare like with like.
+   *
+   * WITHOUT IT, THE `@SCN` HAS TO CARRY THE MATCH ALONE, and it cannot: a stepless scenario may
+   * carry more than one bare check tag, so two runs can honestly cite the same `@SCN` and the first
+   * one found answers both obligations (@SCN-LNT-012). Measured before this field existed — a
+   * genuine `typecheck` watermelon read `satisfied` off `lint:complexity`'s credit and the row read
+   * `balanced`.
+   *
+   * PRESENT EXACTLY WHEN `scnId` IS, never on its own: the seam resolves both terms or neither
+   * (`parse/fitnessCitations` → `citationOfScript`), so an uncited observation carries no citation
+   * keys at all and its JSON is byte-identical to what it was. Optional for the same reason `scnId`
+   * is — this interface is on the frozen v1 barrel, and a required field would break external
+   * construction of a publicly exported type.
+   */
+  checkTag?: string;
   /** The static check's script/CLI is present (a `package.json` `scripts` entry). */
   exists: boolean;
   /**

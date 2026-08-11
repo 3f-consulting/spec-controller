@@ -22,14 +22,14 @@ Feature: spec-controller reconciles its own tree, and the build depends on the a
     half a gate, because a check that reds on everything is as useless as one that reds
     on nothing, and only the pair says the verdict is being read.
 
-    WHAT THE @lint TAG DOES HERE. `@lint=lint:self-balance` is not decoration. It raises
-    the Evidence Obligation this gate's own CI run settles, so the run is credited to
-    THIS scenario instead of folding onto the suspense row as an uncited static check —
-    the @SCN-NCR-001 / @SCN-CPX-003 / @SCN-SSM-006 precedent. Without it the gate would
-    red on its own introduction, which is the tool grading its own homework and finding
-    it wanting: correct behaviour, and the reason the obligation and the wiring land
-    together. Self-citation is a property of the tagging, not a second behaviour, so
-    there is no second @SCN here.
+    WHERE THIS GATE'S OWN OBLIGATION LIVES. The bare `@self-balance` tag on the fitness
+    scenario at the foot of this file is not decoration. It raises the Evidence Obligation
+    this gate's own CI run settles, so the run is credited THERE instead of folding onto
+    the suspense row as an uncited static check — the precedent set by the scenarios
+    for no-committed-reports, complexity-exceptions and scn-subissues. Without it the
+    gate would red on its own introduction, which is the tool grading its own homework
+    and finding it wanting: correct behaviour, and the reason the obligation and the
+    wiring land together.
 
     WHAT THE GATE SCANS is stated once, in `SELF_BALANCE_SCOPE`, and is the whole of it:
     `features/`, the Vitest report, the Cucumber report, the WORKFLOW DIRECTORY,
@@ -43,7 +43,7 @@ Feature: spec-controller reconciles its own tree, and the build depends on the a
     files than the product does would be spec-controller declining to use the capability
     it ships — the same shape @SCN-SLF-002 closed one level down.
 
-    @unit @integration @lint=lint:self-balance @SCN-SLF-001
+    @unit @integration @SCN-SLF-001
     Scenario: the self-reconciliation gate reds an out-of-balance tree and passes over a balanced one
       Given the self-balance gate, wired over spec-controller's own source
       When the gate reconciles a tree whose named evidence is all observed, and a tree naming evidence that nothing observes
@@ -63,8 +63,9 @@ Feature: spec-controller reconciles its own tree, and the build depends on the a
     added to package.json and ci.yml, named by nothing, passing green and off the books.
     The two halves were proven piecewise and nowhere as the claim itself.
 
-    THE TWO TREES DIFFER IN EXACTLY ONE TAG. Both run the same check; only the named
-    arm carries @lint= on the planted scenario. So the red arm's ONLY out-of-balance
+    THE TWO TREES DIFFER IN EXACTLY ONE TAG. Both run the same check and both register it,
+    so the registry cannot be the difference; only the named arm carries that check's BARE
+    TAG on the planted scenario. So the red arm's ONLY out-of-balance
     item is the check, which is what makes the red attributable to it rather than to
     some other flaw in a differently-built fixture, and the green arm is its control.
     Both arms belong to ONE scenario, the @SCN-NCR-001 / @SCN-SLF-001 shape — a gate
@@ -76,3 +77,21 @@ Feature: spec-controller reconciles its own tree, and the build depends on the a
       When the gate reconciles a tree running a static check no scenario names, and a tree naming the check it runs
       Then the gate fails over the tree whose static check nothing names, naming that check
       And the gate passes over the tree whose static check is named
+
+  Rule: spec-controller's own tree reconciles in balance
+
+    THE GATE'S SUBJECT, STATED AS A CHARACTERISTIC. The two Rules above are examples of the
+    gate DECIDING — over a balanced tree and an out-of-balance one, over a named check and an
+    uncited one — so both carry steps. What the CI step actually asserts on every push is
+    narrower and larger at once: that THIS tree balances. That has nothing to exemplify, so it
+    is stated without steps and the bare `@self-balance` tag raises the obligation its own run
+    settles.
+
+    THE CIRCULARITY IS REAL AND IT IS THE POINT. This scenario is reconciled BY the check it
+    names, so the gate must reach its own row to settle it. That is the cobbler's shoes taken
+    to the end: if the citation seam ever stopped resolving `lint:self-balance` to this
+    scenario, the run would post to the suspense row and the gate would red — on itself,
+    loudly, rather than quietly grading everything else while unattributed.
+
+    @self-balance @SCN-SLF-003
+    Scenario: every Evidence Obligation this repository raises is settled by an observation

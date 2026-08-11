@@ -6,9 +6,9 @@ Feature: a fixture target whose ONLY out-of-balance row is the suspense reconcil
   satisfied by a passing observation, no observation cites a phantom scenario (no
   phantom), no suite failed to collect (no broken item, so the run is SOUND and exit 4
   never pre-empts). The one and only reconciling item in the whole run sits on the
-  SUSPENSE row: the target's CI runs `lint:uncited` and NO scenario names
-  `@lint=lint:uncited`, so the guard is an uncited static-check — an uncited
-  credit, posted to the `(no scenario)` suspense reconciliation.
+  SUSPENSE row: the target's CI runs `lint:uncited` and NO fitness scenario cites it — the
+  target registers no check for that handle and carries no scenario for one — so it is an
+  uncited static check: an uncited credit, posted to the `(no scenario)` suspense reconciliation.
 
   This is the fixture the anti-drift invariant (@SCN-CLI-013) needs, and the one shape no
   other fixture in the suite has: the named-only tally reads a CLEAN 2/2/0 while the run

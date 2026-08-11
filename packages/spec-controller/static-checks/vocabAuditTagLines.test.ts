@@ -114,12 +114,15 @@ describe("[SCN-VOC-013] the Gherkin tag line — author-chosen vocabulary vs the
     for (const grammar of ["unit", "integration", "wip"]) expect(texts).not.toContain(grammar);
   });
 
-  it("[SCN-VOC-013] the `@lint=<handle>` tag yields NO segment — via isTierTag's `lint=` FORM", () => {
-    // WHICH RULE HOLDS IT GREEN, measured rather than assumed. Mutating `isTierTag` out reds
-    // this case; mutating the value-drop out does NOT. So the whole `lint=<handle>` token is
-    // recognised as a tier TAG by scnTags.ts's own predicate — a rule it already
-    // owned so that a bare-`lint`-only match would not false-flag every static-check
-    // scenario. Asserted here because that is the rule a future edit would break.
+  it("[SCN-VOC-013] the retired `@lint=<handle>` tag yields NO segment — via the VALUE-DROP", () => {
+    // WHICH RULE HOLDS IT GREEN, RE-MEASURED (3F-2624). It used to be `isTierTag`, which
+    // recognised the whole `lint=<handle>` token so that a bare-`lint`-only match would not
+    // false-flag every static-check scenario. 3F-2567 deleted that clause — the form raises no
+    // Evidence Obligation, so granting it the tier floor would call a scenario tiered while it
+    // owed nothing — and the two rules SWAPPED: the token now reaches `authoredTags` as the KEY
+    // `lint`, which is still a tier tag (bare `@lint` is a registered check), while the VALUE is
+    // dropped by the `key=value` rule. Mutation-probed 2026-08-11, both ways: removing the
+    // value-drop reds this case; the `lint=` clause it used to credit no longer exists to remove.
     const texts = segmentTexts(everyShape);
     expect(texts.some((t) => t.includes("guard"))).toBe(false);
     expect(texts).not.toContain("lint");
@@ -129,12 +132,12 @@ describe("[SCN-VOC-013] the Gherkin tag line — author-chosen vocabulary vs the
   });
 
   it("[SCN-VOC-013] a NON-tier `@key=value` tag drops its VALUE and judges only the KEY", () => {
-    // THE VALUE-DROP'S OWN TEETH, which the `@lint=` case above cannot supply — isTierTag
-    // exempts that whole token either way, so a green there is silent on this rule. This tree
-    // carries ZERO valued tags outside `@lint=`, so no run over it can tell the rule from its
-    // absence and only a constructed case can. `owner` is not a tier, so the key becomes a
-    // segment; `supply` sits in the VALUE and must never be read as vocabulary — 3F-1929's
-    // ruling that a name-of-a-thing is a value, generalised past `@lint=`.
+    // THE VALUE-DROP OVER A NON-TIER KEY. The case above now shares this rule (3F-2624), but
+    // only for a key that IS a tier: it says nothing about what happens when the key itself must
+    // be judged. `owner` is not a tier, so the key becomes a segment; `supply` sits in the VALUE
+    // and must never be read as vocabulary — 3F-1929's ruling that a name-of-a-thing is a value.
+    // This tree carries ZERO non-tier valued tags, so no run over it can tell the rule from its
+    // absence and only a constructed case can.
     const source = ["@TGT", "Feature: f", "", "  @unit @owner=guard-supply-team", "  Scenario: s", "    Given a step", ""].join("\n");
     expect(segmentTexts(source)).toContain("owner");
     expect(

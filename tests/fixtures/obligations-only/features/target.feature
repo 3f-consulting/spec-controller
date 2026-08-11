@@ -1,22 +1,26 @@
 @DEM
-Feature: a corpus whose only lint credit is a named static check
+Feature: a corpus whose only fitness credit is one satisfied citation-routed check
 
-  A FIXTURE target (NOT under features/) standing in for a codebase whose ONLY lint credit is a
-  NAMED static check: one scenario names @lint=lint:obligations-only; CI runs
-  lint:obligations-only; package.json defines it. So the guard EXISTS and is ENFORCED over the real
-  source → satisfied → the run is BALANCED. There is NO other credit shape — no broken, no
-  uncited, no no-evidence-obligation guard — so nothing else can mint the suspense row. The named-guard
-  posting rule ALONE determines the verdict (@SCN-LDG-025, 3F-1851): the credit posts to its
-  naming account, so summary.outOfBalance is 0 and agrees with the balanced verdict. Under the
-  REJECTED post-to-suspense treatment this corpus would mint a spurious out-of-balance suspense
-  row (the 3F-1703 fault), which this fixture makes falsifiable for the first time.
+  A FIXTURE target (NOT under features/) standing in for a codebase whose ONLY fitness credit is a
+  satisfied, CITATION-ROUTED check: one STEPLESS fitness scenario carries the bare check
+  `@obligations-only`; the target's `specController.checkRegistry` registers
+  `lint:obligations-only` as that check; CI runs lint:obligations-only; package.json defines it. So
+  the check EXISTS and is ENFORCED over the real source → satisfied → the run is BALANCED. There is
+  NO other credit shape — no broken, no uncited, no no-evidence-obligation check — so nothing else
+  can mint the suspense row.
 
-  Rule: one scenario names a wired-and-green static check
+  WHAT THAT ISOLATION BUYS (@SCN-LDG-025, 3F-1851): summary.outOfBalance is 0 and AGREES with the
+  balanced verdict. Under the REJECTED post-to-suspense treatment this corpus mints a spurious
+  out-of-balance suspense row — outOfBalance 1 while isBalanced stays true, a failing run whose
+  headline reads as a pass (the 3F-1703 fault). Every other fitness fixture mints a suspense row for
+  some other reason, so this is the only corpus where that disagreement is falsifiable.
 
-    # ONLY @lint — no runtime (@unit/@integration/…) tier. A runtime tier would raise a runtime
-    # obligation with no credit (there is no vitest/cucumber report here) → missing → out-of-balance,
-    # and the named-guard path would no longer ALONE determine the verdict. The @lint tag alone
-    # satisfies the target's obligation set: one named static check, which its CI runs green.
-    @lint=lint:obligations-only @SCN-DEM-001
-    Scenario: the sole naming scenario of lint:obligations-only
-      Given the target source
+  Rule: one stepless fitness scenario carries a wired-and-green check
+
+    # STEPLESS, and carrying ONLY its bare check tag — no runtime (@unit/@integration/…) tier. A
+    # runtime tier would raise a runtime obligation with no credit (there is no vitest/cucumber
+    # report here) → missing → out-of-balance, and the fitness credit would no longer ALONE
+    # determine the verdict. The bare tag alone raises the target's whole obligation set: one
+    # fitness check, which its CI runs green.
+    @obligations-only @SCN-DEM-001
+    Scenario: the fitness scenario for lint:obligations-only

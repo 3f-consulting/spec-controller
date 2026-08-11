@@ -107,7 +107,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     summary.staticChecks COUNTS alone — a pure counter over the guard observations
     (countStaticEvidenceObservationKinds), symmetric with the runtime testVolume counter. The
     standalone member-list section (was guards, then staticChecks) COLLAPSED: the guard member
-    detail lives in the rows now (named → each scenario's @lint sub-row; no-evidence-obligation → the
+    detail lives in the rows now (cited → the fitness scenario's own row; no-evidence-obligation → the
     suspense row's cites-no-scenario credit items), so there is no double-report on the JSON
     surface. The counts runningStaticCheckCount and uncitedStaticCheckCount are carried on the
     persisted summary; the named count is implicit, running − uncited. A pure
@@ -115,7 +115,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     @unit @SCN-RMD-004
     Scenario: the static-check census is summary counts with no standalone section
-      Given a reconciliation run whose derived running-guard set includes a guard no @lint scenario names
+      Given a reconciliation run whose derived running-check set includes a check no fitness scenario cites
       When the report is serialised to JSON
       Then the static-check census carries no standalone staticChecks (or guards) section
       And the static-check counts are carried under summary.staticChecks as runningStaticCheckCount and uncitedStaticCheckCount
@@ -140,15 +140,15 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     evidence obligation outcome field is untouched. Markdown is not migrated here (slice 2) and stays
     byte-identical. The @unit arm proves buildSummary / assembleReport in isolation; the @integration
     arm drives the REAL CLI over a fixture spanning attributed / phantom evidence observation /
-    cites-no-scenario evidence observations AND a CI guard no @lint names, then reads the persisted
+    cites-no-scenario evidence observations AND a CI check no fitness scenario cites, then reads the persisted
     spec-reconciliation.json and proves the test-volume Σ = Σ identity plus the static-check shape on
     the file.
 
     @unit @integration @SCN-RMD-005
     Scenario: the summary materialises the test-volume, static-check, and lint totals with the test-volume balance identity and the static-check shape holding on the persisted file
-      Given a reconciliation run whose evidence spans attributed, phantom-id, and cites-no-scenario evidence observations and whose CI runs a guard no @lint names
+      Given a reconciliation run whose evidence spans attributed, phantom-id, and cites-no-scenario evidence observations and whose CI runs a check no fitness scenario cites
       When the reconciliation run persists spec-reconciliation.json
-      Then the summary carries the test-volume totals, the static-check totals, and the lint tally
+      Then the summary carries the test-volume totals, the static-check totals, and the fitness-obligation tally
       And the test-volume identity Σ rawByRuntimeQualityCheck = onScenario + onPhantomScenario + onSuspenseScenario holds on the persisted summary
       And the persisted static-check summary carries runningStaticCheckCount and uncitedStaticCheckCount with named implicit
 
@@ -214,14 +214,14 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     quality-check value), so the @SCN-RMD-007 round-trip still holds. HELD (slice 2):
     the outcome VALUES; (slice 4): the interim container terms (EvidenceReconciliation, trial balance).
     The @unit arm proves the reconcile → assemble shape in isolation; the @integration arm drives
-    the REAL CLI over a corpus raising BOTH a runtime and a lint evidence obligation, persists
+    the REAL CLI over a corpus raising BOTH a runtime and a fitness evidence obligation, persists
     spec-reconciliation.json, and asserts the flat coordinate (and the ABSENCE of kind / level)
     on the persisted file.
 
     @unit @integration @SCN-RMD-008
     Scenario: each reconciled evidence sub-row carries a single quality-check coordinate, not a (kind, level) grid
-      Given a reconciliation whose scenarios raise runtime and lint evidence obligations
+      Given a reconciliation whose scenarios raise runtime and fitness evidence obligations
       When the report is serialised to spec-reconciliation.json
       Then each evidence sub-row is keyed by one quality-check field with no kind or level
-      And a lint sub-row carries its quality-check "lint" alongside its guard
+      And a lint sub-row carries its quality-check "lint" alongside its check
       And the summary's missing split is carried under missingByQualityCheck keyed by quality-check

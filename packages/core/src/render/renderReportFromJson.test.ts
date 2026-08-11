@@ -48,7 +48,7 @@ const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation =>
 // scenario, so the by-feature cut names "checkout (CHK)". The corpus:
 //   SCN-CHK-001: @unit, one passing unit credit → balanced, attributed 1
 //   SCN-CHK-002: @integration, no credit → integration missing (the coded out-of-balance feature)
-//   SCN-CHK-003: @lint=lint:foo, the guard running & wired → balanced, the named running guard
+//   SCN-CHK-003: the bare check `foo`, its run wired & citing this row → balanced, the cited running check
 //   1 unit credit citing SCN-PHX-001 (no scenario carries it) → a real phantom ROW, phantom 1
 //   1 uncited unit credit (src/b.test.ts) + the no-evidence-obligation lint:bar static check → the suspense row
 // The static-check counts are a FOLD over this ledger now (3F-2118, `staticObservationTally`): 2
@@ -57,13 +57,13 @@ const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation =>
 const scenarios: Scenario[] = [
   { scnId: "SCN-CHK-001", evidenceObligations: [{ qualityCheck: "unit" }] },
   { scnId: "SCN-CHK-002", evidenceObligations: [{ qualityCheck: "integration" }] },
-  { scnId: "SCN-CHK-003", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint:foo" }] },
+  { scnId: "SCN-CHK-003", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "foo" }] },
 ];
 const observations: EvidenceObservation[] = [
   { qualityCheck: "unit", scnId: "SCN-CHK-001", status: "passed" },
   { qualityCheck: "unit", scnId: "SCN-PHX-001", status: "passed" },
   { qualityCheck: "unit", scnId: null, status: "passed", locator: "src/b.test.ts" },
-  { qualityCheck: "lint", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
+  { qualityCheck: "lint", staticCheck: "lint:foo", checkTag: "foo", scnId: "SCN-CHK-003", exists: true, enforcedOverRealSource: true },
   { qualityCheck: "lint", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
 ];
 const balance: Ledger = reconcile(scenarios, observations);

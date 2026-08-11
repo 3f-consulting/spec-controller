@@ -35,8 +35,8 @@ describe("[SCN-RMD-003] runtimeObservationTally folds the posted credits by scen
   // A SPANNING corpus reconciling to every credit account: SCN-A raises unit (2 matched credits)
   // and is ALSO cited at integration it never named (1 no-evidence-obligation); SCN-PHX-999 matches no scenario (1
   // phantom); a null-scnId credit cites no scenario (1 suspense); an ambiguous cucumber step is
-  // broken (1 suspense — it named no test); a named static-check credit rides the lint axis (must
-  // be SKIPPED). Built through reconcile(), so every row is a shape the pipeline actually emits.
+  // broken (1 suspense — it named no test); a static-check credit rides the `lint` quality-check
+  // (must be SKIPPED). Built through reconcile(), so every row is a shape the pipeline emits.
   const scenarios: Scenario[] = [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }];
   const observations: EvidenceObservation[] = [
     { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
@@ -45,7 +45,7 @@ describe("[SCN-RMD-003] runtimeObservationTally folds the posted credits by scen
     { qualityCheck: "unit", scnId: "SCN-PHX-999", status: "passed" }, // PHANTOM
     { qualityCheck: "integration", scnId: null, status: "passed" }, // SUSPENSE (uncited)
     { qualityCheck: "e2e", scnId: "SCN-A", status: "failed", broken: true, locator: "features/x.feature" }, // SUSPENSE (broken)
-    { qualityCheck: "lint", staticCheck: "guard-x", exists: true, enforcedOverRealSource: true }, // SKIPPED (lint axis)
+    { qualityCheck: "lint", staticCheck: "guard-x", exists: true, enforcedOverRealSource: true }, // SKIPPED (the `lint` quality-check)
   ];
   const ledger: Ledger = reconcile(scenarios, observations);
   const tally = runtimeObservationTally(ledger);

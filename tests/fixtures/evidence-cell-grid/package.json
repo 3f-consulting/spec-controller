@@ -3,5 +3,12 @@
     "guard:cell-grid": "echo cell-grid-guard",
     "guard:cell-grid-a": "echo cell-grid-guard-a",
     "guard:cell-grid-b": "echo cell-grid-guard-b"
+  },
+  "specController": {
+    "checkRegistry": {
+      "guard:cell-grid": "cell-grid",
+      "guard:cell-grid-a": "cell-grid-a",
+      "guard:cell-grid-b": "cell-grid-b"
+    }
   }
 }

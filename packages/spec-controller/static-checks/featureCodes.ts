@@ -73,9 +73,9 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
   },
   {
     code: "LNT",
-    slug: "lint-reconciliation",
+    slug: "fitness-reconciliation",
     status: "feature-code-used",
-    note: "the @lint static-check quality-check — reconciling @lint:<guard> scenarios against CI wiring over the real source; flags the watermelon",
+    note: "the fitness axis — reconciling each stepless fitness scenario's bare check against CI wiring over the real source; flags the watermelon. The code is LNT because a code, once allocated, is stable forever: it survives a feature-file rename and is never reused",
   },
   {
     code: "CPX",
@@ -159,7 +159,7 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     code: "STG",
     slug: "scn-tags",
     status: "feature-code-used",
-    note: "the tier-tag floor over spec-controller's own scenarios (the cobbler's shoes) — the lint:scn-tags CI guard reds if any @SCN scenario names no evidence tier (@unit/@integration/@e2e/@performance, a <tier>pending variant, or @lint=<guard>) and is not @wip; @lint-self-cited so the tool's own ledger reconciles it",
+    note: "the tier-tag floor over spec-controller's own scenarios (the cobbler's shoes) — the lint:scn-tags CI guard reds if any @SCN scenario names no evidence tier (@unit/@integration/@e2e/@performance, a <tier>pending variant, or — when it is stepless — a registered bare check tag) and is not @wip; carried by its own stepless fitness scenario so the tool's own ledger reconciles it",
   },
   {
     code: "SLF",

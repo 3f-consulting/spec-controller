@@ -1,0 +1,10 @@
+{
+  "name": "scn-tags-fitness-fixture",
+  "private": true,
+  "specController": {
+    "checkRegistry": {
+      "lint:complexity": "complexity",
+      "typecheck": "typecheck"
+    }
+  }
+}

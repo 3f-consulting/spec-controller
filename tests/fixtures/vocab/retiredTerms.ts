@@ -54,6 +54,15 @@ export const RETIRED = {
   tagPhraseFirst: "ci",
   tagPhraseSecond: "performance",
 
+  /**
+   * 3F-2588 — the retired CLASS NOUN phrase: the word, then one of the class nouns that make it
+   * name a whole class of fitness functions rather than the one style-lint check it IS.
+   */
+  classNounPhraseFirst: "lint",
+  classNounPhraseSecond: "axis",
+  /** A follower the class-noun rule must NOT reach — `style-lint check` is what `@lint` is. */
+  classNounLegitimateSecond: "check",
+
   /** @SCN-VOC-018 — the homograph verb: retired evidence vocabulary AND a TypeScript keyword. */
   homographVerb: "declare",
   /** Its third person, which the naive singulariser folds onto the verb's stem. */
@@ -171,4 +180,5 @@ export const ADOPTED_TRIGGER_WORDS: readonly string[] = [
   ...ADOPTED_PLAIN_TERMS,
   RETIRED.classNamePhraseFirst,
   RETIRED.tagPhraseFirst,
+  RETIRED.classNounPhraseFirst,
 ];

@@ -1,19 +1,21 @@
 @EXT
-Feature: an externally-specified target repo's lint scenario
+Feature: an external target repo's own fitness scenario
 
-  A FIXTURE feature standing in for ANOTHER repo read cross-repo by
-  spec-controller via --features. It names a @lint=<guard> static evidence obligation whose
-  guard exists in the external package.json but is NOT wired into the external CI —
-  the historical watermelon shape (@SCN-LNT-005, the --package-json seam).
+  A FIXTURE feature standing in for ANOTHER repository, read cross-repo by spec-controller
+  via --features. Its stepless fitness scenario carries the bare check @vocab-check, which
+  the external package.json registers for the script lint:vocab-check — a script that
+  repository DEFINES and its ci.yml never runs. That is the watermelon read entirely from
+  the target (@SCN-LNT-005), and every input it rests on lives in this directory.
+
+  Nothing here is spelled the way spec-controller spells it, which is the point: the check
+  tag, the script, the registry entry and the @SCN are all words this repository does not
+  use, so an input resolved from the tool's own tree instead of the target's cannot answer.
 
   This file lives under tests/fixtures/ (NOT features/), so neither the feature-code
-  registry lint nor the scenario↔sub-issue gate sees @EXT / @SCN-EXT-001 — they scan
+  registry check nor the scenario-to-sub-issue gate sees @EXT / @SCN-EXT-001 — they scan
   features/*.feature only.
 
-  Rule: the external repo names a guard over its real source
+  Rule: the external target holds its own vocabulary inside its own check
 
-    @lint=lint:vocab-check @SCN-EXT-001
-    Scenario: the external repo names a vocabulary-check guard
-      Given the external repo's domain source
-      When the vocabulary-check guard is named
-      Then it is reconciled against the external repo's CI wiring
+    @vocab-check @SCN-EXT-001
+    Scenario: the external target's prose stays inside its adopted vocabulary

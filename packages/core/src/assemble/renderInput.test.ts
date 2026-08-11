@@ -424,13 +424,13 @@ describe("[SCN-RMD-003] the runtime-observation totals re-home onto summary; no 
 describe("[SCN-RMD-004] the static-check census is summary counts, no standalone section", () => {
   // RECONCILER-TRUE FIXTURE (evidence-manifesto §11A) — the static-check counts are a FOLD OVER
   // THE LEDGER now (3F-2118, `staticObservationTally`), so the numbers derive from the balance, not
-  // a hand-built census the assembler could disagree with. 2 running CI guards = 1 named
-  // (lint:foo, posts to its `@lint` row) + 1 uncited (lint:bar, no-evidence-obligation, running → the suspense
-  // row) → the fold reads {runningStaticCheckCount: 2, uncitedStaticCheckCount: 1}.
+  // a hand-built census the assembler could disagree with. 2 running CI checks = 1 cited
+  // (lint:foo, citing SCN-RMD-010 and posting to its row) + 1 uncited (lint:bar, no-evidence-obligation,
+  // running → the suspense row) → the fold reads {runningStaticCheckCount: 2, uncitedStaticCheckCount: 1}.
   const staticChecksBalance: Ledger = reconcile(
-    [{ scnId: "SCN-RMD-010", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint:foo" }] }],
+    [{ scnId: "SCN-RMD-010", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "foo" }] }],
     [
-      { qualityCheck: "lint", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "lint", staticCheck: "lint:foo", checkTag: "foo", scnId: "SCN-RMD-010", exists: true, enforcedOverRealSource: true },
       { qualityCheck: "lint", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
     ]
   );
@@ -480,8 +480,8 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
   const rmd005Scenarios: Scenario[] = [
     { scnId: "SCN-RMD-001", evidenceObligations: [{ qualityCheck: "unit" }] },
     { scnId: "SCN-RMD-002", evidenceObligations: [{ qualityCheck: "integration" }] },
-    { scnId: "SCN-RMD-010", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint:foo" }] },
-    { scnId: "SCN-RMD-011", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint:bar" }] },
+    { scnId: "SCN-RMD-010", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "foo" }] },
+    { scnId: "SCN-RMD-011", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "bar" }] },
   ];
   const rmd005Observations: EvidenceObservation[] = [
     { qualityCheck: "unit", scnId: "SCN-RMD-001", status: "passed" },
@@ -490,9 +490,9 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
     { qualityCheck: "integration", scnId: "SCN-RMD-002", status: "passed" },
     { qualityCheck: "unit", scnId: "SCN-PHX-999", status: "passed" },
     { qualityCheck: "integration", scnId: null, status: "passed" },
-    { qualityCheck: "lint", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
-    { qualityCheck: "lint", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: false },
-    // The no-evidence-obligation running guard — no @lint cites it — folds to the suspense row as
+    { qualityCheck: "lint", staticCheck: "lint:foo", checkTag: "foo", scnId: "SCN-RMD-010", exists: true, enforcedOverRealSource: true },
+    { qualityCheck: "lint", staticCheck: "lint:bar", checkTag: "bar", scnId: "SCN-RMD-011", exists: true, enforcedOverRealSource: false },
+    // The no-evidence-obligation running check — no scenario cites it — folds to the suspense row as
     // the 1 uncited static check, the credit-side teeth of the static-check fold.
     { qualityCheck: "lint", staticCheck: "lint:baz", exists: true, enforcedOverRealSource: true },
   ];
@@ -511,7 +511,7 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
         evidenceObligations: [],
         verdict: "out-of-balance",
         qualityCheckReconciliations: [
-          qcr({ qualityCheck: "lint", staticCheck: "lint:foo", outcome: "satisfied" }),
+          qcr({ qualityCheck: "lint", staticCheck: "foo", outcome: "satisfied" }),
           qcr({ qualityCheck: "unit", outcome: "missing" }),
         ],
         pendingItems: [],
@@ -524,11 +524,11 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
         evidenceObligations: [],
         verdict: "out-of-balance",
         qualityCheckReconciliations: [
-          qcr({ qualityCheck: "lint", staticCheck: "lint:bar", outcome: "watermelon" }),
+          qcr({ qualityCheck: "lint", staticCheck: "bar", outcome: "watermelon" }),
         ],
         pendingItems: [],
         reconcilingItems: [
-          qcr({ qualityCheck: "lint", staticCheck: "lint:bar", outcome: "watermelon" }),
+          qcr({ qualityCheck: "lint", staticCheck: "bar", outcome: "watermelon" }),
         ],
       },
     ],
@@ -726,12 +726,15 @@ describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single qualit
     "@RMD",
     "Feature: fixture",
     "  Rule: a fixture rule",
-    "    @unit @lint=lint:x @SCN-RMD-008",
+    // STEPLESS, carrying a runtime tier AND a registered bare check: the only shape a TWO-AXIS
+    // row can be read from now (@SCN-LNT-004). A fitness obligation is raised off steplessness
+    // (@SCN-LNT-006) and the retired `@lint=<handle>` rider this fixture used to carry raises
+    // nothing at all (@SCN-LNT-007), so it can no longer produce the lint sub-row under test.
+    "    @unit @x @SCN-RMD-008",
     "    Scenario: a fixture scenario",
-    "      Given a fixture step",
   ].join("\n");
   const report = () =>
-    JSON.parse(JSON.stringify(assembleRenderInput(__er(reconcile(parseScenarios(feature), [])), ctx))) as {
+    JSON.parse(JSON.stringify(assembleRenderInput(__er(reconcile(parseScenarios(feature, [], ["x"]), [])), ctx))) as {
       ledger: {
         scenarioReconciliations: Array<{
           qualityCheckReconciliations: Array<Record<string, unknown>>;
@@ -752,14 +755,14 @@ describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single qualit
     }
   });
 
-  it("carries a lint sub-row's qualityCheck as 'lint' alongside its guard", () => {
+  it("carries a lint sub-row's qualityCheck as 'lint' alongside its check", () => {
     const r = report();
     const lint = r.ledger.scenarioReconciliations
       .flatMap((s) => s.qualityCheckReconciliations)
       .find((o) => o.qualityCheck === "lint");
     expect(lint).toBeDefined();
     expect(lint!.qualityCheck).toBe("lint");
-    expect(lint!.staticCheck).toBe("lint:x");
+    expect(lint!.staticCheck).toBe("x");
   });
 
   it("keys a runtime sub-row by its level as the quality-check", () => {

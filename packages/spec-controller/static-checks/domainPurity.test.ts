@@ -30,7 +30,7 @@ import { collectSourceFiles, CORE_SRC_ROOT, DOMAIN_ROOT, type CollectedFile } fr
  * fewer than ten modules. The WALK is shared three ways; the FLOOR is shared two ways. The
  * asymmetry is the point, not an oversight.
  */
-const DOMAIN_FILE_COUNT = 6;
+const DOMAIN_FILE_COUNT = 7;
 
 describe("[SCN-DPG-001] a domain module imports only the domain layer and pure standard types", () => {
   it("flags a domain file that imports from an adapter layer (parse/render/assemble/census)", () => {

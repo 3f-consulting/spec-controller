@@ -3,5 +3,10 @@
     "lint:sweep": "echo nightly-sweep",
     "test": "echo test",
     "cucumber": "echo cucumber"
+  },
+  "specController": {
+    "checkRegistry": {
+      "lint:sweep": "sweep"
+    }
   }
 }

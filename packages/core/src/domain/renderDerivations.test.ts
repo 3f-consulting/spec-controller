@@ -48,8 +48,14 @@ const scenarios: Scenario[] = [
 ];
 
 const evidenceObservations: EvidenceObservation[] = [
-  { qualityCheck: "lint", staticCheck: "lint:wired", exists: true, enforcedOverRealSource: true },
-  { qualityCheck: "lint", staticCheck: "lint:unwired", exists: true, enforcedOverRealSource: false },
+  // BOTH FITNESS CREDITS CITE (3F-2625). They answered SCN-AAA-001's two obligations by HANDLE
+  // until the by-handle arm was deleted — a shape that only ever worked because name-match was
+  // alive, and one no observer emits. Under the one posting rule a credit carries the @SCN of the
+  // row it belongs to and the bare check it IS, and the two obligations on this row are told apart
+  // by the second of those (@SCN-LNT-012). The two words this fixture uses for a check are the same
+  // word, which is what makes it a fixture rather than a corpus.
+  { qualityCheck: "lint", staticCheck: "lint:wired", checkTag: "lint:wired", scnId: "SCN-AAA-001", exists: true, enforcedOverRealSource: true },
+  { qualityCheck: "lint", staticCheck: "lint:unwired", checkTag: "lint:unwired", scnId: "SCN-AAA-001", exists: true, enforcedOverRealSource: false },
   { qualityCheck: "lint", staticCheck: "lint:no-evidence-obligation", exists: true, enforcedOverRealSource: true },
   { qualityCheck: "unit", scnId: "SCN-AAA-003", status: "passed" },
   {

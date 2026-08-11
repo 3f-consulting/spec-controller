@@ -691,7 +691,7 @@ const VOC013_FEATURE = [
 
 // @SCN-VOC-013
 Given(
-  "a feature corpus whose tag lines carry a retired term alongside a scenario id, a feature code, a tier tag and a lint handle",
+  "a feature corpus whose tag lines carry a retired term alongside a scenario id, a feature code, a tier tag and a retired-form handle",
   function () {
     const dir = mkdtempSync(join(tmpdir(), "spec-controller-voc013-"));
     mkdirSync(join(dir, "features"));
@@ -785,7 +785,7 @@ Then("the tier tag is not flagged", function () {
 });
 
 // @SCN-VOC-013
-Then("the lint handle value is not flagged", function () {
+Then("the retired-form handle value is not flagged", function () {
   // The measured one. `guard` is a FULL_TERM_ONLY word and `domain` / `purity` are not among
   // its ruled qualifiers, so a SCANNED handle would flag as `bare-different-word` — a row
   // per handle across the tree. 3F-1929 ruled the handle a value; 3F-1852 owns them.

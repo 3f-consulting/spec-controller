@@ -17,12 +17,6 @@
  * than promoted to the public contract.
  */
 
-// `staticCheckEvidenceObligationsOf` — the NAMED-static-check derivation, the static-axis
-// twin of `evidenceObligationPairsOf`. It lives ONCE on the journal (the model's
-// rule for what a scenario names); the balance command's static-check ingest reads
-// it rather than rebuilding the derivation inline. Shared internally — NOT public API,
-// so it stays off the frozen `.` barrel and is reached here instead.
-export { staticCheckEvidenceObligationsOf } from "./domain/journal.js";
 
 // `parseScnCitation` / `parseScnCitations` — the ONE definition of the bracketed citation
 // form. Shared because the two citation readers previously carried their own sigil-optional
@@ -31,3 +25,28 @@ export { staticCheckEvidenceObligationsOf } from "./domain/journal.js";
 // changed block. A second copy is exactly the fault, so the gate imports this one. Internal,
 // not public — the form is spec-controller's own reading convention, not a v1 contract.
 export { parseScnCitation, parseScnCitations } from "./lib/scnCitation.js";
+
+// `checkRegistryOf` / `registeredCheckTags` — the ONE reading of a target's check registry
+// (`domain/checkRegistry`). Shared because the tier-tag floor (@SCN-STG-005) must admit exactly
+// the bare tags the obligation rule raises against: a second reader in `static-checks/` would
+// decide independently which words name a check, and a scenario the floor accepted while the
+// engine raised nothing for it would be tier-named and evidence-free. Internal, not public — where
+// a registry is AUTHORED is still open (the registry-home question, increment D).
+export { checkRegistryOf, registeredCheckTags } from "./domain/checkRegistry.js";
+export type { CheckRegistry } from "./domain/checkRegistry.js";
+
+// `fitnessCitations` / `citationOfScript` — the citation seam's corpus hop and the two hops
+// composed. Shared because the balance command is where a run and a corpus are BOTH in hand, and
+// the cross-repo read (@SCN-LNT-005) makes which corpus load-bearing: the scenario carrying a
+// target's check is the TARGET's, so the hop has to be applied to the corpus that run read, not to
+// whichever one the resolver happened to be built beside. Internal, not public — the seam's shape
+// moves with the registry-home question (increment D).
+export { fitnessCitations, citationOfScript } from "./parse/fitnessCitations.js";
+export type { FitnessCitations, ScriptCitation } from "./parse/fitnessCitations.js";
+
+// `parseTaggedScenarios` — the corpus read BEFORE any obligation rule is applied, and the input
+// the corpus hop above takes. Shared rather than re-derived at the edge: it is the single
+// tag-inheritance walk both of `parseScenarios`' historical false-greens lived in, and a caller
+// that rebuilt "which tags does this scenario carry" would be free to reproduce either one
+// silently. Internal, not public — `parseScenarios` remains the v1 corpus surface.
+export { parseTaggedScenarios } from "./parse/scenarios.js";

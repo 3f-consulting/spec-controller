@@ -41,9 +41,9 @@ import { configKeySegments } from "./configKeys.js";
 import { homographSense, singularise } from "./wordForms.js";
 import { GENERIC_ALLOWLIST } from "./vocabAllowlist.js";
 import {
-  APPROVED_WORDS, BANNED_WORDS, DOMAIN_WORDS, ENTRY_DOMAIN_COMPANIONS, FULL_TERM_ONLY,
-  GUARD_QUALIFIERS, HOMOGRAPH_QUALIFIERS, REJECTED_ALIAS_TO_CANONICAL, RESERVED_WORDS,
-  RULED_ALLOWED, VOCAB_AUDIT_WORDS,
+  APPROVED_WORDS, BANNED_WORDS, CLASS_NOUN_PHRASE_WORDS, DOMAIN_WORDS, ENTRY_DOMAIN_COMPANIONS,
+  FULL_TERM_ONLY, GUARD_QUALIFIERS, HOMOGRAPH_QUALIFIERS, REJECTED_ALIAS_TO_CANONICAL,
+  RESERVED_WORDS, RULED_ALLOWED, VOCAB_AUDIT_WORDS,
 } from "./vocabWordSets.js";
 
 export {
@@ -99,7 +99,10 @@ export type FlagReason =
   | "retired-tag-phrase"
   // @SCN-VOC-005 — the retired CLASS-NAME PHRASE: whole-word `static` immediately before
   // `guard`. Renamed to the canon `static check`.
-  | "retired-class-name-phrase";
+  | "retired-class-name-phrase"
+  // 3F-2588 — the retired CLASS NOUN: whole-word `lint` immediately before a class noun
+  // (`axis`, `kind`, `class`, …). The class is `static check`; `@lint` is one member of it.
+  | "retired-class-noun-phrase";
 
 // ---------------------------------------------------------------------------
 // Core classification
@@ -198,19 +201,27 @@ function fullTermSatisfied(word: string, words: string[], i: number, present: Se
  * GUARD_QUALIFIERS entry and co-occurs; dropping that entry would emit a SECOND row per
  * occurrence dispositioned `review`, and would red @SCN-VOC-001's retired-class-name fixture.
  *
- * BOTH fire in BOTH modes: a retired phrase hides in a comment, a doc, an identifier,
+ * 3F-2588 — the retired CLASS NOUN. Whole-word `lint` immediately before a class noun (`axis`,
+ * `kind`, `class`, `category`, `type`, `family`, `group`, `dimension`, `concept` — the measured
+ * list is `CLASS_NOUN_PHRASE_WORDS`, and the reasoning for what is IN it and what is deliberately
+ * OUT lives there). Canon retired `lint` as the name of the CLASS on 2026-08-07; the class is
+ * `static check` and `@lint` is one member of it. Like the two above, this reds a PHRASE and never
+ * the word: `lint` is individually allowlisted precisely because `@lint`, `lint:*` script names and
+ * ESLint-as-a-tool are all legitimate, and none of them puts a class noun after it.
+ *
+ * ALL THREE fire in BOTH modes: a retired phrase hides in a comment, a doc, an identifier,
  * a string, a filename or a config key alike — and, since @SCN-VOC-013, on a TAG LINE too.
  * Each arm's `FlagReason` names its RULE, never the coinage it catches (3F-2392) — the
  * detector's own API was the last place a retired term still lived as an exported name.
  */
+const CLASS_NOUN_STEMS: ReadonlySet<string> = new Set(CLASS_NOUN_PHRASE_WORDS.map(singularise));
+
 function retiredPhraseVerdict(word: string, following: string): WordVerdict | null {
   const next = singularise(following);
-  if (word === "ci" && next === "performance") {
-    return { word, flagged: true, reason: "retired-tag-phrase", canonical: "ci-run-time" };
-  }
-  if (word === "static" && next === "guard") {
-    return { word, flagged: true, reason: "retired-class-name-phrase", canonical: "static check" };
-  }
+  const flag = (reason: FlagReason, canonical: string): WordVerdict => ({ word, flagged: true, reason, canonical });
+  if (word === "ci" && next === "performance") return flag("retired-tag-phrase", "ci-run-time");
+  if (word === "static" && next === "guard") return flag("retired-class-name-phrase", "static check");
+  if (word === "lint" && CLASS_NOUN_STEMS.has(next)) return flag("retired-class-noun-phrase", "static check");
   return null;
 }
 

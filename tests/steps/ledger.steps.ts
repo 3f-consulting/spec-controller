@@ -1843,11 +1843,11 @@ Then(
 );
 
 /**
- * @SCN-LDG-022 (3F-1846) — every evidence observation posts to AT LEAST ONE ledger account, never
- * to none (canon, double-entry-manifesto.md line 160). This corpus is SINGLE-OBLIGATION (no
- * static check named twice), so the never-zero invariant lands at exactly one — the teeth below against
- * an erroneous double-post IN THIS CORPUS. The multi-obligation instance (a static check posting to
- * every naming scenario) is @SCN-LDG-024.
+ * @SCN-LDG-022 (3F-1846) — every evidence observation posts to EXACTLY ONE ledger account, never to
+ * none. Under the one posting rule both axes CITE, so exactly-one is universal rather than the
+ * runtime half of a weaker "at least one" (3F-2621): the corpus below spans a CITED fitness credit
+ * and an UNCITED one alongside every runtime shape, and the teeth are against a drop AND a
+ * double-post together.
  *
  * @integration is the TEETH. The @unit arm proves `reconcile` populates the account's
  * `evidenceObservations`; only driving the FULL credit corpus through in one run shows the
@@ -1869,16 +1869,19 @@ let ldg022PendingCredit: EvidenceObservation;
 
 // @SCN-LDG-022
 Given(
-  "a run whose credits span every shape — satisfied, no-evidence-obligation, pending-cited, phantom, uncited, broken, a named guard and a no-evidence-obligation guard",
+  "a run whose credits span every shape — satisfied, no-evidence-obligation, pending-cited, phantom, uncited, broken, a cited fitness check and an uncited one",
   function () {
     // SCN-AAA-003 carries @unitpending — a DEFERRED obligation. The credit citing it below is the
     // LOAD-BEARING case: before this scenario it vanished from the model entirely, because there
     // was nowhere for a posted entry to sit. It posts and is findable WHATEVER it reconciles to.
+    //
+    // SCN-AAA-004 is the FITNESS half of the span — a STEPLESS scenario carrying the bare check
+    // `named`, which is what raises a fitness obligation now that the technique has left the tag.
     const source = `@AAA
 Feature: alpha
 
-  @unit @lint=lint:named @SCN-AAA-001
-  Scenario: a satisfied credit, and a guard it names
+  @unit @SCN-AAA-001
+  Scenario: a satisfied credit
     Given a thing
 
   @unit @SCN-AAA-002
@@ -1888,8 +1891,11 @@ Feature: alpha
   @unitpending @SCN-AAA-003
   Scenario: a pending-cited credit
     Given a thing
+
+  @named @SCN-AAA-004
+  Scenario: the fitness scenario carrying the bare check named
 `;
-    scenarios = parseScenarios(source);
+    scenarios = parseScenarios(source, [], ["named"]);
 
     const satisfied: EvidenceObservation = {
       scnId: "SCN-AAA-001", qualityCheck: "unit", status: "passed", locator: "a.test.ts",
@@ -1915,20 +1921,23 @@ Feature: alpha
       scnId: null, qualityCheck: "unit", status: "failed", broken: true,
       locator: "f.test.ts", message: "failed to collect",
     };
-    // A NAMED guard credit carries no @SCN, but SCN-AAA-001's `@lint=lint:named` obligation
-    // links it by GUARD HANDLE — the same link the reconciler already follows to put the outcome
-    // on that row. It posts to the account that names it.
-    const staticCheckEvidenceObligation: EvidenceObservation = {
-      qualityCheck: "lint", staticCheck: "lint:named", exists: true, enforcedOverRealSource: true,
+    // A CITED fitness credit — the citation seam resolved `lint:named` to SCN-AAA-004's bare
+    // `named` check and stamped that @SCN on the run, so it posts to exactly one row by the SAME
+    // rule the runtime credits above use. Note the two words differ (`lint:named` the runnable
+    // handle, `named` the bare check): only the citation can join them.
+    const citedFitnessCredit: EvidenceObservation = {
+      scnId: "SCN-AAA-004",
+      qualityCheck: "lint", staticCheck: "lint:named", checkTag: "named", exists: true, enforcedOverRealSource: true,
     };
-    // A NO-EVIDENCE-OBLIGATION guard credit: no @lint obligation names this handle, so it belongs to no
-    // account → SUSPENSE. The other arm of the guard symmetry.
-    const noEvidenceObligationGuard: EvidenceObservation = {
-      qualityCheck: "lint", staticCheck: "lint:no-evidence-obligation", exists: true, enforcedOverRealSource: false,
+    // An UNCITED fitness credit: the seam reached no @SCN for it — no fitness scenario carries its
+    // check — so it belongs to no row → SUSPENSE, where it reconciles `cites-no-scenario`. The
+    // fitness twin of the uncited runtime credit above, not a second rule.
+    const uncitedFitnessCredit: EvidenceObservation = {
+      qualityCheck: "lint", staticCheck: "lint:nobody-cites-this", exists: true, enforcedOverRealSource: false,
     };
 
     ldgPostingObservations = [
-      satisfied, noEvidenceObligation, ldg022PendingCredit, phantom, uncited, broken, staticCheckEvidenceObligation, noEvidenceObligationGuard,
+      satisfied, noEvidenceObligation, ldg022PendingCredit, phantom, uncited, broken, citedFitnessCredit, uncitedFitnessCredit,
     ];
     evidenceObservations = ldgPostingObservations;
 
@@ -1940,9 +1949,9 @@ Feature: alpha
       [phantom, "SCN-ZZZ-999"],
       [uncited, "(no scenario)"],
       [broken, "(no scenario)"],
-      // The guard symmetry: named → the account that names it; no-evidence-obligation → suspense.
-      [staticCheckEvidenceObligation, "SCN-AAA-001"],
-      [noEvidenceObligationGuard, "(no scenario)"],
+      // The fitness axis, by the SAME rule: cited → the one row it cites; uncited → suspense.
+      [citedFitnessCredit, "SCN-AAA-004"],
+      [uncitedFitnessCredit, "(no scenario)"],
     ]);
 
   },
@@ -2024,8 +2033,8 @@ Then(
   "the run's verdict and reconciling items are unchanged — posting classifies nothing",
   function () {
     // Pinned as LITERALS, never as a re-reconcile of the same inputs (which would compare the
-    // engine to itself and assert nothing). These are the outcomes this corpus produced BEFORE
-    // posting existed, and posting must leave every one of them untouched.
+    // engine to itself and assert nothing). These are the outcomes the RECONCILER produces over
+    // this corpus, and posting must leave every one of them untouched.
     assert.deepEqual(
       ldgPostingLedger.ledger.scenarioReconciliations.map((r: ScenarioReconciliation) => [
         r.scnId,
@@ -2033,7 +2042,6 @@ Then(
         r.reconcilingItems.map((i: QualityCheckReconciliation) => i.outcome),
       ]),
       [
-        // The named guard reconciles `satisfied` on this row — and posts here too.
         ["SCN-AAA-001", "balanced", []],
         ["SCN-AAA-002", "out-of-balance", ["missing", "no-evidence-obligation"]],
         // The pending-cited credit reconciles `no-evidence-obligation` (3F-1858): a pending obligation
@@ -2043,6 +2051,9 @@ Then(
         // classifies nothing: this row's outcome is the RECONCILER's, asserted where that rule
         // lives (@SCN-PND-005); it is pinned here only to keep this exhaustion snapshot honest.
         ["SCN-AAA-003", "out-of-balance", ["no-evidence-obligation"]],
+        // The fitness scenario: its bare `named` check is wired and green, so it reconciles
+        // satisfied against the credit that CITES it.
+        ["SCN-AAA-004", "balanced", []],
         ["SCN-ZZZ-999", "out-of-balance", ["cites-unknown-scenario"]],
         ["(no scenario)", "out-of-balance", ["broken", "cites-no-scenario", "cites-no-scenario"]],
       ],
@@ -2076,16 +2087,20 @@ let ldg023PendingObligation: EvidenceObligation;
 
 // @SCN-LDG-023
 Given(
-  "a run whose scenarios raise obligations of every shape — a runtime obligation, a lint obligation carrying its guard handle, and a pending one",
+  "a run whose scenarios raise obligations of every shape — a runtime obligation, a fitness obligation carrying its bare check, and a pending one",
   function () {
     // SCN-AAA-003 carries @unitpending — a DEFERRED obligation that partitions off to a one-sided
     // Pending Item and earns NO reconciled row. It is the debit-side mirror of LDG-022's
     // load-bearing credit: it must post ANYWAY.
+    //
+    // SCN-AAA-004 is the FITNESS debit — a STEPLESS scenario carrying the bare check `named`. The
+    // debit twin of LDG-022's citation-routed credit: the identity a fitness debit carries is the
+    // REGISTERED BARE CHECK, not the npm-script handle the retired `@lint=<handle>` form named.
     const source = `@AAA
 Feature: alpha
 
-  @unit @lint=lint:named @SCN-AAA-001
-  Scenario: a runtime obligation and a lint obligation carrying its guard handle
+  @unit @SCN-AAA-001
+  Scenario: a runtime obligation
     Given a thing
 
   @integration @SCN-AAA-002
@@ -2095,28 +2110,32 @@ Feature: alpha
   @unitpending @SCN-AAA-003
   Scenario: a pending obligation that earns no reconciled row
     Given a thing
+
+  @named @SCN-AAA-004
+  Scenario: a fitness obligation carrying its bare check
 `;
-    scenarios = parseScenarios(source);
+    scenarios = parseScenarios(source, [], ["named"]);
 
     // Read the debits back off the PARSED scenarios by identity — never hand-built here, so the
     // assertion is against what the engine was actually handed (evidence-manifesto §11A).
     const namedOf = (scnId: string): EvidenceObligation[] =>
       scenarios.find((s: Scenario) => s.scnId === scnId)!.evidenceObligations;
 
-    const [aaa001Unit, aaa001Lint] = namedOf("SCN-AAA-001");
+    const [aaa001Unit] = namedOf("SCN-AAA-001");
     const [aaa002Integration] = namedOf("SCN-AAA-002");
     ldg023PendingObligation = namedOf("SCN-AAA-003")[0]!;
+    const [aaa004Fitness] = namedOf("SCN-AAA-004");
 
-    ldg023Obligations = [aaa001Unit!, aaa001Lint!, aaa002Integration!, ldg023PendingObligation];
+    ldg023Obligations = [aaa001Unit!, aaa002Integration!, ldg023PendingObligation, aaa004Fitness!];
 
     // THE POSTING RULE IS THE SCENARIO ITSELF: a debit posts to the account that RAISED it. Unlike
     // a credit there is no citation to follow and no suspense — a raised obligation always has a
     // real account, by construction.
     ldg023ExpectedAccount = new Map<EvidenceObligation, string>([
       [aaa001Unit!, "SCN-AAA-001"],
-      [aaa001Lint!, "SCN-AAA-001"],
       [aaa002Integration!, "SCN-AAA-002"],
       [ldg023PendingObligation, "SCN-AAA-003"],
+      [aaa004Fitness!, "SCN-AAA-004"],
     ]);
 
     // A credit corpus that mints a PHANTOM and a SUSPENSE account — accounts no scenario raises,
@@ -2163,7 +2182,7 @@ Then("every evidence obligation posts to its own scenario's account", function (
 Then("each debit is findable on its account, keyed by quality-check", function () {
   // KEYED BY QUALITY-CHECK — canon's Ledger is the entries "organised by real or invented
   // scenario, KEYED BY QUALITY-CHECK". So a reader with a scnId and a quality-check can find the
-  // debit, and a `lint` debit is findable WITH ITS GUARD HANDLE intact.
+  // debit, and a fitness debit is findable WITH ITS BARE CHECK intact.
   const accountFor = (scnId: string): ScenarioReconciliation | undefined =>
     ldgPostingLedger.ledger.scenarioReconciliations.find((r: ScenarioReconciliation) => r.scnId === scnId);
 
@@ -2174,10 +2193,12 @@ Then("each debit is findable on its account, keyed by quality-check", function (
 
   assert.ok(findDebit("SCN-AAA-001", "unit"), "the runtime debit is findable by quality-check");
   assert.equal(
-    findDebit("SCN-AAA-001", "lint")?.staticCheck,
-    "lint:named",
-    "the lint debit is findable by quality-check AND carries its guard handle — the account " +
-      "records WHAT WAS NAMED, not merely that something was",
+    findDebit("SCN-AAA-004", "lint")?.staticCheck,
+    "named",
+    "the fitness debit is findable by quality-check AND carries its BARE CHECK — the account " +
+      "records WHAT WAS NAMED, not merely that something was. The bare check is the identity now: " +
+      "the retired `@lint=<handle>` form named a runnable script, which is what put one technique " +
+      "in front of a whole class of fitness functions",
   );
   assert.ok(findDebit("SCN-AAA-002", "integration"), "each scenario's own debit is on its own account");
 
@@ -2224,10 +2245,12 @@ Then(
         r.reconcilingItems.map((i: QualityCheckReconciliation) => i.outcome),
       ]),
       [
-        // The lint debit is named but no guard credit answers it → `missing`, exactly as before.
-        ["SCN-AAA-001", "out-of-balance", ["missing"]],
+        ["SCN-AAA-001", "balanced", []],
         ["SCN-AAA-002", "out-of-balance", ["missing"]],
         ["SCN-AAA-003", "balanced", []],
+        // The fitness debit is raised but no credit answers it → `missing`, the same outcome the
+        // named lint debit earned before the identity moved.
+        ["SCN-AAA-004", "out-of-balance", ["missing"]],
         ["SCN-ZZZ-999", "out-of-balance", ["cites-unknown-scenario"]],
         ["(no scenario)", "out-of-balance", ["cites-no-scenario"]],
       ],
@@ -2477,16 +2500,17 @@ Then("the JSON projects that evidence observation on the reconciliation", functi
 // Observation None. The @integration arm drives the parse → reconcile pipeline over the absent-guard
 // case; the debit-side assertion reuses LDG-026's shared "carries the evidence obligation" Then.
 // Reuses the shared "the ledger reconciles that run" When (LDG-022/023/026/027).
-const LDG028_ABSENT_GUARD = "lint:ldg028-absent-guard";
+const LDG028_ABSENT_CHECK = "ldg028-absent-guard";
+const LDG028_ABSENT_HANDLE = `lint:${LDG028_ABSENT_CHECK}`;
 let ldg028ScnId: string;
 
 // @SCN-LDG-028
 Given(
-  "a scenario {string} requiring a @lint guard absent from both package.json and CI",
+  "a scenario {string} requiring a fitness check absent from both package.json and CI",
   function (scnId: string) {
-    // A @lint scenario built through the REAL scenario reader (the @lint=<guard> →
-    // static-obligation parse seam), and an absent-guard observation: the negative fact the real
-    // detector produces for a guard named in NEITHER package.json NOR CI — exists:false,
+    // A STEPLESS fitness scenario built through the REAL scenario reader (the bare-check →
+    // fitness-obligation parse seam), and an absent-check observation: the negative fact the real
+    // detector produces for a check named in NEITHER package.json NOR CI — exists:false,
     // enforcedOverRealSource:false. So its lint obligation reconciles `missing` by absence: the
     // pure debit case (a required obligation present, its matching observation an ABSENCE).
     ldg028ScnId = scnId;
@@ -2494,18 +2518,22 @@ Given(
       "@LDG",
       "Feature: fixture",
       "  Rule: a fixture rule",
-      `    @lint=${LDG028_ABSENT_GUARD} @${scnId}`,
+      `    @${LDG028_ABSENT_CHECK} @${scnId}`,
       "    Scenario: a fixture scenario",
-      "      Given a fixture step",
     ].join("\n");
-    scenarios = parseScenarios(feature);
+    scenarios = parseScenarios(feature, [], [LDG028_ABSENT_CHECK]);
     // The absent-guard record: {exists:false} is an ABSENCE, the input the detector emits for a
     // guard present in neither source. NOT a real observation (contrast the watermelon's
     // exists:true). Stocked as the run's only observation.
+    // It CITES the fitness scenario — the citation seam stamps the @SCN when the check is
+    // observed, and the two names differ on purpose (the obligation names the bare check, the run
+    // names the runnable handle), so nothing but the citation can join them.
     ldgPostingObservations = [
       {
+        scnId,
         qualityCheck: "lint",
-        staticCheck: LDG028_ABSENT_GUARD,
+        staticCheck: LDG028_ABSENT_HANDLE,
+        checkTag: LDG028_ABSENT_CHECK,
         exists: false,
         enforcedOverRealSource: false,
       },
@@ -2536,7 +2564,7 @@ Then("its lint Quality Check Reconciliation has outcome {string}", function (out
   const reconciliation = ldg028LintReconciliation();
   ldgDebitSubject = {
     reconciliation,
-    expectedObligation: { qualityCheck: "lint", staticCheck: LDG028_ABSENT_GUARD },
+    expectedObligation: { qualityCheck: "lint", staticCheck: LDG028_ABSENT_CHECK },
   };
   assert.equal(
     reconciliation.outcome,

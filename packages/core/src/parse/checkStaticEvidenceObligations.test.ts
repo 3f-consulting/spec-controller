@@ -11,7 +11,7 @@
  * `if:`-gated / matrix steps without crashing — NOT line-scan.
  *
  * Helper-level coverage for the seam @SCN-LNT-001 carries — the Rule preamble at
- * features/lint-reconciliation.feature names "the ingest/guard reader" as part of the
+ * features/fitness-reconciliation.feature names "the ingest/guard reader" as part of the
  * static-kind foundation that scenario is seam-bearing for. These pin that reader
  * directly (its GuardEvidenceObservation output), alongside the @SCN-LNT-001 reconcile
  * test in src/domain/lintReconciliation.test.ts which pins the ledger verdict it feeds.

@@ -32,7 +32,21 @@
     "lint:exempt-data-floor": "tsx packages/spec-controller/static-checks/lintExemptDataFloorCli.ts"
   },
   "specController": {
-    "staticChecks": ["typecheck"]
+    "staticChecks": ["typecheck"],
+    "checkRegistry": {
+      "lint:feature-codes": "feature-codes",
+      "lint:no-committed-reports": "no-committed-reports",
+      "lint:scn-tags": "scn-tags",
+      "lint:complexity": "complexity",
+      "lint:complexity-exceptions": "complexity-exceptions",
+      "lint:blocked-vocabulary": "blocked-vocabulary",
+      "typecheck": "typecheck",
+      "lint:adopted-vocabulary": "adopted-vocabulary",
+      "lint:exempt-data-floor": "exempt-data-floor",
+      "lint:anemic-domain": "anemic-domain",
+      "lint:self-balance": "self-balance",
+      "lint:scn-subissues": "scn-subissues"
+    }
   },
   "devDependencies": {
     "@3f-consulting/spec-controller-core": "workspace:*",

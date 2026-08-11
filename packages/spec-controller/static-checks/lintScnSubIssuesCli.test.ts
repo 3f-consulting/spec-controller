@@ -20,7 +20,12 @@ import {
   parseScenarios,
   runningStaticChecks,
 } from "@3f-consulting/spec-controller-core";
-import { staticCheckEvidenceObligationsOf } from "@3f-consulting/spec-controller-core/internal";
+import {
+  registeredCheckTags,
+  fitnessCitations,
+  parseTaggedScenarios,
+} from "@3f-consulting/spec-controller-core/internal";
+import { resolveCheckRegistry } from "../src/ingest/ingestQualityChecks.js";
 import { isExternalPrFromEvent } from "./lintScnSubIssuesCli.js";
 
 /** A minimal GitHub PR event payload with the given head/base repo full names. */
@@ -83,12 +88,35 @@ const GUARD_PREFIXES = ["lint:", "guard:"] as const;
 
 describe("[SCN-SSM-006] lint:scn-subissues is reconciled on spec-controller's own Ledger", () => {
   const ciSource = readRepoFile(".github/workflows/ci.yml");
-  const packageJson = JSON.parse(readRepoFile("package.json")) as { scripts?: Record<string, string> };
+  const packageJson = JSON.parse(readRepoFile("package.json")) as {
+    scripts?: Record<string, string>;
+    specController?: { checkRegistry?: unknown };
+  };
   const featureSource = readRepoFile("features/scenario-sub-issue-match.feature");
 
   it("is named by a scenario, so its run has an Evidence Obligation to settle against", () => {
-    const named = staticCheckEvidenceObligationsOf(parseScenarios(featureSource));
-    expect([...named]).toContain(OWN_STATIC_CHECK);
+    // THE SAME ASSERTION, THROUGH THE SPELLING THAT NOW CARRIES IT (3F-2589). This used to
+    // read the retired @lint=<handle> form, where a scenario named the check by spelling the
+    // runnable handle back at the tool. Under the one posting rule the corpus names a check
+    // by a BARE tag, and which tag a handle IS comes from this repository's own registry — so
+    // both hops are read from the REAL manifest and the REAL feature file here. A missing
+    // registry entry now fails this exactly as a missing tag does, which is strictly more
+    // than the handle-spelling read could see.
+    const registry = resolveCheckRegistry(packageJson);
+    const checkTag = registry.get(OWN_STATIC_CHECK);
+    expect(checkTag).toBeDefined();
+
+    // Read through the CORPUS HOP itself (`fitnessCitations`) rather than through the corpus's
+    // obligation set: it answers the sharper question — which scenario carries this check — and
+    // so fails on a tag that reaches no stepless scenario as well as on one that is absent. The
+    // journal-side named-handle derivation this replaced was the by-name route's, and went with it
+    // (3F-2590).
+    const citations = fitnessCitations(
+      parseTaggedScenarios(featureSource),
+      registeredCheckTags(registry),
+    );
+
+    expect([...citations.keys()]).toContain(checkTag);
   });
 
   it("exists as a script AND is enforced over real source — it fires, it is not merely present", () => {

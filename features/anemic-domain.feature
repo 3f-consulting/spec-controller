@@ -33,15 +33,16 @@ Feature: A concept's behaviour never drains into a procedural layer beside it
   when its name carries an observed prefix (`lint:` / `guard:`). A name outside that set
   would run in CI while being structurally invisible to the ledger — a real quality check
   kept off the books, which is exactly where a watermelon hides. Named so it IS observed;
-  the `@lint=lint:anemic-domain` tag below is then what keeps it out of the suspense row
-  as an uncited static check. Observed AND required is the balanced state. (The sibling
+  the bare `@anemic-domain` tag on the fitness scenario below is then what keeps it out of
+  the suspense row as an uncited static check. Observed AND required is the balanced state.
+  (The sibling
   purity checks — @DPG, @EPG — deliberately chose the opposite: @unit-only, enforced by
   pnpm test, off the ledger. That is right for them and wrong here, because this check's
   whole subject is the design conformance the tool sells.)
 
   Rule: a procedural-layer module under a domain directory reds the anemic-domain check
 
-    @unit @integration @lint=lint:anemic-domain @SCN-ANM-001
+    @unit @integration @SCN-ANM-001
     Scenario: a procedural-layer module beside the domain concepts reds the build
       Given every module tracked in the real spec-controller repository
       When the anemic-domain check runs over the real tree
@@ -49,3 +50,16 @@ Feature: A concept's behaviour never drains into a procedural layer beside it
       And the same name outside a domain directory is not
       And a module named for its concept is not
       And the check passes clean over the real tree
+
+  Rule: spec-controller's own domain concepts keep their behaviour
+
+    THE FITNESS SCENARIO, AND WHY IT CARRIES NO STEPS. The Rule above holds the CHECK
+    against planted trees — an example, so it has steps. This one holds spec-controller's
+    own tree against the check, which is a whole-system characteristic with nothing to
+    exemplify. The bare `@anemic-domain` tag raises the Evidence Obligation the CI run of
+    `lint:anemic-domain` settles: `specController.checkRegistry` maps that handle to this
+    tag, the corpus maps the tag to the scenario below, and the run's credit posts here
+    rather than folding onto the suspense row.
+
+    @anemic-domain @SCN-ANM-002
+    Scenario: no module under a domain directory is named for a procedural layer

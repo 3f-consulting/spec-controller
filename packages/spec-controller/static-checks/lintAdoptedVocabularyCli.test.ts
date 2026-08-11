@@ -19,7 +19,7 @@ import { fileURLToPath } from "node:url";
 
 import { adoptedOccurrences, adoptedOccurrenceReport } from "./lintAdoptedVocabularyCli.js";
 import {
-  RETIRED, ADOPTED_PLAIN_TERMS, ADOPTED_TRIGGER_WORDS,
+  RETIRED, ADOPTED_PLAIN_TERMS, ADOPTED_TRIGGER_WORDS, CANONICAL,
 } from "../../../tests/fixtures/vocab/retiredTerms.js";
 import {
   adoptedTriggerWords,
@@ -32,7 +32,12 @@ import {
   checkStaticEvidenceObligations,
   runningStaticChecks,
 } from "@3f-consulting/spec-controller-core";
-import { staticCheckEvidenceObligationsOf } from "@3f-consulting/spec-controller-core/internal";
+import {
+  registeredCheckTags,
+  fitnessCitations,
+  parseTaggedScenarios,
+} from "@3f-consulting/spec-controller-core/internal";
+import { resolveCheckRegistry } from "../src/ingest/ingestQualityChecks.js";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const readRepoFile = (relative: string): string =>
@@ -131,10 +136,51 @@ describe("[SCN-VOC-014] a phrase trigger word cannot be flagged for any other re
   // either can reach the manifest. Left unasserted this is an incidental property that a
   // future word-set edit could silently turn into a flood of false reds.
   it("does not flag a bare static or ci outside the retired phrase", () => {
-    for (const word of ["static", "ci"]) {
+    for (const word of ["static", "ci", RETIRED.classNounPhraseFirst]) {
       const [verdict] = classifyWords([word], "name");
       expect(verdict?.flagged).toBe(false);
     }
+  });
+});
+
+/**
+ * 3F-2588 — the CLASS-NOUN regrowth guard's teeth, BOTH WAYS.
+ *
+ * The word is individually allowlisted, so over the real tree this rule measures zero and a green
+ * run says nothing about it in either direction — the same blindness the file's header describes.
+ * A blanket ban on the word would red `@lint`, every `lint:*` script name and every mention of
+ * ESLint, which is why the rule is phrase-scoped and why BOTH directions are pinned here.
+ */
+describe("[SCN-VOC-014] the class-noun phrase reds, and the legitimate senses do not", () => {
+  const firstVerdict = (words: string[]) => classifyWords(words, "prose")[0];
+
+  it("flags the word when a class noun follows it — the class is the canon class name", () => {
+    const verdict = firstVerdict([RETIRED.classNounPhraseFirst, RETIRED.classNounPhraseSecond]);
+    expect(verdict?.flagged).toBe(true);
+    expect(verdict?.canonical).toBe(CANONICAL.className);
+  });
+
+  it("flags the class noun's PLURAL too — a plural must not walk past the singular's ban", () => {
+    expect(firstVerdict([RETIRED.classNounPhraseFirst, "kinds"])?.flagged).toBe(true);
+  });
+
+  it("leaves the bare check tag alone — nothing follows it, so no phrase exists", () => {
+    expect(firstVerdict([RETIRED.classNounPhraseFirst])?.flagged).toBe(false);
+  });
+
+  it("leaves a lint: script name alone — its follower is the check, never a class noun", () => {
+    for (const script of ["lint:complexity", "lint:self-balance", "lint:adopted-vocabulary"]) {
+      const verdict = firstVerdict(script.split(/[:-]/));
+      expect(verdict?.flagged, script).toBe(false);
+    }
+  });
+
+  it("leaves the legitimate follower alone — a style-lint check is what the bare tag IS", () => {
+    const verdict = firstVerdict([
+      RETIRED.classNounPhraseFirst,
+      RETIRED.classNounLegitimateSecond,
+    ]);
+    expect(verdict?.flagged).toBe(false);
   });
 });
 
@@ -191,13 +237,33 @@ describe("[SCN-VOC-014] the gate is reconciled on spec-controller's own Ledger",
   const ciSource = readRepoFile(".github/workflows/ci.yml");
   const packageJson = JSON.parse(readRepoFile("package.json")) as {
     scripts?: Record<string, string>;
+    specController?: { checkRegistry?: unknown };
   };
   const featureSource = readRepoFile("features/vocabulary-audit.feature");
 
   it("is named by a scenario, so its run has an Evidence Obligation to settle against", () => {
-    const named = staticCheckEvidenceObligationsOf(parseScenarios(featureSource));
+    // THE SAME ASSERTION, THROUGH THE SPELLING THAT NOW CARRIES IT (3F-2589). This used to
+    // read the retired @lint=<handle> form, where a scenario named the check by spelling the
+    // runnable handle back at the tool. Under the one posting rule the corpus names a check
+    // by a BARE tag, and which tag a handle IS comes from this repository's own registry — so
+    // both hops are read from the REAL manifest and the REAL feature file here. A missing
+    // registry entry now fails this exactly as a missing tag does, which is strictly more
+    // than the handle-spelling read could see.
+    const registry = resolveCheckRegistry(packageJson);
+    const checkTag = registry.get(OWN_STATIC_CHECK);
+    expect(checkTag).toBeDefined();
 
-    expect([...named]).toContain(OWN_STATIC_CHECK);
+    // Read through the CORPUS HOP itself (`fitnessCitations`) rather than through the corpus's
+    // obligation set: it answers the sharper question — which scenario carries this check — and
+    // so fails on a tag that reaches no stepless scenario as well as on one that is absent. The
+    // journal-side named-handle derivation this replaced was the by-name route's, and went with it
+    // (3F-2590).
+    const citations = fitnessCitations(
+      parseTaggedScenarios(featureSource),
+      registeredCheckTags(registry),
+    );
+
+    expect([...citations.keys()]).toContain(checkTag);
   });
 
   it("exists as a script AND is enforced over real source — it fires, it is not merely present", () => {

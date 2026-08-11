@@ -26,11 +26,11 @@ Feature: ten-outcome corpus — a fixture shaped so the REAL reconcile emits all
     When no observation cites it
     Then it reconciles missing
 
-  @lint=guard:wm @SCN-TOC-004
+  # STEPLESS and carrying the bare check `wm`, which this target's registry maps onto the
+  # `guard:wm` script. A fitness obligation is raised off steplessness (@SCN-LNT-006) and the
+  # run cites this scenario, so the watermelon is reached by the one posting rule.
+  @wm @SCN-TOC-004
   Scenario: watermelon — a static check that exists but is not wired into CI
-    Given a lint guard that exists as a package.json script
-    When CI does not run it
-    Then it reconciles watermelon
 
   @e2e @SCN-TOC-005
   Scenario: no-evidence-obligation — a real scenario cited at a quality-check it never named

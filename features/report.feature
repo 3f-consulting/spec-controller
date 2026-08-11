@@ -128,7 +128,7 @@ Feature: The report renders the ledger as sectioned facts
       Then it carries a "### Evidence reconciliation" section with a "Subject | Total | Balanced | Out-of-balance | Detail" table — a Scenario Reconciliation row and an Evidence obligation row each with its own total, the evidence-obligation out-of-balance decomposed into nested missing (with its bare-level split), failing, and watermelon rows that reconcile to it
       And a balance of N real balanced scenarios plus one suspense reconciliation renders the Scenario Reconciliation row as N+1 total, N balanced, 1 out-of-balance — the suspense reconciliation counted, so the table cannot read a pass on a run isBalanced fails
 
-  Rule: the markdown report surfaces the lint evidence obligations as their own section
+  Rule: the markdown report surfaces the fitness evidence obligations as their own section
 
     The by-kind view (@SCN-RPT-005; re-cut under Summary views with a total
     line by the reformat; labelled by the @lint TAG, not the kind).
@@ -139,15 +139,15 @@ Feature: The report renders the ledger as sectioned facts
     evidence obligation with its scenario, static check handle, and reconciliation outcome — so the lint
     axis (incl. any 🍉 watermelon) reads on its own. The label is the tag word "lint" (the
     internal kind "static" is never rendered). Omitted entirely (total line and
-    all) when no scenario raises a lint evidence obligation. A pure derive over
+    all) when no scenario raises a fitness evidence obligation. A pure derive over
     balance.scenarios[].evidenceObligations[] filtered on kind === "static" —
     markdown-only (project design §3), proven in isolation by Vitest.
 
     @unit @SCN-RPT-005
-    Scenario: the markdown report lists the lint evidence obligations as their own section
-      Given a reconciliation balance whose scenarios raise lint (@lint) evidence obligations spanning balanced and the watermelon, alongside runtime evidence obligations
+    Scenario: the markdown report lists the fitness evidence obligations as their own section
+      Given a reconciliation balance whose scenarios raise fitness evidence obligations spanning balanced and the watermelon, alongside runtime evidence obligations
       When the markdown report is rendered
-      Then it carries a "### Lint evidence obligations" section with a total line and a table listing each lint evidence obligation's scenario, static check handle, and reconciliation outcome — including the 🍉 watermelon — and excluding the runtime evidence obligations
+      Then it carries a "### Lint evidence obligations" section with a total line and a table listing each fitness evidence obligation's scenario, its check, and reconciliation outcome — including the 🍉 watermelon — and excluding the runtime evidence obligations
 
   Rule: the markdown report groups out-of-balance scenarios by feature
 
@@ -241,7 +241,7 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @SCN-RPT-009
     Scenario: the markdown report renders summary-first with the scenario reconciliations last
-      Given a reconciliation balance spanning balanced and out-of-balance scenarios, a lint evidence obligation, and a zero-evidence warning
+      Given a reconciliation balance spanning balanced and out-of-balance scenarios, a fitness evidence obligation, and a zero-evidence warning
       When the markdown report is rendered
       Then it opens with "# Evidence Reconciliation" and "## Run provenance", groups the derived cuts under "## Summary views", and renders the "## Scenario Reconciliations" table last with its summary lines on top
 
@@ -531,9 +531,9 @@ Feature: The report renders the ledger as sectioned facts
 
     @unit @SCN-RPT-020
     Scenario: the markdown renders each outcome's canon description, not the bare handle
-      Given a reconciliation balance whose scenarios span the runtime, lint, credit, and neither-side outcomes
+      Given a reconciliation balance whose scenarios span the runtime, fitness, credit, and neither-side outcomes
       When the markdown report is rendered
-      Then the summary decomposition rows, the per-scenario reconciling items, and the lint table each render the outcome's canon description, single-sourced from OUTCOME_DESCRIPTION
+      Then the summary decomposition rows, the per-scenario reconciling items, and the fitness-obligation table each render the outcome's canon description, single-sourced from OUTCOME_DESCRIPTION
       And the bare outcome handle appears nowhere in the markdown
 
   Rule: the canon gloss for every outcome is the manifesto's Outcome text, verbatim
@@ -660,8 +660,15 @@ Feature: The report renders the ledger as sectioned facts
 
     The census is now a FOLD over the Ledger: it walks the posted credits and reads each
     credit's kind off the ROW it posted to, so the reconciler is the ONE classifier. The fold
-    keeps the RUNTIME scoping — a `lint` credit posts to every account naming it, so a
-    naive walk would double-count the static axis the census must not see at all.
+    keeps the RUNTIME scoping, and citation-routing makes that scoping MORE obviously
+    necessary rather than less. A fitness credit now cites its OWN stepless fitness
+    scenario's @SCN and posts to an ordinary scenario row — so to a naive walk it looks
+    EXACTLY like a runtime credit, indistinguishable by the account it landed on. The fold
+    must therefore skip it on the CHECK (`qualityCheck === "lint"`), never on the absence of
+    a citation. Under the retired name-match posting a fitness credit cited nothing at all,
+    so a walk keyed on "does it cite?" would have got the right answer for the wrong reason;
+    that reading is now simply wrong, and the static axis the census must not see at all
+    would be counted into the Test volume.
 
     @unit @integration @SCN-RPT-023
     Scenario: a broken observation citing a real scenario counts as suspense, not attributed to that scenario

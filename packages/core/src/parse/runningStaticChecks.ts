@@ -30,6 +30,7 @@
 
 import type { GuardEvidenceObservation } from "../model.js";
 import { ciRunCommands, commandInvokesScript, type PackageJsonScripts } from "./checkScriptsRunInCI.js";
+import type { ScriptCitation } from "./fitnessCitations.js";
 
 export function runningStaticChecks(
   ciSources: readonly string[],
@@ -46,7 +47,32 @@ export function runningStaticChecks(
   // NOBODY named: the unattributed check was invisible exactly when it was unattributed.
   //
   // Trailing and optional, so the frozen v1 barrel's symbol surface is untouched.
-  configuredStaticChecks: readonly string[] = []
+  configuredStaticChecks: readonly string[] = [],
+  // @SCN-LNT-001 (3F-2568) — THE OBSERVER STAMPS THE CITATION. Citation-routing inverts what
+  // name-match relied on: the DEBIT used to cite, so a run never had to know which scenario it
+  // belonged to. Now the CREDIT cites, and the only moment a run and the corpus are both in hand
+  // is the moment the run is observed — so the `@SCN` is stamped here rather than recovered
+  // downstream from the handle, which is the lookup name-match already proved cannot be trusted.
+  //
+  // The seam arrives as a FUNCTION rather than as the registry and the corpus map, because what
+  // this reader needs is one answer per handle. Passing the two structures would put the
+  // composition (`citationOfScript`) inside an observer that has no business knowing a registry's
+  // shape — and where a registry is AUTHORED is still open (increment D).
+  //
+  // BOTH TERMS, not just the @SCN. The seam already resolves the bare check tag on its way to the
+  // scenario, and the observation needs it: the @SCN says which ROW the credit posts to, the tag
+  // says which OBLIGATION on that row it answers. A row carrying two bare check tags raises two
+  // fitness obligations and is cited by two runs, so the @SCN alone cannot tell their credits
+  // apart (@SCN-LNT-012). Resolved once at the seam rather than looked up again here, which would
+  // give this reader an opinion about a registry's shape.
+  //
+  // Defaults to citing NOTHING, so a target that has registered nothing observes exactly what it
+  // observed before. What such a target's credits then DO has changed: every one of them cites
+  // nothing, so every one posts to suspense and answers no obligation. No name-match remains to
+  // catch them (3F-2590 removed the posting arm; 3F-2625 the by-handle half in
+  // `domain/qualityCheckReconciliation`, which was still live for a prefix-less check whose handle
+  // and bare tag are the same word).
+  citedScn: (script: string) => ScriptCitation | null = () => null
 ): GuardEvidenceObservation[] {
   const scripts = packageJson.scripts ?? {};
   const runCommands = ciRunCommands(ciSources);
@@ -58,10 +84,17 @@ export function runningStaticChecks(
     )
     .filter((name) => runCommands.some((cmd) => commandInvokesScript(cmd, name)))
     .sort()
-    .map((guard) => ({
-      qualityCheck: "lint" as const,
-      staticCheck: guard,
-      exists: true,
-      enforcedOverRealSource: true,
-    }));
+    .map((guard) => {
+      const citation = citedScn(guard);
+      return {
+        qualityCheck: "lint" as const,
+        staticCheck: guard,
+        exists: true,
+        enforcedOverRealSource: true,
+        // Spread rather than two `?? undefined` assignments, so an observation that cites nothing
+        // carries neither key and its JSON stays byte-identical. Both terms or neither — the seam
+        // resolves them together, and a half-citation would be a shape no reader knows how to read.
+        ...(citation !== null ? { scnId: citation.scnId, checkTag: citation.checkTag } : {}),
+      };
+    });
 }

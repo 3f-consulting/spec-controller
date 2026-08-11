@@ -93,7 +93,7 @@ Feature: Ledger over obligation-vs-observation evidence
   Rule: a credit citing no scenario is a suspense-scenario reconciliation
 
     The bidirectional reconciler also consumes credits that cite NO scenario at
-    all — a runtime result carrying no @SCN anchor, or a CI static check no @lint names
+    all — a runtime result carrying no @SCN anchor, or a CI static check no scenario cites
     (ruling Q4). A credit that posts to no scenario lands on the SUSPENSE scenario
     (a suspense account holds postings that match no
     real account). ALL uncited credits aggregate into ONE suspense-scenario Scenario
@@ -440,55 +440,63 @@ Feature: Ledger over obligation-vs-observation evidence
   # citing NO scenario — uncited, or broken (it named no test, so it cites nothing whatever it
   # structurally carries) — posts to SUSPENSE.
   #
-  # A GUARD credit carries no @SCN, so its link is the GUARD HANDLE rather than a citation: the
-  # same link the reconciler already follows to put a lint obligation's outcome on the naming
-  # row. So the symmetry completes — a NAMED guard posts to EVERY account that names it; a
-  # NO-EVIDENCE-OBLIGATION guard belongs to no account and posts to SUSPENSE, where it already reconciles
-  # `cites-no-scenario`. Every credit posts to AT LEAST ONE account, never to none (canon,
-  # double-entry-manifesto.md line 160: "Not exactly one — a static check posts to every account
-  # that names it"). Exactly-one is a RUNTIME property (the credit cites, so it names one) — the
-  # single-obligation instance below, not the universal. The multi-obligation instance is @SCN-LDG-024.
-  Rule: every evidence observation posts to at least one ledger account, never to none — a runtime credit to the one it cites, a static check to every account that names it
+  # A FITNESS credit cites too, and that is what closed the exception. This block used to record a
+  # WEAKER invariant — "every credit posts to AT LEAST ONE account, never to none", explicitly NOT
+  # exactly one — because the static axis was matched BY HANDLE and one run was evidence for every
+  # scenario naming it. Exactly-one was then only a RUNTIME property, true of the axis whose credit
+  # cites, and the universal had to be weakened to the weaker of the two.
+  #
+  # Under the one posting rule BOTH axes cite: a fitness check's run carries the @SCN of the
+  # stepless fitness scenario that raises its obligation, so it names one row exactly as a test
+  # does. EXACTLY ONE IS NOW TRUE UNIVERSALLY, and it is a stronger claim than the one it replaces —
+  # "at least one" is silent about a double-post, and a double-post is a second copy of the same
+  # fact. (Neither half of the retired route survives: 3F-2590 removed `domain/posting.ts`'s
+  # by-name arm, and 3F-2625 the by-handle fallback that outlived it in
+  # `domain/qualityCheckReconciliation.ts`. This scenario reads identically on both sides of that —
+  # it asserts where credits POST, and the fallback answered obligations without moving a posting,
+  # which is exactly why it could survive a rule this scenario proves.)
+  #
+  # So the spanning corpus below spans BOTH fitness shapes: a CITED fitness credit, which posts to
+  # the one fitness scenario it cites, and an UNCITED one, which belongs to no row and posts to
+  # SUSPENSE where it reconciles `cites-no-scenario` — the same two destinations a runtime credit
+  # has, reached by the same rule.
+  Rule: every evidence observation posts to exactly one ledger account, never to none — the credit cites, on both axes
 
     @unit @integration @SCN-LDG-022
-    Scenario: over a single-obligation corpus every evidence observation posts to exactly one ledger account and is findable there — the never-zero invariant's instance where nothing is named twice
-      Given a run whose credits span every shape — satisfied, no-evidence-obligation, pending-cited, phantom, uncited, broken, a named guard and a no-evidence-obligation guard
+    Scenario: every evidence observation posts to exactly one ledger account and is findable there — behavioural and fitness credits alike
+      Given a run whose credits span every shape — satisfied, no-evidence-obligation, pending-cited, phantom, uncited, broken, a cited fitness check and an uncited one
       When the ledger reconciles that run
       Then every evidence observation posts to exactly one ledger account
       And each credit is findable in the account its citation names
       And the credit citing a pending quality-check is posted and findable
       And the run's verdict and reconciling items are unchanged — posting classifies nothing
 
-  # THE MULTI-OBLIGATION INSTANCE (@SCN-LDG-024, 3F-1850) — where "exactly one" breaks and the
-  # never-zero invariant above lands at MORE than one. A static check's run cites no scenario, so
-  # it is matched by handle and is evidence for EVERY naming scenario: two scenarios naming the same
-  # static check both reconcile satisfied against the ONE run, which posts to each account BY
-  # REFERENCE (one object on both — never copied, so the 3F-1831 census fold cannot double-count).
-  # The case no corpus exercised until now (the coverage hole this closes).
-  Rule: a static check named by two scenarios posts to each account
-
-    @unit @integration @SCN-LDG-024
-    Scenario: one static check's run, named by two scenarios, reconciles satisfied on both and is findable on each
-      Given two scenarios that each name the same static check by @lint, wired and green in CI
-      When the shared-guard corpus is reconciled
-      Then both naming scenarios' lint obligations reconcile satisfied
-      And the one static-check credit is findable on each naming account, one object on both
-
-  # THE OBLIGATIONS-ONLY CORPUS (@SCN-LDG-025, 3F-1851) — isolating the named-guard posting rule so
-  # it ALONE determines the verdict. Every other lint fixture mixes a named guard with another
-  # credit shape (broken / uncited / no-evidence-obligation) that independently mints the suspense row, so the
-  # named-guard path never decides the outcome on its own — the rule was unfalsifiable (a rejected
-  # post-to-suspense treatment went 501/501 green). A corpus whose ONLY lint credit is one satisfied
-  # named guard removes every other cause: balanced, no suspense row, summary.outOfBalance 0
-  # AGREEING with the verdict. The rejected treatment would mint a spurious empty out-of-balance
-  # suspense row — summary.outOfBalance disagreeing with isBalanced, the 3F-1703 fault.
-  Rule: a corpus whose only lint credits are named guards reconciles balanced — the named-guard path alone determines the verdict
+  # THE OBLIGATIONS-ONLY CORPUS (@SCN-LDG-025, 3F-1851) — the HEADLINE AGREEING WITH THE VERDICT
+  # (3F-1703), isolated so nothing else can produce it. This corpus is what makes that agreement
+  # falsifiable: every OTHER fitness fixture mixes its satisfied credit with another shape (broken /
+  # uncited / no-evidence-obligation) that independently mints the suspense row, so the run is
+  # out-of-balance for a reason that has nothing to do with the posting rule under test — and a
+  # rejected post-to-suspense treatment went 501/501 green against exactly that blind spot. A corpus
+  # whose ONLY fitness credit is one satisfied, citation-routed check removes every other cause:
+  # balanced, no suspense row, summary.outOfBalance 0 AGREEING with the balanced verdict. Break the
+  # agreement — mint a spurious empty out-of-balance suspense row — and summary.outOfBalance reads 1
+  # while isBalanced stays true: a failing run rendering a headline that reads as a pass, which is
+  # the 3F-1703 fault verbatim.
+  #
+  # RE-POINTED TO THE CITATION PATH (3F-2620), NOT RETIRED. The corpus used to reach its single
+  # satisfied credit through the named-guard route (`@lint=<handle>`, matched by name); it now
+  # reaches it through the one posting rule — a stepless fitness scenario carrying its bare check,
+  # whose run cites that scenario's @SCN. The ROUTE is what moved. What is asserted — the summary
+  # agreeing with the verdict on a balanced fitness-only corpus — is coverage no other scenario
+  # holds: @SCN-LNT-008 is about two scenarios sharing one check, and says nothing about the
+  # headline.
+  Rule: a balanced fitness-only corpus keeps summary.outOfBalance agreeing with the balanced verdict
 
     @unit @integration @SCN-LDG-025
-    Scenario: a named-guards-only corpus reconciles balanced with no suspense row, so summary.outOfBalance agrees with the balanced verdict
-      Given a corpus whose only lint credit is a named static check, wired and green in CI
+    Scenario: a corpus whose only fitness credit is one satisfied citation-routed check reconciles balanced with no suspense row, so summary.outOfBalance agrees with the balanced verdict
+      Given a corpus whose only fitness credit is a citation-routed check, wired and green in CI
       When the obligations-only corpus is reconciled
-      Then the naming scenario reconciles satisfied and the run is balanced
+      Then the fitness scenario reconciles satisfied and the run is balanced
       And there is no suspense row, and summary.outOfBalance is 0 — agreeing with the balanced verdict
 
   # THE DEBIT HALF of the same posting (@SCN-LDG-023). Where the credit side at least existed
@@ -514,7 +522,7 @@ Feature: Ledger over obligation-vs-observation evidence
 
     @unit @integration @SCN-LDG-023
     Scenario: the evidence obligations a scenario raises post to its ledger account, keyed by quality-check
-      Given a run whose scenarios raise obligations of every shape — a runtime obligation, a lint obligation carrying its guard handle, and a pending one
+      Given a run whose scenarios raise obligations of every shape — a runtime obligation, a fitness obligation carrying its bare check, and a pending one
       When the ledger reconciles that run
       Then every evidence obligation posts to its own scenario's account
       And each debit is findable on its account, keyed by quality-check
@@ -561,11 +569,11 @@ Feature: Ledger over obligation-vs-observation evidence
   # line 36): missing = Obligation Exists, Observation None. Only a REAL observation (exists:true →
   # satisfied/watermelon) is carried; the absent-guard record is not modelled as an observation.
   # Uniform with the runtime missing path, which already carries none.
-  Rule: a lint missing reconciliation carries its obligation and no observation — an absent guard is an absence
+  Rule: a fitness missing reconciliation carries its obligation and no observation — an absent check is an absence
 
     @unit @integration @SCN-LDG-028
-    Scenario: a lint missing quality-check reconciliation carries its obligation and no observation
-      Given a scenario "SCN-LDG-028" requiring a @lint guard absent from both package.json and CI
+    Scenario: a fitness missing quality-check reconciliation carries its obligation and no observation
+      Given a scenario "SCN-LDG-028" requiring a fitness check absent from both package.json and CI
       When the ledger reconciles that run
       Then its lint Quality Check Reconciliation has outcome "missing"
       And it carries the evidence obligation it reconciles (the debit side)

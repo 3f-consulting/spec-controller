@@ -58,32 +58,52 @@ describe("[SCN-USG-001] runningStaticChecks — the running-guard observer (emit
   });
 });
 
-describe("[SCN-USG-003] non-lint CI steps are not observed as static checks", () => {
+describe("[SCN-USG-003] the runtime axis's own CI steps are not derived as fitness checks", () => {
+  const pkg2: PackageJsonScripts = {
+    scripts: { "lint:foo": "echo x", test: "vitest run", cucumber: "cucumber-js" },
+  };
+  const ci2 = [
+    "jobs:",
+    "  ci:",
+    "    steps:",
+    "      - run: pnpm install --frozen-lockfile",
+    "      - run: pnpm lint:foo",
+    "      - run: pnpm test",
+    "      - run: pnpm cucumber",
+  ].join("\n");
+
   it("emits observations only for lint:* scripts — test / cucumber / install CI steps are excluded", () => {
-    const pkg2: PackageJsonScripts = {
-      scripts: { "lint:foo": "echo x", test: "vitest run", cucumber: "cucumber-js" },
-    };
-    const ci2 = [
-      "jobs:",
-      "  ci:",
-      "    steps:",
-      "      - run: pnpm install --frozen-lockfile",
-      "      - run: pnpm lint:foo",
-      "      - run: pnpm test",
-      "      - run: pnpm cucumber",
-    ].join("\n");
-    // Only lint:foo is a running static check; test + cucumber (the runtime axis's observed
+    // Only lint:foo is a running fitness check; test + cucumber (the runtime axis's observed
     // evidence) and install (not a script) never enter the observed set.
     expect(runningStaticChecks([ci2], pkg2, DEFAULT_PREFIXES)).toEqual([
       { qualityCheck: "lint", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
     ]);
+  });
+
+  it("does not let the citation stamp widen membership — a cited runtime step is still excluded", () => {
+    // The observer learned to stamp an @SCN (3F-2568), and the stamp is applied AFTER the
+    // membership filter. Reaching for it earlier — or letting "the seam answered for this
+    // handle" stand in for membership — would put every CI step this reader can name onto the
+    // axis, which is exactly what test and cucumber must never be. citedScn answers for
+    // everything here, so the filter's placement is the only thing keeping them out.
+    expect(
+      runningStaticChecks([ci2], pkg2, DEFAULT_PREFIXES, [], () => ({
+        checkTag: "foo",
+        scnId: "SCN-TGT-001",
+      })).map(
+        (o) => o.staticCheck,
+      ),
+    ).toEqual(["lint:foo"]);
   });
 });
 
 describe("[SCN-USG-004] runningStaticChecks observes guard:-prefixed CI scripts as static checks, not just lint:*", () => {
   // an adopter's repository-shaped case: a guard:domain-purity script (guard:*, not lint:*) a CI run: step
   // invokes must be observed as a running static check under the default prefix set, so the
-  // reconciler can fold one that no @lint names to the suspense row as an uncited static check.
+  // reconciler can fold one no fitness scenario cites to the suspense row as an uncited static
+  // check. The PREFIX SET is what does the finding, and it is what these arms pin — the spelling
+  // `lint` has no privilege here and less claim to one since bare @lint became one style-lint
+  // check among many (@SCN-LNT-010).
   // test/cucumber (neither prefix) stay excluded by construction — preserving @SCN-USG-003.
   // `guard:domain-purity` is a script NAME — a value, not vocabulary — so the handle itself
   // is deliberately untouched by the static-check rename (3F-1929; 3F-1852 owns script names).
@@ -113,6 +133,31 @@ describe("[SCN-USG-004] runningStaticChecks observes guard:-prefixed CI scripts 
         enforcedOverRealSource: true,
       },
     ]);
+  });
+
+  it("carries NO scnId key when the seam is asked and answers nothing — the uncited shape", () => {
+    // THE OTHER HALF OF UNCITED, and the only arm here that can see it. Every sibling calls the
+    // observer without a seam and reads its result with `toEqual`, so all of them pass against
+    // an observation carrying `scnId: undefined` — `toEqual` treats an undefined-valued key as
+    // absent. The source refuses that shape deliberately (`...(scnId !== null ? { scnId } : {})`
+    // rather than `scnId: scnId ?? undefined`, so an uncited observation's JSON stays
+    // byte-identical), and until this arm nothing held it to the refusal: swapping the spread for
+    // the coalesce reds this test and leaves its fifteen siblings green (measured, 3F-2579).
+    //
+    // Asked-and-answered-nothing is the fixture's registered-but-uncarried target reduced to one
+    // function: the registry resolves a bare check for the handle and the corpus carries it
+    // nowhere. What the observer must NOT do is fill the gap from the handle it already has.
+    const observed = runningStaticChecks([guardCi], guardPkg, DEFAULT_PREFIXES, [], () => null);
+
+    expect(observed).toEqual([
+      {
+        qualityCheck: "lint",
+        staticCheck: "guard:domain-purity",
+        exists: true,
+        enforcedOverRealSource: true,
+      },
+    ]);
+    expect(observed[0]).not.toHaveProperty("scnId");
   });
 
   it("observes both lint:* and guard:* running scripts together, still excluding test/cucumber", () => {

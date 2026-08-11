@@ -3,5 +3,10 @@
     "lint:nightly": "echo nightly-check",
     "test": "echo test",
     "cucumber": "echo cucumber"
+  },
+  "specController": {
+    "checkRegistry": {
+      "lint:nightly": "nightly"
+    }
   }
 }

@@ -805,8 +805,8 @@ function evidenceCell(
   // is not an evidence obligation. Named → the check's letter; else `-`.
   // ASKED, not re-encoded (3F-2203). "A pending obligation names nothing" is the model's rule
   // (canon, Pending Item — a `<qc>pending` tag raises NO Evidence Obligation), and it is the SAME
-  // rule `evidenceObligationPairsOf` and `staticCheckEvidenceObligationsOf` apply. The renderer stated the
-  // `!pending` clause itself before: a fourth home for one rule, agreeing by copy.
+  // rule `evidenceObligationPairsOf` applies. The renderer stated the
+  // `!pending` clause itself before: a third home for one rule, agreeing by copy.
   const named = evidenceObligationsOf(s.evidenceObligations).some(
     (o) => o.qualityCheck === col.qualityCheck
   );

@@ -58,9 +58,10 @@ const FEATURE_CODE_RE = new RegExp(`^${FEATURE_CODE}$`);
  *  1. `<FFF>` (57 occurrences) — the feature-code header tag: the same ID scheme as a
  *     scenario id, one slot up, since it IS the `<FFF>` inside every id. The second-largest
  *     category on this surface, and the one the ticket's taxonomy missed entirely.
- *  2. a TIER tag (359) — `isTierTag`, IMPORTED from `scnTags.ts` rather than copied. It also
- *     recognises the `lint=<handle>` FORM, which is what actually keeps every `@lint=` tag in
- *     this tree green (see `authoredTags` — NOT the value-drop, as a mutation probe proved).
+ *  2. a TIER tag (359) — `isTierTag`, IMPORTED from `scnTags.ts` rather than copied. It once
+ *     also recognised the `lint=<handle>` FORM; 3F-2567 deleted that clause, so a retired
+ *     `@lint=<handle>` tag is now held green by the VALUE-DROP below instead — its KEY is bare
+ *     `lint`, which IS a tier tag (a registered check). Re-measured by mutation, 3F-2624.
  *  3. `wip` (6) — scnTags' scenario-scope exemption. Not a tier, so `isTierTag` says no, but
  *     unambiguously Gherkin grammar. Named explicitly rather than left to pass because `wip`
  *     happens to be an unknown word in prose mode: a green nobody chose is not a green.
@@ -103,21 +104,21 @@ export function tagLineTokens(trimmed: string): string[] | null {
  *
  * THE VALUE OF A `key=value` TAG IS DROPPED, unconditionally: a `key=value` tag's value names
  * a THING (a CI script, an owner, a flag setting), and a name of a thing is a value, not
- * vocabulary (3F-1929's ruling; 3F-1852 owns the `@lint=` handles). The KEY survives and is
+ * vocabulary (3F-1929's ruling; 3F-1852 owns the script handles). The KEY survives and is
  * judged as a bare tag.
  *
- * WHAT THIS RULE IS *NOT* DOING, stated because the first draft of this file claimed
- * otherwise and a mutation probe disproved it. It is NOT what keeps the tree's 18
- * `@lint=<handle>` tags green — `isTierTag` recognises the whole `lint=<handle>` FORM, a rule
- * `scnTags.ts` already owned for its own reasons, so those tags are grammar with or without
- * this line. Deleting the value-drop leaves this tree's headline untouched; the earlier claim
- * that it was worth ~10 rows was wrong.
+ * WHAT THIS RULE IS DOING, RE-MEASURED (3F-2624). It used NOT to be what kept a retired
+ * `@lint=<handle>` tag green — `isTierTag` recognised that whole token, so the tag was grammar
+ * with or without this line, and a mutation probe said so. 3F-2567 deleted that clause and the
+ * two rules SWAPPED: the token now arrives here, its KEY (`lint`) is a tier tag and its VALUE is
+ * dropped by this rule. Probed again on 2026-08-11 — removing the value-drop reds the retired
+ * form's case.
  *
- * It is load-bearing for a `key=value` tag whose key is NOT a tier — `@owner=…`, `@flag:x=…`
- * — of which this tree has ZERO today. That is exactly why it is pinned by a unit case over a
- * synthetic non-tier key: no run over this tree can tell the rule from its absence, so only a
- * constructed case can. Kept rather than deferred because the alternative is a scanner that
- * reads a script name as prose the first time someone writes a valued tag that is not `@lint=`.
+ * It remains load-bearing for a `key=value` tag whose key is NOT a tier — `@owner=…`,
+ * `@flag:x=…` — of which this tree has ZERO today. That is why it is ALSO pinned by a unit case
+ * over a synthetic non-tier key: the retired-form case cannot speak for a key that must itself
+ * be judged. Kept rather than deferred because the alternative is a scanner that reads a script
+ * name as prose the first time someone writes a valued tag whose key is not a tier.
  *
  * THE CALLER READS THESE IN PROSE MODE, NOT NAME MODE, which is the taxonomy's other ruling.
  * Only `unknown` is mode-gated; banned words, bare-shortenings, `bare-different-word`,

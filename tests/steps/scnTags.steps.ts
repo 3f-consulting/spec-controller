@@ -119,3 +119,146 @@ When(
     runGuardOver("tests/fixtures/scn-tags-community/features");
   }
 );
+
+// @SCN-STG-004
+When(
+  "it runs over a target whose scenario carries a group-prefixed check tag",
+  function () {
+    runGuardOver("tests/fixtures/scn-tags-group-prefixed/features");
+  }
+);
+
+// @SCN-STG-004
+Then("it fails, naming the bare tag the group-prefixed one should have been", function () {
+  assert.equal(
+    exitCode,
+    1,
+    `expected the scn-tags static check to fail (exit 1) over a tree whose @SCN scenario ` +
+      `carries @fitness=complexity, but it exited ${exitCode}. Output:\n${output}`
+  );
+  assert.match(
+    output,
+    /@fitness=complexity/,
+    `expected the offending tag to be NAMED; got:\n${output}`
+  );
+  assert.match(
+    output,
+    /@complexity\b/,
+    `expected the BARE tag the author wanted (@complexity) to be named — the group is the ` +
+      `part that has to go, and telling them only that the tag means nothing here leaves ` +
+      `them to work that out; got:\n${output}`
+  );
+  assert.match(
+    output,
+    /1 finding\(s\)/,
+    `expected the GRAMMAR question to be the whole of the fault — the fixture scenario names ` +
+      `@unit, so the floor has no complaint, and a second finding would mean the two ` +
+      `questions have bled; got:\n${output}`
+  );
+});
+
+/**
+ * @SCN-STG-005 — drive the real CLI from INSIDE a planted TARGET tree, not just over its
+ * features dir. The check-tag set is the target's own registry, and the CLI resolves it from
+ * the `package.json` at its cwd exactly as it resolves the deferral tags. Running from
+ * repoRoot (as the fixtures above do) would resolve THIS repository's registry, which is empty
+ * — so the arm would prove the shape rule against a set the fixture does not control.
+ */
+// @SCN-STG-005
+function runGuardInTarget(targetRoot: string): void {
+  const root = path.join(repoRoot, targetRoot);
+  const result = spawnSync(TSX, [CLI, "--features", path.join(root, "features")], {
+    cwd: root,
+    encoding: "utf8",
+  });
+  assert.equal(result.error, undefined, `guard failed to spawn: ${result.error?.message}`);
+  exitCode = typeof result.status === "number" ? result.status : 1;
+  output = `${result.stdout ?? ""}${result.stderr ?? ""}`;
+}
+
+// @SCN-STG-005
+When(
+  "it runs over a target whose stepless scenario carries only its registered bare check tag",
+  function () {
+    runGuardInTarget("tests/fixtures/scn-tags-fitness");
+  }
+);
+
+// @SCN-STG-005
+When(
+  "it runs over a target whose stepped scenario carries that same bare check tag and no tier",
+  function () {
+    runGuardInTarget("tests/fixtures/scn-tags-fitness-stepped");
+  }
+);
+
+// @SCN-STG-005
+Then("it fails, naming the scenario that named no tier", function () {
+  assert.equal(
+    exitCode,
+    1,
+    `expected the scn-tags static check to fail (exit 1) over a tree whose STEPPED scenario ` +
+      `rides a bare check tag, but it exited ${exitCode}. Output:\n${output}`
+  );
+  assert.match(
+    output,
+    /SCN-TGT-001/,
+    `expected the offending scenario to be NAMED; got:\n${output}`
+  );
+  assert.match(
+    output,
+    /no evidence tier/,
+    `expected the verdict to be the TIER FLOOR's — a stepped scenario's check tag is still ` +
+      `grammar, so "unrecognised tag" would be the wrong fault; got:\n${output}`
+  );
+});
+
+// @SCN-STG-007
+When(
+  "it runs over a target whose stepless scenario carries two registered bare check tags",
+  function () {
+    // Driven from INSIDE the planted target, for @SCN-STG-005's reason: the check-tag set is the
+    // TARGET's registry, resolved from the package.json at the CLI's cwd. Run from repoRoot it
+    // would resolve THIS repository's registry and the fixture's tags would name nothing.
+    runGuardInTarget("tests/fixtures/scn-tags-two-checks");
+  }
+);
+
+// @SCN-STG-007
+Then("it fails, naming the scenario and BOTH check tags", function () {
+  assert.equal(
+    exitCode,
+    1,
+    `expected the scn-tags static check to fail (exit 1) over a tree whose STEPLESS scenario ` +
+      `carries two registered bare check tags, but it exited ${exitCode}. Output:\n${output}`
+  );
+  assert.match(
+    output,
+    /SCN-TGT-002/,
+    `expected the offending scenario to be NAMED; got:\n${output}`
+  );
+  // BOTH tags, because the author has to choose which scenario keeps which check, and a message
+  // naming one of them has already chosen for them.
+  assert.match(output, /@complexity\b/, `expected @complexity to be named; got:\n${output}`);
+  assert.match(output, /@typecheck\b/, `expected @typecheck to be named; got:\n${output}`);
+  // NOT the behavioural scenario above it, which carries two TIER tags. Two tiers on a stepped
+  // scenario is legal and stays legal; a rule that counted tags rather than reading the shape and
+  // the registry reds this one too, and the arm has to be able to fail that.
+  assert.doesNotMatch(
+    output,
+    /SCN-TGT-001/,
+    `expected the STEPPED scenario carrying two TIER tags to be left alone — two tiers is ` +
+      `legal, and this rule is about fitness tags on a stepless scenario; got:\n${output}`
+  );
+});
+
+// @SCN-STG-007
+When(
+  "it runs over that same target with one of the two check tags removed",
+  function () {
+    // The REMEDY, as its own tree — byte-for-byte the sibling above with one tag gone. The pair is
+    // what makes the arm load-bearing: red then green over one tag's difference, rather than a
+    // single assertion that could pass for any reason.
+    runGuardInTarget("tests/fixtures/scn-tags-two-checks-split");
+  }
+);

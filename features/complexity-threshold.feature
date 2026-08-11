@@ -4,7 +4,7 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
   Mechanism over honour. entity-owns-its-behaviour, small-modules and DRY are honour
   rules until something reds — this is the static check that reds. eslint's
   complexity / max-lines / max-lines-per-function over the REAL source, wired as a
-  BLOCKING per-push CI step beside the existing lint family (3F-2177).
+  BLOCKING per-push CI step beside the existing static checks (3F-2177).
 
   THE THRESHOLD COMES FROM OUTSIDE THE TREE (3F-2286, superseding 3F-2177's seeding
   rule). complexity 10 is NIST / McCabe's stated refactor line; max-lines-per-function
@@ -37,8 +37,9 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
   when its name carries an observed prefix (`lint:` / `guard:`). A name outside that set
   would run in CI while being structurally invisible to the ledger — a real quality
   check kept off the books, which is exactly where a watermelon hides. Named so it IS
-  observed; the `@lint=lint:complexity` tag below is then what keeps it out of the
-  suspense row as an uncited static check. Observed AND required is the balanced state.
+  observed; the bare `@complexity` tag on the fitness scenario at the foot of this file is
+  then what keeps it out of the suspense row as an uncited static check. Observed AND
+  required is the balanced state.
 
   Rule: code outside the exception list reds when it exceeds the external standard
 
@@ -56,7 +57,7 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
     explanation; the same length in code reds. Both halves are stated, because a rule
     that only ever shows what it rejects leaves what it permits to be inferred.
 
-    @unit @integration @lint=lint:complexity @SCN-CPX-001
+    @unit @integration @SCN-CPX-001
     Scenario: a function or module over the external standard reds the build
       Given the thresholds are the external standard, not a measurement of this tree
       When the complexity fitness function scans the real tree
@@ -97,7 +98,7 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
     the permission — a permitting rule whose limits live nowhere is indistinguishable
     from a hole, and this is precisely the rule that could become a hiding place.
 
-    @unit @integration @lint=lint:complexity @SCN-CPX-004
+    @unit @integration @SCN-CPX-004
     Scenario: a domain entity root outgrows the file ceiling without reding
       Given the concept modules the module-size rule does not govern
       When the complexity fitness function scans the real tree
@@ -131,7 +132,7 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
     improvement is @SCN-CPX-003's behaviour, and implementing it here would leave that
     scenario with no genuine red to drive it.
 
-    @unit @integration @lint=lint:complexity @SCN-CPX-002
+    @unit @integration @SCN-CPX-002
     Scenario: an exempt file that grows past its recorded value reds the build
       Given a file on the exception list at its recorded value
       When the complexity fitness function scans the real tree
@@ -160,9 +161,10 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
     The `lint:` prefix is required rather than cosmetic: `runningStaticChecks` observes a
     CI script only when its name carries an observed prefix, so a name outside that set
     would run in CI while being invisible to spec-controller's own ledger — a real quality
-    check kept off the books, which is exactly where a watermelon hides. The
-    `@lint=lint:complexity-exceptions` tag below is then what keeps it out of the suspense
-    row as an uncited static check. Observed AND required is the balanced state.
+    check kept off the books, which is exactly where a watermelon hides. The bare
+    `@complexity-exceptions` tag on its own fitness scenario at the foot of this file is
+    then what keeps it out of the suspense row as an uncited static check. Observed AND
+    required is the balanced state.
 
     MEASURED WITH eslint, NEVER REIMPLEMENTED. The reconciliation runs the `ESLint` API at
     the BARE standard — the same scope blocks the config uses, with the exception blocks
@@ -178,10 +180,30 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
     that @SCN-CPX-002 froze. The reconciliation compares like with like: the worst measured
     value for a file and rule against the value recorded for that same file and rule.
 
-    @unit @integration @lint=lint:complexity-exceptions @SCN-CPX-003
+    @unit @integration @SCN-CPX-003
     Scenario: an exception list that disagrees with the measured tree reds the build
       Given an exception list recording each exempt file's measured value
       When the exception list is reconciled against the real tree
       Then a file measuring above its recorded value reds as a regression
       And a file measuring below its recorded value reds as an improvement not banked
       And a file no longer over the standard reds as a stale entry
+
+  Rule: this tree stays inside the external standard, and its exception list stays honest
+
+    TWO CHECKS, SO TWO SCENARIOS, and resisting the tidier single tag is the point. Both
+    steps run eslint over this tree and both live in this file, which makes one `@complexity`
+    tag covering the pair look like a saving. It would cost the thing the seam is for: the
+    exception-list reconciliation reds on `value < recorded`, a case eslint cannot express at
+    all, so a run of one check would post credit to a scenario naming the other and neither
+    would be attributable. The tag names the CHECK, not the subject the checks share.
+
+    NEITHER CARRIES STEPS. Every Rule above is an example of a check deciding over a planted
+    file; these two are the whole-system characteristics held over the real tree — a
+    threshold has nothing to exemplify. Their bare tags raise the Evidence Obligations the
+    two CI runs settle.
+
+    @complexity @SCN-CPX-005
+    Scenario: every function and module measures inside the external standard, or inside its recorded exception
+
+    @complexity-exceptions @SCN-CPX-006
+    Scenario: every exception entry states the value the tree currently measures

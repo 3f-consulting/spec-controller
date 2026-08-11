@@ -34,8 +34,8 @@ jobs:
       # The no-committed-reports guard over the REAL tree — a pure function of the
       # checked-out repo: fails if any report artefact is TRACKED under runs/ (the
       # in-repo leak vector). Reconciliation reports are more sensitive than the code,
-      # so they live OUTSIDE the repo, never committed. @lint-cited
-      # (@lint=lint:no-committed-reports on @SCN-NCR-001) so the tool's own ledger
+      # so they live OUTSIDE the repo, never committed. CITED by the stepless
+      # fitness scenario @SCN-NCR-002 (@no-committed-reports) so the tool's own ledger
       # reconciles it.
       - name: Lint no committed reports
         run: pnpm lint:no-committed-reports
@@ -43,10 +43,10 @@ jobs:
       # The tier-tag floor over spec-controller's OWN scenarios (the cobbler's
       # shoes) — a pure property of the committed source: every scenario under
       # features/ carrying an @SCN must name an evidence tier
-      # (@unit/@integration/@e2e/@performance, a <tier>pending variant, or
-      # @lint=<guard>) unless it is @wip. Fails naming each tier-less offender.
-      # A full gate on every push (no GitHub API). @lint-cited
-      # (@lint=lint:scn-tags on @SCN-STG-001) so the tool's own ledger reconciles it.
+      # (@unit/@integration/@e2e/@performance, a <tier>pending variant, bare @lint,
+      # or — on a stepless scenario — a registered bare check tag) unless it is @wip.
+      # Fails naming each tier-less offender. A full gate on every push (no GitHub
+      # API). CITED by @SCN-STG-006 (@scn-tags) so the tool's own ledger reconciles it.
       - name: Lint scn-tags
         run: pnpm lint:scn-tags
 
@@ -59,9 +59,9 @@ jobs:
       # entry FREEZING its file at the recorded value: an exemption excuses existing debt and
       # buys no headroom. Blocking on every push: cheap and deterministic, so it earns a
       # per-push slot. A red means refactor, or record a dated exception at the measured value
-      # — never disable the step, and never add slack in advance. @lint-cited
-      # (@lint=lint:complexity on @SCN-CPX-001 and @SCN-CPX-002) so the tool's own ledger
-      # reconciles it rather than reporting it as an uncited static check.
+      # — never disable the step, and never add slack in advance. CITED by @SCN-CPX-005
+      # (@complexity) so the tool's own ledger reconciles it rather than reporting it as an
+      # uncited static check.
       - name: Lint complexity
         run: pnpm lint:complexity
 
@@ -77,8 +77,8 @@ jobs:
       # The `lint:` prefix is required, not cosmetic: runningStaticChecks observes a CI script
       # only when its name carries an observed prefix, so a name outside that set would run here
       # while being invisible to spec-controller's own ledger — a real quality check kept off the
-      # books. @lint-cited (@lint=lint:complexity-exceptions on @SCN-CPX-003) so the tool's
-      # own ledger reconciles it rather than reporting it as an uncited static check.
+      # books. CITED by @SCN-CPX-006 (@complexity-exceptions) so the tool's own ledger
+      # reconciles it rather than reporting it as an uncited static check.
       - name: Lint complexity exceptions
         run: pnpm lint:complexity-exceptions
 
@@ -94,9 +94,8 @@ jobs:
       # missing from it, never "the table is invalid". The `lint:` prefix is required, not
       # cosmetic: runningStaticChecks observes a CI script only when its name carries an observed
       # prefix, so a name outside that set would run here while being invisible to
-      # spec-controller's own ledger. @lint-cited (@lint=lint:blocked-vocabulary on
-      # @SCN-VOC-011) so the tool's own ledger reconciles it rather than reporting it as an
-      # uncited static check.
+      # spec-controller's own ledger. CITED by @SCN-VOC-019 (@blocked-vocabulary) so the
+      # tool's own ledger reconciles it rather than reporting it as an uncited static check.
       - name: Lint blocked vocabulary
         run: pnpm lint:blocked-vocabulary
 
@@ -116,7 +115,7 @@ jobs:
       # enforcing those would red main permanently on work the operator has chosen not to pay
       # yet. The code-side rejected aliases are 3F-2369's, which canon-sources them first.
       #
-      # @lint-cited (@lint=lint:adopted-vocabulary on @SCN-VOC-014) so the tool's own
+      # CITED by @SCN-VOC-020 (@adopted-vocabulary) so the tool's own
       # ledger reconciles this step rather than reporting it as an uncited static check. The
       # `lint:` prefix is required, not cosmetic: runningStaticChecks observes a CI script
       # only when its name carries an observed prefix.
@@ -135,7 +134,7 @@ jobs:
       # all — an exemption covering nothing reds nothing by construction, so without the
       # stale check it sits on as licence for the next file that matches the path.
       #
-      # @lint-cited (@lint=lint:exempt-data-floor on @SCN-VOC-016) so the tool's own
+      # CITED by @SCN-VOC-021 (@exempt-data-floor) so the tool's own
       # ledger reconciles this step rather than reporting it as an uncited static check.
       - name: Lint exempt data floor
         run: pnpm lint:exempt-data-floor
@@ -153,7 +152,7 @@ jobs:
       # it reds a NAME, so behaviour can still drain into a module called anything at all.
       # It fences the obvious case and no more.
       #
-      # @lint-cited (@lint=lint:anemic-domain on @SCN-ANM-001) so the tool's own ledger
+      # CITED by @SCN-ANM-002 (@anemic-domain) so the tool's own ledger
       # reconciles this step rather than reporting it as an uncited static check. The `lint:`
       # prefix is required, not cosmetic: runningStaticChecks observes a CI script only when
       # its name carries an observed prefix, so a name outside that set would run here while
@@ -197,7 +196,7 @@ jobs:
       # did not run", not "the code is wrong", so the script reds that as a usage fault
       # (exit 2) instead of dressing it as a verdict.
       #
-      # @lint-cited (@lint=lint:self-balance on @SCN-SLF-001) so the tool's own ledger
+      # CITED by @SCN-SLF-003 (@self-balance) so the tool's own ledger
       # reconciles this step rather than reporting it as an uncited static check — which it
       # would otherwise be, on its own books, on its own introduction. The `lint:` prefix is
       # required, not cosmetic: runningStaticChecks observes a CI script only when its name

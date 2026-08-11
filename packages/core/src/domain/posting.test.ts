@@ -6,38 +6,38 @@
  * Bidirectional evidence (Evidence Manifesto §9): the describes carry @SCN-LDG-001, matching
  * features/ledger.feature, so a grep of the id returns both halves.
  *
- * The rule under test decides WHERE an entry lands, never what it reconciles TO. Canon sets the
- * cardinality per axis: a RUNTIME credit cites, so it posts to exactly one row (its scenario, a
- * phantom, or suspense); a STATIC CHECK's run cites nothing and is matched BY NAME, so it posts to
- * EVERY row naming it, or to suspense if none does ("one run is evidence for all of them").
+ * The rule under test decides WHERE an entry lands, never what it reconciles TO. ONE CARDINALITY,
+ * over both axes (3F-2590): the CREDIT cites, so it posts to exactly one row — its scenario, a
+ * phantom, or suspense. A fitness check's run reaches that row by carrying the `@SCN` of the
+ * stepless scenario raising its obligation; when the seam reaches no `@SCN` it cites nothing, and
+ * suspense is where an unattributed check is meant to surface.
  *
  * Parent: (@SCN-LDG-001) — posting is the Ledger's assembly; the rule is its own concept.
  */
 
 import { describe, it, expect } from "vitest";
 
-import { postingOf, staticCheckCreditsPostingTo } from "./posting.js";
-import type { Scenario, EvidenceObservation, GuardEvidenceObservation } from "../model.js";
+import { postingOf } from "./posting.js";
+import type { GuardEvidenceObservation } from "../model.js";
 
 const namedScenarioIds = new Set(["SCN-AAA-001", "SCN-AAA-002"]);
-const named = new Set(["lint:named"]);
 
 describe("[SCN-LDG-001] postingOf routes a RUNTIME credit by its citation", () => {
   it("posts a credit citing a named @SCN to that scenario's row", () => {
     expect(
-      postingOf({ qualityCheck: "unit", scnId: "SCN-AAA-001", status: "passed" }, namedScenarioIds, named)
+      postingOf({ qualityCheck: "unit", scnId: "SCN-AAA-001", status: "passed" }, namedScenarioIds)
     ).toEqual({ kind: "scenario", scnId: "SCN-AAA-001" });
   });
 
   it("posts a credit citing a PHANTOM @SCN to a phantom row", () => {
     expect(
-      postingOf({ qualityCheck: "unit", scnId: "SCN-ZZZ-009", status: "passed" }, namedScenarioIds, named)
+      postingOf({ qualityCheck: "unit", scnId: "SCN-ZZZ-009", status: "passed" }, namedScenarioIds)
     ).toEqual({ kind: "phantom-scenario", scnId: "SCN-ZZZ-009" });
   });
 
   it("posts an UNCITED credit (scnId null) to suspense, never phantom", () => {
     expect(
-      postingOf({ qualityCheck: "unit", scnId: null, status: "passed" }, namedScenarioIds, named)
+      postingOf({ qualityCheck: "unit", scnId: null, status: "passed" }, namedScenarioIds)
     ).toEqual({ kind: "suspense-scenario", posted: "cites-nothing" });
   });
 
@@ -51,8 +51,7 @@ describe("[SCN-LDG-001] postingOf routes a RUNTIME credit by its citation", () =
     expect(
       postingOf(
         { qualityCheck: "unit", scnId: "SCN-AAA-001", status: "failed", broken: true },
-        namedScenarioIds,
-        named
+        namedScenarioIds
       )
     ).toEqual({ kind: "suspense-scenario", posted: "broken" });
   });
@@ -61,115 +60,48 @@ describe("[SCN-LDG-001] postingOf routes a RUNTIME credit by its citation", () =
     expect(
       postingOf(
         { qualityCheck: "unit", scnId: "SCN-ZZZ-009", status: "failed", broken: true },
-        namedScenarioIds,
-        named
+        namedScenarioIds
       )
     ).toEqual({ kind: "suspense-scenario", posted: "broken" });
   });
 });
 
-describe("[SCN-LDG-001] postingOf routes a STATIC-CHECK credit by its name", () => {
-  const guard = (staticCheck: string): GuardEvidenceObservation => ({
+describe("[SCN-LDG-001] postingOf routes a FITNESS credit by its citation, the same rule", () => {
+  const check = (staticCheck: string, scnId?: string): GuardEvidenceObservation => ({
     qualityCheck: "lint",
     staticCheck,
     exists: true,
     enforcedOverRealSource: true,
+    ...(scnId !== undefined ? { scnId } : {}),
   });
 
-  it("posts a NAMED static check to every naming scenario — a set, not one row", () => {
-    expect(postingOf(guard("lint:named"), namedScenarioIds, named)).toEqual({
-      kind: "every-naming-scenario",
-      staticCheck: "lint:named",
+  it("posts a CITING run to the one row it cites — exactly as a runtime credit is posted", () => {
+    // The handle and the check are DIFFERENT WORDS (`lint:named` ran; the obligation names a bare
+    // check), so nothing here could be matching by name: the citation is the whole route.
+    expect(postingOf(check("lint:named", "SCN-AAA-001"), namedScenarioIds)).toEqual({
+      kind: "scenario",
+      scnId: "SCN-AAA-001",
     });
   });
 
-  it("posts a NO-EVIDENCE-OBLIGATION static check to suspense — the static analogue of an uncited credit", () => {
-    expect(postingOf(guard("lint:nobody-asked"), namedScenarioIds, named)).toEqual({
+  it("posts a run citing an UNKNOWN @SCN to that phantom row, never to suspense", () => {
+    expect(postingOf(check("lint:named", "SCN-ZZZ-009"), namedScenarioIds)).toEqual({
+      kind: "phantom-scenario",
+      scnId: "SCN-ZZZ-009",
+    });
+  });
+
+  it("posts an UNCITED run to suspense — and there is no by-name fallback left to try", () => {
+    // THE TEETH OF THE DELETION (3F-2590). This handle used to be matched against the corpus's
+    // named-handle set and posted to every row naming it. There is no such set and no such route:
+    // a check the seam reached no @SCN for surfaces in suspense, which is the point of finding it.
+    expect(postingOf(check("lint:named"), namedScenarioIds)).toEqual({
       kind: "suspense-scenario",
       posted: "no-evidence-obligation-static-check",
     });
-  });
-});
-
-describe("[SCN-LDG-001] staticCheckCreditsPostingTo resolves the by-name half per row", () => {
-  const shared: GuardEvidenceObservation = {
-    qualityCheck: "lint",
-    staticCheck: "lint:shared",
-    exists: true,
-    enforcedOverRealSource: true,
-  };
-  const other: GuardEvidenceObservation = {
-    qualityCheck: "lint",
-    staticCheck: "lint:other",
-    exists: true,
-    enforcedOverRealSource: true,
-  };
-  const observations: EvidenceObservation[] = [shared, other];
-
-  /**
-   * @SCN-LDG-024 — one run is evidence for ALL naming scenarios, and it is the SAME OBJECT on each row
-   * (`toBe`, not `toEqual`): that reference-sharing is exactly what makes the downstream
-   * identity-dedupe in `staticObservationTally` both necessary and correct.
-   */
-  it("posts the SAME guard object to each of two naming rows", () => {
-    const a: Scenario = {
-      scnId: "SCN-AAA-001",
-      evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint:shared" }],
-    };
-    const b: Scenario = {
-      scnId: "SCN-AAA-002",
-      evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint:shared" }],
-    };
-    expect(staticCheckCreditsPostingTo(a, observations)[0]).toBe(shared);
-    expect(staticCheckCreditsPostingTo(b, observations)[0]).toBe(shared);
-  });
-
-  it("posts ONCE when one row names the same handle twice", () => {
-    const twice: Scenario = {
-      scnId: "SCN-AAA-001",
-      evidenceObligations: [
-        { qualityCheck: "lint", staticCheck: "lint:shared" },
-        { qualityCheck: "lint", staticCheck: "lint:shared" },
-      ],
-    };
-    expect(staticCheckCreditsPostingTo(twice, observations)).toEqual([shared]);
-  });
-
-  /**
-   * The ORDER is the ROW'S obligation document order, NOT the observation stream's — stated with a
-   * row that NAMES the two handles in the OPPOSITE order to the stream, so an
-   * observation-order implementation would fail this and only this.
-   */
-  it("orders the posted guards by the row's own obligation order, not the observation order", () => {
-    const reversed: Scenario = {
-      scnId: "SCN-AAA-001",
-      evidenceObligations: [
-        { qualityCheck: "lint", staticCheck: "lint:other" },
-        { qualityCheck: "lint", staticCheck: "lint:shared" },
-      ],
-    };
-    expect(staticCheckCreditsPostingTo(reversed, observations)).toEqual([other, shared]);
-  });
-
-  it("posts nothing for a named handle no observation answers", () => {
-    const absent: Scenario = {
-      scnId: "SCN-AAA-001",
-      evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint:absent" }],
-    };
-    expect(staticCheckCreditsPostingTo(absent, observations)).toEqual([]);
-  });
-
-  /**
-   * The documented pending asymmetry (3F-2202), pinned so it cannot drift silently: a
-   * `@lintpending` obligation carries NO `staticCheck`, so it posts nothing here — which is what
-   * keeps this pending-INCLUSIVE walk from disagreeing with the pending-EXCLUDING
-   * `staticCheckEvidenceObligationsOf` that `postingOf` consults.
-   */
-  it("posts nothing for a pending lint obligation, which carries no static check handle", () => {
-    const pending: Scenario = {
-      scnId: "SCN-AAA-001",
-      evidenceObligations: [{ qualityCheck: "lint", pending: true }],
-    };
-    expect(staticCheckCreditsPostingTo(pending, observations)).toEqual([]);
+    expect(postingOf(check("lint:nobody-asked"), namedScenarioIds)).toEqual({
+      kind: "suspense-scenario",
+      posted: "no-evidence-obligation-static-check",
+    });
   });
 });

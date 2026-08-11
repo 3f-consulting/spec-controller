@@ -1,8 +1,14 @@
 {
   "scripts": {
-    "lint:foo": "echo foo-guard",
-    "lint:bar": "echo bar-guard",
+    "lint:foo": "echo foo-check",
+    "lint:bar": "echo bar-check",
     "test": "echo test",
     "cucumber": "echo cucumber"
+  },
+  "specController": {
+    "checkRegistry": {
+      "lint:foo": "foo",
+      "lint:bar": "bar"
+    }
   }
 }

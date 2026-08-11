@@ -5,5 +5,10 @@
     "lint:vocab-check": "tsx src/spec/lintVocabCheckCli.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
+  },
+  "specController": {
+    "checkRegistry": {
+      "lint:vocab-check": "vocab-check"
+    }
   }
 }

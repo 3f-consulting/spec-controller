@@ -19,24 +19,49 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { discoverFeatures } from "../src/ingest/ingestScenarios.js";
-import { resolveDeferralTags } from "../src/ingest/ingestQualityChecks.js";
+import { resolveDeferralTags, resolveCheckRegistry } from "../src/ingest/ingestQualityChecks.js";
+import { registeredCheckTags } from "@3f-consulting/spec-controller-core/internal";
 import { lintScnTags, type FeatureFileSource } from "./scnTags.js";
+
+/** The target's own `package.json` — the config both resolvers below read, read once. */
+interface TargetPackageJson {
+  specController?: { deferralTags?: unknown; checkRegistry?: unknown };
+}
+
+/**
+ * The target's `package.json`, or an empty object where there is none.
+ *
+ * The disk read stays HERE rather than in `scnTags.ts`, which imports nothing — that is what
+ * keeps its dependency from `vocabAudit` (@SCN-VOC-013) one-way and cycle-free.
+ */
+function targetPackageJson(): TargetPackageJson {
+  if (!existsSync("package.json")) return {};
+  return JSON.parse(readFileSync("package.json", "utf8")) as TargetPackageJson;
+}
 
 /**
  * The recognised community deferral tags for the tree being checked (@SCN-STG-002) —
  * `DEFAULT_DEFERRAL_TAGS` extended by the target's `specController.deferralTags`, via the
  * SAME resolver the ingest edge uses (@SCN-PND-021). The unrecognised-tag question must
  * not answer differently from the product's own policy, so the set is resolved rather
- * than restated, and the disk read stays HERE: `scnTags.ts` imports nothing, which is
- * what keeps its dependency from `vocabAudit` (@SCN-VOC-013) one-way and cycle-free.
+ * than restated.
  */
-function recognisedDeferralTags(): readonly string[] {
-  const packageJson = existsSync("package.json")
-    ? (JSON.parse(readFileSync("package.json", "utf8")) as {
-        specController?: { deferralTags?: unknown };
-      })
-    : {};
+function recognisedDeferralTags(packageJson: TargetPackageJson): readonly string[] {
   return resolveDeferralTags(packageJson);
+}
+
+/**
+ * The BARE CHECK TAGS the target registers (@SCN-STG-005) — the tags a stepless fitness scenario
+ * may satisfy the floor with, read through the SAME resolver the reconciler reads its registry with
+ * (@SCN-LNT-005), so the floor admits exactly what the obligation rule raises against. Two readers
+ * of one config key would each decide independently which words name a check, and a scenario the
+ * floor accepted while the engine raised nothing for it would be tier-named and evidence-free.
+ *
+ * Absent, malformed or empty config yields NO tags, and the floor then behaves exactly as it did
+ * before — the defensive stance lives in the resolver, alongside the deferral reader's.
+ */
+function registryCheckTags(packageJson: TargetPackageJson): readonly string[] {
+  return registeredCheckTags(resolveCheckRegistry(packageJson));
 }
 
 /** The features dir from an optional `--features <dir>` flag, or undefined. */
@@ -56,17 +81,22 @@ const sources: FeatureFileSource[] = discovered.map((f) => ({
   source: readFileSync(f.path, "utf8"),
 }));
 
-const result = lintScnTags(sources, recognisedDeferralTags());
+const packageJson = targetPackageJson();
+const result = lintScnTags(
+  sources,
+  recognisedDeferralTags(packageJson),
+  registryCheckTags(packageJson)
+);
 
 if (result.ok) {
   console.log(
-    "scn-tags lint: OK — every @SCN scenario names an evidence tier (or is @wip), and every tag on it is grammar."
+    "scn-tags lint: OK — every @SCN scenario names an evidence tier (or is @wip), every tag on it is grammar, and no stepless fitness scenario claims more than one check."
   );
   process.exit(0);
 }
 
 console.error(
-  `scn-tags lint: FAILED — ${result.violations.length} finding(s): a scenario naming an @SCN but no evidence tier (and not @wip), or a tag that is neither a tier nor a recognised deferral tag:`
+  `scn-tags lint: FAILED — ${result.violations.length} finding(s): a scenario naming an @SCN but no evidence tier (and not @wip), a tag that is neither a tier nor a recognised deferral tag, or a stepless fitness scenario claiming more than one check:`
 );
 for (const v of result.violations) {
   console.error(`  ${v.message}`);

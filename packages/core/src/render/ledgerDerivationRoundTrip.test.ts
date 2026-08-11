@@ -58,21 +58,21 @@ const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation =>
 // this corpus deliberately avoids that). The corpus:
 //   SCN-CHK-001: @unit, one passing unit credit                → balanced scenario row (onScenario)
 //   SCN-CHK-002: @integration, no credit                       → a missing evidence obligation
-//   SCN-CHK-003: @lint=lint:foo, running & wired               → the named running static check
+//   SCN-CHK-003: the bare check `foo`, running & wired          → the cited running static check
 //   SCN-CHK-004: @integrationpending                           → a Pending Item (pending = 1)
 //   1 unit credit citing SCN-PHX-001 (no feature carries it)   → a phantom row (onPhantomScenario)
 //   1 uncited unit credit + the no-evidence-obligation running lint:bar    → the suspense row (onSuspenseScenario)
 const scenarios: Scenario[] = [
   { scnId: "SCN-CHK-001", evidenceObligations: [{ qualityCheck: "unit" }] },
   { scnId: "SCN-CHK-002", evidenceObligations: [{ qualityCheck: "integration" }] },
-  { scnId: "SCN-CHK-003", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint:foo" }] },
+  { scnId: "SCN-CHK-003", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "foo" }] },
   { scnId: "SCN-CHK-004", evidenceObligations: [{ qualityCheck: "integration", pending: true }] },
 ];
 const observations: EvidenceObservation[] = [
   { qualityCheck: "unit", scnId: "SCN-CHK-001", status: "passed" },
   { qualityCheck: "unit", scnId: "SCN-PHX-001", status: "passed" },
   { qualityCheck: "unit", scnId: null, status: "passed", locator: "src/b.test.ts" },
-  { qualityCheck: "lint", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
+  { qualityCheck: "lint", staticCheck: "lint:foo", checkTag: "foo", scnId: "SCN-CHK-003", exists: true, enforcedOverRealSource: true },
   { qualityCheck: "lint", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
 ];
 const balance: Ledger = reconcile(scenarios, observations);

@@ -305,6 +305,77 @@ export function makeQualityCheckReconciliation(
 }
 
 /**
+ * The where-to-fix a credit carries, for the credit-side items that now see BOTH axes.
+ *
+ * A static-check observation has no `locator` and never will: it is read from a target's CI
+ * config and manifest, not from a test file, so there is no file to send the reader to beyond the
+ * check's own handle — which the item already carries. Reading the field off the union rather
+ * than off `RuntimeEvidenceObservation` is what let those items widen to the static axis at all
+ * (@SCN-LNT-001, since a citing static credit can now post to a real or a phantom row).
+ */
+function locatorOf(observation: EvidenceObservation): string | undefined {
+  return observation.qualityCheck === "lint" ? undefined : observation.locator;
+}
+
+/**
+ * The static-check observation answering THIS scenario's `lint` obligation — ONE ROUTE, the
+ * citation, on both of its terms (@SCN-LNT-001).
+ *
+ * THE CREDIT CITES, and it is the same rule the runtime arm applies: an observation citing this
+ * scenario's `@SCN` answers its obligation. That is what lets a FITNESS obligation reconcile at
+ * all — its `staticCheck` is the BARE CHECK TAG the scenario carries (`feature-codes`), while the
+ * run knows only the runnable handle (`lint:feature-codes`), so nothing matches by name and
+ * nothing ever could. The citation is the seam that already crossed between them.
+ *
+ * AND THE CITATION IS NOT AN ADDRESS ON ITS OWN (@SCN-LNT-012). The `@SCN` says which ROW the
+ * credit belongs to; it does not say which of that row's obligations it ANSWERS. A stepless
+ * scenario may carry more than one bare check tag, so a row can raise two fitness obligations and
+ * be cited by two runs — and matching on the `@SCN` alone hands the first credit found to both,
+ * silently absorbing the second. Measured: a genuine `typecheck` watermelon read `satisfied` off
+ * `lint:complexity`'s credit, and the row read `balanced`. So the observation's own BARE CHECK TAG
+ * is compared too, and it is the observation's `checkTag` — NOT its `staticCheck`. `staticCheck` is
+ * the runnable handle, a different vocabulary from the obligation's bare tag, and comparing those
+ * two is name-match in a new spelling: it agrees only where the words coincide, which is
+ * `typecheck`, the one unprefixed check. `checkTag` is what the seam resolved, so the comparison is
+ * like with like.
+ *
+ * NAME-MATCH IS GONE FROM HERE TOO (3F-2625). A by-handle fallback stood second, taken only for a
+ * run that cited NOTHING. 3F-2590 retired the by-name route and removed `posting.ts`'s arm, but
+ * never touched this file, so this half outlived the retirement it was written to announce — and
+ * it was LIVE, not dead code. It compared an uncited observation's RUNNABLE handle against the
+ * obligation's BARE tag, which differ for every prefixed check (`lint:feature-codes` vs
+ * `feature-codes`) and are the SAME WORD for a prefix-less one (`typecheck`). On that check an
+ * uncited credit both posted to suspense AND answered this obligation: the row read `satisfied` on
+ * evidence that cited nothing, and one observation became the credit side of two items on two rows
+ * — the exactly-one-posting claim broken by the reconciler rather than by the posting rule.
+ *
+ * SO A RUN THAT CITES NOTHING NOW ANSWERS NOTHING. It posts to SUSPENSE (`postingOf`), where a
+ * check nobody named is meant to surface, and the obligation naming that check reads `missing` —
+ * an honest pair, both halves loud. Pinned by plant, not by the absence of a symbol:
+ * `uncitedFitnessCredit.test.ts`, @SCN-USG-001.
+ *
+ * ONE WORD IS PASSED, NOT TWO, and it is the BARE CHECK TAG. Every surviving `lint` obligation
+ * names one: the fitness rule raises it from the tag its stepless scenario carries, and the retired
+ * `@lint=<handle>` form raises nothing at all (@SCN-LNT-007). The obligation's word is now matched
+ * ONLY against the observation's own `checkTag` — never against its `staticCheck`, which is the
+ * runnable handle and a different vocabulary. That comparison was the deleted arm's, and it is what
+ * made the arm name-match.
+ *
+ * Lives beside `reconcileEvidenceObligation` rather than inside it: which observation answers an
+ * obligation is one idea with a name, and the outcome mapping that follows it is another.
+ */
+function staticCheckObservationFor(
+  scnId: string,
+  checkTag: string,
+  evidenceObservations: readonly EvidenceObservation[]
+): GuardEvidenceObservation | undefined {
+  return evidenceObservations.find(
+    (o): o is GuardEvidenceObservation =>
+      o.qualityCheck === "lint" && o.scnId === scnId && o.checkTag === checkTag
+  );
+}
+
+/**
  * Reconcile one evidence obligation against the observed evidence, keyed on the
  * flat `qualityCheck`. `qualityCheck === "lint"` is the watermelon
  * discriminator: it routes to the STATIC-check mapping;
@@ -316,17 +387,22 @@ export function reconcileEvidenceObligation(
   evidenceObservations: EvidenceObservation[]
 ): QualityCheckReconciliation {
   if (req.qualityCheck === "lint") {
-    // The lint (static-check) evidence obligation — matched by static check handle among the static check
-    // evidence observations. Three mappings on the static check evidence observation:
+    // The lint (static-check) evidence obligation — matched by CITATION (@SCN plus the bare check
+    // tag) among the static check evidence observations. Three mappings on the static check
+    // evidence observation:
     //   - wired into CI over the real source → satisfied.
     //   - exists (a package.json script) but NOT wired → THE WATERMELON:
     //     green on the surface, red within — a static check that guards nothing.
     //   - absent (no package.json script) → missing: a required
     //     ledger entry never recorded, GENUINELY DIFFERENT from the watermelon.
-    const guard = req.staticCheck!; // present by construction for a lint evidence obligation.
-    const obs = evidenceObservations.find(
-      (o): o is GuardEvidenceObservation => o.qualityCheck === "lint" && o.staticCheck === guard
-    );
+    //
+    // NAMED FOR WHAT IT HOLDS. Every surviving lint obligation carries the BARE CHECK TAG its
+    // stepless scenario spells (`complexity`), never the runnable handle that invokes it
+    // (`lint:complexity`) — the retired `@lint=<handle>` form raises nothing (@SCN-LNT-007). The
+    // old name `guard` read as the handle and was the tag, which is exactly the confusion that let
+    // an observation's handle be compared against it.
+    const checkTag = req.staticCheck!; // present by construction for a lint evidence obligation.
+    const obs = staticCheckObservationFor(scnId, checkTag, evidenceObservations);
     let outcome: Outcome;
     if (obs && obs.enforcedOverRealSource) {
       outcome = "satisfied";
@@ -344,7 +420,7 @@ export function reconcileEvidenceObligation(
     // `find` locating the absent-guard record must not be mistaken for an observation existing.
     return makeQualityCheckReconciliation({
       qualityCheck: "lint",
-      staticCheck: guard,
+      staticCheck: checkTag,
       outcome,
       evidenceObligation: req,
       ...(obs?.exists ? { evidenceObservation: obs } : {}),
@@ -419,7 +495,7 @@ export function reconcileEvidenceObligation(
  */
 export function noEvidenceObligationReconciliationsOf(
   scnId: string,
-  postedCredits: readonly RuntimeEvidenceObservation[],
+  postedCredits: readonly EvidenceObservation[],
   evidenceObligationPairs: ReadonlySet<string>
 ): QualityCheckReconciliation[] {
   return postedCredits
@@ -430,7 +506,7 @@ export function noEvidenceObligationReconciliationsOf(
         outcome: "no-evidence-obligation" as const,
         // The CREDIT side (@SCN-LDG-027): the citing observation this item reconciles.
         evidenceObservation: o,
-        ...(o.locator !== undefined ? { locator: o.locator } : {}),
+        ...(locatorOf(o) !== undefined ? { locator: locatorOf(o) } : {}),
       })
     );
 }
@@ -440,18 +516,24 @@ export function noEvidenceObligationReconciliationsOf(
  * `@SCN` no scenario carries, in citation order. CREDIT-ONLY: a phantom row is minted BY a credit,
  * so nothing can ever have been named of it, and no obligation is in scope.
  *
- * The locator rides through (ruling Q5) — it is the reader's where-to-fix, and a phantom item has
- * no obligation to point at instead.
+ * THE WHERE-TO-FIX IS THE WHOLE OF WHAT THIS ITEM CAN OFFER, which is why both halves ride through
+ * (ruling Q5): a phantom item has no obligation to point a reader at instead. A runtime credit
+ * carries its locator (the test file that cited); a FITNESS credit carries the CHECK THAT RAN —
+ * it is read from a target's config, not from a test file, so it has no locator and the handle is
+ * all there is. That half became reachable when the fitness axis started citing (@SCN-LNT-009);
+ * the suspense arm below already carried it, and the two unmatched-credit destinations must not
+ * tell a reader different amounts about the same class of fault.
  */
 export function citesUnknownScenarioReconciliationsOf(
-  credits: readonly RuntimeEvidenceObservation[]
+  credits: readonly EvidenceObservation[]
 ): QualityCheckReconciliation[] {
   return credits.map((o) =>
     makeQualityCheckReconciliation({
       qualityCheck: o.qualityCheck,
+      ...(o.qualityCheck === "lint" ? { staticCheck: o.staticCheck } : {}),
       outcome: "cites-unknown-scenario",
       evidenceObservation: o,
-      ...(o.locator !== undefined ? { locator: o.locator } : {}),
+      ...(locatorOf(o) !== undefined ? { locator: locatorOf(o) } : {}),
     })
   );
 }

@@ -1285,17 +1285,15 @@ describe("[SCN-LDG-029] a no-scn-code reconciliation carries a scenario-scope ob
 });
 
 /**
- * @SCN-LDG-022 (3F-1846) — every evidence observation posts to AT LEAST ONE ledger account, never
- * to none (canon, double-entry-manifesto.md line 160). Over THIS single-obligation corpus — no
- * static check is named twice — the never-zero invariant lands at exactly one, which is the teeth here
- * against an erroneous double-post. The multi-obligation instance (a static check posting to every
- * naming scenario) is @SCN-LDG-024.
+ * @SCN-LDG-022 (3F-1846) — every evidence observation posts to EXACTLY ONE ledger account, never to
+ * none. Under the one posting rule both axes CITE (3F-2621), so exactly-one is universal rather
+ * than the runtime half of a weaker "at least one"; the teeth are against a drop AND a double-post.
  *
  * The @unit arm: `reconcile` populates each account's `evidenceObservations` with the credits that
  * CITE it. The @integration arm (tests/steps/ledger.steps.ts) drives the whole credit corpus at
  * once for the exhaustion/uniqueness property; these prove the per-shape routing in isolation.
  */
-describe("[SCN-LDG-022] reconcile — every evidence observation posts to at least one account (exactly one over this single-obligation corpus)", () => {
+describe("[SCN-LDG-022] reconcile — every evidence observation posts to exactly one account, never to none", () => {
   const namedScenarios: Scenario[] = [
     { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "unit" }] },
     { scnId: "SCN-AAA-002", evidenceObligations: [{ qualityCheck: "unit" }] },
@@ -1352,28 +1350,29 @@ describe("[SCN-LDG-022] reconcile — every evidence observation posts to at lea
     expect(accountFor(ledger, "SCN-AAA-001")?.evidenceObservations).toEqual([]);
   });
 
-  it("posts a NAMED guard credit to the account that names it", () => {
-    // A static check carries no @SCN, so `byScn` cannot hold it — its link to an account is the STATIC CHECK
-    // HANDLE, exactly the link `reconcileEvidenceObligation` already follows to reconcile a lint
-    // obligation onto this row. Posting it here MIRRORS the reconciler: the credit sits on the
-    // account the outcome already lands on.
-    const named: Scenario[] = [
-      { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint:x" }] },
+  it("posts a CITED fitness credit to the one account it cites — the same rule as a runtime credit", () => {
+    // The fitness axis cites now: the seam resolved the runnable handle to the bare check its
+    // stepless fitness scenario carries and stamped that scenario's @SCN on the run, so this takes
+    // the SAME arm a runtime credit takes. The obligation names `x` and the run names `lint:x` —
+    // nothing but the citation could have joined them.
+    const fitness: Scenario[] = [
+      { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "x" }] },
     ];
     const credit: EvidenceObservation = {
-      qualityCheck: "lint", staticCheck: "lint:x", exists: true, enforcedOverRealSource: true,
+      scnId: "SCN-AAA-001", qualityCheck: "lint", staticCheck: "lint:x", checkTag: "x", exists: true, enforcedOverRealSource: true,
     };
-    const ledger = reconcile(named, [credit]);
+    const ledger = reconcile(fitness, [credit]);
     expect(accountFor(ledger, "SCN-AAA-001")?.evidenceObservations).toEqual([credit]);
-    // A named static check is NOT suspense — suspense is for credits citing no scenario at all.
+    // A cited fitness credit is NOT suspense — suspense is for credits citing no scenario at all.
     expect(accountFor(ledger, "(no scenario)")).toBeUndefined();
   });
 
-  it("posts a NO-EVIDENCE-OBLIGATION guard credit to suspense — it cites no scenario", () => {
-    // The other arm of the symmetry: no @lint obligation names this handle, so it belongs to no
-    // account and lands in suspense, where it already reconciles `cites-no-scenario`.
+  it("posts an UNCITED fitness credit to suspense — it cites no scenario", () => {
+    // The other destination, reached by the same rule: the seam found no fitness scenario carrying
+    // this check, so the run cites nothing and belongs to no row — suspense, where it reconciles
+    // `cites-no-scenario` exactly as an uncited runtime credit does.
     const credit: EvidenceObservation = {
-      qualityCheck: "lint", staticCheck: "lint:nobody-names-this", exists: true, enforcedOverRealSource: false,
+      qualityCheck: "lint", staticCheck: "lint:nobody-cites-this", exists: true, enforcedOverRealSource: false,
     };
     const ledger = reconcile(namedScenarios, [credit]);
     expect(accountFor(ledger, "(no scenario)")?.evidenceObservations).toEqual([credit]);
@@ -1388,78 +1387,43 @@ describe("[SCN-LDG-022] reconcile — every evidence observation posts to at lea
 });
 
 /**
- * @SCN-LDG-024 (3F-1850) — a static check named by TWO scenarios posts to EACH.
+ * @SCN-LDG-025 (3F-1851) — a balanced fitness-only corpus keeps summary.outOfBalance AGREEING with
+ * the balanced verdict.
  *
- * The multi-obligation instance of the posting invariant LDG-022 states as the universal (at least
- * one, never zero — canon, double-entry-manifesto.md line 160): a static check's run cites no
- * scenario, so it is matched by handle and is evidence for EVERY naming scenario. One run, one object,
- * posted BY REFERENCE onto each naming account (never copied — the census walks the flat
- * stream, so a copy would double-count). This is the case no corpus exercised, and where the
- * "exactly one" over-generalisation breaks: here one observation posts to two accounts.
- */
-describe("[SCN-LDG-024] reconcile — a static check named by two scenarios posts to each account", () => {
-  const accountFor = (ledger: Ledger, scnId: string): ScenarioReconciliation | undefined =>
-    ledger.scenarioReconciliations.find((r) => r.scnId === scnId);
-
-  it("posts one static check's run to BOTH naming accounts, by reference, both satisfied", () => {
-    const namingScenarios: Scenario[] = [
-      { scnId: "SCN-SHR-001", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint:double-obligation" }] },
-      { scnId: "SCN-SHR-002", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint:double-obligation" }] },
-    ];
-    const credit: EvidenceObservation = {
-      qualityCheck: "lint", staticCheck: "lint:double-obligation", exists: true, enforcedOverRealSource: true,
-    };
-    const ledger = reconcile(namingScenarios, [credit]);
-    const a1 = accountFor(ledger, "SCN-SHR-001");
-    const a2 = accountFor(ledger, "SCN-SHR-002");
-
-    // Posts to BOTH — one run is evidence for every naming scenario (canon: posts to every account
-    // that names it). This is where "exactly one" breaks and "at least one" holds.
-    expect(a1?.evidenceObservations).toEqual([credit]);
-    expect(a2?.evidenceObservations).toEqual([credit]);
-    // BY REFERENCE — the SAME object on each account, not a copy: safe under the 3F-1831 census
-    // fold, which counts the flat stream once.
-    expect(a1?.evidenceObservations[0]).toBe(a2?.evidenceObservations[0]);
-    // Both naming scenarios reconcile satisfied (the static check is wired + enforced).
-    expect(a1?.qualityCheckReconciliations).toEqual([{ qualityCheck: "lint", staticCheck: "lint:double-obligation", outcome: "satisfied", evidenceObligation: { qualityCheck: "lint", staticCheck: "lint:double-obligation" }, evidenceObservation: { qualityCheck: "lint", staticCheck: "lint:double-obligation", exists: true, enforcedOverRealSource: true } }]);
-    expect(a2?.qualityCheckReconciliations).toEqual([{ qualityCheck: "lint", staticCheck: "lint:double-obligation", outcome: "satisfied", evidenceObligation: { qualityCheck: "lint", staticCheck: "lint:double-obligation" }, evidenceObservation: { qualityCheck: "lint", staticCheck: "lint:double-obligation", exists: true, enforcedOverRealSource: true } }]);
-    // A NAMED guard is never suspense — no no-evidence-obligation static check here.
-    expect(accountFor(ledger, "(no scenario)")).toBeUndefined();
-  });
-});
-
-/**
- * @SCN-LDG-025 (3F-1851) — a named-guards-only corpus reconciles balanced; the named-guard
- * posting rule ALONE determines the verdict.
+ * The coverage hole: every other fitness fixture mixes its satisfied credit with another shape
+ * (broken / uncited / no-evidence-obligation) that independently mints the suspense row, so the run
+ * is out-of-balance for a reason unrelated to the posting rule — and the disagreement this pins was
+ * unfalsifiable. A corpus whose ONLY fitness credit is one satisfied, citation-routed check removes
+ * every other cause: balanced, no suspense row, summary.outOfBalance 0 AGREEING with the balanced
+ * verdict. The rejected post-to-suspense treatment would mint a spurious empty out-of-balance
+ * suspense row — summary.outOfBalance disagreeing with isBalanced, the 3F-1703 fault — which THIS
+ * corpus finally makes red.
  *
- * The coverage hole: every other lint fixture mixes a named guard with another credit shape
- * (broken / uncited / no-evidence-obligation) that independently mints the suspense row, so the named-guard
- * path never determines the outcome on its own — the posting rule was unfalsifiable. A corpus whose
- * ONLY lint credit is one satisfied named guard removes every other cause: balanced, no suspense
- * row, summary.outOfBalance 0 AGREEING with the balanced verdict. The rejected post-to-suspense
- * treatment would mint a spurious empty out-of-balance suspense row — summary.outOfBalance
- * disagreeing with isBalanced, the 3F-1703 fault — which THIS corpus finally makes red.
+ * RE-POINTED TO THE CITATION PATH (3F-2620). The obligation names the BARE check its stepless
+ * fitness scenario carries; the run names the RUNNABLE handle and CITES that scenario's @SCN. The
+ * two words differ on purpose — a reader falling back to matching by name joins nothing here, which
+ * is what makes the citation load-bearing rather than decorative.
  */
-describe("[SCN-LDG-025] reconcile — a named-guards-only corpus reconciles balanced, no suspense row", () => {
+describe("[SCN-LDG-025] reconcile — a balanced fitness-only corpus keeps outOfBalance agreeing with the verdict", () => {
   const accountFor = (ledger: Ledger, scnId: string): ScenarioReconciliation | undefined =>
     ledger.scenarioReconciliations.find((r) => r.scnId === scnId);
   const ctx: RunContext = { target: "obligations-only", inputs: {}, runStart: new Date("2026-07-20T00:00:00.000Z"), sourceSha: null };
 
-  it("a satisfied named guard as the only credit → balanced, no suspense, summary.outOfBalance 0", () => {
-    const named: Scenario[] = [
-      { scnId: "SCN-DEM-001", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint:obligations-only" }] },
+  it("a satisfied citation-routed check as the only credit → balanced, no suspense, summary.outOfBalance 0", () => {
+    const fitness: Scenario[] = [
+      { scnId: "SCN-DEM-001", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "obligations-only" }] },
     ];
     const credit: EvidenceObservation = {
-      qualityCheck: "lint", staticCheck: "lint:obligations-only", exists: true, enforcedOverRealSource: true,
+      scnId: "SCN-DEM-001", qualityCheck: "lint", staticCheck: "lint:obligations-only", checkTag: "obligations-only", exists: true, enforcedOverRealSource: true,
     };
-    const ledger = reconcile(named, [credit]);
+    const ledger = reconcile(fitness, [credit]);
 
-    // The naming account reconciles satisfied and balanced.
+    // The fitness scenario's account reconciles satisfied and balanced.
     expect(accountFor(ledger, "SCN-DEM-001")?.qualityCheckReconciliations).toEqual([
-      { qualityCheck: "lint", staticCheck: "lint:obligations-only", outcome: "satisfied", evidenceObligation: { qualityCheck: "lint", staticCheck: "lint:obligations-only" }, evidenceObservation: { qualityCheck: "lint", staticCheck: "lint:obligations-only", exists: true, enforcedOverRealSource: true } },
+      { qualityCheck: "lint", staticCheck: "obligations-only", outcome: "satisfied", evidenceObligation: { qualityCheck: "lint", staticCheck: "obligations-only" }, evidenceObservation: { scnId: "SCN-DEM-001", qualityCheck: "lint", staticCheck: "lint:obligations-only", checkTag: "obligations-only", exists: true, enforcedOverRealSource: true } },
     ]);
     expect(accountFor(ledger, "SCN-DEM-001")?.verdict).toBe("balanced");
-    // NO suspense row — the only lint credit is the named one.
+    // NO suspense row — the only fitness credit cites its own fitness scenario.
     expect(accountFor(ledger, "(no scenario)")).toBeUndefined();
     // The run is balanced, and the summary AGREES: outOfBalance 0 (the 3F-1703 identity — under
     // the rejected post-to-suspense this becomes 1 while isBalanced stays true, and it reds).
@@ -1493,11 +1457,12 @@ describe("[SCN-LDG-023] reconcile — the evidence obligations a scenario names 
     expect(accountFor(ledger, "SCN-AAA-001")?.evidenceObligations).toEqual([obligation]);
   });
 
-  it("posts a named lint obligation carrying its guard handle", () => {
-    // The other obligation shape: `lint` debits carry the `staticCheck` handle that links them to a
-    // static check credit. The debit posts with its handle intact — the account records WHAT WAS
-    // NAMED, not merely that something was.
-    const obligation: EvidenceObligation = { qualityCheck: "lint", staticCheck: "lint:x" };
+  it("posts a fitness obligation carrying its bare check", () => {
+    // The other obligation shape: a fitness debit carries the BARE CHECK its stepless scenario
+    // named, and posts with that identity intact — the account records WHAT WAS NAMED, not merely
+    // that something was. The identity is the bare check, not the npm-script handle the retired
+    // `@lint=<handle>` form named.
+    const obligation: EvidenceObligation = { qualityCheck: "lint", staticCheck: "x" };
     const namedScenarios: Scenario[] = [{ scnId: "SCN-AAA-001", evidenceObligations: [obligation] }];
     const ledger = reconcile(namedScenarios, []);
     expect(accountFor(ledger, "SCN-AAA-001")?.evidenceObligations).toEqual([obligation]);
@@ -1517,7 +1482,7 @@ describe("[SCN-LDG-023] reconcile — the evidence obligations a scenario names 
 
   it("posts every named obligation of a multi-obligation scenario, in document order", () => {
     const unit: EvidenceObligation = { qualityCheck: "unit" };
-    const lint: EvidenceObligation = { qualityCheck: "lint", staticCheck: "lint:x" };
+    const lint: EvidenceObligation = { qualityCheck: "lint", staticCheck: "x" };
     const namedScenarios: Scenario[] = [{ scnId: "SCN-AAA-001", evidenceObligations: [unit, lint] }];
     const ledger = reconcile(namedScenarios, []);
     expect(accountFor(ledger, "SCN-AAA-001")?.evidenceObligations).toEqual([unit, lint]);

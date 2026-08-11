@@ -9,18 +9,19 @@
  * owns the entry types and what a scenario NAMES. Posting reads both sides and yields the row an
  * entry lands on. (3F-2202 — extracted from the `reconcile` fold, which decided this inline.)
  *
- * CANON, in two clauses that set the cardinality (manifesto "Attribution / attributed (by `@SCN`)"):
- *   - the RUNTIME quality-checks — the CREDIT cites. A test carries `@SCN-XXX`, so one credit
- *     names one scenario and posts to EXACTLY ONE row. A credit posting to no real scenario is
- *     PHANTOM (its `@SCN` matches no scenario) or SUSPENSE (it cites nothing).
- *   - `lint` — the DEBIT cites. The scenario carries `@lint=<static-check>`, so the static check's
- *     run cites nothing and is matched BY NAME — to EVERY row whose evidence obligation names it
- *     (manifesto, Static Check: "one run is evidence for all of them"), or to SUSPENSE if none
- *     does.
+ * ONE CLAUSE, OVER BOTH AXES (3F-2590). THE CREDIT CITES. A test carries `@SCN-XXX`; a fitness
+ * check's run carries the `@SCN` of the stepless fitness scenario that raises its obligation. So
+ * one credit names one scenario and posts to EXACTLY ONE row, and a credit posting to no real
+ * scenario is PHANTOM (its `@SCN` matches no scenario) or SUSPENSE (it cites nothing).
  *
- * "Every evidence observation posts to at least one account, never to none" (manifesto line 160) —
- * NOT *exactly* one, which is the runtime property over-generalised. `Posting` is total over the
- * `EvidenceObservation` union by construction: every variant yields a destination.
+ * THE BY-NAME ROUTE IS GONE, and with it the exception it forced. `lint` used to be the axis where
+ * the DEBIT cited: a scenario carried `@lint=<static-check>`, the run cited nothing, and it was
+ * matched BY NAME to EVERY row whose obligation named it. That is why the invariant had to be
+ * written "every evidence observation posts to AT LEAST ONE account, never to none" — not *exactly*
+ * one, which was the runtime property over-generalised. With both axes citing, EXACTLY ONE is true
+ * universally, and it is the stronger claim: "at least one" is silent about a double-post, and a
+ * double-post is a second copy of the same fact. `Posting` is total over the `EvidenceObservation`
+ * union by construction: every variant yields a destination.
  *
  * POSTING IS NOT CLASSIFYING. This rule decides WHERE an entry lands, never what it reconciles TO.
  * A credit posts to its row whatever outcome it later earns — or none at all. The outcome rules
@@ -37,10 +38,10 @@ import type {
 /**
  * WHERE an entry lands — the posting destination, one variant per route canon names.
  *
- * The three `kind` values that name a row match `ScenarioKind` exactly, because they ARE the row
- * kind the entry posts to. `every-naming-scenario` is the fourth and is NOT a row kind: a
- * static check is not citation-routed at all, so its destination is a SET of rows resolved by name, and
- * naming it as a row-kind would flatten canon's central asymmetry between the two axes.
+ * EVERY `kind` NAMES A ROW, and matches `ScenarioKind` exactly, because each IS the row kind the
+ * entry posts to. A fourth member used to sit here — a SET of rows resolved by name — and it was
+ * the one destination that was not a row at all. It went with the by-name route (3F-2590), so the
+ * type is now exactly the row kinds, on both axes.
  *
  * Named for the ROW, never `Account`: `account` is RETIRED vocabulary (the container re-term —
  * Evidence / Scenario / Quality-Check Reconciliation replaced trial-balance / account /
@@ -51,12 +52,6 @@ export type Posting =
   | { kind: "scenario"; scnId: string }
   /** BY CITATION → an INVENTED row: the credit's `@SCN` is one no scenario carries. */
   | { kind: "phantom-scenario"; scnId: string }
-  /**
-   * BY NAME → every row whose evidence obligation names this static check handle. NOT a row
-   * kind: the destination is a set, and `reconcile` resolves the members per row (in that row's
-   * own obligation order) via `staticCheckCreditsPostingTo`.
-   */
-  | { kind: "every-naming-scenario"; staticCheck: string }
   /**
    * → the SUSPENSE row: the entry names no row at all. `posted` carries WHICH of the three
    * routes brought it here — they are genuinely different facts with different remedies, and the
@@ -74,19 +69,27 @@ export type RuntimePosting =
   | { kind: "phantom-scenario"; scnId: string }
   | { kind: "suspense-scenario"; posted: "broken" | "cites-nothing" };
 
-/** The destinations a STATIC-CHECK credit can reach — it is name-routed, so never by citation. */
+/**
+ * The destinations a STATIC-CHECK credit can reach — the citation-routed ones when the observer
+ * stamped an `@SCN` on it (@SCN-LNT-001), and suspense when it did not. Structurally
+ * `RuntimePosting`'s shape now that the by-name member is gone (3F-2590): one posting rule over
+ * both axes. The two types stay APART because their SUSPENSE reasons differ — a runtime credit
+ * reaches suspense `broken` or `cites-nothing`, a fitness credit only ever because no obligation
+ * names its check — and collapsing them would let a caller be handed a reason its axis cannot
+ * produce.
+ */
 export type StaticCheckPosting =
-  | { kind: "every-naming-scenario"; staticCheck: string }
+  | { kind: "scenario"; scnId: string }
+  | { kind: "phantom-scenario"; scnId: string }
   | { kind: "suspense-scenario"; posted: "no-evidence-obligation-static-check" };
 
 /**
  * WHERE does this evidence observation post? THE posting rule, in one place.
  *
- * The two set parameters are the OBLIGATION side, each already the model's own rule built once by
- * the caller: `scenarioIds` is which scenarios exist, and `staticCheckEvidenceObligations` is
- * `staticCheckEvidenceObligationsOf(scenarios)` (the journal's rule for which handles are named). They
- * are passed rather than re-derived here so the rule stays a pure decision over prepared inputs
- * and cannot disagree with the census that shares them.
+ * `scenarioIds` is the OBLIGATION side — which scenarios exist — already the model's own rule,
+ * built once by the caller and passed rather than re-derived here, so the rule stays a pure
+ * decision over prepared inputs and cannot disagree with the census that shares it. A second set
+ * (the named static-check handles) stood beside it for the by-name route and went with it.
  *
  * ORDER IS LOAD-BEARING — the arms are checked exactly as canon fail-safes them:
  *   1. `broken` FIRST, on the FLAG, never on `scnId` / `status` (@SCN-LDG-017). A proof that never
@@ -102,31 +105,37 @@ export type StaticCheckPosting =
  */
 export function postingOf(
   observation: RuntimeEvidenceObservation,
-  scenarioIds: ReadonlySet<string>,
-  staticCheckEvidenceObligations: ReadonlySet<string>
+  scenarioIds: ReadonlySet<string>
 ): RuntimePosting;
 export function postingOf(
   observation: GuardEvidenceObservation,
-  scenarioIds: ReadonlySet<string>,
-  staticCheckEvidenceObligations: ReadonlySet<string>
+  scenarioIds: ReadonlySet<string>
 ): StaticCheckPosting;
 export function postingOf(
   observation: EvidenceObservation,
-  scenarioIds: ReadonlySet<string>,
-  staticCheckEvidenceObligations: ReadonlySet<string>
+  scenarioIds: ReadonlySet<string>
 ): Posting;
 export function postingOf(
   observation: EvidenceObservation,
-  scenarioIds: ReadonlySet<string>,
-  staticCheckEvidenceObligations: ReadonlySet<string>
+  scenarioIds: ReadonlySet<string>
 ): Posting {
-  // THE STATIC AXIS — the DEBIT cites, so a static check's run is matched BY NAME, never by
-  // attribution. Named → every naming row; named by nobody → suspense (the static
-  // analogue of an uncited runtime credit).
   if (observation.qualityCheck === "lint") {
-    return staticCheckEvidenceObligations.has(observation.staticCheck)
-      ? { kind: "every-naming-scenario", staticCheck: observation.staticCheck }
-      : { kind: "suspense-scenario", posted: "no-evidence-obligation-static-check" };
+    // THE CITATION ROUTE (@SCN-LNT-001) — the run carries the `@SCN` of the fitness scenario that
+    // raises its obligation, so it posts by citation like every other credit: exactly one row,
+    // real or invented. This is deliberately the SAME rule the runtime arm applies below, not a
+    // static-axis variant of it — a whole-system characteristic belongs to the one scenario that
+    // holds it, and the moment the static axis is allowed its own posting rule is the moment the
+    // smear can be reintroduced under a different name.
+    if (observation.scnId !== undefined) {
+      return scenarioIds.has(observation.scnId)
+        ? { kind: "scenario", scnId: observation.scnId }
+        : { kind: "phantom-scenario", scnId: observation.scnId };
+    }
+    // The seam reached no `@SCN` — the handle is unregistered, or no fitness scenario carries its
+    // check — so the run cites nothing and posts to SUSPENSE, the static analogue of an uncited
+    // runtime credit. There is no by-name fallback to try: a check nobody named is meant to
+    // surface, and matching it to rows by handle is exactly the smear this route replaced.
+    return { kind: "suspense-scenario", posted: "no-evidence-obligation-static-check" };
   }
   // THE RUNTIME AXIS — the CREDIT cites, so exactly one row, resolved from the `@SCN` it carries.
   // The fail-safe first: broken is taken on the FLAG, before scnId is ever consulted.
@@ -136,46 +145,4 @@ export function postingOf(
     return { kind: "phantom-scenario", scnId: observation.scnId };
   }
   return { kind: "scenario", scnId: observation.scnId };
-}
-
-/**
- * The static-check credits posting to THIS scenario's row — the BY-NAME half of the posting rule,
- * resolved for one row (canon, Static Check: a static check "posts to every account whose evidence
- * obligation names it"). `postingOf` answers WHETHER a static check posts to naming rows at all;
- * this answers WHICH credits land on a given row, and IN WHAT ORDER.
- *
- * The order is the ROW'S OWN obligation document order, not the observation stream's: the row's
- * `@lint` obligations name the handles it names, and the credits answering them post in that
- * order. Two rows naming the same two guards in opposite orders hold them in opposite orders —
- * so this walks the OBLIGATIONS, never the observations.
- *
- * `find` takes the FIRST observation per handle: one credit answers one handle. The
- * identity-dedupe then keeps a handle NAMED TWICE on one row posting ONCE, while the SAME
- * object still posts to every OTHER row naming it (@SCN-LDG-024) — which is what makes the
- * downstream identity-dedupe in `staticObservationTally` both necessary and correct.
- *
- * PENDING, and a documented asymmetry (preserved, not normalised — 3F-2202). This walks EVERY
- * `@lint` obligation INCLUDING a pending one, because posting is not classifying: a credit posts
- * whatever its obligation later reconciles to, or fails to. `staticCheckEvidenceObligationsOf` — which
- * `postingOf` consults for the no-evidence-obligation/suspense arm — EXCLUDES pending obligations. The two
- * therefore disagree in principle. In practice they cannot: a `@lintpending` obligation carries NO
- * `staticCheck` payload (the guard does not exist yet, `journal.ts`), so the `staticCheck ===
- * undefined` skip below drops it before the disagreement can be observed. Reproduced here exactly
- * as the fold had it; if a hand-built obligation ever carries both `pending` and a `staticCheck`,
- * this is the seam that decides it, and the decision is then owed a ruling against canon.
- */
-export function staticCheckCreditsPostingTo(
-  scenario: Scenario,
-  observations: readonly EvidenceObservation[]
-): GuardEvidenceObservation[] {
-  const posted: GuardEvidenceObservation[] = [];
-  for (const obligation of scenario.evidenceObligations) {
-    if (obligation.qualityCheck !== "lint" || obligation.staticCheck === undefined) continue;
-    const handle = obligation.staticCheck;
-    const observed = observations.find(
-      (o): o is GuardEvidenceObservation => o.qualityCheck === "lint" && o.staticCheck === handle
-    );
-    if (observed !== undefined && !posted.includes(observed)) posted.push(observed);
-  }
-  return posted;
 }

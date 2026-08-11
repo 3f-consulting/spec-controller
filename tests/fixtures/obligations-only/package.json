@@ -3,5 +3,10 @@
     "lint:obligations-only": "echo obligations-only-guard",
     "test": "echo test",
     "cucumber": "echo cucumber"
+  },
+  "specController": {
+    "checkRegistry": {
+      "lint:obligations-only": "obligations-only"
+    }
   }
 }

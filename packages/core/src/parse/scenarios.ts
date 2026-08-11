@@ -15,12 +15,12 @@
  * line carrying an @SCN id contributes that scenario's evidenceObligations from the level
  * tags found across the contiguous tag block.
  *
- * The `lint` quality-check: a `@lint=<guard>` tag in the same block
- * contributes a `{ qualityCheck: "lint", staticCheck: guard }` evidenceObligation — the static check handle is the
- * exact npm-script name, taken as everything after the FIRST `=` (so
- * `@lint=lint:feature-codes` → static check `lint:feature-codes`). The `=` prefix
- * delimiter (operator ruling) replaced an earlier `@lint:` double-colon
- * form, keeping exact-match while removing the double-colon wart.
+ * The `lint` quality-check is raised by a STEPLESS scenario's REGISTERED bare check tag
+ * (`fitnessObligationsOf`, @SCN-LNT-006). The retired `@lint=<guard>` form — where the scenario
+ * named a runnable npm script and the run was matched back to it BY NAME — raises nothing
+ * (@SCN-LNT-007): it supplies no citation, so anything it raised could never be credited under
+ * the one posting rule and would read `missing` for ever. The form is inert in the READER, which
+ * is what makes it retired rather than merely unused.
  *
  * Parent: @SCN-LDG-001.
  */
@@ -56,11 +56,6 @@ const PENDING_TAG_TO_QUALITY_CHECK: Record<string, QualityCheck> = {
 export function pendingQualityCheck(tag: string): QualityCheck | null {
   return PENDING_TAG_TO_QUALITY_CHECK[tag] ?? null;
 }
-/**
- * `lint=<guard>` — the static-check handle. Split on the FIRST `=`; the guard is
- * everything after it (the exact npm-script name, which may itself contain `:`).
- */
-const LINT_TAG = /^lint=(.+)$/;
 const TAG_TO_QUALITY_CHECK: Record<string, RuntimeQualityCheck> = {
   unit: "unit",
   integration: "integration",
@@ -162,81 +157,156 @@ export function parseUntaggedScenarios(source: string): string[] {
 }
 
 /**
+ * THE FITNESS OBLIGATIONS a scenario's tags raise (@SCN-LNT-006) — one per REGISTERED bare check
+ * tag it carries, and only when the scenario is STEPLESS.
+ *
+ * THE TECHNIQUE LEAVES THE TAG. Under name-match the DEBIT cited: a scenario carried
+ * `@lint=<handle>` and a run was matched back to it by name, so an obligation could only be raised
+ * by naming a runnable script — which put one technique in front of a whole class of fitness
+ * functions, and is why `complexity`, `typecheck` and `vocab` all had to spell themselves
+ * `lint:something` to be seen at all. A bare tag drops it: `@complexity` is a flat peer of `@unit`
+ * exactly as `@unit` is a flat peer of `@integration`. There is no `@behavioural=unit`, so there is
+ * no `@fitness=complexity` (canon 2026-08-07, the bare-tags Correction).
+ *
+ * STEPLESS IS THE DISCRIMINATOR. A behavioural scenario is an EXAMPLE and carries steps; a fitness
+ * scenario is a whole-system characteristic held against a threshold and has nothing to exemplify,
+ * so it carries none. Reading a bare check tag off a STEPPED scenario would raise a fitness
+ * obligation on a behavioural row — name-match's own fault, a whole-system characteristic smeared
+ * across examples it was never about, reintroduced through a shorter tag. The tier floor's reading
+ * of the same shape is @SCN-STG-005's; what is settled here is that the obligation follows it.
+ *
+ * REGISTERED, NOT INFERRED. `checkTags` is the registry's answer (`domain/checkRegistry`), taken as
+ * data. Without it every unrecognised tag would be a candidate check and `@smoke` would owe one;
+ * with a prefix heuristic instead, `typecheck` would be missed, which is the reading 3F-2495 already
+ * disproved on the discovery side. An empty registry raises nothing, so this is inert on a corpus
+ * that has not been swept.
+ *
+ * `seen` CARRIES THE CHECKS ALREADY RAISED, and is mutated here: a scenario's effective tags are
+ * its own plus its `Rule:`'s and its `Feature:`'s (@SCN-LDG-020), so one check can reach one
+ * scenario twice and is owed once. Two obligations for one check would leave the second `missing`
+ * for ever — one run is one credit and can cite one `@SCN`.
+ */
+function fitnessObligationsOf(
+  tags: readonly string[],
+  checkTags: readonly string[],
+  stepless: boolean,
+  seen: Set<string>
+): EvidenceObligation[] {
+  if (!stepless) return [];
+  const registered = new Set(checkTags);
+  const raised: EvidenceObligation[] = [];
+  for (const tag of tags) {
+    if (!registered.has(tag) || seen.has(tag)) continue;
+    seen.add(tag);
+    raised.push({ qualityCheck: "lint", staticCheck: tag });
+  }
+  return raised;
+}
+
+/**
  * Derive a scenario's evidence obligations from its EFFECTIVE tags — its own PLUS everything it
  * inherits from its `Feature:` and any enclosing `Rule:` (@SCN-LDG-020). Unchanged in substance
  * from the tag-block reading it replaces; what changed is WHICH tags reach it.
  */
 function obligationsFromTags(
   tags: readonly string[],
-  deferralTags: readonly string[]
+  deferralTags: readonly string[],
+  checkTags: readonly string[],
+  stepless: boolean
 ): EvidenceObligation[] {
-  const blockTags = tags;
-  {
-    {
-      const evidenceObligations: EvidenceObligation[] = [];
-      const seenQualityChecks = new Set<RuntimeQualityCheck>();
-      const seenPending = new Set<QualityCheck>();
-      const seenGuards = new Set<string>();
-      for (const t of blockTags) {
-        // A `<quality-check>pending` tag derives a DEFERRED, one-sided obligation
-        // `{ qualityCheck, pending: true }` (no `staticCheck` payload). Tracked in its own set so
-        // it is neither blocked by nor blocks a bare tier of the same quality-check, and
-        // recognised SEPARATELY from the bare tier tag (the `pending` suffix is significant).
-        const pendingCheck = pendingQualityCheck(t);
-        if (pendingCheck && !seenPending.has(pendingCheck)) {
-          seenPending.add(pendingCheck);
-          evidenceObligations.push({ qualityCheck: pendingCheck, pending: true });
-          continue;
-        }
-        const qualityCheck = TAG_TO_QUALITY_CHECK[t];
-        if (qualityCheck && !seenQualityChecks.has(qualityCheck)) {
-          seenQualityChecks.add(qualityCheck);
-          evidenceObligations.push({ qualityCheck });
-          continue;
-        }
-        const lintMatch = LINT_TAG.exec(t);
-        if (lintMatch) {
-          const guard = lintMatch[1]!;
-          if (!seenGuards.has(guard)) {
-            seenGuards.add(guard);
-            evidenceObligations.push({ qualityCheck: "lint", staticCheck: guard });
-          }
-        }
-      }
-      // SCENARIO-SCOPE community deferral (@SCN-PND-016): when the tag block carries a
-      // RECOGNISED community deferral tag (a bare tag ∈ the injected `deferralTags` set —
-      // empty by default; the app passes its starter policy ∪ config), the whole scenario is
-      // deferred: mark EVERY obligation `pending: true`, overriding its observation-derived
-      // outcome. Applied AFTER the
-      // obligation list is built, so it composes with the `<qc>pending` recognition and covers
-      // every obligation kind (runtime tiers AND `@lint=<guard>`). Idempotent on an
-      // already-pending obligation.
-      if (blockTags.some((t) => deferralTags.includes(t))) {
-        if (evidenceObligations.length === 0) {
-          // INTERPRETATION 2 (@SCN-PND-022): a deferred scenario raising ZERO obligations (a
-          // bare `@wip` — no evidence tag) synthesises ONE scenario-scope pending obligation:
-          // `{ pending: true }` with NO `qualityCheck` (undefined = scenario-scope) and no `staticCheck`.
-          // The reconcile partition routes it to one `qualityCheck`-less Pending Item, so the
-          // scenario is deferred (pending) — the both-missing guard (fires only on zero pending
-          // items) leaves it balanced, not the degenerate both-missing row.
-          evidenceObligations.push({ pending: true });
-        } else {
-          for (const obligation of evidenceObligations) obligation.pending = true;
-        }
-      }
-      return evidenceObligations;
+  const evidenceObligations: EvidenceObligation[] = [];
+  const seenQualityChecks = new Set<RuntimeQualityCheck>();
+  const seenPending = new Set<QualityCheck>();
+  const seenChecks = new Set<string>();
+  for (const t of tags) {
+    // A `<quality-check>pending` tag derives a DEFERRED, one-sided obligation
+    // `{ qualityCheck, pending: true }` (no `staticCheck` payload). Tracked in its own set so
+    // it is neither blocked by nor blocks a bare tier of the same quality-check, and
+    // recognised SEPARATELY from the bare tier tag (the `pending` suffix is significant).
+    const pendingCheck = pendingQualityCheck(t);
+    if (pendingCheck && !seenPending.has(pendingCheck)) {
+      seenPending.add(pendingCheck);
+      evidenceObligations.push({ qualityCheck: pendingCheck, pending: true });
+      continue;
+    }
+    const qualityCheck = TAG_TO_QUALITY_CHECK[t];
+    if (qualityCheck && !seenQualityChecks.has(qualityCheck)) {
+      seenQualityChecks.add(qualityCheck);
+      evidenceObligations.push({ qualityCheck });
+      continue;
     }
   }
+  // The FITNESS obligations (@SCN-LNT-006), raised after the tier arms and BEFORE the deferral pass
+  // below, so a deferred fitness scenario defers like any other rather than escaping through a later
+  // arm. `seenChecks` keeps a check from being owed twice however many of a scenario's effective
+  // tags name it.
+  evidenceObligations.push(...fitnessObligationsOf(tags, checkTags, stepless, seenChecks));
+  // SCENARIO-SCOPE community deferral (@SCN-PND-016): when the tag block carries a
+  // RECOGNISED community deferral tag (a bare tag ∈ the injected `deferralTags` set —
+  // empty by default; the app passes its starter policy ∪ config), the whole scenario is
+  // deferred: mark EVERY obligation `pending: true`, overriding its observation-derived
+  // outcome. Applied AFTER the
+  // obligation list is built, so it composes with the `<qc>pending` recognition and covers
+  // every obligation kind (runtime tiers AND the fitness ones). Idempotent on an
+  // already-pending obligation.
+  if (tags.some((t) => deferralTags.includes(t))) {
+    if (evidenceObligations.length === 0) {
+      // INTERPRETATION 2 (@SCN-PND-022): a deferred scenario raising ZERO obligations (a
+      // bare `@wip` — no evidence tag) synthesises ONE scenario-scope pending obligation:
+      // `{ pending: true }` with NO `qualityCheck` (undefined = scenario-scope) and no `staticCheck`.
+      // The reconcile partition routes it to one `qualityCheck`-less Pending Item, so the
+      // scenario is deferred (pending) — the both-missing guard (fires only on zero pending
+      // items) leaves it balanced, not the degenerate both-missing row.
+      evidenceObligations.push({ pending: true });
+    } else {
+      for (const obligation of evidenceObligations) obligation.pending = true;
+    }
+  }
+  return evidenceObligations;
 }
 
 /**
- * Parse the SCENARIO CORPUS — the ledger's DEBIT side — from the REAL Gherkin AST (@SCN-LDG-020,
- * 3F-1775), the same parser cucumber uses. So the scenarios spec-controller reconciles carry
- * EXACTLY the tags cucumber gives them: one reading of the file, not two.
+ * One `@SCN`-carrying scenario as the corpus READS it, before any obligation rule is applied:
+ * its id and its EFFECTIVE tag set (its own tags, then everything it inherits from its `Rule:`
+ * and `Feature:`).
  *
- * WHY. This was a hand-rolled TAG-LINE SCAN that saw only the contiguous tag block directly above
- * a `Scenario:`. Gherkin does not work that way — a scenario INHERITS the tags of its `Feature:`
- * and of any enclosing `Rule:`. Two bugs followed, and both were false-greens:
+ * Extracted so a second corpus reader cannot grow a second tag-inheritance walk. That walk is
+ * where both of `parseScenarios`'s historical false-greens lived — the UNDER-READ (a hoisted
+ * tier tag invisible, so its obligation was never raised) and the OVER-READ (a tag block above a
+ * `Rule:` emitted as a scenario). A reader that re-derived "which tags does this scenario carry"
+ * would be free to reproduce either one alone, silently, exactly as the retired hand-rolled scan
+ * did beside cucumber's own parse.
+ */
+export interface TaggedScenario {
+  /** The bare scenario id, e.g. `SCN-LDG-001` (no leading @). */
+  scnId: string;
+  /** The scenario's OWN tags first, then its inherited ones — bare, no leading @. */
+  tags: readonly string[];
+  /**
+   * The scenario carries NO steps — the fitness/behavioural shape, read off the same walk as the
+   * tags (@SCN-LNT-006). A behavioural scenario is an EXAMPLE and has steps; a fitness scenario is a
+   * whole-system characteristic held against a threshold, so it has nothing to exemplify.
+   *
+   * It rides here rather than in a reader of its own for the reason the walk was extracted at all: a
+   * second pass over the same file would be free to disagree with this one about which scenario it
+   * is looking at, and a shape read against the wrong scenario is exactly the false-green shape this
+   * parser has already produced twice.
+   */
+  stepless: boolean;
+}
+
+/**
+ * Read every `@SCN`-carrying scenario with its EFFECTIVE tags — the corpus walk `parseScenarios`
+ * is built on, and the same walk any other whole-corpus tag question is answered from.
+ *
+ * The obligation rule is deliberately NOT applied here: what a scenario TAGS and what it OWES are
+ * different questions, and the second is `obligationsFromTags`'. Keeping them apart is what lets
+ * the citation seam ask the first without inheriting a reading of the second.
+ *
+ * WHY THE WALK IS THE AST'S AND NOT A SCAN'S. This was a hand-rolled TAG-LINE SCAN that saw only
+ * the contiguous tag block directly above a `Scenario:`. Gherkin does not work that way — a
+ * scenario INHERITS the tags of its `Feature:` and of any enclosing `Rule:`. Two bugs followed,
+ * and both were false-greens:
  *
  *   UNDER-READ. An evidence tier hoisted to the Feature/Rule line — idiomatic, valid Gherkin,
  *   exactly what an author does with a tier shared by every scenario beneath — was INVISIBLE. The
@@ -252,19 +322,13 @@ function obligationsFromTags(
  * the same id — a corpus-authoring fault, but a VISIBLE one (whether it should red is a deferred
  * policy question, 3F-1774's sibling).
  *
- * The signature is UNCHANGED (`source`, `deferralTags`) — `parseScenarios` is on the frozen v1
- * barrel (@SCN-API-001), so downstream consumers are untouched.
- *
  * An UNPARSEABLE source THROWS — it never yields an empty corpus. Silently returning zero scenarios
  * is the precise shape of the false-green this tool exists to prevent: an empty debit side balances
  * against anything. The app refuses an unreadable feature file at the ingest edge long before this
  * (@SCN-CLI-016: exit 2, halting before any reconcile), so the throw is unreachable in a real run —
  * it is the floor that keeps a future caller from re-opening the hole quietly.
  */
-export function parseScenarios(
-  source: string,
-  deferralTags: readonly string[] = []
-): Scenario[] {
+export function parseTaggedScenarios(source: string): TaggedScenario[] {
   const parser = new Parser(new AstBuilder(IdGenerator.uuid()), new GherkinClassicTokenMatcher());
 
   let document: GherkinDocument;
@@ -279,7 +343,7 @@ export function parseScenarios(
     );
   }
 
-  const scenarios: Scenario[] = [];
+  const tagged: TaggedScenario[] = [];
   const bare = (tags: readonly { name: string }[]): string[] =>
     tags.map((t) => t.name.replace(/^@/, ""));
 
@@ -302,14 +366,40 @@ export function parseScenarios(
       const scnTag = effective.find((t) => SCN_CODE.test(t));
       if (scnTag === undefined) continue;
 
-      scenarios.push({
-        scnId: scnTag,
-        evidenceObligations: obligationsFromTags(effective, deferralTags),
-      });
+      tagged.push({ scnId: scnTag, tags: effective, stepless: child.scenario.steps.length === 0 });
     }
   };
 
   collect((document.feature?.children ?? []) as FeatureChild[], featureTags);
 
-  return scenarios;
+  return tagged;
+}
+
+/**
+ * Parse the SCENARIO CORPUS — the ledger's DEBIT side — from the REAL Gherkin AST (@SCN-LDG-020,
+ * 3F-1775), the same parser cucumber uses. So the scenarios spec-controller reconciles carry
+ * EXACTLY the tags cucumber gives them: one reading of the file, not two.
+ *
+ * The corpus walk is `parseTaggedScenarios`'; this is the OBLIGATION rule applied over it. An
+ * unparseable source still THROWS from the walk rather than yielding an empty corpus.
+ *
+ * `checkTags` — the registry's bare check tags (@SCN-LNT-006) — is ADDITIVE and defaults to none, so
+ * `parseScenarios` keeps its place on the frozen v1 barrel (@SCN-API-001) and every existing caller
+ * reads exactly the corpus it read before. A target that has registered nothing raises no fitness
+ * obligations, which is what lets the bare-tag reading land ahead of the corpus sweep that uses it.
+ */
+export function parseScenarios(
+  source: string,
+  deferralTags: readonly string[] = [],
+  checkTags: readonly string[] = []
+): Scenario[] {
+  return parseTaggedScenarios(source).map((scenario) => ({
+    scnId: scenario.scnId,
+    evidenceObligations: obligationsFromTags(
+      scenario.tags,
+      deferralTags,
+      checkTags,
+      scenario.stepless
+    ),
+  }));
 }

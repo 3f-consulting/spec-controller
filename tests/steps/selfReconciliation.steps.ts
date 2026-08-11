@@ -174,7 +174,7 @@ Then(
 //
 // @SCN-SLF-001 above plants trees with NO static check at all, so the gate has never
 // been driven over the static axis. These steps plant trees that RUN one, differing in
-// exactly one tag: the named arm carries `@lint=lint:foo`, the uncited arm does not. One
+// exactly one tag: the named arm carries the bare check `@foo`, the uncited arm does not. One
 // tag apart is the point — the uncited tree's only out-of-balance item is the check, so
 // a passing assertion attributes the red to it and to nothing else.
 //
@@ -188,18 +188,28 @@ Then(
 // @SCN-SLF-002
 const PLANTED_CHECK = "lint:foo";
 
+/**
+ * The BARE CHECK that script runs under, as both arms' manifests register it. Registered on BOTH
+ * arms on purpose: the arms must differ by exactly one TAG, so the registry entry cannot be the
+ * difference. In the uncited arm the handle still resolves to this check and no scenario carries
+ * it, so the citation seam reaches no @SCN and the run lands in suspense — which is the red.
+ */
+// @SCN-SLF-002
+const PLANTED_CHECK_TAG = "foo";
+
 let uncitedCheckRun: GuardRun;
 let namedCheckRun: GuardRun;
 
 /**
- * Plant a tree that RUNS `lint:foo`. `named` decides whether a scenario names the check
- * via `@lint=` — i.e. whether the running check has an Evidence Obligation to be credited
- * against, or folds onto the suspense row citing no scenario.
+ * Plant a tree that RUNS `lint:foo`. `named` decides whether a scenario carries the BARE CHECK
+ * the registry maps that handle onto — i.e. whether the running check has an Evidence Obligation
+ * to be credited against, or folds onto the suspense row citing no scenario.
  *
- * The planted scenario carries `@unit` and is observed in the Vitest stream on BOTH arms,
- * so the obligation side is settled either way and cannot contribute a second reason to
- * red. In the named arm its tag shape (`@unit @lint=… @SCN-…`) is the one SLF-001 itself
- * carries in this repository — a real self-citing check, not an arrangement invented here.
+ * The planted scenario is STEPLESS on both arms, which is what admits a bare check tag at all
+ * (@SCN-LNT-006), and carries `@unit` — observed in the Vitest stream on BOTH arms — so the
+ * runtime obligation is settled either way and cannot contribute a second reason to red. Its tag
+ * shape (`@unit @foo @SCN-…`) is the one this repository's own fitness scenarios carry: a real
+ * self-citing check, not an arrangement invented here.
  */
 // @SCN-SLF-002
 function plantStaticCheckTree(named: boolean): string {
@@ -210,7 +220,7 @@ function plantStaticCheckTree(named: boolean): string {
   mkdirSync(path.join(root, ".github/workflows"), { recursive: true });
   mkdirSync(path.join(root, "runs/self-balance"), { recursive: true });
 
-  const tags = named ? `@unit @lint=${PLANTED_CHECK} @SCN-PLT-002` : "@unit @SCN-PLT-002";
+  const tags = named ? `@unit @${PLANTED_CHECK_TAG} @SCN-PLT-002` : "@unit @SCN-PLT-002";
   writeFileSync(
     path.join(root, "features/planted.feature"),
     [
@@ -221,8 +231,6 @@ function plantStaticCheckTree(named: boolean): string {
       "",
       `    ${tags}`,
       "    Scenario: the planted behaviour holds",
-      "      Given a planted precondition",
-      "      Then the planted outcome follows",
       "",
     ].join("\n"),
   );
@@ -230,7 +238,14 @@ function plantStaticCheckTree(named: boolean): string {
   // The manifest is where a static check is observed to EXIST.
   writeFileSync(
     path.join(root, "package.json"),
-    JSON.stringify({ name: "planted", scripts: { [PLANTED_CHECK]: "node -e \"\"" } }) + "\n",
+    JSON.stringify({
+      name: "planted",
+      scripts: { [PLANTED_CHECK]: "node -e \"\"" },
+      // The registry is on BOTH arms — see PLANTED_CHECK_TAG. It is what lets the run of the
+      // script reach a bare check at all; whether it then reaches an @SCN is the corpus's answer,
+      // and the corpus is the one thing the two arms differ in.
+      specController: { checkRegistry: { [PLANTED_CHECK]: PLANTED_CHECK_TAG } },
+    }) + "\n",
   );
 
   // The CI config is where it is observed to FIRE — the surface that separates a check
@@ -302,7 +317,8 @@ Then("the gate passes over the tree whose static check is named", function () {
     namedCheckRun.exitCode,
     0,
     `expected the self-balance gate to PASS over a tree whose static check a scenario ` +
-      `names via @lint= — the same tree as the red arm but for that one tag. A gate that ` +
+      `names by carrying its bare check — the same tree as the red arm but for that one tag. ` +
+      `A gate that ` +
       `reds on everything is as useless as one that reds on nothing. ` +
       `Output:\n${namedCheckRun.output}`,
   );

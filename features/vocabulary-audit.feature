@@ -377,8 +377,9 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
     `runningStaticChecks` observes a CI script only when its name carries an observed
     prefix (`lint:` / `guard:`), so a name outside that set would run in CI while being
     structurally invisible to spec-controller's own ledger — a real quality check kept off
-    the books, which is where a watermelon hides. The `@lint=lint:blocked-vocabulary` tag
-    below is then what keeps it out of the suspense row as an uncited static check.
+    the books, which is where a watermelon hides. The bare `@blocked-vocabulary` tag on its
+    fitness scenario at the foot of this file is then what keeps it out of the suspense row
+    as an uncited static check.
     An observation matched to a NAMED evidence obligation is the balanced state (the
     precedent @SCN-CPX-003 sets).
 
@@ -388,7 +389,7 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
     "all clear" from "I did not run" is the failure this Rule exists to remove, so an empty
     parse reds too.
 
-    @unit @integration @lint=lint:blocked-vocabulary @SCN-VOC-011
+    @unit @integration @SCN-VOC-011
     Scenario: a table row with no adoption status reds the build
       Given the vendored blocked-vocabulary table carries a row with no adoption status
       When the blocked-vocabulary status check runs
@@ -507,13 +508,13 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
 
     @unit @integration @SCN-VOC-013
     Scenario: a retired term on a Gherkin tag line is flagged while the tag grammar is not
-      Given a feature corpus whose tag lines carry a retired term alongside a scenario id, a feature code, a tier tag and a lint handle
+      Given a feature corpus whose tag lines carry a retired term alongside a scenario id, a feature code, a tier tag and a retired-form handle
       When the vocabulary audit runs over the corpus
       Then the retired term on the tag line is flagged
       And the scenario id is not flagged
       And the feature-code header tag is not flagged
       And the tier tag is not flagged
-      And the lint handle value is not flagged
+      And the retired-form handle value is not flagged
 
   Rule: an adopted row's term occurring in the tracked tree reds the build
 
@@ -538,7 +539,7 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
     drift — the agreeing-by-copy this feature has removed twice already. So the self-exempt
     blind spot is inherited, not restated here; 3F-2345 is the ticket that sweeps it.
 
-    @unit @integration @lint=lint:adopted-vocabulary @SCN-VOC-014
+    @unit @integration @SCN-VOC-014
     Scenario: an adopted retired term in a non-exempt file reds the gate, and a tree carrying none passes
       Given a tree whose canon table adopts a retired term
       When the adopted-vocabulary gate runs over a copy of that tree carrying the term in an ordinary source file
@@ -583,7 +584,7 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
     "No code file is exempt" is also the better rule to teach, because a reader can check
     it — where "this file names its own legitimate surfaces" can only be trusted.
 
-    @unit @integration @lint=lint:exempt-data-floor @SCN-VOC-016
+    @unit @integration @SCN-VOC-016
     Scenario: a code file carrying an inlined retired term is not exempt, and the audit sees it
       Given the set of files the audit is told to skip
       When each is judged on whether every banned word in it is a mention rather than a use
@@ -669,3 +670,26 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
       And a word carrying no homograph ruling is read as neither
       And the verb in keyword position in TypeScript source is read as grammar, the keyword qualifying it from the next name on the line
       And the verb as a bare name in TypeScript source, with no keyword after it, is still read as vocabulary
+
+  Rule: this tree obeys the vocabulary triage it publishes, on all three of its checks
+
+    THREE CHECKS, SO THREE TAGS, AND THE TIDIER `@vocab` IS THE MISTAKE TO AVOID. The three
+    steps share a subject — this repository's vocabulary — and share nothing else. The table
+    lint judges the TRIAGE RECORD, the adopted gate judges the TREE against it, and the data
+    floor judges the AUDIT'S OWN EXEMPTIONS. One tag covering the set would make a run of any
+    of them credit whichever scenario the corpus happened to reach first, and the other two
+    would reconcile missing while their checks ran green — the attribution fault the one
+    posting rule exists to remove. The tag names the check, not the topic.
+
+    NONE OF THE THREE CARRIES STEPS. The Rules above are examples of each check deciding over
+    a planted tree; these are the characteristics held over the real one. Their bare tags
+    raise the three Evidence Obligations the three CI runs settle.
+
+    @blocked-vocabulary @SCN-VOC-019
+    Scenario: every row of the vendored canon table carries an adoption status
+
+    @adopted-vocabulary @SCN-VOC-020
+    Scenario: no adopted retired term survives in a non-exempt file of this tree
+
+    @exempt-data-floor @SCN-VOC-021
+    Scenario: every audit exemption covers pure data and covers a banned word it still holds

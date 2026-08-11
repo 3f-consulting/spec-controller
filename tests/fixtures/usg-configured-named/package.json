@@ -5,6 +5,9 @@
     "cucumber": "echo cucumber"
   },
   "specController": {
-    "staticChecks": ["typecheck"]
+    "staticChecks": ["typecheck"],
+    "checkRegistry": {
+      "typecheck": "typecheck"
+    }
   }
 }

@@ -116,10 +116,11 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
     exists to name. A gate that is not reconciled on its own Ledger is honour, not
     mechanism.
 
-    The @lint=lint:scn-subissues tag below is what closes it. The tag raises the Evidence
-    Obligation the CI run settles, so the run is credited to THIS scenario instead of the
-    suspense row — the @SCN-CPX-003 / @SCN-VOC-011 / @SCN-NCR-001 precedent, where observed
-    AND required is the balanced state. The `lint:` prefix is load-bearing on the other
+    The bare @scn-subissues tag on the fitness scenario at the foot of this file is what
+    closes it. The tag raises the Evidence Obligation the CI run settles, so the run is
+    credited to THAT scenario instead of the suspense row — the precedent set by the
+    scenarios @SCN-CPX-003, @SCN-VOC-011 and @SCN-NCR-001, where observed AND required is
+    the balanced state. The `lint:` prefix is load-bearing on the other
     side of the same pairing: runningStaticChecks observes a CI script only when its name
     carries an observed prefix, so a name outside that set would run in CI while being
     invisible to spec-controller's own ledger.
@@ -132,7 +133,7 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
     asserted — exists AND enforced over real source — and then that the reconcile posts
     that run to this scenario, leaving no static check uncited on the suspense row.
 
-    @unit @integration @lint=lint:scn-subissues @SCN-SSM-006
+    @unit @integration @SCN-SSM-006
     Scenario: the scenario sub-issue check's own CI run is credited to the scenario naming it
       Given the scn-subissues static check, wired over spec-controller's own source
       When spec-controller's own tree is reconciled
@@ -200,3 +201,22 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
       Given a PR whose new behaviour is proven by a test block naming a scenario id only in its title's prose, on a branch carrying a 3F ticket handle
       When the scenario sub-issue gate runs over the prose-titled fixture PR
       Then the gate reds, naming the block whose title only mentions a scenario id
+
+  Rule: every behaviour-bearing scenario change in this repository is bound to a tracked work item
+
+    THE OBLIGATION @SCN-SSM-006 USED TO CARRY, now held by the shape that fits it. SSM-006
+    asserts the RECONCILIATION — that the check's run is credited and nothing is left uncited
+    — over the real tree, which is a behaviour with steps and stays exactly as it was. What it
+    also used to do, through the retired tag form, was raise spec-controller's own Evidence
+    Obligation for the run. That is a whole-system characteristic of this repository rather
+    than an example of anything, so it is stated as one below and the bare `@scn-subissues`
+    tag raises it there.
+
+    THE CHECK IS PULL-REQUEST-ONLY, AND THAT DOES NOT WEAKEN THE ROW. Its CI step is guarded
+    by `if: github.event_name == 'pull_request'`, because it judges a diff against a base that
+    only a pull request supplies. The ledger reads the workflow, not the run's outcome — the
+    step is present, so the check is observed as enforced over real source, exactly as it was
+    under the retired form.
+
+    @scn-subissues @SCN-SSM-009
+    Scenario: every behaviour-bearing scenario code changed on a pull request is bound to a ticketed one
