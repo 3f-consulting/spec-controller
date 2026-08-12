@@ -28,6 +28,7 @@
 import { AstBuilder, GherkinClassicTokenMatcher, Parser } from "@cucumber/gherkin";
 import { IdGenerator, type FeatureChild, type GherkinDocument } from "@cucumber/messages";
 import type { Scenario, EvidenceObligation, QualityCheck, RuntimeQualityCheck } from "../model.js";
+import { measuredCheckTags, thresholdFor, type ThresholdRegistry } from "../domain/thresholds.js";
 
 const SCN_CODE = /^SCN-[A-Z0-9]+-\d+$/;
 
@@ -185,20 +186,52 @@ export function parseUntaggedScenarios(source: string): string[] {
  * its own plus its `Rule:`'s and its `Feature:`'s (@SCN-LDG-020), so one check can reach one
  * scenario twice and is owed once. Two obligations for one check would leave the second `missing`
  * for ever — one run is one credit and can cite one `@SCN`.
+ *
+ * MEASURED CHECKS JOIN THROUGH THE SAME ARM (@SCN-CIP-001), because they are the same rule: a bare
+ * tag on a stepless scenario, owed once. What differs is what the obligation HOLDS. A measured check
+ * is assessed by running the suite and measuring it, so its evidence is a number and its obligation
+ * carries the CEILING that number is held against — read for THIS scenario, since canon's own shape
+ * for the axis is several stepless scenarios sharing one characteristic with ceilings of their own.
+ *
+ * A MEASURED TAG IS RECOGNISED BY THE THRESHOLD REGISTRY, not by the check registry, and the two sets
+ * are unioned by the caller. A measured check has no runnable script handle — nothing invokes
+ * `ci-run-time` — so `checkRegistry` cannot name it, and a rule reading that set alone would raise
+ * nothing for it: silent, which is worse than wrong.
+ *
+ * `measured: true` IS SET WHETHER OR NOT A CEILING WAS FOUND, and that is the point. The flag routes
+ * the obligation to the comparison arm; the missing ceiling is what that arm then reports
+ * (@SCN-CIP-002). Marking it measured only when a ceiling exists would send an un-authored one down
+ * the static route, to be reported as a check nobody wrote — the wrong cure for the actual fault.
  */
 function fitnessObligationsOf(
   tags: readonly string[],
   checkTags: readonly string[],
   stepless: boolean,
-  seen: Set<string>
+  seen: Set<string>,
+  scnId: string,
+  thresholds: ThresholdRegistry
 ): EvidenceObligation[] {
   if (!stepless) return [];
   const registered = new Set(checkTags);
+  const measured = new Set(measuredCheckTags(thresholds));
   const raised: EvidenceObligation[] = [];
   for (const tag of tags) {
-    if (!registered.has(tag) || seen.has(tag)) continue;
+    if ((!registered.has(tag) && !measured.has(tag)) || seen.has(tag)) continue;
     seen.add(tag);
-    raised.push({ qualityCheck: "lint", staticCheck: tag });
+    if (!measured.has(tag)) {
+      raised.push({ qualityCheck: "lint", staticCheck: tag });
+      continue;
+    }
+    const ceiling = thresholdFor(thresholds, scnId, tag);
+    raised.push({
+      qualityCheck: "lint",
+      staticCheck: tag,
+      measured: true,
+      // Spread rather than `threshold: ceiling ?? undefined`, so an obligation with no authored
+      // ceiling carries no key at all — the absence is a fact about the manifest, and a row
+      // serialising `"threshold": null` would read as a ceiling somebody wrote.
+      ...(ceiling !== null ? { threshold: ceiling } : {}),
+    });
   }
   return raised;
 }
@@ -212,7 +245,9 @@ function obligationsFromTags(
   tags: readonly string[],
   deferralTags: readonly string[],
   checkTags: readonly string[],
-  stepless: boolean
+  stepless: boolean,
+  scnId: string,
+  thresholds: ThresholdRegistry
 ): EvidenceObligation[] {
   const evidenceObligations: EvidenceObligation[] = [];
   const seenQualityChecks = new Set<RuntimeQualityCheck>();
@@ -240,7 +275,9 @@ function obligationsFromTags(
   // below, so a deferred fitness scenario defers like any other rather than escaping through a later
   // arm. `seenChecks` keeps a check from being owed twice however many of a scenario's effective
   // tags name it.
-  evidenceObligations.push(...fitnessObligationsOf(tags, checkTags, stepless, seenChecks));
+  evidenceObligations.push(
+    ...fitnessObligationsOf(tags, checkTags, stepless, seenChecks, scnId, thresholds)
+  );
   // SCENARIO-SCOPE community deferral (@SCN-PND-016): when the tag block carries a
   // RECOGNISED community deferral tag (a bare tag ∈ the injected `deferralTags` set —
   // empty by default; the app passes its starter policy ∪ config), the whole scenario is
@@ -387,11 +424,18 @@ export function parseTaggedScenarios(source: string): TaggedScenario[] {
  * `parseScenarios` keeps its place on the frozen v1 barrel (@SCN-API-001) and every existing caller
  * reads exactly the corpus it read before. A target that has registered nothing raises no fitness
  * obligations, which is what lets the bare-tag reading land ahead of the corpus sweep that uses it.
+ *
+ * `thresholds` — the target's authored ceilings (@SCN-CIP-001) — is trailing and optional for the
+ * same reason, and carries the scenario's own `scnId` into the obligation rule: a measured check's
+ * ceiling is keyed by the row it is owed on, so the rule cannot be applied to a tag set alone.
+ * Empty by default, so a target that has authored no ceiling raises no measured obligation and the
+ * axis is dormant.
  */
 export function parseScenarios(
   source: string,
   deferralTags: readonly string[] = [],
-  checkTags: readonly string[] = []
+  checkTags: readonly string[] = [],
+  thresholds: ThresholdRegistry = new Map()
 ): Scenario[] {
   return parseTaggedScenarios(source).map((scenario) => ({
     scnId: scenario.scnId,
@@ -399,7 +443,9 @@ export function parseScenarios(
       scenario.tags,
       deferralTags,
       checkTags,
-      scenario.stepless
+      scenario.stepless,
+      scenario.scnId,
+      thresholds
     ),
   }));
 }

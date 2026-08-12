@@ -11,6 +11,7 @@ import type { ScenarioReconciliation } from "./scenarioReconciliation.js";
 // obligation-side rule is stated once, at the row.
 import { staticCheckReconciliationsOf, isScenario } from "./scenarioReconciliation.js";
 import type { RuntimeQualityCheck, GuardEvidenceObservation } from "./journal.js";
+import { isMeasuredObservation } from "./journal.js";
 
 /**
  * THE LEDGER — the accounts with their POSTED ENTRIES. Canon (double-entry-manifesto, chain
@@ -563,6 +564,11 @@ export function staticObservationTally(ledger: Ledger): StaticObservationTally {
       // THE STATIC SCOPING — only static-check credits ride the `lint` quality-check; a runtime
       // credit (the uncited/broken ones the suspense row also holds) is not a static observation.
       if (obs.qualityCheck !== "lint") continue;
+      // A MEASUREMENT rides the same axis and is not a static check (@SCN-CIP-003): nothing read a
+      // manifest or a workflow for it, so it is neither a running static check nor an uncited one.
+      // Counting it in either tally would report a static-analysis population this tree does not
+      // have — the parallel-store fault the Ledger folds exist to foreclose.
+      if (isMeasuredObservation(obs)) continue;
       if (row.kind === "suspense-scenario") uncitedStaticCheckCount++;
       if (obs.exists && obs.enforcedOverRealSource) runningStaticCheckCount++;
     }

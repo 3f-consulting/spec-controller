@@ -34,13 +34,14 @@ import {
 } from "./sourceFiles.js";
 
 /**
- * The production core-src population, as of 3F-2565 (domain/checkRegistry.ts,
+ * The production core-src population, as of 3F-2689 (render/measuredItem.ts; 3F-2683's parse/measurements.ts, 3F-2682's domain/thresholds.ts; previously 3F-2565's
+ * domain/checkRegistry.ts,
  * parse/fitnessCitations.ts). Asserted, not assumed: the risk in moving a
  * walk into shared scaffolding is that it silently collects a DIFFERENT set — the guard stays green
  * over the wrong files and proves less than it claims, which is the vacuous green the floor exists
  * to catch. A count the walk has to hit makes that failure loud.
  */
-const CORE_SRC_FILE_COUNT = 25;
+const CORE_SRC_FILE_COUNT = 28;
 
 describe("[SCN-NPS-001] no parallel store re-represents the Ledger's entries", () => {
   it("flags a re-added retired census module file (evidenceObservations.ts / staticEvidenceObservations.ts)", () => {

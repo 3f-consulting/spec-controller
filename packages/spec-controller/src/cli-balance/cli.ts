@@ -19,6 +19,7 @@ import {
   readFeatureNames,
   featureCorpusParseErrors,
   featureCorpusDuplicateScnIds,
+  type ReconcileOptions,
 } from "../ingest/ingestQualityChecks.js";
 import { planOutput } from "./emit/format.js";
 import { writeOutputs } from "./emit/writer.js";
@@ -122,6 +123,25 @@ export function sourceTarget(args: Record<string, string>): string {
  * `runBalance` (the shared typed-error surface) — else null. An OMITTED flag is not an
  * error (legitimately optional: simply no evidence of that kind).
  */
+/**
+ * The parsed args, as the reconciler's input paths — the one place a `--flag` name becomes a
+ * `ReconcileOptions` key.
+ *
+ * Its own function rather than an object literal inside `runBalance`, which sits at the
+ * `max-lines-per-function` standard: a flag is added here, not by growing the orchestration. The
+ * mapping is also the only thing in that function with nothing to do with orchestration.
+ */
+function reconcileInputsOf(args: Record<string, string>): ReconcileOptions {
+  return {
+    features: args["features"],
+    vitest: args["vitest"],
+    cucumber: args["cucumber"],
+    ci: args["ci"],
+    packageJson: args["package-json"],
+    timings: args["timings"],
+  };
+}
+
 export function checkInputsExist(
   args: Record<string, string>,
   exists: (path: string) => boolean,
@@ -129,7 +149,7 @@ export function checkInputsExist(
   // The five input flags in a fixed order — the FIRST supplied-but-absent one is the
   // reported error (deterministic; the operator fixes and re-runs). Keys are the
   // parseArgs form (the `--` stripped); the message names the flag WITH its dashes.
-  const flags = ["vitest", "cucumber", "features", "ci", "package-json"] as const;
+  const flags = ["vitest", "cucumber", "features", "ci", "package-json", "timings"] as const;
   for (const flag of flags) {
     const path = args[flag];
     if (path !== undefined && !exists(path)) {
@@ -145,7 +165,7 @@ export function checkInputsExist(
  * read as raw TEXT and scanned for `run:` steps — neither is JSON, neither can crash the
  * process, and on garbage both reconcile normally (verified, 3F-1742 Discovery).
  */
-const JSON_INPUT_FLAGS = ["vitest", "cucumber", "package-json"] as const;
+const JSON_INPUT_FLAGS = ["vitest", "cucumber", "package-json", "timings"] as const;
 
 /**
  * Guard the READABILITY of the supplied JSON inputs at the CLI edge (@SCN-CLI-014).
@@ -401,13 +421,7 @@ export function runBalance(argv: string[]): void {
     process.exit(2);
   }
 
-  const inputs = {
-    features: args["features"],
-    vitest: args["vitest"],
-    cucumber: args["cucumber"],
-    ci: args["ci"],
-    packageJson: args["package-json"],
-  };
+  const inputs = reconcileInputsOf(args);
 
   // Reconcile the obligation-vs-observation evidence into the Ledger. The runtime evidence-observation
   // views (Test volume, the evidence grid) are FOLDS the renderers derive off this Ledger's posted

@@ -44,6 +44,9 @@ import {
   citationOfScript,
   fitnessCitations,
 } from "../../packages/core/src/parse/fitnessCitations.js";
+// The `lint` quality-check carries two shapes since @SCN-CIP-003 (a static-check fact and a
+// measurement), so a reader wanting a static check's own runnable handle asks for one.
+import { isStaticCheckObservation } from "@3f-consulting/spec-controller-core/internal";
 import { parseTaggedScenarios } from "../../packages/core/src/parse/scenarios.js";
 
 // Fixtures shared across steps within a scenario (isolated per scenario by Cucumber).
@@ -688,7 +691,7 @@ Then(
     // same object posted to every row naming the handle, so a rule that kept name-routing a
     // citing credit puts SCN-FIT-002 in this list too and the assertion reds.
     const observation = evidenceObservations.find(
-      (o) => o.qualityCheck === "lint" && o.staticCheck === CITED_SCRIPT
+      (o) => isStaticCheckObservation(o) && o.staticCheck === CITED_SCRIPT
     );
     assert.ok(observation, `expected an observation of the running check "${CITED_SCRIPT}"`);
     assert.deepEqual(
@@ -725,7 +728,7 @@ Then(
     // fitness scenario carries while the observation knows only the runnable handle, so nothing
     // matches by name and nothing could: an uncited observation leaves the obligation `missing`.
     const observation = evidenceObservations.find(
-      (o) => o.qualityCheck === "lint" && o.staticCheck === PLANTED_SCRIPT
+      (o) => isStaticCheckObservation(o) && o.staticCheck === PLANTED_SCRIPT
     );
     assert.equal(
       observation?.scnId,
@@ -768,7 +771,7 @@ Then(
     // existing — so what reads `missing` is the exists:false fact, not a citation that failed to
     // resolve. Pinning this is what stops the arm passing for the wrong reason.
     const observation = evidenceObservations.find(
-      (o) => o.qualityCheck === "lint" && o.staticCheck === ABSENT_SCRIPT
+      (o) => isStaticCheckObservation(o) && o.staticCheck === ABSENT_SCRIPT
     );
     assert.deepEqual(
       observation,
@@ -824,7 +827,7 @@ Then(
     // `fitnessCitations`. A last-wins reader cites SCN-FIT-002 and this reds on the citation alone,
     // before any outcome is read.
     const observation = evidenceObservations.find(
-      (o) => o.qualityCheck === "lint" && o.staticCheck === CITED_SCRIPT
+      (o) => isStaticCheckObservation(o) && o.staticCheck === CITED_SCRIPT
     );
     assert.equal(
       observation?.scnId,
@@ -965,7 +968,7 @@ Then(
     // resolve, it resolved to a row that has since moved. Pinning it is what stops this arm
     // passing for the wrong reason (an unresolved citation goes to suspense, not here).
     const observation = evidenceObservations.find(
-      (o) => o.qualityCheck === "lint" && o.staticCheck === script
+      (o) => isStaticCheckObservation(o) && o.staticCheck === script
     );
     assert.equal(
       observation?.scnId,
@@ -1019,7 +1022,7 @@ Then("no scenario's row holds that credit", function () {
   // that let an unresolvable citation fall back to the handle puts the renumbered row in this list;
   // one that dropped the credit empties it. Both are the failures the phantom row exists to stop.
   const observation = evidenceObservations.find(
-    (o) => o.qualityCheck === "lint" && o.staticCheck === CITED_SCRIPT
+    (o) => isStaticCheckObservation(o) && o.staticCheck === CITED_SCRIPT
   );
   assert.ok(observation, `expected an observation of the running check "${CITED_SCRIPT}"`);
   assert.deepEqual(

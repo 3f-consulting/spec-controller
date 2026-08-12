@@ -27,6 +27,9 @@ import {
 } from "../../packages/spec-controller/src/ingest/ingestQualityChecks.js";
 import type { Ledger, ScenarioReconciliation } from "../../packages/core/src/model.js";
 import type { EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
+// The `lint` quality-check carries two shapes since @SCN-CIP-003 (a static-check fact and a
+// measurement), so a reader wanting a static check's own runnable handle asks for one.
+import { isStaticCheckObservation } from "@3f-consulting/spec-controller-core/internal";
 
 // @SCN-SSM-006
 /** The static check whose own reconciliation this scenario pins. */
@@ -75,9 +78,11 @@ const ownCheckTag = (): string => {
 // @SCN-SSM-006
 const accountRaising = (ledger: Ledger, checkTag: string): ScenarioReconciliation | undefined =>
   ledger.scenarioReconciliations.find((r) =>
-    r.evidenceObligations.some(
-      (o) => o.qualityCheck === "lint" && o.staticCheck === checkTag
-    )
+    // OBLIGATIONS, not observations — the predicate below is the debit's own shape and stays
+    // spelled out. `isStaticCheckObservation` narrows the observation union and has no business
+    // here; the two sides carry the bare check tag under the same field name and are otherwise
+    // unrelated types.
+    r.evidenceObligations.some((o) => o.qualityCheck === "lint" && o.staticCheck === checkTag)
   );
 
 // @SCN-SSM-006
@@ -108,7 +113,7 @@ Then("the check's run is credited to the scenario that names it", function () {
   );
 
   const credit = account.evidenceObservations.find(
-    (o) => o.qualityCheck === "lint" && o.staticCheck === OWN_STATIC_CHECK
+    (o) => isStaticCheckObservation(o) && o.staticCheck === OWN_STATIC_CHECK
   );
   assert.ok(
     credit,
@@ -134,7 +139,7 @@ Then("the check's run is credited to the scenario that names it", function () {
 Then("no static check run is left uncited on the suspense scenario", function () {
   const suspense = accountFor(ownLedger.ledger, SUSPENSE_SCENARIO);
   const uncitedStaticChecks = (suspense?.evidenceObservations ?? [])
-    .filter((o) => o.qualityCheck === "lint")
+    .filter(isStaticCheckObservation)
     .map((o) => o.staticCheck);
 
   assert.deepEqual(

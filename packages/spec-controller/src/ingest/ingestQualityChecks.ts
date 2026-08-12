@@ -48,9 +48,13 @@ import {
   fitnessCitations,
   citationOfScript,
   parseTaggedScenarios,
+  thresholdsOf,
+  measuredCheckTags,
+  parseMeasuredEvidenceObservations,
   type CheckRegistry,
   type FitnessCitations,
   type ScriptCitation,
+  type ThresholdRegistry,
 } from "@3f-consulting/spec-controller-core/internal";
 import type { PackageJsonScripts } from "@3f-consulting/spec-controller-core";
 import { evidenceReconciliationOf } from "@3f-consulting/spec-controller-core";
@@ -146,6 +150,35 @@ export function resolveCheckRegistry(packageJson: {
 }
 
 /**
+ * The TARGET's authored CEILINGS (@SCN-CIP-001) — `specController.thresholds`, read as
+ * `@SCN → bare check tag → ceiling` through the engine's own `thresholdsOf`.
+ *
+ * The DEBIT side of the measured fitness check, and the reason the axis can reconcile at all. A
+ * static check decides pass from fail itself; a measured one produces a number, and the bar that
+ * number is held against has to come from somewhere the run cannot reach — otherwise the runner
+ * grades its own homework and the ledger transcribes a verdict rather than reconciling one.
+ *
+ * IT IS THE TARGET'S, for the same reason the registry is (@SCN-LNT-005): a suite's acceptable
+ * wall-clock is a property of the repository being reconciled and of the runner class it runs on,
+ * never of the tool doing the reconciling. Read from `--package-json` alongside the scripts, the CI
+ * config and the registry, so every input to a target's verdict came from that target.
+ *
+ * The fourth of this edge's `specController.*` resolvers, and defensive like the three above it: a
+ * missing, non-object or array-shaped config resolves EMPTY, and a malformed entry is dropped by
+ * `thresholdsOf` rather than thrown. There is no starter set: a ceiling the target did not write
+ * would hold its suites to a bar nobody chose.
+ */
+export function resolveThresholds(packageJson: {
+  specController?: { thresholds?: unknown };
+}): ThresholdRegistry {
+  const configured = packageJson.specController?.thresholds;
+  if (typeof configured !== "object" || configured === null || Array.isArray(configured)) {
+    return thresholdsOf({});
+  }
+  return thresholdsOf(configured as Record<string, unknown>);
+}
+
+/**
  * The runnable script handles the OBLIGATION-side observer is asked about — the reader that carries
  * exists-but-unwired, and so the only one able to produce a watermelon.
  *
@@ -206,11 +239,21 @@ interface TargetCorpus {
 function readTargetCorpus(
   featuresDir: string | undefined,
   deferralTags: readonly string[],
-  registry: CheckRegistry
+  registry: CheckRegistry,
+  thresholds: ThresholdRegistry
 ): TargetCorpus {
   const checkTags = registeredCheckTags(registry);
   const sources = featureSources(featuresDir);
-  const scenarios = sources.flatMap((source) => parseScenarios(source, deferralTags, checkTags));
+  // THE OBLIGATION-RAISING TAG SET IS THE UNION (@SCN-CIP-001); the CITATION hop below is the
+  // registry's alone. A measured check has no runnable script handle — nothing invokes
+  // `ci-run-time` — so it can never be registered, and a corpus read against the registry's tags
+  // alone would raise nothing for it. It equally has no business in `fitnessCitations`, which
+  // answers "which scenario does a run of this HANDLE cite": a measured credit arrives already
+  // citing, because canon puts the check-to-scenario mapping in the runner that measures.
+  const obligationTags = [...new Set([...checkTags, ...measuredCheckTags(thresholds)])];
+  const scenarios = sources.flatMap((source) =>
+    parseScenarios(source, deferralTags, obligationTags, thresholds)
+  );
   const citations = fitnessCitations(
     sources.flatMap((source) => parseTaggedScenarios(source)),
     checkTags
@@ -236,6 +279,12 @@ export interface ReconcileOptions {
   cucumber?: string;
   ci?: string;
   packageJson?: string;
+  /**
+   * The timing wrapper's artefact (@SCN-CIP-003) — the measured wall-clock of each timed step, and
+   * the credit side of every measured fitness check. Optional like the other result files: absent,
+   * it contributes nothing, and each measured obligation it would have answered reads `missing`.
+   */
+  timings?: string;
 }
 
 /** Read + JSON-parse a file if present, else return undefined. */
@@ -447,13 +496,15 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
           deferralTags?: unknown;
           staticChecks?: unknown;
           checkRegistry?: unknown;
+          thresholds?: unknown;
         };
       }
     >(pkgPath) ?? {};
   const corpus = readTargetCorpus(
     opts.features,
     resolveDeferralTags(packageJson),
-    resolveCheckRegistry(packageJson)
+    resolveCheckRegistry(packageJson),
+    resolveThresholds(packageJson)
   );
 
   // The TARGET repo root the credit locators are made relative to, so a
@@ -478,7 +529,15 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
   return evidenceReconciliationOf(
     corpus.scenarios,
     // Parse the runtime observations ONCE — the SAME set feeds both the reconciler and the census.
-    [...parseRuntimeObservations(opts, root), ...checkObservations(corpus, ciSources, packageJson)],
+    [
+      ...parseRuntimeObservations(opts, root),
+      ...checkObservations(corpus, ciSources, packageJson),
+      // THE THIRD STREAM (@SCN-CIP-003) — the measurements, which arrive already citing. They are
+      // read here rather than folded into `checkObservations` because that function's two observers
+      // both read the target's CONFIG; a measurement is a fact about a run, and the only thing the
+      // three share is the axis they ride.
+      ...parseMeasuredEvidenceObservations(readJsonIfPresent(opts.timings) ?? {}),
+    ],
     untaggedScenariosFromFeatures(opts.features),
     true,
     true

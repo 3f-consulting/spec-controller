@@ -12,8 +12,11 @@ import type {
   EvidenceObligation,
   EvidenceObservation,
   GuardEvidenceObservation,
+  FitnessEvidenceObservation,
+  MeasuredEvidenceObservation,
   RuntimeEvidenceObservation,
 } from "./journal.js";
+import { isMeasuredObservation, isStaticCheckObservation } from "./journal.js";
 
 /**
  * The reconciled OUTCOME of a single quality-check evidence obligation — one
@@ -369,10 +372,134 @@ function staticCheckObservationFor(
   checkTag: string,
   evidenceObservations: readonly EvidenceObservation[]
 ): GuardEvidenceObservation | undefined {
+  // `isStaticCheckObservation`, not a bare `qualityCheck === "lint"` (@SCN-CIP-003). Since the
+  // measured member joined the union that test no longer narrows to this interface, so a
+  // MEASUREMENT with a matching @SCN and check tag would satisfy the runtime check and be CAST to a
+  // shape it does not have. The outcome it produced was accidentally right — `exists` and
+  // `enforcedOverRealSource` read `undefined`, so the row fell through to `missing` — and it was
+  // right by coincidence of falsiness rather than because anything decided it.
   return evidenceObservations.find(
     (o): o is GuardEvidenceObservation =>
-      o.qualityCheck === "lint" && o.scnId === scnId && o.checkTag === checkTag
+      isStaticCheckObservation(o) && o.scnId === scnId && o.checkTag === checkTag
   );
+}
+
+/**
+ * Reconcile one STATIC-CHECK fitness obligation — the read-over-the-source arm, unchanged in
+ * substance and extracted so it sits beside its measured twin (@SCN-CIP-004) rather than inline in
+ * the fork. Three mappings on the static check evidence observation:
+ *   - wired into CI over the real source → satisfied.
+ *   - exists (a package.json script) but NOT wired → THE WATERMELON: green on the surface, red
+ *     within — a static check that guards nothing.
+ *   - absent (no package.json script) → missing: a required ledger entry never recorded, GENUINELY
+ *     DIFFERENT from the watermelon.
+ *
+ * NAMED FOR WHAT IT HOLDS. Every surviving fitness obligation carries the BARE CHECK TAG its
+ * stepless scenario spells (`complexity`), never the runnable handle that invokes it
+ * (`lint:complexity`) — the retired `@lint=<handle>` form raises nothing (@SCN-LNT-007). The old
+ * name `guard` read as the handle and was the tag, which is exactly the confusion that let an
+ * observation's handle be compared against it.
+ */
+function reconcileStaticObligation(
+  scnId: string,
+  req: EvidenceObligation,
+  evidenceObservations: EvidenceObservation[]
+): QualityCheckReconciliation {
+  const checkTag = req.staticCheck!; // present by construction for a fitness evidence obligation.
+  const obs = staticCheckObservationFor(scnId, checkTag, evidenceObservations);
+  let outcome: Outcome;
+  if (obs && obs.enforcedOverRealSource) {
+    outcome = "satisfied";
+  } else if (obs?.exists) {
+    outcome = "watermelon";
+  } else {
+    outcome = "missing";
+  }
+  // The CREDIT side (@SCN-LDG-027/@SCN-LDG-028): the matched static-check observation, carried
+  // ONLY when it is a REAL observation — `exists:true` (the two-sided `satisfied` / `watermelon`).
+  // A guard absent from both package.json and CI is FOUND as the negative fact
+  // `{exists:false}` — an ABSENCE, not an observed piece of evidence — so `missing` carries
+  // NOTHING on the credit side (Obligation Exists, Observation None; double-entry-manifesto line
+  // 36), uniform with the runtime `missing` path. `obs?.exists` (not `obs`) is the discriminator:
+  // `find` locating the absent-guard record must not be mistaken for an observation existing.
+  return makeQualityCheckReconciliation({
+    qualityCheck: "lint",
+    staticCheck: checkTag,
+    outcome,
+    evidenceObligation: req,
+    ...(obs?.exists ? { evidenceObservation: obs } : {}),
+  });
+}
+
+/**
+ * The MEASUREMENT answering THIS scenario's measured obligation (@SCN-CIP-004) — matched on BOTH
+ * terms, exactly as the static twin above is.
+ *
+ * THE @SCN PICKS THE ROW; THE CHECK TAG PICKS THE OBLIGATION. Neither is unique on its own. A
+ * stepless scenario may carry more than one measured check, so two measurements can honestly cite
+ * one @SCN (@SCN-LNT-012's shape on this axis); and canon's own arrangement for `ci-run-time` is
+ * two scenarios sharing ONE check with ceilings of their own (@SCN-CIP-007), so the tag alone would
+ * credit one suite's row with the other suite's wall-clock. Both faults are silent — each produces
+ * a report that looks like a report about the row it sits on.
+ *
+ * NO CITATION IS RESOLVED HERE, because none has to be. A measurement arrives carrying its @SCN:
+ * canon puts the check-to-scenario mapping in the runner that measures, so the two-hop seam the
+ * static axis needs is simply not on this path.
+ */
+function measuredObservationFor(
+  scnId: string,
+  checkTag: string,
+  evidenceObservations: readonly EvidenceObservation[]
+): MeasuredEvidenceObservation | undefined {
+  return evidenceObservations.find(
+    (o): o is MeasuredEvidenceObservation =>
+      isMeasuredObservation(o) && o.scnId === scnId && o.checkTag === checkTag
+  );
+}
+
+/**
+ * Reconcile one MEASURED fitness obligation (@SCN-CIP-004) — the comparison arm.
+ *
+ * THE ORDER OF THE THREE TESTS IS THE MECHANISM, not a style. The ceiling is checked FIRST, on the
+ * debit alone, before any measurement is sought: an obligation nobody authored a ceiling for cannot
+ * be settled by any number, and taken later the comparison would be `measured <= undefined` —
+ * which JavaScript answers false to — so the row would read `failing` and send a reader to optimise
+ * a suite whose real problem is that nobody wrote its bar (@SCN-CIP-002).
+ *
+ * THEN ABSENCE, THEN THE COMPARISON. No measurement at all is `missing`: the debit stands alone,
+ * which is canon's (Obligation Exists, Observation None). It is deliberately NOT the watermelon —
+ * "exists but is not wired" is a fact READ from a manifest and a workflow, and a measured check is
+ * read from nowhere; when the step does not run there is no artefact and nothing to observe. What
+ * must never come out of this arm is a BALANCED row, which is what a suite nobody timed would look
+ * like if absence were silent.
+ *
+ * AT OR BELOW IS SATISFIED. A ceiling a measurement sits exactly on has not been exceeded.
+ *
+ * NO NEW OUTCOME. `satisfied` and `failing` are both (Exists, Exists) in the canon side-profile and
+ * `missing` is (Exists, None), so the smart constructor's invariant holds unchanged and the union
+ * stays at canon's ten. The wrapper's own trigger-and-gate band — over the engineering anchor but
+ * inside the variance margin — is the WRAPPER's printed report and never reaches here; on the
+ * ledger it would be an eleventh outcome.
+ */
+function reconcileMeasuredObligation(
+  scnId: string,
+  req: EvidenceObligation,
+  evidenceObservations: EvidenceObservation[]
+): QualityCheckReconciliation {
+  const checkTag = req.staticCheck!; // present by construction for a fitness obligation.
+  const base = { qualityCheck: "lint" as const, staticCheck: checkTag, evidenceObligation: req };
+  if (req.threshold === undefined) {
+    return makeQualityCheckReconciliation({ ...base, outcome: "missing" });
+  }
+  const observation = measuredObservationFor(scnId, checkTag, evidenceObservations);
+  if (observation === undefined) {
+    return makeQualityCheckReconciliation({ ...base, outcome: "missing" });
+  }
+  return makeQualityCheckReconciliation({
+    ...base,
+    outcome: observation.measured <= req.threshold ? "satisfied" : "failing",
+    evidenceObservation: observation,
+  });
 }
 
 /**
@@ -387,44 +514,13 @@ export function reconcileEvidenceObligation(
   evidenceObservations: EvidenceObservation[]
 ): QualityCheckReconciliation {
   if (req.qualityCheck === "lint") {
-    // The lint (static-check) evidence obligation — matched by CITATION (@SCN plus the bare check
-    // tag) among the static check evidence observations. Three mappings on the static check
-    // evidence observation:
-    //   - wired into CI over the real source → satisfied.
-    //   - exists (a package.json script) but NOT wired → THE WATERMELON:
-    //     green on the surface, red within — a static check that guards nothing.
-    //   - absent (no package.json script) → missing: a required
-    //     ledger entry never recorded, GENUINELY DIFFERENT from the watermelon.
-    //
-    // NAMED FOR WHAT IT HOLDS. Every surviving lint obligation carries the BARE CHECK TAG its
-    // stepless scenario spells (`complexity`), never the runnable handle that invokes it
-    // (`lint:complexity`) — the retired `@lint=<handle>` form raises nothing (@SCN-LNT-007). The
-    // old name `guard` read as the handle and was the tag, which is exactly the confusion that let
-    // an observation's handle be compared against it.
-    const checkTag = req.staticCheck!; // present by construction for a lint evidence obligation.
-    const obs = staticCheckObservationFor(scnId, checkTag, evidenceObservations);
-    let outcome: Outcome;
-    if (obs && obs.enforcedOverRealSource) {
-      outcome = "satisfied";
-    } else if (obs?.exists) {
-      outcome = "watermelon";
-    } else {
-      outcome = "missing";
-    }
-    // The CREDIT side (@SCN-LDG-027/@SCN-LDG-028): the matched static-check observation, carried
-    // ONLY when it is a REAL observation — `exists:true` (the two-sided `satisfied` / `watermelon`).
-    // A guard absent from both package.json and CI is FOUND as the negative fact
-    // `{exists:false}` — an ABSENCE, not an observed piece of evidence — so `missing` carries
-    // NOTHING on the credit side (Obligation Exists, Observation None; double-entry-manifesto line
-    // 36), uniform with the runtime `missing` path. `obs?.exists` (not `obs`) is the discriminator:
-    // `find` locating the absent-guard record must not be mistaken for an observation existing.
-    return makeQualityCheckReconciliation({
-      qualityCheck: "lint",
-      staticCheck: checkTag,
-      outcome,
-      evidenceObligation: req,
-      ...(obs?.exists ? { evidenceObservation: obs } : {}),
-    });
+    // THE FITNESS FORK (@SCN-CIP-004), taken on the obligation's own `measured` marker and never on
+    // the presence of a ceiling. A measured check is assessed by RUNNING the suite, so it is
+    // reconciled by comparing numbers; the static route reads facts about the TREE and would report
+    // a measured check as a script nobody wrote — the wrong cure, loudly delivered.
+    return req.measured === true
+      ? reconcileMeasuredObligation(scnId, req, evidenceObservations)
+      : reconcileStaticObligation(scnId, req, evidenceObservations);
   }
 
   // A runtime evidence obligation — matched by (scnId, quality-check) among the runtime
@@ -530,7 +626,16 @@ export function citesUnknownScenarioReconciliationsOf(
   return credits.map((o) =>
     makeQualityCheckReconciliation({
       qualityCheck: o.qualityCheck,
-      ...(o.qualityCheck === "lint" ? { staticCheck: o.staticCheck } : {}),
+      // THE CHECK THAT RAN is the fitness credit's whole where-to-fix — it has no test file to be
+      // sent to. For a static run that is its runnable handle; for a MEASUREMENT it is the bare
+      // check tag, which is the only name a measurement has (@SCN-CIP-003). Both land in
+      // `staticCheck`, which on a reconciling item already holds the BARE tag for every obligation
+      // the fitness rule raises.
+      ...(isMeasuredObservation(o)
+        ? { staticCheck: o.checkTag }
+        : isStaticCheckObservation(o)
+          ? { staticCheck: o.staticCheck }
+          : {}),
       outcome: "cites-unknown-scenario",
       evidenceObservation: o,
       ...(locatorOf(o) !== undefined ? { locator: locatorOf(o) } : {}),
@@ -562,7 +667,7 @@ export function citesUnknownScenarioReconciliationsOf(
 export function suspenseReconciliationsOf(
   brokenEvidence: readonly RuntimeEvidenceObservation[],
   uncited: readonly RuntimeEvidenceObservation[],
-  noEvidenceObligationGuards: readonly GuardEvidenceObservation[]
+  noEvidenceObligationGuards: readonly FitnessEvidenceObservation[]
 ): QualityCheckReconciliation[] {
   return [
     ...brokenEvidence.map((o) =>
@@ -584,7 +689,11 @@ export function suspenseReconciliationsOf(
     ...noEvidenceObligationGuards.map((o) =>
       makeQualityCheckReconciliation({
         qualityCheck: "lint" as const,
-        staticCheck: o.staticCheck,
+        // The check that ran, in whichever vocabulary the credit has one: a static run knows its
+        // runnable handle, a measurement knows only its bare check tag (@SCN-CIP-003). A
+        // measurement cannot in fact reach suspense — its runner stamps the citation — so this arm
+        // is typed for what the posting rule may hand it, not for a case today's producers emit.
+        staticCheck: isMeasuredObservation(o) ? o.checkTag : o.staticCheck,
         outcome: "cites-no-scenario" as const,
         evidenceObservation: o,
       })

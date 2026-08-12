@@ -22,6 +22,9 @@
  */
 
 import { describe, it, expect } from "vitest";
+// The `lint` quality-check carries two shapes since @SCN-CIP-003 (a static-check fact and a
+// measurement), so a reader wanting a static check's own runnable handle asks for one.
+import { isStaticCheckObservation } from "@3f-consulting/spec-controller-core/internal";
 import { join } from "node:path";
 import {
   runReconcile,
@@ -300,7 +303,7 @@ describe("[SCN-USG-010] a configured static check a scenario cites is posted onc
     const scenario = reconcile().ledger.scenarioReconciliations.find(
       (s) => s.scnId === "SCN-TGN-001"
     );
-    const posted = scenario?.evidenceObservations.filter((o) => o.qualityCheck === "lint");
+    const posted = scenario?.evidenceObservations.filter(isStaticCheckObservation);
 
     expect(posted).toHaveLength(1);
     expect(posted?.[0]?.scnId).toBe("SCN-TGN-001");

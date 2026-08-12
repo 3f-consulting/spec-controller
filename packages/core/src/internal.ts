@@ -50,3 +50,32 @@ export type { FitnessCitations, ScriptCitation } from "./parse/fitnessCitations.
 // that rebuilt "which tags does this scenario carry" would be free to reproduce either one
 // silently. Internal, not public — `parseScenarios` remains the v1 corpus surface.
 export { parseTaggedScenarios } from "./parse/scenarios.js";
+
+// `thresholdsOf` / `measuredCheckTags` / `thresholdFor` — the ONE reading of a target's authored
+// CEILINGS (`domain/thresholds`, @SCN-CIP-001). Shared for the reason the check registry above is,
+// and one more: a measured check has no runnable script handle, so `registeredCheckTags` cannot see
+// it and the obligation-raising tag set is the UNION of the two readings. Any second reader deciding
+// independently which words name a measured check — the tier-tag floor being the next one to need
+// it (3F-2236) — would admit a tag the engine raises nothing for, or refuse one it does. Internal,
+// not public — where this configuration is AUTHORED moves with the registry-home question.
+export { thresholdsOf, measuredCheckTags, thresholdFor } from "./domain/thresholds.js";
+export type { ThresholdRegistry } from "./domain/thresholds.js";
+
+// `parseMeasuredEvidenceObservations` — the timing wrapper's artefact read into citing Evidence
+// Observations (`parse/measurements`, @SCN-CIP-003). Shared because the balance command is the edge
+// that reads a target's files, and this is one of them. Internal, not public — where a measurement
+// artefact is AUTHORED is as open as the registry-home question the two entries above are parked
+// on, and the frozen v1 surface is not the place to settle it (@SCN-API-001 freezes that barrel
+// exactly, both directions).
+export { parseMeasuredEvidenceObservations } from "./parse/measurements.js";
+export type { MeasurementReport } from "./parse/measurements.js";
+export type { MeasuredEvidenceObservation } from "./domain/journal.js";
+
+// `isMeasuredObservation` / `isStaticCheckObservation` — the sub-discriminators within the `lint`
+// axis (@SCN-CIP-003). Shared because `qualityCheck === "lint"` stopped narrowing to one interface
+// when the measured member joined the union, and every in-repo reader that wants a static check's
+// OWN fields — its runnable handle, its `exists`, its `enforcedOverRealSource` — now has to say
+// which of the two it means. A caller re-spelling the discriminator inline would be free to spell
+// it differently. Internal, not public — the union's third member is not on the frozen v1 surface.
+export { isMeasuredObservation, isStaticCheckObservation } from "./domain/journal.js";
+export type { FitnessEvidenceObservation } from "./domain/journal.js";

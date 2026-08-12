@@ -34,7 +34,8 @@ import type {
 // handle wherever an outcome surfaces to a reader (3F-1626) — and the DERIVED leaf list the
 // decomposition walks (3F-1806): both live in the model, so the renderer cannot drift from the
 // union. Internal core imports (NOT on the frozen v1 barrel).
-import { OUTCOME_DESCRIPTION, OUT_OF_BALANCE_OUTCOMES } from "../model.js";
+import { OUTCOME_DESCRIPTION, OUT_OF_BALANCE_OUTCOMES, OUTCOME_SIDE_PROFILE } from "../model.js";
+import { measuredSuffix } from "./measuredItem.js";
 import {
   projectProvenanceObject,
   type RunContext,
@@ -125,13 +126,18 @@ function renderItem(item: ScenarioReconciliation["reconcilingItems"][number]): s
   // Q4) shows its static check handle; a runtime credit (phantom `cites-unknown-scenario` or
   // suspense `cites-no-scenario`) shows its evidence observation locator. A DEBIT-side evidence obligation
   // (satisfied / missing / failing / watermelon) carries neither and renders bare, as before.
-  const isCredit =
-    item.outcome === "cites-no-scenario" ||
-    item.outcome === "cites-unknown-scenario" ||
-    // The no-evidence-obligation credit also posts to a real scenario's row carrying its
-    // evidence observation locator (ruling Q5) — surface the where-to-fix in the reconciliation cell.
-    item.outcome === "no-evidence-obligation";
-  let suffix = "";
+  //
+  // READ OFF THE CANON TABLE rather than listed here. A credit-side outcome is exactly one canon
+  // calls (Obligation None, Observation Exists) — `cites-no-scenario`, `cites-unknown-scenario`,
+  // `no-evidence-obligation` — and a hand-written list of the three would agree with
+  // `OUTCOME_SIDE_PROFILE` by copy rather than by construction, free to drift the day a fourth
+  // joins. (`broken` and `both-missing` are (None, None), so both terms are read.)
+  const profile = OUTCOME_SIDE_PROFILE[item.outcome];
+  const isCredit = profile.obligation === "None" && profile.observation === "Exists";
+  // A MEASURED item is DEBIT-side, so its where-to-fix — its two numbers — starts here rather than
+  // in the credit arms below (`measuredItem.ts`, @SCN-CIP-008). It is "" for every other item, so
+  // the credit arms overwrite it exactly as they overwrote the empty default.
+  let suffix = measuredSuffix(item);
   // The `broken` credit (@SCN-RPT-021) carries BOTH halves of its where-to-fix: the locator of the
   // evidence that never ran (a test file, or a feature file) AND the message it carries. The
   // message's HEADLINE LINE only — a vitest collection message is multi-line (message + stack) and

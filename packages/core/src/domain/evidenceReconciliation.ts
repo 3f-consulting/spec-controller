@@ -52,6 +52,7 @@ import type {
   RuntimeQualityCheck,
   Scenario,
   GuardEvidenceObservation,
+  FitnessEvidenceObservation,
   EvidenceObservation,
   ScenarioReconciliation,
   PendingItem,
@@ -165,7 +166,10 @@ export function reconcile(
   // owned below, not a routing decision.
   const brokenEvidence: RuntimeEvidenceObservation[] = [];
   const uncited: RuntimeEvidenceObservation[] = [];
-  const noEvidenceObligationGuards: GuardEvidenceObservation[] = [];
+  // The FITNESS union, not the static interface alone (@SCN-CIP-003). A measurement always cites —
+  // its runner stamps the citation — so it cannot in fact reach suspense; the stream is typed to
+  // what `postingOf` may hand it rather than to what today's producers happen to emit.
+  const noEvidenceObligationGuards: FitnessEvidenceObservation[] = [];
   for (const o of evidenceObservations) {
     // The union NARROW — `qualityCheck === "lint"` is the `EvidenceObservation` union's TYPE TAG,
     // not a posting decision. Which axis a credit rides is read here; where it LANDS is the rule's,

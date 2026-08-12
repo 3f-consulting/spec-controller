@@ -26,14 +26,15 @@ import {
 } from "./sourceFiles.js";
 
 /**
- * The production core-src population, as of 3F-2565 (domain/checkRegistry.ts, parse/fitnessCitations.ts).
+ * The production core-src population, as of 3F-2689 (render/measuredItem.ts; 3F-2683's parse/measurements.ts, 3F-2682's domain/thresholds.ts — the measured fitness
+ * check's ceiling registry).
  * Asserted, not assumed — see the pin below.
  *
  * The engine root IS `CORE_SRC_ROOT`: this guard and `noParallelStore` walk the SAME population,
  * which is exactly why they may share a floor. `domainPurity` walks a smaller subtree and keeps its
  * own floor; the asymmetry is deliberate.
  */
-const CORE_SRC_FILE_COUNT = 25;
+const CORE_SRC_FILE_COUNT = 28;
 
 describe("[SCN-EPG-001] the reconciliation engine imports nothing impure and references no IO", () => {
   it("flags an engine file that imports from an impure sibling layer", () => {

@@ -59,6 +59,29 @@ export interface EvidenceObligation {
    * (the one-sided Pending Item) is a later slice.
    */
   pending?: boolean;
+  /**
+   * The check is a MEASURED fitness function (@SCN-CIP-001) — assessed by RUNNING the suite and
+   * measuring it rather than by reading the source, so its evidence is a NUMBER and its
+   * reconciliation is a comparison. ABSENT on every other obligation; `true` on a measured one.
+   *
+   * IT IS THE ROUTING MARKER, and it is separate from `threshold` on purpose. The reconciler takes
+   * the measured arm on THIS flag, never on the presence of a ceiling — `measured: true` with NO
+   * `threshold` is the legal, loud shape of an obligation whose ceiling nobody authored, and it
+   * must reach the arm that says so (@SCN-CIP-002) rather than fall through to the static route and
+   * be reported as a check nobody wrote.
+   */
+  measured?: true;
+  /**
+   * The CEILING this measured obligation is held to — present when the target's manifest authored
+   * one for this `(scnId, staticCheck)` pair, absent when it did not.
+   *
+   * A `threshold` is a ceiling — a bar stayed under, never an allowance drawn down (canon, the
+   * 2026-08-02 retirement): the reconciliation is
+   * `measured <= threshold`. The DEBIT carries it, never the credit — a run supplying both the
+   * number and the bar it was judged against would be grading its own homework, and the ledger
+   * would transcribe a verdict rather than reconcile one.
+   */
+  threshold?: number;
 }
 
 /** A scenario — its @SCN id, and the evidence obligations its evidence tags raise. */
@@ -269,13 +292,95 @@ export interface GuardEvidenceObservation {
 }
 
 /**
+ * One observed MEASUREMENT — the evidence of a MEASURED fitness check (@SCN-CIP-003), emitted by
+ * the timing wrapper that ran the suite rather than read from a config or a result file.
+ *
+ * A THIRD MEMBER RATHER THAN A FLAG ON ITS SIBLING, and the reason is what the sibling MEANS.
+ * `GuardEvidenceObservation` is one observed STATIC-check fact, read from the CI config and the
+ * manifest; its two facts are `exists` and `enforcedOverRealSource`. A measurement has neither —
+ * nothing looked at a manifest, nothing looked at a workflow — so reusing that interface would
+ * mean setting two fields `true` to satisfy a type, asserting facts nobody observed. That is
+ * fabricated evidence, in the tool built to refuse it. (`broken` took the opposite trade-off for a
+ * reason that does not hold here: it rides a runtime observation whose other fields are all
+ * genuinely present.)
+ *
+ * IT ARRIVES ALREADY CITING, which is why `scnId` and `checkTag` are REQUIRED here and optional on
+ * the static twin. A static check's run is a script handle, and its `@SCN` has to be resolved for
+ * it over two hops — a resolution that can reach nothing. A measurement has no handle: the thing
+ * that measures a suite is the wrapper around the step, and canon puts the check-to-scenario
+ * mapping in that runner. A row that cites nothing is therefore not an uncited credit but an
+ * unreadable row, and the reader drops it.
+ *
+ * BOTH TERMS, NOT THE `@SCN` ALONE (@SCN-LNT-012). The `@SCN` says which ROW the credit posts to;
+ * the `checkTag` says which of that row's obligations it ANSWERS. A stepless scenario may carry
+ * more than one measured check, so two measurements can honestly cite one scenario.
+ */
+export interface MeasuredEvidenceObservation {
+  /** A measured fitness check rides the `lint` quality-check, as every fitness check does. */
+  qualityCheck: "lint";
+  /** The `@SCN` this measurement CITES — the row it posts to. */
+  scnId: string;
+  /** The BARE CHECK TAG this measurement IS (`ci-run-time`) — which obligation it answers. */
+  checkTag: string;
+  /** The measurement itself, in the check's own unit. Held against the obligation's `threshold`. */
+  measured: number;
+}
+
+/**
+ * The FITNESS observations — the `lint` quality-check's half of the union, in its two shapes.
+ *
+ * Named because `qualityCheck === "lint"` no longer narrows to one interface, and a reader that
+ * needs "a fitness credit, either kind" should say so rather than re-spell the union.
+ */
+export type FitnessEvidenceObservation = GuardEvidenceObservation | MeasuredEvidenceObservation;
+
+/**
+ * Is this observation a MEASUREMENT? The sub-discriminator among the `lint` quality-check's two
+ * shapes.
+ *
+ * Keyed on `measured` rather than on a kind field, because the field IS the difference: a static
+ * observation carries facts about the tree, a measured one carries a number. Adding a tag field
+ * would put the same distinction in two places, free to disagree.
+ */
+export function isMeasuredObservation(
+  observation: EvidenceObservation
+): observation is MeasuredEvidenceObservation {
+  return observation.qualityCheck === "lint" && "measured" in observation;
+}
+
+/**
+ * Is this observation a STATIC-CHECK fact? The complement of `isMeasuredObservation` within the
+ * `lint` quality-check, and the predicate every reader that wants a static check's OWN fields — its
+ * runnable
+ * handle, its `exists`, its `enforcedOverRealSource` — should ask.
+ *
+ * It exists so those readers state which of the two they mean instead of inheriting an answer from
+ * `qualityCheck === "lint"`, which stopped being a single interface when the measured member joined
+ * (@SCN-CIP-003).
+ */
+export function isStaticCheckObservation(
+  observation: EvidenceObservation
+): observation is GuardEvidenceObservation {
+  return observation.qualityCheck === "lint" && !("measured" in observation);
+}
+
+/**
  * One observed evidence fact — a DISCRIMINATED UNION on `qualityCheck === "lint"`:
- * a runtime test result (keyed by scnId + its runtime quality-check) or a
- * static-check evidenceObservation (`qualityCheck: "lint"`, keyed by guard). The
+ * a runtime test result (keyed by scnId + its runtime quality-check), a
+ * static-check evidenceObservation (`qualityCheck: "lint"`, keyed by guard), or a
+ * MEASUREMENT (`qualityCheck: "lint"`, carrying a number — @SCN-CIP-003). The
  * reconciler matches each evidence obligation against evidence observations of the
  * same quality-check.
+ *
+ * `qualityCheck === "lint"` now narrows to `FitnessEvidenceObservation`, not to
+ * `GuardEvidenceObservation` alone; `isMeasuredObservation` tells the two apart. That widening is
+ * deliberately type-forced: every site that reads a static observation's own fields off a
+ * lint-narrowed value had to state which of the two it meant, rather than inherit an answer.
  */
-export type EvidenceObservation = RuntimeEvidenceObservation | GuardEvidenceObservation;
+export type EvidenceObservation =
+  | RuntimeEvidenceObservation
+  | GuardEvidenceObservation
+  | MeasuredEvidenceObservation;
 
 /**
  * A PENDING ITEM — the one-sided ledger entry a deliberately-DEFERRED evidence

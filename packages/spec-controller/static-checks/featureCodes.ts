@@ -173,6 +173,12 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     status: "feature-code-used",
     note: "the no-parallel-store lock (the DDD retrofit capstone, Slice 8) — a @unit guard that reds if any production file in packages/core/src resurrects a retired evidence-observation census (its module file, a retired credit-list/section symbol, or a parallel `attributed` field), plus a @unit round-trip proving every summary aggregate re-folds from the serialised Ledger; makes 'the Ledger is the ONE source of truth' executable (3F-2101)",
   },
+  {
+    code: "CIP",
+    slug: "ci-run-time",
+    status: "feature-code-used",
+    note: "the MEASURED fitness check — the second way a fitness function is assessed: by running the suite and measuring it, so the obligation carries a threshold and the observation is a number, reconciled satisfied at or under it and failing above. ci-run-time is canon's prototype of the shape; coverage and mutation follow through the same seam (3F-2283). The code matches an adopter's repository's allocation for the same characteristic",
+  },
 ];
 
 /** A single lint finding. */

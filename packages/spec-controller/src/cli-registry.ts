@@ -81,6 +81,12 @@ const balanceFlags: FlagSpec[] = [
     description: "package.json — used to check a named guard's script exists.",
   },
   {
+    name: "--timings",
+    arg: "<report.json>",
+    description:
+      "A timing report — the measured wall-clock of each timed step, evidence for the measured fitness checks.",
+  },
+  {
     name: "--target",
     arg: "<name>",
     description: "A name recorded verbatim in the report's provenance (which project this run reconciled).",
