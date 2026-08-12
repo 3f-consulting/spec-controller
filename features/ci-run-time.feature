@@ -42,15 +42,16 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
   which is the comparison inverted; that is 3F-2509's to argue, and this slice deliberately
   builds the ceiling canon defines rather than a direction flag nothing yet asks for.
 
-  WHY NO SCENARIO BELOW RAISES A MEASURED OBLIGATION OF ITS OWN. Every scenario here is
-  STEPPED — it is an example of what the engine does — so its bare tags raise nothing
-  (@SCN-LNT-006: steplessness is the discriminator). The checks and thresholds named below
-  are fixture data, planted per scenario, under fixture @SCN ids no feature file carries.
-  spec-controller's own timed suites become stepless fitness scenarios in 3F-2236, which
-  wires the wrapper into this repository's CI and puts the obligation on the books; raising
-  it here, before anything measures it, would leave a permanently unsettleable row and red
-  the self-reconciliation gate for the length of the gap. The engine is built first, and its
-  own suites join the ledger when they can be observed.
+  WHY NO ENGINE SCENARIO RAISES A MEASURED OBLIGATION OF ITS OWN. Every scenario under the
+  Rules that exercise the engine and the wrapper is STEPPED — it is an example of what the
+  code does — so its bare tags raise nothing (@SCN-LNT-006: steplessness is the
+  discriminator). The checks and thresholds those scenarios name are fixture data, planted
+  per scenario, under fixture @SCN ids no feature file carries. The obligations this
+  repository actually owes are in the last Rule, where its own timed suites are stated
+  without steps. The order was the point: raising them before anything measured them would
+  have left a permanently unsettleable row and redded the self-reconciliation gate for the
+  length of the gap, so the engine was built first and its own suites joined the ledger once
+  something could observe them.
 
   Rule: a stepless fitness scenario tagged with a measured check raises an Evidence Obligation carrying its threshold
 
@@ -250,3 +251,123 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
       When the corpus and the measurements are reconciled and rendered
       Then the markdown names the check "ci-run-time" with its measurement 96.4 and its threshold 75
       And the JSON carries the measurement and the threshold on the row's own entries
+
+  Rule: a timed step measures itself and posts a measurement that already cites
+
+    THE PRODUCER, WHICH IS THE HALF 3F-2283 LEFT OUT. Every Rule above reads a measurement
+    that has already arrived; nothing in this repository made one. The producer is a wrapper
+    around a CI step: it runs the command, times the wall-clock, and writes the row. Canon
+    puts the check-to-scenario mapping in the runner, so the citation is handed to the wrapper
+    on its command line rather than resolved from anywhere — which is why a measurement needs
+    no two-hop seam and why one tag may honestly name many scenarios on this axis.
+
+    THE WRAPPER IS NOT AN ARBITER. It prints the two-level trigger-and-gate reading a human
+    wants and returns the wrapped command's own exit code; the timing VERDICT is the ledger's
+    alone. A wrapper that also redded would be grading its own homework — and worse, would
+    make a green build depend on two things agreeing.
+
+    @unit @integration @SCN-CIP-009
+    Scenario: a timed step writes a measurement carrying the @SCN and check tag it was given
+
+      THE SHAPE IS THE READER'S, WHICH IS WHY BOTH ARMS READ THE ARTEFACT BACK THROUGH THE
+      INGEST EDGE rather than against a literal of their own. A producer and a reader that
+      agree by inspection agree until the day one of them is edited, and a mis-keyed row does
+      not fail loudly — it reconciles missing, which is the one reading this axis exists to
+      keep unreachable. Asserting through the reader is the only form of this scenario that
+      cannot pass while the two halves disagree.
+
+      Given a timed step citing the scenario "SCN-MSD-001" on the check "ci-run-time"
+      When the step runs and takes a measurable amount of wall-clock
+      Then the artefact it wrote is read as exactly one Evidence Observation, citing "SCN-MSD-001" and naming the check "ci-run-time"
+      And that Evidence Observation carries the seconds the step took
+
+    @unit @integration @SCN-CIP-010
+    Scenario: the wrapped command's exit code is the wrapper's — a failing suite reds however fast it ran
+
+      THE MEASUREMENT IS POSTED ALL THE SAME, which is the half of this easiest to lose. A slow
+      failing suite is still a slow suite, and a wrapper that skipped its write when the child
+      failed would leave that ceiling's row reading missing — a step that plainly ran reported
+      as one that never did, which is the reading this whole axis exists to keep unreachable.
+
+      A COMMAND KILLED BY A SIGNAL never exited, and so carries no code of its own. Reading that
+      absence as a zero would green a build whose suite was cut off mid-run, so the wrapper
+      answers for it in the shell's own arithmetic rather than in an opinion of its own.
+
+      Given a timed step citing the scenario "SCN-MSD-001" on the check "ci-run-time"
+      When the step runs and the command it wraps fails
+      Then the timed step fails exactly as the command it wrapped did
+      And its measurement is posted all the same
+
+    @unit @integration @SCN-CIP-011
+    Scenario: a second timed step in the same run adds its measurement beside the first rather than replacing it
+
+      ONE ARTEFACT, TWO CONTRIBUTING STEPS. `--timings` names a single file and a run has as
+      many timed steps as it has timed suites, so the second step writes into what the first
+      one left. Writing rather than merging would leave only the later row, and the earlier
+      suite's ceiling would reconcile missing — a step that plainly ran reported as one that
+      never did, which is the reading @SCN-CIP-006 exists to keep unreachable.
+
+      WHICH IS NOT AN ARGUMENT FOR APPENDING, and that is why the row is keyed by @SCN and
+      check rather than by the end of the list. A step running twice — a re-run, a retried
+      job — would post a second row answering a debit that is owed once, and the reconciler
+      would be handed two credits for one row and left choosing between them. A step owns its
+      row: it adds beside everyone else's and replaces only its own.
+
+      Given a timed step citing the scenario "SCN-MSD-001" on the check "ci-run-time"
+      When the step runs and takes a measurable amount of wall-clock
+      And a second step citing the scenario "SCN-MSD-002" on that same check runs into the same artefact
+      Then the artefact is read as one Evidence Observation citing "SCN-MSD-001" and one citing "SCN-MSD-002"
+      When the first step runs again, taking longer than it did before
+      Then "SCN-MSD-001" is answered by exactly one Evidence Observation, carrying what its step measured this time
+      And "SCN-MSD-002" is still answered by the measurement it posted
+
+    @unit @integration @SCN-CIP-012
+    Scenario: every run prints the measurement against its trigger and its gate, naming the band it landed in
+
+      THE BAND OVER THE TRIGGER AND UNDER THE GATE IS THE WHOLE POINT OF PRINTING TWO NUMBERS.
+      A run in it is green, and the report says so — the suite has crossed the engineering
+      anchor its substrate decisions were made against, and the only place that fact can be
+      read is here. The ledger's ceiling is the gate, so a row in this band reconciles
+      satisfied exactly as one well under it does, and by the time the two readings differ
+      the slowdown is a red rather than a warning.
+
+      ONE NUMBER IS AUTHORED AND THE OTHER IS DERIVED, which is not a saving. Written side by
+      side in the manifest they could disagree, and a manifest whose trigger sat above its own
+      gate would print a run as inside the anchor and red it in the same job — with nothing to
+      say which of the two the author meant. So the ceiling is the manifest's, read through
+      the same `thresholdFor` the ledger reads it with, and the anchor is that ceiling divided
+      by the portfolio's variance margin.
+
+      AND A PAIR THE MANIFEST GIVES NO CEILING FOR IS NOT GIVEN ONE HERE. The measurement is
+      printed and the absence is named, mirroring the `null` the engine answers with: a
+      default invented in the report would be the one number on the line nobody chose, while
+      the absence is already loud on the ledger (@SCN-CIP-002), where it can be acted on.
+
+      Given a timed step citing the scenario "SCN-MSD-001" on the check "ci-run-time"
+      And its scenario is held to a ci-run-time ceiling far above what the step will take
+      When the step runs and takes a measurable amount of wall-clock
+      Then the report reads its measurement against that ceiling and against the trigger derived from it
+      And the report names the measurement as inside the trigger
+      When the ceiling is dropped below what the step measured and the step runs again
+      Then the report names the measurement as over the gate
+      When a step whose scenario the manifest holds to no ceiling at all runs
+      Then the report carries that step's measurement and says no threshold is configured
+
+  Rule: spec-controller's own timed suites are on the books
+
+    THE CHECK, TURNED ON ITS AUTHOR — the shape `scn-tags.feature` and
+    `self-reconciliation.feature` already take. The Rules above are examples of the engine and
+    the wrapper deciding over planted data; these two are the whole-system characteristics held
+    over this repository's real CI, which is the claim each push actually makes. A threshold has
+    nothing to exemplify, so neither carries steps, and their bare tags raise the obligations
+    the two timed runs settle.
+
+    TWO SCENARIOS UNDER ONE TAG, WHICH IS @SCN-CIP-007'S CASE ARRIVING FOR REAL. Each suite
+    holds its own ceiling and is answered by its own measurement; nothing is shared but the
+    characteristic.
+
+    @ci-run-time @SCN-CIP-013
+    Scenario: this repository's @unit suite completes inside its CI threshold
+
+    @ci-run-time @SCN-CIP-014
+    Scenario: this repository's @integration and @e2e suite completes inside its CI threshold

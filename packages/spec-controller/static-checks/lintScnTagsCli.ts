@@ -19,13 +19,20 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { discoverFeatures } from "../src/ingest/ingestScenarios.js";
-import { resolveDeferralTags, resolveCheckRegistry } from "../src/ingest/ingestQualityChecks.js";
-import { registeredCheckTags } from "@3f-consulting/spec-controller-core/internal";
+import {
+  resolveDeferralTags,
+  resolveCheckRegistry,
+  resolveThresholds,
+} from "../src/ingest/ingestQualityChecks.js";
+import {
+  registeredCheckTags,
+  measuredCheckTags,
+} from "@3f-consulting/spec-controller-core/internal";
 import { lintScnTags, type FeatureFileSource } from "./scnTags.js";
 
-/** The target's own `package.json` — the config both resolvers below read, read once. */
-interface TargetPackageJson {
-  specController?: { deferralTags?: unknown; checkRegistry?: unknown };
+/** The target's own `package.json` — the config every resolver below reads, read once. */
+export interface TargetPackageJson {
+  specController?: { deferralTags?: unknown; checkRegistry?: unknown; thresholds?: unknown };
 }
 
 /**
@@ -58,17 +65,30 @@ function recognisedDeferralTags(packageJson: TargetPackageJson): readonly string
 }
 
 /**
- * The BARE CHECK TAGS the target registers (@SCN-STG-005) — the tags a stepless fitness scenario
- * may satisfy the floor with, read through the SAME resolver the reconciler reads its registry with
- * (@SCN-LNT-005), so the floor admits exactly what the obligation rule raises against. Two readers
- * of one config key would each decide independently which words name a check, and a scenario the
- * floor accepted while the engine raised nothing for it would be tier-named and evidence-free.
+ * The BARE CHECK TAGS a stepless fitness scenario may satisfy the floor with (@SCN-STG-005) —
+ * read through the SAME resolvers the reconciler reads them with (@SCN-LNT-005), so the floor
+ * admits exactly what the obligation rule raises against. Two readers of one config key would
+ * each decide independently which words name a check, and a scenario the floor accepted while
+ * the engine raised nothing for it would be tier-named and evidence-free.
  *
- * Absent, malformed or empty config yields NO tags, and the floor then behaves exactly as it did
- * before — the defensive stance lives in the resolver, alongside the deferral reader's.
+ * TWO SETS, UNIONED, WHICH IS THE OBLIGATION RULE'S OWN READING (@SCN-STG-009, and
+ * `ingestQualityChecks`'s `obligationTags` one file over). A MEASURED check is held against an
+ * authored ceiling and nothing invokes it, so it has no runnable script handle and the registry
+ * can never carry it; the only place it is named is the target's thresholds. Read from the
+ * registry alone this floor reds a stepless `@ci-run-time` scenario for naming no tier — on the
+ * very tag its own obligation was raised from.
+ *
+ * Absent, malformed or empty config yields NO tags from either, and the floor then behaves
+ * exactly as it did before — the defensive stance lives in the resolvers, alongside the
+ * deferral reader's.
  */
-function registryCheckTags(packageJson: TargetPackageJson): readonly string[] {
-  return registeredCheckTags(resolveCheckRegistry(packageJson));
+export function floorCheckTags(packageJson: TargetPackageJson): readonly string[] {
+  return [
+    ...new Set([
+      ...registeredCheckTags(resolveCheckRegistry(packageJson)),
+      ...measuredCheckTags(resolveThresholds(packageJson)),
+    ]),
+  ];
 }
 
 /** The features dir from an optional `--features <dir>` flag, or undefined. */
@@ -81,31 +101,41 @@ function featuresDirArg(argv: readonly string[]): string | undefined {
   return undefined;
 }
 
-const dir = featuresDirArg(process.argv.slice(2));
-const discovered = dir === undefined ? discoverFeatures() : discoverFeatures(dir);
-const sources: FeatureFileSource[] = discovered.map((f) => ({
-  slug: f.slug,
-  source: readFileSync(f.path, "utf8"),
-}));
+/** Read the tree, resolve the target's two sets, and exit on the floor's verdict. */
+export function runScnTagsLint(argv: readonly string[]): void {
+  const dir = featuresDirArg(argv);
+  const discovered = dir === undefined ? discoverFeatures() : discoverFeatures(dir);
+  const sources: FeatureFileSource[] = discovered.map((f) => ({
+    slug: f.slug,
+    source: readFileSync(f.path, "utf8"),
+  }));
 
-const packageJson = targetPackageJson();
-const result = lintScnTags(
-  sources,
-  recognisedDeferralTags(packageJson),
-  registryCheckTags(packageJson)
-);
-
-if (result.ok) {
-  console.log(
-    "scn-tags lint: OK — every @SCN scenario names an evidence tier (or is parked), every tag on it is grammar, and no stepless fitness scenario claims more than one check."
+  const packageJson = targetPackageJson();
+  const result = lintScnTags(
+    sources,
+    recognisedDeferralTags(packageJson),
+    floorCheckTags(packageJson)
   );
-  process.exit(0);
+
+  if (result.ok) {
+    console.log(
+      "scn-tags lint: OK — every @SCN scenario names an evidence tier (or is parked), every tag on it is grammar, and no stepless fitness scenario claims more than one check."
+    );
+    process.exit(0);
+  }
+
+  console.error(
+    `scn-tags lint: FAILED — ${result.violations.length} finding(s): a scenario naming an @SCN but no evidence tier (and not parked), a tag that is neither a tier nor a recognised deferral tag, or a stepless fitness scenario claiming more than one check:`
+  );
+  for (const v of result.violations) {
+    console.error(`  ${v.message}`);
+  }
+  process.exit(1);
 }
 
-console.error(
-  `scn-tags lint: FAILED — ${result.violations.length} finding(s): a scenario naming an @SCN but no evidence tier (and not parked), a tag that is neither a tier nor a recognised deferral tag, or a stepless fitness scenario claiming more than one check:`
-);
-for (const v of result.violations) {
-  console.error(`  ${v.message}`);
-}
-process.exit(1);
+// Run only when invoked as the script, so the @unit arm can import the resolver above without
+// the gate reconciling a tree as a side effect of the import (the lintScnSubIssuesCli convention).
+const invokedDirectly =
+  process.argv[1] !== undefined && import.meta.url === `file://${process.argv[1]}`;
+
+if (invokedDirectly) runScnTagsLint(process.argv.slice(2));

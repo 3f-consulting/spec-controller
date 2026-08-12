@@ -213,6 +213,28 @@ Then("it fails, naming the scenario that named no tier", function () {
   );
 });
 
+/**
+ * @SCN-STG-009 — the MEASURED half of the check-tag set, driven from INSIDE each planted
+ * target for `runGuardInTarget`'s reason: a measured check is named ONLY in the target's
+ * thresholds, so a run from repoRoot would resolve this repository's manifest — which names
+ * no ceiling at all — and the arm would prove nothing about whose ceilings were read.
+ */
+// @SCN-STG-009
+When(
+  "it runs over a target whose stepless scenarios carry a measured check tag and a registered one",
+  function () {
+    runGuardInTarget("tests/fixtures/scn-tags-measured");
+  }
+);
+
+// @SCN-STG-009
+When("it runs over that same target with no thresholds configured", function () {
+  // Byte-for-byte the corpus above; only the manifest differs, so the pair isolates the
+  // thresholds rather than the tags. Its `@complexity` scenario stays admitted throughout,
+  // which is what makes this a red on the MEASURED tag alone.
+  runGuardInTarget("tests/fixtures/scn-tags-measured-unconfigured");
+});
+
 // @SCN-STG-007
 When(
   "it runs over a target whose stepless scenario carries two registered bare check tags",

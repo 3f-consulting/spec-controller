@@ -165,6 +165,18 @@ Feature: The tier-tag floor — every scenario names an evidence tier
     words would be a second place to remember that the group lives in the model — and it would
     green the first group name nobody thought of.
 
+    AND THE REGISTRY IS NOT THE ONLY PLACE A CHECK IS NAMED (@SCN-STG-009). A MEASURED check
+    produces a number and is held against an authored ceiling; nothing invokes it, so it has no
+    runnable script handle and can never appear in the registry at all. Where it IS named is the
+    debit side — the target's thresholds. The obligation rule already reads both and raises
+    against the union, so a floor reading the registry alone reds a stepless `@ci-run-time`
+    scenario for naming no tier on the very tag its own obligation was raised from.
+
+    SO THE TWO SETS ARE READ TOGETHER, at the one edge that resolves both. The floor must admit
+    precisely what the obligation rule raises against: admit less and an author is refused the
+    shape the engine asks them to write, admit more and a scenario is tier-named while owing
+    nothing — the silent hole this floor exists to close, reopened from the other side.
+
     @unit @integration @SCN-STG-004
     Scenario: a @fitness=<check> tag reds the tier-tag check, naming the bare tag it should have been
       Given the scn-tags static check
@@ -177,6 +189,14 @@ Feature: The tier-tag floor — every scenario names an evidence tier
       When it runs over a target whose stepless scenario carries only its registered bare check tag
       Then it passes
       When it runs over a target whose stepped scenario carries that same bare check tag and no tier
+      Then it fails, naming the scenario that named no tier
+
+    @unit @integration @SCN-STG-009
+    Scenario: a stepless scenario tagged with a MEASURED check satisfies the tier floor
+      Given the scn-tags static check
+      When it runs over a target whose stepless scenarios carry a measured check tag and a registered one
+      Then it passes
+      When it runs over that same target with no thresholds configured
       Then it fails, naming the scenario that named no tier
 
   Rule: a stepless fitness scenario carries ONE check, and a second reds the tier-tag check

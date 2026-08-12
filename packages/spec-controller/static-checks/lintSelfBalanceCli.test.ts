@@ -53,13 +53,16 @@ const OWN_STATIC_CHECK = "lint:self-balance";
 const GUARD_PREFIXES = ["lint:", "guard:"] as const;
 
 describe("[SCN-SLF-001] the self-balance gate's scan scope is stated, whole, in one place", () => {
-  it("reaches exactly the five surfaces a reconciliation reads — named, observed, and wired", () => {
-    // EXHAUSTIVE by design. A sixth surface, or a fifth quietly removed, must red here:
+  it("reaches exactly the six surfaces a reconciliation reads — named, observed, and wired", () => {
+    // EXHAUSTIVE by design. A seventh surface, or a sixth quietly removed, must red here:
     // this object is the only statement of what spec-controller's own tree is judged on.
     expect(SELF_BALANCE_SCOPE).toEqual({
       features: "features",
       vitest: "runs/self-balance/vitest.json",
       cucumber: "runs/self-balance/cucumber.json",
+      // The MEASURED stream (@SCN-CIP-013, 3F-2742), sourced from the producer's own constant
+      // so the path this gate reads cannot drift from the path the timed steps write.
+      timings: "runs/self-balance/timings.json",
       // The workflow DIRECTORY, not one file (3F-2500): the product's own default reads
       // every workflow, and a gate that read fewer would be spec-controller declining to
       // use the capability it ships — the shape @SCN-SLF-002 closed one level down.
@@ -68,19 +71,20 @@ describe("[SCN-SLF-001] the self-balance gate's scan scope is stated, whole, in 
     });
   });
 
-  it("keeps the two runtime reports under the never-committed runs/ tree", () => {
+  it("keeps the three runtime artefacts under the never-committed runs/ tree", () => {
     // Not incidental: a reconciliation report enumerates this codebase's gaps, so it is
     // more sensitive than the code. runs/** is gitignored with no re-includes and
     // lint:no-committed-reports enforces it, so writing the streams there is what keeps
     // the gate's own inputs off the record.
     expect(SELF_BALANCE_SCOPE.vitest.startsWith("runs/")).toBe(true);
     expect(SELF_BALANCE_SCOPE.cucumber.startsWith("runs/")).toBe(true);
+    expect(SELF_BALANCE_SCOPE.timings.startsWith("runs/")).toBe(true);
   });
 
   it("hands every scope surface to the product's balance command, resolved against the root", () => {
     // The gate cannot narrow what it reconciles by omitting a flag: each surface appears
     // with its value, so dropping one from the argv reds even if the scope object is intact.
-    const argv = selfBalanceArgv("/tmp/target");
+    const argv = selfBalanceArgv("/tmp/target", {}, () => true);
 
     expect(argv).toEqual([
       "--features",
@@ -89,6 +93,8 @@ describe("[SCN-SLF-001] the self-balance gate's scan scope is stated, whole, in 
       path.join("/tmp/target", "runs/self-balance/vitest.json"),
       "--cucumber",
       path.join("/tmp/target", "runs/self-balance/cucumber.json"),
+      "--timings",
+      path.join("/tmp/target", "runs/self-balance/timings.json"),
       "--ci",
       path.join("/tmp/target", ".github/workflows"),
       "--package-json",
@@ -98,13 +104,28 @@ describe("[SCN-SLF-001] the self-balance gate's scan scope is stated, whole, in 
     ]);
   });
 
+  it("leaves --timings off where no timed step posted, so the rows it answers reconcile missing", () => {
+    // THE ASYMMETRY IS THE POINT (@SCN-CIP-013). A --timings path the balance command cannot
+    // find is a usage fault to it and exits 2, and exit 2 says "this run is broken" where the
+    // truth is "a timed suite was never measured" — a verdict @SCN-CIP-006 puts on the ledger.
+    // Passing the flag regardless would rebuild the hiding place inside the gate: unwrap a
+    // timed script and the build would report a broken run rather than an unmeasured suite.
+    const argv = selfBalanceArgv("/tmp/target", {}, () => false);
+
+    expect(argv).not.toContain("--timings");
+    // Everything else still reaches the command — the absent artefact narrows nothing but itself.
+    expect(argv).toContain(path.join("/tmp/target", "runs/self-balance/vitest.json"));
+    expect(argv).toContain(path.join("/tmp/target", "features"));
+  });
+
   it("lets a caller relocate the emitted reports without relocating the surfaces read", () => {
     // CI writes the streams where the run wrote them, so the report PATHS are an override;
     // WHICH surfaces are read is not. The three tree surfaces stay pinned to the root.
-    const argv = selfBalanceArgv("/tmp/target", {
-      vitest: "/elsewhere/vitest.json",
-      cucumber: "/elsewhere/cucumber.json",
-    });
+    const argv = selfBalanceArgv(
+      "/tmp/target",
+      { vitest: "/elsewhere/vitest.json", cucumber: "/elsewhere/cucumber.json" },
+      () => true,
+    );
 
     expect(argv).toContain("/elsewhere/vitest.json");
     expect(argv).toContain("/elsewhere/cucumber.json");

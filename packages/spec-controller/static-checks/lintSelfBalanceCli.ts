@@ -24,14 +24,15 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 
 import { runBalance } from "../src/cli-balance/cli.js";
+import { TIMINGS_ARTEFACT_PATH } from "./stepTiming.js";
 
 /**
- * The five surfaces the gate reconciles, as paths relative to a target root.
+ * The six surfaces the gate reconciles, as paths relative to a target root.
  *
- * There is no sixth. A path enters the gate only by entering one of these — which is the
+ * There is no seventh. A path enters the gate only by entering one of these — which is the
  * answer to "is `packages/fixture-pkg/` in scope?" (3F-2351, Scan-scope ruling): that
  * path is a string inside a step definition's temporary fixture tree, it exists on none
- * of these five surfaces, and so it is out of scope by construction. No exclusion list
+ * of these surfaces, and so it is out of scope by construction. No exclusion list
  * is built, because an exclusion guarding an input that cannot arrive is a rule left to
  * rot the first time the fixture is renamed.
  */
@@ -42,6 +43,8 @@ export interface SelfBalanceScope {
   vitest: string;
   /** The Cucumber JSON report — the observed `@integration` / `@e2e` stream. */
   cucumber: string;
+  /** The timing artefact — the observed MEASURED stream this run's timed steps post into. */
+  timings: string;
   /** The CI configs — where a static check is observed to FIRE, not merely to exist. */
   ci: string;
   /** The package manifest — where a static check is observed to EXIST. */
@@ -54,7 +57,7 @@ export interface SelfBalanceScope {
  * planted tree under test — `--root` moves the whole scope to another tree, it never
  * narrows which surfaces are read.
  *
- * The two runtime reports live under `runs/`, which `.gitignore` excludes with no
+ * The three runtime artefacts live under `runs/`, which `.gitignore` excludes with no
  * re-includes and `lint:no-committed-reports` enforces: a reconciliation report
  * enumerates a codebase's gaps and is never committed.
  */
@@ -62,6 +65,10 @@ export const SELF_BALANCE_SCOPE: SelfBalanceScope = {
   features: "features",
   vitest: "runs/self-balance/vitest.json",
   cucumber: "runs/self-balance/cucumber.json",
+  // The producer's own constant rather than a second spelling of it. A wrapper writing one path
+  // while this gate read another would not be loud: the reader would find nothing and every
+  // measured row would reconcile missing, which reads as a suite that never ran.
+  timings: TIMINGS_ARTEFACT_PATH,
   ci: ".github/workflows",
   packageJson: "package.json",
 };
@@ -82,6 +89,7 @@ function resolveScope(
     features: join(root, scope.features),
     vitest: overrides.vitest ?? join(root, scope.vitest),
     cucumber: overrides.cucumber ?? join(root, scope.cucumber),
+    timings: join(root, scope.timings),
     ci: join(root, scope.ci),
     packageJson: join(root, scope.packageJson),
   };
@@ -92,12 +100,22 @@ function resolveScope(
  * against `root`, plus the target name that titles the report.
  *
  * Reports may be overridden (CI writes them where the run wrote them); the SURFACES may
- * not. Pure, so the @unit arm can assert the gate passes all five and cannot quietly
+ * not. Pure, so the @unit arm can assert the gate passes all six and cannot quietly
  * drop one.
+ *
+ * THE TIMING ARTEFACT IS PASSED ONLY WHERE IT EXISTS, WHICH IS THE OPPOSITE OF THE TREATMENT
+ * THE TWO SUITE REPORTS GET (@SCN-CIP-013). A `--timings` path the balance command is handed and
+ * cannot find is a usage fault to it and exits 2 (@SCN-CLI-002) — the wrong verdict here. An
+ * absent artefact leaves exactly the measured rows unanswered, and those rows reconciling
+ * missing is the honest reading: a step that never ran is never balanced (@SCN-CIP-006). Exit 2
+ * would take that verdict away from the ledger and rebuild, inside the gate, the hiding place
+ * the gate exists to close — unwrap a timed script and the build would report a broken run
+ * rather than an unmeasured suite.
  */
 export function selfBalanceArgv(
   root: string,
-  overrides: ReportOverrides = {},
+  overrides: ReportOverrides,
+  exists: (path: string) => boolean,
   scope: SelfBalanceScope = SELF_BALANCE_SCOPE,
 ): string[] {
   const resolved = resolveScope(root, overrides, scope);
@@ -108,6 +126,7 @@ export function selfBalanceArgv(
     resolved.vitest,
     "--cucumber",
     resolved.cucumber,
+    ...(exists(resolved.timings) ? ["--timings", resolved.timings] : []),
     "--ci",
     resolved.ci,
     "--package-json",
@@ -122,6 +141,11 @@ export function selfBalanceArgv(
  * level up). The gate cannot reconcile a stream that was never emitted, and an absent
  * report is a USAGE fault — the run was set up wrong — never an out-of-balance verdict.
  * Reporting it as a verdict is the false all-red the dogfooding fault produced.
+ *
+ * THE TIMING ARTEFACT IS DELIBERATELY NOT GUARDED HERE, and the asymmetry is the whole of
+ * @SCN-CIP-013's care. An unemitted suite report leaves EVERY obligation unobserved, which means
+ * the suite did not run; an absent timing artefact leaves exactly the measured rows unanswered,
+ * and those reconciling missing is a verdict the ledger is entitled to reach.
  *
  * Pure: the resolved paths + an injected `exists`, returning a message naming the absent
  * report AND how to emit it, else null.
@@ -183,7 +207,7 @@ export function runSelfBalance(argv: string[]): void {
     return;
   }
 
-  runBalance(selfBalanceArgv(root, overrides));
+  runBalance(selfBalanceArgv(root, overrides, existsSync));
 }
 
 // Run only when invoked as the script, so the @unit arm can import the pure helpers
