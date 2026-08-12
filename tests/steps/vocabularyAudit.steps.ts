@@ -673,9 +673,14 @@ const VOC013_FEATURE_PATH = "features/tag-shapes.feature";
 
 /**
  * ONE tag line carrying every shape the measured tree actually contains — the retired tag
- * `@ci-performance` beside the four protected shapes. They share a line deliberately: the
- * red half and the four green halves must be produced by the SAME walk over the SAME line,
+ * `@ci-performance` beside the five protected shapes. They share a line deliberately: the
+ * red half and the five green halves must be produced by the SAME walk over the SAME line,
  * or each could be true of a different code path.
+ *
+ * The deferral tag is `@skip` and NOT `@wip` on purpose (3F-2655). The grammar arm used to
+ * name `@wip` alone, hard-coded, so a corpus planting `@wip` would be green under the old arm
+ * and the new one alike and would prove only that the word had been thought of. `@skip` is
+ * green only if the arm reads the product's deferral SET.
  */
 const VOC013_FEATURE = [
   "@TGT",
@@ -683,7 +688,7 @@ const VOC013_FEATURE = [
   "",
   "  Rule: the shapes coexist on one tag line",
   "",
-  "    @unit @lint=guard:domain-purity @ci-performance @SCN-TGT-001",
+  "    @unit @skip @lint=guard:domain-purity @ci-performance @SCN-TGT-001",
   "    Scenario: the shapes coexist",
   "      Given a step",
   "",
@@ -691,7 +696,7 @@ const VOC013_FEATURE = [
 
 // @SCN-VOC-013
 Given(
-  "a feature corpus whose tag lines carry a retired term alongside a scenario id, a feature code, a tier tag and a retired-form handle",
+  "a feature corpus whose tag lines carry a retired term alongside a scenario id, a feature code, a tier tag, a community deferral tag and a retired-form handle",
   function () {
     const dir = mkdtempSync(join(tmpdir(), "spec-controller-voc013-"));
     mkdirSync(join(dir, "features"));
@@ -781,6 +786,29 @@ Then("the tier tag is not flagged", function () {
     [],
     `a tier tag is Gherkin grammar (scnTags.ts's own isTierTag) and must earn no row; got:\n` +
       `${JSON.stringify(rows)}`
+  );
+});
+
+// @SCN-VOC-013
+Then("the community deferral tag is not flagged", function () {
+  // THE ARM THAT STOPPED NAMING ONE COMMUNITY TAG (3F-2655). `skip` is the product's own
+  // parking policy — the starter set the application layer owns — so it is Gherkin grammar
+  // wherever it sits, exactly as a tier tag is.
+  //
+  // WHAT THIS STEP DOES NOT PROVE, said out loud because a step that overstates itself is
+  // worse than one that is absent. A deferral tag can earn NO manifest row either way: `skip`
+  // is allowlisted, and the other four are unknown words, which do not flag in PROSE mode. So
+  // this green survives the deletion of the very exemption it names — the erosion trap this
+  // Rule is written over — and it is here for the same reason its four siblings above are: to
+  // state the protected shape at the boundary the scenario describes. The DISCRIMINATING
+  // assertion is the @unit one, over `scanFile`'s SEGMENTS, which is the taxonomy's direct
+  // output and reds the moment the arm stops reading the set (vocabAuditTagLines.test.ts).
+  const rows = voc013Rows().filter((r) => r["current"] === "skip");
+  assert.deepEqual(
+    rows,
+    [],
+    `a community deferral tag is the product's own parking policy and Gherkin grammar, so ` +
+      `it must earn no row; got:\n${JSON.stringify(rows)}`
   );
 });
 

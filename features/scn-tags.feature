@@ -4,7 +4,8 @@ Feature: The tier-tag floor — every scenario names an evidence tier
   spec-controller reconciles on evidence tiers but did not require its OWN scenarios to
   name one — a tier-less scenario yields no evidence obligation and slips silently. This
   guard closes that (the cobbler's shoes): every scenario under features/ carrying an @SCN
-  must name at least one tier tag, UNLESS it carries @wip. scnTags parity with an adopter's repository's
+  must name at least one tier tag, UNLESS it is PARKED — carrying one of the deferral tags
+  the target itself configures (@SCN-STG-008). scnTags parity with an adopter's repository's
   guard:scn-tags. The guard is itself cited — the stepless fitness scenario at the foot of
   this file carries its bare `@scn-tags` tag — and CI-wired, so spec-controller's own
   ledger reconciles it.
@@ -13,9 +14,10 @@ Feature: The tier-tag floor — every scenario names an evidence tier
   pending variants (@unitpending / @integrationpending / etc. — a <tier>pending names the
   tier, deferred), AND @lint=<guard> — spec-controller names lint as @lint=<guard>, not
   bare @lint, so the guard accepts the =<guard> form. A bare-@lint-only match would
-  false-flag every guard scenario (including this one) and red the real tree. Exempt: @wip
-  only (the other recognised deferral tags are for reconciled targets, not spec-controller's
-  own authoring).
+  false-flag every guard scenario (including this one) and red the real tree. Exempt: a
+  PARKED scenario — one carrying any tag in the target's RESOLVED deferral set, which is the
+  community starter set extended by the target's own config, so @wip still parks and so does
+  whatever else the target configures (@SCN-STG-008). The guard itself names no community tag.
 
   Rule: a tier-less non-@wip @SCN scenario reds the scn-tags guard
 
@@ -74,14 +76,58 @@ Feature: The tier-tag floor — every scenario names an evidence tier
     handed to the check. That is what makes "derived, not restated" true rather
     than aspirational — there is no second list here to fall behind the first.
 
-    RECOGNISING A TAG IS NOT EXCUSING THE FLOOR, and the two questions must not
-    bleed. A `@skip` scenario naming no tier still reds — as tier-less, which is
-    what it is. `@wip` remains the only exemption.
+    RECOGNISING A TAG IS ALSO PARKING IT (@SCN-STG-008, 3F-2655). This Rule once ended
+    "recognising a tag is not excusing the floor — a `@skip` scenario naming no tier still
+    reds, and `@wip` remains the only exemption", and that sentence was the defect rather
+    than the discipline: the resolved set arrived here, answered the grammar question, and
+    the floor below then asked a hard-coded `wip` instead. So a `@skip` scenario was
+    recognised as a legitimate deferral and failed for the deferral it had legitimately
+    named. One set, read twice — recognised as grammar, honoured as a skip.
+
+    WHAT DOES NOT BLEED IS THE TYPO ARM, and that is the boundary the two questions keep.
+    A parked scenario's tags are still read for well-formedness, because parking defers what
+    a scenario OWES and what SHAPE it must have, never whether its tags are spelled right.
+    And this set is precisely what lets this arm recognise the parking tag, so excusing the
+    arm on a parked scenario would hide `@wip @untit` — a gate whose teeth come off by
+    writing one more tag.
 
     @unit @integration @SCN-STG-003
     Scenario: a recognised community deferral tag is not an unrecognised tag
       Given the scn-tags static check
       When it runs over a features tree whose tiered @SCN scenario also carries a recognised community deferral tag
+      Then it passes
+
+  Rule: a parked scenario is out of the tier floor's scope, and the parking set is the target's
+
+    THE TAG THE GUARD DOES NOT OWN. `@wip` is a Cucumber convention, not spec-controller
+    vocabulary, and a guard that bakes it in governs by a word it has no authority over: a
+    project parking with `@skip` gets its deliberate deferral read as a fault, and one
+    parking with `@parked` cannot be governed at all without renaming its corpus first.
+
+    THE SET WAS ALREADY ARRIVING. The CLI has resolved the target's deferral set since the
+    grammar Rule above (@SCN-STG-002) and handed it to this check, which read it for the
+    GRAMMAR question and then asked the floor about a hard-coded `wip`. The config surface
+    was not missing; it was half-consulted. One set, read once, answers both questions.
+
+    PARKING IS A SKIP-SIGNAL, NOT A TIER (operator ruling, 3F-2655). A parked scenario is
+    not asserting anything about evidence — it is out of scope until it is unparked, and the
+    floor has nothing to say about it in the meantime.
+
+    AND THE GUARD KEEPS NO DEFAULT OF ITS OWN. The set is INJECTED, defaulting to NONE, the
+    way the check-tag set is and for the same reason: which words park is the target's
+    answer, not this module's. The community default lives where the rest of the product's
+    policy lives — the starter set in the application layer — so a target configuring
+    nothing still parks with `@wip`, and this module still names no community tag at all.
+    That is the difference between owning a policy and hard-coding someone else's.
+
+    @unit @integration @SCN-STG-008
+    Scenario: the tier floor skips a parked scenario, and the parking set is the target's own
+      Given the scn-tags static check
+      When it runs over a target whose tier-less scenario carries a parking tag the target itself configured
+      Then it passes
+      When it runs over that same target with the parking tag removed
+      Then it fails, naming the scenario that named no tier
+      When it runs over a target configuring no parking tags whose tier-less scenario carries @wip
       Then it passes
 
   Rule: a group-prefixed quality-check tag is outside the grammar
@@ -163,18 +209,34 @@ Feature: The tier-tag floor — every scenario names an evidence tier
     (@SCN-STG-005) — untouched. The message names BOTH tags, because the author has to choose
     which scenario keeps which check and a message naming one of them has already chosen for them.
 
-    ASKED INDEPENDENTLY OF @wip, like the grammar question above it rather than like the floor.
-    The parking tag defers what a scenario OWES; it does not license a shape canon does not have.
-    A parked scenario carrying two checks is still two scenarios written as one, and the split is
-    the same edit whenever it happens.
+    ASKED OF UNPARKED SCENARIOS ONLY, like the floor rather than like the grammar question
+    (operator ruling, 3F-2655). This Rule first shipped saying the opposite — that a parking tag
+    defers what a scenario OWES and so has nothing to say about its SHAPE. The ruling is that
+    parking is a SKIP-SIGNAL: a parked scenario is out of scope, and out of scope is not a place
+    where some questions still get asked. Both readings agree the split is the same edit whenever
+    it happens; they disagree about whether an author who has already said "not yet" should be
+    made to do it now, and canon says no.
+
+    THE SKIP IS NOT AN ERASURE, and the fourth pair below is what makes that a fact rather than a
+    promise: unpark the scenario and the same two tags red again, unchanged. What parking buys is
+    time, never a permanent exemption, and a rule that could be switched off for good by one tag
+    would be worth having only until someone noticed.
+
+    WHAT THE SKIP DOES NOT REACH IS THE GRAMMAR ARM one Rule up. A parked scenario's tags are
+    still read for well-formedness, because the deferral set is exactly what lets that arm
+    recognise the parking tag — so excusing it would make `@wip @untit` invisible.
 
     @unit @integration @SCN-STG-007
-    Scenario: two bare check tags on one stepless scenario red the tier-tag check, naming both
+    Scenario: two bare check tags on one UNPARKED stepless scenario red the tier-tag check, naming both
       Given the scn-tags static check
       When it runs over a target whose stepless scenario carries two registered bare check tags
       Then it fails, naming the scenario and BOTH check tags
       When it runs over that same target with one of the two check tags removed
       Then it passes
+      When it runs over that same target with both check tags kept and the scenario parked
+      Then it passes
+      When it runs over that same target with the parking tag taken off again
+      Then it fails, naming the scenario and BOTH check tags
 
   Rule: spec-controller's own corpus satisfies the tier floor
 

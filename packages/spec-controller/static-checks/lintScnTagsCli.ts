@@ -3,7 +3,7 @@
  * CI: it discovers the repo's feature files (via `discoverFeatures`), reads each
  * file's SOURCE — since `DiscoveredFeature.scenarioCodes` carries only the @SCN
  * ids, not the per-scenario tag blocks the floor needs — and flags every scenario
- * that carries an @SCN-<FFF>-<NNN> but NAMES no evidence tier and is not @wip.
+ * that carries an @SCN-<FFF>-<NNN> but NAMES no evidence tier and is not PARKED.
  * Exits non-zero, naming every tier-less offender, if any is found; exits 0 over a
  * compliant tree.
  *
@@ -45,6 +45,13 @@ function targetPackageJson(): TargetPackageJson {
  * SAME resolver the ingest edge uses (@SCN-PND-021). The unrecognised-tag question must
  * not answer differently from the product's own policy, so the set is resolved rather
  * than restated.
+ *
+ * IT IS ALSO THE PARKING SET (@SCN-STG-008), and this line is where the community default
+ * enters. `lintScnTags` names no community tag and parks nothing it is not handed; what makes
+ * `@wip` still work for a target that configures nothing is the starter list INSIDE this
+ * resolver, in the application layer that owns product policy. Reading the config here rather
+ * than there is what keeps `scnTags.ts` import-free — which is what keeps `vocabTagGrammar.ts`'s
+ * dependency on its `isTierTag` one-way and cycle-free.
  */
 function recognisedDeferralTags(packageJson: TargetPackageJson): readonly string[] {
   return resolveDeferralTags(packageJson);
@@ -90,13 +97,13 @@ const result = lintScnTags(
 
 if (result.ok) {
   console.log(
-    "scn-tags lint: OK — every @SCN scenario names an evidence tier (or is @wip), every tag on it is grammar, and no stepless fitness scenario claims more than one check."
+    "scn-tags lint: OK — every @SCN scenario names an evidence tier (or is parked), every tag on it is grammar, and no stepless fitness scenario claims more than one check."
   );
   process.exit(0);
 }
 
 console.error(
-  `scn-tags lint: FAILED — ${result.violations.length} finding(s): a scenario naming an @SCN but no evidence tier (and not @wip), a tag that is neither a tier nor a recognised deferral tag, or a stepless fitness scenario claiming more than one check:`
+  `scn-tags lint: FAILED — ${result.violations.length} finding(s): a scenario naming an @SCN but no evidence tier (and not parked), a tag that is neither a tier nor a recognised deferral tag, or a stepless fitness scenario claiming more than one check:`
 );
 for (const v of result.violations) {
   console.error(`  ${v.message}`);

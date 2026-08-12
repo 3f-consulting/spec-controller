@@ -262,3 +262,52 @@ When(
     runGuardInTarget("tests/fixtures/scn-tags-two-checks-split");
   }
 );
+
+/**
+ * @SCN-STG-008 — the parking arm, driven from INSIDE each planted target for the reason
+ * `runGuardInTarget` names: the parking set is the TARGET's, resolved from the package.json
+ * at the CLI's cwd. Run from repoRoot these three would all resolve spec-controller's own
+ * config and the arm would prove nothing about whose set it is.
+ */
+// @SCN-STG-008
+When(
+  "it runs over a target whose tier-less scenario carries a parking tag the target itself configured",
+  function () {
+    // `@parked` is in NO starter set — it parks only because this fixture configures it.
+    runGuardInTarget("tests/fixtures/scn-tags-parked");
+  }
+);
+
+// @SCN-STG-008
+When("it runs over that same target with the parking tag removed", function () {
+  // Byte-for-byte the sibling above with the tag off the tag line; the config is unchanged,
+  // so the pair isolates the tag rather than the config.
+  runGuardInTarget("tests/fixtures/scn-tags-parked-unparked");
+});
+
+// @SCN-STG-008
+When(
+  "it runs over a target configuring no parking tags whose tier-less scenario carries @wip",
+  function () {
+    runGuardInTarget("tests/fixtures/scn-tags-parked-default");
+  }
+);
+
+// @SCN-STG-007
+When(
+  "it runs over that same target with both check tags kept and the scenario parked",
+  function () {
+    // Byte-for-byte `scn-tags-two-checks` plus a parking tag. Both checks are still on the one
+    // stepless scenario — what changed is that the author has said "not yet", and the rule is
+    // out of scope until they say otherwise (operator ruling, 3F-2655).
+    runGuardInTarget("tests/fixtures/scn-tags-two-checks-parked");
+  }
+);
+
+// @SCN-STG-007
+When("it runs over that same target with the parking tag taken off again", function () {
+  // THE UNPARK, and it is the arm that makes the skip a skip rather than an erasure: this is
+  // the SAME tree the first pair reds, reached by removing the parking tag. A rule that could
+  // be switched off permanently by one tag would not be worth having.
+  runGuardInTarget("tests/fixtures/scn-tags-two-checks");
+});

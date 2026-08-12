@@ -467,12 +467,21 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
         the `<FFF>` inside every scenario id, allocated in featureCodes.ts's REGISTRY and
         held unique by lint:feature-codes. GRAMMAR. This category was missed entirely by the
         ticket's taxonomy and is the second largest.
-      * the tier tags (359) — `@unit` / `@integration` / `@e2e`, their `pending` variants and
-        `@wip`. GRAMMAR, and single-sourced: the predicate is scnTags.ts's OWN `isTierTag`,
+      * the tier tags (359) — `@unit` / `@integration` / `@e2e` and their `pending` variants.
+        GRAMMAR, and single-sourced: the predicate is scnTags.ts's OWN `isTierTag`,
         imported rather than copied, because a second list would agree by diligence and then
         drift (the agreeing-by-copy @SCN-VOC-008 and @SCN-VOC-010 each removed one level up).
         Note the tags the ticket named as the flood risk — bare `@lint`, `@performance` —
         have ZERO occurrences, while five `pending` variants it did not name have 25.
+      * the community DEFERRAL tags (6) — the product's own parking policy, of which `@wip`
+        is one. GRAMMAR, and single-sourced the same way (3F-2655): this arm names the
+        starter set the application layer owns, not one community tag. It USED to name
+        `@wip` alone, hard-coded — the same fault `lint:scn-tags` carried at the tier floor,
+        in a second guard: a check governing by a word it does not own, which greened the
+        one community tag whoever wrote the arm happened to think of and left `@skip`,
+        `@todo`, `@ignore` and `@pending` to be read as authored vocabulary. Named
+        explicitly rather than left to pass because these happen to be unknown words in
+        prose mode: a green nobody chose is not a green.
       * `@lint=<handle>` (18) — a `key=value` tag whose VALUE is a CI script name, not
         vocabulary (3F-1929; 3F-1852 owns the handles). The value is dropped and the key
         judged alone. WHAT ACTUALLY HOLDS THESE 18 GREEN IS `isTierTag`, which recognises the
@@ -508,12 +517,13 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
 
     @unit @integration @SCN-VOC-013
     Scenario: a retired term on a Gherkin tag line is flagged while the tag grammar is not
-      Given a feature corpus whose tag lines carry a retired term alongside a scenario id, a feature code, a tier tag and a retired-form handle
+      Given a feature corpus whose tag lines carry a retired term alongside a scenario id, a feature code, a tier tag, a community deferral tag and a retired-form handle
       When the vocabulary audit runs over the corpus
       Then the retired term on the tag line is flagged
       And the scenario id is not flagged
       And the feature-code header tag is not flagged
       And the tier tag is not flagged
+      And the community deferral tag is not flagged
       And the retired-form handle value is not flagged
 
   Rule: an adopted row's term occurring in the tracked tree reds the build

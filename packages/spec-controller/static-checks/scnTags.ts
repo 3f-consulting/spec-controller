@@ -5,7 +5,8 @@
  * scenarios to NAME one — a tier-less scenario yields no evidence obligation
  * and slips silently. This static check closes that (the cobbler's shoes): every
  * scenario under features/ carrying an @SCN-<FFF>-<NNN> must NAME at least one
- * TIER tag, UNLESS it carries @wip.
+ * TIER tag, UNLESS it is PARKED — carrying one of the deferral tags the TARGET configures
+ * (@SCN-STG-008). This module names no community tag; see `isParked`.
  *
  * What counts as a tier (LOAD-BEARING): @unit / @integration / @e2e /
  * @performance, their `pending` variants (@unitpending / @integrationpending /
@@ -13,7 +14,7 @@
  * (the style-lint check, one registered fitness check among many — the retired
  * @lint=<guard> form satisfies nothing, @SCN-LNT-007). The static check REFUSES
  * the =<guard> form: it raises no Evidence Obligation, so accepting it would call a scenario
- * tiered while it owed nothing at all. Exempt: @wip ONLY.
+ * tiered while it owed nothing at all. Exempt: a PARKED scenario ONLY (@SCN-STG-008).
  *
  * A FIFTH WAY TO SATISFY THE FLOOR, AND IT IS A SHAPE AS WELL AS A TAG (@SCN-STG-005): a
  * STEPLESS scenario carrying a REGISTERED bare check tag (`@complexity`, `@typecheck`,
@@ -96,11 +97,23 @@ export function isTierTag(bare: string): boolean {
 }
 
 /**
- * The tag that exempts a scenario from the tier floor. Named once and used for both
- * questions it answers — the exemption, and its own membership of the grammar — so the
- * unrecognised-tag check cannot come to disagree with the floor about `@wip`.
+ * Does this scenario carry a PARKING tag — a member of the target's deferral set (@SCN-STG-008)?
+ *
+ * NO TAG IS NAMED HERE, AND THAT IS THE RULE. `@wip` is a Cucumber convention this guard does not
+ * own, and a check that bakes it in governs by a word it has no authority over: a project parking
+ * with `@skip` had its deliberate deferral read as a fault, and one parking with `@parked` could
+ * not be governed at all without renaming its corpus. The set is the TARGET's, injected, and the
+ * community default is supplied at the CLI from the application layer's starter set — so a target
+ * configuring nothing still parks with `@wip` while this module still names no community tag.
+ *
+ * THE SAME SET ANSWERS THE GRAMMAR QUESTION, which is what the old `const WIP` could not do: the
+ * resolved set already arrived here for `unrecognisedTagViolations` and the floor then consulted a
+ * hard-coded word instead, so a `@skip` scenario was recognised as a legitimate deferral and failed
+ * for the deferral it had legitimately named. One set, two readings, no way for them to drift.
  */
-const WIP = "wip";
+function isParked(scenario: ParsedScenario, deferrals: ReadonlySet<string>): boolean {
+  return scenario.tags.some((tag) => deferrals.has(tag));
+}
 
 /** The tier tags a near-miss is measured against, bare. */
 const TIER_TAGS: readonly string[] = [
@@ -319,9 +332,17 @@ function unrecognisedTagViolations(
  * BOTH TAGS NAMED. The author has to choose which scenario keeps which check, and a message naming
  * one of them has already chosen for them. In document order, so the message reads like the line.
  *
- * ASKED INDEPENDENTLY OF `@wip`, like the grammar question rather than like the floor: `@wip` defers
- * what a scenario OWES, and this is about what a fitness scenario IS. Parking two checks on one
- * scenario postpones nothing — the split is the same edit whenever it happens.
+ * ASKED OF UNPARKED SCENARIOS ONLY, like the floor rather than like the grammar question — which
+ * is the reverse of how it first shipped (operator ruling, 3F-2655). The original reading was that
+ * a parking tag defers what a scenario OWES and so has nothing to say about what it IS, and that
+ * the split is the same edit whenever it happens. Both readings agree about the edit; they
+ * disagree about whether an author who has already said "not yet" should be made to do it now,
+ * and canon says no: parking is a SKIP-SIGNAL, and out of scope is not a place where some
+ * questions still get asked. The caller enforces this by POSITION — see `lintScnTags` — so this
+ * function never has to know what parking is.
+ *
+ * AND THE SKIP IS NOT AN ERASURE. Unpark the scenario and the same two tags red again, unchanged;
+ * `@SCN-STG-007`'s fourth When/Then pair is that assertion. What parking buys is time.
  */
 function multipleCheckTagViolations(
   feature: FeatureFileSource,
@@ -368,9 +389,17 @@ function satisfiesTierFloor(scenario: ParsedScenario, checks: ReadonlySet<string
 
 /**
  * Lint the feature sources for the tier-tag floor: every scenario carrying an
- * @SCN must NAME a tier tag unless it is @wip. Returns a LintResult-shaped
+ * @SCN must NAME a tier tag unless it is PARKED. Returns a LintResult-shaped
  * `{ ok, violations }` — an empty `violations` (and `ok: true`) means the tree
- * satisfies the floor; each violation names a tier-less non-@wip @SCN scenario.
+ * satisfies the floor; each violation names a tier-less unparked @SCN scenario.
+ *
+ * `deferralTags` — the target's PARKING set (@SCN-STG-008) — is INJECTED and defaults to NONE, so
+ * this module holds no community tag of its own. It is read TWICE, and the two readings are why
+ * there is one parameter rather than two: as GRAMMAR (`unrecognisedTagViolations` — a deferral tag
+ * means something here) and as a SKIP (`isParked` — a parked scenario is out of the floor's
+ * scope). It used to be read only the first way while the floor asked a hard-coded `wip`, which
+ * is how a `@skip` scenario came to be recognised as a legitimate deferral and then failed for it.
+ * "Defaults to the community set" is the CLI's job, from the application layer's starter list.
  *
  * `checkTags` — the target's REGISTERED bare check tags (@SCN-STG-005) — is INJECTED and defaults
  * to none, exactly as the deferral set is, and for the same reason: which words name a check is
@@ -381,11 +410,11 @@ function satisfiesTierFloor(scenario: ParsedScenario, checks: ReadonlySet<string
  */
 export function lintScnTags(
   features: readonly FeatureFileSource[],
-  recognisedDeferralTags: readonly string[] = [],
+  deferralTags: readonly string[] = [],
   checkTags: readonly string[] = []
 ): ScnTagsResult {
   const violations: ScnTagsViolation[] = [];
-  const recognised = new Set([WIP, ...recognisedDeferralTags]);
+  const deferrals = new Set(deferralTags);
   const checks = new Set(checkTags);
   for (const feature of features) {
     for (const scenario of parseScenarios(feature.source)) {
@@ -394,23 +423,33 @@ export function lintScnTags(
 
       // The GRAMMAR question, asked before the floor and independently of it: a
       // scenario can name a tier AND carry a typo, and the typo is the interesting half.
-      violations.push(...unrecognisedTagViolations(feature, scenario, scnId, recognised, checks));
+      violations.push(...unrecognisedTagViolations(feature, scenario, scnId, deferrals, checks));
 
-      // The SHAPE question (@SCN-STG-007), asked here for the same reason — a scenario can satisfy
-      // the floor by its check tags and still be two scenarios written as one, and `@wip` parks
-      // what a scenario owes rather than what it is.
+      // PARKED IS OUT OF SCOPE, FULL STOP — for the SHAPE rule below as well as the floor
+      // (@SCN-STG-008 for the floor, @SCN-STG-007 for the shape; operator ruling 3F-2655). The
+      // set is the target's; see `isParked`.
+      //
+      // ITS POSITION IS THE RULE. Below the grammar arm, so a parked scenario's tags are still
+      // read for well-formedness — parking defers what a scenario OWES and what SHAPE it must
+      // have, never whether its tags are spelled right, and this very set is what lets that arm
+      // recognise the parking tag, so excusing it would hide a typo behind one more tag. Above
+      // everything else, because out of scope is not a place where some questions still get asked.
+      if (isParked(scenario, deferrals)) continue;
+
+      // The SHAPE question (@SCN-STG-007) — a scenario can satisfy the floor by its check tags and
+      // still be two scenarios written as one. Asked of UNPARKED scenarios only, like the floor
+      // under it rather than like the grammar arm above it.
       violations.push(...multipleCheckTagViolations(feature, scenario, scnId, checks));
 
-      if (scenario.tags.includes(WIP)) continue; // exempt
       if (satisfiesTierFloor(scenario, checks)) continue;
       violations.push({
         kind: "missing-tier-tag",
         message:
           `Feature "${feature.slug}" scenario @${scnId} ("${scenario.title}") names ` +
-          `no evidence tier and is not @wip — every @SCN scenario must name at least ` +
+          `no evidence tier and is not parked — every @SCN scenario must name at least ` +
           `one tier (@unit/@integration/@e2e/@performance, a <tier>pending variant, or ` +
           `@lint=<guard>), or — when it is STEPLESS — a registered bare check tag, unless ` +
-          `it carries @wip.`,
+          `it carries one of the deferral tags this target configures.`,
       });
     }
   }

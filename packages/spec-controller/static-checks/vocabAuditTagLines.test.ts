@@ -21,6 +21,7 @@
 
 import { describe, it, expect } from "vitest";
 import { auditFiles, scanFile } from "./vocabAudit.js";
+import { DEFAULT_DEFERRAL_TAGS } from "../src/deferralTags.js";
 import { CANONICAL, RETIRED, RETIRED_TAG_PHRASE } from "../../../tests/fixtures/vocab/retiredTerms.js";
 
 
@@ -46,7 +47,7 @@ describe("[SCN-VOC-013] the Gherkin tag line — author-chosen vocabulary vs the
     "",
     "  Rule: the shapes coexist",
     "",
-    `    @unit @integration @wip @lint=guard:domain-purity @${RETIRED_TAG_PHRASE} @SCN-TGT-001`,
+    `    @unit @integration @wip @skip @lint=guard:domain-purity @${RETIRED_TAG_PHRASE} @SCN-TGT-001`,
     "    Scenario: the shapes coexist on one tag line",
     "      Given a step",
     "",
@@ -106,12 +107,33 @@ describe("[SCN-VOC-013] the Gherkin tag line — author-chosen vocabulary vs the
     expect(segmentTexts(everyShape)).not.toContain("TGT");
   });
 
-  it("[SCN-VOC-013] the tier tags and `@wip` yield NO segment — scnTags.ts's own predicate, imported", () => {
+  it("[SCN-VOC-013] the tier tags yield NO segment — scnTags.ts's own predicate, imported", () => {
     // Single-sourced deliberately: a second copy of the tier list would agree with
     // scnTags.ts by diligence and then drift — the agreeing-by-copy @SCN-VOC-008 removed for
     // `.gitignore` and @SCN-VOC-010 for the canon table.
     const texts = segmentTexts(everyShape);
-    for (const grammar of ["unit", "integration", "wip"]) expect(texts).not.toContain(grammar);
+    for (const grammar of ["unit", "integration"]) expect(texts).not.toContain(grammar);
+  });
+
+  it("[SCN-VOC-013] EVERY community deferral tag yields NO segment — the SET, not one word", () => {
+    // THE ARM THAT STOPPED NAMING A TAG IT DOES NOT OWN (3F-2655). It used to read
+    // `bare === "wip"` — a hard-coded community tag inside a guard, the same fault
+    // `lint:scn-tags` carried at its tier floor, one module over. It greened the one word
+    // whoever wrote it happened to think of and left `@skip`, `@todo`, `@ignore` and
+    // `@pending` — the product's own parking policy, every one of them — to be read as
+    // authored vocabulary.
+    //
+    // ASSERTED OVER THE WHOLE SET, and `wip` is deliberately not the only member checked: a
+    // case naming `wip` alone passes under the rule this replaces, so it could not have told
+    // the two apart. The list is read from the same starter set `resolveDeferralTags` unions
+    // its config onto, so it cannot drift from the policy it claims to mirror.
+    const texts = segmentTexts(everyShape);
+    for (const tag of DEFAULT_DEFERRAL_TAGS) {
+      const line = ["@TGT", "Feature: f", "", `  @unit @${tag} @SCN-TGT-001`, "  Scenario: s", "    Given a step", ""].join("\n");
+      expect(segmentTexts(line)).not.toContain(tag);
+    }
+    expect(texts).not.toContain("wip");
+    expect(texts).not.toContain("skip");
   });
 
   it("[SCN-VOC-013] the retired `@lint=<handle>` tag yields NO segment — via the VALUE-DROP", () => {

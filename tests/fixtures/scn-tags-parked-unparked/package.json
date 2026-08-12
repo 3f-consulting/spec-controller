@@ -1,0 +1,7 @@
+{
+  "name": "scn-tags-parked-unparked-fixture",
+  "private": true,
+  "specController": {
+    "deferralTags": ["@parked"]
+  }
+}

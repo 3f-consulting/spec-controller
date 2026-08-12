@@ -25,6 +25,11 @@
 // `.gitignore` and @SCN-VOC-010 for the canon table. `scnTags.ts` imports nothing, so the
 // dependency is one-way and cycle-free.
 import { isTierTag } from "./scnTags.js";
+// The product's PARKING POLICY, single-sourced (3F-2655) — the same starter set
+// `resolveDeferralTags` unions a target's config onto, so this arm cannot come to disagree with
+// what the product honours. A leaf constant module importing nothing, which is why it is safe
+// here where `featureCodes.ts` was not: that one would have pulled the app's ingest in behind it.
+import { DEFAULT_DEFERRAL_TAGS } from "../src/deferralTags.js";
 
 /**
  * The `<FFF>` FEATURE-CODE SLOT — 2–5 uppercase alphanumerics (Evidence Manifesto §9A).
@@ -62,9 +67,24 @@ const FEATURE_CODE_RE = new RegExp(`^${FEATURE_CODE}$`);
  *     also recognised the `lint=<handle>` FORM; 3F-2567 deleted that clause, so a retired
  *     `@lint=<handle>` tag is now held green by the VALUE-DROP below instead — its KEY is bare
  *     `lint`, which IS a tier tag (a registered check). Re-measured by mutation, 3F-2624.
- *  3. `wip` (6) — scnTags' scenario-scope exemption. Not a tier, so `isTierTag` says no, but
- *     unambiguously Gherkin grammar. Named explicitly rather than left to pass because `wip`
- *     happens to be an unknown word in prose mode: a green nobody chose is not a green.
+ *  3. a COMMUNITY DEFERRAL tag (6) — the product's own parking policy, of which `wip` is one.
+ *     Not a tier, so `isTierTag` says no, but unambiguously Gherkin grammar. Named explicitly
+ *     rather than left to pass because these happen to be unknown words in prose mode: a green
+ *     nobody chose is not a green.
+ *
+ *     THE SET, NOT ONE WORD (3F-2655). This arm read `bare === "wip"` — a community tag
+ *     hard-coded inside a guard, the same fault `lint:scn-tags` carried at its tier floor one
+ *     module over, and the reason both were fixed together. It greened the one word whoever
+ *     wrote it happened to think of, and left `skip`, `todo`, `ignore` and `pending` — every
+ *     one of them the product's own parking policy — to be read as authored vocabulary.
+ *     Single-sourced now, for `isTierTag`'s reason: a second copy of a list agrees by diligence
+ *     and then drifts.
+ *
+ *     WHAT IT STILL DOES NOT SEE is a target's CONFIGURED extras. `scanFile` has no config
+ *     channel and threading one reaches `auditFiles`, `scanFiles` and three CLIs — its own
+ *     slice, deferred deliberately (3F-2655, operator-endorsed). So a target parking with a
+ *     word of its own has that word prose-scanned here. Inert today, since prose mode does not
+ *     flag unknown words; it would bite only if a parking tag were also a retired term.
  *
  * `SCN-<FFF>-<NNN>` HAS NO ARM HERE, ON PURPOSE. `SCN_TOKEN_RE` blanks every scenario id at
  * the top of `scanFile`, before a single line is split, so an id can never reach this
@@ -80,7 +100,7 @@ const FEATURE_CODE_RE = new RegExp(`^${FEATURE_CODE}$`);
  */
 function isStructuralTag(bare: string): boolean {
   if (FEATURE_CODE_RE.test(bare)) return true;
-  if (bare === "wip") return true;
+  if (DEFAULT_DEFERRAL_TAGS.includes(bare)) return true;
   return isTierTag(bare);
 }
 

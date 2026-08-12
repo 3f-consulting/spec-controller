@@ -14,7 +14,11 @@ import { describe, it, expect } from "vitest";
 import { lintScnTags } from "./scnTags.js";
 
 describe("[SCN-STG-001] the scn-tags tier-tag floor over injected feature sources", () => {
-  it("does not flag scenarios naming a tier, a pending variant, bare @lint, or @wip", () => {
+  it("does not flag scenarios naming a tier, a pending variant, bare @lint, or a parking tag", () => {
+    // THE PARKING SET IS NOW PASSED, WHERE THIS CASE USED TO RELY ON A HARD-CODED `wip`
+    // (fix-to-canon, 3F-2655 operator ruling 2026-08-11): the guard holds no community tag of its
+    // own, so a call injecting nothing parks nothing. The assertion is not weakened — the same
+    // scenario still passes — it now says WHERE the policy comes from, which is the whole ruling.
     const source = `@TGT
 Feature: a compliant fixture
 
@@ -30,10 +34,10 @@ Feature: a compliant fixture
   Scenario: a scenario naming the bare style-lint check
 
   @wip @SCN-TGT-004
-  Scenario: a tier-less scenario that is @wip is exempt
+  Scenario: a tier-less scenario the target has parked is exempt
     Given the target source
 `;
-    const result = lintScnTags([{ slug: "compliant", source }]);
+    const result = lintScnTags([{ slug: "compliant", source }], ["wip"]);
     expect(result.ok).toBe(true);
     expect(result.violations).toEqual([]);
   });
@@ -188,9 +192,16 @@ Feature: a fixture carrying community deferral tags
     expect(result.violations).toEqual([]);
   });
 
-  it("still reds a @skip scenario that names no tier — as tier-less, not as unrecognised", () => {
-    // The boundary between the two questions. Recognising the tag says nothing about
-    // whether the scenario named a tier, and @wip stays the only exemption.
+  it("PARKS a @skip scenario that names no tier — recognising a deferral is honouring it", () => {
+    // INVERTED, AND THE INVERSION IS THE TICKET (fix-to-canon, 3F-2655 operator ruling
+    // 2026-08-11). This case used to assert that a `@skip` scenario naming no tier still reds
+    // "as tier-less, not as unrecognised", because `@wip` was the only exemption. That was the
+    // defect stated as a rule: the resolved set arrived, answered the grammar question, and the
+    // floor then consulted a hard-coded word — so a scenario was recognised as a legitimate
+    // deferral and failed for the deferral it had legitimately named. One set, two readings.
+    //
+    // The canon cited is the operator ruling, NOT the code's behaviour — the assertion is
+    // reversed to match a rule that changed, never relaxed to let an implementation through.
     const source = `@TGT
 Feature: a fixture whose deferred scenario names no tier
 
@@ -200,7 +211,8 @@ Feature: a fixture whose deferred scenario names no tier
 `;
     const result = lintScnTags([{ slug: "deferred-tierless", source }], RECOGNISED);
 
-    expect(result.violations.map((v) => v.kind)).toEqual(["missing-tier-tag"]);
+    expect(result.ok).toBe(true);
+    expect(result.violations).toEqual([]);
   });
 
   it("recognises a config-extended tag it is handed — the set is injected, not hard-coded", () => {
@@ -441,20 +453,40 @@ Feature: a target whose stepped scenario rides two check tags
     expect(result.violations.map((v) => v.kind)).toEqual(["missing-tier-tag"]);
   });
 
-  it("reds a @wip stepless scenario carrying two check tags — @wip defers what is OWED, not the shape", () => {
-    // ASKED INDEPENDENTLY OF @wip, like the grammar question rather than like the floor. @wip
-    // parks a scenario's evidence; it does not license a shape canon does not have, and the split
-    // is the same edit whenever it happens. The floor is still exempted, so the ONE finding here
-    // is this rule's.
+  it("SKIPS a parked stepless scenario carrying two check tags — parking defers the shape too", () => {
+    // INVERTED (fix-to-canon, 3F-2655 operator ruling 2026-08-11). This case shipped one commit
+    // earlier asserting the opposite — "asked independently of the parking tag, like the grammar
+    // question rather than like the floor" — on the reading that parking defers what a scenario
+    // OWES and so says nothing about its SHAPE. The ruling is that parking is a SKIP-SIGNAL: a
+    // parked scenario is out of scope, and out of scope is not a place where some questions still
+    // get asked. The canon cited is the ruling, not the code's behaviour.
     const source = `@TGT
 Feature: a parked target scenario claiming two checks
 
   @wip @complexity @typecheck @SCN-TGT-001
   Scenario: the codebase stays inside both thresholds
 `;
-    const result = lintScnTags([{ slug: "wip-two-checks", source }], RECOGNISED, CHECKS);
+    const result = lintScnTags([{ slug: "parked-two-checks", source }], RECOGNISED, CHECKS);
+
+    expect(result.ok).toBe(true);
+    expect(result.violations).toEqual([]);
+  });
+
+  it("reds that same scenario the moment it is UNPARKED — the skip is a skip, not an erasure", () => {
+    // THE COMPANION THAT MAKES THE INVERSION SAFE. Byte-for-byte the case above with the parking
+    // tag gone: the fault is unchanged and the rule still has its teeth. Without this assertion,
+    // "parked scenarios are skipped" and "this rule has been switched off" look identical.
+    const source = `@TGT
+Feature: the same target scenario, unparked
+
+  @complexity @typecheck @SCN-TGT-001
+  Scenario: the codebase stays inside both thresholds
+`;
+    const result = lintScnTags([{ slug: "unparked-two-checks", source }], RECOGNISED, CHECKS);
 
     expect(result.violations.map((v) => v.kind)).toEqual(["multiple-check-tags"]);
+    expect(result.violations[0]!.message).toMatch(/@complexity/);
+    expect(result.violations[0]!.message).toMatch(/@typecheck/);
   });
 
   it("counts only REGISTERED tags — an unregistered second tag is an unrecognised tag, not a second check", () => {
@@ -470,5 +502,61 @@ Feature: a target whose second tag names no check
     const result = lintScnTags([{ slug: "unregistered-second", source }], RECOGNISED, CHECKS);
 
     expect(result.violations.map((v) => v.kind)).toEqual(["unrecognised-tag"]);
+  });
+});
+
+describe("[SCN-STG-008] the tier floor's parking set is the target's, injected, never the guard's", () => {
+  it("parks a tier-less scenario carrying a tag in the injected deferral set", () => {
+    // `parked` is in no starter set and this module knows nothing about it. It parks because it
+    // was HANDED here — which is the whole claim: the words that park are the target's answer.
+    const source = `@TGT
+Feature: a target parking with a tag of its own
+
+  @parked @SCN-TGT-001
+  Scenario: a tier-less scenario the target has parked
+    Given the target source
+`;
+    const result = lintScnTags([{ slug: "parked", source }], ["parked"]);
+
+    expect(result.ok).toBe(true);
+    expect(result.violations).toEqual([]);
+  });
+
+  it("parks NOTHING when the injected set is empty — the module holds no default of its own", () => {
+    // THE ASSERTION THAT MAKES "no hard-coded community tag" TRUE RATHER THAN RELOCATED. With
+    // nothing injected, `@wip` is just a word: it does not park, and it is not grammar either.
+    // Both findings are the point — one set answers both questions, so an empty set answers both
+    // the same way. The community default is the APPLICATION layer's, and it is proved over the
+    // CLI by @SCN-STG-008's third @integration pair, not here.
+    const source = `@TGT
+Feature: a target whose config this call did not read
+
+  @wip @SCN-TGT-001
+  Scenario: a tier-less scenario carrying the community tag
+    Given the target source
+`;
+    const result = lintScnTags([{ slug: "no-policy", source }]);
+
+    expect(result.violations.map((v) => v.kind)).toEqual(["unrecognised-tag", "missing-tier-tag"]);
+  });
+
+  it("still reads a PARKED scenario's tags for well-formedness — a typo beside the parking tag reds", () => {
+    // THE BOUNDARY THE OPERATOR RULED (3F-2655): parking defers what a scenario OWES and what
+    // SHAPE it must have, never whether its tags are spelled right. And the parking set is
+    // precisely what lets the typo arm recognise `@parked`, so excusing that arm here would hide
+    // `@untit` behind one extra tag — @SCN-STG-002's hole, reopened by anyone who parks.
+    // ONE finding, and it is the grammar's: the floor is skipped, so a `missing-tier-tag`
+    // alongside it would mean the skip never happened.
+    const source = `@TGT
+Feature: a parked scenario carrying a mistyped tier tag
+
+  @parked @untit @SCN-TGT-001
+  Scenario: a parked scenario whose other tag is a typo
+    Given the target source
+`;
+    const result = lintScnTags([{ slug: "parked-typo", source }], ["parked"]);
+
+    expect(result.violations.map((v) => v.kind)).toEqual(["unrecognised-tag"]);
+    expect(result.violations[0]!.message).toMatch(/@untit/);
   });
 });
