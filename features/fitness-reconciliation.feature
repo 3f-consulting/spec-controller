@@ -345,6 +345,70 @@ Feature: Reconcile every fitness function as a stepless fitness scenario citing 
       Then the run's credit posts to a phantom row for the @SCN it cited, naming the check "lint:feature-codes"
       And no scenario's row holds that credit
 
+  Rule: a fitness credit citing a real row at a check that row never named is no-evidence-obligation
+
+    THE SAME OUTCOME THE RUNTIME AXIS ALREADY PRODUCES, reached on a second axis. @SCN-LDG-008
+    settled what happens when a credit cites a REAL scenario at a quality-check that scenario never
+    named: it posts to that row against no obligation, and the row carries one credit-only
+    no-evidence-obligation item per such credit. Nothing about that rule is fitness-specific — what
+    was fitness-specific was that the fitness axis could not REACH it.
+
+    IT IS NOT THE UNMATCHED-CREDIT RULE ABOVE, and the distinction is the whole reason this sits in
+    its own Rule. Suspense and the phantom row are where a credit goes when it reaches NO real row —
+    it cited nothing, or it cited an @SCN the corpus does not carry. This credit reached a real row.
+    The row exists, the citation is right, and the only thing wrong is that the check is not one
+    that row owes. Filing it as a third destination of "the credit found nowhere to land" would
+    describe a credit that landed.
+
+    WHY IT WAS UNREACHABLE UNTIL @SCN-LNT-012. While a fitness credit was matched to its obligation
+    by the AXIS alone, any lint obligation answered any lint credit, so a credit landing on a real
+    row always matched something and this shape could not occur. Making the match compare CHECK TAGS
+    — the @SCN picks the row, the tag picks the obligation — created a credit that reaches a real
+    row and matches nothing on it. That was half a correction: the credit-side catch was still keyed
+    on the AXIS, so the credit it newly failed to match, it also newly failed to catch, and the
+    credit reconciled to nothing at all. Measured over a genuine watermelon, the run read balanced.
+
+    @unit @integration @SCN-LNT-013
+    Scenario: a fitness credit citing a real row that does not name its check posts there as no-evidence-obligation
+
+      THE CREDIT REACHED A ROW AND ANSWERED NOTHING ON IT, so it surfaces as the credit-only item
+      that fact already has a name for. Every Evidence Observation posts somewhere and never
+      nowhere.
+
+      THE ROW'S OWN OBLIGATION IS UNTOUCHED BY IT, which is the half that keeps the two facts apart.
+      The scenario still owes the check it named and still reads whatever its own run says; the
+      stray credit is a second, independent item beside it. A reader who saw one row could not tell
+      which of the two things went wrong.
+
+      Given a fitness scenario "SCN-FIT-001" raises the check "complexity" and no other
+      And a run of the check "typecheck" cites "SCN-FIT-001"
+      When that corpus and those runs are reconciled
+      Then the row "SCN-FIT-001" holds a no-evidence-obligation item naming the check "typecheck"
+      And the row's own "complexity" obligation reconciles beside it, untouched
+
+    @unit @integration @SCN-LNT-014
+    Scenario: a balanced row cannot absorb a stray fitness credit — the run that read green over a watermelon reds
+
+      THE FAULT AT ITS MOST DANGEROUS, and the reason this is a slice rather than a tidy-up. When
+      the row's OWN obligation is satisfied, an absorbed credit leaves nothing behind at all: no
+      reconciling item, a balanced row, a balanced run, exit 0. Measured before the fix, over a
+      credit carrying a genuine watermelon — a check that exists and CI does not run — the tool
+      reported the tree as balanced. That is precisely the report this tool exists to refuse,
+      produced by the tool.
+
+      THE VERDICT IS THE ASSERTION, not the item. @SCN-LNT-013 pins that the credit becomes an item;
+      what is pinned here is that the item reaches the ROLL-UP — a row otherwise entirely clean is
+      made out-of-balance by a credit it never asked for, and the run's exit code follows. Asserting
+      the item alone would leave the green build unexplained, which is why the whole-run reading is
+      asserted and not only the row's.
+
+      Given a fitness scenario "SCN-FIT-001" raises the check "complexity" and no other
+      And the "complexity" run cites "SCN-FIT-001" and is wired into CI over the real source
+      And a run of the check "typecheck" cites "SCN-FIT-001" but CI does not run it
+      When that corpus and those runs are reconciled
+      Then the row "SCN-FIT-001" is out-of-balance over the stray credit alone
+      And the whole run reads out-of-balance
+
   Rule: @lint is one bare style-lint check among many, never the catch-all
 
     THE DEMOTION. Every other bare check tag arrived new — @complexity, @typecheck and @vocab had no

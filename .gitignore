@@ -20,3 +20,6 @@ runs/**
 # reconciliation report, so it is never tracked either.
 .stryker-tmp/
 reports/
+
+# Operator-local working notes — never committed (swept into a slice PR by `git add -A`, 3F-2690).
+CLAUDE.local.md

@@ -117,17 +117,55 @@ export interface Scenario {
  * `OUT_OF_BALANCE_OUTCOMES` lives here rather than in the renderer that walks it.
  *
  * A runtime credit's quality-check is a `RuntimeQualityCheck`, so a `lint` obligation
- * never matches one — as intended; the static axis is matched by guard handle, not by pair.
+ * never matches one — as intended; the two axes key differently, see below.
+ *
+ * THE FITNESS KEY CARRIES ITS CHECK TAG (@SCN-LNT-013), and the asymmetry with the runtime key is
+ * the design rather than an inconsistency. A runtime credit's `qualityCheck` IS its discriminating
+ * term — an obligation at `unit` is answered by a credit at `unit`, and there is nothing finer to
+ * key on. On the fitness axis the axis word is `lint` for EVERY check, so the axis alone cannot
+ * discriminate: keyed on it, a row's obligation for one check answers a credit for any other.
+ *
+ * WHICH IS EXACTLY THE FAULT THIS CLOSES. `@SCN-LNT-012` made the debit MATCH compare check tags —
+ * the `@SCN` picks the row, the tag picks the obligation — so a credit whose tag no obligation on
+ * its row names matches nothing, correctly. This set stayed keyed on the axis, so the credit it
+ * newly failed to match was also excluded from the credit-side items that should have caught it,
+ * and it reconciled to NOTHING: filtered out of the debit by its tag and out of the credit side by
+ * its axis. Measured over a genuine watermelon, the run read balanced, exit 0.
+ *
+ * BUILT AND READ TOGETHER. `noEvidenceObligationReconciliationsOf` composes the same key from the
+ * CREDIT's own `checkTag`. A key built one way and read another is this same bug in a new spelling,
+ * so the two are one change and are described in both places.
  */
 export function evidenceObligationPairsOf(scenarios: readonly Scenario[]): Set<string> {
   const pairs = new Set<string>();
   for (const scenario of scenarios) {
     for (const obligation of scenario.evidenceObligations) {
       if (obligation.pending === true) continue; // names nothing — see above.
-      pairs.add(`${scenario.scnId} ${obligation.qualityCheck}`);
+      pairs.add(evidenceObligationPairKey(scenario.scnId, obligation.qualityCheck, obligation.staticCheck));
     }
   }
   return pairs;
+}
+
+/**
+ * THE ONE SPELLING of a `(scenario, what-it-names)` key — shared by the set above and by the
+ * credit-side lookup, so the two cannot drift.
+ *
+ * `checkTag` is the FITNESS discriminator (the obligation's `staticCheck`, the credit's `checkTag`)
+ * and is ignored on the runtime axis, where the quality-check already discriminates. A fitness
+ * entry with NO tag keys distinctly from every tagged one rather than collapsing onto a bare
+ * `"<scn> lint"` that a tagged obligation could answer — an uncited credit never reaches a real
+ * row (`citationOfScript` resolves the `@SCN` and the tag together or neither), and if one ever
+ * did, it must not match by having nothing to compare.
+ */
+export function evidenceObligationPairKey(
+  scnId: string,
+  qualityCheck: QualityCheck | undefined,
+  checkTag: string | undefined
+): string {
+  return qualityCheck === "lint"
+    ? `${scnId} lint ${checkTag}`
+    : `${scnId} ${qualityCheck}`;
 }
 
 /**

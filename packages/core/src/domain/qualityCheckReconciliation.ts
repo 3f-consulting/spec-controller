@@ -16,7 +16,11 @@ import type {
   MeasuredEvidenceObservation,
   RuntimeEvidenceObservation,
 } from "./journal.js";
-import { isMeasuredObservation, isStaticCheckObservation } from "./journal.js";
+import {
+  isMeasuredObservation,
+  isStaticCheckObservation,
+  evidenceObligationPairKey,
+} from "./journal.js";
 
 /**
  * The reconciled OUTCOME of a single quality-check evidence obligation — one
@@ -578,6 +582,37 @@ export function reconcileEvidenceObligation(
 // ---------------------------------------------------------------------------
 
 /**
+ * What a FITNESS credit calls the check that ran — its bare tag where it has one, else the runnable
+ * handle that invoked it. `undefined` for a runtime credit, which names a test file instead.
+ *
+ * The bare tag is preferred because a reconciling item's `staticCheck` holds the bare tag on the
+ * debit side, so a reader comparing "the row names complexity" against "a credit for typecheck
+ * arrived" is comparing like with like. The handle is a fallback rather than a second choice of
+ * vocabulary: a credit with no tag cites nothing and posts to suspense, so it should not reach a
+ * real row at all — but if one ever does, naming its handle beats naming nothing.
+ */
+function fitnessCheckNameOf(observation: EvidenceObservation): string | undefined {
+  return isStaticCheckObservation(observation)
+    ? (observation.checkTag ?? observation.staticCheck)
+    : fitnessCheckTagOf(observation);
+}
+
+/**
+ * A fitness credit's BARE CHECK TAG, or `undefined` — the term the pair key compares.
+ *
+ * Deliberately NO handle fallback, unlike `fitnessCheckNameOf` above. The key is matched against an
+ * obligation's `staticCheck`, which since the bare-tag unification always holds the BARE tag; a
+ * handle substituted here would compare `lint:typecheck` against `typecheck` and miss — name-match
+ * in a new spelling. A credit with no tag keys distinctly from every tagged one, which is what
+ * stops it matching by having nothing to compare.
+ */
+function fitnessCheckTagOf(observation: EvidenceObservation): string | undefined {
+  return isMeasuredObservation(observation) || isStaticCheckObservation(observation)
+    ? observation.checkTag
+    : undefined;
+}
+
+/**
  * The NO-EVIDENCE-OBLIGATION items on a real scenario's row (@SCN-LDG-008) — one per credit citing THIS
  * scenario at a quality-check it never named. The credit posts to a real row against NO
  * evidence obligation, so the item is CREDIT-ONLY (no obligation is in scope).
@@ -595,11 +630,28 @@ export function noEvidenceObligationReconciliationsOf(
   evidenceObligationPairs: ReadonlySet<string>
 ): QualityCheckReconciliation[] {
   return postedCredits
-    .filter((o) => !evidenceObligationPairs.has(`${scnId} ${o.qualityCheck}`))
+    .filter(
+      (o) =>
+        // THE CREDIT'S OWN CHECK TAG, not the axis (@SCN-LNT-013). Keyed on `lint` alone, a row's
+        // obligation for one check answered a credit for any other — so a credit the debit match had
+        // already, correctly, refused by tag was ALSO excluded here and reconciled to nothing.
+        // Composed by the model's own `evidenceObligationPairKey`, the same spelling the set is
+        // built with: a key built one way and read another is the same bug in a new spelling.
+        !evidenceObligationPairs.has(
+          evidenceObligationPairKey(scnId, o.qualityCheck, fitnessCheckTagOf(o))
+        )
+    )
     .map((o) =>
       makeQualityCheckReconciliation({
         qualityCheck: o.qualityCheck,
         outcome: "no-evidence-obligation" as const,
+        // THE CHECK THAT RAN (@SCN-LNT-013) — a fitness credit's whole where-to-fix, since it has no
+        // test file to be sent to. Without it the item reads "lint: no evidence obligation" and a
+        // reader learns only that SOME check arrived uninvited, on a row that may name several.
+        // Preferring the BARE TAG over the runnable handle is what lets it be read against the row's
+        // own obligations, which are named by the bare tag — like compared with like. The handle is
+        // the fallback for a credit that carries no tag, so the item still names something.
+        ...(fitnessCheckNameOf(o) !== undefined ? { staticCheck: fitnessCheckNameOf(o) } : {}),
         // The CREDIT side (@SCN-LDG-027): the citing observation this item reconciles.
         evidenceObservation: o,
         ...(locatorOf(o) !== undefined ? { locator: locatorOf(o) } : {}),
