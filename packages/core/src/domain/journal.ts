@@ -82,6 +82,23 @@ export interface EvidenceObligation {
    * would transcribe a verdict rather than reconcile one.
    */
   threshold?: number;
+  /**
+   * The bar above is a FLOOR — `measured >= threshold`. ABSENT on an ordinary ceiling obligation,
+   * which is every one this repository has authored (@SCN-MUT-001).
+   *
+   * SPARSE, AND SEPARATE FROM `threshold` FOR THE REASON `measured` IS. A `threshold` of `{ value,
+   * comparison }` would restructure every measured row on the wire — including the two live
+   * `ci-run-time` ones — for a fact that is false of most of them; with the flag, a bare-number
+   * entry serialises exactly as it did before the comparison existed. And `atLeast: true` with NO
+   * `threshold` is the legal, loud shape of a floor whose bar nobody authored: the flag says which
+   * way the bar reads, the bar is what the arm then reports.
+   *
+   * THE DIRECTION IS THE TARGET's TO AUTHOR, not the engine's to know. A mutation score is a floor
+   * in every repository there is, but an engine that read the direction off the tag would be
+   * holding a roster of what a bare tag MEANS — the name-matching @SCN-LNT-005 puts in the target's
+   * hands. A target authoring a mutation ceiling is wrong out loud rather than quietly overruled.
+   */
+  atLeast?: true;
 }
 
 /** A scenario — its @SCN id, and the evidence obligations its evidence tags raise. */

@@ -34,7 +34,7 @@ import {
   type MeasuredEvidenceObservation,
 } from "@3f-consulting/spec-controller-core/internal";
 
-import { TIMINGS_ARTEFACT_PATH } from "../../packages/spec-controller/static-checks/stepTiming.js";
+import { MEASUREMENT_ARTEFACT_PATH } from "../../packages/spec-controller/static-checks/measurementArtefact.js";
 
 const repoRoot = process.cwd();
 const wrapper = path.join(repoRoot, "packages", "spec-controller", "static-checks", "timeStepCli.ts");
@@ -198,7 +198,7 @@ When(
   "a second step citing the scenario {string} on that same check runs into the same artefact",
   function (scnId: string) {
     // The same planted root, which is what makes this the same run rather than two of them: one
-    // artefact is what `--timings` names, and both of this repository's timed suites post into it.
+    // artefact is what `--measurements` names, and both of this repository's timed suites post into it.
     firstStepScn = citedScn;
     citedScn = scnId;
     runWrapper(["sleep", String(SECOND_STEP_SECONDS)]);
@@ -357,9 +357,9 @@ function runWrapper(command: readonly string[]): SpawnSyncReturns<string> {
   return run;
 }
 
-/** The artefact the wrapper wrote, read back through the reader `balance --timings` uses. */
+/** The artefact the wrapper wrote, read back through the reader `balance --measurements` uses. */
 function observed(): MeasuredEvidenceObservation[] {
-  const artefactPath = path.join(plantedRoot, TIMINGS_ARTEFACT_PATH);
+  const artefactPath = path.join(plantedRoot, MEASUREMENT_ARTEFACT_PATH);
   let source: string;
   try {
     source = readFileSync(artefactPath, "utf8");

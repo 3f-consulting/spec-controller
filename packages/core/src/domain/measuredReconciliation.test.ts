@@ -231,3 +231,115 @@ describe("[SCN-CIP-007] two scenarios sharing one measured check keep their own 
     );
   });
 });
+
+/**
+ * @unit for @SCN-MUT-004 — the FLOOR arm of the same reconciler: the comparison taken off the
+ * obligation rather than assumed, and the boundary that comes with it.
+ *
+ * Bidirectional evidence: the describe carries @SCN-MUT-004, matching
+ * features/mutation-score.feature and the @integration steps in tests/steps/mutationScore.steps.ts.
+ *
+ * IT LIVES BESIDE THE CEILING ARM for the reason the arms above live together: this is one decision
+ * read two ways, and a reader asking what a measured obligation does needs both directions in view.
+ * The at-most arm is @SCN-CIP-004/-005's and is not re-asserted here.
+ */
+const FLOOR_CHECK = "mutation";
+
+/** The bar this repository's own domain core is held to, borrowed as a realistic floor. */
+const BAR = 91.87;
+
+/** A measured obligation whose bar is a FLOOR — the comparison authored in the manifest entry. */
+const floorObligation = (): EvidenceObligation => ({
+  qualityCheck: "lint",
+  staticCheck: FLOOR_CHECK,
+  measured: true,
+  threshold: BAR,
+  atLeast: true,
+});
+
+/** A mutation score citing `SCN` — a number and nothing else, as every credit on this axis is. */
+const score = (measured: number): EvidenceObservation => measurement(measured, SCN, FLOOR_CHECK);
+
+describe("[SCN-MUT-004] a measurement at or above its at-least bar reconciles satisfied", () => {
+  it("reconciles satisfied above the floor, carrying both sides", () => {
+    // 92.52 against 91.87 — the one fixture shape that cannot pass while the engine ignores what
+    // the debit said, because read as the ceiling this axis was built as, these same two numbers
+    // are `failing`.
+    const item = reconcileEvidenceObligation(SCN, floorObligation(), [score(92.52)]);
+    expect(item.outcome).toBe("satisfied");
+    expect(item.staticCheck).toBe(FLOOR_CHECK);
+    expect(item.evidenceObligation?.threshold).toBe(BAR);
+    expect(item.evidenceObservation).toEqual(score(92.52));
+  });
+
+  it("reconciles satisfied AT the floor — at-or-above, not above", () => {
+    // The boundary, pinned rather than assumed, and the mirror of the ceiling's at-or-below. A
+    // floor a score sits exactly on has been met; `>` would red a run for hitting its bar
+    // precisely, which is not a rule anyone would state out loud.
+    expect(reconcileEvidenceObligation(SCN, floorObligation(), [score(BAR)]).outcome).toBe(
+      "satisfied"
+    );
+  });
+});
+
+/**
+ * @unit for @SCN-MUT-005 — the same floor arm reaching the OTHER answer, and the two numbers that
+ * make that answer actionable.
+ *
+ * Bidirectional evidence: the describe carries @SCN-MUT-005, matching
+ * features/mutation-score.feature and the @integration steps in tests/steps/mutationScore.steps.ts.
+ *
+ * THE FIXTURE IS BUILT TO DISAGREE WITH THE OTHER DIRECTION. 91.4 against a floor of 91.87 is
+ * `failing`; the SAME two numbers read as the ceiling this axis was built as are `satisfied`. So
+ * these assertions cannot pass while the comparison is taken from anywhere but the debit — which
+ * is the whole of what this scenario is worth over @SCN-MUT-004. The at-most reading is
+ * @SCN-CIP-004/-005's and is deliberately NOT re-asserted here; it is the fixture's construction,
+ * not a second claim.
+ *
+ * THE ROW's VERDICT is asserted at @integration, through the real `reconcile`, because that is
+ * where the outcome has to travel to be worth anything.
+ */
+describe("[SCN-MUT-005] a measurement below its at-least bar reconciles failing", () => {
+  /** The shortfall: comfortably inside 91.87 read as a ceiling, and short of it read as a floor. */
+  const SHORTFALL = 91.4;
+
+  it("reconciles failing below the floor, carrying both sides", () => {
+    const item = reconcileEvidenceObligation(SCN, floorObligation(), [score(SHORTFALL)]);
+    expect(item.outcome).toBe("failing");
+    expect(item.staticCheck).toBe(FLOOR_CHECK);
+    // Both numbers ride the one item — the bar off the debit, the measurement off the credit —
+    // which is what makes the row actionable without a second lookup: "mutation is failing" sends
+    // a reader nowhere, "91.4 against a floor of 91.87" sends them somewhere. @SCN-MUT-006 renders
+    // them; this is where they are pinned as PRESENT.
+    expect(item.evidenceObligation?.threshold).toBe(BAR);
+    expect(item.evidenceObservation).toEqual(score(SHORTFALL));
+  });
+
+  it("fails on the barest shortfall, not on a margin", () => {
+    // There is no tolerance band on the ledger, in either direction. A score below its floor is
+    // below it, and a margin quietly added here would be a second, undocumented bar — the very
+    // thing retiring the runner's own `break` threshold was for.
+    expect(reconcileEvidenceObligation(SCN, floorObligation(), [score(91.869)]).outcome).toBe(
+      "failing"
+    );
+  });
+
+  it("is `failing` and not `missing` — the sweep ran, and the suite was not strong enough", () => {
+    // Both are out-of-balance, and they are different facts with different cures. `missing` is a
+    // sweep whose number never arrived; this is a number that arrived and did not meet its bar.
+    // Collapsing them would send a reader to fix a nightly that is running perfectly well.
+    const outcome = reconcileEvidenceObligation(SCN, floorObligation(), [score(SHORTFALL)]).outcome;
+    expect(outcome).not.toBe("missing");
+    expect(outcome).not.toBe("watermelon");
+  });
+
+  it("never reads satisfied on the floor arm just because a number arrived", () => {
+    // The reading this whole axis exists to refuse, stated on the direction that was added last:
+    // a suite whose mutants are surviving must not look like one that met its bar. Written against
+    // `satisfied` rather than for `failing` so it keeps its meaning if the shortfall ever acquires
+    // a more specific name.
+    expect(
+      reconcileEvidenceObligation(SCN, floorObligation(), [score(SHORTFALL)]).outcome
+    ).not.toBe("satisfied");
+  });
+});

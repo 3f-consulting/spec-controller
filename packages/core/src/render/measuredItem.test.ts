@@ -108,3 +108,95 @@ describe("[SCN-CIP-008] a measured reconciling item renders with its two numbers
     expect(reconciliation.summary.staticChecks?.uncitedStaticCheckCount).toBe(0);
   });
 });
+
+/**
+ * @unit for @SCN-MUT-006 — the same rendered line when the bar is a FLOOR: the comparison the
+ * obligation named, on the page beside the two numbers it qualifies.
+ *
+ * Bidirectional evidence: the describe carries @SCN-MUT-006, matching
+ * features/mutation-score.feature and the @integration steps in tests/steps/mutationScore.steps.ts.
+ *
+ * BOTH SIDES ARE NAMED, which is what makes naming either of them worth anything. A floor reading
+ * "at least 91.87" beside a ceiling still reading a bare "threshold 75" leaves the second reader in
+ * exactly the ambiguity the first was rescued from, and leaves an unqualified word on the page for
+ * a reader to guess the meaning of. The two live @ci-run-time rows are untouched by this: every
+ * assertion @SCN-CIP-008 makes over that line is a substring containment, so a named comparison
+ * changes nothing it claims.
+ */
+
+const floorScenario = (threshold: number | undefined, atLeast: boolean): Scenario[] => [
+  {
+    scnId: "SCN-MSD-001",
+    evidenceObligations: [
+      {
+        qualityCheck: "lint",
+        staticCheck: "mutation",
+        measured: true,
+        ...(threshold !== undefined ? { threshold } : {}),
+        ...(atLeast ? { atLeast: true as const } : {}),
+      },
+    ],
+  },
+];
+
+const mutationMeasurement = (measured: number): EvidenceObservation[] => [
+  { qualityCheck: "lint", scnId: "SCN-MSD-001", checkTag: "mutation", measured },
+];
+
+/** The ledger cell for an arbitrary debit/credit pair — `measuredLine` above, unbound from the ceiling fixture. */
+function lineOf(scenarios: Scenario[], observations: EvidenceObservation[]): string {
+  const markdown = renderMarkdown(
+    evidenceReconciliationOf(scenarios, observations, [], true, true),
+    CTX
+  );
+  const start = markdown.indexOf("## Scenario Reconciliations");
+  const ledger = start >= 0 ? markdown.slice(start) : markdown;
+  const line = ledger.split("\n").find((l) => l.startsWith("| SCN-MSD-001 "));
+  expect(line, "expected a ledger row for SCN-MSD-001").toBeDefined();
+  return line!;
+}
+
+describe("[SCN-MUT-006] a measured item renders which side of its bar it had to be on", () => {
+  it("names a floor as a minimum on a failing row, beside the number that missed it", () => {
+    const line = lineOf(floorScenario(91.87, true), mutationMeasurement(91.4));
+    expect(line).toContain("mutation");
+    expect(line).toContain("91.4");
+    expect(line).toContain("at least 91.87");
+  });
+
+  it("does not read that floor as a ceiling", () => {
+    // The half of the scenario that says RATHER THAN A MAXIMUM. A renderer naming a comparison from
+    // a constant would satisfy the assertion above on every row it ever drew; only the negative
+    // shows the words came off the obligation.
+    expect(lineOf(floorScenario(91.87, true), mutationMeasurement(91.4))).not.toContain("at most");
+  });
+
+  it("names a ceiling as a maximum, so the reader of the other row is told which one it is", () => {
+    // The at-most side made explicit too. Left implicit it re-creates the ambiguity this scenario
+    // exists to remove — one bar qualified, one bare, and nothing on the page saying whether the
+    // bare one is the same kind. @SCN-CIP-008 asserts this line by containment of "75", which a
+    // named comparison leaves untouched.
+    expect(lineOf(floorScenario(75, false), mutationMeasurement(96.4))).toContain("at most 75");
+  });
+
+  it("still says so in words when nobody authored a bar, whichever way it would have read", () => {
+    // The arm @SCN-CIP-002 made loud on the data and @SCN-CIP-008 made loud on the page, pinned
+    // again here because the comparison is rendered in the same expression: a floor with no bar has
+    // no number to name a side of, and "no threshold configured" is the sentence that still says
+    // so. A blank would put the fault back to sleep and a zero reads as a bar OF zero.
+    const line = lineOf(floorScenario(undefined, true), mutationMeasurement(91.4));
+    expect(line).toContain("no threshold configured");
+    expect(line).not.toContain("at least");
+  });
+
+  it("carries the comparison into the JSON on the obligation's own entry", () => {
+    // The flag rides the debit through the serialisation that already carries the bar — never a
+    // parallel measured-only field, which is what keeps the no-parallel-store round-trip true.
+    const json = renderJson(
+      evidenceReconciliationOf(floorScenario(91.87, true), mutationMeasurement(91.4), [], true, true),
+      CTX
+    );
+    expect(json).toContain('"threshold": 91.87');
+    expect(json).toContain('"atLeast": true');
+  });
+});

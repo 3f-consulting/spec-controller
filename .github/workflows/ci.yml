@@ -5,6 +5,15 @@ on:
     branches: [main]
   pull_request:
 
+# THE LADDER READS ONE THING IT DOES NOT OWN (3F-2765): the measurement a scheduled
+# mutation sweep persisted, fetched off that workflow's own runs. `actions: read` is what
+# lets it, and the block is written out rather than left to the repository default so that
+# a default tightened elsewhere reds here, naming the permission, instead of reporting a
+# schedule that had lapsed.
+permissions:
+  contents: read
+  actions: read
+
 jobs:
   ci:
     runs-on: ubuntu-latest
@@ -25,6 +34,38 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      # BUILT BECAUSE A `bin` IS A BUILD OUTPUT (3F-2765). `.github/actions/restore-measurements`
+      # reaches the restore by its bin name, and pnpm's `node_modules/.bin` entry for a workspace
+      # package points into that package's `dist/` — a symlink that dangles until this step runs.
+      # Nothing else in this ladder needed the built form, so nothing else caught that the
+      # published surface was never compiled on a pull request at all: a `tsc -p` failure in
+      # either package's build config reached main and was found by whoever next ran `pnpm build`.
+      # `build` carries no observed prefix and is not among the static checks package.json names,
+      # so it joins the local ladder (which is derived from this file) without joining the ledger
+      # — it is a step the checks need, not a check.
+      - name: Build
+        run: pnpm build
+
+      # AND LINKED AFTERWARDS, BECAUSE pnpm LINKS BINS BEFORE ANYTHING IS BUILT. On a fresh
+      # checkout `packages/spec-controller/dist` does not exist yet, so the install above cannot
+      # create the `.bin` entries that point into it and says so rather than failing:
+      #
+      #   [WARN] Failed to create bin at .../node_modules/.bin/restore-measurements.
+      #   ENOENT: no such file or directory, open '.../dist/measurements/restoreCli.js'
+      #
+      # The build then writes the file the entry would have pointed at, and nothing goes back to
+      # make the entry — a second `pnpm install` reports "Already up to date" and relinks nothing,
+      # with or without `--force` (measured, both). `pnpm rebuild` is the command that does, and
+      # the failure it prevents is not loud: `npx --no spec-controller-restore-measurements` with no local bin
+      # falls through to the registry, where no such package exists.
+      #
+      # Local checkouts rarely meet this — they have a dist from some earlier build — and a
+      # consumer installing from the registry never does, because the published tarball ships
+      # dist. It is specific to a repository consuming its own workspace package before building
+      # it, which is why it is fixed here rather than in the package or the action.
+      - name: Link the bins the build just produced
+        run: pnpm rebuild
 
       # The feature-code lint over the REAL feature set — a pure function of the
       # checked-out tree. Asserts every @<FFF> header code is unique and registered.
@@ -202,6 +243,29 @@ jobs:
       # required, not cosmetic: runningStaticChecks observes a CI script only when its name
       # carries an observed prefix, so a name outside that set would run here while being
       # invisible to spec-controller's own ledger.
+      # STEP 2b — THE MEASUREMENT THIS PUSH DID NOT TAKE (@SCN-MUT-011, 3F-2765). A mutation
+      # sweep costs 8-12 minutes against this ladder's ~2 minutes, so it runs nightly and its
+      # score is last night's. Refusing to read it would leave SCN-MUT-011 reconciling `missing`
+      # on every push — a build redding over a cadence rather than over the code — and reading it
+      # unconditionally would settle this tree's bar with a number measured about a different
+      # tree. So it is posted only while it is still young enough to be about this code: 36 hours
+      # against a 03:17 UTC nightly leaves ~12 hours of slack in a healthy cadence, and ONE
+      # missed sweep ages the number out, posts nothing, and reds the gate below. A sweep that
+      # quietly stops running cannot stay quiet.
+      #
+      # The window is an input here and not a manifest field, and that is the split: a manifest
+      # is about BARS, which are facts about the code, and a window is a fact about the pipeline
+      # reading them. Nothing in the action or the CLI it calls names mutation, Stryker or this
+      # repository — this step is the caller, and the caller is the only place those words
+      # belong.
+      - name: Restore the scheduled measurements
+        uses: ./.github/actions/restore-measurements
+        with:
+          artefact-name: mutation-measurement
+          workflow: mutation.yml
+          # 36 hours, in seconds.
+          max-age: 129600
+
       - name: Self-reconciliation balance
         run: pnpm lint:self-balance
 

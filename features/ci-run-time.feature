@@ -106,7 +106,7 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
       Given "ci-run-time" is a measured fitness check whose threshold for "SCN-MSD-001" is 75
       And the corpus carries a stepless scenario "SCN-MSD-001" tagged with the bare check "ci-run-time"
       And the corpus carries a stepless scenario "SCN-MSD-002" tagged with the bare check "ci-run-time"
-      And the timing artefact records a measurement of 12.5 for "ci-run-time" on "SCN-MSD-002"
+      And the measurement artefact records a measurement of 12.5 for "ci-run-time" on "SCN-MSD-002"
       When the corpus and the measurements are reconciled
       Then the row "SCN-MSD-002" reconciles missing on the measured check "ci-run-time"
       And the obligation on row "SCN-MSD-002" names no threshold at all
@@ -126,10 +126,10 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
     measurement is loud on the ledger as the obligation it leaves unanswered.
 
     @unit @integration @SCN-CIP-003
-    Scenario: a measurement in the timing artefact posts one Evidence Observation citing its scenario and naming its check
-      Given the timing artefact records a measurement of 42.1 for "ci-run-time" on "SCN-MSD-001"
-      And the timing artefact also carries a row missing its check
-      When the timing artefact is ingested
+    Scenario: a measurement in the measurement artefact posts one Evidence Observation citing its scenario and naming its check
+      Given the measurement artefact records a measurement of 42.1 for "ci-run-time" on "SCN-MSD-001"
+      And the measurement artefact also carries a row missing its check
+      When the measurement artefact is ingested
       Then exactly one Evidence Observation is produced, citing "SCN-MSD-001" and naming the check "ci-run-time"
       And it carries the measurement 42.1
 
@@ -155,7 +155,7 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
     Scenario: a measurement within its threshold reconciles satisfied
       Given "ci-run-time" is a measured fitness check whose threshold for "SCN-MSD-001" is 75
       And the corpus carries a stepless scenario "SCN-MSD-001" tagged with the bare check "ci-run-time"
-      And the timing artefact records a measurement of 75 for "ci-run-time" on "SCN-MSD-001"
+      And the measurement artefact records a measurement of 75 for "ci-run-time" on "SCN-MSD-001"
       When the corpus and the measurements are reconciled
       Then the row "SCN-MSD-001" reconciles satisfied on the measured check "ci-run-time"
       And that reconciling item carries both the measurement and the threshold
@@ -174,7 +174,7 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
 
       Given "ci-run-time" is a measured fitness check whose threshold for "SCN-MSD-001" is 75
       And the corpus carries a stepless scenario "SCN-MSD-001" tagged with the bare check "ci-run-time"
-      And the timing artefact records a measurement of 96.4 for "ci-run-time" on "SCN-MSD-001"
+      And the measurement artefact records a measurement of 96.4 for "ci-run-time" on "SCN-MSD-001"
       When the corpus and the measurements are reconciled
       Then the row "SCN-MSD-001" reconciles failing on the measured check "ci-run-time"
       And that reconciling item carries both the measurement and the threshold
@@ -198,7 +198,7 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
 
       Given "ci-run-time" is a measured fitness check whose threshold for "SCN-MSD-001" is 75
       And the corpus carries a stepless scenario "SCN-MSD-001" tagged with the bare check "ci-run-time"
-      And no timing artefact was produced at all
+      And no measurement artefact was produced at all
       When the corpus and the measurements are reconciled
       Then the row "SCN-MSD-001" reconciles missing on the measured check "ci-run-time"
       And that reconciling item carries no measurement at all
@@ -224,8 +224,8 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
       And "ci-run-time" also has a threshold of 150 for "SCN-MSD-002"
       And the corpus carries a stepless scenario "SCN-MSD-001" tagged with the bare check "ci-run-time"
       And the corpus carries a stepless scenario "SCN-MSD-002" tagged with the bare check "ci-run-time"
-      And the timing artefact records a measurement of 42.1 for "ci-run-time" on "SCN-MSD-001"
-      And the timing artefact also records a measurement of 181.7 for "ci-run-time" on "SCN-MSD-002"
+      And the measurement artefact records a measurement of 42.1 for "ci-run-time" on "SCN-MSD-001"
+      And the measurement artefact also records a measurement of 181.7 for "ci-run-time" on "SCN-MSD-002"
       When the corpus and the measurements are reconciled
       Then the row "SCN-MSD-001" reconciles satisfied on the measured check "ci-run-time"
       And the row "SCN-MSD-002" reconciles failing on the measured check "ci-run-time"
@@ -247,7 +247,7 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
     Scenario: a failing measured row renders in the markdown report and in the JSON, carrying its measurement against its threshold
       Given "ci-run-time" is a measured fitness check whose threshold for "SCN-MSD-001" is 75
       And the corpus carries a stepless scenario "SCN-MSD-001" tagged with the bare check "ci-run-time"
-      And the timing artefact records a measurement of 96.4 for "ci-run-time" on "SCN-MSD-001"
+      And the measurement artefact records a measurement of 96.4 for "ci-run-time" on "SCN-MSD-001"
       When the corpus and the measurements are reconciled and rendered
       Then the markdown names the check "ci-run-time" with its measurement 96.4 and its threshold 75
       And the JSON carries the measurement and the threshold on the row's own entries
@@ -301,7 +301,7 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
     @unit @integration @SCN-CIP-011
     Scenario: a second timed step in the same run adds its measurement beside the first rather than replacing it
 
-      ONE ARTEFACT, TWO CONTRIBUTING STEPS. `--timings` names a single file and a run has as
+      ONE ARTEFACT, TWO CONTRIBUTING STEPS. `--measurements` names a single file and a run has as
       many timed steps as it has timed suites, so the second step writes into what the first
       one left. Writing rather than merging would leave only the later row, and the earlier
       suite's ceiling would reconcile missing — a step that plainly ran reported as one that

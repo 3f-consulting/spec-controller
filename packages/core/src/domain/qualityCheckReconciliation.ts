@@ -477,7 +477,16 @@ function measuredObservationFor(
  * must never come out of this arm is a BALANCED row, which is what a suite nobody timed would look
  * like if absence were silent.
  *
- * AT OR BELOW IS SATISFIED. A ceiling a measurement sits exactly on has not been exceeded.
+ * AT THE BAR IS NOT PAST IT, IN EITHER DIRECTION (@SCN-MUT-004). A ceiling a measurement sits
+ * exactly on has not been exceeded, and a floor a measurement sits exactly on has been met.
+ *
+ * THE COMPARISON IS READ OFF THE DEBIT, NEVER OFF THE CHECK TAG. Which side of its bar satisfies is
+ * half of what the bar says, so it is authored in the same manifest entry as the number and arrives
+ * on the obligation beside it. An engine that instead knew `mutation` to be a floor would be
+ * holding a roster of what a bare tag MEANS — the name-matching @SCN-LNT-005 puts in the target's
+ * hands — and would overrule a target that had authored something else rather than letting it be
+ * wrong out loud. Absent is at-most, so every obligation raised before this direction existed
+ * reaches exactly the answer it reached before.
  *
  * NO NEW OUTCOME. `satisfied` and `failing` are both (Exists, Exists) in the canon side-profile and
  * `missing` is (Exists, None), so the smart constructor's invariant holds unchanged and the union
@@ -501,7 +510,13 @@ function reconcileMeasuredObligation(
   }
   return makeQualityCheckReconciliation({
     ...base,
-    outcome: observation.measured <= req.threshold ? "satisfied" : "failing",
+    outcome: (
+      req.atLeast === true
+        ? observation.measured >= req.threshold
+        : observation.measured <= req.threshold
+    )
+      ? "satisfied"
+      : "failing",
     evidenceObservation: observation,
   });
 }

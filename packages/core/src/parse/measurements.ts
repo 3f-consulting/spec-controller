@@ -1,5 +1,5 @@
 /**
- * THE MEASUREMENT READER — the timing wrapper's artefact read into citing Evidence Observations
+ * THE MEASUREMENT READER — the measurement artefact read into citing Evidence Observations
  * (@SCN-CIP-003).
  *
  * The third evidence stream, and it belongs to neither of the other two. A runtime credit is read
@@ -27,7 +27,7 @@
 
 import type { MeasuredEvidenceObservation } from "../model.js";
 
-/** The timing wrapper's artefact, as the reader takes it — validated row by row below. */
+/** The measurement artefact, as the reader takes it — validated row by row below. */
 export interface MeasurementReport {
   measurements?: unknown;
 }

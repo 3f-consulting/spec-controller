@@ -179,6 +179,12 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     status: "feature-code-used",
     note: "the MEASURED fitness check — the second way a fitness function is assessed: by running the suite and measuring it, so the obligation carries a threshold and the observation is a number, reconciled satisfied at or under it and failing above. ci-run-time is canon's prototype of the shape; coverage and mutation follow through the same seam (3F-2283). The code matches an adopter's repository's allocation for the same characteristic",
   },
+  {
+    code: "MUT",
+    slug: "mutation-score",
+    status: "feature-code-used",
+    note: "the measured axis read in EITHER direction — a threshold entry carries the comparison it is read with, so a mutation score is held to a FLOOR (at least) where a ci-run-time is held to a ceiling (at most), and a bare number keeps meaning at-most so the two live @ci-run-time rows are untouched by construction rather than by a sweep (3F-2509)",
+  },
 ];
 
 /** A single lint finding. */

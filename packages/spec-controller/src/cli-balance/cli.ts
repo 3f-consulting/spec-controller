@@ -138,7 +138,7 @@ function reconcileInputsOf(args: Record<string, string>): ReconcileOptions {
     cucumber: args["cucumber"],
     ci: args["ci"],
     packageJson: args["package-json"],
-    timings: args["timings"],
+    measurements: args["measurements"],
   };
 }
 
@@ -149,7 +149,7 @@ export function checkInputsExist(
   // The five input flags in a fixed order — the FIRST supplied-but-absent one is the
   // reported error (deterministic; the operator fixes and re-runs). Keys are the
   // parseArgs form (the `--` stripped); the message names the flag WITH its dashes.
-  const flags = ["vitest", "cucumber", "features", "ci", "package-json", "timings"] as const;
+  const flags = ["vitest", "cucumber", "features", "ci", "package-json", "measurements"] as const;
   for (const flag of flags) {
     const path = args[flag];
     if (path !== undefined && !exists(path)) {
@@ -165,7 +165,7 @@ export function checkInputsExist(
  * read as raw TEXT and scanned for `run:` steps — neither is JSON, neither can crash the
  * process, and on garbage both reconcile normally (verified, 3F-1742 Discovery).
  */
-const JSON_INPUT_FLAGS = ["vitest", "cucumber", "package-json", "timings"] as const;
+const JSON_INPUT_FLAGS = ["vitest", "cucumber", "package-json", "measurements"] as const;
 
 /**
  * Guard the READABILITY of the supplied JSON inputs at the CLI edge (@SCN-CLI-014).

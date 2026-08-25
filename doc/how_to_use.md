@@ -61,7 +61,7 @@ spec-controller balance --features ./features \
 | `--cucumber <report.json>` | A Cucumber JSON report — runtime test evidence. |
 | `--ci <ci.yml>` | Your CI workflow — used to check whether `@lint` static checks actually run over the real source. |
 | `--package-json <path>` | `package.json` — used to check a named static check's script exists. |
-| `--timings <report.json>` | A timing report — the measured wall-clock of each timed step, evidence for the measured fitness checks (`@ci-run-time` and its family). |
+| `--measurements <report.json>` | A measurement report — the number each measured check posted, evidence for the measured fitness checks (`@ci-run-time` and its family). |
 | `--target <name>` | A name recorded verbatim in the report's provenance (which project this run reconciled). |
 | `--source-sha <sha>` | Override the git commit SHA recorded in provenance (defaults to the resolved HEAD). |
 | `--format <fmt>[:<path>]` | Where to send output (`md` or `json`, optionally `:<path>` to write to a file). Repeatable. See below. |

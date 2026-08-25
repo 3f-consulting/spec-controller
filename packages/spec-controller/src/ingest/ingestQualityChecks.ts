@@ -280,11 +280,11 @@ export interface ReconcileOptions {
   ci?: string;
   packageJson?: string;
   /**
-   * The timing wrapper's artefact (@SCN-CIP-003) — the measured wall-clock of each timed step, and
+   * The measurement artefact (@SCN-CIP-003) — the number each measured check posted, and
    * the credit side of every measured fitness check. Optional like the other result files: absent,
    * it contributes nothing, and each measured obligation it would have answered reads `missing`.
    */
-  timings?: string;
+  measurements?: string;
 }
 
 /** Read + JSON-parse a file if present, else return undefined. */
@@ -536,7 +536,7 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
       // read here rather than folded into `checkObservations` because that function's two observers
       // both read the target's CONFIG; a measurement is a fact about a run, and the only thing the
       // three share is the axis they ride.
-      ...parseMeasuredEvidenceObservations(readJsonIfPresent(opts.timings) ?? {}),
+      ...parseMeasuredEvidenceObservations(readJsonIfPresent(opts.measurements) ?? {}),
     ],
     untaggedScenariosFromFeatures(opts.features),
     true,

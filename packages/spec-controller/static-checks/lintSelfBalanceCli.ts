@@ -24,7 +24,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 
 import { runBalance } from "../src/cli-balance/cli.js";
-import { TIMINGS_ARTEFACT_PATH } from "./stepTiming.js";
+import { MEASUREMENT_ARTEFACT_PATH } from "./measurementArtefact.js";
 
 /**
  * The six surfaces the gate reconciles, as paths relative to a target root.
@@ -43,8 +43,8 @@ export interface SelfBalanceScope {
   vitest: string;
   /** The Cucumber JSON report — the observed `@integration` / `@e2e` stream. */
   cucumber: string;
-  /** The timing artefact — the observed MEASURED stream this run's timed steps post into. */
-  timings: string;
+  /** The measurement artefact — the observed MEASURED stream this run's timed steps post into. */
+  measurements: string;
   /** The CI configs — where a static check is observed to FIRE, not merely to exist. */
   ci: string;
   /** The package manifest — where a static check is observed to EXIST. */
@@ -68,7 +68,7 @@ export const SELF_BALANCE_SCOPE: SelfBalanceScope = {
   // The producer's own constant rather than a second spelling of it. A wrapper writing one path
   // while this gate read another would not be loud: the reader would find nothing and every
   // measured row would reconcile missing, which reads as a suite that never ran.
-  timings: TIMINGS_ARTEFACT_PATH,
+  measurements: MEASUREMENT_ARTEFACT_PATH,
   ci: ".github/workflows",
   packageJson: "package.json",
 };
@@ -89,7 +89,7 @@ function resolveScope(
     features: join(root, scope.features),
     vitest: overrides.vitest ?? join(root, scope.vitest),
     cucumber: overrides.cucumber ?? join(root, scope.cucumber),
-    timings: join(root, scope.timings),
+    measurements: join(root, scope.measurements),
     ci: join(root, scope.ci),
     packageJson: join(root, scope.packageJson),
   };
@@ -103,8 +103,8 @@ function resolveScope(
  * not. Pure, so the @unit arm can assert the gate passes all six and cannot quietly
  * drop one.
  *
- * THE TIMING ARTEFACT IS PASSED ONLY WHERE IT EXISTS, WHICH IS THE OPPOSITE OF THE TREATMENT
- * THE TWO SUITE REPORTS GET (@SCN-CIP-013). A `--timings` path the balance command is handed and
+ * THE MEASUREMENT ARTEFACT IS PASSED ONLY WHERE IT EXISTS, WHICH IS THE OPPOSITE OF THE TREATMENT
+ * THE TWO SUITE REPORTS GET (@SCN-CIP-013). A `--measurements` path the balance command is handed and
  * cannot find is a usage fault to it and exits 2 (@SCN-CLI-002) — the wrong verdict here. An
  * absent artefact leaves exactly the measured rows unanswered, and those rows reconciling
  * missing is the honest reading: a step that never ran is never balanced (@SCN-CIP-006). Exit 2
@@ -126,7 +126,7 @@ export function selfBalanceArgv(
     resolved.vitest,
     "--cucumber",
     resolved.cucumber,
-    ...(exists(resolved.timings) ? ["--timings", resolved.timings] : []),
+    ...(exists(resolved.measurements) ? ["--measurements", resolved.measurements] : []),
     "--ci",
     resolved.ci,
     "--package-json",
@@ -142,9 +142,9 @@ export function selfBalanceArgv(
  * report is a USAGE fault — the run was set up wrong — never an out-of-balance verdict.
  * Reporting it as a verdict is the false all-red the dogfooding fault produced.
  *
- * THE TIMING ARTEFACT IS DELIBERATELY NOT GUARDED HERE, and the asymmetry is the whole of
+ * THE MEASUREMENT ARTEFACT IS DELIBERATELY NOT GUARDED HERE, and the asymmetry is the whole of
  * @SCN-CIP-013's care. An unemitted suite report leaves EVERY obligation unobserved, which means
- * the suite did not run; an absent timing artefact leaves exactly the measured rows unanswered,
+ * the suite did not run; an absent measurement artefact leaves exactly the measured rows unanswered,
  * and those reconciling missing is a verdict the ledger is entitled to reach.
  *
  * Pure: the resolved paths + an injected `exists`, returning a message naming the absent

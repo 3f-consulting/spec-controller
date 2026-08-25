@@ -30,8 +30,8 @@
  * is still a slow suite and a dropped row reconciles as a step that never ran.
  *
  * IT READS THE ARTEFACT BEFORE IT WRITES ONE (@SCN-CIP-011), because a run has as many timed
- * steps as it has timed suites and they all post into the one file `--timings` names. What that
- * read is worth — and what an unreadable one is worth — is `stepTiming.ts`'s to decide.
+ * steps as it has timed suites and they all post into the one file `--measurements` names. What that
+ * read is worth — and what an unreadable one is worth — is `measurementArtefact.ts`'s to decide.
  *
  * AND IT READS THE TARGET'S MANIFEST, WHICH IS THE ONLY NUMBER IT IS TOLD (@SCN-CIP-012). The
  * ceiling comes from `specController.thresholds` at `--root`, through the same resolver the
@@ -47,12 +47,11 @@ import { thresholdFor } from "@3f-consulting/spec-controller-core/internal";
 
 import { resolveThresholds } from "../src/ingest/ingestQualityChecks.js";
 import {
-  TIMINGS_ARTEFACT_PATH,
+  MEASUREMENT_ARTEFACT_PATH,
   exitCodeOf,
-  measuredSecondsOf,
-  timingArtefactWith,
-  timingReport,
-} from "./stepTiming.js";
+  measurementArtefactWith,
+} from "./measurementArtefact.js";
+import { measuredSecondsOf, timingReport } from "./stepTiming.js";
 
 /** Everything the wrapper was told: what it is measuring, where, and what to run. */
 interface TimedStep {
@@ -124,14 +123,14 @@ function alreadyPostedIn(artefactPath: string): string | undefined {
   }
 }
 
-const artefactPath = path.join(step.root, TIMINGS_ARTEFACT_PATH);
+const artefactPath = path.join(step.root, MEASUREMENT_ARTEFACT_PATH);
 // The parent is made rather than assumed: `runs/` is gitignored, so on a fresh clone the first
 // timed step of a job is the thing that creates it.
 mkdirSync(path.dirname(artefactPath), { recursive: true });
 writeFileSync(
   artefactPath,
   `${JSON.stringify(
-    timingArtefactWith(
+    measurementArtefactWith(
       { scnId: step.scnId, checkTag: step.checkTag, measured },
       alreadyPostedIn(artefactPath),
     ),
@@ -168,7 +167,15 @@ function gateFor(timedStep: TimedStep): number | null {
   } catch {
     return null;
   }
-  return thresholdFor(resolveThresholds(manifest), bare(timedStep.scnId), bare(timedStep.checkTag));
+  // The NUMBER off the bar, and deliberately not the bar. This wrapper reports a wall-clock against
+  // a ceiling and nothing else; the comparison a bar carries is the LEDGER's to reconcile with
+  // (@SCN-MUT-001), and a runner that read it here would be a second arbiter of the same verdict.
+  const bar = thresholdFor(
+    resolveThresholds(manifest),
+    bare(timedStep.scnId),
+    bare(timedStep.checkTag)
+  );
+  return bar?.threshold ?? null;
 }
 
 // EVERY RUN, GREEN OR NOT, AND AFTER THE WRITE. The band over the trigger and under the gate

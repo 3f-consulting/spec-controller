@@ -222,15 +222,20 @@ function fitnessObligationsOf(
       raised.push({ qualityCheck: "lint", staticCheck: tag });
       continue;
     }
-    const ceiling = thresholdFor(thresholds, scnId, tag);
+    const bar = thresholdFor(thresholds, scnId, tag);
     raised.push({
       qualityCheck: "lint",
       staticCheck: tag,
       measured: true,
-      // Spread rather than `threshold: ceiling ?? undefined`, so an obligation with no authored
-      // ceiling carries no key at all — the absence is a fact about the manifest, and a row
-      // serialising `"threshold": null` would read as a ceiling somebody wrote.
-      ...(ceiling !== null ? { threshold: ceiling } : {}),
+      // Spread rather than `threshold: bar?.threshold ?? undefined`, so an obligation with no
+      // authored bar carries no key at all — the absence is a fact about the manifest, and a row
+      // serialising `"threshold": null` would read as a bar somebody wrote.
+      //
+      // THE WHOLE BAR IS SPREAD, not its number picked out (@SCN-MUT-001). The bar and the
+      // obligation hold the comparison in the same sparse terms, so a bare-number entry lands
+      // exactly the keys it landed before the comparison existed, and the direction cannot be
+      // dropped in transit by a reader that only knew to copy the number.
+      ...(bar !== null ? bar : {}),
     });
   }
   return raised;

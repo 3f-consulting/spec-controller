@@ -16,7 +16,8 @@
     "node": ">=22"
   },
   "bin": {
-    "spec-controller": "./dist/cli.js"
+    "spec-controller": "./dist/cli.js",
+    "spec-controller-restore-measurements": "./dist/measurements/restoreCli.js"
   },
   "files": [
     "dist"

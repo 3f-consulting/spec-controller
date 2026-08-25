@@ -31,18 +31,20 @@ import {
 
 import {
   exitCodeOf,
+  measurementArtefactWith,
+  type Measurement,
+  type MeasurementArtefact,
+} from "./measurementArtefact.js";
+import {
   measuredSecondsOf,
-  timingArtefactWith,
   timingBandOf,
   timingReport,
   triggerFor,
-  type StepMeasurement,
-  type TimingArtefact,
 } from "./stepTiming.js";
 
 describe("[SCN-CIP-009] a timed step's measurement carries the @SCN and check tag it was given", () => {
   it("[SCN-CIP-009] the artefact it posts reads back as one Evidence Observation, citing and naming", () => {
-    const artefact = timingArtefactWith(
+    const artefact = measurementArtefactWith(
       {
         scnId: "SCN-MSD-001",
         checkTag: "ci-run-time",
@@ -100,9 +102,9 @@ describe("[SCN-CIP-010] the wrapped command's exit code is the wrapper's", () =>
 
 describe("[SCN-CIP-011] a second timed step's measurement lands beside the first", () => {
   it("[SCN-CIP-011] a step answering a different scenario posts beside the row already there", () => {
-    const posted = timingArtefactWith(
+    const posted = measurementArtefactWith(
       { scnId: "SCN-MSD-002", checkTag: "ci-run-time", measured: 68.2 },
-      serialised(timingArtefactWith(unitSuite(21.4), undefined)),
+      serialised(measurementArtefactWith(unitSuite(21.4), undefined)),
     );
 
     expect(observationsIn(posted).map((row) => [row.scnId, row.measured])).toEqual([
@@ -112,9 +114,9 @@ describe("[SCN-CIP-011] a second timed step's measurement lands beside the first
   });
 
   it("[SCN-CIP-011] a step running twice replaces its own row and posts no second one", () => {
-    const posted = timingArtefactWith(
+    const posted = measurementArtefactWith(
       unitSuite(24.9),
-      serialised(timingArtefactWith(unitSuite(21.4), undefined)),
+      serialised(measurementArtefactWith(unitSuite(21.4), undefined)),
     );
 
     // TWO ROWS ANSWERING ONE DEBIT is the reading the key exists to keep unreachable: the
@@ -127,7 +129,7 @@ describe("[SCN-CIP-011] a second timed step's measurement lands beside the first
     // The reader strips the @ before it reads either term, so two spellings of one address would
     // reconcile as two credits — the split this key exists to prevent, arriving through the
     // spelling rather than through the re-run.
-    const posted = timingArtefactWith(
+    const posted = measurementArtefactWith(
       unitSuite(24.9),
       serialised({
         measurements: [{ scnId: "@SCN-MSD-001", checkTag: "@ci-run-time", measured: 21.4 }],
@@ -144,8 +146,8 @@ describe("[SCN-CIP-011] a second timed step's measurement lands beside the first
     // artefact into a false verdict about a suite that plainly ran. Every reader at this edge
     // drops what it cannot read instead; the producer takes the same stance.
     for (const damaged of ["", "   ", "not json at all", "null", '{"measurements":"nonsense"}']) {
-      expect(observationsIn(timingArtefactWith(unitSuite(21.4), damaged))).toEqual(
-        observationsIn(timingArtefactWith(unitSuite(21.4), undefined)),
+      expect(observationsIn(measurementArtefactWith(unitSuite(21.4), damaged))).toEqual(
+        observationsIn(measurementArtefactWith(unitSuite(21.4), undefined)),
       );
     }
   });
@@ -219,17 +221,17 @@ describe("[SCN-CIP-012] a run reads its measurement against its trigger and its 
 });
 
 /** One suite's row, at whatever it measured — the address is what these arms hold constant. */
-function unitSuite(measured: number): StepMeasurement {
+function unitSuite(measured: number): Measurement {
   return { scnId: "SCN-MSD-001", checkTag: "ci-run-time", measured };
 }
 
 /** An artefact as a later step finds it: the text the wrapper left on disk, not an object. */
-function serialised(artefact: TimingArtefact): string {
+function serialised(artefact: MeasurementArtefact): string {
   return `${JSON.stringify(artefact, null, 2)}\n`;
 }
 
-/** What the artefact is worth to the ledger, read back through the reader `--timings` uses. */
-function observationsIn(artefact: TimingArtefact): MeasuredEvidenceObservation[] {
+/** What the artefact is worth to the ledger, read back through the reader `--measurements` uses. */
+function observationsIn(artefact: MeasurementArtefact): MeasuredEvidenceObservation[] {
   return parseMeasuredEvidenceObservations(
     JSON.parse(JSON.stringify(artefact)) as { measurements?: unknown },
   );

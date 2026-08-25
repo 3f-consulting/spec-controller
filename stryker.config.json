@@ -5,9 +5,9 @@
   "plugins": ["@stryker-mutator/vitest-runner"],
   "coverageAnalysis": "perTest",
   "mutate": ["packages/core/src/domain/**/*.ts", "!packages/core/src/domain/**/*.test.ts"],
-  "reporters": ["progress", "clear-text", "html"],
+  "reporters": ["progress", "clear-text", "html", "json"],
   "htmlReporter": { "fileName": "reports/mutation/index.html" },
   "tempDirName": ".stryker-tmp",
   "timeoutMS": 30000,
-  "thresholds": { "high": 95, "low": 90, "break": 91.87 }
+  "thresholds": { "high": 95, "low": 90 }
 }

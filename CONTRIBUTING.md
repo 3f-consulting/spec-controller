@@ -56,6 +56,23 @@ on your machine. An exclusion excusing a step CI no longer runs reds the ladder.
 
 `bash scripts/verify.sh --list` prints the gates without running them.
 
+**One gate reads a number no local run takes.** `lint:self-balance` reconciles
+`@SCN-MUT-011` — this repository's own domain-core mutation score — against the bar in
+`specController.thresholds`. A mutation sweep costs 8-12 minutes on CI, so it runs nightly
+(`.github/workflows/mutation.yml`) and CI restores that score into the run while it is still
+young enough to be about the code being judged; a score older than 36 hours is not restored
+at all, the row reads `missing`, and the gate reds — which is how a nightly that stops
+running says so. On your machine there is nothing to restore, so run the sweep once:
+
+```
+pnpm mutation
+```
+
+That is ~45 seconds locally and posts the score beside the run's other measurements, after
+which `pnpm verify` is green. Skipping it leaves `lint:self-balance` reporting
+`@SCN-MUT-011` as `missing`, which is the true sentence rather than a false red: no
+measurement arrived.
+
 ## Reports live outside the repo
 
 Reconciliation reports are never committed. `pnpm lint:no-committed-reports` fails

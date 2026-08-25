@@ -257,13 +257,13 @@ Then(
     ).gates.map((gate) => gate.script);
 
     // VACUITY FLOOR. Both sides of the comparison below are computed, so two empty lists
-    // would agree perfectly and prove nothing. The real ci.yml runs 14 script steps and one
+    // would agree perfectly and prove nothing. The real ci.yml runs 15 script steps and one
     // is excluded; anything else means the workflow changed and this scenario is the place
     // that should say so.
     assert.equal(
       expected.length,
-      13,
-      `the real ci.yml must yield 13 local gates; it yielded ${expected.length}: ${expected.join(", ")}`,
+      14,
+      `the real ci.yml must yield 14 local gates; it yielded ${expected.length}: ${expected.join(", ")}`,
     );
 
     assert.deepEqual(listedGates(listing.stdout), expected, "--list must be the derived ladder");

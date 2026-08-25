@@ -131,34 +131,34 @@ Then("that Evidence Obligation carries the threshold {int}", function (ceiling: 
 });
 
 // ---------------------------------------------------------------------------
-// @SCN-CIP-003 — the CREDIT side: the timing wrapper's artefact read into citing observations.
+// @SCN-CIP-003 — the CREDIT side: the measurement artefact read into citing observations.
 // ---------------------------------------------------------------------------
 
 /** The artefact as the wrapper writes it, built row by row across the Given steps. */
-let timingArtefact: { measurements: unknown[] } | undefined;
+let measurementArtefact: { measurements: unknown[] } | undefined;
 
 /** What the reader produced from it. */
 let measurements: MeasuredEvidenceObservation[];
 
 // @SCN-CIP-003
 Given(
-  "the timing artefact records a measurement of {float} for {string} on {string}",
+  "the measurement artefact records a measurement of {float} for {string} on {string}",
   function (measured: number, check: string, scnId: string) {
-    timingArtefact = { measurements: [{ scnId, checkTag: check, measured }] };
+    measurementArtefact = { measurements: [{ scnId, checkTag: check, measured }] };
   }
 );
 
 // @SCN-CIP-003
-Given("the timing artefact also carries a row missing its check", function () {
+Given("the measurement artefact also carries a row missing its check", function () {
   // The tolerant read, exercised alongside the good row rather than alone: an artefact whose bad
   // row cost the whole verdict would be loud nowhere, and the assertion below is "exactly one"
   // precisely so the drop is proven rather than assumed.
-  timingArtefact!.measurements.push({ scnId: "SCN-MSD-002", measured: 12.5 });
+  measurementArtefact!.measurements.push({ scnId: "SCN-MSD-002", measured: 12.5 });
 });
 
 // @SCN-CIP-003
-When("the timing artefact is ingested", function () {
-  measurements = parseMeasuredEvidenceObservations(timingArtefact ?? { measurements: [] });
+When("the measurement artefact is ingested", function () {
+  measurements = parseMeasuredEvidenceObservations(measurementArtefact ?? { measurements: [] });
 });
 
 // @SCN-CIP-003
@@ -211,7 +211,7 @@ When("the corpus and the measurements are reconciled", function () {
   // this is where a rule wired to the wrong input would show, and nowhere else.
   ledger = reconcile(
     parseScenarios(corpusSource, [], measuredCheckTags(thresholds), thresholds),
-    parseMeasuredEvidenceObservations(timingArtefact ?? { measurements: [] })
+    parseMeasuredEvidenceObservations(measurementArtefact ?? { measurements: [] })
   );
 });
 
@@ -251,12 +251,12 @@ Then("the row is out-of-balance", function () {
 });
 
 // @SCN-CIP-006
-Given("no timing artefact was produced at all", function () {
+Given("no measurement artefact was produced at all", function () {
   // ABSENT, not empty. A missing artefact is tolerated exactly as a missing vitest report is — the
   // reader contributes nothing rather than throwing — so the fault surfaces as the obligation it
   // leaves unanswered rather than as a read error, which would say "the run is broken" when what
   // happened is "the step never ran".
-  timingArtefact = undefined;
+  measurementArtefact = undefined;
 });
 
 // @SCN-CIP-006
@@ -296,8 +296,11 @@ Given(
     // the arrangement the static axis calls a corpus fault. Merged into the registry the first
     // Given built rather than replacing it, because the point is that BOTH survive.
     const merged: Record<string, Record<string, number>> = {};
-    for (const [scn, ceilings] of thresholds) {
-      merged[scn] = Object.fromEntries(ceilings);
+    for (const [scn, bars] of thresholds) {
+      // Re-authored from the numbers the registry holds. A pair whose bar it could not read
+      // (@SCN-MUT-003) has no number to re-author, and this fixture never builds one.
+      merged[scn] = {};
+      for (const [tag, bar] of bars) if (bar !== null) merged[scn]![tag] = bar.threshold;
     }
     merged[scnId] = { ...(merged[scnId] ?? {}), [check]: ceiling };
     thresholds = thresholdsOf(merged);
@@ -306,9 +309,9 @@ Given(
 
 // @SCN-CIP-007
 Given(
-  "the timing artefact also records a measurement of {float} for {string} on {string}",
+  "the measurement artefact also records a measurement of {float} for {string} on {string}",
   function (measured: number, check: string, scnId: string) {
-    timingArtefact!.measurements.push({ scnId, checkTag: check, measured });
+    measurementArtefact!.measurements.push({ scnId, checkTag: check, measured });
   }
 );
 
@@ -336,7 +339,7 @@ const CIP_CTX: RunContext = {
 When("the corpus and the measurements are reconciled and rendered", function () {
   const reconciliation = evidenceReconciliationOf(
     parseScenarios(corpusSource, [], measuredCheckTags(thresholds), thresholds),
-    parseMeasuredEvidenceObservations(timingArtefact ?? { measurements: [] })
+    parseMeasuredEvidenceObservations(measurementArtefact ?? { measurements: [] })
   );
   ledger = reconciliation.ledger;
   markdown = renderMarkdown(reconciliation, CIP_CTX);

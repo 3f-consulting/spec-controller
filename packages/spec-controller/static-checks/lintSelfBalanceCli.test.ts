@@ -62,7 +62,7 @@ describe("[SCN-SLF-001] the self-balance gate's scan scope is stated, whole, in 
       cucumber: "runs/self-balance/cucumber.json",
       // The MEASURED stream (@SCN-CIP-013, 3F-2742), sourced from the producer's own constant
       // so the path this gate reads cannot drift from the path the timed steps write.
-      timings: "runs/self-balance/timings.json",
+      measurements: "runs/self-balance/measurements.json",
       // The workflow DIRECTORY, not one file (3F-2500): the product's own default reads
       // every workflow, and a gate that read fewer would be spec-controller declining to
       // use the capability it ships — the shape @SCN-SLF-002 closed one level down.
@@ -78,7 +78,7 @@ describe("[SCN-SLF-001] the self-balance gate's scan scope is stated, whole, in 
     // the gate's own inputs off the record.
     expect(SELF_BALANCE_SCOPE.vitest.startsWith("runs/")).toBe(true);
     expect(SELF_BALANCE_SCOPE.cucumber.startsWith("runs/")).toBe(true);
-    expect(SELF_BALANCE_SCOPE.timings.startsWith("runs/")).toBe(true);
+    expect(SELF_BALANCE_SCOPE.measurements.startsWith("runs/")).toBe(true);
   });
 
   it("hands every scope surface to the product's balance command, resolved against the root", () => {
@@ -93,8 +93,8 @@ describe("[SCN-SLF-001] the self-balance gate's scan scope is stated, whole, in 
       path.join("/tmp/target", "runs/self-balance/vitest.json"),
       "--cucumber",
       path.join("/tmp/target", "runs/self-balance/cucumber.json"),
-      "--timings",
-      path.join("/tmp/target", "runs/self-balance/timings.json"),
+      "--measurements",
+      path.join("/tmp/target", "runs/self-balance/measurements.json"),
       "--ci",
       path.join("/tmp/target", ".github/workflows"),
       "--package-json",
@@ -104,15 +104,15 @@ describe("[SCN-SLF-001] the self-balance gate's scan scope is stated, whole, in 
     ]);
   });
 
-  it("leaves --timings off where no timed step posted, so the rows it answers reconcile missing", () => {
-    // THE ASYMMETRY IS THE POINT (@SCN-CIP-013). A --timings path the balance command cannot
+  it("leaves --measurements off where no timed step posted, so the rows it answers reconcile missing", () => {
+    // THE ASYMMETRY IS THE POINT (@SCN-CIP-013). A --measurements path the balance command cannot
     // find is a usage fault to it and exits 2, and exit 2 says "this run is broken" where the
     // truth is "a timed suite was never measured" — a verdict @SCN-CIP-006 puts on the ledger.
     // Passing the flag regardless would rebuild the hiding place inside the gate: unwrap a
     // timed script and the build would report a broken run rather than an unmeasured suite.
     const argv = selfBalanceArgv("/tmp/target", {}, () => false);
 
-    expect(argv).not.toContain("--timings");
+    expect(argv).not.toContain("--measurements");
     // Everything else still reaches the command — the absent artefact narrows nothing but itself.
     expect(argv).toContain(path.join("/tmp/target", "runs/self-balance/vitest.json"));
     expect(argv).toContain(path.join("/tmp/target", "features"));

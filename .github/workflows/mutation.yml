@@ -1,15 +1,22 @@
 name: Mutation
 
 # Mutation testing over the domain core. NOT a per-push gate — it is a scheduled
-# sweep with a score threshold, deliberately kept OUT of ci.yml so the per-push
-# ladder stays fast and deterministic (3F-2178).
+# sweep, deliberately kept OUT of ci.yml so the per-push ladder stays fast and
+# deterministic (3F-2178): measured, the sweep costs 8-12 minutes on a 2-core
+# runner against a ~2-minute ladder.
 #
 # The domain core is the only mutated scope: packages/core/src/domain/*.ts — the
 # posting / reconciliation / fold rules. The rest of the tree is not mutated; the
 # value concentrates in the pure logic and the run cost scales with the scope.
 #
-# Below the `break` threshold in stryker.config.json the run fails and the
-# scheduled workflow reports red.
+# THIS JOB NO LONGER HOLDS THE VERDICT (3F-2765). It used to red below the `break`
+# threshold in stryker.config.json; that bar is retired, and the score is reconciled
+# against `specController.thresholds` → SCN-MUT-011 on this repository's own ledger,
+# where every other fitness check is settled. Two bars for one characteristic makes a
+# green build depend on two arbiters agreeing, and the ledger's is the one with the
+# @SCN. So what this job now owes the ledger is a MEASUREMENT: `pnpm mutation` wraps
+# the sweep in the score producer, and the artefact below carries that number to
+# whichever push borrows it next.
 on:
   schedule:
     # 03:17 UTC nightly — an off-the-hour minute so the run does not queue behind
@@ -33,8 +40,54 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # `pnpm mutation` is the sweep wrapped in the score producer: it runs Stryker,
+      # derives the score from the mutant statuses, posts it into the run's measurement
+      # artefact citing SCN-MUT-011 on the check `mutation`, and carries the sweep's own
+      # exit code out unchanged. A sweep that left no readable report posts nothing —
+      # the row then reads `missing`, which is the true sentence.
       - name: Mutation test the domain core
         run: pnpm mutation
+
+      # WHEN, WRITTEN INTO THE ARTEFACT, BECAUSE THE BORROWER HAS TO ASK. A push that
+      # settles SCN-MUT-011 with this number is judging its own tree against a sweep of
+      # last night's, and what makes that honest is an expiry: the restore posts the rows
+      # only while they are young enough to still be about the code being judged. It reads
+      # the age off `measuredAt`, and an artefact that does not say when it was measured is
+      # deliberately not treated as fresh — so a sweep that skipped this step would go
+      # quiet rather than red, which is the one reading this axis exists to keep
+      # unreachable.
+      #
+      # Stamped here rather than by the producer: `measurementArtefact` is the shape a RUN
+      # posts its own measurements in, shared with the timing wrapper, and only an artefact
+      # that outlives its run needs a date on it. That is a fact about this upload.
+      - name: Date the measurement this sweep leaves behind
+        run: |
+          set -euo pipefail
+          artefact=runs/self-balance/measurements.json
+          if [ ! -f "${artefact}" ]; then
+            echo "mutation: the sweep posted no measurement, so there is none to date or upload."
+            exit 0
+          fi
+          dated="$(mktemp)"
+          jq --arg at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '. + { measuredAt: $at }' \
+            "${artefact}" > "${dated}"
+          mv "${dated}" "${artefact}"
+          cat "${artefact}"
+
+      # WHAT THE PER-PUSH LADDER BORROWS. `.github/actions/restore-measurements` fetches
+      # this by name off the latest successful run of this workflow, so the name is the
+      # contract between the two and neither pins a branch. `runs/` is gitignored with no
+      # re-includes, so the artefact leaves this job and is never committed.
+      - name: Upload the mutation measurement
+        uses: actions/upload-artifact@v7
+        with:
+          name: mutation-measurement
+          path: runs/self-balance/measurements.json
+          # Nothing to upload means the sweep left no readable report — already reported
+          # above, and already loud on the ledger as a row reading `missing`. A warning
+          # annotation here would be a second, quieter place to look for it.
+          if-no-files-found: ignore
+          retention-days: 14
 
       # The HTML report enumerates which domain lines no test kills — the same
       # class of finding as a reconciliation report, so it is never committed

@@ -1,5 +1,5 @@
 /**
- * @unit for @SCN-CIP-003 — the CREDIT half of the measured fitness check: the timing wrapper's
+ * @unit for @SCN-CIP-003 — the CREDIT half of the measured fitness check: the measurement
  * artefact read into Evidence Observations that CITE.
  *
  * Bidirectional evidence: the describe carries @SCN-CIP-003, matching features/ci-run-time.feature
@@ -15,7 +15,7 @@ import { describe, it, expect } from "vitest";
 
 import { parseMeasuredEvidenceObservations } from "./measurements.js";
 
-describe("[SCN-CIP-003] the timing artefact reads into citing Evidence Observations", () => {
+describe("[SCN-CIP-003] the measurement artefact reads into citing Evidence Observations", () => {
   it("reads a measurement into one observation carrying its citation, its check and its number", () => {
     expect(
       parseMeasuredEvidenceObservations({
