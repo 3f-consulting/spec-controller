@@ -18,7 +18,11 @@
   "bin": {
     "spec-controller": "./dist/cli.js",
     "spec-controller-restore-measurements": "./dist/measurements/restoreCli.js",
-    "spec-controller-persist-measurements": "./dist/measurements/persistCli.js"
+    "spec-controller-persist-measurements": "./dist/measurements/persistCli.js",
+    "spec-controller-mutation-ratchet": "./dist/mutation-ratchet/ratchetCli.js"
+  },
+  "exports": {
+    "./mutation-ratchet": "./src/mutation-ratchet/index.ts"
   },
   "files": [
     "dist"
@@ -33,6 +37,12 @@
     "yaml": "^2.9.0"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "exports": {
+      "./mutation-ratchet": {
+        "types": "./dist/mutation-ratchet/index.d.ts",
+        "default": "./dist/mutation-ratchet/index.js"
+      }
+    }
   }
 }

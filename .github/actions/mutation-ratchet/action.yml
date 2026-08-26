@@ -1,0 +1,127 @@
+# THE MUTATION NO-REGRESSION RATCHET, AS A STEP ANOTHER REPOSITORY CAN CALL (3F-2787).
+#
+# A mutation sweep produces one number, and a bar can only ask whether that number fell. The
+# interesting question is WHY it fell, and there are answers a single number cannot separate: a
+# mutant the suite used to kill now survives, which is the fault the gate exists for; or new
+# mutable code arrived carrying survivors with it, which is not a fault at all. The library behind
+# this step keeps the record as a pair of COUNTS and reaches one of seven verdicts over them.
+#
+# BUILT ONCE, HERE, AND CALLED FROM ANYWHERE. Every term a project owns is an input: WHICH gate,
+# WHERE its report lands, WHICH record file holds the bar, and WHAT to type to bank a measurement.
+# Nothing below names a project, a check, a runner, a workflow or a repository — a second
+# repository passes different inputs rather than forking the reasoning. Inlining the equivalent
+# per project is what this exists to stop: a reconciler copy-pasted into four repositories is four
+# gates that drift the day any one is edited.
+#
+# THE BAR STAYS YOURS. The figures live in your own record file, under a name of your choosing,
+# and your CI runs this step. What is shared is the argument, not the threshold.
+#
+# THERE IS NO `--record` INPUT, DELIBERATELY. Banking a measurement writes a file that a human then
+# commits with the reason in the message. An action offering to bank it in CI is the escape hatch
+# the up-only refusal refuses, one layer out — and a bar raised by a robot at 3am is one nobody
+# had to justify.
+#
+# IT ANNOTATES ON THE VERDICT, NEVER ON A ROSTER OF VERDICT NAMES. The command already decides
+# whether the run stands and says so in its exit code; this step reports that decision and no
+# more. Holding a list of which verdict names are red here would be a second arbiter to keep in
+# step with the first, and the first is the one with the reasoning in it.
+name: Mutation ratchet
+description: >-
+  Reconcile a mutation gate's sweep against the counts it last banked, and red the run when a kill
+  was lost, when nothing was measured, or when a gain is sitting unbanked as head-room.
+
+inputs:
+  gate:
+    description: >-
+      Which gate to reconcile. Names an entry in the record file and, by your own convention, the
+      report below — the two are matched by you rather than by this step.
+    required: true
+  report:
+    description: >-
+      Where this run left the gate's mutation report, relative to the workspace. REQUIRED and
+      deliberately undefaulted: a report path is a fact about the runner that wrote it, so a
+      default here would be this step naming one.
+    required: true
+  record-file:
+    description: >-
+      The record holding each gate's banked counts and the allowance stated against them, relative
+      to the workspace. Defaults to the record's own conventional name, which is yours to write
+      over — unlike the report path, this one belongs to whoever owns the bar.
+    required: false
+    default: quality-thresholds.yml
+  bank-command:
+    description: >-
+      What a reader should type to bank a measurement, quoted verbatim into the ratchet-debt
+      verdict. It names YOUR script, which is exactly why it is an input.
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Reconcile the gate against the counts it last banked
+      shell: bash
+      env:
+        GATE: ${{ inputs.gate }}
+        REPORT: ${{ inputs.report }}
+        RECORD_FILE: ${{ inputs.record-file }}
+        BANK_COMMAND: ${{ inputs.bank-command }}
+      run: |
+        set -uo pipefail
+
+        # Reached by its bin name rather than by a package path, so this names no package and the
+        # caller's own manifest decides which version of the ratchet it is running. The contract is
+        # that `spec-controller-mutation-ratchet` resolves from the workspace — the caller depends
+        # on the package that ships it, and has installed and BUILT it before this step, because a
+        # `bin` is a build output.
+        #
+        # `--no` because a bin that does not resolve is a misconfigured caller and must say so,
+        # never a version fetched from the registry behind the caller's back.
+        #
+        # THE `--` IS LOAD-BEARING. Without it every `--flag` after the command name is read as
+        # npx's own config and never reaches the ratchet, which then reports a missing `--gate` and
+        # exits 2 — measured, not assumed: the same form was written wrong first against a real
+        # packed tarball when the restore shipped.
+        #
+        # `--root` IS THE WORKSPACE, ABSOLUTE. The tree being judged is the caller's, never one the
+        # module finds from its own installed path — installed into node_modules, a self-located
+        # root resolves inside the dependency. Every path input above is resolved against this.
+        args=(--gate "${GATE}" --report "${REPORT}" --record-file "${RECORD_FILE}" --root "${GITHUB_WORKSPACE}")
+        if [ -n "${BANK_COMMAND}" ]; then
+          args+=(--bank-command "${BANK_COMMAND}")
+        fi
+
+        # Captured rather than streamed so the verdict can be BOTH echoed in full and lifted into an
+        # annotation. A verdict only in the log is one nobody opens; a verdict only in an annotation
+        # loses the figures it was reached from.
+        set +e
+        verdict="$(npx --no -- spec-controller-mutation-ratchet "${args[@]}" 2>&1)"
+        status=$?
+        set -e
+
+        printf '%s\n' "${verdict}"
+
+        # ANNOTATED ON THE COMMAND'S OWN DECISION. 0 stands, 1 does not, 2 is a fault in how this
+        # step was called rather than a verdict about the code — the exit this repository reserves
+        # across every check for "this run is broken" as against "the code is wrong".
+        #
+        # The last line carries the verdict sentence; annotations are single-line, and the whole
+        # text is already above in the log.
+        summary="$(printf '%s\n' "${verdict}" | tail -n 1)"
+
+        case "${status}" in
+          0)
+            # GREEN IS ANNOTATED TOO, and that is not noise. Two of the seven verdicts pass while
+            # reporting something real — an allowance spent, or a population that grew — and a pass
+            # nobody reads is how both go quiet.
+            echo "::notice title=Mutation ratchet (${GATE})::${summary}"
+            ;;
+          1)
+            echo "::error title=Mutation ratchet (${GATE})::${summary}"
+            ;;
+          *)
+            echo "::error title=Mutation ratchet (${GATE}) — misuse::${summary}"
+            ;;
+        esac
+
+        exit "${status}"

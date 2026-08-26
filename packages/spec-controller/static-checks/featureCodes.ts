@@ -185,6 +185,12 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     status: "feature-code-used",
     note: "the measured axis read in EITHER direction — a threshold entry carries the comparison it is read with, so a mutation score is held to a FLOOR (at least) where a ci-run-time is held to a ceiling (at most), and a bare number keeps meaning at-most so the two live @ci-run-time rows are untouched by construction rather than by a sweep (3F-2509)",
   },
+  {
+    code: "RAT",
+    slug: "mutation-ratchet",
+    status: "feature-code-used",
+    note: "the no-regression ratchet, shipped as a library a project imports rather than a reconciler each project forks — a gate's record is a PAIR OF COUNTS plus the allowance stated against them, so a lost kill and a grown mutant population reach different verdicts instead of the one red a bare score can raise; every term a project owns (its record file, its gate names, its report path, the tree being judged, what to type to bank a measurement) arrives from the caller (3F-2787)",
+  },
 ];
 
 /** A single lint finding. */

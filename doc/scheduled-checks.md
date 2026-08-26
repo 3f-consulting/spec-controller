@@ -8,11 +8,11 @@ ledger while it is still young enough to be about this code. Past its window it
 posts nothing, the bar it would have settled reconciles `missing`, and the
 ledger reds — a schedule that has quietly stopped cannot stay quiet.
 
-This page is for anyone wiring such a check into their own CI. The two shipped
-composite actions — `persist-measurements` and `restore-measurements` — plus the
-CLIs behind them are a **library** you import into your pipeline. `spec-controller`
-does not sit in your pipeline; you own your bars and their enforcement (see
-[Ownership](#ownership)).
+This page is for anyone wiring such a check into their own CI. The three shipped
+composite actions — `persist-measurements`, `restore-measurements` and
+`mutation-ratchet` — plus the CLIs behind them are a **library** you import into
+your pipeline. `spec-controller` does not sit in your pipeline; you own your bars
+and their enforcement (see [Ownership](#ownership)).
 
 ---
 
@@ -170,6 +170,50 @@ run reads `missing`, out loud on the row that owed the number.
 Downloads the latest successful run's artefact, and if it is younger than
 `max-age`, posts its still-fresh rows into this run's measurement artefact for
 `balance --measurements` to read.
+
+### `mutation-ratchet`
+
+| Input | Required | Default | Purpose |
+|---|---|---|---|
+| `gate` | yes | — | Which gate to reconcile. Names an entry in the record file, and by your own convention the report below. |
+| `report` | yes | — | Where this run left the gate's mutation report, relative to the workspace. |
+| `record-file` | no | `quality-thresholds.yml` | The record holding each gate's banked counts and the allowance stated against them. |
+| `bank-command` | no | `""` | What a reader should type to bank a measurement, quoted verbatim into the ratchet-debt verdict. |
+
+A different shape from the two above, and worth saying why. Persist and restore
+carry a number **to** your ledger; this one reaches a **verdict** and reds your
+run on it. It reconciles a sweep against the counts that gate last banked, and
+answers with one of seven readings — a lost kill, a lost kill inside the
+allowance your record states, a population that grew, a population that shrank
+alongside its kills, a gain nobody banked, a run sitting on its record, or no
+measurement at all.
+
+**The record is a pair of counts, never a bare score.** A score falls both when a
+mutant that used to die now survives and when new mutable code arrives carrying
+survivors with it — two unrelated events one number cannot separate, and the
+cheap way out of the second is to widen the bar, which is how a floor loses its
+teeth. Keeping `detected` and `total` apart is what lets the two be told apart.
+
+**It reds on an unbanked improvement too**, which is the clause that makes it a
+ratchet rather than a ceiling: the gap between a stale record and a better tree
+is head-room, and a later survivor arriving inside it costs nothing and reds
+nothing. Bank the gain and the gate watches where it is meant to.
+
+**There is no `--record` input.** Banking writes a file a human commits with the
+reason in the message; an action that banked in CI would be an escape hatch
+nobody has to justify. The same applies to a fall: the recorder refuses to lower
+a record and offers no flag that overrides it, so a legitimate lowering — code
+deleted, a scope narrowed — is a deliberate hand-edit with its reason in the
+commit.
+
+```yaml
+- name: Reconcile the mutation gate against its record
+  uses: 3f-consulting/spec-controller/.github/actions/mutation-ratchet@main
+  with:
+    gate: domain
+    report: reports/mutation/domain.json
+    bank-command: "pnpm mutation:domain --record"
+```
 
 ---
 
