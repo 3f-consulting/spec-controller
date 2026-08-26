@@ -55,6 +55,8 @@ spec-controller balance --features ./features \
 
 Full flags, examples, and CI wiring: [`doc/how_to_use.md`](./doc/how_to_use.md).
 
+Running a check on a schedule and gating every push on its result — a nightly mutation sweep, a long soak — see [`doc/scheduled-checks.md`](./doc/scheduled-checks.md).
+
 ## The library
 
 The reconciliation engine ships separately as the pure, embeddable library **`@3f-consulting/spec-controller-core`** — same logic, no CLI, no I/O — so you can build your own tooling on top of it.
