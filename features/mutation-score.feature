@@ -205,6 +205,66 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
         | 36     | 37  |
         | 26     | 30  |
 
+  Rule: a scheduled run persists what it measured, dated with the clock it measured on
+
+    THE OTHER HALF OF THE RULE ABOVE, AND IT WAS NOT SHIPPED. The window reads an age off a
+    `measuredAt` the borrowing run never wrote, so something upstream has to write it — and until
+    now that something was a `jq` line inside this repository's own workflow. The reading half
+    shipped as product; the writing half shipped as a shell snippet. A second repository standing a
+    nightly up therefore got the reader for free and had to copy the writer, which is the drift
+    `build once, no per-project local gates` exists to stop. Half a mechanism shipped is a
+    mechanism that gets forked, and the two halves stop agreeing the day either is edited.
+
+    THE DATE BELONGS TO THE PERSIST, NOT TO THE ARTEFACT WRITER (@SCN-CIP-009, @SCN-CIP-011). Only
+    an artefact that OUTLIVES its run needs to say when it was measured; a run posting into its own
+    artefact is already talking about now. So the clock arrives at the step that persists, and the
+    shape a run posts its own measurements in is untouched — the timing wrapper's rows never start
+    carrying a field they have no use for.
+
+    AND THE WINDOW IS NOT THE PERSIST'S EITHER. How long a number stays worth posting is a fact
+    about the cadence of whoever borrows it, which is the restore's caller. The persist writes a
+    moment and says nothing about what it is worth. So the moment it wrote is asserted by asking
+    the borrower's question of it twice, through the reader the restore already uses: a date that
+    is wrong, or that no reader can parse, reds here rather than reading downstream as a schedule
+    that lapsed. One age alone cannot state this — any date in the past satisfies it — so both
+    sides of one window are read.
+
+    AND NOTHING WORTH PERSISTING IS PERSISTED AS NOTHING, NOT AS A DATED EMPTY ARTEFACT. Absent,
+    unparseable and holding-no-well-formed-row are one answer, which is the stance every reader at
+    this edge already takes and the one the restore takes in the mirror direction when it has
+    nothing fresh to post. Both spellings reconcile `missing` downstream, so the ledger reads the
+    same either way; what differs is where it is SAID. Leaving no file lets the upload stay quiet
+    and lets the source say out loud that this run measured nothing, instead of shipping a
+    well-formed artefact a later run silently reads to zero rows. And a run that measured nothing
+    is a fact about the RUN rather than a fault of the persist's (@SCN-CIP-010): the only non-zero
+    exit is 2, and only for a fault in how the persist was CALLED.
+
+    THE THIRD SHAPE IS NOT THE SECOND ONE AGAIN. An artefact that parses and holds no row any
+    reader will accept is what separates a persist reading its rows through the same reader the
+    run's own artefact is read with from one that copies the file across blind — and a blind copy
+    hands a later run a row nothing downstream accepts, an artefact that looks like a measurement
+    and settles nothing.
+
+    @unit @integration @SCN-MUT-012
+    Scenario: a run persists every measurement it made, dated with the moment it measured them
+      Given a run that measured 92.52 for "mutation" on "SCN-MSD-001" and 88 for "coverage" on "SCN-MSD-002"
+      When that run persists what it measured, for a later run to borrow
+      Then the artefact it persisted carries both of those measurements
+      And a run reading that artefact 12 hours later against a 36-hour window finds both still fresh
+      And a run reading it one second past that same window finds neither
+
+    @unit @integration @SCN-MUT-013
+    Scenario Outline: a run with nothing worth persisting persists nothing, rather than a dated artefact holding no measurement
+      Given a run whose own measurement artefact is <artefact>
+      When that run persists what it measured, for a later run to borrow
+      Then it persists no artefact at all, and does not fail for having nothing to persist
+
+      Examples: the three shapes of nothing, which every reader at this edge already answers alike
+        | artefact                                      |
+        | absent, because nothing posted a measurement  |
+        | there, and unparseable                        |
+        | there, and holding no well-formed measurement |
+
   Rule: spec-controller's own mutation score is on the books
 
     THE CHECK, TURNED ON ITS AUTHOR — the shape ci-run-time.feature, scn-tags.feature and

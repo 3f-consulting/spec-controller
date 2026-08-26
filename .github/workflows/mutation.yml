@@ -40,6 +40,21 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # BUILT AND RELINKED BECAUSE A `bin` IS A BUILD OUTPUT, the reason ci.yml already sets out at
+      # length (3F-2765). `.github/actions/persist-measurements` reaches the persist by its bin
+      # name, and pnpm's `node_modules/.bin` entry for a workspace package points into that
+      # package's `dist/` — a symlink that dangles until the build runs, and that a second install
+      # will not go back and create. Without these the persist falls through to the registry, where
+      # no such package exists.
+      #
+      # Ahead of the sweep rather than after it: Stryker mutates `packages/core/src/domain/**`
+      # only, so a `dist/` on disk cannot change what is measured.
+      - name: Build
+        run: pnpm build
+
+      - name: Link the bins the build just produced
+        run: pnpm rebuild
+
       # `pnpm mutation` is the sweep wrapped in the score producer: it runs Stryker,
       # derives the score from the mutant statuses, posts it into the run's measurement
       # artefact citing SCN-MUT-011 on the check `mutation`, and carries the sweep's own
@@ -48,46 +63,27 @@ jobs:
       - name: Mutation test the domain core
         run: pnpm mutation
 
-      # WHEN, WRITTEN INTO THE ARTEFACT, BECAUSE THE BORROWER HAS TO ASK. A push that
-      # settles SCN-MUT-011 with this number is judging its own tree against a sweep of
-      # last night's, and what makes that honest is an expiry: the restore posts the rows
-      # only while they are young enough to still be about the code being judged. It reads
-      # the age off `measuredAt`, and an artefact that does not say when it was measured is
-      # deliberately not treated as fresh — so a sweep that skipped this step would go
-      # quiet rather than red, which is the one reading this axis exists to keep
-      # unreachable.
+      # WHEN, WRITTEN INTO THE ARTEFACT, BECAUSE THE BORROWER HAS TO ASK. A push that settles
+      # SCN-MUT-011 with this number is judging its own tree against a sweep of last night's, and
+      # what makes that honest is an expiry: the restore posts the rows only while they are young
+      # enough to still be about the code being judged. It reads the age off `measuredAt`, and an
+      # artefact that does not say when it was measured is deliberately not treated as fresh — so a
+      # sweep that skipped this step would go quiet rather than red, which is the one reading this
+      # axis exists to keep unreachable.
       #
-      # Stamped here rather than by the producer: `measurementArtefact` is the shape a RUN
-      # posts its own measurements in, shared with the timing wrapper, and only an artefact
-      # that outlives its run needs a date on it. That is a fact about this upload.
-      - name: Date the measurement this sweep leaves behind
-        run: |
-          set -euo pipefail
-          artefact=runs/self-balance/measurements.json
-          if [ ! -f "${artefact}" ]; then
-            echo "mutation: the sweep posted no measurement, so there is none to date or upload."
-            exit 0
-          fi
-          dated="$(mktemp)"
-          jq --arg at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '. + { measuredAt: $at }' \
-            "${artefact}" > "${dated}"
-          mv "${dated}" "${artefact}"
-          cat "${artefact}"
-
-      # WHAT THE PER-PUSH LADDER BORROWS. `.github/actions/restore-measurements` fetches
-      # this by name off the latest successful run of this workflow, so the name is the
-      # contract between the two and neither pins a branch. `runs/` is gitignored with no
-      # re-includes, so the artefact leaves this job and is never committed.
-      - name: Upload the mutation measurement
-        uses: actions/upload-artifact@v7
+      # THROUGH SHIPPED CODE, NOT THROUGH YAML THIS FILE WROTE (3F-2771). This was a `jq` line and
+      # an upload block here, which meant the reading half of the mechanism shipped as product and
+      # the writing half shipped as a shell snippet — so a second repository standing a nightly up
+      # copied the snippet. The action below dates AND uploads, so what is left here is the
+      # artefact's NAME, which is the one term `ci.yml`'s restore has to agree with. Nothing in the
+      # action or the CLI it calls names mutation, Stryker or this repository.
+      #
+      # `runs/` is gitignored with no re-includes, so the artefact this reads leaves the job and is
+      # never committed; the dated copy the action writes never enters the checkout at all.
+      - name: Persist the measurement this sweep leaves behind
+        uses: ./.github/actions/persist-measurements
         with:
-          name: mutation-measurement
-          path: runs/self-balance/measurements.json
-          # Nothing to upload means the sweep left no readable report — already reported
-          # above, and already loud on the ledger as a row reading `missing`. A warning
-          # annotation here would be a second, quieter place to look for it.
-          if-no-files-found: ignore
-          retention-days: 14
+          artefact-name: mutation-measurement
 
       # The HTML report enumerates which domain lines no test kills — the same
       # class of finding as a reconciliation report, so it is never committed
