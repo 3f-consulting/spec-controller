@@ -575,6 +575,7 @@ Feature: Ratchet a mutation gate against the record it last banked — the no-re
       And every verdict that asks for the record to be banked quotes that project's own instruction, and no other project's
       And the record and the report were each sought under the root that project named, and nothing was read from the directory this suite is running in
       And no source file this module ships holds a name this repository goes by — not its packages, not its checks, not its workflows
+      And every error a public function of that surface raises is reachable by name from that surface, so a caller can catch it by type rather than by matching its sentence
 
   Rule: the run that calls it carries the verdict out
 

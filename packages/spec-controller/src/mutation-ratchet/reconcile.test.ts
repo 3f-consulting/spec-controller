@@ -36,6 +36,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import * as surface from "./index.js";
+import { FallRefusedError, raisedRecordText } from "spec-controller/mutation-ratchet";
 import { RECORD_FILE, reconcileGate, type RatchetRequest } from "./reconcile.js";
 import type {
   MutationGateAllowance,
@@ -484,8 +485,9 @@ describe("[SCN-RAT-014] the shipped surface names no project, check, runner, wor
 });
 
 describe("[SCN-RAT-014] the public surface is curated, and reachable by the name a consumer imports", () => {
-  it("[SCN-RAT-014] exports exactly the twelve values the surface states, and nothing standing beside them", () => {
+  it("[SCN-RAT-014] exports exactly the thirteen values the surface states, and nothing standing beside them", () => {
     expect(Object.keys(surface).sort()).toEqual([
+      "FallRefusedError",
       "MalformedRecordError",
       "RECORD_FILE",
       "floorOf",
@@ -499,6 +501,42 @@ describe("[SCN-RAT-014] the public surface is curated, and reachable by the name
       "scoreOf",
       "verdictFor",
     ]);
+  });
+
+  it("[SCN-RAT-014] hands its recorder's up-only refusal over as a type, catchable by a consumer holding nothing but this subpath", () => {
+    // THE IMPORT AT THE TOP OF THIS FILE IS HALF THE ASSERTION, AND IT GOES THE LONG WAY ROUND ON
+    // PURPOSE. `raisedRecordText` and `FallRefusedError` arrive here through
+    // `spec-controller/mutation-ratchet` — the specifier a consumer outside this package writes —
+    // rather than through `./ratchet.js`, which is how every other arm over this type reaches it.
+    // That module-direct route is exactly what kept this gap invisible: 673 lines of examples about
+    // this refusal, all of them green, while the name it is caught by was reachable from inside the
+    // directory and from nowhere else. Reading it back off the barrel's own key list would not close
+    // that either — a list is satisfied by a name, and what a caller needs is the constructor behind
+    // it, live, with a real refusal to hold against it.
+    const bankedBack: MutationMeasurement = {
+      gate: OTHER_PROJECT.gate,
+      detected: BANKED.detected,
+      total: BANKED.total,
+    };
+
+    let raised: unknown;
+    try {
+      raisedRecordText(
+        recordText(BANKED.detected, BANKED.total, BANKED.slack),
+        OTHER_PROJECT.gate,
+        bankedBack,
+        OTHER_PROJECT.recordFile,
+      );
+    } catch (error) {
+      raised = error;
+    }
+
+    // Caught by the type and then READ, because that is the whole difference a name buys. A consumer
+    // matching the message string can tell that something refused; only the type hands back which
+    // record and which gate refused, in fields it did not have to parse a sentence to reach.
+    expect(raised).toBeInstanceOf(FallRefusedError);
+    const refusal = raised instanceof FallRefusedError ? raised : null;
+    expect([refusal?.recordFile, refusal?.gate]).toEqual([OTHER_PROJECT.recordFile, OTHER_PROJECT.gate]);
   });
 
   it("[SCN-RAT-014] carries the seven types across under the names a consumer's own namespace can hold", () => {

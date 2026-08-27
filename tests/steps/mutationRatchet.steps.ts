@@ -34,6 +34,11 @@ import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSyn
 import { tmpdir } from "node:os";
 import path from "node:path";
 
+// Through the specifier a consumer outside this package writes, and deliberately not through the
+// modules standing behind it: the barrel is the subject of the surface arm below, so reaching its
+// contents by any other route would be reading one thing and reporting on another.
+import * as publishedSurface from "spec-controller/mutation-ratchet";
+
 import {
   MalformedRecordError,
   parseGateRecords,
@@ -1135,6 +1140,77 @@ Then(
       assert.ok(code.length > 400, `${file} read back with nothing left in it.`);
       const held = names.filter((name) => code.toLowerCase().includes(name.toLowerCase()));
       assert.deepEqual(held, [], `${file} names ${held.join(", ")} — a term of this repository's, not of its caller's.`);
+    }
+  },
+);
+
+/**
+ * The `@throws` tags of every documented `export function` in one module's text, by function name.
+ *
+ * READ OFF THE DOCUMENTATION RATHER THAN OFF A LIST SOMEBODY KEEPS. A list of "the errors this
+ * library raises" is a second copy of something the modules already state, and the copy is what goes
+ * stale — the type this whole arm exists over was raised, documented and left off the surface in one
+ * slice, and any list written that day would have been written from the same reading that missed it.
+ * The `@throws` tag is where an author records a raise at the moment of writing it, so a thrower
+ * added tomorrow arrives in this reading the same day with nobody having remembered anything.
+ *
+ * THE COMMENT MATCHED IS THE ONE IMMEDIATELY ABOVE. The inner group cannot cross a comment ending,
+ * so the match cannot run two doc comments together with unrelated code between them — an
+ * attribution reaching back over an intervening block would hang one module's raise on another
+ * module's function.
+ */
+function throwersIn(source: string): { fn: string; raises: string[] }[] {
+  const documented: { fn: string; raises: string[] }[] = [];
+
+  for (const match of source.matchAll(/\/\*\*((?:(?!\*\/)[\s\S])*)\*\/\s*export function (\w+)/g)) {
+    const raises = [...(match[1] ?? "").matchAll(/@throws\s+(\w+)/g)].map((tag) => tag[1] ?? "");
+
+    if (raises.length > 0) documented.push({ fn: match[2] ?? "", raises });
+  }
+  return documented;
+}
+
+/** Every documented thrower this module ships, across all of its sources. */
+function throwersThisModuleShips(): { fn: string; raises: string[] }[] {
+  const dir = path.join(process.cwd(), "packages", "spec-controller", "src", "mutation-ratchet");
+
+  return readdirSync(dir)
+    .filter((file) => file.endsWith(".ts") && !file.endsWith(".test.ts"))
+    .sort()
+    .flatMap((file) => throwersIn(readFileSync(path.join(dir, file), "utf8")));
+}
+
+Then(
+  "every error a public function of that surface raises is reachable by name from that surface, so a caller can catch it by type rather than by matching its sentence",
+  function () {
+    const reachable = Object.keys(publishedSurface);
+    const publicThrowers = throwersThisModuleShips().filter(({ fn }) => reachable.includes(fn));
+
+    // The teeth, proved before any absence is believed. A reading that matched nothing at all would
+    // report a clean surface over a surface it never opened, so the throwers have to be found and
+    // there have to be several of them; and a planted `@throws` naming a type nobody exports has to
+    // come back from the very same reading as the breach it is, or the loop below is agreeing with
+    // this tree by coincidence rather than checking it.
+    assert.ok(
+      publicThrowers.length > 1,
+      `only ${publicThrowers.length} public function(s) document a raise; this reading is not reaching the surface.`,
+    );
+    assert.deepEqual(
+      throwersIn("/** @throws NoSuchError when the record is a Tuesday. */\nexport function raiseIt(): void {}"),
+      [{ fn: "raiseIt", raises: ["NoSuchError"] }],
+      "a documented raise is not read back off the tag it is written as.",
+    );
+    assert.ok(!reachable.includes("NoSuchError"), "the planted type is reachable, so planting it proves nothing.");
+
+    for (const { fn, raises } of publicThrowers) {
+      const unreachable = raises.filter((type) => !reachable.includes(type));
+
+      assert.deepEqual(
+        unreachable,
+        [],
+        `${fn} is reachable from the surface and raises ${unreachable.join(", ")}, which is not — a refusal ` +
+          "its caller can be handed but cannot name in a catch.",
+      );
     }
   },
 );
