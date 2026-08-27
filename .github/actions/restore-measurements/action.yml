@@ -113,23 +113,29 @@ runs:
       run: |
         set -euo pipefail
 
-        # Reached by its bin name rather than by a package path, so this names no package and the
-        # caller's own manifest decides which version of the restore it is running. The contract is
-        # that `spec-controller-restore-measurements` resolves from the workspace — the caller depends on the
-        # package that ships it, and has installed and built it before this step. `--no` because a
-        # bin that does not resolve is a misconfigured caller and must say so, never a version
-        # fetched from the registry behind the caller's back.
+        # THE FILE THAT TRAVELS WITH THIS ACTION, AND `github.action_path` IS THE ONLY WAY TO REACH
+        # IT (3F-2810). This step used to run the restore by its bin name, which resolves out of the
+        # CALLER's node_modules from a `dist/` that is build output and is not committed. A
+        # cross-repository `uses:` checks this action out into a workspace that has neither, so the
+        # step died before it ran — which is precisely what happened to the first repository that
+        # tried to import it, and why it went back to writing its own. An action a consumer has to
+        # install a package for is a fork waiting to happen.
         #
-        # THE `--` IS LOAD-BEARING. Without it every `--flag` after the command name is read as
-        # npx's own config and never reaches the restore, which then reports a missing `--from` and
-        # exits 2 — measured, not assumed: the first form written here did exactly that against a
-        # real packed tarball.
+        # THE CHECKOUT BESIDE THIS IS THE CALLER'S TREE, so no sibling path is reachable from here
+        # and `${{ github.action_path }}` is not a convenience: on a cross-repository `uses:` it is
+        # the one directory that exists. `lint:action-bundles` reds any step here that reaches
+        # outside it, and reds this bundle the moment it stops being what building its source
+        # produces — the committed build output being the one thing that can rot in silence.
         #
-        # AND `FROM` IS ABSOLUTE, for the same reason. A relative `--from` resolves against
-        # `--root`, so a path that looked right beside the runner's temp directory would be sought
-        # inside the checkout and found nowhere — a lapsed schedule reported where the truth was a
-        # path bug.
-        npx --no -- spec-controller-restore-measurements \
+        # THE BINS ARE UNTOUCHED. A project that HAS installed the package still reaches
+        # `spec-controller-restore-measurements` directly; what changed is how the ACTION reaches
+        # the restore, and nothing at all about what the restore does — every flag below, and the
+        # `measurements.json` name the payload is found by above, are the bytes they always were.
+        #
+        # AND `FROM` IS ABSOLUTE. A relative `--from` resolves against `--root`, so a path that
+        # looked right beside the runner's temp directory would be sought inside the checkout and
+        # found nowhere — a lapsed schedule reported where the truth was a path bug.
+        node "${{ github.action_path }}/dist/restore-measurements.mjs" \
           --from "${FROM}" \
           --max-age "${MAX_AGE}" \
           --root "${GITHUB_WORKSPACE}"

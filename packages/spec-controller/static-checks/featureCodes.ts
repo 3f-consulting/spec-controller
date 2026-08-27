@@ -42,6 +42,12 @@ export interface FeatureCodeEntry {
  */
 export const REGISTRY: readonly FeatureCodeEntry[] = [
   {
+    code: "ACT",
+    slug: "self-contained-actions",
+    status: "feature-code-used",
+    note: "a composite action carries its own CLI — the step runs a bundle that travelled with the action rather than a bin out of the caller's workspace, and lint:action-bundles reds the bundle that has fallen behind the source it mirrors",
+  },
+  {
     code: "ANM",
     slug: "anemic-domain",
     status: "feature-code-used",

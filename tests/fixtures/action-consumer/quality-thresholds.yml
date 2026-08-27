@@ -1,0 +1,21 @@
+# THE RECORD THE NO-INSTALL CONSUMER JOB POINTS THE RATCHET AT (3F-2810).
+#
+# The job exists to witness that a composite action RUNS through a real `uses:` in a workspace
+# where nothing is installed. The persist and the restore reach that witness on their own — each
+# has an ordinary quiet path (nothing measured; no artefact to fetch) that exits 0 and proves the
+# step ran. The ratchet has no such path: it exists to reach a VERDICT, and every verdict it can
+# reach with no record in front of it is a red. So it is given one.
+#
+# THE COUNTS ARE THE ONLY ONES THAT SAY NOTHING. Measured against the report beside this file the
+# gate scores exactly what is banked here, which reconciles ON THE RECORD and exits 0. A pair that
+# scored better would red as an unbanked gain, and a pair that scored worse as a lost kill — both
+# true readings, and both would red this job over a fixture rather than over the action.
+#
+# NOTHING HERE IS A BAR THIS REPOSITORY KEEPS. spec-controller's own mutation gate is the
+# `SCN-MUT-011` threshold in package.json, reconciled by the ledger. This is a prop.
+mutation-gates:
+  probe:
+    detected: 3
+    total: 4
+    slack-mutants: 0
+    slack-reason: "a fixture gate with nothing to absorb, so the pair below is read exactly as it stands"

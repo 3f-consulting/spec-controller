@@ -69,20 +69,6 @@ runs:
       run: |
         set -uo pipefail
 
-        # Reached by its bin name rather than by a package path, so this names no package and the
-        # caller's own manifest decides which version of the ratchet it is running. The contract is
-        # that `spec-controller-mutation-ratchet` resolves from the workspace — the caller depends
-        # on the package that ships it, and has installed and BUILT it before this step, because a
-        # `bin` is a build output.
-        #
-        # `--no` because a bin that does not resolve is a misconfigured caller and must say so,
-        # never a version fetched from the registry behind the caller's back.
-        #
-        # THE `--` IS LOAD-BEARING. Without it every `--flag` after the command name is read as
-        # npx's own config and never reaches the ratchet, which then reports a missing `--gate` and
-        # exits 2 — measured, not assumed: the same form was written wrong first against a real
-        # packed tarball when the restore shipped.
-        #
         # `--root` IS THE WORKSPACE, ABSOLUTE. The tree being judged is the caller's, never one the
         # module finds from its own installed path — installed into node_modules, a self-located
         # root resolves inside the dependency. Every path input above is resolved against this.
@@ -94,8 +80,19 @@ runs:
         # Captured rather than streamed so the verdict can be BOTH echoed in full and lifted into an
         # annotation. A verdict only in the log is one nobody opens; a verdict only in an annotation
         # loses the figures it was reached from.
+        # THE FILE THAT TRAVELS WITH THIS ACTION, AND `github.action_path` IS THE ONLY WAY TO REACH
+        # IT (3F-2810). This step used to run the ratchet by its bin name, which resolves out of the
+        # CALLER's node_modules from a `dist/` that is build output and is not committed — so on the
+        # cross-repository `uses:` this action exists for, it died before it ran. The bundle beside
+        # this file is the ratchet, whole, with `yaml` inlined so a record can be read in a tree that
+        # holds nothing.
+        #
+        # `lint:action-bundles` reds any step here that reaches outside `${{ github.action_path }}`,
+        # and reds that bundle the moment it stops being what building its source produces. The
+        # package's bins are untouched: a project that HAS installed it still reaches
+        # `spec-controller-mutation-ratchet` directly, and every flag assembled above is unchanged.
         set +e
-        verdict="$(npx --no -- spec-controller-mutation-ratchet "${args[@]}" 2>&1)"
+        verdict="$(node "${{ github.action_path }}/dist/mutation-ratchet.mjs" "${args[@]}" 2>&1)"
         status=$?
         set -e
 

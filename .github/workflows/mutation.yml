@@ -40,12 +40,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # BUILT AND RELINKED BECAUSE A `bin` IS A BUILD OUTPUT, the reason ci.yml already sets out at
-      # length (3F-2765). `.github/actions/persist-measurements` reaches the persist by its bin
-      # name, and pnpm's `node_modules/.bin` entry for a workspace package points into that
-      # package's `dist/` — a symlink that dangles until the build runs, and that a second install
-      # will not go back and create. Without these the persist falls through to the registry, where
-      # no such package exists.
+      # BUILT AND RELINKED BECAUSE A `bin` IS A BUILD OUTPUT, the reason ci.yml sets out at length
+      # (3F-2765) — and, since 3F-2810, no longer the reason this job needs them.
+      # `.github/actions/persist-measurements` used to reach the persist by its bin name, and
+      # pnpm's `node_modules/.bin` entry for a workspace package points into that package's `dist/`
+      # — a symlink that dangles until the build runs, and that a second install will not go back
+      # and create; without these the persist fell through to the registry, where no such package
+      # exists. The action now runs the bundle committed beside it, which nothing here builds. The
+      # steps are kept, and said so here rather than left to be rediscovered: removing a CI step is
+      # a decision about the pipeline rather than about the slice that removed its reason. Filed
+      # for the slice to rule on, alongside ci.yml's own pair.
       #
       # Ahead of the sweep rather than after it: Stryker mutates `packages/core/src/domain/**`
       # only, so a `dist/` on disk cannot change what is measured.

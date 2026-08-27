@@ -63,22 +63,29 @@ runs:
         # `measurements.json`, because the restore finds the payload by that name and by no other.
         echo "to=${into}/measurements.json" >> "${GITHUB_OUTPUT}"
 
-        # Reached by its bin name rather than by a package path, so this names no package and the
-        # caller's own manifest decides which version of the persist it is running. The contract is
-        # that `spec-controller-persist-measurements` resolves from the workspace — the caller
-        # depends on the package that ships it, and has installed and BUILT it before this step.
-        # `--no` because a bin that does not resolve is a misconfigured caller and must say so,
-        # never a version fetched from the registry behind the caller's back.
+        # THE FILE THAT TRAVELS WITH THIS ACTION, AND `github.action_path` IS THE ONLY WAY TO REACH
+        # IT (3F-2810). This step used to run the persist by its bin name, which resolves out of the
+        # CALLER's node_modules from a `dist/` that is build output and is not committed — so a
+        # caller who had installed nothing got a step that died before it ran, and a caller who had
+        # installed something got whichever version their own manifest happened to pin. Neither is a
+        # library. The bundle beside this file is the persist, whole, with its dependencies inlined.
         #
-        # THE `--` IS LOAD-BEARING, as it is on the restore. Without it every `--flag` after the
-        # command name is read as npx's own config and never reaches the persist, which then
-        # reports a missing `--to` and exits 2.
+        # THE CHECKOUT BESIDE THIS IS THE CALLER'S TREE, which is why no sibling path is reachable
+        # from here and why `${{ github.action_path }}` is not a convenience: on a cross-repository
+        # `uses:` it is the one directory that exists. `lint:action-bundles` reds any step here that
+        # reaches outside it, and reds this bundle the moment it stops being what building its
+        # source produces.
+        #
+        # THE BINS ARE UNTOUCHED. A project that HAS installed the package still reaches
+        # `spec-controller-persist-measurements` directly; what changed is how the ACTION reaches
+        # the persist, and nothing at all about what the persist does — every flag below is the
+        # bytes it always was.
         #
         # AND `--to` IS ABSOLUTE. A relative one resolves against `--root`, so a path that looked
         # right beside the runner's temp directory would be written inside the checkout and the
         # upload below would collect nothing — a run that measured plenty, reported as one that
         # measured nothing.
-        npx --no -- spec-controller-persist-measurements \
+        node "${{ github.action_path }}/dist/persist-measurements.mjs" \
           --to "${into}/measurements.json" \
           --root "${GITHUB_WORKSPACE}"
 

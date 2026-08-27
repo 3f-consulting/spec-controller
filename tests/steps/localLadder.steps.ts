@@ -257,13 +257,14 @@ Then(
     ).gates.map((gate) => gate.script);
 
     // VACUITY FLOOR. Both sides of the comparison below are computed, so two empty lists
-    // would agree perfectly and prove nothing. The real ci.yml runs 15 script steps and one
+    // would agree perfectly and prove nothing. The real ci.yml runs 16 script steps and one
     // is excluded; anything else means the workflow changed and this scenario is the place
-    // that should say so.
+    // that should say so. It said so when 3F-2810 added lint:action-bundles, which is the
+    // number moving because a gate was added rather than because one went quiet.
     assert.equal(
       expected.length,
-      14,
-      `the real ci.yml must yield 14 local gates; it yielded ${expected.length}: ${expected.join(", ")}`,
+      15,
+      `the real ci.yml must yield 15 local gates; it yielded ${expected.length}: ${expected.join(", ")}`,
     );
 
     assert.deepEqual(listedGates(listing.stdout), expected, "--list must be the derived ladder");

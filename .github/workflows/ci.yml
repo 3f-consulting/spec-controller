@@ -35,35 +35,37 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # BUILT BECAUSE A `bin` IS A BUILD OUTPUT (3F-2765). `.github/actions/restore-measurements`
-      # reaches the restore by its bin name, and pnpm's `node_modules/.bin` entry for a workspace
-      # package points into that package's `dist/` — a symlink that dangles until this step runs.
-      # Nothing else in this ladder needed the built form, so nothing else caught that the
-      # published surface was never compiled on a pull request at all: a `tsc -p` failure in
+      # BUILT SO THE PUBLISHED SURFACE IS COMPILED ON A PULL REQUEST AT ALL (3F-2765). Nothing else
+      # in this ladder reads the built form, so before this step existed a `tsc -p` failure in
       # either package's build config reached main and was found by whoever next ran `pnpm build`.
+      # That is now the whole of this step's reason: it originally also existed because
+      # `.github/actions/restore-measurements` reached the restore by its bin name and pnpm's
+      # `node_modules/.bin` entry points into the package's `dist/`, and since 3F-2810 no action
+      # reaches a bin at all — each runs the bundle committed beside it, which nothing here builds.
       # `build` carries no observed prefix and is not among the static checks package.json names,
       # so it joins the local ladder (which is derived from this file) without joining the ledger
       # — it is a step the checks need, not a check.
       - name: Build
         run: pnpm build
 
-      # AND LINKED AFTERWARDS, BECAUSE pnpm LINKS BINS BEFORE ANYTHING IS BUILT. On a fresh
-      # checkout `packages/spec-controller/dist` does not exist yet, so the install above cannot
-      # create the `.bin` entries that point into it and says so rather than failing:
+      # LINKED AFTERWARDS, BECAUSE pnpm LINKS BINS BEFORE ANYTHING IS BUILT. On a fresh checkout
+      # `packages/spec-controller/dist` does not exist yet, so the install above cannot create the
+      # `.bin` entries that point into it and says so rather than failing:
       #
       #   [WARN] Failed to create bin at .../node_modules/.bin/restore-measurements.
       #   ENOENT: no such file or directory, open '.../dist/measurements/restoreCli.js'
       #
       # The build then writes the file the entry would have pointed at, and nothing goes back to
       # make the entry — a second `pnpm install` reports "Already up to date" and relinks nothing,
-      # with or without `--force` (measured, both). `pnpm rebuild` is the command that does, and
-      # the failure it prevents is not loud: `npx --no spec-controller-restore-measurements` with no local bin
-      # falls through to the registry, where no such package exists.
+      # with or without `--force` (measured, both). `pnpm rebuild` is the command that does.
       #
-      # Local checkouts rarely meet this — they have a dist from some earlier build — and a
-      # consumer installing from the registry never does, because the published tarball ships
-      # dist. It is specific to a repository consuming its own workspace package before building
-      # it, which is why it is fixed here rather than in the package or the action.
+      # WHAT THIS STEP GUARDED IS GONE, AND THE STEP IS NOT (3F-2810). It existed because an action
+      # here reached a bin with no local entry and fell through to the registry, where no such
+      # package exists; since 3F-2810 every action runs the bundle committed beside it and nothing
+      # in this workflow reaches a bin at all. It is kept because removing a CI step is a decision
+      # about the pipeline rather than about this slice, and it is written down here rather than
+      # left to be rediscovered: a step whose reason has been removed is licence for the next one.
+      # Filed for the slice to rule on.
       - name: Link the bins the build just produced
         run: pnpm rebuild
 
@@ -201,6 +203,36 @@ jobs:
       - name: Lint anemic domain
         run: pnpm lint:anemic-domain
 
+      # THE ACTION BUNDLES (@SCN-ACT-004, 3F-2810) — this repository's own composite actions held
+      # against the rule that a step runs a file which TRAVELS with it. The three under
+      # `.github/actions/` were each written to be imported by another repository and each reached
+      # its CLI as `npx --no -- spec-controller-<name>`, which resolves a bin out of the CALLER's
+      # node_modules, from a `dist/` that is build output and is not committed. A cross-repo `uses:`
+      # checks the action out into a workspace that has neither. All three were well-formed. None of
+      # them ran, and no check in this ladder could see it, because nothing here read an action.
+      #
+      # TWO RULES IN ONE STEP, BECAUSE THEY ARE ONE CLAIM: the step reaches only inside
+      # ${{ github.action_path }}, and each committed bundle is what building its source produces.
+      # Split apart, a tree could sit half-green — a step correctly reaching for a bundle that had
+      # rotted six weeks ago.
+      #
+      # THE SECOND RULE IS WHY THE `dist/` CARVE-OUT IS SAFE. A committed build output is the one
+      # sanctioned exception to this repository's no-committed-build-output discipline, and every JS
+      # action in the world that ships one can rot the same way. The exception is mechanised here
+      # rather than honoured: the red says `pnpm build:action-bundles`, because a byte diff of a
+      # 280 kb bundle is not a message.
+      #
+      # AND IT IS NOT THE ONLY WITNESS, because it structurally cannot see the route that broke.
+      # Everything it does reads FILES. Nothing here exercises a real `uses:`, which is precisely
+      # where the defect lived, and that is the no-install consumer job's job.
+      #
+      # The `lint:` prefix is required, not cosmetic: runningStaticChecks observes a CI script only
+      # when its name carries an observed prefix, so a name outside that set would run here while
+      # being invisible to spec-controller's own ledger. CITED by @SCN-ACT-004 (@action-bundles) so
+      # the tool's own ledger reconciles it rather than reporting it as an uncited static check.
+      - name: Lint action bundles
+        run: pnpm lint:action-bundles
+
       # STEP 1 OF THE SELF-RECONCILIATION CHAIN — the observed @unit stream. The run is
       # unchanged; it now also writes the machine-readable report the gate below reads.
       # runs/ is gitignored with no re-includes and lint:no-committed-reports enforces it,
@@ -288,3 +320,78 @@ jobs:
           # the PR's commit messages); the parser scans both.
           PR_BODY: ${{ github.event.pull_request.body }}
         run: pnpm lint:scn-subissues
+
+  # THE ONE WITNESS THAT WATCHES AN ACTION ACTUALLY RUN (3F-2810).
+  #
+  # `lint:action-bundles`, above, reads FILES: each action's YAML, and the bundle committed beside
+  # it. That is the right shape for a static check and it is structurally blind to the thing that
+  # broke. The three actions were WELL-FORMED when they could not run — they parsed, they named
+  # their inputs, they had a step — and a check reading them would have said so. What was wrong was
+  # only visible at the moment a caller invoked one: `npx --no` resolved a bin out of a workspace
+  # the caller did not have. A construction-level check that has never seen the thing run is the
+  # arrangement that shipped the defect, so it is not the only evidence here.
+  #
+  # WHAT MAKES THIS JOB A WITNESS IS WHAT IT DOES NOT DO. There is no `pnpm install` and no
+  # `pnpm build`, and that absence is the whole experiment: this is the workspace a cross-repository
+  # `uses:` actually lands in — the CALLER's tree, with nothing of this package in it. Adding either
+  # step would make the job green for the wrong reason and it would stay green through a
+  # regression, which is worse than not having it. If a future edit needs one of them to pass, that
+  # edit has reintroduced the defect.
+  #
+  # IT IS OFF THE LEDGER, AND THAT IS ACCURATE RATHER THAN UNFORTUNATE. `runningStaticChecks`
+  # observes a package.json script a CI `run:` step invokes; every step below is a `uses:`, so
+  # there is no script to observe and no Evidence Obligation for it to settle. It raises no row on
+  # spec-controller's own reconciliation and adds no rung to the derived local ladder — a runtime
+  # witness is not a static check, and the two are not the same evidence. @SCN-ACT-004 carries the
+  # ledger half.
+  #
+  # NOTHING HERE IS ALLOWED TO FAIL QUIETLY. There is no `continue-on-error` on any step: a step
+  # permitted to go red without redding the job is exactly the shape this whole slice removed.
+  consumer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # The runtime the bundles are built for, pinned rather than inherited, so this job tests the
+      # target rather than whatever the image happens to ship. Deliberately NOT followed by an
+      # install: `setup-node` alone brings no dependency into the tree.
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      # NOTHING TO PERSIST IS THIS ACTION'S ORDINARY QUIET PATH, and here it is the assertion. The
+      # workspace holds no `runs/self-balance/measurements.json` — no check has run — so the step
+      # reports a run with nothing worth handing on and exits 0, and the upload collects nothing
+      # under `if-no-files-found: ignore`. Reaching that sentence at all is the proof: it is printed
+      # by the bundle, which means the bundle resolved, loaded and ran with nothing installed.
+      #
+      # It also leaves no artefact, which is what keeps the restore below deterministic.
+      - name: Persist, from a workspace with nothing installed
+        uses: ./.github/actions/persist-measurements
+        with:
+          artefact-name: action-consumer-probe
+
+      # AND NOTHING TO RESTORE IS THE MIRROR OF IT. No run of this workflow has ever uploaded an
+      # `action-consumer-probe` — the step above is the only thing that would, and it uploads
+      # nothing — so the fetch finds no artefact, reports a lapsed cadence and exits 0. The window
+      # is a minute because its value is irrelevant here: what is under test is that the step RAN,
+      # not what it decided.
+      - name: Restore, from a workspace with nothing installed
+        uses: ./.github/actions/restore-measurements
+        with:
+          artefact-name: action-consumer-probe
+          workflow: ci.yml
+          max-age: "60"
+
+      # THE RATCHET HAS NO QUIET PATH, SO IT IS GIVEN A RECORD. It exists to reach a verdict and
+      # red the run on it, and every verdict reachable with no record in front of it is a red — so
+      # unlike the two above, it cannot witness itself on an empty tree. The fixture beside this
+      # repository's tests states a gate whose banked counts are exactly what the report beside it
+      # measures, which reconciles ON THE RECORD and exits 0. The prop is the INPUT; the action is
+      # what is under test.
+      - name: Reconcile a gate, from a workspace with nothing installed
+        uses: ./.github/actions/mutation-ratchet
+        with:
+          gate: probe
+          report: tests/fixtures/action-consumer/mutation-report.json
+          record-file: tests/fixtures/action-consumer/quality-thresholds.yml
