@@ -16,6 +16,59 @@ Feature: The public core exports exactly the frozen v1 contract surface
     And the barrel's type exports equal the frozen type surface exactly, both directions
     And any symbol added to or removed from the public core reds the guard
 
+  Rule: every subpath these packages publish is held to a surface written down for it
+
+    ONE BARREL WAS GUARDED AND THE OTHERS WERE NOT, AND NOBODY DECIDED THAT. The scenario above
+    holds the core barrel to a frozen list in both directions, and it has done its job. What it
+    could never do is notice a SECOND published surface arriving beside it. Two have:
+    `@3f-consulting/spec-controller-core` also publishes `./internal` — thirteen exports, no list,
+    no guard, and a header calling itself "NOT THE PUBLIC v1 CONTRACT" while the manifest publishes
+    it anyway — and `spec-controller` publishes `./mutation-ratchet`, whose value half is pinned and
+    whose type half is not. Neither gap was ruled; both are what a per-barrel arrangement does when
+    a barrel is added.
+
+    SO THE THIRD SCENARIO IS THE ONE THAT MATTERS. Holding each surface to its list is the easy
+    half; reconciling the SET of surfaces the manifests publish against the SET somebody wrote a
+    list for is what stops this recurring. A guard wired per barrel by hand is a guard whose
+    coverage is a fact nobody is checking — the same two-lists-that-never-reconcile shape as
+    3F-2826, one layer out.
+
+    THE LISTS STAY HAND-WRITTEN, AND THAT IS THE WHOLE MECHANISM. @SCN-API-001's own guard says why:
+    a list derived from the barrel is a barrel that redefines its own expectation, green by
+    construction forever. Generalising means ONE mechanism over N written-down lists — never one
+    mechanism that reads each barrel and agrees with it.
+
+    THE TYPE ARM IS NOT THE VALUE ARM WITH A DIFFERENT NAME. TypeScript types are erased, so a
+    runtime reflection cannot see them; and spelling each expected type into a typed literal — the
+    arrangement `./mutation-ratchet` has today — reds on a type DROPPED or RENAMED and stays green
+    on one ADDED, because nothing references what nobody wrote. Reading the compiled type surface
+    through the compiler API is what closes the add.
+
+    @unit @SCN-API-004
+    Scenario: a value symbol added to or dropped from a published subpath reds the guard
+      Given every subpath these packages publish, each with the value surface written down for it
+      When a subpath's value exports are reflected against the surface written for it
+      Then they equal that written surface exactly, both directions
+      And a value symbol its barrel exports that the written surface does not name reds the guard
+      And a value symbol the written surface names that its barrel does not export reds the guard
+
+    @unit @SCN-API-005
+    Scenario: a type added to, renamed on, or dropped from a published subpath reds the guard
+      Given every subpath these packages publish, each with the type surface written down for it
+      When a subpath's type-only exports are read off its compiled type surface
+      Then they equal that written surface exactly, both directions
+      And a type its barrel exports that the written surface does not name reds the guard
+      And a type its barrel exports under a new name reds the guard
+      And a type the written surface names that its barrel no longer exports reds the guard
+
+    @unit @SCN-API-006
+    Scenario: a subpath the manifest publishes with no surface written down for it reds the guard
+      Given every package manifest in this workspace, and the surfaces written down for this workspace
+      When what each manifest publishes to a consumer is read — its publish-time map standing in for its workspace map wholesale, the way npm replaces one with the other rather than merging them
+      Then the subpaths those manifests publish are exactly the subpaths a surface is written for, both directions
+      And a subpath a manifest publishes with no surface written for it reds the guard
+      And a surface written for a subpath no manifest publishes any longer reds the guard
+
   Rule: the v1 barrel exposes QualityCheckReconciliation for reading, not construction
 
     @unit @SCN-API-002

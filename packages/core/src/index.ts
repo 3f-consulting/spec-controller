@@ -3,10 +3,19 @@
  * `@3f-consulting/spec-controller-core` package.
  *
  * This re-exports EXACTLY the frozen v1 contract surface. The `@unit` drift
- * guard in `index.test.ts` (@SCN-API-001, features/public-api.feature)
- * reconciles this barrel's actual exports against that frozen enumeration, both
- * directions — so a symbol added here OR dropped reds CI. The surface is the
- * contract downstream consumers build on; it cannot drift silently.
+ * guard for @SCN-API-001 (features/public-api.feature) reconciles this barrel's
+ * actual exports against a surface written down for it, both directions — so a
+ * symbol added here OR dropped reds CI. The surface is the contract downstream
+ * consumers build on; it cannot drift silently.
+ *
+ * THE SURFACE IT IS HELD AGAINST IS NOT IN THIS PACKAGE, and following the guard
+ * is a two-hop trip worth knowing about before it surprises somebody adding an
+ * export. The list lives in `spec-controller`'s
+ * `static-checks/publishedSurfaces.ts`, beside the entries for every other
+ * subpath these packages publish, and the citing test sits with it in
+ * `static-checks/coreBarrelSurface.test.ts`. It cannot live here: `core` is the
+ * pure library and `spec-controller` depends on IT, so a test in this package
+ * reading that registry would invert the dependency and close a cycle.
  *
  * SELECTIVE re-exports, NOT `export *`: the pure boundary is deliberate. The
  * core surface is filtered to pure symbols — no `fs` / `process.cwd` /
