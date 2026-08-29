@@ -75,12 +75,16 @@ the window past which last night's number no longer describes today's code.
 
 ## Wiring
 
-Both actions reach their CLI by bin name with `npx --no`, so the version they run
-is **your manifest's**, never one fetched from the registry behind your back. That
-means `spec-controller` must be an installed dependency in the workspace before
-either action runs (the published package ships its `dist/`, so the bins
-`spec-controller-persist-measurements` and `spec-controller-restore-measurements`
-resolve once it is installed).
+Each action runs a **bundled copy of its CLI, committed beside it** and executed from
+`github.action_path` — so a consumer needs **nothing installed**: just `uses:` it, with no
+`spec-controller` dependency, no build step, and no registry to authenticate against. The
+committed bundle is rebuilt and diffed against its source in CI (`lint:action-bundles`), so it
+cannot drift from the CLI it mirrors.
+
+To run a CLI *outside* GitHub Actions — another CI system, a local script — install the
+published package and call the bin directly (`spec-controller-restore-measurements`, and its
+persist and mutation-ratchet siblings) instead. That is the package channel; the action channel
+above needs no install at all.
 
 ### In the scheduled workflow
 
