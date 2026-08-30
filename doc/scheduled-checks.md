@@ -1,18 +1,16 @@
 # Scheduled checks — measure on a cadence, gate on every push
 
-Some quality checks cost more than a per-push ladder can afford: a full mutation
+Some quality checks cost more than a per-push ladder can afford — a full mutation
 sweep, a long soak, a large end-to-end matrix. You still want their verdict to
-hold the line on every push. The pattern is to run the check on a schedule,
-**persist** its number, and on each push **restore** that number into the run's
-ledger while it is still young enough to be about this code. Past its window it
-posts nothing, the bar it would have settled reconciles `missing`, and the
-ledger reds — a schedule that has quietly stopped cannot stay quiet.
+hold the line on every push. The pattern: run the check on a schedule, and on
+each push feed its latest result to `balance` while it is still recent enough to
+be about this code.
 
-This page is for anyone wiring such a check into their own CI. The three shipped
-composite actions — `persist-measurements`, `restore-measurements` and
-`mutation-ratchet` — plus the CLIs behind them are a **library** you import into
-your pipeline. `spec-controller` does not sit in your pipeline; you own your bars
-and their enforcement (see [Ownership](#ownership)).
+`spec-controller` does not run your schedule or move your files. It reconciles a
+measurement you hand it, the same way it reconciles a Vitest report you hand it.
+Getting last night's number into today's push is ordinary CI — upload an
+artifact, download it, check its age. There is no spec-controller machinery to
+install for any of that; this page just shows the pattern.
 
 ---
 
@@ -22,92 +20,44 @@ A scheduled check is not a new kind of thing. It is a **stepless fitness
 scenario** — a `@<check>` tag plus a threshold in `specController.thresholds`,
 exactly like `@ci-run-time`. The only difference is cadence: the measurement
 arrives from last night's run rather than from this one's. There is no separate
-registry of scheduled checks to maintain — your `.feature` corpus already names
-every evidence obligation, this one included. Author the scenario, give it a
-threshold, and the reconciliation treats a stale-or-missing nightly number the
-same way it treats any obligation with no evidence: out of balance.
+registry to maintain — your `.feature` corpus already names every evidence
+obligation, this one included. Author the scenario, give it a threshold, and the
+reconciliation treats a stale-or-missing nightly number the way it treats any
+obligation with no evidence: out of balance.
 
 ---
 
-## Two halves, one shared term
+## Moving the measurement — native CI, nothing to install
 
-Persist runs in the **scheduled** workflow; restore runs on **push**. The one
-term the two must agree on is `artefact-name` — restore borrows what persist left
-under that exact name, and that agreement is the whole contract between them.
+Your nightly produces a measurement file — the same JSON `balance --measurements`
+reads. Two native steps carry it from the nightly run to the push run.
 
-- **Persist** (scheduled workflow, after the check has measured): dates the run's
-  measurement artefact with the clock it measured on, and uploads it under
-  `artefact-name`.
-- **Restore** (push CI, before `balance`): downloads the latest *successful*
-  scheduled run's artefact by `artefact-name` + `workflow`, and — if it is younger
-  than `max-age` — posts its rows into this run's measurement artefact, the same
-  file `balance --measurements` reads.
-
-Neither action names a check, a runner, a workflow, or a repository in its body.
-Everything that varies between projects is an input, so a second project with a
-different cadence passes a different `max-age`, not a forked copy of the file.
-
----
-
-## The freshness window
-
-`max-age` (seconds) is how long the persisted number stays close enough to true
-about the code this push is judging. Freshness is decided at the **restoring
-run's own clock** — "now" is the run's timestamp, an input — so the decision is
-deterministic and the reconciler never has to learn what time it is. A row that
-has aged out simply never reaches the reconciler; it then reads `missing`,
-already the true sentence, already out of balance. Aged out, absent, and
-undated all read the same way: no fresh row. The loud default is the one that
-reds.
-
-Do not confuse `max-age` with `retention-days` (on persist, default `14`):
-
-| Setting | Belongs to | What it governs |
-|---|---|---|
-| `retention-days` | persist | How long the uploaded **artefact** is kept. Has only to outlast the gap between two scheduled runs, so a fetch always finds *an* artefact. |
-| `max-age` | restore | How long the **number** inside it is still worth posting — the freshness window over the artefact a fetch found. |
-
-They are different facts and belong to the caller for different reasons. Set
-`retention-days` comfortably longer than your schedule's period; set `max-age` to
-the window past which last night's number no longer describes today's code.
-
----
-
-## Wiring
-
-Each action runs a **bundled copy of its CLI, committed beside it** and executed from
-`github.action_path` — so a consumer needs **nothing installed**: just `uses:` it, with no
-`spec-controller` dependency, no build step, and no registry to authenticate against. The
-committed bundle is rebuilt and diffed against its source in CI (`lint:action-bundles`), so it
-cannot drift from the CLI it mirrors.
-
-To run a CLI *outside* GitHub Actions — another CI system, a local script — install the
-published package and call the bin directly (`spec-controller-restore-measurements`, and its
-persist and mutation-ratchet siblings) instead. That is the package channel; the action channel
-above needs no install at all.
-
-### In the scheduled workflow
-
-After your expensive check has run and posted its measurement into the run's
-measurement artefact (`runs/self-balance/measurements.json`):
+**Nightly**, after the check has measured, upload the file:
 
 ```yaml
-- name: Persist last night's measurement
-  uses: 3f-consulting/spec-controller/.github/actions/persist-measurements@main
+- uses: actions/upload-artifact@v4
   with:
-    artefact-name: nightly-measurements
-    retention-days: "14"
+    name: nightly-measurements
+    path: runs/self-balance/measurements.json
 ```
 
-### On push
+**On push**, fetch the latest successful nightly's file and reconcile:
 
 ```yaml
-- name: Restore last night's measurement while it is still fresh
-  uses: 3f-consulting/spec-controller/.github/actions/restore-measurements@main
-  with:
-    artefact-name: nightly-measurements   # must match the persist above
-    workflow: nightly.yml                  # file name, or the workflow's name:
-    max-age: "86400"                       # 24h, in seconds
+- name: Fetch last night's measurement, if it is still fresh
+  env:
+    GH_TOKEN: ${{ github.token }}
+  run: |
+    run_id=$(gh run list --workflow nightly.yml --status success \
+      --limit 1 --json databaseId,createdAt --jq '.[0].databaseId // empty')
+    created=$(gh run list --workflow nightly.yml --status success \
+      --limit 1 --json createdAt --jq '.[0].createdAt // empty')
+    if [ -n "$run_id" ]; then
+      age=$(( $(date +%s) - $(date -d "$created" +%s) ))
+      if [ "$age" -le 86400 ]; then           # 24h window — your cadence, your number
+        gh run download "$run_id" --name nightly-measurements --dir runs/self-balance
+      fi
+    fi
 
 - name: Reconcile
   run: |
@@ -118,124 +68,33 @@ measurement artefact (`runs/self-balance/measurements.json`):
       --format json:reconciliation.json
 ```
 
-Your push run's own measured checks (e.g. `@ci-run-time`) post into the same
-`runs/self-balance/measurements.json`; restore merges the fresh nightly rows in
-beside them, so one `--measurements` read gives `balance` every measured row.
+Your push run's own measured checks (`@ci-run-time`) write into the same
+`runs/self-balance/measurements.json`; the fetched nightly rows sit beside them,
+so one `--measurements` read gives `balance` every measured row.
 
-> **Pinning.** The examples ref the actions at `@main` because the actions are
-> not yet tagged for release. Pin to a tag or a commit SHA once they are — a
-> third-party action on a moving branch is a supply-chain risk, and versioning
-> the action's three-input contract is part of the launch hardening.
+---
+
+## Freshness — one comparison, no recorded timestamp
+
+Last night's number should gate today's push only while it is recent. That is the
+nightly run's own creation time against a window you choose — and `gh run list`
+gives you `createdAt`, so you never record a timestamp yourself. Inside the
+window, place the file; past it, do not. When no fresh measurement is placed,
+`balance` finds none for that check and reconciles it `missing` — so a schedule
+that quietly stopped running reds on its own, and one that ran and failed reads
+`failing`, on the same books.
+
+The reconciler never learns the time: "now" is the run's own instant, an input,
+and a measurement that was not placed is simply not there to reconcile. The
+window is yours — a nightly wants ~26 h, a twice-daily check less; it is a fact
+about your cadence, so it lives in your workflow, not in the tool.
 
 ---
 
 ## Ownership
 
-Two roles, kept distinct (operator ruling, 2026-08-26):
-
-- A **project runs `spec-controller` as its own gate** — it owns its bars and the
-  enforcement of them in its own CI.
-- **`spec-controller` observes** portfolio quality-check health — whether a
-  registered check ran, is fresh, and passed.
-
-The freshness/restore mechanism ships as a **library** — a CLI plus composite
-action a project imports into its own CI — **never `spec-controller` in the
-project's path**. Build once, no per-project local reader. When you wire these
-actions in, the bar is yours, the schedule is yours, the window is yours; the
-library only supplies the dated-persist and fresh-restore plumbing so you do not
-hand-roll the dating or the age check and drift over the one field the two halves
-share (`measuredAt`).
-
----
-
-## Action reference
-
-### `persist-measurements`
-
-| Input | Required | Default | Purpose |
-|---|---|---|---|
-| `artefact-name` | yes | — | The name to upload the dated measurement under. The restore that borrows it names the same one. |
-| `retention-days` | no | `"14"` | How long the uploaded artefact is kept. Must outlast the gap between two scheduled runs. |
-
-Reads the run's measurement artefact at `runs/self-balance/measurements.json`,
-stamps it with `measuredAt` (the run's own clock), and uploads it. A run that
-measured nothing uploads nothing (`if-no-files-found: ignore`) — the borrowing
-run reads `missing`, out loud on the row that owed the number.
-
-### `restore-measurements`
-
-| Input | Required | Default | Purpose |
-|---|---|---|---|
-| `artefact-name` | yes | — | The uploaded artefact holding the persisted measurement. Must match the persist. |
-| `workflow` | yes | — | The scheduled workflow whose latest successful run persisted it — its file name, or the `name:` it carries. |
-| `max-age` | yes | — | How long, in seconds, the persisted number stays close enough to true about this code. |
-| `github-token` | no | `${{ github.token }}` | The token the persisted artefact is fetched with. |
-
-Downloads the latest successful run's artefact, and if it is younger than
-`max-age`, posts its still-fresh rows into this run's measurement artefact for
-`balance --measurements` to read.
-
-### `mutation-ratchet`
-
-| Input | Required | Default | Purpose |
-|---|---|---|---|
-| `gate` | yes | — | Which gate to reconcile. Names an entry in the record file, and by your own convention the report below. |
-| `report` | yes | — | Where this run left the gate's mutation report, relative to the workspace. |
-| `record-file` | no | `quality-thresholds.yml` | The record holding each gate's banked counts and the allowance stated against them. |
-| `bank-command` | no | `""` | What a reader should type to bank a measurement, quoted verbatim into the ratchet-debt verdict. |
-
-A different shape from the two above, and worth saying why. Persist and restore
-carry a number **to** your ledger; this one reaches a **verdict** and reds your
-run on it. It reconciles a sweep against the counts that gate last banked, and
-answers with one of seven readings — a lost kill, a lost kill inside the
-allowance your record states, a population that grew, a population that shrank
-alongside its kills, a gain nobody banked, a run sitting on its record, or no
-measurement at all.
-
-**The record is a pair of counts, never a bare score.** A score falls both when a
-mutant that used to die now survives and when new mutable code arrives carrying
-survivors with it — two unrelated events one number cannot separate, and the
-cheap way out of the second is to widen the bar, which is how a floor loses its
-teeth. Keeping `detected` and `total` apart is what lets the two be told apart.
-
-**It reds on an unbanked improvement too**, which is the clause that makes it a
-ratchet rather than a ceiling: the gap between a stale record and a better tree
-is head-room, and a later survivor arriving inside it costs nothing and reds
-nothing. Bank the gain and the gate watches where it is meant to.
-
-**There is no `--record` input.** Banking writes a file a human commits with the
-reason in the message; an action that banked in CI would be an escape hatch
-nobody has to justify. The same applies to a fall: the recorder refuses to lower
-a record and offers no flag that overrides it, so a legitimate lowering — code
-deleted, a scope narrowed — is a deliberate hand-edit with its reason in the
-commit.
-
-```yaml
-- name: Reconcile the mutation gate against its record
-  uses: 3f-consulting/spec-controller/.github/actions/mutation-ratchet@main
-  with:
-    gate: domain
-    report: reports/mutation/domain.json
-    bank-command: "pnpm mutation:domain --record"
-```
-
----
-
-## What each side says, and how to read it
-
-The quiet paths are quiet because they are true; there is one loud path, and it
-is a misuse rather than a verdict.
-
-- **No scheduled run yet / no artefact uploaded / number past its window** — the
-  restore logs a lapsed schedule and exits `0`, the rows read `missing`, and the
-  ledger says so. This is the ordinary reading of a cadence, not a fault of the
-  step's.
-- **`::error::` … holds no `measurements.json` (exit 1)** — the artefact named by
-  `artefact-name` is present but holds no measurement. This is the step pointed at
-  the *wrong* upload: a fault in how it was called, not a lapsed cadence. Check
-  which artefact `artefact-name` names.
-
-Because a lapsed schedule and a genuinely missing number both surface as
-`missing` on the ledger, the restore also prints what it fetched — the run id,
-the workflow, and the files that arrived — on every run, so the log tells the two
-apart rather than leaving them to be distinguished by absence.
+`spec-controller` observes, and is run as a tool. It is not in your enforcement
+path. You own the check, its schedule, its freshness window, and the handful of
+CI lines above that move its result. Nothing here imports spec-controller — you
+invoke `balance` and hand it a file. How the file got there is your pipeline's
+business, and it is plain GitHub Actions.
