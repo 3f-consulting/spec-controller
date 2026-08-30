@@ -33,8 +33,11 @@ import {
  * The engine root IS `CORE_SRC_ROOT`: this guard and `noParallelStore` walk the SAME population,
  * which is exactly why they may share a floor. `domainPurity` walks a smaller subtree and keeps its
  * own floor; the asymmetry is deliberate.
+ *
+ * 28 → 31 at 3F-2872: the domain's three coded-fault modules (`qualityCheckFault.ts`,
+ * `qualityCheckFaultMessages.ts`, `qualityCheckReconciliationFault.ts`).
  */
-const CORE_SRC_FILE_COUNT = 28;
+const CORE_SRC_FILE_COUNT = 31;
 
 describe("[SCN-EPG-001] the reconciliation engine imports nothing impure and references no IO", () => {
   it("flags an engine file that imports from an impure sibling layer", () => {

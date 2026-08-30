@@ -8,6 +8,11 @@
  * (Evidence Manifesto §9). Asserts the concept's pure function in isolation (§11A — the
  * @integration arm in tests/steps/ledger.steps.ts drives the same behaviour through the
  * parse → reconcile → renderJson pipeline).
+ *
+ * NOTHING HERE READS A REFUSAL'S MESSAGE, AND NOTHING MAY (@SCN-MSG-001, 3F-2872). The invariant
+ * reports a divergence as a code and three parameters; the sentence that renders them is the one
+ * thing in this tree rewritable without a ticket. An arm that told the two divergences apart by
+ * their prose would re-pin the wording this feature exists to unpin, and turn a copy-edit red.
  */
 
 import { describe, it, expect } from "vitest";
@@ -16,7 +21,8 @@ import {
   makeQualityCheckReconciliation,
   OUTCOME_SIDE_PROFILE,
 } from "./qualityCheckReconciliation.js";
-import type { Outcome } from "./qualityCheckReconciliation.js";
+import type { Outcome, SidePresence } from "./qualityCheckReconciliation.js";
+import { QualityCheckFaultCode, type QualityCheckFault } from "./qualityCheckFault.js";
 import type { EvidenceObligation, EvidenceObservation } from "./journal.js";
 
 describe("[SCN-LDG-026] a Quality Check Reconciliation carries the evidence obligation it reconciles (the debit side)", () => {
@@ -70,6 +76,33 @@ describe("[SCN-LDG-028] a lint missing reconciliation carries its obligation and
   });
 });
 
+/**
+ * What a minting attempt did: whether it was refused, and the structured fault it carried.
+ *
+ * `refused` is reported apart from `fault` so a minting that WENT THROUGH cannot read as a
+ * refusal whose payload happened to be absent — two different failures, and the arms below must
+ * not conflate them.
+ */
+interface Refusal {
+  readonly refused: boolean;
+  readonly fault: QualityCheckFault | undefined;
+}
+
+/** Attempt a minting and report the refusal structurally, never as a sentence. */
+function attemptMint(mint: () => unknown): Refusal {
+  try {
+    mint();
+    return { refused: false, fault: undefined };
+  } catch (thrown) {
+    return { refused: true, fault: (thrown as { fault?: QualityCheckFault }).fault };
+  }
+}
+
+/** The other side-presence — canon's value, flipped, which is what a diverging side carries. */
+function flipped(presence: SidePresence): SidePresence {
+  return presence === "Exists" ? "None" : "Exists";
+}
+
 describe("[SCN-LDG-030] a Quality Check Reconciliation's carried sides are consistent with its outcome (the invariant)", () => {
   // A REAL debit and a REAL credit — the content is immaterial to the (outcome, side-presence)
   // invariant, which turns only on PRESENCE. Reused across every outcome below.
@@ -98,27 +131,48 @@ describe("[SCN-LDG-030] a Quality Check Reconciliation's carried sides are consi
       expect(reconciliation.evidenceObservation !== undefined).toBe(observationExists);
     });
 
-    it(`${outcome}: a forbidden obligation side is unconstructible — it throws`, () => {
+    it(`${outcome}: a forbidden obligation side is unconstructible — refused with the obligation-side code and the whole divergence`, () => {
       // FLIP the obligation side away from canon: carry it where the row says None, omit it where
       // the row says Exists. Either divergence is a canon-inconsistent pair the brand forbids.
-      expect(() =>
+      const refusal = attemptMint(() =>
         makeQualityCheckReconciliation({
           outcome,
           ...(obligationExists ? {} : { evidenceObligation: sampleObligation }),
           ...(observationExists ? { evidenceObservation: sampleObservation } : {}),
         })
-      ).toThrow();
+      );
+
+      expect(refusal.refused).toBe(true);
+      // The WHOLE payload, not field by field: `toStrictEqual` fails a fault carrying the wrong
+      // code (the mirror arm's), a wrong parameter, a MISSING parameter, or an extra one — so the
+      // refusal's every carried field is pinned by one assertion, and its prose by none.
+      expect(refusal.fault).toStrictEqual({
+        code: QualityCheckFaultCode.ObligationSideDivergesFromCanon,
+        outcome,
+        required: profile.obligation,
+        actual: flipped(profile.obligation),
+      });
     });
 
-    it(`${outcome}: a forbidden observation side is unconstructible — it throws`, () => {
-      // FLIP the observation side away from canon (mirror of the obligation flip above).
-      expect(() =>
+    it(`${outcome}: a forbidden observation side is unconstructible — refused with the observation-side code and the whole divergence`, () => {
+      // FLIP the observation side away from canon (mirror of the obligation flip above). The
+      // obligation side stays canon-correct, so the DEBIT check passes and the CREDIT check is
+      // the one that refuses — which is the whole reason the two arms can be told apart at all.
+      const refusal = attemptMint(() =>
         makeQualityCheckReconciliation({
           outcome,
           ...(obligationExists ? { evidenceObligation: sampleObligation } : {}),
           ...(observationExists ? {} : { evidenceObservation: sampleObservation }),
         })
-      ).toThrow();
+      );
+
+      expect(refusal.refused).toBe(true);
+      expect(refusal.fault).toStrictEqual({
+        code: QualityCheckFaultCode.ObservationSideDivergesFromCanon,
+        outcome,
+        required: profile.observation,
+        actual: flipped(profile.observation),
+      });
     });
   }
 });

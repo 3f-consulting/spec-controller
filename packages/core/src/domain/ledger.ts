@@ -276,8 +276,10 @@ export function ledgerTally(balance: Ledger): LedgerTally {
   let pending = 0;
   for (const s of balance.scenarioReconciliations) {
     // Pending Items ride every row's `pendingItems` (only scenario rows carry them; a
-    // phantom / suspense row has none), so the tally is a plain sum across all rows.
-    pending += (s.pendingItems ?? []).length;
+    // phantom / suspense row has none — as an EMPTY array, never an absent one), so the tally is
+    // a plain sum across all rows. `pendingItems` is required on `ScenarioReconciliation`, so
+    // there is no absent case to fall back from; `hasPendingItems` above already reads it bare.
+    pending += s.pendingItems.length;
     // The kind sub-counts, tallied ALONGSIDE the verdict (never instead of it) — the row still
     // falls through to the verdict tally below, so a phantom / suspense reconciliation counts
     // into `total` and (being always out-of-balance) into `outOfBalance`.

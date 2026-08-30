@@ -315,7 +315,7 @@ When(
       citationOfScript(script, fitnessRegistry, citations)
     );
 
-    const reconciliation = evidenceReconciliationOf(scenarios, evidenceObservations);
+    const reconciliation = evidenceReconciliationOf(scenarios, evidenceObservations, [], false, false);
     fitnessLedger = reconciliation.ledger;
     markdown = renderMarkdown(reconciliation, CTX);
   }
@@ -372,7 +372,7 @@ When("the registered fitness checks are observed and reconciled", function () {
     (script) => citationOfScript(script, fitnessRegistry, citations)
   );
 
-  const reconciliation = evidenceReconciliationOf(scenarios, evidenceObservations);
+  const reconciliation = evidenceReconciliationOf(scenarios, evidenceObservations, [], false, false);
   fitnessLedger = reconciliation.ledger;
   markdown = renderMarkdown(reconciliation, CTX);
 });
@@ -459,7 +459,7 @@ When("the registered fitness checks and the unit result are observed and reconci
     ),
   ];
 
-  const reconciliation = evidenceReconciliationOf(scenarios, evidenceObservations);
+  const reconciliation = evidenceReconciliationOf(scenarios, evidenceObservations, [], false, false);
   fitnessLedger = reconciliation.ledger;
   markdown = renderMarkdown(reconciliation, CTX);
 });

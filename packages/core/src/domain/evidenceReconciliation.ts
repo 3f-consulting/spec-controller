@@ -518,13 +518,21 @@ export function summaryOf(
  *
  * The two flags are GATES, not data — they state whether the runtime-observation and static-check
  * axes are in play for this run; the counts themselves are always folded from the Ledger.
+ *
+ * WHY THE TRAILING THREE ARE REQUIRED AND CARRY NO DEFAULTS (3F-2875). A gate that defaults to
+ * `false` is a gate a caller can forget to state, and forgetting it CHANGES THE REPORT — the
+ * summary then claims neither axis is in play, silently and plausibly. That is not a hypothetical:
+ * when the defaults were removed, eleven call sites turned out to have been leaning on them. Every
+ * one wanted exactly what it had been getting, so nothing moved; what changed is that each now says
+ * so. A default is the wrong shape for an argument whose omission is indistinguishable from a
+ * deliberate `false`.
  */
 export function evidenceReconciliationOf(
   scenarios: Scenario[],
   evidenceObservations: EvidenceObservation[],
-  untaggedScenarios: readonly string[] = [],
-  withRuntimeObservations: boolean = false,
-  withStaticChecks: boolean = false
+  untaggedScenarios: readonly string[],
+  withRuntimeObservations: boolean,
+  withStaticChecks: boolean
 ): EvidenceReconciliation {
   const ledger = reconcile(scenarios, evidenceObservations, untaggedScenarios);
   return { summary: summaryOf(ledger, withRuntimeObservations, withStaticChecks), ledger };

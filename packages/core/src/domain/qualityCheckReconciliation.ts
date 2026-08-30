@@ -21,6 +21,8 @@ import {
   isStaticCheckObservation,
   evidenceObligationPairKey,
 } from "./journal.js";
+import { QualityCheckFaultCode } from "./qualityCheckFault.js";
+import { QualityCheckReconciliationFault } from "./qualityCheckReconciliationFault.js";
 
 /**
  * The reconciled OUTCOME of a single quality-check evidence obligation — one
@@ -247,6 +249,16 @@ export type QualityCheckReconciliation = QualityCheckReconciliationFields & {
 };
 
 /**
+ * Whether a canon-correct reconciling item CARRIES a given side — the value both halves of the
+ * invariant are stated in: what the canon row required, and what the fields actually carried.
+ *
+ * Named rather than restated inline so the fault that reports a divergence (`qualityCheckFault.ts`)
+ * is typed in the reconciliation's own vocabulary instead of re-spelling the two literals a third
+ * and fourth time.
+ */
+export type SidePresence = "Exists" | "None";
+
+/**
  * THE CANON OUTCOME-SIDE PROFILE (@SCN-LDG-030, 3F-2016) — the (outcome → side-presence) table
  * transcribed from canon (`double-entry-manifesto.md` lines 35-44), keyed by EVERY `Outcome` (a
  * `Record<Outcome, …>`), so a new outcome cannot join the union without STATING its side
@@ -263,7 +275,7 @@ export type QualityCheckReconciliation = QualityCheckReconciliationFields & {
  */
 export const OUTCOME_SIDE_PROFILE: Record<
   Outcome,
-  { obligation: "Exists" | "None"; observation: "Exists" | "None" }
+  { obligation: SidePresence; observation: SidePresence }
 > = {
   satisfied: { obligation: "Exists", observation: "Exists" },
   missing: { obligation: "Exists", observation: "None" },
@@ -294,19 +306,23 @@ export function makeQualityCheckReconciliation(
   const profile = OUTCOME_SIDE_PROFILE[fields.outcome];
   // The DEBIT-side check: the obligation is carried IFF canon says it Exists for this outcome.
   if ((fields.evidenceObligation !== undefined) !== (profile.obligation === "Exists")) {
-    throw new Error(
-      `QualityCheckReconciliation invariant (@SCN-LDG-030): outcome "${fields.outcome}" requires the ` +
-        `evidence obligation (debit) side to be ${profile.obligation}, but it was ` +
-        `${fields.evidenceObligation !== undefined ? "Exists" : "None"}.`,
-    );
+    throw new QualityCheckReconciliationFault({
+      code: QualityCheckFaultCode.ObligationSideDivergesFromCanon,
+      outcome: fields.outcome,
+      required: profile.obligation,
+      // The ternary STAYS in code (@SCN-MSG-001): it is parameter logic, not prose, so mutation
+      // still reaches it — and now an assertion does too, which is what kills it.
+      actual: fields.evidenceObligation !== undefined ? "Exists" : "None",
+    });
   }
   // The CREDIT-side check: the observation is carried IFF canon says it Exists for this outcome.
   if ((fields.evidenceObservation !== undefined) !== (profile.observation === "Exists")) {
-    throw new Error(
-      `QualityCheckReconciliation invariant (@SCN-LDG-030): outcome "${fields.outcome}" requires the ` +
-        `evidence observation (credit) side to be ${profile.observation}, but it was ` +
-        `${fields.evidenceObservation !== undefined ? "Exists" : "None"}.`,
-    );
+    throw new QualityCheckReconciliationFault({
+      code: QualityCheckFaultCode.ObservationSideDivergesFromCanon,
+      outcome: fields.outcome,
+      required: profile.observation,
+      actual: fields.evidenceObservation !== undefined ? "Exists" : "None",
+    });
   }
   return fields as QualityCheckReconciliation;
 }
@@ -558,6 +574,34 @@ export function reconcileEvidenceObligation(
   // guard is what makes the fail-safe hold whatever it carries.
   const match = evidenceObservations.find(
     (o): o is RuntimeEvidenceObservation =>
+      // TWO SURVIVING MUTANTS LIVE ON THIS CLAUSE, KEPT DELIBERATELY (3F-2237). Stryker has no
+      // equivalence detection, so a mutant no test can kill is indistinguishable from one nobody
+      // has written yet. The argument is recorded here because a reader meeting this line has no
+      // other way to recover that the clause is redundant ON PURPOSE.
+      //
+      // `ConditionalExpression` (this clause → `true`) is redundant FOR ANY INPUT WHATSOEVER.
+      // The arm is reached only when `req.qualityCheck !== "lint"` (the fitness fork above
+      // returns first), and `o.qualityCheck === req.qualityCheck` two lines down entails
+      // `o.qualityCheck !== "lint"` for every `o` that survives the chain. The redundancy is
+      // LOGICAL, not type-based — no input, however constructed, separates mutant from original.
+      //
+      // `StringLiteral` (`"lint"` → `""`) rests on a NARROWER argument, and the difference is the
+      // point. Mutated, the clause reads `o.qualityCheck !== ""`. On the `"lint"` side the logical
+      // argument above still covers it — a `"lint"` observation can never satisfy the third clause
+      // below the fitness fork. The `""` side IS separable: an evidence obligation and a credit
+      // both carrying `""` reconcile `satisfied` here and `missing` under the mutant. But that
+      // input is out of domain — no member of `QualityCheck` spells `""`, and nothing in this
+      // package emits it (every producer is a literal, a closed alternation, or a lookup hit), so
+      // it is reachable only by casting PAST the parameter type. 3F-2879 drew exactly that line: a
+      // shape admitted by width subtyping WITH NO CAST is a real published-surface input and kills
+      // (it killed `locatorOf`, and `fitnessCheckTagOf` with it); an out-of-domain value for a
+      // typed field is not one, and pinning behaviour for it would assert a case no reader of this
+      // model can reach.
+      //
+      // Kept because it is load-bearing for the compiler — delete it and `pnpm typecheck` reds
+      // with `TS2339: Property 'broken' does not exist on type 'EvidenceObservation'`, the `"lint"`
+      // observations never having been narrowed away — and because it states the fail-safe above
+      // at the point the reader meets it.
       o.qualityCheck !== "lint" &&
       o.broken !== true &&
       o.qualityCheck === req.qualityCheck &&

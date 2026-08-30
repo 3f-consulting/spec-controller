@@ -85,7 +85,7 @@ Given(
 
 // @SCN-WRN-001
 When("the reconciler runs over the scenarios", function () {
-  markdown = renderMarkdown(evidenceReconciliationOf(scenarios, evidenceObservations), CTX);
+  markdown = renderMarkdown(evidenceReconciliationOf(scenarios, evidenceObservations, [], false, false), CTX);
 });
 
 // @SCN-WRN-001

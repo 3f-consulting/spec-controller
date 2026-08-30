@@ -191,6 +191,12 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     status: "feature-code-used",
     note: "the no-regression ratchet, written as a library that names no project of its own rather than as a reconciler wearing this repository's terms — a gate's record is a PAIR OF COUNTS plus the allowance stated against them, so a lost kill and a grown mutant population reach different verdicts instead of the one red a bare score can raise; every term a project owns (its record file, its gate names, its report path, the tree being judged, what to type to bank a measurement) arrives from the caller (3F-2787)",
   },
+  {
+    code: "MSG",
+    slug: "message-catalogue",
+    status: "feature-code-used",
+    note: "human-facing message prose off the mutated surface — a domain invariant raises a fault named by a numeric CODE carrying its parameters as fields, and the prose that renders it lives in a catalogue held as data and excluded from the mutate glob, so the mutants that pinned wording cease to exist and what stays mutable is the logic deciding which fault and with what parameters (3F-2237)",
+  },
 ];
 
 /** A single lint finding. */

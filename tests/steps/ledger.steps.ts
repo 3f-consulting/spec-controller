@@ -267,7 +267,7 @@ When("the ledger reconciles the target", function () {
   // "still reads missing" assertion stays row-scoped on the rendered ledger, as every other
   // @LDG scenario's. Every pre-existing step reads `markdown` exactly as before.
   reconciliation = reconcile(scenarios, evidenceObservations);
-  markdown = renderMarkdown(evidenceReconciliationOf(scenarios, evidenceObservations), CTX);
+  markdown = renderMarkdown(evidenceReconciliationOf(scenarios, evidenceObservations, [], false, false), CTX);
 });
 
 // @SCN-LDG-011
@@ -653,7 +653,7 @@ Then("the @unit obligation remains the scenario's only required evidence", funct
 
 // @SCN-LDG-001
 When("the reconciler runs", function () {
-  markdown = renderMarkdown(evidenceReconciliationOf(scenarios, evidenceObservations), CTX);
+  markdown = renderMarkdown(evidenceReconciliationOf(scenarios, evidenceObservations, [], false, false), CTX);
 });
 
 // @SCN-LDG-001
@@ -1791,7 +1791,7 @@ Feature: alpha
     evidenceObservations = [
       { scnId: "SCN-AAA-001", qualityCheck: "unit", status: "passed", locator: "a.test.ts" },
     ];
-    ldg021Reconciliation = evidenceReconciliationOf(scenarios, evidenceObservations, untagged);
+    ldg021Reconciliation = evidenceReconciliationOf(scenarios, evidenceObservations, untagged, false, false);
   },
 );
 
@@ -1961,7 +1961,7 @@ Feature: alpha
 // half (LDG-023) reconcile the same way; each Given stocks `scenarios` (the debits) and
 // `ldgPostingObservations` (the credits) with the corpus its property needs.
 When("the ledger reconciles that run", function () {
-  ldgPostingLedger = evidenceReconciliationOf(scenarios, ldgPostingObservations);
+  ldgPostingLedger = evidenceReconciliationOf(scenarios, ldgPostingObservations, [], false, false);
 });
 
 /** Every account an observation posted to — the uniqueness/exhaustion probe. */
@@ -2622,7 +2622,7 @@ Feature: fixture
     "the fixture must contain exactly the one untagged scenario",
   );
   // No observations — an untagged scenario carries no @SCN, so no credit can cite it.
-  ldg021Reconciliation = evidenceReconciliationOf(scenarios, [], untagged);
+  ldg021Reconciliation = evidenceReconciliationOf(scenarios, [], untagged, false, false);
 });
 
 /** The untagged scenario's OWN Quality Check Reconciliation, off the shared corpus ledger. */

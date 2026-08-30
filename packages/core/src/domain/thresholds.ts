@@ -66,6 +66,24 @@ export type ThresholdRegistry = ReadonlyMap<string, ReadonlyMap<string, Threshol
 
 /** A bar's number is finite and non-negative. Zero is legal — canon's binary fitness function. */
 function isCeiling(value: unknown): value is number {
+  // A SURVIVING MUTANT LIVES ON THE FIRST CLAUSE, KEPT DELIBERATELY (3F-2237). Stryker replaces
+  // `typeof value === "number"` ALONE — the column range says so, not the line — leaving
+  // `Number.isFinite(value) && value >= 0`. `Number.isFinite` DOES NOT COERCE: per spec it returns
+  // `false` whenever its argument is not a Number, so it ENTAILS the clause before it and the
+  // result cannot move. Probed against 27 values (strings, booleans, `null`, `undefined`, bigint,
+  // arrays, boxed `new Number(5)`, a `valueOf` object, a `Symbol.toPrimitive` object, a `Proxy`, a
+  // `Date`, `-0`, `NaN`, both infinities): none separates the two, and neither clause has a side
+  // effect, so evaluation order is unobservable too.
+  //
+  // The ground is LANGUAGE SEMANTICS OVER `unknown`, not a type contract — which is why, unlike
+  // `locatorOf` and `fitnessCheckTagOf` (both killed by 3F-2879 / 3F-2898), there is no
+  // published-surface escape. `value` is already `unknown`, so a JavaScript consumer over the
+  // frozen barrel may hand in literally anything, and for every one of those things the two
+  // expressions agree.
+  //
+  // Kept because it is load-bearing for the compiler: delete it and `pnpm typecheck` reds with
+  // `TS18046: 'value' is of type 'unknown'` — both `value >= 0` and the `value is number`
+  // predicate rest on this narrowing.
   return typeof value === "number" && Number.isFinite(value) && value >= 0;
 }
 

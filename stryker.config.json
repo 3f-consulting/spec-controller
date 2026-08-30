@@ -4,7 +4,11 @@
   "testRunner": "vitest",
   "plugins": ["@stryker-mutator/vitest-runner"],
   "coverageAnalysis": "perTest",
-  "mutate": ["packages/core/src/domain/**/*.ts", "!packages/core/src/domain/**/*.test.ts"],
+  "mutate": [
+    "packages/core/src/domain/**/*.ts",
+    "!packages/core/src/domain/**/*.test.ts",
+    "!packages/core/src/domain/qualityCheckFaultMessages.ts"
+  ],
   "reporters": ["progress", "clear-text", "html", "json"],
   "htmlReporter": { "fileName": "reports/mutation/index.html" },
   "tempDirName": ".stryker-tmp",

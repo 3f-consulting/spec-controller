@@ -393,7 +393,10 @@ function ledgerLine(scnId: string): string {
 When("the corpus and that measurement are reconciled and rendered", function () {
   const reconciliation = evidenceReconciliationOf(
     parseScenarios(corpusOf(steplessRows), [], measuredCheckTags(thresholds), thresholds),
-    parseMeasuredEvidenceObservations(measurementArtefact)
+    parseMeasuredEvidenceObservations(measurementArtefact),
+    [],
+    false,
+    false
   );
   markdown = renderMarkdown(reconciliation, MUT_CTX);
   json = renderJson(reconciliation, MUT_CTX);

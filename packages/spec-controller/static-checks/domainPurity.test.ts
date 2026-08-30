@@ -29,8 +29,13 @@ import { collectSourceFiles, CORE_SRC_ROOT, DOMAIN_ROOT, type CollectedFile } fr
  * 10 would invent a constraint that does not exist and red this guard the moment the domain had
  * fewer than ten modules. The WALK is shared three ways; the FLOOR is shared two ways. The
  * asymmetry is the point, not an oversight.
+ *
+ * 8 → 11 at 3F-2872: the coded-fault split — `qualityCheckFault.ts` (the enum + union),
+ * `qualityCheckFaultMessages.ts` (the prose catalogue) and `qualityCheckReconciliationFault.ts`
+ * (the Error). Three modules rather than one because the catalogue keys on the enum and the Error
+ * indexes the catalogue, so housing them together would close a runtime import cycle.
  */
-const DOMAIN_FILE_COUNT = 8;
+const DOMAIN_FILE_COUNT = 11;
 
 describe("[SCN-DPG-001] a domain module imports only the domain layer and pure standard types", () => {
   it("flags a domain file that imports from an adapter layer (parse/render/assemble/census)", () => {

@@ -58,6 +58,22 @@ describe("[SCN-CIP-001] the threshold registry reads a target's ceilings, keyed 
     expect(thresholdFor(registry, "SCN-MSD-001", "ci-run-time")).toStrictEqual({ threshold: 75 });
   });
 
+  it("strips only a LEADING @, so a tag that spells one inside itself keeps it", () => {
+    // `/^@/`, not `/@/`. The @ is stripped because a hand-written manifest spells a tag the way a
+    // feature file does, and that only ever puts one at the front; an @ anywhere else is part of
+    // the name the target chose, and eating it would rename the pair to one no lookup asks for.
+    const registry = thresholdsOf({ "@SCN-MSD-001": { "cucumber@e2e": 75 } });
+    expect(thresholdFor(registry, "SCN-MSD-001", "cucumber@e2e")).toStrictEqual({ threshold: 75 });
+  });
+
+  it("bares a key the manifest padded with whitespace", () => {
+    // The same hand-authoring the @ is stripped for is where a stray space comes from. Stored
+    // untrimmed, both keys keep their padding while every lookup asks bare — so the pair the
+    // manifest plainly names is simply never found, and the miss is silent rather than loud.
+    const registry = thresholdsOf({ "@SCN-MSD-001  ": { "ci-run-time  ": 75 } });
+    expect(thresholdFor(registry, "SCN-MSD-001", "ci-run-time")).toStrictEqual({ threshold: 75 });
+  });
+
   it("names the measured check tags, unique and sorted", () => {
     // The obligation rule needs the tag SET to know which of a scenario's tags name a measured
     // check at all — the measured twin of `registeredCheckTags`.
@@ -213,6 +229,17 @@ describe("[SCN-MUT-002] an at-least entry reads as a bar naming the comparison i
     expect(thresholdFor(registry, "SCN-MSD-001", "ci-run-time")).toStrictEqual({ threshold: 75 });
   });
 
+  it("reads an entry of null as no object form at all, rather than reaching into it", () => {
+    // `typeof null` is "object", so "is this the object form?" cannot be the typeof alone. A JSON
+    // null beside a check is the one value that answers it wrongly, and reaching in reads
+    // `"atLeast" in null`, which THROWS — one bad character in a target's manifest would take the
+    // whole run down and produce no verdict at all, which is loud nowhere. The dropped bar is the
+    // stance this file argues for, and it is a stance only while null is held out here.
+    const registry = thresholdsOf({ "SCN-MSD-001": { mutation: null } });
+    expect(measuredCheckTags(registry)).toEqual(["mutation"]);
+    expect(thresholdFor(registry, "SCN-MSD-001", "mutation")).toBeNull();
+  });
+
   it("drops a bar whose number is not a finite, non-negative one, in either direction", () => {
     // The object form reaches the SAME number-reading the bare form does; a recognised key is not
     // a licence for the value beside it. NaN stays the dangerous one in the new direction too —
@@ -284,10 +311,26 @@ describe("[SCN-MUT-003] an entry naming no comparison the registry recognises ha
     expect(thresholdFor(registry, "SCN-MSD-001", "complexity")).toBeNull();
   });
 
+  it("drops an entry whose value is not a check set at all", () => {
+    // The clause that catches it is `typeof checks !== "object"`, and it carries this case alone —
+    // the empty-id clause beside it does not reach a well-named scenario, and the null clause does
+    // not reach a string. Unguarded, a bare number authored where the check set belongs falls
+    // through to `Object.entries`, which reads "91.87" as FIVE checks keyed "0".."4", each holding
+    // no bar: five measured obligations the manifest never named, against tags nobody can spell.
+    const registry = thresholdsOf({ "SCN-MSD-001": "91.87" });
+    expect(registry.size).toBe(0);
+    expect(measuredCheckTags(registry)).toEqual([]);
+  });
+
   it("still drops an entry that names no check at all", () => {
     // The boundary of the above. An empty check tag names no pair, so there is nothing to hold
     // measured and nothing to report a missing bar against — a key, not a value, and dropped whole.
     const registry = thresholdsOf({ "SCN-MSD-001": { "": { direction: "up" }, "@": 75 } });
     expect(measuredCheckTags(registry)).toEqual([]);
+    // Asserted on the REGISTRY, not on its flattened tag set, because that set cannot tell the two
+    // readings apart: a scenario registered against an EMPTY map contributes no tags either. The
+    // difference is the @SCN itself — registered, it is a scenario the manifest names to every
+    // reader that asks the registry which ones it does, on the strength of an entry naming nothing.
+    expect(registry.size).toBe(0);
   });
 });

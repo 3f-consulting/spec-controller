@@ -30,6 +30,7 @@ import type { ScriptCitation } from "../parse/fitnessCitations.js";
 import type {
   EvidenceObservation,
   Ledger,
+  MeasuredEvidenceObservation,
   Scenario,
   ScenarioReconciliation,
 } from "../model.js";
@@ -341,5 +342,73 @@ describe("[SCN-USG-005] a cited guard:-prefixed static check is attributed to it
       runningStaticCheckCount: 1,
       uncitedStaticCheckCount: 0,
     });
+  });
+});
+
+/**
+ * @SCN-CIP-003 IN THE STATIC-CHECK FOLD — a MEASUREMENT rides the same quality-check as a static
+ * check and is not one, so it is counted in NEITHER tally.
+ *
+ * Bidirectional evidence: the describe carries @SCN-CIP-003, matching features/ci-run-time.feature.
+ *
+ * WHY THE FIXTURE LOOKS LIKE THIS. `MeasuredEvidenceObservation` names no `exists` and no
+ * `enforcedOverRealSource` — a measurement observed neither — and a measurement always cites, so
+ * `postingOf` can never route one to the suspense row. Between them those two facts mean no
+ * measurement this package can build reaches either `++` below the skip, and the skip's promise
+ * would be unfalsifiable from the inside. It is not unfalsifiable from OUTSIDE: `reconcile` and the
+ * `EvidenceObservation` union are on the frozen v1 barrel, TypeScript's width subtyping admits a
+ * richer object through a variable binding with no cast, and a JavaScript consumer is bound by
+ * nothing at all — so a measurement arriving with a static check's two fields on it is a shape the
+ * published surface genuinely accepts. The skip is what keeps it out of a population it is not
+ * part of, which is exactly the fold's own comment. Stated with an intersection annotation rather
+ * than a cast, so the fixture stays inside the type system it is describing (the @SCN-LNT-001
+ * precedent, 3F-2879).
+ *
+ * Parent: @SCN-USG-001 — the tally is the Ledger's own fold; this is the shape it must not count.
+ */
+describe("[SCN-CIP-003] a measurement posted to a row is neither a running static check nor an uncited one", () => {
+  const SCN = "SCN-MSD-001";
+  const CHECK = "ci-run-time";
+
+  // THE PUBLISHED-SURFACE SHAPE — a measurement carrying the two facts a static check would carry.
+  // Both `true`, because a `false` pair would pass the running filter for the ordinary reason and
+  // prove nothing about the skip.
+  const measurement: MeasuredEvidenceObservation & {
+    exists: boolean;
+    enforcedOverRealSource: boolean;
+  } = {
+    qualityCheck: "lint",
+    scnId: SCN,
+    checkTag: CHECK,
+    measured: 42.1,
+    exists: true,
+    enforcedOverRealSource: true,
+  };
+
+  // The corpus: one stepless scenario owing the measured check the measurement answers, so the
+  // credit posts to a REAL row rather than an invented one. Built through `reconcile()`, so the
+  // row is a shape the pipeline emits (evidence-manifesto §11A).
+  const scenarios: Scenario[] = [
+    {
+      scnId: SCN,
+      evidenceObligations: [
+        { qualityCheck: "lint", staticCheck: CHECK, measured: true, threshold: 75 },
+      ],
+    },
+  ];
+  const ledger: Ledger = reconcile(scenarios, [measurement]);
+  const tally = staticObservationTally(ledger);
+
+  it("posts the measurement to the row it cites — so the fold has something to skip", () => {
+    // Anti-vacuity. Were the credit to land anywhere but a row's `evidenceObservations`, the tally
+    // below would read zero for the uninteresting reason and the skip would go unexercised.
+    const row = ledger.scenarioReconciliations.find((r) => r.scnId === SCN);
+    expect(row?.evidenceObservations).toEqual([measurement]);
+  });
+
+  it("counts it in NEITHER tally, though it carries a running check's two facts", () => {
+    // Nothing read a manifest or a workflow for a measurement, so it belongs to no static-analysis
+    // population. Whole-object equality: a count that moved either way fails here.
+    expect(tally).toEqual({ runningStaticCheckCount: 0, uncitedStaticCheckCount: 0 });
   });
 });

@@ -339,7 +339,10 @@ const CIP_CTX: RunContext = {
 When("the corpus and the measurements are reconciled and rendered", function () {
   const reconciliation = evidenceReconciliationOf(
     parseScenarios(corpusSource, [], measuredCheckTags(thresholds), thresholds),
-    parseMeasuredEvidenceObservations(measurementArtefact ?? { measurements: [] })
+    parseMeasuredEvidenceObservations(measurementArtefact ?? { measurements: [] }),
+    [],
+    false,
+    false
   );
   ledger = reconciliation.ledger;
   markdown = renderMarkdown(reconciliation, CIP_CTX);
