@@ -28,6 +28,12 @@ Each `@`-tag on a scenario names one **evidence obligation** — naming one **qu
 
 `@unit` / `@integration` / `@e2e` / `@performance` are runtime tests; `@lint` is a **static check** over the source artefact. `@lint` isn't a second axis — it's one quality-check value, the one whose evidence is *enforcement over the real source* rather than a passing test. So a scenario tagged `@lint @unit @integration` names three obligations, not one combined thing. Each tag asserts *"to prove this scenario, evidence of this quality-check must exist and hold"* — for a runtime test, that it exists and passes; for `@lint`, that the guard is wired into CI and green over the real source, not merely fixture-green. `spec-controller` reconciles those obligations against the evidence that actually ran and catches the **watermelon**: a guard that is green but enforces nothing.
 
+## How this relates to coverage and mutation testing
+
+Coverage tells you a line ran; mutation testing tells you your tests would notice if that line were wrong. Both grade the tests you have against the code you have — and `spec-controller` consumes their verdicts rather than competing with them. What it adds is the question neither can ask: does every behaviour your scenarios *name* have living, attributed evidence, and is any of the green fake?
+
+Mutation testing has no notion of your specification — a requirement with no test and no code is invisible to it, and it only grades the code it can mutate, saying nothing about whether a `@lint` guard enforces anything over the real source or whether an integration check is wired at all. `spec-controller` reconciles the whole evidence apparatus against your scenarios: strong *and* complete *and* attributed, not just strong. Keep your coverage gate and your mutation ratchet — `spec-controller` is the ledger they post into.
+
 ## Install
 
 ```
