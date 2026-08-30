@@ -17,7 +17,6 @@
     "mutation": "tsx packages/spec-controller/static-checks/mutationScoreCli.ts --scn SCN-MUT-011 --check mutation -- stryker run",
     "cucumber": "tsx packages/spec-controller/static-checks/timeStepCli.ts --scn SCN-CIP-014 --check ci-run-time -- cucumber-js",
     "build": "pnpm -r build",
-    "build:action-bundles": "tsx packages/spec-controller/static-checks/buildActionBundlesCli.ts",
     "balance": "tsx packages/spec-controller/src/cli.ts",
     "audit:vocab": "tsx packages/spec-controller/static-checks/vocabAuditCli.ts",
     "lint:feature-codes": "tsx packages/spec-controller/static-checks/lintFeatureCodesCli.ts",
@@ -30,8 +29,7 @@
     "lint:self-balance": "tsx packages/spec-controller/static-checks/lintSelfBalanceCli.ts",
     "lint:adopted-vocabulary": "tsx packages/spec-controller/static-checks/lintAdoptedVocabularyCli.ts",
     "lint:anemic-domain": "tsx packages/spec-controller/static-checks/lintAnemicDomainCli.ts",
-    "lint:exempt-data-floor": "tsx packages/spec-controller/static-checks/lintExemptDataFloorCli.ts",
-    "lint:action-bundles": "tsx packages/spec-controller/static-checks/lintActionBundlesCli.ts"
+    "lint:exempt-data-floor": "tsx packages/spec-controller/static-checks/lintExemptDataFloorCli.ts"
   },
   "specController": {
     "staticChecks": ["typecheck"],
@@ -47,8 +45,7 @@
       "lint:exempt-data-floor": "exempt-data-floor",
       "lint:anemic-domain": "anemic-domain",
       "lint:self-balance": "self-balance",
-      "lint:scn-subissues": "scn-subissues",
-      "lint:action-bundles": "action-bundles"
+      "lint:scn-subissues": "scn-subissues"
     },
     "thresholds": {
       "SCN-CIP-013": { "ci-run-time": 75 },
@@ -62,7 +59,6 @@
     "@stryker-mutator/core": "^9.6.1",
     "@stryker-mutator/vitest-runner": "^9.6.1",
     "@types/node": "^22.0.0",
-    "esbuild": "^0.28.1",
     "eslint": "^9.39.5",
     "spec-controller": "workspace:*",
     "tsx": "^4.22.3",

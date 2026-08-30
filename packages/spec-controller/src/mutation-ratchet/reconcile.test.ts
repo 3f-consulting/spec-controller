@@ -1,5 +1,5 @@
 /**
- * @unit for `reconcile.ts` and the module's public surface — every term a project owns arrives from
+ * @unit for `reconcile.ts` and the module's own surface — every term a project owns arrives from
  * the project (@SCN-RAT-014, 3F-2804).
  *
  * The `[SCN-RAT-014]` markers in the `describe` / `it` strings below are the bidirectional evidence
@@ -23,7 +23,7 @@
  *
  * THE SURFACE IS THEN READ AS BYTES, BECAUSE BEHAVIOUR CANNOT SEE THE LAST TERM. A reconciler told
  * which words to use for banking passes every verdict above while a second, unreachable sentence
- * beside it still names somebody's script. So the shipped module's own text is scanned — every
+ * beside it still names somebody's script. So the module's own text is scanned — every
  * non-test source, its commentary struck out so the ban is about what the module DOES rather than
  * what it argues about, its file list exhaustive so a new source cannot dodge the scan, and each
  * pattern proved to fire on the leak it was drawn from before its absence is believed of anything.
@@ -36,7 +36,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import * as surface from "./index.js";
-import { FallRefusedError, raisedRecordText } from "spec-controller/mutation-ratchet";
+import { FallRefusedError, raisedRecordText } from "./index.js";
 import { RECORD_FILE, reconcileGate, type RatchetRequest } from "./reconcile.js";
 import type {
   MutationGateAllowance,
@@ -288,12 +288,12 @@ describe("[SCN-RAT-014] reconcileGate — each project-owned term is read, never
 });
 
 /**
- * The names a shipped surface must not hold, each drawn from the leak it was written to catch.
+ * The names this module's own surface must not hold, each drawn from the leak it was written to catch.
  *
  * PROVED TO FIRE BEFORE ITS ABSENCE IS BELIEVED. A pattern that could never have matched anything
  * reads exactly like a clean surface, so every row carries the text it was drawn from — four of
  * them the reference implementation's own, measured at Analysis — and the arm asserts the pattern
- * matches that before asserting it matches nothing shipped.
+ * matches that before asserting it matches nothing the module holds.
  */
 const NAMES_SOMEBODY_OWNS: readonly {
   readonly names: string;
@@ -352,15 +352,15 @@ const NAMES_SOMEBODY_OWNS: readonly {
   },
 ];
 
-/** One shipped source: its name, its code with commentary struck out, and its import specifiers. */
-interface ShippedSource {
+/** One source this module holds: its name, its code with commentary struck out, and its import specifiers. */
+interface ModuleSource {
   readonly file: string;
   readonly code: string;
   readonly specifiers: readonly string[];
 }
 
 /**
- * Every source file this module ships, commentary struck out and import specifiers lifted away.
+ * Every source file this module holds, commentary struck out and import specifiers lifted away.
  *
  * THE STRIKE-OUT IS WHAT MAKES THE BAN A STATEMENT ABOUT WHAT THE MODULE DOES. This module argues
  * about exactly these ideas at length — it says out loud that it names no runner and no workflow —
@@ -370,7 +370,7 @@ interface ShippedSource {
  * not trees, so the path pattern must not read them — but a specifier is also exactly where a leak
  * could hide from that removal. They are handed back so the arm can assert what they are.
  */
-function shippedSources(): ShippedSource[] {
+function moduleSources(): ModuleSource[] {
   return readdirSync(MODULE_DIR)
     .filter((file) => file.endsWith(".ts") && !file.endsWith(".test.ts"))
     .sort()
@@ -391,7 +391,7 @@ function shippedSources(): ShippedSource[] {
     });
 }
 
-/** The package's own manifest — the surface this module is reached through once it ships. */
+/** The package's own manifest — where the dependencies this module's imports are held to are stated. */
 function packageManifest(): {
   dependencies?: Record<string, string>;
   exports?: unknown;
@@ -400,9 +400,9 @@ function packageManifest(): {
   return JSON.parse(readFileSync(join(MODULE_DIR, "..", "..", "package.json"), "utf8"));
 }
 
-describe("[SCN-RAT-014] the shipped surface names no project, check, runner, workflow or repository", () => {
-  it("[SCN-RAT-014] is asserted over every source this module ships, read back from beside this file", () => {
-    const sources = shippedSources();
+describe("[SCN-RAT-014] the module's own surface names no project, check, runner, workflow or repository", () => {
+  it("[SCN-RAT-014] is asserted over every source this module holds, read back from beside this file", () => {
+    const sources = moduleSources();
 
     // Exhaustive on purpose: a source file added to this module reds here until somebody has looked
     // at whether it carries a term its callers own.
@@ -449,7 +449,7 @@ describe("[SCN-RAT-014] the shipped surface names no project, check, runner, wor
     const stated = Object.keys(packageManifest().dependencies ?? {});
 
     expect(stated.length).toBeGreaterThan(0);
-    for (const { file, specifiers } of shippedSources()) {
+    for (const { file, specifiers } of moduleSources()) {
       for (const specifier of specifiers) {
         const reachable =
           /^node:[a-z/]+$/.test(specifier) ||
@@ -475,7 +475,7 @@ describe("[SCN-RAT-014] the shipped surface names no project, check, runner, wor
         true,
       );
 
-      for (const { file, code } of shippedSources()) {
+      for (const { file, code } of moduleSources()) {
         const offending = code.split("\n").filter((line) => ban.pattern.test(line));
 
         expect(offending, `${file} names ${ban.names}: ${offending.join(" / ")}`).toEqual([]);
@@ -484,7 +484,7 @@ describe("[SCN-RAT-014] the shipped surface names no project, check, runner, wor
   }
 });
 
-describe("[SCN-RAT-014] the public surface is curated, and reachable by the name a consumer imports", () => {
+describe("[SCN-RAT-014] the barrel is curated, and every name a caller needs is on it", () => {
   it("[SCN-RAT-014] exports exactly the thirteen values the surface states, and nothing standing beside them", () => {
     expect(Object.keys(surface).sort()).toEqual([
       "FallRefusedError",
@@ -503,16 +503,17 @@ describe("[SCN-RAT-014] the public surface is curated, and reachable by the name
     ]);
   });
 
-  it("[SCN-RAT-014] hands its recorder's up-only refusal over as a type, catchable by a consumer holding nothing but this subpath", () => {
+  it("[SCN-RAT-014] hands its recorder's up-only refusal over as a type, catchable by a caller holding nothing but this barrel", () => {
     // THE IMPORT AT THE TOP OF THIS FILE IS HALF THE ASSERTION, AND IT GOES THE LONG WAY ROUND ON
-    // PURPOSE. `raisedRecordText` and `FallRefusedError` arrive here through
-    // `spec-controller/mutation-ratchet` — the specifier a consumer outside this package writes —
-    // rather than through `./ratchet.js`, which is how every other arm over this type reaches it.
-    // That module-direct route is exactly what kept this gap invisible: 673 lines of examples about
-    // this refusal, all of them green, while the name it is caught by was reachable from inside the
+    // PURPOSE. `raisedRecordText` and `FallRefusedError` arrive here through the BARREL rather than
+    // through `./ratchet.js`, which is how every other arm over this type reaches it. That
+    // module-direct route is exactly what kept this gap invisible: 673 lines of examples about this
+    // refusal, all of them green, while the name it is caught by was reachable from inside the
     // directory and from nowhere else. Reading it back off the barrel's own key list would not close
     // that either — a list is satisfied by a name, and what a caller needs is the constructor behind
-    // it, live, with a real refusal to hold against it.
+    // it, live, with a real refusal to hold against it. The route was `spec-controller/mutation-ratchet`
+    // until 3F-2859 stopped publishing that subpath; the barrel is the surface a caller holds now,
+    // and it is the same object either way.
     const bankedBack: MutationMeasurement = {
       gate: OTHER_PROJECT.gate,
       detected: BANKED.detected,
@@ -558,17 +559,5 @@ describe("[SCN-RAT-014] the public surface is curated, and reachable by the name
       "at-baseline",
       OTHER_PROJECT.gate,
     ]);
-  });
-
-  it("[SCN-RAT-014] is reachable as a subpath of the package, in the tree and once built", () => {
-    const manifest = packageManifest();
-
-    expect(manifest.exports).toEqual({ "./mutation-ratchet": "./src/mutation-ratchet/index.ts" });
-    expect(manifest.publishConfig?.exports).toEqual({
-      "./mutation-ratchet": {
-        types: "./dist/mutation-ratchet/index.d.ts",
-        default: "./dist/mutation-ratchet/index.js",
-      },
-    });
   });
 });

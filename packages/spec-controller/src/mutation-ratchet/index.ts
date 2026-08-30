@@ -1,5 +1,5 @@
 /**
- * THE PUBLIC SURFACE — curated symbol by symbol, never a re-export of the tree behind it
+ * THE MODULE'S OWN SURFACE — curated symbol by symbol, never a re-export of the tree behind it
  * (@SCN-RAT-014, 3F-2804).
  *
  * A BARREL THAT RE-EXPORTED EVERY MODULE WOULD BE A CONTRACT NOBODY WROTE. Each module below
@@ -8,8 +8,8 @@
  * builders, the status sets and the loader's per-field readers are all exported so their
  * neighbours can reach them without a second copy. Passing that set on wholesale would freeze
  * every one of them as something a consumer may depend on, and the first refactor that moved one
- * would be a breaking change nobody meant to make. So this file names what is public and the
- * omissions are decisions.
+ * would be a breaking change nobody meant to make. So this file names what a caller may hold and
+ * the omissions are decisions.
  *
  * WHAT IS HERE IS THIS LIBRARY'S OWN ENTRY, AND WHAT ITS FIRST CONSUMER NEEDS. The entry is
  * `reconcileGate` — hand it the five terms a project owns and it answers with a verdict. Around it
@@ -24,11 +24,14 @@
  * that has gates of several kinds they are not, so they cross this line under the fuller names.
  * The aliasing is deliberate and one-directional: the internal spellings stay internal.
  *
- * WHAT THIS SURFACE DOES NOT HAVE IS A DRIFT GUARD OVER ITSELF. The sibling core package's barrel
- * is reflected and compared against a frozen list in both directions, so a symbol quietly added or
- * dropped reds. Nothing equivalent stands over this one, so a later slice can widen it unnoticed.
- * Stated rather than left implied; it is the obvious follow-up if this subpath is to be frozen the
- * way that one is.
+ * AND NO DRIFT GUARD STANDS OVER IT, WHICH IS A DECISION NOW RATHER THAN AN OPEN QUESTION. The
+ * sibling core package's barrel is reflected and compared against a frozen list in both directions,
+ * so a symbol quietly added or dropped reds. That guard is what a PUBLISHED surface is owed, and
+ * 3F-2859 stopped publishing this one: no manifest key resolves here, and no caller outside this
+ * repository can spell the specifier at all. Freezing the list would make every refactor behind
+ * this barrel a change to a contract nobody holds. What the curation above is still for is the
+ * reader of this repository's own gate, and @SCN-RAT-014 reads the list back beside it — so a
+ * symbol added here is a symbol somebody wrote down twice, which is the guard this surface earns.
  */
 
 export { RECORD_FILE, reconcileGate, type RatchetRequest } from "./reconcile.js";

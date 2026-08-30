@@ -1,5 +1,5 @@
 @RAT
-Feature: Ratchet a mutation gate against the record it last banked — the no-regression verdict, as a library a project imports
+Feature: Ratchet a mutation gate against the record it last banked — the no-regression verdict, as a library that names no project of its own
 
   THE VERDICT IS THE PRODUCT, AND IT WAS BUILT IN THE WRONG PLACE FIRST. A mutation sweep
   produces one number, and a bar can only ask whether that number fell. The interesting question
@@ -9,12 +9,13 @@ Feature: Ratchet a mutation gate against the record it last banked — the no-re
   rather than the score is what lets the two be told apart — kills lost is stated directly, and a
   growing population moves `total` while leaving `detected` alone.
 
-  WHY IT SHIPS AS A LIBRARY RATHER THAN TWICE. That argument is a fact about mutation testing,
-  not about any one repository, and it is now settled in one. The second repository to want it
-  either imports it or re-derives it, and a re-derivation is a copy that agrees until the day one
-  side is edited — the shape `.github/actions/persist-measurements` was filed to close one axis
-  over. Each project keeps owning its BAR: the figures live in that project's own record file,
-  under a name of its own choosing, and its own CI runs the gate. What is shared is the reasoning.
+  WHY IT IS WRITTEN AS A LIBRARY AND NOT AS THIS REPOSITORY'S OWN SCRIPT. That argument is a fact
+  about mutation testing, not about any one repository, and it is now settled in one. Nothing
+  publishes this module — each project owns its own no-regression gate, and this one is the gate
+  this repository runs — so a second repository that wants the reasoning LIFTS it rather than
+  importing it, and a module carrying its first home's terms is not liftable at all. Each project
+  keeps owning its BAR: the figures live in that project's own record file, under a name of its own
+  choosing, and its own CI runs the gate. What is shared is the reasoning.
 
   AND SO EVERY TERM A PROJECT OWNS IS AN INPUT. Which record file, which gates it holds, where a
   gate's report lands, which tree is being judged, and what to type to bank a measurement — all
@@ -553,12 +554,12 @@ Feature: Ratchet a mutation gate against the record it last banked — the no-re
 
     AND THE SURFACE IS GREPPED, BECAUSE BEHAVIOUR ALONE CANNOT SEE THE FIFTH TERM. A reconciler
     told which words to use for banking a measurement passes every verdict this Rule drives even
-    while a second, unreachable sentence beside it still names somebody's script. The shipped
-    module's own bytes are what say otherwise, and each pattern is proved to fire on the leak it
-    was drawn from before its absence is believed of anything.
+    while a second, unreachable sentence beside it still names somebody's script. The module's own
+    bytes are what say otherwise, and each pattern is proved to fire on the leak it was drawn from
+    before its absence is believed of anything.
 
     @unit @integration @SCN-RAT-014
-    Scenario: a second project's record file, gate names, report path and bank-it command drive the whole verdict unchanged, and the shipped surface names no project, check, runner, workflow or repository
+    Scenario: a second project's record file, gate names, report path and bank-it command drive the whole verdict unchanged, and the module's own surface names no project, check, runner, workflow or repository
       Given a second project that files its bars under a record name of its own, holding a gate it calls "parcel-routing" banked at 812 kills of 900 mutants, allowing 2
       And that project keeps its tree somewhere that is not the tree this suite is running in, and leaves its sweep's report at a path of its own choosing
       And that project's own instruction for banking a measurement is the only one the ratchet is given
@@ -574,7 +575,7 @@ Feature: Ratchet a mutation gate against the record it last banked — the no-re
       And the same gate with no report written at all reds as no measurement, naming the path that project chose
       And every verdict that asks for the record to be banked quotes that project's own instruction, and no other project's
       And the record and the report were each sought under the root that project named, and nothing was read from the directory this suite is running in
-      And no source file this module ships holds a name this repository goes by — not its packages, not its checks, not its workflows
+      And no source file this module holds carries a name this repository goes by — not its packages, not its checks, not its workflows
       And every error a public function of that surface raises is reachable by name from that surface, so a caller can catch it by type rather than by matching its sentence
 
   Rule: the run that calls it carries the verdict out

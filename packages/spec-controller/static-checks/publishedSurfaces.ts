@@ -16,11 +16,7 @@
  * gaps that produced this registry. The independence is the same rule a two-inspector review runs
  * on: the second reading is worth having only because it was not taken from the first.
  *
- * SO THE DUPLICATION WITH `reconcile.test.ts`'s `[SCN-RAT-014]` PIN IS DELIBERATE. Two
- * independently written lists over one surface disagree loudly or not at all, and a disagreement
- * reds — which is the safe direction, and the reason that pin is not tidied away here.
- *
- * CORE'S OWN ENUMERATION WAS THE OTHER SUCH PIN AND IS GONE (3F-2838), which is a different move
+ * CORE'S OWN ENUMERATION WAS SUCH A PIN AND IS GONE (3F-2838), which is a different move
  * from tidying it away. It sat in `packages/core/src/index.test.ts` over a reflection and a
  * comparison that file also carried — the whole mechanism this module now holds, written twice.
  * Retiring the DUPLICATE MECHANISM is the point; what it cost is the second reading, and that was
@@ -49,7 +45,11 @@
  * tree answers — and it is the reading that would have caught `./internal` on the day it was
  * published, which the two arms above could not have, however well written.
  *
- * WHY TWO ENTRIES AND NOT THREE — THE `./internal` CORRECTION (3F-2837). `./internal` was in
+ * WHY ONE ENTRY AND NOT THREE. Both of the surfaces that motivated this registry have since
+ * stopped being published, each for its own reason, and the registry narrowed with them rather
+ * than being narrowed to make anything green.
+ *
+ * THE `./internal` CORRECTION (3F-2837). `./internal` was in
  * `packages/core/package.json`'s `publishConfig.exports` and therefore importable by an external
  * consumer, while its own header said "NOT THE PUBLIC v1 CONTRACT" and nothing held it to a list.
  * @SCN-API-006 cannot pass over a contradiction like that, and the operator ruled it be resolved in
@@ -61,6 +61,17 @@
  * of `@3f-consulting/spec-controller-core/internal` resolve through it, and because npm replaces
  * `exports` with `publishConfig.exports` wholesale rather than merging them, unpublishing the
  * subpath and keeping the seam is one key.
+ *
+ * THE `./mutation-ratchet` DE-PUBLICATION (3F-2859). The ratchet is now a module this repository
+ * keeps for its own gate, and each project owns its own no-regression gate — so nothing publishes
+ * it: BOTH manifest maps went, not one. `publishedMapOf` prefers the publish-time map and falls
+ * back to the workspace map, so dropping only the publish-time key would have left the subpath
+ * published through the fallback — the opposite of the `./internal` case above, where the
+ * workspace key is what the in-repo importers need. Its in-repo importers went to relative paths
+ * instead, which is the honest spelling once no consumer can write the specifier at all.
+ * `reconcile.test.ts`'s `[SCN-RAT-014]` pin stays and is now the only written list over that
+ * module's surface — no longer a second reading of a published one, so this registry's
+ * independence argument no longer applies to it.
  */
 
 import { existsSync, readdirSync, readFileSync } from "node:fs";
@@ -605,45 +616,6 @@ export const PUBLISHED_SURFACES: readonly PublishedSurface[] = [
       "ProvenanceObject",
       "ProvenanceFacts",
       "ProvenanceInput",
-    ],
-  },
-  {
-    // The mutation ratchet's curated surface. `[SCN-RAT-014]` pins the same thirteen values beside
-    // the module and is left exactly as it is — it was written by reading the barrel too, and two
-    // readings that disagree red, which is the direction worth being wrong in.
-    package: "spec-controller",
-    subpath: "./mutation-ratchet",
-    barrel: "packages/spec-controller/src/mutation-ratchet/index.ts",
-    values: [
-      // The library's own entry, and the record name it reads by default (reconcile.ts)
-      "RECORD_FILE",
-      "reconcileGate",
-      // The record: its floor, its per-gate read, its parse, its two scores, its fault (record.ts)
-      "floorOf",
-      "gateRecordFor",
-      "MalformedRecordError",
-      "parseGateRecords",
-      "recordedScoreOf",
-      "scoreOf",
-      // The recorder and the up-only refusal a caller has to be able to name (ratchet.ts)
-      "FallRefusedError",
-      "raisedRecordText",
-      // The two readers that turn a sweep's report into counts (report.ts)
-      "measurementFromReport",
-      "readMutationReport",
-      // The verdict over counts already in hand (verdict.ts)
-      "verdictFor",
-    ],
-    types: [
-      "RatchetRequest",
-      // Spelled for a consumer's namespace rather than for the module's own — the aliasing is
-      // deliberate, so these are the names that cross the line and therefore the names written here.
-      "MutationGateAllowance",
-      "MutationGateRecord",
-      "MutationReportRead",
-      "MutationMeasurement",
-      "MutationVerdict",
-      "MutationVerdictKind",
     ],
   },
 ];

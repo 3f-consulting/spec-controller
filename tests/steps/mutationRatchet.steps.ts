@@ -34,10 +34,10 @@ import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSyn
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-// Through the specifier a consumer outside this package writes, and deliberately not through the
-// modules standing behind it: the barrel is the subject of the surface arm below, so reaching its
-// contents by any other route would be reading one thing and reporting on another.
-import * as publishedSurface from "spec-controller/mutation-ratchet";
+// Through the barrel, and deliberately not through the modules standing behind it: the barrel is
+// the subject of the surface arm below, so reaching its contents by any other route would be
+// reading one thing and reporting on another.
+import * as ratchetBarrel from "../../packages/spec-controller/src/mutation-ratchet/index.js";
 
 import {
   MalformedRecordError,
@@ -865,7 +865,7 @@ Then(
 );
 
 // @SCN-RAT-014 — a second project's record file, gate names, report path and bank-it command drive
-// the whole verdict unchanged, and the shipped surface names nothing this repository goes by.
+// the whole verdict unchanged, and the module's own surface names nothing this repository goes by.
 //
 // THE SECOND PROJECT IS THE POINT, AND THE @unit PIN BESIDE THIS ONE CANNOT BE THE ONLY ONE MAKING
 // IT. That pin composes its second project's record as a string and drives `reconcileGate` over a
@@ -874,7 +874,7 @@ Then(
 // plants that tree whole and reconciles every one of the runs over it.
 //
 // AND ITS BAN LIST IS DERIVED FROM THIS REPOSITORY RATHER THAN TYPED OUT. The @unit pin scans the
-// shipped surface against patterns somebody wrote down, which is only ever as good as the list.
+// module's own sources against patterns somebody wrote down, which is only ever as good as the list.
 // This one reads the names this repository ACTUALLY goes by — its packages, the checks its own
 // ladder registers, the workflows it runs — straight off the tree, so a name added to any of them
 // tomorrow is in the ban the same day, with nobody having remembered to add it.
@@ -1099,8 +1099,8 @@ function namesThisRepositoryGoesBy(): string[] {
   ];
 }
 
-/** Every source file this module ships, its commentary struck out. */
-function shippedRatchetSources(): { file: string; code: string }[] {
+/** Every source file this module holds, its commentary struck out. */
+function ratchetSources(): { file: string; code: string }[] {
   const dir = path.join(process.cwd(), "packages", "spec-controller", "src", "mutation-ratchet");
 
   return readdirSync(dir)
@@ -1115,7 +1115,7 @@ function shippedRatchetSources(): { file: string; code: string }[] {
 }
 
 Then(
-  "no source file this module ships holds a name this repository goes by — not its packages, not its checks, not its workflows",
+  "no source file this module holds carries a name this repository goes by — not its packages, not its checks, not its workflows",
   function () {
     const names = namesThisRepositoryGoesBy();
 
@@ -1129,11 +1129,11 @@ Then(
       "a planted leak wearing one of this repository's own names is not caught by this reading.",
     );
 
-    const sources = shippedRatchetSources();
+    const sources = ratchetSources();
     assert.deepEqual(
       sources.map((source) => source.file),
       ["index.ts", "ratchet.ts", "ratchetCli.ts", "reconcile.ts", "record.ts", "report.ts", "verdict.ts"],
-      "the shipped surface is not the seven files this arm was written over.",
+      "the module's own surface is not the seven files this arm was written over.",
     );
 
     for (const { file, code } of sources) {
@@ -1170,8 +1170,8 @@ function throwersIn(source: string): { fn: string; raises: string[] }[] {
   return documented;
 }
 
-/** Every documented thrower this module ships, across all of its sources. */
-function throwersThisModuleShips(): { fn: string; raises: string[] }[] {
+/** Every documented thrower this module holds, across all of its sources. */
+function throwersThisModuleHolds(): { fn: string; raises: string[] }[] {
   const dir = path.join(process.cwd(), "packages", "spec-controller", "src", "mutation-ratchet");
 
   return readdirSync(dir)
@@ -1183,8 +1183,8 @@ function throwersThisModuleShips(): { fn: string; raises: string[] }[] {
 Then(
   "every error a public function of that surface raises is reachable by name from that surface, so a caller can catch it by type rather than by matching its sentence",
   function () {
-    const reachable = Object.keys(publishedSurface);
-    const publicThrowers = throwersThisModuleShips().filter(({ fn }) => reachable.includes(fn));
+    const reachable = Object.keys(ratchetBarrel);
+    const publicThrowers = throwersThisModuleHolds().filter(({ fn }) => reachable.includes(fn));
 
     // The teeth, proved before any absence is believed. A reading that matched nothing at all would
     // report a clean surface over a surface it never opened, so the throwers have to be found and

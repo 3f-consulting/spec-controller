@@ -5,21 +5,6 @@ node_modules/
 dist/
 build/
 
-# THE ONE COMMITTED BUILD OUTPUT, AND IT IS MECHANISED RATHER THAN HONOURED (3F-2810). A composite
-# action under .github/actions/ is checked out into the CALLER's workspace, so the only directory
-# its step can rely on is its own: ${{ github.action_path }}. The file that step runs therefore
-# travels with the action, which means a build output in the diff — the exact thing the rule above
-# exists to stop, carved out at exactly these paths and nowhere wider.
-#
-# THE DIRECTORY LINE COMES FIRST AND IS LOAD-BEARING: git cannot re-include a file whose parent
-# directory is excluded, so re-including only the .mjs would re-include nothing at all and the
-# bundles would silently never be committed.
-#
-# What stops the carve-out rotting is lint:action-bundles, which rebuilds each of these from its
-# source and reds on any difference (@SCN-ACT-003, cited over the real tree by @SCN-ACT-004).
-!.github/actions/*/dist/
-!.github/actions/*/dist/*.mjs
-
 .claude/*.local.json
 
 # Reconciliation run output is NOT tracked in the repo. A report enumerates a

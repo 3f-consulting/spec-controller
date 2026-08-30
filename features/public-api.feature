@@ -20,12 +20,13 @@ Feature: The public core exports exactly the frozen v1 contract surface
 
     ONE BARREL WAS GUARDED AND THE OTHERS WERE NOT, AND NOBODY DECIDED THAT. The scenario above
     holds the core barrel to a frozen list in both directions, and it has done its job. What it
-    could never do is notice a SECOND published surface arriving beside it. Two have:
-    `@3f-consulting/spec-controller-core` also publishes `./internal` — thirteen exports, no list,
-    no guard, and a header calling itself "NOT THE PUBLIC v1 CONTRACT" while the manifest publishes
-    it anyway — and `spec-controller` publishes `./mutation-ratchet`, whose value half is pinned and
-    whose type half is not. Neither gap was ruled; both are what a per-barrel arrangement does when
-    a barrel is added.
+    could never do is notice a SECOND published surface arriving beside it. Two had:
+    `@3f-consulting/spec-controller-core` was also publishing `./internal` — thirteen exports, no
+    list, no guard, and a header calling itself "NOT THE PUBLIC v1 CONTRACT" while the manifest
+    published it anyway — and `spec-controller` was publishing `./mutation-ratchet`, whose value
+    half was pinned and whose type half was not. Neither gap was ruled; both are what a per-barrel
+    arrangement does when a barrel is added. Both subpaths have since been un-published, each on
+    its own ruling, and this Rule is what made either of them a decision rather than an accident.
 
     SO THE THIRD SCENARIO IS THE ONE THAT MATTERS. Holding each surface to its list is the easy
     half; reconciling the SET of surfaces the manifests publish against the SET somebody wrote a
@@ -40,8 +41,8 @@ Feature: The public core exports exactly the frozen v1 contract surface
 
     THE TYPE ARM IS NOT THE VALUE ARM WITH A DIFFERENT NAME. TypeScript types are erased, so a
     runtime reflection cannot see them; and spelling each expected type into a typed literal — the
-    arrangement `./mutation-ratchet` has today — reds on a type DROPPED or RENAMED and stays green
-    on one ADDED, because nothing references what nobody wrote. Reading the compiled type surface
+    arrangement the mutation ratchet's own pin uses — reds on a type DROPPED or RENAMED and stays
+    green on one ADDED, because nothing references what nobody wrote. Reading the compiled type surface
     through the compiler API is what closes the add.
 
     @unit @SCN-API-004

@@ -257,14 +257,16 @@ Then(
     ).gates.map((gate) => gate.script);
 
     // VACUITY FLOOR. Both sides of the comparison below are computed, so two empty lists
-    // would agree perfectly and prove nothing. The real ci.yml runs 16 script steps and one
+    // would agree perfectly and prove nothing. The real ci.yml runs 15 script steps and one
     // is excluded; anything else means the workflow changed and this scenario is the place
-    // that should say so. It said so when 3F-2810 added lint:action-bundles, which is the
-    // number moving because a gate was added rather than because one went quiet.
+    // that should say so. It said so most recently when 3F-2854 retired the composite-action
+    // bundle check with the scenario that cited it — the number moving DOWNWARD, which is the
+    // direction this floor exists for: a gate that went quiet and a gate that was deliberately
+    // retired are the same arithmetic here, and only an edit to this line tells them apart.
     assert.equal(
       expected.length,
-      15,
-      `the real ci.yml must yield 15 local gates; it yielded ${expected.length}: ${expected.join(", ")}`,
+      14,
+      `the real ci.yml must yield 14 local gates; it yielded ${expected.length}: ${expected.join(", ")}`,
     );
 
     assert.deepEqual(listedGates(listing.stdout), expected, "--list must be the derived ladder");

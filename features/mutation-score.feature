@@ -169,102 +169,6 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
         | a mutation report with nothing in it | cleanly    |
         | a mutation report nothing can parse  | cleanly    |
 
-  Rule: a measurement is posted only while it is still about the code being judged
-
-    THE EXPIRY IS WHAT MAKES A BORROWED MEASUREMENT HONEST. A score measured last night is a true
-    fact about last night's tree, and reconciling this push against it is a claim about a tree
-    nobody measured. A window says how long that claim stays close enough to true, and beyond it
-    the honest report is that no measurement arrived — the same sentence, and the same red, that a
-    nightly which quietly stopped running produces.
-
-    @unit @integration @SCN-MUT-009
-    Scenario: a measurement inside its window is posted and reconciles against its bar
-      Given the target's manifest holds "SCN-MSD-001" to a bar of at least 91.87 for "mutation"
-      And a scheduled run measured 92.52 for "mutation" on "SCN-MSD-001" and dated what it left
-      And this push holds a restored measurement for 36 hours, and that one was measured 12 hours ago
-      And a producer of this push has already posted a measurement of its own
-      When this push restores what that scheduled run left
-      Then the restored measurement is read back as an Evidence Observation citing "SCN-MSD-001" on the check "mutation"
-      And the measurement this push's own producer posted is still there beside it
-      And the row "SCN-MSD-001" reconciles satisfied against that bar
-
-    @unit @integration @SCN-MUT-010
-    Scenario Outline: a measurement older than its window is not posted at all — the row reads missing, exactly as a sweep that never ran
-      Given the target's manifest holds "SCN-MSD-001" to a bar of at least 91.87 for "mutation"
-      And a scheduled run measured 92.52 for "mutation" on "SCN-MSD-001" and dated what it left
-      And this push holds a restored measurement for <window> hours, and that one was measured <age> hours ago
-      And a producer of this push has already posted a measurement of its own
-      When this push restores what that scheduled run left
-      Then this push posts nothing that scheduled run measured, and does not fail for having nothing to post
-      And the measurement this push's own producer posted is untouched
-      And the row "SCN-MSD-001" reconciles missing on the bare check "mutation", and is out-of-balance
-      And that row reads exactly as it does when no scheduled run left anything at all
-
-      Examples: two windows, because a number the code could have held instead would pass against one
-        | window | age |
-        | 36     | 37  |
-        | 26     | 30  |
-
-  Rule: a scheduled run persists what it measured, dated with the clock it measured on
-
-    THE OTHER HALF OF THE RULE ABOVE, AND IT WAS NOT SHIPPED. The window reads an age off a
-    `measuredAt` the borrowing run never wrote, so something upstream has to write it — and until
-    now that something was a `jq` line inside this repository's own workflow. The reading half
-    shipped as product; the writing half shipped as a shell snippet. A second repository standing a
-    nightly up therefore got the reader for free and had to copy the writer, which is the drift
-    `build once, no per-project local gates` exists to stop. Half a mechanism shipped is a
-    mechanism that gets forked, and the two halves stop agreeing the day either is edited.
-
-    THE DATE BELONGS TO THE PERSIST, NOT TO THE ARTEFACT WRITER (@SCN-CIP-009, @SCN-CIP-011). Only
-    an artefact that OUTLIVES its run needs to say when it was measured; a run posting into its own
-    artefact is already talking about now. So the clock arrives at the step that persists, and the
-    shape a run posts its own measurements in is untouched — the timing wrapper's rows never start
-    carrying a field they have no use for.
-
-    AND THE WINDOW IS NOT THE PERSIST'S EITHER. How long a number stays worth posting is a fact
-    about the cadence of whoever borrows it, which is the restore's caller. The persist writes a
-    moment and says nothing about what it is worth. So the moment it wrote is asserted by asking
-    the borrower's question of it twice, through the reader the restore already uses: a date that
-    is wrong, or that no reader can parse, reds here rather than reading downstream as a schedule
-    that lapsed. One age alone cannot state this — any date in the past satisfies it — so both
-    sides of one window are read.
-
-    AND NOTHING WORTH PERSISTING IS PERSISTED AS NOTHING, NOT AS A DATED EMPTY ARTEFACT. Absent,
-    unparseable and holding-no-well-formed-row are one answer, which is the stance every reader at
-    this edge already takes and the one the restore takes in the mirror direction when it has
-    nothing fresh to post. Both spellings reconcile `missing` downstream, so the ledger reads the
-    same either way; what differs is where it is SAID. Leaving no file lets the upload stay quiet
-    and lets the source say out loud that this run measured nothing, instead of shipping a
-    well-formed artefact a later run silently reads to zero rows. And a run that measured nothing
-    is a fact about the RUN rather than a fault of the persist's (@SCN-CIP-010): the only non-zero
-    exit is 2, and only for a fault in how the persist was CALLED.
-
-    THE THIRD SHAPE IS NOT THE SECOND ONE AGAIN. An artefact that parses and holds no row any
-    reader will accept is what separates a persist reading its rows through the same reader the
-    run's own artefact is read with from one that copies the file across blind — and a blind copy
-    hands a later run a row nothing downstream accepts, an artefact that looks like a measurement
-    and settles nothing.
-
-    @unit @integration @SCN-MUT-012
-    Scenario: a run persists every measurement it made, dated with the moment it measured them
-      Given a run that measured 92.52 for "mutation" on "SCN-MSD-001" and 88 for "coverage" on "SCN-MSD-002"
-      When that run persists what it measured, for a later run to borrow
-      Then the artefact it persisted carries both of those measurements
-      And a run reading that artefact 12 hours later against a 36-hour window finds both still fresh
-      And a run reading it one second past that same window finds neither
-
-    @unit @integration @SCN-MUT-013
-    Scenario Outline: a run with nothing worth persisting persists nothing, rather than a dated artefact holding no measurement
-      Given a run whose own measurement artefact is <artefact>
-      When that run persists what it measured, for a later run to borrow
-      Then it persists no artefact at all, and does not fail for having nothing to persist
-
-      Examples: the three shapes of nothing, which every reader at this edge already answers alike
-        | artefact                                      |
-        | absent, because nothing posted a measurement  |
-        | there, and unparseable                        |
-        | there, and holding no well-formed measurement |
-
   Rule: spec-controller's own mutation score is on the books
 
     THE CHECK, TURNED ON ITS AUTHOR — the shape ci-run-time.feature, scn-tags.feature and
@@ -288,10 +192,11 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     build depending on two arbiters agreeing, and the ledger's is the one with the @SCN.
 
     AND THE NUMBER SETTLING IT IS LAST NIGHT'S, WHICH IS WRITTEN DOWN RATHER THAN GLOSSED OVER. The
-    sweep costs 8-12 minutes against a 2-minute ladder, so this row is settled by a measurement a
-    scheduled run persisted and this push restored while it was still young enough to be about this
-    code. Past that window nothing is posted, the row reads missing, and the ladder reds — the same
-    reading a schedule that quietly stopped running produces.
+    sweep costs 8-12 minutes against a 2-minute ladder, so it runs on a schedule and leaves what it
+    measured behind as an artefact; this push borrows that artefact while the run which produced it
+    is still young enough for its number to be about this code. Past that window nothing is placed,
+    the row reads missing, and the ladder reds — the same reading a schedule that quietly stopped
+    running produces.
 
     @mutation @SCN-MUT-011
     Scenario: this repository's domain core scores at least its mutation threshold

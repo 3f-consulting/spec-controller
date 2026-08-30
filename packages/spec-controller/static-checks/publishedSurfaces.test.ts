@@ -9,19 +9,19 @@
  * observed evidence, and no Cucumber block is owed.
  *
  * THE TWO ARMS REACH THEIR SURFACES BY DIFFERENT ROUTES, AND EACH ROUTE IS PART OF WHAT IT PROVES.
- * The value arm imports the three specifiers; the type arm builds a Program over the barrel SOURCE,
- * because there is no runtime object that carries a type. So the type arm's imports are paths where
- * the value arm's are specifiers, and neither substitutes for the other: a manifest key could break
- * without the type arm noticing, and a type could be added without the value arm noticing.
+ * The value arm imports the published specifier; the type arm builds a Program over the barrel
+ * SOURCE, because there is no runtime object that carries a type. So the type arm's imports are
+ * paths where the value arm's are specifiers, and neither substitutes for the other: a manifest key
+ * could break without the type arm noticing, and a type could be added without the value arm
+ * noticing.
  *
- * THE BARRELS ARRIVE BY THE SPECIFIER A CONSUMER WRITES, NOT BY A RELATIVE PATH. Reaching
- * `./mutation-ratchet` through `../src/mutation-ratchet/index.js` would reflect the same object and
- * prove strictly less: it would pass while the manifest key that makes the subpath importable at
- * all was broken or absent. The three imports below are the three specifiers, so resolution through
- * each manifest is part of what this arm asserts. (`[SCN-RAT-014]` makes the same argument for the
- * one subpath it pins; this is that argument applied to all three.)
+ * THE BARRELS ARRIVE BY THE SPECIFIER A CONSUMER WRITES, NOT BY A RELATIVE PATH. Reaching a barrel
+ * through a relative path into its own package would reflect the same object and prove strictly
+ * less: it would pass while the manifest key that makes the subpath importable at all was broken or
+ * absent. The import below is the published specifier, so resolution through the manifest is part
+ * of what this arm asserts.
  *
- * TEETH ARE PLANTED, NOT INFERRED FROM THE GREEN. The real three passing says nothing about whether
+ * TEETH ARE PLANTED, NOT INFERRED FROM THE GREEN. The real surface passing says nothing about whether
  * the reconciliation would notice if they stopped, so the drift arms below drive planted surfaces
  * belonging to a project that shares no term with this repository: a reconciler with any of these
  * packages' names written into it agrees with the planted case by coincidence or not at all. Each
@@ -36,7 +36,6 @@ import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import * as coreBarrel from "@3f-consulting/spec-controller-core";
-import * as mutationRatchet from "spec-controller/mutation-ratchet";
 
 import {
   barrelPathOf,
@@ -63,7 +62,6 @@ import {
  */
 const REFLECTED: Readonly<Record<string, object>> = {
   "@3f-consulting/spec-controller-core": coreBarrel,
-  "spec-controller/mutation-ratchet": mutationRatchet,
 };
 
 /**
@@ -88,8 +86,8 @@ const PLANTED_SPECIFIER = "parcel-co-routing/tariffs";
  * WHAT EACH LINE IS DOING THERE. The two types cross the barrel through `export type { … }`, which
  * binds a symbol whose own flags say only "alias" — following it is the step that fails silently
  * when the resolution settings are wrong. The `.js` specifier is the spelling this whole workspace
- * writes, so a reflection that could not follow it would find nothing here and nothing on the three
- * real barrels either. And `tariffTable` is a value carried across the same hop: a reflection that
+ * writes, so a reflection that could not follow it would find nothing here and nothing on the real
+ * barrel either. And `tariffTable` is a value carried across the same hop: a reflection that
  * kept it would be reporting the value surface a second time under the type surface's name.
  */
 const PLANTED_BARREL_SOURCES: Readonly<Record<string, string>> = {
@@ -165,11 +163,8 @@ describe("[SCN-API-004] every subpath these packages publish is held to a value 
   it("[SCN-API-004] holds one entry per published subpath, and one reflection per entry", () => {
     // The anti-vacuity floor for this whole arm: the per-surface examples below are generated from
     // the registry, so an emptied or narrowed registry would produce no examples and read as a
-    // clean run. Naming the three here is what makes that impossible.
-    expect(PUBLISHED_SURFACES.map(specifierOf)).toEqual([
-      "@3f-consulting/spec-controller-core",
-      "spec-controller/mutation-ratchet",
-    ]);
+    // clean run. Naming what is published here is what makes that impossible.
+    expect(PUBLISHED_SURFACES.map(specifierOf)).toEqual(["@3f-consulting/spec-controller-core"]);
     expect(Object.keys(REFLECTED).sort()).toEqual(PUBLISHED_SURFACES.map(specifierOf).sort());
   });
 
@@ -192,8 +187,8 @@ describe("[SCN-API-004] every subpath these packages publish is held to a value 
 // -----------------------------------------------------------------------------------------------
 // @SCN-API-005 — the TYPE half. Erased at runtime, so the arm above cannot reach it and this one
 // asks the compiler instead. The plants below run in the order the scenario states them: the ADD
-// first, because it is the only one of the three the typed-literal arrangement this replaces
-// cannot see, and therefore the one whose teeth are worth proving before either of the others.
+// first, because it is the only one of the three a typed-literal arrangement cannot see, and
+// therefore the one whose teeth are worth proving before either of the others.
 // -----------------------------------------------------------------------------------------------
 
 describe("[SCN-API-005] a published subpath's type exports reconcile against the surface written for it", () => {
@@ -231,7 +226,7 @@ describe("[SCN-API-005] a published subpath's type exports reconcile against the
 describe("[SCN-API-005] the compiled type surface is read, and a barrel that will not load reds", () => {
   it("[SCN-API-005] reads a barrel's type-only exports and leaves its values off", () => {
     // THE ANTI-VACUITY ARM, and the reason it is driven over a barrel written for the occasion
-    // rather than over one of the three real ones. The resolution settings are load-bearing: get
+    // rather than over the real one. The resolution settings are load-bearing: get
     // them wrong and every `export type { … } from "./x.js"` alias fails to resolve, the reflection
     // answers with nothing, and each per-surface example below quietly compares one empty list to
     // another. A planted barrel whose answer is KNOWN — two types across a `.js` specifier hop, one
@@ -263,11 +258,10 @@ describe("[SCN-API-005] the compiled type surface is read, and a barrel that wil
 describe("[SCN-API-005] every subpath these packages publish is held to a type surface written for it", () => {
   it("[SCN-API-005] writes at least one type down for every published subpath", () => {
     // The second half of the anti-vacuity floor. The arm above proves the reflection finds types
-    // when they are there; this proves there is something to find on all three, so no per-surface
-    // example can pass by comparing an empty reflection to an empty list.
+    // when they are there; this proves there is something to find on every entry, so no
+    // per-surface example can pass by comparing an empty reflection to an empty list.
     expect(PUBLISHED_SURFACES.map((surface) => [specifierOf(surface), surface.types.length])).toEqual([
       ["@3f-consulting/spec-controller-core", 36],
-      ["spec-controller/mutation-ratchet", 7],
     ]);
   });
 
@@ -530,13 +524,14 @@ describe("[SCN-API-006] this workspace publishes exactly the subpaths a surface 
     expect(Object.keys(core.content["exports"] as object)).toEqual([".", "./internal"]);
   });
 
-  it("[SCN-API-006] publishes exactly these two specifiers, and this is the list a surface is owed for", () => {
+  it("[SCN-API-006] publishes exactly this one specifier, and this is the list a surface is owed for", () => {
     // The anti-vacuity floor for the real read: the reconciliation below compares two sets, and two
     // empty sets reconcile perfectly. Naming what the manifests publish is what makes an emptied
-    // read impossible to mistake for a clean workspace.
+    // read impossible to mistake for a clean workspace — and it holds the OTHER direction too, now
+    // that `spec-controller` publishes no importable subpath at all: a map quietly reappearing on
+    // its manifest reds here rather than passing as a workspace that never had one.
     expect(workspaceManifests().flatMap(publishedSpecifiersOf).sort()).toEqual([
       "@3f-consulting/spec-controller-core",
-      "spec-controller/mutation-ratchet",
     ]);
   });
 

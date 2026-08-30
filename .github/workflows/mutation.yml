@@ -40,54 +40,57 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # BUILT AND RELINKED BECAUSE A `bin` IS A BUILD OUTPUT, the reason ci.yml sets out at length
-      # (3F-2765) — and, since 3F-2810, no longer the reason this job needs them.
-      # `.github/actions/persist-measurements` used to reach the persist by its bin name, and
-      # pnpm's `node_modules/.bin` entry for a workspace package points into that package's `dist/`
-      # — a symlink that dangles until the build runs, and that a second install will not go back
-      # and create; without these the persist fell through to the registry, where no such package
-      # exists. The action now runs the bundle committed beside it, which nothing here builds. The
-      # steps are kept, and said so here rather than left to be rediscovered: removing a CI step is
-      # a decision about the pipeline rather than about the slice that removed its reason. Filed
-      # for the slice to rule on, alongside ci.yml's own pair.
-      #
-      # Ahead of the sweep rather than after it: Stryker mutates `packages/core/src/domain/**`
-      # only, so a `dist/` on disk cannot change what is measured.
-      - name: Build
-        run: pnpm build
-
-      - name: Link the bins the build just produced
-        run: pnpm rebuild
-
       # `pnpm mutation` is the sweep wrapped in the score producer: it runs Stryker,
       # derives the score from the mutant statuses, posts it into the run's measurement
       # artefact citing SCN-MUT-011 on the check `mutation`, and carries the sweep's own
       # exit code out unchanged. A sweep that left no readable report posts nothing —
       # the row then reads `missing`, which is the true sentence.
+      #
+      # NOTHING IS BUILT AHEAD OF THIS, AND NOTHING NEEDS TO BE (3F-2841). A `Build` and a
+      # `pnpm rebuild` stood here because the retired persist action reached its CLI by
+      # a bin name, and pnpm's `node_modules/.bin` entry for a workspace package points into a
+      # `dist/` that does not exist until the build runs. 3F-2810 removed that reason, left both
+      # steps standing and said so in this file, filing the decision for the slice that owned the
+      # pipeline; this is that slice, and it ruled them out. Stryker mutates
+      # `packages/core/src/domain/**` through the vitest runner, off source, so a `dist/` on disk
+      # could not change what is measured even while it was there.
       - name: Mutation test the domain core
         run: pnpm mutation
 
-      # WHEN, WRITTEN INTO THE ARTEFACT, BECAUSE THE BORROWER HAS TO ASK. A push that settles
-      # SCN-MUT-011 with this number is judging its own tree against a sweep of last night's, and
-      # what makes that honest is an expiry: the restore posts the rows only while they are young
-      # enough to still be about the code being judged. It reads the age off `measuredAt`, and an
-      # artefact that does not say when it was measured is deliberately not treated as fresh — so a
-      # sweep that skipped this step would go quiet rather than red, which is the one reading this
-      # axis exists to keep unreachable.
+      # WHAT THIS SWEEP OWES THE LEDGER, LEFT WHERE THE NEXT PUSH CAN BORROW IT (3F-2765). The
+      # score above settles SCN-MUT-011, and the push that reconciles that row is a different run
+      # of a different workflow — so the number has to cross a run boundary, and this is the whole
+      # of that crossing: upload a file, download it, check its age. `ci.yml` names the same
+      # artefact, and that agreement is the entire contract between the two.
       #
-      # THROUGH SHIPPED CODE, NOT THROUGH YAML THIS FILE WROTE (3F-2771). This was a `jq` line and
-      # an upload block here, which meant the reading half of the mechanism shipped as product and
-      # the writing half shipped as a shell snippet — so a second repository standing a nightly up
-      # copied the snippet. The action below dates AND uploads, so what is left here is the
-      # artefact's NAME, which is the one term `ci.yml`'s restore has to agree with. Nothing in the
-      # action or the CLI it calls names mutation, Stryker or this repository.
+      # WRITTEN HERE RATHER THAN SHIPPED (3F-2841). This was a composite action over a CLI
+      # (3F-2771, 3F-2810), which made the writing half of a file-move a published capability. It
+      # is glue, every piece of it native, and glue is written at the edge that needs it.
       #
-      # `runs/` is gitignored with no re-includes, so the artefact this reads leaves the job and is
-      # never committed; the dated copy the action writes never enters the checkout at all.
-      - name: Persist the measurement this sweep leaves behind
-        uses: ./.github/actions/persist-measurements
+      # AND NOTHING IS DATED, WHICH IS THE OTHER HALF OF THAT RULING. The persist stamped
+      # `measuredAt` into the payload so the borrower could ask how old the number was — a fact
+      # GitHub already records as this RUN's `createdAt`, which is what `ci.yml` now reads. A
+      # measurement cannot outlive the run that took it, so the run is the honest clock, and a
+      # timestamp written by the thing being judged never was one.
+      #
+      # A SWEEP THAT MEASURED NOTHING UPLOADS NOTHING, by construction rather than by a CLI: the
+      # score producer writes no artefact when it has no readable report, so there is no file for
+      # `if-no-files-found: ignore` to collect. The row the borrower would have settled then reads
+      # `missing` on the ledger, out loud, in the one place every other verdict on this axis is
+      # reported. A warning annotation here would be a second and quieter place to look for it, and
+      # an error would red a scheduled job over a cadence rather than over the code.
+      #
+      # `runs/` is gitignored with no re-includes, so the artefact this uploads leaves the job and
+      # is never committed.
+      - name: Leave the measurement where a later push can borrow it
+        uses: actions/upload-artifact@v7
         with:
-          artefact-name: mutation-measurement
+          name: mutation-measurement
+          path: runs/self-balance/measurements.json
+          if-no-files-found: ignore
+          # The persist action's own default, carried over unchanged: the artefact only has to
+          # outlast the gap between two runs of the schedule that produces it.
+          retention-days: 14
 
       # The HTML report enumerates which domain lines no test kills — the same
       # class of finding as a reconciliation report, so it is never committed

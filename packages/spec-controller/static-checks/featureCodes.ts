@@ -42,12 +42,6 @@ export interface FeatureCodeEntry {
  */
 export const REGISTRY: readonly FeatureCodeEntry[] = [
   {
-    code: "ACT",
-    slug: "self-contained-actions",
-    status: "feature-code-used",
-    note: "a composite action carries its own CLI — the step runs a bundle that travelled with the action rather than a bin out of the caller's workspace, and lint:action-bundles reds the bundle that has fallen behind the source it mirrors",
-  },
-  {
     code: "ANM",
     slug: "anemic-domain",
     status: "feature-code-used",
@@ -195,7 +189,7 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     code: "RAT",
     slug: "mutation-ratchet",
     status: "feature-code-used",
-    note: "the no-regression ratchet, shipped as a library a project imports rather than a reconciler each project forks — a gate's record is a PAIR OF COUNTS plus the allowance stated against them, so a lost kill and a grown mutant population reach different verdicts instead of the one red a bare score can raise; every term a project owns (its record file, its gate names, its report path, the tree being judged, what to type to bank a measurement) arrives from the caller (3F-2787)",
+    note: "the no-regression ratchet, written as a library that names no project of its own rather than as a reconciler wearing this repository's terms — a gate's record is a PAIR OF COUNTS plus the allowance stated against them, so a lost kill and a grown mutant population reach different verdicts instead of the one red a bare score can raise; every term a project owns (its record file, its gate names, its report path, the tree being judged, what to type to bank a measurement) arrives from the caller (3F-2787)",
   },
 ];
 
