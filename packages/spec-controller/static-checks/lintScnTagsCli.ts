@@ -81,12 +81,17 @@ function recognisedDeferralTags(packageJson: TargetPackageJson): readonly string
  * Absent, malformed or empty config yields NO tags from either, and the floor then behaves
  * exactly as it did before — the defensive stance lives in the resolvers, alongside the
  * deferral reader's.
+ *
+ * THE ROOT IS THE WORKING DIRECTORY BECAUSE THE MANIFEST WAS READ FROM IT (@SCN-MUT-012). A bar
+ * may name a mutation gate whose record the threshold resolver has to open, and that record
+ * belongs to whichever tree the manifest came from — which here is `targetPackageJson`'s bare
+ * relative read, so the two cannot answer for different trees.
  */
 export function floorCheckTags(packageJson: TargetPackageJson): readonly string[] {
   return [
     ...new Set([
       ...registeredCheckTags(resolveCheckRegistry(packageJson)),
-      ...measuredCheckTags(resolveThresholds(packageJson)),
+      ...measuredCheckTags(resolveThresholds(packageJson, ".")),
     ]),
   ];
 }

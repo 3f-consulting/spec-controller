@@ -15,6 +15,8 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx packages/spec-controller/static-checks/timeStepCli.ts --scn SCN-CIP-013 --check ci-run-time -- vitest run",
     "mutation": "tsx packages/spec-controller/static-checks/mutationScoreCli.ts --scn SCN-MUT-011 --check mutation -- stryker run",
+    "mutation:ratchet": "tsx packages/spec-controller/src/mutation-ratchet/ratchetCli.ts --gate domain --report reports/mutation/mutation.json --bank-command 'pnpm mutation:bank'",
+    "mutation:bank": "pnpm mutation:ratchet --record",
     "cucumber": "tsx packages/spec-controller/static-checks/timeStepCli.ts --scn SCN-CIP-014 --check ci-run-time -- cucumber-js",
     "build": "pnpm -r build",
     "balance": "tsx packages/spec-controller/src/cli.ts",
@@ -50,7 +52,7 @@
     "thresholds": {
       "SCN-CIP-013": { "ci-run-time": 75 },
       "SCN-CIP-014": { "ci-run-time": 150 },
-      "SCN-MUT-011": { "mutation": { "atLeast": 91.87 } }
+      "SCN-MUT-011": { "mutation": { "atLeast": { "mutationGate": "domain" } } }
     }
   },
   "devDependencies": {

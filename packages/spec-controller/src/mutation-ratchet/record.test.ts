@@ -30,6 +30,7 @@ import {
   parseGateRecords,
   gateRecordFor,
   floorOf,
+  killFloorOf,
   recordedScoreOf,
   scoreOf,
   type GateRecord,
@@ -122,6 +123,44 @@ describe("[SCN-RAT-001] floorOf", () => {
     const record = recordFor("domain");
 
     expect(recordedScoreOf(record) - floorOf(record)).toBeCloseTo(scoreOf(1, 2243), 12);
+  });
+});
+
+/**
+ * @SCN-MUT-012 (@unit) — `floorOf`'s counts twin, and the reason it is a second function rather
+ * than a caller doing the subtraction: how an allowance is spent is the record's own fact, and an
+ * edge that computed `detected - slack` itself would be a second place holding that fact.
+ *
+ * Its @integration half is the step block in tests/steps/mutationScore.steps.ts, which drives the
+ * whole seam — a planted record, the manifest naming its gate, the obligation that reaches the
+ * ledger — over the app edge that reads this.
+ */
+describe("[SCN-MUT-012] killFloorOf", () => {
+  it("is the recorded kills less the allowance, counted in mutants", () => {
+    expect(killFloorOf(recordFor("domain"))).toBe(2174);
+  });
+
+  it("seats the floor exactly on the recorded kills when the gate allows nothing", () => {
+    expect(killFloorOf(recordFor("state-model"))).toBe(202);
+  });
+
+  it("stays a whole number of mutants where its percentage twin does not", () => {
+    // THE DIVISION IS THE WHOLE DIFFERENCE between this and `floorOf`, and it is asserted rather
+    // than described: an implementation that answered with the percentage would satisfy neither
+    // half of this, and one that rounded a percentage back to a count would satisfy the first.
+    const record = recordFor("domain");
+
+    expect(Number.isInteger(killFloorOf(record))).toBe(true);
+    expect(Number.isInteger(floorOf(record))).toBe(false);
+  });
+
+  it("does not consult the population, so a record whose total moved holds the same floor", () => {
+    // The population-independence the ledger's bar rests on (3F-2788). New mutable code arriving
+    // with survivors on it moves `total` and nothing else; a floor that moved with it would red a
+    // suite that lost no kill at all.
+    const banked = recordFor("domain");
+
+    expect(killFloorOf({ ...banked, total: banked.total + 8 })).toBe(killFloorOf(banked));
   });
 });
 

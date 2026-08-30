@@ -193,6 +193,27 @@ export function floorOf(record: GateRecord): number {
   return scoreOf(record.detected - record.allowance.mutants, record.total);
 }
 
+/**
+ * The failing floor in MUTANTS: the record's kills with its allowance spent out of them.
+ *
+ * `floorOf`'s TWIN WITHOUT THE DIVISION, and the division is the whole difference. A percentage is
+ * two facts folded into one, and folding them is what makes a floor fall when new mutable code
+ * arrives carrying survivors — no kill lost, and the bar missed anyway. Subtracting the allowance
+ * and stopping leaves a whole number of mutants that moves only when a mutant this suite used to
+ * kill stops dying, which is the one fact a bar on this axis is about.
+ *
+ * `total` NEVER ENTERS IT, and that is the population-independence rather than a simplification.
+ * A reader holding this number can be handed a run over any population at all and still be asking
+ * the only question worth asking of it.
+ *
+ * HERE RATHER THAN AT ITS CALLER, for the reason `floorOf` is here: how an allowance is spent is a
+ * fact about the record, and a caller computing `detected - slack` itself would be a second place
+ * holding it — agreeing until the day one of them is edited.
+ */
+export function killFloorOf(record: GateRecord): number {
+  return record.detected - record.allowance.mutants;
+}
+
 /** The score the record itself states — what the ratchet raises and the verdict compares against. */
 export function recordedScoreOf(record: GateRecord): number {
   return scoreOf(record.detected, record.total);

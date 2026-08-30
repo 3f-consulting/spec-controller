@@ -485,13 +485,14 @@ describe("[SCN-RAT-014] the module's own surface names no project, check, runner
 });
 
 describe("[SCN-RAT-014] the barrel is curated, and every name a caller needs is on it", () => {
-  it("[SCN-RAT-014] exports exactly the thirteen values the surface states, and nothing standing beside them", () => {
+  it("[SCN-RAT-014] exports exactly the fourteen values the surface states, and nothing standing beside them", () => {
     expect(Object.keys(surface).sort()).toEqual([
       "FallRefusedError",
       "MalformedRecordError",
       "RECORD_FILE",
       "floorOf",
       "gateRecordFor",
+      "killFloorOf",
       "measurementFromReport",
       "parseGateRecords",
       "raisedRecordText",

@@ -1,0 +1,65 @@
+# spec-controller's own quality bars — the counts its gates last banked (3F-2788).
+#
+# THIS FILE IS SPEC-CONTROLLER'S, NOT THE TOOL'S. It sits at the repository root and outside
+# `package.json`'s `specController.` block on purpose: `specController.` is what a TARGET writes to
+# configure the tool, and this repository is a target of its own tool like any other. What is
+# recorded here is what this project measured, in this project's own words.
+#
+# TWO COUNTS, NEVER A BARE SCORE. A mutation score is kills over mutants, so it falls for two
+# entirely unrelated reasons: a mutant this suite used to kill now survives, which is the fault the
+# gate exists for; or new mutable code arrived carrying survivors with it, which is no fault at all.
+# One number reds on both, and the only cheap way out of a red for the second is to widen the bar —
+# which is how a floor loses its teeth. Kept apart, `detected` moves only when a kill is lost and
+# `total` absorbs the growth on its own.
+#
+# IT READS UPWARD AND IT IS BANKED, NEVER TYPED. The bar is whatever the last sweep detected, so a
+# sweep that kills more mutants is a sweep that raises the bar — with `pnpm mutation:bank`, which
+# rewrites the two counts below and refuses to write a fall. A number nobody re-derives is a number
+# that goes stale, and the hand-typed percentage this file replaces had drifted 7.7 points inside
+# four days of the sweep that moved it.
+#
+# A RECORD THAT MUST COME DOWN COMES DOWN BY HAND, WITH THE REASON IN THE COMMIT. There is no flag
+# for it, deliberately: an escape hatch a tool holds open is one nobody ever has to justify. That
+# route is also, for now, the honest answer to the `population-grew` verdict, which ends by asking
+# for the record to be banked while `--record` refuses every run that reaches it (3F-2909, filed and
+# open). A reader who meets that message should edit the counts here rather than type the command it
+# quotes and be sent in a circle.
+#
+# TWO READERS CONSULT THIS FILE AND THEY ARE ONE ARBITER, NOT TWO THAT AGREE. The ledger sources
+# SCN-MUT-011's bar from the `domain` gate below (`package.json` names the gate; the number is never
+# written there), and `mutation.yml` ends on the ratchet's verdict over the same gate of the same
+# file. Both reach the same integer by the same subtraction. @SCN-MUT-014 reads the four artefacts
+# that state the gate's name back off disk, so a rename on one side reds rather than quietly making
+# them two gates that agree until somebody edits one.
+
+mutation-gates:
+  # The pure engine — `packages/core/src/domain/**`, the posting / reconciliation / fold rules, less
+  # the message catalogue (`stryker.config.json` holds the mutated surface; @SCN-MSG-002 guards it).
+  # It is the only scope this repository mutates: the value concentrates in the pure logic, and the
+  # run cost scales with the scope.
+  #
+  # THE ALLOWANCE IS ZERO BECAUSE IT WAS MEASURED ZERO. The sweep reports no timeouts and no
+  # no-coverage — every one of the 704 mutants came back Killed or Survived — so there is nothing in
+  # this gate that can move between two runs over identical code, and the first lost kill reds. A
+  # timeout is the one status that flips on a slower runner with nothing in the suite having changed,
+  # and this gate has none; a gate whose timeout population flaps between runners is what an
+  # allowance is for, and this is not one. Zero is the policy applied, not a tightening for its own
+  # sake, and it owes no reason for the same measurement.
+  #
+  # AND THE ZERO HELD ACROSS THE TWO MACHINES THAT WILL ACTUALLY RUN IT. A GitHub `ubuntu-latest`
+  # runner (run 33329261311) reported 701 killed, 3 survived, 0 timeout, 0 no-coverage, taking 3m16s
+  # over the sweep; a local run of the same sweep reported the identical four numbers in 21 seconds.
+  # An order of magnitude apart in speed and not one mutant apart in outcome — which is a stronger
+  # claim than "no timeouts were seen once", because a timeout is precisely what a slower machine
+  # manufactures. It is the variance this allowance would have absorbed, observed to be nil on the
+  # runner where it would show.
+  #
+  # THIS GATE NEVER REACHES 704 AND IS NOT SUPPOSED TO. The three survivors are 3F-2885's recorded
+  # equivalent mutants — two in `qualityCheckReconciliation.ts`, one in `thresholds.ts` — each with
+  # its argument written down at its site. They are unkillable by construction, so a reader finding
+  # 701 rather than 704 here is reading a complete gate, not an unfinished one.
+  domain:
+    detected: 701
+    total: 704
+    slack-mutants: 0
+    slack-reason: ""

@@ -9,14 +9,21 @@ name: Mutation
 # posting / reconciliation / fold rules. The rest of the tree is not mutated; the
 # value concentrates in the pure logic and the run cost scales with the scope.
 #
-# THIS JOB NO LONGER HOLDS THE VERDICT (3F-2765). It used to red below the `break`
-# threshold in stryker.config.json; that bar is retired, and the score is reconciled
-# against `specController.thresholds` → SCN-MUT-011 on this repository's own ledger,
-# where every other fitness check is settled. Two bars for one characteristic makes a
-# green build depend on two arbiters agreeing, and the ledger's is the one with the
-# @SCN. So what this job now owes the ledger is a MEASUREMENT: `pnpm mutation` wraps
-# the sweep in the score producer, and the artefact below carries that number to
-# whichever push borrows it next.
+# THIS JOB HOLDS NO SECOND BAR (3F-2765). It used to red below the `break` threshold in
+# stryker.config.json; that bar is retired, and SCN-MUT-011 is settled on this repository's
+# own ledger, where every other fitness check is. Two bars for one characteristic makes a
+# green build depend on two arbiters agreeing, and the ledger's is the one with the @SCN.
+# So what this job owes the ledger is a MEASUREMENT: `pnpm mutation` wraps the sweep in the
+# kill producer, and the artefact below carries that number to whichever push borrows it next.
+#
+# AND THE VERDICT BELOW IS NOT THAT SECOND BAR RETURNING (3F-2788). What 3F-2765 removed was a
+# SEPARATELY DERIVED number sitting beside the ledger's — the runner's own percentage, computed
+# its own way, agreeing with the ledger only by coincidence. The ratchet step is the SAME
+# integer: the same gate of the same `quality-thresholds.yml` the ledger sources SCN-MUT-011's
+# bar from, less the same allowance, by the same subtraction. It cannot disagree with the ledger
+# because there is nothing for it to disagree with. What it adds is the three readings a single
+# floor cannot express — a population that shrank, a population that grew (a loud pass rather
+# than a false red), and a gain nobody banked. Same arbiter, more verdicts.
 on:
   schedule:
     # 03:17 UTC nightly — an off-the-hour minute so the run does not queue behind
@@ -102,3 +109,38 @@ jobs:
           name: mutation-report
           path: reports/mutation/
           retention-days: 14
+
+      # THE VERDICT THE MEASUREMENT ALONE CANNOT REACH, AND THE JOB ENDS ON IT (3F-2788,
+      # @SCN-MUT-014). The sweep above posts the kills; the ledger holds them to the record's kill
+      # floor and answers satisfied or failing. That is one comparison, and it is blind to two
+      # things a nightly sweep should say out loud: a population that SHRANK — fewer mutants than
+      # the record banks, which counts alone cannot tell from a regression somebody masked by
+      # deleting the code under it — and a gain nobody banked, which leaves the record understating
+      # what this suite actually does. This step is where those are said, and it reads the same
+      # gate of the same file the ledger reads, so it is the ledger's own bar with a wider
+      # vocabulary rather than a bar of its own.
+      #
+      # LAST, AFTER BOTH UPLOADS, WHICH IS PLACEMENT WITH A REASON. A red verdict fails the job,
+      # and a step placed before the uploads would take them down with it — leaving the run that
+      # found the fault as the one run with nothing for an operator to open. Put last, the
+      # measurement and the report leave the job whatever the verdict is, and the job's own ending
+      # IS the verdict, which is what the ledger's arbiter cannot be asked to be.
+      #
+      # IT IS NOT A SECOND CHANCE FOR THE BORROW, AND THAT IS NOT WHAT THIS FIXES. `ci.yml` asks
+      # for the newest SUCCESSFUL run of this workflow, so a red verdict withholds this night's
+      # number from the next push either way; the row then reads `missing` once the last good one
+      # ages out, which is the true sentence for a sweep that found a fault nobody has fixed.
+      #
+      # NO `lint:` / `guard:` PREFIX ON THE SCRIPT IT RUNS, WHICH IS LOAD-BEARING RATHER THAN
+      # STYLISTIC. `runningStaticChecks` observes a package.json script as a RUNNING static check
+      # when its name carries an observed prefix and a workflow `run:` step invokes it — and the
+      # ledger reads every workflow under `.github/workflows/`, this one included. A `lint:` name
+      # here would register a per-push static check on spec-controller's own ledger for a step that
+      # only ever runs nightly: a claim this pipeline does not honour, and an uncited one at that.
+      # Same ruling `scripts/verify.sh` already carries for `verify` and `ladder`.
+      #
+      # AND NO `if: always()`. A sweep that died left no verdict worth reaching, and a
+      # reconciliation over a report that run never finished writing would answer about the wrong
+      # tree.
+      - name: Reconcile the sweep against the record
+        run: pnpm mutation:ratchet

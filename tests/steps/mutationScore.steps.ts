@@ -18,8 +18,11 @@
  * ciRunTime.steps.ts makes, for the same reason.
  */
 
-import { Given, When, Then } from "@cucumber/cucumber";
+import { Given, When, Then, After } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 
 import {
   parseScenarios,
@@ -42,6 +45,16 @@ import {
   parseMeasuredEvidenceObservations,
   type ThresholdRegistry,
 } from "@3f-consulting/spec-controller-core/internal";
+
+// The APP EDGE, reached by source path for the reason the registry below is: @SCN-MUT-012's
+// behaviour is the substitution this resolver performs, and composing the registry any other way
+// would assert that the engine still understands a number — which nothing here doubts.
+import { resolveThresholds } from "../../packages/spec-controller/src/ingest/ingestQualityChecks.js";
+
+// The record's conventional name, taken from the library that defaults to it rather than respelled
+// here: a fixture that filed its record under a second spelling of that name would plant a file
+// the resolver never opens and red for a reason no reader could see.
+import { RECORD_FILE } from "../../packages/spec-controller/src/mutation-ratchet/index.js";
 
 // Fixtures shared across steps within a scenario (isolated per scenario by Cucumber).
 
@@ -451,5 +464,136 @@ Then(
     assert.ok(item, "expected the measured item in the serialised report");
     assert.equal(item.evidenceObligation?.threshold, authoredBar);
     assert.equal(item.evidenceObligation?.atLeast, true);
+  }
+);
+
+// ---------------------------------------------------------------------------
+// @SCN-MUT-012 — the bar that names a GATE rather than a number, resolved at the APP EDGE.
+//
+// THE WHOLE ARM RUNS THROUGH `resolveThresholds`, AND THAT IS THE CLAIM. Every scenario above
+// composes its registry with the engine's own `thresholdsOf`, because the bar it authors is
+// already a number by the time the engine is handed it. This one cannot: the substitution IS the
+// behaviour, so the manifest goes to the edge resolver and the registry under test is whatever
+// that resolver decided to pass on.
+//
+// AND THE RECORD GOES TO A TREE OUTSIDE THIS ONE. A record planted inside the working directory
+// cannot tell "the root you handed me" from "the root I assumed" — the term that fails in silence
+// (the same argument @SCN-RAT-014's arm records), and the one that would let this repository's own
+// record answer for a target that never wrote one.
+// ---------------------------------------------------------------------------
+
+/** Trees planted for this feature's record fixtures, removed when the scenario ends. */
+const plantedRoots: string[] = [];
+
+After(function () {
+  for (const root of plantedRoots.splice(0)) rmSync(root, { recursive: true, force: true });
+});
+
+/** The tree the target keeps its record in — never this repository's own. */
+let recordRoot: string;
+
+/** The gate that record banks, and the two figures the bar is derived from. */
+let bankedGate: string;
+let bankedKills: number;
+let bankedAllowance: number;
+
+/** A record's text, as a project authors one. */
+function recordTextOf(gate: string, detected: number, total: number, slack: number): string {
+  return `mutation-gates:
+  ${gate}:
+    detected: ${detected}
+    total: ${total}
+    slack-mutants: ${slack}
+    slack-reason: "measured non-determinism on this gate"
+`;
+}
+
+/** Plant a target tree holding that record under the conventional name, and answer with its root. */
+function plantRecord(text: string): string {
+  const root = mkdtempSync(path.join(tmpdir(), "mutation-score-record-"));
+  plantedRoots.push(root);
+  assert.ok(
+    !root.startsWith(process.cwd()),
+    `the target's tree at ${root} sits inside the working directory, so this arm proves nothing about which tree was read.`
+  );
+  writeFileSync(path.join(root, RECORD_FILE), text, "utf8");
+  return root;
+}
+
+/** The manifest naming the gate rather than a figure, as the target authors it. */
+function manifestNaming(gate: string, check: string, scnId: string) {
+  return { specController: { thresholds: { [scnId]: { [check]: { atLeast: { mutationGate: gate } } } } } };
+}
+
+// @SCN-MUT-012
+Given(
+  "the target's record banks the gate {string} at {int} kills over {int} mutants, with an allowance of {int}",
+  function (gate: string, detected: number, total: number, slack: number) {
+    bankedGate = gate;
+    bankedKills = detected;
+    bankedAllowance = slack;
+    recordRoot = plantRecord(recordTextOf(gate, detected, total, slack));
+  }
+);
+
+// @SCN-MUT-012
+Given(
+  "the target's manifest authors an at-least threshold for {string} on {string} naming that gate rather than a number",
+  function (check: string, scnId: string) {
+    thresholds = resolveThresholds(manifestNaming(bankedGate, check, scnId), recordRoot);
+    steplessRows = [];
+  }
+);
+
+// @SCN-MUT-012
+Then(
+  "the Evidence Obligation raised for {string} holds the bar {int}, the recorded kills less that allowance",
+  function (check: string, bar: number) {
+    // The arithmetic is asserted against the fixture before the bar is, so the Gherkin's 699 and the
+    // record's 701-less-2 cannot part company the day one of them is edited.
+    assert.equal(bar, bankedKills - bankedAllowance);
+    assert.equal(obligationFor(check).threshold, bar);
+  }
+);
+
+// @SCN-MUT-012
+Then(
+  "it holds nothing a measured Evidence Obligation raised from a bare number did not already hold",
+  function () {
+    // ASSERTED AS AN IDENTITY, NOT AS A KEY SET. What crosses the edge is a number, so the
+    // obligation raised from a reference must be the very one the same manifest with that number
+    // typed into it raises — field for field. A registry that carried the reference any further
+    // than this resolver would satisfy a key-set check and still hand the engine a shape it has
+    // never had to read.
+    const typed = thresholdsOf({
+      "SCN-MSD-001": { mutation: { atLeast: bankedKills - bankedAllowance } },
+    });
+    const fromANumber = parseScenarios(
+      corpusOf(steplessRows),
+      [],
+      measuredCheckTags(typed),
+      typed
+    );
+
+    assert.deepEqual(obligationFor("mutation"), fromANumber[0]!.evidenceObligations[0]);
+  }
+);
+
+// @SCN-MUT-012
+Then(
+  "a run measuring {int} kills over a population of any size reconciles satisfied on that row",
+  function (kills: number) {
+    const run = { measurements: [{ scnId: "SCN-MSD-001", checkTag: "mutation", measured: kills }] };
+    assert.equal(itemFor(reconciledWith(run), "SCN-MSD-001", "mutation").outcome, "satisfied");
+
+    // OF ANY SIZE, PROVED BY MOVING IT. The same gate, the same kills, the same allowance, banked
+    // over a population half as large again: an edge that reached its bar by dividing anything
+    // would hold this row to a different number, and the run would red for code nobody wrote.
+    thresholds = resolveThresholds(
+      manifestNaming(bankedGate, "mutation", "SCN-MSD-001"),
+      plantRecord(recordTextOf(bankedGate, bankedKills, bankedKills * 2, bankedAllowance))
+    );
+
+    assert.equal(itemFor(reconciledWith(run), "SCN-MSD-001", "mutation").outcome, "satisfied");
   }
 );

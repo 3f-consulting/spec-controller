@@ -171,7 +171,7 @@ function gateFor(timedStep: TimedStep): number | null {
   // a ceiling and nothing else; the comparison a bar carries is the LEDGER's to reconcile with
   // (@SCN-MUT-001), and a runner that read it here would be a second arbiter of the same verdict.
   const bar = thresholdFor(
-    resolveThresholds(manifest),
+    resolveThresholds(manifest, timedStep.root),
     bare(timedStep.scnId),
     bare(timedStep.checkTag)
   );

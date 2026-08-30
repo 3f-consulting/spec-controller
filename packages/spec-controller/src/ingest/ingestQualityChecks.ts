@@ -14,6 +14,7 @@
  */
 
 import { readFileSync, existsSync } from "node:fs";
+import { join } from "node:path";
 import { ciSourcePathsOf } from "./ciSourcePaths.js";
 import { discoverFeatures } from "./ingestScenarios.js";
 import {
@@ -59,6 +60,17 @@ import {
 import type { PackageJsonScripts } from "@3f-consulting/spec-controller-core";
 import { evidenceReconciliationOf } from "@3f-consulting/spec-controller-core";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
+// The mutation-ratchet library, reached for the RECORD half of a bar that names a gate
+// (@SCN-MUT-012): its conventional record name, its reader, and the floor a gate's own figures
+// imply. Through the barrel, which is the surface a consumer holds.
+import {
+  gateRecordFor,
+  killFloorOf,
+  MalformedRecordError,
+  parseGateRecords,
+  RECORD_FILE,
+  type MutationGateRecord,
+} from "../mutation-ratchet/index.js";
 import type {
   Scenario,
   RuntimeQualityCheck,
@@ -167,15 +179,164 @@ export function resolveCheckRegistry(packageJson: {
  * missing, non-object or array-shaped config resolves EMPTY, and a malformed entry is dropped by
  * `thresholdsOf` rather than thrown. There is no starter set: a ceiling the target did not write
  * would hold its suites to a bar nobody chose.
+ *
+ * AND A BAR MAY NAME A MUTATION GATE INSTEAD OF A FIGURE (@SCN-MUT-012, 3F-2788). A number in a
+ * manifest is a number somebody has to re-derive after every sweep that moves it. So the VALUE may
+ * be a reference to a gate whose record already holds the counts, and it is substituted for that
+ * gate's kill floor HERE — before `thresholdsOf` is called, so what reaches the registry is the
+ * number it has always taken and `packages/core` keeps knowing nothing about records, gates or
+ * YAML. That containment is the whole reason this seam is at the edge rather than in the engine.
+ *
+ * AND A REFERENCE THIS CANNOT SOURCE LEAVES NO BAR, NEVER A NUMBER (@SCN-MUT-013). A reference is a
+ * bar living in a second file, so it can go missing four ways a typed one never could — and each
+ * has a lenient reading that hands back a green nobody earned. All four are refused the same way,
+ * which is `barOf`'s own way with an entry it cannot read: the key survives with nothing beside it,
+ * so the check stays MEASURED and the complaint arrives from the missing-bar arm (@SCN-CIP-002)
+ * rather than from the tag grammar, about a check nobody wrote.
  */
-export function resolveThresholds(packageJson: {
-  specController?: { thresholds?: unknown };
-}): ThresholdRegistry {
+export function resolveThresholds(
+  packageJson: { specController?: { thresholds?: unknown } },
+  /** The TARGET's tree, which every record path below is joined onto (@SCN-LNT-005). */
+  root: string
+): ThresholdRegistry {
   const configured = packageJson.specController?.thresholds;
-  if (typeof configured !== "object" || configured === null || Array.isArray(configured)) {
-    return thresholdsOf({});
+  if (!isBlock(configured)) return thresholdsOf({});
+  return thresholdsOf(withGateReferencesResolved(configured, killFloorReaderFor(root)));
+}
+
+/** Whether a value read out of a manifest is a block of named fields, rather than a list or scalar. */
+function isBlock(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/**
+ * A bar naming a mutation gate rather than a figure.
+ *
+ * THE RECORD'S NAME MAY BE STATED AND OTHERWISE DEFAULTS, which is `ratchetCli`'s asymmetry applied
+ * unchanged and for its reason: the record's name belongs to whoever owns the record, so the
+ * conventional one stands in and a project filing its bars elsewhere writes it over.
+ */
+interface MutationGateReference {
+  readonly mutationGate: string;
+  readonly recordFile?: string;
+}
+
+/** The reference a manifest value states, or `null` where it states none. */
+function gateReferenceOf(value: unknown): MutationGateReference | null {
+  if (!isBlock(value)) return null;
+  const gate = value["mutationGate"];
+  if (typeof gate !== "string" || gate.trim() === "") return null;
+  const recordFile = value["recordFile"];
+  return typeof recordFile === "string"
+    ? { mutationGate: gate, recordFile }
+    : { mutationGate: gate };
+}
+
+/** The kill floor a reference names, or `null` where the record cannot supply it. */
+type KillFloorReader = (reference: MutationGateReference) => number | null;
+
+/**
+ * A refusal met with an absent bar rather than let out of this edge.
+ *
+ * NOTHING IS THROWN OUT OF HERE, and that is the stance rather than caution. A refusal that escapes
+ * costs the whole run its verdict over one bad character in a file nobody may even be reading — a
+ * fault that is loud nowhere, where an absent bar is loud on the ledger. It is `thresholdsOf`'s own
+ * stance for a malformed entry, applied to the half of a bar that now lives in a second file.
+ *
+ * TWO CLASSES AND NO MORE. The record library normalises every fault it can see — the YAML parser's
+ * own included — into `MalformedRecordError` precisely so a caller catches all of them by catching
+ * one; beside it sits the read that never got as far as a record. A bare catch would swallow a
+ * defect in this edge as well, and answer it with the same silent absence.
+ */
+function orNoBar<T>(read: () => T): T | null {
+  try {
+    return read();
+  } catch (cause) {
+    if (cause instanceof MalformedRecordError || isReadRefusal(cause)) return null;
+    throw cause;
   }
-  return thresholdsOf(configured as Record<string, unknown>);
+}
+
+/** A filesystem refusal — the record was not there, or could not be opened. */
+function isReadRefusal(cause: unknown): boolean {
+  return cause instanceof Error && typeof (cause as NodeJS.ErrnoException).code === "string";
+}
+
+/**
+ * A reader over ONE resolution pass's records.
+ *
+ * EACH RECORD IS OPENED ONCE, WHICH IS WHY THIS IS A CLOSURE AND NOT A FUNCTION PER REFERENCE. A
+ * manifest may name several gates of one record, and a reader opening it per entry would let two
+ * references answer for two different states of the same file — a rewrite landing mid-pass, a gate
+ * present for one and gone for the next. One read makes the pass's bars one reading of one record.
+ *
+ * THE REFUSAL IS REMEMBERED TOO. Cacheing only the successes would re-open an absent or unreadable
+ * record per reference, which is the same disagreement by the other door — and the likelier door,
+ * since a record being rewritten is unreadable for exactly the window that matters.
+ *
+ * THE SUBTRACTION IS THE RECORD'S, NOT THIS EDGE'S. `killFloorOf` spends the allowance; an edge
+ * computing `detected - slack` itself would be a second place holding a fact about the record.
+ */
+function killFloorReaderFor(root: string): KillFloorReader {
+  const opened = new Map<string, Map<string, MutationGateRecord> | null>();
+  return (reference) => {
+    const recordFile = reference.recordFile ?? RECORD_FILE;
+    if (!opened.has(recordFile)) {
+      opened.set(
+        recordFile,
+        orNoBar(() => parseGateRecords(readFileSync(join(root, recordFile), "utf8"), recordFile))
+      );
+    }
+    const records = opened.get(recordFile);
+    if (records == null) return null;
+    return orNoBar(() => killFloorOf(gateRecordFor(reference.mutationGate, records, recordFile)));
+  };
+}
+
+/**
+ * One check's entry with any gate reference in it replaced by the number that gate's record implies.
+ *
+ * VALUE-ONLY AND DIRECTION-BLIND. The key beside the number is the comparison, and this reads none
+ * of them: a ceiling naming a gate resolves exactly as a floor does. The engine has no opinion
+ * about which checks are floors (@SCN-LNT-005), so a target authoring a mutation ceiling is wrong
+ * out loud rather than quietly overruled here.
+ */
+function barWithGateResolved(bar: unknown, killFloor: KillFloorReader): unknown {
+  if (!isBlock(bar)) return bar;
+  const resolved: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(bar)) {
+    const reference = gateReferenceOf(value);
+    // `null` where the record could not supply the floor — the value the engine already reads as
+    // no bar, so a reference this could not source is indistinguishable downstream from an entry
+    // nobody could read. What must never be written here is a number of this edge's choosing.
+    resolved[key] = reference === null ? value : killFloor(reference);
+  }
+  return resolved;
+}
+
+/**
+ * The manifest's threshold entries, with every gate reference in them substituted.
+ *
+ * NO RECORD IS OPENED FOR A MANIFEST THAT NAMES NO GATE, which is what keeps this inert for every
+ * target that has never banked one — the two live `@ci-run-time` ceilings included.
+ */
+function withGateReferencesResolved(
+  entries: Record<string, unknown>,
+  killFloor: KillFloorReader
+): Record<string, unknown> {
+  const resolved: Record<string, unknown> = {};
+  for (const [scnKey, checks] of Object.entries(entries)) {
+    if (!isBlock(checks)) {
+      resolved[scnKey] = checks;
+      continue;
+    }
+    const bars: Record<string, unknown> = {};
+    for (const [checkKey, bar] of Object.entries(checks)) {
+      bars[checkKey] = barWithGateResolved(bar, killFloor);
+    }
+    resolved[scnKey] = bars;
+  }
+  return resolved;
 }
 
 /**
@@ -500,16 +661,18 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
         };
       }
     >(pkgPath) ?? {};
+  // The TARGET repo root — the credit locators are made relative to it, so a phantom-scenario row's
+  // where-to-fix (ruling Q5) stays portable in a banked artefact, and a bar naming a mutation gate
+  // finds that target's record rather than this tool's own (@SCN-MUT-012). Resolved BEFORE the
+  // corpus because the bars are read against it.
+  const root = resolveTargetRoot({ features: opts.features });
+
   const corpus = readTargetCorpus(
     opts.features,
     resolveDeferralTags(packageJson),
     resolveCheckRegistry(packageJson),
-    resolveThresholds(packageJson)
+    resolveThresholds(packageJson, root)
   );
-
-  // The TARGET repo root the credit locators are made relative to, so a
-  // phantom-scenario row's where-to-fix (ruling Q5) stays portable in a banked artefact.
-  const root = resolveTargetRoot({ features: opts.features });
 
   // `--ci` names a workflow FILE or a DIRECTORY of them, and defaults to the directory
   // (@SCN-USG-006, 3F-2238): a pipeline split across files enforces its checks just as one

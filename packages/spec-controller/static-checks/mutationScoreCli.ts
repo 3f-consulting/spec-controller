@@ -1,6 +1,6 @@
 /**
- * The mutation producer — runs a mutation sweep and posts the score its mutants imply
- * (@SCN-MUT-007, @SCN-MUT-008 — features/mutation-score.feature).
+ * The mutation producer — runs a mutation sweep and posts the kills its mutants imply, as a whole
+ * number of mutants (@SCN-MUT-007, @SCN-MUT-008 — features/mutation-score.feature).
  *
  *     tsx mutationScoreCli.ts --scn <SCN-ID> --check <tag> [--root <dir>] -- <command> [args…]
  *
@@ -17,7 +17,7 @@
  * citing.
  *
  * IT IS NOT AN ARBITER: its exit code is the wrapped command's, always (@SCN-CIP-010). The
- * verdict on a mutation score is `lint:self-balance`'s alone — which is the same argument, one
+ * verdict on a mutation measurement is `lint:self-balance`'s alone — which is the same argument, one
  * artefact further out, as the one that keeps this file away from the runner's own `thresholds`
  * block. A producer holding both the number and the bar that number is judged against would make
  * a green build depend on two arbiters agreeing.
@@ -29,9 +29,9 @@
  * over it.
  *
  * A SWEEP THAT LEFT NO READABLE REPORT LEFT NO NUMBER, SO IT POSTS NOTHING (@SCN-MUT-008).
- * Absent, empty and unparseable are one answer, and that answer is not zero: a zero is the score
- * of a suite that detected nothing, which would be a claim about the CODE assembled out of a fault
- * in the harness measuring it. The row then reads `missing` — the true sentence, no measurement
+ * Absent, empty and unparseable are one answer, and that answer is not zero: a zero is the kill
+ * count of a suite that killed nothing, which would be a claim about the CODE assembled out of a
+ * fault in the harness measuring it. The row then reads `missing` — the true sentence, no measurement
  * arrived, and the same one a sweep that never ran produces.
  *
  * AND IT IS NOT THIS PRODUCER'S FAULT EITHER, so the exit code is still the wrapped command's. A
@@ -45,12 +45,24 @@ import { spawnSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
+import { readMutationReport } from "../src/mutation-ratchet/index.js";
+
 import {
   MEASUREMENT_ARTEFACT_PATH,
   exitCodeOf,
   measurementArtefactWith,
 } from "./measurementArtefact.js";
-import { MUTATION_REPORT_PATH, mutationScoreIn } from "./mutationScore.js";
+import { MUTATION_REPORT_PATH } from "./mutationScore.js";
+
+/**
+ * What this producer calls the gate it is sweeping, carried only because the reader takes a name.
+ *
+ * IT NEVER LEAVES THIS CALL, WHICH IS WHY A SECOND SPELLING OF IT COULD NOT DRIFT INTO ANYTHING.
+ * The reader puts its caller's word into the measurement it hands back; what is taken out of that
+ * measurement below is a count, so nothing this producer posts, prints or exits on carries the
+ * string. A refusal names the path it looked at, never the gate.
+ */
+const GATE = "domain";
 
 /** Everything the producer was told: what it is measuring, where, and what to run. */
 interface MutationSweep {
@@ -110,20 +122,25 @@ const finished = spawnSync(sweep.command[0]!, sweep.command.slice(1), {
   stdio: "inherit",
 });
 
-/** The report the sweep left, or nothing where it left none this can find. */
-function reportLeftAt(reportPath: string): string | undefined {
-  try {
-    return readFileSync(reportPath, "utf8");
-  } catch {
-    return undefined;
-  }
-}
-
 const reportPath = path.join(sweep.root, MUTATION_REPORT_PATH);
-// READ FROM THE MUTANTS AND NOWHERE ELSE (@SCN-MUT-007). The report carries a `thresholds` block
-// beside them, and a producer transcribing it would be handing the ledger the runner's verdict to
-// reconcile against the ledger's own bar — two arbiters of one characteristic.
-const measured = mutationScoreIn(reportLeftAt(reportPath));
+// READ FROM THE MUTANTS AND NOWHERE ELSE (@SCN-MUT-007), THROUGH THE ONE READER THAT COUNTS THEM
+// (3F-2927). The report carries a `thresholds` block beside them, and a producer transcribing it
+// would be handing the ledger the runner's verdict to reconcile against the ledger's own bar — two
+// arbiters of one characteristic. The reader refuses that block on the same argument, so the count
+// this posts and the count the ratchet reconciles are now one figure read twice rather than two
+// that agree.
+//
+// AND ITS REFUSAL IS THIS PRODUCER'S `null`, WHICH IS WHAT KEEPS @SCN-MUT-008 SAYING WHAT IT SAYS.
+// Absent, empty, unparseable, no files section, and no scored mutant are one answer here as they
+// were before: there is no number, so there is nothing to post.
+const read = readMutationReport(GATE, reportPath);
+// THE KILLS ALONE, AND `total` STOPS HERE (3F-2788). A percentage is two facts divided into one,
+// and dividing by the population is what puts the population into the ledger's comparison: new
+// mutable code arriving with survivors on it moves the denominator and the row reds without a
+// single kill having been lost. The count alone carries only the fact the bar is about, so the
+// row moves when a mutant this suite used to kill stops dying and at no other time. What `total`
+// is for is telling a grown population from a lost kill, and that reading is the ratchet's.
+const measured = read.ok ? read.measurement.detected : null;
 
 if (measured === null) {
   // ON STDERR AND NOT AS A VERDICT. This is not the measurement report below — it is the reason

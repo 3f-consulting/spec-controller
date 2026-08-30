@@ -15,9 +15,16 @@
  * `reconcileGate` — hand it the five terms a project owns and it answers with a verdict. Around it
  * sit the pieces a consumer that wants to compose its own way needs: the verdict over counts
  * already in hand, the two readers that turn a report into counts, the recorder, the loader, the
- * three score functions a consumer rendering its own view needs, the default record name, and both
- * error types the functions above raise — the record fault and the up-only refusal — because a
- * refusal a caller cannot name in a `catch` is a refusal that caller cannot handle.
+ * three score functions a consumer rendering its own view needs, the kill floor those same figures
+ * imply in mutants, the default record name, and both error types the functions above raise — the
+ * record fault and the up-only refusal — because a refusal a caller cannot name in a `catch` is a
+ * refusal that caller cannot handle.
+ *
+ * THE KILL FLOOR CROSSES FOR A SECOND KIND OF CONSUMER, AND THAT IS WHY IT IS NOT A SCORE (3F-2788).
+ * Everything above answers a reader that wants this library's verdict. `killFloorOf` answers one
+ * that wants only the BAR — a ledger holding its own measured row to the same figure this library
+ * reconciles against, so the two cannot disagree by construction. A consumer that derived it
+ * instead would be the second place knowing how an allowance is spent.
  *
  * THE TYPES ARE SPELLED FOR A CONSUMER'S NAMESPACE RATHER THAN FOR THIS MODULE'S. `GateRecord` and
  * `GateAllowance` are unambiguous inside a directory about nothing else; imported into a repository
@@ -39,6 +46,7 @@ export { RECORD_FILE, reconcileGate, type RatchetRequest } from "./reconcile.js"
 export {
   floorOf,
   gateRecordFor,
+  killFloorOf,
   MalformedRecordError,
   parseGateRecords,
   recordedScoreOf,
