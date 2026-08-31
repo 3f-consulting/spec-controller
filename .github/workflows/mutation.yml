@@ -87,6 +87,26 @@ jobs:
       # reported. A warning annotation here would be a second and quieter place to look for it, and
       # an error would red a scheduled job over a cadence rather than over the code.
       #
+      # AND THIS STEP CARRIES NO `if:`, WHICH IS THE FENCE AND NOT AN OMISSION (3F-2957,
+      # @SCN-MUT-016). GitHub holds a step stating no condition to `success()`, so a sweep that DIED
+      # takes this upload down with it and its run reaches the borrow with nothing to download: the
+      # row reads `missing` — no measurement arrived — which is the true sentence about a run whose
+      # number would have been partial, or would have been a previous run's.
+      #
+      # THAT FENCE USED TO BE ACCIDENTAL, AND IS NOW THE ONLY ONE THERE IS. The borrow filtered on
+      # `--status success`, so a crashed run was excluded by the very filter that also excluded the
+      # night which found a regression — one word doing two jobs, and 3F-2901 is the second of them
+      # going wrong. @SCN-MUT-015 removed the filter and the two readings came apart. What still
+      # tells them apart is this absent condition together with `stryker.config.json` setting no
+      # `break` threshold: the sweep cannot exit non-zero over the SCORE, only over ITSELF, so a
+      # failed sweep is a failed HARNESS and the silence of this step is what says so.
+      #
+      # THE REPORT UPLOAD BELOW CARRIES `if: always()` AND MUST, which is an asymmetry with a reason
+      # rather than an untidiness. An operator opening the report of the run that died is precisely
+      # what that upload is for; a ledger reading the NUMBER of the run that died is precisely what
+      # this one must never serve. Two uploads, two conditions — and @SCN-MUT-016 now holds both,
+      # so the edit that made them agree would red rather than pass as tidying.
+      #
       # `runs/` is gitignored with no re-includes, so the artefact this uploads leaves the job and
       # is never committed.
       - name: Leave the measurement where a later push can borrow it
@@ -102,6 +122,10 @@ jobs:
       # The HTML report enumerates which domain lines no test kills — the same
       # class of finding as a reconciliation report, so it is never committed
       # (.gitignore) and is kept only as a build artefact for the operator.
+      #
+      # `if: always()` HERE AND NOTHING ABOVE IS THE ASYMMETRY ARGUED AT THE MEASUREMENT UPLOAD, and
+      # @SCN-MUT-016 holds both halves of it. The run that died is the one whose report an operator
+      # most needs.
       - name: Upload mutation report
         if: always()
         uses: actions/upload-artifact@v7
@@ -126,10 +150,15 @@ jobs:
       # measurement and the report leave the job whatever the verdict is, and the job's own ending
       # IS the verdict, which is what the ledger's arbiter cannot be asked to be.
       #
-      # IT IS NOT A SECOND CHANCE FOR THE BORROW, AND THAT IS NOT WHAT THIS FIXES. `ci.yml` asks
-      # for the newest SUCCESSFUL run of this workflow, so a red verdict withholds this night's
-      # number from the next push either way; the row then reads `missing` once the last good one
-      # ages out, which is the true sentence for a sweep that found a fault nobody has fixed.
+      # AND THE LEDGER'S MEASUREMENT DEPENDS ON THAT PLACEMENT TOO, WHICH IS WHY A SCENARIO NOW
+      # HOLDS IT (3F-2947, @SCN-MUT-015). `ci.yml` borrows from the newest COMPLETED run of this
+      # workflow, whatever verdict followed it, so the night that finds a regression is the night
+      # whose number crosses to the next push — but only because the measurement leaves this job
+      # BEFORE the step below reds it. Move this step up and that night uploads nothing: the row
+      # reads `missing`, a regression is reported as a lapse, and every assertion about WHICH run
+      # is selected stays green while it happens. So the ordering is asserted alongside the
+      # selection rather than defended here alone, and the paragraph above is now the second of
+      # two reasons for it rather than the only one.
       #
       # NO `lint:` / `guard:` PREFIX ON THE SCRIPT IT RUNS, WHICH IS LOAD-BEARING RATHER THAN
       # STYLISTIC. `runningStaticChecks` observes a package.json script as a RUNNING static check

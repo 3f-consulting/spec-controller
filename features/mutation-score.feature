@@ -302,3 +302,76 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
 
     @mutation @SCN-MUT-011
     Scenario: this repository's domain core kills at least the mutants its record banks
+
+  Rule: the measurement a push borrows is the newest sweep's, whatever verdict that sweep reached
+
+    THE RUN THAT FOUND THE FAULT WAS THE ONE RUN NOTHING BORROWED FROM (3F-2947). The nightly ends
+    on the ratchet's verdict, so a night that loses a kill concludes `failure` — and the borrow asked
+    for the newest SUCCESSFUL run, which is every night but that one. Inside the freshness window it
+    therefore reached back to the last GREEN nightly, placed ITS number, and SCN-MUT-011 reconciled
+    satisfied: for up to thirty-six hours the ladder went green over a regression the sweep had
+    already detected and already said out loud, in the one window where the gate this axis exists
+    for was blind to the only fault it is for. Past that window it placed nothing and the row read
+    `missing` — the sentence for a sweep that LAPSED — which is a different fault, on a different
+    night, sent to a different place. The two readings furthest apart collapsed onto one word and
+    the more actionable of them was the one that got lost.
+
+    THE ARTEFACT IS THE EVIDENCE; THE CONCLUSION IS ABOUT THE GATE. A run's conclusion answers
+    whether the nightly's own verdict passed, and that is not what the ledger is asking — it is
+    asking what this tree's domain core killed. Two questions, one of them the ledger's, so the
+    borrow stops reading the answer to the other. It selects on COMPLETION rather than on
+    conclusion: a sweep still running has nothing to hand over yet, and a sweep that finished has,
+    whatever the verdict that followed it said.
+
+    AND SELECTING THAT RUN IS HALF A CLAIM, WHICH IS WHY THE ORDER IS THE OTHER HALF. The regression's
+    number only crosses the boundary because the sweep leaves it behind BEFORE the ratchet step reds
+    the run — move the verdict ahead of the upload and the night that found the fault uploads nothing,
+    the row reads `missing`, and the fail-open closes into the mislabelled red this Rule also removes,
+    with every selection assertion still green. The workflow already defends that placement in prose,
+    and defends it for the OPERATOR'S REPORT; the ledger's measurement now depends on it too, so it is
+    held here rather than in a comment.
+
+    AND THE BORROW IS STILL NOT AN ARBITER, which is the part this leaves exactly as it was. Every
+    branch of it places nothing, says why on stderr, and exits 0; the verdict on a low number is the
+    ledger's, reached by the same comparison as every other verdict on this axis (@SCN-MUT-005).
+    What moves is WHICH run's number crosses the boundary, never who judges it once it has.
+
+    @unit @SCN-MUT-015
+    Scenario: the night that found a regression is the night whose measurement crosses — the push borrows the nightly's newest completed run, and the sweep leaves that measurement behind before the verdict that reds the run
+      Given the workflow every push runs and the workflow that sweeps this repository's domain core
+      When the terms each of them states about the measurement crossing between them are read back
+      Then the push borrows from the newest run of the sweep that has finished, whatever verdict followed it
+      And it asks for no verdict at all, so the night that found a regression is a night it can borrow from
+      And the sweep leaves that measurement behind before the step whose verdict reds the run
+      And every branch of the borrow places nothing, says why, and leaves the verdict to the ledger
+
+    @unit @SCN-MUT-016
+    Scenario: the measurement upload is conditioned on the sweep and the report upload is not, and this repository's runner sets no break threshold, so the sweep's own exit code answers about the sweep rather than about the score
+      A CRASHED SWEEP IS WHAT THE OLD FILTER WAS ACCIDENTALLY FENCING, AND THE FENCE IS KEPT ON
+      PURPOSE (3F-2901). Selecting on completion hands a failed run's artefact to the ledger, and a
+      sweep that DIED is a run whose number is partial, or is a previous run's — a fault in the harness
+      wearing the face of a fault in the code. What tells those apart is already in this repository and
+      was never written down: `stryker.config.json` sets no `break` threshold, so the sweep cannot exit
+      non-zero over the SCORE, only over ITSELF; and the step that uploads the measurement carries no
+      `if:`, so it does not run at all when the sweep before it failed. A crash therefore leaves its
+      run with no measurement to download, the borrow places nothing, and the row reads `missing` — no
+      measurement arrived, which is the true sentence, and the one this repository already reserves for
+      a number that never came.
+
+      THE REPORT UPLOAD BESIDE IT CARRIES `if: always()` AND MUST, which is the asymmetry a tidying
+      edit collapses. An operator opening the report of the run that died is precisely what that upload
+      is for; a ledger reading the NUMBER of the run that died is precisely what this one must never
+      serve. Two uploads, two conditions, and the reason each holds the one it holds.
+
+      AND WHAT IS ASSERTED BELOW IS THE WIRING, NOT THE CONSEQUENCE. This scenario opens this
+      repository's own workflow and runner config and reads three terms back off them; the crashed
+      night reading as `missing` is what those three terms IMPLY, one inference further on, and a
+      scenario claiming it would be claiming more than it observes. The implication is the paragraph
+      above's to carry. What the scenario holds is the three facts it can actually see, each of which
+      a single tidying edit could take away.
+
+      Given the workflow that sweeps this repository's domain core, and the configuration the runner it invokes reads
+      When the terms they state about what a sweep that died leaves behind are read back
+      Then the step that leaves the measurement behind states no condition of its own, so a sweep that failed leaves no measurement behind at all
+      And the step that uploads the operator's report states the condition that runs it whatever the sweep did, so the run that died is still a run an operator can open
+      And the runner is given no score it may break the run over, so the sweep's own exit code answers about the sweep rather than about the score

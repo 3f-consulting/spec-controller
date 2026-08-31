@@ -207,7 +207,7 @@ jobs:
       # window is a fact about the pipeline reading them.
       #
       # AND IT IS NOT AN ARBITER. Every branch below places nothing, says why on stderr, and exits
-      # 0. Having no measurement to borrow — no successful sweep, no artefact, a number past its
+      # 0. Having no measurement to borrow — no finished sweep, no artefact, a number past its
       # window, a payload that is not one — is the ordinary reading of a cadence, and the place it
       # is reported is the ledger: SCN-MUT-011 reconciles `missing` and `lint:self-balance` reds on
       # the row that owed the measurement. A step that redded here as well would make a green build
@@ -232,7 +232,18 @@ jobs:
           rm -rf "${into}"
           mkdir -p "${into}"
 
-          if ! latest="$(gh run list --workflow "${WORKFLOW}" --status success --limit 1 --json databaseId,createdAt)"; then
+          # THE NEWEST FINISHED RUN, NEVER THE NEWEST SUCCESSFUL ONE (3F-2947, @SCN-MUT-015). A
+          # run's conclusion answers whether the nightly's own VERDICT passed; this is asking what
+          # that night's sweep MEASURED, and the night that finds a regression is exactly the night
+          # whose conclusion is `failure`. Filtering on it reached back past that run to the last
+          # green one and placed ITS number — settling this tree's bar with a measurement about an
+          # older tree, and reconciling SCN-MUT-011 satisfied over a regression the sweep had
+          # already detected and already said out loud. `gh` reads both a run's status and its
+          # conclusion off this one flag; `completed` is the status, so it selects on having
+          # FINISHED and on nothing else. It excludes `queued` and `in_progress` on purpose: a
+          # sweep still running has nothing to hand across yet, and selecting it would download
+          # nothing and read `missing` for the ten minutes each night the sweep is live.
+          if ! latest="$(gh run list --workflow "${WORKFLOW}" --status completed --limit 1 --json databaseId,createdAt)"; then
             echo "borrow: could not list runs of ${WORKFLOW}; nothing is placed." >&2
             exit 0
           fi
@@ -240,7 +251,7 @@ jobs:
           id="$(printf '%s' "${latest}" | jq -r '.[0].databaseId // empty')"
           when="$(printf '%s' "${latest}" | jq -r '.[0].createdAt // empty')"
           if [ -z "${id}" ] || [ -z "${when}" ]; then
-            echo "borrow: ${WORKFLOW} names no successful run carrying both an id and a createdAt; nothing is placed." >&2
+            echo "borrow: ${WORKFLOW} names no finished run carrying both an id and a createdAt; nothing is placed." >&2
             exit 0
           fi
 
