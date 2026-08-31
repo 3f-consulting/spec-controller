@@ -206,15 +206,49 @@ describe("[SCN-MUT-015] the night that found a regression is the night whose mea
     expect(upload).toBeLessThan(theOneIndex(steps, reachesTheRatchet, "reach the ratchet"));
   });
 
-  it("[SCN-MUT-015] places nothing, says why, and leaves the verdict to the ledger on every branch", () => {
-    // Non-negotiable 1 of 3F-2947, which this change leaves exactly as it was: a red here as well
-    // would make a green build depend on two arbiters agreeing, which mutation-score.feature
-    // already settles for the bar itself.
+  it("[SCN-MUT-015] meets no failure in doing its job that reds the step, and keeps the one red route left loud on purpose", () => {
+    // Non-negotiable 1 of 3F-2947: a red here as well would make a green build depend on two
+    // arbiters agreeing, which mutation-score.feature already settles for the bar itself. What
+    // moved (3F-2960) is WHERE that guarantee lives. It used to rest on a comment saying the step
+    // ran without `-e` — false since the day it was written, because GitHub invokes a bare `run:`
+    // as `bash -e {0}` and this step names no `shell:`, so errexit arrives from the SHELL and
+    // `set -uo pipefail` does not clear it. What guarded the branches was `if !`; nothing guarded
+    // the stretch between them.
     const script = (borrowStep().run ?? "").split("\n").map((line) => line.trim());
-    const exits = script.flatMap((line, at) => (/^exit\b/.test(line) ? [at] : []));
-    expect(exits.length).toBeGreaterThan(1);
-    expect(exits.map((at) => script[at])).toEqual(exits.map(() => "exit 0"));
-    expect(exits.map((at) => script[at - 1]?.endsWith(">&2"))).toEqual(exits.map(() => true));
-    expect(script.filter((line) => /^set\s+-\S*e/.test(line))).toEqual([]);
+    /** What the shell actually runs, in order — the comments and blanks it never sees dropped. */
+    const commands = script.filter((line) => line !== "" && !line.startsWith("#"));
+
+    // ERREXIT IS CLEARED BEFORE ANYTHING CAN FAIL, AND NOTHING TURNS IT BACK ON — ONE CLAIM, HELD
+    // AS ONE. The absence of `set -e` used to stand here alone, and it was true of the defect and
+    // of the fix alike: that is how a wrong comment acquired a green tick. It says nothing unless
+    // something first clears what the shell arrived with, so it is a CLAUSE of that claim now
+    // rather than a claim of its own. Being the FIRST command is the assertion because it needs no
+    // list of which commands can fail: three attentive readings of this script produced three
+    // different such lists, so a guarantee resting on one rests on the artefact that moved.
+    expect({
+      clearedBeforeAnythingElse: commands[0],
+      turnedBackOn: commands.filter((line) => /^set\s+-\S*e/.test(line)),
+    }).toEqual({
+      clearedBeforeAnythingElse: expect.stringMatching(/^set\s+.*\+\S*e/),
+      turnedBackOn: [],
+    });
+
+    // AND THE LAST ACT IS `exit 0`, WHICH IS A SECOND ROUTE, NOT THE SAME ONE TWICE. A script's
+    // status is its last command's even with errexit cleared, so the `jq` that renders what was
+    // placed would otherwise report the step's verdict over a payload the shape check had passed.
+    expect(commands.at(-1)).toBe("exit 0");
+
+    // AND `-u` IS KEPT, WHICH IS THE ONE RED ROUTE LEFT AND IS ASSERTED RATHER THAN ASSUMED. An
+    // unbound expansion exits 127 whatever errexit says. That red says THIS SCRIPT IS BROKEN, not
+    // YOUR CODE LOST A KILL; dropping it to close the route would buy `cp "" runs/…`, a silent
+    // wrong placement, which is the fail-open this whole line of work exists to close.
+    expect(commands.filter((line) => /^set\s+.*-\S*u/.test(line)).length).toBeGreaterThan(0);
+
+    // AND EVERY EXIT THAT IS NOT THAT LAST ACT IS A BRANCH'S: it places nothing and says why on
+    // stderr first. Unchanged by 3F-2960 — the branches always did behave as their comments claim.
+    const branches = commands.slice(0, -1).flatMap((line, at) => (/^exit\b/.test(line) ? [at] : []));
+    expect(branches.length).toBeGreaterThan(1);
+    expect(branches.map((at) => commands[at])).toEqual(branches.map(() => "exit 0"));
+    expect(branches.map((at) => commands[at - 1]?.endsWith(">&2"))).toEqual(branches.map(() => true));
   });
 });

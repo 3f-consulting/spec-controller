@@ -336,6 +336,38 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     ledger's, reached by the same comparison as every other verdict on this axis (@SCN-MUT-005).
     What moves is WHICH run's number crosses the boundary, never who judges it once it has.
 
+    AND "EVERY BRANCH" WAS NEVER THE WHOLE STEP (3F-2960). The paragraph above was true of the
+    branches and false of the stretch between them. GitHub invokes a bare `run:` as `bash -e {0}`
+    and this step names no `shell:`, so errexit arrives from the SHELL; `set -uo pipefail` sets
+    nounset and pipefail and does not clear it. What guarded the branches was `if !` — a command in
+    an `if` condition is exempt from errexit — never the comment above them, which said the step ran
+    without `-e` and was wrong for as long as it had existed. Every command outside an `if` condition
+    could therefore red the one step this Rule exists to keep out of the verdict: a `cp` onto a full
+    disk would have redded the ladder as though the CODE had lost a kill.
+
+    AND THE FIX COUNTS NOTHING, WHICH IS THE WHOLE ARGUMENT FOR IT. Three attentive readings of this
+    one script produced three different lists of the commands that could red it — six, then nine,
+    then nine with one rationale that did not carry. None was careless, and a fourth pass would not
+    be proof the list had closed; it would be a fourth reading. So guarding each command where it
+    stands was ruled out on CORRECTNESS rather than on size: a guarantee resting on a hand-derived
+    enumeration rests on the one artefact that moved under all three. Telling the shell out loud to
+    clear what it inherited, and ending the script on `exit 0`, is correct over every command in it
+    whether or not anybody enumerated them, and over the one a later edit adds. Two lines, two
+    routes: the first stops a failure MID-SCRIPT from killing the step, the second stops the render
+    at the END of it from being reported as the step's verdict, because a script's status is its
+    last command's even with errexit cleared.
+
+    AND ONE RED ROUTE IS LEFT STANDING ON PURPOSE, WHICH IS WHY THE CLAIM BELOW IS NOT EVERY PATH.
+    `set -u` is kept: an unbound expansion exits 127 whatever errexit says, so nounset is a route by
+    which this step can still red. That red says THIS SCRIPT IS BROKEN rather than YOUR CODE LOST A
+    KILL — a different sentence, sent to a different place, and the one you want. Dropping `-u` to
+    close it would buy `cp "" runs/self-balance/measurements.json`: a silent wrong placement, which
+    is the fail-open shape this whole Rule exists to remove. So the claim below is about the
+    failures the borrow meets IN DOING ITS JOB, and it holds the exception as a term it asserts
+    rather than leaving it an unstated residual — which is how the sentence it replaces went false.
+    That sentence pinned only that the script holds no `set -e`: true of the defect and of the fix
+    alike, which is how a wrong comment acquired a green tick.
+
     @unit @SCN-MUT-015
     Scenario: the night that found a regression is the night whose measurement crosses — the push borrows the nightly's newest completed run, and the sweep leaves that measurement behind before the verdict that reds the run
       Given the workflow every push runs and the workflow that sweeps this repository's domain core
@@ -343,7 +375,7 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
       Then the push borrows from the newest run of the sweep that has finished, whatever verdict followed it
       And it asks for no verdict at all, so the night that found a regression is a night it can borrow from
       And the sweep leaves that measurement behind before the step whose verdict reds the run
-      And every branch of the borrow places nothing, says why, and leaves the verdict to the ledger
+      And no failure the borrow meets in doing its job reds the step — its branches say why and exit 0, the shell it runs under is told to clear the errexit it arrives with, its last act is exit 0 rather than the render whose status would otherwise become the step's, and nounset is kept on so the one red route left says the script is broken rather than that the code lost a kill
 
     @unit @SCN-MUT-016
     Scenario: the measurement upload is conditioned on the sweep and the report upload is not, and this repository's runner sets no break threshold, so the sweep's own exit code answers about the sweep rather than about the score

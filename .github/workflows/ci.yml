@@ -223,9 +223,24 @@ jobs:
           ARTEFACT: mutation-measurement
           MAX_AGE: "129600"
         run: |
-          # NO `-e`, DELIBERATELY. Every failure below is answered where it happens with a sentence
-          # and `exit 0`; `-e` would turn one of them into a red step, which is the one reading
-          # this must never manufacture.
+          # ERREXIT ARRIVES FROM THE SHELL AND IS CLEARED HERE, OUT LOUD (3F-2960). GitHub invokes a
+          # bare `run:` as `bash -e {0}` and this step names no `shell:`, so `-e` is ON unless it is
+          # switched off — `set -uo pipefail` sets nounset and pipefail and does not clear it. It was
+          # not cleared, and the comment that used to stand here said it was: every command outside
+          # an `if` condition could red the one step that must never manufacture a red. What guarded
+          # the branches was `if !`, never this comment.
+          #
+          # GUARDING EACH COMMAND WAS RULED OUT ON CORRECTNESS, NOT ON SIZE. Three attentive readings
+          # of this script produced three different lists of the commands that could red it, so a
+          # guarantee resting on such a list rests on the artefact that moved under all three. These
+          # two lines are correct over every command here whether or not anybody enumerated it, and
+          # over the one a later edit adds.
+          #
+          # `-u` IS KEPT, AND IS THE ONE RED ROUTE LEFT. An unbound expansion exits 127 whatever
+          # errexit says. That red says THIS SCRIPT IS BROKEN rather than YOUR CODE LOST A KILL, and
+          # dropping `-u` to close it would buy `cp "" runs/self-balance/measurements.json` — a
+          # silent wrong placement, which is the fail-open this whole line of work exists to close.
+          set +e
           set -uo pipefail
 
           into="${RUNNER_TEMP}/borrowed-measurement"
@@ -307,6 +322,11 @@ jobs:
           cp "${found}" runs/self-balance/measurements.json
           echo "borrow: placed ${ARTEFACT} from run ${id} of ${WORKFLOW}, measured ${age}s ago, inside the ${MAX_AGE}s window:"
           jq -r '.measurements[] | "borrow:   \(.scnId) \(.checkTag) = \(.measured)"' runs/self-balance/measurements.json
+
+          # THE LAST ACT, BECAUSE A SCRIPT'S STATUS IS ITS LAST COMMAND'S. `set +e` stops a failure
+          # mid-script from killing the step; it does NOT stop the render above from REPORTING one.
+          # Two routes, two lines.
+          exit 0
 
       # STEP 1 OF THE SELF-RECONCILIATION CHAIN — the observed @unit stream. The run is
       # unchanged; it now also writes the machine-readable report the gate below reads.
