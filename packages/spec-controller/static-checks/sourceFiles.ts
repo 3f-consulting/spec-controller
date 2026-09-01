@@ -1,6 +1,7 @@
 /**
- * The ONE source-tree walk the static checks share, the ONE element type they take (3F-2274), and
- * the ONE anti-vacuity floor for the core-src population (3F-2266).
+ * The ONE source-tree walk the static checks share, the ONE element type they take (3F-2274), the
+ * ONE anti-vacuity floor for the core-src population (3F-2266), and the ONE reading of which roots
+ * this repository's own source lives under (3F-2988).
  *
  * Three guard tests — `noParallelStore` (@SCN-NPS-001), `enginePurity` (@SCN-EPG-001) and
  * `domainPurity` (@SCN-DPG-001) — each carried a byte-identical copy of this walk, differing only
@@ -25,7 +26,7 @@
  * asymmetry is deliberate; do not "finish the job" by moving the domain floor here.
  */
 
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 /**
@@ -76,6 +77,48 @@ export const MIN_CORE_SRC_FILES_SCANNED = 10;
 
 /** The headroom the floor must keep below the real tree, in files (3F-2201). */
 export const REQUIRED_FLOOR_HEADROOM = 10;
+
+/**
+ * The anti-vacuity floor for the WHOLE-repository population `repositorySourceRoots` walks
+ * (3F-2988) — the same reason as the core-src floor above, sized for a population roughly three
+ * times larger, and with the same generous margin for exactly the same reason.
+ */
+export const MIN_REPOSITORY_SOURCE_FILES_SCANNED = 40;
+
+/**
+ * Every root this repository's own TypeScript source lives under — each package's `src`, and each
+ * package's `static-checks` where it has one.
+ *
+ * DERIVED FROM THE PACKAGES DIRECTORY, NOT WRITTEN DOWN, and that is the whole point of it. A scan
+ * asking "does this rule exist anywhere but its one home?" is worth exactly as much as its
+ * population, and a hand-listed population is a list that goes stale the day a package is added —
+ * the scan then stays green over the wrong files and says nothing, which is the vacuous green the
+ * floors above exist to catch. Reading the directory means a package added later is scanned because
+ * it is there, not because someone remembered.
+ *
+ * It is the source counterpart of `vitest.config.ts`'s two include globs, which name the same pair
+ * of roots for the same tree.
+ */
+export function repositorySourceRoots(): string[] {
+  const packagesDir = join(process.cwd(), "packages");
+  return readdirSync(packagesDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .flatMap((entry) => ["src", "static-checks"].map((sub) => join(packagesDir, entry.name, sub)))
+    .filter((root) => existsSync(root));
+}
+
+/**
+ * Every PRODUCTION source file in this repository, root by root — the whole-tree population, for a
+ * check whose claim is about the repository rather than about one package (3F-2988).
+ *
+ * Built on `collectSourceFiles`, never beside it: a second walk is the agreeing-by-coincidence this
+ * module was created to remove, and a whole-tree scan that collected differently from the per-root
+ * ones would be the worst place of all to have it.
+ */
+export function collectRepositorySource(): CollectedFile[] {
+  return repositorySourceRoots().flatMap((root) => collectSourceFiles(root));
+}
 
 /**
  * Walk a source tree, collecting every PRODUCTION file (`.ts`, excluding `*.test.ts`) beneath it,

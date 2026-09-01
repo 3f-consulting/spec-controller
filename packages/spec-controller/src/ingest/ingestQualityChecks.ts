@@ -44,6 +44,7 @@ import { runningStaticChecks } from "@3f-consulting/spec-controller-core";
 // Core-internal rather than public: where a target's registry is AUTHORED is still open (the
 // registry-home question, increment D), so the seam's shape is not a v1 contract yet.
 import {
+  bareTerm,
   checkRegistryOf,
   registeredCheckTags,
   fitnessCitations,
@@ -470,7 +471,11 @@ export function resolveDeferralTags(packageJson: {
   const extras = Array.isArray(configured)
     ? configured
         .filter((tag): tag is string => typeof tag === "string")
-        .map((tag) => tag.replace(/^@/, ""))
+        // Through the ONE reading of what a term bare is (@SCN-TRM-001). This port had no trim at
+        // all, so `"@wip  "` failed as well as `"  @wip"`, and a term that is nothing but
+        // whitespace and a sigil is dropped here as an empty one already is.
+        .map(bareTerm)
+        .filter((tag) => tag !== "")
     : [];
   // Union: the starter set FIRST (extends, never replaces — a project cannot un-recognise a
   // built-in), then the configured extras; de-duplicated to keep the set clean.

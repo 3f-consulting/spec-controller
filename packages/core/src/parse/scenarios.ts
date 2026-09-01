@@ -27,6 +27,7 @@
 
 import { AstBuilder, GherkinClassicTokenMatcher, Parser } from "@cucumber/gherkin";
 import { IdGenerator, type FeatureChild, type GherkinDocument } from "@cucumber/messages";
+import { bareTerm } from "../lib/bareTerm.js";
 import type { Scenario, EvidenceObligation, QualityCheck, RuntimeQualityCheck } from "../model.js";
 import { measuredCheckTags, thresholdFor, type ThresholdRegistry } from "../domain/thresholds.js";
 
@@ -386,8 +387,9 @@ export function parseTaggedScenarios(source: string): TaggedScenario[] {
   }
 
   const tagged: TaggedScenario[] = [];
-  const bare = (tags: readonly { name: string }[]): string[] =>
-    tags.map((t) => t.name.replace(/^@/, ""));
+  // The parser tokenises, so no whitespace ever reaches `tag.name` and this was never a defect —
+  // it takes the shared reading anyway so the count of readings stays at one (@SCN-TRM-001).
+  const bare = (tags: readonly { name: string }[]): string[] => tags.map((t) => bareTerm(t.name));
 
   const featureTags = bare(document.feature?.tags ?? []);
 

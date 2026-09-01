@@ -43,7 +43,7 @@ import { spawnSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-import { thresholdFor } from "@3f-consulting/spec-controller-core/internal";
+import { bareTerm, thresholdFor } from "@3f-consulting/spec-controller-core/internal";
 
 import { resolveThresholds } from "../src/ingest/ingestQualityChecks.js";
 import {
@@ -140,11 +140,6 @@ writeFileSync(
   "utf8",
 );
 
-/** Both terms bare, which is how a manifest's ceilings are stored whichever way they were spelled. */
-function bare(term: string): string {
-  return term.replace(/^@/, "").trim();
-}
-
 /**
  * The ceiling the TARGET's manifest holds this step to, or null where it names none.
  *
@@ -172,8 +167,10 @@ function gateFor(timedStep: TimedStep): number | null {
   // (@SCN-MUT-001), and a runner that read it here would be a second arbiter of the same verdict.
   const bar = thresholdFor(
     resolveThresholds(manifest, timedStep.root),
-    bare(timedStep.scnId),
-    bare(timedStep.checkTag)
+    // Both terms bare, which is how a manifest's ceilings are stored whichever way they were
+    // spelled — read through the one `bareTerm` the registry was built with (@SCN-TRM-001).
+    bareTerm(timedStep.scnId),
+    bareTerm(timedStep.checkTag)
   );
   return bar?.threshold ?? null;
 }

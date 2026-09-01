@@ -203,6 +203,12 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     status: "feature-code-used",
     note: "the Gherkin parse gate — the feature corpus's integrity checkpoint moved OUT of the balance CLI's edge and INTO the shared feature-file discovery, so every corpus reader inherits the refusal rather than restating it; three line-scanning checks had twice reported green over a file cucumber could not parse at all (3F-2817)",
   },
+  {
+    code: "TRM",
+    slug: "term-spelling",
+    status: "feature-code-used",
+    note: "a term names the same pair however its author spaced it around the sigil — the leading-whitespace reading, which every hand-authoring port stripped the sigil BEFORE trimming and so stored a padded term still carrying its @, silently unfindable by every bare lookup; one bug because one rule had been hand-copied seven times (3F-2976)",
+  },
 ];
 
 /** A single lint finding. */

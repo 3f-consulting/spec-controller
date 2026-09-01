@@ -25,6 +25,7 @@
  * unanswered (@SCN-CIP-006).
  */
 
+import { bareTerm } from "../lib/bareTerm.js";
 import type { MeasuredEvidenceObservation } from "../model.js";
 
 /** The measurement artefact, as the reader takes it — validated row by row below. */
@@ -32,9 +33,9 @@ export interface MeasurementReport {
   measurements?: unknown;
 }
 
-/** Strip a leading `@`, so an artefact may spell either term the way a feature file does. */
+/** Both terms bare, so an artefact may spell either the way a feature file does (@SCN-TRM-001). */
 function bare(value: unknown): string {
-  return typeof value === "string" ? value.replace(/^@/, "").trim() : "";
+  return typeof value === "string" ? bareTerm(value) : "";
 }
 
 /** A measurement is a finite, non-negative number. Zero is legal — a step can take no time. */

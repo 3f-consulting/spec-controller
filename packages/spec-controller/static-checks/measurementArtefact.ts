@@ -46,6 +46,8 @@
 
 import { constants } from "node:os";
 
+import { bareTerm } from "@3f-consulting/spec-controller-core/internal";
+
 /** One row of the artefact — a measured check's number, already naming the row it posts to. */
 export interface Measurement {
   /** The `@SCN` of the stepless fitness scenario this measurement answers. */
@@ -72,13 +74,14 @@ export const MEASUREMENT_ARTEFACT_PATH = "runs/self-balance/measurements.json";
 
 /** Whether two rows answer the same thing — the @SCN naming the row and the check tag on it. */
 function isTheSameRowAs(row: Measurement, measurement: Measurement): boolean {
-  // Both terms, because neither is an address on its own (@SCN-LNT-012) — and each read the way
-  // `parseMeasuredEvidenceObservations` reads it, since a row this rejected as different and the
-  // reader accepted as the same would reach the ledger as two credits for one debit.
-  const bare = (term: string): string => term.replace(/^@/, "").trim();
+  // Both terms, because neither is an address on its own (@SCN-LNT-012) — and each read through
+  // the SAME `bareTerm` `parseMeasuredEvidenceObservations` reads it with, so the agreement is true
+  // by construction (@SCN-TRM-001). It used to be a second copy of the reading beside a comment
+  // asserting the two must agree, and nothing anywhere compared them: a divergence did not red, it
+  // posted two credits for one debit, silently, which is precisely the fault the comment named.
   return (
-    bare(row.scnId) === bare(measurement.scnId) &&
-    bare(row.checkTag) === bare(measurement.checkTag)
+    bareTerm(row.scnId) === bareTerm(measurement.scnId) &&
+    bareTerm(row.checkTag) === bareTerm(measurement.checkTag)
   );
 }
 

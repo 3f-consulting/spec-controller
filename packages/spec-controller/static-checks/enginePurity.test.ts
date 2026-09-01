@@ -36,8 +36,13 @@ import {
  *
  * 28 → 31 at 3F-2872: the domain's three coded-fault modules (`qualityCheckFault.ts`,
  * `qualityCheckFaultMessages.ts`, `qualityCheckReconciliationFault.ts`).
+ *
+ * 31 → 32 at 3F-2976: `lib/bareTerm.ts`, the ONE reading of what a term bare is, lifted out of the
+ * seven files that each spelled it for themselves (@SCN-TRM-001). The floor moves because the
+ * population did — the walk collects one more production file, which is the fact this count exists
+ * to make loud.
  */
-const CORE_SRC_FILE_COUNT = 31;
+const CORE_SRC_FILE_COUNT = 32;
 
 describe("[SCN-EPG-001] the reconciliation engine imports nothing impure and references no IO", () => {
   it("flags an engine file that imports from an impure sibling layer", () => {

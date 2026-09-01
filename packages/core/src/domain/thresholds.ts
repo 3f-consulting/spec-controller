@@ -46,6 +46,9 @@
  * has to get right. A `false` here would be the same sentence in a term every existing row would
  * have to grow.
  */
+
+import { bareTerm } from "../lib/bareTerm.js";
+
 export interface ThresholdBar {
   /** The number the measurement is compared against. */
   threshold: number;
@@ -146,21 +149,17 @@ function barOf(entry: unknown): ThresholdBar | null {
 export function thresholdsOf(entries: Readonly<Record<string, unknown>>): ThresholdRegistry {
   const registry = new Map<string, Map<string, ThresholdBar | null>>();
   for (const [scnKey, checks] of Object.entries(entries)) {
-    const scnId = bare(scnKey);
+    const scnId = bareTerm(scnKey);
     if (scnId === "" || typeof checks !== "object" || checks === null) continue;
     const bars = new Map<string, ThresholdBar | null>();
     for (const [checkKey, entry] of Object.entries(checks as Record<string, unknown>)) {
-      const checkTag = bare(checkKey);
+      const checkTag = bareTerm(checkKey);
       if (checkTag === "") continue;
       bars.set(checkTag, barOf(entry));
     }
     if (bars.size > 0) registry.set(scnId, bars);
   }
   return registry;
-}
-
-function bare(key: string): string {
-  return key.replace(/^@/, "").trim();
 }
 
 /**

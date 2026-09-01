@@ -26,6 +26,18 @@
 // not public — the form is spec-controller's own reading convention, not a v1 contract.
 export { parseScnCitation, parseScnCitations } from "./lib/scnCitation.js";
 
+// `bareTerm` — the ONE reading of what a term BARE is: whitespace around it is not part of it, and
+// only a LEADING @ is a sigil. Shared because it was hand-copied seven times and the copies carried
+// the same anchored-strip-before-trim ordering, so a term a target typed with a stray space in
+// front of its @ was stored still carrying the @ and no bare lookup ever found it again — silently,
+// since an absent key is a legitimate reading everywhere it is asked for (3F-2976). The app's own
+// hand-authoring ports — a target's configured deferral tags, and the identity a measurement row is
+// de-duplicated by — reach it here rather than re-deriving it, which is what makes the artefact
+// producer's agreement with `parseMeasuredEvidenceObservations` true by construction instead of by
+// a comment saying it must be. Internal, not public — the sigil convention is spec-controller's own
+// reading of a term, not a v1 contract, and @SCN-API-001 freezes that barrel exactly.
+export { bareTerm } from "./lib/bareTerm.js";
+
 // `checkRegistryOf` / `registeredCheckTags` — the ONE reading of a target's check registry
 // (`domain/checkRegistry`). Shared because the tier-tag floor (@SCN-STG-005) must admit exactly
 // the bare tags the obligation rule raises against: a second reader in `static-checks/` would

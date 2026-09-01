@@ -29,6 +29,8 @@
  * broader `stryker` → `mutation` known-tools reading is a separate question, kept separate.
  */
 
+import { bareTerm } from "../lib/bareTerm.js";
+
 /**
  * The registry as the rule reads it — script handle → its bare check tag.
  *
@@ -52,7 +54,7 @@ export function checkRegistryOf(entries: Readonly<Record<string, unknown>>): Che
   const registry = new Map<string, string>();
   for (const [handle, tag] of Object.entries(entries)) {
     if (typeof tag !== "string") continue;
-    const bare = tag.replace(/^@/, "").trim();
+    const bare = bareTerm(tag);
     if (handle === "" || bare === "") continue;
     registry.set(handle, bare);
   }
