@@ -19,6 +19,7 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { discoverFeatures } from "../src/ingest/ingestScenarios.js";
+import { UnreadableFeatureCorpusError } from "../src/ingest/gherkinValidation.js";
 import {
   resolveDeferralTags,
   resolveCheckRegistry,
@@ -106,14 +107,35 @@ function featuresDirArg(argv: readonly string[]): string | undefined {
   return undefined;
 }
 
+/**
+ * The corpus this run is held over, or a REFUSAL if the Gherkin parser rejects any file in it
+ * (@SCN-GPG-002, 3F-2817).
+ *
+ * EXIT 2, NOT 1, AND THE DISTINCTION IS THE POINT. Exit 1 is this floor's verdict — a scenario
+ * names an @SCN and no evidence tier. A refusal is not a verdict: nothing was concluded, because
+ * the input could not be read. Exit 2 is already this repository's status for exactly that
+ * (@SCN-CLI-014/015/016), so a caller can tell "your scenarios are untiered" from "your feature
+ * files are unreadable" by status alone.
+ *
+ * The parser's own words, verbatim, and as a SENTENCE: an uncaught throw would reach the operator
+ * as Node's stack frames under Node's own exit 1 — the verdict status, wearing a crash.
+ */
+function corpusSources(dir: string | undefined): FeatureFileSource[] {
+  try {
+    const discovered = dir === undefined ? discoverFeatures() : discoverFeatures(dir);
+    return discovered.map((f) => ({ slug: f.slug, source: readFileSync(f.path, "utf8") }));
+  } catch (err) {
+    if (err instanceof UnreadableFeatureCorpusError) {
+      console.error(err.message);
+      process.exit(2);
+    }
+    throw err;
+  }
+}
+
 /** Read the tree, resolve the target's two sets, and exit on the floor's verdict. */
 export function runScnTagsLint(argv: readonly string[]): void {
-  const dir = featuresDirArg(argv);
-  const discovered = dir === undefined ? discoverFeatures() : discoverFeatures(dir);
-  const sources: FeatureFileSource[] = discovered.map((f) => ({
-    slug: f.slug,
-    source: readFileSync(f.path, "utf8"),
-  }));
+  const sources = corpusSources(featuresDirArg(argv));
 
   const packageJson = targetPackageJson();
   const result = lintScnTags(

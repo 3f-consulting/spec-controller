@@ -23,7 +23,7 @@ import {
   parseUntaggedScenarios,
   proseOnlyCodes,
 } from "@3f-consulting/spec-controller-core";
-import { parseErrorsIn, type GherkinParseError } from "./gherkinValidation.js";
+import { UnreadableFeatureCorpusError, type GherkinParseError } from "./gherkinValidation.js";
 import { DEFAULT_DEFERRAL_TAGS } from "../deferralTags.js";
 import {
   evidenceObligations,
@@ -522,16 +522,27 @@ function untaggedScenariosFromFeatures(featuresDir: string | undefined): string[
  * The feature corpus's INTEGRITY CHECKPOINT (@SCN-CLI-016, 3F-1767) — validate every discovered
  * `.feature` with the REAL Gherkin parser and report the files it cannot read.
  *
- * The impure edge (discover + read); the validation itself is the pure `parseErrorsIn`. The
- * feature corpus is the ledger's DEBIT side, and it used to be read by a tag-line scan that
+ * The feature corpus is the ledger's DEBIT side, and it used to be read by a tag-line scan that
  * never consulted a parser — so a malformed tag line silently deleted its scenario, and a corrupt
  * spec could read BALANCED. A file the parser rejects is one cucumber would refuse to run: the
  * CLI halts on it (exit 2) rather than reconciling a corpus that is a fiction.
+ *
+ * THIS IS NOW THE CATCH SITE, NOT THE CALL SITE (@SCN-GPG-001, 3F-2817). The validation moved
+ * into `discoverFeatures`, which REFUSES an unreadable corpus rather than returning one, so every
+ * corpus reader inherits the refusal instead of each restating it. What is left here is the
+ * translation back into the list this CLI edge already prints — same files, same order, same
+ * verbatim parser messages, so `balance`'s behaviour is unchanged. Anything that is not a corpus
+ * refusal is not ours to interpret and rethrows.
  */
 export function featureCorpusParseErrors(featuresDir: string | undefined): GherkinParseError[] {
-  const features =
-    featuresDir !== undefined ? discoverFeatures(featuresDir) : discoverFeatures();
-  return features.flatMap((f) => parseErrorsIn(f.path, readFileSync(f.path, "utf8")));
+  try {
+    if (featuresDir !== undefined) discoverFeatures(featuresDir);
+    else discoverFeatures();
+    return [];
+  } catch (err) {
+    if (err instanceof UnreadableFeatureCorpusError) return [...err.errors];
+    throw err;
+  }
 }
 
 /**

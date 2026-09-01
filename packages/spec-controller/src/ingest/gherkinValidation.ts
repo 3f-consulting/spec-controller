@@ -69,3 +69,30 @@ export function parseErrorsIn(file: string, source: string): GherkinParseError[]
     return [{ file, message }];
   }
 }
+
+/**
+ * The corpus-level REFUSAL (@SCN-GPG-001, 3F-2817). A parse failure is reported per file by
+ * `parseErrorsIn` above; this is how a reader of the WHOLE corpus says no.
+ *
+ * WHY IT CARRIES EVERY FILE. The balance CLI already names every unparseable file it found
+ * (@SCN-CLI-016), and a refusal raised at the first bad one would silently narrow that message —
+ * a behaviour change dressed as an implementation detail. So the discovery collects the corpus
+ * and refuses ONCE, carrying the lot in discovery order.
+ *
+ * The rendered message is the parser's words, per file, verbatim: a reader must be told WHAT
+ * broke by the parser rather than by our paraphrase of it.
+ */
+export class UnreadableFeatureCorpusError extends Error {
+  readonly errors: readonly GherkinParseError[];
+
+  constructor(errors: readonly GherkinParseError[]) {
+    super(
+      [
+        "The feature corpus contains a file that could not be parsed as Gherkin:",
+        ...errors.map(({ file, message }) => `${file}\n${message}`),
+      ].join("\n")
+    );
+    this.name = "UnreadableFeatureCorpusError";
+    this.errors = errors;
+  }
+}

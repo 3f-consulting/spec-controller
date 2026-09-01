@@ -13,6 +13,8 @@ import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
+import { UnreadableFeatureCorpusError, parseErrorsIn } from "./gherkinValidation.js";
+
 /** A code is valid when it is 2–5 uppercase alphanumerics. */
 const CODE_PATTERN = /^[A-Z0-9]{2,5}$/;
 
@@ -89,19 +91,39 @@ function featuresDir(): string {
   return join(process.cwd(), "features");
 }
 
-/** Discover every feature file on disk and its header code. */
+/**
+ * Discover every feature file on disk and its header code — REFUSING a corpus the Gherkin
+ * parser rejects (@SCN-GPG-001, 3F-2817).
+ *
+ * The refusal lives HERE, in the one reader every corpus consumer already goes through, so a
+ * consumer INHERITS it rather than restating it. It is not a second parser: it is the existing
+ * `parseErrorsIn` — cucumber's own — reached from the shared discovery instead of only from the
+ * balance CLI's edge. One answer to "what is a feature file".
+ *
+ * WHY THE WHOLE CORPUS, NOT THE FIRST BAD FILE. `featureCorpusParseErrors` reports every
+ * unreadable file and the balance CLI prints them all (@SCN-CLI-016). Refusing at the first
+ * failure would silently narrow that message, so every file is parsed and the refusal is raised
+ * once, carrying the lot in discovery order.
+ *
+ * And NO PARTIAL CORPUS is ever returned: a caller that could scan the readable half of a
+ * rejected tree would be back to reporting a verdict over a corpus it cannot read.
+ */
 export function discoverFeatures(dir: string = featuresDir()): DiscoveredFeature[] {
-  return readdirSync(dir)
+  const files = readdirSync(dir)
     .filter((name) => name.endsWith(".feature"))
     .sort()
     .map((name) => {
       const path = join(dir, name);
-      const source = readFileSync(path, "utf8");
-      return {
-        slug: name.replace(/\.feature$/, ""),
-        path,
-        featureCode: extractFeatureCode(source),
-        scenarioCodes: parseScenarioCodes(source),
-      };
+      return { name, path, source: readFileSync(path, "utf8") };
     });
+
+  const parseErrors = files.flatMap(({ path, source }) => parseErrorsIn(path, source));
+  if (parseErrors.length > 0) throw new UnreadableFeatureCorpusError(parseErrors);
+
+  return files.map(({ name, path, source }) => ({
+    slug: name.replace(/\.feature$/, ""),
+    path,
+    featureCode: extractFeatureCode(source),
+    scenarioCodes: parseScenarioCodes(source),
+  }));
 }

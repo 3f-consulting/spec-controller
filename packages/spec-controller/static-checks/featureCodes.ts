@@ -197,6 +197,12 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     status: "feature-code-used",
     note: "human-facing message prose off the mutated surface — a domain invariant raises a fault named by a numeric CODE carrying its parameters as fields, and the prose that renders it lives in a catalogue held as data and excluded from the mutate glob, so the mutants that pinned wording cease to exist and what stays mutable is the logic deciding which fault and with what parameters (3F-2237)",
   },
+  {
+    code: "GPG",
+    slug: "gherkin-parse-gate",
+    status: "feature-code-used",
+    note: "the Gherkin parse gate — the feature corpus's integrity checkpoint moved OUT of the balance CLI's edge and INTO the shared feature-file discovery, so every corpus reader inherits the refusal rather than restating it; three line-scanning checks had twice reported green over a file cucumber could not parse at all (3F-2817)",
+  },
 ];
 
 /** A single lint finding. */
