@@ -40,6 +40,7 @@ import { authoredTags, SCN_TOKEN_RE, tagLineTokens } from "./vocabTagGrammar.js"
 import { configKeySegments } from "./configKeys.js";
 import { homographSense, singularise } from "./wordForms.js";
 import { GENERIC_ALLOWLIST } from "./vocabAllowlist.js";
+import { classifyPath } from "./fileKind.js";
 import {
   APPROVED_WORDS, BANNED_WORDS, CLASS_NOUN_PHRASE_WORDS, DOMAIN_WORDS, ENTRY_DOMAIN_COMPANIONS,
   FULL_TERM_ONLY, GUARD_QUALIFIERS, HOMOGRAPH_QUALIFIERS, REJECTED_ALIAS_TO_CANONICAL,
@@ -445,26 +446,6 @@ function proseSegments(region: TsRegion | { text: string; line: number }, file: 
     segs.push({ surface, file, line: region.line + idx, mode: "prose", text });
   });
   return segs;
-}
-
-function classifyPath(relPath: string): {
-  kind: "feature" | "steps" | "render-ts" | "ts" | "json" | "yaml" | "docs" | "other";
-  fixture: boolean;
-} {
-  const p = relPath.replace(/\\/g, "/");
-  const base = p.split("/").pop() ?? p;
-  const fixture =
-    p.includes("tests/fixtures/") || p.startsWith("runs/") || /golden|snapshot/i.test(p);
-  let kind: ReturnType<typeof classifyPath>["kind"] = "other";
-  if (p.endsWith(".feature")) kind = "feature";
-  else if (p.includes("tests/steps/") && p.endsWith(".ts")) kind = "steps";
-  else if ((p.includes("src/render/") || p.includes("src/output/")) && p.endsWith(".ts")) kind = "render-ts";
-  else if (p.endsWith(".ts")) kind = "ts";
-  else if (base === "package.json") kind = "docs";
-  else if (p.endsWith(".json")) kind = "json";
-  else if (p.endsWith(".yml") || p.endsWith(".yaml")) kind = "yaml";
-  else if (p.endsWith(".md") || base === "README.md" || p.startsWith("doc/")) kind = "docs";
-  return { kind, fixture };
 }
 
 /** Filename segment(s): the path minus its final extension, name-mode. */

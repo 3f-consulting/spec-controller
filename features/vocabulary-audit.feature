@@ -653,9 +653,11 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
     yields ONE SEGMENT PER NAME, so the keyword is judged alone and the word that qualifies it
     is not in the sequence either — the `follows` qualifier cannot be satisfied in TypeScript
     source AT ALL. It looked satisfied only because the ambient declarations this repository
-    ships sit in `.d.mts` files, which no rule reads as TypeScript, so their whole line is read
-    as prose and the qualifier happens to land beside the verb. In real `.ts` source both the
-    line-initial and the exported form red. So a name segment now carries the NEXT name on its
+    ships sit in `.d.mts` files, which NO RULE READ AS TYPESCRIPT AT THE TIME, so their whole
+    line was read as prose and the qualifier happened to land beside the verb. (That file-kind
+    hole is closed — see the Rule below, @SCN-VOC-022 — so the accident is no longer available
+    to green this one; the lookahead this Rule adds is what carries it now.) In real `.ts`
+    source both the line-initial and the exported form red. So a name segment carries the NEXT name on its
     line, and the qualifier is resolved against the SOURCE where the judged sequence has run
     out. That is a one-word lookahead, not a widening: the qualifier list is unchanged, so the
     verb still earns grammar only when a declaration keyword genuinely follows it.
@@ -680,6 +682,60 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
       And a word carrying no homograph ruling is read as neither
       And the verb in keyword position in TypeScript source is read as grammar, the keyword qualifying it from the next name on the line
       And the verb as a bare name in TypeScript source, with no keyword after it, is still read as vocabulary
+
+  Rule: a module is read as source whatever extension carries it, so `.d.mts` judges as `.ts` does
+
+    THE FILE-KIND TEST WAS A SPELLING TEST (@SCN-VOC-022, 3F-2434). `classifyPath` asked
+    `endsWith(".ts")` three times over. `.mts` does not end with `.ts`, so every ambient type
+    file this repository ships fell past every code branch — and past every data branch
+    too, all the way to the final else. The five `.d.mts` files were never audited as code, and
+    neither were the five `.mjs` modules beside them: ten real source files, judged as English.
+
+    IT LANDED ON `docs`, WHICH IS THE SECOND FALSEHOOD AND ON A DIFFERENT AXIS. The first is how
+    a file is JUDGED; this is what the tool REPORTS ABOUT ITSELF. Falling to the final else means
+    `kind = "other"`, and `other` renders as the `docs` surface — so the coverage matrix has been
+    crediting documentation with ten source files. A reader auditing the auditor saw a docs
+    surface that was partly code and a code surface missing a tenth of the tree.
+
+    IT IS A WATERMELON GENERATOR, WHICH IS WHY IT IS ITS OWN RULE AND NOT A TYPO FIX. The two
+    paths judge differently — identifier segmentation and NAME-mode escalation against
+    prose-per-line — so a rule could look PROVEN against `.d.mts` evidence while being
+    unreachable in the file kind it was written for. That is exactly what happened to the
+    homograph rule @SCN-VOC-018 one Rule above: its `follows` qualifier could not be satisfied
+    in TypeScript source AT ALL, and the thirteen `export declare const` sites that appeared to
+    green it greened by accident of file kind. A green earned in the wrong mode is not a green.
+    (This paragraph must not BEGIN a line with the @-token — Gherkin reads a leading @ as a tag
+    line and reds with "A tag may not contain whitespace", which is exactly what it did here.)
+
+    MEASURED, BEFORE AND AFTER. Over this tree the ten misclassified files carried 214 flagged
+    names as prose and carry 334 as source. NO FLAGGED WORD ANYWHERE IN THE TREE DISAPPEARS —
+    not one, which is the finding that makes the change safe to adopt wholesale — and seven
+    words appear that the audit could not previously see at all. Reading code as prose does not
+    merely mis-label a surface: it UNDER-REPORTS, because a prose line is judged whole while a
+    code region is judged name by name. The movement is one-directional for that reason.
+
+    SO THE RULE IS STATED AS AN EQUIVALENCE, NOT AS A LIST. The extension list is how it is
+    achieved and would drift the moment a new one appears; what must hold is that the SAME
+    construct judges the same whichever module extension carries it. The scenario asserts the
+    other direction too — a prose file is still prose — because an assertion in one direction
+    alone would survive a test that answered "source" for everything, which is the mirror of
+    the defect and no better.
+
+    WHAT THE RULE REACHES AND WHAT THE EVIDENCE EXERCISES ARE NOT THE SAME SET, AND SAYING SO IS
+    THE POINT. Stated by kind, the rule covers `.cts`, `.cjs` and `.js` by construction. This
+    tree carries no `.cts` or `.cjs` at all, so the arm exercises the three that exist — `.ts`,
+    `.d.mts`, `.mjs` — rather than manufacturing a fixture whose only purpose is to make the
+    list look complete. A branch asserted over an empty set greens by having nothing to judge,
+    and that is the vacuity this feature refuses elsewhere. The gap is named here instead.
+
+    @unit @integration @SCN-VOC-022
+    Scenario: the same source judges identically whatever module extension carries it, and a prose file is still prose
+      Given one source text carrying an identifier, a comment and a string
+      And a corpus placing that text under each module extension this tree carries, and under a prose extension
+      When the vocabulary audit runs over the module-extension corpus
+      Then every module extension yields the same flagged words on the same surfaces
+      And no module extension contributes a row on the documentation surface
+      And the prose file is still read as prose, on the documentation surface
 
   Rule: this tree obeys the vocabulary triage it publishes, on all three of its checks
 

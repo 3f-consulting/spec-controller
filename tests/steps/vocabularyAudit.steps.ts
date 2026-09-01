@@ -827,3 +827,123 @@ Then("the retired-form handle value is not flagged", function () {
       `got:\n${JSON.stringify(rows)}`
   );
 });
+
+// -------------------------------------------------------------------------
+// @SCN-VOC-022 — a module is read as source whatever extension carries it
+// -------------------------------------------------------------------------
+
+/**
+ * The extensions THIS TREE CARRIES. The predicate is stated by kind, so it also reaches
+ * `.cts`, `.cjs` and `.js`; the tree holds no `.cts` or `.cjs`, and the ruling for this slice
+ * was to exercise what exists rather than manufacture a fixture whose only purpose is to make
+ * the list look complete. A branch asserted over an empty set greens by having nothing to
+ * judge. The Rule preamble names the gap instead.
+ */
+const VOC022_MODULE_PATHS = ["src/buildSupply.ts", "src/buildSupply.d.mts", "src/buildSupply.mjs"];
+
+/** The prose file that holds the other direction — the same text, read as prose. */
+const VOC022_PROSE_PATH = "doc/notes.md";
+
+/**
+ * One text carrying all three region shapes a code file has. `supply` is the retired evidence
+ * word, so every region yields a row: an all-approved plant would let two empty row sets match
+ * and prove nothing.
+ */
+const VOC022_PLANT = [
+  "// the comment mentions supply",
+  "export function buildSupply(): string {",
+  '  return "supply";',
+  "}",
+  "",
+].join("\n");
+
+// @SCN-VOC-022
+Given("one source text carrying an identifier, a comment and a string", function () {
+  // The plant is a module-scope constant; this step names it, so the scenario reads as the
+  // Rule does rather than opening on a corpus that appeared from nowhere.
+  assert.match(VOC022_PLANT, /buildSupply/, "the plant must carry an identifier");
+  assert.match(VOC022_PLANT, /^\/\/ /m, "the plant must carry a comment");
+  assert.match(VOC022_PLANT, /"supply"/, "the plant must carry a string");
+});
+
+// @SCN-VOC-022
+Given(
+  "a corpus placing that text under each module extension this tree carries, and under a prose extension",
+  function () {
+    const dir = mkdtempSync(join(tmpdir(), "spec-controller-voc022-"));
+    for (const rel of [...VOC022_MODULE_PATHS, VOC022_PROSE_PATH]) {
+      mkdirSync(join(dir, dirname(rel)), { recursive: true });
+      writeFileSync(join(dir, rel), VOC022_PLANT);
+    }
+    gitIn(dir, "init", "-q", "-b", "main");
+
+    // CONTROL PROBE — git must return every plant, or an absent row would mean "not scanned"
+    // rather than "scanned and judged as code", and those look identical in the manifest.
+    const seen = gitIn(dir, "ls-files", "--cached", "--others", "--exclude-standard")
+      .split("\n")
+      .filter((l) => l !== "");
+    for (const rel of [...VOC022_MODULE_PATHS, VOC022_PROSE_PATH])
+      assert.ok(seen.includes(rel), `git must return the plant ${rel}; it returned:\n${seen.join("\n")}`);
+
+    corpusRoot = dir;
+  }
+);
+
+// @SCN-VOC-022
+When("the vocabulary audit runs over the module-extension corpus", function () {
+  auditRun = spawnAudit(corpusRoot, "--manifest", "manifest.csv");
+});
+
+/** The manifest rows for one planted path, with the filename segment dropped. */
+function voc022RowsFor(path: string): Record<string, string>[] {
+  return parseManifest(manifestCsv()).filter(
+    (r) => r["file"] === path && r["surface"] !== "filenames"
+  );
+}
+
+/** A row reduced to what the equivalence is ABOUT — the surface it landed on and the word. */
+const voc022Judged = (rows: Record<string, string>[]) =>
+  rows.map((r) => `${r["surface"]}|${r["line"]}|${r["current"]}`).sort();
+
+// @SCN-VOC-022
+Then("every module extension yields the same flagged words on the same surfaces", function () {
+  const [first, ...rest] = VOC022_MODULE_PATHS.map((p) => voc022Judged(voc022RowsFor(p)));
+  assert.ok(
+    first!.length > 0,
+    `the plant must flag SOMETHING, or every extension agreeing on nothing would pass; manifest:\n${manifestCsv()}`
+  );
+  for (const [i, other] of rest.entries())
+    assert.deepEqual(
+      other,
+      first,
+      `${VOC022_MODULE_PATHS[i + 1]} must judge exactly as ${VOC022_MODULE_PATHS[0]} does — the ` +
+        `extension is how the rule is achieved, the equivalence is what it promises`
+    );
+});
+
+// @SCN-VOC-022
+Then("no module extension contributes a row on the documentation surface", function () {
+  const docsRows = VOC022_MODULE_PATHS.flatMap((p) =>
+    voc022RowsFor(p).filter((r) => r["surface"] === "docs")
+  );
+  assert.deepEqual(
+    docsRows,
+    [],
+    `a module that fails every code branch falls to the final else and renders as \`docs\`, so the ` +
+      `coverage matrix credits documentation with source; got:\n${JSON.stringify(docsRows)}`
+  );
+});
+
+// @SCN-VOC-022
+Then("the prose file is still read as prose, on the documentation surface", function () {
+  // The other direction. Without it a predicate answering "source" for every path would
+  // satisfy the two assertions above — the mirror of the defect, and no better.
+  const rows = voc022RowsFor(VOC022_PROSE_PATH);
+  assert.ok(rows.length > 0, `the prose plant must flag something; manifest:\n${manifestCsv()}`);
+  const offSurface = rows.filter((r) => r["surface"] !== "docs");
+  assert.deepEqual(
+    offSurface,
+    [],
+    `a genuinely prose file must stay on the docs surface; got:\n${JSON.stringify(offSurface)}`
+  );
+});
