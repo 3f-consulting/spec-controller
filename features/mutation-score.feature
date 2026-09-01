@@ -475,3 +475,70 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
       Then the push borrows only from runs of the sweep taken on the branch it names
       And the branch it names is the one branch this ladder itself gates on push
       And it narrows on that branch rather than on the event, so a hand-dispatch on that branch is a run it can borrow from and one on a feature branch is not
+
+  Rule: the borrow says only what it did — the one sentence claiming a placement stands inside the path that made it
+
+    THE ONE PATH THAT SAID SOMETHING FALSE (3F-2962). Every branch of this step places nothing and
+    says why on stderr; the stretch after the last of them places the file and then asserts the
+    placement as fact. Under the cleared errexit (@SCN-MUT-015, 3F-2960) a failing `mkdir` or `cp`
+    no longer stops the script, so that sentence runs anyway — "borrow: placed mutation-measurement
+    from run 33379199321 of mutation.yml, measured 27000s ago, inside the 129600s window:" — the
+    `jq` beneath it fails against a file that is not there, and the terminal `exit 0` reports
+    success. SCN-MUT-011 then reads `missing`, and `missing` is the sentence this repository
+    reserves for a sweep that LAPSED. A mechanical fault wearing a cadence fault's face, with the
+    log actively pointing the reader at mutation.yml's schedule — the conflation @SCN-MUT-015
+    removed one level up, arriving again one level down.
+
+    NEWLY REACHABLE, NOT NEWLY WRITTEN, AND THE TRADE THAT MADE IT SO WAS RIGHT. Before errexit was
+    cleared this path redded — loud, and the wrong shape, which is what 3F-2960 fixed: the ledger is
+    the single arbiter and it reds honestly on `missing`. What the trade did not carry across was
+    the SENTENCE. Clearing errexit is a guarantee about whether the step REDS, and it says nothing
+    about whether what the step SAYS is true; the two were being held by one mechanism, and only one
+    of them survived the fix.
+
+    AND THIS IS NOT THE ENUMERATION THAT WAS RULED OUT. @SCN-MUT-015 barred a hand-derived list of
+    fallible commands standing as the not-redding guarantee, because three attentive readings of
+    this script produced three different lists. `set +e` and the terminal `exit 0` still supply that
+    guarantee, over every command here and over the one a later edit adds; nothing below touches
+    them. What is added asks a different question and needs no list. This step writes TWO things to
+    stdout — the claim, and the `jq` that renders what was placed beneath it — and exactly one of
+    them is an `echo`. The claim is found as that unredirected `echo`: an identification that names
+    no command and excludes none, where excluding the render BY NAME would have been a list of one.
+    It is guarded because it is the claim, not because anybody enumerated what could fail before it.
+
+    AND WHAT IS HELD IS THE GUARD'S IDENTITY, NOT MERELY ADJACENCY — THE DIFFERENCE BETWEEN THE
+    PROXY AND THE PURPOSE. That nothing executable stands between the claim and a closed guard is a
+    proxy, and a sound one; it is not the sentence this Rule is cited for. Insert an unrelated
+    guarded branch between the placement and the claim and adjacency still holds while the claim has
+    stopped standing inside the path of the thing it claims — true today, and no longer true for the
+    reason it is quoted. So the guard immediately above the claim is identified by what its CONDITION
+    DOES: it performs the placement, naming the path the ledger later reads. Still one command, still
+    one claim, still no enumeration — and a command added in that gap reds this scenario whatever it
+    is, whether or not anybody thought it could fail. @SCN-MUT-015's fourth arm cannot see any of
+    this: it holds that every non-terminal `exit` is a branch's and says why on stderr first, which a
+    new branch satisfies by construction and which the defect never violated. The proxy/purpose slip
+    is written down here rather than left implied because on this axis it is the recurring one — the
+    proxy keeps being right and the prose keeps spending it.
+
+    AND THE WORDING IS NOT ASSERTED. The stderr sentence tells a placement this runner could not make
+    apart from a sweep that has stopped running, because a reader who meets `missing` needs to know
+    which of the two they are looking at. That is the sentence's job, and it is written down here
+    rather than pinned in the arm, for the reason @SCN-LDG-030 gives: an arm that pins wording reds
+    on an improvement to it.
+
+    AND THE RENDER BENEATH THE CLAIM IS LEFT EXACTLY AS IT IS. The `jq` reports what was placed,
+    reached only after the placement succeeded and the shape check passed. A failure there is the
+    runner's, it reports itself on stderr, and it asserts nothing. Guarding it would be symmetry
+    rather than a reason.
+
+    AND THE BORROW IS STILL NOT AN ARBITER. The added branch places nothing, says why on stderr, and
+    exits 0, like every branch above it. `set +e` stays first, `set -u` stays on, `exit 0` stays
+    last. What moves is what the step SAYS on one path, never whether it reds on any.
+
+    @unit @SCN-MUT-018
+    Scenario: a placement this runner could not make says so on stderr — the one sentence claiming a measurement was placed stands inside the path that placed it
+      Given the workflow every push runs
+      When the sentences its borrow step prints about what it placed are read back
+      Then it writes exactly one echo of its own to stdout, and that is the sentence claiming a measurement was placed
+      And that sentence stands immediately inside the path of the guard whose condition performs the placement, so nothing runs between the placing and the claiming
+      And a placement that guard could not make says why on stderr, places nothing, and exits 0 like every branch above it

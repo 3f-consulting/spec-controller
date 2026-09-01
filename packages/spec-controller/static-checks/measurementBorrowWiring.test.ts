@@ -1,6 +1,6 @@
 /**
- * Unit arms for the two scenarios about WHICH run of the sweep a push borrows from
- * (features/mutation-score.feature):
+ * Unit arms for the scenarios about WHICH run of the sweep a push borrows from, and about what the
+ * borrow SAYS it did (features/mutation-score.feature):
  *
  *   @SCN-MUT-015 — the night that found a regression is the night whose measurement crosses, so
  *                  the selection asks whether a run FINISHED and never what verdict followed it
@@ -8,16 +8,19 @@
  *   @SCN-MUT-017 — the number that settles this repository's row was measured on the branch this
  *                  ladder gates, so a hand-dispatch on a feature branch is not a run the selection
  *                  can reach (3F-2963).
+ *   @SCN-MUT-018 — the borrow says only what it did, so the one sentence claiming a placement
+ *                  stands inside the path of the guard that made it (3F-2967).
  *
- * TWO SCENARIOS, ONE FILE, BECAUSE THEY READ ONE LINE. Both narrow the same `gh run list`, along
- * axes that do not touch: one asks WHICH VERDICT it must not read, the other WHICH LINE the run
- * was taken on. They share every helper below, and an edit that broke the walk would otherwise
- * have to be caught twice.
+ * THREE SCENARIOS, ONE FILE, BECAUSE THEY READ ONE STEP. The first two narrow the same
+ * `gh run list`, along axes that do not touch: one asks WHICH VERDICT it must not read, the other
+ * WHICH LINE the run was taken on. The third asks what that step SAYS once it has chosen. All three
+ * reach the step through the same walk, and an edit that broke it would otherwise have to be caught
+ * three times.
  *
- * Bidirectional evidence (Evidence Manifesto §9): the `[SCN-MUT-015]` / `[SCN-MUT-017]` ids in the
- * describe / it strings below match their scenarios' tags, so a grep of either id returns both
- * halves of that pair. `@unit`-only — Cucumber skips them; these Vitest arms ARE the observed
- * evidence.
+ * Bidirectional evidence (Evidence Manifesto §9): the `[SCN-MUT-015]` / `[SCN-MUT-017]` /
+ * `[SCN-MUT-018]` ids in the describe / it strings below match their scenarios' tags, so a grep of
+ * any of them returns both halves of that pair. `@unit`-only — Cucumber skips them; these Vitest
+ * arms ARE the observed evidence.
  *
  * ONE CLAIM, TWO HALVES, AND THE SECOND ONE USED TO BE A COMMENT'S. Which run the borrow selects
  * decides whether a regression's number can cross at all; whether the sweep left that number
@@ -45,6 +48,8 @@ import { fileURLToPath } from "node:url";
 
 import { describe, it, expect } from "vitest";
 import { parse } from "yaml";
+
+import { MEASUREMENT_ARTEFACT_PATH } from "./measurementArtefact.js";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
@@ -315,5 +320,99 @@ describe("[SCN-MUT-017] the number that settles this repository's row was measur
     // a term nobody wrote down is the term a later tidy-up adds for symmetry (@SCN-MUT-016's
     // reasoning, applied to the flag that is NOT there rather than the one that is).
     expect(selection()).not.toMatch(/--event\b/);
+  });
+});
+
+/**
+ * What the borrow step's shell actually runs, in order — the comments and blanks it never sees
+ * dropped.
+ *
+ * A THIRD READER OF THE SAME STEP, AND DELIBERATELY NOT A REFACTOR OF THE FIRST. @SCN-MUT-015's
+ * fourth arm computes this same list inline. Lifting it out from under that arm would be a
+ * behaviour-preserving touch of a scenario this slice does not own — a Read, which owes its own
+ * sub-issue (Scenario CRUD). Two lines stand duplicated on purpose rather than reaching across
+ * that boundary for tidiness.
+ */
+function borrowCommands(): string[] {
+  return (borrowStep().run ?? "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line !== "" && !line.startsWith("#"));
+}
+
+/**
+ * Where the step makes its one claim of its own, refused unless there is exactly one.
+ *
+ * IDENTIFIED BY SHAPE, NAMING NOTHING. This step writes TWO things to stdout — this sentence and
+ * the `jq` that renders what was placed beneath it — and only one of them is an `echo`. Excluding
+ * the render BY NAME would be a hand-derived list of one, which is the instrument 3F-2960's Ruling
+ * 2 barred; "is an `echo`, is not redirected" excludes nothing and enumerates nothing.
+ *
+ * EXACTLY ONE, BECAUSE THE CLAIM IS SINGULAR (`gatedPushBranch`'s precedent). "The sentence
+ * claiming a placement" stops meaning anything the moment there are two, and the honest response
+ * is a red naming the ambiguity rather than a silent `[0]` that keeps passing.
+ */
+function theClaimIndex(commands: readonly string[]): number {
+  const found = commands.flatMap((line, at) =>
+    /^echo\b/.test(line) && !line.endsWith(">&2") ? [at] : [],
+  );
+  if (found.length !== 1) {
+    throw new Error(
+      `the borrow step writes ${found.length} echoes of its own to stdout; "the sentence claiming a placement" needs exactly one.`,
+    );
+  }
+  return found[0]!;
+}
+
+/** The `if` opening the block that the `fi` at `from` closes, walked back on nesting depth. */
+function theOpeningIf(commands: readonly string[], from: number): number {
+  let depth = 0;
+  for (let at = from; at >= 0; at--) {
+    if (/^fi\b/.test(commands[at]!)) depth += 1;
+    else if (/^if\b/.test(commands[at]!)) {
+      depth -= 1;
+      if (depth === 0) return at;
+    }
+  }
+  throw new Error(`the borrow step closes a block at ${from} that no if opens.`);
+}
+
+describe("[SCN-MUT-018] the borrow says only what it did", () => {
+  it("[SCN-MUT-018] writes exactly one echo of its own to stdout, and that is the sentence claiming a measurement was placed", () => {
+    // The refusal inside `theClaimIndex` is half of this arm: a second unredirected `echo` makes
+    // the subject of the two assertions below ill-defined, and reds here rather than downstream.
+    const commands = borrowCommands();
+    expect(commands[theClaimIndex(commands)]).toMatch(/\bplaced\b/);
+  });
+
+  it("[SCN-MUT-018] stands that sentence immediately inside the path of the guard whose condition performs the placement", () => {
+    // ADJACENCY IS THE PROXY; THE GUARD'S IDENTITY IS THE PURPOSE, AND BOTH ARE ASSERTED. That
+    // nothing executable stands between the claim and a closed guard is sound and insufficient:
+    // an unrelated guarded branch dropped into that gap satisfies it while the claim has stopped
+    // standing inside the path of the thing it claims. So the guard is required to be the
+    // PLACEMENT's — its condition names the path the ledger later reads.
+    const commands = borrowCommands();
+    const claim = theClaimIndex(commands);
+    expect(commands[claim - 1]).toBe("fi");
+    // MEASUREMENT_ARTEFACT_PATH rather than a literal, so the borrow and the ledger's own reader
+    // stay ONE fact: a path that moved in one and not the other reds instead of passing on two
+    // agreeing strings (`sweepVerdictWiring` chases the producer by this same constant).
+    expect(withEnv(commands[theOpeningIf(commands, claim - 1)]!, borrowStep().env)).toContain(
+      MEASUREMENT_ARTEFACT_PATH,
+    );
+  });
+
+  it("[SCN-MUT-018] lets a placement that guard could not make say why on stderr, place nothing, and exit 0 like every branch above it", () => {
+    // The borrow is still not an arbiter (3F-2947's non-negotiable 1): the branch this Rule adds
+    // behaves as every branch above it does. Its length is asserted because "places nothing" is
+    // the claim — a command added inside it would be the branch doing something.
+    const commands = borrowCommands();
+    const claim = theClaimIndex(commands);
+    const branch = commands.slice(theOpeningIf(commands, claim - 1) + 1, claim - 1);
+    expect({ says: branch.at(-2)?.endsWith(">&2"), leaves: branch.at(-1), does: branch.length }).toEqual({
+      says: true,
+      leaves: "exit 0",
+      does: 2,
+    });
   });
 });

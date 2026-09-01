@@ -351,8 +351,30 @@ jobs:
 
           # A PLAIN COPY, BECAUSE NOTHING HAS POSTED YET. `runs/` is gitignored with no
           # re-includes, so on a fresh checkout the first contributor to a job is what creates it.
-          mkdir -p runs/self-balance
-          cp "${found}" runs/self-balance/measurements.json
+          #
+          # AND IT IS GUARDED BECAUSE THE LINE UNDER IT MAKES A CLAIM (3F-2962, @SCN-MUT-018).
+          # Clearing errexit above is a guarantee about whether this step REDS; it says nothing
+          # about whether what the step SAYS is true, and the two used to be held by one mechanism.
+          # Unguarded, a failed `mkdir` or `cp` fell straight through to that sentence, which
+          # asserted a placement that had not happened; the `jq` then failed against a file that was
+          # not there and the terminal `exit 0` reported success. This is the ONE branch here whose
+          # purpose is what is said rather than whether the step reds, and it counts nothing: the
+          # not-redding guarantee is still `set +e` plus the last line, over every command in this
+          # script whether or not anybody enumerated it.
+          #
+          # THE TWO COMMANDS ARE ONE CONDITION ON PURPOSE. The claim is that THE PLACEMENT
+          # succeeded, and the placement is the `mkdir` AND the `cp`. Guarding them separately
+          # would be two claims, and would rebuild at the scale of two the hand-derived list ruled
+          # out at the scale of nine.
+          #
+          # AND THE SENTENCE CONTRADICTS THE LAPSE READING RATHER THAN INHERITING IT. The window
+          # branch above has already taught this log that `missing` means the sweep has stopped
+          # running. Left generic, this branch would borrow that reading and send the reader to
+          # mutation.yml's schedule over a fault in this runner — the defect moved, not closed.
+          if ! { mkdir -p runs/self-balance && cp "${found}" runs/self-balance/measurements.json; }; then
+            echo "borrow: could not place ${ARTEFACT} from run ${id} of ${WORKFLOW} into runs/self-balance; nothing is placed. SCN-MUT-011 will read missing, and this is NOT the lapsed sweep that sentence usually reports: the measurement arrived and this runner could not put it where the ledger reads it." >&2
+            exit 0
+          fi
           echo "borrow: placed ${ARTEFACT} from run ${id} of ${WORKFLOW}, measured ${age}s ago, inside the ${MAX_AGE}s window:"
           jq -r '.measurements[] | "borrow:   \(.scnId) \(.checkTag) = \(.measured)"' runs/self-balance/measurements.json
 
