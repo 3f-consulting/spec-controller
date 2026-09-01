@@ -216,10 +216,19 @@ jobs:
       - name: Borrow the scheduled sweep's measurement
         env:
           GH_TOKEN: ${{ github.token }}
-          # The three terms that are the whole contract with mutation.yml: which schedule took the
-          # measurement, what it left the measurement under, and how long that number stays close
-          # enough to true about this code — 36 hours, in seconds.
+          # The four terms that are the whole of which measurement crosses: which workflow took it,
+          # which LINE it was taken on (3F-2955), what it left the measurement under, and how long
+          # that number stays close enough to true about this code — 36 hours, in seconds.
+          #
+          # BRANCH IS WRITTEN OUT RATHER THAN DERIVED FROM `github.ref_name`, WHICH IS THE ACCEPTED
+          # COST STATED (@SCN-MUT-017). This ladder also runs on `pull_request`, and nothing sweeps
+          # a feature branch — so borrowing the branch UNDER TEST would find no run and read
+          # `missing` on every pull request. A pull request's mutation row is therefore a statement
+          # about the line it is merging into, not about itself, and that is deliberate. The value
+          # is held to `on.push.branches` by a scenario, so a default-branch rename that moves one
+          # and not the other reds rather than leaving the borrow reading a line nobody gates.
           WORKFLOW: mutation.yml
+          BRANCH: main
           ARTEFACT: mutation-measurement
           MAX_AGE: "129600"
         run: |
@@ -258,15 +267,39 @@ jobs:
           # FINISHED and on nothing else. It excludes `queued` and `in_progress` on purpose: a
           # sweep still running has nothing to hand across yet, and selecting it would download
           # nothing and read `missing` for the ten minutes each night the sweep is live.
-          if ! latest="$(gh run list --workflow "${WORKFLOW}" --status completed --limit 1 --json databaseId,createdAt)"; then
-            echo "borrow: could not list runs of ${WORKFLOW}; nothing is placed." >&2
+          #
+          # AND THE NEWEST RUN ON THE LINE THIS LADDER GATES, NEVER THE NEWEST ANYWHERE (3F-2955,
+          # @SCN-MUT-017). `mutation.yml` enables `workflow_dispatch`, so a sweep hand-dispatched on
+          # a feature branch entered this list and, being newest, won it — and its number was placed
+          # and reconciled a MAIN push's row. Measured on this repository on 2026-08-30: four
+          # dispatches on a feature branch sat newer than that day's nightly for ten hours, each
+          # inside the window, none distinguishable downstream from the nightly they displaced. It
+          # fails OPEN: a branch that adds tests sweeps to a higher kill count, and borrowed onto
+          # main that number reconciles `satisfied` over a main whose own kills had fallen.
+          #
+          # THE TERM IS THE BRANCH AND DELIBERATELY NOT THE EVENT. `--event schedule` excludes the
+          # same dispatches and is the wrong instrument three times over: it refuses a hand-dispatch
+          # ON this branch — a measurement of the very tree being judged, forced to read `missing`,
+          # which is the mislabelled red @SCN-MUT-015 spent a slice removing; it reaches the right
+          # answer only because GitHub resolves cron against the default branch, so a second
+          # schedule or a change in that resolution silently selects a different set with nothing
+          # redding; and it names PROVENANCE where the claim is about the ARTEFACT — which tree was
+          # mutated. The scenario asserts the absence of an event filter for that reason, because a
+          # term nobody wrote down is the term a later tidy-up adds for symmetry.
+          #
+          # AND IT BUYS THE LINE, NOT THE TREE. `main` at 03:17 and `main` at 14:00 are different
+          # trees; the window above is the only thing bounding that drift. Ancestry of the run's
+          # head commit is the tighter instrument and is not built here — it owes a fence for the
+          # shallow checkout, and its own @SCN.
+          if ! latest="$(gh run list --workflow "${WORKFLOW}" --branch "${BRANCH}" --status completed --limit 1 --json databaseId,createdAt)"; then
+            echo "borrow: could not list runs of ${WORKFLOW} on ${BRANCH}; nothing is placed." >&2
             exit 0
           fi
 
           id="$(printf '%s' "${latest}" | jq -r '.[0].databaseId // empty')"
           when="$(printf '%s' "${latest}" | jq -r '.[0].createdAt // empty')"
           if [ -z "${id}" ] || [ -z "${when}" ]; then
-            echo "borrow: ${WORKFLOW} names no finished run carrying both an id and a createdAt; nothing is placed." >&2
+            echo "borrow: ${WORKFLOW} names no finished run on ${BRANCH} carrying both an id and a createdAt; nothing is placed." >&2
             exit 0
           fi
 

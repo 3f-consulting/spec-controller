@@ -407,3 +407,71 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
       Then the step that leaves the measurement behind states no condition of its own, so a sweep that failed leaves no measurement behind at all
       And the step that uploads the operator's report states the condition that runs it whatever the sweep did, so the run that died is still a run an operator can open
       And the runner is given no score it may break the run over, so the sweep's own exit code answers about the sweep rather than about the score
+
+  Rule: the measurement a push borrows was taken on the branch this ladder gates, whatever branch a hand-dispatch reached for
+
+    THE SELECTION IS A CHAIN OF PROXIES, AND THIS IS THE ONE THAT WAS MISSING (3F-2955). What the
+    ledger is asking is whether the number it settles SCN-MUT-011 with was measured about the tree
+    it is judging, and no run says so outright — so the borrow narrows on the facts that stand in
+    for it: the right workflow, a run that FINISHED (@SCN-MUT-015), a number still inside the 36h
+    window. It never narrowed on the LINE. `mutation.yml` enables `workflow_dispatch`, so a sweep
+    hand-dispatched on a feature branch entered that list and, being newest, won it — and its
+    number was placed and reconciled main's row. Measured on this repository on 2026-08-30: four
+    dispatches on a feature branch sat newer than that day's nightly for ten hours, each inside the
+    window, none distinguishable downstream from the nightly they displaced.
+
+    AND IT FAILS OPEN, WHICH IS WHY IT IS THIS AXIS'S FAULT RATHER THAN AN UNTIDINESS. A branch
+    that ADDS tests sweeps to a higher kill count. Borrowed onto main that number reconciles
+    `satisfied` over a main whose own kills had fallen — a regression masked by a measurement about
+    a different line, which is the fault @SCN-MUT-015 closes arriving by the other road. The two
+    are one defect wearing two faces: a number crossing this boundary that is not about the tree
+    being judged.
+
+    THE TERM IS THE BRANCH AND DELIBERATELY NOT THE EVENT, WHICH IS A RULING AND NOT A PREFERENCE.
+    Filtering on `--event schedule` excludes the same feature-branch dispatches and is the wrong
+    instrument three times over. It MANUFACTURES FALSE NEGATIVES: a hand-dispatch ON the gated
+    branch measures that branch's tree and is wanted — the re-run after an infra blip, a fresh
+    number after a large merge — and refusing it forces `missing`, which is the mislabelled red the
+    sibling scenario above spent a whole slice removing, walked back in through the fix for its
+    sibling. Its COUPLING IS INVISIBLE AND NOT OURS: it reaches the right answer only because GitHub
+    resolves cron against the default branch, so a second schedule, a `repository_dispatch`, or a
+    change in how GitHub resolves that ref silently selects a different set with nothing redding,
+    because it still works. And it NAMES THE WRONG SUBJECT: the branch is a fact about the artefact,
+    about which tree was mutated, where the event is a fact about provenance, about who asked.
+    Reading a credit off its provenance rather than off what it is evidence OF is the class of
+    opinion this codebase has spent increments removing. So the selection narrows on the branch,
+    states no event, and the scenario asserts that ABSENCE — for the reason the scenario above it
+    asserts the report upload's `if: always()`: a term nobody wrote down is the term a later
+    tidy-up adds for symmetry.
+
+    THE BRANCH BUYS THE LINE, NOT THE TREE, AND THE SCENARIO BELOW CLAIMS ONLY THE FIRST. `main` at
+    03:17 and `main` at 14:00 are different trees; ten commits can land between the sweep and the
+    push, and the 36h window is the only thing bounding that drift. This closes the different-LINE
+    hole and leaves the different-COMMIT one exactly where it was. The tighter instrument is known
+    and is not built here: take the newest completed run on this branch whose head commit is an
+    ancestor of this push's HEAD, which refuses a measurement taken on a `main` since rewritten
+    under it. It reaches the run object rather than the payload — the fact 3F-2841 already ruled
+    belongs to the run — and it carries a new failure mode to fence, since `actions/checkout`
+    clones shallow and an ancestry test that cannot reach the base owes a branch that places
+    nothing and exits 0 like every other. A later, tighter instrument rather than a competing one.
+
+    ACCEPTED COST, STATED. A `pull_request` build reconciles SCN-MUT-011 against the GATED branch's
+    nightly rather than against its own tree, because nothing sweeps a feature branch. Narrowing on
+    the branch under test instead would make the claim honest and red EVERY pull request — there is
+    no sweep to find — so the cost is taken deliberately: a pull request's mutation row is a
+    statement about the line it is merging into, not about itself. That is why the clause below
+    stops at which branch the run was taken on and does not go on to say the number is about the
+    tree this build is judging, which is true of a push and false of a pull request.
+
+    AND THE BORROW IS STILL NOT AN ARBITER. Nothing here adds a path that reds: the narrowed
+    selection either finds a run or finds none, and finding none is the branch that already places
+    nothing, says why on stderr, and exits 0. What moves is WHICH run's number crosses the
+    boundary, never who judges it once it has.
+
+    @unit @SCN-MUT-017
+    Scenario: the number that settles this repository's row was measured on the branch this ladder gates — a hand-dispatch on a feature branch is not a run this selection can reach
+      Given the workflow every push runs and the workflow that sweeps this repository's domain core
+      When the terms the push states about which of that sweep's runs it selects are read back
+      Then the push borrows only from runs of the sweep taken on the branch it names
+      And the branch it names is the one branch this ladder itself gates on push
+      And it narrows on that branch rather than on the event, so a hand-dispatch on that branch is a run it can borrow from and one on a feature branch is not

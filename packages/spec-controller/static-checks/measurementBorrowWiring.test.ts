@@ -1,10 +1,23 @@
 /**
- * Unit arm for @SCN-MUT-015 — the night that found a regression is the night whose measurement
- * crosses (features/mutation-score.feature, 3F-2956).
+ * Unit arms for the two scenarios about WHICH run of the sweep a push borrows from
+ * (features/mutation-score.feature):
  *
- * Bidirectional evidence (Evidence Manifesto §9): the `[SCN-MUT-015]` ids in the describe / it
- * strings below match the scenario's tag, so a grep of the id returns both halves of the pair.
- * `@unit`-only — Cucumber skips it; this Vitest arm IS the observed evidence.
+ *   @SCN-MUT-015 — the night that found a regression is the night whose measurement crosses, so
+ *                  the selection asks whether a run FINISHED and never what verdict followed it
+ *                  (3F-2956).
+ *   @SCN-MUT-017 — the number that settles this repository's row was measured on the branch this
+ *                  ladder gates, so a hand-dispatch on a feature branch is not a run the selection
+ *                  can reach (3F-2963).
+ *
+ * TWO SCENARIOS, ONE FILE, BECAUSE THEY READ ONE LINE. Both narrow the same `gh run list`, along
+ * axes that do not touch: one asks WHICH VERDICT it must not read, the other WHICH LINE the run
+ * was taken on. They share every helper below, and an edit that broke the walk would otherwise
+ * have to be caught twice.
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the `[SCN-MUT-015]` / `[SCN-MUT-017]` ids in the
+ * describe / it strings below match their scenarios' tags, so a grep of either id returns both
+ * halves of that pair. `@unit`-only — Cucumber skips them; these Vitest arms ARE the observed
+ * evidence.
  *
  * ONE CLAIM, TWO HALVES, AND THE SECOND ONE USED TO BE A COMMENT'S. Which run the borrow selects
  * decides whether a regression's number can cross at all; whether the sweep left that number
@@ -250,5 +263,57 @@ describe("[SCN-MUT-015] the night that found a regression is the night whose mea
     expect(branches.length).toBeGreaterThan(1);
     expect(branches.map((at) => commands[at])).toEqual(branches.map(() => "exit 0"));
     expect(branches.map((at) => commands[at - 1]?.endsWith(">&2"))).toEqual(branches.map(() => true));
+  });
+});
+
+/**
+ * The `on.push.branches` of a workflow, refused unless it names exactly one branch.
+ *
+ * A SECOND, INDEPENDENT WALK OF THE SAME DOCUMENT, WHICH IS WHAT MAKES THE CLAIM BELOW A COUPLING
+ * (@SCN-MUT-017). `stepsOf` descends `jobs.*.steps`; this reads the top-level `on` block. Two
+ * distinct facts about one file — the branch this ladder gates, and the branch it borrows a
+ * measurement about — so asserting they agree is not a file agreeing with itself.
+ *
+ * EXACTLY ONE, BECAUSE THE CLAIM IS SINGULAR. "The one branch this ladder gates on push" is
+ * ill-defined the moment there are two, and the honest response is a red naming the ambiguity
+ * rather than a silent `[0]` that keeps passing while the question it answers has stopped
+ * meaning anything.
+ */
+function gatedPushBranch(file: string): string {
+  const doc: unknown = parse(bytesOf(file));
+  // `on` is YAML 1.1's boolean `true`, which the parser hands back as the key `true`, not "on".
+  const on = isRecord(doc) ? (doc["on"] ?? doc["true"]) : undefined;
+  const push = isRecord(on) ? on["push"] : undefined;
+  const branches = isRecord(push) && Array.isArray(push["branches"]) ? push["branches"] : [];
+  if (branches.length !== 1) {
+    throw new Error(`${file} gates ${branches.length} branches on push; "the one branch this ladder gates" needs exactly one.`);
+  }
+  return String(branches[0]);
+}
+
+describe("[SCN-MUT-017] the number that settles this repository's row was measured on the branch this ladder gates", () => {
+  it("[SCN-MUT-017] borrows only from runs of the sweep taken on the branch it names", () => {
+    // The value is read through `withEnv`, so it resolves whether the term is written inline or
+    // carried in the step's own `env:` beside the other terms of the selection.
+    expect(flagValueOf(selection(), "--branch")).not.toBe("");
+  });
+
+  it("[SCN-MUT-017] names the one branch this ladder itself gates on push", () => {
+    // THE COUPLING, AND THE REASON THE LITERAL STRING IS NOT ASSERTED. Pinning "main" here would
+    // red on a default-branch rename that correctly moved both — a guard failing over a change
+    // that was right. Tying the two facts together instead reds on the rename that moves ONE:
+    // the borrow left reading a branch this ladder no longer gates, which is the fault worth
+    // catching and the one a literal cannot see.
+    expect(flagValueOf(selection(), "--branch")).toBe(gatedPushBranch(LADDER));
+  });
+
+  it("[SCN-MUT-017] narrows on that branch rather than on the event, so a dispatch on the gated branch is still borrowable", () => {
+    // ASSERTED AS AN ABSENCE, WHICH IS THE POINT OF IT. `--event schedule` would exclude the
+    // feature-branch dispatches too and would ALSO refuse a hand-dispatch on the gated branch —
+    // a legitimate measurement of the very tree being judged, forced to read `missing`. Nothing
+    // in the selection line would look wrong afterwards, which is why the absence is held here:
+    // a term nobody wrote down is the term a later tidy-up adds for symmetry (@SCN-MUT-016's
+    // reasoning, applied to the flag that is NOT there rather than the one that is).
+    expect(selection()).not.toMatch(/--event\b/);
   });
 });
