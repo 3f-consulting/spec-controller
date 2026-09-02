@@ -39,7 +39,7 @@ mutation-gates:
   # run cost scales with the scope.
   #
   # THE ALLOWANCE IS ZERO BECAUSE IT WAS MEASURED ZERO. The sweep reports no timeouts and no
-  # no-coverage — every one of the 704 mutants came back Killed or Survived — so there is nothing in
+  # no-coverage — every one of the 697 mutants came back Killed or Survived — so there is nothing in
   # this gate that can move between two runs over identical code, and the first lost kill reds. A
   # timeout is the one status that flips on a slower runner with nothing in the suite having changed,
   # and this gate has none; a gate whose timeout population flaps between runners is what an
@@ -52,14 +52,23 @@ mutation-gates:
   # An order of magnitude apart in speed and not one mutant apart in outcome — which is a stronger
   # claim than "no timeouts were seen once", because a timeout is precisely what a slower machine
   # manufactures. It is the variance this allowance would have absorbed, observed to be nil on the
-  # runner where it would show.
+  # runner where it would show. (That run measured a population of 704, which has since shrunk to
+  # 697 — see the bank-down below. The four statuses it observed are what this paragraph asserts,
+  # and a smaller population does not weaken the claim.)
   #
-  # THIS GATE NEVER REACHES 704 AND IS NOT SUPPOSED TO. The three survivors are 3F-2885's recorded
+  # THIS GATE NEVER REACHES 697 AND IS NOT SUPPOSED TO. The three survivors are 3F-2885's recorded
   # equivalent mutants — two in `qualityCheckReconciliation.ts`, one in `thresholds.ts` — each with
   # its argument written down at its site. They are unkillable by construction, so a reader finding
-  # 701 rather than 704 here is reading a complete gate, not an unfinished one.
+  # 694 rather than 697 here is reading a complete gate, not an unfinished one.
+  #
+  # BANKED DOWN BY HAND, 2026-09-02, FROM 701/704 (3F-3007). 3F-2976 centralised every
+  # `replace(/^@/…)` reading into `packages/core/src/lib/bareTerm.ts`, which is outside the mutate
+  # glob, so seven mutants left `domain/checkRegistry.ts` and `domain/thresholds.ts` with the
+  # expressions that hosted them. All seven were KILLED, and the survivor count is three on both
+  # sides of the move — which is what says this is removed tested code and not a lost kill. Run
+  # 33608027182 reported the fall and refused to write it, as it should.
   domain:
-    detected: 701
-    total: 704
+    detected: 694
+    total: 697
     slack-mutants: 0
     slack-reason: ""
