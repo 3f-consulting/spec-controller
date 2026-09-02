@@ -223,3 +223,54 @@ describe("[SCN-LAD-005] an exclusion naming a script CI does not run reds as sta
     expect(ladder.stale).toEqual([]);
   });
 });
+
+describe("[SCN-LAD-007] an excluded step CI runs behind a gate reds, naming the gates ahead of it", () => {
+  const excluded = [
+    { script: "lint:beta", reason: "reads a pull request's diff and has no answer outside one" },
+  ];
+
+  it("[SCN-LAD-007] an excluded step behind two gates is late, naming both in CI's order", () => {
+    // The gates ahead are NAMED, not counted. The names are what tells a reader which step to
+    // move past what, and they are the same list that says how many unrelated reds can
+    // currently take this step off the board without reporting it unrun.
+    const ladder = deriveLocalLadder(
+      ciConfigRunning("pnpm lint:alpha", "pnpm typecheck", "pnpm lint:beta"),
+      manifest,
+      excluded,
+    );
+
+    expect(ladder.late).toEqual([{ ...excluded[0], gatesAhead: ["lint:alpha", "typecheck"] }]);
+  });
+
+  it("[SCN-LAD-007] the same step run ahead of every gate is not late", () => {
+    // The load-bearing negative. Without it "everything is late" satisfies the assertion above
+    // forever, and no arrangement of any ci.yml could be green.
+    const ladder = deriveLocalLadder(
+      ciConfigRunning("pnpm lint:beta", "pnpm lint:alpha", "pnpm typecheck"),
+      manifest,
+      excluded,
+    );
+
+    expect(ladder.late).toEqual([]);
+    // Still omitted, and the gates behind it still gated. Lateness is a fact ABOUT an
+    // omission, never a replacement for one: a derivation that reported the step late instead
+    // of omitted would red the ladder and lose the printed reason in the same move.
+    expect(ladder.omitted).toEqual(excluded);
+    expect(ladder.gates.map((gate) => gate.script)).toEqual(["lint:alpha", "typecheck"]);
+  });
+
+  it("[SCN-LAD-007] this repository's own ci.yml runs its excluded step ahead of every gate", () => {
+    // THE REAL-TREE PIN, the analogue of [SCN-LAD-005]'s. A rule held only over planted
+    // configs is a rule a reordering of THIS workflow undoes in silence — which is exactly the
+    // defect 3F-3014 was filed for: lint:scn-subissues sat last behind all fifteen gates, and
+    // a stale mutation record redding lint:self-balance cost it three consecutive runs while
+    // nothing reported it unrun.
+    const ladder = deriveLocalLadder(
+      readFileSync(path.join(repoRoot, ".github", "workflows", "ci.yml"), "utf8"),
+      JSON.parse(readFileSync(path.join(repoRoot, "package.json"), "utf8")),
+      CI_ONLY_EXCLUSIONS,
+    );
+
+    expect(ladder.late).toEqual([]);
+  });
+});

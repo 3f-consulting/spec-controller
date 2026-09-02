@@ -52,7 +52,10 @@ commits. A hand-maintained list drifts wherever it is kept; a derivation has not
 than in prose somebody has to keep true. Today that is `lint:scn-subissues`, which
 reconciles the pull request's diff against its ticket: it reads `GITHUB_BASE_SHA` /
 `GITHUB_HEAD_REF` and has no answer outside a PR context, so it runs on your PR rather than
-on your machine. An exclusion excusing a step CI no longer runs reds the ladder.
+on your machine. An exclusion excusing a step CI no longer runs reds the ladder. It also runs
+*first* in CI, ahead of every gate: a step CI is the only place to run has one chance where
+every other gate has two, and a red in anything ahead of it would abort the job and take it
+off the board without reporting it unrun — so the ladder reds if it ever stops running first.
 
 `bash scripts/verify.sh --list` prints the gates without running them.
 

@@ -71,6 +71,18 @@ if (ladder.stale.length > 0) {
   process.exit(1);
 }
 
+for (const entry of ladder.late) {
+  console.error(
+    `local ladder: ${entry.script} is excluded from the local ladder and CI runs it behind ${entry.gatesAhead.length} gate(s) — ${entry.gatesAhead.join(", ")}. It has no local run to fall back on: ${entry.reason}`,
+  );
+}
+if (ladder.late.length > 0) {
+  console.error(
+    "local ladder: move the step ahead of every gate in ci.yml. A red in any gate ahead of it aborts the job and takes it off the board without reporting it unrun, and an excluded step has no second run to lose.",
+  );
+  process.exit(1);
+}
+
 for (const step of ladder.unsupported) {
   console.error(`local ladder: cannot gate ${step.script} — ${step.why}`);
   console.error(`  the step CI runs: ${step.command.split("\n").join(" ⏎ ")}`);

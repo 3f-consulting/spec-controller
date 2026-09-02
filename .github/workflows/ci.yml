@@ -35,6 +35,36 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # The hermetic scenario ⟷ sub-issue gate (ported from an earlier internal tool / an adopter's repository
+      # 3F-834), wired over spec-controller's REAL source on every PR. Every
+      # behaviour-bearing @SCN change must carry its @SCN cite AND be on a ticketed
+      # PR (the Linear-auto-named branch / [3F-NNN] commit prefix) — verified from
+      # the diff + CI metadata ALONE, with NO live Linear call. Wiring it here (not
+      # only over synthetic fixtures) is what makes the guard see real-source drift.
+      # PR-only: it needs the PR diff + base context; on push-to-main there is no PR
+      # base, so it is skipped (parent 3F-1137; @SCN-SSM-001, 3F-1489).
+      #
+      # IT RUNS AHEAD OF EVERY GATE, AND THAT POSITION IS ASSERTED (3F-3014). It is the one
+      # step CI_ONLY_EXCLUSIONS keeps off the local ladder, so CI is its ONLY run — where
+      # every gate below has two. A `run:` step that reds aborts the job, so any gate ahead
+      # of this one can cost it that run while reporting nothing: unreached, not unrun, which
+      # the ledger cannot see because the job dies before the ledger is asked. That is
+      # measured — a stale mutation record redding `lint:self-balance` took this step off the
+      # board for three consecutive commits during 3F-2994, from the end of the job where it
+      # used to sit. Do not move it below a gate: `deriveLocalLadder` reports the arrangement
+      # `late` and `pnpm ladder` reds emitting no gates (@SCN-LAD-007).
+      - name: Lint scenario sub-issue match
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          # The PR's source branch — Linear auto-names it "steven/3f-NNN-…", the
+          # primary ticket-handle source.
+          GITHUB_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          # The PR body is one of the two SCN-exempt trailer sources (the other is
+          # the PR's commit messages); the parser scans both.
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: pnpm lint:scn-subissues
+
       # BUILT SO THE PUBLISHED SURFACE IS COMPILED ON A PULL REQUEST AT ALL (3F-2765). Nothing else
       # in this ladder reads the built form, so before this step existed a `tsc -p` failure in
       # either package's build config reached main and was found by whoever next ran `pnpm build`.
@@ -459,23 +489,3 @@ jobs:
       # invisible to spec-controller's own ledger.
       - name: Self-reconciliation balance
         run: pnpm lint:self-balance
-
-      # The hermetic scenario ⟷ sub-issue gate (ported from an earlier internal tool / an adopter's repository
-      # 3F-834), wired over spec-controller's REAL source on every PR. Every
-      # behaviour-bearing @SCN change must carry its @SCN cite AND be on a ticketed
-      # PR (the Linear-auto-named branch / [3F-NNN] commit prefix) — verified from
-      # the diff + CI metadata ALONE, with NO live Linear call. Wiring it here (not
-      # only over synthetic fixtures) is what makes the guard see real-source drift.
-      # PR-only: it needs the PR diff + base context; on push-to-main there is no PR
-      # base, so it is skipped (parent 3F-1137; @SCN-SSM-001, 3F-1489).
-      - name: Lint scenario sub-issue match
-        if: github.event_name == 'pull_request'
-        env:
-          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          # The PR's source branch — Linear auto-names it "steven/3f-NNN-…", the
-          # primary ticket-handle source.
-          GITHUB_HEAD_REF: ${{ github.event.pull_request.head.ref }}
-          # The PR body is one of the two SCN-exempt trailer sources (the other is
-          # the PR's commit messages); the parser scans both.
-          PR_BODY: ${{ github.event.pull_request.body }}
-        run: pnpm lint:scn-subissues

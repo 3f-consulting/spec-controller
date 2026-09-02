@@ -134,8 +134,15 @@ Given(
   function () {
     // The real exclusion, run by the planted CI — so the entry is satisfied rather than
     // stale, and this scenario says nothing about staleness (that is @SCN-LAD-005's).
+    //
+    // THE EXCLUDED STEP RUNS AHEAD OF THE GATES, AND THE ORDER IS LOAD-BEARING. An excluded
+    // step CI runs BEHIND a gate is the fault @SCN-LAD-007 reds, so planting it second would
+    // red this scenario on a fault it makes no claim about. The gates still follow it, which
+    // is what keeps the assertion below worth making: the exclusion is skipped, not the tail.
+    // The @unit arm in localLadder.test.ts deliberately keeps gates on BOTH sides — extracting
+    // gates around a violating config is a real property, and only a violating config pins it.
     plantedRoot = plant(
-      ["pnpm typecheck", `pnpm ${EXCLUDED_SCRIPT}`, "pnpm lint:alpha"],
+      [`pnpm ${EXCLUDED_SCRIPT}`, "pnpm typecheck", "pnpm lint:alpha"],
       {
         typecheck: "tsc --noEmit",
         [EXCLUDED_SCRIPT]: "tsx lintScnSubIssuesCli.ts",
@@ -204,6 +211,85 @@ Then("the ladder reds, naming the stale entry", function () {
     emitterRun.stdout.trim(),
     "",
     "a ladder that cannot be trusted emits no gates — running a subset is what this stops",
+  );
+});
+
+// @SCN-LAD-007
+/** The gates the late-exclusion plant runs, in the order the planted CI runs them. */
+const GATES_AHEAD = ["typecheck", "lint:alpha"] as const;
+
+/** The manifest both halves of @SCN-LAD-007 share — the same scripts, only the order moves. */
+const LATE_SCRIPTS: Record<string, string> = {
+  typecheck: "tsc --noEmit",
+  [EXCLUDED_SCRIPT]: "tsx lintScnSubIssuesCli.ts",
+  "lint:alpha": "tsx alpha.ts",
+};
+
+Given(
+  "a CI config running the step this repository excludes behind two of its gates",
+  function () {
+    // The fault, planted: the excluded step LAST, both gates ahead of it. A red in either one
+    // aborts the job and costs the excluded step its only run — it has no local ladder to
+    // catch it on a second pass, which is what makes its position load-bearing and no other
+    // step's. Two gates rather than one so the emitter's message has a list to get wrong.
+    plantedRoot = plant(
+      [...GATES_AHEAD.map((script) => `pnpm ${script}`), `pnpm ${EXCLUDED_SCRIPT}`],
+      LATE_SCRIPTS,
+    );
+  },
+);
+
+Then(
+  "the ladder reds, naming the excluded step and the gates that run ahead of it",
+  function () {
+    // TEETH FIRST, message second — the same order @SCN-LAD-005 asserts in, and for the same
+    // reason: an emitter that printed all of this and exited 0 would leave `pnpm verify` green
+    // over a workflow whose one unrunnable gate is unreachable.
+    assert.notEqual(
+      emitterRun.exitCode,
+      0,
+      "an excluded step CI runs behind a gate must RED the ladder, not warn about it. " +
+        `It exited 0 with:\n${emitterRun.stderr}`,
+    );
+    assert.ok(
+      emitterRun.stderr.includes(EXCLUDED_SCRIPT),
+      `the red must name the excluded step. It said:\n${emitterRun.stderr}`,
+    );
+    for (const gate of GATES_AHEAD) {
+      assert.ok(
+        emitterRun.stderr.includes(gate),
+        `the red must name ${gate}, which runs ahead of it. It said:\n${emitterRun.stderr}`,
+      );
+    }
+    assert.equal(
+      emitterRun.stdout.trim(),
+      "",
+      "a ladder that cannot be trusted emits no gates — running a subset is what this stops",
+    );
+  },
+);
+
+Then("the same step run ahead of every gate reds nothing", function () {
+  // THE LOAD-BEARING NEGATIVE, run through the real emitter rather than the decision. Same
+  // scripts, same manifest, only the order moves — so what this half isolates is position and
+  // nothing else. Without it an emitter that redded on every exclusion would satisfy the
+  // assertion above and red every ladder this repository ever builds.
+  const compliant = runEmitter(
+    plant([`pnpm ${EXCLUDED_SCRIPT}`, ...GATES_AHEAD.map((script) => `pnpm ${script}`)], LATE_SCRIPTS),
+  );
+
+  assert.equal(
+    compliant.exitCode,
+    0,
+    `an excluded step ahead of every gate is compliant. It said:\n${compliant.stderr}`,
+  );
+  assert.deepEqual(
+    compliant.stdout
+      .split("\n")
+      .filter((line) => line.trim() !== "")
+      .map((line) => line.split("\t")[0]),
+    [...GATES_AHEAD],
+    "the gates behind the excluded step are still gates — the rule moves the step, not the ladder",
   );
 });
 

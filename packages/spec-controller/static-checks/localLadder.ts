@@ -20,6 +20,15 @@
  * a local gate — `build`, `mutation` and `balance` are not quality gates and must not become
  * them by living in the same object.
  *
+ * AN EXCLUDED STEP'S POSITION IS ASSERTED, NOT MERELY PRESERVED (3F-3014). Every gate has two
+ * chances to run — this ladder and CI — and an entry in `CI_ONLY_EXCLUSIONS` has one. A `run:`
+ * step that reds aborts the job, so a gate ahead of an excluded step can cost it that one run
+ * while reporting nothing: not absent, not disabled, UNREACHED, which is the one shape the
+ * ledger cannot see, because when the job dies first the ledger is never asked either. That is
+ * measured, not hypothetical — a stale mutation record redding `lint:self-balance` took
+ * `lint:scn-subissues` off the board for three consecutive commits during 3F-2994. So the
+ * derivation keeps a position it used to discard, and reports it as `late`.
+ *
  * @SCN-LAD-001 — features/local-ladder.feature.
  */
 
@@ -47,6 +56,23 @@ export interface LadderGate {
 export interface LadderExclusion {
   readonly script: string;
   readonly reason: string;
+}
+
+/**
+ * An excluded step CI runs behind a gate, and the gates it runs behind.
+ *
+ * POSITION IS LOAD-BEARING FOR AN EXCLUDED STEP AND FOR NOTHING ELSE. Every gate has two
+ * chances to run — the local ladder and CI — and an entry in `CI_ONLY_EXCLUSIONS` has one, by
+ * the exclusion's own written reason. A `run:` step that reds aborts the job, so any gate
+ * ahead of the excluded step can cost it that one run while reporting nothing: the step is
+ * not absent and not disabled but UNREACHED, and an obligation is only reconciled missing
+ * when the check does not run AND the ledger is asked. The job dying first skips both.
+ */
+export interface LateExclusion {
+  readonly script: string;
+  readonly reason: string;
+  /** The gates CI runs ahead of it — each one a red that costs this step its only run. */
+  readonly gatesAhead: readonly string[];
 }
 
 /**
@@ -82,6 +108,15 @@ export interface LocalLadder {
    * already apply to their own lists, applied to this one.
    */
   readonly stale: readonly LadderExclusion[];
+  /**
+   * Excluded steps this CI config runs behind at least one gate — the gates ahead named.
+   *
+   * Structural, exactly like `stale`: a fact about the config read, never a judgement about
+   * which gates ahead are LIKELY to red. The threshold is zero because there is no other
+   * threshold a derivation can state — "three gates ahead is fine, four is not" is a number
+   * somebody has to defend, which is the shape this file exists to remove.
+   */
+  readonly late: readonly LateExclusion[];
   /** CI script steps the ladder cannot represent — named, never dropped. */
   readonly unsupported: readonly UnsupportedStep[];
 }
@@ -126,6 +161,7 @@ export function deriveLocalLadder(
   const scripts = Object.keys(packageJson.scripts ?? {});
   const gates: LadderGate[] = [];
   const omitted: LadderExclusion[] = [];
+  const late: LateExclusion[] = [];
   const unsupported: UnsupportedStep[] = [];
 
   for (const rawCommand of ciRunCommands([ciSource])) {
@@ -137,6 +173,12 @@ export function deriveLocalLadder(
     const exclusion = exclusions.find((entry) => entry.script === script);
     if (exclusion !== undefined) {
       omitted.push(exclusion);
+      // The gates ALREADY COLLECTED are the ones CI runs ahead of this step, and each is a red
+      // that can abort the job before it. Zero of them is the only threshold this derivation
+      // can state without maintaining a number somebody has to defend.
+      if (gates.length > 0) {
+        late.push({ ...exclusion, gatesAhead: gates.map((gate) => gate.script) });
+      }
       continue;
     }
 
@@ -152,7 +194,7 @@ export function deriveLocalLadder(
     (entry) => !omitted.some((omission) => omission.script === entry.script),
   );
 
-  return { gates, omitted, stale, unsupported };
+  return { gates, omitted, stale, late, unsupported };
 }
 
 /** What about a CI step the ladder cannot represent as one gate — or nothing, if it can. */

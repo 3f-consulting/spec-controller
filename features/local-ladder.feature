@@ -25,6 +25,14 @@ Feature: The local green-check runs the ladder CI runs, derived rather than list
   emitter prints. An exclusion whose script CI no longer runs reds as stale — the
   ratchet shape lint:complexity-exceptions and lint:exempt-data-floor already use.
 
+  AND THE ONE THING LEFT OUT RUNS FIRST. An excluded step has one chance where every
+  gate has two, and a run: step that reds aborts the job — so any gate ahead of the
+  excluded step can take it off the board without ever reporting it unrun. Not absent,
+  not disabled: unreached, which is the one shape the ledger cannot see, because when
+  the job dies first the ledger is never asked either. It looks identical to green from
+  outside. So position stops being a convention this derivation happens to preserve and
+  becomes a property it asserts.
+
   WHAT A GREEN HERE DOES NOT ESTABLISH. That the ladder is SUFFICIENT — it says the
   local ladder is CI's ladder, and whether CI's ladder is the right one is a separate
   judgement this makes no claim about. And one hand-maintained artefact survives on
@@ -68,6 +76,15 @@ Feature: The local green-check runs the ladder CI runs, derived rather than list
       Given a CI config that no longer runs the step the exclusion excuses
       When the local ladder is built over it
       Then the ladder reds, naming the stale entry
+
+  Rule: a step left out of the local ladder runs ahead of every gate
+
+    @unit @integration @SCN-LAD-007
+    Scenario: an excluded step CI runs behind a gate reds, naming the gates ahead of it
+      Given a CI config running the step this repository excludes behind two of its gates
+      When the local ladder is built over it
+      Then the ladder reds, naming the excluded step and the gates that run ahead of it
+      And the same step run ahead of every gate reds nothing
 
   Rule: the derived ladder holds over the real repository
 
