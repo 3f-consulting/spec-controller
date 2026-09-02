@@ -11,7 +11,7 @@ build/
 # codebase's gaps, dangling anchors, and watermelons — more sensitive than the
 # code itself — so stored runs live OUTSIDE the repo. Ignore the whole runs/ tree
 # with NO re-includes, so no new in-repo run path can ever be committed by
-# accident. The lint:no-committed-reports CI guard enforces this over the real tree.
+# accident. The hygiene:no-committed-reports CI check enforces this over the real tree.
 runs/**
 
 # Mutation-testing output. `.stryker-tmp/` is the sandbox Stryker copies the tree

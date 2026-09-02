@@ -218,11 +218,12 @@ describe("[SCN-CIP-007] two scenarios sharing one measured check keep their own 
   });
 
   it("is the shape the STATIC axis calls a corpus fault, and here is legal", () => {
-    // On the static axis two stepless scenarios sharing one bare check leaves the second `missing`
-    // by design (@SCN-LNT-008): one run is one credit, and the corpus hop keeps first-in-corpus
-    // order. Both readings are correct because they are about different seams — the static credit
-    // has its @SCN resolved FOR it and can only be resolved to one row, while a measurement
-    // arrives carrying its own. Neither row here is missing, which is the whole difference.
+    // On the static axis two stepless scenarios sharing one UNDISCRIMINATED bare check leaves the
+    // second `missing` by design (@SCN-LNT-008): one run is one credit, and the corpus hop keeps
+    // first-in-corpus order. Since @SCN-LNT-015 the two axes agree — a static check's registry
+    // entry names the row it credits, as a measurement has always arrived carrying its own @SCN.
+    // What still differs is only WHERE the citation comes from. Neither row here is missing, which
+    // is the arrangement both axes now reach.
     expect(reconcileEvidenceObligation(UNIT, obligation(75), measurements).outcome).not.toBe(
       "missing"
     );

@@ -67,7 +67,7 @@ export interface MeasurementArtefact {
  * Where a run posts its measurements, relative to a repository root.
  *
  * Beneath `runs/`, which `.gitignore` excludes with no re-includes and
- * `lint:no-committed-reports` holds to it, so the artefact lives for the length of the job and
+ * `hygiene:no-committed-reports` holds to it, so the artefact lives for the length of the job and
  * cannot be committed by accident.
  */
 export const MEASUREMENT_ARTEFACT_PATH = "runs/self-balance/measurements.json";

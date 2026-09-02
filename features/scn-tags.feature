@@ -7,7 +7,7 @@ Feature: The tier-tag floor — every scenario names an evidence tier
   must name at least one tier tag, UNLESS it is PARKED — carrying one of the deferral tags
   the target itself configures (@SCN-STG-008). scnTags parity with an adopter's repository's
   guard:scn-tags. The guard is itself cited — the stepless fitness scenario at the foot of
-  this file carries its bare `@scn-tags` tag — and CI-wired, so spec-controller's own
+  this file carries its bare `@traceability` tag — and CI-wired, so spec-controller's own
   ledger reconciles it.
 
   What counts as a tier (load-bearing): @unit / @integration / @e2e / @performance, their
@@ -271,5 +271,5 @@ Feature: The tier-tag floor — every scenario names an evidence tier
     green anything else. A check whose own corpus entry it could not admit would be telling
     authors to write what it rejects.
 
-    @scn-tags @SCN-STG-006
+    @traceability @SCN-STG-006
     Scenario: every scenario under features carrying an @SCN names an evidence tier

@@ -162,7 +162,7 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
     CI script only when its name carries an observed prefix, so a name outside that set
     would run in CI while being invisible to spec-controller's own ledger — a real quality
     check kept off the books, which is exactly where a watermelon hides. The bare
-    `@complexity-exceptions` tag on its own fitness scenario at the foot of this file is
+    `@complexity` tag on its own fitness scenario at the foot of this file is
     then what keeps it out of the suspense row as an uncited static check. Observed AND
     required is the balanced state.
 
@@ -190,12 +190,18 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
 
   Rule: this tree stays inside the external standard, and its exception list stays honest
 
-    TWO CHECKS, SO TWO SCENARIOS, and resisting the tidier single tag is the point. Both
-    steps run eslint over this tree and both live in this file, which makes one `@complexity`
-    tag covering the pair look like a saving. It would cost the thing the seam is for: the
-    exception-list reconciliation reds on `value < recorded`, a case eslint cannot express at
-    all, so a run of one check would post credit to a scenario naming the other and neither
-    would be attributable. The tag names the CHECK, not the subject the checks share.
+    TWO CHECKS, SO TWO SCENARIOS — AND ONE `@complexity` TAG BETWEEN THEM. Both steps run
+    eslint over this tree and both live in this file, and they still assert different things:
+    the exception-list reconciliation reds on `value < recorded`, a case eslint cannot express
+    at all. Two checks, so two stepless scenarios; one characteristic, so one bare tag. The
+    tag names the characteristic, the @SCN names the check, and the registry entry behind each
+    handle names the row its own run credits — `lint:complexity` names SCN-CPX-005 and
+    `lint:complexity-exceptions` names SCN-CPX-006 (@SCN-LNT-015).
+
+    THE SINGLE TAG USED TO COST EXACTLY WHAT THIS RULE SAID IT WOULD. Read through the corpus
+    hop alone, a run of either check posted credit to whichever scenario the corpus reached
+    first, so neither was attributable and the runner-up reconciled missing while its check ran
+    green. The reading was accurate about the engine; what moved is the join, not the argument.
 
     NEITHER CARRIES STEPS. Every Rule above is an example of a check deciding over a planted
     file; these two are the whole-system characteristics held over the real tree — a
@@ -205,5 +211,5 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
     @complexity @SCN-CPX-005
     Scenario: every function and module measures inside the external standard, or inside its recorded exception
 
-    @complexity-exceptions @SCN-CPX-006
+    @complexity @SCN-CPX-006
     Scenario: every exception entry states the value the tree currently measures

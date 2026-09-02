@@ -9,7 +9,7 @@
  * rather than the repository. `git ls-files` reads the index, so a staged plant is
  * visible — which is what makes proving the teeth a one-line setup.
  *
- * Mirrors `lint:no-committed-reports`: a pure decision plus a thin edge that supplies the
+ * Mirrors `hygiene:no-committed-reports`: a pure decision plus a thin edge that supplies the
  * real file list. The static check is @lint-cited (`@lint=lint:anemic-domain` on
  * @SCN-ANM-001) so the tool's own ledger reconciles it — not an uncited static check. The
  * `lint:` prefix is required rather than cosmetic: `runningStaticChecks` observes a CI

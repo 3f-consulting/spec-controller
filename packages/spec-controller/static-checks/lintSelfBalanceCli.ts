@@ -58,7 +58,7 @@ export interface SelfBalanceScope {
  * narrows which surfaces are read.
  *
  * The three runtime artefacts live under `runs/`, which `.gitignore` excludes with no
- * re-includes and `lint:no-committed-reports` enforces: a reconciliation report
+ * re-includes and `hygiene:no-committed-reports` enforces: a reconciliation report
  * enumerates a codebase's gaps and is never committed.
  */
 export const SELF_BALANCE_SCOPE: SelfBalanceScope = {

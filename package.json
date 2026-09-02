@@ -25,7 +25,7 @@
     "lint:complexity": "eslint",
     "lint:blocked-vocabulary": "tsx packages/spec-controller/static-checks/lintBlockedVocabularyCli.ts",
     "lint:complexity-exceptions": "tsx packages/spec-controller/static-checks/lintComplexityExceptionsCli.ts",
-    "lint:no-committed-reports": "tsx packages/spec-controller/static-checks/lintNoCommittedReportsCli.ts",
+    "hygiene:no-committed-reports": "tsx packages/spec-controller/static-checks/hygieneNoCommittedReportsCli.ts",
     "lint:scn-tags": "tsx packages/spec-controller/static-checks/lintScnTagsCli.ts",
     "lint:scn-subissues": "tsx packages/spec-controller/static-checks/lintScnSubIssuesCli.ts",
     "lint:self-balance": "tsx packages/spec-controller/static-checks/lintSelfBalanceCli.ts",
@@ -36,18 +36,17 @@
   "specController": {
     "staticChecks": ["typecheck"],
     "checkRegistry": {
-      "lint:feature-codes": "feature-codes",
-      "lint:no-committed-reports": "no-committed-reports",
-      "lint:scn-tags": "scn-tags",
-      "lint:complexity": "complexity",
-      "lint:complexity-exceptions": "complexity-exceptions",
-      "lint:blocked-vocabulary": "blocked-vocabulary",
+      "lint:feature-codes": { "check": "traceability", "scn": "SCN-LNT-011" },
+      "lint:scn-tags": { "check": "traceability", "scn": "SCN-STG-006" },
+      "lint:complexity": { "check": "complexity", "scn": "SCN-CPX-005" },
+      "lint:complexity-exceptions": { "check": "complexity", "scn": "SCN-CPX-006" },
+      "lint:blocked-vocabulary": { "check": "vocab", "scn": "SCN-VOC-019" },
       "typecheck": "typecheck",
-      "lint:adopted-vocabulary": "adopted-vocabulary",
-      "lint:exempt-data-floor": "exempt-data-floor",
-      "lint:anemic-domain": "anemic-domain",
+      "lint:adopted-vocabulary": { "check": "vocab", "scn": "SCN-VOC-020" },
+      "lint:exempt-data-floor": { "check": "vocab", "scn": "SCN-VOC-021" },
+      "lint:anemic-domain": "tech-conformance",
       "lint:self-balance": "self-balance",
-      "lint:scn-subissues": "scn-subissues"
+      "lint:scn-subissues": { "check": "traceability", "scn": "SCN-SSM-009" }
     },
     "thresholds": {
       "SCN-CIP-013": { "ci-run-time": 75 },

@@ -9,7 +9,7 @@
  * runs/-tracked rule has no false positives.
  *
  * The tracked-file LIST is INJECTED (not shelled from git here) so the logic is
- * unit-tested in isolation; the CLI (lintNoCommittedReportsCli.ts) provides the
+ * unit-tested in isolation; the CLI (hygieneNoCommittedReportsCli.ts) provides the
  * real list from `git ls-files -- runs/` over the real tree.
  *
  * @SCN-NCR-001 — features/no-committed-reports.feature.

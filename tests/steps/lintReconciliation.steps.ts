@@ -19,7 +19,7 @@
  * Evidence: @SCN-LNT-001 — the seam-bearing first sub-issue; satisfied path.
  */
 
-import { Given, When, Then } from "@cucumber/cucumber";
+import { Given, When, Then, DataTable } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -114,6 +114,14 @@ const ABSENT_SCRIPT = "lint:absent-check";
 const UNWIRED_SCRIPT = "lint:unwired-check";
 
 /**
+ * @SCN-LNT-015 outcome: the pairing the REGISTRY names — which row each handle's run credits.
+ * Held as the table said it, because the Then asserts the credit landed where the ENTRY named
+ * rather than where the corpus happened to reach first, and reading the pairing back off the
+ * registry under test would let a reading that lost the `@SCN` assert against its own loss.
+ */
+let namedCitations: { script: string; check: string; scenario: string }[];
+
+/**
  * Extract a scenario's OWN ledger LEDGER row, split into its cells — `| <scnId> |
  * <verdict> | <reconciling items> |` → the verdict + items CELLS, so an assertion scopes
  * to the row, not the whole report.
@@ -162,6 +170,9 @@ Given(
 // @SCN-LNT-002
 // @SCN-LNT-003
 // @SCN-LNT-008
+// @SCN-LNT-015
+// @SCN-LNT-016
+// @SCN-LNT-017
 Given("a stepless fitness scenario carries the bare check {string}", function (check: string) {
   // NO steps — the fitness shape. The corpus is the second hop of the citation seam, so the
   // scenario that CARRIES the check is the one the run will come to cite.
@@ -175,6 +186,9 @@ Given("a stepless fitness scenario carries the bare check {string}", function (c
 });
 
 // @SCN-LNT-008
+// @SCN-LNT-015
+// @SCN-LNT-016
+// @SCN-LNT-017
 Given(
   "a second stepless fitness scenario carries the same bare check {string}",
   function (check: string) {
@@ -189,6 +203,45 @@ Given(
       `    @${check} @SCN-FIT-002`,
       "    Scenario: a second scenario claiming the same check",
     ].join("\n");
+  }
+);
+
+// @SCN-LNT-017
+Given(
+  "a third stepless fitness scenario carries a different bare check {string}",
+  function (check: string) {
+    // THE NEAR-MATCH'S TARGET, and the row that makes this scenario more than @SCN-LNT-016's
+    // fixture. It EXISTS — a real stepless fitness scenario the corpus carries — so an entry
+    // naming it names something a reader can find; what it does not carry is the characteristic
+    // the entry claims. Membership is per-characteristic, and existence is not membership.
+    fitnessCorpus = [
+      fitnessCorpus,
+      "",
+      `    @${check} @SCN-FIT-003`,
+      "    Scenario: a scenario claiming a different check entirely",
+    ].join("\n");
+  }
+);
+
+// @SCN-LNT-015
+// @SCN-LNT-016
+// @SCN-LNT-017
+Given(
+  "these registry entries name the fitness scenario each check credits",
+  function (entries: DataTable) {
+    // THE RELOCATED ARM, as a target authors it. Each entry carries the characteristic its handle
+    // asserts AND the `@SCN` of the row its run credits — the second term being the one fact the
+    // handle alone can no longer supply once one characteristic names several checks.
+    namedCitations = entries.hashes() as { script: string; check: string; scenario: string }[];
+    fitnessRegistry = checkRegistryOf(
+      Object.fromEntries(
+        namedCitations.map((entry) => [entry.script, { check: entry.check, scn: entry.scenario }])
+      )
+    );
+    // Cleared for the reason every registering Given clears it: module-level fixtures outlive a
+    // cucumber scenario, and a stale divergent corpus would reconcile this arm against a corpus it
+    // never asked for.
+    reconciledCorpus = undefined;
   }
 );
 
@@ -293,6 +346,9 @@ Given("a second scenario would have claimed the same run under name-match", func
 // @SCN-LNT-001
 // @SCN-LNT-008
 // @SCN-LNT-009
+// @SCN-LNT-015
+// @SCN-LNT-016
+// @SCN-LNT-017
 When(
   "the fitness checks wired into CI over the real source are observed and reconciled",
   function () {
@@ -859,6 +915,8 @@ Then(
 );
 
 // @SCN-LNT-008
+// @SCN-LNT-016
+// @SCN-LNT-017
 Then(
   "the second fitness scenario reconciles missing, naming the check {string}",
   function (check: string) {
@@ -1158,5 +1216,171 @@ Then(
       /🍉/,
       `expected ${scnId}'s watermelon item to carry the 🍉 glyph; got "${items}"`
     );
+  }
+);
+
+// @SCN-LNT-015
+Then(
+  "each fitness scenario reconciles satisfied, credited by the run its own registry entry names",
+  function () {
+    // BOTH ROWS, AND EACH BY ITS OWN RUN. Read through the corpus hop alone the second handle
+    // cites the FIRST scenario: one row would hold two credits and the other none, reading
+    // `missing` while its check ran green (@SCN-LNT-008). The entry's `@SCN` is what parts them,
+    // so the assertion is per-entry — the credit for THIS handle, on THIS row, and nowhere else.
+    for (const entry of namedCitations) {
+      const observation = evidenceObservations
+        .filter(isStaticCheckObservation)
+        .find((o) => o.staticCheck === entry.script);
+      assert.ok(
+        observation,
+        `expected a run of ${entry.script} to be observed over the real CI config`
+      );
+      assert.equal(
+        observation.scnId,
+        entry.scenario,
+        `expected ${entry.script} to cite the scenario its registry entry names; got ${JSON.stringify(observation)}`
+      );
+      assert.equal(
+        observation.checkTag,
+        entry.check,
+        `expected ${entry.script} to carry its own characteristic; got ${JSON.stringify(observation)}`
+      );
+
+      // The credit's IDENTITY, counted across the WHOLE ledger. A reading that fell back to
+      // first-in-corpus puts BOTH credits on the first row and this list names two.
+      assert.deepEqual(
+        fitnessLedger.scenarioReconciliations
+          .filter((row) => row.evidenceObservations.includes(observation))
+          .map((row) => row.scnId),
+        [entry.scenario],
+        `expected ${entry.script}'s one credit to post to ${entry.scenario} and to no other row`
+      );
+
+      const row = fitnessLedger.scenarioReconciliations.find((r) => r.scnId === entry.scenario);
+      assert.deepEqual(
+        (row?.qualityCheckReconciliations ?? []).map((item) => [item.staticCheck, item.outcome]),
+        [[entry.check, "satisfied"]],
+        `expected ${entry.scenario} to reconcile satisfied for "${entry.check}"; got ${JSON.stringify(row?.qualityCheckReconciliations)}`
+      );
+
+      // And the same fact read back off the rendered row — the report is where a reader meets it.
+      const { verdict, items } = rowCells(entry.scenario);
+      assert.match(
+        verdict,
+        /\bbalanced\b/,
+        `expected a balanced verdict cell for ${entry.scenario}; got "${verdict}"`
+      );
+      assert.doesNotMatch(
+        verdict,
+        /out-of-balance/,
+        `expected ${entry.scenario} not out-of-balance; got "${verdict}"`
+      );
+      assert.equal(items, "—", `expected no reconciling items on ${entry.scenario}; got "${items}"`);
+    }
+  }
+);
+
+// @SCN-LNT-016
+// @SCN-LNT-017
+Then(
+  "the run of {string} cites no scenario and its credit posts to suspense",
+  function (script: string) {
+    // THE WHOLE CITATION WITHHELD, not a near-match and not a downgrade. The entry named a row
+    // the corpus does not carry with this characteristic, so the seam reaches no `@SCN` at all
+    // and the observation carries none — exactly the shape an UNREGISTERED handle already has.
+    // A reading that fell back to the corpus hop stamps SCN-FIT-001 here and this reds on the
+    // citation alone, before any row is read.
+    const observation = evidenceObservations
+      .filter(isStaticCheckObservation)
+      .find((o) => o.staticCheck === script);
+    assert.ok(observation, `expected a run of ${script} to be observed over the real CI config`);
+    assert.equal(
+      observation.scnId,
+      undefined,
+      `expected ${script}'s run to cite no scenario; got ${JSON.stringify(observation)}`
+    );
+    assert.equal(
+      observation.checkTag,
+      undefined,
+      `expected ${script}'s run to carry no citation keys at all; got ${JSON.stringify(observation)}`
+    );
+
+    // THE CREDIT'S IDENTITY, counted across the WHOLE ledger — the assertion a fallback path
+    // cannot pass. A first-in-corpus degrade puts SCN-FIT-001 in this list; a dropped credit
+    // empties it. Only suspense is right.
+    assert.deepEqual(
+      fitnessLedger.scenarioReconciliations
+        .filter((row) => row.evidenceObservations.includes(observation))
+        .map((row) => row.kind),
+      ["suspense-scenario"],
+      `expected ${script}'s credit to post to the suspense row and to no other`
+    );
+
+    // NAMED ON THE SUSPENSE ROW, because a credit citing nothing has no obligation to point a
+    // reader at and its handle is the only where-to-fix.
+    const suspense = fitnessLedger.scenarioReconciliations.find(
+      (row) => row.kind === "suspense-scenario"
+    );
+    assert.ok(
+      (suspense?.qualityCheckReconciliations ?? []).some(
+        (item) => item.staticCheck === script && item.outcome === "cites-no-scenario"
+      ),
+      `expected a cites-no-scenario item naming ${script}; got ${JSON.stringify(suspense?.qualityCheckReconciliations)}`
+    );
+
+    // And the same fact read back off the rendered row — the report is where a reader meets it.
+    // Row-scoped to the suspense row's own CELLS, so a bare regex over the report cannot pass it.
+    const { verdict, items } = rowCells("(no scenario)");
+    assert.match(
+      verdict,
+      /out-of-balance/,
+      `expected the suspense row's verdict cell to read out-of-balance; got "${verdict}"`
+    );
+    assert.match(
+      items,
+      /lint .*Evidence Observation cites no Scenario/,
+      `expected the suspense row to carry the lint cites-no-scenario item; got "${items}"`
+    );
+    assert.match(
+      items,
+      new RegExp(`\\(${script.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\)`),
+      `expected the suspense item to name the check that ran; got "${items}"`
+    );
+  }
+);
+
+
+// @SCN-LNT-017
+Then(
+  "the third fitness scenario reconciles satisfied for {string} alone, absorbing no credit meant for another characteristic",
+  function (check: string) {
+    // THE CONTROL, AND IT HAS TO BE ONE. The row the wrong entry named is cited by its OWN
+    // handle and reconciles green, so this cannot be passed by a reading that simply fails to
+    // credit it: the row is live throughout, and the question is only whether the stray credit
+    // reached it. Exactly one reconciling item, naming exactly this characteristic.
+    const row = fitnessLedger.scenarioReconciliations.find((r) => r.scnId === "SCN-FIT-003");
+    assert.deepEqual(
+      (row?.qualityCheckReconciliations ?? []).map((item) => [item.staticCheck, item.outcome]),
+      [[check, "satisfied"]],
+      `expected SCN-FIT-003 to reconcile satisfied for "${check}" and nothing else; got ${JSON.stringify(row?.qualityCheckReconciliations)}`
+    );
+
+    // ONE CREDIT ON THE ROW, and it is the one that named this characteristic. A reading that
+    // tested the named @SCN's EXISTENCE rather than its MEMBERSHIP posts a second observation
+    // here — lint:complexity-exceptions' — and this list holds two.
+    assert.deepEqual(
+      (row?.evidenceObservations ?? []).map(
+        (observation) => (observation as { staticCheck?: string }).staticCheck
+      ),
+      ["lint:feature-codes"],
+      `expected only the run naming this characteristic to credit SCN-FIT-003; got ${JSON.stringify(row?.evidenceObservations)}`
+    );
+
+    // And the same fact read back off the rendered row — the report is where a reader meets it.
+    // Row-scoped to the scenario's own CELLS, so a bare regex over the report cannot pass it.
+    const { verdict, items } = rowCells("SCN-FIT-003");
+    assert.match(verdict, /\bbalanced\b/, `expected a balanced verdict cell; got "${verdict}"`);
+    assert.doesNotMatch(verdict, /out-of-balance/, `expected not out-of-balance; got "${verdict}"`);
+    assert.equal(items, "—", `expected no reconciling items on SCN-FIT-003; got "${items}"`);
   }
 );

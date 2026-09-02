@@ -22,13 +22,16 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
   by the runner, as @ci-run-time's is"). So the measurement ARRIVES already citing, and the
   two-hop seam is not consulted at all.
 
-  WHICH IS WHY ONE TAG MAY NAME MANY SCENARIOS HERE. The corpus hop keeps first-in-corpus
-  order and drops the runners-up, so two stepless scenarios sharing one bare check is a
-  corpus fault on the static axis — the second reads missing, out loud (@SCN-LNT-008). Canon
-  asks the opposite of this axis: several checks of one characteristic are several stepless
-  scenarios sharing the tag, told apart by @SCN. Both readings are correct, because they are
-  about different seams. The debit is raised per scenario and always was, and a measured
-  credit carries its own @SCN, so nothing in the middle has to choose between two rows.
+  WHICH IS WHY ONE TAG MAY NAME MANY SCENARIOS HERE — AND, SINCE @SCN-LNT-015, ON THE STATIC
+  AXIS TOO. Canon asks one thing of both: several checks of one characteristic are several
+  stepless scenarios sharing the tag, told apart by @SCN. This axis could always do it,
+  because a measured credit carries its own @SCN. The static axis could not, and said so: the
+  corpus hop keeps first-in-corpus order and dropped the runners-up, so a shared bare check
+  left the second reading missing, out loud (@SCN-LNT-008). That was a fault on the seam as it
+  then stood, correctly reported. The seams no longer disagree — the register holds the
+  check-to-scenario join and each entry names the row its own run credits, so a static credit
+  reaches its own scenario as a measured one always has. The debit is raised per scenario and
+  always was, so nothing in the middle has to choose between two rows.
 
   THE THRESHOLD IS A CEILING, WHICH IS WHAT THE WORD MEANS HERE — a bar you stay under, never
   an allowance drawn down. A measurement at or under its threshold is satisfied and

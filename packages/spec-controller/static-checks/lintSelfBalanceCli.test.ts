@@ -74,7 +74,7 @@ describe("[SCN-SLF-001] the self-balance gate's scan scope is stated, whole, in 
   it("keeps the three runtime artefacts under the never-committed runs/ tree", () => {
     // Not incidental: a reconciliation report enumerates this codebase's gaps, so it is
     // more sensitive than the code. runs/** is gitignored with no re-includes and
-    // lint:no-committed-reports enforces it, so writing the streams there is what keeps
+    // hygiene:no-committed-reports enforces it, so writing the streams there is what keeps
     // the gate's own inputs off the record.
     expect(SELF_BALANCE_SCOPE.vitest.startsWith("runs/")).toBe(true);
     expect(SELF_BALANCE_SCOPE.cucumber.startsWith("runs/")).toBe(true);
@@ -169,7 +169,7 @@ describe("[SCN-SLF-001] the gate is reconciled on spec-controller's own Ledger",
     // registry entry now fails this exactly as a missing tag does, which is strictly more
     // than the handle-spelling read could see.
     const registry = resolveCheckRegistry(packageJson);
-    const checkTag = registry.get(OWN_STATIC_CHECK);
+    const checkTag = registry.get(OWN_STATIC_CHECK)?.check;
     expect(checkTag).toBeDefined();
 
     // Read through the CORPUS HOP itself (`fitnessCitations`) rather than through the corpus's

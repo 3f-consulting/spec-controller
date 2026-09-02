@@ -117,7 +117,7 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     code: "NCR",
     slug: "no-committed-reports",
     status: "feature-code-used",
-    note: "the active never-commit enforcement — the lint:no-committed-reports CI guard fails if a report artefact is tracked in the repo; @lint-self-cited so the tool's own ledger reconciles it",
+    note: "the active never-commit enforcement — the hygiene:no-committed-reports CI check fails if a report artefact is tracked in the repo; deliberately OFF the evidence ledger (3F-2994), which is what the un-observed `hygiene:` prefix buys",
   },
   {
     code: "RMD",

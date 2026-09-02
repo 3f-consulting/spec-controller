@@ -377,7 +377,7 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
     `runningStaticChecks` observes a CI script only when its name carries an observed
     prefix (`lint:` / `guard:`), so a name outside that set would run in CI while being
     structurally invisible to spec-controller's own ledger — a real quality check kept off
-    the books, which is where a watermelon hides. The bare `@blocked-vocabulary` tag on its
+    the books, which is where a watermelon hides. The bare `@vocab` tag on its
     fitness scenario at the foot of this file is then what keeps it out of the suspense row
     as an uncited static check.
     An observation matched to a NAMED evidence obligation is the balanced state (the
@@ -739,23 +739,33 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
 
   Rule: this tree obeys the vocabulary triage it publishes, on all three of its checks
 
-    THREE CHECKS, SO THREE TAGS, AND THE TIDIER `@vocab` IS THE MISTAKE TO AVOID. The three
+    THREE CHECKS, ONE CHARACTERISTIC, AND THE `@SCN` IS WHAT TELLS THEM APART. The three
     steps share a subject — this repository's vocabulary — and share nothing else. The table
     lint judges the TRIAGE RECORD, the adopted gate judges the TREE against it, and the data
-    floor judges the AUDIT'S OWN EXEMPTIONS. One tag covering the set would make a run of any
-    of them credit whichever scenario the corpus happened to reach first, and the other two
-    would reconcile missing while their checks ran green — the attribution fault the one
-    posting rule exists to remove. The tag names the check, not the topic.
+    floor judges the AUDIT'S OWN EXEMPTIONS. Three checks, so three stepless scenarios; one
+    characteristic, so one bare `@vocab` tag between them. The tag names the characteristic,
+    the @SCN names the check, and the registry is what tells the runner which row a static
+    run credits.
+
+    THIS RULE ARGUED THE OPPOSITE, AND IT WAS RIGHT ABOUT THE ENGINE IT WAS WRITTEN AGAINST.
+    One tag over the three DID make a run of any of them credit whichever scenario the corpus
+    happened to reach first, leaving the other two reconciling missing while their checks ran
+    green — the attribution fault the one posting rule exists to remove. That was a measurement
+    of this repository, not a misreading of it. What changed is the seam: the check-to-scenario
+    join moved into the register (@SCN-LNT-015), which is where canon had put it since the
+    measured axis, and each entry now names the row its own run credits. The prose went because
+    canon rules that the tag names the characteristic — not because the engine had already been
+    doing what the prose said it could not.
 
     NONE OF THE THREE CARRIES STEPS. The Rules above are examples of each check deciding over
     a planted tree; these are the characteristics held over the real one. Their bare tags
     raise the three Evidence Obligations the three CI runs settle.
 
-    @blocked-vocabulary @SCN-VOC-019
+    @vocab @SCN-VOC-019
     Scenario: every row of the vendored canon table carries an adoption status
 
-    @adopted-vocabulary @SCN-VOC-020
+    @vocab @SCN-VOC-020
     Scenario: no adopted retired term survives in a non-exempt file of this tree
 
-    @exempt-data-floor @SCN-VOC-021
+    @vocab @SCN-VOC-021
     Scenario: every audit exemption covers pure data and covers a banned word it still holds

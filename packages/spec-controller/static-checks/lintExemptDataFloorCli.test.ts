@@ -139,7 +139,7 @@ describe("[SCN-VOC-016] the gate is reconciled on spec-controller's own Ledger",
     // registry entry now fails this exactly as a missing tag does, which is strictly more
     // than the handle-spelling read could see.
     const registry = resolveCheckRegistry(packageJson);
-    const checkTag = registry.get(OWN_STATIC_CHECK);
+    const checkTag = registry.get(OWN_STATIC_CHECK)?.check;
     expect(checkTag).toBeDefined();
 
     // Read through the CORPUS HOP itself (`fitnessCitations`) rather than through the corpus's

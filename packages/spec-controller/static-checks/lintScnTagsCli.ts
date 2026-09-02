@@ -8,7 +8,7 @@
  * compliant tree.
  *
  * The tier-tag floor over spec-controller's OWN scenarios (the cobbler's shoes).
- * Mirrors `lint:feature-codes` / `lint:no-committed-reports`: a pure function of
+ * Mirrors `lint:feature-codes` / `hygiene:no-committed-reports`: a pure function of
  * the checked-out tree, a full CI gate on every push. The static check is @lint-cited
  * (`@lint=lint:scn-tags` on @SCN-STG-001) so the tool's own ledger reconciles it —
  * not an uncited static-check.

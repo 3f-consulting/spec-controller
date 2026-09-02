@@ -116,7 +116,7 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
     exists to name. A gate that is not reconciled on its own Ledger is honour, not
     mechanism.
 
-    The bare @scn-subissues tag on the fitness scenario at the foot of this file is what
+    The bare @traceability tag on the fitness scenario at the foot of this file is what
     closes it. The tag raises the Evidence Obligation the CI run settles, so the run is
     credited to THAT scenario instead of the suspense row — the precedent set by the
     scenarios @SCN-CPX-003, @SCN-VOC-011 and @SCN-NCR-001, where observed AND required is
@@ -209,7 +209,7 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
     — over the real tree, which is a behaviour with steps and stays exactly as it was. What it
     also used to do, through the retired tag form, was raise spec-controller's own Evidence
     Obligation for the run. That is a whole-system characteristic of this repository rather
-    than an example of anything, so it is stated as one below and the bare `@scn-subissues`
+    than an example of anything, so it is stated as one below and the bare `@traceability`
     tag raises it there.
 
     THE CHECK IS PULL-REQUEST-ONLY, AND THAT DOES NOT WEAKEN THE ROW. Its CI step is guarded
@@ -218,5 +218,5 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
     step is present, so the check is observed as enforced over real source, exactly as it was
     under the retired form.
 
-    @scn-subissues @SCN-SSM-009
+    @traceability @SCN-SSM-009
     Scenario: every behaviour-bearing scenario code changed on a pull request is bound to a ticketed one

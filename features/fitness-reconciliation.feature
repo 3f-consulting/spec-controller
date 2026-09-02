@@ -194,8 +194,10 @@ Feature: Reconcile every fitness function as a stepless fitness scenario citing 
       dedupe, or a both-satisfied path would each have to invent a rule for which scenario the run MEANT,
       when the honest answer is that the corpus has not said. Which scenario wins is fixed by the corpus
       itself — first in corpus order — so the fault surfaces on the row holding no evidence rather than
-      being hidden by the row holding some. That is the forcing function toward one fitness scenario per
-      check: two scenarios cannot share one check without one of them reading missing.
+      being hidden by the row holding some. That is the loud failure mode which makes the string form
+      safe (@SCN-LNT-015): an entry naming only a characteristic still resolves first-in-corpus, so a
+      characteristic that grows a second check without gaining a discriminator surfaces here rather
+      than quietly crediting the wrong row.
 
       Given "lint:feature-codes" is registered as the fitness check "feature-codes"
       And a stepless fitness scenario carries the bare check "feature-codes"
@@ -440,6 +442,116 @@ Feature: Reconcile every fitness function as a stepless fitness scenario citing 
       When the scenario corpus is read
       Then the scenario raises exactly one Evidence Obligation, naming the fitness check "lint"
 
+  Rule: a registry entry may name the fitness scenario its check credits
+
+    WHY THE CORPUS HOP CANNOT ANSWER THIS ALONE. Hop 2 keys on the bare tag, and canon now
+    asks one tag to name several scenarios — several checks of one characteristic, told
+    apart by @SCN (fitness-functions.md → Static checks). A tag that names three scenarios
+    identifies none of them, so first-in-corpus stops being an ordering convention and starts
+    being a wrong answer: two of the three reconcile missing while their checks run green,
+    which is the attribution fault the one posting rule exists to remove.
+
+    THE MAPPING MOVES TO THE RUNNER, WHICH IS WHERE CANON ALREADY PUT IT — "the
+    check-to-scenario mapping held by the runner, as @ci-run-time's is". The measured axis
+    stamps its @SCN onto the measurement at the command line (--scn SCN-CIP-013); a static
+    check emits no artefact to stamp, so its runner-side mapping is the registry, and the
+    registry is where the @SCN goes. Not a second roster of the OBLIGATION: the scenario still
+    raises the debit and still carries the threshold. The registry only says which row this
+    handle's credit belongs to — the one fact the handle alone can no longer supply.
+
+    THE STRING FORM IS UNCHANGED, and that is the compatibility this Rule is careful about. An
+    entry naming only a characteristic resolves exactly as it does today, so @SCN-LNT-008 stays
+    true and stays green: a characteristic with one check needs no ceremony, and one that grows
+    a second check without gaining discriminators fails LOUD — the runner-up still reads missing
+    — rather than quietly crediting the wrong row.
+
+    TWO ARTEFACTS KEYED BY THE SAME WORD AGREE UNTIL ONE IS EDITED, which is the fault the
+    threshold map already meets (@SCN-CIP-002) and answers the same way: an @SCN the corpus
+    does not carry with that characteristic is not smoothed over into a near-match. The
+    citation is ALL OR NOTHING, as it already is for an unregistered handle — the run cites
+    nothing, posts to suspense, and the scenario it was meant for reads missing. Both halves
+    go loud, because a renumbered scenario must not be able to green a row by resembling one.
+
+    @unit @integration @SCN-LNT-015
+    Scenario: a check whose registry entry names its fitness scenario credits that scenario, not the first one carrying its characteristic
+      TWO CHECKS OF ONE CHARACTERISTIC — the shape the collapse produces, and the shape
+      first-in-corpus gets wrong. Both handles are wired and both run, and each entry names the
+      row its own run belongs to, so each credit reaches its own scenario and both reconcile
+      satisfied. Read through the corpus hop alone the second run cites the FIRST scenario: one
+      row holds two credits, the other holds none and reads missing while its check ran green
+      (@SCN-LNT-008). The registry entry is what tells them apart.
+
+      THE FIXTURE IS THE COLLAPSE'S OWN SHAPE, at fixture @SCN ids no feature file carries.
+      Two handles of the characteristic `complexity` are what this tree's own registry holds
+      once the fourteen tags become eight, and they are genuinely wired CI steps over the real
+      source — so what is observed here is a real static check's run, not a planted one.
+
+      Given these registry entries name the fitness scenario each check credits
+        | script                     | check      | scenario    |
+        | lint:complexity            | complexity | SCN-FIT-001 |
+        | lint:complexity-exceptions | complexity | SCN-FIT-002 |
+      And a stepless fitness scenario carries the bare check "complexity"
+      And a second stepless fitness scenario carries the same bare check "complexity"
+      When the fitness checks wired into CI over the real source are observed and reconciled
+      Then each fitness scenario reconciles satisfied, credited by the run its own registry entry names
+
+    @unit @integration @SCN-LNT-016
+    Scenario: a registry entry naming an @SCN no scenario carries cites nothing, and the scenario it was meant for reads missing
+      TWO ARTEFACTS KEYED BY THE SAME WORD, and one of them has been edited. A renumbered
+      scenario, a retired one, an id typed against a code that never existed — all three reach
+      this seam as the same fact: the entry is well-formed, its check runs green, and the row it
+      names is not among the scenarios carrying its characteristic. The threshold map already
+      meets this fault on the measured axis and answers it the same way (@SCN-CIP-002).
+
+      THE CITATION IS ALL OR NOTHING, and both halves go loud. The run cites nothing, so its
+      credit posts to suspense; the scenario that was meant to receive it finds nothing to
+      discharge its obligation and reads missing. The cheap wrong reading is the one this
+      refuses — degrade to the corpus hop, credit whichever row it reached first, and green a
+      row nobody named. That is a watermelon manufactured by the ENGINE rather than by the
+      target, and silence is the outcome that must not be reachable.
+
+      Given these registry entries name the fitness scenario each check credits
+        | script                     | check      | scenario    |
+        | lint:complexity            | complexity | SCN-FIT-001 |
+        | lint:complexity-exceptions | complexity | SCN-FIT-003 |
+      And a stepless fitness scenario carries the bare check "complexity"
+      And a second stepless fitness scenario carries the same bare check "complexity"
+      When the fitness checks wired into CI over the real source are observed and reconciled
+      Then the run of "lint:complexity-exceptions" cites no scenario and its credit posts to suspense
+      And the second fitness scenario reconciles missing, naming the check "complexity"
+
+    @unit @integration @SCN-LNT-017
+    Scenario: a registry entry naming a scenario that carries a different characteristic cites nothing — a near-match is never a match
+      THE ROW THIS ENTRY NAMES IS REAL, and it still answers nothing. It is a stepless fitness
+      scenario the corpus carries, cited by its own check and reconciling green — but it carries
+      a DIFFERENT bare characteristic than the entry does. The @SCN alone was never the join: one
+      row may carry two bare checks and owe two obligations (@SCN-LNT-012), which is exactly why
+      a credit is keyed by the PAIR. An entry whose pair the corpus does not hold has not named a
+      row this check can settle.
+
+      HALF A MATCH IS THE ONE A LOOKUP IS TEMPTED TO SMOOTH OVER, because the id resolves. A
+      reading that tested EXISTENCE rather than MEMBERSHIP would green a row that owes this
+      check nothing, while the row that does owe it reads missing and its own run sits in
+      suspense — the same silent wrong credit @SCN-LNT-016 refuses, reached by a different route.
+
+      TWO FAULTS, TWO REMEDIES, WHICH IS WHY THIS IS NOT AN ARM OF @SCN-LNT-016. That author
+      fixes the id; this one fixes the row it points at — the entry was aimed at the wrong
+      scenario, or the scenario it named was renumbered onto another characteristic. One code
+      path, and an author meeting either needs to be told which of the two they are looking at.
+
+      Given these registry entries name the fitness scenario each check credits
+        | script                     | check        | scenario    |
+        | lint:complexity            | complexity   | SCN-FIT-001 |
+        | lint:complexity-exceptions | complexity   | SCN-FIT-003 |
+        | lint:feature-codes         | traceability | SCN-FIT-003 |
+      And a stepless fitness scenario carries the bare check "complexity"
+      And a second stepless fitness scenario carries the same bare check "complexity"
+      And a third stepless fitness scenario carries a different bare check "traceability"
+      When the fitness checks wired into CI over the real source are observed and reconciled
+      Then the run of "lint:complexity-exceptions" cites no scenario and its credit posts to suspense
+      And the second fitness scenario reconciles missing, naming the check "complexity"
+      And the third fitness scenario reconciles satisfied for "traceability" alone, absorbing no credit meant for another characteristic
+
   Rule: this repository's own feature-code registry holds
 
     THE ONE CHECK THIS FILE OWNS, AND WHY IT LANDS HERE RATHER THAN IN A FILE OF ITS OWN.
@@ -451,8 +563,8 @@ Feature: Reconcile every fitness function as a stepless fitness scenario citing 
     not a claim that the check is part of the fitness-reconciliation model.
 
     IT CARRIES NO STEPS, so it raises exactly one Evidence Obligation — the fitness one its
-    bare `@feature-codes` tag names — and the CI run of lint:feature-codes settles it,
+    bare `@traceability` tag names — and the CI run of lint:feature-codes settles it,
     resolved through this repository's own registry and then through this corpus.
 
-    @feature-codes @SCN-LNT-011
+    @traceability @SCN-LNT-011
     Scenario: every feature-code header in this corpus is unique and registered

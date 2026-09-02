@@ -18,7 +18,7 @@
  * `@lint=lint:complexity-exceptions` tag on @SCN-CPX-003 is then what keeps it out of the suspense
  * row as an uncited static check. Observed AND NAMED is the balanced state.
  *
- * Mirrors `lint:complexity` / `lint:scn-tags` / `lint:no-committed-reports`: a pure function of the
+ * Mirrors `lint:complexity` / `lint:scn-tags` / `hygiene:no-committed-reports`: a pure function of the
  * checked-out tree, a full CI gate on every push.
  */
 

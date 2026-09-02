@@ -95,3 +95,108 @@ describe("[SCN-LNT-001] registeredCheckTags names the tag set the corpus hop mat
     expect(registeredCheckTags(registry)).toEqual(["complexity", "typecheck"]);
   });
 });
+
+/**
+ * @unit for @SCN-LNT-015 — the relocated arm, read at hop 1. A registry entry may name the
+ * fitness scenario its check credits, and the string form keeps naming none.
+ *
+ * Bidirectional evidence: the describe carries the SCN-LNT-015 id, back-linking to
+ * features/fitness-reconciliation.feature's @SCN-LNT-015 scenario.
+ */
+describe("[SCN-LNT-015] checkRegistryOf reads the @SCN an entry names, beside its characteristic", () => {
+  it("keeps both terms — the characteristic the handle asserts and the row its run credits", () => {
+    // THE COLLAPSE'S OWN SHAPE. Two handles, ONE characteristic, and the @SCN is the only thing
+    // that tells their rows apart once the tag has stopped naming the check.
+    const registry = checkRegistryOf({
+      "lint:complexity": { check: "complexity", scn: "SCN-CPX-005" },
+      "lint:complexity-exceptions": { check: "complexity", scn: "SCN-CPX-006" },
+    });
+
+    expect(registry.get("lint:complexity")).toEqual({ check: "complexity", scn: "SCN-CPX-005" });
+    expect(registry.get("lint:complexity-exceptions")).toEqual({
+      check: "complexity",
+      scn: "SCN-CPX-006",
+    });
+    // The characteristic set is UNCHANGED by the second term: two handles of one characteristic
+    // are one tag, which is the whole point of the collapse.
+    expect(registeredCheckTags(registry)).toEqual(["complexity"]);
+    expect(checkTagOfScript(registry, "lint:complexity-exceptions")).toBe("complexity");
+  });
+
+  it("leaves the string form naming no scenario, so the corpus still decides", () => {
+    // The compatibility this rule is careful about: an entry naming only a characteristic resolves
+    // exactly as it does today (@SCN-LNT-008).
+    expect(checkRegistryOf({ "lint:complexity": "complexity" }).get("lint:complexity")).toEqual({
+      check: "complexity",
+      scn: null,
+    });
+  });
+
+  it("reads an object naming no scenario as the object spelling of the string form", () => {
+    expect(
+      checkRegistryOf({ "lint:complexity": { check: "complexity" } }).get("lint:complexity")
+    ).toEqual({ check: "complexity", scn: null });
+  });
+
+  it("stores the @SCN BARE, on the same ground the tag already is", () => {
+    // A registry written beside a feature file will spell BOTH terms the way the file does, and
+    // the corpus carries the id bare. Stripping here rather than at the lookup is the stance
+    // `checkRegistryOf` already takes for the tag.
+    expect(
+      checkRegistryOf({ "lint:complexity": { check: "@complexity", scn: " @SCN-CPX-005 " } }).get(
+        "lint:complexity"
+      )
+    ).toEqual({ check: "complexity", scn: "SCN-CPX-005" });
+  });
+});
+
+/**
+ * @unit for @SCN-LNT-016 — the same property one layer down. An object entry carrying an `scn`
+ * key it cannot resolve to a non-empty bare id is dropped WHOLE, not downgraded to the string
+ * form: a dropped entry leaves the handle unregistered, so its run cites nothing and lands in
+ * suspense, out loud. Degrading it would turn an author's typo into a silent credit on whichever
+ * row the corpus reached first — the outcome @SCN-LNT-016 exists to refuse.
+ *
+ * Bidirectional evidence: the describe carries the SCN-LNT-016 id, back-linking to
+ * features/fitness-reconciliation.feature's @SCN-LNT-016 scenario.
+ */
+describe("[SCN-LNT-016] an unusable `scn` drops the entry whole rather than degrading it", () => {
+  it("drops an entry whose `scn` is not a string", () => {
+    // Config is data from outside, and this is the stance `checkRegistryOf` already takes for a
+    // non-string CHECK. Extending it to the new field is the point: the two terms are read under
+    // one policy, so a reader cannot learn that one of them is trusted more than the other.
+    expect(checkRegistryOf({ "lint:complexity": { check: "complexity", scn: 6 } }).size).toBe(0);
+    expect(checkRegistryOf({ "lint:complexity": { check: "complexity", scn: null } }).size).toBe(0);
+    expect(checkRegistryOf({ "lint:complexity": { check: "complexity", scn: [] } }).size).toBe(0);
+  });
+
+  it("drops an entry whose `scn` bares down to nothing", () => {
+    // `bareTerm` strips the leading `@` and the surrounding space, so `"@"` and `"  "` are the
+    // empty id spelled two other ways. All three say the same thing: the author meant to name a
+    // row and did not.
+    for (const scn of ["", "   ", "@", " @ "]) {
+      expect(checkRegistryOf({ "lint:complexity": { check: "complexity", scn } }).size).toBe(0);
+    }
+  });
+
+  it("takes the handle with it, so the run cites nothing instead of the wrong row", () => {
+    // WHY WHOLE. The alternative — keep the entry at `scn: null` — is the corpus hop again, and
+    // the corpus hop credits the first carrier. That is the silent wrong answer; an unregistered
+    // handle is the loud one (@SCN-LNT-001's `null`, surfaced in suspense).
+    const registry = checkRegistryOf({
+      "lint:complexity": "complexity",
+      "lint:complexity-exceptions": { check: "complexity", scn: 6 },
+    });
+
+    expect(registry.has("lint:complexity-exceptions")).toBe(false);
+    expect(checkTagOfScript(registry, "lint:complexity-exceptions")).toBeNull();
+    // The entries around it are untouched — one malformed entry is one entry's fault.
+    expect(registry.get("lint:complexity")).toEqual({ check: "complexity", scn: null });
+  });
+
+  it("keeps an entry that carries NO `scn` key — the object spelling of the string form", () => {
+    // The boundary, stated from the legal side so the drop cannot quietly widen: it is the KEY's
+    // presence that is being judged, not the truthiness of its value.
+    expect(checkRegistryOf({ "lint:complexity": { check: "complexity" } }).size).toBe(1);
+  });
+});

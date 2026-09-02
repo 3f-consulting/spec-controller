@@ -6,9 +6,12 @@
  *
  * Hop 1 is `domain/checkRegistry`'; hop 2 is here, and it reads the CORPUS. That direction is the
  * point: the feature file stays the one place a check's scenario is named, so moving a fitness
- * scenario or renumbering it moves the citation with it. A second roster of `check → @SCN` pairs
- * held anywhere else would be a copy that agrees until it doesn't, and the disagreement would
- * surface as a check posting to a row it does not belong to.
+ * scenario or renumbering it moves the citation with it. A registry entry may NAME the `@SCN` it
+ * credits (@SCN-LNT-015) — canon's runner-side join for a static check, whose only identifier is a
+ * script handle — but that never makes it a second roster this hop defers to: the name is checked
+ * against the carriers read here, and an `@SCN` the corpus does not carry with that characteristic
+ * cites nothing rather than being smoothed into a near-match (@SCN-LNT-016, @SCN-LNT-017). The
+ * register discriminates; the corpus still decides.
  *
  * WHAT THIS DOES NOT DECIDE. Whether a scenario is stepless, and whether a bare tag RAISES an
  * Evidence Obligation, are the shape and obligation rules (@SCN-STG-005, @SCN-LNT-006). This
@@ -17,21 +20,26 @@
  */
 
 import type { CheckRegistry } from "../domain/checkRegistry.js";
-import { checkTagOfScript } from "../domain/checkRegistry.js";
 import type { TaggedScenario } from "./scenarios.js";
 
-/** Bare check tag → the `@SCN` of the fitness scenario carrying it. */
-export type FitnessCitations = ReadonlyMap<string, string>;
+/** Bare check tag → the `@SCN` of every fitness scenario carrying it, in corpus order. */
+export type FitnessCitations = ReadonlyMap<string, readonly string[]>;
 
 /**
- * HOP 2 — read the corpus for the scenario carrying each registered check tag.
+ * HOP 2 — read the corpus for EVERY scenario carrying each registered check tag, in corpus order.
  *
- * FIRST IN CORPUS ORDER WINS, and the runners-up are dropped rather than merged. Two scenarios
- * tagged with one bare check is a corpus fault, not a shape this seam smooths over: one run is one
- * credit, so it can cite one `@SCN`, and the second scenario's obligation is left with no
- * observation — it reconciles `missing`, out loud (the LNT-011 ruling, 2026-08-09). Returning both
- * would have to invent a rule for which one the credit means, and the honest answer is that the
- * corpus has not said.
+ * WHY EVERY CARRIER, AND NOT JUST THE FIRST. Canon asks one tag to name several scenarios — several
+ * checks of one characteristic, told apart by `@SCN` — so the tag alone stops identifying a row and
+ * the registry entry names it instead (@SCN-LNT-015). Answering "does the `@SCN` this entry names
+ * carry this characteristic?" reads the corpus in the other direction, and there were two ways to
+ * supply it: a second structure passed alongside, which grows `citationOfScript`'s arity, or this
+ * hop carrying what it already walked past. It visits every carrier either way; keeping them costs
+ * nothing and makes both readings fall out of ONE lookup, with no signature widened.
+ *
+ * FIRST IN CORPUS ORDER STILL WINS where an entry names no scenario — the CHOICE moved one function
+ * along, to `citationOfScript`, and the ruling is unchanged (@SCN-LNT-008): one run is one credit,
+ * so it cites one `@SCN`, and a runner-up left with no observation reconciles `missing`, out loud.
+ * Order is therefore load-bearing here and is the corpus's own.
  *
  * A registered check no scenario carries is simply ABSENT from the map — the uncited-check case,
  * whose whole value is that it reaches no row and surfaces in suspense.
@@ -41,10 +49,13 @@ export function fitnessCitations(
   checkTags: readonly string[]
 ): FitnessCitations {
   const known = new Set(checkTags);
-  const citations = new Map<string, string>();
+  const citations = new Map<string, string[]>();
   for (const scenario of scenarios) {
     for (const tag of scenario.tags) {
-      if (known.has(tag) && !citations.has(tag)) citations.set(tag, scenario.scnId);
+      if (!known.has(tag)) continue;
+      const carriers = citations.get(tag) ?? [];
+      if (!carriers.includes(scenario.scnId)) carriers.push(scenario.scnId);
+      citations.set(tag, carriers);
     }
   }
   return citations;
@@ -90,8 +101,15 @@ export function citationOfScript(
   registry: CheckRegistry,
   citations: FitnessCitations
 ): ScriptCitation | null {
-  const checkTag = checkTagOfScript(registry, script);
-  if (checkTag === null) return null;
-  const scnId = citations.get(checkTag);
-  return scnId === undefined ? null : { checkTag, scnId };
+  const entry = registry.get(script);
+  if (entry === undefined) return null;
+  const carriers = citations.get(entry.check) ?? [];
+  // THE ENTRY'S OWN @SCN WHERE IT HAS ONE, the corpus's first carrier where it has none. The
+  // `find` is a MEMBERSHIP test, not a lookup: an `@SCN` the corpus does not carry with this
+  // characteristic is absent from these carriers however it is wrong — misspelt, renumbered, or
+  // carrying a different characteristic — so it resolves to nothing and the citation is withheld
+  // whole. No near-match branch, because a renumbered scenario must not green a row by resembling
+  // one.
+  const scnId = entry.scn === null ? carriers[0] : carriers.find((id) => id === entry.scn);
+  return scnId === undefined ? null : { checkTag: entry.check, scnId };
 }

@@ -26,8 +26,8 @@ Feature: spec-controller reconciles its own tree, and the build depends on the a
     scenario at the foot of this file is not decoration. It raises the Evidence Obligation
     this gate's own CI run settles, so the run is credited THERE instead of folding onto
     the suspense row as an uncited static check — the precedent set by the scenarios
-    for no-committed-reports, complexity-exceptions and scn-subissues. Without it the
-    gate would red on its own introduction, which is the tool grading its own homework
+    for complexity-exceptions and scn-subissues. Without it the gate would red on its
+    own introduction, which is the tool grading its own homework
     and finding it wanting: correct behaviour, and the reason the obligation and the
     wiring land together.
 

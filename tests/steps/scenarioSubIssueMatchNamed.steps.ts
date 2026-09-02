@@ -61,28 +61,49 @@ const accountFor = (ledger: Ledger, scnId: string): ScenarioReconciliation | und
  * assertion is that they meet.
  */
 // @SCN-SSM-006
-const ownCheckTag = (): string => {
+const ownRegistration = (): { check: string; scn: string | null } => {
   const manifest = JSON.parse(
     readFileSync(join(process.cwd(), "package.json"), "utf8")
   ) as Parameters<typeof resolveCheckRegistry>[0];
-  const tag = resolveCheckRegistry(manifest).get(OWN_STATIC_CHECK);
+  const entry = resolveCheckRegistry(manifest).get(OWN_STATIC_CHECK);
   assert.ok(
-    tag,
+    entry,
     `expected ${OWN_STATIC_CHECK} to be registered in specController.checkRegistry — an ` +
       `unregistered handle reaches no bare check tag, so no scenario can name it and its run ` +
       `posts to suspense.`
   );
-  return tag;
+  return entry;
 };
 
 // @SCN-SSM-006
-const accountRaising = (ledger: Ledger, checkTag: string): ScenarioReconciliation | undefined =>
-  ledger.scenarioReconciliations.find((r) =>
-    // OBLIGATIONS, not observations — the predicate below is the debit's own shape and stays
-    // spelled out. `isStaticCheckObservation` narrows the observation union and has no business
-    // here; the two sides carry the bare check tag under the same field name and are otherwise
-    // unrelated types.
-    r.evidenceObligations.some((o) => o.qualityCheck === "lint" && o.staticCheck === checkTag)
+/**
+ * The account raising this check's fitness debit — narrowed by the `@SCN` its registry entry
+ * names, where it names one (3F-3004).
+ *
+ * WHY THE CHARACTERISTIC ALONE NO LONGER LOCATES IT. The bare tag on the scenario is now
+ * `@traceability`, a characteristic THREE of this repository's checks share, so "the account
+ * raising the obligation for this check's tag" matches three accounts and `find` would answer
+ * with whichever the corpus reached first. That is the attribution fault the citation seam
+ * exists to remove, not a property of this check. The registry entry is where canon puts a
+ * static check's check-to-scenario join, so it is what narrows the search — still READ OFF THE
+ * TREE, never a literal `SCN-SSM-009` typed here, so a renumbered or relocated fitness scenario
+ * moves this arm with it rather than quietly falsifying it.
+ *
+ * A `null` discriminator keeps exactly the old reading: the corpus decides, first carrier wins.
+ */
+const accountRaising = (
+  ledger: Ledger,
+  checkTag: string,
+  creditedScn: string | null
+): ScenarioReconciliation | undefined =>
+  ledger.scenarioReconciliations.find(
+    (r) =>
+      (creditedScn === null || r.scnId === creditedScn) &&
+      // OBLIGATIONS, not observations — the predicate below is the debit's own shape and stays
+      // spelled out. `isStaticCheckObservation` narrows the observation union and has no business
+      // here; the two sides carry the bare check tag under the same field name and are otherwise
+      // unrelated types.
+      r.evidenceObligations.some((o) => o.qualityCheck === "lint" && o.staticCheck === checkTag)
   );
 
 // @SCN-SSM-006
@@ -102,8 +123,8 @@ When("spec-controller's own tree is reconciled", function () {
 
 // @SCN-SSM-006
 Then("the check's run is credited to the scenario that names it", function () {
-  const checkTag = ownCheckTag();
-  const account = accountRaising(ownLedger.ledger, checkTag);
+  const { check: checkTag, scn: creditedScn } = ownRegistration();
+  const account = accountRaising(ownLedger.ledger, checkTag, creditedScn);
   assert.ok(
     account,
     `expected a Ledger account raising the fitness Evidence Obligation for "${checkTag}" — ` +

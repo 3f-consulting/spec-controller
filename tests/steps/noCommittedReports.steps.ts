@@ -2,7 +2,7 @@
  * Step definitions for features/no-committed-reports.feature (the @integration
  * arm of @SCN-NCR-001).
  *
- * Anti-watermelon: this runs the REAL `lint:no-committed-reports` guard over the
+ * Anti-watermelon: this runs the REAL `hygiene:no-committed-reports` check over the
  * REAL checked-out repo tree and asserts its actual exit code — NEVER a re-run of
  * the @unit fixture logic. So it reds while the legacy reports are tracked under
  * runs/ and greens once they relocate to the outside store — the guard's
@@ -32,7 +32,7 @@ Given("the real spec-controller repository tree", function () {
 // @SCN-NCR-001
 When("the no-committed-reports guard runs over the real tree", function () {
   try {
-    guardOutput = execFileSync("pnpm", ["lint:no-committed-reports"], {
+    guardOutput = execFileSync("pnpm", ["hygiene:no-committed-reports"], {
       cwd: repoRoot,
       encoding: "utf8",
     });

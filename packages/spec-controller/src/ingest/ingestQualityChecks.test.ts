@@ -94,7 +94,9 @@ describe("[SCN-LNT-005] resolveCheckRegistry reads specController.checkRegistry"
     const registry = resolveCheckRegistry({
       specController: { checkRegistry: { "lint:vocab-check": "vocab-check" } },
     });
-    expect([...registry]).toEqual([["lint:vocab-check", "vocab-check"]]);
+    expect([...registry]).toEqual([
+      ["lint:vocab-check", { check: "vocab-check", scn: null }],
+    ]);
   });
 
   it("resolves EMPTY when the target registers nothing — the reading is inert until something does", () => {
@@ -115,7 +117,7 @@ describe("[SCN-LNT-005] resolveCheckRegistry reads specController.checkRegistry"
     expect([...resolveCheckRegistry({ specController: { checkRegistry: null } })]).toEqual([]);
     expect(
       [...resolveCheckRegistry({ specController: { checkRegistry: { a: 7, b: "check" } } })]
-    ).toEqual([["b", "check"]]);
+    ).toEqual([["b", { check: "check", scn: null }]]);
   });
 });
 

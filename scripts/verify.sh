@@ -26,7 +26,7 @@
 # wrote, the gate reports every evidence obligation unobserved — "the suite did not run", not
 # "the code is wrong". A reconciler comparing gate NAMES would have greened while a flag
 # drifted; running ci.yml's own command string cannot. `runs/` is gitignored with no
-# re-includes and `lint:no-committed-reports` enforces that, so both reports stay local and
+# re-includes and `hygiene:no-committed-reports` enforces that, so both reports stay local and
 # are never committed.
 #
 # WHAT IS LEFT OUT IS PRINTED, NOT COMMENTED. `pnpm ladder` names every excluded step and its

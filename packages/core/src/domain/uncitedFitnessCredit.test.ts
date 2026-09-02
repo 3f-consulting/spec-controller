@@ -15,8 +15,8 @@
  * THE COLLISION THE FALLBACK NEEDED, and it is spec-controller's OWN configuration. The by-handle
  * arm compared an uncited observation's `staticCheck` — the RUNNABLE handle — against the
  * obligation's `staticCheck`, which is the BARE check tag its stepless scenario carries. For
- * eleven of this repository's twelve checks those two spellings differ (`lint:feature-codes` vs
- * `feature-codes`) and the arm could never fire. `typecheck` carries no prefix, so its handle and
+ * ten of this repository's eleven registered checks those two spellings differ (`lint:feature-codes`
+ * vs `traceability`) and the arm could never fire. `typecheck` carries no prefix, so its handle and
  * its bare tag are the SAME WORD — the one check on which the retired route was still live.
  *
  * ONE FIXTURE FACT MAKES THE CREDIT UNCITED: the registry maps `lint:typecheck` where the script

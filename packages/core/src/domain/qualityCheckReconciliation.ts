@@ -346,7 +346,7 @@ function locatorOf(observation: EvidenceObservation): string | undefined {
  *
  * THE CREDIT CITES, and it is the same rule the runtime arm applies: an observation citing this
  * scenario's `@SCN` answers its obligation. That is what lets a FITNESS obligation reconcile at
- * all — its `staticCheck` is the BARE CHECK TAG the scenario carries (`feature-codes`), while the
+ * all — its `staticCheck` is the BARE CHECK TAG the scenario carries (`traceability`), while the
  * run knows only the runnable handle (`lint:feature-codes`), so nothing matches by name and
  * nothing ever could. The citation is the seam that already crossed between them.
  *
@@ -367,7 +367,7 @@ function locatorOf(observation: EvidenceObservation): string | undefined {
  * never touched this file, so this half outlived the retirement it was written to announce — and
  * it was LIVE, not dead code. It compared an uncited observation's RUNNABLE handle against the
  * obligation's BARE tag, which differ for every prefixed check (`lint:feature-codes` vs
- * `feature-codes`) and are the SAME WORD for a prefix-less one (`typecheck`). On that check an
+ * `traceability`) and are the SAME WORD for a prefix-less one (`typecheck`). On that check an
  * uncited credit both posted to suspense AND answered this obligation: the row read `satisfied` on
  * evidence that cited nothing, and one observation became the credit side of two items on two rows
  * — the exactly-one-posting claim broken by the reconciler rather than by the posting rule.

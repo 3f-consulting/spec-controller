@@ -33,6 +33,10 @@ import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import {
+  checkRegistryOf,
+  registeredCheckTags,
+} from "../../packages/core/src/domain/checkRegistry.js";
 
 // Through the barrel, and deliberately not through the modules standing behind it: the barrel is
 // the subject of the surface arm below, so reaching its contents by any other route would be
@@ -1079,7 +1083,7 @@ Then(
 function manifestAt(at: string): {
   name: string;
   scripts?: Record<string, string>;
-  specController?: { checkRegistry: Record<string, string> };
+  specController?: { checkRegistry: Record<string, unknown> };
 } {
   return JSON.parse(readFileSync(path.join(process.cwd(), at), "utf8"));
 }
@@ -1093,7 +1097,12 @@ function namesThisRepositoryGoesBy(): string[] {
     manifestAt("packages/spec-controller/package.json").name,
     manifestAt("packages/core/package.json").name,
     ...Object.keys(root.scripts ?? {}).filter((script) => script.includes(":")),
-    ...Object.values(root.specController?.checkRegistry ?? {}),
+    // THE CHARACTERISTICS, READ THROUGH THE ONE READING OF THE REGISTRY (3F-3004). An entry is
+    // either a bare characteristic or `{ check, scn }` since the citation seam landed, so
+    // `Object.values` would hand this list objects rather than names. `registeredCheckTags` is the
+    // reading that already knows both spellings, and asking it keeps this derivation off a second
+    // copy of the grammar.
+    ...registeredCheckTags(checkRegistryOf(root.specController?.checkRegistry ?? {})),
     ...readdirSync(path.join(process.cwd(), ".github", "workflows")),
     ".github",
   ];

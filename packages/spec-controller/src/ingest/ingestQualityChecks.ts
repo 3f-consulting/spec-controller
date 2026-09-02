@@ -364,8 +364,8 @@ function observedCheckHandles(
   citations: FitnessCitations
 ): Set<string> {
   const handles = new Set<string>();
-  for (const [handle, tag] of registry) {
-    if (citations.has(tag)) handles.add(handle);
+  for (const [handle, entry] of registry) {
+    if (citations.has(entry.check)) handles.add(handle);
   }
   return handles;
 }

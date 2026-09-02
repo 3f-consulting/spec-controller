@@ -75,7 +75,7 @@ measurement arrived.
 
 ## Reports live outside the repo
 
-Reconciliation reports are never committed. `pnpm lint:no-committed-reports` fails
+Reconciliation reports are never committed. `pnpm hygiene:no-committed-reports` fails
 the build if any report artefact is tracked under `runs/`. Reports belong in an
 external store, not in version control.
 
