@@ -38,8 +38,13 @@ Feature: The local green-check runs the ladder CI runs, derived rather than list
   judgement this makes no claim about. And one hand-maintained artefact survives on
   purpose: the exclusion list. Adding to it narrows the local ladder deliberately,
   with a written reason, in a reviewed diff — a decision, not drift. It never narrows
-  CI, so a gate it dodges still reds on the pull request. Fencing that too would be
-  mechanism for a case nobody has hit.
+  CI, so a gate it dodges still reds on the pull request. AND NOTHING FENCES WHETHER A
+  WRITTEN REASON IS TRUE. Staleness is fenced (@SCN-LAD-005) and position is fenced
+  (@SCN-LAD-007); truth is not, and this repository carried a reason that was false the
+  day it was written for the four weeks between 3F-2444 and 3F-3041, every gate green
+  throughout. Ruled the same way, and for a stronger cause: the obvious check on a
+  reason — make it name an env: key the derived gate drops — would have passed that
+  one, which named two real ones. A reviewed diff is the ceiling here.
 
   Rule: every CI step that invokes a package.json script is a local gate
 
@@ -69,7 +74,7 @@ Feature: The local green-check runs the ladder CI runs, derived rather than list
       Given a CI config running a step this repository excludes from the local ladder
       When the local ladder is built over it
       Then the excluded step is not a gate
-      And the ladder names it, with the reason it cannot run locally
+      And the ladder names it, with the reason it is left out
 
     @unit @integration @SCN-LAD-005
     Scenario: an exclusion naming a script CI does not run reds as stale

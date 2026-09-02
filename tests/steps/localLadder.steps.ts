@@ -170,7 +170,7 @@ Then("the excluded step is not a gate", function () {
   );
 });
 
-Then("the ladder names it, with the reason it cannot run locally", function () {
+Then("the ladder names it, with the reason it is left out", function () {
   const reason = CI_ONLY_EXCLUSIONS.find((e) => e.script === EXCLUDED_SCRIPT)?.reason ?? "";
   assert.ok(reason !== "", `${EXCLUDED_SCRIPT} must carry a reason`);
   assert.ok(
@@ -244,7 +244,7 @@ Then(
   function () {
     // TEETH FIRST, message second — the same order @SCN-LAD-005 asserts in, and for the same
     // reason: an emitter that printed all of this and exited 0 would leave `pnpm verify` green
-    // over a workflow whose one unrunnable gate is unreachable.
+    // over a workflow whose one excluded gate is unreachable.
     assert.notEqual(
       emitterRun.exitCode,
       0,

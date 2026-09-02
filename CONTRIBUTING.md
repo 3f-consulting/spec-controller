@@ -49,10 +49,11 @@ arrived with a CI step and no gate line, leaving `pnpm verify` a proper subset o
 commits. A hand-maintained list drifts wherever it is kept; a derivation has nothing to keep.
 
 **What `pnpm verify` leaves out, it prints** — the step and the reason, every run, rather
-than in prose somebody has to keep true. Today that is `lint:scn-subissues`, which
-reconciles the pull request's diff against its ticket: it reads `GITHUB_BASE_SHA` /
-`GITHUB_HEAD_REF` and has no answer outside a PR context, so it runs on your PR rather than
-on your machine. An exclusion excusing a step CI no longer runs reds the ladder. It also runs
+than in prose somebody has to keep true. Today that is `lint:scn-subissues`, which reconciles
+the pull request's diff against its ticket. It is left out not because it cannot run here —
+it can, and that is the trap: one of its inputs is CI-supplied, so locally it answers on less
+than it needs and reds correct work. **The printed reason is the source; this paragraph
+is orientation.** An exclusion excusing a step CI no longer runs reds the ladder. It also runs
 *first* in CI, ahead of every gate: a step CI is the only place to run has one chance where
 every other gate has two, and a red in anything ahead of it would abort the job and take it
 off the board without reporting it unrun — so the ladder reds if it ever stops running first.

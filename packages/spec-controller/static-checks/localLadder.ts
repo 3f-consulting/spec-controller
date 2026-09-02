@@ -50,8 +50,19 @@ export interface LadderGate {
  * A step CI runs that the local ladder deliberately skips, and why.
  *
  * The reason is not decoration. An unexplained gap in a green-check is the failure
- * `scripts/verify.sh` exists to close, so a skipped gate must say what makes it unrunnable
- * here rather than merely inconvenient.
+ * `scripts/verify.sh` exists to close, so a skipped gate must say why its local answer cannot
+ * be believed, rather than merely that running it here is inconvenient.
+ *
+ * UNSOUND IS ENOUGH; IMPOSSIBLE IS NOT REQUIRED — and unsound is the commoner shape, because
+ * an absent env var arrives as its empty value rather than as an error, so the step runs and
+ * answers on less than it has. A step that answers here on inputs that are not here is as
+ * excluded as one that could not start. An entry claiming it cannot run instead argues for
+ * its own deletion: the reader who tests that claim runs the step, finds it green, and takes
+ * the entry out.
+ *
+ * The free-text form is ruled, not overlooked. The obvious check — require the reason to name
+ * an `env:` key the derived gate drops — would have passed the one entry caught false here,
+ * which named two real ones (3F-3041).
  */
 export interface LadderExclusion {
   readonly script: string;
@@ -126,8 +137,14 @@ export interface LocalLadder {
  *
  * THE CRITERION IS STRUCTURAL, NOT A MATTER OF TASTE. A derived gate carries a step's
  * COMMAND and never its `env:` block, so a step needing CI-supplied environment is exactly a
- * step that cannot run here. That is what stops this list becoming the place inconvenient
- * gates go: "it needs the pull request" is checkable, "it is slow" is not.
+ * step whose local answer is computed from inputs that are not here. That is what stops this
+ * list becoming the place inconvenient gates go: "it needs the pull request" is checkable,
+ * "it is slow" is not.
+ *
+ * WHAT THE CRITERION DOES NOT SAY IS THAT THE STEP FAILS. An absent env var arrives as its
+ * empty value, so the step runs, greens or reds on less than it needs, and says nothing about
+ * the difference. That silence is what an entry's reason is for: it is about whether the
+ * answer can be believed, never about whether the command executes.
  *
  * IT NARROWS THE LOCAL LADDER, NEVER CI. ci.yml is untouched by anything in this file, so a
  * gate an entry dodges still reds on the pull request. An entry added wrongly is a written,
@@ -138,7 +155,7 @@ export const CI_ONLY_EXCLUSIONS: readonly LadderExclusion[] = [
   {
     script: "lint:scn-subissues",
     reason:
-      "judges the pull request's diff through GITHUB_BASE_SHA / GITHUB_HEAD_REF, so it has no answer outside a PR context",
+      "running it here would not fail, it would answer wrongly: SCN-exempt trailers come from the pull request body as well as the commit messages, and a derived gate carries a step's command without its env: block, so PR_BODY is empty locally and correct work reds as though nobody had claimed the exemption",
   },
 ];
 
