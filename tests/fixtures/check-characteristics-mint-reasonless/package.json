@@ -1,0 +1,14 @@
+{
+  "name": "check-characteristics-mint-reasonless-fixture",
+  "private": true,
+  "_why": "Planted for @SCN-CHR-003's @integration arm — THE SAME MINT WITH NO REASON. Byte-for-byte the reasoned fixture beside it but for the reason, which is empty: an entry with nothing written against it is not a mint, it is the config line that mints a characteristic and certifies it in one act, which is the fault the whole slice closes. It reds, and it is told WHY its escape route did not admit the word rather than being left with an off-roster complaint about an entry it thought it had covered.",
+  "specController": {
+    "checkRegistry": {
+      "lint:complexity": "complexity",
+      "lint:flakiness": "flakiness"
+    },
+    "mintedCharacteristics": {
+      "flakiness": ""
+    }
+  }
+}

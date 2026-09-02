@@ -34,8 +34,12 @@ import { collectSourceFiles, CORE_SRC_ROOT, DOMAIN_ROOT, type CollectedFile } fr
  * `qualityCheckFaultMessages.ts` (the prose catalogue) and `qualityCheckReconciliationFault.ts`
  * (the Error). Three modules rather than one because the catalogue keys on the enum and the Error
  * indexes the catalogue, so housing them together would close a runtime import cycle.
+ *
+ * 11 → 12 at 3F-2996: `checkCharacteristics.ts`, the portfolio's check-characteristic roster
+ * (@SCN-CHR-001) — pure data plus one predicate, importing nothing, so it lands in the domain
+ * beside `checkRegistry.ts` and this walk collects one more file.
  */
-const DOMAIN_FILE_COUNT = 11;
+const DOMAIN_FILE_COUNT = 12;
 
 describe("[SCN-DPG-001] a domain module imports only the domain layer and pure standard types", () => {
   it("flags a domain file that imports from an adapter layer (parse/render/assemble/census)", () => {

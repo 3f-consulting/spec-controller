@@ -41,8 +41,13 @@ import {
  * seven files that each spelled it for themselves (@SCN-TRM-001). The floor moves because the
  * population did — the walk collects one more production file, which is the fact this count exists
  * to make loud.
+ *
+ * 32 → 33 at 3F-2996: `domain/checkCharacteristics.ts`, the portfolio's check-characteristic roster
+ * — the vendored export that makes a characteristic legal because the PORTFOLIO names it rather
+ * than because the target's own manifest does (@SCN-CHR-001). The floor moves because the
+ * population did.
  */
-const CORE_SRC_FILE_COUNT = 32;
+const CORE_SRC_FILE_COUNT = 33;
 
 describe("[SCN-EPG-001] the reconciliation engine imports nothing impure and references no IO", () => {
   it("flags an engine file that imports from an impure sibling layer", () => {

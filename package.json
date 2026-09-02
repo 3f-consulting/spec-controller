@@ -31,7 +31,8 @@
     "lint:self-balance": "tsx packages/spec-controller/static-checks/lintSelfBalanceCli.ts",
     "lint:adopted-vocabulary": "tsx packages/spec-controller/static-checks/lintAdoptedVocabularyCli.ts",
     "lint:anemic-domain": "tsx packages/spec-controller/static-checks/lintAnemicDomainCli.ts",
-    "lint:exempt-data-floor": "tsx packages/spec-controller/static-checks/lintExemptDataFloorCli.ts"
+    "lint:exempt-data-floor": "tsx packages/spec-controller/static-checks/lintExemptDataFloorCli.ts",
+    "lint:check-characteristics": "tsx packages/spec-controller/static-checks/lintCheckCharacteristicsCli.ts"
   },
   "specController": {
     "staticChecks": ["typecheck"],
@@ -44,6 +45,7 @@
       "typecheck": "typecheck",
       "lint:adopted-vocabulary": { "check": "vocab", "scn": "SCN-VOC-020" },
       "lint:exempt-data-floor": { "check": "vocab", "scn": "SCN-VOC-021" },
+      "lint:check-characteristics": { "check": "vocab", "scn": "SCN-CHR-005" },
       "lint:anemic-domain": "tech-conformance",
       "lint:self-balance": "self-balance",
       "lint:scn-subissues": { "check": "traceability", "scn": "SCN-SSM-009" }

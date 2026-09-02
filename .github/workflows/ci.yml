@@ -166,6 +166,32 @@ jobs:
       - name: Lint exempt data floor
         run: pnpm lint:exempt-data-floor
 
+      # THE CHECK-CHARACTERISTIC GATE (@SCN-CHR-005, 3F-2996) — the fourth vocabulary check, and
+      # the one whose subject is the manifest rather than the tree. The words that may name a
+      # characteristic were read out of this repository's own `specController.checkRegistry` and
+      # `specController.thresholds`, so adding a registry entry was simultaneously the act that
+      # minted a characteristic and the act that certified it. Fourteen tags for seven
+      # characteristics grew over a month here and nothing redded once: an absent check, not a
+      # lapse of discipline. This step is what stops the next one.
+      #
+      # The roster it judges against is `spec-controller-core`'s published export, reached through
+      # this workspace's pinned version — never a hand-typed list. A word the roster does not carry
+      # reds unless `specController.mintedCharacteristics` states a reason for it, and a mint that
+      # licenses nothing reds as stale, so the escape route can only shrink.
+      #
+      # WHAT A GREEN HERE DOES NOT ESTABLISH is printed by the check itself: it holds the WORDS to
+      # the roster and does not judge whether a characteristic was EARNED. Canon's admission test
+      # asks whether an existing characteristic already names the property a check asserts, and no
+      # check can answer that.
+      #
+      # CITED by @SCN-CHR-005 (@vocab) so the tool's own ledger reconciles this step rather than
+      # reporting it as an uncited static check. The `lint:` prefix is required, not cosmetic:
+      # runningStaticChecks observes a CI script only when its name carries an observed prefix, so
+      # a name outside that set would run here while being invisible to spec-controller's own
+      # ledger.
+      - name: Lint check characteristics
+        run: pnpm lint:check-characteristics
+
       # THE ANEMIC-DOMAIN CHECK (@SCN-ANM-001, 3F-2417) — the counterpart to 3F-2416's
       # module-size scope exclusion. That slice removed the one force actively PUSHING a rich
       # aggregate's behaviour out of its concept module (under the ceiling, hiving the

@@ -569,6 +569,9 @@ export const PUBLISHED_SURFACES: readonly PublishedSurface[] = [
       "provenanceObject",
       "projectProvenance",
       "projectProvenanceObject",
+      // The portfolio's check characteristics (domain/checkCharacteristics.ts)
+      "PORTFOLIO_CHECK_CHARACTERISTICS",
+      "isPortfolioCharacteristic",
       // Pure helpers (lib/*)
       "featureCodeOf",
       "relativizeToRoot",

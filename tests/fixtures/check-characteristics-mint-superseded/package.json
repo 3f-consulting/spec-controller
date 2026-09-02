@@ -1,0 +1,13 @@
+{
+  "name": "check-characteristics-mint-superseded-fixture",
+  "private": true,
+  "_why": "Planted for @SCN-CHR-004's @integration arm — THE MINT THE ROSTER HAS OVERTAKEN. `complexity` IS a word fitness-functions.md carries, so the registry entry naming it needs no mint at all and the entry beside it licenses nothing it did not already have. The word is still NAMED here, by that very entry, so the red cannot have come from the unused arm — it can only have come from the roster carrying the word itself, which is what makes this the second way a mint goes stale rather than a second spelling of the first.",
+  "specController": {
+    "checkRegistry": {
+      "lint:complexity": "complexity"
+    },
+    "mintedCharacteristics": {
+      "complexity": "Minted before the portfolio roster carried the word, and never deleted once it did."
+    }
+  }
+}

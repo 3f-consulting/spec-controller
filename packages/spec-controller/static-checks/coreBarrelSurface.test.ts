@@ -114,7 +114,10 @@ describe("[SCN-API-001] the core barrel exports exactly the frozen v1 contract s
     // pass reading like a clean one.
     const surface = coreSurface();
 
-    expect([surface.values.length, surface.types.length]).toEqual([26, 36]);
+    // 26 → 28 at 3F-2996: the portfolio check-characteristic roster and its membership
+    // predicate joined the `.` barrel (@SCN-CHR-001). The pair moves with the registry it is
+    // read off, which is what keeps it an anti-vacuity floor rather than a fourth opinion.
+    expect([surface.values.length, surface.types.length]).toEqual([28, 36]);
   });
 
   it("[SCN-API-001] retires ScenarioTotals from the actual type surface — the totals are the Scenario Reconciliations'", () => {

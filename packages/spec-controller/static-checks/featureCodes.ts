@@ -209,6 +209,12 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     status: "feature-code-used",
     note: "a term names the same pair however its author spaced it around the sigil — the leading-whitespace reading, which every hand-authoring port stripped the sigil BEFORE trimming and so stored a padded term still carrying its @, silently unfindable by every bare lookup; one bug because one rule had been hand-copied seven times (3F-2976)",
   },
+  {
+    code: "CHR",
+    slug: "check-characteristics",
+    status: "feature-code-used",
+    note: "a check characteristic is legal because the PORTFOLIO names it — the words that may name a characteristic arrive from a versioned `spec-controller-core` export, never from the target's own manifest, which is the file that used to certify the very entry that minted them (3F-2996)",
+  },
 ];
 
 /** A single lint finding. */

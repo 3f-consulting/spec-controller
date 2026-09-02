@@ -111,6 +111,15 @@ export type { FeatureNames } from "./render/markdown.js";
 export { provenanceObject, projectProvenance, projectProvenanceObject } from "./provenance/provenance.js";
 export type { RunContext, RunInputs, ProvenanceObject, ProvenanceFacts, ProvenanceInput } from "./provenance/provenance.js";
 
+// --- The portfolio's check characteristics (`domain/checkCharacteristics.ts`) ---
+// ON THE PUBLIC BARREL BY DESIGN, NOT ON `./internal` (3F-2996). The roster is what makes the
+// check vocabulary SHARED, so it has to be reachable by a product that installs this package and
+// never sees spec-controller's `static-checks/` folder; `./internal` is monorepo-scoped and would
+// publish it to exactly the one consumer that does not need it. A product derives its legal set
+// from its PINNED version and refreshes it on a bump — which is the property a hand-typed
+// per-product list cannot have.
+export { PORTFOLIO_CHECK_CHARACTERISTICS, isPortfolioCharacteristic } from "./domain/checkCharacteristics.js";
+
 // --- Pure helpers ---
 export { featureCodeOf } from "./lib/featureCode.js";
 export { relativizeToRoot } from "./lib/portablePath.js";
