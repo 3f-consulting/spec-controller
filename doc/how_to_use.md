@@ -19,7 +19,7 @@ node --version   # must be v22.x or higher
 - Gherkin `.feature` files (your scenarios and their evidence-obligation tags).
 - A Vitest JSON report (runtime test evidence).
 - A Cucumber JSON report (runtime test evidence).
-- Your CI config (`ci.yml`) and `package.json` — used to check that `@lint` static checks are actually wired into CI over the real source.
+- Your CI config (`ci.yml`) and `package.json` — used to check that the static checks your fitness scenarios name are actually wired into CI over the real source.
 
 ---
 
@@ -59,7 +59,7 @@ spec-controller balance --features ./features \
 | `--features <dir>` | Directory of Gherkin `.feature` files — the scenarios. |
 | `--vitest <report.json>` | A Vitest JSON report — runtime test evidence. |
 | `--cucumber <report.json>` | A Cucumber JSON report — runtime test evidence. |
-| `--ci <ci.yml>` | Your CI workflow — used to check whether `@lint` static checks actually run over the real source. |
+| `--ci <ci.yml>` | Your CI workflow — used to check whether the static checks your fitness scenarios name actually run over the real source. |
 | `--package-json <path>` | `package.json` — used to check a named static check's script exists. |
 | `--measurements <report.json>` | A measurement report — the number each measured check posted, evidence for the measured fitness checks (`@ci-run-time` and its family). |
 | `--target <name>` | A name recorded verbatim in the report's provenance (which project this run reconciled). |
@@ -166,7 +166,7 @@ Keep the reports as build artefacts — but do **not** commit them into the repo
 
 **No scenarios found / empty report** — check `--features` points at the directory holding your `.feature` files, and that the scenarios carry `@SCN-…` ids and evidence-obligation tags.
 
-**A guard shows as `missing` or `watermelon` you didn't expect** — `missing` means a named `@lint` guard's script isn't in `package.json`; `watermelon` means the script exists but no CI `run:` step actually invokes it over the real source. Both are real findings, not tool errors — that is the point.
+**A static check shows as `missing` or `watermelon` you didn't expect** — `missing` means the script named for that check isn't in `package.json`; `watermelon` means the script exists but no CI `run:` step actually invokes it over the real source. Both are real findings, not tool errors — that is the point.
 
 **`--json` rejected** — the legacy flag was removed; use `--format json:<path>`.
 
