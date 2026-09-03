@@ -6,12 +6,16 @@
  * Run via `pnpm lint:scn-subissues` in a PR-only CI step. It:
  *   1. resolves the PR base ref (GITHUB_BASE_SHA, falling back to origin/main);
  *   2. computes the feature-file diff and the src/test diffs;
- *   3. parses the behaviour-bearing @SCN codes (added/updated/deleted + the
- *      unit-equivalent discriminator) from the DIFF, and the unit-equivalent
- *      CITES from the CHECKED-OUT content of the changed test files — the diff
- *      detects the change, live file state carries the cite (@SCN-SSM-004,
- *      3F-1741: a cite on an unchanged line is invisible to a diff scan, which
- *      false-positived a valid rename-shaped PR on 3F-1725);
+ *   3. parses the ADDED and DELETED @SCN codes (and the unit-equivalent
+ *      discriminator) from the DIFF; reads the UPDATED codes by comparing each
+ *      changed feature file's BASE source against its HEAD source (@SCN-SSM-010,
+ *      3F-3044: which scenario a change belongs to is a question for the FILES,
+ *      and answering it from the diff named the neighbouring scenario whenever the
+ *      change fell on a scenario's last step); and reads the unit-equivalent CITES
+ *      from the CHECKED-OUT content of the changed test files — the diff detects the
+ *      change, live file state carries the cite (@SCN-SSM-004, 3F-1741: a cite on an
+ *      unchanged line is invisible to a diff scan, which false-positived a valid
+ *      rename-shaped PR on 3F-1725);
  *   4. auto-detects renumber pairs and reads SCN-exempt trailers;
  *   5. reads the PR TICKET HANDLE from CI metadata — GITHUB_HEAD_REF and/or a
  *      "[3F-NNN]" commit-message prefix — NO Linear call;
@@ -38,12 +42,12 @@ import {
   decideScnGate,
   detectDeletedCodes,
   detectRenumberPairs,
-  detectUpdatedCodes,
   isUnitEquivalentBehaviourBearing,
   parseAddedCodes,
   type ChangedBlockCites,
   type Exemption,
 } from "./scnSubIssueGate.js";
+import { readScenarioChanges } from "./scenarioTextChanges.js";
 
 /** Resolve the base ref to diff HEAD against (the PR base). */
 function resolveBaseRef(): string {
@@ -154,14 +158,13 @@ function testFileDiff(base: string): string {
   return diffPaths(base, [TEST_FILE_PATHSPEC], "test-file");
 }
 
-/** The `*.test.ts` files the PR touches, as repo-relative paths. */
-function changedTestFiles(base: string): string[] {
+/** The files the PR touches under one pathspec, as repo-relative paths. */
+function changedFiles(base: string, pathspec: string, label: string): string[] {
   try {
-    const out = execFileSync(
-      "git",
-      ["diff", "--name-only", `${base}...HEAD`, "--", TEST_FILE_PATHSPEC],
-      { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 }
-    );
+    const out = execFileSync("git", ["diff", "--name-only", `${base}...HEAD`, "--", pathspec], {
+      encoding: "utf8",
+      maxBuffer: 64 * 1024 * 1024,
+    });
     return out
       .split(/\r?\n/)
       .map((f) => f.trim())
@@ -169,10 +172,147 @@ function changedTestFiles(base: string): string[] {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     throw new Error(
-      `Failed to list the changed test files against base "${base}". ` +
+      `Failed to list the changed ${label} files against base "${base}". ` +
         `Ensure the checkout has enough history (fetch-depth: 0). Cause: ${message}`
     );
   }
+}
+
+/** The `*.test.ts` files the PR touches, as repo-relative paths. */
+function changedTestFiles(base: string): string[] {
+  return changedFiles(base, TEST_FILE_PATHSPEC, "test");
+}
+
+/**
+ * The commit the source comparison reads its BASE side at. Resolved EXPLICITLY rather than reusing
+ * `base` directly: every diff above is three-dot (`base...HEAD`), which is already the merge base,
+ * and a source read taken at `base` itself would disagree with them about which commit is "before"
+ * whenever main moved on. A base ref with no common ancestor (a shallow checkout) falls back to
+ * `base`, which is the honest reading of what the caller named.
+ */
+function resolveMergeBase(base: string): string {
+  try {
+    return execFileSync("git", ["merge-base", base, "HEAD"], {
+      encoding: "utf8",
+      // git's own stderr is DISCARDED, not inherited: the failure here is an EXPECTED
+      // reading (no common ancestor), and an inherited `fatal:` would print it into a
+      // green gate's log. A check whose passing output contains the word "fatal" is a
+      // check people learn to read past, which is the first step to switching it off.
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+  } catch {
+    return base;
+  }
+}
+
+/**
+ * One tracked file's content AT A COMMIT. A file the PR ADDS does not exist there, so `git show`
+ * fails and the source reads EMPTY — correct, since an absent scenario cannot have been updated.
+ */
+function sourceAtCommit(commit: string, file: string): string {
+  try {
+    return execFileSync("git", ["show", `${commit}:${file}`], {
+      encoding: "utf8",
+      maxBuffer: 64 * 1024 * 1024,
+      // stderr discarded for the reason `resolveMergeBase` gives: a PR that ADDS a feature
+      // file takes this path on every run, so an inherited `fatal: path … exists on disk,
+      // but not in <sha>` would be routine output of a passing gate.
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * The @SCN codes whose SCENARIO TEXT differs between the base and the head (@SCN-SSM-010, 3F-3044).
+ *
+ * The DIFF is not consulted for this beyond naming which feature files moved: attribution by
+ * position is what named the neighbouring scenario whenever a change fell on a scenario's last step,
+ * and every proposed cure for that — a wider context window, mapping changed line numbers back to
+ * scenario extents — keeps a position in the question. Two SOURCES in, a set of codes out.
+ *
+ * A file the PR DELETES has no checked-out content, so its head source reads empty and it
+ * contributes no updates — the deletion itself is `detectDeletedCodes`' to report.
+ *
+ * The second half of the reading is `outsideEveryScenarioFiles` (@SCN-SSM-013, 3F-3054): the changed
+ * feature files whose change lies inside NO scenario. A correct attribution can legitimately name
+ * nothing, so the empty updated set has to be readable as "no scenario contains this change" rather
+ * than "nothing changed" — see `outsideEveryScenarioReport`. Still hermetic: local git and the
+ * checked-out tree, no Linear call.
+ */
+function readFeatureFileChanges(base: string): {
+  updatedCodes: string[];
+  outsideEveryScenarioFiles: string[];
+} {
+  const mergeBase = resolveMergeBase(base);
+  const seen = new Set<string>();
+  const updatedCodes: string[] = [];
+  const outsideEveryScenarioFiles: string[] = [];
+
+  for (const file of changedFiles(base, FEATURE_FILE_PATHSPEC, "feature")) {
+    const headSource = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
+    const changes = readScenarioChanges(sourceAtCommit(mergeBase, file), headSource);
+    if (changes.changedOutsideEveryScenario) outsideEveryScenarioFiles.push(file);
+    for (const code of changes.updatedCodes) {
+      if (seen.has(code)) continue;
+      seen.add(code);
+      updatedCodes.push(code);
+    }
+  }
+
+  return { updatedCodes, outsideEveryScenarioFiles };
+}
+
+/**
+ * The line that says an empty updated set is SILENCE, not ABSENCE (@SCN-SSM-013, 3F-3054) — `null`
+ * when no changed feature file has a change outside every scenario, so nothing is printed and the
+ * no-feature-file-changed run keeps the output it always had, byte for byte.
+ *
+ * WHY THE FACT HAS TO BE SAID. A `Rule:` preamble, a `Feature:` preamble, a comment between two
+ * scenarios: ordinary places to edit, inside no scenario, so no `@SCN` code accounts for them and the
+ * updated set is correctly empty. But the inert message below reports the OTHER empty answer — that
+ * no feature file changed at all — and left alone the two are indistinguishable in the output. That
+ * is this repository's own `missing`-versus-unreached confusion arriving in a third place: the
+ * honest answer reading as the inert one.
+ *
+ * IT IS A REPORT, NOT A VIOLATION. Nothing here reds the gate, nothing is exempted, and
+ * `decideScnGate` is handed exactly the code sets it was handed before. The whole of it is silence in
+ * the code set plus the fact stated out loud — and the file named, because a fact the engineer
+ * cannot locate is a fact they cannot act on.
+ */
+function outsideEveryScenarioReport(files: readonly string[]): string | null {
+  if (files.length === 0) return null;
+  return (
+    `scn-subissue lint: ${files.join(", ")} changed OUTSIDE every scenario — no @SCN code ` +
+    `accounts for that change. An empty updated set here means "no scenario contains this change", ` +
+    `never "nothing changed". Reported, not a violation.`
+  );
+}
+
+/** Print the outside-every-scenario fact, if there is one. The shell over the line above. */
+function reportOutsideEveryScenario(files: readonly string[]): void {
+  const line = outsideEveryScenarioReport(files);
+  if (line !== null) console.log(line);
+}
+
+/**
+ * The run with nothing to check — no `@SCN` code moved and no behaviour-bearing unit-equivalent
+ * change — reported and exited 0. On a PR touching no behaviour-bearing surface this is the whole
+ * output: a no-op that smoke-tests the wiring (git diff + handle read) live over the real source.
+ *
+ * IT IS THE OTHER EMPTY ANSWER, and the pairing is why it is named rather than inlined. This message
+ * says NO FEATURE FILE CHANGED AT ALL; `outsideEveryScenarioReport` says A FEATURE FILE CHANGED AND
+ * NO SCENARIO CONTAINS THE CHANGE. Both leave the code set empty and they are not the same fact, so
+ * the two lines are printed independently and neither stands in for the other (@SCN-SSM-013,
+ * 3F-3054). The wording here is untouched by that slice: it was always the honest report of its own
+ * case, and the fault was that it was the only thing said.
+ */
+function exitWithNothingToCheck(base: string): never {
+  console.log(
+    `scn-subissue lint: OK — the diff against ${base} adds, updates or deletes no @SCN scenario codes and carries no behaviour-bearing unit-equivalent change; nothing to check.`
+  );
+  process.exit(0);
 }
 
 /**
@@ -273,8 +413,9 @@ async function main(): Promise<void> {
   const base = resolveBaseRef();
   const diff = featureFileDiff(base);
   const addedCodes = parseAddedCodes(diff);
-  const updatedCodes = detectUpdatedCodes(diff);
-  const deletedCodes = detectDeletedCodes(diff);
+  const { updatedCodes, outsideEveryScenarioFiles } = readFeatureFileChanges(base);
+  const deletedCodes = detectDeletedCodes(diff, updatedCodes);
+  reportOutsideEveryScenario(outsideEveryScenarioFiles);
 
   const testDiff = testFileDiff(base);
   const srcDiff = srcFileDiff(base);
@@ -292,12 +433,7 @@ async function main(): Promise<void> {
 
   const codesToCheck = [...new Set([...addedCodes, ...updatedCodes, ...deletedCodes])];
 
-  if (codesToCheck.length === 0 && !unitEquivalentBehaviourBearing) {
-    console.log(
-      `scn-subissue lint: OK — the diff against ${base} adds, updates or deletes no @SCN scenario codes and carries no behaviour-bearing unit-equivalent change; nothing to check.`
-    );
-    process.exit(0);
-  }
+  if (codesToCheck.length === 0 && !unitEquivalentBehaviourBearing) exitWithNothingToCheck(base);
 
   const commitMessages = commitMessagesSinceBase(base);
   const renumberPairs = detectRenumberPairs(diff);

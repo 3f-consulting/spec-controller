@@ -62,6 +62,10 @@ export type { FitnessCitations, ScriptCitation } from "./parse/fitnessCitations.
 // that rebuilt "which tags does this scenario carry" would be free to reproduce either one
 // silently. Internal, not public — `parseScenarios` remains the v1 corpus surface.
 export { parseTaggedScenarios } from "./parse/scenarios.js";
+// The TYPE beside the value (@SCN-SSM-010): a caller reading a scenario's EXTENT off this walk
+// needs the shape to name it. Shared for the same reason the walk is — a second reader deriving
+// "where does this scenario start and stop" is the second reading this seam exists to prevent.
+export type { TaggedScenario } from "./parse/scenarios.js";
 
 // `thresholdsOf` / `measuredCheckTags` / `thresholdFor` — the ONE reading of a target's authored
 // BARS (`domain/thresholds`, @SCN-CIP-001; the bar carries the comparison it is read with per

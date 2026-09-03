@@ -220,3 +220,111 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
 
     @traceability @SCN-SSM-009
     Scenario: every behaviour-bearing scenario code changed on a pull request is bound to a ticketed one
+
+  Rule: an updated scenario code is the code of a scenario whose text changed
+
+    A PROXY REPORTED AS A PURPOSE. The updated-code detector accumulated per HUNK: it
+    collected every @SCN code sitting on a CONTEXT line and, once any other line in that
+    hunk changed, reported those codes as updated. The measurement is TRUE — those codes
+    are in the hunk — and it answers a different question from the one the check asks.
+    "Which tag lines fall inside this hunk" is a fact about the DIFF; "which scenario
+    contains this change" is a fact about the CORPUS.
+
+    THE LAST STEP OF A SCENARIO IS AN ORDINARY PLACE TO CHANGE, and it is exactly where
+    the two answers come apart. Unified diff carries three lines of context, so an edit to
+    a scenario's last step leaves that scenario's own tag line — five lines up, past its
+    steps — OUTSIDE the window, while the FOLLOWING scenario's tag line, two lines below,
+    sits inside it. The code reported is the neighbour's: measured on PR #239, where
+    scenario @SCN-LAD-004 was edited and @SCN-LAD-005 was named. An edit to a scenario's
+    FIRST step gets the right answer, which is the whole reason the fault stayed invisible.
+
+    WIDENING THE CONTEXT IS RULED OUT, and not on cost. Every width is wrong for a scenario
+    longer than it, and a wider window pulls in MORE neighbours' tag lines — so the setting
+    that finally reaches the scenario above starts crediting the two below. No number makes
+    hunk-locality mean scenario-membership, because hunk boundaries are a function of git's
+    settings and of what else changed nearby.
+
+    SO THE QUESTION IS PUT TO THE TWO FILES. Not "which scenario contains this line" —
+    that keeps a position in the question, and a position can only come from the diff —
+    but "which scenarios' text differs between the base and the head". Two sources in, a
+    set of codes out: no line arithmetic, no hunk boundaries, no context width anyone has
+    to defend. It is the @SCN-SSM-004 move (3F-1741) made once more on the arm that never
+    received it, and the diff keeps the jobs it is genuinely good at — which files changed,
+    which tag lines were added or removed.
+
+    @unit @integration @SCN-SSM-010
+    Scenario: a change to a scenario's last step names that scenario, not the next one
+      Given a PR whose only Gherkin change edits the LAST step of a scenario that is immediately followed by another scenario's tag line
+      When the scenario sub-issue gate runs over the last-step fixture PR
+      Then the gate reports the edited scenario's code updated, and does not name the following scenario
+
+    @unit @integration @SCN-SSM-011
+    Scenario: a step removed from a scenario still names that scenario
+      THIS ROW EXISTS BECAUSE IT IS THE CASE THE OBVIOUS FIX SILENTLY DROPS. The natural
+      cure for the row above is positional: take the changed line numbers off the hunk
+      header, take the scenario extents off the checked-out file, and attribute one to
+      the other. That reading already exists in this tree as `changedLinesByFile`, and it
+      was measured at the parent's Analysis: for a PURE LINE REMOVAL it returns nothing.
+      A removed line holds no position in the new file, so there is nothing left to
+      attribute, and the check would report NO updated code for a change that genuinely
+      alters what a scenario asserts.
+
+      THAT IS THE SAME FALSE GREEN, ONE DOOR ALONG — a mis-attribution traded for a
+      silent miss. Removing a step is an ordinary edit to a scenario, not a boundary
+      curiosity, so the trade is not even a narrow one. Comparing the two SOURCES has no
+      such hole: a removed step makes the scenario's text differ exactly as a reworded
+      one does, and neither answer consults a line number.
+
+      So this row is the pin. It is what reds when a future refactor "simplifies" the
+      source comparison back into a positional reading, and a reader who does not know
+      that is exactly the reader who deletes it as a duplicate of the row above.
+
+      Given a PR whose only Gherkin change REMOVES the last step of a scenario, adding no line in its place
+      When the scenario sub-issue gate runs over the removed-step fixture PR
+      Then the gate reports that scenario's code updated
+
+    @unit @integration @SCN-SSM-012
+    Scenario: deleting a scenario names it deleted and leaves its neighbours unnamed
+      A DELETION IS WHERE THE OLD READING WAS WORST, not where it was mildest. Removing a
+      whole scenario takes out a run of lines, and that run puts the PRECEDING scenario's
+      trailing steps and the FOLLOWING scenario's tag line inside one hunk. The old
+      detector held every code it saw on a context line, so it named BOTH neighbours
+      updated: two scenarios accused, neither touched, on a pull request that changed
+      nothing in either of them.
+
+      THIS ROW ASSERTS TWO THINGS, AND DROPPING EITHER LOSES THE POINT. The deletion must
+      still be reported — that answer comes off the REMOVED tag line, never off context,
+      and it was measured sound before the reading changed. A row that only checked the
+      neighbours were quiet would go green for a gate that had stopped noticing deletions
+      altogether, which is a worse check than the one being replaced. So the deletion and
+      the silence are pinned together.
+
+      Given a PR whose only Gherkin change DELETES a whole scenario sitting between two untouched scenarios
+      When the scenario sub-issue gate runs over the deleted-scenario fixture PR
+      Then the gate reports the deleted scenario's code deleted, and reports neither neighbour updated
+
+    @unit @integration @SCN-SSM-013
+    Scenario: a change outside every scenario names no scenario, and the check says so
+      A CORRECT ATTRIBUTION CAN NAME NOTHING. A Rule preamble, a Feature preamble, a
+      comment sitting between two scenarios — these are ordinary places to edit, and they
+      lie inside no scenario, so no @SCN code accounts for them. The old reading held no
+      position on that; it held an accident. Reword a Rule preamble with a tag line two
+      lines below it and the reading reported that neighbour; reword a Feature preamble
+      with no tag line within three lines and it reported nothing. One class of edit, two
+      answers, decided by whether a tag happened to fall inside the context window.
+
+      SO THE FIRST CLAUSE IS SILENCE, UNIFORMLY — and the silence is exactly what makes
+      the second clause load-bearing. An empty updated set now carries two meanings that
+      are not the same fact: "no scenario contains this change" and "no feature file
+      changed at all". Left indistinguishable, the honest answer reads as the inert one,
+      which is this repository's own missing-versus-unreached confusion arriving in a
+      third place. So the check STATES the fact — the feature file changed outside every
+      scenario — while the inert message stays exactly as it was, for the case it means.
+
+      IT IS A REPORT, NOT A VIOLATION. Nothing here reds the gate and nothing changes
+      about what the gate does with the code sets it is handed. The whole of this row is
+      silence in the code set plus the fact said out loud.
+
+      Given a PR whose only Gherkin change rewords a Rule preamble two lines above a scenario's tag line
+      When the scenario sub-issue gate runs over the preamble fixture PR
+      Then the gate names no updated scenario code, and reports that the feature file changed outside every scenario

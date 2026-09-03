@@ -336,6 +336,109 @@ export interface TaggedScenario {
    * parser has already produced twice.
    */
   stepless: boolean;
+  /**
+   * The scenario's EXTENT in the source — 1-based and INCLUSIVE, so `lines.slice(startLine - 1,
+   * endLine)` is exactly this scenario's text (@SCN-SSM-010, 3F-3044). It rides on this walk for
+   * the reason `stepless` does, and for one more: the caller that wants an extent is asking which
+   * scenario some text belongs to, and a second pass free to disagree about which scenario it is
+   * looking at is precisely how that question gets the neighbour's answer.
+   *
+   * `startLine` is the lesser of the scenario's first OWN tag line and its keyword line — an
+   * inherited `Rule:`/`Feature:` tag is not part of this scenario's text. `endLine` is the line
+   * before the next block starts (a scenario, a `Rule:` — or its first tag line — a `Background:`,
+   * or EOF), TRIMMED BACK over trailing blank and comment lines.
+   *
+   * The trim is load-bearing rather than tidiness: without it a blank line or a comment sitting
+   * between two scenarios belongs to the preceding one, and an edit there reads as a change to a
+   * scenario it is not part of — neighbour-inheritance rebuilt at a smaller scale, which is the one
+   * outcome @SCN-SSM-010 rules out.
+   *
+   * Derived from AST locations rather than from step positions, so docstrings, data tables and
+   * `Examples:` blocks are covered with no special case.
+   */
+  startLine: number;
+  /** The last line of this scenario's text — see `startLine`. 1-based, inclusive. */
+  endLine: number;
+}
+
+/**
+ * Parse one feature source into cucumber's own AST, or THROW.
+ *
+ * An UNPARSEABLE source never yields an empty corpus. Silently returning zero scenarios is the
+ * precise shape of the false-green this tool exists to prevent: an empty debit side balances against
+ * anything. The app refuses an unreadable feature file at the ingest edge long before this
+ * (@SCN-CLI-016: exit 2, halting before any reconcile), so the throw is unreachable in a real run —
+ * it is the floor that keeps a future caller from re-opening the hole quietly.
+ */
+function parseFeatureDocument(source: string): GherkinDocument {
+  const parser = new Parser(new AstBuilder(IdGenerator.uuid()), new GherkinClassicTokenMatcher());
+  try {
+    return parser.parse(source);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(
+      `The feature source is not valid Gherkin, so no scenario corpus can be read from it. ` +
+        `Reconciling an empty corpus would balance against anything — so this fails loudly ` +
+        `rather than silently. Cause: ${message}`
+    );
+  }
+}
+
+/** A Gherkin block as the extent reading needs it: where it sits, and where its own tags sit. */
+interface LocatedBlock {
+  location: { line: number };
+  tags?: readonly { location: { line: number } }[];
+}
+
+/** A blank line, or one carrying only a `#` comment — what a block's extent is trimmed back over. */
+const BLANK_OR_COMMENT = /^\s*(?:#.*)?$/;
+
+/**
+ * Where a Gherkin block STARTS: its first own tag line if it has one, else its keyword line. Own
+ * tags only — a tag inherited from an enclosing `Rule:` or from the `Feature:` sits in another
+ * block's text, and claiming it here would give two blocks the same lines.
+ */
+function blockStart(block: LocatedBlock): number {
+  return Math.min(block.location.line, ...(block.tags ?? []).map((t) => t.location.line));
+}
+
+/**
+ * Every block start in the document, ascending — the BOUNDARIES one block's text ends at. Untagged
+ * scenarios count: a block's extent has to stop at the next block whether or not that block is one
+ * anybody can name.
+ */
+function collectBlockStarts(children: readonly FeatureChild[], starts: number[]): void {
+  for (const child of children) {
+    if (child.rule) {
+      starts.push(blockStart(child.rule));
+      collectBlockStarts(child.rule.children as FeatureChild[], starts);
+      continue;
+    }
+    if (child.background) starts.push(blockStart(child.background));
+    if (child.scenario) starts.push(blockStart(child.scenario));
+  }
+}
+
+/**
+ * Every block start in the document, ASCENDING — the boundaries `blockEnd` measures against. Read
+ * off the SAME parse the tags come from (@SCN-SSM-010): one Gherkin parse, two walks of its
+ * children, never a second read of the source.
+ */
+function documentBlockStarts(document: GherkinDocument): number[] {
+  const starts: number[] = [];
+  collectBlockStarts((document.feature?.children ?? []) as FeatureChild[], starts);
+  return starts.sort((a, b) => a - b);
+}
+
+/**
+ * Where the block starting at `start` ENDS: the line before the next boundary, or EOF, trimmed back
+ * over trailing blank and comment lines so the gap between two scenarios belongs to neither.
+ */
+function blockEnd(start: number, starts: readonly number[], lines: readonly string[]): number {
+  const next = starts.find((boundary) => boundary > start);
+  let end = Math.min(next !== undefined ? next - 1 : lines.length, lines.length);
+  while (end > start && BLANK_OR_COMMENT.test(lines[end - 1] ?? "")) end -= 1;
+  return end;
 }
 
 /**
@@ -365,26 +468,11 @@ export interface TaggedScenario {
  * the same id — a corpus-authoring fault, but a VISIBLE one (whether it should red is a deferred
  * policy question, 3F-1774's sibling).
  *
- * An UNPARSEABLE source THROWS — it never yields an empty corpus. Silently returning zero scenarios
- * is the precise shape of the false-green this tool exists to prevent: an empty debit side balances
- * against anything. The app refuses an unreadable feature file at the ingest edge long before this
- * (@SCN-CLI-016: exit 2, halting before any reconcile), so the throw is unreachable in a real run —
- * it is the floor that keeps a future caller from re-opening the hole quietly.
+ * An UNPARSEABLE source THROWS, from `parseFeatureDocument` — it never yields an empty corpus, for
+ * the reason recorded there.
  */
 export function parseTaggedScenarios(source: string): TaggedScenario[] {
-  const parser = new Parser(new AstBuilder(IdGenerator.uuid()), new GherkinClassicTokenMatcher());
-
-  let document: GherkinDocument;
-  try {
-    document = parser.parse(source);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    throw new Error(
-      `The feature source is not valid Gherkin, so no scenario corpus can be read from it. ` +
-        `Reconciling an empty corpus would balance against anything — so this fails loudly ` +
-        `rather than silently. Cause: ${message}`
-    );
-  }
+  const document = parseFeatureDocument(source);
 
   const tagged: TaggedScenario[] = [];
   // The parser tokenises, so no whitespace ever reaches `tag.name` and this was never a defect —
@@ -392,6 +480,8 @@ export function parseTaggedScenarios(source: string): TaggedScenario[] {
   const bare = (tags: readonly { name: string }[]): string[] => tags.map((t) => bareTerm(t.name));
 
   const featureTags = bare(document.feature?.tags ?? []);
+  const lines = source.split(/\r?\n/);
+  const starts = documentBlockStarts(document);
 
   const collect = (children: readonly FeatureChild[], inherited: string[]): void => {
     for (const child of children) {
@@ -410,7 +500,14 @@ export function parseTaggedScenarios(source: string): TaggedScenario[] {
       const scnTag = effective.find((t) => SCN_CODE.test(t));
       if (scnTag === undefined) continue;
 
-      tagged.push({ scnId: scnTag, tags: effective, stepless: child.scenario.steps.length === 0 });
+      const startLine = blockStart(child.scenario);
+      tagged.push({
+        scnId: scnTag,
+        tags: effective,
+        stepless: child.scenario.steps.length === 0,
+        startLine,
+        endLine: blockEnd(startLine, starts, lines),
+      });
     }
   };
 

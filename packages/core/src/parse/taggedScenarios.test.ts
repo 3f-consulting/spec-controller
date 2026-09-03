@@ -11,7 +11,14 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { parseTaggedScenarios } from "./scenarios.js";
+import { parseTaggedScenarios, type TaggedScenario } from "./scenarios.js";
+
+/**
+ * The TAG reading alone. A scenario's EXTENT rides on the same walk (@SCN-SSM-010) and is pinned by
+ * that scenario's own arm; dropping it here keeps these rows asserting exactly what they are about.
+ */
+const tagReading = (scenarios: readonly TaggedScenario[]) =>
+  scenarios.map(({ scnId, tags, stepless }) => ({ scnId, tags, stepless }));
 
 describe("[SCN-LDG-020] parseTaggedScenarios exposes the effective tag set the obligation rule reads", () => {
   it("puts the scenario's OWN tags first, then the inherited ones, outermost first", () => {
@@ -28,7 +35,7 @@ Feature: alpha
       Given a thing
 `;
 
-    expect(parseTaggedScenarios(source)).toEqual([
+    expect(tagReading(parseTaggedScenarios(source))).toEqual([
       {
         scnId: "SCN-AAA-001",
         tags: ["unit", "SCN-AAA-001", "AAA", "integration", "complexity"],
@@ -50,7 +57,7 @@ Feature: alpha
     Given another thing
 `;
 
-    expect(parseTaggedScenarios(source)).toEqual([
+    expect(tagReading(parseTaggedScenarios(source))).toEqual([
       { scnId: "SCN-AAA-001", tags: ["unit", "SCN-AAA-001", "AAA"], stepless: false },
     ]);
   });

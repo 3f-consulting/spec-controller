@@ -4,8 +4,9 @@
  * this module lands with @SCN-SSM-001 (3F-1489).
  *
  * On each PR, the static check computes the behaviour-bearing @SCN-<FFF>-<NNN> codes the
- * diff touches (added / updated / deleted Gherkin tag-line codes, plus the
- * unit-test-equivalent behaviour change — the 3F-805 surface) and verifies the
+ * change touches (added / deleted Gherkin tag-line codes from the diff, UPDATED codes from
+ * comparing the base and head feature SOURCES — @SCN-SSM-010, `scenarioTextChanges.ts` — plus the
+ * unit-test-equivalent behaviour change, the 3F-805 surface) and verifies the
  * binding `scenario-binds-test-and-code` ENTIRELY INSIDE CI, with NO live Linear
  * call: the diff carries its @SCN cite (the test+code), AND the PR
  * carries its own TICKET HANDLE (the Linear-auto-named source branch
@@ -65,7 +66,10 @@ export interface Exemption {
 export interface ScnGateInput {
   /** @SCN codes the diff adds, parsed from feature-file tag lines only (bare, no leading @). */
   addedCodes: string[];
-  /** @SCN codes the diff UPDATES (a code present on both sides of a hunk with a body edit). */
+  /**
+   * @SCN codes whose scenario TEXT differs between the base and the head source — read by comparing
+   * the two files, never by reading positions out of a diff (@SCN-SSM-010, `scenarioTextChanges.ts`).
+   */
   updatedCodes: string[];
   /** @SCN codes the diff DELETES (a removed tag line whose behaviour stops). */
   deletedCodes: string[];
@@ -338,72 +342,22 @@ export function detectRenumberPairs(diff: string): RenumberPair[] {
 }
 
 /**
- * Detect the @SCN codes a feature-file diff UPDATES: a scenario BODY changed
- * while its @SCN code held (on a context tag line, or churned removed+added with
- * the same code).
- */
-export function detectUpdatedCodes(diff: string): string[] {
-  const updated: string[] = [];
-  const seen = new Set<string>();
-
-  let removed: string[] = [];
-  let added: string[] = [];
-  let context: string[] = [];
-  let otherChange = false;
-
-  const flush = (): void => {
-    if (otherChange) {
-      const heldCodes = new Set<string>(context);
-      for (const code of removed) {
-        if (added.includes(code)) heldCodes.add(code);
-      }
-      for (const code of heldCodes) {
-        if (!seen.has(code)) {
-          seen.add(code);
-          updated.push(code);
-        }
-      }
-    }
-    removed = [];
-    added = [];
-    context = [];
-    otherChange = false;
-  };
-
-  for (const rawLine of diff.split(/\r?\n/)) {
-    if (HUNK_HEADER.test(rawLine)) {
-      flush();
-      continue;
-    }
-    if (rawLine.startsWith("+++") || rawLine.startsWith("---")) continue;
-    if (rawLine.startsWith("diff --git")) continue;
-
-    const marker = rawLine[0];
-    const body = marker === "+" || marker === "-" || marker === " " ? rawLine.slice(1) : rawLine;
-    const codes = tagLineCodes(body);
-
-    if (marker === "-") {
-      if (codes.length > 0) removed.push(...codes);
-      else otherChange = true;
-    } else if (marker === "+") {
-      if (codes.length > 0) added.push(...codes);
-      else otherChange = true;
-    } else {
-      if (codes.length > 0) context.push(...codes);
-    }
-  }
-
-  flush();
-
-  return updated;
-}
-
-/**
  * Detect the @SCN codes a feature-file diff DELETES: a removed `@SCN` tag-line
  * code whose behaviour stops — not the removed side of a renumber, not also
  * re-added, not an update. Renumber and update WIN over delete.
+ *
+ * THE UPDATED SET IS PASSED IN rather than computed here (@SCN-SSM-010, 3F-3044). It is no longer
+ * a question the diff can answer: which scenarios' text differs is read by comparing the base and
+ * head SOURCES (`scenarioTextChanges.ts`), so the only caller holding that answer is the one that
+ * read the sources. Which tag lines the diff removed is still this function's own question, and
+ * still the diff's.
+ *
+ * THE EXCLUSION IS KEPT even though it is NEARLY vacuous under the new reading — a code absent from
+ * the head cannot be `updated`, so the two sets barely overlap. Nearly is not never: a file carrying
+ * the same code on two scenarios, one of them deleted, still reaches it. Removing a check because a
+ * stronger upstream makes it usually-unnecessary is how the next hole gets dug.
  */
-export function detectDeletedCodes(diff: string): string[] {
+export function detectDeletedCodes(diff: string, updatedCodes: readonly string[]): string[] {
   const removed: string[] = [];
   const removedSeen = new Set<string>();
   const added = new Set<string>();
@@ -433,7 +387,7 @@ export function detectDeletedCodes(diff: string): string[] {
   if (removed.length === 0) return [];
 
   const renumberRemoved = new Set(detectRenumberPairs(diff).map((p) => p.removed));
-  const updated = new Set(detectUpdatedCodes(diff));
+  const updated = new Set(updatedCodes);
 
   return removed.filter(
     (code) => !added.has(code) && !renumberRemoved.has(code) && !updated.has(code)

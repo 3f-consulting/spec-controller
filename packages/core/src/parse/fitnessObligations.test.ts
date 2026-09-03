@@ -142,7 +142,9 @@ Feature: fitness
     // The shape is a property of the scenario, so it travels with the tag set the obligation rule
     // already reads. A separate steplessness reader would be a second walk of the same file, free to
     // disagree with the first about which scenario it is looking at.
-    expect(parseTaggedScenarios(steplessScenario)).toEqual([
+    // The EXTENT rides on the same walk (@SCN-SSM-010) and is pinned by that scenario's own arm;
+    // this row is about steplessness, so it reads the fields it is about.
+    expect(parseTaggedScenarios(steplessScenario)).toMatchObject([
       { scnId: "SCN-FIT-001", tags: ["complexity", "SCN-FIT-001", "FIT"], stepless: true },
     ]);
   });
