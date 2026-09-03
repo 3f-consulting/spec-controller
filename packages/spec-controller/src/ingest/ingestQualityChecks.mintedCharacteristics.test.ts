@@ -17,7 +17,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { resolveMintedCharacteristics } from "./ingestQualityChecks.js";
+import { resolveMintedCharacteristics } from "@3f-consulting/spec-controller-core/internal";
 
 describe("[SCN-CHR-003] the mints a target states", () => {
   it("reads specController.mintedCharacteristics as characteristic to reason", () => {

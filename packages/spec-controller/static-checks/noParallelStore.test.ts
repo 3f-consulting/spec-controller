@@ -53,8 +53,23 @@ import {
  * — the vendored export that makes a characteristic legal because the PORTFOLIO names it rather
  * than because the target's own manifest does (@SCN-CHR-001). The floor moves because the
  * population did.
+ *
+ * 33 → 34 at 3F-3087: `parse/targetManifest.ts`, the `resolve*` family that reads a target's
+ * `specController.*` configuration into the registries the reconciler takes — moved in from the
+ * app's ingest edge, where it was the reason a PUBLISHED module imported core's unpublished
+ * `/internal` subpath (3F-3086). The floor moves because the population did.
+ *
+ * 34 → 35 at 3F-3088: `parse/targetCorpus.ts`, the corpus read that composes a target's feature
+ * sources into the obligations they raise and the `@SCN` each check run cites — moved in from the
+ * same ingest edge and for the same reason, carrying five more of that subpath's symbols off the
+ * published path. The floor moves because the population did.
+ *
+ * 35 → 36 at 3F-3089: `assemble/evidenceReconciliationFromSources.ts`, the reconcile composition
+ * itself — the ONE entry point the frozen v1 barrel gains (@SCN-API-001), which is what takes the
+ * last `/internal` import off the published path and makes the installed binary start. The floor
+ * moves because the population did.
  */
-const CORE_SRC_FILE_COUNT = 33;
+const CORE_SRC_FILE_COUNT = 36;
 
 describe("[SCN-NPS-001] no parallel store re-represents the Ledger's entries", () => {
   it("flags a re-added retired census module file (evidenceObservations.ts / staticEvidenceObservations.ts)", () => {

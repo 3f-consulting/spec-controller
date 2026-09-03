@@ -21,15 +21,15 @@ import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import {
-  runReconcile,
-  resolveCheckRegistry,
-} from "../../packages/spec-controller/src/ingest/ingestQualityChecks.js";
+import { runReconcile } from "../../packages/spec-controller/src/ingest/ingestQualityChecks.js";
 import type { Ledger, ScenarioReconciliation } from "../../packages/core/src/model.js";
 import type { EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
 // The `lint` quality-check carries two shapes since @SCN-CIP-003 (a static-check fact and a
 // measurement), so a reader wanting a static check's own runnable handle asks for one.
-import { isStaticCheckObservation } from "@3f-consulting/spec-controller-core/internal";
+import {
+  isStaticCheckObservation,
+  resolveCheckRegistry,
+} from "@3f-consulting/spec-controller-core/internal";
 
 // @SCN-SSM-006
 /** The static check whose own reconciliation this scenario pins. */

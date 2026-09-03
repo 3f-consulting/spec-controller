@@ -43,13 +43,15 @@ import {
   thresholdsOf,
   measuredCheckTags,
   parseMeasuredEvidenceObservations,
+  resolveThresholds,
   type ThresholdRegistry,
 } from "@3f-consulting/spec-controller-core/internal";
 
-// The APP EDGE, reached by source path for the reason the registry below is: @SCN-MUT-012's
-// behaviour is the substitution this resolver performs, and composing the registry any other way
-// would assert that the engine still understands a number — which nothing here doubts.
-import { resolveThresholds } from "../../packages/spec-controller/src/ingest/ingestQualityChecks.js";
+// THE RESOLVER AND THE READER IT TAKES, which together are @SCN-MUT-012's behaviour: the
+// substitution is the engine's and the record read is the app edge's (3F-3087). Composing the
+// registry any other way would assert that the engine still understands a number — which nothing
+// here doubts — so both halves are reached as the balance command reaches them.
+import { killFloorReaderFor } from "../../packages/spec-controller/src/ingest/ingestQualityChecks.js";
 
 // The record's conventional name, taken from the library that defaults to it rather than respelled
 // here: a fixture that filed its record under a second spelling of that name would plant a file
@@ -540,7 +542,10 @@ Given(
 Given(
   "the target's manifest authors an at-least threshold for {string} on {string} naming that gate rather than a number",
   function (check: string, scnId: string) {
-    thresholds = resolveThresholds(manifestNaming(bankedGate, check, scnId), recordRoot);
+    thresholds = resolveThresholds(
+      manifestNaming(bankedGate, check, scnId),
+      killFloorReaderFor(recordRoot)
+    );
     steplessRows = [];
   }
 );
@@ -591,7 +596,9 @@ Then(
     // would hold this row to a different number, and the run would red for code nobody wrote.
     thresholds = resolveThresholds(
       manifestNaming(bankedGate, "mutation", "SCN-MSD-001"),
-      plantRecord(recordTextOf(bankedGate, bankedKills, bankedKills * 2, bankedAllowance))
+      killFloorReaderFor(
+        plantRecord(recordTextOf(bankedGate, bankedKills, bankedKills * 2, bankedAllowance))
+      )
     );
 
     assert.equal(itemFor(reconciledWith(run), "SCN-MSD-001", "mutation").outcome, "satisfied");

@@ -457,8 +457,14 @@ function publishedMapOf(manifest: WorkspaceManifest): Readonly<Record<string, un
   return effective;
 }
 
-/** The package name a consumer writes, raised for rather than guessed at. */
-function packageNameOf(manifest: WorkspaceManifest): string {
+/**
+ * The package name a consumer writes, raised for rather than guessed at.
+ *
+ * Exported for @SCN-API-007, which needs the names to tell a workspace sibling from a third party
+ * and would otherwise read the same field a second time, with a second answer to what a missing
+ * name means.
+ */
+export function packageNameOf(manifest: WorkspaceManifest): string {
   const name = manifest.content["name"];
   if (typeof name !== "string") {
     throw new Error(`${manifest.path} publishes subpaths under no package name`);
@@ -560,6 +566,9 @@ export const PUBLISHED_SURFACES: readonly PublishedSurface[] = [
       "commandInvokesScript",
       // The render input the adapters frame around the reconciliation (assemble/renderInput.ts)
       "assembleRenderInput",
+      // The reconcile composition over a target's already-read sources
+      // (assemble/evidenceReconciliationFromSources.ts)
+      "evidenceReconciliationFromSources",
       // Render — model to string (render/*)
       "renderJson",
       "renderMarkdown",

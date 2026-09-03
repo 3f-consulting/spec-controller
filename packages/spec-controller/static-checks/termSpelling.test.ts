@@ -22,42 +22,36 @@
 
 import { describe, it, expect } from "vitest";
 
-import { resolveDeferralTags } from "../src/ingest/ingestQualityChecks.js";
+import { resolveDeferralTags } from "@3f-consulting/spec-controller-core/internal";
 import { DEFAULT_DEFERRAL_TAGS } from "../src/deferralTags.js";
 import { measurementArtefactWith } from "./measurementArtefact.js";
 
 describe("[SCN-TRM-001] a configured deferral tag defers however the target spaced it", () => {
+  /** The resolver as the app edge calls it — the starter set is the application layer's (3F-3087). */
+  const resolveConfigured = (deferralTags: readonly unknown[]): readonly string[] =>
+    resolveDeferralTags({ specController: { deferralTags } }, DEFAULT_DEFERRAL_TAGS);
+
   it("recognises a tag padded in front of its sigil", () => {
-    expect(resolveDeferralTags({ specController: { deferralTags: ["  @spike"] } })).toContain(
-      "spike"
-    );
+    expect(resolveConfigured(["  @spike"])).toContain("spike");
   });
 
   it("recognises a tag padded AFTER its term, which this port never trimmed at all", () => {
-    expect(resolveDeferralTags({ specController: { deferralTags: ["@spike  "] } })).toContain(
-      "spike"
-    );
+    expect(resolveConfigured(["@spike  "])).toContain("spike");
   });
 
   it("recognises a tag spelled with a space between the sigil and the term", () => {
-    expect(resolveDeferralTags({ specController: { deferralTags: ["@ spike"] } })).toContain(
-      "spike"
-    );
+    expect(resolveConfigured(["@ spike"])).toContain("spike");
   });
 
   it("recognises nothing at all from an entry that is only whitespace and a sigil", () => {
     // Dropped as an empty entry is. A blank tag in the recognised set is a tag no scenario can
     // carry, so it is inert — but it is also a term the target did not author, and the set is what
     // every deferral decision is read against.
-    expect(new Set(resolveDeferralTags({ specController: { deferralTags: ["  @  "] } }))).toEqual(
-      new Set(DEFAULT_DEFERRAL_TAGS)
-    );
+    expect(new Set(resolveConfigured(["  @  "]))).toEqual(new Set(DEFAULT_DEFERRAL_TAGS));
   });
 
   it("keeps a doubled sigil and an interior @ exactly as the target spelled them", () => {
-    const resolved = resolveDeferralTags({
-      specController: { deferralTags: ["  @@spike", "  para@llel  "] },
-    });
+    const resolved = resolveConfigured(["  @@spike", "  para@llel  "]);
     expect(resolved).toContain("@spike");
     expect(resolved).toContain("para@llel");
   });

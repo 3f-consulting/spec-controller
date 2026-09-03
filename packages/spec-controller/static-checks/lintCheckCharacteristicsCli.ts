@@ -44,11 +44,12 @@
 
 import { existsSync, readFileSync } from "node:fs";
 
+import { killFloorReaderFor } from "../src/ingest/ingestQualityChecks.js";
 import {
   resolveCheckRegistry,
   resolveMintedCharacteristics,
   resolveThresholds,
-} from "../src/ingest/ingestQualityChecks.js";
+} from "@3f-consulting/spec-controller-core/internal";
 import {
   admittedMints,
   characteristicFaults,
@@ -85,7 +86,7 @@ export function runCheckCharacteristicsLint(): void {
   // onto — the same argument `floorCheckTags` passes, for the same reason.
   const named = [
     ...registryCharacteristics(resolveCheckRegistry(manifest)),
-    ...thresholdCharacteristics(resolveThresholds(manifest, ".")),
+    ...thresholdCharacteristics(resolveThresholds(manifest, killFloorReaderFor("."))),
   ];
   const mints = resolveMintedCharacteristics(manifest);
   // The roster is left at its default — the portfolio's, which is the only one a real target is

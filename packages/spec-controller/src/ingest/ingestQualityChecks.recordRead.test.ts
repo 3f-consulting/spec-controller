@@ -37,7 +37,10 @@ vi.mock("node:fs", async (importOriginal) => {
   };
 });
 
-const { resolveThresholds } = await import("./ingestQualityChecks.js");
+// The reader is the half that opens the record, so it is imported AFTER the mock is installed;
+// `resolveThresholds` itself reads nothing and only ever asks the reader for a number (3F-3087).
+const { killFloorReaderFor } = await import("./ingestQualityChecks.js");
+const { resolveThresholds } = await import("@3f-consulting/spec-controller-core/internal");
 const { RECORD_FILE } = await import("../mutation-ratchet/index.js");
 
 describe("[SCN-MUT-013] a resolution pass reads the record it is handed once", () => {
@@ -84,7 +87,10 @@ describe("[SCN-MUT-013] a resolution pass reads the record it is handed once", (
   }
 
   it("opens it once for two references, and both bars are that one reading's", () => {
-    const registry = resolveThresholds(manifestNamingTwoGates(), plantRoot(TWO_GATES));
+    const registry = resolveThresholds(
+      manifestNamingTwoGates(),
+      killFloorReaderFor(plantRoot(TWO_GATES))
+    );
 
     expect(recordReads()).toHaveLength(1);
     expect(registry.get("SCN-MSD-001")?.get("mutation")).toEqual({ threshold: 699, atLeast: true });
@@ -98,7 +104,7 @@ describe("[SCN-MUT-013] a resolution pass reads the record it is handed once", (
     // is unreadable for exactly the window that matters.
     const registry = resolveThresholds(
       manifestNamingTwoGates(),
-      plantRoot("mutation-gates:\n  domain: 1\n  domain: 2\n")
+      killFloorReaderFor(plantRoot("mutation-gates:\n  domain: 1\n  domain: 2\n"))
     );
 
     expect(recordReads()).toHaveLength(1);

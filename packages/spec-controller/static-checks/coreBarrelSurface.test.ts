@@ -117,7 +117,12 @@ describe("[SCN-API-001] the core barrel exports exactly the frozen v1 contract s
     // 26 → 28 at 3F-2996: the portfolio check-characteristic roster and its membership
     // predicate joined the `.` barrel (@SCN-CHR-001). The pair moves with the registry it is
     // read off, which is what keeps it an anti-vacuity floor rather than a fourth opinion.
-    expect([surface.values.length, surface.types.length]).toEqual([28, 36]);
+    //
+    // 28 → 29 at 3F-3089: `evidenceReconciliationFromSources`, the reconcile composition, joined
+    // the `.` barrel — the ONE entry point 3F-2804 sanctions, which is what takes the last
+    // `/internal` import off the published path (3F-3086). The types are unchanged: its input is
+    // an inline object type, so the surface gains a value and no name.
+    expect([surface.values.length, surface.types.length]).toEqual([29, 36]);
   });
 
   it("[SCN-API-001] retires ScenarioTotals from the actual type surface — the totals are the Scenario Reconciliations'", () => {

@@ -20,14 +20,14 @@
 import { existsSync, readFileSync } from "node:fs";
 import { discoverFeatures } from "../src/ingest/ingestScenarios.js";
 import { UnreadableFeatureCorpusError } from "../src/ingest/gherkinValidation.js";
-import {
-  resolveDeferralTags,
-  resolveCheckRegistry,
-  resolveThresholds,
-} from "../src/ingest/ingestQualityChecks.js";
+import { killFloorReaderFor } from "../src/ingest/ingestQualityChecks.js";
+import { DEFAULT_DEFERRAL_TAGS } from "../src/deferralTags.js";
 import {
   registeredCheckTags,
   measuredCheckTags,
+  resolveDeferralTags,
+  resolveCheckRegistry,
+  resolveThresholds,
 } from "@3f-consulting/spec-controller-core/internal";
 import { lintScnTags, type FeatureFileSource } from "./scnTags.js";
 
@@ -62,7 +62,7 @@ function targetPackageJson(): TargetPackageJson {
  * dependency on its `isTierTag` one-way and cycle-free.
  */
 function recognisedDeferralTags(packageJson: TargetPackageJson): readonly string[] {
-  return resolveDeferralTags(packageJson);
+  return resolveDeferralTags(packageJson, DEFAULT_DEFERRAL_TAGS);
 }
 
 /**
@@ -92,7 +92,7 @@ export function floorCheckTags(packageJson: TargetPackageJson): readonly string[
   return [
     ...new Set([
       ...registeredCheckTags(resolveCheckRegistry(packageJson)),
-      ...measuredCheckTags(resolveThresholds(packageJson, ".")),
+      ...measuredCheckTags(resolveThresholds(packageJson, killFloorReaderFor("."))),
     ]),
   ];
 }

@@ -33,9 +33,12 @@ import {
   measuredCheckTags,
   parseMeasuredEvidenceObservations,
   registeredCheckTags,
+  resolveDeferralTags,
+  resolveThresholds,
 } from "@3f-consulting/spec-controller-core/internal";
 
-import { resolveDeferralTags, resolveThresholds } from "../../packages/spec-controller/src/ingest/ingestQualityChecks.js";
+import { killFloorReaderFor } from "../../packages/spec-controller/src/ingest/ingestQualityChecks.js";
+import { DEFAULT_DEFERRAL_TAGS } from "../../packages/spec-controller/src/deferralTags.js";
 
 /** The measured fitness scenario the target holds to a ceiling. */
 const MEASURED_SCN = "SCN-TRM-900";
@@ -156,11 +159,11 @@ When("the corpus is reconciled against that target", function () {
   // against the union of two of them, the artefact read into citing credits, and the reconciler
   // handed both sides. A reading that stores a term the next lookup cannot ask for shows here and
   // nowhere else.
-  const thresholds = resolveThresholds(manifest, process.cwd());
+  const thresholds = resolveThresholds(manifest, killFloorReaderFor(process.cwd()));
   const registry = checkRegistryOf(
     (manifest.specController?.["checkRegistry"] ?? {}) as Record<string, unknown>
   );
-  deferralTags = resolveDeferralTags(manifest);
+  deferralTags = resolveDeferralTags(manifest, DEFAULT_DEFERRAL_TAGS);
   measuredTags = measuredCheckTags(thresholds);
   const checkTags = [...registeredCheckTags(registry), ...measuredTags];
   ledger = reconcile(

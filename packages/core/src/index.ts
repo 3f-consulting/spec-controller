@@ -102,6 +102,14 @@ export type {
   EvidenceObligationsSection,
 } from "./assemble/renderInput.js";
 
+// --- The RECONCILE COMPOSITION over a target's already-read sources
+// (`assemble/evidenceReconciliationFromSources.ts`) ---
+// THE ONE ENTRY POINT THIS BARREL GAINS AT 3F-3086, and the reason it is here rather than on
+// `./internal`: a published module — the CLI's ingest edge — has to reach the composition, and
+// `./internal` is not published (3F-2837, unamended). The nine symbols it composes stay internal,
+// so the surface a consumer's v1 contract carries widens by one name and nothing else.
+export { evidenceReconciliationFromSources } from "./assemble/evidenceReconciliationFromSources.js";
+
 // --- Render — model→string (`render/*`) ---
 export { renderJson } from "./render/json.js";
 export { renderMarkdown, renderReport, renderReportFromJson } from "./render/markdown.js";

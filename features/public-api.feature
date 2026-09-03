@@ -70,6 +70,36 @@ Feature: The public core exports exactly the frozen v1 contract surface
       And a subpath a manifest publishes with no surface written for it reds the guard
       And a surface written for a subpath no manifest publishes any longer reds the guard
 
+  Rule: a module these packages publish imports only what these packages publish
+
+    THE GUARD BESIDE THIS ONE READS THE MANIFESTS AND STOPS THERE. @SCN-API-006 reconciles the
+    subpaths the manifests publish against the subpaths a surface is written for, both directions,
+    and it was green on the day the published CLI could not start. It is not wrong — it answers
+    "is every published subpath held to a list", and every one was. What nobody asked is the other
+    half: whether the modules that TRAVEL IN THE TARBALL import only what those same manifests
+    publish.
+
+    3F-2837 UN-PUBLISHED core's `./internal` AND KEPT THE WORKSPACE KEY so in-repo importers go on
+    resolving it. That is right, and it is exactly why nothing here could red: every gate in this
+    tree resolves through the workspace map, and npm REPLACES that map with the publish-time one
+    rather than merging them. `ingest/ingestQualityChecks.ts` imported
+    `@3f-consulting/spec-controller-core/internal` and travels in the tarball; the installed binary
+    threw ERR_PACKAGE_PATH_NOT_EXPORTED on `balance --help` while every gate stayed green.
+
+    SO THE READING IS OF THE PUBLISHED MODULE SET, NEVER THE SOURCE TREE. A module the workspace
+    keeps and never ships — everything under `static-checks/` — may reach `./internal` freely, which
+    is the seam's whole purpose. The rule binds exactly what `files` and the build would ship, which
+    is also why a source-tree reading would have to exempt nineteen modules and would then be an
+    exemption list nobody maintains.
+
+    @unit @SCN-API-007
+    Scenario: a module that travels in the tarball importing a subpath no manifest publishes reds the guard
+      Given the modules each package would publish, and the specifiers its manifests offer a consumer
+      When each published module's imports of a workspace sibling are read against those specifiers
+      Then every such specifier is one the manifests publish
+      And a published module importing a workspace subpath the manifests do not publish reds the guard
+      And a module this workspace never publishes may import that subpath without redding it
+
   Rule: the v1 barrel exposes QualityCheckReconciliation for reading, not construction
 
     @unit @SCN-API-002

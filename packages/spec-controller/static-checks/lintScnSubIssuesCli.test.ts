@@ -25,7 +25,7 @@ import {
   fitnessCitations,
   parseTaggedScenarios,
 } from "@3f-consulting/spec-controller-core/internal";
-import { resolveCheckRegistry } from "../src/ingest/ingestQualityChecks.js";
+import { resolveCheckRegistry } from "@3f-consulting/spec-controller-core/internal";
 import { isExternalPrFromEvent } from "./lintScnSubIssuesCli.js";
 
 /** A minimal GitHub PR event payload with the given head/base repo full names. */

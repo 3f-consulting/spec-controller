@@ -37,7 +37,7 @@ import {
   fitnessCitations,
   parseTaggedScenarios,
 } from "@3f-consulting/spec-controller-core/internal";
-import { resolveCheckRegistry } from "../src/ingest/ingestQualityChecks.js";
+import { resolveCheckRegistry } from "@3f-consulting/spec-controller-core/internal";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const readRepoFile = (relative: string): string =>

@@ -28,13 +28,13 @@ import { isStaticCheckObservation } from "@3f-consulting/spec-controller-core/in
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { runReconcile, killFloorReaderFor } from "./ingestQualityChecks.js";
 import {
-  runReconcile,
   resolveDeferralTags,
   resolveStaticChecks,
   resolveCheckRegistry,
   resolveThresholds,
-} from "./ingestQualityChecks.js";
+} from "@3f-consulting/spec-controller-core/internal";
 import { DEFAULT_DEFERRAL_TAGS } from "../deferralTags.js";
 import { RECORD_FILE } from "../mutation-ratchet/index.js";
 import { parseScenarios, reconcile } from "@3f-consulting/spec-controller-core";
@@ -139,7 +139,7 @@ describe("[SCN-PND-021] resolveDeferralTags extends the starter set with specCon
     // Teeth: the configured `deferred` tag must appear in the resolved set (so it defers like a
     // built-in), alongside the whole starter set. Reds while the config is ignored (the stub returns
     // the starter set only).
-    const resolved = resolveDeferralTags({ specController: { deferralTags: ["deferred"] } });
+    const resolved = resolveDeferralTags({ specController: { deferralTags: ["deferred"] } }, DEFAULT_DEFERRAL_TAGS);
     expect(resolved).toContain("deferred");
     for (const builtin of DEFAULT_DEFERRAL_TAGS) {
       expect(resolved).toContain(builtin);
@@ -149,10 +149,10 @@ describe("[SCN-PND-021] resolveDeferralTags extends the starter set with specCon
   it("EXTENDS, never replaces — a project cannot un-recognise a built-in, even with a disjoint config", () => {
     // Config extends the recognised set: configuring `deferred` keeps every built-in (`@wip` still
     // defers). The resolved set is a superset of DEFAULT_DEFERRAL_TAGS plus the configured tag.
-    const resolved = resolveDeferralTags({ specController: { deferralTags: ["deferred"] } });
+    const resolved = resolveDeferralTags({ specController: { deferralTags: ["deferred"] } }, DEFAULT_DEFERRAL_TAGS);
     expect(new Set(resolved)).toEqual(new Set([...DEFAULT_DEFERRAL_TAGS, "deferred"]));
     // Even an EMPTY configured list leaves the built-in set intact — it cannot subtract `@wip`.
-    expect(new Set(resolveDeferralTags({ specController: { deferralTags: [] } }))).toEqual(
+    expect(new Set(resolveDeferralTags({ specController: { deferralTags: [] } }, DEFAULT_DEFERRAL_TAGS))).toEqual(
       new Set(DEFAULT_DEFERRAL_TAGS)
     );
   });
@@ -160,20 +160,20 @@ describe("[SCN-PND-021] resolveDeferralTags extends the starter set with specCon
   it("returns exactly the starter set when no specController.deferralTags is configured", () => {
     // A package.json with no `specController` field (or no `deferralTags`) resolves to the starter
     // set alone — the default the pure parser already applies.
-    expect(new Set(resolveDeferralTags({}))).toEqual(new Set(DEFAULT_DEFERRAL_TAGS));
-    expect(new Set(resolveDeferralTags({ specController: {} }))).toEqual(new Set(DEFAULT_DEFERRAL_TAGS));
+    expect(new Set(resolveDeferralTags({}, DEFAULT_DEFERRAL_TAGS))).toEqual(new Set(DEFAULT_DEFERRAL_TAGS));
+    expect(new Set(resolveDeferralTags({ specController: {} }, DEFAULT_DEFERRAL_TAGS))).toEqual(new Set(DEFAULT_DEFERRAL_TAGS));
   });
 
   it("strips a leading `@` and ignores malformed (non-string / non-array) config entries", () => {
     // Configured tags are bare names, `@`-stripped, consistent with DEFAULT_DEFERRAL_TAGS — so
     // `@deferred` resolves to the bare `deferred` the tag-line parser compares against. Non-string
     // entries and a non-array `deferralTags` are ignored defensively (never a crash, never a stray tag).
-    expect(resolveDeferralTags({ specController: { deferralTags: ["@deferred"] } })).toContain("deferred");
-    const mixed = resolveDeferralTags({ specController: { deferralTags: ["@custom", 7, null] as unknown[] } });
+    expect(resolveDeferralTags({ specController: { deferralTags: ["@deferred"] } }, DEFAULT_DEFERRAL_TAGS)).toContain("deferred");
+    const mixed = resolveDeferralTags({ specController: { deferralTags: ["@custom", 7, null] as unknown[] } }, DEFAULT_DEFERRAL_TAGS);
     expect(mixed).toContain("custom");
     expect(new Set(mixed)).toEqual(new Set([...DEFAULT_DEFERRAL_TAGS, "custom"]));
     // A non-array `deferralTags` is ignored — the starter set is returned unchanged.
-    expect(new Set(resolveDeferralTags({ specController: { deferralTags: "nope" as unknown } }))).toEqual(
+    expect(new Set(resolveDeferralTags({ specController: { deferralTags: "nope" as unknown } }, DEFAULT_DEFERRAL_TAGS))).toEqual(
       new Set(DEFAULT_DEFERRAL_TAGS)
     );
   });
@@ -407,9 +407,11 @@ describe("[SCN-MUT-012] resolveThresholds reads a bar that names a mutation gate
     // which is what makes `packages/core` untouched a property rather than a claim.
     const root = plantRoot(RECORD_FILE, recordText(KILLS, MUTANTS, ALLOWANCE));
 
-    expect(asEntries(resolveThresholds(manifest({ atLeast: { mutationGate: GATE } }), root))).toEqual(
-      asEntries(thresholdsOf({ "SCN-MSD-001": { mutation: { atLeast: KILL_FLOOR } } }))
-    );
+    expect(
+      asEntries(
+        resolveThresholds(manifest({ atLeast: { mutationGate: GATE } }), killFloorReaderFor(root))
+      )
+    ).toEqual(asEntries(thresholdsOf({ "SCN-MSD-001": { mutation: { atLeast: KILL_FLOOR } } })));
   });
 
   it("reads the record the reference names, rather than the conventional one beside it", () => {
@@ -421,7 +423,7 @@ describe("[SCN-MUT-012] resolveThresholds reads a bar that names a mutation gate
 
     const registry = resolveThresholds(
       manifest({ atLeast: { mutationGate: GATE, recordFile: "the-bars-parcel-co-keeps.yml" } }),
-      root
+      killFloorReaderFor(root)
     );
 
     expect(registry.get("SCN-MSD-001")?.get("mutation")).toEqual({
@@ -438,7 +440,9 @@ describe("[SCN-MUT-012] resolveThresholds reads a bar that names a mutation gate
     const root = plantRoot(RECORD_FILE, recordText(KILLS, MUTANTS, ALLOWANCE));
 
     expect(
-      resolveThresholds(manifest({ atMost: { mutationGate: GATE } }), root).get("SCN-MSD-001")?.get("mutation")
+      resolveThresholds(manifest({ atMost: { mutationGate: GATE } }), killFloorReaderFor(root))
+        .get("SCN-MSD-001")
+        ?.get("mutation")
     ).toEqual({ threshold: KILL_FLOOR });
   });
 
@@ -452,7 +456,10 @@ describe("[SCN-MUT-012] resolveThresholds reads a bar that names a mutation gate
 
     expect(
       asEntries(
-        resolveThresholds({ specController: { thresholds: { "SCN-CIP-013": { "ci-run-time": 75 } } } }, root)
+        resolveThresholds(
+          { specController: { thresholds: { "SCN-CIP-013": { "ci-run-time": 75 } } } },
+          killFloorReaderFor(root)
+        )
       )
     ).toEqual(asEntries(thresholdsOf({ "SCN-CIP-013": { "ci-run-time": 75 } })));
   });
@@ -553,7 +560,10 @@ Feature: measured
     // an unreadable bar already produces — the key present, `null` beside it — because that is what
     // keeps the check MEASURED while the bar goes missing. A dropped key would take the obligation
     // down with the bar and move the complaint to the tag grammar.
-    const registry = resolveThresholds(manifestNamingTheGate(), plantRoot(text));
+    const registry = resolveThresholds(
+      manifestNamingTheGate(),
+      killFloorReaderFor(plantRoot(text))
+    );
 
     expect(asEntries(registry)).toEqual(asEntries(registryWithNoBar()));
     expect(thresholdFor(registry, "SCN-MSD-001", "mutation")).toBeNull();
@@ -563,7 +573,10 @@ Feature: measured
   it.each(ROWS)(
     "the record %s: the obligation is raised measured, holding no bar the edge picked",
     (_row, text) => {
-      const registry = resolveThresholds(manifestNamingTheGate(), plantRoot(text));
+      const registry = resolveThresholds(
+      manifestNamingTheGate(),
+      killFloorReaderFor(plantRoot(text))
+    );
       const raised = parseScenarios(CORPUS, [], measuredCheckTags(registry), registry);
       const obligation = raised[0]?.evidenceObligations[0];
 
@@ -585,7 +598,10 @@ Feature: measured
       // A MEASUREMENT IS POSTED, WHICH IS WHAT MAKES THIS A NEGATIVE. `missing` over no measurement
       // at all would be true of every row on this axis; the claim is that a run which WOULD clear a
       // sourceable bar still cannot be settled by one nobody could source.
-      const registry = resolveThresholds(manifestNamingTheGate(), plantRoot(text));
+      const registry = resolveThresholds(
+      manifestNamingTheGate(),
+      killFloorReaderFor(plantRoot(text))
+    );
       const ledger = reconcile(
         parseScenarios(CORPUS, [], measuredCheckTags(registry), registry),
         parseMeasuredEvidenceObservations({
@@ -603,7 +619,7 @@ Feature: measured
   it.each(REFUSED_COUNTS)("counts the record refuses — %s — reach no bar either", (_shape, fields) => {
     const registry = resolveThresholds(
       manifestNamingTheGate(),
-      plantRoot(recordText(GATE, fields))
+      killFloorReaderFor(plantRoot(recordText(GATE, fields)))
     );
 
     expect(thresholdFor(registry, "SCN-MSD-001", "mutation")).toBeNull();
@@ -623,7 +639,7 @@ Feature: measured
           },
         },
       },
-      plantRoot(null)
+      killFloorReaderFor(plantRoot(null))
     );
 
     expect(thresholdFor(registry, "SCN-CIP-013", "ci-run-time")).toEqual({ threshold: 75 });

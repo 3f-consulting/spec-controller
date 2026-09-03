@@ -107,3 +107,32 @@ export type { FitnessEvidenceObservation } from "./domain/journal.js";
 // frozen surface and owe @SCN-API-001 a hand-transcribed row to buy nothing.
 export { ciRunSteps } from "./parse/checkScriptsRunInCI.js";
 export type { CiRunStep } from "./parse/checkScriptsRunInCI.js";
+
+// The `resolve*` family — a target's `specController.*` configuration read into the registries the
+// reconciler takes (`parse/targetManifest`). Shared because they moved INTO the engine and the
+// tree's own gates still read a target's config through them: the tier-tag floor (@SCN-STG-005) and
+// the characteristic roster resolve the same registry, bars and mints the reconciler does, and a
+// second reader deciding independently which words a manifest names would admit a tag the engine
+// raises nothing for. They sat at the app's ingest edge until 3F-3087, where they were the reason a
+// PUBLISHED module imported this unpublished subpath — the fault 3F-3086 repairs. Internal, not
+// public: where a target's registry, bars and mints are AUTHORED is the registry-home question
+// (increment D), so the shape of what these read is not a v1 contract yet, and @SCN-API-001 freezes
+// that barrel exactly. Nothing under `static-checks/` travels in a tarball (`tsconfig.build.json`
+// emits `src` alone), so reaching them here is the seam working as 3F-2837 intended.
+export {
+  resolveCheckRegistry,
+  resolveDeferralTags,
+  resolveMintedCharacteristics,
+  resolveStaticChecks,
+  resolveThresholds,
+} from "./parse/targetManifest.js";
+// The TYPES beside the values: the app edge builds the `KillFloorReader` closure `resolveThresholds`
+// takes, over the reference shape a manifest states, so it needs both shapes to name them.
+export type { KillFloorReader, MutationGateReference } from "./parse/targetManifest.js";
+
+// `readTargetCorpus` HAS LEFT THIS SEAM (3F-3089), and the removal is the point rather than tidying.
+// It was shared here for exactly one consumer — the app's ingest edge, which composed the
+// reconciliation itself — and the composition moved into the engine
+// (`assemble/evidenceReconciliationFromSources`), which is what takes the last crossing off the
+// published path. Nothing in this workspace reaches the corpus read any more, and this file
+// re-exports only what the app genuinely shares.
