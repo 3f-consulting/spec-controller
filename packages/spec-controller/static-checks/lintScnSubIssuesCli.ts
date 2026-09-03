@@ -41,11 +41,11 @@ import {
   changedLinesByFile,
   decideScnGate,
   detectDeletedCodes,
-  detectRenumberPairs,
   isUnitEquivalentBehaviourBearing,
   parseAddedCodes,
   type ChangedBlockCites,
   type Exemption,
+  type RenumberPair,
 } from "./scnSubIssueGate.js";
 import { readScenarioChanges } from "./scenarioTextChanges.js";
 
@@ -235,7 +235,14 @@ function sourceAtCommit(commit: string, file: string): string {
  * A file the PR DELETES has no checked-out content, so its head source reads empty and it
  * contributes no updates — the deletion itself is `detectDeletedCodes`' to report.
  *
- * The second half of the reading is `outsideEveryScenarioFiles` (@SCN-SSM-013, 3F-3054): the changed
+ * THE RENUMBER PAIRS COME BACK ON THE SAME READ (@SCN-SSM-015, 3F-3057). They used to be detected
+ * per HUNK, from this same diff, and a hunk holding anything else that changed — an unrelated edit
+ * to a neighbouring scenario's step, a second renumber — threw the pair away. Hunk boundaries are a
+ * function of git's context setting and of what else changed nearby, so that answer moved to the
+ * two sources beside the updated one; the diff keeps naming which feature files moved, and nothing
+ * else about them.
+ *
+ * The third half of the reading is `outsideEveryScenarioFiles` (@SCN-SSM-013, 3F-3054): the changed
  * feature files whose change lies inside NO scenario. A correct attribution can legitimately name
  * nothing, so the empty updated set has to be readable as "no scenario contains this change" rather
  * than "nothing changed" — see `outsideEveryScenarioReport`. Still hermetic: local git and the
@@ -243,11 +250,14 @@ function sourceAtCommit(commit: string, file: string): string {
  */
 function readFeatureFileChanges(base: string): {
   updatedCodes: string[];
+  renumberPairs: RenumberPair[];
   outsideEveryScenarioFiles: string[];
 } {
   const mergeBase = resolveMergeBase(base);
   const seen = new Set<string>();
+  const seenPairs = new Set<string>();
   const updatedCodes: string[] = [];
+  const renumberPairs: RenumberPair[] = [];
   const outsideEveryScenarioFiles: string[] = [];
 
   for (const file of changedFiles(base, FEATURE_FILE_PATHSPEC, "feature")) {
@@ -259,9 +269,15 @@ function readFeatureFileChanges(base: string): {
       seen.add(code);
       updatedCodes.push(code);
     }
+    for (const pair of changes.renumberPairs) {
+      const key = `${pair.removed} ${pair.added}`;
+      if (seenPairs.has(key)) continue;
+      seenPairs.add(key);
+      renumberPairs.push(pair);
+    }
   }
 
-  return { updatedCodes, outsideEveryScenarioFiles };
+  return { updatedCodes, renumberPairs, outsideEveryScenarioFiles };
 }
 
 /**
@@ -413,8 +429,9 @@ async function main(): Promise<void> {
   const base = resolveBaseRef();
   const diff = featureFileDiff(base);
   const addedCodes = parseAddedCodes(diff);
-  const { updatedCodes, outsideEveryScenarioFiles } = readFeatureFileChanges(base);
-  const deletedCodes = detectDeletedCodes(diff, updatedCodes);
+  const { updatedCodes, renumberPairs, outsideEveryScenarioFiles } = readFeatureFileChanges(base);
+  const renumberRemoved = renumberPairs.map((pair) => pair.removed);
+  const deletedCodes = detectDeletedCodes(diff, updatedCodes, renumberRemoved);
   reportOutsideEveryScenario(outsideEveryScenarioFiles);
 
   const testDiff = testFileDiff(base);
@@ -436,7 +453,6 @@ async function main(): Promise<void> {
   if (codesToCheck.length === 0 && !unitEquivalentBehaviourBearing) exitWithNothingToCheck(base);
 
   const commitMessages = commitMessagesSinceBase(base);
-  const renumberPairs = detectRenumberPairs(diff);
   const exemptions = parseExemptions(
     commitMessages,
     process.env["PR_BODY"] ?? ""

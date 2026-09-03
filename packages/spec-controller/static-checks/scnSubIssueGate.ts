@@ -44,7 +44,7 @@ import { isQuotedStringLiteralLine, structuralBraces } from "./testSourceLexer.j
 export const EXEMPTION_REASONS = ["renumber", "regression", "evidence-§8A"] as const;
 export type ExemptionReason = (typeof EXEMPTION_REASONS)[number];
 
-/** A renumber pair auto-detected from the diff: a removed code relabelled to an added code. */
+/** A renumber pair: a code that disappeared, relabelled to a code that appeared on the same text. */
 export interface RenumberPair {
   removed: string;
   added: string;
@@ -294,70 +294,28 @@ function tagLineCodes(body: string): string[] {
 }
 
 /**
- * Auto-detect renumber pairs from a feature-file diff. A renumber is a relabel:
- * a REMOVED `@SCN` code paired with an ADDED `@SCN` code on an otherwise-
- * UNCHANGED scenario body (exactly one removed + one added tag-line code, no
- * other changed line in the hunk).
- */
-export function detectRenumberPairs(diff: string): RenumberPair[] {
-  const pairs: RenumberPair[] = [];
-
-  let removedCodes: string[] = [];
-  let addedCodes: string[] = [];
-  let otherChange = false;
-
-  const flush = (): void => {
-    if (removedCodes.length === 1 && addedCodes.length === 1 && !otherChange) {
-      pairs.push({ removed: removedCodes[0]!, added: addedCodes[0]! });
-    }
-    removedCodes = [];
-    addedCodes = [];
-    otherChange = false;
-  };
-
-  for (const rawLine of diff.split(/\r?\n/)) {
-    if (HUNK_HEADER.test(rawLine)) {
-      flush();
-      continue;
-    }
-    if (rawLine.startsWith("+++") || rawLine.startsWith("---")) continue;
-    if (rawLine.startsWith("diff --git")) continue;
-
-    const marker = rawLine[0];
-    if (marker !== "+" && marker !== "-") continue;
-
-    const body = rawLine.slice(1);
-    const codes = tagLineCodes(body);
-    if (codes.length > 0) {
-      if (marker === "-") removedCodes.push(...codes);
-      else addedCodes.push(...codes);
-    } else {
-      otherChange = true;
-    }
-  }
-
-  flush();
-
-  return pairs;
-}
-
-/**
  * Detect the @SCN codes a feature-file diff DELETES: a removed `@SCN` tag-line
  * code whose behaviour stops — not the removed side of a renumber, not also
  * re-added, not an update. Renumber and update WIN over delete.
  *
- * THE UPDATED SET IS PASSED IN rather than computed here (@SCN-SSM-010, 3F-3044). It is no longer
- * a question the diff can answer: which scenarios' text differs is read by comparing the base and
- * head SOURCES (`scenarioTextChanges.ts`), so the only caller holding that answer is the one that
- * read the sources. Which tag lines the diff removed is still this function's own question, and
- * still the diff's.
+ * THE UPDATED SET IS PASSED IN rather than computed here (@SCN-SSM-010, 3F-3044), AND SO IS THE
+ * RENUMBER-REMOVED SET (@SCN-SSM-015, 3F-3057) — the same treatment for the same reason, one arm
+ * apart. Neither is a question the diff can answer. Which scenarios' text differs, and which
+ * relabelled scenario's body is otherwise unchanged, are both read by comparing the base and head
+ * SOURCES (`scenarioTextChanges.ts`), so the only caller holding either answer is the one that read
+ * the sources. Which tag lines the diff removed is still this function's own question, and still
+ * the diff's.
  *
- * THE EXCLUSION IS KEPT even though it is NEARLY vacuous under the new reading — a code absent from
- * the head cannot be `updated`, so the two sets barely overlap. Nearly is not never: a file carrying
- * the same code on two scenarios, one of them deleted, still reaches it. Removing a check because a
- * stronger upstream makes it usually-unnecessary is how the next hole gets dug.
+ * THE UPDATE EXCLUSION IS KEPT even though it is NEARLY vacuous under the new reading — a code
+ * absent from the head cannot be `updated`, so the two sets barely overlap. Nearly is not never: a
+ * file carrying the same code on two scenarios, one of them deleted, still reaches it. Removing a
+ * check because a stronger upstream makes it usually-unnecessary is how the next hole gets dug.
  */
-export function detectDeletedCodes(diff: string, updatedCodes: readonly string[]): string[] {
+export function detectDeletedCodes(
+  diff: string,
+  updatedCodes: readonly string[],
+  renumberRemovedCodes: readonly string[]
+): string[] {
   const removed: string[] = [];
   const removedSeen = new Set<string>();
   const added = new Set<string>();
@@ -386,7 +344,7 @@ export function detectDeletedCodes(diff: string, updatedCodes: readonly string[]
 
   if (removed.length === 0) return [];
 
-  const renumberRemoved = new Set(detectRenumberPairs(diff).map((p) => p.removed));
+  const renumberRemoved = new Set(renumberRemovedCodes);
   const updated = new Set(updatedCodes);
 
   return removed.filter(

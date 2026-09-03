@@ -328,3 +328,129 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
       Given a PR whose only Gherkin change rewords a Rule preamble two lines above a scenario's tag line
       When the scenario sub-issue gate runs over the preamble fixture PR
       Then the gate names no updated scenario code, and reports that the feature file changed outside every scenario
+
+    @unit @integration @SCN-SSM-014
+    Scenario: a scenario moved verbatim is not a change, so no code is reported updated
+      THE SILENCE HAS TWO AVAILABLE ACCOUNTS AND THEY ARE NOT THE SAME RULE, so this row
+      states which one it is. Either a verbatim move is NOT A CHANGE to the scenario that
+      moved, so there is nothing to report; or it IS a change with nothing owed, so it is
+      reported and then excused. It is the FIRST. A code sitting on both sides whose text is
+      identical never enters the updated set, and no excusing happens anywhere in the gate —
+      there is no exemption to withdraw, because none was granted. Saying which stops the
+      next reader deriving the question again, and if the answer ever becomes the second,
+      this row is where that argument has to be won.
+
+      IT ARRIVED AS A CONSEQUENCE, WHICH IS PRECISELY WHY IT NEEDS A ROW. Nothing chose it:
+      it falls out of attributing by scenario extent, and the reading retired above reported
+      the move's NEIGHBOURS updated, their tag lines having landed inside the window the
+      moved block opened. The behaviour is right and it is right by accident of a correct
+      design, and an intended consequence with no scenario is indistinguishable from an
+      accident — so the next refactor that touches attribution can revert it with every gate
+      still green. That is the failure this pair of Rules exists to remove, arriving once
+      more: a gate redding on correct work, here an author who reordered a file and is told
+      a scenario they did not touch has changed.
+
+      WHAT THIS ROW DOES NOT PROVE, and it is worse than useless if read as proving it. Git
+      represents a verbatim move as a removal plus a re-addition, so the moved scenario's
+      code is still reported ADDED, and an author who only reordered a file is still made to
+      carry a binding for it. The updated arm's silence does not spare them on its own. The
+      added count is asserted beside the silence for exactly that reason — a row asserting
+      only the silence would also go green for a gate that had stopped reading the file at
+      all, and would read as a promise about the reorderer that the gate does not keep.
+      Changing what a move costs is a different arm with a different detector, and is not
+      this Rule's: it is filed, and this row's evidence is where its measurement lives.
+
+      Given a PR whose only Gherkin change MOVES a scenario, its body byte-identical, above its neighbour
+      When the scenario sub-issue gate runs over the moved-scenario fixture PR
+      Then the gate reports no scenario code updated
+
+  Rule: a renumber is a fact about the two scenarios, not about the hunk they landed in
+
+    THE SAME PROXY AS THE RULE ABOVE, ON THE ARM BESIDE IT. A renumber is a relabel:
+    one scenario's code changes and its body does not. That is a claim about ONE
+    SCENARIO'S TEXT, and the detector tested it against the HUNK — pairing a removed
+    tag-line code with an added one only when the hunk held exactly one of each and no
+    other changed line. Both conditions are properties of the hunk. An unrelated edit to
+    a NEIGHBOURING scenario's step, close enough that git emits one hunk, trips the
+    no-other-changed-line condition and the pair is discarded; two renumbers that land
+    together fail the exactly-one count. Neither fact is about either renumbered
+    scenario.
+
+    HUNK BOUNDARIES ARE NOT A PROPERTY OF THE WORK. They are a function of git's context
+    setting and of what else changed nearby, so the SAME renumber pairs or does not pair
+    depending on an edit made to a different scenario, or on the order the author
+    happened to make their edits in. No context width repairs that, for the reason the
+    Rule above gives: no number makes hunk-locality mean scenario-membership.
+
+    WHAT THE LOSS COSTS, AND WHY IT STAYED HIDDEN. The decision passes a renumber
+    UNCONDITIONALLY, ahead of the ticket handle and ahead of every exemption trailer, so
+    a lost pair silently downgrades a legitimate renumber to an ordinary
+    added-plus-deleted code pair, which must then be carried by a handle or an explicit
+    SCN-exempt directive. On this lane's ordinary pull requests the handle is present and
+    the loss is invisible. The exposed author is the one who renumbers, correctly relies
+    on the auto-detection, and is refused — with no indication that an edit to a
+    different scenario is why.
+
+    SO THE QUESTION GOES TO THE TWO SOURCES, exactly as the updated arm's did. A
+    disappeared code pairs with an appeared code when their scenario texts are identical
+    once each side's own tag token — the one token a relabel changes — is replaced by a
+    fixed sentinel. Any other difference defeats the pair, and that conservatism is
+    load-bearing rather than cautious: because the pass is unconditional, an over-eager
+    pairing is not a mis-report but a hole through the whole gate.
+
+    @unit @integration @SCN-SSM-015
+    Scenario: a renumber sharing a hunk with an unrelated edit is still auto-detected
+      Given a PR that renumbers one scenario and edits a nearby scenario's step, both inside one hunk
+      When the scenario sub-issue gate runs over the shared-hunk fixture PR
+      Then the gate auto-detects the renumber and does not require a binding for the new code
+
+    @unit @integration @SCN-SSM-016
+    Scenario: two renumbers inside one hunk are both auto-detected
+      THE SAME FLUSH, THE OTHER CONDITION — which is why this is not the row above
+      wearing a second fixture. @SCN-SSM-015 failed on "no other changed line"; this one
+      fails on "exactly one of each", and a cure that only stopped consulting the
+      neighbouring edit would leave it failing. Two authors renumbering adjacent
+      scenarios in one sitting is the ordinary way a feature file gets its codes
+      tidied, and it put two removed tag lines and two added ones in a single hunk, so
+      BOTH correct renumbers were thrown away together.
+
+      A READER WHO DOES NOT KNOW THAT DELETES THIS AS A DUPLICATE. The two rows share a
+      Rule, a fixture shape and an outcome; what they do not share is the condition
+      that used to red them. So the assertion is plural on purpose — both pairs, not
+      one — because a reading that paired the first and abandoned the second would
+      satisfy the row above and still refuse the second author.
+
+      Given a PR that renumbers two adjacent scenarios inside one hunk
+      When the scenario sub-issue gate runs over the two-renumber fixture PR
+      Then the gate auto-detects both renumbers
+
+    @unit @integration @SCN-SSM-017
+    Scenario: a relabelled scenario whose body also changed is not a renumber
+      THE NEGATIVE THAT STOPS THE CURE GUTTING THE GATE. The two rows above both ask the
+      reading to pair MORE than the retired hunk test did, and the cheapest way to satisfy
+      both of them is to stop looking at the body at all — pair a disappeared code with an
+      appeared one on position, or on their shared feature prefix, and be done. That
+      reading passes @SCN-SSM-015 and @SCN-SSM-016 perfectly. This row is the only thing
+      standing in its way.
+
+      AND WHAT ITS ABSENCE COSTS IS THE WHOLE GATE, not a mis-report. The decision passes a
+      renumber UNCONDITIONALLY, ahead of the ticket handle and ahead of every exemption
+      trailer. So an over-eager pairing does not name a scenario wrongly and stop there: it
+      exempts every renamed-and-rewritten scenario in the repository from the one check
+      that binds a behaviour change to a tracked work item. The auto-exemption exists for a
+      relabel that changes nothing else; a changed body is a changed behaviour, and it
+      still owes a ticket handle or an explicit SCN-exempt trailer.
+
+      A READER WHO DOES NOT KNOW THAT DELETES THIS AS -015 WEARING A THIRD FIXTURE. What
+      separates it is the DIRECTION of the failure it pins: those rows red when the reading
+      pairs too little, this one reds only when it pairs too much. The relabel and the step
+      edit land inside the SAME scenario here — that is the fixture's whole point, and both
+      arms prove it of real git output before they assert any outcome.
+
+      BOTH CLAUSES OF THE OUTCOME ARE LOAD-BEARING. Asserting only that no renumber is
+      auto-detected would go green for a gate that had stopped reading added codes
+      altogether, so the row also asserts what the new code is then made to carry.
+
+      Given a PR that relabels a scenario and changes a step inside that same scenario
+      When the scenario sub-issue gate runs over the relabelled-and-edited fixture PR
+      Then the gate does not auto-detect a renumber, and requires a binding for the new code

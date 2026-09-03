@@ -21,8 +21,15 @@
  *
  * A NEW MODULE RATHER THAN MORE OF `scnSubIssueGate.ts`, on design and on mechanism, agreeing. That
  * file parses diffs and decides the gate; this is a corpus comparison over different inputs. And
- * `complexityExceptions.mjs` freezes it at its measured `max-lines`, buying not one line of
- * headroom, so growth there reds `lint:complexity` by construction.
+ * it is the file already carrying two standing `complexityExceptions.mjs` entries, so growth there
+ * is growth against numbers someone has to argue up; this module carries none.
+ *
+ * THE RENUMBER ARM CAME HERE FOR THE SAME REASON (@SCN-SSM-015, 3F-3057). "Is this scenario's body
+ * otherwise unchanged" is the same shape of question over the same two `byCode` maps, and it was
+ * being answered per HUNK — a pair emitted only when the hunk held exactly one removed tag-line
+ * code, one added one, and no other changed line. All three are facts about the hunk, so an
+ * unrelated edit to a neighbouring scenario, or a second renumber landing beside the first, threw
+ * the pair away. A second module would have meant a second corpus read for a strictly weaker reason.
  *
  * ONE CORPUS READER. The extents come off `parseTaggedScenarios`' existing walk, reached through
  * core's `/internal` seam. There is no second Gherkin parse here; that walk was extracted precisely
@@ -30,11 +37,17 @@
  */
 
 import { parseTaggedScenarios } from "@3f-consulting/spec-controller-core/internal";
+import type { RenumberPair } from "./scnSubIssueGate.js";
 
 /** What comparing one feature file's two sources says. */
 export interface FeatureScenarioChanges {
   /** Codes present in BOTH sources whose scenario text differs, in head document order. */
   updatedCodes: string[];
+  /**
+   * Codes that DISAPPEARED paired with codes that APPEARED on the same scenario text — a relabel
+   * and nothing else. In base document order; each appeared code is claimed at most once.
+   */
+  renumberPairs: RenumberPair[];
   /** Something changed that lies inside no scenario in either source. */
   changedOutsideEveryScenario: boolean;
 }
@@ -77,10 +90,53 @@ function readCorpus(source: string): CorpusText {
 }
 
 /**
+ * The one token a relabel changes, replaced on BOTH sides so everything else can be compared.
+ * ONLY the `@`-sigilled token is normalised: the code is carried as a tag, and any other textual
+ * difference — a changed step, a bare prose id left behind — must defeat the pair. That is the
+ * conservative direction and the one the gate needs, because the decision passes a renumber
+ * UNCONDITIONALLY: an over-eager pairing is not a mis-report but a hole through the whole gate.
+ */
+const RELABELLED_TAG = " @SCN ";
+
+function unlabelled(text: string, code: string): string {
+  return text.split(`@${code}`).join(RELABELLED_TAG);
+}
+
+/**
+ * Pair each disappeared code with the first unclaimed appeared code carrying the same scenario
+ * text. First match in document order, each appeared code claimed once — deterministic, and the
+ * only case where the choice is arbitrary is two byte-identical scenarios renumbered together,
+ * where either pairing says the same thing.
+ *
+ * A code present on BOTH sides is never a renumber, which is the same shared-code rule the update
+ * arm runs on and is what keeps a scenario merely MOVED out of the pairs with nothing special-cased.
+ */
+function pairRenumbers(base: CorpusText, head: CorpusText): RenumberPair[] {
+  const appeared = [...head.byCode.keys()].filter((code) => !base.byCode.has(code));
+  const claimed = new Set<string>();
+  const pairs: RenumberPair[] = [];
+
+  for (const removed of [...base.byCode.keys()].filter((code) => !head.byCode.has(code))) {
+    const before = unlabelled(base.byCode.get(removed)!, removed);
+    for (const added of appeared) {
+      if (claimed.has(added)) continue;
+      if (before !== unlabelled(head.byCode.get(added)!, added)) continue;
+      claimed.add(added);
+      pairs.push({ removed, added });
+      break;
+    }
+  }
+
+  return pairs;
+}
+
+/**
  * Compare one feature file's two sources.
  *
- * A code present on only ONE side is never `updated` — that is an add, a delete or a renumber, and
- * each already has its own detector reading the tag lines the diff added or removed.
+ * A code present on only ONE side is never `updated` — that is an add, a delete or a renumber. The
+ * first two are still the diff's own questions, read off the tag lines it added and removed; the
+ * renumber is answered here, because "this scenario's body is otherwise unchanged" is a fact about
+ * the scenario and no hunk-local test can reach it.
  *
  * An EMPTY source is the honest reading of a file this change adds (no base) or deletes (no head):
  * neither is an update, and both fall out of the shared-code rule with nothing special-cased.
@@ -102,5 +158,9 @@ export function readScenarioChanges(
     if (before !== undefined && before !== text) updatedCodes.push(code);
   }
 
-  return { updatedCodes, changedOutsideEveryScenario: base.residue !== head.residue };
+  return {
+    updatedCodes,
+    renumberPairs: pairRenumbers(base, head),
+    changedOutsideEveryScenario: base.residue !== head.residue,
+  };
 }
