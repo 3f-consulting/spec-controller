@@ -96,3 +96,14 @@ export type { MeasuredEvidenceObservation } from "./domain/journal.js";
 // it differently. Internal, not public — the union's third member is not on the frozen v1 surface.
 export { isMeasuredObservation, isStaticCheckObservation } from "./domain/journal.js";
 export type { FitnessEvidenceObservation } from "./domain/journal.js";
+
+// `ciRunSteps` / `CiRunStep` — the CI walk `ciRunCommands` projects, carrying whether each `run:`
+// step's red would abort the job. Shared because the local-ladder derivation must not open a second
+// YAML walk to see `continue-on-error`: that key is on the same step mapping this walk already
+// visits, and a second reader would be free to disagree with the first about which steps a workflow
+// even runs — which is the silent disagreement the one-place rule exists to prevent (3F-3042). Its
+// only consumer is `static-checks/localLadder.ts`. Internal, not public — `ciRunCommands` remains
+// the v1 contract for anyone outside, and putting this on the frozen `.` barrel would widen a
+// frozen surface and owe @SCN-API-001 a hand-transcribed row to buy nothing.
+export { ciRunSteps } from "./parse/checkScriptsRunInCI.js";
+export type { CiRunStep } from "./parse/checkScriptsRunInCI.js";

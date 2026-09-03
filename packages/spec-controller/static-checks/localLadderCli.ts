@@ -20,6 +20,11 @@
  * red `lint:self-balance` as an uncited one. This is the reasoning `verify` itself already
  * carries, applied to its helper.
  *
+ * IT REDS ON A SWALLOWED RED BEFORE ANYTHING ELSE (@SCN-LAD-008). A step carrying
+ * `continue-on-error`, or sitting under a job that does, runs and reds and leaves the job green —
+ * so it is a gate in name only, and every other message this file prints is about a ladder that
+ * assumes it is not. That block runs first for that reason and for no other; all four exit 1.
+ *
  * `--root <dir>` moves the read to another repository — how both evidence arms drive it over
  * planted trees. It never narrows WHAT is read, so the emitter under test is the emitter
  * `pnpm verify` runs.
@@ -57,6 +62,23 @@ try {
   // distinction `lint:self-balance` draws with its own exit 2, and for the same reason.
   console.error(`local ladder: cannot read ${ciPath} or its package.json — ${String(err)}`);
   process.exit(2);
+}
+
+// FIRST OF THE FOUR, AND THE POSITION IS THE POINT. Every block here exits 1, so ordering only
+// decides which fault a reader is told about — and this one invalidates the premise the other
+// three rest on. If a gate's red does not abort the job, "the ladder CI runs" has stopped being a
+// statement about what CI ENFORCES, and a stale exclusion is the smaller of the reader's problems.
+for (const step of ladder.unenforced) {
+  console.error(
+    `local ladder: ${step.script} runs in CI and its red would not abort the job — ${step.why}.`,
+  );
+  console.error(`  the step CI runs: ${step.command}`);
+}
+if (ladder.unenforced.length > 0) {
+  console.error(
+    "local ladder: take the continue-on-error off the step or its job, or stop calling it a gate. A step whose red the job swallows runs, reds and leaves the job green — and a green job is this repository's evidence that every unconditional step in it ran (3F-3042).",
+  );
+  process.exit(1);
 }
 
 for (const entry of ladder.stale) {

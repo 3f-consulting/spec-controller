@@ -33,6 +33,15 @@ Feature: The local green-check runs the ladder CI runs, derived rather than list
   outside. So position stops being a convention this derivation happens to preserve and
   becomes a property it asserts.
 
+  AND A GATE'S RED MUST ABORT THE JOB, OR IT IS NOT A GATE. Everything above rests on a
+  premise 3F-3042 measured and then ruled acceptable rather than engineered away: a green CI
+  run is the state in which every unconditional step ran, because a run: step that reds
+  aborts the job. continue-on-error is the one attribute that severs job green from step
+  ran — a step carrying it runs, reds, and leaves the job green — and this derivation read
+  every step's run: and discarded every other key, so it could not see one. A ruling whose
+  premise nothing holds is an honour convention, and this repository rules by mechanism, so
+  the premise is held here (@SCN-LAD-008).
+
   WHAT A GREEN HERE DOES NOT ESTABLISH. That the ladder is SUFFICIENT — it says the
   local ladder is CI's ladder, and whether CI's ladder is the right one is a separate
   judgement this makes no claim about. And one hand-maintained artefact survives on
@@ -66,6 +75,27 @@ Feature: The local green-check runs the ladder CI runs, derived rather than list
       Given a CI config that installs dependencies and enables corepack before its gates
       When the local ladder is derived from it
       Then neither setup step is a gate, and neither is recorded as an exclusion
+
+  Rule: a CI step's red must abort the job
+
+    A gate is a step whose red is the job's verdict. continue-on-error severs the two: the
+    step runs, reds, and the job stays green, so the gate is a gate in name only — and it is
+    indistinguishable from a passing one by every reading downstream of the run. A job
+    carrying the attribute does that to every run: step under it at once, which is why the
+    job's own key is read as well as the step's.
+
+    THE VALUE IS READ IN THE SAFE DIRECTION, the direction this parse already takes on a
+    document it cannot read at all. Absent, false, or the string false is the only
+    arrangement that vouches for a step; anything else does not, an expression included,
+    because a value this derivation cannot resolve is a value it must not vouch for.
+
+    @unit @integration @SCN-LAD-008
+    Scenario: a CI step whose red the job would swallow reds the ladder, naming it
+      Given a CI config whose gate carries continue-on-error
+      When the local ladder is built over it
+      Then the ladder reds, naming the step whose red would not abort the job
+      And a job-level continue-on-error reds the same way, naming every gate under it
+      And the same config without the attribute reds nothing
 
   Rule: a step left out of the local ladder names why, and the reason must still hold
 

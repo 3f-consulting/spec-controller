@@ -43,16 +43,44 @@ const plantedRoots: string[] = [];
 let plantedRoot: string;
 let ladder: LocalLadder;
 
+/**
+ * Which `continue-on-error` a planted workflow carries — @SCN-LAD-008's whole subject.
+ *
+ * An OPTION rather than a second planter, so every other scenario's plant is unchanged and the
+ * attribute appears in a config only where a scenario put it there. GitHub admits it in two
+ * places and they are deleted in two different places, so the plant has to be able to write
+ * either one.
+ */
+interface ContinuesOnError {
+  /** Commands whose own step carries `continue-on-error: true`. */
+  readonly steps?: readonly string[];
+  /** Whether the JOB carries it — which reaches every `run:` step under it at once. */
+  readonly job?: boolean;
+}
+
 /** Plant a miniature target: a CI workflow and a package manifest, both real files. */
-function plant(commands: readonly string[], scripts: Record<string, string>): string {
+function plant(
+  commands: readonly string[],
+  scripts: Record<string, string>,
+  continuesOnError: ContinuesOnError = {},
+): string {
   const root = mkdtempSync(path.join(tmpdir(), "local-ladder-"));
   plantedRoots.push(root);
   mkdirSync(path.join(root, ".github", "workflows"), { recursive: true });
   writeFileSync(
     path.join(root, ".github", "workflows", "ci.yml"),
-    ["name: CI", "jobs:", "  ci:", "    steps:", ...commands.map((c) => `      - run: ${c}`)].join(
-      "\n",
-    ),
+    [
+      "name: CI",
+      "jobs:",
+      "  ci:",
+      ...(continuesOnError.job === true ? ["    continue-on-error: true"] : []),
+      "    steps:",
+      ...commands.flatMap((c) =>
+        continuesOnError.steps?.includes(c) === true
+          ? [`      - run: ${c}`, "        continue-on-error: true"]
+          : [`      - run: ${c}`],
+      ),
+    ].join("\n"),
     "utf8",
   );
   writeFileSync(path.join(root, "package.json"), JSON.stringify({ scripts }, null, 2), "utf8");
@@ -290,6 +318,108 @@ Then("the same step run ahead of every gate reds nothing", function () {
       .map((line) => line.split("\t")[0]),
     [...GATES_AHEAD],
     "the gates behind the excluded step are still gates — the rule moves the step, not the ladder",
+  );
+});
+
+// @SCN-LAD-008
+/**
+ * The gates the swallowed-red plants run, in the order the planted CI runs them.
+ *
+ * The excluded step leads every one of them, so all three plants differ from a compliant
+ * workflow in the ATTRIBUTE and in nothing else: a plant that dropped it would red as stale
+ * and a plant that trailed it would red as late, and either would let this scenario pass on a
+ * fault it makes no claim about.
+ */
+const SWALLOWED_GATES = ["typecheck", "lint:alpha"] as const;
+
+/** The commands all three @SCN-LAD-008 plants run — only the attribute moves between them. */
+const SWALLOWED_COMMANDS = [
+  `pnpm ${EXCLUDED_SCRIPT}`,
+  ...SWALLOWED_GATES.map((script) => `pnpm ${script}`),
+];
+
+const SWALLOWED_SCRIPTS: Record<string, string> = {
+  typecheck: "tsc --noEmit",
+  [EXCLUDED_SCRIPT]: "tsx lintScnSubIssuesCli.ts",
+  "lint:alpha": "tsx alpha.ts",
+};
+
+Given("a CI config whose gate carries continue-on-error", function () {
+  // ONE gate carries it, with a compliant gate beside it. A config where every step carried
+  // the attribute would be satisfied by an emitter that redded on any workflow at all.
+  plantedRoot = plant(SWALLOWED_COMMANDS, SWALLOWED_SCRIPTS, { steps: ["pnpm lint:alpha"] });
+});
+
+Then("the ladder reds, naming the step whose red would not abort the job", function () {
+  // TEETH FIRST, message second — the order @SCN-LAD-005 and @SCN-LAD-007 assert in. An
+  // emitter that printed all of this and exited 0 would leave `pnpm verify` green over a
+  // workflow whose gate cannot fail it, which is the watermelon this fence exists to stop.
+  assert.notEqual(
+    emitterRun.exitCode,
+    0,
+    "a gate whose red would not abort the job must RED the ladder, not warn about it. " +
+      `It exited 0 with:\n${emitterRun.stderr}`,
+  );
+  assert.ok(
+    emitterRun.stderr.includes("lint:alpha") && emitterRun.stderr.includes("continue-on-error"),
+    `the red must name the step AND the attribute that severs it. It said:\n${emitterRun.stderr}`,
+  );
+  assert.equal(
+    emitterRun.stdout.trim(),
+    "",
+    "a ladder that cannot be trusted emits no gates — running a subset is what this stops",
+  );
+});
+
+Then(
+  "a job-level continue-on-error reds the same way, naming every gate under it",
+  function () {
+    // THE SECOND PLACE GITHUB ADMITS THE ATTRIBUTE, and the one a step-level reading misses
+    // entirely: one key at the job severs every `run:` step under it at once, so the workflow
+    // that looks least like the case above is the one that swallows the most.
+    const jobWide = runEmitter(plant(SWALLOWED_COMMANDS, SWALLOWED_SCRIPTS, { job: true }));
+
+    assert.notEqual(
+      jobWide.exitCode,
+      0,
+      `a job that continues on error must RED the ladder. It exited 0 with:\n${jobWide.stderr}`,
+    );
+    for (const gate of SWALLOWED_GATES) {
+      assert.ok(
+        jobWide.stderr.includes(gate),
+        `the red must name ${gate}, which the job would swallow. It said:\n${jobWide.stderr}`,
+      );
+    }
+    // The EXCLUDED step too, and that is the ordering assertion: the swallowed-red test runs
+    // ahead of the exclusion lookup, so the one gate with a single chance to run is not the
+    // one this fence reads past.
+    assert.ok(
+      jobWide.stderr.includes(EXCLUDED_SCRIPT),
+      `the red must name ${EXCLUDED_SCRIPT} as well. It said:\n${jobWide.stderr}`,
+    );
+    assert.equal(jobWide.stdout.trim(), "", "a ladder that cannot be trusted emits no gates");
+  },
+);
+
+Then("the same config without the attribute reds nothing", function () {
+  // THE LOAD-BEARING NEGATIVE. Same commands, same manifest, the attribute gone — so what
+  // this half isolates is the attribute and nothing else. Without it an emitter that redded
+  // on every workflow would satisfy both assertions above and red every ladder this
+  // repository ever builds.
+  const compliant = runEmitter(plant(SWALLOWED_COMMANDS, SWALLOWED_SCRIPTS));
+
+  assert.equal(
+    compliant.exitCode,
+    0,
+    `a workflow carrying no continue-on-error is compliant. It said:\n${compliant.stderr}`,
+  );
+  assert.deepEqual(
+    compliant.stdout
+      .split("\n")
+      .filter((line) => line.trim() !== "")
+      .map((line) => line.split("\t")[0]),
+    [...SWALLOWED_GATES],
+    "the gates are still gates — the rule reads the attribute, not the steps",
   );
 });
 

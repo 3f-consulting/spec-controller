@@ -14,6 +14,39 @@ permissions:
   contents: read
   actions: read
 
+# A RED ABORTS THIS JOB AND SKIPS EVERY STEP BEHIND IT — RULED, NOT OVERLOOKED (3F-3042).
+# Measured over the 200 runs to 0ef9263: 72 failed, and every one of the 72 left at least one gate
+# unreached — a median of three, as many as sixteen. Not one failed run ever completed
+# `lint:self-balance`: 55 never reached it, and the other 17 reached it and it was the red. This is
+# not something that bites in a bad week. It bites on every red there has ever been.
+#
+# IT IS STILL ACCEPTABLE, AND THE REASON IS NOT RARITY. A merge is decided on a GREEN run, and a
+# green job is exactly the state in which nothing was suspended: GitHub aborts at the first red, so
+# `success` means every unconditional step ran. The run that turns a pull request green ran this
+# whole ladder over the head being merged, and the squash puts that content on main. Suspension is
+# confined to runs whose verdict is already "not ok" — where nothing is believed about the steps
+# behind the red, because nothing is believed about the run.
+#
+# WHAT IT COSTS IS ROUND-TRIPS, AND THIS REPOSITORY ALREADY PAYS THAT PRICE TWICE. A red build names
+# one failure where it could have named four. `scripts/verify.sh` chose the same trade in so many
+# words — "the first red stops the ladder and the last line says which gate" — and `mutation.yml`
+# chose it again for the sweep: "AND NO `if: always()`. A sweep that died left no verdict worth
+# reaching" (3F-2957, @SCN-MUT-016). Splitting these steps into independent jobs buys N checkouts and
+# N installs to make a RED build more talkative, and buys nothing where a decision is actually made.
+#
+# THE EXCEPTION IS `if:`, AND IT IS STATED RATHER THAN WAVED AT. A step carrying a condition is
+# skipped on a green run too, so the premise is exact: green means every UNCONDITIONAL step ran. The
+# one conditional step below is governed separately — CI_ONLY_EXCLUSIONS names why it is left off
+# the local ladder, and @SCN-LAD-007 asserts it runs ahead of every gate.
+#
+# ONE ATTRIBUTE WOULD FALSIFY ALL OF THIS, AND IT IS FENCED RATHER THAN ASKED FOR POLITELY.
+# `continue-on-error` severs job-green from step-ran: the step runs, reds, and the job ends green
+# over a step that enforced nothing. It is also the cheap answer this ticket was tempted by, and it
+# would have MANUFACTURED the invisibility it set out to close — the shared CI parse walked
+# `jobs -> steps -> run` and discarded every other key of the step, so a swallowed step read as
+# enforced and the ledger balanced it. Do not put it on a step or on this job: @SCN-LAD-008 reds
+# the ladder if you do, before a single gate has run.
+
 jobs:
   ci:
     runs-on: ubuntu-latest

@@ -10,7 +10,7 @@
  * being hand-maintained, so the list stops existing: a gate cannot be forgotten when nobody
  * adds one.
  *
- * THE CI PARSE IS IMPORTED, NEVER REWRITTEN. `ciRunCommands` / `commandInvokesScript` are the
+ * THE CI PARSE IS IMPORTED, NEVER REWRITTEN. `ciRunSteps` / `commandInvokesScript` are the
  * primitives `runningStaticChecks` and `checkStaticEvidenceObligations` already read a static
  * check's enforcement off. That parse is watermelon-critical — a mis-read could report a
  * wired check as unwired, or the reverse — which is exactly why it lives in one place. A
@@ -29,14 +29,23 @@
  * `lint:scn-subissues` off the board for three consecutive commits during 3F-2994. So the
  * derivation keeps a position it used to discard, and reports it as `late`.
  *
+ * AND A GATE WHOSE RED THE JOB WOULD SWALLOW IS NOT A GATE (3F-3042). Everything above rests on
+ * one premise — a green CI run is the state in which every unconditional step ran, because a
+ * `run:` step that reds aborts the job. That was measured over 200 runs and then ruled
+ * ACCEPTABLE rather than engineered away, which is only honest while nothing falsifies it.
+ * `continue-on-error` is the one attribute that does: the step runs, reds, and leaves the job
+ * green, so its red buys nothing and every reading downstream of the run cannot tell it from a
+ * pass. A ruling whose premise nothing holds is an honour convention, so the widened parse reads
+ * the attribute and such a step is reported `unenforced` rather than gated.
+ *
  * @SCN-LAD-001 — features/local-ladder.feature.
  */
 
 import {
-  ciRunCommands,
   commandInvokesScript,
   type PackageJsonScripts,
 } from "@3f-consulting/spec-controller-core";
+import { ciRunSteps } from "@3f-consulting/spec-controller-core/internal";
 
 /** One rung of the local ladder: a CI step's script, and the command CI runs for it. */
 export interface LadderGate {
@@ -104,6 +113,23 @@ export interface UnsupportedStep {
   readonly why: string;
 }
 
+/**
+ * A CI step the derivation will not vouch for, and the key that severs it.
+ *
+ * A gate is a step whose red is the job's verdict. `continue-on-error` breaks that: the step
+ * runs, reds, and the job stays green, so the gate is a gate in name only and is
+ * indistinguishable from a passing one by every reading downstream of the run. Reported
+ * rather than resolved, for the reason `unsupported` is: the ladder cannot make a swallowed
+ * red count, and running the rest as though it did is the subset that looks green.
+ */
+export interface UnenforcedStep {
+  readonly script: string;
+  /** The step's command, as CI carries it. */
+  readonly command: string;
+  /** How the job would swallow this step's red — its own `continue-on-error`, or its job's. */
+  readonly why: string;
+}
+
 /** The gates `pnpm verify` runs, derived from a CI config and a package manifest. */
 export interface LocalLadder {
   /** One gate per CI script step, in the CI config's order. */
@@ -130,6 +156,16 @@ export interface LocalLadder {
   readonly late: readonly LateExclusion[];
   /** CI script steps the ladder cannot represent — named, never dropped. */
   readonly unsupported: readonly UnsupportedStep[];
+  /**
+   * CI script steps whose red would not abort the job — the key that severs each one named.
+   *
+   * The premise every other reading in this file rests on: a green CI run is the state in
+   * which every unconditional step ran, because a `run:` step that reds aborts the job
+   * (3F-3042, measured over 200 runs and ruled acceptable rather than engineered away).
+   * `continue-on-error` is the one attribute that falsifies it, so it is the one attribute
+   * this derivation refuses to read past.
+   */
+  readonly unenforced: readonly UnenforcedStep[];
 }
 
 /**
@@ -180,12 +216,31 @@ export function deriveLocalLadder(
   const omitted: LadderExclusion[] = [];
   const late: LateExclusion[] = [];
   const unsupported: UnsupportedStep[] = [];
+  const unenforced: UnenforcedStep[] = [];
+  // Every script a CI step invokes, whatever the derivation then does with that step. Staleness
+  // is measured against THIS rather than against `omitted`, because the two parted company the
+  // moment a step could be skipped for a reason other than its exclusion (@SCN-LAD-008): a
+  // swallowed excluded step IS run by CI, so reading its absence from `omitted` as "CI no longer
+  // runs it" states the one thing that is not true about it.
+  const invokedInCi = new Set<string>();
 
-  for (const rawCommand of ciRunCommands([ciSource])) {
-    const command = rawCommand.trim();
+  for (const step of ciRunSteps([ciSource])) {
+    const command = step.command.trim();
     const invoked = scripts.filter((name) => commandInvokesScript(command, name));
     const script = invoked[0];
     if (script === undefined) continue;
+    invokedInCi.add(script);
+
+    // AHEAD OF THE EXCLUSION LOOKUP, AND THAT ORDERING IS LOAD-BEARING. The excluded step is the
+    // one gate with a single chance to run (`CI_ONLY_EXCLUSIONS`, @SCN-LAD-007), so swallowing ITS
+    // red is the worst instance of this fault — and a lookup running first would `continue` past
+    // it, print the omission with its reason, and report nothing at all.
+    if (!step.abortsJob) {
+      const carried = step.continuesOnError;
+      const whose = carried.carriedBy === "job" ? "its job carries" : "it carries";
+      unenforced.push({ script, command, why: `${whose} continue-on-error: ${carried.value}` });
+      continue;
+    }
 
     const exclusion = exclusions.find((entry) => entry.script === script);
     if (exclusion !== undefined) {
@@ -207,11 +262,9 @@ export function deriveLocalLadder(
   // Staleness is measured against what CI RUNS, not against what package.json holds: the
   // script surviving in the manifest after its CI step is deleted is exactly the case an
   // existence check would wave through, leaving the ladder narrower than anyone intended.
-  const stale = exclusions.filter(
-    (entry) => !omitted.some((omission) => omission.script === entry.script),
-  );
+  const stale = exclusions.filter((entry) => !invokedInCi.has(entry.script));
 
-  return { gates, omitted, stale, late, unsupported };
+  return { gates, omitted, stale, late, unsupported, unenforced };
 }
 
 /** What about a CI step the ladder cannot represent as one gate — or nothing, if it can. */

@@ -274,3 +274,132 @@ describe("[SCN-LAD-007] an excluded step CI runs behind a gate reds, naming the 
     expect(ladder.late).toEqual([]);
   });
 });
+
+describe("[SCN-LAD-008] a CI step whose red the job would swallow reds the ladder, naming it", () => {
+  /**
+   * A CI config whose job carries `jobKeys` and whose steps are `run:` commands each
+   * followed by the extra keys its tuple names.
+   *
+   * Injected as SOURCE, not as a parsed object: `continue-on-error` is a key of the same
+   * step mapping the walk already visits, and writing the YAML out is what pins that the
+   * widened walk reads the document rather than a shape a test built for it.
+   */
+  const ciConfigOf = (
+    jobKeys: readonly string[],
+    steps: readonly (readonly string[])[],
+  ): string =>
+    [
+      "jobs:",
+      "  ci:",
+      ...jobKeys.map((key) => `    ${key}`),
+      "    steps:",
+      ...steps.flatMap(([command, ...stepKeys]) => [
+        `      - run: ${command}`,
+        ...stepKeys.map((key) => `        ${key}`),
+      ]),
+    ].join("\n");
+
+  const SWALLOWED = "continue-on-error: true";
+
+  it("[SCN-LAD-008] a step carrying continue-on-error is unenforced, and is not a gate", () => {
+    const ladder = deriveLocalLadder(
+      ciConfigOf([], [["pnpm typecheck"], ["pnpm lint:alpha", SWALLOWED]]),
+      manifest,
+      [],
+    );
+
+    // The step is NAMED, and it names the key that severs it — a reader has to know which key
+    // to delete, and the two cases are deleted in different places.
+    expect(ladder.unenforced).toEqual([
+      { script: "lint:alpha", command: "pnpm lint:alpha", why: "it carries continue-on-error: true" },
+    ]);
+    // And it is not a gate. Running it locally would answer a question CI does not ask.
+    expect(ladder.gates.map((gate) => gate.script)).toEqual(["typecheck"]);
+  });
+
+  it("[SCN-LAD-008] a job-level continue-on-error unenforces every run: step under it", () => {
+    const ladder = deriveLocalLadder(
+      ciConfigOf([SWALLOWED], [["pnpm typecheck"], ["pnpm lint:alpha"]]),
+      manifest,
+      [],
+    );
+
+    expect(ladder.unenforced.map((step) => step.script)).toEqual(["typecheck", "lint:alpha"]);
+    expect(ladder.unenforced.map((step) => step.why)).toEqual([
+      "its job carries continue-on-error: true",
+      "its job carries continue-on-error: true",
+    ]);
+    expect(ladder.gates).toEqual([]);
+  });
+
+  it("[SCN-LAD-008] the same config without the attribute is an ordinary ladder", () => {
+    // The load-bearing negative. Without it "everything is unenforced" satisfies both
+    // assertions above and reds every ladder this repository ever builds.
+    const ladder = deriveLocalLadder(
+      ciConfigOf([], [["pnpm typecheck"], ["pnpm lint:alpha"]]),
+      manifest,
+      [],
+    );
+
+    expect(ladder.unenforced).toEqual([]);
+    expect(ladder.gates.map((gate) => gate.script)).toEqual(["typecheck", "lint:alpha"]);
+  });
+
+  it("[SCN-LAD-008] continue-on-error: false, and the string false, still vouch for a step", () => {
+    // The attribute PRESENT and declining to sever is the ordinary way to write it out, and
+    // a reading that keyed on the key's presence would red a workflow that says the safe
+    // thing out loud. The quoted form is the same value: YAML admits both.
+    const ladder = deriveLocalLadder(
+      ciConfigOf(
+        [],
+        [
+          ["pnpm typecheck", "continue-on-error: false"],
+          ["pnpm lint:alpha", 'continue-on-error: "false"'],
+        ],
+      ),
+      manifest,
+      [],
+    );
+
+    expect(ladder.unenforced).toEqual([]);
+    expect(ladder.gates.map((gate) => gate.script)).toEqual(["typecheck", "lint:alpha"]);
+  });
+
+  it("[SCN-LAD-008] an expression the derivation cannot resolve does not vouch for a step", () => {
+    // THE SAFE DIRECTION, the one this parse already takes on a document it cannot read at
+    // all. An expression's value is decided by the run, not by the document, so a derivation
+    // that read it optimistically would vouch for a step on a guess — and the guess is wrong
+    // on exactly the runs the attribute was written for.
+    const ladder = deriveLocalLadder(
+      ciConfigOf([], [["pnpm lint:alpha", "continue-on-error: ${{ github.event_name == 'push' }}"]]),
+      manifest,
+      [],
+    );
+
+    expect(ladder.unenforced.map((step) => step.script)).toEqual(["lint:alpha"]);
+    expect(ladder.gates).toEqual([]);
+  });
+
+  it("[SCN-LAD-008] a swallowed red is caught on the EXCLUDED step, ahead of the exclusion lookup", () => {
+    // THE ORDERING IS LOAD-BEARING, and this is the assertion that holds it. An excluded step
+    // is the one gate with a single chance to run (@SCN-LAD-007), so swallowing ITS red is the
+    // worst instance of this fault — and an exclusion lookup running first would `continue`
+    // past it, report the omission with its reason, and say nothing at all.
+    const excluded = [{ script: "lint:beta", reason: "reads a pull request's diff" }];
+    const ladder = deriveLocalLadder(
+      ciConfigOf([], [["pnpm lint:beta", SWALLOWED], ["pnpm typecheck"]]),
+      manifest,
+      excluded,
+    );
+
+    expect(ladder.unenforced.map((step) => step.script)).toEqual(["lint:beta"]);
+    expect(ladder.omitted).toEqual([]);
+    // AND THE ENTRY IS NOT STALE, which is the half a swallowed step nearly cost. Staleness
+    // used to be read off `omitted`, and a swallowed step never reaches it — so the exclusion
+    // for a step CI DOES run would have been reported as excusing a step CI no longer runs.
+    // The emitter reds on the swallow first, so nobody would have seen the false row; a
+    // derivation that carries an untrue row and relies on nothing asking is the arrangement
+    // 3F-3041 already cost this repository four weeks.
+    expect(ladder.stale).toEqual([]);
+  });
+});
