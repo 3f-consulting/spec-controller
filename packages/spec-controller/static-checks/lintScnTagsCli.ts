@@ -66,7 +66,8 @@ function recognisedDeferralTags(packageJson: TargetPackageJson): readonly string
 }
 
 /**
- * The BARE CHECK TAGS a stepless fitness scenario may satisfy the floor with (@SCN-STG-005) —
+ * The BARE CHECK TAGS a fitness scenario may satisfy the floor with, steps or none
+ * (@SCN-STG-005; the "stepless" qualifier this line carried is retired with 3F-3126) —
  * read through the SAME resolvers the reconciler reads them with (@SCN-LNT-005), so the floor
  * admits exactly what the obligation rule raises against. Two readers of one config key would
  * each decide independently which words name a check, and a scenario the floor accepted while
@@ -146,13 +147,13 @@ export function runScnTagsLint(argv: readonly string[]): void {
 
   if (result.ok) {
     console.log(
-      "scn-tags lint: OK — every @SCN scenario names an evidence tier (or is parked), every tag on it is grammar, and no stepless fitness scenario claims more than one check."
+      "scn-tags lint: OK — every @SCN scenario names an evidence tier (or is parked), every tag on it is grammar, and no scenario claims more than one check."
     );
     process.exit(0);
   }
 
   console.error(
-    `scn-tags lint: FAILED — ${result.violations.length} finding(s): a scenario naming an @SCN but no evidence tier (and not parked), a tag that is neither a tier nor a recognised deferral tag, or a stepless fitness scenario claiming more than one check:`
+    `scn-tags lint: FAILED — ${result.violations.length} finding(s): a scenario naming an @SCN but no evidence tier (and not parked), a tag that is neither a tier nor a recognised deferral tag, or a scenario claiming more than one check:`
   );
   for (const v of result.violations) {
     console.error(`  ${v.message}`);

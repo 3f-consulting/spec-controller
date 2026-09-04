@@ -141,20 +141,23 @@ Feature: The tier-tag floor — every scenario names an evidence tier
     It must satisfy the floor on that alone, or the corpus sweep writes twelve scenarios this
     check reds.
 
-    STEPLESS IS THE DISCRIMINATOR FOR THIS FLOOR, NOT THE TAG. A behavioural scenario is an example
-    and carries steps; a fitness scenario is a whole-system characteristic held against a threshold
-    and has nothing to exemplify. Letting a STEPPED scenario ride a bare check tag to the floor
-    would re-admit name-match's own fault in a shorter spelling — a whole-system characteristic
-    satisfying the tier of an example it was never about.
+    THE REGISTERED TAG IS THE DISCRIMINATOR FOR THIS FLOOR, NOT THE SHAPE (3F-3126). A fitness
+    scenario is a whole-system characteristic held against a threshold, and the bare check tag is
+    the whole of that claim; whether the row was given steps says only how it was written. This
+    preamble used to say the opposite — STEPLESS IS THE DISCRIMINATOR FOR THIS FLOOR, NOT THE TAG,
+    on the reading that letting a STEPPED row ride a bare check tag would re-admit name-match's own
+    fault in a shorter spelling. That reading is retired, not merely restated: steplessness was
+    always a CORRELATE of having nothing to exemplify, never the thing itself, and 3F-3097 exists
+    to convert fitness checks to real step definitions — so a floor keyed on the correlate reds the
+    first conversion for a shape that is exactly what it asked the author to write.
 
-    THE OBLIGATION RULE NO LONGER READS THAT SHAPE, AND THIS FLOOR IS DELIBERATELY THE STRICTER OF
-    THE TWO UNTIL 3F-3126 (3F-3115). It used to, and this preamble used to end by saying the two
-    MUST agree; that sentence is retired rather than merely stale. What it feared — a scenario
-    satisfying the floor while raising no obligation — cannot happen, because both rules read the
-    SAME registered set and this floor's question (stepless AND a check tag) is a strict subset of
-    the engine's (a check tag). The disagreement that survives runs the other way: a stepped
-    scenario carrying a check tag and no tier raises its obligation and REDS here, by name. An
-    unsettled question that stops the build is not the silent slip this check exists to close.
+    SO THE FLOOR AND THE OBLIGATION RULE ASK ONE QUESTION OF ONE SET, which is what the last
+    paragraph of this preamble already required of them. Both read the union of the target's
+    registered check tags and its measured ones, off its own manifest, and neither adds a condition
+    of its own — so the floor admits exactly the scenarios the obligation rule raises against. The
+    interim record that stood here is retired by that: it said this floor was DELIBERATELY THE
+    STRICTER OF THE TWO until 3F-3126 (3F-3115), and that the surviving disagreement ran the other
+    way and was fail-loud. There is no disagreement left to be loud about.
 
     REGISTERED, NOT INFERRED. Which bare tags name a check is the registry's answer, injected the
     way the deferral set is. Inferring it from shape instead would let a typo on a stepless
@@ -192,11 +195,13 @@ Feature: The tier-tag floor — every scenario names an evidence tier
       Then it fails, naming the bare tag the group-prefixed one should have been
 
     @unit @integration @SCN-STG-005
-    Scenario: a stepless fitness scenario satisfies the tier floor by its bare check tag alone
+    Scenario: a fitness scenario satisfies the tier floor by its bare check tag alone, steps or none
       Given the scn-tags static check
       When it runs over a target whose stepless scenario carries only its registered bare check tag
       Then it passes
       When it runs over a target whose stepped scenario carries that same bare check tag and no tier
+      Then it passes
+      When it runs over that same stepped target with nothing registering its check tag
       Then it fails, naming the scenario that named no tier
 
     @unit @integration @SCN-STG-009
@@ -207,9 +212,9 @@ Feature: The tier-tag floor — every scenario names an evidence tier
       When it runs over that same target with no thresholds configured
       Then it fails, naming the scenario that named no tier
 
-  Rule: a stepless fitness scenario carries ONE check, and a second reds the tier-tag check
+  Rule: a fitness scenario carries ONE check, and a second reds the tier-tag check
 
-    ONE CHECK PER STEPLESS FITNESS SCENARIO is canon (`fitness-functions.md`), and until now it
+    ONE CHECK PER FITNESS SCENARIO is canon (`fitness-functions.md`), and until now it
     was only ever enforced from the CREDIT side: @SCN-LNT-008 says one run is not evidence for
     two scenarios, and leaves the runner-up's obligation reading missing. That arm reds the
     corpus fault where two scenarios reach one check. It has nothing to say about the fault
@@ -231,11 +236,26 @@ Feature: The tier-tag floor — every scenario names an evidence tier
     `lint:complexity`'s credit and the row read `balanced` — a false green in the tool whose
     subject is false greens.
 
-    THE RULE IS ABOUT FITNESS TAGS ON A STEPLESS SCENARIO, and nothing else. A behavioural
-    scenario carrying @unit @integration names two TIERS and is owed evidence on each — untouched.
-    A stepless scenario carrying its one check tag beside its @SCN is the normal shape
-    (@SCN-STG-005) — untouched. The message names BOTH tags, because the author has to choose
-    which scenario keeps which check and a message naming one of them has already chosen for them.
+    THE RULE IS ABOUT REGISTERED CHECK TAGS, AND THE TAG IS WHAT NAMES THE AXIS — steps or none
+    (3F-3126). It first shipped asking only about a STEPLESS scenario, defended like this: a
+    stepped scenario riding two check tags has a different fault — it names no tier — so telling
+    it "two checks" would send the author to delete a tag when what they owe is a tier. That
+    defence was downstream of the tier floor, and true only while the floor reds a stepped
+    check-tagged row as tier-less. Steps are a fact about how a row is written; the registered
+    tag is the claim about which axis it is on, and 3F-3115 already moved the obligation rule
+    onto the tag alone. A scenario carrying two check tags meant two scenarios however it was
+    written. A behavioural scenario carrying @unit @integration names two TIERS and is owed
+    evidence on each — untouched, because neither tag names a check. One carrying its single
+    check tag beside its @SCN is the normal fitness shape — untouched. The message names BOTH
+    tags, because the author has to choose which scenario keeps which check and a message naming
+    one of them has already chosen for them.
+
+    AND THE FLOOR HAS NOW MOVED WITH IT (3F-3133). This paragraph used to read THE FLOOR HAS NOT
+    MOVED YET, and named the intermediate that was true of: for one commit a stepped check-tagged
+    row with no tier redded TWICE — tier-less from the floor, two checks from here — because the
+    tier floor (@SCN-STG-005) had not yet stopped reading steplessness. It has now, so that record
+    is retired. What the order bought is still worth saying: the reverse would have admitted that
+    row silently for one commit, and a hole that lasts one commit is still a hole.
 
     ASKED OF UNPARKED SCENARIOS ONLY, like the floor rather than like the grammar question
     (operator ruling, 3F-2655). This Rule first shipped saying the opposite — that a parking tag
@@ -255,7 +275,7 @@ Feature: The tier-tag floor — every scenario names an evidence tier
     recognise the parking tag — so excusing it would make `@wip @untit` invisible.
 
     @unit @integration @SCN-STG-007
-    Scenario: two bare check tags on one UNPARKED stepless scenario red the tier-tag check, naming both
+    Scenario: two bare check tags on one UNPARKED scenario red the tier-tag check, naming both — steps or none
       Given the scn-tags static check
       When it runs over a target whose stepless scenario carries two registered bare check tags
       Then it fails, naming the scenario and BOTH check tags
@@ -264,6 +284,8 @@ Feature: The tier-tag floor — every scenario names an evidence tier
       When it runs over that same target with both check tags kept and the scenario parked
       Then it passes
       When it runs over that same target with the parking tag taken off again
+      Then it fails, naming the scenario and BOTH check tags
+      When it runs over a target whose STEPPED scenario carries two registered bare check tags
       Then it fails, naming the scenario and BOTH check tags
 
   Rule: spec-controller's own corpus satisfies the tier floor
@@ -275,8 +297,8 @@ Feature: The tier-tag floor — every scenario names an evidence tier
 
     IT IS ALSO THE SELF-REFERENTIAL CASE, and it is sound rather than circular. The scenario
     below satisfies the very floor it names — by the fifth route, @SCN-STG-005's — so a
-    regression that broke stepless acceptance would red this file's own gate before it could
-    green anything else. A check whose own corpus entry it could not admit would be telling
+    regression that broke bare-check-tag acceptance would red this file's own gate before it
+    could green anything else. A check whose own corpus entry it could not admit would be telling
     authors to write what it rejects.
 
     @traceability @SCN-STG-006

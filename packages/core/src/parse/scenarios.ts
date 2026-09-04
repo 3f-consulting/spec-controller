@@ -183,10 +183,14 @@ export function parseUntaggedScenarios(source: string): string[] {
  * credit with no obligation to post to (3F-3092). Removing the condition removes that asymmetry;
  * no compensating rule is added on the credit side, and none is needed.
  *
- * `TaggedScenario.stepless` SURVIVES because `parse/scnTags.ts` still reads it — the tier floor and
- * the one-check rule are corpus-SHAPE rules and steplessness is genuinely their subject. Those are
- * @SCN-STG-005's, and they now admit a shape this rule does not; the divergence is filed, not
- * reconciled here.
+ * `TaggedScenario.stepless` SURVIVES, AND NO RULE READS IT (3F-3134). What stood here said the
+ * field survived because `parse/scnTags.ts` still read it, the tier floor and the one-check rule
+ * being corpus-SHAPE rules whose subject steplessness genuinely was. Wrong twice: `parse/scnTags.ts`
+ * is not a path in this repository, and the corpus check it meant
+ * (`spec-controller/static-checks/scnTags.ts`) never read this field — it computed its own off its
+ * own line parser, domain-pure and importless. Both of that check's arms read the registered tag
+ * now (@SCN-STG-005, @SCN-STG-007, 3F-3126) and its private reader is retired, so the tree holds
+ * ONE steplessness reading and no rule consults it. What does is named on the field.
  *
  * REGISTERED, NOT INFERRED. `checkTags` is the registry's answer (`domain/checkRegistry`), taken as
  * data. Without it every unrecognised tag would be a candidate check and `@smoke` would owe one;
@@ -336,10 +340,17 @@ export interface TaggedScenario {
   /**
    * The scenario carries NO steps — a fact about its SHAPE, read off the same walk as the tags.
    *
-   * IT NO LONGER SAYS WHICH AXIS THE SCENARIO IS ON. The obligation rule reads the registered check
-   * tag and nothing else (@SCN-LNT-006, 3F-3115); what still reads this field is `parse/scnTags.ts`,
-   * whose tier floor and one-check rule are corpus-SHAPE rules — steplessness is genuinely their
-   * subject, and theirs is @SCN-STG-005's reading, not this one's.
+   * IT NO LONGER SAYS WHICH AXIS THE SCENARIO IS ON, AND NO RULE READS IT AT ALL. The obligation
+   * rule reads the registered check tag and nothing else (@SCN-LNT-006, 3F-3115), and the corpus
+   * check's tier floor and one-check rule read that same tag (@SCN-STG-005, @SCN-STG-007, 3F-3126).
+   * The sentence that stood here named `parse/scnTags.ts` as the surviving reader — not a path in
+   * this repository, and the check it meant read a private field of its own, retired with 3F-3134.
+   *
+   * WHAT READS IT IS TESTS ASSERTING SHAPE, measured rather than assumed: @SCN-LNT-006's unit arm
+   * pins it on the walk (`fitnessObligations.test.ts`), @SCN-LDG-020's pins it in the walk's own
+   * output (`taggedScenarios.test.ts`), and @SCN-LNT-005's Given reads it off the external fixture
+   * (`tests/steps/lintReconciliation.steps.ts`) as a fact about THAT fixture — which its own
+   * comment already says is not what makes the row a fitness scenario.
    *
    * It rides here rather than in a reader of its own for the reason the walk was extracted at all: a
    * second pass over the same file would be free to disagree with this one about which scenario it

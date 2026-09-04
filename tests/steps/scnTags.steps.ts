@@ -193,12 +193,21 @@ When(
 );
 
 // @SCN-STG-005
+When("it runs over that same stepped target with nothing registering its check tag", function () {
+  // Byte-for-byte the corpus above; only the manifest differs, so the pair isolates the REGISTRY
+  // rather than the tags or the steps. Without it every Then in this scenario reads `it passes`
+  // and a correct ruling is indistinguishable from a floor that stopped looking.
+  runGuardInTarget("tests/fixtures/scn-tags-fitness-stepped-unregistered");
+});
+
+// @SCN-STG-005
 Then("it fails, naming the scenario that named no tier", function () {
   assert.equal(
     exitCode,
     1,
-    `expected the scn-tags static check to fail (exit 1) over a tree whose STEPPED scenario ` +
-      `rides a bare check tag, but it exited ${exitCode}. Output:\n${output}`
+    `expected the scn-tags static check to fail (exit 1) over a tree whose @SCN scenario names ` +
+      `no tier and carries no tag the target registers or measures, but it exited ` +
+      `${exitCode}. Output:\n${output}`
   );
   assert.match(
     output,
@@ -207,9 +216,12 @@ Then("it fails, naming the scenario that named no tier", function () {
   );
   assert.match(
     output,
-    /no evidence tier/,
-    `expected the verdict to be the TIER FLOOR's — a stepped scenario's check tag is still ` +
-      `grammar, so "unrecognised tag" would be the wrong fault; got:\n${output}`
+    /names no evidence tier and is not parked/,
+    `expected the TIER FLOOR's own finding among them — an unregistered word names no check, ` +
+      `so it satisfies nothing and the floor has to say so by name rather than leaving the ` +
+      `grammar arm to imply it. Matched on the FINDING line, never the summary above it: the ` +
+      `summary lists all three fault kinds, so a bare /no evidence tier/ matches whichever ` +
+      `fault fired and would green a floor that had stopped looking; got:\n${output}`
   );
 });
 
@@ -333,3 +345,15 @@ When("it runs over that same target with the parking tag taken off again", funct
   // be switched off permanently by one tag would not be worth having.
   runGuardInTarget("tests/fixtures/scn-tags-two-checks");
 });
+
+// @SCN-STG-007
+When(
+  "it runs over a target whose STEPPED scenario carries two registered bare check tags",
+  function () {
+    // THE RULING (3F-3126): byte-for-byte `scn-tags-two-checks` with steps on the offending row.
+    // Same registry, same two tags, same verdict — the fitness axis is named by the registered
+    // TAG, not by whether the author wrote a step. This pair reds only because the rule stopped
+    // reading shape, which is why it is the one that would have passed before this commit.
+    runGuardInTarget("tests/fixtures/scn-tags-two-checks-stepped");
+  }
+);

@@ -288,7 +288,7 @@ Feature: a fixture spelling a different group into the tag
   });
 });
 
-describe("[SCN-STG-005] a stepless fitness scenario satisfies the tier floor by its bare check tag alone", () => {
+describe("[SCN-STG-005] a fitness scenario satisfies the tier floor by its bare check tag alone, steps or none", () => {
   /** What `resolveDeferralTags` hands the check over a tree with no config of its own. */
   const RECOGNISED = ["wip", "ignore", "skip", "todo", "pending"];
   /** What the target's check registry names — `typecheck` carries no prefix on purpose (3F-2495). */
@@ -310,11 +310,15 @@ Feature: a target whose fitness checks are stepless scenarios
     expect(result.violations).toEqual([]);
   });
 
-  it("reds that same tag on a STEPPED scenario — as tier-less, never as unrecognised", () => {
-    // The discriminator is the SHAPE, not the tag. A stepped scenario is an example, and a
-    // whole-system characteristic cannot satisfy the tier of an example it was never about —
-    // which is name-match's own fault arriving in a shorter spelling. The tag is still
-    // grammar (it means something here), so the ONE violation is the floor's.
+  it("admits that same tag on a STEPPED scenario — the registered tag names the axis", () => {
+    // INVERTED (fix-to-canon, 3F-3126). This case shipped asserting the opposite — "reds that
+    // same tag on a STEPPED scenario — as tier-less, never as unrecognised" — on the reading
+    // that steplessness is what puts a scenario on the fitness axis. The ruling is that the
+    // registered TAG is, in the corpus check as in the engine: steplessness was a CORRELATE of
+    // having nothing to exemplify, never the thing itself, and 3F-3097 converts fitness checks
+    // to real step definitions. A floor keyed on the correlate reds that first conversion for
+    // writing exactly the shape `fitnessObligationsOf` asks for (3F-3115). The canon cited is
+    // the ruling, not the code's behaviour.
     const source = `@TGT
 Feature: a target whose bare check tag rides a stepped scenario
 
@@ -324,7 +328,29 @@ Feature: a target whose bare check tag rides a stepped scenario
 `;
     const result = lintScnTags([{ slug: "stepped", source }], RECOGNISED, CHECKS);
 
-    expect(result.violations.map((v) => v.kind)).toEqual(["missing-tier-tag"]);
+    expect(result.ok).toBe(true);
+    expect(result.violations).toEqual([]);
+  });
+
+  it("reds that same STEPPED scenario when its tag is NOT in the registry handed to the check", () => {
+    // THE TEETH THE INVERSION ABOVE GIVES UP, REPLACED RATHER THAN LOST. Byte-for-byte the case
+    // above with `complexity` withheld from the injected set: nothing about the row changed, so
+    // the pass above is the REGISTRY doing the work and not a floor that stopped asking. Both
+    // faults are named — the word means nothing here, AND the row satisfies nothing — because
+    // they have different fixes.
+    const source = `@TGT
+Feature: a target whose bare check tag rides a stepped scenario
+
+  @complexity @SCN-TGT-001
+  Scenario: a stepped scenario carrying a bare check tag and no tier
+    Given the target source
+`;
+    const result = lintScnTags([{ slug: "stepped-unregistered", source }], RECOGNISED, ["typecheck"]);
+
+    expect(result.violations.map((v) => v.kind)).toEqual([
+      "unrecognised-tag",
+      "missing-tier-tag",
+    ]);
   });
 
   it("reds that same stepless scenario when its tag is NOT in the registry handed to the check", () => {
@@ -365,7 +391,7 @@ Feature: a tiered scenario also carrying a check tag
 });
 
 /**
- * @SCN-STG-007 — one check per stepless fitness scenario, enforced from the CORPUS side.
+ * @SCN-STG-007 — one check per fitness scenario, enforced from the CORPUS side.
  *
  * THE MIRROR OF @SCN-LNT-008, which enforces the same canon rule from the credit side: one run is
  * not evidence for two scenarios. That arm reds two scenarios reaching one check and has nothing to
@@ -378,8 +404,13 @@ Feature: a tiered scenario also carrying a check tag
  * file. Both were ruled in: a registry mapping two handles onto one check reaches the collision
  * with no corpus fault for this check to see, and an author who wrote two tags on one scenario
  * meant two scenarios.
+ *
+ * THE REGISTERED TAG IS THE DISCRIMINATOR, NOT THE SHAPE (3F-3126). The rule first shipped
+ * asking only about a STEPLESS scenario; that precondition was downstream of the tier floor and
+ * is retired here. An author who wrote two check tags on one scenario meant two scenarios
+ * however they wrote it.
  */
-describe("[SCN-STG-007] two bare check tags on one stepless scenario red the tier-tag check", () => {
+describe("[SCN-STG-007] two bare check tags on one unparked scenario red the tier-tag check, steps or none", () => {
   /** What `resolveDeferralTags` hands the check over a tree with no config of its own. */
   const RECOGNISED = ["wip", "ignore", "skip", "todo", "pending"];
   /** What the target's check registry names — `typecheck` carries no prefix on purpose (3F-2495). */
@@ -437,10 +468,47 @@ Feature: a target whose behavioural scenario names two tiers
     expect(result.ok).toBe(true);
   });
 
-  it("leaves a STEPPED scenario carrying two check tags to the FLOOR, not to this rule", () => {
-    // STEPLESS IS THE DISCRIMINATOR (@SCN-STG-005). A stepped scenario riding check tags has a
-    // different fault — it names no tier — and saying "two checks" at it would send the author to
-    // delete a tag when what they owe is a tier. One finding, and it is the floor's.
+  it("reds a STEPPED scenario carrying two registered bare check tags, naming BOTH", () => {
+    // THE RULING, ISOLATED FROM THE FLOOR (3F-3126). The offending scenario names @unit as well,
+    // so it satisfies the tier floor by the ordinary route and the ONLY finding left is this
+    // rule's. That is what makes this case the ruling rather than a restatement of the floor:
+    // steps and a tier, and the two check tags still red. The fitness axis is named by the
+    // registered TAG, not by whether the author wrote a step — the same discriminator 3F-3115
+    // moved `fitnessObligationsOf` onto. This case returns [] before this commit.
+    //
+    // (Whether a scenario should carry a tier tag AND a check tag at all is 3F-3125's question,
+    // deliberately unanswered here; the floor admits the combination by either route today.)
+    const source = `@TGT
+Feature: a target whose stepped scenario claims two checks
+
+  @unit @complexity @typecheck @SCN-TGT-001
+  Scenario: a stepped scenario carrying two check tags and a tier
+    Given the target source
+`;
+    const result = lintScnTags([{ slug: "stepped-two-tiered", source }], RECOGNISED, CHECKS);
+
+    expect(result.violations.map((v) => v.kind)).toEqual(["multiple-check-tags"]);
+    expect(result.violations[0]?.message).toContain("SCN-TGT-001");
+    expect(result.violations[0]?.message).toContain("@complexity");
+    expect(result.violations[0]?.message).toContain("@typecheck");
+  });
+
+  it("reds a STEPPED scenario carrying two check tags — this rule alone, the floor having no complaint", () => {
+    // INVERTED (fix-to-canon, 3F-3126), and SETTLED here (3F-3133). This case shipped asserting
+    // that the rule leaves a STEPPED scenario carrying two check tags to the FLOOR rather than
+    // reding it, on the reading that steplessness is what puts a scenario on the fitness axis.
+    // The ruling is that the registered TAG is, in the corpus check as in the engine; the old
+    // defence — saying "two checks" would send the author to delete a tag when what they owe is
+    // a tier — was downstream of the floor and true only while the floor redded this row as
+    // tier-less. It no longer does, so the message the defence called a misdirection is the
+    // correct one and this row's ONLY fault is that it claims two checks. The canon cited is the
+    // ruling, not the code's behaviour.
+    //
+    // IT IS THE SLICE'S ONE COUPLED ASSERTION, and it passed through a two-finding intermediate:
+    // 3F-3132 stopped this rule reading shape one commit before 3F-3133 stopped the floor, so
+    // for that commit both faults were real and both were asserted. The reverse order would have
+    // admitted this row silently for one commit instead, and a hole that lasts one commit is
+    // still a hole.
     const source = `@TGT
 Feature: a target whose stepped scenario rides two check tags
 
@@ -450,7 +518,7 @@ Feature: a target whose stepped scenario rides two check tags
 `;
     const result = lintScnTags([{ slug: "stepped-two", source }], RECOGNISED, CHECKS);
 
-    expect(result.violations.map((v) => v.kind)).toEqual(["missing-tier-tag"]);
+    expect(result.violations.map((v) => v.kind)).toEqual(["multiple-check-tags"]);
   });
 
   it("SKIPS a parked stepless scenario carrying two check tags — parking defers the shape too", () => {

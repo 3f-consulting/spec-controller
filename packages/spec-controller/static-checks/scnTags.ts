@@ -16,15 +16,18 @@
  * the =<guard> form: it raises no Evidence Obligation, so accepting it would call a scenario
  * tiered while it owed nothing at all. Exempt: a PARKED scenario ONLY (@SCN-STG-008).
  *
- * A FIFTH WAY TO SATISFY THE FLOOR, AND IT IS A SHAPE AS WELL AS A TAG (@SCN-STG-005): a
- * STEPLESS scenario carrying a REGISTERED bare check tag (`@complexity`, `@typecheck`,
- * `@vocab`) names its fitness check and nothing else. The check-tag set is INJECTED, like
+ * A FIFTH WAY TO SATISFY THE FLOOR, AND IT IS A TAG AND ONLY A TAG (@SCN-STG-005): a scenario
+ * carrying a REGISTERED bare check tag (`@complexity`, `@typecheck`, `@vocab`) names its
+ * fitness check, steps or none. This line used to add "AND IT IS A SHAPE AS WELL AS A TAG",
+ * requiring the scenario to be STEPLESS; that half is retired (3F-3126) — steps say how a row
+ * was written, the registered tag says which axis it is on. The check-tag set is INJECTED, like
  * the deferral set — see `lintScnTags`.
  *
- * AND ONE CHECK PER STEPLESS FITNESS SCENARIO (@SCN-STG-007). The floor asks whether a scenario
- * names a tier; this asks whether it names too many. Canon allows a stepless fitness scenario ONE
- * check — one run is one credit — so a second registered bare check tag reds, naming both. It is
- * the corpus-side twin of @SCN-LNT-008, which enforces the same rule from the credit side.
+ * AND ONE CHECK PER FITNESS SCENARIO (@SCN-STG-007). The floor asks whether a scenario names a
+ * tier; this asks whether it names too many. Canon allows a fitness scenario ONE check — one run
+ * is one credit — so a second registered bare check tag reds, naming both, on any unparked
+ * scenario the registry's words appear on. It is the corpus-side twin of @SCN-LNT-008, which
+ * enforces the same rule from the credit side.
  *
  * The feature-file SOURCES are INJECTED (not read from disk here) so the logic is
  * unit-tested in isolation over feature-strings; the CLI (lintScnTagsCli.ts)
@@ -200,47 +203,11 @@ function unrecognisedTagFault(bare: string): string {
   );
 }
 
-/** A scenario parsed from a feature source: its title, its own tag block, and its shape. */
+/** A scenario parsed from a feature source: its title and its own tag block. */
 interface ParsedScenario {
   title: string;
   /** The scenario's own tags, bare (no leading @), in document order. */
   tags: string[];
-  /**
-   * The scenario carries NO steps — the fitness/behavioural shape (@SCN-STG-005). A behavioural
-   * scenario is an EXAMPLE and has steps; a fitness scenario is a whole-system characteristic
-   * held against a threshold, so it has nothing to exemplify.
-   */
-  stepless: boolean;
-}
-
-/** A Gherkin STEP line — the English keywords cucumber's own parser recognises. */
-const STEP_LINE = /^(?:Given|When|Then|And|But|\*)\s/;
-
-/** The keywords that close a scenario's body by opening the next block. */
-const BLOCK_KEYWORD =
-  /^(?:Scenario Outline|Scenario Template|Scenario|Background|Examples|Example|Feature|Rule):/;
-
-/**
- * Does the scenario whose header sits at `headerIndex` carry no steps (@SCN-STG-005)?
- *
- * Scanned FORWARD from the header over the same lines the tag block is scanned backward over, and
- * kept inside this module rather than imported from the engine's AST walk. The engine's
- * `parseTaggedScenarios` answers the same question, and importing it was the alternative — rejected
- * because it would give `scnTags.ts` its first import, and its having none is what keeps
- * `vocabTagGrammar.ts`'s dependency on `isTierTag` one-way and cycle-free. The two readings can
- * only disagree where a line OPENS with a step keyword and cucumber would not read it as a step,
- * and cucumber reads any such line in a scenario body as exactly that — so the divergence is
- * closed by Gherkin's own rule rather than by diligence here.
- */
-function isStepless(lines: readonly string[], headerIndex: number): boolean {
-  for (let i = headerIndex + 1; i < lines.length; i++) {
-    const line = lines[i]!.trim();
-    if (line === "") continue;
-    // A tag line or a block keyword belongs to the NEXT block: this scenario's body ended.
-    if (line.startsWith("@") || BLOCK_KEYWORD.test(line)) return true;
-    if (STEP_LINE.test(line)) return false;
-  }
-  return true;
 }
 
 /**
@@ -266,7 +233,7 @@ function parseScenarios(source: string): ParsedScenario[] {
       if (!tokens.every((t) => t.startsWith("@"))) break;
       for (const token of tokens.slice().reverse()) tags.unshift(token.slice(1));
     }
-    scenarios.push({ title: match[1]!.trim(), tags, stepless: isStepless(lines, i) });
+    scenarios.push({ title: match[1]!.trim(), tags });
   }
   return scenarios;
 }
@@ -309,10 +276,10 @@ function unrecognisedTagViolations(
 }
 
 /**
- * The ONE-CHECK rule, from the corpus side (@SCN-STG-007) — a stepless fitness scenario carrying
- * two registered bare check tags, named with both.
+ * The ONE-CHECK rule, from the corpus side (@SCN-STG-007) — an unparked scenario carrying two
+ * registered bare check tags, named with both.
  *
- * ONE CHECK PER STEPLESS FITNESS SCENARIO is canon (`fitness-functions.md`). @SCN-LNT-008 already
+ * ONE CHECK PER FITNESS SCENARIO is canon (`fitness-functions.md`). @SCN-LNT-008 already
  * enforces it from the CREDIT side — one run is not evidence for two scenarios, and the runner-up
  * reads missing — but that arm only sees two scenarios reaching one check. The fault running the
  * other way is invisible to it: two runs citing one scenario are two honest credits, and nothing
@@ -323,14 +290,34 @@ function unrecognisedTagViolations(
  * reaches the same collision with no corpus fault for this to see, which is why @SCN-LNT-012 stamps
  * each credit with its own bare tag as well. Mechanism and model, not one or the other.
  *
- * STEPLESS AND REGISTERED, the same two conditions the floor reads (@SCN-STG-005), and for the same
- * reasons. A STEPPED scenario riding two check tags has a different fault — it names no tier — and
- * telling it "two checks" would send the author to delete a tag when what they owe is a tier. An
- * UNREGISTERED word names no check at all, so it cannot be the second one; its fault is that it
- * means nothing here, and `unrecognisedTagViolations` says so with the near-miss courtesy.
+ * REGISTERED, AND NOTHING ABOUT SHAPE (3F-3126). An UNREGISTERED word names no check at all, so it
+ * cannot be the second one; its fault is that it means nothing here, and `unrecognisedTagViolations`
+ * says so with the near-miss courtesy. What is no longer asked is whether the scenario is STEPLESS.
+ *
+ * WHY THAT PRECONDITION WENT, since it was defended rather than incidental. It used to read
+ * `if (!scenario.stepless) return []`, on the argument that a STEPPED scenario riding two check
+ * tags has a different fault — it names no tier — so telling it "two checks" would send the author
+ * to delete a tag when what they owe is a tier. That argument was DOWNSTREAM OF THE FLOOR: it holds
+ * only while `satisfiesTierFloor` reds a stepped check-tagged row as tier-less, and 3F-3133 has
+ * stopped it doing that. The floor reads the tag too now, so such a row names its tier fine and
+ * its only remaining fault is that it claims two checks — the message the old defence called a
+ * misdirection is the correct one, and the argument dissolved rather than losing.
+ *
+ * WHAT SURVIVES THE ARGUMENT IS THE CANON, UNCHANGED: one run is one credit, and a scenario
+ * claiming two owes evidence it cannot tell apart. Steps are a fact about how a row is written;
+ * the registered tag is the claim about which axis it is on (3F-3115, which moved the engine's
+ * `fitnessObligationsOf` onto the tag alone for the same reason). An author who wrote two check
+ * tags on one scenario meant two scenarios however they wrote it.
  *
  * BOTH TAGS NAMED. The author has to choose which scenario keeps which check, and a message naming
  * one of them has already chosen for them. In document order, so the message reads like the line.
+ *
+ * AND THE REMEDY NAMES NO SHAPE (3F-3133). It read "Split it into one stepless scenario per
+ * check", which was sound only while the tier floor redded a stepped check-tagged row as
+ * tier-less — an author who split into two STEPPED rows would have been sent back by the floor.
+ * The floor reads the tag now, so both halves of the split are admissible however they are
+ * written, and an instruction to strip the steps would be this rule prescribing the very shape
+ * 3F-3097 exists to stop assuming.
  *
  * ASKED OF UNPARKED SCENARIOS ONLY, like the floor rather than like the grammar question — which
  * is the reverse of how it first shipped (operator ruling, 3F-2655). The original reading was that
@@ -350,18 +337,17 @@ function multipleCheckTagViolations(
   scnId: string,
   checks: ReadonlySet<string>
 ): ScnTagsViolation[] {
-  if (!scenario.stepless) return [];
   const carried = scenario.tags.filter((tag) => checks.has(tag));
   if (carried.length < 2) return [];
   return [
     {
       kind: "multiple-check-tags",
       message:
-        `Feature "${feature.slug}" scenario @${scnId} ("${scenario.title}") is a STEPLESS ` +
-        `fitness scenario carrying ${carried.length} check tags — ` +
+        `Feature "${feature.slug}" scenario @${scnId} ("${scenario.title}") carries ` +
+        `${carried.length} check tags — ` +
         `${carried.map((tag) => `@${tag}`).join(", ")} — but a fitness scenario names ONE ` +
         `check: one run is one credit, and a scenario claiming two owes evidence it cannot ` +
-        `tell apart. Split it into one stepless scenario per check.`,
+        `tell apart. Split it into one scenario per check.`,
     },
   ];
 }
@@ -369,40 +355,45 @@ function multipleCheckTagViolations(
 /**
  * Does this scenario name an evidence tier (@SCN-STG-005)?
  *
- * TWO WAYS, AND THE SECOND IS A SHAPE AS WELL AS A TAG. A behavioural scenario names one of the
- * tier tags `isTierTag` knows. A FITNESS scenario names none of them: once the technique leaves
- * the tag (`@lint=lint:complexity` → `@complexity`), the check tag is all it carries. So a
- * STEPLESS scenario carrying a registered bare check tag satisfies the floor on that alone —
- * without which the corpus sweep writes a stepless scenario per CI check and every one reds.
+ * TWO WAYS, AND THE SECOND IS A TAG AND ONLY A TAG. A behavioural scenario names one of the tier
+ * tags `isTierTag` knows. A FITNESS scenario names none of them: once the technique leaves the tag
+ * (`@lint=lint:complexity` → `@complexity`), the check tag is all it carries. So a scenario
+ * carrying a registered bare check tag satisfies the floor on that alone — without which the
+ * corpus sweep writes a scenario per CI check and every one reds.
  *
- * STEPLESS IS THE DISCRIMINATOR HERE, NOT THE TAG. Letting a STEPPED scenario ride a bare check
- * tag would put a whole-system characteristic on the tier of an example it was never about — the
- * exact fault name-match had, arriving in a shorter spelling.
+ * WHETHER IT HAS STEPS IS NOT ASKED (3F-3126). This route used to require the scenario to be
+ * STEPLESS, defended as STEPLESS IS THE DISCRIMINATOR HERE, NOT THE TAG: letting a stepped
+ * scenario ride a bare check tag would put a whole-system characteristic on the tier of an example
+ * it was never about, name-match's own fault in a shorter spelling. That defence is retired.
+ * Steplessness was a CORRELATE of having nothing to exemplify, never the thing itself, and
+ * 3F-3097 converts fitness checks to real step definitions — so a floor keyed on the correlate
+ * reds the first conversion for writing exactly the shape the obligation rule asks for. Steps say
+ * how a row was written; the REGISTERED tag is the claim about which axis it is on (3F-3115, which
+ * moved `fitnessObligationsOf` onto the tag alone for the same reason).
  *
- * THE ENGINE NO LONGER READS THE SAME SHAPE, AND THIS FLOOR IS DELIBERATELY THE STRICTER OF THE
- * TWO UNTIL 3F-3126 (3F-3115). `fitnessObligationsOf` used to gate on steplessness as well; it now
- * raises a fitness obligation from the check TAG alone, steps or none. So the two rules have
- * parted, and the sentence that used to stand here — that they MUST agree — is retired rather than
- * merely stale.
+ * SO THE FLOOR AND THE OBLIGATION RULE ASK ONE QUESTION OF ONE SET, which is the invariant the
+ * Rule preamble required before either had met it. Both read
+ * `registeredCheckTags(checkRegistry) ∪ measuredCheckTags(thresholds)` off the target's own
+ * package.json (`lintScnTagsCli`; `parse/targetCorpus`), and now both ask exactly `tag ∈ set`:
+ * this floor admits precisely the scenarios the engine raises a fitness obligation for. Neither
+ * the tier-named evidence-free row nor the obligated row this floor refuses is constructible.
  *
- * WHAT THAT SENTENCE FEARED CANNOT HAPPEN, and the reason is a containment rather than a promise.
- * Both rules read the SAME set: `registeredCheckTags(checkRegistry) ∪ measuredCheckTags(thresholds)`
- * off the target's own package.json (`lintScnTagsCli`; `parse/targetCorpus`). This floor's fitness
- * route asks `stepless AND tag ∈ set`; the engine asks `tag ∈ set`. The floor's condition is a
- * strict SUBSET, so every scenario satisfying it also raises an obligation — the tier-named,
- * evidence-free row is unreachable, not merely unobserved.
+ * WHAT STOOD HERE UNTIL THIS COMMIT WAS AN INTERIM RECORD, AND IT IS RETIRED BY BEING SETTLED
+ * (3F-3115 wrote it, 3F-3126 closes it). It said this floor was DELIBERATELY THE STRICTER OF THE
+ * TWO; that what the retired MUST-AGREE sentence feared could not happen because this floor's
+ * condition was a strict SUBSET of the engine's; and that THE SURVIVING DISAGREEMENT RAN THE OTHER
+ * WAY and was fail-loud — a stepped check-tagged row redding here by name. The subset is now an
+ * equality and there is no disagreement left to be loud about, so all three go together rather
+ * than one of them being left to read as still true.
  *
- * THE SURVIVING DISAGREEMENT RUNS THE OTHER WAY, AND IT IS FAIL-LOUD. A STEPPED scenario carrying
- * a check tag and no tier now raises its obligation and fails this floor, so `lint:scn-tags` reds
- * and says which scenario named no tier. That is the honest state of an unsettled question, not a
- * hole: the silent slip this check exists to close is a row nobody hears about, and this one
- * stops the build. It is inert today — measured 2026-09-04, no such scenario exists in this tree
- * or in an adopter's repository's — and it becomes reachable with the first conversion under 3F-3097, which is why
- * 3F-3126 blocks that conversion rather than following it.
+ * WHAT THE REGISTRY STILL DOES IS UNCHANGED, and it is now the whole of the route: an
+ * UNREGISTERED word names no check, satisfies nothing, and reds twice — once as a tag that means
+ * nothing here, once as a scenario that named no tier. That negative pair is what makes the pass
+ * above the injected set's doing rather than a floor that stopped looking.
  */
 function satisfiesTierFloor(scenario: ParsedScenario, checks: ReadonlySet<string>): boolean {
   if (scenario.tags.some(isTierTag)) return true;
-  return scenario.stepless && scenario.tags.some((tag) => checks.has(tag));
+  return scenario.tags.some((tag) => checks.has(tag));
 }
 
 /**
@@ -421,10 +412,12 @@ function satisfiesTierFloor(scenario: ParsedScenario, checks: ReadonlySet<string
  *
  * `checkTags` — the target's REGISTERED bare check tags (@SCN-STG-005) — is INJECTED and defaults
  * to none, exactly as the deferral set is, and for the same reason: which words name a check is
- * the target's own answer, not this module's. Inferred from shape instead, a typo on a stepless
- * scenario would satisfy the floor and raise no obligation; inferred from a `lint:` prefix,
- * `typecheck` would be missed (3F-2495). A target that has registered nothing behaves exactly as
- * it did before, which is what lets this land ahead of the sweep that uses it.
+ * the target's own answer, not this module's. Inferred from shape instead — any bare tag a
+ * STEPLESS scenario carries — a typo would satisfy the floor and raise no obligation; inferred
+ * from a `lint:` prefix, `typecheck` would be missed (3F-2495). The shape belongs to that rejected
+ * reading and to nothing this module still does: no rule here asks about steps (3F-3126), and the
+ * private reader that answered it is retired (3F-3134). A target that has registered nothing
+ * behaves exactly as it did before, which is what lets this land ahead of the sweep that uses it.
  */
 export function lintScnTags(
   features: readonly FeatureFileSource[],
@@ -443,9 +436,9 @@ export function lintScnTags(
       // scenario can name a tier AND carry a typo, and the typo is the interesting half.
       violations.push(...unrecognisedTagViolations(feature, scenario, scnId, deferrals, checks));
 
-      // PARKED IS OUT OF SCOPE, FULL STOP — for the SHAPE rule below as well as the floor
-      // (@SCN-STG-008 for the floor, @SCN-STG-007 for the shape; operator ruling 3F-2655). The
-      // set is the target's; see `isParked`.
+      // PARKED IS OUT OF SCOPE, FULL STOP — for the one-check rule below as well as the floor
+      // (@SCN-STG-008 for the floor, @SCN-STG-007 for the one-check rule; operator ruling
+      // 3F-2655). The set is the target's; see `isParked`.
       //
       // ITS POSITION IS THE RULE. Below the grammar arm, so a parked scenario's tags are still
       // read for well-formedness — parking defers what a scenario OWES and what SHAPE it must
@@ -454,9 +447,9 @@ export function lintScnTags(
       // everything else, because out of scope is not a place where some questions still get asked.
       if (isParked(scenario, deferrals)) continue;
 
-      // The SHAPE question (@SCN-STG-007) — a scenario can satisfy the floor by its check tags and
-      // still be two scenarios written as one. Asked of UNPARKED scenarios only, like the floor
-      // under it rather than like the grammar arm above it.
+      // The ONE-CHECK question (@SCN-STG-007) — a scenario whose tags name a check twice is two
+      // scenarios written as one, whatever else it carries. Asked of UNPARKED scenarios only, like
+      // the floor under it rather than like the grammar arm above it.
       violations.push(...multipleCheckTagViolations(feature, scenario, scnId, checks));
 
       if (satisfiesTierFloor(scenario, checks)) continue;
@@ -466,8 +459,8 @@ export function lintScnTags(
           `Feature "${feature.slug}" scenario @${scnId} ("${scenario.title}") names ` +
           `no evidence tier and is not parked — every @SCN scenario must name at least ` +
           `one tier (@unit/@integration/@e2e/@performance, a <tier>pending variant, or ` +
-          `@lint=<guard>), or — when it is STEPLESS — a registered bare check tag, unless ` +
-          `it carries one of the deferral tags this target configures.`,
+          `@lint=<guard>), or a registered bare check tag, unless it carries one of the ` +
+          `deferral tags this target configures.`,
       });
     }
   }
