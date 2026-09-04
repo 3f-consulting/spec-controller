@@ -160,6 +160,28 @@ spec-controller balance --features ./features \
 
 Keep the reports as build artefacts — but do **not** commit them into the repo. An Evidence Reconciliation enumerates a codebase's gaps, phantom scenarios, and watermelons; it is more sensitive than the code itself, so it belongs outside version control.
 
+### GitHub Actions — put the report on the run summary
+
+A reconciliation is a table, not a list of line-level findings, and GitHub has a channel built for exactly that: the **job summary**. `$GITHUB_STEP_SUMMARY` names a file the runner sets up for each step; anything appended to it renders as GitHub-Flavoured Markdown on the workflow run's summary page.
+
+`balance` already emits Markdown to any path `--format` is given, so this needs nothing from the tool:
+
+```yaml
+- name: Reconcile
+  run: |
+    spec-controller balance --features ./features \
+      --vitest ./vitest-report.json \
+      --cucumber ./cucumber-report.json \
+      --format md:$GITHUB_STEP_SUMMARY \
+      --format json:reconciliation.json
+```
+
+The reconciliation is then readable from the run page itself, rather than by scrolling a monospace job log. The JSON stays a build artefact for anything downstream.
+
+Two limits worth knowing. Each step's summary is capped at **1 MiB** — exceeding it drops the summary and raises an error annotation — and at most **20 step summaries are displayed per job**. A reconciliation over a large corpus can approach the first of those; if it does, route the Markdown to a file, upload it as an artefact, and put a shorter form on the summary.
+
+`$GITHUB_STEP_SUMMARY` is set only inside GitHub Actions. Elsewhere the variable is empty and the shell would expand it to nothing, so keep it out of the command you run locally.
+
 ---
 
 ## Troubleshooting

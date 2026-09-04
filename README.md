@@ -71,6 +71,8 @@ spec-controller balance --features ./features \
   --format json:reconciliation.json
 ```
 
+On GitHub Actions, `--format md:$GITHUB_STEP_SUMMARY` writes the reconciliation straight onto the run's summary page — the report is a table, and that is the channel GitHub provides for one. No action, no plugin, no permission.
+
 Full flags, examples, and CI wiring: [`doc/how_to_use.md`](./doc/how_to_use.md).
 
 Running a check on a schedule and gating every push on its result — a nightly mutation sweep, a long soak — see [`doc/scheduled-checks.md`](./doc/scheduled-checks.md).
