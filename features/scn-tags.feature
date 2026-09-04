@@ -141,12 +141,20 @@ Feature: The tier-tag floor — every scenario names an evidence tier
     It must satisfy the floor on that alone, or the corpus sweep writes twelve scenarios this
     check reds.
 
-    STEPLESS IS THE DISCRIMINATOR, NOT THE TAG. A behavioural scenario is an example and carries
-    steps; a fitness scenario is a whole-system characteristic held against a threshold and has
-    nothing to exemplify. Letting a STEPPED scenario ride a bare check tag to the floor would
-    re-admit name-match's own fault in a shorter spelling — a whole-system characteristic
-    satisfying the tier of an example it was never about — and the obligation rule already reads
-    the same shape, so the two must agree.
+    STEPLESS IS THE DISCRIMINATOR FOR THIS FLOOR, NOT THE TAG. A behavioural scenario is an example
+    and carries steps; a fitness scenario is a whole-system characteristic held against a threshold
+    and has nothing to exemplify. Letting a STEPPED scenario ride a bare check tag to the floor
+    would re-admit name-match's own fault in a shorter spelling — a whole-system characteristic
+    satisfying the tier of an example it was never about.
+
+    THE OBLIGATION RULE NO LONGER READS THAT SHAPE, AND THIS FLOOR IS DELIBERATELY THE STRICTER OF
+    THE TWO UNTIL 3F-3126 (3F-3115). It used to, and this preamble used to end by saying the two
+    MUST agree; that sentence is retired rather than merely stale. What it feared — a scenario
+    satisfying the floor while raising no obligation — cannot happen, because both rules read the
+    SAME registered set and this floor's question (stepless AND a check tag) is a strict subset of
+    the engine's (a check tag). The disagreement that survives runs the other way: a stepped
+    scenario carrying a check tag and no tier raises its obligation and REDS here, by name. An
+    unsettled question that stops the build is not the silent slip this check exists to close.
 
     REGISTERED, NOT INFERRED. Which bare tags name a check is the registry's answer, injected the
     way the deferral set is. Inferring it from shape instead would let a typo on a stepless

@@ -1,7 +1,7 @@
 /**
- * @unit for @SCN-CIP-001 — the DEBIT half of the measured fitness check: a STEPLESS scenario
- * tagged with a measured check owes that check once, and its obligation carries the THRESHOLD
- * authored for that scenario.
+ * @unit for @SCN-CIP-001 — the DEBIT half of the measured fitness check: a scenario tagged with a
+ * measured check owes that check once, STEPS OR NONE, and its obligation carries the THRESHOLD
+ * authored for THAT scenario's own @SCN.
  *
  * Bidirectional evidence: each describe carries its @SCN id, matching features/ci-run-time.feature
  * and the @integration steps in tests/steps/ciRunTime.steps.ts.
@@ -9,6 +9,11 @@
  * Its own file rather than a further block in fitnessObligations.test.ts: that file is
  * @SCN-LNT-006's, the STATIC half of the same rule, and the two differ in exactly the thing worth
  * keeping legible — whether the obligation holds a number.
+ *
+ * WHAT THEY NO LONGER DIFFER IN IS THE SHAPE THE OBLIGATION IS RAISED FROM. Steplessness was one
+ * proxy across both halves, so it went from both at once (3F-3115): the registered check tag is the
+ * discriminator on the static half and the threshold registry's tag is the discriminator here, and
+ * the steps are read by neither.
  */
 
 import { describe, it, expect } from "vitest";
@@ -33,7 +38,7 @@ Feature: measured
     Scenario: the unit suite completes within its CI threshold
 `;
 
-describe("[SCN-CIP-001] a stepless scenario's measured check tag raises one Evidence Obligation carrying its threshold", () => {
+describe("[SCN-CIP-001] a scenario's measured check tag raises one Evidence Obligation carrying its threshold, steps or none", () => {
   it("raises exactly one obligation, naming the check and carrying its ceiling", () => {
     expect(parseScenarios(steplessMeasuredScenario, [], [], THRESHOLDS)).toEqual([
       {
@@ -69,22 +74,49 @@ Feature: measured
     ]);
   });
 
-  it("raises NOTHING for the same measured tag on a STEPPED scenario", () => {
-    // Steplessness is the discriminator on this axis exactly as on the static one. A stepped
-    // scenario is a behavioural EXAMPLE; a whole-system characteristic raised on it would be the
-    // smear name-match produced, reintroduced through the measured arm. Only the tier obligation
-    // survives — which is why every scenario in features/ci-run-time.feature can carry the words
-    // without owing the check.
+  it("raises the same obligation on a STEPPED scenario, carrying THAT row's own ceiling", () => {
+    // THE STEPS ARE NOT THE DISCRIMINATOR (3F-3115), and the measured half never had one of its own
+    // to lose: steplessness was a single proxy across both halves of one rule. A fitness scenario
+    // handed a runnable example keeps the ceiling it was written to be held to. The stepped row
+    // below carries a tier tag TOO, which is the sharpest reading — the measured obligation is
+    // raised ALONGSIDE the tier rather than instead of it. Whether a corpus may hold such a row is
+    // @SCN-STG-005's question; what is read here is the parser.
+    //
+    // AND THE TWO CEILINGS DIFFER, which is the other half of this arm. One characteristic over two
+    // scenarios with two bars is the arrangement canon names for this axis, so an engine keying the
+    // threshold by the TAG would hand 75 to both rows and pass an assertion written with one number.
+    const thresholds = thresholdsOf({
+      "SCN-MSD-001": { "ci-run-time": 75 },
+      "SCN-MSD-002": { "ci-run-time": 150 },
+    });
+
     const source = `@MSD
 Feature: measured
 
-    @unit @ci-run-time @SCN-MSD-001
-    Scenario: an example of something
-      Given a step
+  Rule: the suites complete within their CI thresholds
+
+    @ci-run-time @SCN-MSD-001
+    Scenario: the unit suite completes within its CI threshold
+
+    @unit @ci-run-time @SCN-MSD-002
+    Scenario: the same suite, now carrying a runnable example
+      Given a step, which is the whole of what makes this row STEPPED
 `;
 
-    expect(parseScenarios(source, [], [], THRESHOLDS)).toEqual([
-      { scnId: "SCN-MSD-001", evidenceObligations: [{ qualityCheck: "unit" }] },
+    expect(parseScenarios(source, [], [], thresholds)).toEqual([
+      {
+        scnId: "SCN-MSD-001",
+        evidenceObligations: [
+          { qualityCheck: "lint", staticCheck: "ci-run-time", measured: true, threshold: 75 },
+        ],
+      },
+      {
+        scnId: "SCN-MSD-002",
+        evidenceObligations: [
+          { qualityCheck: "unit" },
+          { qualityCheck: "lint", staticCheck: "ci-run-time", measured: true, threshold: 150 },
+        ],
+      },
     ]);
   });
 

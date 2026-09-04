@@ -38,6 +38,7 @@ import type {
 import {
   thresholdsOf,
   measuredCheckTags,
+  thresholdFor,
   parseMeasuredEvidenceObservations,
   type ThresholdRegistry,
   type MeasuredEvidenceObservation,
@@ -55,16 +56,17 @@ let corpusSource: string;
 let raised: Scenario[];
 
 /**
- * The corpus the fixture builds, one stepless scenario at a time.
+ * The corpus the fixture builds, one scenario at a time — stepless rows and, since @SCN-CIP-001
+ * stopped reading the shape, stepped ones beside them.
  *
- * Held as a list rather than as one string so a scenario needing TWO stepless rows (@SCN-CIP-007)
- * appends rather than rewrites — corpus ORDER is load-bearing on the static axis, and this axis's
- * whole claim is that it is NOT load-bearing here, which can only be shown over a corpus that has
- * an order to be indifferent to.
+ * Held as a list rather than as one string so a scenario needing TWO rows (@SCN-CIP-001,
+ * @SCN-CIP-007) appends rather than rewrites — corpus ORDER is load-bearing on the static axis, and
+ * this axis's whole claim is that it is NOT load-bearing here, which can only be shown over a
+ * corpus that has an order to be indifferent to.
  */
-let steplessRows: string[];
+let corpusRows: string[];
 
-/** Compose the accumulated stepless rows into one feature source. */
+/** Compose the accumulated rows into one feature source. */
 function corpusOf(rows: readonly string[]): string {
   return `@MSD
 Feature: measured
@@ -82,7 +84,7 @@ Given(
     // credit carries is a number and nothing else: a runner that supplied both the number and the
     // bar it was judged against would be grading its own homework.
     thresholds = thresholdsOf({ [scnId]: { [check]: ceiling } });
-    steplessRows = [];
+    corpusRows = [];
   }
 );
 
@@ -90,10 +92,26 @@ Given(
 Given(
   "the corpus carries a stepless scenario {string} tagged with the bare check {string}",
   function (scnId: string, check: string) {
-    steplessRows.push(
+    corpusRows.push(
       `    @${check} @${scnId}\n    Scenario: the suite completes within its CI threshold\n`
     );
-    corpusSource = corpusOf(steplessRows);
+    corpusSource = corpusOf(corpusRows);
+  }
+);
+
+// @SCN-CIP-001
+Given(
+  "the corpus carries a STEPPED scenario {string} tagged with the same bare check {string}",
+  function (scnId: string, check: string) {
+    // THE SAME TAG ON THE OTHER SHAPE, appended to the SAME corpus the preceding Given built — one
+    // read, two rows, so the assertion that follows compares two answers rather than two runs. The
+    // row carries its check tag and NOTHING else: a tier tag beside it would be a corpus question
+    // owned by @SCN-STG-005, and what is read here is the obligation rule.
+    corpusRows.push(
+      `    @${check} @${scnId}\n    Scenario: the same suite, now carrying a runnable example\n` +
+        `      Given a step, which is the whole of what makes this row STEPPED\n`
+    );
+    corpusSource = corpusOf(corpusRows);
   }
 );
 
@@ -107,27 +125,43 @@ When("the measured corpus is read", function () {
 
 // @SCN-CIP-001
 Then(
-  "that scenario raises exactly one Evidence Obligation, naming the measured check {string}",
+  "each of those scenarios raises exactly one Evidence Obligation, naming the measured check {string}",
   function (check: string) {
-    assert.equal(raised.length, 1, `expected one scenario; got ${JSON.stringify(raised)}`);
-    const obligations = raised[0]!.evidenceObligations;
-    assert.equal(
-      obligations.length,
-      1,
-      `expected exactly one Evidence Obligation; got ${JSON.stringify(obligations)}`
-    );
-    assert.equal(obligations[0]!.qualityCheck, "lint");
-    assert.equal(obligations[0]!.staticCheck, check);
-    assert.equal(obligations[0]!.measured, true);
+    // EVERY row the corpus carries, and the count is asserted first: a rule still reading the steps
+    // answers nothing for the stepped row, and a per-row loop over what came back would then agree
+    // with itself over a corpus one row short.
+    assert.equal(raised.length, 2, `expected two scenarios; got ${JSON.stringify(raised)}`);
+    for (const scenario of raised) {
+      const obligations = scenario.evidenceObligations;
+      assert.equal(
+        obligations.length,
+        1,
+        `expected exactly one Evidence Obligation on ${scenario.scnId}; got ${JSON.stringify(obligations)}`
+      );
+      assert.equal(obligations[0]!.qualityCheck, "lint");
+      assert.equal(obligations[0]!.staticCheck, check);
+      assert.equal(obligations[0]!.measured, true);
+    }
   }
 );
 
 // @SCN-CIP-001
-Then("that Evidence Obligation carries the threshold {int}", function (ceiling: number) {
+Then("each Evidence Obligation carries the threshold authored for its own scenario", function () {
   // The clause the whole debit side exists for. Without it the ledger would hold a check's NAME
   // and no rule, and the only thing left able to say whether a measurement passed would be the
   // thing that produced it.
-  assert.equal(raised[0]!.evidenceObligations[0]!.threshold, ceiling);
+  //
+  // THE BARS ARE READ BACK OUT OF THE REGISTRY the Givens authored rather than written here as
+  // literals, so what this asserts is the JOIN — each row got the number filed under ITS @SCN. A
+  // pair of literals would pass just as well against an engine that handed one ceiling to both.
+  for (const scenario of raised) {
+    const obligation = scenario.evidenceObligations[0]!;
+    assert.equal(
+      obligation.threshold,
+      thresholdFor(thresholds, scenario.scnId, obligation.staticCheck!)?.threshold,
+      `expected ${scenario.scnId} to carry the ceiling authored for it, not another row's`
+    );
+  }
 });
 
 // ---------------------------------------------------------------------------
@@ -288,6 +322,7 @@ Then("the obligation on row {string} names no threshold at all", function (scnId
   assert.notEqual(item.outcome, "satisfied");
 });
 
+// @SCN-CIP-001
 // @SCN-CIP-007
 Given(
   "{string} also has a threshold of {int} for {string}",

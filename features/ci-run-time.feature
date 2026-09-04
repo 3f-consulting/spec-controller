@@ -12,7 +12,7 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
   prototype; coverage and mutation follow it through this same seam.
 
   ONE POSTING RULE STILL, AND THE RUNNER HOLDS THE MAPPING. A measured check's credit cites
-  the @SCN of the stepless fitness scenario that raises its obligation, exactly as a static
+  the @SCN of the fitness scenario that raises its obligation, exactly as a static
   check's does and exactly as a unit test's does. What differs is WHERE the citation comes
   from. A static check's run is a script handle, so its @SCN is resolved at observation time
   over two hops — handle to bare tag through the registry, bare tag to scenario through the
@@ -45,18 +45,21 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
   which is the comparison inverted; that is 3F-2509's to argue, and this slice deliberately
   builds the ceiling canon defines rather than a direction flag nothing yet asks for.
 
-  WHY NO ENGINE SCENARIO RAISES A MEASURED OBLIGATION OF ITS OWN. Every scenario under the
-  Rules that exercise the engine and the wrapper is STEPPED — it is an example of what the
-  code does — so its bare tags raise nothing (@SCN-LNT-006: steplessness is the
-  discriminator). The checks and thresholds those scenarios name are fixture data, planted
-  per scenario, under fixture @SCN ids no feature file carries. The obligations this
-  repository actually owes are in the last Rule, where its own timed suites are stated
-  without steps. The order was the point: raising them before anything measured them would
-  have left a permanently unsettleable row and redded the self-reconciliation gate for the
-  length of the gap, so the engine was built first and its own suites joined the ledger once
-  something could observe them.
+  WHY NO ENGINE SCENARIO RAISES A MEASURED OBLIGATION OF ITS OWN, AND IT IS NOT THAT THEY
+  CARRY STEPS. The tag is the discriminator and the steps say nothing about it (@SCN-LNT-006,
+  3F-3115), so a stepped scenario carrying "ci-run-time" would owe that check exactly as a
+  stepless one does. The reason those scenarios stay silent is that NONE OF THEM CARRIES THE
+  TAG AT ALL: the checks and thresholds they name are fixture data, planted per scenario
+  inside a corpus their step definitions build, under fixture @SCN ids no feature file
+  carries. A check named inside a fixture is not a tag on the row that plants it — which is
+  why every scenario here can spell "ci-run-time" out repeatedly without owing it once. The
+  obligations this repository actually owes are in the last Rule, where its own timed suites
+  are held as scenarios of their own. The order was the point: raising them before anything
+  measured them would have left a permanently unsettleable row and redded the
+  self-reconciliation gate for the length of the gap, so the engine was built first and its
+  own suites joined the ledger once something could observe them.
 
-  Rule: a stepless fitness scenario tagged with a measured check raises an Evidence Obligation carrying its threshold
+  Rule: a fitness scenario tagged with a measured check raises an Evidence Obligation carrying its threshold, steps or none
 
     WHAT THE DEBIT HAS TO HOLD, AND WHY IT CANNOT COME FROM THE CREDIT. A static check's
     obligation names its bare tag and nothing more, because the check itself decides pass
@@ -68,9 +71,15 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
     measurement is only ever a number.
 
     ONE OBLIGATION, NAMED BY THE SAME RULES AS ANY OTHER. A measured check is a bare tag
-    raised only from a stepless scenario, owed once however many of a scenario's effective
+    raised from the scenario that carries it — STEPS OR NONE, exactly as the static half is
+    raised (@SCN-LNT-006, 3F-3115) — and owed once however many of a scenario's effective
     tags name it. Nothing about the debit rule is special-cased for it; what is new is that
     the obligation carries a number.
+
+    WHICH MEANS THE MEASURED HALF NEVER HAD A DISCRIMINATOR OF ITS OWN TO LOSE. Steplessness
+    was a proxy on both halves of one rule, so it went from both at once, and what a fitness
+    scenario carrying a runnable example now keeps is the ceiling it was written to be held
+    to rather than nothing at all.
 
     THE THRESHOLD IS KEYED BY @SCN, THEN BY CHECK. Keyed by the tag alone it could not
     express what canon asks of this axis — two scenarios sharing one characteristic with
@@ -80,12 +89,21 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
     both.
 
     @unit @integration @SCN-CIP-001
-    Scenario: a stepless scenario tagged with a measured check raises one Evidence Obligation carrying its threshold
+    Scenario: a scenario tagged with a measured check raises one Evidence Obligation carrying its threshold, steps or none
+
+      THE TWO ROWS ARE READ FROM ONE CORPUS AND HELD TO DIFFERENT CEILINGS, which is what makes
+      the assertion sharp on both halves at once. Identical bars could not tell a reader keying
+      the threshold by @SCN from one keying it by the tag — both would answer 75 twice — so the
+      stepped row is given a ceiling of its own, and a reader that had kept the steps in the
+      question answers nothing for it at all.
+
       Given "ci-run-time" is a measured fitness check whose threshold for "SCN-MSD-001" is 75
+      And "ci-run-time" also has a threshold of 150 for "SCN-MSD-002"
       And the corpus carries a stepless scenario "SCN-MSD-001" tagged with the bare check "ci-run-time"
+      And the corpus carries a STEPPED scenario "SCN-MSD-002" tagged with the same bare check "ci-run-time"
       When the measured corpus is read
-      Then that scenario raises exactly one Evidence Obligation, naming the measured check "ci-run-time"
-      And that Evidence Obligation carries the threshold 75
+      Then each of those scenarios raises exactly one Evidence Obligation, naming the measured check "ci-run-time"
+      And each Evidence Obligation carries the threshold authored for its own scenario
 
     @unit @integration @SCN-CIP-002
     Scenario: a measured obligation whose threshold nothing supplies never reads satisfied, and names what is unsupplied

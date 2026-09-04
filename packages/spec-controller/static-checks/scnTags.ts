@@ -375,12 +375,30 @@ function multipleCheckTagViolations(
  * STEPLESS scenario carrying a registered bare check tag satisfies the floor on that alone —
  * without which the corpus sweep writes a stepless scenario per CI check and every one reds.
  *
- * STEPLESS IS THE DISCRIMINATOR, NOT THE TAG. Letting a STEPPED scenario ride a bare check tag
- * would put a whole-system characteristic on the tier of an example it was never about — the
- * exact fault name-match had, arriving in a shorter spelling. The engine's obligation rule reads
- * the same shape for the same reason (`parse/scenarios.ts` → `fitnessObligationsOf`), and the two
- * MUST agree: a scenario that satisfied the floor here and raised no obligation there would be
- * tier-named and evidence-free, which is precisely the silent slip this whole check exists to close.
+ * STEPLESS IS THE DISCRIMINATOR HERE, NOT THE TAG. Letting a STEPPED scenario ride a bare check
+ * tag would put a whole-system characteristic on the tier of an example it was never about — the
+ * exact fault name-match had, arriving in a shorter spelling.
+ *
+ * THE ENGINE NO LONGER READS THE SAME SHAPE, AND THIS FLOOR IS DELIBERATELY THE STRICTER OF THE
+ * TWO UNTIL 3F-3126 (3F-3115). `fitnessObligationsOf` used to gate on steplessness as well; it now
+ * raises a fitness obligation from the check TAG alone, steps or none. So the two rules have
+ * parted, and the sentence that used to stand here — that they MUST agree — is retired rather than
+ * merely stale.
+ *
+ * WHAT THAT SENTENCE FEARED CANNOT HAPPEN, and the reason is a containment rather than a promise.
+ * Both rules read the SAME set: `registeredCheckTags(checkRegistry) ∪ measuredCheckTags(thresholds)`
+ * off the target's own package.json (`lintScnTagsCli`; `parse/targetCorpus`). This floor's fitness
+ * route asks `stepless AND tag ∈ set`; the engine asks `tag ∈ set`. The floor's condition is a
+ * strict SUBSET, so every scenario satisfying it also raises an obligation — the tier-named,
+ * evidence-free row is unreachable, not merely unobserved.
+ *
+ * THE SURVIVING DISAGREEMENT RUNS THE OTHER WAY, AND IT IS FAIL-LOUD. A STEPPED scenario carrying
+ * a check tag and no tier now raises its obligation and fails this floor, so `lint:scn-tags` reds
+ * and says which scenario named no tier. That is the honest state of an unsettled question, not a
+ * hole: the silent slip this check exists to close is a row nobody hears about, and this one
+ * stops the build. It is inert today — measured 2026-09-04, no such scenario exists in this tree
+ * or in an adopter's repository's — and it becomes reachable with the first conversion under 3F-3097, which is why
+ * 3F-3126 blocks that conversion rather than following it.
  */
 function satisfiesTierFloor(scenario: ParsedScenario, checks: ReadonlySet<string>): boolean {
   if (scenario.tags.some(isTierTag)) return true;

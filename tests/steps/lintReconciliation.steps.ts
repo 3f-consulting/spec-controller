@@ -474,11 +474,10 @@ Given(
     // `{ qualityCheck: "unit" }` from @unit, `{ qualityCheck: "lint", staticCheck }` from the
     // registered check tag — so the reconciler meets a row owing evidence on both.
     //
-    // STEPLESS is what makes the second one reachable at all (@SCN-LNT-006): a bare check tag on a
-    // STEPPED scenario raises nothing, which is name-match's own fault refused in the tag form. So
-    // the shape below is not an endorsement of mixed tagging — whether a behavioural scenario may
-    // carry a fitness tag is @SCN-STG-005's question — it is the only shape from which a two-axis
-    // row can be read at all.
+    // The shape below is not an endorsement of mixed tagging — whether one scenario may carry a
+    // tier tag and a fitness tag together is @SCN-STG-005's question — it is the only shape from
+    // which a two-axis row can be read at all. It is stepless because a fitness scenario ordinarily
+    // is, not because the obligation rule reads the shape: it no longer does (@SCN-LNT-006).
     fitnessCorpus = [
       "@LNT",
       "Feature: fixture",
@@ -551,15 +550,35 @@ Given(
 Given(
   "a stepless scenario tagged with the bare fitness check {string}",
   function (check: string) {
-    // NO steps — that is the whole point of the fixture. A fitness scenario is a whole-system
-    // characteristic held against a threshold, so it has nothing to exemplify; the bare tag is read
-    // off THAT shape, and the stepped case is the one this rule must not raise an obligation for.
+    // NO steps — the ordinary shape of a fitness scenario, which has a whole-system characteristic
+    // to hold and nothing to exemplify. It is the FIRST of the two rows this scenario reads; the
+    // Given that follows appends the STEPPED one, and the assertion is that the shape made no
+    // difference (@SCN-LNT-006).
     corpusSource = [
       "@FIT",
       "Feature: fitness",
       "  Rule: the tree stays inside its thresholds",
       `    @${check} @SCN-FIT-001`,
       "    Scenario: the codebase stays under the threshold",
+    ].join("\n");
+  }
+);
+
+// @SCN-LNT-006
+// @SCN-LNT-010
+Given(
+  "a STEPPED scenario tagged with the same bare fitness check {string}",
+  function (check: string) {
+    // THE SAME TAG ON THE OTHER SHAPE, appended to the SAME corpus the preceding Given built — one
+    // read, two rows, so the assertion that follows compares the two answers rather than two runs.
+    // The row carries its check tag and NOTHING else, which is the shape a converted fitness
+    // scenario arrives in: a tier tag beside it would be a corpus defect (@SCN-STG-005), and the
+    // point here is the obligation rule, not the corpus rule.
+    corpusSource = [
+      corpusSource,
+      `    @${check} @SCN-FIT-002`,
+      "    Scenario: the same characteristic, now carrying a runnable example",
+      "      Given a step, which is the whole of what makes this row STEPPED",
     ].join("\n");
   }
 );
@@ -617,15 +636,20 @@ Then(
 // @SCN-LNT-006
 // @SCN-LNT-010
 Then(
-  "the scenario raises exactly one Evidence Obligation, naming the fitness check {string}",
+  "each of those scenarios raises exactly one Evidence Obligation, naming the fitness check {string}",
   function (check: string) {
-    // Whole-list equality, so "exactly one" has teeth in both directions: a rule that raised the
-    // obligation twice (the tag arrives on the scenario and could arrive again by inheritance) fails
-    // here, and so does one that raised none.
+    // WHOLE-CORPUS equality over BOTH rows, and the two expectations are deliberately IDENTICAL:
+    // what this scenario asserts is that the shape made no difference. A rule still reading the
+    // steps answers `[]` for the second row and fails here; one that answered twice for the first
+    // fails here too.
     assert.deepEqual(
       scenarios.map((scenario) => scenario.evidenceObligations),
-      [[{ qualityCheck: "lint", staticCheck: check }]],
-      `expected one lint Evidence Obligation naming "${check}"; got ${JSON.stringify(scenarios)}`
+      [
+        [{ qualityCheck: "lint", staticCheck: check }],
+        [{ qualityCheck: "lint", staticCheck: check }],
+      ],
+      `expected the stepless row AND the stepped row each to raise one lint Evidence Obligation ` +
+        `naming "${check}" — the tag is the discriminator, not the steps; got ${JSON.stringify(scenarios)}`
     );
   }
 );
@@ -662,9 +686,11 @@ Given(
 Given(
   "that target's corpus carries a stepless fitness scenario tagged with the bare check {string}",
   function (check: string) {
-    // Read through the engine's own corpus reader rather than a regex over the fixture: what makes
-    // the scenario a fitness one is steplessness, and a second opinion about that shape is exactly
-    // the disagreement `parseTaggedScenarios` was extracted to prevent.
+    // Read through the engine's own corpus reader rather than a regex over the fixture: a second
+    // opinion about a scenario's shape is exactly the disagreement `parseTaggedScenarios` was
+    // extracted to prevent. Steplessness is asserted as a fact about THIS fixture — the external
+    // target's row is written the ordinary way — not as what makes it a fitness scenario, which is
+    // its registered bare check tag and nothing else (@SCN-LNT-006).
     const source = readFileSync(join(externalOpts.features, "target.feature"), "utf8");
     const fitness = parseTaggedScenarios(source).filter((s) => s.stepless && s.tags.includes(check));
     assert.deepEqual(

@@ -1,11 +1,17 @@
 @LNT
-Feature: Reconcile every fitness function as a stepless fitness scenario citing its own @SCN
+Feature: Reconcile every fitness function as a fitness scenario citing its own @SCN
 
   The FITNESS axis. Alongside the behavioural quality-checks (the unit / integration /
-  e2e / performance tests, each an EXAMPLE with steps), a STEPLESS scenario tagged with a
-  REGISTERED bare check raises one fitness Evidence Obligation for that check — a
-  whole-system characteristic held against a threshold, which has nothing to exemplify and
-  so carries no steps.
+  e2e / performance tests, each an EXAMPLE with steps), a scenario tagged with a REGISTERED
+  bare check raises one fitness Evidence Obligation for that check — a whole-system
+  characteristic held against a threshold. THE TAG SAYS WHICH AXIS A SCENARIO IS ON, and the
+  STEPS SAY NOTHING ABOUT IT (3F-3115): a characteristic a scenario was written to hold is one
+  it holds whether or not somebody has since given it a runnable example.
+
+  MOST FITNESS SCENARIOS CARRY NO STEPS, AND THAT IS A CONSEQUENCE RATHER THAN THE RULE. A
+  whole-system characteristic usually has nothing to exemplify, so it usually carries none —
+  every fitness scenario in this file is stepless for that reason, and none of them is stepless
+  in order to be READ as one.
 
   ONE POSTING RULE, over both axes. The credit CITES: a fitness check's run arrives
   carrying the @SCN of the scenario that raises its obligation, resolved in two hops —
@@ -41,7 +47,22 @@ Feature: Reconcile every fitness function as a stepless fitness scenario citing 
   (3F-2351). What spec-controller's OWN lint:feature-codes check owes is raised where it
   belongs: the stepless fitness scenario at the foot of this file.
 
-  Rule: a stepless fitness scenario tagged with its bare check raises one fitness Evidence Obligation
+  WHICH TREE A FITNESS SCENARIO IS ABOUT IS THE GHERKIN'S TO SAY, AND THE STEP DEFINITION'S TO
+  OBEY (ruled 2026-09-04). A fitness scenario names its subject in its own text — a PLANTED tree
+  or THE REPOSITORY — and its step definition takes that subject rather than picking one for
+  itself. @SCN-ANM-001 holds the check against planted trees and @SCN-ANM-002 holds this
+  repository against the check; what tells them apart is a sentence a reviewer reads anyway, not
+  a path buried in a step definition. A step definition that runs its check over a fixture while
+  its scenario says the repository is then wrong IN THE DIFF, against that sentence.
+
+  IT IS A CONVENTION WRITTEN DOWN, NOT A STATIC CHECK BUILT, and the asymmetry is the reason. A
+  check that exists but no CI step runs lives in the GAP BETWEEN TWO FILES — nobody meets it by
+  reading, so it needs a mechanism and has one. A step definition pointed at the wrong tree lives
+  in one readable line, in a diff, in review: not invisible, just wrong the way any wrong line is
+  wrong. What would enforce it is a static analysis of TEST code — itself a check that can be
+  wrong, held by nothing.
+
+  Rule: a scenario tagged with its bare check raises one fitness Evidence Obligation, steps or none
 
     THE DEBIT SIDE OF THE ONE POSTING RULE. Under name-match the DEBIT cited: a scenario
     carried @lint=<handle> and the run was matched back to it by name, so an obligation could
@@ -52,13 +73,25 @@ Feature: Reconcile every fitness function as a stepless fitness scenario citing 
     There is no @behavioural=unit, so there is no @fitness=complexity (canon 2026-08-07, the
     bare-tags Correction).
 
-    STEPLESS IS THE DISCRIMINATOR, AND IT IS LOAD-BEARING. A behavioural scenario is an
-    EXAMPLE, so it carries steps; a fitness scenario is a whole-system characteristic held
-    against a threshold and has nothing to exemplify, so it carries none. Reading a bare check
-    tag off a STEPPED scenario would raise a fitness obligation on a behavioural row — which is
-    name-match's own fault, a whole-system characteristic smeared across examples it was never
-    about, reintroduced through a shorter tag. The tier floor's own reading of the shape belongs
-    to @SCN-STG-005; what is settled here is only that the obligation follows it.
+    THE REGISTERED CHECK TAG IS THE DISCRIMINATOR, AND THE STEPS ARE NOT (ruled 2026-09-04,
+    3F-3115). A scenario carrying a registered bare check is a fitness scenario and owes that
+    check; a scenario carrying a tier tag is behavioural and owes its tier. Steps say how a
+    scenario is written, not which axis it sits on — so a fitness scenario handed a runnable
+    example keeps the characteristic it was written to hold, instead of SWAPPING AXES the moment
+    it grows one.
+
+    STEPLESSNESS WAS A PROXY FOR THIS RULE, AND IT READ THE WRONG SIGNAL. Having nothing to
+    exemplify is why a fitness scenario usually carries no steps: a CORRELATE of being
+    non-behavioural, never the thing itself. The CREDIT side never read it — a stepped scenario
+    carrying a registered check has always been a citation carrier — so the debit alone stopped
+    short, and such a row produced an orphaned credit with nothing to post to (3F-3092). What
+    goes here is one condition; the two sides then read the same signal, and no compensating rule
+    is added anywhere.
+
+    WHETHER ONE SCENARIO MAY CARRY BOTH KINDS OF TAG IS STILL NOT SETTLED HERE. A row carrying a
+    tier tag and a check tag together is a corpus defect, and reading the corpus's shape belongs
+    to @SCN-STG-005 exactly as it did before. What is settled here is only which signal the
+    OBLIGATION follows.
 
     A TAG IS A CHECK ONLY WHEN THE REGISTRY SAYS SO — the same registry the citation seam's
     first hop reads. Treating every unrecognised bare tag as a check would raise an obligation
@@ -71,11 +104,12 @@ Feature: Reconcile every fitness function as a stepless fitness scenario citing 
     one scenario twice. It owes that check once.
 
     @unit @integration @SCN-LNT-006
-    Scenario: a stepless scenario tagged with a bare fitness check raises one Evidence Obligation for that check
+    Scenario: a scenario tagged with a bare fitness check raises one Evidence Obligation for that check, steps or none
       Given "complexity" is a registered fitness check
       And a stepless scenario tagged with the bare fitness check "complexity"
+      And a STEPPED scenario tagged with the same bare fitness check "complexity"
       When the scenario corpus is read
-      Then the scenario raises exactly one Evidence Obligation, naming the fitness check "complexity"
+      Then each of those scenarios raises exactly one Evidence Obligation, naming the fitness check "complexity"
 
     @unit @integration @SCN-LNT-007
     Scenario: a @lint=<check> tag raises no Evidence Obligation — the retired form is inert
@@ -262,10 +296,12 @@ Feature: Reconcile every fitness function as a stepless fitness scenario citing 
       leaves that obligation missing and sends its credit to suspense — a different report from the
       one below, and one this scenario catches.
 
-      THE SHAPE RULE IS NOT THIS SCENARIO'S. Whether a stepped behavioural scenario may carry a
-      fitness tag is @SCN-STG-005's question; the fixture below is stepless, because that is the
-      shape a fitness obligation is raised from at all (@SCN-LNT-006). What is settled here is only
-      that the reconciler answers each obligation a row raises on its own axis.
+      THE SHAPE RULE IS NOT THIS SCENARIO'S. Whether one scenario may carry a tier tag and a
+      fitness tag together is @SCN-STG-005's question; the fixture below carries both because it
+      is the only shape a TWO-AXIS row can be read from at all, and it is stepless because that is
+      what a fitness scenario ordinarily is — not because the obligation rule reads the shape,
+      which it no longer does (@SCN-LNT-006). What is settled here is only that the reconciler
+      answers each obligation a row raises on its own axis.
 
       Given "lint:unwired-check" is registered as the fitness check "unwired-check"
       And a stepless scenario carries the bare check "unwired-check" and also requires a unit test
@@ -435,12 +471,20 @@ Feature: Reconcile every fitness function as a stepless fitness scenario citing 
     unification. A reader who collapses any two of the three will conclude this scenario proves
     something it does not.
 
+    AN EXEMPTION FOR THIS ONE TAG WOULD BE TEMPTING IN EITHER DIRECTION, which is why the peer
+    reading is now held over BOTH SHAPES. Since 3F-3115 a registered bare check owes its check from
+    the row that carries it, steps or none (@SCN-LNT-006), and @lint is the tag a reader is likeliest
+    to special-case: carving it OUT of the rule because of what it used to name, or handing it a
+    built-in standing the registry never gave it. The scenario below reads one corpus over a stepless
+    row and a stepped one, so the company that tells a peer from a catch-all is read on both.
+
     @unit @integration @SCN-LNT-010
-    Scenario: a stepless scenario tagged bare @lint raises the style-lint Evidence Obligation
+    Scenario: a scenario tagged bare @lint raises the style-lint Evidence Obligation, steps or none
       Given "lint" is a registered fitness check alongside "complexity" and "typecheck"
       And a stepless scenario tagged with the bare fitness check "lint"
+      And a STEPPED scenario tagged with the same bare fitness check "lint"
       When the scenario corpus is read
-      Then the scenario raises exactly one Evidence Obligation, naming the fitness check "lint"
+      Then each of those scenarios raises exactly one Evidence Obligation, naming the fitness check "lint"
 
   Rule: a registry entry may name the fitness scenario its check credits
 

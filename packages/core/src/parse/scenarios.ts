@@ -15,8 +15,9 @@
  * line carrying an @SCN id contributes that scenario's evidenceObligations from the level
  * tags found across the contiguous tag block.
  *
- * The `lint` quality-check is raised by a STEPLESS scenario's REGISTERED bare check tag
- * (`fitnessObligationsOf`, @SCN-LNT-006). The retired `@lint=<guard>` form — where the scenario
+ * The `lint` quality-check is raised by a scenario's REGISTERED bare check tag, STEPS OR NONE
+ * (`fitnessObligationsOf`, @SCN-LNT-006): the tag says which axis a scenario is on and the steps say
+ * nothing about it (3F-3115). The retired `@lint=<guard>` form — where the scenario
  * named a runnable npm script and the run was matched back to it BY NAME — raises nothing
  * (@SCN-LNT-007): it supplies no citation, so anything it raised could never be credited under
  * the one posting rule and would read `missing` for ever. The form is inert in the READER, which
@@ -160,7 +161,7 @@ export function parseUntaggedScenarios(source: string): string[] {
 
 /**
  * THE FITNESS OBLIGATIONS a scenario's tags raise (@SCN-LNT-006) — one per REGISTERED bare check
- * tag it carries, and only when the scenario is STEPLESS.
+ * tag it carries, whether or not the scenario carries steps.
  *
  * THE TECHNIQUE LEAVES THE TAG. Under name-match the DEBIT cited: a scenario carried
  * `@lint=<handle>` and a run was matched back to it by name, so an obligation could only be raised
@@ -170,12 +171,22 @@ export function parseUntaggedScenarios(source: string): string[] {
  * exactly as `@unit` is a flat peer of `@integration`. There is no `@behavioural=unit`, so there is
  * no `@fitness=complexity` (canon 2026-08-07, the bare-tags Correction).
  *
- * STEPLESS IS THE DISCRIMINATOR. A behavioural scenario is an EXAMPLE and carries steps; a fitness
- * scenario is a whole-system characteristic held against a threshold and has nothing to exemplify,
- * so it carries none. Reading a bare check tag off a STEPPED scenario would raise a fitness
- * obligation on a behavioural row — name-match's own fault, a whole-system characteristic smeared
- * across examples it was never about, reintroduced through a shorter tag. The tier floor's reading
- * of the same shape is @SCN-STG-005's; what is settled here is that the obligation follows it.
+ * THE TAG IS THE DISCRIMINATOR, AND THE STEPS ARE NOT (3F-3115). A scenario carrying a registered
+ * bare check owes that check from the row that carries it; a scenario carrying a tier tag owes its
+ * tier. Steps say how a scenario is WRITTEN, not which axis it is ON, so a fitness scenario handed
+ * a runnable example keeps the characteristic it was written to hold instead of swapping axes.
+ *
+ * THE `stepless` CONDITION THAT USED TO STAND HERE WAS A PROXY, AND IT READ THE WRONG SIGNAL —
+ * having nothing to exemplify is why a fitness scenario usually carries no steps, a correlate of
+ * being non-behavioural rather than the thing itself. The CREDIT side never read it: `fitnessCitations`
+ * has always reached a stepped row, so the debit alone stopped short and such a row produced a
+ * credit with no obligation to post to (3F-3092). Removing the condition removes that asymmetry;
+ * no compensating rule is added on the credit side, and none is needed.
+ *
+ * `TaggedScenario.stepless` SURVIVES because `parse/scnTags.ts` still reads it — the tier floor and
+ * the one-check rule are corpus-SHAPE rules and steplessness is genuinely their subject. Those are
+ * @SCN-STG-005's, and they now admit a shape this rule does not; the divergence is filed, not
+ * reconciled here.
  *
  * REGISTERED, NOT INFERRED. `checkTags` is the registry's answer (`domain/checkRegistry`), taken as
  * data. Without it every unrecognised tag would be a candidate check and `@smoke` would owe one;
@@ -189,7 +200,7 @@ export function parseUntaggedScenarios(source: string): string[] {
  * for ever — one run is one credit and can cite one `@SCN`.
  *
  * MEASURED CHECKS JOIN THROUGH THE SAME ARM (@SCN-CIP-001), because they are the same rule: a bare
- * tag on a stepless scenario, owed once. What differs is what the obligation HOLDS. A measured check
+ * tag on a scenario, owed once. What differs is what the obligation HOLDS. A measured check
  * is assessed by running the suite and measuring it, so its evidence is a number and its obligation
  * carries the CEILING that number is held against — read for THIS scenario, since canon's own shape
  * for the axis is several stepless scenarios sharing one characteristic with ceilings of their own.
@@ -207,12 +218,10 @@ export function parseUntaggedScenarios(source: string): string[] {
 function fitnessObligationsOf(
   tags: readonly string[],
   checkTags: readonly string[],
-  stepless: boolean,
   seen: Set<string>,
   scnId: string,
   thresholds: ThresholdRegistry
 ): EvidenceObligation[] {
-  if (!stepless) return [];
   const registered = new Set(checkTags);
   const measured = new Set(measuredCheckTags(thresholds));
   const raised: EvidenceObligation[] = [];
@@ -251,7 +260,6 @@ function obligationsFromTags(
   tags: readonly string[],
   deferralTags: readonly string[],
   checkTags: readonly string[],
-  stepless: boolean,
   scnId: string,
   thresholds: ThresholdRegistry
 ): EvidenceObligation[] {
@@ -282,7 +290,7 @@ function obligationsFromTags(
   // arm. `seenChecks` keeps a check from being owed twice however many of a scenario's effective
   // tags name it.
   evidenceObligations.push(
-    ...fitnessObligationsOf(tags, checkTags, stepless, seenChecks, scnId, thresholds)
+    ...fitnessObligationsOf(tags, checkTags, seenChecks, scnId, thresholds)
   );
   // SCENARIO-SCOPE community deferral (@SCN-PND-016): when the tag block carries a
   // RECOGNISED community deferral tag (a bare tag ∈ the injected `deferralTags` set —
@@ -326,9 +334,12 @@ export interface TaggedScenario {
   /** The scenario's OWN tags first, then its inherited ones — bare, no leading @. */
   tags: readonly string[];
   /**
-   * The scenario carries NO steps — the fitness/behavioural shape, read off the same walk as the
-   * tags (@SCN-LNT-006). A behavioural scenario is an EXAMPLE and has steps; a fitness scenario is a
-   * whole-system characteristic held against a threshold, so it has nothing to exemplify.
+   * The scenario carries NO steps — a fact about its SHAPE, read off the same walk as the tags.
+   *
+   * IT NO LONGER SAYS WHICH AXIS THE SCENARIO IS ON. The obligation rule reads the registered check
+   * tag and nothing else (@SCN-LNT-006, 3F-3115); what still reads this field is `parse/scnTags.ts`,
+   * whose tier floor and one-check rule are corpus-SHAPE rules — steplessness is genuinely their
+   * subject, and theirs is @SCN-STG-005's reading, not this one's.
    *
    * It rides here rather than in a reader of its own for the reason the walk was extracted at all: a
    * second pass over the same file would be free to disagree with this one about which scenario it
@@ -547,7 +558,6 @@ export function parseScenarios(
       scenario.tags,
       deferralTags,
       checkTags,
-      scenario.stepless,
       scenario.scnId,
       thresholds
     ),
