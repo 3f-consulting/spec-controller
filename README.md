@@ -20,6 +20,24 @@ That is not a bug in the AI. It optimises for the observable objective — *"tes
 
 That is the difference from spec-driven development. A spec is a *moment* of discipline that expires the instant code evolves past it — and the spec is itself AI-touched, subject to the same failure mode it is meant to defend against. Reconciliation is a *continuous* discipline that holds at every CI run.
 
+## Your CI is green. That is not the same as your checks running.
+
+Every analyser in the JavaScript quality stack reports what it **found**. None reports what it **examined**.
+
+- **ESLint** — a clean run prints nothing and exits 0. A config that matches zero source files prints nothing and exits 0. The two are byte-identical; ESLint's own tracker carries the case ([eslint/eslint#16701](https://github.com/eslint/eslint/issues/16701)).
+- **dependency-cruiser** — its default reporter is defined by its documentation as printing nothing and exiting 0 when there are no violations. Point it at the wrong path and the build is green.
+- **Stryker** escapes this only by refusing — it errors with *"No tests found"* rather than reporting an empty success. **Sonar** escapes it only on its dashboard, where a human can see the file count. Neither your exit code nor your build says anything.
+
+So a green step cannot distinguish *this check ran and passed* from *this check ran over nothing*. Silence is the success signal, and silence is also what a renamed script, a retargeted glob, or a job that quietly stopped triggering produces. Nobody finds out from CI. They find out from the bug, months later.
+
+`spec-controller` cannot emit that silence. It does not start from what a tool found — it starts from your declared scenarios, and **every one is a row in the report whether or not any evidence exists for it**. A check that examined nothing comes back `missing`: a named, out-of-balance row. There is no input for which the correct output is nothing.
+
+That is the answer to *"why, when CI already works?"* — `spec-controller` is not asking you to care about something other than a red build. **It makes the build red when it should be.**
+
+### What it costs
+
+You are already doing the ceremony. A fitness check today means writing the check, adding the script, and wiring it into CI. The register adds a scenario and a tag on top of work you were doing anyway — a slightly more elaborate version of a ceremony that already existed, in exchange for the check being *observable* rather than merely present.
+
 ## How it works
 
 Each `@`-tag on a scenario names one **evidence obligation** — naming one **quality-check**'s evidence. A quality-check is a flat, bare tag: a set of peers, never a grid, and never a tag that carries its own group.
