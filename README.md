@@ -30,7 +30,7 @@ Every analyser in the JavaScript quality stack reports what it **found**. None r
 
 So a green step cannot distinguish *this check ran and passed* from *this check ran over nothing*. Silence is the success signal, and silence is also what a renamed script, a retargeted glob, or a job that quietly stopped triggering produces. Nobody finds out from CI. They find out from the bug, months later.
 
-`spec-controller` cannot emit that silence. It does not start from what a tool found — it starts from your declared scenarios, and **every one is a row in the report whether or not any evidence exists for it**. A check that examined nothing comes back `missing`: a named, out-of-balance row. There is no input for which the correct output is nothing.
+`spec-controller` cannot emit that silence. It does not start from what a tool found — it starts from the scenarios you wrote, and **every one is a row in the report whether or not any evidence exists for it**. A check that examined nothing comes back `missing`: a named, out-of-balance row. There is no input for which the correct output is nothing.
 
 That is the answer to *"why, when CI already works?"* — `spec-controller` is not asking you to care about something other than a red build. **It makes the build red when it should be.**
 
