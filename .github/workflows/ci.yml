@@ -65,6 +65,39 @@ jobs:
       - name: Enable corepack
         run: corepack enable
 
+      # WHERE THIS RUN'S EVIDENCE LIVES, RESOLVED ONCE FOR EVERY STEP BELOW (3F-3099).
+      #
+      # spec-controller used to write its own output into its own source tree, and three pieces of
+      # apparatus existed only because it did — a `.gitignore` block, a hygiene check, and that
+      # check's own coverage gap. The suites' reports and the borrow's placement are this run's
+      # OUTPUT, so they land on the runner's disk instead. `static-checks/measurementArtefact.ts`
+      # reads this same name, so every producer and reader in this job resolves to one base whether
+      # it is reached through a command line here or through the resolver in TypeScript.
+      #
+      # ONE ENTRY, NOT FOUR, AND THAT IS THE POINT. The borrow places the sweep record, two suites
+      # write their reports, the fitness pass writes a third and `balance:self` reads all four; a
+      # `$RUNNER_TEMP` expression repeated at each of them is a path that agrees today and drifts on
+      # the first edit that misses one.
+      #
+      # A STEP AND NOT A JOB-LEVEL `env:` KEY, WHICH IS GITHUB'S CONSTRAINT RATHER THAN A
+      # PREFERENCE. `jobs.<id>.env` cannot read the `runner` context — a workflow naming
+      # `${{ runner.temp }}` there fails to START, with no job and so no step conclusions to read.
+      # `$RUNNER_TEMP` is an ordinary variable inside a `run:` shell, so the value is computed here
+      # and handed to every later step through `$GITHUB_ENV`.
+      #
+      # AND IT SURVIVES BETWEEN THOSE STEPS BECAUSE THIS WORKFLOW STATES EXACTLY ONE JOB — verified
+      # against the API rather than read off the indentation. One job is one runner filesystem.
+      # Split it in two and nothing reds: the borrow's measurement stops reaching the read, and the
+      # ledger reports that in the vocabulary of a lapsed nightly sweep. That residual is named in
+      # `measurementArtefact.ts` rather than guarded, because a check on this file's SHAPE is
+      # exactly the control surface 3F-3099 exists to remove.
+      #
+      # IT ADDS NO GATE. `pnpm verify`'s ladder is derived from the `run:` steps of this file that
+      # invoke a package.json script; this one invokes none, so the ladder is unchanged at fourteen
+      # and `scripts/verify.sh` exports the same base for itself.
+      - name: Resolve the evidence root
+        run: echo "SPEC_CONTROLLER_EVIDENCE_DIR=$RUNNER_TEMP/spec-controller-self-balance" >> "$GITHUB_ENV"
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -114,21 +147,6 @@ jobs:
       # checked-out tree. Asserts every @<FFF> header code is unique and registered.
       - name: Lint feature codes
         run: pnpm lint:feature-codes
-
-      # The no-committed-reports check over the REAL tree — a pure function of the
-      # checked-out repo: fails if any report artefact is TRACKED under runs/ (the
-      # in-repo leak vector). Reconciliation reports are more sensitive than the code,
-      # so they live OUTSIDE the repo, never committed.
-      #
-      # DELIBERATELY OFF THE EVIDENCE LEDGER (3F-2994), and the `hygiene:` prefix is how.
-      # It asserts a property of what is COMMITTED, not of the evidence this build
-      # produced, so no fitness scenario reconciles it — and because `hygiene:` is not an
-      # observed prefix (`runningStaticChecks` reads `lint:` / `guard:`), this step is not
-      # observed as a running static check and posts to no suspense row. The reason is
-      # recorded at the package.json entry too. It keeps its teeth: this step runs it, and
-      # the local ladder is derived from this file, so `pnpm verify` gates on it as well.
-      - name: Check no committed reports
-        run: pnpm hygiene:no-committed-reports
 
       # The tier-tag floor over spec-controller's OWN scenarios (the cobbler's
       # shoes) — a pure property of the committed source: every scenario under
@@ -437,8 +455,8 @@ jobs:
 
           # A PLAIN COPY, BECAUSE NOTHING ELSE WRITES THIS FILE. The sweep record is the borrow's
           # alone — no producer of this run posts into it — so there is nothing here to merge with
-          # and nothing for a copy to overwrite. `runs/` is gitignored with no re-includes, so on a
-          # fresh checkout this is also what creates the directory.
+          # and nothing for a copy to overwrite. The evidence root is a directory on the runner
+          # that nothing else creates, so this is also what brings it into being (3F-3099).
           #
           # AND IT IS GUARDED BECAUSE THE LINE UNDER IT MAKES A CLAIM (3F-2962, @SCN-MUT-018).
           # Clearing errexit above is a guarantee about whether this step REDS; it says nothing
@@ -459,12 +477,12 @@ jobs:
           # branch above has already taught this log that `missing` means the sweep has stopped
           # running. Left generic, this branch would borrow that reading and send the reader to
           # mutation.yml's schedule over a fault in this runner — the defect moved, not closed.
-          if ! { mkdir -p runs/mutation && cp "${found}" runs/mutation/measurements.json; }; then
-            echo "borrow: could not place ${ARTEFACT} from run ${id} of ${WORKFLOW} into runs/mutation; nothing is placed. SCN-MUT-011 will read missing, and this is NOT the lapsed sweep that sentence usually reports: the measurement arrived and this runner could not put it where the check that reports it reads it." >&2
+          if ! { mkdir -p "${SPEC_CONTROLLER_EVIDENCE_DIR}/runs/mutation" && cp "${found}" "${SPEC_CONTROLLER_EVIDENCE_DIR}/runs/mutation/measurements.json"; }; then
+            echo "borrow: could not place ${ARTEFACT} from run ${id} of ${WORKFLOW} into the evidence root; nothing is placed. SCN-MUT-011 will read missing, and this is NOT the lapsed sweep that sentence usually reports: the measurement arrived and this runner could not put it where the check that reports it reads it." >&2
             exit 0
           fi
           echo "borrow: placed ${ARTEFACT} from run ${id} of ${WORKFLOW}, measured ${age}s ago, inside the ${MAX_AGE}s window:"
-          jq -r '.measurements[] | "borrow:   \(.scnId) \(.checkTag) = \(.measured)"' runs/mutation/measurements.json
+          jq -r '.measurements[] | "borrow:   \(.scnId) \(.checkTag) = \(.measured)"' "${SPEC_CONTROLLER_EVIDENCE_DIR}/runs/mutation/measurements.json"
 
           # THE LAST ACT, BECAUSE A SCRIPT'S STATUS IS ITS LAST COMMAND'S. `set +e` stops a failure
           # mid-script from killing the step; it does NOT stop the render above from REPORTING one.
@@ -473,18 +491,17 @@ jobs:
 
       # STEP 1 OF THE SELF-RECONCILIATION CHAIN — the observed @unit stream. The run is
       # unchanged; it now also writes the machine-readable report the gate below reads.
-      # runs/ is gitignored with no re-includes and hygiene:no-committed-reports enforces it,
-      # so the artefact exists for the length of the job and is never committed: a
-      # reconciliation report enumerates this codebase's gaps and is more sensitive than
-      # the code. The default reporter is kept alongside so a failure is still readable in
-      # the log rather than only in JSON.
+      # It lands under the job's evidence root, on the runner's own disk, because a
+      # reconciliation report enumerates this codebase's gaps and is this run's OUTPUT — writing
+      # it into the source tree it is about is the defect 3F-3099 closes. The default reporter is
+      # kept alongside so a failure is still readable in the log rather than only in JSON.
       - name: Test
-        run: pnpm test --reporter=default --reporter=json --outputFile.json=runs/self-balance/vitest.json
+        run: pnpm test --reporter=default --reporter=json --outputFile.json="$SPEC_CONTROLLER_EVIDENCE_DIR/runs/self-balance/vitest.json"
 
-      # STEP 2 — the observed @integration / @e2e stream. `--format json:<path>` adds a
+      # STEP 2 — the observed @integration / @e2e stream. `--format json:` adds a
       # file formatter; the progress formatter stays on stdout.
       - name: Cucumber
-        run: pnpm cucumber --format json:runs/self-balance/cucumber.json
+        run: pnpm cucumber --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/runs/self-balance/cucumber.json"
 
       # STEP 2b — THE FITNESS PASS, A SECOND CUCUMBER CALL OVER ITS OWN PROFILE (3F-3146, under
       # 3F-3138). It selects `@fitness` and loads one step-definition file: no behavioural step
@@ -524,8 +541,13 @@ jobs:
       #
       # `pnpm verify` PICKS THIS UP WITH NO EDIT: the local ladder is derived from this file, so
       # adding a `run:` step invoking a package.json script adds the gate (@SCN-LAD-001..006).
+      #
+      # AND THE REPORT PATH MOVED OUT OF `package.json` TO SIT BESIDE THE OTHER TWO (3F-3099). It
+      # was the one evidence path a bare `pnpm` script carried, which made it the one this file's
+      # evidence root could not reach; here it is symmetric with the two steps above, and the local
+      # ladder carries it verbatim like everything else.
       - name: Cucumber (fitness)
-        run: pnpm cucumber:fitness
+        run: pnpm cucumber:fitness --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/runs/self-balance/fitness.json"
 
       # STEP 3 — THE SELF-RECONCILIATION GATE (@SCN-SLF-001, 3F-2351). spec-controller's
       # own tree, put through spec-controller: the evidence obligations raised in features/

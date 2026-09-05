@@ -51,6 +51,17 @@ const SWEEP = "stryker run";
 /** The runner's config where it looks for it, used when the sweep names none of its own. */
 const DEFAULT_RUNNER_CONFIG = "stryker.config.json";
 
+/**
+ * The sweep record where the NIGHTLY spells it — the job's evidence root, then the shared constant.
+ *
+ * THE CONSTANT IS STILL WHAT IS CHASED (3F-3099), which is what keeps the upload and the record's
+ * own producer one fact: a filename that moved in one and not the other reds here rather than
+ * passing on two agreeing strings. What is prepended is the base the whole job resolves against,
+ * asserted as the workflow writes it, so an upload quietly reaching back into the checkout — the
+ * defect this ticket closed — cannot satisfy this either.
+ */
+const UPLOADED_SWEEP_RECORD = `\${{ env.SPEC_CONTROLLER_EVIDENCE_DIR }}/${SWEEP_RECORD_PATH}`;
+
 /** One of this repository's own files, read whole. */
 function bytesOf(file: string): string {
   return readFileSync(path.join(repoRoot, file), "utf8");
@@ -190,7 +201,11 @@ describe("[SCN-MUT-016] a sweep that died leaves no measurement behind, and its 
     // `success()`, and a step placed AHEAD of the sweep would have nothing yet to succeed at.
     // Either edit alone leaves a failed run uploading a number about a tree it never finished.
     const steps = nightlySteps();
-    const upload = theOneIndex(steps, (step) => uploads(step, SWEEP_RECORD_PATH), `upload ${SWEEP_RECORD_PATH}`);
+    const upload = theOneIndex(
+      steps,
+      (step) => uploads(step, UPLOADED_SWEEP_RECORD),
+      `upload ${UPLOADED_SWEEP_RECORD}`,
+    );
     expect(steps[upload]!.condition).toBeUndefined();
     expect(theOneIndex(steps, reachesTheSweep, `reach \`${SWEEP}\``)).toBeLessThan(upload);
   });

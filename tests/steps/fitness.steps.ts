@@ -61,6 +61,7 @@ import {
   postFitnessMeasurement,
   spawnFitnessCommand,
 } from "../../packages/spec-controller/static-checks/fitnessRunner.js";
+import { resolveEvidenceRoot } from "../../packages/spec-controller/static-checks/measurementArtefact.js";
 import { FITNESS_AXIS_TAG } from "../../packages/core/src/parse/scenarios.js";
 
 // @SCN-LNT-023 — the static half of the fitness pass: the row's command is run and its exit code
@@ -128,6 +129,10 @@ Then("the check this scenario names reports its measurement", function () {
     fitnessCommandsAt(root),
     spawnFitnessCommand
   );
-  postFitnessMeasurement(root, outcome.measurement);
+  // THE ONE PRODUCER WHOSE ROOT IS THE WORKING TREE (3F-3099). `root` above is what is being
+  // MEASURED — this repository — and it stays the working directory. Where the credit is WRITTEN is
+  // a different question, answered by the resolver: no target was named here, so the artefact lands
+  // in a temporary directory rather than in the source tree this pass is measuring.
+  postFitnessMeasurement(resolveEvidenceRoot(undefined), outcome.measurement);
   assert.equal(outcome.fault, null, outcome.fault ?? "");
 });

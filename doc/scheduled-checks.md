@@ -22,11 +22,11 @@ pipeline it came from is worse than no recipe.
 Its own mutation check is now a *converted* fitness check (3F-3138): the
 characteristic, the command and the bar live in one row of
 `specController.fitnessChecks`, a cucumber pass runs that command, and the pass
-posts the credit. So its nightly leaves a **sweep record** at
-`runs/mutation/measurements.json` and the borrow places it there, apart from the
-credit stream — because under conversion a borrowed row sitting in
-`runs/self-balance/measurements.json` would be a second credit for one evidence
-obligation. Nothing below depends on that. The recipe as written is what an
+posts the credit. So its nightly leaves a **sweep record** under
+`runs/mutation/` of the evidence root and the borrow places it there, apart from
+the credit stream — because under conversion a borrowed row sitting in that
+root's `runs/self-balance/measurements.json` would be a second credit for one
+evidence obligation. Nothing below depends on that. The recipe as written is what an
 **unconverted** measured check needs, it is what this repository ran until the
 conversion, and it stays correct for a target that has not converted.
 
@@ -50,13 +50,38 @@ obligation with no evidence: out of balance.
 Your nightly produces a measurement file — the same JSON `balance --measurements`
 reads. Two native steps carry it from the nightly run to the push run.
 
+**The measurement is your run's OUTPUT, so it never lands in your checkout.** Both
+jobs below resolve one directory on the runner's own disk and every path in the
+recipe hangs off it. This repository learned that the hard way: it wrote its own
+evidence into its own source tree, then grew a `.gitignore` block and a hygiene
+check to hold back what it had chosen to do — three pieces of apparatus for a
+condition it could simply remove (3F-3099). Removing the condition removed all
+three.
+
+Resolve it in a **step**, not a job-level `env:` key: `jobs.<id>.env` cannot read
+the `runner` context, so a workflow naming `${{ runner.temp }}` there fails to
+start. `$RUNNER_TEMP` is an ordinary variable inside a `run:` shell. The value
+survives between steps because it is **one job** — one job is one runner
+filesystem. Split the job in two and nothing reds: the borrow's measurement stops
+reaching the read, and the row reports `missing`, wearing the words a lapsed
+schedule wears.
+
+```yaml
+- name: Resolve the evidence root
+  run: echo "EVIDENCE_DIR=$RUNNER_TEMP/measurements" >> "$GITHUB_ENV"
+```
+
+Put that step in the **nightly** job and in the **push** job, spelled identically
+in both — a disagreement between the two is silent, and reads downstream exactly
+like a schedule that has lapsed.
+
 **Nightly**, after the check has measured, upload the file:
 
 ```yaml
 - uses: actions/upload-artifact@v7
   with:
     name: nightly-measurements
-    path: runs/self-balance/measurements.json
+    path: ${{ env.EVIDENCE_DIR }}/measurements.json
     # A sweep that measured nothing uploads nothing, and the push run then finds
     # no artefact — which reconciles `missing`, the true sentence for it.
     if-no-files-found: ignore
@@ -86,8 +111,9 @@ the reason this step comes **first** in the job is in
     # which is the one reading this must never manufacture.
     set -uo pipefail
 
-    # Downloaded to scratch, never straight into the tree: nothing reaches
-    # runs/ until it has been read and found to be a measurement.
+    # Downloaded to a scratch directory of its own, never straight to the path
+    # the reconciliation reads: nothing reaches the evidence root until it has
+    # been read and found to be a measurement.
     into="${RUNNER_TEMP}/borrowed-measurement"
     rm -rf "${into}"
     mkdir -p "${into}"
@@ -149,13 +175,13 @@ the reason this step comes **first** in the job is in
     fi
 
     # A plain copy, because this step runs before your own producers and so
-    # nothing has posted yet. runs/ is gitignored, so on a fresh checkout the
-    # first contributor to the job is what creates it.
-    mkdir -p runs/self-balance
-    cp "${found}" runs/self-balance/measurements.json
+    # nothing has posted yet. The evidence root is a directory on the runner, not
+    # in the checkout, so the first contributor to the job is what creates it.
+    mkdir -p "${EVIDENCE_DIR}"
+    cp "${found}" "${EVIDENCE_DIR}/measurements.json"
     echo "borrow: placed ${ARTEFACT} from run ${id}, measured ${age}s ago, inside the ${MAX_AGE}s window:"
     jq -r '.measurements[] | "borrow:   \(.scnId) \(.checkTag) = \(.measured)"' \
-      runs/self-balance/measurements.json
+      "${EVIDENCE_DIR}/measurements.json"
 ```
 
 Then your own suites run, and the reconciliation reads one file:
@@ -165,7 +191,7 @@ Then your own suites run, and the reconciliation reads one file:
   run: |
     npx spec-controller balance \
       --features ./features \
-      --measurements ./runs/self-balance/measurements.json \
+      --measurements "${EVIDENCE_DIR}/measurements.json" \
       --format md:reconciliation.md \
       --format json:reconciliation.json
 ```
@@ -194,14 +220,15 @@ wrong fault.
 ## Ordering — the fetch runs before your own producers
 
 Your push run's own measured checks (`@ci-run-time` and friends) write into the
-same `runs/self-balance/measurements.json`, and each posts **beside** what it
+same `${EVIDENCE_DIR}/measurements.json`, and each posts **beside** what it
 finds: it reads the existing file and replaces only its own row. The borrowed
 nightly row therefore sits beside them **only if it is placed first** — the two
 suite producers are then the merge.
 
 Place it after them and it does not merge, it **overwrites**: the copy above (and
-`gh run download --dir runs/self-balance` writing straight into the tree, which
-is why this recipe downloads to scratch instead) replaces the whole file,
+`gh run download --dir "${EVIDENCE_DIR}"` unpacking straight over the file the
+producers post into, which is why this recipe downloads to scratch instead)
+replaces the whole file,
 discarding every row your own run had just measured. Those obligations then
 reconcile `missing` and the build reds on rows that were, in fact, measured.
 

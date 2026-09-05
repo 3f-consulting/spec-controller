@@ -473,7 +473,7 @@ Then(
     ).gates.map((gate) => gate.script);
 
     // VACUITY FLOOR. Both sides of the comparison below are computed, so two empty lists
-    // would agree perfectly and prove nothing. The real ci.yml runs 16 script steps and one
+    // would agree perfectly and prove nothing. The real ci.yml runs 15 script steps and one
     // is excluded; anything else means the workflow changed and this scenario is the place
     // that should say so. It said so when 3F-2854 retired the composite-action bundle check
     // with the scenario that cited it — the number moving DOWNWARD, which is the direction
@@ -487,11 +487,15 @@ Then(
     // assuming it: the number here is what noticed. And downward again when 3F-3151 converted
     // `lint:complexity` and DELETED its step — the gate did not go quiet, it moved into the
     // `cucumber:fitness` pass wired one commit earlier, which is why the ladder is one shorter
-    // while nothing stopped being checked.
+    // while nothing stopped being checked. And downward once more when 3F-3099 deleted the
+    // report-hygiene step — a case the two directions above do not cover, because that gate
+    // did not move and nothing replaced it: the CONDITION it guarded went (the pipeline stopped
+    // writing its evidence into the tree), so the guard had no job left. This line is what
+    // noticed, and it is the only thing that did.
     assert.equal(
       expected.length,
-      15,
-      `the real ci.yml must yield 15 local gates; it yielded ${expected.length}: ${expected.join(", ")}`,
+      14,
+      `the real ci.yml must yield 14 local gates; it yielded ${expected.length}: ${expected.join(", ")}`,
     );
 
     assert.deepEqual(listedGates(listing.stdout), expected, "--list must be the derived ladder");

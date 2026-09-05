@@ -40,9 +40,11 @@
  *
  * THE RESIDUAL, STATED RATHER THAN ENGINEERED AWAY. Nothing pins this handle out of the
  * observed set: re-prefix it `lint:` and the tree returns silently to the arrangement 3F-3113
- * retired, because the mechanism that would notice is the one being re-entered. The precedent
- * accepts the same residual — `hygiene:no-committed-reports`, `verify` and `ladder` all carry
- * this reasoning in a header comment and nothing else holds it.
+ * retired, because the mechanism that would notice is the one being re-entered. `verify` and
+ * `ladder` stand outside that set on the same terms, held by a header comment and nothing else.
+ * The one other RED-CAPABLE handle that sat beside them under a `hygiene:` prefix went at
+ * 3F-3099 — its CONDITION was removed rather than its guard replaced — so this is now the only
+ * gate in the tree that can red while standing outside the observed set on a comment alone.
  *
  * Parent: 3F-2351.
  */
@@ -51,10 +53,11 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 
 import { runBalance } from "../src/cli-balance/cli.js";
-import { MEASUREMENT_ARTEFACT_PATH } from "./measurementArtefact.js";
+import { MEASUREMENT_ARTEFACT_PATH, resolveEvidenceRoot } from "./measurementArtefact.js";
 
 /**
- * The seven surfaces the gate reconciles, as paths relative to a target root.
+ * The seven surfaces the gate reconciles, as paths relative to the base each belongs to — the
+ * target root for the three SOURCE surfaces, the evidence root for the four this run OUTPUTS.
  *
  * There is no eighth. A path enters the gate only by entering one of these — which is the
  * answer to "is `packages/fixture-pkg/` in scope?" (3F-2351, Scan-scope ruling): that
@@ -89,14 +92,19 @@ export interface SelfBalanceScope {
 }
 
 /**
- * The gate's scan scope. Paths are relative to the target root (`--root`, default the
- * working directory), so the same fixed scope reconciles the repository in CI and a
- * planted tree under test — `--root` moves the whole scope to another tree, it never
- * narrows which surfaces are read.
+ * The gate's scan scope, as paths relative to the base each surface belongs to.
  *
- * The four runtime artefacts live under `runs/`, which `.gitignore` excludes with no
- * re-includes and `hygiene:no-committed-reports` enforces: a reconciliation report
- * enumerates a codebase's gaps and is never committed.
+ * TWO BASES, AND WHICH ONE SEPARATES SOURCE FROM OUTPUT (3F-3099). `features`, `ci` and
+ * `packageJson` are the TREE BEING JUDGED, so they resolve against the target root: `--root`
+ * moves the whole scan to another tree and never narrows which surfaces are read. The four
+ * evidence reports are THIS RUN'S OUTPUT, so they resolve against the EVIDENCE ROOT instead —
+ * the named target root where a target was named, a temporary directory where none was.
+ *
+ * THE STRINGS ARE UNCHANGED, AND THAT IS THE POINT OF THE SPLIT BEING IN THE RESOLUTION RATHER
+ * THAN IN THE VALUES. A planted tree under `--root` reads its evidence at exactly the path it
+ * always did, so every planted arm in this repository's suite keeps working with no edit; what
+ * moved is where a run naming NO target writes and reads, which used to be the working tree —
+ * spec-controller writing its output into its own source.
  */
 export const SELF_BALANCE_SCOPE: SelfBalanceScope = {
   features: "features",
@@ -117,18 +125,26 @@ const SELF_TARGET = "spec-controller";
 /** Report-path overrides: CI points these at wherever the run emitted the streams. */
 type ReportOverrides = Partial<Pick<SelfBalanceScope, "vitest" | "cucumber">>;
 
-/** Resolve each scope surface against the root, honouring the two report overrides. */
-function resolveScope(
+/**
+ * Resolve each scope surface against the base it belongs to, honouring the two report overrides.
+ *
+ * THE SOURCE SURFACES TAKE `root` AND THE EVIDENCE SURFACES TAKE `evidenceRoot`, and the two are
+ * one value whenever a target was named. Handing both in — rather than deriving the second here —
+ * is what keeps the rule in one place: this function reconciles a tree, it does not decide where a
+ * run's output lives.
+ */
+export function resolveScope(
   root: string,
+  evidenceRoot: string,
   overrides: ReportOverrides,
   scope: SelfBalanceScope,
 ): SelfBalanceScope {
   return {
     features: join(root, scope.features),
-    vitest: overrides.vitest ?? join(root, scope.vitest),
-    cucumber: overrides.cucumber ?? join(root, scope.cucumber),
-    fitness: join(root, scope.fitness),
-    measurements: join(root, scope.measurements),
+    vitest: overrides.vitest ?? join(evidenceRoot, scope.vitest),
+    cucumber: overrides.cucumber ?? join(evidenceRoot, scope.cucumber),
+    fitness: join(evidenceRoot, scope.fitness),
+    measurements: join(evidenceRoot, scope.measurements),
     ci: join(root, scope.ci),
     packageJson: join(root, scope.packageJson),
   };
@@ -159,11 +175,12 @@ function resolveScope(
  */
 export function selfBalanceArgv(
   root: string,
+  evidenceRoot: string,
   overrides: ReportOverrides,
   exists: (path: string) => boolean,
   scope: SelfBalanceScope = SELF_BALANCE_SCOPE,
 ): string[] {
-  const resolved = resolveScope(root, overrides, scope);
+  const resolved = resolveScope(root, evidenceRoot, overrides, scope);
   return [
     "--features",
     resolved.features,
@@ -198,12 +215,15 @@ export function selfBalanceArgv(
  * report AND how to emit it, else null.
  */
 export function checkEvidenceReportsPresent(
-  root: string,
+  evidenceRoot: string,
   overrides: ReportOverrides,
   exists: (path: string) => boolean,
   scope: SelfBalanceScope = SELF_BALANCE_SCOPE,
 ): string | null {
-  const resolved = resolveScope(root, overrides, scope);
+  // THE TARGET ROOT IS NOT TAKEN, AND ITS ABSENCE IS THE ASSERTION (3F-3099). Both streams this
+  // guards are OUTPUT, so neither is reachable from the tree being judged; a parameter for a root
+  // nothing here resolves against would be an invitation to reach for it.
+  const resolved = resolveScope(evidenceRoot, evidenceRoot, overrides, scope);
   const streams = [
     { path: resolved.vitest, named: scope.vitest, emit: `pnpm test --reporter=json --outputFile=${scope.vitest}` },
     { path: resolved.cucumber, named: scope.cucumber, emit: `pnpm cucumber --format json:${scope.cucumber}` },
@@ -233,19 +253,27 @@ function flag(argv: string[], name: string): string | undefined {
 }
 
 /**
- * The gate. Resolves the scope against `--root` (default the working directory, i.e. the
- * repository in CI), guards the two runtime streams, and delegates the verdict to the
- * product's own balance command — whose exit code becomes the build's.
+ * The gate. Resolves the source surfaces against `--root` (default the working directory, i.e. the
+ * repository in CI) and the evidence surfaces against the evidence root, guards the two runtime
+ * streams, and delegates the verdict to the product's own balance command — whose exit code
+ * becomes the build's.
  */
 export function runSelfBalance(argv: string[]): void {
-  const root = flag(argv, "root") ?? ".";
+  // NAMED, NOT DEFAULTED, AND THE TWO ARE READ SEPARATELY ON PURPOSE (3F-3099). `root` keeps its
+  // default of the working directory, because the TREE BEING JUDGED with no `--root` is this
+  // repository. Whether a root was NAMED is a different fact, and it is the one that decides where
+  // this run's output lands: defaulting first and then comparing against `"."` would make "no root
+  // given" indistinguishable from "the root given is the working tree".
+  const namedRoot = flag(argv, "root");
+  const root = namedRoot ?? ".";
+  const evidenceRoot = resolveEvidenceRoot(namedRoot);
   const overrides: ReportOverrides = {};
   const vitest = flag(argv, "vitest");
   const cucumber = flag(argv, "cucumber");
   if (vitest !== undefined) overrides.vitest = vitest;
   if (cucumber !== undefined) overrides.cucumber = cucumber;
 
-  const missing = checkEvidenceReportsPresent(root, overrides, existsSync);
+  const missing = checkEvidenceReportsPresent(evidenceRoot, overrides, existsSync);
   if (missing !== null) {
     process.stderr.write(missing + "\n");
     // Exit 2 — the usage code, kept distinct from the out-of-balance verdict (1) so a
@@ -254,7 +282,7 @@ export function runSelfBalance(argv: string[]): void {
     return;
   }
 
-  runBalance(selfBalanceArgv(root, overrides, existsSync));
+  runBalance(selfBalanceArgv(root, evidenceRoot, overrides, existsSync));
 }
 
 // Run only when invoked as the script, so the @unit arm can import the pure helpers

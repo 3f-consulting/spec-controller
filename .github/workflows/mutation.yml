@@ -44,6 +44,25 @@ jobs:
       - name: Enable corepack
         run: corepack enable
 
+      # WHERE THE SWEEP'S RECORD LIVES, AND IT IS SPELLED EXACTLY AS `ci.yml` SPELLS IT (3F-3099).
+      #
+      # THE HAND-OVER IS WHAT THIS AGREEMENT IS FOR. This job writes the sweep record and uploads
+      # it; a later push downloads it and places it where the converted mutation check reads it.
+      # Both ends moved out of the source tree together, and both resolve through the one name —
+      # the producer below through `measurementArtefact.ts`'s resolver, the upload through
+      # `${{ env.SPEC_CONTROLLER_EVIDENCE_DIR }}`, which is this line's value.
+      #
+      # A DISAGREEMENT HERE IS SILENT, WHICH IS WHY IT IS ONE NAME AND NOT TWO PATHS. An upload
+      # naming somewhere the producer did not write leaves the borrow with nothing to fetch, and
+      # the row reads `missing` — wearing the words this repository reserves for a nightly that has
+      # lapsed, so the failure would report a different, already-familiar problem.
+      #
+      # A STEP AND NOT A JOB-LEVEL `env:` KEY, for the reason ci.yml carries at its own copy of
+      # this: `jobs.<id>.env` cannot read the `runner` context, and a workflow naming
+      # `${{ runner.temp }}` there fails to START.
+      - name: Resolve the evidence root
+        run: echo "SPEC_CONTROLLER_EVIDENCE_DIR=$RUNNER_TEMP/spec-controller-self-balance" >> "$GITHUB_ENV"
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -114,13 +133,14 @@ jobs:
       # this one must never serve. Two uploads, two conditions — and @SCN-MUT-016 now holds both,
       # so the edit that made them agree would red rather than pass as tidying.
       #
-      # `runs/` is gitignored with no re-includes, so the artefact this uploads leaves the job and
-      # is never committed.
+      # THE PATH IS THE JOB'S EVIDENCE ROOT AND NOT THIS REPOSITORY (3F-3099), so the record this
+      # uploads was never inside the checkout to begin with — the sweep wrote it to the runner's own
+      # disk through the same resolver `balance:self` reads it back with.
       - name: Leave the measurement where a later push can borrow it
         uses: actions/upload-artifact@v7
         with:
           name: mutation-measurement
-          path: runs/mutation/measurements.json
+          path: ${{ env.SPEC_CONTROLLER_EVIDENCE_DIR }}/runs/mutation/measurements.json
           if-no-files-found: ignore
           # The persist action's own default, carried over unchanged: the artefact only has to
           # outlast the gap between two runs of the schedule that produces it.

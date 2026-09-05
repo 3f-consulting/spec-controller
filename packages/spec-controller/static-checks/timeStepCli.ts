@@ -54,6 +54,7 @@ import {
   MEASUREMENT_ARTEFACT_PATH,
   exitCodeOf,
   measurementArtefactWith,
+  resolveEvidenceRoot,
 } from "./measurementArtefact.js";
 import { measuredSecondsOf, timingReport } from "./stepTiming.js";
 
@@ -61,7 +62,18 @@ import { measuredSecondsOf, timingReport } from "./stepTiming.js";
 interface TimedStep {
   readonly scnId: string;
   readonly checkTag: string;
+  /** Where the wrapped command runs and where the target's manifest is read from. */
   readonly root: string;
+  /**
+   * The root as it was GIVEN — `undefined` where `--root` was absent, never the default above.
+   *
+   * The two are separate fields because they answer different questions, and collapsing them is
+   * the mistake 3F-3099 is about. `root` is where to run and what to read; this is whether a
+   * SELF-CONTAINED TARGET was named, which is what decides where this run's output may land.
+   * A wrapper comparing `root` against `process.cwd()` could not tell "no root given" from
+   * "the root given IS the working tree".
+   */
+  readonly namedRoot: string | undefined;
   readonly command: readonly string[];
 }
 
@@ -100,6 +112,7 @@ function timedStepOf(argv: readonly string[]): TimedStep {
     scnId: flagValue(flags, "--scn") ?? usage("--scn names the scenario this step answers"),
     checkTag: flagValue(flags, "--check") ?? usage("--check names the measured check"),
     root: flagValue(flags, "--root") ?? process.cwd(),
+    namedRoot: flagValue(flags, "--root"),
     command,
   };
 }
@@ -127,9 +140,12 @@ function alreadyPostedIn(artefactPath: string): string | undefined {
   }
 }
 
-const artefactPath = path.join(step.root, MEASUREMENT_ARTEFACT_PATH);
-// The parent is made rather than assumed: `runs/` is gitignored, so on a fresh clone the first
-// timed step of a job is the thing that creates it.
+// AGAINST THE EVIDENCE ROOT, NOT AGAINST `step.root` (3F-3099). A named target carries its own
+// evidence and resolves to exactly the path it always did; a run that named no target writes to a
+// temporary directory rather than into whatever tree it happens to be standing in.
+const artefactPath = path.join(resolveEvidenceRoot(step.namedRoot), MEASUREMENT_ARTEFACT_PATH);
+// The parent is made rather than assumed: the evidence root is a directory nothing else creates,
+// so the first timed step of a job is the thing that creates it.
 mkdirSync(path.dirname(artefactPath), { recursive: true });
 writeFileSync(
   artefactPath,

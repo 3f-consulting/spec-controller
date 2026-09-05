@@ -34,13 +34,21 @@ import path from "node:path";
 
 import { bareTerm } from "@3f-consulting/spec-controller-core/internal";
 
-import { SWEEP_RECORD_PATH, measurementsOf } from "./measurementArtefact.js";
+import { SWEEP_RECORD_PATH, measurementsOf, resolveEvidenceRoot } from "./measurementArtefact.js";
 
 /** Everything the reader was told: which row of the record to print, and which tree to read. */
 interface ScoreRead {
   readonly scnId: string;
   readonly checkTag: string;
-  readonly root: string;
+  /**
+   * The root as it was GIVEN — `undefined` where `--root` was absent (3F-3099).
+   *
+   * THE READER MOVES WITH THE PRODUCER OR IT READS NOTHING, which is why this is here at all. The
+   * sweep writes the record under the evidence root; a reader still joining the constant to the
+   * working directory would find no file, print nothing, and leave the row reconciling `missing` —
+   * wearing, exactly, the words this repository reserves for a nightly that has lapsed.
+   */
+  readonly namedRoot: string | undefined;
 }
 
 /**
@@ -70,12 +78,12 @@ function scoreReadOf(argv: readonly string[]): ScoreRead {
   return {
     scnId: flagValue(argv, "--scn") ?? usage("--scn names the scenario whose number to print"),
     checkTag: flagValue(argv, "--check") ?? usage("--check names the measured check"),
-    root: flagValue(argv, "--root") ?? process.cwd(),
+    namedRoot: flagValue(argv, "--root"),
   };
 }
 
 const asked = scoreReadOf(process.argv.slice(2));
-const recordPath = path.join(asked.root, SWEEP_RECORD_PATH);
+const recordPath = path.join(resolveEvidenceRoot(asked.namedRoot), SWEEP_RECORD_PATH);
 
 /** Whatever the record holds, or nothing where there is nothing readable to find. */
 function recordAt(file: string): unknown {

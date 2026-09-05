@@ -95,11 +95,16 @@ Storage is a cross-cutting concern of the host, not of `balance`. A leading `--s
 | `--run-id <id>` | Name the stored run (default: an ISO-8601 UTC timestamp). |
 
 ```sh
-spec-controller --store ./runs --run-id 2026-07-09-ci balance \
+spec-controller --store ~/spec-controller-runs --run-id 2026-07-09-ci balance \
   --features ./features \
   --vitest ./vitest-report.json \
   --target my-project
-# → ./runs/my-project/2026-07-09-ci/  (reconciliation outputs + run.yaml)
+# → ~/spec-controller-runs/my-project/2026-07-09-ci/  (reconciliation outputs + run.yaml)
+#
+# The root is OUTSIDE the repository being reconciled, which is why there is no default.
+# A report enumerates a codebase's gaps, dangling anchors and watermelons — more sensitive
+# than the code itself — so a kept run belongs in a store you chose, not under version
+# control alongside the thing it is about.
 ```
 
 Run `spec-controller --help` for the top-level summary of commands and host modifiers, or `spec-controller balance --help` for `balance`'s full flag list.

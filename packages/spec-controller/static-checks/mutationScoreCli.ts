@@ -59,6 +59,7 @@ import {
   SWEEP_RECORD_PATH,
   exitCodeOf,
   measurementArtefactWith,
+  resolveEvidenceRoot,
 } from "./measurementArtefact.js";
 import { MUTATION_REPORT_PATH } from "./mutationScore.js";
 
@@ -76,7 +77,16 @@ const GATE = "domain";
 interface MutationSweep {
   readonly scnId: string;
   readonly checkTag: string;
+  /** Where the sweep runs and where its report is read from. */
   readonly root: string;
+  /**
+   * The root as it was GIVEN — `undefined` where `--root` was absent, never the default above.
+   *
+   * Separate from `root` for the reason `timeStepCli`'s is: whether a self-contained target was
+   * NAMED is what decides where this run's output may land, and a producer comparing `root`
+   * against `process.cwd()` could not tell that from a target that happens to be the working tree.
+   */
+  readonly namedRoot: string | undefined;
   readonly command: readonly string[];
 }
 
@@ -119,6 +129,7 @@ function sweepOf(argv: readonly string[]): MutationSweep {
     scnId: flagValue(flags, "--scn") ?? usage("--scn names the scenario this sweep answers"),
     checkTag: flagValue(flags, "--check") ?? usage("--check names the measured check"),
     root: flagValue(flags, "--root") ?? process.cwd(),
+    namedRoot: flagValue(flags, "--root"),
     command,
   };
 }
@@ -174,9 +185,12 @@ function alreadyPostedIn(artefactPath: string): string | undefined {
   }
 }
 
-const artefactPath = path.join(sweep.root, SWEEP_RECORD_PATH);
-// The parent is made rather than assumed: `runs/` is gitignored, so on a fresh clone the first
-// producer of a job is the thing that creates it.
+// AGAINST THE EVIDENCE ROOT, NOT AGAINST `sweep.root` (3F-3099) — the same move the timed step
+// makes, and it must be the same one: the nightly names no root, so this is the write whose base
+// used to be spec-controller's own source tree.
+const artefactPath = path.join(resolveEvidenceRoot(sweep.namedRoot), SWEEP_RECORD_PATH);
+// The parent is made rather than assumed: the evidence root is a directory nothing else creates,
+// so the first producer of a job is the thing that creates it.
 mkdirSync(path.dirname(artefactPath), { recursive: true });
 writeFileSync(
   artefactPath,

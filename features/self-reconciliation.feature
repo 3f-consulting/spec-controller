@@ -18,16 +18,25 @@ Feature: spec-controller reconciles its own tree, and the build depends on the a
 
     The gate is `balance:self`: the product's own `balance` command, run over
     spec-controller's own tree, exiting on the verdict rather than merely printing it.
-    Both arms belong to ONE scenario, the @SCN-NCR-001 shape — a gate that reds is only
+    Both arms belong to ONE scenario, the @SCN-ANM-001 shape — a gate that reds is only
     half a gate, because a check that reds on everything is as useless as one that reds
     on nothing, and only the pair says the verdict is being read.
 
     WHAT THE GATE SCANS is stated once, in `SELF_BALANCE_SCOPE`, and is the whole of it:
     `features/`, the Vitest report, the behavioural Cucumber report, the measurement
-    artefact, the FITNESS PASS'S report, the WORKFLOW DIRECTORY, `package.json`. Seven
-    surfaces resolved against one root — the repository in CI, a planted tree under test.
-    A path reaches the gate only by entering one of the seven, which is what makes the
-    boundary deliberate rather than inherited.
+    artefact, the FITNESS PASS'S report, the WORKFLOW DIRECTORY, `package.json`. A path
+    reaches the gate only by entering one of the seven, which is what makes the boundary
+    deliberate rather than inherited.
+
+    THE SEVEN RESOLVE AGAINST TWO BASES, AND WHICH ONE SEPARATES SOURCE FROM OUTPUT
+    (3F-3099). `features/`, the workflow directory and `package.json` are the tree being
+    judged, so they resolve against the target root. The four evidence reports are this
+    run's own OUTPUT, so they resolve against an EVIDENCE ROOT instead — the named target
+    root where a target was named, because a self-contained tree carries its own evidence,
+    and a temporary directory where none was, never the working tree. spec-controller
+    writing its output into its own source was the defect; a planted tree under `--root`
+    never was one, which is why naming a root is the discriminator rather than a flag every
+    planted arm would have had to start passing.
 
     TWO CUCUMBER REPORTS, BECAUSE THERE ARE TWO PASSES. The behavioural pass's report
     carries runtime credits levelled by a tier tag; the fitness pass's carries static-check
@@ -73,7 +82,7 @@ Feature: spec-controller reconciles its own tree, and the build depends on the a
     TAG on the planted scenario. So the red arm's ONLY out-of-balance
     item is the check, which is what makes the red attributable to it rather than to
     some other flaw in a differently-built fixture, and the green arm is its control.
-    Both arms belong to ONE scenario, the @SCN-NCR-001 / @SCN-SLF-001 shape — a gate
+    Both arms belong to ONE scenario, the @SCN-ANM-001 / @SCN-SLF-001 shape — a gate
     that reds is only half a gate.
 
     @integration @SCN-SLF-002

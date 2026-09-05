@@ -119,7 +119,7 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
     The bare @traceability tag on the fitness scenario at the foot of this file is what
     closes it. The tag raises the Evidence Obligation the CI run settles, so the run is
     credited to THAT scenario instead of the suspense row — the precedent set by the
-    scenarios @SCN-CPX-003, @SCN-VOC-011 and @SCN-NCR-001, where observed AND required is
+    scenarios @SCN-CPX-003, @SCN-VOC-011 and @SCN-ANM-002, where observed AND required is
     the balanced state. The `lint:` prefix is load-bearing on the other
     side of the same pairing: runningStaticChecks observes a CI script only when its name
     carries an observed prefix, so a name outside that set would run in CI while being

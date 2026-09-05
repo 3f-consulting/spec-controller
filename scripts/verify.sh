@@ -20,14 +20,14 @@
 # one here. (packages/spec-controller/static-checks/localLadder.ts; @SCN-LAD-001..006.)
 #
 # THE COMMAND IS CARRIED, NOT RE-TYPED, AND THAT IS LOAD-BEARING. `balance:self`
-# reconciles this repository against the two JSON reports `test` and `cucumber` emit, so both
-# must run AHEAD of it and must write exactly the paths ci.yml writes
-# (runs/self-balance/vitest.json, runs/self-balance/cucumber.json). Run against paths nothing
-# wrote, the gate reports every evidence obligation unobserved — "the suite did not run", not
-# "the code is wrong". A reconciler comparing gate NAMES would have greened while a flag
-# drifted; running ci.yml's own command string cannot. `runs/` is gitignored with no
-# re-includes and `hygiene:no-committed-reports` enforces that, so both reports stay local and
-# are never committed.
+# reconciles this repository against the JSON reports `test`, `cucumber` and `cucumber:fitness`
+# emit, so all three must run AHEAD of it and must write exactly the paths ci.yml writes — which
+# they do by carrying ci.yml's own strings, resolved against the evidence root exported above. Run
+# against paths nothing wrote, the gate reports every evidence obligation unobserved — "the suite
+# did not run", not "the code is wrong". A reconciler comparing gate NAMES would have greened while
+# a flag drifted; running ci.yml's own command string cannot. Those reports are this run's OUTPUT
+# and land outside the working tree entirely (3F-3099), so there is nothing here to keep off the
+# record by other means.
 #
 # WHAT IS LEFT OUT IS PRINTED, NOT COMMENTED. `pnpm ladder` names every excluded step and its
 # reason on stderr each run. It used to be named here, in prose — which is the arrangement
@@ -56,6 +56,21 @@
 # this script consumes the derivation by READING it is the move that let the old subset live.
 
 set -euo pipefail
+
+# WHERE THIS LADDER'S EVIDENCE LANDS, SET ONCE — the local counterpart of `ci.yml`'s job-level
+# `env:` key (3F-3099).
+#
+# THE GATES BELOW ARE CI'S OWN COMMAND STRINGS, CARRIED VERBATIM, so the two suites and the fitness
+# pass name their report paths against this variable exactly as CI does. Exporting it here is what
+# makes those strings resolve to somewhere a local shell can write; unset, they would resolve
+# against the filesystem root and the ladder would red on a path rather than on the code.
+#
+# AND IT KEEPS THE SHELL AND THE TYPESCRIPT AGREEING BY CONSTRUCTION. `balance:self` and the three
+# measured producers resolve this same base through `measurementArtefact.ts`, whose first rung is
+# this variable — so one value reaches everything the ladder runs, whichever side of the boundary
+# it is on. A caller who has already chosen one keeps it.
+verify_temp="${TMPDIR:-/tmp}"
+export SPEC_CONTROLLER_EVIDENCE_DIR="${SPEC_CONTROLLER_EVIDENCE_DIR:-${verify_temp%/}/spec-controller-self-balance}"
 
 list_only=false
 if [[ "${1:-}" == "--list" ]]; then

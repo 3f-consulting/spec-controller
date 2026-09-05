@@ -86,9 +86,11 @@ it as `missing` — the true sentence rather than a false red: no measurement ar
 
 ## Reports live outside the repo
 
-Reconciliation reports are never committed. `pnpm hygiene:no-committed-reports` fails
-the build if any report artefact is tracked under `runs/`. Reports belong in an
-external store, not in version control.
+Reconciliation reports are never committed. Nothing in the pipeline writes one into
+the tree: `pnpm verify` and `ci.yml` both resolve the evidence root to a temp
+directory (`SPEC_CONTROLLER_EVIDENCE_DIR`, defaulted to `$RUNNER_TEMP` / `$TMPDIR`),
+so a report appearing under version control is now a deliberate act rather than an
+accident a guard has to catch. Kept reports belong in an external store.
 
 ## Publishing
 

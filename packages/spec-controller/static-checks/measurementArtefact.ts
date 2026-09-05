@@ -44,7 +44,8 @@
  * and no consumer of the artefact has a wrapped command to ask it about.
  */
 
-import { constants } from "node:os";
+import { constants, tmpdir } from "node:os";
+import path from "node:path";
 
 import { bareTerm } from "@3f-consulting/spec-controller-core/internal";
 
@@ -64,11 +65,83 @@ export interface MeasurementArtefact {
 }
 
 /**
- * Where a run posts its measurements, relative to a repository root.
+ * THE EVIDENCE ROOT this run's output is written under and read back from (3F-3099).
  *
- * Beneath `runs/`, which `.gitignore` excludes with no re-includes and
- * `hygiene:no-committed-reports` holds to it, so the artefact lives for the length of the job and
- * cannot be committed by accident.
+ * THE DEFECT THIS CLOSES, STATED PRECISELY. Every path in this file is a base-relative constant,
+ * and every caller used to join it to the TARGET root — which is correct for a planted target, a
+ * self-contained tree carrying its own evidence, and wrong for exactly one caller: the one whose
+ * root is the working tree. spec-controller wrote its output into its own source, and the three
+ * pieces of apparatus around that (a `.gitignore` block, a hygiene check, and the check's own
+ * coverage gap) existed only because it did. So the fix is not to make the paths absolute; it is
+ * to stop the BASE being derived from the root when no root was named.
+ *
+ * THREE RUNGS, IN THIS ORDER:
+ *
+ *   A NAMED TARGET ROOT — `--root` already means "you are pointing me at a self-contained
+ *   target": `timeStepCli`'s own docblock has it that the wrapped command runs there and the
+ *   artefact lands there. Evidence under a named root was never the fault, and every planted root
+ *   in this repository's suite is already a `mkdtemp` outside any source tree. This rung is what
+ *   lets every planted arm keep working with no edit, and it is the reason this change costs one
+ *   scenario rather than the six an always-on `--evidence` flag would have touched.
+ *
+ *   `SPEC_CONTROLLER_EVIDENCE_DIR` — the environment's answer for a run that named no target: a
+ *   CI job placing every stream on the runner's own disk, where the borrow step and the read step
+ *   share one filesystem, and `scripts/verify.sh` doing the same locally.
+ *
+ *   NEITHER — a temporary directory. `$RUNNER_TEMP` on a runner, `$TMPDIR` locally, and the
+ *   platform's own answer where neither is set, which is the ordinary case on Linux.
+ *
+ * THE FLAG BEATS THE VARIABLE, AND THAT ORDER WAS MEASURED RATHER THAN CHOSEN. The design this
+ * implements had the variable winning ALWAYS. It cannot: `ci.yml` sets the variable for its whole
+ * job and `scripts/verify.sh` exports it for the whole ladder, so EVERY process the suite spawns
+ * inherits it — including the planted-tree arms, which pass `--root <mkdtemp>` and would then read
+ * the outer run's evidence instead of their own. Seven cucumber scenarios red on that, and the
+ * fix is not to teach seven arms to unset a variable: an argument the caller passed is more
+ * specific than the environment it happens to be standing in, which is the ordinary precedence a
+ * flag has over a variable everywhere else. No caller needs the other order — nothing that names
+ * `--root` is reached through either place that sets the variable.
+ *
+ * NAMED IS NOT THE SAME AS DEFAULTED, AND THE WHOLE DESIGN TURNS ON THE DIFFERENCE. Callers pass
+ * `undefined` here for "no root was named" rather than passing the working directory they default
+ * to elsewhere; a resolver comparing against `"."` or `process.cwd()` would have to guess, and it
+ * would guess wrong for the target that really is the working tree.
+ *
+ * AN EMPTY VARIABLE IS AN ABSENT ONE. A workflow `env:` key whose expression resolved to nothing
+ * arrives as the empty string, and taken literally it would resolve every stream to a relative
+ * path — back inside the working tree, silently, which is the defect this exists to close.
+ *
+ * THE RESIDUAL, NAMED RATHER THAN ENGINEERED AWAY. `ci.yml` states exactly one job, so the
+ * borrow step and the read step share a runner filesystem and `$RUNNER_TEMP` reaches both. Split
+ * that workflow in two and nothing reds: the borrow's measurement simply stops reaching the read,
+ * and the ledger reports it in the vocabulary of a lapsed nightly sweep. A check on the workflow's
+ * SHAPE would be exactly the control surface 3F-3099 argues against adding.
+ */
+export function resolveEvidenceRoot(
+  namedRoot: string | undefined,
+  env: NodeJS.ProcessEnv = process.env
+): string {
+  // `??` IS NOT ENOUGH AT ANY OF THESE RUNGS, AND THE DIFFERENCE IS THE EMPTY STRING. A workflow
+  // `env:` key whose expression resolved to nothing arrives as `""`, not as an absent name, and
+  // nullish-coalescing hands it straight on: the override would win as the empty path, and an
+  // empty `RUNNER_TEMP` would shadow a perfectly good `TMPDIR`. Every rung asks for a value that
+  // is actually there.
+  const named = (value: string | undefined): string | undefined =>
+    value !== undefined && value !== "" ? value : undefined;
+
+  if (namedRoot !== undefined) return namedRoot;
+  const overridden = named(env["SPEC_CONTROLLER_EVIDENCE_DIR"]);
+  if (overridden !== undefined) return overridden;
+  const temp = named(env["RUNNER_TEMP"]) ?? named(env["TMPDIR"]) ?? tmpdir();
+  return path.join(temp, "spec-controller-self-balance");
+}
+
+/**
+ * Where a run posts its measurements, relative to the EVIDENCE ROOT above.
+ *
+ * RELATIVE TO THE EVIDENCE ROOT AND NOT TO A REPOSITORY ROOT, WHICH IS THE WHOLE OF 3F-3099'S
+ * CHANGE HERE. The string is unchanged, so a target named by `--root` carries its evidence exactly
+ * where it always did; what moved is the base a run with NO root named resolves against, which is
+ * a temporary directory rather than the working tree.
  */
 export const MEASUREMENT_ARTEFACT_PATH = "runs/self-balance/measurements.json";
 
@@ -89,9 +162,9 @@ export const MEASUREMENT_ARTEFACT_PATH = "runs/self-balance/measurements.json";
  * number — which the fitness pass then posts into the credit stream as the one credit this run
  * produced. Same shape, same reader, different question.
  *
- * Beneath `runs/`, which `.gitignore` excludes with no re-includes and
- * `hygiene:no-committed-reports` holds to it, so the record lives for the length of the job and
- * cannot be committed by accident.
+ * Beneath the EVIDENCE ROOT, like the path above and for the same reason — a SECOND subtree under
+ * it, because the two files answer two different questions and one base holding both is what keeps
+ * them one fact for the borrow, the upload and the reader to chase.
  */
 export const SWEEP_RECORD_PATH = "runs/mutation/measurements.json";
 

@@ -114,12 +114,6 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     note: "the run-management mechanism — a kept run = a named <root>/<target>/<run-id>/ dir + routed --format outputs (spec-reconciliation.md + trial-balance.json) + a run.yaml manifest, under an injected store root",
   },
   {
-    code: "NCR",
-    slug: "no-committed-reports",
-    status: "feature-code-used",
-    note: "the active never-commit enforcement — the hygiene:no-committed-reports CI check fails if a report artefact is tracked in the repo; deliberately OFF the evidence ledger (3F-2994), which is what the un-observed `hygiene:` prefix buys",
-  },
-  {
     code: "RMD",
     slug: "report-model",
     status: "feature-code-used",

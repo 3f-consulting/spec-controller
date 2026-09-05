@@ -328,7 +328,12 @@ function alreadyPostedIn(artefactPath: string): string | undefined {
 }
 
 /**
- * Post a measurement into this run's artefact at `root`, beside every row already there.
+ * Post a measurement into this run's artefact under `evidenceRoot`, beside every row already there.
+ *
+ * THE BASE IS THE EVIDENCE ROOT AND NOT A TARGET ROOT (3F-3099), which is a change of MEANING with
+ * no change of signature — a planted arm handing its own `mkdtemp` in resolves exactly where it
+ * always did. The caller that moved is the real fitness pass, which named no target and so used to
+ * post into spec-controller's own source tree; it now resolves the base through the one resolver.
  *
  * BESIDE, NEVER OVER. A run has as many measurements as it has measured checks and they all answer
  * through the one artefact `balance --measurements` reads, so this hands the keying rule what is
@@ -345,11 +350,11 @@ function alreadyPostedIn(artefactPath: string): string | undefined {
  * as a string and answers with the object — so the rule that decides which rows survive is stated
  * once and each producer supplies its own reading and writing around it.
  */
-export function postFitnessMeasurement(root: string, measurement: Measurement | null): void {
+export function postFitnessMeasurement(evidenceRoot: string, measurement: Measurement | null): void {
   if (measurement === null) return;
-  const artefactPath = path.join(root, MEASUREMENT_ARTEFACT_PATH);
-  // The parent is made rather than assumed: `runs/` is gitignored, so on a fresh clone the first
-  // producer of a run is the thing that creates it.
+  const artefactPath = path.join(evidenceRoot, MEASUREMENT_ARTEFACT_PATH);
+  // The parent is made rather than assumed: the evidence root is a directory nothing else creates,
+  // so the first producer of a run is the thing that creates it.
   mkdirSync(path.dirname(artefactPath), { recursive: true });
   writeFileSync(
     artefactPath,
