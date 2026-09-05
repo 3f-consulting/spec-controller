@@ -58,8 +58,31 @@ function bytesOf(file: string): string {
 /** The manifest, as the ledger's own edge reads it. */
 const manifest = JSON.parse(bytesOf("package.json")) as {
   scripts?: Record<string, string>;
-  specController?: { thresholds?: Record<string, Record<string, unknown>> };
+  specController?: { fitnessChecks?: readonly Record<string, unknown>[] };
 };
+
+/**
+ * The CONFIGURED ROW this repository authors for its own mutation check, refused where it holds
+ * none.
+ *
+ * READ OFF THE ROW RATHER THAN OFF `specController.thresholds` (3F-3152). @SCN-MUT-011 is a
+ * CONVERTED fitness check, so everything it says about itself — its characteristic, its command
+ * and its bar — is in one row keyed by its `@SCN`. Which key of the manifest holds the bar was
+ * never this scenario's claim; that the manifest, the record, the nightly and the producer state
+ * ONE gate name is.
+ */
+function ownRow(): Record<string, unknown> {
+  const row = (manifest.specController?.fitnessChecks ?? []).find(
+    (configured) => configured["scn"] === OWN_SCENARIO,
+  );
+  if (row === undefined) {
+    throw new Error(
+      `package.json holds no specController.fitnessChecks row naming ${OWN_SCENARIO}, ` +
+        "so the gate it sources its bar from cannot be read off it.",
+    );
+  }
+  return row;
+}
 
 /** A `--flag`'s value on a resolved command line, refused where the flag carries none. */
 function flagValueOf(command: string, flag: string): string {
@@ -113,17 +136,18 @@ function nightlyRatchetCommand(): string {
 
 /** The gate the manifest sources this repository's own bar from, refused where it names none. */
 function gateTheManifestNames(): string {
-  const bar = manifest.specController?.thresholds?.[OWN_SCENARIO]?.[OWN_CHECK];
-  const named =
-    typeof bar === "object" && bar !== null ? (bar as Record<string, unknown>)["atLeast"] : undefined;
+  const row = ownRow();
+  // The row's own characteristic is asserted alongside, because a row naming a gate under some
+  // OTHER characteristic would answer this question about a check nobody is asking about.
+  const named = row["atLeast"];
   const gate =
     typeof named === "object" && named !== null
       ? (named as Record<string, unknown>)["mutationGate"]
       : undefined;
-  if (typeof gate !== "string" || gate.trim() === "") {
+  if (row["characteristic"] !== OWN_CHECK || typeof gate !== "string" || gate.trim() === "") {
     throw new Error(
-      `package.json holds ${OWN_SCENARIO}'s "${OWN_CHECK}" bar as ${JSON.stringify(bar)}, ` +
-        "which names no mutation gate.",
+      `package.json holds ${OWN_SCENARIO}'s row as ${JSON.stringify(row)}, which is not a ` +
+        `"${OWN_CHECK}" row naming a mutation gate.`,
     );
   }
   return gate;
@@ -131,10 +155,8 @@ function gateTheManifestNames(): string {
 
 /** Where the manifest's bar is sourced from — the record's own name, or the conventional one. */
 function recordTheManifestReads(): string {
-  const bar = manifest.specController?.thresholds?.[OWN_SCENARIO]?.[OWN_CHECK] as
-    | { atLeast?: { recordFile?: unknown } }
-    | undefined;
-  const named = bar?.atLeast?.recordFile;
+  const bar = ownRow()["atLeast"] as { recordFile?: unknown } | undefined;
+  const named = bar?.recordFile;
   return typeof named === "string" ? named : RECORD_FILE;
 }
 

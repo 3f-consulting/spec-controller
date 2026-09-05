@@ -200,6 +200,34 @@ When("it runs over that same stepped target with nothing registering its check t
   runGuardInTarget("tests/fixtures/scn-tags-fitness-stepped-unregistered");
 });
 
+/**
+ * @SCN-STG-005's CONVERTED route (3F-3149). A converted check carries one word for the whole
+ * axis and its CHARACTERISTIC is on a configured row, so `checkRegistry` names it nowhere and
+ * never will — which is why the pair below turns on `specController.fitnessChecks` rather than
+ * on the registry the three Whens above turn on.
+ */
+// @SCN-STG-005
+When(
+  "it runs over a target whose converted scenarios carry the fitness axis tag, one named by a configured row and one named by none",
+  function () {
+    // BOTH scenarios in this tree must pass, and the second is the ruling: a converted scenario
+    // no row names satisfies THIS floor, because the missing row is @SCN-LNT-020's to report by
+    // id and the run reds on it regardless. A fixture carrying only the configured one would
+    // green whichever way that call had gone.
+    runGuardInTarget("tests/fixtures/scn-tags-converted");
+  }
+);
+
+// @SCN-STG-005
+When("it runs over that same target with no fitness rows configured at all", function () {
+  // Byte-for-byte the corpus above; only the manifest differs, so the pair isolates the ROWS.
+  // It passes, and that is the second ruling rather than an omission: which words name a CHECK
+  // is the target's answer, which axis a scenario is ON is the model's. A floor gating the axis
+  // word on the manifest would red here while the obligation rule — which reads the word with no
+  // such gate — was naming SCN-TGT-001 and SCN-TGT-002 as scenarios on that very axis.
+  runGuardInTarget("tests/fixtures/scn-tags-converted-unconfigured");
+});
+
 // @SCN-STG-005
 Then("it fails, naming the scenario that named no tier", function () {
   assert.equal(

@@ -6,7 +6,7 @@
  *
  * WHY A SEPARATE FILE. `evidenceReconciliation.test.ts` — where @SCN-LDG-021's other arms live —
  * is frozen at exactly 964 code lines by the complexity-exceptions ratchet, which reds EITHER way:
- * one line added reds `lint:complexity`, and raising the recorded value would widen the very debt
+ * one line added reds the complexity check, and raising the recorded value would widen the very debt
  * the ratchet exists to hold down. The house pattern for that is a focused sibling file
  * (`journal.test.ts`, `absorbedFitnessCredit.test.ts`, `uncitedFitnessCredit.test.ts`), and an
  * @SCN carrying arms in more than one file is already routine (@SCN-CIP-003 has four).

@@ -6,7 +6,8 @@
  * states what that measurement found — above the recorded value, below it, or not over the standard
  * at all. Over a list that agrees with the tree it exits 0.
  *
- * WHY THIS IS A SECOND CHECK BESIDE `lint:complexity`. eslint can only red on `value > max`; the
+ * WHY THIS IS A SECOND CHECK BESIDE THE COMPLEXITY CHECK ITSELF. eslint can only red on
+ * `value > max`; the
  * load-bearing case here is `value < recorded` — an improvement nobody banked — which it cannot
  * express. Without that half the list is a ceiling that quietly stops descending: a file improves,
  * the entry is never edited, and the recorded number becomes headroom again.
@@ -18,8 +19,10 @@
  * `@lint=lint:complexity-exceptions` tag on @SCN-CPX-003 is then what keeps it out of the suspense
  * row as an uncited static check. Observed AND NAMED is the balanced state.
  *
- * Mirrors `lint:complexity` / `lint:scn-tags` / `hygiene:no-committed-reports`: a pure function of the
- * checked-out tree, a full CI gate on every push.
+ * Mirrors `lint:scn-tags` / `hygiene:no-committed-reports`: a pure function of the checked-out tree,
+ * a full CI gate on every push. It does NOT mirror its own twin any more — @SCN-CPX-005 converted
+ * (3F-3151) and runs from a configured row inside the fitness cucumber pass, while this one keeps
+ * the discovered route. The pair is where a consumer can read both arrangements side by side.
  */
 
 import { COMPLEXITY_EXCEPTIONS } from "./complexityExceptions.mjs";

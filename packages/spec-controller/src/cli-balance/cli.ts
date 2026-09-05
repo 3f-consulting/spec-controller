@@ -7,7 +7,8 @@
  *
  * Usage:
  *   pnpm reconcile [--features <dir>] [--vitest <report.json>]
- *                  [--cucumber <report.json>] [--ci <ci.yml>]
+ *                  [--cucumber <report.json>] [--fitness <report.json>]
+ *                  [--ci <ci.yml>]
  *                  [--format <fmt>[:<path>]]
  */
 
@@ -112,8 +113,9 @@ export function sourceTarget(args: Record<string, string>): string {
  * mistyped `--vitest` / `--cucumber` / `--features` / `--ci` / `--package-json`
  * pointing at a non-existent path used to reconcile silently against ZERO evidence —
  * a terrifying false all-red report meaning "you forgot the reports", not "your code
- * is broken" (the dogfooding fault). The five flags are Examples of ONE boundary
- * rule: a supplied-but-absent input path is a hard error. Scope is existence only
+ * is broken" (the dogfooding fault). These flags are Examples of ONE boundary
+ * rule: a supplied-but-absent input path is a hard error, and a flag added to the set
+ * inherits it rather than restating it. Scope is existence only
  * (readability / file-vs-dir type-correctness out of scope; `exists` covers the dir
  * flag and the file flags alike).
  *
@@ -139,6 +141,7 @@ function reconcileInputsOf(args: Record<string, string>): ReconcileOptions {
     ci: args["ci"],
     packageJson: args["package-json"],
     measurements: args["measurements"],
+    fitness: args["fitness"],
   };
 }
 
@@ -146,10 +149,12 @@ export function checkInputsExist(
   args: Record<string, string>,
   exists: (path: string) => boolean,
 ): string | null {
-  // The five input flags in a fixed order — the FIRST supplied-but-absent one is the
+  // The input flags in a fixed order — the FIRST supplied-but-absent one is the
   // reported error (deterministic; the operator fixes and re-runs). Keys are the
   // parseArgs form (the `--` stripped); the message names the flag WITH its dashes.
-  const flags = ["vitest", "cucumber", "features", "ci", "package-json", "measurements"] as const;
+  const flags = [
+    "vitest", "cucumber", "features", "ci", "package-json", "measurements", "fitness",
+  ] as const;
   for (const flag of flags) {
     const path = args[flag];
     if (path !== undefined && !exists(path)) {
@@ -165,7 +170,9 @@ export function checkInputsExist(
  * read as raw TEXT and scanned for `run:` steps — neither is JSON, neither can crash the
  * process, and on garbage both reconcile normally (verified, 3F-1742 Discovery).
  */
-const JSON_INPUT_FLAGS = ["vitest", "cucumber", "package-json", "measurements"] as const;
+const JSON_INPUT_FLAGS = [
+  "vitest", "cucumber", "package-json", "measurements", "fitness",
+] as const;
 
 /**
  * Guard the READABILITY of the supplied JSON inputs at the CLI edge (@SCN-CLI-014).

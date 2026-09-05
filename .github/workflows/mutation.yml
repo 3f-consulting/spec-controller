@@ -48,10 +48,16 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # `pnpm mutation` is the sweep wrapped in the score producer: it runs Stryker,
-      # derives the score from the mutant statuses, posts it into the run's measurement
-      # artefact citing SCN-MUT-011 on the check `mutation`, and carries the sweep's own
-      # exit code out unchanged. A sweep that left no readable report posts nothing —
-      # the row then reads `missing`, which is the true sentence.
+      # derives the score from the mutant statuses, writes it into this sweep's own RECORD
+      # citing SCN-MUT-011 on the check `mutation`, and carries the sweep's own exit code
+      # out unchanged. A sweep that left no readable report writes nothing — the row then
+      # reads `missing`, which is the true sentence.
+      #
+      # A RECORD, NOT A RUN'S CREDIT STREAM (3F-3152). SCN-MUT-011 is a CONVERTED fitness
+      # check: the push that reconciles it runs the row's command and posts the credit
+      # itself, so a row written straight into `runs/self-balance/measurements.json` would
+      # be a second credit for one Evidence Obligation. What this job owes is the number;
+      # what the push does with it is the push's.
       #
       # NOTHING IS BUILT AHEAD OF THIS, AND NOTHING NEEDS TO BE (3F-2841). A `Build` and a
       # `pnpm rebuild` stood here because the retired persist action reached its CLI by
@@ -65,10 +71,11 @@ jobs:
         run: pnpm mutation
 
       # WHAT THIS SWEEP OWES THE LEDGER, LEFT WHERE THE NEXT PUSH CAN BORROW IT (3F-2765). The
-      # score above settles SCN-MUT-011, and the push that reconciles that row is a different run
-      # of a different workflow — so the number has to cross a run boundary, and this is the whole
-      # of that crossing: upload a file, download it, check its age. `ci.yml` names the same
-      # artefact, and that agreement is the entire contract between the two.
+      # score above is what settles SCN-MUT-011, and the push that reconciles that row is a
+      # different run of a different workflow — so the number has to cross a run boundary, and
+      # this is the whole of that crossing: upload a file, download it, check its age. `ci.yml`
+      # names the same artefact and places it at the same path, and that agreement is the entire
+      # contract between the two.
       #
       # WRITTEN HERE RATHER THAN SHIPPED (3F-2841). This was a composite action over a CLI
       # (3F-2771, 3F-2810), which made the writing half of a file-move a published capability. It
@@ -113,7 +120,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: mutation-measurement
-          path: runs/self-balance/measurements.json
+          path: runs/mutation/measurements.json
           if-no-files-found: ignore
           # The persist action's own default, carried over unchanged: the artefact only has to
           # outlast the gap between two runs of the schedule that produces it.

@@ -11,6 +11,7 @@
  */
 
 import { registeredCheckTags, type CheckRegistry } from "../domain/checkRegistry.js";
+import type { FitnessCheckRegistry } from "../domain/fitnessChecks.js";
 import { measuredCheckTags, type ThresholdRegistry } from "../domain/thresholds.js";
 import {
   citationOfScript,
@@ -18,7 +19,7 @@ import {
   type FitnessCitations,
   type ScriptCitation,
 } from "./fitnessCitations.js";
-import { parseScenarios, parseTaggedScenarios } from "./scenarios.js";
+import { parseScenarios, parseTaggedScenarios, unconfiguredFitnessScenarios } from "./scenarios.js";
 import type { Scenario } from "../model.js";
 
 /**
@@ -77,6 +78,16 @@ export interface TargetCorpus {
    * the tag picks which of that row's fitness obligations the credit answers (@SCN-LNT-012).
    */
   citedScn: (script: string) => ScriptCitation | null;
+  /**
+   * The scenarios ON the fitness axis that no configured row NAMES (@SCN-LNT-020) — the corpus's
+   * half-converted checks, in corpus order.
+   *
+   * It belongs with the other three because it is the same reading: the obligation rule raises
+   * nothing for such a scenario, and this says WHICH ones. Produced here, where the corpus walk and
+   * the configured rows are both in hand, so the naming and the raising cannot be taken from
+   * different reads — the same guarantee the citation hop is composed here for.
+   */
+  unconfiguredFitnessScenarios: readonly string[];
 }
 
 /**
@@ -91,7 +102,14 @@ export function readTargetCorpus(
   sources: readonly string[],
   deferralTags: readonly string[],
   registry: CheckRegistry,
-  thresholds: ThresholdRegistry
+  thresholds: ThresholdRegistry,
+  /**
+   * The target's CONFIGURED ROWS (@SCN-LNT-018) — the CONVERTED route's half of the debit side. It
+   * reaches `parseScenarios` and nothing else here: a converted check is never discovered as a
+   * script handle, so it has no business in `fitnessCitations`, which answers "which scenario does
+   * a run of this HANDLE cite". Its credit arrives already citing, off the scenario's own tag line.
+   */
+  fitnessChecks: FitnessCheckRegistry
 ): TargetCorpus {
   const checkTags = registeredCheckTags(registry);
   // THE OBLIGATION-RAISING TAG SET IS THE UNION (@SCN-CIP-001); the CITATION hop below is the
@@ -102,15 +120,17 @@ export function readTargetCorpus(
   // citing, because canon puts the check-to-scenario mapping in the runner that measures.
   const obligationTags = [...new Set([...checkTags, ...measuredCheckTags(thresholds)])];
   const scenarios = sources.flatMap((source) =>
-    parseScenarios(source, deferralTags, obligationTags, thresholds)
+    parseScenarios(source, deferralTags, obligationTags, thresholds, fitnessChecks)
   );
-  const citations = fitnessCitations(
-    sources.flatMap((source) => parseTaggedScenarios(source)),
-    checkTags
-  );
+  // ONE WALK, TWO READERS. The citation hop and the unconfigured-scenario reading both ask which
+  // scenario carries what, so they are handed the same tag walk rather than each taking its own —
+  // two walks would be free to disagree about which scenario they are looking at.
+  const tagged = sources.flatMap((source) => parseTaggedScenarios(source));
+  const citations = fitnessCitations(tagged, checkTags);
   return {
     scenarios,
     checkHandles: observedCheckHandles(registry, citations),
     citedScn: (script) => citationOfScript(script, registry, citations),
+    unconfiguredFitnessScenarios: unconfiguredFitnessScenarios(tagged, fitnessChecks),
   };
 }

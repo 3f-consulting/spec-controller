@@ -3,8 +3,8 @@
  *
  * A SEPARATE FILE FROM `characteristicRoster.test.ts`, and for the reason that file's siblings
  * already split on: the roster module's test file is within a few lines of the 400-line ceiling
- * `max-lines` holds test scopes to, so appending here would red `lint:complexity` — an earlier
- * rung than the assertions, which is a red at the wrong gate rather than this scenario's red. The
+ * `max-lines` holds test scopes to, so appending here would red the complexity check — a red at a
+ * different gate rather than this scenario's red. The
  * split is per-rule, not arbitrary: everything below asks one question the file beside it never
  * asks — not *is this word legal* but *is this mint still what makes anything legal*.
  *

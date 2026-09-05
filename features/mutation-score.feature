@@ -280,28 +280,45 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     report read "0 uncited" over a tree that ran a sweep with real teeth and never mentioned it. A
     gate nobody's books carry is the hiding place ci-run-time.feature named.
 
-    A THRESHOLD HAS NOTHING TO EXEMPLIFY, so this scenario carries no steps — its observation is
-    the measured run itself, which is the point of the axis rather than a gap in it. And the bare
-    check tag below is ALONE on its line. A tier tag beside it would raise a second obligation,
-    owed by a suite, that nothing here settles; the row would then be out-of-balance forever for
-    naming evidence it never meant to claim.
+    THIS CHECK IS CONVERTED, AND IT IS THE SECOND OF 3F-3138's TWO WORKED EXAMPLES — the MEASURED
+    one. It carried `@mutation` and no steps: the tag answered two questions at once, and a
+    threshold had nothing to exemplify, so the measured run itself was the whole observation. Now
+    the tag names only the AXIS, the characteristic has moved into a configured row of
+    `specController.fitnessChecks`, and the one sentence below is what a generator would emit from
+    that row. The step is not an example of a threshold; it is the pass running the row's command
+    and posting what it printed, which is the evidence this scenario always rested on, said out
+    loud in the report rather than arriving from a wrapper nothing enumerated.
 
-    THE BAR IS THE RECORD'S AND IT READS UPWARD. `specController.thresholds` no longer holds a
-    number at all: it names the `domain` gate, and `quality-thresholds.yml` states what that gate
-    last banked. A number in a manifest is a number somebody has to re-derive after every sweep that
-    moves it, and the one this repository carried went 7.7 points stale inside four days. Two bars
-    for one characteristic is a green build depending on two arbiters agreeing — and this is now one
-    bar, read by both.
+    AND THE AXIS TAG IS STILL ALONE ON ITS LINE. A tier tag beside it would raise a second Evidence
+    Obligation, owed by a suite, that nothing here settles; the row would then be out-of-balance
+    forever for naming evidence it never meant to claim.
+
+    THE BAR IS THE RECORD'S AND IT READS UPWARD. The row names the `domain` gate rather than a
+    figure, and `quality-thresholds.yml` states what that gate last banked. A number in a manifest
+    is a number somebody has to re-derive after every sweep that moves it, and the one this
+    repository carried went 7.7 points stale inside four days. Two bars for one characteristic is a
+    green build depending on two arbiters agreeing — and this is now one bar, read by both. It also
+    lives in exactly one KEY: `specController.thresholds` holds nothing for this scenario at all,
+    because the row is where a converted check says everything it says about itself.
 
     AND THE KILLS SETTLING IT ARE LAST NIGHT'S, WHICH IS WRITTEN DOWN RATHER THAN GLOSSED OVER. The
     sweep costs 8-12 minutes against a 2-minute ladder, so it runs on a schedule and leaves what it
-    measured behind as an artefact; this push borrows that artefact while the run which produced it
-    is still young enough for its number to be about this code. Past that window nothing is placed,
-    the row reads missing, and the ladder reds — the same reading a schedule that quietly stopped
-    running produces.
+    measured behind as a SWEEP RECORD; this push borrows that record while the run which produced
+    it is still young enough for its number to be about this code, and the row's command prints the
+    number the record holds. Past that window nothing is placed, the command has nothing to print,
+    the scenario fails and the row reads missing — the same reading a schedule that quietly stopped
+    running produces, now said in two places rather than one.
 
-    @mutation @SCN-MUT-011
+    THE RECORD IS NOT THE CREDIT STREAM, AND KEEPING THEM APART IS WHAT THE CONVERSION FORCED. A
+    borrowed number is not a credit this run produced; under conversion the fitness pass posts the
+    credit, so a borrowed row sitting in `runs/self-balance/measurements.json` would be a second
+    credit for one Evidence Obligation. The sweep writes `runs/mutation/measurements.json`, the
+    borrow places it there, and the one credit crosses into the run's own stream by being measured
+    by this scenario.
+
+    @fitness @SCN-MUT-011
     Scenario: this repository's domain core kills at least the mutants its record banks
+      Then the check this scenario names reports its measurement
 
   Rule: the measurement a push borrows is the newest sweep's, whatever verdict that sweep reached
 
@@ -361,7 +378,7 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     `set -u` is kept: an unbound expansion exits 127 whatever errexit says, so nounset is a route by
     which this step can still red. That red says THIS SCRIPT IS BROKEN rather than YOUR CODE LOST A
     KILL — a different sentence, sent to a different place, and the one you want. Dropping `-u` to
-    close it would buy `cp "" runs/self-balance/measurements.json`: a silent wrong placement, which
+    close it would buy `cp "" runs/mutation/measurements.json`: a silent wrong placement, which
     is the fail-open shape this whole Rule exists to remove. So the claim below is about the
     failures the borrow meets IN DOING ITS JOB, and it holds the exception as a term it asserts
     rather than leaving it an unstated residual — which is how the sentence it replaces went false.

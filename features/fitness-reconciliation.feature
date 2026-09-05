@@ -526,16 +526,19 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       (@SCN-LNT-008). The registry entry is what tells them apart.
 
       THE FIXTURE IS THE COLLAPSE'S OWN SHAPE, at fixture @SCN ids no feature file carries.
-      Two handles of the characteristic `complexity` are what this tree's own registry holds
-      once the fourteen tags become eight, and they are genuinely wired CI steps over the real
-      source — so what is observed here is a real static check's run, not a planted one.
+      Two handles of the characteristic `vocab` are what this fixture names, drawn from the
+      four that characteristic holds in this tree's own registry, and they are genuinely wired
+      CI steps over the real source — so what is observed here is a real static check's run,
+      not a planted one. THE CHARACTERISTIC IS PICKED FOR HAVING HANDLES TO SPARE rather than
+      for its subject: this arm reads the checked-out tree, so it needs a characteristic that
+      tree still wires more than once, and every conversion takes one of those away (3F-3153).
 
       Given these registry entries name the fitness scenario each check credits
-        | script                     | check      | scenario    |
-        | lint:complexity            | complexity | SCN-FIT-001 |
-        | lint:complexity-exceptions | complexity | SCN-FIT-002 |
-      And a stepless fitness scenario carries the bare check "complexity"
-      And a second stepless fitness scenario carries the same bare check "complexity"
+        | script                  | check | scenario    |
+        | lint:blocked-vocabulary | vocab | SCN-FIT-001 |
+        | lint:adopted-vocabulary | vocab | SCN-FIT-002 |
+      And a stepless fitness scenario carries the bare check "vocab"
+      And a second stepless fitness scenario carries the same bare check "vocab"
       When the fitness checks wired into CI over the real source are observed and reconciled
       Then each fitness scenario reconciles satisfied, credited by the run its own registry entry names
 
@@ -555,14 +558,14 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       target, and silence is the outcome that must not be reachable.
 
       Given these registry entries name the fitness scenario each check credits
-        | script                     | check      | scenario    |
-        | lint:complexity            | complexity | SCN-FIT-001 |
-        | lint:complexity-exceptions | complexity | SCN-FIT-003 |
-      And a stepless fitness scenario carries the bare check "complexity"
-      And a second stepless fitness scenario carries the same bare check "complexity"
+        | script                  | check | scenario    |
+        | lint:blocked-vocabulary | vocab | SCN-FIT-001 |
+        | lint:adopted-vocabulary | vocab | SCN-FIT-003 |
+      And a stepless fitness scenario carries the bare check "vocab"
+      And a second stepless fitness scenario carries the same bare check "vocab"
       When the fitness checks wired into CI over the real source are observed and reconciled
-      Then the run of "lint:complexity-exceptions" cites no scenario and its credit posts to suspense
-      And the second fitness scenario reconciles missing, naming the check "complexity"
+      Then the run of "lint:adopted-vocabulary" cites no scenario and its credit posts to suspense
+      And the second fitness scenario reconciles missing, naming the check "vocab"
 
     @unit @integration @SCN-LNT-017
     Scenario: a registry entry naming a scenario that carries a different characteristic cites nothing — a near-match is never a match
@@ -584,16 +587,16 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       path, and an author meeting either needs to be told which of the two they are looking at.
 
       Given these registry entries name the fitness scenario each check credits
-        | script                     | check        | scenario    |
-        | lint:complexity            | complexity   | SCN-FIT-001 |
-        | lint:complexity-exceptions | complexity   | SCN-FIT-003 |
-        | lint:feature-codes         | traceability | SCN-FIT-003 |
-      And a stepless fitness scenario carries the bare check "complexity"
-      And a second stepless fitness scenario carries the same bare check "complexity"
+        | script                  | check        | scenario    |
+        | lint:blocked-vocabulary | vocab        | SCN-FIT-001 |
+        | lint:adopted-vocabulary | vocab        | SCN-FIT-003 |
+        | lint:feature-codes      | traceability | SCN-FIT-003 |
+      And a stepless fitness scenario carries the bare check "vocab"
+      And a second stepless fitness scenario carries the same bare check "vocab"
       And a third stepless fitness scenario carries a different bare check "traceability"
       When the fitness checks wired into CI over the real source are observed and reconciled
-      Then the run of "lint:complexity-exceptions" cites no scenario and its credit posts to suspense
-      And the second fitness scenario reconciles missing, naming the check "complexity"
+      Then the run of "lint:adopted-vocabulary" cites no scenario and its credit posts to suspense
+      And the second fitness scenario reconciles missing, naming the check "vocab"
       And the third fitness scenario reconciles satisfied for "traceability" alone, absorbing no credit meant for another characteristic
 
   Rule: this repository's own feature-code registry holds
@@ -612,3 +615,280 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
 
     @traceability @SCN-LNT-011
     Scenario: every feature-code header in this corpus is unique and registered
+
+  Rule: a converted check names its characteristic in data, and the tag names only the axis
+
+    THE COLLAPSE, WALKED THROUGH TWO CHECKS (3F-3138, the walking skeleton of 3F-3139). A
+    fitness scenario has carried a bare characteristic tag — `@complexity`, `@mutation` — and
+    that one token answered two questions at once: HOW is this claim proved, and WHAT is it
+    about. The tier tags answer only the first (`@unit` says nothing about the subject), and
+    nobody mints `@unit-parser`; fitness has been the exception and the exception was never
+    argued for. So the tag collapses to `@fitness` — one word for the whole axis, because post
+    conversion every fitness check runs under cucumber and posts through one report — and the
+    CHARACTERISTIC moves into a configured row, where it stays a first-class word the roll-up
+    still groups by.
+
+    THE ROW IS THE WHOLE OF WHAT A CHECK SAYS ABOUT ITSELF, AND IT IS THREE FIELDS: the `@SCN`
+    it is about, the characteristic it asserts, and the command that returns a violation. A
+    fourth appears only where the bar lives outside the command. Nothing else is needed,
+    because the command carries its own scope — `eslint src/` states which tree in the same
+    string.
+
+    WHY THE CORPUS IS STILL NEEDED WHEN THE ROW ALREADY CARRIES ALL THREE. A linter reports
+    findings only, so its silence is ambiguous between nothing-wrong and nothing-looked.
+    Cucumber reports every scenario it ran, pass or fail — that enumeration is the thing the
+    fitness axis has never had, and the corpus is how a check acquires it. Reading the rows
+    alone and skipping the corpus would put this axis back to single entry.
+
+    @unit @integration @SCN-LNT-018
+    Scenario: a @fitness scenario raises its Evidence Obligation for the characteristic its configured row names
+
+      THE OBLIGATION IS THE SAME ONE A BARE CHECK TAG RAISES, and that is what keeps every reader
+      downstream untouched — the pair key, the reconciler's static arm, the roll-up. What changed is
+      only where the word came from: the tag says which axis the scenario is on, the configured row
+      says which characteristic it is about.
+
+      OWED ONCE, HOWEVER MANY TIMES THE AXIS TAG REACHES THE ROW. A scenario's effective tags are
+      its own plus its Rule's and its Feature's, so the axis tag can arrive twice; two obligations
+      for one characteristic would leave the second missing for ever, since one run is one credit
+      and can cite one @SCN.
+
+      Given a configured row names the scenario "SCN-FIT-001" as the fitness check "complexity"
+      And that scenario carries the bare fitness axis tag and no characteristic tag
+      And the axis tag reaches it a second time, hoisted onto its Rule
+      When the scenario corpus is read
+      Then that scenario raises exactly one Evidence Obligation, naming the fitness check "complexity"
+
+    @unit @integration @SCN-LNT-019
+    Scenario: a configured row carrying a bar raises a measured Evidence Obligation holding it, and a row carrying none raises a static one
+
+      THE ROW'S SHAPE SAYS WHICH KIND OF CHECK IT IS — no type field, no second tag, and no roster
+      of measured characteristics anybody has to keep in step with the rows. A row carrying a bar is
+      measured and a row carrying none is static, which is the discrimination the threshold registry
+      has always made: a check with no entry there is already the static case, so this needs no new
+      concept and adds none.
+
+      THE BAR IS SPREAD WHOLE, NEVER ITS NUMBER PICKED OUT (@SCN-MUT-001). A floor row names
+      `atLeast` and a ceiling row names `atMost`, and the direction is the TARGET's to author rather
+      than the engine's to infer from the characteristic — a mutation score is a floor in every
+      repository there is, and an engine reading the direction off the word would be holding the
+      roster @SCN-LNT-005 puts in the target's hands.
+
+      MEASURED IS SET WHETHER OR NOT A BAR COULD BE READ, exactly as the threshold route sets it.
+      The flag is what routes the obligation to the comparison arm, and a bar nobody wrote is what
+      that arm then reports (@SCN-CIP-002); marking a row measured only where a readable bar was
+      found would send an un-authored one down the static route, to be reported as a check nobody
+      wrote — the wrong cure for the actual fault.
+
+      Given a target configures these fitness rows, and only the bar each names differs
+        | scenario    | check      | at least |
+        | SCN-FIT-002 | mutation   | 90       |
+        | SCN-FIT-003 | coverage   | ninety   |
+        | SCN-FIT-001 | complexity |          |
+      And each of those scenarios carries the bare fitness axis tag and no characteristic tag
+      When the scenario corpus is read
+      Then the three raise, in turn, a measured Evidence Obligation holding that floor whole, a measured one holding no bar, and a plain static one
+
+    @unit @integration @SCN-LNT-020
+    Scenario: a @fitness scenario no configured row names raises no Evidence Obligation and is reported as unconfigured
+
+      IT CANNOT RAISE ONE, AND REACHING FOR A NEAR CHARACTERISTIC IS THE FAULT RATHER THAN THE
+      CURE. A scenario carrying the bare axis tag whose @SCN no configured row names has said
+      which axis it is on and then said nothing about what it asserts. There is no characteristic
+      to raise an Evidence Obligation for, and the nearest word in the portfolio roster is a
+      courtesy that roster already refuses.
+
+      SILENCE IS THE WRONG ANSWER TOO, so it reds — on the outcome canon already carries for this
+      shape rather than on a new one. The scenario is real, no Evidence Obligation was raised and
+      no Evidence Observation cites it, so its row reconciles to nothing on either side and is out
+      of balance through the one degenerate reconciling item. A converted check's scenario carries
+      the axis tag and its @SCN and nothing else, so that row is empty on both sides by
+      construction.
+
+      AND THE REPORT NAMES IT, because the degenerate item cannot say WHY: its own sentence is
+      about a scenario carrying no @SCN, and this one carries one. The naming rides with the other
+      corpus-shape faults the census already reports — count and locator, facts only — so the
+      reader is sent to the one remedy, which is to write the row.
+
+      Given a target's corpus carries two scenarios on the fitness axis and its configured rows name only the first
+      When that target's evidence is reconciled
+      Then the second raises no Evidence Obligation, its row is out of balance, and the report names it as a fitness scenario no configured row names
+
+  Rule: a converted check credits the scenario that raised it, and the credit needs no registry hop
+
+    THE TWO-HOP SEAM IS WHAT CONVERSION RETIRES. An unconverted static check is discovered as
+    a script handle, and a handle does not know what it is FOR — hence `checkRegistry`, and
+    hence the corpus lookup behind it. A converted check is not discovered at all: it is a
+    scenario that ran, carrying its own `@SCN` on its own tag line. The citation is read off
+    the row rather than resolved onto it.
+
+    ONE OBLIGATION, ONE CREDIT, AND THE ROW'S SHAPE DECIDES WHICH STREAM CARRIES IT. A static
+    row's credit is the fitness pass reporting the scenario — the check existed and it ran over
+    the real tree, both facts directly observed rather than inferred from a manifest and a
+    workflow. A measured row's credit is its NUMBER, and the fitness report raises no second
+    credit beside it: two credits answering one obligation is the double count this rule exists
+    to foreclose.
+
+    @unit @integration @SCN-LNT-021
+    Scenario: a static converted check's scenario in the fitness report credits its own row, citing its own @SCN
+
+      THE CREDIT ARRIVES ALREADY CITING, so there is nothing left to resolve. The scenario carries its
+      own @SCN on its own tag line and the configured row keyed by that @SCN carries the characteristic,
+      so both terms of the credit are read off what the pass reported. No check registry is consulted
+      and no corpus lookup stands behind it — the two hops an unconverted check needs are the two this
+      route does not have.
+
+      AND THE TWO FACTS SUCH A CREDIT CARRIES ARE OBSERVED HERE RATHER THAN INFERRED. On the
+      unconverted route the check EXISTS because a manifest holds a script by that name, and it ran
+      over the real tree because a workflow step invokes that script. Here the scenario appearing in
+      the fitness pass's report says the check ran, and the pass runs in the target's own root, so it
+      ran over that root's tree. Both are read from the run itself, which is strictly stronger than a
+      file mentioning a name.
+
+      THE CREDIT IS ABOUT THE WIRING AND THE EXIT CODE IS ABOUT THE FINDINGS. A scenario present in the
+      report credits its row whether it passed or failed, because a static check's ledger row has never
+      carried the check's own verdict: a check finding violations reds the run through the runner's exit
+      code, and the ledger says the check ran. Two questions, two mechanisms — and a reading that
+      credited only the scenarios that passed would answer the second question twice and the first not
+      at all.
+
+      Given a target's configured rows name a static fitness check for each of the two scenarios its corpus carries
+      And its fitness pass reported both, the first having found nothing and the second a violation
+      When that target's evidence is reconciled with what its fitness pass reported
+      Then each scenario's own row is credited for the characteristic its row names, no check registry naming either, and both rows balance
+
+    @unit @integration @SCN-LNT-022
+    Scenario: a measured converted check's scenario in the fitness report raises no credit, because its number is the credit
+
+      ONE OBLIGATION, ONE CREDIT, AND THE ROW'S SHAPE SAYS WHICH STREAM CARRIES IT. A measured
+      converted check raises one Evidence Obligation and its evidence is a NUMBER, read from the
+      measurement artefact by the reader that already exists. A credit raised beside that number
+      would be a second credit answering one Evidence Obligation, and it would answer nothing: the
+      comparison arm reads measurements only, so the extra credit lands on the row naming a
+      characteristic nothing on that row can settle it against, and takes the run out of balance.
+
+      SO THE REPORT READING SKIPS A SCENARIO WHOSE CONFIGURED ROW CARRIES A BAR, and it asks that
+      question through the same predicate the obligation side asks it through. The two readings
+      then agree by construction rather than by diligence: one fact, one spelling, or this is the
+      shape where a debit and a credit grow separate opinions of whether a row is measured — and
+      the row whose bar nothing could read is exactly where they would first differ.
+
+      NO SECOND CREDIT ROUTE IS INVENTED HERE. The ledger has carried two fitness observation
+      shapes since @SCN-CIP-003 — a static fact about the tree, and a measurement — and this only
+      says which of the two a converted row uses. What is new is that the choice is readable from
+      one place rather than reached separately by each side that makes it.
+
+      AND THE ENUMERATION IS NOT LOST, which is the half of this that reads wrong unless the
+      sentence is finished. The measured scenario still appears in the fitness pass's report, and
+      that appearance is still what says the check ran; what it no longer does is post a credit
+      beside the number. Two questions and two mechanisms, exactly as on the static route — only
+      here the second is answered by a value rather than by an exit code.
+
+      Given a target's configured rows name a static fitness check for one of its two scenarios and a measured one, holding a floor, for the other
+      And its fitness pass reported both scenarios, and its measurement artefact holds a number for the measured one
+      When that target's evidence is reconciled with what its fitness pass reported and with what it measured
+      Then the static scenario's row is credited off the report and the measured one's row off its number alone, each row carrying one credit and both balanced
+
+  Rule: the fitness pass runs the command its configured row names
+
+    THE STEP DEFINITION RUNS THE COMMAND. Always, and there is no read-an-artefact second
+    shape in the model: what a target puts BEHIND the command is the target's business, and
+    the pass does the same thing either way. A target that types a sweep there gets the sweep
+    inside its fitness pass, which is exactly what it asked for.
+
+    THE EXIT CODE ANSWERS ONE QUESTION AND THE SCENARIO ANSWERS THE OTHER. `did the check run`
+    is answered by the scenario appearing in the report; `did it find anything` is answered by
+    the exit code. Two questions, two mechanisms — which is why a command exiting 0 having
+    examined nothing cannot pass as silence here.
+
+    THE NUMBER ARRIVES ON STDOUT. A measured row's command prints its measurement and nothing
+    else there; whatever it wants to say goes to stderr. No named artefact path, no second
+    I/O contract in the row — a tool that prints other things gets a wrapper, which is what
+    every measured producer in this repository already is. The BAR stays outside the command
+    either way: one bar per characteristic, never the runner's own verdict.
+
+    @unit @integration @SCN-LNT-023
+    Scenario: the fitness step definition runs its row's command and fails the scenario on a non-zero exit
+
+      THE ROW'S COMMAND IS THE CHECK, AND RUNNING IT IS THE WHOLE OF WHAT THIS STEP DOES. The scenario
+      carries the axis tag and its own @SCN; the row keyed by that @SCN carries the command; the step
+      runs it in the target's own root and reads the exit code. Nothing else is consulted — no check
+      registry, no corpus lookup, no artefact somebody else wrote — because the two terms this needs
+      are the tag line the runner is already holding and the row that names it.
+
+      THE @SCN COMES OFF THE TAG LINE, NEVER OFF THE SCENARIO'S NAME. A title is prose a person edits;
+      recovering an identifier from one is the name-match posting @SCN-LNT-002 retired, and it would
+      make renaming a scenario silently repoint its check. The runner reads the tags the pass hands it,
+      which is the same document the credit reader reads and the same tag it reads there.
+
+      THE FAILURE NAMES THE COMMAND AND QUOTES WHAT IT SAID. A fitness scenario that reds is a
+      violation somebody has to go and fix, and a bare exit code sends them to work out which of a
+      target's rows spoke before they can begin. So the message carries the command verbatim, the exit
+      code it answered with, and what it printed — and where it printed nothing, says that too, because
+      a silent non-zero exit is a fault report of its own.
+
+      A SCENARIO NO CONFIGURED ROW NAMES FAILS HERE, AND THAT IS THIS SCENARIO'S OWN RULING. Such a
+      scenario has said which axis it is on and then said nothing about what it asserts, so there is no
+      command to run and nothing was examined. Passing it would put a scenario in the report that says
+      the check ran when no check ran at all — the enumeration this axis exists to gain, telling the
+      first lie it is capable of. The ledger says the same thing from the other side (@SCN-LNT-020
+      raises no Evidence Obligation and reports the scenario as one no row names), and the two are
+      deliberately not one mechanism: the run reds where the person is, and the reconciliation reds
+      where the row is missing.
+
+      ONE STEP DEFINITION, HOWEVER MANY CHECKS CONVERT. The step text names no characteristic and no
+      command, so every converted static check in every target matches this one sentence and the count
+      stays at one. The measured case adds exactly one more, because reading a number off stdout and
+      posting it is a different assertion over different evidence — and that is the whole of the
+      growth, whatever a target's manifest grows to.
+
+      Given a target's configured rows name a command for two of the three fitness scenarios its corpus carries, and none for the third
+      And the first of those commands finds nothing while the second finds a violation it prints
+      When each of the three scenarios runs under the fitness pass
+      Then the first passes, the second fails naming the command that spoke and quoting what it printed, and the third fails saying no configured row names it
+
+    @unit @integration @SCN-LNT-024
+    Scenario: a measured row's command prints its number on stdout and the step definition posts it citing the scenario's own @SCN
+
+      THE NUMBER IS THE EVIDENCE, WHICH IS WHY THIS IS A SECOND STEP DEFINITION AND NOT AN ARM OF THE
+      FIRST. The static half runs a command and reads an exit code; this half runs a command and reads
+      a NUMBER off what it printed, then posts that number as a measurement. Two assertions over two
+      kinds of evidence — so two step definitions, and exactly two however many checks convert, because
+      everything that varies between two measured checks is in the configured row.
+
+      THE NUMBER ARRIVES ON THE COMMAND'S OWN OUTPUT AND IS THE WHOLE OF WHAT IT PRINTS THERE. Anything
+      the command wants to say goes to its error stream instead. That contract was chosen over naming
+      an artefact path in the row because it needs no fourth field and no file grammar: the row stays
+      the three things a check says about itself plus a bar. A tool that prints other things gets a
+      wrapper, which is what every measured producer in this repository already is, so the wrapper is a
+      cost the target has already paid rather than one this model introduces.
+
+      THE CREDIT CITES THE SCENARIO'S OWN @SCN AND THE CHARACTERISTIC ITS ROW NAMES. Both terms are
+      already in hand — the tag line the pass is running, and the row keyed by it — so nothing is
+      resolved, no registry is consulted, and the measurement arrives citing rather than being
+      attributed afterwards. The characteristic is read through the SAME reading of the row the
+      obligation side reads it through, so the debit and the credit name one word rather than two that
+      have to agree.
+
+      IT POSTS BESIDE WHAT THE RUN HAS ALREADY MEASURED, NEVER OVER IT. A run has as many measurements
+      as it has measured checks and they all answer through one artefact, so this reads what is there
+      and adds its own row keyed by both terms of its address. Writing over the artefact would leave
+      only the last row and every earlier bar reconciling as a check that never ran.
+
+      THE BAR NEVER ENTERS HERE, AND THAT IS THE SAME RULE THE WRAPPERS ALREADY KEEP. One bar per
+      characteristic, held by the ledger, never by the runner that produced the number — a step
+      definition that compared the number itself would be grading its own homework, and the ledger
+      would then transcribe a verdict rather than reconcile one. So a measured scenario passes whenever
+      its command yielded a number, and whether that number clears its bar is the ledger's sentence.
+
+      A COMMAND THAT PRINTED NO USABLE NUMBER FAILS THE SCENARIO AND POSTS NOTHING. Both halves are
+      said because either alone would be the quiet failure: a scenario that passed having posted
+      nothing would leave its row reading missing with nothing red anywhere, and a row posted from
+      unreadable output would be a number nobody measured. Nothing printed, prose printed, and a number
+      the measurement reader would refuse are one answer here — the command did not honour the contract
+      — and the row then reads missing for the loud reason rather than the silent one.
+
+      Given a target's configured rows name a measured fitness check for each of three of its scenarios, and this run has already measured something else
+      And the first of those commands prints a number, the second prints prose, and the third prints nothing at all
+      When each of those three scenarios runs under the fitness pass
+      Then the first posts its number citing its own @SCN and the characteristic its row names, beside the measurement already there, and the other two fail with nothing posted for either

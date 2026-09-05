@@ -61,8 +61,12 @@ import {
  * itself — the ONE entry point the frozen v1 barrel gains (@SCN-API-001), which is what takes the
  * last `/internal` import off the published path and makes the installed binary start. The floor
  * moves because the population did.
+ *
+ * 36 → 37 at 3F-3140: `domain/fitnessChecks.ts`, the CONFIGURED ROWS a converted fitness check is
+ * read from (@SCN-LNT-018) — the debit side's third injected registry, beside the check registry
+ * and the authored ceilings. The floor moves because the population did.
  */
-const CORE_SRC_FILE_COUNT = 36;
+const CORE_SRC_FILE_COUNT = 38;
 
 describe("[SCN-EPG-001] the reconciliation engine imports nothing impure and references no IO", () => {
   it("flags an engine file that imports from an impure sibling layer", () => {

@@ -592,7 +592,12 @@ const testVolumeSection: SectionEmitter = (report) => {
  * The counts read off the report's materialised `summary.staticChecks`.
  */
 const staticChecksSection: SectionEmitter = (report) => {
-  const counts = report.summary.staticChecks;
+  // THE HALF-CONVERTED CHECKS (@SCN-LNT-020) render HERE, under the same heading, because they are
+  // the same class of half-entry as an uncited static check — something the run saw and nothing
+  // owed — read off the other side of the books. FACTS ONLY, count and ids: the reader is told what
+  // the corpus said about itself and left with the one remedy there is, which is to write the row.
+  // OMIT-WHEN-EMPTY, so an unconverted corpus renders byte-identically to before.
+  const { staticChecks: counts, unconfiguredFitnessScenarios: halfConverted = [] } = report.summary;
   if (!counts) return [];
   // A pure counts summary off `summary.staticChecks` (2.4) — symmetric with the
   // runtime `### Test volume` line. There is no census section: the per-guard DETAIL lives in
@@ -600,10 +605,10 @@ const staticChecksSection: SectionEmitter = (report) => {
   // as `cites-no-scenario` credit items on the `(no scenario)` suspense row). Only the running
   // volume + the uncited count render here; the named count is implicit.
   return [
-    "### Static checks",
-    "",
+    "### Static checks", "",
     `${counts.runningStaticCheckCount} static check(s) run, ${counts.uncitedStaticCheckCount} uncited static check(s).`,
     "",
+    ...(halfConverted.length > 0 ? [`${halfConverted.length} @fitness scenario(s) no configured row names: ${halfConverted.join(", ")}.`, ""] : []),
   ];
 };
 

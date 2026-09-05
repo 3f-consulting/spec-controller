@@ -140,21 +140,6 @@ jobs:
       - name: Lint scn-tags
         run: pnpm lint:scn-tags
 
-      # The complexity + module-size thresholds over the REAL tree (@SCN-CPX-001/002, 3F-2286
-      # superseding 3F-2177) — eslint's complexity / max-lines / max-lines-per-function held to
-      # an EXTERNAL standard: 10 (NIST/McCabe), 40 (Google), 400 (a reasoned chosen ceiling),
-      # in static-checks/complexityThresholds.mjs. Never seeded at what this tree measures —
-      # that was 3F-2177's rule, and it certified whatever the code already did. Today's
-      # exceedances are dated per-file debt in static-checks/complexityExceptions.mjs, each
-      # entry FREEZING its file at the recorded value: an exemption excuses existing debt and
-      # buys no headroom. Blocking on every push: cheap and deterministic, so it earns a
-      # per-push slot. A red means refactor, or record a dated exception at the measured value
-      # — never disable the step, and never add slack in advance. CITED by @SCN-CPX-005
-      # (@complexity) so the tool's own ledger reconciles it rather than reporting it as an
-      # uncited static check.
-      - name: Lint complexity
-        run: pnpm lint:complexity
-
       # THE RATCHET (@SCN-CPX-003, 3F-2318) — reconciles static-checks/complexityExceptions.mjs
       # against the tree it describes. The step above freezes each exempt file at its recorded
       # value, which stops the debt growing; it cannot notice the list going stale downward,
@@ -286,13 +271,18 @@ jobs:
       # of slack in a healthy cadence, and ONE missed sweep ages the number out, places nothing,
       # and reds the gate below. A sweep that quietly stops running cannot stay quiet.
       #
-      # FIRST OF THE FOUR, WHICH IS WHAT REMOVES THE MERGE (3F-2841). Three producers post into the
-      # one artefact `lint:self-balance` reads, and each posts BESIDE what it finds
-      # (`measurementArtefactWith`). Landing the borrowed row before the two suite steps makes THEM
-      # the merge; landing it after them, where the retired restore ran, made this step the merge —
-      # the only reason that restore needed to fold whole artefacts together at all. The reordering
-      # deletes that requirement rather than reimplementing it in `jq`, which is why nothing below
-      # reads the file it writes.
+      # IT LANDS A SWEEP RECORD, NOT A ROW OF THIS RUN'S CREDIT STREAM (3F-3152). It used to copy
+      # the nightly's file straight into `runs/self-balance/measurements.json` — the artefact
+      # `lint:self-balance` reads as what THIS run credited — and the merge argument that placement
+      # needed (land it first, let the two suite producers post beside it) went with it. Under a
+      # CONVERTED @SCN-MUT-011 the fitness pass posts the credit itself, from the number this
+      # record holds, so a borrowed row sitting in the credit stream would be a second credit for
+      # one Evidence Obligation. Two files, two questions: what a sweep MEASURED, and what this run
+      # CREDITED. Nothing else reads or writes the path below, so there is no merge here at all.
+      #
+      # IT STILL RUNS FIRST, AND NOW FOR A PLAINER REASON. `cucumber:fitness` runs the row's
+      # command, which reads this file; a borrow placed after it would leave the command with
+      # nothing to print on every push.
       #
       # WRITTEN HERE RATHER THAN SHIPPED (3F-2841). This was a composite action over a CLI
       # (3F-2766, 3F-2810). Every piece of it is a native GitHub operation or a `date` subtraction
@@ -304,10 +294,11 @@ jobs:
       # AND IT IS NOT AN ARBITER. Every branch below places nothing, says why on stderr, and exits
       # 0. Having no measurement to borrow — no finished sweep, no artefact, a number past its
       # window, a payload that is not one — is the ordinary reading of a cadence, and the place it
-      # is reported is the ledger: SCN-MUT-011 reconciles `missing` and `lint:self-balance` reds on
-      # the row that owed the measurement. A step that redded here as well would make a green build
-      # depend on two arbiters agreeing, which is the argument features/mutation-score.feature
-      # already settles for the bar itself.
+      # is reported is downstream: `cucumber:fitness` fails the scenario, because the row's command
+      # has nothing to print, and `lint:self-balance` reds on the row that owed the measurement,
+      # which reconciles `missing`. Both sentences are true and both are reached; a step that
+      # redded HERE as well would make a green build depend on arbiters agreeing, which is the
+      # argument features/mutation-score.feature already settles for the bar itself.
       - name: Borrow the scheduled sweep's measurement
         env:
           GH_TOKEN: ${{ github.token }}
@@ -342,7 +333,7 @@ jobs:
           #
           # `-u` IS KEPT, AND IS THE ONE RED ROUTE LEFT. An unbound expansion exits 127 whatever
           # errexit says. That red says THIS SCRIPT IS BROKEN rather than YOUR CODE LOST A KILL, and
-          # dropping `-u` to close it would buy `cp "" runs/self-balance/measurements.json` — a
+          # dropping `-u` to close it would buy `cp "" runs/mutation/measurements.json` — a
           # silent wrong placement, which is the fail-open this whole line of work exists to close.
           set +e
           set -uo pipefail
@@ -444,8 +435,10 @@ jobs:
             exit 0
           fi
 
-          # A PLAIN COPY, BECAUSE NOTHING HAS POSTED YET. `runs/` is gitignored with no
-          # re-includes, so on a fresh checkout the first contributor to a job is what creates it.
+          # A PLAIN COPY, BECAUSE NOTHING ELSE WRITES THIS FILE. The sweep record is the borrow's
+          # alone — no producer of this run posts into it — so there is nothing here to merge with
+          # and nothing for a copy to overwrite. `runs/` is gitignored with no re-includes, so on a
+          # fresh checkout this is also what creates the directory.
           #
           # AND IT IS GUARDED BECAUSE THE LINE UNDER IT MAKES A CLAIM (3F-2962, @SCN-MUT-018).
           # Clearing errexit above is a guarantee about whether this step REDS; it says nothing
@@ -466,12 +459,12 @@ jobs:
           # branch above has already taught this log that `missing` means the sweep has stopped
           # running. Left generic, this branch would borrow that reading and send the reader to
           # mutation.yml's schedule over a fault in this runner — the defect moved, not closed.
-          if ! { mkdir -p runs/self-balance && cp "${found}" runs/self-balance/measurements.json; }; then
-            echo "borrow: could not place ${ARTEFACT} from run ${id} of ${WORKFLOW} into runs/self-balance; nothing is placed. SCN-MUT-011 will read missing, and this is NOT the lapsed sweep that sentence usually reports: the measurement arrived and this runner could not put it where the ledger reads it." >&2
+          if ! { mkdir -p runs/mutation && cp "${found}" runs/mutation/measurements.json; }; then
+            echo "borrow: could not place ${ARTEFACT} from run ${id} of ${WORKFLOW} into runs/mutation; nothing is placed. SCN-MUT-011 will read missing, and this is NOT the lapsed sweep that sentence usually reports: the measurement arrived and this runner could not put it where the check that reports it reads it." >&2
             exit 0
           fi
           echo "borrow: placed ${ARTEFACT} from run ${id} of ${WORKFLOW}, measured ${age}s ago, inside the ${MAX_AGE}s window:"
-          jq -r '.measurements[] | "borrow:   \(.scnId) \(.checkTag) = \(.measured)"' runs/self-balance/measurements.json
+          jq -r '.measurements[] | "borrow:   \(.scnId) \(.checkTag) = \(.measured)"' runs/mutation/measurements.json
 
           # THE LAST ACT, BECAUSE A SCRIPT'S STATUS IS ITS LAST COMMAND'S. `set +e` stops a failure
           # mid-script from killing the step; it does NOT stop the render above from REPORTING one.
@@ -492,6 +485,47 @@ jobs:
       # file formatter; the progress formatter stays on stdout.
       - name: Cucumber
         run: pnpm cucumber --format json:runs/self-balance/cucumber.json
+
+      # STEP 2b — THE FITNESS PASS, A SECOND CUCUMBER CALL OVER ITS OWN PROFILE (3F-3146, under
+      # 3F-3138). It selects `@fitness` and loads one step-definition file: no behavioural step
+      # definitions, no world, no hooks. `cucumber.js` carries the reasoning; what matters here is
+      # that it is a SEPARATE call writing a SEPARATE report, because the two documents have the
+      # same shape and opposite meanings — the behavioural pass's scenarios are runtime results
+      # levelled by a tier tag, this pass's are converted static-check credits named by a
+      # configured row (SELF_BALANCE_SCOPE.fitness, 3F-3145).
+      #
+      # IT NOW SELECTS A REAL SCENARIO (3F-3151). @SCN-CPX-005 is the first converted check, so
+      # this step is where eslint's complexity / max-lines / max-lines-per-function are held over
+      # the real tree — the work the deleted `Lint complexity` step used to do, reached through
+      # the scenario's configured row instead of through a script handle. Wiring the pass ahead of
+      # its first member is what let that conversion be ONE atomic commit rather than a conversion
+      # plus a pipeline change.
+      #
+      # AND THAT MOVED THE COMPLEXITY GATE DOWN THE LADDER, WHICH IS A COST, NOT A BONUS.
+      # `Lint complexity` ran near the top, before the suites; the complexity violation it used to
+      # catch in seconds is now caught here, behind the whole test and cucumber ladder. Converting
+      # trades early failure for single entry. Worth reading again if the wait starts to bite: the
+      # remedy is where this step sits, not whether the check converted.
+      #
+      # IT IS NOT WRAPPED IN `timeStepCli`, AND THAT IS A DECISION. The behavioural call is wrapped
+      # under SCN-CIP-014; wrapping this one under the same @SCN would post a second measurement
+      # against one Evidence Obligation, which is the double count 3F-3138 forecloses, and a new
+      # @SCN needs a scenario this refactor does not carry. So the fitness pass sits OUTSIDE the
+      # ci-run-time measurement for now — its cost is real and currently unmeasured, which is a
+      # sentence worth reading again now that it runs eslint, and again when the measured
+      # conversion adds the mutation score reader beside it.
+      #
+      # THE SCRIPT NAME CARRIES NO OBSERVED PREFIX, ON PURPOSE — the same care `verify` and
+      # `ladder` were named under. `runningStaticChecks` treats a package.json script as a RUNNING
+      # static check when its name starts with `lint:` or `guard:` and a CI `run:` step invokes it.
+      # `cucumber:fitness` is a pass that RUNS checks, not a check, so a prefixed name would
+      # register a phantom static check on spec-controller's own ledger and red `lint:self-balance`
+      # as an uncited one.
+      #
+      # `pnpm verify` PICKS THIS UP WITH NO EDIT: the local ladder is derived from this file, so
+      # adding a `run:` step invoking a package.json script adds the gate (@SCN-LAD-001..006).
+      - name: Cucumber (fitness)
+        run: pnpm cucumber:fitness
 
       # STEP 3 — THE SELF-RECONCILIATION GATE (@SCN-SLF-001, 3F-2351). spec-controller's
       # own tree, put through spec-controller: the evidence obligations raised in features/

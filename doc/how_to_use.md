@@ -62,6 +62,7 @@ spec-controller balance --features ./features \
 | `--ci <ci.yml>` | Your CI workflow — used to check whether the static checks your fitness scenarios name actually run over the real source. |
 | `--package-json <path>` | `package.json` — used to check a named static check's script exists. |
 | `--measurements <report.json>` | A measurement report — the number each measured check posted, evidence for the measured fitness checks (`@ci-run-time` and its family). |
+| `--fitness <report.json>` | The FITNESS pass's Cucumber report — a second cucumber call's own document, evidence for the converted fitness checks. Omit it if you have converted none. |
 | `--target <name>` | A name recorded verbatim in the report's provenance (which project this run reconciled). |
 | `--source-sha <sha>` | Override the git commit SHA recorded in provenance (defaults to the resolved HEAD). |
 | `--format <fmt>[:<path>]` | Where to send output (`md` or `json`, optionally `:<path>` to write to a file). Repeatable. See below. |

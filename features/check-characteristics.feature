@@ -124,5 +124,26 @@ Feature: A check characteristic is legal because the portfolio names it, never b
     tag for the check that exists to stop tags being minted would be the fault delivered as
     its own cure.
 
-    @vocab @SCN-CHR-005
-    Scenario: every characteristic this repository names is one the portfolio roster carries
+    AND THE PLACES A TARGET MAY NAME ONE ARE NOW THREE (3F-3138). A CONVERTED check names its
+    characteristic on its own configured row — not in the check registry, which answers which
+    check a runnable script handle is, and not in the thresholds, which is where a BAR lives.
+    So the word moves to a third key, and on the commit the first check converts it would face
+    nothing at all. That is this file's own fault re-opened by moving the word one key sideways
+    in the same manifest: a mistyped row would mint a characteristic in silence, and a
+    vocabulary a product can extend by editing its own manifest is a per-product roster wearing
+    a shared one.
+
+    SO THIS SCENARIO IS ABOUT THE READING AS WELL AS THE WORDS, and that is what its Update
+    added. A green here says every characteristic this repository names is a portfolio word,
+    and that sentence is worth exactly what the reading behind it is worth: a source nobody
+    reads makes this green a report about words nobody looked at. So the places are gathered
+    from ONE list and the reading is held to reaching every one of them. That half is the
+    `@unit` arm's to prove and the CI step's to miss — over this repository's own manifest the
+    third source is empty until the first check converts, so the step would green either way.
+
+    @unit @vocab @SCN-CHR-005
+    Scenario: every characteristic this repository names is one the portfolio roster carries, and no place it may name one goes unread
+      Given the places a target may name a characteristic — its check registry, its thresholds and its configured fitness rows
+      When the characteristics this repository names are gathered for the portfolio roster to judge
+      Then every one of those places is reached, so none of them can go silently unread
+      And every characteristic gathered from any of them is one the portfolio roster carries

@@ -49,7 +49,7 @@ import { fileURLToPath } from "node:url";
 import { describe, it, expect } from "vitest";
 import { parse } from "yaml";
 
-import { MEASUREMENT_ARTEFACT_PATH } from "./measurementArtefact.js";
+import { SWEEP_RECORD_PATH } from "./measurementArtefact.js";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
@@ -394,11 +394,11 @@ describe("[SCN-MUT-018] the borrow says only what it did", () => {
     const commands = borrowCommands();
     const claim = theClaimIndex(commands);
     expect(commands[claim - 1]).toBe("fi");
-    // MEASUREMENT_ARTEFACT_PATH rather than a literal, so the borrow and the ledger's own reader
+    // SWEEP_RECORD_PATH rather than a literal, so the borrow and the sweep record's own producer
     // stay ONE fact: a path that moved in one and not the other reds instead of passing on two
-    // agreeing strings (`sweepVerdictWiring` chases the producer by this same constant).
+    // agreeing strings (`sweepVerdictWiring` chases the upload by this same constant).
     expect(withEnv(commands[theOpeningIf(commands, claim - 1)]!, borrowStep().env)).toContain(
-      MEASUREMENT_ARTEFACT_PATH,
+      SWEEP_RECORD_PATH,
     );
   });
 

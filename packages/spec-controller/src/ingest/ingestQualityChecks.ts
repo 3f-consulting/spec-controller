@@ -178,6 +178,16 @@ export interface ReconcileOptions {
    * it contributes nothing, and each measured obligation it would have answered reads `missing`.
    */
   measurements?: string;
+  /**
+   * The FITNESS pass's Cucumber report (@SCN-LNT-021, 3F-3145) — the credit side of every
+   * CONVERTED fitness check, written by a second cucumber call over its own profile.
+   *
+   * KEPT APART FROM `cucumber` BECAUSE THE TWO DOCUMENTS MEAN OPPOSITE THINGS. The behavioural
+   * pass's scenarios are runtime results levelled by a tier tag; this pass's are static-check
+   * credits named by a configured row. Optional like the other result files: a target that has
+   * converted nothing emits none, and the converted rows it would have answered read `missing`.
+   */
+  fitness?: string;
 }
 
 /** Read + JSON-parse a file if present, else return undefined. */
@@ -375,6 +385,7 @@ type TargetManifest = PackageJsonScripts & {
     staticChecks?: unknown;
     checkRegistry?: unknown;
     thresholds?: unknown;
+    fitnessChecks?: unknown;
   };
 };
 
@@ -409,6 +420,10 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
     packageJson,
     ciSources: ciSourcePathsOf(ciPath).map((path) => readFileSync(path, "utf8")),
     measurements: readJsonIfPresent<{ measurements?: unknown }>(opts.measurements) ?? {},
+    // The CONVERTED checks' credit stream, read at this edge like every other report. Absent it
+    // is undefined rather than empty: the engine's parameter is optional, and "no report" and
+    // "a report holding nothing" are the same reading for it.
+    fitnessReport: readJsonIfPresent<CucumberJsonReport>(opts.fitness),
     runtimeObservations: parseRuntimeObservations(opts, root),
     // The three things the engine's resolvers cannot hold, and each for its own reason: the starter
     // deferral set and the guard script prefixes are the application layer's own policy, and the

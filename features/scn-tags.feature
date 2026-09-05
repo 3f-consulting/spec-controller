@@ -188,6 +188,32 @@ Feature: The tier-tag floor — every scenario names an evidence tier
     shape the engine asks them to write, admit more and a scenario is tier-named while owing
     nothing — the silent hole this floor exists to close, reopened from the other side.
 
+    AND THERE IS A THIRD SOURCE NOW, WHICH IS NEITHER OF THOSE TWO (3F-3138). A CONVERTED check
+    carries one word for the whole axis — the fitness tag — and its CHARACTERISTIC moves to a
+    configured row. So there is nothing for a registry to name and never will be: `checkRegistry`
+    answers "which check is this runnable script handle", and a converted check is not discovered
+    as a handle at all — it is a scenario that ran, carrying its own tag line. The floor admits
+    the axis tag the way it admits a registered one, and the set BOTH this floor and the one-check
+    rule read is widened once, at the one edge that assembles it, so the two cannot come to
+    disagree about it the way they did over steplessness.
+
+    THE AXIS WORD IS NOT THE TARGET'S TO GRANT, and that is the one place this route differs from
+    the registered one. Which words name a CHECK is the target's answer — complexity, typecheck,
+    mutation — and which axis a scenario is ON is the model's, exactly as `unit` is. A target that
+    has converted nothing does not get to spell the axis differently, for the reason nobody spells
+    `@unit` differently, so the word is admitted whatever the manifest holds. What that costs is
+    nothing a target can feel: no other tag's reading changes, and a corpus carrying the word
+    without the rows is already reported, by name, one paragraph down.
+
+    AND A CONVERTED SCENARIO NO CONFIGURED ROW NAMES SATISFIES THIS FLOOR, deliberately. Such a
+    scenario has said which axis it is on and then said nothing about what it asserts, and that IS
+    a corpus fault — but it is @SCN-LNT-020's, which names it by id and leaves the reader the one
+    remedy there is, which is to write the row; the run reds on it regardless, through the
+    degenerate both-missing item. A floor redding it too would report half of one fault in a
+    second place with the wrong remedy attached — "name a tier", said to an author whose scenario
+    names its axis — which is the wrong-message failure @SCN-STG-002 split the three kinds to
+    avoid. One fault, one place.
+
     @unit @integration @SCN-STG-004
     Scenario: a @fitness=<check> tag reds the tier-tag check, naming the bare tag it should have been
       Given the scn-tags static check
@@ -195,7 +221,7 @@ Feature: The tier-tag floor — every scenario names an evidence tier
       Then it fails, naming the bare tag the group-prefixed one should have been
 
     @unit @integration @SCN-STG-005
-    Scenario: a fitness scenario satisfies the tier floor by its bare check tag alone, steps or none
+    Scenario: a fitness scenario satisfies the tier floor by the word naming its check — a registered bare tag, or the converted axis tag
       Given the scn-tags static check
       When it runs over a target whose stepless scenario carries only its registered bare check tag
       Then it passes
@@ -203,6 +229,10 @@ Feature: The tier-tag floor — every scenario names an evidence tier
       Then it passes
       When it runs over that same stepped target with nothing registering its check tag
       Then it fails, naming the scenario that named no tier
+      When it runs over a target whose converted scenarios carry the fitness axis tag, one named by a configured row and one named by none
+      Then it passes
+      When it runs over that same target with no fitness rows configured at all
+      Then it passes
 
     @unit @integration @SCN-STG-009
     Scenario: a stepless scenario tagged with a MEASURED check satisfies the tier floor

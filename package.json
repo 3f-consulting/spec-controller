@@ -15,14 +15,15 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx packages/spec-controller/static-checks/timeStepCli.ts --scn SCN-CIP-013 --check ci-run-time -- vitest run",
     "mutation": "tsx packages/spec-controller/static-checks/mutationScoreCli.ts --scn SCN-MUT-011 --check mutation -- stryker run",
+    "mutation:score": "tsx packages/spec-controller/static-checks/mutationScoreReaderCli.ts --scn SCN-MUT-011 --check mutation",
     "mutation:ratchet": "tsx packages/spec-controller/src/mutation-ratchet/ratchetCli.ts --gate domain --report reports/mutation/mutation.json --bank-command 'pnpm mutation:bank'",
     "mutation:bank": "pnpm mutation:ratchet --record",
     "cucumber": "tsx packages/spec-controller/static-checks/timeStepCli.ts --scn SCN-CIP-014 --check ci-run-time -- cucumber-js",
+    "cucumber:fitness": "cucumber-js --profile fitness --format json:runs/self-balance/fitness.json",
     "build": "pnpm -r build",
     "balance": "tsx packages/spec-controller/src/cli.ts",
     "audit:vocab": "tsx packages/spec-controller/static-checks/vocabAuditCli.ts",
     "lint:feature-codes": "tsx packages/spec-controller/static-checks/lintFeatureCodesCli.ts",
-    "lint:complexity": "eslint",
     "lint:blocked-vocabulary": "tsx packages/spec-controller/static-checks/lintBlockedVocabularyCli.ts",
     "lint:complexity-exceptions": "tsx packages/spec-controller/static-checks/lintComplexityExceptionsCli.ts",
     "hygiene:no-committed-reports": "tsx packages/spec-controller/static-checks/hygieneNoCommittedReportsCli.ts",
@@ -39,7 +40,6 @@
     "checkRegistry": {
       "lint:feature-codes": { "check": "traceability", "scn": "SCN-LNT-011" },
       "lint:scn-tags": { "check": "traceability", "scn": "SCN-STG-006" },
-      "lint:complexity": { "check": "complexity", "scn": "SCN-CPX-005" },
       "lint:complexity-exceptions": { "check": "complexity", "scn": "SCN-CPX-006" },
       "lint:blocked-vocabulary": { "check": "vocab", "scn": "SCN-VOC-019" },
       "typecheck": "typecheck",
@@ -50,10 +50,18 @@
       "lint:self-balance": "self-balance",
       "lint:scn-subissues": { "check": "traceability", "scn": "SCN-SSM-009" }
     },
+    "fitnessChecks": [
+      { "scn": "SCN-CPX-005", "characteristic": "complexity", "command": "eslint" },
+      {
+        "scn": "SCN-MUT-011",
+        "characteristic": "mutation",
+        "command": "pnpm --silent mutation:score",
+        "atLeast": { "mutationGate": "domain" }
+      }
+    ],
     "thresholds": {
       "SCN-CIP-013": { "ci-run-time": 75 },
-      "SCN-CIP-014": { "ci-run-time": 150 },
-      "SCN-MUT-011": { "mutation": { "atLeast": { "mutationGate": "domain" } } }
+      "SCN-CIP-014": { "ci-run-time": 150 }
     }
   },
   "devDependencies": {

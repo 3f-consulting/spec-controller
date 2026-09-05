@@ -72,6 +72,29 @@ export interface MeasurementArtefact {
  */
 export const MEASUREMENT_ARTEFACT_PATH = "runs/self-balance/measurements.json";
 
+/**
+ * Where a sweep that runs on its OWN CADENCE leaves what it measured, relative to a repository
+ * root — a SWEEP RECORD, and not this run's credit stream (3F-3152).
+ *
+ * THE TWO FILES ANSWER TWO DIFFERENT QUESTIONS, WHICH IS WHY THEY ARE TWO FILES. The path above is
+ * what THIS run credited: every row in it was produced by a producer of this run, and the ledger
+ * reads it as such. A nightly's number is not that — it was measured about a tree by a run that
+ * finished hours ago, and a push borrows it. While the borrow landed in the credit stream the two
+ * readings were one file, and under a CONVERTED mutation check that becomes a live double count:
+ * the fitness pass posts the credit, so a borrowed row sitting beside it would be a second credit
+ * for one Evidence Obligation.
+ *
+ * SO THE BORROWED NUMBER LANDS HERE AND IS READ FROM HERE. The nightly writes this file, uploads
+ * it, the push places it back at this path, and the converted check's command prints the row's
+ * number — which the fitness pass then posts into the credit stream as the one credit this run
+ * produced. Same shape, same reader, different question.
+ *
+ * Beneath `runs/`, which `.gitignore` excludes with no re-includes and
+ * `hygiene:no-committed-reports` holds to it, so the record lives for the length of the job and
+ * cannot be committed by accident.
+ */
+export const SWEEP_RECORD_PATH = "runs/mutation/measurements.json";
+
 /** Whether two rows answer the same thing — the @SCN naming the row and the check tag on it. */
 function isTheSameRowAs(row: Measurement, measurement: Measurement): boolean {
   // Both terms, because neither is an address on its own (@SCN-LNT-012) — and each read through

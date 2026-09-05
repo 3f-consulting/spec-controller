@@ -32,6 +32,7 @@ import { renderMarkdown, runningStaticChecks } from "@3f-consulting/spec-control
 import type { Scenario, EvidenceObservation, Ledger } from "@3f-consulting/spec-controller-core";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
 import { summaryOf } from "../../packages/core/src/domain/evidenceReconciliation.js";
+import type { EvidenceReconciliation } from "../../packages/core/src/domain/evidenceReconciliation.js";
 // The citation seam's own pieces are core-INTERNAL (where a registry is authored is still open —
 // the registry-home question, increment D), so they are reached by source path rather than
 // promoted onto the frozen v1 barrel.
@@ -46,8 +47,35 @@ import {
 } from "../../packages/core/src/parse/fitnessCitations.js";
 // The `lint` quality-check carries two shapes since @SCN-CIP-003 (a static-check fact and a
 // measurement), so a reader wanting a static check's own runnable handle asks for one.
-import { isStaticCheckObservation } from "@3f-consulting/spec-controller-core/internal";
+import {
+  isStaticCheckObservation,
+  // @SCN-LNT-022 — the measurement artefact as its own reader takes it, so the fixture's bytes
+  // are handed to the composition in the shape the composition asks for rather than an `any`.
+  type MeasurementReport,
+} from "@3f-consulting/spec-controller-core/internal";
 import { parseTaggedScenarios } from "../../packages/core/src/parse/scenarios.js";
+import {
+  carriesBar,
+  type FitnessCheckRegistry,
+} from "../../packages/core/src/domain/fitnessChecks.js";
+import {
+  resolveFitnessChecks,
+  type KillFloorReader,
+} from "../../packages/core/src/parse/targetManifest.js";
+
+/**
+ * The reader the row resolver takes, for planted manifests that name no mutation gate.
+ *
+ * Every fixture below authors its bars as numbers, so the reader is never asked; it is passed
+ * because a bar MAY name a gate instead (@SCN-MUT-012), and the resolver takes the record's reader
+ * exactly as `resolveThresholds` does rather than reaching for a record of its own.
+ */
+const NO_GATE_RECORD: KillFloorReader = () => null;
+// @SCN-LNT-021 — the CREDIT side reads the fitness pass's Cucumber report, so this arm runs the
+// reconcile composition itself rather than `runReconcile`: where that report comes FROM is
+// @SCN-SLF-001's Update, and the reading is what this scenario proves.
+import { evidenceReconciliationFromSources } from "@3f-consulting/spec-controller-core";
+import type { CucumberJsonReport } from "@3f-consulting/spec-controller-core";
 
 // Fixtures shared across steps within a scenario (isolated per scenario by Cucumber).
 let scenarios: Scenario[];
@@ -78,6 +106,11 @@ let externalLedger: Ledger;
 // @SCN-LNT-006 outcome: the registered bare check tags, and the corpus source read against them.
 let registeredCheckTags: string[];
 let corpusSource: string;
+
+// @SCN-LNT-018 outcome: the CONFIGURED ROWS the converted route reads, over the same
+// `corpusSource` the registered-tag arm builds. Left undefined by every other scenario, which is
+// what keeps the reading inert for all of them — `parseScenarios` takes its own empty default.
+let configuredFitnessChecks: FitnessCheckRegistry | undefined;
 
 // @SCN-LNT-001 / @SCN-LNT-002 outcome: the fixture registry and corpus the citation seam is read
 // through, and the Ledger itself — the "exactly one row" count is over posted-credit IDENTITY,
@@ -608,12 +641,163 @@ Given(
   }
 );
 
+// @SCN-LNT-018
+Given(
+  "a configured row names the scenario {string} as the fitness check {string}",
+  function (scn: string, check: string) {
+    // THE ROW IS THE ONLY PLACE THE CHARACTERISTIC IS WRITTEN in this scenario — the corpus the
+    // next Given builds carries the bare axis tag and nothing else — so the expectation at the
+    // foot is a claim about this row rather than about a tag that happens to spell the same word.
+    // Keyed by the @SCN, which is what removes the registry hop: a converted check is not
+    // discovered as a script handle, it is a scenario that ran carrying its own tag line.
+    configuredFitnessChecks = new Map([[scn, { characteristic: check }]]);
+  }
+);
+
+// @SCN-LNT-018
+Given(
+  "that scenario carries the bare fitness axis tag and no characteristic tag",
+  function () {
+    // NO characteristic tag anywhere on the row. A rule still reading the tag for the subject has
+    // nothing to read here, so it answers the empty list and the Then reds — which is what makes
+    // this fixture a discriminator rather than a restatement of @SCN-LNT-006's.
+    corpusSource = [
+      "@FIT",
+      "Feature: fitness",
+      "  Rule: the tree stays inside its thresholds",
+      "    @fitness @SCN-FIT-001",
+      "    Scenario: the codebase stays under the threshold",
+    ].join("\n");
+  }
+);
+
+// @SCN-LNT-018
+Given("the axis tag reaches it a second time, hoisted onto its Rule", function () {
+  // A scenario's effective tags are its own plus its Rule's and its Feature's (@SCN-LDG-020), so
+  // the SAME corpus is rebuilt with the axis tag hoisted as well — one read, one row, the tag
+  // arriving twice. Owed once: two obligations for one characteristic would leave the second
+  // missing for ever, since one run is one credit and can cite one @SCN.
+  corpusSource = [
+    "@FIT",
+    "Feature: fitness",
+    "  @fitness",
+    "  Rule: the tree stays inside its thresholds",
+    "    @fitness @SCN-FIT-001",
+    "    Scenario: the codebase stays under the threshold",
+  ].join("\n");
+});
+
+/**
+ * One table row as a MANIFEST would spell it (@SCN-LNT-019) — the three terms a check says about
+ * itself, plus the bar where the row names one.
+ *
+ * The `at least` cell is written through UNTOUCHED where it is not a number, which is the whole of
+ * what makes the middle row of the table a bar nothing can read rather than a bar this helper
+ * quietly repaired. An empty cell names no bar KEY at all, which is the static case.
+ */
+function manifestRowOf(row: Record<string, string>): Record<string, unknown> {
+  const named = {
+    scn: row["scenario"],
+    characteristic: row["check"],
+    // The RUNNER's half of the row, present because a real row carries it and unread on this side.
+    command: "the command this check runs",
+  };
+  const authored = row["at least"] ?? "";
+  if (authored === "") return named;
+  const number = Number(authored);
+  return { ...named, atLeast: Number.isNaN(number) ? authored : number };
+}
+
+// @SCN-LNT-019
+Given(
+  "a target configures these fitness rows, and only the bar each names differs",
+  function (table: DataTable) {
+    // READ THROUGH THE TARGET'S OWN MANIFEST, not hand-built as a registry, because the claim is
+    // about the ROW's shape and the shape is a property of what the target wrote. A hand-built
+    // registry would assert against this test's own reading of the rows rather than the engine's.
+    configuredFitnessChecks = resolveFitnessChecks(
+      { specController: { fitnessChecks: table.hashes().map(manifestRowOf) } },
+      NO_GATE_RECORD
+    );
+  }
+);
+
+// @SCN-LNT-019
+Given(
+  "each of those scenarios carries the bare fitness axis tag and no characteristic tag",
+  function () {
+    // NO characteristic tag and NO threshold entry anywhere: the only thing separating these three
+    // scenarios is the bar its own row named, so the three different obligations at the foot are a
+    // claim about the rows and about nothing else on the corpus.
+    corpusSource = [
+      "@FIT",
+      "Feature: fitness",
+      "  Rule: the tree stays inside its bars",
+      "    @fitness @SCN-FIT-002",
+      "    Scenario: the tree stays above its mutation floor",
+      "    @fitness @SCN-FIT-003",
+      "    Scenario: the tree stays above its coverage floor",
+      "    @fitness @SCN-FIT-001",
+      "    Scenario: the codebase stays under the complexity threshold",
+    ].join("\n");
+  }
+);
+
 // @SCN-LNT-006
 // @SCN-LNT-007
 // @SCN-LNT-010
+// @SCN-LNT-018
+// @SCN-LNT-019
 When("the scenario corpus is read", function () {
-  scenarios = parseScenarios(corpusSource, [], registeredCheckTags);
+  scenarios = parseScenarios(corpusSource, [], registeredCheckTags, undefined, configuredFitnessChecks);
 });
+
+// @SCN-LNT-018
+Then(
+  "that scenario raises exactly one Evidence Obligation, naming the fitness check {string}",
+  function (check: string) {
+    // WHOLE-CORPUS equality, so "exactly one" excludes a rule that raised the obligation twice for
+    // the twice-arriving tag as firmly as one that raised it under another name or not at all.
+    assert.deepEqual(
+      scenarios.map((scenario) => scenario.evidenceObligations),
+      [[{ qualityCheck: "lint", staticCheck: check }]],
+      `expected the converted row to raise ONE lint Evidence Obligation naming "${check}" — the ` +
+        `tag names the axis and the configured row names the characteristic; ` +
+        `got ${JSON.stringify(scenarios)}`
+    );
+  }
+);
+
+// @SCN-LNT-019
+Then(
+  "the three raise, in turn, a measured Evidence Obligation holding that floor whole, a measured one holding no bar, and a plain static one",
+  function () {
+    // WHOLE-CORPUS equality over all three rows at once, so a rule that raised the measured shape
+    // for every row — or the static shape for every row — reds as firmly as one that dropped a row
+    // or picked the number out of the bar and left the direction behind.
+    assert.deepEqual(
+      scenarios.map((scenario) => scenario.evidenceObligations),
+      [
+        [
+          {
+            qualityCheck: "lint",
+            staticCheck: "mutation",
+            measured: true,
+            threshold: 90,
+            atLeast: true,
+          },
+        ],
+        // MEASURED WITH NO BAR is the legal, loud shape (@SCN-CIP-002): the flag routes the
+        // obligation to the comparison arm, and the bar nobody wrote is what that arm reports.
+        [{ qualityCheck: "lint", staticCheck: "coverage", measured: true }],
+        [{ qualityCheck: "lint", staticCheck: "complexity" }],
+      ],
+      `expected the ROW'S SHAPE to decide the obligation — a row naming a bar measured and holding ` +
+        `it whole, a row naming one nothing can read measured and holding none, a row naming none ` +
+        `plain static; got ${JSON.stringify(scenarios)}`
+    );
+  }
+);
 
 // @SCN-LNT-007
 Then(
@@ -1393,7 +1577,7 @@ Then(
 
     // ONE CREDIT ON THE ROW, and it is the one that named this characteristic. A reading that
     // tested the named @SCN's EXISTENCE rather than its MEMBERSHIP posts a second observation
-    // here — lint:complexity-exceptions' — and this list holds two.
+    // here — lint:adopted-vocabulary's — and this list holds two.
     assert.deepEqual(
       (row?.evidenceObservations ?? []).map(
         (observation) => (observation as { staticCheck?: string }).staticCheck
@@ -1408,5 +1592,397 @@ Then(
     assert.match(verdict, /\bbalanced\b/, `expected a balanced verdict cell; got "${verdict}"`);
     assert.doesNotMatch(verdict, /out-of-balance/, `expected not out-of-balance; got "${verdict}"`);
     assert.equal(items, "—", `expected no reconciling items on SCN-FIT-003; got "${items}"`);
+  }
+);
+
+// -------------------------------------------------------------------------
+// @SCN-LNT-020 — the HALF-CONVERTED corpus: two scenarios on the fitness axis, and a row for only
+// one of them. The arm runs end-to-end through the balance composition over a planted target, so
+// the two readings it asserts — the obligation the rule raises, and the naming the report carries —
+// are taken from the same run over the same bytes rather than from two reads that could disagree.
+// -------------------------------------------------------------------------
+
+/** The planted half-converted target's resolved input paths, and the reconciliation it produced. */
+let halfConvertedOpts: { features: string; ci: string; packageJson: string };
+let halfConvertedReconciliation: EvidenceReconciliation;
+
+// @SCN-LNT-020
+Given(
+  "a target's corpus carries two scenarios on the fitness axis and its configured rows name only the first",
+  function () {
+    // Point at the PLANTED EXTERNAL fixture (tests/fixtures/scn-lnt-020/) — a whole target
+    // repository in one directory: its own corpus, its own rows, its own CI. The two assertions
+    // below hold the fixture to what this scenario says it holds; without them it could drift into
+    // carrying a row for both scenarios and the arm would go on passing while proving nothing.
+    const fixture = join(process.cwd(), "tests/fixtures/scn-lnt-020");
+    halfConvertedOpts = {
+      features: join(fixture, "features"),
+      ci: join(fixture, "ci.yml"),
+      packageJson: join(fixture, "package.json"),
+    };
+    const source = readFileSync(join(halfConvertedOpts.features, "target.feature"), "utf8");
+    assert.deepEqual(
+      parseTaggedScenarios(source)
+        .filter((scenario) => scenario.tags.includes("fitness"))
+        .map((scenario) => scenario.scnId),
+      ["SCN-HCV-001", "SCN-HCV-002"],
+      "expected the planted corpus to carry exactly two scenarios on the fitness axis"
+    );
+    assert.deepEqual(
+      [
+        ...resolveFitnessChecks(
+          JSON.parse(readFileSync(halfConvertedOpts.packageJson, "utf8")) as object,
+          NO_GATE_RECORD
+        ).keys(),
+      ],
+      ["SCN-HCV-001"],
+      "expected the planted rows to name the FIRST scenario and no other"
+    );
+  }
+);
+
+// @SCN-LNT-020
+When("that target's evidence is reconciled", function () {
+  // The whole balance composition over the planted target, and the reconciliation it returns is
+  // rendered AS IT CAME — not re-summarised here — so the report a reader meets is the one the run
+  // produced rather than one this arm assembled beside it.
+  halfConvertedReconciliation = runReconcile(halfConvertedOpts);
+  markdown = renderMarkdown(halfConvertedReconciliation, CTX);
+});
+
+// @SCN-LNT-020
+Then(
+  "the second raises no Evidence Obligation, its row is out of balance, and the report names it as a fitness scenario no configured row names",
+  function () {
+    const rows = halfConvertedReconciliation.ledger.scenarioReconciliations;
+    const named = rows.find((row) => row.scnId === "SCN-HCV-001");
+    const unnamed = rows.find((row) => row.scnId === "SCN-HCV-002");
+
+    // BOTH ROWS, side by side, because the only thing separating them is whether a row names them.
+    // A rule reaching for a near characteristic — or for the axis word itself — puts an obligation
+    // on the second and reds here.
+    assert.deepEqual(
+      named?.evidenceObligations,
+      [{ qualityCheck: "lint", staticCheck: "complexity" }],
+      `expected the named scenario to raise its row's characteristic; got ${JSON.stringify(named?.evidenceObligations)}`
+    );
+    assert.deepEqual(
+      unnamed?.evidenceObligations,
+      [],
+      `expected the scenario no row names to raise NOTHING — there is no characteristic to raise ` +
+        `one for; got ${JSON.stringify(unnamed?.evidenceObligations)}`
+    );
+
+    // IT REDS, on the outcome canon already carries for this shape (Scenario Exists, Evidence
+    // Obligation None, Evidence Observation None) rather than on a new one.
+    assert.equal(
+      unnamed?.verdict,
+      "out-of-balance",
+      "expected the half-converted scenario's row to be out of balance"
+    );
+    assert.deepEqual(
+      (unnamed?.reconcilingItems ?? []).map((item) => item.outcome),
+      ["both-missing"],
+      `expected the degenerate item canon already carries, and no minted outcome; got ${JSON.stringify(unnamed?.reconcilingItems)}`
+    );
+
+    // AND THE REPORT NAMES IT, because the degenerate item's own sentence is about a scenario
+    // carrying no @SCN and this one carries one. The reader is sent to the one remedy.
+    assert.match(
+      markdown,
+      /1 @fitness scenario\(s\) no configured row names: SCN-HCV-002\./,
+      `expected the report to name the half-converted scenario; got:\n${markdown}`
+    );
+    assert.doesNotMatch(
+      markdown,
+      /no configured row names: [^\n]*SCN-HCV-001/,
+      "expected the scenario its row DOES name to stay off that line"
+    );
+  }
+);
+
+// -------------------------------------------------------------------------
+// @SCN-LNT-021 — the CREDIT side of a converted STATIC check: a scenario the fitness pass reported
+// credits the row that raised its Evidence Obligation, citing its own @SCN. The arm runs over a
+// planted target repository (tests/fixtures/scn-lnt-021/) whose corpus, rows and fitness report all
+// live in one directory, so the debit and the credit are taken from one reading of one target.
+// -------------------------------------------------------------------------
+
+/** The planted converted target's fixture directory, its fitness report, and what it reconciled to. */
+let convertedFixture: string;
+let convertedFitnessReport: CucumberJsonReport;
+let convertedReconciliation: EvidenceReconciliation;
+
+/** The planted target's manifest, read once and reused by the Given and the When. */
+function convertedManifest(): {
+  specController?: { fitnessChecks?: unknown; checkRegistry?: unknown };
+} {
+  return JSON.parse(readFileSync(join(convertedFixture, "package.json"), "utf8")) as {
+    specController?: { fitnessChecks?: unknown; checkRegistry?: unknown };
+  };
+}
+
+// @SCN-LNT-021
+Given(
+  "a target's configured rows name a static fitness check for each of the two scenarios its corpus carries",
+  function () {
+    convertedFixture = join(process.cwd(), "tests/fixtures/scn-lnt-021");
+    const manifest = convertedManifest();
+    // THE FIXTURE IS HELD TO WHAT THIS SCENARIO SAYS IT HOLDS. Without these it could drift into
+    // carrying a bar, a characteristic tag or a check registry, and the arm would go on passing
+    // while proving something else.
+    assert.deepEqual(
+      [...resolveFitnessChecks(manifest, NO_GATE_RECORD)].map(([scn, row]) => [
+        scn,
+        row.characteristic,
+        carriesBar(row),
+      ]),
+      [
+        ["SCN-CVT-001", "complexity", false],
+        ["SCN-CVT-002", "traceability", false],
+      ],
+      "expected the planted rows to name both scenarios, each a STATIC check carrying no bar"
+    );
+    assert.equal(
+      manifest.specController?.checkRegistry,
+      undefined,
+      "expected the planted target to configure NO check registry — the hop this route retires"
+    );
+    const source = readFileSync(join(convertedFixture, "features/target.feature"), "utf8");
+    assert.deepEqual(
+      parseTaggedScenarios(source)
+        .filter((scenario) => scenario.tags.includes("fitness"))
+        .map((scenario) => [scenario.scnId, scenario.tags.includes("complexity")]),
+      [
+        ["SCN-CVT-001", false],
+        ["SCN-CVT-002", false],
+      ],
+      "expected the planted corpus to carry both scenarios on the axis and no characteristic tag"
+    );
+  }
+);
+
+// @SCN-LNT-021
+Given(
+  "its fitness pass reported both, the first having found nothing and the second a violation",
+  function () {
+    convertedFitnessReport = JSON.parse(
+      readFileSync(join(convertedFixture, "fitness.json"), "utf8")
+    ) as CucumberJsonReport;
+    // The report is held to carrying BOTH verdicts, because the claim at the foot is that the
+    // credit is about the wiring and the exit code is about the findings. A fixture that drifted
+    // into two passing scenarios would let a reading that filtered on status pass here.
+    assert.deepEqual(
+      (convertedFitnessReport[0]?.elements ?? []).map((scenario) => [
+        (scenario.tags ?? []).map((tag) => tag.name).join(" "),
+        (scenario.steps ?? []).map((step) => step.result?.status).join(","),
+      ]),
+      [
+        ["@fitness @SCN-CVT-001", "passed"],
+        ["@fitness @SCN-CVT-002", "failed"],
+      ],
+      "expected the planted report to carry both axis scenarios, one passed and one failed"
+    );
+  }
+);
+
+// @SCN-LNT-021
+When("that target's evidence is reconciled with what its fitness pass reported", function () {
+  // The reconcile composition over the planted target and NOTHING else — no CI bytes, no scripts,
+  // no runtime observations, no measurements. Every credit these two rows receive can only have
+  // come from the fitness report.
+  convertedReconciliation = evidenceReconciliationFromSources({
+    featureSources: [readFileSync(join(convertedFixture, "features/target.feature"), "utf8")],
+    untaggedScenarios: [],
+    packageJson: convertedManifest(),
+    ciSources: [],
+    measurements: {},
+    runtimeObservations: [],
+    deferralTags: [],
+    guardScriptPrefixes: [],
+    killFloor: () => null,
+    fitnessReport: convertedFitnessReport,
+  });
+});
+
+// @SCN-LNT-021
+Then(
+  "each scenario's own row is credited for the characteristic its row names, no check registry naming either, and both rows balance",
+  function () {
+    // BOTH ROWS AT ONCE, whole — a reading that credited only the passing scenario, or that landed
+    // one row's credit on the other row, reds here as firmly as one that credited nothing.
+    assert.deepEqual(
+      convertedReconciliation.ledger.scenarioReconciliations.map((row) => [
+        row.scnId,
+        row.verdict,
+        // The row's reconciled SUB-ROWS, not its `reconcilingItems`: that field holds the
+        // non-balanced subset, so a satisfied credit would be invisible in it.
+        row.qualityCheckReconciliations.map((item) => [
+          item.staticCheck,
+          item.outcome,
+          item.evidenceObservation !== undefined &&
+          isStaticCheckObservation(item.evidenceObservation)
+            ? [
+                item.evidenceObservation.scnId,
+                item.evidenceObservation.checkTag,
+                item.evidenceObservation.exists,
+                item.evidenceObservation.enforcedOverRealSource,
+              ]
+            : null,
+        ]),
+      ]),
+      [
+        [
+          "SCN-CVT-001",
+          "balanced",
+          [["complexity", "satisfied", ["SCN-CVT-001", "complexity", true, true]]],
+        ],
+        [
+          "SCN-CVT-002",
+          "balanced",
+          [["traceability", "satisfied", ["SCN-CVT-002", "traceability", true, true]]],
+        ],
+      ],
+      `expected each reported scenario's own row to be credited for its row's characteristic, both ` +
+        `facts observed off the run; got ${JSON.stringify(convertedReconciliation.ledger.scenarioReconciliations)}`
+    );
+  }
+);
+
+// -------------------------------------------------------------------------
+// @SCN-LNT-022 — the same reading over a MEASURED row: the fitness report raises no credit for it,
+// because that row's credit is its NUMBER. The arm runs over a planted target repository
+// (tests/fixtures/scn-lnt-022/) whose two rows differ in exactly one thing — the second names a
+// bar — so both streams are read from one target and the routing can only be the bar's doing.
+// -------------------------------------------------------------------------
+
+/** The planted mixed target's fixture directory, its two artefacts, and what it reconciled to. */
+let mixedFixture: string;
+let mixedFitnessReport: CucumberJsonReport;
+let mixedMeasurements: MeasurementReport;
+let mixedReconciliation: EvidenceReconciliation;
+
+/** The planted target's manifest, read once and reused by the Given and the When. */
+function mixedManifest(): { specController?: { fitnessChecks?: unknown } } {
+  return JSON.parse(readFileSync(join(mixedFixture, "package.json"), "utf8")) as {
+    specController?: { fitnessChecks?: unknown };
+  };
+}
+
+// @SCN-LNT-022
+Given(
+  "a target's configured rows name a static fitness check for one of its two scenarios and a measured one, holding a floor, for the other",
+  function () {
+    mixedFixture = join(process.cwd(), "tests/fixtures/scn-lnt-022");
+    // THE FIXTURE IS HELD TO THE ONE DIFFERENCE THIS SCENARIO RESTS ON. Both rows on the axis, both
+    // named by a row, and exactly one of them carrying a bar — without this the fixture could drift
+    // into two static rows and the arm would go on passing while proving nothing about routing.
+    assert.deepEqual(
+      [...resolveFitnessChecks(mixedManifest(), NO_GATE_RECORD)].map(([scn, row]) => [
+        scn,
+        row.characteristic,
+        carriesBar(row),
+      ]),
+      [
+        ["SCN-CVT-001", "complexity", false],
+        ["SCN-CVT-003", "mutation", true],
+      ],
+      "expected the planted rows to differ in exactly one thing — the second names a bar"
+    );
+    assert.deepEqual(
+      parseTaggedScenarios(readFileSync(join(mixedFixture, "features/target.feature"), "utf8"))
+        .filter((scenario) => scenario.tags.includes("fitness"))
+        .map((scenario) => scenario.scnId),
+      ["SCN-CVT-001", "SCN-CVT-003"],
+      "expected the planted corpus to carry both scenarios on the bare fitness axis tag"
+    );
+  }
+);
+
+// @SCN-LNT-022
+Given(
+  "its fitness pass reported both scenarios, and its measurement artefact holds a number for the measured one",
+  function () {
+    mixedFitnessReport = JSON.parse(
+      readFileSync(join(mixedFixture, "fitness.json"), "utf8")
+    ) as CucumberJsonReport;
+    mixedMeasurements = JSON.parse(
+      readFileSync(join(mixedFixture, "measurements.json"), "utf8")
+    ) as MeasurementReport;
+    // THE MEASURED SCENARIO IS IN THE REPORT, and that is the point rather than an oversight: its
+    // appearance there is still what says the check ran. A fixture whose report omitted it would
+    // green a reading that never had to skip anything.
+    assert.deepEqual(
+      (mixedFitnessReport[0]?.elements ?? []).map((scenario) =>
+        (scenario.tags ?? []).map((tag) => tag.name).join(" ")
+      ),
+      ["@fitness @SCN-CVT-001", "@fitness @SCN-CVT-003"],
+      "expected the planted report to carry BOTH axis scenarios, the measured one included"
+    );
+    assert.deepEqual(
+      (Array.isArray(mixedMeasurements.measurements) ? mixedMeasurements.measurements : []).map(
+        (row) => [
+          (row as { scnId?: string }).scnId,
+          (row as { checkTag?: string }).checkTag,
+          (row as { measured?: number }).measured,
+        ]
+      ),
+      [["SCN-CVT-003", "mutation", 92]],
+      "expected the artefact to hold one number, citing the measured scenario and its check"
+    );
+  }
+);
+
+// @SCN-LNT-022
+When(
+  "that target's evidence is reconciled with what its fitness pass reported and with what it measured",
+  function () {
+    mixedReconciliation = evidenceReconciliationFromSources({
+      featureSources: [readFileSync(join(mixedFixture, "features/target.feature"), "utf8")],
+      untaggedScenarios: [],
+      packageJson: mixedManifest(),
+      ciSources: [],
+      measurements: mixedMeasurements,
+      runtimeObservations: [],
+      deferralTags: [],
+      guardScriptPrefixes: [],
+      killFloor: () => null,
+      fitnessReport: mixedFitnessReport,
+    });
+  }
+);
+
+// @SCN-LNT-022
+Then(
+  "the static scenario's row is credited off the report and the measured one's row off its number alone, each row carrying one credit and both balanced",
+  function () {
+    // EACH ROW'S CREDIT LIST WHOLE, because that is where the double count is legible: a stray
+    // static credit on the measured row is ABSORBED by that row's own Evidence Obligation, so it
+    // never reaches the verdict and a run holding one obligation with two credits still reads
+    // balanced. Counting the credits is the assertion; the verdicts ride along beside it.
+    assert.deepEqual(
+      mixedReconciliation.ledger.scenarioReconciliations.map((row) => [
+        row.scnId,
+        row.verdict,
+        row.evidenceObservations.map((observation) =>
+          isStaticCheckObservation(observation)
+            ? [observation.staticCheck, "the fitness report"]
+            : [(observation as { checkTag?: string }).checkTag, "the number"]
+        ),
+      ]),
+      [
+        ["SCN-CVT-001", "balanced", [["complexity", "the fitness report"]]],
+        ["SCN-CVT-003", "balanced", [["mutation", "the number"]]],
+      ],
+      `expected one credit on each row, the static one off the report and the measured one off ` +
+        `its number; got ${JSON.stringify(mixedReconciliation.ledger.scenarioReconciliations)}`
+    );
+    // AND THE ROLL-UP COUNTS ONE STATIC CHECK AS HAVING RUN, not two. A measured check is not a
+    // static check that ran, and this total is where a reader would see the second credit.
+    assert.deepEqual(
+      mixedReconciliation.summary.staticChecks,
+      { runningStaticCheckCount: 1, uncitedStaticCheckCount: 0 },
+      "expected exactly one static check counted as having run — the measured row is not one"
+    );
   }
 );

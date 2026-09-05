@@ -481,7 +481,13 @@ Then(
     // are the same arithmetic here, and only an edit to this line tells them apart. It said so
     // again when 3F-3019 wired `lint:check-characteristics` into the workflow, which is the
     // upward direction: a step whose gate did not reach the local ladder would be a green-check
-    // narrower than CI, the subset fault scripts/verify.sh's own header was written about.
+    // narrower than CI, the subset fault scripts/verify.sh's own header was written about — and
+    // again when 3F-3146 wired the `cucumber:fitness` pass, which is the same upward direction
+    // and the reason that sub-issue could assert the derivation had taken its step rather than
+    // assuming it: the number here is what noticed. And downward again when 3F-3151 converted
+    // `lint:complexity` and DELETED its step — the gate did not go quiet, it moved into the
+    // `cucumber:fitness` pass wired one commit earlier, which is why the ladder is one shorter
+    // while nothing stopped being checked.
     assert.equal(
       expected.length,
       15,

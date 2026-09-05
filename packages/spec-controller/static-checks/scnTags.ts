@@ -17,11 +17,13 @@
  * tiered while it owed nothing at all. Exempt: a PARKED scenario ONLY (@SCN-STG-008).
  *
  * A FIFTH WAY TO SATISFY THE FLOOR, AND IT IS A TAG AND ONLY A TAG (@SCN-STG-005): a scenario
- * carrying a REGISTERED bare check tag (`@complexity`, `@typecheck`, `@vocab`) names its
- * fitness check, steps or none. This line used to add "AND IT IS A SHAPE AS WELL AS A TAG",
- * requiring the scenario to be STEPLESS; that half is retired (3F-3126) — steps say how a row
- * was written, the registered tag says which axis it is on. The check-tag set is INJECTED, like
- * the deferral set — see `lintScnTags`.
+ * carrying a word that names a check — a REGISTERED bare check tag (`@complexity`, `@typecheck`,
+ * `@vocab`), or the AXIS tag a CONVERTED check carries — names its fitness check, steps or none.
+ * This line used to add "AND IT IS A SHAPE AS WELL AS A TAG", requiring the scenario to be
+ * STEPLESS; that half is retired (3F-3126) — steps say how a row was written, the tag says which
+ * axis it is on. The set is INJECTED, like the deferral set, and this module names no member of
+ * it: which words a target registers, which it holds to a ceiling, and the one word the MODEL
+ * owns are all assembled at the edge — see `lintScnTags` and `floorCheckTags`.
  *
  * AND ONE CHECK PER FITNESS SCENARIO (@SCN-STG-007). The floor asks whether a scenario names a
  * tier; this asks whether it names too many. Canon allows a fitness scenario ONE check — one run
@@ -249,8 +251,8 @@ function parseScenarios(source: string): ParsedScenario[] {
  * no deferral tag and no registered check — the registry names checks BARE — so it arrives here
  * whatever the registry holds, and `unrecognisedTagFault` names the tag it should have been.
  *
- * A REGISTERED CHECK TAG IS GRAMMAR WHEREVER IT SITS, steps or none (@SCN-STG-005) — the
- * registry is what says the word means something here, and the scenario's shape says nothing
+ * A WORD THAT NAMES A CHECK IS GRAMMAR WHEREVER IT SITS, steps or none (@SCN-STG-005) — the
+ * injected set is what says the word means something here, and the scenario's shape says nothing
  * about that. A stepped scenario riding one still reds, but as TIER-LESS, which is the fault it
  * has: telling an author "this tag means nothing here" about a tag that names a real check is
  * the same wrong-message failure @SCN-STG-002 split the two kinds to avoid.
@@ -358,7 +360,7 @@ function multipleCheckTagViolations(
  * TWO WAYS, AND THE SECOND IS A TAG AND ONLY A TAG. A behavioural scenario names one of the tier
  * tags `isTierTag` knows. A FITNESS scenario names none of them: once the technique leaves the tag
  * (`@lint=lint:complexity` → `@complexity`), the check tag is all it carries. So a scenario
- * carrying a registered bare check tag satisfies the floor on that alone — without which the
+ * carrying a word from the injected set satisfies the floor on that alone — without which the
  * corpus sweep writes a scenario per CI check and every one reds.
  *
  * WHETHER IT HAS STEPS IS NOT ASKED (3F-3126). This route used to require the scenario to be
@@ -373,10 +375,18 @@ function multipleCheckTagViolations(
  *
  * SO THE FLOOR AND THE OBLIGATION RULE ASK ONE QUESTION OF ONE SET, which is the invariant the
  * Rule preamble required before either had met it. Both read
- * `registeredCheckTags(checkRegistry) ∪ measuredCheckTags(thresholds)` off the target's own
- * package.json (`lintScnTagsCli`; `parse/targetCorpus`), and now both ask exactly `tag ∈ set`:
- * this floor admits precisely the scenarios the engine raises a fitness obligation for. Neither
- * the tier-named evidence-free row nor the obligated row this floor refuses is constructible.
+ * `registeredCheckTags(checkRegistry) ∪ measuredCheckTags(thresholds) ∪ {FITNESS_AXIS_TAG}` off
+ * the target's own package.json and the model's own word (`lintScnTagsCli`; `parse/targetCorpus`,
+ * `parse/scenarios`), and now both ask exactly `tag ∈ set`: this floor admits precisely the
+ * scenarios the engine raises a fitness obligation for. Neither the tier-named evidence-free row
+ * nor the obligated row this floor refuses is constructible.
+ *
+ * THE ONE PLACE THE EQUALITY IS DELIBERATELY LOOSE IS THE CONVERTED WORD (3F-3149). A scenario on
+ * the fitness axis that NO configured row names raises no obligation and still satisfies this
+ * floor — because the engine has its own sentence for that corpus (@SCN-LNT-020 names it by id,
+ * and the run reds through the degenerate both-missing item), and a second half-report here would
+ * carry the wrong remedy: "name a tier", said to an author whose scenario names its axis. One
+ * fault, one place, with the message that fixes it.
  *
  * WHAT STOOD HERE UNTIL THIS COMMIT WAS AN INTERIM RECORD, AND IT IS RETIRED BY BEING SETTLED
  * (3F-3115 wrote it, 3F-3126 closes it). It said this floor was DELIBERATELY THE STRICTER OF THE
@@ -410,14 +420,21 @@ function satisfiesTierFloor(scenario: ParsedScenario, checks: ReadonlySet<string
  * is how a `@skip` scenario came to be recognised as a legitimate deferral and then failed for it.
  * "Defaults to the community set" is the CLI's job, from the application layer's starter list.
  *
- * `checkTags` — the target's REGISTERED bare check tags (@SCN-STG-005) — is INJECTED and defaults
- * to none, exactly as the deferral set is, and for the same reason: which words name a check is
- * the target's own answer, not this module's. Inferred from shape instead — any bare tag a
- * STEPLESS scenario carries — a typo would satisfy the floor and raise no obligation; inferred
- * from a `lint:` prefix, `typecheck` would be missed (3F-2495). The shape belongs to that rejected
- * reading and to nothing this module still does: no rule here asks about steps (3F-3126), and the
- * private reader that answered it is retired (3F-3134). A target that has registered nothing
- * behaves exactly as it did before, which is what lets this land ahead of the sweep that uses it.
+ * `checkTags` — every word that NAMES a check on the tree being checked (@SCN-STG-005) — is
+ * INJECTED and defaults to none, exactly as the deferral set is, and for the same reason: which
+ * words name a check is the caller's answer, not this module's. Inferred from shape instead — any
+ * bare tag a STEPLESS scenario carries — a typo would satisfy the floor and raise no obligation;
+ * inferred from a `lint:` prefix, `typecheck` would be missed (3F-2495). The shape belongs to that
+ * rejected reading and to nothing this module still does: no rule here asks about steps (3F-3126),
+ * and the private reader that answered it is retired (3F-3134). A target that has registered
+ * nothing behaves exactly as it did before, which is what lets this land ahead of the sweep that
+ * uses it.
+ *
+ * IT IS THREE SOURCES AT THE EDGE AND ONE PARAMETER HERE (3F-3149), which is the same discipline
+ * the deferral set's one parameter carries: a target's registry, its ceilings and the model's own
+ * CONVERTED-axis word are assembled once, in `floorCheckTags`, so the FLOOR and the ONE-CHECK rule
+ * cannot come to hold different opinions of which words name a check. They did once, over
+ * steplessness, and 3F-3126 spent a slice bringing them back.
  */
 export function lintScnTags(
   features: readonly FeatureFileSource[],
@@ -459,7 +476,7 @@ export function lintScnTags(
           `Feature "${feature.slug}" scenario @${scnId} ("${scenario.title}") names ` +
           `no evidence tier and is not parked — every @SCN scenario must name at least ` +
           `one tier (@unit/@integration/@e2e/@performance, a <tier>pending variant, or ` +
-          `@lint=<guard>), or a registered bare check tag, unless it carries one of the ` +
+          `@lint=<guard>), or a word that names a check here, unless it carries one of the ` +
           `deferral tags this target configures.`,
       });
     }

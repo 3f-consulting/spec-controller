@@ -5,8 +5,8 @@
  * features/report-model.feature, so a grep of the id returns both halves.
  *
  * WHY A SEPARATE FILE. `renderInput.test.ts` — where @SCN-RMD-008's other arms live — measures
- * EXACTLY 626 code lines against a 626 complexity-exceptions ratchet, so one line added reds
- * `lint:complexity` and raising the recorded value would widen the debt the ratchet holds down.
+ * EXACTLY 626 code lines against a 626 complexity-exceptions ratchet, so one line added reds the
+ * complexity check and raising the recorded value would widen the debt the ratchet holds down.
  * The house pattern is a focused sibling file (`untaggedScenarioRow.test.ts`, `journal.test.ts`),
  * and an @SCN carrying arms in more than one file is routine (@SCN-CIP-003 has four).
  *

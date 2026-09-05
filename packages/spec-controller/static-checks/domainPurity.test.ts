@@ -38,8 +38,13 @@ import { collectSourceFiles, CORE_SRC_ROOT, DOMAIN_ROOT, type CollectedFile } fr
  * 11 → 12 at 3F-2996: `checkCharacteristics.ts`, the portfolio's check-characteristic roster
  * (@SCN-CHR-001) — pure data plus one predicate, importing nothing, so it lands in the domain
  * beside `checkRegistry.ts` and this walk collects one more file.
+ *
+ * 12 → 13 at 3F-3140: `fitnessChecks.ts`, the CONFIGURED ROWS a converted fitness check is read
+ * from (@SCN-LNT-018) — the `@SCN` → characteristic reading, importing only `bareTerm`, so it
+ * lands in the domain beside `checkRegistry.ts` and `thresholds.ts`, its two peers on the same
+ * seam. The floor moves because the population did.
  */
-const DOMAIN_FILE_COUNT = 12;
+const DOMAIN_FILE_COUNT = 13;
 
 describe("[SCN-DPG-001] a domain module imports only the domain layer and pure standard types", () => {
   it("flags a domain file that imports from an adapter layer (parse/render/assemble/census)", () => {

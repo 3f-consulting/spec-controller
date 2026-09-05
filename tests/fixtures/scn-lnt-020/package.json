@@ -1,0 +1,16 @@
+{
+  "name": "half-converted-target-repo-fixture",
+  "private": true,
+  "scripts": {
+    "test": "vitest run"
+  },
+  "specController": {
+    "fitnessChecks": [
+      {
+        "scn": "SCN-HCV-001",
+        "characteristic": "complexity",
+        "command": "eslint"
+      }
+    ]
+  }
+}

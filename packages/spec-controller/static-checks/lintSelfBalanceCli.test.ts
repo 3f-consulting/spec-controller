@@ -14,13 +14,19 @@
  *   names it is an uncited static check, i.e. an instance on the tool's own books of the
  *   class `uncited-static-checks.feature` exists to name.
  *
- * The gate's VERDICT — reds an out-of-balance tree, passes a balanced one — is the
- * @integration arm's (tests/steps/selfReconciliation.steps.ts), which runs the real
- * guard end-to-end over two planted trees. Asserting a verdict here would only re-run
- * the reconciler in isolation.
+ *   THE SEVENTH SURFACE REACHING THE VERDICT (3F-3145). The scope object and the argv are
+ *   both claims about strings: a `--fitness` the balance command does not accept satisfies
+ *   them and then exits 2 on the first real run. So this arm drives the flag through
+ *   `runBalance` itself over a converted target fixture, and the two runs differ in exactly
+ *   one argument, which is what attributes the difference to the flag.
+ *
+ * The gate's VERDICT over spec-controller's own tree — reds an out-of-balance tree, passes a
+ * balanced one — is the @integration arm's (tests/steps/selfReconciliation.steps.ts), which
+ * runs the real guard end-to-end over two planted trees. Asserting THAT verdict here would
+ * only re-run the reconciler in isolation.
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -30,6 +36,7 @@ import {
   selfBalanceArgv,
   checkEvidenceReportsPresent,
 } from "./lintSelfBalanceCli.js";
+import { runBalance } from "../src/cli-balance/cli.js";
 import {
   parseScenarios,
   checkStaticEvidenceObligations,
@@ -53,13 +60,18 @@ const OWN_STATIC_CHECK = "lint:self-balance";
 const GUARD_PREFIXES = ["lint:", "guard:"] as const;
 
 describe("[SCN-SLF-001] the self-balance gate's scan scope is stated, whole, in one place", () => {
-  it("reaches exactly the six surfaces a reconciliation reads — named, observed, and wired", () => {
-    // EXHAUSTIVE by design. A seventh surface, or a sixth quietly removed, must red here:
+  it("reaches exactly the seven surfaces a reconciliation reads — named, observed, and wired", () => {
+    // EXHAUSTIVE by design. An eighth surface, or a seventh quietly removed, must red here:
     // this object is the only statement of what spec-controller's own tree is judged on.
     expect(SELF_BALANCE_SCOPE).toEqual({
       features: "features",
       vitest: "runs/self-balance/vitest.json",
       cucumber: "runs/self-balance/cucumber.json",
+      // The FITNESS pass's own report (@SCN-LNT-021, 3F-3145) — a SECOND cucumber call's
+      // document, read as the converted static checks' credits rather than as runtime results.
+      // It is a surface in its own right precisely because one file read two ways would leave
+      // the gate guessing which half of it was which.
+      fitness: "runs/self-balance/fitness.json",
       // The MEASURED stream (@SCN-CIP-013, 3F-2742), sourced from the producer's own constant
       // so the path this gate reads cannot drift from the path the timed steps write.
       measurements: "runs/self-balance/measurements.json",
@@ -71,7 +83,7 @@ describe("[SCN-SLF-001] the self-balance gate's scan scope is stated, whole, in 
     });
   });
 
-  it("keeps the three runtime artefacts under the never-committed runs/ tree", () => {
+  it("keeps the four runtime artefacts under the never-committed runs/ tree", () => {
     // Not incidental: a reconciliation report enumerates this codebase's gaps, so it is
     // more sensitive than the code. runs/** is gitignored with no re-includes and
     // hygiene:no-committed-reports enforces it, so writing the streams there is what keeps
@@ -79,6 +91,7 @@ describe("[SCN-SLF-001] the self-balance gate's scan scope is stated, whole, in 
     expect(SELF_BALANCE_SCOPE.vitest.startsWith("runs/")).toBe(true);
     expect(SELF_BALANCE_SCOPE.cucumber.startsWith("runs/")).toBe(true);
     expect(SELF_BALANCE_SCOPE.measurements.startsWith("runs/")).toBe(true);
+    expect(SELF_BALANCE_SCOPE.fitness.startsWith("runs/")).toBe(true);
   });
 
   it("hands every scope surface to the product's balance command, resolved against the root", () => {
@@ -95,6 +108,8 @@ describe("[SCN-SLF-001] the self-balance gate's scan scope is stated, whole, in 
       path.join("/tmp/target", "runs/self-balance/cucumber.json"),
       "--measurements",
       path.join("/tmp/target", "runs/self-balance/measurements.json"),
+      "--fitness",
+      path.join("/tmp/target", "runs/self-balance/fitness.json"),
       "--ci",
       path.join("/tmp/target", ".github/workflows"),
       "--package-json",
@@ -104,7 +119,7 @@ describe("[SCN-SLF-001] the self-balance gate's scan scope is stated, whole, in 
     ]);
   });
 
-  it("leaves --measurements off where no timed step posted, so the rows it answers reconcile missing", () => {
+  it("leaves the two optional artefacts' flags off where nothing wrote them, so the rows they answer reconcile missing", () => {
     // THE ASYMMETRY IS THE POINT (@SCN-CIP-013). A --measurements path the balance command cannot
     // find is a usage fault to it and exits 2, and exit 2 says "this run is broken" where the
     // truth is "a timed suite was never measured" — a verdict @SCN-CIP-006 puts on the ledger.
@@ -113,7 +128,11 @@ describe("[SCN-SLF-001] the self-balance gate's scan scope is stated, whole, in 
     const argv = selfBalanceArgv("/tmp/target", {}, () => false);
 
     expect(argv).not.toContain("--measurements");
-    // Everything else still reaches the command — the absent artefact narrows nothing but itself.
+    // THE FITNESS REPORT TAKES THE MEASUREMENT ARTEFACT'S TREATMENT, NOT THE SUITE REPORTS'
+    // (3F-3145). A target that has converted nothing emits no fitness report, and a run that
+    // exited 2 over its absence would call every unconverted consumer's set-up broken.
+    expect(argv).not.toContain("--fitness");
+    // Everything else still reaches the command — the absent artefacts narrow nothing but themselves.
     expect(argv).toContain(path.join("/tmp/target", "runs/self-balance/vitest.json"));
     expect(argv).toContain(path.join("/tmp/target", "features"));
   });
@@ -132,6 +151,61 @@ describe("[SCN-SLF-001] the self-balance gate's scan scope is stated, whole, in 
     expect(argv).toContain(path.join("/tmp/target", "features"));
     expect(argv).toContain(path.join("/tmp/target", ".github/workflows"));
     expect(argv).toContain(path.join("/tmp/target", "package.json"));
+  });
+});
+
+describe("[SCN-SLF-001] the fitness pass's report is a surface the balance command accepts and reads", () => {
+  // THE CONVERTED TARGET FIXTURE (@SCN-LNT-021's, reused rather than re-planted): two scenarios on
+  // the bare fitness axis tag, a configured row naming each, and a fitness report holding both. Its
+  // directory carries no workflow, so `--ci` at the fixture resolves to nothing and this
+  // repository's own workflows cannot leak onto the planted target's books.
+  const fixture = "tests/fixtures/scn-lnt-021";
+  const withoutTheReport = [
+    "--features", `${fixture}/features`,
+    "--package-json", `${fixture}/package.json`,
+    "--ci", fixture,
+  ];
+
+  /** Run `balance` in-process and read back its verdict headline and its exit code. */
+  function verdictOf(argv: readonly string[]): { word: string; exitCode: number; emitted: string } {
+    const savedExitCode = process.exitCode;
+    process.exitCode = 0;
+    const chunks: string[] = [];
+    const writeSpy = vi
+      .spyOn(process.stdout, "write")
+      .mockImplementation((chunk: string | Uint8Array): boolean => {
+        chunks.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
+        return true;
+      });
+    try {
+      runBalance([...argv]);
+      const emitted = chunks.join("");
+      const headline = emitted.match(/^\*\*(BALANCED|OUT-OF-BALANCE|UNSOUND)\*\* /m);
+      return { word: String(headline?.[1]), exitCode: Number(process.exitCode ?? 0), emitted };
+    } finally {
+      writeSpy.mockRestore();
+      process.exitCode = savedExitCode;
+    }
+  }
+
+  it("credits the converted rows when it is named, and leaves them unanswered — never a broken run — when it is not", () => {
+    const named = verdictOf([...withoutTheReport, "--fitness", `${fixture}/fitness.json`]);
+    const unnamed = verdictOf(withoutTheReport);
+
+    // NAMED: the two converted obligations are settled off the report, so the target balances.
+    expect(named.word, named.emitted).toBe("BALANCED");
+    expect(named.exitCode).toBe(0);
+
+    // UNNAMED, the control, and the difference is one argument. The rows reconcile MISSING and the
+    // run is out-of-balance (exit 1) — never the usage code 2, which is what a precondition check
+    // on this surface would have produced and what the ticket rules out: an unconverted consumer's
+    // set-up is not broken by having nothing to convert.
+    expect(unnamed.word, unnamed.emitted).toBe("OUT-OF-BALANCE");
+    expect(unnamed.exitCode).toBe(1);
+    // And the red NAMES the rows it is about, so the difference is attributable to the two
+    // converted scenarios rather than to some other flaw in the fixture.
+    expect(unnamed.emitted).toContain("SCN-CVT-001");
+    expect(unnamed.emitted).toContain("SCN-CVT-002");
   });
 });
 

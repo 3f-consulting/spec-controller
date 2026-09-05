@@ -11,12 +11,19 @@
  * lists disagreeing. It also inherits `bareTerm` normalisation for free (3F-2976): a manifest
  * spelling `@complexity` or `@mutation` resolves without a second reading of what a term BARE is.
  *
- * BOTH SOURCES ARE READ, AND THEY STAY TWO (@SCN-CHR-002). A measured check has no runnable script
- * handle, so the registry can never carry it and `specController.thresholds` is the only place it
- * is named; a gate reading the registry alone would leave `ci-run-time` and `mutation` mintable at
- * will — the fault surviving in the half of the config nobody looked at. `registeredCheckTags`,
- * `measuredCheckTags` and `floorCheckTags` are untouched: what is added is that ONE roster judges
- * what both sources may name.
+ * EVERY SOURCE IS READ, AND THEY STAY SEPARATE (@SCN-CHR-002, @SCN-CHR-005). A measured check has
+ * no runnable script handle, so the registry can never carry it and `specController.thresholds` is
+ * the only place it is named; a CONVERTED check is not discovered as a handle either, and names its
+ * characteristic on its own configured row. A gate reading the registry alone would leave
+ * `ci-run-time` and `mutation` mintable at will, and one stopping at the first two would leave
+ * every converted check the same way — the fault surviving in the part of the config nobody looked
+ * at. `registeredCheckTags`, `measuredCheckTags` and `floorCheckTags` are untouched: what is added
+ * is that ONE roster judges what all three may name.
+ *
+ * AND THE SOURCES ARE COUNTED OUT LOUD, on the happy path (@SCN-CHR-005). The failure mode this
+ * check has that its own faults do not is a source silently not read: it reds nothing, anywhere, so
+ * the verdict names the places it reached rather than leaving a green to be read as covering the
+ * manifest. `CHARACTERISTIC_SOURCE_KEYS` is the one list the reading and this sentence both take.
  *
  * THE WIRING LANDED AS ONE COMMIT, AND THAT IS WHY (@SCN-CHR-005). A `lint:`-prefixed script is
  * discovered as a running static check by `GUARD_SCRIPT_PREFIXES`, so one landing ahead of its
@@ -47,15 +54,17 @@ import { existsSync, readFileSync } from "node:fs";
 import { killFloorReaderFor } from "../src/ingest/ingestQualityChecks.js";
 import {
   resolveCheckRegistry,
+  resolveFitnessChecks,
   resolveMintedCharacteristics,
   resolveThresholds,
 } from "@3f-consulting/spec-controller-core/internal";
 import {
   admittedMints,
+  CHARACTERISTIC_SOURCE_KEYS,
   characteristicFaults,
-  registryCharacteristics,
-  thresholdCharacteristics,
+  namedCharacteristics,
   type AdmittedMint,
+  type NamedCharacteristic,
 } from "./characteristicRoster.js";
 
 /** The target's own `package.json` — the manifest whose named characteristics are judged. */
@@ -63,8 +72,28 @@ export interface TargetManifest {
   specController?: {
     checkRegistry?: unknown;
     thresholds?: unknown;
+    fitnessChecks?: unknown;
     mintedCharacteristics?: unknown;
   };
+}
+
+/**
+ * Everything this manifest names, gathered from every place it may name one (@SCN-CHR-005).
+ *
+ * THE TARGET'S OWN TREE IS THE CWD, so `.` is the root every threshold record path is joined onto
+ * — the same argument `floorCheckTags` passes, for the same reason.
+ *
+ * EXPORTED SO THE READING IS PINNABLE APART FROM THE PRINTING. A rule that reaches three sources is
+ * worth nothing while the check still hands it two, and that inertness is silent: the verdict would
+ * go on greening a manifest whose rows nobody read. So the CALL SITE is what the @unit arm holds,
+ * not only the rule behind it.
+ */
+export function targetNamedCharacteristics(manifest: TargetManifest): NamedCharacteristic[] {
+  return namedCharacteristics(
+    resolveCheckRegistry(manifest),
+    resolveThresholds(manifest, killFloorReaderFor(".")),
+    resolveFitnessChecks(manifest, killFloorReaderFor(".")),
+  );
 }
 
 /**
@@ -82,12 +111,7 @@ function targetPackageJson(): TargetManifest {
 /** Read the target's manifest, judge the characteristics it names, and exit on the verdict. */
 export function runCheckCharacteristicsLint(): void {
   const manifest = targetPackageJson();
-  // THE TARGET'S OWN TREE IS THE CWD, so `.` is the root every threshold record path is joined
-  // onto — the same argument `floorCheckTags` passes, for the same reason.
-  const named = [
-    ...registryCharacteristics(resolveCheckRegistry(manifest)),
-    ...thresholdCharacteristics(resolveThresholds(manifest, killFloorReaderFor("."))),
-  ];
+  const named = targetNamedCharacteristics(manifest);
   const mints = resolveMintedCharacteristics(manifest);
   // The roster is left at its default — the portfolio's, which is the only one a real target is
   // judged against. Naming it here would be a second statement of a default stated once.
@@ -102,7 +126,9 @@ export function runCheckCharacteristicsLint(): void {
 
   if (faults.length === 0) {
     console.log(
-      `check-characteristics lint: OK — ${named.length} characteristic(s) named and ` +
+      `check-characteristics lint: OK — ${named.length} characteristic(s) named across all ` +
+        `${CHARACTERISTIC_SOURCE_KEYS.length} of the places a target may name one ` +
+        `(${CHARACTERISTIC_SOURCE_KEYS.join(", ")}), and ` +
         `${admitted.length} mint(s) stated, every one either a word the portfolio roster ` +
         `carries or a mint carrying its reason. This holds the WORDS to the roster; it does not ` +
         `judge whether a characteristic was EARNED — canon's admission test asks whether an ` +

@@ -6,9 +6,11 @@
  *
  * BUILT THE WAY THE TIMING WRAPPER WAS, because it is the same producer over a different number.
  * `timeStepCli.ts` wraps a step and reads a clock; this wraps a sweep and reads the report the
- * sweep left. Both are told which scenario and which check they are measuring, both post into the
- * one artefact `balance --measurements` reads, and both carry the wrapped command's exit code out
- * unchanged. What is genuinely different is only where the number comes from.
+ * sweep left. Both are told which scenario and which check they are measuring, both write a row in
+ * the one shape `balance --measurements` reads, and both carry the wrapped command's exit code out
+ * unchanged. What is genuinely different is where the number comes from — and, since 3F-3152,
+ * which FILE it lands in: a timed step measures the run it is part of and credits it, a sweep on
+ * its own cadence leaves a record for a later run to borrow.
  *
  * THE CITATION IS AN ARGUMENT, NOT A LOOKUP. A static check's credit resolves its `@SCN` over two
  * hops from a script handle; a measurement has no handle to resolve, so canon puts the
@@ -22,11 +24,17 @@
  * block. A producer holding both the number and the bar that number is judged against would make
  * a green build depend on two arbiters agreeing.
  *
- * IT READS THE ARTEFACT BEFORE IT WRITES ONE (@SCN-CIP-011), because a run has as many
- * measurements as it has measured checks and they all post into the one file `--measurements`
- * names. What that read is worth — and what an unreadable one is worth — is
- * `measurementArtefact.ts`'s to decide, and this producer posts BESIDE what it finds rather than
- * over it.
+ * IT WRITES A SWEEP RECORD, NOT THIS RUN'S CREDIT STREAM (3F-3152). A sweep on its own cadence is
+ * not measuring the tree the run reading it is judging — that gap is the whole reason the number
+ * has to cross a run boundary — so what it leaves behind is a RECORD of what it measured, at
+ * `SWEEP_RECORD_PATH`, and a push borrows it there. Under a CONVERTED mutation check the credit is
+ * posted by the fitness pass from the number this record holds, so a row written straight into the
+ * credit stream would be a second credit for one Evidence Obligation. The shape of the file and
+ * every rule about writing into it are unchanged; only which question it answers is.
+ *
+ * IT READS THE RECORD BEFORE IT WRITES ONE (@SCN-CIP-011) and posts BESIDE what it finds rather
+ * than over it. What that read is worth — and what an unreadable one is worth — is
+ * `measurementArtefact.ts`'s to decide.
  *
  * A SWEEP THAT LEFT NO READABLE REPORT LEFT NO NUMBER, SO IT POSTS NOTHING (@SCN-MUT-008).
  * Absent, empty and unparseable are one answer, and that answer is not zero: a zero is the kill
@@ -48,7 +56,7 @@ import path from "node:path";
 import { readMutationReport } from "../src/mutation-ratchet/index.js";
 
 import {
-  MEASUREMENT_ARTEFACT_PATH,
+  SWEEP_RECORD_PATH,
   exitCodeOf,
   measurementArtefactWith,
 } from "./measurementArtefact.js";
@@ -166,7 +174,7 @@ function alreadyPostedIn(artefactPath: string): string | undefined {
   }
 }
 
-const artefactPath = path.join(sweep.root, MEASUREMENT_ARTEFACT_PATH);
+const artefactPath = path.join(sweep.root, SWEEP_RECORD_PATH);
 // The parent is made rather than assumed: `runs/` is gitignored, so on a fresh clone the first
 // producer of a job is the thing that creates it.
 mkdirSync(path.dirname(artefactPath), { recursive: true });

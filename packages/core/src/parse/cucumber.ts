@@ -42,7 +42,13 @@ export type CucumberJsonReport = Array<{
   }>;
 }>;
 
-const SCN_TAG = /^@?(SCN-[A-Z0-9]+-\d+)$/;
+/**
+ * Which tag on a REPORTED scenario is its `@SCN`. Exported because the fitness pass's report is
+ * read by a second reader (`convertedFitnessCredits`, @SCN-LNT-021) that asks the same question of
+ * the same document — and two spellings of it would eventually disagree about a corpus neither of
+ * them wrote.
+ */
+export const SCN_TAG = /^@?(SCN-[A-Z0-9]+-\d+)$/;
 
 /**
  * The non-unit runtime tiers a scenario can NAME by tag. A cucumber observation's

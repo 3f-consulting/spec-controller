@@ -60,22 +60,29 @@ off the board without reporting it unrun — so the ladder reds if it ever stops
 
 `bash scripts/verify.sh --list` prints the gates without running them.
 
-**One gate reads a number no local run takes.** `lint:self-balance` reconciles
-`@SCN-MUT-011` — this repository's own domain-core mutation score — against the bar in
-`specController.thresholds`. A mutation sweep costs 8-12 minutes on CI, so it runs nightly
-(`.github/workflows/mutation.yml`) and CI restores that score into the run while it is still
-young enough to be about the code being judged; a score older than 36 hours is not restored
-at all, the row reads `missing`, and the gate reds — which is how a nightly that stops
-running says so. On your machine there is nothing to restore, so run the sweep once:
+**Two gates read a number no local run takes.** `@SCN-MUT-011` — this repository's own
+domain-core mutation score — is a CONVERTED fitness check: its configured row in
+`specController.fitnessChecks` names the characteristic, the command that prints the number
+(`pnpm --silent mutation:score`) and the `domain` gate its bar is sourced from. So
+`cucumber:fitness` runs that command and posts what it printed, and `lint:self-balance`
+reconciles the number against the gate's banked kill floor.
+
+A mutation sweep costs 8-12 minutes on CI, so it runs nightly
+(`.github/workflows/mutation.yml`) and leaves what it measured as a SWEEP RECORD; CI borrows
+that record into `runs/mutation/measurements.json` while it is still young enough to be about
+the code being judged. A score older than 36 hours is not placed at all — the command then has
+nothing to print, `cucumber:fitness` reds on the scenario and `lint:self-balance` reds on the
+row, which reads `missing`. That is how a nightly that stops running says so.
+
+On your machine there is nothing to borrow, so run the sweep once:
 
 ```
 pnpm mutation
 ```
 
-That is ~45 seconds locally and posts the score beside the run's other measurements, after
-which `pnpm verify` is green. Skipping it leaves `lint:self-balance` reporting
-`@SCN-MUT-011` as `missing`, which is the true sentence rather than a false red: no
-measurement arrived.
+That is ~45 seconds locally and writes the sweep record, after which `pnpm verify` is green.
+Skipping it fails `@SCN-MUT-011` in the fitness pass and leaves `lint:self-balance` reporting
+it as `missing` — the true sentence rather than a false red: no measurement arrived.
 
 ## Reports live outside the repo
 

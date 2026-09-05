@@ -419,6 +419,22 @@ export interface Summary {
   staticChecks?: StaticCheckTotals;
   /** The static-only lint evidenceObligation tally (RMD-005) — always present (a pure balance derive). */
   lint: LintTally;
+  /**
+   * The scenarios ON the fitness axis that no configured row NAMES (@SCN-LNT-020) — the corpus's
+   * half-converted checks, in corpus order.
+   *
+   * NOT A LEDGER FOLD, and it says so by being the one member here that is not. It is a fact about
+   * the CORPUS — what a scenario said about itself and what no row said back — which the Ledger
+   * cannot hold: such a scenario raises nothing, so nothing about it reaches a row except the
+   * degenerate `both-missing` item its emptiness earns, and that item's own gloss is about a
+   * scenario carrying no `@SCN`. It rides beside `staticChecks` for the reason that one does: the
+   * report's `### Static checks` section is where a half-entry the run saw and nothing owed is
+   * named, and this is that same class of half-entry on the other side of the books.
+   *
+   * PRESENT ONLY WHEN NON-EMPTY, so a target that has converted nothing — every target today —
+   * renders and serialises exactly as it did before.
+   */
+  unconfiguredFitnessScenarios?: readonly string[];
 }
 
 /**

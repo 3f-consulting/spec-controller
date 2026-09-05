@@ -104,8 +104,13 @@ function isCeiling(value: unknown): value is number {
  * A RECOGNISED KEY IS NOT A LICENCE FOR THE VALUE BESIDE IT. Both forms reach the same number
  * reading, so a floor of `NaN` is dropped exactly as a ceiling of `NaN` is — `measured >= NaN` is
  * false, and a bar nothing can clear reds an honest suite and blames the suite.
+ *
+ * EXPORTED BECAUSE A CONVERTED CHECK'S ROW NAMES ITS BAR IN THESE SAME TWO KEYS (@SCN-LNT-019), and
+ * one bar grammar is the point: a second reader over `atLeast` / `atMost` would be a second opinion
+ * about what a target wrote, and the first entry either read differently would be a silent one. The
+ * row is handed in whole — the other terms beside the direction are none of this reader's business.
  */
-function barOf(entry: unknown): ThresholdBar | null {
+export function barOf(entry: unknown): ThresholdBar | null {
   if (isCeiling(entry)) return { threshold: entry };
   if (typeof entry !== "object" || entry === null) return null;
   const named = entry as Record<string, unknown>;

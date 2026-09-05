@@ -32,10 +32,24 @@ Feature: spec-controller reconciles its own tree, and the build depends on the a
     wiring land together.
 
     WHAT THE GATE SCANS is stated once, in `SELF_BALANCE_SCOPE`, and is the whole of it:
-    `features/`, the Vitest report, the Cucumber report, the WORKFLOW DIRECTORY,
-    `package.json`. Five surfaces resolved against one root — the repository in CI, a
-    planted tree under test. A path reaches the gate only by entering one of the five,
-    which is what makes the boundary deliberate rather than inherited.
+    `features/`, the Vitest report, the behavioural Cucumber report, the measurement
+    artefact, the FITNESS PASS'S report, the WORKFLOW DIRECTORY, `package.json`. Seven
+    surfaces resolved against one root — the repository in CI, a planted tree under test.
+    A path reaches the gate only by entering one of the seven, which is what makes the
+    boundary deliberate rather than inherited.
+
+    TWO CUCUMBER REPORTS, BECAUSE THERE ARE TWO PASSES. The behavioural pass's report
+    carries runtime credits levelled by a tier tag; the fitness pass's carries static-check
+    credits named by a configured row. One document cannot be read both ways without the
+    gate guessing which half of it is which, so the second pass is told apart by being
+    named separately rather than by a rule buried inside one file.
+
+    A TARGET THAT HAS CONVERTED NOTHING EMITS NO FITNESS REPORT, AND THAT IS NOT A BROKEN
+    RUN. The two suite reports carry a precondition check — an unemitted one means the
+    suite did not run, which would leave every obligation unobserved — and the fitness
+    report carries none, for the reason the measurement artefact carries none: its absence
+    leaves exactly the converted rows unanswered, and those rows reconciling missing is a
+    verdict the ledger is entitled to reach.
 
     THE CI SURFACE IS THE DIRECTORY, NOT ONE FILE (3F-2500). The product's own default
     reads every workflow, because a check enforced from a sibling file is otherwise

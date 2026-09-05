@@ -210,7 +210,7 @@ describe("[SCN-CPX-003] reconcileExceptions — the list must state the measured
     expect(new Set(found.map((d) => d.message)).size).toBe(3);
   });
 
-  it("[SCN-CPX-003] leaves an over-standard file with NO entry to lint:complexity", () => {
+  it("[SCN-CPX-003] leaves an over-standard file with NO entry to the complexity check", () => {
     // Deliberately not this check's finding: an unexcepted file over the standard is an ordinary
     // standard violation, and @SCN-CPX-001 reds it by name. Two authors for one fault would blur
     // which check owns which sentence.

@@ -1,0 +1,14 @@
+name: CI
+
+# A FIXTURE CI config for the half-converted target repository (@SCN-LNT-020). It carries no
+# `lint:` step at all, because this arm's subject is the DEBIT side: what a corpus says about
+# itself when one of its two fitness scenarios has a configured row and the other has none.
+on: [push, pull_request]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test
+        run: pnpm test

@@ -37,7 +37,7 @@ import { fileURLToPath } from "node:url";
 import { describe, it, expect } from "vitest";
 import { parse } from "yaml";
 
-import { MEASUREMENT_ARTEFACT_PATH } from "./measurementArtefact.js";
+import { SWEEP_RECORD_PATH } from "./measurementArtefact.js";
 import { MUTATION_REPORT_PATH } from "./mutationScore.js";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
@@ -190,7 +190,7 @@ describe("[SCN-MUT-016] a sweep that died leaves no measurement behind, and its 
     // `success()`, and a step placed AHEAD of the sweep would have nothing yet to succeed at.
     // Either edit alone leaves a failed run uploading a number about a tree it never finished.
     const steps = nightlySteps();
-    const upload = theOneIndex(steps, (step) => uploads(step, MEASUREMENT_ARTEFACT_PATH), `upload ${MEASUREMENT_ARTEFACT_PATH}`);
+    const upload = theOneIndex(steps, (step) => uploads(step, SWEEP_RECORD_PATH), `upload ${SWEEP_RECORD_PATH}`);
     expect(steps[upload]!.condition).toBeUndefined();
     expect(theOneIndex(steps, reachesTheSweep, `reach \`${SWEEP}\``)).toBeLessThan(upload);
   });

@@ -27,6 +27,7 @@
 import { bareTerm } from "../lib/bareTerm.js";
 import { checkRegistryOf, type CheckRegistry } from "../domain/checkRegistry.js";
 import { thresholdsOf, type ThresholdRegistry } from "../domain/thresholds.js";
+import { fitnessChecksOf, type FitnessCheckRegistry } from "../domain/fitnessChecks.js";
 
 /** Whether a value read out of a manifest is a block of named fields, rather than a list or scalar. */
 function isBlock(value: unknown): value is Record<string, unknown> {
@@ -286,3 +287,49 @@ export function resolveDeferralTags(
   return [...new Set([...starterTags, ...extras])];
 }
 
+
+/**
+ * The TARGET's CONFIGURED FITNESS ROWS (@SCN-LNT-018) — `specController.fitnessChecks`, read as
+ * `@SCN → the characteristic that scenario asserts` through the engine's own `fitnessChecksOf`.
+ *
+ * THE DEBIT SIDE OF A CONVERTED CHECK. A converted scenario carries `@fitness` and nothing about
+ * its subject, so the characteristic it owes comes from here — and from the row whose `scn` is that
+ * scenario's own, which is what removes the registry hop an unconverted static check needs.
+ *
+ * IT IS THE TARGET'S, for the reason the check registry and the ceilings are (@SCN-LNT-005): a
+ * characteristic means what the target says it means, and a row resolved from this tool's own
+ * manifest would put an obligation on a target's books under a word it never wrote.
+ *
+ * The sixth of this family's `specController.*` resolvers, and defensive like the five above it: a
+ * missing or wrongly-shaped config resolves EMPTY, and a malformed row is dropped by
+ * `fitnessChecksOf` rather than thrown. There is no starter set: a target that has converted
+ * nothing owes nothing on this route, which is what keeps the reading inert on an unswept corpus.
+ *
+ * AND A ROW'S BAR MAY NAME A MUTATION GATE INSTEAD OF A FIGURE, EXACTLY AS A THRESHOLD ENTRY'S MAY
+ * (@SCN-MUT-012, 3F-3152). The row is the second place a target can author a bar, so it is the
+ * second place the same substitution has to happen — through the SAME reader and the same
+ * value-only, direction-blind replacement `resolveThresholds` calls, applied to the row before
+ * `fitnessChecksOf` reads it. A converted row and a threshold entry cannot then come to disagree
+ * about what a target wrote, which is the argument `fitnessCheckOf` already makes for reading the
+ * bar through `barOf` rather than through a grammar of its own.
+ *
+ * A REFERENCE THIS CANNOT SOURCE STILL LEAVES NO BAR, NEVER A NUMBER (@SCN-MUT-013). What comes
+ * back is `null` beside the key, which is what keeps the row MEASURED with nothing to hold it to —
+ * the shape @SCN-CIP-002 reports, and the same reading the threshold route reaches.
+ */
+export function resolveFitnessChecks(
+  packageJson: {
+    specController?: { fitnessChecks?: unknown };
+  },
+  /**
+   * The reader over the TARGET's records, built by the edge that knows where that tree is
+   * (@SCN-LNT-005) — the same argument `resolveThresholds` takes, for the same reason.
+   */
+  killFloor: KillFloorReader
+): FitnessCheckRegistry {
+  const configured = packageJson.specController?.fitnessChecks;
+  if (!Array.isArray(configured)) return fitnessChecksOf(configured);
+  return fitnessChecksOf(
+    (configured as readonly unknown[]).map((row) => barWithGateResolved(row, killFloor))
+  );
+}

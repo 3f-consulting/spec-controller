@@ -163,7 +163,7 @@ describe("[SCN-CPX-001] a function or module over the external standard reds the
 describe("[SCN-CPX-001] the exception list records today's exceedances as dated debt", () => {
   it("[SCN-CPX-001] the list is not empty — the tree's debt is enumerated, not implied", () => {
     // The vacuity floor. An empty list would make every assertion below pass over nothing, and would
-    // also make `lint:complexity` green for the wrong reason — no exceedance recorded rather than none
+    // also make the complexity check green for the wrong reason — no exceedance recorded rather than none
     // existing. Measured 2026-08-02; it moves with every merge, so this pins non-emptiness, not a count.
     expect(COMPLEXITY_EXCEPTIONS.length).toBeGreaterThan(0);
   });

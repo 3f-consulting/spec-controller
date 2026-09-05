@@ -12,11 +12,23 @@ Getting last night's number into today's push is ordinary CI — upload an
 artifact, download it, check its age. There is no spec-controller machinery to
 install for any of that; this page just shows the pattern.
 
-The workflow below is the one this repository runs against itself, in
+The workflow below is the one this repository grew against itself, in
 [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) and
 [`.github/workflows/mutation.yml`](../.github/workflows/mutation.yml). It is
 written out here rather than summarised because a recipe that disagrees with the
 pipeline it came from is worse than no recipe.
+
+**Where this repository has since gone further, and why it is not in the recipe.**
+Its own mutation check is now a *converted* fitness check (3F-3138): the
+characteristic, the command and the bar live in one row of
+`specController.fitnessChecks`, a cucumber pass runs that command, and the pass
+posts the credit. So its nightly leaves a **sweep record** at
+`runs/mutation/measurements.json` and the borrow places it there, apart from the
+credit stream — because under conversion a borrowed row sitting in
+`runs/self-balance/measurements.json` would be a second credit for one evidence
+obligation. Nothing below depends on that. The recipe as written is what an
+**unconverted** measured check needs, it is what this repository ran until the
+conversion, and it stays correct for a target that has not converted.
 
 ---
 

@@ -1,0 +1,22 @@
+{
+  "name": "converted-measured-target-repo-fixture",
+  "private": true,
+  "scripts": {
+    "test": "vitest run"
+  },
+  "specController": {
+    "fitnessChecks": [
+      {
+        "scn": "SCN-CVT-001",
+        "characteristic": "complexity",
+        "command": "eslint"
+      },
+      {
+        "scn": "SCN-CVT-003",
+        "characteristic": "mutation",
+        "command": "mutation-score",
+        "atLeast": 90
+      }
+    ]
+  }
+}

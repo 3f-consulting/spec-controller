@@ -30,13 +30,40 @@
  */
 
 import { PORTFOLIO_CHECK_CHARACTERISTICS } from "@3f-consulting/spec-controller-core";
-import type { CheckRegistry, ThresholdRegistry } from "@3f-consulting/spec-controller-core/internal";
+import type {
+  CheckRegistry,
+  FitnessCheckRegistry,
+  ThresholdRegistry,
+} from "@3f-consulting/spec-controller-core/internal";
 
 /** The manifest key a registry entry's characteristic was carried by. */
 const CHECK_REGISTRY_KEY = "specController.checkRegistry";
 
 /** The manifest key a threshold entry's characteristic was carried by. */
 const THRESHOLDS_KEY = "specController.thresholds";
+
+/** The manifest key a CONVERTED check's row carries its characteristic on (@SCN-CHR-005, 3F-3138). */
+const FITNESS_CHECKS_KEY = "specController.fitnessChecks";
+
+/**
+ * EVERY PLACE A TARGET MAY NAME A CHARACTERISTIC, and it is a LIST because the failure mode here
+ * is a source silently not read (@SCN-CHR-005).
+ *
+ * A SOURCE NOBODY READS REDS NOTHING, ANYWHERE, BY CONSTRUCTION — which is what makes it unlike
+ * every other fault this module reports: an unrostered word is loud, a stale mint is loud, and a
+ * key nobody consults is a green about words nobody looked at. So the places are written down
+ * once, `namedCharacteristics` is held to reaching all of them, and the verdict says how many it
+ * read.
+ *
+ * MINTS ARE NOT A MEMBER. A mint does not NAME a characteristic a check asserts; it states why a
+ * word the roster does not carry is needed, which answers the fault rather than feeding it.
+ * Listing it here would hold every mint to the roster, refusing the words the key exists to admit.
+ */
+export const CHARACTERISTIC_SOURCE_KEYS = [
+  CHECK_REGISTRY_KEY,
+  THRESHOLDS_KEY,
+  FITNESS_CHECKS_KEY,
+] as const;
 
 /** The manifest key a mint was carried by — the SECOND act, never the line that adds the check. */
 const MINTED_KEY = "specController.mintedCharacteristics";
@@ -125,6 +152,55 @@ export function thresholdCharacteristics(thresholds: ThresholdRegistry): NamedCh
   );
 }
 
+/**
+ * The characteristics the target's CONFIGURED FITNESS ROWS name, in the rows' own order
+ * (@SCN-CHR-005, 3F-3138).
+ *
+ * NEITHER OF THE OTHER TWO EVER CARRIES ONE. A converted check is not discovered as a runnable
+ * script handle — it is a scenario that ran, carrying its own tag line — so the registry cannot
+ * hold it, and a STATIC converted row names no bar so the thresholds cannot either. Its row is the
+ * only place its characteristic is written, which makes a reading that stops at the first two this
+ * file's own fault, reached by moving one word one key sideways.
+ *
+ * THE @SCN IS THE ENTRY, as the script handle is on the registry's side and the @SCN on the
+ * thresholds'. The remedy is a manifest LINE, so a word mistyped on two rows is two edits.
+ *
+ * THE BAR IS NOT ASKED ABOUT. Whether a row is measured decides which STREAM credits the check and
+ * says nothing about whether its word is a portfolio word; a reading that saw only the static rows
+ * would leave every converted MEASURED check mintable at will — @SCN-CHR-002's fault, one key over.
+ */
+export function fitnessCheckCharacteristics(
+  fitnessChecks: FitnessCheckRegistry,
+): NamedCharacteristic[] {
+  return [...fitnessChecks].map(([scnId, row]) => ({
+    characteristic: row.characteristic,
+    key: FITNESS_CHECKS_KEY,
+    entry: scnId,
+  }));
+}
+
+/**
+ * Everything this target names, gathered from every place it may name one (@SCN-CHR-005).
+ *
+ * ONE ASSEMBLY, AND THAT IS THE WHOLE OF WHY IT EXISTS. Readers spread over a caller's argument
+ * list are as many chances to add a fourth source and reach only three — and a source nobody reads
+ * reds nothing, anywhere, by construction. So the gathering has one home, a pin holds it to
+ * `CHARACTERISTIC_SOURCE_KEYS`, and the verdict counts that same list rather than a number somebody
+ * keeps in step by hand. Order is the manifest's, source by source, because an author reading a red
+ * is reading their own file top to bottom.
+ */
+export function namedCharacteristics(
+  registry: CheckRegistry,
+  thresholds: ThresholdRegistry,
+  fitnessChecks: FitnessCheckRegistry,
+): NamedCharacteristic[] {
+  return [
+    ...registryCharacteristics(registry),
+    ...thresholdCharacteristics(thresholds),
+    ...fitnessCheckCharacteristics(fitnessChecks),
+  ];
+}
+
 /** What a minted characteristic's message says. */
 function mintMessage(named: NamedCharacteristic): string {
   return (
@@ -163,11 +239,23 @@ function staleMintRemedy(characteristic: string): string {
   );
 }
 
+/**
+ * The places this message tells an author to look, read off the read set rather than restated.
+ *
+ * A LIST WRITTEN TWICE FALLS OUT OF STEP, and here it would do so silently: the staleness VERDICT
+ * already reads whatever `namedCharacteristics` gathered, so a sentence naming two of three sources
+ * would send an author to the wrong places about a decision that had read all of them.
+ */
+function namingKeysProse(): string {
+  const keys = [...CHARACTERISTIC_SOURCE_KEYS];
+  return `${keys.slice(0, -1).join(", ")} or ${keys[keys.length - 1]}`;
+}
+
 /** What a mint nothing in the target's own manifest names any more says. */
 function unusedMintMessage(characteristic: string): string {
   return (
-    `"${characteristic}" is minted with a reason, but no ${CHECK_REGISTRY_KEY} or ` +
-    `${THRESHOLDS_KEY} entry names it any more, so this mint is not what makes anything legal. ` +
+    `"${characteristic}" is minted with a reason, but no ${namingKeysProse()} entry names it ` +
+    `any more, so this mint is not what makes anything legal. ` +
     staleMintRemedy(characteristic)
   );
 }

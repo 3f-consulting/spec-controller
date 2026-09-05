@@ -296,7 +296,14 @@ export interface RuntimeEvidenceObservation {
 export interface GuardEvidenceObservation {
   /** A static check evidence observation is the `lint` quality-check (the watermelon discriminator). */
   qualityCheck: "lint";
-  /** The `staticCheck` handle — the npm-script name a `@lint=<guard>` tag names. */
+  /**
+   * WHAT THE CHECK IS CALLED — the runnable npm-script handle on the DISCOVERED route
+   * (`lint:complexity`), and the CHARACTERISTIC itself on the converted one (@SCN-LNT-021), because
+   * a converted check has no handle: it is not invoked by name, it is a scenario that ran.
+   *
+   * It is the where-to-fix an unmatched credit carries, never what the reconciler matches on —
+   * that is `checkTag` below, and the difference between the two is stated there at length.
+   */
   staticCheck: string;
   /**
    * The `@SCN` this run CITES — the fitness scenario whose bare check tag the citation seam
@@ -335,13 +342,35 @@ export interface GuardEvidenceObservation {
    * construction of a publicly exported type.
    */
   checkTag?: string;
-  /** The static check's script/CLI is present (a `package.json` `scripts` entry). */
+  /**
+   * The static check EXISTS — and the route the observer took to that fact is now one of two
+   * (@SCN-LNT-021).
+   *
+   * INFERRED on the DISCOVERED route: a `package.json` `scripts` entry by that name is present, so
+   * something by that name could be invoked. OBSERVED on the CONVERTED route: the check's scenario
+   * appears in the fitness pass's Cucumber report, which says it RAN — a stronger fact than a
+   * manifest holding a name, and one no manifest read can reach.
+   *
+   * The field means the same thing either way, which is why it is one field: this check is not
+   * absent from the target. What differs is the strength of what stands behind it, and the
+   * converted route's is the stronger of the two — which is why `--ci` and its twin below
+   * eventually retire for converted checks (3F-3139).
+   */
   exists: boolean;
   /**
-   * The static check's command appears as a CI `run:` step over the real tree — the v1
-   * (COARSE) "enforced over real source" signal (v1 verifies the command IS a CI
-   * step, NOT that it reads real source vs fixtures — the residual gap a later
-   * evidenceObservation-based check closes).
+   * The static check ran OVER THE REAL TREE rather than over a fixture — and, as with `exists`
+   * above, by one of two routes (@SCN-LNT-021).
+   *
+   * INFERRED on the DISCOVERED route: the check's command appears as a CI `run:` step, the v1
+   * (COARSE) signal — v1 verifies the command IS a CI step, NOT that it reads real source vs
+   * fixtures, the residual gap a later evidenceObservation-based check closes. OBSERVED on the
+   * CONVERTED route: the fitness pass runs in the target's own root, so a scenario reported by that
+   * pass ran over that root's tree, and the coarseness the workflow read carries is simply not on
+   * this path.
+   *
+   * NEITHER ROUTE READS THE CHECK'S OWN VERDICT, on this field or any other. Whether the check
+   * FOUND anything is the runner's exit code's answer; whether it RAN is this one's. Two questions,
+   * two mechanisms, and a converted check keeps that split exactly.
    */
   enforcedOverRealSource: boolean;
 }

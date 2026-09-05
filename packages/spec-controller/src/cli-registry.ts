@@ -87,6 +87,12 @@ const balanceFlags: FlagSpec[] = [
       "A measurement report — the number each measured check posted, evidence for the measured fitness checks.",
   },
   {
+    name: "--fitness",
+    arg: "<report.json>",
+    description:
+      "The FITNESS pass's Cucumber report — a second cucumber call's own document, evidence for the converted fitness checks. Omit it if you have converted none.",
+  },
+  {
     name: "--target",
     arg: "<name>",
     description: "A name recorded verbatim in the report's provenance (which project this run reconciled).",

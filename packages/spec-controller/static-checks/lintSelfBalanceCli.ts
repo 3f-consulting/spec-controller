@@ -27,9 +27,9 @@ import { runBalance } from "../src/cli-balance/cli.js";
 import { MEASUREMENT_ARTEFACT_PATH } from "./measurementArtefact.js";
 
 /**
- * The six surfaces the gate reconciles, as paths relative to a target root.
+ * The seven surfaces the gate reconciles, as paths relative to a target root.
  *
- * There is no seventh. A path enters the gate only by entering one of these — which is the
+ * There is no eighth. A path enters the gate only by entering one of these — which is the
  * answer to "is `packages/fixture-pkg/` in scope?" (3F-2351, Scan-scope ruling): that
  * path is a string inside a step definition's temporary fixture tree, it exists on none
  * of these surfaces, and so it is out of scope by construction. No exclusion list
@@ -41,8 +41,18 @@ export interface SelfBalanceScope {
   features: string;
   /** The Vitest JSON report — the observed `@unit` stream. */
   vitest: string;
-  /** The Cucumber JSON report — the observed `@integration` / `@e2e` stream. */
+  /** The BEHAVIOURAL Cucumber JSON report — the observed `@integration` / `@e2e` stream. */
   cucumber: string;
+  /**
+   * The FITNESS pass's Cucumber JSON report (@SCN-LNT-021, 3F-3145) — the observed CONVERTED
+   * static-check stream, written by a SECOND cucumber call over its own profile.
+   *
+   * A SURFACE OF ITS OWN RATHER THAN A SECOND READING OF `cucumber`. The two documents have the
+   * same shape and opposite meanings: the behavioural pass's scenarios are runtime results
+   * levelled by a tier tag, the fitness pass's are static-check credits named by a configured
+   * row. One file read both ways would have the gate guessing which half of it was which.
+   */
+  fitness: string;
   /** The measurement artefact — the observed MEASURED stream this run's timed steps post into. */
   measurements: string;
   /** The CI configs — where a static check is observed to FIRE, not merely to exist. */
@@ -57,7 +67,7 @@ export interface SelfBalanceScope {
  * planted tree under test — `--root` moves the whole scope to another tree, it never
  * narrows which surfaces are read.
  *
- * The three runtime artefacts live under `runs/`, which `.gitignore` excludes with no
+ * The four runtime artefacts live under `runs/`, which `.gitignore` excludes with no
  * re-includes and `hygiene:no-committed-reports` enforces: a reconciliation report
  * enumerates a codebase's gaps and is never committed.
  */
@@ -65,6 +75,7 @@ export const SELF_BALANCE_SCOPE: SelfBalanceScope = {
   features: "features",
   vitest: "runs/self-balance/vitest.json",
   cucumber: "runs/self-balance/cucumber.json",
+  fitness: "runs/self-balance/fitness.json",
   // The producer's own constant rather than a second spelling of it. A wrapper writing one path
   // while this gate read another would not be loud: the reader would find nothing and every
   // measured row would reconcile missing, which reads as a suite that never ran.
@@ -89,6 +100,7 @@ function resolveScope(
     features: join(root, scope.features),
     vitest: overrides.vitest ?? join(root, scope.vitest),
     cucumber: overrides.cucumber ?? join(root, scope.cucumber),
+    fitness: join(root, scope.fitness),
     measurements: join(root, scope.measurements),
     ci: join(root, scope.ci),
     packageJson: join(root, scope.packageJson),
@@ -100,17 +112,23 @@ function resolveScope(
  * against `root`, plus the target name that titles the report.
  *
  * Reports may be overridden (CI writes them where the run wrote them); the SURFACES may
- * not. Pure, so the @unit arm can assert the gate passes all six and cannot quietly
+ * not. Pure, so the @unit arm can assert the gate passes all seven and cannot quietly
  * drop one.
  *
- * THE MEASUREMENT ARTEFACT IS PASSED ONLY WHERE IT EXISTS, WHICH IS THE OPPOSITE OF THE TREATMENT
- * THE TWO SUITE REPORTS GET (@SCN-CIP-013). A `--measurements` path the balance command is handed and
+ * THE MEASUREMENT ARTEFACT AND THE FITNESS REPORT ARE PASSED ONLY WHERE THEY EXIST, WHICH IS THE
+ * OPPOSITE OF THE TREATMENT THE TWO SUITE REPORTS GET (@SCN-CIP-013, and 3F-3145 for the
+ * second). A `--measurements` path the balance command is handed and
  * cannot find is a usage fault to it and exits 2 (@SCN-CLI-002) — the wrong verdict here. An
  * absent artefact leaves exactly the measured rows unanswered, and those rows reconciling
  * missing is the honest reading: a step that never ran is never balanced (@SCN-CIP-006). Exit 2
  * would take that verdict away from the ledger and rebuild, inside the gate, the hiding place
  * the gate exists to close — unwrap a timed script and the build would report a broken run
  * rather than an unmeasured suite.
+ *
+ * THE FITNESS REPORT TAKES THAT TREATMENT FOR THE SAME REASON, ONE STEP FURTHER OUT. A target
+ * that has converted no check runs no fitness pass and writes no report, so exit 2 there would
+ * call an unconverted consumer's set-up broken over a file it has no reason to own. Absent, it
+ * leaves exactly the converted rows unanswered — which is a verdict, not a fault.
  */
 export function selfBalanceArgv(
   root: string,
@@ -127,6 +145,7 @@ export function selfBalanceArgv(
     "--cucumber",
     resolved.cucumber,
     ...(exists(resolved.measurements) ? ["--measurements", resolved.measurements] : []),
+    ...(exists(resolved.fitness) ? ["--fitness", resolved.fitness] : []),
     "--ci",
     resolved.ci,
     "--package-json",
@@ -142,10 +161,11 @@ export function selfBalanceArgv(
  * report is a USAGE fault — the run was set up wrong — never an out-of-balance verdict.
  * Reporting it as a verdict is the false all-red the dogfooding fault produced.
  *
- * THE MEASUREMENT ARTEFACT IS DELIBERATELY NOT GUARDED HERE, and the asymmetry is the whole of
- * @SCN-CIP-013's care. An unemitted suite report leaves EVERY obligation unobserved, which means
- * the suite did not run; an absent measurement artefact leaves exactly the measured rows unanswered,
- * and those reconciling missing is a verdict the ledger is entitled to reach.
+ * THE MEASUREMENT ARTEFACT AND THE FITNESS REPORT ARE DELIBERATELY NOT CHECKED HERE, and the
+ * asymmetry is the whole of @SCN-CIP-013's care. An unemitted suite report leaves EVERY obligation
+ * unobserved, which means the suite did not run; an absent measurement artefact or fitness report
+ * leaves exactly the measured or converted rows unanswered, and those reconciling missing is a
+ * verdict the ledger is entitled to reach.
  *
  * Pure: the resolved paths + an injected `exists`, returning a message naming the absent
  * report AND how to emit it, else null.

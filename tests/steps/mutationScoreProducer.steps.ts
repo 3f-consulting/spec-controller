@@ -38,7 +38,7 @@ import {
 } from "@3f-consulting/spec-controller-core/internal";
 
 import {
-  MEASUREMENT_ARTEFACT_PATH,
+  SWEEP_RECORD_PATH,
   type Measurement,
 } from "../../packages/spec-controller/static-checks/measurementArtefact.js";
 import { MUTATION_REPORT_PATH } from "../../packages/spec-controller/static-checks/mutationScore.js";
@@ -255,7 +255,7 @@ Given(
     // as it has measured checks and the one thing "posts nothing" must not come to mean is "leaves
     // an empty artefact where the rest of the run's readings were".
     otherProducersRow = { scnId: "SCN-CIP-013", checkTag: "ci-run-time", measured: 21.4 };
-    const artefactPath = path.join(plantedRoot, MEASUREMENT_ARTEFACT_PATH);
+    const artefactPath = path.join(plantedRoot, SWEEP_RECORD_PATH);
     mkdirSync(path.dirname(artefactPath), { recursive: true });
     writeFileSync(
       artefactPath,
@@ -409,7 +409,7 @@ function runProducer(command: readonly string[]): void {
 
 /** The artefact the producer wrote, read back through the reader `balance --measurements` uses. */
 function posted(): MeasuredEvidenceObservation[] {
-  const artefactPath = path.join(plantedRoot, MEASUREMENT_ARTEFACT_PATH);
+  const artefactPath = path.join(plantedRoot, SWEEP_RECORD_PATH);
   let source: string;
   try {
     source = readFileSync(artefactPath, "utf8");

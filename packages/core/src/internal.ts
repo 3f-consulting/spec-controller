@@ -67,6 +67,19 @@ export { parseTaggedScenarios } from "./parse/scenarios.js";
 // "where does this scenario start and stop" is the second reading this seam exists to prevent.
 export type { TaggedScenario } from "./parse/scenarios.js";
 
+// `FITNESS_AXIS_TAG` — the ONE spelling of the word a CONVERTED check's scenario carries
+// (`parse/scenarios`, @SCN-LNT-018). Shared because the tier-tag floor and its one-check rule
+// (@SCN-STG-005, @SCN-STG-007) must admit exactly the scenarios the obligation rule raises
+// against, and this word is now the third source of what names a check on a corpus — the two
+// resolvers beside it answer for a target's registry and its ceilings, and neither can ever carry
+// this one: a converted check has no runnable script handle and no authored ceiling, only a
+// configured row. A second spelling in `static-checks/` would be a word the floor admitted while
+// the engine raised nothing for it, or the reverse — the seam 3F-3126 spent a slice closing.
+// A LITERAL RATHER THAN A RESOLVED SET, and deliberately: which words name a CHECK is the
+// target's answer, which AXIS a scenario is on is the model's, exactly as `unit` is. Internal,
+// not public — @SCN-API-001 freezes the `.` barrel exactly.
+export { FITNESS_AXIS_TAG } from "./parse/scenarios.js";
+
 // `thresholdsOf` / `measuredCheckTags` / `thresholdFor` — the ONE reading of a target's authored
 // BARS (`domain/thresholds`, @SCN-CIP-001; the bar carries the comparison it is read with per
 // @SCN-MUT-001). Shared for the reason the check registry above is,
@@ -122,6 +135,7 @@ export type { CiRunStep } from "./parse/checkScriptsRunInCI.js";
 export {
   resolveCheckRegistry,
   resolveDeferralTags,
+  resolveFitnessChecks,
   resolveMintedCharacteristics,
   resolveStaticChecks,
   resolveThresholds,
@@ -136,3 +150,16 @@ export type { KillFloorReader, MutationGateReference } from "./parse/targetManif
 // (`assemble/evidenceReconciliationFromSources`), which is what takes the last crossing off the
 // published path. Nothing in this workspace reaches the corpus read any more, and this file
 // re-exports only what the app genuinely shares.
+
+// `fitnessChecksOf` / `FitnessCheck` / `FitnessCheckRegistry` — the ONE reading of a target's
+// CONVERTED rows (`domain/fitnessChecks`, @SCN-LNT-018). Shared because the fitness pass's RUNNER
+// must cite the characteristic its row names when it posts a measured check's number
+// (@SCN-LNT-024), and that word is the same word the obligation side raises the Evidence
+// Obligation against. A second reader in `static-checks/` deciding independently what
+// characteristic a row names would post a credit under one spelling while the debit was raised
+// under another — an obligation with no credit and a credit with no obligation, from one row, and
+// loud nowhere. The runner reads only `characteristic` here; the BAR stays the ledger's
+// (@SCN-LNT-019, 3F-2509) and no runner reaches for it. Internal, not public — where these rows are
+// AUTHORED moves with the registry-home question the entries above are parked on.
+export { fitnessChecksOf } from "./domain/fitnessChecks.js";
+export type { FitnessCheck, FitnessCheckRegistry } from "./domain/fitnessChecks.js";

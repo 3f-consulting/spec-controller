@@ -40,8 +40,8 @@
  * only well defined per file per rule. The reconciliation therefore compares like with like.
  *
  * WHAT IT DELIBERATELY DOES NOT RED ON. A file measuring over the standard with NO entry at all is
- * not this check's finding — that is an ordinary standard violation and `lint:complexity` reds it by
- * name (@SCN-CPX-001). Reding it here too would give one fault two authors and blur which check owns
+ * not this check's finding — that is an ordinary standard violation and the complexity check reds it
+ * by name (@SCN-CPX-001). Reding it here too would give one fault two authors and blur which check owns
  * which sentence, which is the non-negotiable 3F-2286 exists to protect.
  *
  * Parent: @SCN-CPX-003 (3F-2318) — the exception-list reconciliation (3F-2286).
