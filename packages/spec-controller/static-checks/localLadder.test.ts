@@ -74,7 +74,7 @@ describe("[SCN-LAD-001] the ladder is every CI script step, in ci.yml's order", 
 
 describe("[SCN-LAD-002] a gate runs CI's command verbatim, flags and report paths included", () => {
   it("[SCN-LAD-002] the gate carries the CI step's command, not `pnpm <script>`", () => {
-    // THE PROPERTY A NAME-RECONCILER COULD NOT HAVE. `lint:self-balance` reads exactly the
+    // THE PROPERTY A NAME-RECONCILER COULD NOT HAVE. `balance:self` reads exactly the
     // paths `test` and `cucumber` write; a check that reconciled gate NAMES would green
     // while `--outputFile.json=` drifted to a path nothing wrote, and the gate would then
     // report every evidence obligation unobserved — "the suite did not run". Carrying the
@@ -263,7 +263,7 @@ describe("[SCN-LAD-007] an excluded step CI runs behind a gate reds, naming the 
     // THE REAL-TREE PIN, the analogue of [SCN-LAD-005]'s. A rule held only over planted
     // configs is a rule a reordering of THIS workflow undoes in silence — which is exactly the
     // defect 3F-3014 was filed for: lint:scn-subissues sat last behind all fifteen gates, and
-    // a stale mutation record redding lint:self-balance cost it three consecutive runs while
+    // a stale mutation record redding balance:self cost it three consecutive runs while
     // nothing reported it unrun.
     const ladder = deriveLocalLadder(
       readFileSync(path.join(repoRoot, ".github", "workflows", "ci.yml"), "utf8"),

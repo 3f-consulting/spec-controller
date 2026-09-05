@@ -19,7 +19,7 @@
 # this script runs what it is handed. A gate cannot be forgotten here, because nobody adds
 # one here. (packages/spec-controller/static-checks/localLadder.ts; @SCN-LAD-001..006.)
 #
-# THE COMMAND IS CARRIED, NOT RE-TYPED, AND THAT IS LOAD-BEARING. `lint:self-balance`
+# THE COMMAND IS CARRIED, NOT RE-TYPED, AND THAT IS LOAD-BEARING. `balance:self`
 # reconciles this repository against the two JSON reports `test` and `cucumber` emit, so both
 # must run AHEAD of it and must write exactly the paths ci.yml writes
 # (runs/self-balance/vitest.json, runs/self-balance/cucumber.json). Run against paths nothing
@@ -38,8 +38,14 @@
 # package.json script as a RUNNING static check when its name starts with an observed
 # prefix (`lint:` / `guard:`) and a CI `run:` step invokes it. Neither `verify` nor `ladder`
 # is a check — one aggregates them, the other lists them — so a `lint:` name would register a
-# phantom static check on spec-controller's own ledger and red `lint:self-balance` as an
+# phantom static check on spec-controller's own ledger and red `balance:self` as an
 # uncited one. Both stay outside the observed set, and the ledger is unchanged.
+#
+# `balance:self` IS THE THIRD, AND ITS REASON IS ONE STEP FURTHER (3F-3113). It is not a check
+# either — it is the product's own `balance` command invoked with fixed arguments — and it is
+# the one whose `lint:` spelling would put the RECONCILIATION'S OWN VERDICT on the ledger that
+# verdict is about. It keeps its teeth regardless: this ladder is derived from ci.yml, which
+# consults no prefix, so the gate still runs here at the same position under the new handle.
 #
 # FAIL-FAST, AND NAME THE GATE. The first red stops the ladder and the last line says
 # which gate died. A green-check whose failure output does not say what failed is a

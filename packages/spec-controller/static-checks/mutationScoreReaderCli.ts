@@ -45,7 +45,7 @@ interface ScoreRead {
 
 /**
  * A fault in how the reader was CALLED — exit 2, the code the ladder emitter and
- * `lint:self-balance` already reserve for "this run is broken" as against "the code is wrong".
+ * `balance:self` already reserve for "this run is broken" as against "the code is wrong".
  *
  * ONLY how it was called. A record that is not there, or holds no such row, is not a misuse: it is
  * a sweep that has not run, and it leaves through the ordinary refusal below.

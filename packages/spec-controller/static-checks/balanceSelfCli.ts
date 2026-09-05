@@ -1,5 +1,5 @@
 /**
- * The SELF-RECONCILIATION gate — `lint:self-balance` (@SCN-SLF-001, 3F-2354).
+ * The SELF-RECONCILIATION gate — `balance:self` (@SCN-SLF-001, 3F-2354).
  *
  * spec-controller's own tree, put through spec-controller. The reconciler could always
  * report this repository's own one-way evidence claims; nothing ever ran it, so the
@@ -8,14 +8,41 @@
  *
  * NOT A SECOND IMPLEMENTATION. This wrapper computes no verdict of its own — it resolves
  * the scan scope and hands the argv to the product's own `runBalance`, so the exit code
- * is the CLI's (@SCN-CLI-004 / 3F-1414: 0 balanced, 1 out-of-balance, 2 usage). A lint
- * script that re-derived the answer would agree with the product by diligence and then
- * drift — the shape `no-parallel-store.feature` exists to forbid.
+ * is the CLI's (@SCN-CLI-004 / 3F-1414: 0 balanced, 1 out-of-balance, 2 usage). A wrapper
+ * that re-derived the answer would agree with the product by diligence and then drift —
+ * the shape `no-parallel-store.feature` exists to forbid.
  *
  * THE SCAN SCOPE IS THE POINT. `SELF_BALANCE_SCOPE` below is the whole of what this gate
  * reaches, stated once, and the @unit arm asserts it EXHAUSTIVELY so a later silent
  * narrowing reds. The boundary is therefore deliberate, not inherited from whatever the
  * caller happened to pass.
+ *
+ * WHY THE NAME CARRIES `balance:` AND NOT `lint:`, WHICH IS NOT COSMETIC — AND WHY IT IS THE
+ * ONE FILE HERE THAT CANNOT BE ON THE BOOKS AT ALL. `runningStaticChecks` observes a
+ * package.json script as a RUNNING static check when its name starts with an observed prefix
+ * (`lint:` / `guard:`) and a CI `run:` step invokes it. This is not a check: it is the
+ * product's own `balance` command invoked with fixed arguments, which is why the handle sits
+ * beside `balance` in the manifest rather than among the `lint:`-prefixed scripts. Spelled
+ * `lint:` it would be observed, and the reconciliation's own verdict would become an entry in
+ * the ledger that verdict is about — a second arbiter for a fact this file's exit code
+ * already settles.
+ * `balance:` is deliberately outside the observed set for that reason (3F-3113).
+ *
+ * NOT A DODGE, AND THE TEETH ARE WHERE TO LOOK. Canon names "renaming a script to become an
+ * uncited check" as a watermelon's hiding place, and the discriminator is not the rename — it
+ * is whether anything still needs to reconcile the thing. Nothing does: `ci.yml` invokes this
+ * step, it exits on the verdict, and `pnpm verify`'s ladder is DERIVED from `ci.yml`
+ * (`localLadder.ts`, prefix-agnostic by construction), so `pnpm ladder` still lists this gate
+ * and `pnpm verify` still gates on it — at the same position, under the new handle, with no
+ * edit to the ladder. What left is the ROW asserting that the ledger balances, which the
+ * stepless @SCN-SLF-003 used to carry; the stepped scenarios stay, because the gate is still
+ * specified — it is simply no longer reconciled.
+ *
+ * THE RESIDUAL, STATED RATHER THAN ENGINEERED AWAY. Nothing pins this handle out of the
+ * observed set: re-prefix it `lint:` and the tree returns silently to the arrangement 3F-3113
+ * retired, because the mechanism that would notice is the one being re-entered. The precedent
+ * accepts the same residual — `hygiene:no-committed-reports`, `verify` and `ladder` all carry
+ * this reasoning in a header comment and nothing else holds it.
  *
  * Parent: 3F-2351.
  */
@@ -185,7 +212,7 @@ export function checkEvidenceReportsPresent(
   for (const stream of streams) {
     if (!exists(stream.path)) {
       return (
-        `lint:self-balance: the evidence report ${stream.named} was never emitted ` +
+        `balance:self: the evidence report ${stream.named} was never emitted ` +
         `(looked in ${stream.path}).\n` +
         `This is a setup fault, not a verdict — reconciling against a report that does ` +
         `not exist would report every obligation as unobserved, which means "the suite ` +

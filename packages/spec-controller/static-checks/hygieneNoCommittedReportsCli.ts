@@ -17,7 +17,7 @@
  * no fitness scenario reconciles it and none is owed: under the Freshness model the report
  * it holds to account is the one this build regenerated, which the ledger already covers.
  * Spelled `lint:` it would be observed, cite no scenario, post to the suspense row, and red
- * `lint:self-balance` as an uncited static check. Ruled 2026-09-01; 3F-2994 / 3F-3003.
+ * `balance:self` as an uncited static check. Ruled 2026-09-01; 3F-2994 / 3F-3003.
  *
  * NOT A DODGE, AND THE TEETH ARE THE TEST. Canon names "renaming a suite script to become
  * an uncited check" as a watermelon's hiding place, and the discriminator is not the rename

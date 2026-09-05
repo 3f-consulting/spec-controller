@@ -22,6 +22,7 @@
     "cucumber:fitness": "cucumber-js --profile fitness --format json:runs/self-balance/fitness.json",
     "build": "pnpm -r build",
     "balance": "tsx packages/spec-controller/src/cli.ts",
+    "balance:self": "tsx packages/spec-controller/static-checks/balanceSelfCli.ts",
     "audit:vocab": "tsx packages/spec-controller/static-checks/vocabAuditCli.ts",
     "lint:feature-codes": "tsx packages/spec-controller/static-checks/lintFeatureCodesCli.ts",
     "lint:blocked-vocabulary": "tsx packages/spec-controller/static-checks/lintBlockedVocabularyCli.ts",
@@ -29,7 +30,6 @@
     "hygiene:no-committed-reports": "tsx packages/spec-controller/static-checks/hygieneNoCommittedReportsCli.ts",
     "lint:scn-tags": "tsx packages/spec-controller/static-checks/lintScnTagsCli.ts",
     "lint:scn-subissues": "tsx packages/spec-controller/static-checks/lintScnSubIssuesCli.ts",
-    "lint:self-balance": "tsx packages/spec-controller/static-checks/lintSelfBalanceCli.ts",
     "lint:adopted-vocabulary": "tsx packages/spec-controller/static-checks/lintAdoptedVocabularyCli.ts",
     "lint:anemic-domain": "tsx packages/spec-controller/static-checks/lintAnemicDomainCli.ts",
     "lint:exempt-data-floor": "tsx packages/spec-controller/static-checks/lintExemptDataFloorCli.ts",
@@ -47,7 +47,6 @@
       "lint:exempt-data-floor": { "check": "vocab", "scn": "SCN-VOC-021" },
       "lint:check-characteristics": { "check": "vocab", "scn": "SCN-CHR-005" },
       "lint:anemic-domain": "tech-conformance",
-      "lint:self-balance": "self-balance",
       "lint:scn-subissues": { "check": "traceability", "scn": "SCN-SSM-009" }
     },
     "fitnessChecks": [

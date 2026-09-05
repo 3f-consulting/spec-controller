@@ -183,7 +183,7 @@ export const GUARD_QUALIFIERS: readonly (readonly string[])[] = [
  * PHRASE-SCOPED, AND THAT IS THE WHOLE DESIGN. `lint` is LEGITIMATE in three senses that must stay
  * green, and a blanket ban on the word would red all three and be worse than nothing:
  *   - `@lint` — the bare style-lint check tag (@SCN-LNT-010);
- *   - `lint:*` — every npm script name (`lint:complexity`, `lint:self-balance`, …), in
+ *   - `lint:*` — every npm script name (`lint:complexity`, `lint:feature-codes`, …), in
  *     `package.json` and in `ci.yml`;
  *   - ESLint as a tool, in prose.
  * None of the three puts a class noun after the word, so none is reachable by this list.

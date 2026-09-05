@@ -169,7 +169,7 @@ describe("[SCN-VOC-014] the class-noun phrase reds, and the legitimate senses do
   });
 
   it("leaves a lint: script name alone — its follower is the check, never a class noun", () => {
-    for (const script of ["lint:complexity", "lint:self-balance", "lint:adopted-vocabulary"]) {
+    for (const script of ["lint:complexity", "lint:feature-codes", "lint:adopted-vocabulary"]) {
       const verdict = firstVerdict(script.split(/[:-]/));
       expect(verdict?.flagged, script).toBe(false);
     }

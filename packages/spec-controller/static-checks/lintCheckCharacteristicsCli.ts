@@ -27,7 +27,7 @@
  *
  * THE WIRING LANDED AS ONE COMMIT, AND THAT IS WHY (@SCN-CHR-005). A `lint:`-prefixed script is
  * discovered as a running static check by `GUARD_SCRIPT_PREFIXES`, so one landing ahead of its
- * registry entry cites nothing, posts to suspense and reds `lint:self-balance`; symmetrically a
+ * registry entry cites nothing, posts to suspense and reds `balance:self`; symmetrically a
  * stepless fitness scenario landing ahead of the check that settles it reconciles `missing`. So
  * the `lint:check-characteristics` script, its registry entry, the CI step and the scenario are a
  * single commit — no subset of them is green. The `@integration` arms still reach this CLI

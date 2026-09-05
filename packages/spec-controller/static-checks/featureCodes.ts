@@ -165,7 +165,7 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     code: "SLF",
     slug: "self-reconciliation",
     status: "feature-code-used",
-    note: "the self-reconciliation gate (the cobbler's shoes, the whole pair) — lint:self-balance runs the product's own balance over spec-controller's own tree on every push and PR and exits on the verdict, so the tool's own out-of-balance reds the build rather than printing a report nobody must read; @lint-self-cited so the gate is not itself an uncited static check (3F-2351)",
+    note: "the self-reconciliation gate (the cobbler's shoes, the whole pair) — balance:self runs the product's own balance over spec-controller's own tree on every push and PR and exits on the verdict, so the tool's own out-of-balance reds the build rather than printing a report nobody must read; the handle carries no observed prefix, so the reconciliation's own verdict is not a row on the ledger it computes (3F-2351, 3F-3113)",
   },
   {
     code: "NPS",

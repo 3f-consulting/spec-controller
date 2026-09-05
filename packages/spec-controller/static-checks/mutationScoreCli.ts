@@ -19,7 +19,7 @@
  * citing.
  *
  * IT IS NOT AN ARBITER: its exit code is the wrapped command's, always (@SCN-CIP-010). The
- * verdict on a mutation measurement is `lint:self-balance`'s alone — which is the same argument, one
+ * verdict on a mutation measurement is `balance:self`'s alone — which is the same argument, one
  * artefact further out, as the one that keeps this file away from the runner's own `thresholds`
  * block. A producer holding both the number and the bar that number is judged against would make
  * a green build depend on two arbiters agreeing.
@@ -81,7 +81,7 @@ interface MutationSweep {
 }
 
 /**
- * A fault in how the producer was CALLED — exit 2, the code `lint:self-balance` and the ladder
+ * A fault in how the producer was CALLED — exit 2, the code `balance:self` and the ladder
  * emitter already reserve for "this run is broken" as against "the code is wrong".
  *
  * ONLY how it was called (@SCN-MUT-008). What the SWEEP left behind never comes here: a report

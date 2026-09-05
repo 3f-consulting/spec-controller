@@ -25,7 +25,7 @@
  * step that reds aborts the job, so a gate ahead of an excluded step can cost it that one run
  * while reporting nothing: not absent, not disabled, UNREACHED, which is the one shape the
  * ledger cannot see, because when the job dies first the ledger is never asked either. That is
- * measured, not hypothetical — a stale mutation record redding `lint:self-balance` took
+ * measured, not hypothetical — a stale mutation record redding `balance:self` took
  * `lint:scn-subissues` off the board for three consecutive commits during 3F-2994. So the
  * derivation keeps a position it used to discard, and reports it as `late`.
  *
@@ -198,7 +198,7 @@ export const CI_ONLY_EXCLUSIONS: readonly LadderExclusion[] = [
 /**
  * Derive the local ladder from a CI config and a package manifest.
  *
- * ORDER IS THE CI CONFIG'S ORDER, AND IT IS LOAD-BEARING. `lint:self-balance` reconciles this
+ * ORDER IS THE CI CONFIG'S ORDER, AND IT IS LOAD-BEARING. `balance:self` reconciles this
  * repository against the two JSON reports `test` and `cucumber` emit, so both must run ahead
  * of it. Run out of order it reports every evidence obligation unobserved — "the suite did
  * not run", not "the code is wrong".

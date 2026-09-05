@@ -15,7 +15,7 @@ Feature: The local green-check runs the ladder CI runs, derived rather than list
   SO THE LADDER IS DERIVED, NOT LISTED. Every ci.yml run: step that invokes a
   package.json script is a gate, in ci.yml's order, running ci.yml's command verbatim.
   A gate cannot be forgotten, because nobody adds one. The order is not a convenience:
-  lint:self-balance reconciles this repository against the two JSON reports test and
+  balance:self reconciles this repository against the two JSON reports test and
   cucumber emit, so both must run ahead of it and must write the paths ci.yml writes.
   Carrying the command string rather than re-typing it is what holds those paths
   together — a check reconciling gate NAMES would green while a flag drifted.

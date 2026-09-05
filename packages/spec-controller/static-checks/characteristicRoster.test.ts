@@ -1,7 +1,7 @@
 /**
  * @SCN-CHR-001, @SCN-CHR-002, @SCN-CHR-003 (3F-2996) — the @unit arm of the check-characteristic gate.
  *
- * WHY THE ROSTER IS INJECTED IN EVERY RULE ASSERTION BELOW. spec-controller's own eight
+ * WHY THE ROSTER IS INJECTED IN EVERY RULE ASSERTION BELOW. spec-controller's own seven
  * characteristics are all portfolio words, so this rule is green over the real tree by
  * construction and a passing build says nothing about whether it works. The rule is therefore
  * proven against a constructed roster and constructed manifest entries — `exemptionFaults`'
@@ -161,15 +161,20 @@ describe("[SCN-CHR-001] the vendored portfolio roster", () => {
   });
 
   it("carries every characteristic this repository itself names", () => {
-    // The claim @SCN-CHR-005 will make of the real manifest, asserted here over the eight words
+    // The claim @SCN-CHR-005 will make of the real manifest, asserted here over the seven words
     // as they stand. It is a statement about the ROSTER's coverage, not about the gate.
+    //
+    // `self-balance` LEFT THIS LIST AND STAYED ON THE ROSTER (3F-3113). The manifest stopped
+    // naming it when the self-reconciliation's own row was retired; the word sits on
+    // PORTFOLIO_CHECK_CHARACTERISTICS named by nothing, which the rule permits by construction
+    // — it judges the words a manifest NAMES, and enumerates in that direction only. Left here
+    // it would have gone on passing while asserting something untrue of this repository.
     for (const characteristic of [
       "traceability",
       "complexity",
       "vocab",
       "typecheck",
       "tech-conformance",
-      "self-balance",
       "ci-run-time",
       "mutation",
     ]) {

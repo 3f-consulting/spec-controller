@@ -2,10 +2,10 @@
  * Step definitions for features/self-reconciliation.feature — the @integration arm of
  * @SCN-SLF-001, the self-reconciliation gate.
  *
- * ANTI-WATERMELON. This runs the REAL `pnpm lint:self-balance` guard as a subprocess and
+ * ANTI-WATERMELON. This runs the REAL `pnpm balance:self` guard as a subprocess and
  * reads its actual outcome — never a re-run of the reconciler in isolation, which would
  * prove the engine agrees with itself and say nothing about whether the GATE is wired.
- * The @unit arm (packages/spec-controller/static-checks/lintSelfBalanceCli.test.ts) owns
+ * The @unit arm (packages/spec-controller/static-checks/balanceSelfCli.test.ts) owns
  * the scan scope and the self-citation; this one owns the verdict.
  *
  * WHY PLANTED TREES RATHER THAN THIS ONE. The gate reads a Cucumber report, and this
@@ -18,7 +18,7 @@
  * permanent real out-of-balance in-tree to point a passing test at.
  *
  * @SCN-SLF-001 — bidirectional evidence marker. Grepping SCN-SLF-001 returns the
- * scenario, this step block, and the @unit blocks in lintSelfBalanceCli.test.ts.
+ * scenario, this step block, and the @unit blocks in balanceSelfCli.test.ts.
  *
  * Parent: 3F-2354 (sub-issue 1 of 1 under 3F-2351, the CI gate).
  */
@@ -108,7 +108,7 @@ function plantTree(observed: boolean): string {
 // @SCN-SLF-001
 function runGuard(root: string): GuardRun {
   try {
-    const output = execFileSync("pnpm", ["lint:self-balance", "--root", root], {
+    const output = execFileSync("pnpm", ["balance:self", "--root", root], {
       cwd: repoRoot,
       encoding: "utf8",
     });

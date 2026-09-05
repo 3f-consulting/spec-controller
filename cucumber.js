@@ -6,7 +6,7 @@
 // TWO PROFILES, TWO PASSES, AND THE SPLIT IS THE POINT (3F-3146, under 3F-3138). The
 // default profile is the BEHAVIOURAL pass — the runtime evidence stream. The `fitness`
 // profile is the CONVERTED-STATIC-CHECK pass: one cucumber call per axis, each writing its
-// own report, so `lint:self-balance` never has to guess which half of one document is which.
+// own report, so `balance:self` never has to guess which half of one document is which.
 // Named exports are cucumber's own profile mechanism, and profiles do NOT inherit from
 // `default` (configuration/from_file.js merges the requested profiles onto `{}`), so each
 // block below states its whole configuration.

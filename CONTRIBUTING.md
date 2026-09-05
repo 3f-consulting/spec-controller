@@ -64,14 +64,14 @@ off the board without reporting it unrun — so the ladder reds if it ever stops
 domain-core mutation score — is a CONVERTED fitness check: its configured row in
 `specController.fitnessChecks` names the characteristic, the command that prints the number
 (`pnpm --silent mutation:score`) and the `domain` gate its bar is sourced from. So
-`cucumber:fitness` runs that command and posts what it printed, and `lint:self-balance`
+`cucumber:fitness` runs that command and posts what it printed, and `balance:self`
 reconciles the number against the gate's banked kill floor.
 
 A mutation sweep costs 8-12 minutes on CI, so it runs nightly
 (`.github/workflows/mutation.yml`) and leaves what it measured as a SWEEP RECORD; CI borrows
 that record into `runs/mutation/measurements.json` while it is still young enough to be about
 the code being judged. A score older than 36 hours is not placed at all — the command then has
-nothing to print, `cucumber:fitness` reds on the scenario and `lint:self-balance` reds on the
+nothing to print, `cucumber:fitness` reds on the scenario and `balance:self` reds on the
 row, which reads `missing`. That is how a nightly that stops running says so.
 
 On your machine there is nothing to borrow, so run the sweep once:
@@ -81,7 +81,7 @@ pnpm mutation
 ```
 
 That is ~45 seconds locally and writes the sweep record, after which `pnpm verify` is green.
-Skipping it fails `@SCN-MUT-011` in the fitness pass and leaves `lint:self-balance` reporting
+Skipping it fails `@SCN-MUT-011` in the fitness pass and leaves `balance:self` reporting
 it as `missing` — the true sentence rather than a false red: no measurement arrived.
 
 ## Reports live outside the repo

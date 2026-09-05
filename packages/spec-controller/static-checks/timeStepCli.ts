@@ -23,7 +23,7 @@
  * over a planted tree needs exactly the arrangement the real run uses.
  *
  * IT IS NOT AN ARBITER EITHER: its exit code is the wrapped command's, always (@SCN-CIP-010).
- * The timing verdict is `lint:self-balance`'s alone, so a suite over its ceiling reds in one
+ * The timing verdict is `balance:self`'s alone, so a suite over its ceiling reds in one
  * place and reads from one report. A wrapper that also redded on time would hold both the
  * number and the bar that number is judged against, and would make a green build depend on two
  * arbiters agreeing. The write happens first and unconditionally, because a slow failing suite
@@ -66,7 +66,7 @@ interface TimedStep {
 }
 
 /**
- * A fault in how the wrapper was CALLED — exit 2, the code `lint:self-balance` and the ladder
+ * A fault in how the wrapper was CALLED — exit 2, the code `balance:self` and the ladder
  * emitter already reserve for "this run is broken" as against "the code is wrong".
  */
 function usage(problem: string): never {
