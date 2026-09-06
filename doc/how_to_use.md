@@ -112,27 +112,40 @@ Run `spec-controller --help` for the top-level summary of commands and host modi
 
 ---
 
-## Run against an adopter's repository
+## Run against a target — a worked example
+
+Three locations, named once at the top and used throughout: the repository being reconciled, this checkout, and the store. Set them to your own and the rest of the block runs unchanged.
+
+`STORE` sits outside both checkouts deliberately, for the reason given above — a kept run enumerates a codebase's gaps, dangling anchors and watermelons, so it belongs in a store you chose rather than under version control alongside the thing it is about.
 
 ```
-cd ./projects/3f/an-adopters-repository
+TARGET=~/code/your-project           # the repository being reconciled
+CONTROLLER=~/code/spec-controller    # this checkout
+STORE=~/spec-controller-runs         # kept runs, OUTSIDE both
+
+# 1. Produce the target's evidence.
+cd "$TARGET"
 git switch main
 git pull --ff-only
 pnpm install --frozen-lockfile
 npx cucumber-js --format summary --format json:reports/cucumber.json
 npx vitest run --reporter=json --outputFile=reports/vitest.json
 
-
-cd .
+# 2. Reconcile it. The controller checkout is refreshed too — the verdict is only
+#    as trustworthy as the binary that produced it.
+cd "$CONTROLLER"
+git switch main
+git pull --ff-only
+pnpm install --frozen-lockfile
 node_modules/.bin/tsx packages/spec-controller/src/cli.ts \
-  --store . \
+  --store "$STORE" \
   balance \
-  --target an-adopters-repository \
-  --features ./projects/3f/an-adopters-repository/features \
-  --vitest ./projects/3f/an-adopters-repository/reports/vitest.json \
-  --cucumber ./projects/3f/an-adopters-repository/reports/cucumber.json \
-  --ci ./projects/3f/an-adopters-repository/.github/workflows/ci.yml \
-  --package-json ./projects/3f/an-adopters-repository/package.json
+  --target your-project \
+  --features "$TARGET/features" \
+  --vitest "$TARGET/reports/vitest.json" \
+  --cucumber "$TARGET/reports/cucumber.json" \
+  --ci "$TARGET/.github/workflows/ci.yml" \
+  --package-json "$TARGET/package.json"
 ```
 
 ---

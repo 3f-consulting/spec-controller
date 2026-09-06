@@ -34,7 +34,8 @@
     "lint:anemic-domain": "tsx tests/checks/lintAnemicDomainCli.ts",
     "lint:exempt-data-floor": "tsx tests/checks/lintExemptDataFloorCli.ts",
     "fitness:corpus": "tsx tests/checks/fitnessCorpus.ts",
-    "doc:compatibility-examples": "tsx tests/checks/compatibilityExamplesCli.ts"
+    "doc:compatibility-examples": "tsx tests/checks/compatibilityExamplesCli.ts",
+    "doc:paths": "tsx tests/checks/docPathsCli.ts"
   },
   "specController": {
     "fitnessChecks": [
@@ -108,6 +109,11 @@
         "scn": "SCN-FIT-015",
         "characteristic": "doc-accuracy",
         "command": "pnpm --silent doc:compatibility-examples"
+      },
+      {
+        "scn": "SCN-FIT-016",
+        "characteristic": "doc-accuracy",
+        "command": "pnpm doc:paths"
       }
     ]
   },

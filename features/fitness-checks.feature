@@ -93,3 +93,7 @@ Feature: The fitness checks this repository configures, one scenario per row
   @fitness @SCN-FIT-015
   Scenario: doc-accuracy — `pnpm --silent doc:compatibility-examples`
     Then the check this scenario names finds no violations
+
+  @fitness @SCN-FIT-016
+  Scenario: doc-accuracy — `pnpm doc:paths`
+    Then the check this scenario names finds no violations
