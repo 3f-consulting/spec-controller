@@ -24,6 +24,32 @@
  * instead would be a claim about the CODE assembled out of a fault in the harness measuring it,
  * which is the reading @SCN-MUT-008 exists to keep unreachable.
  *
+ * AND IT CHECKS NO AGE, WHICH IS A DIVISION OF LABOUR RATHER THAN AN OVERSIGHT — BUT IT IS THE
+ * HALF A CONSUMER COPYING THIS FILE DOES NOT GET (3F-3156). A record's age is settled where the
+ * record is PLACED, against the producing run's own clock, before the payload is fetched at all.
+ * Nothing here holds a window, and there is no timestamp in a `Measurement` for one to be held
+ * against. So the account of failure modes above is complete about ABSENCE and about nothing else:
+ * hand this reader a record from any distance in the past and it prints the number and exits 0 —
+ * measured at six years and seven months, which is not a generous bound, it is the lack of one.
+ *
+ * SO COPYING THIS FILE WITHOUT A WINDOWED PLACEMENT BUYS A CHECK THAT GREENS OVER A NUMBER NOBODY
+ * REFRESHED. The placement is the half that costs something, and it does not look like this: here
+ * it is a step in `ci.yml` weighing a nightly run's own `createdAt` against a thirty-six hour
+ * window and placing nothing once that lapses, so the row reads `missing` and the sentence above
+ * is reached honestly (@SCN-MUT-020, @SCN-MUT-021 — the two arms that RUN that step rather than
+ * reading it). Whoever adopts the expensive-producer pattern owes themselves that half in whatever
+ * shape their own pipeline takes. Taking this file alone is taking the cheap half of a pair.
+ *
+ * AND LOCALLY THERE IS NO PLACEMENT AT ALL — AN ACCEPTED COST, STATED HERE RATHER THAN LEFT TO BE
+ * DISCOVERED. The borrow is a CI step, and the local ladder is derived from the `ci.yml` steps that
+ * invoke a package.json script, which that one does not. So nothing windows the record `pnpm
+ * mutation` leaves behind: locally the number is whatever was last swept, of unbounded age, and
+ * the row reads satisfied over it. That is a true contract rather than a fault — the developer's
+ * own sweep IS the placement — and it is deliberately not repaired by putting a clock here. The
+ * only clock available locally is the file's mtime, which a copy resets and which says when the
+ * record MOVED rather than when it was MEASURED; a bar resting on that would be the dishonest
+ * clock 3F-2841 retired, wearing a filesystem's costume.
+ *
  * IT IS NOT AN ARBITER AND HOLDS NO BAR. One bar per characteristic and it is the ledger's
  * (3F-2509). This prints a number; whether that number clears the `domain` gate's kill floor is
  * settled in exactly one place, on the row that owes the measurement.

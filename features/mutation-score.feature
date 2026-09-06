@@ -620,3 +620,65 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
         | SCN-MUT-011 | states no superseded code               | refuses, naming the row it could not find      |
         | SCN-FIT-002 | states that it supersedes "SCN-MUT-011" | answers with the number that measurement holds |
         | SCN-LNT-001 | states that it supersedes "SCN-MUT-011" | refuses, naming the row it could not find      |
+
+  Rule: the measurement a push borrows is young enough to be about the code it will settle
+
+    THE WINDOW HAD NO WITNESS, AND NOTHING IN THIS REPOSITORY WOULD HAVE NOTICED IT GO (3F-3156).
+    Thirty-six hours is the single thing standing between a lapsed nightly and a satisfied row: the
+    reader prints whatever number it finds and holds no clock of its own, by the ruling that retired
+    the payload's `measuredAt` (@SCN-MUT-019, 3F-2841). Delete the age comparison in the borrow and
+    every static check in this tree stays green, every scenario above this Rule stays green, and a
+    number measured on a tree three weeks old settles SCN-FIT-002 satisfied. That is a watermelon by
+    this product's own meaning of the word, inside the product named for finding them.
+
+    IT HAD ONE ONCE, AND THE WITNESS DID NOT MOVE WHEN THE MECHANISM DID. Two scenarios held this
+    axis — a measurement inside its window is posted, one older than its window is not — and both
+    were deleted when the reader they were written against was retired (3F-2855, 3F-2856). The
+    window itself moved into the borrow and arrived with nothing asking for it. The tell is still in
+    this file: the Rule above narrates "a number still inside the 36h window" as an aside, which is
+    what a fact looks like after it has stopped being checked and gone on being true.
+
+    SO THE ARM RUNS THE BORROW RATHER THAN READING IT, WHICH IS THE WHOLE OF THE DIFFERENCE HERE.
+    Every other arm over this step reads its text: which run it selects, on which line, what it says
+    once it has chosen. A text assertion cannot tell a window that FIRES from a window whose
+    arithmetic is broken on the runner it runs on — and reading a mechanism's behaviour off its
+    configuration is exactly the move that let this window lose its witness in the first place. The
+    step is taken out of the workflow every push runs, its own `env:` supplies the four terms, and it
+    is executed with the boundary to GitHub answered and nothing else replaced.
+
+    AND THE ARITHMETIC IS GNU'S, WHICH MAKES A SHIM A CORRECTNESS TERM RATHER THAN PORTABILITY
+    POLISH. `date -u -d "<iso>"` is GNU syntax; a BSD `date` refuses it and the step takes its own
+    "not a moment this runner can read" path, places nothing and exits 0. Measured at Analysis: with
+    a BSD `date`, a run one hour old and a run forty hours old both placed nothing, for the same
+    wrong reason. So the arm resolves a GNU `date` and REDS where it finds none. A skipped arm is a
+    credit saying a check ran when it did not, which is the fault one level up that 3F-3162 closed.
+
+    @unit @SCN-MUT-020
+    Scenario: a sweep that finished inside the window has its measurement placed, and the borrow names the age it accepted
+      Given the workflow every push runs, and a sweep of this repository's domain core that finished well inside the window that borrow states
+      When the push borrows from it
+      Then that sweep's measurement is placed where the check reporting it reads it, carrying the numbers the sweep measured
+      And the borrow names the age it accepted and the window it accepted it against
+
+    @unit @SCN-MUT-021
+    Scenario: a sweep that finished past the window has nothing placed, so the row it would have settled reads missing exactly as a sweep that never ran
+      THE ARM THAT WOULD GO VACUOUSLY GREEN, WHICH IS WHY THE SHIM ABOVE IS A CORRECTNESS TERM AND
+      NOT A CONVENIENCE. A runner whose `date` cannot read an ISO moment places nothing, says why,
+      and lets the push carry on — the same three observations this scenario makes, reached for a
+      reason that has nothing to do with the window. The refusal arm is therefore the one that goes
+      green over a mechanism it never touched. What tells the two apart is the sentence: the lapse
+      names the age it refused and the window it refused it against, and the unreadable-timestamp
+      path names neither. So this arm reads that sentence, and reds where it is the wrong one.
+
+      AND THE LAPSE STOPS NOTHING, WHICH IS THE DESIGN RATHER THAN A SOFTNESS IN IT. Every path
+      through this borrow ends the same way — nothing placed, one sentence saying which path ran,
+      and the push carrying on (@SCN-MUT-018). A cadence that lapsed is not a fault in the code
+      being pushed, and the borrow is not the arbiter of either; the row that sweep would have
+      settled reads missing, which is the true sentence about a sweep that has stopped arriving.
+      An arm asserting a stopped push here would be asserting the opposite of what this step is.
+
+      Given the workflow every push runs, and a sweep of this repository's domain core that finished well past the window that borrow states
+      When the push borrows from it
+      Then nothing is placed where the check reporting it reads it, so the row that sweep would have settled reads missing exactly as a sweep that never ran
+      And the borrow names the lapse it refused: how old that sweep was, and the window it measured it against
+      And the push carries on, because a sweep that has lapsed is not a fault in the code being pushed

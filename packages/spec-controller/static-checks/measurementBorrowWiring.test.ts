@@ -10,17 +10,35 @@
  *                  can reach (3F-2963).
  *   @SCN-MUT-018 — the borrow says only what it did, so the one sentence claiming a placement
  *                  stands inside the path of the guard that made it (3F-2967).
+ *   @SCN-MUT-020 — the measurement a push borrows is young enough to be about the code it will
+ *                  settle, so a sweep that finished inside the window has its number placed and
+ *                  the borrow names the age it accepted (3F-3182).
+ *   @SCN-MUT-021 — and the same window from the other side: a sweep that finished past it has
+ *                  nothing placed, the lapse named, and the push carrying on — so the row it
+ *                  would have settled reads missing exactly as a sweep that never ran (3F-3183).
  *
- * THREE SCENARIOS, ONE FILE, BECAUSE THEY READ ONE STEP. The first two narrow the same
- * `gh run list`, along axes that do not touch: one asks WHICH VERDICT it must not read, the other
- * WHICH LINE the run was taken on. The third asks what that step SAYS once it has chosen. All three
- * reach the step through the same walk, and an edit that broke it would otherwise have to be caught
- * three times.
+ * ONE FILE, BECAUSE THEY ALL REACH ONE STEP. The first two narrow the same `gh run list`, along
+ * axes that do not touch: one asks WHICH VERDICT it must not read, the other WHICH LINE the run was
+ * taken on. The third asks what that step SAYS once it has chosen. The last two ask whether its age
+ * arithmetic FIRES, from either side of the window — and they are a pair rather than one arm twice,
+ * because a refusal arm alone is green over a borrow that places nothing ever, and an admitting arm
+ * alone is green over a window that never refuses. All of them reach the step through the same
+ * walk, and an edit that broke it would otherwise have to be caught once per arm.
+ *
+ * THREE OF THESE ARMS READ THE STEP; @SCN-MUT-020 AND @SCN-MUT-021 RUN IT, AND THE DISTINCTION IS
+ * LOAD-BEARING RATHER THAN STYLISTIC (3F-3156). Everything above them asserts the step's TEXT, which
+ * is the right instrument for a term that either is or is not written down. It is the wrong instrument
+ * for the window: a text assertion cannot tell an age comparison that fires from one whose
+ * arithmetic is broken on the runner it runs on — `date -u -d` is GNU-only, and under a BSD `date`
+ * this step places nothing and exits 0 with every text assertion in this file still green. Reading
+ * a mechanism's behaviour off its configuration is also the exact move that let this window lose
+ * its witness for two slices. So the executing arms are not candidates for a later tidy-up into the
+ * shape the arms above them use, and that is written here rather than left to be re-derived.
  *
  * Bidirectional evidence (Evidence Manifesto §9): the `[SCN-MUT-015]` / `[SCN-MUT-017]` /
- * `[SCN-MUT-018]` ids in the describe / it strings below match their scenarios' tags, so a grep of
- * any of them returns both halves of that pair. `@unit`-only — Cucumber skips them; these Vitest
- * arms ARE the observed evidence.
+ * `[SCN-MUT-018]` / `[SCN-MUT-020]` / `[SCN-MUT-021]` ids in the describe / it strings below match
+ * their scenarios' tags, so a grep of any of them returns both halves of that pair. `@unit`-only —
+ * Cucumber skips them; these Vitest arms ARE the observed evidence.
  *
  * ONE CLAIM, TWO HALVES, AND THE SECOND ONE USED TO BE A COMMENT'S. Which run the borrow selects
  * decides whether a regression's number can cross at all; whether the sweep left that number
@@ -42,11 +60,13 @@
  * red as themselves rather than as an empty comparison against an empty one.
  */
 
-import { readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { describe, it, expect } from "vitest";
+import { afterAll, describe, it, expect } from "vitest";
 import { parse } from "yaml";
 
 import { SWEEP_RECORD_PATH } from "./measurementArtefact.js";
@@ -414,5 +434,222 @@ describe("[SCN-MUT-018] the borrow says only what it did", () => {
       leaves: "exit 0",
       does: 2,
     });
+  });
+});
+
+/* ═══ @SCN-MUT-020 / @SCN-MUT-021 — THE ARMS THAT RUN THE STEP RATHER THAN READING IT ════════ */
+
+/**
+ * `gh`, answered at the two calls the borrow makes and refusing every other.
+ *
+ * THE BOUNDARY IS THE ONLY THING REPLACED. GitHub is the one thing this arm cannot have: a listing
+ * of the sweep's runs and the artefact one of them left behind. Everything else in the step — the
+ * `jq` filters, the date arithmetic, the future-dated path, the payload shape check, the `mkdir`
+ * and `cp` that place the record, the cleared errexit and the terminal `exit 0` — is the real
+ * script running for real. That is what makes this arm able to see a branch nobody enumerated.
+ *
+ * IT REFUSES ANY OTHER CALL RATHER THAN SHRUGGING. A stub that answered everything would let a
+ * borrow that started asking GitHub something new pass silently on a stub's default.
+ */
+const GH_STUB = `#!/usr/bin/env bash
+set -u
+if [ "\${1:-}" = "run" ] && [ "\${2:-}" = "list" ]; then
+  printf '%s' "\${STUB_RUN_LIST}"
+  exit 0
+fi
+if [ "\${1:-}" = "run" ] && [ "\${2:-}" = "download" ]; then
+  previous=""
+  into=""
+  for argument in "$@"; do
+    if [ "\${previous}" = "--dir" ]; then into="\${argument}"; fi
+    previous="\${argument}"
+  done
+  mkdir -p "\${into}"
+  printf '%s' "\${STUB_MEASUREMENTS}" > "\${into}/measurements.json"
+  exit 0
+fi
+echo "gh stub: the borrow asked for something this arm does not answer: $*" >&2
+exit 1
+`;
+
+/**
+ * A GNU `date` on this machine, REFUSED WHERE THERE IS NONE — never skipped.
+ *
+ * THE HAZARD THIS EXISTS FOR, MEASURED RATHER THAN ANTICIPATED (3F-3156). `date -u -d "<iso>"` is
+ * GNU syntax. A BSD `date` refuses it, so the step takes its own "not a moment this runner can
+ * read" path, places nothing and exits 0 — which is INDISTINGUISHABLE from the past-the-window
+ * outcome. Measured at Analysis: with a BSD `date`, a run one hour old and a run forty hours old
+ * both placed nothing, for the same wrong reason. `ubuntu-latest` has GNU `date` natively; a macOS
+ * developer machine has it as `gdate` if coreutils is installed.
+ *
+ * AND A MISSING ONE THROWS RATHER THAN SKIPS. A skipped arm posts a credit saying the check ran
+ * when it did not, which is the fault 3F-3162 closed one level up. An arm that cannot reach the
+ * arithmetic it exists to witness must say so as a red.
+ */
+function gnuDate(): string {
+  const directories = (process.env["PATH"] ?? "").split(path.delimiter).filter((entry) => entry !== "");
+  for (const name of ["gdate", "date"]) {
+    for (const directory of directories) {
+      const candidate = path.join(directory, name);
+      const probe = spawnSync(candidate, ["--version"], { encoding: "utf8" });
+      if (probe.status === 0 && /GNU coreutils/.test(probe.stdout)) return candidate;
+    }
+  }
+  throw new Error(
+    "this arm runs the borrow's own age arithmetic, which is GNU `date -u -d` syntax, and no GNU " +
+      "date is on PATH (`gdate`, or a `date` whose --version says GNU coreutils). Skipping would " +
+      "leave the step on its unreadable-timestamp path — placing nothing, exiting 0, and proving " +
+      "nothing about the window while looking like it had run.",
+  );
+}
+
+/**
+ * The window the step itself states, in seconds — read from the step's own `env:`, never typed here.
+ *
+ * A HARD-CODED 129600 WOULD BE A SECOND COPY OF THE WINDOW, and a fact surviving as a copy while
+ * its witness went away is the whole finding this scenario closes. The timestamps below are derived
+ * from this number, so retuning the window in `ci.yml` moves this arm with it.
+ */
+function statedWindow(): number {
+  const stated = Number(borrowStep().env["MAX_AGE"]);
+  if (!Number.isFinite(stated) || stated <= 0) {
+    throw new Error(`the borrow step's env names no readable MAX_AGE; it holds ${borrowStep().env["MAX_AGE"]}.`);
+  }
+  return stated;
+}
+
+/** The scratch roots each run owns, cleared once the file's arms are done with them. */
+const sandboxes: string[] = [];
+
+afterAll(() => {
+  for (const sandbox of sandboxes) rmSync(sandbox, { recursive: true, force: true });
+});
+
+/**
+ * The payload the sweep left behind — ONE object, shared by both executing arms.
+ *
+ * BECAUSE THE PAIR'S WHOLE CLAIM IS THAT AGE IS THE ONLY INPUT THAT DIFFERS BETWEEN THEM. Written
+ * as two literals that claim to be identical, they would be identical until the day one of them was
+ * edited, and the arm that then went green would be green about something nobody meant to ask. That
+ * is the same fact-surviving-as-a-copy this file's own window finding is about, one level down, so
+ * the identity is held by there being one object rather than by a comment asserting two.
+ */
+const SWEPT = { measurements: [{ scnId: "SCN-MUT-011", checkTag: "mutation", measured: 774 }] };
+
+/** What running the borrow left behind: what it said, how it ended, and what it placed. */
+interface Borrowed {
+  readonly stdout: string;
+  readonly stderr: string;
+  readonly status: number | null;
+  readonly placed: string | undefined;
+}
+
+/**
+ * Run the real borrow step over a sweep that finished at `createdAt` and left `payload` behind.
+ *
+ * THE EVIDENCE ROOT IS THIS RUN'S OWN, NEVER THE DEVELOPER'S. A warm root would let a previous
+ * sweep's record read as this arm's placement — the confounder that made two of three probes wrong
+ * on 3F-3162 — so both roots the step writes under are directories this arm creates and owns.
+ *
+ * IT IS INVOKED AS `bash -e`, WHICH IS HOW GITHUB INVOKES IT. A bare `run:` naming no `shell:` runs
+ * as `bash -e {0}`, so the errexit the step clears out loud (@SCN-MUT-015) has to actually arrive.
+ */
+function borrow(createdAt: string, payload: unknown): Borrowed {
+  const step = borrowStep();
+  const sandbox = mkdtempSync(path.join(os.tmpdir(), "borrow-arm-"));
+  sandboxes.push(sandbox);
+  const evidence = path.join(sandbox, "evidence");
+  const stubs = path.join(sandbox, "bin");
+  for (const directory of [evidence, path.join(sandbox, "runner-temp"), stubs]) mkdirSync(directory);
+  symlinkSync(gnuDate(), path.join(stubs, "date"));
+  writeFileSync(path.join(stubs, "gh"), GH_STUB, { mode: 0o755 });
+  const script = path.join(sandbox, "borrow.sh");
+  writeFileSync(script, step.run ?? "");
+  const ran = spawnSync("bash", ["-e", script], {
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      ...step.env,
+      PATH: `${stubs}${path.delimiter}${process.env["PATH"] ?? ""}`,
+      SPEC_CONTROLLER_EVIDENCE_DIR: evidence,
+      RUNNER_TEMP: path.join(sandbox, "runner-temp"),
+      STUB_RUN_LIST: JSON.stringify([{ databaseId: 4242, createdAt }]),
+      STUB_MEASUREMENTS: JSON.stringify(payload),
+    },
+  });
+  const record = path.join(evidence, SWEEP_RECORD_PATH);
+  return {
+    stdout: ran.stdout,
+    stderr: ran.stderr,
+    status: ran.status,
+    placed: existsSync(record) ? readFileSync(record, "utf8") : undefined,
+  };
+}
+
+describe("[SCN-MUT-020] the measurement a push borrows is young enough to be about the code it will settle", () => {
+  it("[SCN-MUT-020] places the measurement of a sweep that finished inside the window, and names the age it accepted against the window it accepted it against", () => {
+    // COMFORTABLY INSIDE, AND DERIVED FROM THE STEP'S OWN WINDOW. Half the stated window is inside
+    // it by construction whatever the number is retuned to, and far enough from both edges that no
+    // clock skew between this process and the shell's `date` can reach either.
+    const window = statedWindow();
+    const inside = Math.floor(window / 2);
+    const borrowed = borrow(new Date(Date.now() - inside * 1000).toISOString(), SWEPT);
+
+    // EVERY OTHER PATH THROUGH THIS STEP SAYS WHY ON STDERR AND PLACES NOTHING (@SCN-MUT-018), so
+    // a silent stderr is the assertion that the PLACING path is the one that ran — including the
+    // unreadable-timestamp path a BSD `date` would have taken, which is the vacuous green this
+    // scenario exists to make unreachable.
+    expect({ status: borrowed.status, said: borrowed.stderr }).toEqual({ status: 0, said: "" });
+
+    // The record is where the check that reports it reads it, and it carries what the sweep
+    // measured — not merely a file of the right name in the right place.
+    expect(borrowed.placed === undefined ? undefined : JSON.parse(borrowed.placed)).toEqual(SWEPT);
+    expect(borrowed.stdout).toContain("borrow:   SCN-MUT-011 mutation = 774");
+
+    // AND IT NAMES BOTH NUMBERS, WHICH IS WHAT MAKES THE ACCEPTANCE READABLE IN A LOG. An age
+    // without its window is a number nobody can judge; the window without the age says nothing
+    // about the run that crossed. The window is asserted to be the step's own stated one, so a
+    // sentence rendering some other number reds rather than reading plausibly.
+    const named = /measured (\d+)s ago, inside the (\d+)s window/.exec(borrowed.stdout);
+    expect(named).not.toBeNull();
+    expect(Number(named?.[2])).toBe(window);
+    expect(Math.abs(Number(named?.[1]) - inside)).toBeLessThanOrEqual(60);
+  });
+});
+
+describe("[SCN-MUT-021] a sweep that finished past the window has nothing placed", () => {
+  it("[SCN-MUT-021] places nothing for a sweep that finished past the window, names the lapse it refused, and lets the push carry on", () => {
+    // COMFORTABLY PAST, AND DERIVED FROM THE STEP'S OWN WINDOW — the same term @SCN-MUT-020 halves.
+    // Twice the stated window is outside it by construction whatever the number is retuned to, so
+    // this arm and its sibling move together when the cadence is retuned and neither can drift onto
+    // the wrong side of a boundary that changed underneath them.
+    const window = statedWindow();
+    const past = window * 2;
+
+    // THE SWEEP LEFT A PERFECTLY GOOD NUMBER BEHIND, AND IT IS STILL REFUSED. The payload is the
+    // SAME OBJECT @SCN-MUT-020 has placed, so the single input that differs between the two arms
+    // is when the run finished. A green here is therefore about the age and about nothing else —
+    // and that is held by `SWEPT` being one object, not by these two arms being kept in step.
+    const borrowed = borrow(new Date(Date.now() - past * 1000).toISOString(), SWEPT);
+
+    // NOTHING PLACED, AND THE PUSH NOT STOPPED — the two halves of the same stance (@SCN-MUT-018).
+    // The borrow is no arbiter: a lapsed cadence is not a fault in the code being pushed, so it
+    // says what it did and exits as it would have on any other path. Asserting a stopped ladder
+    // here would assert the opposite of the design.
+    expect({ status: borrowed.status, placed: borrowed.placed }).toEqual({ status: 0, placed: undefined });
+    expect(borrowed.stdout).not.toContain("borrow: placed");
+
+    // AND THIS IS THE ASSERTION THAT KEEPS THIS ARM FROM PASSING FOR THE WRONG REASON, so it is the
+    // one that must stay sharp. Four other paths through this step also place nothing and exit 0,
+    // and one of them — a `date` that cannot read an ISO moment — is reachable on any runner
+    // without GNU coreutils. Only the lapse names an age AND the window it was measured against, so
+    // reading those two numbers out of the sentence is what tells the window firing apart from the
+    // arithmetic never having run. The window is asserted to be the step's own stated one, and the
+    // age to be the one this arm dated the run at, so a sentence rendering some other pair of
+    // numbers reds rather than reading plausibly.
+    const named = /measured (\d+)s ago, past the (\d+)s window/.exec(borrowed.stderr);
+    expect(named).not.toBeNull();
+    expect(Number(named?.[2])).toBe(window);
+    expect(Math.abs(Number(named?.[1]) - past)).toBeLessThanOrEqual(60);
   });
 });
