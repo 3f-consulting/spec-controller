@@ -33,7 +33,8 @@
     "lint:adopted-vocabulary": "tsx packages/spec-controller/static-checks/lintAdoptedVocabularyCli.ts",
     "lint:anemic-domain": "tsx packages/spec-controller/static-checks/lintAnemicDomainCli.ts",
     "lint:exempt-data-floor": "tsx packages/spec-controller/static-checks/lintExemptDataFloorCli.ts",
-    "fitness:corpus": "tsx packages/spec-controller/static-checks/fitnessCorpus.ts"
+    "fitness:corpus": "tsx packages/spec-controller/static-checks/fitnessCorpus.ts",
+    "doc:compatibility-examples": "tsx packages/spec-controller/static-checks/compatibilityExamplesCli.ts"
   },
   "specController": {
     "fitnessChecks": [
@@ -102,6 +103,11 @@
         "scn": "SCN-FIT-014",
         "characteristic": "traceability",
         "command": "pnpm --silent fitness:corpus && git diff --exit-code -- features/fitness-checks.feature"
+      },
+      {
+        "scn": "SCN-FIT-015",
+        "characteristic": "doc-accuracy",
+        "command": "pnpm --silent doc:compatibility-examples"
       }
     ]
   },

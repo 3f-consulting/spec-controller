@@ -59,6 +59,14 @@ is pending*, that is the honest answer rather than a missing clause — inventin
 for a mechanism with no designed replacement would be the same fault as an absolute framing, one
 register quieter.
 
+**This section documents what the READER accepts, not what we happen to use.** The difference is
+worth stating because it is currently large: this repository has converted every one of its own
+static checks to the last mechanism below, so its `package.json` carries no `checkRegistry`, no
+`thresholds` and no `staticChecks` at all. **None of that is a withdrawal.** Each of those
+mechanisms is read exactly as it was, our having stopped using them is not a step you are asked to
+take, and the sunset clause on each still says what it said. When we do intend to stop reading one,
+it changes here first and in a major version — a promise is not withdrawn by a delivery landing.
+
 ### `specController.checkRegistry` — both spellings
 
 **Supported.** It routes a static check's credit to the scenario it discharges, and it works in
@@ -73,7 +81,7 @@ Both spellings are supported and neither is preferred:
 "specController": {
   "checkRegistry": {
     // Object form — names the characteristic AND the fitness scenario the credit posts to.
-    "lint:complexity-exceptions": { "check": "complexity", "scn": "SCN-CPX-006" },
+    "lint:complexity-exceptions": { "check": "complexity", "scn": "SCN-CHK-004" },
 
     // String form — names the characteristic only; the corpus decides which row the credit
     // posts to. An object carrying no "scn" is the object spelling of exactly this.
@@ -81,6 +89,14 @@ Both spellings are supported and neither is preferred:
   }
 }
 ```
+
+**The `@SCN` above is YOURS, not ours, and that is a deliberate change.** This page used to cite
+scenarios out of our own corpus, which read as more honest and turned out to be less: we migrated
+every one of our static checks to the mechanism two entries below, and the codes those examples
+named stopped existing while the examples went on naming them. `SCN-CHK-004` belongs to whoever is
+reading — a feature code this repository has never allocated — so the example illustrates the shape
+without making a claim about a tree you cannot see. Where an example on this page *does* cite one of
+our codes, that citation is held to our corpus by a check that runs on every push.
 
 **Why it exists, so that its ending is legible rather than arbitrary.** A static check's run reaches
 the reconciliation as an anonymous script handle — `lint:complexity` — and nothing in that handle
@@ -94,20 +110,29 @@ If you never convert a check, you never touch the registry.
 
 ### `specController.thresholds`
 
-**Supported.** It carries the ceiling a measured check's number is held against, keyed by the
+**Supported.** It carries the bar a measured check's number is held against, keyed by the
 scenario's `@SCN` and the characteristic:
 
 ```jsonc
 "specController": {
   "thresholds": {
-    "SCN-CIP-013": { "ci-run-time": 75 },
-    "SCN-MUT-011": { "mutation": { "atLeast": { "mutationGate": "domain" } } }
+    "SCN-CHK-012": { "ci-run-time": { "atMost": 75 } },
+    "SCN-CHK-013": { "mutation": { "atLeast": { "mutationGate": "domain" } } }
   }
 }
 ```
 
-**Nothing is pending against it** — no replacement is designed, so no sunset is stated. It is
-**removed only in a major version**, after a replacement has shipped.
+**A bar carries a direction, and the direction is half of it.** `atMost` is a ceiling — hold the
+pipeline under seventy-five seconds. `atLeast` is a floor — hold the mutation score above what a
+gate records. A bare number (`"ci-run-time": 75`) is the ceiling spelling and stays supported; it is
+the direction being implicit that makes it worth spelling out, because the two readings differ by
+which builds go green rather than by style.
+
+**A replacement HAS shipped, and this entry is the one place on this page that said otherwise.**
+For a check converted to a fitness scenario the bar lives on its `specController.fitnessChecks` row,
+so a converted check needs no entry here. This block remains the answer for a measured
+characteristic you have **not** converted, it is **removed only in a major version**, and nothing
+asks you to move before then.
 
 A measured characteristic has no runnable script handle — nothing invokes `ci-run-time` — so the
 check registry cannot name it, and this block is how such a characteristic is recognised at all. The
@@ -182,6 +207,123 @@ from. It is **removed only in a major version.**
 
 The tag set is yours: an unrecognised bare tag raises nothing, and a corpus that has registered
 nothing raises nothing. The tool adds no obligation to your books under a word you never used.
+
+**There is now a SECOND route to the same obligation, and both are read.** A scenario carrying the
+single tag `@fitness` gets its characteristic from its configured row rather than from its tag —
+that is the next entry. The two live side by side and neither is being taken away: a bare
+characteristic tag raises what it has always raised, an `@fitness` scenario raises what its row
+names, and a scenario reached by both raises the obligation once. What changed is that a corpus now
+has a choice about where the word lives, not that the tag stopped working.
+
+### `specController.fitnessChecks`
+
+**Supported**, and it is the newest of these mechanisms rather than the oldest. A row says which
+scenario a check is about, what the check asserts, and the command that runs it — so a check stops
+being an anonymous script handle that something else has to route, and becomes a scenario that runs
+and reports like every other scenario you have:
+
+```jsonc
+"specController": {
+  "fitnessChecks": [
+    { "scn": "SCN-CHK-004", "characteristic": "vocab",
+      "command": "pnpm lint:blocked-vocabulary" },
+
+    // A row carrying a bar is MEASURED — its command prints a number and the number is held
+    // to the bar. `atMost` is a ceiling: keep the pipeline under seventy-five seconds.
+    { "scn": "SCN-CHK-012", "characteristic": "ci-run-time",
+      "command": "pnpm --silent timing:score --scn SCN-CHK-012",
+      "atMost": 75 },
+
+    // `atLeast` is a floor, and a bar may name a recorded gate instead of a figure — the
+    // number then comes from the record rather than from this file.
+    { "scn": "SCN-CHK-013", "characteristic": "mutation",
+      "command": "pnpm --silent mutation:score",
+      "atLeast": { "mutationGate": "domain" } }
+  ]
+}
+```
+
+**The direction is half of the bar, so both keys are spelled.** `atMost` holds a number down and
+`atLeast` holds it up; the two differ by which builds go green rather than by style, and a bar read
+in the wrong direction reds a fast suite and greens a slow one. It is the **presence** of either key
+that makes a row measured — a bar naming a gate nothing can source leaves the row measured with no
+bar rather than quietly passing, and the reconciliation says so.
+
+**Nothing is pending against it** — it is what the other entries move toward. It is **removed only in
+a major version**, and a corpus that converts nothing never writes a row.
+
+#### `notExaminedExit` — for a check whose subject is sometimes legitimately absent
+
+Some checks have nothing to look at on some runs, through no fault of anyone's. A check over pull
+request metadata, run on a branch that has no pull request. A check over a directory this particular
+repository does not have. The run examined nothing — and **both of the answers normally available
+are wrong**: exiting clean is a green nobody earned, and exiting with a violation reds honest work
+for the circumstances it ran in.
+
+So a row may name the exit code its command uses to say *I examined nothing*:
+
+```jsonc
+"specController": {
+  "fitnessChecks": [
+    { "scn": "SCN-CHK-021", "characteristic": "traceability",
+      "command": "pnpm check:pr-metadata",
+      "notExaminedExit": 3 }
+  ]
+}
+```
+
+The scenario is then reported **skipped** — neither passed nor failed, in Cucumber's own vocabulary.
+It still appears in the report, so the check is still recorded as having run; it does not count
+toward the run's exit code; and it is visibly not a pass.
+
+Three rules, and the first is the one that keeps this narrow:
+
+- **No field means no third state.** Every non-zero exit is a fault, which is what you want for
+  almost every check. You opt in to the third answer or you never meet it.
+- **`0` and `1` are refused where the rows are read**, not discovered at runtime. A row naming `0`
+  reports *examined nothing* on exactly the runs where the check worked; a row naming `1` turns
+  every real finding into one. Both leave a check unable to say something it must be able to say.
+- **Every other code is yours**, `2` and `4` included. What an ending means is a property of your
+  command, and the row is where your command is written down.
+
+This repository's own first user of the field is its scenario ⟷ sub-issue check, which cannot answer
+its question without a pull request body to read. That is a *member* of the class and not the reason
+for it: the field exists because a check with no subject must be able to say so.
+
+#### What a row you got wrong actually does — because it is not what you would guess
+
+**A row the reader cannot make sense of is DROPPED, not rejected.** Mistype a characteristic and the
+row goes quiet: no error, no warning, and the check simply stops running. That leniency is
+deliberate — one bad line in your manifest should not take down every check you have — and it means
+a typo costs you a check rather than a build.
+
+**What catches it is the checked-in corpus, which is the strongest argument for keeping one.** If
+your fitness corpus is generated from these rows and committed, a dropped row removes its scenario
+from the regenerated file, and a row of your own that regenerates and diffs will red:
+
+```
+✖ `pnpm --silent fitness:corpus && git diff --exit-code -- features/fitness-checks.feature` exited 1.
+  --- a/features/fitness-checks.feature
+  +++ b/features/fitness-checks.feature
+  @@ -42,10 +42,6 @@
+  -  @fitness @SCN-CHK-004
+  -  Scenario: vocab — `pnpm lint:blocked-vocabulary`
+```
+
+Without that row nothing tells you the check left.
+
+**Two values are refused outright, and refusing them reds every fitness scenario you have.** The
+manifest is read once for the whole pass, so `notExaminedExit: 0` or `1` on one row fails all of
+them — including rows you did not touch. **Read the first line before you go hunting**: it names the
+row, not the checks.
+
+```
+Error: SCN-CHK-004: notExaminedExit: 1 is refused where the rows are read, because an ordinary
+violation ends that way, so this row turns every finding the check makes into a check that examined
+nothing, and a red into a non-failure. …
+```
+
+One line of configuration, however many scenarios went red.
 
 ---
 

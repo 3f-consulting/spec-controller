@@ -92,6 +92,12 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     note: "the complexity + module-size thresholds — eslint complexity/max-lines/max-lines-per-function over the real tree, held to an EXTERNAL standard (10/40/400, cited) rather than the tree's own measured maximum, with today's exceedances enumerated as dated debt",
   },
   {
+    code: "CMP",
+    slug: "compatibility-commitment",
+    status: "feature-code-used",
+    note: "the compatibility commitment — doc/compatibility.md's own configuration examples, read by the readers that page states support them, and its citations of this repository's scenarios held to the corpus. Two questions rather than one: the shape question fails the day a documented mechanism stops being read, the citation question fails the day a worked example outlives the scenario it names (3F-3175)",
+  },
+  {
     code: "FIT",
     slug: "fitness-checks",
     status: "feature-code-used",
