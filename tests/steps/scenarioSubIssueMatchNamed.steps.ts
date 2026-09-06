@@ -90,8 +90,14 @@ const ownRow = (): { scn: string; characteristic: string } => {
  * manifest, and a fitness pass over this tree reports exactly those. So the report is derived from
  * the tree's own corpus, which is the document the pass itself reads.
  *
- * NO STEP STATUS IS WRITTEN, and that is not an omission. `convertedFitnessCredits` reads none:
- * the credit is about the wiring, and the exit code is about the findings.
+ * EVERY SCENARIO IS REPORTED AS PASSED, AND THAT IS THE STATEMENT THIS ARM NEEDS. The report
+ * stands in for a pass over this tree, and this scenario's own claim at the foot is that the row
+ * names the scenario AND a pass reported it — so the document has to say the checks RAN. It used
+ * to carry no step at all, on the reasoning that `convertedFitnessCredits` read no status; that
+ * reasoning was right about the FINDINGS and wrong about the RUNNING, and @SCN-LNT-026 corrected
+ * it. A stepless scenario is now broken evidence, which is the honest reading of a report saying
+ * nothing ran — so the fixture stopped under-stating what it stands in for, rather than the rule
+ * being loosened to keep it green.
  */
 // @SCN-SSM-006
 const fitnessReportPath = (): string => {
@@ -106,7 +112,13 @@ const fitnessReportPath = (): string => {
       uri: "features/fitness-checks.feature",
       elements: codes.map((code) => ({
         tags: [{ name: "@fitness" }, { name: `@${code}` }],
-        steps: [],
+        steps: [
+          {
+            keyword: "Then ",
+            name: "the check this scenario names finds no violations",
+            result: { status: "passed" },
+          },
+        ],
       })),
     },
   ];

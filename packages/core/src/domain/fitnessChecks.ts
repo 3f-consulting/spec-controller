@@ -37,6 +37,12 @@ import { barOf, type ThresholdBar } from "./thresholds.js";
  * scenario and be filed under another. The command a row states is not a member either — it is the
  * RUNNER's half of the row and nothing on the debit side reads it. The BAR is, because whether the
  * row names one is what says the check is measured (@SCN-LNT-019).
+ *
+ * AND SO IS THE ENDING BY WHICH THAT COMMAND SAYS `I EXAMINED NOTHING` (3F-3177). It is not the
+ * command: it is the row's sentence about how the command SPEAKS, and the credit side has to ask
+ * it, because a skip in the fitness report is honest exactly where the row named the ending that
+ * produced it and incidental everywhere else. One field read by two sides belongs in the ONE
+ * reading of the rows, beside the bar — a second copy behind the runner is two readers of one fact.
  */
 export interface FitnessCheck {
   /** The bare characteristic this check asserts (`complexity`). */
@@ -55,6 +61,27 @@ export interface FitnessCheck {
    * ask the same question of it and one spelling is what keeps their answers the same.
    */
   readonly bar?: ThresholdBar | null;
+  /**
+   * The ending by which THIS row's command says it examined nothing, or `null` where the row named
+   * none — which is every row that has not asked for the third answer (@SCN-LNT-023, 3F-3170).
+   *
+   * WHY THE LEDGER HOLDS IT AT ALL, WHICH IS NOT THE RUNNER'S REASON. The runner needs the VALUE,
+   * to tell an ending its row named from every other ending a command can have. This side needs
+   * only whether one was named: a fitness scenario the pass reported as skipped is a check that
+   * said so about itself exactly where its row named the ending that produced the skip, and a hook,
+   * a tag filter or a lost `require` cannot reach the manifest to name one. Two facts from two
+   * places is what makes that discrimination unforgeable, and this is the manifest's half of it.
+   *
+   * ALWAYS PRESENT, UNLIKE THE BAR, AND THE DIFFERENCE IS WHAT ABSENCE MEANS. A row naming no bar
+   * is a STATIC check — a different kind of check — so the bar's absence is a third answer the
+   * field carries by being missing. A row naming no ending is an ordinary row keeping the
+   * two-answer reading, so `null` says the whole of it and there is nothing a missing key would add.
+   *
+   * READ THROUGH `namesNotExaminedEnding`, NEVER BY REACHING FOR THIS FIELD, for the reason
+   * `carriesBar` gives one line up: two spellings of one question grow two opinions, and the row
+   * that named `0` — refused at the runner, absent here — is where they would differ first.
+   */
+  readonly notExaminedExit: number | null;
 }
 
 /**
@@ -69,6 +96,50 @@ export interface FitnessCheck {
  */
 export function carriesBar(check: FitnessCheck): boolean {
   return check.bar !== undefined;
+}
+
+/**
+ * THE ONE PREDICATE — does this row name the ending its command says `I examined nothing` with
+ * (@SCN-LNT-023, moved here at 3F-3177).
+ *
+ * The exact twin of `carriesBar` and for the identical reason. The RUNNER asks the question to
+ * decide whether an ending it just saw is the third answer; the CREDIT side asks it to decide
+ * whether a skip the fitness report carries is one the check asked for. Two questions, one fact,
+ * one spelling — and the row that named `0` is where two spellings would differ first, because that
+ * row is refused where the commands are read and simply names nothing here.
+ */
+export function namesNotExaminedEnding(check: FitnessCheck): boolean {
+  return check.notExaminedExit !== null;
+}
+
+/**
+ * The code a row named for its command's `I examined nothing`, or `null` where it named none.
+ *
+ * ANYTHING THAT IS NOT A WHOLE NUMBER IS NOT A NAMING, and the direction of that fallback is what
+ * makes it safe to state so quietly. A naming misread as absent leaves the ending a FAULT — loud,
+ * at the person, on the run. Misread the other way and a check that broke would be reported as one
+ * that examined nothing, which is this repository's own silence fault. So a value the reader cannot
+ * take at its word gets the reading that fails rather than the one that goes quiet.
+ *
+ * IT DOES NOT JUDGE THE NUMBER, ONLY READ IT, and that is what lets ONE READING serve TWO CONSUMERS
+ * with ONE REFUSAL — at the runner (3F-3177). `refuseAnEndingTheProtocolSpends` throws on a row
+ * spending a clean run's ending or a violation's (@SCN-LNT-025), and it stays at
+ * `fitnessCommandsOf`, where a run is about to ACT on the value. It must not be pulled in here:
+ * this reading is what `balance` takes a stranger's manifest through, and a throw on this path
+ * turns one bad character in someone else's `package.json` into a run that produces no verdict at
+ * all — loud nowhere, and the very reasoning `fitnessChecksOf` below gives for dropping a malformed
+ * row rather than throwing on it. The ledger only ever asks whether a value was named.
+ *
+ * Reading and judging in one step would also make the refusal a guess at what a row MEANT rather
+ * than a sentence about what it SAID: a row spelling `"0"` names no ending at all, so it is not a
+ * naming of a clean run's ending either.
+ */
+export function notExaminedEndingOf(named: unknown): number | null {
+  // THE `typeof` CLAUSE IS THE NARROWING AND NOT A SECOND RUNTIME GUARD, which is why the mutation
+  // sweep records it as an equivalent mutant here (`quality-thresholds.yml`): `Number.isInteger`
+  // already answers false for every non-number, so dropping it changes no run — and changes the
+  // returned type from `number` to `unknown`, which is what stops anybody dropping it.
+  return typeof named === "number" && Number.isInteger(named) ? named : null;
 }
 
 /** The rows as the rule reads them — bare `@SCN` → the row naming that scenario's check. */
@@ -108,8 +179,14 @@ function fitnessCheckOf(entry: unknown): readonly [string, FitnessCheck] | null 
   // registry's OWN reader, handed the row whole: one grammar for `atLeast` / `atMost`, so a
   // converted row and a threshold entry cannot come to disagree about what a target wrote.
   const row = named as Record<string, unknown>;
-  if (!BAR_DIRECTIONS.some((direction) => direction in row)) return [scnId, { characteristic }];
-  return [scnId, { characteristic, bar: barOf(row) }];
+  // THE ENDING IS READ WHATEVER SHAPE THE ROW IS, because it is orthogonal to the bar: a measured
+  // row can name one and a static row can name none, and neither answer says anything about the
+  // other. `null` carries "named none" on both branches, so there is no branch where the field's
+  // absence has to mean something (3F-3177).
+  const notExaminedExit = notExaminedEndingOf(row["notExaminedExit"]);
+  if (!BAR_DIRECTIONS.some((direction) => direction in row))
+    return [scnId, { characteristic, notExaminedExit }];
+  return [scnId, { characteristic, notExaminedExit, bar: barOf(row) }];
 }
 
 /**

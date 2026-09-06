@@ -1,0 +1,34 @@
+[
+  {
+    "description": "",
+    "keyword": "Feature",
+    "name": "a converted target's fitness corpus, carrying one of the two scenarios its rows name",
+    "line": 2,
+    "id": "a-converted-target's-fitness-corpus",
+    "tags": [{ "name": "@CVT", "line": 1 }],
+    "uri": "features/target.feature",
+    "elements": [
+      {
+        "description": "",
+        "keyword": "Scenario",
+        "name": "the codebase stays under its complexity threshold",
+        "line": 19,
+        "id": "a-converted-target's-fitness-corpus;the-codebase-stays-under-its-complexity-threshold",
+        "tags": [
+          { "name": "@fitness", "line": 18 },
+          { "name": "@SCN-CVT-001", "line": 18 }
+        ],
+        "steps": [
+          {
+            "arguments": [],
+            "keyword": "Then ",
+            "line": 20,
+            "name": "the check reports no violations",
+            "match": { "location": "tests/steps/fitness.steps.ts:1" },
+            "result": { "status": "passed", "duration": 1 }
+          }
+        ]
+      }
+    ]
+  }
+]

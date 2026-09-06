@@ -28,6 +28,12 @@
  * spends on a pending-items verdict under `--strict`. The whole reasoning, and the two uses that
  * keep the field from being a cul-de-sac, are at `FitnessCommandRow.notExaminedExit` below.
  *
+ * AND THE READING OF THAT CODE IS THE LEDGER'S, NOT THIS MODULE'S (3F-3177). Both sides of a
+ * configured row now ask what ending it named — this side to compare an exit code against, the
+ * credit side to tell a skip the check asked for from one a hook produced — so the reading lives
+ * once, at `notExaminedEndingOf` in `packages/core/src/domain/fitnessChecks.ts`, and is imported
+ * back here. The REFUSAL below did not go with it, and the reason is written at both sites.
+ *
  * WITH TWO ENDINGS THE ROW MAY NOT SPEND, REFUSED WHERE THE ROWS ARE READ (@SCN-LNT-025). A row
  * naming the ending of a clean run, or of a run that found something, is asking for the third answer
  * on one of the two endings the pass reads everything else by — and a refusal that waited for the
@@ -56,6 +62,7 @@ import path from "node:path";
 import {
   bareTerm,
   fitnessChecksOf,
+  notExaminedEndingOf,
   type FitnessCheckRegistry,
 } from "@3f-consulting/spec-controller-core/internal";
 
@@ -114,7 +121,11 @@ export interface FitnessCommandRow {
    *   2. 3F-3162'S DISCRIMINATOR. That ticket asks how to tell an honest skip in the fitness pass
    *      from an incidental one — a hook, a tag filter, a shared background quietly satisfying a
    *      whole axis. This field answers it: a skip is honest EXACTLY where a row named the code
-   *      that produced it, and every other route to `skipped` is incidental and suspect.
+   *      that produced it, and every other route to `skipped` is broken evidence (@SCN-LNT-026). That
+   *      second use is the LEDGER'S, which is why the reading moved to
+   *      `packages/core/src/domain/fitnessChecks.ts` at 3F-3177 and this field is read through it.
+   *      A hook can make the report say `skipped` and cannot reach the manifest to name an ending,
+   *      so the two facts come from two places and the pairing cannot be forged.
    */
   readonly notExaminedExit: number | null;
 }
@@ -125,7 +136,14 @@ export interface FitnessCommandRow {
  * SEPARATE FROM `FitnessCheckRegistry`, WHICH THE LEDGER READS, and deliberately so: that registry
  * holds the characteristic and the bar — the DEBIT's half of the row — and states in its own header
  * that the command is the runner's half and nothing on that side reads it. This is that half. The
- * two readings share the row and the key, and neither borrows the other's fields.
+ * two readings share the row and the key, and the COMMAND is still read on this side alone.
+ *
+ * ONE FIELD IS NOW READ BY BOTH, AND IT IS NOT A BORROWING (3F-3177). `notExaminedExit` is on both
+ * registries because both sides genuinely ask about it — this one needs the VALUE, to tell an ending
+ * its row named from every other ending a command can have; the ledger needs only WHETHER one was
+ * named, which is how it tells a skip the check asked for from a skip a hook produced. Neither side
+ * reads it its own way: the ONE reading is `notExaminedEndingOf`, imported from the ledger's file,
+ * and this registry keeps only what it must compare an exit code against.
  */
 export type FitnessCommandRegistry = ReadonlyMap<string, FitnessCommandRow>;
 
@@ -206,29 +224,18 @@ export function fitnessCommandsOf(entries: unknown): FitnessCommandRegistry {
     if (typeof row?.scn !== "string" || typeof row.command !== "string") continue;
     const scnId = bareTerm(row.scn);
     if (scnId === "" || row.command.trim() === "") continue;
-    const notExaminedExit = notExaminedExitOf(row.notExaminedExit);
+    // ONE READING, TWO CONSUMERS, ONE REFUSAL — AT THE RUNNER (3F-3177). The reading is the
+    // ledger's (`notExaminedEndingOf`, imported above): both sides of the row ask what ending it
+    // named, and two copies of that reading would eventually answer a target's `7.5` differently.
+    // The REFUSAL stays HERE and must not be pulled in beside it: `fitnessChecksOf` is what
+    // `balance` reads a CONSUMER'S manifest through, and a throw on that path turns one bad
+    // character in a stranger's `package.json` into a run that produces no verdict at all, which is
+    // loud nowhere. This path is about to ACT on the value, which is where refusing belongs.
+    const notExaminedExit = notExaminedEndingOf(row.notExaminedExit);
     refuseAnEndingTheProtocolSpends(scnId, notExaminedExit);
     commands.set(scnId, { command: row.command, notExaminedExit });
   }
   return commands;
-}
-
-/**
- * The code a row named for its command's `I examined nothing`, or `null` where it named none.
- *
- * ANYTHING THAT IS NOT A WHOLE NUMBER IS NOT A NAMING, and the direction of that fallback is what
- * makes it safe to state so quietly. A naming misread as absent leaves the ending a FAULT — loud,
- * at the person, on the run. Misread the other way and a check that broke would be reported as one
- * that examined nothing, which is this repository's own silence fault. So a value the reader cannot
- * take at its word gets the reading that fails rather than the one that goes quiet.
- *
- * IT DOES NOT JUDGE THE NUMBER, ONLY READ IT, and the judgement is the next thing that happens to
- * what it answers (`refuseAnEndingTheProtocolSpends`, @SCN-LNT-025). Reading and judging in one step
- * would make the refusal a guess at what a row MEANT rather than a sentence about what it SAID: a
- * row spelling `"0"` names no ending at all, so it is not a naming of a clean run's ending either.
- */
-function notExaminedExitOf(named: unknown): number | null {
-  return typeof named === "number" && Number.isInteger(named) ? named : null;
 }
 
 /** The ending by which a command says it found nothing — the pass's own, and no row's to spend. */
@@ -257,6 +264,16 @@ const VIOLATION_ENDING = 1;
  * the 3F-3170 repair, which this refusal must not quietly undo. So this is NOT an allow-list of
  * permitted endings and must not be tidied into one: the two refusals are against the PROTOCOL'S
  * own fixed points, a pass and a violation, and not against anyone's taxonomy.
+ *
+ * AND AT THE RUNNER'S READ, NEVER AT THE LEDGER'S — ONE READING, TWO CONSUMERS, ONE REFUSAL
+ * (3F-3177). The reading of what ending a row named is the ledger's now (`notExaminedEndingOf`,
+ * `packages/core/src/domain/fitnessChecks.ts`), because the credit side asks the same row the same
+ * question. This throw did NOT go with it and must not be moved there for tidiness: `fitnessChecksOf`
+ * is what `balance` reads a CONSUMER'S manifest through, so a throw on that path turns one bad
+ * character in a stranger's `package.json` into a run that produces no verdict at all — loud
+ * nowhere, and precisely the reasoning that reader's own header gives for dropping a malformed row
+ * rather than throwing on it. A refusal belongs where a run is about to ACT on the value; the ledger
+ * only ever asks whether a value was named.
  *
  * AT THE READ, WHICH IS THE WHOLE OF WHY IT IS HERE RATHER THAN IN `fitnessCheckOutcome`. A refusal
  * deferred to the run fires only on the run that takes the bad path — and for the row naming a

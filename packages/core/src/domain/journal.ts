@@ -373,6 +373,55 @@ export interface GuardEvidenceObservation {
    * two mechanisms, and a converted check keeps that split exactly.
    */
   enforcedOverRealSource: boolean;
+  /**
+   * THE CHECK NEVER RAN (@SCN-LNT-026) — the static twin of the flag its runtime sibling has
+   * carried since @SCN-LDG-017, and the same fact under the same name: a proof that never
+   * materialised. ABSENT on an ordinary observation; `true` on broken evidence.
+   *
+   * `true` RATHER THAN `boolean`, which is the runtime twin's shape and its reason: `false` would
+   * be an expressible value meaning exactly what absence already means, and the reconciler's
+   * fail-safes test the flag rather than its negation. There is no state for the second spelling
+   * to name.
+   *
+   * WHAT REACHES IT ON THIS AXIS. A converted check's credit says the check RAN, and the fitness
+   * pass's report is what says so — so a scenario that report carries with no reading that means
+   * "it ran" is a check whose running nothing can vouch for. A skip a row asked for is the one
+   * exception, and it is settled by the row rather than by the report (`namesNotExaminedEnding`):
+   * two facts from two places, which is why a hook cannot forge it.
+   *
+   * THE SAME FAIL-SAFE, IN THE SAME TWO PLACES. `postingOf` takes `broken` on the FLAG before
+   * `scnId` is consulted, so a broken credit is never citation-routed; `staticCheckObservationFor`
+   * excludes it from the obligation match, so it can neither discharge nor fail the obligation it
+   * cites. Both hold WHATEVER the observation structurally carries — and it does carry its `scnId`
+   * and `checkTag`, exactly as cucumber's broken observation carries the `@SCN` its scenario cited.
+   *
+   * `exists` AND `enforcedOverRealSource` READ `false` ON ONE, AND THAT IS NOT A NEGATIVE CLAIM
+   * DRESSED UP. Both are OBSERVED facts on the converted route — the scenario appearing in the
+   * report says the check ran, over the target's own tree — and neither was observed here. So the
+   * honest values are the ones that assert nothing, and they are also the ones that keep the
+   * roll-up right: a check that did not run is not a running static check.
+   */
+  broken?: true;
+  /**
+   * WHAT the report said, and why that is not a credit — the WHAT-BROKE half of a `broken`
+   * observation's payload, in the voice its cucumber twin already uses (`ambiguousMessage`): it
+   * names the subject, states the diagnosis, and prescribes NO cure.
+   *
+   * IT IS THE WHOLE OF THE REPORT'S ANSWER, so it is written as one. The broken item carries no
+   * `evidenceObservation` — a proof that never ran is not an observed piece of evidence — so this
+   * sentence is all a reader gets under `## Run integrity`. Present on a `broken` observation;
+   * absent on an ordinary one.
+   */
+  message?: string;
+  /**
+   * WHERE the reader is sent — the report's own feature `uri` for the scenario that did not run,
+   * the where-to-fix half beside `message`.
+   *
+   * A DISCOVERED static check has no locator and says so (`qualityCheckReconciliation` states it):
+   * it is read from a config, not from a file that ran. A CONVERTED one is a scenario in a corpus,
+   * so the corpus is a real place to send a reader, and the renderer already prints it.
+   */
+  locator?: string;
 }
 
 /**

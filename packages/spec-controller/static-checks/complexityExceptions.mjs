@@ -53,17 +53,22 @@
  * not when the file was last read.
  *
  * The production files that remain are the domain core (markdown.ts, vocabAudit.ts's complexity 25,
- * evidenceReconciliation.ts's 107-line reconcile), so the list still doubles as a refactor backlog —
+ * evidenceReconciliation.ts's `reconcile`), so the list still doubles as a refactor backlog —
  * a shorter and more honest one, now that it names files carrying too much CODE rather than files
  * carrying explanation.
+ *
+ * Banked 2026-09-06 (3F-3178): `reconcile`'s routing pass became `routeCredits`, so
+ * evidenceReconciliation.ts's `complexity` entry is DELETED — the file is no longer over the
+ * standard at all — and its `max-lines-per-function` banks 100 → 80. The extraction was forced by
+ * this list rather than chosen: the static axis gaining its second suspense reason took the
+ * function past both ceilings, and an exception buys no headroom.
  *
  * @type {readonly import("./complexityExceptions.d.mts").ComplexityException[]}
  */
 export const COMPLEXITY_EXCEPTIONS = [
   { path: "packages/core/src/assemble/renderInput.test.ts",                 rule: "max-lines",               value:  626, since: "2026-08-11" },
   { path: "packages/core/src/domain/evidenceReconciliation.test.ts",        rule: "max-lines",               value:  964, since: "2026-08-11" },
-  { path: "packages/core/src/domain/evidenceReconciliation.ts",             rule: "complexity",              value:   15, since: "2026-08-11" },
-  { path: "packages/core/src/domain/evidenceReconciliation.ts",             rule: "max-lines-per-function",  value:  100, since: "2026-08-11" },
+  { path: "packages/core/src/domain/evidenceReconciliation.ts",             rule: "max-lines-per-function",  value:   80, since: "2026-09-06" },
   { path: "packages/core/src/domain/ledger.ts",                             rule: "max-lines-per-function",  value:   53, since: "2026-08-05" },
   { path: "packages/core/src/parse/cucumber.ts",                            rule: "complexity",              value:   16, since: "2026-08-02" },
   { path: "packages/core/src/parse/cucumber.ts",                            rule: "max-lines-per-function",  value:   42, since: "2026-08-05" },

@@ -50,8 +50,10 @@
  * with, whose command then ended that way. Nothing else in this file skips, and no row that has not
  * named a code can reach it — so a `skipped` fitness scenario in the report is a check that said so
  * about itself, and every OTHER route to a skipped fitness scenario (a hook, a tag filter, a shared
- * background) is incidental and worth suspecting. That is the discriminator 3F-3162 needs, and this
- * is the one place in the pass that can hand it over.
+ * background) is one this pass cannot produce. That was the discriminator 3F-3162 needed and this
+ * is the one place in the pass that can hand it over; since @SCN-LNT-026 the ledger CONSUMES it,
+ * so such a route is no longer merely worth suspecting — its credit is broken evidence and the run
+ * is stamped unsound.
  *
  * THE `@SCN` COMES OFF THE TAG LINE, NEVER OFF THE SCENARIO'S NAME. Cucumber hands the hook the
  * running pickle's tags; a title is prose a person edits, and recovering an identifier from one is

@@ -949,3 +949,94 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       When each of those rows is read on its own
       Then the first two are refused, each refusal naming the row it is about and the value that row carries, and neither command has left the trace it leaves whenever it runs
       And the third and fourth are read as written, and the third's command then runs and leaves that same trace
+
+  Rule: a fitness credit says the check RAN, and a check that did not run is broken evidence rather than an absent one
+
+    THE CREDIT IS ABOUT THE WIRING AND THE EXIT CODE IS ABOUT THE FINDINGS, AND BOTH HALVES STAY
+    TRUE. What was wrong was reading `skipped` as a way of having run. A check that found violations
+    reds the run through the runner's exit code and its row says the check ran; a check that never
+    ran has no finding to carry and no exit code to carry it, so nothing anywhere in the chain
+    disagrees with its credit. Cucumber exits 0 for a skipped scenario and a skipped scenario still
+    appears in the report — so the credit posted, the row read satisfied, and the run was green over
+    a check that examined nothing.
+
+    TWO FACTS FROM TWO PLACES, WHICH IS WHY A HOOK CANNOT FORGE IT. The step status comes from the
+    report; the ending a row names comes from the target's manifest. A hook, a tag filter or a lost
+    `require` can make the report say `skipped`, and none of them can reach the manifest to make a
+    row name an ending. So whether a skip is one the check asked for is settled by a checked-in
+    sentence about that check, in the same file as its command.
+
+    THE TWO KINDS OF ROW WERE NEVER EQUALLY EXPOSED, AND THE REASON IS STRUCTURAL RATHER THAN LUCK.
+    A MEASURED row's credit is its NUMBER, written from inside the step body, so it needs an
+    artefact the pass has to actively produce — and a step that never runs produces none. It fails
+    closed with no help from anything. A STATIC row's credit is the scenario's APPEARANCE in the
+    report, and a skipped scenario appears: one fact, and a skip supplies it for free. So one hook
+    over the whole axis leaves every measured row missing and every static row satisfied. What this
+    Rule does is give the static row its SECOND fact; the measured side needs no repair, for the
+    same reason it already catches that hook by itself.
+
+    `broken` IS CANON'S OWN WORD FOR IT AND NOTHING HERE IS NEW. It has meant a proof that never ran
+    since @SCN-LDG-017 and @SCN-LDG-019: it posts to the suspense row carrying its where-to-fix and
+    its what-broke and NO Evidence Observation, so the Evidence Obligation it cites reconciles
+    `missing` by absence, and it stamps the run unsound. The verdict is the point rather than a side
+    effect — a run that disagrees with itself is one thing, and a run over checks that did not run
+    is another. A `missing` row alone would also have sent the reader the wrong remedy, write the
+    check rather than fix your hook, which is the misdirection @SCN-LDG-019 named when it stopped
+    dropping ambiguous steps as inconclusive.
+
+    @unit @integration @SCN-LNT-026
+    Scenario: a fitness scenario the pass reported as skipped credits its row only where that row names the ending its command says it examined nothing with — every other skip is broken evidence
+
+      THE DISCRIMINATOR IS THE ASSERTION, WHICH IS WHY BOTH ARMS ARE READ FROM ONE REPORT. The two
+      scenarios below are reported identically and their rows differ in exactly one thing — whether
+      the row names an ending. Taken from two reports the pair could agree by accident: a reading
+      that credited neither and a reading that credited both would each have to be caught by
+      comparing two runs, when the whole claim is that one run tells them apart.
+
+      THE DEFAULT IS `broken`, NOT THE CREDIT, so the arms are written the other way up from the
+      obvious one. The credit is reached by the two readings that say the check ran — every step
+      passed, or a step failed — and by the skip a row asked for; every other reading falls through.
+      A status this reader cannot vouch for is a check whose running it cannot vouch for, so a
+      status nobody anticipated reds rather than credits. That is the safe direction on an axis
+      whose whole subject is a green that means nothing.
+
+      THE ROW THAT NAMED ITS ENDING KEEPS TODAY'S READING, AND THAT IS NOT AN EXEMPTION CARVED FOR
+      IT. The check said so about itself, in its own row, beside its own command, so its skip is the
+      answer it asked to be able to give (@SCN-LNT-023) rather than something that happened to it.
+      The residual is said rather than hidden: such a row can still be skipped by a hook and will
+      still be credited, because the report cannot tell those two skips apart. It is bounded to the
+      rows that asked.
+
+      Given a target's configured rows name a static fitness check for each of the two scenarios its corpus carries, and only the first names the ending its command says it examined nothing with
+      And its fitness pass reported both as skipped
+      When that target's evidence is reconciled with what its fitness pass reported
+      Then the first row is credited and balances, and the second is credited by nothing, its Evidence Obligation reads missing, and the run is unsound
+
+    @unit @integration @SCN-LNT-027
+    Scenario: a configured row whose scenario the fitness report it was handed never carried is broken evidence, and a run handed no report at all is unchanged
+
+      THE ROWS ARE THE SIDE THE REPORT CANNOT ERASE, AND THAT IS THE WHOLE OF THIS RULE'S REACH.
+      A row is read from the target's manifest and its enumeration from the pass's report, so
+      emptying either leaves the other standing. Every other reading on this axis loses its own
+      subject the moment the corpus goes — the Evidence Obligations travel with the scenarios and
+      the credits travel with the pass, both sides cancel, and a run over nothing balances at zero.
+
+      BOTH READINGS ARE TAKEN FROM ONE TARGET BECAUSE THEY ARE ONE CLAIM. Handed a report that
+      omits a row, the run is unsound; handed no report at all, it reconciles exactly as it did
+      before. Split across two fixtures the pair could agree by accident, which is how one `??`
+      came to flatten the two facts into one and stay that way.
+
+      A REPORT HANDED OVER CARRYING NOTHING AND NO REPORT AT ALL ARE DIFFERENT FACTS. The first is
+      a pass that ran and did not carry this check. The second is a target that converted nothing,
+      or a pass nobody ran — and calling that target's set-up broken over a file it has no reason
+      to own is the fault the self-reconciliation gate already refuses one level up.
+
+      EVERY CONFIGURED ROW IS IN SCOPE, MEASURED AND STATIC ALIKE. A measured row's CREDIT is its
+      number (@SCN-LNT-022), and its ENUMERATION is still its scenario appearing in the report. So
+      a number arriving for a row the pass never enumerated is a number from a route that
+      enumerates nothing, which is the reading this axis exists to refuse.
+
+      Given a target's configured rows name a static fitness check for each of two scenarios, and its corpus carries only the first
+      When that target's evidence is reconciled with a fitness pass report carrying only that first scenario
+      Then the row whose scenario the report never carried is broken evidence naming it, and the run is unsound
+      And the same target reconciled with no fitness pass report at all raises nothing broken — the scenario its corpus carries reconciles missing, and the run is merely out of balance

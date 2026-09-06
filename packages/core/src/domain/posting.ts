@@ -34,6 +34,11 @@ import type {
   RuntimeEvidenceObservation,
   GuardEvidenceObservation,
 } from "./journal.js";
+// The union's OWN sub-discriminator over the `lint` quality-check (@SCN-CIP-003) — asked rather
+// than a hand-written shape test, so this rule classes an observation exactly as the reconciler
+// does.
+// A value import, hence its own statement beside the type-only one above.
+import { isStaticCheckObservation } from "./journal.js";
 
 /**
  * WHERE an entry lands — the posting destination, one variant per route canon names.
@@ -71,17 +76,24 @@ export type RuntimePosting =
 
 /**
  * The destinations a STATIC-CHECK credit can reach — the citation-routed ones when the observer
- * stamped an `@SCN` on it (@SCN-LNT-001), and suspense when it did not. Structurally
- * `RuntimePosting`'s shape now that the by-name member is gone (3F-2590): one posting rule over
- * both axes. The two types stay APART because their SUSPENSE reasons differ — a runtime credit
- * reaches suspense `broken` or `cites-nothing`, a fitness credit only ever because no obligation
- * names its check — and collapsing them would let a caller be handed a reason its axis cannot
- * produce.
+ * stamped an `@SCN` on it (@SCN-LNT-001), and suspense when the check named nobody or never ran.
+ * Structurally `RuntimePosting`'s shape now that the by-name member is gone (3F-2590): one posting
+ * rule over both axes. The two types stay APART because their SUSPENSE reasons still differ — a
+ * runtime credit reaches suspense `broken` or `cites-nothing`, a fitness credit `broken` or
+ * because no obligation names its check — and collapsing them would let a caller be handed a
+ * reason its axis cannot produce. `cites-nothing` is the one this axis has never had: a converted
+ * credit that cites nothing is a check nobody named, which is a different fault with a different
+ * remedy.
+ *
+ * `broken` ARRIVES HERE AT @SCN-LNT-026 AND IS NOT A NEW CONCEPT, only a newly reachable one. The
+ * outcome has meant a proof that never ran since @SCN-LDG-017; what changed is that the static
+ * axis can now say it, because the fitness pass's report says whether the check ran and the
+ * reader had been declining to look.
  */
 export type StaticCheckPosting =
   | { kind: "scenario"; scnId: string }
   | { kind: "phantom-scenario"; scnId: string }
-  | { kind: "suspense-scenario"; posted: "no-evidence-obligation-static-check" };
+  | { kind: "suspense-scenario"; posted: "broken" | "no-evidence-obligation-static-check" };
 
 /**
  * WHERE does this evidence observation post? THE posting rule, in one place.
@@ -91,14 +103,19 @@ export type StaticCheckPosting =
  * decision over prepared inputs and cannot disagree with the census that shares it. A second set
  * (the named static-check handles) stood beside it for the by-name route and went with it.
  *
- * ORDER IS LOAD-BEARING — the arms are checked exactly as canon fail-safes them:
+ * ORDER IS LOAD-BEARING — the arms are checked exactly as canon fail-safes them, and ON BOTH
+ * BRANCHES since @SCN-LNT-026, which is the point of saying it once here:
  *   1. `broken` FIRST, on the FLAG, never on `scnId` / `status` (@SCN-LDG-017). A proof that never
  *      ran cannot discharge or fail an obligation, so it must never be citation-routed — not to a
  *      real row, not to a phantom one. It structurally MAY carry an `scnId` and a `status`; both
  *      are ignored here. Checking `broken` after either would misfile it.
- *   2. an uncited credit (`scnId === null`) → suspense, never phantom.
+ *   2. an uncited credit (`scnId === null`, or absent on the static axis) → suspense, never phantom.
  *   3. a cited credit whose `@SCN` no scenario carries → phantom.
  *   4. otherwise → that scenario's row.
+ *
+ * The two branches differ only in what step 2's suspense reason is CALLED, because the two axes
+ * reach it for different reasons: a runtime credit that ran and cited nothing, a static check no
+ * obligation names. Steps 1, 3 and 4 are the same rule read twice.
  *
  * The overloads keep the two axes' destinations apart at the type level, so a caller that has
  * already narrowed the union cannot be handed a destination its axis can never reach.
@@ -120,6 +137,19 @@ export function postingOf(
   scenarioIds: ReadonlySet<string>
 ): Posting {
   if (observation.qualityCheck === "lint") {
+    // THE FAIL-SAFE FIRST (@SCN-LNT-026), which is the runtime arm's own arrangement one branch
+    // down and carries its reason unchanged: broken is taken on the FLAG, before `scnId` is ever
+    // consulted, so a proof that never ran can never be citation-routed — not to a real row, not
+    // to a phantom one — and so can neither discharge nor fail the obligation it cites. The
+    // observation MAY carry an `scnId` and a `checkTag`, and does; both are ignored here.
+    //
+    // THE SUB-DISCRIMINATOR IS PART OF THE TEST BECAUSE THE AXIS CARRIES TWO SHAPES (@SCN-CIP-003):
+    // only a static-check observation has the flag at all — a measurement is a number, and a
+    // number that never arrived is an absence rather than a broken proof — so asking through the
+    // union's own predicate is what stops this reaching for a field its sibling does not have.
+    if (isStaticCheckObservation(observation) && observation.broken === true) {
+      return { kind: "suspense-scenario", posted: "broken" };
+    }
     // THE CITATION ROUTE (@SCN-LNT-001) — the run carries the `@SCN` of the fitness scenario that
     // raises its obligation, so it posts by citation like every other credit: exactly one row,
     // real or invented. This is deliberately the SAME rule the runtime arm applies below, not a

@@ -26,6 +26,9 @@ import type { EvidenceReconciliation } from "../assemble/renderInput.js";
 // @SCN-LNT-022 — the union's OWN discriminators, so "which stream carried this credit" is read
 // here exactly as the reconciler reads it.
 import { isMeasuredObservation, isStaticCheckObservation } from "../domain/journal.js";
+// @SCN-LNT-026 — the run-integrity predicate the CLI and the renderer both ask, so "is this run
+// unsound" is read here exactly as they read it rather than re-derived from the items.
+import { hasBrokenEvidence } from "../domain/ledger.js";
 
 /**
  * A converted target's corpus: two scenarios, each carrying the bare axis tag and its own `@SCN`,
@@ -154,8 +157,11 @@ describe("[SCN-LNT-021] a converted static check's scenario in the fitness repor
 
   it("credits nothing for a reported scenario no configured row names", () => {
     // The credit's characteristic is read off the ROW, so a scenario no row names has no credit to
-    // raise any more than it has an obligation (@SCN-LNT-020). It reaches no row and no suspense
-    // entry invented for it.
+    // raise any more than it has an obligation (@SCN-LNT-020). Nothing on the ledger is about it.
+    //
+    // THE SUSPENSE ROW HERE IS THE OTHER RULE'S (@SCN-LNT-027), and naming whose it is IS the
+    // assertion. This report carries neither configured row, so both are unenumerated and both go
+    // broken — and SCN-CVT-404, the scenario nobody named, is on the ledger nowhere at all.
     const reconciliation = reconcileConverted([
       {
         uri: "features/fitness.feature",
@@ -165,8 +171,15 @@ describe("[SCN-LNT-021] a converted static check's scenario in the fitness repor
     expect(reconciliation.ledger.scenarioReconciliations.map((r) => r.scnId)).toEqual([
       "SCN-CVT-001",
       "SCN-CVT-002",
+      "(no scenario)",
     ]);
     expect(rowOf(reconciliation, "SCN-CVT-001").items.map((i) => i.outcome)).toEqual(["missing"]);
+    expect(suspenseItemsOf(reconciliation).map(([, message]) => message)).toEqual([
+      "SCN-CVT-001: the fitness pass's report carried no scenario for this row of " +
+        "`specController.fitnessChecks` — so the check did not run.",
+      "SCN-CVT-002: the fitness pass's report carried no scenario for this row of " +
+        "`specController.fitnessChecks` — so the check did not run.",
+    ]);
   });
 
   it("credits nothing from a report carrying no scenario on the fitness axis — inert on an unconverted target", () => {
@@ -320,5 +333,214 @@ describe("[SCN-LNT-022] a measured converted check's scenario in the fitness rep
     expect(
       rowOf(reconciliation, "SCN-CVT-003").items.map((item) => [item.staticCheck, item.outcome])
     ).toEqual([["mutation", "missing"]]);
+  });
+});
+
+/**
+ * @unit for @SCN-LNT-026 — the CREDIT side reads what the report says about the RUNNING: a
+ * scenario the fitness pass reported as skipped credits its row only where that row names the
+ * ending its command says it examined nothing with, and every other skip is broken evidence.
+ *
+ * BOTH ARMS FROM ONE REPORT, WHICH IS THE POINT OF THE FIXTURE. The two rows differ in exactly one
+ * field and their scenarios are reported identically, so a reading that credited both and a
+ * reading that credited neither are each caught by ONE reconciliation rather than by comparing
+ * two. Split across two reports the pair could agree by accident.
+ *
+ * THE CLAIM IS TAKEN THROUGH THE WHOLE RECONCILE COMPOSITION, for @SCN-LNT-021's reason one block
+ * above: what is asserted is where the credit LANDS and what the run's verdict then is, and only a
+ * single walk of a single corpus can answer both.
+ *
+ * Bidirectional evidence: the describe carries its @SCN id, matching
+ * features/fitness-reconciliation.feature and the @integration steps in
+ * tests/steps/lintReconciliation.steps.ts.
+ */
+
+/**
+ * Two STATIC rows over the same two scenarios, differing in ONE field: the first names the ending
+ * its command says it examined nothing with, the second names none. Neither carries a bar, so both
+ * are read by the report reader rather than by the measurement stream.
+ */
+const skipManifest = {
+  specController: {
+    fitnessChecks: [
+      { scn: "SCN-CVT-001", characteristic: "complexity", command: "eslint", notExaminedExit: 3 },
+      { scn: "SCN-CVT-002", characteristic: "traceability", command: "scn-subissues" },
+    ],
+  },
+};
+
+/** The reconcile composition over that manifest and the report handed in — nothing else. */
+function reconcileSkipped(report: CucumberJsonReport): EvidenceReconciliation {
+  return evidenceReconciliationFromSources({
+    featureSources: [convertedCorpus],
+    untaggedScenarios: [],
+    packageJson: skipManifest,
+    ciSources: [],
+    measurements: {},
+    runtimeObservations: [],
+    deferralTags: [],
+    guardScriptPrefixes: [],
+    killFloor: () => null,
+    fitnessReport: report,
+  });
+}
+
+/** The pass reported BOTH scenarios as skipped — one report, one status, two rows. */
+const bothSkipped: CucumberJsonReport = [
+  {
+    uri: "features/fitness-checks.feature",
+    elements: [
+      reportedScenario("SCN-CVT-001", "skipped"),
+      reportedScenario("SCN-CVT-002", "skipped"),
+    ],
+  },
+];
+
+/** The suspense row's reconciling items, as `[outcome, message]` — where broken evidence surfaces. */
+function suspenseItemsOf(reconciliation: EvidenceReconciliation) {
+  const row = reconciliation.ledger.scenarioReconciliations.find(
+    (r) => r.kind === "suspense-scenario"
+  );
+  return (row?.qualityCheckReconciliations ?? []).map((item) => [item.outcome, item.message]);
+}
+
+describe("[SCN-LNT-026] a skipped fitness scenario credits its row only where that row names its not-examined ending", () => {
+  it("credits the row that named its ending, and nothing at all the row that named none", () => {
+    // THE DISCRIMINATOR, WHOLE. Both rows are asserted from ONE reconciliation of ONE report: the
+    // first balances on a credit, the second reconciles `missing` with no observation carried —
+    // "obligation exists, observation none", which is what a proof that never ran leaves behind.
+    const reconciliation = reconcileSkipped(bothSkipped);
+    expect(rowOf(reconciliation, "SCN-CVT-001")).toEqual({
+      verdict: "balanced",
+      items: [
+        {
+          qualityCheck: "lint",
+          staticCheck: "complexity",
+          outcome: "satisfied",
+          evidenceObligation: { qualityCheck: "lint", staticCheck: "complexity" },
+          evidenceObservation: {
+            qualityCheck: "lint",
+            staticCheck: "complexity",
+            scnId: "SCN-CVT-001",
+            checkTag: "complexity",
+            exists: true,
+            enforcedOverRealSource: true,
+          },
+        },
+      ],
+    });
+    expect(rowOf(reconciliation, "SCN-CVT-002")).toEqual({
+      verdict: "out-of-balance",
+      items: [
+        {
+          qualityCheck: "lint",
+          staticCheck: "traceability",
+          outcome: "missing",
+          evidenceObligation: { qualityCheck: "lint", staticCheck: "traceability" },
+        },
+      ],
+    });
+  });
+
+  it("stamps the run unsound, and says which scenario the pass reported skipped and why that is not a credit", () => {
+    // The message is the WHOLE of what the reader gets — a broken item carries no observation — so
+    // it is asserted verbatim rather than by a substring: it names the @SCN, says what the report
+    // said, says why that is not a credit, and prescribes no cure.
+    const reconciliation = reconcileSkipped(bothSkipped);
+    expect(
+      hasBrokenEvidence({ scenarioReconciliations: reconciliation.ledger.scenarioReconciliations })
+    ).toBe(true);
+    expect(suspenseItemsOf(reconciliation)).toEqual([
+      [
+        "broken",
+        "SCN-CVT-002: the fitness pass reported this scenario as skipped, and its row of " +
+          "`specController.fitnessChecks` names no ending its command says it examined nothing " +
+          "with — so the check did not run.",
+      ],
+    ]);
+  });
+
+  it("counts the skipped-and-unnamed row as no static check at all — neither run nor uncited", () => {
+    // Where the broken credit would otherwise lie twice. It did not run, so it is not a running
+    // static check; and it is not a check nobody named, so it is not an uncited one either.
+    expect(reconcileSkipped(bothSkipped).summary.staticChecks).toEqual({
+      runningStaticCheckCount: 1,
+      uncitedStaticCheckCount: 0,
+    });
+  });
+
+  it("still credits both rows off a report that says they RAN — the reading skips a status, not the axis", () => {
+    // The discriminator against a cure that stopped crediting skipped-adjacent reports altogether,
+    // and @SCN-LNT-021's claim restated over rows one of which names an ending: passed and failed
+    // are both "the check ran", whatever the row says about endings.
+    const reconciliation = reconcileSkipped([
+      {
+        uri: "features/fitness-checks.feature",
+        elements: [
+          reportedScenario("SCN-CVT-001", "passed"),
+          reportedScenario("SCN-CVT-002", "failed"),
+        ],
+      },
+    ]);
+    expect(
+      reconciliation.ledger.scenarioReconciliations.map((row) => [row.scnId, row.verdict])
+    ).toEqual([
+      ["SCN-CVT-001", "balanced"],
+      ["SCN-CVT-002", "balanced"],
+    ]);
+    expect(suspenseItemsOf(reconciliation)).toEqual([]);
+  });
+
+  it("reads a status nobody anticipated as broken, not as a credit — the default is the safe one", () => {
+    // THE FALL-THROUGH IS THE ASSERTION. `pending` is not one of the readings that say a check
+    // ran, and the row that names an ending gets no shelter from it: the ending authorises a SKIP,
+    // and this is not one. A reading that credited every status it did not recognise would be
+    // vouching for a run it cannot describe.
+    const reconciliation = reconcileSkipped([
+      {
+        uri: "features/fitness-checks.feature",
+        elements: [reportedScenario("SCN-CVT-001", "pending")],
+      },
+    ]);
+    expect(rowOf(reconciliation, "SCN-CVT-001").items.map((i) => i.outcome)).toEqual(["missing"]);
+    // The SECOND item is @SCN-LNT-027's rule over the same report: this one carries the first row's
+    // scenario and not the second's, so the second was never enumerated. Asserted here rather than
+    // dodged by widening the fixture, because both readings are true of this one report.
+    expect(suspenseItemsOf(reconciliation)).toEqual([
+      [
+        "broken",
+        "SCN-CVT-001: the fitness pass reported this scenario's step as pending — so the check " +
+          "did not run.",
+      ],
+      [
+        "broken",
+        "SCN-CVT-002: the fitness pass's report carried no scenario for this row of " +
+          "`specController.fitnessChecks` — so the check did not run.",
+      ],
+    ]);
+  });
+
+  it("reads a reported scenario carrying no step at all as broken", () => {
+    // Nothing ran, so nothing can be vouched for. The message says what the report held rather
+    // than reaching for a status it never carried.
+    const reconciliation = reconcileSkipped([
+      {
+        uri: "features/fitness-checks.feature",
+        elements: [{ tags: [{ name: "@fitness" }, { name: "@SCN-CVT-001" }], steps: [] }],
+      },
+    ]);
+    expect(suspenseItemsOf(reconciliation)).toEqual([
+      [
+        "broken",
+        "SCN-CVT-001: the fitness pass reported this scenario with no step at all — so the check " +
+          "did not run.",
+      ],
+      // And the second row, which this report never carried at all (@SCN-LNT-027).
+      [
+        "broken",
+        "SCN-CVT-002: the fitness pass's report carried no scenario for this row of " +
+          "`specController.fitnessChecks` — so the check did not run.",
+      ],
+    ]);
   });
 });

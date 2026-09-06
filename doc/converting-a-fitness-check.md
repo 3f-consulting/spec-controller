@@ -311,8 +311,37 @@ this product is named for, so the report now says which zero it is rather than l
 guess. The residual closes when the reader stops supporting script discovery altogether, which is a
 breaking change sequenced after the consumer who still routes credits through it has migrated.
 
-**A skipped scenario is still credited as having run.** The credit is about the wiring and the
-verdict travels on the pass's exit code, which is right for the third-answer case and is why
-`notExaminedExit` works at all. It also means any *other* route to `skipped` posts a credit for a
-check nobody ran. A skip is honest exactly where a row stated the code that produced it; every
-other route to one is incidental and worth suspecting.
+**A check that did not run is no longer credited — this one is CLOSED, and it is the part of the
+model worth reading twice before you convert.** This section used to say that a skipped scenario is
+still credited as having run, that any route to `skipped` other than the third answer posts a credit
+for a check nobody ran, and that such a route is worth suspecting. It is a mechanism now rather than
+a suspicion.
+
+A fitness credit says the check RAN, so the reader reads what the report says about the running:
+
+| what the report says of your scenario | what the ledger does |
+| -- | -- |
+| its step **passed** or **failed** | credits the row, unchanged — the exit code carries the findings |
+| its step is **skipped** and the row names its `notExaminedExit` | credits the row, unchanged — the check said so about itself |
+| **any other skip**, an inconclusive status, or no step at all | **broken evidence** — the row's Evidence Obligation reconciles `missing`, the run is unsound, `balance` exits **4** |
+| **no scenario at all**, for a row a handed-over report never carried | **broken evidence**, citing that row |
+| **no report handed over at all** | unchanged — the rows reconcile `missing` and the run is out of balance at exit **1** |
+
+The last two rows are one rule read twice. Your rows come from your manifest and their enumeration
+comes from the pass's report, so emptying either leaves the other standing — which is why an emptied
+corpus now reds instead of balancing over nothing, and why a target that has converted nothing (no
+pass, no report) is untouched. Nothing in the pass can reach your manifest to forge the other half.
+
+**If every row you convert is static, that difference is yours to know about.** A MEASURED row's
+credit is a number something has to produce, so a step that never runs produces none and the row
+fails closed with no help from anything. A STATIC row's credit was the scenario's APPEARANCE in the
+report — one fact, and a skip supplies it for free — so one hook over the whole axis used to leave
+every static row satisfied while only the measured ones redded. The repair gives the static row its
+second fact rather than making the two kinds alike. A repository whose rows are all static had
+nothing redding on its behalf at all, and now does.
+
+**Two residuals stay, stated rather than left to be found.** A row that names its `notExaminedExit`
+can still be skipped by a hook and will still be credited, because the report cannot tell that skip
+from the one its command asked for — bounded to the rows that opted in. And a manifest whose
+`fitnessChecks` key is unreadable holds zero rows, so the rows and a regenerated corpus go together
+and no rule above can see it.

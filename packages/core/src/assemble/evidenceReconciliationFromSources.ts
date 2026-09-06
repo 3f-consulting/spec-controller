@@ -138,7 +138,13 @@ export function evidenceReconciliationFromSources(input: {
       // one no script-handle observer can see — it is never discovered, so nothing double-observes
       // it. The rows are the SAME reading the obligations were raised from, taken from `corpus`'s
       // own registry, so a credit can never cite a characteristic the debit side never owed.
-      ...convertedFitnessCredits(input.fitnessReport ?? [], fitnessChecks),
+      // THE OPTIONALITY IS PASSED THROUGH RATHER THAN FLATTENED (@SCN-LNT-027). It used to read
+      // `input.fitnessReport ?? []`, which made a run handed NO report indistinguishable from one
+      // handed a report carrying nothing — and those are opposite facts. The first is a target
+      // that converted nothing, or a pass nobody ran: its rows reconcile missing and the run is
+      // out of balance. The second is a pass that ran and carried none of the configured checks,
+      // which is every one of them broken. The reader tells them apart; nothing here may.
+      ...convertedFitnessCredits(input.fitnessReport, fitnessChecks),
       // THE THIRD STREAM (@SCN-CIP-003) — the measurements, which arrive already citing. They are
       // read here rather than folded into `checkObservations` because that function's two observers
       // both read the target's CONFIG; a measurement is a fact about a run, and the only thing the

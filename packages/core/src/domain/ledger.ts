@@ -540,8 +540,10 @@ export interface StaticObservationTally {
  * `uncitedStaticCheckCount` is the count of lint credits on the SUSPENSE row — the no-evidence-obligation
  * static checks the reconciler folded there (a static check running with no scenario citing it,
  * `cites-no-scenario` on the credit side). By construction the app only pushes RUNNING guards into
- * that no-evidence-obligation stream (`runningStaticChecks`), so every suspense lint credit is running — the
- * plain count is the census's running-and-uncited count.
+ * that no-evidence-obligation stream (`runningStaticChecks`), so every such suspense lint credit is
+ * running — the plain count is the census's running-and-uncited count. A BROKEN credit reaches the
+ * same row by a different route (@SCN-LNT-026) and is excluded: it is a check a scenario DID name,
+ * which did not run.
  *
  * `runningStaticCheckCount` is the count of RUNNING lint credits across ALL rows. One care-move the
  * runtime axis does not need (see the block comment above):
@@ -571,6 +573,13 @@ export function staticObservationTally(ledger: Ledger): StaticObservationTally {
       // Counting it in either tally would report a static-analysis population this tree does not
       // have — the parallel-store fault the Ledger folds exist to foreclose.
       if (isMeasuredObservation(obs)) continue;
+      // A BROKEN CREDIT IS NEITHER COUNT (@SCN-LNT-026). It reaches the suspense row for a reason
+      // the uncited count does not name: the check DID have a scenario naming it, and it did not
+      // run. Counting it as uncited would report a check nobody named, sending the reader to write
+      // an obligation that is already written — the misdirection the `broken` outcome exists to
+      // avoid. It is not a running static check either, and `exists` reads false so the clause
+      // below already says so; this one is what keeps the sentence true rather than incidental.
+      if (obs.broken === true) continue;
       if (row.kind === "suspense-scenario") uncitedStaticCheckCount++;
       if (obs.exists && obs.enforcedOverRealSource) runningStaticCheckCount++;
     }

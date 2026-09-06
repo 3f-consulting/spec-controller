@@ -400,7 +400,17 @@ function staticCheckObservationFor(
   // right by coincidence of falsiness rather than because anything decided it.
   return evidenceObservations.find(
     (o): o is GuardEvidenceObservation =>
-      isStaticCheckObservation(o) && o.scnId === scnId && o.checkTag === checkTag
+      isStaticCheckObservation(o) &&
+      // THE FAIL-SAFE, THE SAME ONE THE RUNTIME MATCH BELOW KEEPS (@SCN-LNT-026). A proof that
+      // never ran can neither discharge an obligation nor fail it, so a broken credit is excluded
+      // from the match entirely and its obligation reconciles `missing` by absence — while the
+      // credit itself posts to suspense, where the reader is told what broke. The exclusion is
+      // STRUCTURAL rather than incidental: this observation carries its `scnId` and its
+      // `checkTag`, exactly as cucumber's broken observation carries the `@SCN` its scenario
+      // cited, so nothing but this clause keeps it out.
+      o.broken !== true &&
+      o.scnId === scnId &&
+      o.checkTag === checkTag
   );
 }
 
@@ -774,9 +784,15 @@ export function citesUnknownScenarioReconciliationsOf(
  *   - an uncited runtime credit carries the observation it reconciles, plus its locator.
  *   - a no-evidence-obligation static check carries its handle and its observation; it has no locator (a
  *     guard is read from config, not from a test file).
+ *
+ * THE BROKEN STREAM TAKES EITHER AXIS SINCE @SCN-LNT-026, AND THE ARM NEEDED NO BRANCH FOR IT.
+ * A converted static check that did not run carries the same two payload halves under the same
+ * two names, so the map reads what the observation holds exactly as it does for a vitest suite
+ * that failed to collect. What differs is only the `qualityCheck` the item then carries — `lint`
+ * rather than a runtime tier — which is read off the observation and not decided here.
  */
 export function suspenseReconciliationsOf(
-  brokenEvidence: readonly RuntimeEvidenceObservation[],
+  brokenEvidence: readonly (RuntimeEvidenceObservation | GuardEvidenceObservation)[],
   uncited: readonly RuntimeEvidenceObservation[],
   noEvidenceObligationGuards: readonly FitnessEvidenceObservation[]
 ): QualityCheckReconciliation[] {

@@ -1,0 +1,55 @@
+[
+  {
+    "description": "",
+    "keyword": "Feature",
+    "name": "a converted target's fitness corpus, whose pass reported both scenarios as skipped",
+    "line": 2,
+    "id": "a-converted-target's-fitness-corpus",
+    "tags": [{ "name": "@CVT", "line": 1 }],
+    "uri": "features/target.feature",
+    "elements": [
+      {
+        "description": "",
+        "keyword": "Scenario",
+        "name": "the codebase stays under its complexity threshold",
+        "line": 20,
+        "id": "a-converted-target's-fitness-corpus;the-codebase-stays-under-its-complexity-threshold",
+        "tags": [
+          { "name": "@fitness", "line": 19 },
+          { "name": "@SCN-CVT-001", "line": 19 }
+        ],
+        "steps": [
+          {
+            "arguments": [],
+            "keyword": "Then ",
+            "line": 21,
+            "name": "the check reports no violations",
+            "match": { "location": "tests/steps/fitness.steps.ts:1" },
+            "result": { "status": "skipped", "duration": 0 }
+          }
+        ]
+      },
+      {
+        "description": "",
+        "keyword": "Scenario",
+        "name": "every scenario in the corpus is traceable to its own sub-issue",
+        "line": 23,
+        "id": "a-converted-target's-fitness-corpus;every-scenario-in-the-corpus-is-traceable-to-its-own-sub-issue",
+        "tags": [
+          { "name": "@fitness", "line": 22 },
+          { "name": "@SCN-CVT-002", "line": 22 }
+        ],
+        "steps": [
+          {
+            "arguments": [],
+            "keyword": "Then ",
+            "line": 24,
+            "name": "the check reports no violations",
+            "match": { "location": "tests/steps/fitness.steps.ts:1" },
+            "result": { "status": "skipped", "duration": 0 }
+          }
+        ]
+      }
+    ]
+  }
+]

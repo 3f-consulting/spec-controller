@@ -94,6 +94,9 @@ import {
 // THE POSTING RULE (3F-2202) — where an entry lands is canon's own glossary group, so it lives on
 // its own concept module. `reconcile` no longer decides a destination; it ASKS.
 import { postingOf } from "./posting.js";
+// The `lint` quality-check's own sub-discriminator (@SCN-CIP-003), asked here to NARROW what the
+// posting rule has already routed — see the fitness arm below.
+import { isStaticCheckObservation } from "../model.js";
 
 /** A destination that names ONE row — the two citation-routed `Posting` kinds. */
 type CitedPosting = { kind: "scenario" | "phantom-scenario"; scnId: string };
@@ -135,36 +138,50 @@ function citationIndex(): CitationIndex {
   };
 }
 
-export function reconcile(
-  scenarios: Scenario[],
-  evidenceObservations: EvidenceObservation[],
-  untaggedScenarios: readonly string[] = []
-): Ledger {
-  const scenarioReconciliations: ScenarioReconciliation[] = [];
+/**
+ * THE ROUTED CREDIT STREAMS — every observation filed where the posting rule says it lands, in
+ * observation order, with nothing yet decided about what any of them RECONCILES to.
+ */
+interface RoutedCredits {
+  /** The credits routed BY CITATION, plus the phantom ids they minted. */
+  readonly citations: CitationIndex;
+  /** Proofs that never ran, from EITHER axis (@SCN-LDG-017, @SCN-LNT-026). */
+  readonly brokenEvidence: readonly (RuntimeEvidenceObservation | GuardEvidenceObservation)[];
+  /** Runtime credits that RAN and carried no `@SCN`. */
+  readonly uncited: readonly RuntimeEvidenceObservation[];
+  /** Static checks that ran with no Evidence Obligation naming them. */
+  readonly noEvidenceObligationGuards: readonly FitnessEvidenceObservation[];
+}
 
-  // THE OBLIGATION SIDE, prepared once — the three sets the posting rule and the outcome rules read.
-  // Each is already the MODEL's own rule (never re-derived here), and each is built ONCE and
-  // shared, so no two consumers can drift: `scenarioIds` is which scenarios exist,
-  // and `evidenceObligationPairs` is what they name at each quality-check (3F-1858).
-  const scenarioIds = new Set(scenarios.map((d) => d.scnId));
-  // The NAMED pairs — the model's rule, built ONCE and shared with the census (3F-1858).
-  // Pending obligations are excluded: a pending obligation names nothing.
-  const evidenceObligationPairs = evidenceObligationPairsOf(scenarios);
-  // THE ONE ROUTING PASS (3F-2202). Every credit is routed ONCE, by THE posting rule
-  // (`domain/posting`), into the structures the fold below reads. `reconcile` no longer DECIDES a
-  // destination anywhere — it asks, and files the answer.
-  //
-  // This replaces two passes that re-stated the SAME four routing decisions (the citation index
-  // here and the phantom-id scan further down) plus three stream filters. They agreed by
-  // copy-paste, not by construction: either could have grown an arm alone and nothing would have
-  // redded — the identical anaemia `evidenceObligationPairsOf` was extracted to cure.
+/**
+ * THE ONE ROUTING PASS (3F-2202). Every credit is routed ONCE, by THE posting rule
+ * (`domain/posting`), into the structures the fold reads. `reconcile` no longer DECIDES a
+ * destination anywhere — it asks, and files the answer.
+ *
+ * This replaces two passes that re-stated the SAME four routing decisions (the citation index and
+ * the phantom-id scan) plus three stream filters. They agreed by copy-paste, not by construction:
+ * either could have grown an arm alone and nothing would have redded — the identical anaemia
+ * `evidenceObligationPairsOf` was extracted to cure.
+ *
+ * ITS OWN FUNCTION, extracted at @SCN-LNT-026 when the static axis gained its second suspense
+ * reason and took `reconcile` past the `complexity` and `max-lines-per-function` ceilings. Routing
+ * is one idea with a name and the fold below is another; nothing about what it decides moved, and
+ * the exception list is untouched — an exception buys no headroom.
+ */
+function routeCredits(
+  evidenceObservations: readonly EvidenceObservation[],
+  scenarioIds: ReadonlySet<string>
+): RoutedCredits {
   // THE CITATION INDEX holds BOTH axes now (@SCN-LNT-001): a fitness check's run cites the
   // scenario that raises its obligation, so it files here exactly as a test result does.
   const citations = citationIndex();
   // The three SUSPENSE streams, kept separate and each in observation order — the suspense row's
-  // item order (broken first, then uncited, then the no-evidence-obligation static checks) is row assembly,
-  // owned below, not a routing decision.
-  const brokenEvidence: RuntimeEvidenceObservation[] = [];
+  // item order (broken first, then uncited, then the no-evidence-obligation static checks) is row
+  // assembly, owned by the fold in `reconcile`, not a routing decision.
+  // BROKEN EVIDENCE FROM EITHER AXIS (@SCN-LNT-026). It was a runtime-only stream while `broken`
+  // was a runtime-only fact; a converted static check that did not run is the same fact about the
+  // same kind of absence, so it lands in the same stream and renders through the same section.
+  const brokenEvidence: (RuntimeEvidenceObservation | GuardEvidenceObservation)[] = [];
   const uncited: RuntimeEvidenceObservation[] = [];
   // The FITNESS union, not the static interface alone (@SCN-CIP-003). A measurement always cites —
   // its runner stamps the citation — so it cannot in fact reach suspense; the stream is typed to
@@ -176,9 +193,20 @@ export function reconcile(
     // on both branches.
     if (o.qualityCheck === "lint") {
       const posting = postingOf(o, scenarioIds);
-      // A check whose run reached no `@SCN` cites nothing, so it posts to SUSPENSE — the static
-      // analogue of an uncited runtime credit.
-      if (posting.kind === "suspense-scenario") noEvidenceObligationGuards.push(o);
+      // THE SPLIT ON THIS AXIS TOO (@SCN-LNT-026), the twin of the runtime arm's below. Both
+      // reasons post to suspense because neither names a row, and they stay in separate streams
+      // because they are different facts with different remedies: a check nobody named RAN and
+      // wants an obligation written for it; a broken one never ran and wants its harness fixed.
+      //
+      // THE SECOND CLAUSE IS THE NARROW, NOT A SECOND DECISION. `postingOf` reaches `broken` on
+      // this axis only through `isStaticCheckObservation`, so asking the same predicate here
+      // cannot disagree with it — it re-states what the rule already settled in the one form the
+      // compiler accepts. Nothing falls between the two arms: an observation that somehow took
+      // neither still lands in the second, misfiled rather than vaporised.
+      if (posting.kind === "suspense-scenario") {
+        if (posting.posted === "broken" && isStaticCheckObservation(o)) brokenEvidence.push(o);
+        else noEvidenceObligationGuards.push(o);
+      }
       // A CITING run files into the citation index like any other credit (@SCN-LNT-001) —
       // exactly one row, real or invented. There is no third destination left (3F-2590).
       else citations.file(posting, o);
@@ -202,6 +230,30 @@ export function reconcile(
         break;
     }
   }
+  return { citations, brokenEvidence, uncited, noEvidenceObligationGuards };
+}
+
+export function reconcile(
+  scenarios: Scenario[],
+  evidenceObservations: EvidenceObservation[],
+  untaggedScenarios: readonly string[] = []
+): Ledger {
+  const scenarioReconciliations: ScenarioReconciliation[] = [];
+
+  // THE OBLIGATION SIDE, prepared once — the three sets the posting rule and the outcome rules read.
+  // Each is already the MODEL's own rule (never re-derived here), and each is built ONCE and
+  // shared, so no two consumers can drift: `scenarioIds` is which scenarios exist,
+  // and `evidenceObligationPairs` is what they name at each quality-check (3F-1858).
+  const scenarioIds = new Set(scenarios.map((d) => d.scnId));
+  // The NAMED pairs — the model's rule, built ONCE and shared with the census (3F-1858).
+  // Pending obligations are excluded: a pending obligation names nothing.
+  const evidenceObligationPairs = evidenceObligationPairsOf(scenarios);
+  // THE ONE ROUTING PASS (3F-2202) — asked of the posting rule, in one place, and read back as
+  // four streams. What each of them then RECONCILES to is the fold's, below.
+  const { citations, brokenEvidence, uncited, noEvidenceObligationGuards } = routeCredits(
+    evidenceObservations,
+    scenarioIds
+  );
   for (const d of scenarios) {
     // THE PENDING PARTITION (@SCN-PND-004) — `pendingItemsOf` and `evidenceObligationsOf`
     // are exact complements over the scenario's obligations, so nothing is dropped and nothing is

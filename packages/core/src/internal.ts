@@ -169,5 +169,28 @@ export type { KillFloorReader, MutationGateReference } from "./parse/targetManif
 // its own way would emit a corpus that disagreed with the obligation rule about which evidence a
 // check produces, from the same row, and the emitted file would then be the thing that made the
 // two disagree. The header on `carriesBar` states the one-spelling rule this export serves.
-export { carriesBar, fitnessChecksOf } from "./domain/fitnessChecks.js";
+//
+// `notExaminedEndingOf` IS THE ONE READING OF THE ENDING, AND IT CROSSES FOR THE OPPOSITE REASON TO
+// THE TWO ABOVE (3F-3177). Those cross because the RUNNER must not read a row its own way. This one
+// crosses because the runner already did: it held its own copy of this reading while the ledger had
+// none, and the credit side now has to ask the same row the same question — is a skip in the fitness
+// report one the check said it would produce? Moving the reading here and importing it back leaves
+// ONE READING with TWO CONSUMERS, so a target's `notExaminedExit: 7.5` cannot read as a naming on
+// one side and as nothing on the other.
+//
+// THE REFUSAL DOES NOT CROSS WITH IT, AND THAT IS DELIBERATE. `refuseAnEndingTheProtocolSpends`
+// (@SCN-LNT-025) throws, and it stays at `fitnessCommandsOf` where a run is about to act on the
+// value. `fitnessChecksOf` is what `balance` reads a CONSUMER'S manifest through, and a throw there
+// turns one bad character in a stranger's `package.json` into a run with no verdict at all — loud
+// nowhere. One reading, two consumers, one refusal, at the runner.
+//
+// `namesNotExaminedEnding` IS THE SHAPE QUESTION AND NEVER THE VALUE, the `carriesBar` split again.
+// The runner needs the ending itself, to compare an exit code against; every other reader needs only
+// whether one was named, and one spelling is what keeps their answers the same.
+export {
+  carriesBar,
+  fitnessChecksOf,
+  namesNotExaminedEnding,
+  notExaminedEndingOf,
+} from "./domain/fitnessChecks.js";
 export type { FitnessCheck, FitnessCheckRegistry } from "./domain/fitnessChecks.js";

@@ -37,6 +37,14 @@ export type CucumberJsonReport = Array<{
        */
       keyword?: string;
       name?: string;
+      /**
+       * A HOOK rather than one of the scenario's own steps (@SCN-LNT-026). Cucumber emits every
+       * `Before` / `After` it ran as a step of the scenario, marked `hidden` and carrying its own
+       * status — so a reader asking "what did the report say about this SCENARIO" has to know
+       * which entries the corpus actually wrote. This reader does not: a hook that fails or is
+       * skipped alters what the scenario's steps then read, which is signal it already has.
+       */
+      hidden?: boolean;
       result?: { status?: string; duration?: number };
     }>;
   }>;
