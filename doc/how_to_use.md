@@ -116,6 +116,7 @@ Run `spec-controller --help` for the top-level summary of commands and host modi
 
 ```
 cd ./projects/3f/an-adopters-repository
+git switch main
 git pull --ff-only
 pnpm install --frozen-lockfile
 npx cucumber-js --format summary --format json:reports/cucumber.json
