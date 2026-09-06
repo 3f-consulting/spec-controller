@@ -60,3 +60,153 @@ describe("[SCN-RPT-001] provenance records input paths portably (relative to the
     expect(facts.inputs).toContainEqual({ flag: "--features", value: "features" });
   });
 });
+
+/**
+ * The optional measurement and fitness streams on the canonical input list (@SCN-RPT-027,
+ * 3F-3155). The isolation half of the pair: the @integration arm in
+ * tests/steps/report.steps.ts runs the REAL CLI and reads the persisted block back, while
+ * these arms pin the projection's ORDER and its additive JSON shape, which a rendered line
+ * cannot show.
+ */
+describe("[SCN-RPT-027] the provenance projection names the optional measurement and fitness streams", () => {
+  const handed = (inputs: RunInputs): RunContext => ({
+    target: "streams-target",
+    inputs,
+    runStart: new Date("2026-09-06T15:00:00.000Z"),
+    sourceSha: "abc123",
+  });
+
+  it("carries the measurement and fitness streams the run received onto the provenance object", () => {
+    const obj = provenanceObject(
+      handed({ features: "features", measurements: "measurements.json", fitness: "fitness.json" })
+    );
+    expect(obj.inputs.measurements).toBe("measurements.json");
+    expect(obj.inputs.fitness).toBe("fitness.json");
+  });
+
+  it("renders them APPENDED after --package-json, so no flag that was already listed moves", () => {
+    const facts = projectProvenance(
+      handed({
+        features: "features",
+        vitest: "vitest.json",
+        cucumber: "cucumber.json",
+        ci: ".github/workflows",
+        packageJson: "package.json",
+        measurements: "measurements.json",
+        fitness: "fitness.json",
+      })
+    );
+    expect(facts.inputs.map((i) => i.flag)).toEqual([
+      "--features",
+      "--vitest",
+      "--cucumber",
+      "--ci",
+      "--package-json",
+      "--measurements",
+      "--fitness",
+    ]);
+  });
+
+  it("is ADDITIVE on the JSON surface — a run handed neither stream serialises byte-identically", () => {
+    const obj = provenanceObject(
+      handed({
+        features: "features",
+        vitest: "vitest.json",
+        cucumber: "cucumber.json",
+        ci: ".github/workflows",
+        packageJson: "package.json",
+      })
+    );
+    expect(JSON.stringify(obj.inputs)).toBe(
+      '{"features":"features","vitest":"vitest.json","cucumber":"cucumber.json","ci":".github/workflows","packageJson":"package.json"}'
+    );
+  });
+
+  it("names an EMPTY stream path no more than it names an absent one — the presence filter is unchanged", () => {
+    const facts = projectProvenance(handed({ features: "features", measurements: "  ", fitness: "" }));
+    expect(facts.inputs.map((i) => i.flag)).toEqual(["--features"]);
+  });
+});
+
+/**
+ * The canonical inputs a run did NOT receive (@SCN-RPT-028, 3F-3155). @SCN-RPT-027 named
+ * every stream a run was handed, which killed the "handed it and the block does not say so"
+ * reading; it left the other one alive, because absence from a list only informs a reader who
+ * already holds the list. These arms pin the derivation — the flags with no value, taken from
+ * the SAME canonical list the Inputs line renders, so a flag can never be listed on one line
+ * and missing from both. The rendering is @SCN-RPT-028's markdown.test.ts arms; the persisted
+ * line is its @integration arm.
+ */
+describe("[SCN-RPT-028] the provenance projection names the canonical inputs the run did not receive", () => {
+  const handed = (inputs: RunInputs): RunContext => ({
+    target: "partly-handed-target",
+    inputs,
+    runStart: new Date("2026-09-06T15:30:00.000Z"),
+    sourceSha: "abc123",
+  });
+
+  it("names the canonical flags with no value, in canonical order", () => {
+    const facts = projectProvenance(handed({ features: "features", measurements: "measurements.json" }));
+    expect(facts.absentInputs).toEqual([
+      "--vitest",
+      "--cucumber",
+      "--ci",
+      "--package-json",
+      "--fitness",
+    ]);
+  });
+
+  it("counts an EMPTY value as absent — the same presence rule the Inputs list already applies", () => {
+    const facts = projectProvenance(handed({ features: "features", fitness: "   ", measurements: "" }));
+    expect(facts.inputs.map((i) => i.flag)).toEqual(["--features"]);
+    expect(facts.absentInputs).toContain("--fitness");
+    expect(facts.absentInputs).toContain("--measurements");
+  });
+
+  it("is empty when the run was handed every canonical stream — there is nothing to report absent", () => {
+    const facts = projectProvenance(
+      handed({
+        features: "features",
+        vitest: "vitest.json",
+        cucumber: "cucumber.json",
+        ci: ".github/workflows",
+        packageJson: "package.json",
+        measurements: "measurements.json",
+        fitness: "fitness.json",
+      })
+    );
+    expect(facts.absentInputs).toEqual([]);
+  });
+
+  it("names every canonical flag when the run was handed nothing, so the empty-Inputs reading keeps its meaning", () => {
+    const facts = projectProvenance(handed({}));
+    expect(facts.inputs).toEqual([]);
+    expect(facts.absentInputs).toEqual([
+      "--features",
+      "--vitest",
+      "--cucumber",
+      "--ci",
+      "--package-json",
+      "--measurements",
+      "--fitness",
+    ]);
+  });
+
+  it("adds NOTHING to the JSON provenance object — absence is derivable, so it is not persisted", () => {
+    // GREEN BY DESIGN, and it is the pin for the half that must NOT move. provenance.ts's own
+    // rule is persist a fact on JSON iff it is not derivable; `inputs` plus the canonical flag
+    // list already fixes absence, so a second copy would agree with the first only until one of
+    // them was edited. This arm reds the moment someone persists it.
+    const obj = provenanceObject(handed({ features: "features" }));
+    expect(Object.keys(obj)).toEqual([
+      "target",
+      "sourceSha",
+      "toolSha",
+      "toolVersion",
+      "runTimestamp",
+      "inputs",
+    ]);
+    expect(obj).not.toHaveProperty("absentInputs");
+    expect(JSON.stringify(obj)).not.toContain("absent");
+  });
+});

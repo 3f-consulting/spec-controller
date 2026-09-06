@@ -714,3 +714,64 @@ Feature: The report renders the ledger as sectioned facts
       Given the tool resolves its own identity from its own directory
       Then the tool SHA is the spec-controller checkout HEAD, and the version is present, when run from the repo
       And the tool SHA is null but the tool version is still present when the tool is not a git checkout
+
+  Rule: the Run provenance names every stream the run was handed, and every one it was not
+
+    What was this verdict computed from (@SCN-RPT-027, 3F-3155). The canonical input
+    list the Inputs block renders carried five flags, and neither the measurement stream
+    nor the fitness stream was among them — so a report whose every converted static-check
+    row was settled from a fitness pass did not admit reading one. Both streams are
+    OPTIONAL by design, passed only where the file exists, so their absence from the block
+    was genuinely ambiguous between "the run never got it" and "the run got it and the
+    block does not say so" — the two readings the fitness characteristic exists to keep apart.
+
+    THE CANONICAL LIST GAINS THE TWO STREAMS AND NOTHING ELSE MOVES. They are appended
+    after --package-json, so no line that was already rendered changes position; the
+    presence filter is untouched, so a run handed neither still renders exactly the flags
+    it was handed and its JSON provenance.inputs object serialises byte-identically. Both
+    surfaces project the SAME ctx.inputs — the object the reconcile itself consumed, which
+    already carried all seven keys — so the block is never a second opinion about what was
+    read.
+
+    The @integration arm runs the REAL CLI binary as a subprocess over a fixture corpus
+    handed both streams and reads the PERSISTED Inputs block back. A projection test
+    compares a structure this repository wrote against a structure this repository wrote;
+    it cannot tell a rendered line from a line the CLI never wrote, and the whole point of
+    a provenance block is that the run actually produced it.
+
+    @unit @integration @SCN-RPT-027
+    Scenario: the Inputs block names the optional measurement and fitness streams when the run received them
+      Given a reconciliation run handed a measurement stream and a fitness stream alongside its feature corpus
+      When the run writes its markdown artifact for the streams it was handed
+      Then the persisted report's Inputs block names the measurement stream and the fitness stream, after the streams it already named
+      When the real CLI reconciles a fixture corpus handed both a measurement stream and a fitness stream
+      Then the persisted report's Inputs block names every stream that run received
+
+    @unit @integration @SCN-RPT-028
+    Scenario: a canonical input the run did not receive is named as absent rather than omitted, so silence is never the answer
+      Silence is never the answer (@SCN-RPT-028, 3F-3155). @SCN-RPT-027 removed the "the run
+      got it and the block does not say so" reading by naming every stream a run received. It
+      did NOT answer "was the fitness pass consulted?" for a reader who does not already hold
+      the canonical list in their head — absence from a list is only informative to someone
+      who knows what the list could have contained. So the block names the canonical inputs
+      with no value too, on a line of their own.
+
+      A SEPARATE LINE, NOT AN INTERLEAVED MARKER, AND THE REASON IS A BRANCH IT WOULD HAVE
+      KILLED. Threading absent entries through the Inputs list makes the "none specified"
+      branch unreachable and silently rewrites a rendering that already exists. A separate
+      line leaves the list, its order and its empty branch byte-identical, and costs one line.
+      It renders only when something IS absent: a "none supplied" line on the healthy path
+      would be noise in a block whose whole discipline is facts only.
+
+      THE FACT IS DERIVED, NOT PERSISTED. The JSON provenance object gains nothing here.
+      provenance.ts carries the project's rule — persist a fact on JSON iff it is not
+      derivable — and absence is exactly derivable, from the inputs object plus the canonical
+      flag list. A second copy would agree with the first until one of them was edited.
+
+      Given a reconciliation run handed only some of the streams the tool can read
+      When that run writes its markdown artifact
+      Then the persisted report names the streams it was not handed, on a line of its own beneath the ones it was
+      And a run handed every stream says nothing about absence at all
+      And a run handed nothing still reports its inputs as none specified, and names every canonical stream as not supplied
+      When the real CLI reconciles a fixture corpus with three of its streams withheld
+      Then the persisted report names exactly the withheld streams as not supplied, and none of the streams that run received

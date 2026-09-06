@@ -19,7 +19,15 @@ import { relativizeToRoot } from "../lib/portablePath.js";
 /**
  * The CLI input paths/flags actually used for a run — each optional; only the ones
  * the operator supplied are present. Mirrors the CLI's ReconcileOptions (the same
- * --features/--vitest/--cucumber/--ci/--package-json seams).
+ * --features/--vitest/--cucumber/--ci/--package-json/--measurements/--fitness seams).
+ *
+ * `measurements` and `fitness` joined the interface at 3F-3184 (@SCN-RPT-027). They were
+ * ALREADY flowing through it: `reconcileInputsOf` builds one ReconcileOptions carrying all
+ * seven and that same object is both reconciled and assigned to `ctx.inputs`, so structural
+ * typing let the two ride along unseen and the block simply never named them. Both are
+ * optional by design — passed only where the file exists — which is exactly why their
+ * silence was ambiguous between "the run never got it" and "the run got it and the block
+ * does not say so".
  */
 export interface RunInputs {
   features?: string;
@@ -27,6 +35,8 @@ export interface RunInputs {
   cucumber?: string;
   ci?: string;
   packageJson?: string;
+  measurements?: string;
+  fitness?: string;
 }
 
 /**
@@ -74,6 +84,12 @@ const INPUT_FLAGS: readonly { key: keyof RunInputs; flag: string }[] = [
   { key: "cucumber", flag: "--cucumber" },
   { key: "ci", flag: "--ci" },
   { key: "packageJson", flag: "--package-json" },
+  // APPENDED, so no flag that was already rendered moves (@SCN-RPT-027). Widening this
+  // list is the whole of the change: `presentInputs`, `provenanceObject`,
+  // `projectProvenanceObject`, the markdown header and the JSON object all iterate it, so
+  // the two surfaces gain the streams in step and neither can drift from the other.
+  { key: "measurements", flag: "--measurements" },
+  { key: "fitness", flag: "--fitness" },
 ];
 
 /** One input flag actually used, as the flag handle + the value the operator gave. */
@@ -98,6 +114,20 @@ export interface ProvenanceFacts {
   toolSha: string | null;
   /** The tool's package version — always present. */
   toolVersion: string;
+  /**
+   * The canonical input flags the run did NOT receive — the complement of `inputs` over
+   * INPUT_FLAGS, in the same canonical order (@SCN-RPT-028, 3F-3155). @SCN-RPT-027 made the
+   * block name every stream a run was handed, which killed the "handed it and the block does
+   * not say so" reading; it left the other one alive, because absence from a list only informs
+   * a reader who already holds the list. Naming the flags with no value is what makes the page
+   * self-describing about the streams it did not get.
+   *
+   * PRESENTATION ONLY, AND THAT IS A RULING. It lives here and NOT on `ProvenanceObject`,
+   * because the JSON persists a fact iff it is not derivable (see that interface) and absence
+   * is exactly derivable — `inputs` plus this file's canonical flag list determines it. A
+   * second persisted copy would agree with the first only until one of them was edited.
+   */
+  absentInputs: string[];
 }
 
 /** Format an instant as second-precision UTC, e.g. `2026-06-27T08:17:53Z`. */
@@ -174,15 +204,23 @@ export function provenanceObject(ctx: RunContext): ProvenanceObject {
  */
 export function projectProvenanceObject(obj: ProvenanceObject): ProvenanceFacts {
   const inputs: ProvenanceInput[] = [];
+  // The flags with no value, derived in the SAME pass over the SAME canonical list that
+  // produces the flags with one (@SCN-RPT-028). One list, one traversal, two complementary
+  // outputs — so a flag can never be named on both lines, nor missing from both, and adding
+  // an eighth input flag reaches the absence line without anyone remembering to.
+  const absentInputs: string[] = [];
   for (const { key, flag } of INPUT_FLAGS) {
     const value = obj.inputs[key];
     if (typeof value === "string") {
       inputs.push({ flag, value });
+    } else {
+      absentInputs.push(flag);
     }
   }
   return {
     target: obj.target,
     inputs,
+    absentInputs,
     runStartUtc: obj.runTimestamp,
     sourceSha: obj.sourceSha,
     toolSha: obj.toolSha,

@@ -63,6 +63,14 @@
  * this list rather than chosen: the static axis gaining its second suspense reason took the
  * function past both ceilings, and an exception buys no headroom.
  *
+ * Banked 2026-09-06 (3F-3185): markdown.ts's `max-lines` banks 457 → 456. The provenance
+ * emitter gained the "- Not supplied:" line (@SCN-RPT-028) and paid for it out of the Inputs
+ * loop, which lost its braces; the net was one line BELOW the frozen value, so the entry comes
+ * down with it. The scenario's rendering arms went to a new provenanceSection.test.ts for the
+ * same reason from the other side — markdown.test.ts is frozen at 1341 and three more arms
+ * would have reded it, which is the ratchet doing its job rather than an obstacle to route
+ * around by editing a number up.
+ *
  * @type {readonly import("./complexityExceptions.d.mts").ComplexityException[]}
  */
 export const COMPLEXITY_EXCEPTIONS = [
@@ -76,7 +84,7 @@ export const COMPLEXITY_EXCEPTIONS = [
   { path: "packages/core/src/parse/vitest.ts",                              rule: "complexity",              value:   14, since: "2026-08-06" },
   { path: "packages/core/src/render/markdown.test.ts",                      rule: "max-lines",               value: 1341, since: "2026-08-05" },
   { path: "packages/core/src/render/markdown.ts",                           rule: "complexity",              value:   13, since: "2026-08-02" },
-  { path: "packages/core/src/render/markdown.ts",                           rule: "max-lines",               value:  457, since: "2026-08-12" },
+  { path: "packages/core/src/render/markdown.ts",                           rule: "max-lines",               value:  456, since: "2026-09-06" },
   { path: "packages/core/src/render/markdown.ts",                           rule: "max-lines-per-function",  value:   75, since: "2026-08-05" },
   { path: "packages/spec-controller/src/cli-balance/cli.ts",                rule: "complexity",              value:   18, since: "2026-08-02" },
   { path: "packages/spec-controller/src/cli-balance/cli.ts",                rule: "max-lines-per-function",  value:   89, since: "2026-08-12" },

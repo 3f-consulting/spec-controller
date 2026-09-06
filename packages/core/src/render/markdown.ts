@@ -253,10 +253,27 @@ const provenanceSection: SectionEmitter = (report) => {
     lines.push("- Inputs: none specified");
   } else {
     lines.push("- Inputs:");
-    for (const { flag, value } of p.inputs) {
-      lines.push(`  - \`${flag} ${value}\``);
-    }
+    // One statement, so this emitter's CODE-line count is unchanged by the absence line below.
+    for (const { flag, value } of p.inputs) lines.push(`  - \`${flag} ${value}\``);
   }
+  // The canonical inputs the run did NOT receive (@SCN-RPT-028, 3F-3155), on a line of their
+  // own BENEATH the Inputs list. A separate line rather than a "(not supplied)" marker
+  // interleaved into the list: interleaving would make the "none specified" branch above
+  // unreachable and silently rewrite a rendering that already exists, where this leaves the
+  // list, its order and its empty branch byte-identical.
+  //
+  // ONLY WHEN SOMETHING IS ABSENT. Every stream a run was handed is listed above
+  // (@SCN-RPT-027), so a flag missing from the list is definitionally one the run did not get;
+  // this line spares the reader holding the canonical list in their head, and a "none" on the
+  // healthy path would be noise in a block whose whole discipline is facts only.
+  //
+  // AND IT COSTS THIS FILE NO NET CODE LINE, which is not tidiness. `complexityExceptions.mjs`
+  // FREEZES markdown.ts at exactly 457 code lines — an exception excuses the debt already
+  // there and buys not one line of headroom — so the Inputs loop above lost its braces to pay
+  // for the one line here. A section that cannot be added to without reding the ratchet is the
+  // ratchet working; extracting this emitter to its own module is the standing answer and is
+  // the refactor backlog's, not this scenario's.
+  if (p.absentInputs.length > 0) lines.push(`- Not supplied: ${p.absentInputs.map((flag) => `\`${flag}\``).join(", ")}`);
   lines.push(`- Run timestamp (UTC): ${p.runStartUtc}`);
   lines.push(`- Source SHA: ${p.sourceSha ?? "unknown (non-git target)"}`);
   // The TOOL's own identity (3F-1916) — which spec-controller produced this run,

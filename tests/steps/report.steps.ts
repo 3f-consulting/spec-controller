@@ -20,7 +20,7 @@
 import { Given, When, Then, After } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runReconcile, readEvidenceObligations, readFeatureNames } from "../../packages/spec-controller/src/ingest/ingestQualityChecks.js";
@@ -1164,4 +1164,322 @@ Then(
 
 After({ tags: "@SCN-RPT-023" }, function () {
   if (runsRoot023 && existsSync(runsRoot023)) rmSync(runsRoot023, { recursive: true, force: true });
+});
+
+// @SCN-RPT-027
+// The Run provenance names every stream the run was handed (3F-3155 / 3F-3184). Two arms,
+// both reading a PERSISTED Inputs block back off disk: the first threads a ctx carrying the
+// two optional streams through the production writer, the second runs the REAL CLI binary as
+// a subprocess so the flags travel argv -> reconcileInputsOf -> ctx.inputs -> renderer -> disk
+// without this file ever constructing the object under test.
+let ctx027: RunContext;
+let runsRoot027: string;
+let markdown027: string;
+let cliDir027: string;
+let cliReport027: string;
+const RPT027_INPUTS = {
+  features: "tests/fixtures/scn-lnt-022/features",
+  packageJson: "tests/fixtures/scn-lnt-022/package.json",
+  measurements: "tests/fixtures/scn-lnt-022/measurements.json",
+  fitness: "tests/fixtures/scn-lnt-022/fitness.json",
+};
+
+// @SCN-RPT-027
+Given(
+  "a reconciliation run handed a measurement stream and a fitness stream alongside its feature corpus",
+  function () {
+    ctx027 = {
+      target: "streams-target",
+      inputs: {
+        features: RPT027_INPUTS.features,
+        packageJson: RPT027_INPUTS.packageJson,
+        measurements: RPT027_INPUTS.measurements,
+        fitness: RPT027_INPUTS.fitness,
+      },
+      runStart: new Date("2026-09-06T15:00:00.000Z"),
+      sourceSha: "905a987c0ffeeba110000000000000000deadbeef",
+      toolSha: "13ee47f271ace511efdb2511276284b4cb50c247",
+      toolVersion: "0.1.0",
+    };
+    runsRoot027 = mkdtempSync(join(tmpdir(), "spec-controller-rpt027-"));
+  }
+);
+
+// @SCN-RPT-027
+When("the run writes its markdown artifact for the streams it was handed", function () {
+  const balance = runReconcile({});
+  const runDir = persistReport(runsRoot027, { balance, ctx: ctx027 });
+  markdown027 = readFileSync(join(runDir, "spec-reconciliation.md"), "utf8");
+});
+
+// @SCN-RPT-027
+Then(
+  "the persisted report's Inputs block names the measurement stream and the fitness stream, after the streams it already named",
+  function () {
+    // Teeth: today the canonical flag list stops at --package-json, so neither line is
+    // rendered and both assertions red. The ORDER assertion is the second half — the two
+    // streams are APPENDED, so no line that was already rendered moves.
+    const measurementLine = `  - \`--measurements ${RPT027_INPUTS.measurements}\``;
+    const fitnessLine = `  - \`--fitness ${RPT027_INPUTS.fitness}\``;
+    const packageJsonLine = `  - \`--package-json ${RPT027_INPUTS.packageJson}\``;
+    assert.ok(
+      markdown027.includes(measurementLine),
+      `expected the persisted Inputs block to name the measurement stream as "${measurementLine}"; got:\n${markdown027.slice(0, 800)}`
+    );
+    assert.ok(
+      markdown027.includes(fitnessLine),
+      `expected the persisted Inputs block to name the fitness stream as "${fitnessLine}"; got:\n${markdown027.slice(0, 800)}`
+    );
+    assert.ok(
+      markdown027.indexOf(packageJsonLine) < markdown027.indexOf(measurementLine) &&
+        markdown027.indexOf(measurementLine) < markdown027.indexOf(fitnessLine),
+      `expected the two streams appended after --package-json, in that order; got:\n${markdown027.slice(0, 800)}`
+    );
+  }
+);
+
+// @SCN-RPT-027
+// The REAL binary, over a fixture corpus that is self-consistent with its own measurement and
+// fitness streams (tests/fixtures/scn-lnt-022 — one static check, one measured), so the run
+// BALANCES and the arm reds on the provenance block rather than on a verdict.
+When(
+  "the real CLI reconciles a fixture corpus handed both a measurement stream and a fitness stream",
+  function () {
+    const repoRoot = process.cwd();
+    const abs = (p: string): string => join(repoRoot, p);
+    cliDir027 = mkdtempSync(join(tmpdir(), "spec-controller-rpt027-cli-"));
+    const reportPath = join(cliDir027, "spec-reconciliation.md");
+    const result = spawnSync(
+      join(repoRoot, "node_modules", ".bin", "tsx"),
+      [
+        join(repoRoot, "packages", "spec-controller", "src", "cli-balance", "cli.ts"),
+        "--features", abs(RPT027_INPUTS.features),
+        "--package-json", abs(RPT027_INPUTS.packageJson),
+        "--measurements", abs(RPT027_INPUTS.measurements),
+        "--fitness", abs(RPT027_INPUTS.fitness),
+        "--format", `md:${reportPath}`,
+      ],
+      { cwd: repoRoot, encoding: "utf8" }
+    );
+    assert.equal(
+      result.error,
+      undefined,
+      `expected the CLI subprocess to run; it failed to spawn: ${result.error?.message}`
+    );
+    assert.equal(
+      result.status,
+      0,
+      `expected the CLI to exit 0 (this fixture corpus balances); got exit ${result.status}\n` +
+        `stdout:\n${result.stdout}\nstderr:\n${result.stderr}`
+    );
+    assert.ok(existsSync(reportPath), `expected the CLI to persist ${reportPath}; it does not exist`);
+    cliReport027 = readFileSync(reportPath, "utf8");
+  }
+);
+
+// @SCN-RPT-027
+Then(
+  "the persisted report's Inputs block names every stream that run received",
+  function () {
+    // Teeth: the four flags this run was handed must ALL be named. The CLI already carried
+    // measurements and fitness on ctx.inputs; until the canonical list admits them the
+    // renderer drops them silently, which is exactly the ambiguity this scenario closes.
+    for (const flag of ["--features", "--package-json", "--measurements", "--fitness"]) {
+      assert.ok(
+        cliReport027.includes(`  - \`${flag} `),
+        `expected the persisted Inputs block to name "${flag}"; got:\n${cliReport027.slice(0, 800)}`
+      );
+    }
+    // And nothing the run was NOT handed is named — the presence filter is unchanged.
+    for (const flag of ["--vitest", "--cucumber", "--ci"]) {
+      assert.ok(
+        !cliReport027.includes(`  - \`${flag} `),
+        `expected the Inputs block NOT to name "${flag}" — the run was not handed it; got:\n${cliReport027.slice(0, 800)}`
+      );
+    }
+  }
+);
+
+After({ tags: "@SCN-RPT-027" }, function () {
+  if (runsRoot027 && existsSync(runsRoot027)) rmSync(runsRoot027, { recursive: true, force: true });
+  if (cliDir027 && existsSync(cliDir027)) rmSync(cliDir027, { recursive: true, force: true });
+});
+
+// @SCN-RPT-028
+// The Run provenance names every stream the run did NOT get (3F-3155 / 3F-3185). Three
+// PERSISTED renders through the production writer pin the derivation's three readings — some
+// streams handed, all of them handed, none of them handed — and a fourth arm runs the REAL CLI
+// binary with three flags deliberately withheld, so the withholding travels argv ->
+// reconcileInputsOf -> ctx.inputs -> renderer -> disk without this file constructing the object
+// under test. The @unit arms live in packages/core/src/{provenance/provenance,render/markdown}.test.ts.
+let runsRoot028: string;
+let markdownPartial028: string;
+let markdownEvery028: string;
+let markdownNone028: string;
+let cliDir028: string;
+let cliReport028: string;
+const RPT028_HANDED = {
+  features: "tests/fixtures/scn-lnt-022/features",
+  packageJson: "tests/fixtures/scn-lnt-022/package.json",
+  measurements: "tests/fixtures/scn-lnt-022/measurements.json",
+  fitness: "tests/fixtures/scn-lnt-022/fitness.json",
+};
+/** The three canonical flags the CLI arm deliberately withholds, in canonical render order. */
+const RPT028_WITHHELD = ["--vitest", "--cucumber", "--ci"];
+
+/** The one rendered "- Not supplied:" line, or a stated null when the render carries none. */
+function notSuppliedLine(markdown: string): string | null {
+  return markdown.split("\n").find((line) => line.startsWith("- Not supplied:")) ?? null;
+}
+
+function ctx028(inputs: RunContext["inputs"]): RunContext {
+  return {
+    target: "absent-streams-target",
+    inputs,
+    runStart: new Date("2026-09-06T15:30:00.000Z"),
+    sourceSha: "905a987c0ffeeba110000000000000000deadbeef",
+    toolSha: "13ee47f271ace511efdb2511276284b4cb50c247",
+    toolVersion: "0.1.0",
+  };
+}
+
+// @SCN-RPT-028
+Given("a reconciliation run handed only some of the streams the tool can read", function () {
+  runsRoot028 = mkdtempSync(join(tmpdir(), "spec-controller-rpt028-"));
+});
+
+// @SCN-RPT-028
+When("that run writes its markdown artifact", function () {
+  const balance = runReconcile({});
+  const render = (inputs: RunContext["inputs"], suffix: string): string => {
+    const dir = join(runsRoot028, suffix);
+    mkdirSync(dir, { recursive: true });
+    const runDir = persistReport(dir, { balance, ctx: ctx028(inputs) });
+    return readFileSync(join(runDir, "spec-reconciliation.md"), "utf8");
+  };
+  markdownPartial028 = render(
+    { features: RPT028_HANDED.features, measurements: RPT028_HANDED.measurements },
+    "partial"
+  );
+  markdownEvery028 = render(
+    {
+      features: RPT028_HANDED.features,
+      vitest: "vitest.json",
+      cucumber: "cucumber.json",
+      ci: ".github/workflows",
+      packageJson: RPT028_HANDED.packageJson,
+      measurements: RPT028_HANDED.measurements,
+      fitness: RPT028_HANDED.fitness,
+    },
+    "every"
+  );
+  markdownNone028 = render({}, "none");
+});
+
+// @SCN-RPT-028
+Then(
+  "the persisted report names the streams it was not handed, on a line of its own beneath the ones it was",
+  function () {
+    // Teeth: no such line exists today, so this reds on a null. assert.equal on the WHOLE
+    // rendered line rather than assert.ok on a membership test — cucumber's formatter drops an
+    // assert.ok message in favour of "-false +true", and a membership check would green on a
+    // line that also named a stream the run WAS handed.
+    assert.equal(
+      notSuppliedLine(markdownPartial028),
+      "- Not supplied: `--vitest`, `--cucumber`, `--ci`, `--package-json`, `--fitness`"
+    );
+    // Beneath the Inputs list, above the timestamp — met while the reader is still reading
+    // what the run was handed, not after the SHAs.
+    const iMeasurements = markdownPartial028.indexOf(`  - \`--measurements ${RPT028_HANDED.measurements}\``);
+    const iNotSupplied = markdownPartial028.indexOf("- Not supplied:");
+    const iTimestamp = markdownPartial028.indexOf("- Run timestamp (UTC):");
+    assert.equal(
+      iMeasurements < iNotSupplied && iNotSupplied < iTimestamp,
+      true,
+      `expected the not-supplied line between the Inputs list and the timestamp; got offsets ` +
+        `measurements=${iMeasurements} notSupplied=${iNotSupplied} timestamp=${iTimestamp}`
+    );
+  }
+);
+
+// @SCN-RPT-028
+Then("a run handed every stream says nothing about absence at all", function () {
+  assert.equal(notSuppliedLine(markdownEvery028), null);
+});
+
+// @SCN-RPT-028
+Then(
+  "a run handed nothing still reports its inputs as none specified, and names every canonical stream as not supplied",
+  function () {
+    // The empty-Inputs branch stays REACHABLE. Threading absent entries into the Inputs list
+    // would kill it silently; a separate line cannot, and this is what says so.
+    assert.equal(
+      markdownNone028.split("\n").includes("- Inputs: none specified"),
+      true,
+      `expected the none-specified Inputs branch to survive; got:\n${markdownNone028.slice(0, 800)}`
+    );
+    assert.equal(
+      notSuppliedLine(markdownNone028),
+      "- Not supplied: `--features`, `--vitest`, `--cucumber`, `--ci`, `--package-json`, `--measurements`, `--fitness`"
+    );
+  }
+);
+
+// @SCN-RPT-028
+// The REAL binary over tests/fixtures/scn-lnt-022 — the corpus that is self-consistent with its
+// own measurement and fitness streams, so the run BALANCES (exit 0) and the arm's teeth are the
+// provenance block rather than a verdict. Three flags are withheld and four are handed, so one
+// run carries BOTH sides of the discrimination: the line names exactly the withheld three.
+When(
+  "the real CLI reconciles a fixture corpus with three of its streams withheld",
+  function () {
+    const repoRoot = process.cwd();
+    const abs = (p: string): string => join(repoRoot, p);
+    cliDir028 = mkdtempSync(join(tmpdir(), "spec-controller-rpt028-cli-"));
+    const reportPath = join(cliDir028, "spec-reconciliation.md");
+    const result = spawnSync(
+      join(repoRoot, "node_modules", ".bin", "tsx"),
+      [
+        join(repoRoot, "packages", "spec-controller", "src", "cli-balance", "cli.ts"),
+        "--features", abs(RPT028_HANDED.features),
+        "--package-json", abs(RPT028_HANDED.packageJson),
+        "--measurements", abs(RPT028_HANDED.measurements),
+        "--fitness", abs(RPT028_HANDED.fitness),
+        "--format", `md:${reportPath}`,
+      ],
+      { cwd: repoRoot, encoding: "utf8" }
+    );
+    assert.equal(
+      result.error,
+      undefined,
+      `expected the CLI subprocess to run; it failed to spawn: ${result.error?.message}`
+    );
+    assert.equal(
+      result.status,
+      0,
+      `expected the CLI to exit 0 (this fixture corpus balances); got exit ${result.status}\n` +
+        `stdout:\n${result.stdout}\nstderr:\n${result.stderr}`
+    );
+    assert.equal(existsSync(reportPath), true, `expected the CLI to persist ${reportPath}; it does not exist`);
+    cliReport028 = readFileSync(reportPath, "utf8");
+  }
+);
+
+// @SCN-RPT-028
+Then(
+  "the persisted report names exactly the withheld streams as not supplied, and none of the streams that run received",
+  function () {
+    // BOTH SIDES FROM ONE RUN. The equality names the withheld three and, by being an equality,
+    // refuses the four the run WAS handed — a line that named a supplied stream would red here
+    // just as loudly as a line that named none of the withheld ones.
+    assert.equal(
+      notSuppliedLine(cliReport028),
+      `- Not supplied: ${RPT028_WITHHELD.map((flag) => `\`${flag}\``).join(", ")}`
+    );
+  }
+);
+
+After({ tags: "@SCN-RPT-028" }, function () {
+  if (runsRoot028 && existsSync(runsRoot028)) rmSync(runsRoot028, { recursive: true, force: true });
+  if (cliDir028 && existsSync(cliDir028)) rmSync(cliDir028, { recursive: true, force: true });
 });
