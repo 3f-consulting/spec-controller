@@ -17,7 +17,7 @@
 # SO THE LIST IS GONE. `pnpm ladder` derives the gates from ci.yml — every `run:` step that
 # invokes a package.json script, in ci.yml's order, carrying ci.yml's command VERBATIM — and
 # this script runs what it is handed. A gate cannot be forgotten here, because nobody adds
-# one here. (packages/spec-controller/static-checks/localLadder.ts; @SCN-LAD-001..006.)
+# one here. (tests/checks/localLadder.ts; @SCN-LAD-001..006.)
 #
 # THE COMMAND IS CARRIED, NOT RE-TYPED, AND THAT IS LOAD-BEARING. `balance:self`
 # reconciles this repository against the JSON reports `test`, `cucumber` and `cucumber:fitness`

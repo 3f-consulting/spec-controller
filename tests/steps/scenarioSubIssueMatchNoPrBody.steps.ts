@@ -6,7 +6,7 @@
  * WHY THIS ARM HAS TO BE A SUBPROCESS AND NOT A CALL. The whole subject is what the PROCESS's
  * environment does or does not carry: `PR_BODY` absent is a different fact from `PR_BODY` present
  * and empty, and an in-process call has no environment to be absent from. The @unit arm in
- * packages/spec-controller/static-checks/scnSubIssueGate.test.ts proves the DECISION over the
+ * tests/checks/scnSubIssueGate.test.ts proves the DECISION over the
  * injected boolean; this proves the READ that produces it — that the CLI still distinguishes an
  * unset variable from an empty one by the time the decision is asked.
  *
@@ -16,7 +16,7 @@
  * collapsed the pair, which is the fault this row exists to catch.
  *
  * @SCN-SSM-018 — bidirectional evidence marker. Grepping SCN-SSM-018 returns the scenario, this
- * step block, and the @unit arm in packages/spec-controller/static-checks/scnSubIssueGate.test.ts.
+ * step block, and the @unit arm in tests/checks/scnSubIssueGate.test.ts.
  *
  * Parent: 3F-3139 (collapse the fitness characteristics to one `@fitness` tag); this row is what
  * makes `lint:scn-subissues` safe to convert, so it is sequenced ahead of the conversion.
@@ -30,14 +30,14 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-import { NOT_EXAMINED_EXIT_CODE } from "../../packages/spec-controller/static-checks/scnSubIssueGate.js";
+import { NOT_EXAMINED_EXIT_CODE } from "../checks/scnSubIssueGate.js";
 
 // @SCN-SSM-018
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const tsxBin = path.join(repoRoot, "node_modules/.bin/tsx");
 const cliPath = path.join(
   repoRoot,
-  "packages/spec-controller/static-checks/lintScnSubIssuesCli.ts"
+  "tests/checks/lintScnSubIssuesCli.ts"
 );
 
 /** The bare @SCN code the fixture PR adds without binding it to a ticket. */

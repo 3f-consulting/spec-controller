@@ -9,14 +9,16 @@ import { defineConfig } from "vitest/config";
  * thresholds (per-test < 100ms; full suite < 30s local).
  *
  * Test files live alongside the source they prove: the pure core under
- * packages/core/src, the app layer + the product quality checks under
- * packages/spec-controller.
+ * packages/core/src, the app layer under packages/spec-controller/src, and the
+ * repository's own quality checks under tests/checks (3F-3187 — check code is
+ * test code, so it sits beside the step definitions rather than in the product
+ * package).
  */
 export default defineConfig({
   test: {
     include: [
       "packages/*/src/**/*.test.ts",
-      "packages/spec-controller/static-checks/**/*.test.ts",
+      "tests/checks/**/*.test.ts",
     ],
   },
 });

@@ -73,7 +73,7 @@ jobs:
       # spec-controller used to write its own output into its own source tree, and three pieces of
       # apparatus existed only because it did — a `.gitignore` block, a hygiene check, and that
       # check's own coverage gap. The suites' reports and the borrow's placement are this run's
-      # OUTPUT, so they land on the runner's disk instead. `static-checks/measurementArtefact.ts`
+      # OUTPUT, so they land on the runner's disk instead. `tests/checks/measurementArtefact.ts`
       # reads this same name, so every producer and reader in this job resolves to one base whether
       # it is reached through a command line here or through the resolver in TypeScript.
       #

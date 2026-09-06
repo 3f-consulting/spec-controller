@@ -4,7 +4,7 @@
  * Manifesto §9A a scenario id is `SCN-<FFF>-<NNN>` where `<FFF>` is 2–5 uppercase
  * alphanumerics. This is the ONE engine-side owner of parsing the `<FFF>` off a bare
  * scenario id; the impure feature-file discovery (`discoverFeatures`) lives in
- * ingest/ingestScenarios.ts and the duplicate-code lint in static-checks/featureCodes.ts.
+ * ingest/ingestScenarios.ts and the duplicate-code lint in tests/checks/featureCodes.ts.
  *
  * Reused by the by-feature report grouping (@SCN-RPT-006).
  */

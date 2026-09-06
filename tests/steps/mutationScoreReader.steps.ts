@@ -3,7 +3,7 @@
  * record planted in a root of this scenario's own.
  *
  * The bidirectional evidence marker (Evidence Manifesto §9) is on the step blocks below; the @unit
- * pin is packages/spec-controller/static-checks/measurementArtefact.supersededCode.test.ts.
+ * pin is tests/checks/measurementArtefact.supersededCode.test.ts.
  *
  * WHY THIS ARM RUNS THE REAL READER. The @unit pin beside it proves the matching rule over rows it
  * hands in directly; what it cannot reach is everything between a command line and a file on disk —
@@ -32,14 +32,13 @@ import path from "node:path";
 import {
   SWEEP_RECORD_PATH,
   type Measurement,
-} from "../../packages/spec-controller/static-checks/measurementArtefact.js";
+} from "../checks/measurementArtefact.js";
 
 const repoRoot = process.cwd();
 const reader = path.join(
   repoRoot,
-  "packages",
-  "spec-controller",
-  "static-checks",
+  "tests",
+  "checks",
   "mutationScoreReaderCli.ts",
 );
 const tsxBin = path.join(repoRoot, "node_modules", ".bin", "tsx");

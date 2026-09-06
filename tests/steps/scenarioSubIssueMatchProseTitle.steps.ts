@@ -40,7 +40,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 const tsxBin = path.join(repoRoot, "node_modules/.bin/tsx");
 const cliPath = path.join(
   repoRoot,
-  "packages/spec-controller/static-checks/lintScnSubIssuesCli.ts"
+  "tests/checks/lintScnSubIssuesCli.ts"
 );
 
 /** The @SCN cited — properly, in brackets — by the file's other, untouched test. */

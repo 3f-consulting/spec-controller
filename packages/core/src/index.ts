@@ -10,10 +10,10 @@
  *
  * THE SURFACE IT IS HELD AGAINST IS NOT IN THIS PACKAGE, and following the guard
  * is a two-hop trip worth knowing about before it surprises somebody adding an
- * export. The list lives in `spec-controller`'s
- * `static-checks/publishedSurfaces.ts`, beside the entries for every other
+ * export. The list lives in the repository's check tree, at
+ * `tests/checks/publishedSurfaces.ts`, beside the entries for every other
  * subpath these packages publish, and the citing test sits with it in
- * `static-checks/coreBarrelSurface.test.ts`. It cannot live here: `core` is the
+ * `tests/checks/coreBarrelSurface.test.ts`. It cannot live here: `core` is the
  * pure library and `spec-controller` depends on IT, so a test in this package
  * reading that registry would invert the dependency and close a cycle.
  *
@@ -122,7 +122,7 @@ export type { RunContext, RunInputs, ProvenanceObject, ProvenanceFacts, Provenan
 // --- The portfolio's check characteristics (`domain/checkCharacteristics.ts`) ---
 // ON THE PUBLIC BARREL BY DESIGN, NOT ON `./internal` (3F-2996). The roster is what makes the
 // check vocabulary SHARED, so it has to be reachable by a product that installs this package and
-// never sees spec-controller's `static-checks/` folder; `./internal` is monorepo-scoped and would
+// never sees this repository's `tests/checks/` folder; `./internal` is monorepo-scoped and would
 // publish it to exactly the one consumer that does not need it. A product derives its legal set
 // from its PINNED version and refreshes it on a bump — which is the property a hand-typed
 // per-product list cannot have.

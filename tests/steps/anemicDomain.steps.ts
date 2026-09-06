@@ -28,7 +28,7 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import { findProceduralLayerModules } from "../../packages/spec-controller/static-checks/anemicDomain.js";
+import { findProceduralLayerModules } from "../checks/anemicDomain.js";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 

@@ -19,7 +19,7 @@
  * Anti-watermelon (the @integration proof): this drives the REAL lint:scn-subissues CLI as a
  * SUBPROCESS over a throwaway git fixture, so the move is one git actually performed rather
  * than one a fixture describes. The @unit arm in
- * packages/spec-controller/static-checks/scenarioTextChanges.movedVerbatim.test.ts pins the
+ * tests/checks/scenarioTextChanges.movedVerbatim.test.ts pins the
  * reading; this arm pins what the CLI does with it.
  *
  * THE BYTE-IDENTITY PREMISE IS ASSERTED BEFORE THE OUTCOME IS, off real git output AND off
@@ -54,7 +54,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 const tsxBin = path.join(repoRoot, "node_modules/.bin/tsx");
 const cliPath = path.join(
   repoRoot,
-  "packages/spec-controller/static-checks/lintScnSubIssuesCli.ts"
+  "tests/checks/lintScnSubIssuesCli.ts"
 );
 
 /** The first scenario, never moved — nothing here is about it. */

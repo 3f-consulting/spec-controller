@@ -6,7 +6,7 @@
  * @SCN-SSM-001 — bidirectional evidence marker for
  * features/scenario-sub-issue-match.feature. Grepping SCN-SSM-001 returns the
  * scenario, this step block, and the @unit test in
- * packages/spec-controller/static-checks/scnSubIssueGate.test.ts.
+ * tests/checks/scnSubIssueGate.test.ts.
  *
  * Parent: 3F-1137 (the port + fork-exemption design).
  */
@@ -17,7 +17,7 @@ import {
   decideScnGate,
   type ScnGateInput,
   type ScnGateResult,
-} from "../../packages/spec-controller/static-checks/scnSubIssueGate.js";
+} from "../checks/scnSubIssueGate.js";
 
 function baseInput(overrides: Partial<ScnGateInput> = {}): ScnGateInput {
   return {

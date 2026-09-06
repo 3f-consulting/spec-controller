@@ -6,7 +6,7 @@
  * matching features/term-spelling.feature and the @integration arm in
  * tests/steps/termSpelling.steps.ts. The app-side ports — a target's configured deferral tags and
  * the measurement artefact's row identity — are pinned in
- * packages/spec-controller/static-checks/termSpelling.test.ts, because `packages/core` cannot
+ * tests/checks/termSpelling.test.ts, because `packages/core` cannot
  * import the app package and a core test that could would be the dependency cycle the seam exists
  * to refuse.
  *

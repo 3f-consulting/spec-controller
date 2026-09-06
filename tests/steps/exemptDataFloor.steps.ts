@@ -24,8 +24,8 @@ import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { isPureDataPath, exemptionFaults } from "../../packages/spec-controller/static-checks/lintExemptDataFloorCli.js";
-import type { ExemptionKind } from "../../packages/spec-controller/static-checks/selfExempt.js";
+import { isPureDataPath, exemptionFaults } from "../checks/lintExemptDataFloorCli.js";
+import type { ExemptionKind } from "../checks/selfExempt.js";
 
 // @SCN-VOC-016
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
@@ -68,10 +68,10 @@ When(
     // The redding arm, over a PLANTED list: a code file that genuinely holds banned words.
     // Driven through the same predicate the gate uses, not a re-implementation of it.
     const pure: ExemptionKind = { kind: "pure-data", note: "planted" };
-    const codeFile = "packages/spec-controller/static-checks/vocabAudit.ts";
+    const codeFile = "tests/checks/vocabAudit.ts";
     codeFileVerdict = exemptionFaults(new Map([[codeFile, pure]]), new Map([[codeFile, 8]]));
 
-    const dataFile = "packages/spec-controller/static-checks/blockedVocabulary.md";
+    const dataFile = "tests/checks/blockedVocabulary.md";
     pureDataVerdict = exemptionFaults(new Map([[dataFile, pure]]), new Map([[dataFile, 25]]));
   },
 );
@@ -86,9 +86,9 @@ Then("a file that also holds live vocabulary is refused the exemption", function
   );
   assert.equal(codeFileVerdict[0]?.kind, "code-file-exempt");
   assert.equal(
-    isPureDataPath("packages/spec-controller/static-checks/vocabAudit.ts"),
+    isPureDataPath("tests/checks/vocabAudit.ts"),
     false,
-    "a .ts module under static-checks is code, whatever data it happens to carry",
+    "a .ts module under tests/checks is code, whatever data it happens to carry",
   );
 });
 
@@ -122,11 +122,11 @@ Given("an exemption granted for a file that held banned words as data", function
 
 // @SCN-VOC-017
 When("the file no longer holds any", function () {
-  const table = "packages/spec-controller/static-checks/blockedVocabulary.md";
+  const table = "tests/checks/blockedVocabulary.md";
   const pure: ExemptionKind = { kind: "pure-data", note: "planted" };
   staleVerdict = exemptionFaults(new Map([[table, pure]]), new Map([[table, 0]]));
 
-  const code = "packages/spec-controller/static-checks/vocabAudit.ts";
+  const code = "tests/checks/vocabAudit.ts";
   const residual: ExemptionKind = { kind: "residual", pending: "3F-2392", note: "planted" };
   staleResidualVerdict = exemptionFaults(new Map([[code, residual]]), new Map([[code, 0]]));
 });

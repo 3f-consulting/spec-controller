@@ -20,9 +20,8 @@ import path from "node:path";
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const CLI = path.join(
   repoRoot,
-  "packages",
-  "spec-controller",
-  "static-checks",
+  "tests",
+  "checks",
   "lintScnTagsCli.ts"
 );
 const TSX = path.join(repoRoot, "node_modules", ".bin", "tsx");

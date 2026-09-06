@@ -27,8 +27,8 @@ import { fileURLToPath } from "node:url";
 import {
   ciOnlyExclusionsOf,
   deriveLocalLadder,
-} from "../../packages/spec-controller/static-checks/localLadder.js";
-import type { LocalLadder } from "../../packages/spec-controller/static-checks/localLadder.js";
+} from "../checks/localLadder.js";
+import type { LocalLadder } from "../checks/localLadder.js";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 

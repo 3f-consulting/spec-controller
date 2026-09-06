@@ -5,7 +5,7 @@
  * ANTI-WATERMELON. This runs the REAL `pnpm lint:adopted-vocabulary` as a subprocess and
  * reads its actual outcome — never a re-run of the filter in isolation, which would prove
  * the predicate agrees with itself and say nothing about whether the GATE is wired. The
- * @unit arm (packages/spec-controller/static-checks/lintAdoptedVocabularyCli.test.ts) owns
+ * @unit arm (tests/checks/lintAdoptedVocabularyCli.test.ts) owns
  * the filter's judgement; this one owns the verdict.
  *
  * WHY PLANTED TREES. The adopted terms measure ZERO occurrences in this repository — that

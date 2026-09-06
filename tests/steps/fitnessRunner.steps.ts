@@ -4,7 +4,7 @@
  *
  * Bidirectional evidence (Evidence Manifesto §9): the step block below carries the @SCN it proves,
  * matching features/fitness-reconciliation.feature and the @unit pins in
- * packages/spec-controller/static-checks/fitnessRunner.test.ts.
+ * tests/checks/fitnessRunner.test.ts.
  *
  * WHAT THIS ARM ADDS OVER THE @unit ONE, WHICH IS THE ONLY REASON IT EXISTS. The unit arm hands the
  * verdict rule a `run` that answers from a table, so it proves the reasoning and nothing about the
@@ -47,8 +47,8 @@ import {
   spawnFitnessCommand,
   type FitnessCheckOutcome,
   type FitnessCommandRegistry,
-} from "../../packages/spec-controller/static-checks/fitnessRunner.js";
-import { NOT_EXAMINED_EXIT_CODE } from "../../packages/spec-controller/static-checks/scnSubIssueGate.js";
+} from "../checks/fitnessRunner.js";
+import { NOT_EXAMINED_EXIT_CODE } from "../checks/scnSubIssueGate.js";
 
 // @SCN-LNT-023 — the runner over six scenarios: five a row names and one no row names. The rows
 // are planted in the shape a manifest spells them and read through the real reader, so the arm

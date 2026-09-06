@@ -20,12 +20,12 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { SURFACES } from "../../packages/spec-controller/static-checks/vocabAudit.js";
+import { SURFACES } from "../checks/vocabAudit.js";
 import {
   BLOCKED_VOCABULARY_ROWS,
   VENDORED_TABLE_PATH,
   type BlockedVocabularyRow,
-} from "../../packages/spec-controller/static-checks/blockedVocabulary.js";
+} from "../checks/blockedVocabulary.js";
 
 const VOCAB_FIXTURE_ROOT = "tests/fixtures/vocab";
 let matrixMd: string;
@@ -78,7 +78,7 @@ function spawnAudit(root: string, flag: "--manifest" | "--matrix", outName: stri
   const outDir = mkdtempSync(join(tmpdir(), "spec-controller-vocab-out-"));
   const outPath = join(outDir, outName);
   const argv = [
-    join(repoRoot, "packages", "spec-controller", "static-checks", "vocabAuditCli.ts"),
+    join(repoRoot, "tests", "checks", "vocabAuditCli.ts"),
     "--root",
     root,
     flag,
@@ -570,7 +570,7 @@ function spawnStatusCheck(tablePath: string): {
 } {
   const repoRoot = process.cwd();
   const argv = [
-    join(repoRoot, "packages", "spec-controller", "static-checks", "lintBlockedVocabularyCli.ts"),
+    join(repoRoot, "tests", "checks", "lintBlockedVocabularyCli.ts"),
     "--table",
     tablePath,
   ];

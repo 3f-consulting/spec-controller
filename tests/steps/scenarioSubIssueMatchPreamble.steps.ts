@@ -6,7 +6,7 @@
  * WHY THE SECOND CLAUSE NEEDS THIS ARM AND THE @unit ONE CANNOT SUPPLY IT. Comparing the
  * two sources already answers both halves — `updatedCodes: []` and
  * `changedOutsideEveryScenario: true` — and the @unit arm in
- * packages/spec-controller/static-checks/scenarioTextChanges.test.ts pins them. But the
+ * tests/checks/scenarioTextChanges.test.ts pins them. But the
  * row is about what the CHECK REPORTS, and a fact the reading produces which nothing
  * prints is a fact nobody ever sees. Only a run of the real CLI can read stdout, so this
  * arm is where the second clause has its teeth.
@@ -57,7 +57,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 const tsxBin = path.join(repoRoot, "node_modules/.bin/tsx");
 const cliPath = path.join(
   repoRoot,
-  "packages/spec-controller/static-checks/lintScnSubIssuesCli.ts"
+  "tests/checks/lintScnSubIssuesCli.ts"
 );
 
 /**

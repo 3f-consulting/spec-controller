@@ -62,7 +62,7 @@ Feature: Term spelling — a term names the same pair however its author spelled
     spell the pattern as a fixture, and the scan is itself a test.
 
     WHAT THE SCAN DOES NOT REACH, NAMED HERE RATHER THAN DISCOVERED LATER. It reads the .ts files
-    under each package's src and static-checks, tests aside, and it matches a reading spelled as a
+    under each package's src and under tests/checks, tests aside, and it matches a reading spelled as a
     replace call whose pattern anchors the sigil at the start of the string. An eighth copy written
     into one of the .mjs data modules beside those checks, or spelled without a replace call at all,
     is not reached — and @SCN-VOC-022 has already ruled that a module is source whatever extension

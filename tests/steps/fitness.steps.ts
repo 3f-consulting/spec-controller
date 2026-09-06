@@ -31,7 +31,7 @@
  * next check to convert, and the fifteenth target would have fifteen.
  *
  * IT IS WIRING AND NOTHING ELSE. The verdict, the row resolution and the message all live in
- * `static-checks/fitnessRunner.ts` with the process injected, so they are proved by a @unit arm
+ * `tests/checks/fitnessRunner.ts` with the process injected, so they are proved by a @unit arm
  * that spawns nothing. What is here is the part no unit test can reach: reading the running
  * scenario's tag line, and turning each of the runner's three verdicts into the thing cucumber
  * reports for it.
@@ -80,13 +80,13 @@ import {
   fitnessMeasurement,
   postFitnessMeasurement,
   spawnFitnessCommand,
-} from "../../packages/spec-controller/static-checks/fitnessRunner.js";
-import { resolveEvidenceRoot } from "../../packages/spec-controller/static-checks/measurementArtefact.js";
+} from "../checks/fitnessRunner.js";
+import { resolveEvidenceRoot } from "../checks/measurementArtefact.js";
 import { FITNESS_AXIS_TAG } from "../../packages/core/src/parse/scenarios.js";
 
 // @SCN-LNT-023 — the static half of the fitness pass: the row's command is run and its exit code
 // is the scenario's verdict. The @unit pins are in
-// packages/spec-controller/static-checks/fitnessRunner.test.ts and the @integration arm in
+// tests/checks/fitnessRunner.test.ts and the @integration arm in
 // tests/steps/fitnessRunner.steps.ts.
 
 /** The `@SCN` of the scenario the pass is currently running, or null before it has started one. */
@@ -135,7 +135,7 @@ Then("the check this scenario names finds no violations", function () {
  *
  * IT IS WIRING AND NOTHING ELSE, exactly as the static sentence is. Which row a scenario resolves
  * to, what counts as a number, what a fault says and which rows survive in the artefact all live in
- * `static-checks/fitnessRunner.ts` with the process injected. What is here is the order: post what
+ * `tests/checks/fitnessRunner.ts` with the process injected. What is here is the order: post what
  * was measured, then fail on the fault — and `postFitnessMeasurement` writing nothing for a `null`
  * is what makes that order safe to state without a branch. A step definition holding an `if` about
  * whether to post would be holding half the ruling.

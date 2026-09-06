@@ -17,7 +17,7 @@
  *
  * Anti-watermelon (the @integration proof): this drives the REAL lint:scn-subissues CLI as
  * a SUBPROCESS over a throwaway git fixture. The @unit arm in
- * packages/spec-controller/static-checks/scenarioTextChanges.test.ts pins the reading;
+ * tests/checks/scenarioTextChanges.test.ts pins the reading;
  * this arm pins the CLI's CHOICE OF INPUT, which is where the fault lived.
  *
  * THE ONE HUNK IS ASSERTED BEFORE THE OUTCOME IS. A fixture that quietly split into two
@@ -50,7 +50,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 const tsxBin = path.join(repoRoot, "node_modules/.bin/tsx");
 const cliPath = path.join(
   repoRoot,
-  "packages/spec-controller/static-checks/lintScnSubIssuesCli.ts"
+  "tests/checks/lintScnSubIssuesCli.ts"
 );
 
 /** The neighbour whose LAST step the fixture PR edits — a real change, correctly reported. */

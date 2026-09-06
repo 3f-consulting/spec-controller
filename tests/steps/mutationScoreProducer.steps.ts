@@ -4,7 +4,7 @@
  *
  * @SCN-MUT-007 / @SCN-MUT-008 — the bidirectional evidence markers (Evidence Manifesto §9), on
  * the step blocks that answer each. Their @unit pins live in
- * packages/spec-controller/static-checks/mutationScore.test.ts.
+ * tests/checks/mutationScore.test.ts.
  *
  * ITS OWN STEP TEXT, EVERY LINE OF IT. Cucumber's step registry is process-wide, and
  * tests/steps/ciRunTime.steps.ts registers several UNQUALIFIED measurement phrases over its own
@@ -40,15 +40,14 @@ import {
 import {
   SWEEP_RECORD_PATH,
   type Measurement,
-} from "../../packages/spec-controller/static-checks/measurementArtefact.js";
-import { MUTATION_REPORT_PATH } from "../../packages/spec-controller/static-checks/mutationScore.js";
+} from "../checks/measurementArtefact.js";
+import { MUTATION_REPORT_PATH } from "../checks/mutationScore.js";
 
 const repoRoot = process.cwd();
 const producer = path.join(
   repoRoot,
-  "packages",
-  "spec-controller",
-  "static-checks",
+  "tests",
+  "checks",
   "mutationScoreCli.ts",
 );
 const tsxBin = path.join(repoRoot, "node_modules", ".bin", "tsx");

@@ -16,7 +16,7 @@
  * Anti-watermelon (the @integration proof): this drives the REAL lint:scn-subissues
  * CLI as a SUBPROCESS over a throwaway git fixture whose HEAD commit deletes the last
  * step of a scenario and adds no line in its place. The @unit arm in
- * packages/spec-controller/static-checks/scenarioTextChanges.test.ts pins the pure
+ * tests/checks/scenarioTextChanges.test.ts pins the pure
  * reading; this arm pins the CLI's CHOICE OF INPUT, which is where the fault lived.
  *
  * THE IDENTITY IS LOAD-BEARING, not decorative. The fixture PR carries NO ticket
@@ -46,7 +46,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 const tsxBin = path.join(repoRoot, "node_modules/.bin/tsx");
 const cliPath = path.join(
   repoRoot,
-  "packages/spec-controller/static-checks/lintScnSubIssuesCli.ts"
+  "tests/checks/lintScnSubIssuesCli.ts"
 );
 
 /** The scenario whose last step the fixture PR REMOVES — the code the gate must name. */

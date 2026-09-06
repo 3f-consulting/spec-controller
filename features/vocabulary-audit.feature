@@ -316,7 +316,7 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
     across every product and is deliberately NOT built here.
 
     DERIVATION, NOT COMPARISON. The in-repo hop is not checked, it is DISSOLVED: the
-    table is committed at `static-checks/blockedVocabulary.md` and the enforced word set
+    table is committed at `tests/checks/blockedVocabulary.md` and the enforced word set
     is PARSED OUT OF IT, so there is no second list left to drift. "A new plain adopted
     row is a table edit only" stops being a promise and becomes a structural fact — the
     throwaway-term proof in this scenario's PR adds a nonsense row to the table with no

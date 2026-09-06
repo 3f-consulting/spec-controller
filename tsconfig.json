@@ -11,6 +11,6 @@
     "sourceMap": true,
     "skipLibCheck": true
   },
-  "include": ["packages/*/src", "packages/*/static-checks", "tests"],
+  "include": ["packages/*/src", "tests"],
   "exclude": ["node_modules", "**/dist"]
 }

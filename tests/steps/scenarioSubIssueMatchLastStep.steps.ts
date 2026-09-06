@@ -22,7 +22,7 @@
  * This arm is the TEETH: the fault was the CLI's CHOICE OF INPUT (it handed a corpus
  * question to a diff), exactly as in 3F-1741, so only a test driving the live wiring
  * end-to-end (git diff → base/head source read → decideScnGate → exit code) can catch
- * it. The @unit arm in packages/spec-controller/static-checks/scenarioTextChanges.test.ts
+ * it. The @unit arm in tests/checks/scenarioTextChanges.test.ts
  * proves the pure reading in isolation and would have stayed green straight through it.
  *
  * @SCN-SSM-010 — bidirectional evidence marker. Grepping SCN-SSM-010 returns the
@@ -45,7 +45,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 const tsxBin = path.join(repoRoot, "node_modules/.bin/tsx");
 const cliPath = path.join(
   repoRoot,
-  "packages/spec-controller/static-checks/lintScnSubIssuesCli.ts"
+  "tests/checks/lintScnSubIssuesCli.ts"
 );
 
 /** The scenario whose LAST STEP the fixture PR edits — the code the gate must name. */

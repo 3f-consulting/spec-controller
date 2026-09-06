@@ -40,7 +40,7 @@ export { bareTerm } from "./lib/bareTerm.js";
 
 // `checkRegistryOf` / `registeredCheckTags` — the ONE reading of a target's check registry
 // (`domain/checkRegistry`). Shared because the tier-tag floor (@SCN-STG-005) must admit exactly
-// the bare tags the obligation rule raises against: a second reader in `static-checks/` would
+// the bare tags the obligation rule raises against: a second reader in `tests/checks/` would
 // decide independently which words name a check, and a scenario the floor accepted while the
 // engine raised nothing for it would be tier-named and evidence-free. Internal, not public — where
 // a registry is AUTHORED is still open (the registry-home question, increment D).
@@ -73,7 +73,7 @@ export type { TaggedScenario } from "./parse/scenarios.js";
 // against, and this word is now the third source of what names a check on a corpus — the two
 // resolvers beside it answer for a target's registry and its ceilings, and neither can ever carry
 // this one: a converted check has no runnable script handle and no authored ceiling, only a
-// configured row. A second spelling in `static-checks/` would be a word the floor admitted while
+// configured row. A second spelling in `tests/checks/` would be a word the floor admitted while
 // the engine raised nothing for it, or the reverse — the seam 3F-3126 spent a slice closing.
 // A LITERAL RATHER THAN A RESOLVED SET, and deliberately: which words name a CHECK is the
 // target's answer, which AXIS a scenario is on is the model's, exactly as `unit` is. Internal,
@@ -115,7 +115,7 @@ export type { FitnessEvidenceObservation } from "./domain/journal.js";
 // YAML walk to see `continue-on-error`: that key is on the same step mapping this walk already
 // visits, and a second reader would be free to disagree with the first about which steps a workflow
 // even runs — which is the silent disagreement the one-place rule exists to prevent (3F-3042). Its
-// only consumer is `static-checks/localLadder.ts`. Internal, not public — `ciRunCommands` remains
+// only consumer is `tests/checks/localLadder.ts`. Internal, not public — `ciRunCommands` remains
 // the v1 contract for anyone outside, and putting this on the frozen `.` barrel would widen a
 // frozen surface and owe @SCN-API-001 a hand-transcribed row to buy nothing.
 export { ciRunSteps } from "./parse/checkScriptsRunInCI.js";
@@ -130,7 +130,7 @@ export type { CiRunStep } from "./parse/checkScriptsRunInCI.js";
 // PUBLISHED module imported this unpublished subpath — the fault 3F-3086 repairs. Internal, not
 // public: where a target's registry, bars and mints are AUTHORED is the registry-home question
 // (increment D), so the shape of what these read is not a v1 contract yet, and @SCN-API-001 freezes
-// that barrel exactly. Nothing under `static-checks/` travels in a tarball (`tsconfig.build.json`
+// that barrel exactly. Nothing under `tests/checks/` travels in a tarball (`tsconfig.build.json`
 // emits `src` alone), so reaching them here is the seam working as 3F-2837 intended.
 export {
   resolveCheckRegistry,
@@ -154,7 +154,7 @@ export type { KillFloorReader, MutationGateReference } from "./parse/targetManif
 // CONVERTED rows (`domain/fitnessChecks`, @SCN-LNT-018). Shared because the fitness pass's RUNNER
 // must cite the characteristic its row names when it posts a measured check's number
 // (@SCN-LNT-024), and that word is the same word the obligation side raises the Evidence
-// Obligation against. A second reader in `static-checks/` deciding independently what
+// Obligation against. A second reader in `tests/checks/` deciding independently what
 // characteristic a row names would post a credit under one spelling while the debit was raised
 // under another — an obligation with no credit and a credit with no obligation, from one row, and
 // loud nowhere. The runner reads only `characteristic` here; the BAR stays the ledger's

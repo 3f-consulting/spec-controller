@@ -14,7 +14,7 @@
  *
  * Before this module the two citation readers each carried their own sigil-OPTIONAL regex
  * — `/\bSCN-[A-Z0-9]+-\d+\b/` in parse/vitest.ts and `/@?(SCN-[A-Z0-9]+-\d+)/g` in
- * static-checks/scnSubIssueGate.ts — so any SCN-shaped token anywhere in a title was a
+ * tests/checks/scnSubIssueGate.ts — so any SCN-shaped token anywhere in a title was a
  * citation whatever it was doing there. On the runtime side that minted a phantom scenario
  * from fixture data; on the static side it let a prose mention vouch for a changed test
  * block, a false green. Two copies of the answer is how they drifted from canon and from

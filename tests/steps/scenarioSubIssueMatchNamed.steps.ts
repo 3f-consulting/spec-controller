@@ -8,7 +8,7 @@
  * `runReconcile` over spec-controller's own features/ + .github/workflows/ci.yml +
  * package.json — and reads the posting off the resulting Ledger. Not a re-run of the
  * observers in isolation (that is the @unit arm, in
- * packages/spec-controller/static-checks/lintScnSubIssuesCli.test.ts), and not a grep:
+ * tests/checks/lintScnSubIssuesCli.test.ts), and not a grep:
  * the assertion is the reconciliation OUTCOME over the real tree.
  *
  * THE CHECK CONVERTED AT 3F-3165, AND THE JOIN GOT SHORTER RATHER THAN LOOSER. It was a

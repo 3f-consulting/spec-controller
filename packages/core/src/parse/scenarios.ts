@@ -188,7 +188,7 @@ export function parseUntaggedScenarios(source: string): string[] {
  * field survived because `parse/scnTags.ts` still read it, the tier floor and the one-check rule
  * being corpus-SHAPE rules whose subject steplessness genuinely was. Wrong twice: `parse/scnTags.ts`
  * is not a path in this repository, and the corpus check it meant
- * (`spec-controller/static-checks/scnTags.ts`) never read this field — it computed its own off its
+ * (`spec-controller/tests/checks/scnTags.ts`) never read this field — it computed its own off its
  * own line parser, domain-pure and importless. Both of that check's arms read the registered tag
  * now (@SCN-STG-005, @SCN-STG-007, 3F-3126) and its private reader is retired, so the tree holds
  * ONE steplessness reading and no rule consults it. What does is named on the field.

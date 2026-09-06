@@ -19,13 +19,13 @@
  * is emitted from one place, `ruleAtCeiling`, because a second statement of it would silently
  * re-measure the whole debt list.
  *
- * The thresholds are NOT written here — they live in `static-checks/complexityThresholds.mjs`, the one
+ * The thresholds are NOT written here — they live in `tests/checks/complexityThresholds.mjs`, the one
  * source the @unit pin also reads. See that file for the external sources each number is cited to, and
  * for why nothing measured off this tree may enter it. The exceedances that exist TODAY live in
- * `static-checks/complexityExceptions.mjs`, which carries the opposite guarantee.
+ * `tests/checks/complexityExceptions.mjs`, which carries the opposite guarantee.
  *
  * SCOPE MATCHES WHAT THE EXCEPTIONS WERE MEASURED OVER. The production block covers
- * `packages/<pkg>/src` and `packages/<pkg>/static-checks`. Widening these globs without re-measuring
+ * `packages/<pkg>/src` and `tests/checks`. Widening these globs without re-measuring
  * would let the check red over files no exception was ever recorded against — a wall of reds on a
  * green tree, which is how a fitness function starts crying wolf.
  *
@@ -58,13 +58,13 @@
  */
 
 import tseslint from "typescript-eslint";
-import { COMPLEXITY_EXCEPTIONS } from "./packages/spec-controller/static-checks/complexityExceptions.mjs";
-import { DOMAIN_ENTITY_ROOTS } from "./packages/spec-controller/static-checks/domainEntityRoots.mjs";
+import { COMPLEXITY_EXCEPTIONS } from "./tests/checks/complexityExceptions.mjs";
+import { DOMAIN_ENTITY_ROOTS } from "./tests/checks/domainEntityRoots.mjs";
 import {
   PRODUCTION_THRESHOLD,
   TEST_THRESHOLD,
   ruleAtCeiling,
-} from "./packages/spec-controller/static-checks/complexityThresholds.mjs";
+} from "./tests/checks/complexityThresholds.mjs";
 
 /**
  * All three rules at one scope's thresholds.
@@ -98,7 +98,7 @@ const tsLanguageOptions = {
  *
  * @type {string[]}
  */
-export const MEASURED_GLOBS = ["packages/*/src/**/*.ts", "packages/*/static-checks/**/*.ts"];
+export const MEASURED_GLOBS = ["packages/*/src/**/*.ts", "tests/checks/**/*.ts"];
 
 /**
  * The standard, held over both scopes, with NO exception applied (@SCN-CPX-003, 3F-2318).

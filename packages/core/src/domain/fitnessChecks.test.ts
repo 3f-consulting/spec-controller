@@ -11,7 +11,7 @@
  * reading at 3F-3177 because both sides of a row now ask about it. What the RUNNER does with the
  * same reading — compare an exit code against it, and refuse a row spending the protocol's own two
  * endings — is pinned where the runner is, under @SCN-LNT-023 and @SCN-LNT-025 in
- * packages/spec-controller/static-checks/fitnessRunner.test.ts. Here it is only the reading, which
+ * tests/checks/fitnessRunner.test.ts. Here it is only the reading, which
  * is the whole of what this file is for.
  *
  * Bidirectional evidence: the describes carry the @SCN id, matching

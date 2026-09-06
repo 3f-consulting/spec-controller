@@ -87,7 +87,7 @@ Feature: The public core exports exactly the frozen v1 contract surface
     threw ERR_PACKAGE_PATH_NOT_EXPORTED on `balance --help` while every gate stayed green.
 
     SO THE READING IS OF THE PUBLISHED MODULE SET, NEVER THE SOURCE TREE. A module the workspace
-    keeps and never ships — everything under `static-checks/` — may reach `./internal` freely, which
+    keeps and never ships — everything under `tests/checks/` — may reach `./internal` freely, which
     is the seam's whole purpose. The rule binds exactly what `files` and the build would ship, which
     is also why a source-tree reading would have to exempt nineteen modules and would then be an
     exemption list nobody maintains.

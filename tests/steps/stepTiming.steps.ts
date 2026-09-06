@@ -34,10 +34,10 @@ import {
   type MeasuredEvidenceObservation,
 } from "@3f-consulting/spec-controller-core/internal";
 
-import { TIMINGS_RECORD_PATH } from "../../packages/spec-controller/static-checks/measurementArtefact.js";
+import { TIMINGS_RECORD_PATH } from "../checks/measurementArtefact.js";
 
 const repoRoot = process.cwd();
-const wrapper = path.join(repoRoot, "packages", "spec-controller", "static-checks", "timeStepCli.ts");
+const wrapper = path.join(repoRoot, "tests", "checks", "timeStepCli.ts");
 const tsxBin = path.join(repoRoot, "node_modules", ".bin", "tsx");
 
 /**

@@ -18,7 +18,7 @@
  *
  * Anti-watermelon (the @integration proof): this drives the REAL lint:scn-subissues CLI as
  * a SUBPROCESS over a throwaway git fixture. The @unit arm in
- * packages/spec-controller/static-checks/scenarioTextChanges.test.ts pins the reading; this
+ * tests/checks/scenarioTextChanges.test.ts pins the reading; this
  * arm pins what the CLI does with it — and this row's outcome is a REFUSAL, so what it
  * proves is that the refusal still arrives once every other input is stripped away.
  *
@@ -51,7 +51,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 const tsxBin = path.join(repoRoot, "node_modules/.bin/tsx");
 const cliPath = path.join(
   repoRoot,
-  "packages/spec-controller/static-checks/lintScnSubIssuesCli.ts"
+  "tests/checks/lintScnSubIssuesCli.ts"
 );
 
 /** The neighbour scenario, byte-identical on both sides — nothing here is about it. */

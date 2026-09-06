@@ -8,9 +8,9 @@
  * @SCN-API-001'S GUARD USED TO LIVE HERE AND NOW DOES NOT (3F-2838). It held this
  * barrel to a frozen enumeration this file carried, over a runtime reflection and
  * a compiler-API reading of the type surface it also carried. All three are now
- * `spec-controller`'s `static-checks/publishedSurfaces.ts`, shared with the arms
+ * `spec-controller`'s `tests/checks/publishedSurfaces.ts`, shared with the arms
  * that hold every other published subpath, and the citing test went with them:
- * `static-checks/coreBarrelSurface.test.ts`. It could not stay here, because core
+ * `tests/checks/coreBarrelSurface.test.ts`. It could not stay here, because core
  * is the pure library and `spec-controller` depends on IT — a test in this package
  * importing that mechanism would invert the dependency and close a cycle.
  *

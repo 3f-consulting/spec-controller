@@ -5,7 +5,7 @@
  * ANTI-WATERMELON. This runs the REAL `pnpm balance:self` guard as a subprocess and
  * reads its actual outcome — never a re-run of the reconciler in isolation, which would
  * prove the engine agrees with itself and say nothing about whether the GATE is wired.
- * The @unit arm (packages/spec-controller/static-checks/balanceSelfCli.test.ts) owns
+ * The @unit arm (tests/checks/balanceSelfCli.test.ts) owns
  * the scan scope and the self-citation; this one owns the verdict.
  *
  * WHY PLANTED TREES RATHER THAN THIS ONE. The gate reads a Cucumber report, and this

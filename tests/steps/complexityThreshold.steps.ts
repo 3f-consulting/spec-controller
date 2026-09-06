@@ -115,10 +115,10 @@ async function redsOutsideButNotInside(source: string, rule: ExceptionRule): Pro
 
 Given("the thresholds are the external standard, not a measurement of this tree", async function () {
   const thresholds = await import(
-    "../../packages/spec-controller/static-checks/complexityThresholds.mjs"
+    "../checks/complexityThresholds.mjs"
   );
   const exceptionModule = await import(
-    "../../packages/spec-controller/static-checks/complexityExceptions.mjs"
+    "../checks/complexityExceptions.mjs"
   );
   exceptions = exceptionModule.COMPLEXITY_EXCEPTIONS as readonly Exception[];
 
@@ -208,7 +208,7 @@ const sourceAt = (rule: (typeof RULES)[number], value: number): string => {
 
 Given("a file on the exception list at its recorded value", async function () {
   const exceptionModule = await import(
-    "../../packages/spec-controller/static-checks/complexityExceptions.mjs"
+    "../checks/complexityExceptions.mjs"
   );
   exceptions = exceptionModule.COMPLEXITY_EXCEPTIONS as readonly Exception[];
 
@@ -287,7 +287,7 @@ type Disagreement = {
 };
 
 /** A real, in-scope production file that is UNDER the standard — the stale-entry plant's subject. */
-const UNDER_STANDARD_PATH = "packages/spec-controller/static-checks/sourceFiles.ts";
+const UNDER_STANDARD_PATH = "tests/checks/sourceFiles.ts";
 
 let measuredTree: readonly MeasuredValue[];
 let reconcile: (
@@ -298,7 +298,7 @@ let reconcile: (
 /** The reconciliation module, loaded lazily so a missing build reds THIS scenario and no other. */
 async function reconciliationModule(): Promise<Record<string, unknown>> {
   return (await import(
-    "../../packages/spec-controller/static-checks/complexityExceptionsReconciliation.mjs"
+    "../checks/complexityExceptionsReconciliation.mjs"
   )) as Record<string, unknown>;
 }
 
@@ -341,7 +341,7 @@ function assertNamesItsCause(found: Disagreement): void {
 
 Given("an exception list recording each exempt file's measured value", async function () {
   const exceptionModule = await import(
-    "../../packages/spec-controller/static-checks/complexityExceptions.mjs"
+    "../checks/complexityExceptions.mjs"
   );
   exceptions = exceptionModule.COMPLEXITY_EXCEPTIONS as readonly Exception[];
 
@@ -460,10 +460,10 @@ const perUnitCeilingFor = (path: string, rule: ExceptionRule, standard: number):
   exceptions.find((entry) => entry.path === path && entry.rule === rule)?.value ?? standard;
 
 Given("the concept modules the module-size rule does not govern", async function () {
-  const module = await import("../../packages/spec-controller/static-checks/domainEntityRoots.mjs");
+  const module = await import("../checks/domainEntityRoots.mjs");
   entityRoots = module.DOMAIN_ENTITY_ROOTS as readonly string[];
   const exceptionModule = await import(
-    "../../packages/spec-controller/static-checks/complexityExceptions.mjs"
+    "../checks/complexityExceptions.mjs"
   );
   exceptions = exceptionModule.COMPLEXITY_EXCEPTIONS as readonly Exception[];
 

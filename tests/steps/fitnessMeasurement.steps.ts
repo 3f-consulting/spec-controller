@@ -4,7 +4,7 @@
  *
  * Bidirectional evidence (Evidence Manifesto §9): the step block below carries the @SCN it proves,
  * matching features/fitness-reconciliation.feature and the @unit pins in
- * packages/spec-controller/static-checks/fitnessRunner.test.ts.
+ * tests/checks/fitnessRunner.test.ts.
  *
  * WHAT THIS ARM ADDS OVER THE @unit ONE, WHICH IS THE ONLY REASON IT EXISTS. The unit arm hands the
  * measurement rule a `run` that answers from a table, so it proves the reading and nothing about
@@ -41,7 +41,7 @@ import {
   type MeasurementReport,
 } from "@3f-consulting/spec-controller-core/internal";
 
-import { MEASUREMENT_ARTEFACT_PATH } from "../../packages/spec-controller/static-checks/measurementArtefact.js";
+import { MEASUREMENT_ARTEFACT_PATH } from "../checks/measurementArtefact.js";
 import {
   fitnessMeasurement,
   fitnessCommandsOf,
@@ -49,7 +49,7 @@ import {
   spawnFitnessCommand,
   type FitnessCommandRegistry,
   type FitnessMeasurementOutcome,
-} from "../../packages/spec-controller/static-checks/fitnessRunner.js";
+} from "../checks/fitnessRunner.js";
 
 // @SCN-LNT-024 — the measured runner over three scenarios whose rows each name a real command: one
 // that prints a number, one that prints prose, one that prints nothing on its output at all. The
