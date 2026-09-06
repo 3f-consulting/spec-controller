@@ -736,36 +736,3 @@ Feature: Audit every surface's vocabulary against the manifesto (one-time, repor
       Then every module extension yields the same flagged words on the same surfaces
       And no module extension contributes a row on the documentation surface
       And the prose file is still read as prose, on the documentation surface
-
-  Rule: this tree obeys the vocabulary triage it publishes, on all three of its checks
-
-    THREE CHECKS, ONE CHARACTERISTIC, AND THE `@SCN` IS WHAT TELLS THEM APART. The three
-    steps share a subject — this repository's vocabulary — and share nothing else. The table
-    lint judges the TRIAGE RECORD, the adopted gate judges the TREE against it, and the data
-    floor judges the AUDIT'S OWN EXEMPTIONS. Three checks, so three stepless scenarios; one
-    characteristic, so one bare `@vocab` tag between them. The tag names the characteristic,
-    the @SCN names the check, and the registry is what tells the runner which row a static
-    run credits.
-
-    THIS RULE ARGUED THE OPPOSITE, AND IT WAS RIGHT ABOUT THE ENGINE IT WAS WRITTEN AGAINST.
-    One tag over the three DID make a run of any of them credit whichever scenario the corpus
-    happened to reach first, leaving the other two reconciling missing while their checks ran
-    green — the attribution fault the one posting rule exists to remove. That was a measurement
-    of this repository, not a misreading of it. What changed is the seam: the check-to-scenario
-    join moved into the register (@SCN-LNT-015), which is where canon had put it since the
-    measured axis, and each entry now names the row its own run credits. The prose went because
-    canon rules that the tag names the characteristic — not because the engine had already been
-    doing what the prose said it could not.
-
-    NONE OF THE THREE CARRIES STEPS. The Rules above are examples of each check deciding over
-    a planted tree; these are the characteristics held over the real one. Their bare tags
-    raise the three Evidence Obligations the three CI runs settle.
-
-    @vocab @SCN-VOC-019
-    Scenario: every row of the vendored canon table carries an adoption status
-
-    @vocab @SCN-VOC-020
-    Scenario: no adopted retired term survives in a non-exempt file of this tree
-
-    @vocab @SCN-VOC-021
-    Scenario: every audit exemption covers pure data and covers a banned word it still holds

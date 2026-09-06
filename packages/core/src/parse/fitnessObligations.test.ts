@@ -21,14 +21,14 @@ Feature: fitness
 
   Rule: the tree stays inside its thresholds
 
-    @complexity @SCN-FIT-001
+    @complexity @SCN-AAA-001
     Scenario: the codebase stays under the complexity threshold
 `;
 
 describe("[SCN-LNT-006] a scenario's bare check tag raises one fitness Evidence Obligation, steps or none", () => {
   it("raises exactly one obligation, naming the check the bare tag names", () => {
     expect(parseScenarios(steplessScenario, [], REGISTERED)).toEqual([
-      { scnId: "SCN-FIT-001", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "complexity" }] },
+      { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "complexity" }] },
     ]);
   });
 
@@ -43,12 +43,12 @@ Feature: fitness
   @complexity
   Rule: the tree stays inside its thresholds
 
-    @complexity @SCN-FIT-001
+    @complexity @SCN-AAA-001
     Scenario: the codebase stays under the complexity threshold
 `;
 
     expect(parseScenarios(source, [], REGISTERED)).toEqual([
-      { scnId: "SCN-FIT-001", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "complexity" }] },
+      { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "complexity" }] },
     ]);
   });
 
@@ -66,14 +66,14 @@ Feature: fitness
 
   Rule: the tree stays inside its thresholds
 
-    @unit @complexity @SCN-FIT-002
+    @unit @complexity @SCN-AAA-002
     Scenario: a scenario carrying a tier tag and a registered check, with steps
       Given a thing
 `;
 
     expect(parseScenarios(source, [], REGISTERED)).toEqual([
       {
-        scnId: "SCN-FIT-002",
+        scnId: "SCN-AAA-002",
         evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "lint", staticCheck: "complexity" }],
       },
     ]);
@@ -87,12 +87,12 @@ Feature: fitness
 
   Rule: the tree stays inside its thresholds
 
-    @smoke @SCN-FIT-003
+    @smoke @SCN-AAA-003
     Scenario: a stepless scenario carrying no registered check
 `;
 
     expect(parseScenarios(source, [], REGISTERED)).toEqual([
-      { scnId: "SCN-FIT-003", evidenceObligations: [] },
+      { scnId: "SCN-AAA-003", evidenceObligations: [] },
     ]);
   });
 
@@ -100,7 +100,7 @@ Feature: fitness
     // The reading is INERT until a target supplies its registry — which is what keeps this additive
     // over a corpus that has not been swept yet.
     expect(parseScenarios(steplessScenario)).toEqual([
-      { scnId: "SCN-FIT-001", evidenceObligations: [] },
+      { scnId: "SCN-AAA-001", evidenceObligations: [] },
     ]);
   });
 
@@ -152,7 +152,7 @@ Feature: fitness
     // The EXTENT rides on the same walk (@SCN-SSM-010) and is pinned by that scenario's own arm;
     // this row is about steplessness, so it reads the fields it is about.
     expect(parseTaggedScenarios(steplessScenario)).toMatchObject([
-      { scnId: "SCN-FIT-001", tags: ["complexity", "SCN-FIT-001", "FIT"], stepless: true },
+      { scnId: "SCN-AAA-001", tags: ["complexity", "SCN-AAA-001", "FIT"], stepless: true },
     ]);
   });
 });
@@ -171,7 +171,7 @@ Feature: fitness
 
   Rule: the tree stays inside its thresholds
 
-    @lint @SCN-FIT-001
+    @lint @SCN-AAA-001
     Scenario: the source stays inside the style rules
 `;
 
@@ -181,7 +181,7 @@ Feature: fitness
 
   Rule: the tree stays inside its thresholds
 
-    @unit @lint @SCN-FIT-002
+    @unit @lint @SCN-AAA-002
     Scenario: the same style rules, now carrying a runnable example
       Given a step, which is the whole of what makes this row STEPPED
 `;
@@ -193,7 +193,7 @@ Feature: fitness
     // demoted TAG, one check among twelve. They share a word and are different facts; a reading that
     // merged them would be invisible in an assertion that checked only one.
     expect(parseScenarios(bareLintScenario, [], REGISTERED_WITH_LINT)).toEqual([
-      { scnId: "SCN-FIT-001", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint" }] },
+      { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint" }] },
     ]);
   });
 
@@ -203,7 +203,7 @@ Feature: fitness
     // built-in meaning, because for the whole of name-match it HAD one. A target that runs no style
     // lint owes no style lint, and spelling the tag cannot conjure the obligation.
     expect(parseScenarios(bareLintScenario, [], ["complexity", "typecheck"])).toEqual([
-      { scnId: "SCN-FIT-001", evidenceObligations: [] },
+      { scnId: "SCN-AAA-001", evidenceObligations: [] },
     ]);
   });
 
@@ -227,7 +227,7 @@ Feature: fitness
     // and `staticCheck: "lint"` the demoted tag — so a reading that merged them cannot pass.
     expect(parseScenarios(steppedBareLintScenario, [], REGISTERED_WITH_LINT)).toEqual([
       {
-        scnId: "SCN-FIT-002",
+        scnId: "SCN-AAA-002",
         evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "lint", staticCheck: "lint" }],
       },
     ]);
@@ -239,7 +239,7 @@ Feature: fitness
     // above and fails here. A target that runs no style lint owes none whatever shape the row is,
     // and only the registry can say otherwise.
     expect(parseScenarios(steppedBareLintScenario, [], ["complexity", "typecheck"])).toEqual([
-      { scnId: "SCN-FIT-002", evidenceObligations: [{ qualityCheck: "unit" }] },
+      { scnId: "SCN-AAA-002", evidenceObligations: [{ qualityCheck: "unit" }] },
     ]);
   });
 });
@@ -262,7 +262,7 @@ Feature: fitness
 
   Rule: the retired form is inert
 
-    ${tags} @SCN-FIT-003
+    ${tags} @SCN-AAA-003
     Scenario: a scenario still spelling the retired form
 ${steps}`;
 
@@ -272,7 +272,7 @@ ${steps}`;
     // `feature-codes` is registered here and the tag names its runnable handle, so a re-routing
     // reader passes a fixture the empty expectation refuses.
     expect(parseScenarios(retiredForm(`@lint=${REGISTERED_HANDLE}`), [], ["feature-codes"])).toEqual([
-      { scnId: "SCN-FIT-003", evidenceObligations: [] },
+      { scnId: "SCN-AAA-003", evidenceObligations: [] },
     ]);
   });
 
@@ -281,7 +281,7 @@ ${steps}`;
     // retired form behind that gate would raise the obligation here and nowhere else, which reads
     // as retirement on the corpus this repository happens to carry.
     expect(parseScenarios(retiredForm(`@lint=${REGISTERED_HANDLE}`, ""), [], ["feature-codes"])).toEqual([
-      { scnId: "SCN-FIT-003", evidenceObligations: [] },
+      { scnId: "SCN-AAA-003", evidenceObligations: [] },
     ]);
   });
 
@@ -290,7 +290,7 @@ ${steps}`;
     // still owes that tier. A reader that dropped the whole scenario would take real obligations
     // dark, which is the false-green the deferral-tag distinction exists to keep out (3F-2351).
     expect(parseScenarios(retiredForm(`@unit @lint=${REGISTERED_HANDLE}`), [], ["feature-codes"])).toEqual([
-      { scnId: "SCN-FIT-003", evidenceObligations: [{ qualityCheck: "unit" }] },
+      { scnId: "SCN-AAA-003", evidenceObligations: [{ qualityCheck: "unit" }] },
     ]);
   });
 
@@ -298,7 +298,7 @@ ${steps}`;
     // The other direction: under name-match the handle needed no registry at all, so an
     // unregistered one is exactly what the retired reader would still have raised.
     expect(parseScenarios(retiredForm("@lint=lint:nobody-registers-this"), [], ["feature-codes"])).toEqual([
-      { scnId: "SCN-FIT-003", evidenceObligations: [] },
+      { scnId: "SCN-AAA-003", evidenceObligations: [] },
     ]);
   });
 });

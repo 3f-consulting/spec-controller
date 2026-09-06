@@ -21,7 +21,7 @@
  *
  * THE RUN IS PLANTED, AND SO IS THE ROOT IT WRITES INTO. `--root` moves both the wrapped
  * command's working directory and the artefact, so nothing here touches this repository's own
- * `runs/` or `reports/` trees. Wrapping this repository's real mutation sweep is @SCN-MUT-011's,
+ * `runs/` or `reports/` trees. Wrapping this repository's real mutation sweep is @SCN-FIT-002's,
  * and a scenario that ran Stryker would cost the eight to twelve minutes Stryker costs.
  */
 
@@ -254,7 +254,7 @@ Given(
     // A ci-run-time row rather than a second mutation one, because a run has as many measurements
     // as it has measured checks and the one thing "posts nothing" must not come to mean is "leaves
     // an empty artefact where the rest of the run's readings were".
-    otherProducersRow = { scnId: "SCN-CIP-013", checkTag: "ci-run-time", measured: 21.4 };
+    otherProducersRow = { scnId: "SCN-AAA-005", checkTag: "ci-run-time", measured: 21.4 };
     const artefactPath = path.join(plantedRoot, SWEEP_RECORD_PATH);
     mkdirSync(path.dirname(artefactPath), { recursive: true });
     writeFileSync(

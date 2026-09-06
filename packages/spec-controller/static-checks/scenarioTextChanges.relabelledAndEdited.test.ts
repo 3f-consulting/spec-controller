@@ -155,6 +155,7 @@ function gateInput(overrides: Partial<ScnGateInput>): ScnGateInput {
     uncitedChangedTestBlocks: [],
     hasTicketHandle: false,
     isExternalPr: false,
+    prBodyReadable: true,
     ...overrides,
   };
 }

@@ -69,7 +69,7 @@ const SILENT_COMMAND = 'node -e "console.error(\'swept 0 mutants\')"';
 const PLANTED_COMMANDS = [NUMBER_COMMAND, PROSE_COMMAND, SILENT_COMMAND] as const;
 
 /** What another producer of this run already posted, before any of the three scenarios ran. */
-const ALREADY_MEASURED = { scnId: "SCN-CIP-014", checkTag: "ci-run-time", measured: 42.1 };
+const ALREADY_MEASURED = { scnId: "SCN-AAA-006", checkTag: "ci-run-time", measured: 42.1 };
 
 let plantedRoot: string;
 let plantedCommands: FitnessCommandRegistry;
@@ -104,7 +104,12 @@ Given(
   function () {
     // Stated as an assertion over the planted rows rather than as prose about them, so the arm
     // cannot go on passing against three commands that had quietly become the same one.
-    assert.deepEqual([...plantedCommands.values()], [...PLANTED_COMMANDS]);
+    // The COMMAND half of each row, which is the only half a measured check has: this route reads
+    // no exit code, so the code a row may name for one is not its business (3F-3170).
+    assert.deepEqual(
+      [...plantedCommands.values()].map((row) => row.command),
+      [...PLANTED_COMMANDS]
+    );
     assert.deepEqual(
       [...plantedChecks.values()].map((check) => check.characteristic),
       [...PLANTED_CHARACTERISTICS]

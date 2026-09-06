@@ -22,7 +22,7 @@ import type { FitnessCheckRegistry } from "../domain/fitnessChecks.js";
 
 /** The configured rows, as the obligation rule takes them: bare `@SCN` → the characteristic. */
 const CONFIGURED: FitnessCheckRegistry = new Map([
-  ["SCN-FIT-001", { characteristic: "complexity" }],
+  ["SCN-AAA-001", { characteristic: "complexity" }],
 ]);
 
 /**
@@ -35,7 +35,7 @@ Feature: fitness
 
   Rule: the tree stays inside its thresholds
 
-    @fitness @SCN-FIT-001
+    @fitness @SCN-AAA-001
     Scenario: the codebase stays under the complexity threshold
 `;
 
@@ -43,7 +43,7 @@ describe("[SCN-LNT-018] a @fitness scenario owes the characteristic its configur
   it("raises one obligation, naming the characteristic the row names rather than the tag", () => {
     expect(parseScenarios(convertedScenario, [], [], new Map(), CONFIGURED)).toEqual([
       {
-        scnId: "SCN-FIT-001",
+        scnId: "SCN-AAA-001",
         evidenceObligations: [{ qualityCheck: "lint", staticCheck: "complexity" }],
       },
     ]);
@@ -59,13 +59,13 @@ Feature: fitness
   @fitness
   Rule: the tree stays inside its thresholds
 
-    @fitness @SCN-FIT-001
+    @fitness @SCN-AAA-001
     Scenario: the codebase stays under the complexity threshold
 `;
 
     expect(parseScenarios(source, [], [], new Map(), CONFIGURED)).toEqual([
       {
-        scnId: "SCN-FIT-001",
+        scnId: "SCN-AAA-001",
         evidenceObligations: [{ qualityCheck: "lint", staticCheck: "complexity" }],
       },
     ]);
@@ -81,7 +81,7 @@ Feature: fitness
 
   Rule: the tree stays inside its thresholds
 
-    @complexity @SCN-FIT-001
+    @complexity @SCN-AAA-001
     Scenario: the codebase stays under the complexity threshold
 `;
 
@@ -94,7 +94,7 @@ Feature: fitness
     // What keeps this additive over a corpus nobody has swept: the rows arrive as data, and a
     // target that has configured none owes nothing on this route.
     expect(parseScenarios(convertedScenario)).toEqual([
-      { scnId: "SCN-FIT-001", evidenceObligations: [] },
+      { scnId: "SCN-AAA-001", evidenceObligations: [] },
     ]);
   });
 
@@ -107,14 +107,14 @@ Feature: fitness
 
   Rule: the tree stays inside its thresholds
 
-    @unit @fitness @SCN-FIT-001
+    @unit @fitness @SCN-AAA-001
     Scenario: a converted check carrying a runnable example too
       Given a step
 `;
 
     expect(parseScenarios(source, [], [], new Map(), CONFIGURED)).toEqual([
       {
-        scnId: "SCN-FIT-001",
+        scnId: "SCN-AAA-001",
         evidenceObligations: [
           { qualityCheck: "unit" },
           { qualityCheck: "lint", staticCheck: "complexity" },
@@ -126,9 +126,9 @@ Feature: fitness
 
 /** The converted rows for @SCN-LNT-019 — one floor, one bar nothing can read, one no bar at all. */
 const BY_SHAPE: FitnessCheckRegistry = new Map([
-  ["SCN-FIT-002", { characteristic: "mutation", bar: { threshold: 90, atLeast: true } }],
-  ["SCN-FIT-003", { characteristic: "coverage", bar: null }],
-  ["SCN-FIT-001", { characteristic: "complexity" }],
+  ["SCN-AAA-002", { characteristic: "mutation", bar: { threshold: 90, atLeast: true } }],
+  ["SCN-AAA-003", { characteristic: "coverage", bar: null }],
+  ["SCN-AAA-001", { characteristic: "complexity" }],
 ]);
 
 /** A converted scenario per row, in the order the expectations below read them. */
@@ -137,13 +137,13 @@ Feature: fitness
 
   Rule: the tree stays inside its bars
 
-    @fitness @SCN-FIT-002
+    @fitness @SCN-AAA-002
     Scenario: the tree stays above its mutation floor
 
-    @fitness @SCN-FIT-003
+    @fitness @SCN-AAA-003
     Scenario: the tree stays above its coverage floor
 
-    @fitness @SCN-FIT-001
+    @fitness @SCN-AAA-001
     Scenario: the codebase stays under the complexity threshold
 `;
 
@@ -153,7 +153,7 @@ describe("[SCN-LNT-019] the row's shape decides which obligation the converted r
     // shape for all three — reds as firmly as one that dropped a row.
     expect(parseScenarios(byShapeCorpus, [], [], new Map(), BY_SHAPE)).toEqual([
       {
-        scnId: "SCN-FIT-002",
+        scnId: "SCN-AAA-002",
         evidenceObligations: [
           {
             qualityCheck: "lint",
@@ -169,11 +169,11 @@ describe("[SCN-LNT-019] the row's shape decides which obligation the converted r
         // obligation to the comparison arm and the missing bar is what that arm then reports;
         // marking it measured only where a bar was read would send an un-authored one down the
         // static route, to be reported as a check nobody wrote.
-        scnId: "SCN-FIT-003",
+        scnId: "SCN-AAA-003",
         evidenceObligations: [{ qualityCheck: "lint", staticCheck: "coverage", measured: true }],
       },
       {
-        scnId: "SCN-FIT-001",
+        scnId: "SCN-AAA-001",
         evidenceObligations: [{ qualityCheck: "lint", staticCheck: "complexity" }],
       },
     ]);
@@ -183,12 +183,12 @@ describe("[SCN-LNT-019] the row's shape decides which obligation the converted r
     // The direction is the TARGET's to author, never the engine's to infer from the characteristic
     // (@SCN-MUT-001): a row naming `atMost` lands exactly the keys it landed before floors existed.
     const ceiling: FitnessCheckRegistry = new Map([
-      ["SCN-FIT-001", { characteristic: "ci-run-time", bar: { threshold: 75 } }],
+      ["SCN-AAA-001", { characteristic: "ci-run-time", bar: { threshold: 75 } }],
     ]);
 
     expect(parseScenarios(convertedScenario, [], [], new Map(), ceiling)).toEqual([
       {
-        scnId: "SCN-FIT-001",
+        scnId: "SCN-AAA-001",
         evidenceObligations: [
           { qualityCheck: "lint", staticCheck: "ci-run-time", measured: true, threshold: 75 },
         ],
@@ -206,7 +206,7 @@ Feature: fitness
 
   Rule: the tree stays inside its bars
 
-    @mutation @SCN-FIT-002
+    @mutation @SCN-AAA-002
     Scenario: the tree stays above its mutation floor
 `;
     const converted = `@FIT
@@ -214,7 +214,7 @@ Feature: fitness
 
   Rule: the tree stays inside its bars
 
-    @fitness @SCN-FIT-002
+    @fitness @SCN-AAA-002
     Scenario: the tree stays above its mutation floor
 `;
 
@@ -223,7 +223,7 @@ Feature: fitness
         byThresholdRegistry,
         [],
         [],
-        new Map([["SCN-FIT-002", new Map([["mutation", { threshold: 90, atLeast: true }]])]])
+        new Map([["SCN-AAA-002", new Map([["mutation", { threshold: 90, atLeast: true }]])]])
       )
     );
   });

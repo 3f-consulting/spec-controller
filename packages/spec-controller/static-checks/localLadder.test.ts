@@ -18,7 +18,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { CI_ONLY_EXCLUSIONS, deriveLocalLadder } from "./localLadder.js";
+import { ciOnlyExclusionsOf, deriveLocalLadder } from "./localLadder.js";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
@@ -173,15 +173,29 @@ describe("[SCN-LAD-004] an excluded CI-only step is not a gate, and its reason i
     expect(ladder.omitted).toEqual(excluded);
   });
 
-  it("[SCN-LAD-004] this repository excludes exactly one step, and it says why", () => {
-    // The list is the one hand-maintained artefact the derivation leaves. Pinning its size
-    // is what makes growing it a deliberate act with a diff, rather than a habit.
-    expect(CI_ONLY_EXCLUSIONS.map((exclusion) => exclusion.script)).toEqual([
-      "lint:scn-subissues",
-    ]);
-    for (const exclusion of CI_ONLY_EXCLUSIONS) {
-      expect(exclusion.reason.length, `${exclusion.script} must say why`).toBeGreaterThan(20);
-    }
+  it("[SCN-LAD-004] this repository names no exclusions, and a target's are read from its manifest", () => {
+    // THE LIST IS THE TARGET'S, AND THIS TARGET'S IS EMPTY (3F-3165). It held one entry —
+    // lint:scn-subissues, which answered wrongly outside CI — until that check learnt to say "I
+    // examined nothing" instead. Pinning the size is still what makes growing it a deliberate act
+    // with a diff rather than a habit; what moved is that the number to pin is now zero.
+    const manifest: unknown = JSON.parse(
+      readFileSync(path.join(repoRoot, "package.json"), "utf8"),
+    );
+    expect(ciOnlyExclusionsOf(manifest)).toEqual([]);
+
+    // THE READER STILL READS, which is the load-bearing negative: without it "everything is
+    // empty" would satisfy the line above and no target could ever exclude anything.
+    expect(
+      ciOnlyExclusionsOf({
+        specController: {
+          ciOnlyExclusions: [{ script: "lint:beta", reason: "reads a pull request's diff" }],
+        },
+      }),
+    ).toEqual([{ script: "lint:beta", reason: "reads a pull request's diff" }]);
+
+    // A malformed entry yields nothing rather than a half-exclusion — the safe direction, so a
+    // target cannot narrow its own green-check by writing the key wrongly.
+    expect(ciOnlyExclusionsOf({ specController: { ciOnlyExclusions: [{ script: 3 }] } })).toEqual([]);
   });
 });
 
@@ -217,7 +231,7 @@ describe("[SCN-LAD-005] an exclusion naming a script CI does not run reds as sta
     const ladder = deriveLocalLadder(
       readFileSync(path.join(repoRoot, ".github", "workflows", "ci.yml"), "utf8"),
       JSON.parse(readFileSync(path.join(repoRoot, "package.json"), "utf8")),
-      CI_ONLY_EXCLUSIONS,
+      ciOnlyExclusionsOf(JSON.parse(readFileSync(path.join(repoRoot, "package.json"), "utf8"))),
     );
 
     expect(ladder.stale).toEqual([]);
@@ -268,7 +282,7 @@ describe("[SCN-LAD-007] an excluded step CI runs behind a gate reds, naming the 
     const ladder = deriveLocalLadder(
       readFileSync(path.join(repoRoot, ".github", "workflows", "ci.yml"), "utf8"),
       JSON.parse(readFileSync(path.join(repoRoot, "package.json"), "utf8")),
-      CI_ONLY_EXCLUSIONS,
+      ciOnlyExclusionsOf(JSON.parse(readFileSync(path.join(repoRoot, "package.json"), "utf8"))),
     );
 
     expect(ladder.late).toEqual([]);

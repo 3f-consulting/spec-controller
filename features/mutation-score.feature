@@ -241,7 +241,7 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
   Rule: spec-controller's own mutation gate is wired to one record, so its two readers cannot disagree
 
     THE HONOUR-ARTEFACT LINK, MADE MECHANICAL. Two readers now consult this repository's record: the
-    ledger, for the bar it holds SCN-MUT-011 to, and the nightly's ratchet, for the verdict it ends
+    ledger, for the bar it holds SCN-FIT-002 to, and the nightly's ratchet, for the verdict it ends
     on. They agree because they read the same gate of the same file — and nothing but this scenario
     stops a rename on one side from quietly making them two gates that agree until somebody edits
     one. The report path is in the same knot: the ratchet reads a file the sweep writes, and a sweep
@@ -263,7 +263,7 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     Scenario: the gate the nightly reconciles, the gate the manifest sources its bar from and the gate this repository's record holds are one name, and the report the ratchet reads is the one the sweep writes
       Given this repository's record, its manifest, and the workflow that sweeps its domain core
       When the terms each of them states are read back
-      Then the gate the manifest sources SCN-MUT-011's bar from is a gate the record holds
+      Then the gate the manifest sources SCN-FIT-002's bar from is a gate the record holds
       And the gate the nightly asks the ratchet to reconcile is that same gate
       And the gate the producer stamps onto the measurement it reads is that same gate
       And the report path the nightly hands the ratchet is the one this repository's sweep writes
@@ -283,11 +283,30 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     THIS CHECK IS CONVERTED, AND IT IS THE SECOND OF 3F-3138's TWO WORKED EXAMPLES — the MEASURED
     one. It carried `@mutation` and no steps: the tag answered two questions at once, and a
     threshold had nothing to exemplify, so the measured run itself was the whole observation. Now
-    the tag names only the AXIS, the characteristic has moved into a configured row of
-    `specController.fitnessChecks`, and the one sentence below is what a generator would emit from
-    that row. The step is not an example of a threshold; it is the pass running the row's command
-    and posting what it printed, which is the evidence this scenario always rested on, said out
-    loud in the report rather than arriving from a wrapper nothing enumerated.
+    the tag names only the AXIS and the characteristic has moved into a configured row of
+    `specController.fitnessChecks`. The sentence its scenario carries is not an example of a
+    threshold; it is the pass running the row's command and posting what it printed, which is the
+    evidence this scenario always rested on, said out loud in the report rather than arriving from
+    a wrapper nothing enumerated.
+
+    ITS SCENARIO IS NO LONGER WRITTEN HERE — IT IS GENERATED (3F-3164). What sat under this Rule is
+    now EMITTED from its row into `features/fitness-checks.feature`, along with every other
+    configured row, so the corpus half of a converted check is authored nowhere: the row is the
+    whole of what anybody writes. This Rule keeps its argument and no longer keeps a scenario.
+
+    IT WAS THE LAST CODE MINTED AND THE ONLY ONE THAT NEEDED A MECHANISM TO CROSS (3F-3168). Every
+    other converted check renamed freely, because both sides of its citation move in one commit.
+    This one does not: its code is stamped into the SWEEP RECORD by a producer that runs on a
+    different cadence, on a different branch. `pnpm mutation` writes `{ scnId, checkTag, measured }`
+    nightly on the gated branch; this push's `pnpm mutation:score` reads that row back by both
+    terms. Renaming the scenario renames the key on the READING side only — the newest record when
+    SCN-FIT-002 was minted had been written by the previous night's code and still said
+    SCN-MUT-011 — so the two would have been desynchronised for exactly as long as it takes a sweep
+    to run on the renamed tree, and the ledger would have read `missing` for a check that ran. The
+    reader therefore learned to answer a row from a measurement stamped with the code that row
+    supersedes (@SCN-MUT-019), the row states `--supersedes SCN-MUT-011` on its command line, and
+    the flag comes off once a nightly has stamped the new code (3F-3174). A transition that has no
+    end is a resting state wearing a transition's name.
 
     AND THE AXIS TAG IS STILL ALONE ON ITS LINE. A tier tag beside it would raise a second Evidence
     Obligation, owed by a suite, that nothing here settles; the row would then be out-of-balance
@@ -316,16 +335,12 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     borrow places it there, and the one credit crosses into the run's own stream by being measured
     by this scenario.
 
-    @fitness @SCN-MUT-011
-    Scenario: this repository's domain core kills at least the mutants its record banks
-      Then the check this scenario names reports its measurement
-
   Rule: the measurement a push borrows is the newest sweep's, whatever verdict that sweep reached
 
     THE RUN THAT FOUND THE FAULT WAS THE ONE RUN NOTHING BORROWED FROM (3F-2947). The nightly ends
     on the ratchet's verdict, so a night that loses a kill concludes `failure` — and the borrow asked
     for the newest SUCCESSFUL run, which is every night but that one. Inside the freshness window it
-    therefore reached back to the last GREEN nightly, placed ITS number, and SCN-MUT-011 reconciled
+    therefore reached back to the last GREEN nightly, placed ITS number, and SCN-FIT-002 reconciled
     satisfied: for up to thirty-six hours the ladder went green over a regression the sweep had
     already detected and already said out loud, in the one window where the gate this axis exists
     for was blind to the only fault it is for. Past that window it placed nothing and the row read
@@ -428,7 +443,7 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
   Rule: the measurement a push borrows was taken on the branch this ladder gates, whatever branch a hand-dispatch reached for
 
     THE SELECTION IS A CHAIN OF PROXIES, AND THIS IS THE ONE THAT WAS MISSING (3F-2955). What the
-    ledger is asking is whether the number it settles SCN-MUT-011 with was measured about the tree
+    ledger is asking is whether the number it settles SCN-FIT-002 with was measured about the tree
     it is judging, and no run says so outright — so the borrow narrows on the facts that stand in
     for it: the right workflow, a run that FINISHED (@SCN-MUT-015), a number still inside the 36h
     window. It never narrowed on the LINE. `mutation.yml` enables `workflow_dispatch`, so a sweep
@@ -472,7 +487,7 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     clones shallow and an ancestry test that cannot reach the base owes a branch that places
     nothing and exits 0 like every other. A later, tighter instrument rather than a competing one.
 
-    ACCEPTED COST, STATED. A `pull_request` build reconciles SCN-MUT-011 against the GATED branch's
+    ACCEPTED COST, STATED. A `pull_request` build reconciles SCN-FIT-002 against the GATED branch's
     nightly rather than against its own tree, because nothing sweeps a feature branch. Narrowing on
     the branch under test instead would make the claim honest and red EVERY pull request — there is
     no sweep to find — so the cost is taken deliberately: a pull request's mutation row is a
@@ -501,7 +516,7 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     no longer stops the script, so that sentence runs anyway — "borrow: placed mutation-measurement
     from run 33379199321 of mutation.yml, measured 27000s ago, inside the 129600s window:" — the
     `jq` beneath it fails against a file that is not there, and the terminal `exit 0` reports
-    success. SCN-MUT-011 then reads `missing`, and `missing` is the sentence this repository
+    success. SCN-FIT-002 then reads `missing`, and `missing` is the sentence this repository
     reserves for a sweep that LAPSED. A mechanical fault wearing a cadence fault's face, with the
     log actively pointing the reader at mutation.yml's schedule — the conflation @SCN-MUT-015
     removed one level up, arriving again one level down.
@@ -559,3 +574,49 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
       Then it writes exactly one echo of its own to stdout, and that is the sentence claiming a measurement was placed
       And that sentence stands immediately inside the path of the guard whose condition performs the placement, so nothing runs between the placing and the claiming
       And a placement that guard could not make says why on stderr, places nothing, and exits 0 like every branch above it
+
+  Rule: a measurement stamped with a superseded @SCN answers the row that supersedes it, for exactly as long as the producer has not caught up
+
+    THE ONE ROW A MINT CANNOT REACH, AND THE REASON IS A SCHEDULE RATHER THAN A COUPLING. Every
+    other converted row's `@SCN` renames inside one tree: the corpus, the manifest and the citing
+    surfaces move in one commit and nothing outside the commit has an opinion. A MEASURED row's
+    number is stamped with its `@SCN` by whatever produced it, and this one's producer is a nightly
+    sweep on the gated branch. Rename the row and the newest record any build can reach was written
+    by the code being replaced, so the two are keyed apart until a sweep has run on the renamed
+    tree. There is no atomic version of that: rename and the tree reds until a schedule fires, wait
+    for the schedule and the rename was not atomic.
+
+    SO THE ROW STATES WHICH CODE ITS MEASUREMENT MAY STILL ARRIVE UNDER, AND A ROW THAT STATES
+    NOTHING KEEPS THE ONE-CODE READING. This is `notExaminedExit`'s shape and it is that shape for
+    the same reason: what a producer stamps is a fact about the producer, so the row the producer
+    answers is where it is written down. Opt-in, per row, never inferred — a row silent on the point
+    accepts only its own code, which is what every row had before any row could ask, so nothing
+    already written changes meaning by standing still.
+
+    AND IT IS TWO CODES FOR ONE ROW, NEVER A LOOSER RULE ABOUT RECORDS. A superseded code is
+    answered because the record PREDATES the rename, and never because the record is old — those
+    are different facts and only the first is a reason. This widens WHICH CODE COUNTS and leaves
+    WHICH RECORD COUNTS exactly where it was: a measurement carries no clock of its own, and the
+    window that keeps a lapsed sweep's number out is applied against the producing run's own clock
+    where the record is placed, before any code in it is read. A reader that had taken the age into
+    its own hands here would be the swallowed guarantee this Rule exists to keep unreachable.
+
+    IT IS A CONTRACT WITH AN END, AND THE END IS ONE SWEEP AWAY. The producer moves to the new code
+    in the same change; the first nightly after it stamps the new code, and from then on the
+    superseded code answers nothing because no record carries it. The statement on the row is what
+    a later reader removes, and it is written where they will find it.
+
+    @unit @integration @SCN-MUT-019
+    Scenario Outline: a measurement stamped with a superseded code answers the row that supersedes it, and a row stating no superseded code keeps the one-code reading
+      Given a sweep record holding one measurement, stamped with the scenario "<stamped>" on the check "mutation"
+      And a row measuring "mutation" on the scenario "SCN-FIT-002", which <supersession>
+      When that row's check is asked for its measurement
+      Then it <answer>
+      And what keeps a lapsed sweep's number out is untouched: the measurement carries no clock of its own, and the window is applied against the producing run's own clock where the record is placed, before any code in it is read
+
+      Examples:
+        | stamped     | supersession                            | answer                                         |
+        | SCN-MUT-011 | states that it supersedes "SCN-MUT-011" | answers with the number that measurement holds |
+        | SCN-MUT-011 | states no superseded code               | refuses, naming the row it could not find      |
+        | SCN-FIT-002 | states that it supersedes "SCN-MUT-011" | answers with the number that measurement holds |
+        | SCN-LNT-001 | states that it supersedes "SCN-MUT-011" | refuses, naming the row it could not find      |

@@ -29,14 +29,23 @@
  * arbiters agreeing. The write happens first and unconditionally, because a slow failing suite
  * is still a slow suite and a dropped row reconciles as a step that never ran.
  *
- * IT READS THE ARTEFACT BEFORE IT WRITES ONE (@SCN-CIP-011), because a run has as many timed
- * steps as it has timed suites and they all post into the one file `--measurements` names. What that
- * read is worth — and what an unreadable one is worth — is `measurementArtefact.ts`'s to decide.
+ * IT READS THE RECORD BEFORE IT WRITES ONE (@SCN-CIP-011), because a run has as many timed
+ * steps as it has timed suites and they all post into the one file. What that read is worth — and
+ * what an unreadable one is worth — is `measurementArtefact.ts`'s to decide.
+ *
+ * WHAT IT WRITES IS A TIMINGS RECORD AND NOT THIS RUN'S CREDIT STREAM (3F-3166). It used to be the
+ * credit: the artefact this wrote WAS the file `balance --measurements` reads, because the two
+ * timed suites were answered by bare `@ci-run-time` tags on stepless scenarios. Those rows are
+ * CONVERTED now (@SCN-FIT-012 / @SCN-FIT-013) and the fitness pass posts their credits, from the
+ * numbers this record holds. A wrapper still writing into the credit stream would settle those
+ * obligations whether or not the pass that enumerates them ever ran — a credit arriving by a route
+ * that enumerates nothing, which is the single-entry fault the whole axis exists to close. The
+ * sweep record made the same split for the same reason one conversion earlier.
  *
  * AND IT READS THE TARGET'S MANIFEST, WHICH IS THE ONLY NUMBER IT IS TOLD (@SCN-CIP-012). The
- * ceiling comes from `specController.thresholds` at `--root`, through the same resolver the
- * reconciler uses; the anchor beneath it is divided back out. Every run prints the measurement
- * against both, names its band, and settles nothing.
+ * ceiling comes from the target's own bars at `--root`, through the same resolvers the reconciler
+ * uses; the anchor beneath it is divided back out. Every run prints the measurement against both,
+ * names its band, and settles nothing.
  */
 
 import { spawnSync } from "node:child_process";
@@ -45,13 +54,14 @@ import path from "node:path";
 
 import {
   bareTerm,
+  resolveFitnessChecks,
   resolveThresholds,
   thresholdFor,
 } from "@3f-consulting/spec-controller-core/internal";
 
 import { killFloorReaderFor } from "../src/ingest/ingestQualityChecks.js";
 import {
-  MEASUREMENT_ARTEFACT_PATH,
+  TIMINGS_RECORD_PATH,
   exitCodeOf,
   measurementArtefactWith,
   resolveEvidenceRoot,
@@ -143,7 +153,7 @@ function alreadyPostedIn(artefactPath: string): string | undefined {
 // AGAINST THE EVIDENCE ROOT, NOT AGAINST `step.root` (3F-3099). A named target carries its own
 // evidence and resolves to exactly the path it always did; a run that named no target writes to a
 // temporary directory rather than into whatever tree it happens to be standing in.
-const artefactPath = path.join(resolveEvidenceRoot(step.namedRoot), MEASUREMENT_ARTEFACT_PATH);
+const artefactPath = path.join(resolveEvidenceRoot(step.namedRoot), TIMINGS_RECORD_PATH);
 // The parent is made rather than assumed: the evidence root is a directory nothing else creates,
 // so the first timed step of a job is the thing that creates it.
 mkdirSync(path.dirname(artefactPath), { recursive: true });
@@ -163,36 +173,55 @@ writeFileSync(
 /**
  * The ceiling the TARGET's manifest holds this step to, or null where it names none.
  *
- * READ THROUGH THE SAME RESOLVER THE LEDGER READS IT WITH, never a second copy: a wrapper that
- * parsed `specController.thresholds` itself would answer a question the reconciler answers
- * differently, and the report and the verdict would disagree about the same run. It is the
- * target's manifest and not this tool's (@SCN-LNT-005) — a suite's acceptable wall-clock is a
- * property of the repository being measured and the runner class it runs on.
+ * READ THROUGH THE SAME RESOLVERS THE LEDGER READS IT WITH, never a second copy: a wrapper that
+ * parsed the manifest itself would answer a question the reconciler answers differently, and the
+ * report and the verdict would disagree about the same run. It is the target's manifest and not
+ * this tool's (@SCN-LNT-005) — a suite's acceptable wall-clock is a property of the repository
+ * being measured and the runner class it runs on.
+ *
+ * TWO PLACES A TARGET MAY AUTHOR A BAR, AND BOTH ARE ASKED (3F-3166). `specController.thresholds`
+ * is where an UNCONVERTED measured check's ceiling lives; a CONVERTED one carries its bar on its
+ * own `specController.fitnessChecks` row. This repository's two timed suites moved from the first
+ * to the second when they became @SCN-FIT-012 / @SCN-FIT-013, and a wrapper that kept asking only
+ * the first would print "no threshold is configured" over a bar sitting in the manifest it just
+ * read — a report saying the false thing rather than the loud one.
+ *
+ * THE THRESHOLD KEY IS ASKED FIRST BECAUSE IT IS THE NARROWER STATEMENT. A target mid-conversion
+ * may hold both; the entry keyed by this exact (`@SCN`, check) pair is the one written about this
+ * step, and a row is reached by `@SCN` alone.
  *
  * A manifest that is absent or unreadable yields no ceiling rather than a fault, which is what
  * `--root` over a planted tree needs and what the resolvers at this edge already do with config
  * they cannot read.
  */
 function gateFor(timedStep: TimedStep): number | null {
-  let manifest: { specController?: { thresholds?: unknown } };
+  let manifest: { specController?: { thresholds?: unknown; fitnessChecks?: unknown } };
   try {
     manifest = JSON.parse(readFileSync(path.join(timedStep.root, "package.json"), "utf8")) as {
-      specController?: { thresholds?: unknown };
+      specController?: { thresholds?: unknown; fitnessChecks?: unknown };
     };
   } catch {
     return null;
   }
+  // ONE READER PER RESOLUTION PASS, handed to both resolvers, so a manifest naming a gate of a
+  // record opens that record once (@SCN-LNT-005).
+  const killFloor = killFloorReaderFor(timedStep.root);
   // The NUMBER off the bar, and deliberately not the bar. This wrapper reports a wall-clock against
   // a ceiling and nothing else; the comparison a bar carries is the LEDGER's to reconcile with
   // (@SCN-MUT-001), and a runner that read it here would be a second arbiter of the same verdict.
-  const bar = thresholdFor(
-    resolveThresholds(manifest, killFloorReaderFor(timedStep.root)),
+  const configured = thresholdFor(
+    resolveThresholds(manifest, killFloor),
     // Both terms bare, which is how a manifest's ceilings are stored whichever way they were
     // spelled — read through the one `bareTerm` the registry was built with (@SCN-TRM-001).
     bareTerm(timedStep.scnId),
     bareTerm(timedStep.checkTag)
   );
-  return bar?.threshold ?? null;
+  if (configured != null) return configured.threshold;
+  // THE ROW'S OWN BAR, reached by the `@SCN` this step was told to cite. `resolveFitnessChecks`
+  // keys bare and reads the bar through the same `barOf` grammar the threshold route uses, so the
+  // two homes cannot come to disagree about what a target wrote.
+  const row = resolveFitnessChecks(manifest, killFloor).get(bareTerm(timedStep.scnId));
+  return row?.bar?.threshold ?? null;
 }
 
 // EVERY RUN, GREEN OR NOT, AND AFTER THE WRITE. The band over the trigger and under the gate

@@ -18,8 +18,8 @@ node --version   # must be v22.x or higher
 
 - Gherkin `.feature` files (your scenarios and their evidence-obligation tags).
 - A Vitest JSON report (runtime test evidence).
-- A Cucumber JSON report (runtime test evidence).
-- Your CI config (`ci.yml`) and `package.json` — used to check that the static checks your fitness scenarios name are actually wired into CI over the real source.
+- A Cucumber JSON report (runtime test evidence) — and, if you have converted any fitness check, a SECOND Cucumber report from the fitness pass, which runs LAST (see *Wiring into CI*).
+- Your CI config (`ci.yml`) and `package.json` — used to check that an UNCONVERTED static check is wired into CI over the real source. A converted check is no longer a CI step, so neither is needed once you have converted everything.
 
 ---
 
@@ -59,10 +59,10 @@ spec-controller balance --features ./features \
 | `--features <dir>` | Directory of Gherkin `.feature` files — the scenarios. |
 | `--vitest <report.json>` | A Vitest JSON report — runtime test evidence. |
 | `--cucumber <report.json>` | A Cucumber JSON report — runtime test evidence. |
-| `--ci <ci.yml>` | Your CI workflow — used to check whether the static checks your fitness scenarios name actually run over the real source. |
+| `--ci <ci.yml>` | Your CI workflow — used to check whether an UNCONVERTED static check runs over the real source. A converted check is not a CI step, so once you have converted everything this flag has nothing left to read. |
 | `--package-json <path>` | `package.json` — used to check a named static check's script exists. |
 | `--measurements <report.json>` | A measurement report — the number each measured check posted, evidence for the measured fitness checks (`@ci-run-time` and its family). |
-| `--fitness <report.json>` | The FITNESS pass's Cucumber report — a second cucumber call's own document, evidence for the converted fitness checks. Omit it if you have converted none. |
+| `--fitness <report.json>` | The FITNESS pass's Cucumber report — the SECOND cucumber call's own document, evidence for the converted fitness checks. That call runs LAST; see *Wiring into CI*. Omit it if you have converted none. |
 | `--target <name>` | A name recorded verbatim in the report's provenance (which project this run reconciled). |
 | `--source-sha <sha>` | Override the git commit SHA recorded in provenance (defaults to the resolved HEAD). |
 | `--format <fmt>[:<path>]` | Where to send output (`md` or `json`, optionally `:<path>` to write to a file). Repeatable. See below. |
@@ -151,18 +151,34 @@ The outcome you are watching for is the **watermelon**: a static check that is g
 
 ## Wiring into CI
 
-The point of `spec-controller` is continuous reconciliation, so `balance` belongs in CI, after your tests have produced their reports:
+The point of `spec-controller` is continuous reconciliation, so `balance` belongs in CI, after your tests have produced their reports.
+
+**If you have converted any fitness check, there are two cucumber calls and the order is load-bearing:**
+
+```yaml
+- run: pnpm cucumber          # the BEHAVIOURAL pass — @unit / @integration / @e2e / @performance
+- run: pnpm cucumber:fitness  # the FITNESS pass — @fitness, and nothing else
+```
+
+**The fitness pass runs LAST.** Several converted checks are *readers*: their command prints a number an **earlier** step of the same run left behind — the behavioural suite's own wall-clock, a nightly mutation sweep's banked record. Put the fitness call first and you meet absent artefacts and a wall of `missing` rows **while following this page exactly**. It is the one part of the design that is easy to get wrong by accident. (The fitness pass's own run time is deliberately unmeasured: the pass that observes cannot be inside what it observes.)
+
+Then reconcile, once, over both reports:
 
 ```sh
-# after your test steps have written vitest-report.json / cucumber-report.json
+# after your test steps have written vitest-report.json / cucumber-report.json,
+# and the FITNESS pass has written fitness-report.json
 spec-controller balance --features ./features \
   --vitest ./vitest-report.json \
   --cucumber ./cucumber-report.json \
+  --fitness ./fitness-report.json \
+  --measurements ./measurements.json \
   --ci ./.github/workflows/ci.yml \
   --package-json ./package.json \
   --format md:reconciliation.md \
   --format json:reconciliation.json
 ```
+
+Drop `--fitness` and `--measurements` if you have converted nothing; drop `--ci` once you have converted everything, because a converted check is no longer a CI step and there is no workflow line left to read. Converting checks you already have — with a worked before/after and the traps: [`converting-a-fitness-check.md`](./converting-a-fitness-check.md).
 
 Keep the reports as build artefacts — but do **not** commit them into the repo. An Evidence Reconciliation enumerates a codebase's gaps, phantom scenarios, and watermelons; it is more sensitive than the code itself, so it belongs outside version control.
 

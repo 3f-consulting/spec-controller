@@ -48,24 +48,45 @@ list with a list inside the script, which then drifted the same way: `lint:anemi
 arrived with a CI step and no gate line, leaving `pnpm verify` a proper subset of CI for four
 commits. A hand-maintained list drifts wherever it is kept; a derivation has nothing to keep.
 
+**The ladder is much shorter than it was, and nothing stopped being checked.** Most of the
+`lint:` steps left `ci.yml` at 3F-3165 and `typecheck` followed at 3F-3166: they are rows of
+`specController.fitnessChecks` now, and the `cucumber:fitness` gate runs them. The last `lint:`
+step went at 3F-3167 — `lint:check-characteristics`, and that one is a DELETION rather than a
+conversion: it held the words a manifest names to the portfolio roster, and the collapse to one
+`@fitness` tag makes a characteristic a label on a row rather than a token the parser reads. So
+`ci.yml` now carries no `lint:` step at all, and a check you are looking for is either a gate here
+or a row there — `pnpm ladder` plus that manifest key are between them the whole set.
+
 **What `pnpm verify` leaves out, it prints** — the step and the reason, every run, rather
-than in prose somebody has to keep true. Today that is `lint:scn-subissues`, which reconciles
-the pull request's diff against its ticket. It is left out not because it cannot run here —
-it can, and that is the trap: one of its inputs is CI-supplied, so locally it answers on less
-than it needs and reds correct work. **The printed reason is the source; this paragraph
-is orientation.** An exclusion excusing a step CI no longer runs reds the ladder. It also runs
-*first* in CI, ahead of every gate: a step CI is the only place to run has one chance where
-every other gate has two, and a red in anything ahead of it would abort the job and take it
-off the board without reporting it unrun — so the ladder reds if it ever stops running first.
+than in prose somebody has to keep true. **Today it leaves out nothing**, and the closing line
+says so by not mentioning an omission at all (3F-3165). The exclusion list is a target's to
+write, in `specController.ciOnlyExclusions`; this repository's is empty. It held one entry —
+`lint:scn-subissues`, whose inputs come from the pull request, so locally it answered on less
+than it needed and redded correct work — until that check learnt to say *I examined nothing*
+instead, with an ending of its own. **The printed reason is the source; this paragraph is
+orientation.** An exclusion excusing a step CI no longer runs still reds the ladder, and an
+excluded step CI runs behind a gate still reds it: such a step has one chance to run where
+every gate has two, so a red ahead of it takes it off the board without reporting it unrun.
 
 `bash scripts/verify.sh --list` prints the gates without running them.
 
-**Two gates read a number no local run takes.** `@SCN-MUT-011` — this repository's own
-domain-core mutation score — is a CONVERTED fitness check: its configured row in
-`specController.fitnessChecks` names the characteristic, the command that prints the number
-(`pnpm --silent mutation:score`) and the `domain` gate its bar is sourced from. So
-`cucumber:fitness` runs that command and posts what it printed, and `balance:self`
-reconciles the number against the gate's banked kill floor.
+**Three rows are MEASURED — their evidence is a number rather than an exit code.** Each has a
+configured row in `specController.fitnessChecks` naming the characteristic, the command that
+prints the number, and the bar the ledger holds it to. `cucumber:fitness` runs the command and
+posts what it printed; `balance:self` does the comparing. The scenario passes when its command
+*yielded* a number — whether that number is inside its bar is the ledger's sentence, in one place.
+
+**Two of the three read what this run itself produced, which is why the fitness pass runs LAST.**
+`pnpm test` and `pnpm cucumber` are both wrapped in `timeStepCli`: each times its suite and writes
+a TIMINGS RECORD, and `@SCN-FIT-012` (the unit suite, at most 75s) and `@SCN-FIT-013` (the
+behavioural suite, at most 150s) read their own row back out of it. Producer then reader, in that
+order — put `cucumber:fitness` ahead of the suites and both rows read `missing` while you do
+exactly what you were told. **The fitness pass's own run time is unmeasured, and must be**: the pass
+that observes cannot be inside what it observes.
+
+**The third reads a number no local run takes.** `@SCN-FIT-002` — this repository's own domain-core
+mutation score — names `pnpm --silent mutation:score` and sources its bar from the `domain` gate's
+banked kill floor.
 
 A mutation sweep costs 8-12 minutes on CI, so it runs nightly
 (`.github/workflows/mutation.yml`) and leaves what it measured as a SWEEP RECORD; CI borrows
@@ -81,8 +102,31 @@ pnpm mutation
 ```
 
 That is ~45 seconds locally and writes the sweep record, after which `pnpm verify` is green.
-Skipping it fails `@SCN-MUT-011` in the fitness pass and leaves `balance:self` reporting
+Skipping it fails `@SCN-FIT-002` in the fitness pass and leaves `balance:self` reporting
 it as `missing` — the true sentence rather than a false red: no measurement arrived.
+
+**And `runs/self-balance/measurements.json` — the credit stream — persists between local runs and
+is merged into, not rewritten.** CI starts cold; your machine does not. A row you renamed, or a
+producer you withheld to plant a fault, will find its own previous output waiting, so a plant can
+green on evidence it never produced and a stale credit can reconcile as a phantom row citing an
+unknown scenario. **Clear the artefact as part of any plant, and say what state the root was in
+when you report the result.**
+
+## The report's `### Static checks` line, and which of its zeros is vacuous
+
+`0 uncited static check(s)` over this tree means **the discoverable set is empty**, not that a
+populated one came back clean. Every fitness command left `ci.yml` at 3F-3139, so there is no
+`lint:`/`guard:` script for a `run:` step to invoke and `runningStaticChecks` observes nothing.
+The number beside it is not vacuous and is not produced by the same mechanism: `11 static check(s)
+run` counts the credits the **converted rows** post — eleven of the fourteen, the other three being
+measured and so not static checks.
+
+A capability exercised by nothing and reporting green is the fault this product is named for, and
+it is ours until [3F-3161](3F-3161) retires script discovery
+altogether — sequenced after the consumer still routing credits through it has migrated. Stated
+here, in `features/uncited-static-checks.feature`, and in
+[`doc/converting-a-fitness-check.md`](./doc/converting-a-fitness-check.md), so a reader who meets
+the zero is not left to infer which one it is.
 
 ## Reports live outside the repo
 

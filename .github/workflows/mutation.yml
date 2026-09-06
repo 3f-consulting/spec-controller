@@ -10,7 +10,7 @@ name: Mutation
 # value concentrates in the pure logic and the run cost scales with the scope.
 #
 # THIS JOB HOLDS NO SECOND BAR (3F-2765). It used to red below the `break` threshold in
-# stryker.config.json; that bar is retired, and SCN-MUT-011 is settled on this repository's
+# stryker.config.json; that bar is retired, and SCN-FIT-002 is settled on this repository's
 # own ledger, where every other fitness check is. Two bars for one characteristic makes a
 # green build depend on two arbiters agreeing, and the ledger's is the one with the @SCN.
 # So what this job owes the ledger is a MEASUREMENT: `pnpm mutation` wraps the sweep in the
@@ -19,7 +19,7 @@ name: Mutation
 # AND THE VERDICT BELOW IS NOT THAT SECOND BAR RETURNING (3F-2788). What 3F-2765 removed was a
 # SEPARATELY DERIVED number sitting beside the ledger's — the runner's own percentage, computed
 # its own way, agreeing with the ledger only by coincidence. The ratchet step is the SAME
-# integer: the same gate of the same `quality-thresholds.yml` the ledger sources SCN-MUT-011's
+# integer: the same gate of the same `quality-thresholds.yml` the ledger sources SCN-FIT-002's
 # bar from, less the same allowance, by the same subtraction. It cannot disagree with the ledger
 # because there is nothing for it to disagree with. What it adds is the three readings a single
 # floor cannot express — a population that shrank, a population that grew (a loud pass rather
@@ -68,11 +68,11 @@ jobs:
 
       # `pnpm mutation` is the sweep wrapped in the score producer: it runs Stryker,
       # derives the score from the mutant statuses, writes it into this sweep's own RECORD
-      # citing SCN-MUT-011 on the check `mutation`, and carries the sweep's own exit code
+      # citing SCN-FIT-002 on the check `mutation`, and carries the sweep's own exit code
       # out unchanged. A sweep that left no readable report writes nothing — the row then
       # reads `missing`, which is the true sentence.
       #
-      # A RECORD, NOT A RUN'S CREDIT STREAM (3F-3152). SCN-MUT-011 is a CONVERTED fitness
+      # A RECORD, NOT A RUN'S CREDIT STREAM (3F-3152). SCN-FIT-002 is a CONVERTED fitness
       # check: the push that reconciles it runs the row's command and posts the credit
       # itself, so a row written straight into `runs/self-balance/measurements.json` would
       # be a second credit for one Evidence Obligation. What this job owes is the number;
@@ -90,7 +90,7 @@ jobs:
         run: pnpm mutation
 
       # WHAT THIS SWEEP OWES THE LEDGER, LEFT WHERE THE NEXT PUSH CAN BORROW IT (3F-2765). The
-      # score above is what settles SCN-MUT-011, and the push that reconciles that row is a
+      # score above is what settles SCN-FIT-002, and the push that reconciles that row is a
       # different run of a different workflow — so the number has to cross a run boundary, and
       # this is the whole of that crossing: upload a file, download it, check its age. `ci.yml`
       # names the same artefact and places it at the same path, and that agreement is the entire

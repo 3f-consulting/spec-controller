@@ -33,7 +33,25 @@
  * IT IS WIRING AND NOTHING ELSE. The verdict, the row resolution and the message all live in
  * `static-checks/fitnessRunner.ts` with the process injected, so they are proved by a @unit arm
  * that spawns nothing. What is here is the part no unit test can reach: reading the running
- * scenario's tag line, and turning a fault into a thrown assertion.
+ * scenario's tag line, and turning each of the runner's three verdicts into the thing cucumber
+ * reports for it.
+ *
+ * THE THIRD VERDICT IS A CUCUMBER SKIP, AND THAT IS THE ONE THING ONLY THIS FILE CAN DO (3F-3169).
+ * Cucumber has exactly three statuses a step can reach on its own — passed, failed, skipped — and
+ * `skipped` is the one that is neither. Returning the string is cucumber's own mechanism for it, so
+ * no status is fabricated and no formatter is taught a new word: the scenario still appears in the
+ * report (the credit reader takes that as the check having RUN), the report says `skipped` rather
+ * than `passed`, and a skip has never counted towards the pass's exit code. A pass here instead
+ * would be a scenario going green having examined nothing — the silence fault, in the repository
+ * that names it.
+ *
+ * AND A SKIP HERE MEANS ONE THING, WHICH IS WHAT MAKES IT READABLE (3F-3170). This step reaches
+ * `skipped` on exactly one route: a row that NAMED the code its command says `I examined nothing`
+ * with, whose command then ended that way. Nothing else in this file skips, and no row that has not
+ * named a code can reach it — so a `skipped` fitness scenario in the report is a check that said so
+ * about itself, and every OTHER route to a skipped fitness scenario (a hook, a tag filter, a shared
+ * background) is incidental and worth suspecting. That is the discriminator 3F-3162 needs, and this
+ * is the one place in the pass that can hand it over.
  *
  * THE `@SCN` COMES OFF THE TAG LINE, NEVER OFF THE SCENARIO'S NAME. Cucumber hands the hook the
  * running pickle's tags; a title is prose a person edits, and recovering an identifier from one is
@@ -54,7 +72,7 @@ import assert from "node:assert/strict";
 
 import { SCN_TAG } from "../../packages/core/src/parse/cucumber.js";
 import {
-  fitnessCheckFault,
+  fitnessCheckOutcome,
   fitnessChecksAt,
   fitnessCommandsAt,
   fitnessMeasurement,
@@ -91,8 +109,18 @@ Then("the check this scenario names finds no violations", function () {
     runningScn !== null,
     "this fitness scenario carries no @SCN, so no configured row can name it"
   );
-  const fault = fitnessCheckFault(runningScn, fitnessCommandsAt(process.cwd()), spawnFitnessCommand);
-  assert.equal(fault, null, fault ?? "");
+  const outcome = fitnessCheckOutcome(
+    runningScn,
+    fitnessCommandsAt(process.cwd()),
+    spawnFitnessCommand
+  );
+  // NEITHER PASSED NOR FAILED, said in cucumber's own vocabulary. `return "skipped"` is the step
+  // runner's documented route to `TestStepResultStatus.SKIPPED`, and a skipped step is not among
+  // the statuses that cause a run to fail — so this answer costs the pass nothing while stopping
+  // short of the green a check that examined nothing has not earned.
+  if (outcome.verdict === "not-examined") return "skipped";
+  assert.equal(outcome.verdict, "clean", outcome.fault ?? "");
+  return undefined;
 });
 
 /* ═══ THE MEASURED RUNNER (@SCN-LNT-024, 3F-3148) ═══════════════════════════════════════════════

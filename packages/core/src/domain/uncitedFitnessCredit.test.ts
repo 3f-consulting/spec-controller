@@ -12,22 +12,35 @@
  * symbol grep can see. Only reconciling a credit and reading where it landed can. So the retirement
  * is pinned by CONSTRUCTION here rather than by the absence of a word somewhere.
  *
- * THE COLLISION THE FALLBACK NEEDED, and it is spec-controller's OWN configuration. The by-handle
- * arm compared an uncited observation's `staticCheck` — the RUNNABLE handle — against the
- * obligation's `staticCheck`, which is the BARE check tag its stepless scenario carries. For
- * ten of this repository's eleven registered checks those two spellings differ (`lint:feature-codes`
- * vs `traceability`) and the arm could never fire. `typecheck` carries no prefix, so its handle and
- * its bare tag are the SAME WORD — the one check on which the retired route was still live.
+ * THE COLLISION THE FALLBACK NEEDED. The by-handle arm compared an uncited observation's
+ * `staticCheck` — the RUNNABLE handle — against the obligation's `staticCheck`, which is the BARE
+ * check tag its stepless scenario carries. For a prefixed check those two spellings differ
+ * (`lint:feature-codes` vs `traceability`) and the arm could never fire. A PREFIX-LESS check
+ * carries its handle and its bare tag as the SAME WORD — the shape on which the retired route was
+ * still live, and the whole reason this plant is worth having.
  *
- * ONE FIXTURE FACT MAKES THE CREDIT UNCITED: the registry maps `lint:typecheck` where the script
- * is really called `typecheck`, so the running handle is UNREGISTERED and hop 1 of the citation
- * seam returns null (`domain/checkRegistry` — "a running check the registry cannot name reaches no
- * @SCN, so its observation cites nothing and lands in suspense"). The tag itself is registered, so
- * the corpus still raises the obligation. Everything else — the CI config, the package.json, the
- * configured static-check set — is this repository's real, checked-out tree.
+ * PLANTED WHOLE, AND IT USED TO BE THIS REPOSITORY'S OWN TREE (3F-3166). `typecheck` was the
+ * collision: a prefix-less script that `specController.staticChecks` put on the books, so the CI
+ * config, the manifest and the configured set could all be read from the checked-out source. That
+ * conversion has happened — `typecheck` is @SCN-FIT-011 now, a `specController.fitnessChecks` row
+ * run inside the fitness pass, so it is no longer a CI step and `specController.staticChecks` has
+ * left this manifest. Under 3F-3139's migration NO check of this tree is discovered by handle at
+ * all, which is 3F-3165's finding one step further on: the durable subject is a planted tree.
+ * What the real read bought was a genuine workflow under the OBSERVER; what this arm asserts is the
+ * CITATION SEAM, whose inputs — the registry and the corpus — were fixtures in it already. So the
+ * plant wires exactly the handle the fixture registry misses, and states its own premise instead of
+ * borrowing one from files other work edits.
+ *
+ * TWO FIXTURE FACTS, AND THE SECOND IS THE ONE THAT MAKES THE CREDIT UNCITED: the planted tree runs
+ * a prefix-less `typecheck` script and configures it as a static check, so the observer produces a
+ * credit; and the registry maps `lint:typecheck` where the script is really called `typecheck`, so
+ * the running handle is UNREGISTERED and hop 1 of the citation seam returns null
+ * (`domain/checkRegistry` — "a running check the registry cannot name reaches no @SCN, so its
+ * observation cites nothing and lands in suspense"). The tag itself is registered, so the corpus
+ * still raises the obligation.
  *
  * WHAT IT LOOKED LIKE BEFORE. The credit posted to SUSPENSE and, on the very same run, answered
- * SCN-FIT-001's obligation by handle — so the row read `balanced` on evidence that cited nothing
+ * SCN-AAA-001's obligation by handle — so the row read `balanced` on evidence that cited nothing
  * and the one observation was the credit side of two items on two rows. A green carrying a false
  * explanation, which is the class this repository exists to catch.
  *
@@ -38,8 +51,6 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { reconcile } from "./evidenceReconciliation.js";
 import { checkRegistryOf, registeredCheckTags } from "./checkRegistry.js";
 import { citationOfScript, fitnessCitations } from "../parse/fitnessCitations.js";
@@ -47,8 +58,24 @@ import { parseScenarios, parseTaggedScenarios } from "../parse/scenarios.js";
 import { runningStaticChecks } from "../parse/runningStaticChecks.js";
 import type { PackageJsonScripts } from "../parse/checkScriptsRunInCI.js";
 
-/** The real, prefix-less script this repository configures as a static check. */
+/** The prefix-less script the planted tree configures as a static check. */
 const UNREGISTERED_HANDLE = "typecheck";
+
+/**
+ * The planted workflow and manifest — a tree that RUNS the prefix-less script, which is the whole
+ * of what the observer needs to produce the credit this arm is about.
+ *
+ * STATED HERE RATHER THAN READ, and the two halves have to agree or the observer finds nothing: a
+ * `run:` step naming the script, and a `scripts` entry defining it. The configured set below is the
+ * third half — the discovery route a prefix cannot reach (@SCN-USG-009).
+ */
+const PLANTED_CI = [
+  `jobs:\n  ci:\n    steps:\n      - run: pnpm ${UNREGISTERED_HANDLE}\n`,
+];
+const PLANTED_PACKAGE_JSON: PackageJsonScripts = {
+  scripts: { [UNREGISTERED_HANDLE]: "tsc --noEmit" },
+};
+const PLANTED_STATIC_CHECKS = [UNREGISTERED_HANDLE];
 
 /**
  * The handle the fixture registry maps instead — a misspelling of the real one, which is what
@@ -58,24 +85,14 @@ const MISSPELT_HANDLE = "lint:typecheck";
 
 describe("[SCN-USG-001] an uncited fitness credit lands in suspense and never answers an Evidence Obligation by name", () => {
   it("posts the citing-nothing credit to suspense, leaves the scenario naming that check missing, and answers no obligation anywhere with it", () => {
-    const root = process.cwd();
-    const ciSource = readFileSync(join(root, ".github/workflows/ci.yml"), "utf8");
-    const packageJson = JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as
-      PackageJsonScripts & { specController?: { staticChecks?: string[] } };
-    // READ FROM THE REAL CONFIG, never retyped. If this repository ever stops configuring
-    // `typecheck` as a static check the observer produces nothing and every assertion below would
-    // pass over an empty ledger — a probe that never fired, reading as a probe that passed.
-    const configuredStaticChecks = packageJson.specController?.staticChecks ?? [];
-    expect(configuredStaticChecks).toContain(UNREGISTERED_HANDLE);
-
-    // The registry knows the TAG and misses the HANDLE — the one planted fact.
+    // The registry knows the TAG and misses the HANDLE — the fixture fact the citation seam turns on.
     const registry = checkRegistryOf({ [MISSPELT_HANDLE]: UNREGISTERED_HANDLE });
     const checkTags = registeredCheckTags(registry);
     const corpus = [
       "@LNT",
       "Feature: fixture",
       "  Rule: a fixture rule",
-      `    @${UNREGISTERED_HANDLE} @SCN-FIT-001`,
+      `    @${UNREGISTERED_HANDLE} @SCN-AAA-001`,
       "    Scenario: the tree compiles under the configured type settings",
     ].join("\n");
     const scenarios = parseScenarios(corpus, [], checkTags);
@@ -83,17 +100,23 @@ describe("[SCN-USG-001] an uncited fitness credit lands in suspense and never an
     // Without this the plant would prove only that an unnamed check reaches suspense, which is
     // @SCN-USG-001's plain case and was never what the by-handle arm keyed on.
     expect(scenarios.map((s) => [s.scnId, s.evidenceObligations])).toEqual([
-      ["SCN-FIT-001", [{ qualityCheck: "lint", staticCheck: UNREGISTERED_HANDLE }]],
+      ["SCN-AAA-001", [{ qualityCheck: "lint", staticCheck: UNREGISTERED_HANDLE }]],
     ]);
     const citations = fitnessCitations(parseTaggedScenarios(corpus), checkTags);
 
     const evidenceObservations = runningStaticChecks(
-      [ciSource],
-      packageJson,
+      PLANTED_CI,
+      PLANTED_PACKAGE_JSON,
       ["lint:"],
-      configuredStaticChecks,
+      PLANTED_STATIC_CHECKS,
       (script) => citationOfScript(script, registry, citations)
     );
+    // THE PROBE FIRED, ASSERTED BEFORE ANYTHING IS READ OFF IT. An observer that produced nothing
+    // would let every assertion below pass over an empty ledger — a probe that never fired, reading
+    // as a probe that passed. It used to be the real manifest's `staticChecks` entry that was
+    // checked for exactly this; the planted tree owes the same guard, taken one step later where it
+    // covers the whole of the wiring rather than one input to it.
+    expect(evidenceObservations).toHaveLength(1);
     const observation = evidenceObservations.find((o) => o.staticCheck === UNREGISTERED_HANDLE);
     // WHOLE-OBJECT, so the absence of `scnId` is pinned by its absence: an observer that
     // recovered the citation from the handle's shape carries the key and reds here.
@@ -122,7 +145,7 @@ describe("[SCN-USG-001] an uncited fitness credit lands in suspense and never an
     // AND THE SCENARIO NAMING THAT CHECK READS MISSING — the honest pair. Nothing credited its
     // obligation, so it carries the obligation and NO observation (@SCN-LDG-028), and the row is
     // out of balance. Under the by-handle arm this row read `balanced` / `satisfied` instead.
-    const fitness = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-FIT-001");
+    const fitness = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-AAA-001");
     expect(fitness?.verdict).toBe("out-of-balance");
     const missingItem = {
       qualityCheck: "lint",
@@ -143,7 +166,7 @@ describe("[SCN-USG-001] an uncited fitness credit lands in suspense and never an
     // THE TEETH, and the assertion the symbol grep could not make: NO Evidence Obligation
     // ANYWHERE is answered by this credit. An item carrying BOTH an obligation and this
     // observation is a name-match by definition — whatever route produced it, whatever it is
-    // called, and wherever in the module it lives. The by-handle `find` puts SCN-FIT-001 here.
+    // called, and wherever in the module it lives. The by-handle `find` puts SCN-AAA-001 here.
     expect(
       balance.scenarioReconciliations
         .flatMap((row) =>

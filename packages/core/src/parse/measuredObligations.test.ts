@@ -142,13 +142,13 @@ Feature: measured
     const source = `@FIT
 Feature: fitness
 
-    @complexity @SCN-FIT-001
+    @complexity @SCN-AAA-001
     Scenario: the codebase stays under the complexity threshold
 `;
 
     expect(parseScenarios(source, [], ["complexity"], THRESHOLDS)).toEqual([
       {
-        scnId: "SCN-FIT-001",
+        scnId: "SCN-AAA-001",
         evidenceObligations: [{ qualityCheck: "lint", staticCheck: "complexity" }],
       },
     ]);

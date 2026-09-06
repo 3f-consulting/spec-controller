@@ -83,7 +83,16 @@ export interface SelfBalanceScope {
    * row. One file read both ways would have the gate guessing which half of it was which.
    */
   fitness: string;
-  /** The measurement artefact — the observed MEASURED stream this run's timed steps post into. */
+  /**
+   * The measurement artefact — the observed MEASURED stream, which the FITNESS PASS posts into
+   * (3F-3166).
+   *
+   * IT USED TO BE THE TIMED STEPS' OWN FILE, and the change is the last measured check converting.
+   * `timeStepCli` now writes a TIMINGS RECORD and the fitness pass reads it, so every credit on
+   * this stream — the two timings and the mutation score alike — arrives from the pass that
+   * enumerates the scenarios owing them. A producer writing here directly would settle an
+   * obligation whether or not anything enumerated it.
+   */
   measurements: string;
   /** The CI configs — where a static check is observed to FIRE, not merely to exist. */
   ci: string;
@@ -111,9 +120,9 @@ export const SELF_BALANCE_SCOPE: SelfBalanceScope = {
   vitest: "runs/self-balance/vitest.json",
   cucumber: "runs/self-balance/cucumber.json",
   fitness: "runs/self-balance/fitness.json",
-  // The producer's own constant rather than a second spelling of it. A wrapper writing one path
-  // while this gate read another would not be loud: the reader would find nothing and every
-  // measured row would reconcile missing, which reads as a suite that never ran.
+  // The producer's own constant rather than a second spelling of it. The fitness pass posting to
+  // one path while this gate read another would not be loud: the reader would find nothing and
+  // every measured row would reconcile missing, which reads as a suite that never ran.
   measurements: MEASUREMENT_ARTEFACT_PATH,
   ci: ".github/workflows",
   packageJson: "package.json",
@@ -159,7 +168,7 @@ export function resolveScope(
  * drop one.
  *
  * THE MEASUREMENT ARTEFACT AND THE FITNESS REPORT ARE PASSED ONLY WHERE THEY EXIST, WHICH IS THE
- * OPPOSITE OF THE TREATMENT THE TWO SUITE REPORTS GET (@SCN-CIP-013, and 3F-3145 for the
+ * OPPOSITE OF THE TREATMENT THE TWO SUITE REPORTS GET (@SCN-CIP-006, and 3F-3145 for the
  * second). A `--measurements` path the balance command is handed and
  * cannot find is a usage fault to it and exits 2 (@SCN-CLI-002) — the wrong verdict here. An
  * absent artefact leaves exactly the measured rows unanswered, and those rows reconciling
@@ -206,7 +215,7 @@ export function selfBalanceArgv(
  * Reporting it as a verdict is the false all-red the dogfooding fault produced.
  *
  * THE MEASUREMENT ARTEFACT AND THE FITNESS REPORT ARE DELIBERATELY NOT CHECKED HERE, and the
- * asymmetry is the whole of @SCN-CIP-013's care. An unemitted suite report leaves EVERY obligation
+ * asymmetry is the whole of @SCN-CIP-006's care. An unemitted suite report leaves EVERY obligation
  * unobserved, which means the suite did not run; an absent measurement artefact or fitness report
  * leaves exactly the measured or converted rows unanswered, and those reconciling missing is a
  * verdict the ledger is entitled to reach.

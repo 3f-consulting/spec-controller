@@ -3,7 +3,7 @@
  * about.
  *
  *     @SCN          the row                       what the corpus then reads
- *     SCN-CPX-005   { characteristic: complexity } a @fitness scenario owes `complexity`
+ *     SCN-FIT-001   { characteristic: complexity } a @fitness scenario owes `complexity`
  *
  * THE TAG NAMES THE AXIS AND THE ROW NAMES THE SUBJECT. A bare characteristic tag answered two
  * questions at once — how a claim is proved, and what it is about — and the tier tags answer only

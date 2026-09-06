@@ -2,7 +2,7 @@
  * The command behind this repository's CONVERTED mutation check — it prints the number the
  * scheduled sweep left behind, and nothing else, on stdout (3F-3152, under 3F-3138).
  *
- *     tsx mutationScoreReaderCli.ts --scn <SCN-ID> --check <tag> [--root <dir>]
+ *     tsx mutationScoreReaderCli.ts --scn <SCN-ID> --check <tag> [--supersedes <SCN-ID>] [--root <dir>]
  *
  * WHY THIS EXISTS RATHER THAN THE SWEEP ITSELF. 3F-3138's Ruling 1 is that a converted check's
  * step definition RUNS its row's command, always — what a target puts BEHIND that command is the
@@ -27,19 +27,54 @@
  * IT IS NOT AN ARBITER AND HOLDS NO BAR. One bar per characteristic and it is the ledger's
  * (3F-2509). This prints a number; whether that number clears the `domain` gate's kill floor is
  * settled in exactly one place, on the row that owes the measurement.
+ *
+ * AND IT ANSWERS TO A SUPERSEDED CODE WHERE THE ROW NAMES ONE, WHICH IS ABOUT THE CODE AND NEVER
+ * ABOUT THE RECORD (@SCN-MUT-019). The sweep stamps its measurement with the `@SCN` of the row it
+ * was told to measure, and it runs nightly on the gated branch — so a commit that renames the row
+ * is not a commit the producer is in, and until a sweep has run on the renamed tree the newest
+ * record any build can reach is keyed under the code being replaced. `--supersedes` is the expand
+ * half of that expand/contract, named on the row's own command line beside the two terms the row
+ * already states there.
+ *
+ * WHAT IT DOES NOT WIDEN IS WHICH RECORD COUNTS. A superseded code answers because the record
+ * PREDATES the rename, never because the record is old. Nothing here reads a clock and there is no
+ * clock here to read: the sweep record carries two terms and a number per row. The window that
+ * keeps a lapsed sweep's number out is applied where the record is PLACED — against the producing
+ * run's own clock, and before the payload is fetched at all — so no code inside it, superseded or
+ * current, can reach a decision the age has already made. The full reasoning is at
+ * `MeasurementAsk.supersededScnId`.
  */
 
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-import { bareTerm } from "@3f-consulting/spec-controller-core/internal";
-
-import { SWEEP_RECORD_PATH, measurementsOf, resolveEvidenceRoot } from "./measurementArtefact.js";
+import {
+  SWEEP_RECORD_PATH,
+  measurementAnswering,
+  measurementsOf,
+  resolveEvidenceRoot,
+} from "./measurementArtefact.js";
 
 /** Everything the reader was told: which row of the record to print, and which tree to read. */
 interface ScoreRead {
   readonly scnId: string;
   readonly checkTag: string;
+  /**
+   * The `@SCN` this row's code SUPERSEDED, whose measurement still answers it, or `null` where the
+   * command named none (@SCN-MUT-019).
+   *
+   * IT ARRIVES ON THE COMMAND LINE BECAUSE THAT IS WHERE THIS ROW'S OTHER TWO TERMS ARRIVE. The
+   * row already states `--scn` and `--check` to this reader through the command it names; a third
+   * fact about the same row taken from somewhere else would give one row two sources that agree
+   * until one of them moves. The row is still where it is written down — a row's command is part of
+   * the row — and it is the form a consumer can copy, because a consumer's reader is their own
+   * program and no manifest field of ours can reach inside it.
+   *
+   * A COMMAND THAT NAMES NONE ANSWERS ONLY TO ITS OWN CODE, which is today's reading and the safe
+   * default. The whole of why a row would ever name one, and why this widens which CODE counts
+   * rather than which RECORD counts, is at `MeasurementAsk.supersededScnId`.
+   */
+  readonly supersededScnId: string | null;
   /**
    * The root as it was GIVEN — `undefined` where `--root` was absent (3F-3099).
    *
@@ -60,7 +95,9 @@ interface ScoreRead {
  */
 function usage(problem: string): never {
   console.error(`mutation score: ${problem}`);
-  console.error("mutation score: usage — --scn <SCN-ID> --check <tag> [--root <dir>]");
+  console.error(
+    "mutation score: usage — --scn <SCN-ID> --check <tag> [--supersedes <SCN-ID>] [--root <dir>]"
+  );
   process.exit(2);
 }
 
@@ -78,8 +115,17 @@ function scoreReadOf(argv: readonly string[]): ScoreRead {
   return {
     scnId: flagValue(argv, "--scn") ?? usage("--scn names the scenario whose number to print"),
     checkTag: flagValue(argv, "--check") ?? usage("--check names the measured check"),
+    // A BLANK IS NOT A NAMING. `--supersedes ""` reaches here as the empty string, and taken at its
+    // word it would be a code no row can carry and every `bareTerm` comparison would refuse — which
+    // is the same answer as naming none, reached the long way round and reported nowhere.
+    supersededScnId: namedCode(flagValue(argv, "--supersedes")),
     namedRoot: flagValue(argv, "--root"),
   };
+}
+
+/** A `--flag`'s value where it is one, or `null` where the flag was absent or spelled blank. */
+function namedCode(value: string | undefined): string | null {
+  return value !== undefined && value.trim() !== "" ? value : null;
 }
 
 const asked = scoreReadOf(process.argv.slice(2));
@@ -104,17 +150,25 @@ function recordAt(file: string): unknown {
 // row that producer never writes — or to refuse one it does — with the disagreement showing up as
 // a ledger row that quietly reads `missing`.
 const rows = measurementsOf((recordAt(recordPath) as { measurements?: unknown } | undefined)?.measurements);
-// BOTH TERMS, BARE, because neither is an address on its own (@SCN-LNT-012) and a record may hold
-// several rows: the sweep record is keyed exactly as the credit stream is.
-const row = rows.find(
-  (held) =>
-    bareTerm(held.scnId) === bareTerm(asked.scnId) &&
-    bareTerm(held.checkTag) === bareTerm(asked.checkTag)
-);
+// THROUGH THE ARTEFACT'S OWN MATCHING RULE, for the reason the row reader above is shared: this
+// used to spell both-terms-bare for itself beside a timings reader spelling it identically, and two
+// copies of one rule agree until the day one of them is edited (@SCN-MUT-019).
+const row = measurementAnswering(rows, {
+  scnId: asked.scnId,
+  checkTag: asked.checkTag,
+  supersededScnId: asked.supersededScnId,
+});
 
 if (row === undefined) {
+  // THE SUPERSEDED CODE IS NAMED IN THE REFUSAL WHERE ONE WAS ASKED FOR. A reader that looked under
+  // two codes and reported only one sends whoever is reading the failure to check a record for a
+  // key it was never the only key looked for.
+  const alsoLookedFor =
+    asked.supersededScnId === null
+      ? ""
+      : ` (nor under ${asked.supersededScnId}, the code this row supersedes)`;
   console.error(
-    `mutation score: ${asked.scnId} ${asked.checkTag} — no such row in the sweep record at ` +
+    `mutation score: ${asked.scnId} ${asked.checkTag}${alsoLookedFor} — no such row in the sweep record at ` +
       `${recordPath}, so there is no number to print. Run the sweep (\`pnpm mutation\`), or, on ` +
       "CI, this is the nightly having lapsed: the scenario fails and the row reads missing, " +
       "which is the true sentence — no measurement arrived."

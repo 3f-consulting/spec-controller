@@ -39,6 +39,14 @@ export interface FeatureCodeEntry {
  * The feature-code registry — the canonical <FFF> allocation. Once allocated, a
  * code is stable forever: it survives a feature-file rename and is never reused
  * for a different capability.
+ *
+ * `AAA` IS THE FIXTURE FEATURE-CODE AND IS DELIBERATELY ABSENT FROM THIS LIST (3F-3168). A test
+ * that plants a corpus needs scenario ids, and for years it borrowed live ones — so `SCN-FIT-001`
+ * meant a real generated scenario in one file and a planted fixture in another, and a grep could
+ * not tell them apart. No gate met the collision: fixture ids live in step-definition strings and
+ * in quoted step arguments, which `lint:scn-tags` and `lint:feature-codes` never read. Fixtures
+ * now spell `SCN-AAA-nnn`, and `AAA` stays unallocated so that spelling can never become a real
+ * code in this repository or in a target that copies the convention.
  */
 export const REGISTRY: readonly FeatureCodeEntry[] = [
   {
@@ -82,6 +90,12 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     slug: "complexity-threshold",
     status: "feature-code-used",
     note: "the complexity + module-size thresholds — eslint complexity/max-lines/max-lines-per-function over the real tree, held to an EXTERNAL standard (10/40/400, cited) rather than the tree's own measured maximum, with today's exceedances enumerated as dated debt",
+  },
+  {
+    code: "FIT",
+    slug: "fitness-checks",
+    status: "feature-code-used",
+    note: "the GENERATED fitness corpus — one @fitness scenario per specController.fitnessChecks row, emitted by static-checks/fitnessCorpus.ts and checked in. The scenarios are not authored: each carries the @SCN its row states, which is why the numbering is not contiguous. One of its own rows regenerates the file and diffs the result, so a corpus that has drifted from the rows it came from reds the pass it is part of (3F-3164)",
   },
   {
     code: "USG",
@@ -202,12 +216,6 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     slug: "term-spelling",
     status: "feature-code-used",
     note: "a term names the same pair however its author spaced it around the sigil — the leading-whitespace reading, which every hand-authoring port stripped the sigil BEFORE trimming and so stored a padded term still carrying its @, silently unfindable by every bare lookup; one bug because one rule had been hand-copied seven times (3F-2976)",
-  },
-  {
-    code: "CHR",
-    slug: "check-characteristics",
-    status: "feature-code-used",
-    note: "a check characteristic is legal because the PORTFOLIO names it — the words that may name a characteristic arrive from a versioned `spec-controller-core` export, never from the target's own manifest, which is the file that used to certify the very entry that minted them (3F-2996)",
   },
 ];
 

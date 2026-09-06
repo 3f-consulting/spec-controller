@@ -85,7 +85,7 @@ Then(
 Then(
   "the row's own {string} obligation reconciles beside it, untouched",
   function (check: string) {
-    const item = rowOf("SCN-FIT-001").qualityCheckReconciliations.find(
+    const item = rowOf("SCN-AAA-001").qualityCheckReconciliations.find(
       (i) => i.staticCheck === check
     );
     assert.ok(item, `expected the row's own "${check}" obligation to still reconcile`);

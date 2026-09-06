@@ -25,7 +25,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  CI_ONLY_EXCLUSIONS,
+  ciOnlyExclusionsOf,
   deriveLocalLadder,
 } from "../../packages/spec-controller/static-checks/localLadder.js";
 import type { LocalLadder } from "../../packages/spec-controller/static-checks/localLadder.js";
@@ -36,8 +36,21 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 /** The scripts the planted CI config runs, in the order it runs them. */
 const PLANTED_ORDER = ["lint:third", "typecheck", "lint:first"] as const;
 
-/** The one step this repository runs in CI and does not gate locally. */
-const EXCLUDED_SCRIPT = "lint:scn-subissues";
+/**
+ * The step a PLANTED target runs in CI and does not gate locally — the fixture these arms need.
+ *
+ * IT WAS THIS REPOSITORY'S OWN, AND THIS REPOSITORY NOW EXCLUDES NOTHING (3F-3165).
+ * `lint:scn-subissues` was excluded because a derived gate carries a step's command without its
+ * `env:` block; the check now answers that case itself with a third state, so the entry retired
+ * and the list moved from a constant in the tool to a key in the TARGET's manifest. So each plant
+ * below writes its own exclusion, which is a fixture stating its own premise rather than borrowing
+ * one from a file other work edits.
+ */
+const EXCLUDED_SCRIPT = "lint:planted-ci-only";
+
+/** The planted exclusion's reason — long enough to be a reason, and printed by the emitter. */
+const EXCLUDED_REASON =
+  "running it here would not fail, it would answer wrongly: it reads a pull request body the local run has no way to supply, so correct work reds as though nobody had claimed the exemption";
 
 const plantedRoots: string[] = [];
 let plantedRoot: string;
@@ -83,7 +96,18 @@ function plant(
     ].join("\n"),
     "utf8",
   );
-  writeFileSync(path.join(root, "package.json"), JSON.stringify({ scripts }, null, 2), "utf8");
+  // THE PLANTED TARGET NAMES ITS OWN EXCLUSION, whenever it defines the excluded script. The
+  // emitter reads exclusions from the root it is pointed at (3F-3165), so this is what gives
+  // @SCN-LAD-004 / 005 / 007 a step to exclude now that this repository excludes none.
+  const specController =
+    EXCLUDED_SCRIPT in scripts || commands.some((c) => c.includes(EXCLUDED_SCRIPT))
+      ? { ciOnlyExclusions: [{ script: EXCLUDED_SCRIPT, reason: EXCLUDED_REASON }] }
+      : undefined;
+  writeFileSync(
+    path.join(root, "package.json"),
+    JSON.stringify(specController === undefined ? { scripts } : { scripts, specController }, null, 2),
+    "utf8",
+  );
   return root;
 }
 
@@ -158,7 +182,7 @@ function runEmitter(root: string): EmitterRun {
 }
 
 Given(
-  "a CI config running a step this repository excludes from the local ladder",
+  "a CI config running a step its target excludes from the local ladder",
   function () {
     // The real exclusion, run by the planted CI — so the entry is satisfied rather than
     // stale, and this scenario says nothing about staleness (that is @SCN-LAD-005's).
@@ -173,7 +197,7 @@ Given(
       [`pnpm ${EXCLUDED_SCRIPT}`, "pnpm typecheck", "pnpm lint:alpha"],
       {
         typecheck: "tsc --noEmit",
-        [EXCLUDED_SCRIPT]: "tsx lintScnSubIssuesCli.ts",
+        [EXCLUDED_SCRIPT]: "tsx plantedCiOnlyCli.ts",
         "lint:alpha": "tsx alpha.ts",
       },
     );
@@ -199,8 +223,16 @@ Then("the excluded step is not a gate", function () {
 });
 
 Then("the ladder names it, with the reason it is left out", function () {
-  const reason = CI_ONLY_EXCLUSIONS.find((e) => e.script === EXCLUDED_SCRIPT)?.reason ?? "";
-  assert.ok(reason !== "", `${EXCLUDED_SCRIPT} must carry a reason`);
+  // The reason is read back off the PLANTED MANIFEST rather than off the constant here, so the
+  // assertion is that the emitter carried the target's own words through — not that two copies of
+  // one string in this file agree with each other.
+  const planted = JSON.parse(
+    readFileSync(path.join(plantedRoot, "package.json"), "utf8"),
+  ) as { specController?: { ciOnlyExclusions?: { script: string; reason: string }[] } };
+  const reason =
+    planted.specController?.ciOnlyExclusions?.find((e) => e.script === EXCLUDED_SCRIPT)?.reason ??
+    "";
+  assert.notEqual(reason, "", `${EXCLUDED_SCRIPT} must carry a reason`);
   assert.ok(
     emitterRun.stderr.includes(EXCLUDED_SCRIPT) && emitterRun.stderr.includes(reason),
     `the emitter must name the omission AND its reason. It said:\n${emitterRun.stderr}`,
@@ -217,7 +249,7 @@ Given("a CI config that no longer runs the step the exclusion excuses", function
     "lint:alpha": "tsx alpha.ts",
     // The excused script still EXISTS in the manifest; only the CI step is gone. That is
     // the case a "does the script exist?" check would miss.
-    [EXCLUDED_SCRIPT]: "tsx lintScnSubIssuesCli.ts",
+    [EXCLUDED_SCRIPT]: "tsx plantedCiOnlyCli.ts",
   });
 });
 
@@ -249,12 +281,12 @@ const GATES_AHEAD = ["typecheck", "lint:alpha"] as const;
 /** The manifest both halves of @SCN-LAD-007 share — the same scripts, only the order moves. */
 const LATE_SCRIPTS: Record<string, string> = {
   typecheck: "tsc --noEmit",
-  [EXCLUDED_SCRIPT]: "tsx lintScnSubIssuesCli.ts",
+  [EXCLUDED_SCRIPT]: "tsx plantedCiOnlyCli.ts",
   "lint:alpha": "tsx alpha.ts",
 };
 
 Given(
-  "a CI config running the step this repository excludes behind two of its gates",
+  "a CI config running the step its target excludes behind two of its gates",
   function () {
     // The fault, planted: the excluded step LAST, both gates ahead of it. A red in either one
     // aborts the job and costs the excluded step its only run — it has no local ladder to
@@ -340,7 +372,7 @@ const SWALLOWED_COMMANDS = [
 
 const SWALLOWED_SCRIPTS: Record<string, string> = {
   typecheck: "tsc --noEmit",
-  [EXCLUDED_SCRIPT]: "tsx lintScnSubIssuesCli.ts",
+  [EXCLUDED_SCRIPT]: "tsx plantedCiOnlyCli.ts",
   "lint:alpha": "tsx alpha.ts",
 };
 
@@ -462,14 +494,14 @@ When("the local green-check lists the ladder it would run", function () {
 });
 
 Then(
-  "it lists every script the real CI runs but the one excluded step, in CI's order",
+  "it lists every script the real CI runs, in CI's order",
   function () {
     assert.equal(listing.exitCode, 0, `--list must succeed. It said:\n${listing.stderr}`);
 
     const expected = deriveLocalLadder(
       readFileSync(path.join(repoRoot, ".github", "workflows", "ci.yml"), "utf8"),
       JSON.parse(readFileSync(path.join(repoRoot, "package.json"), "utf8")),
-      CI_ONLY_EXCLUSIONS,
+      ciOnlyExclusionsOf(JSON.parse(readFileSync(path.join(repoRoot, "package.json"), "utf8"))),
     ).gates.map((gate) => gate.script);
 
     // VACUITY FLOOR. Both sides of the comparison below are computed, so two empty lists
@@ -491,23 +523,41 @@ Then(
     // report-hygiene step — a case the two directions above do not cover, because that gate
     // did not move and nothing replaced it: the CONDITION it guarded went (the pipeline stopped
     // writing its evidence into the tree), so the guard had no job left. This line is what
-    // noticed, and it is the only thing that did.
+    // noticed, and it is the only thing that did. And downward once more when 3F-3166 converted
+    // `typecheck` — the one check in this tree with no `lint:` prefix, put on the books by
+    // `specController.staticChecks` rather than found by discovery, and now @SCN-FIT-011 with a
+    // configured row of its own. The gate did not go quiet; it moved into `cucumber:fitness` with
+    // the eight before it. And downward a last time when 3F-3167 DELETED
+    // `lint:check-characteristics` — the third kind again, the kind 3F-3099's line was written
+    // for: the gate did not move and nothing replaced it, because its SUBJECT went. It held the
+    // words a manifest names to the portfolio roster, and under the collapse a characteristic is
+    // a reporting label on a configured row rather than a token the parser reads, so there is no
+    // longer a mint to certify. That leaves this ladder with no `lint:` step at all: every static
+    // check in this tree now runs behind `cucumber:fitness`.
     assert.equal(
       expected.length,
-      14,
-      `the real ci.yml must yield 14 local gates; it yielded ${expected.length}: ${expected.join(", ")}`,
+      5,
+      `the real ci.yml must yield 5 local gates; it yielded ${expected.length}: ${expected.join(", ")}`,
     );
 
     assert.deepEqual(listedGates(listing.stdout), expected, "--list must be the derived ladder");
   },
 );
 
-Then("lint:anemic-domain is one of them", function () {
-  // The gate 3F-2444 was filed for. Named explicitly rather than left to the equality above,
-  // so the ticket's first acceptance line has an assertion of its own to point at.
+Then("cucumber:fitness is one of them", function () {
+  // THE NAMED GATE, AND WHICH GATE IS WORTH NAMING MOVED WITH THE FITNESS MIGRATION (3F-3165).
+  // It was `lint:anemic-domain`, the gate 3F-2444 was filed for: it had landed with a CI step and
+  // no matching line in the hand-maintained local list, which is how `pnpm verify` came to be a
+  // proper subset of CI. That check is now a `specController.fitnessChecks` row and runs inside
+  // the fitness pass, so it is no longer a CI step and cannot be a gate.
+  //
+  // `cucumber:fitness` inherits the job, and inherits it with interest: every converted check runs
+  // behind this one gate, so a local ladder that lost it would drop the whole static axis at once
+  // — the same silent narrowing 3F-2444 found, over far more than one check. Named explicitly
+  // rather than left to the equality above, so there is an assertion pointing at it.
   assert.ok(
-    listedGates(listing.stdout).includes("lint:anemic-domain"),
-    `lint:anemic-domain must be gated locally. The ladder was:\n${listing.stdout}`,
+    listedGates(listing.stdout).includes("cucumber:fitness"),
+    `cucumber:fitness must be gated locally. The ladder was:\n${listing.stdout}`,
   );
 });
 

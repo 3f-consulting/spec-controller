@@ -39,7 +39,7 @@ import { MUTATION_REPORT_PATH } from "./mutationScore.js";
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 
 /** The scenario whose bar this repository sources from its own record. */
-const OWN_SCENARIO = "SCN-MUT-011";
+const OWN_SCENARIO = "SCN-FIT-002";
 
 /** The check that bar is authored against. */
 const OWN_CHECK = "mutation";
@@ -65,7 +65,7 @@ const manifest = JSON.parse(bytesOf("package.json")) as {
  * The CONFIGURED ROW this repository authors for its own mutation check, refused where it holds
  * none.
  *
- * READ OFF THE ROW RATHER THAN OFF `specController.thresholds` (3F-3152). @SCN-MUT-011 is a
+ * READ OFF THE ROW RATHER THAN OFF `specController.thresholds` (3F-3152). @SCN-FIT-002 is a
  * CONVERTED fitness check, so everything it says about itself — its characteristic, its command
  * and its bar — is in one row keyed by its `@SCN`. Which key of the manifest holds the bar was
  * never this scenario's claim; that the manifest, the record, the nightly and the producer state
@@ -180,7 +180,7 @@ function ownRecord(): MutationGateRecord {
 }
 
 describe("[SCN-MUT-014] this repository's mutation gate is one word across the four artefacts that state it", () => {
-  it("[SCN-MUT-014] sources SCN-MUT-011's bar from a gate this repository's own record holds", () => {
+  it("[SCN-MUT-014] sources SCN-FIT-002's bar from a gate this repository's own record holds", () => {
     // `gateRecordFor` refuses a gate the record does not hold, so a rename on either side reds here
     // naming both the gate that was asked for and the ones the record does carry.
     const record = ownRecord();

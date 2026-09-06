@@ -37,6 +37,27 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
   on an axis this tool has not built yet (3F-2509, the sibling of an adopter's repository's @ci-run-time). Ruling
   it "out of scope" is the dodge that feature file was written to reject.
 
+  THIS AXIS NOW READS ZERO OVER SPEC-CONTROLLER'S OWN TREE, AND A READER MUST BE ABLE TO TELL
+  WHICH ZERO IT IS (3F-3168, time-boxed to 3F-3161). The 3F-3139 migration moved every fitness
+  command out of .github/workflows/ci.yml and onto a specController.fitnessChecks row, so this
+  repository has no lint:/guard: script that a CI run: step invokes. runningStaticChecks
+  therefore observes NOTHING here, and the uncited count is 0 because the discoverable set is
+  EMPTY — not because a populated set was checked and came back clean.
+
+  Those two readings are the fault this product exists to separate, and here they collapse onto
+  one number: a capability exercised by nothing, reporting green. 3F-3074 recorded exactly this
+  shape as a fault when a consumer's tree produced it. It is stated here rather than left for a
+  reader to infer, and it is TIME-BOXED: the residual closes at 3F-3161, when the reader stops
+  supporting script discovery at all — a breaking change sequenced after the consumer still
+  routing credits through it has migrated. If that migration stalls, the residual is re-raised
+  rather than left to age into folklore.
+
+  What is NOT vacuous over this tree is the number beside it. "11 static check(s) run" counts the
+  running lint credits the CONVERTED rows post — eleven of the fourteen rows, the other three
+  being measured and so not static checks at all — so the running count is answered by the
+  fitness pass and only the uncited count is answered by discovery. Reading both as products of
+  the same mechanism is the misreading this paragraph forecloses.
+
   The unit arm proves runningStaticChecks + countStaticEvidenceObservationKinds + the render section
   in isolation; the integration arm drives the real file reads (ci.yml + package.json + features)
   over a fixture target and asserts the rendered report surface.

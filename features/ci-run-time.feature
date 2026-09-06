@@ -52,12 +52,17 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
   TAG AT ALL: the checks and thresholds they name are fixture data, planted per scenario
   inside a corpus their step definitions build, under fixture @SCN ids no feature file
   carries. A check named inside a fixture is not a tag on the row that plants it — which is
-  why every scenario here can spell "ci-run-time" out repeatedly without owing it once. The
-  obligations this repository actually owes are in the last Rule, where its own timed suites
-  are held as scenarios of their own. The order was the point: raising them before anything
-  measured them would have left a permanently unsettleable row and redded the
-  self-reconciliation gate for the length of the gap, so the engine was built first and its
-  own suites joined the ledger once something could observe them.
+  why every scenario here can spell "ci-run-time" out repeatedly without owing it once.
+
+  AND THE TWO OBLIGATIONS THIS REPOSITORY ACTUALLY OWES HAVE LEFT THIS FILE (3F-3166). They were
+  the last Rule here — two stepless scenarios carrying the bare tag, one per timed suite. They are
+  CONVERTED now: @SCN-FIT-012 and @SCN-FIT-013, generated into features/fitness-checks.feature from
+  their rows in specController.fitnessChecks, where each names its own ceiling. Nothing about the
+  engine below moved with them; what changed is where the two claims about this tree are written,
+  and the ceilings they are held to are on their rows rather than in a second manifest key. The
+  ORDER was always the point and still is: raising an obligation before anything measured it would
+  leave a permanently unsettleable row, so the wrapper writes a timings record when the suite runs
+  and the fitness pass reads it back afterwards.
 
   Rule: a fitness scenario tagged with a measured check raises an Evidence Obligation carrying its threshold, steps or none
 
@@ -373,22 +378,3 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
       Then the report names the measurement as over the gate
       When a step whose scenario the manifest holds to no ceiling at all runs
       Then the report carries that step's measurement and says no threshold is configured
-
-  Rule: spec-controller's own timed suites are on the books
-
-    THE CHECK, TURNED ON ITS AUTHOR — the shape `scn-tags.feature` and
-    `self-reconciliation.feature` already take. The Rules above are examples of the engine and
-    the wrapper deciding over planted data; these two are the whole-system characteristics held
-    over this repository's real CI, which is the claim each push actually makes. A threshold has
-    nothing to exemplify, so neither carries steps, and their bare tags raise the obligations
-    the two timed runs settle.
-
-    TWO SCENARIOS UNDER ONE TAG, WHICH IS @SCN-CIP-007'S CASE ARRIVING FOR REAL. Each suite
-    holds its own ceiling and is answered by its own measurement; nothing is shared but the
-    characteristic.
-
-    @ci-run-time @SCN-CIP-013
-    Scenario: this repository's @unit suite completes inside its CI threshold
-
-    @ci-run-time @SCN-CIP-014
-    Scenario: this repository's @integration and @e2e suite completes inside its CI threshold

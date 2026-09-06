@@ -13,6 +13,27 @@
  * this module posts a credit, and why a command exiting 0 having examined nothing cannot pass as
  * silence: its silence is only ever half the answer.
  *
+ * AND THE SECOND QUESTION HAS THREE ANSWERS (3F-3169). A check finds nothing, or finds something,
+ * or could not examine anything at all — the last being the ordinary state of a check whose input
+ * only CI holds, which is where `lint:scn-subissues` arrived when 3F-3163 taught it to say so. The
+ * third answer is not a pass and not a fault: the step definition turns it into a cucumber SKIP, so
+ * the scenario stays in the report (the credit still says the check ran) while the report says
+ * plainly that it did not examine anything, and the pass's own exit code is untouched.
+ *
+ * THE THIRD ANSWER IS THE ROW'S TO ASK FOR, AND THIS MODULE KNOWS NO CODE OF ITS OWN (3F-3170). It
+ * is heard from a row that NAMES the code its command says it with, and from no other row; a row
+ * silent on the point keeps the two-answer reading, where every ending but a clean one is a fault.
+ * One code fixed here for every target would be this module telling a consumer's command what its
+ * own answers mean — and the first attempt at that took a code this product's own `balance` already
+ * spends on a pending-items verdict under `--strict`. The whole reasoning, and the two uses that
+ * keep the field from being a cul-de-sac, are at `FitnessCommandRow.notExaminedExit` below.
+ *
+ * WITH TWO ENDINGS THE ROW MAY NOT SPEND, REFUSED WHERE THE ROWS ARE READ (@SCN-LNT-025). A row
+ * naming the ending of a clean run, or of a run that found something, is asking for the third answer
+ * on one of the two endings the pass reads everything else by — and a refusal that waited for the
+ * run would fire on the very run whose failure it swallows. Which two, and why every other ending
+ * stays the row's, is at `refuseAnEndingTheProtocolSpends`.
+ *
  * WHY THIS IS A MODULE AND NOT THE STEP DEFINITION ITSELF. `tests/steps/fitness.steps.ts` is the
  * cucumber wiring — a hook that reads the running scenario's tag line and one step that calls in
  * here — and wiring is the one part no unit test can reach. Everything a verdict depends on is
@@ -43,6 +64,60 @@ import {
   measurementArtefactWith,
   type Measurement,
 } from "./measurementArtefact.js";
+// AND THIS MODULE IMPORTS NO CHECK'S OWN EXIT CODE, WHICH IS THE SHAPE OF THE 3F-3170 REPAIR. It
+// briefly imported `NOT_EXAMINED_EXIT_CODE` from `scnSubIssueGate.ts` so the runner and the one
+// check answering that way shared a spelling — but a runner that knows any check's code is a runner
+// reading one check's answers into every target's commands. The code now arrives on the row beside
+// the command it is about, and this module knows no check by name.
+
+/**
+ * What one configured row says about the command it names — the command itself, and the one thing
+ * about how that command SPEAKS the runner has to be told rather than assume.
+ */
+export interface FitnessCommandRow {
+  /** The command line the row names, run as the target wrote it. */
+  readonly command: string;
+  /**
+   * The exit code by which THIS row's command says it examined nothing, or `null` where the row
+   * says nothing on the point — which is every row that has not asked for the third answer.
+   *
+   * WHY IT IS THE ROW'S TO SAY, AND NOT THE PASS'S (3F-3170). What an exit code MEANS is a property
+   * of the command, and the first attempt at fixing one code for every target picked one this
+   * product's own `balance` already spends on a pending-items verdict under `--strict`
+   * (`src/cli-balance/cli.ts`). A consumer with `balance --strict` behind a fitness row would have
+   * had that red silently re-read as a check that examined nothing — the exact substitution this
+   * product exists to catch, made by the product. A rarer code is not the repair either: the claim
+   * that a code will not collide is the claim that just failed, sysexits already spends 64–78, and
+   * 128+n is signal termination. The row carries the command, so it is where the command's own
+   * taxonomy belongs.
+   *
+   * TWO ENDINGS CANNOT ARRIVE HERE AT ALL (@SCN-LNT-025). A row spending the ending of a clean run,
+   * or of a run that found something, is refused where the rows are read — so this field carries
+   * either an ending a target chose for its own command, or nothing.
+   *
+   * `null` IS A REAL ANSWER AND THE SAFE ONE. A row silent on the point gets the two-answer reading
+   * — every non-zero ending is a fault — which is what every row got before any row could ask, so
+   * nothing already written changes meaning by standing still. Opt-in, per row, never inferred: a
+   * check able to answer honestly that there was nothing here to look at is the unusual one, and the
+   * row saying so is what makes it a statement rather than an accident.
+   *
+   * AND WHY THE FIELD EXISTS AT ALL, WHICH IS NOT THE CHECK THAT PROMPTED IT. `lint:scn-subissues`
+   * is this field's FIRST MEMBER, not its reason: the third answer is close to unreachable for that
+   * check locally, needing a changed scenario AND no ticket handle AND no readable pull-request
+   * body, and this repository's `[3F-NNNN]` commit subjects supply the handle every time. A
+   * mechanism built for a case that almost never fires is a cul-de-sac and a later reader would be
+   * right to delete it. Two things keep it:
+   *
+   *   1. A CONSUMER'S ROW whose command legitimately has no subject in some run — a check over a
+   *      directory a given build does not check out, a sweep whose input a nightly produces. That
+   *      is the general case; ours is one special case of it.
+   *   2. 3F-3162'S DISCRIMINATOR. That ticket asks how to tell an honest skip in the fitness pass
+   *      from an incidental one — a hook, a tag filter, a shared background quietly satisfying a
+   *      whole axis. This field answers it: a skip is honest EXACTLY where a row named the code
+   *      that produced it, and every other route to `skipped` is incidental and suspect.
+   */
+  readonly notExaminedExit: number | null;
+}
 
 /**
  * The command each configured row names, keyed by the bare `@SCN` that row is about.
@@ -52,7 +127,7 @@ import {
  * that the command is the runner's half and nothing on that side reads it. This is that half. The
  * two readings share the row and the key, and neither borrows the other's fields.
  */
-export type FitnessCommandRegistry = ReadonlyMap<string, string>;
+export type FitnessCommandRegistry = ReadonlyMap<string, FitnessCommandRow>;
 
 /** What running one row's command produced, as much of it as a verdict or a message reads. */
 export interface FitnessCommandResult {
@@ -66,6 +141,35 @@ export interface FitnessCommandResult {
 export type RunFitnessCommand = (command: string) => FitnessCommandResult;
 
 /**
+ * The three answers a converted static check's command can give the pass.
+ *
+ * THREE, BECAUSE TWO CANNOT SAY THE ONE THING A CHECK OUTSIDE CI MOST NEEDS TO (3F-3169). `clean`
+ * and `fault` between them assume the check got to look; `not-examined` is the answer of a check
+ * whose input was not there to be examined — an absent pull-request body on a laptop being the
+ * lived case. Folding that into `fault` reds an honest tree; folding it into `clean` is the silence
+ * fault, in the repository that names it.
+ *
+ * `not-examined` IS REACHABLE ONLY FOR A ROW THAT NAMED ITS CODE (3F-3170), so a target that has
+ * never written the field has a two-valued verdict in practice and the third value costs it
+ * nothing.
+ */
+export type FitnessVerdict = "clean" | "not-examined" | "fault";
+
+/**
+ * What running one row's command came to, and the sentence that goes with it where there is one.
+ *
+ * `fault` IS NON-NULL EXACTLY WHEN THE VERDICT IS `fault`, and the two other verdicts carry no
+ * sentence at all. A clean run has nothing to say; a check that examined nothing is the ORDINARY
+ * state of a check whose input only CI holds, and narrating it on every local run would train the
+ * reader to scroll past the one line that is ever going to matter.
+ */
+export interface FitnessCheckOutcome {
+  readonly verdict: FitnessVerdict;
+  /** Why the scenario fails, verbatim for whoever has to fix it; `null` unless the verdict is a fault. */
+  readonly fault: string | null;
+}
+
+/**
  * The command each row of a target's `specController.fitnessChecks` names, keyed by the bare `@SCN`
  * that row is about.
  *
@@ -76,25 +180,115 @@ export type RunFitnessCommand = (command: string) => FitnessCommandResult;
  * quieter spelling, so it is dropped by the same clause.
  *
  * THE `@SCN` IS STORED BARE, through the ONE reading of what a term bare is. The running scenario's
- * tag line arrives bare, so a row filed under `"@SCN-MUT-011"` would be filed under a key no lookup
+ * tag line arrives bare, so a row filed under `"@SCN-FIT-002"` would be filed under a key no lookup
  * ever asks for — the silent-miss class `bareTerm` exists to close.
  *
- * A MALFORMED ROW IS DROPPED, NOT THROWN ON. Configuration is data from outside, and a reader that
- * threw on a typo would turn one bad character into a pass that produced no verdict at all. A
+ * A HALF-WRITTEN ROW IS DROPPED, NOT THROWN ON. Configuration is data from outside, and a reader
+ * that threw on a typo would turn one bad character into a pass that produced no verdict at all. A
  * dropped row leaves its scenario naming no command, which is a fault this module reports loudly at
  * the scenario it belongs to.
+ *
+ * A ROW SPENDING ONE OF THE PROTOCOL'S OWN ENDINGS IS REFUSED OUTRIGHT, WHICH IS THE OTHER ANSWER
+ * AND NOT AN EXCEPTION TO THAT ONE (@SCN-LNT-025). The rows above said something incomplete; that
+ * row says something complete and false, and acting on it reclassifies a pass or a finding
+ * silently. Dropping it would report its scenario as one no configured row names, while the row sits
+ * in the manifest — so the read stops instead, naming the row and the value. The reasoning, and why
+ * exactly two endings and no others, is at `refuseAnEndingTheProtocolSpends`.
  */
 export function fitnessCommandsOf(entries: unknown): FitnessCommandRegistry {
-  const commands = new Map<string, string>();
+  const commands = new Map<string, FitnessCommandRow>();
   if (!Array.isArray(entries)) return commands;
   for (const entry of entries as readonly unknown[]) {
-    const row = entry as { scn?: unknown; command?: unknown } | null | undefined;
+    const row = entry as
+      | { scn?: unknown; command?: unknown; notExaminedExit?: unknown }
+      | null
+      | undefined;
     if (typeof row?.scn !== "string" || typeof row.command !== "string") continue;
     const scnId = bareTerm(row.scn);
     if (scnId === "" || row.command.trim() === "") continue;
-    commands.set(scnId, row.command);
+    const notExaminedExit = notExaminedExitOf(row.notExaminedExit);
+    refuseAnEndingTheProtocolSpends(scnId, notExaminedExit);
+    commands.set(scnId, { command: row.command, notExaminedExit });
   }
   return commands;
+}
+
+/**
+ * The code a row named for its command's `I examined nothing`, or `null` where it named none.
+ *
+ * ANYTHING THAT IS NOT A WHOLE NUMBER IS NOT A NAMING, and the direction of that fallback is what
+ * makes it safe to state so quietly. A naming misread as absent leaves the ending a FAULT — loud,
+ * at the person, on the run. Misread the other way and a check that broke would be reported as one
+ * that examined nothing, which is this repository's own silence fault. So a value the reader cannot
+ * take at its word gets the reading that fails rather than the one that goes quiet.
+ *
+ * IT DOES NOT JUDGE THE NUMBER, ONLY READ IT, and the judgement is the next thing that happens to
+ * what it answers (`refuseAnEndingTheProtocolSpends`, @SCN-LNT-025). Reading and judging in one step
+ * would make the refusal a guess at what a row MEANT rather than a sentence about what it SAID: a
+ * row spelling `"0"` names no ending at all, so it is not a naming of a clean run's ending either.
+ */
+function notExaminedExitOf(named: unknown): number | null {
+  return typeof named === "number" && Number.isInteger(named) ? named : null;
+}
+
+/** The ending by which a command says it found nothing — the pass's own, and no row's to spend. */
+const CLEAN_RUN_ENDING = 0;
+
+/** The ending by which a command says it found something — likewise the pass's own. */
+const VIOLATION_ENDING = 1;
+
+/**
+ * Refuse a row that spends one of the two endings THE PROTOCOL ITSELF READS on the third answer
+ * (@SCN-LNT-025) — and refuse it here, where the rows are READ, rather than when a command ends
+ * that way.
+ *
+ * WHY THESE TWO AND NO OTHERS, WHICH IS THE PART A LATER READER MUST NOT TIDY. A row naming a clean
+ * run's ending would report a check that examined nothing on exactly the runs where that check
+ * worked, leaving it no way left to say it passed. A row naming a violation's ending would turn
+ * every finding that check makes into a check that examined nothing — a red arriving as a
+ * non-failure, at whatever scale the check runs, on the one ending the whole of the tooling world
+ * agrees means `I found something`. Both are the silence fault this repository exists to name,
+ * arriving through its own configuration.
+ *
+ * AND EVERY OTHER ENDING STAYS THE ROW'S, INCLUDING THE TWO THIS PRODUCT ITSELF SPENDS. `balance`
+ * answers 2 for a usage fault and 4 for an unsound run (`src/cli-balance/cli.ts`), and a row naming
+ * either is still read as written. The field says what THAT row's command means by an ending, which
+ * is the row author's sentence to write and not the runner's to have opinions about — the whole of
+ * the 3F-3170 repair, which this refusal must not quietly undo. So this is NOT an allow-list of
+ * permitted endings and must not be tidied into one: the two refusals are against the PROTOCOL'S
+ * own fixed points, a pass and a violation, and not against anyone's taxonomy.
+ *
+ * AT THE READ, WHICH IS THE WHOLE OF WHY IT IS HERE RATHER THAN IN `fitnessCheckOutcome`. A refusal
+ * deferred to the run fires only on the run that takes the bad path — and for the row naming a
+ * violation's ending, the bad path IS the run where a real finding was made, which is exactly the
+ * run whose failure it would swallow. A validation that fires only when the bad path is taken is a
+ * validation that hides the bad path.
+ *
+ * IT THROWS WHERE A HALF-WRITTEN ROW IS DROPPED, AND THE DIFFERENCE IS WHAT EACH ROW SAID. A row
+ * naming no scenario or no command is an incomplete sentence — there is nothing to act on, and its
+ * scenario says so loudly at the scenario. This row is a COMPLETE and actionable sentence that is
+ * false about the protocol: acted on it reclassifies silently, and dropped it would leave its
+ * scenario reporting that no configured row names it while the row sits there in the manifest,
+ * sending its author to write a row they have already written.
+ */
+function refuseAnEndingTheProtocolSpends(scnId: string, named: number | null): void {
+  if (named !== CLEAN_RUN_ENDING && named !== VIOLATION_ENDING) return;
+  const collapse =
+    named === CLEAN_RUN_ENDING
+      ? "a clean run ends that way, so this row reports a check that examined nothing on exactly " +
+        "the runs where the check worked, and leaves it no way to say it passed"
+      : "an ordinary violation ends that way, so this row turns every finding the check makes into " +
+        "a check that examined nothing, and a red into a non-failure";
+  // The ROW and the VALUE, because a refusal saying only that the configuration is wrong sends the
+  // reader hunting through every row a target carries for the one that said it.
+  throw new Error(
+    `${scnId}: notExaminedExit: ${named} is refused where the rows are read, because ${collapse}. ` +
+      "These two endings are refused as the PROTOCOL'S own — a pass and a violation — and not " +
+      "against any tool's taxonomy: every other ending is the row's to name, 2 and 4 included, " +
+      "though this product's own `balance` spends them on a usage fault and an unsound run. What " +
+      "an ending MEANS is a property of the command, and the row is where the command is written " +
+      "down."
+  );
 }
 
 /**
@@ -141,8 +335,8 @@ const NO_ROW =
   "returns a violation.";
 
 /**
- * Run the check the running scenario's `@SCN` names, and answer the fault where there is one — or
- * `null` where the command ran and found nothing.
+ * Run the check the running scenario's `@SCN` names, and answer which of the three things it came
+ * to: it found nothing, it found a violation, or it could not examine anything at all.
  *
  * A SCENARIO NO ROW NAMES IS A FAULT, and nothing is run for it. Such a scenario has said which
  * axis it is on and then said nothing about what it asserts, so nothing was examined — and letting
@@ -151,6 +345,8 @@ const NO_ROW =
  * The ledger says the same thing from the other side (@SCN-LNT-020 raises no Evidence Obligation
  * and reports the scenario as one no configured row names), and the two are deliberately not one
  * mechanism: the run reds where the person is, the reconciliation reds where the row is missing.
+ * It is emphatically NOT the third verdict either: a scenario naming no check is a corpus fault
+ * somebody has to fix, not a check that looked and found no input.
  *
  * `null` STATUS IS ITS OWN SENTENCE. A command killed by a signal, or one that could not be
  * started, never answered with a code — folding it into the non-zero arm would print `exited null`
@@ -160,17 +356,26 @@ const NO_ROW =
  * somebody has to go and fix, and a bare exit code sends them to work out which of a target's rows
  * spoke before they can begin.
  */
-export function fitnessCheckFault(
+export function fitnessCheckOutcome(
   scnId: string,
   commands: FitnessCommandRegistry,
   run: RunFitnessCommand
-): string | null {
-  const command = commands.get(scnId);
-  if (command === undefined) return `${scnId}: ${NO_ROW}`;
+): FitnessCheckOutcome {
+  const row = commands.get(scnId);
+  if (row === undefined) return { verdict: "fault", fault: `${scnId}: ${NO_ROW}` };
+  const command = row.command;
   const result = run(command);
-  if (result.status === 0) return null;
+  if (result.status === 0) return { verdict: "clean", fault: null };
+  // THE ROW'S OWN CODE, AND ONLY WHERE THE ROW NAMED ONE (3F-3170). A row silent on the point never
+  // reaches this branch, so every non-zero ending of its command stays a fault — the reading every
+  // row had before any row could ask. And it is ONE code rather than a range: widening to "any
+  // non-zero that is not 1" would hand the third answer to every check that broke, and the code a
+  // target spends on a usage error is routinely the neighbour of the one it says this with.
+  if (row.notExaminedExit !== null && result.status === row.notExaminedExit) {
+    return { verdict: "not-examined", fault: null };
+  }
   const how = result.status === null ? "did not run to completion" : `exited ${result.status}`;
-  return `${scnId}: \`${command}\` ${how}.\n${quoted(result)}`;
+  return { verdict: "fault", fault: `${scnId}: \`${command}\` ${how}.\n${quoted(result)}` };
 }
 
 /**
@@ -298,11 +503,16 @@ export function fitnessMeasurement(
   commands: FitnessCommandRegistry,
   run: RunFitnessCommand
 ): FitnessMeasurementOutcome {
-  const command = commands.get(scnId);
+  const row = commands.get(scnId);
   const check = checks.get(scnId);
-  if (command === undefined || check === undefined) {
+  if (row === undefined || check === undefined) {
     return { measurement: null, fault: `${scnId}: ${NO_ROW}` };
   }
+  // THE MEASURED ROUTE READS NO EXIT CODE AT ALL, so it reads no code a row could name for one
+  // either: the number IS the evidence here, and a command that answered with one has honoured the
+  // contract whatever code it went out with. Only the command half of the row is this half's
+  // business.
+  const command = row.command;
   const result = run(command);
   const measured = measuredNumberOf(result.stdout);
   if (measured === null) {

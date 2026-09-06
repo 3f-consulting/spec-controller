@@ -40,6 +40,17 @@
 import { parseScnCitations } from "@3f-consulting/spec-controller-core/internal";
 import { isQuotedStringLiteralLine, structuralBraces } from "./testSourceLexer.js";
 
+/**
+ * The exit code by which this check says it EXAMINED NOTHING — neither the 0 of a pass nor the 1
+ * of a violation (@SCN-SSM-018). 2 is already this repository's usage/internal-error code across
+ * the static checks, so the third answer takes the next free slot rather than overloading one.
+ *
+ * IT IS A CODE AND NOT A MARKER LINE ON STDOUT because the consumer that must not misread it is a
+ * process, and a process reads an exit code. Any answer carried only in prose beside an exit of 0
+ * would be a pass to every caller that did not happen to parse it.
+ */
+export const NOT_EXAMINED_EXIT_CODE = 3;
+
 /** The recognised exemption reasons (enumerated; a missing/unknown reason reds). */
 export const EXEMPTION_REASONS = ["renumber", "regression", "evidence-§8A"] as const;
 export type ExemptionReason = (typeof EXEMPTION_REASONS)[number];
@@ -106,6 +117,34 @@ export interface ScnGateInput {
    * exemption for external PRs.
    */
   isExternalPr: boolean;
+  /**
+   * Whether the PULL REQUEST BODY could be read at all — `true` when a body was supplied (an
+   * EMPTY one included: it was read, and it carried no exemption), `false` when there was none
+   * to read, which is what running outside a pull request IS.
+   *
+   * IT IS NOT "WAS THERE AN EXEMPTION". SCN-exempt directives arrive from the commit messages
+   * too, and those are readable everywhere; this says only whether the OTHER source was
+   * available. An implementation that folded the two would answer `false` on every pull request
+   * whose author wrote no trailer, which is the state @SCN-SSM-002 pins redding. (@SCN-SSM-018)
+   */
+  prBodyReadable: boolean;
+}
+
+/**
+ * The gate's three answers (@SCN-SSM-018), where there used to be two.
+ *
+ * `not-examined` is NOT a soft pass and must never be read as one: it says the question this
+ * gate exists to ask had no answer available on this run, which is a different fact from
+ * "asked, and nothing was wrong". Two of the three are verdicts about the CHANGE; the third is
+ * a verdict about the RUN.
+ */
+export type ScnGateVerdict = "pass" | "fail" | "not-examined";
+
+/** A code the gate could not answer for, and the statement of why not. */
+export interface ScnGateUnexamined {
+  /** The @SCN code (bare, no leading @) the gate could not answer for. */
+  code: string;
+  message: string;
 }
 
 /** A single gate violation. */
@@ -118,8 +157,109 @@ export interface ScnGateViolation {
 
 /** The result of a gate decision. */
 export interface ScnGateResult {
+  /**
+   * True on a PASS AND ON NOTHING ELSE. A `not-examined` run did not pass, so this is false
+   * there too — a caller still reading the old boolean gets the safe half of the third answer
+   * rather than a silent green (@SCN-SSM-018). `verdict` is what separates the two falses.
+   */
   ok: boolean;
+  verdict: ScnGateVerdict;
   violations: ScnGateViolation[];
+  /** The codes the gate could not answer for. Empty unless the verdict is `not-examined`. */
+  unexamined: ScnGateUnexamined[];
+}
+
+/** What one surface of the gate found, before the verdict is taken over all of them. */
+export type ScnGateFindings = Pick<ScnGateResult, "violations" | "unexamined">;
+
+/**
+ * What a code is told when the one question left for it had nowhere to be answered from
+ * (@SCN-SSM-018). One spelling, so the two surfaces that can reach the third answer cannot come
+ * to describe it differently.
+ */
+const notExamined = (code: string, subject: string): ScnGateUnexamined => ({
+  code,
+  message:
+    `${subject} carries no ticket handle, and whether an exemption was claimed for it CANNOT BE ` +
+    `ANSWERED on this run: SCN-exempt directives come from the pull request body as well as the ` +
+    `commit messages, and there was no pull request body to read. So nothing was examined here — ` +
+    `which is neither a pass nor a violation. On a pull request the body is always readable, and ` +
+    `the same change there either carries its exemption or reds.`,
+});
+
+/**
+ * The findings on the UNIT-EQUIVALENT surface — the 3F-805 leak: new behaviour shipped as a
+ * `@unit` test with no Gherkin `@SCN` delta. Such a change must CITE a scenario (which scenario)
+ * AND be on a ticketed PR (a live work-unit); both are required, and a valid exemption on the
+ * cited code excuses the pair.
+ *
+ * LIFTED OUT OF `decideScnGate` AT @SCN-SSM-018, when its third answer made this a fourth branch.
+ * The caller keeps the code-set loop; this keeps the surface that is not a code set, and neither
+ * has to be read to understand the other.
+ */
+function unitEquivalentFindings(input: ScnGateInput): ScnGateFindings {
+  const violations: ScnGateViolation[] = [];
+  const unexamined: ScnGateUnexamined[] = [];
+
+  const exempted = input.unitEquivalentCitedCodes.some((code) =>
+    input.exemptions.some(
+      (e) =>
+        e.code === code &&
+        e.reason !== null &&
+        (EXEMPTION_REASONS as readonly string[]).includes(e.reason)
+    )
+  );
+  if (!exempted) {
+    if (input.uncitedChangedTestBlocks.length > 0) {
+      // A CHANGED test block cites nothing — not on itself, not on any ancestor.
+      // A sibling's cite elsewhere in the file does NOT vouch for it (@SCN-SSM-005),
+      // and neither does the ticket handle: the handle proves a live work-unit, not
+      // WHICH scenario this new behaviour belongs to. Both are required.
+      violations.push({
+        kind: "uncited-unit-equivalent",
+        code: "",
+        message:
+          `A behaviour-bearing unit-equivalent change is proven by test block(s) that cite ` +
+          `no scenario: ${input.uncitedChangedTestBlocks.join("; ")}. Another test in the ` +
+          `same file citing an @SCN does not vouch for these — a cite belongs to the block ` +
+          `it annotates. Carry the scenario's feature-prefixed @SCN-<FFF>-<NNN> id in the ` +
+          `changed test's own describe/it string (or in an enclosing describe's).`,
+      });
+    } else if (input.unitEquivalentCitedCodes.length === 0) {
+      violations.push({
+        kind: "uncited-unit-equivalent",
+        code: "",
+        message:
+          `A behaviour-bearing unit-equivalent change (a src/** change proven only by a ` +
+          `@unit test, with no Gherkin @SCN feature delta) cites no scenario. Carry the ` +
+          `scenario's feature-prefixed @SCN-<FFF>-<NNN> id inside the @unit test's describe/it ` +
+          `string (the bidirectional-link rule) — a ticket handle alone is not enough.`,
+      });
+    } else if (!input.hasTicketHandle && !input.prBodyReadable) {
+      // The same third answer the code-set loop gives, on the unit-equivalent surface and for
+      // the same reason: the cite arrived, the handle did not, and an exemption was the only
+      // thing left that could have bound it (@SCN-SSM-018).
+      unexamined.push(
+        notExamined(
+          input.unitEquivalentCitedCodes[0]!,
+          `The behaviour-bearing unit-equivalent change citing @${input.unitEquivalentCitedCodes[0]}`
+        )
+      );
+    } else if (!input.hasTicketHandle) {
+      violations.push({
+        kind: "missing-ticket-handle",
+        code: input.unitEquivalentCitedCodes[0]!,
+        message:
+          `A behaviour-bearing unit-equivalent change cites @${input.unitEquivalentCitedCodes[0]} ` +
+          `but is on a PR that carries no ticket handle (no Linear-auto-named branch ` +
+          `"steven/3f-NNN-…" and no "[3F-NNN]" commit-message prefix), so it can't be bound to a ` +
+          `live tracked work-unit. Open the PR from its Linear-auto-named branch (or carry a ` +
+          `[3F-NNN] commit prefix).`,
+      });
+    }
+  }
+
+  return { violations, unexamined };
 }
 
 /**
@@ -137,16 +277,27 @@ export interface ScnGateResult {
  * without auto-rejecting community contributions. Fork status is the ONLY
  * exemption signal — handle-absence is never exempting (a no-handle INTERNAL PR
  * still reds; that is the very violation the gate exists to catch).
+ *
+ * THE THIRD ANSWER (@SCN-SSM-018): where a code's LAST remaining rescue was an exemption, and
+ * `prBodyReadable` says one of the two places exemptions live could not be read, the code is
+ * reported UNEXAMINED rather than violated. Not a pass — nothing passed — and not a red, because
+ * an absent pull request body is the ordinary state off a pull request rather than a fault.
+ *
+ * IT REACHES ONLY THE QUESTION THE BODY COULD HAVE ANSWERED. A malformed trailer arrived from the
+ * commit messages and was read in full, so it still reds; so does a changed test block citing no
+ * scenario, which is a fact about the checked-out tree. Widening the third answer over those would
+ * hide a finding behind an absence — the same lie the other way round.
  */
 export function decideScnGate(input: ScnGateInput): ScnGateResult {
   // Fork exemption: a fork-sourced (external) PR is skipped silently — no
   // violation, whatever the code sets or the ticket handle. Fork status ONLY;
   // an internal PR (isExternalPr false) still runs the full gate below.
   if (input.isExternalPr) {
-    return { ok: true, violations: [] };
+    return { ok: true, verdict: "pass", violations: [], unexamined: [] };
   }
 
   const violations: ScnGateViolation[] = [];
+  const unexamined: ScnGateUnexamined[] = [];
 
   const checkCode = (code: string, verb: "Added" | "Updated" | "Deleted"): void => {
     if (input.renumberPairs.some((p) => p.added === code)) return;
@@ -166,6 +317,13 @@ export function decideScnGate(input: ScnGateInput): ScnGateResult {
         code,
         message: `${verb} scenario code @${code} carries a malformed SCN-exempt trailer — its reason is missing or not in {${EXEMPTION_REASONS.join(", ")}}. A malformed exemption is a failure, not a silent pass: correct the reason to one of {${EXEMPTION_REASONS.join(", ")}}, or remove the SCN-exempt trailer and put the change on a ticketed PR.`,
       });
+      return;
+    }
+
+    // The last rescue was an exemption, and one of the two places exemptions live was not
+    // readable. Nothing here is a finding: the gate reports what it could not answer.
+    if (!input.prBodyReadable) {
+      unexamined.push(notExamined(code, `${verb} scenario code @${code}`));
       return;
     }
 
@@ -193,60 +351,21 @@ export function decideScnGate(input: ScnGateInput): ScnGateResult {
     checkCode(code, "Deleted");
   }
 
-  // Unit-equivalent surface (the 3F-805 leak). A behaviour-bearing unit-equivalent
-  // change must CITE a scenario (which scenario) AND be on a ticketed PR (a live
-  // work-unit). Both are required.
+  // Unit-equivalent surface (the 3F-805 leak) — its own function since @SCN-SSM-018 added a
+  // fourth branch to it, because the complexity check reds before the reader does.
   if (input.unitEquivalentBehaviourBearing) {
-    const exempted = input.unitEquivalentCitedCodes.some((code) =>
-      input.exemptions.some(
-        (e) =>
-          e.code === code &&
-          e.reason !== null &&
-          (EXEMPTION_REASONS as readonly string[]).includes(e.reason)
-      )
-    );
-    if (!exempted) {
-      if (input.uncitedChangedTestBlocks.length > 0) {
-        // A CHANGED test block cites nothing — not on itself, not on any ancestor.
-        // A sibling's cite elsewhere in the file does NOT vouch for it (@SCN-SSM-005),
-        // and neither does the ticket handle: the handle proves a live work-unit, not
-        // WHICH scenario this new behaviour belongs to. Both are required.
-        violations.push({
-          kind: "uncited-unit-equivalent",
-          code: "",
-          message:
-            `A behaviour-bearing unit-equivalent change is proven by test block(s) that cite ` +
-            `no scenario: ${input.uncitedChangedTestBlocks.join("; ")}. Another test in the ` +
-            `same file citing an @SCN does not vouch for these — a cite belongs to the block ` +
-            `it annotates. Carry the scenario's feature-prefixed @SCN-<FFF>-<NNN> id in the ` +
-            `changed test's own describe/it string (or in an enclosing describe's).`,
-        });
-      } else if (input.unitEquivalentCitedCodes.length === 0) {
-        violations.push({
-          kind: "uncited-unit-equivalent",
-          code: "",
-          message:
-            `A behaviour-bearing unit-equivalent change (a src/** change proven only by a ` +
-            `@unit test, with no Gherkin @SCN feature delta) cites no scenario. Carry the ` +
-            `scenario's feature-prefixed @SCN-<FFF>-<NNN> id inside the @unit test's describe/it ` +
-            `string (the bidirectional-link rule) — a ticket handle alone is not enough.`,
-        });
-      } else if (!input.hasTicketHandle) {
-        violations.push({
-          kind: "missing-ticket-handle",
-          code: input.unitEquivalentCitedCodes[0]!,
-          message:
-            `A behaviour-bearing unit-equivalent change cites @${input.unitEquivalentCitedCodes[0]} ` +
-            `but is on a PR that carries no ticket handle (no Linear-auto-named branch ` +
-            `"steven/3f-NNN-…" and no "[3F-NNN]" commit-message prefix), so it can't be bound to a ` +
-            `live tracked work-unit. Open the PR from its Linear-auto-named branch (or carry a ` +
-            `[3F-NNN] commit prefix).`,
-        });
-      }
-    }
+    const found = unitEquivalentFindings(input);
+    violations.push(...found.violations);
+    unexamined.push(...found.unexamined);
   }
 
-  return { ok: violations.length === 0, violations };
+  // A FINDING OUTRANKS AN UNANSWERED QUESTION. A run that both found something and could not
+  // answer for something else has still found something, so it reds — which is what keeps CI's
+  // teeth: there, the body is always readable and `unexamined` is always empty anyway.
+  const verdict: ScnGateVerdict =
+    violations.length > 0 ? "fail" : unexamined.length > 0 ? "not-examined" : "pass";
+
+  return { ok: verdict === "pass", verdict, violations, unexamined };
 }
 
 /**

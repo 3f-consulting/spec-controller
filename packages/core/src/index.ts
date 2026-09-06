@@ -126,6 +126,13 @@ export type { RunContext, RunInputs, ProvenanceObject, ProvenanceFacts, Provenan
 // publish it to exactly the one consumer that does not need it. A product derives its legal set
 // from its PINNED version and refreshes it on a bump — which is the property a hand-typed
 // per-product list cannot have.
+//
+// AND IT IS A REPORTING VOCABULARY NOW, NOT A GATE (3F-3167). No check in this repository reads
+// it any more: the collapse to one `@fitness` tag moved the characteristic onto a configured row
+// as a FIELD, and a word that only labels a roll-up needs no parser holding it. Whether the
+// portfolio should carry a given word is a question for canon, asked of people. So this export is
+// what a consumer's report groups by and what the portfolio says out loud — the two jobs one
+// token used to do, with the enforcing half retired rather than moved.
 export { PORTFOLIO_CHECK_CHARACTERISTICS, isPortfolioCharacteristic } from "./domain/checkCharacteristics.js";
 
 // --- Pure helpers ---

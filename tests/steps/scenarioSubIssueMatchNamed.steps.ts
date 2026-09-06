@@ -11,6 +11,13 @@
  * packages/spec-controller/static-checks/lintScnSubIssuesCli.test.ts), and not a grep:
  * the assertion is the reconciliation OUTCOME over the real tree.
  *
+ * THE CHECK CONVERTED AT 3F-3165, AND THE JOIN GOT SHORTER RATHER THAN LOOSER. It was a
+ * discovered CI script whose run had to be joined back to a scenario through
+ * `specController.checkRegistry` and then through the corpus; it is now a row of
+ * `specController.fitnessChecks` naming SCN-FIT-010, and the credit arrives already citing.
+ * So what is read off the tree is the ROW rather than the registry entry, and the credit
+ * comes from the fitness pass's report rather than from script discovery.
+ *
  * @SCN-SSM-006 — bidirectional evidence marker. Grepping SCN-SSM-006 returns the
  * scenario, this step block, and the @unit block in lintScnSubIssuesCli.test.ts.
  *
@@ -19,17 +26,15 @@
 
 import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runReconcile } from "../../packages/spec-controller/src/ingest/ingestQualityChecks.js";
 import type { Ledger, ScenarioReconciliation } from "../../packages/core/src/model.js";
 import type { EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
 // The `lint` quality-check carries two shapes since @SCN-CIP-003 (a static-check fact and a
 // measurement), so a reader wanting a static check's own runnable handle asks for one.
-import {
-  isStaticCheckObservation,
-  resolveCheckRegistry,
-} from "@3f-consulting/spec-controller-core/internal";
+import { isStaticCheckObservation } from "@3f-consulting/spec-controller-core/internal";
 
 // @SCN-SSM-006
 /** The static check whose own reconciliation this scenario pins. */
@@ -39,72 +44,77 @@ const OWN_STATIC_CHECK = "lint:scn-subissues";
 const SUSPENSE_SCENARIO = "(no scenario)";
 
 let ownLedger: EvidenceReconciliation;
+let reportPath: string | undefined;
 
 // @SCN-SSM-006
 const accountFor = (ledger: Ledger, scnId: string): ScenarioReconciliation | undefined =>
   ledger.scenarioReconciliations.find((r) => r.scnId === scnId);
 
 /**
- * The bare check tag this repository's own registry resolves the handle to (3F-2589).
+ * The configured row this repository gives the check, and the `@SCN` that row names.
  *
- * WHY THE NAMING SCENARIO IS NO LONGER A CONSTANT HERE. Under name-match this arm knew the
- * answer in advance: the scenario naming the check was the one that spelled the runnable handle
- * in the retired tag form, and that was this file's own @SCN-SSM-006. Under the one posting rule
- * the corpus names a check by a BARE tag, so WHICH scenario names it is the corpus's answer, and
- * restating it as a literal here would assert something the Gherkin does not say — "credited to
- * SCN-SSM-006" rather than "credited to the scenario that names it". Worse, the literal would go
- * quietly wrong the first time the fitness scenario moved or renumbered.
- *
- * So the account is found by its POSTED DEBIT — the account that raised the fitness Evidence
- * Obligation for this check — and the credit is then asserted onto that same account. That is
- * double-entry read as double-entry: debit side and credit side located independently, and the
- * assertion is that they meet.
+ * WHY THE NAMING SCENARIO IS NOT A CONSTANT HERE. Under name-match this arm knew the answer in
+ * advance; under the one posting rule it had to read the registry for it; under conversion the
+ * row states it outright. The discipline is unchanged and so is its reason: a literal
+ * `SCN-FIT-010` typed here would assert "credited to SCN-FIT-010" rather than "credited to the
+ * scenario that names it", and would go quietly wrong the first time the row was renumbered. So
+ * it is READ OFF THE TREE, and the row is located by the COMMAND it runs — the one fact about
+ * this check that a renumbering cannot move.
  */
 // @SCN-SSM-006
-const ownRegistration = (): { check: string; scn: string | null } => {
-  const manifest = JSON.parse(
-    readFileSync(join(process.cwd(), "package.json"), "utf8")
-  ) as Parameters<typeof resolveCheckRegistry>[0];
-  const entry = resolveCheckRegistry(manifest).get(OWN_STATIC_CHECK);
-  assert.ok(
-    entry,
-    `expected ${OWN_STATIC_CHECK} to be registered in specController.checkRegistry — an ` +
-      `unregistered handle reaches no bare check tag, so no scenario can name it and its run ` +
-      `posts to suspense.`
+const ownRow = (): { scn: string; characteristic: string } => {
+  const manifest = JSON.parse(readFileSync(join(process.cwd(), "package.json"), "utf8")) as {
+    specController?: {
+      fitnessChecks?: { scn?: string; characteristic?: string; command?: string }[];
+    };
+  };
+  const row = (manifest.specController?.fitnessChecks ?? []).find(
+    (candidate) => candidate.command === `pnpm ${OWN_STATIC_CHECK}`
   );
-  return entry;
+  assert.ok(
+    row?.scn !== undefined && row.characteristic !== undefined,
+    `expected a specController.fitnessChecks row whose command runs ${OWN_STATIC_CHECK} — ` +
+      `without one the check names no scenario at all, so its run has nothing to settle ` +
+      `against and would post to suspense.`
+  );
+  return { scn: row.scn, characteristic: row.characteristic };
 };
 
-// @SCN-SSM-006
 /**
- * The account raising this check's fitness debit — narrowed by the `@SCN` its registry entry
- * names, where it names one (3F-3004).
+ * The fitness pass's report, DERIVED FROM THE REAL GENERATED CORPUS rather than read off disk.
  *
- * WHY THE CHARACTERISTIC ALONE NO LONGER LOCATES IT. The bare tag on the scenario is now
- * `@traceability`, a characteristic THREE of this repository's checks share, so "the account
- * raising the obligation for this check's tag" matches three accounts and `find` would answer
- * with whichever the corpus reached first. That is the attribution fault the citation seam
- * exists to remove, not a property of this check. The registry entry is where canon puts a
- * static check's check-to-scenario join, so it is what narrows the search — still READ OFF THE
- * TREE, never a literal `SCN-SSM-009` typed here, so a renumbered or relocated fitness scenario
- * moves this arm with it rather than quietly falsifying it.
+ * WHY IT IS NOT THE FILE THE PASS WRITES. The credit this arm is about rides the fitness cucumber
+ * report, and that report is written by a gate that runs AFTER the one this scenario runs in — so
+ * reading the file would read the PREVIOUS run's report, or nothing at all in a fresh clone. What
+ * is real here is the corpus: every scenario in it is emitted from a row of this repository's own
+ * manifest, and a fitness pass over this tree reports exactly those. So the report is derived from
+ * the tree's own corpus, which is the document the pass itself reads.
  *
- * A `null` discriminator keeps exactly the old reading: the corpus decides, first carrier wins.
+ * NO STEP STATUS IS WRITTEN, and that is not an omission. `convertedFitnessCredits` reads none:
+ * the credit is about the wiring, and the exit code is about the findings.
  */
-const accountRaising = (
-  ledger: Ledger,
-  checkTag: string,
-  creditedScn: string | null
-): ScenarioReconciliation | undefined =>
-  ledger.scenarioReconciliations.find(
-    (r) =>
-      (creditedScn === null || r.scnId === creditedScn) &&
-      // OBLIGATIONS, not observations — the predicate below is the debit's own shape and stays
-      // spelled out. `isStaticCheckObservation` narrows the observation union and has no business
-      // here; the two sides carry the bare check tag under the same field name and are otherwise
-      // unrelated types.
-      r.evidenceObligations.some((o) => o.qualityCheck === "lint" && o.staticCheck === checkTag)
+// @SCN-SSM-006
+const fitnessReportPath = (): string => {
+  const corpus = readFileSync(join(process.cwd(), "features/fitness-checks.feature"), "utf8");
+  const codes = [...corpus.matchAll(/^ *@fitness @(SCN-[A-Z]+-\d+)\s*$/gm)].map((m) => m[1]!);
+  assert.ok(
+    codes.length > 0,
+    "expected the generated fitness corpus to carry at least one @fitness scenario"
   );
+  const report = [
+    {
+      uri: "features/fitness-checks.feature",
+      elements: codes.map((code) => ({
+        tags: [{ name: "@fitness" }, { name: `@${code}` }],
+        steps: [],
+      })),
+    },
+  ];
+  const dir = mkdtempSync(join(tmpdir(), "ssm006-fitness-"));
+  const path = join(dir, "fitness.json");
+  writeFileSync(path, JSON.stringify(report), "utf8");
+  return path;
+};
 
 // @SCN-SSM-006
 Given("the scn-subissues static check, wired over spec-controller's own source", function () {
@@ -114,45 +124,56 @@ Given("the scn-subissues static check, wired over spec-controller's own source",
 
 // @SCN-SSM-006
 When("spec-controller's own tree is reconciled", function () {
+  reportPath = fitnessReportPath();
   ownLedger = runReconcile({
     features: join(process.cwd(), "features"),
     ci: join(process.cwd(), ".github/workflows/ci.yml"),
     packageJson: join(process.cwd(), "package.json"),
+    fitness: reportPath,
   });
 });
 
 // @SCN-SSM-006
 Then("the check's run is credited to the scenario that names it", function () {
-  const { check: checkTag, scn: creditedScn } = ownRegistration();
-  const account = accountRaising(ownLedger.ledger, checkTag, creditedScn);
+  const { scn, characteristic } = ownRow();
+  const account = accountFor(ownLedger.ledger, scn);
   assert.ok(
     account,
-    `expected a Ledger account raising the fitness Evidence Obligation for "${checkTag}" — ` +
-      `the scenario naming ${OWN_STATIC_CHECK}; got none. Without a stepless scenario ` +
-      `carrying the bare @${checkTag} tag the check names no scenario and its run has ` +
-      `nothing to settle against.`
+    `expected a Ledger account for ${scn} — the scenario the row naming ${OWN_STATIC_CHECK} ` +
+      `points at; got none. Without a generated scenario carrying that code the check names ` +
+      `nothing and its run has no Evidence Obligation to settle against.`
+  );
+
+  // OBLIGATIONS, not observations — the debit side's own shape, spelled out. The two sides carry
+  // the characteristic under the same field name and are otherwise unrelated types.
+  assert.ok(
+    account.evidenceObligations.some(
+      (o) => o.qualityCheck === "lint" && o.staticCheck === characteristic
+    ),
+    `expected ${scn} to raise the fitness Evidence Obligation for "${characteristic}"; got ` +
+      `${JSON.stringify(account.evidenceObligations)}`
   );
 
   const credit = account.evidenceObservations.find(
-    (o) => isStaticCheckObservation(o) && o.staticCheck === OWN_STATIC_CHECK
+    (o) => isStaticCheckObservation(o) && o.staticCheck === characteristic
   );
   assert.ok(
     credit,
-    `expected ${OWN_STATIC_CHECK}'s run posted to ${account.scnId}'s account; got ` +
+    `expected the converted run's credit posted to ${scn}'s account; got ` +
       `${JSON.stringify(account.evidenceObservations)}`
   );
 
   const lint = account.qualityCheckReconciliations.find((r) => r.qualityCheck === "lint");
   assert.ok(
     lint,
-    `expected ${account.scnId} to carry a lint reconciliation; got ` +
+    `expected ${scn} to carry a lint reconciliation; got ` +
       `${JSON.stringify(account.qualityCheckReconciliations)}`
   );
   assert.equal(
     lint.outcome,
     "satisfied",
-    `expected ${account.scnId}'s lint obligation to reconcile satisfied — the check ` +
-      `exists AND is enforced over real source; got "${lint.outcome}"`
+    `expected ${scn}'s lint obligation to reconcile satisfied — the row names the scenario AND ` +
+      `a pass over this tree reported it; got "${lint.outcome}"`
   );
 });
 
@@ -166,8 +187,13 @@ Then("no static check run is left uncited on the suspense scenario", function ()
   assert.deepEqual(
     uncitedStaticChecks,
     [],
-    `expected NO static check folded onto the suspense scenario — every running check is ` +
-      `named by a stepless fitness scenario carrying its bare check tag; got uncited: ` +
+    `expected NO static check folded onto the suspense scenario — every check that runs is ` +
+      `named, by a configured row or by a scenario carrying its bare check tag; got uncited: ` +
       `${uncitedStaticChecks.join(", ")}`
   );
+
+  if (reportPath !== undefined) {
+    rmSync(join(reportPath, ".."), { recursive: true, force: true });
+    reportPath = undefined;
+  }
 });

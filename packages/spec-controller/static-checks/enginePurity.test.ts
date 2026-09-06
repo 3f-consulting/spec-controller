@@ -43,9 +43,9 @@ import {
  * to make loud.
  *
  * 32 → 33 at 3F-2996: `domain/checkCharacteristics.ts`, the portfolio's check-characteristic roster
- * — the vendored export that makes a characteristic legal because the PORTFOLIO names it rather
- * than because the target's own manifest does (@SCN-CHR-001). The floor moves because the
- * population did.
+ * — the vendored export naming the words the portfolio carries. The floor moves because the
+ * population did. The file stays; what left at 3F-3167 is the GATE that read it, so the
+ * scenario this line used to cite is gone and the ticket handle is what remains citable.
  *
  * 33 → 34 at 3F-3087: `parse/targetManifest.ts`, the `resolve*` family that reads a target's
  * `specController.*` configuration into the registries the reconciler takes — moved in from the

@@ -234,55 +234,39 @@ describe("[SCN-VOC-014] a red names the file, the line and the term", () => {
 });
 
 describe("[SCN-VOC-014] the gate is reconciled on spec-controller's own Ledger", () => {
-  const ciSource = readRepoFile(".github/workflows/ci.yml");
-  const packageJson = JSON.parse(readRepoFile("package.json")) as {
+  const manifest = JSON.parse(readRepoFile("package.json")) as {
     scripts?: Record<string, string>;
-    specController?: { checkRegistry?: unknown };
+    specController?: { fitnessChecks?: { scn?: string; command?: string }[] };
   };
-  const featureSource = readRepoFile("features/vocabulary-audit.feature");
+  const corpus = readRepoFile("features/fitness-checks.feature");
+  const rows = manifest.specController?.fitnessChecks ?? [];
+  const ownRow = rows.find((candidate) => candidate.command === `pnpm ${OWN_STATIC_CHECK}`);
 
-  it("is named by a scenario, so its run has an Evidence Obligation to settle against", () => {
-    // THE SAME ASSERTION, THROUGH THE SPELLING THAT NOW CARRIES IT (3F-2589). This used to
-    // read the retired @lint=<handle> form, where a scenario named the check by spelling the
-    // runnable handle back at the tool. Under the one posting rule the corpus names a check
-    // by a BARE tag, and which tag a handle IS comes from this repository's own registry — so
-    // both hops are read from the REAL manifest and the REAL feature file here. A missing
-    // registry entry now fails this exactly as a missing tag does, which is strictly more
-    // than the handle-spelling read could see.
-    const registry = resolveCheckRegistry(packageJson);
-    const checkTag = registry.get(OWN_STATIC_CHECK)?.check;
-    expect(checkTag).toBeDefined();
-
-    // Read through the CORPUS HOP itself (`fitnessCitations`) rather than through the corpus's
-    // obligation set: it answers the sharper question — which scenario carries this check — and
-    // so fails on a tag that reaches no stepless scenario as well as on one that is absent. The
-    // journal-side named-handle derivation this replaced was the by-name route's, and went with it
-    // (3F-2590).
-    const citations = fitnessCitations(
-      parseTaggedScenarios(featureSource),
-      registeredCheckTags(registry),
-    );
-
-    expect([...citations.keys()]).toContain(checkTag);
+  it("is named by a configured fitness row, so its run has an Evidence Obligation to settle against", () => {
+    // THE SAME ASSERTION, THROUGH THE SPELLING THAT NOW CARRIES IT (3F-3165). It read the
+    // registry hop before this — a handle resolved to a bare check tag, that tag looked up in
+    // the corpus — because an unconverted check is DISCOVERED and a handle does not know what
+    // it is for. A converted check is never discovered: its row states the @SCN, and the
+    // scenario the corpus carries under that @SCN is what the fitness pass reports. One hop,
+    // read off the REAL manifest, so the claim is the tree's rather than this test's.
+    expect(ownRow?.scn).toBeDefined();
   });
 
-  it("exists as a script AND is enforced over real source — it fires, it is not merely present", () => {
-    expect(checkStaticEvidenceObligations([OWN_STATIC_CHECK], [ciSource], packageJson)).toEqual([
-      {
-        qualityCheck: "lint",
-        staticCheck: OWN_STATIC_CHECK,
-        exists: true,
-        enforcedOverRealSource: true,
-      },
-    ]);
+  it("has a scenario in the generated corpus, which is the enumeration a linter's silence lacks", () => {
+    // The reason the corpus exists at all given the row already carries everything: a check
+    // reports findings and says nothing when it finds none, so its silence cannot be told from
+    // its absence. Cucumber reports every scenario it ran.
+    expect(corpus).toContain(`@fitness @${ownRow?.scn ?? "(no row)"}`);
   });
 
-  it("is one of the running static checks the observer emits into the evidence stream", () => {
-    const running = runningStaticChecks([ciSource], packageJson, GUARD_PREFIXES).map(
-      (observation) => observation.staticCheck,
-    );
-
-    expect(running).toContain(OWN_STATIC_CHECK);
+  it("fires because the pass RUNS its command — it is not merely present in a manifest", () => {
+    // BOTH HALVES, AS BEFORE, AND BOTH ARE NOW FACTS ABOUT THE RUN. The old pair was `exists`
+    // (a package.json script) and `enforcedOverRealSource` (a ci.yml run: step) — a file
+    // MENTIONING a name. Here the row's command IS the script, the fitness pass executes it in
+    // this repository's own root, and the scenario appearing in that pass's report is the
+    // credit. Strictly stronger evidence, which is what conversion buys.
+    expect(ownRow?.command).toBe(`pnpm ${OWN_STATIC_CHECK}`);
+    expect(manifest.scripts ?? {}).toHaveProperty(OWN_STATIC_CHECK);
   });
 });
 

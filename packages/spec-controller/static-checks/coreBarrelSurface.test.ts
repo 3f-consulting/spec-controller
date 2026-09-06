@@ -115,8 +115,9 @@ describe("[SCN-API-001] the core barrel exports exactly the frozen v1 contract s
     const surface = coreSurface();
 
     // 26 → 28 at 3F-2996: the portfolio check-characteristic roster and its membership
-    // predicate joined the `.` barrel (@SCN-CHR-001). The pair moves with the registry it is
-    // read off, which is what keeps it an anti-vacuity floor rather than a fourth opinion.
+    // predicate joined the `.` barrel. They are still on it after 3F-3167 retired the gate that
+    // read them here: the words are what a consumer's report rolls up by, and that was always the
+    // half a target imports the roster for.
     //
     // 28 → 29 at 3F-3089: `evidenceReconciliationFromSources`, the reconcile composition, joined
     // the `.` barrel — the ONE entry point 3F-2804 sanctions, which is what takes the last

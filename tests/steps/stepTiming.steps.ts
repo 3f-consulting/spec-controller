@@ -34,7 +34,7 @@ import {
   type MeasuredEvidenceObservation,
 } from "@3f-consulting/spec-controller-core/internal";
 
-import { MEASUREMENT_ARTEFACT_PATH } from "../../packages/spec-controller/static-checks/measurementArtefact.js";
+import { TIMINGS_RECORD_PATH } from "../../packages/spec-controller/static-checks/measurementArtefact.js";
 
 const repoRoot = process.cwd();
 const wrapper = path.join(repoRoot, "packages", "spec-controller", "static-checks", "timeStepCli.ts");
@@ -357,9 +357,16 @@ function runWrapper(command: readonly string[]): SpawnSyncReturns<string> {
   return run;
 }
 
-/** The artefact the wrapper wrote, read back through the reader `balance --measurements` uses. */
+/**
+ * The record the wrapper wrote, read back through the reader `balance --measurements` uses.
+ *
+ * THE READER IS THE CREDIT STREAM'S THOUGH THE FILE IS NOT (3F-3166). A timings record and a credit
+ * stream are the same shape and are read by the same reader; what separates them is which question
+ * they answer. Reading this one back through the real reader is what pins the producer and the
+ * consumer to one shape — a mis-keyed row is not loud, it reconciles `missing`.
+ */
 function observed(): MeasuredEvidenceObservation[] {
-  const artefactPath = path.join(plantedRoot, MEASUREMENT_ARTEFACT_PATH);
+  const artefactPath = path.join(plantedRoot, TIMINGS_RECORD_PATH);
   let source: string;
   try {
     source = readFileSync(artefactPath, "utf8");

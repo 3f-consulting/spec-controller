@@ -45,12 +45,14 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
   obligations are untouched and still reconcile — the distinction from a deferral tag,
   which would have taken every obligation these scenarios name dark to silence one row each
   (3F-2351). What spec-controller's OWN lint:feature-codes check owes is raised where it
-  belongs: the stepless fitness scenario at the foot of this file.
+  belongs: its row of specController.fitnessChecks, whose generated scenario carries the
+  code SCN-FIT-007 in features/fitness-checks.feature (3F-3165). It sat stepless at the foot
+  of this file until then, under a code of this feature's own.
 
   WHICH TREE A FITNESS SCENARIO IS ABOUT IS THE GHERKIN'S TO SAY, AND THE STEP DEFINITION'S TO
   OBEY (ruled 2026-09-04). A fitness scenario names its subject in its own text — a PLANTED tree
   or THE REPOSITORY — and its step definition takes that subject rather than picking one for
-  itself. @SCN-ANM-001 holds the check against planted trees and @SCN-ANM-002 holds this
+  itself. @SCN-ANM-001 holds the check against planted trees and @SCN-FIT-009 holds this
   repository against the check; what tells them apart is a sentence a reviewer reads anyway, not
   a path buried in a step definition. A step definition that runs its check over a fixture while
   its scenario says the repository is then wrong IN THE DIFF, against that sentence.
@@ -165,11 +167,11 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     is proven here is the rule itself, over fixture data.
 
     @unit @integration @SCN-LNT-001
-    Scenario: a fitness check wired into CI over the real source posts one observation citing its scenario and reconciles satisfied
+    Scenario: a fitness check wired into CI posts one observation citing its scenario and reconciles satisfied
       Given "lint:feature-codes" is registered as the fitness check "feature-codes"
       And a stepless fitness scenario carries the bare check "feature-codes"
       And a second scenario would have claimed the same run under name-match
-      When the fitness checks wired into CI over the real source are observed and reconciled
+      When the fitness checks wired into CI are observed and reconciled
       Then the run's observation posts to exactly one row — the fitness scenario's own
       And that fitness scenario reconciles satisfied
 
@@ -236,7 +238,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       Given "lint:feature-codes" is registered as the fitness check "feature-codes"
       And a stepless fitness scenario carries the bare check "feature-codes"
       And a second stepless fitness scenario carries the same bare check "feature-codes"
-      When the fitness checks wired into CI over the real source are observed and reconciled
+      When the fitness checks wired into CI are observed and reconciled
       Then the first fitness scenario reconciles satisfied, holding the run's one credit
       And the second fitness scenario reconciles missing, naming the check "feature-codes"
 
@@ -379,7 +381,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       Given "lint:feature-codes" is registered as the fitness check "feature-codes"
       And a stepless fitness scenario carries the bare check "feature-codes"
       And that fitness scenario is renumbered after the run cites it
-      When the fitness checks wired into CI over the real source are observed and reconciled
+      When the fitness checks wired into CI are observed and reconciled
       Then the run's credit posts to a phantom row for the @SCN it cited, naming the check "lint:feature-codes"
       And no scenario's row holds that credit
 
@@ -418,10 +420,10 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       stray credit is a second, independent item beside it. A reader who saw one row could not tell
       which of the two things went wrong.
 
-      Given a fitness scenario "SCN-FIT-001" raises the check "complexity" and no other
-      And a run of the check "typecheck" cites "SCN-FIT-001"
+      Given a fitness scenario "SCN-AAA-001" raises the check "complexity" and no other
+      And a run of the check "typecheck" cites "SCN-AAA-001"
       When that corpus and those runs are reconciled
-      Then the row "SCN-FIT-001" holds a no-evidence-obligation item naming the check "typecheck"
+      Then the row "SCN-AAA-001" holds a no-evidence-obligation item naming the check "typecheck"
       And the row's own "complexity" obligation reconciles beside it, untouched
 
     @unit @integration @SCN-LNT-014
@@ -440,11 +442,11 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       the item alone would leave the green build unexplained, which is why the whole-run reading is
       asserted and not only the row's.
 
-      Given a fitness scenario "SCN-FIT-001" raises the check "complexity" and no other
-      And the "complexity" run cites "SCN-FIT-001" and is wired into CI over the real source
-      And a run of the check "typecheck" cites "SCN-FIT-001" but CI does not run it
+      Given a fitness scenario "SCN-AAA-001" raises the check "complexity" and no other
+      And the "complexity" run cites "SCN-AAA-001" and is wired into CI over the real source
+      And a run of the check "typecheck" cites "SCN-AAA-001" but CI does not run it
       When that corpus and those runs are reconciled
-      Then the row "SCN-FIT-001" is out-of-balance over the stray credit alone
+      Then the row "SCN-AAA-001" is out-of-balance over the stray credit alone
       And the whole run reads out-of-balance
 
   Rule: @lint is one bare style-lint check among many, never the catch-all
@@ -497,7 +499,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
 
     THE MAPPING MOVES TO THE RUNNER, WHICH IS WHERE CANON ALREADY PUT IT — "the
     check-to-scenario mapping held by the runner, as @ci-run-time's is". The measured axis
-    stamps its @SCN onto the measurement at the command line (--scn SCN-CIP-013); a static
+    stamps its @SCN onto the measurement at the command line (--scn SCN-FIT-012); a static
     check emits no artefact to stamp, so its runner-side mapping is the registry, and the
     registry is where the @SCN goes. Not a second roster of the OBLIGATION: the scenario still
     raises the debit and still carries the threshold. The registry only says which row this
@@ -535,11 +537,11 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
 
       Given these registry entries name the fitness scenario each check credits
         | script                  | check | scenario    |
-        | lint:blocked-vocabulary | vocab | SCN-FIT-001 |
-        | lint:adopted-vocabulary | vocab | SCN-FIT-002 |
+        | lint:blocked-vocabulary | vocab | SCN-AAA-001 |
+        | lint:adopted-vocabulary | vocab | SCN-AAA-002 |
       And a stepless fitness scenario carries the bare check "vocab"
       And a second stepless fitness scenario carries the same bare check "vocab"
-      When the fitness checks wired into CI over the real source are observed and reconciled
+      When the fitness checks wired into CI are observed and reconciled
       Then each fitness scenario reconciles satisfied, credited by the run its own registry entry names
 
     @unit @integration @SCN-LNT-016
@@ -559,11 +561,11 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
 
       Given these registry entries name the fitness scenario each check credits
         | script                  | check | scenario    |
-        | lint:blocked-vocabulary | vocab | SCN-FIT-001 |
-        | lint:adopted-vocabulary | vocab | SCN-FIT-003 |
+        | lint:blocked-vocabulary | vocab | SCN-AAA-001 |
+        | lint:adopted-vocabulary | vocab | SCN-AAA-003 |
       And a stepless fitness scenario carries the bare check "vocab"
       And a second stepless fitness scenario carries the same bare check "vocab"
-      When the fitness checks wired into CI over the real source are observed and reconciled
+      When the fitness checks wired into CI are observed and reconciled
       Then the run of "lint:adopted-vocabulary" cites no scenario and its credit posts to suspense
       And the second fitness scenario reconciles missing, naming the check "vocab"
 
@@ -588,33 +590,16 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
 
       Given these registry entries name the fitness scenario each check credits
         | script                  | check        | scenario    |
-        | lint:blocked-vocabulary | vocab        | SCN-FIT-001 |
-        | lint:adopted-vocabulary | vocab        | SCN-FIT-003 |
-        | lint:feature-codes      | traceability | SCN-FIT-003 |
+        | lint:blocked-vocabulary | vocab        | SCN-AAA-001 |
+        | lint:adopted-vocabulary | vocab        | SCN-AAA-003 |
+        | lint:feature-codes      | traceability | SCN-AAA-003 |
       And a stepless fitness scenario carries the bare check "vocab"
       And a second stepless fitness scenario carries the same bare check "vocab"
       And a third stepless fitness scenario carries a different bare check "traceability"
-      When the fitness checks wired into CI over the real source are observed and reconciled
+      When the fitness checks wired into CI are observed and reconciled
       Then the run of "lint:adopted-vocabulary" cites no scenario and its credit posts to suspense
       And the second fitness scenario reconciles missing, naming the check "vocab"
       And the third fitness scenario reconciles satisfied for "traceability" alone, absorbing no credit meant for another characteristic
-
-  Rule: this repository's own feature-code registry holds
-
-    THE ONE CHECK THIS FILE OWNS, AND WHY IT LANDS HERE RATHER THAN IN A FILE OF ITS OWN.
-    lint:feature-codes has no feature file of its own — it is the check that keeps the
-    `@<FFF>` header codes unique and registered, machinery every other feature file depends
-    on and none is about. The corpus already homed its obligation here, on @SCN-LNT-001's
-    tag line, for the length of the retired tag form; @SCN-LNT-011 keeps that home and gives
-    it the shape the one posting rule asks for. It is append-only allocation in this file,
-    not a claim that the check is part of the fitness-reconciliation model.
-
-    IT CARRIES NO STEPS, so it raises exactly one Evidence Obligation — the fitness one its
-    bare `@traceability` tag names — and the CI run of lint:feature-codes settles it,
-    resolved through this repository's own registry and then through this corpus.
-
-    @traceability @SCN-LNT-011
-    Scenario: every feature-code header in this corpus is unique and registered
 
   Rule: a converted check names its characteristic in data, and the tag names only the axis
 
@@ -653,7 +638,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       for one characteristic would leave the second missing for ever, since one run is one credit
       and can cite one @SCN.
 
-      Given a configured row names the scenario "SCN-FIT-001" as the fitness check "complexity"
+      Given a configured row names the scenario "SCN-AAA-001" as the fitness check "complexity"
       And that scenario carries the bare fitness axis tag and no characteristic tag
       And the axis tag reaches it a second time, hoisted onto its Rule
       When the scenario corpus is read
@@ -682,9 +667,9 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
 
       Given a target configures these fitness rows, and only the bar each names differs
         | scenario    | check      | at least |
-        | SCN-FIT-002 | mutation   | 90       |
-        | SCN-FIT-003 | coverage   | ninety   |
-        | SCN-FIT-001 | complexity |          |
+        | SCN-AAA-002 | mutation   | 90       |
+        | SCN-AAA-003 | coverage   | ninety   |
+        | SCN-AAA-001 | complexity |          |
       And each of those scenarios carries the bare fitness axis tag and no characteristic tag
       When the scenario corpus is read
       Then the three raise, in turn, a measured Evidence Obligation holding that floor whole, a measured one holding no bar, and a plain static one
@@ -801,6 +786,15 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     the exit code. Two questions, two mechanisms — which is why a command exiting 0 having
     examined nothing cannot pass as silence here.
 
+    AND THE SECOND QUESTION HAS A THIRD ANSWER, WHICH THE ROW HAS TO ASK FOR (3F-3169, 3F-3170).
+    A check says `nothing to report`, or `here is a violation`, or `I could not examine
+    anything` — the third being what a check whose input exists only in CI has to be able to say
+    on a laptop. The pass hears that third answer from a row that NAMES the code its command
+    says it with, and from no other row: a row silent on the point keeps the two-answer reading,
+    where every way of ending but a clean one is a check that broke and stays a failure. What a
+    code MEANS is a property of the command rather than of the pass, so the pass reads it where
+    the command is written down instead of fixing one code for every target at once.
+
     THE NUMBER ARRIVES ON STDOUT. A measured row's command prints its measurement and nothing
     else there; whatever it wants to say goes to stderr. No named artefact path, no second
     I/O contract in the row — a tool that prints other things gets a wrapper, which is what
@@ -808,13 +802,37 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     either way: one bar per characteristic, never the runner's own verdict.
 
     @unit @integration @SCN-LNT-023
-    Scenario: the fitness step definition runs its row's command and fails the scenario on a non-zero exit
+    Scenario: the fitness step definition runs its row's command, and hears a check that examined nothing only from a row naming the code that says so
 
       THE ROW'S COMMAND IS THE CHECK, AND RUNNING IT IS THE WHOLE OF WHAT THIS STEP DOES. The scenario
       carries the axis tag and its own @SCN; the row keyed by that @SCN carries the command; the step
       runs it in the target's own root and reads the exit code. Nothing else is consulted — no check
       registry, no corpus lookup, no artefact somebody else wrote — because the two terms this needs
       are the tag line the runner is already holding and the row that names it.
+
+      THE THIRD ANSWER IS OPT-IN PER ROW AND NEVER INFERRED (3F-3170). A check can find nothing, it can
+      find a violation it prints, or it can be unable to examine anything at all — which is the ordinary
+      state of a check whose input only CI holds. The pass hears that third answer only from a row that
+      NAMES the code its command says it with; a row silent on the point keeps the two-answer reading it
+      has always had, which is both the safe default and what every target already gets. The third
+      answer is still not a pass: a scenario that went green having examined nothing is the silence
+      fault, in the repository that names it. So the pass reports it as neither passed nor failed — the
+      scenario still appears, so its row is still credited as one that ran, and the pass's own verdict
+      is unmoved.
+
+      THE CODE IS THE ROW'S BECAUSE THE MEANING IS THE COMMAND'S (3F-3170). One code fixed for every
+      target would be the pass telling a consumer's command what its own answers mean, and the first
+      attempt at that took a code this product's own `balance` already spends on a pending-items verdict
+      under `--strict` — so a consumer running `balance` behind a fitness row would have had a red
+      silently reclassified as a check that examined nothing, in the product built to catch that. A
+      rarer code is not the repair: the claim that a code will not collide is the claim that just
+      failed, and the quiet ranges are spoken for as well. The row already carries the command, so it is
+      where that command's own taxonomy belongs.
+
+      AND IT IS ONE CODE PER ROW, NOT A RANGE. Exactly one way of ending means `I examined nothing` for
+      a given command, and every other way that command can end is a check that broke and stays a
+      failure. A range would hand the third answer to the broken check next door, which is the silence
+      fault arriving through the door built to close it.
 
       THE @SCN COMES OFF THE TAG LINE, NEVER OFF THE SCENARIO'S NAME. A title is prose a person edits;
       recovering an identifier from one is the name-match posting @SCN-LNT-002 retired, and it would
@@ -842,10 +860,11 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       posting it is a different assertion over different evidence — and that is the whole of the
       growth, whatever a target's manifest grows to.
 
-      Given a target's configured rows name a command for two of the three fitness scenarios its corpus carries, and none for the third
-      And the first of those commands finds nothing while the second finds a violation it prints
-      When each of the three scenarios runs under the fitness pass
-      Then the first passes, the second fails naming the command that spoke and quoting what it printed, and the third fails saying no configured row names it
+      Given a target's configured rows name a command for five of the six fitness scenarios its corpus carries, and none for the sixth
+      And every one of those rows but the fourth also names the code by which its command says it examined nothing
+      And those commands are, in order, one that finds nothing, one that finds a violation it prints, one that says it examined nothing, another saying it examined nothing in exactly the same words, and one that is itself broken
+      When each of the six scenarios runs under the fitness pass
+      Then the first passes, the second fails naming the command that spoke and quoting what it printed, the third neither passes nor fails, the fourth fails although its command said what the third's said because its own row names no such code, the fifth fails because a check that broke is not one that examined nothing, and the sixth fails saying no configured row names it
 
     @unit @integration @SCN-LNT-024
     Scenario: a measured row's command prints its number on stdout and the step definition posts it citing the scenario's own @SCN
@@ -892,3 +911,41 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       And the first of those commands prints a number, the second prints prose, and the third prints nothing at all
       When each of those three scenarios runs under the fitness pass
       Then the first posts its number citing its own @SCN and the characteristic its row names, beside the measurement already there, and the other two fail with nothing posted for either
+
+    @unit @integration @SCN-LNT-025
+    Scenario: a row that spends the ending of a clean run, or of a run that found something, on "I examined nothing" is refused when the target's rows are read
+
+      TWO ENDINGS ARE THE PROTOCOL'S OWN AND NO ROW MAY SPEND THEM ON THE THIRD ANSWER. A row naming
+      the ending a clean run has would report a check that examined nothing on exactly the runs where
+      that check worked, so a check that passed would stop being read as one that passed. A row naming
+      the ending an ordinary violation has would turn every finding into a check that examined nothing
+      — a red arriving as a non-failure, at whatever scale that check runs, on the one ending the whole
+      of the tooling world agrees means `I found something`. Both are the silence fault this repository
+      exists to name, arriving through its own configuration.
+
+      AT THE READ, AND THAT IS THE WHOLE OF THIS SCENARIO. A refusal that waited until a command ended
+      that way would fire only on the run that took the bad path — and for the row naming a violation's
+      ending, the bad path IS the run where a real finding was made, which is exactly the run whose
+      failure it would swallow. A validation that fires only when the bad path is taken is a validation
+      that hides the bad path. So the row is refused when the target's rows are read, before anything
+      has been run, and the refusal names the row it is about and the value that row carries: a message
+      saying only that the configuration is wrong sends the reader hunting through thirteen rows.
+
+      AND NOTHING ELSE IS REFUSED, INCLUDING THE ENDINGS THIS PRODUCT ITSELF SPENDS. `balance` answers
+      one way for a usage fault and another for an unsound run, and a row naming either of those is
+      still read as written. The field says what THAT command means by an ending, which is the row
+      author's sentence to write rather than the runner's to have opinions about — the whole of the
+      3F-3170 repair. The two refusals are refusals against the PROTOCOL'S OWN fixed points, a pass and
+      a violation, and not against any tool's taxonomy; a later reader tidying them into a list of
+      permitted endings would be reversing that ruling by accident.
+
+      A REFUSED ROW HAS NOT BEEN RUN, AND THE PLANT SAYS SO RATHER THAN THE PROSE. Each of the four
+      rows below names a command that leaves a trace behind it whenever it runs. Neither refused row
+      leaves one, and the accepted row leaves its own — so the absence is read against a trace that is
+      shown to arrive, rather than against a mechanism that might never have worked at all.
+
+      Given four rows, each naming a command that leaves a trace behind it whenever it runs
+      And the first names, as the ending by which its command says it examined nothing, the ending of a clean run; the second names the ending of a run that found something; the third names an ending that is neither; and the fourth names no ending at all
+      When each of those rows is read on its own
+      Then the first two are refused, each refusal naming the row it is about and the value that row carries, and neither command has left the trace it leaves whenever it runs
+      And the third and fourth are read as written, and the third's command then runs and leaves that same trace

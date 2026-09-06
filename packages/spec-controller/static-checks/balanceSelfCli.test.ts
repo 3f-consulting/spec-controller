@@ -52,7 +52,7 @@ describe("[SCN-SLF-001] the self-balance gate's scan scope is stated, whole, in 
       // It is a surface in its own right precisely because one file read two ways would leave
       // the gate guessing which half of it was which.
       fitness: "runs/self-balance/fitness.json",
-      // The MEASURED stream (@SCN-CIP-013, 3F-2742), sourced from the producer's own constant
+      // The MEASURED stream (@SCN-CIP-006, 3F-2742), sourced from the producer's own constant
       // so the path this gate reads cannot drift from the path the timed steps write.
       measurements: "runs/self-balance/measurements.json",
       // The workflow DIRECTORY, not one file (3F-2500): the product's own default reads
@@ -118,7 +118,7 @@ describe("[SCN-SLF-001] the self-balance gate's scan scope is stated, whole, in 
   });
 
   it("leaves the two optional artefacts' flags off where nothing wrote them, so the rows they answer reconcile missing", () => {
-    // THE ASYMMETRY IS THE POINT (@SCN-CIP-013). A --measurements path the balance command cannot
+    // THE ASYMMETRY IS THE POINT (@SCN-CIP-006). A --measurements path the balance command cannot
     // find is a usage fault to it and exits 2, and exit 2 says "this run is broken" where the
     // truth is "a timed suite was never measured" — a verdict @SCN-CIP-006 puts on the ledger.
     // Passing the flag regardless would rebuild the hiding place inside the gate: unwrap a

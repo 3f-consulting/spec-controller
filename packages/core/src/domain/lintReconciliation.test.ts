@@ -5,18 +5,21 @@
  * @SCN-LNT-001 id matching features/fitness-reconciliation.feature, so a grep of the
  * id returns both halves of the pair.
  *
- * It reconciles spec-controller's OWN lint:feature-codes static check against its REAL,
- * checked-out .github/workflows/ci.yml + package.json (NOT a fixture — acceptance
- * condition 1): the static check's command is genuinely a CI `run:` step over the real
- * tree, so the static evidenceObligation reconciles BALANCED. Asserts REAL reconcile
- * output, not a hand-seeded fixture (evidence-manifesto §11A).
+ * THE TREE IT RECONCILES AGAINST IS PLANTED, AND THE PREMISE THAT IT WAS NOT DIED WITH SCRIPT
+ * DISCOVERY (3F-3165, recorded here at 3F-3168). It used to read the checked-out
+ * .github/workflows/ci.yml + package.json, on the argument that a genuinely CI-wired handle is
+ * stronger evidence than a fixture one. That argument required this repository to keep a `lint:`
+ * script as a CI `run:` step, and the migration to converted fitness checks moved every such
+ * command OUT of ci.yml and onto a `specController.fitnessChecks` row. There is no wired handle
+ * left to read, so the workflow is planted alongside the registry and the corpus — which were
+ * fixtures here already. `lint:feature-codes` survives as a NAME the plant uses, not as a live
+ * wiring this asserts. It still asserts REAL reconcile output rather than a hand-seeded verdict
+ * (evidence-manifesto §11A); what moved is where the inputs come from.
  *
  * Parent: @SCN-LNT-001.
  */
 
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { reconcile } from "./evidenceReconciliation.js";
 import { checkRegistryOf, registeredCheckTags } from "./checkRegistry.js";
 import { checkStaticEvidenceObligations } from "../parse/checkStaticEvidenceObligations.js";
@@ -32,22 +35,41 @@ const REAL_GUARD = "lint:feature-codes";
 /** The bare check tag the registry maps that handle to — the citation seam's middle term. */
 const CHECK_TAG = "feature-codes";
 
-describe("[SCN-LNT-001] a fitness check wired into CI over the real source posts one observation citing its scenario and reconciles satisfied", () => {
+/**
+ * A workflow and a manifest that WIRE one static check — the fixture these three arms used to read
+ * off spec-controller's own tree.
+ *
+ * THE REAL TREE STOPPED BEING AN INSTANCE, WHICH IS THE MIGRATION WORKING (3F-3165, under 3F-3139).
+ * A converted fitness check is not a CI `run:` step at all: its command lives on a
+ * `specController.fitnessChecks` row and the fitness cucumber pass invokes it, so this repository's
+ * workflow now names no discovered static check for these arms to observe. 3F-3153 measured that
+ * coming — "under the full migration no characteristic retains two wired handles at all… the
+ * durable answer is a planted tree rather than the real one" — and left the move to 3F-3139. This
+ * is that move.
+ *
+ * WHAT IS LOST AND WHAT IS NOT. What the real read bought was that the OBSERVER sees a genuine
+ * workflow; what these arms are about is the CITATION SEAM — which row a run's credit posts to —
+ * and that is decided by the registry and the corpus, both of which were always fixtures here. The
+ * observer's own reading of a real workflow is still held, by the arms that own it
+ * (`checkScriptsRunInCI`, `runningStaticChecks`), over the workflows THEY plant.
+ */
+function wiringFor(script: string): { ciSource: string; packageJson: PackageJsonScripts } {
+  return {
+    ciSource: ["name: CI", "jobs:", "  ci:", "    steps:", `      - run: pnpm ${script}`].join("\n"),
+    packageJson: { scripts: { [script]: `tsx ${script}.ts` } },
+  };
+}
+
+describe("[SCN-LNT-001] a fitness check wired into CI posts one observation citing its scenario and reconciles satisfied", () => {
   it("posts the run's observation to exactly one row — the fitness scenario's own — and reconciles it satisfied", () => {
-    // spec-controller's OWN, REAL CI config + package.json (cwd is the repo root under
-    // `pnpm test`) — the check is genuinely a CI run step over the real tree, not a planted
-    // fixture. What is fixture-supplied is the REGISTRY and the CORPUS: spec-controller's own
-    // tree registers nothing until the corpus sweep (3F-2589), so this seam reads inert on it.
-    const root = process.cwd();
-    const ciSource = readFileSync(join(root, ".github/workflows/ci.yml"), "utf8");
-    const packageJson = JSON.parse(
-      readFileSync(join(root, "package.json"), "utf8")
-    ) as PackageJsonScripts;
+    // The wiring is PLANTED — see `wiringFor`. The registry and the corpus were already
+    // fixture-supplied here; the workflow joined them at 3F-3165.
+    const { ciSource, packageJson } = wiringFor(REAL_GUARD);
 
     const registry = checkRegistryOf({ [REAL_GUARD]: CHECK_TAG });
     const checkTags = registeredCheckTags(registry);
-    // TWO rows that both reach this one run. SCN-FIT-001 is the stepless fitness scenario whose
-    // bare tag raises the obligation; SCN-FIT-002 names the same runnable handle the retired way,
+    // TWO rows that both reach this one run. SCN-AAA-001 is the stepless fitness scenario whose
+    // bare tag raises the obligation; SCN-AAA-002 names the same runnable handle the retired way,
     // and is the row name-match would ALSO have posted the credit to. Without it "exactly one"
     // asserts nothing — a corpus of one row cannot tell a citation from a smear.
     //
@@ -59,10 +81,10 @@ describe("[SCN-LNT-001] a fitness check wired into CI over the real source posts
       "@LNT",
       "Feature: fixture",
       "  Rule: a fixture rule",
-      `    @${CHECK_TAG} @SCN-FIT-001`,
+      `    @${CHECK_TAG} @SCN-AAA-001`,
       "    Scenario: the corpus keeps its feature codes inside the threshold",
       "",
-      `    @lint=${REAL_GUARD} @SCN-FIT-002`,
+      `    @lint=${REAL_GUARD} @SCN-AAA-002`,
       "    Scenario: a fixture scenario naming the same handle the retired way",
       "      Given a fixture step",
     ].join("\n");
@@ -79,20 +101,20 @@ describe("[SCN-LNT-001] a fitness check wired into CI over the real source posts
       (script) => citationOfScript(script, registry, citations)
     );
     const observation = evidenceObservations.find((o) => o.staticCheck === REAL_GUARD);
-    expect(observation?.scnId).toBe("SCN-FIT-001");
+    expect(observation?.scnId).toBe("SCN-AAA-001");
 
     const balance = reconcile(scenarios, evidenceObservations);
 
     // EXACTLY ONE ROW. The identity of the posted credit is what is counted, across the WHOLE
     // ledger — under name-match this same object posted to every row naming the handle, so a
-    // rule that kept name-routing a citing credit puts SCN-FIT-002 in this list too.
+    // rule that kept name-routing a citing credit puts SCN-AAA-002 in this list too.
     expect(
       balance.scenarioReconciliations
         .filter((row) => row.evidenceObservations.includes(observation!))
         .map((row) => row.scnId)
-    ).toEqual(["SCN-FIT-001"]);
+    ).toEqual(["SCN-AAA-001"]);
 
-    const fitness = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-FIT-001");
+    const fitness = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-AAA-001");
     expect(fitness?.verdict).toBe("balanced");
     expect(fitness?.reconcilingItems).toEqual([]);
     expect(fitness?.qualityCheckReconciliations).toEqual([
@@ -173,7 +195,7 @@ describe("[SCN-LNT-002] a fitness scenario naming a check that exists but is unw
       "@LNT",
       "Feature: fixture",
       "  Rule: a fixture rule",
-      `    @${PLANTED_CHECK} @SCN-FIT-001`,
+      `    @${PLANTED_CHECK} @SCN-AAA-001`,
       "    Scenario: the tree stays inside this check's threshold",
     ].join("\n");
     const scenarios = parseScenarios(corpus, [], checkTags);
@@ -197,12 +219,12 @@ describe("[SCN-LNT-002] a fitness scenario naming a check that exists but is unw
         checkTag: PLANTED_CHECK,
         exists: true,
         enforcedOverRealSource: false,
-        scnId: "SCN-FIT-001",
+        scnId: "SCN-AAA-001",
       },
     ]);
 
     const balance = reconcile(scenarios, evidenceObservations);
-    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-FIT-001");
+    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-AAA-001");
 
     // The watermelon: out-of-balance, carrying exactly the exists-but-not-enforced-over-real-source
     // reconciling item. The item names the BARE check (the obligation's handle) while its
@@ -280,7 +302,7 @@ describe("[SCN-LNT-003] a fitness scenario naming a check that does not exist re
       "@LNT",
       "Feature: fixture",
       "  Rule: a fixture rule",
-      `    @${ABSENT_CHECK} @SCN-FIT-001`,
+      `    @${ABSENT_CHECK} @SCN-AAA-001`,
       "    Scenario: the tree stays inside this check's threshold",
     ].join("\n");
     const scenarios = parseScenarios(corpus, [], checkTags);
@@ -304,12 +326,12 @@ describe("[SCN-LNT-003] a fitness scenario naming a check that does not exist re
         checkTag: ABSENT_CHECK,
         exists: false,
         enforcedOverRealSource: false,
-        scnId: "SCN-FIT-001",
+        scnId: "SCN-AAA-001",
       },
     ]);
 
     const balance = reconcile(scenarios, evidenceObservations);
-    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-FIT-001");
+    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-AAA-001");
 
     // Required-but-missing: out-of-balance, carrying exactly the missing reconciling item, which
     // names the BARE check (the obligation's handle) while the record that found it named the
@@ -351,11 +373,7 @@ describe("[SCN-LNT-003] a fitness scenario naming a check that does not exist re
  */
 describe("[SCN-LNT-008] a check named by two fitness scenarios satisfies one and leaves the other missing", () => {
   it("credits the first scenario in corpus order satisfied and leaves the second missing — one run is not evidence for both", () => {
-    const root = process.cwd();
-    const ciSource = readFileSync(join(root, ".github/workflows/ci.yml"), "utf8");
-    const packageJson = JSON.parse(
-      readFileSync(join(root, "package.json"), "utf8")
-    ) as PackageJsonScripts;
+    const { ciSource, packageJson } = wiringFor(REAL_GUARD);
 
     const registry = checkRegistryOf({ [REAL_GUARD]: CHECK_TAG });
     const checkTags = registeredCheckTags(registry);
@@ -366,16 +384,16 @@ describe("[SCN-LNT-008] a check named by two fitness scenarios satisfies one and
       "@LNT",
       "Feature: fixture",
       "  Rule: a fixture rule",
-      `    @${CHECK_TAG} @SCN-FIT-001`,
+      `    @${CHECK_TAG} @SCN-AAA-001`,
       "    Scenario: the corpus keeps its feature codes inside the threshold",
       "",
-      `    @${CHECK_TAG} @SCN-FIT-002`,
+      `    @${CHECK_TAG} @SCN-AAA-002`,
       "    Scenario: a second scenario claiming the same check",
     ].join("\n");
     const scenarios = parseScenarios(corpus, [], checkTags);
     expect(scenarios.map((s) => [s.scnId, s.evidenceObligations])).toEqual([
-      ["SCN-FIT-001", [{ qualityCheck: "lint", staticCheck: CHECK_TAG }]],
-      ["SCN-FIT-002", [{ qualityCheck: "lint", staticCheck: CHECK_TAG }]],
+      ["SCN-AAA-001", [{ qualityCheck: "lint", staticCheck: CHECK_TAG }]],
+      ["SCN-AAA-002", [{ qualityCheck: "lint", staticCheck: CHECK_TAG }]],
     ]);
 
     const citations = fitnessCitations(parseTaggedScenarios(corpus), checkTags);
@@ -387,24 +405,24 @@ describe("[SCN-LNT-008] a check named by two fitness scenarios satisfies one and
       (script) => citationOfScript(script, registry, citations)
     );
     const observation = evidenceObservations.find((o) => o.staticCheck === REAL_GUARD);
-    // ONE @SCN, and it is the FIRST scenario's. A last-wins reader cites SCN-FIT-002 here.
-    expect(observation?.scnId).toBe("SCN-FIT-001");
+    // ONE @SCN, and it is the FIRST scenario's. A last-wins reader cites SCN-AAA-002 here.
+    expect(observation?.scnId).toBe("SCN-AAA-001");
 
     const balance = reconcile(scenarios, evidenceObservations);
 
     // The credit's IDENTITY, counted across the WHOLE ledger — the shared-credit path this ruling
-    // refuses puts SCN-FIT-002 in this list too.
+    // refuses puts SCN-AAA-002 in this list too.
     expect(
       balance.scenarioReconciliations
         .filter((row) => row.evidenceObservations.includes(observation!))
         .map((row) => row.scnId)
-    ).toEqual(["SCN-FIT-001"]);
+    ).toEqual(["SCN-AAA-001"]);
 
     // THE PAIR. The cited scenario holds the credit and balances; the runner-up carries the SAME
     // obligation, finds nothing to discharge it, and is out-of-balance carrying `missing` with NO
     // observation — the absent credit pinned by its absence (@SCN-LDG-028), which is what
     // distinguishes "the run went elsewhere" from "the run half-counted here".
-    const cited = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-FIT-001");
+    const cited = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-AAA-001");
     expect(cited?.verdict).toBe("balanced");
     expect(cited?.qualityCheckReconciliations).toEqual([
       {
@@ -416,7 +434,7 @@ describe("[SCN-LNT-008] a check named by two fitness scenarios satisfies one and
       },
     ]);
 
-    const runnerUp = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-FIT-002");
+    const runnerUp = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-AAA-002");
     expect(runnerUp?.verdict).toBe("out-of-balance");
     const missingItem = {
       qualityCheck: "lint",
@@ -456,26 +474,22 @@ describe("[SCN-LNT-008] a check named by two fitness scenarios satisfies one and
  */
 describe("[SCN-LNT-009] a fitness credit citing an @SCN no scenario carries posts to a phantom row", () => {
   it("mints the phantom row for the cited @SCN, posts the run's one credit there naming the check, and holds it out-of-balance", () => {
-    const root = process.cwd();
-    const ciSource = readFileSync(join(root, ".github/workflows/ci.yml"), "utf8");
-    const packageJson = JSON.parse(
-      readFileSync(join(root, "package.json"), "utf8")
-    ) as PackageJsonScripts;
+    const { ciSource, packageJson } = wiringFor(REAL_GUARD);
 
     const registry = checkRegistryOf({ [REAL_GUARD]: CHECK_TAG });
     const checkTags = registeredCheckTags(registry);
-    // The corpus AS IT READ WHEN THE RUN WAS OBSERVED — the fitness scenario carried SCN-FIT-001,
+    // The corpus AS IT READ WHEN THE RUN WAS OBSERVED — the fitness scenario carried SCN-AAA-001,
     // so that is the `@SCN` the run comes to cite.
     const corpusAtObservation = [
       "@LNT",
       "Feature: fixture",
       "  Rule: a fixture rule",
-      `    @${CHECK_TAG} @SCN-FIT-001`,
+      `    @${CHECK_TAG} @SCN-AAA-001`,
       "    Scenario: the corpus keeps its feature codes inside the threshold",
     ].join("\n");
     // And AS IT READS WHEN THE LEDGER IS BUILT — the same scenario, renumbered. Nothing carries
-    // SCN-FIT-001 any more, so the credit names a row nobody wrote.
-    const corpusAtReconcile = corpusAtObservation.replace("SCN-FIT-001", "SCN-FIT-002");
+    // SCN-AAA-001 any more, so the credit names a row nobody wrote.
+    const corpusAtReconcile = corpusAtObservation.replace("SCN-AAA-001", "SCN-AAA-002");
 
     const citations = fitnessCitations(parseTaggedScenarios(corpusAtObservation), checkTags);
     const evidenceObservations = runningStaticChecks(
@@ -486,17 +500,17 @@ describe("[SCN-LNT-009] a fitness credit citing an @SCN no scenario carries post
       (script) => citationOfScript(script, registry, citations)
     );
     const observation = evidenceObservations.find((o) => o.staticCheck === REAL_GUARD);
-    expect(observation?.scnId).toBe("SCN-FIT-001");
+    expect(observation?.scnId).toBe("SCN-AAA-001");
 
     const scenarios = parseScenarios(corpusAtReconcile, [], checkTags);
-    expect(scenarios.map((s) => s.scnId)).toEqual(["SCN-FIT-002"]);
+    expect(scenarios.map((s) => s.scnId)).toEqual(["SCN-AAA-002"]);
 
     const balance = reconcile(scenarios, evidenceObservations);
 
     // THE INVENTED ROW — one per unknown cited id, holding the credit that minted it, raising
     // nothing (nobody named it), and out-of-balance because nothing about it can balance.
     const phantom = balance.scenarioReconciliations.find((s) => s.kind === "phantom-scenario");
-    expect(phantom?.scnId).toBe("SCN-FIT-001");
+    expect(phantom?.scnId).toBe("SCN-AAA-001");
     expect(phantom?.verdict).toBe("out-of-balance");
     expect(phantom?.evidenceObligations).toEqual([]);
     expect(phantom?.evidenceObservations).toEqual([observation]);
@@ -521,7 +535,7 @@ describe("[SCN-LNT-009] a fitness credit citing an @SCN no scenario carries post
       balance.scenarioReconciliations
         .filter((row) => row.evidenceObservations.includes(observation!))
         .map((row) => row.scnId)
-    ).toEqual(["SCN-FIT-001"]);
+    ).toEqual(["SCN-AAA-001"]);
   });
 });
 
@@ -585,7 +599,7 @@ describe("[SCN-LNT-004] a scenario requiring both a unit test and a fitness chec
       "@LNT",
       "Feature: fixture",
       "  Rule: a fixture rule",
-      `    @unit @${UNWIRED_CHECK} @SCN-FIT-001`,
+      `    @unit @${UNWIRED_CHECK} @SCN-AAA-001`,
       "    Scenario: the tree stays inside this check's threshold",
     ].join("\n");
     const scenarios = parseScenarios(corpus, [], checkTags);
@@ -597,7 +611,7 @@ describe("[SCN-LNT-004] a scenario requiring both a unit test and a fitness chec
     // The two credits, observed apart by their own readers and citing the SAME @SCN.
     const unitCredit: EvidenceObservation = {
       qualityCheck: "unit",
-      scnId: "SCN-FIT-001",
+      scnId: "SCN-AAA-001",
       status: "passed",
     };
     const fitnessCredits = checkStaticEvidenceObligations(
@@ -613,12 +627,12 @@ describe("[SCN-LNT-004] a scenario requiring both a unit test and a fitness chec
         checkTag: UNWIRED_CHECK,
         exists: true,
         enforcedOverRealSource: false,
-        scnId: "SCN-FIT-001",
+        scnId: "SCN-AAA-001",
       },
     ]);
 
     const balance = reconcile(scenarios, [unitCredit, ...fitnessCredits]);
-    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-FIT-001");
+    const scenario = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-AAA-001");
 
     // The fitness watermelon holds the row out of balance even though the behavioural axis balances.
     expect(scenario?.verdict).toBe("out-of-balance");

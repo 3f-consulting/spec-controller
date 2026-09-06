@@ -45,7 +45,8 @@ Feature: The local green-check runs the ladder CI runs, derived rather than list
   WHAT A GREEN HERE DOES NOT ESTABLISH. That the ladder is SUFFICIENT — it says the
   local ladder is CI's ladder, and whether CI's ladder is the right one is a separate
   judgement this makes no claim about. And one hand-maintained artefact survives on
-  purpose: the exclusion list. Adding to it narrows the local ladder deliberately,
+  purpose: the exclusion list, which is the TARGET's to write and which THIS repository
+  leaves empty (3F-3165). Adding to it narrows the local ladder deliberately,
   with a written reason, in a reviewed diff — a decision, not drift. It never narrows
   CI, so a gate it dodges still reds on the pull request. AND NOTHING FENCES WHETHER A
   WRITTEN REASON IS TRUE. Staleness is fenced (@SCN-LAD-005) and position is fenced
@@ -101,7 +102,7 @@ Feature: The local green-check runs the ladder CI runs, derived rather than list
 
     @unit @integration @SCN-LAD-004
     Scenario: an excluded CI-only step is not a gate, and its reason is printed
-      Given a CI config running a step this repository excludes from the local ladder
+      Given a CI config running a step its target excludes from the local ladder
       When the local ladder is built over it
       Then the excluded step is not a gate
       And the ladder names it, with the reason it is left out
@@ -116,7 +117,7 @@ Feature: The local green-check runs the ladder CI runs, derived rather than list
 
     @unit @integration @SCN-LAD-007
     Scenario: an excluded step CI runs behind a gate reds, naming the gates ahead of it
-      Given a CI config running the step this repository excludes behind two of its gates
+      Given a CI config running the step its target excludes behind two of its gates
       When the local ladder is built over it
       Then the ladder reds, naming the excluded step and the gates that run ahead of it
       And the same step run ahead of every gate reds nothing
@@ -124,9 +125,9 @@ Feature: The local green-check runs the ladder CI runs, derived rather than list
   Rule: the derived ladder holds over the real repository
 
     @integration @SCN-LAD-006
-    Scenario: pnpm verify lists every CI script but the one excluded step, lint:anemic-domain among them
+    Scenario: pnpm verify lists every CI script this repository runs, cucumber:fitness among them
       Given the real spec-controller repository
       When the local green-check lists the ladder it would run
-      Then it lists every script the real CI runs but the one excluded step, in CI's order
-      And lint:anemic-domain is one of them
+      Then it lists every script the real CI runs, in CI's order
+      And cucumber:fitness is one of them
       And the count it reports is the number of gates it listed

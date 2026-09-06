@@ -34,7 +34,7 @@
 
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { CI_ONLY_EXCLUSIONS, deriveLocalLadder } from "./localLadder.js";
+import { ciOnlyExclusionsOf, deriveLocalLadder } from "./localLadder.js";
 
 /** The `--root <dir>` argument, or the working directory. */
 function rootFromArgv(argv: readonly string[]): string {
@@ -52,10 +52,15 @@ const ciPath = path.join(root, ".github", "workflows", "ci.yml");
 
 let ladder;
 try {
+  const packageJson: unknown = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"));
   ladder = deriveLocalLadder(
     readFileSync(ciPath, "utf8"),
-    JSON.parse(readFileSync(path.join(root, "package.json"), "utf8")),
-    CI_ONLY_EXCLUSIONS,
+    packageJson as Parameters<typeof deriveLocalLadder>[1],
+    // THE EXCLUSIONS ARE THE TARGET'S, read from the root this run was pointed at (3F-3165).
+    // They were a constant compiled into `localLadder.ts` until its one entry retired with the
+    // check that needed it; a constant could only ever describe one repository, and `--root`
+    // points this emitter at others.
+    ciOnlyExclusionsOf(packageJson),
   );
 } catch (err) {
   // A ladder that cannot be built is a usage fault, not a verdict about the code — the
@@ -111,7 +116,7 @@ for (const step of ladder.unsupported) {
 }
 if (ladder.unsupported.length > 0) {
   console.error(
-    "local ladder: split the step into one command per gate, or exclude it in CI_ONLY_EXCLUSIONS with a reason. Running a subset silently is what this ladder exists to stop.",
+    "local ladder: split the step into one command per gate, or exclude it in specController.ciOnlyExclusions with a reason. Running a subset silently is what this ladder exists to stop.",
   );
   process.exit(1);
 }

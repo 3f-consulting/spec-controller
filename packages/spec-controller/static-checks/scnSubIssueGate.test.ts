@@ -31,6 +31,10 @@ function baseInput(overrides: Partial<ScnGateInput> = {}): ScnGateInput {
     uncitedChangedTestBlocks: [],
     hasTicketHandle: false,
     isExternalPr: false,
+    // Every row written before @SCN-SSM-018 was written against a readable pull request body,
+    // and this default is what keeps them saying what they said: the third answer is reachable
+    // only where the body is ABSENT, so a default of `true` leaves each of them unchanged.
+    prBodyReadable: true,
     ...overrides,
   };
 }
@@ -385,5 +389,87 @@ describe("[SCN-SSM-008] the cite scan counts the bracketed token — a prose men
     // The two must agree, or a PR's verdict depends on which read reached it first.
     expect(parseCitedCodesInSource(proseTitledBlock)).toEqual([]);
     expect(parseCitedCodesInSource(bracketedAmidProse)).toEqual(["SCN-API-001"]);
+  });
+});
+
+describe("[SCN-SSM-018] a scenario change with no pull request body to read is examined by nothing", () => {
+  it("[SCN-SSM-018] answers not-examined for the unbound code — not a pass, and not a violation", () => {
+    // The third sentence. Neither answer on offer is true of this run, so neither is given:
+    // `ok` stays false because nothing passed, and `violations` stays empty because nothing
+    // was found. A reading that folded this into either would be the collapse.
+    const result = decideScnGate(
+      baseInput({ addedCodes: ["SCN-LDG-003"], hasTicketHandle: false, prBodyReadable: false })
+    );
+
+    expect(result.verdict).toBe("not-examined");
+    expect(result.ok).toBe(false);
+    expect(result.violations).toEqual([]);
+    expect(result.unexamined.map((u) => u.code)).toEqual(["SCN-LDG-003"]);
+    expect(result.unexamined[0]?.message).toContain("SCN-LDG-003");
+  });
+
+  it("[SCN-SSM-018] reds the SAME change when the body WAS readable and carried no exemption", () => {
+    // An empty pull request body is a body: it was read, it carried no exemption, and the
+    // change is still unbound. One field apart from the row above and opposite in meaning —
+    // collapsing the pair is the whole of the bug, so both are asserted here together.
+    const result = decideScnGate(
+      baseInput({ addedCodes: ["SCN-LDG-003"], hasTicketHandle: false, prBodyReadable: true })
+    );
+
+    expect(result.verdict).toBe("fail");
+    expect(result.ok).toBe(false);
+    expect(result.unexamined).toEqual([]);
+    expect(result.violations.map((v) => v.kind)).toEqual(["missing-ticket-handle"]);
+  });
+
+  it("[SCN-SSM-018] still passes on a ticket handle with no body to read — the handle answers first", () => {
+    // The narrowing, measured rather than asserted: the decision passes a code the moment the
+    // change carries a handle, ahead of every exemption trailer, so the unreadable body is
+    // never reached. This is why the third answer is a residual case and not the local norm.
+    const result = decideScnGate(
+      baseInput({ addedCodes: ["SCN-LDG-003"], hasTicketHandle: true, prBodyReadable: false })
+    );
+
+    expect(result.verdict).toBe("pass");
+    expect(result.ok).toBe(true);
+    expect(result.unexamined).toEqual([]);
+    expect(result.violations).toEqual([]);
+  });
+
+  it("[SCN-SSM-018] still reds a malformed exemption trailer with no body to read — a trailer that WAS read is a finding", () => {
+    // The line the third answer must not cross. A trailer reached the gate from the commit
+    // messages, which are readable everywhere, and its reason is not one of the recognised
+    // ones. That was examined in full; reporting it as unexamined would hide a finding behind
+    // an absence, which is the same lie pointing the other way.
+    const result = decideScnGate(
+      baseInput({
+        addedCodes: ["SCN-LDG-003"],
+        hasTicketHandle: false,
+        prBodyReadable: false,
+        exemptions: [{ code: "SCN-LDG-003", reason: "because I said so" }],
+      })
+    );
+
+    expect(result.verdict).toBe("fail");
+    expect(result.violations.map((v) => v.kind)).toEqual(["malformed-exemption"]);
+    expect(result.unexamined).toEqual([]);
+  });
+
+  it("[SCN-SSM-018] keeps a reachable finding a finding — an uncited changed test block still reds with no body to read", () => {
+    // The same line from the other side, on the unit-equivalent surface. Whether a changed
+    // test block cites a scenario is a fact about the checked-out tree, read in full whatever
+    // the environment carries; only the ticket-binding question needed the body.
+    const result = decideScnGate(
+      baseInput({
+        unitEquivalentBehaviourBearing: true,
+        uncitedChangedTestBlocks: ["packages/fixture-pkg/src/tally.test.ts: the doubling"],
+        hasTicketHandle: false,
+        prBodyReadable: false,
+      })
+    );
+
+    expect(result.verdict).toBe("fail");
+    expect(result.violations.map((v) => v.kind)).toEqual(["uncited-unit-equivalent"]);
+    expect(result.unexamined).toEqual([]);
   });
 });

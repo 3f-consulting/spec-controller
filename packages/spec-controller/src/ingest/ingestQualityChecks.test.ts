@@ -457,11 +457,11 @@ describe("[SCN-MUT-012] resolveThresholds reads a bar that names a mutation gate
     expect(
       asEntries(
         resolveThresholds(
-          { specController: { thresholds: { "SCN-CIP-013": { "ci-run-time": 75 } } } },
+          { specController: { thresholds: { "SCN-AAA-005": { "ci-run-time": 75 } } } },
           killFloorReaderFor(root)
         )
       )
-    ).toEqual(asEntries(thresholdsOf({ "SCN-CIP-013": { "ci-run-time": 75 } })));
+    ).toEqual(asEntries(thresholdsOf({ "SCN-AAA-005": { "ci-run-time": 75 } })));
   });
 });
 
@@ -635,14 +635,14 @@ Feature: measured
         specController: {
           thresholds: {
             "SCN-MSD-001": { mutation: { atLeast: { mutationGate: GATE } } },
-            "SCN-CIP-013": { "ci-run-time": 75 },
+            "SCN-AAA-005": { "ci-run-time": 75 },
           },
         },
       },
       killFloorReaderFor(plantRoot(null))
     );
 
-    expect(thresholdFor(registry, "SCN-CIP-013", "ci-run-time")).toEqual({ threshold: 75 });
+    expect(thresholdFor(registry, "SCN-AAA-005", "ci-run-time")).toEqual({ threshold: 75 });
     expect(thresholdFor(registry, "SCN-MSD-001", "mutation")).toBeNull();
   });
 });

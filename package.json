@@ -13,12 +13,13 @@
     "verify": "bash scripts/verify.sh",
     "ladder": "tsx packages/spec-controller/static-checks/localLadderCli.ts",
     "typecheck": "tsc --noEmit",
-    "test": "tsx packages/spec-controller/static-checks/timeStepCli.ts --scn SCN-CIP-013 --check ci-run-time -- vitest run",
-    "mutation": "tsx packages/spec-controller/static-checks/mutationScoreCli.ts --scn SCN-MUT-011 --check mutation -- stryker run",
-    "mutation:score": "tsx packages/spec-controller/static-checks/mutationScoreReaderCli.ts --scn SCN-MUT-011 --check mutation",
+    "test": "tsx packages/spec-controller/static-checks/timeStepCli.ts --scn SCN-FIT-012 --check ci-run-time -- vitest run",
+    "mutation": "tsx packages/spec-controller/static-checks/mutationScoreCli.ts --scn SCN-FIT-002 --check mutation -- stryker run",
+    "mutation:score": "tsx packages/spec-controller/static-checks/mutationScoreReaderCli.ts --scn SCN-FIT-002 --check mutation",
+    "timing:score": "tsx packages/spec-controller/static-checks/timingReaderCli.ts --check ci-run-time",
     "mutation:ratchet": "tsx packages/spec-controller/src/mutation-ratchet/ratchetCli.ts --gate domain --report reports/mutation/mutation.json --bank-command 'pnpm mutation:bank'",
     "mutation:bank": "pnpm mutation:ratchet --record",
-    "cucumber": "tsx packages/spec-controller/static-checks/timeStepCli.ts --scn SCN-CIP-014 --check ci-run-time -- cucumber-js",
+    "cucumber": "tsx packages/spec-controller/static-checks/timeStepCli.ts --scn SCN-FIT-013 --check ci-run-time -- cucumber-js",
     "cucumber:fitness": "cucumber-js --profile fitness",
     "build": "pnpm -r build",
     "balance": "tsx packages/spec-controller/src/cli.ts",
@@ -32,35 +33,77 @@
     "lint:adopted-vocabulary": "tsx packages/spec-controller/static-checks/lintAdoptedVocabularyCli.ts",
     "lint:anemic-domain": "tsx packages/spec-controller/static-checks/lintAnemicDomainCli.ts",
     "lint:exempt-data-floor": "tsx packages/spec-controller/static-checks/lintExemptDataFloorCli.ts",
-    "lint:check-characteristics": "tsx packages/spec-controller/static-checks/lintCheckCharacteristicsCli.ts"
+    "fitness:corpus": "tsx packages/spec-controller/static-checks/fitnessCorpus.ts"
   },
   "specController": {
-    "staticChecks": ["typecheck"],
-    "checkRegistry": {
-      "lint:feature-codes": { "check": "traceability", "scn": "SCN-LNT-011" },
-      "lint:scn-tags": { "check": "traceability", "scn": "SCN-STG-006" },
-      "lint:complexity-exceptions": { "check": "complexity", "scn": "SCN-CPX-006" },
-      "lint:blocked-vocabulary": { "check": "vocab", "scn": "SCN-VOC-019" },
-      "typecheck": "typecheck",
-      "lint:adopted-vocabulary": { "check": "vocab", "scn": "SCN-VOC-020" },
-      "lint:exempt-data-floor": { "check": "vocab", "scn": "SCN-VOC-021" },
-      "lint:check-characteristics": { "check": "vocab", "scn": "SCN-CHR-005" },
-      "lint:anemic-domain": "tech-conformance",
-      "lint:scn-subissues": { "check": "traceability", "scn": "SCN-SSM-009" }
-    },
     "fitnessChecks": [
-      { "scn": "SCN-CPX-005", "characteristic": "complexity", "command": "eslint" },
+      { "scn": "SCN-FIT-001", "characteristic": "complexity", "command": "eslint" },
       {
-        "scn": "SCN-MUT-011",
+        "scn": "SCN-FIT-003",
+        "characteristic": "complexity",
+        "command": "pnpm lint:complexity-exceptions"
+      },
+      {
+        "scn": "SCN-FIT-004",
+        "characteristic": "vocab",
+        "command": "pnpm lint:blocked-vocabulary"
+      },
+      {
+        "scn": "SCN-FIT-005",
+        "characteristic": "vocab",
+        "command": "pnpm lint:adopted-vocabulary"
+      },
+      {
+        "scn": "SCN-FIT-006",
+        "characteristic": "vocab",
+        "command": "pnpm lint:exempt-data-floor"
+      },
+      {
+        "scn": "SCN-FIT-007",
+        "characteristic": "traceability",
+        "command": "pnpm lint:feature-codes"
+      },
+      {
+        "scn": "SCN-FIT-008",
+        "characteristic": "traceability",
+        "command": "pnpm lint:scn-tags"
+      },
+      {
+        "scn": "SCN-FIT-009",
+        "characteristic": "tech-conformance",
+        "command": "pnpm lint:anemic-domain"
+      },
+      {
+        "scn": "SCN-FIT-010",
+        "characteristic": "traceability",
+        "command": "pnpm lint:scn-subissues",
+        "notExaminedExit": 3
+      },
+      { "scn": "SCN-FIT-011", "characteristic": "typecheck", "command": "pnpm typecheck" },
+      {
+        "scn": "SCN-FIT-012",
+        "characteristic": "ci-run-time",
+        "command": "pnpm --silent timing:score --scn SCN-FIT-012",
+        "atMost": 75
+      },
+      {
+        "scn": "SCN-FIT-013",
+        "characteristic": "ci-run-time",
+        "command": "pnpm --silent timing:score --scn SCN-FIT-013",
+        "atMost": 150
+      },
+      {
+        "scn": "SCN-FIT-002",
         "characteristic": "mutation",
-        "command": "pnpm --silent mutation:score",
+        "command": "pnpm --silent mutation:score --supersedes SCN-MUT-011",
         "atLeast": { "mutationGate": "domain" }
+      },
+      {
+        "scn": "SCN-FIT-014",
+        "characteristic": "traceability",
+        "command": "pnpm --silent fitness:corpus && git diff --exit-code -- features/fitness-checks.feature"
       }
-    ],
-    "thresholds": {
-      "SCN-CIP-013": { "ci-run-time": 75 },
-      "SCN-CIP-014": { "ci-run-time": 150 }
-    }
+    ]
   },
   "devDependencies": {
     "@3f-consulting/spec-controller-core": "workspace:*",

@@ -73,7 +73,7 @@ Both spellings are supported and neither is preferred:
 "specController": {
   "checkRegistry": {
     // Object form — names the characteristic AND the fitness scenario the credit posts to.
-    "lint:complexity": { "check": "complexity", "scn": "SCN-CPX-005" },
+    "lint:complexity-exceptions": { "check": "complexity", "scn": "SCN-CPX-006" },
 
     // String form — names the characteristic only; the corpus decides which row the credit
     // posts to. An object carrying no "scn" is the object spelling of exactly this.

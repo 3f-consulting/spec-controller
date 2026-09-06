@@ -107,31 +107,30 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
 
   Rule: the scn-subissues static check's own CI run reconciles on spec-controller's Ledger
 
-    THE COBBLER'S SHOES, THE LAST PAIR. lint:scn-subissues runs in spec-controller's own
-    CI over its own source and exists as a package.json script, so the running-static-check
-    observer emits its run into the evidence stream on every reconcile. The other side was
-    missing: no scenario NAMED it. A run nothing names has no Evidence Obligation to settle
-    against, so it folded onto the suspense scenario as an uncited static check — an
-    instance, on the tool's own books, of exactly the class uncited-static-checks.feature
-    exists to name. A gate that is not reconciled on its own Ledger is honour, not
-    mechanism.
+    THE COBBLER'S SHOES, THE LAST PAIR. lint:scn-subissues runs over spec-controller's own
+    source on every build, so its run reaches the evidence stream on every reconcile. The
+    other side was missing: no scenario NAMED it. A run nothing names has no Evidence
+    Obligation to settle against, so it folded onto the suspense scenario as an uncited
+    static check — an instance, on the tool's own books, of exactly the class
+    uncited-static-checks.feature exists to name. A gate that is not reconciled on its own
+    Ledger is honour, not mechanism.
 
-    The bare @traceability tag on the fitness scenario at the foot of this file is what
-    closes it. The tag raises the Evidence Obligation the CI run settles, so the run is
-    credited to THAT scenario instead of the suspense row — the precedent set by the
-    scenarios @SCN-CPX-003, @SCN-VOC-011 and @SCN-ANM-002, where observed AND required is
-    the balanced state. The `lint:` prefix is load-bearing on the other
-    side of the same pairing: runningStaticChecks observes a CI script only when its name
-    carries an observed prefix, so a name outside that set would run in CI while being
-    invisible to spec-controller's own ledger.
+    WHAT CLOSES IT IS NOW A CONFIGURED ROW, AND THAT IS THE SAME CLAIM THROUGH A SHORTER
+    JOIN (3F-3165). It used to be a stepless scenario at the foot of this file carrying a
+    bare @traceability tag, joined back to the running script handle through
+    specController.checkRegistry and then through the corpus — two hops, because a
+    DISCOVERED check is a script handle and a handle does not know what it is for. The
+    check is now a row of specController.fitnessChecks naming SCN-FIT-010; the fitness pass
+    runs the row's command, and the generated scenario appearing in that pass's report IS
+    the credit, carrying its own @SCN on its own tag line. Nothing is resolved onto it.
 
     WHAT THIS ASSERTS THAT SSM-001..005 DO NOT. The siblings above pin the gate's DECISION
     over fixtures — what it passes and what it reds. This one pins the check's own
-    RECONCILIATION over the real tree, and asserts it FIRES rather than merely exists: the
-    script being present in package.json is only half the observation, and a check that
-    exists but that no CI step invokes is the WATERMELON, not a green. So both halves are
-    asserted — exists AND enforced over real source — and then that the reconcile posts
-    that run to this scenario, leaving no static check uncited on the suspense row.
+    RECONCILIATION over the real tree, and asserts it FIRES rather than merely exists: a
+    row naming a command is only half the observation, and the half that matters is the
+    scenario appearing in a run's report. So both halves are asserted — the row names the
+    scenario AND a pass over this tree reports it — and then that the reconcile posts that
+    credit to that scenario, leaving no static check uncited on the suspense row.
 
     @unit @integration @SCN-SSM-006
     Scenario: the scenario sub-issue check's own CI run is credited to the scenario naming it
@@ -201,25 +200,6 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
       Given a PR whose new behaviour is proven by a test block naming a scenario id only in its title's prose, on a branch carrying a 3F ticket handle
       When the scenario sub-issue gate runs over the prose-titled fixture PR
       Then the gate reds, naming the block whose title only mentions a scenario id
-
-  Rule: every behaviour-bearing scenario change in this repository is bound to a tracked work item
-
-    THE OBLIGATION @SCN-SSM-006 USED TO CARRY, now held by the shape that fits it. SSM-006
-    asserts the RECONCILIATION — that the check's run is credited and nothing is left uncited
-    — over the real tree, which is a behaviour with steps and stays exactly as it was. What it
-    also used to do, through the retired tag form, was raise spec-controller's own Evidence
-    Obligation for the run. That is a whole-system characteristic of this repository rather
-    than an example of anything, so it is stated as one below and the bare `@traceability`
-    tag raises it there.
-
-    THE CHECK IS PULL-REQUEST-ONLY, AND THAT DOES NOT WEAKEN THE ROW. Its CI step is guarded
-    by `if: github.event_name == 'pull_request'`, because it judges a diff against a base that
-    only a pull request supplies. The ledger reads the workflow, not the run's outcome — the
-    step is present, so the check is observed as enforced over real source, exactly as it was
-    under the retired form.
-
-    @traceability @SCN-SSM-009
-    Scenario: every behaviour-bearing scenario code changed on a pull request is bound to a ticketed one
 
   Rule: an updated scenario code is the code of a scenario whose text changed
 
@@ -454,3 +434,46 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
       Given a PR that relabels a scenario and changes a step inside that same scenario
       When the scenario sub-issue gate runs over the relabelled-and-edited fixture PR
       Then the gate does not auto-detect a renumber, and requires a binding for the new code
+
+  Rule: a scenario change the gate could not examine is reported as examined by nothing, never as a pass
+
+    THE THIRD SENTENCE. Two answers were on offer — the exemption was claimed and is valid,
+    so pass; the exemption was not claimed and should have been, so red — and a third case
+    fits neither. SCN-exempt directives come from the pull request body as well as the commit
+    messages, so a run with no pull request body has no way to answer whether an exemption was
+    claimed. Neither of the two answers may be invented for it.
+
+    "DO NOT FAIL ON IT" MUST NOT RESOLVE TO A PASS. A check that goes green having examined
+    nothing is the silence fault, in the repository that exists to name it — and it is worse
+    than the red it replaces, because a red is looked at.
+
+    THE DISCRIMINATOR IS WHETHER THE ABSENT INPUT IS A FAULT OR THE ORDINARY STATE, and this
+    repository holds both precedents. An absent mutation record reds, because an absent nightly
+    sweep is a lapsed nightly. An unreadable timing report posts nothing and exits 0, because a
+    zero would red an honest suite for a fault in the thing measuring it. An absent pull request
+    body on a laptop is neither: it is what running outside a pull request IS.
+
+    IT IS NARROWER THAN IT LOOKS, AND THE NARROWING IS MEASURED. The decision passes a code the
+    moment the change carries a ticket handle, ahead of every exemption trailer — and a handle
+    is readable from a [3F-NNNN] commit subject with no pull request anywhere near it. So this
+    answer is reachable only where a scenario changed, no handle exists, AND no body can be
+    read. The ordinary local run never meets it; the residual case is the one that must not lie.
+
+    AN EMPTY BODY IS NOT THIS CASE, AND THE TWO ARE ONE KEYSTROKE APART IN A FIXTURE. A pull
+    request whose author wrote nothing HAS a body — it was read, and it carried no exemption —
+    so the same change reds there, exactly as @SCN-SSM-002 pins. Collapsing the pair is the
+    whole of the bug: the gate would either red honest work off a laptop or wave a real
+    violation through in CI, and which of the two it did would depend on which way somebody
+    had guessed.
+
+    A FINDING THE GATE DID REACH STAYS A FINDING. Only the question the pull request body could
+    have answered goes unanswered — whether an unbound code was exempted. A changed test block
+    citing no scenario is a fact about the checked-out tree, read in full and reported in full;
+    calling that one unexamined would hide a finding behind an absence, which is the same lie
+    pointing the other way.
+
+    @unit @integration @SCN-SSM-018
+    Scenario: a scenario change with no pull request body to read is examined by nothing, and says so rather than passing
+      Given an internal PR that adds a behaviour-bearing @SCN code, carries no 3F ticket handle, and has no pull request body to read
+      When the scenario sub-issue gate runs over the no-body fixture PR
+      Then the gate reports the code as examined by nothing, and neither passes it nor reds it

@@ -213,7 +213,7 @@ Given("a stepless fitness scenario carries the bare check {string}", function (c
     "@LNT",
     "Feature: fixture",
     "  Rule: a fixture rule",
-    `    @${check} @SCN-FIT-001`,
+    `    @${check} @SCN-AAA-001`,
     "    Scenario: the tree stays inside this check's threshold",
   ].join("\n");
 });
@@ -233,7 +233,7 @@ Given(
     fitnessCorpus = [
       fitnessCorpus,
       "",
-      `    @${check} @SCN-FIT-002`,
+      `    @${check} @SCN-AAA-002`,
       "    Scenario: a second scenario claiming the same check",
     ].join("\n");
   }
@@ -250,7 +250,7 @@ Given(
     fitnessCorpus = [
       fitnessCorpus,
       "",
-      `    @${check} @SCN-FIT-003`,
+      `    @${check} @SCN-AAA-003`,
       "    Scenario: a scenario claiming a different check entirely",
     ].join("\n");
   }
@@ -300,13 +300,13 @@ Given(
   function (check: string, otherCheck: string) {
     // ONE ROW OWING TWO FITNESS OBLIGATIONS — a legal corpus, and the shape the citation seam is
     // not unique over. `fitnessCitations` maps each bare tag to the scenario carrying it, so BOTH
-    // tags here resolve to SCN-FIT-001 and both runs cite it. Nothing about that is a fault; what
+    // tags here resolve to SCN-AAA-001 and both runs cite it. Nothing about that is a fault; what
     // the arm settles is whether the reconciler can still tell the two credits apart.
     fitnessCorpus = [
       "@LNT",
       "Feature: fixture",
       "  Rule: a fixture rule",
-      `    @${check} @${otherCheck} @SCN-FIT-001`,
+      `    @${check} @${otherCheck} @SCN-AAA-001`,
       "    Scenario: the tree stays inside both thresholds",
     ].join("\n");
   }
@@ -354,7 +354,7 @@ Given("that fitness scenario is renumbered after the run cites it", function () 
   // retiring the scenario, or reconciling a feature file the cited one does not live in, produce
   // the same fact. The citation is still resolved against `fitnessCorpus` — only the reconciled
   // read moves.
-  reconciledCorpus = fitnessCorpus.replace("SCN-FIT-001", "SCN-FIT-002");
+  reconciledCorpus = fitnessCorpus.replace("SCN-AAA-001", "SCN-AAA-002");
 });
 
 // @SCN-LNT-001
@@ -370,7 +370,7 @@ Given("a second scenario would have claimed the same run under name-match", func
   fitnessCorpus = [
     fitnessCorpus,
     "",
-    `    @lint=${CITED_SCRIPT} @SCN-FIT-002`,
+    `    @lint=${CITED_SCRIPT} @SCN-AAA-002`,
     "    Scenario: a fixture scenario naming the same handle the retired way",
     "      Given a fixture step",
   ].join("\n");
@@ -383,16 +383,37 @@ Given("a second scenario would have claimed the same run under name-match", func
 // @SCN-LNT-016
 // @SCN-LNT-017
 When(
-  "the fitness checks wired into CI over the real source are observed and reconciled",
+  "the fitness checks wired into CI are observed and reconciled",
   function () {
-    // The tool's OWN, REAL CI config + package.json from the checked-out tree (cwd is the repo
-    // root under `pnpm cucumber`) — the check is genuinely a CI run step over real source, not a
-    // planted fixture. The cross-component arm: registry → corpus → observer → reconcile → render.
-    const root = process.cwd();
-    const ciSource = readFileSync(join(root, ".github/workflows/ci.yml"), "utf8");
-    const packageJson = JSON.parse(
-      readFileSync(join(root, "package.json"), "utf8")
-    ) as PackageJsonScripts;
+    // A PLANTED WORKFLOW WIRING EXACTLY THE REGISTERED HANDLES, and the plant is the migration
+    // working rather than a retreat from it (3F-3165, under 3F-3139). This arm read the
+    // checked-out ci.yml and package.json until the conversion emptied them: a converted fitness
+    // check is not a CI `run:` step at all — its command sits on a `specController.fitnessChecks`
+    // row and the fitness cucumber pass invokes it — so this repository wires no discovered static
+    // check for these arms to observe. 3F-3153 measured that coming ("under the full migration no
+    // characteristic retains two wired handles at all… the durable answer is a planted tree rather
+    // than the real one") and left the move to 3F-3139. This is that move.
+    //
+    // WHAT THE REAL READ BOUGHT AND WHAT IT DID NOT. It bought a genuine workflow under the
+    // OBSERVER; what these arms assert is the CITATION SEAM — which row a run's credit posts to —
+    // decided by the registry and the corpus, both of which were always fixtures here. The
+    // observer's own reading of a workflow document is still held by the arms that own it
+    // (@SCN-USG-001..010, @SCN-LDG-*), over the workflows they plant.
+    //
+    // THE PLANT STATES ITS OWN PREMISE. Wiring exactly the handles the registry names means the
+    // fixture cannot go quietly false the way it did here: a handle nobody registered is not wired,
+    // and one that is registered is, which is the condition each of these scenarios says it has.
+    const handles = [...fitnessRegistry.keys()];
+    const ciSource = [
+      "name: CI",
+      "jobs:",
+      "  ci:",
+      "    steps:",
+      ...handles.map((handle) => `      - run: pnpm ${handle}`),
+    ].join("\n");
+    const packageJson: PackageJsonScripts = {
+      scripts: Object.fromEntries(handles.map((handle) => [handle, `tsx ${handle}.ts`])),
+    };
 
     const checkTags = registeredCheckTagsOf(fitnessRegistry);
     // TWO READS, and they are the same one unless an arm has said otherwise: the citation is
@@ -515,7 +536,7 @@ Given(
       "@LNT",
       "Feature: fixture",
       "  Rule: a fixture rule",
-      `    @unit @${check} @SCN-FIT-001`,
+      `    @unit @${check} @SCN-AAA-001`,
       "    Scenario: the tree stays inside this check's threshold",
     ].join("\n");
   }
@@ -526,7 +547,7 @@ Given("the unit test for that scenario passes", function () {
   // The behavioural credit, CITING — the same route, and the same @SCN, the fitness credit will
   // arrive by. A green here is what makes the arm load-bearing: if the axes could smear, this is
   // the credit that would wrongly discharge the fitness obligation and turn the watermelon green.
-  unitCredit = { qualityCheck: "unit", scnId: "SCN-FIT-001", status: "passed" };
+  unitCredit = { qualityCheck: "unit", scnId: "SCN-AAA-001", status: "passed" };
 });
 
 // @SCN-LNT-004
@@ -591,7 +612,7 @@ Given(
       "@FIT",
       "Feature: fitness",
       "  Rule: the tree stays inside its thresholds",
-      `    @${check} @SCN-FIT-001`,
+      `    @${check} @SCN-AAA-001`,
       "    Scenario: the codebase stays under the threshold",
     ].join("\n");
   }
@@ -609,7 +630,7 @@ Given(
     // point here is the obligation rule, not the corpus rule.
     corpusSource = [
       corpusSource,
-      `    @${check} @SCN-FIT-002`,
+      `    @${check} @SCN-AAA-002`,
       "    Scenario: the same characteristic, now carrying a runnable example",
       "      Given a step, which is the whole of what makes this row STEPPED",
     ].join("\n");
@@ -634,7 +655,7 @@ Given(
       "@FIT",
       "Feature: fitness",
       "  Rule: the retired form is inert",
-      `    @lint=${handle} @SCN-FIT-003`,
+      `    @lint=${handle} @SCN-AAA-003`,
       "    Scenario: a behavioural scenario still spelling the retired form",
       "      Given the target source",
     ].join("\n");
@@ -665,7 +686,7 @@ Given(
       "@FIT",
       "Feature: fitness",
       "  Rule: the tree stays inside its thresholds",
-      "    @fitness @SCN-FIT-001",
+      "    @fitness @SCN-AAA-001",
       "    Scenario: the codebase stays under the threshold",
     ].join("\n");
   }
@@ -682,7 +703,7 @@ Given("the axis tag reaches it a second time, hoisted onto its Rule", function (
     "Feature: fitness",
     "  @fitness",
     "  Rule: the tree stays inside its thresholds",
-    "    @fitness @SCN-FIT-001",
+    "    @fitness @SCN-AAA-001",
     "    Scenario: the codebase stays under the threshold",
   ].join("\n");
 });
@@ -733,11 +754,11 @@ Given(
       "@FIT",
       "Feature: fitness",
       "  Rule: the tree stays inside its bars",
-      "    @fitness @SCN-FIT-002",
+      "    @fitness @SCN-AAA-002",
       "    Scenario: the tree stays above its mutation floor",
-      "    @fitness @SCN-FIT-003",
+      "    @fitness @SCN-AAA-003",
       "    Scenario: the tree stays above its coverage floor",
-      "    @fitness @SCN-FIT-001",
+      "    @fitness @SCN-AAA-001",
       "    Scenario: the codebase stays under the complexity threshold",
     ].join("\n");
   }
@@ -955,7 +976,7 @@ Then(
   function () {
     // The identity of the posted credit, counted across the WHOLE ledger. Under name-match this
     // same object posted to every row naming the handle, so a rule that kept name-routing a
-    // citing credit puts SCN-FIT-002 in this list too and the assertion reds.
+    // citing credit puts SCN-AAA-002 in this list too and the assertion reds.
     const observation = evidenceObservations.find(
       (o) => isStaticCheckObservation(o) && o.staticCheck === CITED_SCRIPT
     );
@@ -964,7 +985,7 @@ Then(
       fitnessLedger.scenarioReconciliations
         .filter((row) => row.evidenceObservations.includes(observation))
         .map((row) => row.scnId),
-      ["SCN-FIT-001"],
+      ["SCN-AAA-001"],
       "expected the citing credit to post to the fitness scenario's row and to no other"
     );
   }
@@ -975,12 +996,12 @@ Then("that fitness scenario reconciles satisfied", function () {
   // The OUTCOME on the concept, and the same fact read back off the rendered row — the report
   // is where a reader meets it. A `missing` (the citation route not taken) flips both.
   const outcomes = (
-    fitnessLedger.scenarioReconciliations.find((row) => row.scnId === "SCN-FIT-001")
+    fitnessLedger.scenarioReconciliations.find((row) => row.scnId === "SCN-AAA-001")
       ?.qualityCheckReconciliations ?? []
   ).map((item) => item.outcome);
   assert.deepEqual(outcomes, ["satisfied"], "expected the fitness obligation to reconcile satisfied");
 
-  const { verdict, items } = rowCells("SCN-FIT-001");
+  const { verdict, items } = rowCells("SCN-AAA-001");
   assert.match(verdict, /\bbalanced\b/, `expected a balanced verdict cell; got "${verdict}"`);
   assert.doesNotMatch(verdict, /out-of-balance/, `expected not out-of-balance; got "${verdict}"`);
   assert.equal(items, "—", `expected no reconciling items; got "${items}"`);
@@ -998,13 +1019,13 @@ Then(
     );
     assert.equal(
       observation?.scnId,
-      "SCN-FIT-001",
+      "SCN-AAA-001",
       `expected the unwired check's observation to cite the fitness scenario; got ${JSON.stringify(observation)}`
     );
 
     // The OUTCOME on the concept — the pair, so the item is pinned to name the BARE check rather
     // than the handle that ran it, and `watermelon` rather than `missing` or `satisfied`.
-    const row = fitnessLedger.scenarioReconciliations.find((r) => r.scnId === "SCN-FIT-001");
+    const row = fitnessLedger.scenarioReconciliations.find((r) => r.scnId === "SCN-AAA-001");
     assert.deepEqual(
       (row?.qualityCheckReconciliations ?? []).map((item) => [item.staticCheck, item.outcome]),
       [[check, "watermelon"]],
@@ -1013,7 +1034,7 @@ Then(
 
     // And the same fact read back off the rendered row — the report is where a reader meets it.
     // Row-scoped to the scenario's own CELLS, so a bare regex over the report cannot pass it.
-    const { verdict, items } = rowCells("SCN-FIT-001");
+    const { verdict, items } = rowCells("SCN-AAA-001");
     assert.match(
       verdict,
       /out-of-balance/,
@@ -1047,14 +1068,14 @@ Then(
         checkTag: "absent-check",
         exists: false,
         enforcedOverRealSource: false,
-        scnId: "SCN-FIT-001",
+        scnId: "SCN-AAA-001",
       },
       `expected the absent check to be read as a citing exists:false record; got ${JSON.stringify(observation)}`
     );
 
     // The OUTCOME on the concept — the pair, so the item is pinned to name the BARE check rather
     // than the handle that found it, and `missing` rather than the watermelon.
-    const row = fitnessLedger.scenarioReconciliations.find((r) => r.scnId === "SCN-FIT-001");
+    const row = fitnessLedger.scenarioReconciliations.find((r) => r.scnId === "SCN-AAA-001");
     assert.deepEqual(
       (row?.qualityCheckReconciliations ?? []).map((item) => [item.staticCheck, item.outcome]),
       [[check, "missing"]],
@@ -1070,7 +1091,7 @@ Then(
 
     // And the same fact read back off the rendered row — the report is where a reader meets it.
     // Row-scoped to the scenario's own CELLS, so a bare regex over the report cannot pass it.
-    const { verdict, items } = rowCells("SCN-FIT-001");
+    const { verdict, items } = rowCells("SCN-AAA-001");
     assert.match(
       verdict,
       /out-of-balance/,
@@ -1090,34 +1111,34 @@ Then(
   "the first fitness scenario reconciles satisfied, holding the run's one credit",
   function () {
     // ONE @SCN, and it is the FIRST scenario's — the corpus's own answer, kept by
-    // `fitnessCitations`. A last-wins reader cites SCN-FIT-002 and this reds on the citation alone,
+    // `fitnessCitations`. A last-wins reader cites SCN-AAA-002 and this reds on the citation alone,
     // before any outcome is read.
     const observation = evidenceObservations.find(
       (o) => isStaticCheckObservation(o) && o.staticCheck === CITED_SCRIPT
     );
     assert.equal(
       observation?.scnId,
-      "SCN-FIT-001",
+      "SCN-AAA-001",
       `expected the run to cite the first fitness scenario in corpus order; got ${JSON.stringify(observation)}`
     );
 
     // The credit's IDENTITY, counted across the WHOLE ledger. A shared-credit path — the reading
-    // this ruling refuses — puts SCN-FIT-002 in this list too.
+    // this ruling refuses — puts SCN-AAA-002 in this list too.
     assert.deepEqual(
       fitnessLedger.scenarioReconciliations
         .filter((row) => row.evidenceObservations.includes(observation!))
         .map((row) => row.scnId),
-      ["SCN-FIT-001"],
+      ["SCN-AAA-001"],
       "expected the one credit to post to the cited scenario's row and to no other"
     );
 
     const outcomes = (
-      fitnessLedger.scenarioReconciliations.find((row) => row.scnId === "SCN-FIT-001")
+      fitnessLedger.scenarioReconciliations.find((row) => row.scnId === "SCN-AAA-001")
         ?.qualityCheckReconciliations ?? []
     ).map((item) => item.outcome);
     assert.deepEqual(outcomes, ["satisfied"], "expected the cited scenario to reconcile satisfied");
 
-    const { verdict, items } = rowCells("SCN-FIT-001");
+    const { verdict, items } = rowCells("SCN-AAA-001");
     assert.match(verdict, /\bbalanced\b/, `expected a balanced verdict cell; got "${verdict}"`);
     assert.doesNotMatch(verdict, /out-of-balance/, `expected not out-of-balance; got "${verdict}"`);
     assert.equal(items, "—", `expected no reconciling items; got "${items}"`);
@@ -1134,7 +1155,7 @@ Then(
     // above and finds nothing to discharge it, so it reads `missing` — out loud, on the ledger,
     // rather than absorbed by a run that was never about it. A both-satisfied or dedupe path flips
     // this to `satisfied`; a name-match fallback that let a citing run answer by handle does too.
-    const row = fitnessLedger.scenarioReconciliations.find((r) => r.scnId === "SCN-FIT-002");
+    const row = fitnessLedger.scenarioReconciliations.find((r) => r.scnId === "SCN-AAA-002");
     assert.deepEqual(
       (row?.qualityCheckReconciliations ?? []).map((item) => [item.staticCheck, item.outcome]),
       [[check, "missing"]],
@@ -1156,7 +1177,7 @@ Then(
 
     // And the same fact read back off the rendered row — the report is where a reader meets the
     // corpus fault. Row-scoped to the scenario's own CELLS, so a bare regex cannot pass it.
-    const { verdict, items } = rowCells("SCN-FIT-002");
+    const { verdict, items } = rowCells("SCN-AAA-002");
     assert.match(
       verdict,
       /out-of-balance/,
@@ -1180,7 +1201,7 @@ Then(
     // reads `satisfied` while the check it names guards nothing. The pair is asserted TOGETHER
     // with the crediting observation, because the outcome alone cannot tell a watermelon read off
     // its own run from a watermelon read off the other one.
-    const row = fitnessLedger.scenarioReconciliations.find((r) => r.scnId === "SCN-FIT-001");
+    const row = fitnessLedger.scenarioReconciliations.find((r) => r.scnId === "SCN-AAA-001");
     const item = (row?.qualityCheckReconciliations ?? []).find((i) => i.staticCheck === check);
     assert.deepEqual(
       [item?.outcome, (item?.evidenceObservation as { staticCheck?: string } | undefined)?.staticCheck],
@@ -1191,7 +1212,7 @@ Then(
 
     // And the row itself, which is where the false green is actually reported: a smeared credit
     // turns this row `balanced` and the whole ledger green over a check that runs nowhere.
-    const { verdict, items } = rowCells("SCN-FIT-001");
+    const { verdict, items } = rowCells("SCN-AAA-001");
     assert.match(
       verdict,
       /out-of-balance/,
@@ -1209,7 +1230,7 @@ Then(
     // pass the assertion above and break this one — the second credit must be accounted for, not
     // merely kept away from the first obligation. Together the two pin every credit to the
     // obligation it is about, which is the never-dropped clause read on a two-check row.
-    const row = fitnessLedger.scenarioReconciliations.find((r) => r.scnId === "SCN-FIT-001");
+    const row = fitnessLedger.scenarioReconciliations.find((r) => r.scnId === "SCN-AAA-001");
     const item = (row?.qualityCheckReconciliations ?? []).find((i) => i.staticCheck === check);
     assert.deepEqual(
       [item?.outcome, (item?.evidenceObservation as { staticCheck?: string } | undefined)?.staticCheck],
@@ -1240,7 +1261,7 @@ Then(
     );
     assert.equal(
       observation?.scnId,
-      "SCN-FIT-001",
+      "SCN-AAA-001",
       `expected the run to carry the @SCN it was stamped with; got ${JSON.stringify(observation)}`
     );
 
@@ -1250,7 +1271,7 @@ Then(
     const phantom = fitnessLedger.scenarioReconciliations.find(
       (row) => row.kind === "phantom-scenario"
     );
-    assert.equal(phantom?.scnId, "SCN-FIT-001", "expected a phantom row for the cited @SCN");
+    assert.equal(phantom?.scnId, "SCN-AAA-001", "expected a phantom row for the cited @SCN");
     assert.deepEqual(phantom?.evidenceObligations, [], "expected the phantom row to raise nothing");
     assert.deepEqual(
       (phantom?.qualityCheckReconciliations ?? []).map((item) => [
@@ -1264,7 +1285,7 @@ Then(
 
     // And the same fact read back off the rendered row — the report is where a reader meets it.
     // Row-scoped to the phantom row's own CELLS, so a bare regex over the report cannot pass it.
-    const { verdict, items } = rowCells("SCN-FIT-001");
+    const { verdict, items } = rowCells("SCN-AAA-001");
     assert.match(
       verdict,
       /out-of-balance/,
@@ -1297,7 +1318,7 @@ Then("no scenario's row holds that credit", function () {
     fitnessLedger.scenarioReconciliations
       .filter((row) => row.evidenceObservations.includes(observation))
       .map((row) => [row.kind, row.scnId]),
-    [["phantom-scenario", "SCN-FIT-001"]],
+    [["phantom-scenario", "SCN-AAA-001"]],
     "expected the credit to post to the phantom row and to no other"
   );
 });
@@ -1310,7 +1331,7 @@ Then(
     // item is pinned to name the BARE tag the scenario carries while its observation names the
     // RUNNABLE handle — two different words, so a reader that matched by name could never have
     // joined them, and one that let the green unit credit answer this obligation reads `satisfied`.
-    const row = fitnessLedger.scenarioReconciliations.find((r) => r.scnId === "SCN-FIT-001");
+    const row = fitnessLedger.scenarioReconciliations.find((r) => r.scnId === "SCN-AAA-001");
     const item = (row?.qualityCheckReconciliations ?? []).find((i) => i.qualityCheck === "lint");
     assert.deepEqual(
       [item?.staticCheck, item?.outcome],
@@ -1325,14 +1346,14 @@ Then(
         checkTag: "unwired-check",
         exists: true,
         enforcedOverRealSource: false,
-        scnId: "SCN-FIT-001",
+        scnId: "SCN-AAA-001",
       },
       `expected the fitness obligation to be answered by the citing fitness credit; got ${JSON.stringify(item?.evidenceObservation)}`
     );
 
     // And the same fact read back off the rendered row — the report is where a reader meets it.
     // The row is out of balance on the fitness item ALONE, while the behavioural axis balances.
-    const { verdict, items } = rowCells("SCN-FIT-001");
+    const { verdict, items } = rowCells("SCN-AAA-001");
     assert.match(
       verdict,
       /out-of-balance/,
@@ -1353,7 +1374,7 @@ Then("its unit obligation reconciles satisfied, omitted from the reconciling ite
   // above, and the direction a fitness run must never green. Both credits cite the SAME @SCN and
   // post to the SAME row, so a reconciler answering an obligation by the row it sits on rather
   // than by what it owes puts the fitness credit here.
-  const row = fitnessLedger.scenarioReconciliations.find((r) => r.scnId === "SCN-FIT-001");
+  const row = fitnessLedger.scenarioReconciliations.find((r) => r.scnId === "SCN-AAA-001");
   assert.deepEqual(
     (row?.qualityCheckReconciliations ?? []).find((i) => i.qualityCheck === "unit"),
     {
@@ -1379,7 +1400,7 @@ Then("its unit obligation reconciles satisfied, omitted from the reconciling ite
     ["lint"],
     `expected only the fitness item to remain reconciling; got ${JSON.stringify(row?.reconcilingItems)}`
   );
-  const { items } = rowCells("SCN-FIT-001");
+  const { items } = rowCells("SCN-AAA-001");
   assert.doesNotMatch(
     items,
     /\bunit\b/,
@@ -1498,7 +1519,7 @@ Then(
     // THE WHOLE CITATION WITHHELD, not a near-match and not a downgrade. The entry named a row
     // the corpus does not carry with this characteristic, so the seam reaches no `@SCN` at all
     // and the observation carries none — exactly the shape an UNREGISTERED handle already has.
-    // A reading that fell back to the corpus hop stamps SCN-FIT-001 here and this reds on the
+    // A reading that fell back to the corpus hop stamps SCN-AAA-001 here and this reds on the
     // citation alone, before any row is read.
     const observation = evidenceObservations
       .filter(isStaticCheckObservation)
@@ -1516,7 +1537,7 @@ Then(
     );
 
     // THE CREDIT'S IDENTITY, counted across the WHOLE ledger — the assertion a fallback path
-    // cannot pass. A first-in-corpus degrade puts SCN-FIT-001 in this list; a dropped credit
+    // cannot pass. A first-in-corpus degrade puts SCN-AAA-001 in this list; a dropped credit
     // empties it. Only suspense is right.
     assert.deepEqual(
       fitnessLedger.scenarioReconciliations
@@ -1568,11 +1589,11 @@ Then(
     // handle and reconciles green, so this cannot be passed by a reading that simply fails to
     // credit it: the row is live throughout, and the question is only whether the stray credit
     // reached it. Exactly one reconciling item, naming exactly this characteristic.
-    const row = fitnessLedger.scenarioReconciliations.find((r) => r.scnId === "SCN-FIT-003");
+    const row = fitnessLedger.scenarioReconciliations.find((r) => r.scnId === "SCN-AAA-003");
     assert.deepEqual(
       (row?.qualityCheckReconciliations ?? []).map((item) => [item.staticCheck, item.outcome]),
       [[check, "satisfied"]],
-      `expected SCN-FIT-003 to reconcile satisfied for "${check}" and nothing else; got ${JSON.stringify(row?.qualityCheckReconciliations)}`
+      `expected SCN-AAA-003 to reconcile satisfied for "${check}" and nothing else; got ${JSON.stringify(row?.qualityCheckReconciliations)}`
     );
 
     // ONE CREDIT ON THE ROW, and it is the one that named this characteristic. A reading that
@@ -1583,15 +1604,15 @@ Then(
         (observation) => (observation as { staticCheck?: string }).staticCheck
       ),
       ["lint:feature-codes"],
-      `expected only the run naming this characteristic to credit SCN-FIT-003; got ${JSON.stringify(row?.evidenceObservations)}`
+      `expected only the run naming this characteristic to credit SCN-AAA-003; got ${JSON.stringify(row?.evidenceObservations)}`
     );
 
     // And the same fact read back off the rendered row — the report is where a reader meets it.
     // Row-scoped to the scenario's own CELLS, so a bare regex over the report cannot pass it.
-    const { verdict, items } = rowCells("SCN-FIT-003");
+    const { verdict, items } = rowCells("SCN-AAA-003");
     assert.match(verdict, /\bbalanced\b/, `expected a balanced verdict cell; got "${verdict}"`);
     assert.doesNotMatch(verdict, /out-of-balance/, `expected not out-of-balance; got "${verdict}"`);
-    assert.equal(items, "—", `expected no reconciling items on SCN-FIT-003; got "${items}"`);
+    assert.equal(items, "—", `expected no reconciling items on SCN-AAA-003; got "${items}"`);
   }
 );
 

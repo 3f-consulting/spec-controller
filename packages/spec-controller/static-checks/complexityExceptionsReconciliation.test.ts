@@ -21,7 +21,6 @@
 
 import { readFileSync } from "node:fs";
 import { describe, it, expect } from "vitest";
-import { runningStaticChecks } from "@3f-consulting/spec-controller-core";
 import * as reconciliation from "./complexityExceptionsReconciliation.mjs";
 import type {
   ComplexityException,
@@ -33,9 +32,8 @@ import type {
 /** The repo root, from this file's location — the tests run with cwd at the workspace root. */
 const ROOT = process.cwd();
 
-/** The static check this scenario NAMES, and the prefix that makes the ledger observe it. */
+/** The static check this scenario NAMES — a configured fitness row's command since 3F-3165. */
 const CHECK_NAME = "lint:complexity-exceptions";
-const OBSERVED_PREFIX = "lint:";
 
 /**
  * One runtime export, asserted PRESENT with a sentence. The cast is to `Partial<…>` so a module that
@@ -229,17 +227,20 @@ describe("[SCN-CPX-003] reconcileExceptions — the list must state the measured
 });
 
 describe("[SCN-CPX-003] the check is observed by the ledger, not kept off the books", () => {
-  it("[SCN-CPX-003] carries the lint: prefix that makes runningStaticChecks see it", () => {
-    // Not cosmetic. A CI script whose name lacks an observed prefix runs while being structurally
-    // invisible to spec-controller's own ledger — a real quality check kept off the books, which is
-    // exactly where a watermelon hides. Asserted through the ledger's OWN observer, over the REAL
-    // package.json and ci.yml, so the claim is the ledger's rather than this test's.
-    expect(CHECK_NAME.startsWith(OBSERVED_PREFIX)).toBe(true);
-    const packageJson = JSON.parse(readFileSync(`${ROOT}/package.json`, "utf8")) as {
-      scripts?: Record<string, string>;
+  it("[SCN-CPX-003] is named by a configured fitness row, which is what puts it on the books", () => {
+    // THE CLAIM IS UNCHANGED AND ITS MECHANISM MOVED (3F-3165). This used to read the ledger's
+    // DISCOVERY observer: the script carried the `lint:` prefix and a ci.yml `run:` step invoked
+    // it, so `runningStaticChecks` saw it. Under conversion there is no `run:` step to find — the
+    // check is a row of `specController.fitnessChecks`, the fitness pass runs its command, and the
+    // generated scenario appearing in that pass's report IS the credit. Stronger evidence, not
+    // weaker: a scenario that RAN rather than a workflow file mentioning a name.
+    //
+    // Read off the REAL manifest, so the claim is the tree's rather than this test's — and it reds
+    // the day somebody deletes the row, which is the only way this check could go off the books.
+    const manifest = JSON.parse(readFileSync(`${ROOT}/package.json`, "utf8")) as {
+      specController?: { fitnessChecks?: { command?: string }[] };
     };
-    const ci = readFileSync(`${ROOT}/.github/workflows/ci.yml`, "utf8");
-    const observed = runningStaticChecks([ci], packageJson, [OBSERVED_PREFIX]).map((o) => o.staticCheck);
-    expect(observed).toContain(CHECK_NAME);
+    const commands = (manifest.specController?.fitnessChecks ?? []).map((row) => row.command);
+    expect(commands).toContain(`pnpm ${CHECK_NAME}`);
   });
 });

@@ -108,14 +108,14 @@ describe("[SCN-LNT-015] checkRegistryOf reads the @SCN an entry names, beside it
     // THE COLLAPSE'S OWN SHAPE. Two handles, ONE characteristic, and the @SCN is the only thing
     // that tells their rows apart once the tag has stopped naming the check.
     const registry = checkRegistryOf({
-      "lint:complexity": { check: "complexity", scn: "SCN-CPX-005" },
-      "lint:complexity-exceptions": { check: "complexity", scn: "SCN-CPX-006" },
+      "lint:complexity": { check: "complexity", scn: "SCN-AAA-001" },
+      "lint:complexity-exceptions": { check: "complexity", scn: "SCN-AAA-004" },
     });
 
-    expect(registry.get("lint:complexity")).toEqual({ check: "complexity", scn: "SCN-CPX-005" });
+    expect(registry.get("lint:complexity")).toEqual({ check: "complexity", scn: "SCN-AAA-001" });
     expect(registry.get("lint:complexity-exceptions")).toEqual({
       check: "complexity",
-      scn: "SCN-CPX-006",
+      scn: "SCN-AAA-004",
     });
     // The characteristic set is UNCHANGED by the second term: two handles of one characteristic
     // are one tag, which is the whole point of the collapse.
@@ -143,10 +143,10 @@ describe("[SCN-LNT-015] checkRegistryOf reads the @SCN an entry names, beside it
     // the corpus carries the id bare. Stripping here rather than at the lookup is the stance
     // `checkRegistryOf` already takes for the tag.
     expect(
-      checkRegistryOf({ "lint:complexity": { check: "@complexity", scn: " @SCN-CPX-005 " } }).get(
+      checkRegistryOf({ "lint:complexity": { check: "@complexity", scn: " @SCN-AAA-001 " } }).get(
         "lint:complexity"
       )
-    ).toEqual({ check: "complexity", scn: "SCN-CPX-005" });
+    ).toEqual({ check: "complexity", scn: "SCN-AAA-001" });
   });
 });
 

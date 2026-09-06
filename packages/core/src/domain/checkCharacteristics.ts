@@ -1,21 +1,30 @@
 /**
  * THE PORTFOLIO'S CHECK CHARACTERISTICS — the words that may name what a fitness check asserts.
  *
- * THE FAULT THIS EXISTS TO CLOSE (3F-2996). The set of words that could name a characteristic
- * used to be read out of the target's own `specController.checkRegistry` and
+ * WHAT THIS IS FOR NOW — A ROLL-UP VOCABULARY, NOT A GATE (3F-3167). A fitness scenario carries
+ * one tag, `@fitness`, and names its characteristic as a FIELD on its configured row. The word is
+ * therefore a REPORTING LABEL: it is what a report groups its fitness rows by and what the
+ * portfolio says out loud about where a product is weak. Nothing parses it, and no check in this
+ * repository holds a manifest to this list any more.
+ *
+ * THE GATE THAT USED TO (3F-2996, retired 3F-3167). The set of words that could name a
+ * characteristic was once read out of the target's own `specController.checkRegistry` and
  * `specController.thresholds`, so adding a registry entry was simultaneously the act that MINTED
  * a characteristic and the act that CERTIFIED it. Fourteen tags for seven characteristics were
  * built over a month in a repository that reconciles its own tree on every push, and nothing
- * redded once (3F-2994). A vocabulary a product can extend by editing its own manifest is not a
- * shared vocabulary; it is a per-product roster wearing one.
+ * redded once (3F-2994). `lint:check-characteristics` closed that, along with a minting ceremony
+ * for words canon had not named — and both left when the tag stopped doing two jobs. A word that
+ * only labels a roll-up cannot be minted into the parser by a typo, because the parser does not
+ * read it. Whether the portfolio SHOULD carry a given word is a canon question, asked of people.
  *
- * SO THE ROSTER IS THE PORTFOLIO'S, AND IT ARRIVES BY VERSION. Canon names this package as the
- * machine-readable form's home — *"a `spec-controller-core` export or its own shared package …
- * from which each product's tag checker DERIVES its legal set via its pinned version, refreshed
- * on a bump — never a hand-typed roster"* (`fitness-functions.md` → *Static checks*). Every
- * reconciled product already installs this package to run `balance`, so the export is the
- * smaller of the two shapes canon offers: nothing is published that was not published before,
- * and no consumer gains a dependency.
+ * THE ROSTER IS STILL THE PORTFOLIO'S, AND IT STILL ARRIVES BY VERSION. Canon names this package
+ * as the machine-readable form's home — *"a `spec-controller-core` export or its own shared
+ * package … from which each product DERIVES its legal set via its pinned version, refreshed on a
+ * bump — never a hand-typed roster"* (`fitness-functions.md` → *Static checks*). Every reconciled
+ * product already installs this package to run `balance`, so the export is the smaller of the two
+ * shapes canon offers: nothing is published that was not published before, and no consumer gains
+ * a dependency. What changed at 3F-3167 is what a consumer DOES with it — group a report, not
+ * refuse a build.
  *
  * ON THE PUBLIC `.` BARREL, NEVER `./internal`. A roster only the monorepo can import is
  * reachable by exactly the one product that does not need it. The barrel entry is a v1 contract
@@ -23,24 +32,14 @@
  * makes the addition a reviewed decision rather than drift, the property this whole slice is
  * about, applied to itself.
  *
- * ═══ THE SECOND HOP IS DELIBERATELY NOT BUILT HERE ═══
+ * ═══ THIS FILE IS A VENDORED COPY, AND SAYS SO ═══
  *
- * There are two hops between canon and a verdict: code ↔ this roster, and this roster ↔ canon's
- * prose. The FIRST is DISSOLVED — this export IS the list every consumer reads, so there is no
- * second copy in code to disagree with it. The SECOND belongs to the `strategy` repository's CI,
- * where every product is visible, and is not built here for the reason `blockedVocabulary.md`
- * already runs under: canon lives in a repository this one's CI never checks out, and a public
- * consumer of an MIT-licensed tool would not have it at all (operator ruling 2026-08-03,
- * 3F-2296). This file is a VENDORED COPY and says so on its face rather than leaving a reader to
- * wonder whether the reconciliation was forgotten.
- *
- * ═══ WHAT A GREEN AGAINST THIS ROSTER DOES NOT ESTABLISH ═══
- *
- * That a characteristic was EARNED. Canon's admission test — *a characteristic earns a tag when
- * no existing characteristic names the property the check asserts* — asks whether an existing
- * word already covers this property, and no check can answer that. Membership here answers the
- * answerable half: is this word one the portfolio carries. The check that reads this roster says
- * so in its own output rather than letting a green be read as more than it is.
+ * Canon lives in the `strategy` repository, which this one's CI never checks out and a public
+ * consumer of an MIT-licensed tool would not have at all — the arrangement `blockedVocabulary.md`
+ * already runs under (operator ruling 2026-08-03, 3F-2296). So this list is transcribed, and
+ * holding it to canon belongs to the maintainers' private repository's CI, where every product is visible. It
+ * says so on its face rather than leaving a reader to wonder whether the reconciliation was
+ * forgotten.
  *
  * PURE DATA AND ONE PREDICATE — no I/O, nothing imported, so it sits in `domain/` beside
  * `checkRegistry.ts` and `enginePurity` / `domainPurity` stay green by construction.

@@ -6,9 +6,12 @@ Feature: The tier-tag floor — every scenario names an evidence tier
   guard closes that (the cobbler's shoes): every scenario under features/ carrying an @SCN
   must name at least one tier tag, UNLESS it is PARKED — carrying one of the deferral tags
   the target itself configures (@SCN-STG-008). scnTags parity with an adopter's repository's
-  guard:scn-tags. The guard is itself cited — the stepless fitness scenario at the foot of
-  this file carries its bare `@traceability` tag — and CI-wired, so spec-controller's own
-  ledger reconciles it.
+  guard:scn-tags. The guard is itself cited — it converted as @SCN-FIT-008 (3F-3165), so the
+  scenario that carries it is emitted into features/fitness-checks.feature from the
+  specController.fitnessChecks row naming `pnpm lint:scn-tags`, and the fitness pass running that
+  command is what posts its credit. It used to be a stepless scenario at the foot of THIS file
+  carrying a bare `@traceability` tag, settled by a CI step that had to be discovered and joined
+  back to it. Either way spec-controller's own ledger reconciles it, which was always the point.
 
   What counts as a tier (load-bearing): @unit / @integration / @e2e / @performance, their
   pending variants (@unitpending / @integrationpending / etc. — a <tier>pending names the
@@ -317,19 +320,3 @@ Feature: The tier-tag floor — every scenario names an evidence tier
       Then it fails, naming the scenario and BOTH check tags
       When it runs over a target whose STEPPED scenario carries two registered bare check tags
       Then it fails, naming the scenario and BOTH check tags
-
-  Rule: spec-controller's own corpus satisfies the tier floor
-
-    THE CHECK, TURNED ON ITS AUTHOR, and the first scenario in this file to be the shape it
-    describes: stepless, carrying its bare check tag and nothing else. Every Rule above is
-    an EXAMPLE of the check deciding over a planted tree; this is the property held over
-    features/ itself, which is the claim the CI step actually makes on every push.
-
-    IT IS ALSO THE SELF-REFERENTIAL CASE, and it is sound rather than circular. The scenario
-    below satisfies the very floor it names — by the fifth route, @SCN-STG-005's — so a
-    regression that broke bare-check-tag acceptance would red this file's own gate before it
-    could green anything else. A check whose own corpus entry it could not admit would be telling
-    authors to write what it rejects.
-
-    @traceability @SCN-STG-006
-    Scenario: every scenario under features carrying an @SCN names an evidence tier

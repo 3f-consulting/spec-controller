@@ -59,7 +59,7 @@ describe("[SCN-LNT-012] two fitness credits citing one @SCN each answer their ow
       "@LNT",
       "Feature: fixture",
       "  Rule: a fixture rule",
-      `    @${WIRED_CHECK} @${COLLIDING_SCRIPT} @SCN-FIT-001`,
+      `    @${WIRED_CHECK} @${COLLIDING_SCRIPT} @SCN-AAA-001`,
       "    Scenario: the tree stays inside both thresholds",
     ].join("\n");
     const scenarios = parseScenarios(corpus, [], checkTags);
@@ -101,12 +101,12 @@ describe("[SCN-LNT-012] two fitness credits citing one @SCN each answer their ow
     // BOTH credits cite the SAME @SCN, and they disagree about enforcement. Pinned, because if
     // either fact were untrue the outcome assertions below would pass without proving anything.
     expect(fitnessCredits.map((o) => [o.staticCheck, o.scnId, o.enforcedOverRealSource])).toEqual([
-      [WIRED_SCRIPT, "SCN-FIT-001", true],
-      [COLLIDING_SCRIPT, "SCN-FIT-001", false],
+      [WIRED_SCRIPT, "SCN-AAA-001", true],
+      [COLLIDING_SCRIPT, "SCN-AAA-001", false],
     ]);
 
     const balance = reconcile(scenarios, fitnessCredits);
-    const row = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-FIT-001");
+    const row = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-AAA-001");
 
     // EACH OBLIGATION ANSWERED BY ITS OWN CREDIT — the pairs asserted whole, so neither a smear
     // (both readings crediting `lint:complexity`) nor a refusal (the second obligation left with

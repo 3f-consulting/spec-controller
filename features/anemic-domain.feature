@@ -29,12 +29,16 @@ Feature: A concept's behaviour never drains into a procedural layer beside it
   this much ("a filename-signature static check is enough to fence the obvious case"),
   and the value is that the unmissable version of the mistake becomes unmissable.
 
-  WHY THE CHECK IS NAMED `lint:anemic-domain`. runningStaticChecks observes a script only
-  when its name carries an observed prefix (`lint:` / `guard:`). A name outside that set
-  would run in CI while being structurally invisible to the ledger — a real quality check
-  kept off the books, which is exactly where a watermelon hides. Named so it IS observed;
-  the bare `@tech-conformance` tag on the fitness scenario below is then what keeps it out of
-  the suspense row as an uncited static check. Observed AND required is the balanced state.
+  HOW THE CHECK GETS ONTO THE BOOKS, AND HOW THAT CHANGED (3F-3165, under 3F-3139). It used to
+  turn on its NAME: `runningStaticChecks` observes a script only when its name carries an observed
+  prefix (`lint:` / `guard:`), so a name outside that set would run in CI while being structurally
+  invisible to the ledger — a real quality check kept off the books, which is exactly where a
+  watermelon hides — and a bare `@tech-conformance` tag on a stepless scenario below was what kept
+  the run out of the suspense row. The check converted as `@SCN-FIT-009` and its CI step left the
+  workflow, so nothing discovers it any more: `pnpm lint:anemic-domain` is a command a
+  `specController.fitnessChecks` row states, the fitness pass runs it, and the credit cites the
+  `@SCN` the row named. Observed AND required is still the balanced state; what changed is that
+  both halves now come from one row instead of from a name and a tag agreeing.
   (The sibling
   purity checks — @DPG, @EPG — deliberately chose the opposite: @unit-only, enforced by
   pnpm test, off the ledger. That is right for them and wrong here, because this check's
@@ -50,16 +54,3 @@ Feature: A concept's behaviour never drains into a procedural layer beside it
       And the same name outside a domain directory is not
       And a module named for its concept is not
       And the check passes clean over the real tree
-
-  Rule: spec-controller's own domain concepts keep their behaviour
-
-    THE FITNESS SCENARIO, AND WHY IT CARRIES NO STEPS. The Rule above holds the CHECK
-    against planted trees — an example, so it has steps. This one holds spec-controller's
-    own tree against the check, which is a whole-system characteristic with nothing to
-    exemplify. The bare `@tech-conformance` tag raises the Evidence Obligation the CI run of
-    `lint:anemic-domain` settles: `specController.checkRegistry` maps that handle to this
-    tag, the corpus maps the tag to the scenario below, and the run's credit posts here
-    rather than folding onto the suspense row.
-
-    @tech-conformance @SCN-ANM-002
-    Scenario: no module under a domain directory is named for a procedural layer

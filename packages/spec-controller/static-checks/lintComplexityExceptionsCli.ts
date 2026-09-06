@@ -20,7 +20,7 @@
  * row as an uncited static check. Observed AND NAMED is the balanced state.
  *
  * Mirrors `lint:scn-tags`: a pure function of the checked-out tree,
- * a full CI gate on every push. It does NOT mirror its own twin any more — @SCN-CPX-005 converted
+ * a full CI gate on every push. It does NOT mirror its own twin any more — @SCN-FIT-001 converted
  * (3F-3151) and runs from a configured row inside the fitness cucumber pass, while this one keeps
  * the discovered route. The pair is where a consumer can read both arrangements side by side.
  */

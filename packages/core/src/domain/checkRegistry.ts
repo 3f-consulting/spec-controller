@@ -37,7 +37,7 @@ import { bareTerm } from "../lib/bareTerm.js";
  * THE SECOND TERM IS THE RELOCATED ARM, not a new mechanism (canon, *Where the check-to-scenario
  * join lives*). The join between a check and its fitness scenario is held by the runner or the
  * register, keyed by the scenario's `@SCN`; a MEASURED check stamps that `@SCN` onto its artefact
- * at the command line (`--scn SCN-CIP-013`), but a static check emits no artefact to stamp and its
+ * at the command line (`--scn SCN-FIT-012`), but a static check emits no artefact to stamp and its
  * only identifier is the script handle. While one tag named one check the handle determined a
  * scenario by way of the tag; once a characteristic names several checks it stops determining one,
  * and the registry — the runner-side mapping for a static check — is where the `@SCN` must live.

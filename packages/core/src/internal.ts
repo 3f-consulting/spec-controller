@@ -136,7 +136,6 @@ export {
   resolveCheckRegistry,
   resolveDeferralTags,
   resolveFitnessChecks,
-  resolveMintedCharacteristics,
   resolveStaticChecks,
   resolveThresholds,
 } from "./parse/targetManifest.js";
@@ -161,5 +160,14 @@ export type { KillFloorReader, MutationGateReference } from "./parse/targetManif
 // loud nowhere. The runner reads only `characteristic` here; the BAR stays the ledger's
 // (@SCN-LNT-019, 3F-2509) and no runner reaches for it. Internal, not public — where these rows are
 // AUTHORED moves with the registry-home question the entries above are parked on.
-export { fitnessChecksOf } from "./domain/fitnessChecks.js";
+//
+// `carriesBar` IS THE SHAPE QUESTION AND NEVER THE VALUE, and the two are not the same crossing
+// (3F-3164). The bar's NUMBER stays the ledger's, as above; whether a row carries one at all is
+// what says which KIND of check it is, and the corpus generator has to know that to emit the right
+// sentence — the static one asserts an exit code, the measured one asserts that a number arrived.
+// It is shared for the reason `fitnessChecksOf` is: a generator answering "is this row measured"
+// its own way would emit a corpus that disagreed with the obligation rule about which evidence a
+// check produces, from the same row, and the emitted file would then be the thing that made the
+// two disagree. The header on `carriesBar` states the one-spelling rule this export serves.
+export { carriesBar, fitnessChecksOf } from "./domain/fitnessChecks.js";
 export type { FitnessCheck, FitnessCheckRegistry } from "./domain/fitnessChecks.js";

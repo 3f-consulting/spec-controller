@@ -20,7 +20,7 @@ import { evidenceReconciliationOf, reconcile } from "./evidenceReconciliation.js
 import { isBalanced } from "./ledger.js";
 import type { EvidenceObservation, Scenario } from "./journal.js";
 
-const SCN = "SCN-FIT-001";
+const SCN = "SCN-AAA-001";
 
 /** The row's own check — the one it actually names. */
 const OWN = "complexity";

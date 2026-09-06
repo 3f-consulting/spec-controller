@@ -27,20 +27,20 @@ describe("[SCN-LNT-018] the configured rows read into the registry the obligatio
   it("keys each row by the @SCN it names, holding the characteristic it asserts", () => {
     expect([
       ...fitnessChecksOf([
-        { scn: "SCN-CPX-005", characteristic: "complexity", command: "eslint" },
-        { scn: "SCN-MUT-011", characteristic: "mutation", command: "pnpm mutation:score" },
+        { scn: "SCN-AAA-001", characteristic: "complexity", command: "eslint" },
+        { scn: "SCN-AAA-007", characteristic: "mutation", command: "pnpm mutation:score" },
       ]),
     ]).toEqual([
-      ["SCN-CPX-005", { characteristic: "complexity" }],
-      ["SCN-MUT-011", { characteristic: "mutation" }],
+      ["SCN-AAA-001", { characteristic: "complexity" }],
+      ["SCN-AAA-007", { characteristic: "mutation" }],
     ]);
   });
 
   it("stores both terms BARE, so a row spelled the way a feature file spells them still matches", () => {
     // A manifest written by hand will sooner or later carry the sigils — the stance `thresholdsOf`
     // and `checkRegistryOf` already take, and the lookup is bare on both sides.
-    expect([...fitnessChecksOf([{ scn: "@SCN-CPX-005", characteristic: "@complexity" }])]).toEqual([
-      ["SCN-CPX-005", { characteristic: "complexity" }],
+    expect([...fitnessChecksOf([{ scn: "@SCN-AAA-001", characteristic: "@complexity" }])]).toEqual([
+      ["SCN-AAA-001", { characteristic: "complexity" }],
     ]);
   });
 
@@ -51,20 +51,20 @@ describe("[SCN-LNT-018] the configured rows read into the registry the obligatio
     expect([
       ...fitnessChecksOf([
         { characteristic: "complexity" },
-        { scn: "SCN-CPX-005" },
+        { scn: "SCN-AAA-001" },
         { scn: "  ", characteristic: "complexity" },
-        { scn: "SCN-CPX-005", characteristic: "  " },
-        { scn: "SCN-CPX-005", characteristic: 7 },
+        { scn: "SCN-AAA-001", characteristic: "  " },
+        { scn: "SCN-AAA-001", characteristic: 7 },
         () => "not a row either",
         "not a row",
         null,
-        { scn: "SCN-CPX-006", characteristic: "complexity" },
+        { scn: "SCN-AAA-004", characteristic: "complexity" },
       ]),
-    ]).toEqual([["SCN-CPX-006", { characteristic: "complexity" }]]);
+    ]).toEqual([["SCN-AAA-004", { characteristic: "complexity" }]]);
   });
 
   it("reads nothing from a value that is not a list of rows", () => {
-    for (const entries of [undefined, null, "rows", 7, { "SCN-CPX-005": "complexity" }]) {
+    for (const entries of [undefined, null, "rows", 7, { "SCN-AAA-001": "complexity" }]) {
       expect([...fitnessChecksOf(entries)]).toEqual([]);
     }
   });
@@ -78,11 +78,11 @@ describe("[SCN-LNT-018] the rows come from the TARGET's manifest", () => {
     expect([
       ...resolveFitnessChecks(
         {
-          specController: { fitnessChecks: [{ scn: "SCN-CPX-005", characteristic: "complexity" }] },
+          specController: { fitnessChecks: [{ scn: "SCN-AAA-001", characteristic: "complexity" }] },
         },
         NO_RECORD
       ),
-    ]).toEqual([["SCN-CPX-005", { characteristic: "complexity" }]]);
+    ]).toEqual([["SCN-AAA-001", { characteristic: "complexity" }]]);
   });
 
   it("resolves empty for a manifest that configures none — inert on an unconverted target", () => {
@@ -97,24 +97,24 @@ describe("[SCN-LNT-019] the row's SHAPE says which kind of check it is", () => {
     // a reader that only knew to copy the number would drop it in transit.
     expect([
       ...fitnessChecksOf([
-        { scn: "SCN-MUT-011", characteristic: "mutation", command: "pnpm mutation:score", atLeast: 90 },
+        { scn: "SCN-AAA-007", characteristic: "mutation", command: "pnpm mutation:score", atLeast: 90 },
       ]),
     ]).toEqual([
-      ["SCN-MUT-011", { characteristic: "mutation", bar: { threshold: 90, atLeast: true } }],
+      ["SCN-AAA-007", { characteristic: "mutation", bar: { threshold: 90, atLeast: true } }],
     ]);
   });
 
   it("holds a ceiling row's bar sparsely — the number, and no direction beside it", () => {
-    expect([...fitnessChecksOf([{ scn: "SCN-CIP-013", characteristic: "ci-run-time", atMost: 75 }])]).toEqual([
-      ["SCN-CIP-013", { characteristic: "ci-run-time", bar: { threshold: 75 } }],
+    expect([...fitnessChecksOf([{ scn: "SCN-AAA-005", characteristic: "ci-run-time", atMost: 75 }])]).toEqual([
+      ["SCN-AAA-005", { characteristic: "ci-run-time", bar: { threshold: 75 } }],
     ]);
   });
 
   it("leaves a row naming no bar carrying none at all — the static case, and it is the shape that says so", () => {
     // No type field and no second tag: what makes this row static is that it names no bar, which is
     // the discrimination `thresholdsOf` has always made.
-    expect([...fitnessChecksOf([{ scn: "SCN-CPX-005", characteristic: "complexity", command: "eslint" }])]).toEqual([
-      ["SCN-CPX-005", { characteristic: "complexity" }],
+    expect([...fitnessChecksOf([{ scn: "SCN-AAA-001", characteristic: "complexity", command: "eslint" }])]).toEqual([
+      ["SCN-AAA-001", { characteristic: "complexity" }],
     ]);
   });
 
@@ -123,8 +123,8 @@ describe("[SCN-LNT-019] the row's SHAPE says which kind of check it is", () => {
     // nothing to hold it to — reported by the missing-bar arm (@SCN-CIP-002) rather than sent down
     // the static route to be reported as a check nobody wrote.
     for (const authored of ["ninety", { mutationGate: "domain" }, Number.NaN, -1, null, [90]]) {
-      expect([...fitnessChecksOf([{ scn: "SCN-MUT-011", characteristic: "mutation", atLeast: authored }])]).toEqual([
-        ["SCN-MUT-011", { characteristic: "mutation", bar: null }],
+      expect([...fitnessChecksOf([{ scn: "SCN-AAA-007", characteristic: "mutation", atLeast: authored }])]).toEqual([
+        ["SCN-AAA-007", { characteristic: "mutation", bar: null }],
       ]);
     }
   });
@@ -141,7 +141,7 @@ describe("[SCN-LNT-019] the row's SHAPE says which kind of check it is", () => {
           specController: {
             fitnessChecks: [
               {
-                scn: "SCN-MUT-011",
+                scn: "SCN-AAA-007",
                 characteristic: "mutation",
                 command: "pnpm --silent mutation:score",
                 atLeast: { mutationGate: "domain" },
@@ -152,7 +152,7 @@ describe("[SCN-LNT-019] the row's SHAPE says which kind of check it is", () => {
         () => 699
       ),
     ]).toEqual([
-      ["SCN-MUT-011", { characteristic: "mutation", bar: { threshold: 699, atLeast: true } }],
+      ["SCN-AAA-007", { characteristic: "mutation", bar: { threshold: 699, atLeast: true } }],
     ]);
   });
 
@@ -165,29 +165,29 @@ describe("[SCN-LNT-019] the row's SHAPE says which kind of check it is", () => {
         {
           specController: {
             fitnessChecks: [
-              { scn: "SCN-MUT-011", characteristic: "mutation", atLeast: { mutationGate: "domain" } },
+              { scn: "SCN-AAA-007", characteristic: "mutation", atLeast: { mutationGate: "domain" } },
             ],
           },
         },
         NO_RECORD
       ),
-    ]).toEqual([["SCN-MUT-011", { characteristic: "mutation", bar: null }]]);
+    ]).toEqual([["SCN-AAA-007", { characteristic: "mutation", bar: null }]]);
   });
 
   it("keeps a row naming BOTH directions measured, and holds it to neither", () => {
     // Two directions at once is a contradiction rather than more information — whichever key were
     // read first would silently settle it — so the row is measured and the bar is nothing.
     expect([
-      ...fitnessChecksOf([{ scn: "SCN-MUT-011", characteristic: "mutation", atLeast: 90, atMost: 95 }]),
-    ]).toEqual([["SCN-MUT-011", { characteristic: "mutation", bar: null }]]);
+      ...fitnessChecksOf([{ scn: "SCN-AAA-007", characteristic: "mutation", atLeast: 90, atMost: 95 }]),
+    ]).toEqual([["SCN-AAA-007", { characteristic: "mutation", bar: null }]]);
   });
 });
 
 describe("[SCN-LNT-019] ONE predicate answers `does this row carry a bar`", () => {
   function rowFor(entry: Record<string, unknown>): FitnessCheck {
     const row = fitnessChecksOf([
-      { scn: "SCN-MUT-011", characteristic: "mutation", ...entry },
-    ]).get("SCN-MUT-011");
+      { scn: "SCN-AAA-007", characteristic: "mutation", ...entry },
+    ]).get("SCN-AAA-007");
     expect(row).toBeDefined();
     return row as FitnessCheck;
   }

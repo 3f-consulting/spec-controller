@@ -80,10 +80,17 @@ fi
 # Build the ladder first, whole. A stale exclusion, or a step the ladder cannot represent,
 # stops everything here with the fault named — before a single gate has run. A partial ladder
 # that runs and looks green is the failure this file exists to remove.
-if ! ladder=$(pnpm --silent ladder); then
+# THE EMITTER'S stderr IS CAPTURED AND RE-EMITTED, NOT SWALLOWED. It carries the omissions and
+# their reasons, which is the one thing a reader of a green-check has to see; capturing it is only
+# so the closing line below can tell whether there WAS one (3F-3165).
+ladder_notes=$(mktemp)
+trap 'rm -f "$ladder_notes"' EXIT
+if ! ladder=$(pnpm --silent ladder 2>"$ladder_notes"); then
+  cat "$ladder_notes" >&2
   printf '\nverify: the ladder could not be built; no gate has run.\n' >&2
   exit 1
 fi
+cat "$ladder_notes" >&2
 
 # Run one gate, announcing it before and naming it if it reds.
 gate() {
@@ -112,8 +119,19 @@ done <<<"$ladder"
 # The count is the length of the ladder that just ran — derived, not maintained, so it cannot
 # disagree with it. The old line said "12" while CI ran 14; a number someone has to keep true
 # is a number that eventually is not.
-if [[ "$list_only" == true ]]; then
-  printf '\nverify: would run all %d local gates (the omission and its reason are above).\n' "$count"
+#
+# AND THE OMISSION CLAUSE IS CONDITIONAL, because as of 3F-3165 there is usually nothing omitted.
+# The emitter prints an omission and its reason to stderr for every exclusion the TARGET names,
+# and this repository names none — so a closing line that always pointed at one would be sending
+# a reader to look for something that is not there, which is the same class of untrue sentence
+# this whole ladder exists to remove.
+if [[ -s "$ladder_notes" ]]; then
+  omission=' (the omission and its reason are above)'
 else
-  printf '\nverify: all %d local gates green (the omission and its reason are above).\n' "$count"
+  omission=''
+fi
+if [[ "$list_only" == true ]]; then
+  printf '\nverify: would run all %d local gates%s.\n' "$count" "$omission"
+else
+  printf '\nverify: all %d local gates green%s.\n' "$count" "$omission"
 fi

@@ -37,7 +37,7 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
   It used to be `lint:complexity`, named with an observed prefix so `runningStaticChecks` would
   discover it — a real quality check kept off the books is exactly where a watermelon hides, so
   being discovered was the entire point of the name. Discovery is what converting retires. The
-  check is now a row of `specController.fitnessChecks` naming this file's SCN-CPX-005, the
+  check is now a row of `specController.fitnessChecks` naming SCN-FIT-001, the
   characteristic it asserts and the command that returns a violation; the fitness cucumber pass
   runs that command and reports the scenario, and the credit arrives citing the @SCN off the
   scenario's own tag line rather than being resolved onto it through a handle. The script, its
@@ -160,14 +160,17 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
 
     WHY THIS IS A SECOND NAMED CHECK, NOT MORE eslint. eslint can only red on
     `value > max`; the load-bearing case here is `value < recorded`, which it cannot
-    express at all. So the reconciliation is its own CI script, `lint:complexity-exceptions`.
-    The `lint:` prefix is required rather than cosmetic: `runningStaticChecks` observes a
-    CI script only when its name carries an observed prefix, so a name outside that set
-    would run in CI while being invisible to spec-controller's own ledger — a real quality
-    check kept off the books, which is exactly where a watermelon hides. The bare
-    `@complexity` tag on its own fitness scenario at the foot of this file is
-    then what keeps it out of the suspense row as an uncited static check. Observed AND
-    required is the balanced state.
+    express at all. So the reconciliation is its own command, `pnpm lint:complexity-exceptions`.
+
+    AND IT IS NO LONGER A CI STEP EITHER (3F-3165, under 3F-3139). It converted as
+    `@SCN-FIT-003` and its `run:` line left the workflow with it. The `lint:` prefix on the
+    script name used to be load-bearing — `runningStaticChecks` observes a CI script only when
+    its name carries an observed prefix, so a name outside that set would run in CI while being
+    invisible to spec-controller's own ledger — and the bare `@complexity` tag on a stepless
+    scenario at the foot of this file was what kept the run out of the suspense row. Neither
+    holds now: the row states the `@SCN` and the characteristic outright, the fitness pass runs
+    the command, and the credit arrives citing the scenario's own tag line. The prefix survives as
+    a name a reader recognises, not as a hook anything discovers.
 
     MEASURED WITH eslint, NEVER REIMPLEMENTED. The reconciliation runs the `ESLint` API at
     the BARE standard — the same scope blocks the config uses, with the exception blocks
@@ -190,46 +193,3 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
       Then a file measuring above its recorded value reds as a regression
       And a file measuring below its recorded value reds as an improvement not banked
       And a file no longer over the standard reds as a stale entry
-
-  Rule: this tree stays inside the external standard, and its exception list stays honest
-
-    TWO CHECKS, SO TWO SCENARIOS — AND, SINCE 3F-3151, TWO ROUTES TO ONE CHARACTERISTIC. Both
-    run eslint over this tree and both live in this file, and they still assert different things:
-    the exception-list reconciliation reds on `value < recorded`, a case eslint cannot express at
-    all. What moved is not the pair but how each one's Evidence Obligation is raised and settled.
-
-    SCN-CPX-005 IS CONVERTED. Its tag names the AXIS and nothing about its subject, and the
-    subject moved into data: a row of `specController.fitnessChecks` names the scenario, names
-    `complexity` as the characteristic it asserts, and names the command that returns a
-    violation. The fitness cucumber pass runs that command, and the scenario appearing in that
-    pass's report IS the credit, citing the @SCN off its own tag line. No script handle, no
-    registry entry, no corpus lookup behind either.
-
-    SCN-CPX-006 IS NOT, AND STAYS EXACTLY AS IT WAS — the bare `@complexity` tag,
-    `lint:complexity-exceptions` discovered as a running static check by its observed prefix, and
-    `checkRegistry` behind that handle naming SCN-CPX-006 as the row its own run credits
-    (@SCN-LNT-015). Converting one of a pair rather than both is deliberate: it is what a
-    consumer mid-migration actually has, and this file is where the two routes are shown
-    coexisting on one characteristic, with the roll-up still grouping both under `complexity`.
-
-    THE SINGLE BARE TAG USED TO COST EXACTLY WHAT THIS RULE SAID IT WOULD. Read through the
-    corpus hop alone, a run of either check posted credit to whichever scenario the corpus
-    reached first, so neither was attributable and the runner-up reconciled missing while its
-    check ran green. The reading was accurate about the engine; what moved is the join, not the
-    argument — and on the converted half the join has gone altogether.
-
-    ONE CARRIES A STEP AND ONE DOES NOT, AND THE DIFFERENCE IS WHO RUNS IT. Every Rule above is
-    an example of a check deciding over a planted file; these two are the whole-system
-    characteristics held over the real tree, and a threshold has nothing to exemplify, so neither
-    states a case. SCN-CPX-005's single sentence is not an example either — it is what the
-    fitness pass EXECUTES, the same sentence every converted check in every target carries, which
-    is what holds the step-definition count at one however many checks convert. SCN-CPX-006 has
-    nothing to execute, a CI script settles it, so it stays stepless and its bare tag is what
-    keeps it out of the suspense row as an uncited static check.
-
-    @fitness @SCN-CPX-005
-    Scenario: every function and module measures inside the external standard, or inside its recorded exception
-      Then the check this scenario names finds no violations
-
-    @complexity @SCN-CPX-006
-    Scenario: every exception entry states the value the tree currently measures

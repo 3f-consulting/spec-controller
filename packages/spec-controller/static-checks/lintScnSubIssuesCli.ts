@@ -19,7 +19,15 @@
  *   4. auto-detects renumber pairs and reads SCN-exempt trailers;
  *   5. reads the PR TICKET HANDLE from CI metadata — GITHUB_HEAD_REF and/or a
  *      "[3F-NNN]" commit-message prefix — NO Linear call;
- *   6. runs decideScnGate and exits non-zero on any violation.
+ *   6. runs decideScnGate and answers with ONE OF THREE exit codes.
+ *
+ * THREE ANSWERS, NOT TWO (@SCN-SSM-018). 0 is a pass; 1 is a violation; NOT_EXAMINED_EXIT_CODE
+ * says the run had no pull request body to read, so whether an exemption was claimed for an
+ * unbound code had nowhere to be answered from. That case exits neither 0 nor 1 on purpose:
+ * exiting 0 having examined nothing is the silence fault this repository is named for, and
+ * exiting 1 would red honest work for the fact that it ran off a pull request. It is narrow —
+ * the decision passes a code the moment a `[3F-NNN]` commit subject binds it, ahead of every
+ * exemption — but the residual case is the one that must not lie.
  *
  * On a PR that touches no behaviour-bearing surface the code sets are empty and
  * the surface is inert: no violations, exit 0 — a no-op that smoke-tests the
@@ -42,10 +50,12 @@ import {
   decideScnGate,
   detectDeletedCodes,
   isUnitEquivalentBehaviourBearing,
+  NOT_EXAMINED_EXIT_CODE,
   parseAddedCodes,
   type ChangedBlockCites,
   type Exemption,
   type RenumberPair,
+  type ScnGateResult,
 } from "./scnSubIssueGate.js";
 import { readScenarioChanges } from "./scenarioTextChanges.js";
 
@@ -425,6 +435,48 @@ function commitMessagesSinceBase(base: string): string[] {
   }
 }
 
+/** The summary line's uncited-blocks clause, present only when there are any. */
+function uncited(blocks: readonly string[]): string {
+  return blocks.length > 0 ? `, UNCITED changed block(s): ${blocks.join("; ")}` : "";
+}
+
+/** The summary line's checking clause, present only when a code set reached the decision. */
+function checking(codes: readonly string[]): string {
+  return codes.length > 0 ? ` — checking: ${codes.join(", ")}` : "";
+}
+
+/**
+ * Say what the decision answered, and leave with the code that says it (@SCN-SSM-018).
+ *
+ * THREE EXITS, AND THE ORDER OF THE PRINTING IS NOT THE ORDER OF THE VERDICT. What could not be
+ * examined is printed BEFORE the failure arm, so a run that both found something and could not
+ * answer for something else says both: the exit code carries the finding, and the reader still
+ * learns what went unasked. Folding the two would make the louder answer swallow the quieter one.
+ */
+function reportAndExit(result: ScnGateResult): never {
+  if (result.verdict === "pass") {
+    console.log(
+      "scn-subissue lint: OK — every behaviour-bearing change carries its @SCN cite and is on a ticketed PR (or a recognised exemption); verified hermetically, no Linear call."
+    );
+    process.exit(0);
+  }
+
+  if (result.unexamined.length > 0) {
+    console.error("scn-subissue lint: NOT EXAMINED");
+    for (const u of result.unexamined) console.error(`  [not-examined] ${u.message}`);
+  }
+
+  // NOT `process.exit(0)`, AND THAT IS THE WHOLE POINT. Exiting 0 having examined nothing is the
+  // silence fault, in the repository named for it: every caller would read it as a pass and none
+  // would be told. NOT 1 either — there is no violation to report, and an absent pull request
+  // body is the ordinary state off a pull request rather than a fault.
+  if (result.verdict === "not-examined") process.exit(NOT_EXAMINED_EXIT_CODE);
+
+  console.error("scn-subissue lint: FAILED");
+  for (const v of result.violations) console.error(`  [${v.kind}] ${v.message}`);
+  process.exit(1);
+}
+
 async function main(): Promise<void> {
   const base = resolveBaseRef();
   const diff = featureFileDiff(base);
@@ -453,10 +505,15 @@ async function main(): Promise<void> {
   if (codesToCheck.length === 0 && !unitEquivalentBehaviourBearing) exitWithNothingToCheck(base);
 
   const commitMessages = commitMessagesSinceBase(base);
-  const exemptions = parseExemptions(
-    commitMessages,
-    process.env["PR_BODY"] ?? ""
-  );
+  // THE ABSENT VARIABLE AND THE EMPTY ONE ARE DIFFERENT FACTS, AND THE `?? ""` USED TO ERASE THAT
+  // (@SCN-SSM-018). CI always supplies PR_BODY — `${{ github.event.pull_request.body }}` resolves
+  // to the empty string for a pull request whose author wrote nothing — so a body that is PRESENT
+  // and empty was read and carried no exemption, and an unclaimed exemption there still reds. It
+  // is UNSET that says there was no pull request body at all, which off a pull request is not a
+  // fault but the ordinary state. The parse still gets a string; the decision gets the fact.
+  const prBody = process.env["PR_BODY"];
+  const prBodyReadable = prBody !== undefined;
+  const exemptions = parseExemptions(commitMessages, prBody ?? "");
   const hasTicketHandle = readTicketHandle(process.env["GITHUB_HEAD_REF"], commitMessages);
 
   // The live fork read (@SCN-SSM-003): a fork-sourced (external) PR —
@@ -465,7 +522,7 @@ async function main(): Promise<void> {
   const isExternalPr = readIsExternalPr(process.env["GITHUB_EVENT_PATH"]);
 
   console.log(
-    `scn-subissue lint: ${addedCodes.length} added, ${updatedCodes.length} updated, ${deletedCodes.length} deleted @SCN code(s); unit-equivalent: ${unitEquivalentBehaviourBearing ? "behaviour-bearing" : "inert"}, cited [${unitEquivalentCitedCodes.join(", ")}]${uncitedChangedTestBlocks.length > 0 ? `, UNCITED changed block(s): ${uncitedChangedTestBlocks.join("; ")}` : ""}; ticket handle: ${hasTicketHandle ? "present" : "ABSENT"}${codesToCheck.length > 0 ? ` — checking: ${codesToCheck.join(", ")}` : ""}`
+    `scn-subissue lint: ${addedCodes.length} added, ${updatedCodes.length} updated, ${deletedCodes.length} deleted @SCN code(s); unit-equivalent: ${unitEquivalentBehaviourBearing ? "behaviour-bearing" : "inert"}, cited [${unitEquivalentCitedCodes.join(", ")}]${uncited(uncitedChangedTestBlocks)}; ticket handle: ${hasTicketHandle ? "present" : "ABSENT"}; pull request body: ${prBodyReadable ? "readable" : "NONE TO READ"}${checking(codesToCheck)}`
   );
 
   const result = decideScnGate({
@@ -479,20 +536,10 @@ async function main(): Promise<void> {
     uncitedChangedTestBlocks,
     hasTicketHandle,
     isExternalPr,
+    prBodyReadable,
   });
 
-  if (result.ok) {
-    console.log(
-      "scn-subissue lint: OK — every behaviour-bearing change carries its @SCN cite and is on a ticketed PR (or a recognised exemption); verified hermetically, no Linear call."
-    );
-    process.exit(0);
-  }
-
-  console.error("scn-subissue lint: FAILED");
-  for (const v of result.violations) {
-    console.error(`  [${v.kind}] ${v.message}`);
-  }
-  process.exit(1);
+  reportAndExit(result);
 }
 
 const invokedDirectly =

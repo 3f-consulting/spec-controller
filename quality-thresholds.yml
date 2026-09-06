@@ -26,7 +26,7 @@
 # quotes and be sent in a circle.
 #
 # TWO READERS CONSULT THIS FILE AND THEY ARE ONE ARBITER, NOT TWO THAT AGREE. The ledger sources
-# SCN-MUT-011's bar from the `domain` gate below (`package.json` names the gate; the number is never
+# SCN-FIT-002's bar from the `domain` gate below (`package.json` names the gate; the number is never
 # written there), and `mutation.yml` ends on the ratchet's verdict over the same gate of the same
 # file. Both reach the same integer by the same subtraction. @SCN-MUT-014 reads the four artefacts
 # that state the gate's name back off disk, so a rename on one side reds rather than quietly making

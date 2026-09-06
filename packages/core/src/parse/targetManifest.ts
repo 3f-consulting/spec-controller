@@ -212,47 +212,6 @@ export function resolveThresholds(
 }
 
 /**
- * The TARGET's MINTED characteristics (@SCN-CHR-003) — `specController.mintedCharacteristics`,
- * read as `bare characteristic → the reason stated for it`.
- *
- * THE ROUTE OUT, AND WHY IT NEEDS A KEY OF ITS OWN. A consumer whose legitimate characteristic
- * canon has not yet named must be able to name it, or the portfolio roster stops being a shared
- * vocabulary and becomes a gate on delivery — the choice would be between minting silently and
- * waiting for a canon change, and neither is acceptable. What makes this a route rather than the
- * fault under another name is that it is a SECOND act: a differently-named key whose only purpose
- * is to say a portfolio word is being minted, never the same line that adds the check. A flag
- * beside the registry entry would be one edit, in the place the author was already editing.
- *
- * The fifth of this family's `specController.*` resolvers, and defensive like the four above it: a
- * missing, non-object or array-shaped config resolves EMPTY, and no shape of entry throws — config
- * is data from outside, and a check that throws on a typo produces no verdict at all. There is no
- * starter set: a mint the target did not write would license a word nobody chose.
- *
- * A REASON THIS CANNOT READ LEAVES THE KEY, NEVER DROPS IT. Anything that is not a string is not a
- * reason, and the entry survives with `null` beside it — `thresholdsOf`'s stance with a bar it
- * cannot read (@SCN-MUT-003), for its reason. Dropping the key would hand the author an off-roster
- * complaint about a word whose mint entry is sitting right there, which is the one message that
- * cannot help them; keeping it lets the rule say the mint states no reason.
- *
- * WHITESPACE AROUND EITHER SIDE IS NOT PART OF IT. The characteristic goes through `bareTerm`, so
- * `@flakiness` names what `flakiness` names (3F-2976) and this is not a second reading of what a
- * term BARE is; the reason is trimmed for the same reason, and for no more than that — whether a
- * reason is a REASON is `characteristicFaults`' judgement and is made in one place.
- */
-export function resolveMintedCharacteristics(packageJson: {
-  specController?: { mintedCharacteristics?: unknown };
-}): ReadonlyMap<string, string | null> {
-  const configured = packageJson.specController?.mintedCharacteristics;
-  if (!isBlock(configured)) return new Map();
-  return new Map(
-    Object.entries(configured).map(([characteristic, reason]) => [
-      bareTerm(characteristic),
-      typeof reason === "string" ? reason.trim() : null,
-    ])
-  );
-}
-
-/**
  * Resolve the recognised deferral-tag set for the target (@SCN-PND-021) — the app's single-sourced
  * starter set EXTENDED by the target `package.json`'s `specController.deferralTags`. Config
  * EXTENDS, never replaces: a project cannot un-recognise a built-in (`@wip` always defers).

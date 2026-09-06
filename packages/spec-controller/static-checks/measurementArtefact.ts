@@ -168,6 +168,31 @@ export const MEASUREMENT_ARTEFACT_PATH = "runs/self-balance/measurements.json";
  */
 export const SWEEP_RECORD_PATH = "runs/mutation/measurements.json";
 
+/**
+ * Where THIS run's timed steps leave what they measured, relative to a repository root — a TIMINGS
+ * RECORD, and not this run's credit stream either (3F-3166).
+ *
+ * THE SAME SPLIT `SWEEP_RECORD_PATH` MAKES, FOR THE SAME REASON, AND IT ARRIVED WITH THE SAME
+ * CONVERSION. `@ci-run-time` used to be a bare tag on two stepless scenarios, and the wrapper's
+ * measurement WAS the credit: it posted straight into the artefact above and `balance --measurements`
+ * read it as what this run credited. Under CONVERTED rows (@SCN-FIT-012 / @SCN-FIT-013) the fitness
+ * pass posts the credit itself, from the number this record holds — so a wrapper still writing into
+ * the credit stream would settle those obligations whether or not the pass that enumerates them ever
+ * ran. That is not a double count, because a row is keyed by (`@SCN`, check) and the later write
+ * would simply replace the earlier one; it is worse than a double count. It is a credit arriving by
+ * a route that enumerates nothing, which is the single-entry fault this whole axis exists to close:
+ * empty the generated corpus and every timing row would still read satisfied.
+ *
+ * TWO FILES, TWO QUESTIONS, exactly as the sweep record puts it: what a producer MEASURED, and what
+ * this run CREDITED. The shape is identical and one reader reads both.
+ *
+ * BOTH TIMED STEPS SHARE IT, which is why the merge rule above still matters here. A run has as many
+ * timed steps as it has timed suites, and each owns its own row.
+ *
+ * Beneath the EVIDENCE ROOT, like the two paths above and for the reason stated there.
+ */
+export const TIMINGS_RECORD_PATH = "runs/timings/measurements.json";
+
 /** Whether two rows answer the same thing — the @SCN naming the row and the check tag on it. */
 function isTheSameRowAs(row: Measurement, measurement: Measurement): boolean {
   // Both terms, because neither is an address on its own (@SCN-LNT-012) — and each read through
@@ -197,6 +222,78 @@ function isMeasurement(row: unknown): row is Measurement {
  */
 export function measurementsOf(rows: unknown): Measurement[] {
   return Array.isArray(rows) ? rows.filter(isMeasurement) : [];
+}
+
+/**
+ * What a reader is asking a record for — the row's own two terms, and the code a measurement
+ * answering that row may STILL arrive stamped with (@SCN-MUT-019).
+ */
+export interface MeasurementAsk {
+  /** The `@SCN` of the row asking, which is the code its own producer stamps today. */
+  readonly scnId: string;
+  /** The bare check tag the row is about; neither term is an address on its own (@SCN-LNT-012). */
+  readonly checkTag: string;
+  /**
+   * The `@SCN` this row's code SUPERSEDED, whose measurements still answer it — or `null` where the
+   * row states none, which is every row whose producer was never out of step with it.
+   *
+   * WHY A ROW EVER STATES ONE. A measured row's number is stamped with its `@SCN` by whatever
+   * PRODUCED it, and a producer on another cadence — a nightly sweep, a scheduled job — is not in
+   * the commit that renames the row. So between the rename and that producer's next run, the newest
+   * record any build can reach is keyed under the code being replaced. There is no atomic version
+   * of that change: rename and the tree reds until a schedule fires, wait for the schedule and the
+   * rename was not atomic. Stating the superseded code here is the expand half of expand/contract,
+   * and the contract half is one sweep away.
+   *
+   * `null` IS A REAL ANSWER AND THE SAFE ONE, exactly as it is for `notExaminedExit`. A row silent
+   * on the point answers only to its own code, which is what every row had before any row could
+   * ask — so nothing already written changes meaning by standing still. Opt-in, per row, never
+   * inferred: a producer being out of step with the row it answers is the unusual state, and the
+   * row saying so is what makes it a statement rather than an accident.
+   *
+   * AND IT WIDENS WHICH CODE COUNTS, NEVER WHICH RECORD COUNTS. A superseded code answers because
+   * the record PREDATES the rename, and never because the record is old — those are different
+   * facts and only the first is a reason. Nothing here reads a clock, and there is no clock here to
+   * read: a `Measurement` carries its two terms and a number. What keeps a lapsed sweep's number
+   * out is the placement, which weighs the PRODUCING RUN'S own clock against a window and does not
+   * fetch the payload at all until that window is cleared — so no code in it, superseded or
+   * current, can reach a decision the age has already made. A reader that took the age into its own
+   * hands here would be the swallowed guarantee this field exists to keep unreachable.
+   */
+  readonly supersededScnId: string | null;
+}
+
+/**
+ * The row of a record that answers what a reader asked, or `undefined` where none does.
+ *
+ * ONE MATCHING RULE FOR EVERY READER OVER THIS ARTEFACT. The sweep record's reader and the timings
+ * record's reader ask the same question of the same shape, and each used to spell the answer for
+ * itself — two copies that agreed until the day one of them was edited, which is the arrangement
+ * this module already refuses for the KEYING rule beside it (`isTheSameRowAs`).
+ *
+ * BOTH TERMS, BARE, because neither is an address on its own (@SCN-LNT-012) and a record may hold
+ * several rows: these records are keyed exactly as the credit stream is.
+ *
+ * THE ROW'S OWN CODE WINS WHEREVER BOTH ARE THERE. A record carrying the superseded code AND the
+ * current one was written across the boundary this exists for, and the current one is the newer
+ * fact about the newer tree.
+ */
+export function measurementAnswering(
+  rows: readonly Measurement[],
+  asked: MeasurementAsk,
+): Measurement | undefined {
+  const stampedWith = (scnId: string) => (held: Measurement) =>
+    bareTerm(held.scnId) === bareTerm(scnId) && bareTerm(held.checkTag) === bareTerm(asked.checkTag);
+  const own = rows.find(stampedWith(asked.scnId));
+  // THE SUPERSEDED CODE IS THE SECOND LOOK AND NEVER THE FIRST, so a record written across the
+  // boundary answers with the newer fact about the newer tree. And it is looked for only where the
+  // row NAMED one: a row silent on the point keeps the one-code reading, which is what every row
+  // had before any row could ask.
+  if (own !== undefined || asked.supersededScnId === null) return own;
+  // BOTH TERMS ON THIS ARM TOO. Dropping the check tag here would hand this row any measurement
+  // wearing the superseded @SCN — a timing wearing a mutation row's old code, say — which is the
+  // silent mis-credit the two-term rule exists to close, arriving through the widening.
+  return rows.find(stampedWith(asked.supersededScnId));
 }
 
 /**

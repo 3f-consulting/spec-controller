@@ -169,7 +169,19 @@ export interface LocalLadder {
 }
 
 /**
- * The steps this repository runs in CI and does not gate locally.
+ * The exclusions a TARGET names — the steps it runs in CI and does not gate locally.
+ *
+ * IT WAS A CONSTANT COMPILED INTO THIS FILE, AND ITS ONE ENTRY RETIRED WITH THE CHECK THAT
+ * NEEDED IT (3F-3165). `lint:scn-subissues` was excluded because a derived gate carries a step's
+ * command without its `env:` block, so `PR_BODY` is empty locally and correct work would have red
+ * as though nobody had claimed the exemption. The check now answers that case itself — exit 3, "I
+ * examined nothing", neither a pass nor a fault (3F-3163 / 3F-3169 / 3F-3170) — so the subset is
+ * expressed ONCE, in the check's own answer, instead of twice in an exclusion list and a
+ * behaviour. This repository names no exclusions at all, and `pnpm ladder` prints no omission.
+ *
+ * SO THE LIST BECAME THE TARGET'S RATHER THAN THE TOOL'S, which is where `--root` already put
+ * every other input. A constant here could only ever describe one repository, and the emitter is
+ * pointed at others.
  *
  * THE CRITERION IS STRUCTURAL, NOT A MATTER OF TASTE. A derived gate carries a step's
  * COMMAND and never its `env:` block, so a step needing CI-supplied environment is exactly a
@@ -186,14 +198,21 @@ export interface LocalLadder {
  * gate an entry dodges still reds on the pull request. An entry added wrongly is a written,
  * printed decision caught in review — not drift, which is why the list is allowed to exist at
  * all. An entry that goes STALE is caught by the ladder itself (@SCN-LAD-005).
+ *
+ * A MALFORMED OR ABSENT KEY YIELDS NO EXCLUSIONS, the safe direction: a target that says nothing
+ * gates everything CI runs, and cannot narrow its own green-check by writing the key wrongly.
  */
-export const CI_ONLY_EXCLUSIONS: readonly LadderExclusion[] = [
-  {
-    script: "lint:scn-subissues",
-    reason:
-      "running it here would not fail, it would answer wrongly: SCN-exempt trailers come from the pull request body as well as the commit messages, and a derived gate carries a step's command without its env: block, so PR_BODY is empty locally and correct work reds as though nobody had claimed the exemption",
-  },
-];
+export function ciOnlyExclusionsOf(packageJson: unknown): readonly LadderExclusion[] {
+  const named = (packageJson as { specController?: { ciOnlyExclusions?: unknown } } | null)
+    ?.specController?.ciOnlyExclusions;
+  if (!Array.isArray(named)) return [];
+  return named.flatMap((entry) => {
+    const row = entry as { script?: unknown; reason?: unknown };
+    return typeof row.script === "string" && typeof row.reason === "string"
+      ? [{ script: row.script, reason: row.reason }]
+      : [];
+  });
+}
 
 /**
  * Derive the local ladder from a CI config and a package manifest.

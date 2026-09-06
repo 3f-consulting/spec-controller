@@ -34,10 +34,13 @@ permissions:
 # reaching" (3F-2957, @SCN-MUT-016). Splitting these steps into independent jobs buys N checkouts and
 # N installs to make a RED build more talkative, and buys nothing where a decision is actually made.
 #
-# THE EXCEPTION IS `if:`, AND IT IS STATED RATHER THAN WAVED AT. A step carrying a condition is
-# skipped on a green run too, so the premise is exact: green means every UNCONDITIONAL step ran. The
-# one conditional step below is governed separately — CI_ONLY_EXCLUSIONS names why it is left off
-# the local ladder, and @SCN-LAD-007 asserts it runs ahead of every gate.
+# THE `if:` EXCEPTION USED TO NEED STATING AND NO LONGER APPLIES (3F-3165). A step carrying a
+# condition is skipped on a green run too, so the premise had to be written exactly: green means
+# every UNCONDITIONAL step ran. The one conditional step was `Lint scenario sub-issue match`, and it
+# converted — it is @SCN-FIT-010 now, run by the fitness pass, and the case its condition existed
+# for (no pull request, so nothing to diff) is answered by the check itself with a third ending
+# rather than by skipping the step. EVERY STEP IN THIS JOB IS NOW UNCONDITIONAL, so the premise
+# needs no exception at all. Add an `if:` and this paragraph stops being true.
 #
 # ONE ATTRIBUTE WOULD FALSIFY ALL OF THIS, AND IT IS FENCED RATHER THAN ASKED FOR POLITELY.
 # `continue-on-error` severs job-green from step-ran: the step runs, reds, and the job ends green
@@ -93,43 +96,13 @@ jobs:
       # exactly the control surface 3F-3099 exists to remove.
       #
       # IT ADDS NO GATE. `pnpm verify`'s ladder is derived from the `run:` steps of this file that
-      # invoke a package.json script; this one invokes none, so the ladder is unchanged at fourteen
-      # and `scripts/verify.sh` exports the same base for itself.
+      # invoke a package.json script; this one invokes none, so the ladder is unchanged by it — five
+      # gates as this file now stands — and `scripts/verify.sh` exports the same base for itself.
       - name: Resolve the evidence root
         run: echo "SPEC_CONTROLLER_EVIDENCE_DIR=$RUNNER_TEMP/spec-controller-self-balance" >> "$GITHUB_ENV"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      # The hermetic scenario ⟷ sub-issue gate (ported from an earlier internal tool / an adopter's repository
-      # 3F-834), wired over spec-controller's REAL source on every PR. Every
-      # behaviour-bearing @SCN change must carry its @SCN cite AND be on a ticketed
-      # PR (the Linear-auto-named branch / [3F-NNN] commit prefix) — verified from
-      # the diff + CI metadata ALONE, with NO live Linear call. Wiring it here (not
-      # only over synthetic fixtures) is what makes the guard see real-source drift.
-      # PR-only: it needs the PR diff + base context; on push-to-main there is no PR
-      # base, so it is skipped (parent 3F-1137; @SCN-SSM-001, 3F-1489).
-      #
-      # IT RUNS AHEAD OF EVERY GATE, AND THAT POSITION IS ASSERTED (3F-3014). It is the one
-      # step CI_ONLY_EXCLUSIONS keeps off the local ladder, so CI is its ONLY run — where
-      # every gate below has two. A `run:` step that reds aborts the job, so any gate ahead
-      # of this one can cost it that run while reporting nothing: unreached, not unrun, which
-      # the ledger cannot see because the job dies before the ledger is asked. That is
-      # measured — a stale mutation record redding `balance:self` took this step off the
-      # board for three consecutive commits during 3F-2994, from the end of the job where it
-      # used to sit. Do not move it below a gate: `deriveLocalLadder` reports the arrangement
-      # `late` and `pnpm ladder` reds emitting no gates (@SCN-LAD-007).
-      - name: Lint scenario sub-issue match
-        if: github.event_name == 'pull_request'
-        env:
-          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          # The PR's source branch — Linear auto-names it "steven/3f-NNN-…", the
-          # primary ticket-handle source.
-          GITHUB_HEAD_REF: ${{ github.event.pull_request.head.ref }}
-          # The PR body is one of the two SCN-exempt trailer sources (the other is
-          # the PR's commit messages); the parser scans both.
-          PR_BODY: ${{ github.event.pull_request.body }}
-        run: pnpm lint:scn-subissues
 
       # BUILT SO THE PUBLISHED SURFACE IS COMPILED ON A PULL REQUEST AT ALL (3F-2765). Nothing else
       # in this ladder reads the built form, so before this step existed a `tsc -p` failure in
@@ -143,146 +116,10 @@ jobs:
       - name: Build
         run: pnpm build
 
-      # The feature-code lint over the REAL feature set — a pure function of the
-      # checked-out tree. Asserts every @<FFF> header code is unique and registered.
-      - name: Lint feature codes
-        run: pnpm lint:feature-codes
-
-      # The tier-tag floor over spec-controller's OWN scenarios (the cobbler's
-      # shoes) — a pure property of the committed source: every scenario under
-      # features/ carrying an @SCN must name an evidence tier
-      # (@unit/@integration/@e2e/@performance, a <tier>pending variant, bare @lint,
-      # or — on a stepless scenario — a registered bare check tag) unless it is @wip.
-      # Fails naming each tier-less offender. A full gate on every push (no GitHub
-      # API). CITED by @SCN-STG-006 (@traceability) so the tool's own ledger reconciles it.
-      - name: Lint scn-tags
-        run: pnpm lint:scn-tags
-
-      # THE RATCHET (@SCN-CPX-003, 3F-2318) — reconciles static-checks/complexityExceptions.mjs
-      # against the tree it describes. The step above freezes each exempt file at its recorded
-      # value, which stops the debt growing; it cannot notice the list going stale downward,
-      # because eslint only reds on value > max. So this step measures the tree with eslint at
-      # the BARE standard (no exception blocks) and reds when the list no longer states what
-      # that measurement found: ABOVE the recorded value is a regression, BELOW it is an
-      # improvement nobody banked (the half that makes the list a ratchet rather than a ceiling
-      # that quietly stops descending), and no longer over the standard at all is a stale entry
-      # to delete. Each red names the file, the rule, the recorded value and the measured value.
-      # The `lint:` prefix is required, not cosmetic: runningStaticChecks observes a CI script
-      # only when its name carries an observed prefix, so a name outside that set would run here
-      # while being invisible to spec-controller's own ledger — a real quality check kept off the
-      # books. CITED by @SCN-CPX-006 (@complexity) so the tool's own ledger
-      # reconciles it rather than reporting it as an uncited static check.
-      - name: Lint complexity exceptions
-        run: pnpm lint:complexity-exceptions
-
-      # The vendored canon table's TRIAGE RECORD (@SCN-VOC-011, 3F-2331) — reds when a row of
-      # static-checks/blockedVocabulary.md does not say what this repository decided about it.
-      # @SCN-VOC-010 made the enforced word set a DERIVATION of that table and gave each row an
-      # adoption status, which is what lets this repository ship green against a canon table
-      # whose unadopted rows carry 2,272 occurrences — and is also the obvious way to smuggle a
-      # row past everybody: leave the status cell out and the row enforces nothing, in silence.
-      # So every row must carry exactly one of adopted / deferred / not-applicable, and a
-      # deferred row must name the ticket that pays it and the date it was taken: a deferral
-      # without a ticket is an intention, not a decision. Each red names WHICH row and WHAT is
-      # missing from it, never "the table is invalid". The `lint:` prefix is required, not
-      # cosmetic: runningStaticChecks observes a CI script only when its name carries an observed
-      # prefix, so a name outside that set would run here while being invisible to
-      # spec-controller's own ledger. CITED by @SCN-VOC-019 (@vocab) so the
-      # tool's own ledger reconciles it rather than reporting it as an uncited static check.
-      - name: Lint blocked vocabulary
-        run: pnpm lint:blocked-vocabulary
-
-      - name: Type-check
-        run: pnpm typecheck
-
-      # THE TREE-ENFORCEMENT HALF OF THE VOCABULARY ARC (@SCN-VOC-014, 3F-2343). The third
-      # vocabulary check, and the one with teeth over the TREE. `audit:vocab` reports and
-      # exits 0 however much it finds — its one non-zero exit is reserved for "I could not
-      # scan" (@SCN-VOC-009) and must not be shared with a finding. `lint:blocked-vocabulary`
-      # above judges the vendored TABLE's triage. Neither says the tree obeys that triage, so
-      # until this step existed an adopted retired word could silently regrow — and one
-      # nearly did, caught by a hand-run manifest diff rather than by CI.
-      #
-      # It reds ONLY on rows the table marks `adopted`. A `deferred` row is dated, ticketed
-      # debt carrying 2,272 occurrences in this tree (@SCN-VOC-015 pins that green out loud);
-      # enforcing those would red main permanently on work the operator has chosen not to pay
-      # yet. The code-side rejected aliases are 3F-2369's, which canon-sources them first.
-      #
-      # CITED by @SCN-VOC-020 (@vocab) so the tool's own
-      # ledger reconciles this step rather than reporting it as an uncited static check. The
-      # `lint:` prefix is required, not cosmetic: runningStaticChecks observes a CI script
-      # only when its name carries an observed prefix.
-      - name: Lint adopted vocabulary
-        run: pnpm lint:adopted-vocabulary
-
-      # THE DATA FLOOR (@SCN-VOC-016 / @SCN-VOC-017, 3F-2378). An exemption makes a file
-      # wholly invisible to the vocabulary audit; that is honest for a PURE-DATA file, where
-      # every banned word is a MENTION, and dishonest for a MIXED file, where the same
-      # exemption hides a USE behind a mention. That is what hid 3F-2300 — a renamed handle
-      # survived as an identifier in files nobody could see into.
-      #
-      # So every entry states its KIND. `pure-data` is permanent; `residual` is temporary
-      # debt that must NAME THE TICKET that removes it, the same shape a deferred canon row
-      # has. A code file claiming pure-data reds. So does an entry covering no banned word at
-      # all — an exemption covering nothing reds nothing by construction, so without the
-      # stale check it sits on as licence for the next file that matches the path.
-      #
-      # CITED by @SCN-VOC-021 (@vocab) so the tool's own
-      # ledger reconciles this step rather than reporting it as an uncited static check.
-      - name: Lint exempt data floor
-        run: pnpm lint:exempt-data-floor
-
-      # THE CHECK-CHARACTERISTIC GATE (@SCN-CHR-005, 3F-2996) — the fourth vocabulary check, and
-      # the one whose subject is the manifest rather than the tree. The words that may name a
-      # characteristic were read out of this repository's own `specController.checkRegistry` and
-      # `specController.thresholds`, so adding a registry entry was simultaneously the act that
-      # minted a characteristic and the act that certified it. Fourteen tags for seven
-      # characteristics grew over a month here and nothing redded once: an absent check, not a
-      # lapse of discipline. This step is what stops the next one.
-      #
-      # The roster it judges against is `spec-controller-core`'s published export, reached through
-      # this workspace's pinned version — never a hand-typed list. A word the roster does not carry
-      # reds unless `specController.mintedCharacteristics` states a reason for it, and a mint that
-      # licenses nothing reds as stale, so the escape route can only shrink.
-      #
-      # WHAT A GREEN HERE DOES NOT ESTABLISH is printed by the check itself: it holds the WORDS to
-      # the roster and does not judge whether a characteristic was EARNED. Canon's admission test
-      # asks whether an existing characteristic already names the property a check asserts, and no
-      # check can answer that.
-      #
-      # CITED by @SCN-CHR-005 (@vocab) so the tool's own ledger reconciles this step rather than
-      # reporting it as an uncited static check. The `lint:` prefix is required, not cosmetic:
-      # runningStaticChecks observes a CI script only when its name carries an observed prefix, so
-      # a name outside that set would run here while being invisible to spec-controller's own
-      # ledger.
-      - name: Lint check characteristics
-        run: pnpm lint:check-characteristics
-
-      # THE ANEMIC-DOMAIN CHECK (@SCN-ANM-001, 3F-2417) — the counterpart to 3F-2416's
-      # module-size scope exclusion. That slice removed the one force actively PUSHING a rich
-      # aggregate's behaviour out of its concept module (under the ceiling, hiving the
-      # operations into a second module was the cheapest route to green); this reds the module
-      # that would receive them. A concept owns its own behaviour — canon,
-      # technical-design/functional-domain-modelling.md, and the fitness-functions.md ruling of
-      # 2026-08-05, which asks for exactly this much mechanism.
-      #
-      # The scope is a DOMAIN DIRECTORY, not the word: a renderService under render/ is
-      # ordinary and legitimate. And what a green here does NOT establish is written down —
-      # it reds a NAME, so behaviour can still drain into a module called anything at all.
-      # It fences the obvious case and no more.
-      #
-      # CITED by @SCN-ANM-002 (@tech-conformance) so the tool's own ledger
-      # reconciles this step rather than reporting it as an uncited static check. The `lint:`
-      # prefix is required, not cosmetic: runningStaticChecks observes a CI script only when
-      # its name carries an observed prefix, so a name outside that set would run here while
-      # being invisible to spec-controller's own ledger.
-      - name: Lint anemic domain
-        run: pnpm lint:anemic-domain
-
       # STEP 0 OF THE SELF-RECONCILIATION CHAIN — THE MEASUREMENT THIS PUSH DID NOT TAKE
-      # (@SCN-MUT-011, 3F-2765). A mutation sweep costs 8-12 minutes against this ladder's ~2
+      # (@SCN-FIT-002, 3F-2765). A mutation sweep costs 8-12 minutes against this ladder's ~2
       # minutes, so it runs nightly (mutation.yml) and its score is last night's. Refusing to read
-      # it would leave SCN-MUT-011 reconciling `missing` on every push — a build redding over a
+      # it would leave SCN-FIT-002 reconciling `missing` on every push — a build redding over a
       # cadence rather than over the code — and reading it unconditionally would settle this tree's
       # bar with a number measured about a different tree. So it is placed only while it is still
       # young enough to be about this code: 36 hours against a 03:17 UTC nightly leaves ~12 hours
@@ -293,7 +130,7 @@ jobs:
       # the nightly's file straight into `runs/self-balance/measurements.json` — the artefact
       # `balance:self` reads as what THIS run credited — and the merge argument that placement
       # needed (land it first, let the two suite producers post beside it) went with it. Under a
-      # CONVERTED @SCN-MUT-011 the fitness pass posts the credit itself, from the number this
+      # CONVERTED @SCN-FIT-002 the fitness pass posts the credit itself, from the number this
       # record holds, so a borrowed row sitting in the credit stream would be a second credit for
       # one Evidence Obligation. Two files, two questions: what a sweep MEASURED, and what this run
       # CREDITED. Nothing else reads or writes the path below, so there is no merge here at all.
@@ -301,6 +138,15 @@ jobs:
       # IT STILL RUNS FIRST, AND NOW FOR A PLAINER REASON. `cucumber:fitness` runs the row's
       # command, which reads this file; a borrow placed after it would leave the command with
       # nothing to print on every push.
+      #
+      # THE RECORD THIS PLACES MAY STILL SAY `SCN-MUT-011` — A TRANSITION WITH AN END (3F-3168,
+      # 3F-3174). The row was minted `SCN-FIT-002`, and the producer that stamps the record moved
+      # with it in the same commit; but the producer runs nightly on the gated branch, so the newest
+      # borrowable record was written by the PREVIOUS night's code and carries the old code. The
+      # row's command therefore states `--supersedes SCN-MUT-011`, and the reader answers a row
+      # from a measurement stamped with the code that row supersedes (@SCN-MUT-019). Once one
+      # nightly has run on the renamed tree, no record carries the old code and the flag comes off
+      # (3F-3174) — otherwise the transition becomes the resting state.
       #
       # WRITTEN HERE RATHER THAN SHIPPED (3F-2841). This was a composite action over a CLI
       # (3F-2766, 3F-2810). Every piece of it is a native GitHub operation or a `date` subtraction
@@ -365,7 +211,7 @@ jobs:
           # that night's sweep MEASURED, and the night that finds a regression is exactly the night
           # whose conclusion is `failure`. Filtering on it reached back past that run to the last
           # green one and placed ITS number — settling this tree's bar with a measurement about an
-          # older tree, and reconciling SCN-MUT-011 satisfied over a regression the sweep had
+          # older tree, and reconciling SCN-FIT-002 satisfied over a regression the sweep had
           # already detected and already said out loud. `gh` reads both a run's status and its
           # conclusion off this one flag; `completed` is the status, so it selects on having
           # FINISHED and on nothing else. It excludes `queued` and `in_progress` on purpose: a
@@ -426,7 +272,7 @@ jobs:
           fi
 
           if [ "${age}" -gt "${MAX_AGE}" ]; then
-            echo "borrow: run ${id} of ${WORKFLOW} measured ${age}s ago, past the ${MAX_AGE}s window; nothing is placed. SCN-MUT-011 will read missing, which is the true sentence: the sweep has lapsed." >&2
+            echo "borrow: run ${id} of ${WORKFLOW} measured ${age}s ago, past the ${MAX_AGE}s window; nothing is placed. SCN-FIT-002 will read missing, which is the true sentence: the sweep has lapsed." >&2
             exit 0
           fi
 
@@ -478,7 +324,7 @@ jobs:
           # running. Left generic, this branch would borrow that reading and send the reader to
           # mutation.yml's schedule over a fault in this runner — the defect moved, not closed.
           if ! { mkdir -p "${SPEC_CONTROLLER_EVIDENCE_DIR}/runs/mutation" && cp "${found}" "${SPEC_CONTROLLER_EVIDENCE_DIR}/runs/mutation/measurements.json"; }; then
-            echo "borrow: could not place ${ARTEFACT} from run ${id} of ${WORKFLOW} into the evidence root; nothing is placed. SCN-MUT-011 will read missing, and this is NOT the lapsed sweep that sentence usually reports: the measurement arrived and this runner could not put it where the check that reports it reads it." >&2
+            echo "borrow: could not place ${ARTEFACT} from run ${id} of ${WORKFLOW} into the evidence root; nothing is placed. SCN-FIT-002 will read missing, and this is NOT the lapsed sweep that sentence usually reports: the measurement arrived and this runner could not put it where the check that reports it reads it." >&2
             exit 0
           fi
           echo "borrow: placed ${ARTEFACT} from run ${id} of ${WORKFLOW}, measured ${age}s ago, inside the ${MAX_AGE}s window:"
@@ -511,12 +357,15 @@ jobs:
       # levelled by a tier tag, this pass's are converted static-check credits named by a
       # configured row (SELF_BALANCE_SCOPE.fitness, 3F-3145).
       #
-      # IT NOW SELECTS A REAL SCENARIO (3F-3151). @SCN-CPX-005 is the first converted check, so
-      # this step is where eslint's complexity / max-lines / max-lines-per-function are held over
-      # the real tree — the work the deleted `Lint complexity` step used to do, reached through
-      # the scenario's configured row instead of through a script handle. Wiring the pass ahead of
-      # its first member is what let that conversion be ONE atomic commit rather than a conversion
-      # plus a pipeline change.
+      # IT NOW SELECTS REAL SCENARIOS (3F-3151, generated since 3F-3164). @SCN-FIT-001 is the
+      # first converted check, so this step is where eslint's complexity / max-lines /
+      # max-lines-per-function are held over the real tree — the work the deleted `Lint complexity`
+      # step used to do, reached through the scenario's configured row instead of through a script
+      # handle. Wiring the pass ahead of its first member is what let that conversion be ONE atomic
+      # commit rather than a conversion plus a pipeline change. Every scenario it selects is now
+      # EMITTED from `specController.fitnessChecks` into `features/fitness-checks.feature`, and one
+      # of those rows regenerates that file and diffs it, so a corpus that has drifted from its
+      # rows reds this very step.
       #
       # AND THAT MOVED THE COMPLEXITY GATE DOWN THE LADDER, WHICH IS A COST, NOT A BONUS.
       # `Lint complexity` ran near the top, before the suites; the complexity violation it used to
@@ -524,13 +373,14 @@ jobs:
       # trades early failure for single entry. Worth reading again if the wait starts to bite: the
       # remedy is where this step sits, not whether the check converted.
       #
-      # IT IS NOT WRAPPED IN `timeStepCli`, AND THAT IS A DECISION. The behavioural call is wrapped
-      # under SCN-CIP-014; wrapping this one under the same @SCN would post a second measurement
-      # against one Evidence Obligation, which is the double count 3F-3138 forecloses, and a new
-      # @SCN needs a scenario this refactor does not carry. So the fitness pass sits OUTSIDE the
-      # ci-run-time measurement for now — its cost is real and currently unmeasured, which is a
-      # sentence worth reading again now that it runs eslint, and again when the measured
-      # conversion adds the mutation score reader beside it.
+      # IT IS NOT WRAPPED IN `timeStepCli`, AND THAT IS NOW A RULE RATHER THAN A DEFERRAL (3F-3166).
+      # THE PASS THAT OBSERVES CANNOT BE INSIDE WHAT IT OBSERVES. This pass READS the two timings
+      # the steps above wrote; wrapping it would have it measuring a run whose verdict it is part
+      # of, and the behavioural suite is what is worth timing anyway. The behavioural call is
+      # wrapped under @SCN-FIT-013 and the unit call under @SCN-FIT-012; wrapping this one under
+      # either would post a second measurement against one Evidence Obligation, and a third @SCN
+      # would need a row nothing produces. So the fitness pass's own run time stays unmeasured, on
+      # purpose, and that is the same separation `balance` keeps by not producing what it judges.
       #
       # THE SCRIPT NAME CARRIES NO OBSERVED PREFIX, ON PURPOSE — the same care `verify` and
       # `ladder` were named under. `runningStaticChecks` treats a package.json script as a RUNNING
@@ -546,7 +396,35 @@ jobs:
       # was the one evidence path a bare `pnpm` script carried, which made it the one this file's
       # evidence root could not reach; here it is symmetric with the two steps above, and the local
       # ladder carries it verbatim like everything else.
+      #
+      # AND IT CARRIES THE ENV BLOCK THE RETIRED `Lint scenario sub-issue match` STEP CARRIED
+      # (3F-3165). @SCN-FIT-010 runs `lint:scn-subissues` from here now, and a derived gate carries
+      # a step's command without its `env:` block — so without these three keys that check would
+      # run in CI over an empty pull-request context, answer "I examined nothing" on every build,
+      # and be credited as having run. A check that stopped checking looks identical to a green.
+      # They are named on THIS step rather than on the job because `jobs.<id>.env` cannot reach the
+      # `github` context's pull_request fields on a push, and an absent key is an empty value here.
+      #
+      # NO `if:` CONDITION ANY MORE, AND THAT IS THE THIRD ANSWER DOING ITS JOB. The retired step
+      # was PR-only because on a push there is no base to diff against; the row now says
+      # `notExaminedExit: 3`, so the check reports "examined nothing" and its scenario is skipped
+      # rather than passed (3F-3163 / 3F-3169 / 3F-3170). One conditional step less, and the
+      # subset is expressed once — in the check's own answer — instead of twice.
+      #
+      # WHAT IT COSTS IS POSITION, AND IT IS STATED RATHER THAN DISCOVERED LATER. That step ran
+      # AHEAD of every gate (3F-3014) because an excluded step had a single chance to run. It is
+      # not excluded any more — `pnpm verify` runs it locally inside this pass — so it has the two
+      # chances every gate has, and the reason for the position went with the exclusion. It does
+      # now sit behind the whole ladder, which is the same trade every converted check made.
       - name: Cucumber (fitness)
+        env:
+          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          # The PR's source branch — Linear auto-names it "steven/3f-NNN-…", the
+          # primary ticket-handle source.
+          GITHUB_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          # The PR body is one of the two SCN-exempt trailer sources (the other is
+          # the PR's commit messages); the parser scans both.
+          PR_BODY: ${{ github.event.pull_request.body }}
         run: pnpm cucumber:fitness --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/runs/self-balance/fitness.json"
 
       # STEP 3 — THE SELF-RECONCILIATION GATE (@SCN-SLF-001, 3F-2351). spec-controller's
