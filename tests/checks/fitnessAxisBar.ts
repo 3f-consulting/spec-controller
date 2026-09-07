@@ -64,6 +64,13 @@
  * Parent: 3F-3180 (sub-issue 2 of 3).
  */
 
+/**
+ * WHY IT IS A CHECK RATHER THAN PROTOCOL (3F-3198). It reads the banked figure and REFUSES a manifest
+ * that has fallen below it: an assertion about this repository reported as a pass or a refusal, which
+ * is the plainest case of a check in the tree. It reads a record on the way there, as every check
+ * does; reading one is not what makes a module protocol.
+ */
+
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 

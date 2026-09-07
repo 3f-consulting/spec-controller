@@ -1,16 +1,20 @@
 /**
- * @unit for @SCN-LNT-023 — the fitness pass runs the command its configured row names and reads its
- * verdict off the ending: a clean run, a violation, or — where that row named the code its command
- * says so with — a check that examined nothing.
+ * @unit for @SCN-LNT-023 and @SCN-LNT-025 — the fitness pass runs the command its configured row
+ * names and reads its verdict off the ending: a clean run, a violation, or — where that row named
+ * the code its command says so with — a check that examined nothing.
  *
- * THE THIRD ANSWER IS OPT-IN AND THE ARMS BELOW ARE BUILT AROUND THAT (3F-3170). Two registries run
+ * THE MEASURED HALF'S ARMS ARE NEXT DOOR (3F-3196), in `fitnessMeasurement.test.ts`, because its
+ * subject is. This file proves `fitnessCommand.ts` and reaches nothing under
+ * `fitnessMeasurement.ts` — the same one-way edge the two modules have.
+ *
+ * THE THIRD ANSWER IS OPT-IN AND THE ARMS BELOW ARE BUILT AROUND THAT (3F-3170). Two indexes run
  * through every arm that touches it: one whose row NAMES a code, one whose row names none. The
- * second is not a control in the decorative sense — it is the arm the previous runner could not
- * pass, because a code fixed for every target reads a consumer's own red as a skip.
+ * second is not a control in the decorative sense — it is the arm the previous shape of the pass
+ * could not clear, because a code fixed for every target reads a consumer's own red as a skip.
  *
  * Bidirectional evidence (Evidence Manifesto §9): the describe/it strings carry [SCN-LNT-023],
  * matching features/fitness-reconciliation.feature and the @integration arm's step block in
- * tests/steps/fitnessRunner.steps.ts.
+ * tests/steps/fitnessCommand.steps.ts.
  *
  * THE PROCESS IS INJECTED HERE AND REAL IN THE OTHER ARM. Everything below hands
  * `fitnessCheckOutcome` a `run` that answers from a table, so the two things a verdict actually
@@ -27,30 +31,15 @@
  * Parent: 3F-3138 — the general shape of a converted fitness check.
  */
 
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
-
 import { describe, it, expect } from "vitest";
 
-import {
-  fitnessChecksOf,
-  parseMeasuredEvidenceObservations,
-  type FitnessCheckRegistry,
-  type MeasurementReport,
-} from "@3f-consulting/spec-controller-core/internal";
-
-import { MEASUREMENT_ARTEFACT_PATH } from "./measurementArtefact.js";
 import { NOT_EXAMINED_EXIT_CODE } from "./scnSubIssueGate.js";
 import {
   fitnessCheckOutcome,
   fitnessCommandsOf,
-  fitnessMeasurement,
-  measuredNumberOf,
-  postFitnessMeasurement,
   type FitnessCommandResult,
   type RunFitnessCommand,
-} from "./fitnessRunner.js";
+} from "./fitnessCommand.js";
 
 /** A `run` that answers from a table and records every command it was handed. */
 function recordingRun(answers: Record<string, Partial<FitnessCommandResult>>): {
@@ -83,9 +72,9 @@ const ROWS = [
  * The code the arms below plant a row with — and it is deliberately NOT the one the first check to
  * answer this way chose (3F-3170).
  *
- * A ROW'S CODE IS THE ROW'S, so an arm planting the code the runner used to be fixed at would pass
- * against a runner that had never learnt to read the row at all. Planting a different one is what
- * makes the arm the discriminator between "reads the row" and "still reads a constant".
+ * A ROW'S CODE IS THE ROW'S, so an arm planting the code the pass used to be fixed at would go
+ * green against a pass that had never learnt to read the row at all. Planting a different one is
+ * what makes the arm the discriminator between "reads the row" and "still reads a constant".
  */
 const PLANTED_NOT_EXAMINED_EXIT = 7;
 
@@ -215,7 +204,7 @@ describe("[SCN-LNT-023] a check that could not examine anything (3F-3169, made o
 
   it("[SCN-LNT-023] neither passes nor fails where its own row named that code, and raises no fault", () => {
     // THE THIRD ANSWER, AND IT IS NOT A PASS. 3F-3163 taught `lint:scn-subissues` to say "there is
-    // no pull-request body to read, so nothing was examined" with a code of its own; a runner that
+    // no pull-request body to read, so nothing was examined" with a code of its own; a pass that
     // folded that into the fault arm reds an honest tree, and one that folded it into the clean arm
     // greens a scenario that examined nothing. Neither, then — the pass reports it as skipped.
     const { run, ran } = recordingRun({ eslint: { status: PLANTED_NOT_EXAMINED_EXIT } });
@@ -228,11 +217,11 @@ describe("[SCN-LNT-023] a check that could not examine anything (3F-3169, made o
   });
 
   it("[SCN-LNT-023] is a FAULT on that same ending where the row named no such code (3F-3170)", () => {
-    // THE WHOLE POINT, AND THE ARM A RUNNER WITH ONE CODE FOR EVERY TARGET CANNOT PASS. The
+    // THE WHOLE POINT, AND THE ARM A PASS WITH ONE CODE FOR EVERY TARGET CANNOT CLEAR. The
     // ending planted here is the one `lint:scn-subissues` uses — and it is also the one this
     // product's own `balance` spends on a pending-items verdict under `--strict`. A row that said
     // nothing about what that ending means gets the two-answer reading, so the consumer keeps
-    // their red; a runner reading that code for everybody hands it back to them as a skip.
+    // their red; a pass reading that code for everybody hands it back to them as a skip.
     const { run } = recordingRun({
       eslint: { status: NOT_EXAMINED_EXIT_CODE, stderr: "1 Pending Item under --strict\n" },
     });
@@ -244,9 +233,9 @@ describe("[SCN-LNT-023] a check that could not examine anything (3F-3169, made o
 
   it("[SCN-LNT-023] reads the code off the ROW rather than off any one check's own spelling", () => {
     // `lint:scn-subissues` IS THE FIRST MEMBER, NOT THE RULE. Its own code is a fact about that
-    // check, and a runner pinned to it would be reading one check's answer into every target's
+    // check, and a pass pinned to it would be reading one check's answer into every target's
     // commands. So a row naming a DIFFERENT code is heard on that code and on no other — which
-    // this pair states in both directions over the one registry.
+    // this pair states in both directions over the one index.
     const { run } = recordingRun({ eslint: { status: NOT_EXAMINED_EXIT_CODE } });
     expect(fitnessCheckOutcome("SCN-AAA-001", naming, run).verdict).toBe("fault");
     const named = recordingRun({ eslint: { status: PLANTED_NOT_EXAMINED_EXIT } });
@@ -290,7 +279,7 @@ describe("[SCN-LNT-023] a @fitness scenario no configured row names", () => {
  * WHY EVERY ARM BELOW CALLS THE READER AND NOTHING ELSE. The refusal is at the READ, so what these
  * arms exercise is `fitnessCommandsOf` on its own — and that reader takes no `run` argument at all,
  * which is the structural half of "before anything is spawned": there is nothing in its signature
- * to spawn with. The other half is the @integration arm in `tests/steps/fitnessRunner.steps.ts`,
+ * to spawn with. The other half is the @integration arm in `tests/steps/fitnessCommand.steps.ts`,
  * where every planted command would leave a trace on disk and the refused ones leave none.
  *
  * THE ACCEPTED ARMS ARE NOT DECORATION. A reader that refused every row would satisfy both refusal
@@ -352,7 +341,7 @@ describe("[SCN-LNT-025] a row spending one of the protocol's own endings on the 
   it("[SCN-LNT-025] reads a row naming any other ending as written, including the two this product itself spends", () => {
     // `balance` answers 2 for a usage fault and 4 for an unsound run (`src/cli-balance/cli.ts`), and
     // BOTH are still the row author's to name: the field says what THAT command means by an ending,
-    // and a runner with opinions about another tool's taxonomy is what 3F-3170 removed. A consumer
+    // and a pass with opinions about another tool's taxonomy is what 3F-3170 removed. A consumer
     // whose check honestly has no subject to examine and says so with 2 is stating a fact about
     // their own command.
     for (const named of [2, 3, 4, 7, 64, 127]) {
@@ -378,162 +367,5 @@ describe("[SCN-LNT-025] a row spending one of the protocol's own endings on the 
     expect([...fitnessCommandsOf(rowNaming("0")).values()]).toEqual([
       { command: "eslint", notExaminedExit: null },
     ]);
-  });
-});
-
-/* ═══ @unit FOR @SCN-LNT-024 — the measured half ═════════════════════════════════════════════ */
-
-/**
- * WHAT THIS ARM PROVES THAT THE @integration ONE CANNOT REACH CHEAPLY. The number rule is read over
- * a table of things a command might print — a number, prose, nothing, a number the measurement
- * reader would refuse — none of which needs a process to have printed them. The posting rule is
- * read against an artefact this arm writes into a throwaway root and then reads back through the
- * REAL reader, which is the only reading that can catch a producer and a reader disagreeing about
- * the keys of a row neither of them wrote.
- */
-
-/** The two rows the measured arms resolve against, in the shape a manifest spells them. */
-const MEASURED_ROWS = [
-  {
-    scn: "SCN-AAA-007",
-    characteristic: "mutation",
-    command: "pnpm --silent mutation:score",
-    atLeast: 240,
-  },
-];
-
-/**
- * The SAME rows as the LEDGER reads them — the half of the row this runner cites but never authors.
- *
- * BUILT THROUGH THE LEDGER'S OWN READER RATHER THAN HAND-KEYED, because the whole claim of the
- * citation below is that the credit's `checkTag` and the debit's `staticCheck` are one word read
- * once. A hand-built map here would let the runner cite a characteristic the obligation rule never
- * raises, and this arm would say it was right to.
- */
-const MEASURED_CHECKS: FitnessCheckRegistry = fitnessChecksOf(MEASURED_ROWS);
-
-describe("[SCN-LNT-024] the number a measured row's command printed", () => {
-  it("[SCN-LNT-024] is read off what it printed, whatever whitespace came with it", () => {
-    expect(measuredNumberOf("240\n")).toBe(240);
-    expect(measuredNumberOf("  97.5  \n\n")).toBe(97.5);
-    // Zero is a real measurement — a suite can kill nothing — and must not read as "no number".
-    expect(measuredNumberOf("0")).toBe(0);
-  });
-
-  it("[SCN-LNT-024] is absent where the command printed prose, nothing, or more than one thing", () => {
-    expect(measuredNumberOf("mutation score: 240")).toBeNull();
-    expect(measuredNumberOf("")).toBeNull();
-    expect(measuredNumberOf("   \n ")).toBeNull();
-    // Two numbers is not one measurement, and taking the first would post a number nobody meant.
-    expect(measuredNumberOf("240\n241\n")).toBeNull();
-  });
-
-  it("[SCN-LNT-024] is absent where the number is one the measurement reader would refuse", () => {
-    // A number posted here that `parseMeasuredEvidenceObservations` drops leaves the row reading
-    // `missing` with nothing red anywhere — the silent failure this scenario exists to foreclose.
-    // So the refusal happens HERE, where it fails the scenario out loud.
-    expect(measuredNumberOf("-1")).toBeNull();
-    expect(measuredNumberOf("Infinity")).toBeNull();
-    expect(measuredNumberOf("NaN")).toBeNull();
-  });
-});
-
-describe("[SCN-LNT-024] the measurement a measured row's command yields", () => {
-  const commands = fitnessCommandsOf(MEASURED_ROWS);
-
-  it("[SCN-LNT-024] cites the scenario's own @SCN and the characteristic its row names", () => {
-    const { run, ran } = recordingRun({
-      "pnpm --silent mutation:score": { stdout: "240\n" },
-    });
-    const outcome = fitnessMeasurement("SCN-AAA-007", MEASURED_CHECKS, commands, run);
-    expect(outcome.fault).toBeNull();
-    expect(outcome.measurement).toEqual({
-      scnId: "SCN-AAA-007",
-      checkTag: "mutation",
-      measured: 240,
-    });
-    // The command reached for is the one the row names — a rule that resolved the wrong row would
-    // satisfy every assertion about the number while measuring something else.
-    expect(ran).toEqual(["pnpm --silent mutation:score"]);
-  });
-
-  it("[SCN-LNT-024] is a fault with NOTHING measured where the command printed no usable number", () => {
-    for (const printed of ["mutation score: 240", "", "-1"]) {
-      const { run } = recordingRun({ "pnpm --silent mutation:score": { stdout: printed } });
-      const outcome = fitnessMeasurement("SCN-AAA-007", MEASURED_CHECKS, commands, run);
-      // BOTH halves, every time: either alone is the quiet failure the ruling names.
-      expect(outcome.measurement).toBeNull();
-      expect(outcome.fault).toContain("SCN-AAA-007");
-      expect(outcome.fault).toContain("pnpm --silent mutation:score");
-    }
-  });
-
-  it("[SCN-LNT-024] does not read the exit code — the number is the evidence, and the bar is the ledger's", () => {
-    // A command that answered with a number and a non-zero code has honoured the contract. Whether
-    // 240 clears its bar is the ledger's sentence (3F-2509), and a runner that redded on it would
-    // be the second arbiter of one characteristic.
-    const { run } = recordingRun({
-      "pnpm --silent mutation:score": { status: 1, stdout: "240\n", stderr: "swept in 9m" },
-    });
-    const outcome = fitnessMeasurement("SCN-AAA-007", MEASURED_CHECKS, commands, run);
-    expect(outcome.fault).toBeNull();
-    expect(outcome.measurement?.measured).toBe(240);
-  });
-
-  it("[SCN-LNT-024] is a fault, and nothing is run, for a scenario no configured row names", () => {
-    const { run, ran } = recordingRun({});
-    const outcome = fitnessMeasurement("SCN-CVT-099", MEASURED_CHECKS, commands, run);
-    expect(outcome.measurement).toBeNull();
-    expect(outcome.fault).toContain("specController.fitnessChecks");
-    expect(ran).toEqual([]);
-  });
-});
-
-describe("[SCN-LNT-024] the artefact a measured row's number posts into", () => {
-  /** A throwaway root, so the posting rule is read over a real file rather than a mock of one. */
-  function plantedRoot(): string {
-    return mkdtempSync(path.join(tmpdir(), "scn-lnt-024-"));
-  }
-
-  /** What the artefact at a root says, read back through the reader `balance` itself uses. */
-  function postedAt(root: string): unknown {
-    const artefact = readFileSync(path.join(root, MEASUREMENT_ARTEFACT_PATH), "utf8");
-    return parseMeasuredEvidenceObservations(JSON.parse(artefact) as MeasurementReport);
-  }
-
-  it("[SCN-LNT-024] is created where the run has posted nothing yet, and reads back through the real reader", () => {
-    const root = plantedRoot();
-    postFitnessMeasurement(root, { scnId: "SCN-AAA-007", checkTag: "mutation", measured: 240 });
-    // THROUGH THE REAL READER, not by inspecting the JSON: a producer that agreed with the reader
-    // by inspection would agree until the day one of them was edited, and a mis-keyed row is not
-    // loud — it is dropped, and the obligation reconciles missing.
-    expect(postedAt(root)).toEqual([
-      { qualityCheck: "lint", scnId: "SCN-AAA-007", checkTag: "mutation", measured: 240 },
-    ]);
-  });
-
-  it("[SCN-LNT-024] posts BESIDE what this run already measured, never over it", () => {
-    const root = plantedRoot();
-    mkdirSync(path.join(root, path.dirname(MEASUREMENT_ARTEFACT_PATH)), { recursive: true });
-    writeFileSync(
-      path.join(root, MEASUREMENT_ARTEFACT_PATH),
-      JSON.stringify({
-        measurements: [{ scnId: "SCN-AAA-006", checkTag: "ci-run-time", measured: 42.1 }],
-      }),
-      "utf8"
-    );
-    postFitnessMeasurement(root, { scnId: "SCN-AAA-007", checkTag: "mutation", measured: 240 });
-    expect(postedAt(root)).toEqual([
-      { qualityCheck: "lint", scnId: "SCN-AAA-006", checkTag: "ci-run-time", measured: 42.1 },
-      { qualityCheck: "lint", scnId: "SCN-AAA-007", checkTag: "mutation", measured: 240 },
-    ]);
-  });
-
-  it("[SCN-LNT-024] writes nothing at all where there was no measurement to post", () => {
-    const root = plantedRoot();
-    postFitnessMeasurement(root, null);
-    // Not an empty artefact — no artefact. An empty one would be this producer claiming the run
-    // measured nothing, over the top of whatever a sibling had already posted.
-    expect(existsSync(path.join(root, MEASUREMENT_ARTEFACT_PATH))).toBe(false);
   });
 });

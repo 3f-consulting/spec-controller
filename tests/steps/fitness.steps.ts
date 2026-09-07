@@ -22,7 +22,7 @@
  * characteristic or a command, which is what holds the count at two: a step text mentioning either
  * would need a third registration for the next check that converted.
  *
- * ═══ THE STATIC RUNNER (@SCN-LNT-023, 3F-3147) ═══
+ * ═══ THE STATIC PASS (@SCN-LNT-023, 3F-3147) ═══
  *
  * ONE SENTENCE, AND IT NAMES NEITHER THE CHARACTERISTIC NOR THE COMMAND. Every converted static
  * check in every target matches the same step below, because everything that varies between two
@@ -31,9 +31,9 @@
  * next check to convert, and the fifteenth target would have fifteen.
  *
  * IT IS WIRING AND NOTHING ELSE. The verdict, the row resolution and the message all live in
- * `tests/checks/fitnessRunner.ts` with the process injected, so they are proved by a @unit arm
+ * `tests/checks/fitnessCommand.ts` with the process injected, so they are proved by a @unit arm
  * that spawns nothing. What is here is the part no unit test can reach: reading the running
- * scenario's tag line, and turning each of the runner's three verdicts into the thing cucumber
+ * scenario's tag line, and turning each of the pass's three verdicts into the thing cucumber
  * reports for it.
  *
  * THE THIRD VERDICT IS A CUCUMBER SKIP, AND THAT IS THE ONE THING ONLY THIS FILE CAN DO (3F-3169).
@@ -58,7 +58,7 @@
  * THE `@SCN` COMES OFF THE TAG LINE, NEVER OFF THE SCENARIO'S NAME. Cucumber hands the hook the
  * running pickle's tags; a title is prose a person edits, and recovering an identifier from one is
  * the name-match posting @SCN-LNT-002 retired. `SCN_TAG` is the reader that already answers "which
- * tag on a scenario is its @SCN" for the fitness pass's own report — one spelling, so the runner
+ * tag on a scenario is its @SCN" for the fitness pass's own report — one spelling, so the pass
  * and the credit reader cannot come to disagree about a corpus neither of them wrote.
  *
  * THE HOOK IS TAG-SCOPED BECAUSE THIS FILE IS LOADED TWICE. The `fitness` profile names it, and
@@ -77,17 +77,16 @@ import {
   fitnessCheckOutcome,
   fitnessChecksAt,
   fitnessCommandsAt,
-  fitnessMeasurement,
-  postFitnessMeasurement,
   spawnFitnessCommand,
-} from "../checks/fitnessRunner.js";
+} from "../checks/fitnessCommand.js";
+import { fitnessMeasurement, postFitnessMeasurement } from "../checks/fitnessMeasurement.js";
 import { resolveEvidenceRoot } from "../checks/measurementArtefact.js";
 import { FITNESS_AXIS_TAG } from "../../packages/core/src/parse/scenarios.js";
 
 // @SCN-LNT-023 — the static half of the fitness pass: the row's command is run and its exit code
 // is the scenario's verdict. The @unit pins are in
-// tests/checks/fitnessRunner.test.ts and the @integration arm in
-// tests/steps/fitnessRunner.steps.ts.
+// tests/checks/fitnessCommand.test.ts and the @integration arm in
+// tests/steps/fitnessCommand.steps.ts.
 
 /** The `@SCN` of the scenario the pass is currently running, or null before it has started one. */
 let runningScn: string | null = null;
@@ -104,8 +103,8 @@ Before({ tags: `@${FITNESS_AXIS_TAG}` }, function (scenario) {
 // @SCN-LNT-023
 Then("the check this scenario names finds no violations", function () {
   // A scenario on the axis carrying no @SCN cites nothing, so there is no row to look it up by.
-  // `lint:scn-tags` holds the corpus to carrying one; this is what the RUNNER does if it ever
-  // meets one anyway, rather than resolving `null` against the registry and reporting a missing
+  // `lint:scn-tags` holds the corpus to carrying one; this is what the PASS does if it ever
+  // meets one anyway, rather than resolving `null` against the index and reporting a missing
   // row for a scenario whose fault is that it named no scenario.
   assert.ok(
     runningScn !== null,
@@ -125,7 +124,7 @@ Then("the check this scenario names finds no violations", function () {
   return undefined;
 });
 
-/* ═══ THE MEASURED RUNNER (@SCN-LNT-024, 3F-3148) ═══════════════════════════════════════════════
+/* ═══ THE MEASURED PASS (@SCN-LNT-024, 3F-3148) ═══════════════════════════════════════════════
  *
  * THE NUMBER IS THE EVIDENCE, WHICH IS WHY THIS SENTENCE EXISTS BESIDE THE ONE ABOVE. It runs the
  * row's command, reads the number off what the command printed, and posts it as this run's credit
@@ -135,7 +134,7 @@ Then("the check this scenario names finds no violations", function () {
  *
  * IT IS WIRING AND NOTHING ELSE, exactly as the static sentence is. Which row a scenario resolves
  * to, what counts as a number, what a fault says and which rows survive in the artefact all live in
- * `tests/checks/fitnessRunner.ts` with the process injected. What is here is the order: post what
+ * `tests/checks/fitnessMeasurement.ts` with the process injected. What is here is the order: post what
  * was measured, then fail on the fault — and `postFitnessMeasurement` writing nothing for a `null`
  * is what makes that order safe to state without a branch. A step definition holding an `if` about
  * whether to post would be holding half the ruling.

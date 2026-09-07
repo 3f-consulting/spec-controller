@@ -17,6 +17,15 @@
  * check whose number is a percentage.
  */
 
+/**
+ * WHY IT IS A CHECK RATHER THAN PROTOCOL (3F-3198). It classifies a measurement, which is the shape
+ * 3F-3190's discriminator sends to the product — but not the substance. Everything in it is about ONE
+ * characteristic and about THIS repository's own gate: the band, the seconds, and a variance margin
+ * read out of `technical-design/fitness-functions.md`'s `trigger x 1.25`. Nothing a target configures
+ * reaches any of it, and the product already has its one reading of a number against its bar, in
+ * core's domain. A second band-reading inside the product would be that reading twice.
+ */
+
 import type { Measurement } from "./measurementArtefact.js";
 
 /**

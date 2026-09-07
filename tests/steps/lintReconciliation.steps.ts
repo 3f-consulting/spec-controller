@@ -59,7 +59,7 @@ import {
   // @SCN-LNT-026 — the ONE spelling of "does this row name its not-examined ending", asked here
   // exactly as the credit reader asks it, so the fixture is held to the fact the rule reads.
   namesNotExaminedEnding,
-  type FitnessCheckRegistry,
+  type FitnessCheckIndex,
 } from "../../packages/core/src/domain/fitnessChecks.js";
 import {
   resolveFitnessChecks,
@@ -113,7 +113,7 @@ let corpusSource: string;
 // @SCN-LNT-018 outcome: the CONFIGURED ROWS the converted route reads, over the same
 // `corpusSource` the registered-tag arm builds. Left undefined by every other scenario, which is
 // what keeps the reading inert for all of them — `parseScenarios` takes its own empty default.
-let configuredFitnessChecks: FitnessCheckRegistry | undefined;
+let configuredFitnessChecks: FitnessCheckIndex | undefined;
 
 // @SCN-LNT-001 / @SCN-LNT-002 outcome: the fixture registry and corpus the citation seam is read
 // through, and the Ledger itself — the "exactly one row" count is over posted-credit IDENTITY,
@@ -723,7 +723,7 @@ function manifestRowOf(row: Record<string, string>): Record<string, unknown> {
   const named = {
     scn: row["scenario"],
     characteristic: row["check"],
-    // The RUNNER's half of the row, present because a real row carries it and unread on this side.
+    // The COMMAND half of the row, present because a real row carries it and unread on this side.
     command: "the command this check runs",
   };
   const authored = row["at least"] ?? "";

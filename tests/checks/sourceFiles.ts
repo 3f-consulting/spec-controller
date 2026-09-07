@@ -26,6 +26,14 @@
  * asymmetry is deliberate; do not "finish the job" by moving the domain floor here.
  */
 
+/**
+ * WHY IT IS NEITHER, AND WHY THAT STILL KEEPS IT HERE (3F-3198). It asserts no property of the
+ * repository, so it is not a check; it reads no evidence record, so it is not protocol either. It is
+ * the check tree's own scaffolding, and the note above already states the two facts that decide its
+ * home: it imports `node:fs`, which shuts `packages/core/src`, and it must stay OUT of the population
+ * it defines, which is the one thing no destination inside a walked root can offer.
+ */
+
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 

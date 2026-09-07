@@ -4,7 +4,7 @@
  *
  * Bidirectional evidence (Evidence Manifesto §9): the step block below carries the @SCN it proves,
  * matching features/fitness-reconciliation.feature and the @unit pins in
- * tests/checks/fitnessRunner.test.ts.
+ * tests/checks/fitnessMeasurement.test.ts.
  *
  * WHAT THIS ARM ADDS OVER THE @unit ONE, WHICH IS THE ONLY REASON IT EXISTS. The unit arm hands the
  * measurement rule a `run` that answers from a table, so it proves the reading and nothing about
@@ -16,12 +16,12 @@
  *
  * THE THIRD COMMAND PRINTS ON ITS ERROR STREAM AND NOTHING ON ITS OUTPUT, which is the contract
  * from the other side: a command may say whatever it likes, as long as the only thing on its output
- * is the number. A runner that read both streams together would take that command's prose as its
+ * is the number. A pass that read both streams together would take that command's prose as its
  * measurement — and would pass this arm if the arm only ever planted silent commands.
  *
  * ITS OWN STEP TEXT RATHER THAN THE FITNESS PASS'S. `tests/steps/fitness.steps.ts` carries the two
  * sentences a converted check's scenario matches, and both are deliberately generic. This file is a
- * scenario ABOUT that runner rather than one running under it, so it words its steps for itself —
+ * scenario ABOUT that pass rather than one running under it, so it words its steps for itself —
  * cucumber registers step definitions globally within a profile, and a scenario that borrowed the
  * pass's own sentence would be indistinguishable from a converted check.
  *
@@ -37,21 +37,23 @@ import path from "node:path";
 import {
   fitnessChecksOf,
   parseMeasuredEvidenceObservations,
-  type FitnessCheckRegistry,
+  type FitnessCheckIndex,
   type MeasurementReport,
 } from "@3f-consulting/spec-controller-core/internal";
 
 import { MEASUREMENT_ARTEFACT_PATH } from "../checks/measurementArtefact.js";
 import {
-  fitnessMeasurement,
   fitnessCommandsOf,
-  postFitnessMeasurement,
   spawnFitnessCommand,
-  type FitnessCommandRegistry,
+  type FitnessCommandIndex,
+} from "../checks/fitnessCommand.js";
+import {
+  fitnessMeasurement,
+  postFitnessMeasurement,
   type FitnessMeasurementOutcome,
-} from "../checks/fitnessRunner.js";
+} from "../checks/fitnessMeasurement.js";
 
-// @SCN-LNT-024 — the measured runner over three scenarios whose rows each name a real command: one
+// @SCN-LNT-024 — the measured pass over three scenarios whose rows each name a real command: one
 // that prints a number, one that prints prose, one that prints nothing on its output at all. The
 // rows are planted in the shape a manifest spells them and read through BOTH real readers, so the
 // arm exercises the resolution and the citation as well as the spawn and the posting.
@@ -72,8 +74,8 @@ const PLANTED_COMMANDS = [NUMBER_COMMAND, PROSE_COMMAND, SILENT_COMMAND] as cons
 const ALREADY_MEASURED = { scnId: "SCN-AAA-006", checkTag: "ci-run-time", measured: 42.1 };
 
 let plantedRoot: string;
-let plantedCommands: FitnessCommandRegistry;
-let plantedChecks: FitnessCheckRegistry;
+let plantedCommands: FitnessCommandIndex;
+let plantedChecks: FitnessCheckIndex;
 let outcomes: FitnessMeasurementOutcome[];
 
 // @SCN-LNT-024
@@ -87,7 +89,7 @@ Given(
       atLeast: 1,
     }));
     // BOTH readers over the SAME rows, which is what the citation assertion below rests on: the
-    // characteristic the runner cites is the one the ledger's own reader took off the row.
+    // characteristic the pass cites is the one the ledger's own reader took off the row.
     plantedCommands = fitnessCommandsOf(rows);
     plantedChecks = fitnessChecksOf(rows);
 

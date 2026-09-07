@@ -1,5 +1,5 @@
 /**
- * THE THRESHOLD REGISTRY — what ceiling a MEASURED fitness check is held to on a given scenario.
+ * THE THRESHOLD INDEX — what ceiling a MEASURED fitness check is held to on a given scenario.
  *
  * The debit-side twin of `checkRegistry`, and the input that makes the measured axis possible at
  * all:
@@ -22,7 +22,7 @@
  * obligations, and one number under it would answer for both — whichever was read first silently
  * setting the other's bar.
  *
- * PURE AND INJECTED — the registry arrives as data, read from the TARGET's own manifest at the app
+ * PURE AND INJECTED — the index arrives as data, read from the TARGET's own manifest at the app
  * edge (`specController.thresholds`). A ceiling means what the target says it means (@SCN-LNT-005);
  * resolved from spec-controller's own manifest it would answer for a repository the run never read.
  *
@@ -35,7 +35,7 @@
 /**
  * A BAR a measurement is held to — the number, and the side of it that satisfies.
  *
- * The registry's value is this rather than the number alone, because a number cannot carry a
+ * The index's value is this rather than the number alone, because a number cannot carry a
  * comparison and "91.87" says nothing until somebody says which side of it passes. The direction is
  * half of the bar, so it is authored in the same manifest entry as the number and cannot disagree
  * with the number it qualifies.
@@ -57,7 +57,7 @@ export interface ThresholdBar {
 }
 
 /**
- * The registry as the rule reads it — `@SCN` → bare check tag → the bar it is held to.
+ * The index as the rule reads it — `@SCN` → bare check tag → the bar it is held to.
  *
  * THE BAR IS NULLABLE AND THE TAG IS NOT (@SCN-MUT-003). A manifest entry makes two claims — that
  * this scenario holds this check, and what bar it holds it to — and only the second can fail to
@@ -65,7 +65,7 @@ export interface ThresholdBar {
  * check stays measured and the missing bar is reported by the arm that exists for exactly that
  * (@SCN-CIP-002) rather than by the tag grammar complaining about a check nobody wrote.
  */
-export type ThresholdRegistry = ReadonlyMap<string, ReadonlyMap<string, ThresholdBar | null>>;
+export type ThresholdIndex = ReadonlyMap<string, ReadonlyMap<string, ThresholdBar | null>>;
 
 /** A bar's number is finite and non-negative. Zero is legal — canon's binary fitness function. */
 function isCeiling(value: unknown): value is number {
@@ -125,7 +125,7 @@ export function barOf(entry: unknown): ThresholdBar | null {
 }
 
 /**
- * Build a registry from a manifest's `{ "<@SCN>": { "<check>": <bar> } }` entries.
+ * Build an index from a manifest's `{ "<@SCN>": { "<check>": <bar> } }` entries.
  *
  * BOTH KEYS ARE STORED BARE. A manifest written by hand will sooner or later spell either the way
  * a feature file does (`@SCN-CIP-001`, `@ci-run-time`), and both lookups match bare — so the `@` is
@@ -141,7 +141,7 @@ export function barOf(entry: unknown): ThresholdBar | null {
  *
  * WHAT IS DROPPED IS THE BAR, NEVER THE CHECK (@SCN-MUT-003). The key still names a pair the target
  * authored, and that naming is the whole of what makes a check MEASURED — a measured check has no
- * script handle, so this registry's key set is the only place the tag is known at all. Dropping the
+ * script handle, so this index's key set is the only place the tag is known at all. Dropping the
  * key with the value would take the obligation down with the bar: the stepless scenario carrying
  * that tag would raise nothing, and the only complaint left would come from the tag grammar, about
  * a check nobody wrote rather than about a bar nobody authored. So a value this cannot read is kept
@@ -151,8 +151,8 @@ export function barOf(entry: unknown): ThresholdBar | null {
  * A KEY THAT NAMES NO CHECK IS STILL DROPPED WHOLE. An empty tag names no pair, so there is no
  * check to hold measured and nothing to report a missing bar against.
  */
-export function thresholdsOf(entries: Readonly<Record<string, unknown>>): ThresholdRegistry {
-  const registry = new Map<string, Map<string, ThresholdBar | null>>();
+export function thresholdsOf(entries: Readonly<Record<string, unknown>>): ThresholdIndex {
+  const index = new Map<string, Map<string, ThresholdBar | null>>();
   for (const [scnKey, checks] of Object.entries(entries)) {
     const scnId = bareTerm(scnKey);
     if (scnId === "" || typeof checks !== "object" || checks === null) continue;
@@ -162,9 +162,9 @@ export function thresholdsOf(entries: Readonly<Record<string, unknown>>): Thresh
       if (checkTag === "") continue;
       bars.set(checkTag, barOf(entry));
     }
-    if (bars.size > 0) registry.set(scnId, bars);
+    if (bars.size > 0) index.set(scnId, bars);
   }
-  return registry;
+  return index;
 }
 
 /**
@@ -181,15 +181,15 @@ export function thresholdsOf(entries: Readonly<Record<string, unknown>>): Thresh
  * all. The honest answer is that there is no rule, and the obligation carries that absence.
  */
 export function thresholdFor(
-  registry: ThresholdRegistry,
+  index: ThresholdIndex,
   scnId: string,
   checkTag: string
 ): ThresholdBar | null {
-  return registry.get(scnId)?.get(checkTag) ?? null;
+  return index.get(scnId)?.get(checkTag) ?? null;
 }
 
 /**
- * The bare check tags this registry knows to be MEASURED — unique and sorted.
+ * The bare check tags this index knows to be MEASURED — unique and sorted.
  *
  * The measured twin of `registeredCheckTags`, and the reason a measured check is visible to the
  * obligation rule at all. A measured check has no runnable script handle, so it never appears in
@@ -197,8 +197,8 @@ export function thresholdFor(
  * tagged with one would raise nothing and the axis would be silent rather than wrong. The two sets
  * are unioned at the edge that reads both.
  */
-export function measuredCheckTags(registry: ThresholdRegistry): string[] {
+export function measuredCheckTags(index: ThresholdIndex): string[] {
   const tags = new Set<string>();
-  for (const bars of registry.values()) for (const tag of bars.keys()) tags.add(tag);
+  for (const bars of index.values()) for (const tag of bars.keys()) tags.add(tag);
   return [...tags].sort();
 }

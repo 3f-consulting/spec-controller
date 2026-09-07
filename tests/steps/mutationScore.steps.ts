@@ -44,12 +44,12 @@ import {
   measuredCheckTags,
   parseMeasuredEvidenceObservations,
   resolveThresholds,
-  type ThresholdRegistry,
+  type ThresholdIndex,
 } from "@3f-consulting/spec-controller-core/internal";
 
 // THE RESOLVER AND THE READER IT TAKES, which together are @SCN-MUT-012's behaviour: the
 // substitution is the engine's and the record read is the app edge's (3F-3087). Composing the
-// registry any other way would assert that the engine still understands a number — which nothing
+// index any other way would assert that the engine still understands a number — which nothing
 // here doubts — so both halves are reached as the balance command reaches them.
 import { killFloorReaderFor } from "../../packages/spec-controller/src/ingest/ingestQualityChecks.js";
 
@@ -61,7 +61,7 @@ import { RECORD_FILE } from "../../packages/spec-controller/src/mutation-ratchet
 // Fixtures shared across steps within a scenario (isolated per scenario by Cucumber).
 
 /** The target's authored bars, as its manifest holds them — @SCN, then bare check tag. */
-let thresholds: ThresholdRegistry;
+let thresholds: ThresholdIndex;
 
 /** The corpus source, one stepless row at a time. */
 let steplessRows: string[];
@@ -159,7 +159,7 @@ Then(
 // @SCN-MUT-001
 Then("it holds nothing a measured Evidence Obligation did not already hold", function () {
   // The regression guard the bare form exists for, asserted on the KEY SET rather than on the
-  // fields read one at a time: a widened registry that leaked a term into the obligation would
+  // fields read one at a time: a widened index that leaked a term into the obligation would
   // satisfy every field assertion above and change what the ledger serialises for the two live
   // @ci-run-time rows, which is the one thing this scenario promises will not happen.
   assert.deepEqual(Object.keys(obligationFor("mutation")).sort(), [
@@ -473,9 +473,9 @@ Then(
 // @SCN-MUT-012 — the bar that names a GATE rather than a number, resolved at the APP EDGE.
 //
 // THE WHOLE ARM RUNS THROUGH `resolveThresholds`, AND THAT IS THE CLAIM. Every scenario above
-// composes its registry with the engine's own `thresholdsOf`, because the bar it authors is
+// composes its index with the engine's own `thresholdsOf`, because the bar it authors is
 // already a number by the time the engine is handed it. This one cannot: the substitution IS the
-// behaviour, so the manifest goes to the edge resolver and the registry under test is whatever
+// behaviour, so the manifest goes to the edge resolver and the index under test is whatever
 // that resolver decided to pass on.
 //
 // AND THE RECORD GOES TO A TREE OUTSIDE THIS ONE. A record planted inside the working directory
@@ -567,7 +567,7 @@ Then(
   function () {
     // ASSERTED AS AN IDENTITY, NOT AS A KEY SET. What crosses the edge is a number, so the
     // obligation raised from a reference must be the very one the same manifest with that number
-    // typed into it raises — field for field. A registry that carried the reference any further
+    // typed into it raises — field for field. An index that carried the reference any further
     // than this resolver would satisfy a key-set check and still hand the engine a shape it has
     // never had to read.
     const typed = thresholdsOf({

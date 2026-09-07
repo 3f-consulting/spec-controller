@@ -11,8 +11,8 @@
  */
 
 import { registeredCheckTags, type CheckRegistry } from "../domain/checkRegistry.js";
-import type { FitnessCheckRegistry } from "../domain/fitnessChecks.js";
-import { measuredCheckTags, type ThresholdRegistry } from "../domain/thresholds.js";
+import type { FitnessCheckIndex } from "../domain/fitnessChecks.js";
+import { measuredCheckTags, type ThresholdIndex } from "../domain/thresholds.js";
 import {
   citationOfScript,
   fitnessCitations,
@@ -102,14 +102,14 @@ export function readTargetCorpus(
   sources: readonly string[],
   deferralTags: readonly string[],
   registry: CheckRegistry,
-  thresholds: ThresholdRegistry,
+  thresholds: ThresholdIndex,
   /**
    * The target's CONFIGURED ROWS (@SCN-LNT-018) — the CONVERTED route's half of the debit side. It
    * reaches `parseScenarios` and nothing else here: a converted check is never discovered as a
    * script handle, so it has no business in `fitnessCitations`, which answers "which scenario does
    * a run of this HANDLE cite". Its credit arrives already citing, off the scenario's own tag line.
    */
-  fitnessChecks: FitnessCheckRegistry
+  fitnessChecks: FitnessCheckIndex
 ): TargetCorpus {
   const checkTags = registeredCheckTags(registry);
   // THE OBLIGATION-RAISING TAG SET IS THE UNION (@SCN-CIP-001); the CITATION hop below is the

@@ -32,14 +32,14 @@
  *
  * ═══ IT READS THE PRODUCT'S OWN TWO READERS, AND ADDS NO THIRD ═══
  *
- * The debit side's reader (`fitnessChecksAt` → characteristic + bar) and the runner's
+ * The debit side's reader (`fitnessChecksAt` → characteristic + bar) and the command side's
  * (`fitnessCommandsAt` → command + `notExaminedExit`) already answer everything a scenario needs.
  * Reading the manifest a third way here would be a generator free to disagree with the ledger about
  * what a row says — a corpus asserting `complexity` for a row the ledger reads as `vocab` is
  * precisely the drift the guard exists to catch, arriving from inside the guard.
  *
  * WHICH READER DECIDES A SCENARIO EXISTS IS THE DEBIT SIDE'S, deliberately. A row naming a scenario
- * and a characteristic but no command still OWES its check — so it gets a scenario, and the runner
+ * and a characteristic but no command still OWES its check — so it gets a scenario, and the pass
  * reds it at the person with "no row of specController.fitnessChecks names this scenario, so there
  * is no command to run". Emitting from the command side instead would make a half-written row
  * silently absent from the corpus, which is a check nobody is told they lost.
@@ -52,16 +52,24 @@
  * Parent: 3F-3139.
  */
 
+/**
+ * WHY IT IS A CHECK RATHER THAN PROTOCOL (3F-3198). It writes a file, which is the shape 3F-3190's
+ * discriminator sends to the product — but the file is THIS repository's own corpus, emitted from
+ * THIS repository's own manifest, and its output is an authored artefact of the tree rather than a
+ * target's evidence. A target generating its corpus this way would be running its own copy of this
+ * generator over its own rows, not calling ours.
+ */
+
 import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-import { carriesBar, type FitnessCheckRegistry } from "@3f-consulting/spec-controller-core/internal";
+import { carriesBar, type FitnessCheckIndex } from "@3f-consulting/spec-controller-core/internal";
 
 import {
   fitnessChecksAt,
   fitnessCommandsAt,
-  type FitnessCommandRegistry,
-} from "./fitnessRunner.js";
+  type FitnessCommandIndex,
+} from "./fitnessCommand.js";
 
 /** Where the generated corpus lives, relative to the tree it is generated for. */
 export const FITNESS_CORPUS_PATH = path.join("features", "fitness-checks.feature");
@@ -141,7 +149,7 @@ Feature: The fitness checks this repository configures, one scenario per row
  * newline would otherwise emit a corpus the parser cannot read — a generator's own output being the
  * thing that breaks the gate that reads it.
  *
- * A ROW WITH NO COMMAND STILL GETS A TITLE. Its scenario exists (the check is owed), the runner is
+ * A ROW WITH NO COMMAND STILL GETS A TITLE. Its scenario exists (the check is owed), the pass is
  * what says the command is missing, and a title inventing one would put the generator in the
  * business of covering for the manifest.
  */
@@ -151,15 +159,15 @@ export function fitnessScenarioTitle(characteristic: string, command: string | u
 }
 
 /**
- * The whole corpus, as text, from the two registries the product already reads its rows through.
+ * The whole corpus, as text, from the two indexes the product already reads its rows through.
  *
  * PURE, AND ITS TWO INPUTS ARE THE PRODUCT'S OWN. Everything that decides what comes out is in the
  * rows: the order (the manifest's), the codes (each row's own), the sentences (each row's shape).
  * So regeneration is deterministic, and the guard's `git diff` means what it says.
  */
 export function fitnessCorpusOf(
-  checks: FitnessCheckRegistry,
-  commands: FitnessCommandRegistry,
+  checks: FitnessCheckIndex,
+  commands: FitnessCommandIndex,
 ): string {
   const scenarios = [...checks].map(([scnId, check]) => {
     const title = fitnessScenarioTitle(check.characteristic, commands.get(scnId)?.command);

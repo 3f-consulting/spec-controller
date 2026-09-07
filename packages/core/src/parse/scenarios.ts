@@ -30,8 +30,8 @@ import { AstBuilder, GherkinClassicTokenMatcher, Parser } from "@cucumber/gherki
 import { IdGenerator, type FeatureChild, type GherkinDocument } from "@cucumber/messages";
 import { bareTerm } from "../lib/bareTerm.js";
 import type { Scenario, EvidenceObligation, QualityCheck, RuntimeQualityCheck } from "../model.js";
-import { measuredCheckTags, thresholdFor, type ThresholdRegistry } from "../domain/thresholds.js";
-import { carriesBar, type FitnessCheckRegistry } from "../domain/fitnessChecks.js";
+import { measuredCheckTags, thresholdFor, type ThresholdIndex } from "../domain/thresholds.js";
+import { carriesBar, type FitnessCheckIndex } from "../domain/fitnessChecks.js";
 
 const SCN_CODE = /^SCN-[A-Z0-9]+-\d+$/;
 
@@ -210,7 +210,7 @@ export function parseUntaggedScenarios(source: string): string[] {
  * carries the CEILING that number is held against — read for THIS scenario, since canon's own shape
  * for the axis is several stepless scenarios sharing one characteristic with ceilings of their own.
  *
- * A MEASURED TAG IS RECOGNISED BY THE THRESHOLD REGISTRY, not by the check registry, and the two sets
+ * A MEASURED TAG IS RECOGNISED BY THE THRESHOLD INDEX, not by the check registry, and the two sets
  * are unioned by the caller. A measured check has no runnable script handle — nothing invokes
  * `ci-run-time` — so `checkRegistry` cannot name it, and a rule reading that set alone would raise
  * nothing for it: silent, which is worse than wrong.
@@ -225,7 +225,7 @@ function fitnessObligationsOf(
   checkTags: readonly string[],
   seen: Set<string>,
   scnId: string,
-  thresholds: ThresholdRegistry
+  thresholds: ThresholdIndex
 ): EvidenceObligation[] {
   const registered = new Set(checkTags);
   const measured = new Set(measuredCheckTags(thresholds));
@@ -306,7 +306,7 @@ export const FITNESS_AXIS_TAG = "fitness";
  */
 function convertedFitnessObligationsOf(
   tags: readonly string[],
-  fitnessChecks: FitnessCheckRegistry,
+  fitnessChecks: FitnessCheckIndex,
   seen: Set<string>,
   scnId: string
 ): EvidenceObligation[] {
@@ -363,7 +363,7 @@ function convertedFitnessObligationsOf(
  */
 export function unconfiguredFitnessScenarios(
   scenarios: readonly TaggedScenario[],
-  fitnessChecks: FitnessCheckRegistry
+  fitnessChecks: FitnessCheckIndex
 ): string[] {
   const unconfigured: string[] = [];
   for (const scenario of scenarios) {
@@ -384,8 +384,8 @@ function obligationsFromTags(
   deferralTags: readonly string[],
   checkTags: readonly string[],
   scnId: string,
-  thresholds: ThresholdRegistry,
-  fitnessChecks: FitnessCheckRegistry
+  thresholds: ThresholdIndex,
+  fitnessChecks: FitnessCheckIndex
 ): EvidenceObligation[] {
   const evidenceObligations: EvidenceObligation[] = [];
   const seenQualityChecks = new Set<RuntimeQualityCheck>();
@@ -681,7 +681,7 @@ export function parseTaggedScenarios(source: string): TaggedScenario[] {
  * axis is dormant.
  *
  * `fitnessChecks` — the target's CONFIGURED ROWS (@SCN-LNT-018) — is trailing and optional for the
- * third time, and carries the scenario's own `scnId` for the threshold registry's reason: a
+ * third time, and carries the scenario's own `scnId` for the threshold index's reason: a
  * converted check's characteristic is keyed by the row it is owed on. Empty by default, so a
  * target that has converted nothing raises nothing on this route.
  */
@@ -689,8 +689,8 @@ export function parseScenarios(
   source: string,
   deferralTags: readonly string[] = [],
   checkTags: readonly string[] = [],
-  thresholds: ThresholdRegistry = new Map(),
-  fitnessChecks: FitnessCheckRegistry = new Map()
+  thresholds: ThresholdIndex = new Map(),
+  fitnessChecks: FitnessCheckIndex = new Map()
 ): Scenario[] {
   return parseTaggedScenarios(source).map((scenario) => ({
     scnId: scenario.scnId,

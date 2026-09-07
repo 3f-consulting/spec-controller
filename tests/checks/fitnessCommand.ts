@@ -1,6 +1,25 @@
 /**
- * THE RUNNER BEHIND A CONVERTED FITNESS CHECK (@SCN-LNT-023) — the row's command, run, and its
- * exit code read as the scenario's verdict.
+ * THE COMMAND HALF OF A CONVERTED FITNESS CHECK (@SCN-LNT-023) — the row's command, run, and
+ * its exit code read as the scenario's verdict.
+ *
+ * THIS MODULE CANNOT REACH THE MEASUREMENT HALF, AND THAT SEPARATION IS ONLY HALF TRUE — READ THIS
+ * BEFORE WIDENING THE FITNESS PROFILE'S REQUIRE LIST (3F-3190).
+ *
+ * The separation holds where it can be held: this module's entire import list is `node:child_process`,
+ * `node:fs`, `node:path` and core's `/internal` — NO local module at all. `fitnessMeasurement.ts`
+ * imports this one; nothing here imports it back, and there is no re-export propping the edge up.
+ * So a STATIC row's code path genuinely never reaches the measurement protocol.
+ *
+ * IT DOES NOT HOLD AT THE CUCUMBER LOAD, AND THAT IS ACCEPTED RATHER THAN ENGINEERED AROUND.
+ * `tests/steps/fitness.steps.ts` carries BOTH step definitions and is fixed by 3F-3146 as the single
+ * file the `fitness` profile requires. So the process running a static row still LOADS the file that
+ * can post a measurement, even though the row's own code never calls into it. Splitting that steps
+ * file would reintroduce the coupling 3F-3114 removed, which is a worse trade than the residual.
+ *
+ * WHAT THAT MEANS FOR YOU. If you widen the profile's require list, you are changing the only thing
+ * standing between these two halves at run time — the fact that one file is loaded rather than two.
+ * The module graph will still look separated and will no longer be the whole story. Say what you are
+ * giving up in the same commit.
  *
  * IT RUNS THE COMMAND. ALWAYS. There is no read-an-artefact second shape in this model: what a
  * target puts BEHIND the command is the target's business, and a target that types a sweep there
@@ -52,34 +71,45 @@
  * — a command that exits non-zero saying nothing, a command killed before it answered — are ones a
  * plant can barely stage.
  *
+ * WHAT IS HERE, AND WHAT IS NEXT DOOR (3F-3196). This module is the STATIC half: read a target's
+ * rows into an index, classify an exit code, and reach a shell. The MEASURED half — read a number
+ * off what a command printed and post it as this run's credit — is `fitnessMeasurement.ts`, and
+ * the edge between them runs ONE WAY. That module imports this one for the index type, the quoting
+ * and the sentence a scenario no row names is told; nothing here imports it back, so a static
+ * row's path never reaches the posting code. A re-export in this direction would restore exactly
+ * the reachability the split removed, and would satisfy the letter of it while undoing the point.
+ *
  * Parent: 3F-3138 — the general shape of a converted fitness check.
  */
 
+/**
+ * WHY IT IS STILL HERE (3F-3198). PROTOCOL by 3F-3190's discriminator — it reads a target's
+ * configured rows into an index, runs a row's command and classifies the exit code — and held in this
+ * tree by the boundary rule at `checkTree.ts`: the four core symbols it imports come from the UNPUBLISHED
+ * `./internal`, so under `packages/spec-controller/src` this module would travel in the tarball and
+ * throw ERR_PACKAGE_PATH_NOT_EXPORTED on first load (@SCN-API-007, measured). What it DOES says move;
+ * what it IMPORTS says it cannot, and the import is the stronger reading.
+ */
+
 import { spawnSync } from "node:child_process";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 
 import {
   bareTerm,
   fitnessChecksOf,
   notExaminedEndingOf,
-  type FitnessCheckRegistry,
+  type FitnessCheckIndex,
 } from "@3f-consulting/spec-controller-core/internal";
-
-import {
-  MEASUREMENT_ARTEFACT_PATH,
-  measurementArtefactWith,
-  type Measurement,
-} from "./measurementArtefact.js";
 // AND THIS MODULE IMPORTS NO CHECK'S OWN EXIT CODE, WHICH IS THE SHAPE OF THE 3F-3170 REPAIR. It
-// briefly imported `NOT_EXAMINED_EXIT_CODE` from `scnSubIssueGate.ts` so the runner and the one
-// check answering that way shared a spelling — but a runner that knows any check's code is a runner
+// briefly imported `NOT_EXAMINED_EXIT_CODE` from `scnSubIssueGate.ts` so the pass and the one
+// check answering that way shared a spelling — but a pass that knows any check's code is a pass
 // reading one check's answers into every target's commands. The code now arrives on the row beside
 // the command it is about, and this module knows no check by name.
 
 /**
  * What one configured row says about the command it names — the command itself, and the one thing
- * about how that command SPEAKS the runner has to be told rather than assume.
+ * about how that command SPEAKS the pass has to be told rather than assume.
  */
 export interface FitnessCommandRow {
   /** The command line the row names, run as the target wrote it. */
@@ -133,19 +163,19 @@ export interface FitnessCommandRow {
 /**
  * The command each configured row names, keyed by the bare `@SCN` that row is about.
  *
- * SEPARATE FROM `FitnessCheckRegistry`, WHICH THE LEDGER READS, and deliberately so: that registry
+ * SEPARATE FROM `FitnessCheckIndex`, WHICH THE LEDGER READS, and deliberately so: that index
  * holds the characteristic and the bar — the DEBIT's half of the row — and states in its own header
- * that the command is the runner's half and nothing on that side reads it. This is that half. The
+ * that the command is the COMMAND half and nothing on that side reads it. This is that half. The
  * two readings share the row and the key, and the COMMAND is still read on this side alone.
  *
  * ONE FIELD IS NOW READ BY BOTH, AND IT IS NOT A BORROWING (3F-3177). `notExaminedExit` is on both
- * registries because both sides genuinely ask about it — this one needs the VALUE, to tell an ending
+ * indexes because both sides genuinely ask about it — this one needs the VALUE, to tell an ending
  * its row named from every other ending a command can have; the ledger needs only WHETHER one was
  * named, which is how it tells a skip the check asked for from a skip a hook produced. Neither side
  * reads it its own way: the ONE reading is `notExaminedEndingOf`, imported from the ledger's file,
- * and this registry keeps only what it must compare an exit code against.
+ * and this index keeps only what it must compare an exit code against.
  */
-export type FitnessCommandRegistry = ReadonlyMap<string, FitnessCommandRow>;
+export type FitnessCommandIndex = ReadonlyMap<string, FitnessCommandRow>;
 
 /** What running one row's command produced, as much of it as a verdict or a message reads. */
 export interface FitnessCommandResult {
@@ -155,7 +185,7 @@ export interface FitnessCommandResult {
   readonly stderr: string;
 }
 
-/** How the runner reaches a process — injected, so every verdict below is provable without one. */
+/** How the pass reaches a process — injected, so every verdict below is provable without one. */
 export type RunFitnessCommand = (command: string) => FitnessCommandResult;
 
 /**
@@ -213,7 +243,7 @@ export interface FitnessCheckOutcome {
  * in the manifest — so the read stops instead, naming the row and the value. The reasoning, and why
  * exactly two endings and no others, is at `refuseAnEndingTheProtocolSpends`.
  */
-export function fitnessCommandsOf(entries: unknown): FitnessCommandRegistry {
+export function fitnessCommandsOf(entries: unknown): FitnessCommandIndex {
   const commands = new Map<string, FitnessCommandRow>();
   if (!Array.isArray(entries)) return commands;
   for (const entry of entries as readonly unknown[]) {
@@ -224,7 +254,7 @@ export function fitnessCommandsOf(entries: unknown): FitnessCommandRegistry {
     if (typeof row?.scn !== "string" || typeof row.command !== "string") continue;
     const scnId = bareTerm(row.scn);
     if (scnId === "" || row.command.trim() === "") continue;
-    // ONE READING, TWO CONSUMERS, ONE REFUSAL — AT THE RUNNER (3F-3177). The reading is the
+    // ONE READING, TWO CONSUMERS, ONE REFUSAL — AT THE PASS (3F-3177). The reading is the
     // ledger's (`notExaminedEndingOf`, imported above): both sides of the row ask what ending it
     // named, and two copies of that reading would eventually answer a target's `7.5` differently.
     // The REFUSAL stays HERE and must not be pulled in beside it: `fitnessChecksOf` is what
@@ -260,12 +290,12 @@ const VIOLATION_ENDING = 1;
  * AND EVERY OTHER ENDING STAYS THE ROW'S, INCLUDING THE TWO THIS PRODUCT ITSELF SPENDS. `balance`
  * answers 2 for a usage fault and 4 for an unsound run (`src/cli-balance/cli.ts`), and a row naming
  * either is still read as written. The field says what THAT row's command means by an ending, which
- * is the row author's sentence to write and not the runner's to have opinions about — the whole of
+ * is the row author's sentence to write and not the pass's to have opinions about — the whole of
  * the 3F-3170 repair, which this refusal must not quietly undo. So this is NOT an allow-list of
  * permitted endings and must not be tidied into one: the two refusals are against the PROTOCOL'S
  * own fixed points, a pass and a violation, and not against anyone's taxonomy.
  *
- * AND AT THE RUNNER'S READ, NEVER AT THE LEDGER'S — ONE READING, TWO CONSUMERS, ONE REFUSAL
+ * AND AT THE PASS'S READ, NEVER AT THE LEDGER'S — ONE READING, TWO CONSUMERS, ONE REFUSAL
  * (3F-3177). The reading of what ending a row named is the ledger's now (`notExaminedEndingOf`,
  * `packages/core/src/domain/fitnessChecks.ts`), because the credit side asks the same row the same
  * question. This throw did NOT go with it and must not be moved there for tidiness: `fitnessChecksOf`
@@ -315,14 +345,28 @@ function refuseAnEndingTheProtocolSpends(scnId: string, named: number | null): v
  * on this route rather than one inferred from a workflow file: the rows come from the target's own
  * manifest and the commands run against the tree beside it.
  */
-export function fitnessCommandsAt(root: string): FitnessCommandRegistry {
+export function fitnessCommandsAt(root: string): FitnessCommandIndex {
   return fitnessCommandsOf(fitnessRowsAt(root));
+}
+
+/**
+ * The rows as the LEDGER reads them, at the root the fitness pass is running in.
+ *
+ * THE MEASURED HALF READS ONLY THE CHARACTERISTIC OFF THIS, AND IT READS IT THROUGH THE
+ * LEDGER'S OWN READER. The word a measured credit cites is the same word the Evidence Obligation was raised
+ * against, so a second reading of "what characteristic does this row name" would let the credit post
+ * under one spelling while the debit stood under another — one row, an obligation with no credit and
+ * a credit with no obligation, and loud nowhere. The BAR on these rows is not this module's business
+ * and nothing here reaches for it.
+ */
+export function fitnessChecksAt(root: string): FitnessCheckIndex {
+  return fitnessChecksOf(fitnessRowsAt(root));
 }
 
 /**
  * The rows themselves, as the target's manifest spells them, before either reading of them.
  *
- * ONE READ FOR TWO READINGS. The runner takes the command half of a row and the ledger's reader
+ * ONE READ FOR TWO READINGS. The pass takes the command half of a row and the ledger's reader
  * takes the characteristic half, and both are asked at the same moment about the same file — so the
  * FILE is read once here and each reader is handed the same rows. Two reads would be two chances
  * for a manifest edited mid-pass to hand one half of the pass a row the other half never saw.
@@ -334,8 +378,18 @@ function fitnessRowsAt(root: string): unknown {
   return manifest.specController?.fitnessChecks;
 }
 
-/** What the command said, on either stream, or a plain statement that it said nothing. */
-function quoted(result: FitnessCommandResult): string {
+/* ═══ CLASSIFYING WHAT ONE ROW'S COMMAND CAME TO ═════════════════════════════════════════════ */
+
+/**
+ * What the command said, on either stream, or a plain statement that it said nothing.
+ *
+ * EXPORTED BECAUSE THE MEASURED HALF QUOTES THE SAME WAY, AND FOR THE SAME REASON (3F-3196).
+ * `fitnessMeasurement.ts` reads a number off a command's output and has to say what a command that
+ * printed no usable one actually said — the identical sentence, over the identical result shape. A
+ * second copy over there would drift the day one of them learnt to truncate. It lives on THIS side
+ * because the shape it quotes is this side's, and the edge only ever points this way.
+ */
+export function quoted(result: FitnessCommandResult): string {
   const said = [result.stdout, result.stderr]
     .map((stream) => stream.trim())
     .filter((stream) => stream !== "")
@@ -345,8 +399,15 @@ function quoted(result: FitnessCommandResult): string {
   return said === "" ? "(it printed nothing)" : said;
 }
 
-/** What a scenario no configured row names is told, and the one remedy it is sent to. */
-const NO_ROW =
+/**
+ * What a scenario no configured row names is told, and the one remedy it is sent to.
+ *
+ * EXPORTED FOR THE MEASURED HALF, WHICH MEETS THE SAME SCENARIO (3F-3196). A measured scenario
+ * missing its row is missing it in exactly the sense this sentence describes, and the remedy is the
+ * same one — write the row. The sentence is about the INDEX, which is this side's, so it is stated
+ * here once and read across rather than said twice in two wordings.
+ */
+export const NO_ROW =
   "no row of specController.fitnessChecks names this scenario, so there is no command to run. " +
   "Write its row: the @SCN it is about, the characteristic it asserts, and the command that " +
   "returns a violation.";
@@ -375,7 +436,7 @@ const NO_ROW =
  */
 export function fitnessCheckOutcome(
   scnId: string,
-  commands: FitnessCommandRegistry,
+  commands: FitnessCommandIndex,
   run: RunFitnessCommand
 ): FitnessCheckOutcome {
   const row = commands.get(scnId);
@@ -414,178 +475,3 @@ export const spawnFitnessCommand: RunFitnessCommand = (command) => {
     stderr: finished.stderr ?? "",
   };
 };
-
-/* ═══ THE MEASURED HALF (@SCN-LNT-024) ═══════════════════════════════════════════════════════ */
-
-/**
- * WHY THERE IS A SECOND HALF AT ALL, AND WHY THERE IS NOT A THIRD. The static half runs a command
- * and reads an EXIT CODE; this one runs a command and reads a NUMBER off what it printed, then posts
- * that number as a measurement. Two assertions over two kinds of evidence — so two step definitions
- * in `tests/steps/fitness.steps.ts`, and exactly two however many checks convert, because everything
- * that varies between two measured checks is in the configured row.
- *
- * THE BAR IS NOWHERE IN HERE. One bar per characteristic and it is the ledger's (3F-2509): a runner
- * that compared the number it had just produced would be grading its own homework, and the ledger
- * would then transcribe a verdict rather than reconcile one. So the EXIT CODE is not read on this
- * route either — the number IS the evidence, and a command that answered with one has honoured the
- * contract whatever code it went out with. That is the same stance `exitCodeOf` states for the
- * wrappers: a producer is not an arbiter of what it measured.
- */
-
-/**
- * What running a MEASURED row's command produced — its number, or the fault that says why there
- * is none. Never both, and never neither.
- *
- * TWO FIELDS RATHER THAN A THROWN ERROR, because both halves of the ruling have to be readable
- * from one answer: the scenario fails AND nothing is posted. A shape that could carry a fault
- * beside a measurement would let a caller post from a run it also called broken.
- */
-export interface FitnessMeasurementOutcome {
-  /** The number the command printed, already citing the row it answers, or `null` on a fault. */
-  readonly measurement: Measurement | null;
-  /** Why there is no measurement, or `null` where there is one. */
-  readonly fault: string | null;
-}
-
-/**
- * The number a command's own output holds, or `null` where what it printed is not one.
- *
- * THE WHOLE OF THE OUTPUT, NOT THE FIRST NUMBER IN IT. A measured row's command prints its
- * measurement and nothing else there; anything it wants to say goes to its error stream. Reading a
- * number OUT of prose would make `mutation score: 240` and `240 of 300 killed` both post a number,
- * one of them the wrong one, and silently — which is exactly the second I/O contract this ruling
- * refused to put in the row.
- *
- * A NUMBER THE MEASUREMENT READER WOULD REFUSE IS REFUSED HERE, WHERE IT IS LOUD.
- * `parseMeasuredEvidenceObservations` takes a finite, non-negative number and drops anything else —
- * so a negative or an infinity posted from here would be dropped on the way back in and the row
- * would read `missing` with nothing red anywhere. That is the silent failure this scenario exists
- * to foreclose, so the refusal happens at the point where it fails the scenario instead. The two
- * readings are held together by both arms reading the artefact back through that real reader; a
- * comment asserting they must agree would agree until one of them was edited.
- *
- * ZERO IS A MEASUREMENT. A suite can kill nothing and a step can take no time, and reading zero as
- * "no number" would turn the worst real answer into a missing one.
- */
-export function measuredNumberOf(printed: string): number | null {
-  const said = printed.trim();
-  // `Number("")` is 0, so an empty stream would otherwise post the measurement of a command that
-  // measured nothing at all.
-  if (said === "") return null;
-  const measured = Number(said);
-  return Number.isFinite(measured) && measured >= 0 ? measured : null;
-}
-
-/**
- * The rows as the LEDGER reads them, at the root the fitness pass is running in.
- *
- * THE RUNNER READS ONLY THE CHARACTERISTIC OFF THIS, AND IT READS IT THROUGH THE LEDGER'S OWN
- * READER. The word a measured credit cites is the same word the Evidence Obligation was raised
- * against, so a second reading of "what characteristic does this row name" would let the credit post
- * under one spelling while the debit stood under another — one row, an obligation with no credit and
- * a credit with no obligation, and loud nowhere. The BAR on these rows is not this module's business
- * and nothing here reaches for it.
- */
-export function fitnessChecksAt(root: string): FitnessCheckRegistry {
-  return fitnessChecksOf(fitnessRowsAt(root));
-}
-
-/** What a command that printed no usable number is told, and the contract it is sent back to. */
-const NOT_A_NUMBER =
-  "printed no measurement. A measured row's command prints its number, and nothing else, on its " +
-  "own output; anything else it has to say goes to its error stream. The number must also be one " +
-  "the measurement reader takes — finite, and not negative — or the row it posts would be dropped " +
-  "on the way back in and read as a check that never ran.";
-
-/**
- * Run the measured check the running scenario's `@SCN` names, and read the number it printed.
- *
- * BOTH READINGS OF THE ROW ARE REQUIRED, AND A SCENARIO MISSING EITHER IS THE SAME FAULT. A row
- * that named a command and no characteristic would leave a number with nothing to cite; one that
- * named a characteristic and no command would leave a scenario with nothing to run. Neither is a
- * measurement, and both send the author to the same place — write the row.
- *
- * THE CITATION IS IN HAND BEFORE THE COMMAND STARTS. The `@SCN` came off the running scenario's own
- * tag line and the characteristic off the row keyed by it, so the measurement arrives already citing
- * rather than being attributed afterwards — which is the two-hop seam conversion retires.
- *
- * NOTHING IS POSTED ON A FAULT, and that is half the ruling rather than an implementation detail: a
- * scenario that failed having posted a number would hand the ledger a credit from a run it had just
- * called broken, and one that passed having posted nothing would leave its row reading `missing`
- * with nothing red anywhere. Two mechanisms, both loud, neither standing in for the other.
- */
-export function fitnessMeasurement(
-  scnId: string,
-  checks: FitnessCheckRegistry,
-  commands: FitnessCommandRegistry,
-  run: RunFitnessCommand
-): FitnessMeasurementOutcome {
-  const row = commands.get(scnId);
-  const check = checks.get(scnId);
-  if (row === undefined || check === undefined) {
-    return { measurement: null, fault: `${scnId}: ${NO_ROW}` };
-  }
-  // THE MEASURED ROUTE READS NO EXIT CODE AT ALL, so it reads no code a row could name for one
-  // either: the number IS the evidence here, and a command that answered with one has honoured the
-  // contract whatever code it went out with. Only the command half of the row is this half's
-  // business.
-  const command = row.command;
-  const result = run(command);
-  const measured = measuredNumberOf(result.stdout);
-  if (measured === null) {
-    return {
-      measurement: null,
-      // The command verbatim and what it said, for the reason the static half quotes them: whoever
-      // has to fix this should not first have to work out which of a target's rows spoke.
-      fault: `${scnId}: \`${command}\` ${NOT_A_NUMBER}\n${quoted(result)}`,
-    };
-  }
-  return { measurement: { scnId, checkTag: check.characteristic, measured }, fault: null };
-}
-
-/** What this run has already posted into the artefact, or nothing where there is nothing to read. */
-function alreadyPostedIn(artefactPath: string): string | undefined {
-  try {
-    return readFileSync(artefactPath, "utf8");
-  } catch {
-    // The first producer of a run finds no file, which is the ordinary case and not a fault. What
-    // is unreadable for any other reason is `measurementArtefactWith`'s to decide, one layer up.
-    return undefined;
-  }
-}
-
-/**
- * Post a measurement into this run's artefact under `evidenceRoot`, beside every row already there.
- *
- * THE BASE IS THE EVIDENCE ROOT AND NOT A TARGET ROOT (3F-3099), which is a change of MEANING with
- * no change of signature — a planted arm handing its own `mkdtemp` in resolves exactly where it
- * always did. The caller that moved is the real fitness pass, which named no target and so used to
- * post into spec-controller's own source tree; it now resolves the base through the one resolver.
- *
- * BESIDE, NEVER OVER. A run has as many measurements as it has measured checks and they all answer
- * through the one artefact `balance --measurements` reads, so this hands the keying rule what is
- * already there and writes what comes back. Writing over it would leave only the last row and every
- * earlier bar reconciling as a check that never ran.
- *
- * `null` WRITES NOTHING AT ALL — not an empty artefact. An empty one would be this producer claiming
- * the run measured nothing, over the top of whatever a sibling had already posted; the caller that
- * hands `null` in is a scenario that is about to fail, and a failing scenario has no business
- * touching the run's credit stream.
- *
- * THE I/O IS THIS PRODUCER'S AND THE KEYING IS NOT, which is the arrangement every producer in this
- * directory already has. `measurementArtefactWith` is deliberately file-free — it takes the artefact
- * as a string and answers with the object — so the rule that decides which rows survive is stated
- * once and each producer supplies its own reading and writing around it.
- */
-export function postFitnessMeasurement(evidenceRoot: string, measurement: Measurement | null): void {
-  if (measurement === null) return;
-  const artefactPath = path.join(evidenceRoot, MEASUREMENT_ARTEFACT_PATH);
-  // The parent is made rather than assumed: the evidence root is a directory nothing else creates,
-  // so the first producer of a run is the thing that creates it.
-  mkdirSync(path.dirname(artefactPath), { recursive: true });
-  writeFileSync(
-    artefactPath,
-    `${JSON.stringify(measurementArtefactWith(measurement, alreadyPostedIn(artefactPath)), null, 2)}\n`,
-    "utf8"
-  );
-}

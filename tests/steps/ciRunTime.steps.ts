@@ -9,7 +9,7 @@
  *
  * WHY @integration AND NOT @unit ALONE. The @unit pins prove each rule in isolation; these steps
  * exercise the same rules through the seam that composes them — a target's manifest read into a
- * threshold registry, the corpus read against it, and the reconciler handed both. The two readings
+ * threshold index, the corpus read against it, and the reconciler handed both. The two readings
  * disagreeing is exactly the fault worth catching: a rule that is right on its own and wired to
  * the wrong input reads green at unit and wrong on the ledger.
  *
@@ -40,14 +40,14 @@ import {
   measuredCheckTags,
   thresholdFor,
   parseMeasuredEvidenceObservations,
-  type ThresholdRegistry,
+  type ThresholdIndex,
   type MeasuredEvidenceObservation,
 } from "@3f-consulting/spec-controller-core/internal";
 
 // Fixtures shared across steps within a scenario (isolated per scenario by Cucumber).
 
 /** The target's authored ceilings, as its manifest holds them — @SCN, then bare check tag. */
-let thresholds: ThresholdRegistry;
+let thresholds: ThresholdIndex;
 
 /** The corpus source the obligation rule is read over. */
 let corpusSource: string;

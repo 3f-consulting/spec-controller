@@ -75,7 +75,7 @@ import {
   carriesBar,
   namesNotExaminedEnding,
   type FitnessCheck,
-  type FitnessCheckRegistry,
+  type FitnessCheckIndex,
 } from "../domain/fitnessChecks.js";
 import type { GuardEvidenceObservation } from "../model.js";
 import { SCN_TAG, type CucumberJsonReport } from "./cucumber.js";
@@ -274,7 +274,7 @@ function rowWasNotEnumeratedMessage(scnId: string): string {
  */
 function reportedCredits(
   report: CucumberJsonReport,
-  fitnessChecks: FitnessCheckRegistry
+  fitnessChecks: FitnessCheckIndex
 ): { credits: GuardEvidenceObservation[]; enumerated: ReadonlySet<string> } {
   const credits: GuardEvidenceObservation[] = [];
   const enumerated = new Set<string>();
@@ -308,7 +308,7 @@ function reportedCredits(
  */
 function rowFor(
   scenario: { tags?: readonly { name?: string }[] },
-  fitnessChecks: FitnessCheckRegistry
+  fitnessChecks: FitnessCheckIndex
 ): { scnId: string; check: FitnessCheck } | null {
   const tags = scenario.tags ?? [];
   if (!tags.some((tag) => bareTerm(tag.name ?? "") === FITNESS_AXIS_TAG)) return null;
@@ -348,7 +348,7 @@ function rowFor(
  */
 export function convertedFitnessCredits(
   report: CucumberJsonReport | undefined,
-  fitnessChecks: FitnessCheckRegistry
+  fitnessChecks: FitnessCheckIndex
 ): GuardEvidenceObservation[] {
   if (report === undefined) return [];
   const { credits, enumerated } = reportedCredits(report, fitnessChecks);

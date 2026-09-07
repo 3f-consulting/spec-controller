@@ -18,6 +18,45 @@
  */
 
 /**
+ * WHAT KEEPS A MODULE IN THIS TREE, MEASURED RATHER THAN ARGUED (3F-3198).
+ *
+ * 3F-3190 asked which modules here are PROTOCOL — code that reads, classifies, parses or writes an
+ * evidence record — rather than checks, and ruled the protocol half into
+ * `packages/spec-controller/src`. That discriminator is sound and it is not sufficient: it asks what
+ * a module DOES and never what its home COSTS. Both candidate homes are shut, and each is shut by a
+ * rule this repository already runs.
+ *
+ *   - `packages/core/src` is shut by @SCN-EPG-001's `io-import` arm. The fitness protocol imports
+ *     `node:fs` and `node:child_process`; the engine may import neither.
+ *   - `packages/spec-controller/src` is shut by @SCN-API-007. That package PUBLISHES, so every module
+ *     under its `src` travels in the tarball — and `fitnessCommand.ts`, `fitnessMeasurement.ts` and
+ *     `measurementArtefact.ts` each import `@3f-consulting/spec-controller-core/internal`, which
+ *     3F-2837 un-published. The move was MADE at 3F-3198 rather than reasoned about: all three
+ *     reported as modules an installed consumer meets as ERR_PACKAGE_PATH_NOT_EXPORTED on first load,
+ *     and the move was reverted.
+ *
+ * SO THE BOUNDARY IS THE SECOND DISCRIMINATOR, AND IT IS THE STRONGER OF THE TWO. A module that can
+ * only be written against core's UNPUBLISHED surface is not a module the product ships. `./internal`
+ * is this tree's window into core — nothing under `packages/spec-controller/src` reaches it today —
+ * so reaching it is what keeps a module here, whatever the first discriminator says it does.
+ *
+ * THIS IS A RE-MEASURED RULING, NOT A NEW ONE. `measurementArtefact.ts` was promoted into the product
+ * package once already (3F-2763) and folded back out at 3F-2861 as "a product module with no product
+ * consumer, carried into `dist` on every build". The red above is that same sentence, said by a check
+ * instead of by a person.
+ *
+ * AND THE FIRST HOME'S RULE DOES NOT REACH THE SECOND. @SCN-EPG-001 walks `packages/core/src` and
+ * nothing else, so a check-tree import planted in a `packages/spec-controller/src` module passes it
+ * (measured 3F-3198, eight arms green over the plant). What refuses that import is
+ * `tsconfig.build.json`'s `rootDir`, which reds `pnpm build` with TS6059. Two different mechanisms,
+ * one for each package; neither covers the other's tree.
+ *
+ * WHAT WOULD RE-OPEN THE SECOND HOME: publishing the four symbols those three modules need on core's
+ * frozen v1 barrel (@SCN-API-001). That widens a published surface, which is a slice of its own and
+ * never a side effect of a relocation.
+ */
+
+/**
  * The check tree's path segments, relative to the repository root.
  *
  * Segments rather than a joined path because the two readers join differently — one with the

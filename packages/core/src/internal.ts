@@ -89,7 +89,7 @@ export { FITNESS_AXIS_TAG } from "./parse/scenarios.js";
 // it (3F-2236) — would admit a tag the engine raises nothing for, or refuse one it does. Internal,
 // not public — where this configuration is AUTHORED moves with the registry-home question.
 export { thresholdsOf, measuredCheckTags, thresholdFor } from "./domain/thresholds.js";
-export type { ThresholdRegistry, ThresholdBar } from "./domain/thresholds.js";
+export type { ThresholdIndex, ThresholdBar } from "./domain/thresholds.js";
 
 // `parseMeasuredEvidenceObservations` — the measurement artefact read into citing Evidence
 // Observations (`parse/measurements`, @SCN-CIP-003). Shared because the balance command is the edge
@@ -121,17 +121,18 @@ export type { FitnessEvidenceObservation } from "./domain/journal.js";
 export { ciRunSteps } from "./parse/checkScriptsRunInCI.js";
 export type { CiRunStep } from "./parse/checkScriptsRunInCI.js";
 
-// The `resolve*` family — a target's `specController.*` configuration read into the registries the
-// reconciler takes (`parse/targetManifest`). Shared because they moved INTO the engine and the
-// tree's own gates still read a target's config through them: the tier-tag floor (@SCN-STG-005) and
-// the characteristic roster resolve the same registry, bars and mints the reconciler does, and a
-// second reader deciding independently which words a manifest names would admit a tag the engine
-// raises nothing for. They sat at the app's ingest edge until 3F-3087, where they were the reason a
-// PUBLISHED module imported this unpublished subpath — the fault 3F-3086 repairs. Internal, not
-// public: where a target's registry, bars and mints are AUTHORED is the registry-home question
-// (increment D), so the shape of what these read is not a v1 contract yet, and @SCN-API-001 freezes
-// that barrel exactly. Nothing under `tests/checks/` travels in a tarball (`tsconfig.build.json`
-// emits `src` alone), so reaching them here is the seam working as 3F-2837 intended.
+// The `resolve*` family — a target's `specController.*` configuration read into the registry, bars
+// and mints the reconciler takes (`parse/targetManifest`). Shared because they moved INTO the
+// engine and the tree's own gates still read a target's config through them: the tier-tag floor
+// (@SCN-STG-005) and the characteristic roster resolve the same registry, bars and mints the
+// reconciler does, and a second reader deciding independently which words a manifest names would
+// admit a tag the engine raises nothing for. They sat at the app's ingest edge until 3F-3087,
+// where they were the reason a PUBLISHED module imported this unpublished subpath — the fault
+// 3F-3086 repairs. Internal, not public: where a target's registry, bars and mints are AUTHORED
+// is the registry-home question (increment D), so the shape of what these read is not a v1
+// contract yet, and @SCN-API-001 freezes that barrel exactly. Nothing under `tests/checks/`
+// travels in a tarball (`tsconfig.build.json` emits `src` alone), so reaching them here is the
+// seam working as 3F-2837 intended.
 export {
   resolveCheckRegistry,
   resolveDeferralTags,
@@ -150,16 +151,17 @@ export type { KillFloorReader, MutationGateReference } from "./parse/targetManif
 // published path. Nothing in this workspace reaches the corpus read any more, and this file
 // re-exports only what the app genuinely shares.
 
-// `fitnessChecksOf` / `FitnessCheck` / `FitnessCheckRegistry` — the ONE reading of a target's
-// CONVERTED rows (`domain/fitnessChecks`, @SCN-LNT-018). Shared because the fitness pass's RUNNER
+// `fitnessChecksOf` / `FitnessCheck` / `FitnessCheckIndex` — the ONE reading of a target's
+// CONVERTED rows (`domain/fitnessChecks`, @SCN-LNT-018). Shared because the fitness pass
 // must cite the characteristic its row names when it posts a measured check's number
 // (@SCN-LNT-024), and that word is the same word the obligation side raises the Evidence
 // Obligation against. A second reader in `tests/checks/` deciding independently what
 // characteristic a row names would post a credit under one spelling while the debit was raised
 // under another — an obligation with no credit and a credit with no obligation, from one row, and
-// loud nowhere. The runner reads only `characteristic` here; the BAR stays the ledger's
-// (@SCN-LNT-019, 3F-2509) and no runner reaches for it. Internal, not public — where these rows are
-// AUTHORED moves with the registry-home question the entries above are parked on.
+// loud nowhere. The pass reads only `characteristic` here; the BAR stays the ledger's
+// (@SCN-LNT-019, 3F-2509) and nothing on the command side reaches for it. Internal, not public —
+// where these rows are AUTHORED moves with the registry-home question the entries above are
+// parked on.
 //
 // `carriesBar` IS THE SHAPE QUESTION AND NEVER THE VALUE, and the two are not the same crossing
 // (3F-3164). The bar's NUMBER stays the ledger's, as above; whether a row carries one at all is
@@ -171,8 +173,8 @@ export type { KillFloorReader, MutationGateReference } from "./parse/targetManif
 // two disagree. The header on `carriesBar` states the one-spelling rule this export serves.
 //
 // `notExaminedEndingOf` IS THE ONE READING OF THE ENDING, AND IT CROSSES FOR THE OPPOSITE REASON TO
-// THE TWO ABOVE (3F-3177). Those cross because the RUNNER must not read a row its own way. This one
-// crosses because the runner already did: it held its own copy of this reading while the ledger had
+// THE TWO ABOVE (3F-3177). Those cross because the PASS must not read a row its own way. This one
+// crosses because the pass already did: it held its own copy of this reading while the ledger had
 // none, and the credit side now has to ask the same row the same question — is a skip in the fitness
 // report one the check said it would produce? Moving the reading here and importing it back leaves
 // ONE READING with TWO CONSUMERS, so a target's `notExaminedExit: 7.5` cannot read as a naming on
@@ -182,10 +184,10 @@ export type { KillFloorReader, MutationGateReference } from "./parse/targetManif
 // (@SCN-LNT-025) throws, and it stays at `fitnessCommandsOf` where a run is about to act on the
 // value. `fitnessChecksOf` is what `balance` reads a CONSUMER'S manifest through, and a throw there
 // turns one bad character in a stranger's `package.json` into a run with no verdict at all — loud
-// nowhere. One reading, two consumers, one refusal, at the runner.
+// nowhere. One reading, two consumers, one refusal, at the pass.
 //
 // `namesNotExaminedEnding` IS THE SHAPE QUESTION AND NEVER THE VALUE, the `carriesBar` split again.
-// The runner needs the ending itself, to compare an exit code against; every other reader needs only
+// The pass needs the ending itself, to compare an exit code against; every other reader needs only
 // whether one was named, and one spelling is what keeps their answers the same.
 export {
   carriesBar,
@@ -193,4 +195,4 @@ export {
   namesNotExaminedEnding,
   notExaminedEndingOf,
 } from "./domain/fitnessChecks.js";
-export type { FitnessCheck, FitnessCheckRegistry } from "./domain/fitnessChecks.js";
+export type { FitnessCheck, FitnessCheckIndex } from "./domain/fitnessChecks.js";

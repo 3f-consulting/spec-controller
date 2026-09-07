@@ -4,7 +4,7 @@
  *
  * Bidirectional evidence (Evidence Manifesto §9): the step block below carries the @SCN it proves,
  * matching features/fitness-reconciliation.feature and the @unit pins in
- * tests/checks/fitnessRunner.test.ts.
+ * tests/checks/fitnessCommand.test.ts.
  *
  * WHAT THIS ARM ADDS OVER THE @unit ONE, WHICH IS THE ONLY REASON IT EXISTS. The unit arm hands the
  * verdict rule a `run` that answers from a table, so it proves the reasoning and nothing about the
@@ -17,7 +17,7 @@
  * that examined nothing answers with the ONE code its own row names, and three of the planted
  * commands stand next to it: one that broke, answering with the neighbouring code this repository
  * already spends on that; one whose row names no code at all yet whose command ends in exactly the
- * words the third's did; and the clean one. All are real processes here, so a runner reading a
+ * words the third's did; and the clean one. All are real processes here, so a pass reading a
  * RANGE, or reading one fixed code for every row, greens the arm built to catch it.
  *
  * THE PAIR IN THE MIDDLE IS THE WHOLE ARM (3F-3170). The third and fourth planted commands are the
@@ -27,7 +27,7 @@
  *
  * ITS OWN STEP TEXT RATHER THAN THE FITNESS PASS'S. `tests/steps/fitness.steps.ts` carries the ONE
  * sentence a converted check's scenario matches, and it is deliberately generic. This file is a
- * scenario ABOUT that runner rather than a scenario running under it, so it words its steps for
+ * scenario ABOUT that pass rather than a scenario running under it, so it words its steps for
  * itself — cucumber registers step definitions globally within a profile, and a scenario that
  * borrowed the pass's own sentence would be indistinguishable from a converted check.
  *
@@ -46,11 +46,11 @@ import {
   fitnessCommandsOf,
   spawnFitnessCommand,
   type FitnessCheckOutcome,
-  type FitnessCommandRegistry,
-} from "../checks/fitnessRunner.js";
+  type FitnessCommandIndex,
+} from "../checks/fitnessCommand.js";
 import { NOT_EXAMINED_EXIT_CODE } from "../checks/scnSubIssueGate.js";
 
-// @SCN-LNT-023 — the runner over six scenarios: five a row names and one no row names. The rows
+// @SCN-LNT-023 — the pass over six scenarios: five a row names and one no row names. The rows
 // are planted in the shape a manifest spells them and read through the real reader, so the arm
 // exercises the resolution as well as the spawn.
 
@@ -74,14 +74,14 @@ const VIOLATING_COMMAND =
  * with REAL codes, which is what makes the pair a boundary rather than a pair of table rows.
  *
  * THE FIRST SPELLS ITS CODE FROM THE CHECK'S OWN EXPORT rather than typing a 3 here. A plant that
- * typed the number would go on passing if the check moved to another code, proving the runner
+ * typed the number would go on passing if the check moved to another code, proving the pass
  * against a contract nothing was keeping any more. That same export is what the PLANTED ROW names,
  * so the row and the command it names cannot come to disagree inside the fixture itself.
  */
 const NOT_EXAMINED_COMMAND = `node -e "console.error('no pull-request body to read'); process.exit(${NOT_EXAMINED_EXIT_CODE})"`;
 const BROKEN_COMMAND = 'node -e "console.error(\'usage: lint <path>\'); process.exit(2)"';
 
-let plantedCommands: FitnessCommandRegistry;
+let plantedCommands: FitnessCommandIndex;
 let outcomes: FitnessCheckOutcome[];
 
 // @SCN-LNT-023
@@ -167,7 +167,7 @@ Given(
     );
     assert.equal(plantedCommands.get(PLANTED_SCENARIOS[4])?.command, BROKEN_COMMAND);
     // The two codes are ADJACENT and must not be the same one, which is the whole of what the
-    // broken plant is for: a runner reading a range rather than one code would tell them apart
+    // broken plant is for: a pass reading a range rather than one code would tell them apart
     // nowhere.
     assert.notEqual(NOT_EXAMINED_EXIT_CODE, 2);
   }
@@ -212,7 +212,7 @@ Then(
 
     // THE ARM THIS SCENARIO EXISTS FOR (3F-3170). The same command, run again, under a row that
     // named no code for that ending — so it is a fault, and its message says the ordinary thing a
-    // fault says. A runner reading one code for every target answers `not-examined` here, which is
+    // fault says. A pass reading one code for every target answers `not-examined` here, which is
     // a consumer's own red arriving as a non-failure.
     const unnamed = outcomes[3]!.fault ?? "";
     assert.match(unnamed, /SCN-CVT-014/);
@@ -246,7 +246,7 @@ const VIOLATION_ENDING = 1;
  * `lint:scn-subissues` says "I examined nothing" with it and this product's own `balance` spends it
  * on a pending-items verdict under `--strict`, and the row naming it is still read as written: the
  * field says what THAT row's command means by an ending, which is the row author's sentence rather
- * than the runner's. Only the protocol's own two are refused.
+ * than the pass's. Only the protocol's own two are refused.
  */
 const ACCEPTED_ENDING = 3;
 
@@ -277,7 +277,7 @@ interface PlantedTarget {
 let plantedTargets: PlantedTarget[] = [];
 /** What each read came to — the refusal it was met with, or the row it was read as. */
 let refusals: (string | null)[] = [];
-let readRegistries: (FitnessCommandRegistry | null)[] = [];
+let readRegistries: (FitnessCommandIndex | null)[] = [];
 
 /** The command every planted row names: it writes its trace, and that is all it does. */
 function tracingCommand(trace: string): string {

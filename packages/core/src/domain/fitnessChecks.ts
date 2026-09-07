@@ -22,7 +22,7 @@
  * rather than something a lookup has to recover.
  *
  * PURE AND INJECTED — the rows arrive as data, read from the TARGET's own manifest at the app edge
- * (`specController.fitnessChecks`), the stance `checkRegistry` and the threshold registry already
+ * (`specController.fitnessChecks`), the stance `checkRegistry` and the threshold index already
  * take. A target that configures nothing raises nothing, so the reading is inert on a corpus
  * nobody has converted.
  */
@@ -33,16 +33,16 @@ import { barOf, type ThresholdBar } from "./thresholds.js";
 /**
  * ONE CONFIGURED ROW as the obligation rule reads it.
  *
- * The `scn` a row states is not a member here: it is this registry's KEY, so a row cannot name one
+ * The `scn` a row states is not a member here: it is this index's KEY, so a row cannot name one
  * scenario and be filed under another. The command a row states is not a member either — it is the
- * RUNNER's half of the row and nothing on the debit side reads it. The BAR is, because whether the
+ * COMMAND half of the row and nothing on the debit side reads it. The BAR is, because whether the
  * row names one is what says the check is measured (@SCN-LNT-019).
  *
  * AND SO IS THE ENDING BY WHICH THAT COMMAND SAYS `I EXAMINED NOTHING` (3F-3177). It is not the
  * command: it is the row's sentence about how the command SPEAKS, and the credit side has to ask
  * it, because a skip in the fitness report is honest exactly where the row named the ending that
  * produced it and incidental everywhere else. One field read by two sides belongs in the ONE
- * reading of the rows, beside the bar — a second copy behind the runner is two readers of one fact.
+ * reading of the rows, beside the bar — a second copy behind the pass is two readers of one fact.
  */
 export interface FitnessCheck {
   /** The bare characteristic this check asserts (`complexity`). */
@@ -65,7 +65,7 @@ export interface FitnessCheck {
    * The ending by which THIS row's command says it examined nothing, or `null` where the row named
    * none — which is every row that has not asked for the third answer (@SCN-LNT-023, 3F-3170).
    *
-   * WHY THE LEDGER HOLDS IT AT ALL, WHICH IS NOT THE RUNNER'S REASON. The runner needs the VALUE,
+   * WHY THE LEDGER HOLDS IT AT ALL, WHICH IS NOT THE PASS'S REASON. The pass needs the VALUE,
    * to tell an ending its row named from every other ending a command can have. This side needs
    * only whether one was named: a fitness scenario the pass reported as skipped is a check that
    * said so about itself exactly where its row named the ending that produced the skip, and a hook,
@@ -79,7 +79,7 @@ export interface FitnessCheck {
    *
    * READ THROUGH `namesNotExaminedEnding`, NEVER BY REACHING FOR THIS FIELD, for the reason
    * `carriesBar` gives one line up: two spellings of one question grow two opinions, and the row
-   * that named `0` — refused at the runner, absent here — is where they would differ first.
+   * that named `0` — refused at the pass, absent here — is where they would differ first.
    */
   readonly notExaminedExit: number | null;
 }
@@ -102,7 +102,7 @@ export function carriesBar(check: FitnessCheck): boolean {
  * THE ONE PREDICATE — does this row name the ending its command says `I examined nothing` with
  * (@SCN-LNT-023, moved here at 3F-3177).
  *
- * The exact twin of `carriesBar` and for the identical reason. The RUNNER asks the question to
+ * The exact twin of `carriesBar` and for the identical reason. The PASS asks the question to
  * decide whether an ending it just saw is the third answer; the CREDIT side asks it to decide
  * whether a skip the fitness report carries is one the check asked for. Two questions, one fact,
  * one spelling — and the row that named `0` is where two spellings would differ first, because that
@@ -122,7 +122,7 @@ export function namesNotExaminedEnding(check: FitnessCheck): boolean {
  * take at its word gets the reading that fails rather than the one that goes quiet.
  *
  * IT DOES NOT JUDGE THE NUMBER, ONLY READ IT, and that is what lets ONE READING serve TWO CONSUMERS
- * with ONE REFUSAL — at the runner (3F-3177). `refuseAnEndingTheProtocolSpends` throws on a row
+ * with ONE REFUSAL — at the pass (3F-3177). `refuseAnEndingTheProtocolSpends` throws on a row
  * spending a clean run's ending or a violation's (@SCN-LNT-025), and it stays at
  * `fitnessCommandsOf`, where a run is about to ACT on the value. It must not be pulled in here:
  * this reading is what `balance` takes a stranger's manifest through, and a throw on this path
@@ -143,7 +143,7 @@ export function notExaminedEndingOf(named: unknown): number | null {
 }
 
 /** The rows as the rule reads them — bare `@SCN` → the row naming that scenario's check. */
-export type FitnessCheckRegistry = ReadonlyMap<string, FitnessCheck>;
+export type FitnessCheckIndex = ReadonlyMap<string, FitnessCheck>;
 
 /**
  * The two keys a row names its bar with. Either one makes the row MEASURED, whatever stands beside
@@ -176,7 +176,7 @@ function fitnessCheckOf(entry: unknown): readonly [string, FitnessCheck] | null 
   if (scnId === "" || characteristic === "") return null;
   // THE ROW'S SHAPE SAYS WHICH KIND OF CHECK IT IS — no type field, no second tag, no roster of
   // measured characteristics somebody has to keep in step with the rows. The bar is read by the
-  // registry's OWN reader, handed the row whole: one grammar for `atLeast` / `atMost`, so a
+  // threshold index's OWN reader, handed the row whole: one grammar for `atLeast` / `atMost`, so a
   // converted row and a threshold entry cannot come to disagree about what a target wrote.
   const row = named as Record<string, unknown>;
   // THE ENDING IS READ WHATEVER SHAPE THE ROW IS, because it is orthogonal to the bar: a measured
@@ -190,7 +190,7 @@ function fitnessCheckOf(entry: unknown): readonly [string, FitnessCheck] | null 
 }
 
 /**
- * Build the registry from the rows a manifest holds.
+ * Build the index from the rows a manifest holds.
  *
  * A LIST, NOT A BLOCK KEYED BY `@SCN`, and the shape is the row's own argument: a row is what a
  * check says about ITSELF — its `@SCN`, its characteristic, its command — so no one of those three
@@ -202,12 +202,12 @@ function fitnessCheckOf(entry: unknown): readonly [string, FitnessCheck] | null 
  * turns one bad character into a run that produces no verdict at all, which is loud nowhere; a
  * dropped row leaves its scenario naming no characteristic, which the corpus reports.
  */
-export function fitnessChecksOf(entries: unknown): FitnessCheckRegistry {
+export function fitnessChecksOf(entries: unknown): FitnessCheckIndex {
   if (!Array.isArray(entries)) return new Map();
-  const registry = new Map<string, FitnessCheck>();
+  const index = new Map<string, FitnessCheck>();
   for (const entry of entries as readonly unknown[]) {
     const row = fitnessCheckOf(entry);
-    if (row !== null) registry.set(row[0], row[1]);
+    if (row !== null) index.set(row[0], row[1]);
   }
-  return registry;
+  return index;
 }

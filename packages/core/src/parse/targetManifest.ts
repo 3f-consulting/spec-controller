@@ -1,6 +1,6 @@
 /**
- * The TARGET's `specController.*` configuration, read into the registries the reconciler
- * takes — the `resolve*` family, moved here from the app's ingest edge (3F-3087).
+ * The TARGET's `specController.*` configuration, read into the registry, bars and mints the
+ * reconciler takes — the `resolve*` family, moved here from the app's ingest edge (3F-3087).
  *
  * WHY THEY LIVE IN THE ENGINE. Every one of them is a pure function of a manifest object
  * somebody else already read off disk, and every one of them is the ONE reading of the key it
@@ -26,8 +26,8 @@
 
 import { bareTerm } from "../lib/bareTerm.js";
 import { checkRegistryOf, type CheckRegistry } from "../domain/checkRegistry.js";
-import { thresholdsOf, type ThresholdRegistry } from "../domain/thresholds.js";
-import { fitnessChecksOf, type FitnessCheckRegistry } from "../domain/fitnessChecks.js";
+import { thresholdsOf, type ThresholdIndex } from "../domain/thresholds.js";
+import { fitnessChecksOf, type FitnessCheckIndex } from "../domain/fitnessChecks.js";
 
 /** Whether a value read out of a manifest is a block of named fields, rather than a list or scalar. */
 function isBlock(value: unknown): value is Record<string, unknown> {
@@ -184,7 +184,7 @@ function withGateReferencesResolved(
  * AND A BAR MAY NAME A MUTATION GATE INSTEAD OF A FIGURE (@SCN-MUT-012, 3F-2788). A number in a
  * manifest is a number somebody has to re-derive after every sweep that moves it. So the VALUE may
  * be a reference to a gate whose record already holds the counts, and it is substituted for that
- * gate's kill floor HERE — before `thresholdsOf` is called, so what reaches the registry is the
+ * gate's kill floor HERE — before `thresholdsOf` is called, so what reaches the index is the
  * number it has always taken. THE READER IS INJECTED, which is what keeps the engine knowing
  * nothing about records, gates or YAML now that the substitution lives inside it: the app edge
  * opens the target's record and hands in a closure, and this function only ever asks it for a
@@ -205,7 +205,7 @@ export function resolveThresholds(
    * record reads that record once.
    */
   killFloor: KillFloorReader
-): ThresholdRegistry {
+): ThresholdIndex {
   const configured = packageJson.specController?.thresholds;
   if (!isBlock(configured)) return thresholdsOf({});
   return thresholdsOf(withGateReferencesResolved(configured, killFloor));
@@ -285,7 +285,7 @@ export function resolveFitnessChecks(
    * (@SCN-LNT-005) — the same argument `resolveThresholds` takes, for the same reason.
    */
   killFloor: KillFloorReader
-): FitnessCheckRegistry {
+): FitnessCheckIndex {
   const configured = packageJson.specController?.fitnessChecks;
   if (!Array.isArray(configured)) return fitnessChecksOf(configured);
   return fitnessChecksOf(

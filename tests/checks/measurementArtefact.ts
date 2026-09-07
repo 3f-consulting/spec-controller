@@ -44,6 +44,45 @@
  * and no consumer of the artefact has a wrapped command to ask it about.
  */
 
+/**
+ * WHY IT IS STILL HERE, MEASURED A SECOND TIME (3F-3198). The paragraph above records that this
+ * module was promoted into the product package at 3F-2763 and folded back out at 3F-2861, as a
+ * product module with no product consumer carried into `dist` on every build. 3F-3190 proposed the
+ * promotion again, on the protocol discriminator. It was MADE rather than argued: `bareTerm` comes
+ * from core's UNPUBLISHED `./internal`, so under `packages/spec-controller/src` this module reported
+ * as one an installed consumer meets as ERR_PACKAGE_PATH_NOT_EXPORTED (@SCN-API-007). 3F-2861's
+ * sentence now has a check saying it. The rule is at `checkTree.ts`.
+ */
+
+/**
+ * THREE REFUSALS, AND THEY ARE NOT THE SAME REFUSAL (3F-3199). This module has now stopped three
+ * attempts to move it into the product package, and a fourth attempt will be wasted unless the
+ * reasons are told apart first. The relocation 3F-3190 proposed is WITHDRAWN rather than deferred,
+ * so this docblock is the whole of the record.
+ *
+ *   1. 3F-2763 PROMOTED IT, for a consumer that then stopped existing.
+ *   2. 3F-2861 FOLDED IT BACK OUT, and that reason is about PURPOSE — a product module with no
+ *      product consumer, carried into `dist` on every build. It says NOT YET. Its condition is
+ *      3F-3117: a second repository actually adopting the measurement vocabulary. Satisfy that and
+ *      this reason lapses on its own.
+ *   3. @SCN-API-007 REFUSES IT, and that reason is about PACKAGING. It says NOT AS WRITTEN, and a
+ *      consumer arriving tomorrow does not touch it.
+ *
+ * WHY THE THIRD IS A BARREL DECISION AND NOT A JUDGEMENT CALL. `packages/spec-controller` PUBLISHES
+ * — it is not `private`, it carries `publishConfig.access: "public"`, and it ships `files: ["dist"]`
+ * — so everything under its `src` travels in the tarball. This module imports `bareTerm` from
+ * `@3f-consulting/spec-controller-core/internal`, and core's `publishConfig.exports` ships only `.`.
+ * npm REPLACES `exports` with `publishConfig.exports` wholesale rather than merging them, so
+ * `./internal` is present in the workspace and absent from the published package. An installed
+ * consumer resolves through the publish-time map alone and gets ERR_PACKAGE_PATH_NOT_EXPORTED on
+ * first load — which is why the move reds @SCN-API-007 and why an in-repo green cannot see it.
+ *
+ * SO WHAT THE FOURTH ATTEMPT HAS TO DO FIRST. Not argue the discriminator again — 3F-3198 already
+ * made the move and the tree answered. Either publish core's `./internal` subpath (a v1 surface
+ * decision, @SCN-API-001 freezes that barrel), or give this module a route to `bareTerm` that does
+ * not cross an unpublished subpath. Until one of those lands, the placement question is not open.
+ */
+
 import { constants, tmpdir } from "node:os";
 import path from "node:path";
 

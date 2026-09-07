@@ -18,10 +18,10 @@
 
 import { describe, it, expect } from "vitest";
 import { parseScenarios } from "./scenarios.js";
-import type { FitnessCheckRegistry } from "../domain/fitnessChecks.js";
+import type { FitnessCheckIndex } from "../domain/fitnessChecks.js";
 
 /** The configured rows, as the obligation rule takes them: bare `@SCN` → the characteristic. */
-const CONFIGURED: FitnessCheckRegistry = new Map([
+const CONFIGURED: FitnessCheckIndex = new Map([
   ["SCN-AAA-001", { characteristic: "complexity", notExaminedExit: null }],
 ]);
 
@@ -125,7 +125,7 @@ Feature: fitness
 });
 
 /** The converted rows for @SCN-LNT-019 — one floor, one bar nothing can read, one no bar at all. */
-const BY_SHAPE: FitnessCheckRegistry = new Map([
+const BY_SHAPE: FitnessCheckIndex = new Map([
   ["SCN-AAA-002", { characteristic: "mutation", notExaminedExit: null, bar: { threshold: 90, atLeast: true } }],
   ["SCN-AAA-003", { characteristic: "coverage", notExaminedExit: null, bar: null }],
   ["SCN-AAA-001", { characteristic: "complexity", notExaminedExit: null }],
@@ -182,7 +182,7 @@ describe("[SCN-LNT-019] the row's shape decides which obligation the converted r
   it("carries a ceiling row's bar sparsely — the number, and no direction beside it", () => {
     // The direction is the TARGET's to author, never the engine's to infer from the characteristic
     // (@SCN-MUT-001): a row naming `atMost` lands exactly the keys it landed before floors existed.
-    const ceiling: FitnessCheckRegistry = new Map([
+    const ceiling: FitnessCheckIndex = new Map([
       ["SCN-AAA-001", { characteristic: "ci-run-time", notExaminedExit: null, bar: { threshold: 75 } }],
     ]);
 

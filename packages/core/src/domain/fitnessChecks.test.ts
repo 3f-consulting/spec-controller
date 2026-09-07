@@ -1,6 +1,6 @@
 /**
  * @unit for @SCN-LNT-018 — the other half of the converted route: the CONFIGURED ROWS arriving as
- * data, read from a target's manifest into the registry the obligation rule takes.
+ * data, read from a target's manifest into the index the obligation rule takes.
  *
  * AND FOR @SCN-LNT-019 — the BAR half of the same reading: whether a row carries one at all, which
  * is the whole of what says a converted check is measured rather than static. It belongs here
@@ -8,15 +8,15 @@
  * does with it is pinned in parse/convertedFitnessObligations.test.ts.
  *
  * AND FOR THE ENDING A ROW NAMES ITS COMMAND'S `I examined nothing` WITH, which arrived in this
- * reading at 3F-3177 because both sides of a row now ask about it. What the RUNNER does with the
+ * reading at 3F-3177 because both sides of a row now ask about it. What the PASS does with the
  * same reading — compare an exit code against it, and refuse a row spending the protocol's own two
- * endings — is pinned where the runner is, under @SCN-LNT-023 and @SCN-LNT-025 in
- * tests/checks/fitnessRunner.test.ts. Here it is only the reading, which
+ * endings — is pinned where the pass is, under @SCN-LNT-023 and @SCN-LNT-025 in
+ * tests/checks/fitnessCommand.test.ts. Here it is only the reading, which
  * is the whole of what this file is for.
  *
  * Bidirectional evidence: the describes carry the @SCN id, matching
  * features/fitness-reconciliation.feature and the @integration steps in
- * tests/steps/lintReconciliation.steps.ts. The rule that CONSUMES this registry is pinned next
+ * tests/steps/lintReconciliation.steps.ts. The rule that CONSUMES this index is pinned next
  * door in parse/convertedFitnessObligations.test.ts; this file pins only the reading.
  */
 
@@ -82,7 +82,7 @@ describe("[SCN-LNT-018] the configured rows read into the registry the obligatio
   });
 
   it("holds the ending a row names for its command's `I examined nothing`, and null where it names none", () => {
-    // ONE READING, TWO CONSUMERS (3F-3177). The runner reads this same field off this same row to
+    // ONE READING, TWO CONSUMERS (3F-3177). The pass reads this same field off this same row to
     // compare an exit code against; the credit side reads it to tell a skip the check asked for
     // from one a hook produced. A second reading here would take a target's `"3"` as a naming on
     // one side and as nothing on the other, and the row they disagreed about is the one nobody
@@ -103,7 +103,7 @@ describe("[SCN-LNT-018] the configured rows read into the registry the obligatio
   });
 
   it("answers ONE predicate for whether a row named such an ending at all", () => {
-    // The twin of `carriesBar`, and the twin's reason: the runner needs the VALUE and every other
+    // The twin of `carriesBar`, and the twin's reason: the pass needs the VALUE and every other
     // reader needs only whether one was named, so two spellings of the second question would grow
     // two opinions of one fact. `0` cannot reach here — it is refused where the commands are read
     // (@SCN-LNT-025) — so a row this answers `false` for is one that named nothing readable.

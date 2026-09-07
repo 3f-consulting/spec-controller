@@ -55,6 +55,13 @@
  * Parent: 3F-2351.
  */
 
+/**
+ * WHY IT IS A CHECK RATHER THAN PROTOCOL (3F-3198). It asserts a property of THIS repository and exits
+ * on the verdict, which is what a gate is. That it resolves paths and reads reports on the way there
+ * is scaffolding for the assertion, not an evidence protocol a target could use: every surface in
+ * `SELF_BALANCE_SCOPE` is one of this repository's own.
+ */
+
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 

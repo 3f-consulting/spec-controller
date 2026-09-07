@@ -223,8 +223,8 @@ this direction retires. Converting something you are about to delete is work don
 was correct in CI and unanswerable on a laptop — it reads a pull-request body that does not exist
 locally. Converted first, it would have put a conditional red into every developer's green-check.
 The cure is in the check: a third answer, *nothing was examined*, distinct from both *passed* and
-*failed*, carried on an exit code **the row states** (`notExaminedExit`) rather than one the
-runner assumes. *Do not fail on it* must not resolve to a pass — a scenario that goes green having
+*failed*, carried on an exit code **the row states** (`notExaminedExit`) rather than one
+spec-controller assumes. *Do not fail on it* must not resolve to a pass — a scenario that goes green having
 examined nothing is the fault this product is named for.
 
 **Mint the codes last, and mint them all.** A code minted early is a code every later sub-issue has
@@ -233,7 +233,7 @@ to sweep again.
 | # | what | shape |
 |---|---|---|
 | 1 | the CI-only check learns a third answer | new behaviour |
-| 2 | the fitness runner learns to read that answer | changed behaviour |
+| 2 | spec-controller learns to read that answer | changed behaviour |
 | 3 | the third answer becomes opt-in per row (`notExaminedExit`) | changed behaviour |
 | 4 | a row stating an exit of 0 or 1 for it is refused when the config is read | new behaviour |
 | 5 | the generator, its drift guard, and the first two rows | refactor |

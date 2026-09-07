@@ -38,12 +38,19 @@
  * reports success reads, in a shell history or a run's own log, as a banking that happened.
  */
 
+/**
+ * WHY IT IS A CHECK RATHER THAN PROTOCOL (3F-3198). It writes a record, which is the shape 3F-3190's
+ * discriminator sends to the product. The record is `quality-thresholds.yml` — this repository's own
+ * banked bar, deliberately outside the `specController.` block a target configures — and the module
+ * only ever raises it. It is the ratchet under an assertion about this tree, not a protocol.
+ */
+
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { MalformedRecordError } from "../../packages/spec-controller/src/mutation-ratchet/record.js";
 
-import { fitnessChecksAt } from "./fitnessRunner.js";
+import { fitnessChecksAt } from "./fitnessCommand.js";
 
 /**
  * The section of the record that holds the axis's banked size.
