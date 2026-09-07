@@ -40,8 +40,9 @@ export interface TargetPackageJson {
 /**
  * The target's `package.json`, or an empty object where there is none.
  *
- * The disk read stays HERE rather than in `scnTags.ts`, which imports nothing — that is what
- * keeps its dependency from `vocabAudit` (@SCN-VOC-013) one-way and cycle-free.
+ * The disk read stays HERE rather than in `scnTags.ts`, which imports nothing. That kept the
+ * one external consumer's dependency one-way and cycle-free; since 3F-3211 retired it there is
+ * no external consumer left, and the arrangement is kept because it is the right shape anyway.
  */
 function targetPackageJson(): TargetPackageJson {
   if (!existsSync("package.json")) return {};
@@ -59,7 +60,7 @@ function targetPackageJson(): TargetPackageJson {
  * enters. `lintScnTags` names no community tag and parks nothing it is not handed; what makes
  * `@wip` still work for a target that configures nothing is the starter list INSIDE this
  * resolver, in the application layer that owns product policy. Reading the config here rather
- * than there is what keeps `scnTags.ts` import-free — which is what keeps `vocabTagGrammar.ts`'s
+ * than there is what keeps `scnTags.ts` import-free — which is what keeps its consumers'
  * dependency on its `isTierTag` one-way and cycle-free.
  */
 function recognisedDeferralTags(packageJson: TargetPackageJson): readonly string[] {

@@ -86,12 +86,13 @@ const SCN_PATTERN = /^SCN-[A-Z0-9]+-\d+$/;
  * registered fitness check in its own right — the style-lint one, a flat peer of `@complexity`
  * (@SCN-LNT-010) — so removing this clause too would red every scenario that names it.
  *
- * EXPORTED for `vocabAudit.ts` (@SCN-VOC-013, 3F-2313), which needs the same answer to
- * decide what on a Gherkin tag line is GRAMMAR rather than authored vocabulary. It is
- * imported rather than copied on purpose: a second tier list over there would agree with
- * this one by diligence and then drift — the agreeing-by-copy @SCN-VOC-008 removed for
- * `.gitignore` and @SCN-VOC-010 for the canon table. This module imports nothing, so the
- * dependency is one-way and cycle-free.
+ * EXPORTED, and since 3F-3211 nothing outside this module imports it. It was exported for
+ * the vocabulary audit (3F-2313), which needed the same answer to decide what on a Gherkin
+ * tag line is GRAMMAR rather than authored vocabulary, and it was imported rather than copied
+ * on purpose — a second tier list over there would have agreed by diligence and then drifted.
+ * That consumer is gone. The export is left in place rather than narrowed in a deletion slice:
+ * whether this module's surface should shrink is a question about API shape, not about the
+ * audit, and it is named here rather than answered silently.
  */
 export function isTierTag(bare: string): boolean {
   if (bare === "lint") return true;

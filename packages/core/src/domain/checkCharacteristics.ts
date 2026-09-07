@@ -35,8 +35,8 @@
  * ═══ THIS FILE IS A VENDORED COPY, AND SAYS SO ═══
  *
  * Canon lives in the `strategy` repository, which this one's CI never checks out and a public
- * consumer of an MIT-licensed tool would not have at all — the arrangement `blockedVocabulary.md`
- * already runs under (operator ruling 2026-08-03, 3F-2296). So this list is transcribed, and
+ * consumer of an MIT-licensed tool would not have at all — the arrangement the operator ruled
+ * for exactly this case (2026-08-03, 3F-2296). So this list is transcribed, and
  * holding it to canon belongs to the maintainers' private repository's CI, where every product is visible. It
  * says so on its face rather than leaving a reader to wonder whether the reconciliation was
  * forgotten.

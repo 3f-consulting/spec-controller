@@ -141,8 +141,8 @@ export const TEST_THRESHOLD = {
  * threshold holds the CODE a reader must hold in their head, not the file's bytes. Counting
  * documentation put the cheapest route under a ceiling on DELETING the comment that explains why the
  * code is the shape it is — a fitness function pushing against what it exists to protect, and one
- * this tree has already paid (vocabWordSets.ts 443→400, vocabAudit.test.ts 815→797, partly comment
- * compactions banked as line count). `fitness-functions.md`, the portfolio standard promoted from
+ * this tree has already paid: two of the largest reductions ever banked here were partly comment
+ * compactions counted as line count. `fitness-functions.md`, the portfolio standard promoted from
  * an adopter's repository 2026-08-04, rules the counting mode; it is stated here rather than left to eslint's defaults
  * because every value in `complexityExceptions.mjs` is measured in this mode, and any other mode
  * changes every number in the debt list at once and in silence.

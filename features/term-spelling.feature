@@ -65,7 +65,7 @@ Feature: Term spelling — a term names the same pair however its author spelled
     under each package's src and under tests/checks, tests aside, and it matches a reading spelled as a
     replace call whose pattern anchors the sigil at the start of the string. An eighth copy written
     into one of the .mjs data modules beside those checks, or spelled without a replace call at all,
-    is not reached — and @SCN-VOC-022 has already ruled that a module is source whatever extension
+    is not reached — and 3F-2979 already ruled that a module is source whatever extension
     carries it, so this .ts population is a narrower reading of "this repository's source" than that
     ruling would give. Filed as 3F-2989, which owns closing it. Said out loud rather than left in a
     ticket alone, because a scan trusted for more than it reaches is how a copy comes back.

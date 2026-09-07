@@ -570,7 +570,7 @@ describe("[SCN-RMD-005] the summary materialises the three report totals", () =>
     const sg = report.summary.staticChecks!;
     // The evidence-obligation count is IMPLICIT — running − uncited, never a surface field.
     expect(sg.runningStaticCheckCount - sg.uncitedStaticCheckCount).toBe(1);
-    // 3F-2291 (@SCN-VOC-004): this pin was two `not.toHaveProperty` negatives naming the
+    // 3F-2291: this pin was two `not.toHaveProperty` negatives naming the
     // fields the 2-field census must NOT carry, one of them a word retired by that ticket.
     // Renaming a word inside a negative assertion empties it silently — it would then pin
     // the absence of a field that never existed at all — so the pin is restated POSITIVELY

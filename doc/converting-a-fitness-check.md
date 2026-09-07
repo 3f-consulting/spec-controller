@@ -248,14 +248,15 @@ of accepting a green.
 
 ### The old → new mapping
 
+Three further rows — the `vocab` characteristic's, converted to `SCN-FIT-004` / `-005` / `-006` —
+were retired outright when the vocabulary audit left the tree (3F-3211). The conversion they
+document still happened; there is simply nothing left on either side of it to map.
+
 | old `@SCN` | characteristic | command on the row today | new `@SCN` |
 |---|---|---|---|
 | `SCN-CPX-005` | complexity | `eslint` | `SCN-FIT-001` |
 | `SCN-MUT-011` | mutation | `pnpm --silent mutation:score --supersedes SCN-MUT-011` · `atLeast` | `SCN-FIT-002` |
 | `SCN-CPX-006` | complexity | `pnpm lint:complexity-exceptions` | `SCN-FIT-003` |
-| `SCN-VOC-019` | vocab | `pnpm lint:blocked-vocabulary` | `SCN-FIT-004` |
-| `SCN-VOC-020` | vocab | `pnpm lint:adopted-vocabulary` | `SCN-FIT-005` |
-| `SCN-VOC-021` | vocab | `pnpm lint:exempt-data-floor` | `SCN-FIT-006` |
 | `SCN-LNT-011` | traceability | `pnpm lint:feature-codes` | `SCN-FIT-007` |
 | `SCN-STG-006` | traceability | `pnpm lint:scn-tags` | `SCN-FIT-008` |
 | `SCN-ANM-002` | tech-conformance | `pnpm lint:anemic-domain` | `SCN-FIT-009` |

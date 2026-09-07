@@ -37,7 +37,7 @@
  * not a reading of it, and one of the arms below is what says so.
  *
  * THE RESIDUAL, SAID OUT LOUD (and again in the Rule preamble). The population is `.ts`, and
- * @SCN-VOC-022 (3F-2434) has already ruled that a module is source whatever extension carries it —
+ * 3F-2434 already ruled that a module is source whatever extension carries it —
  * so a reading written into one of the `.mjs` data modules beside these checks is out of reach, as
  * is one spelled without a `.replace(` call at all. This scan reaches what the seven copies were
  * actually spelled as; it does not reach every conceivable eighth.
@@ -160,7 +160,7 @@ describe("[SCN-TRM-002] a second reading of what a term bare is cannot be added 
   it("does not flag a strip that is a DIFFERENT rule, nor the token readings never in scope", () => {
     // The must-not-move boundary. An unanchored strip of every sigil in a value is not a reading of
     // what a term bare is, and the `startsWith`/`slice` token readings in scnSubIssueGate, scnTags
-    // and vocabTagGrammar take a whitespace-split token that cannot carry whitespace — never part of
+    // take a whitespace-split token that cannot carry whitespace — never part of
     // the defect, and a scan sweeping them in would be renaming its own claim.
     const different: CollectedFile[] = [
       {
@@ -168,7 +168,7 @@ describe("[SCN-TRM-002] a second reading of what a term bare is cannot be added 
         source: `const flattened = (v: string) => v.replace(/${SIGIL}/g, "-");`,
       },
       {
-        path: "tests/checks/vocabTagGrammar.ts",
+        path: "tests/checks/scnSubIssueGate.ts",
         source: `const bare = (t: string) => (t.startsWith("${SIGIL}") ? t.slice(1) : t);`,
       },
     ];

@@ -140,12 +140,6 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     note: "the whole-document report model — the ONE model both renderings consume, serialised glue-free to spec-reconciliation.json in the manifesto vocabulary",
   },
   {
-    code: "VOC",
-    slug: "vocabulary-audit",
-    status: "feature-code-used",
-    note: "the closed-vocabulary audit — scan every file, decompose every name, flag any word outside the approved word-set; report-only, NOT a CI gate",
-  },
-  {
     code: "EPG",
     slug: "engine-purity",
     status: "feature-code-used",

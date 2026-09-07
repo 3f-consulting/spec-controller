@@ -51,8 +51,8 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
     comments and blank lines are skipped. Counting documentation put the cheapest route
     under a ceiling on DELETING the comment that explains why the code is the shape it
     is — a fitness function pushing against the thing it exists to protect, and one this
-    tree has already paid (vocabWordSets.ts 443→400, vocabAudit.test.ts 815→797 were
-    partly comment compactions banked as line count). Under this counting the pressure
+    tree has already paid: two of the largest reductions ever banked here were partly
+    comment compactions counted as line count. Under this counting the pressure
     inverts: explaining the code is free, growing the code is not.
 
     The last example below is the half that pins it, and it is not decoration. A module

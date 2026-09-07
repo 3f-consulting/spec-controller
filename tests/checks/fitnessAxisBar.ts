@@ -36,11 +36,11 @@
  * Moving it out of the artefact it guards is a separate question about generator design and is
  * deliberately not built here.
  *
- * AND IT DOES NOT MAKE THE FIVE INCIDENTAL `tests/checks/*.test.ts` FILES REDUNDANT. Five of them
+ * AND IT DOES NOT MAKE THE INCIDENTAL `tests/checks/*.test.ts` FILES REDUNDANT. Three of them
  * already red on an emptied manifest — `complexityExceptionsReconciliation`,
- * `lintAdoptedVocabularyCli`, `lintExemptDataFloorCli`, `lintScnSubIssuesCli`,
- * `mutationGateWiring` — each by accident, because one check wanted to assert that ITS OWN row is
- * configured. Once a designed witness exists somebody will read those five as duplicate coverage.
+ * `lintScnSubIssuesCli`, `mutationGateWiring` — each by accident, because one check wanted to
+ * assert that ITS OWN row is configured. (Five, until 3F-3211 retired the two vocabulary ones.)
+ * Once a designed witness exists somebody will read those three as duplicate coverage.
  * They are not. They witness a different fault:
  *
  *   THIS IS A CARDINALITY WITNESS. It compares a number. Sixteen rows becoming zero, or fifteen,

@@ -101,4 +101,4 @@ mutation-gates:
 # record starts unbanked; the figure below was written by `pnpm fitness:bank` reading this tree,
 # which is what "banked, never typed" means in practice.
 fitness-axis:
-  rows: 16
+  rows: 13

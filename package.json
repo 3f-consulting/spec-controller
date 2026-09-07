@@ -24,15 +24,11 @@
     "build": "pnpm -r build",
     "balance": "tsx packages/spec-controller/src/cli.ts",
     "balance:self": "tsx tests/checks/balanceSelfCli.ts",
-    "audit:vocab": "tsx tests/checks/vocabAuditCli.ts",
     "lint:feature-codes": "tsx tests/checks/lintFeatureCodesCli.ts",
-    "lint:blocked-vocabulary": "tsx tests/checks/lintBlockedVocabularyCli.ts",
     "lint:complexity-exceptions": "tsx tests/checks/lintComplexityExceptionsCli.ts",
     "lint:scn-tags": "tsx tests/checks/lintScnTagsCli.ts",
     "lint:scn-subissues": "tsx tests/checks/lintScnSubIssuesCli.ts",
-    "lint:adopted-vocabulary": "tsx tests/checks/lintAdoptedVocabularyCli.ts",
     "lint:anemic-domain": "tsx tests/checks/lintAnemicDomainCli.ts",
-    "lint:exempt-data-floor": "tsx tests/checks/lintExemptDataFloorCli.ts",
     "fitness:corpus": "tsx tests/checks/fitnessCorpus.ts",
     "fitness:bank": "tsx tests/checks/fitnessRowBankCli.ts",
     "doc:compatibility-examples": "tsx tests/checks/compatibilityExamplesCli.ts",
@@ -45,21 +41,6 @@
         "scn": "SCN-FIT-003",
         "characteristic": "complexity",
         "command": "pnpm lint:complexity-exceptions"
-      },
-      {
-        "scn": "SCN-FIT-004",
-        "characteristic": "vocab",
-        "command": "pnpm lint:blocked-vocabulary"
-      },
-      {
-        "scn": "SCN-FIT-005",
-        "characteristic": "vocab",
-        "command": "pnpm lint:adopted-vocabulary"
-      },
-      {
-        "scn": "SCN-FIT-006",
-        "characteristic": "vocab",
-        "command": "pnpm lint:exempt-data-floor"
       },
       {
         "scn": "SCN-FIT-007",

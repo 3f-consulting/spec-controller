@@ -52,7 +52,7 @@
  * their original `since` where the value did not move — a date records when a number was measured,
  * not when the file was last read.
  *
- * The production files that remain are the domain core (markdown.ts, vocabAudit.ts's complexity 25,
+ * The production files that remain are the domain core (markdown.ts,
  * evidenceReconciliation.ts's `reconcile`), so the list still doubles as a refactor backlog —
  * a shorter and more honest one, now that it names files carrying too much CODE rather than files
  * carrying explanation.
@@ -91,12 +91,7 @@ export const COMPLEXITY_EXCEPTIONS = [
   { path: "packages/spec-controller/src/ingest/ingestScenarios.ts",         rule: "complexity",              value:   12, since: "2026-08-02" },
   { path: "tests/checks/featureCodes.ts",         rule: "complexity",              value:   17, since: "2026-08-02" },
   { path: "tests/checks/featureCodes.ts",         rule: "max-lines-per-function",  value:   76, since: "2026-08-05" },
-  { path: "tests/checks/fileKind.ts",             rule: "complexity",              value:   18, since: "2026-09-01" },
   { path: "tests/checks/lintScnSubIssuesCli.ts",  rule: "max-lines-per-function",  value:   45, since: "2026-09-05" },
   { path: "tests/checks/scnSubIssueGate.ts",      rule: "complexity",              value:   17, since: "2026-08-02" },
   { path: "tests/checks/scnSubIssueGate.ts",      rule: "max-lines-per-function",  value:   60, since: "2026-09-05" },
-  { path: "tests/checks/vocabAudit.test.ts",      rule: "max-lines",               value:  560, since: "2026-08-05" },
-  { path: "tests/checks/vocabAudit.ts",           rule: "complexity",              value:   25, since: "2026-08-02" },
-  { path: "tests/checks/vocabAudit.ts",           rule: "max-lines",               value:  490, since: "2026-09-01" },
-  { path: "tests/checks/vocabAudit.ts",           rule: "max-lines-per-function",  value:  107, since: "2026-08-05" },
 ];

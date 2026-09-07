@@ -42,18 +42,6 @@ Feature: The fitness checks this repository configures, one scenario per row
   Scenario: complexity — `pnpm lint:complexity-exceptions`
     Then the check this scenario names finds no violations
 
-  @fitness @SCN-FIT-004
-  Scenario: vocab — `pnpm lint:blocked-vocabulary`
-    Then the check this scenario names finds no violations
-
-  @fitness @SCN-FIT-005
-  Scenario: vocab — `pnpm lint:adopted-vocabulary`
-    Then the check this scenario names finds no violations
-
-  @fitness @SCN-FIT-006
-  Scenario: vocab — `pnpm lint:exempt-data-floor`
-    Then the check this scenario names finds no violations
-
   @fitness @SCN-FIT-007
   Scenario: traceability — `pnpm lint:feature-codes`
     Then the check this scenario names finds no violations
