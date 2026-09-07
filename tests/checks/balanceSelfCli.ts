@@ -13,9 +13,15 @@
  * the shape `no-parallel-store.feature` exists to forbid.
  *
  * THE SCAN SCOPE IS THE POINT. `SELF_BALANCE_SCOPE` below is the whole of what this gate
- * reaches, stated once, and the @unit arm asserts it EXHAUSTIVELY so a later silent
+ * RECONCILES, stated once, and the @unit arm asserts it EXHAUSTIVELY so a later silent
  * narrowing reds. The boundary is therefore deliberate, not inherited from whatever the
  * caller happened to pass.
+ *
+ * AND IT CARRIES TWO PRECONDITIONS THAT ARE NOT PART OF IT (@SCN-SLF-005, 3F-3193). The two
+ * runtime reports must have been emitted, and the fitness axis must still hold the rows the
+ * target's record banks. Both are read before the reconciliation and neither is ever handed to
+ * the balance command, so neither is an eighth scan surface — a precondition is a question about
+ * whether this run can be believed, which is a different question from what it reconciles.
  *
  * WHY THE NAME CARRIES `balance:` AND NOT `lint:`, WHICH IS NOT COSMETIC — AND WHY IT IS THE
  * ONE FILE HERE THAT CANNOT BE ON THE BOOKS AT ALL. `runningStaticChecks` observes a
@@ -53,6 +59,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 
 import { runBalance } from "../../packages/spec-controller/src/cli-balance/cli.js";
+import { fitnessAxisRefusalAt } from "./fitnessAxisBar.js";
 import { MEASUREMENT_ARTEFACT_PATH, resolveEvidenceRoot } from "./measurementArtefact.js";
 
 /**
@@ -288,6 +295,32 @@ export function runSelfBalance(argv: string[]): void {
     // Exit 2 — the usage code, kept distinct from the out-of-balance verdict (1) so a
     // mis-set-up run can never be mistaken for an honest disagreement.
     process.exitCode = 2;
+    return;
+  }
+
+  // THE FITNESS AXIS'S BANKED FIGURE, ANSWERED BEFORE THE BOOKS ARE OPENED (@SCN-SLF-005, 3F-3193).
+  //
+  // THIS GATE IS WHERE THE COMPARISON RUNS, AND THAT IS THE WHOLE DESIGN. A fitness row's scenario
+  // is generated into the corpus, so a comparison held as a row would vanish with the corpus it was
+  // there to notice the emptying of. This step is already outside the corpus and already exits on
+  // its verdict, so it needs no new surface and no new wiring.
+  //
+  // FIRST, AND THE RUN STOPS ON A FALL. Every obligation on this axis is raised FROM the rows, so a
+  // reconciliation over an emptied axis reports on a population that is no longer there — which is
+  // precisely the healthy-looking page 3F-3180 measured and could not tell from a healthy one.
+  // Printing a verdict over it and appending a note would put a headline on that page.
+  //
+  // EXIT 1 AND NOT 2. A tree that has lost rows is not a run somebody set up wrong; it is a fact
+  // about the tree, which is what the verdict code says and what the usage code would deny.
+  //
+  // THE RECORD IS NOT AN EIGHTH SCAN SURFACE. `SELF_BALANCE_SCOPE` states what the RECONCILIATION
+  // reads, and is still exhaustive over that; this file is read by the gate BEFORE the reconciliation
+  // and is never handed to the balance command — the same standing `checkEvidenceReportsPresent`
+  // has, one precondition over.
+  const fallen = fitnessAxisRefusalAt(root);
+  if (fallen !== null) {
+    process.stderr.write(fallen + "\n");
+    process.exitCode = 1;
     return;
   }
 

@@ -22,11 +22,21 @@ Feature: spec-controller reconciles its own tree, and the build depends on the a
     half a gate, because a check that reds on everything is as useless as one that reds
     on nothing, and only the pair says the verdict is being read.
 
-    WHAT THE GATE SCANS is stated once, in `SELF_BALANCE_SCOPE`, and is the whole of it:
-    `features/`, the Vitest report, the behavioural Cucumber report, the measurement
+    WHAT THE GATE RECONCILES is stated once, in `SELF_BALANCE_SCOPE`, and is the whole of
+    it: `features/`, the Vitest report, the behavioural Cucumber report, the measurement
     artefact, the FITNESS PASS'S report, the WORKFLOW DIRECTORY, `package.json`. A path
-    reaches the gate only by entering one of the seven, which is what makes the boundary
+    enters the books only by entering one of the seven, which is what makes the boundary
     deliberate rather than inherited.
+
+    A PRECONDITION IS NOT AN EIGHTH SURFACE, AND THIS PARAGRAPH USED TO SAY OTHERWISE
+    (@SCN-SLF-005, 3F-3193). The gate also READS files it never reconciles: whether the
+    two runtime reports were emitted at all, and whether the fitness axis still holds the
+    rows `quality-thresholds.yml` banks. Neither answer is handed to the balance command,
+    and the distinction is real — whether this run can be believed is a different question
+    from what it reconciles. But it went unwritten while every precondition happened to
+    read a file already among the seven, and the record is the first one that does not. A
+    boundary stated in a scenario and qualified only in a docblock is two spellings that
+    agree until one is edited, which is the arrangement this feature exists to refuse.
 
     THE SEVEN RESOLVE AGAINST TWO BASES, AND WHICH ONE SEPARATES SOURCE FROM OUTPUT
     (3F-3099). `features/`, the workflow directory and `package.json` are the tree being
@@ -91,3 +101,106 @@ Feature: spec-controller reconciles its own tree, and the build depends on the a
       When the gate reconciles a tree running a static check no scenario names, and a tree naming the check it runs
       Then the gate fails over the tree whose static check nothing names, naming that check
       And the gate passes over the tree whose static check is named
+
+  Rule: the fitness axis's size is a number the repository banked, not one anybody typed
+
+    THE AXIS HAS ONE AUTHOR FOR BOTH ITS BOOKS, AND THAT IS THE FAULT THIS RULE ANSWERS.
+    A converted check's Evidence Obligation is generated from a configured row and its
+    Evidence Observation is produced by running that same row's command, so one edit to
+    the manifest moves both sides together and no surviving side is left to disagree.
+    Mistype the key that holds the rows and the manifest reads empty, the corpus is
+    regenerated empty, the fitness pass runs nothing, and the report says nothing about
+    any of it (3F-3180, measured cold).
+
+    SO THE SECOND SOURCE IS A COUNT THE REPOSITORY BANKED, AND IT LIVES WHERE THE TYPO
+    CANNOT REACH. `quality-thresholds.yml` sits at the repository root and outside the
+    manifest block a target writes to configure the tool — that placement is the whole
+    reason this cure was chosen over the alternatives, because a number kept inside the
+    block would have gone empty in the same edit and inherited the fault it is here to
+    cure.
+
+    BANKED, NEVER TYPED, WHICH IS THE RULE THAT FILE ALREADY STATES ABOUT ITSELF. The
+    count is read upward off the tree by a command, exactly as the mutation record's two
+    figures are, and the command refuses to write a fall: a record that must come down
+    comes down by hand, with the reason in the commit. There is no flag for it,
+    deliberately — an escape hatch a tool holds open is one nobody ever has to justify.
+
+    THE COUNT IS READ FROM THE MANIFEST AND NEVER FROM THE CORPUS. The corpus is
+    generated from the rows, so a count taken off it and held to a bar would be a
+    derivation checked against itself — the same single-author fault arriving through
+    the cure.
+
+    @unit @integration @SCN-SLF-004
+    Scenario: banking reads the row count off the tree and writes it upward, refusing to record a fall
+      Given a repository whose record banks fewer fitness rows than its manifest holds
+      When the repository banks the fitness-row count its manifest states
+      Then the record states the count read from the manifest, and stands otherwise byte for byte as it was
+      And banking over a manifest that has since lost rows is refused, naming both counts and leaving the record as it stood
+
+    @unit @integration @SCN-SLF-005
+    Scenario: a run whose fitness axis holds fewer rows than the banked figure reds the gate, naming the figure and the count
+      WHERE THE COMPARISON RUNS IS THE LOAD-BEARING DECISION, AND IT IS NOT A FITNESS
+      ROW. A fitness row's scenario is generated into the corpus, so an emptied corpus
+      would take the comparison away with it — rebuilding, inside the cure, the exact
+      recursion this repository already documents one level down. It runs in the
+      self-reconciliation gate instead, which is already its own pipeline step, outside
+      the corpus, and is where a bar is read.
+
+      BOTH NUMBERS, IN THE LINE ITSELF. A reader meeting this red is told what the record
+      banks and what the manifest now holds, in one sentence, without going to look. A
+      line saying only that the axis is smaller would send them off to find the two
+      figures the sentence was the right place to state.
+
+      THE BAR IS ANSWERED BEFORE THE BOOKS ARE OPENED. Every obligation on this axis is
+      raised FROM the rows, so a reconciliation over an emptied axis reports on a
+      population that is no longer there — which is the healthy-looking page a reader
+      could not tell from a healthy one. The count is compared first and the run stops on
+      a fall, rather than a verdict being printed over it.
+
+      TWO REPOSITORIES DIFFERING IN ONE NUMERAL, which is what makes the red attributable
+      to the count rather than to some other flaw in a differently-built plant. Both hold
+      the same manifest and the same evidence; only the figure their record banks differs.
+
+      Given a repository whose manifest has lost fitness rows since its record was banked
+      When the self-reconciliation gate reconciles that repository, and one whose manifest still holds every row its record banks
+      Then the gate fails over the repository that has lost rows, naming both the figure the record banks and the count the manifest now holds
+      And the gate says nothing about the axis over the repository whose rows are all still there
+
+    @unit @integration @SCN-SLF-006
+    Scenario: a repository that banked no fitness figure is not redded by a bar it never set, and one that banked a figure is still held to it
+      ABSENT IS NOT ZERO, AND THEY ARE DIFFERENT FACTS ABOUT A REPOSITORY. A record that banks
+      no count for the axis has set no bar at all; a record banking zero has set one that every
+      count on earth clears. Read as the same thing, the reader answers a figure nobody wrote
+      and holds the tree to it forever after — which is @SCN-MUT-003's rule one axis over: an
+      entry naming no comparison it recognises raises an obligation with no bar at all, rather
+      than one the engine picked a direction for.
+
+      EVERY CONSUMER OF THIS TOOL ARRIVES HERE, AND ARRIVES HERE FIRST. A repository that has
+      converted no checks has never run the banking command, so it files no figure, and a
+      mechanism that redded it would be one that reds on first use. It is the same standing this
+      feature already gives the fitness report itself: a target that has converted nothing emits
+      none, and its absence is a verdict the ledger is entitled to reach rather than a broken run.
+
+      A SILENCE ASSERTION ALONE CANNOT SEE THE DEFAULTING, WHICH IS WHY THE READER'S OWN ANSWER
+      IS NAMED IN A STEP OF ITS OWN. A bar of zero is cleared by every count, so a defaulted
+      reading is silent over exactly the repositories this scenario watches — from outside the
+      gate the fault and the cure look identical, and a scenario that only watched for quiet
+      would pass over both. The distinction survives only where it is made, so the record that
+      banks nothing is read as banking none, and that is asserted rather than inferred from the
+      quiet.
+
+      NEVER BANKED COMES IN TWO FORMS AND BOTH ARE ORDINARY. A repository may file no record
+      at all, which is where a consumer starts, or file one that banks its other bars and has
+      never banked this one, which is where a consumer arrives the day it adopts any other gate
+      here. Neither has set a figure, so neither is held to one.
+
+      REPOSITORIES DIFFERING IN WHETHER THE RECORD BANKS A FIGURE AT ALL, where the pair in the
+      scenario above differ in one numeral inside a record they both write. All of them hold the
+      same manifest and the same evidence. Without the last, silence over the others says
+      nothing that a gate which had stopped looking would not also say.
+
+      Given a repository filing no record at all, one whose record files no block for the axis, and one whose record banks more rows than its manifest holds
+      When the self-reconciliation gate reconciles each of them
+      Then the gate says nothing about the axis over the repositories that banked no figure
+      And a record filing no block for the axis is read as banking none at all, rather than as banking zero
+      And the gate fails over the repository whose record does bank a figure, so the silence is the absent figure's and not the gate's

@@ -72,3 +72,33 @@ mutation-gates:
     total: 697
     slack-mutants: 0
     slack-reason: ""
+
+# THE FITNESS AXIS'S SIZE — how many rows this repository's manifest was last banked to hold
+# (3F-3192, @SCN-SLF-004).
+#
+# WHY A SECOND NUMBER FOR THE AXIS AT ALL, AND WHY IT LIVES IN THIS FILE. A converted check's
+# Evidence Obligation is GENERATED from a configured row and its Evidence Observation is produced by
+# RUNNING that same row's command, so both books have one author. Delete a row — or mistype the key
+# that holds them — and both sides move together in one edit: the manifest reads empty, the
+# regenerated corpus holds no scenarios, the pass runs nothing, and the report says nothing about
+# any of it. Measured cold on 3F-3180: sixteen rows gone and not one line a reader could tell from a
+# healthy one. No comparison between two artefacts that are both derived from the rows can see that,
+# which is why the second source had to be a number kept somewhere the same edit cannot reach — this
+# file, at the repository root, outside `package.json`'s `specController.` block, for the reason the
+# header above already gives.
+#
+# BANKED, NEVER TYPED, BY THE SAME RULES AS THE GATES ABOVE. `pnpm fitness:bank` reads how many rows
+# the manifest actually holds — through the ledger's own reader, so the bar is held against exactly
+# the population the obligations are raised over — and rewrites the line below only when that is
+# MORE than what is recorded. A fall is refused, and there is no flag that writes one: a check
+# honestly retired is a hand edit here with the reason in the commit.
+#
+# READ FROM THE MANIFEST, NEVER FROM THE GENERATED CORPUS. The corpus is derived from the rows, so a
+# count taken off it and held to this figure would be a derivation checked against itself — the same
+# single-author fault arriving through its own cure.
+#
+# THE `rows: 0` THIS ARRIVED AS WAS NOT A MEASUREMENT AND WAS NEVER MEANT TO SURVIVE THE COMMIT. A
+# record starts unbanked; the figure below was written by `pnpm fitness:bank` reading this tree,
+# which is what "banked, never typed" means in practice.
+fitness-axis:
+  rows: 16

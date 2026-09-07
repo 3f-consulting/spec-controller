@@ -34,6 +34,7 @@
     "lint:anemic-domain": "tsx tests/checks/lintAnemicDomainCli.ts",
     "lint:exempt-data-floor": "tsx tests/checks/lintExemptDataFloorCli.ts",
     "fitness:corpus": "tsx tests/checks/fitnessCorpus.ts",
+    "fitness:bank": "tsx tests/checks/fitnessRowBankCli.ts",
     "doc:compatibility-examples": "tsx tests/checks/compatibilityExamplesCli.ts",
     "doc:paths": "tsx tests/checks/docPathsCli.ts"
   },
