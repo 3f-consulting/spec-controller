@@ -25,18 +25,26 @@ import { describe, it, expect } from "vitest";
 import { checkEnginePurity } from "./enginePurity.js";
 import {
   collectSourceFiles,
-  CORE_SRC_ROOT,
-  DOMAIN_ROOT,
+  coreSrcRoot,
+  domainRoot,
   MIN_CORE_SRC_FILES_SCANNED,
+  resolveRepositoryRoot,
   type CollectedFile,
 } from "./sourceFiles.js";
+
+/**
+ * The repository this guard is asked about, resolved ONCE and passed down (3F-3207). The enumerator
+ * no longer inherits it from wherever the process is standing, so the subject is stated here rather
+ * than at each of the calls below.
+ */
+const REPOSITORY_ROOT = resolveRepositoryRoot();
 
 /**
  * The production core-src population, as of 3F-2689 (render/measuredItem.ts; 3F-2683's parse/measurements.ts, 3F-2682's domain/thresholds.ts — the measured fitness
  * check's ceiling registry).
  * Asserted, not assumed — see the pin below.
  *
- * The engine root IS `CORE_SRC_ROOT`: this guard and `noParallelStore` walk the SAME population,
+ * The engine root IS `coreSrcRoot`: this guard and `noParallelStore` walk the SAME population,
  * which is exactly why they may share a floor. `domainPurity` walks a smaller subtree and keeps its
  * own floor; the asymmetry is deliberate.
  *
@@ -144,7 +152,7 @@ describe("[SCN-EPG-001] the reconciliation engine imports nothing impure and ref
   it("passes clean over the REAL packages/core/src tree (the seam holds today)", () => {
     // The dogfood green: the engine is pure; any future stray import or IO
     // reference in a production engine file reds this.
-    const engineFiles = collectSourceFiles(CORE_SRC_ROOT);
+    const engineFiles = collectSourceFiles(coreSrcRoot(REPOSITORY_ROOT), REPOSITORY_ROOT);
     // Sanity: we actually scanned the tree (not an empty walk masquerading as green). The floor is
     // the SHARED one — this guard and noParallelStore walk the same population, so a bare literal
     // here would be a second copy of the same rule, drifting the moment either is retuned (3F-2266).
@@ -159,10 +167,10 @@ describe("[SCN-EPG-001] the reconciliation engine imports nothing impure and ref
     //
     // Green on both sides of that change — it is a characterisation pin, not the driver of the
     // refactor, and its teeth come from a plant rather than from having once been red.
-    const engineFiles = collectSourceFiles(CORE_SRC_ROOT);
+    const engineFiles = collectSourceFiles(coreSrcRoot(REPOSITORY_ROOT), REPOSITORY_ROOT);
     expect(engineFiles).toHaveLength(CORE_SRC_FILE_COUNT);
     // It DISCRIMINATES by root: the same collector over the domain subtree returns strictly fewer.
     // A collector that ignored its argument would satisfy every other assertion in this file.
-    expect(collectSourceFiles(DOMAIN_ROOT).length).toBeLessThan(engineFiles.length);
+    expect(collectSourceFiles(domainRoot(REPOSITORY_ROOT), REPOSITORY_ROOT).length).toBeLessThan(engineFiles.length);
   });
 });

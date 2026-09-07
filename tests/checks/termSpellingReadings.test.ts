@@ -55,8 +55,16 @@ import {
   MIN_REPOSITORY_SOURCE_FILES_SCANNED,
   repositorySourceRoots,
   REQUIRED_FLOOR_HEADROOM,
+  resolveRepositoryRoot,
   type CollectedFile,
 } from "./sourceFiles.js";
+
+/**
+ * The repository this scan is asked about, resolved ONCE and passed down (3F-3207). The enumerator
+ * no longer inherits it from wherever the process is standing, so the subject is stated here rather
+ * than at each of the calls below.
+ */
+const REPOSITORY_ROOT = resolveRepositoryRoot();
 
 /** The ONE home this repository's single reading is expected to live in. */
 const THE_ONE_READING = "packages/core/src/lib/bareTerm.ts";
@@ -190,10 +198,10 @@ describe("[SCN-TRM-002] a second reading of what a term bare is cannot be added 
     // The pin every assertion below rests on. A scan is worth exactly its population: collect the
     // wrong files and the dogfood green is vacuous and says nothing about it. The roots are DERIVED
     // from the packages directory, so this also pins that the derivation found more than one.
-    const roots = repositorySourceRoots();
+    const roots = repositorySourceRoots(REPOSITORY_ROOT);
     expect(roots.length).toBeGreaterThan(1);
 
-    const files = collectRepositorySource();
+    const files = collectRepositorySource(REPOSITORY_ROOT);
     expect(files.every((f) => f.path.endsWith(".ts") && !f.path.endsWith(".test.ts"))).toBe(true);
     expect(
       files.every((f) => f.path.startsWith("packages/") || f.path.startsWith("tests/checks/")),
@@ -204,13 +212,13 @@ describe("[SCN-TRM-002] a second reading of what a term bare is cannot be added 
     expect(files.some((f) => f.path.startsWith("packages/spec-controller/src/"))).toBe(true);
     expect(files.some((f) => f.path.startsWith("tests/checks/"))).toBe(true);
     // And it is strictly wider than any single root, so a collector ignoring its argument would fail.
-    expect(files.length).toBeGreaterThan(collectSourceFiles(roots[0]!).length);
+    expect(files.length).toBeGreaterThan(collectSourceFiles(roots[0]!, REPOSITORY_ROOT).length);
   });
 
   it("finds exactly ONE reading in this repository's source, and it is lib/bareTerm.ts", () => {
     // The dogfood green — the claim itself. It reds by naming every file that carries a reading, so
     // an eighth copy pasted anywhere in the source says where it is on the first run.
-    const files = collectRepositorySource();
+    const files = collectRepositorySource(REPOSITORY_ROOT);
     expect(files.length).toBeGreaterThan(MIN_REPOSITORY_SOURCE_FILES_SCANNED);
     expect(readingsIn(files)).toEqual([THE_ONE_READING]);
   });
@@ -221,7 +229,7 @@ describe("[SCN-TRM-002] a second reading of what a term bare is cannot be added 
     // (3F-2201's finding, over the core-src floor). Headroom is the property that matters, and it
     // holds at any tree size.
     expect(
-      collectRepositorySource().length - MIN_REPOSITORY_SOURCE_FILES_SCANNED
+      collectRepositorySource(REPOSITORY_ROOT).length - MIN_REPOSITORY_SOURCE_FILES_SCANNED
     ).toBeGreaterThanOrEqual(REQUIRED_FLOOR_HEADROOM);
   });
 
@@ -231,7 +239,7 @@ describe("[SCN-TRM-002] a second reading of what a term bare is cannot be added 
     // pinned at the moment it is easiest to loosen into meaninglessness later.
     const emptyDir = mkdtempSync(join(tmpdir(), "trm-empty-walk-"));
     try {
-      const scanned = collectSourceFiles(emptyDir);
+      const scanned = collectSourceFiles(emptyDir, REPOSITORY_ROOT);
       expect(scanned).toEqual([]);
       expect(readingsIn(scanned)).toEqual([]);
       expect(scanned.length > MIN_REPOSITORY_SOURCE_FILES_SCANNED).toBe(false);

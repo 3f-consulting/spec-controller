@@ -18,7 +18,20 @@
 
 import { describe, it, expect } from "vitest";
 import { checkDomainPurity } from "./domainPurity.js";
-import { collectSourceFiles, CORE_SRC_ROOT, DOMAIN_ROOT, type CollectedFile } from "./sourceFiles.js";
+import {
+  collectSourceFiles,
+  coreSrcRoot,
+  domainRoot,
+  resolveRepositoryRoot,
+  type CollectedFile,
+} from "./sourceFiles.js";
+
+/**
+ * The repository this guard is asked about, resolved ONCE and passed down (3F-3207). The enumerator
+ * no longer inherits it from wherever the process is standing, so the subject is stated here rather
+ * than at each of the calls below.
+ */
+const REPOSITORY_ROOT = resolveRepositoryRoot();
 
 /**
  * The production domain population, as of 3F-2266. Asserted, not assumed — see the pin below.
@@ -100,7 +113,7 @@ describe("[SCN-DPG-001] a domain module imports only the domain layer and pure s
   it("passes clean over the REAL packages/core/src/domain tree (the seam holds today)", () => {
     // The dogfood green: the domain is pure; any future stray adapter or app import in a
     // production domain file reds this.
-    const domainFiles = collectSourceFiles(DOMAIN_ROOT);
+    const domainFiles = collectSourceFiles(domainRoot(REPOSITORY_ROOT), REPOSITORY_ROOT);
     // Sanity: we actually scanned the tree (not an empty walk masquerading as green). This floor is
     // LOCAL and stays local — a different population from the core-src one the other two guards
     // share (3F-2266).
@@ -112,18 +125,18 @@ describe("[SCN-DPG-001] a domain module imports only the domain layer and pure s
     // The most plausible way this refactor could go wrong: pass the WRONG ROOT and collect all of
     // core/src instead of just domain/.
     //
-    // The assertion above DOES catch that — verified by plant, not assumed: swapping DOMAIN_ROOT
-    // for CORE_SRC_ROOT there reds it with 21 `adapter-import` violations. But look at what that
+    // The assertion above DOES catch that — verified by plant, not assumed: swapping `domainRoot`
+    // for `coreSrcRoot` there reds it with 21 `adapter-import` violations. But look at what that
     // red SAYS. It reports "the domain imports adapters" — a false and alarming diagnosis — when
     // the truth is "the walk collected the wrong tree". That is the cries-wolf failure 3F-2201 was
     // raised about, one layer up: a red whose stated cause is not its actual cause sends the reader
     // hunting a purity violation that does not exist.
     //
     // This pin exists to name the real fault first and unambiguously.
-    const domainFiles = collectSourceFiles(DOMAIN_ROOT);
+    const domainFiles = collectSourceFiles(domainRoot(REPOSITORY_ROOT), REPOSITORY_ROOT);
     expect(domainFiles).toHaveLength(DOMAIN_FILE_COUNT);
     expect(domainFiles.every((f) => f.path.startsWith("packages/core/src/domain/"))).toBe(true);
     // Scoped, not the whole tree: the same collector over the engine root returns strictly more.
-    expect(collectSourceFiles(CORE_SRC_ROOT).length).toBeGreaterThan(domainFiles.length);
+    expect(collectSourceFiles(coreSrcRoot(REPOSITORY_ROOT), REPOSITORY_ROOT).length).toBeGreaterThan(domainFiles.length);
   });
 });

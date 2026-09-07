@@ -14,7 +14,7 @@
     "ladder": "tsx tests/checks/localLadderCli.ts",
     "typecheck": "tsc --noEmit",
     "test": "tsx tests/checks/timeStepCli.ts --scn SCN-FIT-012 --check ci-run-time -- vitest run",
-    "mutation": "tsx tests/checks/mutationScoreCli.ts --scn SCN-FIT-002 --check mutation -- stryker run",
+    "mutation": "SPEC_CONTROLLER_SOURCE_ROOT=\"$PWD\" tsx tests/checks/mutationScoreCli.ts --scn SCN-FIT-002 --check mutation -- stryker run",
     "mutation:score": "tsx tests/checks/mutationScoreReaderCli.ts --scn SCN-FIT-002 --check mutation",
     "timing:score": "tsx tests/checks/timingReaderCli.ts --check ci-run-time",
     "mutation:ratchet": "tsx packages/spec-controller/src/mutation-ratchet/ratchetCli.ts --gate domain --report reports/mutation/mutation.json --bank-command 'pnpm mutation:bank'",

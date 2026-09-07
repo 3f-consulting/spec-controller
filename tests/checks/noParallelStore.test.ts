@@ -26,12 +26,20 @@ import { join } from "node:path";
 import { checkNoParallelStore } from "./noParallelStore.js";
 import {
   collectSourceFiles,
-  CORE_SRC_ROOT,
-  DOMAIN_ROOT,
+  coreSrcRoot,
+  domainRoot,
   MIN_CORE_SRC_FILES_SCANNED,
   REQUIRED_FLOOR_HEADROOM,
+  resolveRepositoryRoot,
   type CollectedFile,
 } from "./sourceFiles.js";
+
+/**
+ * The repository this lock is asked about, resolved ONCE and passed down (3F-3207). The enumerator
+ * no longer inherits it from wherever the process is standing, so the subject is stated here rather
+ * than at each of the calls below.
+ */
+const REPOSITORY_ROOT = resolveRepositoryRoot();
 
 /**
  * The production core-src population, as of 3F-2689 (render/measuredItem.ts; 3F-2683's parse/measurements.ts, 3F-2682's domain/thresholds.ts; previously 3F-2565's
@@ -146,20 +154,20 @@ describe("[SCN-NPS-001] no parallel store re-represents the Ledger's entries", (
     // risks it collecting a DIFFERENT set — the guard stays green over the wrong files, proving
     // less than it claims. Every other assertion here consumes this walk's output, so if the
     // population is wrong they are all vacuous together and none of them says so.
-    const coreFiles = collectSourceFiles(CORE_SRC_ROOT);
+    const coreFiles = collectSourceFiles(coreSrcRoot(REPOSITORY_ROOT), REPOSITORY_ROOT);
     expect(coreFiles).toHaveLength(CORE_SRC_FILE_COUNT);
     // It excludes tests by construction, and reports repo-relative paths.
     expect(coreFiles.every((f) => f.path.endsWith(".ts") && !f.path.endsWith(".test.ts"))).toBe(true);
     expect(coreFiles.every((f) => f.path.startsWith("packages/core/src/"))).toBe(true);
     // And it DISCRIMINATES by root — the same collector over the domain subtree returns a strictly
     // smaller set. A collector that ignored its argument would pass every assertion above.
-    expect(collectSourceFiles(DOMAIN_ROOT).length).toBeLessThan(coreFiles.length);
+    expect(collectSourceFiles(domainRoot(REPOSITORY_ROOT), REPOSITORY_ROOT).length).toBeLessThan(coreFiles.length);
   });
 
   it("passes clean over the REAL packages/core/src tree (the lock holds today)", () => {
     // The dogfood green: the census modules stay retired, no retired symbol is re-defined, no
     // parallel `attributed` field exists. Any future resurrection reds this.
-    const coreFiles = collectSourceFiles(CORE_SRC_ROOT);
+    const coreFiles = collectSourceFiles(coreSrcRoot(REPOSITORY_ROOT), REPOSITORY_ROOT);
     // Sanity: we actually scanned the tree (not an empty walk masquerading as green). The floor sits
     // well BELOW the real count, not just under it — a broken walk yields ~0, so catching it needs
     // no tight margin, and a tight one only punishes ordinary deletion (3F-2201).
@@ -183,7 +191,7 @@ describe("[SCN-NPS-001] no parallel store re-represents the Ledger's entries", (
     // being fixed here, because it names itself honestly ("the floor no longer keeps headroom —
     // retune it") instead of blaming a parallel store for a deletion. A red that tells the truth
     // about its own cause is a different animal from one that cries wolf.
-    const coreFiles = collectSourceFiles(CORE_SRC_ROOT);
+    const coreFiles = collectSourceFiles(coreSrcRoot(REPOSITORY_ROOT), REPOSITORY_ROOT);
     expect(coreFiles.length - MIN_CORE_SRC_FILES_SCANNED).toBeGreaterThanOrEqual(REQUIRED_FLOOR_HEADROOM);
   });
 
@@ -197,7 +205,7 @@ describe("[SCN-NPS-001] no parallel store re-represents the Ledger's entries", (
     // (evidence-manifesto.md §11A) — it exercises the walk, not a fixture.
     const emptyDir = mkdtempSync(join(tmpdir(), "nps-empty-walk-"));
     try {
-      const scanned = collectSourceFiles(emptyDir);
+      const scanned = collectSourceFiles(emptyDir, REPOSITORY_ROOT);
       expect(scanned).toEqual([]);
       expect(scanned.length > MIN_CORE_SRC_FILES_SCANNED).toBe(false);
     } finally {

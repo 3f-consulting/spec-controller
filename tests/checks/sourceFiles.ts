@@ -20,7 +20,7 @@
  * WHAT IS SHARED AND WHAT IS NOT. The WALK is shared three ways — all three guards collect the same
  * way, differing only in root. The ELEMENT TYPE is shared three ways too (3F-2274): one shape,
  * stated once. The FLOOR is shared TWO ways: only `noParallelStore` and
- * `enginePurity` walk the same population (`CORE_SRC_ROOT`), so only they can share a floor.
+ * `enginePurity` walk the same population (`coreSrcRoot`), so only they can share a floor.
  * `domainPurity` walks a smaller subtree and keeps its own floor locally — a different population
  * is a different floor, and unifying them would be a behaviour change dressed as a tidy-up. The
  * asymmetry is deliberate; do not "finish the job" by moving the domain floor here.
@@ -65,17 +65,97 @@ export interface CollectedFile {
   source: string;
 }
 
-/** The core engine's source root — the population `noParallelStore` and `enginePurity` share. */
-export const CORE_SRC_ROOT = join(process.cwd(), "packages", "core", "src");
+/**
+ * The ONE named place ambience is resolved: which repository a check is about, when nobody stated
+ * it (3F-3207).
+ *
+ * Three rungs, in this order:
+ *
+ *   NAMED — the caller stated the subject. An argument is more specific than the environment the
+ *   process happens to be standing in.
+ *
+ *   `SPEC_CONTROLLER_SOURCE_ROOT` — the environment's answer where no caller named one. This is
+ *   the rung a mutation runner needs: Stryker copies the tree into an instrumented sandbox and
+ *   runs the suite from inside it, so the working directory is the copy, and the launching shell's
+ *   variable is what reaches the worker to name the real repository. It is set in exactly one
+ *   place — `package.json`'s `mutation` script — because that is the whole of its blast radius.
+ *
+ *   The working directory — the ordinary case, and every ordinary run takes it.
+ *
+ * THE LAST TWO RUNGS ARRIVE AS PARAMETERS WITH AMBIENT DEFAULTS, AND THAT SYMMETRY IS THE POINT
+ * (3F-3207). `env` was always injectable; the working directory became so for the same reason and
+ * on the same precedent. A rung has to be observed MOVING to be observed at all, and the only other
+ * way to move this one is `process.chdir` — which throws outright in a worker thread, so a suite
+ * that reached for it could not run under the very mutation runner this slice exists to unblock.
+ * Measured: all three arms of `sourcePopulation.test.ts` died with `process.chdir() is not
+ * supported in workers` before this parameter existed. The default is the real ambient read, and
+ * every production caller takes it.
+ *
+ * MODELLED ON `resolveEvidenceRoot` IN `measurementArtefact.ts`, BY CITATION. 3F-3099 settled this
+ * exact ladder for the evidence path, from a measurement rather than a preference, and a second
+ * structurally-identical resolver reasoned out independently here would agree with that one by
+ * COINCIDENCE. Its argument transfers unchanged: an argument the caller passed is more specific
+ * than the environment, and no caller needs the other order.
+ *
+ * AN EMPTY VARIABLE IS AN ABSENT ONE, AT EVERY RUNG — which is why `??` will not do. A variable
+ * whose expression resolved to nothing arrives as `""`, and nullish-coalescing hands it straight
+ * on. Taken literally it is not an obvious failure but a quiet one: `join("", "packages", "core",
+ * "src")` is a RELATIVE path, which readdir resolves back against the working directory. A check
+ * handed nothing would scan the tree it was standing in and report about it confidently — the
+ * defect this slice closes, arriving through the door built to fix it.
+ *
+ * THIS IS THE ONLY FUNCTION IN THIS MODULE PERMITTED TO CONSULT AMBIENT STATE, AND IT SAYS SO IN
+ * ITS NAME. Nothing below defaults its root; a defaulted root would leave the enumerator ambient
+ * for every caller who wrote nothing, which is the condition being removed.
+ *
+ * IT CANNOT SWITCH A CHECK OFF, WHICH IS WHAT MAKES AN AMBIENT RUNG TOLERABLE HERE. The variable
+ * names a subject; it does not gate a scan. With it absent under a mutation runner the guard does
+ * not go quiet — it reds loudly, which is exactly how this fault was found.
+ */
+export function resolveRepositoryRoot(
+  named?: string,
+  env: NodeJS.ProcessEnv = process.env,
+  workingDirectory: string = process.cwd(),
+): string {
+  const stated = (value: string | undefined): string | undefined =>
+    value !== undefined && value !== "" ? value : undefined;
+
+  const namedRoot = stated(named);
+  if (namedRoot !== undefined) return namedRoot;
+  const fromEnvironment = stated(env["SPEC_CONTROLLER_SOURCE_ROOT"]);
+  if (fromEnvironment !== undefined) return fromEnvironment;
+  return workingDirectory;
+}
 
 /**
- * The domain subtree — DERIVED from `CORE_SRC_ROOT` rather than re-spelled, so "where core src is"
+ * The core engine's source root under a NAMED repository — the population `noParallelStore` and
+ * `enginePurity` share.
+ *
+ * IT TAKES ITS SUBJECT, AND THAT IS THE WHOLE OF 3F-3207. This was a module-level constant frozen
+ * from the working directory at import, so the population every scope-dependent check walks was
+ * inherited from wherever the process happened to be standing. Under a mutation runner that is the
+ * instrumented sandbox, and the engine-purity guard then reported the instrument's own scaffolding
+ * as engine code — a check answering confidently about the wrong tree. A root that arrives as an
+ * argument cannot be inherited by accident, and "does it walk the tree it was told about" becomes a
+ * question that can be asked at all.
+ *
+ * NO DEFAULT, DELIBERATELY. A defaulted root would leave the enumerator ambient for every caller
+ * who wrote nothing, which is the condition being removed; the caller states the subject.
+ */
+export function coreSrcRoot(root: string): string {
+  return join(root, "packages", "core", "src");
+}
+
+/**
+ * The domain subtree — DERIVED from `coreSrcRoot` rather than re-spelled, so "where core src is"
  * is stated exactly once.
  */
-export const DOMAIN_ROOT = join(CORE_SRC_ROOT, "domain");
+export function domainRoot(root: string): string {
+  return join(coreSrcRoot(root), "domain");
+}
 
 /**
- * The anti-vacuity floor for the `CORE_SRC_ROOT` population: how many production files the walk
+ * The anti-vacuity floor for the `coreSrcRoot` population: how many production files the walk
  * must find before a clean verdict counts as a scan at all (a check that scanned nothing isn't a
  * check).
  *
@@ -119,14 +199,14 @@ export const MIN_REPOSITORY_SOURCE_FILES_SCANNED = 40;
  * It is the source counterpart of `vitest.config.ts`'s two include globs, which name the same pair
  * of roots for the same tree.
  */
-export function repositorySourceRoots(): string[] {
-  const packagesDir = join(process.cwd(), "packages");
+export function repositorySourceRoots(root: string): string[] {
+  const packagesDir = join(root, "packages");
   const packageRoots = readdirSync(packagesDir, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .sort((a, b) => a.name.localeCompare(b.name))
     .map((entry) => join(packagesDir, entry.name, "src"));
-  return [...packageRoots, join(process.cwd(), ...CHECK_TREE_SEGMENTS)].filter((root) =>
-    existsSync(root),
+  return [...packageRoots, join(root, ...CHECK_TREE_SEGMENTS)].filter((candidate) =>
+    existsSync(candidate),
   );
 }
 
@@ -138,24 +218,49 @@ export function repositorySourceRoots(): string[] {
  * module was created to remove, and a whole-tree scan that collected differently from the per-root
  * ones would be the worst place of all to have it.
  */
-export function collectRepositorySource(): CollectedFile[] {
-  return repositorySourceRoots().flatMap((root) => collectSourceFiles(root));
+export function collectRepositorySource(root: string): CollectedFile[] {
+  return repositorySourceRoots(root).flatMap((dir) => collectSourceFiles(dir, root));
 }
 
 /**
- * Walk a source tree, collecting every PRODUCTION file (`.ts`, excluding `*.test.ts`) beneath it,
- * in directory-sorted order, with repo-relative paths.
+ * Walk a source tree, collecting every PRODUCTION file (`.ts`, excluding `*.test.ts` and `*.d.ts`)
+ * beneath it, in directory-sorted order, with paths relative to the repository it belongs to.
  *
- * Parameterised by root — that is the whole of the difference the three copies used to encode.
+ * Parameterised by `dir` — that is the whole of the difference the three copies used to encode.
+ *
+ * A DECLARATION IS NOT PRODUCTION SOURCE, AND UNTIL @SCN-SRC-003 IT WAS COUNTED AS ONE (3F-3205).
+ * A failed build left a stray `checkTree.d.ts` under `tests/checks/` and the population read 111
+ * where the tree held 110 — so a build artefact entered the denominator of every scope-dependent
+ * check, and a check that examined it found nothing wrong and reported clean a file it had no
+ * business reading. Inflation is the quieter of the two ways this walk can be wrong: an
+ * anti-vacuity floor is EASIER to clear, so nothing reds.
+ *
+ * `.d.ts` IS THE WHOLE OF THE KNOWN SURFACE, AND THAT IS MEASURED RATHER THAN GUESSED AT. `.d.mts`
+ * never entered the population, because `"x.d.mts".endsWith(".ts")` is false — four tracked
+ * `.d.mts` declaration files sit under `tests/checks/` today and none of them is in the count.
+ * Widening this past `.d.ts` would be filtering for a case nothing has demonstrated.
+ *
+ * `root` IS A SECOND JOB, NOT A SECOND SPELLING OF THE FIRST (3F-3207). `dir` is the subtree to
+ * walk; `root` is what the collected paths are reported RELATIVE TO, and the two come apart the
+ * moment a caller names a subtree — `dir` is `<root>/packages/core/src` while `root` is the
+ * repository. It was read from the working directory here, which made the relativisation silently
+ * correct only while the process happened to be standing in the repository being walked. Walk a
+ * named tree from anywhere else and every path comes out mangled — and paths are what every
+ * violation is REPORTED by, so the guards would red on the report rather than on the property.
+ * Without this argument the whole change is cosmetic.
  */
-export function collectSourceFiles(dir: string): CollectedFile[] {
+export function collectSourceFiles(dir: string, root: string): CollectedFile[] {
   const out: CollectedFile[] = [];
   for (const entry of readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
     const abs = join(dir, entry.name);
     if (entry.isDirectory()) {
-      out.push(...collectSourceFiles(abs));
-    } else if (entry.name.endsWith(".ts") && !entry.name.endsWith(".test.ts")) {
-      out.push({ path: abs.slice(process.cwd().length + 1), source: readFileSync(abs, "utf8") });
+      out.push(...collectSourceFiles(abs, root));
+    } else if (
+      entry.name.endsWith(".ts") &&
+      !entry.name.endsWith(".test.ts") &&
+      !entry.name.endsWith(".d.ts")
+    ) {
+      out.push({ path: abs.slice(root.length + 1), source: readFileSync(abs, "utf8") });
     }
   }
   return out;
