@@ -277,6 +277,54 @@ authored last. The code is read off the row and never derived from the row's pos
 it did not renumber anything — which is the whole point of a stable identifier, visible in the
 artefact rather than asserted about it.
 
+### What you have afterwards — the check is the command, and cucumber is the enumerator
+
+**A converted check is not trapped inside the pass.** Every row's `command` is a command you can
+run in a terminal, on its own, and its exit code is the check's verdict. The conversion took
+nothing away: the row holds the same string the CI step used to hold.
+
+Nine of this repository's thirteen rows are exactly that.
+
+```sh
+eslint
+pnpm lint:complexity-exceptions
+pnpm lint:feature-codes
+pnpm lint:scn-tags
+pnpm lint:anemic-domain
+pnpm lint:scn-subissues
+pnpm typecheck
+pnpm --silent doc:compatibility-examples
+pnpm doc:paths
+```
+
+Exit 0 is the check passing. No cucumber, no `balance`, no ceremony. That matters most when a check
+reds: you debug it by running it, not by reading a report about it.
+
+**The other four are not self-contained, and each names its own reason** — which is the clearest
+statement of `Freshness` a reader of this page will meet.
+
+| row | why it cannot be run cold |
+|---|---|
+| `SCN-FIT-012` / `SCN-FIT-013` | `timing:score` reads a measurement the behavioural suite wrote **earlier in the same run** |
+| `SCN-FIT-002` | `mutation:score` reads the record borrowed from the **nightly sweep**, and only while it is inside its window |
+| `SCN-FIT-014` | a compound rather than a reader — it regenerates the corpus, then diffs it |
+
+The first two are why the fitness pass runs last, and they are one shape at two cadences: evidence
+collected somewhere other than the moment the row is read. `Freshness` is what decides whether it
+still counts — immediate for a push-path check, satisfied by construction because the suite that
+wrote the report ran in the same build; an explicit window for a scheduled one, so a nightly that
+stops running reds on its own once the window lapses.
+
+**So what does the pass add, if the commands already work?** Enumeration, and only enumeration. A
+check reports what it found and says nothing when it finds none, so its silence cannot be told from
+its absence. Running the commands by hand gives you each one's verdict; running them through the
+pass makes **every configured row appear in a report, pass or fail** — so a check that quietly
+stopped running shows up as an absent row instead of as no output at all.
+
+**The commands are the evidence. The pass is what makes the set of them observable.** That sentence
+is the whole of why the scenarios exist, and it is the one a product copying this migration should
+take away.
+
 ### The sweep, and the trap inside it
 
 A minted `@SCN` changes every surface that names the old one, and the grep that closes the sweep is
