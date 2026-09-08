@@ -357,15 +357,15 @@ jobs:
       # levelled by a tier tag, this pass's are converted static-check credits named by a
       # configured row (SELF_BALANCE_SCOPE.fitness, 3F-3145).
       #
-      # IT NOW SELECTS REAL SCENARIOS (3F-3151, generated since 3F-3164). @SCN-FIT-001 is the
-      # first converted check, so this step is where eslint's complexity / max-lines /
-      # max-lines-per-function are held over the real tree — the work the deleted `Lint complexity`
-      # step used to do, reached through the scenario's configured row instead of through a script
-      # handle. Wiring the pass ahead of its first member is what let that conversion be ONE atomic
-      # commit rather than a conversion plus a pipeline change. Every scenario it selects is now
-      # EMITTED from `specController.fitnessChecks` into `features/fitness-checks.feature`, and one
-      # of those rows regenerates that file and diffs it, so a corpus that has drifted from its
-      # rows reds this very step.
+      # IT NOW SELECTS REAL SCENARIOS (3F-3151). @SCN-FIT-001 is the first converted check, so this
+      # step is where eslint's complexity / max-lines / max-lines-per-function are held over the
+      # real tree — the work the deleted `Lint complexity` step used to do, reached through the
+      # scenario's configured row instead of through a script handle. Wiring the pass ahead of its
+      # first member is what let that conversion be ONE atomic commit rather than a conversion plus
+      # a pipeline change. Every scenario it selects is AUTHORED in
+      # `features/fitness-checks.feature` beside its row of `specController.fitnessChecks`
+      # (3F-3244); the two are written independently, which is what lets the pass and the ledger
+      # report a scenario with no row and a row with no scenario.
       #
       # AND THAT MOVED THE COMPLEXITY GATE DOWN THE LADDER, WHICH IS A COST, NOT A BONUS.
       # `Lint complexity` ran near the top, before the suites; the complexity violation it used to

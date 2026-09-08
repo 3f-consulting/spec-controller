@@ -121,7 +121,7 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
     specController.checkRegistry and then through the corpus — two hops, because a
     DISCOVERED check is a script handle and a handle does not know what it is for. The
     check is now a row of specController.fitnessChecks naming SCN-FIT-010; the fitness pass
-    runs the row's command, and the generated scenario appearing in that pass's report IS
+    runs the row's command, and the scenario appearing in that pass's report IS
     the credit, carrying its own @SCN on its own tag line. Nothing is resolved onto it.
 
     WHAT THIS ASSERTS THAT SSM-001..005 DO NOT. The siblings above pin the gate's DECISION

@@ -45,7 +45,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
   obligations are untouched and still reconcile — the distinction from a deferral tag,
   which would have taken every obligation these scenarios name dark to silence one row each
   (3F-2351). What spec-controller's OWN lint:feature-codes check owes is raised where it
-  belongs: its row of specController.fitnessChecks, whose generated scenario carries the
+  belongs: its row of specController.fitnessChecks, whose scenario carries the
   code SCN-FIT-007 in features/fitness-checks.feature (3F-3165). It sat stepless at the foot
   of this file until then, under a code of this feature's own.
 

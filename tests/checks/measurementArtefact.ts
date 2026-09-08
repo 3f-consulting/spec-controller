@@ -220,7 +220,7 @@ export const SWEEP_RECORD_PATH = "runs/mutation/measurements.json";
  * ran. That is not a double count, because a row is keyed by (`@SCN`, check) and the later write
  * would simply replace the earlier one; it is worse than a double count. It is a credit arriving by
  * a route that enumerates nothing, which is the single-entry fault this whole axis exists to close:
- * empty the generated corpus and every timing row would still read satisfied.
+ * empty the corpus and every timing row would still read satisfied.
  *
  * TWO FILES, TWO QUESTIONS, exactly as the sweep record puts it: what a producer MEASURED, and what
  * this run CREDITED. The shape is identical and one reader reads both.

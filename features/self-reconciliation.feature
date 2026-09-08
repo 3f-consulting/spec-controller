@@ -104,13 +104,13 @@ Feature: spec-controller reconciles its own tree, and the build depends on the a
 
   Rule: the fitness axis's size is a number the repository banked, not one anybody typed
 
-    THE AXIS HAS ONE AUTHOR FOR BOTH ITS BOOKS, AND THAT IS THE FAULT THIS RULE ANSWERS.
-    A converted check's Evidence Obligation is generated from a configured row and its
-    Evidence Observation is produced by running that same row's command, so one edit to
-    the manifest moves both sides together and no surviving side is left to disagree.
-    Mistype the key that holds the rows and the manifest reads empty, the corpus is
-    regenerated empty, the fitness pass runs nothing, and the report says nothing about
-    any of it (3F-3180, measured cold).
+    THE AXIS ONCE HAD ONE AUTHOR FOR BOTH ITS BOOKS, AND THAT IS THE FAULT THIS RULE WAS
+    BUILT FOR. A converted check's Evidence Obligation is raised from a configured row and
+    its Evidence Observation is produced by running that same row's command; while the
+    corpus was EMITTED from the rows as well, one edit to the manifest moved every side
+    together and no surviving side was left to disagree. Mistype the key that holds the
+    rows and the manifest read empty, the corpus was regenerated empty, the fitness pass
+    ran nothing, and the report said nothing about any of it (3F-3180, measured cold).
 
     SO THE SECOND SOURCE IS A COUNT THE REPOSITORY BANKED, AND IT LIVES WHERE THE TYPO
     CANNOT REACH. `quality-thresholds.yml` sits at the repository root and outside the
@@ -125,10 +125,14 @@ Feature: spec-controller reconciles its own tree, and the build depends on the a
     comes down by hand, with the reason in the commit. There is no flag for it,
     deliberately — an escape hatch a tool holds open is one nobody ever has to justify.
 
-    THE COUNT IS READ FROM THE MANIFEST AND NEVER FROM THE CORPUS. The corpus is
-    generated from the rows, so a count taken off it and held to a bar would be a
-    derivation checked against itself — the same single-author fault arriving through
-    the cure.
+    THE CORPUS IS AUTHORED NOW, AND THIS NUMBER IS A CARDINALITY BELT (3F-3244). An
+    emptied manifest leaves its scenarios standing, so the pass reds on each and the
+    ledger's census names them; what the banked figure adds is one line stating the fall
+    in numbers, including where a row and its scenario leave together.
+
+    THE COUNT IS READ FROM THE MANIFEST AND NEVER FROM THE CORPUS. Two authored sides are
+    two sides to count, and counting the one this bar is not held against would answer a
+    different question from the one the refusal states.
 
     @unit @integration @SCN-SLF-004
     Scenario: banking reads the row count off the tree and writes it upward, refusing to record a fall
@@ -140,9 +144,9 @@ Feature: spec-controller reconciles its own tree, and the build depends on the a
     @unit @integration @SCN-SLF-005
     Scenario: a run whose fitness axis holds fewer rows than the banked figure reds the gate, naming the figure and the count
       WHERE THE COMPARISON RUNS IS THE LOAD-BEARING DECISION, AND IT IS NOT A FITNESS
-      ROW. A fitness row's scenario is generated into the corpus, so an emptied corpus
-      would take the comparison away with it — rebuilding, inside the cure, the exact
-      recursion this repository already documents one level down. It runs in the
+      ROW. A comparison held as a row would go with the rows it is there to notice the
+      loss of — rebuilding, inside the cure, the exact recursion this repository already
+      documents one level down. It runs in the
       self-reconciliation gate instead, which is already its own pipeline step, outside
       the corpus, and is where a bar is read.
 

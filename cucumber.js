@@ -31,13 +31,13 @@ export default {
 // reasons that have nothing to do with the check. Naming one file removes the coupling BY
 // CONSTRUCTION rather than by everyone remembering not to reach for the world.
 //
-// ITS TAG FILTER SELECTS EVERY ROW OF `specController.fitnessChecks`, through the corpus those
-// rows are GENERATED into (`features/fitness-checks.feature`, 3F-3164). It was wired one commit
+// ITS TAG FILTER SELECTS EVERY SCENARIO OF `features/fitness-checks.feature`, each of which is
+// authored beside a row of `specController.fitnessChecks` (3F-3244). It was wired one commit
 // ahead of its first member and selected nothing, which a cucumber run treats as an exit 0 — and
 // that is what let the first conversion land as ONE commit rather than as a conversion plus a
 // pipeline change. It is also the shape worth suspecting now that the whole set arrives from one
-// generated file: a pass selecting nothing still exits 0, so an empty corpus and a clean corpus
-// are the same exit code (reported to 3F-3162).
+// file: a pass selecting nothing still exits 0, so an empty corpus and a clean corpus are the same
+// exit code (reported to 3F-3162).
 //
 // THE DEFAULT PROFILE IS UNCHANGED AND MUST STAY SO. `@fitness` carries no tier tag, so
 // `@integration or @e2e or @performance` never selected these scenarios and still does not —

@@ -29,7 +29,6 @@
     "lint:scn-tags": "tsx tests/checks/lintScnTagsCli.ts",
     "lint:scn-subissues": "tsx tests/checks/lintScnSubIssuesCli.ts",
     "lint:anemic-domain": "tsx tests/checks/lintAnemicDomainCli.ts",
-    "fitness:corpus": "tsx tests/checks/fitnessCorpus.ts",
     "fitness:bank": "tsx tests/checks/fitnessRowBankCli.ts",
     "doc:compatibility-examples": "tsx tests/checks/compatibilityExamplesCli.ts",
     "doc:paths": "tsx tests/checks/docPathsCli.ts"
@@ -81,11 +80,6 @@
         "characteristic": "mutation",
         "command": "pnpm --silent mutation:score --supersedes SCN-MUT-011",
         "atLeast": { "mutationGate": "domain" }
-      },
-      {
-        "scn": "SCN-FIT-014",
-        "characteristic": "traceability",
-        "command": "pnpm --silent fitness:corpus && git diff --exit-code -- features/fitness-checks.feature"
       },
       {
         "scn": "SCN-FIT-015",

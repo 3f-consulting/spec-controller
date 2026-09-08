@@ -81,14 +81,14 @@ const ownRow = (): { scn: string; characteristic: string } => {
 };
 
 /**
- * The fitness pass's report, DERIVED FROM THE REAL GENERATED CORPUS rather than read off disk.
+ * The fitness pass's report, DERIVED FROM THE REAL CORPUS rather than read off disk.
  *
  * WHY IT IS NOT THE FILE THE PASS WRITES. The credit this arm is about rides the fitness cucumber
  * report, and that report is written by a gate that runs AFTER the one this scenario runs in — so
  * reading the file would read the PREVIOUS run's report, or nothing at all in a fresh clone. What
- * is real here is the corpus: every scenario in it is emitted from a row of this repository's own
- * manifest, and a fitness pass over this tree reports exactly those. So the report is derived from
- * the tree's own corpus, which is the document the pass itself reads.
+ * is real here is the corpus: it is the authored document the pass itself reads, and a fitness
+ * pass over this tree reports exactly the scenarios it carries. So the report is derived from the
+ * tree's own corpus rather than curated beside it.
  *
  * EVERY SCENARIO IS REPORTED AS PASSED, AND THAT IS THE STATEMENT THIS ARM NEEDS. The report
  * stands in for a pass over this tree, and this scenario's own claim at the foot is that the row
@@ -105,7 +105,7 @@ const fitnessReportPath = (): string => {
   const codes = [...corpus.matchAll(/^ *@fitness @(SCN-[A-Z]+-\d+)\s*$/gm)].map((m) => m[1]!);
   assert.ok(
     codes.length > 0,
-    "expected the generated fitness corpus to carry at least one @fitness scenario"
+    "expected the fitness corpus to carry at least one @fitness scenario"
   );
   const report = [
     {
@@ -152,7 +152,7 @@ Then("the check's run is credited to the scenario that names it", function () {
   assert.ok(
     account,
     `expected a Ledger account for ${scn} — the scenario the row naming ${OWN_STATIC_CHECK} ` +
-      `points at; got none. Without a generated scenario carrying that code the check names ` +
+      `points at; got none. Without a scenario carrying that code the check names ` +
       `nothing and its run has no Evidence Obligation to settle against.`
   );
 

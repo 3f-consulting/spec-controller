@@ -1130,7 +1130,11 @@ Then(
 
     // The teeth, proved before the absence is believed: the list is not empty, it holds the shapes
     // it is meant to, and a planted leak wearing one of them is caught by the very same reading.
-    assert.ok(names.length > 20, `only ${names.length} name(s) came off the tree; the derivation is not reading it.`);
+    // A FLOOR, NOT A MEASUREMENT (3F-3244). What this proves is that the derivation READ the tree
+    // rather than answering with a stub, so the number only has to be far enough above zero to say
+    // so. It was `> 20` — one below the colon-script count of the day — and deleting a single
+    // script reded it, which is a check on the size of the manifest wearing a teeth-proof's name.
+    assert.ok(names.length > 10, `only ${names.length} name(s) came off the tree; the derivation is not reading it.`);
     assert.ok(names.includes("spec-controller") && names.includes("ci.yml"));
     const planted = `  const bankCommand = "run ${names.find((name) => name.includes(":")) ?? ""} --record";`;
     assert.ok(

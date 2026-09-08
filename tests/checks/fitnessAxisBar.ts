@@ -2,41 +2,38 @@
  * THE BANKED FIGURE, HELD AGAINST THE AXIS — a manifest that has lost fitness rows since the record
  * was banked reds the self-reconciliation gate, naming both numbers (@SCN-SLF-005, 3F-3193).
  *
- * WHAT THIS IS FOR. Since the check registry was retired, the fitness axis has had ONE author for
- * both of its books: a converted check's Evidence Obligation is generated from a configured row and
- * its Evidence Observation is produced by running that same row's command. Delete a row — or
- * mistype the key that holds them — and both sides move together in one edit. The manifest reads
- * empty, the regenerated corpus holds no scenarios, the pass runs nothing, and the report has
- * nothing left to say about any of it. Measured cold on 3F-3180: sixteen rows gone, exit 0, and not
- * one line a reader could tell from a healthy one. This comparison is the second, independently
- * authored source that edit cannot reach, and its whole job is to make that loud.
+ * WHAT THIS IS FOR. It was built when the fitness axis had ONE author for both of its books: a
+ * converted check's Evidence Obligation was raised from a configured row, its Evidence Observation
+ * came from running that same row's command, and the corpus those scenarios lived in was EMITTED
+ * from the rows too. Delete a row — or mistype the key that holds them — and every side moved
+ * together in one edit: the manifest read empty, the regenerated corpus held no scenarios, the pass
+ * ran nothing, and the report had nothing left to say about any of it. Measured cold on 3F-3180:
+ * sixteen rows gone, exit 0, and not one line a reader could tell from a healthy one.
  *
- * WHERE IT RUNS IS THE LOAD-BEARING DECISION, AND IT IS NOT A FITNESS ROW. A fitness row's scenario
- * is GENERATED into the corpus, so an emptied corpus would take this comparison away with it —
- * rebuilding, inside the cure, the exact recursion described below for the drift guard. It runs in
- * `balance:self` instead, which is already its own `ci.yml` step, outside the corpus, and is where
- * a bar is read (3F-2509).
+ * THAT IS NO LONGER THE STANDING SHAPE, AND THIS IS NO LONGER THE ONLY SURVIVING SIDE (3F-3244).
+ * The corpus is AUTHORED now, beside the rows rather than from them, so an emptied manifest leaves
+ * twelve scenarios standing that nothing configures — the pass reds on each, and the ledger's
+ * census names them. The second, independently authored source is the corpus itself.
  *
- * AND THE COUNT COMES OFF THE MANIFEST, NEVER OFF THE GENERATED CORPUS. The corpus is derived from
- * the rows, so a count taken from it and held to this figure would be a derivation checked against
- * itself — the same single-author fault arriving through its own cure. It is read through
- * `fitnessRowCountAt`, which is the LEDGER'S own reader, so the bar is held against exactly the
- * population the obligations are raised over.
+ * SO WHAT THIS IS TODAY IS A CARDINALITY BELT, AND IT IS WORTH KEEPING AS ONE. It answers before
+ * the books are opened, in one line naming both figures, over the population the obligations are
+ * raised over — a plainer sentence than a reader assembles from a wall of unconfigured-scenario
+ * reds, and one that still fires where a row and its scenario leave together.
+ *
+ * WHERE IT RUNS IS STILL NOT A FITNESS ROW. A comparison held as a row would vanish with the rows
+ * it is there to notice the loss of — rebuilding, inside the cure, the recursion that made the
+ * corpus drift guard unable to detect its own absence (deleted at 3F-3243). It runs in
+ * `balance:self` instead, which is already its own `ci.yml` step and is where a bar is read
+ * (3F-2509).
+ *
+ * AND THE COUNT COMES OFF THE MANIFEST, NEVER OFF THE CORPUS. Two authored sides are two sides to
+ * count, and counting the one this belt is not held against would answer a different question from
+ * the one the refusal states. It is read through `fitnessRowCountAt`, which is the LEDGER'S own
+ * reader, so the bar is held against exactly the population the obligations are raised over.
  *
  * ═══ WHAT A GREEN FROM THIS CHECK DOES NOT MEAN ═══
  *
- * IT DOES NOT CURE `@SCN-FIT-014`'s SELF-REFERENCE, AND A READER WHO TAKES IT AS HAVING DONE SO HAS
- * READ IT WRONG. The corpus drift guard regenerates the corpus and diffs it, and the command works
- * — but its own scenario is generated into the very file it guards, so an emptied corpus takes its
- * witness with it and `0 scenarios` is an exit 0. It cannot detect its own absence. This banked
- * count does not fix that: it changes the CONSEQUENCE, not the guard. An emptied corpus now reds
- * here, on the count, even though the drift guard never ran to notice that it was gone. So the
- * residual SHRINKS AND DOES NOT CLOSE — `@SCN-FIT-014` remains a check whose green means less than
- * a reader takes it to mean, and what changed is only that its silence is no longer the last word.
- * Moving it out of the artefact it guards is a separate question about generator design and is
- * deliberately not built here.
- *
- * AND IT DOES NOT MAKE THE INCIDENTAL `tests/checks/*.test.ts` FILES REDUNDANT. Three of them
+ * IT DOES NOT MAKE THE INCIDENTAL `tests/checks/*.test.ts` FILES REDUNDANT. Three of them
  * already red on an emptied manifest — `complexityExceptionsReconciliation`,
  * `lintScnSubIssuesCli`, `mutationGateWiring` — each by accident, because one check wanted to
  * assert that ITS OWN row is configured. (Five, until 3F-3211 retired the two vocabulary ones.)
@@ -130,11 +127,12 @@ export function fitnessAxisRefusal(fall: FitnessAxisFall, recordFile: string): s
     `balance:self: ${FITNESS_AXIS}: THE AXIS HAS LOST ROWS — banked ${fall.banked}, found ` +
     `${fall.found}. ${recordFile} banks ${fall.banked} fitness row(s) and this tree's manifest now ` +
     `holds ${fall.found}.\n` +
-    "Both books on this axis have one author: the Evidence Obligations are generated from the " +
-    "configured rows and the Evidence Observations come from running those same rows, so one edit " +
-    "moves both sides together and no surviving side is left to disagree. That is why the figure " +
-    "is banked in a file the edit cannot reach, and why this is read before the reconciliation " +
-    "rather than reported inside it — a ledger over an emptied axis reconciles a population that " +
+    "This is a cardinality belt over the rows, and it says the fall in one line naming both " +
+    "figures. The scenarios in features/fitness-checks.feature are authored beside these rows " +
+    "rather than emitted from them, so an emptied manifest also reds the fitness pass and is " +
+    "named scenario by scenario on the ledger; the figure is banked in a file the edit cannot " +
+    "reach so that the count itself still speaks, and it is read before the reconciliation " +
+    "rather than inside it — a ledger over an emptied axis reconciles a population that " +
     "is no longer there, and says nothing about the rows that left.\n" +
     "Nothing here lowers a record for you. If the fall is honest — a check retired, a row " +
     `deliberately dropped — edit ${recordFile} by hand and put the reason in the commit.`

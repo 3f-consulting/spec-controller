@@ -36,9 +36,9 @@ The `Rule:` preamble above them said why, and it is captured here with them:
 changed.** What differs is entirely in how the check's Evidence Obligation is raised and how its
 Evidence Observation gets back to it.
 
-That adjacency no longer exists in the tree: `SCN-CPX-005` left when the corpus became generated,
-and `SCN-CPX-006` follows it. Which is why it is written down here — reconstructing it from a diff
-afterwards reads as archaeology rather than as an example.
+That adjacency no longer exists in the tree: `SCN-CPX-005` left when its scenario moved into the
+fitness corpus, and `SCN-CPX-006` follows it. Which is why it is written down here —
+reconstructing it from a diff afterwards reads as archaeology rather than as an example.
 
 ---
 
@@ -85,12 +85,12 @@ Cucumber reports every scenario it ran, pass or fail.
 
 ## What the after looks like today
 
-Since 3F-3164 the corpus half is **generated**. The scenario above is no longer written by hand at
-all — it is emitted from its row, and it is now `@SCN-FIT-001`:
+The scenario above lives in the fitness corpus now, under `@SCN-FIT-001`, **written beside its row
+rather than derived from it**:
 
 ```gherkin
   @fitness @SCN-FIT-001
-  Scenario: complexity — `eslint`
+  Scenario: every function and module measures inside the external complexity standard, or inside its recorded exception
     Then the check this scenario names finds no violations
 ```
 
@@ -98,15 +98,25 @@ all — it is emitted from its row, and it is now `@SCN-FIT-001`:
 { "scn": "SCN-FIT-001", "characteristic": "complexity", "command": "eslint" }
 ```
 
-**The `@SCN` is read off the row, never derived from the row's position.** A positional code would
-renumber every citation the moment a row was inserted, which is the opposite of what a stable
-identifier is for. So the generated file's numbering is not contiguous, and that is the rule
-working rather than a gap.
+**Two things to write, and that is the point.** For one commit's length this repository EMITTED the
+corpus from the rows (3F-3164) and guarded it with a regenerate-and-diff row; 3F-3243 deleted the
+guard and 3F-3244 the generator. A scenario emitted from the row it is reconciled against cannot
+disagree with it, so the axis had one author wearing double-entry's clothes: delete a row and its
+scenario went with it, silently. Authored, the two sides can disagree — which is the only reason
+either of them is worth reading.
 
-**The corpus is checked in, and a row of the corpus guards it.** `SCN-FIT-014`'s command
-regenerates the file and diffs the result, so a corpus that has drifted from the rows it came from
-reds the pass it is part of. Generating at pipeline time instead would put the definition somewhere
-nobody can read or review; checking it in unguarded would be a watermelon in a new costume.
+**So both halves of the pair are now faults something says out loud.** A scenario whose code no row
+names reds the pass, because there is no command for it to run, and the ledger's census names it. A
+row whose scenario the corpus does not carry reconciles as an Evidence Obligation nothing observed.
+
+**The `@SCN` is chosen when the check is added, never derived from the scenario's position.** A
+positional code would renumber every citation the moment a scenario was inserted, which is the
+opposite of what a stable identifier is for. So the corpus's numbering is not contiguous, and that
+is the rule working rather than a gap.
+
+**The corpus is checked in.** Generating at pipeline time would put the definition somewhere nobody
+can read or review — and now there is nothing to generate: it is a feature file, written by hand,
+like every other feature file in the tree.
 
 ---
 
@@ -161,8 +171,9 @@ inside what it observes. The behavioural suite is what is worth timing.
 
 1. **Write the row** — `scn`, `characteristic`, `command`, plus `atLeast` / `atMost` where the check
    produces a number.
-2. **Give the scenario the axis tag** and remove its characteristic tag. Under the generated corpus
-   this happens for you: the row is the whole of what you write.
+2. **Give the scenario the axis tag** and remove its characteristic tag. Write the scenario in your
+   fitness corpus and the row beside it; neither half is derived from the other, which is what makes
+   a scenario with no row, and a row with no scenario, something a run can report.
 3. **Take the command out of the pipeline file.** A converted check stops being a CI step; there is
    no `run:` line left to find, and nothing needs to discover a script handle any more.
 4. **Sweep the citations.** A minted `@SCN` changes every surface that names the old one — the
@@ -201,7 +212,7 @@ inside what it observes. The behavioural suite is what is worth timing.
    nothing. Same characteristics claimed, same obligation count, same satisfied / missing verdicts,
    against a baseline captured **before the first edit**.
 7. **Prove the comparison has teeth.** A matching ledger is also what *not migrating* produces.
-   Break one generated row's `scn` so its credit cites nothing, confirm the comparison reds, and
+   Break one row's `scn` so its credit cites nothing, confirm the comparison reds, and
    restore. A comparison whose teeth are unproven is a diff that is not looking.
 
 ---
@@ -242,6 +253,7 @@ to sweep again.
 | 8 | the check that cannot convert is deleted, with its scenarios | deletion |
 | 9 | the reader learns to answer a row from a measurement stamped with a superseded code | changed behaviour |
 | 10 | the citation sweep, the last mint, and this page | refactor |
+| 11 | the drift guard, then the generator: the corpus becomes authored | refactor |
 
 Steps 1–4 and 9 were **not planned**. Every one was found by a sub-issue running a *plant* instead
 of accepting a green.
@@ -264,7 +276,6 @@ document still happened; there is simply nothing left on either side of it to ma
 | `SCN-API-003` | typecheck | `pnpm typecheck` | `SCN-FIT-011` |
 | `SCN-CIP-013` | ci-run-time | `pnpm --silent timing:score --scn SCN-FIT-012` · `atMost: 75` | `SCN-FIT-012` |
 | `SCN-CIP-014` | ci-run-time | `pnpm --silent timing:score --scn SCN-FIT-013` · `atMost: 150` | `SCN-FIT-013` |
-| — | traceability | `pnpm --silent fitness:corpus && git diff --exit-code -- features/fitness-checks.feature` | `SCN-FIT-014` |
 | `SCN-CHR-005` | — | **deleted, not converted** | — |
 
 **Three rows carry a bar, and the direction is per-row rather than per-characteristic.** A mutation
@@ -272,8 +283,8 @@ score is a floor (`atLeast`); a run time is a ceiling (`atMost`). Both live in t
 and a blanket word in a table was wrong about one of them — which is the reason a row states its
 own direction rather than the engine holding a roster of which characteristics are floors.
 
-**`SCN-FIT-002` is the thirteenth scenario in the generated file, not the second.** Its row was
-authored last. The code is read off the row and never derived from the row's position, so seating
+**`SCN-FIT-002` is the tenth scenario in the corpus, not the second.** Its row was authored last.
+The code was chosen when the check was added and never derived from anything's position, so seating
 it did not renumber anything — which is the whole point of a stable identifier, visible in the
 artefact rather than asserted about it.
 
@@ -283,7 +294,7 @@ artefact rather than asserted about it.
 run in a terminal, on its own, and its exit code is the check's verdict. The conversion took
 nothing away: the row holds the same string the CI step used to hold.
 
-Nine of this repository's thirteen rows are exactly that.
+Nine of this repository's twelve rows are exactly that.
 
 ```sh
 eslint
@@ -300,14 +311,13 @@ pnpm doc:paths
 Exit 0 is the check passing. No cucumber, no `balance`, no ceremony. That matters most when a check
 reds: you debug it by running it, not by reading a report about it.
 
-**The other four are not self-contained, and each names its own reason** — which is the clearest
+**The other three are not self-contained, and each names its own reason** — which is the clearest
 statement of `Freshness` a reader of this page will meet.
 
 | row | why it cannot be run cold |
 |---|---|
 | `SCN-FIT-012` / `SCN-FIT-013` | `timing:score` reads a measurement the behavioural suite wrote **earlier in the same run** |
 | `SCN-FIT-002` | `mutation:score` reads the record borrowed from the **nightly sweep**, and only while it is inside its window |
-| `SCN-FIT-014` | a compound rather than a reader — it regenerates the corpus, then diffs it |
 
 The first two are why the fitness pass runs last, and they are one shape at two cadences: evidence
 collected somewhere other than the moment the row is read. `Freshness` is what decides whether it
@@ -389,8 +399,11 @@ every static row satisfied while only the measured ones redded. The repair gives
 second fact rather than making the two kinds alike. A repository whose rows are all static had
 nothing redding on its behalf at all, and now does.
 
-**Two residuals stay, stated rather than left to be found.** A row that names its `notExaminedExit`
+**One residual stays, stated rather than left to be found.** A row that names its `notExaminedExit`
 can still be skipped by a hook and will still be credited, because the report cannot tell that skip
-from the one its command asked for — bounded to the rows that opted in. And a manifest whose
-`fitnessChecks` key is unreadable holds zero rows, so the rows and a regenerated corpus go together
-and no rule above can see it.
+from the one its command asked for — bounded to the rows that opted in.
+
+**The second residual is closed, and closing it is what an authored corpus buys.** A manifest whose
+`fitnessChecks` key is unreadable holds zero rows. While the corpus was emitted from those rows it
+emptied with them, and no rule above could see it. Authored, the corpus stands: every scenario in it
+is now one no row configures, so the fitness pass reds on each and the ledger's census names them.

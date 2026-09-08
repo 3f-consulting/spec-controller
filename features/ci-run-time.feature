@@ -56,7 +56,7 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
 
   AND THE TWO OBLIGATIONS THIS REPOSITORY ACTUALLY OWES HAVE LEFT THIS FILE (3F-3166). They were
   the last Rule here — two stepless scenarios carrying the bare tag, one per timed suite. They are
-  CONVERTED now: @SCN-FIT-012 and @SCN-FIT-013, generated into features/fitness-checks.feature from
+  CONVERTED now: @SCN-FIT-012 and @SCN-FIT-013, authored in features/fitness-checks.feature beside
   their rows in specController.fitnessChecks, where each names its own ceiling. Nothing about the
   engine below moved with them; what changed is where the two claims about this tree are written,
   and the ceilings they are held to are on their rows rather than in a second manifest key. The

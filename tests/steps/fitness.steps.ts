@@ -17,10 +17,15 @@
  *
  * The static case asserts an EXIT CODE; the measured case asserts that a NUMBER arrived and posts
  * it. Different assertions over different evidence, so they are two sentences rather than one with
- * a branch in it — and the corpus says which a scenario is, because a generated scenario is emitted
- * from its row and the row's shape already says whether it carries a bar. Neither sentence names a
- * characteristic or a command, which is what holds the count at two: a step text mentioning either
- * would need a third registration for the next check that converted.
+ * a branch in it — and which one a scenario carries is its AUTHOR's statement of what kind of check
+ * it is, written to match the shape of the row beside it (3F-3244; until then the corpus was
+ * emitted from the row and the match was a derivation rather than a claim). Neither sentence names
+ * a characteristic or a command, which is what holds the count at two: a step text mentioning
+ * either would need a third registration for the next check that converted.
+ *
+ * SO THE TWO CAN NOW DISAGREE, AND THAT IS THE POINT RATHER THAN A GAP. A barred row whose scenario
+ * carries the static sentence is a check claiming to assert an exit code while its row asks for a
+ * number, and the run says so — where a generated corpus could only ever agree with itself.
  *
  * ═══ THE STATIC PASS (@SCN-LNT-023, 3F-3147) ═══
  *

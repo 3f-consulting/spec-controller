@@ -307,10 +307,10 @@ export function runSelfBalance(argv: string[]): void {
 
   // THE FITNESS AXIS'S BANKED FIGURE, ANSWERED BEFORE THE BOOKS ARE OPENED (@SCN-SLF-005, 3F-3193).
   //
-  // THIS GATE IS WHERE THE COMPARISON RUNS, AND THAT IS THE WHOLE DESIGN. A fitness row's scenario
-  // is generated into the corpus, so a comparison held as a row would vanish with the corpus it was
-  // there to notice the emptying of. This step is already outside the corpus and already exits on
-  // its verdict, so it needs no new surface and no new wiring.
+  // THIS GATE IS WHERE THE COMPARISON RUNS, AND THAT IS THE WHOLE DESIGN. A comparison held as a
+  // fitness row would vanish with the rows it was there to notice the emptying of. This step is
+  // already outside the corpus and already exits on its verdict, so it needs no new surface and no
+  // new wiring.
   //
   // FIRST, AND THE RUN STOPS ON A FALL. Every obligation on this axis is raised FROM the rows, so a
   // reconciliation over an emptied axis reports on a population that is no longer there — which is

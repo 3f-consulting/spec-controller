@@ -2,13 +2,16 @@
  * THE FITNESS AXIS'S BANKED ROW COUNT — read upward off the tree, written into the record, and
  * never written downward (@SCN-SLF-004, 3F-3192).
  *
- * WHY A SECOND NUMBER EXISTS AT ALL. A converted check's Evidence Obligation is GENERATED from a
- * configured row and its Evidence Observation is produced by RUNNING that same row's command, so
- * the fitness axis has one author for both of its books. Delete a row, or mistype the key that
- * holds them, and both sides move together in one edit: the manifest reads empty, the regenerated
- * corpus holds no scenarios, the pass runs nothing, and the report has nothing left to say about
- * any of it. That is single-entry wearing double-entry's clothes, and no comparison between two
- * artefacts that are both derived from the rows can see it (3F-3180, measured cold).
+ * WHY A SECOND NUMBER EXISTS AT ALL. It was banked when the fitness axis had one author for both
+ * of its books: a converted check's Evidence Obligation was raised from a configured row, its
+ * Evidence Observation came from running that same row's command, and the corpus was EMITTED from
+ * the rows as well. Delete a row, or mistype the key that holds them, and every side moved together
+ * in one edit: the manifest read empty, the regenerated corpus held no scenarios, the pass ran
+ * nothing, and the report had nothing left to say about any of it — single-entry wearing
+ * double-entry's clothes (3F-3180, measured cold). Since 3F-3244 the corpus is AUTHORED beside the
+ * rows, so an emptied manifest leaves its scenarios standing and the pass reds on each; what this
+ * number is today is a cardinality belt that states the fall in one line, including where a row
+ * and its scenario leave together.
  *
  * SO THE SECOND SOURCE IS A COUNT THE REPOSITORY BANKED, AND WHERE IT LIVES IS THE WHOLE ARGUMENT.
  * It goes in `quality-thresholds.yml`, which sits at the repository root and OUTSIDE the
@@ -17,9 +20,9 @@
  * message saying why. A count kept inside that block would have emptied in the same edit and
  * inherited the fault rather than curing it.
  *
- * READ FROM THE MANIFEST, NEVER FROM THE CORPUS. The corpus is generated from the rows, so a count
- * taken off it and held to a bar would be a derivation checked against itself — the same
- * single-author fault arriving through the cure. And it is read through `fitnessChecksAt`, the
+ * READ FROM THE MANIFEST, NEVER FROM THE CORPUS. Two authored sides are two sides to count, and
+ * counting the one this bar is not held against would answer a different question from the one the
+ * refusal states. And it is read through `fitnessChecksAt`, the
  * LEDGER'S own reader, rather than by counting a JSON array here: a second reading of "how many
  * rows are there" would eventually answer differently from the reading that raises the
  * obligations, and a bar held against a population nobody else counts is a bar about nothing.

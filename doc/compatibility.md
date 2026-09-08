@@ -297,20 +297,28 @@ row goes quiet: no error, no warning, and the check simply stops running. That l
 deliberate — one bad line in your manifest should not take down every check you have — and it means
 a typo costs you a check rather than a build.
 
-**What catches it is the checked-in corpus, which is the strongest argument for keeping one.** If
-your fitness corpus is generated from these rows and committed, a dropped row removes its scenario
-from the regenerated file, and a row of your own that regenerates and diffs will red:
+**What catches it is the scenario, which survives the row.** Your fitness corpus is a feature file
+you wrote; the row is a line you wrote beside it. Drop the row and the scenario is still there,
+carrying a code nothing configures — so the fitness pass has no command to run for it and reds
+naming it, and the reconciliation's census names it too:
 
 ```
-✖ `pnpm --silent fitness:corpus && git diff --exit-code -- features/fitness-checks.feature` exited 1.
-  --- a/features/fitness-checks.feature
-  +++ b/features/fitness-checks.feature
-  @@ -42,10 +42,6 @@
-  -  @fitness @SCN-CHK-004
-  -  Scenario: vocab — `pnpm lint:blocked-vocabulary`
+✖ Then the check this scenario names finds no violations
+    AssertionError: SCN-CHK-004: no row of specController.fitnessChecks names this scenario, so
+    there is no command to run. Write its row: the @SCN it is about, the characteristic it
+    asserts, and the command that returns a violation.
 ```
 
-Without that row nothing tells you the check left.
+and, on the reconciliation:
+
+```
+1 @fitness scenario(s) no configured row names: SCN-CHK-004.
+```
+
+Do not reach for a generated corpus and a regenerate-and-diff row to catch this instead. That is
+the arrangement this repository ran for one commit and then retired: a corpus emitted from the rows
+drops the scenario with the row, so the two sides can never disagree and there is nothing left to
+notice the loss. The scenario has to be authored for its survival to mean anything.
 
 **Two values are refused outright, and refusing them reds every fitness scenario you have.** The
 manifest is read once for the whole pass, so `notExaminedExit: 0` or `1` on one row fails all of

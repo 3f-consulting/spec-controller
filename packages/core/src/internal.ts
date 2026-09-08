@@ -165,12 +165,13 @@ export type { KillFloorReader, MutationGateReference } from "./parse/targetManif
 //
 // `carriesBar` IS THE SHAPE QUESTION AND NEVER THE VALUE, and the two are not the same crossing
 // (3F-3164). The bar's NUMBER stays the ledger's, as above; whether a row carries one at all is
-// what says which KIND of check it is, and the corpus generator has to know that to emit the right
-// sentence — the static one asserts an exit code, the measured one asserts that a number arrived.
-// It is shared for the reason `fitnessChecksOf` is: a generator answering "is this row measured"
-// its own way would emit a corpus that disagreed with the obligation rule about which evidence a
-// check produces, from the same row, and the emitted file would then be the thing that made the
-// two disagree. The header on `carriesBar` states the one-spelling rule this export serves.
+// what says which KIND of check it is — the static sentence asserts an exit code, the measured one
+// asserts that a number arrived. THE CONSUMER THAT MADE THIS CROSSING WAS A GENERATOR AND IS GONE
+// (3F-3244): the corpus is authored now, so nothing derives a scenario's sentence from this answer
+// and the two sides can disagree, which is what makes the disagreement reportable. It is shared for
+// the reason `fitnessChecksOf` is — a second reader answering "is this row measured" its own way
+// would put the credit side and the obligation rule at odds about which evidence one row produces.
+// The header on `carriesBar` states the one-spelling rule this export serves.
 //
 // `notExaminedEndingOf` IS THE ONE READING OF THE ENDING, AND IT CROSSES FOR THE OPPOSITE REASON TO
 // THE TWO ABOVE (3F-3177). Those cross because the PASS must not read a row its own way. This one

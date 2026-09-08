@@ -289,10 +289,10 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     evidence this scenario always rested on, said out loud in the report rather than arriving from
     a wrapper nothing enumerated.
 
-    ITS SCENARIO IS NO LONGER WRITTEN HERE — IT IS GENERATED (3F-3164). What sat under this Rule is
-    now EMITTED from its row into `features/fitness-checks.feature`, along with every other
-    configured row, so the corpus half of a converted check is authored nowhere: the row is the
-    whole of what anybody writes. This Rule keeps its argument and no longer keeps a scenario.
+    ITS SCENARIO IS NO LONGER WRITTEN HERE — IT LIVES IN `features/fitness-checks.feature` (3F-3164,
+    authored there rather than emitted since 3F-3244). What sat under this Rule now sits beside every
+    other converted check's scenario, one file for the whole axis, each one written beside the row
+    that names it. This Rule keeps its argument and no longer keeps a scenario.
 
     IT WAS THE LAST CODE MINTED AND THE ONLY ONE THAT NEEDED A MECHANISM TO CROSS (3F-3168). Every
     other converted check renamed freely, because both sides of its citation move in one commit.

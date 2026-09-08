@@ -42,7 +42,7 @@ export interface FeatureCodeEntry {
  *
  * `AAA` IS THE FIXTURE FEATURE-CODE AND IS DELIBERATELY ABSENT FROM THIS LIST (3F-3168). A test
  * that plants a corpus needs scenario ids, and for years it borrowed live ones — so `SCN-FIT-001`
- * meant a real generated scenario in one file and a planted fixture in another, and a grep could
+ * meant a real scenario in one file and a planted fixture in another, and a grep could
  * not tell them apart. No gate met the collision: fixture ids live in step-definition strings and
  * in quoted step arguments, which `lint:scn-tags` and `lint:feature-codes` never read. Fixtures
  * now spell `SCN-AAA-nnn`, and `AAA` stays unallocated so that spelling can never become a real
@@ -101,7 +101,7 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     code: "FIT",
     slug: "fitness-checks",
     status: "feature-code-used",
-    note: "the GENERATED fitness corpus — one @fitness scenario per specController.fitnessChecks row, emitted by tests/checks/fitnessCorpus.ts and checked in. The scenarios are not authored: each carries the @SCN its row states, which is why the numbering is not contiguous. One of its own rows regenerates the file and diffs the result, so a corpus that has drifted from the rows it came from reds the pass it is part of (3F-3164)",
+    note: "the fitness corpus — one @fitness scenario per specController.fitnessChecks row, each authored beside its row rather than emitted from it (3F-3244). A scenario carries the @SCN its row names and never one derived from its position, which is why the numbering is not contiguous.",
   },
   {
     code: "USG",

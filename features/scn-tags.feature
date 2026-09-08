@@ -7,7 +7,7 @@ Feature: The tier-tag floor — every scenario names an evidence tier
   must name at least one tier tag, UNLESS it is PARKED — carrying one of the deferral tags
   the target itself configures (@SCN-STG-008). scnTags parity with an adopter's repository's
   guard:scn-tags. The guard is itself cited — it converted as @SCN-FIT-008 (3F-3165), so the
-  scenario that carries it is emitted into features/fitness-checks.feature from the
+  scenario that carries it is authored in features/fitness-checks.feature beside the
   specController.fitnessChecks row naming `pnpm lint:scn-tags`, and the fitness pass running that
   command is what posts its credit. It used to be a stepless scenario at the foot of THIS file
   carrying a bare `@traceability` tag, settled by a CI step that had to be discovered and joined
@@ -141,8 +141,8 @@ Feature: The tier-tag floor — every scenario names an evidence tier
     2026-08-07, the bare-tags Correction). The floor above knows four tier tags, their pending
     variants and the lint=<handle> form, and a fitness scenario carries none of them: once the
     technique leaves the tag, a stepless fitness scenario carries its bare check and nothing else.
-    It must satisfy the floor on that alone, or the corpus sweep writes twelve scenarios this
-    check reds.
+    It must satisfy the floor on that alone, or every one of the twelve scenarios in
+    features/fitness-checks.feature reds this check.
 
     THE REGISTERED TAG IS THE DISCRIMINATOR FOR THIS FLOOR, NOT THE SHAPE (3F-3126). A fitness
     scenario is a whole-system characteristic held against a threshold, and the bare check tag is

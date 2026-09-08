@@ -174,8 +174,8 @@ describe("[SCN-SLF-005] a fitness axis smaller than the figure the record banks 
       refusalCitesTheRecord: said.includes(RECORD_FILE),
       // THE WHOLE READER OVER REAL TREES rather than over strings — the one that decides whether a
       // missing file is an absent bar or an error, and reads the count off the MANIFEST and never
-      // off the generated corpus, which is derived from these same rows. The trees below carry no
-      // corpus at all, so a reader that wanted one would have nothing to answer from.
+      // off the corpus, which is the other authored side rather than this bar's subject. The trees
+      // below carry no corpus at all, so a reader that wanted one would have nothing to answer from.
       overFallenTree: reading(refusalAt(treeHolding(3, 16), RECORD_FILE)),
       overIntactTree: reading(refusalAt(treeHolding(3, 3), RECORD_FILE)),
       overTreeFilingNoRecord: reading(refusalAt(treeHolding(0), RECORD_FILE)),
