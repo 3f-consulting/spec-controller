@@ -5,345 +5,135 @@
  * @SCN-CPX-001 id matching features/complexity-threshold.feature, so a grep of the id returns both
  * halves of the pair.
  *
- * FIX-TO-CANON, NOT A ROUTINE UPDATE (3F-2316, under 3F-2286). This file previously pinned four
- * assertions that 3F-2286 makes FALSE by superseding 3F-2177's seeding rule:
+ * ONE ARM, ONE PLANTED SET OF CEILINGS, ONE ASSERTION (3F-3231, under 3F-3218). This module is not a
+ * scanner and has no list of findings to return: its ENTIRE output is the rule table it hands
+ * eslint, so that table is the verdict, and the planted input is every ceiling the config can ask it
+ * for — all three rules, both scopes, and an exception's recorded value. Twenty-four arms each
+ * asserting "this number is right" or "this shape is right" left the table's COMPLETENESS
+ * unasserted: a module emitting the right entries plus a fourth, or omitting one, satisfied all
+ * twenty-four. One expect over the whole table closes that, and pins in one place every rule this
+ * module states:
  *
- *   - "the production thresholds are seeded at the tree's measured maximum"
- *   - "the test thresholds are seeded separately, at the test tree's own maximum"
- *   - "every threshold records a ratchet target strictly below its seed"
- *   - "the ratchet targets are the measured p90s, not arbitrary round numbers"
+ *   · the three external numbers — NIST/McCabe 10, Google 40, the chosen 400 — as literals, so a
+ *     reinstated tree-derived seed (25 / 1024 / 261 / 7 / 2419 / 221) reds here whatever else moves;
+ *   · the two scopes agreeing by construction, which is the provenance proof: the populations differ
+ *     by 2.4x at the file level, so two MEASURED thresholds could not coincide;
+ *   · the test scope's `max-lines-per-function` ABSTENTION surviving the emitter unchanged — no
+ *     substitute number invented for it, which is the self-certification 3F-2286 removed;
+ *   · the per-rule SHAPE asymmetry — `complexity` takes a bare number, the line rules an options
+ *     object. Hand eslint the wrong one and it does not complain: it mis-reads the option and applies
+ *     no ceiling at all, which looks exactly like a file under its ceiling. Nothing else notices this;
+ *   · the counting mode riding on every emitted line rule (3F-2395) — the threshold holds the CODE a
+ *     reader must hold in their head, not the file's bytes, and every value in the debt list is
+ *     measured in this mode, so any other mode changes the whole list at once and in silence;
+ *   · the frozen ceiling at EXACTLY the recorded value and never an `"off"` — the difference from the
+ *     rule this one replaced, where an exception switched a rule off and the file could grow without
+ *     limit.
  *
- * A fifth went with them — "the two scopes differ in BOTH directions" — which was true only while both
- * scopes were measurements of their own populations. Under one external standard the two scopes agree
- * by construction, so that assertion inverts into this file's strongest provenance pin (below).
+ * WHAT THIS ARM DOES NOT PIN, SAID PLAINLY. `STANDARD_SOURCES` (each number naming its source) and
+ * the enumerated `RETIRED_TREE_DERIVED_SEEDS` no longer carry a @unit assertion of their own; the
+ * literals above catch a reinstated seed by its value, not by its membership of that list, and no
+ * arm now reads the citations. The debt list's own shape and the concept-module set likewise leave
+ * this tier — @SCN-CPX-003's reconciliation reds a stale or wrong entry over the real tree, and the
+ * @integration arms below plant against every entry and every root rather than against one sample.
  *
- * Every one of the five asserted the SEED-AT-MEASURED-MAXIMUM rule, which is precisely what 3F-2286
- * retires: a threshold derived from the tree it judges certifies whatever that tree already does.
- * Changing a shipped assertion is normally the tell of green-by-erosion; the one legitimate exception
- * is a superseded contract, and this is it. The replacements below are STRICTLY STRONGER — they pin
- * PROVENANCE (each number matches its cited source outside this tree, and no threshold still carries a
- * number this tree produced), which the retired assertions could not express at all.
+ * THE MODULE IS IMPORTED THROUGH A NAMESPACE, DELIBERATELY — the same reason
+ * `complexityExceptionsReconciliation.test.ts` gives. A named import of a missing export is an ESM
+ * link error that takes this whole file down before a single assertion runs, and with one arm left
+ * that costs @SCN-CPX-001 its only observation and reds the ledger as `missing` rather than as a
+ * sentence. Through the namespace a missing export is a failing assertion naming the export.
  *
- * WHAT THIS PROVES AND WHAT IT DOES NOT. The reding itself is eslint's behaviour, not ours — it is
- * proven by PLANT on the PR and by the @integration arm, because a third party's rule engine is not
- * something a unit test should re-implement. What IS ours, and what this file pins, is the THRESHOLD
- * TABLE and the DEBT LIST: the numbers, their provenance, the scope split, and the shape of every
- * exception. Those are the values a future edit could silently loosen with nothing else noticing.
- *
- * Both are read from the REAL modules the eslint config consumes, never restated here. A copy would
- * agree by coincidence and drift the moment either side is retuned.
+ * THE REAL TREE IS NOT THIS ARM'S SUBJECT, AND THAT IS MEASURED, NOT ASSUMED (Ruling B, 3F-3218).
+ * @SCN-FIT-001 runs `eslint` over this repository on every fitness pass, through the config that
+ * imports this module. It was proved to REACH this module rather than merely to be named for it: with
+ * `PRODUCTION_THRESHOLD.complexity` moved from 10 to 1 the row fails by name on 317 findings. The
+ * OPPOSITE plant — the thresholds neutered so nothing breaches, which is the prescription that reads
+ * as the obvious one — leaves the row GREEN and byte-identical to the control, because a check that
+ * has stopped looking finds nothing and a clean tree also finds nothing. Only the direction that
+ * makes the check report a violation that is not there discriminates.
  *
  * Parent: @SCN-CPX-001 (3F-2316) — the complexity/module-size fitness function (3F-2286).
  */
 
 import { describe, it, expect } from "vitest";
+import * as thresholdModule from "./complexityThresholds.mjs";
 import {
   PRODUCTION_THRESHOLD,
-  RETIRED_TREE_DERIVED_SEEDS,
-  STANDARD_SOURCES,
   TEST_THRESHOLD,
   type ComplexityThreshold,
   type EslintRuleId,
-  type RuleEntry,
-  type RuleThreshold,
 } from "./complexityThresholds.mjs";
-// A NAMESPACE import, deliberately: `ruleAtCeiling` is asserted to exist below, and a named import of
-// a missing export is an ESM link error that takes this whole file — and with it @SCN-CPX-001's
-// evidence — down before a single assertion runs. Through the namespace, its absence is a failing
-// assertion with a sentence, which is what a red is supposed to be.
-import * as thresholdModule from "./complexityThresholds.mjs";
-import { COMPLEXITY_EXCEPTIONS } from "./complexityExceptions.mjs";
-import { DOMAIN_ENTITY_ROOTS } from "./domainEntityRoots.mjs";
-import { existsSync } from "node:fs";
-import { resolve } from "node:path";
 
 /**
- * The external standard, written out here as the literal numbers the sources state.
- *
- * This is a PIN, not a second implementation: the whole point of 3F-2286 is that these three numbers
- * are fixed by bodies outside this repository, so a test that re-states them is asserting the claim
- * the ticket makes. Contrast the retired `SEEDED_*` constants, which re-stated measurements of this
- * tree — those went stale the moment anyone refactored, which is exactly why they were the wrong pin.
+ * The emitter, asserted PRESENT with a sentence rather than named-imported. The cast is deliberate:
+ * a module that exports only its types must still type-check here, so the absence surfaces as a red
+ * assertion naming the export and cited to @SCN-CPX-001, not as a compile error.
  */
-const EXTERNAL_STANDARD = {
-  /** NIST 500-235 / McCabe — above 10, refactor. */
-  complexity: 10,
-  /** Google engineering practices — past ~40 lines, break it up. */
-  maxLinesPerFunction: 40,
-  /** A chosen ceiling: no industry body publishes a hard file cap, and the config says so. */
-  maxLines: 400,
-} as const;
+const ruleAtCeiling = (): typeof thresholdModule.ruleAtCeiling => {
+  const candidate = (thresholdModule as Partial<typeof thresholdModule>).ruleAtCeiling;
+  expect(
+    candidate,
+    "@SCN-CPX-001 needs `ruleAtCeiling` exported from the threshold module",
+  ).toBeTypeOf("function");
+  return candidate as typeof thresholdModule.ruleAtCeiling;
+};
 
-const RULES = ["complexity", "maxLines", "maxLinesPerFunction"] as const;
-
-/** eslint rule id → the threshold key that holds its ceiling. */
+/** eslint rule id → the threshold key holding its ceiling. The config asks in exactly these pairs. */
 const RULE_TO_KEY = {
   complexity: "complexity",
   "max-lines": "maxLines",
   "max-lines-per-function": "maxLinesPerFunction",
-} as const;
+} as const satisfies Record<EslintRuleId, keyof ComplexityThreshold>;
 
-/** The scope an exception's file falls in — the same `**\/*.test.ts` split the eslint config uses. */
-const scopeOf = (path: string): ComplexityThreshold =>
-  path.endsWith(".test.ts") ? TEST_THRESHOLD : PRODUCTION_THRESHOLD;
+/**
+ * A recorded value standing in for a debt-list entry, planted as a literal.
+ *
+ * Read from the real list this would assert over whatever the tree happens to carry today; the claim
+ * here is about the emitter, and the list's own truth is @SCN-CPX-003's — reconciled against the
+ * measured tree — and the @integration arm's, which plants at every entry's value and at one past it.
+ */
+const RECORDED_VALUE = 575;
+
+/** Every rule the module holds, at one scope's ceilings, in the shape eslint receives. */
+const emittedFor = (ceilings: ComplexityThreshold): Record<string, unknown> =>
+  Object.fromEntries(
+    Object.entries(RULE_TO_KEY).map(([rule, key]) => [
+      rule,
+      ruleAtCeiling()(rule as EslintRuleId, ceilings[key]),
+    ]),
+  );
+
+/** The options object both line rules carry, at whatever ceiling they are held to. */
+const linesAt = (max: number) => ["error", { max, skipBlankLines: true, skipComments: true }];
 
 describe("[SCN-CPX-001] a function or module over the external standard reds the build", () => {
-  it("[SCN-CPX-001] every production threshold is the cited external number, not a measurement of this tree", () => {
-    // The provenance pin. Each number is what its source states — NIST/McCabe 10, Google 40 — so a
-    // later edit toward "what the code currently does" has to argue with the standard, not with a
-    // measurement that goes stale on the next refactor.
-    expect(PRODUCTION_THRESHOLD.complexity).toBe(EXTERNAL_STANDARD.complexity);
-    expect(PRODUCTION_THRESHOLD.maxLinesPerFunction).toBe(EXTERNAL_STANDARD.maxLinesPerFunction);
-    expect(PRODUCTION_THRESHOLD.maxLines).toBe(EXTERNAL_STANDARD.maxLines);
-  });
+  it("[SCN-CPX-001] hands eslint every rule at the cited external number in that rule's own shape, holds both scopes to the same standard but for the test scope's abstention, and freezes an exempt file at exactly its recorded value", () => {
+    const verdict = {
+      production: emittedFor(PRODUCTION_THRESHOLD),
+      test: emittedFor(TEST_THRESHOLD),
+      exempt: emittedFor({
+        complexity: RECORDED_VALUE,
+        maxLines: RECORDED_VALUE,
+        maxLinesPerFunction: RECORDED_VALUE,
+      }),
+    };
 
-  it("[SCN-CPX-001] the test scope is held to the SAME numbers — a standard does not bend to the population it judges", () => {
-    // This is the load-bearing provenance assertion, and it is the INVERSE of the one it replaces.
-    // The two populations differ by 2.4x at the file level and 3.5x at the function level, so two
-    // MEASURED thresholds could not possibly coincide. That they are identical is the proof neither
-    // was measured off this tree.
-    expect(TEST_THRESHOLD.complexity).toBe(EXTERNAL_STANDARD.complexity);
-    expect(TEST_THRESHOLD.maxLines).toBe(EXTERNAL_STANDARD.maxLines);
-    expect(TEST_THRESHOLD.complexity).toBe(PRODUCTION_THRESHOLD.complexity);
-    expect(TEST_THRESHOLD.maxLines).toBe(PRODUCTION_THRESHOLD.maxLines);
-  });
-
-  it("[SCN-CPX-001] max-lines-per-function is explicitly off for tests — never a number seeded off the test tree", () => {
-    // The one asymmetry, and it is an ABSTENTION rather than a looser number. The rule measures
-    // production-function tractability; a describe/it callback is a container, not that. No external
-    // source states a container length, so none is invented — reinstating the retired 221 would be
-    // the self-certification 3F-2286 exists to remove.
-    expect(TEST_THRESHOLD.maxLinesPerFunction).toBe("off");
-  });
-
-  it("[SCN-CPX-001] no threshold still carries a number this tree produced", () => {
-    // Negative provenance. The retired seeds are enumerated by the module itself, so this cannot pass
-    // by the test forgetting one — and a future edit that quietly reinstated 1024 or 221 reds here
-    // even if it also updated EXTERNAL_STANDARD to match.
-    expect(RETIRED_TREE_DERIVED_SEEDS.length).toBeGreaterThan(0);
-    for (const threshold of [PRODUCTION_THRESHOLD, TEST_THRESHOLD]) {
-      for (const rule of RULES) {
-        expect(RETIRED_TREE_DERIVED_SEEDS).not.toContain(threshold[rule]);
-      }
-    }
-  });
-
-  it("[SCN-CPX-001] every rule names where its number came from", () => {
-    // A cited number and an uncited one are indistinguishable once shipped, so the citation is part of
-    // the contract rather than a comment. maxLines is held to a HIGHER bar than the other two: it has
-    // no external source, and the config has to say so rather than imply one.
-    for (const rule of RULES) {
-      expect(STANDARD_SOURCES[rule].trim().length).toBeGreaterThan(0);
-    }
-    expect(STANDARD_SOURCES.complexity).toMatch(/McCabe|NIST/);
-    expect(STANDARD_SOURCES.maxLinesPerFunction).toMatch(/Google/);
-    expect(STANDARD_SOURCES.maxLines).toMatch(/chosen|choice/i);
-  });
-
-  it("[SCN-CPX-001] no threshold records a ratchet target — the seed it descended from is retired", () => {
-    // `ratchet` recorded the measured p90 as a destination BELOW a measured seed. With no seed there is
-    // nothing to descend from; the debt that gap used to imply is enumerated in the exception list.
-    for (const threshold of [PRODUCTION_THRESHOLD, TEST_THRESHOLD]) {
-      expect(Object.keys(threshold)).not.toContain("ratchet");
-    }
-  });
-
-  it("[SCN-CPX-001] both scopes name all three rules — no rule is silently unheld", () => {
-    // An absent key is indistinguishable from an oversight. An explicit "off" had to be written on
-    // purpose, so the two are held apart rather than collapsed into "not a number".
-    for (const threshold of [PRODUCTION_THRESHOLD, TEST_THRESHOLD] as ComplexityThreshold[]) {
-      for (const rule of RULES) {
-        const value = threshold[rule];
-        expect(value === "off" || (typeof value === "number" && value > 0)).toBe(true);
-      }
-    }
-  });
-});
-
-describe("[SCN-CPX-001] the exception list records today's exceedances as dated debt", () => {
-  it("[SCN-CPX-001] the list is not empty — the tree's debt is enumerated, not implied", () => {
-    // The vacuity floor. An empty list would make every assertion below pass over nothing, and would
-    // also make the complexity check green for the wrong reason — no exceedance recorded rather than none
-    // existing. Measured 2026-08-02; it moves with every merge, so this pins non-emptiness, not a count.
-    expect(COMPLEXITY_EXCEPTIONS.length).toBeGreaterThan(0);
-  });
-
-  it("[SCN-CPX-001] every entry carries a path, a rule, a measured value and the date it was measured", () => {
-    for (const entry of COMPLEXITY_EXCEPTIONS) {
-      expect(entry.path.length).toBeGreaterThan(0);
-      expect(Object.keys(RULE_TO_KEY)).toContain(entry.rule);
-      expect(Number.isInteger(entry.value)).toBe(true);
-      expect(entry.since).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    }
-  });
-
-  it("[SCN-CPX-001] every recorded value actually exceeds the standard — an exception that exempts nothing is noise", () => {
-    // A list entry whose value sits UNDER the standard would suspend a rule over a file that never
-    // breached it: headroom bought with no debt to show for it, and invisible because the tree stays
-    // green either way. Held here so it cannot be added.
-    for (const entry of COMPLEXITY_EXCEPTIONS) {
-      const ceiling = scopeOf(entry.path)[RULE_TO_KEY[entry.rule]];
-      expect(typeof ceiling).toBe("number");
-      expect(entry.value).toBeGreaterThan(ceiling as number);
-    }
-  });
-
-  it("[SCN-CPX-001] no file exempts the same rule twice — one entry is one file's worst offender", () => {
-    // Two entries for one path+rule would leave which value is enforced ambiguous, and @SCN-CPX-002
-    // freezes a file at exactly ONE number. Uniqueness is what makes that number well-defined.
-    const keys = COMPLEXITY_EXCEPTIONS.map((entry) => `${entry.path} ${entry.rule}`);
-    expect(new Set(keys).size).toBe(keys.length);
-  });
-
-  it("[SCN-CPX-001] no entry exempts a rule its scope does not hold at all", () => {
-    // max-lines-per-function is off for test files, so a test-scope entry for it would record debt
-    // against a rule that never fires — a debt list padded with entries nobody can ever pay down.
-    const deadEntries = COMPLEXITY_EXCEPTIONS.filter(
-      (entry) => scopeOf(entry.path)[RULE_TO_KEY[entry.rule]] === "off",
-    );
-    expect(deadEntries).toEqual([]);
-  });
-});
-
-/**
- * @SCN-CPX-002 (3F-2317) — the emitter that turns a recorded value into a frozen ceiling.
- *
- * DIVISION OF LABOUR WITH THE @integration ARM. Whether eslint actually reds at value+1 is eslint's
- * behaviour, proven there by planting against the REAL config. What is ours, and what this pins, is
- * the RULE ENTRY the config hands eslint: the right shape per rule, the counting mode the recorded
- * values were measured in, and a ceiling at exactly the recorded number for every entry. Those are
- * silent failures — eslint mis-reads a wrong-shaped option rather than complaining — so they need a
- * pin that does not depend on noticing an absent red.
- */
-describe("[SCN-CPX-002] an exempt file that grows past its recorded value reds the build", () => {
-  const emit = (rule: EslintRuleId, ceiling: RuleThreshold): RuleEntry =>
-    thresholdModule.ruleAtCeiling(rule, ceiling);
-
-  it("[SCN-CPX-002] the threshold module emits rule entries — one emitter serves both scopes and the debt list", () => {
-    // Stated first and on its own so its absence reads as a sentence. One emitter is what stops the
-    // exception blocks re-deciding a rule's option shape in a second place and drifting from the
-    // scope blocks — the agreeing-by-copy this codebase keeps removing.
-    expect(typeof thresholdModule.ruleAtCeiling).toBe("function");
-  });
-
-  it("[SCN-CPX-002] `complexity` is emitted as a bare number — the one rule with no options object", () => {
-    // The trap the ticket names: eslint takes `["error", 10]` for complexity and `["error", {max}]`
-    // for the line rules. Hand it the wrong one and it SILENTLY mis-reads the config — no error, no
-    // red, just a ceiling that is not there. A shape mistake here is invisible everywhere else.
-    expect(emit("complexity", 21)).toEqual(["error", 21]);
-  });
-
-  it("[SCN-CPX-002] both line rules are emitted as an options object carrying the ceiling as `max`", () => {
-    expect(emit("max-lines", 510)).toEqual([
-      "error",
-      { max: 510, skipBlankLines: true, skipComments: true },
-    ]);
-    expect(emit("max-lines-per-function", 44)).toEqual([
-      "error",
-      { max: 44, skipBlankLines: true, skipComments: true },
-    ]);
-  });
-
-  it("[SCN-CPX-002] every emitted line rule counts CODE lines — documentation does not count against the ceiling", () => {
-    // FIX-TO-CANON (3F-2395, `fitness-functions.md` promoted from an adopter's repository 2026-08-04), not green-by-
-    // erosion. This assertion previously pinned both flags FALSE, which held the file's bytes rather
-    // than its code: the cheapest route under a ceiling was deleting the comment that explains why
-    // the code is the shape it is, so the gate pushed against the thing it exists to protect. The
-    // canon now rules the threshold counts code. Every recorded value in the debt list was re-measured
-    // in this mode in the same commit — any OTHER mode changes every number in the list at once and
-    // in silence, which is why the mode is pinned literally rather than left to eslint's defaults.
-    for (const rule of ["max-lines", "max-lines-per-function"] as const) {
-      const [, options] = emit(rule, 100) as readonly ["error", Record<string, unknown>];
-      expect(options.skipBlankLines).toBe(true);
-      expect(options.skipComments).toBe(true);
-    }
-  });
-
-  it("[SCN-CPX-002] an `off` ceiling passes straight through to eslint's own severity vocabulary", () => {
-    // The test scope's max-lines-per-function abstention has to survive the emitter unchanged; a
-    // number invented for it here would reinstate the self-certification 3F-2286 removed.
-    expect(emit("max-lines-per-function", "off")).toBe("off");
-  });
-
-  it("[SCN-CPX-002] every exception entry emits a ceiling at exactly its recorded value — never an `off`", () => {
-    // The load-bearing one, and the difference from @SCN-CPX-001. There an entry emitted `"off"` and
-    // the file could grow without limit; here it emits a ceiling AT the recorded number, so the
-    // exemption excuses the debt already present and buys not one line of headroom.
-    expect(COMPLEXITY_EXCEPTIONS.length).toBeGreaterThan(0);
-    for (const entry of COMPLEXITY_EXCEPTIONS) {
-      const ruleEntry = emit(entry.rule, entry.value);
-      expect(ruleEntry, `${entry.path} (${entry.rule}) must not be switched off`).not.toBe("off");
-      const [severity, options] = ruleEntry as ["error", number | { max: number }];
-      expect(severity).toBe("error");
-      expect(typeof options === "number" ? options : options.max).toBe(entry.value);
-    }
-  });
-});
-
-/**
- * @SCN-CPX-004 (3F-2416) — the domain's concept modules, which `max-lines` does not govern.
- *
- * DIVISION OF LABOUR WITH THE @integration ARM, as above. Whether eslint actually stops reding on an
- * excluded path is eslint's behaviour, proven there by planting against the REAL config. What is ours
- * is the SET itself: that it names real files, that it stays as narrow as it claims, and that it never
- * overlaps the debt list. Those are the ways a scope statement quietly turns into the per-file
- * exemption canon rules out, and none of them would show up as a red anywhere else.
- */
-describe("[SCN-CPX-004] a domain entity root outgrows the file ceiling without reding", () => {
-  it("[SCN-CPX-004] the set is not empty — an empty one would make every assertion here pass over nothing", () => {
-    expect(DOMAIN_ENTITY_ROOTS.length).toBeGreaterThan(0);
-  });
-
-  it("[SCN-CPX-004] every path exists on disk — a stale entry silently excludes nothing", () => {
-    // A renamed or deleted module leaves a path matching no file. eslint says nothing about a
-    // `files` pattern that matches nothing, so the entry would read as an active exclusion while
-    // excluding nothing at all — and the module it was meant to cover would be back under the
-    // ceiling with no one told. The repo root is four levels up from this file.
-    const root = resolve(import.meta.dirname, "../..");
-    for (const path of DOMAIN_ENTITY_ROOTS) {
-      expect(existsSync(resolve(root, path)), `${path} is listed but does not exist`).toBe(true);
-    }
-  });
-
-  it("[SCN-CPX-004] every path is a domain module, and none is a test file", () => {
-    // The scope claim is about the DOMAIN's concept modules. A path outside a domain directory
-    // would be an ordinary file quietly excused, which is exactly the per-file exemption this set
-    // is not. A `.test.ts` would be worse still — test files are already held at their own scope.
-    for (const path of DOMAIN_ENTITY_ROOTS) {
-      expect(path, `${path} is not under a domain directory`).toMatch(/^packages\/[^/]+\/src\/domain\//);
-      expect(path.endsWith(".test.ts"), `${path} is a test file`).toBe(false);
-    }
-  });
-
-  it("[SCN-CPX-004] no module is listed twice — one entry is one claim about one module", () => {
-    expect(new Set(DOMAIN_ENTITY_ROOTS).size).toBe(DOMAIN_ENTITY_ROOTS.length);
-  });
-
-  it("[SCN-CPX-004] no excluded module also carries a `max-lines` exception", () => {
-    // The overlap is the hiding place. An entry would record debt against a rule that no longer
-    // applies to the file, so it could never be paid down and would sit there reading as debt for
-    // good. This is the SECOND of two mechanisms: because the exclusion lives inside
-    // BARE_STANDARD_CONFIG, @SCN-CPX-003's reconciliation measures through it and reds such an
-    // entry as a stale one on its own. Neither mechanism relies on the other.
-    const excluded = new Set(DOMAIN_ENTITY_ROOTS);
-    const both = COMPLEXITY_EXCEPTIONS.filter(
-      (entry) => entry.rule === "max-lines" && excluded.has(entry.path),
-    );
-    expect(both).toEqual([]);
-  });
-
-  it("[SCN-CPX-004] the exclusion block switches off `max-lines` and nothing else", async () => {
-    // The whole reason exempting module size is safe, read off the REAL config rather than restated.
-    // If a future edit reached for `complexity` or `max-lines-per-function` in this block too, the
-    // exclusion would stop being about coherence and start being cover — and nothing else would
-    // notice, because a rule switched off produces no finding to miss. Three of these modules carry
-    // a per-unit exception today; they stay gated as the smells they are.
-    const { BARE_STANDARD_CONFIG } = await import("../../eslint.config.mjs");
-    const block = BARE_STANDARD_CONFIG.find(
-      (candidate) => candidate.files?.[0] === DOMAIN_ENTITY_ROOTS[0],
-    );
-    expect(block, "the bare standard must carry the concept-module exclusion block").toBeDefined();
-    expect(block?.files).toEqual([...DOMAIN_ENTITY_ROOTS]);
-    expect(block?.rules).toEqual({ "max-lines": "off" });
+    expect(verdict).toEqual({
+      production: {
+        complexity: ["error", 10],
+        "max-lines": linesAt(400),
+        "max-lines-per-function": linesAt(40),
+      },
+      test: {
+        complexity: ["error", 10],
+        "max-lines": linesAt(400),
+        "max-lines-per-function": "off",
+      },
+      exempt: {
+        complexity: ["error", RECORDED_VALUE],
+        "max-lines": linesAt(RECORDED_VALUE),
+        "max-lines-per-function": linesAt(RECORDED_VALUE),
+      },
+    });
   });
 });

@@ -166,7 +166,7 @@ Feature: spec-controller reconciles its own tree, and the build depends on the a
       Then the gate fails over the repository that has lost rows, naming both the figure the record banks and the count the manifest now holds
       And the gate says nothing about the axis over the repository whose rows are all still there
 
-    @unit @integration @SCN-SLF-006
+    @integration @SCN-SLF-006
     Scenario: a repository that banked no fitness figure is not redded by a bar it never set, and one that banked a figure is still held to it
       ABSENT IS NOT ZERO, AND THEY ARE DIFFERENT FACTS ABOUT A REPOSITORY. A record that banks
       no count for the axis has set no bar at all; a record banking zero has set one that every

@@ -28,39 +28,32 @@ Feature: The public core exports exactly the frozen v1 contract surface
     arrangement does when a barrel is added. Both subpaths have since been un-published, each on
     its own ruling, and this Rule is what made either of them a decision rather than an accident.
 
-    SO THE THIRD SCENARIO IS THE ONE THAT MATTERS. Holding each surface to its list is the easy
-    half; reconciling the SET of surfaces the manifests publish against the SET somebody wrote a
-    list for is what stops this recurring. A guard wired per barrel by hand is a guard whose
-    coverage is a fact nobody is checking — the same two-lists-that-never-reconcile shape as
-    3F-2826, one layer out.
+    SO THIS IS THE SCENARIO THAT MATTERS, AND SINCE 3F-3229 IT IS THE ONLY ONE HERE. Holding each
+    surface to its list is the easy half; reconciling the SET of surfaces the manifests publish
+    against the SET somebody wrote a list for is what stops this recurring. A guard wired per barrel
+    by hand is a guard whose coverage is a fact nobody is checking — the same
+    two-lists-that-never-reconcile shape as 3F-2826, one layer out.
+
+    THE VALUE HALF AND THE TYPE HALF RETIRED AS STATEMENTS, NOT AS CHECKS. Two further scenarios
+    stood here until 3F-3229 — one saying a value symbol added to or dropped from a published
+    subpath reds the guard, one saying the same of a type added, renamed or dropped. Both remain
+    true and both are still reconciled, inside the single arm that now carries an instance of every
+    drift this rule detects. What they had that this scenario does not is a separate entry on the
+    ledger; and the real barrel they read is the barrel the scenario above already holds to both
+    halves in both directions, measured rather than assumed. What no other scenario in this
+    repository can see is a subpath ARRIVING with no list written for it, which is why this is the
+    one that stayed.
 
     THE LISTS STAY HAND-WRITTEN, AND THAT IS THE WHOLE MECHANISM. @SCN-API-001's own guard says why:
     a list derived from the barrel is a barrel that redefines its own expectation, green by
     construction forever. Generalising means ONE mechanism over N written-down lists — never one
     mechanism that reads each barrel and agrees with it.
 
-    THE TYPE ARM IS NOT THE VALUE ARM WITH A DIFFERENT NAME. TypeScript types are erased, so a
+    THE TYPE HALF IS NOT THE VALUE HALF WITH A DIFFERENT NAME. TypeScript types are erased, so a
     runtime reflection cannot see them; and spelling each expected type into a typed literal — the
     arrangement the mutation ratchet's own pin uses — reds on a type DROPPED or RENAMED and stays
     green on one ADDED, because nothing references what nobody wrote. Reading the compiled type surface
-    through the compiler API is what closes the add.
-
-    @unit @SCN-API-004
-    Scenario: a value symbol added to or dropped from a published subpath reds the guard
-      Given every subpath these packages publish, each with the value surface written down for it
-      When a subpath's value exports are reflected against the surface written for it
-      Then they equal that written surface exactly, both directions
-      And a value symbol its barrel exports that the written surface does not name reds the guard
-      And a value symbol the written surface names that its barrel does not export reds the guard
-
-    @unit @SCN-API-005
-    Scenario: a type added to, renamed on, or dropped from a published subpath reds the guard
-      Given every subpath these packages publish, each with the type surface written down for it
-      When a subpath's type-only exports are read off its compiled type surface
-      Then they equal that written surface exactly, both directions
-      And a type its barrel exports that the written surface does not name reds the guard
-      And a type its barrel exports under a new name reds the guard
-      And a type the written surface names that its barrel no longer exports reds the guard
+    through the compiler API is what closes the add, and this rule's evidence reads it that way.
 
     @unit @SCN-API-006
     Scenario: a subpath the manifest publishes with no surface written down for it reds the guard

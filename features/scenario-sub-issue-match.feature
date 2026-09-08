@@ -20,7 +20,7 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
 
   Rule: a behaviour-bearing change on a ticketed internal PR passes the gate
 
-    @unit @integration @SCN-SSM-001
+    @integration @SCN-SSM-001
     Scenario: an added scenario code on an internal PR carrying a ticket handle passes
       Given an added scenario code on an internal PR that carries a ticket handle
       When the scenario sub-issue gate decides
@@ -34,7 +34,7 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
     and names the unbound code. Fork status is the only exemption; handle-absence
     on an internal PR is precisely the violation the gate exists to catch.
 
-    @unit @integration @SCN-SSM-002
+    @integration @SCN-SSM-002
     Scenario: an added scenario code on an internal PR with no ticket handle is rejected
       Given a PR that adds a behaviour-bearing @SCN code, from a branch in the repo, carrying no 3F ticket handle
       When the scenario sub-issue gate runs over the fixture PR
@@ -53,7 +53,7 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
     see SSM-002). The decision stays hermetic: given isExternalPr the pure
     decision returns no violation; only the live CLI reads the payload.
 
-    @unit @integration @SCN-SSM-003
+    @integration @SCN-SSM-003
     Scenario: a fork-sourced external PR is exempt from the gate
       Given a fork-PR fixture whose head repo differs from the base repo, adding a behaviour-bearing @SCN code with no 3F ticket handle
       When the scenario sub-issue gate runs over the fork-PR fixture
@@ -74,7 +74,7 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
     tree, still no Linear call. The diff remains the CHANGE-DETECTOR; only the
     cite check moves to live file state.
 
-    @unit @integration @SCN-SSM-004
+    @integration @SCN-SSM-004
     Scenario: a rename inside a cited it-body, its @SCN cite line unchanged, passes the gate
       Given a PR whose src rename edits the body of a test whose @SCN cite line is left unchanged, on a branch carrying a 3F ticket handle
       When the scenario sub-issue gate runs over the rename-shaped fixture PR
@@ -99,7 +99,7 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
     churned it-body is a TOUCHED block whose cite, unchanged line and all, is still bound
     to it.
 
-    @unit @integration @SCN-SSM-005
+    @integration @SCN-SSM-005
     Scenario: a new uncited test block in a file that cites elsewhere reds the gate
       Given a PR adding new src behaviour proven by a new UNCITED test block, in a test file whose other, untouched tests carry @SCN cites, on a branch carrying a 3F ticket handle
       When the scenario sub-issue gate runs over the sibling-cited fixture PR
@@ -195,7 +195,7 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
     comparing against it, naming the fixture it came from, crediting the ruling it
     implements — is ordinary prose in this repository and stays free to write.
 
-    @unit @integration @SCN-SSM-008
+    @integration @SCN-SSM-008
     Scenario: a changed test block whose title names a scenario id only in prose reds as uncited
       Given a PR whose new behaviour is proven by a test block naming a scenario id only in its title's prose, on a branch carrying a 3F ticket handle
       When the scenario sub-issue gate runs over the prose-titled fixture PR
@@ -232,13 +232,13 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
     received it, and the diff keeps the jobs it is genuinely good at — which files changed,
     which tag lines were added or removed.
 
-    @unit @integration @SCN-SSM-010
+    @integration @SCN-SSM-010
     Scenario: a change to a scenario's last step names that scenario, not the next one
       Given a PR whose only Gherkin change edits the LAST step of a scenario that is immediately followed by another scenario's tag line
       When the scenario sub-issue gate runs over the last-step fixture PR
       Then the gate reports the edited scenario's code updated, and does not name the following scenario
 
-    @unit @integration @SCN-SSM-011
+    @integration @SCN-SSM-011
     Scenario: a step removed from a scenario still names that scenario
       THIS ROW EXISTS BECAUSE IT IS THE CASE THE OBVIOUS FIX SILENTLY DROPS. The natural
       cure for the row above is positional: take the changed line numbers off the hunk
@@ -263,7 +263,7 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
       When the scenario sub-issue gate runs over the removed-step fixture PR
       Then the gate reports that scenario's code updated
 
-    @unit @integration @SCN-SSM-012
+    @integration @SCN-SSM-012
     Scenario: deleting a scenario names it deleted and leaves its neighbours unnamed
       A DELETION IS WHERE THE OLD READING WAS WORST, not where it was mildest. Removing a
       whole scenario takes out a run of lines, and that run puts the PRECEDING scenario's
@@ -283,7 +283,7 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
       When the scenario sub-issue gate runs over the deleted-scenario fixture PR
       Then the gate reports the deleted scenario's code deleted, and reports neither neighbour updated
 
-    @unit @integration @SCN-SSM-013
+    @integration @SCN-SSM-013
     Scenario: a change outside every scenario names no scenario, and the check says so
       A CORRECT ATTRIBUTION CAN NAME NOTHING. A Rule preamble, a Feature preamble, a
       comment sitting between two scenarios — these are ordinary places to edit, and they
@@ -309,7 +309,7 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
       When the scenario sub-issue gate runs over the preamble fixture PR
       Then the gate names no updated scenario code, and reports that the feature file changed outside every scenario
 
-    @unit @integration @SCN-SSM-014
+    @integration @SCN-SSM-014
     Scenario: a scenario moved verbatim is not a change, so no code is reported updated
       THE SILENCE HAS TWO AVAILABLE ACCOUNTS AND THEY ARE NOT THE SAME RULE, so this row
       states which one it is. Either a verbatim move is NOT A CHANGE to the scenario that
@@ -378,13 +378,13 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
     load-bearing rather than cautious: because the pass is unconditional, an over-eager
     pairing is not a mis-report but a hole through the whole gate.
 
-    @unit @integration @SCN-SSM-015
+    @integration @SCN-SSM-015
     Scenario: a renumber sharing a hunk with an unrelated edit is still auto-detected
       Given a PR that renumbers one scenario and edits a nearby scenario's step, both inside one hunk
       When the scenario sub-issue gate runs over the shared-hunk fixture PR
       Then the gate auto-detects the renumber and does not require a binding for the new code
 
-    @unit @integration @SCN-SSM-016
+    @integration @SCN-SSM-016
     Scenario: two renumbers inside one hunk are both auto-detected
       THE SAME FLUSH, THE OTHER CONDITION — which is why this is not the row above
       wearing a second fixture. @SCN-SSM-015 failed on "no other changed line"; this one
@@ -472,7 +472,7 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
     calling that one unexamined would hide a finding behind an absence, which is the same lie
     pointing the other way.
 
-    @unit @integration @SCN-SSM-018
+    @integration @SCN-SSM-018
     Scenario: a scenario change with no pull request body to read is examined by nothing, and says so rather than passing
       Given an internal PR that adds a behaviour-bearing @SCN code, carries no 3F ticket handle, and has no pull request body to read
       When the scenario sub-issue gate runs over the no-body fixture PR

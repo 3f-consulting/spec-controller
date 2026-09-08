@@ -101,7 +101,7 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
     the permission — a permitting rule whose limits live nowhere is indistinguishable
     from a hole, and this is precisely the rule that could become a hiding place.
 
-    @unit @integration @SCN-CPX-004
+    @integration @SCN-CPX-004
     Scenario: a domain entity root outgrows the file ceiling without reding
       Given the concept modules the module-size rule does not govern
       When the complexity fitness function scans the real tree
@@ -135,7 +135,7 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
     improvement is @SCN-CPX-003's behaviour, and implementing it here would leave that
     scenario with no genuine red to drive it.
 
-    @unit @integration @SCN-CPX-002
+    @integration @SCN-CPX-002
     Scenario: an exempt file that grows past its recorded value reds the build
       Given a file on the exception list at its recorded value
       When the complexity fitness function scans the real tree

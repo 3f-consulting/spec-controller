@@ -1,5 +1,7 @@
 /**
- * @SCN-GPG-002 (3F-2972) — the @unit arm of the parse gate at the STATIC CHECKS' edge.
+ * @SCN-GPG-002 (3F-2972) — the ONE planted-violation arm of the parse gate at the STATIC
+ * CHECKS' edge (3F-3225 / 3F-3218): one rigged corpus carrying every violation kind this gate
+ * detects, and ONE expect over the whole verdict both checks leave behind.
  *
  * The sibling scenario (@SCN-GPG-001) proved the shared discovery REFUSES. What is proven here
  * is the one thing that refusal cannot decide for itself: how a check that inherits it BEHAVES
@@ -9,14 +11,13 @@
  *
  * A REFUSAL IS NOT A VERDICT (non-negotiable 4). Exit 1 is these checks' finding-bearing verdict;
  * exit 2 is this repository's status for an input the tool cannot read (@SCN-CLI-014/015/016). So
- * the pin is not merely "non-zero": it is 2 AND NOT 1, and the control run below earns the
+ * the pin is not merely "non-zero": it is 2 AND NOT 1, and the CONTROL columns earn the
  * distinction by showing the same check answering 1 over a corpus it can read.
  *
- * THE CORPUS IS RIGGED TO BE ANSWERABLE. Beside the file the parser rejects sits one it accepts
- * that WOULD earn each check a finding of its own — an unregistered feature code for one, a
- * tier-less @SCN for the other. Without it "reports no verdict" would pass over a check that had
- * nothing to say anyway; with it, a check that scanned the readable half says something specific
- * and this arm names that something and refuses it.
+ * THE CONTROL IS INSIDE THE ONE ASSERTION, not beside it as a second arm. `refusalVerdict: null`
+ * standing next to `controlVerdict: "lint: FAILED"` is what makes "reports no verdict" a
+ * WITHHOLDING rather than a check that had nothing to say — and it is also what proves the
+ * VERDICT reader fires at all, so the null is a measured absence rather than a silent instrument.
  *
  * The parser's words are measured against the parser — `parseErrorsIn` over the same source —
  * never against a string typed in here, so a paraphrase at the edge cannot pass.
@@ -52,36 +53,18 @@ Feature: beta
     Given another thing
 `;
 
-/** The corpus root and the unreadable file's path within it. */
-interface Corpus {
-  root: string;
-  unreadable: string;
-}
-
 /**
- * Write a throwaway corpus. `readable` first by `readdirSync().sort()`, so a check that scanned
- * what it could read before it hit trouble would scan exactly the file that earns a finding.
+ * Write a throwaway corpus and return its root. `a-readable.feature` sorts first under
+ * `readdirSync().sort()`, so a check that scanned what it could read before it hit trouble
+ * would scan exactly the file that earns a finding.
  */
-function writeCorpus(files: readonly (readonly [string, string])[]): Corpus {
+function writeCorpus(files: readonly (readonly [string, string])[]): string {
   const root = mkdtempSync(join(tmpdir(), `scn-gpg-002-${process.pid}-`));
   mkdirSync(join(root, "features"), { recursive: true });
   for (const [name, source] of files) {
     writeFileSync(join(root, "features", name), source);
   }
-  return { root, unreadable: join(root, "features", "b-unreadable.feature") };
-}
-
-/** A rigged corpus: one file the parser rejects, beside one it accepts. */
-function riggedCorpus(): Corpus {
-  return writeCorpus([
-    ["a-readable.feature", READABLE],
-    ["b-unreadable.feature", UNREADABLE],
-  ]);
-}
-
-/** The control: the readable file alone, which every check can read and must answer over. */
-function readableCorpus(): Corpus {
-  return writeCorpus([["a-readable.feature", READABLE]]);
+  return root;
 }
 
 /** `process.exit` raised as a value the harness can read, since the real one never returns. */
@@ -138,54 +121,60 @@ const CHECKS = [
 /** A verdict of either kind: the clean bill, or the finding list. Neither may survive a refusal. */
 const VERDICT = /lint: (OK|FAILED)/;
 
+/** The refusal's opening sentence, as `UnreadableFeatureCorpusError` renders it. */
+const REFUSAL_SENTENCE = "The feature corpus contains a file that could not be parsed as Gherkin:";
+
+/**
+ * Everything one check leaves behind over BOTH corpora, as one value.
+ *
+ * The verdict is reported as the matched STRING or null rather than as a boolean, so an absent
+ * verdict and an unread one are told apart at the reader's return value — a `false` from a
+ * regex nobody could see fire would be the same shape as a genuine withholding.
+ */
+function verdictOf(check: () => void): Record<string, unknown> {
+  const riggedRoot = writeCorpus([
+    ["a-readable.feature", READABLE],
+    ["b-unreadable.feature", UNREADABLE],
+  ]);
+  const unreadable = join(riggedRoot, "features", "b-unreadable.feature");
+  const refusal = runOver(riggedRoot, check);
+  const control = runOver(writeCorpus([["a-readable.feature", READABLE]]), check);
+
+  return {
+    refusalExit: refusal.exitCode,
+    refusalEscaped: refusal.escaped,
+    refusalNamesTheUnreadableFile: refusal.output.includes(unreadable),
+    refusalCarriesTheParsersOwnWords: refusal.output.includes(
+      parseErrorsIn(unreadable, UNREADABLE)[0]!.message
+    ),
+    refusalOpensWithTheRefusalSentence: refusal.output.includes(REFUSAL_SENTENCE),
+    refusalPrintsStackFrames: /^\s+at\s/m.test(refusal.output),
+    refusalVerdict: VERDICT.exec(refusal.output)?.[0] ?? null,
+    controlExit: control.exitCode,
+    controlVerdict: VERDICT.exec(control.output)?.[0] ?? null,
+  };
+}
+
+/** What a check that refuses an unreadable corpus, and answers a readable one, leaves behind. */
+const REFUSES_AND_ANSWERS = {
+  refusalExit: 2,
+  refusalEscaped: undefined,
+  refusalNamesTheUnreadableFile: true,
+  refusalCarriesTheParsersOwnWords: true,
+  refusalOpensWithTheRefusalSentence: true,
+  refusalPrintsStackFrames: false,
+  refusalVerdict: null,
+  controlExit: 1,
+  controlVerdict: "lint: FAILED",
+};
+
 describe("[SCN-GPG-002] a static check over an unparseable corpus refuses, and reports no verdict", () => {
-  for (const check of CHECKS) {
-    describe(check.name, () => {
-      it("refuses the corpus instead of reporting on it", () => {
-        const { exitCode } = runOver(riggedCorpus().root, check.run);
+  it("[SCN-GPG-002] refuses with the unreadable-input status, names the file in the parser's own words as a sentence, and withholds the verdict the readable file beside it earns", () => {
+    const verdict = Object.fromEntries(CHECKS.map((c) => [c.name, verdictOf(c.run)]));
 
-        expect(exitCode).toBe(2);
-      });
-
-      it("names the unreadable file and carries the parser's own words", () => {
-        const corpus = riggedCorpus();
-        const { output } = runOver(corpus.root, check.run);
-
-        expect(output).toContain(corpus.unreadable);
-        expect(output).toContain(parseErrorsIn(corpus.unreadable, UNREADABLE)[0]!.message);
-      });
-
-      it("says so as a sentence, not as a stack trace", () => {
-        const { output, escaped } = runOver(riggedCorpus().root, check.run);
-
-        // An error that ESCAPES is the stack trace: Node prints the frames itself and exits 1.
-        expect(escaped).toBeUndefined();
-        expect(output).not.toMatch(/^\s+at\s/m);
-        expect(output).toContain(
-          "The feature corpus contains a file that could not be parsed as Gherkin:"
-        );
-      });
-
-      it("reports no verdict about the corpus it could not read", () => {
-        const { exitCode, output } = runOver(riggedCorpus().root, check.run);
-
-        // The refusal is this assertion's PREMISE: a check that crashed would also print no
-        // verdict, and this arm would then be reading a silence rather than a withholding.
-        expect(exitCode).toBe(2);
-        expect(output).not.toMatch(VERDICT);
-      });
-
-      it("is told apart from a finding, which the same check answers with over a corpus it can read", () => {
-        // The vacuity floor: without this, "no verdict" would pass over a check with nothing
-        // to say. The readable file earns a real finding, and the refusal withheld it.
-        const control = runOver(readableCorpus().root, check.run);
-        const refusal = runOver(riggedCorpus().root, check.run);
-
-        expect(control.output).toMatch(/lint: FAILED/);
-        expect(control.exitCode).toBe(1);
-        expect(refusal.exitCode).toBe(2);
-        expect(refusal.exitCode).not.toBe(control.exitCode);
-      });
+    expect(verdict).toEqual({
+      "lint:feature-codes": REFUSES_AND_ANSWERS,
+      "lint:scn-tags": REFUSES_AND_ANSWERS,
     });
-  }
+  });
 });

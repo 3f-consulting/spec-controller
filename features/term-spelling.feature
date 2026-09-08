@@ -18,8 +18,9 @@ Feature: Term spelling — a term names the same pair however its author spelled
   ONE RULE, SPELLED SEVEN TIMES, SO ONE BUG BECAME SEVEN. The correction is not the reordering;
   it is that a rule this small was hand-copied at all. dry's "a rule stated twice is a rule
   obeyed in its laxest form" with the laxest form being all of them — the shape @SCN-API-004
-  ruled on for hand-transcribed lists and 3F-2960's Ruling 2 ruled on again. The second Rule
-  that keeps the count at one is 3F-2988's.
+  ruled on for hand-transcribed lists and 3F-2960's Ruling 2 ruled on again. The count is held
+  at one by a scan over this repository's own source, which is part of this Rule's @unit evidence
+  (3F-2988 stated it as a Rule of its own; 3F-3226 retired that Rule and kept the scan).
 
   WHAT THIS DOES NOT CLAIM. It does not make the terms a sanitiser. A doubled sigil, an @ inside
   a term, whitespace inside a term, and case are each left exactly as they are and named here so
@@ -45,34 +46,3 @@ Feature: Term spelling — a term names the same pair however its author spelled
       Then each term names exactly the pair its bare spelling names, so nothing the target plainly authored is dormant
       And a term carrying an @ inside itself keeps it, because only a LEADING sigil is a sigil
       And a term that is nothing but whitespace and a sigil names no pair at all, and is dropped as an empty one is
-
-  Rule: there is one reading of what a term bare is, and a second cannot be added silently
-
-    WHY @unit ALONE, POSITIVELY. The observation is a scan over this repository's own source —
-    read the files, count the readings — and Vitest proves that whole path. A Cucumber arm would
-    read the same files through a second harness and prove the harness. That is the ruling already
-    taken by @SCN-GPG-001, for exactly this shape.
-
-    A SCAN, NOT A LIST. The static check counts readings and names where they are; it does not
-    carry an enumeration of the files allowed to hold one, because a hand-written exception list is
-    the instrument 3F-2960's Ruling 2 barred and is the same fault one level up. That is why the
-    seventh copy — a reading no whitespace can reach, and so never a defect — adopted the shared
-    one anyway: an exception-free scan is worth more than a copy left alone. Excluding the test
-    files is the SCOPE and not an exception: the claim is about this repository's source, a test may
-    spell the pattern as a fixture, and the scan is itself a test.
-
-    WHAT THE SCAN DOES NOT REACH, NAMED HERE RATHER THAN DISCOVERED LATER. It reads the .ts files
-    under each package's src and under tests/checks, tests aside, and it matches a reading spelled as a
-    replace call whose pattern anchors the sigil at the start of the string. An eighth copy written
-    into one of the .mjs data modules beside those checks, or spelled without a replace call at all,
-    is not reached — and 3F-2979 already ruled that a module is source whatever extension
-    carries it, so this .ts population is a narrower reading of "this repository's source" than that
-    ruling would give. Filed as 3F-2989, which owns closing it. Said out loud rather than left in a
-    ticket alone, because a scan trusted for more than it reaches is how a copy comes back.
-
-    @unit @SCN-TRM-002
-    Scenario: a second reading of what a term bare is cannot be added to this repository without redding
-      Given this repository's own TypeScript source, its tests aside
-      When it is scanned for a reading of what a term bare is
-      Then exactly one such reading exists, and every reader of a hand-authored term takes it
-      And a second reading planted beside one of those readers reds this scan, naming the file that carries it

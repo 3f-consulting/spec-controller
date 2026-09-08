@@ -2,32 +2,34 @@
  * Unit pin for what the mutation producer reads out of a report (@SCN-MUT-007, 3F-2761;
  * @SCN-MUT-008, 3F-2762).
  *
- * Bidirectional evidence (Evidence Manifesto §9): the describe/it strings carry the @SCN id
+ * Bidirectional evidence (Evidence Manifesto §9): each describe/it string carries the @SCN id
  * matching features/mutation-score.feature, so a grep of either returns both halves of its pair —
  * an arm here and a step block in tests/steps/mutationScoreProducer.steps.ts.
  *
- * THE ASSERTION GOES THROUGH THE REAL READER, never against a literal of this file's own. A row
- * this producer keys one way and `parseMeasuredEvidenceObservations` reads another is not a loud
- * failure: the reader drops it and its Evidence Obligation reconciles `missing`, so a drifted
- * producer looks exactly like a mutation run that never happened — the one reading this axis
- * exists to keep unreachable. @SCN-CIP-009 takes the same route for the same reason.
+ * ONE ARM PER SCENARIO, AND THAT IS FORCED RATHER THAN CHOSEN (3F-3224). The two rules are one
+ * module's and a single arm over one corpus would state them both — but `parse/vitest.ts` reads
+ * ONE citation per assertion (`parseScnCitation`, first-bracket-wins, @SCN-LDG-016), so a title
+ * naming two codes credits the first and leaves the second reconciling `missing`. Measured, not
+ * assumed: the single-arm form redded `balance:self` with SCN-MUT-008 at `U/-`.
  *
- * WHAT THIS ARM ADDS OVER THE @integration ONE. That arm runs the real producer over a planted
- * tree and so proves the whole seam — the argument parse, the spawn, the report found on disk,
- * the write. This one chooses the mutants, which is what lets the metric's boundary be pinned at
- * the edges a real run cannot be staged into: a report with no valid mutant at all, and a report
- * whose thresholds block is moved while its mutants are held still. The same division holds for
- * @SCN-MUT-008 — the reading of a report that is not there is pinned here, and what a run with
- * nothing to post then DOES is pinned over a real producer, because it is not a reading at all.
+ * WHAT THE READING IS, WHICH IS NOT WHAT THIS FILE IS NAMED FOR (3F-3224). `mutationScore.ts`
+ * beside it exports a path and nothing else; the reading is `src/mutation-ratchet/report.ts`'s and
+ * these arms reach it there, never through a second copy — which is what makes the number the
+ * ledger reconciles and the number the ratchet reconciles one number rather than two that agree.
+ * Composed here is the one step left outside that reader: which of the two counts
+ * `mutationScoreCli.ts` posts. Both go through the REAL reader, never against a literal of this
+ * file's own — a row this producer keys one way and `parseMeasuredEvidenceObservations` reads
+ * another is not a loud failure: the reader drops it and the obligation reconciles `missing`, so a
+ * drifted producer looks exactly like a run that never happened, the one reading this axis exists
+ * to keep unreachable. @SCN-CIP-009 takes the same route for the same reason.
  *
- * THE READING IS THE RATCHET LIBRARY'S (3F-2927). The counting of statuses has one home,
- * `src/mutation-ratchet/report.ts`, and this arm reaches the mutants through it rather than
- * through a second copy — which is what makes the number the ledger reconciles and the number the
- * ratchet reconciles the same number rather than two that agree. What is composed here is the one
- * step left outside that reader: which of the two counts `mutationScoreCli.ts` posts. A producer
- * built as a command line is not a function this arm can call, so that step is spelled here and
- * run for real by the @integration arm — which is therefore where "the number is not those
- * mutants read as a percentage" has its teeth, and why no arm below restates it.
+ * WHAT THESE ARMS ADD OVER THE @integration ONES, WHICH ARE THIS PAIR'S REAL-RUN HALF. Those run
+ * the real producer over a planted tree and so prove the whole seam — the argument parse, the
+ * spawn, the report found on disk, the write. These choose the mutants, which is what lets the
+ * boundary be pinned at the edges a real run cannot be staged into: a report with no valid mutant
+ * at all, and one whose thresholds block moves while its mutants are held still. A producer built
+ * as a command line is not a function an arm can call, so "the number is not those mutants read as
+ * a percentage" has its teeth over there and is not restated here.
  */
 
 import { tmpdir } from "node:os";
@@ -49,13 +51,11 @@ import {
 import { measurementArtefactWith } from "./measurementArtefact.js";
 
 /**
- * How many mutants of each outcome the fixture report carries, and the block it also carries.
- *
  * SEVEN AND TWO IS NINE DETECTED, OVER TWELVE VALID — and every wrong reading of the same report
- * is a different number: those nine as a percentage read 75, counting every mutant found reads
- * 56.25, the metric's covered-code variant reads 69.23, killed-only reads 58.33, the population
- * itself is 12, and the thresholds block names 95 and 90. A fixture whose wrong answers collided
- * would pass while the producer read the wrong field.
+ * is a different number: those nine as a percentage read 75, every mutant found reads 56.25, the
+ * covered-code variant 69.23, killed-only 58.33, the population itself 12, and the thresholds
+ * block 95 and 90. A fixture whose wrong answers collided would pass while the producer read the
+ * wrong field.
  */
 const OUTCOMES = {
   Killed: 7,
@@ -71,16 +71,30 @@ const OUTCOMES = {
 const DETECTED_KILLS = 9;
 
 /**
- * A mutation report in the shape `mutation-testing-report-schema@3.7.3` defines, over two files.
+ * ERRORED, FAILED-TO-COMPILE AND IGNORED ARE OUTSIDE A KILL COUNT TWICE OVER — none is detected
+ * and none is in the population — so piling more on may not move the kills by so much as one, and
+ * a reader folding them into either term falls on the first of these. The second is the boundary a
+ * real run cannot be staged into: a report holding no scored mutant at all.
+ */
+const PILED_DEEPER = { ...OUTCOMES, RuntimeError: 40, CompileError: 30, Ignored: 20 };
+const NONE_VALID = { RuntimeError: 1, CompileError: 1, Ignored: 2 };
+
+/** The block a report carries about itself, which is not where any number below comes from. */
+const SAYS_95_AND_90 = { high: 95, low: 90 };
+
+/**
+ * A report in the shape `mutation-testing-report-schema@3.7.3` defines, as the TEXT the producer
+ * only ever has one in — two of the readings below cannot be expressed as a parsed report at all,
+ * absent having no object and unparseable being exactly the text `JSON.parse` refuses.
  *
  * TWO FILES, BECAUSE ONE WOULD NOT SHOW THE WALK. Stryker keys the mutants by the file they were
- * made in, so a reader that took only the first file's list would score a tree by whichever file
+ * made in, so a reader taking only the first file's list would score a tree by whichever file
  * sorted first — right on this repository's smallest module and wrong on every real run.
  */
-function reportOf(
+function reportText(
   outcomes: Readonly<Record<string, number>>,
   thresholds: Readonly<Record<string, number>>,
-): unknown {
+): string {
   const mutants = Object.entries(outcomes).flatMap(([status, count]) =>
     Array.from({ length: count }, (_, at) => ({
       id: `${status}-${at}`,
@@ -90,7 +104,7 @@ function reportOf(
     })),
   );
   const half = Math.ceil(mutants.length / 2);
-  return {
+  return JSON.stringify({
     schemaVersion: "2",
     thresholds,
     files: {
@@ -105,14 +119,13 @@ function reportOf(
         mutants: mutants.slice(half),
       },
     },
-  };
+  });
 }
 
 /**
- * What this arm calls the gate it is reading, and where it says the report was sought.
- *
- * THE PATH IS UNDER NEITHER THIS TREE NOR THE ONE THE TESTS RUN FROM, deliberately: the absent-report
- * row below is only absent if nothing could have written there.
+ * What these arms call the gate, and where they say the report was sought — UNDER NEITHER THIS
+ * TREE NOR THE ONE THE TESTS RUN FROM, deliberately: the absent reading below is only absent if
+ * nothing could have written there.
  */
 const GATE = "domain";
 const SOUGHT_AT = join(tmpdir(), "mutation-report-that-was-never-written", "mutation.json");
@@ -120,11 +133,6 @@ const SOUGHT_AT = join(tmpdir(), "mutation-report-that-was-never-written", "muta
 /** The kills a read is worth, taken exactly as `mutationScoreCli.ts` takes them. */
 function killsFrom(read: MutationReportRead): number | null {
   return read.ok ? read.measurement.detected : null;
-}
-
-/** The kills a report is worth, which is the whole of what this producer takes from one. */
-function killsOf(report: unknown): number | null {
-  return killsFrom(measurementFromReport(GATE, JSON.stringify(report), SOUGHT_AT));
 }
 
 /**
@@ -152,15 +160,57 @@ function observationsFor(measured: number): MeasuredEvidenceObservation[] {
   );
 }
 
-describe("[SCN-MUT-007] a mutation run posts the kills its mutants imply", () => {
-  it("[SCN-MUT-007] the measurement it posts reads back as one Evidence Observation carrying that count", () => {
-    const kills = killsOf(reportOf(OUTCOMES, { high: 95, low: 90 }));
+/** One shape a finished sweep leaves the producer, and the name this file knows it by. */
+interface Reading {
+  readonly reading: string;
+  readonly source: string | undefined;
+}
 
-    expect(kills).toBe(DETECTED_KILLS);
-    // BOTH terms of the address, because neither is one on its own (@SCN-LNT-012): the @SCN says
+/**
+ * The four readings that DO carry a number, differing in exactly the fields a wrong reader would
+ * take one from. THE FIRST IS ALSO @SCN-MUT-008's CONTROL and is lent to that corpus rather than
+ * restated there: without a reading that counts, every refusal over there is satisfied by a reader
+ * that refuses everything — which posts nothing on a healthy nightly and reads like one that
+ * stopped.
+ */
+const COUNTED: readonly Reading[] = [
+  { reading: "the mutants, beside a thresholds block", source: reportText(OUTCOMES, SAYS_95_AND_90) },
+  { reading: "the mutants, thresholds naming others", source: reportText(OUTCOMES, { high: 60, low: 40 }) },
+  { reading: "the mutants, no thresholds block", source: reportText(OUTCOMES, {}) },
+  { reading: "the mutants, invalid piled deeper", source: reportText(PILED_DEEPER, SAYS_95_AND_90) },
+];
+
+/** The four shapes a sweep leaves that carry no number at all, and the control they are read against. */
+const UNCOUNTED: readonly Reading[] = [
+  { reading: "no valid mutant at all", source: reportText(NONE_VALID, SAYS_95_AND_90) },
+  { reading: "no report on the tree", source: undefined },
+  { reading: "an empty report", source: "" },
+  { reading: "a report cut off mid-list", source: '{"files": {"a.ts": {"mutants": [' },
+  COUNTED[0]!,
+];
+
+/** Every reading in a corpus, paired with what the producer was left holding by it. */
+function killsAcross(corpus: readonly Reading[]): { reading: string; kills: number | null }[] {
+  return corpus.map(({ reading, source }) => ({ reading, kills: killsLeftBy(source) }));
+}
+
+describe("[SCN-MUT-007] a mutation run posts the kills its mutants imply", () => {
+  it("[SCN-MUT-007] reads the same nine kills out of every report carrying those mutants, whatever each says about itself beside them, and posts that count as one Evidence Observation under both terms of its address", () => {
+    // ONE ASSERTION OVER THE WHOLE CORPUS, because the count alone is not the claim. WHICH
+    // reading yielded which answer is: a producer that took the thresholds block, folded the
+    // invalid outcomes into either term, or walked one file's mutants rather than every file's
+    // moves a row here while leaving the shape of the verdict — and often its total — intact.
+    expect(killsAcross(COUNTED)).toEqual([
+      { reading: "the mutants, beside a thresholds block", kills: DETECTED_KILLS },
+      { reading: "the mutants, thresholds naming others", kills: DETECTED_KILLS },
+      { reading: "the mutants, no thresholds block", kills: DETECTED_KILLS },
+      { reading: "the mutants, invalid piled deeper", kills: DETECTED_KILLS },
+    ]);
+
+    // BOTH TERMS OF THE ADDRESS, because neither is one on its own (@SCN-LNT-012): the @SCN says
     // which row the credit posts to, the check tag says which of that row's Evidence Obligations
-    // it answers.
-    expect(observationsFor(kills!)).toEqual([
+    // it answers. The number goes in as the reader's own, never as a literal of this file's.
+    expect(observationsFor(killsLeftBy(COUNTED[0]!.source)!)).toEqual([
       {
         qualityCheck: "lint",
         scnId: "SCN-MSD-001",
@@ -169,71 +219,20 @@ describe("[SCN-MUT-007] a mutation run posts the kills its mutants imply", () =>
       },
     ]);
   });
-
-  it("[SCN-MUT-007] moving the report's own thresholds block moves nothing", () => {
-    // THE SAME MUTANTS, A DIFFERENT VERDICT BESIDE THEM. A producer transcribing that block would
-    // answer differently here while every assertion about the shape of what it posted still held,
-    // which is why the block is moved rather than merely made to disagree once.
-    expect(killsOf(reportOf(OUTCOMES, { high: 95, low: 90 }))).toBe(DETECTED_KILLS);
-    expect(killsOf(reportOf(OUTCOMES, { high: 60, low: 40 }))).toBe(DETECTED_KILLS);
-    expect(killsOf(reportOf(OUTCOMES, {}))).toBe(DETECTED_KILLS);
-  });
-
-  it("[SCN-MUT-007] the outcomes the metric holds outside its valid set are outside the count", () => {
-    // Errored, failed-to-compile and ignored mutants are false positives to the metric, so piling
-    // more of them on may not move the kills by so much as one. They are outside a kill count
-    // twice over — none is detected and none is in the population — so a reader folding them into
-    // either term would fall here and nowhere else.
-    const heavier = { ...OUTCOMES, RuntimeError: 40, CompileError: 30, Ignored: 20 };
-    expect(killsOf(reportOf(heavier, { high: 95, low: 90 }))).toBe(DETECTED_KILLS);
-  });
-
-  it("[SCN-MUT-007] a report whose every mutant is outside the valid set carries no count at all", () => {
-    // NOT ZERO. Zero is the kill count of a suite that detected nothing, and a run with nothing to
-    // detect has not earned it — the report holds no scored mutant, so the pure half says so and
-    // what to do about it belongs to the edge that asked.
-    const noneValid = { RuntimeError: 1, CompileError: 1, Ignored: 2 };
-    expect(killsOf(reportOf(noneValid, { high: 95, low: 90 }))).toBeNull();
-  });
 });
 
-/**
- * The three shapes a sweep leaves when it produced nothing this can read, as SOURCE rather than
- * as parsed reports.
- *
- * SOURCE, BECAUSE THAT IS THE ONLY FORM THE PRODUCER EVER HAS ONE IN. Two of these three cannot
- * be expressed as a parsed report at all — absent has no object, and unparseable is exactly the
- * text `JSON.parse` refuses — so a fixture built out of objects would be pinning a boundary one
- * step inside the one the producer stands on.
- */
-const NOTHING_READABLE: readonly (string | undefined)[] = [
-  undefined,
-  "",
-  '{"files": {"a.ts": {"mutants": [',
-];
-
 describe("[SCN-MUT-008] a mutation run that produced no readable report has no kills to post", () => {
-  it("[SCN-MUT-008] a report that is absent, empty or unparseable yields no count", () => {
-    // ONE ASSERTION OVER ALL THREE, because they are one behaviour met three ways and a producer
-    // that answered two of them would be a producer nobody could describe.
-    expect(NOTHING_READABLE.map(killsLeftBy)).toEqual([null, null, null]);
-  });
-
-  it("[SCN-MUT-008] and none of them is a zero, which is the kill count of a suite that killed nothing", () => {
-    // THE NEGATIVE IS THE WHOLE SCENARIO. `null` and `0` are both falsy and a caller reading this
-    // loosely would post the zero; a count of zero is the kill count of a suite that killed
-    // nothing, a claim about the CODE assembled out of a fault in the harness measuring it, and
-    // there is no code-shaped fact here at all.
-    for (const kills of NOTHING_READABLE.map(killsLeftBy)) {
-      expect(typeof kills).not.toBe("number");
-    }
-  });
-
-  it("[SCN-MUT-008] a report it CAN read still counts, so nothing-to-post is not everything-dropped", () => {
-    // The control. Without it every assertion above is satisfied by a reader that returns null for
-    // everything, which posts nothing on a healthy nightly and reads as a nightly that stopped.
-    expect(killsLeftBy(JSON.stringify(reportOf(OUTCOMES, { high: 95, low: 90 })))).toBe(
-      DETECTED_KILLS,
-    );
+  it("[SCN-MUT-008] carries no count at all out of any of the four shapes a sweep leaves it nothing in, and none of those is a zero, while the report it CAN read still counts beside them", () => {
+    // NOT ZERO, AND THE EQUALITY IS WHAT KEEPS THAT SAID. Zero is the kill count of a suite that
+    // detected nothing, and a run with nothing to detect has not earned it — so the pure half
+    // says so and what to do about it belongs to the edge that asked. `null` and `0` are both
+    // falsy and a caller reading this loosely would post the zero; only an equality refuses it.
+    expect(killsAcross(UNCOUNTED)).toEqual([
+      { reading: "no valid mutant at all", kills: null },
+      { reading: "no report on the tree", kills: null },
+      { reading: "an empty report", kills: null },
+      { reading: "a report cut off mid-list", kills: null },
+      { reading: "the mutants, beside a thresholds block", kills: DETECTED_KILLS },
+    ]);
   });
 });

@@ -1,25 +1,55 @@
 /**
- * The `@unit` arm for @SCN-API-007 — a module that travels in the tarball importing a subpath no
- * manifest publishes reds the guard.
+ * The `@unit` guard for @SCN-API-007 — a module that travels in the tarball importing a subpath no
+ * manifest publishes reds the check.
  *
  * Bidirectional evidence (Evidence Manifesto §9): the `describe` / `it` strings carry the
  * SCN-API-007 id matching features/public-api.feature, so a grep of that id returns both halves of
- * the pair. `@unit` only, as its three siblings in that file are — this Vitest run IS the observed
- * evidence, and no Cucumber block is owed.
+ * the pair. `@unit` only — this Vitest run IS the observed evidence, and no Cucumber block is owed.
  *
- * GREEN ON ITS FIRST RUN, AND THAT IS THE POINT RATHER THAN A CONCESSION. The fault this guard
- * closes was repaired three sub-issues earlier (3F-3087 / 3F-3088 / 3F-3089), so there is no red
- * left in the tree for it to stage. Its teeth come from PLANTS instead, and both directions are
- * planted here rather than argued: a published module reaching an unpublished subpath must red, and
- * a module the workspace never ships must be free to reach the same subpath — because that seam is
- * what `./internal` exists for, and a guard that banned it would have taken nineteen correct
- * modules with it.
+ * TWO ARMS, AND WHICH ONE ANSWERS WHICH QUESTION (3F-3218). The first drives one planted workspace
+ * on disk carrying an instance of every crossing this check detects and every near-miss it must
+ * let through, and reports the whole verdict in a single comparison. The second runs that same
+ * reconciliation over this repository's own published modules. Neuter `reconcilePublishedImports`
+ * and the first reds while the second is still green — which is the failure the second cannot see.
  *
- * THE PLANTS RUN OVER A WHOLE WORKSPACE ON DISK, for the reason @SCN-API-006's do next door: what
+ * ONE ASSERTION OVER THE WHOLE VERDICT, NOT ONE ARM PER FORM. Four arms each saying "this form is
+ * detected" leave ORDER and COMPLETENESS unasserted — a checker reporting the four plus a fifth, or
+ * in another order, satisfies all four. The single `toEqual` closes both, and every module that
+ * must NOT be reported is proven by its ABSENCE from that array: a negative control costing a line
+ * rather than an arm. The `scanned` member beside it is what makes those absences mean something —
+ * a decoy missing from the verdict because the scan never reached it reads exactly like a decoy
+ * correctly let through, and the denominator is the only thing that tells the two apart.
+ *
+ * GREEN ON ITS FIRST RUN, AND THAT IS THE POINT RATHER THAN A CONCESSION. The fault this check
+ * closes was repaired at 3F-3087 / 3F-3088 / 3F-3089, so there is no red left in the tree for it to
+ * stage. Its teeth come from PLANTS instead, and both directions are planted rather than argued: a
+ * published module reaching an unpublished subpath must red, and a module the workspace never ships
+ * must be free to reach the same subpath — because that seam is what `./internal` exists for, and a
+ * guard that banned it would have taken nineteen correct modules with it.
+ *
+ * THE PLANT RUNS OVER A WHOLE WORKSPACE ON DISK, for the reason @SCN-API-006's does next door: what
  * this arm has to get right is which sources a build turns into a tarball, and a list of module
  * paths handed straight to the reconciliation would exercise none of it. The planted project shares
  * no term with this repository, so a reader with any of these packages' names written into it
  * agrees with the planted case by coincidence or not at all.
+ *
+ * WHY THE REAL-TREE ARM STAYS (3F-3218 Ruling B, measured at 3F-3228 rather than inherited).
+ * `publishedImports.ts` is imported by NOTHING outside this file — no fitness row in
+ * `specController.fitnessChecks` names it, no `lint:` script invokes it, no Cucumber step reaches
+ * it, and no sibling arm borrows it as an instrument. So the arm below is this check's only contact
+ * with the repository, and deleting it would leave the check running forever over invented fixtures
+ * and reporting green about a world it had stopped looking at. It is also the half that cannot be
+ * had any other way: every gate in this tree resolves through the workspace `exports` map, and npm
+ * REPLACES that map with `publishConfig.exports` rather than merging them, so a module reaching an
+ * un-published subpath is correct in-workspace and unresolvable once installed.
+ *
+ * WHAT THE CUT COST, NAMED RATHER THAN LEFT TO BE DISCOVERED. Three arms went that asserted
+ * `publishedModulesOf` RAISES on input it cannot read — a package with no `tsconfig.build.json`, an
+ * `include` glob it cannot expand, a manifest naming no `files`. Those refusals are the module's
+ * own anti-vacuity design (its header argues them) and they are no longer unit-proven: a refusal
+ * cannot be planted into the same corpus as the crossings, because it aborts the read that produces
+ * the verdict. The behaviour is unchanged and still fails loudly at the build — it is the PROOF
+ * that is now carried by the code alone, and this paragraph is where a reader is told so.
  */
 
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -29,44 +59,39 @@ import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
-  importedSpecifiersIn,
   publishedModulesOf,
   reconcilePublishedImports,
   siblingSpecifiersIn,
   unpublishedImportReport,
+  type UnpublishedImport,
 } from "./publishedImports.js";
-import {
-  workspaceManifests,
-  workspaceManifestsIn,
-  type WorkspaceManifest,
-} from "./publishedSurfaces.js";
+import { workspaceManifests, workspaceManifestsIn } from "./publishedSurfaces.js";
 
-/** The planted workspace's own file, kept apart so an arm can substitute a package it cannot read. */
-const PLANTED_WORKSPACE_FILE = `packages:
-  - "lib/*"
-`;
-
-/** The build config both planted packages compile through — this workspace's own arrangement. */
+/** The build config all three planted packages compile through — this workspace's own arrangement. */
 const PLANTED_BUILD = JSON.stringify({
   compilerOptions: { outDir: "dist", rootDir: "src" },
   include: ["src"],
   exclude: ["src/**/*.test.ts"],
 });
 
+/** The subpath the planted workspace resolves and the planted tarball cannot — the `./internal` shape. */
+const UNPUBLISHED = "harbour-co-routing/tariffs";
+
+/** A module reaching that subpath by a plain import, wherever the corpus puts it. */
+const REACHES_UNPUBLISHED = `import { tariff } from "${UNPUBLISHED}";\nexport const t = tariff;\n`;
+
 /**
- * A workspace belonging to a fictional shipping project, planted for the occasion.
+ * One workspace belonging to a fictional shipping project, planted for the occasion.
  *
- * `lib/routing` IS THE `./internal` SHAPE. Its workspace map carries `./tariffs` and its
- * publish-time map does not, so `harbour-co-routing/tariffs` is a specifier that resolves inside
- * the workspace and cannot resolve once installed — exactly the crossing that took the real CLI
- * down. Three modules reach it here and only one of them is a fault: `src/plant.ts` is compiled and
- * shipped, `src/plant.test.ts` is excluded from the build, and `tools/audit.ts` sits outside every
- * root the build compiles. All three are added per arm, so the base workspace is clean.
- *
- * `lib/depot/src/intake.ts` MENTIONS the same specifier inside a comment and imports it nowhere.
- * That is the decoy this repository actually carries, twice, in published modules.
+ * `lib/routing`'s workspace map carries `./tariffs` and its publish-time map does not, so
+ * `harbour-co-routing/tariffs` resolves inside the workspace and cannot resolve once installed —
+ * exactly the crossing that took the real CLI down. FOUR modules reach it and are faults, one in
+ * each of the forms a module can cross a package boundary by; FOUR more reach it or name it and are
+ * not, one for each reason this check must let a module through.
  */
 const PLANTED_FILES: Readonly<Record<string, string>> = {
+  "pnpm-workspace.yaml": 'packages:\n  - "lib/*"\n',
+
   "lib/routing/package.json": JSON.stringify({
     name: "harbour-co-routing",
     files: ["dist"],
@@ -76,31 +101,66 @@ const PLANTED_FILES: Readonly<Record<string, string>> = {
     },
   }),
   "lib/routing/tsconfig.build.json": PLANTED_BUILD,
-  "lib/routing/src/index.ts": 'import { intake } from "harbour-co-depot/intake";\nexport const route = intake;\n',
   "lib/routing/src/tariffs.ts": "export const tariff = 1;\n",
+  // The anti-vacuity floor INSIDE the plant, and the three specifier kinds this check does not
+  // judge. `harbour-co-depot/intake` IS a workspace crossing and the depot's manifest publishes it,
+  // so it is judged and cleared — an empty answer for this module is a verdict rather than a scan
+  // that found nothing to judge. A `node:` builtin, a third party and a relative path are somebody
+  // else's contract or never leave the package, and none of them reaches the verdict.
+  "lib/routing/src/index.ts":
+    'import { readFileSync } from "node:fs";\n' +
+    'import { parse } from "yaml";\n' +
+    'import { tariff } from "./tariffs.js";\n' +
+    'import { intake } from "harbour-co-depot/intake";\n' +
+    "export const route = [readFileSync, parse, tariff, intake];\n",
+
+  // FAULT, form 1 of 4 — a plain import.
+  "lib/routing/src/berth.ts": REACHES_UNPUBLISHED,
+  // FAULT, form 2 of 4 — `export … from`, which crosses the boundary at load exactly as an import
+  // does and which a reader looking only for `import` would miss.
+  "lib/routing/src/consign.ts": `export { tariff } from "${UNPUBLISHED}";\n`,
+  // FAULT, form 3 of 4 — a type-only import. Erased by the compiler, so it is the form most easily
+  // argued to be harmless; it is not, because `verbatimModuleSyntax` is not in play and the
+  // declaration file emitted beside it names the same unresolvable subpath.
+  "lib/routing/src/manifest.ts": `import type { Tariff } from "${UNPUBLISHED}";\nexport type T = Tariff;\n`,
+  // FAULT, form 4 of 4 — a dynamic `import()`, planted one directory DOWN so the same line proves
+  // the walk recurses as the compiler does rather than reading only a root's own children.
+  "lib/routing/src/inland/haulage.ts": `export const haul = () => import("${UNPUBLISHED}");\n`,
+
+  // FREE, reason 1 of 4 — inside a compiled root but matched by the build's `exclude`, so it never
+  // becomes a published module. Load-bearing rather than tidy: three `*.test.ts` modules beside
+  // this repository's own published sources reach its un-published subpath, correctly.
+  "lib/routing/src/plant.test.ts": REACHES_UNPUBLISHED,
+  // FREE, reason 2 of 4 — outside every root the build compiles, so nothing of it travels.
+  "lib/routing/tools/audit.ts": REACHES_UNPUBLISHED,
+
   "lib/depot/package.json": JSON.stringify({
     name: "harbour-co-depot",
     files: ["dist"],
     exports: { "./intake": "./src/intake.ts" },
   }),
   "lib/depot/tsconfig.build.json": PLANTED_BUILD,
+  // FREE, reason 3 of 4 — a PUBLISHED module naming the subpath in a comment and in an ordinary
+  // string, importing it nowhere. The decoy this repository actually carries: `packages/core/src/
+  // internal.ts` names the un-published specifier in a comment, correctly, and a match over the
+  // file text reports one fault where there are none. Parsing is what makes the reading say what
+  // the sentence says.
   "lib/depot/src/intake.ts":
-    '// Reached through harbour-co-routing/tariffs before the split; kept as a note, not an import.\n' +
-    'const note = "harbour-co-routing/tariffs";\nexport const intake = note;\n',
+    `// Reached through ${UNPUBLISHED} before the split; kept as a note, not an import.\n` +
+    `const note = "${UNPUBLISHED}";\nexport const intake = note;\n`,
+
+  // FREE, reason 4 of 4 — a package whose `files` does not ship what its build wrote, so no module
+  // in it travels and none of them is scanned.
+  "lib/wharf/package.json": JSON.stringify({ name: "harbour-co-wharf", files: ["README.md"] }),
+  "lib/wharf/tsconfig.build.json": PLANTED_BUILD,
+  "lib/wharf/src/quay.ts": REACHES_UNPUBLISHED,
 };
 
-/** A module reaching the subpath the planted workspace does not publish, wherever it is put. */
-const REACHES_TARIFFS = 'import { tariff } from "harbour-co-routing/tariffs";\nexport const t = tariff;\n';
-
 /** Write the planted workspace to a real directory, read it, and take it away again. */
-function withPlantedWorkspace<T>(
-  read: (repoRoot: string) => T,
-  extra: Readonly<Record<string, string>> = {},
-): T {
+function withPlantedWorkspace<T>(read: (repoRoot: string) => T): T {
   const root = mkdtempSync(join(tmpdir(), "harbour-co-workspace-"));
   try {
-    writeFileSync(join(root, "pnpm-workspace.yaml"), PLANTED_WORKSPACE_FILE);
-    for (const [path, source] of Object.entries({ ...PLANTED_FILES, ...extra })) {
+    for (const [path, source] of Object.entries(PLANTED_FILES)) {
       const file = join(root, path);
       mkdirSync(dirname(file), { recursive: true });
       writeFileSync(file, source);
@@ -111,214 +171,80 @@ function withPlantedWorkspace<T>(
   }
 }
 
-/** One planted package's manifest by directory name, so an arm names what it reads rather than indexing. */
-function plantedManifest(repoRoot: string, packageDir: string): WorkspaceManifest {
-  const wanted = join("lib", packageDir, "package.json");
-  const found = workspaceManifestsIn(repoRoot).find((manifest) => manifest.path === wanted);
-  if (found === undefined) {
-    throw new Error(`the planted workspace read found no manifest at ${wanted}`);
-  }
-  return found;
+/** One crossing of the planted workspace's un-published subpath, by the module that makes it. */
+function crossing(...segments: readonly string[]): UnpublishedImport {
+  return { module: join(...segments), specifier: UNPUBLISHED };
 }
-
-/** A manifest handed straight over, for the arms about a manifest's CONTENT rather than a tree. */
-function manifestOf(content: Readonly<Record<string, unknown>>): WorkspaceManifest {
-  return { path: "lib/depot/package.json", content };
-}
-
-/** One of this repository's published modules, read the way the reconciliation reads it. */
-function readSource(module: string): string {
-  return readFileSync(join(process.cwd(), module), "utf8");
-}
-
-/** This repository's own manifest at one path, so an arm about it fails saying which was missing. */
-function manifestAt(path: string): WorkspaceManifest {
-  const found = workspaceManifests().find((manifest) => manifest.path === path);
-  if (found === undefined) {
-    throw new Error(`no manifest found at ${path} — the workspace read found nothing there`);
-  }
-  return found;
-}
-
-describe("[SCN-API-007] the modules a package would publish are what `files` and the build together ship", () => {
-  it("[SCN-API-007] finds the sources the build compiles, recursing as the compiler does", () => {
-    const modules = withPlantedWorkspace(
-      (root) => publishedModulesOf(plantedManifest(root, "routing"), root),
-      { "lib/routing/src/inland/depot.ts": "export const inland = 1;\n" },
-    );
-
-    expect(modules).toEqual([
-      join("lib", "routing", "src", "index.ts"),
-      join("lib", "routing", "src", "inland", "depot.ts"),
-      join("lib", "routing", "src", "tariffs.ts"),
-    ]);
-  });
-
-  it("[SCN-API-007] leaves out a source the build excludes, which is what keeps a test module off the boat", () => {
-    // Load-bearing rather than tidy: three `*.test.ts` modules beside this repository's published
-    // sources reach the un-published subpath, correctly, and are never compiled into the tarball.
-    const modules = withPlantedWorkspace(
-      (root) => publishedModulesOf(plantedManifest(root, "routing"), root),
-      { "lib/routing/src/plant.test.ts": REACHES_TARIFFS },
-    );
-
-    expect(modules).not.toContain(join("lib", "routing", "src", "plant.test.ts"));
-  });
-
-  it("[SCN-API-007] finds no published modules in a package whose files list does not ship what the build wrote", () => {
-    const modules = withPlantedWorkspace(
-      (root) => publishedModulesOf(plantedManifest(root, "depot"), root),
-      { "lib/depot/package.json": JSON.stringify({ name: "harbour-co-depot", files: ["README.md"] }) },
-    );
-
-    expect(modules).toEqual([]);
-  });
-
-  it("[SCN-API-007] refuses a package with no build config rather than reading no modules off it", () => {
-    // The quiet failure this reader must not have. A third package arrives under the same pattern
-    // with nothing beside it saying what it compiles; scanned for nothing, it would be reported
-    // clean, and every module in it would travel unheld.
-    expect(() =>
-      withPlantedWorkspace((root) => publishedModulesOf(plantedManifest(root, "wharf"), root), {
-        "lib/wharf/package.json": JSON.stringify({ name: "harbour-co-wharf", files: ["dist"] }),
-        "lib/wharf/src/berth.ts": REACHES_TARIFFS,
-      }),
-    ).toThrow(/lib\/wharf\/package\.json/);
-  });
-
-  it("[SCN-API-007] refuses an include it cannot expand rather than expanding it to nothing", () => {
-    expect(() =>
-      withPlantedWorkspace((root) => publishedModulesOf(plantedManifest(root, "depot"), root), {
-        "lib/depot/tsconfig.build.json": JSON.stringify({
-          compilerOptions: { outDir: "dist" },
-          include: ["src/**/*.ts"],
-        }),
-      }),
-    ).toThrow(/src\/\*\*\/\*\.ts/);
-  });
-
-  it("[SCN-API-007] refuses a package that names no list of files to ship", () => {
-    expect(() => publishedModulesOf(manifestOf({ name: "harbour-co-depot" }), tmpdir())).toThrow(
-      /lib\/depot\/package\.json/,
-    );
-  });
-});
-
-describe("[SCN-API-007] a module's imports are read off its import statements, never off its text", () => {
-  it("[SCN-API-007] reads a plain import, an `export … from`, a type-only import and a dynamic import()", () => {
-    const source = [
-      'import { a } from "harbour-co-depot/intake";',
-      'export { b } from "harbour-co-routing/tariffs";',
-      'import type { C } from "harbour-co-routing";',
-      'const d = await import("harbour-co-depot");',
-    ].join("\n");
-
-    expect(importedSpecifiersIn(source, "plant.ts")).toEqual([
-      "harbour-co-depot/intake",
-      "harbour-co-routing/tariffs",
-      "harbour-co-routing",
-      "harbour-co-depot",
-    ]);
-  });
-
-  it("[SCN-API-007] reads no specifier out of a comment or out of an ordinary string", () => {
-    // The decoy this repository actually carries. `packages/core/src/internal.ts` is a PUBLISHED
-    // module and names the un-published specifier inside a comment, correctly; a match over the file
-    // text finds it and reports one fault where there are none. Measured on the tree this arm first
-    // ran over: 56 published modules, one text-match hit, zero imports.
-    const source = PLANTED_FILES["lib/depot/src/intake.ts"] as string;
-
-    expect(importedSpecifiersIn(source, "intake.ts")).toEqual([]);
-  });
-
-  it("[SCN-API-007] judges only the specifiers that name a package of this workspace", () => {
-    const source = [
-      'import { readFileSync } from "node:fs";',
-      'import { parse } from "yaml";',
-      'import { local } from "./local.js";',
-      'import { intake } from "harbour-co-depot/intake";',
-    ].join("\n");
-
-    expect(siblingSpecifiersIn(source, "plant.ts", ["harbour-co-routing", "harbour-co-depot"])).toEqual([
-      "harbour-co-depot/intake",
-    ]);
-  });
-});
-
-describe("[SCN-API-007] a published module importing a subpath the manifests do not publish reds the guard", () => {
-  it("[SCN-API-007] flags a published module importing a workspace subpath no manifest publishes", () => {
-    // The fault itself, on the `./internal` shape: the workspace map carries `./tariffs`, the
-    // publish-time map does not, and npm REPLACES one with the other rather than merging them. This
-    // is the direction that would have reded on the day the installed CLI could not start.
-    const found = withPlantedWorkspace(
-      (root) => reconcilePublishedImports(workspaceManifestsIn(root), root),
-      { "lib/routing/src/plant.ts": REACHES_TARIFFS },
-    );
-
-    expect(found).toEqual([
-      { module: join("lib", "routing", "src", "plant.ts"), specifier: "harbour-co-routing/tariffs" },
-    ]);
-  });
-
-  it("[SCN-API-007] lets a module this workspace never publishes import that same subpath", () => {
-    // The half that keeps the seam. `./internal` is un-published AND its workspace key is kept so
-    // in-repo modules go on resolving it; a guard that reded on those would have banned the very
-    // arrangement it exists to protect. Both ways a module stays home are planted — outside every
-    // root the build compiles, and inside one but excluded from the compilation.
-    const found = withPlantedWorkspace(
-      (root) => reconcilePublishedImports(workspaceManifestsIn(root), root),
-      { "lib/routing/tools/audit.ts": REACHES_TARIFFS, "lib/routing/src/plant.test.ts": REACHES_TARIFFS },
-    );
-
-    expect(found).toEqual([]);
-  });
-
-  it("[SCN-API-007] finds no drift when every published module imports a specifier the manifests publish", () => {
-    // The anti-vacuity floor for the plant above: `lib/routing/src/index.ts` DOES cross a package
-    // boundary, to `harbour-co-depot/intake`, which the depot's manifest publishes. An empty answer
-    // here has to be a judgement rather than a scan that found nothing to judge.
-    const crossings = siblingSpecifiersIn(
-      PLANTED_FILES["lib/routing/src/index.ts"] as string,
-      "index.ts",
-      ["harbour-co-routing", "harbour-co-depot"],
-    );
-
-    expect(crossings).toEqual(["harbour-co-depot/intake"]);
-    expect(withPlantedWorkspace((root) => reconcilePublishedImports(workspaceManifestsIn(root), root))).toEqual([]);
-  });
-
-  it("[SCN-API-007] names the module, the specifier and what an installed consumer would hit", () => {
-    const report = unpublishedImportReport([
-      { module: join("lib", "routing", "src", "plant.ts"), specifier: "harbour-co-routing/tariffs" },
-    ]);
-
-    expect(report).toContain(join("lib", "routing", "src", "plant.ts"));
-    expect(report).toContain("harbour-co-routing/tariffs");
-    expect(report).toContain("ERR_PACKAGE_PATH_NOT_EXPORTED");
-  });
-});
 
 describe("[SCN-API-007] every module these packages publish imports only what these manifests publish", () => {
-  it("[SCN-API-007] finds published modules in both packages, and workspace crossings among them", () => {
-    // The anti-vacuity floor over the REAL tree. The arm below asserts an empty answer, and an empty
-    // answer from a scan that found no modules, or found modules that cross no package boundary,
-    // reads exactly like a clean workspace.
-    const core = publishedModulesOf(manifestAt(join("packages", "core", "package.json")), process.cwd());
-    const app = publishedModulesOf(manifestAt(join("packages", "spec-controller", "package.json")), process.cwd());
-    const names = workspaceManifests().map((manifest) => manifest.content["name"] as string);
-    const crossings = app.flatMap((module) =>
-      siblingSpecifiersIn(readSource(module), module, names),
-    );
+  it("[SCN-API-007] reports every planted crossing, in order, and nothing for the modules that never travel", () => {
+    const { verdict, scanned } = withPlantedWorkspace((root) => {
+      const manifests = workspaceManifestsIn(root);
+      return {
+        verdict: reconcilePublishedImports(manifests, root),
+        scanned: manifests.flatMap((manifest) => publishedModulesOf(manifest, root)),
+      };
+    });
 
-    expect(core).toContain(join("packages", "core", "src", "index.ts"));
-    expect(app).toContain(join("packages", "spec-controller", "src", "cli.ts"));
-    expect(crossings).toContain("@3f-consulting/spec-controller-core");
+    expect({ verdict, scanned }).toEqual({
+      verdict: [
+        crossing("lib", "routing", "src", "berth.ts"),
+        crossing("lib", "routing", "src", "consign.ts"),
+        crossing("lib", "routing", "src", "inland", "haulage.ts"),
+        crossing("lib", "routing", "src", "manifest.ts"),
+      ],
+      // The denominator, and the only thing that makes the four absences above mean anything. Every
+      // module here was read and judged, so `intake.ts` clearing the verdict is the comment decoy
+      // being seen through rather than skipped; and `src/plant.test.ts`, `tools/audit.ts` and every
+      // module of `lib/wharf` are absent HERE, which is the check declining to scan what never
+      // ships rather than scanning it and forgiving it.
+      scanned: [
+        join("lib", "depot", "src", "intake.ts"),
+        join("lib", "routing", "src", "berth.ts"),
+        join("lib", "routing", "src", "consign.ts"),
+        join("lib", "routing", "src", "index.ts"),
+        join("lib", "routing", "src", "inland", "haulage.ts"),
+        join("lib", "routing", "src", "manifest.ts"),
+        join("lib", "routing", "src", "tariffs.ts"),
+      ],
+    });
   });
 
-  it("[SCN-API-007] holds this repository's published modules to the specifiers its manifests publish", () => {
-    const found = reconcilePublishedImports(workspaceManifests(), process.cwd());
+  it("[SCN-API-007] holds this repository's own published modules to the specifiers its manifests publish", () => {
+    // The dogfood green, and this check's only contact with the repository (Ruling B, above): any
+    // published module that starts reaching an un-published subpath reds HERE and nowhere else.
+    const manifests = workspaceManifests();
+    const published = manifests.flatMap((manifest) => publishedModulesOf(manifest, process.cwd()));
+    const names = manifests.map((manifest) => manifest.content["name"] as string);
+    const crossings = published.flatMap((module) =>
+      siblingSpecifiersIn(readFileSync(join(process.cwd(), module), "utf8"), module, names),
+    );
+    const found = reconcilePublishedImports(manifests, process.cwd());
 
-    expect(unpublishedImportReport(found)).toBe("");
-    expect(found).toEqual([]);
+    expect({
+      drift: found,
+      report: unpublishedImportReport(found),
+      // The anti-vacuity floor over the REAL tree. `drift: []` from a scan that found no modules,
+      // or found modules that cross no package boundary, reads exactly like a clean workspace. The
+      // two barrels are named because they are the entry points a consumer actually loads, and the
+      // counts are FLOORS rather than transcriptions — 58 modules and 15 crossings on the tree this
+      // arm was last measured against, so a floor well under each reds on a scan that has been
+      // narrowed or emptied without redding on an ordinary module being added or retired.
+      readsBothPackages: [
+        published.includes(join("packages", "core", "src", "index.ts")),
+        published.includes(join("packages", "spec-controller", "src", "cli.ts")),
+      ],
+      scannedEnough: published.length >= 40,
+      crossedTheBoundary: [
+        [...new Set(crossings)],
+        crossings.length >= 8,
+      ],
+    }).toEqual({
+      drift: [],
+      report: "",
+      readsBothPackages: [true, true],
+      scannedEnough: true,
+      crossedTheBoundary: [["@3f-consulting/spec-controller-core"], true],
+    });
   });
 });

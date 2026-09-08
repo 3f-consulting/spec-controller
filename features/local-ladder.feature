@@ -58,24 +58,11 @@ Feature: The local green-check runs the ladder CI runs, derived rather than list
 
   Rule: every CI step that invokes a package.json script is a local gate
 
-    @unit @integration @SCN-LAD-001
+    @integration @SCN-LAD-001
     Scenario: the ladder is every CI script step, in ci.yml's order
       Given a CI config whose steps invoke three package.json scripts in a fixed order
       When the local ladder is derived from it
       Then the ladder gates exactly those three scripts, in the CI config's order
-
-    @unit @SCN-LAD-002
-    Scenario: a gate runs CI's command verbatim, flags and report paths included
-      Given a CI config whose test step carries reporter flags and a report path
-      When the local ladder is derived from it
-      Then the gate's command is the CI step's command, character for character
-      And a step spanning lines or invoking two scripts is named unsupported, never dropped
-
-    @unit @SCN-LAD-003
-    Scenario: a CI step invoking no package.json script is not a gate
-      Given a CI config that installs dependencies and enables corepack before its gates
-      When the local ladder is derived from it
-      Then neither setup step is a gate, and neither is recorded as an exclusion
 
   Rule: a CI step's red must abort the job
 
@@ -100,14 +87,14 @@ Feature: The local green-check runs the ladder CI runs, derived rather than list
 
   Rule: a step left out of the local ladder names why, and the reason must still hold
 
-    @unit @integration @SCN-LAD-004
+    @integration @SCN-LAD-004
     Scenario: an excluded CI-only step is not a gate, and its reason is printed
       Given a CI config running a step its target excludes from the local ladder
       When the local ladder is built over it
       Then the excluded step is not a gate
       And the ladder names it, with the reason it is left out
 
-    @unit @integration @SCN-LAD-005
+    @integration @SCN-LAD-005
     Scenario: an exclusion naming a script CI does not run reds as stale
       Given a CI config that no longer runs the step the exclusion excuses
       When the local ladder is built over it
@@ -115,7 +102,7 @@ Feature: The local green-check runs the ladder CI runs, derived rather than list
 
   Rule: a step left out of the local ladder runs ahead of every gate
 
-    @unit @integration @SCN-LAD-007
+    @integration @SCN-LAD-007
     Scenario: an excluded step CI runs behind a gate reds, naming the gates ahead of it
       Given a CI config running the step its target excludes behind two of its gates
       When the local ladder is built over it

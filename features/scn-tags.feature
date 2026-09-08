@@ -61,7 +61,7 @@ Feature: The tier-tag floor — every scenario names an evidence tier
     reds all the same. A guess that steers the fix is worth having; a guess that
     decides the outcome would make the gate only as good as its edit distance.
 
-    @unit @integration @SCN-STG-002
+    @integration @SCN-STG-002
     Scenario: an unrecognised tag reds the check, naming it and the tier it resembles
       Given the scn-tags static check
       When it runs over a features tree whose @SCN scenario carries a mistyped tier tag
@@ -94,7 +94,7 @@ Feature: The tier-tag floor — every scenario names an evidence tier
     arm on a parked scenario would hide `@wip @untit` — a gate whose teeth come off by
     writing one more tag.
 
-    @unit @integration @SCN-STG-003
+    @integration @SCN-STG-003
     Scenario: a recognised community deferral tag is not an unrecognised tag
       Given the scn-tags static check
       When it runs over a features tree whose tiered @SCN scenario also carries a recognised community deferral tag
@@ -123,7 +123,7 @@ Feature: The tier-tag floor — every scenario names an evidence tier
     nothing still parks with `@wip`, and this module still names no community tag at all.
     That is the difference between owning a policy and hard-coding someone else's.
 
-    @unit @integration @SCN-STG-008
+    @integration @SCN-STG-008
     Scenario: the tier floor skips a parked scenario, and the parking set is the target's own
       Given the scn-tags static check
       When it runs over a target whose tier-less scenario carries a parking tag the target itself configured
@@ -217,13 +217,13 @@ Feature: The tier-tag floor — every scenario names an evidence tier
     names its axis — which is the wrong-message failure @SCN-STG-002 split the three kinds to
     avoid. One fault, one place.
 
-    @unit @integration @SCN-STG-004
+    @integration @SCN-STG-004
     Scenario: a @fitness=<check> tag reds the tier-tag check, naming the bare tag it should have been
       Given the scn-tags static check
       When it runs over a target whose scenario carries a group-prefixed check tag
       Then it fails, naming the bare tag the group-prefixed one should have been
 
-    @unit @integration @SCN-STG-005
+    @integration @SCN-STG-005
     Scenario: a fitness scenario satisfies the tier floor by the word naming its check — a registered bare tag, or the converted axis tag
       Given the scn-tags static check
       When it runs over a target whose stepless scenario carries only its registered bare check tag
@@ -307,7 +307,7 @@ Feature: The tier-tag floor — every scenario names an evidence tier
     still read for well-formedness, because the deferral set is exactly what lets that arm
     recognise the parking tag — so excusing it would make `@wip @untit` invisible.
 
-    @unit @integration @SCN-STG-007
+    @integration @SCN-STG-007
     Scenario: two bare check tags on one UNPARKED scenario red the tier-tag check, naming both — steps or none
       Given the scn-tags static check
       When it runs over a target whose stepless scenario carries two registered bare check tags
