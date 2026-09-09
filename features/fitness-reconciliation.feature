@@ -699,281 +699,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       When that target's evidence is reconciled
       Then the second raises no Evidence Obligation, its row is out of balance, and the report names it as a fitness scenario no configured row names
 
-  Rule: a converted check credits the scenario that raised it, and the credit needs no registry hop
-
-    THE TWO-HOP SEAM IS WHAT CONVERSION RETIRES. An unconverted static check is discovered as
-    a script handle, and a handle does not know what it is FOR — hence `checkRegistry`, and
-    hence the corpus lookup behind it. A converted check is not discovered at all: it is a
-    scenario that ran, carrying its own `@SCN` on its own tag line. The citation is read off
-    the row rather than resolved onto it.
-
-    ONE OBLIGATION, ONE CREDIT, AND THE ROW'S SHAPE DECIDES WHICH STREAM CARRIES IT. A static
-    row's credit is the fitness pass reporting the scenario — the check existed and it ran over
-    the real tree, both facts directly observed rather than inferred from a manifest and a
-    workflow. A measured row's credit is its NUMBER, and the fitness report raises no second
-    credit beside it: two credits answering one obligation is the double count this rule exists
-    to foreclose.
-
-    @unit @integration @SCN-LNT-021
-    Scenario: a static converted check's scenario in the fitness report credits its own row, citing its own @SCN
-
-      THE CREDIT ARRIVES ALREADY CITING, so there is nothing left to resolve. The scenario carries its
-      own @SCN on its own tag line and the configured row keyed by that @SCN carries the characteristic,
-      so both terms of the credit are read off what the pass reported. No check registry is consulted
-      and no corpus lookup stands behind it — the two hops an unconverted check needs are the two this
-      route does not have.
-
-      AND THE TWO FACTS SUCH A CREDIT CARRIES ARE OBSERVED HERE RATHER THAN INFERRED. On the
-      unconverted route the check EXISTS because a manifest holds a script by that name, and it ran
-      over the real tree because a workflow step invokes that script. Here the scenario appearing in
-      the fitness pass's report says the check ran, and the pass runs in the target's own root, so it
-      ran over that root's tree. Both are read from the run itself, which is strictly stronger than a
-      file mentioning a name.
-
-      THE CREDIT IS ABOUT THE WIRING AND THE EXIT CODE IS ABOUT THE FINDINGS. A scenario present in the
-      report credits its row whether it passed or failed, because a static check's ledger row has never
-      carried the check's own verdict: a check finding violations reds the run through the runner's exit
-      code, and the ledger says the check ran. Two questions, two mechanisms — and a reading that
-      credited only the scenarios that passed would answer the second question twice and the first not
-      at all.
-
-      Given a target's configured rows name a static fitness check for each of the two scenarios its corpus carries
-      And its fitness pass reported both, the first having found nothing and the second a violation
-      When that target's evidence is reconciled with what its fitness pass reported
-      Then each scenario's own row is credited for the characteristic its row names, no check registry naming either, and both rows balance
-
-    @unit @integration @SCN-LNT-022
-    Scenario: a measured converted check's scenario in the fitness report raises no credit, because its number is the credit
-
-      ONE OBLIGATION, ONE CREDIT, AND THE ROW'S SHAPE SAYS WHICH STREAM CARRIES IT. A measured
-      converted check raises one Evidence Obligation and its evidence is a NUMBER, read from the
-      measurement artefact by the reader that already exists. A credit raised beside that number
-      would be a second credit answering one Evidence Obligation, and it would answer nothing: the
-      comparison arm reads measurements only, so the extra credit lands on the row naming a
-      characteristic nothing on that row can settle it against, and takes the run out of balance.
-
-      SO THE REPORT READING SKIPS A SCENARIO WHOSE CONFIGURED ROW CARRIES A BAR, and it asks that
-      question through the same predicate the obligation side asks it through. The two readings
-      then agree by construction rather than by diligence: one fact, one spelling, or this is the
-      shape where a debit and a credit grow separate opinions of whether a row is measured — and
-      the row whose bar nothing could read is exactly where they would first differ.
-
-      NO SECOND CREDIT ROUTE IS INVENTED HERE. The ledger has carried two fitness observation
-      shapes since @SCN-CIP-003 — a static fact about the tree, and a measurement — and this only
-      says which of the two a converted row uses. What is new is that the choice is readable from
-      one place rather than reached separately by each side that makes it.
-
-      AND THE ENUMERATION IS NOT LOST, which is the half of this that reads wrong unless the
-      sentence is finished. The measured scenario still appears in the fitness pass's report, and
-      that appearance is still what says the check ran; what it no longer does is post a credit
-      beside the number. Two questions and two mechanisms, exactly as on the static route — only
-      here the second is answered by a value rather than by an exit code.
-
-      Given a target's configured rows name a static fitness check for one of its two scenarios and a measured one, holding a floor, for the other
-      And its fitness pass reported both scenarios, and its measurement artefact holds a number for the measured one
-      When that target's evidence is reconciled with what its fitness pass reported and with what it measured
-      Then the static scenario's row is credited off the report and the measured one's row off its number alone, each row carrying one credit and both balanced
-
-  Rule: the fitness pass runs the command its configured row names
-
-    THE STEP DEFINITION RUNS THE COMMAND. Always, and there is no read-an-artefact second
-    shape in the model: what a target puts BEHIND the command is the target's business, and
-    the pass does the same thing either way. A target that types a sweep there gets the sweep
-    inside its fitness pass, which is exactly what it asked for.
-
-    THE EXIT CODE ANSWERS ONE QUESTION AND THE SCENARIO ANSWERS THE OTHER. `did the check run`
-    is answered by the scenario appearing in the report; `did it find anything` is answered by
-    the exit code. Two questions, two mechanisms — which is why a command exiting 0 having
-    examined nothing cannot pass as silence here.
-
-    AND THE SECOND QUESTION HAS A THIRD ANSWER, WHICH THE ROW HAS TO ASK FOR (3F-3169, 3F-3170).
-    A check says `nothing to report`, or `here is a violation`, or `I could not examine
-    anything` — the third being what a check whose input exists only in CI has to be able to say
-    on a laptop. The pass hears that third answer from a row that NAMES the code its command
-    says it with, and from no other row: a row silent on the point keeps the two-answer reading,
-    where every way of ending but a clean one is a check that broke and stays a failure. What a
-    code MEANS is a property of the command rather than of the pass, so the pass reads it where
-    the command is written down instead of fixing one code for every target at once.
-
-    THE NUMBER ARRIVES ON STDOUT. A measured row's command prints its measurement and nothing
-    else there; whatever it wants to say goes to stderr. No named artefact path, no second
-    I/O contract in the row — a tool that prints other things gets a wrapper, which is what
-    every measured producer in this repository already is. The BAR stays outside the command
-    either way: one bar per characteristic, never the runner's own verdict.
-
-    @integration @SCN-LNT-023
-    Scenario: the fitness step definition runs its row's command, and hears a check that examined nothing only from a row naming the code that says so
-
-      THE ROW'S COMMAND IS THE CHECK, AND RUNNING IT IS THE WHOLE OF WHAT THIS STEP DOES. The scenario
-      carries the axis tag and its own @SCN; the row keyed by that @SCN carries the command; the step
-      runs it in the target's own root and reads the exit code. Nothing else is consulted — no check
-      registry, no corpus lookup, no artefact somebody else wrote — because the two terms this needs
-      are the tag line the runner is already holding and the row that names it.
-
-      THE THIRD ANSWER IS OPT-IN PER ROW AND NEVER INFERRED (3F-3170). A check can find nothing, it can
-      find a violation it prints, or it can be unable to examine anything at all — which is the ordinary
-      state of a check whose input only CI holds. The pass hears that third answer only from a row that
-      NAMES the code its command says it with; a row silent on the point keeps the two-answer reading it
-      has always had, which is both the safe default and what every target already gets. The third
-      answer is still not a pass: a scenario that went green having examined nothing is the silence
-      fault, in the repository that names it. So the pass reports it as neither passed nor failed — the
-      scenario still appears, so its row is still credited as one that ran, and the pass's own verdict
-      is unmoved.
-
-      THE CODE IS THE ROW'S BECAUSE THE MEANING IS THE COMMAND'S (3F-3170). One code fixed for every
-      target would be the pass telling a consumer's command what its own answers mean, and the first
-      attempt at that took a code this product's own `balance` already spends on a pending-items verdict
-      under `--strict` — so a consumer running `balance` behind a fitness row would have had a red
-      silently reclassified as a check that examined nothing, in the product built to catch that. A
-      rarer code is not the repair: the claim that a code will not collide is the claim that just
-      failed, and the quiet ranges are spoken for as well. The row already carries the command, so it is
-      where that command's own taxonomy belongs.
-
-      AND IT IS ONE CODE PER ROW, NOT A RANGE. Exactly one way of ending means `I examined nothing` for
-      a given command, and every other way that command can end is a check that broke and stays a
-      failure. A range would hand the third answer to the broken check next door, which is the silence
-      fault arriving through the door built to close it.
-
-      THE @SCN COMES OFF THE TAG LINE, NEVER OFF THE SCENARIO'S NAME. A title is prose a person edits;
-      recovering an identifier from one is the name-match posting @SCN-LNT-002 retired, and it would
-      make renaming a scenario silently repoint its check. The runner reads the tags the pass hands it,
-      which is the same document the credit reader reads and the same tag it reads there.
-
-      THE FAILURE NAMES THE COMMAND AND QUOTES WHAT IT SAID. A fitness scenario that reds is a
-      violation somebody has to go and fix, and a bare exit code sends them to work out which of a
-      target's rows spoke before they can begin. So the message carries the command verbatim, the exit
-      code it answered with, and what it printed — and where it printed nothing, says that too, because
-      a silent non-zero exit is a fault report of its own.
-
-      A SCENARIO NO CONFIGURED ROW NAMES FAILS HERE, AND THAT IS THIS SCENARIO'S OWN RULING. Such a
-      scenario has said which axis it is on and then said nothing about what it asserts, so there is no
-      command to run and nothing was examined. Passing it would put a scenario in the report that says
-      the check ran when no check ran at all — the enumeration this axis exists to gain, telling the
-      first lie it is capable of. The ledger says the same thing from the other side (@SCN-LNT-020
-      raises no Evidence Obligation and reports the scenario as one no row names), and the two are
-      deliberately not one mechanism: the run reds where the person is, and the reconciliation reds
-      where the row is missing.
-
-      ONE STEP DEFINITION, HOWEVER MANY CHECKS CONVERT. The step text names no characteristic and no
-      command, so every converted static check in every target matches this one sentence and the count
-      stays at one. The measured case adds exactly one more, because reading a number off stdout and
-      posting it is a different assertion over different evidence — and that is the whole of the
-      growth, whatever a target's manifest grows to.
-
-      Given a target's configured rows name a command for five of the six fitness scenarios its corpus carries, and none for the sixth
-      And every one of those rows but the fourth also names the code by which its command says it examined nothing
-      And those commands are, in order, one that finds nothing, one that finds a violation it prints, one that says it examined nothing, another saying it examined nothing in exactly the same words, and one that is itself broken
-      When each of the six scenarios runs under the fitness pass
-      Then the first passes, the second fails naming the command that spoke and quoting what it printed, the third neither passes nor fails, the fourth fails although its command said what the third's said because its own row names no such code, the fifth fails because a check that broke is not one that examined nothing, and the sixth fails saying no configured row names it
-
-    @integration @SCN-LNT-024
-    Scenario: a measured row's command prints its number on stdout and the step definition posts it citing the scenario's own @SCN
-
-      THE NUMBER IS THE EVIDENCE, WHICH IS WHY THIS IS A SECOND STEP DEFINITION AND NOT AN ARM OF THE
-      FIRST. The static half runs a command and reads an exit code; this half runs a command and reads
-      a NUMBER off what it printed, then posts that number as a measurement. Two assertions over two
-      kinds of evidence — so two step definitions, and exactly two however many checks convert, because
-      everything that varies between two measured checks is in the configured row.
-
-      THE NUMBER ARRIVES ON THE COMMAND'S OWN OUTPUT AND IS THE WHOLE OF WHAT IT PRINTS THERE. Anything
-      the command wants to say goes to its error stream instead. That contract was chosen over naming
-      an artefact path in the row because it needs no fourth field and no file grammar: the row stays
-      the three things a check says about itself plus a bar. A tool that prints other things gets a
-      wrapper, which is what every measured producer in this repository already is, so the wrapper is a
-      cost the target has already paid rather than one this model introduces.
-
-      THE CREDIT CITES THE SCENARIO'S OWN @SCN AND THE CHARACTERISTIC ITS ROW NAMES. Both terms are
-      already in hand — the tag line the pass is running, and the row keyed by it — so nothing is
-      resolved, no registry is consulted, and the measurement arrives citing rather than being
-      attributed afterwards. The characteristic is read through the SAME reading of the row the
-      obligation side reads it through, so the debit and the credit name one word rather than two that
-      have to agree.
-
-      IT POSTS BESIDE WHAT THE RUN HAS ALREADY MEASURED, NEVER OVER IT. A run has as many measurements
-      as it has measured checks and they all answer through one artefact, so this reads what is there
-      and adds its own row keyed by both terms of its address. Writing over the artefact would leave
-      only the last row and every earlier bar reconciling as a check that never ran.
-
-      THE BAR NEVER ENTERS HERE, AND THAT IS THE SAME RULE THE WRAPPERS ALREADY KEEP. One bar per
-      characteristic, held by the ledger, never by the runner that produced the number — a step
-      definition that compared the number itself would be grading its own homework, and the ledger
-      would then transcribe a verdict rather than reconcile one. So a measured scenario passes whenever
-      its command yielded a number, and whether that number clears its bar is the ledger's sentence.
-
-      A COMMAND THAT PRINTED NO USABLE NUMBER FAILS THE SCENARIO AND POSTS NOTHING. Both halves are
-      said because either alone would be the quiet failure: a scenario that passed having posted
-      nothing would leave its row reading missing with nothing red anywhere, and a row posted from
-      unreadable output would be a number nobody measured. Nothing printed, prose printed, and a number
-      the measurement reader would refuse are one answer here — the command did not honour the contract
-      — and the row then reads missing for the loud reason rather than the silent one.
-
-      Given a target's configured rows name a measured fitness check for each of three of its scenarios, and this run has already measured something else
-      And the first of those commands prints a number, the second prints prose, and the third prints nothing at all
-      When each of those three scenarios runs under the fitness pass
-      Then the first posts its number citing its own @SCN and the characteristic its row names, beside the measurement already there, and the other two fail with nothing posted for either
-
-    @integration @SCN-LNT-025
-    Scenario: a row that spends the ending of a clean run, or of a run that found something, on "I examined nothing" is refused when the target's rows are read
-
-      TWO ENDINGS ARE THE PROTOCOL'S OWN AND NO ROW MAY SPEND THEM ON THE THIRD ANSWER. A row naming
-      the ending a clean run has would report a check that examined nothing on exactly the runs where
-      that check worked, so a check that passed would stop being read as one that passed. A row naming
-      the ending an ordinary violation has would turn every finding into a check that examined nothing
-      — a red arriving as a non-failure, at whatever scale that check runs, on the one ending the whole
-      of the tooling world agrees means `I found something`. Both are the silence fault this repository
-      exists to name, arriving through its own configuration.
-
-      AT THE READ, AND THAT IS THE WHOLE OF THIS SCENARIO. A refusal that waited until a command ended
-      that way would fire only on the run that took the bad path — and for the row naming a violation's
-      ending, the bad path IS the run where a real finding was made, which is exactly the run whose
-      failure it would swallow. A validation that fires only when the bad path is taken is a validation
-      that hides the bad path. So the row is refused when the target's rows are read, before anything
-      has been run, and the refusal names the row it is about and the value that row carries: a message
-      saying only that the configuration is wrong sends the reader hunting through thirteen rows.
-
-      AND NOTHING ELSE IS REFUSED, INCLUDING THE ENDINGS THIS PRODUCT ITSELF SPENDS. `balance` answers
-      one way for a usage fault and another for an unsound run, and a row naming either of those is
-      still read as written. The field says what THAT command means by an ending, which is the row
-      author's sentence to write rather than the runner's to have opinions about — the whole of the
-      3F-3170 repair. The two refusals are refusals against the PROTOCOL'S OWN fixed points, a pass and
-      a violation, and not against any tool's taxonomy; a later reader tidying them into a list of
-      permitted endings would be reversing that ruling by accident.
-
-      A REFUSED ROW HAS NOT BEEN RUN, AND THE PLANT SAYS SO RATHER THAN THE PROSE. Each of the four
-      rows below names a command that leaves a trace behind it whenever it runs. Neither refused row
-      leaves one, and the accepted row leaves its own — so the absence is read against a trace that is
-      shown to arrive, rather than against a mechanism that might never have worked at all.
-
-      Given four rows, each naming a command that leaves a trace behind it whenever it runs
-      And the first names, as the ending by which its command says it examined nothing, the ending of a clean run; the second names the ending of a run that found something; the third names an ending that is neither; and the fourth names no ending at all
-      When each of those rows is read on its own
-      Then the first two are refused, each refusal naming the row it is about and the value that row carries, and neither command has left the trace it leaves whenever it runs
-      And the third and fourth are read as written, and the third's command then runs and leaves that same trace
-
-  Rule: a fitness credit says the check RAN, and a check that did not run is broken evidence rather than an absent one
-
-    THE CREDIT IS ABOUT THE WIRING AND THE EXIT CODE IS ABOUT THE FINDINGS, AND BOTH HALVES STAY
-    TRUE. What was wrong was reading `skipped` as a way of having run. A check that found violations
-    reds the run through the runner's exit code and its row says the check ran; a check that never
-    ran has no finding to carry and no exit code to carry it, so nothing anywhere in the chain
-    disagrees with its credit. Cucumber exits 0 for a skipped scenario and a skipped scenario still
-    appears in the report — so the credit posted, the row read satisfied, and the run was green over
-    a check that examined nothing.
-
-    TWO FACTS FROM TWO PLACES, WHICH IS WHY A HOOK CANNOT FORGE IT. The step status comes from the
-    report; the ending a row names comes from the target's manifest. A hook, a tag filter or a lost
-    `require` can make the report say `skipped`, and none of them can reach the manifest to make a
-    row name an ending. So whether a skip is one the check asked for is settled by a checked-in
-    sentence about that check, in the same file as its command.
-
-    THE TWO KINDS OF ROW WERE NEVER EQUALLY EXPOSED, AND THE REASON IS STRUCTURAL RATHER THAN LUCK.
-    A MEASURED row's credit is its NUMBER, written from inside the step body, so it needs an
-    artefact the pass has to actively produce — and a step that never runs produces none. It fails
-    closed with no help from anything. A STATIC row's credit is the scenario's APPEARANCE in the
-    report, and a skipped scenario appears: one fact, and a skip supplies it for free. So one hook
-    over the whole axis leaves every measured row missing and every static row satisfied. What this
-    Rule does is give the static row its SECOND fact; the measured side needs no repair, for the
-    same reason it already catches that hook by itself.
+  Rule: a check that did not run is broken evidence rather than an absent one
 
     `broken` IS CANON'S OWN WORD FOR IT AND NOTHING HERE IS NEW. It has meant a proof that never ran
     since @SCN-LDG-017 and @SCN-LDG-019: it posts to the suspense row carrying its where-to-fix and
@@ -984,59 +710,371 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     check rather than fix your hook, which is the misdirection @SCN-LDG-019 named when it stopped
     dropping ambiguous steps as inconclusive.
 
-    @unit @integration @SCN-LNT-026
-    Scenario: a fitness scenario the pass reported as skipped credits its row only where that row names the ending its command says it examined nothing with — every other skip is broken evidence
-
-      THE DISCRIMINATOR IS THE ASSERTION, WHICH IS WHY BOTH ARMS ARE READ FROM ONE REPORT. The two
-      scenarios below are reported identically and their rows differ in exactly one thing — whether
-      the row names an ending. Taken from two reports the pair could agree by accident: a reading
-      that credited neither and a reading that credited both would each have to be caught by
-      comparing two runs, when the whole claim is that one run tells them apart.
-
-      THE DEFAULT IS `broken`, NOT THE CREDIT, so the arms are written the other way up from the
-      obvious one. The credit is reached by the two readings that say the check ran — every step
-      passed, or a step failed — and by the skip a row asked for; every other reading falls through.
-      A status this reader cannot vouch for is a check whose running it cannot vouch for, so a
-      status nobody anticipated reds rather than credits. That is the safe direction on an axis
-      whose whole subject is a green that means nothing.
-
-      THE ROW THAT NAMED ITS ENDING KEEPS TODAY'S READING, AND THAT IS NOT AN EXEMPTION CARVED FOR
-      IT. The check said so about itself, in its own row, beside its own command, so its skip is the
-      answer it asked to be able to give (@SCN-LNT-023) rather than something that happened to it.
-      The residual is said rather than hidden: such a row can still be skipped by a hook and will
-      still be credited, because the report cannot tell those two skips apart. It is bounded to the
-      rows that asked.
-
-      Given a target's configured rows name a static fitness check for each of the two scenarios its corpus carries, and only the first names the ending its command says it examined nothing with
-      And its fitness pass reported both as skipped
-      When that target's evidence is reconciled with what its fitness pass reported
-      Then the first row is credited and balances, and the second is credited by nothing, its Evidence Obligation reads missing, and the run is unsound
-
     @unit @integration @SCN-LNT-027
-    Scenario: a configured row whose scenario the fitness report it was handed never carried is broken evidence, and a run handed no report at all is unchanged
+    Scenario: a configured row whose step the CI run's record it was handed never carried is broken evidence, and a run handed no record at all is unchanged
 
-      THE ROWS ARE THE SIDE THE REPORT CANNOT ERASE, AND THAT IS THE WHOLE OF THIS RULE'S REACH.
-      A row is read from the target's manifest and its enumeration from the pass's report, so
+      THE ROWS ARE THE SIDE THE RECORD CANNOT ERASE, AND THAT IS THE WHOLE OF THIS RULE'S REACH.
+      A row is read from the target's manifest and its enumeration from the run's own record, so
       emptying either leaves the other standing. Every other reading on this axis loses its own
       subject the moment the corpus goes — the Evidence Obligations travel with the scenarios and
-      the credits travel with the pass, both sides cancel, and a run over nothing balances at zero.
+      the credits travel with the steps that ran, both sides cancel, and a run over nothing
+      balances at zero.
 
-      BOTH READINGS ARE TAKEN FROM ONE TARGET BECAUSE THEY ARE ONE CLAIM. Handed a report that
-      omits a row, the run is unsound; handed no report at all, it reconciles exactly as it did
-      before. Split across two fixtures the pair could agree by accident, which is how one `??`
-      came to flatten the two facts into one and stay that way.
+      BOTH READINGS ARE TAKEN FROM ONE TARGET BECAUSE THEY ARE ONE CLAIM. Handed a record that
+      omits a row, the run is unsound; handed no record at all, it reconciles exactly as it did
+      before. Split across two fixtures the pair could agree by accident, and one default is all
+      that separates them: a reader taking no record for a record carrying nothing would call
+      every configured row broken on the first target whose pipeline dumps none.
 
-      A REPORT HANDED OVER CARRYING NOTHING AND NO REPORT AT ALL ARE DIFFERENT FACTS. The first is
-      a pass that ran and did not carry this check. The second is a target that converted nothing,
-      or a pass nobody ran — and calling that target's set-up broken over a file it has no reason
-      to own is the fault the self-reconciliation gate already refuses one level up.
+      A RECORD HANDED OVER CARRYING NOTHING AND NO RECORD AT ALL ARE DIFFERENT FACTS. The first is
+      a run that happened and named not one of these steps. The second is a target whose pipeline
+      writes no record, or a run nobody recorded — and calling that target's set-up broken over a
+      file it has no reason to own is the fault the self-reconciliation gate already refuses one
+      level up.
 
       EVERY CONFIGURED ROW IS IN SCOPE, MEASURED AND STATIC ALIKE. A measured row's CREDIT is its
-      number (@SCN-LNT-022), and its ENUMERATION is still its scenario appearing in the report. So
-      a number arriving for a row the pass never enumerated is a number from a route that
-      enumerates nothing, which is the reading this axis exists to refuse.
+      number (@SCN-LNT-022) and its ENUMERATION is its own step in the record, the step whose
+      command wrote that number down (@SCN-LNT-024). So a number arriving for a row the run
+      recorded no step for is a number from a route that enumerates nothing, which is the reading
+      this axis exists to refuse.
 
       Given a target's configured rows name a static fitness check for each of two scenarios, and its corpus carries only the first
-      When that target's evidence is reconciled with a fitness pass report carrying only that first scenario
-      Then the row whose scenario the report never carried is broken evidence naming it, and the run is unsound
-      And the same target reconciled with no fitness pass report at all raises nothing broken — the scenario its corpus carries reconciles missing, and the run is merely out of balance
+      When that target's evidence is reconciled with a CI run record carrying a step for that first row alone
+      Then the row the record carried no step for is broken evidence naming it, and the run is unsound
+      And the same target reconciled with no CI run record at all raises nothing broken — the scenario its corpus carries reconciles missing, and the run is merely out of balance
+
+    @unit @integration @SCN-LNT-026
+    Scenario: a check step's outcome credits its row only where it says what the check did, and every other reading is broken evidence rather than a credit
+
+      THE READINGS THAT CREDIT ARE THE ONES THAT SAY WHAT THE CHECK DID, and there are two. A step
+      that succeeded ran and found nothing; a step that failed ran and found something. Each of
+      those is a fact about a check, and every other reading is a fact about a pipeline.
+
+      THERE IS NO THIRD, AND A ROW CANNOT BUY ONE. A row could once ask to be credited for a skip by
+      naming the ending its command says it examined nothing with — but a command that examines
+      nothing still RUNS and still ENDS, so its step reads success or failure and is never skipped.
+      A step is skipped when a condition went false, when the job was cancelled, or when somebody
+      moved it. The declaration could only be read for whether it was named, never checked against
+      anything, so it forgave every skip: `if: false` beside it read satisfied for ever. The field
+      is gone rather than guarded (3F-3252).
+
+      THE SECOND OF THEM STOPPED BEING A BARE CREDIT WHEN THE THIRD THING CARRYING THE VERDICT WENT.
+      While a pass ran the checks, a check that found violations reddened the run through the
+      runner's exit code and its credit only had to say the check ran — so passed and failed were
+      honestly ONE answer, and this scenario's own text used to say so. A CI step's exit code reaches
+      this ledger nowhere, so the failed step's credit carries what it found and its row reds
+      (@SCN-LNT-028) rather than balancing beside the row whose check passed.
+
+      THE DEFAULT IS `broken`, NOT THE CREDIT, so the arms are written the other way up from the
+      obvious one. A status this reader cannot vouch for is a check whose running it cannot vouch
+      for, so a skip no row asked for and a status nobody anticipated red rather than credit. That is
+      the safe direction on an axis whose whole subject is a green that means nothing.
+
+      AND `broken` IS THE RIGHT RED RATHER THAN THE LOUDEST ONE. It carries no Evidence Observation,
+      so the row's Evidence Obligation reconciles missing by absence and the run is stamped unsound —
+      a run over checks that did not run is a different thing from a run that disagrees with itself,
+      and a bare missing row would send the reader to write a check that is already written.
+
+      ALL FOUR READINGS ARE TAKEN FROM ONE RECORD, WHICH IS WHY THEY ARE ONE SCENARIO. Split across
+      four, the set could agree by accident: a reader crediting everything and a reader crediting
+      nothing would each need a second run to catch, when the whole claim is that ONE record draws
+      the line between them.
+
+      Given a target's configured rows name a static fitness check for each of the four scenarios its corpus carries
+      And its CI run's record says the first check's step succeeded, the second's failed, the third's was skipped, and the fourth's carries a status nobody anticipated
+      When that target's evidence is reconciled with the single record that run wrote about all four steps
+      Then the first row balances on a credit saying its check found nothing, the second reads failing off what its check found, and neither of the last two is credited — each is broken evidence naming what the record said about it, and the run is unsound
+
+  Rule: a pipeline nobody has annotated is reported as every check it runs, each citing no scenario
+
+    THIS IS THE STATE A CONSUMER STARTS IN, AND REACHING IT COSTS THEM NOTHING. They have written
+    no fitness scenario, configured no row and touched no step; their pipeline runs the checks it
+    always ran. What can still be said about it — here is every check you run, and not one of them
+    answers anything you have specified — is the first useful sentence this axis says to anybody,
+    and it is a report rather than the absence of one.
+
+    SO IT IS HELD AS A CLAIM RATHER THAN LEFT AS A CONSEQUENCE OF ONE. The behaviour falls out of a
+    citation that reaches nothing, which is exactly why nothing was watching it: every narrowing
+    that would silence an uncited check — dropping the credit that cites no row, refusing a handle
+    no row names — leaves every other reading on this axis green. The report a prospect sees before
+    they have adopted anything is the one no other arm is standing over.
+
+    AND THE SILENCE IS THE OTHER HALF OF THE SAME CLAIM. A pipeline checks out a tree, sets up a
+    toolchain, installs dependencies and builds, and none of those is a quality check. A report
+    naming them would drown the sentence it exists to say, so what discriminates is the check
+    heuristic — the scripts a manifest holds under a guard prefix or names as static checks — and a
+    step that heuristic does not reach is reported nowhere at all.
+
+    @unit @integration @SCN-LNT-029
+    Scenario: a check step citing no @SCN posts to suspense, which is the unannotated consumer's whole report
+
+      THE LEDGER IS READ WHOLE, BECAUSE WHAT THIS WATCHES FOR IS A CARDINALITY. An arm that looked
+      one uncited check up and found it in suspense would go on passing over a reader that had
+      quietly stopped raising the other two, and over one that had started raising the install step
+      beside them. Every row and every item on it is asserted, so a credit that stopped being
+      raised is as visible here as one that arrived wrong.
+
+      THE HANDLE IS WHAT LANDS IN SUSPENSE, AND THAT IS WHAT MAKES THE REPORT ACTIONABLE. A check
+      citing no scenario has no code to be named by, so what the row carries is the script that
+      ran — the one term the consumer can look up in their own manifest, and the one an annotation
+      would replace.
+
+      THE TARGET HAS NO CORPUS AT ALL, WHICH IS THE HONEST SHAPE OF THIS STATE RATHER THAN A
+      SHORTCUT. A consumer on their first run has specified nothing, so there is no scenario for a
+      credit to have landed on by accident and no row for the suspense one to be mistaken for. It
+      also makes the whole report one row, which is what the claim says it is.
+
+      Given a target whose CI runs every static check its manifest holds, and states the code of none of them
+      And that CI also checks out its tree, sets up its toolchain, installs its dependencies and builds it
+      When that target's evidence is reconciled from its manifest and its workflow
+      Then every check the pipeline ran is on the one suspense row citing no scenario, and the steps that are not checks are reported nowhere at all
+
+  Rule: a running check's citation is the code its own CI step carries, resolved against the configured row that code names
+
+    THE ROW SUPPLIES THE CHARACTERISTIC AND THE STEP SUPPLIES THE CODE, WHICH IS WHY NEITHER HALF
+    IS TAKEN OFF THE SCRIPT'S NAME. A CI step can state which row its check answers and nothing
+    else: an id is a code, never a characteristic, and reading a characteristic off the handle that
+    ran would be the name-match this axis retired, in a new spelling. So the code is read from the
+    step and the characteristic from the row that code names — two facts from two places — and a
+    code no configured row answers reaches neither.
+
+    A STEP CARRYING NO CODE STILL CITES NOTHING, and that is the state above this one rather than a
+    gap in it. A consumer who has annotated nothing runs checks that post to suspense and answer no
+    Evidence Obligation, which is the first useful sentence this axis says to a pipeline nobody has
+    specified. This rule is what a consumer's annotation BUYS; it does not narrow what the
+    unannotated pipeline reports.
+
+    @unit @integration @SCN-LNT-031
+    Scenario: a check step whose id: names a configured row supplies that row's citation, so an annotated pipeline is not read as unannotated
+
+      BOTH CHECKS ARE READ FROM ONE TARGET BECAUSE THEY ARE ONE CLAIM. The two steps below run two
+      scripts of one manifest, discovered by one prefix, and differ in exactly one thing — whether
+      the step states the code of the row it runs. Taken from two targets the pair could agree by
+      accident: a reader citing nothing and a reader citing everything would each need a second run
+      to catch, when the whole claim is that ONE run tells them apart.
+
+      THE ANNOTATED HALF IS THE ONE THAT WAS UNREACHABLE. The walk carries the step's code and the
+      observer reads it, and between them stood a composition that passed no seam at all — so every
+      discovered check on the live path cited nothing however carefully its step was annotated, and
+      a fully annotated pipeline reported as a fully unannotated one. That is invisible from either
+      end alone, which is why the assertion is over the reconciled ledger rather than over a reader.
+
+      Given a target whose CI runs a check for each of the two static rows its manifest configures
+      And only the first check's step states the code of the row it runs
+      When that target's evidence is reconciled from its manifest, its corpus and its workflow
+      Then the first check's run credits the row its step names and that row balances, and the second run cites no scenario
+
+  Rule: a check step's outcome in the CI run's record is the fitness credit
+
+    THE RECORD IS A SECOND DOCUMENT AND A SECOND QUESTION, which is why it is read by a reader of
+    its own rather than folded into the one above it. The workflow FILE says a check is wired in
+    and which row its step cites; the RUN's record says what that step did on this run. One is a
+    fact about a repository and the other a fact about an afternoon, and a reader handed only the
+    first can say a check is wired and nothing at all about whether it held.
+
+    ONE OBLIGATION, ONE CREDIT, AND THE ROW'S SHAPE DECIDES WHETHER THIS READER RAISES IT. A
+    static row's credit is its own step's outcome in the record — the check ran, in the consumer's
+    own checkout, and here is what it found. A measured row's credit is its NUMBER, and this reader
+    raises no second credit beside it: two credits answering one Evidence Obligation is the double
+    count this Rule exists to foreclose.
+
+    THE VERDICT NOW HAS TO TRAVEL, BECAUSE THE THIRD THING CARRYING IT HAS GONE. While a pass ran
+    the checks, a check that found violations reddened the run through the runner's exit code and
+    its enumeration still said the check ran — so passed and failed were honestly one answer to the
+    one question that reader asked. A CI step's exit code reaches nothing here: what crosses is a
+    status field. So a reader that went on collapsing the two would be green over every check that
+    ran and found something, which is this axis's own headline fault arriving by the front door.
+
+    @unit @integration @SCN-LNT-021
+    Scenario: a static check's step the run's record says succeeded credits its own row, citing its own @SCN
+
+      THE CREDIT ARRIVES ALREADY CITING, so there is nothing left to resolve. The step's `id:` IS
+      the code of the row that step answers, and the row keyed by that code carries the
+      characteristic — two terms from two places, both read off what was observed. No check registry
+      is consulted and no corpus lookup stands behind it: the two hops a DISCOVERED check needs are
+      the two this route does not have.
+
+      AND THE TWO FACTS SUCH A CREDIT CARRIES ARE OBSERVED RATHER THAN INFERRED. On the discovered
+      route the check EXISTS because a manifest holds a script by that name, and it ran over the real
+      tree because a workflow step invokes that script — a file MENTIONING a name, twice. Here the
+      record says the step ran, and it ran in the consumer's own checkout over that checkout's own
+      tree. Both are facts about the run itself, which is strictly stronger than a file naming a
+      command.
+
+      EACH ROW IS CREDITED BY ITS OWN STEP, WHICH IS WHY TWO ROWS ARE READ FROM ONE RECORD. A reader
+      posting one entry's credit to every configured row, and a reader crossing the two, both leave
+      every row balanced and say so with the same verdict — so what discriminates is the
+      characteristic each row was credited FOR, asserted per row rather than counted.
+
+      AND THE STEPS THAT ARE NOT CHECKS ARE SILENT. The record also holds the step that wrote it, and
+      no configured row answers that id, so nothing anywhere on the ledger is about it. A pipeline
+      checks out a tree and sets up a toolchain too, and a report naming those would drown the
+      sentence it exists to say.
+
+      Given a target whose configured rows name a static fitness check for each of the two scenarios its corpus carries, and no check registry naming either
+      And its CI run's record says both of those checks' steps succeeded, beside the step that wrote the record
+      When that target's evidence is reconciled with the record its own CI run wrote
+      Then each row is credited for the characteristic its own row names, both Evidence Obligations read satisfied, and the run balances
+
+    @unit @integration @SCN-LNT-022
+    Scenario: a measured check's step in the CI run's record raises no credit, because its number is the credit
+
+      ONE OBLIGATION, ONE CREDIT, AND THE ROW'S SHAPE SAYS WHICH STREAM CARRIES IT. A measured
+      converted check raises one Evidence Obligation and its evidence is a NUMBER, read from the
+      measurement artefact by the reader that already exists. A credit raised beside that number
+      would be a second credit answering one Evidence Obligation, and it would answer nothing: the
+      comparison arm reads measurements only, so the extra credit lands on the row naming a
+      characteristic nothing on that row can settle it against, and takes the run out of balance.
+
+      SO THIS READER SKIPS AN ENTRY WHOSE CONFIGURED ROW CARRIES A BAR, and it asks that question
+      through the same predicate the obligation side asks it through. The two readings then agree by
+      construction rather than by diligence: one fact, one spelling, or this is the shape where a
+      debit and a credit grow separate opinions of whether a row is measured — and the row whose bar
+      nothing could read is exactly where they would first differ.
+
+      AND A STEP'S OUTCOME COULD NOT HAVE CARRIED THE NUMBER ANYWAY, which is why this seam is a
+      split rather than a suppression. What crosses the record is a status — the step ran and found
+      nothing, or the step ran and found something. A measured row is owed a value, and no status
+      spells one; a reader crediting such a row off an outcome would be answering "how much" with
+      "it ran", which is this axis's own headline fault wearing a number's clothes.
+
+      NO SECOND CREDIT ROUTE IS INVENTED HERE. The ledger has carried two fitness observation shapes
+      since @SCN-CIP-003 — a static fact about the tree, and a measurement — and this only says
+      which of the two a converted row uses. What is new is that the choice is readable from one
+      place rather than reached separately by each side that makes it.
+
+      AND NOTHING IS LOST WITH THE ENTRY THIS READER PASSES OVER, which is the half that reads wrong
+      unless the sentence is finished. The whole of what a measured row's step outcome could say is
+      that the command ran; the number says that and the value both, because a number cannot arrive
+      from a step that never ran. Two questions and two mechanisms, exactly as on the static route —
+      only here one answer settles both.
+
+      Given a target's configured rows name a static fitness check for one of its two scenarios and a measured one, holding a floor, for the other
+      And its CI run's record says both of those checks' steps succeeded, and its measurement artefact holds a number for the measured one
+      When that target's evidence is reconciled with the record its own CI run wrote and with what it measured
+      Then the static scenario's row is credited off the record and the measured one's row off its number alone, each row carrying one credit and both balanced
+
+    @unit @integration @SCN-LNT-028
+    Scenario: a check step that failed posts a failing observation, out of balance whatever the job concluded
+
+      IT IS `failing` AND NOT `broken`, AND THE TWO ARE OPPOSITES RATHER THAN NEIGHBOURS. `broken`
+      is the never-ran case: the attempt errored before it could cite, so the item carries NO
+      Evidence Observation and the run is stamped unsound. A step that failed is the other end of
+      that — it ran, it completed, and it reported what it found — so reading it as broken would
+      throw away the one thing the check actually said. `missing` is wrong for the same reason from
+      the other side: it says no evidence, and there is evidence.
+
+      NOR IS THE WORD INVENTED FOR THIS AXIS. Present-and-passing reconciles satisfied and
+      present-and-failing reconciles failing, on every behavioural axis, since the ledger had two
+      sides; a failed unit test posts `failing` today. What this Rule does is stop the fitness axis
+      being the one place where a check's own verdict was somebody else's business.
+
+      THE STEP'S TWO FIELDS ARE HELD IN AGREEMENT HERE, DELIBERATELY. A record can report a step
+      that failed while reporting the job it sat in as green, and WHICH of those two a reader must
+      take is a claim of its own with its own scenario (3F-3264). Settling both from one fixture
+      would let a reader that took the wrong field pass this arm on the strength of the right word,
+      and a reader that posted the wrong word pass that one on the strength of the right field.
+      This scenario settles the WORD, over a step whose failure nothing laundered.
+
+      WHAT MAKES "WHATEVER THE JOB CONCLUDED" AN ASSERTION AND NOT A FLOURISH. No job-level verdict
+      is in the record or reaches the ledger, and the record handed over here ends on a step that
+      succeeded — so a reader summarising the run rather than reading the row's own step has a green
+      to reach for. The row reds off its own step alone.
+
+      Given a target whose configured row names a static fitness check for the scenario its corpus carries
+      And its CI run's record says that check's step failed, on a record whose remaining step succeeded
+      When that target's evidence is reconciled with what its CI run recorded
+      Then that row's Evidence Obligation reads failing, carrying the observation of the step that failed it, and the run is out of balance rather than unsound
+
+    @unit @integration @SCN-LNT-030
+    Scenario: the reader takes the step's outcome, so a red the job swallowed still reds its row
+
+      A STEP'S TWO RESULTS ARE NOT TWO OPINIONS OF ONE FACT. One is what the step did; the other is
+      what the job was told afterwards, and `continue-on-error` is the one attribute that puts a
+      value between them — the step runs, it reds, and the job is handed a success. So a reader
+      taking the second is green over every check a consumer chose to let their pipeline survive:
+      a one-line watermelon inside the product whose whole subject is watermelons.
+
+      THE RECORD IS THE ONLY DOCUMENT THAT CARRIES WHAT THE STEP DID. A run's steps as the provider
+      hands them back over its own interface carry the laundered result and no code at all, so a
+      reader built on that interface could not see through the mask however carefully it was
+      written. The dump this axis asks a consumer's pipeline for exists for exactly this: it is
+      where the step's own result and the code it cites are written down together.
+
+      THE FIXTURE IS WHAT EARNS THIS ARM, AND ITS SIBLING DECLINED IT ON PURPOSE. The failed step of
+      `@SCN-LNT-028` holds its two results in agreement, so a reader taking either one passes there;
+      here they disagree, and only the reader taking what the step did reds. Written against what
+      the job was told, this same arm reports the row with no credit at all — which is precisely the
+      green a swallowed red buys.
+
+      ONE FIELD IS READ AND THE OTHER IS READ NOWHERE. The laundered result is carried on the
+      record's type because it is in the document, and consulted by nothing. A reader comparing the
+      two would be a disagreement detector, and there is nothing here to detect: the step said what
+      it did, and the job's retelling adds no fact this ledger needs.
+
+      NOTHING HERE FENCES `continue-on-error`. This repository's own ladder still refuses it, because
+      a gate whose red its job swallows is a gate in name only. A consumer who reaches for it
+      deliberately is a different party asking a different question, and what this axis owes them is
+      an honest ledger rather than a refusal.
+
+      Given a target whose configured row names a static fitness check for the scenario its corpus carries, and whose CI lets that check's step red without failing the job
+      And its CI run's record says that step failed, while the job it sat in was told it succeeded
+      When that target's evidence is reconciled with the record that run wrote about itself
+      Then that row's Evidence Obligation reads failing off what the step did, and nothing is read off what the job was told
+
+  Rule: a measured row's credit is the number its own command wrote into the run's record
+
+    THE NUMBER ARRIVES IN A RECORD, WHICH IS THE ONE THING A STEP'S ENDING COULD NEVER CARRY. A
+    measured row's command writes its measurement into the run's own record, and every measured row
+    of that run writes into the same one. No named artefact path and no second I/O contract in the
+    row — the row stays the three things a check says about itself plus a bar, and a tool that
+    writes nowhere gets a wrapper, which is what every measured producer already is.
+
+    AND NOTHING THIS PRODUCT SHIPS RUNS THAT COMMAND. The consumer's pipeline runs it, as it ran it
+    before any of this was configured, and the record is the whole of what crosses. A pass that
+    spawned the row's command to take a number off what it printed would be this product executing
+    the thing it exists to observe, and would make the credit depend on a runner nobody's pipeline
+    has — which is the arrangement this Rule replaces rather than a shape it could be written in.
+
+    THE BAR STAYS OUTSIDE EITHER WAY: one bar per characteristic, held by the ledger, never by
+    whatever produced the number.
+
+    @integration @SCN-LNT-024
+    Scenario: a measured row's command writes its number into the run's record, and the credit is read straight out of that record
+
+      THE NUMBER IS THE EVIDENCE AND THE COMMAND IS WHAT WRITES IT DOWN, which is the whole of the
+      producing half. Nothing reads a stream, classifies what a command said, or decides on its
+      behalf whether it measured anything: a row that was measured has a number in the record and a
+      row that was not has none. The reading side then has one question to ask and one place to ask
+      it, and the two terms of the citation are in the record already because whatever produced the
+      number knew what it was measuring.
+
+      IT WRITES BESIDE WHAT THE RUN HAS ALREADY MEASURED, NEVER OVER IT. A run has as many
+      measurements as it has measured rows and they all answer through one record, so a producer
+      reads what is there and adds its own row keyed by both terms of its address. Writing over the
+      record would leave only the last row, and every earlier bar would reconcile as a check that
+      never ran.
+
+      A COMMAND THAT WROTE NO USABLE NUMBER CREDITS NOTHING, AND THE ROW SAYS SO LOUDLY. Nothing
+      written and something written that no reader could take as a number are one answer here — the
+      command did not honour the contract — and the row is then credited by nothing rather than by a
+      number nobody measured. Both halves are said because either alone is the quiet failure: a row
+      credited from an unreadable record would be evidence invented at the reader, and a run that
+      passed having recorded nothing would leave that row reading missing with nothing red anywhere.
+
+      THE BAR NEVER ENTERS HERE, AND THAT IS THE SAME RULE THE PRODUCERS ALREADY KEEP. One bar per
+      characteristic, held by the ledger, never by whatever produced the number — a producer that
+      compared its own number would be grading its own homework, and the ledger would then
+      transcribe a verdict rather than reconcile one. So a measured row is answered whenever its
+      command wrote a number, and whether that number clears its bar is the ledger's sentence.
+
+      AND THE RECONCILIATION IS HANDED NO RUNNER'S REPORT AT ALL, which is what makes the claim
+      legible rather than merely true. The record and the target's own corpus and manifest are the
+      only things this run is given, so a credit reaching any of these four rows can only have come
+      out of what the commands wrote — there is no second stream for one to arrive by, and a route
+      that had quietly kept posting on the rows' behalf would have nowhere to post from.
+
+      Given a target's configured rows name a measured fitness check for each of four of its scenarios, and an earlier step of this run has already written one of those numbers into the run's record
+      And of the three commands still to run, the first writes its number into that record, the second writes nothing at all, and the third writes a row nothing could read as a number
+      When each of those commands runs as its own step of that run, and that target's evidence is then reconciled with what the run measured
+      Then the number written earlier still stands beside the one the first command wrote, each crediting its own row for the characteristic that row names, and the other two rows are credited by nothing

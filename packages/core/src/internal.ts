@@ -110,12 +110,14 @@ export type { MeasuredEvidenceObservation } from "./domain/journal.js";
 export { isMeasuredObservation, isStaticCheckObservation } from "./domain/journal.js";
 export type { FitnessEvidenceObservation } from "./domain/journal.js";
 
-// `ciRunSteps` / `CiRunStep` — the CI walk `ciRunCommands` projects, carrying whether each `run:`
-// step's red would abort the job. Shared because the local-ladder derivation must not open a second
-// YAML walk to see `continue-on-error`: that key is on the same step mapping this walk already
-// visits, and a second reader would be free to disagree with the first about which steps a workflow
-// even runs — which is the silent disagreement the one-place rule exists to prevent (3F-3042). Its
-// only consumer is `tests/checks/localLadder.ts`. Internal, not public — `ciRunCommands` remains
+// `ciRunSteps` / `CiRunStep` — the CI walk `ciRunCommands` projects, carrying each `run:` step's
+// `id:` and whether its red would abort the job. Shared because the local-ladder derivation must
+// not open a second YAML walk to see `continue-on-error`: that key is on the same step mapping this
+// walk already visits, and a second reader would be free to disagree with the first about which
+// steps a workflow even runs — which is the silent disagreement the one-place rule exists to
+// prevent (3F-3042). Its only consumer OUTSIDE the engine is `tests/checks/localLadder.ts`;
+// `runningStaticChecks` reads the same walk in-engine for the `id:` (3F-3261). Internal, not
+// public — `ciRunCommands` remains
 // the v1 contract for anyone outside, and putting this on the frozen `.` barrel would widen a
 // frozen surface and owe @SCN-API-001 a hand-transcribed row to buy nothing.
 export { ciRunSteps } from "./parse/checkScriptsRunInCI.js";
@@ -152,8 +154,8 @@ export type { KillFloorReader, MutationGateReference } from "./parse/targetManif
 // re-exports only what the app genuinely shares.
 
 // `fitnessChecksOf` / `FitnessCheck` / `FitnessCheckIndex` — the ONE reading of a target's
-// CONVERTED rows (`domain/fitnessChecks`, @SCN-LNT-018). Shared because the fitness pass
-// must cite the characteristic its row names when it posts a measured check's number
+// CONVERTED rows (`domain/fitnessChecks`, @SCN-LNT-018). Shared because a measured row's own
+// COMMAND must cite the characteristic its row names when it writes the number down
 // (@SCN-LNT-024), and that word is the same word the obligation side raises the Evidence
 // Obligation against. A second reader in `tests/checks/` deciding independently what
 // characteristic a row names would post a credit under one spelling while the debit was raised
@@ -173,27 +175,12 @@ export type { KillFloorReader, MutationGateReference } from "./parse/targetManif
 // would put the credit side and the obligation rule at odds about which evidence one row produces.
 // The header on `carriesBar` states the one-spelling rule this export serves.
 //
-// `notExaminedEndingOf` IS THE ONE READING OF THE ENDING, AND IT CROSSES FOR THE OPPOSITE REASON TO
-// THE TWO ABOVE (3F-3177). Those cross because the PASS must not read a row its own way. This one
-// crosses because the pass already did: it held its own copy of this reading while the ledger had
-// none, and the credit side now has to ask the same row the same question — is a skip in the fitness
-// report one the check said it would produce? Moving the reading here and importing it back leaves
-// ONE READING with TWO CONSUMERS, so a target's `notExaminedExit: 7.5` cannot read as a naming on
-// one side and as nothing on the other.
-//
-// THE REFUSAL DOES NOT CROSS WITH IT, AND THAT IS DELIBERATE. `refuseAnEndingTheProtocolSpends`
-// (@SCN-LNT-025) throws, and it stays at `fitnessCommandsOf` where a run is about to act on the
-// value. `fitnessChecksOf` is what `balance` reads a CONSUMER'S manifest through, and a throw there
-// turns one bad character in a stranger's `package.json` into a run with no verdict at all — loud
-// nowhere. One reading, two consumers, one refusal, at the pass.
-//
-// `namesNotExaminedEnding` IS THE SHAPE QUESTION AND NEVER THE VALUE, the `carriesBar` split again.
-// The pass needs the ending itself, to compare an exit code against; every other reader needs only
-// whether one was named, and one spelling is what keeps their answers the same.
+// AND NOTHING THROWS ON THIS PATH, WHICH IS DELIBERATE. `fitnessChecksOf` is what `balance` reads a
+// CONSUMER'S manifest through, and a throw there turns one bad character in a stranger's
+// `package.json` into a run with no verdict at all — loud nowhere. A malformed row is dropped and
+// the obligation it would have raised is simply not raised, which the ledger reports.
 export {
   carriesBar,
   fitnessChecksOf,
-  namesNotExaminedEnding,
-  notExaminedEndingOf,
 } from "./domain/fitnessChecks.js";
 export type { FitnessCheck, FitnessCheckIndex } from "./domain/fitnessChecks.js";

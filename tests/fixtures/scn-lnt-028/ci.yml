@@ -1,0 +1,22 @@
+# The fixture target's OWN workflow, standing in for another repository's pipeline. The check is an
+# ordinary `run:` step of that pipeline, stating the code of the row it answers and carrying the
+# `if: always()` that keeps a later step running past its red.
+#
+# THE COMMAND IS NOT ONE OF THAT REPOSITORY'S SCRIPTS, and that is this fixture's isolation. A
+# guard-prefixed script handle would be discovered from this file and observed by the derivation
+# reader, whose credit would answer the row's obligation first — so the run record's reading would
+# be asserted over a row something else had already settled.
+name: fixture CI
+jobs:
+  quality:
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Complexity
+        id: SCN-CVT-001
+        if: always()
+        run: eslint
+      - name: Dump this run's step record
+        id: dump-the-step-record
+        if: always()
+        run: printf '%s' "$STEPS_JSON" > ci-steps.json

@@ -51,10 +51,13 @@ export type CucumberJsonReport = Array<{
 }>;
 
 /**
- * Which tag on a REPORTED scenario is its `@SCN`. Exported because the fitness pass's report is
- * read by a second reader (`convertedFitnessCredits`, @SCN-LNT-021) that asks the same question of
- * the same document — and two spellings of it would eventually disagree about a corpus neither of
- * them wrote.
+ * Which tag on a REPORTED scenario is its `@SCN`.
+ *
+ * IT USED TO BE EXPORTED FOR A SECOND READER OF THIS SAME DOCUMENT — the fitness pass's own
+ * cucumber report, read by `convertedFitnessCredits` (@SCN-LNT-021). That pass and that reader went
+ * at 3F-3272: the converted checks' credits come off the CI run's own step record now, whose key IS
+ * the code, so nothing there has a tag line to read. The export stands because the corpus reader
+ * beside it takes the same pattern.
  */
 export const SCN_TAG = /^@?(SCN-[A-Z0-9]+-\d+)$/;
 

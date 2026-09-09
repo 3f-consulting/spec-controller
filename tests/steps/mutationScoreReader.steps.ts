@@ -8,7 +8,7 @@
  * WHY THIS ARM RUNS THE REAL READER. The @unit pin beside it proves the matching rule over rows it
  * hands in directly; what it cannot reach is everything between a command line and a file on disk —
  * the argument parse, the evidence-root resolution, the record found where the borrow left it, and
- * the exit code the fitness pass reads as the scenario's verdict. A widening right in the matcher
+ * the exit code its own CI step reports as its outcome. A widening right in the matcher
  * and wrong at the flag reads green at unit and refuses on every push.
  *
  * ITS OWN STEP TEXT, EVERY LINE OF IT. Cucumber's step registry is process-wide, and several files

@@ -20,8 +20,7 @@
     "mutation:ratchet": "tsx packages/spec-controller/src/mutation-ratchet/ratchetCli.ts --gate domain --report reports/mutation/mutation.json --bank-command 'pnpm mutation:bank'",
     "mutation:bank": "pnpm mutation:ratchet --record",
     "cucumber": "tsx tests/checks/timeStepCli.ts --scn SCN-FIT-013 --check ci-run-time -- cucumber-js",
-    "cucumber:fitness": "cucumber-js --profile fitness",
-    "build": "pnpm -r build",
+      "build": "pnpm -r build",
     "balance": "tsx packages/spec-controller/src/cli.ts",
     "balance:self": "tsx tests/checks/balanceSelfCli.ts",
     "lint:feature-codes": "tsx tests/checks/lintFeatureCodesCli.ts",
@@ -59,8 +58,7 @@
       {
         "scn": "SCN-FIT-010",
         "characteristic": "traceability",
-        "command": "pnpm lint:scn-subissues",
-        "notExaminedExit": 3
+        "command": "pnpm lint:scn-subissues"
       },
       { "scn": "SCN-FIT-011", "characteristic": "typecheck", "command": "pnpm typecheck" },
       {

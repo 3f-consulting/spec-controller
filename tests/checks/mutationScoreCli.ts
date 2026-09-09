@@ -28,8 +28,8 @@
  * not measuring the tree the run reading it is judging — that gap is the whole reason the number
  * has to cross a run boundary — so what it leaves behind is a RECORD of what it measured, at
  * `SWEEP_RECORD_PATH`, and a push borrows it there. Under a CONVERTED mutation check the credit is
- * posted by the fitness pass from the number this record holds, so a row written straight into the
- * credit stream would be a second credit for one Evidence Obligation. The shape of the file and
+ * posted by the row's own command from the number this record holds, so a row written straight into
+ * the credit stream would be a second credit for one Evidence Obligation. The shape of the file and
  * every rule about writing into it are unchanged; only which question it answers is.
  *
  * IT READS THE RECORD BEFORE IT WRITES ONE (@SCN-CIP-011) and posts BESIDE what it finds rather

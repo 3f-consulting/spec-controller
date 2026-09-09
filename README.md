@@ -68,16 +68,26 @@ So a stepped scenario tagged `@unit @integration` names two obligations; a fitne
 
 **Every credit posts the same way**: the evidence cites its scenario's `@SCN`. A behavioural test cites the stepped scenario it exercises; a fitness check cites the scenario whose row named it. One rule, one direction — a check running uncited posts to the suspense scenario and is surfaced, never dropped.
 
-### Your pipeline, for checks, is two lines — and the order is load-bearing
+### Your pipeline keeps every check exactly where it already is
 
 ```yaml
-- run: pnpm cucumber            # the behavioural pass — @unit / @integration / @e2e / @performance
-- run: pnpm cucumber:fitness    # the fitness pass — @fitness, and nothing else
+- run: eslint
+  id: SCN-FIT-001
+  if: always()
+- run: pnpm typecheck
+  id: SCN-FIT-011
+  if: always()
+- if: always()
+  run: echo '${{ toJSON(steps) }}' > ci-steps.json
 ```
 
-**The fitness pass runs LAST.** Several checks are readers: they print a number an *earlier* step left behind — a suite's own run time, last night's mutation sweep. Put the fitness pass first and you get absent artefacts and a wall of unsettled rows while following this page exactly. It is the one part of the design that is easy to get wrong by accident.
+**Your checks are already commands in your pipeline, and a run of that pipeline is already a record of what each one did — written by your CI provider, for its own purposes.** So `spec-controller` reads that record, and runs nothing itself. What you write is an `id:` per check step — the `@SCN` of the scenario that names it, a **citation** and never a declaration — and one dump step per job.
 
-**And nothing else goes in the pipeline.** A converted check stops being a CI step — there is no `run:` line to find and no script name to discover. The proof that it ran is *its scenario appearing in the pass's report*, which is stronger evidence than a workflow file mentioning it, and it is the enumeration a fitness check never had.
+**The `if: always()` is on every check step, not just the dump.** Without it the first red aborts the job and every later check is skipped, so the ledger reports one failure and N never-rans — a worse account from a correct mechanism.
+
+**The record must carry `outcome`, never `conclusion`.** `conclusion` is post-`continue-on-error`: a step marked with it that actually failed reports `success` there. `outcome` is the step's real result, and `toJSON(steps)` is the only place `outcome` and `id` travel together.
+
+**Nothing moves out of your pipeline.** Your steps keep their names, their order, their matrix, their caching, and their language — the citation is an attribute, and it works over `ruff` as well as over `eslint`.
 
 `spec-controller` reconciles those obligations against the evidence that actually ran, and catches the **watermelon**: a check that is green but enforces nothing.
 

@@ -532,32 +532,62 @@ Then(
     // for: the gate did not move and nothing replaced it, because its SUBJECT went. It held the
     // words a manifest names to the portfolio roster, and under the collapse a characteristic is
     // a reporting label on a configured row rather than a token the parser reads, so there is no
-    // longer a mint to certify. That leaves this ladder with no `lint:` step at all: every static
-    // check in this tree now runs behind `cucumber:fitness`.
+    // longer a mint to certify. That left this ladder with no `lint:` step at all: every static
+    // check in this tree ran behind `cucumber:fitness`.
+    //
+    // AND THEN SHARPLY UPWARD — 5 TO 12 — WHEN 3F-3271 GAVE EACH FITNESS ROW ITS OWN CI STEP. This
+    // is the upward direction again, and it is the largest single move this line has recorded: the
+    // twelve rows came out of the one `cucumber:fitness` step and became twelve steps, so the five
+    // `lint:` checks, `typecheck` and `doc:paths` are gates once more. Seven gates returned to
+    // `pnpm verify` that the conversion into the pass had taken out of it, and that is the whole
+    // reason those steps invoke the package.json handle rather than the CLI behind it — spelt the
+    // other way they would run the same checks in CI and this number would not have moved, which
+    // is the silently-narrowing green-check @SCN-LAD-001..006 exist to make impossible.
+    //
+    // THE THREE REMAINING ROWS ARE `pnpm --silent` INVOCATIONS AND ARE NOT GATES, WHICH IS THE
+    // DERIVATION BEING EXACT RATHER THAN A GAP. `commandInvokesScript` matches `pnpm <script>` and
+    // `pnpm run <script>` on an exact token, and `--silent` sits where the script name would be.
+    // `mutation:score` and the two `timing:score` readers each read an artefact an earlier step
+    // wrote, so a local ladder running them out of that context would red on a missing record
+    // rather than on the code.
+    //
+    // AND DOWNWARD BY ONE — 12 TO 11 — WHEN 3F-3272 DELETED THE CUCUMBER FITNESS PASS. This is
+    // 3F-3099's third kind again, and the clearest instance of it this line has recorded: the gate
+    // did not move and nothing replaced it, because what it ran had ALREADY moved. 3F-3271 gave
+    // each of the twelve rows its own step one commit earlier, so for the length of that slice
+    // every check ran twice and this number counted both routes; deleting the pass leaves the
+    // twelve steps standing and takes the pass's own gate off the ladder. Nothing stopped being
+    // checked, which is exactly the reading only an edit to this line can distinguish from a gate
+    // that went quiet.
     assert.equal(
       expected.length,
-      5,
-      `the real ci.yml must yield 5 local gates; it yielded ${expected.length}: ${expected.join(", ")}`,
+      11,
+      `the real ci.yml must yield 11 local gates; it yielded ${expected.length}: ${expected.join(", ")}`,
     );
 
     assert.deepEqual(listedGates(listing.stdout), expected, "--list must be the derived ladder");
   },
 );
 
-Then("cucumber:fitness is one of them", function () {
-  // THE NAMED GATE, AND WHICH GATE IS WORTH NAMING MOVED WITH THE FITNESS MIGRATION (3F-3165).
-  // It was `lint:anemic-domain`, the gate 3F-2444 was filed for: it had landed with a CI step and
-  // no matching line in the hand-maintained local list, which is how `pnpm verify` came to be a
-  // proper subset of CI. That check is now a `specController.fitnessChecks` row and runs inside
-  // the fitness pass, so it is no longer a CI step and cannot be a gate.
+Then("lint:anemic-domain is one of them", function () {
+  // THE NAMED GATE, AND IT IS BACK TO THE ONE 3F-2444 WAS FILED FOR (3F-3272). `lint:anemic-domain`
+  // landed with a CI step and no matching line in the hand-maintained local list, which is how
+  // `pnpm verify` came to be a proper subset of CI — this scenario exists because of that check.
   //
-  // `cucumber:fitness` inherits the job, and inherits it with interest: every converted check runs
-  // behind this one gate, so a local ladder that lost it would drop the whole static axis at once
-  // — the same silent narrowing 3F-2444 found, over far more than one check. Named explicitly
-  // rather than left to the equality above, so there is an assertion pointing at it.
+  // IT STOPPED BEING NAMEABLE FOR TWO SLICES AND IS AGAIN. The check became a
+  // `specController.fitnessChecks` row running inside the cucumber fitness pass, so it was no
+  // longer a CI step and could not be a gate; `cucumber:fitness` held the name meanwhile, because
+  // every converted check ran behind that one gate and a ladder that lost it would drop the whole
+  // static axis at once. 3F-3271 gave the row its own step — `id: SCN-FIT-009` — and 3F-3272
+  // deleted the pass, so the founding case is a gate in its own right once more and the gate that
+  // stood in for it does not exist.
+  //
+  // NAMED EXPLICITLY RATHER THAN LEFT TO THE EQUALITY ABOVE, so there is an assertion pointing at
+  // one gate by name. Both sides of that equality are derived from the same ci.yml; this one is
+  // not, and it is what would still red if the derivation and the workflow agreed on nothing.
   assert.ok(
-    listedGates(listing.stdout).includes("cucumber:fitness"),
-    `cucumber:fitness must be gated locally. The ladder was:\n${listing.stdout}`,
+    listedGates(listing.stdout).includes("lint:anemic-domain"),
+    `lint:anemic-domain must be gated locally. The ladder was:\n${listing.stdout}`,
   );
 });
 

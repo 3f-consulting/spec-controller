@@ -9,7 +9,7 @@
  * target's business. This repository's sweep costs 8-12 minutes against a ~2-minute ladder and is
  * nightly for that reason, which predates the conversion, so what its row names is a cheap reader
  * over the record the sweep already left. A target that types a sweep into its row gets the sweep
- * inside its fitness pass, which is exactly what it asked for; this one did not ask for that.
+ * as its own CI step, which is exactly what it asked for; this one did not ask for that.
  *
  * THE NUMBER IS THE WHOLE OF STDOUT, AND THAT IS A CONTRACT RATHER THAN A HABIT (3F-3138's Ruling
  * 2). `measuredNumberOf` reads the trimmed WHOLE of what a measured row's command printed, never
@@ -75,9 +75,11 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 import {
+  MEASUREMENT_ARTEFACT_PATH,
   SWEEP_RECORD_PATH,
   measurementAnswering,
   measurementsOf,
+  postMeasurement,
   resolveEvidenceRoot,
 } from "./measurementArtefact.js";
 
@@ -202,6 +204,21 @@ if (row === undefined) {
   process.exit(1);
 }
 
-// THE NUMBER, ALONE. Nothing else may reach this stream: the step definition reads the whole of it
-// as the measurement.
+// AND THE NUMBER IS WRITTEN INTO THIS RUN'S CREDIT STREAM, NOT ONLY PRINTED (@SCN-LNT-024). The
+// command a measured row names is what writes its number down: a CI step's outcome is an exit code
+// and an exit code cannot carry a measurement, so the step says the check RAN (@SCN-LNT-027) and
+// the number arrives on the measurement artefact, already citing both terms. Printing alone left
+// the writing to the pass that spawned this command, and there is no pass — the consumer's pipeline
+// runs this as its own step, and `balance` reads what it wrote.
+//
+// BESIDE WHAT THE RUN HAS ALREADY MEASURED, never over it, which is the artefact's own keying rule
+// and is why the write goes through its one door.
+postMeasurement(path.join(resolveEvidenceRoot(asked.namedRoot), MEASUREMENT_ARTEFACT_PATH), {
+  scnId: asked.scnId,
+  checkTag: asked.checkTag,
+  measured: row.measured,
+});
+
+// THE NUMBER, ALONE ON STDOUT. Nothing else may reach this stream: it is what a human reading the
+// step's log sees, and what a consumer piping this command anywhere else takes as its answer.
 console.log(String(row.measured));

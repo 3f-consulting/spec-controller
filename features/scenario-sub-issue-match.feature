@@ -120,9 +120,9 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
     bare @traceability tag, joined back to the running script handle through
     specController.checkRegistry and then through the corpus — two hops, because a
     DISCOVERED check is a script handle and a handle does not know what it is for. The
-    check is now a row of specController.fitnessChecks naming SCN-FIT-010; the fitness pass
-    runs the row's command, and the scenario appearing in that pass's report IS
-    the credit, carrying its own @SCN on its own tag line. Nothing is resolved onto it.
+    check is now a row of specController.fitnessChecks naming SCN-FIT-010; a CI step carrying that
+    code as its id: runs the row's command, and that step's entry in the run's own record IS the
+    credit, keyed by the code it carried. Nothing is resolved onto it.
 
     WHAT THIS ASSERTS THAT SSM-001..005 DO NOT. The siblings above pin the gate's DECISION
     over fixtures — what it passes and what it reds. This one pins the check's own

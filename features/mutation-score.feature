@@ -275,9 +275,9 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     threshold had nothing to exemplify, so the measured run itself was the whole observation. Now
     the tag names only the AXIS and the characteristic has moved into a configured row of
     `specController.fitnessChecks`. The sentence its scenario carries is not an example of a
-    threshold; it is the pass running the row's command and posting what it printed, which is the
-    evidence this scenario always rested on, said out loud in the report rather than arriving from
-    a wrapper nothing enumerated.
+    threshold; the scenario is stepless, and its evidence is the row's command writing its number
+    into the run's record — the evidence this scenario always rested on, arriving from a step the
+    run's own record enumerates rather than from a wrapper nothing enumerated.
 
     ITS SCENARIO IS NO LONGER WRITTEN HERE — IT LIVES IN `features/fitness-checks.feature` (3F-3164,
     authored there rather than emitted since 3F-3244). What sat under this Rule now sits beside every
@@ -319,11 +319,11 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     running produces, now said in two places rather than one.
 
     THE RECORD IS NOT THE CREDIT STREAM, AND KEEPING THEM APART IS WHAT THE CONVERSION FORCED. A
-    borrowed number is not a credit this run produced; under conversion the fitness pass posts the
-    credit, so a borrowed row sitting in `runs/self-balance/measurements.json` would be a second
+    borrowed number is not a credit this run produced; under conversion the row's own command posts
+    the credit, so a borrowed row sitting in `runs/self-balance/measurements.json` would be a second
     credit for one Evidence Obligation. The sweep writes `runs/mutation/measurements.json`, the
-    borrow places it there, and the one credit crosses into the run's own stream by being measured
-    by this scenario.
+    borrow places it there, and the one credit crosses into the run's own stream when the row's
+    step reads it and writes the number down.
 
   Rule: the measurement a push borrows is the newest sweep's, whatever verdict that sweep reached
 
@@ -521,9 +521,8 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     for the schedule and the rename was not atomic.
 
     SO THE ROW STATES WHICH CODE ITS MEASUREMENT MAY STILL ARRIVE UNDER, AND A ROW THAT STATES
-    NOTHING KEEPS THE ONE-CODE READING. This is `notExaminedExit`'s shape and it is that shape for
-    the same reason: what a producer stamps is a fact about the producer, so the row the producer
-    answers is where it is written down. Opt-in, per row, never inferred — a row silent on the point
+    NOTHING KEEPS THE ONE-CODE READING. What a producer stamps is a fact about the producer, so the
+    row the producer answers is where it is written down. Opt-in, per row, never inferred — a row silent on the point
     accepts only its own code, which is what every row had before any row could ask, so nothing
     already written changes meaning by standing still.
 

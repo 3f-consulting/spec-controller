@@ -129,7 +129,7 @@ export function fitnessAxisRefusal(fall: FitnessAxisFall, recordFile: string): s
     `holds ${fall.found}.\n` +
     "This is a cardinality belt over the rows, and it says the fall in one line naming both " +
     "figures. The scenarios in features/fitness-checks.feature are authored beside these rows " +
-    "rather than emitted from them, so an emptied manifest also reds the fitness pass and is " +
+    "rather than emitted from them, so an emptied manifest leaves every scenario standing and is " +
     "named scenario by scenario on the ledger; the figure is banked in a file the edit cannot " +
     "reach so that the count itself still speaks, and it is read before the reconciliation " +
     "rather than inside it — a ledger over an emptied axis reconciles a population that " +

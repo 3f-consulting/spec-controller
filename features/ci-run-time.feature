@@ -62,7 +62,7 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
   and the ceilings they are held to are on their rows rather than in a second manifest key. The
   ORDER was always the point and still is: raising an obligation before anything measured it would
   leave a permanently unsettleable row, so the wrapper writes a timings record when the suite runs
-  and the fitness pass reads it back afterwards.
+  and each row's own step reads it back afterwards, writing the number into the run's credit stream.
 
   Rule: a fitness scenario tagged with a measured check raises an Evidence Obligation carrying its threshold, steps or none
 

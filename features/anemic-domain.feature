@@ -36,8 +36,8 @@ Feature: A concept's behaviour never drains into a procedural layer beside it
   watermelon hides — and a bare `@tech-conformance` tag on a stepless scenario below was what kept
   the run out of the suspense row. The check converted as `@SCN-FIT-009` and its CI step left the
   workflow, so nothing discovers it any more: `pnpm lint:anemic-domain` is a command a
-  `specController.fitnessChecks` row states, the fitness pass runs it, and the credit cites the
-  `@SCN` the row named. Observed AND required is still the balanced state; what changed is that
+  `specController.fitnessChecks` row states, a CI step whose `id:` is that row's code runs it, and
+  the credit cites the `@SCN` the step carried. Observed AND required is still the balanced state; what changed is that
   both halves now come from one row instead of from a name and a tag agreeing.
   (The sibling
   purity checks — @DPG, @EPG — deliberately chose the opposite: @unit-only, enforced by

@@ -14,6 +14,7 @@ import { registeredCheckTags, type CheckRegistry } from "../domain/checkRegistry
 import type { FitnessCheckIndex } from "../domain/fitnessChecks.js";
 import { measuredCheckTags, type ThresholdIndex } from "../domain/thresholds.js";
 import {
+  citationOfCitedRow,
   citationOfScript,
   fitnessCitations,
   type FitnessCitations,
@@ -79,6 +80,19 @@ export interface TargetCorpus {
    */
   citedScn: (script: string) => ScriptCitation | null;
   /**
+   * What a run whose CI step STATES a code cites — the configured row that code names, read for
+   * the characteristic a CI step cannot state (@SCN-LNT-031).
+   *
+   * IT BELONGS BESIDE `citedScn` FOR `citedScn`'S OWN REASON. Both answer "which row does this run
+   * post to", from the ONE reading of the target's manifest the Evidence Obligations were raised
+   * from — so a credit can never cite a row the debit side never read, whichever route it took.
+   * Composed here rather than at the call site for that guarantee, and for no other.
+   *
+   * NO CODE IS THE SAME ANSWER AS AN UNANSWERED ONE — `null`, the run cites nothing, and it posts
+   * to suspense. That is the state a consumer starts in, and this seam does not narrow it.
+   */
+  citedRow: (citedScn: string | undefined) => ScriptCitation | null;
+  /**
    * The scenarios ON the fitness axis that no configured row NAMES (@SCN-LNT-020) — the corpus's
    * half-converted checks, in corpus order.
    *
@@ -105,9 +119,14 @@ export function readTargetCorpus(
   thresholds: ThresholdIndex,
   /**
    * The target's CONFIGURED ROWS (@SCN-LNT-018) — the CONVERTED route's half of the debit side. It
-   * reaches `parseScenarios` and nothing else here: a converted check is never discovered as a
-   * script handle, so it has no business in `fitnessCitations`, which answers "which scenario does
-   * a run of this HANDLE cite". Its credit arrives already citing, off the scenario's own tag line.
+   * reaches `parseScenarios`, which raises the Evidence Obligations, and `citedRow`, which reads a
+   * row back for a run whose CI step states its code (@SCN-LNT-031) — the same rows on both sides,
+   * which is the whole reason this reading is composed here.
+   *
+   * IT STILL HAS NO BUSINESS IN `fitnessCitations`'S HOPS, which answer "which scenario does a run
+   * of this HANDLE cite": a converted check is never discovered as a script handle, and a credit
+   * arriving off a scenario's own tag line is already citing. `citedRow` is the other direction —
+   * a code the CONSUMER wrote, resolved against the rows rather than against the corpus.
    */
   fitnessChecks: FitnessCheckIndex
 ): TargetCorpus {
@@ -131,6 +150,7 @@ export function readTargetCorpus(
     scenarios,
     checkHandles: observedCheckHandles(registry, citations),
     citedScn: (script) => citationOfScript(script, registry, citations),
+    citedRow: (citedScn) => citationOfCitedRow(citedScn, fitnessChecks),
     unconfiguredFitnessScenarios: unconfiguredFitnessScenarios(tagged, fitnessChecks),
   };
 }

@@ -29,11 +29,11 @@
  *   - `packages/core/src` is shut by @SCN-EPG-001's `io-import` arm. The fitness protocol imports
  *     `node:fs` and `node:child_process`; the engine may import neither.
  *   - `packages/spec-controller/src` is shut by @SCN-API-007. That package PUBLISHES, so every module
- *     under its `src` travels in the tarball — and `fitnessCommand.ts`, `fitnessMeasurement.ts` and
- *     `measurementArtefact.ts` each import `@3f-consulting/spec-controller-core/internal`, which
- *     3F-2837 un-published. The move was MADE at 3F-3198 rather than reasoned about: all three
- *     reported as modules an installed consumer meets as ERR_PACKAGE_PATH_NOT_EXPORTED on first load,
- *     and the move was reverted.
+ *     under its `src` travels in the tarball — and `measurementArtefact.ts` imports
+ *     `@3f-consulting/spec-controller-core/internal`, which 3F-2837 un-published. The move was MADE
+ *     at 3F-3198 rather than reasoned about, over three modules of which this is the one still
+ *     standing: each reported as a module an installed consumer meets as
+ *     ERR_PACKAGE_PATH_NOT_EXPORTED on first load, and the move was reverted.
  *
  * SO THE BOUNDARY IS THE SECOND DISCRIMINATOR, AND IT IS THE STRONGER OF THE TWO. A module that can
  * only be written against core's UNPUBLISHED surface is not a module the product ships. `./internal`

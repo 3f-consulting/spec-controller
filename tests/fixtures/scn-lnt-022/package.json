@@ -1,8 +1,8 @@
 {
-  "name": "converted-measured-target-repo-fixture",
+  "name": "measured-check-step-fitness-target-repo-fixture",
   "private": true,
   "scripts": {
-    "test": "vitest run"
+    "build": "tsc"
   },
   "specController": {
     "fitnessChecks": [

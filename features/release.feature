@@ -143,8 +143,8 @@ Feature: A release verifies the artefact it publishes, in the tree a stranger in
     score, the duration of the observer. Not one of them says the tarball works. Excluding the one
     while keeping the other drew the line in two places in the same file, and the second place cost
     every real release: `SCN-FIT-002` prints a number a SCHEDULED sweep leaves behind, `ci.yml`
-    fetches that record and the release had no equivalent, so the fitness pass reds on a cold runner
-    and the job dies before it packs anything (measured, 3F-3249). One rule covers both exclusions:
+    fetches that record and the release had no equivalent, so that row's own step reds on a cold
+    runner and the job dies before it packs anything (measured, 3F-3249). One rule covers both exclusions:
     THE RELEASE PATH CONSULTS NOTHING THAT IS ABOUT THIS REPOSITORY RATHER THAN ABOUT THE ARTEFACT.
 
     THE ABSENCE ARM IS WORTH LITTLE ALONE, AND IT IS THE ARM THAT READS MOST NATURALLY. "No gate of

@@ -46,7 +46,16 @@ const REPOSITORY_ROOT = resolveRepositoryRoot();
  *
  * Bump it when a core module is legitimately added or removed; the count moving is the fact this
  * constant exists to make loud, and `git log -S CORE_SRC_FILE_COUNT` carries which slice moved it
- * each time it did. What it must never be is loosened into a floor: the floor is already asserted
+ * each time it did. A removal is the shape a double-entry ledger is blind to — nothing fails, a
+ * row simply stops being counted — which is the direction this pin exists for.
+ *
+ * IT DID NOT MOVE AT 3F-3252, AND THE REASON IS WORTH THE LINE. `parse/convertedFitnessCredits.ts`
+ * left with the cucumber fitness pass it read, and `parse/ciStepRecord.ts` arrived to replace it:
+ * one out, one in, so the count is 38 on both sides. THAT IS THIS PIN'S OWN BLIND SPOT — a
+ * simultaneous add and removal nets to zero and reads as a tree that did not change. An exact pin
+ * catches a bare removal, which a floor cannot; it does not catch a swap, and nothing here does.
+ *
+ * What it must never be is loosened into a floor: the floor is already asserted
  * below, and it is measurably blind to the fault this catches.
  */
 const CORE_SRC_FILE_COUNT = 38;

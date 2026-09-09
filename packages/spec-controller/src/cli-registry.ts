@@ -87,10 +87,10 @@ const balanceFlags: FlagSpec[] = [
       "A measurement report — the number each measured check posted, evidence for the measured fitness checks.",
   },
   {
-    name: "--fitness",
-    arg: "<report.json>",
+    name: "--ci-steps",
+    arg: "<record.json>",
     description:
-      "The FITNESS pass's Cucumber report — a second cucumber call's own document, evidence for the converted fitness checks. Omit it if you have converted none.",
+      "The CI run's own record of what each of its steps did — your pipeline's `toJSON(steps)` dump, evidence for the converted fitness checks. Omit it if you have converted none.",
   },
   {
     name: "--target",

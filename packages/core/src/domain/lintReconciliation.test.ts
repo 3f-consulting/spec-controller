@@ -41,7 +41,7 @@ const CHECK_TAG = "feature-codes";
  *
  * THE REAL TREE STOPPED BEING AN INSTANCE, WHICH IS THE MIGRATION WORKING (3F-3165, under 3F-3139).
  * A converted fitness check is not a CI `run:` step at all: its command lives on a
- * `specController.fitnessChecks` row and the fitness cucumber pass invokes it, so this repository's
+ * `specController.fitnessChecks` row and its own CI step invokes it, so this repository's
  * workflow now names no discovered static check for these arms to observe. 3F-3153 measured that
  * coming — "under the full migration no characteristic retains two wired handles at all… the
  * durable answer is a planted tree rather than the real one" — and left the move to 3F-3139. This

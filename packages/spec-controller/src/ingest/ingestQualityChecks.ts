@@ -179,15 +179,18 @@ export interface ReconcileOptions {
    */
   measurements?: string;
   /**
-   * The FITNESS pass's Cucumber report (@SCN-LNT-021, 3F-3145) — the credit side of every
-   * CONVERTED fitness check, written by a second cucumber call over its own profile.
+   * The CI RUN'S OWN RECORD of what each of its steps did (@SCN-LNT-021, @SCN-LNT-028) — the credit
+   * side of every CONVERTED fitness check, written by the consumer's own pipeline and by neither
+   * party to this reconciliation.
    *
-   * KEPT APART FROM `cucumber` BECAUSE THE TWO DOCUMENTS MEAN OPPOSITE THINGS. The behavioural
-   * pass's scenarios are runtime results levelled by a tier tag; this pass's are static-check
-   * credits named by a configured row. Optional like the other result files: a target that has
-   * converted nothing emits none, and the converted rows it would have answered read `missing`.
+   * KEPT APART FROM `ci` BECAUSE THE TWO DOCUMENTS ANSWER DIFFERENT QUESTIONS. The workflow FILE
+   * says a check is wired into this pipeline and which row its step cites — a fact about a
+   * repository, true between runs. This is one RUN's record: did it run this time, and what did it
+   * find. Optional like the other result files: a consumer whose pipeline dumps no record, or a
+   * local run with no pipeline at all, hands none, and the converted rows it would have answered
+   * read `missing`.
    */
-  fitness?: string;
+  ciSteps?: string;
 }
 
 /** Read + JSON-parse a file if present, else return undefined. */
@@ -420,10 +423,17 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
     packageJson,
     ciSources: ciSourcePathsOf(ciPath).map((path) => readFileSync(path, "utf8")),
     measurements: readJsonIfPresent<{ measurements?: unknown }>(opts.measurements) ?? {},
-    // The CONVERTED checks' credit stream, read at this edge like every other report. Absent it
-    // is undefined rather than empty: the engine's parameter is optional, and "no report" and
-    // "a report holding nothing" are the same reading for it.
-    fitnessReport: readJsonIfPresent<CucumberJsonReport>(opts.fitness),
+    // The CONVERTED checks' credit stream, read at this edge like every other report. Absent it is
+    // undefined rather than empty, and that distinction reaches the reader (@SCN-LNT-027): "no
+    // record" is a run nobody recorded, "a record holding nothing" is a run that recorded none of
+    // these steps, and those are opposite facts.
+    // STRUCTURALLY, NOT BY NAME, for the reason `measurements` above is read that way: this module
+    // travels in the tarball and reaches core through the PUBLIC barrel alone (3F-3086), and
+    // `CiStepRecord` is not on it. The shape is the document's, which is the consumer's, so what is
+    // written here is what the file holds rather than a contract owed to anyone.
+    ciStepRecord: readJsonIfPresent<Record<string, { outcome?: string; conclusion?: string }>>(
+      opts.ciSteps
+    ),
     runtimeObservations: parseRuntimeObservations(opts, root),
     // The three things the engine's resolvers cannot hold, and each for its own reason: the starter
     // deferral set and the guard script prefixes are the application layer's own policy, and the

@@ -1,0 +1,13 @@
+{
+  "name": "unannotated-pipeline-fitness-target-repo-fixture",
+  "private": true,
+  "scripts": {
+    "lint:alpha": "eslint",
+    "lint:beta": "scn-subissues",
+    "typecheck": "tsc --noEmit",
+    "build": "tsup"
+  },
+  "specController": {
+    "staticChecks": ["typecheck"]
+  }
+}

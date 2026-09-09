@@ -745,7 +745,7 @@ Then("every gate the release states passes the run those two refused, so the rel
 
 Then("a release gating on either of them packs nothing at all", function () {
   const reconciling = gatingRelease("Reconcile this repository", "pnpm balance:self");
-  const measuring = gatingRelease("Cucumber (fitness)", "pnpm cucumber:fitness");
+  const measuring = gatingRelease("Verify", "pnpm verify");
 
   assert.deepEqual(
     [reconciling, measuring].map((stated) =>

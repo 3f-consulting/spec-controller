@@ -1,11 +1,11 @@
 /**
- * The complexity + module-size static check (@SCN-CPX-001, 3F-2286) — run by the fitness pass.
+ * The complexity + module-size static check (@SCN-CPX-001, 3F-2286) — a CI step of its own.
  *
  * IT HAS NO SCRIPT NAME OF ITS OWN SINCE 3F-3151. `pnpm lint:complexity` was deleted when
  * @SCN-FIT-001 converted: the check is a row of `specController.fitnessChecks` naming that
  * scenario, the characteristic `complexity`, and the command `eslint` — which is this config.
- * `pnpm cucumber:fitness` runs it, and `pnpm verify` reaches it there. To measure the tree by
- * hand, `pnpm exec eslint`.
+ * `ci.yml` runs it as the step carrying `id: SCN-FIT-001`. To measure the tree by hand,
+ * `pnpm exec eslint`.
  *
  * Mechanism over honour: small-modules, entity-owns-its-behaviour and DRY are honour rules until
  * something reds. This is the something. THREE rules only — `complexity`, `max-lines`,

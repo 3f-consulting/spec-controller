@@ -1,0 +1,12 @@
+{
+  "SCN-CVT-001": {
+    "outputs": {},
+    "outcome": "failure",
+    "conclusion": "success"
+  },
+  "dump-the-step-record": {
+    "outputs": {},
+    "outcome": "success",
+    "conclusion": "success"
+  }
+}

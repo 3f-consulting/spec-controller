@@ -720,7 +720,7 @@ Feature: The report renders the ledger as sectioned facts
     What was this verdict computed from (@SCN-RPT-027, 3F-3155). The canonical input
     list the Inputs block renders carried five flags, and neither the measurement stream
     nor the fitness stream was among them — so a report whose every converted static-check
-    row was settled from a fitness pass did not admit reading one. Both streams are
+    row was settled from that stream did not admit reading it. Both streams are
     OPTIONAL by design, passed only where the file exists, so their absence from the block
     was genuinely ambiguous between "the run never got it" and "the run got it and the
     block does not say so" — the two readings the fitness characteristic exists to keep apart.
@@ -751,7 +751,7 @@ Feature: The report renders the ledger as sectioned facts
     Scenario: a canonical input the run did not receive is named as absent rather than omitted, so silence is never the answer
       Silence is never the answer (@SCN-RPT-028, 3F-3155). @SCN-RPT-027 removed the "the run
       got it and the block does not say so" reading by naming every stream a run received. It
-      did NOT answer "was the fitness pass consulted?" for a reader who does not already hold
+      did NOT answer "was the fitness stream consulted?" for a reader who does not already hold
       the canonical list in their head — absence from a list is only informative to someone
       who knows what the list could have contained. So the block names the canonical inputs
       with no value too, on a line of their own.

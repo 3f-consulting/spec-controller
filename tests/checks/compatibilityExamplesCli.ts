@@ -9,17 +9,18 @@
  * `guard:` name invoked by a CI `run:` step is DISCOVERED as a running static check, which would
  * put this back on the axis a converted check has left and report it as one nobody cited. A check
  * born converted has no history to preserve, so it takes a name discovery never looks at, and gets
- * no CI step of its own — the fitness pass runs it.
+ * a CI step whose `id:` is the code of the row that names it, which is a citation and not a
+ * handle.
  *
  * ═══ TWO EXIT CODES, AND THERE IS NO THIRD ONE TO ADD ═══
  *
- * `0` clean, `1` violations. This row states no `notExaminedExit`, and the reason is written here
- * rather than left for a later reader to infer from its absence: that field is for a command whose
- * subject is legitimately missing in some runs — `lint:scn-subissues` run outside a pull request —
- * where exiting 0 is a green nothing earned and exiting 1 reds honest work for the circumstances it
- * ran in. `doc/compatibility.md` is in the tree on every run. Its absence is a fault, not the
- * ordinary state, so it exits `1` like any other violation and the third state would be answering a
- * question nobody here can ask.
+ * `0` clean, `1` violations. `doc/compatibility.md` is in the tree on every run, so its absence is
+ * a fault rather than the ordinary state and exits `1` like any other violation.
+ *
+ * A COMMAND WHOSE SUBJECT IS SOMETIMES LEGITIMATELY ABSENT SAYS SO IN ITS OWN CI `run:` LINE —
+ * `cmd || [ $? -eq 3 ]` — where it becomes an honest success the runner records (3F-3252). The
+ * ledger never learns about endings: a step record carries a status and no exit code, so a row that
+ * DECLARED one could only be read for whether it was named, and would forgive every skip.
  *
  * Parent: 3F-3154.
  */

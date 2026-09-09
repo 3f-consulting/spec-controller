@@ -168,8 +168,8 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
     its name carries an observed prefix, so a name outside that set would run in CI while being
     invisible to spec-controller's own ledger — and the bare `@complexity` tag on a stepless
     scenario at the foot of this file was what kept the run out of the suspense row. Neither
-    holds now: the row states the `@SCN` and the characteristic outright, the fitness pass runs
-    the command, and the credit arrives citing the scenario's own tag line. The prefix survives as
+    holds now: the row states the `@SCN` and the characteristic outright, a CI step carrying that
+    code as its `id:` runs the command, and the credit arrives citing the code that step carried. The prefix survives as
     a name a reader recognises, not as a hook anything discovers.
 
     MEASURED WITH eslint, NEVER REIMPLEMENTED. The reconciliation runs the `ESLint` API at

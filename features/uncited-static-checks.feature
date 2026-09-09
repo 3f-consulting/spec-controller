@@ -55,7 +55,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
   What is NOT vacuous over this tree is the number beside it. "11 static check(s) run" counts the
   running lint credits the CONVERTED rows post — eleven of the fourteen rows, the other three
   being measured and so not static checks at all — so the running count is answered by the
-  fitness pass and only the uncited count is answered by discovery. Reading both as products of
+  converted rows' own CI steps and only the uncited count is answered by discovery. Reading both as products of
   the same mechanism is the misreading this paragraph forecloses.
 
   The unit arm proves runningStaticChecks + countStaticEvidenceObservationKinds + the render section

@@ -7,8 +7,8 @@ Feature: a converted target's fitness corpus, carrying one of the two scenarios 
 
   THE SECOND ROW'S SCENARIO IS NOT HERE, AND THAT IS THE FIXTURE'S WHOLE SUBJECT. The manifest
   names two checks and the corpus carries one, which is an emptied corpus in miniature: the
-  Evidence Obligation went with the scenario and the credit went with the pass, so before this rule
-  the second check appeared nowhere at all and the run balanced over it.
+  Evidence Obligation went with the scenario and the credit went with the step nothing recorded, so
+  before this rule the second check appeared nowhere at all and the run balanced over it.
 
   This file lives under tests/fixtures/ (NOT features/), so neither the feature-code registry
   check nor the scenario-to-sub-issue gate sees the CVT code — they scan features/*.feature only.

@@ -438,7 +438,15 @@ function reconcileStaticObligation(
   const checkTag = req.staticCheck!; // present by construction for a fitness evidence obligation.
   const obs = staticCheckObservationFor(scnId, checkTag, evidenceObservations);
   let outcome: Outcome;
-  if (obs && obs.enforcedOverRealSource) {
+  // THE CHECK'S OWN VERDICT FIRST, WHERE THE OBSERVATION CARRIED ONE (@SCN-LNT-028), and the order
+  // is the rule rather than a convenience. `exists` and `enforcedOverRealSource` say a check is
+  // there and is wired, which is exactly what a check that ran and found violations also is — so
+  // asked in the other order the wiring facts would answer `satisfied` over a red and the verdict
+  // would never be reached. It is the same arrangement `broken` takes one function up, for the
+  // same reason: the fact that reds is the one asked about first.
+  if (obs?.status === "failed") {
+    outcome = "failing";
+  } else if (obs && obs.enforcedOverRealSource) {
     outcome = "satisfied";
   } else if (obs?.exists) {
     outcome = "watermelon";

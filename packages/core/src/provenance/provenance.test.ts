@@ -62,13 +62,13 @@ describe("[SCN-RPT-001] provenance records input paths portably (relative to the
 });
 
 /**
- * The optional measurement and fitness streams on the canonical input list (@SCN-RPT-027,
+ * The optional measurement stream and the CI step record on the canonical input list (@SCN-RPT-027,
  * 3F-3155). The isolation half of the pair: the @integration arm in
  * tests/steps/report.steps.ts runs the REAL CLI and reads the persisted block back, while
  * these arms pin the projection's ORDER and its additive JSON shape, which a rendered line
  * cannot show.
  */
-describe("[SCN-RPT-027] the provenance projection names the optional measurement and fitness streams", () => {
+describe("[SCN-RPT-027] the provenance projection names the optional measurement stream and the CI step record", () => {
   const handed = (inputs: RunInputs): RunContext => ({
     target: "streams-target",
     inputs,
@@ -76,12 +76,12 @@ describe("[SCN-RPT-027] the provenance projection names the optional measurement
     sourceSha: "abc123",
   });
 
-  it("carries the measurement and fitness streams the run received onto the provenance object", () => {
+  it("carries the measurement stream and the CI step record the run received onto the provenance object", () => {
     const obj = provenanceObject(
-      handed({ features: "features", measurements: "measurements.json", fitness: "fitness.json" })
+      handed({ features: "features", measurements: "measurements.json", ciSteps: "ci-steps.json" })
     );
     expect(obj.inputs.measurements).toBe("measurements.json");
-    expect(obj.inputs.fitness).toBe("fitness.json");
+    expect(obj.inputs.ciSteps).toBe("ci-steps.json");
   });
 
   it("renders them APPENDED after --package-json, so no flag that was already listed moves", () => {
@@ -93,7 +93,7 @@ describe("[SCN-RPT-027] the provenance projection names the optional measurement
         ci: ".github/workflows",
         packageJson: "package.json",
         measurements: "measurements.json",
-        fitness: "fitness.json",
+        ciSteps: "ci-steps.json",
       })
     );
     expect(facts.inputs.map((i) => i.flag)).toEqual([
@@ -103,7 +103,7 @@ describe("[SCN-RPT-027] the provenance projection names the optional measurement
       "--ci",
       "--package-json",
       "--measurements",
-      "--fitness",
+      "--ci-steps",
     ]);
   });
 
@@ -123,7 +123,7 @@ describe("[SCN-RPT-027] the provenance projection names the optional measurement
   });
 
   it("names an EMPTY stream path no more than it names an absent one — the presence filter is unchanged", () => {
-    const facts = projectProvenance(handed({ features: "features", measurements: "  ", fitness: "" }));
+    const facts = projectProvenance(handed({ features: "features", measurements: "  ", ciSteps: "" }));
     expect(facts.inputs.map((i) => i.flag)).toEqual(["--features"]);
   });
 });
@@ -152,14 +152,14 @@ describe("[SCN-RPT-028] the provenance projection names the canonical inputs the
       "--cucumber",
       "--ci",
       "--package-json",
-      "--fitness",
+      "--ci-steps",
     ]);
   });
 
   it("counts an EMPTY value as absent — the same presence rule the Inputs list already applies", () => {
-    const facts = projectProvenance(handed({ features: "features", fitness: "   ", measurements: "" }));
+    const facts = projectProvenance(handed({ features: "features", ciSteps: "   ", measurements: "" }));
     expect(facts.inputs.map((i) => i.flag)).toEqual(["--features"]);
-    expect(facts.absentInputs).toContain("--fitness");
+    expect(facts.absentInputs).toContain("--ci-steps");
     expect(facts.absentInputs).toContain("--measurements");
   });
 
@@ -172,7 +172,7 @@ describe("[SCN-RPT-028] the provenance projection names the canonical inputs the
         ci: ".github/workflows",
         packageJson: "package.json",
         measurements: "measurements.json",
-        fitness: "fitness.json",
+        ciSteps: "ci-steps.json",
       })
     );
     expect(facts.absentInputs).toEqual([]);
@@ -188,7 +188,7 @@ describe("[SCN-RPT-028] the provenance projection names the canonical inputs the
       "--ci",
       "--package-json",
       "--measurements",
-      "--fitness",
+      "--ci-steps",
     ]);
   });
 

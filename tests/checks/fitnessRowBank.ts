@@ -22,7 +22,7 @@
  *
  * READ FROM THE MANIFEST, NEVER FROM THE CORPUS. Two authored sides are two sides to count, and
  * counting the one this bar is not held against would answer a different question from the one the
- * refusal states. And it is read through `fitnessChecksAt`, the
+ * refusal states. And it is narrowed through `fitnessChecksOf`, the
  * LEDGER'S own reader, rather than by counting a JSON array here: a second reading of "how many
  * rows are there" would eventually answer differently from the reading that raises the
  * obligations, and a bar held against a population nobody else counts is a bar about nothing.
@@ -51,9 +51,9 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { MalformedRecordError } from "../../packages/spec-controller/src/mutation-ratchet/record.js";
+import { fitnessChecksOf } from "@3f-consulting/spec-controller-core/internal";
 
-import { fitnessChecksAt } from "./fitnessCommand.js";
+import { MalformedRecordError } from "../../packages/spec-controller/src/mutation-ratchet/record.js";
 
 /**
  * The section of the record that holds the axis's banked size.
@@ -109,7 +109,23 @@ export class FitnessFallRefusedError extends Error {
  * and it is a fall, which is what the refusal below is for.
  */
 export function fitnessRowCountAt(root: string): number {
-  return fitnessChecksAt(root).size;
+  return fitnessChecksOf(fitnessRowsOf(root)).size;
+}
+
+/**
+ * The rows themselves, as the target's manifest spells them, before the ledger's reader narrows
+ * them.
+ *
+ * IT LIVES HERE BECAUSE THIS IS THE ONLY THING LEFT THAT READS THEM OFF DISK (3F-3272). It used to
+ * sit beside the pass that ran each row's command, read once so the pass and the ledger's reader
+ * could not be handed two different manifests; the pass is deleted and the ledger reads the
+ * target's manifest at its own edge, so the one remaining caller is this count.
+ */
+function fitnessRowsOf(root: string): unknown {
+  const manifest = JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as {
+    specController?: { fitnessChecks?: unknown };
+  };
+  return manifest.specController?.fitnessChecks;
 }
 
 /** How far a line is indented, in characters. */

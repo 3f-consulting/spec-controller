@@ -12,7 +12,7 @@
  * pass reds and the job dies before it packs anything (measured, 3F-3249).
  *
  * THE GATES ARE READ AS AN ORDERED LIST, NOT SEARCHED FOR TWO NAMES. A ledger cannot see an
- * unraised debit: a reading that only looked for `balance:self` and `cucumber:fitness` would be
+ * unraised debit: a reading that only looked for `balance:self` and `verify` would be
  * blind to the THIRD repository-scoped gate somebody adds next year, and equally blind to a release
  * that had quietly stopped gating on anything at all. So the caller compares the whole list, in
  * order, and a gate added, removed or renamed reds until somebody says which side of the line it is
@@ -67,11 +67,21 @@ export const ABOUT_THIS_REPOSITORY: readonly RepositoryScopedCommand[] = [
       "it cannot publish the cure for the disease",
   },
   {
-    script: "cucumber:fitness",
+    // THE SCRIPT MOVED WHEN THE PASS WENT (3F-3272), AND THE REASON DID NOT. It was
+    // `cucumber:fitness`, the one gate every converted check ran behind — so naming the axis was
+    // naming one script. The twelve rows are twelve CI steps now and there is no single handle for
+    // them, and one of those steps is `pnpm typecheck`, which the release runs DELIBERATELY because
+    // it is about the artefact. So what is named here is the local ladder that runs the whole of
+    // this repository's own bookkeeping in one command: it reaches `balance:self` and every fitness
+    // row, including the one that reads a scheduled sweep's record. Naming the retired script would
+    // have been a rule that can no longer match anything, and naming each row would be the roster
+    // this repository keeps deleting.
+    script: "verify",
     why:
-      "the fitness axis measures this repository — its complexity bars, its corpus traceability, " +
-      "its own mutation score, the duration of its observer — and one of its rows prints a number " +
-      "a scheduled sweep left behind, so a release gating on it is a release a lapsed cron can block",
+      "the local ladder runs the fitness axis and the self-reconciliation together, and that axis " +
+      "measures this repository — its complexity bars, its corpus traceability, its own mutation " +
+      "score, the duration of its observer — with one row printing a number a scheduled sweep left " +
+      "behind, so a release gating on it is a release a lapsed cron can block",
   },
 ];
 

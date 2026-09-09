@@ -34,13 +34,26 @@ permissions:
 # reaching" (3F-2957, @SCN-MUT-016). Splitting these steps into independent jobs buys N checkouts and
 # N installs to make a RED build more talkative, and buys nothing where a decision is actually made.
 #
-# THE `if:` EXCEPTION USED TO NEED STATING AND NO LONGER APPLIES (3F-3165). A step carrying a
-# condition is skipped on a green run too, so the premise had to be written exactly: green means
-# every UNCONDITIONAL step ran. The one conditional step was `Lint scenario sub-issue match`, and it
-# converted — it is @SCN-FIT-010 now, run by the fitness pass, and the case its condition existed
-# for (no pull request, so nothing to diff) is answered by the check itself with a third ending
-# rather than by skipping the step. EVERY STEP IN THIS JOB IS NOW UNCONDITIONAL, so the premise
-# needs no exception at all. Add an `if:` and this paragraph stops being true.
+# AND THE FITNESS CHECK STEPS BELOW CARRY `if: always()`, WHICH MAKES THE PREMISE STRONGER RATHER
+# THAN NEEDING AN EXCEPTION FROM IT (3F-3271, under 3F-3252). A condition is not one thing. The
+# condition that would falsify the paragraph above is a NARROWING one — a step that a green run
+# skips, so `success` stops meaning it ran, which is exactly what `Lint scenario sub-issue match`
+# used to do before 3F-3165 (it is @SCN-FIT-010 now, and the case its condition existed for is
+# answered by the check itself with a third ending, absorbed in that step's own `run:` line). `always()` is the opposite: the DEFAULT is
+# `if: success()`, so `always()` WIDENS — the step runs on a green build and also on a build that
+# has already redded. There is no run in which an `always()` step is skipped and an unconditional
+# one is not. `success` still means every step in this job ran, and now a red run means more of
+# them ran too.
+#
+# WHAT IS DELIBERATELY REVERSED IS THE COST TRADE, AND ONLY FOR THE CHECK STEPS. 3F-3042's trade
+# above — a red names one failure where it could have named four — stands everywhere else in this
+# file, and stands in `scripts/verify.sh` and `mutation.yml` unchanged. It is reversed for the
+# fitness check steps because those steps are INDEPENDENT of one another: eslint's red says nothing
+# about typecheck's, so stopping at the first tells a reader nothing they could have inferred. The
+# price is a slower red build; the ledger this file now feeds is the reason it is worth paying. A
+# fitness row with no entry in the run record is BROKEN evidence and stamps the run unsound, so
+# without `always()` one early red would report one `failing` and eleven `broken` — a worse account
+# from a correct mechanism.
 #
 # ONE ATTRIBUTE WOULD FALSIFY ALL OF THIS, AND IT IS FENCED RATHER THAN ASKED FOR POLITELY.
 # `continue-on-error` severs job-green from step-ran: the step runs, reds, and the job ends green
@@ -77,10 +90,11 @@ jobs:
       # reads this same name, so every producer and reader in this job resolves to one base whether
       # it is reached through a command line here or through the resolver in TypeScript.
       #
-      # ONE ENTRY, NOT FOUR, AND THAT IS THE POINT. The borrow places the sweep record, two suites
-      # write their reports, the fitness pass writes a third and `balance:self` reads all four; a
-      # `$RUNNER_TEMP` expression repeated at each of them is a path that agrees today and drifts on
-      # the first edit that misses one.
+      # ONE ENTRY, NOT FIVE, AND THAT IS THE POINT. The borrow places the sweep record, two suites
+      # write their reports, the three measured rows' commands write the credit stream, the dump
+      # step writes this run's step record, and `balance:self` reads all of them; a `$RUNNER_TEMP`
+      # expression repeated at each of them is a path that agrees today and drifts on the first edit
+      # that misses one.
       #
       # A STEP AND NOT A JOB-LEVEL `env:` KEY, WHICH IS GITHUB'S CONSTRAINT RATHER THAN A
       # PREFERENCE. `jobs.<id>.env` cannot read the `runner` context — a workflow naming
@@ -96,8 +110,11 @@ jobs:
       # exactly the control surface 3F-3099 exists to remove.
       #
       # IT ADDS NO GATE. `pnpm verify`'s ladder is derived from the `run:` steps of this file that
-      # invoke a package.json script; this one invokes none, so the ladder is unchanged by it — five
-      # gates as this file now stands — and `scripts/verify.sh` exports the same base for itself.
+      # invoke a package.json script; this one invokes none, so the ladder is unchanged by it —
+      # twelve gates as this file now stands — and `scripts/verify.sh` exports the same base for
+      # itself. (The number is not maintained here either: `pnpm ladder` prints it, and the closing
+      # line of `scripts/verify.sh` counts what it just ran. It is in this sentence only because a
+      # reader asking "unchanged from what?" deserves the figure.)
       - name: Resolve the evidence root
         run: echo "SPEC_CONTROLLER_EVIDENCE_DIR=$RUNNER_TEMP/spec-controller-self-balance" >> "$GITHUB_ENV"
 
@@ -130,14 +147,14 @@ jobs:
       # the nightly's file straight into `runs/self-balance/measurements.json` — the artefact
       # `balance:self` reads as what THIS run credited — and the merge argument that placement
       # needed (land it first, let the two suite producers post beside it) went with it. Under a
-      # CONVERTED @SCN-FIT-002 the fitness pass posts the credit itself, from the number this
-      # record holds, so a borrowed row sitting in the credit stream would be a second credit for
-      # one Evidence Obligation. Two files, two questions: what a sweep MEASURED, and what this run
+      # CONVERTED @SCN-FIT-002 the row's own command posts the credit, from the number this record
+      # holds, so a borrowed row sitting in the credit stream would be a second credit for one
+      # Evidence Obligation. Two files, two questions: what a sweep MEASURED, and what this run
       # CREDITED. Nothing else reads or writes the path below, so there is no merge here at all.
       #
-      # IT STILL RUNS FIRST, AND NOW FOR A PLAINER REASON. `cucumber:fitness` runs the row's
-      # command, which reads this file; a borrow placed after it would leave the command with
-      # nothing to print on every push.
+      # IT STILL RUNS FIRST, AND NOW FOR A PLAINER REASON. The `Mutation score` step below IS the
+      # row's command and it reads this file; a borrow placed after it would leave that step with
+      # nothing to print, and nothing to write, on every push.
       #
       # THE RECORD THIS PLACES MAY STILL SAY `SCN-MUT-011` — A TRANSITION WITH AN END (3F-3168,
       # 3F-3174). The row was minted `SCN-FIT-002`, and the producer that stamps the record moved
@@ -158,9 +175,9 @@ jobs:
       # AND IT IS NOT AN ARBITER. Every branch below places nothing, says why on stderr, and exits
       # 0. Having no measurement to borrow — no finished sweep, no artefact, a number past its
       # window, a payload that is not one — is the ordinary reading of a cadence, and the place it
-      # is reported is downstream: `cucumber:fitness` fails the scenario, because the row's command
-      # has nothing to print, and `balance:self` reds on the row that owed the measurement,
-      # which reconciles `missing`. Both sentences are true and both are reached; a step that
+      # is reported is downstream: the `Mutation score` step reds, because the row's command has
+      # nothing to print, and `balance:self` reds on the row that owed the measurement, which
+      # reconciles `missing`. Both sentences are true and both are reached; a step that
       # redded HERE as well would make a green build depend on arbiters agreeing, which is the
       # argument features/mutation-score.feature already settles for the bar itself.
       - name: Borrow the scheduled sweep's measurement
@@ -349,83 +366,181 @@ jobs:
       - name: Cucumber
         run: pnpm cucumber --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/runs/self-balance/cucumber.json"
 
-      # STEP 2b — THE FITNESS PASS, A SECOND CUCUMBER CALL OVER ITS OWN PROFILE (3F-3146, under
-      # 3F-3138). It selects `@fitness` and loads one step-definition file: no behavioural step
-      # definitions, no world, no hooks. `cucumber.js` carries the reasoning; what matters here is
-      # that it is a SEPARATE call writing a SEPARATE report, because the two documents have the
-      # same shape and opposite meanings — the behavioural pass's scenarios are runtime results
-      # levelled by a tier tag, this pass's are converted static-check credits named by a
-      # configured row (SELF_BALANCE_SCOPE.fitness, 3F-3145).
+      # STEP 2b — THE TWELVE FITNESS ROWS, AS TWELVE CI STEPS THAT CITE THEM (3F-3271, under
+      # 3F-3252; the second cucumber call they replaced was deleted at 3F-3272).
       #
-      # IT NOW SELECTS REAL SCENARIOS (3F-3151). @SCN-FIT-001 is the first converted check, so this
-      # step is where eslint's complexity / max-lines / max-lines-per-function are held over the
-      # real tree — the work the deleted `Lint complexity` step used to do, reached through the
-      # scenario's configured row instead of through a script handle. Wiring the pass ahead of its
-      # first member is what let that conversion be ONE atomic commit rather than a conversion plus
-      # a pipeline change. Every scenario it selects is AUTHORED in
-      # `features/fitness-checks.feature` beside its row of `specController.fitnessChecks`
-      # (3F-3244); the two are written independently, which is what lets the pass and the ledger
-      # report a scenario with no row and a row with no scenario.
+      # THERE USED TO BE A `Cucumber (fitness)` STEP HERE, and what it did is now done by these
+      # twelve. It was a SECOND cucumber call over its own profile: it ran every converted check's
+      # command and wrote a report the ledger read as their credit stream. That is a second evidence
+      # stream manufactured beside one that already existed — the run record this job's own dump
+      # step writes — so it went with the pass.
       #
-      # AND THAT MOVED THE COMPLEXITY GATE DOWN THE LADDER, WHICH IS A COST, NOT A BONUS.
-      # `Lint complexity` ran near the top, before the suites; the complexity violation it used to
-      # catch in seconds is now caught here, behind the whole test and cucumber ladder. Converting
-      # trades early failure for single entry. Worth reading again if the wait starts to bite: the
-      # remedy is where this step sits, not whether the check converted.
+      # AND THE GATES CAME BACK UP THE LADDER WITH THE SPLIT, WHICH IS THE COST THE CONVERSION PAID
+      # BEING REFUNDED. `Lint complexity` and its siblings used to run near the top; converting them
+      # put every one behind the whole test and cucumber ladder, inside one pass. They are steps
+      # again, and `pnpm verify`'s ladder is derived from this file, so each is a local gate in its
+      # own right once more.
       #
-      # IT IS NOT WRAPPED IN `timeStepCli`, AND THAT IS NOW A RULE RATHER THAN A DEFERRAL (3F-3166).
-      # THE PASS THAT OBSERVES CANNOT BE INSIDE WHAT IT OBSERVES. This pass READS the two timings
-      # the steps above wrote; wrapping it would have it measuring a run whose verdict it is part
-      # of, and the behavioural suite is what is worth timing anyway. The behavioural call is
-      # wrapped under @SCN-FIT-013 and the unit call under @SCN-FIT-012; wrapping this one under
-      # either would post a second measurement against one Evidence Obligation, and a third @SCN
-      # would need a row nothing produces. So the fitness pass's own run time stays unmeasured, on
-      # purpose, and that is the same separation `balance` keeps by not producing what it judges.
+      # THE CONSUMER'S CI IS THE CREDIT JOURNAL, AND `balance` EXECUTES NOTHING. A quality check is
+      # already a command in a pipeline; a run of that pipeline is already a record of what each
+      # command did, written by the provider for its own purposes. So the fitness axis reads that
+      # record instead of manufacturing a second one — which is what the cucumber fitness pass was,
+      # and why it is deleted. What a consumer writes is an `id:` per check step and one dump step;
+      # `doc/converting-a-fitness-check.md` is the whole of it.
       #
-      # THE SCRIPT NAME CARRIES NO OBSERVED PREFIX, ON PURPOSE — the same care `verify` and
-      # `ladder` were named under. `runningStaticChecks` treats a package.json script as a RUNNING
-      # static check when its name starts with `lint:` or `guard:` and a CI `run:` step invokes it.
-      # `cucumber:fitness` is a pass that RUNS checks, not a check, so a prefixed name would
-      # register a phantom static check on spec-controller's own ledger and red `balance:self`
-      # as an uncited one.
+      # THE `id:` IS THE `@SCN` ITSELF, AND IT CITES THE ROW RATHER THAN RESTATING IT. The
+      # obligation stays in the `@fitness` scenario, the command stays in the row of
+      # `specController.fitnessChecks`, and this step produces the observation. Three books, three
+      # authors, none of them able to answer for another. An arbitrary handle would need a fourth
+      # artefact mapping it back, which is the roster this repository keeps deleting.
       #
-      # `pnpm verify` PICKS THIS UP WITH NO EDIT: the local ladder is derived from this file, so
-      # adding a `run:` step invoking a package.json script adds the gate (@SCN-LAD-001..006).
+      # AND ONLY A STEP CARRYING AN `id:` IS IN THE `steps` CONTEXT AT ALL — GitHub's own rule, not
+      # a filter written here. `checkout`, `setup-node` and `Install dependencies` are not checks
+      # and do not appear, so the dump below needs no discriminator of its own.
       #
-      # AND THE REPORT PATH MOVED OUT OF `package.json` TO SIT BESIDE THE OTHER TWO (3F-3099). It
-      # was the one evidence path a bare `pnpm` script carried, which made it the one this file's
-      # evidence root could not reach; here it is symmetric with the two steps above, and the local
-      # ladder carries it verbatim like everything else.
+      # EVERY ONE CARRIES `if: always()`, AND THAT IS THE HALT OBJECTION ANSWERED RATHER THAN
+      # INHERITED. Without it the first red check aborts the job and every later check step is
+      # skipped, so the ledger would read one `failing` and N `broken` — a worse report from a
+      # correct mechanism. The checks are INDEPENDENT: eslint's red says nothing about typecheck's,
+      # so naming four failures beats naming one here. See the header for what that reverses and
+      # what it does not.
       #
-      # AND IT CARRIES THE ENV BLOCK THE RETIRED `Lint scenario sub-issue match` STEP CARRIED
-      # (3F-3165). @SCN-FIT-010 runs `lint:scn-subissues` from here now, and a derived gate carries
-      # a step's command without its `env:` block — so without these three keys that check would
-      # run in CI over an empty pull-request context, answer "I examined nothing" on every build,
-      # and be credited as having run. A check that stopped checking looks identical to a green.
-      # They are named on THIS step rather than on the job because `jobs.<id>.env` cannot reach the
-      # `github` context's pull_request fields on a push, and an absent key is an empty value here.
+      # THEY INVOKE THE package.json HANDLE AND NOT THE CLI BEHIND IT, WHICH IS WHAT PUTS THEM BACK
+      # IN THE LOCAL LADDER. `pnpm verify` is derived from the `run:` steps of THIS file that invoke
+      # a package.json script (@SCN-LAD-001..006), so these steps take it from five gates to twelve
+      # — the five `lint:` checks, `typecheck` and `doc:paths` return to the local green-check that
+      # the conversion into the fitness pass had taken them out of. Writing `pnpm exec tsx
+      # tests/checks/lintFeatureCodesCli.ts` here would run the same check and hold the ledger
+      # equally still, and now that the pass is gone `pnpm verify` would have silently dropped to
+      # one. A green-check that narrows without saying so is the fault @SCN-LAD-001..006 exist to
+      # make impossible; a step spelt to dodge them is the same fault wearing a longer command.
       #
-      # NO `if:` CONDITION ANY MORE, AND THAT IS THE THIRD ANSWER DOING ITS JOB. The retired step
-      # was PR-only because on a push there is no base to diff against; the row now says
-      # `notExaminedExit: 3`, so the check reports "examined nothing" and its scenario is skipped
-      # rather than passed (3F-3163 / 3F-3169 / 3F-3170). One conditional step less, and the
-      # subset is expressed once — in the check's own answer — instead of twice.
-      #
-      # WHAT IT COSTS IS POSITION, AND IT IS STATED RATHER THAN DISCOVERED LATER. That step ran
-      # AHEAD of every gate (3F-3014) because an excluded step had a single chance to run. It is
-      # not excluded any more — `pnpm verify` runs it locally inside this pass — so it has the two
-      # chances every gate has, and the reason for the position went with the exclusion. It does
-      # now sit behind the whole ladder, which is the same trade every converted check made.
-      - name: Cucumber (fitness)
+      # THE THREE `pnpm --silent` ROWS ARE NOT GATES, AND THAT IS THE DERIVATION BEING EXACT RATHER
+      # THAN A GAP. `--silent` sits where the script name would be, so the ladder does not match
+      # them; each reads an artefact an earlier step of THIS run wrote, so a local ladder running
+      # them out of that context would red on a missing record rather than on the code.
+      - name: Complexity — eslint's complexity, max-lines and max-lines-per-function
+        id: SCN-FIT-001
+        if: always()
+        # `pnpm exec` rather than the row's bare `eslint`, because a `run:` shell has no
+        # `node_modules/.bin` on its PATH. The row states the bare command a consumer would type;
+        # what a pipeline needs to put it on the PATH is the pipeline's business.
+        run: pnpm exec eslint
+
+      - name: Complexity exceptions
+        id: SCN-FIT-003
+        if: always()
+        run: pnpm lint:complexity-exceptions
+
+      - name: Feature codes
+        id: SCN-FIT-007
+        if: always()
+        run: pnpm lint:feature-codes
+
+      - name: SCN tags
+        id: SCN-FIT-008
+        if: always()
+        run: pnpm lint:scn-tags
+
+      - name: Anemic domain
+        id: SCN-FIT-009
+        if: always()
+        run: pnpm lint:anemic-domain
+
+      # THE THREE KEYS ARE THIS STEP'S OWN, AND THEY ARE THE ONLY COPY. `Cucumber (fitness)` used
+      # to carry the same block because the pass ran this check too; the pass is gone and this is
+      # what the check runs under. Without them it runs over an empty pull-request context, answers
+      # "I examined nothing" on every build, and is credited as having run — a check that stopped
+      # checking looks identical to a green. They are named on the STEP because `jobs.<id>.env`
+      # cannot reach the `github` context's pull_request fields on a push.
+      - name: Scenario sub-issue match
+        id: SCN-FIT-010
+        if: always()
         env:
           GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          # The PR's source branch — Linear auto-names it "steven/3f-NNN-…", the
-          # primary ticket-handle source.
           GITHUB_HEAD_REF: ${{ github.event.pull_request.head.ref }}
-          # The PR body is one of the two SCN-exempt trailer sources (the other is
-          # the PR's commit messages); the parser scans both.
           PR_BODY: ${{ github.event.pull_request.body }}
-        run: pnpm cucumber:fitness --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/runs/self-balance/fitness.json"
+        # THE THIRD ENDING IS ABSORBED HERE, IN OUR OWN `run:` LINE, AND THAT IS THE WHOLE OF IT
+        # (3F-3252). This check answers "no pull request, so nothing to diff" with exit 3 rather
+        # than by skipping the step. A step record carries a STATUS and no exit code, so nothing
+        # downstream can tell that 3 from a real failure — and a row that DECLARED the code could
+        # only be read for whether it was named, which would forgive every skip and hatch a
+        # switched-off check into a green ledger. So the ledger learns nothing about endings, and
+        # exit 3 becomes an honest `success` the runner records. Change the code here and in
+        # `scnSubIssueGate.ts`'s NOT_EXAMINED_EXIT_CODE together; they are one decision.
+        run: pnpm lint:scn-subissues || [ $? -eq 3 ]
+
+      - name: Typecheck
+        id: SCN-FIT-011
+        if: always()
+        run: pnpm typecheck
+
+      # THE THREE MEASURED ROWS PRINT A NUMBER THEY DID NOT TAKE, WHICH IS WHY THEY ARE READERS AND
+      # NOT SWEEPS. A step's outcome is an exit code and an exit code cannot carry a measurement, so
+      # the measured half keeps exactly what it has: the command writes the number into the
+      # measurement artefact (@SCN-LNT-024) and published core reads it through `--measurements`.
+      # Their STEPS are still what says the check ran (@SCN-LNT-027) — a number arriving for a row
+      # the run recorded no step for is a number from a route that enumerates nothing. These steps run
+      # behind the producers they read — `Test` for SCN-FIT-012, `Cucumber` for SCN-FIT-013, and the
+      # borrow for SCN-FIT-002 — because a reader ahead of its producer has nothing to print.
+      - name: Unit suite run time
+        id: SCN-FIT-012
+        if: always()
+        run: pnpm --silent timing:score --scn SCN-FIT-012
+
+      - name: Behavioural suite run time
+        id: SCN-FIT-013
+        if: always()
+        run: pnpm --silent timing:score --scn SCN-FIT-013
+
+      - name: Mutation score
+        id: SCN-FIT-002
+        if: always()
+        run: pnpm --silent mutation:score --supersedes SCN-MUT-011
+
+      - name: Compatibility examples
+        id: SCN-FIT-015
+        if: always()
+        run: pnpm --silent doc:compatibility-examples
+
+      - name: Documented paths
+        id: SCN-FIT-016
+        if: always()
+        run: pnpm doc:paths
+
+      # THE DUMP — THE ONLY PLACE `outcome` AND `id` ARE CARRIED TOGETHER (3F-3252).
+      #
+      # `outcome` IS PRE-`continue-on-error`; `conclusion` IS POST. A step marked
+      # `continue-on-error: true` that actually failed reports `conclusion: success`, so a reader
+      # taking `conclusion` is green over a masked failure — a one-line watermelon in the watermelon
+      # product. The jobs API cannot see through that mask at all: its step object carries
+      # `[completed_at, conclusion, name, number, started_at, status]` and no `outcome` and no `id`.
+      # This dump is not one source among two. It is the only one.
+      #
+      # `if: always()` BECAUSE ITS WHOLE VALUE IS THE RED RUN. A dump that only runs on a green
+      # build records the one case nobody needed a record of.
+      #
+      # THE JSON CROSSES THROUGH `env:` RATHER THAN INTO THE COMMAND LINE. A `${{ }}` expansion
+      # inside `run:` is substituted into the script before bash sees it, so a step name carrying a
+      # quote would end the string and the rest would be shell. As an `env:` value it is data, and
+      # `printf '%s'` never re-reads it.
+      - name: Dump this run's step record
+        if: always()
+        env:
+          STEPS_JSON: ${{ toJSON(steps) }}
+        #
+        # AND IT SAYS HOW BIG THE RECORD IS, BECAUSE `printf` EXITS 0 OVER AN EMPTY VARIABLE. A step
+        # that wrote nothing and a step that wrote the run both end `success`, so a green step is
+        # not on its own a signal that anything crossed. The byte count and the step count are that
+        # signal, and the `jq` length is what would notice an expansion that resolved to `{}`. The
+        # gate below now reads this file as the whole fitness axis's credit stream, so an empty one
+        # is twelve broken rows and an unsound run rather than a quiet nothing.
+        run: |
+          mkdir -p "$SPEC_CONTROLLER_EVIDENCE_DIR/runs/self-balance"
+          record="$SPEC_CONTROLLER_EVIDENCE_DIR/runs/self-balance/ci-steps.json"
+          printf '%s' "$STEPS_JSON" > "$record"
+          printf 'step record: %s bytes, %s step(s) with an id:\n' \
+            "$(wc -c < "$record" | tr -d ' ')" "$(jq 'length' "$record")"
 
       # STEP 3 — THE SELF-RECONCILIATION GATE (@SCN-SLF-001, 3F-2351). spec-controller's
       # own tree, put through spec-controller: the evidence obligations raised in features/

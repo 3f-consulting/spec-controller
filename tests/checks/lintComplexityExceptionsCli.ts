@@ -21,8 +21,8 @@
  *
  * Mirrors `lint:scn-tags`: a pure function of the checked-out tree,
  * a full CI gate on every push. It does NOT mirror its own twin any more — @SCN-FIT-001 converted
- * (3F-3151) and runs from a configured row inside the fitness cucumber pass, while this one keeps
- * the discovered route. The pair is where a consumer can read both arrangements side by side.
+ * (3F-3151) and is observed through the `id:` on its own CI step, while this one keeps the
+ * discovered route. The pair is where a consumer can read both arrangements side by side.
  */
 
 import { COMPLEXITY_EXCEPTIONS } from "./complexityExceptions.mjs";

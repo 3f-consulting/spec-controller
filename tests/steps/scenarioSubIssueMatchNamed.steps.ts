@@ -16,7 +16,7 @@
  * `specController.checkRegistry` and then through the corpus; it is now a row of
  * `specController.fitnessChecks` naming SCN-FIT-010, and the credit arrives already citing.
  * So what is read off the tree is the ROW rather than the registry entry, and the credit
- * comes from the fitness pass's report rather than from script discovery.
+ * comes from the CI run's own step record rather than from script discovery.
  *
  * @SCN-SSM-006 — bidirectional evidence marker. Grepping SCN-SSM-006 returns the
  * scenario, this step block, and the @unit block in lintScnSubIssuesCli.test.ts.
@@ -81,50 +81,37 @@ const ownRow = (): { scn: string; characteristic: string } => {
 };
 
 /**
- * The fitness pass's report, DERIVED FROM THE REAL CORPUS rather than read off disk.
+ * A CI RUN'S STEP RECORD for this tree, DERIVED FROM THE REAL CORPUS rather than read off disk.
  *
- * WHY IT IS NOT THE FILE THE PASS WRITES. The credit this arm is about rides the fitness cucumber
- * report, and that report is written by a gate that runs AFTER the one this scenario runs in — so
- * reading the file would read the PREVIOUS run's report, or nothing at all in a fresh clone. What
- * is real here is the corpus: it is the authored document the pass itself reads, and a fitness
- * pass over this tree reports exactly the scenarios it carries. So the report is derived from the
- * tree's own corpus rather than curated beside it.
+ * WHY IT IS NOT THE FILE A RUN WRITES. The credit this arm is about rides the CI run's own record
+ * of its steps, and that record is dumped by a step of the pipeline this scenario is running
+ * INSIDE — so reading the file would read the previous run's record, or nothing at all in a fresh
+ * clone, and on a developer's machine there is no pipeline and so no record at all. What is real
+ * here is the corpus: it is the authored document the rows are reconciled against, and a pipeline
+ * over this tree carries a step per row it holds. So the record is derived from the tree's own
+ * corpus rather than curated beside it.
  *
- * EVERY SCENARIO IS REPORTED AS PASSED, AND THAT IS THE STATEMENT THIS ARM NEEDS. The report
- * stands in for a pass over this tree, and this scenario's own claim at the foot is that the row
- * names the scenario AND a pass reported it — so the document has to say the checks RAN. It used
- * to carry no step at all, on the reasoning that `convertedFitnessCredits` read no status; that
- * reasoning was right about the FINDINGS and wrong about the RUNNING, and @SCN-LNT-026 corrected
- * it. A stepless scenario is now broken evidence, which is the honest reading of a report saying
- * nothing ran — so the fixture stopped under-stating what it stands in for, rather than the rule
- * being loosened to keep it green.
+ * EVERY STEP IS RECORDED AS HAVING SUCCEEDED, AND THAT IS THE STATEMENT THIS ARM NEEDS. The record
+ * stands in for a run over this tree, and this scenario's own claim at the foot is that the row
+ * names the scenario AND a run reported it — so the document has to say the checks RAN. An entry
+ * whose outcome this reader has no reading for is broken evidence (@SCN-LNT-026), and a row the
+ * record holds no entry for is broken too (@SCN-LNT-027), so a record standing in for a healthy
+ * run has to carry every code the corpus does and say what each one did.
  */
 // @SCN-SSM-006
-const fitnessReportPath = (): string => {
+const ciStepRecordPath = (): string => {
   const corpus = readFileSync(join(process.cwd(), "features/fitness-checks.feature"), "utf8");
   const codes = [...corpus.matchAll(/^ *@fitness @(SCN-[A-Z]+-\d+)\s*$/gm)].map((m) => m[1]!);
   assert.ok(
     codes.length > 0,
     "expected the fitness corpus to carry at least one @fitness scenario"
   );
-  const report = [
-    {
-      uri: "features/fitness-checks.feature",
-      elements: codes.map((code) => ({
-        tags: [{ name: "@fitness" }, { name: `@${code}` }],
-        steps: [
-          {
-            keyword: "Then ",
-            name: "the check this scenario names finds no violations",
-            result: { status: "passed" },
-          },
-        ],
-      })),
-    },
-  ];
-  const dir = mkdtempSync(join(tmpdir(), "ssm006-fitness-"));
-  const path = join(dir, "fitness.json");
-  writeFileSync(path, JSON.stringify(report), "utf8");
+  const record = Object.fromEntries(
+    codes.map((code) => [code, { outcome: "success", conclusion: "success" }])
+  );
+  const dir = mkdtempSync(join(tmpdir(), "ssm006-ci-steps-"));
+  const path = join(dir, "ci-steps.json");
+  writeFileSync(path, JSON.stringify(record), "utf8");
   return path;
 };
 
@@ -136,12 +123,12 @@ Given("the scn-subissues static check, wired over spec-controller's own source",
 
 // @SCN-SSM-006
 When("spec-controller's own tree is reconciled", function () {
-  reportPath = fitnessReportPath();
+  reportPath = ciStepRecordPath();
   ownLedger = runReconcile({
     features: join(process.cwd(), "features"),
     ci: join(process.cwd(), ".github/workflows/ci.yml"),
     packageJson: join(process.cwd(), "package.json"),
-    fitness: reportPath,
+    ciSteps: reportPath,
   });
 });
 

@@ -19,9 +19,10 @@ import { relativizeToRoot } from "../lib/portablePath.js";
 /**
  * The CLI input paths/flags actually used for a run — each optional; only the ones
  * the operator supplied are present. Mirrors the CLI's ReconcileOptions (the same
- * --features/--vitest/--cucumber/--ci/--package-json/--measurements/--fitness seams).
+ * --features/--vitest/--cucumber/--ci/--package-json/--measurements/--ci-steps seams).
  *
- * `measurements` and `fitness` joined the interface at 3F-3184 (@SCN-RPT-027). They were
+ * `measurements` and the converted checks' credit stream joined the interface at 3F-3184
+ * (@SCN-RPT-027). They were
  * ALREADY flowing through it: `reconcileInputsOf` builds one ReconcileOptions carrying all
  * seven and that same object is both reconciled and assigned to `ctx.inputs`, so structural
  * typing let the two ride along unseen and the block simply never named them. Both are
@@ -36,7 +37,7 @@ export interface RunInputs {
   ci?: string;
   packageJson?: string;
   measurements?: string;
-  fitness?: string;
+  ciSteps?: string;
 }
 
 /**
@@ -89,7 +90,7 @@ const INPUT_FLAGS: readonly { key: keyof RunInputs; flag: string }[] = [
   // `projectProvenanceObject`, the markdown header and the JSON object all iterate it, so
   // the two surfaces gain the streams in step and neither can drift from the other.
   { key: "measurements", flag: "--measurements" },
-  { key: "fitness", flag: "--fitness" },
+  { key: "ciSteps", flag: "--ci-steps" },
 ];
 
 /** One input flag actually used, as the flag handle + the value the operator gave. */

@@ -284,7 +284,7 @@ export const FITNESS_AXIS_TAG = "fitness";
  * second tag, no roster of measured characteristics. A row carrying a bar is measured and one
  * carrying none is static, which is the discrimination `thresholdsOf` has always made: a check with
  * no entry there is already the static case. `carriesBar` is the ONE spelling of that question, and
- * the credit side asks it too — a measured row's credit is its NUMBER, so the fitness report raises
+ * the credit side asks it too — a measured row's credit is its NUMBER, so its step's outcome raises
  * none beside it, and two readers of one fact would eventually differ about the row whose bar
  * nothing can read.
  *

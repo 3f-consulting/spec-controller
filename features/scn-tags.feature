@@ -8,8 +8,8 @@ Feature: The tier-tag floor — every scenario names an evidence tier
   the target itself configures (@SCN-STG-008). scnTags parity with an adopter's repository's
   guard:scn-tags. The guard is itself cited — it converted as @SCN-FIT-008 (3F-3165), so the
   scenario that carries it is authored in features/fitness-checks.feature beside the
-  specController.fitnessChecks row naming `pnpm lint:scn-tags`, and the fitness pass running that
-  command is what posts its credit. It used to be a stepless scenario at the foot of THIS file
+  specController.fitnessChecks row naming `pnpm lint:scn-tags`, and the CI step carrying that code
+  as its id: is what runs the command and posts its credit. It used to be a stepless scenario at the foot of THIS file
   carrying a bare `@traceability` tag, settled by a CI step that had to be discovered and joined
   back to it. Either way spec-controller's own ledger reconciles it, which was always the point.
 

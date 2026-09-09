@@ -43,9 +43,11 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 import {
+  MEASUREMENT_ARTEFACT_PATH,
   TIMINGS_RECORD_PATH,
   measurementAnswering,
   measurementsOf,
+  postMeasurement,
   resolveEvidenceRoot,
 } from "./measurementArtefact.js";
 
@@ -134,13 +136,28 @@ if (row === undefined) {
   console.error(
     `ci run time: ${asked.scnId} ${asked.checkTag} — no such row in the timings record at ` +
       `${recordPath}, so there is no number to print. The timed suites write it: run \`pnpm test\` ` +
-      "and `pnpm cucumber` first. The fitness pass runs LAST for exactly this reason — put it " +
-      "ahead of them and every timing row reads missing, which is the true sentence: no " +
+      "and `pnpm cucumber` first. This row's step runs BEHIND them for exactly this reason — put " +
+      "it ahead of them and every timing row reads missing, which is the true sentence: no " +
       "measurement arrived."
   );
   process.exit(1);
 }
 
-// THE NUMBER, ALONE. Nothing else may reach this stream: the step definition reads the whole of it
-// as the measurement.
+// AND THE NUMBER IS WRITTEN INTO THIS RUN'S CREDIT STREAM, NOT ONLY PRINTED (@SCN-LNT-024). The
+// command a measured row names is what writes its number down: a CI step's outcome is an exit code
+// and an exit code cannot carry a measurement, so the step says the check RAN (@SCN-LNT-027) and
+// the number arrives on the measurement artefact, already citing both terms. Printing alone left
+// the writing to the pass that spawned this command, and there is no pass — the consumer's pipeline
+// runs this as its own step, and `balance` reads what it wrote.
+//
+// BESIDE WHAT THE RUN HAS ALREADY MEASURED, never over it, which is the artefact's own keying rule
+// and is why the write goes through its one door.
+postMeasurement(path.join(resolveEvidenceRoot(asked.namedRoot), MEASUREMENT_ARTEFACT_PATH), {
+  scnId: asked.scnId,
+  checkTag: asked.checkTag,
+  measured: row.measured,
+});
+
+// THE NUMBER, ALONE ON STDOUT. Nothing else may reach this stream: it is what a human reading the
+// step's log sees, and what a consumer piping this command anywhere else takes as its answer.
 console.log(String(row.measured));

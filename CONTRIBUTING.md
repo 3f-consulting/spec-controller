@@ -48,14 +48,15 @@ list with a list inside the script, which then drifted the same way: `lint:anemi
 arrived with a CI step and no gate line, leaving `pnpm verify` a proper subset of CI for four
 commits. A hand-maintained list drifts wherever it is kept; a derivation has nothing to keep.
 
-**The ladder is much shorter than it was, and nothing stopped being checked.** Most of the
-`lint:` steps left `ci.yml` at 3F-3165 and `typecheck` followed at 3F-3166: they are rows of
-`specController.fitnessChecks` now, and the `cucumber:fitness` gate runs them. The last `lint:`
-step went at 3F-3167 — `lint:check-characteristics`, and that one is a DELETION rather than a
-conversion: it held the words a manifest names to the portfolio roster, and the collapse to one
-`@fitness` tag makes a characteristic a label on a row rather than a token the parser reads. So
-`ci.yml` now carries no `lint:` step at all, and a check you are looking for is either a gate here
-or a row there — `pnpm ladder` plus that manifest key are between them the whole set.
+**Every converted check is a CI step again, carrying its `@SCN` as the step's `id:`.** Most of the
+`lint:` steps left `ci.yml` at 3F-3165 and `typecheck` followed at 3F-3166, into a cucumber fitness
+pass; 3F-3271 gave each of the twelve rows its own step and 3F-3272 deleted the pass. A converted
+check is therefore both a row of `specController.fitnessChecks` and a `run:` step whose `id:` cites
+that row — the command in the pipeline, the obligation in the scenario, the observation in the
+run's own record of what its steps did. The one check DELETED rather than converted was
+`lint:check-characteristics` (3F-3167): it held the words a manifest names to the portfolio roster,
+and the collapse to one `@fitness` tag makes a characteristic a label on a row rather than a token
+the parser reads.
 
 **What `pnpm verify` leaves out, it prints** — the step and the reason, every run, rather
 than in prose somebody has to keep true. **Today it leaves out nothing**, and the closing line
@@ -72,17 +73,17 @@ every gate has two, so a red ahead of it takes it off the board without reportin
 
 **Three rows are MEASURED — their evidence is a number rather than an exit code.** Each has a
 configured row in `specController.fitnessChecks` naming the characteristic, the command that
-prints the number, and the bar the ledger holds it to. `cucumber:fitness` runs the command and
-posts what it printed; `balance:self` does the comparing. The scenario passes when its command
-*yielded* a number — whether that number is inside its bar is the ledger's sentence, in one place.
+prints the number, and the bar the ledger holds it to. That command is a CI step of its own; it
+writes what it read into the run's measurement record, and `balance:self` does the comparing. The
+row is answered when its command *wrote* a number — whether that number is inside its bar is the
+ledger's sentence, in one place.
 
-**Two of the three read what this run itself produced, which is why the fitness pass runs LAST.**
+**Two of the three read what this run itself produced, which is why their steps run LAST.**
 `pnpm test` and `pnpm cucumber` are both wrapped in `timeStepCli`: each times its suite and writes
 a TIMINGS RECORD, and `@SCN-FIT-012` (the unit suite, at most 75s) and `@SCN-FIT-013` (the
 behavioural suite, at most 150s) read their own row back out of it. Producer then reader, in that
-order — put `cucumber:fitness` ahead of the suites and both rows read `missing` while you do
-exactly what you were told. **The fitness pass's own run time is unmeasured, and must be**: the pass
-that observes cannot be inside what it observes.
+order — put those steps ahead of the suites and both rows read `missing` while you do exactly what
+you were told.
 
 **The third reads a number no local run takes.** `@SCN-FIT-002` — this repository's own domain-core
 mutation score — names `pnpm --silent mutation:score` and sources its bar from the `domain` gate's
@@ -92,8 +93,8 @@ A mutation sweep costs 8-12 minutes on CI, so it runs nightly
 (`.github/workflows/mutation.yml`) and leaves what it measured as a SWEEP RECORD; CI borrows
 that record into `runs/mutation/measurements.json` while it is still young enough to be about
 the code being judged. A score older than 36 hours is not placed at all — the command then has
-nothing to print, `cucumber:fitness` reds on the scenario and `balance:self` reds on the
-row, which reads `missing`. That is how a nightly that stops running says so.
+nothing to print, its own step reds and `balance:self` reds on the row, which reads `missing`.
+That is how a nightly that stops running says so.
 
 On your machine there is nothing to borrow, so run the sweep once:
 
@@ -101,9 +102,19 @@ On your machine there is nothing to borrow, so run the sweep once:
 pnpm mutation
 ```
 
-That is ~45 seconds locally and writes the sweep record, after which `pnpm verify` is green.
-Skipping it fails `@SCN-FIT-002` in the fitness pass and leaves `balance:self` reporting
-it as `missing` — the true sentence rather than a false red: no measurement arrived.
+That is ~45 seconds locally and writes the sweep record, so `pnpm --silent mutation:score` has a
+number to print. Skipping it fails that command and leaves `balance:self` reporting the row as
+`missing` — the true sentence rather than a false red: no measurement arrived.
+
+**A LOCAL `balance:self` REPORTS EVERY FITNESS ROW AS `missing`, AND THAT IS THE DESIGN RATHER THAN
+A FAULT (3F-3272).** The fitness axis's credit journal is the CI run's own record of what each of
+its steps did, dumped by an `if: always()` step of `ci.yml`. Your machine runs no pipeline, so
+`balance:self` is handed no record, nothing is raised for the twelve rows, and each reconciles
+`missing` — out of balance at exit 1, and NOT unsound: a run handed no record of itself is a
+different fact from a run whose record carried nothing. **The checks themselves still run locally**
+— every one of them is a gate of `pnpm ladder` or a command you can type — and their teeth are their
+own exit codes, unchanged. What a local run does not have is the ledger's view of them, and the one
+place that view is real is CI.
 
 **And `runs/self-balance/measurements.json` — the credit stream — persists between local runs and
 is merged into, not rewritten.** CI starts cold; your machine does not. A row you renamed, or a

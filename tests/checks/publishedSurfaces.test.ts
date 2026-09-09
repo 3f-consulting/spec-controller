@@ -24,7 +24,7 @@
  *
  * RULING B — THIS CHECK IS RUN BY NOTHING ELSE, MEASURED FROM BOTH ENDS (3F-3229). No fitness row
  * invokes it and no cucumber twin exists; the measurement was an export planted on the real core
- * barrel, under which `pnpm cucumber:fitness` — every configured fitness row — stayed green while
+ * barrel, under which every configured fitness row's own check stayed green while
  * the arm below reded. So this workspace's actual manifests, actual published subpaths and actual
  * exports are held here or nowhere.
  *

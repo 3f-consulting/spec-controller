@@ -24,7 +24,7 @@ Feature: spec-controller reconciles its own tree, and the build depends on the a
 
     WHAT THE GATE RECONCILES is stated once, in `SELF_BALANCE_SCOPE`, and is the whole of
     it: `features/`, the Vitest report, the behavioural Cucumber report, the measurement
-    artefact, the FITNESS PASS'S report, the WORKFLOW DIRECTORY, `package.json`. A path
+    artefact, the CI RUN'S OWN STEP RECORD, the WORKFLOW DIRECTORY, `package.json`. A path
     enters the books only by entering one of the seven, which is what makes the boundary
     deliberate rather than inherited.
 
@@ -48,18 +48,26 @@ Feature: spec-controller reconciles its own tree, and the build depends on the a
     never was one, which is why naming a root is the discriminator rather than a flag every
     planted arm would have had to start passing.
 
-    TWO CUCUMBER REPORTS, BECAUSE THERE ARE TWO PASSES. The behavioural pass's report
-    carries runtime credits levelled by a tier tag; the fitness pass's carries static-check
-    credits named by a configured row. One document cannot be read both ways without the
-    gate guessing which half of it is which, so the second pass is told apart by being
-    named separately rather than by a rule buried inside one file.
+    TWO DOCUMENTS ABOUT THE PIPELINE, BECAUSE THERE ARE TWO QUESTIONS. The workflow
+    DIRECTORY says a check is wired into this pipeline and which row its step cites, and is
+    true between runs; the run's own step record says what each of those steps DID on one
+    afternoon. Neither can be got from the other, so both are surfaces and neither is a
+    second reading of the first.
 
-    A TARGET THAT HAS CONVERTED NOTHING EMITS NO FITNESS REPORT, AND THAT IS NOT A BROKEN
-    RUN. The two suite reports carry a precondition check — an unemitted one means the
-    suite did not run, which would leave every obligation unobserved — and the fitness
-    report carries none, for the reason the measurement artefact carries none: its absence
-    leaves exactly the converted rows unanswered, and those rows reconciling missing is a
-    verdict the ledger is entitled to reach.
+    A TARGET WHOSE PIPELINE DUMPS NO STEP RECORD EMITS NONE, AND THAT IS NOT A BROKEN RUN.
+    The two suite reports carry a precondition check — an unemitted one means the suite did
+    not run, which would leave every obligation unobserved — and the step record carries
+    none, for the reason the measurement artefact carries none: its absence leaves exactly
+    the converted rows unanswered, and those rows reconciling missing is a verdict the
+    ledger is entitled to reach.
+
+    AND A LOCAL RUN OF THIS GATE IS EXACTLY THAT TARGET, WHICH IS SAID HERE RATHER THAN
+    DISCOVERED (3F-3272). The record is dumped by a step of the pipeline; a developer's
+    machine runs no pipeline, so a local `balance:self` is handed none and every configured
+    fitness row reconciles missing — out of balance, and NOT unsound. The checks themselves
+    still run locally, as gates of the derived ladder in their own right, and their teeth are
+    their own exit codes. What a local run does not have is the credit journal, because the
+    credit journal is the pipeline's.
 
     THE CI SURFACE IS THE DIRECTORY, NOT ONE FILE (3F-2500). The product's own default
     reads every workflow, because a check enforced from a sibling file is otherwise
@@ -109,8 +117,8 @@ Feature: spec-controller reconciles its own tree, and the build depends on the a
     its Evidence Observation is produced by running that same row's command; while the
     corpus was EMITTED from the rows as well, one edit to the manifest moved every side
     together and no surviving side was left to disagree. Mistype the key that holds the
-    rows and the manifest read empty, the corpus was regenerated empty, the fitness pass
-    ran nothing, and the report said nothing about any of it (3F-3180, measured cold).
+    rows and the manifest read empty, the corpus was regenerated empty, nothing ran, and the
+    report said nothing about any of it (3F-3180, measured cold).
 
     SO THE SECOND SOURCE IS A COUNT THE REPOSITORY BANKED, AND IT LIVES WHERE THE TYPO
     CANNOT REACH. `quality-thresholds.yml` sits at the repository root and outside the
@@ -126,8 +134,8 @@ Feature: spec-controller reconciles its own tree, and the build depends on the a
     deliberately — an escape hatch a tool holds open is one nobody ever has to justify.
 
     THE CORPUS IS AUTHORED NOW, AND THIS NUMBER IS A CARDINALITY BELT (3F-3244). An
-    emptied manifest leaves its scenarios standing, so the pass reds on each and the
-    ledger's census names them; what the banked figure adds is one line stating the fall
+    emptied manifest leaves its scenarios standing, so the ledger's census names each of
+    them as a fitness scenario no configured row names; what the banked figure adds is one line stating the fall
     in numbers, including where a row and its scenario leave together.
 
     THE COUNT IS READ FROM THE MANIFEST AND NEVER FROM THE CORPUS. Two authored sides are
@@ -182,7 +190,7 @@ Feature: spec-controller reconciles its own tree, and the build depends on the a
       EVERY CONSUMER OF THIS TOOL ARRIVES HERE, AND ARRIVES HERE FIRST. A repository that has
       converted no checks has never run the banking command, so it files no figure, and a
       mechanism that redded it would be one that reds on first use. It is the same standing this
-      feature already gives the fitness report itself: a target that has converted nothing emits
+      feature already gives the CI step record itself: a target that has converted nothing emits
       none, and its absence is a verdict the ledger is entitled to reach rather than a broken run.
 
       A SILENCE ASSERTION ALONE CANNOT SEE THE DEFAULTING, WHICH IS WHY THE READER'S OWN ANSWER

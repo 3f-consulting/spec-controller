@@ -23,7 +23,8 @@
  * collision: a prefix-less script that `specController.staticChecks` put on the books, so the CI
  * config, the manifest and the configured set could all be read from the checked-out source. That
  * conversion has happened — `typecheck` is @SCN-FIT-011 now, a `specController.fitnessChecks` row
- * run inside the fitness pass, so it is no longer a CI step and `specController.staticChecks` has
+ * observed through the `id:` on its own CI step, so it is no longer a DISCOVERED check and
+ * `specController.staticChecks` has
  * left this manifest. Under 3F-3139's migration NO check of this tree is discovered by handle at
  * all, which is 3F-3165's finding one step further on: the durable subject is a planted tree.
  * What the real read bought was a genuine workflow under the OBSERVER; what this arm asserts is the

@@ -112,9 +112,9 @@ Feature: The local green-check runs the ladder CI runs, derived rather than list
   Rule: the derived ladder holds over the real repository
 
     @integration @SCN-LAD-006
-    Scenario: pnpm verify lists every CI script this repository runs, cucumber:fitness among them
+    Scenario: pnpm verify lists every CI script this repository runs, lint:anemic-domain among them
       Given the real spec-controller repository
       When the local green-check lists the ladder it would run
       Then it lists every script the real CI runs, in CI's order
-      And cucumber:fitness is one of them
+      And lint:anemic-domain is one of them
       And the count it reports is the number of gates it listed

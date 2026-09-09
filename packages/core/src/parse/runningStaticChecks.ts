@@ -9,8 +9,8 @@
  *
  * One of the two static-check observers: this one reads every RUNNING CI guard; the
  * named-guard observer (`checkStaticEvidenceObligations`, `ingest/guard`) reads the OBLIGATION side (the
- * watermelon input). Both share the watermelon-critical CI-parse primitive (`ciRunCommands` /
- * `commandInvokesScript`) from `ingest/ciCommands`.
+ * watermelon input). Both share the watermelon-critical CI-parse primitive (`ciRunSteps`, of which
+ * `ciRunCommands` is the projection / `commandInvokesScript`) from `ingest/ciCommands`.
  *
  * A running static check is `exists: true` (a `package.json` script by construction — the
  * `Object.keys(scripts)` source) and `enforcedOverRealSource: true` (a CI `run:` step invokes it
@@ -29,7 +29,7 @@
  */
 
 import type { GuardEvidenceObservation } from "../model.js";
-import { ciRunCommands, commandInvokesScript, type PackageJsonScripts } from "./checkScriptsRunInCI.js";
+import { ciRunSteps, commandInvokesScript, type PackageJsonScripts } from "./checkScriptsRunInCI.js";
 import type { ScriptCitation } from "./fitnessCitations.js";
 
 export function runningStaticChecks(
@@ -72,29 +72,56 @@ export function runningStaticChecks(
   // catch them (3F-2590 removed the posting arm; 3F-2625 the by-handle half in
   // `domain/qualityCheckReconciliation`, which was still live for a prefix-less check whose handle
   // and bare tag are the same word).
-  citedScn: (script: string) => ScriptCitation | null = () => null
+  //
+  // IT IS ASKED ABOUT THE STEP AS WELL AS THE HANDLE (@SCN-LNT-031, 3F-3273). A consumer's own
+  // citation is written on the CI step, so a seam handed only the handle cannot see the one thing
+  // the consumer said — and the widening is what lets the citation come off the ROW that code
+  // names rather than out of the handle's spelling. The second argument is optional and every
+  // existing caller supplies a one-argument function, which JavaScript is free to keep passing two
+  // arguments to: the seams that resolve a handle go on answering exactly as they did.
+  citedScn: (script: string, citedByStep?: string) => ScriptCitation | null = () => null
 ): GuardEvidenceObservation[] {
   const scripts = packageJson.scripts ?? {};
-  const runCommands = ciRunCommands(ciSources);
+  // THE STEPS, NOT THEIR COMMANDS. `ciRunCommands` is this walk's projection, so reading the steps
+  // is the SAME parse rather than a second one — and the step is what carries the `id:` the
+  // citation below comes off (3F-3261).
+  const runSteps = ciRunSteps(ciSources);
   return Object.keys(scripts)
     .filter(
       (name) =>
         guardPrefixes.some((prefix) => name.startsWith(prefix)) ||
         configuredStaticChecks.includes(name)
     )
-    .filter((name) => runCommands.some((cmd) => commandInvokesScript(cmd, name)))
+    .filter((name) => runSteps.some((step) => commandInvokesScript(step.command, name)))
     .sort()
     .map((guard) => {
-      const citation = citedScn(guard);
+      // THE STEP'S OWN `@SCN`, WHERE ITS AUTHOR WROTE ONE. The `id:` on the CI step that invokes
+      // this check is the consumer's explicit citation, so it names the row ahead of anything the
+      // seam DERIVED for the same handle: an explicit citation beats a derived one, which is the
+      // whole point of writing it. First carrier in CI order wins, the corpus's own tie-break
+      // (`parse/fitnessCitations`), and a step with no `id:` never masks a later step that has one.
+      const citedByStep = runSteps.find(
+        (step) => step.id !== undefined && commandInvokesScript(step.command, guard)
+      )?.id;
+      // AND THE SEAM IS ASKED WITH IT (@SCN-LNT-031). Read ahead of the seam rather than after it,
+      // because it is now an INPUT to the citation and not only a refinement of one: the code names
+      // the configured row, and that row is where the check tag a CI step cannot state comes from.
+      const citation = citedScn(guard, citedByStep);
       return {
         qualityCheck: "lint" as const,
         staticCheck: guard,
         exists: true,
         enforcedOverRealSource: true,
         // Spread rather than two `?? undefined` assignments, so an observation that cites nothing
-        // carries neither key and its JSON stays byte-identical. Both terms or neither — the seam
-        // resolves them together, and a half-citation would be a shape no reader knows how to read.
-        ...(citation !== null ? { scnId: citation.scnId, checkTag: citation.checkTag } : {}),
+        // carries neither key and its JSON stays byte-identical. Both terms or neither — a
+        // half-citation would be a shape no reader knows how to read, and the bare check tag is
+        // the term a CI step CANNOT state: `id:` names the row, never the characteristic the
+        // ledger reconciles on. So a step's `id:` refines which row a citation posts to; it does
+        // not manufacture a citation where the seam reached no check tag at all — that target has
+        // registered nothing, which is `new-client`, and its observations belong in suspense.
+        ...(citation !== null
+          ? { scnId: citedByStep ?? citation.scnId, checkTag: citation.checkTag }
+          : {}),
       };
     });
 }

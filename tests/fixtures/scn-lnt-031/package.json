@@ -1,0 +1,22 @@
+{
+  "name": "annotated-check-step-fitness-target-repo-fixture",
+  "private": true,
+  "scripts": {
+    "lint:alpha": "eslint",
+    "lint:beta": "scn-subissues"
+  },
+  "specController": {
+    "fitnessChecks": [
+      {
+        "scn": "SCN-CVT-001",
+        "characteristic": "complexity",
+        "command": "pnpm lint:alpha"
+      },
+      {
+        "scn": "SCN-CVT-002",
+        "characteristic": "traceability",
+        "command": "pnpm lint:beta"
+      }
+    ]
+  }
+}

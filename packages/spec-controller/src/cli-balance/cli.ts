@@ -7,7 +7,7 @@
  *
  * Usage:
  *   pnpm reconcile [--features <dir>] [--vitest <report.json>]
- *                  [--cucumber <report.json>] [--fitness <report.json>]
+ *                  [--cucumber <report.json>] [--ci-steps <record.json>]
  *                  [--ci <ci.yml>]
  *                  [--format <fmt>[:<path>]]
  */
@@ -141,7 +141,7 @@ function reconcileInputsOf(args: Record<string, string>): ReconcileOptions {
     ci: args["ci"],
     packageJson: args["package-json"],
     measurements: args["measurements"],
-    fitness: args["fitness"],
+    ciSteps: args["ci-steps"],
   };
 }
 
@@ -153,7 +153,7 @@ export function checkInputsExist(
   // reported error (deterministic; the operator fixes and re-runs). Keys are the
   // parseArgs form (the `--` stripped); the message names the flag WITH its dashes.
   const flags = [
-    "vitest", "cucumber", "features", "ci", "package-json", "measurements", "fitness",
+    "vitest", "cucumber", "features", "ci", "package-json", "measurements", "ci-steps",
   ] as const;
   for (const flag of flags) {
     const path = args[flag];
@@ -171,7 +171,7 @@ export function checkInputsExist(
  * process, and on garbage both reconcile normally (verified, 3F-1742 Discovery).
  */
 const JSON_INPUT_FLAGS = [
-  "vitest", "cucumber", "package-json", "measurements", "fitness",
+  "vitest", "cucumber", "package-json", "measurements", "ci-steps",
 ] as const;
 
 /**

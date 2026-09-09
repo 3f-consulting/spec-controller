@@ -7,12 +7,9 @@
  * rather than beside the obligation rule because it is a fact about the ROW; what the rule then
  * does with it is pinned in parse/convertedFitnessObligations.test.ts.
  *
- * AND FOR THE ENDING A ROW NAMES ITS COMMAND'S `I examined nothing` WITH, which arrived in this
- * reading at 3F-3177 because both sides of a row now ask about it. What the PASS does with the
- * same reading — compare an exit code against it, and refuse a row spending the protocol's own two
- * endings — is pinned where the pass is, under @SCN-LNT-023 and @SCN-LNT-025 in
- * tests/checks/fitnessCommand.test.ts. Here it is only the reading, which
- * is the whole of what this file is for.
+ * THE ENDING A ROW ONCE NAMED FOR ITS COMMAND'S `I examined nothing` IS GONE (3F-3252). A skip
+ * cannot mean it — the command still runs and still ends — so the field could only ever be read
+ * for whether it was named, which would have forgiven every skip.
  *
  * Bidirectional evidence: the describes carry the @SCN id, matching
  * features/fitness-reconciliation.feature and the @integration steps in
@@ -24,7 +21,6 @@ import { describe, it, expect } from "vitest";
 import {
   fitnessChecksOf,
   carriesBar,
-  namesNotExaminedEnding,
   type FitnessCheck,
 } from "./fitnessChecks.js";
 import { resolveFitnessChecks, type KillFloorReader } from "../parse/targetManifest.js";
@@ -43,8 +39,8 @@ describe("[SCN-LNT-018] the configured rows read into the registry the obligatio
         { scn: "SCN-AAA-007", characteristic: "mutation", command: "pnpm mutation:score" },
       ]),
     ]).toEqual([
-      ["SCN-AAA-001", { characteristic: "complexity", notExaminedExit: null }],
-      ["SCN-AAA-007", { characteristic: "mutation", notExaminedExit: null }],
+      ["SCN-AAA-001", { characteristic: "complexity" }],
+      ["SCN-AAA-007", { characteristic: "mutation" }],
     ]);
   });
 
@@ -52,7 +48,7 @@ describe("[SCN-LNT-018] the configured rows read into the registry the obligatio
     // A manifest written by hand will sooner or later carry the sigils — the stance `thresholdsOf`
     // and `checkRegistryOf` already take, and the lookup is bare on both sides.
     expect([...fitnessChecksOf([{ scn: "@SCN-AAA-001", characteristic: "@complexity" }])]).toEqual([
-      ["SCN-AAA-001", { characteristic: "complexity", notExaminedExit: null }],
+      ["SCN-AAA-001", { characteristic: "complexity" }],
     ]);
   });
 
@@ -72,51 +68,13 @@ describe("[SCN-LNT-018] the configured rows read into the registry the obligatio
         null,
         { scn: "SCN-AAA-004", characteristic: "complexity" },
       ]),
-    ]).toEqual([["SCN-AAA-004", { characteristic: "complexity", notExaminedExit: null }]]);
+    ]).toEqual([["SCN-AAA-004", { characteristic: "complexity" }]]);
   });
 
   it("reads nothing from a value that is not a list of rows", () => {
     for (const entries of [undefined, null, "rows", 7, { "SCN-AAA-001": "complexity" }]) {
       expect([...fitnessChecksOf(entries)]).toEqual([]);
     }
-  });
-
-  it("holds the ending a row names for its command's `I examined nothing`, and null where it names none", () => {
-    // ONE READING, TWO CONSUMERS (3F-3177). The pass reads this same field off this same row to
-    // compare an exit code against; the credit side reads it to tell a skip the check asked for
-    // from one a hook produced. A second reading here would take a target's `"3"` as a naming on
-    // one side and as nothing on the other, and the row they disagreed about is the one nobody
-    // would go and look at.
-    expect([
-      ...fitnessChecksOf([
-        { scn: "SCN-AAA-001", characteristic: "traceability", notExaminedExit: 3 },
-        { scn: "SCN-AAA-004", characteristic: "complexity", notExaminedExit: "3" },
-        { scn: "SCN-AAA-005", characteristic: "complexity", notExaminedExit: 7.5 },
-        { scn: "SCN-AAA-007", characteristic: "mutation" },
-      ]),
-    ]).toEqual([
-      ["SCN-AAA-001", { characteristic: "traceability", notExaminedExit: 3 }],
-      ["SCN-AAA-004", { characteristic: "complexity", notExaminedExit: null }],
-      ["SCN-AAA-005", { characteristic: "complexity", notExaminedExit: null }],
-      ["SCN-AAA-007", { characteristic: "mutation", notExaminedExit: null }],
-    ]);
-  });
-
-  it("answers ONE predicate for whether a row named such an ending at all", () => {
-    // The twin of `carriesBar`, and the twin's reason: the pass needs the VALUE and every other
-    // reader needs only whether one was named, so two spellings of the second question would grow
-    // two opinions of one fact. `0` cannot reach here — it is refused where the commands are read
-    // (@SCN-LNT-025) — so a row this answers `false` for is one that named nothing readable.
-    const named = fitnessChecksOf([
-      { scn: "SCN-AAA-001", characteristic: "traceability", notExaminedExit: 3 },
-      { scn: "SCN-AAA-004", characteristic: "complexity", notExaminedExit: "3" },
-      { scn: "SCN-AAA-007", characteristic: "mutation" },
-    ]);
-    expect([...named.values()].map((row) => namesNotExaminedEnding(row))).toEqual([
-      true,
-      false,
-      false,
-    ]);
   });
 });
 
@@ -132,7 +90,7 @@ describe("[SCN-LNT-018] the rows come from the TARGET's manifest", () => {
         },
         NO_RECORD
       ),
-    ]).toEqual([["SCN-AAA-001", { characteristic: "complexity", notExaminedExit: null }]]);
+    ]).toEqual([["SCN-AAA-001", { characteristic: "complexity" }]]);
   });
 
   it("resolves empty for a manifest that configures none — inert on an unconverted target", () => {
@@ -150,13 +108,13 @@ describe("[SCN-LNT-019] the row's SHAPE says which kind of check it is", () => {
         { scn: "SCN-AAA-007", characteristic: "mutation", command: "pnpm mutation:score", atLeast: 90 },
       ]),
     ]).toEqual([
-      ["SCN-AAA-007", { characteristic: "mutation", notExaminedExit: null, bar: { threshold: 90, atLeast: true } }],
+      ["SCN-AAA-007", { characteristic: "mutation", bar: { threshold: 90, atLeast: true } }],
     ]);
   });
 
   it("holds a ceiling row's bar sparsely — the number, and no direction beside it", () => {
     expect([...fitnessChecksOf([{ scn: "SCN-AAA-005", characteristic: "ci-run-time", atMost: 75 }])]).toEqual([
-      ["SCN-AAA-005", { characteristic: "ci-run-time", notExaminedExit: null, bar: { threshold: 75 } }],
+      ["SCN-AAA-005", { characteristic: "ci-run-time", bar: { threshold: 75 } }],
     ]);
   });
 
@@ -164,7 +122,7 @@ describe("[SCN-LNT-019] the row's SHAPE says which kind of check it is", () => {
     // No type field and no second tag: what makes this row static is that it names no bar, which is
     // the discrimination `thresholdsOf` has always made.
     expect([...fitnessChecksOf([{ scn: "SCN-AAA-001", characteristic: "complexity", command: "eslint" }])]).toEqual([
-      ["SCN-AAA-001", { characteristic: "complexity", notExaminedExit: null }],
+      ["SCN-AAA-001", { characteristic: "complexity" }],
     ]);
   });
 
@@ -174,7 +132,7 @@ describe("[SCN-LNT-019] the row's SHAPE says which kind of check it is", () => {
     // the static route to be reported as a check nobody wrote.
     for (const authored of ["ninety", { mutationGate: "domain" }, Number.NaN, -1, null, [90]]) {
       expect([...fitnessChecksOf([{ scn: "SCN-AAA-007", characteristic: "mutation", atLeast: authored }])]).toEqual([
-        ["SCN-AAA-007", { characteristic: "mutation", notExaminedExit: null, bar: null }],
+        ["SCN-AAA-007", { characteristic: "mutation", bar: null }],
       ]);
     }
   });
@@ -202,7 +160,7 @@ describe("[SCN-LNT-019] the row's SHAPE says which kind of check it is", () => {
         () => 699
       ),
     ]).toEqual([
-      ["SCN-AAA-007", { characteristic: "mutation", notExaminedExit: null, bar: { threshold: 699, atLeast: true } }],
+      ["SCN-AAA-007", { characteristic: "mutation", bar: { threshold: 699, atLeast: true } }],
     ]);
   });
 
@@ -221,7 +179,7 @@ describe("[SCN-LNT-019] the row's SHAPE says which kind of check it is", () => {
         },
         NO_RECORD
       ),
-    ]).toEqual([["SCN-AAA-007", { characteristic: "mutation", notExaminedExit: null, bar: null }]]);
+    ]).toEqual([["SCN-AAA-007", { characteristic: "mutation", bar: null }]]);
   });
 
   it("keeps a row naming BOTH directions measured, and holds it to neither", () => {
@@ -229,7 +187,7 @@ describe("[SCN-LNT-019] the row's SHAPE says which kind of check it is", () => {
     // read first would silently settle it — so the row is measured and the bar is nothing.
     expect([
       ...fitnessChecksOf([{ scn: "SCN-AAA-007", characteristic: "mutation", atLeast: 90, atMost: 95 }]),
-    ]).toEqual([["SCN-AAA-007", { characteristic: "mutation", notExaminedExit: null, bar: null }]]);
+    ]).toEqual([["SCN-AAA-007", { characteristic: "mutation", bar: null }]]);
   });
 });
 

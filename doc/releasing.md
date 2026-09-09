@@ -108,8 +108,8 @@ Both packages are **semver**, and both are on `0.x`.
 ## The release path asks nothing about this repository
 
 `release.yml` gates on what says **this artefact is sound**: the build, the typecheck, both suites,
-and the clean-room install of the packed tarballs. It runs **neither `balance:self` nor
-`pnpm cucumber:fitness`**, and that is a rule rather than an oversight:
+and the clean-room install of the packed tarballs. It runs **neither `balance:self` nor `pnpm
+verify`**, and that is a rule rather than an oversight:
 
 > **The release path consults nothing that is about this repository rather than about the artefact.**
 
@@ -117,7 +117,7 @@ The self-reconciliation is a statement about this repository's own bookkeeping. 
 the same category row for row — complexity bars, corpus traceability, anemic-domain conformance,
 this suite's own mutation score, the duration of the observer. Not one of those says the tarball
 works. `SCN-FIT-011` is `pnpm typecheck`, and the release runs it directly, so the one
-artefact-relevant member of the axis is covered outside the pass.
+artefact-relevant member of the axis is covered on its own terms.
 
 Two things go wrong when a release does ask:
 
@@ -127,7 +127,7 @@ Two things go wrong when a release does ask:
   would refuse to publish the cure for the disease.
 - **A lapsed cron blocks a release.** `SCN-FIT-002` prints a number a **scheduled nightly sweep**
   leaves behind. `ci.yml` fetches that record; the release path has no equivalent, so on a runner
-  starting with a cold evidence root the fitness pass reds and the job dies before it packs
+  starting with a cold evidence root that row's own step reds and the job dies before it packs
   anything. That was measured, on a real run, before it was removed.
 
 **The residual, stated rather than hidden.** A tag can be cut from any commit, so the release path's

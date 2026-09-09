@@ -34,7 +34,7 @@ Feature: The compatibility page's own examples are held to the tree that publish
   IT IS @unit AND NOT @integration, deliberately, which is the choice @DPG and @EPG already made.
   The disk-reading half — find the page, read the corpus, set an exit code — is exercised over the
   REAL page on every push by `@SCN-FIT-015`, whose configured row runs the command itself. A second
-  arm spawning the same command over a planted tree would assert what the fitness pass already
-  asserts against the live one.
+  arm spawning the same command over a planted tree would assert what that step already asserts
+  against the live one.
 
   Rule: the page's configuration examples are read by the reader that page says supports them

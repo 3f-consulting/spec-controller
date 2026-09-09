@@ -87,7 +87,7 @@ export type RuntimePosting =
  *
  * `broken` ARRIVES HERE AT @SCN-LNT-026 AND IS NOT A NEW CONCEPT, only a newly reachable one. The
  * outcome has meant a proof that never ran since @SCN-LDG-017; what changed is that the static
- * axis can now say it, because the fitness pass's report says whether the check ran and the
+ * axis can now say it, because the CI run's own step record says whether the check ran and the
  * reader had been declining to look.
  */
 export type StaticCheckPosting =

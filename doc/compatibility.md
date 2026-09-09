@@ -252,43 +252,29 @@ bar rather than quietly passing, and the reconciliation says so.
 **Nothing is pending against it** — it is what the other entries move toward. It is **removed only in
 a major version**, and a corpus that converts nothing never writes a row.
 
-#### `notExaminedExit` — for a check whose subject is sometimes legitimately absent
+#### `notExaminedExit` — REMOVED (3F-3252)
 
-Some checks have nothing to look at on some runs, through no fault of anyone's. A check over pull
-request metadata, run on a branch that has no pull request. A check over a directory this particular
-repository does not have. The run examined nothing — and **both of the answers normally available
-are wrong**: exiting clean is a green nobody earned, and exiting with a violation reds honest work
-for the circumstances it ran in.
+A row could once name the exit code its command uses to say *I examined nothing*, so a check whose
+subject is legitimately absent on some runs was neither a green nobody earned nor a red against
+honest work. **The field is gone, and so is the concept.**
 
-So a row may name the exit code its command uses to say *I examined nothing*:
+It was readable only while spec-controller's own pass SPAWNED the command and compared the number.
+Under the CI-record model nothing of ours spawns anything: a step record carries a **status** and
+no exit code, so a declared ending could only be read for *whether it was named* — which would
+forgive **any** skip, including `if: false`. A check switched off would have read satisfied for
+ever, single-entry, in the double-entry product.
 
-```jsonc
-"specController": {
-  "fitnessChecks": [
-    { "scn": "SCN-CHK-021", "characteristic": "traceability",
-      "command": "pnpm check:pr-metadata",
-      "notExaminedExit": 3 }
-  ]
-}
+**Say it in your own `run:` line instead**, where your CI records the result honestly:
+
+```yaml
+- name: PR metadata
+  id: SCN-CHK-021
+  if: always()
+  run: pnpm check:pr-metadata || [ $? -eq 3 ]
 ```
 
-The scenario is then reported **skipped** — neither passed nor failed, in Cucumber's own vocabulary.
-It still appears in the report, so the check is still recorded as having run; it does not count
-toward the run's exit code; and it is visibly not a pass.
-
-Three rules, and the first is the one that keeps this narrow:
-
-- **No field means no third state.** Every non-zero exit is a fault, which is what you want for
-  almost every check. You opt in to the third answer or you never meet it.
-- **`0` and `1` are refused where the rows are read**, not discovered at runtime. A row naming `0`
-  reports *examined nothing* on exactly the runs where the check worked; a row naming `1` turns
-  every real finding into one. Both leave a check unable to say something it must be able to say.
-- **Every other code is yours**, `2` and `4` included. What an ending means is a property of your
-  command, and the row is where your command is written down.
-
-This repository's own first user of the field is its scenario ⟷ sub-issue check, which cannot answer
-its question without a pull request body to read. That is a *member* of the class and not the reason
-for it: the field exists because a check with no subject must be able to say so.
+That is your business, on your side of the boundary, and it needs nothing from your row. A row that
+still carries `notExaminedExit` is **ignored**, not refused — the key is simply not read.
 
 #### What a row you got wrong actually does — because it is not what you would guess
 
@@ -299,12 +285,11 @@ a typo costs you a check rather than a build.
 
 **What catches it is the scenario, which survives the row.** Your fitness corpus is a feature file
 you wrote; the row is a line you wrote beside it. Drop the row and the scenario is still there,
-carrying a code nothing configures — so the fitness pass has no command to run for it and reds
-naming it, and the reconciliation's census names it too:
+carrying a code nothing configures — so the reconciliation's census names it, as a fitness scenario
+no configured row names:
 
 ```
-✖ Then the check this scenario names finds no violations
-    AssertionError: SCN-CHK-004: no row of specController.fitnessChecks names this scenario, so
+SCN-CHK-004: no row of specController.fitnessChecks names this scenario, so
     there is no command to run. Write its row: the @SCN it is about, the characteristic it
     asserts, and the command that returns a violation.
 ```
@@ -319,19 +304,6 @@ Do not reach for a generated corpus and a regenerate-and-diff row to catch this 
 the arrangement this repository ran for one commit and then retired: a corpus emitted from the rows
 drops the scenario with the row, so the two sides can never disagree and there is nothing left to
 notice the loss. The scenario has to be authored for its survival to mean anything.
-
-**Two values are refused outright, and refusing them reds every fitness scenario you have.** The
-manifest is read once for the whole pass, so `notExaminedExit: 0` or `1` on one row fails all of
-them — including rows you did not touch. **Read the first line before you go hunting**: it names the
-row, not the checks.
-
-```
-Error: SCN-CHK-004: notExaminedExit: 1 is refused where the rows are read, because an ordinary
-violation ends that way, so this row turns every finding the check makes into a check that examined
-nothing, and a red into a non-failure. …
-```
-
-One line of configuration, however many scenarios went red.
 
 ---
 

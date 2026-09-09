@@ -1,21 +1,30 @@
 {
-  "name": "skipped-fitness-target-repo-fixture",
+  "name": "check-step-readings-fitness-target-repo-fixture",
   "private": true,
   "scripts": {
-    "test": "vitest run"
+    "build": "tsc"
   },
   "specController": {
     "fitnessChecks": [
       {
         "scn": "SCN-CVT-001",
         "characteristic": "complexity",
-        "command": "eslint",
-        "notExaminedExit": 3
+        "command": "eslint"
       },
       {
         "scn": "SCN-CVT-002",
         "characteristic": "traceability",
         "command": "scn-subissues"
+      },
+      {
+        "scn": "SCN-CVT-003",
+        "characteristic": "duplication",
+        "command": "jscpd"
+      },
+      {
+        "scn": "SCN-CVT-004",
+        "characteristic": "doc-accuracy",
+        "command": "doc-audit"
       }
     ]
   }

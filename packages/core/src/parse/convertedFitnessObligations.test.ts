@@ -22,7 +22,7 @@ import type { FitnessCheckIndex } from "../domain/fitnessChecks.js";
 
 /** The configured rows, as the obligation rule takes them: bare `@SCN` → the characteristic. */
 const CONFIGURED: FitnessCheckIndex = new Map([
-  ["SCN-AAA-001", { characteristic: "complexity", notExaminedExit: null }],
+  ["SCN-AAA-001", { characteristic: "complexity" }],
 ]);
 
 /**
@@ -126,9 +126,9 @@ Feature: fitness
 
 /** The converted rows for @SCN-LNT-019 — one floor, one bar nothing can read, one no bar at all. */
 const BY_SHAPE: FitnessCheckIndex = new Map([
-  ["SCN-AAA-002", { characteristic: "mutation", notExaminedExit: null, bar: { threshold: 90, atLeast: true } }],
-  ["SCN-AAA-003", { characteristic: "coverage", notExaminedExit: null, bar: null }],
-  ["SCN-AAA-001", { characteristic: "complexity", notExaminedExit: null }],
+  ["SCN-AAA-002", { characteristic: "mutation", bar: { threshold: 90, atLeast: true } }],
+  ["SCN-AAA-003", { characteristic: "coverage", bar: null }],
+  ["SCN-AAA-001", { characteristic: "complexity" }],
 ]);
 
 /** A converted scenario per row, in the order the expectations below read them. */
@@ -183,7 +183,7 @@ describe("[SCN-LNT-019] the row's shape decides which obligation the converted r
     // The direction is the TARGET's to author, never the engine's to infer from the characteristic
     // (@SCN-MUT-001): a row naming `atMost` lands exactly the keys it landed before floors existed.
     const ceiling: FitnessCheckIndex = new Map([
-      ["SCN-AAA-001", { characteristic: "ci-run-time", notExaminedExit: null, bar: { threshold: 75 } }],
+      ["SCN-AAA-001", { characteristic: "ci-run-time", bar: { threshold: 75 } }],
     ]);
 
     expect(parseScenarios(convertedScenario, [], [], new Map(), ceiling)).toEqual([

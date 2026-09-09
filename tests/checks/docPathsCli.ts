@@ -41,11 +41,13 @@
  * under the real count so that ordinary deletion does not red it, and the pass line says how many
  * pages were read so the green states its own reach rather than asserting it.
  *
- * ═══ TWO EXIT CODES, AND NO `notExaminedExit` ═══
+ * ═══ TWO EXIT CODES, AND THERE IS NO THIRD ═══
  *
- * `0` clean, `1` violations. That third state is for a command whose subject is legitimately absent
- * in some runs — `lint:scn-subissues` outside a pull request. These pages are in the tree on every
- * run, so their absence is a fault rather than the ordinary state, and it exits `1` like any other.
+ * `0` clean, `1` violations. These pages are in the tree on every run, so their absence is a fault
+ * rather than the ordinary state, and it exits `1` like any other. A command whose subject IS
+ * sometimes legitimately absent absorbs that in its own CI `run:` line rather than on its row —
+ * the ledger reads a status with no exit code in it, so it can learn nothing about endings
+ * (3F-3252).
  *
  * ═══ THE HANDLE CARRIES NO OBSERVED PREFIX, AND THAT IS THE RULE RATHER THAN A PREFERENCE ═══
  *
@@ -55,10 +57,10 @@
  * states that outright (3F-3113), and this row is the same shape.
  *
  * IT WAS MINTED `lint:doc-paths` AND RENAMED BEFORE MERGE (3F-3181). Under the old name the prefix
- * discovered nothing, because the fitness pass runs this row and it has no CI step of its own — so
- * the fault was INERT, and an inert fault is the kind that ships. Anyone later adding a `run:` step
- * would have registered a check nobody cited and redded `balance:self` for a reason that had
- * nothing to do with their change.
+ * discovered nothing, because at the time the fitness pass ran this row and it had no CI step of
+ * its own — so the fault was INERT, and an inert fault is the kind that ships. It has a step now,
+ * and under the old name that step would have registered a check nobody cited and redded
+ * `balance:self` for a reason that had nothing to do with whoever added it.
  *
  * NO UNIT TESTS, DELIBERATELY (operator ruling, 2026-09-06). This module asserts a property of the
  * repository and reports pass/fail, so it IS a test; it carries the generated characteristic claim

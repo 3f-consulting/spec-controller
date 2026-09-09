@@ -348,8 +348,8 @@ export interface GuardEvidenceObservation {
    *
    * INFERRED on the DISCOVERED route: a `package.json` `scripts` entry by that name is present, so
    * something by that name could be invoked. OBSERVED on the CONVERTED route: the check's scenario
-   * appears in the fitness pass's Cucumber report, which says it RAN — a stronger fact than a
-   * manifest holding a name, and one no manifest read can reach.
+   * step appears in the CI run's own record of what each of its steps did, which says it RAN — a
+   * stronger fact than a manifest holding a name, and one no manifest read can reach.
    *
    * The field means the same thing either way, which is why it is one field: this check is not
    * absent from the target. What differs is the strength of what stands behind it, and the
@@ -364,15 +364,38 @@ export interface GuardEvidenceObservation {
    * INFERRED on the DISCOVERED route: the check's command appears as a CI `run:` step, the v1
    * (COARSE) signal — v1 verifies the command IS a CI step, NOT that it reads real source vs
    * fixtures, the residual gap a later evidenceObservation-based check closes. OBSERVED on the
-   * CONVERTED route: the fitness pass runs in the target's own root, so a scenario reported by that
-   * pass ran over that root's tree, and the coarseness the workflow read carries is simply not on
-   * this path.
+   * CONVERTED route: the step ran inside the target's own pipeline, over the target's own checkout,
+   * so a step the run's record names ran over that tree — and the coarseness the workflow read
+   * carries is simply not on this path.
    *
    * NEITHER ROUTE READS THE CHECK'S OWN VERDICT, on this field or any other. Whether the check
    * FOUND anything is the runner's exit code's answer; whether it RAN is this one's. Two questions,
    * two mechanisms, and a converted check keeps that split exactly.
    */
   enforcedOverRealSource: boolean;
+  /**
+   * THE CHECK'S OWN VERDICT, where the stream that observed it carried one (@SCN-LNT-028) — the
+   * same field, spelled the same way, as its runtime sibling's above.
+   *
+   * IT IS ABSENT ON EVERY ROUTE THAT READS A CONFIG, and that absence is the honest value rather
+   * than an omission. `exists` and `enforcedOverRealSource` are read from a manifest and a
+   * workflow, which say a check is there and is wired; neither document knows what the check
+   * FOUND. So those routes assert nothing here and reconcile exactly as they always have.
+   *
+   * WHAT MADE IT NECESSARY WAS THE THIRD THING GOING AWAY. While a runner ran the checks, a check
+   * that found violations reddened the run through the runner's exit code, so a reader could
+   * honestly answer "did it run" and leave the verdict to somebody else. A CI step's exit code
+   * reaches this ledger nowhere: what crosses is a status field, so the verdict now has to travel
+   * on the observation or not at all — and a reader that went on collapsing passed and failed
+   * would be green over every check that ran and found something.
+   *
+   * `failed` REACHES `failing`, WHICH IS THE WORD EVERY OTHER AXIS ALREADY USES. Present-and-
+   * passing reconciles satisfied and present-and-failing reconciles failing, and a failed unit
+   * test has posted `failing` since the ledger had two sides. It is emphatically NOT `broken`:
+   * that is the never-ran case, it carries no observation at all, and it stamps the run unsound —
+   * so reading a check that ran and found violations as broken would discard what the check said.
+   */
+  status?: EvidenceStatus;
   /**
    * THE CHECK NEVER RAN (@SCN-LNT-026) — the static twin of the flag its runtime sibling has
    * carried since @SCN-LDG-017, and the same fact under the same name: a proof that never
@@ -383,11 +406,13 @@ export interface GuardEvidenceObservation {
    * fail-safes test the flag rather than its negation. There is no state for the second spelling
    * to name.
    *
-   * WHAT REACHES IT ON THIS AXIS. A converted check's credit says the check RAN, and the fitness
-   * pass's report is what says so — so a scenario that report carries with no reading that means
-   * "it ran" is a check whose running nothing can vouch for. A skip a row asked for is the one
-   * exception, and it is settled by the row rather than by the report (`namesNotExaminedEnding`):
-   * two facts from two places, which is why a hook cannot forge it.
+   * WHAT REACHES IT ON THIS AXIS, AND IT IS NOW TWO DOCUMENTS RATHER THAN ONE (@SCN-LNT-026). A
+   * converted check's credit says what the check DID, and the document saying so is the CI run's
+   * own step record — so an entry carrying no reading that says what the check did is a check whose
+   * running nothing can vouch for, and so is a configured row the record holds no entry for at all
+   * (@SCN-LNT-027). THERE IS NO EXCEPTION: no row can excuse a skip (3F-3252), because a command
+   * that examines nothing still runs and still ends, so a skip never means that and a declaration
+   * saying it did could only be read for whether it was named.
    *
    * THE SAME FAIL-SAFE, IN THE SAME TWO PLACES. `postingOf` takes `broken` on the FLAG before
    * `scnId` is consulted, so a broken credit is never citation-routed; `staticCheckObservationFor`

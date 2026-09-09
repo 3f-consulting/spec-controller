@@ -1,0 +1,25 @@
+# The fixture target's OWN workflow, standing in for another repository's pipeline — one whose
+# author reached for `continue-on-error` deliberately. The check runs, its red is swallowed, and
+# the job carries on. THIS FILE IS NOT THIS REPOSITORY'S LADDER: @SCN-LAD-008 still refuses the
+# attribute over .github/workflows/ci.yml, which is where that check reads and the only place it
+# reads. What is modelled here is a consumer's choice, and what this axis owes them for it is an
+# honest ledger rather than a refusal.
+#
+# THE COMMAND IS NOT ONE OF THAT REPOSITORY'S SCRIPTS, and that is this fixture's isolation, as it
+# is its sibling's. A guard-prefixed script handle would be discovered from this file and observed
+# by the derivation reader, whose credit would answer the row's obligation first — so the run
+# record's reading would be asserted over a row something else had already settled.
+name: fixture CI
+jobs:
+  quality:
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Complexity
+        id: SCN-CVT-001
+        continue-on-error: true
+        run: eslint
+      - name: Dump this run's step record
+        id: dump-the-step-record
+        if: always()
+        run: printf '%s' "$STEPS_JSON" > ci-steps.json

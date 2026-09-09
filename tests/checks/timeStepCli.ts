@@ -36,10 +36,10 @@
  * WHAT IT WRITES IS A TIMINGS RECORD AND NOT THIS RUN'S CREDIT STREAM (3F-3166). It used to be the
  * credit: the artefact this wrote WAS the file `balance --measurements` reads, because the two
  * timed suites were answered by bare `@ci-run-time` tags on stepless scenarios. Those rows are
- * CONVERTED now (@SCN-FIT-012 / @SCN-FIT-013) and the fitness pass posts their credits, from the
- * numbers this record holds. A wrapper still writing into the credit stream would settle those
- * obligations whether or not the pass that enumerates them ever ran — a credit arriving by a route
- * that enumerates nothing, which is the single-entry fault the whole axis exists to close. The
+ * CONVERTED now (@SCN-FIT-012 / @SCN-FIT-013) and each row's own reader command posts its credit,
+ * from the numbers this record holds. A wrapper still writing into the credit stream would settle
+ * those obligations whether or not the STEP that enumerates them ever ran — a credit arriving by a
+ * route that enumerates nothing, which is the single-entry fault the whole axis exists to close. The
  * sweep record made the same split for the same reason one conversion earlier.
  *
  * AND IT READS THE TARGET'S MANIFEST, WHICH IS THE ONLY NUMBER IT IS TOLD (@SCN-CIP-012). The

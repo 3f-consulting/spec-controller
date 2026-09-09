@@ -1,0 +1,16 @@
+{
+  "name": "failed-check-step-fitness-target-repo-fixture",
+  "private": true,
+  "scripts": {
+    "build": "tsc"
+  },
+  "specController": {
+    "fitnessChecks": [
+      {
+        "scn": "SCN-CVT-001",
+        "characteristic": "complexity",
+        "command": "eslint"
+      }
+    ]
+  }
+}

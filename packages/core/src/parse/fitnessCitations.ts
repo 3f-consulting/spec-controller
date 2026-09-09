@@ -13,6 +13,12 @@
  * cites nothing rather than being smoothed into a near-match (@SCN-LNT-016, @SCN-LNT-017). The
  * register discriminates; the corpus still decides.
  *
+ * AND ONE CITATION NEEDS NO HOPS AT ALL (@SCN-LNT-031). A consumer who writes the code of the row
+ * a check answers onto that check's own CI step has said which row it posts to, so the resolution
+ * above has nothing left to do: `citationOfCitedRow` reads the configured row that code names and
+ * takes both terms off it. Same seam, same two terms, a shorter route — and it is a route the
+ * consumer opens, which is why it beats a derived citation where both are available.
+ *
  * WHAT THIS DOES NOT DECIDE. Whether a scenario is stepless, and whether a bare tag RAISES an
  * Evidence Obligation, are the shape and obligation rules (@SCN-STG-005, @SCN-LNT-006). This
  * answers one question only — which scenario CARRIES this check — so the two readings cannot
@@ -20,6 +26,8 @@
  */
 
 import type { CheckRegistry } from "../domain/checkRegistry.js";
+import type { FitnessCheckIndex } from "../domain/fitnessChecks.js";
+import { bareTerm } from "../lib/bareTerm.js";
 import type { TaggedScenario } from "./scenarios.js";
 
 /** Bare check tag → the `@SCN` of every fitness scenario carrying it, in corpus order. */
@@ -112,4 +120,35 @@ export function citationOfScript(
   // one.
   const scnId = entry.scn === null ? carriers[0] : carriers.find((id) => id === entry.scn);
   return scnId === undefined ? null : { checkTag: entry.check, scnId };
+}
+
+/**
+ * THE CONSUMER'S OWN CITATION — the configured row a code written on a CI check step names, read
+ * back as what that step's run cites.
+ *
+ * NOT A THIRD HOP, AND THE DIFFERENCE IS WHERE IT STARTS. The two hops above resolve a runnable
+ * script HANDLE into a scenario, because a handle does not know what it is for. An `id:` is not a
+ * handle: it is the consumer SAYING which row this check answers — a citation, never a declaration
+ * — so there is nothing to resolve. The row keyed by that code carries the characteristic, and both
+ * terms come off one configured row rather than one being recovered from the other.
+ *
+ * IT REFINES, IT DOES NOT MANUFACTURE (@SCN-LNT-031, and 3F-3261's rule kept whole). A code no
+ * configured row answers returns `null` rather than a citation half-assembled from the handle that
+ * ran: an `id:` names a ROW and never a characteristic, and reaching for the script's name for the
+ * missing half is the name-match this axis retired, in a new spelling. A step carrying no code at
+ * all is the same answer for the same reason — the target has said nothing about that check, so its
+ * run cites nothing and posts to suspense, which is the state a consumer starts in.
+ *
+ * BARED ON THE WAY IN, because a manifest's `scn` is stored bare and a workflow is hand-authored:
+ * the one spelling rule this repository has (`lib/bareTerm`) is what keeps a code written with a
+ * sigil or a stray space from being looked up under a key no row is filed at.
+ */
+export function citationOfCitedRow(
+  citedScn: string | undefined,
+  fitnessChecks: FitnessCheckIndex
+): ScriptCitation | null {
+  if (citedScn === undefined) return null;
+  const scnId = bareTerm(citedScn);
+  const row = fitnessChecks.get(scnId);
+  return row === undefined ? null : { checkTag: row.characteristic, scnId };
 }

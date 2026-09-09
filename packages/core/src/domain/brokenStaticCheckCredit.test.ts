@@ -54,7 +54,7 @@ describe("[SCN-LNT-026] a BROKEN static-check credit is excluded from the obliga
         exists: true,
         enforcedOverRealSource: true,
         broken: true,
-        message: "the fitness pass reported this scenario as skipped",
+        message: "the run's record says this check's step was skipped",
         locator: "features/fitness-checks.feature",
       },
     ];
@@ -87,7 +87,7 @@ describe("[SCN-LNT-026] a BROKEN static-check credit is excluded from the obliga
         qualityCheck: "lint",
         outcome: "broken",
         locator: "features/fitness-checks.feature",
-        message: "the fitness pass reported this scenario as skipped",
+        message: "the run's record says this check's step was skipped",
       },
     ]);
     expect(hasBrokenEvidence(balance)).toBe(true);

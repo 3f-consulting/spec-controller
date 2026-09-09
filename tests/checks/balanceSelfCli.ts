@@ -88,24 +88,33 @@ export interface SelfBalanceScope {
   /** The BEHAVIOURAL Cucumber JSON report — the observed `@integration` / `@e2e` stream. */
   cucumber: string;
   /**
-   * The FITNESS pass's Cucumber JSON report (@SCN-LNT-021, 3F-3145) — the observed CONVERTED
-   * static-check stream, written by a SECOND cucumber call over its own profile.
+   * The CI RUN'S OWN RECORD of what each of its steps did (@SCN-LNT-021, @SCN-LNT-028) — the
+   * observed CONVERTED static-check stream, dumped by the run's own `if: always()` step from
+   * `toJSON(steps)`.
    *
-   * A SURFACE OF ITS OWN RATHER THAN A SECOND READING OF `cucumber`. The two documents have the
-   * same shape and opposite meanings: the behavioural pass's scenarios are runtime results
-   * levelled by a tier tag, the fitness pass's are static-check credits named by a configured
-   * row. One file read both ways would have the gate guessing which half of it was which.
+   * A SURFACE OF ITS OWN RATHER THAN A SECOND READING OF `ci`. The two documents answer different
+   * questions: the workflow FILE says a check is wired into this pipeline and which row its step
+   * cites, and is true between runs; this says what that step DID on one afternoon. Neither can be
+   * got from the other's document, which is why the gate hands over both.
+   *
+   * AND A LOCAL RUN HAS NONE, WHICH IS STATED HERE RATHER THAN DISCOVERED IN A RED. The dump is a
+   * CI step; `pnpm balance:self` on a developer's machine has no `toJSON(steps)` to read, so this
+   * surface is absent, nothing is raised for it, and every configured row reconciles `missing` by
+   * absence — out of balance at exit 1, and NOT unsound (@SCN-LNT-027 keeps a run handed no record
+   * apart from a run whose record carried nothing). The checks themselves still run locally: they
+   * are gates of `pnpm verify` in their own right, and their teeth are their own exit codes. What
+   * a local run does not have is the credit journal, because the credit journal is the pipeline's.
    */
-  fitness: string;
+  ciSteps: string;
   /**
-   * The measurement artefact — the observed MEASURED stream, which the FITNESS PASS posts into
-   * (3F-3166).
+   * The measurement artefact — the observed MEASURED stream, which each measured row's own COMMAND
+   * writes into (@SCN-LNT-024).
    *
-   * IT USED TO BE THE TIMED STEPS' OWN FILE, and the change is the last measured check converting.
-   * `timeStepCli` now writes a TIMINGS RECORD and the fitness pass reads it, so every credit on
-   * this stream — the two timings and the mutation score alike — arrives from the pass that
-   * enumerates the scenarios owing them. A producer writing here directly would settle an
-   * obligation whether or not anything enumerated it.
+   * THE COMMAND WRITES IT, AND THAT IS THE WHOLE OF THE PRODUCING HALF. A step's outcome is an exit
+   * code and an exit code cannot carry a number, so a measured row's step says the check RAN
+   * (@SCN-LNT-027) and its number arrives here, already citing both terms, from the reader the row
+   * names. Nothing spawns that command to take the number off what it printed: the consumer's
+   * pipeline runs it, as their own step.
    */
   measurements: string;
   /** The CI configs — where a static check is observed to FIRE, not merely to exist. */
@@ -133,10 +142,11 @@ export const SELF_BALANCE_SCOPE: SelfBalanceScope = {
   features: "features",
   vitest: "runs/self-balance/vitest.json",
   cucumber: "runs/self-balance/cucumber.json",
-  fitness: "runs/self-balance/fitness.json",
-  // The producer's own constant rather than a second spelling of it. The fitness pass posting to
-  // one path while this gate read another would not be loud: the reader would find nothing and
-  // every measured row would reconcile missing, which reads as a suite that never ran.
+  // The dump step's own path in `ci.yml`, and the one surface here a LOCAL run never produces.
+  ciSteps: "runs/self-balance/ci-steps.json",
+  // The producers' own constant rather than a second spelling of it. A measured row's command
+  // posting to one path while this gate read another would not be loud: the reader would find
+  // nothing and every measured row would reconcile missing, which reads as a check that never ran.
   measurements: MEASUREMENT_ARTEFACT_PATH,
   ci: ".github/workflows",
   packageJson: "package.json",
@@ -166,7 +176,7 @@ export function resolveScope(
     features: join(root, scope.features),
     vitest: overrides.vitest ?? join(evidenceRoot, scope.vitest),
     cucumber: overrides.cucumber ?? join(evidenceRoot, scope.cucumber),
-    fitness: join(evidenceRoot, scope.fitness),
+    ciSteps: join(evidenceRoot, scope.ciSteps),
     measurements: join(evidenceRoot, scope.measurements),
     ci: join(root, scope.ci),
     packageJson: join(root, scope.packageJson),
@@ -181,8 +191,8 @@ export function resolveScope(
  * not. Pure, so the @unit arm can assert the gate passes all seven and cannot quietly
  * drop one.
  *
- * THE MEASUREMENT ARTEFACT AND THE FITNESS REPORT ARE PASSED ONLY WHERE THEY EXIST, WHICH IS THE
- * OPPOSITE OF THE TREATMENT THE TWO SUITE REPORTS GET (@SCN-CIP-006, and 3F-3145 for the
+ * THE MEASUREMENT ARTEFACT AND THE CI STEP RECORD ARE PASSED ONLY WHERE THEY EXIST, WHICH IS THE
+ * OPPOSITE OF THE TREATMENT THE TWO SUITE REPORTS GET (@SCN-CIP-006, and 3F-3252 for the
  * second). A `--measurements` path the balance command is handed and
  * cannot find is a usage fault to it and exits 2 (@SCN-CLI-002) — the wrong verdict here. An
  * absent artefact leaves exactly the measured rows unanswered, and those rows reconciling
@@ -191,9 +201,9 @@ export function resolveScope(
  * the gate exists to close — unwrap a timed script and the build would report a broken run
  * rather than an unmeasured suite.
  *
- * THE FITNESS REPORT TAKES THAT TREATMENT FOR THE SAME REASON, ONE STEP FURTHER OUT. A target
- * that has converted no check runs no fitness pass and writes no report, so exit 2 there would
- * call an unconverted consumer's set-up broken over a file it has no reason to own. Absent, it
+ * THE CI STEP RECORD TAKES THAT TREATMENT FOR THE SAME REASON, ONE STEP FURTHER OUT. A consumer
+ * whose pipeline dumps no record hands none, and so does every LOCAL run of this gate, so exit 2
+ * there would call a developer's working copy broken over a file only a pipeline writes. Absent, it
  * leaves exactly the converted rows unanswered — which is a verdict, not a fault.
  */
 export function selfBalanceArgv(
@@ -212,7 +222,7 @@ export function selfBalanceArgv(
     "--cucumber",
     resolved.cucumber,
     ...(exists(resolved.measurements) ? ["--measurements", resolved.measurements] : []),
-    ...(exists(resolved.fitness) ? ["--fitness", resolved.fitness] : []),
+    ...(exists(resolved.ciSteps) ? ["--ci-steps", resolved.ciSteps] : []),
     "--ci",
     resolved.ci,
     "--package-json",
@@ -228,9 +238,9 @@ export function selfBalanceArgv(
  * report is a USAGE fault — the run was set up wrong — never an out-of-balance verdict.
  * Reporting it as a verdict is the false all-red the dogfooding fault produced.
  *
- * THE MEASUREMENT ARTEFACT AND THE FITNESS REPORT ARE DELIBERATELY NOT CHECKED HERE, and the
+ * THE MEASUREMENT ARTEFACT AND THE CI STEP RECORD ARE DELIBERATELY NOT CHECKED HERE, and the
  * asymmetry is the whole of @SCN-CIP-006's care. An unemitted suite report leaves EVERY obligation
- * unobserved, which means the suite did not run; an absent measurement artefact or fitness report
+ * unobserved, which means the suite did not run; an absent measurement artefact or step record
  * leaves exactly the measured or converted rows unanswered, and those reconciling missing is a
  * verdict the ledger is entitled to reach.
  *

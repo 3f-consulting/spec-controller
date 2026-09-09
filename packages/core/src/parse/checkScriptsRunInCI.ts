@@ -9,8 +9,9 @@
  *
  * The CI config is parsed with the reputable `yaml` parser (jobs → steps → run, including
  * block-scalar `run:` and `if:`/matrix steps) — never line-scanned. The step mapping is read
- * for its `continue-on-error` as well as its `run:`, because a step whose red the job would
- * swallow is a check that reports without enforcing (3F-3042, @SCN-LAD-008). A static check's
+ * for its `continue-on-error` and its `id:` as well as its `run:`, because a step whose red the job
+ * would swallow is a check that reports without enforcing (3F-3042, @SCN-LAD-008) and a step's
+ * `id:` is where a consumer writes the `@SCN` its check cites (3F-3261). A static check's
  * command counts as enforced only on an EXACT
  * package-manager invocation of its script name (`pnpm <guard>` / `pnpm run <guard>` /
  * `npm run <guard>` / `yarn <guard>`), so a sibling static check's run step never falsely enforces it.
@@ -34,16 +35,22 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 const CONTINUE_ON_ERROR = "continue-on-error";
 
 /**
- * One CI `run:` step: the command, and whether its red is the job's verdict.
+ * One CI `run:` step: the command, the `id:` it was given, and whether its red is the job's verdict.
  *
- * A UNION RATHER THAN AN OPTIONAL FIELD, so the invariant is unrepresentable rather than
- * commented. A step that does not abort the job always names the key that severs it — a reader
- * has to know WHICH key to delete, and the two live in two different places — and a step that
- * does abort it carries no such key to go stale beside the flag.
+ * A UNION RATHER THAN AN OPTIONAL FIELD for the `continue-on-error` half, so the invariant is
+ * unrepresentable rather than commented. A step that does not abort the job always names the key
+ * that severs it — a reader has to know WHICH key to delete, and the two live in two different
+ * places — and a step that does abort it carries no such key to go stale beside the flag.
+ *
+ * `id` IS OPTIONAL AND THAT IS NOT THE SAME SHAPE OF QUESTION. There is no second key and no
+ * invariant to pair it with: the step either carries an `id:` or it does not, and its absence is a
+ * fact about the workflow rather than a state needing a witness. Optional rather than `string |
+ * null` for the reason the observation's own `scnId` is (`domain/journal.ts`) — an absent citation
+ * carries no key at all.
  *
  * @SCN-LAD-008 — features/local-ladder.feature.
  */
-export type CiRunStep = { readonly command: string } & (
+export type CiRunStep = { readonly command: string; readonly id?: string } & (
   | { readonly abortsJob: true }
   | {
       readonly abortsJob: false;
@@ -65,25 +72,48 @@ function vouchesForTheStep(value: unknown): boolean {
   return value === undefined || value === false || value === "false";
 }
 
-/** One `run:` step, read with its own `continue-on-error` and its job's. */
-function stepOf(command: string, ownValue: unknown, jobValue: unknown): CiRunStep {
+/**
+ * A step's `id:`, or nothing.
+ *
+ * A STRING OR SILENCE. YAML will hand back a number for `id: 001` and a mapping for a malformed
+ * one, and neither is something a citation can be read off — so anything but a non-empty string
+ * reads as no `id:` at all. The SAFE direction again: an unreadable `id:` leaves the step citing
+ * nothing, which posts to suspense and is visible, rather than citing a coerced word that would
+ * answer some obligation by accident.
+ */
+function idOf(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const id = value.trim();
+  return id === "" ? undefined : id;
+}
+
+/** One `run:` step, read with its `id:`, its own `continue-on-error` and its job's. */
+function stepOf(
+  command: string,
+  id: string | undefined,
+  ownValue: unknown,
+  jobValue: unknown
+): CiRunStep {
+  // Spread rather than an `id: undefined` assignment, so a step carrying no `id:` carries no key
+  // and its shape stays exactly what it was before this walk read the key at all.
+  const step = { command, ...(id !== undefined ? { id } : {}) };
   // The step's own key is named ahead of its job's because it is the nearer one to delete;
   // either alone is enough to sever the step, so this decides the message and not the verdict.
   if (!vouchesForTheStep(ownValue)) {
     return {
-      command,
+      ...step,
       abortsJob: false,
       continuesOnError: { carriedBy: "step", value: String(ownValue) },
     };
   }
   if (!vouchesForTheStep(jobValue)) {
     return {
-      command,
+      ...step,
       abortsJob: false,
       continuesOnError: { carriedBy: "job", value: String(jobValue) },
     };
   }
-  return { command, abortsJob: true };
+  return { ...step, abortsJob: true };
 }
 
 /**
@@ -100,7 +130,7 @@ function runStepsOfJob(job: unknown): CiRunStep[] {
     if (!isRecord(step)) continue;
     const run = step["run"];
     if (typeof run !== "string") continue;
-    runSteps.push(stepOf(run, step[CONTINUE_ON_ERROR], jobValue));
+    runSteps.push(stepOf(run, idOf(step["id"]), step[CONTINUE_ON_ERROR], jobValue));
   }
   return runSteps;
 }
@@ -139,18 +169,24 @@ export function ciRunCommands(ciSources: readonly string[]): string[] {
 }
 
 /**
- * Every CI `run:` step across ALL of a target's config sources — the command, and whether the
- * step's red would abort the job.
+ * Every CI `run:` step across ALL of a target's config sources — the command, the `id:` it carries,
+ * and whether the step's red would abort the job.
  *
- * THE SAME WALK `ciRunCommands` READS, WIDENED — never a second one. `continue-on-error` is a key
- * of the step mapping this walk already visits and used to discard, and a second walk to pick it
- * up would be a second thing to get wrong, disagreeing silently with the first about which steps
- * a workflow even runs. `ciRunCommands` is this function's projection, so the two cannot disagree.
+ * THE SAME WALK `ciRunCommands` READS, WIDENED — never a second one, and widened TWICE now for the
+ * same reason. `continue-on-error` and `id` are both keys of the step mapping this walk already
+ * visits and used to discard, and a second walk to pick either up would be a second thing to get
+ * wrong, disagreeing silently with the first about which steps a workflow even runs.
+ * `ciRunCommands` is this function's projection, so the two cannot disagree.
  *
- * WHY A CALLER WANTS IT (3F-3042). A green CI run is evidence that every unconditional step ran,
- * because a `run:` step that reds aborts the job. `continue-on-error` is the one attribute that
- * falsifies that: the step runs, reds, and leaves the job green. A reader that cannot see it
- * cannot tell a gate from a gate in name only.
+ * WHY A CALLER WANTS `abortsJob` (3F-3042). A green CI run is evidence that every unconditional
+ * step ran, because a `run:` step that reds aborts the job. `continue-on-error` is the one
+ * attribute that falsifies that: the step runs, reds, and leaves the job green. A reader that
+ * cannot see it cannot tell a gate from a gate in name only.
+ *
+ * WHY A CALLER WANTS `id` (3F-3261). A check step's `id:` is where a consumer writes the `@SCN`
+ * their check cites — a citation, never a declaration: the obligation stays in the scenario and the
+ * command stays in the step. Reading it here is what lets the derivation say WHICH row a wired
+ * check answers, rather than only that it is wired.
  *
  * @SCN-LAD-008 — features/local-ladder.feature.
  */

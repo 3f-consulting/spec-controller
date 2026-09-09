@@ -83,6 +83,7 @@
  * not cross an unpublished subpath. Until one of those lands, the placement question is not open.
  */
 
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { constants, tmpdir } from "node:os";
 import path from "node:path";
 
@@ -193,13 +194,13 @@ export const MEASUREMENT_ARTEFACT_PATH = "runs/self-balance/measurements.json";
  * reads it as such. A nightly's number is not that — it was measured about a tree by a run that
  * finished hours ago, and a push borrows it. While the borrow landed in the credit stream the two
  * readings were one file, and under a CONVERTED mutation check that becomes a live double count:
- * the fitness pass posts the credit, so a borrowed row sitting beside it would be a second credit
- * for one Evidence Obligation.
+ * the row's own command posts the credit, so a borrowed row sitting beside it would be a second
+ * credit for one Evidence Obligation.
  *
  * SO THE BORROWED NUMBER LANDS HERE AND IS READ FROM HERE. The nightly writes this file, uploads
  * it, the push places it back at this path, and the converted check's command prints the row's
- * number — which the fitness pass then posts into the credit stream as the one credit this run
- * produced. Same shape, same reader, different question.
+ * number, and writes it into the credit stream as the one credit this run produced. Same shape,
+ * same reader, different question.
  *
  * Beneath the EVIDENCE ROOT, like the path above and for the same reason — a SECOND subtree under
  * it, because the two files answer two different questions and one base holding both is what keeps
@@ -284,7 +285,7 @@ export interface MeasurementAsk {
    * rename was not atomic. Stating the superseded code here is the expand half of expand/contract,
    * and the contract half is one sweep away.
    *
-   * `null` IS A REAL ANSWER AND THE SAFE ONE, exactly as it is for `notExaminedExit`. A row silent
+   * `null` IS A REAL ANSWER AND THE SAFE ONE. A row silent
    * on the point answers only to its own code, which is what every row had before any row could
    * ask — so nothing already written changes meaning by standing still. Opt-in, per row, never
    * inferred: a producer being out of step with the row it answers is the unusual state, and the
@@ -389,6 +390,46 @@ function measurementArtefactWithAll(
     (row) => !measurements.some((measurement) => isTheSameRowAs(row, measurement)),
   );
   return { measurements: [...others, ...measurements] };
+}
+
+/** What a record already holds, or nothing where there is nothing readable to find. */
+function artefactAt(recordPath: string): string | undefined {
+  try {
+    return readFileSync(recordPath, "utf8");
+  } catch {
+    // The first producer of a run finds no file, which is the ordinary case and not a fault. What
+    // is unreadable for any other reason is `measurementArtefactWith`'s to decide, one layer up.
+    return undefined;
+  }
+}
+
+/**
+ * Post a measurement into a record at `recordPath`, beside every row already there (@SCN-LNT-024).
+ *
+ * THE COMMAND WRITES ITS OWN NUMBER DOWN, AND THIS IS WHERE THAT HAPPENS. A measured row's credit
+ * is its NUMBER, and a CI step's outcome is an exit code — so the record is the only thing that can
+ * carry it, and the only thing that can write it is the command the row names. Nothing spawns that
+ * command to read a number off what it printed: the consumer's pipeline runs it, as their own step.
+ *
+ * BESIDE, NEVER OVER. A run has as many measurements as it has measured checks and they all answer
+ * through the one artefact `balance --measurements` reads, so this hands the keying rule what is
+ * already there and writes what comes back. Writing over it would leave only the last row and every
+ * earlier bar reconciling as a check that never ran.
+ *
+ * THE I/O IS HERE AND THE KEYING IS NOT, which is why `measurementArtefactWith` above takes the
+ * artefact as a STRING and answers with the object. The rule that decides which rows survive is
+ * stated once and stays testable without a filesystem; this is the one door that reads and writes
+ * around it, shared by every producer rather than copied beside each one.
+ */
+export function postMeasurement(recordPath: string, measurement: Measurement): void {
+  // The parent is made rather than assumed: the evidence root is a directory nothing else creates,
+  // so the first producer of a run is the thing that creates it.
+  mkdirSync(path.dirname(recordPath), { recursive: true });
+  writeFileSync(
+    recordPath,
+    `${JSON.stringify(measurementArtefactWith(measurement, artefactAt(recordPath)), null, 2)}\n`,
+    "utf8"
+  );
 }
 
 /** How a wrapped command ended, in the two fields `spawnSync` reports it in. */
