@@ -1,0 +1,156 @@
+name: Release
+
+# A TAG, OR A HAND-STARTED RUN, AND NOTHING ELSE (3F-3249, @SCN-REL-003). This is its own file
+# rather than a job in `ci.yml`, and the reason is that file's own trigger: it runs on `push: main`
+# AND on `pull_request`, so a release living inside it would attempt one on both. The alternative —
+# an `if:`-conditioned step in that job — would break the premise `ci.yml` states in its own header
+# and relies on: every step in it is unconditional, which is what lets a green there mean every gate
+# ran.
+#
+# AND THE SEPARATION IS WHAT KEEPS THE RELEASE REACHABLE WHILE THE RECONCILIATION IS RED (3F-3250,
+# @SCN-REL-004). Nothing below asks anything that is about THIS REPOSITORY rather than about the
+# artefact — not `balance:self` and not the fitness pass. A tree whose self-reconciliation reds can
+# still be released, which is the hatch the bootstrap in 3F-3105 needs: a model skew must not be
+# able to strand CI on a red only a hand publish can clear.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+# THE IDENTITY IS MINTED PER RUN, AND THERE IS NO CREDENTIAL ANYWHERE IN THIS FILE. `id-token: write`
+# is what lets npm's trusted publisher recognise this workflow; a repository secret would be a
+# credential that outlives the run, which is the thing an identity minted per run exists so that
+# nobody has to hold. `contents: read` is the checkout's and nothing more — this release writes
+# nothing back to the repository.
+#
+# PROVENANCE COMES FROM THE IDENTITY, NOT FROM A FLAG. npm emits the attestation itself once the
+# repository is public and emits none while it is private, and there is no flag path to write. Do
+# not add one.
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # `registry-url` IS WHAT WRITES THE `.npmrc` npm AUTHENTICATES AGAINST, and it is the only
+      # reason this action is configured at all beyond the Node version. No cache is asked for: a
+      # release runs rarely and the one thing it must not do is resolve a dependency out of a store
+      # somebody else's run filled.
+      #
+      # NODE 24 AND NOT 22, AND THE REASON IS THE npm THAT COMES WITH IT (review of 3F-2811, and it
+      # would have cost the first release). `setup-node` installs whatever npm the Node it fetches
+      # bundles: Node 22 bundles npm 10.9.x, and BOTH things this file's last two steps depend on
+      # need newer — OIDC trusted publishing needs npm >= 11.5.1, and `npm stage publish` is newer
+      # still. Node 24 bundles npm 11.19.x. On 22 the staging step would have died with an
+      # unrecognised command or an unauthenticated push, and it would have READ like the
+      # trusted-publisher configuration being wrong — which npm never validates at save time, so
+      # that is precisely the diagnosis nobody could have ruled out from the error.
+      #
+      # THE DIVERGENCE FROM `ci.yml` IS DELIBERATE AND IS NAMED RATHER THAN HIDDEN. That file runs on
+      # 22, so the gates below run on a NEWER runtime here than the ones that green a pull request.
+      # `engines` says `node >=22`, so both are runtimes a consumer may be on, and between the two
+      # files both are covered — but a release that reds on something 22 never sees is a real
+      # possibility and this comment is where a reader meets it.
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - name: Enable corepack
+        run: corepack enable
+
+      # THE INSTALL IS A PRECONDITION OF THE PACK, AND THE REASON IS RESOLUTION RATHER THAN
+      # DEPENDENCIES (measured, 3F-3247). `pnpm pack` resolves `workspace:*` out of the INSTALLED
+      # link, not out of the workspace manifests, so a checkout with no `node_modules` fails
+      # outright with ERR_PNPM_CANNOT_RESOLVE_WORKSPACE_PROTOCOL. Nobody should later optimise this
+      # out of a job that "only packs".
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      # THE ARTEFACT GATES, AHEAD OF THE PACK. Everything from here to the pack is about the tree
+      # this release would send; everything after it is about the files it produced.
+      #
+      # THE FITNESS PASS IS NOT AMONG THEM, AND ITS ABSENCE IS THE RULE RATHER THAN AN OMISSION
+      # (3F-3250, @SCN-REL-004). `balance:self` was already excluded because it is a statement about
+      # THIS REPOSITORY'S BOOKKEEPING rather than about the artefact — and the fitness axis is that
+      # same category row for row: complexity bars, corpus traceability, anemic-domain conformance,
+      # this suite's own mutation score, the duration of the observer. Not one of them says the
+      # tarball works. Keeping the pass while excluding the reconciliation drew the line in two
+      # places in this one file, and the second place cost every real release: `SCN-FIT-002` prints
+      # a number a SCHEDULED sweep leaves behind, `ci.yml` fetches that record and this file had no
+      # equivalent, so on a runner starting cold the pass redded and the job died before it packed
+      # anything (measured, 3F-3249). One rule covers both: THE RELEASE PATH CONSULTS NOTHING THAT IS
+      # ABOUT THIS REPOSITORY RATHER THAN ABOUT THE ARTEFACT.
+      #
+      # NOTHING THAT SPEAKS TO THE TARBALL IS LOST WITH IT. `SCN-FIT-011` IS `pnpm typecheck`, and
+      # the step below runs it directly — the one artefact-relevant member of the axis is covered
+      # outside the pass. The repository bars are `ci.yml`'s, discharged on every merge to `main`;
+      # what a tag cut from an unmerged branch has not passed is the residual `doc/releasing.md`
+      # states, and it is the same one a tag has always carried.
+      #
+      # AND NOT ONE OF THESE THREE CARRIES AN OBSERVED SCRIPT PREFIX, WHICH IS A CONSTRAINT ON THIS
+      # FILE RATHER THAN A COINCIDENCE (3F-3249, planted). The reconciliation's CI scan is the
+      # WORKFLOW DIRECTORY, not `ci.yml`, so a `lint:`- or `guard:`-prefixed script invoked from
+      # here would register a static check on spec-controller's own ledger that no scenario cites,
+      # and `balance:self` would red on it as uncited. It is also why the smoke below is invoked by
+      # path rather than through a script.
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Cucumber
+        run: pnpm cucumber
+
+      # PACKED ONCE, AND EVERY STEP BELOW READS THESE SAME FILES. `pnpm pack` performs the whole
+      # manifest transformation a publish performs — `workspace:*` resolved to the concrete version
+      # this workspace holds, `publishConfig` applied wholesale — so what lands here is byte for
+      # byte what the registry would receive. A second pack between the smoke and the staging would
+      # make the smoke a rehearsal of a different artefact, which is the fault this whole file
+      # exists to keep out of a release.
+      #
+      # `pnpm` PACKS AND `npm` PUBLISHES, AND THE SPLIT IS FORCED. pnpm cannot authenticate over
+      # OIDC (pnpm/pnpm#9812 open; #11513 reports it breaking on pnpm 11, which this repository
+      # runs), and npm never has to understand a workspace protocol because by the time it sees the
+      # artefact there is not one.
+      - name: Pack both packages, once
+        run: |
+          rm -rf "$RUNNER_TEMP/release"
+          mkdir -p "$RUNNER_TEMP/release"
+          pnpm --dir packages/core pack --pack-destination "$RUNNER_TEMP/release"
+          pnpm --dir packages/spec-controller pack --pack-destination "$RUNNER_TEMP/release"
+
+      # THE SMOKE IS @SCN-REL-001'S RECIPE, RUN OVER THE FILES ABOVE. Every gate in this repository
+      # resolves through the WORKSPACE manifest, and npm REPLACES that manifest's `exports` map with
+      # `publishConfig.exports` wholesale at publish time. The two readings differ nowhere except
+      # inside an installed tarball — which is how 3F-3086's published CLI threw
+      # ERR_PACKAGE_PATH_NOT_EXPORTED on its first command with every gate green behind it. So the
+      # tarballs are installed where no checkout can help them and the command is started there.
+      - name: Smoke the packed artefacts in a clean room
+        run: pnpm exec tsx tests/checks/cleanRoomInstallCli.ts --pack-dir "$RUNNER_TEMP/release" packages/core packages/spec-controller
+
+      # CORE FIRST, AND THE ORDER IS THE WHOLE OF @SCN-REL-003. The CLI's packed manifest names core
+      # by a concrete version, so that version has to be resolvable the moment a consumer asks for
+      # it. Send the CLI first and the release is broken between its own two acts: for as long as
+      # the second one takes, `npm i spec-controller` resolves an engine nobody can fetch.
+      #
+      # `npm stage publish`, NEVER `npm publish`. This publisher has direct publication switched off
+      # registry-side, so an ordinary publish is REFUSED and nothing arrives at all. The workflow
+      # stages; a person promotes, and `npm stage approve` cannot use an identity minted for a run —
+      # which is what makes the promotion a human act by construction rather than by convention.
+      #
+      # AND NOTHING RUNS AFTER THESE TWO. Everything this release verified, it verified before this
+      # point, so a step behind them would be a change to the artefact nothing here has read.
+      - name: Stage core
+        run: npm stage publish "$RUNNER_TEMP/release"/3f-consulting-spec-controller-core-*.tgz
+
+      - name: Stage the CLI
+        run: npm stage publish "$RUNNER_TEMP/release"/spec-controller-*.tgz

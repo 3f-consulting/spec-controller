@@ -223,6 +223,12 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
     status: "feature-code-used",
     note: "a check's population is the tree it was TOLD about — the source enumerator takes its subject rather than inheriting the working directory, so a guard running from a mutation runner's instrumented copy still answers about the repository. Three faults came out of that one ambient walk (narrowed at 3F-3118, inflated at 3F-3205, the wrong tree entirely at 3F-3207) and none was caught by a check; this is the feature that can ask the question (3F-3207)",
   },
+  {
+    code: "REL",
+    slug: "release",
+    status: "feature-code-used",
+    note: "a release verifies the artefact it publishes, in the tree a stranger installs it into — npm REPLACES the workspace exports map at publish time rather than merging it, so every gate in this repository resolves through a map no consumer ever sees, and 3F-3086's installed CLI threw ERR_PACKAGE_PATH_NOT_EXPORTED with 605 tests and thirteen gates green behind it (3F-2811)",
+  },
 ];
 
 /** A single lint finding. */
