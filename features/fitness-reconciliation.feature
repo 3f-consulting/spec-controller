@@ -801,7 +801,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     every measured producer in this repository already is. The BAR stays outside the command
     either way: one bar per characteristic, never the runner's own verdict.
 
-    @unit @integration @SCN-LNT-023
+    @integration @SCN-LNT-023
     Scenario: the fitness step definition runs its row's command, and hears a check that examined nothing only from a row naming the code that says so
 
       THE ROW'S COMMAND IS THE CHECK, AND RUNNING IT IS THE WHOLE OF WHAT THIS STEP DOES. The scenario
@@ -866,7 +866,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       When each of the six scenarios runs under the fitness pass
       Then the first passes, the second fails naming the command that spoke and quoting what it printed, the third neither passes nor fails, the fourth fails although its command said what the third's said because its own row names no such code, the fifth fails because a check that broke is not one that examined nothing, and the sixth fails saying no configured row names it
 
-    @unit @integration @SCN-LNT-024
+    @integration @SCN-LNT-024
     Scenario: a measured row's command prints its number on stdout and the step definition posts it citing the scenario's own @SCN
 
       THE NUMBER IS THE EVIDENCE, WHICH IS WHY THIS IS A SECOND STEP DEFINITION AND NOT AN ARM OF THE
@@ -912,7 +912,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       When each of those three scenarios runs under the fitness pass
       Then the first posts its number citing its own @SCN and the characteristic its row names, beside the measurement already there, and the other two fail with nothing posted for either
 
-    @unit @integration @SCN-LNT-025
+    @integration @SCN-LNT-025
     Scenario: a row that spends the ending of a clean run, or of a run that found something, on "I examined nothing" is refused when the target's rows are read
 
       TWO ENDINGS ARE THE PROTOCOL'S OWN AND NO ROW MAY SPEND THEM ON THE THIRD ANSWER. A row naming

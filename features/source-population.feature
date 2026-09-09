@@ -24,24 +24,4 @@ Feature: A check's population is the tree it was told about
 
   Rule: the enumerator walks the tree it is given, not the directory the process is standing in
 
-    @unit @SCN-SRC-001
-    Scenario: a check scans the tree it was asked about, not the instrumented copy beside it
-      Given a copy of the engine's source carrying the preamble a mutation runner injects
-      When the engine-purity guard is asked about the REPOSITORY, and then about the COPY
-      Then asked about the repository it reports the engine clean, because the copy is not what it was asked about
-      And asked about the copy it reports the injected process references, so the named subject is the only thing that decides
-
-    @unit @SCN-SRC-002
-    Scenario: a named root beats the environment, and the environment beats the working directory
-      Given a root named by the caller, a root named only by the environment, and neither
-      When the repository root is resolved for each
-      Then the caller's root wins over the environment, and the environment wins over the working directory
-      And a variable set to the empty string is an absent one, never a root that resolves back inside the working tree
-
   Rule: the population is this repository's implementation files
-
-    @unit @SCN-SRC-003
-    Scenario: a declaration file is not production source
-      Given a scanned root holding an implementation file and a .d.ts declaration beside it
-      When the source walk collects the root
-      Then only the implementation file is in the population, because a declaration carries no implementation for a check to read

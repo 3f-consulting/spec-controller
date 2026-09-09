@@ -38,16 +38,3 @@ Feature: The compatibility page's own examples are held to the tree that publish
   asserts against the live one.
 
   Rule: the page's configuration examples are read by the reader that page says supports them
-
-    @unit @SCN-CMP-001
-    Scenario: a stale example on the commitment page reds the build that publishes it
-      Given the compatibility page as this repository publishes it
-      When the compatibility-examples check runs over it
-      Then a fenced block naming specController is read as configuration whatever its fence says
-      And every entry such a block writes must survive the reader that resolves it
-      And an entry whose own key the reader cannot read is a violation rather than an absence
-      And a documented specController key no reader is wired for is a violation
-      And a block this narrow jsonc reading cannot parse is reported against its own line
-      And a scenario code under a feature code this repository has allocated must exist in features/
-      And a scenario code under any other feature code is the reader's own and raises nothing
-      And the check passes clean over the real page

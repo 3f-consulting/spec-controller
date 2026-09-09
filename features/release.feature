@@ -44,7 +44,7 @@ Feature: A release verifies the artefact it publishes, in the tree a stranger in
     workspace links whatever the tarball says; a directory outside it, holding one manifest and
     the two tarballs' own dependencies, resolves through the published map alone.
 
-    @unit @integration @SCN-REL-001
+    @integration @SCN-REL-001
     Scenario: the packed artefacts install into a tree holding nothing else and the CLI runs there, and a tarball packed without its build reds
       Given the two packages packed from a tree whose build has run
       When they are installed into a directory holding nothing else of this repository
@@ -78,7 +78,7 @@ Feature: A release verifies the artefact it publishes, in the tree a stranger in
     git remote. The first run of this scenario redded on it, on real tarballs, and the run is on
     the record; the arm below cannot red on it a second time without deleting the field again.
 
-    @unit @integration @SCN-REL-002
+    @integration @SCN-REL-002
     Scenario: no workspace specifier survives packing, publishConfig is applied, and the licence and the repository link both travel
       Given the two packages this release packs, as their tarballs carry them
       When each packed manifest is read against what its own workspace manifest promised a consumer
@@ -174,7 +174,7 @@ Feature: A release verifies the artefact it publishes, in the tree a stranger in
     release is being cut to escape a red. Nothing merges by this route — `main` still requires the
     whole ladder, `balance:self` included.
 
-    @unit @integration @SCN-REL-004
+    @integration @SCN-REL-004
     Scenario: no gate of the release asks about this repository, and a run the reconciliation refuses still reaches the packing
       Given a run whose evidence is as cold as a release runner's, and the release this repository would cut
       When the reconciliation, the axis beside it, and every gate the release states are all put to that run

@@ -6,17 +6,17 @@
  * the pair. `@unit`, as the scenario is tagged — this Vitest run IS the observed evidence and no
  * Cucumber block is owed.
  *
- * TWO ARMS, AND WHICH ONE ANSWERS WHICH QUESTION. The first drives a planted surface that has
- * parted company with its barrel in both directions on both halves, and is where this check's teeth
- * are: neuter the reconciliation and it reds while the real barrel is still clean. The second runs
- * that same reconciliation over the real barrel and reports the whole verdict in one comparison —
- * the drift each way on each half, the floor that stops a vacuous read passing for a clean one, and
- * the retirements pinned by name.
+ * ONE ARM, AND ITS SUBJECT IS THE REAL BARREL. It runs the reconciliation over `packages/core`'s
+ * own barrel and reports the whole verdict in one comparison — the drift each way on each half, the
+ * floor that stops a vacuous read passing for a clean one, and the retirements pinned by name. The
+ * planted-surface arm beside it went at 3F-3245: its subject was this check's implementation, and
+ * an arm authored from an implementation by that implementation's author proves only that the check
+ * does what its author wrote, never what the rule requires.
  *
  * WHY THE EVIDENCE MOVED OUT OF `packages/core` AND THE SCENARIO DID NOT. Everything this file
  * asserts, `packages/core/src/index.test.ts` asserted until 3F-2838, over a reflection and a
- * comparison it carried itself. Those are now `publishedSurfaces.ts`'s, shared with @SCN-API-004,
- * @SCN-API-005 and @SCN-API-006 — and `packages/core` cannot import them. Core is the pure library
+ * comparison it carried itself. Those are now `publishedSurfaces.ts`'s, shared with @SCN-API-006
+ * (and, until 3F-3229, @SCN-API-004 and @SCN-API-005) — and `packages/core` cannot import them. Core is the pure library
  * and `spec-controller` depends on it, so a core test reading this module would invert that
  * dependency and close a cycle. Reading core's tree from `tests/checks/` is the direction that
  * already works, and `enginePurity` and `domainPurity` both do it. So the scenario stayed exactly
@@ -35,15 +35,14 @@
  * would have been a finding about the surface. Agreement is what makes retiring the older list a
  * removal of duplication rather than a loss of a reading.
  *
- * THE PER-SURFACE ARMS OF @SCN-API-004 AND @SCN-API-005 ALREADY COVER THIS BARREL, and the overlap
- * is stated rather than avoided — it was MEASURED at 3F-3227 rather than reasoned about. An export
- * planted on `packages/core/src/index.ts` reds this file's real-tree arm and @SCN-API-004's
- * per-surface arm, and a planted type reds this one and @SCN-API-005's; two arms each time, never
- * one. So the real barrel is not held by this file alone. What would be lost by leaning on those
- * arms instead is the bidirectional handle: @SCN-API-001 is a scenario on the ledger and it owes
- * evidence spelled with its own id, and an arm citing another scenario is that scenario's evidence,
- * not this one's. Those arms hold every published subpath, this one holds the subpath a consumer's
- * v1 contract is; the reconciliation underneath is the same and running it twice costs nothing.
+ * WHAT ELSE READS THIS BARREL, MEASURED AT 3F-3245 RATHER THAN REASONED ABOUT. @SCN-API-004 and
+ * @SCN-API-005 — the per-surface scenarios that used to cover it — retired at 3F-3229, so the
+ * obvious reading is that this arm now holds the barrel alone. That reading is WRONG, and the plant
+ * says so: an export appended to `packages/core/src/index.ts` reds this arm AND @SCN-API-006's next
+ * door, because `publishedSurfaces`' real-tree arm reconciles every published subpath's surface and
+ * core's `.` is one of them. Two arms, not one. What this file holds that the other does not is the
+ * bidirectional handle: @SCN-API-001 is a scenario on the ledger and owes evidence spelled with its
+ * own id, and an arm citing another scenario is that scenario's evidence rather than this one's.
  */
 
 import { describe, expect, it } from "vitest";
@@ -63,9 +62,6 @@ import {
 /** The specifier a consumer of the frozen v1 contract writes. */
 const CORE_SPECIFIER = "@3f-consulting/spec-controller-core";
 
-/** The specifier the planted surface is written for — no package publishes it, which is the point. */
-const PLANTED_SPECIFIER = "@3f-consulting/planted-barrel";
-
 /**
  * The surface written down for core's `.` barrel, raised for rather than looked past.
  *
@@ -83,35 +79,6 @@ function coreSurface(): PublishedSurface {
 }
 
 describe("[SCN-API-001] the core barrel exports exactly the frozen v1 contract surface", () => {
-  it("[SCN-API-001] reports a planted surface parted from its barrel each way on both halves at once", () => {
-    // The teeth. Nothing here reads the repository: `reconcile*Surface` take the reflected names as
-    // data, so a surface that exists nowhere can carry an instance of every drift this check
-    // detects — a symbol exported and not written down, and a symbol written down and not exported,
-    // once over the values and once over the types. Neuter the reconciliation and this arm reds
-    // while the real barrel is still clean, which is the failure the arm below cannot see.
-    const planted: PublishedSurface = {
-      package: PLANTED_SPECIFIER,
-      subpath: ".",
-      barrel: "packages/planted/src/index.ts",
-      values: ["writtenValue", "agreedValue"],
-      types: ["WrittenType", "AgreedType"],
-    };
-
-    expect({
-      values: reconcileValueSurface(planted, ["agreedValue", "unwrittenValue"]),
-      types: reconcileTypeSurface(planted, ["AgreedType", "UnwrittenType"]),
-    }).toEqual({
-      values: [
-        { specifier: PLANTED_SPECIFIER, kind: "unwritten-export", symbol: "unwrittenValue" },
-        { specifier: PLANTED_SPECIFIER, kind: "missing-export", symbol: "writtenValue" },
-      ],
-      types: [
-        { specifier: PLANTED_SPECIFIER, kind: "unwritten-export", symbol: "UnwrittenType" },
-        { specifier: PLANTED_SPECIFIER, kind: "missing-export", symbol: "WrittenType" },
-      ],
-    });
-  });
-
   it("[SCN-API-001] holds the real core barrel to the frozen surface — both halves, both directions", () => {
     const surface = coreSurface();
     const values = Object.keys(coreBarrel);

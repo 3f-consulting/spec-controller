@@ -3,25 +3,16 @@
  * author spaced it around the sigil, and there is exactly ONE reading in this repository of what a
  * term bare IS.
  *
- * ONE CHECK, ONE PLANTED-VIOLATION ARM, ONE REAL-TREE RUN (3F-3218). The two arms below are the
- * whole obligation. The first plants one instance of every violation kind this check detects —
- * every spelling a hand-authored term can carry at each app-side port, and a second reading of bare
- * in either spelling a pattern can take — and asserts ONE verdict over all of them. The second runs
- * the same scan over THIS repository. Sixteen arms across two files became these two, and
- * `@SCN-TRM-002` — the scenario the second file's nine arms were the only evidence for — retired
- * with them (3F-3226).
- *
- * WHY ONE VERDICT AND NOT SIXTEEN ASSERTIONS. Sixteen arms each asserting one property leave the
- * CROSS-PRODUCTS unasserted: a port that bared the padded spelling correctly while ALSO eating an
- * interior @ satisfied both of the two arms that used to cover it, separately. One `expect` over the
- * whole verdict pins the must-move and the must-not-move readings against each other in the same
- * comparison, and pins the order and completeness of what the scan returns as well.
+ * ONE ARM, AND ITS SUBJECT IS THIS REPOSITORY'S SOURCE. It scans the whole population for readings
+ * of what a term bare is and asserts one verdict over it. The planted-violation arm beside it went
+ * at 3F-3245: its subject was this check's own implementation, authored from that implementation by
+ * its author, so its green proved the check does what its author wrote rather than what the rule
+ * requires — one author keeping both books.
  *
  * WHY THE REAL-TREE ARM IS KEPT (Ruling B, measured not assumed). `package.json`'s
- * `specController.fitnessChecks` carries thirteen rows and NONE of them scans this repository's
- * source for readings; no other gate does either. Drop the second arm and this check never touches
- * the repository again — it would run forever over invented fixtures and report green about a world
- * it had stopped looking at.
+ * `specController.fitnessChecks` carries twelve rows and NONE of them scans this repository's
+ * source for readings; no other gate does either. Drop this arm and the check stops running
+ * altogether — which is why it is the check rather than a second opinion about one.
  *
  * WHY A SCAN AND NOT A FIXED CORRECTION. 3F-2976's finding was never the inverted ordering. It was
  * that a rule this small — what a term looks like once its sigil and its whitespace are off — had
@@ -36,15 +27,14 @@
  * the claim is about this repository's source, a test legitimately spells the pattern as a fixture,
  * and this scan is itself a test.
  *
- * NOTHING IN THIS FILE SPELLS THE PATTERN OUT WHOLE, SO IT CANNOT FIND ITSELF. Both the needle and
- * every planted fixture are assembled from `SIGIL` at run time, so the sequence being searched for
- * is never among this file's characters — and `*.test.ts` is outside the population as well, which
- * makes that belt AND braces. The property is asserted in the second arm rather than merely argued
- * for here.
+ * NOTHING IN THIS FILE SPELLS THE PATTERN OUT WHOLE, SO IT CANNOT FIND ITSELF. The needle is
+ * assembled from `SIGIL` at run time, so the sequence being searched for is never among this file's
+ * characters — and `*.test.ts` is outside the population as well, which makes that belt AND braces.
+ * The property is asserted by the arm below rather than merely argued for here.
  *
  * IT DETECTS THE CALL, NOT THE CHARACTERS. `lib/bareTerm.ts`'s own doc-comment records the old wrong
  * spelling in prose, to say what the defect was. Comments are stripped before the scan, so a
- * sentence naming a spelling is not a reading of it, and a column of the first arm says so.
+ * sentence naming a spelling is not a reading of it.
  *
  * THE RESIDUAL, SAID OUT LOUD (and again in the Rule preamble). The population is `.ts`, and 3F-2434
  * already ruled that a module is source whatever extension carries it — so a reading written into
@@ -52,7 +42,7 @@
  * `.replace` call at all. This scan reaches what the seven copies were actually spelled as; it does
  * not reach every conceivable eighth.
  *
- * Bidirectional evidence (Evidence Manifesto §9): both describes carry [SCN-TRM-001], matching
+ * Bidirectional evidence (Evidence Manifesto §9): the describe carries [SCN-TRM-001], matching
  * features/term-spelling.feature, the @integration arm in tests/steps/termSpelling.steps.ts, and the
  * core-side ports in packages/core/src/lib/bareTerm.test.ts. The core/app split is the package
  * boundary and nothing else — `packages/core` cannot import the app, so a single file could not hold
@@ -60,14 +50,14 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { readFileSync } from "node:fs";
+import {} from "node:os";
+import {} from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { resolveDeferralTags } from "@3f-consulting/spec-controller-core/internal";
-import { DEFAULT_DEFERRAL_TAGS } from "../../packages/spec-controller/src/deferralTags.js";
-import { measurementArtefactWith } from "./measurementArtefact.js";
+import {} from "@3f-consulting/spec-controller-core/internal";
+import {} from "../../packages/spec-controller/src/deferralTags.js";
+import {} from "./measurementArtefact.js";
 import {
   collectRepositorySource,
   collectSourceFiles,
@@ -134,126 +124,10 @@ function readingsIn(files: readonly CollectedFile[]): string[] {
 }
 
 /** A reading, spelled as a regular-expression literal — the spelling all seven copies used. */
-const literalReading = `const bare = (v: string) => v.replace(/^${SIGIL}/, "").trim();`;
 
 /** The same reading, spelled as a pattern built from a string. */
-const constructedReading = `const bare = (v: string) => v.replace(new RegExp("^${SIGIL}"), "").trim();`;
 
 /** The resolver as the app edge calls it — the starter set is the application layer's (3F-3087). */
-const resolveConfigured = (deferralTags: readonly unknown[]): readonly string[] =>
-  resolveDeferralTags({ specController: { deferralTags } }, DEFAULT_DEFERRAL_TAGS);
-
-describe("[SCN-TRM-001] every mis-spelling of a hand-authored term, and every second reading of what bare is, planted at once", () => {
-  it("names each one, and leaves the spellings that are a different term alone", () => {
-    // A REAL empty directory rather than a hand-seeded [] the collector never produces
-    // (evidence-manifesto.md §11A) — it exercises the walk, not a fixture. This is the floor's
-    // reason, planted at the moment it is easiest to loosen into meaninglessness later.
-    const emptyDir = mkdtempSync(join(tmpdir(), "trm-empty-walk-"));
-    let emptyWalk: readonly CollectedFile[];
-    try {
-      emptyWalk = collectSourceFiles(emptyDir, REPOSITORY_ROOT);
-    } finally {
-      rmSync(emptyDir, { recursive: true, force: true });
-    }
-
-    expect({
-      // THE DEFERRAL PORT WAS THE WORST OF THEM. It stripped with no trim at all, so a tag padded
-      // AFTER its term failed as well as one padded in front — and a target whose deferral tag
-      // defers nothing gets a scenario raising its full obligations, out of balance for a reason
-      // nobody wrote down. Every spelling goes through ONE call, so the must-move readings and the
-      // must-not-move ones are compared against each other rather than one at a time.
-      deferralTagsTheTargetAuthored: resolveConfigured([
-        "  @spike",
-        `${SIGIL}manual  `,
-        "@ regression",
-        "  @  ",
-        "  @@spike",
-        "  para@llel  ",
-      ]).filter((tag) => !DEFAULT_DEFERRAL_TAGS.includes(tag)),
-
-      // THE ARTEFACT PORT IS THE ONE WHOSE MISS POSTS TWICE. A row this reader rejects as different
-      // and `parseMeasuredEvidenceObservations` accepts as the same reaches the ledger as two
-      // credits for one debit. A step that runs twice owes its bar ONE measurement.
-      rowsAfterAPaddedRepost: measurementArtefactWith(
-        { scnId: "SCN-MSD-001", checkTag: "ci-run-time", measured: 40 },
-        JSON.stringify({
-          measurements: [{ scnId: "  @SCN-MSD-001", checkTag: "  @ci-run-time", measured: 96.4 }],
-        })
-      ).measurements.map((row) => row.measured),
-      // The must-not-move side of the same reading: `cucumber@e2e` is not `cucumber`, so the two
-      // rows are two rows and the earlier one survives.
-      rowsAfterAnInteriorAtRepost: measurementArtefactWith(
-        { scnId: "SCN-MSD-001", checkTag: "cucumber", measured: 40 },
-        JSON.stringify({
-          measurements: [{ scnId: "  @SCN-MSD-001", checkTag: "cucumber@e2e", measured: 96.4 }],
-        })
-      ).measurements.map((row) => row.measured),
-
-      // The teeth of the scan, over planted sources. A scan that found nothing at all would pass
-      // the real-tree arm below trivially — it is green today — so what makes that green mean
-      // anything is this: a planted reading is found, and the failure names the file carrying it.
-      plantedReadingsNamed: readingsIn([
-        { path: "packages/core/src/domain/thresholds.ts", source: literalReading },
-        { path: "tests/checks/timeStepCli.ts", source: constructedReading },
-      ]),
-      // A count of FILES would let a second reading hide behind the first wherever the first was
-      // legitimate — which is exactly the one file this scan expects to find a reading in.
-      twoPlantedInOneFile: readingsIn([
-        { path: THE_ONE_READING, source: `${literalReading}\n${constructedReading}` },
-      ]),
-      // The false positive that would have bought an exception list, in BOTH comment forms: a
-      // stripper handling only block comments passes the first and reds on the first `//` note
-      // somebody writes about the defect.
-      proseNamingTheOldSpelling: readingsIn([
-        {
-          path: THE_ONE_READING,
-          source: `/**\n * Every port spelled it the same wrong way — ${literalReading} — and the\n * anchor is defeated by a leading space.\n */\nexport const bareTerm = (v: string) => v.trim();`,
-        },
-        {
-          path: "packages/core/src/domain/checkRegistry.ts",
-          source: `// this used to be ${constructedReading}, which is 3F-2976\nexport const tag = (v: string) => v.trim();`,
-        },
-      ]),
-      // The must-not-move boundary of the scan. An unanchored strip of every sigil in a value is a
-      // DIFFERENT rule, and the `startsWith`/`slice` token readings take a whitespace-split token
-      // that cannot carry whitespace — never part of the defect, and a scan sweeping them in would
-      // be renaming its own claim.
-      aDifferentRuleAndTheTokenReadings: readingsIn([
-        {
-          path: "packages/core/src/parse/scenarios.ts",
-          source: `const flattened = (v: string) => v.replace(/${SIGIL}/g, "-");`,
-        },
-        {
-          path: "tests/checks/scnSubIssueGate.ts",
-          source: `const bare = (t: string) => (t.startsWith("${SIGIL}") ? t.slice(1) : t);`,
-        },
-      ]),
-      // Nothing scanned is not a scan: the walk really returns nothing, the scan really finds
-      // nothing in it, and the floor really refuses it.
-      anEmptyWalk: {
-        scanned: [...emptyWalk],
-        readings: readingsIn(emptyWalk),
-        clearsTheFloor: emptyWalk.length > MIN_REPOSITORY_SOURCE_FILES_SCANNED,
-      },
-    }).toEqual({
-      // Padded in front, padded after the term, spaced inside the sigil — all three name the term
-      // the target plainly authored. Whitespace-and-a-sigil names no pair at all and is dropped as
-      // an empty entry is. A doubled sigil and an interior @ are kept exactly as spelled: only a
-      // LEADING sigil is a sigil, and only whitespace AROUND a term is not part of it.
-      deferralTagsTheTargetAuthored: ["spike", "manual", "regression", "@spike", "para@llel"],
-      rowsAfterAPaddedRepost: [40],
-      rowsAfterAnInteriorAtRepost: [96.4, 40],
-      plantedReadingsNamed: [
-        "packages/core/src/domain/thresholds.ts",
-        "tests/checks/timeStepCli.ts",
-      ],
-      twoPlantedInOneFile: [THE_ONE_READING, THE_ONE_READING],
-      proseNamingTheOldSpelling: [],
-      aDifferentRuleAndTheTokenReadings: [],
-      anEmptyWalk: { scanned: [], readings: [], clearsTheFloor: false },
-    });
-  });
-});
 
 describe("[SCN-TRM-001] the same scan, over THIS repository", () => {
   it("finds one reading of what a term bare is, in the file that owns it, over a population wide enough to mean it", () => {

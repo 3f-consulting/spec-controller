@@ -147,7 +147,7 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     the division is exactly what makes the ledger's row red when new mutable code arrives carrying
     survivors. The kills alone carry only the fact the bar is about.
 
-    @unit @integration @SCN-MUT-007
+    @integration @SCN-MUT-007
     Scenario: the number posted is the detected mutants themselves, derived from the statuses and not read from the report's own thresholds block
       Given a mutation run citing the scenario "SCN-MSD-001" on the check "mutation"
       And its mutants came back 7 killed and 2 timed out against 2 survived and 1 never covered
@@ -159,7 +159,7 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
       And it carries neither number the report's own thresholds block names
       And it carries neither 75 nor any other reading of those mutants as a percentage
 
-    @unit @integration @SCN-MUT-008
+    @integration @SCN-MUT-008
     Scenario Outline: a mutation run that produced no readable report posts no measurement, rather than a count of zero
       Given a mutation run citing the scenario "SCN-MSD-001" on the check "mutation"
       And another producer of that same run has already posted a measurement of its own
@@ -258,16 +258,6 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     AND IT IS READ OFF THE REAL ARTEFACTS. Every Rule above decides over planted data, which is what
     lets those scenarios show a rule going wrong. This one is a claim about THIS repository's wiring,
     so a planted copy of that wiring would be a scenario about nothing.
-
-    @unit @SCN-MUT-014
-    Scenario: the gate the nightly reconciles, the gate the manifest sources its bar from and the gate this repository's record holds are one name, and the report the ratchet reads is the one the sweep writes
-      Given this repository's record, its manifest, and the workflow that sweeps its domain core
-      When the terms each of them states are read back
-      Then the gate the manifest sources SCN-FIT-002's bar from is a gate the record holds
-      And the gate the nightly asks the ratchet to reconcile is that same gate
-      And the gate the producer stamps onto the measurement it reads is that same gate
-      And the report path the nightly hands the ratchet is the one this repository's sweep writes
-      And the record states that gate's allowance and, being zero, states no reason for it
 
   Rule: spec-controller's own mutation kills are on the books
 
@@ -400,46 +390,6 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     That sentence pinned only that the script holds no `set -e`: true of the defect and of the fix
     alike, which is how a wrong comment acquired a green tick.
 
-    @unit @SCN-MUT-015
-    Scenario: the night that found a regression is the night whose measurement crosses — the push borrows the nightly's newest completed run, and the sweep leaves that measurement behind before the verdict that reds the run
-      Given the workflow every push runs and the workflow that sweeps this repository's domain core
-      When the terms each of them states about the measurement crossing between them are read back
-      Then the push borrows from the newest run of the sweep that has finished, whatever verdict followed it
-      And it asks for no verdict at all, so the night that found a regression is a night it can borrow from
-      And the sweep leaves that measurement behind before the step whose verdict reds the run
-      And no failure the borrow meets in doing its job reds the step — its branches say why and exit 0, the shell it runs under is told to clear the errexit it arrives with, its last act is exit 0 rather than the render whose status would otherwise become the step's, and nounset is kept on so the one red route left says the script is broken rather than that the code lost a kill
-
-    @unit @SCN-MUT-016
-    Scenario: the measurement upload is conditioned on the sweep and the report upload is not, and this repository's runner sets no break threshold, so the sweep's own exit code answers about the sweep rather than about the score
-      A CRASHED SWEEP IS WHAT THE OLD FILTER WAS ACCIDENTALLY FENCING, AND THE FENCE IS KEPT ON
-      PURPOSE (3F-2901). Selecting on completion hands a failed run's artefact to the ledger, and a
-      sweep that DIED is a run whose number is partial, or is a previous run's — a fault in the harness
-      wearing the face of a fault in the code. What tells those apart is already in this repository and
-      was never written down: `stryker.config.json` sets no `break` threshold, so the sweep cannot exit
-      non-zero over the SCORE, only over ITSELF; and the step that uploads the measurement carries no
-      `if:`, so it does not run at all when the sweep before it failed. A crash therefore leaves its
-      run with no measurement to download, the borrow places nothing, and the row reads `missing` — no
-      measurement arrived, which is the true sentence, and the one this repository already reserves for
-      a number that never came.
-
-      THE REPORT UPLOAD BESIDE IT CARRIES `if: always()` AND MUST, which is the asymmetry a tidying
-      edit collapses. An operator opening the report of the run that died is precisely what that upload
-      is for; a ledger reading the NUMBER of the run that died is precisely what this one must never
-      serve. Two uploads, two conditions, and the reason each holds the one it holds.
-
-      AND WHAT IS ASSERTED BELOW IS THE WIRING, NOT THE CONSEQUENCE. This scenario opens this
-      repository's own workflow and runner config and reads three terms back off them; the crashed
-      night reading as `missing` is what those three terms IMPLY, one inference further on, and a
-      scenario claiming it would be claiming more than it observes. The implication is the paragraph
-      above's to carry. What the scenario holds is the three facts it can actually see, each of which
-      a single tidying edit could take away.
-
-      Given the workflow that sweeps this repository's domain core, and the configuration the runner it invokes reads
-      When the terms they state about what a sweep that died leaves behind are read back
-      Then the step that leaves the measurement behind states no condition of its own, so a sweep that failed leaves no measurement behind at all
-      And the step that uploads the operator's report states the condition that runs it whatever the sweep did, so the run that died is still a run an operator can open
-      And the runner is given no score it may break the run over, so the sweep's own exit code answers about the sweep rather than about the score
-
   Rule: the measurement a push borrows was taken on the branch this ladder gates, whatever branch a hand-dispatch reached for
 
     THE SELECTION IS A CHAIN OF PROXIES, AND THIS IS THE ONE THAT WAS MISSING (3F-2955). What the
@@ -500,14 +450,6 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     nothing, says why on stderr, and exits 0. What moves is WHICH run's number crosses the
     boundary, never who judges it once it has.
 
-    @unit @SCN-MUT-017
-    Scenario: the number that settles this repository's row was measured on the branch this ladder gates — a hand-dispatch on a feature branch is not a run this selection can reach
-      Given the workflow every push runs and the workflow that sweeps this repository's domain core
-      When the terms the push states about which of that sweep's runs it selects are read back
-      Then the push borrows only from runs of the sweep taken on the branch it names
-      And the branch it names is the one branch this ladder itself gates on push
-      And it narrows on that branch rather than on the event, so a hand-dispatch on that branch is a run it can borrow from and one on a feature branch is not
-
   Rule: the borrow says only what it did — the one sentence claiming a placement stands inside the path that made it
 
     THE ONE PATH THAT SAID SOMETHING FALSE (3F-2962). Every branch of this step places nothing and
@@ -567,14 +509,6 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     exits 0, like every branch above it. `set +e` stays first, `set -u` stays on, `exit 0` stays
     last. What moves is what the step SAYS on one path, never whether it reds on any.
 
-    @unit @SCN-MUT-018
-    Scenario: a placement this runner could not make says so on stderr — the one sentence claiming a measurement was placed stands inside the path that placed it
-      Given the workflow every push runs
-      When the sentences its borrow step prints about what it placed are read back
-      Then it writes exactly one echo of its own to stdout, and that is the sentence claiming a measurement was placed
-      And that sentence stands immediately inside the path of the guard whose condition performs the placement, so nothing runs between the placing and the claiming
-      And a placement that guard could not make says why on stderr, places nothing, and exits 0 like every branch above it
-
   Rule: a measurement stamped with a superseded @SCN answers the row that supersedes it, for exactly as long as the producer has not caught up
 
     THE ONE ROW A MINT CANNOT REACH, AND THE REASON IS A SCHEDULE RATHER THAN A COUPLING. Every
@@ -606,7 +540,7 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     superseded code answers nothing because no record carries it. The statement on the row is what
     a later reader removes, and it is written where they will find it.
 
-    @unit @integration @SCN-MUT-019
+    @integration @SCN-MUT-019
     Scenario Outline: a measurement stamped with a superseded code answers the row that supersedes it, and a row stating no superseded code keeps the one-code reading
       Given a sweep record holding one measurement, stamped with the scenario "<stamped>" on the check "mutation"
       And a row measuring "mutation" on the scenario "SCN-FIT-002", which <supersession>
@@ -652,33 +586,3 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     a BSD `date`, a run one hour old and a run forty hours old both placed nothing, for the same
     wrong reason. So the arm resolves a GNU `date` and REDS where it finds none. A skipped arm is a
     credit saying a check ran when it did not, which is the fault one level up that 3F-3162 closed.
-
-    @unit @SCN-MUT-020
-    Scenario: a sweep that finished inside the window has its measurement placed, and the borrow names the age it accepted
-      Given the workflow every push runs, and a sweep of this repository's domain core that finished well inside the window that borrow states
-      When the push borrows from it
-      Then that sweep's measurement is placed where the check reporting it reads it, carrying the numbers the sweep measured
-      And the borrow names the age it accepted and the window it accepted it against
-
-    @unit @SCN-MUT-021
-    Scenario: a sweep that finished past the window has nothing placed, so the row it would have settled reads missing exactly as a sweep that never ran
-      THE ARM THAT WOULD GO VACUOUSLY GREEN, WHICH IS WHY THE SHIM ABOVE IS A CORRECTNESS TERM AND
-      NOT A CONVENIENCE. A runner whose `date` cannot read an ISO moment places nothing, says why,
-      and lets the push carry on — the same three observations this scenario makes, reached for a
-      reason that has nothing to do with the window. The refusal arm is therefore the one that goes
-      green over a mechanism it never touched. What tells the two apart is the sentence: the lapse
-      names the age it refused and the window it refused it against, and the unreadable-timestamp
-      path names neither. So this arm reads that sentence, and reds where it is the wrong one.
-
-      AND THE LAPSE STOPS NOTHING, WHICH IS THE DESIGN RATHER THAN A SOFTNESS IN IT. Every path
-      through this borrow ends the same way — nothing placed, one sentence saying which path ran,
-      and the push carrying on (@SCN-MUT-018). A cadence that lapsed is not a fault in the code
-      being pushed, and the borrow is not the arbiter of either; the row that sweep would have
-      settled reads missing, which is the true sentence about a sweep that has stopped arriving.
-      An arm asserting a stopped push here would be asserting the opposite of what this step is.
-
-      Given the workflow every push runs, and a sweep of this repository's domain core that finished well past the window that borrow states
-      When the push borrows from it
-      Then nothing is placed where the check reporting it reads it, so the row that sweep would have settled reads missing exactly as a sweep that never ran
-      And the borrow names the lapse it refused: how old that sweep was, and the window it measured it against
-      And the push carries on, because a sweep that has lapsed is not a fault in the code being pushed

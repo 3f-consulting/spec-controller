@@ -77,7 +77,7 @@ Feature: The local green-check runs the ladder CI runs, derived rather than list
     arrangement that vouches for a step; anything else does not, an expression included,
     because a value this derivation cannot resolve is a value it must not vouch for.
 
-    @unit @integration @SCN-LAD-008
+    @integration @SCN-LAD-008
     Scenario: a CI step whose red the job would swallow reds the ladder, naming it
       Given a CI config whose gate carries continue-on-error
       When the local ladder is built over it

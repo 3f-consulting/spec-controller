@@ -60,7 +60,7 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
     explanation; the same length in code reds. Both halves are stated, because a rule
     that only ever shows what it rejects leaves what it permits to be inferred.
 
-    @unit @integration @SCN-CPX-001
+    @integration @SCN-CPX-001
     Scenario: a function or module over the external standard reds the build
       Given the thresholds are the external standard, not a measurement of this tree
       When the complexity fitness function scans the real tree
@@ -186,7 +186,7 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
     that @SCN-CPX-002 froze. The reconciliation compares like with like: the worst measured
     value for a file and rule against the value recorded for that same file and rule.
 
-    @unit @integration @SCN-CPX-003
+    @integration @SCN-CPX-003
     Scenario: an exception list that disagrees with the measured tree reds the build
       Given an exception list recording each exempt file's measured value
       When the exception list is reconciled against the real tree

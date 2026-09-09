@@ -57,7 +57,7 @@ Feature: The Gherkin parse gate — no check reports on a corpus the parser reje
     if the check ever read it. So "reports no verdict" is not read off a silent run: a check that
     scanned the readable half would say something specific, and the Then names it and refuses it.
 
-    @unit @integration @SCN-GPG-002
+    @integration @SCN-GPG-002
     Scenario Outline: a feature-file static check over an unparseable corpus exits non-zero naming the file and the parse failure, not a stack trace
       Given a feature corpus holding one file the Gherkin parser rejects beside one it accepts
       When <check> is asked to check that corpus

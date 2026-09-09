@@ -292,7 +292,7 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
     alone. A wrapper that also redded would be grading its own homework — and worse, would
     make a green build depend on two things agreeing.
 
-    @unit @integration @SCN-CIP-009
+    @integration @SCN-CIP-009
     Scenario: a timed step writes a measurement carrying the @SCN and check tag it was given
 
       THE SHAPE IS THE READER'S, WHICH IS WHY BOTH ARMS READ THE ARTEFACT BACK THROUGH THE
@@ -307,7 +307,7 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
       Then the artefact it wrote is read as exactly one Evidence Observation, citing "SCN-MSD-001" and naming the check "ci-run-time"
       And that Evidence Observation carries the seconds the step took
 
-    @unit @integration @SCN-CIP-010
+    @integration @SCN-CIP-010
     Scenario: the wrapped command's exit code is the wrapper's — a failing suite reds however fast it ran
 
       THE MEASUREMENT IS POSTED ALL THE SAME, which is the half of this easiest to lose. A slow
@@ -324,7 +324,7 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
       Then the timed step fails exactly as the command it wrapped did
       And its measurement is posted all the same
 
-    @unit @integration @SCN-CIP-011
+    @integration @SCN-CIP-011
     Scenario: a second timed step in the same run adds its measurement beside the first rather than replacing it
 
       ONE ARTEFACT, TWO CONTRIBUTING STEPS. `--measurements` names a single file and a run has as
@@ -347,7 +347,7 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
       Then "SCN-MSD-001" is answered by exactly one Evidence Observation, carrying what its step measured this time
       And "SCN-MSD-002" is still answered by the measurement it posted
 
-    @unit @integration @SCN-CIP-012
+    @integration @SCN-CIP-012
     Scenario: every run prints the measurement against its trigger and its gate, naming the band it landed in
 
       THE BAND OVER THE TRIGGER AND UNDER THE GATE IS THE WHOLE POINT OF PRINTING TWO NUMBERS.

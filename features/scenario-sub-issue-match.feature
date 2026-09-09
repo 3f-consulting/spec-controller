@@ -132,7 +132,7 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
     scenario AND a pass over this tree reports it — and then that the reconcile posts that
     credit to that scenario, leaving no static check uncited on the suspense row.
 
-    @unit @integration @SCN-SSM-006
+    @integration @SCN-SSM-006
     Scenario: the scenario sub-issue check's own CI run is credited to the scenario naming it
       Given the scn-subissues static check, wired over spec-controller's own source
       When spec-controller's own tree is reconciled
@@ -168,7 +168,7 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
     down an ancestor chain the parser found; this pins that the chain is found at
     all. The inheritance rule is worth nothing if the ancestor was never open.
 
-    @unit @integration @SCN-SSM-007
+    @integration @SCN-SSM-007
     Scenario: an it beneath a brace-titled cited describe reads as cited
       Given a PR touching an it beneath a cited describe whose title literal carries braces, on a branch carrying a 3F ticket handle
       When the scenario sub-issue gate runs over the brace-titled fixture PR
@@ -404,7 +404,7 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
       When the scenario sub-issue gate runs over the two-renumber fixture PR
       Then the gate auto-detects both renumbers
 
-    @unit @integration @SCN-SSM-017
+    @integration @SCN-SSM-017
     Scenario: a relabelled scenario whose body also changed is not a renumber
       THE NEGATIVE THAT STOPS THE CURE GUTTING THE GATE. The two rows above both ask the
       reading to pair MORE than the retired hunk test did, and the cheapest way to satisfy

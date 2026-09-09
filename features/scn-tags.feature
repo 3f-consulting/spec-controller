@@ -29,7 +29,7 @@ Feature: The tier-tag floor — every scenario names an evidence tier
     a tree where every @SCN scenario names a tier (or is @wip). @SCN-STG-001 itself
     carries @unit @integration, satisfying the floor it enforces.
 
-    @unit @integration @SCN-STG-001
+    @integration @SCN-STG-001
     Scenario: the scn-tags guard flags a tier-less non-@wip scenario, exempts @wip, and passes a tiered tree
       Given the scn-tags guard
       When it runs over a features tree with a tier-less non-@wip scenario
@@ -237,7 +237,7 @@ Feature: The tier-tag floor — every scenario names an evidence tier
       When it runs over that same target with no fitness rows configured at all
       Then it passes
 
-    @unit @integration @SCN-STG-009
+    @integration @SCN-STG-009
     Scenario: a stepless scenario tagged with a MEASURED check satisfies the tier floor
       Given the scn-tags static check
       When it runs over a target whose stepless scenarios carry a measured check tag and a registered one

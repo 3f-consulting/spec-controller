@@ -46,7 +46,7 @@ Feature: A concept's behaviour never drains into a procedural layer beside it
 
   Rule: a procedural-layer module under a domain directory reds the anemic-domain check
 
-    @unit @integration @SCN-ANM-001
+    @integration @SCN-ANM-001
     Scenario: a procedural-layer module beside the domain concepts reds the build
       Given every module tracked in the real spec-controller repository
       When the anemic-domain check runs over the real tree

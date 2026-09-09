@@ -67,7 +67,7 @@ Feature: spec-controller reconciles its own tree, and the build depends on the a
     files than the product does would be spec-controller declining to use the capability
     it ships — the same shape @SCN-SLF-002 closed one level down.
 
-    @unit @integration @SCN-SLF-001
+    @integration @SCN-SLF-001
     Scenario: the self-reconciliation gate reds an out-of-balance tree and passes over a balanced one
       Given the self-balance gate, wired over spec-controller's own source
       When the gate reconciles a tree whose named evidence is all observed, and a tree naming evidence that nothing observes
@@ -134,14 +134,14 @@ Feature: spec-controller reconciles its own tree, and the build depends on the a
     two sides to count, and counting the one this bar is not held against would answer a
     different question from the one the refusal states.
 
-    @unit @integration @SCN-SLF-004
+    @integration @SCN-SLF-004
     Scenario: banking reads the row count off the tree and writes it upward, refusing to record a fall
       Given a repository whose record banks fewer fitness rows than its manifest holds
       When the repository banks the fitness-row count its manifest states
       Then the record states the count read from the manifest, and stands otherwise byte for byte as it was
       And banking over a manifest that has since lost rows is refused, naming both counts and leaving the record as it stood
 
-    @unit @integration @SCN-SLF-005
+    @integration @SCN-SLF-005
     Scenario: a run whose fitness axis holds fewer rows than the banked figure reds the gate, naming the figure and the count
       WHERE THE COMPARISON RUNS IS THE LOAD-BEARING DECISION, AND IT IS NOT A FITNESS
       ROW. A comparison held as a row would go with the rows it is there to notice the

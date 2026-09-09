@@ -28,9 +28,11 @@
 # TWO READERS CONSULT THIS FILE AND THEY ARE ONE ARBITER, NOT TWO THAT AGREE. The ledger sources
 # SCN-FIT-002's bar from the `domain` gate below (`package.json` names the gate; the number is never
 # written there), and `mutation.yml` ends on the ratchet's verdict over the same gate of the same
-# file. Both reach the same integer by the same subtraction. @SCN-MUT-014 reads the four artefacts
-# that state the gate's name back off disk, so a rename on one side reds rather than quietly making
-# them two gates that agree until somebody edits one.
+# file. Both reach the same integer by the same subtraction. A rename on one side is caught by the
+# ledger itself: the gate name no longer resolves, SCN-FIT-002's obligation finds no observation and
+# reads missing, and the build reds. @SCN-MUT-014 used to read the four artefacts back off disk and
+# say the same thing a second time; it retired at 3F-3245 as a second detector for a fault the
+# engine already detects by construction.
 
 mutation-gates:
   # The pure engine — `packages/core/src/domain/**`, the posting / reconciliation / fold rules, less
