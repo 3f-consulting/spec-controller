@@ -27,8 +27,7 @@
     "lint:complexity-exceptions": "tsx tests/checks/lintComplexityExceptionsCli.ts",
     "lint:scn-tags": "tsx tests/checks/lintScnTagsCli.ts",
     "lint:scn-subissues": "tsx tests/checks/lintScnSubIssuesCli.ts",
-    "lint:anemic-domain": "tsx tests/checks/lintAnemicDomainCli.ts",
-    "fitness:bank": "tsx tests/checks/fitnessRowBankCli.ts"
+    "lint:anemic-domain": "tsx tests/checks/lintAnemicDomainCli.ts"
   },
   "specController": {
     "fitnessChecks": [
