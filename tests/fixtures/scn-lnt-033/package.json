@@ -1,0 +1,14 @@
+{
+  "name": "uncited-severed-check-census-target-repo-fixture",
+  "private": true,
+  "scripts": {
+    "lint:advisory": "eslint",
+    "lint:enforced": "anemic-domain"
+  },
+  "specController": {
+    "checkRegistry": {
+      "lint:advisory": "complexity",
+      "lint:enforced": "tech-conformance"
+    }
+  }
+}

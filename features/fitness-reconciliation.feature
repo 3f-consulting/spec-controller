@@ -864,6 +864,81 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       When that target's evidence is reconciled from its manifest, its corpus and its workflow
       Then the first check's run credits the row its step names and that row balances, and the second run cites no scenario
 
+  Rule: a check the job's verdict does not depend on is not enforced over the real source, wherever the severance is written
+
+    THE FIELD IS NAMED FOR ENFORCEMENT AND THAT IS THE WHOLE OF THE READING. A step whose red the
+    job survives runs, reds, and leaves the pipeline green — so it enforces nothing over the real
+    source however faithfully it analyses it. `continue-on-error` is the one attribute that
+    falsifies what a green job otherwise proves, which is that every unconditional step ran and
+    passed; a reader blind to it cannot tell a gate from a gate in name only.
+
+    AND THE SEVERANCE IS WRITTEN IN TWO PLACES, WHICH IS ONE FACT RATHER THAN TWO. GitHub spells
+    the key on a step and on a job, and either alone leaves the same check unenforced. So what the
+    rule holds is the CONSEQUENCE — the job's verdict does not depend on this check — and not the
+    spelling that produced it. Reading them as two behaviours would invite a reader that catches
+    the near one and misses the far one, which is a watermelon detector with a watermelon in it.
+
+    THE SAFE DIRECTION IS INHERITED, NOT RE-DECIDED. This walk already refuses to vouch for a step
+    whose `continue-on-error` it cannot prove harmless — absent, `false` or the string `"false"`
+    and nothing else — because an expression's value is decided by the run rather than by the
+    document. That reading reports a check unenforced, which is flagged and visible, ahead of
+    falsely enforced, which is hidden; and it points the same way here.
+
+    @unit @integration @SCN-LNT-032
+    Scenario: a check whose step or whose job carries continue-on-error reconciles as the watermelon, beside a sibling check whose red is the job's verdict
+
+      THE ENGINE COMPUTED THIS FACT AND THREW IT AWAY, which is why the claim is held here rather
+      than left to the walk that produces it. `abortsJob` has been read off both carriers correctly
+      since 3F-3042, and every consumer it ever reached was under `tests/` — this repository's own
+      ladder, which never ships. So the guard that looked like the defence protected us and no
+      consumer at all, while the published reader certified as satisfied precisely what this
+      product itself calls the watermelon: green on the surface, red within.
+
+      THE WORD WAS ALREADY ALLOCATED AND THE RECONCILER WAS ALREADY WAITING FOR IT. `watermelon` is
+      defined as a check that exists but is not wired into CI over the real source, and a severed
+      step is wired-but-unenforcing — the second half of that sentence exactly. Nothing in the
+      outcome ladder moves to accommodate it: the observation arrives exists-and-unenforced and
+      falls to the word already there, which is the strongest evidence the vocabulary was right.
+      What a workflow file cannot say is what the check FOUND, so the rival reading — your job hid
+      this check's red — is a claim no document on this route can support.
+
+      THREE CHECKS FROM ONE TARGET, AND THAT IS THE CLAIM RATHER THAN THE CONVENIENCE. The three
+      run under one manifest, are discovered by one prefix and differ in exactly one thing: where
+      the severance is written, or whether it is written at all. Taken from three targets they
+      could agree by accident — a reader that flags everything and a reader that flags nothing each
+      need a second run to catch, when the whole claim is that ONE run tells them apart.
+
+      Given a target whose corpus names three static checks its CI runs
+      And the first check's step carries continue-on-error, the second's job carries it, and the third's red is the job's verdict
+      When that target's evidence is reconciled from its manifest, its corpus and the two jobs of its workflow
+      Then the first two rows read the watermelon and leave balanced, and the third reconciles satisfied
+
+    @unit @integration @SCN-LNT-033
+    Scenario: the static-check census counts only the checks the job's verdict depends on, on both of its counts
+
+      THE TWO COUNTS ARE ONE SENTENCE, AND WHAT A READER TAKES FROM IT IS THE NUMBER NEITHER OF
+      THEM PRINTS. The census says how many static checks run and how many of those nothing names;
+      subtract and you have the checks that run AND are named, which is the figure a consumer reads
+      to learn how much of their pipeline is a gate somebody owns. Move one count's membership rule
+      and leave the other's, and that figure is wrong — undercounted here, and below nil on a
+      pipeline carrying more severed uncited checks than enforced ones.
+
+      SO THE RULE ABOVE IS NOT FINISHED AT THE ROW. Reading the severance on the named side alone
+      repairs one number by breaking another: a severed check nobody cites leaves the running count
+      and stays in the uncited one, and the subtraction then reports fewer named checks than the
+      report's own rows carry. Both counts are folded from the same posted credits, so both take
+      the same membership rule or the fold contradicts itself.
+
+      AND IT IS A CONSISTENCY THE CENSUS ALREADY KEEPS, rather than a new one. The running count has
+      always excluded the unwired watermelon — a check that exists and enforces nothing is not
+      protection, so it is not counted as protection. A check whose red its job swallows is that
+      same claim reached through a different document, and counting it inflates the one line a
+      consumer reads for how much protection they have.
+
+      Given a target running two static checks no scenario cites, one of them behind continue-on-error
+      When that target's census is taken from its manifest, its corpus and its workflow
+      Then the census reports one static check run and one uncited static check, so the named count it implies is nil
+
   Rule: a check step's outcome in the CI run's record is the fitness credit
 
     THE RECORD IS A SECOND DOCUMENT AND A SECOND QUESTION, which is why it is read by a reader of

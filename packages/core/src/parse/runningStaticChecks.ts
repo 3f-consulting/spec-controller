@@ -13,9 +13,10 @@
  * `ciRunCommands` is the projection / `commandInvokesScript`) from `ingest/ciCommands`.
  *
  * A running static check is `exists: true` (a `package.json` script by construction — the
- * `Object.keys(scripts)` source) and `enforcedOverRealSource: true` (a CI `run:` step invokes it
- * by construction — the `commandInvokesScript` filter). The named static checks' watermelon detail
- * (exists / enforcedOverRealSource for a static check that does NOT run) is the OTHER observer's job.
+ * `Object.keys(scripts)` source). `enforcedOverRealSource` is READ, not assumed (@SCN-LNT-032): a
+ * `run:` step invokes it by construction, but a step whose red its job survives runs, reds and
+ * leaves the pipeline green, so being invoked is not being enforced. The named static checks'
+ * OTHER watermelon detail — a static check that does not run at all — is the OTHER observer's job.
  *
  * A script counts as a static check when its name matches any configured `guardPrefixes` entry —
  * the guard-prefix set is SET at the CLI edge (`ingest/ingestQualityChecks.ts`, default
@@ -86,12 +87,22 @@ export function runningStaticChecks(
   // is the SAME parse rather than a second one — and the step is what carries the `id:` the
   // citation below comes off (3F-3261).
   const runSteps = ciRunSteps(ciSources);
+  // WHETHER THE JOB'S VERDICT DEPENDS ON THIS CHECK (@SCN-LNT-032) — `some`, not `every`, because a
+  // check a second step runs unsevered IS one the job's verdict depends on. Stated in the same
+  // shape as the obligation-side observer's, deliberately: two observers answering one question
+  // differently is the disagreement the shared walk exists to foreclose.
+  const enforces = (guard: string): boolean =>
+    runSteps.some((step) => commandInvokesScript(step.command, guard) && step.abortsJob);
   return Object.keys(scripts)
     .filter(
       (name) =>
         guardPrefixes.some((prefix) => name.startsWith(prefix)) ||
         configuredStaticChecks.includes(name)
     )
+    // MEMBERSHIP, AND IT DOES NOT ASK ABOUT THE SEVERANCE (@SCN-LNT-032). This filter decides
+    // whether a script is OBSERVED AT ALL; narrowing it on `abortsJob` would delete a severed check
+    // from the report rather than surface it as the watermelon — the same fault this scenario
+    // closes, reached from the other side, and silent. The FIELD moves; this filter does not.
     .filter((name) => runSteps.some((step) => commandInvokesScript(step.command, name)))
     .sort()
     .map((guard) => {
@@ -111,7 +122,7 @@ export function runningStaticChecks(
         qualityCheck: "lint" as const,
         staticCheck: guard,
         exists: true,
-        enforcedOverRealSource: true,
+        enforcedOverRealSource: enforces(guard),
         // Spread rather than two `?? undefined` assignments, so an observation that cites nothing
         // carries neither key and its JSON stays byte-identical. Both terms or neither — a
         // half-citation would be a shape no reader knows how to read, and the bare check tag is

@@ -1,0 +1,24 @@
+{
+  "name": "severed-check-fitness-target-repo-fixture",
+  "private": true,
+  "scripts": {
+    "lint:alpha": "eslint",
+    "lint:beta": "scn-subissues",
+    "lint:gamma": "anemic-domain"
+  },
+  "specController": {
+    "checkRegistry": { "lint:alpha": "complexity" },
+    "fitnessChecks": [
+      {
+        "scn": "SCN-CVT-002",
+        "characteristic": "traceability",
+        "command": "pnpm lint:beta"
+      },
+      {
+        "scn": "SCN-CVT-003",
+        "characteristic": "tech-conformance",
+        "command": "pnpm lint:gamma"
+      }
+    ]
+  }
+}

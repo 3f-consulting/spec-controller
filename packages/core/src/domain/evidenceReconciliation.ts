@@ -432,8 +432,9 @@ export interface TestVolumeTotals {
  * The materialised static-check totals (RMD-005) — the static-check kind-counts the
  * markdown's `### Static checks` line derives, following the census shape exactly:
  * `runningStaticCheckCount` (the volume of running static checks) and `uncitedStaticCheckCount` (how many
- * of them NO `@lint` cites). The named count is IMPLICIT (`running − uncited`) and is
- * not carried (every named static check is already a reconciled `@lint` sub-row).
+ * of THOSE no `@lint` cites — a subset of the first, @SCN-LNT-033). The named count is IMPLICIT
+ * (`running − uncited`) and is not carried (every named static check is already a reconciled
+ * `@lint` sub-row); drawn from one population under one membership rule, it cannot go below nil.
  */
 export interface StaticCheckTotals {
   runningStaticCheckCount: number;

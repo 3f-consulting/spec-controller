@@ -2,24 +2,27 @@
  * The `ingest/guard` reader — the NAMED-guard observer (the watermelon input).
  * Per NAMED `@lint=<guard>` handle it reports `{ staticCheck, exists, enforcedOverRealSource }`,
  * where `enforcedOverRealSource` means the static check's command appears as a CI `run:` step over the
- * real tree — so a named static check that exists but is not wired reconciles as the WATERMELON.
+ * real tree WHOSE RED IS THAT JOB'S VERDICT — so a named static check that exists but is not wired,
+ * or is wired to a step the job survives, reconciles as the WATERMELON.
  *
  * One of the two static-check observers: this one reads the OBLIGATION side; the
  * running-guard observer (`runningStaticChecks`, `ingest/ciGuards`) reads every running CI guard. Both
- * share the watermelon-critical CI-parse primitive (`ciRunCommands` / `commandInvokesScript`) from
- * `ingest/ciCommands`, so the structural parse lives in ONE place.
+ * share the watermelon-critical CI-parse primitive (`ciRunSteps` / `commandInvokesScript`) from
+ * `ingest/ciCommands`, so the structural parse lives in ONE place — and since @SCN-LNT-032 both read
+ * the same field off it, so the two cannot come to disagree about what enforcement is.
  *
  * Parent: @SCN-LNT-001 (the seam-bearing first sub-issue; satisfied path).
  */
 
 import type { GuardEvidenceObservation } from "../model.js";
-import { ciRunCommands, commandInvokesScript, type PackageJsonScripts } from "./checkScriptsRunInCI.js";
+import { ciRunSteps, commandInvokesScript, type PackageJsonScripts } from "./checkScriptsRunInCI.js";
 import type { ScriptCitation } from "./fitnessCitations.js";
 
 /**
  * Read each named static check's evidenceObservation from the CI config source + package.json:
  *   - `exists` — the static check is a `package.json` `scripts` entry.
- *   - `enforcedOverRealSource` — its command is a CI `run:` step over the real tree.
+ *   - `enforcedOverRealSource` — its command is a CI `run:` step over the real tree AND that step's
+ *     red is its job's verdict.
  */
 export function checkStaticEvidenceObligations(
   guards: string[],
@@ -50,15 +53,24 @@ export function checkStaticEvidenceObligations(
   citedScn: (script: string) => ScriptCitation | null = () => null
 ): GuardEvidenceObservation[] {
   const scripts = packageJson.scripts ?? {};
-  const runCommands = ciRunCommands(ciSources);
+  // THE STEPS, NOT THEIR COMMANDS (@SCN-LNT-032). `ciRunCommands` is this walk's projection, so
+  // reading the steps is the SAME parse rather than a second one — and `abortsJob` is the field the
+  // projection discarded. It has been read off both carriers of the severance correctly since
+  // 3F-3042 and reached no published consumer until now, which is how this reader came to certify
+  // as satisfied a check whose red its target's job swallows.
+  const runSteps = ciRunSteps(ciSources);
   return guards.map((guard) => {
     const citation = citedScn(guard);
     return {
       qualityCheck: "lint" as const,
       staticCheck: guard,
       exists: Object.prototype.hasOwnProperty.call(scripts, guard),
-      enforcedOverRealSource: runCommands.some((cmd) =>
-        commandInvokesScript(cmd, guard)
+      // ANY step that both invokes the check and aborts its job on a red — `some`, not `every`,
+      // because a check a second step runs unsevered IS one the job's verdict depends on. The same
+      // rule in the same shape as `runningStaticChecks`', deliberately: two observers answering one
+      // question differently is the disagreement this shared primitive exists to foreclose.
+      enforcedOverRealSource: runSteps.some(
+        (step) => commandInvokesScript(step.command, guard) && step.abortsJob
       ),
       // Spread rather than two `?? undefined` assignments, so an observation that cites nothing
       // carries neither key and its JSON stays byte-identical. Both terms or neither — the seam

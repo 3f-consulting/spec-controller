@@ -71,6 +71,10 @@ import {
 } from "../../packages/core/src/domain/fitnessChecks.js";
 import {
   resolveFitnessChecks,
+  // @SCN-LNT-032 — the fixture's REGISTRY read by the resolver the composition itself uses, so the
+  // arm is held to the arrangement that puts one of its three checks on the obligation-side
+  // observer rather than to a second reading of the same manifest.
+  resolveCheckRegistry,
   type KillFloorReader,
 } from "../../packages/core/src/parse/targetManifest.js";
 
@@ -3249,5 +3253,328 @@ Then(
       ["features", "packageJson", "measurements"],
       "expected the run to name exactly its corpus, its manifest and the record its commands wrote"
     );
+  }
+);
+
+// -------------------------------------------------------------------------
+// @SCN-LNT-032 — a check the job's verdict does not depend on reconciles as the WATERMELON,
+// wherever the severance is written, beside a sibling check whose red IS that verdict. The arm
+// runs over a planted target repository (tests/fixtures/scn-lnt-032/) whose manifest names three
+// static checks, whose corpus carries a stepless scenario for each, and whose workflow severs two
+// of them — one on the step, one on the job.
+//
+// THREE CHECKS, ONE TARGET, ONE RUN. They run under one manifest and are discovered by one prefix,
+// and differ in exactly one thing: where the severance is written, or whether it is written at
+// all. Split across three targets they could agree by accident — a reader that flags everything
+// and a reader that flags nothing each need a second run to catch.
+//
+// AND THE THREE REACH BOTH OBSERVERS, WHICH IS THE FIXTURE'S OTHER JOB. The first check is
+// REGISTERED, so the corpus obliges its handle and the obligation-side observer answers for it
+// while the running-check stream drops it; the second and third are CONFIGURED rows their steps
+// cite, so the running-check observer answers for those. Neither module can be reverted without
+// redding this arm.
+// -------------------------------------------------------------------------
+
+/** @SCN-LNT-032 outcome: the planted target's root, its workflow bytes, and its reconciliation. */
+let severedFixture: string;
+let severedCiSource: string;
+let severedReconciliation: EvidenceReconciliation;
+
+// @SCN-LNT-032
+Given("a target whose corpus names three static checks its CI runs", function () {
+  severedFixture = join(process.cwd(), "tests/fixtures/scn-lnt-032");
+  const manifest = JSON.parse(
+    readFileSync(join(severedFixture, "package.json"), "utf8")
+  ) as PackageJsonScripts & {
+    specController?: { checkRegistry?: unknown; fitnessChecks?: unknown };
+  };
+  // THE FIXTURE IS HELD TO THE ARRANGEMENT THIS SCENARIO RESTS ON: three STATIC checks, each a
+  // script the manifest holds, named the two ways that reach the two observers. Drift either way —
+  // a bar appearing, a registry entry lost, a row losing its script — and the arm would go on
+  // passing while asserting something else, or would quietly stop exercising one of the readers.
+  assert.deepEqual(
+    [...resolveFitnessChecks(manifest, NO_GATE_RECORD)].map(([scn, row]) => [
+      scn,
+      row.characteristic,
+      carriesBar(row),
+    ]),
+    [
+      ["SCN-CVT-002", "traceability", false],
+      ["SCN-CVT-003", "tech-conformance", false],
+    ],
+    "expected two CONFIGURED static rows, each naming a script of this manifest"
+  );
+  assert.deepEqual(
+    [...resolveCheckRegistry(manifest)].map(([handle, entry]) => [handle, entry.check]),
+    [["lint:alpha", "complexity"]],
+    "expected the third check to be named through the REGISTRY, so the obligation-side observer answers for it"
+  );
+  assert.deepEqual(
+    Object.keys(manifest.scripts ?? {}),
+    ["lint:alpha", "lint:beta", "lint:gamma"],
+    "expected each of the three checks to exist as a script under the one discovered prefix"
+  );
+  severedCiSource = readFileSync(join(severedFixture, "ci.yml"), "utf8");
+  // AND ALL THREE ARE ORDINARY `run:` STEPS OF THAT TARGET'S OWN PIPELINE. Nothing is moved out of
+  // the pipeline and no wrapper stands in front of a command, which is the property the whole
+  // claim rests on — a fixture that had quietly grown one would prove a different route.
+  assert.deepEqual(
+    ciRunSteps([severedCiSource]).map((step) => step.command),
+    ["pnpm lint:alpha", "pnpm lint:gamma", "pnpm lint:beta"],
+    "expected the planted workflow to invoke each check's own script from a plain run: step"
+  );
+});
+
+// @SCN-LNT-032
+Given(
+  "the first check's step carries continue-on-error, the second's job carries it, and the third's red is the job's verdict",
+  function () {
+    // THE ONE DIFFERENCE BETWEEN THE THREE STEPS, ASSERTED AS ONE FACT — and asserted through the
+    // reader the observers themselves use, rather than by a second reading of the same YAML that
+    // would be free to disagree with it about which steps this workflow even runs.
+    //
+    // WHERE the key is carried is asserted as well as WHETHER, because a fixture whose two severed
+    // checks were severed the same way would leave the far carrier unwitnessed while the arm read
+    // green — the reader that catches the near one and misses the far one, which is the fault this
+    // scenario exists to close.
+    assert.deepEqual(
+      ciRunSteps([severedCiSource]).map((step) => [
+        step.command,
+        step.abortsJob,
+        step.abortsJob ? null : step.continuesOnError.carriedBy,
+      ]),
+      [
+        ["pnpm lint:alpha", false, "step"],
+        ["pnpm lint:gamma", true, null],
+        ["pnpm lint:beta", false, "job"],
+      ],
+      "expected one check severed on its step, one on its job, and one whose red is still the job's verdict"
+    );
+  }
+);
+
+// @SCN-LNT-032
+When(
+  "that target's evidence is reconciled from its manifest, its corpus and the two jobs of its workflow",
+  function () {
+    severedReconciliation = evidenceReconciliationFromSources({
+      featureSources: [
+        readFileSync(join(severedFixture, "features/target.feature"), "utf8"),
+      ],
+      untaggedScenarios: [],
+      packageJson: JSON.parse(
+        readFileSync(join(severedFixture, "package.json"), "utf8")
+      ) as PackageJsonScripts,
+      ciSources: [severedCiSource],
+      measurements: {},
+      runtimeObservations: [],
+      deferralTags: [],
+      // THE PREFIX FINDS ALL THREE, WHICH IS WHAT LEAVES THE SEVERANCE AS THE ONLY VARIABLE.
+      // Discovery is blind to `continue-on-error`; what the key decides is what a discovered
+      // check's row READS.
+      guardScriptPrefixes: ["lint:"],
+      killFloor: () => null,
+    });
+  }
+);
+
+// @SCN-LNT-032
+Then(
+  "the first two rows read the watermelon and leave balanced, and the third reconciles satisfied",
+  function () {
+    // THE LEDGER WHOLE, because what this watches for is a DISCRIMINATION rather than one row's
+    // value. An arm over the severed rows alone would pass over a reader that had started flagging
+    // the third as well — the opposite fault, and just as wrong.
+    assert.deepEqual(
+      severedReconciliation.ledger.scenarioReconciliations.map((row) => [
+        row.scnId,
+        row.kind,
+        row.verdict,
+        row.qualityCheckReconciliations.map((item) => [item.staticCheck, item.outcome]),
+      ]),
+      [
+        ["SCN-CVT-001", "scenario", "out-of-balance", [["complexity", "watermelon"]]],
+        ["SCN-CVT-002", "scenario", "out-of-balance", [["traceability", "watermelon"]]],
+        ["SCN-CVT-003", "scenario", "balanced", [["tech-conformance", "satisfied"]]],
+      ],
+      `expected both severed checks to read the watermelon and the sibling to stay satisfied; ` +
+        `got ${JSON.stringify(severedReconciliation.ledger.scenarioReconciliations)}`
+    );
+    // AND A SEVERED CHECK IS STILL OBSERVED, as one that EXISTS and enforces nothing. The field
+    // moves and the membership filter does not: narrowing the filter that decides whether a script
+    // is observed at all would delete a severed check from the report rather than surface it —
+    // the same fault reached from the other side, and silent. A watermelon row carrying no
+    // observation at all is that mistake showing.
+    assert.deepEqual(
+      severedReconciliation.ledger.scenarioReconciliations
+        .filter((row) => row.scnId !== "SCN-CVT-003")
+        .flatMap((row) => row.evidenceObservations)
+        .filter(isStaticCheckObservation)
+        .map((observation) => [
+          observation.staticCheck,
+          observation.exists,
+          observation.enforcedOverRealSource,
+          observation.scnId,
+        ]),
+      [
+        ["lint:alpha", true, false, "SCN-CVT-001"],
+        ["lint:beta", true, false, "SCN-CVT-002"],
+      ],
+      "expected each severed check to be OBSERVED as one that exists and enforces nothing, on the row it cites"
+    );
+  }
+);
+
+// -------------------------------------------------------------------------
+// @SCN-LNT-033 — the static-check CENSUS counts only the checks the job's verdict depends on, on
+// BOTH of its counts. The arm drives the REAL `balance` CLI over a planted target repository
+// (tests/fixtures/scn-lnt-033/) whose manifest names two static checks, whose corpus names
+// neither, and whose workflow severs one of them — and reads the census off the persisted report
+// rather than off an in-memory re-run.
+//
+// A DIFFERENT READER FROM @SCN-LNT-032'S, WHICH IS WHY IT IS A SECOND SCENARIO. That one is the
+// NAMED row: an obligation exists and its outcome moves. Here there is no obligation at all and no
+// row moves — what moves is the one line a consumer reads for how much protection they have, and
+// the figure they take from it is the subtraction neither count prints.
+//
+// REGISTERED-BUT-UNCARRIED, BOTH OF THEM, so the severance is the only variable. The two checks
+// share a prefix, a manifest, a registry treatment and their absence from the corpus; the job's
+// verdict depends on one and not on the other. A fixture whose two checks also differed in their
+// citation could report this census for a reason that has nothing to do with the key.
+// -------------------------------------------------------------------------
+
+/** @SCN-LNT-033 outcome: the planted target's root and the report the CLI persisted for it. */
+let uncitedSeveredFixture: string;
+let uncitedSeveredMd: string;
+
+// @SCN-LNT-033
+Given(
+  "a target running two static checks no scenario cites, one of them behind continue-on-error",
+  function () {
+    uncitedSeveredFixture = join(process.cwd(), "tests/fixtures/scn-lnt-033");
+    const manifest = JSON.parse(
+      readFileSync(join(uncitedSeveredFixture, "package.json"), "utf8")
+    ) as PackageJsonScripts & { specController?: { checkRegistry?: unknown } };
+    // THE FIXTURE IS HELD TO THE ARRANGEMENT THE CLAIM RESTS ON: two static checks under one
+    // discovered prefix, BOTH registered, so neither is uncited for a reason the other is not.
+    // Drift either way — a third script, a registry entry lost — and the arm would go on passing
+    // while asserting something else.
+    assert.deepEqual(
+      Object.keys(manifest.scripts ?? {}),
+      ["lint:advisory", "lint:enforced"],
+      "expected exactly two checks, each a script under the one discovered prefix"
+    );
+    assert.deepEqual(
+      [...resolveCheckRegistry(manifest)].map(([handle, entry]) => [handle, entry.check]),
+      [
+        ["lint:advisory", "complexity"],
+        ["lint:enforced", "tech-conformance"],
+      ],
+      "expected BOTH handles registered, so the citation seam treats them identically"
+    );
+    // AND THE CORPUS NAMES NEITHER, which is what makes both of them uncited. Asserted against the
+    // corpus bytes rather than left to the fixture's own comment: a tag appearing on either check
+    // would make that check CITED and take the whole claim away.
+    const corpus = readFileSync(
+      join(uncitedSeveredFixture, "features/target.feature"),
+      "utf8"
+    );
+    assert.deepEqual(
+      ["complexity", "tech-conformance"].filter((check) => corpus.includes(`@${check}`)),
+      [],
+      "expected the corpus to carry neither check's bare tag — an uncited check is one nothing names"
+    );
+    // THE ONE DIFFERENCE BETWEEN THE TWO STEPS, read through the reader the observers themselves
+    // use rather than by a second reading of the same YAML, which would be free to disagree with
+    // them about which steps this workflow even runs.
+    assert.deepEqual(
+      ciRunSteps([readFileSync(join(uncitedSeveredFixture, "ci.yml"), "utf8")]).map((step) => [
+        step.command,
+        step.abortsJob,
+      ]),
+      [
+        ["pnpm lint:advisory", false],
+        ["pnpm lint:enforced", true],
+      ],
+      "expected one check the job's verdict survives and one whose red IS that verdict"
+    );
+  }
+);
+
+// @SCN-LNT-033
+When(
+  "that target's census is taken from its manifest, its corpus and its workflow",
+  function () {
+    // THE REAL CLI OVER REAL FILES, not an in-memory re-run — the census is a rendered LINE, and
+    // what a consumer reads is the report on disk. A fold asserted in memory cannot tell whether
+    // the number ever reached the page.
+    const reportDir = mkdtempSync(join(tmpdir(), "spec-controller-lnt033-"));
+    const reportPath = join(reportDir, "spec-reconciliation.md");
+    const result = spawnSync(
+      join(process.cwd(), "node_modules", ".bin", "tsx"),
+      [
+        join(process.cwd(), "packages", "spec-controller", "src", "cli-balance", "cli.ts"),
+        "--features", join(uncitedSeveredFixture, "features"),
+        "--ci", join(uncitedSeveredFixture, "ci.yml"),
+        "--package-json", join(uncitedSeveredFixture, "package.json"),
+        "--target", "lnt033-fixture",
+        "--format", `md:${reportPath}`,
+      ],
+      { cwd: reportDir, encoding: "utf8" }
+    );
+    assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
+    // Exit 1: this target IS out of balance — two uncited credits in suspense and one unobserved
+    // unit obligation. The report is written IN FULL first, which is what this arm reads.
+    assert.equal(
+      result.status,
+      1,
+      `expected exit 1 (out-of-balance) writing the report; got ${result.status}\nstderr:\n${result.stderr}`
+    );
+    uncitedSeveredMd = readFileSync(reportPath, "utf8");
+  }
+);
+
+// @SCN-LNT-033
+Then(
+  "the census reports one static check run and one uncited static check, so the named count it implies is nil",
+  function () {
+    // BOTH COUNTS AS ONE LINE, because the fault is a DISAGREEMENT between them rather than a wrong
+    // number in either. A reader that had narrowed the running count as well would report "0 run,
+    // 0 uncited" — two counts agreeing by both being empty, which describes a pipeline with no
+    // checks in it.
+    //
+    // AND THE LINE IS LIFTED BEFORE IT IS COMPARED, so a red prints the census the report actually
+    // carries. A whole-report `includes` that fails says only that a string was absent, and the
+    // one thing a reader of this red needs is the pair of numbers that turned up instead.
+    const censusLine = uncitedSeveredMd
+      .split("\n")
+      .find((line) => /static check\(s\) run, \d+ uncited static check\(s\)\./.test(line));
+    assert.equal(
+      censusLine,
+      "1 static check(s) run, 1 uncited static check(s).",
+      `expected the severed check to count in NEITHER census count, so the named count it ` +
+        `implies is 1 − 1 = 0. An untreated uncited count reports 2 uncited here and the ` +
+        `subtraction goes to −1, which is a number no pipeline can have.`
+    );
+
+    // THE COUNT MOVES AND THE POSTING DOES NOT. Dropping the severed check from the stream would
+    // satisfy the line above by DELETING the check from the report — the reader would never learn
+    // they run a check that guards nothing and that nobody has named, which is two omissions at
+    // once and silent. Both handles are on the books, on the suspense row and on no other.
+    const ledgerSection = uncitedSeveredMd.slice(
+      uncitedSeveredMd.indexOf("## Scenario Reconciliations")
+    );
+    for (const handle of ["lint:advisory", "lint:enforced"]) {
+      const bearing = ledgerSection
+        .split("\n")
+        .filter((line) => line.startsWith("|") && line.includes(`(${handle})`))
+        .map((line) => line.split("|").map((cell) => cell.trim())[1]);
+      assert.deepEqual(
+        bearing,
+        ["(no scenario)"],
+        `expected ${handle} banked as a cites-no-scenario credit on the suspense row and on no ` +
+          `other; got ${JSON.stringify(bearing)} in:\n${uncitedSeveredMd}`
+      );
+    }
   }
 );
