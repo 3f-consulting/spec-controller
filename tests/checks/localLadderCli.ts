@@ -17,7 +17,7 @@
  * `runningStaticChecks` treats a package.json script as a RUNNING static check when its name
  * starts with an observed prefix (`lint:` / `guard:`) and a CI `run:` step invokes it. Calling
  * this `lint:ladder` would register a phantom static check on spec-controller's own ledger and
- * red `balance:self` as an uncited one. This is the reasoning `verify` itself already
+ * red the self-reconciliation as an uncited one. This is the reasoning `verify` itself already
  * carries, applied to its helper.
  *
  * IT REDS ON A SWALLOWED RED BEFORE ANYTHING ELSE (@SCN-LAD-008). A step carrying
@@ -64,7 +64,7 @@ try {
   );
 } catch (err) {
   // A ladder that cannot be built is a usage fault, not a verdict about the code — the
-  // distinction `balance:self` draws with its own exit 2, and for the same reason.
+  // distinction the self-reconciliation draws with its own exit 2, and for the same reason.
   console.error(`local ladder: cannot read ${ciPath} or its package.json — ${String(err)}`);
   process.exit(2);
 }

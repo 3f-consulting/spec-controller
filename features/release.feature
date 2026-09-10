@@ -144,12 +144,12 @@ Feature: A release verifies the artefact it publishes, in the tree a stranger in
 
     THE CURE MUST NOT BE BLOCKED BY THE DISEASE. 3F-3105 bootstraps this repository's own
     reconciliation onto a PINNED PUBLISHED spec-controller. When the model moves and the pinned
-    reader can no longer read the tree, `balance:self` reds, and the only thing that clears it is
+    reader can no longer read the tree, the self-reconciliation reds, and the only thing that clears it is
     publishing a version that can. A release path consulting the reconciliation would refuse to cut
     that release for the very reason the release is being cut, and the tree would be stranded on a
     red nothing but a hand publish could clear. So the release path does not ask.
 
-    AND THE LINE IS NOT `balance:self`, WHICH IS WHERE THE FIRST DRAFT OF THIS FILE PUT IT. The
+    AND THE LINE IS NOT THE SELF-RECONCILIATION ALONE, WHICH IS WHERE THE FIRST DRAFT OF THIS FILE PUT IT. The
     self-reconciliation is excluded because it is a statement about THIS REPOSITORY'S BOOKKEEPING
     rather than about the artefact — and the fitness axis is that same category, row for row:
     complexity bars, corpus traceability, anemic-domain conformance, this suite's own mutation
@@ -185,7 +185,7 @@ Feature: A release verifies the artefact it publishes, in the tree a stranger in
     are `ci.yml`'s, discharged on every merge to `main`. A tag cut from `main` has already passed all
     of them; a tag cut from an unmerged branch has not, and that is exactly the case in which a
     release is being cut to escape a red. Nothing merges by this route — `main` still requires the
-    whole ladder, `balance:self` included.
+    whole ladder, the self-reconciliation included.
 
     @integration @SCN-REL-004
     Scenario: no gate of the release asks about this repository, and a run the reconciliation refuses still reaches the packing

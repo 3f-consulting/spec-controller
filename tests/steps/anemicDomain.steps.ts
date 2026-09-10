@@ -60,7 +60,7 @@ Given("every module tracked in the real spec-controller repository", function ()
 When("the anemic-domain check runs over the real tree", function () {
   // THE REAL SCRIPT CI RUNS, exit code and all — not a hand-call of the decision. That is
   // what makes the clean-tree Then a statement about `pnpm lint:anemic-domain` rather than
-  // about a function that happens to share its name (the @SCN-SLF-001 shape).
+  // about a function that happens to share its name.
   try {
     checkOutput = execFileSync("pnpm", ["lint:anemic-domain"], {
       cwd: repoRoot,

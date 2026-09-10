@@ -19,7 +19,7 @@
  * name starts with `lint:` or `guard:` and a CI `run:` step invokes it, and the reconciliation's
  * scan reaches every workflow in `.github/workflows`, not only `ci.yml`. A release invoking a
  * prefixed script would register a static check on spec-controller's own ledger that no scenario
- * cites, and `balance:self` would red on it. This is invoked by path, so the ledger never sees it —
+ * cites, and the self-reconciliation would red on it. This is invoked by path, so the ledger never sees it —
  * the reasoning `verify` and `ladder` already carry, applied one workflow over.
  *
  * WHAT ITS GREEN DOES NOT ESTABLISH. It reports the install and the start; it does not read the
@@ -51,7 +51,7 @@ interface Asked {
 /**
  * The request, or a usage fault.
  *
- * EXIT 2 RATHER THAN 1, the distinction `balance:self` and the ladder emitter both draw: a request
+ * EXIT 2 RATHER THAN 1, the distinction the self-reconciliation and the ladder emitter both draw: a request
  * this script cannot read is a fault in how it was called, never a verdict about the artefact. A
  * release told the wrong directory must not report that its packages do not install.
  */

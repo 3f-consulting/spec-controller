@@ -135,7 +135,7 @@ jobs:
       #
       # THE PATH IS THE JOB'S EVIDENCE ROOT AND NOT THIS REPOSITORY (3F-3099), so the record this
       # uploads was never inside the checkout to begin with — the sweep wrote it to the runner's own
-      # disk through the same resolver `balance:self` reads it back with.
+      # disk through the same resolver the self-reconciliation's measurement stream is read with.
       - name: Leave the measurement where a later push can borrow it
         uses: actions/upload-artifact@v7
         with:

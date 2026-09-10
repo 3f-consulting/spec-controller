@@ -87,8 +87,8 @@ import {
  */
 const NO_GATE_RECORD: KillFloorReader = () => null;
 // The fitness-axis credit arms run the reconcile composition itself rather than `runReconcile`:
-// where a target's run record comes FROM is @SCN-SLF-001's Update, and the reading is what those
-// scenarios prove.
+// where a target's run record comes FROM is the gate's own question, and the reading is what
+// these arms prove.
 import { evidenceReconciliationFromSources } from "@3f-consulting/spec-controller-core";
 
 // Fixtures shared across steps within a scenario (isolated per scenario by Cucumber).

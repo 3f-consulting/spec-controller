@@ -19,9 +19,9 @@
 # this script runs what it is handed. A gate cannot be forgotten here, because nobody adds
 # one here. (tests/checks/localLadder.ts; @SCN-LAD-001..006.)
 #
-# THE COMMAND IS CARRIED, NOT RE-TYPED, AND THAT IS LOAD-BEARING. `balance:self`
-# reconciles this repository against the JSON reports `test`, `cucumber` and `cucumber:fitness`
-# emit, so all three must run AHEAD of it and must write exactly the paths ci.yml writes — which
+# THE COMMAND IS CARRIED, NOT RE-TYPED, AND THAT IS LOAD-BEARING. The self-reconciliation
+# reconciles this repository against the JSON reports `test` and `cucumber`
+# emit, so both must run AHEAD of it and must write exactly the paths ci.yml writes — which
 # they do by carrying ci.yml's own strings, resolved against the evidence root exported above. Run
 # against paths nothing wrote, the gate reports every evidence obligation unobserved — "the suite
 # did not run", not "the code is wrong". A reconciler comparing gate NAMES would have greened while
@@ -38,14 +38,15 @@
 # package.json script as a RUNNING static check when its name starts with an observed
 # prefix (`lint:` / `guard:`) and a CI `run:` step invokes it. Neither `verify` nor `ladder`
 # is a check — one aggregates them, the other lists them — so a `lint:` name would register a
-# phantom static check on spec-controller's own ledger and red `balance:self` as an
+# phantom static check on spec-controller's own ledger and red the self-reconciliation as an
 # uncited one. Both stay outside the observed set, and the ledger is unchanged.
 #
-# `balance:self` IS THE THIRD, AND ITS REASON IS ONE STEP FURTHER (3F-3113). It is not a check
-# either — it is the product's own `balance` command invoked with fixed arguments — and it is
-# the one whose `lint:` spelling would put the RECONCILIATION'S OWN VERDICT on the ledger that
-# verdict is about. It keeps its teeth regardless: this ladder is derived from ci.yml, which
-# consults no prefix, so the gate still runs here at the same position under the new handle.
+# `spec-controller` IS THE THIRD, AND ITS REASON IS ONE STEP FURTHER (3F-3113, 3F-3293). It is not
+# a check either — it is the workspace CLI, which ci.yml invokes with the `balance` command and this
+# repository's own scan surfaces — and it is the one whose `lint:` spelling would put the
+# RECONCILIATION'S OWN VERDICT on the ledger that verdict is about. It keeps its teeth regardless:
+# this ladder is derived from ci.yml, which consults no prefix, so the gate still runs here at the
+# same position under the handle of the binary it is.
 #
 # FAIL-FAST, AND NAME THE GATE. The first red stops the ladder and the last line says
 # which gate died. A green-check whose failure output does not say what failed is a
@@ -65,10 +66,11 @@ set -euo pipefail
 # makes those strings resolve to somewhere a local shell can write; unset, they would resolve
 # against the filesystem root and the ladder would red on a path rather than on the code.
 #
-# AND IT KEEPS THE SHELL AND THE TYPESCRIPT AGREEING BY CONSTRUCTION. `balance:self` and the three
-# measured producers resolve this same base through `measurementArtefact.ts`, whose first rung is
-# this variable — so one value reaches everything the ladder runs, whichever side of the boundary
-# it is on. A caller who has already chosen one keeps it.
+# AND IT KEEPS THE SHELL AND THE TYPESCRIPT AGREEING BY CONSTRUCTION. The self-reconciliation names
+# this variable in ci.yml's own command string, and the three measured producers resolve the same
+# base through `measurementArtefact.ts`, whose first rung is this variable — so one value reaches
+# everything the ladder runs, whichever side of the boundary it is on. A caller who has already
+# chosen one keeps it.
 verify_temp="${TMPDIR:-/tmp}"
 export SPEC_CONTROLLER_EVIDENCE_DIR="${SPEC_CONTROLLER_EVIDENCE_DIR:-${verify_temp%/}/spec-controller-self-balance}"
 

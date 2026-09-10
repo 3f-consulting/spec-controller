@@ -43,6 +43,7 @@ import {
   type CleanRoomFault,
   type PackedPackage,
 } from "../checks/cleanRoomInstall.js";
+import { ciOnlyExclusionsOf, deriveLocalLadder } from "../checks/localLadder.js";
 import { packedPackageAt } from "../checks/packedPackages.js";
 import {
   packedManifestFaults,
@@ -641,6 +642,45 @@ function assertNoReleaseFault(faults: readonly ReleaseFault[], kind: ReleaseFaul
 /** The fitness row whose input a scheduled sweep produces — the one that killed 3F-3249's release. */
 const SWEEP_FED_ROW = "SCN-FIT-002";
 
+/**
+ * The `package.json` handle this repository's self-reconciliation runs under — the workspace CLI
+ * itself, since 3F-3293 deleted the wrapper that used to stand in front of it.
+ *
+ * ONE SPELLING IN THIS FILE, BECAUSE THE TWO ARMS BELOW ASK DIFFERENT QUESTIONS OF IT. The
+ * document plant needs a command a reader can classify; the cold run needs a command that
+ * actually reconciles. Both are about the same gate, and a file naming it twice by hand could
+ * have them drift apart.
+ */
+const RECONCILIATION_SCRIPT = "spec-controller";
+
+/**
+ * The self-reconciliation exactly as `ci.yml` states it, CARRIED rather than re-typed here.
+ *
+ * WHY IT IS DERIVED. The gate's argv is where its scan surfaces and its evidence paths live, and
+ * a copy of that line in this file would agree with the workflow on the day it was written and
+ * then green while a flag drifted — which is the reasoning `scripts/verify.sh` already carries
+ * for the whole ladder. The same derivation `pnpm verify` consumes is read here, so this arm puts
+ * the real gate to the cold run rather than something shaped like it.
+ *
+ * AND THE POSITIVE CONTROL IS WHY IT MATTERS. The assertion below is that the reconciliation
+ * REFUSES a cold evidence root; a command that refused because it was malformed, or because it
+ * was handed no subcommand, would satisfy that assertion while proving nothing about evidence.
+ */
+function selfReconciliationCommand(): string {
+  const manifest = manifestAt(repoRoot) as unknown as { scripts?: Record<string, string> };
+  const gate = deriveLocalLadder(
+    readFileSync(path.join(repoRoot, ".github", "workflows", "ci.yml"), "utf8"),
+    manifest,
+    ciOnlyExclusionsOf(manifest),
+  ).gates.find((rung) => rung.script === RECONCILIATION_SCRIPT);
+  assert.ok(
+    gate !== undefined,
+    `${RECONCILIATION_SCRIPT} must be a gate CI runs, or this arm has nothing to put to the cold ` +
+      "run and the control below would be vacuous",
+  );
+  return gate.command;
+}
+
 /** A release's gates, put to one run, and what that run said to the two things it is not asked. */
 interface ColdRun {
   readonly gates: readonly ReleaseGate[];
@@ -701,7 +741,7 @@ When("the reconciliation, the axis beside it, and every gate the release states 
     gates,
     faults: gateFaults(gates),
     answers,
-    reconciliation: putToTheColdRun("pnpm balance:self"),
+    reconciliation: putToTheColdRun(selfReconciliationCommand()),
     axis: putToTheColdRun(fitnessRowCommand(SWEEP_FED_ROW)),
   };
 });
@@ -758,7 +798,10 @@ Then("every gate the release states passes the run those two refused, so the rel
 });
 
 Then("a release gating on either of them packs nothing at all", function () {
-  const reconciling = gatingRelease("Reconcile this repository", "pnpm balance:self");
+  const reconciling = gatingRelease(
+    "Reconcile this repository",
+    `pnpm ${RECONCILIATION_SCRIPT} balance`,
+  );
   const measuring = gatingRelease("Verify", "pnpm verify");
 
   assert.deepEqual(

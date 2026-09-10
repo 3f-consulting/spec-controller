@@ -36,6 +36,19 @@ as it goes, in ci.yml's order and on ci.yml's own command lines, stopping at the
 and naming the gate that died. Read the script's header for why both the order and the
 command strings are load-bearing.
 
+**The last gate is the self-reconciliation, and it reads what the two suites emitted.** It is
+`pnpm spec-controller balance` — the product's own binary, run over this tree with this tree's
+scan surfaces (3F-3293). A `--vitest` or `--cucumber` path it is handed and cannot find is a
+**setup fault, not a verdict**: it exits 2 naming the flag and the path, because reconciling
+against a report that does not exist would report every obligation as unobserved, which means
+*the suite did not run*, never *the code is wrong*. Running the ladder in order emits both. If you
+are running the gate on its own, emit them first:
+
+```
+pnpm test --reporter=default --reporter=json --outputFile.json="$SPEC_CONTROLLER_EVIDENCE_DIR/runs/self-balance/vitest.json"
+pnpm cucumber --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/runs/self-balance/cucumber.json"
+```
+
 **Nobody maintains that list, including this document.** The gates are *derived* from
 `.github/workflows/ci.yml` on every run: each `run:` step invoking a `package.json` script
 becomes a local gate (3F-2444). A step added to CI is gated locally with no edit here and
@@ -74,7 +87,8 @@ every gate has two, so a red ahead of it takes it off the board without reportin
 **Three rows are MEASURED — their evidence is a number rather than an exit code.** Each has a
 configured row in `specController.fitnessChecks` naming the characteristic, the command that
 prints the number, and the bar the ledger holds it to. That command is a CI step of its own; it
-writes what it read into the run's measurement record, and `balance:self` does the comparing. The
+writes what it read into the run's measurement record, and the self-reconciliation does the
+comparing. The
 row is answered when its command *wrote* a number — whether that number is inside its bar is the
 ledger's sentence, in one place.
 
@@ -93,7 +107,8 @@ A mutation sweep costs 8-12 minutes on CI, so it runs nightly
 (`.github/workflows/mutation.yml`) and leaves what it measured as a SWEEP RECORD; CI borrows
 that record into `runs/mutation/measurements.json` while it is still young enough to be about
 the code being judged. A score older than 36 hours is not placed at all — the command then has
-nothing to print, its own step reds and `balance:self` reds on the row, which reads `missing`.
+nothing to print, its own step reds and the self-reconciliation reds on the row, which reads
+`missing`.
 That is how a nightly that stops running says so.
 
 On your machine there is nothing to borrow, so run the sweep once:
@@ -103,13 +118,13 @@ pnpm mutation
 ```
 
 That is ~45 seconds locally and writes the sweep record, so `pnpm --silent mutation:score` has a
-number to print. Skipping it fails that command and leaves `balance:self` reporting the row as
+number to print. Skipping it fails that command and leaves the self-reconciliation reporting the row as
 `missing` — the true sentence rather than a false red: no measurement arrived.
 
-**A LOCAL `balance:self` REPORTS EVERY FITNESS ROW AS `missing`, AND THAT IS THE DESIGN RATHER THAN
+**A LOCAL SELF-RECONCILIATION REPORTS EVERY FITNESS ROW AS `missing`, AND THAT IS THE DESIGN RATHER THAN
 A FAULT (3F-3272).** The fitness axis's credit journal is the CI run's own record of what each of
 its steps did, dumped by an `if: always()` step of `ci.yml`. Your machine runs no pipeline, so
-`balance:self` is handed no record, nothing is raised for the ten rows, and each reconciles
+the self-reconciliation is handed no record, nothing is raised for the ten rows, and each reconciles
 `missing` — out of balance at exit 1, and NOT unsound: a run handed no record of itself is a
 different fact from a run whose record carried nothing. **The checks themselves still run locally**
 — every one of them is a gate of `pnpm ladder` or a command you can type — and their teeth are their

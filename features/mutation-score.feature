@@ -261,8 +261,8 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
 
   Rule: spec-controller's own mutation kills are on the books
 
-    THE CHECK, TURNED ON ITS AUTHOR — the shape ci-run-time.feature, scn-tags.feature and
-    self-reconciliation.feature already take, and the reason this axis was filed at all. Every Rule
+    THE CHECK, TURNED ON ITS AUTHOR — the shape ci-run-time.feature and scn-tags.feature already
+    take, and the reason this axis was filed at all. Every Rule
     above is the engine and the producer deciding over planted data; this one is the characteristic
     held over this repository's own domain core, which is the claim each push actually makes. Until
     this line existed `pnpm mutation` reconciled nowhere: not uncited but INVISIBLE, because the

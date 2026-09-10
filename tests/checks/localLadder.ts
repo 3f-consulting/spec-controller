@@ -17,15 +17,17 @@
  * second YAML walk here would be a second thing to get wrong, disagreeing silently.
  *
  * THE MANIFEST IS NOT THE SOURCE; `ci.yml` IS. A `package.json` script CI does not run is not
- * a local gate — `build`, `mutation` and `balance` are not quality gates and must not become
- * them by living in the same object.
+ * a local gate, however gate-shaped its name, and a script CI DOES run is one however ordinary
+ * its name looks. Which handles are gates is not a fact about the manifest at all: the workspace
+ * CLI sat in that object without being one until ci.yml's self-reconciliation step began invoking
+ * it directly (3F-3293), and it became a gate that day with no edit here.
  *
  * AN EXCLUDED STEP'S POSITION IS ASSERTED, NOT MERELY PRESERVED (3F-3014). Every gate has two
  * chances to run — this ladder and CI — and an entry in `CI_ONLY_EXCLUSIONS` has one. A `run:`
  * step that reds aborts the job, so a gate ahead of an excluded step can cost it that one run
  * while reporting nothing: not absent, not disabled, UNREACHED, which is the one shape the
  * ledger cannot see, because when the job dies first the ledger is never asked either. That is
- * measured, not hypothetical — a stale mutation record redding `balance:self` took
+ * measured, not hypothetical — a stale mutation record redding the self-reconciliation took
  * `lint:scn-subissues` off the board for three consecutive commits during 3F-2994. So the
  * derivation keeps a position it used to discard, and reports it as `late`.
  *
@@ -217,7 +219,7 @@ export function ciOnlyExclusionsOf(packageJson: unknown): readonly LadderExclusi
 /**
  * Derive the local ladder from a CI config and a package manifest.
  *
- * ORDER IS THE CI CONFIG'S ORDER, AND IT IS LOAD-BEARING. `balance:self` reconciles this
+ * ORDER IS THE CI CONFIG'S ORDER, AND IT IS LOAD-BEARING. The self-reconciliation reconciles this
  * repository against the two JSON reports `test` and `cucumber` emit, so both must run ahead
  * of it. Run out of order it reports every evidence obligation unobserved — "the suite did
  * not run", not "the code is wrong".

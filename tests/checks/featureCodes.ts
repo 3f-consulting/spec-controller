@@ -173,8 +173,8 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
   {
     code: "SLF",
     slug: "self-reconciliation",
-    status: "feature-code-used",
-    note: "the self-reconciliation gate (the cobbler's shoes, the whole pair) — balance:self runs the product's own balance over spec-controller's own tree on every push and PR and exits on the verdict, so the tool's own out-of-balance reds the build rather than printing a report nobody must read; the handle carries no observed prefix, so the reconciliation's own verdict is not a row on the ledger it computes (3F-2351, 3F-3113)",
+    status: "feature-code-reserved",
+    note: "the self-reconciliation gate (the cobbler's shoes, the whole pair) — spec-controller's own tree put through spec-controller on every push and PR, with the build depending on the verdict (3F-2351, 3F-3113). THE FEATURE FILE IS GONE (3F-3295): both its scenarios asserted over a WRAPPER what the CLI's own scenarios already assert over a target — the exit-code contract belongs to cli-balance and noticing an uncited static check to uncited-static-checks — so the first went at 3F-3294 and the second took the file with it at 3F-3295. The GATE itself stays: CI keeps reconciling this repository, it is simply no longer a second detector on our own books. The code stays allocated and is never reissued",
   },
   {
     code: "NPS",

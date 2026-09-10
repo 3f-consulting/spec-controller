@@ -108,8 +108,8 @@ Both packages are **semver**, and both are on `0.x`.
 ## The release path asks nothing about this repository
 
 `release.yml` gates on what says **this artefact is sound**: the build, the typecheck, both suites,
-and the clean-room install of the packed tarballs. It runs **neither `balance:self` nor `pnpm
-verify`**, and that is a rule rather than an oversight:
+and the clean-room install of the packed tarballs. It runs **neither the self-reconciliation nor
+`pnpm verify`**, and that is a rule rather than an oversight:
 
 > **The release path consults nothing that is about this repository rather than about the artefact.**
 
@@ -122,7 +122,7 @@ artefact-relevant member of the axis is covered on its own terms.
 Two things go wrong when a release does ask:
 
 - **A model skew becomes a deadlock.** When this repository reconciles itself with a *pinned
-  published* spec-controller and the model moves, `balance:self` reds — and the only cure is
+  published* spec-controller and the model moves, the self-reconciliation reds — and the only cure is
   publishing a version that can read the new tree. A release path consulting the reconciliation
   would refuse to publish the cure for the disease.
 - **A lapsed cron blocks a release.** `SCN-FIT-002` prints a number a **scheduled nightly sweep**
@@ -134,8 +134,8 @@ Two things go wrong when a release does ask:
 rigour is the tag-cutter's discipline plus the workflow's own gates. Repository bars are `ci.yml`'s
 and are discharged on every merge to `main`: a tag cut from `main` has already passed all of them; a
 tag cut from an **unmerged branch** has not — which is exactly the case the next section is about.
-What bounds it is that nothing merges by this route. `main` still requires the whole ladder,
-`balance:self` included.
+What bounds it is that nothing merges by this route. `main` still requires the whole ladder, the
+self-reconciliation included.
 
 `@SCN-REL-004` in `features/release.feature` holds this rule, and holds it by putting the release's
 whole gate list to a run with a cold evidence root — one the reconciliation and the fitness axis both
@@ -147,11 +147,11 @@ refuse — and watching every gate the release states pass it.
 
 This is the hatch the rule above exists for: Rust's stage0 bump, in this repository's terms. Use it
 when a change to the model means the **pinned published** spec-controller can no longer read this
-tree, so `balance:self` reds on the very branch that fixes it.
+tree, so the self-reconciliation reds on the very branch that fixes it.
 
-1. **The model change lands on a branch.** CI reds at `balance:self`, naming the skew.
+1. **The model change lands on a branch.** CI reds at `Self-reconciliation balance`, naming the skew.
 2. **Cut a prerelease tag from that branch** — `v0.1.0-alpha.N`. The release workflow stages both
-   packages. It never asks `balance:self` anything, so the red does not stop it.
+   packages. It never asks the self-reconciliation anything, so the red does not stop it.
 3. **Promote the staged versions**, core first, with `npm stage approve` or from npmjs.com. Until
    you do, nothing has changed for anybody.
 4. **Bump the pin on the branch**, in the same review, to the version you just promoted.

@@ -12,7 +12,7 @@
  * pass reds and the job dies before it packs anything (measured, 3F-3249).
  *
  * THE GATES ARE READ AS AN ORDERED LIST, NOT SEARCHED FOR TWO NAMES. A ledger cannot see an
- * unraised debit: a reading that only looked for `balance:self` and `verify` would be
+ * unraised debit: a reading that only looked for `spec-controller` and `verify` would be
  * blind to the THIRD repository-scoped gate somebody adds next year, and equally blind to a release
  * that had quietly stopped gating on anything at all. So the caller compares the whole list, in
  * order, and a gate added, removed or renamed reds until somebody says which side of the line it is
@@ -60,11 +60,23 @@ export interface RepositoryScopedCommand {
  */
 export const ABOUT_THIS_REPOSITORY: readonly RepositoryScopedCommand[] = [
   {
-    script: "balance:self",
+    // THE HANDLE MOVED WHEN THE WRAPPER WENT (3F-3293), AND THE ENTRY DID NOT. It was the
+    // wrapper's own script, a handle that could only ever have been the self-reconciliation;
+    // `ci.yml` now runs the product's own binary directly, so what a release must not gate on in
+    // THIS repository is `spec-controller` run over THIS tree. Dropping the entry instead was refused:
+    // the caller's ordered whole-list comparison would still red on the gate, but with
+    // "unrecognised" where the reader needs the reason, which is this list's entire purpose.
+    //
+    // AND IT IS BROADER THAN WHAT IT REPLACES, STATED RATHER THAN ENGINEERED AWAY. A release
+    // reconciling some OTHER target from this workflow would now be classified repository-scoped
+    // and red. That is the ordered list asking to be told which side of the line such a gate is
+    // on, which is the behaviour this module already wants.
+    script: "spec-controller",
     why:
-      "the self-reconciliation is a statement about this repository's own bookkeeping, and under a " +
-      "model skew it is red for the very reason the release is being cut — so a release consulting " +
-      "it cannot publish the cure for the disease",
+      "running the product's own binary over this tree is the self-reconciliation — a statement " +
+      "about this repository's own bookkeeping, and under a model skew it is red for the very " +
+      "reason the release is being cut, so a release consulting it cannot publish the cure for " +
+      "the disease",
   },
   {
     // THE SCRIPT MOVED WHEN THE PASS WENT (3F-3272), AND THE REASON DID NOT. It was
@@ -72,7 +84,7 @@ export const ABOUT_THIS_REPOSITORY: readonly RepositoryScopedCommand[] = [
     // naming one script. The ten rows are ten CI steps now and there is no single handle for
     // them, and one of those steps is `pnpm typecheck`, which the release runs DELIBERATELY because
     // it is about the artefact. So what is named here is the local ladder that runs the whole of
-    // this repository's own bookkeeping in one command: it reaches `balance:self` and every fitness
+    // this repository's own bookkeeping in one command: it reaches the self-reconciliation and every fitness
     // row, including the one that reads a scheduled sweep's record. Naming the retired script would
     // have been a rule that can no longer match anything, and naming each row would be the roster
     // this repository keeps deleting.

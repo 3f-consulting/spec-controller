@@ -16,8 +16,8 @@ permissions:
 
 # A RED ABORTS THIS JOB AND SKIPS EVERY STEP BEHIND IT — RULED, NOT OVERLOOKED (3F-3042).
 # Measured over the 200 runs to 0ef9263: 72 failed, and every one of the 72 left at least one gate
-# unreached — a median of three, as many as sixteen. Not one failed run ever completed
-# `balance:self`: 55 never reached it, and the other 17 reached it and it was the red. This is
+# unreached — a median of three, as many as sixteen. Not one failed run ever completed the
+# self-reconciliation: 55 never reached it, and the other 17 reached it and it was the red. This is
 # not something that bites in a bad week. It bites on every red there has ever been.
 #
 # IT IS STILL ACCEPTABLE, AND THE REASON IS NOT RARITY. A merge is decided on a GREEN run, and a
@@ -92,7 +92,7 @@ jobs:
       #
       # ONE ENTRY, NOT FIVE, AND THAT IS THE POINT. The borrow places the sweep record, two suites
       # write their reports, the three measured rows' commands write the credit stream, the dump
-      # step writes this run's step record, and `balance:self` reads all of them; a `$RUNNER_TEMP`
+      # step writes this run's step record, and the self-reconciliation reads all of them; a `$RUNNER_TEMP`
       # expression repeated at each of them is a path that agrees today and drifts on the first edit
       # that misses one.
       #
@@ -145,7 +145,7 @@ jobs:
       #
       # IT LANDS A SWEEP RECORD, NOT A ROW OF THIS RUN'S CREDIT STREAM (3F-3152). It used to copy
       # the nightly's file straight into `runs/self-balance/measurements.json` — the artefact
-      # `balance:self` reads as what THIS run credited — and the merge argument that placement
+      # the self-reconciliation reads as what THIS run credited — and the merge argument that placement
       # needed (land it first, let the two suite producers post beside it) went with it. Under a
       # CONVERTED @SCN-FIT-002 the row's own command posts the credit, from the number this record
       # holds, so a borrowed row sitting in the credit stream would be a second credit for one
@@ -176,7 +176,7 @@ jobs:
       # 0. Having no measurement to borrow — no finished sweep, no artefact, a number past its
       # window, a payload that is not one — is the ordinary reading of a cadence, and the place it
       # is reported is downstream: the `Mutation score` step reds, because the row's command has
-      # nothing to print, and `balance:self` reds on the row that owed the measurement, which
+      # nothing to print, and the self-reconciliation reds on the row that owed the measurement, which
       # reconciles `missing`. Both sentences are true and both are reached; a step that
       # redded HERE as well would make a green build depend on arbiters agreeing, which is the
       # argument features/mutation-score.feature already settles for the bar itself.
@@ -532,7 +532,7 @@ jobs:
           printf 'step record: %s bytes, %s step(s) with an id:\n' \
             "$(wc -c < "$record" | tr -d ' ')" "$(jq 'length' "$record")"
 
-      # STEP 3 — THE SELF-RECONCILIATION GATE (@SCN-SLF-001, 3F-2351). spec-controller's
+      # STEP 3 — THE SELF-RECONCILIATION GATE (3F-2351). spec-controller's
       # own tree, put through spec-controller: the evidence obligations raised in features/
       # reconciled against the two streams above plus this file and package.json, with the
       # build depending on the verdict.
@@ -550,8 +550,10 @@ jobs:
       #
       # It runs AFTER both suites because it consumes their output — a gate over reports
       # that were never emitted reports every obligation unobserved, which means "the suite
-      # did not run", not "the code is wrong", so the script reds that as a usage fault
-      # (exit 2) instead of dressing it as a verdict.
+      # did not run", not "the code is wrong", so the CLI reds a supplied-but-absent
+      # `--vitest` or `--cucumber` as a usage fault (exit 2, @SCN-CLI-002) instead of
+      # dressing it as a verdict. That rule is the product's own and is asserted where it
+      # lives; nothing here restates it.
       #
       # IT IS NOT ON THE LEDGER IT COMPUTES, AND THE HANDLE IS HOW (3F-3113). This step used
       # to carry a `lint:` prefix, cited by a stepless fitness scenario, so the run
@@ -560,12 +562,33 @@ jobs:
       # its registry entry are retired, and the handle moved OUT of the observed set to match:
       # runningStaticChecks observes a `package.json` script as a running static check only
       # when its name carries an observed prefix (`lint:` / `guard:`) and a CI `run:` step
-      # invokes it, so `balance:` is deliberately outside it. Spelled `lint:` again this step
+      # invokes it, so `spec-controller` is deliberately outside it. Spelled `lint:` this step
       # would cite nothing, post to the suspense row, and red on itself.
       #
-      # THE TEETH ARE UNCHANGED, WHICH IS WHAT MAKES THE RENAME A CORRECTION RATHER THAN A
-      # DODGE. It still runs here, it still exits on the verdict, and `pnpm verify`'s ladder
-      # is DERIVED from this file (`localLadder.ts`, prefix-agnostic by construction), so the
-      # gate keeps its position locally under the new handle with no edit to the ladder.
+      # AND IT IS THE PRODUCT'S OWN BINARY, INVOKED THE WAY AN ADOPTER INVOKES IT (3F-3293).
+      # It used to be a wrapper — a repository-local script, 325 lines of TypeScript resolving
+      # seven scan surfaces before handing the argv on. No adopter can write that and none should,
+      # so the exemplar stopped teaching it: the surfaces are flags on this line, the `spec-controller`
+      # script is the workspace CLI and nothing else, and what this repository dogfoods is the
+      # command a consumer types. The wrapper's evidence-report precondition went with it, because
+      # the CLI already holds that rule (@SCN-CLI-002) and a second implementation one level up is
+      # the shape this repository keeps deleting.
+      #
+      # THE TWO OPTIONAL EVIDENCE FLAGS ARE PASSED ONLY WHERE THE FILE EXISTS, AND THAT CONDITIONAL
+      # IS THE WHOLE OF WHAT THE WRAPPER DID HERE. A `--measurements` or `--ci-steps` path the CLI
+      # is handed and cannot find is a usage fault to it and exits 2 — the wrong verdict. Absent,
+      # each leaves exactly its own rows unanswered, and those reconciling `missing` is the honest
+      # reading: a step that never ran is never balanced (@SCN-CIP-006). `ci-steps.json` is written
+      # by the dump step above, so a developer's machine never has one and a local run must not be
+      # called broken over it. The `$(...)` is unquoted on purpose — the two tokens have to split.
+      #
+      # ONE LINE, AND ONE `package.json` SCRIPT. `pnpm verify`'s ladder is DERIVED from this file
+      # (`localLadder.ts`), and that derivation reports a multi-line `run:` or a step invoking two
+      # scripts as `unsupported`, which reds the local green-check outright rather than running
+      # half a gate. `commandInvokesScript` matches the token straight after `pnpm`, so
+      # `spec-controller` is the one hit and the `balance` word behind it is an argument. The
+      # command string is carried verbatim into the local ladder, which is why the evidence paths
+      # are written against `SPEC_CONTROLLER_EVIDENCE_DIR`: `scripts/verify.sh` exports the same
+      # variable, so one string resolves in both environments.
       - name: Self-reconciliation balance
-        run: pnpm balance:self
+        run: R="$SPEC_CONTROLLER_EVIDENCE_DIR/runs/self-balance"; pnpm spec-controller balance --features features --vitest "$R/vitest.json" --cucumber "$R/cucumber.json" $([ -f "$R/measurements.json" ] && echo "--measurements $R/measurements.json") $([ -f "$R/ci-steps.json" ] && echo "--ci-steps $R/ci-steps.json") --ci .github/workflows --package-json package.json --target spec-controller

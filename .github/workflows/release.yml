@@ -9,7 +9,7 @@ name: Release
 #
 # AND THE SEPARATION IS WHAT KEEPS THE RELEASE REACHABLE WHILE THE RECONCILIATION IS RED (3F-3250,
 # @SCN-REL-004). Nothing below asks anything that is about THIS REPOSITORY rather than about the
-# artefact — not `balance:self` and not the fitness pass. A tree whose self-reconciliation reds can
+# artefact — not the self-reconciliation and not the fitness pass. A tree whose self-reconciliation reds can
 # still be released, which is the hatch the bootstrap in 3F-3105 needs: a model skew must not be
 # able to strand CI on a red only a hand publish can clear.
 on:
@@ -78,7 +78,7 @@ jobs:
       # this release would send; everything after it is about the files it produced.
       #
       # THE FITNESS PASS IS NOT AMONG THEM, AND ITS ABSENCE IS THE RULE RATHER THAN AN OMISSION
-      # (3F-3250, @SCN-REL-004). `balance:self` was already excluded because it is a statement about
+      # (3F-3250, @SCN-REL-004). The self-reconciliation was already excluded because it is a statement about
       # THIS REPOSITORY'S BOOKKEEPING rather than about the artefact — and the fitness axis is that
       # same category row for row: complexity bars, corpus traceability, anemic-domain conformance,
       # this suite's own mutation score, the duration of the observer. Not one of them says the
@@ -99,7 +99,7 @@ jobs:
       # FILE RATHER THAN A COINCIDENCE (3F-3249, planted). The reconciliation's CI scan is the
       # WORKFLOW DIRECTORY, not `ci.yml`, so a `lint:`- or `guard:`-prefixed script invoked from
       # here would register a static check on spec-controller's own ledger that no scenario cites,
-      # and `balance:self` would red on it as uncited. It is also why the smoke below is invoked by
+      # and the self-reconciliation would red on it as uncited. It is also why the smoke below is invoked by
       # path rather than through a script.
       - name: Typecheck
         run: pnpm typecheck
