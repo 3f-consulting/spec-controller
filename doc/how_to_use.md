@@ -24,6 +24,92 @@ node --version   # must be v22.x or higher
 
 ---
 
+## Declaring a fitness check
+
+A **fitness check** is a whole-system characteristic — complexity, mutation score, type
+soundness, vocabulary, suite run time. Declaring one takes four things, and **none of them is a
+cucumber step definition**. There is no fitness profile to configure and no step to write.
+
+**1. A scenario, tagged `@fitness`, carrying an `@SCN`.** It has no steps — the check is the
+command, not a walk-through:
+
+```gherkin
+    @fitness @SCN-FIT-001
+    Scenario: no module exceeds the complexity bar
+```
+
+**2. A row in your `package.json`, under `specController.fitnessChecks`.** The row names the
+scenario's code, what the check is *about*, and the command:
+
+```json
+"specController": {
+  "fitnessChecks": [
+    { "scn": "SCN-FIT-001", "characteristic": "complexity", "command": "eslint" },
+    { "scn": "SCN-FIT-002", "characteristic": "mutation",
+      "command": "pnpm --silent mutation:score", "atLeast": 90 }
+  ]
+}
+```
+
+`characteristic` is data, not a tag — the report rolls up per characteristic, and a new one is a
+new word in a row rather than a change to any list. **The row's shape says which kind of check it
+is**: a row with a bar (`atLeast` / `atMost`) is measured, a row without one is static.
+
+Neither half is derived from the other, and that is deliberate: a scenario with no row, and a row
+with no scenario, are both things a run can report.
+
+**3. The scenario's `@SCN` as the `id:` of the step that already runs the command.** The check
+stays exactly where it is in your pipeline. What you add is a citation:
+
+```yaml
+- run: eslint
+  id: SCN-FIT-001
+  if: always()
+```
+
+**4. One `toJSON(steps)` dump step per job**, so the reconciler can read what each step did:
+
+```yaml
+- if: always()
+  run: echo '${{ toJSON(steps) }}' > ci-steps.json
+```
+
+**The `if: always()` goes on every check step, not just the dump.** Without it the first red aborts
+the job and every later check is skipped, so the ledger reports one failure and N never-rans — a
+worse account from a correct mechanism. **And the dump must be `toJSON(steps)`**: it is the only
+place a step's `id` and its `outcome` travel together, and `outcome` is the field that survives
+`continue-on-error` where `conclusion` does not.
+
+Then pass `--ci-steps ./ci-steps.json` to `balance` (see *Wiring into CI*).
+
+### A converted check is still a command you can run
+
+Converting a check does not move it inside anything. Most of the rows in this repository's own
+manifest are a command you can paste into a terminal — `pnpm lint:scn-tags`, `pnpm typecheck`, bare
+`eslint` — and exit 0 is the check passing, with no cucumber and no `spec-controller` involved. The
+rest read a number an earlier step, or a scheduled sweep, already left behind. What the row and the
+`id:` add is that the run becomes **observable**: the ledger can say the check ran, and against
+what.
+
+The worked before/after, the migration checklist, and the traps:
+[`converting-a-fitness-check.md`](./converting-a-fitness-check.md).
+
+### Two limits, stated so you do not discover them
+
+**The zero-annotation state is Node-shaped.** Reconciling a pipeline you have not annotated at all
+still finds the checks it can, by matching `package.json` script names against observed prefixes —
+so a pipeline with a bare `run: ruff` and no `package.json` script derives nothing, and its report
+is empty rather than wrong. **Annotating the steps has no such shape**: an `id:` is a key of the
+step mapping, the command below it is any command in any language, and nothing in the resolution
+reads a manifest.
+
+**A check that legitimately applies to only some platforms is not served.** A matrix build uses
+`if:` to skip such a step, and that skip reds. *"The command examined nothing"* and *"this row was
+not obliged on this run"* are different claims, and only the first is modelled today.
+
+
+---
+
 ## Install
 
 ```sh
@@ -60,8 +146,8 @@ spec-controller balance --features ./features \
 | `--features <dir>` | Directory of Gherkin `.feature` files — the scenarios. |
 | `--vitest <report.json>` | A Vitest JSON report — runtime test evidence. |
 | `--cucumber <report.json>` | A Cucumber JSON report — runtime test evidence. |
-| `--ci <ci.yml>` | Your CI workflow — used to check whether an UNCONVERTED static check runs over the real source. A converted check is not a CI step, so once you have converted everything this flag has nothing left to read. |
-| `--package-json <path>` | `package.json` — used to check a named static check's script exists. |
+| `--ci <ci.yml>` | Your CI workflows — a file, or a directory of them (default `.github/workflows`). Where an UNCONVERTED static check is found running over the real source, and where a check step's `id:` supplies the `@SCN` its result cites. |
+| `--package-json <path>` | The target's `package.json` — its `scripts`, and its `specController.fitnessChecks` rows (see *Declaring a fitness check*). |
 | `--measurements <report.json>` | A measurement report — the number each measured check posted, evidence for the measured fitness checks (`@ci-run-time` and its family). |
 | `--ci-steps <record.json>` | Your CI run's own record of what each of its steps did — the `toJSON(steps)` dump, evidence for the converted fitness checks. See *Wiring into CI*. Omit it if you have converted none. |
 | `--target <name>` | A name recorded verbatim in the report's provenance (which project this run reconciled). |

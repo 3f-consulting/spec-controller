@@ -55,13 +55,14 @@ Feature: A release verifies the artefact it publishes, in the tree a stranger in
 
     A CONSUMER RESOLVES THE MANIFEST IN THE TARBALL, AND IT IS NOT THE ONE IN THIS TREE. The Rule
     above installs the artefact and starts it; this one reads what the artefact says about itself
-    to somebody who has never seen the repository it came out of. Four things have to be true of
-    that document, and only one of them is about a file: the dependency specifiers have to name
+    to somebody who has never seen the repository it came out of. Five things have to be true of
+    that document, and two of them are about a file: the dependency specifiers have to name
     versions a registry can serve rather than a workspace nobody else has, the fields these
     packages publish differently from the way they develop have to stand as published, the licence
-    the manifest declares has to travel beside it, and the manifest has to say where it came from.
+    the manifest declares has to travel beside it, the manifest has to say where it came from, and
+    the artefact has to open with a front page.
 
-    THREE OF THE FOUR ALREADY HELD ON THE DAY THIS WAS WRITTEN, and that is exactly why the
+    THREE OF THE FIVE ALREADY HELD ON THE DAY THIS WAS WRITTEN, and that is exactly why the
     scenario is worth having rather than exactly why it is not. They hold because `pnpm pack`
     behaves well, not because anything in this repository holds it to that — and a scenario whose
     only content is the current output is a snapshot rather than a check. So every property here is
@@ -78,13 +79,25 @@ Feature: A release verifies the artefact it publishes, in the tree a stranger in
     git remote. The first run of this scenario redded on it, on real tarballs, and the run is on
     the record; the arm below cannot red on it a second time without deleting the field again.
 
+    THE FIFTH PROPERTY ARRIVED THE SAME WAY THE FOURTH DID, and it is the one a stranger meets
+    first. Neither package directory held a front page when this line was written and neither
+    tarball carried one — 94 files in the CLI's, 158 in core's, `package/LICENSE` in both and no
+    README in either, measured on real tarballs before the reading below could see it. The licence
+    travels because pnpm copies the workspace root's in as it packs; nothing does that for a front
+    page, so a package a stranger installs opened on nothing at all. That first run redded, on real
+    tarballs, and the run is on the record. UNLIKE THE OTHER FOUR IT CANNOT RED IN THE WORKSPACE ARM
+    EITHER, and the reason is where the file lives: a README is authored in the package directory
+    rather than injected at pack time, so once it exists it stands on both sides of this reading and
+    that arm is silent about it by construction.
+
     @integration @SCN-REL-002
-    Scenario: no workspace specifier survives packing, publishConfig is applied, and the licence and the repository link both travel
+    Scenario: no workspace specifier survives packing, publishConfig is applied, and the licence, the repository link and the front page all travel
       Given the two packages this release packs, as their tarballs carry them
       When each packed manifest is read against what its own workspace manifest promised a consumer
       Then no dependency is named by a specifier only this workspace could resolve
       And every field these packages publish differently from the way they develop stands as published
       And the licence and the link back to the repository both travel with the artefact
+      And a front page travels with the artefact, and it is not empty
       And reading the same packages as this workspace holds them, rather than as the tarballs carry them, reds instead
 
   Rule: no window exists in which the CLI resolves a core that is not there

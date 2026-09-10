@@ -27,7 +27,7 @@ import type { EvidenceReconciliation } from "@3f-consulting/spec-controller-core
 
 /**
  * The reconciliation payloads the writer renders — the balance plus its sibling reads
- * (ctx / corpus / guards / featureNames), exactly the arguments the pure renderers take. Threaded
+ * (ctx / evidenceObligations / featureNames), exactly the arguments the pure renderers take. Threaded
  * from `cli.ts` (built once, rendered per planned output). `withRuntimeObservations` and
  * `withStaticChecks` are the GATES for the two observation axes (Test volume + the evidence grid;
  * the Static checks cut): the renderers fold BOTH off the Ledger themselves (3F-2103 / 3F-2118 —

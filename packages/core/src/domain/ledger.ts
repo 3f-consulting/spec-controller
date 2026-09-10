@@ -560,7 +560,7 @@ export interface StaticObservationTally {
  * no-evidence-obligation static checks the reconciler folded there (a static check running with no
  * scenario citing it, `cites-no-scenario` on the credit side). THE RUNNING QUALIFIER IS ENFORCED
  * HERE AND IS NO LONGER FREE (@SCN-LNT-033). It used to be a plain count, and the sentence in this
- * place said that by construction the app pushes only RUNNING guards into that stream
+ * place said that by construction the app pushes only RUNNING checks into that stream
  * (`runningStaticChecks`), so every suspense lint credit was running. `@SCN-LNT-032` falsified
  * that: the same stream now carries a check whose red its job swallows, which is pushed into it and
  * is not running. So the filter below applies to BOTH counts, and the invariant the old sentence

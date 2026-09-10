@@ -1,9 +1,9 @@
 /**
- * The CI-parse primitive — the shared static-evidence reader machinery BOTH guard
+ * The CI-parse primitive — the shared static-evidence reader machinery BOTH static-check
  * observers import: walk the CI config STRUCTURALLY to its `run:` steps (`ciRunSteps`, of which
  * `ciRunCommands` is the projection to their command strings), and test whether a command invokes
- * a given npm script by an EXACT package-manager invocation (`commandInvokesScript`). `checkStaticEvidenceObligations` (the named-guard observer, `ingest/guard`) and
- * `runningStaticChecks` (the running-guard observer, `ingest/ciGuards`) both read a guard's
+ * a given npm script by an EXACT package-manager invocation (`commandInvokesScript`). `checkStaticEvidenceObligations` (the obligation-side observer) and
+ * `runningStaticChecks` (the running-check observer) both read a check's
  * enforcement off these, so the watermelon-critical parse lives in ONE place — a mis-read could
  * itself HIDE a watermelon (read a wired static check as unwired, or the reverse).
  *
@@ -13,8 +13,8 @@
  * would swallow is a check that reports without enforcing (3F-3042, @SCN-LAD-008) and a step's
  * `id:` is where a consumer writes the `@SCN` its check cites (3F-3261). A static check's
  * command counts as enforced only on an EXACT
- * package-manager invocation of its script name (`pnpm <guard>` / `pnpm run <guard>` /
- * `npm run <guard>` / `yarn <guard>`), so a sibling static check's run step never falsely enforces it.
+ * package-manager invocation of its script name (`pnpm <script>` / `pnpm run <script>` /
+ * `npm run <script>` / `yarn <script>`), so a sibling static check's run step never falsely enforces it.
  *
  * Parent: @SCN-LNT-001.
  */

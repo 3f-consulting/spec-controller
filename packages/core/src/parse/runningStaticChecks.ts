@@ -1,16 +1,16 @@
 /**
- * The running-guard observer — emit a `GuardEvidenceObservation` for
- * EVERY running CI guard, not just the named ones. This is the static analogue of the runner
+ * The running-check observer — emit a `GuardEvidenceObservation` for
+ * EVERY static check CI runs, not just the obliged ones. This is the static analogue of the runner
  * emitting every test result: CI publishes no static check manifest, so the running set is DERIVED — a
  * `package.json` `lint:*` script that a CI `run:` step actually invokes (@SCN-USG-001).
  * It completes the static stream so the one reconcile engine sees every running static check (a named
  * one matches its `@lint` obligation; a no-evidence-obligation one folds to the suspense row) — no
  * derive-and-diff patch.
  *
- * One of the two static-check observers: this one reads every RUNNING CI guard; the
- * named-guard observer (`checkStaticEvidenceObligations`, `ingest/guard`) reads the OBLIGATION side (the
+ * One of the two static-check observers: this one reads every static check CI RUNS; the
+ * obligation-side observer (`checkStaticEvidenceObligations`) reads the OBLIGATION side (the
  * watermelon input). Both share the watermelon-critical CI-parse primitive (`ciRunSteps`, of which
- * `ciRunCommands` is the projection / `commandInvokesScript`) from `ingest/ciCommands`.
+ * `ciRunCommands` is the projection / `commandInvokesScript`) from `checkScriptsRunInCI`.
  *
  * A running static check is `exists: true` (a `package.json` script by construction — the
  * `Object.keys(scripts)` source). `enforcedOverRealSource` is READ, not assumed (@SCN-LNT-032): a
@@ -19,14 +19,14 @@
  * OTHER watermelon detail — a static check that does not run at all — is the OTHER observer's job.
  *
  * A script counts as a static check when its name matches any configured `guardPrefixes` entry —
- * the guard-prefix set is SET at the CLI edge (`ingest/ingestQualityChecks.ts`, default
+ * the prefix set is SET at the CLI edge (`ingest/ingestQualityChecks.ts`, default
  * `["lint:", "guard:"]`) and INJECTED here, so the core makes no convention assumption
  * (@SCN-USG-004). `install`/`corepack`/`checkout` aren't scripts and never match; `test`/`cucumber`
- * are the RUNTIME axis's observed evidence and carry no guard prefix, so they are excluded by
+ * are the RUNTIME axis's observed evidence and carry no such prefix, so they are excluded by
  * construction (@SCN-USG-003); `tsc` is deferred with the multi-ecosystem config work.
  * `qualityCheck: "lint"` is the static-check AXIS name (unchanged) — not the script prefix.
  *
- * Parent: @SCN-USG-001 (the uncited static-check); @SCN-USG-004 (the guard-prefix set).
+ * Parent: @SCN-USG-001 (the uncited static-check); @SCN-USG-004 (the prefix set).
  */
 
 import type { GuardEvidenceObservation } from "../model.js";

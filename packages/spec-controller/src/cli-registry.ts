@@ -5,14 +5,22 @@
  *   - `global`   — the host modifiers recognised BEFORE the command (`--store`,
  *                  `--run-id`), consumed by the top-level dispatcher; rendered by
  *                  `spec-controller --help` (the sibling @SCN-CLI-007 surface).
- *   - `commands` — the per-command scopes; `balance`'s 9 flags (+ `--help`/`-h`),
- *                  rendered by `balance --help`.
+ *   - `commands` — the per-command scopes; `balance`'s reconciliation flags (+ `--help`/`-h`),
+ *                  rendered by `balance --help`. No count is written here: @SCN-CLI-008 holds
+ *                  registry and render together whatever the number is, and a figure repeated in
+ *                  prose is one nothing reads (3F-3277).
  *
  * A flag exists ⇒ a registry entry ⇒ it appears in help, by construction — the
  * single-source discipline the completeness guard (@SCN-CLI-008) will enforce and the
- * registry-bounded parser (@SCN-CLI-009) will reject against. Flag descriptions are
- * migrated from doc/how_to_use.md's flag table, which the registry now supersedes as the
- * source of truth. Registry + renderers live in the CLI/app layer, never the domain.
+ * registry-bounded parser (@SCN-CLI-009) will reject against. Registry + renderers live in the
+ * CLI/app layer, never the domain.
+ *
+ * THE REGISTRY IS THE SOURCE OF TRUTH FOR A FLAG'S DESCRIPTION AND NOTHING RECONCILES THE DOC
+ * AGAINST IT. This docblock used to say the doc was reconciled by @SCN-CLI-007/008; it is not —
+ * those two are about the registry and the two RENDERERS, and nothing in `tests/` or `features/`
+ * reads doc/how_to_use.md at all (3F-3256 deleted the checks that read documentation). So the
+ * flag table in that page is kept in step by hand, and it has drifted in BOTH directions before
+ * now: ahead of the registry on one sentence and behind it on the next (3F-3083).
  */
 
 import { DEFAULT_DEFERRAL_TAGS } from "./deferralTags.js";
@@ -50,15 +58,16 @@ export interface CliRegistry {
 }
 
 /**
- * The `balance` command's per-command scope — its 9 reconciliation flags plus `--help`/
- * `-h`. Descriptions migrated from doc/how_to_use.md's flag table (the registry now the
- * source of truth; the doc is reconciled against it by @SCN-CLI-007/008).
+ * The `balance` command's per-command scope — its reconciliation flags plus `--help`/`-h`.
+ * This registry is where a flag's description LIVES; doc/how_to_use.md's flag table restates it
+ * by hand, reconciled by nobody (see the header).
  */
 const balanceFlags: FlagSpec[] = [
   {
     name: "--features",
     arg: "<dir>",
-    description: "Directory of Gherkin .feature files — the scenarios.",
+    description:
+      "Directory of Gherkin .feature files — the scenarios, and the `@`-tags naming what each must prove (@unit, @integration, @fitness, …).",
   },
   {
     name: "--vitest",
@@ -73,12 +82,14 @@ const balanceFlags: FlagSpec[] = [
   {
     name: "--ci",
     arg: "<ci.yml>",
-    description: "Your CI workflow — used to check whether @lint guards actually run over the real source.",
+    description:
+      "Your CI workflows — a file, or a directory of them (default .github/workflows). Where a static check you have not converted is found running over the real source, and where a check step's `id:` supplies the @SCN its result cites.",
   },
   {
     name: "--package-json",
     arg: "<path>",
-    description: "package.json — used to check a named guard's script exists.",
+    description:
+      "The target's package.json — its `scripts`, and its specController.fitnessChecks rows: each names a scenario's @SCN, a characteristic, and the command that is the check.",
   },
   {
     name: "--measurements",

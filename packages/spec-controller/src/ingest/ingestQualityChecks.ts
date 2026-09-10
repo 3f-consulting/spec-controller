@@ -77,9 +77,9 @@ const CUCUMBER_QUALITY_CHECK: RuntimeQualityCheck = "integration";
 
 /**
  * The static-check script-prefix convention set — which package.json script names the
- * running-guard observer (`runningStaticChecks`) recognises as static checks, SET at the
+ * running-check observer (`runningStaticChecks`) recognises as static checks, SET at the
  * CLI edge rather than hardcoded in the core parser. `lint:*` is an earlier internal tool's own convention;
- * `guard:*` is an adopter's repository's (four `guard:*` guards run in an adopter's repository's CI). A third convention adds its
+ * `guard:*` is an adopter's repository's (four `guard:*` scripts run in an adopter's repository's CI). A third convention adds its
  * prefix here; the core never assumes the set. No CLI override flag yet — that earns its place
  * at a third ecosystem, not now (mirrors the VITEST_QUALITY_CHECK stance above).
  * `qualityCheck: "lint"` (the static-check axis name) is unchanged — this is the script prefix,
@@ -162,7 +162,7 @@ export function killFloorReaderFor(
  * The reconciler's resolved input paths — the CLI options threaded to the readers.
  * Every path is optional; a missing result file is tolerated (its evidence is
  * simply absent). `packageJson` is the EXTERNALLY-SPECIFIED package.json the static
- * (guard) reader reads `exists` from (the --package-json seam, @SCN-LNT-005):
+ * static-check reader reads `exists` from (the --package-json seam, @SCN-LNT-005):
  * default the tool's own cwd `package.json`; set it to reconcile ANOTHER repo's
  * static checks — required to render the historical watermelon correctly.
  */

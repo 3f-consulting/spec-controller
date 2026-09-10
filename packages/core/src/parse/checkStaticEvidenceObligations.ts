@@ -1,15 +1,21 @@
 /**
- * The `ingest/guard` reader — the NAMED-guard observer (the watermelon input).
- * Per NAMED `@lint=<guard>` handle it reports `{ staticCheck, exists, enforcedOverRealSource }`,
+ * The OBLIGATION-side static-check observer (the watermelon input).
+ * Per runnable handle the corpus obliges it reports `{ staticCheck, exists, enforcedOverRealSource }`,
  * where `enforcedOverRealSource` means the static check's command appears as a CI `run:` step over the
  * real tree WHOSE RED IS THAT JOB'S VERDICT — so a named static check that exists but is not wired,
  * or is wired to a step the job survives, reconciles as the WATERMELON.
  *
- * One of the two static-check observers: this one reads the OBLIGATION side; the
- * running-guard observer (`runningStaticChecks`, `ingest/ciGuards`) reads every running CI guard. Both
- * share the watermelon-critical CI-parse primitive (`ciRunSteps` / `commandInvokesScript`) from
- * `ingest/ciCommands`, so the structural parse lives in ONE place — and since @SCN-LNT-032 both read
- * the same field off it, so the two cannot come to disagree about what enforcement is.
+ * WHERE ITS HANDLES COME FROM, SINCE IT IS NOT WHAT THIS DOCBLOCK USED TO SAY (3F-3083). They are
+ * `corpus.checkHandles` — the check registry's inverse, narrowed to the checks the corpus actually
+ * carries a scenario for (`parse/targetCorpus`). The `@lint=<handle>` rider that once fed this
+ * reader went with the by-name route at 3F-2590 and raises no obligation at all now
+ * (@SCN-LNT-007), so it is an input this function can no longer receive.
+ *
+ * One of the two static-check observers: this one reads the OBLIGATION side; the running-check
+ * observer (`runningStaticChecks`) reads every static check CI runs. Both share the
+ * watermelon-critical CI-parse primitive (`ciRunSteps` / `commandInvokesScript`) from
+ * `checkScriptsRunInCI`, so the structural parse lives in ONE place — and since @SCN-LNT-032 both
+ * read the same field off it, so the two cannot come to disagree about what enforcement is.
  *
  * Parent: @SCN-LNT-001 (the seam-bearing first sub-issue; satisfied path).
  */

@@ -171,7 +171,7 @@ declare const qualityCheckReconciliationBrand: unique symbol;
 /**
  * A single evidenceObligation's reconciliation outcome — a reconciling item. A SINGLE
  * flat shape mirroring EvidenceObligation: keyed on `qualityCheck`, with
- * `guard` present IFF `qualityCheck === 'lint'` (the static-check reconciling item).
+ * `staticCheck` present IFF `qualityCheck === 'lint'` (the static-check reconciling item).
  *
  * The un-branded FIELDS (module-internal). The exported `QualityCheckReconciliation` type is this
  * intersected with the nominal brand; `makeQualityCheckReconciliation` takes these fields and mints
@@ -791,7 +791,7 @@ export function citesUnknownScenarioReconciliationsOf(
  *     NO `evidenceObservation` — a proof that never ran is not an observed piece of evidence.
  *   - an uncited runtime credit carries the observation it reconciles, plus its locator.
  *   - a no-evidence-obligation static check carries its handle and its observation; it has no locator (a
- *     guard is read from config, not from a test file).
+ *     static check is read from config, not from a test file).
  *
  * THE BROKEN STREAM TAKES EITHER AXIS SINCE @SCN-LNT-026, AND THE ARM NEEDED NO BRANCH FOR IT.
  * A converted static check that did not run carries the same two payload halves under the same

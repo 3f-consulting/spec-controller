@@ -10,12 +10,18 @@
  * successful install still says nothing about — an install resolves what the manifest names, so a
  * manifest naming the wrong thing fails later, somewhere else, for a reader who has no checkout.
  *
- * FOUR PROPERTIES, AND THREE OF THEM HELD BEFORE ANY OF THIS WAS WRITTEN. They held because pnpm
+ * FIVE PROPERTIES, AND THREE OF THEM HELD BEFORE ANY OF THIS WAS WRITTEN. They held because pnpm
  * behaves well, not because anything held it to that, and the value of the check is entirely in the
  * arms that red. So each property is stated as a FAULT with an instance, never as a shape the
- * current output happens to have: the planted arm carries one of every fault below at once, and the
- * scenario's negative arm runs this same reading over the packages as the WORKSPACE holds them —
- * where three of the four are live faults sitting in the tree, permanently, by design.
+ * current output happens to have: the scenario's negative arm runs this same reading over the
+ * packages as the WORKSPACE holds them — where three of the five are live faults sitting in the
+ * tree, permanently, by design.
+ *
+ * THE OTHER TWO CANNOT RED IN THAT ARM, AND THEIR COUNTER-CASE IS THIS REPOSITORY'S OWN HISTORY.
+ * `repository` is in the source manifests as well as the tarballs; a front page is AUTHORED in the
+ * package directory rather than injected at pack time, so once it exists it stands on both sides of
+ * the reading. Each redded on real tarballs on its first run, before the field or the file existed,
+ * and neither can be made to red here a second time without taking it away again.
  *
  * THE READING IS THE SAME ONE BOTH TIMES, WHICH IS WHAT MAKES THE NEGATIVE ARM WORTH ANYTHING. A
  * second reader written for the workspace side would agree with this one by diligence and then
@@ -24,8 +30,7 @@
  *
  * NOTHING HERE PACKS, EXTRACTS OR READS A DISK. It is handed a manifest, a publish-time
  * declaration, and the list of files an artefact carries; the getting of those is the caller's, so
- * the whole reading can be pinned by equality in one `@unit` arm while the `@integration` arm
- * spends the seconds a real pack costs.
+ * the whole reading is cheap and the `@integration` arm spends the seconds a real pack costs.
  *
  * PATHS ARRIVE RELATIVE TO THE PACKAGE ROOT, NOT AS THE TARBALL SPELLS THEM. npm roots every
  * tarball at `package/`, and a rule that knew that prefix could only ever be applied to a tarball —
@@ -68,7 +73,8 @@ export interface PackedManifestFault {
     | "publish-time-field-not-applied"
     | "licence-did-not-travel"
     | "repository-absent"
-    | "repository-names-another-directory";
+    | "repository-names-another-directory"
+    | "readme-did-not-travel";
   readonly message: string;
 }
 
@@ -96,6 +102,9 @@ const NPM_CLIENT_KEYS = new Set(["access", "registry", "tag", "provenance"]);
 /** The licence spellings a package root may carry, as npm itself recognises them. */
 const LICENCE_NAMES = /^licen[sc]e(\.|$)/i;
 
+/** The front-page spellings a package root may carry, as npm itself recognises them. */
+const README_NAMES = /^readme(\.|$)/i;
+
 /** Everything this document fails to tell a consumer, in the order the Rule states the properties. */
 export function packedManifestFaults(published: PublishedPackage): PackedManifestFault[] {
   return [
@@ -103,6 +112,7 @@ export function packedManifestFaults(published: PublishedPackage): PackedManifes
     ...unappliedPublishTimeFields(published),
     ...absentLicence(published),
     ...repositoryFaults(published),
+    ...absentFrontPage(published),
   ];
 }
 
@@ -210,6 +220,34 @@ function repositoryFaults(published: PublishedPackage): PackedManifestFault[] {
       message:
         `${manifest.name} was packed from ${packedFrom} and points at ${directory ?? "the repository root"}. ` +
         "In a repository publishing more than one package, that is a link to somebody else's source.",
+    },
+  ];
+}
+
+/**
+ * A package that opens on nothing.
+ *
+ * NOTHING TRIGGERS THIS ONE, AND THAT IS THE WHOLE OF THE ASYMMETRY WITH THE LICENCE. `absentLicence`
+ * fires only where the manifest DECLARES a `license`, because a package claiming no terms is making
+ * a different argument and this Rule has no standing to answer it. No manifest field declares a front
+ * page — there is nothing for the reading to be conditional ON — and no package a stranger installs
+ * is better off without one. So the obligation is unconditional, and the absence of a field
+ * announcing it is not the absence of it.
+ *
+ * NON-EMPTY, for the reason `absentLicence` already gives in its own words: an empty copy is exactly
+ * what a copy step that ran and did nothing leaves behind, and a file list cannot tell the two apart.
+ */
+function absentFrontPage(published: PublishedPackage): PackedManifestFault[] {
+  const { manifest, carries } = published;
+  const travelled = carries.filter((file) => README_NAMES.test(file.path) && file.bytes > 0);
+  if (travelled.length > 0) return [];
+
+  return [
+    {
+      kind: "readme-did-not-travel",
+      message:
+        `${manifest.name} carries no front page a reader could open. ` +
+        "The first thing somebody who has just installed it looks for is the one file it does not have.",
     },
   ];
 }

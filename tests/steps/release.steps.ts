@@ -282,13 +282,14 @@ function unbuiltCheckout(): string {
 // diligence and then drift. What this arm adds is the reading: the tarballs are unpacked, and the
 // manifest and the file list each one carries are handed to `packedManifestFaults`.
 //
-// NOTHING HERE BUILDS, AND THAT IS NOT AN OVERSIGHT. None of this Rule's four properties is about a
-// file the build produces — a manifest's specifiers, its publish-time fields, its licence and its
-// link back to source are all true or false of an unbuilt pack exactly as they are of a built one.
+// NOTHING HERE BUILDS, AND THAT IS NOT AN OVERSIGHT. None of this Rule's five properties is about a
+// file the build produces — a manifest's specifiers, its publish-time fields, its licence, its link
+// back to source and its front page are all true or false of an unbuilt pack exactly as they are of
+// a built one.
 // The clean room next door needs the build and runs it; borrowing that need here would spend the
 // cucumber budget on a premise this scenario does not have.
 //
-// THE NEGATIVE ARM READS THE PACKAGE DIRECTORIES THROUGH THE SAME FUNCTION. Three of the four
+// THE NEGATIVE ARM READS THE PACKAGE DIRECTORIES THROUGH THE SAME FUNCTION. Three of the five
 // properties are live faults in this workspace, permanently: the CLI's core dependency is a
 // workspace specifier, core's map offers the `./internal` subpath its publish-time map drops, and
 // neither package directory holds a licence — pnpm copies the workspace root's in as it packs. So
@@ -389,6 +390,16 @@ Then("the licence and the link back to the repository both travel with the artef
   }
 });
 
+Then("a front page travels with the artefact, and it is not empty", function () {
+  // NO SECOND HALF HERE, UNLIKE THE LICENCE ABOVE. That step reads the terms back and compares them
+  // byte for byte, because there is one licence this repository publishes under and a copy that
+  // differs from it is a different promise. A front page has no such original — each package's is
+  // its own, written for the reader who installed THAT package — so the only thing to assert is what
+  // the Rule states: a page arrived, and it is not the empty file a copy step that did nothing
+  // leaves behind. `readme-did-not-travel` refuses both halves of that at once.
+  assertNoFault(consumedFaults, "readme-did-not-travel");
+});
+
 Then(
   "reading the same packages as this workspace holds them, rather than as the tarballs carry them, reds instead",
   function () {
@@ -399,9 +410,12 @@ Then(
 
     // THE FAULTS ARE PINNED PER PACKAGE AND IN FULL, never as "at least one". A count would be
     // satisfied by the wrong fault, and the interesting content of this arm is exactly WHICH of the
-    // four properties this workspace violates and which it does not: `repository` is in the source
-    // manifests as well as the tarballs, so it is absent from both lists below — its counter-case is
-    // this scenario's own first run, which redded on real tarballs before the field existed.
+    // five properties this workspace violates and which it does not. TWO are absent from both lists
+    // below, for the same reason in two shapes: `repository` is in the source manifests as well as
+    // the tarballs, and a front page is AUTHORED in the package directory rather than injected at
+    // pack time, so each stands on both sides of this reading. Their counter-case is this scenario's
+    // own first run in each case — redded on real tarballs before the field, and before the file,
+    // existed.
     assert.deepEqual(
       develops.map((published) => packedManifestFaults(published).map((fault) => fault.kind)),
       [

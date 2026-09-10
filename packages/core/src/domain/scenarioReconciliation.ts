@@ -202,7 +202,7 @@ export function isScenario(row: ScenarioReconciliation): boolean {
 
 /**
  * A row's STATIC-CHECK sub-rows — its `lint` Quality Check Reconciliations, in document order, one
- * per `@lint=<guard>` obligation the scenario named (3F-2203).
+ * per static-check obligation the scenario named (3F-2203).
  *
  * The OBLIGATION-side cut: `lint` reconciliations only ever arise from an obligation, so this
  * is the row's named-static-check count as well as its list. It is the single source both the
@@ -224,7 +224,7 @@ export function staticCheckReconciliationsOf(
  * static check is THERE. Only `missing` — no script at all — is absent. The watermelon's inadequacy
  * is quality, and quality is reported in the reconciling items (🍉), never by shrinking this count.
  *
- * A domain fact, not a rendering choice: which outcomes imply the guard exists is the outcome
+ * A domain fact, not a rendering choice: which outcomes imply the check exists is the outcome
  * vocabulary's business, the same class as `OUT_OF_BALANCE_OUTCOMES`. The renderer READS it.
  */
 export function presentStaticCheckCountOf(row: ScenarioReconciliation): number {

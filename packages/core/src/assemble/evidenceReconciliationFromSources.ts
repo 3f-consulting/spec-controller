@@ -83,7 +83,7 @@ type TargetManifest = PackageJsonScripts & {
  * each source's fallback quality-check is the application layer's mapping, not the engine's.
  * @param input.deferralTags the application layer's STARTER deferral set, which a target's config
  * may only extend (@SCN-PND-021). Product policy, single-sourced there and never here.
- * @param input.guardScriptPrefixes the script-name prefixes the running-guard observer treats as
+ * @param input.guardScriptPrefixes the script-name prefixes the running-check observer treats as
  * static checks — a heuristic for FINDING checks, never the definition of one (@SCN-USG-009), and
  * the app's own convention set for the same reason.
  * @param input.killFloor the reader over the target's mutation records, injected as a closure.

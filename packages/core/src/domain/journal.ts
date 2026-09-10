@@ -34,9 +34,13 @@ export type RuntimeQualityCheck = Exclude<QualityCheck, "lint">;
  * One evidence obligation a scenario raises — a SINGLE flat shape keyed on
  * `qualityCheck` (no `kind`/`level` discriminated union):
  *   - `@unit`/`@integration`/… → `{ qualityCheck: <level> }`.
- *   - `@lint=<guard>`           → `{ qualityCheck: 'lint', staticCheck }`.
- * `staticCheck` is present IFF `qualityCheck === 'lint'` (the static check handle a `@lint=<guard>`
- * tag names); a runtime evidence obligation carries no `staticCheck`.
+ *   - a `@fitness` scenario, via its `specController.fitnessChecks` row
+ *                              → `{ qualityCheck: 'lint', staticCheck: <the row's characteristic> }`.
+ *   - a registered bare check tag (e.g. `@complexity`)
+ *                              → `{ qualityCheck: 'lint', staticCheck: <the tag> }`.
+ * `staticCheck` is present IFF `qualityCheck === 'lint'` (the characteristic the check is about);
+ * a runtime evidence obligation carries no `staticCheck`. The `@lint=<handle>` rider that once
+ * raised this went with the by-name route (3F-2590) and raises nothing now (@SCN-LNT-007).
  *
  * `qualityCheck` is OPTIONAL (@SCN-PND-022) — `undefined` = SCENARIO-SCOPE: the
  * synthesised whole-scenario deferral a recognised deferral tag raises on a scenario
@@ -289,7 +293,7 @@ export interface RuntimeEvidenceObservation {
 
 /**
  * One observed STATIC-check fact, read from the CI config + package.json by the
- * `ingest/guard` seam. NOT a result-JSON fact: the watermelon is an
+ * two static-check observers. NOT a result-JSON fact: the watermelon is an
  * ABSENCE of wiring no emitted test result can carry, so this is read from the
  * *config* of the real tree.
  */
@@ -525,7 +529,7 @@ export function isStaticCheckObservation(
 /**
  * One observed evidence fact — a DISCRIMINATED UNION on `qualityCheck === "lint"`:
  * a runtime test result (keyed by scnId + its runtime quality-check), a
- * static-check evidenceObservation (`qualityCheck: "lint"`, keyed by guard), or a
+ * static-check evidenceObservation (`qualityCheck: "lint"`, keyed by `staticCheck`), or a
  * MEASUREMENT (`qualityCheck: "lint"`, carrying a number — @SCN-CIP-003). The
  * reconciler matches each evidence obligation against evidence observations of the
  * same quality-check.
