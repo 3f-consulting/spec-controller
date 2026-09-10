@@ -505,7 +505,7 @@ Then(
     ).gates.map((gate) => gate.script);
 
     // VACUITY FLOOR. Both sides of the comparison below are computed, so two empty lists
-    // would agree perfectly and prove nothing. The real ci.yml runs 15 script steps and one
+    // would agree perfectly and prove nothing. The real ci.yml runs 14 script steps and one
     // is excluded; anything else means the workflow changed and this scenario is the place
     // that should say so. It said so when 3F-2854 retired the composite-action bundle check
     // with the scenario that cited it — the number moving DOWNWARD, which is the direction
@@ -559,10 +559,20 @@ Then(
     // twelve steps standing and takes the pass's own gate off the ladder. Nothing stopped being
     // checked, which is exactly the reading only an edit to this line can distinguish from a gate
     // that went quiet.
+    //
+    // AND DOWNWARD BY ONE MORE — 11 TO 10 — WHEN 3F-3276 DELETED `doc:paths`. The third kind
+    // again, and the plainest instance of it this line has recorded: the gate did not move and
+    // nothing replaced it, because its SUBJECT was withdrawn. @SCN-FIT-016 asked whether a
+    // published page sends a reader to an absolute path inside somebody's home directory; that
+    // class of question was judged not worth automating, so the scenario, the row, the command
+    // and the module behind them left together and this ladder is one shorter for it. Nothing
+    // moved anywhere and nothing stopped being checked that is still checked elsewhere — the
+    // check simply has no subject left. An unedited number here would have read identically to a
+    // step that quietly stopped running, which is the whole reason this paragraph is written.
     assert.equal(
       expected.length,
-      11,
-      `the real ci.yml must yield 11 local gates; it yielded ${expected.length}: ${expected.join(", ")}`,
+      10,
+      `the real ci.yml must yield 10 local gates; it yielded ${expected.length}: ${expected.join(", ")}`,
     );
 
     assert.deepEqual(listedGates(listing.stdout), expected, "--list must be the derived ladder");

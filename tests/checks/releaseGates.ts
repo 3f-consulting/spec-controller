@@ -69,7 +69,7 @@ export const ABOUT_THIS_REPOSITORY: readonly RepositoryScopedCommand[] = [
   {
     // THE SCRIPT MOVED WHEN THE PASS WENT (3F-3272), AND THE REASON DID NOT. It was
     // `cucumber:fitness`, the one gate every converted check ran behind — so naming the axis was
-    // naming one script. The twelve rows are twelve CI steps now and there is no single handle for
+    // naming one script. The ten rows are ten CI steps now and there is no single handle for
     // them, and one of those steps is `pnpm typecheck`, which the release runs DELIBERATELY because
     // it is about the artefact. So what is named here is the local ladder that runs the whole of
     // this repository's own bookkeeping in one command: it reaches `balance:self` and every fitness

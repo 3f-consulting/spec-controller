@@ -92,7 +92,7 @@ mutation-gates:
 #
 # SINCE 3F-3244 THE CORPUS IS AUTHORED, AND THIS FIGURE IS AN ORDINARY CARDINALITY BELT. The
 # scenarios are written beside the rows rather than emitted from them, so an emptied manifest leaves
-# twelve scenarios standing that nothing configures: the fitness pass reds on each and the ledger's
+# ten scenarios standing that nothing configures: the fitness pass reds on each and the ledger's
 # census names them. That is the independently authored second source now. What the number below
 # still adds is one line naming both figures, ahead of the books being opened, and a fall it catches
 # where a row and its scenario are removed together. The count itself did not move.
@@ -111,4 +111,4 @@ mutation-gates:
 # record starts unbanked; the figure below was written by `pnpm fitness:bank` reading this tree,
 # which is what "banked, never typed" means in practice.
 fitness-axis:
-  rows: 12
+  rows: 10

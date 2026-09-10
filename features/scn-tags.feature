@@ -141,7 +141,7 @@ Feature: The tier-tag floor — every scenario names an evidence tier
     2026-08-07, the bare-tags Correction). The floor above knows four tier tags, their pending
     variants and the lint=<handle> form, and a fitness scenario carries none of them: once the
     technique leaves the tag, a stepless fitness scenario carries its bare check and nothing else.
-    It must satisfy the floor on that alone, or every one of the twelve scenarios in
+    It must satisfy the floor on that alone, or every one of the ten scenarios in
     features/fitness-checks.feature reds this check.
 
     THE REGISTERED TAG IS THE DISCRIMINATOR FOR THIS FLOOR, NOT THE SHAPE (3F-3126). A fitness

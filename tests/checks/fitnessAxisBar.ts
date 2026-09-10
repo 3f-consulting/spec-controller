@@ -12,7 +12,7 @@
  *
  * THAT IS NO LONGER THE STANDING SHAPE, AND THIS IS NO LONGER THE ONLY SURVIVING SIDE (3F-3244).
  * The corpus is AUTHORED now, beside the rows rather than from them, so an emptied manifest leaves
- * twelve scenarios standing that nothing configures — the pass reds on each, and the ledger's
+ * ten scenarios standing that nothing configures — the pass reds on each, and the ledger's
  * census names them. The second, independently authored source is the corpus itself.
  *
  * SO WHAT THIS IS TODAY IS A CARDINALITY BELT, AND IT IS WORTH KEEPING AS ONE. It answers before

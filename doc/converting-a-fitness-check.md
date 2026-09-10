@@ -292,7 +292,7 @@ artefact rather than asserted about it.
 terminal, on its own, and its exit code is the check's verdict. The conversion took nothing away:
 the row holds the same string the CI step holds.
 
-Nine of this repository's twelve rows are exactly that.
+Seven of this repository's ten rows are exactly that.
 
 ```sh
 eslint
@@ -302,8 +302,6 @@ pnpm lint:scn-tags
 pnpm lint:anemic-domain
 pnpm lint:scn-subissues
 pnpm typecheck
-pnpm --silent doc:compatibility-examples
-pnpm doc:paths
 ```
 
 Exit 0 is the check passing. No runner, no `balance`, no ceremony. That matters most when a check
@@ -388,7 +386,7 @@ answer for another, which is the only reason reading them together says anything
 `always()` WIDENS: there is no run in which an `always()` step is skipped and an unconditional one
 is not. What it buys is that an early red no longer decides the report — check steps are independent
 of one another, and a row with no entry in the run record is broken evidence rather than a quiet
-absence, so without it one failure would be reported as one failure and eleven unknowns.
+absence, so without it one failure would be reported as one failure and nine unknowns.
 
 **Keep invoking the same handle the step already invoked.** Where your green-check is derived from
 the pipeline file — spec-controller's own `pnpm verify` is (`scripts/verify.sh`) — spelling the step

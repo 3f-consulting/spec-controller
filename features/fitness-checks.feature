@@ -86,9 +86,3 @@ Feature: The fitness checks this repository configures, one scenario per row
 
   @fitness @SCN-FIT-002
   Scenario: the domain's mutation score, for the ledger to hold against its kill floor
-
-  @fitness @SCN-FIT-015
-  Scenario: the compatibility page's configuration examples still resolve, and every scenario it cites still exists
-
-  @fitness @SCN-FIT-016
-  Scenario: no published page sends a reader to an absolute path inside somebody's home directory

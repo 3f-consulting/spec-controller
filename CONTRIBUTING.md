@@ -109,7 +109,7 @@ number to print. Skipping it fails that command and leaves `balance:self` report
 **A LOCAL `balance:self` REPORTS EVERY FITNESS ROW AS `missing`, AND THAT IS THE DESIGN RATHER THAN
 A FAULT (3F-3272).** The fitness axis's credit journal is the CI run's own record of what each of
 its steps did, dumped by an `if: always()` step of `ci.yml`. Your machine runs no pipeline, so
-`balance:self` is handed no record, nothing is raised for the twelve rows, and each reconciles
+`balance:self` is handed no record, nothing is raised for the ten rows, and each reconciles
 `missing` — out of balance at exit 1, and NOT unsound: a run handed no record of itself is a
 different fact from a run whose record carried nothing. **The checks themselves still run locally**
 — every one of them is a gate of `pnpm ladder` or a command you can type — and their teeth are their

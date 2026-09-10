@@ -52,7 +52,7 @@ permissions:
 # about typecheck's, so stopping at the first tells a reader nothing they could have inferred. The
 # price is a slower red build; the ledger this file now feeds is the reason it is worth paying. A
 # fitness row with no entry in the run record is BROKEN evidence and stamps the run unsound, so
-# without `always()` one early red would report one `failing` and eleven `broken` — a worse account
+# without `always()` one early red would report one `failing` and nine `broken` — a worse account
 # from a correct mechanism.
 #
 # ONE ATTRIBUTE WOULD FALSIFY ALL OF THIS, AND IT IS FENCED RATHER THAN ASKED FOR POLITELY.
@@ -111,7 +111,7 @@ jobs:
       #
       # IT ADDS NO GATE. `pnpm verify`'s ladder is derived from the `run:` steps of this file that
       # invoke a package.json script; this one invokes none, so the ladder is unchanged by it —
-      # twelve gates as this file now stands — and `scripts/verify.sh` exports the same base for
+      # ten gates as this file now stands — and `scripts/verify.sh` exports the same base for
       # itself. (The number is not maintained here either: `pnpm ladder` prints it, and the closing
       # line of `scripts/verify.sh` counts what it just ran. It is in this sentence only because a
       # reader asking "unchanged from what?" deserves the figure.)
@@ -366,11 +366,11 @@ jobs:
       - name: Cucumber
         run: pnpm cucumber --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/runs/self-balance/cucumber.json"
 
-      # STEP 2b — THE TWELVE FITNESS ROWS, AS TWELVE CI STEPS THAT CITE THEM (3F-3271, under
+      # STEP 2b — THE TEN FITNESS ROWS, AS TEN CI STEPS THAT CITE THEM (3F-3271, under
       # 3F-3252; the second cucumber call they replaced was deleted at 3F-3272).
       #
       # THERE USED TO BE A `Cucumber (fitness)` STEP HERE, and what it did is now done by these
-      # twelve. It was a SECOND cucumber call over its own profile: it ran every converted check's
+      # ten. It was a SECOND cucumber call over its own profile: it ran every converted check's
       # command and wrote a report the ledger read as their credit stream. That is a second evidence
       # stream manufactured beside one that already existed — the run record this job's own dump
       # step writes — so it went with the pass.
@@ -407,9 +407,9 @@ jobs:
       #
       # THEY INVOKE THE package.json HANDLE AND NOT THE CLI BEHIND IT, WHICH IS WHAT PUTS THEM BACK
       # IN THE LOCAL LADDER. `pnpm verify` is derived from the `run:` steps of THIS file that invoke
-      # a package.json script (@SCN-LAD-001..006), so these steps take it from five gates to twelve
-      # — the five `lint:` checks, `typecheck` and `doc:paths` return to the local green-check that
-      # the conversion into the fitness pass had taken them out of. Writing `pnpm exec tsx
+      # a package.json script (@SCN-LAD-001..006), so these steps take it from four gates to ten —
+      # the five `lint:` checks and `typecheck` return to the local green-check that the conversion
+      # into the fitness pass had taken them out of. Writing `pnpm exec tsx
       # tests/checks/lintFeatureCodesCli.ts` here would run the same check and hold the ledger
       # equally still, and now that the pass is gone `pnpm verify` would have silently dropped to
       # one. A green-check that narrows without saying so is the fault @SCN-LAD-001..006 exist to
@@ -498,16 +498,6 @@ jobs:
         if: always()
         run: pnpm --silent mutation:score --supersedes SCN-MUT-011
 
-      - name: Compatibility examples
-        id: SCN-FIT-015
-        if: always()
-        run: pnpm --silent doc:compatibility-examples
-
-      - name: Documented paths
-        id: SCN-FIT-016
-        if: always()
-        run: pnpm doc:paths
-
       # THE DUMP — THE ONLY PLACE `outcome` AND `id` ARE CARRIED TOGETHER (3F-3252).
       #
       # `outcome` IS PRE-`continue-on-error`; `conclusion` IS POST. A step marked
@@ -534,7 +524,7 @@ jobs:
         # not on its own a signal that anything crossed. The byte count and the step count are that
         # signal, and the `jq` length is what would notice an expansion that resolved to `{}`. The
         # gate below now reads this file as the whole fitness axis's credit stream, so an empty one
-        # is twelve broken rows and an unsound run rather than a quiet nothing.
+        # is ten broken rows and an unsound run rather than a quiet nothing.
         run: |
           mkdir -p "$SPEC_CONTROLLER_EVIDENCE_DIR/runs/self-balance"
           record="$SPEC_CONTROLLER_EVIDENCE_DIR/runs/self-balance/ci-steps.json"

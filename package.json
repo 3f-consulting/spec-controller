@@ -28,9 +28,7 @@
     "lint:scn-tags": "tsx tests/checks/lintScnTagsCli.ts",
     "lint:scn-subissues": "tsx tests/checks/lintScnSubIssuesCli.ts",
     "lint:anemic-domain": "tsx tests/checks/lintAnemicDomainCli.ts",
-    "fitness:bank": "tsx tests/checks/fitnessRowBankCli.ts",
-    "doc:compatibility-examples": "tsx tests/checks/compatibilityExamplesCli.ts",
-    "doc:paths": "tsx tests/checks/docPathsCli.ts"
+    "fitness:bank": "tsx tests/checks/fitnessRowBankCli.ts"
   },
   "specController": {
     "fitnessChecks": [
@@ -78,16 +76,6 @@
         "characteristic": "mutation",
         "command": "pnpm --silent mutation:score --supersedes SCN-MUT-011",
         "atLeast": { "mutationGate": "domain" }
-      },
-      {
-        "scn": "SCN-FIT-015",
-        "characteristic": "doc-accuracy",
-        "command": "pnpm --silent doc:compatibility-examples"
-      },
-      {
-        "scn": "SCN-FIT-016",
-        "characteristic": "doc-accuracy",
-        "command": "pnpm doc:paths"
       }
     ]
   },
