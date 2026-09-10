@@ -228,7 +228,7 @@ export function collectRepositorySource(root: string): CollectedFile[] {
  *
  * Parameterised by `dir` — that is the whole of the difference the three copies used to encode.
  *
- * A DECLARATION IS NOT PRODUCTION SOURCE, AND UNTIL @SCN-SRC-003 IT WAS COUNTED AS ONE (3F-3205).
+ * A DECLARATION IS NOT PRODUCTION SOURCE, AND UNTIL 3F-3217 IT WAS COUNTED AS ONE (3F-3205).
  * A failed build left a stray `checkTree.d.ts` under `tests/checks/` and the population read 111
  * where the tree held 110 — so a build artefact entered the denominator of every scope-dependent
  * check, and a check that examined it found nothing wrong and reported clean a file it had no

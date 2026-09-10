@@ -28,7 +28,8 @@ export interface FeatureCodeEntry {
   slug: string;
   /**
    * `feature-code-used` — the @<FFF> header tag is present on a feature file now.
-   * `feature-code-reserved` — the code is allocated for a not-yet-created feature file.
+   * `feature-code-reserved` — the code is allocated but no feature file carries it now: either
+   * not yet created, or its file was deleted. A code is never reused.
    */
   status: "feature-code-used" | "feature-code-reserved";
   /** One-line note on the code's home / disposition. */
@@ -94,8 +95,8 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
   {
     code: "CMP",
     slug: "compatibility-commitment",
-    status: "feature-code-used",
-    note: "the compatibility commitment — doc/compatibility.md's own configuration examples, read by the readers that page states support them, and its citations of this repository's scenarios held to the corpus. Two questions rather than one: the shape question fails the day a documented mechanism stops being read, the citation question fails the day a worked example outlives the scenario it names (3F-3175)",
+    status: "feature-code-reserved",
+    note: "the compatibility commitment — doc/compatibility.md's own configuration examples, read by the readers that page states support them, and its citations of this repository's scenarios held to the corpus (3F-3175). THE FEATURE FILE IS GONE (3F-3258): 3F-3256 deleted the check the Rule was about, leaving one Rule, no scenarios, and a closing paragraph pointing for its evidence at the fitness scenario 3F-3275 had already retired. The code stays allocated and is never reissued",
   },
   {
     code: "FIT",
@@ -220,8 +221,8 @@ export const REGISTRY: readonly FeatureCodeEntry[] = [
   {
     code: "SRC",
     slug: "source-population",
-    status: "feature-code-used",
-    note: "a check's population is the tree it was TOLD about — the source enumerator takes its subject rather than inheriting the working directory, so a guard running from a mutation runner's instrumented copy still answers about the repository. Three faults came out of that one ambient walk (narrowed at 3F-3118, inflated at 3F-3205, the wrong tree entirely at 3F-3207) and none was caught by a check; this is the feature that can ask the question (3F-3207)",
+    status: "feature-code-reserved",
+    note: "a check's population is the tree it was TOLD about — the source enumerator takes its subject rather than inheriting the working directory, so a check running from a mutation runner's instrumented copy still answers about the repository (3F-3207). THE FEATURE FILE IS GONE (3F-3258): its scenarios retired at 3F-3245 and what was left was two Rules and the design history behind them — a decision record filed in the corpus, and already held in the maintainers' private notes. The code stays allocated and is never reissued",
   },
   {
     code: "REL",

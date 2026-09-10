@@ -10,10 +10,10 @@
  * `@unit`-only — Cucumber skips it; this run IS the observed evidence.
  *
  * NOTHING ELSE RUNS THIS CHECK AS A CHECK. No fitness row invokes `checkEnginePurity` and no
- * `lint:` script does. One other arm used to reach it over the real tree — sourcePopulation's
- * @SCN-SRC-001 — but that borrowed the checker as an INSTRUMENT for a claim about the enumerator's
- * subject, carried no anti-vacuity floor, and retired with its scenario at 3F-3245. So this is the
- * guard's only contact with the repository, and it keeps the floor.
+ * `lint:` script does. One other arm used to reach it over the real tree — the enumerator-subject
+ * arm 3F-3207 shipped — but that borrowed the checker as an INSTRUMENT for a claim about the
+ * enumerator's subject, carried no anti-vacuity floor, and retired with its scenario at 3F-3245.
+ * So this is the guard's only contact with the repository, and it keeps the floor.
  *
  * THE PLANTED ARM WENT AT 3F-3245. Authored from this check's implementation by that
  * implementation's author, its green proved the check does what its author wrote rather than what
