@@ -3,13 +3,16 @@
  * ONE anti-vacuity floor for the core-src population (3F-2266), and the ONE reading of which roots
  * this repository's own source lives under (3F-2988).
  *
- * Three guard tests — `noParallelStore` (@SCN-NPS-001), `enginePurity` (@SCN-EPG-001) and
- * `domainPurity` (@SCN-DPG-001) — each carried a byte-identical copy of this walk, differing only
- * in the recursive-call name, the element type, and the root. The same rule written three times
- * agrees by COINCIDENCE, not by construction: change one walk, or bump one floor and not the
- * others, and they drift apart silently with nothing to red it. That is the agreeing-by-copy the
- * domain-model work spent five slices removing from the domain; this removes it from the guards'
- * scaffolding.
+ * Three guard tests — `noParallelStore`, `enginePurity` (@SCN-EPG-001) and `domainPurity`
+ * (@SCN-DPG-001) — each carried a byte-identical copy of this walk, differing only in the
+ * recursive-call name, the element type, and the root. The same rule written three times agrees by
+ * COINCIDENCE, not by construction: change one walk, or bump one floor and not the others, and they
+ * drift apart silently with nothing to red it. That is the agreeing-by-copy the domain-model work
+ * spent five slices removing from the domain; this removes it from the guards' scaffolding.
+ *
+ * `noParallelStore` LEFT AT 3F-3324 — it matched three retired spellings and said in its own
+ * comment that a parallel store under a fresh name passed it. The unification above is why its
+ * departure cost the survivors nothing: they had no copy of the walk to lose.
  *
  * WHY IT LIVES HERE AND NOT IN THE ENGINE. It imports `node:fs`, and @SCN-EPG-001 reds any file
  * under `packages/core/src` that imports a node IO builtin — siting it in the engine would make the
@@ -17,10 +20,12 @@
  * would shift the very counts it is used to assert. `tests/checks/` satisfies both by
  * construction; it is where the guards it serves already live (product-not-app, reads the tree).
  *
- * WHAT IS SHARED AND WHAT IS NOT. The WALK is shared three ways — all three guards collect the same
- * way, differing only in root. The ELEMENT TYPE is shared three ways too (3F-2274): one shape,
- * stated once. The FLOOR is shared TWO ways: only `noParallelStore` and
- * `enginePurity` walk the same population (`coreSrcRoot`), so only they can share a floor.
+ * WHAT IS SHARED AND WHAT IS NOT, COUNTED AFTER 3F-3324. The WALK has THREE readers: `enginePurity`
+ * and `domainPurity` over named subtrees, and `termSpelling` over the whole repository via
+ * `collectRepositorySource`. The ELEMENT TYPE is taken by TWO checkers — `checkEnginePurity` and
+ * `checkDomainPurity` — plus `termSpelling`'s own local helper (3F-2274): one shape, stated once.
+ * The core-src FLOOR has exactly ONE consumer, `enginePurity`, which is the state after
+ * `noParallelStore` left; it is not a shared term any more, and the docblock beside it says so.
  * `domainPurity` walks a smaller subtree and keeps its own floor locally — a different population
  * is a different floor, and unifying them would be a behaviour change dressed as a tidy-up. The
  * asymmetry is deliberate; do not "finish the job" by moving the domain floor here.
@@ -42,11 +47,12 @@ import { CHECK_TREE_SEGMENTS } from "./checkTree.js";
 /**
  * A file the walk collected — its repo-relative path and its raw source.
  *
- * THE element type — `checkNoParallelStore`, `checkEnginePurity` and `checkDomainPurity` all take
- * this one, so `{ path, source }` is stated exactly ONCE in the repo (3F-2274). Each guard used
- * to export its own structurally-identical alias, which meant the shape agreed by COINCIDENCE: add
- * a field to one and the other three carry on compiling while describing a different file. The
- * walk was unified first (3F-2266); this is the same argument applied to the walk's ELEMENT.
+ * THE element type — `checkEnginePurity` and `checkDomainPurity` both take this one, and
+ * `termSpelling.test.ts` reads the collected files through it, so `{ path, source }` is stated
+ * exactly ONCE in the repo (3F-2274). Each guard used to export its own structurally-identical
+ * alias, which meant the shape agreed by COINCIDENCE: add a field to one and the others carry on
+ * compiling while describing a different file. The walk was unified first (3F-2266); this is the
+ * same argument applied to the walk's ELEMENT.
  *
  * A guard imports it with `import type`, never a value import: this module reads `node:fs`, and the
  * guards are pure by construction — that is the whole reason the collector sits in `tests/checks/`
@@ -128,8 +134,7 @@ export function resolveRepositoryRoot(
 }
 
 /**
- * The core engine's source root under a NAMED repository — the population `noParallelStore` and
- * `enginePurity` share.
+ * The core engine's source root under a NAMED repository — the population `enginePurity` walks.
  *
  * IT TAKES ITS SUBJECT, AND THAT IS THE WHOLE OF 3F-3207. This was a module-level constant frozen
  * from the working directory at import, so the population every scope-dependent check walks was
@@ -162,6 +167,12 @@ export function domainRoot(root: string): string {
  * It sits well BELOW the real count, not just under it — a broken walk yields ~0, so catching that
  * needs no tight margin, while a tight one reds on ordinary deletion and blames a parallel store
  * for it (3F-2201). The required headroom is asserted, not merely intended.
+ *
+ * ONE CONSUMER, AND IT KEEPS THIS HOME ANYWAY (3F-3324). `noParallelStore` was the second reader
+ * and has gone, so `enginePurity.test.ts` is now the only one. It stays here rather than moving
+ * local to that one consumer because THIS is where the population it floors is defined —
+ * `coreSrcRoot`, two declarations up — and a floor written apart from its population is a number
+ * with nothing beside it to check it against.
  */
 export const MIN_CORE_SRC_FILES_SCANNED = 10;
 

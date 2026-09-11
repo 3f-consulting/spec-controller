@@ -407,9 +407,10 @@ Then(
 // @SCN-CIP-008
 Then("the JSON carries the measurement and the threshold on the row's own entries", function () {
   // Through the EXISTING serialisation — the ceiling rides the obligation, the measurement rides
-  // the observation — rather than through a parallel measured-only field. That is what keeps the
-  // no-parallel-store round-trip true: every summary re-folds from the serialised Ledger, so a
-  // field that failed to serialise would break it somewhere far from here.
+  // the observation — rather than through a parallel measured-only field. That is why this arm
+  // asserts both numbers in the serialised report rather than on the object. The serialisation
+  // itself is witnessed by @SCN-RMD-007, which re-renders markdown from the parsed JSON and
+  // asserts byte-identity (3F-3325).
   const report = JSON.parse(json) as unknown;
   const serialised = JSON.stringify(report);
   assert.ok(serialised.includes('"threshold":75'), "expected the ceiling in the serialised report");

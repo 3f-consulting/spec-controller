@@ -445,10 +445,10 @@ Then("that row does not read its bar as a maximum", function () {
 Then(
   "the JSON carries that bar with the comparison the obligation named, on the row's own entries",
   function () {
-    // Through the OBLIGATION's own entry rather than a parallel measured-only field. That is what
-    // keeps the no-parallel-store round-trip true: every summary re-folds from the serialised
-    // Ledger, so a comparison that failed to serialise there would break the round-trip somewhere
-    // far from here rather than in a test about rendering.
+    // Through the OBLIGATION's own entry rather than a parallel measured-only field — which is
+    // why the comparison is asserted in the serialised report rather than on the object. The
+    // serialisation is witnessed by @SCN-RMD-007, which re-renders markdown from the parsed JSON
+    // and asserts byte-identity (3F-3325).
     const report = JSON.parse(json) as {
       ledger: {
         scenarioReconciliations: {

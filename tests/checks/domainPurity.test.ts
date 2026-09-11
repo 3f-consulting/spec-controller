@@ -19,8 +19,8 @@
  * was authored from this module's implementation, by that implementation's author, from that
  * author's reading of the rule — so its green proved the check does what its author wrote, never
  * what the rule requires. One author, both books. The population floor below stays LOCAL: the
- * domain subtree is much smaller than the core-src one enginePurity and noParallelStore share, and
- * adopting their floor of 10 would invent a constraint that does not exist (3F-2266).
+ * domain subtree is much smaller than the core-src population enginePurity walks, and adopting its
+ * floor of 10 would invent a constraint that does not exist (3F-2266).
  */
 
 import { describe, expect, it } from "vitest";
@@ -37,8 +37,8 @@ describe("[SCN-DPG-001] a domain module imports only the domain layer and pure s
     // adapter or app import in a production domain file reds here.
     const domainFiles = collectSourceFiles(domainRoot(REPOSITORY_ROOT), REPOSITORY_ROOT);
     // Sanity: the tree was actually scanned, not an empty walk masquerading as green. This floor is
-    // LOCAL and stays local — a different, much smaller population than the core-src one the other
-    // two guards share, so their floor of 10 would be a constraint invented here (3F-2266).
+    // LOCAL and stays local — a different, much smaller population than the core-src one
+    // enginePurity walks, so its floor of 10 would be a constraint invented here (3F-2266).
     expect(domainFiles.length).toBeGreaterThan(0);
     expect(checkDomainPurity(domainFiles)).toEqual([]);
   });

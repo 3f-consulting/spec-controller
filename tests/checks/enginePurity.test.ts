@@ -41,8 +41,10 @@ describe("[SCN-EPG-001] the reconciliation engine imports nothing impure and ref
     // stripping comments reds HERE, which is why no hand-written doc-comment fixture is kept above.
     const engineFiles = collectSourceFiles(coreSrcRoot(REPOSITORY_ROOT), REPOSITORY_ROOT);
     // Sanity: the tree was actually scanned, not an empty walk masquerading as green. The floor is
-    // the SHARED one — this guard and noParallelStore walk the same population, so a bare literal
-    // here would be a second copy of the same rule, drifting the moment either is retuned (3F-2266).
+    // named in sourceFiles.ts beside the population it floors, and since 3F-3324 this arm is its
+    // ONLY consumer — a bare literal here would restate the rule away from `coreSrcRoot`, which is
+    // the separation that let the old copies drift (3F-2266). Proven by plant, not by reading:
+    // hand the collector a tree with no production files and the line below throws.
     expect(engineFiles.length).toBeGreaterThan(MIN_CORE_SRC_FILES_SCANNED);
     expect(checkEnginePurity(engineFiles)).toEqual([]);
   });

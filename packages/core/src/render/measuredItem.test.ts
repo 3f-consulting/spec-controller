@@ -87,9 +87,12 @@ describe("[SCN-CIP-008] a measured reconciling item renders with its two numbers
 
   it("carries both numbers into the JSON, through the entries that already serialise", () => {
     // The ceiling rides the obligation and the measurement rides the observation — no parallel
-    // measured-only field. That is what keeps the no-parallel-store round-trip true: every summary
-    // re-folds from the serialised Ledger, so a field that failed to serialise would break the
-    // round-trip somewhere far from here rather than in a test about rendering.
+    // measured-only field. Both numbers therefore reach the JSON through the serialisation the
+    // entries already have, which is why this arm asserts them THERE rather than trusting a field
+    // to appear. That serialisation is witnessed by @SCN-RMD-007 (`renderReportFromJson.test.ts`),
+    // which renders markdown from the parsed JSON and asserts byte-identity — a genuinely second
+    // reading, and since 3F-3325 the only one. (SCN-NPS-002 used to be named here; it re-folded
+    // with the very functions it was checking, so it never held this property.)
     const json = renderJson(
       evidenceReconciliationOf(scenario(75), measurement(96.4), [], true, true),
       CTX
@@ -191,7 +194,8 @@ describe("[SCN-MUT-006] a measured item renders which side of its bar it had to 
 
   it("carries the comparison into the JSON on the obligation's own entry", () => {
     // The flag rides the debit through the serialisation that already carries the bar — never a
-    // parallel measured-only field, which is what keeps the no-parallel-store round-trip true.
+    // parallel measured-only field. @SCN-RMD-007 is what witnesses that serialisation, by
+    // re-rendering markdown from the parsed JSON and asserting byte-identity (3F-3325).
     const json = renderJson(
       evidenceReconciliationOf(floorScenario(91.87, true), mutationMeasurement(91.4), [], true, true),
       CTX
