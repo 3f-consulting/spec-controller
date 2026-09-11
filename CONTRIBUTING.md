@@ -64,7 +64,7 @@ commits. A hand-maintained list drifts wherever it is kept; a derivation has not
 **Every converted check is a CI step, carrying its `@SCN` as the step's `id:`.** A converted check
 is both a row of `specController.fitnessChecks` and a `run:` step whose `id:` cites that row — the
 command in the pipeline, the obligation in the scenario, the observation in the run's own record of
-what its steps did. Three artefacts, three authors, none derived from another.
+what its steps did.
 
 **A check that only held our vocabulary is deleted rather than converted.** With one `@fitness` tag,
 a characteristic is a label on a row rather than a token the parser reads, so a check policing which

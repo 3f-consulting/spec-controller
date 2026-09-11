@@ -38,7 +38,7 @@ That is the answer to *"why, when CI already works?"* — `spec-controller` is n
 
 ### What it costs
 
-You are already doing the ceremony. A fitness check means writing the check, adding the script, and wiring it into CI — and you have done all three. What this asks for is two short additions and no rewriting: the same command string, unchanged, in a **row** of your config beside a **stepless scenario** saying what the check asserts; and the row's `@SCN` on the pipeline step you already have, as its `id:`. Nothing is translated, generated into a workflow, or moved out of your pipeline. Behavioural scenarios you are already writing gain a tag. The check becomes *observable* rather than merely present.
+You are already doing the ceremony. A fitness check means writing the check, adding the script, and wiring it into CI — and you have done all three. **Start by installing it and changing nothing**: every check your pipeline ran comes back listed, with the fact that nothing demanded any of them. Put an id on a check's CI step and that credit becomes attributable. Write a scenario for it, tagged as you already tag `@unit`, and it reconciles. Three states, and you stop where the value stops for you. Nothing is translated, generated into a workflow, or moved out of your pipeline.
 
 ## How it works
 

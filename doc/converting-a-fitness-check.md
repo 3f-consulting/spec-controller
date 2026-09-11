@@ -1,8 +1,9 @@
 # Fitness checks — what one is, and how you declare it
 
-*A fitness check is a characteristic your codebase must hold, held by three artefacts nobody derives
-from the others. This page states the model. If you are converting existing checks, the checklist
-is under* Converting an existing check.*
+*A fitness check is a characteristic your codebase must hold. **What you author to declare one
+depends on how far you have adopted** — there are three states and you can stop at any of them. This
+page states the model; if you are converting existing checks, the checklist is under* Converting an
+existing check.*
 
 For the compatibility position — what keeps working, for how long, and what would break it — see
 [`compatibility.md`](./compatibility.md). For the flags and the CLI, see
@@ -14,12 +15,32 @@ what your corpus said was owed.
 
 ---
 
-## The three artefacts, on one worked check
+## Three states, and you choose where to stop
 
-Take one check — *every function and module measures inside the external complexity standard.* Three
-artefacts carry it, and **no two of them are derived from each other**: a stepless scenario in your
-corpus, a row of `specController.fitnessChecks`, and a step of your own pipeline carrying the row's
-`@SCN` as its `id:`.
+Take one check — *every function and module measures inside the external complexity standard.* What
+you author for it, and what `balance` can say back, depends on which state you are in.
+
+| state | what you author | what the report says |
+| -- | -- | -- |
+| **`new-client`** | nothing | every check your pipeline ran, and that not one of them is demanded — each credit posts to the **suspense** row, `cites-no-scenario` |
+| **`annotated`** | an `@SCN` on the check's CI step, as the step's `id:` | the same list, now attributed: this credit came from that check. Each posts to a **phantom** row, `cites-unknown-scenario` — nothing yet demands it |
+| **`conformant`** | a stepless scenario carrying that `@SCN`, tagged `@fitness` exactly as you tag one `@unit` | a reconciliation: what was owed, what ran, and every disagreement named |
+
+**`new-client` costs you nothing and is not a crippled demo.** It genuinely cannot reconcile, because
+nothing was declared, so nothing can be owed — and saying that out loud rather than reporting silence
+is the whole point of the tool.
+
+**`annotated` costs minutes.** The command does not change; you add an id.
+
+**`conformant` is where reconciliation happens**, and it is the only state in which you write a
+scenario. The runner there is Cucumber: your check's command moves into a step definition, CI
+launches Cucumber filtered by `@fitness`, and the pass produces the evidence carrying the right
+`@SCN`. Getting there from `annotated` is either your own work or `migrate`'s.
+
+**The row of `specController.fitnessChecks`** — `scn`, `characteristic`, `command`, and
+`atLeast` / `atMost` where the check produces a number — carries what is measured and against what
+bar. The sections below assume you are heading for `conformant`; if you are stopping at `annotated`,
+read them for the row and the CI step and skip the scenario.
 
 The scenario is **written beside its row rather than derived from it**:
 
