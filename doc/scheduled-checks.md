@@ -18,30 +18,27 @@ The workflow below is the one this repository grew against itself, in
 written out here rather than summarised because a recipe that disagrees with the
 pipeline it came from is worse than no recipe.
 
-**Where this repository has since gone further, and why it is not in the recipe.**
-Its own mutation check is now a *converted* fitness check (3F-3138): the
-characteristic, the command and the bar live in one row of
-`specController.fitnessChecks`, a cucumber pass runs that command, and the pass
-posts the credit. So its nightly leaves a **sweep record** under
-`runs/mutation/` of the evidence root and the borrow places it there, apart from
-the credit stream — because under conversion a borrowed row sitting in that
-root's `runs/self-balance/measurements.json` would be a second credit for one
-evidence obligation. Nothing below depends on that. The recipe as written is what an
-**unconverted** measured check needs, it is what this repository ran until the
-conversion, and it stays correct for a target that has not converted.
+**Where a converted check differs, and why it is not in the recipe.** Under conversion the
+characteristic, the command and the bar live in one row of `specController.fitnessChecks`, and the
+credit comes from the **step's own entry in the run record** — `balance` runs nothing. The nightly
+then leaves its **sweep record** under `runs/mutation/` of the evidence root and the borrow places
+it there, apart from the credit stream: a borrowed row sitting in `runs/self-balance/` would be a
+second credit for one evidence obligation. Nothing below depends on that. The recipe as written is
+what an **unconverted** measured check needs, and it stays correct for a target that has not
+converted.
 
 ---
 
 ## The scenario is the registry
 
-A scheduled check is not a new kind of thing. It is a **stepless fitness
-scenario** — a `@<check>` tag plus a threshold in `specController.thresholds`,
-exactly like `@ci-run-time`. The only difference is cadence: the measurement
-arrives from last night's run rather than from this one's. There is no separate
-registry to maintain — your `.feature` corpus already names every evidence
-obligation, this one included. Author the scenario, give it a threshold, and the
-reconciliation treats a stale-or-missing nightly number the way it treats any
-obligation with no evidence: out of balance.
+A scheduled check is not a new kind of thing. It is a **stepless `@fitness`
+scenario** whose bar lives on its row of `specController.fitnessChecks`, exactly
+like every other measured check. The only difference is cadence: the measurement
+arrives from last night's run rather than from this one's. The scenario and the
+row are **two authored artefacts, neither derived from the other** — a scenario
+with no row, and a row with no scenario, are both faults something says out
+loud. Author both, and the reconciliation treats a stale-or-missing nightly
+number the way it treats any obligation with no evidence: out of balance.
 
 ---
 
@@ -55,7 +52,7 @@ jobs below resolve one directory on the runner's own disk and every path in the
 recipe hangs off it. This repository learned that the hard way: it wrote its own
 evidence into its own source tree, then grew a `.gitignore` block and a hygiene
 check to hold back what it had chosen to do — three pieces of apparatus for a
-condition it could simply remove (3F-3099). Removing the condition removed all
+condition it could simply remove. Removing the condition removed all
 three.
 
 Resolve it in a **step**, not a job-level `env:` key: `jobs.<id>.env` cannot read
@@ -104,7 +101,7 @@ the reason this step comes **first** in the job is in
     # long that number stays close enough to true about this code.
     WORKFLOW: nightly.yml
     ARTEFACT: nightly-measurements
-    MAX_AGE: "129600"          # 36 hours, in seconds — your cadence, your number
+    MAX_AGE: "93600"           # 26 h = a 24 h cadence + 2 h margin, in seconds
   run: |
     # NO `-e`, DELIBERATELY. Every failure below is answered where it happens
     # with a sentence and `exit 0`; `-e` would turn one of them into a red step,
@@ -253,9 +250,14 @@ claim — and unlike the payload's, it is not written by the very run being judg
 A `measuredAt` stamped into the artefact is a fact GitHub already records.
 
 The reconciler never learns the time: "now" is the run's own instant, an input,
-and a measurement that was not placed is simply not there to reconcile. The
-window is yours — a nightly wants ~26 h, a twice-daily check less; it is a fact
-about your cadence, so it lives in your workflow, not in the tool.
+and a measurement that was not placed is simply not there to reconcile.
+
+**The window is a derivation, not a number you pick: your producer's cadence
+plus a margin.** A nightly is **24 h + 2 h = 26 h**. A twice-daily sweep reads
+the same rule and gets 14. Write the derivation into the workflow rather than
+the figure, so a change of cadence carries its own answer — and keep it in your
+workflow, never in the tool: it is a fact about your pipeline, not about your
+code.
 
 ---
 

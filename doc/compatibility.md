@@ -59,13 +59,11 @@ is pending*, that is the honest answer rather than a missing clause — inventin
 for a mechanism with no designed replacement would be the same fault as an absolute framing, one
 register quieter.
 
-**This section documents what the READER accepts, not what we happen to use.** The difference is
-worth stating because it is currently large: this repository has converted every one of its own
-static checks to the last mechanism below, so its `package.json` carries no `checkRegistry`, no
-`thresholds` and no `staticChecks` at all. **None of that is a withdrawal.** Each of those
-mechanisms is read exactly as it was, our having stopped using them is not a step you are asked to
-take, and the sunset clause on each still says what it said. When we do intend to stop reading one,
-it changes here first and in a major version — a promise is not withdrawn by a delivery landing.
+**This page documents what the READER accepts, not what we happen to use**, and the two are not the
+same set. A mechanism we have stopped using is read exactly as it was: **our no longer using
+something is not a withdrawal of it**, it is not a step you are asked to take, and the sunset clause
+on each entry still says what it said. When we do intend to stop reading one, it changes here first
+and in a major version — a promise is not withdrawn by a delivery landing.
 
 ### `specController.checkRegistry` — both spellings
 
@@ -90,10 +88,9 @@ Both spellings are supported and neither is preferred:
 }
 ```
 
-**The `@SCN` above is YOURS, not ours, and that is a deliberate change.** This page used to cite
-scenarios out of our own corpus, which read as more honest and turned out to be less: we migrated
-every one of our static checks to the mechanism two entries below, and the codes those examples
-named stopped existing while the examples went on naming them. `SCN-CHK-004` belongs to whoever is
+**Every `@SCN` on this page is YOURS, not ours, and that is deliberate.** Citing scenarios out of
+our own corpus reads as more honest and is less: our codes move when our tree moves, and an example
+naming a code that has stopped existing teaches a reader nothing they can use. `SCN-CHK-004` belongs to whoever is
 reading — a feature code this repository has never allocated — so the example illustrates the shape
 without making a claim about a tree you cannot see. Where an example on this page *does* cite one of
 our codes, that citation is held to our corpus by a check that runs on every push.
@@ -252,7 +249,7 @@ bar rather than quietly passing, and the reconciliation says so.
 **Nothing is pending against it** — it is what the other entries move toward. It is **removed only in
 a major version**, and a corpus that converts nothing never writes a row.
 
-#### `notExaminedExit` — REMOVED (3F-3252)
+#### `notExaminedExit` — REMOVED
 
 A row could once name the exit code its command uses to say *I examined nothing*, so a check whose
 subject is legitimately absent on some runs was neither a green nobody earned nor a red against

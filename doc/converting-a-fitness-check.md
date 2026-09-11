@@ -1,9 +1,8 @@
 # Fitness checks — what one is, and how you declare it
 
 *A fitness check is a characteristic your codebase must hold, held by three artefacts nobody derives
-from the others. This page states the model, then shows the migration this repository ran to reach
-it. If you are converting existing checks, the checklist is under* Converting an existing check;
-*the archaeology is the appendix.*
+from the others. This page states the model. If you are converting existing checks, the checklist
+is under* Converting an existing check.*
 
 For the compatibility position — what keeps working, for how long, and what would break it — see
 [`compatibility.md`](./compatibility.md). For the flags and the CLI, see
@@ -33,18 +32,15 @@ The scenario is **written beside its row rather than derived from it**:
 { "scn": "SCN-FIT-001", "characteristic": "complexity", "command": "eslint" }
 ```
 
-**That is the whole scenario — a tag line and a title, and no steps.** It carried one `Then` while a
-cucumber pass needed something to bind; the pass is deleted (3F-3272) and the line went with it.
-Nothing in this repository runs a check on a scenario's behalf, so there is nothing for a step to
-say: the check is a step of your pipeline, the pipeline records what that step did, and `balance`
-reads the record.
+**That is the whole scenario — a tag line and a title, and no steps.** A fitness scenario is a
+**declared obligation, not a test**, and nothing runs it. There is nothing for a step to say: the
+check is a step of your pipeline, the pipeline records what that step did, and `balance` reads the
+record. A `Then` line would make the scenario try to be both sides of the entry at once.
 
-**Two things to write, and that is the point.** For one commit's length this repository EMITTED the
-corpus from the rows (3F-3164) and guarded it with a regenerate-and-diff row; 3F-3243 deleted the
-guard and 3F-3244 the generator. A scenario emitted from the row it is reconciled against cannot
-disagree with it, so the axis had one author wearing double-entry's clothes: delete a row and its
-scenario went with it, silently. Authored, the two sides can disagree — which is the only reason
-either of them is worth reading.
+**Two things to write, and that is the point.** A scenario emitted from the row it is reconciled
+against cannot disagree with it — that is one author wearing double-entry's clothes, and deleting a
+row would take its obligation with it, silently. Authored, the two sides can disagree, which is the
+only reason either of them is worth reading.
 
 **So both halves of the pair are faults something says out loud.** The ledger reports a scenario
 whose code no row names as unconfigured, and a row whose scenario the corpus does not carry as an
@@ -64,10 +60,8 @@ like every other feature file in the tree.
 
 ## Annotating your pipeline — the whole of what you write
 
-*There was once a cucumber pass here, and it was a second record of what a pipeline already did.
-This section is the route that reads the first one, and since `3F-3272` it is the only route: the
-pass is deleted, not kept as a second supported path. Its whole cost is one line per check step plus
-one step at the end.*
+*This is the whole of what you write, and there is no second route: `balance` reads the record your
+pipeline already produces. Its whole cost is one line per check step plus one step at the end.*
 
 ### One line per check step, and the line is the `@SCN`
 
@@ -81,7 +75,7 @@ A check that is already a pipeline step needs nothing done to the command:
 ```
 
 **The `id:` is the row's `@SCN`, never a handle of your own choosing.** A handle would need a fourth
-artefact mapping it back to a row — the roster this repository keeps deleting — and the three
+artefact mapping it back to a row — a roster, which is the thing this model does without — and the three
 authors would become four. The obligation stays in the `@fitness` scenario, the command stays in the
 row of `specController.fitnessChecks`, and the step produces the observation; none of the three can
 answer for another, which is the only reason reading them together says anything.
@@ -147,12 +141,11 @@ merely out of balance.
 ### What this route costs a consumer, and the named limit on the free end of it
 
 Reconciling a pipeline you have not annotated at all is `new-client`: your credits cite nothing, post
-to suspense, and answer no obligation. **That free state is Node-shaped today, and the reason is
-worth stating rather than leaving to be found.** Script discovery ranges over
-`Object.keys(packageJson.scripts)` (`packages/core/src/parse/runningStaticChecks.ts`) — a check is
-discovered when a script name carries an observed prefix and a `run:` step invokes it — so a
-pipeline with no `package.json` presents no scripts, and a Go or Rust repository gets a
-zero-annotation reading of "nothing discoverable" rather than a wrong one.
+to suspense, and answer no obligation. **The free state is Node-shaped, and the reason is worth stating rather than leaving to be found.**
+Script discovery ranges over the scripts your `package.json` declares — a check is discovered when a
+script name carries an observed prefix and a `run:` step invokes it — so a pipeline with no
+`package.json` presents no scripts, and a Go or Rust repository gets a zero-annotation reading of
+"nothing discoverable" rather than a wrong one.
 
 **`annotated` has no such shape, and that is the point of putting the citation on the step.**
 An `id:` is a key of the step mapping, the command below it is any command in any language, and
@@ -188,22 +181,36 @@ grading its own homework, and the reconciliation would transcribe a verdict rath
 terminal, on its own, and its exit code is the check's verdict. The conversion took nothing away:
 the row holds the same string the CI step holds.
 
-Six of this repository's nine rows are exactly that.
+Most rows are exactly that — a command you already run, or one off the shelf:
 
 ```sh
 eslint
-pnpm lint:complexity-exceptions
-pnpm spec-controller tags
-pnpm lint:anemic-domain
-pnpm lint:scn-subissues
 pnpm typecheck
 ```
 
 Exit 0 is the check passing. No runner, no `balance`, no ceremony. That matters most when a check
 reds: you debug it by running it, not by reading a report about it.
 
-**The other three are not self-contained, and each names its own reason** — which is the clearest
-statement of `Freshness` a reader of this page will meet.
+**The other three read a number something else produced, and one rule governs all three.**
+
+| row | what its command reads |
+| -- | -- |
+| `SCN-FIT-012` / `SCN-FIT-013` | a suite timing placed by the run that measured it |
+| `SCN-FIT-002` | the record borrowed from the nightly mutation sweep |
+
+**A measurement is read only if THIS RUN placed it, and the placement decides freshness before
+placing.** The mechanism is **absence, not a timestamp**: past the window nothing is placed, the
+command has nothing to print, its step reds, and the row reads `missing` — the true sentence, the
+sweep has lapsed. No clock lives in the reader and none lives on the row.
+
+**The window is a derivation, not a constant: the producer's cadence plus a margin.** A nightly
+sweep is **24 h + 2 h = 26 h**. A twice-daily sweep reads the same rule and gets 14. Copy the
+derivation, never our number.
+
+⚠️ **Ordering is not a freshness mechanism.** A step placed ahead of the producer it reads meets an
+absent artefact and its row reads `missing` — which is the placement rule working, not a second
+rule beside it. Do not reason about which step runs first as though that were what makes a
+measurement valid.
 
 | row | why it cannot be run cold |
 |---|---|
@@ -230,17 +237,16 @@ migration should take away.
 
 ## Two things that are easy to get wrong
 
-**1. A reader-shaped check's step runs BEHIND the step it reads.** Some rows read what an earlier
-step produced: a mutation sweep's banked record, the behavioural suite's own timing. Put such a
-step ahead of its producer and it meets an absent artefact and its row reads `missing` **while you
-do exactly what the documentation told you**. This is the one part of the design that is easy to
-get wrong by accident.
+**1. A reader-shaped check's step is answered by placement, not by position.** Some rows read what
+another step produced: a mutation sweep's borrowed record, a suite's own timing. If nothing placed a
+measurement for this run, the row reads `missing` and says so — whatever order the steps ran in.
+Putting such a step ahead of its producer therefore fails loudly rather than silently, which is the
+design and not a hazard to route around.
 
 **A run-time check is the archetype of that shape, not an exception to it.** The wall-clock a suite
 took cannot be measured from inside the step that reports it, so the measuring happens where the
 suite runs — a timing wrapper around the step, writing a record — and the reading happens in a step
-of its own, from a row whose command is a cheap reader over that record. spec-controller's own two
-are `@SCN-FIT-012` (its unit suite) and `@SCN-FIT-013` (its behavioural suite).
+of its own, from a row whose command is a cheap reader over that record.
 
 **2. `if: always()` goes on every check step, not only the dump.** Without it the first red aborts
 the job, every later check step is skipped, and the ledger reports one `failing` and N `broken` — a
@@ -251,25 +257,16 @@ nothing about another's.
 
 ## What this leaves open, stated rather than left to be found
 
-**Our own discovery axis used to report a vacuous zero, and annotating the pipeline is what ended
-it.** While every fitness command was inside the pass there was no `lint:`/`guard:` script for a
-`run:` step to invoke, so script discovery found nothing and the *uncited static check* count was
-`0` over a tree where nothing was discoverable — a capability exercised by nothing and reporting
-green, which is the exact fault this product is named for. The report said which zero it was rather
-than leaving a reader to guess, and that was the whole of the answer. The five check steps of the
-section above put five discoverable scripts back, each cited by its step's `id:`, so the count is
-now `0` uncited out of five discovered — a zero the axis reached rather than one it inherited. The
-residual that remains is the opposite shape and is stated where it belongs: script discovery is
+**A discovery axis with nothing to discover reports a vacuous zero, and annotating the pipeline is
+what ends it.** A capability exercised by nothing and reporting green is the exact fault this
+product is named for, so the report says *which* zero it is rather than leaving a reader to guess:
+`0` uncited out of N discovered is a zero the axis reached, and `0` out of `0` is one it inherited.
+The residual that remains is the opposite shape and is stated where it belongs: script discovery is
 Node-shaped, which is the named limit above.
 
-**A check that did not run is no longer credited — this one is CLOSED, and it is the part of the
-model worth reading twice before you convert.** This section used to say that a skipped scenario is
-still credited as having run, that any route to `skipped` other than the third answer posts a credit
-for a check nobody ran, and that such a route is worth suspecting. It is a mechanism now rather than
-a suspicion.
-
-A fitness credit says the check RAN, so the reader reads what the run's own record says about the
-running:
+**A check that did not run is not credited, and it is the part of the model worth reading twice
+before you convert.** A fitness credit says the check RAN, so the reader reads what the run's own
+record says about the running:
 
 | what the record says of your row's step | what the ledger does |
 | -- | -- |
@@ -293,18 +290,16 @@ have is the credit journal, because the credit journal is the pipeline's.
 
 **If every row you convert is static, that difference is yours to know about.** A MEASURED row's
 credit is a number something has to produce, so a step that never runs produces none and the row
-fails closed with no help from anything. A STATIC row's credit used to be the scenario's APPEARANCE
-in a report — one fact, and a skip supplies it for free — so one hook over the whole axis used to
-leave every static row satisfied while only the measured ones redded. The repair gives the static row its
-second fact rather than making the two kinds alike. A repository whose rows are all static had
-nothing redding on its behalf at all, and now does.
+fails closed unaided. A STATIC row needs **two facts from two places** — its step's status from the
+run record, and its own existence from your manifest — because one fact alone is something a skip
+can supply for free. That is why the two kinds are not made alike: the static row is given its
+second fact instead.
 
-**That residual is CLOSED, and closing it is why `notExaminedExit` no longer exists (3F-3252).** A
-row that named its ending could still be skipped by an `if:` condition and would still be credited,
-because a step record carries a **status and no exit code** — so the declaration could only be read
-for *whether it was named*, never checked against anything. `if: false` beside a declared ending
-would have read satisfied for ever: a check switched off, green in the ledger, through the product's
-own configuration, and single-entry in the double-entry product.
+**There is no field by which a row declares its own not-examined ending, and there must not be.** A
+step record carries a **status and no exit code**, so such a declaration could only be read for
+*whether it was named*, never checked against anything — `if: false` beside a declared ending would
+read satisfied for ever: a check switched off, green in the ledger, through the product's own
+configuration, and single-entry in the double-entry product.
 
 A command that examines nothing **still runs and still ends**, so its step reads `success` or
 `failure` and is never `skipped`. A skip means a condition went false, the job was cancelled, or
@@ -319,7 +314,7 @@ somebody moved the step — never that. The field could not name what it claimed
 
 ### Two limits, stated so you do not discover them
 
-**`new-client` is Node-shaped today.** The zero-annotation state finds your checks by matching
+**`new-client` is Node-shaped.** The zero-annotation state finds your checks by matching
 `package.json` script names against observed prefixes, so a pipeline with a bare `run: ruff` and no
 `package.json` script derives nothing and its report is empty rather than useful.
 **`annotated` is not** — the `id:` carries the citation whatever the command is, in any
@@ -331,11 +326,10 @@ was not obliged on this run"* are different claims, and conflating them is exact
 hatch above — so this one gets its own name and its own second book if it is needed, never a
 self-certification.
 
-**The second residual is closed, and closing it is what an authored corpus buys.** A manifest whose
-`fitnessChecks` key is unreadable holds zero rows. While the corpus was emitted from those rows it
-emptied with them, and no rule above could see it. Authored, the corpus stands: every scenario in it
-is now one no row configures, so the ledger's census names each of them as a fitness scenario no
-configured row names.
+**An authored corpus cannot be emptied silently, and that is what authoring it buys.** A manifest
+whose `fitnessChecks` key is unreadable holds zero rows. A corpus emitted from those rows would
+empty with them, and no rule above could see it. Authored, the corpus stands: every scenario in it
+is one no row configures, and the ledger's census names each of them.
 
 ## Converting an existing check — the checklist
 
@@ -358,7 +352,7 @@ configured row names.
    the two for as long as it takes the producer to run again. **There is no atomic version of that
    change**, and the two honest routes are:
 
-   - **Expand / contract, which is what this repository did.** The reader accepts the superseded
+   - **Expand / contract.** The reader accepts the superseded
      code for one cycle. Say it on the row's own command line rather than in a manifest field —
      the only thing that has to understand it is the row's *own reader*, which is your program, not
      the reconciler, and the command line is the form a consumer can copy:
@@ -375,7 +369,7 @@ configured row names.
    - **Take the transient deliberately.** Rename both sides and accept a red window between the
      merge and the producer's next run. Honest, and announced rather than discovered.
 
-   The route this repository could *not* take is deferring the mint indefinitely. A code is stable
+   The route that is not available is deferring the mint indefinitely. A code is stable
    forever and survives a feature-file rename, so a check may keep its code while its scenario
    moves — but a migration that leaves one check in the old numbering has not migrated, it has
    stopped.
@@ -385,181 +379,3 @@ configured row names.
 7. **Prove the comparison has teeth.** A matching ledger is also what *not migrating* produces.
    Break one row's `scn` so its credit cites nothing, confirm the comparison reds, and
    restore. A comparison whose teeth are unproven is a diff that is not looking.
-
----
-
-# Appendix — the migration this repository ran
-
-*Fourteen rows, eleven of them conversions, one deletion and one new check. Written down because a
-consumer running the same migration will ask for it, and because a mapping table is the only thing
-that makes the closing ledger comparison auditable: every `@SCN` changed, so a row-for-row diff
-says nothing.*
-
-## The pair, captured before half of it was deleted
-
-At `49293a5` this repository's `features/complexity-threshold.feature` carried two scenarios five
-lines apart under one `Rule:`. One was converted; one was not. The difference between them is the
-whole design.
-
-```gherkin
-    @fitness @SCN-CPX-005
-    Scenario: every function and module measures inside the external standard, or inside its recorded exception
-      Then the check this scenario names finds no violations
-
-    @complexity @SCN-CPX-006
-    Scenario: every exception entry states the value the tree currently measures
-```
-
-The `Rule:` preamble above them said why, and it is captured here with them:
-
-> SCN-CPX-005's single sentence is not an example either — it is what the fitness pass EXECUTES,
-> the same sentence every converted check in every target carries, which is what holds the
-> step-definition count at one however many checks convert. SCN-CPX-006 has nothing to execute, a
-> CI script settles it, so it stays stepless and its bare tag is what keeps it out of the suspense
-> row as an uncited static check.
-
-**Both scenarios are about `complexity`. Both run eslint over the same tree. Neither one's subject
-changed.** What differs is entirely in how the check's Evidence Obligation is raised and how its
-Evidence Observation gets back to it.
-
-That adjacency no longer exists in the tree: `SCN-CPX-005` left when its scenario moved into the
-fitness corpus, and `SCN-CPX-006` follows it. Which is why it is written down here —
-reconstructing it from a diff afterwards reads as archaeology rather than as an example.
-
----
-
-## Reading the two halves
-
-### The UNCONVERTED half — `@complexity @SCN-CPX-006`
-
-- It carries a **characteristic tag**, `@complexity`, and **no steps**. It is *stepless*: nothing
-  in the suite executes it.
-- The check that settles it is a **CI step**, `pnpm lint:complexity-exceptions`, discovered by the
-  reconciler because its script name starts with an observed prefix (`lint:` / `guard:`) and a
-  `run:` step in the workflow file invokes it.
-- Getting from that script back to *this* scenario takes **two hops**: an entry in
-  `specController.checkRegistry` says what characteristic the handle is about and which `@SCN` its
-  run credits, and the corpus is then searched for the scenario carrying that code.
-- The evidence that the check ran is **a workflow file mentioning it**.
-
-Everything in that list is a joint, and every joint is somewhere the two halves can come apart.
-When two scenarios shared one bare `@complexity` tag, a run of *either* check posted its credit to
-whichever scenario the corpus reached first — so neither was attributable, and the runner-up
-reconciled `missing` while its check ran green.
-
-### The CONVERTED half — `@fitness @SCN-CPX-005`
-
-- It carries the **axis tag** `@fitness` and nothing about its subject.
-- It carries **no steps at all**. A fitness scenario is a characteristic and a threshold, and
-  nothing in it is executable. *(It carried one sentence while a cucumber pass bound it; that pass
-  is deleted — see the annotation route below.)*
-- Its subject lives in **data** — one row of `specController.fitnessChecks`:
-
-  ```json
-  { "scn": "SCN-CPX-005", "characteristic": "complexity", "command": "eslint" }
-  ```
-
-- **Your pipeline runs that command**, as the step it already was, carrying `id: SCN-CPX-005`.
-  **That step's entry in the run's own record IS the credit**, keyed by the code the step carried.
-- No script handle to discover, no registry entry, no corpus lookup behind either.
-
-The proof that the check ran is now *an entry in the run's own record*, which is stronger than *a
-workflow file mentions it* — and it is the enumeration the fitness checks were missing. A linter
-reports findings only, so its silence is ambiguous between *nothing was wrong* and *nothing looked*.
-A CI run reports every step it ran and what each one did.
-
----
-
-## The order it ran in, and the old → new mapping
-
-### The order, and why it is that order
-
-**Delete before you migrate.** Two checks left rather than converting — one whose subject *is* the
-report the run produces (it cannot be a row of the report it judges) and one whose whole mechanism
-this direction retires. Converting something you are about to delete is work done to be undone.
-
-**Fix the checks that answer wrongly outside CI before converting them, not after.** One check here
-was correct in CI and unanswerable on a laptop — it reads a pull-request body that does not exist
-locally. Converted first, it would have put a conditional red into every developer's green-check.
-The cure is in the check: a third answer, *nothing was examined*, distinct from both *passed* and
-*failed*, carried on an exit code the check itself uses. *(That answer was briefly opt-in per row via a
-`notExaminedExit` field; the field is gone — 3F-3252 — and a command whose subject is sometimes
-absent now absorbs it in its own CI `run:` line.)* *Do not fail on it* must not resolve to a pass — a scenario that goes green having
-examined nothing is the fault this product is named for.
-
-**Mint the codes last, and mint them all.** A code minted early is a code every later sub-issue has
-to sweep again.
-
-| # | what | shape |
-|---|---|---|
-| 1 | the CI-only check learns a third answer | new behaviour |
-| 2 | spec-controller learns to read that answer | changed behaviour |
-| 3 | ~~the third answer becomes opt-in per row (`notExaminedExit`)~~ — **later removed, 3F-3252** | changed behaviour |
-| 4 | ~~a row stating an exit of 0 or 1 for it is refused when the config is read~~ — **removed with the field** | new behaviour |
-| 5 | the generator, its drift guard, and the first two rows | refactor |
-| 6 | the eight static checks convert; their CI steps leave the workflow | refactor |
-| 7 | `typecheck` and the two run-time bars convert; the threshold key folds in and leaves | refactor |
-| 8 | the check that cannot convert is deleted, with its scenarios | deletion |
-| 9 | the reader learns to answer a row from a measurement stamped with a superseded code | changed behaviour |
-| 10 | the citation sweep, the last mint, and this page | refactor |
-| 11 | the drift guard, then the generator: the corpus becomes authored | refactor |
-
-Steps 1–4 and 9 were **not planned**. Every one was found by a sub-issue running a *plant* instead
-of accepting a green.
-
-### The old → new mapping
-
-Three further rows — the `vocab` characteristic's, converted to `SCN-FIT-004` / `-005` / `-006` —
-were retired outright when the vocabulary audit left the tree (3F-3211). Two more went the same
-way, for one reason between them: `SCN-STG-006` → `SCN-FIT-008` (the `traceability` row for `pnpm
-lint:scn-tags`, retired at 3F-3312) and `SCN-LNT-011` → `SCN-FIT-007` (the `traceability` row for
-`pnpm lint:feature-codes`, retired at 3F-3313) — each a private copy of rules that now ship as
-`spec-controller tags`, and so a second thing to run. The conversions they document still
-happened; there is simply nothing left on either side of them to map.
-
-| old `@SCN` | characteristic | command on the row today | new `@SCN` |
-|---|---|---|---|
-| `SCN-CPX-005` | complexity | `eslint` | `SCN-FIT-001` |
-| `SCN-MUT-011` | mutation | `pnpm --silent mutation:score --supersedes SCN-MUT-011` · `atLeast` | `SCN-FIT-002` |
-| `SCN-CPX-006` | complexity | `pnpm lint:complexity-exceptions` | `SCN-FIT-003` |
-| `SCN-ANM-002` | tech-conformance | `pnpm lint:anemic-domain` | `SCN-FIT-009` |
-| `SCN-SSM-009` | traceability | `pnpm lint:scn-subissues` | `SCN-FIT-010` |
-| `SCN-API-003` | typecheck | `pnpm typecheck` | `SCN-FIT-011` |
-| `SCN-CIP-013` | ci-run-time | `pnpm --silent timing:score --scn SCN-FIT-012` · `atMost: 75` | `SCN-FIT-012` |
-| `SCN-CIP-014` | ci-run-time | `pnpm --silent timing:score --scn SCN-FIT-013` · `atMost: 150` | `SCN-FIT-013` |
-| `SCN-CHR-005` | — | **deleted, not converted** | — |
-
-**Three rows carry a bar, and the direction is per-row rather than per-characteristic.** A mutation
-score is a floor (`atLeast`); a run time is a ceiling (`atMost`). Both live in the same repository
-and a blanket word in a table was wrong about one of them — which is the reason a row states its
-own direction rather than the engine holding a roster of which characteristics are floors.
-
-**`SCN-FIT-002` is the tenth scenario in the corpus, not the second.** Its row was authored last.
-The code was chosen when the check was added and never derived from anything's position, so seating
-it did not renumber anything — which is the whole point of a stable identifier, visible in the
-artefact rather than asserted about it.
-
-### The sweep, and the trap inside it
-
-A minted `@SCN` changes every surface that names the old one, and the grep that closes the sweep is
-one grep over the whole tree rather than one per conversion — the citation this catches is the one
-surviving in a surface no individual conversion looked at.
-
-**Classify every hit; never substitute blindly.** This repository's own sweep was 224 occurrences
-of `SCN-FIT-001/002/003` across 24 files, and only 19 of them were the real codes. The rest were
-**fixture ids** — planted corpora built as strings inside step definitions, and quoted step
-arguments inside a feature file — which had spelled `SCN-FIT-00n` since long before the migration
-minted those codes for real. Nothing caught the collision, and nothing could: a fixture id lives in
-a string, and the tag lints read tag lines.
-
-**Move fixture ids out of any range a target can mint.** Ours now spell `SCN-AAA-nnn`, and `AAA` is
-kept out of the feature-code registry so it can never become a real code. Do this *before* the
-mint, not after: a sweep run while the two meanings share a spelling has to be re-run.
-
-**And grep for reads of the artefact, not only for the names.** A citation is one shape; code that
-depends on the *shape* of a file is another, and a name-grep cannot see it. Eleven test arms here
-pinned *this repository runs a discovered static check* without naming any converted code, and a
-docblock claimed a test reconciled against the real workflow file long after its inputs had become
-planted. The durable way to size that half of the sweep is to **run the suite, not read for it**.
-
----

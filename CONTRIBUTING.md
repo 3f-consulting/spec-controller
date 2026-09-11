@@ -61,15 +61,14 @@ list with a list inside the script, which then drifted the same way: `lint:anemi
 arrived with a CI step and no gate line, leaving `pnpm verify` a proper subset of CI for four
 commits. A hand-maintained list drifts wherever it is kept; a derivation has nothing to keep.
 
-**Every converted check is a CI step again, carrying its `@SCN` as the step's `id:`.** Most of the
-`lint:` steps left `ci.yml` at 3F-3165 and `typecheck` followed at 3F-3166, into a cucumber fitness
-pass; 3F-3271 gave each of the twelve rows its own step and 3F-3272 deleted the pass. A converted
-check is therefore both a row of `specController.fitnessChecks` and a `run:` step whose `id:` cites
-that row — the command in the pipeline, the obligation in the scenario, the observation in the
-run's own record of what its steps did. The one check DELETED rather than converted was
-`lint:check-characteristics` (3F-3167): it held the words a manifest names to the portfolio roster,
-and the collapse to one `@fitness` tag makes a characteristic a label on a row rather than a token
-the parser reads.
+**Every converted check is a CI step, carrying its `@SCN` as the step's `id:`.** A converted check
+is both a row of `specController.fitnessChecks` and a `run:` step whose `id:` cites that row — the
+command in the pipeline, the obligation in the scenario, the observation in the run's own record of
+what its steps did. Three artefacts, three authors, none derived from another.
+
+**A check that only held our vocabulary is deleted rather than converted.** With one `@fitness` tag,
+a characteristic is a label on a row rather than a token the parser reads, so a check policing which
+characteristic words a manifest may name has nothing left to police.
 
 **What `pnpm verify` leaves out, it prints** — the step and the reason, every run, rather
 than in prose somebody has to keep true. **Today it leaves out nothing**, and the closing line
@@ -106,9 +105,9 @@ banked kill floor.
 A mutation sweep costs 8-12 minutes on CI, so it runs nightly
 (`.github/workflows/mutation.yml`) and leaves what it measured as a SWEEP RECORD; CI borrows
 that record into `runs/mutation/measurements.json` while it is still young enough to be about
-the code being judged. A score older than 36 hours is not placed at all — the command then has
-nothing to print, its own step reds and the self-reconciliation reds on the row, which reads
-`missing`.
+the code being judged. **The window is the producer's cadence plus a margin — 24 h + 2 h = 26 h**
+for a nightly. Past it nothing is placed at all: the command then has nothing to print, its own
+step reds and the self-reconciliation reds on the row, which reads `missing`.
 That is how a nightly that stops running says so.
 
 On your machine there is nothing to borrow, so run the sweep once:
@@ -121,10 +120,11 @@ That is ~45 seconds locally and writes the sweep record, so `pnpm --silent mutat
 number to print. Skipping it fails that command and leaves the self-reconciliation reporting the row as
 `missing` — the true sentence rather than a false red: no measurement arrived.
 
-**A LOCAL SELF-RECONCILIATION REPORTS EVERY FITNESS ROW AS `missing`, AND THAT IS THE DESIGN RATHER THAN
-A FAULT (3F-3272).** The fitness axis's credit journal is the CI run's own record of what each of
-its steps did, dumped by an `if: always()` step of `ci.yml`. Your machine runs no pipeline, so
-the self-reconciliation is handed no record, nothing is raised for the ten rows, and each reconciles
+**A LOCAL SELF-RECONCILIATION REPORTS EVERY FITNESS ROW AS `missing`, AND THAT IS THE DESIGN RATHER
+THAN A FAULT.** A local run cannot settle a fitness row — only CI produces a step record. The
+fitness axis's credit journal is the CI run's own record of what each of its steps did, dumped by an
+`if: always()` step of `ci.yml`. Your machine runs no pipeline, so the self-reconciliation is handed
+no record, nothing is raised for any configured row, and each reconciles
 `missing` — out of balance at exit 1, and NOT unsound: a run handed no record of itself is a
 different fact from a run whose record carried nothing. **The checks themselves still run locally**
 — every one of them is a gate of `pnpm ladder` or a command you can type — and their teeth are their
@@ -140,17 +140,22 @@ when you report the result.**
 
 ## The report's `### Static checks` line, and which of its zeros is vacuous
 
-`0 uncited static check(s)` over this tree means **the discoverable set is empty**, not that a
-populated one came back clean. Every fitness command left `ci.yml` at 3F-3139, so there is no
-`lint:`/`guard:` script for a `run:` step to invoke and `runningStaticChecks` observes nothing.
-The number beside it is not vacuous and is not produced by the same mechanism: `11 static check(s)
-run` counts the credits the **converted rows** post — eleven of the fourteen, the other three being
-measured and so not static checks.
+**`0 uncited static check(s)` has two readings and they are not the same claim.** Over a
+**populated** discoverable set it means every discovered check cites a scenario — a zero the axis
+reached. Over an **empty** set it means nothing was discoverable — a zero it inherited. A capability
+exercised by nothing and reporting green is the fault this product is named for, so read the
+denominator, never the zero: `0 uncited out of N discovered` is the sentence that distinguishes
+them.
 
-A capability exercised by nothing and reporting green is the fault this product is named for, and
-it is ours until [3F-3161](3F-3161) retires script discovery
-altogether — sequenced after the consumer still routing credits through it has migrated. Stated
-here, in `features/uncited-static-checks.feature`, and in
+The discoverable set is whatever `lint:`/`guard:`-prefixed script a `run:` step of `ci.yml`
+invokes; each such step carries its row's `@SCN` as its `id:`, so a discovered check that cites
+nothing is the only thing the count is reporting. The number beside it is produced by a different
+mechanism and is not vacuous: it counts the credits the static rows post, the measured rows being
+answered by a number rather than by an exit code.
+
+Script discovery is itself a compatibility mechanism, retired by
+[3F-3161](3F-3161) once the consumer still routing credits
+through it has migrated. Stated here, in `features/uncited-static-checks.feature`, and in
 [`doc/converting-a-fitness-check.md`](./doc/converting-a-fitness-check.md), so a reader who meets
 the zero is not left to infer which one it is.
 

@@ -97,7 +97,7 @@ The worked before/after, the migration checklist, and the traps:
 ### Two limits, stated so you do not discover them
 
 **The zero-annotation state is Node-shaped.** Reconciling a pipeline you have not annotated at all
-still finds the checks it can, by matching `package.json` script names against observed prefixes —
+finds the checks it can, by matching `package.json` script names against observed prefixes —
 so a pipeline with a bare `run: ruff` and no `package.json` script derives nothing, and its report
 is empty rather than wrong. **Annotating the steps has no such shape**: an `id:` is a key of the
 step mapping, the command below it is any command in any language, and nothing in the resolution
@@ -105,7 +105,7 @@ reads a manifest.
 
 **A check that legitimately applies to only some platforms is not served.** A matrix build uses
 `if:` to skip such a step, and that skip reds. *"The command examined nothing"* and *"this row was
-not obliged on this run"* are different claims, and only the first is modelled today.
+not obliged on this run"* are different claims, and only the first is modelled.
 
 
 ---
