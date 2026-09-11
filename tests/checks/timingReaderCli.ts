@@ -6,7 +6,7 @@
  *
  * `mutationScoreReaderCli`'S SIBLING, AND DELIBERATELY THE SAME SHAPE. The two differ in one fact —
  * which record they read — because their producers run on different cadences and nothing else about
- * them differs at all. A sweep record is written by a nightly hours ago and borrowed in; a timings
+ * them differs at all. A sweep record is written by a nightly hours ago and placed in; a timings
  * record is written by the two suites this job has already run. Both are `(@SCN, check) → number`,
  * read back through the artefact's own row reader, and both print the number alone.
  *

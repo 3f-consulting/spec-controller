@@ -312,23 +312,23 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
 
     AND THE KILLS SETTLING IT ARE LAST NIGHT'S, WHICH IS WRITTEN DOWN RATHER THAN GLOSSED OVER. The
     sweep costs 8-12 minutes against a 2-minute ladder, so it runs on a schedule and leaves what it
-    measured behind as a SWEEP RECORD; this push borrows that record while the run which produced
+    measured behind as a SWEEP RECORD; this push places that record while the run which produced
     it is still young enough for its number to be about this code, and the row's command prints the
     number the record holds. Past that window nothing is placed, the command has nothing to print,
     the scenario fails and the row reads missing — the same reading a schedule that quietly stopped
     running produces, now said in two places rather than one.
 
     THE RECORD IS NOT THE CREDIT STREAM, AND KEEPING THEM APART IS WHAT THE CONVERSION FORCED. A
-    borrowed number is not a credit this run produced; under conversion the row's own command posts
-    the credit, so a borrowed row sitting in `runs/self-balance/measurements.json` would be a second
-    credit for one Evidence Obligation. The sweep writes `runs/mutation/measurements.json`, the
-    borrow places it there, and the one credit crosses into the run's own stream when the row's
+    placed number is not a credit this run produced; under conversion the row's own command posts
+    the credit, so a placed row sitting in `measurements.json` would be a second
+    credit for one Evidence Obligation. The sweep writes `mutation-measurements.json`, the
+    placement puts it there, and the one credit crosses into the run's own stream when the row's
     step reads it and writes the number down.
 
-  Rule: the measurement a push borrows is the newest sweep's, whatever verdict that sweep reached
+  Rule: the measurement a push places is the newest sweep's, whatever verdict that sweep reached
 
-    THE RUN THAT FOUND THE FAULT WAS THE ONE RUN NOTHING BORROWED FROM (3F-2947). The nightly ends
-    on the ratchet's verdict, so a night that loses a kill concludes `failure` — and the borrow asked
+    THE RUN THAT FOUND THE FAULT WAS THE ONE RUN NOTHING PLACED FROM (3F-2947). The nightly ends
+    on the ratchet's verdict, so a night that loses a kill concludes `failure` — and the placement asked
     for the newest SUCCESSFUL run, which is every night but that one. Inside the freshness window it
     therefore reached back to the last GREEN nightly, placed ITS number, and SCN-FIT-002 reconciled
     satisfied: for up to thirty-six hours the ladder went green over a regression the sweep had
@@ -341,7 +341,7 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     THE ARTEFACT IS THE EVIDENCE; THE CONCLUSION IS ABOUT THE GATE. A run's conclusion answers
     whether the nightly's own verdict passed, and that is not what the ledger is asking — it is
     asking what this tree's domain core killed. Two questions, one of them the ledger's, so the
-    borrow stops reading the answer to the other. It selects on COMPLETION rather than on
+    placement stops reading the answer to the other. It selects on COMPLETION rather than on
     conclusion: a sweep still running has nothing to hand over yet, and a sweep that finished has,
     whatever the verdict that followed it said.
 
@@ -353,7 +353,7 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     and defends it for the OPERATOR'S REPORT; the ledger's measurement now depends on it too, so it is
     held here rather than in a comment.
 
-    AND THE BORROW IS STILL NOT AN ARBITER, which is the part this leaves exactly as it was. Every
+    AND THE PLACEMENT IS STILL NOT AN ARBITER, which is the part this leaves exactly as it was. Every
     branch of it places nothing, says why on stderr, and exits 0; the verdict on a low number is the
     ledger's, reached by the same comparison as every other verdict on this axis (@SCN-MUT-005).
     What moves is WHICH run's number crosses the boundary, never who judges it once it has.
@@ -383,18 +383,18 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     `set -u` is kept: an unbound expansion exits 127 whatever errexit says, so nounset is a route by
     which this step can still red. That red says THIS SCRIPT IS BROKEN rather than YOUR CODE LOST A
     KILL — a different sentence, sent to a different place, and the one you want. Dropping `-u` to
-    close it would buy `cp "" runs/mutation/measurements.json`: a silent wrong placement, which
+    close it would buy `cp "" mutation-measurements.json`: a silent wrong placement, which
     is the fail-open shape this whole Rule exists to remove. So the claim below is about the
-    failures the borrow meets IN DOING ITS JOB, and it holds the exception as a term it asserts
+    failures the placement meets IN DOING ITS JOB, and it holds the exception as a term it asserts
     rather than leaving it an unstated residual — which is how the sentence it replaces went false.
     That sentence pinned only that the script holds no `set -e`: true of the defect and of the fix
     alike, which is how a wrong comment acquired a green tick.
 
-  Rule: the measurement a push borrows was taken on the branch this ladder gates, whatever branch a hand-dispatch reached for
+  Rule: the measurement a push places was taken on the branch this ladder gates, whatever branch a hand-dispatch reached for
 
     THE SELECTION IS A CHAIN OF PROXIES, AND THIS IS THE ONE THAT WAS MISSING (3F-2955). What the
     ledger is asking is whether the number it settles SCN-FIT-002 with was measured about the tree
-    it is judging, and no run says so outright — so the borrow narrows on the facts that stand in
+    it is judging, and no run says so outright — so the placement narrows on the facts that stand in
     for it: the right workflow, a run that FINISHED (@SCN-MUT-015), a number still inside the 36h
     window. It never narrowed on the LINE. `mutation.yml` enables `workflow_dispatch`, so a sweep
     hand-dispatched on a feature branch entered that list and, being newest, won it — and its
@@ -403,7 +403,7 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     window, none distinguishable downstream from the nightly they displaced.
 
     AND IT FAILS OPEN, WHICH IS WHY IT IS THIS AXIS'S FAULT RATHER THAN AN UNTIDINESS. A branch
-    that ADDS tests sweeps to a higher kill count. Borrowed onto main that number reconciles
+    that ADDS tests sweeps to a higher kill count. Placed onto main that number reconciles
     `satisfied` over a main whose own kills had fallen — a regression masked by a measurement about
     a different line, which is the fault @SCN-MUT-015 closes arriving by the other road. The two
     are one defect wearing two faces: a number crossing this boundary that is not about the tree
@@ -445,17 +445,17 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     stops at which branch the run was taken on and does not go on to say the number is about the
     tree this build is judging, which is true of a push and false of a pull request.
 
-    AND THE BORROW IS STILL NOT AN ARBITER. Nothing here adds a path that reds: the narrowed
+    AND THE PLACEMENT IS STILL NOT AN ARBITER. Nothing here adds a path that reds: the narrowed
     selection either finds a run or finds none, and finding none is the branch that already places
     nothing, says why on stderr, and exits 0. What moves is WHICH run's number crosses the
     boundary, never who judges it once it has.
 
-  Rule: the borrow says only what it did — the one sentence claiming a placement stands inside the path that made it
+  Rule: the placement says only what it did — the one sentence claiming a placement stands inside the path that made it
 
     THE ONE PATH THAT SAID SOMETHING FALSE (3F-2962). Every branch of this step places nothing and
     says why on stderr; the stretch after the last of them places the file and then asserts the
     placement as fact. Under the cleared errexit (@SCN-MUT-015, 3F-2960) a failing `mkdir` or `cp`
-    no longer stops the script, so that sentence runs anyway — "borrow: placed mutation-measurement
+    no longer stops the script, so that sentence runs anyway — "place: placed mutation-measurement
     from run 33379199321 of mutation.yml, measured 27000s ago, inside the 129600s window:" — the
     `jq` beneath it fails against a file that is not there, and the terminal `exit 0` reports
     success. SCN-FIT-002 then reads `missing`, and `missing` is the sentence this repository
@@ -505,7 +505,7 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     runner's, it reports itself on stderr, and it asserts nothing. Guarding it would be symmetry
     rather than a reason.
 
-    AND THE BORROW IS STILL NOT AN ARBITER. The added branch places nothing, says why on stderr, and
+    AND THE PLACEMENT IS STILL NOT AN ARBITER. The added branch places nothing, says why on stderr, and
     exits 0, like every branch above it. `set +e` stays first, `set -u` stays on, `exit 0` stays
     last. What moves is what the step SAYS on one path, never whether it reds on any.
 
@@ -554,12 +554,12 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
         | SCN-FIT-002 | states that it supersedes "SCN-MUT-011" | answers with the number that measurement holds |
         | SCN-LNT-001 | states that it supersedes "SCN-MUT-011" | refuses, naming the row it could not find      |
 
-  Rule: the measurement a push borrows is young enough to be about the code it will settle
+  Rule: the measurement a push places is young enough to be about the code it will settle
 
     THE WINDOW HAD NO WITNESS, AND NOTHING IN THIS REPOSITORY WOULD HAVE NOTICED IT GO (3F-3156).
     Thirty-six hours is the single thing standing between a lapsed nightly and a satisfied row: the
     reader prints whatever number it finds and holds no clock of its own, by the ruling that retired
-    the payload's `measuredAt` (@SCN-MUT-019, 3F-2841). Delete the age comparison in the borrow and
+    the payload's `measuredAt` (@SCN-MUT-019, 3F-2841). Delete the age comparison in the placement and
     every static check in this tree stays green, every scenario above this Rule stays green, and a
     number measured on a tree three weeks old settles SCN-FIT-002 satisfied. That is a watermelon by
     this product's own meaning of the word, inside the product named for finding them.
@@ -567,11 +567,11 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     IT HAD ONE ONCE, AND THE WITNESS DID NOT MOVE WHEN THE MECHANISM DID. Two scenarios held this
     axis — a measurement inside its window is posted, one older than its window is not — and both
     were deleted when the reader they were written against was retired (3F-2855, 3F-2856). The
-    window itself moved into the borrow and arrived with nothing asking for it. The tell is still in
+    window itself moved into the placement and arrived with nothing asking for it. The tell is still in
     this file: the Rule above narrates "a number still inside the 36h window" as an aside, which is
     what a fact looks like after it has stopped being checked and gone on being true.
 
-    SO THE ARM RUNS THE BORROW RATHER THAN READING IT, WHICH IS THE WHOLE OF THE DIFFERENCE HERE.
+    SO THE ARM RUNS THE PLACEMENT RATHER THAN READING IT, WHICH IS THE WHOLE OF THE DIFFERENCE HERE.
     Every other arm over this step reads its text: which run it selects, on which line, what it says
     once it has chosen. A text assertion cannot tell a window that FIRES from a window whose
     arithmetic is broken on the runner it runs on — and reading a mechanism's behaviour off its

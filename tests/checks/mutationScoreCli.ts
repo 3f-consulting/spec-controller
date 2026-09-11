@@ -10,7 +10,7 @@
  * the one shape `balance --measurements` reads, and both carry the wrapped command's exit code out
  * unchanged. What is genuinely different is where the number comes from — and, since 3F-3152,
  * which FILE it lands in: a timed step measures the run it is part of and credits it, a sweep on
- * its own cadence leaves a record for a later run to borrow.
+ * its own cadence leaves a record for a later run to place.
  *
  * THE CITATION IS AN ARGUMENT, NOT A LOOKUP. A static check's credit resolves its `@SCN` over two
  * hops from a script handle; a measurement has no handle to resolve, so canon puts the
@@ -27,7 +27,7 @@
  * IT WRITES A SWEEP RECORD, NOT THIS RUN'S CREDIT STREAM (3F-3152). A sweep on its own cadence is
  * not measuring the tree the run reading it is judging — that gap is the whole reason the number
  * has to cross a run boundary — so what it leaves behind is a RECORD of what it measured, at
- * `SWEEP_RECORD_PATH`, and a push borrows it there. Under a CONVERTED mutation check the credit is
+ * `SWEEP_RECORD_PATH`, and a push places it there. Under a CONVERTED mutation check the credit is
  * posted by the row's own command from the number this record holds, so a row written straight into
  * the credit stream would be a second credit for one Evidence Obligation. The shape of the file and
  * every rule about writing into it are unchanged; only which question it answers is.

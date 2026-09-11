@@ -72,7 +72,7 @@ set -euo pipefail
 # everything the ladder runs, whichever side of the boundary it is on. A caller who has already
 # chosen one keeps it.
 verify_temp="${TMPDIR:-/tmp}"
-export SPEC_CONTROLLER_EVIDENCE_DIR="${SPEC_CONTROLLER_EVIDENCE_DIR:-${verify_temp%/}/spec-controller-self-balance}"
+export SPEC_CONTROLLER_EVIDENCE_DIR="${SPEC_CONTROLLER_EVIDENCE_DIR:-${verify_temp%/}/spec-controller-evidence}"
 
 list_only=false
 if [[ "${1:-}" == "--list" ]]; then

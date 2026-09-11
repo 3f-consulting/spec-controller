@@ -125,7 +125,7 @@ export interface MeasurementArtefact {
  *   scenario rather than the six an always-on `--evidence` flag would have touched.
  *
  *   `SPEC_CONTROLLER_EVIDENCE_DIR` — the environment's answer for a run that named no target: a
- *   CI job placing every stream on the runner's own disk, where the borrow step and the read step
+ *   CI job placing every stream on the runner's own disk, where the placement step and the read step
  *   share one filesystem, and `scripts/verify.sh` doing the same locally.
  *
  *   NEITHER — a temporary directory. `$RUNNER_TEMP` on a runner, `$TMPDIR` locally, and the
@@ -151,8 +151,8 @@ export interface MeasurementArtefact {
  * path — back inside the working tree, silently, which is the defect this exists to close.
  *
  * THE RESIDUAL, NAMED RATHER THAN ENGINEERED AWAY. `ci.yml` states exactly one job, so the
- * borrow step and the read step share a runner filesystem and `$RUNNER_TEMP` reaches both. Split
- * that workflow in two and nothing reds: the borrow's measurement simply stops reaching the read,
+ * placement step and the read step share a runner filesystem and `$RUNNER_TEMP` reaches both. Split
+ * that workflow in two and nothing reds: the placement's measurement simply stops reaching the read,
  * and the ledger reports it in the vocabulary of a lapsed nightly sweep. A check on the workflow's
  * SHAPE would be exactly the control surface 3F-3099 argues against adding.
  */
@@ -172,44 +172,63 @@ export function resolveEvidenceRoot(
   const overridden = named(env["SPEC_CONTROLLER_EVIDENCE_DIR"]);
   if (overridden !== undefined) return overridden;
   const temp = named(env["RUNNER_TEMP"]) ?? named(env["TMPDIR"]) ?? tmpdir();
-  return path.join(temp, "spec-controller-self-balance");
+  return path.join(temp, "spec-controller-evidence");
 }
 
 /**
  * Where a run posts its measurements, relative to the EVIDENCE ROOT above.
  *
  * RELATIVE TO THE EVIDENCE ROOT AND NOT TO A REPOSITORY ROOT, WHICH IS THE WHOLE OF 3F-3099'S
- * CHANGE HERE. The string is unchanged, so a target named by `--root` carries its evidence exactly
- * where it always did; what moved is the base a run with NO root named resolves against, which is
- * a temporary directory rather than the working tree.
+ * CHANGE HERE. What moved then was the base a run with NO root named resolves against — a
+ * temporary directory rather than the working tree.
+ *
+ * AND IT IS A BARE FILENAME, BECAUSE THE ROOT IS ALREADY THE ANSWER (3F-3320). This used to be
+ * `runs/self-balance/measurements.json`: a directory named after a wrapper that no longer exists,
+ * inside a `runs/` that never had a sibling, inside a directory already called evidence. Every
+ * path here goes through the evidence root, so a subtree under it distinguished nothing — and the
+ * exemplar taught each of those levels to every consumer who copied the worked step.
+ *
+ * THE DIRECTORIES ONLY EVER EXISTED TO KEEP THREE FILENAMES APART. This path, `SWEEP_RECORD_PATH`
+ * and `TIMINGS_RECORD_PATH` all ended `measurements.json`, so flattening collided and a folder was
+ * put in to separate them. That is a filename problem wearing a directory's clothes; the other two
+ * are now qualified by their producer and the folders have no work left to do.
+ *
+ * THIS ONE STAYS BARE ON PURPOSE. The other two are named for who WROTE them; this file has no
+ * producer — it is what the reader CLIs post into — and `balance --measurements` points straight
+ * at it, so the flag and the filename agree. (`posted-measurements.json` was considered, naming
+ * what actually distinguishes it — raw versus posted — at the cost of that agreement. Not taken.)
  */
-export const MEASUREMENT_ARTEFACT_PATH = "runs/self-balance/measurements.json";
+export const MEASUREMENT_ARTEFACT_PATH = "measurements.json";
 
 /**
- * Where a sweep that runs on its OWN CADENCE leaves what it measured, relative to a repository
- * root — a SWEEP RECORD, and not this run's credit stream (3F-3152).
+ * Where a sweep that runs on its OWN CADENCE leaves what it measured, relative to the EVIDENCE
+ * ROOT — a SWEEP RECORD, and not this run's credit stream (3F-3152).
  *
  * THE TWO FILES ANSWER TWO DIFFERENT QUESTIONS, WHICH IS WHY THEY ARE TWO FILES. The path above is
  * what THIS run credited: every row in it was produced by a producer of this run, and the ledger
  * reads it as such. A nightly's number is not that — it was measured about a tree by a run that
- * finished hours ago, and a push borrows it. While the borrow landed in the credit stream the two
+ * finished hours ago, and a push places it. While the placement landed in the credit stream the two
  * readings were one file, and under a CONVERTED mutation check that becomes a live double count:
- * the row's own command posts the credit, so a borrowed row sitting beside it would be a second
+ * the row's own command posts the credit, so a placed row sitting beside it would be a second
  * credit for one Evidence Obligation.
  *
- * SO THE BORROWED NUMBER LANDS HERE AND IS READ FROM HERE. The nightly writes this file, uploads
+ * SO THE PLACED NUMBER LANDS HERE AND IS READ FROM HERE. The nightly writes this file, uploads
  * it, the push places it back at this path, and the converted check's command prints the row's
  * number, and writes it into the credit stream as the one credit this run produced. Same shape,
  * same reader, different question.
  *
- * Beneath the EVIDENCE ROOT, like the path above and for the same reason — a SECOND subtree under
- * it, because the two files answer two different questions and one base holding both is what keeps
- * them one fact for the borrow, the upload and the reader to chase.
+ * AT THE EVIDENCE ROOT, LIKE THE PATH ABOVE, AND TOLD APART BY ITS NAME RATHER THAN BY A FOLDER
+ * (3F-3320). The separation from the credit stream is the load-bearing thing here, and flattening
+ * makes it STRONGER, not weaker: it used to be implicit in a directory two levels down, and it is
+ * now explicit in the filename. `mutation-measurements.json` cannot be mistaken for the
+ * `measurements.json` that `balance --measurements` reads, by anything — a reader, a `find`, or a
+ * person. One base still holds both, which is what keeps them one fact for the placement, the
+ * upload and the reader to chase.
  */
-export const SWEEP_RECORD_PATH = "runs/mutation/measurements.json";
+export const SWEEP_RECORD_PATH = "mutation-measurements.json";
 
 /**
- * Where THIS run's timed steps leave what they measured, relative to a repository root — a TIMINGS
+ * Where THIS run's timed steps leave what they measured, relative to the EVIDENCE ROOT — a TIMINGS
  * RECORD, and not this run's credit stream either (3F-3166).
  *
  * THE SAME SPLIT `SWEEP_RECORD_PATH` MAKES, FOR THE SAME REASON, AND IT ARRIVED WITH THE SAME
@@ -229,9 +248,10 @@ export const SWEEP_RECORD_PATH = "runs/mutation/measurements.json";
  * BOTH TIMED STEPS SHARE IT, which is why the merge rule above still matters here. A run has as many
  * timed steps as it has timed suites, and each owns its own row.
  *
- * Beneath the EVIDENCE ROOT, like the two paths above and for the reason stated there.
+ * AT THE EVIDENCE ROOT, like the two paths above, qualified by its producer for the reason stated
+ * there (3F-3320).
  */
-export const TIMINGS_RECORD_PATH = "runs/timings/measurements.json";
+export const TIMINGS_RECORD_PATH = "timings-measurements.json";
 
 /** Whether two rows answer the same thing — the @SCN naming the row and the check tag on it. */
 function isTheSameRowAs(row: Measurement, measurement: Measurement): boolean {

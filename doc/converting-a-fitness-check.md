@@ -99,8 +99,8 @@ the day the pass is deleted.
         env:
           STEPS_JSON: ${{ toJSON(steps) }}
         run: |
-          mkdir -p "$SPEC_CONTROLLER_EVIDENCE_DIR/runs/self-balance"
-          printf '%s' "$STEPS_JSON" > "$SPEC_CONTROLLER_EVIDENCE_DIR/runs/self-balance/ci-steps.json"
+          mkdir -p "$SPEC_CONTROLLER_EVIDENCE_DIR"
+          printf '%s' "$STEPS_JSON" > "$SPEC_CONTROLLER_EVIDENCE_DIR/ci-steps.json"
 ```
 
 **Only a step carrying an `id:` is in the `steps` context at all.** That is GitHub's rule rather
@@ -196,7 +196,7 @@ reds: you debug it by running it, not by reading a report about it.
 | row | what its command reads |
 | -- | -- |
 | `SCN-FIT-012` / `SCN-FIT-013` | a suite timing placed by the run that measured it |
-| `SCN-FIT-002` | the record borrowed from the nightly mutation sweep |
+| `SCN-FIT-002` | the record placed from the nightly mutation sweep |
 
 **A measurement is read only if THIS RUN placed it, and the placement decides freshness before
 placing.** The mechanism is **absence, not a timestamp**: past the window nothing is placed, the
@@ -215,7 +215,7 @@ measurement valid.
 | row | why it cannot be run cold |
 |---|---|
 | `SCN-FIT-012` / `SCN-FIT-013` | `timing:score` reads a measurement the behavioural suite wrote **earlier in the same run** |
-| `SCN-FIT-002` | `mutation:score` reads the record borrowed from the **nightly sweep**, and only while it is inside its window |
+| `SCN-FIT-002` | `mutation:score` reads the record placed from the **nightly sweep**, and only while it is inside its window |
 
 The first two are why their steps run behind their producers, and they are one shape at two
 cadences: evidence
@@ -238,7 +238,7 @@ migration should take away.
 ## Two things that are easy to get wrong
 
 **1. A reader-shaped check's step is answered by placement, not by position.** Some rows read what
-another step produced: a mutation sweep's borrowed record, a suite's own timing. If nothing placed a
+another step produced: a mutation sweep's placed record, a suite's own timing. If nothing placed a
 measurement for this run, the row reads `missing` and says so — whatever order the steps ran in.
 Putting such a step ahead of its producer therefore fails loudly rather than silently, which is the
 design and not a hazard to route around.

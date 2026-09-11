@@ -21,8 +21,8 @@ pipeline it came from is worse than no recipe.
 **Where a converted check differs, and why it is not in the recipe.** Under conversion the
 characteristic, the command and the bar live in one row of `specController.fitnessChecks`, and the
 credit comes from the **step's own entry in the run record** — `balance` runs nothing. The nightly
-then leaves its **sweep record** under `runs/mutation/` of the evidence root and the borrow places
-it there, apart from the credit stream: a borrowed row sitting in `runs/self-balance/` would be a
+then leaves its **sweep record** as `mutation-measurements.json` in the evidence root and the placement puts
+it there, apart from the credit stream: a placed row sitting in `measurements.json` would be a
 second credit for one evidence obligation. Nothing below depends on that. The recipe as written is
 what an **unconverted** measured check needs, and it stays correct for a target that has not
 converted.
@@ -59,7 +59,7 @@ Resolve it in a **step**, not a job-level `env:` key: `jobs.<id>.env` cannot rea
 the `runner` context, so a workflow naming `${{ runner.temp }}` there fails to
 start. `$RUNNER_TEMP` is an ordinary variable inside a `run:` shell. The value
 survives between steps because it is **one job** — one job is one runner
-filesystem. Split the job in two and nothing reds: the borrow's measurement stops
+filesystem. Split the job in two and nothing reds: the placement's measurement stops
 reaching the read, and the row reports `missing`, wearing the words a lapsed
 schedule wears.
 
@@ -93,7 +93,7 @@ the reason this step comes **first** in the job is in
 [*Ordering*](#ordering--the-fetch-runs-before-your-own-producers).
 
 ```yaml
-- name: Borrow the scheduled check's measurement
+- name: Place the scheduled check's measurement
   env:
     GH_TOKEN: ${{ github.token }}
     # The three terms that are the whole contract with the schedule: which
@@ -111,20 +111,20 @@ the reason this step comes **first** in the job is in
     # Downloaded to a scratch directory of its own, never straight to the path
     # the reconciliation reads: nothing reaches the evidence root until it has
     # been read and found to be a measurement.
-    into="${RUNNER_TEMP}/borrowed-measurement"
+    into="${RUNNER_TEMP}/placed-measurement"
     rm -rf "${into}"
     mkdir -p "${into}"
 
     if ! latest="$(gh run list --workflow "${WORKFLOW}" --status success \
       --limit 1 --json databaseId,createdAt)"; then
-      echo "borrow: could not list runs of ${WORKFLOW}; nothing is placed." >&2
+      echo "place: could not list runs of ${WORKFLOW}; nothing is placed." >&2
       exit 0
     fi
 
     id="$(printf '%s' "${latest}" | jq -r '.[0].databaseId // empty')"
     when="$(printf '%s' "${latest}" | jq -r '.[0].createdAt // empty')"
     if [ -z "${id}" ] || [ -z "${when}" ]; then
-      echo "borrow: ${WORKFLOW} names no successful run carrying both an id and a createdAt; nothing is placed." >&2
+      echo "place: ${WORKFLOW} names no successful run carrying both an id and a createdAt; nothing is placed." >&2
       exit 0
     fi
 
@@ -132,7 +132,7 @@ the reason this step comes **first** in the job is in
     # subtraction below would produce a number anyway, and the window comparison
     # would pass on it.
     if ! measured_at="$(date -u -d "${when}" +%s 2>/dev/null)"; then
-      echo "borrow: run ${id} reports createdAt ${when}, which is not a moment this runner can read; nothing is placed." >&2
+      echo "place: run ${id} reports createdAt ${when}, which is not a moment this runner can read; nothing is placed." >&2
       exit 0
     fi
     age=$(( $(date -u +%s) - measured_at ))
@@ -140,17 +140,17 @@ the reason this step comes **first** in the job is in
     # A run dated in the future is a clock nobody can reason about, and it is the
     # one arithmetic that would otherwise pass every window there is.
     if [ "${age}" -lt 0 ]; then
-      echo "borrow: run ${id} is dated ${age#-}s in the future; nothing is placed." >&2
+      echo "place: run ${id} is dated ${age#-}s in the future; nothing is placed." >&2
       exit 0
     fi
 
     if [ "${age}" -gt "${MAX_AGE}" ]; then
-      echo "borrow: run ${id} measured ${age}s ago, past the ${MAX_AGE}s window; nothing is placed. The row will read missing, which is the true sentence: the schedule has lapsed." >&2
+      echo "place: run ${id} measured ${age}s ago, past the ${MAX_AGE}s window; nothing is placed. The row will read missing, which is the true sentence: the schedule has lapsed." >&2
       exit 0
     fi
 
     if ! gh run download "${id}" --name "${ARTEFACT}" --dir "${into}"; then
-      echo "borrow: run ${id} left no ${ARTEFACT} to download; nothing is placed." >&2
+      echo "place: run ${id} left no ${ARTEFACT} to download; nothing is placed." >&2
       exit 0
     fi
 
@@ -158,7 +158,7 @@ the reason this step comes **first** in the job is in
     # an artefact holding a tree flatten differently.
     found="$(find "${into}" -type f -name measurements.json -print -quit)"
     if [ -z "${found}" ]; then
-      echo "borrow: ${ARTEFACT} from run ${id} holds no measurements.json; nothing is placed." >&2
+      echo "place: ${ARTEFACT} from run ${id} holds no measurements.json; nothing is placed." >&2
       exit 0
     fi
 
@@ -167,7 +167,7 @@ the reason this step comes **first** in the job is in
     # payload that was never fetched, so the two are told apart here.
     if ! jq -e '(.measurements | type) == "array" and (.measurements | length) > 0' \
       "${found}" >/dev/null 2>&1; then
-      echo "borrow: measurements.json from run ${id} carries no measurements to place; nothing is placed." >&2
+      echo "place: measurements.json from run ${id} carries no measurements to place; nothing is placed." >&2
       exit 0
     fi
 
@@ -176,8 +176,8 @@ the reason this step comes **first** in the job is in
     # in the checkout, so the first contributor to the job is what creates it.
     mkdir -p "${EVIDENCE_DIR}"
     cp "${found}" "${EVIDENCE_DIR}/measurements.json"
-    echo "borrow: placed ${ARTEFACT} from run ${id}, measured ${age}s ago, inside the ${MAX_AGE}s window:"
-    jq -r '.measurements[] | "borrow:   \(.scnId) \(.checkTag) = \(.measured)"' \
+    echo "place: placed ${ARTEFACT} from run ${id}, measured ${age}s ago, inside the ${MAX_AGE}s window:"
+    jq -r '.measurements[] | "place:   \(.scnId) \(.checkTag) = \(.measured)"' \
       "${EVIDENCE_DIR}/measurements.json"
 ```
 
@@ -218,7 +218,7 @@ wrong fault.
 
 Your push run's own measured checks (`@ci-run-time` and friends) write into the
 same `${EVIDENCE_DIR}/measurements.json`, and each posts **beside** what it
-finds: it reads the existing file and replaces only its own row. The borrowed
+finds: it reads the existing file and replaces only its own row. The placed
 nightly row therefore sits beside them **only if it is placed first** — the two
 suite producers are then the merge.
 
@@ -229,7 +229,7 @@ replaces the whole file,
 discarding every row your own run had just measured. Those obligations then
 reconcile `missing` and the build reds on rows that were, in fact, measured.
 
-So the borrow step goes **above** the steps that run your suites. This is the
+So the placement step goes **above** the steps that run your suites. This is the
 whole of the ordering rule, and it is why nothing in it needs a `jq` merge.
 
 ---
@@ -287,7 +287,7 @@ build depend on two arbiters agreeing, and the second arbiter would report the
 fault twice under two different names.
 
 So there is exactly one way to read this pipeline, and it is the reconciliation
-report. Everything the borrow step knows, it says on stderr; everything it
+report. Everything the placement step knows, it says on stderr; everything it
 decides, it decides by placing a file or not placing one.
 
 ---

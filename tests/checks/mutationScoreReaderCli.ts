@@ -41,7 +41,7 @@
  * shape their own pipeline takes. Taking this file alone is taking the cheap half of a pair.
  *
  * AND LOCALLY THERE IS NO PLACEMENT AT ALL — AN ACCEPTED COST, STATED HERE RATHER THAN LEFT TO BE
- * DISCOVERED. The borrow is a CI step, and the local ladder is derived from the `ci.yml` steps that
+ * DISCOVERED. The placement is a CI step, and the local ladder is derived from the `ci.yml` steps that
  * invoke a package.json script, which that one does not. So nothing windows the record `pnpm
  * mutation` leaves behind: locally the number is whatever was last swept, of unbounded age, and
  * the row reads satisfied over it. That is a true contract rather than a fault — the developer's

@@ -13,7 +13,7 @@
  *
  * THE STEP IS PLANTED, AND SO IS THE ROOT IT WRITES INTO. `--root` moves both the wrapped
  * command's working directory and the artefact, so nothing here touches this repository's own
- * `runs/` tree. Wrapping this repository's real suites is 3F-2742/2743's, and a scenario that
+ * evidence root. Wrapping this repository's real suites is 3F-2742/2743's, and a scenario that
  * timed a real suite would take as long as the suite.
  *
  * WHICH IS ALSO WHERE THE CEILING COMES FROM (@SCN-CIP-012). The planted root carries its own

@@ -45,8 +45,8 @@ against a report that does not exist would report every obligation as unobserved
 are running the gate on its own, emit them first:
 
 ```
-pnpm test --reporter=default --reporter=json --outputFile.json="$SPEC_CONTROLLER_EVIDENCE_DIR/runs/self-balance/vitest.json"
-pnpm cucumber --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/runs/self-balance/cucumber.json"
+pnpm test --reporter=default --reporter=json --outputFile.json="$SPEC_CONTROLLER_EVIDENCE_DIR/vitest.json"
+pnpm cucumber --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json"
 ```
 
 **Nobody maintains that list, including this document.** The gates are *derived* from
@@ -103,14 +103,14 @@ mutation score — names `pnpm --silent mutation:score` and sources its bar from
 banked kill floor.
 
 A mutation sweep costs 8-12 minutes on CI, so it runs nightly
-(`.github/workflows/mutation.yml`) and leaves what it measured as a SWEEP RECORD; CI borrows
-that record into `runs/mutation/measurements.json` while it is still young enough to be about
+(`.github/workflows/mutation.yml`) and leaves what it measured as a SWEEP RECORD; CI places
+that record into `mutation-measurements.json` while it is still young enough to be about
 the code being judged. **The window is the producer's cadence plus a margin — 24 h + 2 h = 26 h**
 for a nightly. Past it nothing is placed at all: the command then has nothing to print, its own
 step reds and the self-reconciliation reds on the row, which reads `missing`.
 That is how a nightly that stops running says so.
 
-On your machine there is nothing to borrow, so run the sweep once:
+On your machine there is nothing to place, so run the sweep once:
 
 ```
 pnpm mutation
@@ -131,7 +131,7 @@ different fact from a run whose record carried nothing. **The checks themselves 
 own exit codes, unchanged. What a local run does not have is the ledger's view of them, and the one
 place that view is real is CI.
 
-**And `runs/self-balance/measurements.json` — the credit stream — persists between local runs and
+**And `measurements.json` — the credit stream — persists between local runs and
 is merged into, not rewritten.** CI starts cold; your machine does not. A row you renamed, or a
 producer you withheld to plant a fault, will find its own previous output waiting, so a plant can
 green on evidence it never produced and a stale credit can reconcile as a phantom row citing an

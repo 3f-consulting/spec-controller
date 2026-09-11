@@ -85,12 +85,12 @@ jobs:
       #
       # spec-controller used to write its own output into its own source tree, and three pieces of
       # apparatus existed only because it did — a `.gitignore` block, a hygiene check, and that
-      # check's own coverage gap. The suites' reports and the borrow's placement are this run's
+      # check's own coverage gap. The suites' reports and the placed sweep record are this run's
       # OUTPUT, so they land on the runner's disk instead. `tests/checks/measurementArtefact.ts`
       # reads this same name, so every producer and reader in this job resolves to one base whether
       # it is reached through a command line here or through the resolver in TypeScript.
       #
-      # ONE ENTRY, NOT FIVE, AND THAT IS THE POINT. The borrow places the sweep record, two suites
+      # ONE ENTRY, NOT FIVE, AND THAT IS THE POINT. The placement step places the sweep record, two suites
       # write their reports, the three measured rows' commands write the credit stream, the dump
       # step writes this run's step record, and the self-reconciliation reads all of them; a `$RUNNER_TEMP`
       # expression repeated at each of them is a path that agrees today and drifts on the first edit
@@ -104,7 +104,7 @@ jobs:
       #
       # AND IT SURVIVES BETWEEN THOSE STEPS BECAUSE THIS WORKFLOW STATES EXACTLY ONE JOB — verified
       # against the API rather than read off the indentation. One job is one runner filesystem.
-      # Split it in two and nothing reds: the borrow's measurement stops reaching the read, and the
+      # Split it in two and nothing reds: the placement's measurement stops reaching the read, and the
       # ledger reports that in the vocabulary of a lapsed nightly sweep. That residual is named in
       # `measurementArtefact.ts` rather than guarded, because a check on this file's SHAPE is
       # exactly the control surface 3F-3099 exists to remove.
@@ -116,7 +116,7 @@ jobs:
       # line of `scripts/verify.sh` counts what it just ran. It is in this sentence only because a
       # reader asking "unchanged from what?" deserves the figure.)
       - name: Resolve the evidence root
-        run: echo "SPEC_CONTROLLER_EVIDENCE_DIR=$RUNNER_TEMP/spec-controller-self-balance" >> "$GITHUB_ENV"
+        run: echo "SPEC_CONTROLLER_EVIDENCE_DIR=$RUNNER_TEMP/spec-controller-evidence" >> "$GITHUB_ENV"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -144,22 +144,22 @@ jobs:
       # and reds the gate below. A sweep that quietly stops running cannot stay quiet.
       #
       # IT LANDS A SWEEP RECORD, NOT A ROW OF THIS RUN'S CREDIT STREAM (3F-3152). It used to copy
-      # the nightly's file straight into `runs/self-balance/measurements.json` — the artefact
+      # the nightly's file straight into `measurements.json` — the artefact
       # the self-reconciliation reads as what THIS run credited — and the merge argument that placement
       # needed (land it first, let the two suite producers post beside it) went with it. Under a
       # CONVERTED @SCN-FIT-002 the row's own command posts the credit, from the number this record
-      # holds, so a borrowed row sitting in the credit stream would be a second credit for one
+      # holds, so a placed row sitting in the credit stream would be a second credit for one
       # Evidence Obligation. Two files, two questions: what a sweep MEASURED, and what this run
       # CREDITED. Nothing else reads or writes the path below, so there is no merge here at all.
       #
       # IT STILL RUNS FIRST, AND NOW FOR A PLAINER REASON. The `Mutation score` step below IS the
-      # row's command and it reads this file; a borrow placed after it would leave that step with
+      # row's command and it reads this file; a placement made after it would leave that step with
       # nothing to print, and nothing to write, on every push.
       #
       # THE RECORD THIS PLACES MAY STILL SAY `SCN-MUT-011` — A TRANSITION WITH AN END (3F-3168,
       # 3F-3174). The row was minted `SCN-FIT-002`, and the producer that stamps the record moved
       # with it in the same commit; but the producer runs nightly on the gated branch, so the newest
-      # borrowable record was written by the PREVIOUS night's code and carries the old code. The
+      # placeable record was written by the PREVIOUS night's code and carries the old code. The
       # row's command therefore states `--supersedes SCN-MUT-011`, and the reader answers a row
       # from a measurement stamped with the code that row supersedes (@SCN-MUT-019). Once one
       # nightly has run on the renamed tree, no record carries the old code and the flag comes off
@@ -173,14 +173,14 @@ jobs:
       # window is a fact about the pipeline reading them.
       #
       # AND IT IS NOT AN ARBITER. Every branch below places nothing, says why on stderr, and exits
-      # 0. Having no measurement to borrow — no finished sweep, no artefact, a number past its
+      # 0. Having no measurement to place — no finished sweep, no artefact, a number past its
       # window, a payload that is not one — is the ordinary reading of a cadence, and the place it
       # is reported is downstream: the `Mutation score` step reds, because the row's command has
       # nothing to print, and the self-reconciliation reds on the row that owed the measurement, which
       # reconciles `missing`. Both sentences are true and both are reached; a step that
       # redded HERE as well would make a green build depend on arbiters agreeing, which is the
       # argument features/mutation-score.feature already settles for the bar itself.
-      - name: Borrow the scheduled sweep's measurement
+      - name: Place the scheduled sweep's measurement
         env:
           GH_TOKEN: ${{ github.token }}
           # The four terms that are the whole of which measurement crosses: which workflow took it,
@@ -189,11 +189,11 @@ jobs:
           #
           # BRANCH IS WRITTEN OUT RATHER THAN DERIVED FROM `github.ref_name`, WHICH IS THE ACCEPTED
           # COST STATED (@SCN-MUT-017). This ladder also runs on `pull_request`, and nothing sweeps
-          # a feature branch — so borrowing the branch UNDER TEST would find no run and read
+          # a feature branch — so placing from the branch UNDER TEST would find no run and read
           # `missing` on every pull request. A pull request's mutation row is therefore a statement
           # about the line it is merging into, not about itself, and that is deliberate. The value
           # is held to `on.push.branches` by a scenario, so a default-branch rename that moves one
-          # and not the other reds rather than leaving the borrow reading a line nobody gates.
+          # and not the other reds rather than leaving the placement reading a line nobody gates.
           WORKFLOW: mutation.yml
           BRANCH: main
           ARTEFACT: mutation-measurement
@@ -214,12 +214,12 @@ jobs:
           #
           # `-u` IS KEPT, AND IS THE ONE RED ROUTE LEFT. An unbound expansion exits 127 whatever
           # errexit says. That red says THIS SCRIPT IS BROKEN rather than YOUR CODE LOST A KILL, and
-          # dropping `-u` to close it would buy `cp "" runs/mutation/measurements.json` — a
+          # dropping `-u` to close it would buy `cp "" mutation-measurements.json` — a
           # silent wrong placement, which is the fail-open this whole line of work exists to close.
           set +e
           set -uo pipefail
 
-          into="${RUNNER_TEMP}/borrowed-measurement"
+          into="${RUNNER_TEMP}/placed-measurement"
           rm -rf "${into}"
           mkdir -p "${into}"
 
@@ -241,7 +241,7 @@ jobs:
           # and reconciled a MAIN push's row. Measured on this repository on 2026-08-30: four
           # dispatches on a feature branch sat newer than that day's nightly for ten hours, each
           # inside the window, none distinguishable downstream from the nightly they displaced. It
-          # fails OPEN: a branch that adds tests sweeps to a higher kill count, and borrowed onto
+          # fails OPEN: a branch that adds tests sweeps to a higher kill count, and placed onto
           # main that number reconciles `satisfied` over a main whose own kills had fallen.
           #
           # THE TERM IS THE BRANCH AND DELIBERATELY NOT THE EVENT. `--event schedule` excludes the
@@ -259,14 +259,14 @@ jobs:
           # head commit is the tighter instrument and is not built here — it owes a fence for the
           # shallow checkout, and its own @SCN.
           if ! latest="$(gh run list --workflow "${WORKFLOW}" --branch "${BRANCH}" --status completed --limit 1 --json databaseId,createdAt)"; then
-            echo "borrow: could not list runs of ${WORKFLOW} on ${BRANCH}; nothing is placed." >&2
+            echo "place: could not list runs of ${WORKFLOW} on ${BRANCH}; nothing is placed." >&2
             exit 0
           fi
 
           id="$(printf '%s' "${latest}" | jq -r '.[0].databaseId // empty')"
           when="$(printf '%s' "${latest}" | jq -r '.[0].createdAt // empty')"
           if [ -z "${id}" ] || [ -z "${when}" ]; then
-            echo "borrow: ${WORKFLOW} names no finished run on ${BRANCH} carrying both an id and a createdAt; nothing is placed." >&2
+            echo "place: ${WORKFLOW} names no finished run on ${BRANCH} carrying both an id and a createdAt; nothing is placed." >&2
             exit 0
           fi
 
@@ -276,7 +276,7 @@ jobs:
           # run that took it, so the run's own clock bounds the payload's — and unlike the payload's
           # it is not the judged run's to write.
           if ! measured_at="$(date -u -d "${when}" +%s 2>/dev/null)"; then
-            echo "borrow: run ${id} of ${WORKFLOW} reports createdAt ${when}, which is not a moment this runner can read; nothing is placed." >&2
+            echo "place: run ${id} of ${WORKFLOW} reports createdAt ${when}, which is not a moment this runner can read; nothing is placed." >&2
             exit 0
           fi
           age=$(( $(date -u +%s) - measured_at ))
@@ -284,25 +284,45 @@ jobs:
           # A run dated in the future is a clock nobody can reason about, and it is the one
           # arithmetic that would otherwise pass every window there is.
           if [ "${age}" -lt 0 ]; then
-            echo "borrow: run ${id} of ${WORKFLOW} is dated ${age#-}s in the future; nothing is placed." >&2
+            echo "place: run ${id} of ${WORKFLOW} is dated ${age#-}s in the future; nothing is placed." >&2
             exit 0
           fi
 
           if [ "${age}" -gt "${MAX_AGE}" ]; then
-            echo "borrow: run ${id} of ${WORKFLOW} measured ${age}s ago, past the ${MAX_AGE}s window; nothing is placed. SCN-FIT-002 will read missing, which is the true sentence: the sweep has lapsed." >&2
+            echo "place: run ${id} of ${WORKFLOW} measured ${age}s ago, past the ${MAX_AGE}s window; nothing is placed. SCN-FIT-002 will read missing, which is the true sentence: the sweep has lapsed." >&2
             exit 0
           fi
 
           if ! gh run download "${id}" --name "${ARTEFACT}" --dir "${into}"; then
-            echo "borrow: run ${id} of ${WORKFLOW} left no ${ARTEFACT} to download; nothing is placed." >&2
+            echo "place: run ${id} of ${WORKFLOW} left no ${ARTEFACT} to download; nothing is placed." >&2
             exit 0
           fi
 
           # Found by name wherever the upload put it: an artefact holding one file and an artefact
           # holding a tree flatten differently.
-          found="$(find "${into}" -type f -name measurements.json -print -quit)"
+          #
+          # EITHER NAME, BECAUSE THIS IS A TRANSITION WITH AN END (3F-3320) — the same shape, and
+          # for the same structural reason, as `--supersedes SCN-MUT-011` on the row's command
+          # below. 3F-3320 renamed the sweep record `measurements.json` -> `mutation-measurements.json`
+          # so that flattening the evidence root could not collide it with the credit stream. But
+          # `mutation.yml` runs NIGHTLY ON THE GATED BRANCH, so the newest artefact this step can
+          # reach was uploaded by the PREVIOUS night's code and still holds the OLD basename. A
+          # `find` matching only the new one therefore places nothing on every push until a nightly
+          # has run on the renamed tree — measured, not predicted: the first CI run of this change
+          # said "holds no measurements.json; nothing is placed" and reconciled SCN-FIT-002 missing.
+          #
+          # IT FAILS IN THE ONE DIRECTION THAT IS SAFE TO WIDEN. This artefact is the sweep's alone
+          # and holds exactly one payload, so there is no second file either name could select by
+          # mistake; and whatever is found is still read by the `jq` below before it is placed, and
+          # still lands under the NEW name, so nothing downstream sees the old spelling.
+          #
+          # WHEN THE OLD ARM COMES OUT: once one nightly has run on main carrying this change, no
+          # reachable artefact holds `measurements.json` and the `-o` clause is dead. Take it out
+          # then — otherwise the transition becomes the resting state, which is the failure 3F-3174
+          # names for the superseded `@SCN` beside it.
+          found="$(find "${into}" -type f \( -name mutation-measurements.json -o -name measurements.json \) -print -quit)"
           if [ -z "${found}" ]; then
-            echo "borrow: ${ARTEFACT} from run ${id} holds no measurements.json; nothing is placed." >&2
+            echo "place: ${ARTEFACT} from run ${id} holds neither mutation-measurements.json nor measurements.json; nothing is placed." >&2
             exit 0
           fi
 
@@ -312,11 +332,11 @@ jobs:
           # is the only key asked for, which is what makes the dated artefacts a previous nightly
           # already uploaded readable without a migration: `measuredAt` sits beside it, unread.
           if ! jq -e '(.measurements | type) == "array" and (.measurements | length) > 0' "${found}" >/dev/null 2>&1; then
-            echo "borrow: measurements.json from run ${id} carries no measurements to place; nothing is placed." >&2
+            echo "place: the payload at ${found} from run ${id} carries no measurements to place; nothing is placed." >&2
             exit 0
           fi
 
-          # A PLAIN COPY, BECAUSE NOTHING ELSE WRITES THIS FILE. The sweep record is the borrow's
+          # A PLAIN COPY, BECAUSE NOTHING ELSE WRITES THIS FILE. The sweep record is the placement's
           # alone — no producer of this run posts into it — so there is nothing here to merge with
           # and nothing for a copy to overwrite. The evidence root is a directory on the runner
           # that nothing else creates, so this is also what brings it into being (3F-3099).
@@ -338,14 +358,14 @@ jobs:
           #
           # AND THE SENTENCE CONTRADICTS THE LAPSE READING RATHER THAN INHERITING IT. The window
           # branch above has already taught this log that `missing` means the sweep has stopped
-          # running. Left generic, this branch would borrow that reading and send the reader to
+          # running. Left generic, this branch would inherit that reading and send the reader to
           # mutation.yml's schedule over a fault in this runner — the defect moved, not closed.
-          if ! { mkdir -p "${SPEC_CONTROLLER_EVIDENCE_DIR}/runs/mutation" && cp "${found}" "${SPEC_CONTROLLER_EVIDENCE_DIR}/runs/mutation/measurements.json"; }; then
-            echo "borrow: could not place ${ARTEFACT} from run ${id} of ${WORKFLOW} into the evidence root; nothing is placed. SCN-FIT-002 will read missing, and this is NOT the lapsed sweep that sentence usually reports: the measurement arrived and this runner could not put it where the check that reports it reads it." >&2
+          if ! { mkdir -p "${SPEC_CONTROLLER_EVIDENCE_DIR}" && cp "${found}" "${SPEC_CONTROLLER_EVIDENCE_DIR}/mutation-measurements.json"; }; then
+            echo "place: could not place ${ARTEFACT} from run ${id} of ${WORKFLOW} into the evidence root; nothing is placed. SCN-FIT-002 will read missing, and this is NOT the lapsed sweep that sentence usually reports: the measurement arrived and this runner could not put it where the check that reports it reads it." >&2
             exit 0
           fi
-          echo "borrow: placed ${ARTEFACT} from run ${id} of ${WORKFLOW}, measured ${age}s ago, inside the ${MAX_AGE}s window:"
-          jq -r '.measurements[] | "borrow:   \(.scnId) \(.checkTag) = \(.measured)"' "${SPEC_CONTROLLER_EVIDENCE_DIR}/runs/mutation/measurements.json"
+          echo "place: placed ${ARTEFACT} from run ${id} of ${WORKFLOW}, measured ${age}s ago, inside the ${MAX_AGE}s window:"
+          jq -r '.measurements[] | "place:   \(.scnId) \(.checkTag) = \(.measured)"' "${SPEC_CONTROLLER_EVIDENCE_DIR}/mutation-measurements.json"
 
           # THE LAST ACT, BECAUSE A SCRIPT'S STATUS IS ITS LAST COMMAND'S. `set +e` stops a failure
           # mid-script from killing the step; it does NOT stop the render above from REPORTING one.
@@ -359,12 +379,12 @@ jobs:
       # it into the source tree it is about is the defect 3F-3099 closes. The default reporter is
       # kept alongside so a failure is still readable in the log rather than only in JSON.
       - name: Test
-        run: pnpm test --reporter=default --reporter=json --outputFile.json="$SPEC_CONTROLLER_EVIDENCE_DIR/runs/self-balance/vitest.json"
+        run: pnpm test --reporter=default --reporter=json --outputFile.json="$SPEC_CONTROLLER_EVIDENCE_DIR/vitest.json"
 
       # STEP 2 — the observed @integration / @e2e stream. `--format json:` adds a
       # file formatter; the progress formatter stays on stdout.
       - name: Cucumber
-        run: pnpm cucumber --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/runs/self-balance/cucumber.json"
+        run: pnpm cucumber --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json"
 
       # STEP 2b — THE TEN FITNESS ROWS, AS TEN CI STEPS THAT CITE THEM (3F-3271, under
       # 3F-3252; the second cucumber call they replaced was deleted at 3F-3272).
@@ -500,7 +520,7 @@ jobs:
       # Their STEPS are still what says the check ran (@SCN-LNT-027) — a number arriving for a row
       # the run recorded no step for is a number from a route that enumerates nothing. These steps run
       # behind the producers they read — `Test` for SCN-FIT-012, `Cucumber` for SCN-FIT-013, and the
-      # borrow for SCN-FIT-002 — because a reader ahead of its producer has nothing to print.
+      # placement for SCN-FIT-002 — because a reader ahead of its producer has nothing to print.
       - name: Unit suite run time
         id: SCN-FIT-012
         if: always()
@@ -544,8 +564,8 @@ jobs:
         # gate below now reads this file as the whole fitness axis's credit stream, so an empty one
         # is ten broken rows and an unsound run rather than a quiet nothing.
         run: |
-          mkdir -p "$SPEC_CONTROLLER_EVIDENCE_DIR/runs/self-balance"
-          record="$SPEC_CONTROLLER_EVIDENCE_DIR/runs/self-balance/ci-steps.json"
+          mkdir -p "$SPEC_CONTROLLER_EVIDENCE_DIR"
+          record="$SPEC_CONTROLLER_EVIDENCE_DIR/ci-steps.json"
           printf '%s' "$STEPS_JSON" > "$record"
           printf 'step record: %s bytes, %s step(s) with an id:\n' \
             "$(wc -c < "$record" | tr -d ' ')" "$(jq 'length' "$record")"
@@ -609,4 +629,4 @@ jobs:
       # are written against `SPEC_CONTROLLER_EVIDENCE_DIR`: `scripts/verify.sh` exports the same
       # variable, so one string resolves in both environments.
       - name: Self-reconciliation balance
-        run: R="$SPEC_CONTROLLER_EVIDENCE_DIR/runs/self-balance"; pnpm spec-controller balance --features features --vitest "$R/vitest.json" --cucumber "$R/cucumber.json" $([ -f "$R/measurements.json" ] && echo "--measurements $R/measurements.json") $([ -f "$R/ci-steps.json" ] && echo "--ci-steps $R/ci-steps.json") --ci .github/workflows --package-json package.json --target spec-controller
+        run: pnpm spec-controller balance --features features --vitest "$SPEC_CONTROLLER_EVIDENCE_DIR/vitest.json" --cucumber "$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json" $([ -f "$SPEC_CONTROLLER_EVIDENCE_DIR/measurements.json" ] && echo "--measurements $SPEC_CONTROLLER_EVIDENCE_DIR/measurements.json") $([ -f "$SPEC_CONTROLLER_EVIDENCE_DIR/ci-steps.json" ] && echo "--ci-steps $SPEC_CONTROLLER_EVIDENCE_DIR/ci-steps.json") --ci .github/workflows --package-json package.json --target spec-controller

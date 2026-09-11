@@ -21,7 +21,7 @@
  *
  * THE RUN IS PLANTED, AND SO IS THE ROOT IT WRITES INTO. `--root` moves both the wrapped
  * command's working directory and the artefact, so nothing here touches this repository's own
- * `runs/` or `reports/` trees. Wrapping this repository's real mutation sweep is @SCN-FIT-002's,
+ * evidence root or its `reports/` tree. Wrapping this repository's real mutation sweep is @SCN-FIT-002's,
  * and a scenario that ran Stryker would cost the eight to twelve minutes Stryker costs.
  */
 

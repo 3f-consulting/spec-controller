@@ -14,7 +14,7 @@ name: Mutation
 # own ledger, where every other fitness check is. Two bars for one characteristic makes a
 # green build depend on two arbiters agreeing, and the ledger's is the one with the @SCN.
 # So what this job owes the ledger is a MEASUREMENT: `pnpm mutation` wraps the sweep in the
-# kill producer, and the artefact below carries that number to whichever push borrows it next.
+# kill producer, and the artefact below carries that number to whichever push places it next.
 #
 # AND THE VERDICT BELOW IS NOT THAT SECOND BAR RETURNING (3F-2788). What 3F-2765 removed was a
 # SEPARATELY DERIVED number sitting beside the ledger's — the runner's own percentage, computed
@@ -53,7 +53,7 @@ jobs:
       # `${{ env.SPEC_CONTROLLER_EVIDENCE_DIR }}`, which is this line's value.
       #
       # A DISAGREEMENT HERE IS SILENT, WHICH IS WHY IT IS ONE NAME AND NOT TWO PATHS. An upload
-      # naming somewhere the producer did not write leaves the borrow with nothing to fetch, and
+      # naming somewhere the producer did not write leaves the placement with nothing to fetch, and
       # the row reads `missing` — wearing the words this repository reserves for a nightly that has
       # lapsed, so the failure would report a different, already-familiar problem.
       #
@@ -61,7 +61,7 @@ jobs:
       # this: `jobs.<id>.env` cannot read the `runner` context, and a workflow naming
       # `${{ runner.temp }}` there fails to START.
       - name: Resolve the evidence root
-        run: echo "SPEC_CONTROLLER_EVIDENCE_DIR=$RUNNER_TEMP/spec-controller-self-balance" >> "$GITHUB_ENV"
+        run: echo "SPEC_CONTROLLER_EVIDENCE_DIR=$RUNNER_TEMP/spec-controller-evidence" >> "$GITHUB_ENV"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -74,7 +74,7 @@ jobs:
       #
       # A RECORD, NOT A RUN'S CREDIT STREAM (3F-3152). SCN-FIT-002 is a CONVERTED fitness
       # check: the push that reconciles it runs the row's command and posts the credit
-      # itself, so a row written straight into `runs/self-balance/measurements.json` would
+      # itself, so a row written straight into `measurements.json` would
       # be a second credit for one Evidence Obligation. What this job owes is the number;
       # what the push does with it is the push's.
       #
@@ -89,7 +89,7 @@ jobs:
       - name: Mutation test the domain core
         run: pnpm mutation
 
-      # WHAT THIS SWEEP OWES THE LEDGER, LEFT WHERE THE NEXT PUSH CAN BORROW IT (3F-2765). The
+      # WHAT THIS SWEEP OWES THE LEDGER, LEFT WHERE THE NEXT PUSH CAN PLACE IT (3F-2765). The
       # score above is what settles SCN-FIT-002, and the push that reconciles that row is a
       # different run of a different workflow — so the number has to cross a run boundary, and
       # this is the whole of that crossing: upload a file, download it, check its age. `ci.yml`
@@ -101,25 +101,25 @@ jobs:
       # is glue, every piece of it native, and glue is written at the edge that needs it.
       #
       # AND NOTHING IS DATED, WHICH IS THE OTHER HALF OF THAT RULING. The persist stamped
-      # `measuredAt` into the payload so the borrower could ask how old the number was — a fact
+      # `measuredAt` into the payload so the placing run could ask how old the number was — a fact
       # GitHub already records as this RUN's `createdAt`, which is what `ci.yml` now reads. A
       # measurement cannot outlive the run that took it, so the run is the honest clock, and a
       # timestamp written by the thing being judged never was one.
       #
       # A SWEEP THAT MEASURED NOTHING UPLOADS NOTHING, by construction rather than by a CLI: the
       # score producer writes no artefact when it has no readable report, so there is no file for
-      # `if-no-files-found: ignore` to collect. The row the borrower would have settled then reads
+      # `if-no-files-found: ignore` to collect. The row the placing run would have settled then reads
       # `missing` on the ledger, out loud, in the one place every other verdict on this axis is
       # reported. A warning annotation here would be a second and quieter place to look for it, and
       # an error would red a scheduled job over a cadence rather than over the code.
       #
       # AND THIS STEP CARRIES NO `if:`, WHICH IS THE FENCE AND NOT AN OMISSION (3F-2957,
       # @SCN-MUT-016). GitHub holds a step stating no condition to `success()`, so a sweep that DIED
-      # takes this upload down with it and its run reaches the borrow with nothing to download: the
+      # takes this upload down with it and its run reaches the placement with nothing to download: the
       # row reads `missing` — no measurement arrived — which is the true sentence about a run whose
       # number would have been partial, or would have been a previous run's.
       #
-      # THAT FENCE USED TO BE ACCIDENTAL, AND IS NOW THE ONLY ONE THERE IS. The borrow filtered on
+      # THAT FENCE USED TO BE ACCIDENTAL, AND IS NOW THE ONLY ONE THERE IS. The placement filtered on
       # `--status success`, so a crashed run was excluded by the very filter that also excluded the
       # night which found a regression — one word doing two jobs, and 3F-2901 is the second of them
       # going wrong. @SCN-MUT-015 removed the filter and the two readings came apart. What still
@@ -136,11 +136,11 @@ jobs:
       # THE PATH IS THE JOB'S EVIDENCE ROOT AND NOT THIS REPOSITORY (3F-3099), so the record this
       # uploads was never inside the checkout to begin with — the sweep wrote it to the runner's own
       # disk through the same resolver the self-reconciliation's measurement stream is read with.
-      - name: Leave the measurement where a later push can borrow it
+      - name: Leave the measurement where a later push can place it
         uses: actions/upload-artifact@v7
         with:
           name: mutation-measurement
-          path: ${{ env.SPEC_CONTROLLER_EVIDENCE_DIR }}/runs/mutation/measurements.json
+          path: ${{ env.SPEC_CONTROLLER_EVIDENCE_DIR }}/mutation-measurements.json
           if-no-files-found: ignore
           # The persist action's own default, carried over unchanged: the artefact only has to
           # outlast the gap between two runs of the schedule that produces it.
@@ -178,7 +178,7 @@ jobs:
       # IS the verdict, which is what the ledger's arbiter cannot be asked to be.
       #
       # AND THE LEDGER'S MEASUREMENT DEPENDS ON THAT PLACEMENT TOO, WHICH IS WHY A SCENARIO NOW
-      # HOLDS IT (3F-2947, @SCN-MUT-015). `ci.yml` borrows from the newest COMPLETED run of this
+      # HOLDS IT (3F-2947, @SCN-MUT-015). `ci.yml` places from the newest COMPLETED run of this
       # workflow, whatever verdict followed it, so the night that finds a regression is the night
       # whose number crosses to the next push — but only because the measurement leaves this job
       # BEFORE the step below reds it. Move this step up and that night uploads nothing: the row
