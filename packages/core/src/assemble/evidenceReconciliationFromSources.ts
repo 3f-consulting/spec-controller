@@ -230,7 +230,7 @@ function checkObservations(
       // THE CONSUMER'S OWN CITATION, WIRED (@SCN-LNT-031). The walk carries a check step's `id:`
       // and this observer reads it, and until this seam was passed the two met nowhere: every
       // discovered check on the live path cited nothing, so a fully annotated pipeline reconciled
-      // exactly as an unannotated one — `new-client` reported over a target in `minimal-adherence`.
+      // exactly as an unannotated one — `new-client` reported over a target in `annotated`.
       //
       // THE HANDLE IS DELIBERATELY NOT CONSULTED. The row a step's code names carries the
       // characteristic, so both terms come off ONE configured row; reaching for the script's
