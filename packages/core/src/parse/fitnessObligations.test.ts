@@ -1,7 +1,9 @@
 /**
  * @unit for @SCN-LNT-006 — the fitness half of the obligation rule: a scenario tagged with a
- * REGISTERED bare check owes that check, once, STEPS OR NONE — and for @SCN-LNT-010, the same rule
- * read over `lint`, the one bare tag that used to name the whole class.
+ * REGISTERED bare check owes that check, once. The row it is read on is STEPLESS, which is the
+ * only shape a fitness scenario has — a declared obligation nothing runs. And for @SCN-LNT-010,
+ * the same rule read over `lint`, the one bare tag that used to name the whole class — read on
+ * that same stepless row, both directions of the exemption a reader would be tempted to grant it.
  *
  * Bidirectional evidence: each describe carries its @SCN id, matching
  * features/fitness-reconciliation.feature and the @integration steps in tests/steps/lintReconciliation.steps.ts.
@@ -25,7 +27,7 @@ Feature: fitness
     Scenario: the codebase stays under the complexity threshold
 `;
 
-describe("[SCN-LNT-006] a scenario's bare check tag raises one fitness Evidence Obligation, steps or none", () => {
+describe("[SCN-LNT-006] a scenario's bare check tag raises one fitness Evidence Obligation", () => {
   it("raises exactly one obligation, naming the check the bare tag names", () => {
     expect(parseScenarios(steplessScenario, [], REGISTERED)).toEqual([
       { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "complexity" }] },
@@ -49,33 +51,6 @@ Feature: fitness
 
     expect(parseScenarios(source, [], REGISTERED)).toEqual([
       { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "complexity" }] },
-    ]);
-  });
-
-  it("raises the same one obligation for the same bare tag on a STEPPED scenario", () => {
-    // THE STEPS ARE NOT THE DISCRIMINATOR (3F-3115). The tag is: a registered bare check owes its
-    // check from the row that carries it, and giving that row a runnable example does not move it
-    // off the fitness axis. The row below carries a tier tag TOO, which is the sharpest reading of
-    // the rule — the fitness obligation is raised ALONGSIDE the tier, not instead of it, so nothing
-    // about the tier arms changed when the condition went.
-    //
-    // Whether one row may carry both kinds of tag is a CORPUS question owned by @SCN-STG-005 and
-    // still unenforced; this row reads the PARSER, and the parser answers each tag on its own axis.
-    const source = `@FIT
-Feature: fitness
-
-  Rule: the tree stays inside its thresholds
-
-    @unit @complexity @SCN-AAA-002
-    Scenario: a scenario carrying a tier tag and a registered check, with steps
-      Given a thing
-`;
-
-    expect(parseScenarios(source, [], REGISTERED)).toEqual([
-      {
-        scnId: "SCN-AAA-002",
-        evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "lint", staticCheck: "complexity" }],
-      },
     ]);
   });
 
@@ -175,17 +150,6 @@ Feature: fitness
     Scenario: the source stays inside the style rules
 `;
 
-  /** The same tag on the other shape, carrying a tier tag too — the sharpest reading of the rule. */
-  const steppedBareLintScenario = `@FIT
-Feature: fitness
-
-  Rule: the tree stays inside its thresholds
-
-    @unit @lint @SCN-AAA-002
-    Scenario: the same style rules, now carrying a runnable example
-      Given a step, which is the whole of what makes this row STEPPED
-`;
-
   it("owes the style-lint check alone, never the class it used to name", () => {
     // BOTH SPELLINGS ARE VISIBLE HERE, and telling them apart is the point of asserting the whole
     // obligation. `qualityCheck: "lint"` is the AXIS a fitness obligation is filed under — the twin
@@ -204,42 +168,6 @@ Feature: fitness
     // lint owes no style lint, and spelling the tag cannot conjure the obligation.
     expect(parseScenarios(bareLintScenario, [], ["complexity", "typecheck"])).toEqual([
       { scnId: "SCN-AAA-001", evidenceObligations: [] },
-    ]);
-  });
-
-  it("raises the same style-lint obligation from a STEPPED scenario, with no exemption for this one tag", () => {
-    // THE CLAIM SURVIVED AND ITS POLARITY INVERTED (3F-3115). The arm that stood here held that a
-    // stepped row carrying `@lint` raised nothing; the steps stopped being the discriminator, so
-    // what it holds now is that `lint` gets no exemption from the rule every other bare check meets
-    // (@SCN-LNT-006). This is the tag where an exemption would be most tempting IN EITHER DIRECTION,
-    // because it is the one with a prior life as the name of the whole class — carved OUT of the
-    // rule for what it used to mean, or handed a standing the registry never gave it. This arm reads
-    // the first direction; the one after it reads the second.
-    //
-    // THE COMPANY IS STILL THE ASSERTION, and it is read on this shape too. The registry names three
-    // checks and the row carries `@lint` alone, so a rule reading the registry rather than the row's
-    // own tags owes all three here — a peer and a catch-all stay apart on a stepped row exactly as
-    // they do on a stepless one.
-    //
-    // The row carries a tier tag TOO, which is the sharpest reading: the fitness obligation is
-    // raised ALONGSIDE the tier rather than instead of it. Whole-list equality over the WHOLE
-    // obligation keeps both spellings of the word visible at once — `qualityCheck: "lint"` the axis
-    // and `staticCheck: "lint"` the demoted tag — so a reading that merged them cannot pass.
-    expect(parseScenarios(steppedBareLintScenario, [], REGISTERED_WITH_LINT)).toEqual([
-      {
-        scnId: "SCN-AAA-002",
-        evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "lint", staticCheck: "lint" }],
-      },
-    ]);
-  });
-
-  it("owes nothing from a STEPPED scenario either when the registry does not name it", () => {
-    // THE OTHER DIRECTION, and the arm above cannot stand in for it. A reader that had given `lint`
-    // a built-in standing — the one bare tag old enough for that to be tempting — passes the arm
-    // above and fails here. A target that runs no style lint owes none whatever shape the row is,
-    // and only the registry can say otherwise.
-    expect(parseScenarios(steppedBareLintScenario, [], ["complexity", "typecheck"])).toEqual([
-      { scnId: "SCN-AAA-002", evidenceObligations: [{ qualityCheck: "unit" }] },
     ]);
   });
 });

@@ -66,6 +66,8 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
 
   Rule: a fitness scenario tagged with a measured check raises an Evidence Obligation carrying its threshold, steps or none
 
+    THE COMPATIBILITY PATH: the bare check tag is a supported legacy reading, retired by 3F-3161.
+
     WHAT THE DEBIT HAS TO HOLD, AND WHY IT CANNOT COME FROM THE CREDIT. A static check's
     obligation names its bare tag and nothing more, because the check itself decides pass
     from fail and the ledger reconciles what it decided. A measured check cannot work that

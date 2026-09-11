@@ -270,6 +270,8 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
 
   Rule: a scenario names ONE check, and a second reds the corpus check
 
+    THE COMPATIBILITY PATH: the bare check tag is a supported legacy reading, retired by 3F-3161.
+
     ONE CHECK PER FITNESS SCENARIO is canon (`fitness-functions.md`), and until now it
     was only ever enforced from the CREDIT side: @SCN-LNT-008 says one run is not evidence for
     two scenarios, and leaves the runner-up's obligation reading missing. That arm reds the

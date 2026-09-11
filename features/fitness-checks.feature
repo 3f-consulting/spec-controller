@@ -6,15 +6,14 @@ Feature: The fitness checks this repository configures, one scenario per row
   minted code, and a title saying what the check asserts — and no steps at all, for the reason
   stated further down. The row goes in `specController.fitnessChecks` in package.json, naming that
   same code, the characteristic the check is about, and the command that runs it. Neither half is
-  derived from the other, which is what makes them two books rather than one read twice: this file
-  was EMITTED from those rows until 3F-3244, and a scenario emitted from the row it is reconciled
-  against could never disagree with it.
+  derived from the other, which is what makes them two books rather than one read twice: a scenario
+  derived from the row it is reconciled against could never disagree with it.
 
-  SO A SCENARIO WITH NO ROW, AND A ROW WITH NO SCENARIO, ARE BOTH FAULTS SOMETHING NOW SAYS OUT
-  LOUD. The ledger reports a scenario whose code no row names as unconfigured, and a row whose
-  scenario the corpus does not carry as an Evidence Obligation nothing observed. Under generation
-  neither could happen and neither could be reported, which is the same trade every derived
-  artefact makes.
+  SO A SCENARIO WITH NO ROW, AND A ROW WITH NO SCENARIO, ARE BOTH FAULTS SOMETHING SAYS OUT LOUD.
+  The ledger reports a scenario whose code no row names as unconfigured, and a row whose scenario
+  the corpus does not carry as an Evidence Obligation nothing observed. That is the return on
+  authoring the two halves independently, and the whole of it: the disagreement is reportable
+  because it is possible.
 
   WHY THE SCENARIOS EXIST AT ALL, given the rows already carry everything. A check reports its
   findings and says nothing when it finds none, so its silence cannot be told from its absence. The
@@ -38,13 +37,12 @@ Feature: The fitness checks this repository configures, one scenario per row
   no characteristic tag: which characteristic a check asserts, and which bar it is held to, are read
   from its row by the ledger.
 
-  AND EVERY SCENARIO HERE IS STEPLESS, WHICH IS WHAT A FITNESS SCENARIO ALWAYS WAS (3F-3272). Each
-  carried one `Then` line until the cucumber fitness pass was deleted, and it carried it because
-  cucumber needed something to bind — not because the scenario asserted anything the row and the
-  bar do not already say. Nothing in this repository runs a check on a scenario's behalf now: the
-  check is a step of the pipeline, the pipeline records what that step did, and `balance` reads the
-  record. What is left here is the obligation, which is the whole of what canon asked for — a
-  characteristic and a threshold, on a stepless scenario.
+  AND EVERY SCENARIO HERE IS STEPLESS, BECAUSE THAT IS WHAT A FITNESS SCENARIO IS. It is a DECLARED
+  OBLIGATION rather than a test, and nothing runs it: the check is a step of the pipeline, the
+  pipeline records what that step did, and `balance` reads the record. A `Then` line would make the
+  scenario try to be BOTH SIDES OF THE ENTRY — raising the obligation and answering it — which is
+  the one thing double entry cannot allow. What is left here is the obligation, which is the whole
+  of what canon asks for: a characteristic and a threshold, on a stepless scenario.
 
   WHICH BAR A ROW STATES IS ITS OWN SHAPE, AND IT NEVER REACHES THIS FILE. A row with no bar is
   answered by its step's outcome, and a row carrying `atLeast` or `atMost` is answered by the number

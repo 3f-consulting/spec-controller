@@ -1,33 +1,40 @@
 @LNT
 Feature: Reconcile every fitness function as a fitness scenario citing its own @SCN
 
-  The FITNESS axis. Alongside the behavioural quality-checks (the unit / integration /
-  e2e / performance tests, each an EXAMPLE with steps), a scenario tagged with a REGISTERED
-  bare check raises one fitness Evidence Obligation for that check — a whole-system
-  characteristic held against a threshold. THE TAG SAYS WHICH AXIS A SCENARIO IS ON, and the
-  STEPS SAY NOTHING ABOUT IT (3F-3115): a characteristic a scenario was written to hold is one
-  it holds whether or not somebody has since given it a runnable example.
+  The FITNESS axis. Alongside the behavioural quality-checks (the unit / integration / e2e /
+  performance tests, each an EXAMPLE with steps), a fitness scenario DECLARES one Evidence
+  Obligation: a whole-system characteristic held against a threshold. In this repository the
+  scenario carries `@fitness` and a freshly minted code, and which characteristic it is about and
+  which bar it is held to are fields of its row in `specController.fitnessChecks`, read by the
+  ledger.
 
-  MOST FITNESS SCENARIOS CARRY NO STEPS, AND THAT IS A CONSEQUENCE RATHER THAN THE RULE. A
-  whole-system characteristic usually has nothing to exemplify, so it usually carries none —
-  every fitness scenario in this file is stepless for that reason, and none of them is stepless
-  in order to be READ as one.
+  A FITNESS SCENARIO IS STEPLESS, AND THAT IS THE RULE RATHER THAN A HABIT. It is a DECLARED
+  OBLIGATION rather than a test, and nothing runs it. A `Then` line would make it try to be BOTH
+  SIDES OF THE ENTRY — raising the obligation and answering it — which is the one thing double
+  entry cannot allow. A characteristic a scenario was written to hold is one it holds because the
+  scenario says so, never because somebody gave it a runnable example.
 
-  ONE POSTING RULE, over both axes. The credit CITES: a fitness check's run arrives
-  carrying the @SCN of the scenario that raises its obligation, resolved in two hops —
-  script handle to bare check tag through the target's registry, bare check tag to the
-  scenario through the corpus — and the ordinary citation route does the rest. There is no
-  static-axis posting rule left to be special.
+  ONE POSTING RULE, over both axes, and the credit's citation is ONE HOP. The check's step in the
+  CI config carries its row's @SCN as the step's `id:`; the run's own record says what that step
+  did; `balance` reads the citation straight off it. Nothing is matched back by name and nothing is
+  resolved through a second artefact, so there is no static-axis posting rule left to be special.
 
-  WHAT THE FILE IS CALLED, AND WHY THE CODE IS NOT. The feature code is @LNT because a code,
-  once allocated, is stable forever: it survives a rename and is never reused — a rule this
-  repository now keeps by hand and nothing enforces, the registry table that reserved each
-  retired code having left with `lint:feature-codes` at 3F-3313. The name it was allocated
-  under — the retired `@lint=<handle>` form, where a scenario named a runnable script and the
-  run was matched back to it BY NAME — is the thing this feature retired, so the FILE took
-  the right name (3F-2592) and the code stayed put. `@lint` itself survives here as ONE bare
-  check among many: the style-lint one, a flat peer of `@complexity` and `@typecheck`
-  (@SCN-LNT-010).
+  THE COMPATIBILITY PATH, WHICH SEVERAL RULES BELOW ARE ABOUT. A target may instead register its
+  checks under `specController.checkRegistry` and tag its scenarios with a BARE CHECK TAG, and the
+  reader still honours it: a scenario carrying a registered bare check raises one fitness Evidence
+  Obligation for that check. It is a SUPPORTED LEGACY READING rather than the current one — a real
+  consumer reconciles through it today and stops when it migrates, at which point the reader's
+  support for it goes in a MAJOR-version removal. Where a Rule below is about that reading, its own
+  preamble says so.
+
+  WHAT THE FILE IS CALLED, AND WHY THE CODE IS NOT. The feature code is @LNT because a code, once
+  allocated, is stable forever: it survives a rename and is never reused — a rule this repository
+  now keeps by hand and nothing enforces, the registry table that reserved each retired code having
+  left with the check that read it. The name it was allocated under — the retired `@lint=<handle>`
+  form, where a scenario named a runnable script and the run was matched back to it BY NAME — is
+  the thing this feature retired, so the FILE took the right name and the code stayed put. `@lint`
+  itself survives here as ONE bare check among many: the style-lint one, a flat peer of
+  `@complexity` and `@typecheck` (@SCN-LNT-010).
 
   A fitness obligation reconciles as evidence only when the check actually holds over the
   REAL source: its command must be a `run:` step in the CI config over the real tree — not
@@ -45,15 +52,12 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
   package.json / ci.yml fixtures. @SCN-LDG-028 tests the identical shape through the
   fixture check ldg028-absent-guard and reconciles balanced. Their @unit and @integration
   obligations are untouched and still reconcile — the distinction from a deferral tag,
-  which would have taken every obligation these scenarios name dark to silence one row each
-  (3F-2351). AND lint:feature-codes IS NOW ONE OF THOSE FIXTURE HANDLES (3F-3313). It was this
-  repository's own check, and what it owed was raised where it belonged — its row of
-  specController.fitnessChecks, under the code SCN-FIT-007 in features/fitness-checks.feature
-  (3F-3165), which sat stepless at the foot of this file until then under a code of this
-  feature's own. The rules it carried ship from `spec-controller tags` now, so the row, the
-  script and the scenario left together and the handle survives here as a step-definition
-  constant: a name no script in this repository answers to, and none may again, for exactly
-  the reason the three above must never exist.
+  which would take every obligation these scenarios name dark to silence one row each.
+  AND lint:feature-codes IS ONE OF THOSE FIXTURE HANDLES. It was this repository's own check once;
+  the rules it carried ship from `spec-controller tags` now, and the row, the script and the
+  scenario left together. The handle survives here as a step-definition constant: a name no script
+  in this repository answers to, and none may again, for exactly the reason the three above must
+  never exist.
 
   WHICH TREE A FITNESS SCENARIO IS ABOUT IS THE GHERKIN'S TO SAY, AND THE STEP DEFINITION'S TO
   OBEY (ruled 2026-09-04). A fitness scenario names its subject in its own text — a PLANTED tree
@@ -70,7 +74,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
   wrong. What would enforce it is a static analysis of TEST code — itself a check that can be
   wrong, held by nothing.
 
-  Rule: a scenario tagged with its bare check raises one fitness Evidence Obligation, steps or none
+  Rule: a scenario tagged with its bare check raises one fitness Evidence Obligation
 
     THE DEBIT SIDE OF THE ONE POSTING RULE. Under name-match the DEBIT cited: a scenario
     carried @lint=<handle> and the run was matched back to it by name, so an obligation could
@@ -81,43 +85,41 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     There is no @behavioural=unit, so there is no @fitness=complexity (canon 2026-08-07, the
     bare-tags Correction).
 
-    THE REGISTERED CHECK TAG IS THE DISCRIMINATOR, AND THE STEPS ARE NOT (ruled 2026-09-04,
-    3F-3115). A scenario carrying a registered bare check is a fitness scenario and owes that
-    check; a scenario carrying a tier tag is behavioural and owes its tier. Steps say how a
-    scenario is written, not which axis it sits on — so a fitness scenario handed a runnable
-    example keeps the characteristic it was written to hold, instead of SWAPPING AXES the moment
-    it grows one.
+    THE REGISTERED CHECK TAG NAMES THE AXIS, AND THIS RULE IS ABOUT THE COMPATIBILITY PATH. A
+    scenario carrying a registered bare check owes that check; a scenario carrying a tier tag is
+    behavioural and owes its tier. The reading is the SUPPORTED LEGACY one the Feature preamble
+    describes — a target registers its checks under `specController.checkRegistry` and tags each
+    row with the bare check it runs — and the reader honours it for as long as a consumer
+    reconciles through it.
 
-    STEPLESSNESS WAS A PROXY FOR THIS RULE, AND IT READ THE WRONG SIGNAL. Having nothing to
-    exemplify is why a fitness scenario usually carries no steps: a CORRELATE of being
-    non-behavioural, never the thing itself. The CREDIT side never read it — a stepped scenario
-    carrying a registered check has always been a citation carrier — so the debit alone stopped
-    short, and such a row produced an orphaned credit with nothing to post to (3F-3092). What
-    goes here is one condition; the two sides then read the same signal, and no compensating rule
-    is added anywhere.
+    A FITNESS SCENARIO IS STEPLESS, AND THE ROW BELOW IS WRITTEN THAT WAY BECAUSE THAT IS THE
+    RULE. It is a DECLARED OBLIGATION rather than a test and nothing runs it, so there is nothing
+    for a step to exemplify, and a `Then` line would have one row raise the obligation and answer
+    it. A stepped row carrying a registered check is a corpus defect rather than a second legal
+    shape, so nothing here is read over one: the stepless row is the only shape a fitness scenario
+    has, and it is what this rule is asserted on.
 
     WHETHER ONE SCENARIO MAY CARRY BOTH KINDS OF TAG IS STILL NOT SETTLED HERE. A row carrying a
     tier tag and a check tag together is a corpus defect, and reading the corpus's shape belongs
     to @SCN-STG-005 exactly as it did before. What is settled here is only which signal the
     OBLIGATION follows.
 
-    A TAG IS A CHECK ONLY WHEN THE REGISTRY SAYS SO — the same registry the citation seam's
-    first hop reads. Treating every unrecognised bare tag as a check would raise an obligation
-    for @smoke, and a corpus cannot be asked to keep its own vocabulary straight by convention.
-    The registry arrives as data, so a target that registers nothing raises no fitness
-    obligations at all and the reading is inert until something supplies one.
+    A TAG IS A CHECK ONLY WHEN THE REGISTRY SAYS SO — the same registry the compatibility path
+    resolves a discovered script handle through. Treating every unrecognised bare tag as a check
+    would raise an obligation for @smoke, and a corpus cannot be asked to keep its own vocabulary
+    straight by convention. The registry arrives as data, so a target that registers nothing raises
+    no fitness obligations at all and the reading is inert until something supplies one.
 
     ONE OBLIGATION, NOT ONE PER MENTION. A scenario's effective tags are its own plus
     everything it inherits from its Rule and its Feature (@SCN-LDG-020), so one check can reach
     one scenario twice. It owes that check once.
 
     @unit @integration @SCN-LNT-006
-    Scenario: a scenario tagged with a bare fitness check raises one Evidence Obligation for that check, steps or none
+    Scenario: a scenario tagged with a bare fitness check raises one Evidence Obligation for that check
       Given "complexity" is a registered fitness check
       And a stepless scenario tagged with the bare fitness check "complexity"
-      And a STEPPED scenario tagged with the same bare fitness check "complexity"
       When the scenario corpus is read
-      Then each of those scenarios raises exactly one Evidence Obligation, naming the fitness check "complexity"
+      Then the scenario raises exactly one Evidence Obligation, naming the fitness check "complexity"
 
     @unit @integration @SCN-LNT-007
     Scenario: a @lint=<check> tag raises no Evidence Obligation — the retired form is inert
@@ -480,20 +482,20 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     unification. A reader who collapses any two of the three will conclude this scenario proves
     something it does not.
 
-    AN EXEMPTION FOR THIS ONE TAG WOULD BE TEMPTING IN EITHER DIRECTION, which is why the peer
-    reading is now held over BOTH SHAPES. Since 3F-3115 a registered bare check owes its check from
-    the row that carries it, steps or none (@SCN-LNT-006), and @lint is the tag a reader is likeliest
-    to special-case: carving it OUT of the rule because of what it used to name, or handing it a
-    built-in standing the registry never gave it. The scenario below reads one corpus over a stepless
-    row and a stepped one, so the company that tells a peer from a catch-all is read on both.
+    AN EXEMPTION FOR THIS ONE TAG WOULD BE TEMPTING IN EITHER DIRECTION, and both directions are
+    read here. A registered bare check owes its check from the row that carries it (@SCN-LNT-006),
+    and @lint is the tag a reader is likeliest to special-case: excused the rule because of what it
+    used to name, or handed a built-in standing the registry never gave it. Both readings are held
+    over the ONE shape a fitness scenario has — the stepless row, which is what it is because the
+    scenario is a declared obligation and nothing runs it — so the company that tells a peer from a
+    catch-all is read there, which is the only place there is to read it.
 
     @unit @integration @SCN-LNT-010
-    Scenario: a scenario tagged bare @lint raises the style-lint Evidence Obligation, steps or none
+    Scenario: a scenario tagged bare @lint raises the style-lint Evidence Obligation
       Given "lint" is a registered fitness check alongside "complexity" and "typecheck"
       And a stepless scenario tagged with the bare fitness check "lint"
-      And a STEPPED scenario tagged with the same bare fitness check "lint"
       When the scenario corpus is read
-      Then each of those scenarios raises exactly one Evidence Obligation, naming the fitness check "lint"
+      Then the scenario raises exactly one Evidence Obligation, naming the fitness check "lint"
 
   Rule: a registry entry may name the fitness scenario its check credits
 

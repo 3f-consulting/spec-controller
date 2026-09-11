@@ -620,35 +620,15 @@ Given(
 Given(
   "a stepless scenario tagged with the bare fitness check {string}",
   function (check: string) {
-    // NO steps — the ordinary shape of a fitness scenario, which has a whole-system characteristic
-    // to hold and nothing to exemplify. It is the FIRST of the two rows this scenario reads; the
-    // Given that follows appends the STEPPED one, and the assertion is that the shape made no
-    // difference (@SCN-LNT-006).
+    // NO steps — the shape a fitness scenario HAS, because it is a declared obligation, nothing
+    // runs it, and there is nothing for a step to exemplify. Both callers read this ONE row and
+    // nothing else: it is the only shape there is to read the rule on.
     corpusSource = [
       "@FIT",
       "Feature: fitness",
       "  Rule: the tree stays inside its thresholds",
       `    @${check} @SCN-AAA-001`,
       "    Scenario: the codebase stays under the threshold",
-    ].join("\n");
-  }
-);
-
-// @SCN-LNT-006
-// @SCN-LNT-010
-Given(
-  "a STEPPED scenario tagged with the same bare fitness check {string}",
-  function (check: string) {
-    // THE SAME TAG ON THE OTHER SHAPE, appended to the SAME corpus the preceding Given built — one
-    // read, two rows, so the assertion that follows compares the two answers rather than two runs.
-    // The row carries its check tag and NOTHING else, which is the shape a converted fitness
-    // scenario arrives in: a tier tag beside it would be a corpus defect (@SCN-STG-005), and the
-    // point here is the obligation rule, not the corpus rule.
-    corpusSource = [
-      corpusSource,
-      `    @${check} @SCN-AAA-002`,
-      "    Scenario: the same characteristic, now carrying a runnable example",
-      "      Given a step, which is the whole of what makes this row STEPPED",
     ].join("\n");
   }
 );
@@ -857,20 +837,22 @@ Then(
 // @SCN-LNT-006
 // @SCN-LNT-010
 Then(
-  "each of those scenarios raises exactly one Evidence Obligation, naming the fitness check {string}",
+  "the scenario raises exactly one Evidence Obligation, naming the fitness check {string}",
   function (check: string) {
-    // WHOLE-CORPUS equality over BOTH rows, and the two expectations are deliberately IDENTICAL:
-    // what this scenario asserts is that the shape made no difference. A rule still reading the
-    // steps answers `[]` for the second row and fails here; one that answered twice for the first
-    // fails here too.
+    // WHOLE-CORPUS equality over the one row the corpus holds, so "exactly one" excludes a rule
+    // that raised the obligation TWICE for a twice-arriving tag as firmly as one that raised it
+    // under another name, on a second row, or not at all. A `.length === 1` on scenario zero would
+    // pass all but the last.
+    //
+    // ONE ROW, AND IT IS STEPLESS, because that is the only shape a fitness scenario has: it is a
+    // declared obligation and nothing runs it. The arm that stood beside this one read a STEPPED
+    // row and asserted the shape made no difference — which certified the retired ruling whichever
+    // way it pointed, so it is gone rather than inverted.
     assert.deepEqual(
       scenarios.map((scenario) => scenario.evidenceObligations),
-      [
-        [{ qualityCheck: "lint", staticCheck: check }],
-        [{ qualityCheck: "lint", staticCheck: check }],
-      ],
-      `expected the stepless row AND the stepped row each to raise one lint Evidence Obligation ` +
-        `naming "${check}" — the tag is the discriminator, not the steps; got ${JSON.stringify(scenarios)}`
+      [[{ qualityCheck: "lint", staticCheck: check }]],
+      `expected the stepless row to raise ONE lint Evidence Obligation naming "${check}" — the ` +
+        `registered bare check tag names the axis; got ${JSON.stringify(scenarios)}`
     );
   }
 );
