@@ -85,7 +85,7 @@ Then pass `--ci-steps ./ci-steps.json` to `balance` (see *Wiring into CI*).
 ### A converted check is still a command you can run
 
 Converting a check does not move it inside anything. Most of the rows in this repository's own
-manifest are a command you can paste into a terminal — `pnpm lint:scn-tags`, `pnpm typecheck`, bare
+manifest are a command you can paste into a terminal — `pnpm spec-controller tags`, `pnpm typecheck`, bare
 `eslint` — and exit 0 is the check passing, with no cucumber and no `spec-controller` involved. The
 rest read a number an earlier step, or a scheduled sweep, already left behind. What the row and the
 `id:` add is that the run becomes **observable**: the ledger can say the check ran, and against

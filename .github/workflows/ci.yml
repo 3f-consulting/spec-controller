@@ -111,7 +111,7 @@ jobs:
       #
       # IT ADDS NO GATE. `pnpm verify`'s ladder is derived from the `run:` steps of this file that
       # invoke a package.json script; this one invokes none, so the ladder is unchanged by it —
-      # ten gates as this file now stands — and `scripts/verify.sh` exports the same base for
+      # nine gates as this file now stands — and `scripts/verify.sh` exports the same base for
       # itself. (The number is not maintained here either: `pnpm ladder` prints it, and the closing
       # line of `scripts/verify.sh` counts what it just ran. It is in this sentence only because a
       # reader asking "unchanged from what?" deserves the figure.)
@@ -407,13 +407,14 @@ jobs:
       #
       # THEY INVOKE THE package.json HANDLE AND NOT THE CLI BEHIND IT, WHICH IS WHAT PUTS THEM BACK
       # IN THE LOCAL LADDER. `pnpm verify` is derived from the `run:` steps of THIS file that invoke
-      # a package.json script (@SCN-LAD-001..006), so these steps take it from four gates to ten —
-      # the five `lint:` checks and `typecheck` return to the local green-check that the conversion
-      # into the fitness pass had taken them out of. Writing `pnpm exec tsx
-      # tests/checks/lintFeatureCodesCli.ts` here would run the same check and hold the ledger
-      # equally still, and now that the pass is gone `pnpm verify` would have silently dropped to
-      # one. A green-check that narrows without saying so is the fault @SCN-LAD-001..006 exist to
-      # make impossible; a step spelt to dodge them is the same fault wearing a longer command.
+      # a package.json script (@SCN-LAD-001..006), so these steps take it from four gates to nine —
+      # the three `lint:` checks and `typecheck` return to the local green-check that the
+      # conversion into the fitness pass had taken them out of, and the corpus-tags step arrives
+      # there with them. Writing `pnpm exec tsx tests/checks/lintAnemicDomainCli.ts` here would run
+      # the same check and hold the ledger equally still, and now that the pass is gone `pnpm
+      # verify` would have silently dropped to one. A green-check that narrows without saying so is
+      # the fault @SCN-LAD-001..006 exist to make impossible; a step spelt to dodge them is the
+      # same fault wearing a longer command.
       #
       # THE THREE `pnpm --silent` ROWS ARE NOT GATES, AND THAT IS THE DERIVATION BEING EXACT RATHER
       # THAN A GAP. `--silent` sits where the script name would be, so the ladder does not match
@@ -432,15 +433,32 @@ jobs:
         if: always()
         run: pnpm lint:complexity-exceptions
 
-      - name: Feature codes
-        id: SCN-FIT-007
+      # THE ONE STEP HERE THAT IS THE PRODUCT RATHER THAN A CHECK WE WROTE (3F-3311), AND IT IS NOW
+      # THE ONLY ONE POLICING THE CORPUS. It stood beside two private copies of itself —
+      # `lint:scn-tags` (620 lines over a hand-rolled line parser, left at 3F-3312) and
+      # `lint:feature-codes` (417 lines over a second corpus walk and a hand-kept table of feature
+      # codes, left at 3F-3313) — both under `tests/checks/`, which is in neither package's
+      # published `files` and so unreachable from any other repository by construction. An adopter
+      # got `@SCN` codes and inherited nothing that policed them. This step runs the WORKSPACE CLI
+      # DIRECTLY, the way an adopter runs the command they installed, which is the whole of what
+      # acceptance item 2 asks: a private copy ships nothing. `3F-3296` de-wrappered the
+      # self-reconciliation step below for the same reason, and the two steps now differ only in
+      # which command they hand the binary.
+      #
+      # ITS HANDLE IS OUTSIDE THE OBSERVED SET, AND THAT IS WHY NO PHANTOM CHECK ARRIVES WITH IT.
+      # `runningStaticChecks` counts a `package.json` script as a running static check when its
+      # name carries an observed prefix (`lint:` / `guard:`) and a CI `run:` step invokes it;
+      # `spec-controller` is the workspace CLI and carries neither, so this step adds an
+      # observation for SCN-FIT-014 and nothing to the static-check census.
+      #
+      # SO THE `id:` IS THE WHOLE CITATION. The obligation is the stepless `@fitness` scenario, the
+      # command is the row in `specController.fitnessChecks`, and this step is the observation that
+      # answers them — cited by `id:` alone (@SCN-LNT-031). Misspell it and the credit posts to the
+      # suspense row while the scenario reads unobserved.
+      - name: Corpus tags
+        id: SCN-FIT-014
         if: always()
-        run: pnpm lint:feature-codes
-
-      - name: SCN tags
-        id: SCN-FIT-008
-        if: always()
-        run: pnpm lint:scn-tags
+        run: pnpm spec-controller tags
 
       - name: Anemic domain
         id: SCN-FIT-009

@@ -8,14 +8,15 @@
  * is the exact reading this slice exists to fix, a single check run on its own by a contributor
  * who changed a feature file.
  *
- * THE COMMAND IS DERIVED, NOT RE-TYPED. Each check is spawned from the package.json script the
- * Examples table names, so this arm cannot drift from what CI runs — the discipline `pnpm ladder`
- * already applies to the ladder itself. A step that re-typed `tsx …/lintFeatureCodesCli.ts` would
- * keep passing after the script moved.
+ * THE COMMAND IS DERIVED, NOT RE-TYPED. The Examples cell names a package.json script and, after
+ * it, the subcommand to hand that script; the script's own text is read from package.json rather
+ * than restated here. So this arm cannot drift from what CI runs — the discipline `pnpm ladder`
+ * already applies to the ladder itself. A step that re-typed `tsx …/cli.ts tags` would keep passing
+ * after the script moved.
  *
- * THE CORPUS IS STEERED BY THE WORKING DIRECTORY, which is how both checks default it — so
- * neither needs a flag it does not have, and the planted corpus is reached exactly as a real
- * contributor's would be.
+ * THE CORPUS IS STEERED BY THE WORKING DIRECTORY, which is how `tags` defaults both its inputs —
+ * so it needs neither `--features` nor `--package-json` here, and the planted corpus is reached
+ * exactly as a real contributor's would be.
  *
  * @SCN-GPG-002 — bidirectional evidence marker for features/gherkin-parse-gate.feature.
  */
@@ -34,15 +35,28 @@ import { parseErrorsIn } from "../../packages/spec-controller/src/ingest/gherkin
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
 /**
- * A well-formed file BOTH checks would red over: `ZZZ` is in no registry (feature-codes), and
- * its @SCN scenario names no evidence tier and is not parked (scn-tags). It is what makes
- * "reports no verdict" a withholding rather than a silence.
+ * A well-formed file `spec-controller tags` reds over: its @SCN scenario carries `@untit`, a tag
+ * that is neither an evidence tier, a recognised deferral tag nor a word naming a check, so the
+ * grammar rule earns it a finding. It is what makes "reports no verdict" a withholding rather
+ * than a silence.
+ *
+ * THE FINDING USED TO BE A MISSING TIER, and it stopped being one when 3F-3309 deleted the tier
+ * floor. A fixture rigged to be answerable is only rigged while the check still has something to
+ * say about it: measured after the floor left, this file's original form ran `lint: OK`, exit 0,
+ * which would have greened the refusal arm above by silence instead of by withholding. 3F-3309
+ * put `@untit` here for that reason, and 3F-3310 re-measured it against the shipped command the
+ * Examples table now names — `tags: FAILED`, exit 1, on the grammar rule.
+ *
+ * THE UNREGISTERED HEADER CODE IS NO LONGER A SECOND FINDING. `ZZZ` is in no registry because
+ * there is no registry left: `tags` polices what the corpus itself says — one header code per
+ * file, and a scenario id naming its own file — and a hand-kept allocation table was the "second
+ * list to drift" this slice retired. So the grammar rule is the whole of what answers here.
  */
 const READABLE = `@ZZZ
-Feature: a readable file each check would have something to say about
+Feature: a readable file the check would have something to say about
 
-  @SCN-ZZZ-001
-  Scenario: it names an unregistered feature code and no evidence tier
+  @untit @SCN-ZZZ-001
+  Scenario: it carries a tag that means nothing
     Given a thing
 `;
 
@@ -80,25 +94,33 @@ function writeCorpus(files: readonly (readonly [string, string])[]): string {
 
 /**
  * The command `pnpm <check>` runs, read from the root package.json rather than restated here.
- * Every check in the Examples table is a `tsx <script>` invocation; anything else is a change
- * this arm must be told about rather than silently paper over.
+ *
+ * The Examples cell is a script name followed by whatever arguments that script takes — for
+ * `spec-controller tags`, the workspace CLI and the subcommand to give it. The script's own text
+ * is a `tsx <entry>` invocation; anything else is a change this arm must be told about rather than
+ * silently paper over.
  */
-function commandFor(check: string): readonly [string, string] {
+function commandFor(check: string): readonly [string, readonly string[]] {
+  const [scriptName, ...subcommand] = check.split(/\s+/);
+  assert.ok(scriptName, `the Examples table names no command: "${check}"`);
   const pkg = JSON.parse(readFileSync(path.join(repoRoot, "package.json"), "utf8")) as {
     scripts: Record<string, string | undefined>;
   };
-  const script = pkg.scripts[check];
-  assert.ok(script, `package.json names no script "${check}" — the Examples table has drifted`);
+  const script = pkg.scripts[scriptName];
+  assert.ok(script, `package.json names no script "${scriptName}" — the Examples table has drifted`);
   const [runner, entry] = script.split(/\s+/);
-  assert.equal(runner, "tsx", `expected "${check}" to be a tsx invocation; got "${script}"`);
-  assert.ok(entry, `"${check}" names no entry point: "${script}"`);
-  return [path.join(repoRoot, "node_modules", ".bin", "tsx"), path.join(repoRoot, entry)];
+  assert.equal(runner, "tsx", `expected "${scriptName}" to be a tsx invocation; got "${script}"`);
+  assert.ok(entry, `"${scriptName}" names no entry point: "${script}"`);
+  return [
+    path.join(repoRoot, "node_modules", ".bin", "tsx"),
+    [path.join(repoRoot, entry), ...subcommand],
+  ];
 }
 
 /** Spawn the real check as its own process, with `corpusRoot` as its working directory. */
 function spawnCheckOver(check: string, corpusRoot: string): Outcome {
-  const [tsx, entry] = commandFor(check);
-  const result = spawnSync(tsx, [entry], { cwd: corpusRoot, encoding: "utf8" });
+  const [tsx, args] = commandFor(check);
+  const result = spawnSync(tsx, [...args], { cwd: corpusRoot, encoding: "utf8" });
   assert.equal(result.error, undefined, `${check} failed to spawn: ${result.error?.message}`);
   return {
     exitCode: typeof result.status === "number" ? result.status : 1,
@@ -118,8 +140,12 @@ Given("a feature corpus holding one file the Gherkin parser rejects beside one i
   unreadableFile = path.join(riggedRoot, "features", "b-unreadable.feature");
 });
 
+/**
+ * A REGEX, NOT `{word}`. The Examples cell names a command, and a command is a script plus its
+ * subcommand — two words with a space in them, which the built-in `{word}` parameter cannot match.
+ */
 // @SCN-GPG-002
-When("{word} is asked to check that corpus", function (check: string) {
+When(/^(.+) is asked to check that corpus$/, function (check: string) {
   checkUnderTest = check;
   outcome = spawnCheckOver(check, riggedRoot);
 });
@@ -161,8 +187,12 @@ Then("it says so as a sentence, not as a stack trace", function () {
   );
 });
 
-/** A verdict of either kind: the clean bill, or the finding list. Neither may survive a refusal. */
-const VERDICT = /lint: (OK|FAILED)/;
+/**
+ * A verdict of either kind: the clean bill, or the finding list. Neither may survive a refusal.
+ * `tags:` is the shipped command's own prefix on both — the word it opens each verdict with, and
+ * the one thing a caller reading stdout would take as an answer about the corpus.
+ */
+const VERDICT = /tags: (OK|FAILED)/;
 
 // @SCN-GPG-002
 Then(
@@ -177,7 +207,7 @@ Then(
     const control = spawnCheckOver(checkUnderTest, writeCorpus([["a-readable.feature", READABLE]]));
     assert.match(
       control.output,
-      /lint: FAILED/,
+      /tags: FAILED/,
       `the planted corpus must earn ${checkUnderTest} a finding when it CAN read it, or this ` +
         `scenario proves nothing; got:\n${control.output}`,
     );

@@ -110,6 +110,16 @@ export type {
 // so the surface a consumer's v1 contract carries widens by one name and nothing else.
 export { evidenceReconciliationFromSources } from "./assemble/evidenceReconciliationFromSources.js";
 
+// --- The `@SCN` SCHEME'S OWN RULES over a target's corpus (`parse/corpusFaults.ts`) ---
+// THE TWO NAMES THIS BARREL GAINS AT 3F-3300, and here for `evidenceReconciliationFromSources`'s
+// reason: a published module — the `tags` command's CLI edge — has to reach the rule, and
+// `./internal` is not published (3F-2837, unamended). `parseTaggedScenarios`, the tag-inheritance
+// walk the grammar rules read, stays internal; what crosses is the CALLER, exactly as it did for
+// the reconcile composition. The surface a consumer's v1 contract carries widens by two names —
+// the function and the fault it reports — and by nothing else.
+export { corpusFaults } from "./parse/corpusFaults.js";
+export type { CorpusFault } from "./parse/corpusFaults.js";
+
 // --- Render — model→string (`render/*`) ---
 export { renderJson } from "./render/json.js";
 export { renderMarkdown, renderReport, renderReportFromJson } from "./render/markdown.js";

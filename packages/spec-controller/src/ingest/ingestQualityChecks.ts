@@ -305,7 +305,9 @@ export function featureCorpusDuplicateScnIds(featuresDir: string | undefined): s
  * (markdown-only — the by-feature cut is markdown-only, so it is NOT serialised to JSON).
  * Uncoded files (`featureCode === null`) are omitted, so the by-feature emitter falls
  * back to the bare `FFF` for any id whose code no file registers. One-prefix-one-file holds
- * by invariant (`lintFeatureCodes` flags a duplicate code), so the map is unambiguous.
+ * by invariant (`corpusFaults` raises `duplicate-feature-code`, @SCN-STG-010), so the map is
+ * unambiguous. That invariant was `lintFeatureCodes`' until 3F-3313; it is the shipped command's
+ * now, which is the first time a CONSUMER of this reader has it too.
  */
 export function readFeatureNames(featuresDir?: string): Map<string, string> {
   const features =

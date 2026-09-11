@@ -6,9 +6,11 @@
  *   spec-controller [--store <root>] [--run-id <id>] <command> [command-args]
  *
  * Commands: `balance` — the deterministic reconciliation of scenarios against
- * observed evidence, standalone on the public core + app layer (no engine). The
- * `analyse` / `migrate` capabilities are a separate, closed offering built on the same
- * core.
+ * observed evidence, standalone on the public core + app layer (no engine); `tags` — the
+ * @SCN scheme policing itself over the same corpus, which is a fault about the corpus rather
+ * than a verdict about its evidence, and so has its own status ladder rather than a fifth
+ * meaning on balance's. The `analyse` / `migrate` capabilities are a separate, closed offering
+ * built on the same core.
  *
  * Storage is a CROSS-CUTTING host modifier, not a command. A leading `--store <root>`
  * turns any command into a STORED run: the host wraps the command via the kept-run
@@ -22,6 +24,7 @@
 import { dirname } from "node:path";
 
 import { runBalance } from "./cli-balance/cli.js";
+import { runTags } from "./corpus/cli.js";
 import { resolveSourceSha, resolveToolIdentity } from "./run-management/resolveRunInputs.js";
 import {
   executeKeptRun,
@@ -37,6 +40,9 @@ function runCommand(command: string, argv: string[]): void {
   switch (command) {
     case "balance":
       runBalance(argv);
+      return;
+    case "tags":
+      runTags(argv);
       return;
     default:
       process.stderr.write(

@@ -4,7 +4,8 @@
  * records (split out of the old spec/featureCodes.ts). The pure per-source
  * parsers (extractFeatureCode / parseScenarioCodes) live here with their sole consumer;
  * the `scnId → feature-code` grammar helper is engine-side (packages/core/src/lib/
- * featureCode.ts); the duplicate-code lint is product-side (tests/checks/featureCodes.ts).
+ * featureCode.ts); the duplicate-code lint is engine-side too since 3F-3313, as @SCN-STG-010 in
+ * parse/corpusFaults.ts, and no longer a private check under tests/checks/.
  *
  * The foundation, folded into the @LDG runtime spine.
  */

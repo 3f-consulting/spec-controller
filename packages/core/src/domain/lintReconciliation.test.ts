@@ -29,7 +29,10 @@ import { runningStaticChecks } from "../parse/runningStaticChecks.js";
 import type { PackageJsonScripts } from "../parse/checkScriptsRunInCI.js";
 import type { EvidenceObservation } from "../model.js";
 
-/** spec-controller's own, real wired static check — the dogfood subject (package.json script). */
+/** The handle the fixtures below plant. It WAS spec-controller's own wired static check; since
+ *  3F-3313 no script in this repository carries the name, which changes nothing here — the header
+ *  above already records that this file plants its workflow and manifest rather than reading the
+ *  tree, so the string is fixture data and its realness was never what the arms rest on. */
 const REAL_GUARD = "lint:feature-codes";
 
 /** The bare check tag the registry maps that handle to — the citation seam's middle term. */

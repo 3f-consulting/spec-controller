@@ -55,10 +55,25 @@ const REPOSITORY_ROOT = resolveRepositoryRoot();
  * simultaneous add and removal nets to zero and reads as a tree that did not change. An exact pin
  * catches a bare removal, which a floor cannot; it does not catch a swap, and nothing here does.
  *
+ * IT MOVED 39 → 41 AT 3F-3303, AND THE MOVE IS AN ADDITION WITH NOTHING LEAVING. `parse/
+ * corpusFaults.ts` reached the 400-line `max-lines` ceiling with four grammar clauses still to
+ * land, and canon rules that a module at the ceiling SPLITS rather than buying an exception entry
+ * (@SCN-CPX-001). It split on the seam its own rules have — `parse/corpusCodeFaults.ts` (a feature
+ * code binding to a feature file) and `parse/corpusGrammarFaults.ts` (a tag meaning something) —
+ * leaving the composition and the fault vocabulary behind. Two in, none out, so this is the
+ * direction the pin reads cleanly rather than the swap its blind spot is about.
+ *
+ * IT MOVED 41 → 42 AT 3F-3307, AND AGAIN THE MOVE IS AN ADDITION WITH NOTHING LEAVING.
+ * `parse/corpusGrammarFaults.ts` was at 345 of the 400-line ceiling and the one-check rule
+ * (@SCN-STG-007) does not fit under it — so the same canon applies a second time and
+ * `parse/corpusClaimFaults.ts` arrives. The seam is not grammar-versus-more-grammar: the grammar
+ * arm asks whether a WORD means something, and this asks whether a SCENARIO has claimed too many
+ * of the words that do. One in, none out.
+ *
  * What it must never be is loosened into a floor: the floor is already asserted
  * below, and it is measurably blind to the fault this catches.
  */
-const CORE_SRC_FILE_COUNT = 38;
+const CORE_SRC_FILE_COUNT = 42;
 
 describe("[SCN-NPS-001] no parallel store re-represents the Ledger's entries", () => {
   it("passes clean over the REAL packages/core/src tree (the lock holds today)", () => {

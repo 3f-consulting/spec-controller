@@ -19,8 +19,9 @@
  * `@lint=lint:complexity-exceptions` tag on @SCN-CPX-003 is then what keeps it out of the suspense
  * row as an uncited static check. Observed AND NAMED is the balanced state.
  *
- * Mirrors `lint:scn-tags`: a pure function of the checked-out tree,
- * a full CI gate on every push. It does NOT mirror its own twin any more — @SCN-FIT-001 converted
+ * A PURE FUNCTION OF THE CHECKED-OUT TREE, a full CI gate on every push. That sentence named
+ * `lint:scn-tags` as the check it mirrored until 3F-3312 deleted it; the shape is stated on its
+ * own here rather than borrowed from a sibling that can leave. It does NOT mirror its own twin any more — @SCN-FIT-001 converted
  * (3F-3151) and is observed through the `id:` on its own CI step, while this one keeps the
  * discovered route. The pair is where a consumer can read both arrangements side by side.
  */

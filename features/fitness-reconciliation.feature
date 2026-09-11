@@ -20,12 +20,14 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
   static-axis posting rule left to be special.
 
   WHAT THE FILE IS CALLED, AND WHY THE CODE IS NOT. The feature code is @LNT because a code,
-  once allocated, is stable forever: it survives a rename and is never reused
-  (`featureCodes.ts`). The name it was allocated under — the retired `@lint=<handle>` form,
-  where a scenario named a runnable script and the run was matched back to it BY NAME — is
-  the thing this feature retired, so the FILE took the right name (3F-2592) and the code
-  stayed put. `@lint` itself survives here as ONE bare check among many: the style-lint one,
-  a flat peer of `@complexity` and `@typecheck` (@SCN-LNT-010).
+  once allocated, is stable forever: it survives a rename and is never reused — a rule this
+  repository now keeps by hand and nothing enforces, the registry table that reserved each
+  retired code having left with `lint:feature-codes` at 3F-3313. The name it was allocated
+  under — the retired `@lint=<handle>` form, where a scenario named a runnable script and the
+  run was matched back to it BY NAME — is the thing this feature retired, so the FILE took
+  the right name (3F-2592) and the code stayed put. `@lint` itself survives here as ONE bare
+  check among many: the style-lint one, a flat peer of `@complexity` and `@typecheck`
+  (@SCN-LNT-010).
 
   A fitness obligation reconciles as evidence only when the check actually holds over the
   REAL source: its command must be a `run:` step in the CI config over the real tree — not
@@ -44,10 +46,14 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
   fixture check ldg028-absent-guard and reconciles balanced. Their @unit and @integration
   obligations are untouched and still reconcile — the distinction from a deferral tag,
   which would have taken every obligation these scenarios name dark to silence one row each
-  (3F-2351). What spec-controller's OWN lint:feature-codes check owes is raised where it
-  belongs: its row of specController.fitnessChecks, whose scenario carries the
-  code SCN-FIT-007 in features/fitness-checks.feature (3F-3165). It sat stepless at the foot
-  of this file until then, under a code of this feature's own.
+  (3F-2351). AND lint:feature-codes IS NOW ONE OF THOSE FIXTURE HANDLES (3F-3313). It was this
+  repository's own check, and what it owed was raised where it belonged — its row of
+  specController.fitnessChecks, under the code SCN-FIT-007 in features/fitness-checks.feature
+  (3F-3165), which sat stepless at the foot of this file until then under a code of this
+  feature's own. The rules it carried ship from `spec-controller tags` now, so the row, the
+  script and the scenario left together and the handle survives here as a step-definition
+  constant: a name no script in this repository answers to, and none may again, for exactly
+  the reason the three above must never exist.
 
   WHICH TREE A FITNESS SCENARIO IS ABOUT IS THE GHERKIN'S TO SAY, AND THE STEP DEFINITION'S TO
   OBEY (ruled 2026-09-04). A fitness scenario names its subject in its own text — a PLANTED tree
@@ -126,8 +132,9 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       transitional reader that kept deriving the obligation would leave every re-grown @lint= tag
       owing a check the citation seam can never credit — one run cites one @SCN, and this form
       supplies none — so the row would read missing for ever and the corpus would look wrong when
-      only the tag was. Nothing raised is a corpus fault the tier floor catches (lint:scn-tags reds
-      an unrecognised tag once its lint= clause goes), not a permanent red on the books.
+      only the tag was. Nothing raised is a corpus fault the tag check catches (`spec-controller
+      tags` reds an unrecognised tag once its lint= clause goes), not a permanent red on the
+      books.
 
       THE HANDLE IS REGISTERED HERE ON PURPOSE. If the retired form were quietly re-routed through
       the registry — read the handle, look up its check, raise THAT obligation — the corpus would go

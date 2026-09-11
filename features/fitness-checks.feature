@@ -63,11 +63,8 @@ Feature: The fitness checks this repository configures, one scenario per row
   @fitness @SCN-FIT-003
   Scenario: every recorded complexity exception states the value the tree currently measures
 
-  @fitness @SCN-FIT-007
-  Scenario: every feature file carries a registered header code, and the corpus parses
-
-  @fitness @SCN-FIT-008
-  Scenario: every scenario carrying a code names an evidence tier, or is parked
+  @fitness @SCN-FIT-014
+  Scenario: every tag on the corpus obeys the @SCN scheme's own rules
 
   @fitness @SCN-FIT-009
   Scenario: no domain module is named for a procedural layer

@@ -215,18 +215,25 @@ Feature: spec-controller balance runs standalone
 
   Rule: the CLI answers --help from a single command/flag registry, completeness-guarded.
 
-    `spec-controller balance --help` (and `-h`) prints the balance command's flags —
-    each name + arg-placeholder + description — rendered from the data-driven
-    command/flag registry, and exits 0. It is handled in `runBalance` BEFORE any
-    parse/reconcile, so `--help` never falls through as a stray flag while balance runs
+    `<command> --help` (and `-h`) prints THAT command's flags — each name +
+    arg-placeholder + description — rendered from the data-driven command/flag
+    registry, and exits 0. Each command answers it BEFORE any parse or work of its
+    own, so `--help` never falls through as a stray flag while the command runs
     anyway. The registry is the single source: a flag exists ⇒ a registry entry ⇒ it
     appears in help, by construction.
 
+    The scope is per-command because the REGISTRY has always been two-scope — a global
+    host-modifier scope and a set of per-command scopes. The per-command renderer was
+    nonetheless written against the one command that existed and found `balance` BY NAME,
+    so a second command had no help surface at all: not an empty one, no way to ask for
+    it. The command is a parameter, so what the renderer covers is the registry's shape
+    rather than the command set's size on the day it was written.
+
     @SCN-CLI-006 @unit @e2e
-    Scenario: balance --help lists the command's flags and exits 0
+    Scenario: <command> --help lists that command's flags and exits 0
       Given the spec-controller binary
       When "spec-controller balance --help" is invoked
-      Then it exits 0 and prints each registered balance flag with its description
+      Then it exits 0 and prints each flag the registry gives that command, with its description
 
     @SCN-CLI-007 @unit @e2e
     Scenario: spec-controller --help lists the commands and the global --store/--run-id modifiers
@@ -237,7 +244,7 @@ Feature: spec-controller balance runs standalone
     @SCN-CLI-008 @unit
     Scenario: every registered flag, command and modifier reaches its help surface (completeness guard)
       Given the two-scope command/flag registry and its two help renderers
-      Then no per-command flag the registry carries is missing from the balance --help render
+      Then no flag the registry gives any command is missing from that command's --help render
       And no global modifier and no registered command is missing from the top-level --help render
       And a registry entry that its help surface omits reds the guard
 

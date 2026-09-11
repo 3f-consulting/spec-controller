@@ -569,6 +569,8 @@ export const PUBLISHED_SURFACES: readonly PublishedSurface[] = [
       // The reconcile composition over a target's already-read sources
       // (assemble/evidenceReconciliationFromSources.ts)
       "evidenceReconciliationFromSources",
+      // The @SCN scheme's own rules over a target's corpus (parse/corpusFaults.ts)
+      "corpusFaults",
       // Render — model to string (render/*)
       "renderJson",
       "renderMarkdown",
@@ -620,6 +622,8 @@ export const PUBLISHED_SURFACES: readonly PublishedSurface[] = [
       "StaticCheckTotals",
       "LintTally",
       "EvidenceObligationsSection",
+      // The @SCN scheme's own rules over a target's corpus (parse/corpusFaults.ts)
+      "CorpusFault",
       // Render (render/*)
       "FeatureNames",
       // Provenance — the pure subset (provenance/provenance.ts)

@@ -39,10 +39,10 @@ export { parseScnCitation, parseScnCitations } from "./lib/scnCitation.js";
 export { bareTerm } from "./lib/bareTerm.js";
 
 // `checkRegistryOf` / `registeredCheckTags` — the ONE reading of a target's check registry
-// (`domain/checkRegistry`). Shared because the tier-tag floor (@SCN-STG-005) must admit exactly
-// the bare tags the obligation rule raises against: a second reader in `tests/checks/` would
-// decide independently which words name a check, and a scenario the floor accepted while the
-// engine raised nothing for it would be tier-named and evidence-free. Internal, not public — where
+// (`domain/checkRegistry`). Shared because the corpus check's grammar rule (@SCN-STG-005) must
+// admit exactly the bare tags the obligation rule raises against: a second reader in
+// `tests/checks/` would decide independently which words name a check, and a word the check
+// called legitimate while the engine raised nothing for it would mean two different things. Internal, not public — where
 // a registry is AUTHORED is still open (the registry-home question, increment D).
 export { checkRegistryOf, registeredCheckTags } from "./domain/checkRegistry.js";
 export type { CheckRegistry } from "./domain/checkRegistry.js";
@@ -68,8 +68,8 @@ export { parseTaggedScenarios } from "./parse/scenarios.js";
 export type { TaggedScenario } from "./parse/scenarios.js";
 
 // `FITNESS_AXIS_TAG` — the ONE spelling of the word a CONVERTED check's scenario carries
-// (`parse/scenarios`, @SCN-LNT-018). Shared because the tier-tag floor and its one-check rule
-// (@SCN-STG-005, @SCN-STG-007) must admit exactly the scenarios the obligation rule raises
+// (`parse/scenarios`, @SCN-LNT-018). Shared because the corpus check's grammar and one-check
+// rules (@SCN-STG-005, @SCN-STG-007) must admit exactly the scenarios the obligation rule raises
 // against, and this word is now the third source of what names a check on a corpus — the two
 // resolvers beside it answer for a target's registry and its ceilings, and neither can ever carry
 // this one: a converted check has no runnable script handle and no authored ceiling, only a
@@ -125,7 +125,7 @@ export type { CiRunStep } from "./parse/checkScriptsRunInCI.js";
 
 // The `resolve*` family — a target's `specController.*` configuration read into the registry, bars
 // and mints the reconciler takes (`parse/targetManifest`). Shared because they moved INTO the
-// engine and the tree's own gates still read a target's config through them: the tier-tag floor
+// engine and the tree's own gates still read a target's config through them: the corpus check
 // (@SCN-STG-005) and the characteristic roster resolve the same registry, bars and mints the
 // reconciler does, and a second reader deciding independently which words a manifest names would
 // admit a tag the engine raises nothing for. They sat at the app's ingest edge until 3F-3087,

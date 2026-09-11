@@ -60,12 +60,34 @@ const PENDING_TAG_TO_QUALITY_CHECK: Record<string, QualityCheck> = {
 export function pendingQualityCheck(tag: string): QualityCheck | null {
   return PENDING_TAG_TO_QUALITY_CHECK[tag] ?? null;
 }
+
+/**
+ * Every recognised `<quality-check>pending` spelling, derived from the map above rather than
+ * listed again (@SCN-STG-002, 3F-3302).
+ *
+ * WHY A LIST AND NOT JUST THE PREDICATE. `pendingQualityCheck` answers "is THIS tag one", which
+ * is all an obligation needs. The tag-grammar rule needs the other direction too — the words to
+ * measure an unrecognised tag AGAINST, so it can name the tier a typo resembles — and a list
+ * written out over there would agree with this map by diligence and then drift the first time a
+ * quality-check is added.
+ */
+export const PENDING_QUALITY_CHECK_TAGS: readonly string[] = Object.keys(
+  PENDING_TAG_TO_QUALITY_CHECK
+);
+
 const TAG_TO_QUALITY_CHECK: Record<string, RuntimeQualityCheck> = {
   unit: "unit",
   integration: "integration",
   e2e: "e2e",
   performance: "performance",
 };
+
+/**
+ * The bare tags that name a RUNTIME evidence tier, derived from the map above (@SCN-STG-002,
+ * 3F-3302). Exported for the same reason as the pending list beside it, and kept beneath the map
+ * it reads so the two can never be edited apart.
+ */
+export const RUNTIME_QUALITY_CHECK_TAGS: readonly string[] = Object.keys(TAG_TO_QUALITY_CHECK);
 
 /** Is a trimmed line a genuine Gherkin TAG LINE? Return its bare tags, else null. */
 function tagLineTags(line: string): string[] | null {
@@ -187,11 +209,11 @@ export function parseUntaggedScenarios(source: string): string[] {
  * `TaggedScenario.stepless` SURVIVES, AND NO RULE READS IT (3F-3134). What stood here said the
  * field survived because `parse/scnTags.ts` still read it, the tier floor and the one-check rule
  * being corpus-SHAPE rules whose subject steplessness genuinely was. Wrong twice: `parse/scnTags.ts`
- * is not a path in this repository, and the corpus check it meant
- * (`spec-controller/tests/checks/scnTags.ts`) never read this field — it computed its own off its
- * own line parser, domain-pure and importless. Both of that check's arms read the registered tag
- * now (@SCN-STG-005, @SCN-STG-007, 3F-3126) and its private reader is retired, so the tree holds
- * ONE steplessness reading and no rule consults it. What does is named on the field.
+ * is not a path in this repository, and the corpus check it meant (spec-controller's private
+ * `tests/checks/scnTags.ts`, deleted at 3F-3312) never read this field — it computed its own off
+ * its own line parser, domain-pure and importless. Both of those rules read the registered tag
+ * now (@SCN-STG-005, @SCN-STG-007, 3F-3126) and run from the shipped corpus check, so the tree
+ * holds ONE steplessness reading and no rule consults it. What does is named on the field.
  *
  * REGISTERED, NOT INFERRED. `checkTags` is the registry's answer (`domain/checkRegistry`), taken as
  * data. Without it every unrecognised tag would be a candidate check and `@smoke` would owe one;
@@ -465,7 +487,8 @@ export interface TaggedScenario {
    *
    * IT NO LONGER SAYS WHICH AXIS THE SCENARIO IS ON, AND NO RULE READS IT AT ALL. The obligation
    * rule reads the registered check tag and nothing else (@SCN-LNT-006, 3F-3115), and the corpus
-   * check's tier floor and one-check rule read that same tag (@SCN-STG-005, @SCN-STG-007, 3F-3126).
+   * check's grammar and one-check rules read that same tag (@SCN-STG-005, @SCN-STG-007, 3F-3126;
+   * its tier floor, the third reader that clause named, left at 3F-3309).
    * The sentence that stood here named `parse/scnTags.ts` as the surviving reader — not a path in
    * this repository, and the check it meant read a private field of its own, retired with 3F-3134.
    *

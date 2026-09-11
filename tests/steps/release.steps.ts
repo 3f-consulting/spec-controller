@@ -654,6 +654,21 @@ const SWEEP_FED_ROW = "SCN-FIT-002";
 const RECONCILIATION_SCRIPT = "spec-controller";
 
 /**
+ * The SUBCOMMAND that tells the reconciliation gate from its sibling — and it exists because the
+ * handle above stopped being unique (3F-3311).
+ *
+ * `pnpm spec-controller tags` is a second CI step invoking the same workspace CLI, so the derived
+ * ladder now carries the script name `spec-controller` TWICE and this file's lookup can no longer
+ * key on it. That is the derivation being honest — a gate is its command, and the two commands
+ * differ — but a `find` on the name alone silently took whichever came first in `ci.yml`, which is
+ * the corpus check. It exits 0 over a cold evidence root, because it reads the corpus and not the
+ * run, so the positive control below asserted "a run with no evidence in it is refused" against a
+ * command that has no opinion about evidence at all, and the arm redded while nothing was wrong
+ * with the release.
+ */
+const RECONCILIATION_COMMAND = "balance";
+
+/**
  * The self-reconciliation exactly as `ci.yml` states it, CARRIED rather than re-typed here.
  *
  * WHY IT IS DERIVED. The gate's argv is where its scan surfaces and its evidence paths live, and
@@ -665,20 +680,26 @@ const RECONCILIATION_SCRIPT = "spec-controller";
  * AND THE POSITIVE CONTROL IS WHY IT MATTERS. The assertion below is that the reconciliation
  * REFUSES a cold evidence root; a command that refused because it was malformed, or because it
  * was handed no subcommand, would satisfy that assertion while proving nothing about evidence.
+ * A command that ran the WRONG SUBCOMMAND is the same fault wearing a working exit code, which is
+ * why the handle is no longer the whole key and why the match below is asserted UNIQUE: a third
+ * `spec-controller` step arriving one day must red here rather than be silently picked between.
  */
 function selfReconciliationCommand(): string {
   const manifest = manifestAt(repoRoot) as unknown as { scripts?: Record<string, string> };
-  const gate = deriveLocalLadder(
+  const named = new RegExp(`\\b${RECONCILIATION_SCRIPT}\\s+${RECONCILIATION_COMMAND}\\b`);
+  const matched = deriveLocalLadder(
     readFileSync(path.join(repoRoot, ".github", "workflows", "ci.yml"), "utf8"),
     manifest,
     ciOnlyExclusionsOf(manifest),
-  ).gates.find((rung) => rung.script === RECONCILIATION_SCRIPT);
-  assert.ok(
-    gate !== undefined,
-    `${RECONCILIATION_SCRIPT} must be a gate CI runs, or this arm has nothing to put to the cold ` +
-      "run and the control below would be vacuous",
+  ).gates.filter((rung) => rung.script === RECONCILIATION_SCRIPT && named.test(rung.command));
+  assert.equal(
+    matched.length,
+    1,
+    `exactly one gate CI runs must be \`${RECONCILIATION_SCRIPT} ${RECONCILIATION_COMMAND}\`, or ` +
+      "this arm has nothing to put to the cold run and the control below would be vacuous. The " +
+      `ladder offered ${matched.length}.`,
   );
-  return gate.command;
+  return matched[0]!.command;
 }
 
 /** A release's gates, put to one run, and what that run said to the two things it is not asked. */

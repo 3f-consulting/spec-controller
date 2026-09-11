@@ -147,7 +147,9 @@ let plantedScripts: PackageJsonScripts;
 // only meet at the reconcile — which is the fact the arm exists to keep true.
 let unitCredit: EvidenceObservation;
 
-/** The runnable handle the fixture registry maps — spec-controller's own genuinely-wired check. */
+/** The runnable handle the fixture registry maps. It was spec-controller's own wired check until
+ *  3F-3313; the name is fixture data here — the registry, the corpus and the workflow these arms
+ *  read are all planted — so what it names in the tree was never load-bearing. */
 const CITED_SCRIPT = "lint:feature-codes";
 
 /** The planted unwired handle — fixture-only; never a real in-repo script. */

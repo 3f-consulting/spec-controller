@@ -9,8 +9,10 @@
  * rather than the repository. `git ls-files` reads the index, so a staged plant is
  * visible — which is what makes proving the teeth a one-line setup.
  *
- * Mirrors `lint:scn-tags`: a pure decision (`anemicDomain.ts`, `scnTags.ts`) plus a thin edge
- * that supplies the real input. The static check is @lint-cited (`@lint=lint:anemic-domain` on
+ * THE SHAPE IS A PURE DECISION (`anemicDomain.ts`) PLUS A THIN EDGE that supplies the real input.
+ * It was written as a mirror of `lint:scn-tags`, which had the same split and left at 3F-3312 —
+ * named here as its own arrangement now, because a docblock pointing at a deleted sibling
+ * teaches nothing and nothing typechecks the pointer. The static check is @lint-cited (`@lint=lint:anemic-domain` on
  * @SCN-ANM-001) so the tool's own ledger reconciles it — not an uncited static check. The
  * `lint:` prefix is required rather than cosmetic: `runningStaticChecks` observes a CI
  * script only when its name carries an observed prefix.

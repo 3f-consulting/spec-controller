@@ -322,43 +322,61 @@ When(
   },
 );
 
+/**
+ * @SCN-CLI-006 — `<command> --help` is per-command (3F-3298). The command token is read
+ * out of the invocation the scenario names, the spawn is built from it, and the expected
+ * flag scope is looked up BY it — so nothing in this block is `balance` by construction.
+ * Ask it about a second registered command and it asks the binary about that command;
+ * the old block spelt `balance` in the spawn, in the assertion and in the step wording.
+ */
+let helpCommand = "";
+
 // @SCN-CLI-006
 Given("the spec-controller binary", function () {
-  // No fixture target needed: `balance --help` is answered from the registry BEFORE any
-  // reconcile, so there is nothing to reconcile. The shared When spawns the real binary.
-  invocationArgs = ["--help"];
+  // No fixture target: `<command> --help` is answered from the registry BEFORE the command
+  // does any work of its own, so there is nothing to reconcile. The When names the command.
+  helpCommand = "";
 });
 
 // @SCN-CLI-006
-When("{string} is invoked", function (command: string) {
-  assert.equal(command, "spec-controller balance --help");
-  cliResult = spawnBalance(invocationArgs);
+When("{string} is invoked", function (invocation: string) {
+  const [binary, command, ...rest] = invocation.split(" ");
+  assert.equal(binary, "spec-controller");
+  assert.ok(command, `expected a command token in the invocation; got "${invocation}"`);
+  assert.deepEqual(rest, ["--help"], `expected a <command> --help invocation; got "${invocation}"`);
+  helpCommand = command;
+  cliResult = spawnController([helpCommand, "--help"]);
 });
 
 // @SCN-CLI-006
-Then("it exits 0 and prints each registered balance flag with its description", function () {
-  assert.equal(cliResult.status, 0, `expected exit 0; got ${cliResult.status}\n${cliResult.stderr}`);
-  const balanceFlags = cliRegistry.commands.find((c) => c.name === "balance")?.flags ?? [];
-  // Non-vacuous: the registry must register balance's whole flag scope (9 flags + --help/-h),
-  // else there is nothing to prove appeared. This reds in Discovery (empty registry stub) and
-  // greens when the Implementation phase populates the registry.
-  assert.ok(
-    balanceFlags.length >= 10,
-    `registry must register balance's flags; got ${balanceFlags.length}`,
-  );
-  // The real binary's stdout lists every registered flag with its description — proof the
-  // registry is the single source `balance --help` renders from, over the actual subprocess.
-  for (const flag of balanceFlags) {
+Then(
+  "it exits 0 and prints each flag the registry gives that command, with its description",
+  function () {
+    assert.equal(cliResult.status, 0, `expected exit 0; got ${cliResult.status}\n${cliResult.stderr}`);
+    const entry = cliRegistry.commands.find((c) => c.name === helpCommand);
+    // Non-vacuous twice over: the registry must REGISTER the command the scenario invoked,
+    // and give it a flag scope — else there is nothing to prove appeared and the loop below
+    // would pass over an empty list.
+    assert.ok(entry, `the registry must register the command "${helpCommand}"`);
     assert.ok(
-      cliResult.stdout.includes(flag.name),
-      `expected stdout to list ${flag.name}; got:\n${cliResult.stdout}`,
+      entry.flags.length > 0,
+      `the registry must give "${helpCommand}" a flag scope; got ${entry.flags.length}`,
     );
-    assert.ok(
-      cliResult.stdout.includes(flag.description),
-      `expected stdout to describe ${flag.name}; got:\n${cliResult.stdout}`,
-    );
-  }
-});
+    // The real binary's stdout lists every flag the registry gives THAT command, with its
+    // description — proof the registry is the single source `<command> --help` renders
+    // from, over the actual subprocess.
+    for (const flag of entry.flags) {
+      assert.ok(
+        cliResult.stdout.includes(flag.name),
+        `expected stdout to list ${flag.name}; got:\n${cliResult.stdout}`,
+      );
+      assert.ok(
+        cliResult.stdout.includes(flag.description),
+        `expected stdout to describe ${flag.name}; got:\n${cliResult.stdout}`,
+      );
+    }
+  },
+);
 
 // @SCN-CLI-007
 /**

@@ -12,15 +12,15 @@ Feature: a target whose stepped scenario claims two fitness checks
   3F-3132 the one-check rule returned nothing for a stepped scenario and this fixture
   passed that arm; the whole change is that it no longer does.
 
-  IT ALSO REDS AS TIER-LESS UNTIL 3F-3133 LANDS, and that is deliberate rather than
-  incidental: the tier floor still reads steplessness for one more commit, so SCN-TGT-002
-  names no tier it recognises. Both faults are real while both rules disagree, and this
-  arm asserts only its own half — the scenario named, and both check tags named.
+  AND IT REDS ONCE, WHICH IS WHAT THE ARM'S FINDING COUNT TURNS ON. This tree used to red
+  TWICE while the private check's tier floor still read steplessness — two faults, and the
+  arm could assert only its own half. The shipped command carries no tier floor at all, so
+  the one finding here is this rule's and the count is a control rather than a coincidence.
 
   The behavioural scenario above it carries TWO TIER tags on purpose, exactly as its
   sibling fixture does: two tiers on one stepped scenario is legal and must stay legal, so
-  a rule that counted tags rather than reading the registry would red this fixture for the
-  wrong scenario.
+  a rule that counted tags rather than reading the target's check set would red this
+  fixture for the wrong scenario.
 
   @unit @integration @SCN-TGT-001
   Scenario: a behavioural scenario carrying two tiers

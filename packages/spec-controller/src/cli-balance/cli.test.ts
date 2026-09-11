@@ -17,11 +17,14 @@ import {
   checkInputsParse,
   checkLegacyJson,
   checkRenderFromJson,
-  checkUnknownFlags,
   runBalance,
   sourceTarget,
 } from "./cli.js";
 import { cliRegistry } from "../cli-registry.js";
+// `checkUnknownFlags` MOVED TO THE SHARED ARGV MODULE (3F-3300) and took a `command`
+// parameter with it — the bounding is per-command now, so a second command gets it by
+// construction. What this arm asks is unchanged: `balance`, against `balance`'s scope.
+import { checkUnknownFlags } from "../cli-args.js";
 
 describe("[SCN-FMT-006] checkLegacyJson rejects the removed --json flag with a migration hint", () => {
   it("returns the typed migration-hint error naming --format json:<path> when --json is present", () => {
@@ -377,12 +380,12 @@ describe("[SCN-CLI-009] checkUnknownFlags bounds balance to the flags the regist
   it("returns null when every parsed flag is registered", () => {
     // Registered flags pass through: features/vitest/format/render-from-json/help are all in
     // the balance scope, so the bounded parser accepts them and the reconcile proceeds.
-    expect(checkUnknownFlags({ features: "features", vitest: "v.json" }, cliRegistry)).toBeNull();
+    expect(checkUnknownFlags({ features: "features", vitest: "v.json" }, cliRegistry, "balance")).toBeNull();
     expect(
-      checkUnknownFlags({ format: "json:out.json", "render-from-json": "r.json" }, cliRegistry),
+      checkUnknownFlags({ format: "json:out.json", "render-from-json": "r.json" }, cliRegistry, "balance"),
     ).toBeNull();
     // No flags at all is trivially all-registered.
-    expect(checkUnknownFlags({}, cliRegistry)).toBeNull();
+    expect(checkUnknownFlags({}, cliRegistry, "balance")).toBeNull();
   });
 
   it("returns a typed usage error naming an unregistered flag (the swallowed-typo footgun)", () => {
@@ -391,11 +394,11 @@ describe("[SCN-CLI-009] checkUnknownFlags bounds balance to the flags the regist
     // returns a non-null message that NAMES the offending flag, which runBalance routes to
     // stderr + exit 2 (usage, per 3F-1414's 0/1/2 taxonomy), never exit 1, never a silent
     // reconcile against the wrong intent.
-    const bogus = checkUnknownFlags({ bogus: "true" }, cliRegistry);
+    const bogus = checkUnknownFlags({ bogus: "true" }, cliRegistry, "balance");
     expect(bogus).not.toBeNull();
     expect(bogus).toContain("--bogus");
 
-    const typo = checkUnknownFlags({ strcit: "true" }, cliRegistry);
+    const typo = checkUnknownFlags({ strcit: "true" }, cliRegistry, "balance");
     expect(typo).not.toBeNull();
     expect(typo).toContain("--strcit");
   });

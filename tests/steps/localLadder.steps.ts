@@ -569,10 +569,47 @@ Then(
     // moved anywhere and nothing stopped being checked that is still checked elsewhere — the
     // check simply has no subject left. An unedited number here would have read identically to a
     // step that quietly stopped running, which is the whole reason this paragraph is written.
+    //
+    // AND UPWARD BY ONE — 10 TO 11 — WHEN 3F-3311 GAVE THE SHIPPED CORPUS CHECK ITS OWN STEP. The
+    // upward direction, and the ordinary one: `pnpm spec-controller tags` is a new `run:` step
+    // invoking a manifest handle, so it is a gate here the moment it is a step there. What makes
+    // it worth its own paragraph is that it is the FIRST GATE WHOSE SCRIPT NAME IS NOT UNIQUE —
+    // the self-reconciliation invokes the same `spec-controller` handle with a different command,
+    // so the derived ladder now carries that name twice and `--list` prints it twice. That is the
+    // derivation being honest rather than a fault in it: a gate IS its command, and the two
+    // commands differ, so both run and both red on their own subject. What the collision costs is
+    // a READER of a failure — `verify: FAILED at gate: spec-controller` no longer says which of
+    // the two died, and only the gate banner above it in the transcript does. Named here rather
+    // than worked around, because the name is the derivation's own and nothing in this repository
+    // should mint a second one to make a message tidier.
+    //
+    // AND BACK DOWN BY ONE — 11 TO 10 — WHEN 3F-3312 DELETED `lint:scn-tags`. Not the third kind
+    // and not the first: this gate's subject was not withdrawn and the gate did not move, it was
+    // SUPERSEDED IN PLACE by the step added one sub-issue earlier. `pnpm spec-controller tags`
+    // runs the rules `lint:scn-tags` ran, off a real Gherkin AST instead of a hand-rolled line
+    // parser, from the package a target installs rather than from 620 private lines under
+    // tests/checks/ — so for the length of one sub-issue this repository ran both, and the pair
+    // is what made the count 11. Deleting the private copy leaves every rule still running and
+    // takes the second route off the ladder. THE READING THIS LINE HAS TO SEPARATE is exactly the
+    // one a bare number cannot: a supersession that keeps every check, and a check that quietly
+    // stopped running, produce the identical decrement. Only the edit that carries this paragraph
+    // tells them apart, which is why the arithmetic is asserted rather than derived.
+    //
+    // AND BACK DOWN ONCE MORE — 10 TO 9 — WHEN 3F-3313 DELETED `lint:feature-codes`. The same
+    // supersession-in-place as the line above, one sub-issue later and one rule narrower: two of
+    // that check's six findings — one feature code per file, and a scenario code naming the file
+    // it is written in — ship from `pnpm spec-controller tags` as @SCN-STG-010 and @SCN-STG-011,
+    // a third was already a REFUSAL (`balance` exits 2 on a duplicated @SCN before it reaches a
+    // verdict), and the remaining three were about a hand-kept table of 33 feature-code
+    // allocations that cannot ship to a repository which has never seen it. So this decrement is
+    // NOT purely the supersession the last one was, and saying so is the point of writing the
+    // paragraph: something the tree used to check it no longer checks — a retired feature's code
+    // is never reissued — and the arithmetic here is the only place a reader meets that fact as a
+    // number. A bare 9 would have read as a tidy-up.
     assert.equal(
       expected.length,
-      10,
-      `the real ci.yml must yield 10 local gates; it yielded ${expected.length}: ${expected.join(", ")}`,
+      9,
+      `the real ci.yml must yield 9 local gates; it yielded ${expected.length}: ${expected.join(", ")}`,
     );
 
     assert.deepEqual(listedGates(listing.stdout), expected, "--list must be the derived ladder");

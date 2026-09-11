@@ -106,6 +106,13 @@ describe("[SCN-API-001] the core barrel exports exactly the frozen v1 contract s
       // the `.` barrel — the ONE entry point 3F-2804 sanctions, which is what takes the last
       // `/internal` import off the published path (3F-3086). The types are unchanged: its input is
       // an inline object type, so the surface gains a value and no name.
+      //
+      // 29 → 30 values and 36 → 37 types at 3F-3300: `corpusFaults` and the `CorpusFault` it
+      // reports, for `evidenceReconciliationFromSources`'s own reason — the `tags` command's edge
+      // is a PUBLISHED module and the rule it calls has to be reachable from the root barrel. This
+      // one gains a TYPE as well, and the asymmetry is the point rather than an inconsistency: the
+      // composition's input is an inline object type nobody names, while a consumer reading the
+      // findings back has to name what it is holding.
       written: [surface.values.length, surface.types.length],
       // A name written twice would make the written surface one symbol shorter than it reads, and
       // the reconciliations above would go on passing over the shortfall.
@@ -125,8 +132,8 @@ describe("[SCN-API-001] the core barrel exports exactly the frozen v1 contract s
     }).toEqual({
       valueDrift: [],
       typeDrift: [],
-      written: [29, 36],
-      writtenOnce: [29, 36],
+      written: [30, 37],
+      writtenOnce: [30, 37],
       retired: [false, false, false],
       kept: [true, true],
     });

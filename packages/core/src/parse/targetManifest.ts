@@ -77,8 +77,8 @@ export function resolveStaticChecks(packageJson: {
  * fitness obligation on its books under a word it never used.
  *
  * Where a registry is AUTHORED is still open (the registry-home question, increment D); this key is
- * the seam it is read from today, and the tier-tag floor reads it through THIS function so the
- * floor admits exactly the tags the obligation rule raises against.
+ * the seam it is read from today, and the corpus check reads it through THIS function so the
+ * words it calls grammar are exactly the tags the obligation rule raises against.
  */
 export function resolveCheckRegistry(packageJson: {
   specController?: { checkRegistry?: unknown };

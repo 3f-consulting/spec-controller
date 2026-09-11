@@ -259,16 +259,18 @@ of accepting a green.
 ### The old → new mapping
 
 Three further rows — the `vocab` characteristic's, converted to `SCN-FIT-004` / `-005` / `-006` —
-were retired outright when the vocabulary audit left the tree (3F-3211). The conversion they
-document still happened; there is simply nothing left on either side of it to map.
+were retired outright when the vocabulary audit left the tree (3F-3211). Two more went the same
+way, for one reason between them: `SCN-STG-006` → `SCN-FIT-008` (the `traceability` row for `pnpm
+lint:scn-tags`, retired at 3F-3312) and `SCN-LNT-011` → `SCN-FIT-007` (the `traceability` row for
+`pnpm lint:feature-codes`, retired at 3F-3313) — each a private copy of rules that now ship as
+`spec-controller tags`, and so a second thing to run. The conversions they document still
+happened; there is simply nothing left on either side of them to map.
 
 | old `@SCN` | characteristic | command on the row today | new `@SCN` |
 |---|---|---|---|
 | `SCN-CPX-005` | complexity | `eslint` | `SCN-FIT-001` |
 | `SCN-MUT-011` | mutation | `pnpm --silent mutation:score --supersedes SCN-MUT-011` · `atLeast` | `SCN-FIT-002` |
 | `SCN-CPX-006` | complexity | `pnpm lint:complexity-exceptions` | `SCN-FIT-003` |
-| `SCN-LNT-011` | traceability | `pnpm lint:feature-codes` | `SCN-FIT-007` |
-| `SCN-STG-006` | traceability | `pnpm lint:scn-tags` | `SCN-FIT-008` |
 | `SCN-ANM-002` | tech-conformance | `pnpm lint:anemic-domain` | `SCN-FIT-009` |
 | `SCN-SSM-009` | traceability | `pnpm lint:scn-subissues` | `SCN-FIT-010` |
 | `SCN-API-003` | typecheck | `pnpm typecheck` | `SCN-FIT-011` |
@@ -292,13 +294,12 @@ artefact rather than asserted about it.
 terminal, on its own, and its exit code is the check's verdict. The conversion took nothing away:
 the row holds the same string the CI step holds.
 
-Seven of this repository's ten rows are exactly that.
+Six of this repository's nine rows are exactly that.
 
 ```sh
 eslint
 pnpm lint:complexity-exceptions
-pnpm lint:feature-codes
-pnpm lint:scn-tags
+pnpm spec-controller tags
 pnpm lint:anemic-domain
 pnpm lint:scn-subissues
 pnpm typecheck
@@ -370,10 +371,10 @@ one step at the end.*
 A check that is already a pipeline step needs nothing done to the command:
 
 ```yaml
-      - name: Feature codes
-        id: SCN-FIT-007
+      - name: Complexity exceptions
+        id: SCN-FIT-003
         if: always()
-        run: pnpm lint:feature-codes
+        run: pnpm lint:complexity-exceptions
 ```
 
 **The `id:` is the row's `@SCN`, never a handle of your own choosing.** A handle would need a fourth

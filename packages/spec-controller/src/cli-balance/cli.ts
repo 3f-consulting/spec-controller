@@ -31,28 +31,12 @@ import {
   hasBrokenEvidence,
 } from "@3f-consulting/spec-controller-core";
 import { resolveSourceSha, resolveTargetRoot, resolveToolIdentity } from "../run-management/resolveRunInputs.js";
-import { cliRegistry, renderBalanceHelp } from "../cli-registry.js";
-import type { CliRegistry } from "../cli-registry.js";
+import { cliRegistry, renderCommandHelp } from "../cli-registry.js";
+// THE ARGV READING AND ITS REGISTRY BOUNDING, SHARED WITH EVERY OTHER COMMAND (3F-3300). Both
+// lived here while `balance` was the only command; a second command needs them, and a second
+// copy of "what did the operator type" is the one thing this tree least wants two of.
+import { parseArgs, checkUnknownFlags } from "../cli-args.js";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
-
-/** Parse `--flag value` pairs from argv into a record. */
-function parseArgs(argv: string[]): Record<string, string> {
-  const args: Record<string, string> = {};
-  for (let i = 0; i < argv.length; i++) {
-    const a = argv[i];
-    if (a !== undefined && a.startsWith("--")) {
-      const key = a.slice(2);
-      const value = argv[i + 1];
-      if (value !== undefined && !value.startsWith("--")) {
-        args[key] = value;
-        i++;
-      } else {
-        args[key] = "true";
-      }
-    }
-  }
-  return args;
-}
 
 /**
  * Collect the `--format <spec>` values from argv in order (the flag is REPEATABLE, unlike
@@ -244,43 +228,6 @@ export function checkRenderFromJson(
   return null;
 }
 
-/**
- * The registry-bounded flag check at the CLI edge (@SCN-CLI-009). `balance` accepts ONLY
- * the flags its per-command registry scope LISTS (by `name` or `alias`); an unregistered
- * flag — a typo like `--strcit`, a stray `--bogus` — is a usage error, NOT silently
- * swallowed the way the old permissive `parseArgs` did. This is the structural teeth behind
- * "accepted = registry = help": a flag can't affect behaviour without a registry entry (and
- * so, by CLI-008's guard, without appearing in help).
- *
- * PURE and `@unit`-testable like `checkLegacyJson` / `checkInputsExist`: reads the parsed
- * args (keys are the `--`-stripped flag names) + the registry, returns the FIRST unregistered
- * flag as a typed usage error naming it WITH its dashes — routed to stderr + exit 2 by
- * `runBalance` (per 3F-1414's `0` balanced / `1` out-of-balance / `2` usage taxonomy),
- * never exit 1, never a silent reconcile — else null. The global `--store`/`--run-id`
- * modifiers never reach here: the top-level dispatcher (`parseHostInvocation`) consumes them
- * BEFORE `balance` is dispatched, so the bounded parser sees only the command's own args.
- */
-export function checkUnknownFlags(args: Record<string, string>, registry: CliRegistry): string | null {
-  // The accepted set: every balance-scope flag name AND alias, with the leading dashes
-  // stripped so it compares against parseArgs's `--`-stripped keys (e.g. "--features" and
-  // "-h" become "features" and "h"). Built from the registry alone — the single source — so
-  // "accepted = registry" holds by construction.
-  const balance = registry.commands.find((command) => command.name === "balance");
-  const accepted = new Set<string>();
-  for (const flag of balance?.flags ?? []) {
-    accepted.add(flag.name.replace(/^-+/, ""));
-    for (const alias of flag.aliases ?? []) accepted.add(alias.replace(/^-+/, ""));
-  }
-  // The FIRST parsed flag not in the accepted set is the reported error (Object.keys is
-  // argv order, so this is deterministic). The message names the flag WITH its dashes.
-  for (const key of Object.keys(args)) {
-    if (!accepted.has(key)) {
-      return `Unknown flag --${key} for 'spec-controller balance'. Run 'spec-controller balance --help' to see the accepted flags.`;
-    }
-  }
-  return null;
-}
-
 export function runBalance(argv: string[]): void {
   // Answer `--help`/`-h` from the command/flag registry (@SCN-CLI-006) BEFORE any
   // parse or reconcile: render the balance command's per-command scope (a line per
@@ -289,7 +236,7 @@ export function runBalance(argv: string[]): void {
   // while balance runs anyway. The registry is the single source, so a flag that exists is
   // a flag that appears in help — no hand-kept list to drift.
   if (argv.includes("--help") || argv.includes("-h")) {
-    process.stdout.write(renderBalanceHelp(cliRegistry) + "\n");
+    process.stdout.write(renderCommandHelp(cliRegistry, "balance") + "\n");
     return;
   }
 
@@ -320,7 +267,7 @@ export function runBalance(argv: string[]): void {
   // hint; the global `--store`/`--run-id` modifiers were consumed by the dispatcher before
   // balance, so they never reach here. This is the structural teeth behind "accepted =
   // registry = help" — a flag can't affect behaviour without a registry entry.
-  const unknownFlagError = checkUnknownFlags(args, cliRegistry);
+  const unknownFlagError = checkUnknownFlags(args, cliRegistry, "balance");
   if (unknownFlagError) {
     process.stderr.write(unknownFlagError + "\n");
     process.exitCode = 2;

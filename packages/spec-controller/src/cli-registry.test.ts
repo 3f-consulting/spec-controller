@@ -1,8 +1,10 @@
 /**
- * @SCN-CLI-006 (@unit) — the balance-help renderer over the two-scope command/flag
- * registry. The renderer walks the `balance` command's per-command scope and emits a
- * line per registered flag (name + arg-placeholder + description) — proof the registry
- * is the single source `balance --help` renders from.
+ * @SCN-CLI-006 (@unit) — the per-command help renderer over the two-scope command/flag
+ * registry. The renderer walks THE NAMED command's per-command scope and emits a line
+ * per registered flag (name + arg-placeholder + description) — proof the registry is the
+ * single source `<command> --help` renders from. The command is a PARAMETER (3F-3298);
+ * before that it was found by the name `balance` inside the renderer, so a second
+ * registered command had no help surface at all — not an empty one, no way to ask.
  *
  * Bidirectional evidence (Evidence Manifesto §9): the describe string carries the
  * [SCN-CLI-006] id, matching features/cli-balance.feature and the `// @SCN-CLI-006`
@@ -11,10 +13,10 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { cliRegistry, renderBalanceHelp, renderTopLevelHelp } from "./cli-registry.js";
+import { cliRegistry, renderCommandHelp, renderTopLevelHelp, type CliRegistry } from "./cli-registry.js";
 import { DEFAULT_DEFERRAL_TAGS } from "./deferralTags.js";
 
-describe("[SCN-CLI-006] renderBalanceHelp renders a line per registered balance flag", () => {
+describe("[SCN-CLI-006] renderCommandHelp renders a line per flag the registry gives that command", () => {
   const balanceFlags = cliRegistry.commands.find((c) => c.name === "balance")?.flags ?? [];
 
   it("registers the balance command's full flag scope in the registry (the single source)", () => {
@@ -45,7 +47,7 @@ describe("[SCN-CLI-006] renderBalanceHelp renders a line per registered balance 
     // and there is EXACTLY one rendered flag line per registered flag (none dropped, none
     // doubled). A renderer that hard-coded a subset, or dropped the arg/description, reds.
     expect(balanceFlags.length).toBeGreaterThan(0);
-    const out = renderBalanceHelp(cliRegistry);
+    const out = renderCommandHelp(cliRegistry, "balance");
     for (const flag of balanceFlags) {
       expect(out).toContain(flag.name);
       expect(out).toContain(flag.description);
@@ -53,6 +55,37 @@ describe("[SCN-CLI-006] renderBalanceHelp renders a line per registered balance 
     }
     const flagLines = out.split("\n").filter((line) => /(^|\s)--[a-z]/.test(line));
     expect(flagLines).toHaveLength(balanceFlags.length);
+  });
+
+  it("renders whichever command it is given, not the one the renderer was written against", () => {
+    // Teeth, and the arm that could not be WRITTEN against the old signature: with a second
+    // command registered, ask for THAT command. `renderBalanceHelp(registry)` took no command
+    // argument, so it rendered `balance` whatever the registry held — a second command's
+    // scope was unreachable (the 3F-3298 plant transcript, on the ticket and the commit).
+    // Constructed locally, never pushed into `cliRegistry`: standing up a real second command
+    // is 3F-3300's, and this arm is about the parameter, not about which commands exist.
+    const twoCommands: CliRegistry = {
+      global: cliRegistry.global,
+      commands: [
+        ...cliRegistry.commands,
+        {
+          name: "second",
+          summary: "A second registered command — the case the renderer was blind to.",
+          flags: [{ name: "--only-mine", arg: "<dir>", description: "A flag only the second command carries." }],
+        },
+      ],
+    };
+    const out = renderCommandHelp(twoCommands, "second");
+    expect(out).toContain("--only-mine");
+    expect(out).toContain("A flag only the second command carries.");
+    expect(out).toContain("A second registered command — the case the renderer was blind to.");
+    // And it is the SECOND command's scope, not balance's, so no balance-only flag leaks in.
+    expect(out).not.toContain("--render-from-json");
+    // Nor balance's config block: `specController.deferralTags` is a field BALANCE reads
+    // (@SCN-PND-021), so it is carried on balance's registry entry rather than appended
+    // unconditionally by the renderer. Appended unconditionally it would document, under
+    // every future command, a config field that command does not read.
+    expect(out).not.toContain("specController.deferralTags");
   });
 });
 
@@ -89,7 +122,9 @@ describe("[SCN-CLI-007] renderTopLevelHelp renders the commands and the global s
  * @SCN-CLI-008 (@unit) — the completeness guard. Where @SCN-CLI-006/007 pin each
  * renderer against a KNOWN set, this guard is the structural capstone: it walks the
  * registry itself and asserts NOTHING it LISTS is missing from its help surface,
- * per scope. Adding a flag/command/modifier to `cliRegistry` without it reaching the
+ * per scope. The per-command scope means EVERY registered command (3F-3299), each
+ * rendered through `renderCommandHelp` and checked against its own entries; it used to
+ * name `balance` and render that alone, so a second command's flags were unwalked. Adding a flag/command/modifier to `cliRegistry` without it reaching the
  * matching renderer leaves a non-empty `missing` set — the guard reds. That is the
  * mechanism that makes "all further additions reach help" structural, not a note (the
  * Pending-Items increment's `--strict` reds this until it is in help).
@@ -100,15 +135,35 @@ describe("[SCN-CLI-007] renderTopLevelHelp renders the commands and the global s
  * features/cli-balance.feature (a grep of the id returns both halves).
  */
 describe("[SCN-CLI-008] the completeness guard — no registry entry is missing from its help surface", () => {
-  it("finds every per-command balance flag in the balance --help render (per-command scope)", () => {
-    // Teeth: iterate the WHOLE per-command scope; a flag added to the registry but not
-    // reaching renderBalanceHelp lands in `missing` and reds. Naming the missing flag
-    // (rather than a bare toContain per known flag, @SCN-CLI-006) is the completeness
-    // framing: the guard reports exactly which registered flag fell out of help.
-    const balanceFlags = cliRegistry.commands.find((c) => c.name === "balance")?.flags ?? [];
-    expect(balanceFlags.length).toBeGreaterThan(0);
-    const out = renderBalanceHelp(cliRegistry);
-    const missing = balanceFlags.filter((flag) => !out.includes(flag.name)).map((flag) => flag.name);
+  it("finds every command's registry entries in that command's --help render (per-command scope)", () => {
+    // Teeth: iterate EVERY command's scope, not `balance`'s looked up by literal. The old
+    // arm rendered the one command it named and checked that render, which read as
+    // structural and was not — a flag registered on a SECOND command could be absent from
+    // that command's help and this arm stayed green, because it never rendered that
+    // command at all. Each miss is reported as `<command> <entry>`, so a failure names
+    // which command's entry fell out rather than only that something did.
+    //
+    // A command's `configHelp` is a registry entry too — 3F-3298 moved balance's
+    // `specController.deferralTags` block onto its own entry precisely so it renders under
+    // the command that reads that field and under nothing else, which is a per-command
+    // help surface obligation exactly as its flags are.
+    const entryCount = cliRegistry.commands.reduce(
+      (total, command) => total + command.flags.length + (command.configHelp?.length ?? 0),
+      0,
+    );
+    // The floor the sibling arms carry, kept as the set widens: a loop over an empty set
+    // reports a clean workspace. Zero commands, and commands whose scopes are all empty,
+    // both collapse to zero entries here.
+    expect(entryCount).toBeGreaterThan(0);
+    const missing = cliRegistry.commands.flatMap((command) => {
+      const out = renderCommandHelp(cliRegistry, command.name);
+      return [
+        ...command.flags.filter((flag) => !out.includes(flag.name)).map((flag) => `${command.name} ${flag.name}`),
+        ...(command.configHelp ?? [])
+          .filter((line) => !out.includes(line))
+          .map((line) => `${command.name} configHelp: ${line.trim()}`),
+      ];
+    });
     expect(missing).toEqual([]);
   });
 
@@ -146,7 +201,7 @@ describe("[SCN-PND-021] balance --help documents specController.deferralTags and
   it("documents the specController.deferralTags config field", () => {
     // Teeth: the help surface names the config field so a project can discover it. Reds while the
     // help renderer says nothing about the config namespace.
-    const out = renderBalanceHelp(cliRegistry);
+    const out = renderCommandHelp(cliRegistry, "balance");
     expect(out).toContain("specController.deferralTags");
   });
 
@@ -155,7 +210,7 @@ describe("[SCN-PND-021] balance --help documents specController.deferralTags and
     // hand-kept copy. A tag added to DEFAULT_DEFERRAL_TAGS but absent from the render reds here, so
     // the documented set cannot drift from the recognised one (the completeness discipline).
     expect(DEFAULT_DEFERRAL_TAGS.length).toBeGreaterThan(0);
-    const out = renderBalanceHelp(cliRegistry);
+    const out = renderCommandHelp(cliRegistry, "balance");
     const missing = DEFAULT_DEFERRAL_TAGS.filter((tag) => !out.includes(tag));
     expect(missing).toEqual([]);
   });

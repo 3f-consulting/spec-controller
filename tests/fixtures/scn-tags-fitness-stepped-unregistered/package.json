@@ -1,9 +1,0 @@
-{
-  "name": "scn-tags-fitness-stepped-unregistered-fixture",
-  "private": true,
-  "specController": {
-    "checkRegistry": {
-      "typecheck": "typecheck"
-    }
-  }
-}

@@ -22,9 +22,7 @@
     "cucumber": "tsx tests/checks/timeStepCli.ts --scn SCN-FIT-013 --check ci-run-time -- cucumber-js",
       "build": "pnpm -r build",
     "spec-controller": "tsx packages/spec-controller/src/cli.ts",
-    "lint:feature-codes": "tsx tests/checks/lintFeatureCodesCli.ts",
     "lint:complexity-exceptions": "tsx tests/checks/lintComplexityExceptionsCli.ts",
-    "lint:scn-tags": "tsx tests/checks/lintScnTagsCli.ts",
     "lint:scn-subissues": "tsx tests/checks/lintScnSubIssuesCli.ts",
     "lint:anemic-domain": "tsx tests/checks/lintAnemicDomainCli.ts"
   },
@@ -37,14 +35,9 @@
         "command": "pnpm lint:complexity-exceptions"
       },
       {
-        "scn": "SCN-FIT-007",
+        "scn": "SCN-FIT-014",
         "characteristic": "traceability",
-        "command": "pnpm lint:feature-codes"
-      },
-      {
-        "scn": "SCN-FIT-008",
-        "characteristic": "traceability",
-        "command": "pnpm lint:scn-tags"
+        "command": "pnpm spec-controller tags"
       },
       {
         "scn": "SCN-FIT-009",

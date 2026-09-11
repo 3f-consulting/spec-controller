@@ -17,13 +17,14 @@ Feature: The Gherkin parse gate — no check reports on a corpus the parser reje
   feature file", as the adopted-vocabulary gate already has one answer to "what is the project".
 
   WHAT INHERITANCE FENCES, AND WHAT IT DOES NOT — the residual, stated rather than left to be
-  discovered. The scenarios below hold that the shared discovery refuses, and that the two checks
-  reading through it refuse with it. They do NOT hold that every feature-file reader on the ladder
-  goes through the shared discovery. A check added later that walks features/ its own way would
-  scan an unparseable corpus and report green while both scenarios stay green — and it would do so
-  at whatever rung it occupied, including ahead of the first reader that does inherit. Closing
-  that needs a derivation over ci.yml and each check's source: its own property, its own scenario,
-  and not this slice. Naming it here is what stops it being silent.
+  discovered. The scenarios below hold that the shared discovery refuses, and that the shipped
+  command reading through it — `spec-controller tags` — refuses with it. They do NOT hold that
+  every feature-file reader on the ladder goes through the shared discovery. A check added later
+  that walks features/ its own way would scan an unparseable corpus and report green while both
+  scenarios stay green — and it would do so at whatever rung it occupied, including ahead of the
+  first reader that does inherit. Closing that needs a derivation over ci.yml and each check's
+  source: its own property, its own scenario, and not this slice. Naming it here is what stops it
+  being silent.
 
   Rule: a reader of the feature corpus refuses a corpus the Gherkin parser rejects
 
@@ -68,6 +69,5 @@ Feature: The Gherkin parse gate — no check reports on a corpus the parser reje
       And the refusal is told apart from a finding, so a caller can tell an unreadable corpus from a failing one
 
       Examples:
-        | check              |
-        | lint:feature-codes |
-        | lint:scn-tags      |
+        | check                |
+        | spec-controller tags |

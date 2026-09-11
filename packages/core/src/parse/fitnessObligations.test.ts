@@ -253,7 +253,10 @@ Feature: fitness
  * the same question asked of the two tag forms — one raises, the other no longer can.
  */
 describe("[SCN-LNT-007] the retired @lint=<handle> form raises no Evidence Obligation", () => {
-  /** The runnable handle a real registered check runs under — the strongest case for the form. */
+  /** A runnable handle the fixture registry below registers — the strongest case for the form,
+   *  because a re-routing reader would find the check and raise its obligation. Registered HERE,
+   *  never in the tree: since 3F-3313 no script in this repository carries this name, and the arm
+   *  never depended on one (`parseScenarios`' third argument is the whole registry it reads). */
   const REGISTERED_HANDLE = "lint:feature-codes";
 
   const retiredForm = (tags: string, steps = "      Given a thing\n"): string =>

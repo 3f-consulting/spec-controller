@@ -5,8 +5,8 @@
  *   - `global`   — the host modifiers recognised BEFORE the command (`--store`,
  *                  `--run-id`), consumed by the top-level dispatcher; rendered by
  *                  `spec-controller --help` (the sibling @SCN-CLI-007 surface).
- *   - `commands` — the per-command scopes; `balance`'s reconciliation flags (+ `--help`/`-h`),
- *                  rendered by `balance --help`. No count is written here: @SCN-CLI-008 holds
+ *   - `commands` — the per-command scopes; each command's own flags (+ `--help`/`-h`),
+ *                  rendered by `<command> --help`. No count is written here: @SCN-CLI-008 holds
  *                  registry and render together whatever the number is, and a figure repeated in
  *                  prose is one nothing reads (3F-3277).
  *
@@ -39,7 +39,7 @@ export interface FlagSpec {
   description: string;
 }
 
-/** A command: its token, a one-line summary, and its per-command flag scope. */
+/** A command: its token, a one-line summary, its per-command flag scope, and any config it reads. */
 export interface CommandSpec {
   /** The command token (e.g. "balance"). */
   name: string;
@@ -47,6 +47,14 @@ export interface CommandSpec {
   summary: string;
   /** The command's per-command flag scope. */
   flags: FlagSpec[];
+  /**
+   * Trailing help lines documenting `package.json` config THIS command reads, rendered
+   * verbatim after the flag list. It lives on the command's entry rather than in the
+   * renderer because a config field belongs to whichever command consumes it: appended
+   * unconditionally, `balance`'s `specController.deferralTags` block would document, under
+   * every later command, a field that command does not read (3F-3298). Omit when none.
+   */
+  configHelp?: string[];
 }
 
 /** The two-scope registry: the global host-modifier scope, and the per-command scopes. */
@@ -135,6 +143,55 @@ const balanceFlags: FlagSpec[] = [
   },
 ];
 
+/**
+ * `balance`'s config block: the `specController.deferralTags` field it reads, with its
+ * recognised starter set SINGLE-SOURCED from DEFAULT_DEFERRAL_TAGS (@SCN-PND-021 / the
+ * 3F-1405 completeness discipline — the lines are built FROM the constant, never a
+ * hand-kept copy, so the documented set cannot drift from the recognised one). It hangs
+ * off balance's registry entry, not off the renderer, so it renders under `balance --help`
+ * and under nothing else.
+ */
+const balanceConfigHelp: string[] = [
+  "Configuration (in the target repo's package.json):",
+  "  specController.deferralTags: string[]",
+  "      Extra recognised deferral tags. A scenario carrying one defers every obligation it",
+  "      names to a Pending Item, extending (never replacing) the built-in set.",
+  `      Built-in deferral tags: ${DEFAULT_DEFERRAL_TAGS.map((tag) => `@${tag}`).join(", ")}`,
+];
+
+/**
+ * The `tags` command's per-command scope (3F-3300). Two input flags and `--help`/`-h`, and the
+ * two are `balance`'s own spellings on purpose: a consumer pointing one command at a corpus and a
+ * manifest should not have to learn a second name for each when they point the other at the same
+ * two files. The descriptions are this command's — what it reads them FOR is not what `balance`
+ * reads them for — but the flags are the same flags.
+ *
+ * NO `configHelp`. A command's config block documents the `package.json` fields THAT command
+ * reads, and `tags` reads none yet: the check-tag union and the recognised deferral set arrive
+ * with the grammar rules (3F-3302 onward), and the entry gains its block then. Appending
+ * `balance`'s block here would document, under this command, fields this command does not read —
+ * which is the fault 3F-3298 moved that block onto a command entry to prevent.
+ */
+const tagsFlags: FlagSpec[] = [
+  {
+    name: "--features",
+    arg: "<dir>",
+    description:
+      "Directory of Gherkin .feature files — the corpus these rules are asked about (default ./features).",
+  },
+  {
+    name: "--package-json",
+    arg: "<path>",
+    description:
+      "The target's package.json — its specController block, from which the words that name a check and the tags that park a scenario are resolved (default ./package.json).",
+  },
+  {
+    name: "--help",
+    aliases: ["-h"],
+    description: "Show this help and exit.",
+  },
+];
+
 /** The global host-modifier scope — recognised before the command; the CLI-007 surface. */
 const globalFlags: FlagSpec[] = [
   {
@@ -161,6 +218,13 @@ export const cliRegistry: CliRegistry = {
       summary:
         "Reconcile Gherkin scenarios against test/CI evidence and emit the Evidence Reconciliation (Markdown to stdout by default).",
       flags: balanceFlags,
+      configHelp: balanceConfigHelp,
+    },
+    {
+      name: "tags",
+      summary:
+        "Police the @SCN scheme over your Gherkin corpus — the rules the scheme itself imposes on the tags and header codes a feature file carries (exit 1 on findings, 2 on a corpus that cannot be read).",
+      flags: tagsFlags,
     },
   ],
 };
@@ -172,37 +236,33 @@ function flagLabel(flag: FlagSpec): string {
 }
 
 /**
- * Render the `balance` command's per-command scope as help text: one line per registered
- * flag (name + arg-placeholder + description), driven BY the registry — so a flag that
- * exists is a flag that appears, by construction. Returns the help block WITHOUT a
- * trailing newline (the caller adds it, matching the writer's stdout convention).
+ * Render THE NAMED command's per-command scope as help text: one line per registered flag
+ * (name + arg-placeholder + description), then whatever config lines that command's entry
+ * carries — driven BY the registry, so a flag that exists is a flag that appears, by
+ * construction. Returns the help block WITHOUT a trailing newline (the caller adds it,
+ * matching the writer's stdout convention).
+ *
+ * THE COMMAND IS A PARAMETER (3F-3298). It used to be the literal `"balance"`, found by name
+ * inside this function, which is what the single registered command made look general. A
+ * second command had no help surface at all under that signature — not an empty one; there
+ * was no argument by which to ask. What the renderer covers is now the registry's shape
+ * rather than the command set's size on the day it was written.
  */
-export function renderBalanceHelp(registry: CliRegistry): string {
-  const command = registry.commands.find((c) => c.name === "balance");
-  const flags = command?.flags ?? [];
+export function renderCommandHelp(registry: CliRegistry, command: string): string {
+  const entry = registry.commands.find((c) => c.name === command);
+  const flags = entry?.flags ?? [];
   const gutter = 2;
   const labelWidth = Math.max(0, ...flags.map((f) => flagLabel(f).length));
   const lines = flags.map(
     (flag) => `  ${flagLabel(flag).padEnd(labelWidth + gutter)}${flag.description}`,
   );
-  // The `specController.deferralTags` config field, with its recognised starter set SINGLE-SOURCED
-  // from DEFAULT_DEFERRAL_TAGS (@SCN-PND-021 / the 3F-1405 completeness discipline — the render reads
-  // the constant, never a hand-kept copy, so the documented set cannot drift from the recognised one).
-  const starterSet = DEFAULT_DEFERRAL_TAGS.map((tag) => `@${tag}`).join(", ");
-  const configLines = [
-    "Configuration (in the target repo's package.json):",
-    "  specController.deferralTags: string[]",
-    "      Extra recognised deferral tags. A scenario carrying one defers every obligation it",
-    "      names to a Pending Item, extending (never replacing) the built-in set.",
-    `      Built-in deferral tags: ${starterSet}`,
-  ];
+  const configHelp = entry?.configHelp ?? [];
   return [
-    `spec-controller balance — ${command?.summary ?? ""}`,
+    `spec-controller ${command} — ${entry?.summary ?? ""}`,
     "",
     "Options:",
     ...lines,
-    "",
-    ...configLines,
+    ...(configHelp.length > 0 ? ["", ...configHelp] : []),
   ].join("\n");
 }
 
@@ -210,7 +270,7 @@ export function renderBalanceHelp(registry: CliRegistry): string {
  * Render the top-level `spec-controller --help` surface (@SCN-CLI-007) FROM the registry:
  * a Commands section (each command's name + one-line summary) and a Host modifiers section
  * (each global-scope flag: name + arg-placeholder + one-line description). The global-scope
- * half of the two-scope registry — the counterpart to `renderBalanceHelp`'s per-command
+ * half of the two-scope registry — the counterpart to `renderCommandHelp`'s per-command
  * half — so the top-level usage no longer hand-keeps (and can no longer silently drift
  * from) the command set or the host modifiers; both are sourced from `cliRegistry`.
  * Summaries and descriptions render on a single line (no wrapping) so a registered string

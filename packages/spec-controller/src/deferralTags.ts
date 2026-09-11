@@ -10,7 +10,7 @@
  * handed (its default is `[]`, a policy-free pure core); the app is the single source
  * of the starter policy and always passes the resolved set (starter ∪ configured) into
  * the parser at the ingest edge. Both `resolveDeferralTags` (the `@SCN-PND-021` config
- * union) and `renderBalanceHelp`'s `--help` listing source this constant.
+ * union) and `renderCommandHelp`'s `--help` listing source this constant.
  */
 export const DEFAULT_DEFERRAL_TAGS: readonly string[] = [
   "wip",

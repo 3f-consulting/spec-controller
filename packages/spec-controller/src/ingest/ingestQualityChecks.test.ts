@@ -86,8 +86,10 @@ describe("[SCN-LNT-005] a fitness check is read from the external target's own p
 /**
  * @SCN-LNT-005 (@unit) — the registry config read in isolation, the third of the three
  * `specController.*` resolvers this edge owns. Its consumers are the reconciler above and the
- * tier-tag floor (`lintScnTagsCli`), which reads it through this same function so the floor admits
- * exactly the tags the obligation rule raises against.
+ * shipped corpus check (`parse/corpusGrammarFaults`, behind `spec-controller tags`), which reads
+ * it through this same function so the words it calls grammar are exactly the tags the obligation
+ * rule raises against. The private copy of that check named here until 3F-3312 read it through
+ * this function too, which is how the two stayed agreed while both existed.
  */
 describe("[SCN-LNT-005] resolveCheckRegistry reads specController.checkRegistry", () => {
   it("maps each configured script handle to its bare check tag", () => {

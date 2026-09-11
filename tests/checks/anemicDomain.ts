@@ -15,8 +15,8 @@
  *
  * THE FILE LIST IS INJECTED (not shelled from git here) so the rule is unit-tested in
  * isolation and both evidence arms can plant paths without writing files; the CLI
- * (`lintAnemicDomainCli.ts`) supplies the real list from `git ls-files`. Same split as
- * `scnTags.ts`, for the same reason.
+ * (`lintAnemicDomainCli.ts`) supplies the real list from `git ls-files`. `scnTags.ts` was split
+ * the same way for the same reason, and left at 3F-3312.
  *
  * WHAT A GREEN HERE DOES NOT ESTABLISH. It reds a NAME. Behaviour can drain out of a
  * concept into a module called anything at all, so a green is not evidence the domain is

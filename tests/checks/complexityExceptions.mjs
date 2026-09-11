@@ -89,8 +89,6 @@ export const COMPLEXITY_EXCEPTIONS = [
   { path: "packages/spec-controller/src/cli-balance/cli.ts",                rule: "complexity",              value:   18, since: "2026-08-02" },
   { path: "packages/spec-controller/src/cli-balance/cli.ts",                rule: "max-lines-per-function",  value:   89, since: "2026-08-12" },
   { path: "packages/spec-controller/src/ingest/ingestScenarios.ts",         rule: "complexity",              value:   12, since: "2026-08-02" },
-  { path: "tests/checks/featureCodes.ts",         rule: "complexity",              value:   17, since: "2026-08-02" },
-  { path: "tests/checks/featureCodes.ts",         rule: "max-lines-per-function",  value:   76, since: "2026-08-05" },
   { path: "tests/checks/lintScnSubIssuesCli.ts",  rule: "max-lines-per-function",  value:   45, since: "2026-09-05" },
   { path: "tests/checks/scnSubIssueGate.ts",      rule: "complexity",              value:   17, since: "2026-08-02" },
   { path: "tests/checks/scnSubIssueGate.ts",      rule: "max-lines-per-function",  value:   60, since: "2026-09-05" },
