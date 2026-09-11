@@ -70,7 +70,7 @@ mutation-gates:
   # sides of the move — which is what says this is removed tested code and not a lost kill. Run
   # 33608027182 reported the fall and refused to write it, as it should.
   domain:
-    detected: 694
-    total: 697
+    detected: 807
+    total: 836
     slack-mutants: 0
     slack-reason: ""
