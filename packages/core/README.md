@@ -38,7 +38,7 @@ isBalanced(ledger); // false while any scenario names evidence that did not arri
 
 - **Parse** — `parseScenarios` and its untagged/prose-only companions; `parseVitestEvidenceObservations`, `parseCucumberEvidenceObservations`; the readers for static checks and for what a pipeline's steps actually ran.
 - **Reconcile** — `reconcile` for the ledger itself, `evidenceReconciliationOf` for the ledger plus its summary, and `evidenceReconciliationFromSources` for the whole composition over sources you have already read.
-- **Ask the ledger** — `isBalanced`, `hasPendingItems`, `hasBrokenEvidence`. These are the three questions a caller decides on: the CLI's own balanced / out-of-balance / unsound / pending-under-strict verdicts are built out of these three and nothing else.
+- **Ask the ledger** — `isBalanced`, `hasPendingItems`, `hasBrokenEvidence`, `hasNothingToReconcile`. These are the four questions a caller decides on: the CLI's own balanced / out-of-balance / unsound / pending-under-strict / nothing-to-reconcile verdicts are built out of these four and nothing else.
 - **Render** — `renderMarkdown`, `renderJson`, `renderReport`, `renderReportFromJson`, and `assembleRenderInput` if you want the payload rather than a string.
 - **Provenance** — the pure subset: what a run was, without asking the filesystem what it is.
 

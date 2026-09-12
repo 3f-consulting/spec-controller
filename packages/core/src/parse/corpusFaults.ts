@@ -17,7 +17,8 @@
  * hands over bytes; nothing internal is re-exported to buy it.
  *
  * WHAT SEPARATES A FAULT FROM A VERDICT. `balance`'s exit code IS its verdict — balanced, out of
- * balance, pending-under-strict — and a corpus fault is not a reconciliation verdict. It
+ * balance, pending-under-strict, unsound, nothing-to-reconcile — and a corpus fault is not a
+ * reconciliation verdict. It
  * is a statement that the corpus itself is malformed, which is why it is a second command with
  * its own status ladder rather than a fourth meaning bolted onto a status a consumer's CI
  * branches on.

@@ -118,6 +118,55 @@ export function hasBrokenEvidence(reconciliation: Ledger): boolean {
 }
 
 /**
+ * Does the WHOLE run have NOTHING TO RECONCILE — no accounts at all? The FOURTH whole-run
+ * predicate (@SCN-CLI-019), beside `isBalanced` / `hasPendingItems` / `hasBrokenEvidence`, and the
+ * one shape the other three cannot speak about.
+ *
+ * THE FAULT IT EXISTS TO NAME. `isBalanced` is `.every()` over the rows, so on an EMPTY ledger it
+ * is VACUOUSLY TRUE; `hasPendingItems` and `hasBrokenEvidence` are `.some()`, so they are
+ * vacuously FALSE. A target that declared nothing and produced nothing therefore satisfied every
+ * existing predicate in the direction that reads as a pass, and was told "BALANCED … (exit 0)" — a
+ * green over silence, from the tool whose whole claim is that silence is not the same as nothing
+ * wrong. No combination of the three separates an empty run from a clean one, which is why this is
+ * a predicate and not a derivation of one.
+ *
+ * ITS OWN ENUMERATED STATE, exit 5 (taxonomy: 0 balanced / 1 out-of-balance / 2 usage / 3
+ * pending-under-strict / 4 unsound / 5 nothing to reconcile). Not balanced — there are no accounts
+ * to agree. Not out-of-balance — nothing disagrees. Not a usage fault — the invocation was valid
+ * and `new-client` is a supported adoption state, not a degraded one. Not unsound — no proof
+ * failed; none was owed.
+ *
+ * KEYED ON THE EMPTY LEDGER, NEVER ON THE EMPTY CORPUS, and that is load-bearing rather than
+ * pedantic: a target with no corpus but uncited credits HAS a row — its suspense row — and is an
+ * ordinary out-of-balance report at exit 1 (@SCN-CLI-020). Keyed on "no corpus" instead, the modal
+ * first run's whole report would disappear behind exit 5.
+ *
+ * DERIVED, NEVER STORED — no emptiness flag is written onto `Ledger`, the same no-drift reason its
+ * three siblings derive, and the reason no JSON-schema change is owed: a machine consumer reads
+ * the row count off the ledger it already has. The markdown renderer prints the HEADLINE word —
+ * "NOTHING TO RECONCILE" is the render word, never the predicate's name, exactly as "unsound" is
+ * for `hasBrokenEvidence`.
+ *
+ * WHERE IT MUST BE ASKED, MEASURED RATHER THAN ARGUED (3F-3344). The ticket predicted this would
+ * be @SCN-CLI-012's pre-emption one code further on — ask it after `isBalanced` and the branch
+ * goes unreachable. IT IS NOT, and the plant that was supposed to prove it stayed GREEN. An empty
+ * ledger is MUTUALLY EXCLUSIVE with all three siblings: with no rows there is no row to carry a
+ * broken item, a reconciling item or a Pending Item, so it fires NONE of them and its position
+ * AMONG them is unobservable. Moving it below `!isBalanced` in the CLI ladder still exits 5
+ * (measured).
+ *
+ * WHAT IS LOAD-BEARING is its position against the chain's DEFAULT. "Balanced" is not a predicate
+ * branch — it is the fall-through — so there is no "after the balanced case" to append a fifth
+ * code to, and a chain that reaches its default has already called the run balanced. Appended
+ * after the default the branch is dead code and the run exits 0 (measured: the plant that DID red).
+ * That is also why the fault survived: a fifth code cannot be ADDED to this chain, it has to
+ * DISPLACE the default, and nothing about the other three predicates says so.
+ */
+export function hasNothingToReconcile(reconciliation: Ledger): boolean {
+  return reconciliation.scenarioReconciliations.length === 0;
+}
+
+/**
  * The BROKEN reconciling items across the WHOLE run (3F-2203) — every proof that never ran, in row
  * order, each carrying its WHERE-to-fix (locator) and WHAT-broke (the runner's message).
  *

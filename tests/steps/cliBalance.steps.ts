@@ -102,6 +102,8 @@ const SUSPENSE_ONLY = {
 let invocationArgs: string[] = [];
 /** The path CLI-002's Given points a flag at — asserted verbatim in stderr. */
 let missingPath = "";
+/** The directory the next spawn runs IN, set by a Given whose target is not this tree (CLI-017). */
+let invocationCwd: string | undefined;
 let cliResult: SpawnSyncReturns<string>;
 
 /**
@@ -112,10 +114,16 @@ let cliResult: SpawnSyncReturns<string>;
  */
 function spawnBalance(args: string[]): SpawnSyncReturns<string> {
   const root = process.cwd();
+  // The target the run STANDS IN, which is not always the tool's own tree: every flag `balance`
+  // reads has a default resolved against the cwd, so the target-shaped defaults (--features,
+  // --package-json, --ci) are only reachable by running somewhere else (@SCN-CLI-017). Consumed
+  // here rather than read, so one Given's target can never leak into the next scenario's run.
+  const cwd = invocationCwd ?? root;
+  invocationCwd = undefined;
   const result = spawnSync(
     join(root, "node_modules", ".bin", "tsx"),
     [join(root, "packages", "spec-controller", "src", "cli.ts"), "balance", ...args],
-    { cwd: root, encoding: "utf8" },
+    { cwd, encoding: "utf8" },
   );
   assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
   return result;
@@ -841,5 +849,375 @@ Then("stderr names the unparseable report and the parse failure", function () {
     cliResult.stderr,
     /^\s+at .*:\d+:\d+\)?$/m,
     `expected a TYPED usage error, but the process crashed with a stack trace:\n${cliResult.stderr}`,
+  );
+});
+
+/**
+ * @SCN-CLI-019 — a run with NOTHING TO RECONCILE. The @e2e half: the real binary over a
+ * target that declared no scenario and produced no evidence, asserting the status of the
+ * `spec-controller` PROCESS ITSELF (spawnSync, never a pipeline — see the @SCN-CLI-013 block:
+ * a piped `$?` reads the LAST command's status and launders a failure into a pass).
+ *
+ * The @unit halves are `[SCN-CLI-019]` in packages/core/src/domain/isBalanced.test.ts (the
+ * predicate), packages/spec-controller/src/cli-balance/cli.test.ts (the ladder's first branch)
+ * and packages/core/src/render/markdown.test.ts (the headline). A grep of SCN-CLI-019 returns
+ * the scenario and every arm.
+ */
+
+/**
+ * The NOTHING-TO-RECONCILE fixture target (@SCN-CLI-019) — the modal `new-client`: a corpus
+ * directory EMPTY OF SCENARIOS (no obligation raised), no evidence report (no observation
+ * posted), and a GUARDLESS --package-json with no --ci (no static check running, so nothing is
+ * uncited and the suspense row stays empty). The ledger reconcile() emits carries ZERO Scenario
+ * Reconciliation rows — the one shape `isBalanced` cannot speak about, since `.every()` over
+ * `[]` is vacuously TRUE. Measured before the fix: `**BALANCED** … (exit 0)` over 0 rows.
+ */
+const NOTHING_TO_RECONCILE = {
+  features: "tests/fixtures/nothing-to-reconcile/features",
+  packageJson: "tests/fixtures/nothing-to-reconcile/package.json",
+};
+
+// @SCN-CLI-019
+Given("a target that declared no scenario and produced no evidence", function () {
+  const root = process.cwd();
+  for (const path of Object.values(NOTHING_TO_RECONCILE)) {
+    assert.ok(existsSync(join(root, path)), `missing fixture input: ${path}`);
+  }
+  // No --vitest, no --cucumber, no --ci: the target produced nothing, which is half the
+  // shape. The guardless --package-json is the other half — a RUNNING static check would
+  // post an uncited credit to the suspense row and give the run a row after all (which is
+  // @SCN-CLI-020's target, an ordinary out-of-balance report at exit 1, not this one's).
+  invocationArgs = [
+    "--features",
+    NOTHING_TO_RECONCILE.features,
+    "--package-json",
+    NOTHING_TO_RECONCILE.packageJson,
+  ];
+});
+
+// @SCN-CLI-019
+Then("the verdict headline says the run had nothing to reconcile, never that it balanced", function () {
+  // THE HEADLINE HALF of the scenario — the printed verdict, beside the exit code the shared
+  // `exits with status {int}` Then pins. Both are asserted because @SCN-CLI-013's invariant is
+  // that they name the SAME outcome: a fifth exit code with a fourth headline word keeps that
+  // claim true only if the renderer's dominance chain and the CLI's ladder gained the branch in
+  // the same position. The negative is the load-bearing half: the fault was not a missing
+  // sentence, it was the WRONG one — a vacuous green over silence.
+  const headline = cliResult.stdout.match(/^\*\*(.+?)\*\* — .*\(exit (\d+)\)$/m);
+  assert.ok(headline, `expected a run-verdict headline in stdout; got:\n${cliResult.stdout}`);
+  assert.equal(
+    headline[1],
+    "NOTHING TO RECONCILE",
+    `expected the headline word to say the run had nothing to reconcile; got **${headline[1]}**`,
+  );
+  assert.equal(
+    Number(headline[2]),
+    5,
+    `expected the headline to name exit 5; got exit ${headline[2]}`,
+  );
+  assert.doesNotMatch(
+    cliResult.stdout,
+    /\*\*BALANCED\*\*/,
+    `a run with no accounts must NEVER read as balanced; got:\n${cliResult.stdout}`,
+  );
+});
+
+/**
+ * @SCN-CLI-017 — a target with NO `features/` DIRECTORY AT ALL is reported on, never crashed over.
+ *
+ * @e2e IS THE ONLY ARM THAT CAN SEE THIS ONE, and not merely by convention. The fault is on the
+ * DEFAULT corpus path — `join(process.cwd(), "features")` — so reproducing it means running the
+ * tool from a directory that has no `features/`. A Vitest arm cannot: `process.chdir` throws in a
+ * worker, and passing the absent directory as `--features` is a DIFFERENT case, guarded by
+ * `checkInputsExist` and refused at exit 2 (@SCN-CLI-002, the bystander this slice must not move).
+ * So the @unit halves prove the typed absence and each reader's translation of it
+ * (`[SCN-CLI-017]` in ingest/ingestScenarios.test.ts and ingest/absentFeatureCorpus.test.ts), and
+ * this arm proves the only thing they cannot reach: the real binary, standing in a real
+ * new-client target, ending on a status of its own rather than on Node's default.
+ *
+ * Measured before the fix, from a scratch target with no `features/`:
+ *   Error: ENOENT: no such file or directory, scandir '<cwd>/features'
+ *       at discoverFeatures (ingest/ingestScenarios.ts:113:17)
+ *   EXIT=1  — the OUT-OF-BALANCE code, reached by crashing.
+ */
+
+/** The exit codes `balance` enumerates. Node's uncaught-throw default (1) is INSIDE this set,
+ * which is the whole reason the collision exists — so membership alone proves nothing, and the
+ * Then below pairs it with the report's own headline and a stderr free of stack frames. */
+const ENUMERATED_STATUSES = [0, 1, 2, 3, 4, 5];
+
+// @SCN-CLI-017
+Given("a target with no Gherkin corpus at all — no features directory on disk", function () {
+  // The modal `new-client`: a brownfield repository on the day it installs spec-controller. It
+  // has unit tests and a manifest; it has no `features/` and never had one. NOTHING is supplied
+  // on the command line — an absent DEFAULT corpus is the shape under test, and a supplied path
+  // would be @SCN-CLI-002's case instead.
+  const dir = mkdtempSync(join(tmpdir(), `scn-cli-017-${process.pid}-`));
+  writeFileSync(
+    join(dir, "package.json"),
+    JSON.stringify({ name: "new-client-target", private: true, scripts: { test: "vitest run" } }),
+  );
+  assert.ok(
+    !existsSync(join(dir, "features")),
+    `fixture invariant: ${join(dir, "features")} must NOT exist — this is the ABSENT corpus case`,
+  );
+  invocationArgs = [];
+  invocationCwd = dir;
+});
+
+// @SCN-CLI-017
+Then("the run ends on an enumerated status rather than a stack trace", function () {
+  // A CRASH IS WHAT THIS REFUSES, and the exit code alone cannot say so: Node's default for an
+  // uncaught throw IS 1, which the taxonomy already spends on out-of-balance. So the three
+  // halves together — no stack frames on stderr, a status the taxonomy enumerates, and that
+  // status being the one the report's OWN headline names — are what separate "the tool decided"
+  // from "the process died".
+  assert.doesNotMatch(
+    cliResult.stderr,
+    /^\s+at .+:\d+:\d+\)?$/m,
+    `expected no stack trace on stderr; got:\n${cliResult.stderr}`,
+  );
+  assert.doesNotMatch(
+    cliResult.stderr,
+    /ENOENT/,
+    `the absent corpus escaped as a raw filesystem error; got:\n${cliResult.stderr}`,
+  );
+  assert.ok(
+    ENUMERATED_STATUSES.includes(cliResult.status ?? -1),
+    `expected an enumerated status; got ${cliResult.status}\nstderr:\n${cliResult.stderr}`,
+  );
+  const headline = cliResult.stdout.match(/^\*\*(.+?)\*\* — .*\(exit (\d+)\)$/m);
+  assert.ok(headline, `expected a run-verdict headline in stdout; got:\n${cliResult.stdout}`);
+  assert.equal(
+    cliResult.status,
+    Number(headline[2]),
+    `the report says exit ${headline[2]} (**${headline[1]}**) but the process exited ${cliResult.status} — a status the REPORT did not choose is Node's, not the tool's`,
+  );
+});
+
+/**
+ * @SCN-CLI-020 — the MODAL `new-client`, and the load-bearing guard of this slice: a target with
+ * NO Gherkin corpus whose unit tests cite nothing is an ordinary OUT-OF-BALANCE report at exit 1,
+ * never a run with nothing to reconcile.
+ *
+ * WHAT IT DISCRIMINATES. @SCN-CLI-019 keys nothing-to-reconcile on the EMPTY LEDGER; the natural
+ * shortcut while fixing @SCN-CLI-017 is to key it on the EMPTY CORPUS instead, since that is the
+ * fact in hand at the moment the absence is caught. Both scenarios stay green under that shortcut
+ * — CLI-019's fixture has no evidence either, and CLI-017's asserts only that the run ends on an
+ * enumerated status the report itself names, which exit 5 satisfies. This run is the one that
+ * separates them: its corpus is empty AND its ledger is not, so the two keyings disagree here and
+ * nowhere else. Under the shortcut the whole report — the suspense row, the two uncited credits,
+ * the out-of-balance verdict that IS the product's argument — disappears behind exit 5.
+ *
+ * THE DIRECTORY IS ABSENT, NOT EMPTY, and that is the fixture rather than a detail: a shortcut
+ * keyed on the caught `MissingFeatureCorpusError` never fires over a directory that exists, so an
+ * empty-directory fixture would sit green through the exact fault this scenario is named for.
+ *
+ * @e2e IS THE ONLY ARM THAT REACHES THAT FORM, for @SCN-CLI-017's reason: the absence is on the
+ * DEFAULT corpus path — `join(process.cwd(), "features")` — so it needs a process standing in a
+ * directory that has no `features/`, which a Vitest worker cannot produce (`process.chdir` throws)
+ * and a supplied `--features` cannot mean (that is @SCN-CLI-002's exit 2). The @unit half is
+ * `[SCN-CLI-020]` in packages/core/src/domain/isBalanced.test.ts — the predicate pair over the
+ * ledger this shape produces. A grep of SCN-CLI-020 returns the scenario and both arms.
+ */
+
+/** The MODAL `new-client` target: no `features/`, a manifest, and a vitest report whose passing
+ * tests cite no scenario. Nothing is declared, so nothing is owed; the credits have nowhere to
+ * post but the suspense row. */
+const NEW_CLIENT_UNCITED = "tests/fixtures/new-client-uncited";
+
+// @SCN-CLI-020
+Given("a target with no Gherkin corpus whose unit evidence cites no scenario", function () {
+  const dir = join(process.cwd(), NEW_CLIENT_UNCITED);
+  assert.ok(
+    !existsSync(join(dir, "features")),
+    `fixture invariant: ${join(dir, "features")} must NOT exist — an EMPTY corpus directory is a
+     different shape and would sit green through the very shortcut this scenario guards`,
+  );
+  // The run STANDS IN the target, so the absent corpus is reached as the DEFAULT it is. Only
+  // --vitest is supplied; --package-json and --ci take their target-relative defaults, which is
+  // what a consumer's first invocation actually looks like.
+  invocationArgs = ["--vitest", "vitest.json"];
+  invocationCwd = dir;
+});
+
+// @SCN-CLI-020
+Then("the uncited credits are posted to the suspense reconciliation", function () {
+  // Read off the report's OWN test-volume sentence — the binary's statement of where every credit
+  // landed, never a re-derivation here. Both halves matter: the credits are ON the suspense row,
+  // and NONE of them reached a scenario or a phantom, because nothing was declared for them to
+  // cite. That is the row whose existence makes the ledger non-empty.
+  const volume = cliResult.stdout.match(
+    /^(\d+) evidence observations = (\d+) on scenarios \+ (\d+) on phantom scenarios \+ (\d+) on the suspense scenario\.$/m,
+  );
+  assert.ok(volume, `expected the test-volume sentence in stdout; got:\n${cliResult.stdout}`);
+  assert.deepEqual(
+    [volume[1], volume[2], volume[3], volume[4]].map(Number),
+    [2, 0, 0, 2],
+    `expected both uncited credits on the suspense scenario and none anywhere else; got: ${volume[0]}`,
+  );
+  assert.match(
+    cliResult.stdout,
+    /^\| ↳ Evidence Observation cites no Scenario \| +\| +\| 2 \|/m,
+    `expected the two credits reconciled as cites-no-scenario; got:\n${cliResult.stdout}`,
+  );
+});
+
+// @SCN-CLI-020
+Then("the run is never read as one with nothing to reconcile", function () {
+  // THE NEGATIVE THIS SCENARIO EXISTS FOR. The fault is not a missing sentence — it is the WRONG
+  // one, the whole report replaced by the fifth code because the keying asked about the corpus
+  // rather than the accounts. Asserted on both statements of the verdict, the printed word and
+  // the process status, because a shortcut may be planted at either end.
+  assert.doesNotMatch(
+    cliResult.stdout,
+    /NOTHING TO RECONCILE/,
+    `a corpus-less run WITH accounts has something to reconcile — its suspense row; got:\n${cliResult.stdout}`,
+  );
+  assert.notEqual(
+    cliResult.status,
+    5,
+    `expected an ordinary out-of-balance verdict; the run exited 5, so nothing-to-reconcile was keyed on the empty CORPUS rather than the empty LEDGER\nstdout:\n${cliResult.stdout}`,
+  );
+});
+
+/**
+ * @SCN-CLI-018 — an absent corpus and a corpus holding no scenario reach the SAME verdict by the
+ * SAME sentence, and that sentence names the corpus directory it examined.
+ *
+ * WHY THIS SCENARIO EXISTS AFTER ITS SIBLINGS RATHER THAN INSTEAD OF THEM. @SCN-CLI-017 stops the
+ * absent corpus crashing and @SCN-CLI-019 supplies the verdict all three now land on, so the three
+ * shapes ALREADY agree the moment this arm is written — measured on the branch tip before a line of
+ * it existed, three reports byte-identical but for their timestamps. What is written here is not a
+ * fix, it is the thing that stops them drifting apart later: absence and emptiness are one answer
+ * in the product's argument, and nothing in the tree said so.
+ *
+ * THE ASSERTION COMPARES THE RUNS AGAINST EACH OTHER, NEVER AGAINST A SENTENCE WRITTEN HERE. A
+ * literal expected verdict in this file is a second copy of the renderer's wording: it drifts the
+ * day someone rewords the gloss, and — worse — it passes while all three are wrong in the same way.
+ * Sameness alone, though, is satisfied by three identical SILENCES, so it is paired with exactly one
+ * positive pin on the shared sentence: it names the corpus directory. The directory literal that pin
+ * uses is `CORPUS_DIR` below, which is what BUILDS the fixtures — a fact about the targets, not a
+ * transcription of the renderer.
+ *
+ * @e2e IS WHERE THE THREE SHAPES CAN STAND SIDE BY SIDE. Shape 1's absence is on the DEFAULT corpus
+ * path (`join(process.cwd(), "features")`), which needs a process standing somewhere with no
+ * `features/` — a Vitest worker cannot produce it (`process.chdir` throws) and a supplied
+ * `--features` would mean @SCN-CLI-002's exit 2 instead. The @unit half is `[SCN-CLI-018]` in
+ * packages/spec-controller/src/ingest/noCorpusVerdict.test.ts, which reaches the other three
+ * quarters of the claim through `runReconcile` + `renderMarkdown` over real directories. A grep of
+ * SCN-CLI-018 returns the scenario and both arms.
+ */
+
+/** The corpus directory every one of the three targets uses — the DEFAULT, unsupplied, which is why
+ * all three name the same one. It builds the fixtures below AND is the literal the naming pin
+ * asserts, so that pin is derived from the targets rather than transcribed from the renderer. */
+const CORPUS_DIR = "features";
+
+/** A target with nothing to reconcile, in one of the three shapes "no corpus" comes in. */
+let noCorpusTargets: { shape: string; root: string }[] = [];
+/** What the binary said in each of them, in the same order. */
+let noCorpusRuns: { shape: string; stdout: string }[] = [];
+
+/** The run-verdict headline line, as a reader meets it — the ONE line this scenario compares. */
+function verdictLineOf(stdout: string, shape: string): string {
+  const line = stdout.match(/^\*\*.+\*\* — .*\(exit \d+\)$/m)?.[0];
+  assert.ok(line, `expected a run-verdict headline for the target with ${shape}; got:\n${stdout}`);
+  return line;
+}
+
+/** The run this scenario reads, by position — every arm below wants one of the three, and an
+ * absent one is a harness fault rather than a verdict, so it is named as one. */
+function noCorpusRun(index: number): { shape: string; stdout: string } {
+  const run = noCorpusRuns[index];
+  assert.ok(run, `expected all three shapes to have been run; run ${index} is missing`);
+  return run;
+}
+
+// @SCN-CLI-018
+Given(
+  "a target with no corpus directory, a target whose corpus is empty, and a target whose corpus declares no scenario",
+  function () {
+    const root = mkdtempSync(join(tmpdir(), `scn-cli-018-${process.pid}-`));
+    // A GUARDLESS manifest and no evidence report in all three, so the CORPUS is the only thing
+    // that differs between them. A running static check would post an uncited credit, give the run
+    // a suspense row, and turn all three into @SCN-CLI-020's shape instead of this one's.
+    const manifest = JSON.stringify({ name: "new-client-target", private: true, scripts: {} });
+    const shapes: { shape: string; build: (dir: string) => void }[] = [
+      // Shape 1 — the modal `new-client`: no corpus directory was ever created.
+      { shape: "no corpus directory", build: () => {} },
+      // Shape 2 — a corpus directory that exists and holds nothing.
+      { shape: "an empty corpus", build: (dir) => mkdirSync(join(dir, CORPUS_DIR)) },
+      // Shape 3 — a corpus directory holding a feature file that declares no scenario at all. NOT
+      // an untagged scenario, which is a different fact about the target (something WAS declared,
+      // and it is owed an @SCN); this file declares nothing to be owed anything.
+      {
+        shape: "a corpus declaring no scenario",
+        build: (dir) => {
+          mkdirSync(join(dir, CORPUS_DIR));
+          writeFileSync(
+            join(dir, CORPUS_DIR, "target.feature"),
+            "Feature: a corpus that declares nothing\n\n  Prose only. No scenario is declared in this file.\n",
+          );
+        },
+      },
+    ];
+    noCorpusTargets = shapes.map(({ shape, build }, i) => {
+      const dir = join(root, `shape-${i}`);
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(join(dir, "package.json"), manifest);
+      build(dir);
+      return { shape, root: dir };
+    });
+    const [first] = noCorpusTargets;
+    assert.ok(first && !existsSync(join(first.root, CORPUS_DIR)),
+      `fixture invariant: the first target must have NO ${CORPUS_DIR}/ — that is the shape under test`,
+    );
+  },
+);
+
+// @SCN-CLI-018
+When(
+  '"spec-controller balance" is invoked over each of those targets through the CLI binary',
+  function () {
+    // NOTHING IS SUPPLIED, in any of the three. The corpus is reached as the DEFAULT it is, which
+    // is both the only way shape 1's absence is reachable at all and what a consumer's very first
+    // invocation actually looks like.
+    noCorpusRuns = noCorpusTargets.map(({ shape, root }) => {
+      invocationCwd = root;
+      return { shape, stdout: spawnBalance([]).stdout };
+    });
+  },
+);
+
+// @SCN-CLI-018
+Then("every one of them is told the same verdict by the same sentence", function () {
+  assert.equal(noCorpusRuns.length, 3, "expected all three shapes to have been run");
+  const first = noCorpusRun(0);
+  const firstLine = verdictLineOf(first.stdout, first.shape);
+  for (const index of [1, 2]) {
+    const other = noCorpusRun(index);
+    const otherLine = verdictLineOf(other.stdout, other.shape);
+    // COMPARED AGAINST THE OTHER RUNS, never against a sentence written here. "Absent and empty
+    // are the same answer, not two" is a claim about the runs agreeing, and that is what is read.
+    assert.equal(
+      otherLine,
+      firstLine,
+      `absent and empty are ONE answer, not two: the target with ${other.shape} was told something the target with ${first.shape} was not.\n  ${first.shape}: ${firstLine}\n  ${other.shape}: ${otherLine}`,
+    );
+  }
+});
+
+// @SCN-CLI-018
+Then("that sentence names the corpus directory it examined", function () {
+  // THE POSITIVE PIN, once, on the sentence the Then above has just established is shared. Three
+  // identical silences satisfy sameness; only this says the report told the reader WHERE it looked.
+  // Asserted on the verdict LINE rather than on stdout, because the provenance block above it
+  // already carries the flag name and would green this over a verdict that says nothing at all.
+  const { shape, stdout } = noCorpusRun(0);
+  const line = verdictLineOf(stdout, shape);
+  assert.ok(
+    line.includes(CORPUS_DIR),
+    `"I found no record" and "I found no regression" must not wear one word: the verdict never names the corpus directory (${CORPUS_DIR}) it examined.\n  ${line}`,
   );
 });

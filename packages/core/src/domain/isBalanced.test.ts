@@ -19,7 +19,7 @@
 import { describe, it, expect } from "vitest";
 
 import { reconcile } from "./evidenceReconciliation.js";
-import { isBalanced, hasPendingItems, hasBrokenEvidence } from "./ledger.js";
+import { isBalanced, hasPendingItems, hasBrokenEvidence, hasNothingToReconcile } from "./ledger.js";
 import { makeQualityCheckReconciliation, OUTCOME_SIDE_PROFILE } from "../model.js";
 import type {
   Ledger,
@@ -234,8 +234,8 @@ describe("[SCN-PND-008] isBalanced — an Ledger whose only exceptions are Pendi
  * it consults. Where @SCN-PND-008 pins that a balanced-with-pending run does not fail by
  * DEFAULT, this pins the OPT-IN escalation: under `--strict`, an otherwise-balanced run
  * CARRYING Pending Items exits the DISTINCT code 3 (taxonomy 0 balanced / 1 out-of-balance /
- * 2 usage / 3 pending-under-strict — a Pending Item is not out-of-balance, so it must NOT
- * share code 1). Out-of-balance DOMINATES: an out-of-balance run exits 1 regardless of
+ * 2 usage / 3 pending-under-strict / 4 unsound / 5 nothing to reconcile — a Pending Item is not
+ * out-of-balance, so it must NOT share code 1). Out-of-balance DOMINATES: an out-of-balance run exits 1 regardless of
  * `--strict`, because the escalation is checked only when `isBalanced` is true. And the
  * escalation must NOT over-fire: a balanced run with NO Pending Items stays 0 even under
  * `--strict`.
@@ -419,5 +419,140 @@ describe("[SCN-LDG-018] hasBrokenEvidence — the whole-run soundness predicate"
       [brokenObservation],
     );
     expect(Object.keys(balance)).toEqual(["scenarioReconciliations"]);
+  });
+});
+
+/**
+ * @unit for @SCN-CLI-019 — `hasNothingToReconcile`, the FOURTH whole-run predicate beside
+ * `isBalanced` / `hasPendingItems` / `hasBrokenEvidence`, and the one shape the other three
+ * cannot speak about: the EMPTY ledger.
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): the describe/it strings carry the
+ * SCN-CLI-019 id, matching features/cli-balance.feature's @SCN-CLI-019 scenario and its @e2e
+ * Cucumber step-block (tests/steps/cliBalance.steps.ts, `// @SCN-CLI-019`). A grep of
+ * SCN-CLI-019 returns the scenario, this @unit, the ladder's @unit and the @e2e steps.
+ *
+ * THE FAULT THIS PREDICATE EXISTS TO NAME. `isBalanced` is `.every()` over the rows, so on `[]`
+ * it is VACUOUSLY TRUE — and `hasPendingItems` / `hasBrokenEvidence` are `.some()`, vacuously
+ * FALSE. A target that declared nothing and produced nothing therefore satisfied every existing
+ * predicate in the direction that reads as a pass, and was told "BALANCED … (exit 0)": a green
+ * over silence, from the tool whose whole claim is that silence is not the same as nothing wrong.
+ *
+ * KEYED ON THE EMPTY LEDGER, NEVER ON THE EMPTY CORPUS. A target with no corpus but uncited
+ * credits HAS a row — its suspense row — and is an ordinary out-of-balance report at exit 1
+ * (@SCN-CLI-020). The arm below pins that distinction, because keying this on "no corpus" would
+ * make the modal first run's whole report disappear behind exit 5.
+ */
+describe("[SCN-CLI-019] hasNothingToReconcile — the whole-run predicate for a ledger with no accounts", () => {
+  it("is true for the ledger reconcile() emits over a target that declared nothing and produced nothing", () => {
+    // RECONCILER-TRUE (evidence-manifesto §11A): the ledger is PRODUCED by reconcile() over an
+    // empty corpus and empty evidence, not hand-built — the exact shape the CLI edge sees.
+    const empty = reconcile([], []);
+    expect(empty.scenarioReconciliations).toEqual([]);
+    expect(hasNothingToReconcile(empty)).toBe(true);
+  });
+
+  it("is the ONLY predicate that separates an empty ledger from a balanced one: the other three read it as a pass", () => {
+    // THE TEETH, and the whole reason the predicate exists. Over `[]` every existing predicate
+    // points at "nothing is wrong here" — `.every()` is vacuously true, `.some()` vacuously
+    // false — so no combination of the three can tell an empty run from a clean one.
+    const empty = reconcile([], []);
+    expect(isBalanced(empty)).toBe(true);
+    expect(hasPendingItems(empty)).toBe(false);
+    expect(hasBrokenEvidence(empty)).toBe(false);
+    expect(hasNothingToReconcile(empty)).toBe(true);
+
+    // And a genuinely balanced run agrees with three of them and DIFFERS on the fourth — which
+    // is what makes the fourth load-bearing rather than a restatement of `isBalanced`.
+    const balanced = reconcile(
+      [{ scnId: "SCN-NTR-001", evidenceObligations: [{ qualityCheck: "unit" }] }],
+      [{ qualityCheck: "unit", scnId: "SCN-NTR-001", status: "passed" }],
+    );
+    expect(isBalanced(balanced)).toBe(true);
+    expect(hasNothingToReconcile(balanced)).toBe(false);
+  });
+
+  // THE EMPTY-CORPUS-WITH-CREDITS ARM LIVES UNDER @SCN-CLI-020, NOT HERE (3F-3342, slice-level).
+  // An arm asserting it stood in this describe between 790cc9a and this commit, and it was a
+  // MIS-CITATION: this scenario's text is "a run with nothing to reconcile exits 5 and its headline
+  // says so", which says nothing about a corpus-less run that HAS rows. The claim belongs to
+  // @SCN-CLI-020, whose scenario text is exactly it. Left here, grepping @SCN-CLI-020 would have
+  // missed a proof of its own claim, and deleting that scenario would have left the proof alive
+  // under another id — the vacated-but-green shape (evidence-manifesto §9, bidirectional link).
+  //
+  // NO COVERAGE WAS LOST, clause by clause rather than by assumption: the removed arm asserted
+  // `rows.length > 0`, `hasNothingToReconcile === false` and `isBalanced === false` over
+  // `reconcile([], [1 uncited passing credit])`. @SCN-CLI-020's describe asserts all three over
+  // `reconcile([], [2 uncited passing credits])` — and its first arm pins `rows.map(kind)` to
+  // exactly `["suspense-scenario"]`, which is strictly stronger than a length check — plus the
+  // controlled pair that moves only the credits. The sole input difference is one credit versus
+  // two, which no branch in these predicates distinguishes.
+
+  it("is DERIVED, never stored: the ledger carries no emptiness field", () => {
+    // The same no-drift ruling its three siblings derive under — a machine consumer reads the
+    // row count off the ledger it already has, so no JSON-schema change is owed. Reds the moment
+    // a `nothingToReconcile` flag is written onto the ledger instead of being derived.
+    const empty = reconcile([], []);
+    expect(Object.keys(empty)).toEqual(["scenarioReconciliations"]);
+  });
+});
+
+/**
+ * @unit for @SCN-CLI-020 — the MODAL `new-client`, and this slice's load-bearing distinction: a
+ * corpus-less run that STILL HAS ACCOUNTS. Nothing is declared, so nothing is owed; the target's
+ * untagged unit tests cite nothing, so their credits post to the SUSPENSE row — and a ledger with
+ * a row is an ordinary out-of-balance report (exit 1), never nothing-to-reconcile (exit 5).
+ *
+ * WHY IT IS A SCENARIO OF ITS OWN rather than a corollary of @SCN-CLI-019. The shortcut this
+ * guards keys the fifth code on the empty CORPUS instead of the empty LEDGER, and both other
+ * scenarios in this slice stay green under it: CLI-019's target produced no evidence either, and
+ * CLI-017 asserts only that an absent corpus ends on an enumerated status the report itself names.
+ * The two keyings agree everywhere except HERE — an empty corpus over a non-empty ledger — which
+ * is exactly the shape the product's own pitch turns on, and exactly the report exit 5 would hide.
+ *
+ * Bidirectional evidence (Evidence Manifesto §9): features/cli-balance.feature's @SCN-CLI-020, its
+ * @e2e step block in tests/steps/cliBalance.steps.ts (`// @SCN-CLI-020`), and this describe.
+ *
+ * THE @e2e ARM CARRIES WHAT THIS ONE CANNOT: the corpus ABSENT rather than merely empty, reached
+ * as the default of a process standing in the target. Here the corpus is `[]` because that is what
+ * `reconcile` is handed either way — the ledger shape is identical, and the ledger is what the
+ * predicate pair is about.
+ */
+describe("[SCN-CLI-020] a corpus-less run carrying uncited credits — an ordinary out-of-balance report", () => {
+  // RECONCILER-TRUE (evidence-manifesto §11A): the ledger is PRODUCED by reconcile() over an empty
+  // corpus and two uncited passing credits — the exact shape the CLI edge sees for the modal
+  // `new-client` — not hand-built to the answer.
+  const corpusLessWithCredits = () =>
+    reconcile(
+      [],
+      [
+        { qualityCheck: "unit", scnId: null, status: "passed", locator: "src/widget.test.ts" },
+        { qualityCheck: "unit", scnId: null, status: "passed", locator: "src/widget.test.ts" },
+      ],
+    );
+
+  it("has a suspense row, so it is NOT a run with nothing to reconcile", () => {
+    const ledger = corpusLessWithCredits();
+    expect(ledger.scenarioReconciliations.map((row) => row.kind)).toEqual(["suspense-scenario"]);
+    expect(hasNothingToReconcile(ledger)).toBe(false);
+  });
+
+  it("is out of balance, so it reaches the verdict exit 5 would have replaced", () => {
+    const ledger = corpusLessWithCredits();
+    expect(isBalanced(ledger)).toBe(false);
+    // And the run is SOUND and carries no Pending Item — the other two exit codes above 1 in the
+    // ladder are not in play either, so exit 1 is reached by the balance verdict itself rather
+    // than by falling past a pre-emption.
+    expect(hasBrokenEvidence(ledger)).toBe(false);
+    expect(hasPendingItems(ledger)).toBe(false);
+  });
+
+  it("differs from the empty run ONLY in its credits: the same empty corpus, the opposite verdict", () => {
+    // THE DISCRIMINATION ITSELF, as a controlled pair. One input moves — the uncited credits —
+    // and the two runs must land on different whole-run predicates. Keyed on the corpus they are
+    // indistinguishable, because the corpus is `[]` in both.
+    const declaredNothingProducedNothing = reconcile([], []);
+    expect(hasNothingToReconcile(declaredNothingProducedNothing)).toBe(true);
+    expect(hasNothingToReconcile(corpusLessWithCredits())).toBe(false);
   });
 });

@@ -16,14 +16,18 @@
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { ciSourcePathsOf } from "./ciSourcePaths.js";
-import { discoverFeatures } from "./ingestScenarios.js";
+import { discoverFeatures, type DiscoveredFeature } from "./ingestScenarios.js";
 import {
   parseScenarios,
   countScnOccurrences,
   parseUntaggedScenarios,
   proseOnlyCodes,
 } from "@3f-consulting/spec-controller-core";
-import { UnreadableFeatureCorpusError, type GherkinParseError } from "./gherkinValidation.js";
+import {
+  MissingFeatureCorpusError,
+  UnreadableFeatureCorpusError,
+  type GherkinParseError,
+} from "./gherkinValidation.js";
 import { DEFAULT_DEFERRAL_TAGS } from "../deferralTags.js";
 import {
   evidenceObligations,
@@ -201,15 +205,47 @@ function readJsonIfPresent<T>(path: string | undefined): T | undefined {
   return JSON.parse(readFileSync(path, "utf8")) as T;
 }
 /**
+ * THE CORPUS `balance` READS — the shared discovery, with an ABSENT directory read as NO CORPUS
+ * (@SCN-CLI-017, 3F-3345). The single place this command opts in.
+ *
+ * `new-client` is a supported adoption state, not a degraded one, and most targets have no
+ * `features/` directory at all — so an absent DEFAULT corpus is the target's honest shape and
+ * `balance` reports on it. Left to escape it was a raw `ENOENT` landing on Node's default exit 1,
+ * the OUT-OF-BALANCE code, which is exactly the collision @SCN-CLI-014/015/016 closed on every
+ * other input, alive on the one path each new consumer is guaranteed to take.
+ *
+ * ONE HELPER, NOT FIVE CATCHES, and that is the whole reason it exists: five readers each doing
+ * this by hand is five chances for one to stay intolerant, and a run that reports on a corpus for
+ * four of its readings and throws on the fifth is worse than one that throws. The translation is
+ * also why `discoverFeatures` is not the place to be tolerant — see its own note, and
+ * `MissingFeatureCorpusError`'s: `tags` reaches the same reader and keeps refusing.
+ *
+ * IT IS `[]`, NOT A VERDICT. Zero rows is what @SCN-CLI-019 reads as NOTHING TO RECONCILE, and a
+ * corpus-less target that still has uncited credits keeps its suspense row and its exit 1
+ * (@SCN-CLI-020) — this reader says what it found, never what the run means.
+ *
+ * A supplied-but-absent `--features` never arrives here: `checkInputsExist` refuses it at the CLI
+ * edge, exit 2 (@SCN-CLI-002). The precedent is `ciSourcePathsOf`, which already answers an absent
+ * DEFAULT `.github/workflows` with `[]` for the same reason — the default finding nothing is a fact
+ * about the target, not a mistake by its author.
+ */
+function balanceCorpus(featuresDir: string | undefined): DiscoveredFeature[] {
+  try {
+    return featuresDir !== undefined ? discoverFeatures(featuresDir) : discoverFeatures();
+  } catch (err) {
+    if (err instanceof MissingFeatureCorpusError) return [];
+    throw err;
+  }
+}
+
+/**
  * The discovered feature corpus's SOURCES — read once so the two readings a citing run needs (the
  * obligations, and the corpus hop's `check tag → @SCN`) are taken from the same bytes. Two
  * discoveries could disagree about the corpus, and a citation resolved against a corpus the ledger
  * was not built from is exactly the phantom-row fault (@SCN-LNT-009).
  */
 function featureSources(featuresDir: string | undefined): string[] {
-  const features =
-    featuresDir !== undefined ? discoverFeatures(featuresDir) : discoverFeatures();
-  return features.map((f) => readFileSync(f.path, "utf8"));
+  return balanceCorpus(featuresDir).map((f) => readFileSync(f.path, "utf8"));
 }
 
 function scenariosFromFeatures(
@@ -232,9 +268,7 @@ function scenariosFromFeatures(
  * where to go.
  */
 function untaggedScenariosFromFeatures(featuresDir: string | undefined): string[] {
-  const features =
-    featuresDir !== undefined ? discoverFeatures(featuresDir) : discoverFeatures();
-  return features.flatMap((f) =>
+  return balanceCorpus(featuresDir).flatMap((f) =>
     parseUntaggedScenarios(readFileSync(f.path, "utf8")).map(
       (scenario) => `${f.slug}.feature : ${scenario}`
     )
@@ -259,8 +293,7 @@ function untaggedScenariosFromFeatures(featuresDir: string | undefined): string[
  */
 export function featureCorpusParseErrors(featuresDir: string | undefined): GherkinParseError[] {
   try {
-    if (featuresDir !== undefined) discoverFeatures(featuresDir);
-    else discoverFeatures();
+    balanceCorpus(featuresDir);
     return [];
   } catch (err) {
     if (err instanceof UnreadableFeatureCorpusError) return [...err.errors];
@@ -312,10 +345,8 @@ export function featureCorpusDuplicateScnIds(featuresDir: string | undefined): s
  * now, which is the first time a CONSUMER of this reader has it too.
  */
 export function readFeatureNames(featuresDir?: string): Map<string, string> {
-  const features =
-    featuresDir !== undefined ? discoverFeatures(featuresDir) : discoverFeatures();
   const map = new Map<string, string>();
-  for (const f of features) {
+  for (const f of balanceCorpus(featuresDir)) {
     if (f.featureCode !== null) map.set(f.featureCode, f.slug);
   }
   return map;
@@ -332,8 +363,7 @@ export function readFeatureNames(featuresDir?: string): Map<string, string> {
  * threaded to the renderers via `writeOutputs`; `runReconcile` stays unchanged.
  */
 export function readEvidenceObligations(features?: string): EvidenceObligations {
-  const featureFiles =
-    features !== undefined ? discoverFeatures(features) : discoverFeatures();
+  const featureFiles = balanceCorpus(features);
   let raw = 0;
   let scenarioCount = 0;
   const untagged: UntaggedScenario[] = [];

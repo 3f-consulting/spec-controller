@@ -71,6 +71,15 @@
  * would have reded it, which is the ratchet doing its job rather than an obstacle to route
  * around by editing a number up.
  *
+ * Banked 2026-09-12 (3F-3344): three entries come down, all of them forced by this list rather
+ * than chosen. @SCN-CLI-019 added a fifth verdict, which took cli-balance/cli.ts's `complexity`
+ * to 19 and `max-lines-per-function` to 91 — both REGRESSIONS against frozen values. The exit-code
+ * ladder left `runBalance` as `verdictExitCode`, a named function carrying the pre-emption
+ * argument, and the file banks 18 → 15 and 89 → 83. The same verdict took markdown.ts's
+ * `max-lines` to 470 against a frozen 456, so `runVerdictSection` left for runVerdict.ts —
+ * `measuredItem.ts`'s precedent, and the entry banks 456 → 418. Each is a ratchet doing its job:
+ * the alternative in every case was editing a number up, which buys headroom and is barred.
+ *
  * @type {readonly import("./complexityExceptions.d.mts").ComplexityException[]}
  */
 export const COMPLEXITY_EXCEPTIONS = [
@@ -84,10 +93,10 @@ export const COMPLEXITY_EXCEPTIONS = [
   { path: "packages/core/src/parse/vitest.ts",                              rule: "complexity",              value:   14, since: "2026-08-06" },
   { path: "packages/core/src/render/markdown.test.ts",                      rule: "max-lines",               value: 1341, since: "2026-08-05" },
   { path: "packages/core/src/render/markdown.ts",                           rule: "complexity",              value:   13, since: "2026-08-02" },
-  { path: "packages/core/src/render/markdown.ts",                           rule: "max-lines",               value:  456, since: "2026-09-06" },
+  { path: "packages/core/src/render/markdown.ts",                           rule: "max-lines",               value:  418, since: "2026-09-12" },
   { path: "packages/core/src/render/markdown.ts",                           rule: "max-lines-per-function",  value:   75, since: "2026-08-05" },
-  { path: "packages/spec-controller/src/cli-balance/cli.ts",                rule: "complexity",              value:   18, since: "2026-08-02" },
-  { path: "packages/spec-controller/src/cli-balance/cli.ts",                rule: "max-lines-per-function",  value:   89, since: "2026-08-12" },
+  { path: "packages/spec-controller/src/cli-balance/cli.ts",                rule: "complexity",              value:   15, since: "2026-09-12" },
+  { path: "packages/spec-controller/src/cli-balance/cli.ts",                rule: "max-lines-per-function",  value:   83, since: "2026-09-12" },
   { path: "packages/spec-controller/src/ingest/ingestScenarios.ts",         rule: "complexity",              value:   12, since: "2026-08-02" },
   { path: "tests/checks/lintScnSubIssuesCli.ts",  rule: "max-lines-per-function",  value:   45, since: "2026-09-05" },
   { path: "tests/checks/scnSubIssueGate.ts",      rule: "complexity",              value:   17, since: "2026-08-02" },

@@ -10,9 +10,9 @@
  * read the manifest, build the mutation-record reader, hand over the bytes.
  *
  * ITS OWN COMMAND RATHER THAN A `balance` FLAG. `balance`'s exit code IS its verdict — 0
- * balanced, 1 out of balance, 3 pending-under-strict, 4 unsound — and a corpus FAULT is not a
- * reconciliation verdict. A flag would either overload one of those codes or add a fifth meaning
- * to a status a consumer's CI branches on. A second command costs one registry entry and gives
+ * balanced, 1 out of balance, 3 pending-under-strict, 4 unsound, 5 nothing to reconcile — and a
+ * corpus FAULT is not a reconciliation verdict. A flag would either overload one of those codes or
+ * add a further meaning to a status a consumer's CI branches on. A second command costs one registry entry and gives
  * the fault its own ladder:
  *
  *   0 — the corpus obeys the scheme.

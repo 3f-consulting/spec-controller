@@ -96,3 +96,32 @@ export class UnreadableFeatureCorpusError extends Error {
     this.errors = errors;
   }
 }
+
+/**
+ * The corpus-level ABSENCE refusal (@SCN-CLI-017, 3F-3345) — sibling to the parse refusal above,
+ * and deliberately the same shape: the reader refuses ONCE, and each command decides what the
+ * refusal means for it.
+ *
+ * WHY A TYPED ERROR RATHER THAN AN EMPTY CORPUS. The obvious fix is for `discoverFeatures` to hand
+ * back `[]` when the directory is not there. Measured, that would ship a NEW false green in a
+ * second command: `spec-controller tags` reaches the same reader through `readCorpusInputs`, whose
+ * GENERIC catch is the only thing turning an absent corpus — and, since `tags` carries no
+ * `checkInputsExist`, a supplied-but-absent `--features` too — into `The corpus could not be
+ * read: …` at exit 2. Tolerance at the reader turns both into `tags: OK …` at exit 0, inside the
+ * slice whose whole purpose is killing a vacuous certification. Typed, both survive untouched:
+ * this IS an `Error`, so it still lands in that generic catch.
+ *
+ * IT CARRIES THE DIRECTORY because the report is owed the name of what it examined — "I found no
+ * record" and "I found no regression" must never wear one word (3F-2947), and a consumer told
+ * their corpus is empty deserves to know which directory was read to reach that.
+ */
+export class MissingFeatureCorpusError extends Error {
+  /** The directory that is not there — as resolved, so a reader can print the path examined. */
+  readonly directory: string;
+
+  constructor(directory: string) {
+    super(`The feature corpus directory does not exist: ${directory}`);
+    this.name = "MissingFeatureCorpusError";
+    this.directory = directory;
+  }
+}

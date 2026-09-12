@@ -58,7 +58,8 @@ import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js
 // The three WHOLE-RUN predicates the verdict headline (@SCN-RPT-022) asks — the SAME three the
 // CLI asks to set its exit code, in the SAME dominance order. The renderer never re-scans the
 // reconciliation for a verdict of its own, so the headline cannot drift from the code it names.
-import { hasBrokenEvidence, isBalanced, hasPendingItems } from "../domain/ledger.js";
+import { hasBrokenEvidence } from "../domain/ledger.js";
+import { runVerdictSection } from "./runVerdict.js";
 import { featureCodeOf } from "../lib/featureCode.js";
 
 /** A short status glyph per reconciling-item outcome — a visual cue alongside the word. */
@@ -379,82 +380,6 @@ const runIntegritySection: SectionEmitter = (report) => {
  * Evidence reconciliation beneath it are always present).
  */
 const summaryViewsSection: SectionEmitter = () => ["## Summary views", ""];
-
-/**
- * The RUN-VERDICT headline (@SCN-RPT-022) — the first thing under `## Summary views`, so the
- * summary OPENS with the bottom line. The tally already fails on its own once every Scenario
- * Reconciliation is counted (@SCN-RMD-001, 3F-1724); this is the SUPPLEMENT that makes the
- * failure impossible to MISS. The slice's non-negotiable invariant (3F-1703): a run that exits
- * non-zero NEVER renders a headline that reads as a pass — an adopter's repository 17-36-50Z fault, where a
- * failing run's `141 | 141 | 0` tally was read as a clean board by operator and agent alike.
- *
- * ALWAYS PRESENT — the one deliberate departure from the `runIntegritySection` precedent it
- * otherwise follows. The unsound stamp is omit-when-empty (a sound run must gain no stray empty
- * section); a BALANCED run, by contrast, needs its verdict line just as much as a failing one —
- * "there is no headline" is not a verdict a reader can rely on.
- *
- * THE DOMINANCE ORDER MIRRORS `cli-balance/cli.ts` EXACTLY — broken → out-of-balance → pending.
- * The headline asks the same three predicates the CLI asks, in the same order, and never
- * re-derives a verdict of its own, so it cannot drift from the exit code it names. The order is
- * load-bearing for the same reason it is there: a broken run is ALWAYS out-of-balance too (its
- * `broken` item sits on the suspense row), so asking `isBalanced` first would have the headline
- * say exit 1 while the process exits 4. @SCN-CLI-013 (3F-1728) then PINS that agreement.
- *
- * EXIT 3 IS THE ONE CODE THE CORE CANNOT ASSERT. `--strict` is a CLI-edge flag invisible to the
- * core (it appears nowhere in `packages/core/src`), so the renderer cannot know whether it was
- * passed. A balanced run carrying Pending Items therefore names exit 3 CONDITIONALLY ("exit 3
- * under `--strict`") and never claims it; 0 / 1 / 4 are determinate from the reconciliation alone.
- */
-const runVerdictSection: SectionEmitter = (report) => {
-  const reconciliation = { scenarioReconciliations: report.ledger.scenarioReconciliations };
-  // The predicates, in the CLI's dominance order. Each headline word is the RENDER word, not the
-  // predicate name (`hasBrokenEvidence` → "UNSOUND"), the `isBalanced` → "balanced" precedent —
-  // and "UNSOUND" is coherent with the `## Run integrity: unsound` stamp above (@SCN-RPT-021).
-  const verdict = hasBrokenEvidence(reconciliation)
-    ? {
-        headline: "**UNSOUND**",
-        exit: "exit 4",
-        // GENERIC over both producers (3F-1654), for the same reason the run-integrity stamp is:
-        // a cucumber ambiguity is not a collection failure, and the verdict line is read by the
-        // same reader. It names the FACT the two share; the stamp above carries the detail.
-        gloss:
-          "the evidence could not be TRUSTED to reconcile. A proof never ran, so the behaviour " +
-          "it proves was never exercised. Read the run-integrity stamp above before any count " +
-          "below it.",
-      }
-    : !isBalanced(reconciliation)
-      ? {
-          headline: "**OUT-OF-BALANCE**",
-          exit: "exit 1",
-          gloss:
-            "the accounts do not agree. At least one Scenario Reconciliation carries a " +
-            "reconciling item. This run FAILED.",
-        }
-      : {
-          headline: "**BALANCED**",
-          exit: "exit 0",
-          gloss: "every Scenario Reconciliation balances: scenario, phantom and suspense alike.",
-        };
-  const lines = [
-    "### Run verdict",
-    "",
-    `${verdict.headline} — ${verdict.gloss} (${verdict.exit})`,
-  ];
-  // The CONDITIONAL rider — never an assertion. A balanced run carrying Pending Items exits 0 as
-  // rendered, and 3 only if the caller passed `--strict`; the core cannot see the flag, so it
-  // names the possibility and stops short of claiming it. Asked LAST, mirroring the CLI's own
-  // `else if (strict && hasPendingItems(...))` — a run already failing on a dominant predicate
-  // never reaches it, and the note never appears alongside UNSOUND or OUT-OF-BALANCE.
-  if (verdict.exit === "exit 0" && hasPendingItems(reconciliation)) {
-    lines.push("");
-    lines.push(
-      "⏳ Pending Items are outstanding — deferred, not out-of-balance, so the verdict stands. " +
-        "A run that treats a deferral as a failure gives exit 3 under `--strict`."
-    );
-  }
-  lines.push("");
-  return lines;
-};
 
 /**
  * Evidence reconciliation (@SCN-RPT-004 Update — supersedes the `Axis |

@@ -2,12 +2,13 @@
 
 This page answers one question, and deliberately only one:
 
-> **What can I configure today without it being taken away?**
+> **What can I build on today without it being taken away?**
 
-If you are wiring `spec-controller` into a repository, you are about to write configuration and tag a
-corpus of scenarios, and you need to know which of that work is safe. Everything below is a
-commitment about the mechanisms this tool reads. How to *use* them is
-[`doc/how_to_use.md`](./how_to_use.md); this page is only about how long they last.
+If you are wiring `spec-controller` into a repository, you are about to write configuration, tag a
+corpus of scenarios, and branch your pipeline on what the command returns — and you need to know
+which of that work is safe. Everything below is a commitment about the mechanisms this tool **reads**
+and the status it **exits with**; those are the two surfaces you can build against. How to *use* them
+is [`doc/how_to_use.md`](./how_to_use.md); this page is only about how long they last.
 
 ---
 
@@ -302,6 +303,46 @@ Do not reach for a generated corpus and a regenerate-and-diff row to catch this 
 the arrangement this repository ran for one commit and then retired: a corpus emitted from the rows
 drops the scenario with the row, so the two sides can never disagree and there is nothing left to
 notice the loss. The scenario has to be authored for its survival to mean anything.
+
+---
+
+## The `balance` exit code
+
+Configuration is not the only thing you build on. Your pipeline branches on the **status**, and a
+number a consumer wires `if [ $? -eq 1 ]` against is a contract in exactly the sense this page
+exists to state.
+
+**Supported.** `balance` ends on an **enumerated** status, and each code means one thing:
+
+| Code | Meaning |
+|---|---|
+| `0` | **balanced** — every obligation has evidence, and it holds |
+| `1` | **out-of-balance** — the two records disagree, and the report says where |
+| `2` | **usage** — the invocation was wrong |
+| `3` | balanced, but carrying **Pending Items**, and you asked for `--strict` |
+| `4` | **unsound** — a proving suite failed to collect, so the ledger could not be trusted to disagree |
+| `5` | **nothing to reconcile** — the ledger carries no row at all. **Not** *balanced*: no accounts agreed, because there were none. **Not** *out-of-balance*: nothing was declared for anything to disagree about. The run has no basis for a verdict, and says so rather than certifying. |
+
+**A code's meaning is never reassigned, and Node's default is never one of them.** That second half
+is the part worth writing down: a run that cannot reconcile ends on an enumerated code of its own
+rather than falling out of the process, because a crash that exits `1` is indistinguishable, by
+status, from an honest disagreement. **An input the tool cannot read is part of `2`** — a mistyped
+path, an unparseable report, a corpus the Gherkin parser rejects are all the invocation being wrong,
+never a verdict about your code.
+
+**The enumeration is open at the top, and that is the one thing to design your pipeline around.** A
+state that is genuinely none of the existing codes gets a **new** code rather than being folded into
+the nearest one — `5` is the most recent, added when a run over a target that had declared nothing
+and produced nothing was found reporting `0`. So **treat an unrecognised non-zero code as a failure
+you have not seen before**, not as a synonym for `1`. Matching `1` exactly is unaffected by a code
+being added; treating *non-zero* as a red build is already correct, and only imprecise about why.
+
+**Nothing is pending against this**, and a code is **reassigned or removed only in a major version.**
+
+The wording of `0`–`4` above is the CLI package's own `README` table verbatim, so the two pages
+cannot drift into two contracts. What is **not** covered here is the report's prose — the headline
+word printed beside each code is render wording, and the *exact prose of the rendered report*
+exclusion below governs it. Build on the code and on the JSON; never on the sentence.
 
 ---
 

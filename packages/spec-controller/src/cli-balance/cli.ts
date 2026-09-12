@@ -29,6 +29,7 @@ import {
   isBalanced,
   hasPendingItems,
   hasBrokenEvidence,
+  hasNothingToReconcile,
 } from "@3f-consulting/spec-controller-core";
 import { resolveSourceSha, resolveTargetRoot, resolveToolIdentity } from "../run-management/resolveRunInputs.js";
 import { cliRegistry, renderCommandHelp } from "../cli-registry.js";
@@ -36,7 +37,7 @@ import { cliRegistry, renderCommandHelp } from "../cli-registry.js";
 // lived here while `balance` was the only command; a second command needs them, and a second
 // copy of "what did the operator type" is the one thing this tree least wants two of.
 import { parseArgs, checkUnknownFlags } from "../cli-args.js";
-import type { RunContext } from "@3f-consulting/spec-controller-core";
+import type { Ledger, RunContext } from "@3f-consulting/spec-controller-core";
 
 /**
  * Collect the `--format <spec>` values from argv in order (the flag is REPEATABLE, unlike
@@ -452,7 +453,8 @@ export function runBalance(argv: string[]): void {
   // The --strict escalation (@SCN-CLI-011): Pending Items are run-neutral by DEFAULT
   // (@SCN-PND-008 — they never red a build), but `--strict` is the OPT-IN that fails an
   // OTHERWISE-BALANCED run carrying them, exiting the DISTINCT code 3 (taxonomy 0 balanced /
-  // 1 out-of-balance / 2 usage / 3 pending-under-strict — a Pending Item is not out-of-balance,
+  // 1 out-of-balance / 2 usage / 3 pending-under-strict / 4 unsound / 5 nothing to reconcile —
+  // a Pending Item is not out-of-balance,
   // so it must NEVER share code 1). Out-of-balance DOMINATES: the escalation is checked ONLY in
   // the `isBalanced` branch, so an out-of-balance run exits 1 regardless of --strict. Like the
   // CLI-004 gate this SETS process.exitCode (never process.exit) AFTER writeOutputs, so the
@@ -461,7 +463,8 @@ export function runBalance(argv: string[]): void {
   //
   // The UNSOUND pre-emption (@SCN-CLI-012): a run carrying BROKEN evidence — a proving suite
   // that failed to COLLECT, so the behaviour was never exercised — exits the DISTINCT code 4
-  // (taxonomy 0 balanced / 1 out-of-balance / 2 usage / 3 pending-under-strict / 4 unsound).
+  // (taxonomy 0 balanced / 1 out-of-balance / 2 usage / 3 pending-under-strict / 4 unsound /
+  // 5 nothing to reconcile).
   // Exit 1 says "the ledger disagrees"; exit 4 says "the ledger could not be TRUSTED to
   // disagree" — you cannot trust a reconciliation whose evidence never materialised, so
   // unsound DOMINATES.
@@ -474,14 +477,53 @@ export function runBalance(argv: string[]): void {
   // would otherwise be swallowed by. @SCN-CLI-004 is a BYSTANDER, not an Update: its fixture
   // is a SOUND out-of-balance run (no broken item), so it falls through this branch and still
   // exits exactly 1 — the pre-emption fires only when evidence genuinely failed to collect.
-  const strict = args["strict"] !== undefined;
-  if (hasBrokenEvidence(balance.ledger)) {
-    process.exitCode = 4;
-  } else if (!isBalanced(balance.ledger)) {
-    process.exitCode = 1;
-  } else if (strict && hasPendingItems(balance.ledger)) {
-    process.exitCode = 3;
-  }
+  //
+  // THE NOTHING-TO-RECONCILE PRE-EMPTION (@SCN-CLI-019): a run whose ledger carries ZERO Scenario
+  // Reconciliation rows — a target that declared nothing AND produced nothing — exits the DISTINCT
+  // code 5. It is its own state: not balanced (no accounts to agree), not out-of-balance (nothing
+  // disagrees), not a usage fault (the invocation was valid and `new-client` is a supported
+  // adoption state), not unsound (no proof failed; none was owed).
+  //
+  // IT IS NOT THE UNSOUND PRE-EMPTION ONE CODE FURTHER ON, THOUGH IT LOOKS LIKE IT — measured,
+  // because the ticket predicted it was. An empty ledger is MUTUALLY EXCLUSIVE with all three
+  // predicates above: with no rows there is no row to carry a broken item, a reconciling item or a
+  // Pending Item, so it fires none of them. Moved below `!isBalanced`, this branch STILL returns 5
+  // (the prescribed plant stayed green). Its position among the predicates is free, and it is
+  // first only so this ladder and `runVerdictSection` read in the SAME order — the shape
+  // @SCN-CLI-013's invariant leans on.
+  //
+  // WHAT IS LOAD-BEARING is its position against the DEFAULT below. "Balanced" is not a branch
+  // here, it is the `return 0` a run reaches by failing every test — so there is no "after the
+  // balanced case" to append a fifth code to. Appended after that return the branch is dead code
+  // and an empty run exits 0 (measured: the plant that DID red). That is why the fault survived a
+  // taxonomy that had already grown twice: a fifth code cannot be ADDED to this chain, it has to
+  // DISPLACE the default, and nothing about the other three says so.
+  //
+  // Keyed on the EMPTY LEDGER, never on the empty corpus: a corpus-less run carrying uncited
+  // credits HAS a row — its suspense row — and is an ordinary out-of-balance report at exit 1
+  // (@SCN-CLI-020). @SCN-CLI-004/005/010/012 are BYSTANDERS: every one of their fixtures carries
+  // rows, so none reaches this branch.
+  const code = verdictExitCode(balance.ledger, args["strict"] !== undefined);
+  // Assigned only when NON-ZERO, so a balanced run still LEAVES process.exitCode at its default
+  // rather than writing a 0 over it — the distinction @SCN-CLI-005 and @SCN-CLI-010 both rest on.
+  if (code !== 0) process.exitCode = code;
+}
+
+/**
+ * THE DOMINANCE LADDER — the whole-run verdict as the enumerated status a consumer's CI branches
+ * on, and the ONE place the order argued for above is written down. Extracted from `runBalance`
+ * (3F-3344) so the ladder is a named thing with its own reading rather than a tail the reader
+ * arrives at, and so the pre-emption argument sits ON it.
+ *
+ * ENUMERATED, NEVER A COUNT — a count would 8-bit `& 0xFF` wrap into a false pass. Returns 0 for a
+ * balanced run; the caller leaves the process's default alone rather than writing that 0 back.
+ */
+function verdictExitCode(ledger: Ledger, strict: boolean): number {
+  if (hasNothingToReconcile(ledger)) return 5;
+  if (hasBrokenEvidence(ledger)) return 4;
+  if (!isBalanced(ledger)) return 1;
+  if (strict && hasPendingItems(ledger)) return 3;
+  return 0;
 }
 
 // Only run the balance command when this module is executed directly

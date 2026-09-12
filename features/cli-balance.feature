@@ -139,7 +139,7 @@ Feature: spec-controller balance runs standalone
     CRASHED before reconciling must never reach for it: a broken invocation masquerading
     as an honest disagreement is precisely the meaning-collision the exit taxonomy exists
     to prevent (0 balanced / 1 out-of-balance / 2 usage / 3 pending-under-strict /
-    4 unsound). A present-but-unparseable report is an INPUT fault — sibling to a missing
+    4 unsound / 5 nothing to reconcile). A present-but-unparseable report is an INPUT fault — sibling to a missing
     path (@SCN-CLI-002) and an unrecognised flag (@SCN-CLI-009), both already exit 2 — so
     it halts BEFORE reconciling, naming the file and the parse failure, and exits 2.
 
@@ -212,6 +212,65 @@ Feature: spec-controller balance runs standalone
         | a corrupt tag line         |
         | a corrupt scenario keyword |
         | wholly unparseable         |
+
+  Rule: a target with no Gherkin corpus is reconciled, not refused
+
+    `new-client` is a supported adoption state, not a degraded one, and most targets have
+    no `features/` directory at all. An absent DEFAULT corpus escaped as a raw ENOENT and
+    landed on Node's default exit 1 — the out-of-balance code — which is the exact collision
+    that @SCN-CLI-014/015/016 closed on every other input, alive on the one path each new
+    consumer is guaranteed to take. The corpus that is ABSENT and the corpus that holds NO
+    SCENARIO are one answer, not two, and the report names the directory it examined.
+
+    A SUPPLIED `--features` at a path that does not exist is untouched by this Rule and stays a
+    usage fault at exit 2 (@SCN-CLI-002): supplied-but-absent is the operator mistyping,
+    absent-by-default is the target's honest shape.
+
+    @SCN-CLI-017 @unit @e2e
+    Scenario: a target with no features/ directory is reported on, never crashed over
+      Given a target with no Gherkin corpus at all — no features directory on disk
+      When "spec-controller balance" is invoked over that target through the CLI binary
+      Then it prints the Evidence Reconciliation to stdout
+      And the run ends on an enumerated status rather than a stack trace
+
+    @SCN-CLI-018 @unit @e2e
+    Scenario: an absent corpus and a corpus holding no scenario reach the same verdict by the same sentence
+      Given a target with no corpus directory, a target whose corpus is empty, and a target whose corpus declares no scenario
+      When "spec-controller balance" is invoked over each of those targets through the CLI binary
+      Then every one of them is told the same verdict by the same sentence
+      And that sentence names the corpus directory it examined
+
+  Rule: a run with nothing to reconcile has no verdict to give, and says so
+
+    `isBalanced` is `.every()` over the rows and so is VACUOUSLY TRUE on an empty ledger: a
+    target that declared nothing and produced nothing was told "BALANCED … (exit 0)" — a green
+    over silence, from the tool whose whole claim is that silence is not the same as nothing
+    wrong. Nothing-to-reconcile is its OWN enumerated state — not balanced (no accounts to
+    agree), not out-of-balance (nothing disagrees), not a usage fault (the invocation was valid
+    and the target supported), not unsound (no proof failed; none was owed). Exit 5 (taxonomy:
+    0 balanced / 1 out-of-balance / 2 usage / 3 pending-under-strict / 4 unsound / 5 nothing to
+    reconcile).
+
+    KEYED ON THE EMPTY LEDGER, NEVER ON THE EMPTY CORPUS, and that is load-bearing rather than
+    pedantic: a target with no corpus but uncited credits HAS rows — its suspense row — and is
+    an ordinary out-of-balance report at exit 1. Key this on "no corpus" instead and the modal
+    first run's whole report disappears behind exit 5.
+
+    @SCN-CLI-019 @unit @e2e
+    Scenario: a run with nothing to reconcile exits 5 and its headline says so, rather than reporting balanced
+      Given a target that declared no scenario and produced no evidence
+      When "spec-controller balance" is invoked over that target through the CLI binary
+      Then the command exits with status 5
+      And the verdict headline says the run had nothing to reconcile, never that it balanced
+
+    @SCN-CLI-020 @unit @e2e
+    Scenario: a corpus-less run carrying uncited credits is an ordinary out-of-balance report at exit 1
+      Given a target with no Gherkin corpus whose unit evidence cites no scenario
+      When "spec-controller balance" is invoked over that target through the CLI binary
+      Then the uncited credits are posted to the suspense reconciliation
+      And the verdict headline reads OUT-OF-BALANCE and names exit 1
+      And the command exits with status 1
+      And the run is never read as one with nothing to reconcile
 
   Rule: the CLI answers --help from a single command/flag registry, completeness-guarded.
 

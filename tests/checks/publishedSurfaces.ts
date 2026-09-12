@@ -561,6 +561,7 @@ export const PUBLISHED_SURFACES: readonly PublishedSurface[] = [
       "isBalanced",
       "hasPendingItems",
       "hasBrokenEvidence",
+      "hasNothingToReconcile",
       // Result and CI readers (parse/*)
       "parseVitestEvidenceObservations",
       "parseCucumberEvidenceObservations",

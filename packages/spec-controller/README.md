@@ -50,6 +50,7 @@ A scenario tagged `@unit` names an obligation — a unit test must exist and pas
 | `2` | usage — the invocation was wrong |
 | `3` | balanced, but carrying Pending Items, and you asked for `--strict` |
 | `4` | unsound — a proving suite failed to collect, so the ledger could not be trusted to disagree |
+| `5` | nothing to reconcile — no scenario was declared and no evidence was produced, so the run had no basis for a verdict |
 
 The whole report is written before the code is set, so a failing run still tells you why.
 

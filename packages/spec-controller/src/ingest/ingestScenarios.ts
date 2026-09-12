@@ -14,7 +14,11 @@ import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
-import { UnreadableFeatureCorpusError, parseErrorsIn } from "./gherkinValidation.js";
+import {
+  MissingFeatureCorpusError,
+  UnreadableFeatureCorpusError,
+  parseErrorsIn,
+} from "./gherkinValidation.js";
 
 /** A code is valid when it is 2–5 uppercase alphanumerics. */
 const CODE_PATTERN = /^[A-Z0-9]{2,5}$/;
@@ -93,6 +97,33 @@ function featuresDir(): string {
 }
 
 /**
+ * List the corpus directory, REFUSING an absent one by name rather than by `ENOENT` (@SCN-CLI-017,
+ * 3F-3345).
+ *
+ * Absence stays a REFUSAL AT THE READER — what changed is that it is typed, so a caller can decide.
+ * `balance` opts in to reporting on a target that has no corpus (most targets have no `features/`
+ * at all, and `new-client` is a supported adoption state); `tags` keeps refusing, unedited, because
+ * a `MissingFeatureCorpusError` is still an `Error` and still lands in its generic catch. Returning
+ * `[]` here instead would make that decision for both, and measured it turns two named refusals
+ * into `tags: OK …` at exit 0.
+ *
+ * ONLY `ENOENT`. A `features` path that exists but is a FILE, or one the process may not read, is
+ * a different fault and is not ours to reinterpret — it rethrows.
+ *
+ * A SUPPLIED `--features` never reaches here absent: `checkInputsExist` refuses it at the CLI edge
+ * with exit 2 (@SCN-CLI-002). Supplied-but-absent is the operator mistyping; absent-by-default is
+ * the target's honest shape.
+ */
+function corpusFileNames(dir: string): string[] {
+  try {
+    return readdirSync(dir);
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") throw new MissingFeatureCorpusError(dir);
+    throw err;
+  }
+}
+
+/**
  * Discover every feature file on disk and its header code — REFUSING a corpus the Gherkin
  * parser rejects (@SCN-GPG-001, 3F-2817).
  *
@@ -110,7 +141,7 @@ function featuresDir(): string {
  * rejected tree would be back to reporting a verdict over a corpus it cannot read.
  */
 export function discoverFeatures(dir: string = featuresDir()): DiscoveredFeature[] {
-  const files = readdirSync(dir)
+  const files = corpusFileNames(dir)
     .filter((name) => name.endsWith(".feature"))
     .sort()
     .map((name) => {

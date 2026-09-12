@@ -113,6 +113,11 @@ describe("[SCN-API-001] the core barrel exports exactly the frozen v1 contract s
       // one gains a TYPE as well, and the asymmetry is the point rather than an inconsistency: the
       // composition's input is an inline object type nobody names, while a consumer reading the
       // findings back has to name what it is holding.
+      //
+      // 30 → 31 values at 3F-3344: `hasNothingToReconcile`, the FOURTH whole-run predicate
+      // (@SCN-CLI-019), joins its three siblings on the barrel — a caller mapping the ledger to an
+      // exit code has to be able to ask the question the other three cannot answer. No type: it is
+      // a predicate over the `Ledger` the surface already names.
       written: [surface.values.length, surface.types.length],
       // A name written twice would make the written surface one symbol shorter than it reads, and
       // the reconciliations above would go on passing over the shortfall.
@@ -132,8 +137,8 @@ describe("[SCN-API-001] the core barrel exports exactly the frozen v1 contract s
     }).toEqual({
       valueDrift: [],
       typeDrift: [],
-      written: [30, 37],
-      writtenOnce: [30, 37],
+      written: [31, 37],
+      writtenOnce: [31, 37],
       retired: [false, false, false],
       kept: [true, true],
     });

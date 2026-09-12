@@ -8,7 +8,7 @@
  * Parent: 3F-2817 (the three feature-file lints read Gherkin by line).
  */
 
-import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it, expect } from "vitest";
@@ -142,5 +142,77 @@ describe("[SCN-GPG-001] the shared feature-file discovery refuses a corpus the p
     expect(discovered.map((f) => f.slug)).toEqual(["a-alpha"]);
     expect(discovered[0]!.featureCode).toBe("AAA");
     expect(discovered[0]!.scenarioCodes).toEqual(["SCN-AAA-001"]);
+  });
+});
+
+/**
+ * @unit for the shared discovery's ABSENCE refusal (@SCN-CLI-017, 3F-3345) — the sibling of the
+ * parse refusal above, and deliberately the SAME shape: `discoverFeatures` refuses once, and each
+ * command translates the refusal into its own status.
+ *
+ * WHY NOT `[]`. The obvious fix — hand back an empty corpus when the directory is not there —
+ * would ship a NEW false green in a second command. `spec-controller tags` reaches this same
+ * reader through `readCorpusInputs`, whose generic `catch` is the only thing turning an absent
+ * corpus into `The corpus could not be read: …` at exit 2; tolerance here turns that named
+ * refusal into `tags: OK …` at exit 0, inside the slice whose whole purpose is killing a vacuous
+ * certification. So absence stays a refusal AT THE READER and becomes typed, which is what lets
+ * `balance` opt in to reporting while `tags` keeps its refusal untouched.
+ *
+ * THE DEFAULT-DIRECTORY FORM IS NOT PROVABLE HERE. `featuresDir()` resolves against
+ * `process.cwd()` and `process.chdir` throws in a Vitest worker, so the arm that runs the tool
+ * from a directory with no `features/` is the @e2e one in tests/steps/cliBalance.steps.ts.
+ */
+describe("[SCN-CLI-017] an absent feature corpus is a typed fact, not a raw ENOENT", () => {
+  /** A directory that is NOT there — the target's honest shape, never a path anyone supplied. */
+  function absentDir(): string {
+    const dir = join(mkdtempSync(join(tmpdir(), `scn-cli-017-${process.pid}-`)), "features");
+    expect(existsSync(dir)).toBe(false);
+    return dir;
+  }
+
+  it("refuses with the corpus's own error rather than letting readdirSync's ENOENT escape", () => {
+    const { thrown } = discover(absentDir());
+
+    expect((thrown as Error | undefined)?.name).toBe("MissingFeatureCorpusError");
+    // The raw fault is what used to reach the CLI edge and land on Node's default exit 1.
+    expect((thrown as { code?: string } | undefined)?.code).toBeUndefined();
+  });
+
+  it("names the directory it looked in, so the report can say what it examined", () => {
+    const dir = absentDir();
+
+    const { thrown } = discover(dir);
+
+    expect((thrown as { directory?: string }).directory).toBe(dir);
+    expect((thrown as Error).message).toContain(dir);
+  });
+
+  it("is still an Error, so `tags`' generic catch keeps refusing an absent corpus", () => {
+    // THE MEASURED TRAP, pinned at the type. `readCorpusInputs` (corpus/cli.ts) catches
+    // `UnreadableFeatureCorpusError` by name and everything else generically; a refusal that
+    // stopped being an Error would fall out of both and crash `tags` to Node's default instead.
+    const { thrown } = discover(absentDir());
+
+    expect(thrown).toBeInstanceOf(Error);
+  });
+
+  it("hands back nothing — an absent corpus is not an empty one at this reader", () => {
+    const { returned } = discover(absentDir());
+
+    expect(returned).toBeUndefined();
+  });
+
+  it("rethrows what is NOT an absence — a `features` path that is a FILE is a different fault", () => {
+    // THE BOUNDARY OF THE NEW BRANCH. Only `ENOENT` becomes the typed absence; a path that IS
+    // there but is not a directory, or one this process may not read, is not ours to reinterpret
+    // — reading it as "no corpus" would hand `balance` an empty corpus over an input it could not
+    // read, which is the shape @SCN-CLI-016 exists to refuse.
+    const notADirectory = join(mkdtempSync(join(tmpdir(), `scn-cli-017-file-${process.pid}-`)), "features");
+    writeFileSync(notADirectory, "this is a file, not a corpus directory\n");
+
+    const { thrown } = discover(notADirectory);
+
+    expect((thrown as Error).name).not.toBe("MissingFeatureCorpusError");
+    expect((thrown as NodeJS.ErrnoException).code).toBe("ENOTDIR");
   });
 });

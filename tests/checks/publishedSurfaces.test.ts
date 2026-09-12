@@ -145,7 +145,7 @@ describe("[SCN-API-006] every subpath these packages publish is held to a surfac
           specifier: "@3f-consulting/spec-controller-core",
           valueDrift: [],
           typeDrift: [],
-          written: [30, 37],
+          written: [31, 37],
         },
       ],
       reflectedExhaustive: ["@3f-consulting/spec-controller-core"],

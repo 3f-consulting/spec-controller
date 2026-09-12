@@ -1,0 +1,11 @@
+{
+  "testResults": [
+    {
+      "name": "src/widget.test.ts",
+      "assertionResults": [
+        { "fullName": "widget renders the label it is given", "status": "passed" },
+        { "fullName": "widget hides itself when the label is empty", "status": "passed" }
+      ]
+    }
+  ]
+}

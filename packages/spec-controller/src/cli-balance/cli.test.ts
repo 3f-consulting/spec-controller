@@ -328,6 +328,60 @@ describe("[SCN-CLI-012] runBalance exits 4 for a run carrying broken evidence, P
   });
 });
 
+describe("[SCN-CLI-019] runBalance exits 5 for a run with nothing to reconcile, PRE-EMPTING the vacuously-balanced verdict", () => {
+  it("emits the report in full AND sets process.exitCode = 5 — not the 0 the same run's vacuously-true balance verdict would otherwise give", () => {
+    // NOT @SCN-CLI-012's pre-emption one code further on, though the ticket predicted it would be.
+    // An empty ledger fires NONE of the three predicates above it — no rows, so no row to carry a
+    // broken item, a reconciling item or a Pending Item — so its position among them is
+    // unobservable, and the prescribed plant (move it below `!isBalanced`) stayed GREEN. What it
+    // may not sit after is the chain's DEFAULT: "balanced" is the `return 0` a run reaches by
+    // failing every test, so a fifth code has to displace that default rather than follow it.
+    //
+    // Teeth, measured both ways: appended after the `return 0` the branch is dead code and this
+    // very fixture exits 0 — the plant that DID red. And measured at 6ea5edf, before the branch
+    // existed: `**BALANCED** — every Scenario Reconciliation balances … (exit 0)` over a
+    // `| Scenario Reconciliation | 0 | 0 | 0 |` tally.
+    //
+    // The report must still flush IN FULL before the code is set — process.exitCode, never
+    // process.exit (reaching these assertions at all is half the proof). Same discipline as the
+    // CLI-004 gate.
+    const savedExitCode = process.exitCode;
+    process.exitCode = 0;
+    const chunks: string[] = [];
+    const writeSpy = vi
+      .spyOn(process.stdout, "write")
+      .mockImplementation((chunk: string | Uint8Array): boolean => {
+        chunks.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
+        return true;
+      });
+    try {
+      // The nothing-to-reconcile fixture: a corpus directory EMPTY OF SCENARIOS, no evidence
+      // report, and a guardless --package-json with no --ci — nothing declared, nothing
+      // produced, nothing uncited, so the ledger carries ZERO rows.
+      runBalance([
+        "--features",
+        "tests/fixtures/nothing-to-reconcile/features",
+        "--package-json",
+        "tests/fixtures/nothing-to-reconcile/package.json",
+      ]);
+
+      const emitted = chunks.join("");
+      // The report is written IN FULL — this is a REPORT, not a refusal. A consumer whose first
+      // run has nothing to reconcile is still told what was examined; only the verdict differs.
+      expect(emitted).toMatch(/^# Evidence Reconciliation/m);
+      // The ledger the CLI actually built over this target carries ZERO rows — read off the
+      // emitted tally, the binary's own statement, never re-derived here. That is the shape on
+      // which `isBalanced` is vacuously true, so the 5 pre-empted a live 0 rather than filling
+      // a vacuum, and it is why the branch cannot sit after `isBalanced`.
+      expect(emitted).toMatch(/^\| Scenario Reconciliation \| 0 \| 0 \| 0 \|/m);
+      expect(process.exitCode).toBe(5);
+    } finally {
+      writeSpy.mockRestore();
+      process.exitCode = savedExitCode;
+    }
+  });
+});
+
 describe("[SCN-CLI-010] runBalance leaves the exit code 0 for an only-Pending-Items run when --strict is not given", () => {
   it("emits the balanced-with-pending report AND leaves process.exitCode at its default 0, returning normally", () => {
     // The LENIENT DEFAULT (@SCN-CLI-010): a reconciliation balanced except for Pending Items

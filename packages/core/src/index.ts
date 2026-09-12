@@ -59,7 +59,12 @@ export { reconcile, evidenceReconciliationOf } from "./domain/evidenceReconcilia
 // be re-exported through `reconcile/reconcile.js` — a shell kept alive purely to preserve importer
 // paths after 3F-1994 sent the behaviour home. No symbol is re-exported through a module that does
 // not own it.
-export { isBalanced, hasPendingItems, hasBrokenEvidence } from "./domain/ledger.js";
+export {
+  isBalanced,
+  hasPendingItems,
+  hasBrokenEvidence,
+  hasNothingToReconcile,
+} from "./domain/ledger.js";
 
 // The runtime evidence-observation census (`census/evidenceObservations.ts`) is RETIRED (3F-2104):
 // its counting folds onto the Ledger (`runtimeObservationTally`, an internal domain fold), and its
