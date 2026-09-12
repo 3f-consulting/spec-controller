@@ -216,7 +216,7 @@ wrong fault.
 
 ## Ordering — the fetch runs before your own producers
 
-Your push run's own measured checks (`@ci-run-time` and friends) write into the
+Your push run's own measured checks (`ci-run-time` and friends) write into the
 same `${EVIDENCE_DIR}/measurements.json`, and each posts **beside** what it
 finds: it reads the existing file and replaces only its own row. The placed
 nightly row therefore sits beside them **only if it is placed first** — the two

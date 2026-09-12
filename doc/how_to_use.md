@@ -148,7 +148,7 @@ spec-controller balance --features ./features \
 | `--cucumber <report.json>` | A Cucumber JSON report — runtime test evidence. |
 | `--ci <ci.yml>` | Your CI workflows — a file, or a directory of them (default `.github/workflows`). Where an UNCONVERTED static check is found running over the real source, and where a check step's `id:` supplies the `@SCN` its result cites. |
 | `--package-json <path>` | The target's `package.json` — its `scripts`, and its `specController.fitnessChecks` rows (see *Declaring a fitness check*). |
-| `--measurements <report.json>` | A measurement report — the number each measured check posted, evidence for the measured fitness checks (`@ci-run-time` and its family). |
+| `--measurements <report.json>` | A measurement report — the number each measured check posted, evidence for the measured fitness checks (`ci-run-time` and its family). |
 | `--ci-steps <record.json>` | Your CI run's own record of what each of its steps did — the `toJSON(steps)` dump, evidence for the converted fitness checks. See *Wiring into CI*. Omit it if you have converted none. |
 | `--target <name>` | A name recorded verbatim in the report's provenance (which project this run reconciled). |
 | `--source-sha <sha>` | Override the git commit SHA recorded in provenance (defaults to the resolved HEAD). |

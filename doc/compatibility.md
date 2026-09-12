@@ -144,7 +144,7 @@ two blocks are read together and neither substitutes for the other.
 ```
 
 Both terms are read bare, so you may spell either the way a feature file does (`@SCN-CIP-001`,
-`@ci-run-time`) and it resolves the same. A row missing either term of its address, or carrying a
+`ci-run-time`) and it resolves the same. A row missing either term of its address, or carrying a
 number that is not finite and non-negative, is **dropped rather than posted** — a measurement whose
 citation is absent means the artefact is broken, not that a check went uncited, and reporting it as
 uncited would blame your corpus for a fault in the wrapper that measured it.
@@ -209,8 +209,8 @@ nothing raises nothing. The tool adds no obligation to your books under a word y
 **There is now a SECOND route to the same obligation, and both are read.** A scenario carrying the
 single tag `@fitness` gets its characteristic from its configured row rather than from its tag —
 that is the next entry. The two live side by side and neither is being taken away: a bare
-characteristic tag raises what it has always raised, an `@fitness` scenario raises what its row
-names, and a scenario reached by both raises the obligation once. What changed is that a corpus now
+characteristic tag — `@complexity` and its siblings — raises what it has always raised, an
+`@fitness` scenario raises what its row names, and a scenario reached by both raises the obligation once. What changed is that a corpus now
 has a choice about where the word lives, not that the tag stopped working.
 
 ### `specController.fitnessChecks`
