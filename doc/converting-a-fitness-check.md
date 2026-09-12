@@ -341,11 +341,17 @@ somebody moved the step — never that. The field could not name what it claimed
 
 ### Two limits, stated so you do not discover them
 
-**`new-client` is Node-shaped.** The zero-annotation state finds your checks by matching
-`package.json` script names against observed prefixes, so a pipeline with a bare `run: ruff` and no
-`package.json` script derives nothing and its report is empty rather than useful.
-**`annotated` is not** — the `id:` carries the citation whatever the command is, in any
-language. Widening the discovery is its own ticket and fires when a non-Node consumer appears.
+**`new-client` is Node-shaped today, and that is a defect rather than a design.** The
+zero-annotation state finds your checks by matching `package.json` script names against observed
+prefixes, so a pipeline with a bare `run: ruff` and no `package.json` script derives nothing and its
+report is empty rather than useful. **`annotated` is not** — the `id:` carries the citation whatever
+the command is, in any language.
+
+**What replaces it, and why it is not a longer list.** A prefix list samples an unbounded set: the
+names your team gives its checks. The set of *behavioural runners* is closed — one per tier — so you
+declare those and **everything else in your pipeline is a fitness check**. `ruff`, `mypy` and
+`cargo clippy` become discoverable without one line of ours knowing those words. Until that lands,
+the limit above is real and stated.
 
 **A check that legitimately applies to only some platforms is not served.** A matrix build uses
 `if:` to skip such a step, and that skip now reds. *"The command examined nothing"* and *"this row
