@@ -86,7 +86,7 @@ like a schedule that has lapsed.
     retention-days: 14
 ```
 
-**On push**, fetch the latest successful nightly's file. Every branch below that
+**On push**, fetch the latest **finished** nightly's file. Every branch below that
 cannot finish the job places nothing, says why on stderr, and exits 0 — the
 reason is in [*Fail-closed*](#fail-closed--on-any-ambiguity-place-nothing), and
 the reason this step comes **first** in the job is in
@@ -96,10 +96,18 @@ the reason this step comes **first** in the job is in
 - name: Place the scheduled check's measurement
   env:
     GH_TOKEN: ${{ github.token }}
-    # The three terms that are the whole contract with the schedule: which
-    # workflow took the measurement, what it left the measurement under, and how
-    # long that number stays close enough to true about this code.
+    # The four terms that are the whole contract with the schedule: which
+    # workflow took the measurement, which LINE it was taken on, what it left the
+    # measurement under, and how long that number stays close enough to true
+    # about this code.
+    #
+    # BRANCH IS WRITTEN OUT RATHER THAN DERIVED FROM `github.ref_name`. This
+    # ladder also runs on pull requests, and nothing sweeps a feature branch — so
+    # placing from the branch UNDER TEST would find no run and read `missing` on
+    # every pull request. A pull request's measured row is therefore a statement
+    # about the line it is merging into, not about itself, and that is deliberate.
     WORKFLOW: nightly.yml
+    BRANCH: main
     ARTEFACT: nightly-measurements
     MAX_AGE: "93600"           # 26 h = a 24 h cadence + 2 h margin, in seconds
   run: |
@@ -115,8 +123,19 @@ the reason this step comes **first** in the job is in
     rm -rf "${into}"
     mkdir -p "${into}"
 
-    if ! latest="$(gh run list --workflow "${WORKFLOW}" --status success \
-      --limit 1 --json databaseId,createdAt)"; then
+    # THE NEWEST FINISHED RUN, NEVER THE NEWEST SUCCESSFUL ONE. A run's
+    # conclusion answers whether the nightly's own VERDICT passed; this is asking
+    # what that night's sweep MEASURED, and the night that finds a regression is
+    # exactly the night whose conclusion is `failure`. Filter on success and you
+    # reach back past that run to the last green one and place ITS number —
+    # settling today's bar with a measurement about an older tree, and
+    # reconciling the row satisfied over a regression the sweep had already
+    # detected and already said out loud. `gh` reads both a run's status and its
+    # conclusion off this one flag; `completed` is the status, so it selects on
+    # having FINISHED and on nothing else. It excludes `queued` and
+    # `in_progress` on purpose: a sweep still running has nothing to hand across.
+    if ! latest="$(gh run list --workflow "${WORKFLOW}" --branch "${BRANCH}" \
+      --status completed --limit 1 --json databaseId,createdAt)"; then
       echo "place: could not list runs of ${WORKFLOW}; nothing is placed." >&2
       exit 0
     fi
@@ -124,7 +143,7 @@ the reason this step comes **first** in the job is in
     id="$(printf '%s' "${latest}" | jq -r '.[0].databaseId // empty')"
     when="$(printf '%s' "${latest}" | jq -r '.[0].createdAt // empty')"
     if [ -z "${id}" ] || [ -z "${when}" ]; then
-      echo "place: ${WORKFLOW} names no successful run carrying both an id and a createdAt; nothing is placed." >&2
+      echo "place: ${WORKFLOW} names no finished run on ${BRANCH} carrying both an id and a createdAt; nothing is placed." >&2
       exit 0
     fi
 
@@ -269,7 +288,7 @@ leniency — it is the opposite, and it is worth being explicit about why, becau
 the permissive version of this step is easy to write by accident.
 
 **Place nothing.** A number the step cannot vouch for must not reach the tree. No
-successful run; a run naming no id or no `createdAt`; a `createdAt` that will not
+finished run; a run naming no id or no `createdAt`; a `createdAt` that will not
 parse; an age that comes out negative; an age past the window; a download that
 fails; an artefact holding no `measurements.json`; a payload that is not JSON, or
 whose `measurements` array is absent or empty — each of those is a case where the
