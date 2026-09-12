@@ -372,6 +372,113 @@ jobs:
           # Two routes, two lines.
           exit 0
 
+      # STEP 0b OF THE SELF-RECONCILIATION CHAIN — THE PER-MUTANT RECORD THIS PUSH IS JUDGED
+      # AGAINST (@SCN-FIT-017, 3F-3326). The step above places a NUMBER — what last night's sweep
+      # scored. This places the DOCUMENT that number was derived from: every mutant that sweep made,
+      # where it was made, and what happened when the suite met it. A score can only say a figure
+      # fell; the per-mutant record says WHICH kill went missing, and that is a fault a bar is three
+      # orders of magnitude too coarse to see. Measured at 3F-3321: a real lost kill moved this
+      # tree's score from 96.65% to 96.53%, which passes every conventional threshold there is.
+      #
+      # THE SAME TERMS AS ITS SIBLING, LESS ONE, AND THE MISSING ONE IS THE POINT.
+      #
+      #   - THE NEWEST COMPLETED RUN, NEVER THE NEWEST SUCCESSFUL ONE (3F-2947, @SCN-MUT-015). The
+      #     night that finds a regression is exactly the night whose conclusion is `failure`, so a
+      #     filter on success reaches back past it to a record about an older tree.
+      #
+      #   - ON `main`, NEVER THE BRANCH UNDER TEST (3F-2955, @SCN-MUT-017). A branch's own record
+      #     would compare the branch against itself and green everything — the fail-open shape the
+      #     step above spent a slice closing, and here it would be the whole gate.
+      #
+      #   - `mutation-report`, WHICH `mutation.yml` ALREADY UPLOADS, `if: always()`, 14-day
+      #     retention. Nothing is added to that workflow and there is no bootstrap window: the
+      #     records nightlies have already left on `main` are readable today.
+      #
+      #   - AND NO `MAX_AGE`. That is the asymmetry, and it is stated rather than inherited. A
+      #     MEASUREMENT expires because a number about an older tree is a false statement about this
+      #     one. A RECORD does not: it says what the kills WERE, and every kill in it is one this
+      #     suite once made. An older record names MORE kills to account for, so age makes the
+      #     comparison STRICTER, never staler — and a window here would throw evidence away for
+      #     being old and red the gate over a cadence.
+      #
+      # IT IS NOT AN ARBITER, for the reason its sibling is not: every branch places nothing, says
+      # why on stderr, and exits 0. Having no record to place is the ordinary reading of a pipeline
+      # whose sweep has not run yet, and where that is reported is downstream — the sweep below runs
+      # nothing, the row's command settles nothing and posts no number, and SCN-FIT-017 reconciles
+      # `missing`. A step redding HERE as well would make a green build depend on two arbiters.
+      - name: Place the recorded sweep
+        env:
+          GH_TOKEN: ${{ github.token }}
+          WORKFLOW: mutation.yml
+          BRANCH: main
+          ARTEFACT: mutation-report
+        run: |
+          # ERREXIT ARRIVES FROM THE SHELL AND IS CLEARED HERE, OUT LOUD, exactly as at the sibling
+          # above and for the same reason: this step must never manufacture a red, and `set -uo
+          # pipefail` does not clear `-e`. `-u` is kept and is the one red route left — an unbound
+          # expansion exits 127, which says THIS SCRIPT IS BROKEN rather than YOUR CODE LOST A KILL.
+          set +e
+          set -uo pipefail
+
+          into="${RUNNER_TEMP}/placed-record"
+          rm -rf "${into}"
+          mkdir -p "${into}"
+
+          if ! latest="$(gh run list --workflow "${WORKFLOW}" --branch "${BRANCH}" --status completed --limit 1 --json databaseId)"; then
+            echo "record: could not list runs of ${WORKFLOW} on ${BRANCH}; nothing is placed." >&2
+            exit 0
+          fi
+
+          id="$(printf '%s' "${latest}" | jq -r '.[0].databaseId // empty')"
+          if [ -z "${id}" ]; then
+            echo "record: ${WORKFLOW} names no finished run on ${BRANCH}; nothing is placed." >&2
+            exit 0
+          fi
+
+          if ! gh run download "${id}" --name "${ARTEFACT}" --dir "${into}"; then
+            echo "record: run ${id} of ${WORKFLOW} left no ${ARTEFACT} to download; nothing is placed." >&2
+            exit 0
+          fi
+
+          # Found by name wherever the upload put it: `mutation.yml` uploads the whole
+          # `reports/mutation/` directory, so the report sits beside the HTML render of itself.
+          found="$(find "${into}" -type f -name mutation.json -print -quit)"
+          if [ -z "${found}" ]; then
+            echo "record: ${ARTEFACT} from run ${id} holds no mutation.json; nothing is placed." >&2
+            exit 0
+          fi
+
+          # WHAT ARRIVED IS READ BEFORE IT IS PLACED. An empty or malformed report copied into the
+          # tree would settle nothing and read exactly like a report that was never fetched, so the
+          # two are told apart here rather than left to be told apart by their absence. `.files` is
+          # the only key asked for, because it is the only one the comparison reads.
+          if ! jq -e '(.files | type) == "object" and (.files | length) > 0' "${found}" >/dev/null 2>&1; then
+            echo "record: the report at ${found} from run ${id} names no mutated file; nothing is placed." >&2
+            exit 0
+          fi
+
+          # GUARDED BECAUSE THE LINES UNDER IT MAKE A CLAIM (3F-2962, @SCN-MUT-018). Clearing errexit
+          # is a guarantee about whether this step REDS and says nothing about whether what it SAYS
+          # is true. The two commands are one condition because the claim is that THE PLACEMENT
+          # succeeded, and the placement is both of them.
+          if ! { mkdir -p "${SPEC_CONTROLLER_EVIDENCE_DIR}" && cp "${found}" "${SPEC_CONTROLLER_EVIDENCE_DIR}/recorded-sweep.json"; }; then
+            echo "record: could not place ${ARTEFACT} from run ${id} of ${WORKFLOW} into the evidence root; nothing is placed. SCN-FIT-017 will read missing, and this is NOT the sweep that has not run yet: the record arrived and this runner could not put it where the check reads it." >&2
+            exit 0
+          fi
+
+          # THE KILLS IT HOLDS, BECAUSE A COPY THAT SUCCEEDED SAYS NOTHING ABOUT WHAT CROSSED. This
+          # is the figure the comparison is about to account for, and the one line that would notice
+          # a record placed from the wrong workflow or truncated in transit.
+          echo "record: placed ${ARTEFACT} from run ${id} of ${WORKFLOW} —" \
+            "$(jq '[.files[].mutants[] | select(.status == "Killed" or .status == "Timeout")] | length' "${SPEC_CONTROLLER_EVIDENCE_DIR}/recorded-sweep.json")" \
+            "detected of" \
+            "$(jq '[.files[].mutants[]] | length' "${SPEC_CONTROLLER_EVIDENCE_DIR}/recorded-sweep.json")" \
+            "mutants."
+
+          # THE LAST ACT, BECAUSE A SCRIPT'S STATUS IS ITS LAST COMMAND'S. `set +e` stops a failure
+          # mid-script from killing the step; it does not stop the render above from REPORTING one.
+          exit 0
+
       # STEP 1 OF THE SELF-RECONCILIATION CHAIN — the observed @unit stream. The run is
       # unchanged; it now also writes the machine-readable report the gate below reads.
       # It lands under the job's evidence root, on the runner's own disk, because a
@@ -386,7 +493,63 @@ jobs:
       - name: Cucumber
         run: pnpm cucumber --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json"
 
-      # STEP 2b — THE TEN FITNESS ROWS, AS TEN CI STEPS THAT CITE THEM (3F-3271, under
+      # STEP 2c — THIS PUSH'S OWN SWEEP, RUN AGAINST A COPY OF THE RECORD AND NEVER THE RECORD
+      # ITSELF (@SCN-FIT-017, 3F-3326).
+      #
+      # A READER-SHAPED ROW NEEDS ITS PRODUCER AHEAD OF IT, AND THIS IS SCN-FIT-017'S. The row's
+      # command reads two reports and runs nothing: a measured row's command is run BY the fitness
+      # steps below to read its number, so a row naming a command that launched a sweep would put
+      # that sweep inside the pass — which is the cost `mutationScoreReaderCli` exists to keep out
+      # of it. The sweep is therefore its own step, here, beside the other producers of numbers
+      # those rows read.
+      #
+      # AND IT IS INCREMENTAL, WHICH IS THE WHOLE REASON A SWEEP CAN RUN ON A PUSH AT ALL. Stryker
+      # re-tests the mutants whose source OR whose covering TESTS changed since the record and
+      # carries the rest through unchanged — the covering-test half settled by plant at 3F-3326, and
+      # it is the half that matters here, because a suite solving a failure by deleting the test is
+      # this product's origin story. Measured on this tree: ~7 seconds over an untouched domain,
+      # against the 8-to-12 minutes `mutation.yml` pays nightly for the cold sweep.
+      #
+      # THE COPY IS LOAD-BEARING AND IS NOT TIDINESS. `--incremental` READS the incremental file and
+      # then REWRITES it with this run's own results merged in. Point the comparison at that file
+      # afterwards and it reads this run's report against a copy of this run's report: nothing ever
+      # differs, no kill is ever lost, and the gate is a detector-shaped silence. MEASURED rather
+      # than reasoned, on a tree carrying a real lost kill — the comparison against the placed
+      # record found it and exited 1; the comparison against the file this step had just rewritten
+      # found nothing and exited 0. So the record is placed under a name of its own, copied here,
+      # and read by nothing that edits it.
+      #
+      # NO RECORD, NO SWEEP — AND THE STEP STILL RUNS. Mutating with nothing to compare against
+      # would pay for a cold sweep to produce a report the check can only refuse. The absence is
+      # answered here, out loud, and reported where every other verdict on this axis is: on the row.
+      #
+      # ERREXIT IS KEPT, UNLIKE THE TWO PLACEMENT STEPS, AND THE DIFFERENCE IS WHAT EACH STEP IS
+      # FOR. A placement must never manufacture a red, because having nothing to place is an
+      # ordinary reading of a cadence. This is a PRODUCER: a sweep that cannot run is a broken
+      # harness, and the honest place to say so is the step that broke.
+      #
+      # `pnpm exec`, NEVER A package.json SCRIPT, AND THAT IS DELIBERATE TWICE OVER. `pnpm mutation`
+      # is this same sweep wrapped in SCN-FIT-002's score producer, so running it here would post
+      # THIS run's score over the placed nightly's and quietly retire a cross-run crossing no
+      # scenario has retired. And `pnpm verify`'s ladder is derived from the `run:` steps of this
+      # file that invoke a script (@SCN-LAD-001..006), so a script here would become a local gate
+      # that runs a mutation sweep on every green-check.
+      - name: Mutate this push against the recorded sweep
+        run: |
+          set -uo pipefail
+
+          record="${SPEC_CONTROLLER_EVIDENCE_DIR}/recorded-sweep.json"
+          if [ ! -f "${record}" ]; then
+            echo "sweep: no recorded sweep was placed, so there is nothing to mutate against and no sweep is run. SCN-FIT-017 will read missing, which is the true sentence: this push compared no mutant." >&2
+            exit 0
+          fi
+
+          working="${RUNNER_TEMP}/incremental-sweep/mutation.json"
+          mkdir -p "$(dirname "${working}")"
+          cp "${record}" "${working}"
+          pnpm exec stryker run --incremental --incrementalFile "${working}"
+
+      # STEP 2b — THE FITNESS ROWS, AS ONE CI STEP EACH THAT CITES THEM (3F-3271, under
       # 3F-3252; the second cucumber call they replaced was deleted at 3F-3272).
       #
       # THERE USED TO BE A `Cucumber (fitness)` STEP HERE, and what it did is now done by these
@@ -436,10 +599,12 @@ jobs:
       # the fault @SCN-LAD-001..006 exist to make impossible; a step spelt to dodge them is the
       # same fault wearing a longer command.
       #
-      # THE THREE `pnpm --silent` ROWS ARE NOT GATES, AND THAT IS THE DERIVATION BEING EXACT RATHER
-      # THAN A GAP. `--silent` sits where the script name would be, so the ladder does not match
-      # them; each reads an artefact an earlier step of THIS run wrote, so a local ladder running
-      # them out of that context would red on a missing record rather than on the code.
+      # THE `pnpm --silent` ROWS ARE NOT GATES, AND THAT IS THE DERIVATION BEING EXACT RATHER THAN
+      # A GAP. `--silent` sits where the script name would be, so the ladder does not match them;
+      # each reads an artefact an earlier step of THIS run wrote, so a local ladder running them out
+      # of that context would red on a missing record rather than on the code. How many there are is
+      # read off the rows and is deliberately not counted here — a number in this prose is a second
+      # reading of the manifest, kept in step by whoever remembers.
       - name: Complexity — eslint's complexity, max-lines and max-lines-per-function
         id: SCN-FIT-001
         if: always()
@@ -535,6 +700,23 @@ jobs:
         id: SCN-FIT-002
         if: always()
         run: pnpm --silent mutation:score --supersedes SCN-MUT-011
+
+      # THE ONE ROW WHOSE COMMAND CARRIES A VERDICT AS WELL AS A NUMBER, AND BOTH ARE DELIBERATE
+      # (@SCN-MRG-006). Every other producer here hands the ledger a figure and leaves the bar to
+      # it, because a producer holding both would be two arbiters of one characteristic. Nothing in
+      # this command reads a bar: a lost kill is not a number over a threshold, it is a kill the
+      # record made that this run does not, found by the comparison itself. So it reds on the fact,
+      # and `atMost: 0` still lives in exactly one place — somebody reading this log should not have
+      # to wait for a reconciliation to learn that a kill went missing.
+      #
+      # AND A RECORD IT COULD NOT READ ENDS THE RUN CLEANLY, WHICH IS NOT LENIENCE. Nothing was
+      # compared, so nothing was lost and nothing was measured: it posts no number, the row reads as
+      # a check that never ran, and the ledger reds it out loud. Posting a nought instead would be a
+      # claim about this suite assembled out of a fault in the machinery reading it.
+      - name: Mutation regression
+        id: SCN-FIT-017
+        if: always()
+        run: pnpm --silent mutation:regression
 
       # THE DUMP — THE ONLY PLACE `outcome` AND `id` ARE CARRIED TOGETHER (3F-3252).
       #

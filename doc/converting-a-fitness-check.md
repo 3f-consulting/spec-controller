@@ -387,7 +387,7 @@ is one no row configures, and the ledger's census names each of them.
      ```json
      { "scn": "SCN-FIT-002", "characteristic": "mutation",
        "command": "pnpm --silent mutation:score --supersedes SCN-MUT-011",
-       "atLeast": { "mutationGate": "domain" } }
+       "atLeast": 80 }
      ```
 
      Move the **producer** to the new code in the same commit, or the transition never contracts.

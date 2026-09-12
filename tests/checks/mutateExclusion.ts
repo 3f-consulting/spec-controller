@@ -1,5 +1,5 @@
 /**
- * The MUTATED-SURFACE static check (@SCN-MSG-002, 3F-2873) — what `stryker.config.json`'s `mutate`
+ * The MUTATED-SURFACE static check (@SCN-MSG-002, 3F-2873) — what `stryker.config.mjs`'s `mutate`
  * glob is allowed to say, held to a list that states its reasons.
  *
  * WHY THIS GUARD EXISTS AT ALL. 3F-2873 takes the fault-message catalogue off the mutated surface
@@ -16,9 +16,9 @@
  * reports WHICH, so the red names its own cause rather than sending the reader hunting.
  *
  * PURE, LIKE ITS SIBLINGS. `checkMutateSurface` takes the parsed glob as data and returns the
- * violations; the file read lives in the `@unit` arm that drives this over the real config, exactly
- * as `domainPurity` splits its walk from its rule. `mutateGlobOf` parses the config TEXT, so a
- * config that lost its `mutate` key throws here rather than reading as a surface with no
+ * violations; the config load lives in the `@unit` arm that drives this over the real config,
+ * exactly as `domainPurity` splits its walk from its rule. `mutateGlobOf` reads the loaded config,
+ * so a config that lost its `mutate` key throws here rather than reading as a surface with no
  * exclusions — the empty-vs-empty false green this guard would otherwise be wide open to.
  */
 
@@ -42,7 +42,7 @@ export interface MutateSurfaceViolation {
 }
 
 /**
- * The whole of what `stryker.config.json`'s `mutate` may say. Two excludes, one include, no more.
+ * The whole of what `stryker.config.mjs`'s `mutate` may say. Two excludes, one include, no more.
  *
  * The catalogue entry is the one this scenario exists for. It is granted to a file that holds a
  * table of sentences and NOTHING ELSE — no branching, no lookup, no render helper — which is why
@@ -136,16 +136,22 @@ export function checkMutateSurface(glob: readonly string[]): MutateSurfaceViolat
 }
 
 /**
- * The `mutate` glob out of a Stryker config's TEXT.
+ * The `mutate` glob out of a LOADED Stryker config — what the runner's own reader hands back.
+ *
+ * IT TAKES THE CONFIG AND NOT ITS TEXT SINCE 3F-3334. `stryker.config.json` became
+ * `stryker.config.mjs` the moment the break threshold arrived with a line of prose beside it, which
+ * strict `JSON.parse` refuses. The config is a module now, so the only way to read it is the way
+ * Stryker reads it — load it and look at what it exported. A guard that went on parsing text would
+ * have been parsing a file the runner no longer opens, and would have said so out loud exactly
+ * never.
  *
  * Throws rather than defaulting when the key is absent or is not a list of strings. A guard that
  * read a missing key as `[]` would report a config with NO exclusions as a config whose exclusions
  * all match — the empty-vs-empty green that makes a check which never ran indistinguishable from
  * one that passed.
  */
-export function mutateGlobOf(configText: string): readonly string[] {
-  const parsed: unknown = JSON.parse(configText);
-  const glob = (parsed as { mutate?: unknown }).mutate;
+export function mutateGlobOf(config: unknown): readonly string[] {
+  const glob = (config as { mutate?: unknown } | null | undefined)?.mutate;
   if (!Array.isArray(glob) || !glob.every((entry) => typeof entry === "string")) {
     throw new Error("stryker config: `mutate` is absent or is not a list of glob patterns");
   }

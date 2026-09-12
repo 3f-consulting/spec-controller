@@ -1,6 +1,6 @@
 /**
- * The mutation producer — runs a mutation sweep and posts the kills its mutants imply, as a whole
- * number of mutants (@SCN-MUT-007, @SCN-MUT-008 — features/mutation-score.feature).
+ * The mutation producer — runs a mutation sweep and posts the score its mutants imply, as a
+ * percentage of the valid ones (@SCN-MUT-007, @SCN-MUT-008 — features/mutation-score.feature).
  *
  *     tsx mutationScoreCli.ts --scn <SCN-ID> --check <tag> [--root <dir>] -- <command> [args…]
  *
@@ -24,6 +24,15 @@
  * block. A producer holding both the number and the bar that number is judged against would make
  * a green build depend on two arbiters agreeing.
  *
+ * AND THE UNIT CROSSES A RUN BOUNDARY, THE WAY THE @SCN DID (3F-3335). This runs nightly and the
+ * reader runs on this push, so for the length of one sweep cycle after the unit moves, the newest
+ * record any build can reach was written by the PREVIOUS unit's code — a kill count where a
+ * percentage is now expected. Nothing reds on it: 807 clears a bar of 80 as comfortably as 96.53
+ * does, which is the same green the old unit gave against the new bar and is satisfied for the
+ * same empty reason. It ends the first time a nightly sweeps this tree. Written down rather than
+ * glossed over, because the row reads satisfied either way and nothing else in the system would
+ * say which of the two it was.
+ *
  * IT WRITES A SWEEP RECORD, NOT THIS RUN'S CREDIT STREAM (3F-3152). A sweep on its own cadence is
  * not measuring the tree the run reading it is judging — that gap is the whole reason the number
  * has to cross a run boundary — so what it leaves behind is a RECORD of what it measured, at
@@ -37,9 +46,9 @@
  * `measurementArtefact.ts`'s to decide.
  *
  * A SWEEP THAT LEFT NO READABLE REPORT LEFT NO NUMBER, SO IT POSTS NOTHING (@SCN-MUT-008).
- * Absent, empty and unparseable are one answer, and that answer is not zero: a zero is the kill
- * count of a suite that killed nothing, which would be a claim about the CODE assembled out of a
- * fault in the harness measuring it. The row then reads `missing` — the true sentence, no measurement
+ * Absent, empty and unparseable are one answer, and that answer is not zero: a zero is the score
+ * of a suite that killed nothing, which would be a claim about the CODE assembled out of a fault
+ * in the harness measuring it. The row then reads `missing` — the true sentence, no measurement
  * arrived, and the same one a sweep that never ran produces.
  *
  * AND IT IS NOT THIS PRODUCER'S FAULT EITHER, so the exit code is still the wrapped command's. A
@@ -68,7 +77,7 @@ import { MUTATION_REPORT_PATH } from "./mutationScore.js";
  *
  * IT NEVER LEAVES THIS CALL, WHICH IS WHY A SECOND SPELLING OF IT COULD NOT DRIFT INTO ANYTHING.
  * The reader puts its caller's word into the measurement it hands back; what is taken out of that
- * measurement below is a count, so nothing this producer posts, prints or exits on carries the
+ * measurement below is two counts, so nothing this producer posts, prints or exits on carries the
  * string. A refusal names the path it looked at, never the gate.
  */
 const GATE = "domain";
@@ -153,13 +162,25 @@ const reportPath = path.join(sweep.root, MUTATION_REPORT_PATH);
 // Absent, empty, unparseable, no files section, and no scored mutant are one answer here as they
 // were before: there is no number, so there is nothing to post.
 const read = readMutationReport(GATE, reportPath);
-// THE KILLS ALONE, AND `total` STOPS HERE (3F-2788). A percentage is two facts divided into one,
-// and dividing by the population is what puts the population into the ledger's comparison: new
-// mutable code arriving with survivors on it moves the denominator and the row reds without a
-// single kill having been lost. The count alone carries only the fact the bar is about, so the
-// row moves when a mutant this suite used to kill stops dying and at no other time. What `total`
-// is for is telling a grown population from a lost kill, and that reading is the ratchet's.
-const measured = read.ok ? read.measurement.detected : null;
+// THE SCORE, AND ITS DENOMINATOR IS THE READER'S OWN `total` (3F-3335). The count was the right
+// unit while the bar was a banked kill floor — a figure in the same unit, moving when a kill was
+// lost. The bar is now the conventional percentage the runner breaks on, read off SCN-FIT-002's
+// own row, and a count held against it clears at 807 and at 81 alike: satisfied by any suite, for
+// no reason.
+//
+// AND `total` IS THE VALID POPULATION, WHICH IS THE HALF THIS TREE CANNOT CHECK ITSELF ON. It is
+// detected plus survived plus never-covered — precisely what Stryker divides by when it decides
+// whether to break — and the uncompilable, the errored and the ignored are outside it. This
+// repository's own sweep has none of those three, so `detected/total` and detected over every
+// mutant found are the same number here and a run against this tree would tell them apart never;
+// the planted report under @SCN-MUT-007 carries all three for exactly that reason. Reading both
+// figures off ONE read is what makes the runner's number and the ledger's one formula rather than
+// two that agree until a report arrives holding a mutant nobody could have caught.
+//
+// AND IT IS UNROUNDED, BECAUSE THE BAR IS. Stryker rounds to two places for the human reading its
+// log and breaks on the full figure. A producer rounding here would be a third number in a
+// characteristic this increment spent its length getting down to one.
+const measured = read.ok ? (read.measurement.detected / read.measurement.total) * 100 : null;
 
 if (measured === null) {
   // ON STDERR AND NOT AS A VERDICT. This is not the measurement report below — it is the reason

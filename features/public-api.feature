@@ -50,8 +50,8 @@ Feature: The public core exports exactly the frozen v1 contract surface
     mechanism that reads each barrel and agrees with it.
 
     THE TYPE HALF IS NOT THE VALUE HALF WITH A DIFFERENT NAME. TypeScript types are erased, so a
-    runtime reflection cannot see them; and spelling each expected type into a typed literal — the
-    arrangement the mutation ratchet's own pin uses — reds on a type DROPPED or RENAMED and stays
+    runtime reflection cannot see them; and spelling each expected type into a typed literal reds
+    on a type DROPPED or RENAMED and stays
     green on one ADDED, because nothing references what nobody wrote. Reading the compiled type surface
     through the compiler API is what closes the add, and this rule's evidence reads it that way.
 

@@ -99,8 +99,9 @@ order — put those steps ahead of the suites and both rows read `missing` while
 you were told.
 
 **The third reads a number no local run takes.** `@SCN-FIT-002` — this repository's own domain-core
-mutation score — names `pnpm --silent mutation:score` and sources its bar from the `domain` gate's
-banked kill floor.
+mutation score — names `pnpm --silent mutation:score` and holds it to the `atLeast` on its own row.
+That same integer is the `break` threshold `stryker.config.mjs` reads back off the row, so the
+ledger and the runner cannot disagree about where the floor is.
 
 A mutation sweep costs 8-12 minutes on CI, so it runs nightly
 (`.github/workflows/mutation.yml`) and leaves what it measured as a SWEEP RECORD; CI places

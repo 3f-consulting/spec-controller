@@ -1,47 +1,46 @@
 /**
  * THE MODULE'S OWN SURFACE — curated symbol by symbol, never a re-export of the tree behind it
- * (@SCN-RAT-014, 3F-2804).
+ * (3F-2804, 3F-3337).
+ *
+ * WHAT IS BEHIND THIS BARREL NOW IS TWO READERS, AND THE RATCHET THEY WERE BUILT FOR IS GONE
+ * (3F-3337). `record.ts` reads a target's banked gate record and hands back the kill floor it
+ * implies; `report.ts` counts a mutation report's own mutants into a measurement. What left with
+ * the ratchet is everything that COMPARED the two — the verdicts, the up-only recorder, the
+ * reconciliation entry and the command that ended on it — because this repository's gate is now a
+ * per-mutant comparison the runner keeps, and nothing types a mutation count here any more.
+ *
+ * ITS TWO CONSUMERS ARE BOTH IN THIS TREE, AND THEY WANT DIFFERENT HALVES. `ingest/
+ * ingestQualityChecks.ts` wants the RECORD half: the engine's `mutationGate` bar kind lets a target
+ * author a fitness row naming a gate instead of a figure, which is a published capability decided
+ * over a target's own record (@SCN-MUT-012, @SCN-MUT-013). `tests/checks/mutationScoreCli.ts` wants
+ * the REPORT half: `pnpm mutation:score` takes the two counts out of a sweep's report and divides
+ * them (@SCN-MUT-007, @SCN-MUT-008). Neither wants the other's, which is why both are named here
+ * rather than the tree behind them being passed on wholesale.
  *
  * A BARREL THAT RE-EXPORTED EVERY MODULE WOULD BE A CONTRACT NOBODY WROTE. Each module below
  * exports what its own siblings need from it, and sibling-visibility is a much wider set than
- * consumer-visibility: the gate-block span finder, the field rewriter, the per-verdict message
- * builders, the status sets and the loader's per-field readers are all exported so their
- * neighbours can reach them without a second copy. Passing that set on wholesale would freeze
- * every one of them as something a consumer may depend on, and the first refactor that moved one
- * would be a breaking change nobody meant to make. So this file names what a caller may hold and
- * the omissions are decisions.
+ * consumer-visibility. Passing that set on wholesale would freeze every one of them as something a
+ * caller may depend on, and the first refactor that moved one would be a breaking change nobody
+ * meant to make. So this file names what a caller may hold and the omissions are decisions.
  *
- * WHAT IS HERE IS THIS LIBRARY'S OWN ENTRY, AND WHAT ITS FIRST CONSUMER NEEDS. The entry is
- * `reconcileGate` — hand it the five terms a project owns and it answers with a verdict. Around it
- * sit the pieces a consumer that wants to compose its own way needs: the verdict over counts
- * already in hand, the two readers that turn a report into counts, the recorder, the loader, the
- * three score functions a consumer rendering its own view needs, the kill floor those same figures
- * imply in mutants, the default record name, and both error types the functions above raise — the
- * record fault and the up-only refusal — because a refusal a caller cannot name in a `catch` is a
- * refusal that caller cannot handle.
+ * THE KILL FLOOR IS THE BAR, AND IT IS NOT A SCORE (3F-2788). `killFloorOf` answers a ledger
+ * holding a measured row to the figure a gate's own record implies, in mutants — a percentage would
+ * fold the kill lost and the population grown into one number, which is the distinction a bar on
+ * this axis exists to keep. A consumer that derived it instead would be the second place knowing
+ * how an allowance is spent.
  *
- * THE KILL FLOOR CROSSES FOR A SECOND KIND OF CONSUMER, AND THAT IS WHY IT IS NOT A SCORE (3F-2788).
- * Everything above answers a reader that wants this library's verdict. `killFloorOf` answers one
- * that wants only the BAR — a ledger holding its own measured row to the same figure this library
- * reconciles against, so the two cannot disagree by construction. A consumer that derived it
- * instead would be the second place knowing how an allowance is spent.
+ * THE TYPES ARE SPELLED FOR A CONSUMER'S NAMESPACE RATHER THAN FOR THIS MODULE'S. `GateRecord` is
+ * unambiguous inside a directory about nothing else; imported into a repository that has gates of
+ * several kinds it is not, so it crosses this line under the fuller name. The aliasing is
+ * deliberate and one-directional: the internal spelling stays internal.
  *
- * THE TYPES ARE SPELLED FOR A CONSUMER'S NAMESPACE RATHER THAN FOR THIS MODULE'S. `GateRecord` and
- * `GateAllowance` are unambiguous inside a directory about nothing else; imported into a repository
- * that has gates of several kinds they are not, so they cross this line under the fuller names.
- * The aliasing is deliberate and one-directional: the internal spellings stay internal.
- *
- * AND NO DRIFT GUARD STANDS OVER IT, WHICH IS A DECISION NOW RATHER THAN AN OPEN QUESTION. The
- * sibling core package's barrel is reflected and compared against a frozen list in both directions,
- * so a symbol quietly added or dropped reds. That guard is what a PUBLISHED surface is owed, and
- * 3F-2859 stopped publishing this one: no manifest key resolves here, and no caller outside this
- * repository can spell the specifier at all. Freezing the list would make every refactor behind
- * this barrel a change to a contract nobody holds. What the curation above is still for is the
- * reader of this repository's own gate, and @SCN-RAT-014 reads the list back beside it — so a
- * symbol added here is a symbol somebody wrote down twice, which is the guard this surface earns.
+ * AND NO DRIFT GUARD STANDS OVER IT, WHICH IS A DECISION RATHER THAN AN OPEN QUESTION. The sibling
+ * core package's barrel is reflected and compared against a frozen list in both directions, so a
+ * symbol quietly added or dropped reds. That is what a PUBLISHED surface is owed, and 3F-2859
+ * stopped publishing this one: no manifest key resolves here, and no caller outside this repository
+ * can spell the specifier at all. Freezing the list would make every refactor behind this barrel a
+ * change to a contract nobody holds.
  */
-
-export { RECORD_FILE, reconcileGate, type RatchetRequest } from "./reconcile.js";
 
 export {
   floorOf,
@@ -49,23 +48,13 @@ export {
   killFloorOf,
   MalformedRecordError,
   parseGateRecords,
-  recordedScoreOf,
-  scoreOf,
-  type GateAllowance as MutationGateAllowance,
+  RECORD_FILE,
   type GateRecord as MutationGateRecord,
 } from "./record.js";
-
-export { FallRefusedError, raisedRecordText } from "./ratchet.js";
 
 export {
   measurementFromReport,
   readMutationReport,
+  type MutationMeasurement,
   type MutationReportRead,
 } from "./report.js";
-
-export {
-  verdictFor,
-  type MutationMeasurement,
-  type MutationVerdict,
-  type MutationVerdictKind,
-} from "./verdict.js";

@@ -51,8 +51,8 @@
  * clock 3F-2841 retired, wearing a filesystem's costume.
  *
  * IT IS NOT AN ARBITER AND HOLDS NO BAR. One bar per characteristic and it is the ledger's
- * (3F-2509). This prints a number; whether that number clears the `domain` gate's kill floor is
- * settled in exactly one place, on the row that owes the measurement.
+ * (3F-2509). This prints a number — a mutation score, since 3F-3335 — and whether that number
+ * clears the bar is settled in exactly one place, on the row that owes the measurement.
  *
  * AND IT ANSWERS TO A SUPERSEDED CODE WHERE THE ROW NAMES ONE, WHICH IS ABOUT THE CODE AND NEVER
  * ABOUT THE RECORD (@SCN-MUT-019). The sweep stamps its measurement with the `@SCN` of the row it

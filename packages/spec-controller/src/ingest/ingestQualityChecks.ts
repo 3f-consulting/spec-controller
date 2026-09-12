@@ -47,9 +47,11 @@ import {
 import { evidenceReconciliationFromSources } from "@3f-consulting/spec-controller-core";
 import type { PackageJsonScripts } from "@3f-consulting/spec-controller-core";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
-// The mutation-ratchet library, reached for the RECORD half of a bar that names a gate
-// (@SCN-MUT-012): its conventional record name, its reader, and the floor a gate's own figures
-// imply. Through the barrel, which is the surface a consumer holds.
+// The record reader, reached for the RECORD half of a bar that names a gate (@SCN-MUT-012): its
+// conventional record name, its parser, and the floor a gate's own figures imply. Through the
+// barrel, which is the surface a caller holds. (The directory is still spelled `mutation-ratchet`
+// and the ratchet it was named for is deleted — 3F-3337 left the name standing rather than move a
+// module inside a delete; filed as a finding.)
 import {
   gateRecordFor,
   killFloorOf,

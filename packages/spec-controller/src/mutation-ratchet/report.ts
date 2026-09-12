@@ -1,6 +1,13 @@
 /**
  * THE MEASUREMENT — a gate's run, counted out of its mutation report's own mutants
- * (@SCN-RAT-010, 3F-2799).
+ * (@SCN-MUT-007, 3F-2799, 3F-3337).
+ *
+ * THE RATCHET THAT RECONCILED THIS IS GONE; THE READER IS NOT (3F-3337). Its one remaining caller
+ * is `tests/checks/mutationScoreCli.ts` — `pnpm mutation:score`, the producer that posts
+ * SCN-FIT-002's number — which takes the two counts out of this and divides them. @SCN-MUT-007 and
+ * @SCN-MUT-008 are what specify it now, and they state the same two things this file states: the
+ * valid population is the killed and the timed-out over those plus the survived and the
+ * never-covered, and a run with no readable report posts nothing rather than a count of zero.
  *
  * STATED, NEVER INFERRED, AND THAT IS THE WHOLE MODULE. A mutation report groups its mutants by
  * the file they were made in and gives each one a status. The metric scores two of those statuses
@@ -21,7 +28,8 @@
  * AND THE REPORT'S OWN THRESHOLDS ARE NOT READ, WHICH IS THE SAME RULING ONE ARTEFACT FURTHER OUT.
  * A report carries the thresholds its own run was configured against, and reading them would be
  * taking the runner's verdict on its own homework as the measurement. The bar lives in the record
- * (`record.ts`), and the report is only ever asked what happened. Every figure produced here is
+ * (SCN-FIT-002's own row, which `stryker.config.mjs` reads back), and the report is only ever
+ * asked what happened. Every figure produced here is
  * counted from the mutants; every other number in the document is left where it lies, however
  * conveniently it is shaped.
  *
@@ -31,7 +39,7 @@
  * holding exactly one, which is the shape a small fixture takes by default.
  *
  * AND A REPORT THAT CANNOT BE READ, OR THAT HOLDS NO SCORED MUTANT AT ALL, IS REFUSED RATHER THAN
- * SCORED ZERO (@SCN-RAT-009). Zero is a measurement — a run that mutated the scope and killed none
+ * SCORED ZERO (@SCN-MUT-008). Zero is a measurement — a run that mutated the scope and killed none
  * of it — and the two must not be spelled the same, because reconciling a zero reaches a regression
  * whose message sends its reader hunting kills that in this case never happened. The refusal comes
  * back as a value rather than a throw, so a caller cannot drop it by forgetting to catch.
@@ -43,10 +51,28 @@
 
 import { existsSync, readFileSync } from "node:fs";
 
-import type { MutationMeasurement } from "./verdict.js";
+/**
+ * One gate's measured run, in the two counts the metric is defined over.
+ *
+ * IT MOVED HERE FROM `verdict.ts` WHEN THE RATCHET LEFT (3F-3337), unchanged. It sat beside the
+ * comparison while there was one; what produces it now is this module alone, so it sits where it
+ * is made.
+ *
+ * TWO COUNTS AND NOT A SCORE. A measurement that arrived as a score would already have folded the
+ * two events a reader has to tell apart — a kill lost, and a population that grew — into one
+ * number, before any caller could look at either.
+ */
+export interface MutationMeasurement {
+  /** The gate this run measured, as the caller names it. */
+  readonly gate: string;
+  /** Mutants the suite detected. */
+  readonly detected: number;
+  /** Every mutant the gate measured, detected or not. */
+  readonly total: number;
+}
 
 /**
- * A report read: the measurement, or the reason there is not one (@SCN-RAT-009, 3F-2800).
+ * A report read: the measurement, or the reason there is not one (@SCN-MUT-008, 3F-2800).
  *
  * A REFUSAL IS A RESULT, NEVER AN EXCEPTION THE CALLER MAY FORGET TO CATCH. Reading a report is the
  * one step of this library that reaches for something outside its own arguments, so it is the one

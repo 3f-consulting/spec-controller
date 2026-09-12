@@ -150,11 +150,37 @@ Then("it refuses, naming the row it could not find", function () {
   }
 });
 
-/** The one line of the workflow matching a shape, refused where there is not exactly one. */
+/** The step this claim is about, by the name the workflow gives it. */
+const PLACEMENT_STEP = "Place the scheduled sweep's measurement";
+
+/**
+ * The lines of ONE named step of the workflow, and nothing else.
+ *
+ * THE CLAIM WAS ALWAYS ABOUT THIS STEP AND USED TO BE MEASURED OVER THE WHOLE FILE, which held
+ * while the file placed one thing. 3F-3333 added a second placement — the per-mutant record
+ * SCN-FIT-017 is judged against — and every shape below matched twice, so an arm asserting an
+ * ORDER inside this step failed over a step it says nothing about. Scoping is what keeps the
+ * instrument pointed at the subject; it does not loosen it, because "exactly one" is still refused
+ * inside the slice and the slice still has to exist.
+ */
+function theStep(lines: readonly string[], named: string): readonly string[] {
+  const opens = lines.flatMap((line, at) => (line.includes(`- name: ${named}`) ? [at] : []));
+  if (opens.length !== 1) {
+    assert.fail(`${LADDER} holds ${opens.length} steps named "${named}"; it must hold exactly one.`);
+  }
+  const from = opens[0]!;
+  const after = lines.findIndex((line, at) => at > from && /^\s{6}- name: /.test(line));
+  return lines.slice(from, after === -1 ? lines.length : after);
+}
+
+/** The one line of a step matching a shape, refused where there is not exactly one. */
 function theOneLine(lines: readonly string[], shape: RegExp, what: string): number {
   const found = lines.flatMap((line, at) => (shape.test(line) ? [at] : []));
   if (found.length !== 1) {
-    assert.fail(`${LADDER} holds ${found.length} lines that ${what}; it must hold exactly one.`);
+    assert.fail(
+      `the "${PLACEMENT_STEP}" step of ${LADDER} holds ${found.length} lines that ${what}; ` +
+        "it must hold exactly one.",
+    );
   }
   return found[0]!;
 }
@@ -180,7 +206,10 @@ Then(
     // downloaded and never placed, so this reader meets no record at all — superseded code or
     // current. Move the window check after the download and this reds, which is exactly the edit
     // that would turn "answers a superseded code" into "answers a stale one".
-    const lines = readFileSync(path.join(repoRoot, LADDER), "utf8").split("\n");
+    const lines = theStep(
+      readFileSync(path.join(repoRoot, LADDER), "utf8").split("\n"),
+      PLACEMENT_STEP,
+    );
     const refusesPastTheWindow = theOneLine(lines, /-gt "\$\{MAX_AGE\}"/, "refuse a run past the window");
     const fetches = theOneLine(lines, /\bgh\s+run\s+download\b/, "fetch the payload");
     const places = theOneLine(lines, /cp "\$\{found\}"/, "place the record where this reader reads it");

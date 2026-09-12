@@ -9,21 +9,30 @@ name: Mutation
 # posting / reconciliation / fold rules. The rest of the tree is not mutated; the
 # value concentrates in the pure logic and the run cost scales with the scope.
 #
-# THIS JOB HOLDS NO SECOND BAR (3F-2765). It used to red below the `break` threshold in
-# stryker.config.json; that bar is retired, and SCN-FIT-002 is settled on this repository's
-# own ledger, where every other fitness check is. Two bars for one characteristic makes a
-# green build depend on two arbiters agreeing, and the ledger's is the one with the @SCN.
+# THIS JOB HOLDS NO SECOND BAR (3F-2765, and still true after 3F-3334). It used to red below a
+# `break` threshold that stryker.config.json TYPED for itself — a separately stated number sitting
+# beside the ledger's and agreeing with it by coincidence. That bar is retired, and SCN-FIT-002 is
+# settled on this repository's own ledger, where every other fitness check is. A `break` stands in
+# stryker.config.mjs again and it is not that bar returning: it is READ off package.json's
+# SCN-FIT-002 row, the same integer the ledger holds the score against, so there is nothing for it
+# to disagree with. Two bars for one characteristic makes a green build depend on two arbiters
+# agreeing; one bar with two readers cannot.
 # So what this job owes the ledger is a MEASUREMENT: `pnpm mutation` wraps the sweep in the
 # kill producer, and the artefact below carries that number to whichever push places it next.
 #
-# AND THE VERDICT BELOW IS NOT THAT SECOND BAR RETURNING (3F-2788). What 3F-2765 removed was a
-# SEPARATELY DERIVED number sitting beside the ledger's — the runner's own percentage, computed
-# its own way, agreeing with the ledger only by coincidence. The ratchet step is the SAME
-# integer: the same gate of the same `quality-thresholds.yml` the ledger sources SCN-FIT-002's
-# bar from, less the same allowance, by the same subtraction. It cannot disagree with the ledger
-# because there is nothing for it to disagree with. What it adds is the three readings a single
-# floor cannot express — a population that shrank, a population that grew (a loud pass rather
-# than a false red), and a gain nobody banked. Same arbiter, more verdicts.
+# AND THIS JOB NO LONGER ENDS ON A VERDICT OF ITS OWN (3F-3337). It used to close on a ratchet step
+# reconciling the sweep against a banked record — three readings a single floor cannot express: a
+# population that shrank, a population that grew, and a gain nobody banked. That record was a pair
+# of counts a human kept, and it was measured blind: it read `detected: 694` against a live 807, so
+# the gate could only red on a loss of more than 113 kills, and at 3F-3321 a real lost kill went
+# past it reporting "no kill went missing". What replaced it is a per-mutant comparison the RUNNER
+# keeps — `pnpm mutation:regression` on every push, against the report this job already uploads —
+# so what this job owes is the report and the measurement, and nothing here judges either.
+#
+# WHICH MAKES THE REPORT UPLOAD BELOW LOAD-BEARING IN A SECOND WAY. It was the operator's copy of
+# what the sweep found; it is now also the RECORD `pnpm mutation:regression` compares each push
+# against (SCN-FIT-017). Its `if: always()` and its path are unchanged and @SCN-MUT-016 still holds
+# both halves of the asymmetry below — what changed is who else reads what it leaves behind.
 on:
   schedule:
     # 03:17 UTC nightly — an off-the-hour minute so the run does not queue behind
@@ -122,10 +131,15 @@ jobs:
       # THAT FENCE USED TO BE ACCIDENTAL, AND IS NOW THE ONLY ONE THERE IS. The placement filtered on
       # `--status success`, so a crashed run was excluded by the very filter that also excluded the
       # night which found a regression — one word doing two jobs, and 3F-2901 is the second of them
-      # going wrong. @SCN-MUT-015 removed the filter and the two readings came apart. What still
-      # tells them apart is this absent condition together with `stryker.config.json` setting no
-      # `break` threshold: the sweep cannot exit non-zero over the SCORE, only over ITSELF, so a
-      # failed sweep is a failed HARNESS and the silence of this step is what says so.
+      # going wrong. @SCN-MUT-015 removed the filter and the two readings came apart. What tells them
+      # apart is this absent condition: a sweep that died uploads nothing, so the row reads `missing`
+      # and the build reds on it.
+      #
+      # AND SINCE 3F-3334 A SWEEP CAN DIE OVER ITS SCORE AS WELL AS OVER ITSELF — NAMED HERE, NOT
+      # FIXED HERE. `stryker.config.mjs` sets a `break` threshold, so a sweep below the bar exits
+      # non-zero, uploads nothing through this step, and SCN-FIT-002 reads `missing` rather than
+      # `failing`. Both are red and no scenario asserts the distinction, and the sweep measures 96.4%
+      # against a bar of 80 — so 3F-3326 recorded this as a residual rather than changing the fence.
       #
       # THE REPORT UPLOAD BELOW CARRIES `if: always()` AND MUST, which is an asymmetry with a reason
       # rather than an untidiness. An operator opening the report of the run that died is precisely
@@ -160,43 +174,3 @@ jobs:
           name: mutation-report
           path: reports/mutation/
           retention-days: 14
-
-      # THE VERDICT THE MEASUREMENT ALONE CANNOT REACH, AND THE JOB ENDS ON IT (3F-2788,
-      # @SCN-MUT-014). The sweep above posts the kills; the ledger holds them to the record's kill
-      # floor and answers satisfied or failing. That is one comparison, and it is blind to two
-      # things a nightly sweep should say out loud: a population that SHRANK — fewer mutants than
-      # the record banks, which counts alone cannot tell from a regression somebody masked by
-      # deleting the code under it — and a gain nobody banked, which leaves the record understating
-      # what this suite actually does. This step is where those are said, and it reads the same
-      # gate of the same file the ledger reads, so it is the ledger's own bar with a wider
-      # vocabulary rather than a bar of its own.
-      #
-      # LAST, AFTER BOTH UPLOADS, WHICH IS PLACEMENT WITH A REASON. A red verdict fails the job,
-      # and a step placed before the uploads would take them down with it — leaving the run that
-      # found the fault as the one run with nothing for an operator to open. Put last, the
-      # measurement and the report leave the job whatever the verdict is, and the job's own ending
-      # IS the verdict, which is what the ledger's arbiter cannot be asked to be.
-      #
-      # AND THE LEDGER'S MEASUREMENT DEPENDS ON THAT PLACEMENT TOO, WHICH IS WHY A SCENARIO NOW
-      # HOLDS IT (3F-2947, @SCN-MUT-015). `ci.yml` places from the newest COMPLETED run of this
-      # workflow, whatever verdict followed it, so the night that finds a regression is the night
-      # whose number crosses to the next push — but only because the measurement leaves this job
-      # BEFORE the step below reds it. Move this step up and that night uploads nothing: the row
-      # reads `missing`, a regression is reported as a lapse, and every assertion about WHICH run
-      # is selected stays green while it happens. So the ordering is asserted alongside the
-      # selection rather than defended here alone, and the paragraph above is now the second of
-      # two reasons for it rather than the only one.
-      #
-      # NO `lint:` / `guard:` PREFIX ON THE SCRIPT IT RUNS, WHICH IS LOAD-BEARING RATHER THAN
-      # STYLISTIC. `runningStaticChecks` observes a package.json script as a RUNNING static check
-      # when its name carries an observed prefix and a workflow `run:` step invokes it — and the
-      # ledger reads every workflow under `.github/workflows/`, this one included. A `lint:` name
-      # here would register a per-push static check on spec-controller's own ledger for a step that
-      # only ever runs nightly: a claim this pipeline does not honour, and an uncited one at that.
-      # Same ruling `scripts/verify.sh` already carries for `verify` and `ladder`.
-      #
-      # AND NO `if: always()`. A sweep that died left no verdict worth reaching, and a
-      # reconciliation over a report that run never finished writing would answer about the wrong
-      # tree.
-      - name: Reconcile the sweep against the record
-        run: pnpm mutation:ratchet

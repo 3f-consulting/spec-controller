@@ -38,10 +38,12 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
   THE NUMBER IS DERIVED FROM THE MUTANTS, NEVER READ FROM THE RUNNER'S VERDICT. Stryker's report
   carries the mutant statuses AND a thresholds block of its own, and reading the second one would
   be transcribing a verdict the ledger exists to reconcile — the runner grading its own homework,
-  one artefact further out. So the producer reads the statuses, counts the kills they imply, and
-  hands the ledger a number with no opinion attached. The runner's own break threshold is retired
-  in the same move: two bars for one characteristic is a green build depending on two arbiters
-  agreeing, and the ledger's is the one with the @SCN.
+  one artefact further out. So the producer reads the statuses, scores them, and hands the ledger a
+  number with no opinion attached. The runner's own break threshold is not the second bar it once
+  was: since 3F-3334 it is READ off the row the ledger holds this check to, so one number settles
+  one characteristic and two readers consult it. Which is exactly why the score posted here has to
+  be the same quantity the runner breaks on, counted the same way — two formulas over one report
+  would put the two arbiters back, agreeing until the day a report arrives that tells them apart.
 
   THE CADENCE IS THE PART @ci-run-time NEVER HAD TO ANSWER. A timed suite is measured by the run
   that is reconciling it, so the measurement is always this run's. A mutation sweep costs 8-12
@@ -133,7 +135,7 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
       And that row does not read its bar as a maximum
       And the JSON carries that bar with the comparison the obligation named, on the row's own entries
 
-  Rule: a mutation run posts the kills its mutants imply, as a whole number of mutants
+  Rule: a mutation run posts the score its mutants imply, as a percentage of the valid ones
 
     THE PRODUCER, BUILT THE WAY THE TIMING WRAPPER WAS. It is told which scenario and which check
     it is measuring, so the measurement arrives already citing; it posts beside whatever the run's
@@ -141,23 +143,33 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     back through the real reader, because a producer and a reader agreeing by inspection agree
     until one of them is edited.
 
-    THE UNIT CHANGES AND THE PRODUCER DOES NOT MOVE. It still reads the mutant statuses and still
-    refuses the report's own thresholds block; what it posts is now the DETECTED COUNT rather than
-    that count as a percentage of the valid ones. A percentage is two facts divided into one, and
-    the division is exactly what makes the ledger's row red when new mutable code arrives carrying
-    survivors. The kills alone carry only the fact the bar is about.
+    THE UNIT MOVES AND THE PRODUCER DOES NOT. It still reads the mutant statuses and still refuses
+    the report's own thresholds block; what it posts is that detected count as a PERCENTAGE of the
+    valid ones rather than the count itself. The count was right for a bar that was a banked kill
+    floor — a figure in the same unit, moving when a kill was lost. The bar is now the conventional
+    percentage the runner breaks on, and a count held against it reconciles satisfied at 807 and at
+    81 alike: a row that asks nothing of any suite, wearing the same green as one that does.
+
+    AND THE POPULATION IS THE BAR'S, WHICH IS THE HALF A REPORT CAN HIDE. The score is the detected
+    mutants over the VALID ones — the statuses a mutant could have been caught in — and the mutants
+    outside that population are outside it here too. A run in which nothing errored, nothing failed
+    to compile and nothing was ignored cannot tell that reading from one dividing by every mutant
+    the report mentions, so the scenario below plants all three and names the number the wrong
+    population produces. Two readers now settle this characteristic off one bar; they only agree
+    while they are dividing the same two facts.
 
     @integration @SCN-MUT-007
-    Scenario: the number posted is the detected mutants themselves, derived from the statuses and not read from the report's own thresholds block
+    Scenario: the number posted is the score the mutants' statuses imply, derived from them and never read from the report's own thresholds block
       Given a mutation run citing the scenario "SCN-MSD-001" on the check "mutation"
       And its mutants came back 7 killed and 2 timed out against 2 survived and 1 never covered
       And beside them 1 errored, 1 failed to compile and 2 were ignored, none of which the metric counts as valid
       And the report also carries a thresholds block of its own, naming numbers those mutants do not imply
-      When that run posts the kills it measured
+      When that run posts the score it measured
       Then the measurement it posted is read back as exactly one Evidence Observation citing "SCN-MSD-001" on the check "mutation"
-      And it carries 9, the detected mutants themselves
+      And it carries 75, those detected mutants as a percentage of the valid ones
       And it carries neither number the report's own thresholds block names
-      And it carries neither 75 nor any other reading of those mutants as a percentage
+      And it carries neither 56.25 nor any other reading that counted the invalid mutants in with the valid
+      And it carries neither 9 nor any other count of those mutants
 
     @integration @SCN-MUT-008
     Scenario Outline: a mutation run that produced no readable report posts no measurement, rather than a count of zero
@@ -240,24 +252,32 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
 
   Rule: spec-controller's own mutation gate is wired to one record, so its two readers cannot disagree
 
-    THE HONOUR-ARTEFACT LINK, MADE MECHANICAL. Two readers now consult this repository's record: the
-    ledger, for the bar it holds SCN-FIT-002 to, and the nightly's ratchet, for the verdict it ends
-    on. They agree because they read the same gate of the same file — and nothing but this scenario
-    stops a rename on one side from quietly making them two gates that agree until somebody edits
-    one. The report path is in the same knot: the ratchet reads a file the sweep writes, and a sweep
-    that moved its output would leave the gate reconciling a report nobody produces.
+    THE HONOUR-ARTEFACT LINK, MADE MECHANICAL. Two readers consult this repository's bar: the
+    ledger, which holds SCN-FIT-002's measured score to it, and the runner, which breaks on it. They
+    cannot disagree because there is only one of it — `package.json`'s SCN-FIT-002 row states the
+    integer and `stryker.config.mjs` reads THAT row rather than typing a copy beside it — and the
+    scenario below is what stops a rename on either side quietly turning one bar into two that agree
+    until somebody edits one.
 
-    FOUR ARTEFACTS STATE THAT ONE WORD, AND THE FOURTH IS THE ONE NOTHING WOULD CATCH. The producer
-    reads its report through a reader that takes a gate name, so it carries a spelling of its own —
-    and that spelling is unobservable today: the reader copies it into the measurement, the producer
-    takes only the counts back out, and a refusal names the path rather than the gate. A spelling
-    nothing reads is a spelling nothing can catch drifting, and the day something does read it the
-    disagreement is already there. So it is held to the same word rather than exempted for being
-    quiet.
+    IT USED TO KNOT FOUR ARTEFACTS AND IT NOW KNOTS TWO, WHICH IS THE RECORD LEAVING RATHER THAN THE
+    ARGUMENT WEAKENING (3F-3337). The four were the row, `quality-thresholds.yml`'s `domain` gate,
+    the nightly's ratchet verdict over that same gate, and the gate name the producer carried into
+    its own report read. All four stated one word, and the fourth was the one nothing would have
+    caught drifting. The banked record is deleted: the row now carries a percentage of its own, the
+    ratchet that reconciled against the record is gone, and the producer's gate name is a label on a
+    refusal rather than a term anything matches on. What is left is one integer with two readers,
+    which is the smallest shape this Rule can be true of.
 
     AND IT IS READ OFF THE REAL ARTEFACTS. Every Rule above decides over planted data, which is what
     lets those scenarios show a rule going wrong. This one is a claim about THIS repository's wiring,
     so a planted copy of that wiring would be a scenario about nothing.
+
+    @integration @SCN-MUT-022
+    Scenario: the runner's break threshold is SCN-FIT-002's own bar, read off the real artefacts rather than typed beside it
+      Given this repository's own ledger row for its mutation score
+      When the runner that sweeps it is asked what it breaks on
+      Then the bar it breaks on is that row's own
+      And the same runner over a row carrying a different bar breaks on that one instead
 
   Rule: spec-controller's own mutation kills are on the books
 
@@ -302,13 +322,17 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     Obligation, owed by a suite, that nothing here settles; the row would then be out-of-balance
     forever for naming evidence it never meant to claim.
 
-    THE BAR IS THE RECORD'S AND IT READS UPWARD. The row names the `domain` gate rather than a
-    figure, and `quality-thresholds.yml` states what that gate last banked. A number in a manifest
-    is a number somebody has to re-derive after every sweep that moves it, and the one this
-    repository carried went 7.7 points stale inside four days. Two bars for one characteristic is a
-    green build depending on two arbiters agreeing — and this is now one bar, read by both. It also
-    lives in exactly one KEY: `specController.thresholds` holds nothing for this scenario at all,
-    because the row is where a converted check says everything it says about itself.
+    THE BAR IS A CONVENTIONAL PERCENTAGE THE ROW STATES, AND IT STANDS STILL (3F-3334, 3F-3337).
+    The row used to name the `domain` gate of `quality-thresholds.yml` rather than a figure, and
+    that file stated what the gate last banked. Both are gone: a bar whose freshness depended on
+    somebody re-deriving it after every sweep is a bar maintained by memory, and the one this
+    repository carried went 7.7 points stale inside four days before a banked record replaced it and
+    then went blind by 113 kills. What the row holds now is an `atLeast` nobody has to re-bank, and
+    `stryker.config.mjs` reads that same integer for the threshold its sweep breaks on. Two bars for
+    one characteristic is a green build depending on two arbiters agreeing; one bar with two readers
+    cannot be. It also lives in exactly one KEY: `specController.thresholds` holds nothing for this
+    scenario at all, because the row is where a converted check says everything it says about
+    itself.
 
     AND THE KILLS SETTLING IT ARE LAST NIGHT'S, WHICH IS WRITTEN DOWN RATHER THAN GLOSSED OVER. The
     sweep costs 8-12 minutes against a 2-minute ladder, so it runs on a schedule and leaves what it
@@ -327,9 +351,9 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
 
   Rule: the measurement a push places is the newest sweep's, whatever verdict that sweep reached
 
-    THE RUN THAT FOUND THE FAULT WAS THE ONE RUN NOTHING PLACED FROM (3F-2947). The nightly ends
-    on the ratchet's verdict, so a night that loses a kill concludes `failure` — and the placement asked
-    for the newest SUCCESSFUL run, which is every night but that one. Inside the freshness window it
+    THE RUN THAT FOUND THE FAULT WAS THE ONE RUN NOTHING PLACED FROM (3F-2947). The nightly then
+    ended on a ratchet verdict, so a night that lost a kill concluded `failure` — and the placement
+    asked for the newest SUCCESSFUL run, which is every night but that one. Inside the freshness window it
     therefore reached back to the last GREEN nightly, placed ITS number, and SCN-FIT-002 reconciled
     satisfied: for up to thirty-six hours the ladder went green over a regression the sweep had
     already detected and already said out loud, in the one window where the gate this axis exists
@@ -345,12 +369,13 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     conclusion: a sweep still running has nothing to hand over yet, and a sweep that finished has,
     whatever the verdict that followed it said.
 
-    AND SELECTING THAT RUN IS HALF A CLAIM, WHICH IS WHY THE ORDER IS THE OTHER HALF. The regression's
-    number only crosses the boundary because the sweep leaves it behind BEFORE the ratchet step reds
-    the run — move the verdict ahead of the upload and the night that found the fault uploads nothing,
-    the row reads `missing`, and the fail-open closes into the mislabelled red this Rule also removes,
-    with every selection assertion still green. The workflow already defends that placement in prose,
-    and defends it for the OPERATOR'S REPORT; the ledger's measurement now depends on it too, so it is
+    AND SELECTING THAT RUN IS HALF A CLAIM, WHICH IS WHY THE ORDER IS THE OTHER HALF. A night's
+    number only crosses the boundary because the sweep leaves it behind before anything downstream of
+    it can red the run — put a step that can fail ahead of the upload and the night that found the
+    fault uploads nothing, the row reads `missing`, and the fail-open closes into the mislabelled red
+    this Rule also removes, with every selection assertion still green. The ratchet verdict that
+    prompted this is deleted (3F-3337) and the ordering rule outlived it: the workflow defends the
+    placement for the OPERATOR'S REPORT, and the ledger's measurement depends on it too, so it is
     held here rather than in a comment.
 
     AND THE PLACEMENT IS STILL NOT AN ARBITER, which is the part this leaves exactly as it was. Every

@@ -49,11 +49,20 @@ Feature: The fitness checks this repository configures, one scenario per row
   its command wrote down. Whether that number clears the bar is the ledger's sentence, never this
   file's — a scenario comparing its own measurement would be grading its own homework.
 
+  A BAR IS RAISED AS DELIBERATE PROCESS OPTIMISATION AND IS NEVER LOWERED BECAUSE A PUSH WENT RED.
+  Raising one because the suite has got stronger and should be held higher is a change of its own,
+  in its own commit, with its own reason. Lowering one because a PR went red is the gate certifying
+  the regression it exists to catch, and it is banned. Canon's rule is that a bar rises or holds and
+  never re-baselines down; a fixed bar obeys it by standing still, which is why it cannot go stale
+  in the direction that matters.
+
   READER-SHAPED ROWS RUN BEHIND THE PRODUCERS THEY READ, AND THAT IS LOAD-BEARING RATHER THAN
-  CONVENTIONAL. Three of these rows print a number an earlier step of the same run left behind — a
-  mutation sweep's record, each suite's own timing — so a pipeline that puts their steps ahead of
-  those producers meets absent artefacts and a wall of unsettled rows while doing exactly what it
-  was told.
+  CONVENTIONAL. Some of these rows print a number an earlier step of the same run left behind — a
+  mutation sweep's record, a recorded sweep put beside this push's own, each suite's own timing —
+  so a pipeline that puts their steps ahead of those producers meets absent artefacts and a wall of
+  unsettled rows while doing exactly what it was told. Which rows those are is read off the rows
+  themselves and is deliberately not counted here: a number in this prose is a second reading of
+  the manifest, kept in step by whoever remembers.
 
   @fitness @SCN-FIT-001
   Scenario: every function and module measures inside the external complexity standard, or inside its recorded exception
@@ -80,4 +89,7 @@ Feature: The fitness checks this repository configures, one scenario per row
   Scenario: the behavioural suite's wall-clock, for the ledger to hold against its ceiling
 
   @fitness @SCN-FIT-002
-  Scenario: the domain's mutation score, for the ledger to hold against its kill floor
+  Scenario: the domain's mutation score, for the ledger to hold against the break threshold its runner reads from the same row
+
+  @fitness @SCN-FIT-017
+  Scenario: no mutant the recorded sweep detected survives this push

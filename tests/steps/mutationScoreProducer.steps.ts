@@ -1,6 +1,6 @@
 /**
  * @integration for the producer Rule of features/mutation-score.feature — the mutation run that
- * posts the kills its mutants imply, as a whole number of mutants.
+ * posts the score its mutants imply, as a percentage of the valid ones.
  *
  * @SCN-MUT-007 / @SCN-MUT-008 — the bidirectional evidence markers (Evidence Manifesto §9), on
  * the step blocks that answer each. Their @unit pins live in
@@ -106,9 +106,9 @@ Given(
 Given(
   "its mutants came back {int} killed and {int} timed out against {int} survived and {int} never covered",
   function (killed: number, timedOut: number, survived: number, neverCovered: number) {
-    // Seven and two is nine detected, and every wrong reading of the same report is a different
-    // number — which is what makes the assertion below sharp rather than merely present. Read as a
-    // percentage of the twelve valid it is 75, which is the answer the producer used to post.
+    // Seven and two is nine detected over twelve valid, which is 75 — and every wrong reading of
+    // the same report is a different number, which is what makes the assertion below sharp rather
+    // than merely present. Nine on its own is the count this producer used to post.
     outcomes = {
       ...outcomes,
       Killed: killed,
@@ -123,10 +123,13 @@ Given(
 Given(
   "beside them {int} errored, {int} failed to compile and {int} were ignored, none of which the metric counts as valid",
   function (errored: number, failedToCompile: number, ignored: number) {
-    // The metric holds these outside `totalValid`, and a kill count is outside them twice over —
-    // none of them is detected and none of them is in the population. In the report they are
-    // indistinguishable from any other mutant, which is exactly why they are here: a producer
-    // counting every mutant it found as a percentage reads 56.25 off this same report.
+    // THE DENOMINATOR IS PINNED HERE OR IT IS PINNED NOWHERE. The metric holds these outside the
+    // valid population — nobody's assertion failed to catch a mutant that would not compile,
+    // because there was never anything there to catch — and in the report they are
+    // indistinguishable from any other mutant. On a report holding none of the three, dividing by
+    // the valid ones and dividing by every mutant found are the SAME number, and an arm built out
+    // of such a report would pass against either. With these four beside them the two readings are
+    // 75 and 56.25, and only one of them is the quantity the runner's own break threshold judges.
     outcomes = {
       ...outcomes,
       RuntimeError: errored,
@@ -140,7 +143,7 @@ Given(
 Given(
   "the report also carries a thresholds block of its own, naming numbers those mutants do not imply",
   function () {
-    // NINETY-FIVE AND NINETY, neither of which is 9. This is the whole construction of the
+    // NINETY-FIVE AND NINETY, neither of which is 75. This is the whole construction of the
     // scenario: a producer transcribing the runner's own verdict posts one of these and reds here,
     // and one that reads a report carrying no such block at all would never be caught by it.
     reportThresholds = { high: 95, low: 90 };
@@ -148,7 +151,7 @@ Given(
 );
 
 // @SCN-MUT-007
-When("that run posts the kills it measured", function () {
+When("that run posts the score it measured", function () {
   writeFileSync(
     path.join(plantedRoot, STAGED_REPORT),
     JSON.stringify(plantedReport()),
@@ -180,14 +183,17 @@ Then(
 );
 
 // @SCN-MUT-007
-Then("it carries {int}, the detected mutants themselves", function (kills: number) {
-  assert.equal(
-    posted()[0]!.measured,
-    kills,
-    `the measurement must be the kills its mutants imply; the run came back ` +
-      `${JSON.stringify(outcomes)} and posted ${posted()[0]!.measured}`,
-  );
-});
+Then(
+  "it carries {float}, those detected mutants as a percentage of the valid ones",
+  function (score: number) {
+    assert.equal(
+      posted()[0]!.measured,
+      score,
+      `the measurement must be the score its mutants imply; the run came back ` +
+        `${JSON.stringify(outcomes)} and posted ${posted()[0]!.measured}`,
+    );
+  },
+);
 
 // @SCN-MUT-007
 Then("it carries neither number the report's own thresholds block names", function () {
@@ -203,44 +209,103 @@ Then("it carries neither number the report's own thresholds block names", functi
   }
 });
 
-/**
- * Every reading of these mutants AS A PERCENTAGE — the answers a producer that still divided could
- * post off this one report.
- *
- * TWO NUMERATORS OVER THREE POPULATIONS, because a division is two choices and pinning only the
- * one the producer used to make would leave the step green against a producer that divided
- * differently. Kills are the detected or the killed alone; the population is the valid twelve,
- * every mutant found, or the valid ones a test reached.
- */
-function percentageReadingsOf(counts: Readonly<Record<string, number>>): number[] {
+/** The figures a set of mutant statuses implies, each named for the reading that takes it. */
+interface Tally {
+  /** Killed and timed out — the mutants the suite noticed. */
+  readonly detected: number;
+  /** Killed alone, which is detected minus the slower road to the same event. */
+  readonly killed: number;
+  /** Detected plus survived plus never-covered — the population the score divides by. */
+  readonly valid: number;
+  /** Every mutant the report mentions, the invalid ones included. */
+  readonly found: number;
+  /** The valid ones a test actually reached. */
+  readonly covered: number;
+  /** The valid ones the suite did not notice. */
+  readonly undetected: number;
+}
+
+function tallyOf(counts: Readonly<Record<string, number>>): Tally {
   const of = (status: string): number => counts[status] ?? 0;
   const detected = of("Killed") + of("Timeout");
   const valid = detected + of("Survived") + of("NoCoverage");
-  const found = Object.values(counts).reduce((running, count) => running + count, 0);
-  return [detected, of("Killed")].flatMap((kills) =>
-    [valid, found, valid - of("NoCoverage")].map((population) => (kills / population) * 100),
+  return {
+    detected,
+    killed: of("Killed"),
+    valid,
+    found: Object.values(counts).reduce((running, count) => running + count, 0),
+    covered: valid - of("NoCoverage"),
+    undetected: valid - detected,
+  };
+}
+
+/**
+ * Every percentage reachable off these mutants whose POPULATION is not the valid ones — the
+ * readings a producer dividing by the wrong denominator would post off this identical report.
+ *
+ * TWO NUMERATORS OVER THE TWO WRONG POPULATIONS, because a division is two choices and pinning
+ * only the one a careless producer is likeliest to make would leave the step green against a
+ * producer that got the other half wrong. The populations here are every mutant found — which
+ * counts the errored, the uncompilable and the ignored in with the valid — and the valid ones a
+ * test reached, which drops the never-covered that the metric exists to charge for.
+ */
+function readingsOverAWrongPopulation(counts: Readonly<Record<string, number>>): number[] {
+  const tally = tallyOf(counts);
+  return [tally.detected, tally.killed].flatMap((kills) =>
+    [tally.found, tally.covered].map((population) => (kills / population) * 100),
   );
+}
+
+/** Every whole number of mutants these statuses imply — the readings that are a count, not a score. */
+function countReadingsOf(counts: Readonly<Record<string, number>>): number[] {
+  const tally = tallyOf(counts);
+  return [tally.detected, tally.killed, tally.valid, tally.found, tally.covered, tally.undetected];
 }
 
 // @SCN-MUT-007
 Then(
-  "it carries neither {float} nor any other reading of those mutants as a percentage",
+  "it carries neither {float} nor any other reading that counted the invalid mutants in with the valid",
   function (named: number) {
-    const asPercentages = percentageReadingsOf(outcomes);
-    // THE NAMED ONE IS CHECKED TO STILL BE ONE OF THEM. The scenario names the answer this
-    // producer used to post; a derivation that stopped producing it would be a step that had
-    // quietly stopped covering the reading it was written for.
+    const overAWrongPopulation = readingsOverAWrongPopulation(outcomes);
+    // THE NAMED ONE IS CHECKED TO STILL BE ONE OF THEM, AND THAT CHECK IS THIS ARM'S CONTROL. The
+    // scenario names the number the wrong population produces off ITS fixture; a fixture that
+    // stopped planting an errored, an uncompilable or an ignored mutant would make the two
+    // divisions agree, and a step that only compared the posted number would go on passing while
+    // asserting nothing about the denominator. This reds instead, naming what the fixture lost.
     assert.ok(
-      asPercentages.includes(named),
-      `${named} must be one of the percentage readings of these mutants; they read ` +
-        `${JSON.stringify(asPercentages)}`,
+      overAWrongPopulation.includes(named),
+      `${named} must still be one of the readings these mutants give over a wrong population; ` +
+        `they read ${JSON.stringify(overAWrongPopulation)}. A fixture with no errored, ` +
+        "uncompilable or ignored mutant pins no denominator at all.",
     );
-    for (const reading of asPercentages) {
+    for (const reading of overAWrongPopulation) {
       assert.notEqual(
         posted()[0]!.measured,
         reading,
-        `the measurement must be a count of mutants, never those mutants read as a percentage; ` +
-          `it posted ${posted()[0]!.measured}, which is ${reading} read that way`,
+        `the score's population is the valid mutants, never every mutant the report mentions ` +
+          `nor the ones a test reached; it posted ${posted()[0]!.measured}, which is that ` +
+          "reading",
+      );
+    }
+  },
+);
+
+// @SCN-MUT-007
+Then(
+  "it carries neither {int} nor any other count of those mutants",
+  function (named: number) {
+    const asCounts = countReadingsOf(outcomes);
+    assert.ok(
+      asCounts.includes(named),
+      `${named} must be one of the counts these mutants give; they read ` +
+        `${JSON.stringify(asCounts)}`,
+    );
+    for (const reading of asCounts) {
+      assert.notEqual(
+        posted()[0]!.measured,
+        reading,
+        `the measurement must be a score, never a count of mutants; it posted ` +
+          `${posted()[0]!.measured}, which is that count`,
       );
     }
   },

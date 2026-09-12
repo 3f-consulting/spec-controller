@@ -62,16 +62,20 @@
  * `exports` with `publishConfig.exports` wholesale rather than merging them, unpublishing the
  * subpath and keeping the seam is one key.
  *
- * THE `./mutation-ratchet` DE-PUBLICATION (3F-2859). The ratchet is now a module this repository
- * keeps for its own gate, and each project owns its own no-regression gate — so nothing publishes
- * it: BOTH manifest maps went, not one. `publishedMapOf` prefers the publish-time map and falls
+ * THE `./mutation-ratchet` DE-PUBLICATION (3F-2859). Each project owns its own no-regression gate,
+ * so nothing publishes that subpath: BOTH manifest maps went, not one. `publishedMapOf` prefers the publish-time map and falls
  * back to the workspace map, so dropping only the publish-time key would have left the subpath
  * published through the fallback — the opposite of the `./internal` case above, where the
  * workspace key is what the in-repo importers need. Its in-repo importers went to relative paths
  * instead, which is the honest spelling once no consumer can write the specifier at all.
- * `reconcile.test.ts`'s `[SCN-RAT-014]` pin stays and is now the only written list over that
- * module's surface — no longer a second reading of a published one, so this registry's
- * independence argument no longer applies to it.
+ *
+ * AND SINCE 3F-3337 NO WRITTEN LIST STANDS OVER THAT BARREL AT ALL. `reconcile.test.ts` held the
+ * only one, and it left with the ratchet's own scenarios. What is behind the
+ * barrel now is the record reader the engine's `mutationGate` bar kind reaches and the report
+ * reader `pnpm mutation:score` reaches — two in-repo importers, both spelling a relative path, and
+ * no manifest key resolving there. A frozen list over a surface no consumer can name would make
+ * every refactor behind it a change to a contract nobody holds, which is the argument that stopped
+ * this registry standing over it in the first place.
  */
 
 import { existsSync, readdirSync, readFileSync } from "node:fs";
@@ -242,8 +246,8 @@ const TYPE_SURFACE_OPTIONS: ts.CompilerOptions = {
  *
  * WHY THIS CANNOT BE THE VALUE ARM WITH A DIFFERENT ARGUMENT. Types are erased, so the runtime
  * namespace `@SCN-API-004` reflects contains no trace of them; and the substitute this workspace
- * reached for instead — spelling each expected type into a typed literal, as `./mutation-ratchet`
- * does — answers only half the question. A type dropped or renamed stops that literal compiling; a
+ * reached for instead — spelling each expected type into a typed literal — answers only half the
+ * question. A type dropped or renamed stops that literal compiling; a
  * type ADDED reds nothing, because nothing references what nobody wrote. Asking the compiler for
  * the surface itself is what makes the addition visible.
  *

@@ -479,9 +479,8 @@ Then(
 // that resolver decided to pass on.
 //
 // AND THE RECORD GOES TO A TREE OUTSIDE THIS ONE. A record planted inside the working directory
-// cannot tell "the root you handed me" from "the root I assumed" — the term that fails in silence
-// (the same argument @SCN-RAT-014's arm records), and the one that would let this repository's own
-// record answer for a target that never wrote one.
+// cannot tell "the root you handed me" from "the root I assumed" — the term that fails in silence,
+// and the one that would let this repository's own record answer for a target that never wrote one.
 // ---------------------------------------------------------------------------
 
 /** Trees planted for this feature's record fixtures, removed when the scenario ends. */

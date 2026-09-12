@@ -1,6 +1,15 @@
 /**
  * A GATE'S RECORD — the pair of counts it last banked, and the allowance stated against them
- * (@SCN-RAT-001, 3F-2790).
+ * (@SCN-MUT-012, 3F-2790, 3F-3337).
+ *
+ * THE RATCHET THAT ONCE RECONCILED AGAINST THIS IS GONE; THE READER IS NOT (3F-3337). What reaches
+ * this module now is the engine's `mutationGate` bar kind, through `ingestQualityChecks.ts`: a
+ * target may author a fitness row whose bar names a gate rather than a figure, and the kill floor
+ * that gate's record implies is the bar the ledger then holds it to. That is a published
+ * capability, decided over a TARGET'S record, and this repository no longer keeps one of its own.
+ * @SCN-MUT-012 and @SCN-MUT-013 are what specify it — the second carrying, as its own Examples,
+ * the record that holds no gate of that name, the record that is not there to be read and the
+ * record holding text nothing can read as a record.
  *
  * THE RECORD IS TWO COUNTS, NEVER A BARE SCORE, and that is the load-bearing choice this whole
  * module exists to make possible. A mutation score is detected over total, so it falls for two
@@ -21,7 +30,7 @@
  * measured nothing read as scoring zero, an allowance nobody justified read as justified. The bar
  * is then enforced as though somebody had written it, and the only symptom is a build that has
  * quietly stopped being able to red. So each one is refused by name, and the refusal says which
- * record it read and where in that record the fault is (@SCN-RAT-002, 3F-2792).
+ * record it read and where in that record the fault is (@SCN-MUT-013, 3F-2792).
  *
  * IT IS NOT A STATIC CHECK, and takes no `static-check:` prefix. A static check is a pure function
  * of the checked-out tree; the record this reads feeds a reconciler that judges a MEASUREMENT,
@@ -30,6 +39,20 @@
  */
 
 import { parse } from "yaml";
+
+/**
+ * The name a record is filed under when its caller does not choose one.
+ *
+ * A DEFAULT, NEVER A CONSTANT THE READER GOES LOOKING FOR. Which file holds a project's bars is
+ * that project's own fact, and a caller naming its own is answered by that name — this is only
+ * what stands in when none is given, and it is exported so a caller happy with the convention does
+ * not have to respell it and get one character of it wrong.
+ *
+ * IT MOVED HERE FROM `reconcile.ts` WHEN THE RATCHET LEFT (3F-3337), unchanged. The entry that used
+ * to sit beside it reconciled a gate against this record; what is left reading a record is this
+ * module, so the default name sits with the reader that defaults to it.
+ */
+export const RECORD_FILE = "quality-thresholds.yml";
 
 /**
  * The section of a record file that holds every gate's counts.
@@ -43,7 +66,7 @@ import { parse } from "yaml";
  * asks of it is one section, under one name, so a project can file its mutation bars beside the
  * rest of its policy rather than in a file of their own.
  */
-export const MUTATION_GATES = "mutation-gates";
+const MUTATION_GATES = "mutation-gates";
 
 /**
  * The document itself, when the fault is above any one gate — a record whose top level is not a
@@ -69,7 +92,7 @@ const WHOLE_SECTION = "<section>";
  * asked to raise a gate no block is written for, and a refusal a reader has to recognise in two
  * spellings is one they will eventually parse wrongly.
  */
-export const WHOLE_GATE = "<gate>";
+const WHOLE_GATE = "<gate>";
 
 /**
  * Raised when a record cannot be read as a bar.
@@ -129,50 +152,8 @@ export interface GateRecord {
 }
 
 /** A mutation score, as a percentage, computed from counts rather than read off a report. */
-export function scoreOf(detected: number, total: number): number {
+function scoreOf(detected: number, total: number): number {
   return (detected / total) * 100;
-}
-
-/** A percentage, at the one precision every figure in this library is stated to. */
-export function pct(value: number): string {
-  return value.toFixed(4);
-}
-
-/**
- * `detected/total (score%)` — the one shape every count pair in this library is stated in.
- *
- * BOTH HALVES, ALWAYS, AND THE SCORE BESIDE THEM. A message naming only the figure that moved
- * leaves its reader unable to see WHICH of the two moved, which is the single distinction this
- * library exists to make.
- *
- * IT LIVES HERE, BESIDE THE COUNTS, BECAUSE TWO READERS STATE IT. The reconciler prints it in every
- * verdict and the recorder prints it in its refusal, and one sentence spelled twice is the
- * agreeing-until-somebody-edits-one shape this library was built to remove.
- */
-export function counts(detected: number, total: number): string {
-  return `${detected}/${total} (${pct(scoreOf(detected, total))}%)`;
-}
-
-/**
- * Whether one pair of counts scores strictly ABOVE another.
- *
- * CROSS-MULTIPLIED RATHER THAN DIVIDED, so the comparison is exact. Two scores equal as ratios can
- * differ in their last bit once each has been through a division, and a pair that did not move would
- * then read as one that did. The counts are whole and small enough that the products are exact.
- *
- * ONE FUNCTION READ BOTH WAYS ROUND, WHICH IS WHAT LEAVES EQUAL UNCLAIMED. Above and below are the
- * same two products with the arguments swapped, so no run can be claimed by both, and — the case
- * that matters — none can be claimed by neither. Two comparisons reached by different arithmetic
- * could each answer `false` for a run that is genuinely one or the other, and the run would fall out
- * of every reader here at once.
- */
-export function scoreRoseOver(
-  detected: number,
-  total: number,
-  overDetected: number,
-  overTotal: number,
-): boolean {
-  return detected * overTotal > overDetected * total;
 }
 
 /**
@@ -212,11 +193,6 @@ export function floorOf(record: GateRecord): number {
  */
 export function killFloorOf(record: GateRecord): number {
   return record.detected - record.allowance.mutants;
-}
-
-/** The score the record itself states — what the ratchet raises and the verdict compares against. */
-export function recordedScoreOf(record: GateRecord): number {
-  return scoreOf(record.detected, record.total);
 }
 
 /**
@@ -416,7 +392,7 @@ export function parseGateRecords(text: string, recordFile: string): Map<string, 
  * This one is a record that reads perfectly, asked for a gate it never held — a gate name mistyped
  * where the caller states it. The lenient answer is not a wrong bar but NO bar, which reads
  * downstream as a gate with nothing to enforce, and it greens for as long as the typo survives.
- * Nothing about the record is wrong, so nobody is ever sent to look at it (@SCN-RAT-003, 3F-2793).
+ * Nothing about the record is wrong, so nobody is ever sent to look at it (@SCN-MUT-013, 3F-2793).
  *
  * AND THE REFUSAL LISTS THE GATES THE RECORD DOES HOLD. A record's gates are near-neighbours by
  * construction — a project names them after the scopes it is quarantining from each other — so a

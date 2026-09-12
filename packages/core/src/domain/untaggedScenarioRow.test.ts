@@ -20,8 +20,8 @@
  *
  * It matters because @SCN-LDG-023's Gherkin is exclusively about evidence OBLIGATIONS posting to
  * their account keyed by quality-check. A row's credits and its Pending Items are neither, so an
- * arm asserting them under that id would assert more than its scenario says — the @SCN-RAT-014
- * fault (3F-2841). @SCN-LDG-021 IS the row: *"the untagged scenario has its own out-of-balance
+ * arm asserting them under that id would assert more than its scenario says — the fault 3F-2841
+ * named, where a @unit arm quietly held a manifest assertion its scenario's text never mentioned. @SCN-LDG-021 IS the row: *"the untagged scenario has its own out-of-balance
  * row, reconciling no-scn-code"*. Both claims below say that row is EXACTLY that and nothing more.
  *
  * WHAT THE TWO CLAIMS REST ON. An untagged scenario reaches the ledger by NAME and carries no

@@ -3,7 +3,7 @@
  * the stryker exclusion covers exactly it. `@unit`-only; the describe string carries the id, so a
  * grep of @SCN-MSG-002 returns both halves of the pair (Evidence Manifesto §9).
  *
- * ONE ARM, OVER THE REAL ARTEFACTS. It is the only place either `stryker.config.json` or the
+ * ONE ARM, OVER THE REAL ARTEFACTS. It is the only place either `stryker.config.mjs` or the
  * catalogue is compared to anything: no mutant is raised over the catalogue — that is what the
  * exclusion does — and @SCN-MSG-001's arm reads no message at all by its own ruling, so the
  * totality-and-parameters half belongs beside the exclusion that makes it necessary rather than in
@@ -18,9 +18,9 @@
  * over RENDERER FUNCTIONS, so every entry is truthy and only a call can judge one.
  */
 
-import { readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { describe, it, expect } from "vitest";
 
 import {
@@ -32,8 +32,8 @@ import { checkMutateSurface, mutateGlobOf } from "./mutateExclusion.js";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
-/** The real config this guard is about — read from disk, never a copy of it written here. */
-const STRYKER_CONFIG = "stryker.config.json";
+/** The real config this guard is about — loaded from disk, never a copy of it written here. */
+const STRYKER_CONFIG = "stryker.config.mjs";
 
 /**
  * One sample fault per code, keyed the same way the catalogue is, so a future fault arrives with its
@@ -75,12 +75,20 @@ const FAULT_CODES = Object.values(QualityCheckFaultCode).filter(
 const SAMPLES: readonly QualityCheckFault[] = Object.values(SAMPLE_FAULTS);
 
 describe("[SCN-MSG-002] the catalogue is total over the fault codes with no empty entry, and the stryker exclusion covers exactly it", () => {
-  it("holds the REAL stryker config to the sanction list, and the REAL catalogue to every fault code", () => {
+  it("holds the REAL stryker config to the sanction list, and the REAL catalogue to every fault code", async () => {
+    // LOADED THE WAY THE RUNNER LOADS IT, AND ITS PRESENCE ASSERTED FIRST. A `.mjs` config is a
+    // module, so the read is an import, and an import of a file that is not there fails deep inside
+    // a loader naming a specifier rather than the artefact this guard is about. The presence line
+    // is what turns that into the sentence a reader needs.
+    const configPath = path.join(repoRoot, STRYKER_CONFIG);
+    expect(existsSync(configPath)).toBe(true);
+    const loaded = (await import(pathToFileURL(configPath).href)) as { default?: unknown };
+
     // The dogfood green, read back off disk. This is the assertion that stops the exclusion being
     // a hole: a later edit widening it to a directory reds HERE, not on a reviewer noticing that a
-    // mutation score improved for a reason nobody stated. The floor is the parser's live substitute
+    // mutation score improved for a reason nobody stated. The floor is the reader's live substitute
     // — a `mutate` key read as `[]` rather than refused arrives here as a glob of length zero.
-    const glob = mutateGlobOf(readFileSync(path.join(repoRoot, STRYKER_CONFIG), "utf8"));
+    const glob = mutateGlobOf(loaded.default);
     expect(glob.length).toBeGreaterThan(0);
     expect(checkMutateSurface(glob)).toEqual([]);
 

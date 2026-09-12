@@ -93,9 +93,9 @@ export function resolveCheckRegistry(packageJson: {
 /**
  * A bar naming a mutation gate rather than a figure.
  *
- * THE RECORD'S NAME MAY BE STATED AND OTHERWISE DEFAULTS, which is `ratchetCli`'s asymmetry applied
- * unchanged and for its reason: the record's name belongs to whoever owns the record, so the
- * conventional one stands in and a project filing its bars elsewhere writes it over.
+ * THE RECORD'S NAME MAY BE STATED AND OTHERWISE DEFAULTS, and the reason is whose the name is: the
+ * record belongs to whoever owns the record, so the conventional one stands in and a project filing
+ * its bars elsewhere writes it over.
  */
 export interface MutationGateReference {
   readonly mutationGate: string;
