@@ -31,7 +31,7 @@ converted.
 
 ## The scenario is the registry
 
-A scheduled check is not a new kind of thing. It is a **stepless `@fitness`
+A scheduled check is not a new kind of thing. It is a **`@fitness`
 scenario** whose bar lives on its row of `specController.fitnessChecks`, exactly
 like every other measured check. The only difference is cadence: the measurement
 arrives from last night's run rather than from this one's. The scenario and the

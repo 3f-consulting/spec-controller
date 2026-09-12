@@ -24,7 +24,7 @@ you author for it, and what `balance` can say back, depends on which state you a
 | -- | -- | -- |
 | **`new-client`** | nothing | every check your pipeline ran, and that not one of them is demanded — each credit posts to the **suspense** row, `cites-no-scenario` |
 | **`annotated`** | an `@SCN` on the check's CI step, as the step's `id:` | the same list, now attributed: this credit came from that check. Each posts to a **phantom** row, `cites-unknown-scenario` — nothing yet demands it |
-| **`conformant`** | a stepless scenario carrying that `@SCN`, tagged `@fitness` exactly as you tag one `@unit` | a reconciliation: what was owed, what ran, and every disagreement named |
+| **`conformant`** | the same id on the CI step, **plus a scenario** carrying that `@SCN`, tagged `@fitness` and written exactly as you write one tagged `@unit` | a reconciliation: what was owed, what ran, and every disagreement named |
 
 **`new-client` costs you nothing and is not a crippled demo.** It genuinely cannot reconcile, because
 nothing was declared, so nothing can be owed — and saying that out loud rather than reporting silence
@@ -33,9 +33,15 @@ is the whole point of the tool.
 **`annotated` costs minutes.** The command does not change; you add an id.
 
 **`conformant` is where reconciliation happens**, and it is the only state in which you write a
-scenario. The runner there is Cucumber: your check's command moves into a step definition, CI
-launches Cucumber filtered by `@fitness`, and the pass produces the evidence carrying the right
-`@SCN`. Getting there from `annotated` is either your own work or `migrate`'s.
+scenario. **Your pipeline does not change to get here.** The command is the same, in the same step,
+carrying the same id; what changes is that the `@SCN` now names a scenario that exists, so something
+demands the credit your check was already producing. The phantom becomes real.
+
+**You write the scenario exactly as you write a `@unit` one** — steps, and a tag naming its axis.
+Its steps do not run, in the same way a `@unit` scenario's steps do not: Cucumber is filtered on
+`@integration`, `@e2e` and `@performance`, so it selects neither. The steps are the specification;
+the runner your CI already calls is what produces the evidence. Getting here from `annotated` is
+either your own work or `migrate`'s.
 
 **The row of `specController.fitnessChecks`** — `scn`, `characteristic`, `command`, and
 `atLeast` / `atMost` where the check produces a number — carries what is measured and against what
@@ -178,8 +184,8 @@ same way whatever it builds.
 ## No step definitions at all, however many checks convert
 
 A converted check's row carries its `@SCN`, its characteristic and its command. Nothing that varies
-between two checks is in the corpus, and nothing that is *common* to them is either — a fitness
-scenario is **stepless**, and this product runs no check on its behalf:
+between two checks is in the corpus, and nothing that is *common* to them is either — this product
+runs no check on your behalf and binds nothing to your scenario's steps:
 
 | the row | how its credit arrives | what is asserted |
 |---|---|---|

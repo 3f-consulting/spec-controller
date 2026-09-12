@@ -68,8 +68,8 @@ and in a major version — a promise is not withdrawn by a delivery landing.
 ### `specController.checkRegistry` — both spellings
 
 **Supported.** It routes a static check's credit to the scenario it discharges, and it works in
-`0.1.0-alpha.1`. It **stops being necessary** for any check you convert to a Cucumber-run fitness
-scenario, because a converted check's credit arrives already citing its `@SCN` and the registry has
+`0.1.0-alpha.1`. It **stops being necessary** for any check you convert to a fitness
+scenario of its own, because a converted check's credit arrives already citing its `@SCN` and the registry has
 nothing left to join. It is **removed only in a major version**, and a corpus that never converts
 keeps it and keeps working.
 
@@ -98,7 +98,7 @@ our codes, that citation is held to our corpus by a check that runs on every pus
 **Why it exists, so that its ending is legible rather than arbitrary.** A static check's run reaches
 the reconciliation as an anonymous script handle — `lint:complexity` — and nothing in that handle
 says which scenario the run credits. The registry is what says so. When a check becomes a fitness
-scenario that Cucumber runs, its credit arrives already carrying its `@SCN`, the handle leaves the
+scenario of its own, its credit arrives already carrying its `@SCN`, the handle leaves the
 reconciliation, and the entry has nothing left to carry. **The entry is then deleted as a
 consequence of converting, never as a migration of its own.** There is no step at which you are
 asked to stop doing the thing you were told to do.
@@ -195,9 +195,10 @@ of its script name; this is for the check nobody named.
 **Supported.** A scenario carrying a bare characteristic tag your configuration recognises —
 `@complexity`, `@typecheck`, `@vocab` from the check registry; `@ci-run-time` and its family from
 the thresholds block — raises exactly one evidence obligation for that characteristic, **whether or
-not the scenario carries steps.** A stepless fitness scenario is the
-common shape and stays fully supported; a stepped one raises the same obligation, so giving a fitness
-check a runnable example does not silently drop the characteristic the scenario was written to hold.
+not the scenario carries steps.** A fitness scenario with steps is the
+shape to write, matching every other scenario in your corpus; a stepless one raises the same
+obligation and stays fully supported, so neither shape silently drops the characteristic the scenario
+was written to hold.
 
 **Nothing is pending against this** — it is the direction the other entries move toward, not away
 from. It is **removed only in a major version.**
