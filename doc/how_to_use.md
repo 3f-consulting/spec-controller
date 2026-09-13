@@ -30,12 +30,16 @@ A **fitness check** is a whole-system characteristic — complexity, mutation sc
 soundness, vocabulary, suite run time. Declaring one takes four things, and **none of them is a
 cucumber step definition**. There is no fitness profile to configure and no step to write.
 
-**1. A scenario, tagged `@fitness`, carrying an `@SCN`.** It has no steps — the check is the
-command, not a walk-through:
+**1. A scenario, tagged `@fitness`, carrying an `@SCN`.** You write it exactly as you write a
+`@unit` one — steps, and a tag naming its axis. Its steps are the specification; the command your
+CI already runs is the evidence, and nothing here runs the steps:
 
 ```gherkin
     @fitness @SCN-FIT-001
     Scenario: no module exceeds the complexity bar
+      Given the modules of this repository
+      When each is measured against the complexity bar
+      Then no module exceeds it
 ```
 
 **2. A row in your `package.json`, under `specController.fitnessChecks`.** The row names the

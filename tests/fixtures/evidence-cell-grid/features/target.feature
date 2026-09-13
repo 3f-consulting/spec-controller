@@ -31,8 +31,9 @@ Feature: an evidence-cell-grid fixture target spanning every four-way cell case
 
   Rule: the fixture target spans every cell case
 
-    # STEPLESS, so the bare check raises its fitness obligation (@SCN-LNT-006); the runtime tier
-    # rides alongside, which is the only shape a two-axis row can be read from (@SCN-LNT-004).
+    # STEPLESS, and the bare check raises its fitness obligation off that tag rather than off the
+    # shape (@SCN-LNT-006); the runtime tier rides alongside, making this a two-axis row
+    # (@SCN-LNT-004).
     @unit @cell-grid @SCN-CEL-001
     Scenario: a named, met obligation at unit and lint
 

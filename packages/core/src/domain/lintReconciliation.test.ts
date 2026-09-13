@@ -563,8 +563,8 @@ describe("[SCN-LNT-009] a fitness credit citing an @SCN no scenario carries post
  * the SAME row, which is precisely the arrangement in which a reconciler answering an obligation by
  * the row it sits on, rather than by what it owes, would collapse them.
  *
- * THE FIXTURE IS STEPLESS, and it has to be: a bare check tag on a STEPPED scenario raises no
- * obligation at all (@SCN-LNT-006), so this is the only shape a two-axis row can be READ from.
+ * THE FIXTURE IS STEPLESS, and that is how it is written rather than what the reader requires: a
+ * bare check tag raises its obligation from the row that carries it, steps or none (@SCN-LNT-006).
  * That is not an endorsement of mixed tagging — whether a behavioural scenario may carry a fitness
  * tag is @SCN-STG-005's question — it is what the corpus reader admits.
  *

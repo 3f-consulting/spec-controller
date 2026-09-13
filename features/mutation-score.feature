@@ -295,7 +295,7 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     threshold had nothing to exemplify, so the measured run itself was the whole observation. Now
     the tag names only the AXIS and the characteristic has moved into a configured row of
     `specController.fitnessChecks`. The sentence its scenario carries is not an example of a
-    threshold; the scenario is stepless, and its evidence is the row's command writing its number
+    threshold; its evidence is the row's command writing its number
     into the run's record — the evidence this scenario always rested on, arriving from a step the
     run's own record enumerates rather than from a wrapper nothing enumerated.
 

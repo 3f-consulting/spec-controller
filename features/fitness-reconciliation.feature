@@ -8,11 +8,12 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
   which bar it is held to are fields of its row in `specController.fitnessChecks`, read by the
   ledger.
 
-  A FITNESS SCENARIO IS STEPLESS, AND THAT IS THE RULE RATHER THAN A HABIT. It is a DECLARED
-  OBLIGATION rather than a test, and nothing runs it. A `Then` line would make it try to be BOTH
-  SIDES OF THE ENTRY — raising the obligation and answering it — which is the one thing double
-  entry cannot allow. A characteristic a scenario was written to hold is one it holds because the
-  scenario says so, never because somebody gave it a runnable example.
+  A FITNESS SCENARIO IS A DECLARED OBLIGATION RATHER THAN A TEST, AND NOTHING RUNS IT. It is
+  authored like every other scenario in this corpus, steps and all, and what keeps it off the
+  runners is its TAG rather than its shape. What a step may not do is GRADE THE RUN: "Then the
+  check passes" would have one row raise the obligation and answer it — BOTH SIDES OF THE ENTRY,
+  which is the one thing double entry cannot allow. A characteristic a scenario was written to hold
+  is one it holds because the scenario says so, never because somebody gave it a runnable example.
 
   ONE POSTING RULE, over both axes, and the credit's citation is ONE HOP. The check's step in the
   CI config carries its row's @SCN as the step's `id:`; the run's own record says what that step
@@ -92,12 +93,11 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     row with the bare check it runs — and the reader honours it for as long as a consumer
     reconciles through it.
 
-    A FITNESS SCENARIO IS STEPLESS, AND THE ROW BELOW IS WRITTEN THAT WAY BECAUSE THAT IS THE
-    RULE. It is a DECLARED OBLIGATION rather than a test and nothing runs it, so there is nothing
-    for a step to exemplify, and a `Then` line would have one row raise the obligation and answer
-    it. A stepped row carrying a registered check is a corpus defect rather than a second legal
-    shape, so nothing here is read over one: the stepless row is the only shape a fitness scenario
-    has, and it is what this rule is asserted on.
+    THE ROW BELOW IS STEPLESS, AND THAT IS A FACT ABOUT THIS FIXTURE RATHER THAN ABOUT THE RULE.
+    The obligation follows the TAG and never the shape (3F-3115), so a stepped row carrying a
+    registered check owes that check exactly as this one does. The fixture is written the shorter
+    way because the tag is the whole of what is read here, and what is asserted is which SIGNAL the
+    obligation follows — over the smallest row that carries it.
 
     WHETHER ONE SCENARIO MAY CARRY BOTH KINDS OF TAG IS STILL NOT SETTLED HERE. A row carrying a
     tier tag and a check tag together is a corpus defect, and reading the corpus's shape belongs
@@ -172,8 +172,9 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     corpus could name spec-controller's own check at all — so the repository's obligation and
     this scenario's subject matter shared one tag line, and the row that proved the POSTING
     RULE also stood as the row the real run posted to. 3F-2589 separated them: what the real
-    check owes is raised by the stepless fitness scenario at the foot of this file, and what
-    is proven here is the rule itself, over fixture data.
+    check owes is raised by this repository's own `@fitness` scenario for it, authored in
+    features/fitness-checks.feature beside its row, and what is proven here is the rule itself,
+    over fixture data.
 
     @unit @integration @SCN-LNT-001
     Scenario: a fitness check wired into CI posts one observation citing its scenario and reconciles satisfied
@@ -308,11 +309,11 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       one below, and one this scenario catches.
 
       THE SHAPE RULE IS NOT THIS SCENARIO'S. Whether one scenario may carry a tier tag and a
-      fitness tag together is @SCN-STG-005's question; the fixture below carries both because it
-      is the only shape a TWO-AXIS row can be read from at all, and it is stepless because that is
-      what a fitness scenario ordinarily is — not because the obligation rule reads the shape,
-      which it no longer does (@SCN-LNT-006). What is settled here is only that the reconciler
-      answers each obligation a row raises on its own axis.
+      fitness tag together is @SCN-STG-005's question; the fixture below carries both because a
+      TWO-AXIS row is what this reads, and it is stepless because that is how this fixture is
+      written — not because the obligation rule reads the shape, which it does not
+      (@SCN-LNT-006). What is settled here is only that the reconciler answers each obligation a
+      row raises on its own axis.
 
       Given "lint:unwired-check" is registered as the fitness check "unwired-check"
       And a stepless scenario carries the bare check "unwired-check" and also requires a unit test
@@ -344,7 +345,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       somewhere and enforced nowhere is precisely the fact that has to survive the boundary.
 
       Given an external target whose package.json registers "lint:vocab-check" as the fitness check "vocab-check"
-      And that target's corpus carries a stepless fitness scenario tagged with the bare check "vocab-check"
+      And that target's corpus carries a fitness scenario tagged with the bare check "vocab-check"
       And that target's package.json defines the script "lint:vocab-check" while its CI config does not run it
       And spec-controller's own package.json defines no such script and registers no such check
       When the reconciler runs against that external target
@@ -486,9 +487,8 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     read here. A registered bare check owes its check from the row that carries it (@SCN-LNT-006),
     and @lint is the tag a reader is likeliest to special-case: excused the rule because of what it
     used to name, or handed a built-in standing the registry never gave it. Both readings are held
-    over the ONE shape a fitness scenario has — the stepless row, which is what it is because the
-    scenario is a declared obligation and nothing runs it — so the company that tells a peer from a
-    catch-all is read there, which is the only place there is to read it.
+    over the row that carries the tag, whatever shape that row is written in — so the company that
+    tells a peer from a catch-all is read there, which is the only place there is to read it.
 
     @unit @integration @SCN-LNT-010
     Scenario: a scenario tagged bare @lint raises the style-lint Evidence Obligation

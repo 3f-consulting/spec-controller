@@ -726,9 +726,10 @@ describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single qualit
     "@RMD",
     "Feature: fixture",
     "  Rule: a fixture rule",
-    // STEPLESS, carrying a runtime tier AND a registered bare check: the only shape a TWO-AXIS
-    // row can be read from now (@SCN-LNT-004). A fitness obligation is raised off steplessness
-    // (@SCN-LNT-006) and the retired `@lint=<handle>` rider this fixture used to carry raises
+    // STEPLESS, carrying a runtime tier AND a registered bare check — the TWO-AXIS row this
+    // sub-row is read from (@SCN-LNT-004). The fitness obligation is raised off the registered
+    // bare TAG and never off the shape (@SCN-LNT-006), and the retired `@lint=<handle>` rider
+    // this fixture used to carry raises
     // nothing at all (@SCN-LNT-007), so it can no longer produce the lint sub-row under test.
     "    @unit @x @SCN-RMD-008",
     "    Scenario: a fixture scenario",

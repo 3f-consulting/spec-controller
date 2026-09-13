@@ -10,7 +10,7 @@
  * entry lands on. (3F-2202 — extracted from the `reconcile` fold, which decided this inline.)
  *
  * ONE CLAUSE, OVER BOTH AXES (3F-2590). THE CREDIT CITES. A test carries `@SCN-XXX`; a fitness
- * check's run carries the `@SCN` of the stepless fitness scenario that raises its obligation. So
+ * check's run carries the `@SCN` of the fitness scenario that raises its obligation. So
  * one credit names one scenario and posts to EXACTLY ONE row, and a credit posting to no real
  * scenario is PHANTOM (its `@SCN` matches no scenario) or SUSPENSE (it cites nothing).
  *

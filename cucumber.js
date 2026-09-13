@@ -13,10 +13,10 @@
 // the pass that manufactured a second evidence stream is deleted rather than kept as a second
 // supported route — nothing here runs a check any more.
 //
-// THE `@fitness` SCENARIOS ARE UNAFFECTED AND STAY STEPLESS. They never carried a tier tag, so the
-// filter below never selected them and still does not; what they lost is the one `Then` line
-// cucumber bound, which is what canon said a fitness scenario was all along — a characteristic and
-// a threshold, obligation only.
+// THE `@fitness` SCENARIOS ARE UNAFFECTED, AND WHAT KEEPS THEM OFF THIS PROFILE IS THEIR TAG. They
+// never carried a tier tag, so the filter below never selected them and still does not — the same
+// arrangement `@unit` already has with vitest. They are authored like every other scenario in this
+// corpus, steps and all (3F-3368): the steps are the specification, and nothing here runs them.
 
 // The canonical evidence-layer tag filter: Cucumber runs the
 // @integration / @e2e / @performance scenarios; @unit-only scenarios reconcile

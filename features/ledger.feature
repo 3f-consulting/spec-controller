@@ -447,7 +447,7 @@ Feature: Ledger over obligation-vs-observation evidence
   # cites, and the universal had to be weakened to the weaker of the two.
   #
   # Under the one posting rule BOTH axes cite: a fitness check's run carries the @SCN of the
-  # stepless fitness scenario that raises its obligation, so it names one row exactly as a test
+  # fitness scenario that raises its obligation, so it names one row exactly as a test
   # does. EXACTLY ONE IS NOW TRUE UNIVERSALLY, and it is a stronger claim than the one it replaces —
   # "at least one" is silent about a double-post, and a double-post is a second copy of the same
   # fact. (Neither half of the retired route survives: 3F-2590 removed `domain/posting.ts`'s

@@ -228,7 +228,7 @@ Given(
 // @SCN-LNT-016
 // @SCN-LNT-017
 Given("a stepless fitness scenario carries the bare check {string}", function (check: string) {
-  // NO steps — the fitness shape. The corpus is the second hop of the citation seam, so the
+  // NO steps — how this fixture is written, not what the rule reads. The corpus is the second hop of the citation seam, so the
   // scenario that CARRIES the check is the one the run will come to cite.
   fitnessCorpus = [
     "@LNT",
@@ -550,9 +550,9 @@ Given(
     // registered check tag — so the reconciler meets a row owing evidence on both.
     //
     // The shape below is not an endorsement of mixed tagging — whether one scenario may carry a
-    // tier tag and a fitness tag together is @SCN-STG-005's question — it is the only shape from
-    // which a two-axis row can be read at all. It is stepless because a fitness scenario ordinarily
-    // is, not because the obligation rule reads the shape: it no longer does (@SCN-LNT-006).
+    // tier tag and a fitness tag together is @SCN-STG-005's question — what is read here is a
+    // two-axis row. It is stepless because that is how this fixture is written, not because the
+    // obligation rule reads the shape: it does not (@SCN-LNT-006).
     fitnessCorpus = [
       "@LNT",
       "Feature: fixture",
@@ -625,7 +625,7 @@ Given(
 Given(
   "a stepless scenario tagged with the bare fitness check {string}",
   function (check: string) {
-    // NO steps — the shape a fitness scenario HAS, because it is a declared obligation, nothing
+    // NO steps — how this fixture is written; the tag is what the rule reads, nothing
     // runs it, and there is nothing for a step to exemplify. Both callers read this ONE row and
     // nothing else: it is the only shape there is to read the rule on.
     corpusSource = [
@@ -849,8 +849,8 @@ Then(
     // under another name, on a second row, or not at all. A `.length === 1` on scenario zero would
     // pass all but the last.
     //
-    // ONE ROW, AND IT IS STEPLESS, because that is the only shape a fitness scenario has: it is a
-    // declared obligation and nothing runs it. The arm that stood beside this one read a STEPPED
+    // ONE ROW, AND IT IS STEPLESS, which is how this fixture is written rather than what the rule
+    // requires — the tag raises the obligation, steps or none. The arm that stood beside this one read a STEPPED
     // row and asserted the shape made no difference — which certified the retired ruling whichever
     // way it pointed, so it is gone rather than inverted.
     assert.deepEqual(
@@ -892,19 +892,18 @@ Given(
 
 // @SCN-LNT-005
 Given(
-  "that target's corpus carries a stepless fitness scenario tagged with the bare check {string}",
+  "that target's corpus carries a fitness scenario tagged with the bare check {string}",
   function (check: string) {
     // Read through the engine's own corpus reader rather than a regex over the fixture: a second
-    // opinion about a scenario's shape is exactly the disagreement `parseTaggedScenarios` was
-    // extracted to prevent. Steplessness is asserted as a fact about THIS fixture — the external
-    // target's row is written the ordinary way — not as what makes it a fitness scenario, which is
-    // its registered bare check tag and nothing else (@SCN-LNT-006).
+    // opinion about which scenario a tag sits on is exactly the disagreement `parseTaggedScenarios`
+    // was extracted to prevent. The registered bare check tag and nothing else is what makes the row
+    // a fitness scenario (@SCN-LNT-006), so that tag is the whole filter.
     const source = readFileSync(join(externalOpts.features, "target.feature"), "utf8");
-    const fitness = parseTaggedScenarios(source).filter((s) => s.stepless && s.tags.includes(check));
+    const fitness = parseTaggedScenarios(source).filter((s) => s.tags.includes(check));
     assert.deepEqual(
       fitness.map((s) => s.scnId),
       ["SCN-EXT-001"],
-      `expected the external corpus to carry one stepless scenario tagged "${check}"`
+      `expected the external corpus to carry one scenario tagged "${check}"`
     );
   }
 );

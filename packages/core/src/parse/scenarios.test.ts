@@ -717,7 +717,8 @@ Feature: alpha
 
   it("inherits a FITNESS obligation and a community deferral tag, like any other tag", () => {
     // Inheritance is not tier-only: EVERY tag inherits, exactly as cucumber resolves them. The
-    // scenario beneath is STEPLESS, which is what admits the bare check tag it inherits.
+    // scenario beneath is STEPLESS; what admits the bare check tag it inherits is the registry,
+    // never the shape (@SCN-LNT-006).
     const fitnessSource = `@AAA @feature-codes
 Feature: alpha
 

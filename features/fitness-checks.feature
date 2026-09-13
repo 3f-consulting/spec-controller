@@ -3,11 +3,11 @@ Feature: The fitness checks this repository configures, one scenario per row
 
   HOW A CHECK IS ADDED HERE, IN TWO STEPS — write the scenario, add the row. The scenario is
   authored like every other scenario in this corpus: a tag line carrying `@fitness` and a freshly
-  minted code, and a title saying what the check asserts — and no steps at all, for the reason
-  stated further down. The row goes in `specController.fitnessChecks` in package.json, naming that
-  same code, the characteristic the check is about, and the command that runs it. Neither half is
-  derived from the other, which is what makes them two books rather than one read twice: a scenario
-  derived from the row it is reconciled against could never disagree with it.
+  minted code, a title saying what the check asserts, and steps saying it in Given/When/Then. The
+  row goes in `specController.fitnessChecks` in package.json, naming that same code, the
+  characteristic the check is about, and the command that runs it. Neither half is derived from the
+  other, which is what makes them two books rather than one read twice: a scenario derived from the
+  row it is reconciled against could never disagree with it.
 
   SO A SCENARIO WITH NO ROW, AND A ROW WITH NO SCENARIO, ARE BOTH FAULTS SOMETHING SAYS OUT LOUD.
   The ledger reports a scenario whose code no row names as unconfigured, and a row whose scenario
@@ -37,12 +37,20 @@ Feature: The fitness checks this repository configures, one scenario per row
   no characteristic tag: which characteristic a check asserts, and which bar it is held to, are read
   from its row by the ledger.
 
-  AND EVERY SCENARIO HERE IS STEPLESS, BECAUSE THAT IS WHAT A FITNESS SCENARIO IS. It is a DECLARED
-  OBLIGATION rather than a test, and nothing runs it: the check is a step of the pipeline, the
-  pipeline records what that step did, and `balance` reads the record. A `Then` line would make the
-  scenario try to be BOTH SIDES OF THE ENTRY — raising the obligation and answering it — which is
-  the one thing double entry cannot allow. What is left here is the obligation, which is the whole
-  of what canon asks for: a characteristic and a threshold, on a stepless scenario.
+  AND WHAT KEEPS A SCENARIO HERE OFF THE RUNNERS IS ITS TAG, NEVER ITS SHAPE. `@fitness` sits
+  outside the Cucumber profile's `@integration or @e2e or @performance` exactly as `@unit` does, so
+  Cucumber selects none of these scenarios and no step definition stands behind their steps — the
+  same arrangement `@unit` already has with vitest. So a scenario here is authored like every other
+  scenario in this corpus, steps and all: the steps are the SPECIFICATION, saying what the check
+  asserts of this tree, and the check's own command — run as a step of the pipeline under this
+  scenario's code — is the EVIDENCE. It is still a DECLARED OBLIGATION rather than a test, because
+  nothing here runs it: the pipeline records what that step did, and `balance` reads the record.
+
+  WHAT A STEP HERE MAY NOT DO IS GRADE THE RUN. "Then the check passes", or "Then the build is
+  green", is the scenario raising the obligation and answering it in the same breath — BOTH SIDES
+  OF THE ENTRY, which is the one thing double entry cannot allow. A `Then` states the PROPERTY
+  ASSERTED, as a `@unit` scenario's does; whether this push cleared it is the ledger's sentence,
+  taken from the record.
 
   WHICH BAR A ROW STATES IS ITS OWN SHAPE, AND IT NEVER REACHES THIS FILE. A row with no bar is
   answered by its step's outcome, and a row carrying `atLeast` or `atMost` is answered by the number
@@ -66,30 +74,61 @@ Feature: The fitness checks this repository configures, one scenario per row
 
   @fitness @SCN-FIT-001
   Scenario: every function and module measures inside the external complexity standard, or inside its recorded exception
+    Given this repository's source as this push leaves it
+    And a recorded exception for each site held above the standard
+    When the external complexity standard is applied across that source
+    Then every function and module measures inside the standard, or inside its own recorded exception
 
   @fitness @SCN-FIT-003
   Scenario: every recorded complexity exception states the value the tree currently measures
+    Given the recorded complexity exceptions, each naming a value
+    When each is read against what the tree now measures at that site
+    Then every exception states the value the tree currently measures
 
   @fitness @SCN-FIT-014
   Scenario: every tag on the corpus obeys the @SCN scheme's own rules
+    Given this repository's Gherkin corpus, its tags and its feature codes
+    When the @SCN scheme's own rules are applied to it
+    Then every tag on the corpus obeys them
 
   @fitness @SCN-FIT-009
   Scenario: no domain module is named for a procedural layer
+    Given the modules of this repository's domain
+    When each module's name is read against the procedural-layer words
+    Then no domain module is named for one
 
   @fitness @SCN-FIT-010
   Scenario: every scenario a change touches is named by a sub-issue of the ticket it is on
+    Given the scenarios this change touches, read from the diff and from the checked-out tree
+    When each is asked which tracked work-item carries it
+    Then every one of them is named by a sub-issue of the ticket the change is on
 
   @fitness @SCN-FIT-011
   Scenario: the whole tree type-checks
+    Given the whole tree — source, tests, step definitions and checks alike
+    When the type-checker is run over it
+    Then it reports no error
 
   @fitness @SCN-FIT-012
   Scenario: the unit suite's wall-clock, for the ledger to hold against its ceiling
+    Given the unit suite as this push runs it
+    When the wrapper that launched it records its wall-clock
+    Then that number is posted for the ledger to hold against the ceiling its row states
 
   @fitness @SCN-FIT-013
   Scenario: the behavioural suite's wall-clock, for the ledger to hold against its ceiling
+    Given the behavioural suite as this push runs it
+    When the wrapper that launched it records its wall-clock
+    Then that number is posted for the ledger to hold against the ceiling its row states
 
   @fitness @SCN-FIT-002
   Scenario: the domain's mutation score, for the ledger to hold against the break threshold its runner reads from the same row
+    Given the mutation sweep's record for this push
+    When the domain's score is read off that record
+    Then that number is posted for the ledger to hold against the break threshold its runner reads from the same row
 
   @fitness @SCN-FIT-017
   Scenario: no mutant the recorded sweep detected survives this push
+    Given the recorded sweep's mutants and this push's own
+    When the two are compared, mutant for mutant
+    Then no mutant the recorded sweep detected survives this push

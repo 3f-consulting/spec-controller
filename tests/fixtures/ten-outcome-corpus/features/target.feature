@@ -27,7 +27,7 @@ Feature: ten-outcome corpus — a fixture shaped so the REAL reconcile emits all
     Then it reconciles missing
 
   # STEPLESS and carrying the bare check `wm`, which this target's registry maps onto the
-  # `guard:wm` script. A fitness obligation is raised off steplessness (@SCN-LNT-006) and the
+  # `guard:wm` script. A fitness obligation is raised off the bare tag, steps or none (@SCN-LNT-006), and the
   # run cites this scenario, so the watermelon is reached by the one posting rule.
   @wm @SCN-TOC-004
   Scenario: watermelon — a static check that exists but is not wired into CI

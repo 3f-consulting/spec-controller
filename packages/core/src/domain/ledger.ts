@@ -487,7 +487,7 @@ export interface RuntimeObservationTally {
  * same rows, not a parallel opinion kept in step.
  *
  * Static check (`lint`) credits are SKIPPED, ON THE CHECK and never on the absence of a citation
- * (@SCN-RPT-023). A fitness credit now CITES its own stepless scenario and posts to an ordinary
+ * (@SCN-RPT-023). A fitness credit now CITES its own scenario and posts to an ordinary
  * scenario row, so to a naive walk it is indistinguishable from a runtime credit by the account it
  * landed on; the `qualityCheck` is the only thing that tells them apart. Counting one would fold
  * the static axis into the Test volume, which must not see it at all.

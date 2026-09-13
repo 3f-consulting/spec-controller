@@ -661,7 +661,7 @@ Feature: The report renders the ledger as sectioned facts
     The census is now a FOLD over the Ledger: it walks the posted credits and reads each
     credit's kind off the ROW it posted to, so the reconciler is the ONE classifier. The fold
     keeps the RUNTIME scoping, and citation-routing makes that scoping MORE obviously
-    necessary rather than less. A fitness credit now cites its OWN stepless fitness
+    necessary rather than less. A fitness credit now cites its OWN fitness
     scenario's @SCN and posts to an ordinary scenario row — so to a naive walk it looks
     EXACTLY like a runtime credit, indistinguishable by the account it landed on. The fold
     must therefore skip it on the CHECK (`qualityCheck === "lint"`), never on the absence of

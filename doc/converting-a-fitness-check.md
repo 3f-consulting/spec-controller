@@ -53,16 +53,22 @@ The scenario is **written beside its row rather than derived from it**:
 ```gherkin
   @fitness @SCN-FIT-001
   Scenario: every function and module measures inside the external complexity standard, or inside its recorded exception
+    Given this repository's source as this push leaves it
+    And a recorded exception for each site held above the standard
+    When the external complexity standard is applied across that source
+    Then every function and module measures inside the standard, or inside its own recorded exception
 ```
 
 ```json
 { "scn": "SCN-FIT-001", "characteristic": "complexity", "command": "eslint" }
 ```
 
-**That is the whole scenario — a tag line and a title, and no steps.** A fitness scenario is a
-**declared obligation, not a test**, and nothing runs it. There is nothing for a step to say: the
-check is a step of your pipeline, the pipeline records what that step did, and `balance` reads the
-record. A `Then` line would make the scenario try to be both sides of the entry at once.
+**That is the whole scenario — a tag line, a title, and steps.** A fitness scenario is a
+**declared obligation, not a test**, and nothing runs it: the check is a step of your pipeline, the
+pipeline records what that step did, and `balance` reads the record. What its steps must not do is
+**grade the run** — "Then the check passes", or "Then the build is green", would make the scenario
+both sides of the entry at once. A `Then` states the property asserted, exactly as a `@unit`
+scenario's does; whether this push cleared it is the ledger's sentence.
 
 **Two things to write, and that is the point.** A scenario emitted from the row it is reconciled
 against cannot disagree with it — that is one author wearing double-entry's clothes, and deleting a

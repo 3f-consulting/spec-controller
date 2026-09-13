@@ -91,7 +91,7 @@ import { bareTerm } from "@3f-consulting/spec-controller-core/internal";
 
 /** One row of the artefact — a measured check's number, already naming the row it posts to. */
 export interface Measurement {
-  /** The `@SCN` of the stepless fitness scenario this measurement answers. */
+  /** The `@SCN` of the fitness scenario this measurement answers. */
   readonly scnId: string;
   /** The bare check tag the measurement IS, naming which obligation it settles. */
   readonly checkTag: string;

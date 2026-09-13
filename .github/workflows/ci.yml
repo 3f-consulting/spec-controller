@@ -636,7 +636,7 @@ jobs:
       # `spec-controller` is the workspace CLI and carries neither, so this step adds an
       # observation for SCN-FIT-014 and nothing to the static-check census.
       #
-      # SO THE `id:` IS THE WHOLE CITATION. The obligation is the stepless `@fitness` scenario, the
+      # SO THE `id:` IS THE WHOLE CITATION. The obligation is the `@fitness` scenario, the
       # command is the row in `specController.fitnessChecks`, and this step is the observation that
       # answers them — cited by `id:` alone (@SCN-LNT-031). Misspell it and the credit posts to the
       # suspense row while the scenario reads unobserved.

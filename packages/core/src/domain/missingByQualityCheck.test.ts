@@ -50,8 +50,8 @@ import { reconcile } from "./evidenceReconciliation.js";
 import { ledgerTally } from "./ledger.js";
 
 describe("[SCN-RMD-008] the missing split carries every quality-check in canonical order", () => {
-  // ONE stepless scenario spanning all four runtime quality-checks. Steplessness raises the fitness
-  // obligation naming the registered check `x` (@SCN-LNT-006), and each tier tag raises its own
+  // ONE stepless scenario spanning all four runtime quality-checks. The registered bare check tag
+  // raises the fitness obligation naming `x` (@SCN-LNT-006), and each tier tag raises its own
   // runtime obligation, so the corpus raises five. `reconcile` is handed NO Evidence Observations,
   // so every one of the five reconciles `missing` — the outcome the split is built from.
   const feature = [

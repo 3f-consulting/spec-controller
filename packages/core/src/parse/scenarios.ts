@@ -206,14 +206,13 @@ export function parseUntaggedScenarios(source: string): string[] {
  * credit with no obligation to post to (3F-3092). Removing the condition removes that asymmetry;
  * no compensating rule is added on the credit side, and none is needed.
  *
- * `TaggedScenario.stepless` SURVIVES, AND NO RULE READS IT (3F-3134). What stood here said the
- * field survived because `parse/scnTags.ts` still read it, the tier floor and the one-check rule
- * being corpus-SHAPE rules whose subject steplessness genuinely was. Wrong twice: `parse/scnTags.ts`
- * is not a path in this repository, and the corpus check it meant (spec-controller's private
- * `tests/checks/scnTags.ts`, deleted at 3F-3312) never read this field — it computed its own off
- * its own line parser, domain-pure and importless. Both of those rules read the registered tag
- * now (@SCN-STG-005, @SCN-STG-007, 3F-3126) and run from the shipped corpus check, so the tree
- * holds ONE steplessness reading and no rule consults it. What does is named on the field.
+ * AND THE FIELD THAT OUTLIVED THE CONDITION IS GONE WITH IT (3F-3369). `TaggedScenario` carried a
+ * `stepless` boolean on after the rule stopped reading it, kept by a reason that was wrong twice
+ * (3F-3134): it named `parse/scnTags.ts` as the surviving reader, which is not a path in this
+ * repository, and the corpus check it meant computed its own steplessness off its own line parser
+ * and never read this one. Both rules that reason named read the registered tag now (@SCN-STG-005,
+ * @SCN-STG-007, 3F-3126). So nothing asked the walk for a scenario's SHAPE, and the walk stopped
+ * answering: steplessness is derived nowhere in this tree, and a scenario's axis is its tag.
  *
  * REGISTERED, NOT INFERRED. `checkTags` is the registry's answer (`domain/checkRegistry`), taken as
  * data. Without it every unrecognised tag would be a candidate check and `@smoke` would owe one;
@@ -483,33 +482,12 @@ export interface TaggedScenario {
   /** The scenario's OWN tags first, then its inherited ones — bare, no leading @. */
   tags: readonly string[];
   /**
-   * The scenario carries NO steps — a fact about its SHAPE, read off the same walk as the tags.
-   *
-   * IT NO LONGER SAYS WHICH AXIS THE SCENARIO IS ON, AND NO RULE READS IT AT ALL. The obligation
-   * rule reads the registered check tag and nothing else (@SCN-LNT-006, 3F-3115), and the corpus
-   * check's grammar and one-check rules read that same tag (@SCN-STG-005, @SCN-STG-007, 3F-3126;
-   * its tier floor, the third reader that clause named, left at 3F-3309).
-   * The sentence that stood here named `parse/scnTags.ts` as the surviving reader — not a path in
-   * this repository, and the check it meant read a private field of its own, retired with 3F-3134.
-   *
-   * WHAT READS IT IS TESTS ASSERTING SHAPE, measured rather than assumed: @SCN-LNT-006's unit arm
-   * pins it on the walk (`fitnessObligations.test.ts`), @SCN-LDG-020's pins it in the walk's own
-   * output (`taggedScenarios.test.ts`), and @SCN-LNT-005's Given reads it off the external fixture
-   * (`tests/steps/lintReconciliation.steps.ts`) as a fact about THAT fixture — which its own
-   * comment already says is not what makes the row a fitness scenario.
-   *
-   * It rides here rather than in a reader of its own for the reason the walk was extracted at all: a
-   * second pass over the same file would be free to disagree with this one about which scenario it
-   * is looking at, and a shape read against the wrong scenario is exactly the false-green shape this
-   * parser has already produced twice.
-   */
-  stepless: boolean;
-  /**
    * The scenario's EXTENT in the source — 1-based and INCLUSIVE, so `lines.slice(startLine - 1,
-   * endLine)` is exactly this scenario's text (@SCN-SSM-010, 3F-3044). It rides on this walk for
-   * the reason `stepless` does, and for one more: the caller that wants an extent is asking which
-   * scenario some text belongs to, and a second pass free to disagree about which scenario it is
-   * looking at is precisely how that question gets the neighbour's answer.
+   * endLine)` is exactly this scenario's text (@SCN-SSM-010, 3F-3044). It rides on this walk for the
+   * reason the walk was extracted at all, sharpened by what an extent is FOR: a second pass over the
+   * same file would be free to disagree with this one about which scenario it is looking at, and the
+   * caller that wants an extent is asking which scenario some text belongs to — so a disagreeing
+   * second pass is precisely how that question gets the neighbour's answer.
    *
    * `startLine` is the lesser of the scenario's first OWN tag line and its keyword line — an
    * inherited `Rule:`/`Feature:` tag is not part of this scenario's text. `endLine` is the line
@@ -672,7 +650,6 @@ export function parseTaggedScenarios(source: string): TaggedScenario[] {
       tagged.push({
         scnId: scnTag,
         tags: effective,
-        stepless: child.scenario.steps.length === 0,
         startLine,
         endLine: blockEnd(startLine, starts, lines),
       });

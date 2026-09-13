@@ -1,9 +1,10 @@
 /**
  * @unit for @SCN-LNT-006 — the fitness half of the obligation rule: a scenario tagged with a
- * REGISTERED bare check owes that check, once. The row it is read on is STEPLESS, which is the
- * only shape a fitness scenario has — a declared obligation nothing runs. And for @SCN-LNT-010,
- * the same rule read over `lint`, the one bare tag that used to name the whole class — read on
- * that same stepless row, both directions of the exemption a reader would be tempted to grant it.
+ * REGISTERED bare check owes that check, once. The row it is read on carries no steps, which is a
+ * fact about THIS fixture and not about what a fitness scenario is: the tag raises the obligation
+ * and the shape says nothing about it (3F-3115). And for @SCN-LNT-010, the same rule read over
+ * `lint`, the one bare tag that used to name the whole class — read on that same row, both
+ * directions of the exemption a reader would be tempted to grant it.
  *
  * Bidirectional evidence: each describe carries its @SCN id, matching
  * features/fitness-reconciliation.feature and the @integration steps in tests/steps/lintReconciliation.steps.ts.
@@ -13,7 +14,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { parseScenarios, parseTaggedScenarios } from "./scenarios.js";
+import { parseScenarios } from "./scenarios.js";
 
 /** The registry's answer, as the corpus hop takes it: the bare tags this target's checks run under. */
 const REGISTERED = ["complexity", "typecheck"];
@@ -119,17 +120,6 @@ Feature: fitness
       },
     ]);
   });
-
-  it("reads steplessness off the corpus walk, not off a second reading of the file", () => {
-    // The shape is a property of the scenario, so it travels with the tag set the obligation rule
-    // already reads. A separate steplessness reader would be a second walk of the same file, free to
-    // disagree with the first about which scenario it is looking at.
-    // The EXTENT rides on the same walk (@SCN-SSM-010) and is pinned by that scenario's own arm;
-    // this row is about steplessness, so it reads the fields it is about.
-    expect(parseTaggedScenarios(steplessScenario)).toMatchObject([
-      { scnId: "SCN-AAA-001", tags: ["complexity", "SCN-AAA-001", "FIT"], stepless: true },
-    ]);
-  });
 });
 
 describe("[SCN-LNT-010] bare @lint is the style-lint check, one peer among many", () => {
@@ -208,8 +198,9 @@ ${steps}`;
   });
 
   it("raises nothing on a STEPLESS scenario either — the form is dead, not merely mis-shaped", () => {
-    // Steplessness is what admits a BARE tag (@SCN-LNT-006). A reader that had merely moved the
-    // retired form behind that gate would raise the obligation here and nowhere else, which reads
+    // A BARE tag raises its obligation from the row that carries it, steps or none (@SCN-LNT-006),
+    // and the retired form raises nothing on either shape. A reader that had merely moved the
+    // retired form behind a steplessness gate would raise the obligation here and nowhere else, which reads
     // as retirement on the corpus this repository happens to carry.
     expect(parseScenarios(retiredForm(`@lint=${REGISTERED_HANDLE}`, ""), [], ["feature-codes"])).toEqual([
       { scnId: "SCN-AAA-003", evidenceObligations: [] },
