@@ -46,7 +46,7 @@ The types these functions take and return are exported alongside them, so a cons
 
 ## The surface is a contract
 
-This barrel is the whole public surface — the package publishes exactly one entrypoint, and what that entrypoint exports is held against a written-down list in both directions, so a symbol quietly added or quietly dropped fails the build that would have shipped it. Before you build on this, [`doc/compatibility.md`](https://github.com/3f-consulting/spec-controller/blob/main/doc/compatibility.md) says which mechanisms are supported today and what a deprecation path does and does not mean here.
+This barrel is the whole public surface — the package publishes exactly one entrypoint, and what that entrypoint exports is held against a written-down list in both directions, so a symbol quietly added or quietly dropped fails the build that would have shipped it. Before you build on this: the package is at a `0.x` version and makes no compatibility promise — see [`doc/compatibility.md`](https://github.com/3f-consulting/spec-controller/blob/main/doc/compatibility.md). Pin an exact version.
 
 Source, issues and history: [github.com/3f-consulting/spec-controller](https://github.com/3f-consulting/spec-controller).
 

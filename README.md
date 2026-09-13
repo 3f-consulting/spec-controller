@@ -132,7 +132,7 @@ Full flags, examples, and CI wiring: [`doc/how_to_use.md`](./doc/how_to_use.md).
 
 Running a check on a schedule and gating every push on its result — a nightly mutation sweep, a long soak — see [`doc/scheduled-checks.md`](./doc/scheduled-checks.md).
 
-Before you wire this into a repository you intend to keep: [`doc/compatibility.md`](./doc/compatibility.md) says which mechanisms are supported today, what a deprecation path does and does not mean here, and what would break you — so *is this safe to build on?* has an answer you can read rather than infer.
+Before you wire this into a repository you intend to keep: this package is at a `0.x` version, which under semantic versioning promises nothing — [`doc/compatibility.md`](./doc/compatibility.md) says so plainly, and says what changes at `1.0`. Pin an exact version.
 
 ## The library
 

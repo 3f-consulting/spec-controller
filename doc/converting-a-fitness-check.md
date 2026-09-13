@@ -5,8 +5,8 @@ depends on how far you have adopted** — there are three states and you can sto
 page states the model; if you are converting existing checks, the checklist is under* Converting an
 existing check.*
 
-For the compatibility position — what keeps working, for how long, and what would break it — see
-[`compatibility.md`](./compatibility.md). For the flags and the CLI, see
+For the compatibility position — why a `0.x` version promises nothing, and what changes at `1.0` —
+see [`compatibility.md`](./compatibility.md). For the flags and the CLI, see
 [`how_to_use.md`](./how_to_use.md).
 
 **`balance` executes nothing.** It runs no command and spawns no process. Your pipeline runs your
@@ -450,8 +450,8 @@ is one no row configures, and the ledger's census names each of them.
 
    **You never write the reconciler in either list.** `spec-controller balance` and its
    `toJSON(steps)` dump are excluded **by construction**: the reconciler is not one of the reconciled
-   rows, and that holds for a manifest that says nothing at all. The normative statement of both keys
-   is in [`compatibility.md`](./compatibility.md).
+   rows, and that holds for a manifest that says nothing at all. Both keys are documented in
+   [`how_to_use.md`](./how_to_use.md).
 
 2. **Write the row** — `scn`, `characteristic`, `command`, plus `atLeast` / `atMost` where the check
    produces a number.

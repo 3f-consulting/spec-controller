@@ -159,10 +159,12 @@ an exit code.
 prefixes** were retired by
 [3F-3343](3F-3343) — a widening, not a removal: a prefixed
 script is still observed, because every step is, so no major version was engaged
-(`doc/compatibility.md` carries the reasoning). The **`specController.staticChecks` registry** is
+(the reasoning is on that ticket). The **`specController.staticChecks` registry** is
 still honoured and is now inert, and its actual removal is
-[3F-3161](3F-3161)'s, once the consumer still routing credits
-through it has migrated — that one **is** a major version. Stated here, in
+[3F-3161](3F-3161)'s. **That removal no longer waits on a
+consumer and no longer engages a major version** — the compatibility commitment was withdrawn on
+2026-09-13 ([3F-3376](3F-3376)) because it was made to nobody,
+and measurement found no consumer routing credits through the registry at all. Stated here, in
 `features/uncited-static-checks.feature`, and in
 [`doc/converting-a-fitness-check.md`](./doc/converting-a-fitness-check.md), so a reader who meets
 the zero is not left to infer which one it is.
