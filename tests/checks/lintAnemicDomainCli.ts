@@ -14,8 +14,9 @@
  * named here as its own arrangement now, because a docblock pointing at a deleted sibling
  * teaches nothing and nothing typechecks the pointer. The static check is @lint-cited (`@lint=lint:anemic-domain` on
  * @SCN-ANM-001) so the tool's own ledger reconciles it — not an uncited static check. The
- * `lint:` prefix is required rather than cosmetic: `runningStaticChecks` observes a CI
- * script only when its name carries an observed prefix.
+ * `lint:` prefix is no longer load-bearing (3F-3343): `runningStaticChecks` observed a CI script
+ * only when its name carried an observed prefix, and that set is gone — this check is on the books
+ * because its STEP is one of ci.yml's, under any name at all.
  */
 
 import { execFileSync } from "node:child_process";

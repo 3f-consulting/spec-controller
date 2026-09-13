@@ -90,6 +90,13 @@ function verdictFor(target: Shape): string {
   const balance = runReconcile({
     features: join(root, CORPUS_DIR),
     packageJson: join(root, "package.json"),
+    // `--ci` POINTED AT THE TARGET'S OWN ROOT, which holds no workflow. The flag defaults to
+    // `.github/workflows`, so a reconcile that omits it reads THIS repository's pipeline; since
+    // @SCN-USG-004 made every step of it a candidate, that default would put this repository's
+    // checks on a synthetic target's ledger and give three empty corpora a suspense row apiece.
+    // The omission used to be isolated by accident — a prefix rule found nothing in those
+    // workflows for a manifest with no scripts — and an accident is not isolation.
+    ci: root,
   });
   // NOTHING SUPPLIED — `inputs` is empty, so the corpus is the DEFAULT and the renderer has to say
   // so from the provenance it already carries. Each shape keeps its OWN root as the target, which

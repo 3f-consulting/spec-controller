@@ -1,12 +1,17 @@
 {
   "scripts": {
-    "guard:domain-purity": "echo domain-purity-guard",
-    "test": "echo test",
-    "cucumber": "echo cucumber"
+    "domain-purity": "echo domain-purity-check",
+    "test": "vitest run",
+    "cucumber": "cucumber-js"
   },
   "specController": {
     "checkRegistry": {
-      "guard:domain-purity": "domain-purity"
-    }
+      "domain-purity": "domain-purity"
+    },
+    "runners": {
+      "unit": "vitest",
+      "integration": "cucumber-js"
+    },
+    "notChecks": ["ci.yml:ci:pnpm install --frozen-lockfile"]
   }
 }

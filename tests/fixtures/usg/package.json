@@ -2,13 +2,20 @@
   "scripts": {
     "lint:foo": "echo foo-check",
     "lint:bar": "echo bar-check",
-    "test": "echo test",
-    "cucumber": "echo cucumber"
+    "test": "vitest run",
+    "cucumber": "cucumber-js"
   },
   "specController": {
     "checkRegistry": {
       "lint:foo": "foo",
       "lint:bar": "bar"
-    }
+    },
+    "runners": {
+      "unit": "vitest",
+      "integration": "cucumber-js"
+    },
+    "notChecks": [
+      "ci.yml:ci:pnpm install --frozen-lockfile"
+    ]
   }
 }

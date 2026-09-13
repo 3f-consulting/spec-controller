@@ -11,10 +11,11 @@ Feature: a converted target's fitness corpus, four measured checks and no static
   reader could take as a number — so the four rows differ in nothing but what their commands left
   behind, and everything the assertions see can only be that.
 
-  NO CHECK HERE IS ONE OF THAT REPOSITORY'S SCRIPTS AND NO WORKFLOW STANDS BESIDE IT, which is what
-  leaves the record the only thing observing these rows. A script handle behind a guard prefix would
-  be discovered from a workflow file and the derivation's own credit would be the one the ledger
-  matched — so the reading under test would be untested while its arm stayed green.
+  NO CHECK HERE IS ONE OF THAT REPOSITORY'S SCRIPTS AND NO WORKFLOW STANDS BESIDE IT, which is realistic rather than
+  load-bearing. What leaves the run's record the only thing observing them is the composition: a run handed its own record is answered for its CONFIGURED
+  rows by that record, so the derivation reader does not credit them a second time (3F-3360).
+  Until the membership rule inverted, the isolation was the prefix set's accident — a command
+  that is not a script matched no prefix — and an accident is not a guarantee.
 
   This file lives under tests/fixtures/ (NOT features/), so neither the feature-code registry check
   nor the scenario-to-sub-issue gate sees the CVT code — they scan features/*.feature only.

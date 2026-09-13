@@ -34,19 +34,21 @@
 # that had already stopped being true. An exclusion excusing a step CI no longer runs reds
 # the ladder rather than sitting on as licence (@SCN-LAD-005).
 #
-# THE SCRIPT NAMES CARRY NO OBSERVED PREFIX, ON PURPOSE. `runningStaticChecks` treats a
-# package.json script as a RUNNING static check when its name starts with an observed
-# prefix (`lint:` / `guard:`) and a CI `run:` step invokes it. Neither `verify` nor `ladder`
-# is a check — one aggregates them, the other lists them — so a `lint:` name would register a
-# phantom static check on spec-controller's own ledger and red the self-reconciliation as an
-# uncited one. Both stay outside the observed set, and the ledger is unchanged.
+# WHAT KEEPS `verify`, `ladder` AND `spec-controller` OFF THE LEDGER IS NOT THEIR NAMES (3F-3343).
+# `runningStaticChecks` used to treat a package.json script as a RUNNING static check when its name
+# started with an observed prefix (`lint:` / `guard:`), so these three were kept outside that set by
+# their spelling. THAT PREFIX SET IS GONE. Membership is now decided by subtraction: a `run:` step
+# of the workflows `--ci` names is a candidate fitness check unless it runs a behavioural runner the
+# manifest names, is the reconciler, or is a step `specController.notChecks` names. None of the
+# three is a step of ci.yml at all — `verify` aggregates the ladder, `ladder` lists it, and
+# `spec-controller` reaches CI only as the `balance` step, which is the reconciler by construction
+# — so none of them can register a phantom check whatever it is called.
 #
-# `spec-controller` IS THE THIRD, AND ITS REASON IS ONE STEP FURTHER (3F-3113, 3F-3293). It is not
-# a check either — it is the workspace CLI, which ci.yml invokes with the `balance` command and this
-# repository's own scan surfaces — and it is the one whose `lint:` spelling would put the
-# RECONCILIATION'S OWN VERDICT on the ledger that verdict is about. It keeps its teeth regardless:
-# this ladder is derived from ci.yml, which consults no prefix, so the gate still runs here at the
-# same position under the handle of the binary it is.
+# THE SPELLING IS STILL DELIBERATE, and for a smaller reason than it used to be: a `lint:` name here
+# would say these are checks to a reader, and one of them — `spec-controller` — would say the
+# RECONCILIATION'S OWN VERDICT is a row on the ledger that verdict is about (3F-3113, 3F-3293). The
+# gate's teeth never rested on the spelling either way: this ladder is derived from ci.yml, so it
+# runs at the same position under the handle of the binary it is.
 #
 # FAIL-FAST, AND NAME THE GATE. The first red stops the ladder and the last line says
 # which gate died. A green-check whose failure output does not say what failed is a

@@ -46,6 +46,11 @@ Feature: an annotated target's fitness corpus
 const manifest = {
   scripts: { "lint:alpha": "eslint", "lint:beta": "scn-subissues" },
   specController: {
+    // THE CHECKOUT STEP IS NOT A CHECK, and under the inverted membership rule it is a
+    // candidate until this target says so (@SCN-USG-013). An action is a candidate on the same
+    // terms as a command — a quality check can BE an action — so a pipeline that opens with a
+    // checkout answers for it here, exactly as a consumer's own manifest does.
+    notChecks: ["ci.yml:quality:Checkout"],
     fitnessChecks: [
       { scn: "SCN-CVT-001", characteristic: "complexity", command: "pnpm lint:alpha" },
       { scn: "SCN-CVT-002", characteristic: "traceability", command: "pnpm lint:beta" },
@@ -77,10 +82,12 @@ function reconcileAnnotated(): EvidenceReconciliation {
     untaggedScenarios: [],
     packageJson: manifest,
     ciSources: [annotatedCi],
+    // The workflow FILE the exclusion above opens with — an entry can name no step of a
+    // source this run was given no name for.
+    ciSourceNames: ["ci.yml"],
     measurements: {},
     runtimeObservations: [],
     deferralTags: [],
-    guardScriptPrefixes: ["lint:"],
     killFloor: () => null,
   });
 }

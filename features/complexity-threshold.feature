@@ -36,7 +36,8 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
   THE CHECK NO LONGER HAS A SCRIPT NAME, AND THAT IS THE CONVERSION (3F-3151, under 3F-3138).
   It used to be `lint:complexity`, named with an observed prefix so `runningStaticChecks` would
   discover it — a real quality check kept off the books is exactly where a watermelon hides, so
-  being discovered was the entire point of the name. Discovery is what converting retires. The
+  being discovered was the entire point of the name. That prefix set is retired (3F-3343) and no
+  name is a hook any more. Discovery by SCRIPT NAME is what converting retired. The
   check is now a row of `specController.fitnessChecks` naming SCN-FIT-001, the
   characteristic it asserts and the command that returns a violation; the fitness cucumber pass
   runs that command and reports the scenario, and the credit arrives citing the @SCN off the
@@ -162,15 +163,16 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
     `value > max`; the load-bearing case here is `value < recorded`, which it cannot
     express at all. So the reconciliation is its own command, `pnpm lint:complexity-exceptions`.
 
-    AND IT IS NO LONGER A CI STEP EITHER (3F-3165, under 3F-3139). It converted as
-    `@SCN-FIT-003` and its `run:` line left the workflow with it. The `lint:` prefix on the
-    script name used to be load-bearing — `runningStaticChecks` observes a CI script only when
-    its name carries an observed prefix, so a name outside that set would run in CI while being
-    invisible to spec-controller's own ledger — and the bare `@complexity` tag on a stepless
-    scenario at the foot of this file was what kept the run out of the suspense row. Neither
-    holds now: the row states the `@SCN` and the characteristic outright, a CI step carrying that
-    code as its `id:` runs the command, and the credit arrives citing the code that step carried. The prefix survives as
-    a name a reader recognises, not as a hook anything discovers.
+    AND IT IS A CI STEP AGAIN, UNDER ITS ROW'S OWN CODE (3F-3165, under 3F-3139). It converted as
+    `@SCN-FIT-003`. The `lint:` prefix on the script name used to be load-bearing —
+    `runningStaticChecks` observed a CI script only when its name carried an observed prefix, so a
+    name outside that set would run in CI while being invisible to spec-controller's own ledger —
+    and the bare `@complexity` tag on a stepless scenario at the foot of this file was what kept
+    the run out of the suspense row. Neither holds now: the row states the `@SCN` and the
+    characteristic outright, a CI step carrying that code as its `id:` runs the command, and the
+    credit arrives citing the code that step carried. The prefix survives as a name a reader
+    recognises, not as a hook anything discovers — and since 3F-3343 there is no such hook to be:
+    the step is on the books because it is a step.
 
     MEASURED WITH eslint, NEVER REIMPLEMENTED. The reconciliation runs the `ESLint` API at
     the BARE standard — the same scope blocks the config uses, with the exception blocks

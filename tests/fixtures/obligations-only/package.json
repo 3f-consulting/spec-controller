@@ -1,12 +1,19 @@
 {
   "scripts": {
     "lint:obligations-only": "echo obligations-only-guard",
-    "test": "echo test",
-    "cucumber": "echo cucumber"
+    "test": "vitest run",
+    "cucumber": "cucumber-js"
   },
   "specController": {
     "checkRegistry": {
       "lint:obligations-only": "obligations-only"
-    }
+    },
+    "runners": {
+      "unit": "vitest",
+      "integration": "cucumber-js"
+    },
+    "notChecks": [
+      "ci.yml:ci:pnpm install --frozen-lockfile"
+    ]
   }
 }

@@ -11,6 +11,9 @@
         "characteristic": "complexity",
         "command": "eslint"
       }
-    ]
+    ],
+    "runners": {
+      "unit": "vitest"
+    }
   }
 }

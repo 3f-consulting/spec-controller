@@ -363,6 +363,14 @@ describe("[SCN-CLI-019] runBalance exits 5 for a run with nothing to reconcile, 
         "tests/fixtures/nothing-to-reconcile/features",
         "--package-json",
         "tests/fixtures/nothing-to-reconcile/package.json",
+        // AND `--ci` IS POINTED AT THE FIXTURE, WHICH HOLDS NO WORKFLOW. The flag defaults to
+        // `.github/workflows`, so a run that omits it reads THIS repository's own pipeline; since
+        // @SCN-USG-004 made every step of it a candidate, that default put this repository's
+        // checks on a fixture's ledger. Naming the fixture is what makes the run about the
+        // fixture — the isolation the omission used to get by accident, from a prefix rule that
+        // found nothing in those workflows for a manifest that is not theirs.
+        "--ci",
+        "tests/fixtures/nothing-to-reconcile",
       ]);
 
       const emitted = chunks.join("");
@@ -409,6 +417,14 @@ describe("[SCN-CLI-010] runBalance leaves the exit code 0 for an only-Pending-It
         "tests/fixtures/pending-only/features",
         "--package-json",
         "tests/fixtures/pending-only/package.json",
+        // AND `--ci` IS POINTED AT THE FIXTURE, WHICH HOLDS NO WORKFLOW. The flag defaults to
+        // `.github/workflows`, so a run that omits it reads THIS repository's own pipeline; since
+        // @SCN-USG-004 made every step of it a candidate, that default put this repository's
+        // checks on a fixture's ledger. Naming the fixture is what makes the run about the
+        // fixture — the isolation the omission used to get by accident, from a prefix rule that
+        // found nothing in those workflows for a manifest that is not theirs.
+        "--ci",
+        "tests/fixtures/pending-only",
       ]);
 
       const emitted = chunks.join("");
@@ -529,6 +545,8 @@ describe("[SCN-CLI-013] the tally, the verdict headline and the process exit cod
         "--features", "tests/fixtures/balanced/features",
         "--vitest", "tests/fixtures/balanced/vitest.json",
         "--package-json", "tests/fixtures/balanced/package.json",
+        // Pointed at the fixture, which holds no workflow — see the note at @SCN-CLI-019.
+        "--ci", "tests/fixtures/balanced",
       ],
       outOfBalance: 0,
       word: "BALANCED",
@@ -561,6 +579,8 @@ describe("[SCN-CLI-013] the tally, the verdict headline and the process exit cod
         "--features", "tests/fixtures/broken/features",
         "--vitest", "tests/fixtures/broken/vitest.json",
         "--package-json", "tests/fixtures/broken/package.json",
+        // Pointed at the fixture, which holds no workflow — see the note at @SCN-CLI-019.
+        "--ci", "tests/fixtures/broken",
       ],
       outOfBalance: 2,
       word: "UNSOUND",

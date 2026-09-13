@@ -6,6 +6,7 @@
     "lint:enforced": "anemic-domain"
   },
   "specController": {
+    "notChecks": ["ci.yml:quality:Checkout"],
     "checkRegistry": {
       "lint:advisory": "complexity",
       "lint:enforced": "tech-conformance"

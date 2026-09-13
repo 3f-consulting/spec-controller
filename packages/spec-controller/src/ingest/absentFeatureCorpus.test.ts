@@ -33,15 +33,22 @@ import {
 } from "./ingestQualityChecks.js";
 
 /** A `features/` directory that is NOT on disk — the modal `new-client`'s honest shape. */
-function absentCorpus(): { features: string; packageJson: string } {
+function absentCorpus(): { features: string; packageJson: string; ci: string } {
   const root = mkdtempSync(join(tmpdir(), `scn-cli-017-absent-${process.pid}-`));
-  // A GUARDLESS manifest and no --ci: nothing is running, so nothing is uncited and the suspense
-  // row stays empty. What is under test is the CORPUS side alone.
+  // A GUARDLESS manifest, and `--ci` pointed at the target's own root, which holds no workflow:
+  // nothing is running, so nothing is uncited and the suspense row stays empty. What is under
+  // test is the CORPUS side alone.
+  //
+  // NAMED RATHER THAN OMITTED, since @SCN-USG-004. The flag defaults to `.github/workflows`, so a
+  // run omitting it reads THIS repository's pipeline, every step of which is now a candidate —
+  // and this target would be handed a ledger of somebody else's checks. The omission used to be
+  // isolated by accident, because a prefix rule found nothing there for a manifest with no
+  // scripts, and an accident is not isolation.
   const packageJson = join(root, "package.json");
   writeFileSync(packageJson, JSON.stringify({ name: "new-client-target", scripts: {} }));
   const features = join(root, "features");
   expect(existsSync(features)).toBe(false);
-  return { features, packageJson };
+  return { features, packageJson, ci: root };
 }
 
 /** A `features/` directory that IS on disk and holds a file cucumber would refuse — the control. */
@@ -89,9 +96,9 @@ describe("[SCN-CLI-017] balance reads an absent corpus as no corpus, at every re
     // THE WHOLE CLAIM, at the reconcile: the run completes and produces a ledger. Zero rows is
     // what @SCN-CLI-019 then reads as NOTHING TO RECONCILE — this arm asserts the SHAPE, not that
     // verdict, which is its sibling's to make.
-    const { features, packageJson } = absentCorpus();
+    const { features, packageJson, ci } = absentCorpus();
 
-    const balance = runReconcile({ features, packageJson });
+    const balance = runReconcile({ features, packageJson, ci });
 
     expect(balance.ledger.scenarioReconciliations).toEqual([]);
   });

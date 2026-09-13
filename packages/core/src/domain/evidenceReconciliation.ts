@@ -441,6 +441,110 @@ export interface StaticCheckTotals {
   uncitedStaticCheckCount: number;
 }
 
+/**
+ * ONE STEP THAT IS THE RECONCILER (@SCN-USG-014) — the step, as the report names one, and which
+ * half of the reconciler it is.
+ *
+ * TWO ROLES RATHER THAN A BARE LIST, because the two are different facts about a pipeline and a
+ * consumer reading the report is owed both: one step RUNS the reconciliation these books are, and
+ * one WRITES the step record that run reads. Collapsing them would say only that two steps were
+ * set aside, which is the shape of a claim nobody can check.
+ *
+ * BESIDE `BehaviouralRunner` FOR THE REASON THAT ONE IS HERE: it is carried on the summary and the
+ * renderer reads it off there. Neither is a tally — the question a reader has is which step was
+ * accounted for as what, and a count answers none of it.
+ */
+export interface ReconcilerStep {
+  /** The step, named as every section of the report names one (`parse/stepNames`). */
+  readonly step: string;
+  /** Which half of the reconciler it is — the run itself, or the record that run reads. */
+  readonly role: "reconciles" | "records";
+}
+
+/**
+ * ONE STEP RECOGNISED AS THE RUNNER OF ONE TIER (@SCN-USG-011) — the tier the target named it
+ * for, the runner it named, and the step GitHub itself displays it as.
+ *
+ * BESIDE `StaticCheckTotals` RATHER THAN IN THE PARSE THAT PRODUCES IT, for the reason that one
+ * is here: it is carried on the summary, and the renderer reads it off there. It is not a tally —
+ * a recognition names a step, and a count of them would answer none of the questions a reader has
+ * about which step was recognised as what.
+ */
+export interface BehaviouralRunner {
+  /** The tier key the target named this runner under — `unit`, `integration`, `e2e`, `performance`. */
+  readonly tier: string;
+  /** The runner's name, as the target wrote it. */
+  readonly runner: string;
+  /** The step's identity — its `name:`, else the action it `uses:`, else the first line of its `run:`. */
+  readonly step: string;
+}
+
+/**
+ * ONE JOB OF ONE WORKFLOW THIS RUN READ (@SCN-USG-020) — where the steps came from, and how many
+ * of them there were.
+ *
+ * BOTH FIGURES, because either alone is satisfiable by a reader that is wrong about the other.
+ * `steps` says what was in front of the tool and nothing about what it did with them; `candidates`
+ * is the figure already on the report, re-cut. It is the PAIR, per job, that lets a consumer see a
+ * whole job pass through discovery contributing nothing and ask why.
+ *
+ * BESIDE `ReconcilerStep` AND `BehaviouralRunner` FOR THE REASON THOSE ARE HERE: it is carried on
+ * the summary and the renderer reads it off there. It is not a tally of the ledger — no row exists
+ * for a job, and the question a reader has is which files and which jobs the numbers came from.
+ *
+ * THE SOURCE IS OPTIONAL BECAUSE THE CORE HOLDS NO FILESYSTEM. Workflow names arrive as data from
+ * the CLI edge (`parse/stepNames`), so a run given none for a source can name no file for its jobs
+ * — and dropping those jobs would be the silence this axis exists to end, so the row survives
+ * without the half of its name nobody supplied.
+ */
+export interface JobDiscoveryScope {
+  /** The workflow file the job was read from, absent where the run was given no name for it. */
+  readonly source?: string;
+  /** The key the job is written under in that workflow's `jobs:` mapping. */
+  readonly job: string;
+  /** How many steps this run read from it. */
+  readonly steps: number;
+  /** How many of those steps are candidate fitness checks. */
+  readonly candidates: number;
+}
+
+/**
+ * WHAT BECAME OF EVERY STEP THIS RUN READ (@SCN-USG-018) — the population, the four dispositions,
+ * and the total those four come to.
+ *
+ * BOTH TOTALS, AND `accountedFor` IS THE ONE THAT HAS TO BE CARRIED. A consumer of this structure
+ * could add the four dispositions up for themselves, and a consumer that did would be measuring
+ * their own arithmetic: they would agree with any four figures a reader happened to produce,
+ * including four produced by a reader that had lost a step on the way. The sum is the READER's
+ * answer to "how many did you account for", stated beside "how many did you read" so the two can
+ * be compared rather than reconstructed. The identity `accountedFor === stepsRead` is the axis's
+ * first non-negotiable — nothing seen is dropped — made checkable.
+ *
+ * IT IS A CARDINALITY INSTRUMENT, WHICH IS WHY NO OTHER MEMBER HERE CAN STAND IN FOR IT. Every
+ * account beside it names steps that BECAME something — a runner, the reconciler, an exclusion, a
+ * row on the books. A step dropped on a branch nobody enumerated becomes nothing, names nothing
+ * and posts nothing, so there is no list it is missing from: only a count of the population
+ * against the dispositions can see it at all.
+ *
+ * BESIDE `JobDiscoveryScope` FOR THE REASON THAT ONE IS HERE: it is carried on the summary and the
+ * renderer reads it off there. It is not a fold of the ledger — three of its four dispositions
+ * post no row by definition, so there is nothing for it to be derived from.
+ */
+export interface StepAccounting {
+  /** How many steps of the target's pipeline this run read. */
+  readonly stepsRead: number;
+  /** How many of them are candidate fitness checks. */
+  readonly candidates: number;
+  /** How many of them run a runner the target named. */
+  readonly runners: number;
+  /** How many of them are the reconciliation or the step record it reads. */
+  readonly reconciler: number;
+  /** How many of them the target names non-checks. */
+  readonly excluded: number;
+  /** The four above, added up by the reader that counted them. */
+  readonly accountedFor: number;
+}
+
 /** The materialised summary — the totals (manifesto: "the aggregate of the trial balance"). */
 export interface Summary {
   scenarioReconciliations: ScenarioReconciliationTotals;
@@ -488,6 +592,134 @@ export interface Summary {
    * renders and serialises exactly as it did before.
    */
   unconfiguredFitnessScenarios?: readonly string[];
+  /**
+   * THE STEPS RECOGNISED AS BEHAVIOURAL RUNNERS (@SCN-USG-011), in the order the pipeline runs
+   * them — what the target named, found where its pipeline invokes it.
+   *
+   * NOT A LEDGER FOLD, and it rides here for the reason `unconfiguredFitnessScenarios` does: it is
+   * a fact about what the reader SAW, not about anything the books hold. A runner raises no
+   * obligation and posts no credit — it is the disposition a step gets INSTEAD of reaching the
+   * ledger — so there is no row for it to be derived from and it has to be carried.
+   *
+   * PRESENT ONLY WHEN NON-EMPTY, so a target that has named no runners renders and serialises
+   * exactly as it did before.
+   */
+  behaviouralRunners?: readonly BehaviouralRunner[];
+  /**
+   * WHAT THE TARGET SAID ABOUT EACH TIER (@SCN-USG-016) — `specController.runners` as written: the
+   * runner's name where it named one, and `null` for a tier it says it has none. A tier the block
+   * OMITS is absent from this record, and that third state is the whole reason the field exists.
+   *
+   * NOT `behaviouralRunners`, which is the other half of the same subject and is easy to mistake
+   * for it. That one is what a run RECOGNISED — tier, runner and the step it was found at, a fact
+   * about the pipeline. This one is what the target SAID, a fact about the manifest, and the two
+   * disagree whenever a named runner runs at no step this reader could see.
+   *
+   * PRESENT ONLY WHEN NON-EMPTY, so a target that has named no runners renders and serialises
+   * byte-identically to before.
+   */
+  runnerTiers?: Readonly<Record<string, string | null>>;
+  /**
+   * THE RUNNER BLOCK'S KEYS THAT ARE NOT ONE OF THE FOUR CANON TIERS (@SCN-USG-019) — what the
+   * target wrote that this tool does not recognise, in the order the manifest wrote it.
+   *
+   * IT CARRIES A NON-EVENT, WHICH IS WHY IT HAS TO BE CARRIED AT ALL. An unrecognised key
+   * recognises no step, excludes no step and posts no row, so nothing anywhere else in this
+   * structure differs between a manifest that wrote it and one that did not. Without this field
+   * the consumer's entry is simply gone — and a consumer who wrote something and believes it took
+   * effect is the same fault as a step dropped in silence, reached from the configuration side.
+   *
+   * NOT `runnerTiers`, which is the block's other half: that one is what the target said about a
+   * tier that EXISTS, and every entry in it can be run against a pipeline. Nothing in here can be.
+   *
+   * PRESENT ONLY WHEN NON-EMPTY, so a target whose block is keyed correctly — every target today —
+   * renders and serialises byte-identically to before.
+   */
+  unrecognisedRunnerKeys?: readonly string[];
+  /**
+   * THE STEPS THE TARGET NAMES NON-CHECKS (@SCN-USG-015) — `specController.notChecks`' entries
+   * that named a step of the pipeline this run read, each as the consumer wrote it.
+   *
+   * IT CARRIES A DISPOSITION, WHICH IS WHY IT IS CARRIED AT ALL. An excluded step reaches no
+   * observer and posts no row, so nothing else in this structure differs between a run that
+   * excluded it and a run that never saw it — and those are the two things a reader most needs
+   * told apart. A step that simply vanished on the consumer's own instruction is the silence this
+   * axis exists to end, arriving with their signature on it; naming it is what makes the exclusion
+   * a disposition rather than a drop, and correctable in one line of their own configuration.
+   *
+   * PRESENT ONLY WHEN NON-EMPTY, so a target that names no non-checks — every target today —
+   * renders and serialises byte-identically to before.
+   */
+  excludedSteps?: readonly string[];
+  /**
+   * THE STEPS THAT ARE THE RECONCILER (@SCN-USG-014) — the step running this reconciliation and
+   * the step writing the record it reads, in the order the pipeline runs them.
+   *
+   * NOT `excludedSteps`, AND THE DIFFERENCE IS THE WHOLE REASON THIS IS A SEPARATE MEMBER. That
+   * one is a list the consumer wrote about their own pipeline; this one is nobody's list. A
+   * `notChecks` pair naming these two steps produces the same books, and a report folding them
+   * together would credit a consumer's configuration for an exclusion that holds over a manifest
+   * saying nothing — which is every consumer's first run.
+   *
+   * PRESENT ONLY WHEN NON-EMPTY, so a target whose pipeline does not run this tool renders and
+   * serialises byte-identically to before.
+   */
+  reconcilerSteps?: readonly ReconcilerStep[];
+  /**
+   * THE `notChecks` ENTRIES THAT NAMED NO STEP (@SCN-USG-015) — in the order the manifest wrote
+   * them, and the other half of a total partition with `excludedSteps`.
+   *
+   * A LINE THAT MATCHES NOTHING IS A STALE EXCLUSION. The consumer renamed a step and the entry
+   * now hides nothing, or is about to hide the wrong thing the next time a step is renamed onto
+   * it. Either way it is a fact about their manifest that only this run can see, and dropping it
+   * is the same fault as dropping a step: something was written, it took no effect, and nothing
+   * anywhere says so.
+   *
+   * NOT `excludedSteps`, and the two are easy to mistake for one another. That one names a step
+   * this run READ; every entry in here named none, so nothing in the pipeline corresponds to it.
+   *
+   * PRESENT ONLY WHEN NON-EMPTY, for the reason its twin is.
+   */
+  unmatchedNotChecks?: readonly string[];
+  /**
+   * THE SCOPE THIS RUN RANGED OVER (@SCN-USG-020) — one entry per job of every workflow `--ci`
+   * resolved, sorted by workflow and then by job.
+   *
+   * IT CARRIES THE PROVENANCE OF EVERY OTHER FIGURE ON THE REPORT, which is why it has to be
+   * carried at all. The census above states how many checks ran; nothing anywhere states how many
+   * jobs, in how many files, that number came from — so a consumer whose second job holds three
+   * checks reads exactly what a consumer with three checks in one job reads, and a consumer
+   * pointed at the wrong file has nothing that says so. The tool makes no judgement about whether
+   * a scope is the right one; stating it is the answer.
+   *
+   * NOT THE ACCOUNTING IDENTITY, which is a separate claim over the same steps (@SCN-USG-018).
+   * That one asserts the dispositions sum to the steps read, so nothing was dropped; this one
+   * asserts WHERE the steps came from. A reader satisfies either alone.
+   *
+   * PRESENT ONLY WHEN NON-EMPTY, so a run that read no CI configuration at all renders and
+   * serialises byte-identically to before.
+   */
+  discoveryScope?: readonly JobDiscoveryScope[];
+  /**
+   * WHAT BECAME OF EVERY STEP THIS RUN READ (@SCN-USG-018) — the population, the four dispositions
+   * and the total they come to, so the axis's first non-negotiable is a figure a reader can check
+   * rather than a sentence they have to take on trust.
+   *
+   * IT IS THE ONLY MEMBER HERE THAT CAN SEE AN ABSENCE. `behaviouralRunners`, `reconcilerSteps`,
+   * `excludedSteps` and the static-check census each name what a step BECAME; a step dropped on a
+   * branch nobody enumerated became nothing, so it is missing from no list and every one of them
+   * reads exactly as it would have read had the step never existed. Counting the population
+   * against the dispositions is what makes the drop visible, and it is the whole reason this
+   * member is a set of counts rather than another list of steps.
+   *
+   * NOT `discoveryScope`, which counts the same population for a different question. That one
+   * asserts WHERE the steps came from — which files, which jobs; this one asserts that none of
+   * them went missing between being read and being accounted for. A reader satisfies either alone.
+   *
+   * PRESENT ONLY WHEN THE RUN READ A STEP, so a run handed no CI configuration renders and
+   * serialises byte-identically to before.
+   */
+  stepAccounting?: StepAccounting;
 }
 
 /**

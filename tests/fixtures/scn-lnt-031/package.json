@@ -6,6 +6,7 @@
     "lint:beta": "scn-subissues"
   },
   "specController": {
+    "notChecks": ["ci.yml:quality:Checkout"],
     "fitnessChecks": [
       {
         "scn": "SCN-CVT-001",

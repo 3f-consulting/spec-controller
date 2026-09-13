@@ -29,6 +29,13 @@ import { runningStaticChecks } from "../parse/runningStaticChecks.js";
 import type { PackageJsonScripts } from "../parse/checkScriptsRunInCI.js";
 import type { EvidenceObservation } from "../model.js";
 
+// A target that has named no behavioural runners — the membership argument the observed prefix
+// set used to occupy (@SCN-USG-004, 3F-3343). These fixtures' pipelines run no suite, so there is
+// nothing for a runner block to take out and naming one would be configuration about a step that
+// is not there.
+const NO_RUNNERS: Readonly<Record<string, string | null>> = {};
+
+
 /** The handle the fixtures below plant. It WAS spec-controller's own wired static check; since
  *  3F-3313 no script in this repository carries the name, which changes nothing here — the header
  *  above already records that this file plants its workflow and manifest rather than reading the
@@ -99,7 +106,7 @@ describe("[SCN-LNT-001] a fitness check wired into CI posts one observation citi
     const evidenceObservations = runningStaticChecks(
       [ciSource],
       packageJson,
-      ["lint:"],
+      NO_RUNNERS,
       [],
       (script) => citationOfScript(script, registry, citations)
     );
@@ -403,7 +410,7 @@ describe("[SCN-LNT-008] a check named by two fitness scenarios satisfies one and
     const evidenceObservations = runningStaticChecks(
       [ciSource],
       packageJson,
-      ["lint:"],
+      NO_RUNNERS,
       [],
       (script) => citationOfScript(script, registry, citations)
     );
@@ -498,7 +505,7 @@ describe("[SCN-LNT-009] a fitness credit citing an @SCN no scenario carries post
     const evidenceObservations = runningStaticChecks(
       [ciSource],
       packageJson,
-      ["lint:"],
+      NO_RUNNERS,
       [],
       (script) => citationOfScript(script, registry, citations)
     );

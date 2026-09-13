@@ -3,10 +3,11 @@
 # identically — so the four steps differ in nothing this file holds, and everything the reader is
 # heard to say differently about them came from the record of the run beside it.
 #
-# NONE OF THE FOUR COMMANDS IS ONE OF THAT REPOSITORY'S SCRIPTS, and that is this fixture's
-# isolation. A guard-prefixed script handle would be discovered from this file and observed by the
-# derivation reader, whose credit would answer the row's obligation first — so the run record's
-# reading would be asserted over rows something else had already settled.
+# NO COMMAND HERE IS ONE OF THAT REPOSITORY'S SCRIPTS, which is realistic rather than load-bearing.
+# What isolates the record's reading is that a run handed its own record is answered for its
+# CONFIGURED rows by that record, so the derivation reader does not credit them a second time
+# (3F-3360). Until the membership rule inverted, the isolation was the prefix set's accident —
+# a command that is not a script matches no prefix — and an accident is not a guarantee.
 name: fixture CI
 jobs:
   quality:
@@ -32,4 +33,6 @@ jobs:
       - name: Dump this run's step record
         id: dump-the-step-record
         if: always()
+        env:
+          STEPS_JSON: ${{ toJSON(steps) }}
         run: printf '%s' "$STEPS_JSON" > ci-steps.json

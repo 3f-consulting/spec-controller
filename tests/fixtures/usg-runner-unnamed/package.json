@@ -1,0 +1,14 @@
+{
+  "scripts": {
+    "test": "vitest run",
+    "cucumber": "cucumber-js"
+  },
+  "specController": {
+    "runners": {
+      "unit": "vitest"
+    },
+    "notChecks": [
+      "ci.yml:ci:pnpm install --frozen-lockfile"
+    ]
+  }
+}

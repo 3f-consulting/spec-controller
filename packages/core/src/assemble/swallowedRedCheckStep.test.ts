@@ -40,12 +40,18 @@ Feature: a target's fitness corpus
 
 /**
  * The target's manifest — one STATIC row whose command is a BARE one, not a script of this
- * manifest. A guard-prefixed handle would be DISCOVERED from the workflow below and observed by
- * the derivation reader, whose credit would answer this row's obligation first.
+ * manifest. Until @SCN-USG-004 inverted the membership rule that
+ * was also this fixture's isolation, because no prefix reached such a command; the isolation is now
+ * a mechanism — a run handed its own record is answered for its CONFIGURED rows by that record.
  */
 const manifest = {
   scripts: { build: "tsc" },
   specController: {
+    // THE CHECKOUT STEP IS NOT A CHECK, and under the inverted membership rule it is a
+    // candidate until this target says so (@SCN-USG-013). An action is a candidate on the same
+    // terms as a command — a quality check can BE an action — so a pipeline that opens with a
+    // checkout answers for it here, exactly as a consumer's own manifest does.
+    notChecks: ["ci.yml:quality:Checkout"],
     fitnessChecks: [{ scn: "SCN-CVT-001", characteristic: "complexity", command: "eslint" }],
   },
 };
@@ -68,6 +74,8 @@ jobs:
       - name: Dump this run's step record
         id: dump-the-step-record
         if: always()
+        env:
+          STEPS_JSON: \${{ toJSON(steps) }}
         run: printf '%s' "$STEPS_JSON" > ci-steps.json
 `;
 
@@ -88,10 +96,12 @@ function reconcile(): EvidenceReconciliation {
     untaggedScenarios: [],
     packageJson: manifest,
     ciSources: [ci],
+    // The workflow FILE the exclusion above opens with — an entry can name no step of a
+    // source this run was given no name for.
+    ciSourceNames: ["ci.yml"],
     measurements: {},
     runtimeObservations: [],
     deferralTags: [],
-    guardScriptPrefixes: ["lint:"],
     killFloor: () => null,
     ciStepRecord: record,
   });

@@ -91,6 +91,11 @@ const NO_GATE_RECORD: KillFloorReader = () => null;
 // these arms prove.
 import { evidenceReconciliationFromSources } from "@3f-consulting/spec-controller-core";
 
+// A target that has named no behavioural runners — the membership argument the observed prefix set
+// used to occupy (@SCN-USG-004, 3F-3343).
+const NO_RUNNERS: Readonly<Record<string, string | null>> = {};
+
+
 // Fixtures shared across steps within a scenario (isolated per scenario by Cucumber).
 let scenarios: Scenario[];
 let evidenceObservations: EvidenceObservation[];
@@ -437,7 +442,7 @@ When(
     // looked for in the corpus as it reads when the LEDGER is built (@SCN-LNT-009).
     scenarios = parseScenarios(reconciledCorpus ?? fitnessCorpus, [], checkTags);
     const citations = fitnessCitations(parseTaggedScenarios(fitnessCorpus), checkTags);
-    evidenceObservations = runningStaticChecks([ciSource], packageJson, ["lint:"], [], (script) =>
+    evidenceObservations = runningStaticChecks([ciSource], packageJson, NO_RUNNERS, [], (script) =>
       citationOfScript(script, fitnessRegistry, citations)
     );
 
@@ -1815,7 +1820,6 @@ When(
       measurements: {},
       runtimeObservations: [],
       deferralTags: [],
-      guardScriptPrefixes: [],
       killFloor: () => null,
     };
     unenumeratedReconciliation = evidenceReconciliationFromSources({
@@ -1983,12 +1987,15 @@ When(
         readFileSync(join(annotatedFixture, "package.json"), "utf8")
       ) as PackageJsonScripts,
       ciSources: [annotatedCiSource],
+      // The workflow FILE this fixture's `notChecks` entry opens with — the one half of an
+      // exclusion that does not come out of the workflow's own text, and which a caller
+      // supplying none makes unnameable.
+      ciSourceNames: ["ci.yml"],
       measurements: {},
       runtimeObservations: [],
       deferralTags: [],
       // THE PREFIX FINDS BOTH CHECKS, WHICH IS WHAT LEAVES THE ANNOTATION AS THE ONLY VARIABLE.
       // Discovery is blind to the `id:`; what the code decides is where a discovered run POSTS.
-      guardScriptPrefixes: ["lint:"],
       killFloor: () => null,
     });
   }
@@ -2077,17 +2084,22 @@ Given(
       [["SCN-CVT-001", "complexity", false]],
       "expected one STATIC row naming the scenario the planted corpus carries"
     );
-    // AND NOTHING ELSE OBSERVES THAT ROW. The check is a bare command, so the workflow read
-    // discovers no script for it — asserted through the observer itself rather than by reading the
-    // manifest twice, because what must be empty is what that observer EMITS.
+    // AND WHAT KEEPS THE RUN RECORD ITS ONLY OBSERVER IS A MECHANISM, NOT AN ACCIDENT. The check is
+    // a bare command, so no prefix ever reached it and the derivation reader used to emit nothing
+    // at all here. Since @SCN-USG-004 it emits one candidate per step of the pipeline, the checkout ACTION among them (@SCN-USG-013) — asserted
+    // below rather than assumed, because that is the fact this fixture's old isolation rested on
+    // and it has gone. What isolates the record's reading now is the composition: a run handed its
+    // own record is answered for its CONFIGURED rows by that record, so the derivation credit for
+    // this row never reaches the books. The Then reads that off the row's own observation, which
+    // carries what the STEP did and would not if the poorer credit had won.
     assert.deepEqual(
       runningStaticChecks(
         [readFileSync(join(failedStepFixture, "ci.yml"), "utf8")],
         manifest as PackageJsonScripts,
-        ["lint:"]
-      ),
-      [],
-      "expected the workflow read to discover no check for this row, so the run record is its only observer"
+        NO_RUNNERS
+      ).map((observation) => observation.staticCheck),
+      ["Checkout", "Complexity", "Dump this run's step record"],
+      "expected the derivation reader to see every step, so the isolation below is the composition's rather than a prefix rule's oversight"
     );
   }
 );
@@ -2124,10 +2136,13 @@ When("that target's evidence is reconciled with what its CI run recorded", funct
       readFileSync(join(failedStepFixture, "package.json"), "utf8")
     ) as PackageJsonScripts,
     ciSources: [readFileSync(join(failedStepFixture, "ci.yml"), "utf8")],
+    // The workflow FILE this fixture's `notChecks` entry opens with — the one half of an
+    // exclusion that does not come out of the workflow's own text, and which a caller
+    // supplying none makes unnameable.
+    ciSourceNames: ["ci.yml"],
     measurements: {},
     runtimeObservations: [],
     deferralTags: [],
-    guardScriptPrefixes: ["lint:"],
     killFloor: NO_GATE_RECORD,
     ciStepRecord: failedStepRecord,
   });
@@ -2240,17 +2255,28 @@ Given(
       ],
       "expected the planted workflow to run its two non-check commands beside its three checks"
     );
-    // AND `build` IS THE SHARP ONE. Checkout and the toolchain set-up invoke no script and could
-    // never be discovered; `pnpm build` runs a script the manifest really holds, and is excluded
-    // only because the heuristic does not reach it — no guard prefix, and no `staticChecks` entry
-    // naming it. That is the discriminator discriminating rather than a step that was out of reach.
+    // AND WHAT TAKES THEM OUT IS THE TARGET'S OWN LIST, NOT A HEURISTIC OF OURS (@SCN-USG-004).
+    // `build` used to be the sharp case — a script the manifest really holds, really invoked, that
+    // the check heuristic did not reach because it carried no guard prefix and no `staticChecks`
+    // entry named it. Nothing decides that by a name any more, so this target names its install and
+    // build steps non-checks: one line each, which is what the inverted rule asks of a consumer in
+    // place of a convention. The `uses:` pair carries an entry each on the same terms — a quality
+    // check can BE an action, so a step's form settles nothing about it (@SCN-USG-013).
     const manifest = JSON.parse(
       readFileSync(join(unannotatedFixture, "package.json"), "utf8")
-    ) as PackageJsonScripts & { specController?: { staticChecks?: unknown } };
+    ) as PackageJsonScripts & { specController?: { staticChecks?: unknown; notChecks?: unknown } };
     assert.deepEqual(
-      [Object.keys(manifest.scripts ?? {}).includes("build"), manifest.specController?.staticChecks],
-      [true, ["typecheck"]],
-      "expected `build` to be a real script of this manifest that no staticChecks entry names"
+      [Object.keys(manifest.scripts ?? {}).includes("build"), manifest.specController?.notChecks],
+      [
+        true,
+        [
+          "ci.yml:quality:Checkout",
+          "ci.yml:quality:Set up Node",
+          "ci.yml:quality:Install",
+          "ci.yml:quality:Build",
+        ],
+      ],
+      "expected `build` to be a real script of this manifest that the target names a non-check"
     );
   }
 );
@@ -2266,22 +2292,29 @@ When("that target's evidence is reconciled from its manifest and its workflow", 
       readFileSync(join(unannotatedFixture, "package.json"), "utf8")
     ) as PackageJsonScripts,
     ciSources: [unannotatedCiSource],
+    // The workflow FILE its `notChecks` entries open with — the one half of an exclusion that does
+    // not come out of the workflow's own text, and which a caller supplying none makes unnameable.
+    ciSourceNames: ["ci.yml"],
     measurements: {},
     runtimeObservations: [],
     deferralTags: [],
-    guardScriptPrefixes: ["lint:"],
     killFloor: NO_GATE_RECORD,
   });
 });
 
 // @SCN-LNT-029
 Then(
-  "every check the pipeline ran is on the one suspense row citing no scenario, and the steps that are not checks are reported nowhere at all",
+  "every check the pipeline ran is on the one suspense row citing no scenario, and the steps the target named non-checks are off the books",
   function () {
     // THE WHOLE REPORT, AS THE CONSUMER WOULD READ IT: one row, three items, one per check their
-    // pipeline runs — and nothing for the install, the build, the checkout or the toolchain
-    // set-up. Both halves of this scenario are read off the SAME list, because they are one claim:
-    // what makes the report useful is exactly what it leaves out.
+    // pipeline runs — and nothing on the BOOKS for the install, the build, the checkout or the
+    // toolchain set-up. Both halves of this scenario are read off the SAME list, because they are
+    // one claim: what makes the report useful is exactly what it keeps off the accounts.
+    //
+    // OFF THE BOOKS IS NOT SILENT, and since @SCN-USG-004 that distinction is the whole of what
+    // the inversion bought. The install and build steps are NAMED, in the report's own excluded
+    // section, because the target said they are not checks; what this list holds is that saying so
+    // took them off the accounts rather than merely labelling them.
     assert.deepEqual(
       unannotatedReconciliation.ledger.scenarioReconciliations.map((row) => [
         row.scnId,
@@ -2382,13 +2415,20 @@ Given(
       ],
       "expected the planted workflow's check step to be one whose red its job swallows"
     );
-    // AND NOTHING ELSE OBSERVES THAT ROW. The check is a bare command, so the workflow read
-    // discovers no script for it — asserted through the observer itself rather than by reading the
-    // manifest twice, because what must be empty is what that observer EMITS.
+    // AND WHAT KEEPS THE RUN RECORD ITS ONLY OBSERVER IS A MECHANISM, NOT AN ACCIDENT. The check is
+    // a bare command, so no prefix ever reached it and the derivation reader used to emit nothing
+    // at all here. Since @SCN-USG-004 it emits one candidate per step of the pipeline, the checkout ACTION among them (@SCN-USG-013) — asserted
+    // below rather than assumed, because that is the fact this fixture's old isolation rested on
+    // and it has gone. What isolates the record's reading now is the composition: a run handed its
+    // own record is answered for its CONFIGURED rows by that record, so the derivation credit for
+    // this row never reaches the books. The Then reads that off the row's own observation, which
+    // carries what the STEP did and would not if the poorer credit had won.
     assert.deepEqual(
-      runningStaticChecks([ciSource], manifest as PackageJsonScripts, ["lint:"]),
-      [],
-      "expected the workflow read to discover no check for this row, so the run record is its only observer"
+      runningStaticChecks([ciSource], manifest as PackageJsonScripts, NO_RUNNERS).map(
+        (observation) => observation.staticCheck
+      ),
+      ["Checkout", "Complexity", "Dump this run's step record"],
+      "expected the derivation reader to see every step, so the isolation below is the composition's rather than a prefix rule's oversight"
     );
   }
 );
@@ -2423,10 +2463,13 @@ When("that target's evidence is reconciled with the record that run wrote about 
       readFileSync(join(swallowedRedFixture, "package.json"), "utf8")
     ) as PackageJsonScripts,
     ciSources: [readFileSync(join(swallowedRedFixture, "ci.yml"), "utf8")],
+    // The workflow FILE this fixture's `notChecks` entry opens with — the one half of an
+    // exclusion that does not come out of the workflow's own text, and which a caller
+    // supplying none makes unnameable.
+    ciSourceNames: ["ci.yml"],
     measurements: {},
     runtimeObservations: [],
     deferralTags: [],
-    guardScriptPrefixes: ["lint:"],
     killFloor: NO_GATE_RECORD,
     ciStepRecord: swallowedRedRecord,
   });
@@ -2545,13 +2588,20 @@ Given(
       ["SCN-CVT-001", "SCN-CVT-002", "dump-the-step-record"],
       "expected each check's step to state the code of the row it runs, beside the record's own step"
     );
-    // AND NOTHING ELSE OBSERVES THOSE ROWS. Both commands are bare ones, so the workflow read
-    // discovers no script for either — asserted through the observer itself rather than by reading
-    // the manifest twice, because what must be empty is what that observer EMITS.
+    // AND WHAT KEEPS THE RUN RECORD ITS ONLY OBSERVER IS A MECHANISM, NOT AN ACCIDENT. Both checks are
+    // bare commands, so no prefix ever reached it and the derivation reader used to emit nothing
+    // at all here. Since @SCN-USG-004 it emits one candidate per step of the pipeline, the checkout ACTION among them (@SCN-USG-013) — asserted
+    // below rather than assumed, because that is the fact this fixture's old isolation rested on
+    // and it has gone. What isolates the record's reading now is the composition: a run handed its
+    // own record is answered for its CONFIGURED rows by that record, so the derivation credit for
+    // these rows never reaches the books. The Then reads that off each row's own observation, which
+    // carries what the STEP did and would not if the poorer credit had won.
     assert.deepEqual(
-      runningStaticChecks([ciSource], manifest as PackageJsonScripts, ["lint:"]),
-      [],
-      "expected the workflow read to discover no check for either row, so the run record is their only observer"
+      runningStaticChecks([ciSource], manifest as PackageJsonScripts, NO_RUNNERS).map(
+        (observation) => observation.staticCheck
+      ),
+      ["Checkout", "Complexity", "Dump this run's step record", "Traceability"],
+      "expected the derivation reader to see every step, so the isolation below is the composition's rather than a prefix rule's oversight"
     );
   }
 );
@@ -2589,10 +2639,13 @@ When("that target's evidence is reconciled with the record its own CI run wrote"
       readFileSync(join(succeededStepFixture, "package.json"), "utf8")
     ) as PackageJsonScripts,
     ciSources: [readFileSync(join(succeededStepFixture, "ci.yml"), "utf8")],
+    // The workflow FILE this fixture's `notChecks` entry opens with — the one half of an
+    // exclusion that does not come out of the workflow's own text, and which a caller
+    // supplying none makes unnameable.
+    ciSourceNames: ["ci.yml"],
     measurements: {},
     runtimeObservations: [],
     deferralTags: [],
-    guardScriptPrefixes: ["lint:"],
     killFloor: NO_GATE_RECORD,
     ciStepRecord: succeededStepRecord,
   });
@@ -2774,13 +2827,20 @@ Given(
       ["SCN-CVT-001", "SCN-CVT-003", "dump-the-step-record"],
       "expected each check's step to state the code of the row it runs, beside the record's own step"
     );
-    // AND NOTHING ELSE OBSERVES THOSE ROWS. Both commands are bare ones, so the workflow read
-    // discovers no script for either — asserted through the observer itself rather than by reading
-    // the manifest twice, because what must be empty is what that observer EMITS.
+    // AND WHAT KEEPS THE RUN RECORD ITS ONLY OBSERVER IS A MECHANISM, NOT AN ACCIDENT. Both checks are
+    // bare commands, so no prefix ever reached it and the derivation reader used to emit nothing
+    // at all here. Since @SCN-USG-004 it emits one candidate per step of the pipeline, the checkout ACTION among them (@SCN-USG-013) — asserted
+    // below rather than assumed, because that is the fact this fixture's old isolation rested on
+    // and it has gone. What isolates the record's reading now is the composition: a run handed its
+    // own record is answered for its CONFIGURED rows by that record, so the derivation credit for
+    // these rows never reaches the books. The Then reads that off each row's own observation, which
+    // carries what the STEP did and would not if the poorer credit had won.
     assert.deepEqual(
-      runningStaticChecks([ciSource], mixedManifest(), ["lint:"]),
-      [],
-      "expected the workflow read to discover no check for either row, so the run record and the number are their only observers"
+      runningStaticChecks([ciSource], mixedManifest(), NO_RUNNERS).map(
+        (observation) => observation.staticCheck
+      ),
+      ["Checkout", "Complexity", "Dump this run's step record", "Mutation score"],
+      "expected the derivation reader to see every step, so the isolation below is the composition's rather than a prefix rule's oversight"
     );
   }
 );
@@ -2794,10 +2854,13 @@ When(
       untaggedScenarios: [],
       packageJson: mixedManifest(),
       ciSources: [readFileSync(join(mixedFixture, "ci.yml"), "utf8")],
+      // The workflow FILE this fixture's `notChecks` entry opens with — the one half of an
+      // exclusion that does not come out of the workflow's own text, and which a caller
+      // supplying none makes unnameable.
+      ciSourceNames: ["ci.yml"],
       measurements: mixedMeasurements,
       runtimeObservations: [],
       deferralTags: [],
-      guardScriptPrefixes: ["lint:"],
       killFloor: NO_GATE_RECORD,
       ciStepRecord: mixedStepRecord,
     });
@@ -2931,10 +2994,13 @@ When(
         readFileSync(join(readingsFixture, "package.json"), "utf8")
       ) as PackageJsonScripts,
       ciSources: [readFileSync(join(readingsFixture, "ci.yml"), "utf8")],
+      // The workflow FILE this fixture's `notChecks` entry opens with — the one half of an
+      // exclusion that does not come out of the workflow's own text, and which a caller
+      // supplying none makes unnameable.
+      ciSourceNames: ["ci.yml"],
       measurements: {},
       runtimeObservations: [],
       deferralTags: [],
-      guardScriptPrefixes: ["lint:"],
       killFloor: NO_GATE_RECORD,
       ciStepRecord: readingsRecord,
     });
@@ -3176,6 +3242,11 @@ When(
         join(repoRoot, "packages", "spec-controller", "src", "cli-balance", "cli.ts"),
         "--features", join(measuredFixture, "features"),
         "--package-json", join(measuredFixture, "package.json"),
+        // `--ci` NAMED AT THE FIXTURE, WHICH HOLDS NO WORKFLOW. The flag defaults to
+        // `.github/workflows`, so omitting it reads THIS repository's pipeline — and since
+        // @SCN-USG-004 made every step of it a candidate, that default would put this
+        // repository's own checks on a planted target's ledger.
+        "--ci", measuredFixture,
         "--measurements", measuredRecordPath,
         "--format", `json:${reportPath}`,
       ],
@@ -3231,11 +3302,13 @@ Then(
       "expected each command's row to stand beside the ones already there, in the order they ran"
     );
     // AND NO RUNNER'S REPORT WAS HANDED IN, asserted over the streams the run itself names rather
-    // than over the arm's own argv: three inputs, and none of them a pass's document.
+    // than over the arm's own argv: four inputs, and none of them a pass's document. `ci` is one
+    // of them and names the fixture's own root, which holds no workflow — the isolation the
+    // omission used to get from a default that reads THIS repository's pipeline.
     assert.deepEqual(
       Object.keys(measuredReport.runProvenance.inputs),
-      ["features", "packageJson", "measurements"],
-      "expected the run to name exactly its corpus, its manifest and the record its commands wrote"
+      ["features", "ci", "packageJson", "measurements"],
+      "expected the run to name exactly its corpus, its own workflow scope, its manifest and the record its commands wrote"
     );
   }
 );
@@ -3350,13 +3423,16 @@ When(
         readFileSync(join(severedFixture, "package.json"), "utf8")
       ) as PackageJsonScripts,
       ciSources: [severedCiSource],
+      // The workflow FILE this fixture's `notChecks` entry opens with — the one half of an
+      // exclusion that does not come out of the workflow's own text, and which a caller
+      // supplying none makes unnameable.
+      ciSourceNames: ["ci.yml"],
       measurements: {},
       runtimeObservations: [],
       deferralTags: [],
       // THE PREFIX FINDS ALL THREE, WHICH IS WHAT LEAVES THE SEVERANCE AS THE ONLY VARIABLE.
       // Discovery is blind to `continue-on-error`; what the key decides is what a discovered
       // check's row READS.
-      guardScriptPrefixes: ["lint:"],
       killFloor: () => null,
     });
   }

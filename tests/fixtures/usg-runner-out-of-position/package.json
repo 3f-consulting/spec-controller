@@ -1,0 +1,17 @@
+{
+  "scripts": {
+    "test": "vitest run",
+    "lint:rules": "eslint . --format json"
+  },
+  "specController": {
+    "runners": {
+      "unit": "vitest"
+    },
+    "checkRegistry": {
+      "lint:rules": "rules"
+    },
+    "notChecks": [
+      "ci.yml:ci:pnpm install --frozen-lockfile"
+    ]
+  }
+}

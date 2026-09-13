@@ -154,28 +154,56 @@ uncited would blame your corpus for a fault in the wrapper that measured it.
 key it does not recognise is not a breaking change — but the three keys above keep their names and
 their meanings, and are **removed only in a major version**.
 
-### The observed script prefixes — and what they do not reach
+### The observed script prefixes — the mechanism is retired, the guarantee is not
 
-**Supported.** A `package.json` script whose name begins `lint:` or `guard:`, invoked by a CI `run:`
-step, is observed as a running static check. **They stop being necessary when a fitness corpus names
-its own command**, at which point there is no anonymous handle left to discover. They are **removed
-only in a major version.**
+**Supported, and it is now met by something wider than the mechanism that used to meet it.** A
+`package.json` script whose name begins `lint:` or `guard:`, invoked by a CI `run:` step, is
+observed as a running static check. That sentence is exactly as true today as it was the day it was
+written. What changed is *why* it is true: it used to be true because the reader matched those two
+prefixes, and it is true now because the reader observes **every** step of the pipeline it is
+pointed at, whatever the step is called and whatever it is named after. The prefix set itself was
+retired on **2026-09-12** by
+[3F-3343](3F-3343). The promise it kept was not.
 
-**And here is the limit, stated plainly because you will otherwise meet it by surprise.** That set is
-exactly `lint:` and `guard:`. If your checks are named by any other convention — `static-check:`,
-`check:`, `verify:` — **prefix discovery does not see them.** Registered checks are unaffected: the
-registry names the handle directly, so a registered check reconciles under any script name at all.
-What you lose is the *unregistered* case — a check that runs in CI and is registered by nothing
-produces no row, rather than surfacing as one nobody cited.
+**There is nothing left to remove**, so the third clause has no work to do here. The reader holds no
+prefix set. What remains is the guarantee above, and it is not on a sunset path — it is carried by
+the widest discovery mechanism this tool has.
 
-**We are not going to widen that set**, and saying so is more useful than a promise we do not intend
-to keep. The direction of travel removes the question rather than answering it. Until then, the
-supported answer is the next entry.
+**No major version was needed, and that is a judgement you should be able to check rather than take
+on trust.** The reasoning, in terms you can disagree with:
+
+- **The entry promised a behaviour, not a mechanism.** *This script is observed* is the commitment;
+  matching a prefix was how it was kept. Clause 3 governs the removal of a **supported mechanism**,
+  and a mechanism is removed when something you configured stops being read. Nothing you configured
+  stopped being read.
+- **A consumer standing on `lint:`/`guard:` loses nothing measurable.** Their scripts are still
+  observed, still reconcile against the same citations, and not one line of their manifest needed
+  editing. They also gain the rest of their pipeline, which they never had.
+- **A widening is not the removal of a road.** Removing a road needs a major version because someone
+  is standing on it. This adds lanes to it. The direction is what settles the clause, and the
+  direction here is strictly outward.
+- **This page's own text anticipated it.** *The direction of travel removes the question rather than
+  answering it* was written under a refusal to widen the set, and it is the sentence that turned out
+  to be right — the set is **gone** rather than longer. That refusal is not being disowned as a
+  mistake: declining to grow a list of names and then deleting the list are the same position held
+  to its conclusion.
+
+**What genuinely warrants watching is a different clause, and it is named here rather than folded
+in.** Observing every step means a corpus can raise obligations it did not raise before: a step that
+was invisible now posts a row, and a first run against an unconfigured pipeline can go out of
+balance where it previously did not. That is a change to *which obligations a corpus raises*, which
+is governed by **What would break you, and what we undertake not to do silently** further down this
+page, and it is answered there. The prefix guarantee and the obligation count are two different
+promises; this entry is about the first, and pointing at the second is not a way of avoiding it.
+
+The mechanism that carries the guarantee now is the entry two below: `specController.runners` and
+`specController.notChecks`.
 
 ### `specController.staticChecks`
 
-**Supported.** It names scripts that are static checks under a naming convention the prefixes do not
-reach, **extending** discovery rather than replacing it:
+**Supported and honoured — and, since 2026-09-12, inert. Both are true and you need both.** It names
+scripts that are static checks under a naming convention the prefixes did not reach, **extending**
+discovery rather than replacing it:
 
 ```jsonc
 "specController": {
@@ -184,12 +212,78 @@ reach, **extending** discovery rather than replacing it:
 ```
 
 Membership is a property of the check — does it analyse source without running it — not of its name.
-`tsc --noEmit` is static analysis under any reading and no prefix recognises it, and your scripts are
-not ours to rename. **It stops being necessary at the same moment the prefixes do**, and is
-**removed only in a major version.**
+`tsc --noEmit` is static analysis under any reading and no prefix recognised it, and your scripts are
+not ours to rename.
 
-It only widens discovery. A check you have *named* in the registry has always reconciled regardless
-of its script name; this is for the check nobody named.
+**It said it would stop being necessary at the same moment the prefixes did, and that moment has
+arrived.** Every script this key can name is discovered anyway, because every step of the pipeline
+is. So the key still reads, still resolves, still extends nothing that was not already found, and
+naming a script here changes no row — that is what *inert* means. **A configuration that has stopped
+mattering has not stopped being read**, and this page does not treat the two as the same event.
+
+**It is not removed here.**
+[3F-3161](3F-3161) owns its actual removal, and that removal
+**is** a major version, gated on the last consumer routing credits through it having moved. Leave
+the key where it is; nothing asks you to take it out.
+
+It only ever widened discovery. A check you have *named* in the registry has always reconciled
+regardless of its script name; this was for the check nobody named.
+
+### `specController.runners` and `specController.notChecks`
+
+**Supported**, and they are the newest entries on this page — the mechanism that carries the
+discovery guarantee now that the prefixes are gone. Both are **new optional keys**, which this page
+has already ruled is not a breaking change: *a reader that ignores a key it does not recognise is
+not a breaking change*, and the converse holds too — a key you have never written costs you
+nothing, because a target that configures neither is read exactly as it was.
+
+```jsonc
+"specController": {
+  "runners": {
+    "unit": "vitest",
+    "integration": "cucumber-js",
+    "e2e": "cucumber-js",
+    "performance": null
+  },
+  "notChecks": [
+    "ci.yml:build:Checkout",
+    "ci.yml:build:Install dependencies"
+  ]
+}
+```
+
+**`runners` names the commands that run your behavioural suites, so that everything else in your
+pipeline can be read as a fitness check.** It is keyed by the four canon tiers — `unit`,
+`integration`, `e2e`, `performance` — and by nothing else. A value is either the runner's name or
+`null`; **`null` is a statement, not a blank.** It says *we have no runner for this tier*, which is
+a different thing from omitting the key, which says *we have not told you*, and the report
+distinguishes the two rather than collapsing them. **A key outside the four tiers is reported as
+unrecognised and excludes nothing** — your run is not aborted over a typo, and the typo is not
+silently honoured either.
+
+**A runner is recognised as a whole shell token, never as a substring.** It is matched against the
+step's own command, or against the `package.json` script that step invokes, following
+script-to-script chains three deep — because in practice a pipeline invokes its runner through an
+alias (`pnpm test`), and the binary's name is nowhere in the workflow. Whole-token matching is
+load-bearing rather than fastidious: a substring rule excludes a step whose *path argument* happens
+to contain a runner's name, and a step wrongly excluded as a runner is invisible, which is the one
+failure this whole mechanism exists to end.
+
+**`notChecks` is your list of steps that are neither runners nor checks** — a checkout, a dependency
+install, an artefact upload, a deploy. Entries are `<workflow file>:<job id>:<step name>` and are
+matched **exactly**. There is no prefix form, no glob and no bare-name form, deliberately: the same
+step name is a check in one workflow and plumbing in another, and a bare name would take out both.
+To exclude a whole workflow, point `--ci` somewhere narrower. **An excluded step is named on the
+report rather than dropped**, and **an entry matching no step is itself reported, as a stale
+exclusion** — so a line you wrote once and outgrew tells you so instead of quietly protecting
+nothing.
+
+**What is not configurable, on purpose:** `spec-controller balance` itself and its step-record dump
+are excluded **by construction**. The reconciler is not one of the reconciled rows, and that holds
+for a manifest that says nothing at all — you never have to write it, and writing it would not be
+what makes it true.
+
+**Nothing is pending against either key**, and both are **removed only in a major version**.
 
 ### The characteristic tag on a fitness scenario
 

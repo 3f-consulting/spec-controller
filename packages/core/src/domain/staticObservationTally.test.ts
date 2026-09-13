@@ -35,6 +35,16 @@ import type {
   ScenarioReconciliation,
 } from "../model.js";
 
+// THE MEMBERSHIP ARGUMENT — the target's declared behavioural runners, which is what the observed
+// prefix set used to be (@SCN-USG-004, 3F-3343). This fixture's pipeline runs both suites, so it
+// has to name their runners or the two suite steps are candidates and the uncited count is three
+// rather than one — a `new-client` report, not the case this scenario is about.
+const SUITE_RUNNERS: Readonly<Record<string, string | null>> = {
+  unit: "vitest",
+  integration: "cucumber-js",
+};
+
+
 describe("[SCN-USG-001] staticObservationTally folds the posted static-check credits, running-filtered", () => {
   // A SPANNING corpus reconciling to every static-check credit shape, all four CITATION-ROUTED
   // (3F-2590 removed the by-name route, and the identity-dedupe with it):
@@ -146,7 +156,7 @@ describe("[SCN-USG-001] a static check no fitness scenario cites is banked on th
   // The obligation-side reader, for the handle the corpus obliges — the citing credit.
   const citedCredits = checkStaticEvidenceObligations(["lint:foo"], [ci], pkg, citedScn);
   // The running-check observer, for everything CI runs that the first did not cover — no citation.
-  const uncitedCredits = runningStaticChecks([ci], pkg, ["lint:", "guard:"]).filter(
+  const uncitedCredits = runningStaticChecks([ci], pkg, SUITE_RUNNERS).filter(
     (o) => o.staticCheck !== "lint:foo"
   );
   const ledger: Ledger = reconcile(fitness, [...citedCredits, ...uncitedCredits]);
@@ -219,28 +229,37 @@ describe("[SCN-USG-001] a static check no fitness scenario cites is banked on th
 });
 
 /**
- * @SCN-USG-005 (3F-2580) — a `guard:`-prefixed static check that CI runs AND a fitness scenario
- * CITES is ATTRIBUTED to that scenario's row, never counted as an uncited static check.
+ * @SCN-USG-005 (3F-2580; re-pointed 3F-3362) — a static check whose script name matches no
+ * convention of ours that CI runs AND a fitness scenario CITES is ATTRIBUTED to that scenario's
+ * row, never counted as an uncited static check.
  *
  * THE SEAM THIS OWNS, and why @SCN-USG-004 does not already cover it. Its twin pins the UNCITED
- * half; nothing pinned that the two sides MEET — that a `guard:`-prefixed handle CI runs and a
- * corpus cites reconciles `satisfied` on that scenario's row, rather than vanishing or landing on
- * suspense. Every other reconciled corpus in the suite cites a `lint:`-prefixed handle.
+ * half; nothing pinned that the two sides MEET — that a handle under no convention of ours CI runs
+ * and a corpus cites reconciles `satisfied` on that scenario's row, rather than vanishing or
+ * landing on suspense.
  *
- * THE TWO SIDES NAME DIFFERENT WORDS, which is what makes the citation load-bearing rather than
- * decorative: the obligation names the BARE check tag the stepless scenario carries
- * (`domain-purity`) while the run names the RUNNABLE handle (`guard:domain-purity`). A reader
- * falling back to matching by name joins nothing, leaves the obligation missing and sends the
- * credit to suspense — so the retired name-match rule cannot produce this row at all.
+ * WHAT THE SPELLING BUYS IS NOTHING, AND THE HANDLE NOW CARRIES NO PREFIX AT ALL. The framing this
+ * replaces argued that from the handle and the bare tag being DIFFERENT words
+ * (`guard:domain-purity` against `domain-purity`), so that a reader matching by name joined
+ * nothing. Prefix-free they are the same word and that argument is gone — deliberately, because
+ * the pair 3F-3362 leaves behind is a stronger statement of the same thing: the twin fixture runs
+ * the same script under the same registry entry from a byte-identical manifest, so any reader
+ * answering from the spelling answers the same way for both, and the two verdicts differ. The
+ * name-joins-nothing tooth still has its own witnesses, where a handle and its bare tag are
+ * genuinely different words: @SCN-USG-002 (`lint:foo` → `foo`) and @SCN-USG-006 (`lint:nightly` →
+ * `nightly`). It is not orphaned here; it is no longer THIS scenario's.
  *
- * THIS ARM IS NOT THE PREFIX SET'S READER, and the framing it replaces claimed the opposite. Under
- * name-match this corpus reached the axis through DISCOVERY (`runningStaticChecks`, prefix-scoped)
- * and its teeth were a prefix-scoped match on the obliged set. Under the one posting rule a handle
- * whose registered tag a scenario carries reaches the axis through the OBLIGATION-side reader,
- * which has never consulted the prefix set, and is filtered out of the running-check stream so one
- * run is not observed twice. Narrowing the prefix set reds @SCN-USG-004 and leaves this green
- * (measured, 3F-2579). What this arm holds instead is that the seam is BLIND to the prefix — an
- * opaque handle resolves through the registry whatever it is called.
+ * THIS ARM IS NOT DISCOVERY'S READER. A handle whose registered tag a scenario carries reaches the
+ * axis through the OBLIGATION-side reader, which has never consulted the discovery rule, and is
+ * filtered out of the running-check stream so one run is not observed twice. Narrowing discovery
+ * reds @SCN-USG-004 and leaves this green — measured against the prefix set at 3F-2579, and
+ * measured again at 3F-3362 against the thing that replaced it, a `notChecks` entry naming the
+ * step.
+ *
+ * SO WHAT REDS THIS ARM IS THE CITATION AND ONLY THE CITATION, which is the pair's own claim.
+ * Withdraw it (`citedScn` reaching no `@SCN`) and the credit carries no row: the derivation arm
+ * reds on the missing terms, the attribution arm finds no reconciliation, the suspense arm finds
+ * the row it says is absent, and the tally reads 1 run, 1 uncited. Measured, 3F-3362 — all four.
  *
  * THE CREDIT IS DRIVEN FOR REAL (evidence-manifesto §11A): DERIVED by the obligation-side observer
  * from a CI source and a scripts manifest, never hand-written, and the Ledger is built by
@@ -249,18 +268,18 @@ describe("[SCN-USG-001] a static check no fitness scenario cites is banked on th
  * outside the domain-purity check's population by construction: its collector walks PRODUCTION
  * files only, excluding `*.test.ts`.
  *
- * `guard:domain-purity` is a script NAME — a value, not vocabulary — so the handle is deliberately
+ * `domain-purity` is a script NAME — a value, not vocabulary — so the handle is deliberately
  * untouched by the static-check rename (3F-1929; 3F-1852 owns script names).
  *
  * Parent: @SCN-USG-005; sibling of @SCN-USG-004 (the uncited half).
  */
-describe("[SCN-USG-005] a cited guard:-prefixed static check is attributed to its scenario, never an uncited static check", () => {
+describe("[SCN-USG-005] a cited static check under no convention of ours is attributed to its scenario, never an uncited static check", () => {
   const accountFor = (ledger: Ledger, scnId: string): ScenarioReconciliation | undefined =>
     ledger.scenarioReconciliations.find((r) => r.scnId === scnId);
 
   const guardPkg: PackageJsonScripts = {
     scripts: {
-      "guard:domain-purity": "echo domain-purity",
+      "domain-purity": "echo domain-purity",
       test: "vitest run",
       cucumber: "cucumber-js",
     },
@@ -270,25 +289,20 @@ describe("[SCN-USG-005] a cited guard:-prefixed static check is attributed to it
     "  ci:",
     "    steps:",
     "      - run: pnpm install --frozen-lockfile",
-    "      - run: pnpm guard:domain-purity",
+    "      - run: pnpm domain-purity",
     "      - run: pnpm test",
     "      - run: pnpm cucumber",
   ].join("\n");
 
   // THE SEAM'S ANSWER, injected. Composing a registry and a corpus to reach it is
   // `citationOfScript`'s own subject (@SCN-LNT-001); what is under test here is what the posting
-  // rule does with an opaque `guard:`-prefixed handle once the answer is an `@SCN`.
+  // rule does with an opaque handle under no convention of ours once the answer is an `@SCN`.
   const citedScn = (script: string): ScriptCitation | null =>
-    script === "guard:domain-purity" ? { checkTag: "domain-purity", scnId: "SCN-GRD-001" } : null;
+    script === "domain-purity" ? { checkTag: "domain-purity", scnId: "SCN-GRD-001" } : null;
 
   // THE CREDIT — derived by the OBLIGATION-side reader, the door this corpus reaches the axis
   // through, carrying the citation the seam resolved.
-  const credits = checkStaticEvidenceObligations(
-    ["guard:domain-purity"],
-    [guardCi],
-    guardPkg,
-    citedScn
-  );
+  const credits = checkStaticEvidenceObligations(["domain-purity"], [guardCi], guardPkg, citedScn);
   // THE CORPUS — one stepless fitness scenario, raising its obligation against the BARE tag.
   const fitness: Scenario[] = [
     {
@@ -300,7 +314,7 @@ describe("[SCN-USG-005] a cited guard:-prefixed static check is attributed to it
 
   const observation = {
     qualityCheck: "lint",
-    staticCheck: "guard:domain-purity",
+    staticCheck: "domain-purity",
     checkTag: "domain-purity",
     exists: true,
     enforcedOverRealSource: true,
@@ -315,10 +329,10 @@ describe("[SCN-USG-005] a cited guard:-prefixed static check is attributed to it
   });
 
   it("posts it to the citing scenario's row, satisfying its bare-tag obligation — the ATTRIBUTED half", () => {
-    // The scenario's actual claim: attributed, and attributed HERE, under the tag the corpus
-    // carries rather than the handle that ran. The report's `### Static checks` section carries
-    // counts only, so no rendered surface can tell this from the credit landing on some OTHER
-    // row — which is exactly why this belongs at the unit layer.
+    // The scenario's actual claim: attributed, and attributed HERE, on the row the citation
+    // names. The report's `### Static checks` section carries counts only, so no rendered surface
+    // can tell this from the credit landing on some OTHER row — which is exactly why this belongs
+    // at the unit layer.
     expect(accountFor(ledger, "SCN-GRD-001")?.qualityCheckReconciliations).toEqual([
       {
         qualityCheck: "lint",
@@ -331,9 +345,9 @@ describe("[SCN-USG-005] a cited guard:-prefixed static check is attributed to it
     expect(accountFor(ledger, "SCN-GRD-001")?.verdict).toBe("balanced");
   });
 
-  it("mints NO suspense row — a cited static check is never uncited, whatever its prefix", () => {
-    // The negative half. A reader that matched the credit to the obligation by NAME would find
-    // nothing to join, and this row is where the unplaceable credit would then appear.
+  it("mints NO suspense row — a cited static check is never uncited, whatever it is called", () => {
+    // The negative half. A reader that reached no `@SCN` for the handle would have nowhere to
+    // place the credit, and this row is where the unplaceable credit then appears.
     expect(accountFor(ledger, "(no scenario)")).toBeUndefined();
   });
 

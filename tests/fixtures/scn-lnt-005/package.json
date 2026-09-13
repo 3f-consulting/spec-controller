@@ -9,6 +9,9 @@
   "specController": {
     "checkRegistry": {
       "lint:vocab-check": "vocab-check"
+    },
+    "runners": {
+      "unit": "vitest"
     }
   }
 }

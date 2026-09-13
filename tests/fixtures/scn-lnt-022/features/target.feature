@@ -10,10 +10,11 @@ Feature: a converted target's fitness corpus, one static check and one measured,
   record cannot say is the second one's NUMBER, which is why only one of these two rows is credited
   from it.
 
-  NEITHER CHECK IS ONE OF THAT REPOSITORY'S SCRIPTS, which is what leaves the run's record and the
-  measurement artefact as the only things observing these rows. A script handle behind a guard
-  prefix would be DISCOVERED from the workflow file, and the derivation's own credit would be the
-  one the ledger matched — so the reading under test would be untested while its arm stayed green.
+  NEITHER CHECK IS ONE OF THAT REPOSITORY'S SCRIPTS, which is realistic rather than
+  load-bearing. What leaves the run's record the only thing observing them is the composition: a run handed its own record is answered for its CONFIGURED
+  rows by that record, so the derivation reader does not credit them a second time (3F-3360).
+  Until the membership rule inverted, the isolation was the prefix set's accident — a command
+  that is not a script matched no prefix — and an accident is not a guarantee.
 
   ITS fitness.json IS GONE, WITH THE FLAG THAT READ IT (3F-3272). @SCN-RPT-027 and its siblings run
   the REAL binary over this directory as a corpus self-consistent with both its optional streams,

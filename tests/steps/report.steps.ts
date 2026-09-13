@@ -1262,7 +1262,14 @@ When(
         "--ci-steps", abs(RPT027_INPUTS.ciSteps),
         "--format", `md:${reportPath}`,
       ],
-      { cwd: repoRoot, encoding: "utf8" }
+      // RUN FROM A DIRECTORY WITH NO PIPELINE OF ITS OWN, which is the only way to leave `--ci`
+      // genuinely unsupplied and still be about this fixture (@SCN-USG-004, 3F-3343). The flag
+      // defaults to `.github/workflows` RESOLVED AGAINST THE CWD, so a run standing in this
+      // repository reads this repository's pipeline — and since every step of it is a candidate,
+      // that would bank spec-controller's own checks on a fixture's ledger. The assertion below
+      // requires `--ci` to be named NOWHERE in the Inputs block, so supplying it is not available:
+      // the cwd is what has to move. Every path this run is handed is already absolute.
+      { cwd: cliDir027, encoding: "utf8" }
     );
     assert.equal(
       result.error,
@@ -1450,7 +1457,14 @@ When(
         "--ci-steps", abs(RPT028_HANDED.ciSteps),
         "--format", `md:${reportPath}`,
       ],
-      { cwd: repoRoot, encoding: "utf8" }
+      // RUN FROM A DIRECTORY WITH NO PIPELINE OF ITS OWN, which is the only way to leave `--ci`
+      // genuinely unsupplied and still be about this fixture (@SCN-USG-004, 3F-3343 — as at @SCN-RPT-027). The flag
+      // defaults to `.github/workflows` RESOLVED AGAINST THE CWD, so a run standing in this
+      // repository reads this repository's pipeline — and since every step of it is a candidate,
+      // that would bank spec-controller's own checks on a fixture's ledger. The assertion below
+      // requires `--ci` to be named NOWHERE in the Inputs block, so supplying it is not available:
+      // the cwd is what has to move. Every path this run is handed is already absolute.
+      { cwd: cliDir028, encoding: "utf8" }
     );
     assert.equal(
       result.error,

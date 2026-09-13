@@ -1,13 +1,18 @@
 {
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "echo test",
-    "cucumber": "echo cucumber"
+    "test": "vitest run",
+    "cucumber": "cucumber-js"
   },
   "specController": {
     "staticChecks": ["typecheck"],
     "checkRegistry": {
       "typecheck": "typecheck"
-    }
+    },
+    "runners": {
+      "unit": "vitest",
+      "integration": "cucumber-js"
+    },
+    "notChecks": ["ci.yml:ci:pnpm install --frozen-lockfile"]
   }
 }

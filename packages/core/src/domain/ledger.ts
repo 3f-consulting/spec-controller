@@ -589,9 +589,10 @@ export function runtimeObservationTally(ledger: Ledger): RuntimeObservationTally
  */
 export interface StaticObservationTally {
   /**
-   * The running static-check set volume — every static-check script a CI `run:` step invokes and
-   * whose red is that job's verdict. A check the job survives runs and enforces nothing, so it is
-   * not counted as protection (@SCN-LNT-032).
+   * The running static-check set volume — every check a step of the target's CI runs and whose red
+   * is that job's verdict, whatever form the step takes (@SCN-USG-013): a check can be an action as
+   * readily as a command. A check the job survives runs and enforces nothing, so it is not counted
+   * as protection (@SCN-LNT-032).
    */
   runningStaticCheckCount: number;
   /** Running static checks NO `@lint` cites — a SUBSET of the count above (named is implicit). */

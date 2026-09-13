@@ -194,9 +194,10 @@ describe("[SCN-USG-009] resolveStaticChecks reads specController.staticChecks", 
   });
 
   it("returns nothing when the target configures none", () => {
-    // The default is EMPTY, not a starter set: unlike deferral tags there is no built-in a
-    // project would inherit, because the built-in discovery IS the prefix set. A default here
-    // would put a check on a target's books that its own conventions never claimed.
+    // The default is EMPTY, not a starter set: unlike deferral tags there is no built-in a project
+    // would inherit, because discovery reaches every step of the pipeline without being told
+    // (@SCN-USG-004) — and, before that, because the built-in discovery WAS the prefix set. A
+    // default here would put a check on a target's books that its own conventions never claimed.
     expect(resolveStaticChecks({})).toEqual([]);
     expect(resolveStaticChecks({ specController: {} })).toEqual([]);
   });

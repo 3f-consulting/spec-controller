@@ -5,6 +5,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: pnpm install --frozen-lockfile
-      - run: pnpm guard:domain-purity
+      - run: pnpm domain-purity
       - run: pnpm test
       - run: pnpm cucumber

@@ -365,9 +365,10 @@ export interface GuardEvidenceObservation {
    * The static check ran OVER THE REAL TREE rather than over a fixture — and, as with `exists`
    * above, by one of two routes (@SCN-LNT-021).
    *
-   * INFERRED on the DISCOVERED route: the check's command appears as a CI `run:` step, the v1
-   * (COARSE) signal — v1 verifies the command IS a CI step, NOT that it reads real source vs
-   * fixtures, the residual gap a later evidenceObservation-based check closes. OBSERVED on the
+   * INFERRED on the DISCOVERED route: the check appears as a step of the target's CI — a `run:` one
+   * or a `uses:` one (@SCN-USG-013) — the v1 (COARSE) signal, which verifies the check IS a CI step
+   * and NOT that it reads real source vs fixtures, the residual gap a later
+   * evidenceObservation-based check closes. OBSERVED on the
    * CONVERTED route: the step ran inside the target's own pipeline, over the target's own checkout,
    * so a step the run's record names ran over that tree — and the coarseness the workflow read
    * carries is simply not on this path.

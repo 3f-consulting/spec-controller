@@ -13,12 +13,13 @@
  * gates and nothing else; stderr is the human's, and holds the omission and any fault. Mixing
  * them would make the ladder's own commentary parse as a gate.
  *
- * THE SCRIPT NAME CARRIES NO OBSERVED PREFIX, AND CI DOES NOT RUN IT — both deliberate.
- * `runningStaticChecks` treats a package.json script as a RUNNING static check when its name
- * starts with an observed prefix (`lint:` / `guard:`) and a CI `run:` step invokes it. Calling
- * this `lint:ladder` would register a phantom static check on spec-controller's own ledger and
- * red the self-reconciliation as an uncited one. This is the reasoning `verify` itself already
- * carries, applied to its helper.
+ * CI DOES NOT RUN IT, AND THAT — NOT ITS NAME — IS WHAT KEEPS IT OFF THE LEDGER (3F-3343).
+ * `runningStaticChecks` used to treat a package.json script as a RUNNING static check when its
+ * name started with an observed prefix, so calling this `lint:ladder` would have registered a
+ * phantom check. The prefix set is gone: membership is decided by subtraction over the STEPS of
+ * the workflows `--ci` names, and this helper is a step of none of them. The name still carries no
+ * prefix, which is now a statement to a reader rather than a mechanism. Same reasoning `verify`
+ * itself carries, applied to its helper.
  *
  * IT REDS ON A SWALLOWED RED BEFORE ANYTHING ELSE (@SCN-LAD-008). A step carrying
  * `continue-on-error`, or sitting under a job that does, runs and reds and leaves the job green —

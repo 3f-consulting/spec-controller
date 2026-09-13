@@ -1,0 +1,27 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm build
+      - name: Unit tests
+        run: pnpm test
+      - name: Sweep check
+        run: pnpm lint:sweep
+      - name: Depth check
+        run: pnpm lint:depth
+      - name: Type check
+        run: pnpm typecheck
+      - uses: github/codeql-action/analyze@v3
+      - name: Dump this run's step record
+        if: always()
+        env:
+          STEPS_JSON: ${{ toJSON(steps) }}
+        run: pnpm lint:dump
+      - name: Self-reconciliation balance
+        run: pnpm lint:reconcile

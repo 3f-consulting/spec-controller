@@ -1,7 +1,8 @@
 /**
  * The CI-parse primitive — the shared static-evidence reader machinery BOTH static-check
- * observers import: walk the CI config STRUCTURALLY to its `run:` steps (`ciRunSteps`, of which
- * `ciRunCommands` is the projection to their command strings), and test whether a command invokes
+ * observers import: walk the CI config STRUCTURALLY to its steps (`ciWorkflowSteps`, of which
+ * `ciRunSteps` is the projection to the `run:` ones and `ciRunCommands` the projection to their
+ * command strings), and test whether a command invokes
  * a given npm script by an EXACT package-manager invocation (`commandInvokesScript`). `checkStaticEvidenceObligations` (the obligation-side observer) and
  * `runningStaticChecks` (the running-check observer) both read a check's
  * enforcement off these, so the watermelon-critical parse lives in ONE place — a mis-read could
@@ -50,14 +51,79 @@ const CONTINUE_ON_ERROR = "continue-on-error";
  *
  * @SCN-LAD-008 — features/local-ladder.feature.
  */
-export type CiRunStep = { readonly command: string; readonly id?: string } & (
+export type CiRunStep = { readonly command: string; readonly id?: string } & StepAbortsJob;
+
+/**
+ * Whether a step's red is the job's verdict, and — when it is not — which key severed it.
+ *
+ * NAMED RATHER THAN INLINED because two step readings now carry it: `CiRunStep`, which is the
+ * `run:`-only projection every existing caller reads, and `CiWorkflowStep`, the whole-pipeline
+ * walk below. Restating the union in both would let the two drift into disagreeing about the one
+ * attribute that separates a gate from a gate in name only.
+ */
+type StepAbortsJob =
   | { readonly abortsJob: true }
   | {
       readonly abortsJob: false;
       /** Which key carries the `continue-on-error`, and the value it carries. */
       readonly continuesOnError: { readonly carriedBy: "step" | "job"; readonly value: string };
-    }
-);
+    };
+
+/**
+ * What a step DOES — GitHub gives a step one of these two and never both.
+ *
+ * A UNION RATHER THAN TWO OPTIONAL FIELDS, so "a step with neither" and "a step with both" are
+ * unrepresentable instead of being states every reader has to remember to handle.
+ */
+export type CiStepAction =
+  /** A shell step, carrying the command it runs. */
+  | { readonly runs: string }
+  /** An action step, carrying the action reference it uses. */
+  | { readonly uses: string };
+
+/**
+ * ONE step of ONE job of ONE workflow — every step, whatever form it takes, with the identity a
+ * consumer would recognise it by and the job it belongs to.
+ *
+ * WHY THIS EXISTS BESIDE `CiRunStep` (3F-3352). Three things this walk has always seen and thrown
+ * away are each needed to report a pipeline rather than a subset of it: `uses:` steps (a quality
+ * check can be an action, so discarding them at the walk drops real checks), the step's `name:`
+ * (which is how a consumer identifies a step, and how a report names one), and the job the step
+ * belongs to (`Typecheck` in `ci.yml` and `Typecheck` in `release.yml` are otherwise
+ * indistinguishable, which makes a per-step exclusion unwritable).
+ *
+ * A SOURCE INDEX RATHER THAN A FILENAME. `ciSources` is an array of anonymous source strings and
+ * the core holds no filesystem — deliberately, and `ciSourcePaths.ts` says why. Mapping the index
+ * back to a workflow file is the CLI edge's job, where the paths are already resolved.
+ */
+export type CiWorkflowStep = {
+  /** Which of the `ciSources` this step was read from — an index, never a path. */
+  readonly sourceIndex: number;
+  /** The key this step's job is written under in the workflow's `jobs:` mapping. */
+  readonly jobId: string;
+  /** What GitHub itself would display for this step — see `identityOf`. */
+  readonly identity: string;
+  readonly id?: string;
+  /**
+   * The step's OWN `env:` values, as written — where a workflow EXPRESSION crosses into a step.
+   *
+   * WHY A READER WANTS THEM (3F-3358). A `${{ }}` expansion inside `run:` is substituted into the
+   * script before bash sees it, so a value carrying a quote would end the string and the rest
+   * would be shell; the way a workflow hands a step something GitHub computed is therefore `env:`,
+   * and this repository's own step-record dump says so in as many words. A reader that cannot see
+   * `env:` cannot tell a step producing the run's own step record from any other shell step.
+   *
+   * THE STEP'S OWN, NEVER THE JOB'S, and that is a narrowing rather than an omission. A job-level
+   * `env:` reaches every step of the job, so reading it here would answer this question the same
+   * way for all of them — and a reader that took an expression off the job would set the whole
+   * job aside on the strength of one key.
+   *
+   * VALUES, NOT KEYS. What a caller asks about is what a step was handed; the name a workflow gave
+   * it is the author's own word for it, and not one this walk has any business carrying.
+   */
+  readonly env: readonly string[];
+} & CiStepAction &
+  StepAbortsJob;
 
 /**
  * Does a `continue-on-error` value leave a step's red as the job's verdict?
@@ -70,6 +136,16 @@ export type CiRunStep = { readonly command: string; readonly id?: string } & (
  */
 function vouchesForTheStep(value: unknown): boolean {
   return value === undefined || value === false || value === "false";
+}
+
+/**
+ * A step's own `env:` VALUES, or none — anything that is not a string is not an expression and is
+ * not something a reader here can be given, the same safe direction `idOf` below takes.
+ */
+function envValuesOf(value: unknown): readonly string[] {
+  return isRecord(value)
+    ? Object.values(value).filter((entry): entry is string => typeof entry === "string")
+    : [];
 }
 
 /**
@@ -87,60 +163,85 @@ function idOf(value: unknown): string | undefined {
   return id === "" ? undefined : id;
 }
 
-/** One `run:` step, read with its `id:`, its own `continue-on-error` and its job's. */
-function stepOf(
-  command: string,
-  id: string | undefined,
-  ownValue: unknown,
-  jobValue: unknown
-): CiRunStep {
-  // Spread rather than an `id: undefined` assignment, so a step carrying no `id:` carries no key
-  // and its shape stays exactly what it was before this walk read the key at all.
-  const step = { command, ...(id !== undefined ? { id } : {}) };
+/** A step's own `continue-on-error` read against its job's. */
+function abortsJobOf(ownValue: unknown, jobValue: unknown): StepAbortsJob {
   // The step's own key is named ahead of its job's because it is the nearer one to delete;
   // either alone is enough to sever the step, so this decides the message and not the verdict.
   if (!vouchesForTheStep(ownValue)) {
-    return {
-      ...step,
-      abortsJob: false,
-      continuesOnError: { carriedBy: "step", value: String(ownValue) },
-    };
+    return { abortsJob: false, continuesOnError: { carriedBy: "step", value: String(ownValue) } };
   }
   if (!vouchesForTheStep(jobValue)) {
-    return {
-      ...step,
-      abortsJob: false,
-      continuesOnError: { carriedBy: "job", value: String(jobValue) },
-    };
+    return { abortsJob: false, continuesOnError: { carriedBy: "job", value: String(jobValue) } };
   }
-  return { ...step, abortsJob: true };
+  return { abortsJob: true };
 }
 
 /**
- * The `run:` steps of ONE job. A job-level `continue-on-error` reaches every one of them, which
+ * What a step does, or nothing at all.
+ *
+ * `run:` IS READ FIRST so that a malformed step carrying both keys is read exactly as this walk
+ * has always read it. A step carrying neither is not a step GitHub would run, and yields nothing
+ * — the same safe direction the rest of this parse takes on what it cannot make sense of.
+ */
+function actionOf(step: Record<string, unknown>): CiStepAction | undefined {
+  const runs = step["run"];
+  if (typeof runs === "string") return { runs };
+  const uses = step["uses"];
+  if (typeof uses === "string") return { uses };
+  return undefined;
+}
+
+/**
+ * The string GitHub itself displays for a step: its `name:`, else the action it `uses:`, else the
+ * first line of its `run:`.
+ *
+ * IN GITHUB'S OWN ORDER AND FOR GITHUB'S OWN REASON — a consumer naming a step in configuration,
+ * or reading one off a report, reads the string already in front of them in their run log, so
+ * nothing new has to be learned to write one down. The first NON-BLANK line of a `run:`, because a
+ * block scalar may open on one and an empty identity is a string no consumer can write.
+ */
+function identityOf(name: unknown, action: CiStepAction): string {
+  if (typeof name === "string" && name.trim() !== "") return name.trim();
+  if ("uses" in action) return action.uses;
+  return action.runs.split(/\r?\n/).find((line) => line.trim() !== "")?.trim() ?? "";
+}
+
+/**
+ * The steps of ONE job. A job-level `continue-on-error` reaches every one of them, which
  * is why the job's own key is read here rather than left to the step loop to miss.
  */
-function runStepsOfJob(job: unknown): CiRunStep[] {
+function stepsOfJob(jobId: string, job: unknown, sourceIndex: number): CiWorkflowStep[] {
   if (!isRecord(job)) return [];
   const steps = job["steps"];
   if (!Array.isArray(steps)) return [];
   const jobValue = job[CONTINUE_ON_ERROR];
-  const runSteps: CiRunStep[] = [];
+  const read: CiWorkflowStep[] = [];
   for (const step of steps) {
     if (!isRecord(step)) continue;
-    const run = step["run"];
-    if (typeof run !== "string") continue;
-    runSteps.push(stepOf(run, idOf(step["id"]), step[CONTINUE_ON_ERROR], jobValue));
+    const action = actionOf(step);
+    if (action === undefined) continue;
+    const id = idOf(step["id"]);
+    read.push({
+      sourceIndex,
+      jobId,
+      identity: identityOf(step["name"], action),
+      env: envValuesOf(step["env"]),
+      // Spread rather than an `id: undefined` assignment, so a step carrying no `id:` carries no
+      // key at all — the shape an absent citation has everywhere else in this engine.
+      ...(id !== undefined ? { id } : {}),
+      ...action,
+      ...abortsJobOf(step[CONTINUE_ON_ERROR], jobValue),
+    });
   }
-  return runSteps;
+  return read;
 }
 
 /**
- * Every CI `run:` step of ONE config source, walked STRUCTURALLY from the parsed document
- * (jobs → steps → run). A malformed config that fails to parse yields no steps — the SAFE
+ * Every step of ONE config source, walked STRUCTURALLY from the parsed document
+ * (jobs → steps). A malformed config that fails to parse yields no steps — the SAFE
  * direction: it reports static checks as unenforced (flagged), never falsely enforced (hidden).
  */
-function runStepsOf(ciSource: string): CiRunStep[] {
+function stepsOf(ciSource: string, sourceIndex: number): CiWorkflowStep[] {
   let doc: unknown;
   try {
     doc = parse(ciSource);
@@ -149,7 +250,15 @@ function runStepsOf(ciSource: string): CiRunStep[] {
   }
   const jobs = isRecord(doc) ? doc["jobs"] : undefined;
   if (!isRecord(jobs)) return [];
-  return Object.values(jobs).flatMap(runStepsOfJob);
+  return Object.entries(jobs).flatMap(([jobId, job]) => stepsOfJob(jobId, job, sourceIndex));
+}
+
+/** One whole-pipeline step read back down to the `run:`-step shape its callers have always had. */
+function runStepOf(step: CiWorkflowStep & { readonly runs: string }): CiRunStep {
+  const read = { command: step.runs, ...(step.id !== undefined ? { id: step.id } : {}) };
+  return step.abortsJob
+    ? { ...read, abortsJob: true }
+    : { ...read, abortsJob: false, continuesOnError: step.continuesOnError };
 }
 
 /**
@@ -191,7 +300,31 @@ export function ciRunCommands(ciSources: readonly string[]): string[] {
  * @SCN-LAD-008 — features/local-ladder.feature.
  */
 export function ciRunSteps(ciSources: readonly string[]): CiRunStep[] {
-  return ciSources.flatMap(runStepsOf);
+  return ciWorkflowSteps(ciSources).flatMap((step) => ("runs" in step ? [runStepOf(step)] : []));
+}
+
+/**
+ * EVERY step across ALL of a target's config sources — `uses:` as well as `run:`, each with the
+ * identity GitHub displays for it, the job it belongs to, and the source it was read from.
+ *
+ * THE WALK, OF WHICH `ciRunSteps` IS NOW THE PROJECTION — never a second one, for the third time
+ * and the same reason. `uses:`, `name:` and the job key are all reachable from the mapping this
+ * walk already visits, and a sibling walk to pick them up would be free to disagree with this one
+ * about which steps a workflow even runs. `ciRunSteps` projects this, so the two cannot; that is
+ * the relationship `ciRunCommands` already has to `ciRunSteps`, one layer along.
+ *
+ * WHY A CALLER WANTS THE WIDER READING (3F-3352, parent 3F-3343). A pipeline's quality checks are
+ * whatever a consumer's pipeline runs, and a reader that discards every `uses:` step at the walk
+ * cannot see a check that is an action; one that forgets `name:` cannot report a step by the
+ * string its author reads in their own run log; and one that flattens the jobs cannot tell two
+ * identically-named steps in two workflows apart, which is what makes a per-step judgement about
+ * one of them unwritable.
+ *
+ * IT CHANGES NO VERDICT. Nothing is discovered, excluded or classified here — this reader makes
+ * the steps VISIBLE, and what is done with them is its callers'.
+ */
+export function ciWorkflowSteps(ciSources: readonly string[]): CiWorkflowStep[] {
+  return ciSources.flatMap((ciSource, sourceIndex) => stepsOf(ciSource, sourceIndex));
 }
 
 /**

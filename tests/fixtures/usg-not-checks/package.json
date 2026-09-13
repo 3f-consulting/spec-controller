@@ -1,0 +1,21 @@
+{
+  "scripts": {
+    "test": "vitest run",
+    "lint:rules": "eslint . --format json",
+    "lint:sweep": "madge --circular"
+  },
+  "specController": {
+    "notChecks": [
+      "ci.yml:ci:Rule check",
+      "ci.yml:ci:Circular-import check",
+      "ci.yml:ci:pnpm install --frozen-lockfile"
+    ],
+    "checkRegistry": {
+      "lint:rules": "rules",
+      "lint:sweep": "sweep"
+    },
+    "runners": {
+      "unit": "vitest"
+    }
+  }
+}

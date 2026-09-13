@@ -1,12 +1,20 @@
 {
   "scripts": {
     "lint:nightly": "echo nightly-check",
-    "test": "echo test",
-    "cucumber": "echo cucumber"
+    "test": "vitest run",
+    "cucumber": "cucumber-js"
   },
   "specController": {
     "checkRegistry": {
       "lint:nightly": "nightly"
-    }
+    },
+    "runners": {
+      "unit": "vitest",
+      "integration": "cucumber-js"
+    },
+    "notChecks": [
+      "ci.yml:ci:pnpm install --frozen-lockfile",
+      "nightly.yml:nightly:pnpm install --frozen-lockfile"
+    ]
   }
 }

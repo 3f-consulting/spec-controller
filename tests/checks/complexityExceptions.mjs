@@ -80,6 +80,20 @@
  * `measuredItem.ts`'s precedent, and the entry banks 456 → 418. Each is a ratchet doing its job:
  * the alternative in every case was editing a number up, which buys headroom and is barred.
  *
+ * Banked 2026-09-12 (3F-3353): markdown.ts's `max-lines` banks 418 → 411, and the ratchet is what
+ * decided where the new code went. @SCN-USG-011 owed the renderer an import and a section entry —
+ * two lines against a frozen 418, so the recognised-runner cut went to its own module rather than
+ * into markdown.ts, and `staticChecksSection` followed it out to `staticChecks.ts` unchanged to pay
+ * for those two lines. The alternative was editing 418 up by two, which buys headroom and is barred.
+ *
+ * Banked 2026-09-12 (3F-3357): markdown.ts's `max-lines` entry is DELETED — the file is under the
+ * 400 standard and the list shrinks by a line. @SCN-USG-015 owed the renderer an import and a
+ * section entry, two lines against a frozen 411, so the excluded-step cut went to its own module
+ * and `testVolumeSection` followed it out to `testVolume.ts` unchanged to pay for them — which
+ * took the file past the standard altogether. It goes out beside `staticChecks.ts` because that
+ * module's header already calls `### Test volume` its mirror. Same move as 3F-3353's, one section
+ * further, and the alternative was again editing a number up, which buys headroom and is barred.
+ *
  * @type {readonly import("./complexityExceptions.d.mts").ComplexityException[]}
  */
 export const COMPLEXITY_EXCEPTIONS = [
@@ -93,7 +107,6 @@ export const COMPLEXITY_EXCEPTIONS = [
   { path: "packages/core/src/parse/vitest.ts",                              rule: "complexity",              value:   14, since: "2026-08-06" },
   { path: "packages/core/src/render/markdown.test.ts",                      rule: "max-lines",               value: 1341, since: "2026-08-05" },
   { path: "packages/core/src/render/markdown.ts",                           rule: "complexity",              value:   13, since: "2026-08-02" },
-  { path: "packages/core/src/render/markdown.ts",                           rule: "max-lines",               value:  418, since: "2026-09-12" },
   { path: "packages/core/src/render/markdown.ts",                           rule: "max-lines-per-function",  value:   75, since: "2026-08-05" },
   { path: "packages/spec-controller/src/cli-balance/cli.ts",                rule: "complexity",              value:   15, since: "2026-09-12" },
   { path: "packages/spec-controller/src/cli-balance/cli.ts",                rule: "max-lines-per-function",  value:   83, since: "2026-09-12" },

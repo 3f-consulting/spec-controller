@@ -98,6 +98,19 @@ const SUSPENSE_ONLY = {
   ci: "tests/fixtures/suspense-only/ci.yml",
 };
 
+
+/**
+ * `--ci` NAMED AT THE FIXTURE'S OWN DIRECTORY, WHICH HOLDS NO WORKFLOW — the isolation these
+ * targets used to get by accident (@SCN-USG-004, 3F-3343). The flag defaults to
+ * `.github/workflows` resolved against the cwd, and these runs stand in THIS tree, so a run that
+ * omits it reads spec-controller's own pipeline. That was harmless while discovery keyed on a
+ * script prefix: none of those steps invokes a script of a FIXTURE's manifest, so nothing was
+ * found. Every step is a candidate now, so the default would bank this repository's own checks on
+ * a fixture's ledger — and a guardless `--package-json` no longer buys the silence it was chosen
+ * for. Naming the fixture is what makes the run about the fixture.
+ */
+const NO_WORKFLOWS = (fixtureDir: string): string[] => ["--ci", fixtureDir];
+
 /** The `--flag value` pairs the shared When passes to `balance` (set by each Given). */
 let invocationArgs: string[] = [];
 /** The path CLI-002's Given points a flag at — asserted verbatim in stderr. */
@@ -137,7 +150,7 @@ Given("a target with scenarios and a Vitest report of what ran", function () {
   // fixture, which exited 0 only pre-gate). --package-json is guardless so no suspense row.
   assert.ok(existsSync(join(root, BALANCED.features)), `missing fixture features: ${BALANCED.features}`);
   assert.ok(existsSync(join(root, BALANCED.vitest)), `missing fixture vitest report: ${BALANCED.vitest}`);
-  invocationArgs = ["--features", BALANCED.features, "--vitest", BALANCED.vitest, "--package-json", BALANCED.packageJson];
+  invocationArgs = ["--features", BALANCED.features, "--vitest", BALANCED.vitest, "--package-json", BALANCED.packageJson, ...NO_WORKFLOWS("tests/fixtures/balanced")];
 });
 
 // @SCN-CLI-002
@@ -209,7 +222,7 @@ Given("a target with scenarios and a Vitest report", function () {
   // is still not an error — the point of this scenario.
   assert.ok(existsSync(join(root, BALANCED.features)), `missing fixture features: ${BALANCED.features}`);
   assert.ok(existsSync(join(root, BALANCED.vitest)), `missing fixture vitest report: ${BALANCED.vitest}`);
-  invocationArgs = ["--features", BALANCED.features, "--vitest", BALANCED.vitest, "--package-json", BALANCED.packageJson];
+  invocationArgs = ["--features", BALANCED.features, "--vitest", BALANCED.vitest, "--package-json", BALANCED.packageJson, ...NO_WORKFLOWS("tests/fixtures/balanced")];
 });
 
 // @SCN-CLI-003
@@ -242,7 +255,13 @@ Given("a target that reconciles out-of-balance", function () {
   // the ONLY thing wrong is the balance itself, which is exactly what the gate must red.
   assert.ok(existsSync(join(root, FIXTURE.features)), `missing fixture features: ${FIXTURE.features}`);
   assert.ok(existsSync(join(root, FIXTURE.vitest)), `missing fixture vitest report: ${FIXTURE.vitest}`);
-  invocationArgs = ["--features", FIXTURE.features, "--vitest", FIXTURE.vitest];
+  invocationArgs = [
+    "--features",
+    FIXTURE.features,
+    "--vitest",
+    FIXTURE.vitest,
+    ...NO_WORKFLOWS("tests/fixtures/evidence-observation"),
+  ];
 });
 
 // @SCN-CLI-005
@@ -257,7 +276,7 @@ Given("a target that reconciles all-balanced", function () {
   // is distinct from CLI-004's out-of-balance Given.
   assert.ok(existsSync(join(root, BALANCED.features)), `missing fixture features: ${BALANCED.features}`);
   assert.ok(existsSync(join(root, BALANCED.vitest)), `missing fixture vitest report: ${BALANCED.vitest}`);
-  invocationArgs = ["--features", BALANCED.features, "--vitest", BALANCED.vitest, "--package-json", BALANCED.packageJson];
+  invocationArgs = ["--features", BALANCED.features, "--vitest", BALANCED.vitest, "--package-json", BALANCED.packageJson, ...NO_WORKFLOWS("tests/fixtures/balanced")];
 });
 
 // @SCN-CLI-012
@@ -280,6 +299,7 @@ Given("a target whose vitest report carries a collection-failed suite", function
     BROKEN.vitest,
     "--package-json",
     BROKEN.packageJson,
+    ...NO_WORKFLOWS("tests/fixtures/broken"),
   ];
 });
 
@@ -300,7 +320,13 @@ Given("a target whose only exception is Pending Items", function () {
     existsSync(join(root, PENDING_ONLY.packageJson)),
     `missing fixture package.json: ${PENDING_ONLY.packageJson}`,
   );
-  invocationArgs = ["--features", PENDING_ONLY.features, "--package-json", PENDING_ONLY.packageJson];
+  invocationArgs = [
+    "--features",
+    PENDING_ONLY.features,
+    "--package-json",
+    PENDING_ONLY.packageJson,
+    ...NO_WORKFLOWS("tests/fixtures/pending-only"),
+  ];
 });
 
 // @SCN-CLI-010
@@ -883,7 +909,7 @@ Given("a target that declared no scenario and produced no evidence", function ()
   for (const path of Object.values(NOTHING_TO_RECONCILE)) {
     assert.ok(existsSync(join(root, path)), `missing fixture input: ${path}`);
   }
-  // No --vitest, no --cucumber, no --ci: the target produced nothing, which is half the
+  // No --vitest and no --cucumber: the target produced nothing, which is half the
   // shape. The guardless --package-json is the other half — a RUNNING static check would
   // post an uncited credit to the suspense row and give the run a row after all (which is
   // @SCN-CLI-020's target, an ordinary out-of-balance report at exit 1, not this one's).
@@ -892,6 +918,7 @@ Given("a target that declared no scenario and produced no evidence", function ()
     NOTHING_TO_RECONCILE.features,
     "--package-json",
     NOTHING_TO_RECONCILE.packageJson,
+    ...NO_WORKFLOWS("tests/fixtures/nothing-to-reconcile"),
   ];
 });
 

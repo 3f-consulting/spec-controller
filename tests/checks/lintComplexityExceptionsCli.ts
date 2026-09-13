@@ -12,12 +12,14 @@
  * express. Without that half the list is a ceiling that quietly stops descending: a file improves,
  * the entry is never edited, and the recorded number becomes headroom again.
  *
- * WHY THE NAME CARRIES THE `lint:` PREFIX, WHICH IS NOT COSMETIC. `runningStaticChecks` observes a CI
- * script only when its name carries an observed prefix (`lint:` / `guard:`). A name outside that set
- * would run in CI while being structurally invisible to spec-controller's own ledger — a real quality
- * check kept off the books, which is exactly where a watermelon hides. The
- * `@lint=lint:complexity-exceptions` tag on @SCN-CPX-003 is then what keeps it out of the suspense
- * row as an uncited static check. Observed AND NAMED is the balanced state.
+ * WHY THE NAME CARRIES THE `lint:` PREFIX, AND WHY THAT STOPPED BEING LOAD-BEARING (3F-3343).
+ * `runningStaticChecks` observed a CI script only when its name carried an observed prefix, so a
+ * name outside that set ran in CI while being structurally invisible to spec-controller's own
+ * ledger — a real quality check kept off the books, which is exactly where a watermelon hides.
+ * The prefix set is gone: this check is on the books because its STEP is a step of ci.yml that
+ * runs no declared runner and nothing excludes, and it would be on them under any name at all.
+ * The `@lint=lint:complexity-exceptions` tag on @SCN-CPX-003 is what keeps it out of the suspense
+ * row as an uncited static check. Observed AND NAMED is the balanced state, unchanged.
  *
  * A PURE FUNCTION OF THE CHECKED-OUT TREE, a full CI gate on every push. That sentence named
  * `lint:scn-tags` as the check it mirrored until 3F-3312 deleted it; the shape is stated on its

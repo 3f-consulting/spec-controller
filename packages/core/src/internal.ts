@@ -123,6 +123,17 @@ export type { FitnessEvidenceObservation } from "./domain/journal.js";
 export { ciRunSteps } from "./parse/checkScriptsRunInCI.js";
 export type { CiRunStep } from "./parse/checkScriptsRunInCI.js";
 
+// `ciWorkflowSteps` / `CiWorkflowStep` / `CiStepAction` — the SAME walk read whole: `uses:` steps
+// as well as `run:` ones, each with the identity GitHub displays for it and the job it belongs to
+// (3F-3352). `ciRunSteps` is its projection, so the pair cannot disagree about which steps a
+// workflow runs — the third time that one-walk rule has held here, and for the reason it held the
+// first two. Internal, not public, on the same footing as `ciRunSteps`: `ciRunCommands` remains
+// the v1 contract for anyone outside, and the shape of a whole-pipeline step is a reading the
+// discovery inversion (3F-3343) is still settling, so freezing it now would owe @SCN-API-001 a
+// hand-transcribed row for a surface no consumer has yet asked for.
+export { ciWorkflowSteps } from "./parse/checkScriptsRunInCI.js";
+export type { CiWorkflowStep, CiStepAction } from "./parse/checkScriptsRunInCI.js";
+
 // The `resolve*` family — a target's `specController.*` configuration read into the registry, bars
 // and mints the reconciler takes (`parse/targetManifest`). Shared because they moved INTO the
 // engine and the tree's own gates still read a target's config through them: the corpus check

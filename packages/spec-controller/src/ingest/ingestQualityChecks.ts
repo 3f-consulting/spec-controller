@@ -14,7 +14,7 @@
  */
 
 import { readFileSync, existsSync } from "node:fs";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { ciSourcePathsOf } from "./ciSourcePaths.js";
 import { discoverFeatures, type DiscoveredFeature } from "./ingestScenarios.js";
 import {
@@ -82,22 +82,21 @@ const VITEST_QUALITY_CHECK: RuntimeQualityCheck = "unit";
 const CUCUMBER_QUALITY_CHECK: RuntimeQualityCheck = "integration";
 
 /**
- * The static-check script-prefix convention set — which package.json script names the
- * running-check observer (`runningStaticChecks`) recognises as static checks, SET at the
- * CLI edge rather than hardcoded in the core parser. `lint:*` is an earlier internal tool's own convention;
- * `guard:*` is an adopter's repository's (four `guard:*` scripts run in an adopter's repository's CI). A third convention adds its
- * prefix here; the core never assumes the set. No CLI override flag yet — that earns its place
- * at a third ecosystem, not now (mirrors the VITEST_QUALITY_CHECK stance above).
- * `qualityCheck: "lint"` (the static-check axis name) is unchanged — this is the script prefix,
- * not the axis.
+ * THIS TOOL, RUN TO RECONCILE (@SCN-USG-014, 3F-3343) — the invocation whose step is the
+ * reconciler rather than one of the reconciled rows, SET at the CLI edge and injected into the
+ * core like the prefixes above and the workflow names below.
  *
- * A HEURISTIC FOR FINDING CHECKS, NEVER THE DEFINITION OF ONE (@SCN-USG-009, 3F-2495). Membership
- * is a property of the CHECK — does it analyse source without executing it — so a target whose
- * gate this set misses configures it by name via `specController.staticChecks` (the engine's
- * `resolveStaticChecks`) rather than renaming its scripts to our convention, which is not a thing
- * the tool can ask of a client.
+ * HOW THIS PRODUCT IS INVOKED IS THIS LAYER'S FACT. `spec-controller` is the `bin` this package
+ * publishes and `balance` is the command that reconciles; the engine holds neither, and a core
+ * that assumed them would be asserting something about a command line it never sees.
+ *
+ * BOTH TOKENS, AND THE SECOND IS NOT DECORATION. This repository's own pipeline runs
+ * `pnpm spec-controller tags` beside its balance step — the same binary, doing something that is
+ * an ordinary step of the pipeline being reconciled — so an invocation naming the binary alone
+ * would take that step off the books. The comparison is whole, adjacent shell tokens
+ * (`parse/commandRuns`), so this names the reconciliation and nothing else the tool can do.
  */
-const GUARD_SCRIPT_PREFIXES: readonly string[] = ["lint:", "guard:"];
+const RECONCILER_INVOCATION = "spec-controller balance";
 
 /**
  * A refusal met with an absent bar rather than let out of this edge.
@@ -423,6 +422,8 @@ type TargetManifest = PackageJsonScripts & {
     checkRegistry?: unknown;
     thresholds?: unknown;
     fitnessChecks?: unknown;
+    runners?: unknown;
+    notChecks?: unknown;
   };
 };
 
@@ -445,6 +446,12 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
   // file-vs-directory distinction, so one flag stays one flag and an explicit file is still
   // a narrowing (@SCN-USG-008).
   const ciPath = opts.ci ?? ".github/workflows";
+  // RESOLVED ONCE, READ TWICE (@SCN-USG-015). The engine takes anonymous source strings and holds
+  // no filesystem, so the mapping from a step's source index back to the workflow file it came
+  // from is made HERE, where the paths are already in hand — `ciSourcePaths.ts` is explicit that
+  // keeping the core that way is the point. Resolving the list twice would be two chances for the
+  // bytes and the names to fall out of the order they are paired by.
+  const ciPaths = ciSourcePathsOf(ciPath);
 
   return evidenceReconciliationFromSources({
     // The corpus's bytes, read ONCE at this impure edge (3F-3088). The engine composes the three
@@ -455,7 +462,12 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
     // names the FILE, which the discovery knows and a source string does not.
     untaggedScenarios: untaggedScenariosFromFeatures(opts.features),
     packageJson,
-    ciSources: ciSourcePathsOf(ciPath).map((path) => readFileSync(path, "utf8")),
+    ciSources: ciPaths.map((path) => readFileSync(path, "utf8")),
+    // THE FILE, NOT THE PATH. A `notChecks` entry opens with the workflow's own name — `ci.yml`,
+    // `release.yml` — which is what a consumer reads at the head of their run log and the only
+    // half of the entry that does not come out of the workflow's own text. The directory it sits
+    // in is the caller's `--ci`, not the consumer's subject, so it is not part of what they write.
+    ciSourceNames: ciPaths.map((path) => basename(path)),
     measurements: readJsonIfPresent<{ measurements?: unknown }>(opts.measurements) ?? {},
     // The CONVERTED checks' credit stream, read at this edge like every other report. Absent it is
     // undefined rather than empty, and that distinction reaches the reader (@SCN-LNT-027): "no
@@ -469,11 +481,14 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
       opts.ciSteps
     ),
     runtimeObservations: parseRuntimeObservations(opts, root),
-    // The three things the engine's resolvers cannot hold, and each for its own reason: the starter
-    // deferral set and the guard script prefixes are the application layer's own policy, and the
-    // reader opens a file on the target's tree.
+    // The three things the engine's resolvers cannot hold, and each for its own reason: the
+    // starter deferral set is the application layer's own policy, how this tool is invoked to
+    // reconcile is a fact about this product's command line, and the reader opens a file on the
+    // target's tree. THE PREFIX SET USED TO SIT HERE AND IS GONE (@SCN-USG-004, 3F-3343): the
+    // engine no longer decides a check's membership by its name, so there is no convention left
+    // for this edge to own.
     deferralTags: DEFAULT_DEFERRAL_TAGS,
-    guardScriptPrefixes: GUARD_SCRIPT_PREFIXES,
+    reconcilerInvocation: RECONCILER_INVOCATION,
     killFloor: killFloorReaderFor(root),
   });
 }

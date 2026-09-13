@@ -20,7 +20,7 @@ node --version   # must be v22.x or higher
 - A Vitest JSON report (runtime test evidence).
 - A Cucumber JSON report (runtime test evidence).
 - Your CI run's own step record — the `toJSON(steps)` dump your pipeline writes, evidence for every converted fitness check (see *Wiring into CI*).
-- Your CI config (`ci.yml`) and `package.json` — used to check that an UNCONVERTED static check is wired into CI over the real source.
+- Your CI config (`ci.yml`) and `package.json` — the CI config is the scope discovery ranges over, and both are used to check that an UNCONVERTED static check is wired into CI over the real source.
 
 ---
 
@@ -94,16 +94,57 @@ what.
 The worked before/after, the migration checklist, and the traps:
 [`converting-a-fitness-check.md`](./converting-a-fitness-check.md).
 
-### Two limits, stated so you do not discover them
+### Naming your runners, and the one limit that remains
 
-**The zero-annotation state is Node-shaped today, and that is a defect rather than a design.**
-Reconciling a pipeline you have not annotated at all finds the checks it can, by matching
-`package.json` script names against observed prefixes — so a pipeline with a bare `run: ruff` and no
-`package.json` script derives nothing, and its report is empty rather than wrong. **The replacement
-is not a longer list of names**: you will declare the commands that run your behavioural suites — a
-closed set of four, one per tier — and every other step of your pipeline is a fitness check. **Annotating the steps has no such shape**: an `id:` is a key of the
-step mapping, the command below it is any command in any language, and nothing in the resolution
-reads a manifest.
+**The zero-annotation state is no longer Node-shaped.** It used to find the checks it could by
+matching `package.json` script names against observed prefixes, so a pipeline with a bare `run: ruff`
+and no `package.json` script derived nothing. That prefix set is gone, retired on 2026-09-12 by
+[3F-3343](3F-3343), and **the replacement is not a longer list
+of names**: you name the commands that run your behavioural suites — a closed set of four, one per
+tier — and **every other step of the workflows `--ci` names is a candidate fitness check**, whatever
+it invokes and whether it is a `run:` step or a `uses:` action.
+
+```jsonc
+"specController": {
+  "runners": {
+    "unit": "vitest",             // the command your CI runs for @unit
+    "integration": "cucumber-js", // for @integration
+    "e2e": "cucumber-js",         // two tiers, one runner, which is normal
+    "performance": null           // we have no performance runner
+  },
+  "notChecks": [
+    "ci.yml:build:actions/checkout@v5",
+    "ci.yml:build:Install dependencies"
+  ]
+}
+```
+
+**`runners` is keyed by the four canon tiers and by nothing else.** A value is a runner's name or
+`null`, and `null` is a statement rather than a blank — *we have no runner for this tier*, which the
+report distinguishes from omitting the key, which it reads back as *you have not told us*. A key
+outside the four is reported as unrecognised, excludes nothing, and does not abort the run. **No
+block at all is not an error**: every step becomes a candidate, which is the report the free state is
+sold on. A runner is matched as a **whole shell token** — of the step's own command, or of the
+`package.json` script it invokes, following aliases three deep — and never as a substring.
+
+**`notChecks` is your list of steps that are neither runners nor checks.** Entries are
+`<workflow file>:<job id>:<step name>`, matched **exactly**: no prefix form, no glob, no bare name.
+**To take a whole workflow out, narrow `--ci`** rather than listing its steps. An excluded step is
+named on the report rather than dropped, and an entry matching no step is reported as stale.
+`balance` itself and its `toJSON(steps)` dump are excluded **by construction** — never write them.
+
+**What stays Node-shaped is where the configuration lives**, not what can be discovered: both keys
+sit under `specController` in a `package.json`, so a repository that has none adds a stub file. And
+the residue of the recognition rule is a **false positive you can see**: a suite run through an
+action, or a runner buried in a quoted argument to a wrapper, is reported as a candidate check rather
+than silently excluded — one line of `notChecks` each. **Annotating the steps has no such shape at
+all**: an `id:` is a key of the step mapping, the command below it is any command in any language,
+and nothing in the resolution reads a manifest.
+
+**Your first run against an unannotated pipeline reds.** Every candidate cites nothing, so every
+credit posts to suspense and `balance` exits 1 — the ledger being right about a corpus that demands
+nothing yet. Adopting by observing rather than by redding the build is
+[3F-3100](3F-3100), and it is not in the tool today.
 
 **A check that legitimately applies to only some platforms is not served.** A matrix build uses
 `if:` to skip such a step, and that skip reds. *"The command examined nothing"* and *"this row was
@@ -148,8 +189,8 @@ spec-controller balance --features ./features \
 | `--features <dir>` | Directory of Gherkin `.feature` files — the scenarios. |
 | `--vitest <report.json>` | A Vitest JSON report — runtime test evidence. |
 | `--cucumber <report.json>` | A Cucumber JSON report — runtime test evidence. |
-| `--ci <ci.yml>` | Your CI workflows — a file, or a directory of them (default `.github/workflows`). Where an UNCONVERTED static check is found running over the real source, and where a check step's `id:` supplies the `@SCN` its result cites. |
-| `--package-json <path>` | The target's `package.json` — its `scripts`, and its `specController.fitnessChecks` rows (see *Declaring a fitness check*). |
+| `--ci <ci.yml>` | Your CI workflows — a file, or a directory of them (default `.github/workflows`). **This is the scope of discovery**: every step of every job it resolves is read, and narrowing it is how a whole workflow comes out. Also where an UNCONVERTED static check is found running over the real source, and where a check step's `id:` supplies the `@SCN` its result cites. |
+| `--package-json <path>` | The target's `package.json` — its `scripts`, its `specController.fitnessChecks` rows (see *Declaring a fitness check*), and its `specController.runners` / `specController.notChecks` (see *Naming your runners*). Defaults to `package.json` at the working directory. |
 | `--measurements <report.json>` | A measurement report — the number each measured check posted, evidence for the measured fitness checks (`ci-run-time` and its family). |
 | `--ci-steps <record.json>` | Your CI run's own record of what each of its steps did — the `toJSON(steps)` dump, evidence for the converted fitness checks. See *Wiring into CI*. Omit it if you have converted none. |
 | `--target <name>` | A name recorded verbatim in the report's provenance (which project this run reconciled). |
@@ -322,6 +363,10 @@ Two limits worth knowing. Each step's summary is capped at **1 MiB** — exceedi
 **No scenarios found / empty report** — check `--features` points at the directory holding your `.feature` files, and that the scenarios carry `@SCN-…` ids and evidence-obligation tags.
 
 **A static check shows as `missing` or `watermelon` you didn't expect** — `missing` means the script named for that check isn't in `package.json`; `watermelon` means the script exists but no CI `run:` step actually invokes it over the real source. Both are real findings, not tool errors — that is the point.
+
+**My first run reds with a wall of uncited checks** — expected, and not a misconfiguration. Every step of the workflows `--ci` names is a candidate fitness check until something says otherwise, and a candidate that cites no scenario posts to suspense, so `balance` exits 1. Read the **Discovery scope** and **Step accounting** sections of the report: they name each workflow and job, how many steps were read, and what became of every one of them. Then name your runners, name your non-checks, or narrow `--ci` — see *Naming your runners, and the one limit that remains*.
+
+**A step I know is my test suite is reported as a check** — the runner recognition did not reach it. It matches a whole shell token of the step's command or of the `package.json` script the step invokes; a suite run through a `uses:` action, or one buried in a quoted argument to a wrapper, is not reached. Add the step to `specController.notChecks`. The failure direction is deliberate: a step wrongly reported is one line to fix, a step wrongly excluded would be invisible.
 
 **`--json` rejected** — the legacy flag was removed; use `--format json:<path>`.
 

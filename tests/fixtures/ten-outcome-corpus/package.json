@@ -2,11 +2,18 @@
   "name": "ten-outcome-corpus-fixture",
   "private": true,
   "scripts": {
-    "guard:wm": "echo the watermelon guard exists as a script but CI never runs it"
+    "guard:wm": "echo the watermelon guard exists as a script but CI never runs it",
+    "test": "vitest run"
   },
   "specController": {
     "checkRegistry": {
       "guard:wm": "wm"
-    }
+    },
+    "runners": {
+      "unit": "vitest"
+    },
+    "notChecks": [
+      "ci.yml:build:pnpm install"
+    ]
   }
 }

@@ -1,0 +1,17 @@
+name: Nightly
+on:
+  schedule:
+    - cron: "17 3 * * *"
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sweep check
+        run: pnpm lint:sweep
+      - name: Depth check
+        run: pnpm lint:depth
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Audit
+        run: pnpm audit --audit-level=high

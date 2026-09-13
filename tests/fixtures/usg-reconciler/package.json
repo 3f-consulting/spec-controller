@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "test": "vitest run",
+    "lint:sweep": "madge --circular",
+    "lint:dump": "printf '%s' \"$STEPS_JSON\" > ci-steps.json",
+    "lint:reconcile": "spec-controller balance --features features --ci ci.yml --package-json package.json --target usg-reconciler"
+  }
+}

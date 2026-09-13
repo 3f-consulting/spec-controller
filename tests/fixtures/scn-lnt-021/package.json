@@ -5,6 +5,7 @@
     "build": "tsc"
   },
   "specController": {
+    "notChecks": ["ci.yml:quality:Checkout"],
     "fitnessChecks": [
       {
         "scn": "SCN-CVT-001",

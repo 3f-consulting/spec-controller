@@ -66,6 +66,11 @@ Feature: a converted target's fitness corpus
 const manifest = {
   scripts: { build: "tsc" },
   specController: {
+    // THE CHECKOUT STEP IS NOT A CHECK, and under the inverted membership rule it is a
+    // candidate until this target says so (@SCN-USG-013). An action is a candidate on the same
+    // terms as a command — a quality check can BE an action — so a pipeline that opens with a
+    // checkout answers for it here, exactly as a consumer's own manifest does.
+    notChecks: ["ci.yml:quality:Checkout"],
     fitnessChecks: [
       { scn: "SCN-CVT-001", characteristic: "complexity", command: "eslint" },
       { scn: "SCN-CVT-003", characteristic: "mutation", command: "mutation-score", atLeast: 90 },
@@ -94,6 +99,8 @@ jobs:
       - name: Dump this run's step record
         id: dump-the-step-record
         if: always()
+        env:
+          STEPS_JSON: \${{ toJSON(steps) }}
         run: printf '%s' "$STEPS_JSON" > ci-steps.json
 `;
 
@@ -120,10 +127,12 @@ function reconcile(measurements: { measurements: readonly unknown[] }): Evidence
     untaggedScenarios: [],
     packageJson: manifest,
     ciSources: [ci],
+    // The workflow FILE the exclusion above opens with — an entry can name no step of a
+    // source this run was given no name for.
+    ciSourceNames: ["ci.yml"],
     measurements,
     runtimeObservations: [],
     deferralTags: [],
-    guardScriptPrefixes: ["lint:"],
     killFloor: () => null,
     ciStepRecord: record,
   });

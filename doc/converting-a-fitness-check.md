@@ -165,18 +165,52 @@ A failed check is `failing`, never `broken`. `broken` is reserved for the case w
 said about whether the check ran, and it is the one that stamps the whole run unsound rather than
 merely out of balance.
 
-### What this route costs a consumer, and the named limit on the free end of it
+### What this route costs a consumer, and what the free end of it reads
 
 Reconciling a pipeline you have not annotated at all is `new-client`: your credits cite nothing, post
-to suspense, and answer no obligation. **The free state is Node-shaped, and the reason is worth stating rather than leaving to be found.**
-Script discovery ranges over the scripts your `package.json` declares — a check is discovered when a
-script name carries an observed prefix and a `run:` step invokes it — so a pipeline with no
-`package.json` presents no scripts, and a Go or Rust repository gets a zero-annotation reading of
-"nothing discoverable" rather than a wrong one.
+to suspense, and answer no obligation. **What that state discovers is every step of the workflows
+`--ci` names, whatever the step invokes.** A step is a candidate fitness check unless it runs a
+behavioural runner your manifest named, is the reconciler itself, or is a step you named a non-check
+— said by subtraction, so there is no rule anywhere about what a check is *called*. A bare
+`run: ruff`, a `cargo clippy`, a `uses: github/codeql-action/analyze`: each is read, and each posts.
 
-**`annotated` has no such shape, and that is the point of putting the citation on the step.**
-An `id:` is a key of the step mapping, the command below it is any command in any language, and
-nothing in the resolution reads a manifest. A pipeline that annotates its check steps is read the
+**The prefix rule this section used to describe is gone**, retired on 2026-09-12 by
+[3F-3343](3F-3343). It matched `package.json` script names
+against a set of ours — `lint:`, `guard:` — which is a sample of an unbounded set that belongs to
+you, so a pipeline whose scripts are `lint`, `typecheck` and `audit` was one the reader could not see
+and said nothing about. **Nothing shaped like it replaced it.** The set that is closed is the
+*behavioural runners* — one per tier, and the tiers are canon — so you name those and everything
+else is a candidate.
+
+**Which half is language-agnostic now, and which half is not.** Deciding whether a step is a
+*candidate* reads no manifest and no vocabulary of ours: that half is agnostic, and a repository with
+no `package.json` at all has every step of its pipeline on the books. Recognising a *runner* is the
+half that is not — but it is smaller than it sounds. A runner is matched as a **whole shell token of
+the step's own command** first, so `pytest -q` and `poetry run pytest tests/` are both recognised
+with no manifest script involved. What needs your `package.json` is the second clause, the hop
+through a script alias — `pnpm test` → `vitest` — and that clause exists precisely because Node
+pipelines are the ones that hide the runner behind an alias. What genuinely stays Node-shaped is
+narrower still: **the place you write the configuration.** `runners` and `notChecks` live under
+`specController` in a `package.json`, so a repository that has none adds a stub file to say anything
+at all.
+
+**The residue is a false positive, in the one direction you can see.** Two shapes of runner step are
+not recognised, and each leaves the step **on the books as a candidate** rather than quietly out of
+them: a suite run through an **action** (`uses:`), because the rule is about a command and an action
+states none; and a runner buried in a **quoted argument** to a wrapper — `./step-threshold unit
+"pytest -q"` — because tokens are whole and never substrings. Each costs one line of `notChecks`, and
+you can *see* that it cost you one. That is the entire argument for the inversion: under the retired
+rule silence hid checks you **have**, and a false negative is invisible.
+
+**Your first run reds, and it is meant to.** Every candidate cites nothing, so every credit posts to
+suspense and `balance` exits 1. That is the ledger being right about a corpus that demands nothing
+yet, not the tool failing to start — and it is the number that shrinks as you convert. Adopting by
+observing rather than by redding the build is
+[3F-3100](3F-3100), and it is not in the tool today.
+
+**`annotated` was never manifest-shaped either, and that is the point of putting the citation on the
+step.** An `id:` is a key of the step mapping, the command below it is any command in any language,
+and nothing in the resolution reads a manifest. A pipeline that annotates its check steps is read the
 same way whatever it builds.
 
 ---
@@ -288,8 +322,9 @@ nothing about another's.
 what ends it.** A capability exercised by nothing and reporting green is the exact fault this
 product is named for, so the report says *which* zero it is rather than leaving a reader to guess:
 `0` uncited out of N discovered is a zero the axis reached, and `0` out of `0` is one it inherited.
-The residual that remains is the opposite shape and is stated where it belongs: script discovery is
-Node-shaped, which is the named limit above.
+The residual that remains is the opposite shape and is stated where it belongs: discovery now reads
+every step it is pointed at, so what it can get wrong is a step reported as a check that is not one
+— the false positive named above, visible on the report and answered in one line of `notChecks`.
 
 **A check that did not run is not credited, and it is the part of the model worth reading twice
 before you convert.** A fitness credit says the check RAN, so the reader reads what the run's own
@@ -339,19 +374,18 @@ somebody moved the step — never that. The field could not name what it claimed
       if: always()
       run: pnpm check:pr-metadata || [ $? -eq 3 ]
 
-### Two limits, stated so you do not discover them
+### One limit, stated so you do not discover it
 
-**`new-client` is Node-shaped today, and that is a defect rather than a design.** The
-zero-annotation state finds your checks by matching `package.json` script names against observed
-prefixes, so a pipeline with a bare `run: ruff` and no `package.json` script derives nothing and its
-report is empty rather than useful. **`annotated` is not** — the `id:` carries the citation whatever
-the command is, in any language.
-
-**What replaces it, and why it is not a longer list.** A prefix list samples an unbounded set: the
-names your team gives its checks. The set of *behavioural runners* is closed — one per tier — so you
-declare those and **everything else in your pipeline is a fitness check**. `ruff`, `mypy` and
-`cargo clippy` become discoverable without one line of ours knowing those words. Until that lands,
-the limit above is real and stated.
+**This section carried two, and the first has been retired rather than restated.** `new-client` was
+Node-shaped: the zero-annotation state found your checks by matching `package.json` script names
+against observed prefixes, so a pipeline with a bare `run: ruff` and no `package.json` script derived
+nothing and its report was empty rather than useful. **That is no longer how discovery works.** A
+prefix list samples an unbounded set — the names your team gives its checks — and the set of
+*behavioural runners* is closed, one per tier, so you name those and **everything else in your
+pipeline is a candidate fitness check**. `ruff`, `mypy` and `cargo clippy` are discovered without one
+line of ours knowing those words. What that leaves is a false positive you can read and correct, not
+a silence; it is stated in full under *What this route costs a consumer* above, and the keys are in
+the checklist below.
 
 **A check that legitimately applies to only some platforms is not served.** A matrix build uses
 `if:` to skip such a step, and that skip now reds. *"The command examined nothing"* and *"this row
@@ -366,18 +400,65 @@ is one no row configures, and the ledger's census names each of them.
 
 ## Converting an existing check — the checklist
 
-1. **Write the row** — `scn`, `characteristic`, `command`, plus `atLeast` / `atMost` where the check
+1. **Name your behavioural runners, and the steps that are not checks.** This comes first because it
+   is what you write before anything else, converted check or not: until the tool knows which steps
+   run your suites, they are candidate fitness checks like everything else.
+
+   ```jsonc
+   "specController": {
+     "runners": {
+       "unit": "vitest",             // the command your CI runs for @unit
+       "integration": "cucumber-js", // for @integration
+       "e2e": "cucumber-js",         // two tiers, one runner, which is normal
+       "performance": null           // we have no performance runner
+     },
+     "notChecks": [
+       "ci.yml:build:actions/checkout@v5",
+       "ci.yml:build:Install dependencies"
+     ]
+   }
+   ```
+
+   **`runners` is keyed by the four canon tiers and by nothing else** — `unit`, `integration`, `e2e`,
+   `performance`. A value is a runner's name or `null`, and **`null` is a statement rather than a
+   blank**: it says *we have no runner for this tier*, the report says so, and that is a different
+   sentence from omitting the key, which the report reads back as *you have not told us*. **A key
+   outside the four is reported as unrecognised and excludes nothing** — a typo is neither honoured
+   silently nor a reason to abort your run. **No block at all is not an error**: every step becomes a
+   candidate, which is exactly the report `new-client` is sold on.
+
+   **A runner is matched as a whole shell token, never as a substring** — of the step's own command,
+   or of the `package.json` script the step invokes, following script-to-script aliases three deep.
+   The alias hop is there because a real pipeline runs `pnpm test`, not `vitest`. Whole tokens are
+   load-bearing rather than fastidious: a substring rule excludes a step whose *path argument*
+   happens to contain a runner's name, and a step wrongly excluded is invisible.
+
+   **`notChecks` is your list of steps that are neither runners nor checks** — a checkout, an
+   install, an artefact upload, a deploy. An entry is `<workflow file>:<job id>:<step name>` and is
+   matched **exactly**: no prefix form, no glob, no bare name, because the same step name is a check
+   in one workflow and plumbing in another and a bare name would take out both. **To take a whole
+   workflow out, point `--ci` somewhere narrower** rather than listing its steps. An excluded step is
+   **named on the report** rather than dropped, and **an entry that matches no step is itself
+   reported as stale** — so a line you wrote once and outgrew tells you so instead of quietly
+   protecting nothing.
+
+   **You never write the reconciler in either list.** `spec-controller balance` and its
+   `toJSON(steps)` dump are excluded **by construction**: the reconciler is not one of the reconciled
+   rows, and that holds for a manifest that says nothing at all. The normative statement of both keys
+   is in [`compatibility.md`](./compatibility.md).
+
+2. **Write the row** — `scn`, `characteristic`, `command`, plus `atLeast` / `atMost` where the check
    produces a number.
-2. **Give the scenario the axis tag** and remove its characteristic tag. Write the scenario in your
+3. **Give the scenario the axis tag** and remove its characteristic tag. Write the scenario in your
    fitness corpus and the row beside it; neither half is derived from the other, which is what makes
    a scenario with no row, and a row with no scenario, something a run can report.
-3. **Leave the command exactly where it is, and give its step the scenario's code as its `id:`.**
+4. **Leave the command exactly where it is, and give its step the scenario's code as its `id:`.**
    A converted check is still a CI step; what changes is that the step now carries a citation, and
    that the job ends with one `toJSON(steps)` dump the reconciler reads.
-4. **Sweep the citations.** A minted `@SCN` changes every surface that names the old one — the
+5. **Sweep the citations.** A minted `@SCN` changes every surface that names the old one — the
    corpus, step ids, unit-test pins, docblocks, workflow comments, the decision log. Grep for the
    retired code and expect zero hits.
-5. **Watch out for a measured check whose producer runs on another cadence.** Renaming the `@SCN`
+6. **Watch out for a measured check whose producer runs on another cadence.** Renaming the `@SCN`
    of a static check touches only your own tree. A measured check's number is stamped with that
    `@SCN` by whatever *produced* it — a nightly sweep, a scheduled job — and read back by both
    terms. If the producer runs on a different schedule, or on a different branch, the newest record
@@ -406,9 +487,9 @@ is one no row configures, and the ledger's census names each of them.
    forever and survives a feature-file rename, so a check may keep its code while its scenario
    moves — but a migration that leaves one check in the old numbering has not migrated, it has
    stopped.
-6. **Compare the ledger shape, not the rows.** Every `@SCN` changed, so a row-for-row diff says
+7. **Compare the ledger shape, not the rows.** Every `@SCN` changed, so a row-for-row diff says
    nothing. Same characteristics claimed, same obligation count, same satisfied / missing verdicts,
    against a baseline captured **before the first edit**.
-7. **Prove the comparison has teeth.** A matching ledger is also what *not migrating* produces.
+8. **Prove the comparison has teeth.** A matching ledger is also what *not migrating* produces.
    Break one row's `scn` so its credit cites nothing, confirm the comparison reds, and
    restore. A comparison whose teeth are unproven is a diff that is not looking.

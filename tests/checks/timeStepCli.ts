@@ -10,12 +10,13 @@
  * (`double-entry-manifesto.md` → Fitness Scenario). Here the runner is a command line, and the
  * measurement it writes arrives already citing.
  *
- * IT IS NOT A CHECK, AND IT TAKES NO SCRIPT NAME OF ITS OWN. `runningStaticChecks` reads a
- * `package.json` script as a running static check when its name carries an observed prefix
- * (`lint:` / `guard:`) and a CI step invokes it, so a `lint:`-spelled wrapper would register a
- * phantom static check on this repository's own ledger. The reasoning `verify` and `ladder`
- * already carry — and the reason the timed scripts wrap THEMSELVES rather than gaining a
- * wrapper script beside them.
+ * IT IS NOT A CHECK, AND IT TAKES NO SCRIPT NAME OF ITS OWN. That used to be a rule about the
+ * NAME: `runningStaticChecks` read a `package.json` script as a running static check when its name
+ * carried an observed prefix, so a `lint:`-spelled wrapper registered a phantom check on this
+ * repository's own ledger. THE PREFIX SET IS GONE (3F-3343) and membership is decided by
+ * subtraction over the pipeline's steps, so what keeps this wrapper off the ledger is that it is
+ * not a step of ci.yml — the timed scripts wrap THEMSELVES rather than gaining a wrapper step
+ * beside them, which is the arrangement that survives the change rather than the spelling.
  *
  * `--root` MOVES THE WHOLE STEP: the wrapped command runs there and the artefact lands there.
  * One argument rather than two because a wrapper that measured a step in one tree and posted

@@ -808,11 +808,16 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     no row names — leaves every other reading on this axis green. The report a prospect sees before
     they have adopted anything is the one no other arm is standing over.
 
-    AND THE SILENCE IS THE OTHER HALF OF THE SAME CLAIM. A pipeline checks out a tree, sets up a
-    toolchain, installs dependencies and builds, and none of those is a quality check. A report
-    naming them would drown the sentence it exists to say, so what discriminates is the check
-    heuristic — the scripts a manifest holds under a guard prefix or names as static checks — and a
-    step that heuristic does not reach is reported nowhere at all.
+    AND KEEPING THE PLUMBING OFF THE BOOKS IS THE OTHER HALF OF THE SAME CLAIM. A pipeline checks
+    out a tree, sets up a toolchain, installs dependencies and builds, and none of those is a
+    quality check; a report banking them as checks would drown the sentence it exists to say. WHAT
+    DISCRIMINATES IS THE CONSUMER'S OWN LIST, and since 3F-3343 nothing else does: the tool held a
+    check heuristic — the scripts a manifest carried under a guard prefix or named as static checks
+    — and retired it, because the set of names a check might be given belongs to the consumer and
+    guessing at it is what made a pipeline named some other way invisible. So the target below says
+    which of its steps are not checks, in one line each, and those steps are ACCOUNTED as excluded
+    rather than reported nowhere. Off the books, and not silent — the difference is the whole of
+    what the inversion bought.
 
     @unit @integration @SCN-LNT-029
     Scenario: a check step citing no @SCN posts to suspense, which is the unannotated consumer's whole report
@@ -836,7 +841,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       Given a target whose CI runs every static check its manifest holds, and states the code of none of them
       And that CI also checks out its tree, sets up its toolchain, installs its dependencies and builds it
       When that target's evidence is reconciled from its manifest and its workflow
-      Then every check the pipeline ran is on the one suspense row citing no scenario, and the steps that are not checks are reported nowhere at all
+      Then every check the pipeline ran is on the one suspense row citing no scenario, and the steps the target named non-checks are off the books
 
   Rule: a running check's citation is the code its own CI step carries, resolved against the configured row that code names
 

@@ -1,23 +1,24 @@
 @TGD
-Feature: a fixture target citing the guard:-prefixed check its CI runs
+Feature: a fixture target citing the check its CI runs, under no convention of ours
 
-  A FIXTURE target (NOT under features/) standing in for a codebase whose CI runs one static
-  check under the guard: prefix rather than lint:, and whose corpus CARRIES it. This target's
-  own specController.checkRegistry maps guard:domain-purity to the bare check domain-purity, and
-  the stepless fitness scenario below carries that tag — so the seam resolves the handle to
-  SCN-TGD-001 and the credit posts to that row rather than to suspense. `test` / `cucumber` run
-  in this CI too, carry no check prefix and are registered nowhere, so they reach neither door
-  onto this axis.
+  A FIXTURE target (NOT under features/) standing in for a codebase whose scripts are named the
+  way its own team names them — domain-purity, carrying neither lint: nor guard: nor any other
+  prefix this tool has ever recognised — and whose corpus CARRIES the check that handle resolves
+  to. This target's own specController.checkRegistry maps domain-purity to the bare check
+  domain-purity, and the stepless fitness scenario below carries that tag, so the seam resolves
+  the handle to SCN-TGD-001 and the credit posts to that row rather than to suspense.
 
-  ONE FACT APART FROM usg-guard, WHICH IS THE WHOLE OF WHY THE PAIR IS A CONTROL. That target
-  runs the same script and registers the same bare check; the only difference between the two is
-  the tag on the scenario below. So nothing but the citation can move either verdict: a reader
-  taking a registry entry for an attribution greens both, and one placing nothing reds both.
+  ONE FACT APART FROM usg-guard, AND THE OTHER TWO FILES SAY SO BY BEING THE SAME BYTES. That
+  target's ci.yml and package.json are byte-identical to this one's, so the corpus below is the
+  whole of the difference and a drift into some second difference nobody meant has nowhere to
+  happen. Nothing but the citation can move either verdict: a reader taking a registry entry for
+  an attribution greens both, one placing nothing reds both, and a reader answering from the
+  handle's spelling has the same handle to answer from twice.
 
-  THE HANDLE'S PREFIX BUYS IT NOTHING HERE, and that is the point rather than an accident. The
-  seam resolves an opaque script name through the registry, so guard:domain-purity is attributed
-  for exactly the reason lint:foo is attributed in the usg target. What the prefix does is FIND a
-  script nothing cites — which is usg-guard's job, not this one's.
+  ITS SUITES AND ITS PLUMBING ARE NAMED, so what this target's discovery reaches is the one check
+  rather than four. The manifest names the runners its test and cucumber steps run and names its
+  install step a non-check — which is how a consumer takes a step out, and the reason those three
+  reach neither door onto this axis is that naming and never their spelling.
 
   THE @unit TAG BELOW IS DELIBERATE. It leaves this target owing a unit test no run supplies, so
   it reconciles OUT OF BALANCE and the CLI exits 1 — which is what the shared When step reads.

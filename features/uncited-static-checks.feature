@@ -17,12 +17,16 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
   mirror of RuntimeEvidenceObservationKindCounts. The report surfaces the counts under
   "### Static checks", mirroring "### Test volume"; the guard member detail lives in the rows.
 
-  WHICH SCRIPTS ARE STATIC CHECKS, AND WHY IT IS NOT A NAMING QUESTION (3F-2495). Membership is
-  a PROPERTY of the check — does it analyse source without executing it and red the build on a
-  violation — never a property of its name. The lint:/guard: prefixes and the target's own
-  specController.staticChecks are two ways of DISCOVERING checks with that property; neither
-  defines one. install/checkout are not scripts at all; test/cucumber are the runtime axis's
-  observed evidence and are never double-counted here.
+  WHICH STEPS ARE STATIC CHECKS, AND WHY IT IS NOT A NAMING QUESTION (3F-2495, settled at
+  3F-3343). Membership is a PROPERTY of the check — does it analyse source without executing it
+  and red the build on a violation — never a property of its name. It used to be DISCOVERED by
+  two naming heuristics, the lint:/guard: prefixes and the target's own
+  specController.staticChecks, and neither of them ever defined one. The prefixes are retired:
+  membership is decided by subtraction, and a run: step of the workflows --ci names is a
+  candidate fitness check unless it runs a behavioural runner the manifest names, is the
+  reconciler, or is a step the manifest names a non-check. install and checkout are steps like
+  any other and leave by that third door; test and cucumber are the runtime axis's observed
+  evidence and leave by the first, which is what the manifest's runners block says.
 
   This line used to end "tsc deferred", and that deferral outlived its reason: `tsc --noEmit`
   is static analysis on any reading, spec-controller ran it in CI throughout, and the report
@@ -37,20 +41,20 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
   on an axis this tool has not built yet (3F-2509, the sibling of an adopter's repository's @ci-run-time). Ruling
   it "out of scope" is the dodge that feature file was written to reject.
 
-  THIS AXIS NOW READS ZERO OVER SPEC-CONTROLLER'S OWN TREE, AND A READER MUST BE ABLE TO TELL
-  WHICH ZERO IT IS (3F-3168, time-boxed to 3F-3161). The 3F-3139 migration moved every fitness
-  command out of .github/workflows/ci.yml and onto a specController.fitnessChecks row, so this
-  repository has no lint:/guard: script that a CI run: step invokes. runningStaticChecks
-  therefore observes NOTHING here, and the uncited count is 0 because the discoverable set is
-  EMPTY — not because a populated set was checked and came back clean.
+  THE ZERO OVER SPEC-CONTROLLER'S OWN TREE IS NO LONGER A ZERO OVER AN EMPTY SET (3F-3168, closed
+  at 3F-3343). It was: the 3F-3139 migration moved every fitness command out of
+  .github/workflows/ci.yml and onto a specController.fitnessChecks row, and under the prefix rule
+  what was left to discover was almost nothing — so "0 uncited" said the discoverable set was
+  EMPTY rather than that a populated set had been checked and come back clean. Those two readings
+  are the fault this product exists to separate, and here they had collapsed onto one number: a
+  capability exercised by nothing, reporting green. 3F-3074 recorded exactly this shape as a fault
+  when a consumer's tree produced it.
 
-  Those two readings are the fault this product exists to separate, and here they collapse onto
-  one number: a capability exercised by nothing, reporting green. 3F-3074 recorded exactly this
-  shape as a fault when a consumer's tree produced it. It is stated here rather than left for a
-  reader to infer, and it is TIME-BOXED: the residual closes at 3F-3161, when the reader stops
-  supporting script discovery at all — a breaking change sequenced after the consumer still
-  routing credits through it has migrated. If that migration stalls, the residual is re-raised
-  rather than left to age into folklore.
+  IT IS CLOSED BY THE INVERSION RATHER THAN BY A TICKET THAT WAS STILL OWED. Every run: step of
+  ci.yml is a candidate now, so the denominator is this repository's whole pipeline: ten checks
+  discovered, each carrying the code of the row it answers on its own step, and nought uncited.
+  The residual that remains is a smaller one — specController.staticChecks is still honoured and
+  is now inert, and 3F-3161 owns its removal, which is a major version.
 
   What is NOT vacuous over this tree is the number beside it. "11 static check(s) run" counts the
   running lint credits the CONVERTED rows post — eleven of the fourteen rows, the other three
@@ -125,16 +129,14 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
       When the reconciliation report is rendered for the target
       Then lint:foo is attributed to the scenario citing it, not reported uncited
 
-  Rule: the runtime axis's own CI steps are not derived as fitness checks
+  Rule: a step invoking a runner the manifest names is not a candidate fitness check
 
-    THE EXCLUSION SURVIVES THE RULE CHANGE; WHAT DRAWS IT HAS MOVED. A script reached this axis
-    two ways under name-match: a lint:/guard: prefix — or the target's own configured check
-    list — found it as a running check, or a scenario spelled its runnable handle in an @lint=
-    tag and obliged it. Under the one posting rule that second door is the target's REGISTRY: a
-    handle is obliged when the registry maps it to a bare check tag some stepless fitness
-    scenario carries. test and cucumber pass through neither door — they carry no check prefix,
-    this target configures neither, and its registry names lint:foo and lint:bar and nothing
-    else.
+    THE EXCLUSION SURVIVES THE RULE CHANGE; WHAT DRAWS IT HAS MOVED. What takes a pipeline step
+    out of this axis is the target saying which commands run its behavioural suites: its
+    manifest names one runner per tier, and a step invoking that runner — reached through the
+    manifest script the step runs (@SCN-USG-011) — is that tier's runner rather than a gate.
+    This target names vitest for unit and cucumber-js for integration, and its test and
+    cucumber scripts run exactly those, so both steps are recognised where CI invokes them.
 
     THE FAULT IS DOUBLE-COUNTING, NOT A WRONG NUMBER. pnpm test and pnpm cucumber ARE evidence:
     they are how a corpus's behavioural scenarios get their observations at all. A reader that
@@ -143,59 +145,65 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     running more gates than it has, with the invented ones redding as uncited for no fault of
     the tree's.
 
-    THE TWO DOORS FAIL DIFFERENTLY, AND ONLY THE TALLY SEES BOTH. A step found by a widened
-    prefix or configuration cites nothing, so it falls to the suspense row and names itself
-    there. One admitted through the registry door is ATTRIBUTED instead — it never reaches
-    suspense, and it raises no obligation of its own, so it never reaches the attributed cut
-    either; the whole of what the report says about it is the running count moving by one. The
-    count is therefore what this scenario asserts first, and the suspense reading is what tells
-    a reader which check inflated it.
+    WHICH IS WHY THE TALLY IS WHAT THIS SCENARIO ASSERTS FIRST. A behavioural step wrongly taken
+    for a check cites nothing, so it falls to the suspense row and names itself there — but that
+    row can only be read for by a reader who already knows which handle to look for, and a
+    recognition rule can fail over a step nobody predicted. The count moves whichever step it
+    was, so the count is asserted first and the suspense reading is what tells a reader which
+    step inflated it.
 
     @unit @integration @SCN-USG-003
-    Scenario: test and cucumber CI steps are not derived as fitness checks
+    Scenario: test and cucumber CI steps are not candidate fitness checks, because the manifest names their runners
       Given a target whose CI runs the lint:foo and lint:bar checks
       And its CI also runs the test and cucumber suites
+      And its manifest names the unit and integration runners those suites run
       And only lint:foo is cited by a fitness scenario
       When the reconciliation report is rendered for the target
       Then only lint:foo and lint:bar are counted as fitness checks, not test or cucumber
 
-  Rule: a guard:-prefixed CI script no fitness scenario cites is reported as an uncited static check
+  Rule: a CI check whose script name matches no convention of the tool's is reported as an uncited static check
 
-    THE PREFIX FINDS IT, AND FINDING HAS NOT MOVED. Discovery reads a target's scripts through
-    the prefix set and the target's own configured check list, and guard: has sat in that set
-    beside lint: since 3F-2495 ruled membership a property of the check rather than of its name.
-    What HAS moved is the test the verdict turns on. Under name-match a check was cited by a
-    scenario spelling its runnable handle back at it, so this script was uncited because no tag
-    anywhere said guard:domain-purity. Under the one posting rule the run resolves through the
-    target's registry to a bare check tag, and through its corpus to whatever stepless fitness
-    scenario carries that tag — and this target's corpus carries none.
+    THE PREFIX NO LONGER FINDS ANYTHING, BECAUSE THERE IS NO PREFIX SET LEFT TO FIND WITH. Until
+    3F-3343 discovery read a target's scripts through an observed prefix set — lint: and guard: —
+    and this scenario's script carried guard: so that it would be found. The set of names a quality
+    check might be given belongs to the consumer and is unbounded; a list of two was a sample of it,
+    and a longer list would have been a bigger sample. So the membership rule is inverted: a step of
+    the pipeline is a candidate fitness check UNLESS it invokes a runner the manifest names, is the
+    reconciler, or is a step the consumer named a non-check. The script below is called
+    domain-purity, which matches no convention this tool has ever recognised, and it is found
+    because nothing takes it out.
 
-    WHICH IS WHY THE SPELLING lint IS NOT WHAT ANY OF THIS RESTS ON, and why the pair is worth
-    keeping now that bare @lint is one style-lint check among many rather than the name of the
-    axis. A reader that had quietly made "cited" mean "some tag mentions lint" would still green
-    the lint:-prefixed twin and fail here, on a prefix the tool has recognised all along.
+    WHICH IS THE HEADLINE OF THE INVERSION AND NOT A REFINEMENT OF THE OLD RULE. Under the prefix
+    set this exact target was silent: its check ran, cited nothing, and produced no row, no count
+    and no red — the consumer read a clean board over a gate nobody owned. The uncited verdict is
+    what this scenario is about, and the reason it is now reachable is that the check is discovered
+    at all.
 
-    REGISTERED, AND STILL UNCITED — the shape that separates the prefix from the citation. This
-    target's registry maps guard:domain-purity to the bare check domain-purity, so the seam CAN
-    reach a tag for the handle; what nothing in its corpus does is carry that tag. Leaving the
-    handle out of the registry would report the same uncited check for a second reason — a
-    handle nothing registers reaches nothing either — and the target would then go on passing
-    under a reader that took every registered handle for an attributed one. One fact holds this
-    verdict, and it is the fact the cited twin flips.
+    THE CITED HALF IS WHAT MAKES IT MEAN SOMETHING, and it is the twin one Rule along
+    (@SCN-USG-005). A reader that reported every step as uncited would satisfy this scenario while
+    being useless; only a sibling target whose identically-unprefixed check IS attributed tells the
+    two apart.
+
+    REGISTERED, AND STILL UNCITED — the shape that separates discovery from citation, unchanged by
+    the switch. This target's registry maps domain-purity to the bare check domain-purity, so the
+    seam CAN reach a tag for the handle; what nothing in its corpus does is carry that tag. Leaving
+    the handle out of the registry would report the same uncited check for a second reason — a
+    handle nothing registers reaches nothing either — and the target would then go on passing under
+    a reader that took every registered handle for an attributed one. One fact holds this verdict,
+    and it is the fact the cited twin flips.
 
     THE LANDING IS READ ON THE ROW, not anywhere in the report. Posting to suspense is a claim
     about WHERE the credit went, and a whole-report search cannot tell the suspense row from any
-    other row that happens to mention the handle — the reading @SCN-USG-001 already scopes for
-    the lint:-prefixed case. A prefix-discovered check lands exactly where its lint:-prefixed
-    twin lands, so this scenario asserts it in the same terms rather than settling for the
-    absence of an attribution.
+    other row that happens to mention the handle — the reading @SCN-USG-001 already scopes for the
+    lint:-prefixed case. An unprefixed check lands exactly where a prefixed one lands, so this
+    scenario asserts it in the same terms rather than settling for the absence of an attribution.
 
     @unit @integration @SCN-USG-004
-    Scenario: an uncited guard:-prefixed script running in CI is an uncited static check
-      Given a target whose CI runs the guard:domain-purity script
-      And no fitness scenario cites guard:domain-purity
+    Scenario: an uncited check whose script name carries no prefix of ours is an uncited static check
+      Given a target whose CI runs the domain-purity script, a name matching no convention of ours
+      And no fitness scenario cites domain-purity
       When the reconciliation report is rendered for the target
-      Then the Static checks section reports guard:domain-purity as an uncited static check
+      Then the Static checks section reports domain-purity as an uncited static check
 
   Rule: a static check is observed wherever in the workflows it runs
 
@@ -314,65 +322,68 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
       When the reconciliation report is rendered for that target's ci.yml alone
       Then lint:sweep is not counted among the running static checks
 
-  Rule: a guard:-prefixed CI script a fitness scenario cites is attributed, not uncited
+  Rule: a CI check whose script name matches no convention of the tool's, that a fitness scenario cites, is attributed
 
     THE CONTROL THAT MAKES THE RULE ABOVE MEAN SOMETHING. @SCN-USG-004 is satisfied on its own by
-    a reader that places nothing and calls every guard:-prefixed script it finds uncited; this is
-    what stops that. Both targets run the same guard:domain-purity script and both registries map
-    it to the same bare check domain-purity, so the ONE fact left between them is whether a
-    stepless fitness scenario carries that tag — and that fact alone moves the verdict off the
-    suspense row and onto a scenario's.
+    a reader that places nothing and calls every script it finds uncited; this is what stops that.
+    Both targets run the same domain-purity script, a name matching no convention of ours, and
+    both registries map it to the same bare check domain-purity — so the ONE fact left between
+    them is whether a stepless fitness scenario carries that tag, and that fact alone moves the
+    verdict off the suspense row and onto a scenario's.
 
-    CITED NOW MEANS CARRIED, NOT SPELLED. Under name-match this target earned its attribution by
-    spelling the runnable handle back at the tool in a tag, and being attributed was a lookup hit
-    on one string. Under the one posting rule the run resolves guard:domain-purity through the
-    target's registry to the bare check domain-purity, and through its corpus to the scenario
-    carrying that tag: the row it lands on is SCN-TGD-001 and the check it lands under is
-    domain-purity — the BARE tag, not the handle that ran. Those two spellings never meet, so the
-    retired rule cannot post this row at all.
+    WHICH IS WHY THE NAME CANNOT BE WHAT DECIDES, and the pair is what proves it rather than
+    asserts it. The two targets run the same script under the same registry entry, so any reader
+    answering from the handle's spelling answers the same way for both — and the two verdicts
+    differ. Whatever places this credit on SCN-TGD-001 is reading the corpus, which is the one
+    posting rule; the retired rule read a name, and a name is the thing these two targets share.
 
-    WHICH IS WHY THE ASSERTION READS THE ATTRIBUTED ROW, not the absence of an uncited one — the
-    reading @SCN-USG-002 already gives its own lint:-prefixed twin. Absence is the weaker claim and
-    several wrong readers produce it: one that drops the credit on the floor reports no uncited
-    check either, and so does one that posts it to a scenario the corpus never wrote.
+    THE ASSERTION READS THE ATTRIBUTED ROW, not the absence of an uncited one — the reading
+    that @SCN-USG-002 already gives its own cited twin. Absence is the weaker claim and several
+    wrong readers produce it: one that drops the credit on the floor reports no uncited check
+    either, and so does one that posts it to a scenario the corpus never wrote.
 
-    THE PAIR IS NOT SYMMETRIC, AND THIS ARM IS NOT THE PREFIX SET'S READER. Its twin reaches this
-    axis through DISCOVERY, where the prefix set is what finds a script at all. This target reaches
-    it through the other door: a handle whose bare check some scenario carries is answered by the
-    obligation-side observer, which has never consulted the prefix set, and is filtered out of the
-    running-check stream precisely so that one run is not observed twice. So narrowing the prefix
-    set reds the twin and leaves this arm green, and the pair's value is not a symmetry it does not
-    have. What this arm holds instead is that the seam is BLIND to the prefix — an opaque handle
-    resolves through the registry whatever it is called, so a reader that had quietly made the
-    resolution lint:-only would attribute nothing here.
+    THE PAIR IS NOT SYMMETRIC, AND THE PLANT THAT USED TO SAY SO IS GONE WITH THE PREFIX SET. The
+    asymmetry was stated as a narrowing of the observed prefixes — cut them to lint: and the twin
+    reds while this arm stays green — and since 3F-3343 there is no prefix set to narrow. The
+    asymmetry survives, because it was never about the prefixes: the twin reaches this axis
+    through DISCOVERY, which now reads every step of the pipeline that is not a runner the
+    manifest names, the reconciler, or a step the consumer named a non-check. This target reaches
+    it through the other door — a handle whose bare check some scenario carries is answered by the
+    obligation-side observer, whatever discovery did — and is then filtered out of the
+    running-check stream so that one run is not observed twice.
+
+    SO NARROWING DISCOVERY IS WHAT PLAYS THE OLD PLANT'S PART, and it was run rather than reasoned
+    (3F-3362): name this target's own step a non-check and the twin's verdict is what goes, while
+    this one is attributed exactly as before. The conclusion is STRONGER than the argument it
+    lost — the old plant showed the seam blind to WHICH prefix a handle carried, and this handle
+    now carries none at all and is attributed anyway.
 
     @unit @integration @SCN-USG-005
-    Scenario: a cited guard:-prefixed script is attributed, not an uncited static check
-      Given a target whose CI runs the guard:domain-purity script it cites
-      And a fitness scenario cites guard:domain-purity
+    Scenario: a cited check whose script name carries no prefix of ours is attributed, not an uncited static check
+      Given a target whose CI runs the domain-purity script under no convention of ours
+      And a fitness scenario cites domain-purity
       When the reconciliation report is rendered for the target
-      Then guard:domain-purity is attributed to the scenario citing it, not reported uncited
+      Then domain-purity is attributed to the scenario citing it, not reported uncited
 
   Rule: a target can configure a script a static check, and the tool observes it on that axis
 
-    THE PREFIX SET IS A DISCOVERY HEURISTIC, NOT A DEFINITION (3F-2495). Static-axis
-    membership is a property of the check — does it analyse source without executing it —
-    and `tsc --noEmit` has that property whatever its script is called. A check with the
-    property and no recognised prefix is a FALSE NEGATIVE, not an exclusion.
+    THE PREFIX SET WAS A DISCOVERY HEURISTIC AND NEVER A DEFINITION (3F-2495), AND IT IS GONE
+    (3F-3343). Static-axis membership is a property of the check — does it analyse source without
+    executing it — and `tsc --noEmit` has that property whatever its script is called. A check with
+    the property and no recognised prefix was a FALSE NEGATIVE, not an exclusion, and this
+    configuration is what a target used to close it with.
 
-    THE GAP IS ONLY IN THE DISCOVERY DIRECTION, which is narrower than it first looks. The
-    obligation-side observer has never consulted the prefix set, so a non-prefixed check the
-    corpus reaches has always reconciled on its scenario's own row — under name-match by a
-    scenario spelling @lint=typecheck back at the tool, and under the one posting rule by a
-    stepless fitness scenario carrying the bare check tag this target's registry resolves the
-    handle to. What has never worked either way is finding a non-prefixed check NOBODY took
-    responsibility for — which is the one worth finding, and the one this feature file exists
-    to surface.
+    THE GAP IS CLOSED FOR EVERY SCRIPT AT ONCE NOW, so this key is honoured and inert. The
+    obligation-side observer never consulted the prefix set, so a non-prefixed check the corpus
+    reaches has always reconciled on its scenario's own row; what could not happen was finding a
+    non-prefixed check NOBODY took responsibility for. Discovery reaches every step of the
+    pipeline, so it happens whether this key names the script or not.
 
-    RENAMING IS NOT THE REMEDY. A client's scripts are not ours to rename, so the tool has
-    to be able to be TOLD. The configuration extends the discovery input; it never replaces
-    the prefixes, and it buys no exemption — a configured check is uncited, and reds, on
-    exactly the terms every other check is.
+    RENAMING WAS NEVER THE REMEDY, AND NOW NOTHING ASKS FOR ONE. A client's scripts are not ours to
+    rename, so the tool had to be able to be TOLD; the tool no longer needs telling. The key stays
+    honoured — it is what a consumer wrote, and removing it is 3F-3161's major version — and it
+    buys no exemption: a configured check is uncited, and reds, on exactly the terms every other
+    check is.
 
     THE MANIFEST IS STILL NOT THE SOURCE, and the registry is held to the same terms. A
     configured script CI does not run is not a gate, and would red every repository for owning
@@ -380,9 +391,9 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     run happened. So the two manifest keys are two answers to two questions — WHICH scripts
     are checks here, and WHAT bare tag names this one — rather than one answer written twice.
 
-    WHAT MAKES A CONFIGURED CHECK UNCITED HAS MOVED; DISCOVERING IT HAS NOT. Discovery still
-    keys on the prefix set plus this target's own configured check list, and that half is
-    exactly what 3F-2495 settled. What the one posting rule changes is the test the verdict
+    WHAT MAKES A CONFIGURED CHECK UNCITED HAS MOVED, AND SO HAS DISCOVERING IT. Discovery keyed on
+    the prefix set plus this target's own configured check list, which is what 3F-2495 settled; it
+    now reaches this check because its STEP is one of the pipeline's, under any name at all. What the one posting rule changes is the test the verdict
     turns on: the run resolves typecheck through the target's registry to a bare check tag,
     and through its corpus to whatever stepless fitness scenario carries that tag — and this
     target's corpus carries none, so the seam reaches no @SCN and the credit cites no scenario.
@@ -444,3 +455,438 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
       And a fitness scenario cites typecheck
       When the reconciliation report is rendered for the target
       Then typecheck is attributed to the scenario citing it, counted once and not reported uncited
+
+  Rule: a runner named as a binary is recognised at the step that invokes it through a manifest script
+
+    THE RUNNER'S NAME IS NOT IN THE WORKFLOW, which is why the manifest hop IS the rule rather
+    than a refinement of one. Measured over 113 run: steps in five real pipelines, a whole-token
+    match on the step's command alone recognises ZERO runners: every one of those pipelines
+    invokes its runner through a package.json script alias — pnpm test, pnpm cucumber — and the
+    binary's name appears in the workflow only inside a path. So a rule that resolves a step's
+    command to the executable it actually runs cannot be built from the workflow at all, because
+    the executable is not there.
+
+    WHOLE SHELL TOKENS, NEVER A SUBSTRING. The substring form recognises 2 of those same 113 and
+    both are false: one of them is the reconciler's own balance step, matched on the filename
+    vitest.json inside its --vitest argument. Excluding a fitness check as a runner is the one
+    direction this axis cannot tolerate, because it is silent — and it happens on the first real
+    pipeline a substring rule is pointed at. The sibling scenario one Rule along is welded to that
+    line; this one is why the hop exists at all.
+
+    A STEP INVOKES A SCRIPT BY THE PRODUCT'S OWN EXACT PACKAGE-MANAGER TEST, the same reading a
+    static check's enforcement is already taken through, so two readers cannot come to disagree
+    about what pnpm test invokes. The script's body is then read for the runner as a whole token,
+    and a script invoking another script is followed to a depth of three under a visited set: a
+    deeper chain is a shape no pipeline in the portfolio has, and an unbounded walk over a
+    manifest the consumer wrote is an input this tool does not control.
+
+    NO VERDICT MOVED WHEN THIS LANDED, and that was deliberate: a runner sat outside the static
+    axis because the prefix rule never reached it, so what this scenario bought at the time was the
+    READER — a step recognised as a runner leaves it NAMED rather than silent, the first half of
+    the no-fifth-outcome rule the inversion needed before it could land. SINCE THE INVERSION THIS
+    RECOGNITION IS ALSO THE VERDICT (@SCN-USG-004): the prefix rule is gone, so what keeps a runner
+    step off the static axis is this rule and nothing else. Both readings go through one
+    comparison, so the report and the books cannot disagree about which step ran a runner.
+
+    @unit @integration @SCN-USG-011
+    Scenario: a step running `pnpm test` is the unit runner when the manifest's `test` script runs vitest
+      Given a target that names vitest its unit runner and runs pnpm test in CI
+      When the reconciliation report is rendered for the target
+      Then the report names vitest the unit runner, recognised at the step that runs it
+
+  Rule: a runner's name occurring anywhere but the command position leaves the step a candidate
+
+    THIS IS THE RECOGNITION RULE'S TEETH, AND IT IS WELDED TO A MEASUREMENT. Over the same 113
+    run: steps in five real pipelines, a substring reading of the rule recognises exactly two —
+    and both are false. Each matched on a FILENAME: one on the vitest.json a step writes its
+    evidence to, the other on that same filename inside the reconciler's own --vitest argument.
+    Neither step runs vitest. Both would have vanished.
+
+    A FALSE POSITIVE AND A FALSE EXCLUSION ARE NOT THE SAME MISTAKE, and the whole design rests on
+    their being told apart. A step wrongly called a check is one line of the consumer's own
+    configuration, written off a report that named the step. A step wrongly called a runner is a
+    check DELETED from the report with nothing said — the silence this axis exists to end. So the
+    asymmetry is built rather than asserted, and the whole of what builds it is that the
+    comparison is over whole shell tokens: a path, a --flag, an output filename and an =-joined
+    argument all carry the runner's name without being it.
+
+    THE PLANT IS RECORDED, NOT ASSUMED. Swapping the token comparison for a substring one reds
+    this scenario and the unit arms beside it; the swap was made, its red was read, and it was
+    reverted. A guard whose teeth were reasoned about rather than watched is not a guard.
+
+    THE CHECK STEP HERE IS AN ORDINARY ONE, deliberately. The reconciler's own step is excluded
+    too, but BY CONSTRUCTION and not by this rule (@SCN-USG-014) — sharing one fixture would leave
+    two different exclusions free to answer for each other, and a green would say which of them
+    was doing the work.
+
+    @unit @integration @SCN-USG-012
+    Scenario: a check step naming a runner in a path or an argument is a candidate, never excluded as the runner
+      Given a target that names vitest its unit runner, runs its unit suite, and runs a check whose command writes a report named after that runner
+      When the reconciliation report is rendered for the target
+      Then the report names the unit suite step its runner and no other, and the check is on the books as an uncited static check
+
+  Rule: a tier whose runner is null has no runner; a tier the block omits has not been told
+
+    TWO FACTS THAT ARE OPPOSITE, AND THE CLAIM IS THE DISTINCTION. A null runner is something the
+    target SAID — we have no performance suite — and an absent key is something it never said. A
+    reader that folds one into the other loses a fact it was given, and it loses it in the one
+    direction that cannot be recovered: silence and a stated absence look identical afterwards.
+
+    IT IS READABLE ONLY IN THE REPORT, WHICH IS WHY THAT IS WHERE IT IS ASSERTED. Neither state
+    excludes a step and neither recognises one, so every discovery verdict in this file is the same
+    under both — a collapsed reader goes on passing every one of them. There is no comparison whose
+    outcome moves, so there is nothing for a scenario about exclusion to catch. What moves is the
+    resolver's RETURN VALUE and, through it, the sentence the report prints about that tier.
+
+    AND THAT SENTENCE IS WHY THE NULL IS WORTH WRITING AT ALL. A tier the block omits is reported
+    unnamed — the tool saying out loud that it has not been told, rather than quietly assuming the
+    target has nothing there. Writing null is how a consumer answers that line, and a reader that
+    dropped nulls would make the config inert: the same report either way, and no reason for anyone
+    to write it. So the two halves are one claim rather than two, and asserting either alone is
+    satisfied by a reader that prints one sentence for both, which is precisely the collapse.
+
+    THE TWO TARGETS ARE ALIKE BUT FOR THE KEY. One manifest says performance is null, the other
+    omits performance, and nothing else differs between them — same scripts, same workflow, same
+    corpus. A pair differing in one place is what lets the difference in their reports be
+    attributed to that place, and a control is only one if it is otherwise identical.
+
+    WHAT THIS DOES NOT ANSWER, kept out on purpose. A key that is not one of the four canon tiers
+    is its own scenario (SCN-USG-019). A target carrying no runner block at all is another
+    (SCN-USG-017), and its report is untouched here — this section speaks only for a target that
+    has said something. A tier NAMED whose runner no step runs stays the open question the
+    recognition section already deferred; naming a tier is not saying it has none.
+
+    @unit @integration @SCN-USG-016
+    Scenario: a null runner reports the tier as having none, and an absent key reports it as unnamed
+      Given a target that says it has no performance runner
+      And a second target, alike but for saying nothing about performance
+      When the reconciliation report is rendered for both targets
+      Then the first target's report says it has no performance runner
+      And the second target's report says its performance runner is unnamed
+
+  Rule: the runner block is keyed by the four canon tiers and no other
+
+    A CLOSED SET WITH NOTHING FORCING ITS CLOSURE IS A HOLE. The runner block is keyed by tier
+    and the tiers are canon — unit, integration, e2e, performance — which is exactly what makes
+    the inversion possible: the small thing is named because it is enumerable, and the open one
+    is inferred. Every sibling scenario in this section exercises one of the four; not one of
+    them can say what happens to a fifth, and a reader honouring any key at all passes all of
+    them. So the closure is the claim here, and it is the only claim no sibling can reach.
+
+    QUIETLY HONOURING IT IS THE SMUGGLING THE CLOSURE FORBIDS. A "lint": "eslint" entry in the
+    runner block is a consumer taking their own checks out of discovery one key at a time, and
+    it reinstates the silence this whole axis exists to remove — a check that vanishes from the
+    report with a reason nobody can read. Naming a key a runner tier is not a way to exclude a
+    check; the way to exclude a step is to say so where exclusions are said, and to be told
+    about it in the report.
+
+    SILENTLY IGNORING IT IS THE OTHER WRONG ANSWER, and it is the same class of fault as
+    dropped-and-silent. The consumer wrote something. They believe it took effect. A reader that
+    partitions the key out and says nothing leaves them holding a manifest that does not do what
+    they think, with no line anywhere to correct it from — which is the fault of the prefix rule
+    reached from the configuration side rather than the pipeline side.
+
+    SO THE RUN IS NOT ABORTED OVER IT, AND THAT IS THE SAME FAIL-SAFE DIRECTION AS THE REST. An
+    unrecognised key is a fact about the manifest, surfaced on the report where the consumer can
+    read it and fix it in one line. Throwing would cost a run its whole verdict over one typo in
+    a block that changes no verdict at all — the stance every resolver in this family already
+    takes about data that came from outside.
+
+    THE KEY EXCLUDES NOTHING, WHICH IS THE HALF THAT NEEDS A CHECK BESIDE IT. An absence proves
+    little on its own: a reader recognising nothing anywhere satisfies it. So the target below
+    runs a real check whose script the bogus key names, and that check has to reach the books as
+    an uncited static check — the presence that makes the absence mean something.
+
+    @unit @integration @SCN-USG-019
+    Scenario: a runners key that is not one of the four tiers is reported, never silently honoured
+      Given a target whose runner block names a key that is not one of the four tiers
+      And that key names the command of a check its CI runs
+      When the reconciliation report is rendered for the target
+      Then the report names that key as one it does not recognise
+      And the check is on the books as an uncited static check
+
+  Rule: a step the manifest names a non-check is excluded, and the report says so
+
+    THE THIRD EXCLUSION, AND THE ONLY ONE THAT IS THE CONSUMER'S OWN LIST. Not everything that
+    is not a behavioural runner is a fitness check — a checkout, a corepack enable, a dependency
+    install, a deploy — and a rule calling those checks fills a consumer's first report with
+    noise. So the consumer gets to say which steps are not checks, about their own pipeline,
+    once. It is a list of THEIR steps, never a list of check names of ours, and that is what
+    keeps it from being the prefix rule wearing a new hat.
+
+    AN ENTRY IS FULLY QUALIFIED AND MATCHED EXACTLY — the workflow file, the job it is written
+    under, and the step's own name, which is the string GitHub itself shows in a run log. Typecheck
+    is a check in this repository's ci.yml and plumbing in its release.yml, so a bare-name entry
+    would take out both, and the second of those is a check deleted from the report with nothing
+    said. Job identity is what the widened walk was widened to carry, and this is what it is for.
+
+    THERE IS NO WILDCARD FORM, ARGUED RATHER THAN OMITTED. A consumer wanting a whole workflow out
+    narrows the CI input at the command line — a supported narrowing this file already pins one
+    Rule along (SCN-USG-008) — so a second way to say the same thing buys a grammar to specify, to
+    test and to explain. Exact-only can be widened later and breaks nobody; starting wide cannot
+    be narrowed once somebody's manifest depends on it.
+
+    THE REPORT NAMES EACH EXCLUDED STEP, AND THAT HALF IS NOT OPTIONAL. A step that reaches this
+    reader leaves it as an observation, as a runner, as the reconciler, or as a step the consumer
+    named a non-check, and none of those four is silent. An excluded step that simply vanished
+    would be the very silence this whole axis exists to end, arriving in a new coat and with the
+    consumer's own signature on it.
+
+    AND AN ENTRY NAMING NO STEP IS ITSELF NAMED. A line matching nothing is a stale exclusion: the
+    consumer renamed a step and the entry now hides nothing, or is about to hide the wrong thing
+    the next time a step is renamed onto it. Either way it is a fact about their manifest that only
+    this run can see, and dropping it is the same fault as dropping a step — something was written,
+    it took no effect, and nothing anywhere says so.
+
+    THE SIBLING CHECK IS THE CONTROL, and without it the claim is unfalsifiable. A reader that
+    discovered no checks at all would satisfy "the excluded step's check is off the books" while
+    being blind; only a second check still standing beside it, one no entry names, tells the
+    exclusion from the blindness. Both checks carried a prefix the rule of the day already
+    discovered, so the exclusion was readable before the membership filter inverted rather than
+    only after it; under the inverted rule both are discovered because they are steps, and the
+    fixture's plumbing is named a non-check beside them for the same reason.
+
+    @unit @integration @SCN-USG-015
+    Scenario: a step named in `notChecks` is not a candidate, and is reported as excluded rather than dropped
+      Given a target that names one check step of its pipeline a non-check
+      And a sibling check step no entry of its names
+      And an entry that names no step its pipeline runs
+      When the reconciliation report is rendered for the target
+      Then the report names the excluded step, and its check is off the books while the sibling's is on them
+      And the report names the entry that matched no step
+
+  Rule: the reconciler is not one of the reconciled rows
+
+    THE SECOND EXCLUSION, AND THE ONLY ONE NOBODY WRITES. A consumer's pipeline runs the
+    reconciliation itself, and the run that computes the books cannot be a row in them: the step
+    that runs balance is the reconciler, not a check it reconciles. The step-record dump goes with
+    it, because that record is the reconciler's own input — written before balance reads it, which
+    is what makes it the input rather than an observation about it.
+
+    A CITATION ON EITHER IS UNSATISFIABLE, and that is the whole of why this is by construction
+    rather than a judgement. The dump is written BEFORE the reconciliation reads it, so no record
+    of this run can ever carry the balance step's own outcome, and no scenario can ever be shown
+    to have been answered by it. A demand nothing could ever satisfy is not a check a consumer has
+    failed to cite; it is not a check.
+
+    AND A CONFIGURED ANSWER WOULD LOOK IDENTICAL, WHICH IS WHY THE FIXTURE SAYS NOTHING. A pair of
+    notChecks entries produces exactly this report — no balance row, no dump row — over exactly
+    this pipeline. The two answers part company at the consumer who never wrote the entries, and
+    under the configured one their very first run reports their own reconciler as an uncited
+    fitness check on their books. So the target below carries no such list at all, and the report
+    it produces must name nothing as excluded: an exclusion section appearing here would say the
+    consumer's own configuration did the work, and there is no configuration to do it.
+
+    WHAT RECOGNISES THEM IS NOT A NAME. The reconciling step is the one running this tool's own
+    reconciling invocation — through a manifest script alias like any other command, by whole
+    shell tokens like the runner rule beside it, and adjacent, so the same tool run for another
+    purpose stays a candidate. The dump is the step carrying GitHub's own step-record expression,
+    which is the only way that record can be produced. Neither reads a step's title, and neither
+    is a list: one is our own invocation, one is GitHub's own grammar.
+
+    BOTH STEPS ARE DISCOVERED BEFORE THIS RULE TAKES THEM OUT, which is what gives the scenario its
+    teeth. Each invoked its command through a lint:-prefixed script, so both were found under the
+    prefix rule of the day and both posted to the suspense row — wrong, and red; under the inverted
+    rule (@SCN-USG-004) they are found because they are steps, which is the same fact reached by a
+    wider route. A fixture whose reconciler the reader could not see at all would leave this
+    scenario green on its first run over a reader that had never looked at the step, which asserts
+    nothing.
+
+    THE SWEEP CHECK IS THE CONTROL. A reader that discovered nothing at all satisfies "neither
+    reaches the books" while being blind, so an ordinary check of the same pipeline — same job,
+    named by nothing — has to stay on them.
+
+    @unit @integration @SCN-USG-014
+    Scenario: the balance step and its step-record dump are not candidates, and no configuration says so
+      Given a target whose pipeline runs the reconciliation and dumps the step record it reads
+      And a manifest that says nothing about either step
+      And an ordinary check step of the same pipeline
+      When the reconciliation report is rendered for the target
+      Then the report accounts for both steps as the reconciler, and neither is on the books while the ordinary check is
+      And the report names nothing the target excluded
+
+  Rule: a step is a candidate whatever form it takes
+
+    AN ACTION CAN BE A QUALITY CHECK, AND THE COMMON ONES ARE. CodeQL's analyse step and a
+    dependency review are actions rather than commands, so a reader discarding every uses: step
+    drops real checks — and drops them without a word, which is the exact fault the inverted
+    membership rule exists to end. The discard cost nothing while nothing downstream wanted an
+    action; under the inversion it is a fifth outcome smuggled in at the walk.
+
+    EXCLUDING ACTIONS WHOLESALE WOULD BE THE PREFIX RULE AGAIN, ONE LAYER ALONG. A structural rule
+    about where a check may LIVE is the same guess as a rule about what one may be CALLED, and it
+    is a guess this tool has already been wrong about once. Nothing about a step's form says
+    whether it is a check. What says so is what the target named a runner, what the reconciler is,
+    and what the consumer said is not one — the same three facts, asked of the same steps.
+
+    AND IT IS THE SHAPE A NON-NODE CONSUMER ARRIVES IN. A pipeline whose static analysis is CodeQL
+    and whose dependency review is an action has no package.json script for either, so a run:-only
+    reading hands that consumer the same empty report the Node-shaped limit used to hand them, by
+    a different route.
+
+    THE ACTION REFERENCE IS THE NAME, AND IT IS GITHUB'S RATHER THAN ONE INVENTED HERE — the
+    step's name: where it has one, else the uses: value. A run: step is named by the script it
+    invokes because that is the handle a consumer runs to reproduce the check; an action step
+    invokes no script of theirs, so a handle read out of its shape would be a convention, and the
+    honest answer is the string already in front of them in their own run log.
+
+    WHAT AN ACTION DID IS NOT ASKED HERE, and the boundary is deliberate. The run record is the
+    only thing that says what any step did, and its rules are untouched. This Rule is discovery
+    and nothing else: the action ran in this pipeline, and nothing cites it.
+
+    THE COMMAND CHECK BESIDE IT IS THE CONTROL, and without it the claim is unfalsifiable twice
+    over. A reader discovering nothing at all satisfies "the action is uncited" by being blind,
+    and a reader that gained the uses: half while losing the run: half satisfies it too — so an
+    ordinary command check has to stay on the books in the same run.
+
+    @unit @integration @SCN-USG-013
+    Scenario: a `uses:` step is a candidate fitness check, reported by the action it uses
+      Given a target whose pipeline runs a quality check as an action rather than a command
+      And a check step of the same pipeline that runs a command
+      When the reconciliation report is rendered for the target
+      Then the report posts the action to the suspense row, named by the action reference it uses
+      And the command check is on the books beside it
+
+  Rule: a manifest naming no runners makes every step a candidate
+
+    THIS IS THE STATE THE PRODUCT EXISTS FOR. The product promises the consumer who installs it
+    and does nothing else a report of every check their pipeline ran, listed — and under the prefix
+    rule that promise was conditional on a naming convention they had never heard of. Measured over
+    the planted consumer at the head of this axis's analysis, a manifest carrying an empty
+    specController block reported ONE static check run over a pipeline of eleven steps, and said
+    nothing whatever about the other ten. This scenario is that promise made true, and the shape
+    that makes it true is subtraction: nothing was named, so nothing is taken out.
+
+    A MANIFEST THAT HAS SAID NOTHING IS SUPPORTED, NOT INCOMPLETE. There is no error, no warning,
+    and nothing anywhere asking the consumer to configure something before the tool will answer
+    them. A first run that scolded its reader for the absence of a block would be the prefix rule's
+    demand wearing a different sentence — you must tell us about your pipeline in our terms before
+    we will read it — and the whole argument of the inversion is that the tool reads what is there
+    and reports it.
+
+    THE TARGET'S OWN TEST SUITE IS A CANDIDATE, AND ASSERTING THAT IS THE POINT. With no runner
+    named, pnpm test is a step like every other step and lands on the books as one. It is a false
+    POSITIVE, it is the direction this axis chose deliberately, it is visible in the report, and it
+    is one line of the consumer's own configuration to correct (@SCN-USG-011). Quietly exempting it
+    would take a rule about what a test step is CALLED or what it LOOKS like — a runner list of
+    ours — which is the drift the whole inversion exists to remove, reinstated at the one step where
+    it would look most reasonable.
+
+    EVERY STEP THAT IS NOT THE RECONCILER, strictly. The reconciler and its step-record dump come
+    out by construction and hold over a manifest saying nothing (@SCN-USG-014), so "every step" is
+    never literally every step of every pipeline. This target's pipeline runs no reconciler at all,
+    which is what keeps the claim here to exactly one thing: the steps that reach the books are the
+    steps that are there, and the other exclusion has nothing to be confused with.
+
+    THE FIRST RUN STILL REDS, AND THAT IS NOT SOFTENED HERE. A candidate citing nothing posts to
+    suspense, so a consumer who has configured nothing is out of balance on their first run. That is
+    the state as it stands, it is asserted rather than worked around, and the reporter mode that
+    changes it is 3F-3100's.
+
+    THE EXACT SET IS THE CONTROL, not a count. A reader that discovered nothing satisfies no part of
+    this; a reader that dropped uses: steps, or one that guessed at a default runner for a block the
+    consumer never wrote, reports a proper subset of the same pipeline and reds on the set rather
+    than on a total that could be reached two ways.
+
+    @unit @integration @SCN-USG-017
+    Scenario: a target with no runners block reports every step of its pipeline as a candidate
+      Given a target whose configuration names no runners and no non-checks
+      And a pipeline of ordinary steps, the target's own test suite among them
+      When the target's first reconciliation is rendered
+      Then the report posts every step of that pipeline to the suspense row, the test suite among them
+      And the report asks the target to configure nothing
+      And the run does not balance
+
+  Rule: the report names the scope it read
+
+    THE AXIS'S OWN ANALYSIS ASKED WHAT THE TOOL SAYS WHEN IT IS POINTED SOMEWHERE THAT YIELDS AN
+    IMPLAUSIBLE ANSWER — pointed at a release workflow it would post that pipeline's publish step
+    as a quality check, and pointed at one job of several it would miss the checks in the others
+    without a word. The answer is that the tool makes NO judgement about plausibility and states
+    its scope instead. A trigger-based or name-based rule for "this looks like a release workflow"
+    is exactly the judgement this axis puts out of scope — any judgement about whether a discovered
+    step ought to be a check — and it would be a list of ours, which is the drift the whole
+    inversion exists to remove.
+
+    STATING THE SCOPE IS THE ANSWER, not a consolation for not having a better one. A consumer
+    pointed at the wrong thing reads the file and the job and the counts, knows on sight, and
+    corrects it by narrowing --ci (@SCN-USG-008) or by naming the steps that are not checks
+    (@SCN-USG-015). A wrong answer the report says out loud is one line of their own configuration;
+    a wrong answer it keeps to itself is the silence this axis exists to end.
+
+    AND IT IS THE ANSWER TO THE QUIETER HALF — THE JOB THE TOOL NEVER LOOKED AT. Discovery reports
+    a bare count of what survived, and nothing anywhere said how many jobs that count came from: a
+    consumer whose second job holds three checks reads exactly what a consumer with three checks in
+    one job reads. Neither figure can be got from the other, so the provenance has to be stated,
+    and stating it is what makes a scope that is too narrow visible without the tool guessing that
+    it is.
+
+    BOTH FIGURES PER JOB, because either alone is satisfiable by a reader that is wrong about the
+    other. Steps read alone says what was in front of the tool and nothing about what it did with
+    them; candidates alone is the count that is already on the report, re-cut. It is the pair, per
+    job, that lets a consumer see a whole job pass through discovery contributing nothing and ask
+    why.
+
+    SORTED, so two runs over one tree cannot differ and a diff of two reports never turns on the
+    order a directory happened to be handed back in — the same reason the source resolution sorts
+    (@SCN-USG-006).
+
+    NOT THE ACCOUNTING IDENTITY, which is its own Rule (@SCN-USG-018). That one asserts the
+    dispositions sum to the steps read, so nothing the reader saw was dropped; this one asserts the
+    provenance — which files and which jobs those steps came from. A reader satisfies either alone:
+    a correct sum over a scope it never names, or a named scope whose numbers do not add up.
+
+    TWO WORKFLOWS, AND A SECOND FILE WHOSE JOBS DO NOT STAND ALONE, ARE THE CONTROL. A reader
+    reporting one row per workflow satisfies "names the workflows" while flattening the jobs
+    exactly as the walk used to; a reader naming only the job the checks are in satisfies "names
+    the jobs" while hiding a job it ranged over for nothing. And the fixture's jobs are written in
+    an order the sorted report has to change, so a reader emitting them as it met them reds rather
+    than agreeing by coincidence.
+
+    @unit @integration @SCN-USG-020
+    Scenario: the report names the workflows, the jobs and the step count discovery ranged over
+      Given a target whose pipeline is two workflows, the second of them running two jobs
+      When the reconciliation report is rendered for the target
+      Then the report names every workflow and every job it read, with the steps it read from each and how many of them became candidates
+      And the scope it names reads in one settled order
+
+  Rule: every step the reader saw is accounted for
+
+    THIS AXIS'S FIRST NON-NEGOTIABLE IS A CLAIM ABOUT CODE, AND PROSE CANNOT HOLD IT. Nothing seen
+    is dropped: a step that reaches this reader leaves it as a candidate fitness check, as one of
+    the runners the target named, as the reconciler, or as a step the consumer called a non-check.
+    There is no fifth outcome. Four exhaustive dispositions is not a sentence any reader can check
+    by reading, and the fault it forecloses is the exact one this whole axis exists to end — a step
+    seen and quietly discarded. So the exhaustiveness is asserted as an identity over the report's
+    own numbers: candidates plus runners plus the reconciler plus the excluded equals the steps read.
+
+    IT ASKS WHAT WOULD STOP BEING COUNTED, NOT WHAT WOULD FAIL, and that is why it is here rather
+    than left to the scenarios beside it. Every other scenario on this axis watches a step arrive
+    somewhere — on the books, in the runner cut, in the reconciler's two lines, in the excluded
+    list. A removal-shaped fault raises nothing for any of them to miss: a filter that drops a step
+    on a branch nobody enumerated posts no row, names no step and reds no assertion, because the
+    thing it did was to not happen. Only a cardinality instrument sees an absence like that, and a
+    cardinality instrument is what this is.
+
+    THE SUM IS THE CODE'S, NOT THE TEST'S. A scenario that read the four figures off the report and
+    added them up itself would be measuring its own arithmetic — it would agree with itself over any
+    four numbers the report happened to print, including four printed by a reader that had lost a
+    step. So the report states BOTH totals: how many steps this run read, and how many of them it
+    accounted for. The scenario reads the pair.
+
+    FOUR FIGURES NOBODY CAN SWAP, which is the fixture's job. Its pipeline is built so that the four
+    dispositions carry four different counts — four candidates, one runner, two reconciler steps,
+    three the manifest calls non-checks — so a reader that attributed a step to the wrong
+    disposition reds on the figures even where the total would have survived the mistake. A pipeline
+    where two dispositions read alike would let that error through in silence.
+
+    AND BOTH FORMS OF STEP ARE AMONG THEM. One of the candidates is an action rather than a command,
+    because a `run:`-only reading is the historical shape of exactly this fault (@SCN-USG-013) and
+    the identity is what would have caught it as a shortfall rather than as nothing at all.
+
+    @unit @integration @SCN-USG-018
+    Scenario: candidates, runners, the reconciler and the excluded sum to the steps read
+      Given a target whose pipeline holds every disposition this reader has — checks, the runner its manifest names, the reconciliation itself, and steps it calls non-checks
+      When the reconciliation report is rendered for the target
+      Then the report states how many steps it read and how many of them it accounted for, and the two agree
+      And each disposition carries the count that pipeline gives it

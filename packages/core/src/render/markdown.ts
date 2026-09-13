@@ -36,10 +36,7 @@ import type {
 // union. Internal core imports (NOT on the frozen v1 barrel).
 import { OUTCOME_DESCRIPTION, OUT_OF_BALANCE_OUTCOMES, OUTCOME_SIDE_PROFILE } from "../model.js";
 import { measuredSuffix } from "./measuredItem.js";
-import {
-  projectProvenanceObject,
-  type RunContext,
-} from "../provenance/provenance.js";
+import type { RunContext } from "../provenance/provenance.js";
 import type { EvidenceObligations } from "../census/evidenceObligations.js";
 import { RUNTIME_QUALITY_CHECKS } from "../domain/ledger.js";
 // THE MODEL DERIVATIONS THE RENDERER READS (3F-2203) — it projects these; it does not compute them.
@@ -60,6 +57,14 @@ import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js
 // reconciliation for a verdict of its own, so the headline cannot drift from the code it names.
 import { hasBrokenEvidence } from "../domain/ledger.js";
 import { runVerdictSection } from "./runVerdict.js";
+import { provenanceSection } from "./provenanceSection.js";
+import { discoveryScopeSection } from "./discoveryScope.js";
+import { staticChecksSection } from "./staticChecks.js";
+import { behaviouralRunnersSection } from "./behaviouralRunners.js";
+import { excludedStepsSection } from "./excludedSteps.js";
+import { reconcilerSection } from "./reconcilerSteps.js";
+import { stepAccountingSection } from "./stepAccounting.js";
+import { testVolumeSection } from "./testVolume.js";
 import { featureCodeOf } from "../lib/featureCode.js";
 
 /** A short status glyph per reconciling-item outcome — a visual cue alongside the word. */
@@ -237,55 +242,6 @@ export type FeatureNames = ReadonlyMap<string, string>;
 // entries by scenario); the rendered document is the reconciled OUTPUT, never "Ledger"
 // (double-entry-manifesto). Renamed from "# Ledger" → "# Spec reconciliation" → here.
 const titleSection: SectionEmitter = () => ["# Evidence Reconciliation", ""];
-
-/**
- * The Run-provenance header (@SCN-RPT-001) — stays first after the title.
- * Facts only (project design §5): the resolved target repo, the input paths/flags
- * actually used, the run-start timestamp in UTC, and the target's source SHA (a null
- * SHA rendered as an explicit "unknown (non-git target)"). Projected off the shared
- * report model's `runProvenance` object via `projectProvenanceObject`, so this
- * header and the JSON `runProvenance` object never drift and the render needs no `ctx`.
- */
-const provenanceSection: SectionEmitter = (report) => {
-  const p = projectProvenanceObject(report.runProvenance);
-  const lines = ["## Run provenance", ""];
-  lines.push(`- Target repo: ${p.target}`);
-  if (p.inputs.length === 0) {
-    lines.push("- Inputs: none specified");
-  } else {
-    lines.push("- Inputs:");
-    // One statement, so this emitter's CODE-line count is unchanged by the absence line below.
-    for (const { flag, value } of p.inputs) lines.push(`  - \`${flag} ${value}\``);
-  }
-  // The canonical inputs the run did NOT receive (@SCN-RPT-028, 3F-3155), on a line of their
-  // own BENEATH the Inputs list. A separate line rather than a "(not supplied)" marker
-  // interleaved into the list: interleaving would make the "none specified" branch above
-  // unreachable and silently rewrite a rendering that already exists, where this leaves the
-  // list, its order and its empty branch byte-identical.
-  //
-  // ONLY WHEN SOMETHING IS ABSENT. Every stream a run was handed is listed above
-  // (@SCN-RPT-027), so a flag missing from the list is definitionally one the run did not get;
-  // this line spares the reader holding the canonical list in their head, and a "none" on the
-  // healthy path would be noise in a block whose whole discipline is facts only.
-  //
-  // AND IT COSTS THIS FILE NO NET CODE LINE, which is not tidiness. `complexityExceptions.mjs`
-  // FREEZES markdown.ts at exactly 457 code lines — an exception excuses the debt already
-  // there and buys not one line of headroom — so the Inputs loop above lost its braces to pay
-  // for the one line here. A section that cannot be added to without reding the ratchet is the
-  // ratchet working; extracting this emitter to its own module is the standing answer and is
-  // the refactor backlog's, not this scenario's.
-  if (p.absentInputs.length > 0) lines.push(`- Not supplied: ${p.absentInputs.map((flag) => `\`${flag}\``).join(", ")}`);
-  lines.push(`- Run timestamp (UTC): ${p.runStartUtc}`);
-  lines.push(`- Source SHA: ${p.sourceSha ?? "unknown (non-git target)"}`);
-  // The TOOL's own identity (3F-1916) — which spec-controller produced this run,
-  // distinct from the target's Source SHA above. A null tool SHA renders the explicit
-  // "unknown (not a git checkout)" (mirroring Source SHA's null-rendering); the version
-  // is always present, so a run stays attributable even with no SHA.
-  lines.push(`- Tool SHA: ${p.toolSha ?? "unknown (not a git checkout)"}`);
-  lines.push(`- Tool version: ${p.toolVersion}`);
-  lines.push("");
-  return lines;
-};
 
 /**
  * The RUN-INTEGRITY stamp (@SCN-RPT-021) — the customer-visible payoff of the `broken`
@@ -480,78 +436,6 @@ const evidenceReconciliationSection: SectionEmitter = (report) => {
   }
   lines.push("");
   return lines;
-};
-
-/**
- * Test volume (@SCN-RPT-010) — the evidence-observation side under Summary views, the
- * counterpart to the Evidence reconciliation' evidence-obligation side. Renders the balancing identity
- * (`N evidence observations = a on scenarios + b on phantom scenarios + c on the suspense scenario`,
- * a DERIVED view of the retained aggregate, grouped by the SCENARIO-KIND each credit posted to)
- * then the per-quality-check evidence observation table
- * (all four runtime quality-checks, zeros shown — a fixed tally like Evidence reconciliation).
- * Omitted only when no evidence-observation read is threaded (the 3-arg back-compat path). The
- * identity holds BY CONSTRUCTION (one shared pass in src/evidenceObservations.ts); the renderer
- * only sums what the aggregate already counted by kind. Quality-checks read as their tag words,
- * lowercase (the label-=-tag rule). The numbers read off the report's materialised
- * `summary.testVolume` + `summary.rawByRuntimeQualityCheck` (both Ledger folds, 3F-2103 — the
- * `evidenceObservations` section retired).
- */
-const testVolumeSection: SectionEmitter = (report) => {
-  const volume = report.summary.testVolume;
-  const raw = report.summary.rawByRuntimeQualityCheck;
-  if (!volume || !raw) return [];
-  const total = volume.totalEvidenceObservations;
-  // Three DIRECT reads off the materialised kind-counts — the renderer does no arithmetic on this
-  // line. The three terms are grouped by the SCENARIO-KIND each credit posted to (the canon
-  // grouping): on scenarios (a scenario's account), on phantom scenarios (invented
-  // phantom-scenario accounts — many can exist, hence the plural) and on the suspense scenario (the
-  // one suspense account, singular — includes broken). The identity total = onScenario +
-  // onPhantomScenario + onSuspenseScenario holds BY CONSTRUCTION (one shared runtimeObservationTally
-  // fold), so the three printed terms cannot drift from the total.
-  const lines = [
-    "### Test volume",
-    "",
-    `${total} evidence observations = ${volume.onScenario} on scenarios + ${volume.onPhantomScenario} on phantom scenarios + ${volume.onSuspenseScenario} on the suspense scenario.`,
-    "",
-    "| Quality-check | Evidence observations |",
-    "| --- | --- |",
-  ];
-  for (const qualityCheck of RUNTIME_QUALITY_CHECKS) {
-    lines.push(`| ${qualityCheck} | ${raw[qualityCheck]} |`);
-  }
-  lines.push("");
-  return lines;
-};
-
-/**
- * Static checks (@SCN-USG-001) — the STATIC-check evidence observation side under
- * Summary views, the mirror of `### Test volume` on the runtime axis. Renders the counts line
- * (`N static check(s) run, K uncited static check(s)`) alone — a pure counts summary, symmetric with
- * `### Test volume` (2.4). The named count is implicit (`running − uncited`), so it
- * is no longer printed. The per-guard member detail lives in the rows (named → each
- * scenario's `@lint` sub-row; no-evidence-obligation → the suspense row's `cites-no-scenario` credit items), so
- * no list renders here. Omitted only when no static-check census is threaded (the back-compat path).
- * The counts read off the report's materialised `summary.staticChecks`.
- */
-const staticChecksSection: SectionEmitter = (report) => {
-  // THE HALF-CONVERTED CHECKS (@SCN-LNT-020) render HERE, under the same heading, because they are
-  // the same class of half-entry as an uncited static check — something the run saw and nothing
-  // owed — read off the other side of the books. FACTS ONLY, count and ids: the reader is told what
-  // the corpus said about itself and left with the one remedy there is, which is to write the row.
-  // OMIT-WHEN-EMPTY, so an unconverted corpus renders byte-identically to before.
-  const { staticChecks: counts, unconfiguredFitnessScenarios: halfConverted = [] } = report.summary;
-  if (!counts) return [];
-  // A pure counts summary off `summary.staticChecks` (2.4) — symmetric with the
-  // runtime `### Test volume` line. There is no census section: the per-guard DETAIL lives in
-  // the rows (named → each scenario's `@lint` sub-row; the no-evidence-obligation static-checks surface
-  // as `cites-no-scenario` credit items on the `(no scenario)` suspense row). Only the running
-  // volume + the uncited count render here; the named count is implicit.
-  return [
-    "### Static checks", "",
-    `${counts.runningStaticCheckCount} static check(s) run, ${counts.uncitedStaticCheckCount} uncited static check(s).`,
-    "",
-    ...(halfConverted.length > 0 ? [`${halfConverted.length} @fitness scenario(s) no configured row names: ${halfConverted.join(", ")}.`, ""] : []),
-  ];
 };
 
 /**
@@ -920,7 +804,29 @@ const SECTIONS: readonly SectionEmitter[] = [
   runVerdictSection,
   evidenceReconciliationSection,
   testVolumeSection,
+  // The scope discovery ranged over (@SCN-USG-020), ahead of the static-check census rather than
+  // among the dispositions below it: it is not one of the things a step became, it is the pipeline
+  // every figure under it was read from. A reader meets what was read before what was found.
+  discoveryScopeSection,
   staticChecksSection,
+  // The steps recognised as behavioural runners (@SCN-USG-011), beside the static-check counts
+  // rather than among them: a runner is what a step was recognised as INSTEAD of reaching that
+  // census, so it belongs next to it and never inside it.
+  behaviouralRunnersSection,
+  // The steps that are the reconciler (@SCN-USG-014), between the two: it is the disposition
+  // nobody configured, so it reads after what the target named its runners and before the list the
+  // consumer wrote — the tool accounting for itself before it accounts for their instructions.
+  reconcilerSection,
+  // The steps the target named non-checks (@SCN-USG-015), after the runners for the same reason
+  // those follow the census: all three are dispositions a step got INSTEAD of reaching the books,
+  // and they read in the order the reader meets them — what ran the suites, what this tool took
+  // out of its own books, then what the consumer took out.
+  excludedStepsSection,
+  // What became of every step the run read (@SCN-USG-018), last of the pipeline cuts because it
+  // is the one that counts what the four above it named. A reader meets the dispositions and then
+  // the figure saying they are all of them — which is the axis's first non-negotiable, stated as
+  // something checkable rather than as a sentence taken on trust.
+  stepAccountingSection,
   lintSection,
   byFeatureSection,
   ledgerSection,

@@ -93,7 +93,6 @@ function reconcileUnenumerated(record?: CiStepRecord): EvidenceReconciliation {
     measurements: {},
     runtimeObservations: [],
     deferralTags: [],
-    guardScriptPrefixes: [],
     killFloor: () => null,
     ...(record === undefined ? {} : { ciStepRecord: record }),
   });
@@ -205,7 +204,6 @@ describe("[SCN-LNT-027] a MEASURED row is held to the same enumeration as a stat
       },
       runtimeObservations: [],
       deferralTags: [],
-      guardScriptPrefixes: [],
       killFloor: () => null,
       ciStepRecord: firstOnly,
     });

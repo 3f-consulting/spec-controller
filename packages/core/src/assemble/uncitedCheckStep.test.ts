@@ -13,11 +13,16 @@
  * accident, no row the suspense one could be mistaken for, and the whole report is one row. It
  * costs them nothing to obtain, which is the property this arm exists to keep true.
  *
- * THE SILENCE IS ASSERTED THROUGH `build`, NOT ONLY THROUGH `checkout`. Checkout and the toolchain
- * set-up are not scripts at all and could never be discovered; `pnpm build` runs a script the
- * manifest really holds, from a real `run:` step, and is excluded only because it carries no guard
- * prefix and no `staticChecks` entry names it. That is the discriminator actually discriminating,
- * rather than a step that was out of reach anyway.
+ * WHAT KEEPS THE PLUMBING OFF THE BOOKS IS THE TARGET'S OWN LIST, NOT A HEURISTIC OF OURS
+ * (@SCN-USG-004, 3F-3343). It used to be the check heuristic: `pnpm build` runs a script the
+ * manifest really holds, from a real `run:` step, and was silent only because it carried no guard
+ * prefix and no `staticChecks` entry named it. Nothing decides that by a name any more, so the
+ * install and build steps are candidates like any other and this target names them non-checks —
+ * one line each, which is what the inversion asks of a consumer in place of a convention.
+ *
+ * AND THEY ARE NOT SILENT NOW, THEY ARE ACCOUNTED. An excluded step is named on the report under
+ * its own section; what this arm holds is that it is not on the BOOKS, which is the half that
+ * would drown the sentence the report exists to say.
  *
  * Bidirectional evidence: the describe carries its @SCN id, matching
  * features/fitness-reconciliation.feature and the @integration steps in
@@ -29,9 +34,11 @@ import { evidenceReconciliationFromSources } from "./evidenceReconciliationFromS
 import type { EvidenceReconciliation } from "./renderInput.js";
 
 /**
- * The target's manifest — four scripts, three of which the check heuristic reaches: two under the
- * guard prefix and one the target names as a static check. No `fitnessChecks`, because a consumer
- * in this state has configured nothing.
+ * The target's manifest — four scripts, three of which are checks its pipeline runs. Two carry a
+ * guard prefix and one is named a static check, which is how the retired check heuristic reached
+ * them; discovery reaches all three because their STEPS are steps (@SCN-USG-004), and the fourth
+ * (`build`) is off the books because the target says so. No `fitnessChecks`, because a consumer in
+ * this state has configured nothing about its rows.
  */
 const manifest = {
   scripts: {
@@ -40,7 +47,19 @@ const manifest = {
     typecheck: "tsc --noEmit",
     build: "tsup",
   },
-  specController: { staticChecks: ["typecheck"] },
+  specController: {
+    staticChecks: ["typecheck"],
+    // The four steps of the pipeline below that are not checks — the `uses:` pair among them, on
+    // the same terms as the two commands (@SCN-USG-013). A quality check can BE an action, so
+    // there is no shape a step can take that answers this question for its author; the consumer
+    // answers it, once, about their own pipeline.
+    notChecks: [
+      "ci.yml:quality:Checkout",
+      "ci.yml:quality:Set up Node",
+      "ci.yml:quality:Install",
+      "ci.yml:quality:Build",
+    ],
+  },
 };
 
 /**
@@ -75,10 +94,12 @@ function reconcileUnannotated(): EvidenceReconciliation {
     untaggedScenarios: [],
     packageJson: manifest,
     ciSources: [unannotatedCi],
+    // The workflow FILE the entries above open with — the one half of an exclusion that does not
+    // come out of the workflow's own text, and which a caller supplying none makes unnameable.
+    ciSourceNames: ["ci.yml"],
     measurements: {},
     runtimeObservations: [],
     deferralTags: [],
-    guardScriptPrefixes: ["lint:"],
     killFloor: () => null,
   });
 }

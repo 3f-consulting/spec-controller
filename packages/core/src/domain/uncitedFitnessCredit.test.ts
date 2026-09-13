@@ -59,6 +59,13 @@ import { parseScenarios, parseTaggedScenarios } from "../parse/scenarios.js";
 import { runningStaticChecks } from "../parse/runningStaticChecks.js";
 import type { PackageJsonScripts } from "../parse/checkScriptsRunInCI.js";
 
+// A target that has named no behavioural runners — the membership argument the observed prefix
+// set used to occupy (@SCN-USG-004, 3F-3343). These fixtures' pipelines run no suite, so there is
+// nothing for a runner block to take out and naming one would be configuration about a step that
+// is not there.
+const NO_RUNNERS: Readonly<Record<string, string | null>> = {};
+
+
 /** The prefix-less script the planted tree configures as a static check. */
 const UNREGISTERED_HANDLE = "typecheck";
 
@@ -108,7 +115,7 @@ describe("[SCN-USG-001] an uncited fitness credit lands in suspense and never an
     const evidenceObservations = runningStaticChecks(
       PLANTED_CI,
       PLANTED_PACKAGE_JSON,
-      ["lint:"],
+      NO_RUNNERS,
       PLANTED_STATIC_CHECKS,
       (script) => citationOfScript(script, registry, citations)
     );
