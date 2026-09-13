@@ -54,6 +54,19 @@ A scenario tagged `@unit` names an obligation — a unit test must exist and pas
 
 The whole report is written before the code is set, so a failing run still tells you why.
 
+**Node's default is never one of these.** A run that cannot reconcile ends on an enumerated code of
+its own rather than falling out of the process — a crash that exits `1` would be indistinguishable,
+by status, from an honest disagreement. **An input the tool cannot read is part of `2`**: a mistyped
+path, an unparseable report or a corpus the Gherkin parser rejects are all the invocation being
+wrong, never a verdict about your code.
+
+**The enumeration is open at the top, and that is the one thing to design your pipeline around.** A
+state that is genuinely none of the above gets a **new** code rather than being folded into the
+nearest one — `5` is the most recent, added when a run over a target that had declared nothing and
+produced nothing was found reporting `0`. So **treat an unrecognised non-zero code as a failure you
+have not seen before**, not as a synonym for `1`. Matching `1` exactly is unaffected by a code being
+added; treating *non-zero* as a red build is already correct, and only imprecise about why.
+
 ## On CI
 
 ```
