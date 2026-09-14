@@ -35,7 +35,7 @@ import { DEFAULT_DEFERRAL_TAGS } from "../deferralTags.js";
 import { UnreadableFeatureCorpusError } from "../ingest/gherkinValidation.js";
 import { discoverFeatures } from "../ingest/ingestScenarios.js";
 import { killFloorReaderFor } from "../ingest/ingestQualityChecks.js";
-import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
+import { resolveTargetRoot, resolveToolIdentity } from "../run-management/resolveRunInputs.js";
 
 /** The corpus and the manifest, or the reason neither could be read. */
 type CorpusInputs =
@@ -108,7 +108,7 @@ export function runTags(argv: string[]): void {
   // Registry-bounded parse (@SCN-CLI-009's rule, applied to this command's own scope): `tags`
   // accepts ONLY the flags its registry entry lists. By construction, not by assertion — the
   // helper is the one `balance` uses, given this command's name.
-  const unknownFlagError = checkUnknownFlags(args, cliRegistry, "tags");
+  const unknownFlagError = checkUnknownFlags(args, cliRegistry, "tags", resolveToolIdentity().toolVersion);
   if (unknownFlagError) {
     process.stderr.write(unknownFlagError + "\n");
     process.exitCode = 2;

@@ -268,7 +268,7 @@ export function runBalance(argv: string[]): void {
   // hint; the global `--store`/`--run-id` modifiers were consumed by the dispatcher before
   // balance, so they never reach here. This is the structural teeth behind "accepted =
   // registry = help" — a flag can't affect behaviour without a registry entry.
-  const unknownFlagError = checkUnknownFlags(args, cliRegistry, "balance");
+  const unknownFlagError = checkUnknownFlags(args, cliRegistry, "balance", resolveToolIdentity().toolVersion);
   if (unknownFlagError) {
     process.stderr.write(unknownFlagError + "\n");
     process.exitCode = 2;

@@ -69,11 +69,30 @@ export function parseArgs(argv: readonly string[]): Record<string, string> {
  * degenerate one: an unregistered command has no scope, so every flag given to it is outside it.
  * The dispatcher refuses such a command before this is ever reached, so the case is unreachable
  * today and stated here so it cannot become a silent "accept everything" later.
+ *
+ * IT NAMES THE VERSION THAT REFUSED, AND THAT IS FOR THE PINNED READER (3F-3105, @SCN-SLF-008).
+ * A consumer pins spec-controller and then moves their own tree; the pinned reader is handed argv
+ * it was published too early — or too late — to understand, and an unadorned "unknown flag" is
+ * indistinguishable from a typo. Naming the running version makes version skew legible from the CI
+ * log alone, and naming the bump says what to do about it. `toolVersion` is a PARAMETER rather than
+ * a read performed here so this stays pure and `@unit`-testable; the callers pass
+ * `resolveToolIdentity().toolVersion`, the same value the report provenance carries.
+ *
+ * WHY THE PRODUCT SAYS THIS AND NOT THE CONSUMER. spec-controller's own repository is a consumer of
+ * its published self, and the ruling there is that it does NOT wrap itself — a dependency, a `run:`
+ * step, and the verdict its exit code gives. A consumer-side translator turning exit 2 into a skew
+ * refusal is exactly that forbidden wrapper, and no other adopter could write one either. So the
+ * refusal is the tool's own, which makes it universal rather than local.
+ *
+ * THE STATUS DOES NOT MOVE. The caller still routes this to stderr and exit 2. A mistyped `--strcit`
+ * is still a usage fault, and giving skew its own status would cost every adopter the ordinary
+ * reading to serve the rarer one.
  */
 export function checkUnknownFlags(
   args: Record<string, string>,
   registry: CliRegistry,
   command: string,
+  toolVersion: string,
 ): string | null {
   // The accepted set: every flag name AND alias in THIS command's scope, with the leading dashes
   // stripped so it compares against the parse's `--`-stripped keys (e.g. "--features" and "-h"
@@ -91,8 +110,11 @@ export function checkUnknownFlags(
   for (const key of Object.keys(args)) {
     if (!accepted.has(key)) {
       return (
-        `Unknown flag --${key} for 'spec-controller ${command}'. ` +
-        `Run 'spec-controller ${command} --help' to see the accepted flags.`
+        `Unknown flag --${key} for 'spec-controller ${command}' — this is spec-controller ` +
+        `${toolVersion}, and that flag is not in its ${command} scope.\n` +
+        `If this version is pinned, the pin and the tree it is reading have drifted apart: ` +
+        `bump the pin to a version whose '${command}' accepts --${key}.\n` +
+        `Otherwise run 'spec-controller ${command} --help' to see the flags this version accepts.`
       );
     }
   }
