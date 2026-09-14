@@ -5,9 +5,13 @@
     "cucumber": "cucumber-js"
   },
   "specController": {
-    "checkRegistry": {
-      "lint:nightly": "nightly"
-    },
+    "fitnessChecks": [
+      {
+        "scn": "SCN-TGS-001",
+        "characteristic": "nightly",
+        "command": "pnpm lint:nightly"
+      }
+    ],
     "runners": {
       "unit": "vitest",
       "integration": "cucumber-js"

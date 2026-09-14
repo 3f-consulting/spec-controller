@@ -53,7 +53,6 @@ import type { KillFloorReader } from "./targetManifest.js";
 export type TargetManifest = PackageJsonScripts & {
   specController?: {
     deferralTags?: unknown;
-    checkRegistry?: unknown;
     thresholds?: unknown;
     fitnessChecks?: unknown;
   };

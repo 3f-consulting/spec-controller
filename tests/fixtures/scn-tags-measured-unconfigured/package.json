@@ -1,9 +1,5 @@
 {
   "name": "scn-tags-measured-unconfigured-fixture",
   "private": true,
-  "specController": {
-    "checkRegistry": {
-      "lint:complexity": "complexity"
-    }
-  }
+  "specController": {}
 }

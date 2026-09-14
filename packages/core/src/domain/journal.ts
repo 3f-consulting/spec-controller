@@ -176,7 +176,7 @@ export function evidenceObligationPairsOf(scenarios: readonly Scenario[]): Set<s
  * and is ignored on the runtime axis, where the quality-check already discriminates. A fitness
  * entry with NO tag keys distinctly from every tagged one rather than collapsing onto a bare
  * `"<scn> lint"` that a tagged obligation could answer — an uncited credit never reaches a real
- * row (`citationOfScript` resolves the `@SCN` and the tag together or neither), and if one ever
+ * row (`citationOfCitedRow` resolves the `@SCN` and the tag together or neither), and if one ever
  * did, it must not match by having nothing to compare.
  */
 export function evidenceObligationPairKey(
@@ -313,8 +313,8 @@ export interface GuardEvidenceObservation {
    * The `@SCN` this run CITES — the fitness scenario whose bare check tag the citation seam
    * resolved this handle to (`parse/fitnessCitations`), stamped by the observer.
    *
-   * ABSENT when the seam reached none: the handle is unregistered, or no scenario carries its
-   * check. That absence is now the WHOLE routing decision, no flag needed — a citing credit posts
+   * ABSENT when the seam reached none: no configured row names it, or its CI step states no
+   * code. That absence is now the WHOLE routing decision, no flag needed — a citing credit posts
    * to the one row it names, and a credit that cites nothing posts to suspense and answers no
    * obligation at all (3F-2590 removed the by-name posting arm; 3F-2625 the by-handle half that
    * outlived it in `qualityCheckReconciliation`). Optional rather than `string | null` (the runtime
@@ -340,7 +340,7 @@ export interface GuardEvidenceObservation {
    * `balanced`.
    *
    * PRESENT EXACTLY WHEN `scnId` IS, never on its own: the seam resolves both terms or neither
-   * (`parse/fitnessCitations` → `citationOfScript`), so an uncited observation carries no citation
+   * (`parse/fitnessCitations` → `citationOfCitedRow`), so an uncited observation carries no citation
    * keys at all and its JSON is byte-identical to what it was. Optional for the same reason `scnId`
    * is — this interface is on the frozen v1 barrel, and a required field would break external
    * construction of a publicly exported type.

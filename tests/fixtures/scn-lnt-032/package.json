@@ -8,8 +8,12 @@
   },
   "specController": {
     "notChecks": ["ci.yml:quality:Checkout"],
-    "checkRegistry": { "lint:alpha": "complexity" },
     "fitnessChecks": [
+      {
+        "scn": "SCN-CVT-001",
+        "characteristic": "complexity",
+        "command": "pnpm lint:alpha"
+      },
       {
         "scn": "SCN-CVT-002",
         "characteristic": "traceability",

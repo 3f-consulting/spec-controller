@@ -7,7 +7,7 @@ Feature: an evidence-cell-grid fixture target spanning every four-way cell case
   the shapes the pipeline ACTUALLY emits (the class @SCN-RPT-017 / @SCN-RPT-018 established: a
   cell bug is only caught by the real pipeline, never by a hand-built balance).
 
-  The five scenarios, and the cells they pin:
+  The four scenarios, and the cells they pin:
     - @SCN-CEL-001 — @unit + the bare check @cell-grid, both discharged → Lint `1`, Unit `1`
       (named and met — the count).
     - @SCN-CEL-002 — @integration, NO cucumber observation → Integration `∅` (named, missing),
@@ -20,10 +20,17 @@ Feature: an evidence-cell-grid fixture target spanning every four-way cell case
       Pending Item and posts NO reconciled row; but the pending pair STAYS in
       evidenceObligationPairs, so the vitest observation citing it is ATTRIBUTED, not no-evidence-obligation →
       its Unit cell must read `(1)`. The second, live-today production shape of `(N)`.
-    - @SCN-CEL-005 — two bare checks (@cell-grid-a @cell-grid-b), BOTH wired
-      into CI and discharged → Lint `L2/2`: the LEFT count is the evidence-obligation count (two
-      lint QCRs on the row, @SCN-RPT-011), the RIGHT the present-guard count. The ONLY scenario
-      naming >1 static check — it exercises the `L2` left-count path.
+
+  A FIFTH SCENARIO ONCE STOOD HERE — SCN-CEL-005, two bare checks on one row, both wired and
+  discharged, pinning the `L2/2` left-count path. It carried no corpus obligation of its own (it
+  existed only to plant a `specController.checkRegistry` collision) and went with the rest of the
+  registry-route migration (3F-3395). Canon settles why it has no replacement: `double-entry-
+  manifesto.md`'s Quality Check definition makes the check ITSELF the scenario, and several checks
+  of one characteristic are several SCENARIOS sharing that characteristic, told apart by `@SCN` —
+  one scenario is one fitness check BY CONSTRUCTION. A row naming two characteristics has no
+  expression in the target model this fixture exercises, so there is nothing left to plant it
+  with. `render/markdown.ts` still carries the `L2`/`L3` rendering branch this scenario was the
+  only producer of — deliberately left in place, not dead code to sweep, pending its own ticket.
 
   This file lives under tests/fixtures/ (NOT features/), so neither the feature-code registry
   lint nor the scenario↔sub-issue gate sees @CEL / @SCN-CEL-NNN — they scan features/*.feature
@@ -34,7 +41,7 @@ Feature: an evidence-cell-grid fixture target spanning every four-way cell case
     # STEPLESS, and the bare check raises its fitness obligation off that tag rather than off the
     # shape (@SCN-LNT-006); the runtime tier rides alongside, making this a two-axis row
     # (@SCN-LNT-004).
-    @unit @cell-grid @SCN-CEL-001
+    @unit @fitness @SCN-CEL-001
     Scenario: a named, met obligation at unit and lint
 
     @integration @SCN-CEL-002
@@ -48,6 +55,3 @@ Feature: an evidence-cell-grid fixture target spanning every four-way cell case
     @unitpending @SCN-CEL-004
     Scenario: a pending unit obligation an observation is nonetheless attributed to
       Given the target repo's source
-
-    @cell-grid-a @cell-grid-b @SCN-CEL-005
-    Scenario: a scenario naming two static checks, both wired and discharged

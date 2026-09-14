@@ -1,10 +1,10 @@
 /**
- * The TARGET's `specController.*` configuration, read into the registry, bars and mints the
+ * The TARGET's `specController.*` configuration, read into the rows, bars and mints the
  * reconciler takes — the `resolve*` family, moved here from the app's ingest edge (3F-3087).
  *
  * WHY THEY LIVE IN THE ENGINE. Every one of them is a pure function of a manifest object
  * somebody else already read off disk, and every one of them is the ONE reading of the key it
- * names — `checkRegistryOf`, `thresholdsOf` and `bareTerm` are all core's, so the reader and the
+ * names — `thresholdsOf`, `fitnessChecksOf` and `bareTerm` are all core's, so the reader and the
  * thing it reads through belonged on the same side of the package boundary. Sitting at the app
  * edge they were the reason a PUBLISHED module imported core's unpublished `/internal` subpath,
  * which is the fault 3F-3086 repairs; nothing about reading a parsed manifest ever needed the
@@ -18,14 +18,13 @@
  * knowing nothing about files, records or ratchets (@SCN-EPG-001, and 3F-2841's pattern: a
  * project-owned term arrives as an input).
  *
- * DEFENSIVE THROUGHOUT, AND THAT IS THE FAMILY'S STANCE RATHER THAN FIVE LOCAL CHOICES. Config
- * is data from outside: a missing, non-object or array-shaped value resolves EMPTY, and a
- * malformed entry is dropped by the registry factory rather than thrown. A check that throws on
- * a typo produces no verdict at all.
+ * DEFENSIVE THROUGHOUT, AND THAT IS THE FAMILY'S STANCE RATHER THAN LOCAL CHOICES PER RESOLVER.
+ * Config is data from outside: a missing, non-object or array-shaped value resolves EMPTY, and a
+ * malformed entry is dropped by the reading function it is handed to rather than thrown. A check
+ * that throws on a typo produces no verdict at all.
  */
 
 import { bareTerm } from "../lib/bareTerm.js";
-import { checkRegistryOf, type CheckRegistry } from "../domain/checkRegistry.js";
 import { thresholdsOf, type ThresholdIndex } from "../domain/thresholds.js";
 import { fitnessChecksOf, type FitnessCheckIndex } from "../domain/fitnessChecks.js";
 // THE FOUR CANON TIERS, read from the ledger's own enumeration rather than restated here
@@ -39,31 +38,6 @@ function isBlock(value: unknown): value is Record<string, unknown> {
 }
 
 /**
- * The scripts the TARGET configures AS static checks (@SCN-USG-009, 3F-2495) — read from
- * `specController.staticChecks`, EXTENDING the prefix discovery above.
- *
- * WHY A CONFIGURATION AND NOT A RENAME. `tsc --noEmit` is static analysis on any reading and reds
- * the build on a violation, and no prefix recognises it. Renaming the script fixes one repository;
- * a client's scripts are not ours to rename, so the tool has to be able to be TOLD.
- *
- * EXTENDS, NEVER REPLACES — the `resolveDeferralTags` contract one function up, and for the same
- * reason: a target cannot un-recognise a check the convention already finds. Bare script names
- * (no `@`-stripping — these are manifest keys, not tags); non-string / non-array config ignored
- * defensively, consistent with the deferral-tag reader.
- *
- * It widens only the DISCOVERY direction. The named-obligation observer never consulted the
- * prefixes, so any named check always reconciled; what this buys is finding a check NOBODY
- * cites — the unattributed check, which was invisible exactly when it was unattributed.
- */
-export function resolveStaticChecks(packageJson: {
-  specController?: { staticChecks?: unknown };
-}): readonly string[] {
-  const configured = packageJson.specController?.staticChecks;
-  if (!Array.isArray(configured)) return [];
-  return [...new Set(configured.filter((name): name is string => typeof name === "string"))];
-}
-
-/**
  * The steps the TARGET names NON-CHECKS (@SCN-USG-015, 3F-3343) — `specController.notChecks`, read
  * as the fully-qualified `<workflow file>:<job id>:<step name>` entries the target wrote.
  *
@@ -73,7 +47,7 @@ export function resolveStaticChecks(packageJson: {
  * consumer's own STEPS is the opposite thing: it is about their pipeline, it is written once, and
  * nothing in this tree has an opinion about what is on it.
  *
- * The eighth of this family's `specController.*` resolvers, and defensive like the seven above it:
+ * The seventh of this family's `specController.*` resolvers, and defensive like the six above it:
  * a missing or non-array value resolves EMPTY and a non-string entry is dropped rather than
  * thrown. Deduplicated, as the configured-static-check list beside it is, so a target that wrote
  * one line twice is reported one line — the account below is per ENTRY, and the same entry twice
@@ -88,37 +62,6 @@ export function resolveNotChecks(packageJson: {
   const configured = packageJson.specController?.notChecks;
   if (!Array.isArray(configured)) return [];
   return [...new Set(configured.filter((entry): entry is string => typeof entry === "string"))];
-}
-
-/**
- * The TARGET's check registry (@SCN-LNT-005) — `specController.checkRegistry`, read as
- * `script handle → bare check tag` through the engine's own `checkRegistryOf`.
- *
- * IT IS THE TARGET'S, AND THAT IS THE WHOLE POINT. spec-controller reconciles a tree that is
- * usually not its own, and a bare check tag means what the target says it means. Resolved from the
- * tool's own manifest instead, a target registering nothing raises no fitness obligation at all,
- * and one registering the same word for a different script credits the wrong row — so the registry
- * travels with the scripts and the CI config it is read alongside, and every one of them comes from
- * `--package-json`.
- *
- * The third of this family's `specController.*` resolvers, and defensive like the two above it: a
- * missing, non-object or array-shaped config resolves EMPTY, and a malformed entry is dropped by
- * `checkRegistryOf` rather than thrown. There is no starter set — unlike deferral tags there is no
- * built-in a target would inherit, and a registry entry the target did not write would put a
- * fitness obligation on its books under a word it never used.
- *
- * Where a registry is AUTHORED is still open (the registry-home question, increment D); this key is
- * the seam it is read from today, and the corpus check reads it through THIS function so the
- * words it calls grammar are exactly the tags the obligation rule raises against.
- */
-export function resolveCheckRegistry(packageJson: {
-  specController?: { checkRegistry?: unknown };
-}): CheckRegistry {
-  const configured = packageJson.specController?.checkRegistry;
-  if (typeof configured !== "object" || configured === null || Array.isArray(configured)) {
-    return checkRegistryOf({});
-  }
-  return checkRegistryOf(configured as Record<string, unknown>);
 }
 
 /**
@@ -207,7 +150,7 @@ function withGateReferencesResolved(
  * never of the tool doing the reconciling. Read from `--package-json` alongside the scripts, the CI
  * config and the registry, so every input to a target's verdict came from that target.
  *
- * The fourth of this family's `specController.*` resolvers, and defensive like the three above it: a
+ * The third of this family's `specController.*` resolvers, and defensive like the two above it: a
  * missing, non-object or array-shaped config resolves EMPTY, and a malformed entry is dropped by
  * `thresholdsOf` rather than thrown. There is no starter set: a ceiling the target did not write
  * would hold its suites to a bar nobody chose.
@@ -290,7 +233,7 @@ export function resolveDeferralTags(
  * characteristic means what the target says it means, and a row resolved from this tool's own
  * manifest would put an obligation on a target's books under a word it never wrote.
  *
- * The sixth of this family's `specController.*` resolvers, and defensive like the five above it: a
+ * The fifth of this family's `specController.*` resolvers, and defensive like the four above it: a
  * missing or wrongly-shaped config resolves EMPTY, and a malformed row is dropped by
  * `fitnessChecksOf` rather than thrown. There is no starter set: a target that has converted
  * nothing owes nothing on this route, which is what keeps the reading inert on an unswept corpus.
@@ -354,7 +297,7 @@ export interface ResolvedRunners {
  * command runs a repository's unit suite is a fact about that repository, and a runner resolved
  * from this tool's own manifest would answer for a pipeline this run never looked at.
  *
- * The seventh of this family's `specController.*` resolvers, and defensive like the six above it: a
+ * The sixth of this family's `specController.*` resolvers, and defensive like the five above it: a
  * missing, non-object or array-shaped config resolves EMPTY, and an entry whose value is neither a
  * runner's NAME nor `null` is dropped rather than thrown. A manifest naming no runners is not an
  * error — it is a `new-client`, which is the state this axis is sold on.
@@ -403,4 +346,34 @@ export function resolveRunners(packageJson: {
     ),
     unrecognisedKeys: Object.keys(configured).filter((key) => !isTier(key)),
   };
+}
+
+/**
+ * THE specController.* KEYS THIS READER HAS RETIRED (@SCN-USG-021, @SCN-USG-022) — the top-level
+ * keys a manifest carries whose reading this tool has removed, in the order the manifest wrote
+ * them.
+ *
+ * NAMED, NOT SILENTLY GONE. Retiring a route is not the same act as never having had one: a
+ * consumer who wrote `checkRegistry` once, when it was read, believes it still routes their
+ * checks. Ceasing to read it without saying so leaves them holding a manifest that no longer
+ * does what they think, with nothing on the report to correct it from — the same fault as a
+ * dropped step, reached from the retirement side rather than the discovery side.
+ *
+ * APPEND-ONLY, the family's own append-only key set (RUNTIME_QUALITY_CHECKS beside it). A key
+ * retires once and is never re-read; the set only grows as this reader retires more of them
+ * (`checkRegistry` first, 3F-3398; `staticChecks` second, 3F-3399 — the tiebreak
+ * `parse/runningStaticChecks.ts`'s `handleOf` used to settle among several invoked scripts,
+ * 3F-3396 deleted).
+ *
+ * DEFENSIVE LIKE THE READERS ABOVE IT: a missing or non-object `specController` names no
+ * retired key, never throws.
+ */
+const RETIRED_SPEC_CONTROLLER_KEYS = ["checkRegistry", "staticChecks"] as const;
+
+export function resolveRetiredKeys(packageJson: { specController?: unknown }): readonly string[] {
+  const configured = packageJson.specController;
+  if (!isBlock(configured)) return [];
+  return Object.keys(configured).filter((key) =>
+    (RETIRED_SPEC_CONTROLLER_KEYS as readonly string[]).includes(key)
+  );
 }

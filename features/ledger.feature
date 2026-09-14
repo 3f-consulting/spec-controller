@@ -90,6 +90,17 @@ Feature: Ledger over obligation-vs-observation evidence
       Then the ledger reports "SCN-PHANTOM-999" as a phantom-scenario reconciliation with a cites-unknown-scenario item
       And the phantom-scenario "SCN-PHANTOM-999" is out of balance
 
+    # A phantom item's SHAPE, one destination over from @SCN-LDG-008: it carries what the
+    # credit has a value for, and omits — not nulls — the keys it does not.
+    @unit @integration @SCN-LDG-034
+    Scenario: a phantom row's item carries the keys its credit has a value for and omits the rest
+      Given a scenario "SCN-LDG-034" requiring unit-level evidence
+      And a passing lint credit citing the phantom scenario "SCN-PHANTOM-034" naming the check "lint:complexity"
+      When the reconciler runs
+      Then the ledger reports "SCN-PHANTOM-034" as a phantom-scenario reconciliation with a cites-unknown-scenario item
+      And the phantom-scenario "SCN-PHANTOM-034"'s item carries the check "lint:complexity" and no locator key
+      And the phantom-scenario "SCN-PHANTOM-034" is out of balance
+
   Rule: a credit citing no scenario is a suspense-scenario reconciliation
 
     The bidirectional reconciler also consumes credits that cite NO scenario at
@@ -471,6 +482,22 @@ Feature: Ledger over obligation-vs-observation evidence
       And the credit citing a pending quality-check is posted and findable
       And the run's verdict and reconciling items are unchanged — posting classifies nothing
 
+    # POSTING SAYS WHERE A CREDIT LANDS; THIS SCENARIO IS THE SAME RULE READ AS AN OUTCOME. Two
+    # rows can honestly share one characteristic — canon's own arrangement for a measured check
+    # (ci-run-time.feature's SCN-CIP-007) is two scenarios under one tag with ceilings of their
+    # own, each cited by its own measurement. The static axis has never had that shape pinned: one
+    # credit, two rows raising the SAME check, the credit naming only one of them. The credit cites
+    # on this axis exactly as it does on every other, so it can discharge only the row it names —
+    # the other reads missing, not absorbed and not left both-satisfied by a match keyed on the
+    # check alone.
+    @unit @integration @SCN-LDG-035
+    Scenario: a static-check credit discharges only the obligation on the row whose @SCN it cites
+      Given two fitness scenarios "SCN-AAA-001" and "SCN-AAA-002" both raising the check "complexity"
+      And a static-check credit citing only "SCN-AAA-001", naming the check "complexity"
+      When the ledger reconciles that shared-check run
+      Then the row "SCN-AAA-001" reconciles satisfied on the check "complexity", holding the credit
+      And the row "SCN-AAA-002" reconciles missing on the check "complexity", holding no credit
+
   # THE OBLIGATIONS-ONLY CORPUS (@SCN-LDG-025, 3F-1851) — the HEADLINE AGREEING WITH THE VERDICT
   # (3F-1703), isolated so nothing else can produce it. This corpus is what makes that agreement
   # falsifiable: every OTHER fitness fixture mixes its satisfied credit with another shape (broken /
@@ -488,8 +515,8 @@ Feature: Ledger over obligation-vs-observation evidence
   # reaches it through the one posting rule — a stepless fitness scenario carrying its bare check,
   # whose run cites that scenario's @SCN. The ROUTE is what moved. What is asserted — the summary
   # agreeing with the verdict on a balanced fitness-only corpus — is coverage no other scenario
-  # holds: @SCN-LNT-008 is about two scenarios sharing one check, and says nothing about the
-  # headline.
+  # holds: the one posting rule's own scenarios are about which run credits which row, and say
+  # nothing about the headline.
   Rule: a balanced fitness-only corpus keeps summary.outOfBalance agreeing with the balanced verdict
 
     @unit @integration @SCN-LDG-025

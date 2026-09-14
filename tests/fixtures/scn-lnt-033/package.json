@@ -7,9 +7,15 @@
   },
   "specController": {
     "notChecks": ["ci.yml:quality:Checkout"],
-    "checkRegistry": {
-      "lint:advisory": "complexity",
-      "lint:enforced": "tech-conformance"
-    }
+    "fitnessChecks": [
+      {
+        "scn": "SCN-CVT-001",
+        "characteristic": "complexity"
+      },
+      {
+        "scn": "SCN-CVT-002",
+        "characteristic": "tech-conformance"
+      }
+    ]
   }
 }

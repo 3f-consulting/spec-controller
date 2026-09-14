@@ -2,9 +2,5 @@
   "scripts": {
     "domain-purity": "echo domain-purity-check"
   },
-  "specController": {
-    "checkRegistry": {
-      "domain-purity": "domain-purity"
-    }
-  }
+  "specController": {}
 }

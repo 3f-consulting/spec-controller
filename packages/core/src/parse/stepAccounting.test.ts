@@ -211,7 +211,6 @@ describe("[SCN-USG-018] stepAccounting — every step read, accounted for as exa
         [CI_YML],
         SCRIPTS,
         UNIT_RUNNER,
-        [],
         () => null,
         (step) => isReconciler(step) || notChecks(step)
       ).length

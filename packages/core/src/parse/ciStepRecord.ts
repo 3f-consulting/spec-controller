@@ -284,9 +284,9 @@ function rowHasNoEntryMessage(scnId: string): string {
  *
  * THE CREDIT ARRIVES ALREADY CITING, WHICH IS THE SEAM THIS ROUTE RETIRES (@SCN-LNT-021). A
  * DISCOVERED check is found as a runnable script handle, and a handle does not know what it is
- * for — hence `checkRegistry`, and hence the corpus lookup behind it. Here the entry's key IS the
- * code of the row it answers and that row carries the characteristic: two terms from two places,
- * neither resolved onto the other and no registry consulted at all.
+ * for — hence the (now-retired) registry, and hence the corpus lookup behind it. Here the
+ * entry's key IS the code of the row it answers and that row carries the characteristic: two
+ * terms from two places, neither resolved onto the other and no registry consulted at all.
  *
  * `failing`, AND THE THREE NEIGHBOURS IT IS NOT. `broken` is the never-ran case: it carries no
  * Evidence Observation and stamps the run unsound, so reading a failed step as broken would throw

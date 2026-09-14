@@ -5,6 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: pnpm install --frozen-lockfile
-      - run: pnpm domain-purity
+      - id: SCN-TGD-001
+        run: pnpm domain-purity
       - run: pnpm test
       - run: pnpm cucumber

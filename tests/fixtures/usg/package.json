@@ -6,10 +6,13 @@
     "cucumber": "cucumber-js"
   },
   "specController": {
-    "checkRegistry": {
-      "lint:foo": "foo",
-      "lint:bar": "bar"
-    },
+    "fitnessChecks": [
+      {
+        "scn": "SCN-TGT-001",
+        "characteristic": "foo",
+        "command": "pnpm lint:foo"
+      }
+    ],
     "runners": {
       "unit": "vitest",
       "integration": "cucumber-js"

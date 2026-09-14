@@ -149,7 +149,7 @@ describe("[SCN-USG-020] discoveryScope — the candidates it counts are the ones
     );
 
   const posted = (isExcluded: (step: CiWorkflowStep) => boolean): number =>
-    runningStaticChecks(sources, SCRIPTS, UNIT_RUNNER, [], () => null, isExcluded).length;
+    runningStaticChecks(sources, SCRIPTS, UNIT_RUNNER, () => null, isExcluded).length;
 
   it("counts what the observer posts when the consumer excluded a step", () => {
     expect(totalCandidates(excluding("Install"))).toBe(posted(excluding("Install")));

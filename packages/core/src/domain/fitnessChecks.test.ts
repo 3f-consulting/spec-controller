@@ -46,7 +46,7 @@ describe("[SCN-LNT-018] the configured rows read into the registry the obligatio
 
   it("stores both terms BARE, so a row spelled the way a feature file spells them still matches", () => {
     // A manifest written by hand will sooner or later carry the sigils — the stance `thresholdsOf`
-    // and `checkRegistryOf` already take, and the lookup is bare on both sides.
+    // already takes, and the lookup is bare on both sides.
     expect([...fitnessChecksOf([{ scn: "@SCN-AAA-001", characteristic: "@complexity" }])]).toEqual([
       ["SCN-AAA-001", { characteristic: "complexity" }],
     ]);

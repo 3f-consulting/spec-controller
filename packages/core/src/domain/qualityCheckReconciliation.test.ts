@@ -232,3 +232,52 @@ describe("[SCN-LDG-031] OUTCOME_SIDE_PROFILE matches the manifesto's per-outcome
     }
   );
 });
+
+/**
+ * [SCN-LDG-035] (3F-3409) — a static-check credit discharges only the obligation on the row whose
+ * @SCN it cites, even when a second row raises the SAME bare check.
+ *
+ * THE MUTATION-RATCHET GAP THIS CLOSES. `staticCheckObservationFor`
+ * (qualityCheckReconciliation.ts) matches an observation on THREE terms — not broken, `scnId ===
+ * scnId`, `checkTag === checkTag` — and no existing scenario ever called it twice over one
+ * observations array with two DIFFERENT scnId values sharing one checkTag. Neuter the `scnId`
+ * clause to `true` and every existing scenario stays green: each one's corpus carries at most one
+ * row per checkTag, so the clause was never the thing separating pass from fail. This arm is
+ * built so it is.
+ *
+ * PURE, AT `reconcileEvidenceObligation`'s OWN LEVEL — the same level @SCN-LDG-026/-028 above test
+ * at, and the level Stryker's mutation runner (vitest only, per stryker.config.mjs) actually
+ * measures kills against. The one credit is reconciled against BOTH rows' obligations in turn,
+ * which is what the mutant needs held constant to be caught: same observations array, same
+ * checkTag, different scnId.
+ */
+describe("[SCN-LDG-035] a static-check credit discharges only the obligation on the row whose @SCN it cites", () => {
+  it("two rows share one checkTag; the cited row is satisfied and the other stays missing", () => {
+    const obligation: EvidenceObligation = { qualityCheck: "lint", staticCheck: "complexity" };
+    // ONE credit, citing SCN-AAA-001 only.
+    const credit: EvidenceObservation = {
+      qualityCheck: "lint",
+      staticCheck: "lint:complexity",
+      checkTag: "complexity",
+      scnId: "SCN-AAA-001",
+      exists: true,
+      enforcedOverRealSource: true,
+    };
+
+    const cited = reconcileEvidenceObligation("SCN-AAA-001", obligation, [credit]);
+    const other = reconcileEvidenceObligation("SCN-AAA-002", obligation, [credit]);
+
+    // THE CITED ROW — answered by the credit that names it.
+    expect(cited.outcome).toBe("satisfied");
+    expect(cited.evidenceObservation).toEqual(credit);
+
+    // THE DISCRIMINATOR. Under the bare `o.scnId === scnId` mutant neutered to `true`, `find`
+    // would return the SAME credit for SCN-AAA-002 — only `checkTag` would still discriminate, and
+    // both rows share it. The obligation exists and nothing cites SCN-AAA-002, so it reconciles
+    // missing and carries no Evidence Observation (canon: Obligation Exists, Observation None).
+    expect(other.outcome).toBe("missing");
+    expect(
+      (other as { evidenceObservation?: unknown }).evidenceObservation
+    ).toBeUndefined();
+  });
+});

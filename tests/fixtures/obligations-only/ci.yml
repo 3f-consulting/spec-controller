@@ -5,6 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: pnpm install --frozen-lockfile
-      - run: pnpm lint:obligations-only
+      - id: SCN-DEM-001
+        run: pnpm lint:obligations-only
       - run: pnpm test
       - run: pnpm cucumber

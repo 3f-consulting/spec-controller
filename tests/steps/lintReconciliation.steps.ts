@@ -33,20 +33,12 @@ import { runReconcile } from "../../packages/spec-controller/src/ingest/ingestQu
 import { renderMarkdown, runningStaticChecks, hasBrokenEvidence } from "@3f-consulting/spec-controller-core";
 import type { Scenario, EvidenceObservation, Ledger } from "@3f-consulting/spec-controller-core";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
-import { summaryOf } from "../../packages/core/src/domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "../../packages/core/src/domain/evidenceReconciliation.js";
-// The citation seam's own pieces are core-INTERNAL (where a registry is authored is still open —
-// the registry-home question, increment D), so they are reached by source path rather than
-// promoted onto the frozen v1 barrel.
-import {
-  checkRegistryOf,
-  registeredCheckTags as registeredCheckTagsOf,
-  type CheckRegistry,
-} from "../../packages/core/src/domain/checkRegistry.js";
-import {
-  citationOfScript,
-  fitnessCitations,
-} from "../../packages/core/src/parse/fitnessCitations.js";
+// The citation seam's own surviving piece is core-INTERNAL (where a registry is authored is still
+// open — the registry-home question, increment D), so it is reached by source path rather than
+// promoted onto the frozen v1 barrel. The registry route this once shared the import with retired
+// whole (3F-3395, @SCN-LNT-017 — the last registry-`scn` scenario).
+import { citationOfCitedRow } from "../../packages/core/src/parse/fitnessCitations.js";
 // The `lint` quality-check carries two shapes since @SCN-CIP-003 (a static-check fact and a
 // measurement), so a reader wanting a static check's own runnable handle asks for one.
 import {
@@ -71,10 +63,6 @@ import {
 } from "../../packages/core/src/domain/fitnessChecks.js";
 import {
   resolveFitnessChecks,
-  // @SCN-LNT-032 — the fixture's REGISTRY read by the resolver the composition itself uses, so the
-  // arm is held to the arrangement that puts one of its three checks on the obligation-side
-  // observer rather than to a second reading of the same manifest.
-  resolveCheckRegistry,
   type KillFloorReader,
 } from "../../packages/core/src/parse/targetManifest.js";
 
@@ -111,19 +99,8 @@ const CTX: RunContext = {
   sourceSha: null,
 };
 
-// @SCN-LNT-005 outcome: the external target's resolved input paths, its parsed manifest (the
-// registry AND the scripts — one read, since the arm asserts against both), and the Ledger the run
-// produced. Held apart from `fitnessLedger` because this arm's corpus is the TARGET's, and the two
-// being different documents is the whole subject.
-let externalOpts: { features: string; ci: string; packageJson: string };
-let externalPackageJson: {
-  scripts?: Record<string, string>;
-  specController?: { checkRegistry?: Record<string, string> };
-};
-let externalLedger: Ledger;
-
 // @SCN-LNT-006 outcome: the registered bare check tags, and the corpus source read against them.
-let registeredCheckTags: string[];
+let obligationCheckTags: string[];
 let corpusSource: string;
 
 // @SCN-LNT-018 outcome: the CONFIGURED ROWS the converted route reads, over the same
@@ -131,17 +108,11 @@ let corpusSource: string;
 // what keeps the reading inert for all of them — `parseScenarios` takes its own empty default.
 let configuredFitnessChecks: FitnessCheckIndex | undefined;
 
-// @SCN-LNT-001 / @SCN-LNT-002 outcome: the fixture registry and corpus the citation seam is read
-// through, and the Ledger itself — the "exactly one row" count is over posted-credit IDENTITY,
-// which the rendered report cannot carry.
-let fitnessRegistry: CheckRegistry;
+// @SCN-LNT-002 outcome: the fixture corpus the citation seam is read through, and the Ledger
+// itself — the "exactly one row" count is over posted-credit IDENTITY, which the rendered report
+// cannot carry.
 let fitnessCorpus: string;
 let fitnessLedger: Ledger;
-
-// @SCN-LNT-009 outcome: the corpus AS IT READS WHEN THE LEDGER IS BUILT, when that is not the one
-// the run's citation was resolved against. Undefined for every other scenario, which is what keeps
-// the two reads identical there.
-let reconciledCorpus: string | undefined;
 
 // @SCN-LNT-002 outcome: the planted tree the unwired check is read against.
 let plantedCiSource: string;
@@ -152,28 +123,10 @@ let plantedScripts: PackageJsonScripts;
 // only meet at the reconcile — which is the fact the arm exists to keep true.
 let unitCredit: EvidenceObservation;
 
-/** The runnable handle the fixture registry maps. It was spec-controller's own wired check until
- *  3F-3313; the name is fixture data here — the registry, the corpus and the workflow these arms
- *  read are all planted — so what it names in the tree was never load-bearing. */
+/** The runnable handle the fixture cites. It was spec-controller's own wired check until 3F-3313;
+ *  the name is fixture data here — the corpus and the workflow these arms read are all planted —
+ *  so what it names in the tree was never load-bearing. */
 const CITED_SCRIPT = "lint:feature-codes";
-
-/** The planted unwired handle — fixture-only; never a real in-repo script. */
-const PLANTED_SCRIPT = "lint:planted-watermelon";
-
-/** The registered handle nothing implements — fixture-only, and the point of the absent arm. */
-const ABSENT_SCRIPT = "lint:absent-check";
-
-/** The two-axis arm's unwired handle. The bare tag the registry maps it to is a DIFFERENT word
- *  (`unwired-check`), so nothing but the citation can join that obligation to this credit. */
-const UNWIRED_SCRIPT = "lint:unwired-check";
-
-/**
- * @SCN-LNT-015 outcome: the pairing the REGISTRY names — which row each handle's run credits.
- * Held as the table said it, because the Then asserts the credit landed where the ENTRY named
- * rather than where the corpus happened to reach first, and reading the pairing back off the
- * registry under test would let a reading that lost the `@SCN` assert against its own loss.
- */
-let namedCitations: { script: string; check: string; scenario: string }[];
 
 /**
  * Extract a scenario's OWN ledger LEDGER row, split into its cells — `| <scnId> |
@@ -200,454 +153,71 @@ function rowCells(scnId: string): { verdict: string; items: string } {
   return { verdict: cells[2] ?? "", items: cells[3] ?? "" };
 }
 
-// @SCN-LNT-001
-// @SCN-LNT-002
-// @SCN-LNT-003
-// @SCN-LNT-004
-// @SCN-LNT-008
-// @SCN-LNT-009
+// @SCN-LNT-007
 Given(
   "{string} is registered as the fitness check {string}",
-  function (script: string, check: string) {
-    // The registry, as data. It is FIXTURE-supplied here: spec-controller's own tree registers
-    // nothing until the corpus sweep (3F-2589), so the seam reads inert over the real tree while
-    // this arm still exercises it end-to-end.
-    fitnessRegistry = checkRegistryOf({ [script]: check });
-    // Every arm below opens on this step, so it is where the divergent-corpus opt-in is cleared:
-    // module-level fixtures outlive a cucumber scenario, and a stale one would silently reconcile
-    // the NEXT arm against a corpus it never asked for.
-    reconciledCorpus = undefined;
+  function (_script: string, check: string) {
+    // THE HANDLE ONCE ALSO MAPPED THROUGH A FIXTURE REGISTRY (retired whole, 3F-3395,
+    // @SCN-LNT-017 — the last registry-`scn` scenario); what survives of this step for its one
+    // remaining caller (@SCN-LNT-007) is the check TAG becoming a recognised one, directly — the
+    // fact the retired `@lint=<handle>` form's Given below reads to prove its claim is the
+    // STRONGER one: even a genuinely recognised check, the retired form still raises nothing.
+    obligationCheckTags = [check];
   }
 );
 
-// @SCN-LNT-001
-// @SCN-LNT-002
-// @SCN-LNT-003
-// @SCN-LNT-008
-// @SCN-LNT-015
-// @SCN-LNT-016
-// @SCN-LNT-017
-Given("a stepless fitness scenario carries the bare check {string}", function (check: string) {
-  // NO steps — how this fixture is written, not what the rule reads. The corpus is the second hop of the citation seam, so the
-  // scenario that CARRIES the check is the one the run will come to cite.
+// @SCN-LNT-004
+Given("that scenario also carries the unit tier tag", function () {
+  // ONE ROW, TWO AXES. The two tags are flat peers and each raises its own obligation —
+  // `{ qualityCheck: "unit" }` from @unit, `{ qualityCheck: "lint", staticCheck }` from the
+  // configured row @fitness resolves against (@SCN-LNT-018) — so the reconciler meets a row
+  // owing evidence on both.
+  //
+  // The shape below is not an endorsement of mixed tagging — whether one scenario may carry a
+  // tier tag and a fitness tag together is @SCN-STG-005's question — what is read here is a
+  // two-axis row.
   fitnessCorpus = [
     "@LNT",
     "Feature: fixture",
     "  Rule: a fixture rule",
-    `    @${check} @SCN-AAA-001`,
+    "    @unit @fitness @SCN-AAA-001",
     "    Scenario: the tree stays inside this check's threshold",
   ].join("\n");
 });
 
-// @SCN-LNT-008
-// @SCN-LNT-015
-// @SCN-LNT-016
-// @SCN-LNT-017
-Given(
-  "a second stepless fitness scenario carries the same bare check {string}",
-  function (check: string) {
-    // THE CORPUS FAULT, planted. A second STEPLESS scenario carrying the SAME bare check raises the
-    // SAME obligation — the obligation rule reads the tag off each scenario's own shape
-    // (@SCN-LNT-006) and knows nothing of the other — so the ledger holds two debits for one run.
-    // Appended rather than replacing, because corpus ORDER is what decides which one the credit
-    // reaches: this one is second, and second gets nothing.
-    fitnessCorpus = [
-      fitnessCorpus,
-      "",
-      `    @${check} @SCN-AAA-002`,
-      "    Scenario: a second scenario claiming the same check",
-    ].join("\n");
-  }
-);
-
-// @SCN-LNT-017
-Given(
-  "a third stepless fitness scenario carries a different bare check {string}",
-  function (check: string) {
-    // THE NEAR-MATCH'S TARGET, and the row that makes this scenario more than @SCN-LNT-016's
-    // fixture. It EXISTS — a real stepless fitness scenario the corpus carries — so an entry
-    // naming it names something a reader can find; what it does not carry is the characteristic
-    // the entry claims. Membership is per-characteristic, and existence is not membership.
-    fitnessCorpus = [
-      fitnessCorpus,
-      "",
-      `    @${check} @SCN-AAA-003`,
-      "    Scenario: a scenario claiming a different check entirely",
-    ].join("\n");
-  }
-);
-
-// @SCN-LNT-015
-// @SCN-LNT-016
-// @SCN-LNT-017
-Given(
-  "these registry entries name the fitness scenario each check credits",
-  function (entries: DataTable) {
-    // THE RELOCATED ARM, as a target authors it. Each entry carries the characteristic its handle
-    // asserts AND the `@SCN` of the row its run credits — the second term being the one fact the
-    // handle alone can no longer supply once one characteristic names several checks.
-    namedCitations = entries.hashes() as { script: string; check: string; scenario: string }[];
-    fitnessRegistry = checkRegistryOf(
-      Object.fromEntries(
-        namedCitations.map((entry) => [entry.script, { check: entry.check, scn: entry.scenario }])
-      )
-    );
-    // Cleared for the reason every registering Given clears it: module-level fixtures outlive a
-    // cucumber scenario, and a stale divergent corpus would reconcile this arm against a corpus it
-    // never asked for.
-    reconciledCorpus = undefined;
-  }
-);
-
-// @SCN-LNT-012
-Given(
-  "{string} and {string} are registered as the fitness checks {string} and {string}",
-  function (script: string, otherScript: string, check: string, otherCheck: string) {
-    // TWO registered handles, and the ORDER is load-bearing. `checkStaticEvidenceObligations` is
-    // driven by the registry's own key order, so the wired check is observed FIRST — which is the
-    // credit a reader matching on the @SCN alone finds and hands to both obligations. Registering
-    // them the other way round would hide the fault behind an accident of iteration.
-    fitnessRegistry = checkRegistryOf({ [script]: check, [otherScript]: otherCheck });
-    // Cleared here for the same reason the single-check Given clears it: module-level fixtures
-    // outlive a cucumber scenario, and a stale divergent corpus would reconcile this arm against
-    // a corpus it never asked for.
-    reconciledCorpus = undefined;
-  }
-);
-
-// @SCN-LNT-012
-Given(
-  "a stepless fitness scenario carries both bare checks {string} and {string}",
-  function (check: string, otherCheck: string) {
-    // ONE ROW OWING TWO FITNESS OBLIGATIONS — a legal corpus, and the shape the citation seam is
-    // not unique over. `fitnessCitations` maps each bare tag to the scenario carrying it, so BOTH
-    // tags here resolve to SCN-AAA-001 and both runs cite it. Nothing about that is a fault; what
-    // the arm settles is whether the reconciler can still tell the two credits apart.
-    fitnessCorpus = [
-      "@LNT",
-      "Feature: fixture",
-      "  Rule: a fixture rule",
-      `    @${check} @${otherCheck} @SCN-AAA-001`,
-      "    Scenario: the tree stays inside both thresholds",
-    ].join("\n");
-  }
-);
-
-// @SCN-LNT-012
-Given(
-  "the planted package.json defines both scripts while the planted CI config runs only {string}",
-  function (wired: string) {
-    // THE TWO CREDITS MUST DISAGREE, or the arm proves nothing. Both scripts EXIST, so neither
-    // obligation can read `missing`; only one is a CI run step, so one credit is satisfied-shaped
-    // and the other is the watermelon. A fixture wiring both would let a reader that smears one
-    // credit across both obligations pass — the outcomes would coincide and the smear would be
-    // invisible. `typecheck` is the planted unwired one deliberately: it is the ONE check whose
-    // runnable handle and bare tag are the same word, so a name-match reading also survives here,
-    // and the arm has to be able to fail it.
-    plantedCiSource = [
-      "name: CI",
-      "on: [push, pull_request]",
-      "jobs:",
-      "  ci:",
-      "    runs-on: ubuntu-latest",
-      "    steps:",
-      "      - uses: actions/checkout@v4",
-      `      - name: Complexity`,
-      `        run: pnpm ${wired}`,
-      "      - name: Test",
-      "        run: pnpm test",
-    ].join("\n");
-    plantedScripts = {
-      scripts: {
-        [wired]: "tsx scripts/planted-complexity.ts",
-        typecheck: "tsc --noEmit",
-        test: "vitest run",
-      },
-    };
-  }
-);
-
-// @SCN-LNT-009
-Given("that fitness scenario is renumbered after the run cites it", function () {
-  // THE TWO READS, made to disagree the way a real corpus does. The run's @SCN is stamped when the
-  // check is OBSERVED, and the row it names is looked for in the corpus as it reads when the ledger
-  // is built. Renumbering between the two is the smallest honest way to produce that disagreement;
-  // retiring the scenario, or reconciling a feature file the cited one does not live in, produce
-  // the same fact. The citation is still resolved against `fitnessCorpus` — only the reconciled
-  // read moves.
-  reconciledCorpus = fitnessCorpus.replace("SCN-AAA-001", "SCN-AAA-002");
-});
-
-// @SCN-LNT-001
-Given("a second scenario would have claimed the same run under name-match", function () {
-  // The row name-match ALSO posted this run to. Without it "exactly one row" asserts nothing:
-  // a corpus of one row cannot tell a citation from a smear.
-  //
-  // THE RETIRED TAG FORM HERE IS DELIBERATE AND STAYS (3F-2624's sweep classified it a KEEPER).
-  // It is not a corpus that forgot to migrate: it is the NEGATIVE CONTROL, planted so that a
-  // reader which re-grew the by-name route — keyed on exactly this spelling — would put the run
-  // on two rows and red. Sweeping it to a bare tag would make the second row a genuine second
-  // fitness scenario, which is @SCN-LNT-008's subject and a different outcome entirely.
-  fitnessCorpus = [
-    fitnessCorpus,
-    "",
-    `    @lint=${CITED_SCRIPT} @SCN-AAA-002`,
-    "    Scenario: a fixture scenario naming the same handle the retired way",
-    "      Given a fixture step",
-  ].join("\n");
-});
-
-// @SCN-LNT-001
-// @SCN-LNT-008
-// @SCN-LNT-009
-// @SCN-LNT-015
-// @SCN-LNT-016
-// @SCN-LNT-017
-When(
-  "the fitness checks wired into CI are observed and reconciled",
-  function () {
-    // A PLANTED WORKFLOW WIRING EXACTLY THE REGISTERED HANDLES, and the plant is the migration
-    // working rather than a retreat from it (3F-3165, under 3F-3139). This arm read the
-    // checked-out ci.yml and package.json until the conversion emptied them: a converted fitness
-    // check is not a CI `run:` step at all — its command sits on a `specController.fitnessChecks`
-    // row and its own CI step invokes it — so this repository wires no discovered static
-    // check for these arms to observe. 3F-3153 measured that coming ("under the full migration no
-    // characteristic retains two wired handles at all… the durable answer is a planted tree rather
-    // than the real one") and left the move to 3F-3139. This is that move.
-    //
-    // WHAT THE REAL READ BOUGHT AND WHAT IT DID NOT. It bought a genuine workflow under the
-    // OBSERVER; what these arms assert is the CITATION SEAM — which row a run's credit posts to —
-    // decided by the registry and the corpus, both of which were always fixtures here. The
-    // observer's own reading of a workflow document is still held by the arms that own it
-    // (@SCN-USG-001..010, @SCN-LDG-*), over the workflows they plant.
-    //
-    // THE PLANT STATES ITS OWN PREMISE. Wiring exactly the handles the registry names means the
-    // fixture cannot go quietly false the way it did here: a handle nobody registered is not wired,
-    // and one that is registered is, which is the condition each of these scenarios says it has.
-    const handles = [...fitnessRegistry.keys()];
-    const ciSource = [
-      "name: CI",
-      "jobs:",
-      "  ci:",
-      "    steps:",
-      ...handles.map((handle) => `      - run: pnpm ${handle}`),
-    ].join("\n");
-    const packageJson: PackageJsonScripts = {
-      scripts: Object.fromEntries(handles.map((handle) => [handle, `tsx ${handle}.ts`])),
-    };
-
-    const checkTags = registeredCheckTagsOf(fitnessRegistry);
-    // TWO READS, and they are the same one unless an arm has said otherwise: the citation is
-    // resolved against the corpus as it read when the check was OBSERVED, and the row it names is
-    // looked for in the corpus as it reads when the LEDGER is built (@SCN-LNT-009).
-    scenarios = parseScenarios(reconciledCorpus ?? fitnessCorpus, [], checkTags);
-    const citations = fitnessCitations(parseTaggedScenarios(fitnessCorpus), checkTags);
-    evidenceObservations = runningStaticChecks([ciSource], packageJson, NO_RUNNERS, [], (script) =>
-      citationOfScript(script, fitnessRegistry, citations)
-    );
-
-    const reconciliation = evidenceReconciliationOf(scenarios, evidenceObservations, [], false, false);
-    fitnessLedger = reconciliation.ledger;
-    markdown = renderMarkdown(reconciliation, CTX);
-  }
-);
-
-// @SCN-LNT-002
-// @SCN-LNT-004
-Given(
-  "a planted package.json defines the script {string} but the planted CI config does not run it",
-  function (script: string) {
-    // The PLANTED watermelon — a fixture ci.yml + fixture package.json, NOT the tool's real tree:
-    // the script EXISTS (fixture-green) but its command is absent from the CI config, so it guards
-    // nothing over real source. spec-controller cannot keep a permanent real watermelon, and the
-    // planted script is never a real in-repo one (acceptance bar: the detector CATCHES it over the
-    // planted fixture, rather than the outcome being asserted).
-    plantedCiSource = [
-      "name: CI",
-      "on: [push, pull_request]",
-      "jobs:",
-      "  ci:",
-      "    runs-on: ubuntu-latest",
-      "    steps:",
-      "      - uses: actions/checkout@v4",
-      "      - name: Type-check",
-      "        run: pnpm typecheck",
-      "      - name: Test",
-      "        run: pnpm test",
-    ].join("\n");
-    plantedScripts = {
-      scripts: {
-        [script]: "tsx scripts/planted-watermelon.ts",
-        test: "vitest run",
-        typecheck: "tsc --noEmit",
-      },
-    };
-  }
-);
-
-// @SCN-LNT-002
-// @SCN-LNT-003
-// @SCN-LNT-012
-When("the registered fitness checks are observed and reconciled", function () {
-  // THE OBLIGATION-SIDE OBSERVER, CITING. The running-check reader cannot carry this case at all:
-  // it observes what CI RUNS, so a check that runs nowhere is precisely what it filters out. The
-  // registry's own handles are therefore what is observed here, and the citation is resolved over
-  // the same two hops the running arm uses (@SCN-LNT-001) — one seam, whichever reader reaches it.
-  const checkTags = registeredCheckTagsOf(fitnessRegistry);
-  scenarios = parseScenarios(fitnessCorpus, [], checkTags);
-  const citations = fitnessCitations(parseTaggedScenarios(fitnessCorpus), checkTags);
-  evidenceObservations = checkStaticEvidenceObligations(
-    [...fitnessRegistry.keys()],
-    [plantedCiSource],
-    plantedScripts,
-    (script) => citationOfScript(script, fitnessRegistry, citations)
-  );
-
-  const reconciliation = evidenceReconciliationOf(scenarios, evidenceObservations, [], false, false);
-  fitnessLedger = reconciliation.ledger;
-  markdown = renderMarkdown(reconciliation, CTX);
-});
-
-// @SCN-LNT-003
-Given(
-  "the planted package.json defines no script {string} and the planted CI config does not run it",
-  function (script: string) {
-    // The watermelon's planted tree with ONE fact changed — the script is gone. Both arms are read
-    // by the same observer through the same When, so the difference the pair proves is exists:true
-    // against exists:false and nothing else. The planted handle is never a real in-repo script.
-    plantedCiSource = [
-      "name: CI",
-      "on: [push, pull_request]",
-      "jobs:",
-      "  ci:",
-      "    runs-on: ubuntu-latest",
-      "    steps:",
-      "      - uses: actions/checkout@v4",
-      "      - name: Type-check",
-      "        run: pnpm typecheck",
-      "      - name: Test",
-      "        run: pnpm test",
-    ].join("\n");
-    plantedScripts = {
-      scripts: {
-        test: "vitest run",
-        typecheck: "tsc --noEmit",
-      },
-    };
-    assert.ok(
-      !(script in (plantedScripts.scripts ?? {})),
-      `expected the planted package.json to define no script "${script}"`
-    );
-  }
-);
-
-// @SCN-LNT-004
-Given(
-  "a stepless scenario carries the bare check {string} and also requires a unit test",
-  function (check: string) {
-    // ONE ROW, TWO AXES. The two bare tags are flat peers and each raises its own obligation —
-    // `{ qualityCheck: "unit" }` from @unit, `{ qualityCheck: "lint", staticCheck }` from the
-    // registered check tag — so the reconciler meets a row owing evidence on both.
-    //
-    // The shape below is not an endorsement of mixed tagging — whether one scenario may carry a
-    // tier tag and a fitness tag together is @SCN-STG-005's question — what is read here is a
-    // two-axis row. It is stepless because that is how this fixture is written, not because the
-    // obligation rule reads the shape: it does not (@SCN-LNT-006).
-    fitnessCorpus = [
-      "@LNT",
-      "Feature: fixture",
-      "  Rule: a fixture rule",
-      `    @unit @${check} @SCN-AAA-001`,
-      "    Scenario: the tree stays inside this check's threshold",
-    ].join("\n");
-  }
-);
-
 // @SCN-LNT-004
 Given("the unit test for that scenario passes", function () {
-  // The behavioural credit, CITING — the same route, and the same @SCN, the fitness credit will
-  // arrive by. A green here is what makes the arm load-bearing: if the axes could smear, this is
-  // the credit that would wrongly discharge the fitness obligation and turn the watermelon green.
+  // The behavioural credit, CITING — the same route, and the same @SCN, the fitness axis is READ
+  // over. A green here is what makes the arm load-bearing: if the axes could smear, this is the
+  // credit that would wrongly discharge the fitness obligation and turn the missing item satisfied.
   unitCredit = { qualityCheck: "unit", scnId: "SCN-AAA-001", status: "passed" };
 });
 
 // @SCN-LNT-004
-When("the registered fitness checks and the unit result are observed and reconciled", function () {
+When("the configured fitness check and the unit result are observed and reconciled", function () {
   // TWO READERS, ONE RECONCILE. The behavioural credit is a test run's result and the fitness
-  // credit comes from the obligation-side reader over the planted tree (@SCN-LNT-002) — they are
-  // observed apart and meet only here, which is where independence is either kept or lost.
-  const checkTags = registeredCheckTagsOf(fitnessRegistry);
-  scenarios = parseScenarios(fitnessCorpus, [], checkTags);
-  const citations = fitnessCitations(parseTaggedScenarios(fitnessCorpus), checkTags);
-  evidenceObservations = [
-    unitCredit,
-    ...checkStaticEvidenceObligations(
-      [...fitnessRegistry.keys()],
-      [plantedCiSource],
-      plantedScripts,
-      (script) => citationOfScript(script, fitnessRegistry, citations)
-    ),
-  ];
+  // obligation is read off the configured row (@SCN-LNT-018) — they are observed apart and meet
+  // only here, which is where independence is either kept or lost. Nothing cites SCN-AAA-001 on
+  // the lint axis, so no fitness observation is added: the obligation the row raises reconciles
+  // missing on its own, never smeared by the unit credit beside it.
+  scenarios = parseScenarios(fitnessCorpus, [], [], undefined, configuredFitnessChecks);
+  evidenceObservations = [unitCredit];
 
   const reconciliation = evidenceReconciliationOf(scenarios, evidenceObservations, [], false, false);
   fitnessLedger = reconciliation.ledger;
   markdown = renderMarkdown(reconciliation, CTX);
 });
-
-// @SCN-LNT-006
-Given("{string} is a registered fitness check", function (check: string) {
-  // The registry, as the obligation rule takes it — data, not a prefix heuristic. A tag names a
-  // check only because something registered it; without this the corpus could not tell @complexity
-  // from @smoke, and every unrecognised tag would be a candidate check.
-  registeredCheckTags = [check];
-});
-
-// @SCN-LNT-010
-Given(
-  "{string} is a registered fitness check alongside {string} and {string}",
-  function (check: string, peer: string, otherPeer: string) {
-    // THE COMPANY IS THE ASSERTION. A registry of one cannot tell a peer from a catch-all — both
-    // raise a single obligation over a scenario carrying a single tag, so @SCN-LNT-006's fixture is
-    // silent on the question this scenario exists to settle. With the peers registered, a @lint that
-    // still stood for the class would owe all three.
-    //
-    // The peers are registered and NEVER tagged: the corpus below carries @lint alone, so the only
-    // way an obligation for `complexity` or `typecheck` can reach that row is a rule that reads the
-    // registry rather than the scenario's own tags.
-    // Three named parameters rather than a rest: cucumber matches a step definition's ARITY against
-    // the expression's capture count, so a variadic signature reads as one argument and never binds.
-    registeredCheckTags = [check, peer, otherPeer];
-  }
-);
-
-// @SCN-LNT-006
-// @SCN-LNT-010
-Given(
-  "a stepless scenario tagged with the bare fitness check {string}",
-  function (check: string) {
-    // NO steps — how this fixture is written; the tag is what the rule reads, nothing
-    // runs it, and there is nothing for a step to exemplify. Both callers read this ONE row and
-    // nothing else: it is the only shape there is to read the rule on.
-    corpusSource = [
-      "@FIT",
-      "Feature: fitness",
-      "  Rule: the tree stays inside its thresholds",
-      `    @${check} @SCN-AAA-001`,
-      "    Scenario: the codebase stays under the threshold",
-    ].join("\n");
-  }
-);
 
 // @SCN-LNT-007
 Given(
   "a scenario tagged with the retired @lint= form naming the runnable handle {string}",
   function (handle: string) {
-    // THE HANDLE IS THE REGISTERED ONE. `registeredCheckTags` is derived from the fixture registry
-    // the preceding Given built, so the check this handle runs IS registered — which is what makes
-    // the expectation below a claim about the reader rather than about an unknown word. A rule that
-    // re-routed the retired form through the registry would raise `feature-codes` here and pass a
-    // fixture whose handle nothing registered.
-    registeredCheckTags = registeredCheckTagsOf(fitnessRegistry);
+    // THE HANDLE IS THE REGISTERED ONE. `obligationCheckTags` was set by the preceding Given to
+    // carry this handle's check, so the check this handle runs IS a recognised one — which is what
+    // makes the expectation below a claim about the reader rather than about an unknown word. A
+    // rule that re-routed the retired form onto a recognised tag would raise `feature-codes` here
+    // and pass a fixture whose handle names nothing recognised.
+    //
     // STEPPED, because that is the shape the retired form always rode: it named a runnable script
     // from a behavioural scenario, which is the smear the bare tag replaced. The scenario carries
     // NO other evidence tag, so the whole obligation list is the one this form would have raised —
@@ -664,6 +234,8 @@ Given(
 );
 
 // @SCN-LNT-018
+// @SCN-LNT-004
+// @SCN-LNT-009
 Given(
   "a configured row names the scenario {string} as the fitness check {string}",
   function (scn: string, check: string) {
@@ -672,9 +244,69 @@ Given(
     // foot is a claim about this row rather than about a tag that happens to spell the same word.
     // Keyed by the @SCN, which is what removes the registry hop: a converted check is not
     // discovered as a script handle, it is a scenario that ran carrying its own tag line.
+    //
+    // @SCN-LNT-009 READS THIS ROW THE SAME WAY, and that is the point: the row names a scenario
+    // code, and whether the CORPUS agrees is a separate fact this Given makes no claim about
+    // either way. A phantom fixture and a satisfied one both start from the same row.
     configuredFitnessChecks = new Map([[scn, { characteristic: check }]]);
   }
 );
+
+// @SCN-LNT-009
+Given("a @fitness scenario in the corpus carries a different check entirely", function () {
+  // A GENUINE, NON-EMPTY CORPUS — so the phantom result below is not read off an absent one. This
+  // scenario answers a DIFFERENT configured row (@SCN-LNT-018's shape: the bare @fitness axis tag,
+  // the characteristic supplied by a row rather than a bare check tag), which is what makes the
+  // phantom fact "no scenario carries SCN-AAA-001" rather than "no scenario exists at all".
+  fitnessCorpus = [
+    "@LNT",
+    "Feature: fixture",
+    "  Rule: a fixture rule",
+    "    @fitness @SCN-AAA-002",
+    "    Scenario: a scenario answering a different configured row entirely",
+  ].join("\n");
+});
+
+// @SCN-LNT-009
+Given(
+  "a CI step names {string} as answering the row {string}",
+  function (script: string, scn: string) {
+    // THE CONSUMER'S OWN CITATION (@SCN-LNT-031's route) — the step states the code of the row it
+    // runs, so the seam that reads it asks the configured rows directly and never the corpus. That
+    // is what makes this fixture's disagreement reachable at all: the code IS a configured row's
+    // key (the Given above), so the citation resolves to something real, and the row it resolves
+    // to is exactly the one the corpus, built by the Given above this one, does not carry.
+    plantedCiSource = [
+      "name: CI",
+      "jobs:",
+      "  ci:",
+      "    steps:",
+      `      - id: ${scn}`,
+      `        run: pnpm ${script}`,
+    ].join("\n");
+    plantedScripts = { scripts: { [script]: `tsx ${script}.ts` } };
+  }
+);
+
+// @SCN-LNT-009
+When("the fitness check citing a configured row is observed and reconciled", function () {
+  // THE CONFIGURED-ROW SEAM (@SCN-LNT-031): the step's own code is checked against
+  // `configuredFitnessChecks` alone — there is no registry hop and no corpus lookup on the way IN.
+  // The corpus is consulted only downstream, by the reconciler, to find the scenario the posted
+  // @SCN names — and it is THERE, not at the citation seam, that this fixture's row and corpus
+  // disagree.
+  scenarios = parseScenarios(fitnessCorpus, [], [], undefined, configuredFitnessChecks);
+  evidenceObservations = runningStaticChecks(
+    [plantedCiSource],
+    plantedScripts,
+    NO_RUNNERS,
+    (_script, citedByStep) => citationOfCitedRow(citedByStep, configuredFitnessChecks ?? new Map())
+  );
+
+  const reconciliation = evidenceReconciliationOf(scenarios, evidenceObservations, [], false, false);
+  fitnessLedger = reconciliation.ledger;
+  markdown = renderMarkdown(reconciliation, CTX);
+});
 
 // @SCN-LNT-018
 Given(
@@ -765,13 +397,11 @@ Given(
   }
 );
 
-// @SCN-LNT-006
 // @SCN-LNT-007
-// @SCN-LNT-010
 // @SCN-LNT-018
 // @SCN-LNT-019
 When("the scenario corpus is read", function () {
-  scenarios = parseScenarios(corpusSource, [], registeredCheckTags, undefined, configuredFitnessChecks);
+  scenarios = parseScenarios(corpusSource, [], obligationCheckTags, undefined, configuredFitnessChecks);
 });
 
 // @SCN-LNT-018
@@ -839,316 +469,6 @@ Then(
   }
 );
 
-// @SCN-LNT-006
-// @SCN-LNT-010
-Then(
-  "the scenario raises exactly one Evidence Obligation, naming the fitness check {string}",
-  function (check: string) {
-    // WHOLE-CORPUS equality over the one row the corpus holds, so "exactly one" excludes a rule
-    // that raised the obligation TWICE for a twice-arriving tag as firmly as one that raised it
-    // under another name, on a second row, or not at all. A `.length === 1` on scenario zero would
-    // pass all but the last.
-    //
-    // ONE ROW, AND IT IS STEPLESS, which is how this fixture is written rather than what the rule
-    // requires — the tag raises the obligation, steps or none. The arm that stood beside this one read a STEPPED
-    // row and asserted the shape made no difference — which certified the retired ruling whichever
-    // way it pointed, so it is gone rather than inverted.
-    assert.deepEqual(
-      scenarios.map((scenario) => scenario.evidenceObligations),
-      [[{ qualityCheck: "lint", staticCheck: check }]],
-      `expected the stepless row to raise ONE lint Evidence Obligation naming "${check}" — the ` +
-        `registered bare check tag names the axis; got ${JSON.stringify(scenarios)}`
-    );
-  }
-);
-
-// @SCN-LNT-005
-Given(
-  "an external target whose package.json registers {string} as the fitness check {string}",
-  function (script: string, check: string) {
-    // Point at the PLANTED EXTERNAL fixture (tests/fixtures/scn-lnt-005/) — a whole target
-    // repository in one directory: its own registry, its own corpus, its own scripts, its own CI.
-    // The three Givens that follow assert the fixture genuinely holds what this scenario says it
-    // holds. Without them the fixture could drift into agreeing with the tool's own tree and the
-    // arm would go on passing while proving nothing — the one failure a cross-repo scenario
-    // cannot afford, because the whole claim is about WHERE an input came from.
-    const fixture = join(process.cwd(), "tests/fixtures/scn-lnt-005");
-    externalOpts = {
-      features: join(fixture, "features"),
-      ci: join(fixture, "ci.yml"),
-      packageJson: join(fixture, "package.json"),
-    };
-    externalPackageJson = JSON.parse(readFileSync(externalOpts.packageJson, "utf8")) as {
-      scripts?: Record<string, string>;
-      specController?: { checkRegistry?: Record<string, string> };
-    };
-    assert.equal(
-      externalPackageJson.specController?.checkRegistry?.[script],
-      check,
-      `expected the external target to register "${script}" as the fitness check "${check}"`
-    );
-  }
-);
-
-// @SCN-LNT-005
-Given(
-  "that target's corpus carries a fitness scenario tagged with the bare check {string}",
-  function (check: string) {
-    // Read through the engine's own corpus reader rather than a regex over the fixture: a second
-    // opinion about which scenario a tag sits on is exactly the disagreement `parseTaggedScenarios`
-    // was extracted to prevent. The registered bare check tag and nothing else is what makes the row
-    // a fitness scenario (@SCN-LNT-006), so that tag is the whole filter.
-    const source = readFileSync(join(externalOpts.features, "target.feature"), "utf8");
-    const fitness = parseTaggedScenarios(source).filter((s) => s.tags.includes(check));
-    assert.deepEqual(
-      fitness.map((s) => s.scnId),
-      ["SCN-EXT-001"],
-      `expected the external corpus to carry one scenario tagged "${check}"`
-    );
-  }
-);
-
-// @SCN-LNT-005
-Given(
-  "that target's package.json defines the script {string} while its CI config does not run it",
-  function (script: string) {
-    assert.ok(
-      externalPackageJson.scripts?.[script] !== undefined,
-      `expected the external package.json to define the script "${script}"`
-    );
-    assert.doesNotMatch(
-      readFileSync(externalOpts.ci, "utf8"),
-      new RegExp(`run:.*${script}`),
-      `expected the external CI config NOT to run "${script}"`
-    );
-  }
-);
-
-// @SCN-LNT-005
-Given(
-  "spec-controller's own package.json defines no such script and registers no such check",
-  function () {
-    // THE NEGATIVE THE OUTCOME RESTS ON, asserted rather than assumed. A reader falling back to the
-    // tool's own manifest finds no script here and reports the check as one nobody wrote, so the row
-    // would read missing instead of the watermelon. The day spec-controller acquires a script or a
-    // registry entry by either of these names, this arm stops being able to tell the two reads
-    // apart — and it says so here rather than quietly going green for the wrong reason.
-    const own = JSON.parse(readFileSync(join(process.cwd(), "package.json"), "utf8")) as {
-      scripts?: Record<string, string>;
-      specController?: { checkRegistry?: Record<string, string> };
-    };
-    const registry = own.specController?.checkRegistry ?? {};
-    for (const script of Object.keys(externalPackageJson.scripts ?? {})) {
-      if (!script.startsWith("lint:")) continue;
-      assert.equal(
-        own.scripts?.[script],
-        undefined,
-        `expected spec-controller's own package.json NOT to define "${script}"`
-      );
-      assert.equal(
-        registry[script],
-        undefined,
-        `expected spec-controller's own registry NOT to name "${script}"`
-      );
-    }
-  }
-);
-
-// @SCN-LNT-005
-When("the reconciler runs against that external target", function () {
-  // Drive the CLI read/reconcile core end-to-end (the cross-component arm): the target's
-  // registry and corpus resolve the citation, the target's package.json and CI supply
-  // exists / enforced-over-real-source, then reconcile and render.
-  // THE AXIS GATES ARE THE CONCEPT'S NOW (3F-2233), so they are stated here rather than at the
-  // render call. This scenario is authored against the gates OFF — with the fitness axis on, the
-  // ledger row gains its evidence column and `rowCells` (which picks by POSITION) reads that cell
-  // as the verdict. The reconciliation is identical either way: same `out-of-balance` verdict,
-  // same 🍉 item.
-  const external = runReconcile(externalOpts);
-  externalLedger = external.ledger;
-  markdown = renderMarkdown(
-    { summary: summaryOf(external.ledger, false, false), ledger: external.ledger },
-    CTX
-  );
-});
-
-// @SCN-LNT-001
-Then(
-  "the run's observation posts to exactly one row — the fitness scenario's own",
-  function () {
-    // The identity of the posted credit, counted across the WHOLE ledger. Under name-match this
-    // same object posted to every row naming the handle, so a rule that kept name-routing a
-    // citing credit puts SCN-AAA-002 in this list too and the assertion reds.
-    const observation = evidenceObservations.find(
-      (o) => isStaticCheckObservation(o) && o.staticCheck === CITED_SCRIPT
-    );
-    assert.ok(observation, `expected an observation of the running check "${CITED_SCRIPT}"`);
-    assert.deepEqual(
-      fitnessLedger.scenarioReconciliations
-        .filter((row) => row.evidenceObservations.includes(observation))
-        .map((row) => row.scnId),
-      ["SCN-AAA-001"],
-      "expected the citing credit to post to the fitness scenario's row and to no other"
-    );
-  }
-);
-
-// @SCN-LNT-001
-Then("that fitness scenario reconciles satisfied", function () {
-  // The OUTCOME on the concept, and the same fact read back off the rendered row — the report
-  // is where a reader meets it. A `missing` (the citation route not taken) flips both.
-  const outcomes = (
-    fitnessLedger.scenarioReconciliations.find((row) => row.scnId === "SCN-AAA-001")
-      ?.qualityCheckReconciliations ?? []
-  ).map((item) => item.outcome);
-  assert.deepEqual(outcomes, ["satisfied"], "expected the fitness obligation to reconcile satisfied");
-
-  const { verdict, items } = rowCells("SCN-AAA-001");
-  assert.match(verdict, /\bbalanced\b/, `expected a balanced verdict cell; got "${verdict}"`);
-  assert.doesNotMatch(verdict, /out-of-balance/, `expected not out-of-balance; got "${verdict}"`);
-  assert.equal(items, "—", `expected no reconciling items; got "${items}"`);
-});
-
-// @SCN-LNT-002
-Then(
-  "that fitness scenario reconciles as the watermelon, naming the check {string}",
-  function (check: string) {
-    // THE CITATION IS WHAT MAKES THIS REACHABLE. The obligation's staticCheck is the BARE tag the
-    // fitness scenario carries while the observation knows only the runnable handle, so nothing
-    // matches by name and nothing could: an uncited observation leaves the obligation `missing`.
-    const observation = evidenceObservations.find(
-      (o) => isStaticCheckObservation(o) && o.staticCheck === PLANTED_SCRIPT
-    );
-    assert.equal(
-      observation?.scnId,
-      "SCN-AAA-001",
-      `expected the unwired check's observation to cite the fitness scenario; got ${JSON.stringify(observation)}`
-    );
-
-    // The OUTCOME on the concept — the pair, so the item is pinned to name the BARE check rather
-    // than the handle that ran it, and `watermelon` rather than `missing` or `satisfied`.
-    const row = fitnessLedger.scenarioReconciliations.find((r) => r.scnId === "SCN-AAA-001");
-    assert.deepEqual(
-      (row?.qualityCheckReconciliations ?? []).map((item) => [item.staticCheck, item.outcome]),
-      [[check, "watermelon"]],
-      `expected one watermelon reconciling item naming "${check}"; got ${JSON.stringify(row?.qualityCheckReconciliations)}`
-    );
-
-    // And the same fact read back off the rendered row — the report is where a reader meets it.
-    // Row-scoped to the scenario's own CELLS, so a bare regex over the report cannot pass it.
-    const { verdict, items } = rowCells("SCN-AAA-001");
-    assert.match(
-      verdict,
-      /out-of-balance/,
-      `expected the fitness scenario's verdict cell to read out-of-balance for the unwired check "${check}"; got "${verdict}"`
-    );
-    assert.match(
-      items,
-      /lint .*Evidence Observation is passing but fabricated/,
-      `expected the lint watermelon reconciling item for "${check}"; got "${items}"`
-    );
-    assert.match(items, /🍉/, `expected the watermelon item to carry the 🍉 glyph; got "${items}"`);
-  }
-);
-
-// @SCN-LNT-003
-Then(
-  "that fitness scenario reconciles missing, naming the check {string}",
-  function (check: string) {
-    // THE SEAM REACHED THE ROW; there was nothing to credit it with. The observation carries the
-    // scenario's @SCN exactly as the watermelon's does — the citation never depended on the script
-    // existing — so what reads `missing` is the exists:false fact, not a citation that failed to
-    // resolve. Pinning this is what stops the arm passing for the wrong reason.
-    const observation = evidenceObservations.find(
-      (o) => isStaticCheckObservation(o) && o.staticCheck === ABSENT_SCRIPT
-    );
-    assert.deepEqual(
-      observation,
-      {
-        qualityCheck: "lint",
-        staticCheck: ABSENT_SCRIPT,
-        checkTag: "absent-check",
-        exists: false,
-        enforcedOverRealSource: false,
-        scnId: "SCN-AAA-001",
-      },
-      `expected the absent check to be read as a citing exists:false record; got ${JSON.stringify(observation)}`
-    );
-
-    // The OUTCOME on the concept — the pair, so the item is pinned to name the BARE check rather
-    // than the handle that found it, and `missing` rather than the watermelon.
-    const row = fitnessLedger.scenarioReconciliations.find((r) => r.scnId === "SCN-AAA-001");
-    assert.deepEqual(
-      (row?.qualityCheckReconciliations ?? []).map((item) => [item.staticCheck, item.outcome]),
-      [[check, "missing"]],
-      `expected one missing reconciling item naming "${check}"; got ${JSON.stringify(row?.qualityCheckReconciliations)}`
-    );
-    // And the credit side pinned by its ABSENCE: an absent check is FOUND as a negative fact, not
-    // observed as evidence, so `missing` carries no observation (@SCN-LDG-028).
-    assert.equal(
-      row?.qualityCheckReconciliations?.[0]?.evidenceObservation,
-      undefined,
-      "expected the missing item to carry no Evidence Observation (Obligation Exists, Observation None)"
-    );
-
-    // And the same fact read back off the rendered row — the report is where a reader meets it.
-    // Row-scoped to the scenario's own CELLS, so a bare regex over the report cannot pass it.
-    const { verdict, items } = rowCells("SCN-AAA-001");
-    assert.match(
-      verdict,
-      /out-of-balance/,
-      `expected the fitness scenario's verdict cell to read out-of-balance for the absent check "${check}"; got "${verdict}"`
-    );
-    assert.match(
-      items,
-      /lint .*missing/,
-      `expected the lint missing reconciling item for "${check}"; got "${items}"`
-    );
-    assert.match(items, /∅/, `expected the missing item to carry the ∅ glyph; got "${items}"`);
-  }
-);
-
-// @SCN-LNT-008
-Then(
-  "the first fitness scenario reconciles satisfied, holding the run's one credit",
-  function () {
-    // ONE @SCN, and it is the FIRST scenario's — the corpus's own answer, kept by
-    // `fitnessCitations`. A last-wins reader cites SCN-AAA-002 and this reds on the citation alone,
-    // before any outcome is read.
-    const observation = evidenceObservations.find(
-      (o) => isStaticCheckObservation(o) && o.staticCheck === CITED_SCRIPT
-    );
-    assert.equal(
-      observation?.scnId,
-      "SCN-AAA-001",
-      `expected the run to cite the first fitness scenario in corpus order; got ${JSON.stringify(observation)}`
-    );
-
-    // The credit's IDENTITY, counted across the WHOLE ledger. A shared-credit path — the reading
-    // this ruling refuses — puts SCN-AAA-002 in this list too.
-    assert.deepEqual(
-      fitnessLedger.scenarioReconciliations
-        .filter((row) => row.evidenceObservations.includes(observation!))
-        .map((row) => row.scnId),
-      ["SCN-AAA-001"],
-      "expected the one credit to post to the cited scenario's row and to no other"
-    );
-
-    const outcomes = (
-      fitnessLedger.scenarioReconciliations.find((row) => row.scnId === "SCN-AAA-001")
-        ?.qualityCheckReconciliations ?? []
-    ).map((item) => item.outcome);
-    assert.deepEqual(outcomes, ["satisfied"], "expected the cited scenario to reconcile satisfied");
-
-    const { verdict, items } = rowCells("SCN-AAA-001");
-    assert.match(verdict, /\bbalanced\b/, `expected a balanced verdict cell; got "${verdict}"`);
-    assert.doesNotMatch(verdict, /out-of-balance/, `expected not out-of-balance; got "${verdict}"`);
-    assert.equal(items, "—", `expected no reconciling items; got "${items}"`);
-  }
-);
-
-// @SCN-LNT-008
-// @SCN-LNT-016
 // @SCN-LNT-017
 Then(
   "the second fitness scenario reconciles missing, naming the check {string}",
@@ -1191,63 +511,6 @@ Then(
       `expected the lint missing reconciling item for "${check}"; got "${items}"`
     );
     assert.match(items, /∅/, `expected the missing item to carry the ∅ glyph; got "${items}"`);
-  }
-);
-
-// @SCN-LNT-012
-Then(
-  "the {string} obligation reconciles as the watermelon, credited by the typecheck run's own observation",
-  function (check: string) {
-    // THE FALSE GREEN, PINNED. This is the obligation a reader matching on the @SCN alone answers
-    // with `lint:complexity`'s credit — a wired, enforced-over-real-source observation — and so
-    // reads `satisfied` while the check it names guards nothing. The pair is asserted TOGETHER
-    // with the crediting observation, because the outcome alone cannot tell a watermelon read off
-    // its own run from a watermelon read off the other one.
-    const row = fitnessLedger.scenarioReconciliations.find((r) => r.scnId === "SCN-AAA-001");
-    const item = (row?.qualityCheckReconciliations ?? []).find((i) => i.staticCheck === check);
-    assert.deepEqual(
-      [item?.outcome, (item?.evidenceObservation as { staticCheck?: string } | undefined)?.staticCheck],
-      ["watermelon", "typecheck"],
-      `expected the "${check}" obligation to read watermelon, credited by its OWN run's observation ` +
-        `— not by the wired complexity credit citing the same @SCN; got ${JSON.stringify(item)}`
-    );
-
-    // And the row itself, which is where the false green is actually reported: a smeared credit
-    // turns this row `balanced` and the whole ledger green over a check that runs nowhere.
-    const { verdict, items } = rowCells("SCN-AAA-001");
-    assert.match(
-      verdict,
-      /out-of-balance/,
-      `expected the row to read out-of-balance on the unwired "${check}"; got "${verdict}"`
-    );
-    assert.match(items, /🍉/, `expected the watermelon item to carry the 🍉 glyph; got "${items}"`);
-  }
-);
-
-// @SCN-LNT-012
-Then(
-  "the {string} obligation reconciles satisfied, credited by the complexity run's own observation",
-  function (check: string) {
-    // THE OTHER HALF, and it is not a formality. Fixing the smear by refusing BOTH credits would
-    // pass the assertion above and break this one — the second credit must be accounted for, not
-    // merely kept away from the first obligation. Together the two pin every credit to the
-    // obligation it is about, which is the never-dropped clause read on a two-check row.
-    const row = fitnessLedger.scenarioReconciliations.find((r) => r.scnId === "SCN-AAA-001");
-    const item = (row?.qualityCheckReconciliations ?? []).find((i) => i.staticCheck === check);
-    assert.deepEqual(
-      [item?.outcome, (item?.evidenceObservation as { staticCheck?: string } | undefined)?.staticCheck],
-      ["satisfied", "lint:complexity"],
-      `expected the "${check}" obligation to read satisfied, credited by its OWN run's observation; ` +
-        `got ${JSON.stringify(item)}`
-    );
-
-    // EXACTLY TWO READINGS ON THE ROW, one per obligation — so neither a dropped obligation nor a
-    // duplicated one can pass the two assertions by accident.
-    assert.equal(
-      row?.qualityCheckReconciliations?.length,
-      2,
-      `expected one reconciling reading per fitness obligation; got ${JSON.stringify(row?.qualityCheckReconciliations)}`
-    );
   }
 );
 
@@ -1327,30 +590,23 @@ Then("no scenario's row holds that credit", function () {
 
 // @SCN-LNT-004
 Then(
-  "the scenario's fitness obligation reconciles as the watermelon, naming the check {string}",
+  "the scenario's fitness obligation reconciles missing, naming the check {string}",
   function (check: string) {
-    // THE FITNESS AXIS, ANSWERED BY ITS OWN CREDIT AND NOTHING ELSE. The pair is asserted so the
-    // item is pinned to name the BARE tag the scenario carries while its observation names the
-    // RUNNABLE handle — two different words, so a reader that matched by name could never have
-    // joined them, and one that let the green unit credit answer this obligation reads `satisfied`.
+    // THE FITNESS AXIS, ANSWERED BY ITS OWN ABSENCE AND NOTHING ELSE. Nothing cites SCN-AAA-001 on
+    // the lint axis — the configured row raises the obligation and no CI step names it — so the
+    // item carries no Evidence Observation at all (Obligation Exists, Observation None; canon's
+    // @SCN-LDG-028), never the green unit credit beside it.
     const row = fitnessLedger.scenarioReconciliations.find((r) => r.scnId === "SCN-AAA-001");
     const item = (row?.qualityCheckReconciliations ?? []).find((i) => i.qualityCheck === "lint");
     assert.deepEqual(
       [item?.staticCheck, item?.outcome],
-      [check, "watermelon"],
-      `expected the fitness obligation to reconcile watermelon naming "${check}"; got ${JSON.stringify(item)}`
+      [check, "missing"],
+      `expected the fitness obligation to reconcile missing naming "${check}"; got ${JSON.stringify(item)}`
     );
-    assert.deepEqual(
+    assert.equal(
       item?.evidenceObservation,
-      {
-        qualityCheck: "lint",
-        staticCheck: UNWIRED_SCRIPT,
-        checkTag: "unwired-check",
-        exists: true,
-        enforcedOverRealSource: false,
-        scnId: "SCN-AAA-001",
-      },
-      `expected the fitness obligation to be answered by the citing fitness credit; got ${JSON.stringify(item?.evidenceObservation)}`
+      undefined,
+      `expected the missing fitness item to carry no Evidence Observation; got ${JSON.stringify(item?.evidenceObservation)}`
     );
 
     // And the same fact read back off the rendered row — the report is where a reader meets it.
@@ -1363,10 +619,10 @@ Then(
     );
     assert.match(
       items,
-      /lint .*Evidence Observation is passing but fabricated/,
-      `expected the lint watermelon reconciling item for "${check}"; got "${items}"`
+      /lint .*missing/,
+      `expected the lint missing reconciling item for "${check}"; got "${items}"`
     );
-    assert.match(items, /🍉/, `expected the watermelon item to carry the 🍉 glyph; got "${items}"`);
+    assert.match(items, /∅/, `expected the missing item to carry the ∅ glyph; got "${items}"`);
   }
 );
 
@@ -1410,110 +666,6 @@ Then("its unit obligation reconciles satisfied, omitted from the reconciling ite
   );
 });
 
-// @SCN-LNT-005
-Then(
-  "that target's fitness scenario {string} reconciles as the watermelon, naming the check {string}",
-  function (scnId: string, check: string) {
-    // THE TWO SIDES NAME DIFFERENT WORDS, and that asymmetry is the assertion. The obligation names
-    // the BARE tag the target's fitness scenario carries; the observation names the RUNNABLE handle
-    // the target's CI would have had to invoke. Nothing joins them but the citation, and the
-    // citation could only be resolved by reading the target's own registry and the target's own
-    // corpus — so a run that resolved either from spec-controller's tree reaches no observation at
-    // all and this pair reads `missing` with no credit.
-    const row = externalLedger.scenarioReconciliations.find((r) => r.scnId === scnId);
-    assert.deepEqual(
-      (row?.qualityCheckReconciliations ?? []).map((item) => [
-        item.staticCheck,
-        item.outcome,
-        (item.evidenceObservation as { staticCheck?: string } | undefined)?.staticCheck,
-      ]),
-      [[check, "watermelon", "lint:vocab-check"]],
-      `expected one watermelon item naming "${check}", credited by the handle's observation; got ${JSON.stringify(row?.qualityCheckReconciliations)}`
-    );
-
-    // And the same fact read back off the rendered row — the report is where a reader meets it.
-    // Row-scoped to the scenario's own CELLS, so a bare regex over the report cannot pass it.
-    const { verdict, items } = rowCells(scnId);
-    assert.match(
-      verdict,
-      /out-of-balance/,
-      `expected ${scnId}'s verdict cell to read out-of-balance for the external check "${check}"; got "${verdict}"`
-    );
-    assert.match(
-      items,
-      /lint .*Evidence Observation is passing but fabricated/,
-      `expected ${scnId} to carry the lint watermelon reconciling item for the external check "${check}"; got "${items}"`
-    );
-    assert.match(
-      items,
-      /🍉/,
-      `expected ${scnId}'s watermelon item to carry the 🍉 glyph; got "${items}"`
-    );
-  }
-);
-
-// @SCN-LNT-015
-Then(
-  "each fitness scenario reconciles satisfied, credited by the run its own registry entry names",
-  function () {
-    // BOTH ROWS, AND EACH BY ITS OWN RUN. Read through the corpus hop alone the second handle
-    // cites the FIRST scenario: one row would hold two credits and the other none, reading
-    // `missing` while its check ran green (@SCN-LNT-008). The entry's `@SCN` is what parts them,
-    // so the assertion is per-entry — the credit for THIS handle, on THIS row, and nowhere else.
-    for (const entry of namedCitations) {
-      const observation = evidenceObservations
-        .filter(isStaticCheckObservation)
-        .find((o) => o.staticCheck === entry.script);
-      assert.ok(
-        observation,
-        `expected a run of ${entry.script} to be observed over the real CI config`
-      );
-      assert.equal(
-        observation.scnId,
-        entry.scenario,
-        `expected ${entry.script} to cite the scenario its registry entry names; got ${JSON.stringify(observation)}`
-      );
-      assert.equal(
-        observation.checkTag,
-        entry.check,
-        `expected ${entry.script} to carry its own characteristic; got ${JSON.stringify(observation)}`
-      );
-
-      // The credit's IDENTITY, counted across the WHOLE ledger. A reading that fell back to
-      // first-in-corpus puts BOTH credits on the first row and this list names two.
-      assert.deepEqual(
-        fitnessLedger.scenarioReconciliations
-          .filter((row) => row.evidenceObservations.includes(observation))
-          .map((row) => row.scnId),
-        [entry.scenario],
-        `expected ${entry.script}'s one credit to post to ${entry.scenario} and to no other row`
-      );
-
-      const row = fitnessLedger.scenarioReconciliations.find((r) => r.scnId === entry.scenario);
-      assert.deepEqual(
-        (row?.qualityCheckReconciliations ?? []).map((item) => [item.staticCheck, item.outcome]),
-        [[entry.check, "satisfied"]],
-        `expected ${entry.scenario} to reconcile satisfied for "${entry.check}"; got ${JSON.stringify(row?.qualityCheckReconciliations)}`
-      );
-
-      // And the same fact read back off the rendered row — the report is where a reader meets it.
-      const { verdict, items } = rowCells(entry.scenario);
-      assert.match(
-        verdict,
-        /\bbalanced\b/,
-        `expected a balanced verdict cell for ${entry.scenario}; got "${verdict}"`
-      );
-      assert.doesNotMatch(
-        verdict,
-        /out-of-balance/,
-        `expected ${entry.scenario} not out-of-balance; got "${verdict}"`
-      );
-      assert.equal(items, "—", `expected no reconciling items on ${entry.scenario}; got "${items}"`);
-    }
-  }
-);
-
-// @SCN-LNT-016
 // @SCN-LNT-017
 Then(
   "the run of {string} cites no scenario and its credit posts to suspense",
@@ -3324,11 +2476,13 @@ Then(
 // all. Split across three targets they could agree by accident — a reader that flags everything
 // and a reader that flags nothing each need a second run to catch.
 //
-// AND THE THREE REACH BOTH OBSERVERS, WHICH IS THE FIXTURE'S OTHER JOB. The first check is
-// REGISTERED, so the corpus obliges its handle and the obligation-side observer answers for it
-// while the running-check stream drops it; the second and third are CONFIGURED rows their steps
-// cite, so the running-check observer answers for those. Neither module can be reverted without
-// redding this arm.
+// AND ALL THREE REACH THE RUNNING-CHECK OBSERVER THE SAME (CONFIGURED) WAY (3F-3400). Each is a
+// `resolveFitnessChecks` row, and each row's CI step carries that row's own `@SCN` as its `id:` —
+// the citedRow seam the running-check observer reads. The fixture used to put its first check on
+// the REGISTRY instead, reaching the obligation-side observer; that route, and the registry
+// resolver it read (`resolveCheckRegistry`), retired whole (3F-3395) — its last caller in this
+// file was @SCN-LNT-033's fixture until it converted too (3F-3401). Severance stays the only
+// variable the three differ on.
 // -------------------------------------------------------------------------
 
 /** @SCN-LNT-032 outcome: the planted target's root, its workflow bytes, and its reconciliation. */
@@ -3342,12 +2496,14 @@ Given("a target whose corpus names three static checks its CI runs", function ()
   const manifest = JSON.parse(
     readFileSync(join(severedFixture, "package.json"), "utf8")
   ) as PackageJsonScripts & {
-    specController?: { checkRegistry?: unknown; fitnessChecks?: unknown };
+    specController?: { fitnessChecks?: unknown };
   };
   // THE FIXTURE IS HELD TO THE ARRANGEMENT THIS SCENARIO RESTS ON: three STATIC checks, each a
-  // script the manifest holds, named the two ways that reach the two observers. Drift either way —
-  // a bar appearing, a registry entry lost, a row losing its script — and the arm would go on
-  // passing while asserting something else, or would quietly stop exercising one of the readers.
+  // script the manifest holds, all three named the CONFIGURED way so the running-check observer
+  // answers for every one of them (3F-3400 — the registry route this arm once split across retired
+  // with the reader it exercised). Drift either way — a bar appearing, a row lost, a row losing its
+  // script — and the arm would go on passing while asserting something else, or would quietly stop
+  // exercising the observer.
   assert.deepEqual(
     [...resolveFitnessChecks(manifest, NO_GATE_RECORD)].map(([scn, row]) => [
       scn,
@@ -3355,15 +2511,11 @@ Given("a target whose corpus names three static checks its CI runs", function ()
       carriesBar(row),
     ]),
     [
+      ["SCN-CVT-001", "complexity", false],
       ["SCN-CVT-002", "traceability", false],
       ["SCN-CVT-003", "tech-conformance", false],
     ],
-    "expected two CONFIGURED static rows, each naming a script of this manifest"
-  );
-  assert.deepEqual(
-    [...resolveCheckRegistry(manifest)].map(([handle, entry]) => [handle, entry.check]),
-    [["lint:alpha", "complexity"]],
-    "expected the third check to be named through the REGISTRY, so the obligation-side observer answers for it"
+    "expected all three CONFIGURED static rows, each naming a script of this manifest"
   );
   assert.deepEqual(
     Object.keys(manifest.scripts ?? {}),
@@ -3496,10 +2648,12 @@ Then(
 // row moves — what moves is the one line a consumer reads for how much protection they have, and
 // the figure they take from it is the subtraction neither count prints.
 //
-// REGISTERED-BUT-UNCARRIED, BOTH OF THEM, so the severance is the only variable. The two checks
-// share a prefix, a manifest, a registry treatment and their absence from the corpus; the job's
-// verdict depends on one and not on the other. A fixture whose two checks also differed in their
-// citation could report this census for a reason that has nothing to do with the key.
+// CONFIGURED-BUT-UNCARRIED, BOTH OF THEM, so the severance is the only variable. The two checks
+// share a prefix, a manifest, a `specController.fitnessChecks` treatment (3F-3401 — the registry
+// route this arm once named, and the resolver that read it, retired whole at 3F-3395) and
+// their absence from the corpus; the job's verdict depends on one and not on the other. A fixture
+// whose two checks also differed in their citation could report this census for a reason that has
+// nothing to do with the key.
 // -------------------------------------------------------------------------
 
 /** @SCN-LNT-033 outcome: the planted target's root and the report the CLI persisted for it. */
@@ -3513,35 +2667,41 @@ Given(
     uncitedSeveredFixture = join(process.cwd(), "tests/fixtures/scn-lnt-033");
     const manifest = JSON.parse(
       readFileSync(join(uncitedSeveredFixture, "package.json"), "utf8")
-    ) as PackageJsonScripts & { specController?: { checkRegistry?: unknown } };
+    ) as PackageJsonScripts & { specController?: { fitnessChecks?: unknown } };
     // THE FIXTURE IS HELD TO THE ARRANGEMENT THE CLAIM RESTS ON: two static checks under one
-    // discovered prefix, BOTH registered, so neither is uncited for a reason the other is not.
-    // Drift either way — a third script, a registry entry lost — and the arm would go on passing
-    // while asserting something else.
+    // discovered prefix, BOTH CONFIGURED THE SAME WAY (3F-3401 — the registry route this arm once
+    // named, and its resolver, `resolveCheckRegistry`, retired whole at 3F-3395), so neither is
+    // uncited for a reason the other is not. Drift either way — a third script, a configured row
+    // lost — and the arm would go on passing while asserting something else.
     assert.deepEqual(
       Object.keys(manifest.scripts ?? {}),
       ["lint:advisory", "lint:enforced"],
       "expected exactly two checks, each a script under the one discovered prefix"
     );
     assert.deepEqual(
-      [...resolveCheckRegistry(manifest)].map(([handle, entry]) => [handle, entry.check]),
+      [...resolveFitnessChecks(manifest, NO_GATE_RECORD)].map(([scn, row]) => [
+        scn,
+        row.characteristic,
+        carriesBar(row),
+      ]),
       [
-        ["lint:advisory", "complexity"],
-        ["lint:enforced", "tech-conformance"],
+        ["SCN-CVT-001", "complexity", false],
+        ["SCN-CVT-002", "tech-conformance", false],
       ],
-      "expected BOTH handles registered, so the citation seam treats them identically"
+      "expected BOTH rows configured, so the citation seam treats them identically"
     );
-    // AND THE CORPUS NAMES NEITHER, which is what makes both of them uncited. Asserted against the
-    // corpus bytes rather than left to the fixture's own comment: a tag appearing on either check
-    // would make that check CITED and take the whole claim away.
+    // AND THE CORPUS CITES NEITHER ROW, which is what makes both of them uncited. Asserted against
+    // the corpus bytes rather than left to the fixture's own comment: a scenario carrying either
+    // row's `@SCN` would make that check CITED and take the whole claim away — the CONFIGURED
+    // route's citation runs off the scenario's own tag line, not a second reading of a registry.
     const corpus = readFileSync(
       join(uncitedSeveredFixture, "features/target.feature"),
       "utf8"
     );
     assert.deepEqual(
-      ["complexity", "tech-conformance"].filter((check) => corpus.includes(`@${check}`)),
+      ["SCN-CVT-001", "SCN-CVT-002"].filter((scn) => corpus.includes(`@${scn}`)),
       [],
-      "expected the corpus to carry neither check's bare tag — an uncited check is one nothing names"
+      "expected the corpus to carry neither check's row id — an uncited check is one nothing names"
     );
     // THE ONE DIFFERENCE BETWEEN THE TWO STEPS, read through the reader the observers themselves
     // use rather than by a second reading of the same YAML, which would be free to disagree with

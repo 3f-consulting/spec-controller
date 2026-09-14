@@ -26,7 +26,6 @@
  * telling authors which words are legitimate.
  */
 
-import { registeredCheckTags } from "../domain/checkRegistry.js";
 import { measuredCheckTags } from "../domain/thresholds.js";
 import { featureCodeOf } from "../lib/featureCode.js";
 import type { CorpusFault, CorpusFile, TargetManifest } from "./corpusFaults.js";
@@ -38,7 +37,6 @@ import {
 } from "./scenarios.js";
 import {
   type KillFloorReader,
-  resolveCheckRegistry,
   resolveDeferralTags,
   resolveThresholds,
 } from "./targetManifest.js";
@@ -80,15 +78,16 @@ const TIER_TAGS: readonly string[] = [
  * the words the engine beside it raises obligations from — there is no second answer to fall
  * behind the first, and no package boundary for one to be resolved on either side of.
  *
- * REGISTERED, NOT INFERRED. Which bare tags name a check is the TARGET's answer, read through
- * `resolveCheckRegistry` — the one reading of `specController.checkRegistry`. Inferring it from
- * a scenario's shape instead would admit any word at all on a row that looked fitness-shaped,
- * and a typo would then read as legitimate grammar while raising no obligation, which is the
- * silent slip these rules exist to close.
+ * NO BARE TAG NAMES A CHECK ANY LONGER (3F-3161). The target's own check registry used to be
+ * read here as the TARGET's answer for which bare words meant a check; that reading is retired,
+ * and a bare check tag is grammar nowhere now, registered or not — the only words this function
+ * still admits beside the scheme's own tiers are the converted axis word and a measured tag read
+ * off the target's own thresholds. A target still writing one is read nowhere by this
+ * assembly, which is the whole of what @SCN-STG-005 changed.
  *
  * AND THE AXIS WORD IS NOT THE TARGET'S TO GRANT (3F-3138, 3F-3149). A CONVERTED check carries
- * one word for the whole axis and puts its CHARACTERISTIC on a configured row, so
- * `checkRegistry` names it nowhere and never will. Which words name a CHECK is the target's
+ * one word for the whole axis and puts its CHARACTERISTIC on a configured row, so the retired
+ * registry names it nowhere and never will. Which words name a CHECK is the target's
  * answer; which axis a scenario is ON is the model's, exactly as `unit` is — so the word is
  * admitted whatever the manifest holds, and a target that has converted nothing does not get to
  * spell it differently. It arrives as `FITNESS_AXIS_TAG`, the one spelling of it, because a
@@ -100,13 +99,11 @@ const TIER_TAGS: readonly string[] = [
  * remedy attached — *this word means nothing here*, said to an author whose scenario names the
  * one axis the model has.
  *
- * AND THE MEASURED SOURCE IS THE THIRD (@SCN-STG-009), joined HERE for the registered half's
- * reason. A measured check produces a number held against an authored ceiling; nothing invokes
- * it, so it has no runnable script handle and can never be registered — the only place it is
- * named is the target's thresholds, which is why the union is three sources and not two. Read
- * the registry alone and a target's `@ci-run-time` row reds on the very tag its own obligation
- * was raised from; read the thresholds instead and its `@complexity` row does. One line, at this
- * one assembly, rather than a second set anywhere.
+ * AND THE MEASURED SOURCE IS THE OTHER (@SCN-STG-009). A measured check produces a number held
+ * against an authored ceiling; nothing invokes it, so it has no runnable script handle and was
+ * never named by a registry either — the only place it is named is the target's thresholds. Skip
+ * them and a target's `@ci-run-time` row reds on the very tag its own obligation was raised from,
+ * which is why this assembly still has two sources rather than collapsing to the axis word alone.
  *
  * AND IT HAS A SECOND READER SINCE 3F-3307, which is what makes "one assembly" a fact rather than
  * a habit. `corpusClaimFaults.ts` asks a different question over this same set — how many of these
@@ -130,7 +127,6 @@ export function checkTagsOf(
   killFloor: KillFloorReader
 ): readonly string[] {
   return [
-    ...registeredCheckTags(resolveCheckRegistry(packageJson)),
     ...measuredCheckTags(resolveThresholds(packageJson, killFloor)),
     FITNESS_AXIS_TAG,
   ];
@@ -231,10 +227,10 @@ function unrecognisedTagFault(tag: string): string {
  * Is this tag part of the `@SCN` scheme's grammar, on a scenario in this file?
  *
  * SIX CLAUSES, AND ONE OF THEM CARRIES THE WHOLE CHECK-TAG UNION. What this rule reaches is the
- * scheme's own words, the target's deferral set, and `checkTagsOf`'s three sources — the
- * REGISTERED tags, the MEASURED ones and the axis word. That the union grew a source at
- * @SCN-STG-009 changed nothing here, which is the point of assembling it there: a clause reading
- * one source at a time would have had to grow with it.
+ * scheme's own words, the target's deferral set, and `checkTagsOf`'s two sources — the MEASURED
+ * tags and the axis word (a bare check tag is grammar nowhere now, 3F-3161). That the union grew
+ * and then shrank a source (@SCN-STG-009, @SCN-STG-005) changed nothing here, which is the point
+ * of assembling it there: a clause reading one source at a time would have had to move with it.
  *
  * THE FILE'S HEADER CODE IS GRAMMAR, and that clause is new rather than moved. `@TGT` sits on the
  * `Feature:` line and `parseTaggedScenarios` inherits it onto every scenario beneath, exactly as
@@ -312,11 +308,12 @@ function isGrammar(
  *
  * @param features the target's discovered feature files, read once at the edge.
  * @param packageJson the TARGET's manifest, read HERE through the same resolvers the ingest edge
- * reads it with — one reading of `specController.deferralTags` (@SCN-PND-021), one of
- * `specController.checkRegistry` (@SCN-STG-005) and one of `specController.thresholds`
- * (@SCN-STG-009), so the words this rule calls legitimate are exactly the words the engine beside
- * it honours as a skip and raises obligations from. A set handed in already resolved would have
- * been a second answer travelling under the first's name.
+ * reads it with — one reading of `specController.deferralTags` (@SCN-PND-021) and one of
+ * `specController.thresholds` (@SCN-STG-009), so the words this rule calls legitimate are exactly
+ * the words the engine beside it honours as a skip and raises obligations from.
+ * The target's own check registry is retired and read nowhere in this assembly (@SCN-STG-005,
+ * 3F-3161). A set handed in already resolved would have been a second answer travelling under the
+ * first's name.
  * @param starterDeferralTags the APPLICATION layer's starter set, which a target's config may only
  * extend and never replace. It is a parameter because it is product policy — an evolvable list of
  * strings — and a copy held in core would be a second statement of it. Pass none and this clause

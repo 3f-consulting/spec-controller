@@ -12,6 +12,23 @@
 import type { RenderInput } from "../assemble/renderInput.js";
 
 /**
+ * THE RETIRED-KEY ACCOUNT (@SCN-USG-021) — one line per `specController.*` key this reader has
+ * retired that the target's manifest still carries, naming the key and saying what became of it.
+ *
+ * THE LINE EXISTS BECAUSE THE ALTERNATIVE IS SILENCE, the same argument
+ * `behaviouralRunners.ts`'s `unrecognisedKeyAccount` makes for a key the target INVENTED: a
+ * consumer who wrote `checkRegistry` in good faith, when it was read, believes it still routes
+ * their checks. Nothing reads it now — the entries it names reach no candidate and resolve no
+ * citation — so the only remaining question is whether they get to find that out, and this is
+ * the answer.
+ */
+const retiredKeyAccount = (keys: readonly string[] | undefined): string[] =>
+  (keys ?? []).map(
+    (key) =>
+      `- specController.${key} — retired: this reader no longer reads it, and none of its entries reach the books.`
+  );
+
+/**
  * Static checks (@SCN-USG-001) — the STATIC-check evidence observation side under
  * Summary views, the mirror of `### Test volume` on the runtime axis. Renders the counts line
  * (`N static check(s) run, K uncited static check(s)`) alone — a pure counts summary, symmetric with
@@ -29,6 +46,11 @@ export const staticChecksSection = (report: RenderInput): string[] => {
   // OMIT-WHEN-EMPTY, so an unconverted corpus renders byte-identically to before.
   const { staticChecks: counts, unconfiguredFitnessScenarios: halfConverted = [] } = report.summary;
   if (!counts) return [];
+  // THE RETIRED-KEY ACCOUNT (@SCN-USG-021) renders HERE, under the same heading, because a
+  // retired key is a fact about the STATIC axis: every key this reader has retired so far named
+  // a route onto this axis's books, never the runtime one. OMIT-WHEN-EMPTY, the same as every
+  // account beside it.
+  const retired = retiredKeyAccount(report.summary.retiredKeys);
   // A pure counts summary off `summary.staticChecks` (2.4) — symmetric with the
   // runtime `### Test volume` line. There is no census section: the per-guard DETAIL lives in
   // the rows (named → each scenario's `@lint` sub-row; the no-evidence-obligation static-checks surface
@@ -39,5 +61,6 @@ export const staticChecksSection = (report: RenderInput): string[] => {
     `${counts.runningStaticCheckCount} static check(s) run, ${counts.uncitedStaticCheckCount} uncited static check(s).`,
     "",
     ...(halfConverted.length > 0 ? [`${halfConverted.length} @fitness scenario(s) no configured row names: ${halfConverted.join(", ")}.`, ""] : []),
+    ...(retired.length > 0 ? [...retired, ""] : []),
   ];
 };

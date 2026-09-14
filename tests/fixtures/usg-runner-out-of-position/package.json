@@ -7,9 +7,6 @@
     "runners": {
       "unit": "vitest"
     },
-    "checkRegistry": {
-      "lint:rules": "rules"
-    },
     "notChecks": [
       "ci.yml:ci:pnpm install --frozen-lockfile"
     ]

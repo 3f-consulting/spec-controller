@@ -121,7 +121,7 @@ describe("[SCN-USG-003] test and cucumber CI steps are not candidate fitness che
     // axis, which is exactly what test and cucumber must never be. citedScn answers for
     // everything here, so the filter's placement is the only thing keeping them out.
     expect(
-      runningStaticChecks([ci2], pkg2, resolveRunners(manifest).tiers, [], () => ({
+      runningStaticChecks([ci2], pkg2, resolveRunners(manifest).tiers, () => ({
         checkTag: "foo",
         scnId: "SCN-TGT-001",
       })).map(
@@ -202,7 +202,6 @@ describe("[SCN-USG-004] runningStaticChecks observes a CI script matching no con
       [unprefixedCi],
       unprefixedPkg,
       membership,
-      [],
       () => null
     );
 
@@ -215,38 +214,6 @@ describe("[SCN-USG-004] runningStaticChecks observes a CI script matching no con
       },
     ]);
     expect(observed[0]).not.toHaveProperty("scnId");
-  });
-
-  it("observes the prefixed and the unprefixed alike — the prefix buys nothing and costs nothing", () => {
-    // THE COMPATIBILITY CLAIM, HELD AT THE OBSERVER (`doc/compatibility.md`). A `lint:`- or
-    // `guard:`-prefixed script invoked by a `run:` step is still observed as a running static
-    // check; what changed is why. A reader that had retired the prefixes by NARROWING — dropping
-    // the set and keeping a script-name rule of some other shape — reds here rather than only in
-    // a consumer's tree six months from now.
-    const mixedManifest = {
-      scripts: {
-        "lint:foo": "echo foo",
-        "guard:legacy": "echo legacy",
-        "domain-purity": "echo dp",
-        test: "vitest run",
-        cucumber: "cucumber-js",
-      },
-      specController: { runners: { unit: "vitest", integration: "cucumber-js" } },
-    };
-    const mixedPkg: PackageJsonScripts = { scripts: mixedManifest.scripts };
-    const mixedCi = [
-      "jobs:",
-      "  ci:",
-      "    steps:",
-      "      - run: pnpm lint:foo",
-      "      - run: pnpm guard:legacy",
-      "      - run: pnpm domain-purity",
-      "      - run: pnpm test",
-      "      - run: pnpm cucumber",
-    ].join("\n");
-    expect(
-      runningStaticChecks([mixedCi], mixedPkg, membership).map((o) => o.staticCheck)
-    ).toEqual(["domain-purity", "guard:legacy", "lint:foo"]);
   });
 });
 
@@ -296,94 +263,6 @@ describe("[SCN-USG-007] a static check running in ANY of a target's workflows is
 
     expect(runningStaticChecks([malformed, nightly], pkg, SUITE_RUNNERS)).toEqual([
       { qualityCheck: "lint", staticCheck: "lint:sweep", exists: true, enforcedOverRealSource: true },
-    ]);
-  });
-});
-
-/**
- * @SCN-USG-009 (@unit) — the CONFIGURED static check, STILL HONOURED AND NOW INERT FOR DISCOVERY
- * (@SCN-USG-004, 3F-3343). It existed because discovery keyed on a name: a target whose check our
- * convention missed named it here and was found. Nothing keys on a name any more, so every script
- * this list could name is discovered anyway and naming one changes no row. What it still settles
- * is what a candidate is CALLED where a step invokes more than one script — the last thing a
- * consumer saying "this one is the static check" has left to decide.
- *
- * ITS REMOVAL IS 3F-3161'S AND IS A MAJOR VERSION. A configuration that has stopped mattering has
- * not stopped being read (`doc/compatibility.md`), and these arms are the witness of that.
- *
- * Bidirectional back-reference: grepping `SCN-USG-009` returns this block AND the
- * features/uncited-static-checks.feature scenario.
- */
-describe("[SCN-USG-009] runningStaticChecks observes a script the target CONFIGURES a static check", () => {
-  const pkg: PackageJsonScripts = {
-    scripts: {
-      typecheck: "tsc --noEmit",
-      test: "vitest run",
-      cucumber: "cucumber-js",
-    },
-  };
-  const ci = [
-    "jobs:\n  ci:\n    steps:\n      - run: pnpm typecheck\n      - run: pnpm test\n",
-  ];
-
-  it("finds a configured script no prefix recognises", () => {
-    expect(runningStaticChecks(ci, pkg, SUITE_RUNNERS, ["typecheck"])).toEqual([
-      { qualityCheck: "lint", staticCheck: "typecheck", exists: true, enforcedOverRealSource: true },
-    ]);
-  });
-
-  it("finds it WITHOUT the configuration too — the entry is inert for discovery", () => {
-    // WHAT THIS ARM USED TO SAY, AND WHY IT NOW SAYS THE OPPOSITE. Before 3F-2495 `tsc --noEmit`
-    // reds a build and the observer could not see it, because it is not called lint:typecheck;
-    // this configuration is what closed that silence, and this arm read "finds nothing without
-    // the configuration". @SCN-USG-004 closes the same silence for every script at once, so the
-    // configuration no longer changes this answer — measured here rather than asserted, because
-    // "supported and inert" is a claim about behaviour and only a run can hold it.
-    expect(runningStaticChecks(ci, pkg, SUITE_RUNNERS)).toEqual([
-      { qualityCheck: "lint", staticCheck: "typecheck", exists: true, enforcedOverRealSource: true },
-    ]);
-  });
-
-  it("names the candidate by the configured script where its step invokes two", () => {
-    // WHAT THE CONFIGURATION STILL SETTLES. A step running two of the target's scripts has two
-    // names available and the report can print one; the consumer saying which of them IS the
-    // static check is the answer, and it is the only thing left for this list to decide. Drop the
-    // entry and the row is named `build`, which is where-to-fix pointing at the wrong thing.
-    const both: PackageJsonScripts = {
-      scripts: { build: "tsc -b", typecheck: "tsc --noEmit" },
-    };
-    const ciBoth = ["jobs:\n  ci:\n    steps:\n      - run: pnpm build && pnpm typecheck\n"];
-
-    expect(runningStaticChecks(ciBoth, both, SUITE_RUNNERS, ["typecheck"]).map((o) => o.staticCheck))
-      .toEqual(["typecheck"]);
-    expect(runningStaticChecks(ciBoth, both, SUITE_RUNNERS).map((o) => o.staticCheck))
-      .toEqual(["build"]);
-  });
-
-  it("still requires the check to RUN in CI — the manifest is not the source", () => {
-    // A configured script CI does not run is not a gate. Without this, configuring a helper
-    // would red a repository for owning it — the call deriveLocalLadder already makes.
-    const ciWithout = ["jobs:\n  ci:\n    steps:\n      - run: pnpm test\n"];
-
-    expect(runningStaticChecks(ciWithout, pkg, SUITE_RUNNERS, ["typecheck"])).toEqual([]);
-  });
-
-  it("ignores a configuration naming a script the manifest does not define", () => {
-    // The entry reaches nothing, and — since the switch — takes nothing away either: the steps
-    // this pipeline runs are candidates whatever this list says, and `pnpm typecheck` is one of
-    // them. What is asserted is that a nonsense entry adds no row of its own.
-    expect(runningStaticChecks(ci, pkg, SUITE_RUNNERS, ["nonexistent"]).map((o) => o.staticCheck))
-      .toEqual(["typecheck"]);
-  });
-
-  it("emits a configured check exactly once even if it is also prefix-recognised", () => {
-    // Belt and braces against the double-count @SCN-USG-010 guards one layer up: a target
-    // that both names a lint: script AND configures it must not get two observations.
-    const pkgPrefixed: PackageJsonScripts = { scripts: { "lint:foo": "echo foo" } };
-    const ciPrefixed = ["jobs:\n  ci:\n    steps:\n      - run: pnpm lint:foo\n"];
-
-    expect(runningStaticChecks(ciPrefixed, pkgPrefixed, NO_RUNNERS, ["lint:foo"])).toEqual([
-      { qualityCheck: "lint", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
     ]);
   });
 });
@@ -456,5 +335,47 @@ describe("[SCN-USG-013] a `uses:` step is a candidate fitness check, reported by
     expect(runningStaticChecks([ci], pkg, SUITE_RUNNERS).map((o) => o.staticCheck)).not.toContain(
       "pnpm test",
     );
+  });
+});
+
+describe("[SCN-USG-022] a step invoking two scripts is named by the first it invokes, the tiebreak's removal", () => {
+  // GREEN ON FIRST RUN, DELIBERATELY (3F-3399's carve-out — drive-scenario's discriminator: would
+  // the earlier sub-issue have shipped this code for its OWN red? Yes). `handleOf`'s
+  // `invoked[0] ?? step.identity` fallback is the exact line 3F-3396 landed deleting the
+  // configured-check tiebreak (specController.staticChecks no longer settles anything, so nothing
+  // is left to prefer); this arm adds no new production code, only the first witness of a
+  // multi-script step, which nothing in this tree exercised before. Mutation-proved locally
+  // (handleOf changed to prefer invoked[1] over invoked[0] — this arm reds; reverted) rather than
+  // staged red, because no CI-red is reachable for a guarantee already fully shipped by a sibling.
+  const pkg: PackageJsonScripts = {
+    scripts: {
+      "check:format": "prettier --check .",
+      "check:types": "tsc --noEmit",
+      test: "vitest run",
+      cucumber: "cucumber-js",
+    },
+  };
+  const ci = [
+    "jobs:",
+    "  ci:",
+    "    steps:",
+    "      - run: |",
+    "          pnpm check:format",
+    "          pnpm check:types",
+    "      - run: pnpm test",
+    "      - run: pnpm cucumber",
+  ].join("\n");
+
+  it("names the step by the first script it invokes, not the second", () => {
+    // ONE STEP, ONE OBSERVATION — a step invoking two scripts is still the one step this reader
+    // saw, so there is one handle to choose, never two credits for the same run.
+    expect(runningStaticChecks([ci], pkg, SUITE_RUNNERS)).toEqual([
+      {
+        qualityCheck: "lint",
+        staticCheck: "check:format",
+        exists: true,
+        enforcedOverRealSource: true,
+      },
+    ]);
   });
 });

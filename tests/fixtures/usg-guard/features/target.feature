@@ -8,13 +8,12 @@ Feature: a fixture target whose CI runs a check under no convention of ours
   reconciler, and not a step this manifest names a non-check — the inversion, and the one thing
   that separates this target from the silence it produced under the prefix set.
 
-  THE HANDLE IS REGISTERED AND STILL UNCITED, which is the shape only the one posting rule can
-  produce and the reason this manifest carries a checkRegistry at all. specController maps
-  domain-purity to the bare check domain-purity, so the seam can resolve a tag for the handle;
-  nothing in the corpus below carries that tag, so it reaches no @SCN and the credit cites no
-  scenario. Leaving the handle unregistered would report the same uncited check for a second
-  reason — a handle nothing registers reaches nothing either — and this target would then go on
-  passing under a reader that took every registered handle for an attributed one.
+  THE HANDLE ANSWERS NO CONFIGURED ROW AND NO SCENARIO CARRIES ITS TAG, which is what leaves it
+  uncited: no `specController.fitnessChecks` row names domain-purity's characteristic and no CI
+  step states a row's code, so the seam that would resolve a citation has nothing to resolve. This
+  manifest once also carried a `checkRegistry` entry making the same claim over the now-retired
+  registry route (3F-3395); it changed nothing observable then either, since nothing in the corpus
+  below ever carried the tag it would have resolved.
 
   ITS SUITES AND ITS PLUMBING ARE NAMED, so the uncited count is one rather than four. The
   manifest names the runners its test and cucumber steps run, and names its install step a

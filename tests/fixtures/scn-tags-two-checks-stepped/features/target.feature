@@ -2,11 +2,11 @@
 Feature: a target whose stepped scenario claims two fitness checks
 
   The FIFTH pair of the @integration arm belonging to @SCN-STG-007, and byte-for-byte
-  `scn-tags-two-checks` with one difference: the offending scenario has STEPS. The registry
-  is the same, the two bare check tags are the same, and the verdict has to be the same —
-  because the fitness axis is named by the registered TAG, not by whether the author wrote
-  a step (3F-3126, following 3F-3115 in the engine). Two tags on one scenario meant two
-  scenarios however it was written.
+  `scn-tags-two-checks` with one difference: the offending scenario has STEPS. The
+  thresholds are the same, the two measured check tags are the same, and the verdict has
+  to be the same — because the fitness axis is named by the check TAG, not by whether
+  the author wrote a step (3F-3126, following 3F-3115 in the engine). Two tags on one
+  scenario meant two scenarios however it was written.
 
   THIS TREE IS THE PAIR THAT ONLY REDS BECAUSE THE RULE STOPPED READING SHAPE. Before
   3F-3132 the one-check rule returned nothing for a stepped scenario and this fixture
@@ -26,6 +26,6 @@ Feature: a target whose stepped scenario claims two fitness checks
   Scenario: a behavioural scenario carrying two tiers
     Given the target source
 
-  @complexity @typecheck @SCN-TGT-002
-  Scenario: the codebase stays inside both thresholds
+  @ci-run-time @coverage @SCN-TGT-002
+  Scenario: the codebase stays inside both measured thresholds
     Given the target source

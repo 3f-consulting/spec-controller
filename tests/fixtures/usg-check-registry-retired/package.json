@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "lint:foo": "eslint . --format json"
+  },
+  "specController": {
+    "checkRegistry": {
+      "lint:foo": "foo"
+    }
+  }
+}

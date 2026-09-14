@@ -20,5 +20,5 @@ Feature: a target whose two-check stepless scenario has been parked
   Scenario: a behavioural scenario carrying two tiers
     Given the target source
 
-  @wip @complexity @typecheck @SCN-TGT-002
-  Scenario: the codebase stays inside both thresholds
+  @wip @ci-run-time @coverage @SCN-TGT-002
+  Scenario: the codebase stays inside both measured thresholds

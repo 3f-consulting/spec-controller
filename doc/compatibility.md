@@ -18,12 +18,27 @@ in the eight days that followed. A commitment maintained by hand against a
 moving model is one that gets broken quietly — so it is withdrawn deliberately
 instead, while withdrawing it still costs nobody anything.
 
-**What has NOT changed: what the reader accepts.** Every mechanism the tool read
-before this page was cut, it still reads. `specController.checkRegistry`,
-`specController.thresholds`, the observed script prefixes, `staticChecks`,
-`runners`, `notChecks`, `fitnessChecks` and the `--measurements` document shape
-are all still honoured exactly as they were. **Nothing was removed here; only a
-promise about the future was.**
+**What the reader accepts today.** `specController.thresholds`, `runners`,
+`notChecks`, `fitnessChecks` and the `--measurements` document shape are read
+exactly as they were.
+
+**Two manifest keys are no longer read, and a tree still carrying them is told
+so.** `specController.checkRegistry` and `specController.staticChecks` were
+retired by `3F-3161`. Neither produces a credit, raises an obligation, or settles
+which script a CI step is named by; a bare characteristic tag on a scenario now
+means nothing, and a run over such a tree reports the retired key by name rather
+than reading it quietly. There is one way to declare a fitness check: a
+`@fitness` scenario, a `specController.fitnessChecks` row, and the row's `@SCN`
+on the CI step's `id:`. See
+[`converting-a-fitness-check.md`](./converting-a-fitness-check.md).
+
+**The observed script prefixes were already gone** before this page was rewritten
+— `3F-3343` retired `lint:`/`guard:` discovery and replaced it with declared
+behavioural runners. The sentence claiming they were still honoured was written
+after that landed and was never true.
+
+**At `0.x` none of this is a promise.** Any of it may change in any release until
+`1.0`; pin an exact version and read the changelog.
 
 **Where to read what the tool does today:**
 

@@ -30,7 +30,7 @@ import {
   parseVitestEvidenceObservations,
   type VitestJsonReport,
 } from "@3f-consulting/spec-controller-core";
-import type { Scenario, EvidenceObligation, EvidenceObservation, Ledger, ScenarioReconciliation, QualityCheckReconciliation, EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
+import type { Scenario, EvidenceObligation, EvidenceObservation, GuardEvidenceObservation, Ledger, ScenarioReconciliation, QualityCheckReconciliation, EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
 // The whole-run soundness predicate (@SCN-LDG-018), imported by MODULE PATH rather than from the
 // package barrel: the barrel is the FROZEN v1 surface (@SCN-API-001), and adding `hasBrokenEvidence`
@@ -203,6 +203,28 @@ Given(
     evidenceObservations = [
       { qualityCheck: "unit", scnId, status: "passed", locator: "src/phantom.test.ts" },
     ];
+  }
+);
+
+// @SCN-LDG-034 — the FITNESS-axis twin of SCN-LDG-006's runtime credit above: a lint credit
+// citing an @SCN no scenario carries also posts to the phantom account. It carries a value
+// for the check that ran — its whole where-to-fix — and, deliberately, a `locator` too: no
+// GuardEvidenceObservation route ever populates one, but the shape can carry one (the same
+// width-subtyping corner outcomeRules.test.ts's @SCN-LDG-034 @unit arm pins), and the item
+// must not surface it even so. The intersection type states what an external caller may
+// legally hand in; it is not a cast past the contract (see that arm's docblock at length).
+Given(
+  "a passing lint credit citing the phantom scenario {string} naming the check {string}",
+  function (scnId: string, staticCheck: string) {
+    const credit: GuardEvidenceObservation & { locator: string } = {
+      qualityCheck: "lint",
+      staticCheck,
+      scnId,
+      exists: true,
+      enforcedOverRealSource: true,
+      locator: "packages/core/src/domain/fitnessChecks.ts",
+    };
+    evidenceObservations = [credit];
   }
 );
 
@@ -730,6 +752,34 @@ Then("the phantom-scenario {string} is out of balance", function (scnId: string)
     `expected phantom-scenario ${scnId}'s verdict cell to read out-of-balance; got "${verdict}"`
   );
 });
+
+// @SCN-LDG-034
+Then(
+  "the phantom-scenario {string}'s item carries the check {string} and no locator key",
+  function (scnId: string, staticCheck: string) {
+    // Structural, not a markdown regex: the phantom row's OWN item carries the check it has a
+    // value for (its whole where-to-fix) and omits `locator` — absent, not undefined — even
+    // though a credit-shaped value could carry one. Reds under a mutant that re-admits the key.
+    // Recomputed rather than read off the shared `reconciliation` fixture: "the reconciler
+    // runs" (this scenario's When, shared with SCN-LDG-006/007/008) only renders `markdown`.
+    const rows = reconcile(scenarios, evidenceObservations).scenarioReconciliations;
+    const phantom = rows.find((row) => row.scnId === scnId);
+    assert.ok(
+      phantom,
+      `expected a phantom row for ${scnId}; got rows: ${rows.map((r) => r.scnId).join(", ")}`
+    );
+    const [item] = phantom!.qualityCheckReconciliations;
+    assert.equal(
+      item?.staticCheck,
+      staticCheck,
+      `expected the phantom item to carry the check "${staticCheck}"; got ${JSON.stringify(item)}`
+    );
+    assert.ok(
+      !("locator" in (item ?? {})),
+      `expected the phantom item to carry no locator key; got ${JSON.stringify(item)}`
+    );
+  }
+);
 
 // @SCN-LDG-007
 Then(
@@ -2064,6 +2114,119 @@ Then(
       isBalanced(ldgPostingLedger.ledger),
       false,
       "the whole-run verdict — and so the exit code — is unchanged by this slice",
+    );
+  },
+);
+
+/**
+ * @SCN-LDG-035 (3F-3409) — a static-check credit discharges only the obligation on the row whose
+ * @SCN it cites, even when a second row raises the SAME characteristic.
+ *
+ * @SCN-CIP-007 (ci-run-time.feature) already pins this shape on the MEASURED axis: two stepless
+ * scenarios sharing one measured check, each answered by its own measurement. This scenario is
+ * its STATIC-axis twin — the shape that axis had never had pinned, because the two scenarios
+ * whose deletion left the gap (@SCN-LNT-008, @SCN-LNT-012) proved it through the retired
+ * first-in-corpus / registry routes rather than the configured-row route that survives them.
+ *
+ * `configuredFitnessChecks` carries BOTH scnIds against the same characteristic — the converted
+ * route is keyed per-@SCN (`FitnessCheckIndex`), so two rows sharing one characteristic string is
+ * an ordinary corpus, not a collision. Only one static-check credit exists, citing one of the two.
+ */
+
+let ldg035Ledger: Ledger;
+let ldg035Credit: GuardEvidenceObservation;
+
+// @SCN-LDG-035
+Given(
+  "two fitness scenarios {string} and {string} both raising the check {string}",
+  function (firstScn: string, secondScn: string, check: string) {
+    const fitnessChecks = new Map([
+      [firstScn, { characteristic: check }],
+      [secondScn, { characteristic: check }],
+    ]);
+    const source = [
+      "@AAA",
+      "Feature: alpha",
+      "",
+      `  @fitness @${firstScn}`,
+      "  Scenario: the first row raising the shared check",
+      "",
+      `  @fitness @${secondScn}`,
+      "  Scenario: the second row raising the shared check",
+    ].join("\n");
+    scenarios = parseScenarios(source, [], [], undefined, fitnessChecks);
+  },
+);
+
+// @SCN-LDG-035
+Given(
+  "a static-check credit citing only {string}, naming the check {string}",
+  function (cited: string, check: string) {
+    // THE SAME OBJECT SHAPE LDG-022's CITED FITNESS CREDIT USES — `staticCheck` the runnable
+    // handle (the where-to-fix), `checkTag` the bare characteristic the match compares.
+    ldg035Credit = {
+      scnId: cited,
+      qualityCheck: "lint",
+      staticCheck: `lint:${check}`,
+      checkTag: check,
+      exists: true,
+      enforcedOverRealSource: true,
+    };
+    evidenceObservations = [ldg035Credit];
+  },
+);
+
+// @SCN-LDG-035
+When("the ledger reconciles that shared-check run", function () {
+  ldg035Ledger = reconcile(scenarios, evidenceObservations, []);
+});
+
+// @SCN-LDG-035
+Then(
+  "the row {string} reconciles satisfied on the check {string}, holding the credit",
+  function (scnId: string, check: string) {
+    const row = ldg035Ledger.scenarioReconciliations.find(
+      (r: ScenarioReconciliation) => r.scnId === scnId,
+    );
+    const item = (row?.qualityCheckReconciliations ?? []).find(
+      (i: QualityCheckReconciliation) => i.qualityCheck === "lint",
+    );
+    assert.deepEqual(
+      [item?.staticCheck, item?.outcome],
+      [check, "satisfied"],
+      `expected the cited row "${scnId}" to reconcile satisfied on "${check}"; got ${JSON.stringify(item)}`,
+    );
+    assert.equal(
+      item?.evidenceObservation,
+      ldg035Credit,
+      `expected the cited row "${scnId}" to hold the credit that names it`,
+    );
+  },
+);
+
+// @SCN-LDG-035
+Then(
+  "the row {string} reconciles missing on the check {string}, holding no credit",
+  function (scnId: string, check: string) {
+    // THE DISCRIMINATOR. Under the bare `o.scnId === scnId` mutant neutered to `true`, this row's
+    // own match would find the SAME credit — checkTag alone matches, since both rows share it —
+    // and this row would wrongly reconcile satisfied off a credit that never cited it.
+    const row = ldg035Ledger.scenarioReconciliations.find(
+      (r: ScenarioReconciliation) => r.scnId === scnId,
+    );
+    const item = (row?.qualityCheckReconciliations ?? []).find(
+      (i: QualityCheckReconciliation) => i.qualityCheck === "lint",
+    );
+    assert.deepEqual(
+      [item?.staticCheck, item?.outcome],
+      [check, "missing"],
+      `expected the uncited row "${scnId}" to reconcile missing on "${check}"; got ${JSON.stringify(item)}`,
+    );
+    assert.equal(
+      item?.evidenceObservation,
+      undefined,
+      `expected the uncited row "${scnId}" to hold NO Evidence Observation — the credit posted ` +
+        `to "${ldg035Credit.scnId}", never here`,
     );
   },
 );

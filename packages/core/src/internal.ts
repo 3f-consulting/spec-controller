@@ -38,23 +38,14 @@ export { parseScnCitation, parseScnCitations } from "./lib/scnCitation.js";
 // reading of a term, not a v1 contract, and @SCN-API-001 freezes that barrel exactly.
 export { bareTerm } from "./lib/bareTerm.js";
 
-// `checkRegistryOf` / `registeredCheckTags` — the ONE reading of a target's check registry
-// (`domain/checkRegistry`). Shared because the corpus check's grammar rule (@SCN-STG-005) must
-// admit exactly the bare tags the obligation rule raises against: a second reader in
-// `tests/checks/` would decide independently which words name a check, and a word the check
-// called legitimate while the engine raised nothing for it would mean two different things. Internal, not public — where
-// a registry is AUTHORED is still open (the registry-home question, increment D).
-export { checkRegistryOf, registeredCheckTags } from "./domain/checkRegistry.js";
-export type { CheckRegistry } from "./domain/checkRegistry.js";
-
-// `fitnessCitations` / `citationOfScript` — the citation seam's corpus hop and the two hops
-// composed. Shared because the balance command is where a run and a corpus are BOTH in hand, and
-// the cross-repo read (@SCN-LNT-005) makes which corpus load-bearing: the scenario carrying a
-// target's check is the TARGET's, so the hop has to be applied to the corpus that run read, not to
-// whichever one the resolver happened to be built beside. Internal, not public — the seam's shape
-// moves with the registry-home question (increment D).
-export { fitnessCitations, citationOfScript } from "./parse/fitnessCitations.js";
-export type { FitnessCitations, ScriptCitation } from "./parse/fitnessCitations.js";
+// `ScriptCitation` — the citation seam's shape, all that is left of it on this barrel now the
+// registry route is retired (3F-3161, @SCN-LNT-017 — the last registry-`scn` scenario). Shared
+// because `termSpelling.steps.ts` names a check's citation by the `id:` route (@SCN-LNT-031) and
+// needs the shape to hold it. `citationOfCitedRow`, the function that produces one, is reached by
+// source path rather than promoted here — the app edge composes it through `TargetCorpus`, not by
+// calling it directly. Internal, not public — the seam's shape moves with the registry-home
+// question (increment D).
+export type { ScriptCitation } from "./parse/fitnessCitations.js";
 
 // `parseTaggedScenarios` — the corpus read BEFORE any obligation rule is applied, and the input
 // the corpus hop above takes. Shared rather than re-derived at the edge: it is the single
@@ -82,12 +73,13 @@ export { FITNESS_AXIS_TAG } from "./parse/scenarios.js";
 
 // `thresholdsOf` / `measuredCheckTags` / `thresholdFor` — the ONE reading of a target's authored
 // BARS (`domain/thresholds`, @SCN-CIP-001; the bar carries the comparison it is read with per
-// @SCN-MUT-001). Shared for the reason the check registry above is,
-// and one more: a measured check has no runnable script handle, so `registeredCheckTags` cannot see
-// it and the obligation-raising tag set is the UNION of the two readings. Any second reader deciding
-// independently which words name a measured check — the tier-tag floor being the next one to need
-// it (3F-2236) — would admit a tag the engine raises nothing for, or refuse one it does. Internal,
-// not public — where this configuration is AUTHORED moves with the registry-home question.
+// @SCN-MUT-001). Shared because `measuredCheckTags` is the whole of the obligation-raising tag set
+// now the registry route retired (3F-3161): a measured check has no runnable script handle, so it
+// can never be registered, and no second reading is left for this one to be a union with. Any
+// second reader deciding independently which words name a measured check — the tier-tag floor
+// being the next one to need it (3F-2236) — would admit a tag the engine raises nothing for, or
+// refuse one it does. Internal, not public — where this configuration is AUTHORED moves with the
+// registry-home question.
 export { thresholdsOf, measuredCheckTags, thresholdFor } from "./domain/thresholds.js";
 export type { ThresholdIndex, ThresholdBar } from "./domain/thresholds.js";
 
@@ -134,23 +126,21 @@ export type { CiRunStep } from "./parse/checkScriptsRunInCI.js";
 export { ciWorkflowSteps } from "./parse/checkScriptsRunInCI.js";
 export type { CiWorkflowStep, CiStepAction } from "./parse/checkScriptsRunInCI.js";
 
-// The `resolve*` family — a target's `specController.*` configuration read into the registry, bars
+// The `resolve*` family — a target's `specController.*` configuration read into the rows, bars
 // and mints the reconciler takes (`parse/targetManifest`). Shared because they moved INTO the
 // engine and the tree's own gates still read a target's config through them: the corpus check
-// (@SCN-STG-005) and the characteristic roster resolve the same registry, bars and mints the
+// (@SCN-STG-005) and the characteristic roster resolve the same rows, bars and mints the
 // reconciler does, and a second reader deciding independently which words a manifest names would
 // admit a tag the engine raises nothing for. They sat at the app's ingest edge until 3F-3087,
 // where they were the reason a PUBLISHED module imported this unpublished subpath — the fault
-// 3F-3086 repairs. Internal, not public: where a target's registry, bars and mints are AUTHORED
+// 3F-3086 repairs. Internal, not public: where a target's rows, bars and mints are AUTHORED
 // is the registry-home question (increment D), so the shape of what these read is not a v1
 // contract yet, and @SCN-API-001 freezes that barrel exactly. Nothing under `tests/checks/`
 // travels in a tarball (`tsconfig.build.json` emits `src` alone), so reaching them here is the
 // seam working as 3F-2837 intended.
 export {
-  resolveCheckRegistry,
   resolveDeferralTags,
   resolveFitnessChecks,
-  resolveStaticChecks,
   resolveThresholds,
 } from "./parse/targetManifest.js";
 // The TYPES beside the values: the app edge builds the `KillFloorReader` closure `resolveThresholds`

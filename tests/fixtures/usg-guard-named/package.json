@@ -5,9 +5,13 @@
     "cucumber": "cucumber-js"
   },
   "specController": {
-    "checkRegistry": {
-      "domain-purity": "domain-purity"
-    },
+    "fitnessChecks": [
+      {
+        "scn": "SCN-TGD-001",
+        "characteristic": "domain-purity",
+        "command": "pnpm domain-purity"
+      }
+    ],
     "runners": {
       "unit": "vitest",
       "integration": "cucumber-js"

@@ -6,13 +6,12 @@ Feature: a fixture target whose uncited static check runs in a sibling workflow
   and off the books. ci.yml runs the suites only; nightly.yml runs lint:sweep; nothing
   in this corpus carries lint:sweep's check tag.
 
-  THE HANDLE IS REGISTERED AND STILL UNCITED, which is the shape only the one posting rule
-  can produce and the reason this manifest carries a checkRegistry at all. specController
-  maps lint:sweep to the bare check sweep, so the seam can resolve a tag for the handle;
-  nothing in the corpus below carries that tag, so it reaches no @SCN and the credit cites
-  no scenario. Leaving the handle unregistered would report the same uncited check for a
-  second reason — a handle nothing registers reaches nothing either — and this target would
-  then go on passing under a reader that took every registered handle for an attributed one.
+  THE HANDLE ANSWERS NO CONFIGURED ROW AND NO SCENARIO CARRIES ITS TAG, which is what leaves it
+  uncited: no `specController.fitnessChecks` row names sweep's characteristic and no CI step
+  states a row's code, so the seam that would resolve a citation has nothing to resolve. This
+  manifest once also carried a `checkRegistry` entry making the same claim over the now-retired
+  registry route (3F-3395); it changed nothing observable then either, since nothing in the
+  corpus below ever carried the tag it would have resolved.
 
   The mirror of the usg-sibling fixture, and kept separate from it: that one's check IS
   cited, so it reconciles balanced, and adding an uncited check to it would fold a

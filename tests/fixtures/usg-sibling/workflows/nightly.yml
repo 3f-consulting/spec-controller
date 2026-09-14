@@ -7,4 +7,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: pnpm install --frozen-lockfile
-      - run: pnpm lint:nightly
+      - id: SCN-TGS-001
+        run: pnpm lint:nightly

@@ -35,7 +35,6 @@ import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
 import { bareTerm } from "../lib/bareTerm.js";
 import type { EvidenceObservation } from "../model.js";
 import type { CiWorkflowStep, PackageJsonScripts } from "../parse/checkScriptsRunInCI.js";
-import { checkStaticEvidenceObligations } from "../parse/checkStaticEvidenceObligations.js";
 import {
   parseMeasuredEvidenceObservations,
   type MeasurementReport,
@@ -49,12 +48,11 @@ import { stepAccounting } from "../parse/stepAccounting.js";
 import { reconcilerSteps, type ReconcilerSteps } from "../parse/reconcilerSteps.js";
 import type { FitnessCheckIndex } from "../domain/fitnessChecks.js";
 import {
-  resolveCheckRegistry,
   resolveDeferralTags,
   resolveNotChecks,
+  resolveRetiredKeys,
   resolveRunners,
   type ResolvedRunners,
-  resolveStaticChecks,
   resolveThresholds,
   resolveFitnessChecks,
   type KillFloorReader,
@@ -67,7 +65,6 @@ type TargetManifest = PackageJsonScripts & {
   specController?: {
     deferralTags?: unknown;
     staticChecks?: unknown;
-    checkRegistry?: unknown;
     thresholds?: unknown;
     fitnessChecks?: unknown;
     runners?: unknown;
@@ -148,8 +145,8 @@ function observationStreams(
     // them apart; nothing here may.
     ...ciStepRecordCredits(input.ciStepRecord, fitnessChecks),
     // THE THIRD STREAM (@SCN-CIP-003) — the measurements, which arrive already citing. They are
-    // read here rather than folded into `checkObservations` because that function's two observers
-    // both read the target's CONFIG; a measurement is a fact about a run, and the only thing the
+    // read here rather than folded into `checkObservations` because that function's observer
+    // reads the target's CONFIG; a measurement is a fact about a run, and the only thing the
     // three share is the axis they ride.
     ...parseMeasuredEvidenceObservations(input.measurements),
   ];
@@ -290,7 +287,6 @@ export function evidenceReconciliationFromSources(
   const corpus = readTargetCorpus(
     input.featureSources,
     resolveDeferralTags(packageJson, input.deferralTags),
-    resolveCheckRegistry(packageJson),
     resolveThresholds(packageJson, input.killFloor),
     fitnessChecks
   );
@@ -354,7 +350,10 @@ function withReaderAccounts(
       withExclusionAccount(
         withReconcilerAccount(
           withRunnerAccount(
-            withUnconfiguredFitnessScenarios(reconciliation, corpus),
+            withRetiredKeysAccount(
+              withUnconfiguredFitnessScenarios(reconciliation, corpus),
+              packageJson
+            ),
             input.ciSources,
             packageJson,
             runners
@@ -374,6 +373,32 @@ function withReaderAccounts(
     reconciler,
     exclusions
   );
+}
+
+/**
+ * THE RETIRED-KEY ACCOUNT (@SCN-USG-021) — the target's own `specController.*` keys this reader
+ * no longer reads, carried onto the summary the factory built rather than threaded through it,
+ * for the reason the half-converted scenarios beside it are: the factory's inputs are the
+ * JOURNAL, and a retired key is neither an obligation nor an observation. Nothing reads it, so
+ * there is no row for it to be derived from — only a name for the report to carry.
+ *
+ * READ OFF THE SAME MANIFEST EVERY OTHER GRAFT IN THIS MODULE COMES FROM, and nothing else: a
+ * retired key is a fact about what the target WROTE, not about its pipeline, so it needs no CI
+ * bytes and no corpus reading to resolve.
+ *
+ * ONLY WHEN THERE IS SOMETHING TO SAY, so a target that has never written a retired key — every
+ * target today — renders and serialises byte-identically to before.
+ */
+function withRetiredKeysAccount(
+  reconciliation: EvidenceReconciliation,
+  packageJson: TargetManifest
+): EvidenceReconciliation {
+  const retiredKeys = resolveRetiredKeys(packageJson);
+  if (retiredKeys.length === 0) return reconciliation;
+  return {
+    ...reconciliation,
+    summary: { ...reconciliation.summary, retiredKeys },
+  };
 }
 
 /**
@@ -589,25 +614,21 @@ function withUnconfiguredFitnessScenarios(
 }
 
 /**
- * The COMPLETE static stream the reconciliation consumes, from the two observers that produce it.
+ * The COMPLETE static stream the reconciliation consumes, from the RUNNING-check observer — the
+ * static analogue of a runner emitting every test result, so nothing a gate runs is off the books.
  *
- * The OBLIGATION-side reader answers for every check the corpus obliges (`corpus.checkHandles`),
- * carrying the authoritative exists / enforced-over-real-source detail — and so the only one able
- * to report the watermelon, since a check that runs nowhere is exactly what the other observer
- * filters out. Both the `exists` read and the CI read come from the TARGET (@SCN-LNT-005): a check
- * present in another repository's package.json and absent from its CI is the watermelon there
- * exactly as it is here, and reading either from spec-controller's own tree would answer for a
- * repository this run never looked at.
- *
- * The RUNNING-check observer then adds every running CI check the first did not cover — the static
- * analogue of a runner emitting every test result, so nothing a gate runs is off the books. The
- * exclusion is what keeps them from double-observing one check.
+ * THE OBLIGATION-SIDE OBSERVER THIS COMPOSED ALONGSIDE IS RETIRED (3F-3161, @SCN-LNT-017). It
+ * answered for every check the corpus obliged by a REGISTERED handle (`corpus.checkHandles`), and
+ * that discovery went with the registry it was keyed from: every check now either states its own
+ * row's code on its CI step, which the running-check observer already reads, or is a converted
+ * `@fitness` row with no runnable script handle to be discovered by. There is no second observer
+ * left to double-observe against.
  *
  * WHAT A SURVIVOR CITES IS THE TARGET'S OWN ANSWER (@SCN-LNT-031). A check whose CI step states the
  * code of the configured row it runs posts to that row; one whose step states none cites no
  * scenario and the reconciliation folds it into the suspense row (@SCN-USG-001), which is where an
- * unattributed check is meant to surface. The second is the state a consumer starts in, and it is
- * the report this axis's first useful sentence is made of — not a gap in the first.
+ * unattributed check is meant to surface. That is the state a consumer starts in, and it is the
+ * report this axis's first useful sentence is made of.
  */
 function checkObservations(
   corpus: TargetCorpus,
@@ -618,29 +639,18 @@ function checkObservations(
   // would be free to name a step the unit runner in one section while the books posted it as a
   // fitness check in the other.
   runnerTiers: Readonly<Record<string, string | null>>,
-  // @SCN-USG-015 — the consumer's own exclusions, reaching the DISCOVERY observer alone. The
-  // obligation-side observer is deliberately not asked: it answers whether a check the corpus
-  // NAMES runs anywhere in CI, and a step excluded there would read as a check that runs nowhere,
-  // which is the watermelon this axis exists to catch reported over a check the consumer never
-  // took out of their pipeline.
+  // @SCN-USG-015 — the consumer's own exclusions, reaching the DISCOVERY observer.
   isExcluded: StepExclusions["isExcluded"],
   // The configured rows this run's own record answers for — none when it was handed no record.
   // Stated at the composition (`observationStreams`), because which STREAM answers a row is a
   // question about the run's inputs and not one an observer has any business holding.
   answeredByTheRecord: ReadonlySet<string>
 ): EvidenceObservation[] {
-  const obligated = [...corpus.checkHandles];
   return [
-    ...(obligated.length > 0
-      ? checkStaticEvidenceObligations(obligated, ciSources, packageJson, corpus.citedScn)
-      : []),
     ...runningStaticChecks(
       ciSources,
       packageJson,
       runnerTiers,
-      // The target's own configurations (@SCN-USG-009) — honoured, and now settling which of the
-      // scripts a step invokes is the check rather than whether the step is one at all.
-      resolveStaticChecks(packageJson),
       // THE CONSUMER'S OWN CITATION, WIRED (@SCN-LNT-031). The walk carries a check step's `id:`
       // and this observer reads it, and until this seam was passed the two met nowhere: every
       // discovered check on the live path cited nothing, so a fully annotated pipeline reconciled
@@ -653,10 +663,6 @@ function checkObservations(
       // suspense — which is `new-client`, unnarrowed.
       (_script, citedByStep) => corpus.citedRow(citedByStep),
       isExcluded
-    ).filter(
-      (o) =>
-        !corpus.checkHandles.has(o.staticCheck) &&
-        !(o.scnId !== undefined && answeredByTheRecord.has(bareTerm(o.scnId)))
-    ),
+    ).filter((o) => !(o.scnId !== undefined && answeredByTheRecord.has(bareTerm(o.scnId)))),
   ];
 }

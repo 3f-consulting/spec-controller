@@ -5,13 +5,12 @@
     "cucumber": "cucumber-js"
   },
   "specController": {
-    "checkRegistry": {
-      "domain-purity": "domain-purity"
-    },
     "runners": {
       "unit": "vitest",
       "integration": "cucumber-js"
     },
-    "notChecks": ["ci.yml:ci:pnpm install --frozen-lockfile"]
+    "notChecks": [
+      "ci.yml:ci:pnpm install --frozen-lockfile"
+    ]
   }
 }

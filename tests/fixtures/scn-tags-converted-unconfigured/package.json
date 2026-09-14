@@ -1,9 +1,5 @@
 {
   "name": "scn-tags-converted-unconfigured-fixture",
   "private": true,
-  "specController": {
-    "checkRegistry": {
-      "typecheck": "typecheck"
-    }
-  }
+  "specController": {}
 }

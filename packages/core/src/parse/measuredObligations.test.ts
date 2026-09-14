@@ -122,9 +122,9 @@ Feature: measured
 
   it("raises the obligation for a check the thresholds name even where the registry does not", () => {
     // THE TAG SET IS THE UNION, and this is the half that is new. A measured check has no runnable
-    // script handle, so it never appears in `checkRegistry` and `registeredCheckTags` cannot see
-    // it. Were the obligation-raising set the registry's alone, a measured tag would raise nothing
-    // at all and the axis would be silent rather than wrong — the worst of the two.
+    // script handle, so it is never discoverable by one. Were the obligation-raising set built from
+    // discovered handles alone, a measured tag would raise nothing at all and the axis would be
+    // silent rather than wrong — the worst of the two.
     expect(parseScenarios(steplessMeasuredScenario, [], ["complexity"], THRESHOLDS)).toEqual([
       {
         scnId: "SCN-MSD-001",

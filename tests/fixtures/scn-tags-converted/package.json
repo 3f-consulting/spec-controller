@@ -2,11 +2,12 @@
   "name": "scn-tags-converted-fixture",
   "private": true,
   "specController": {
-    "checkRegistry": {
-      "typecheck": "typecheck"
-    },
     "fitnessChecks": [
-      { "scn": "SCN-TGT-001", "characteristic": "complexity", "command": "eslint" }
+      {
+        "scn": "SCN-TGT-001",
+        "characteristic": "complexity",
+        "command": "eslint"
+      }
     ]
   }
 }

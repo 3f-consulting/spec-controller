@@ -22,12 +22,13 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
   by the runner, as @ci-run-time's is"). So the measurement ARRIVES already citing, and the
   two-hop seam is not consulted at all.
 
-  WHICH IS WHY ONE TAG MAY NAME MANY SCENARIOS HERE — AND, SINCE @SCN-LNT-015, ON THE STATIC
-  AXIS TOO. Canon asks one thing of both: several checks of one characteristic are several
-  stepless scenarios sharing the tag, told apart by @SCN. This axis could always do it,
+  WHICH IS WHY ONE TAG MAY NAME MANY SCENARIOS HERE — AND, NOW A REGISTRY ENTRY CAN SAY WHICH
+  SCENARIO A CHECK CREDITS, ON THE STATIC AXIS TOO. Canon asks one thing of both: several
+  checks of one characteristic are several stepless scenarios sharing the tag, told apart
+  by @SCN. This axis could always do it,
   because a measured credit carries its own @SCN. The static axis could not, and said so: the
   corpus hop keeps first-in-corpus order and dropped the runners-up, so a shared bare check
-  left the second reading missing, out loud (@SCN-LNT-008). That was a fault on the seam as it
+  left the second reading missing, out loud. That was a fault on the seam as it
   then stood, correctly reported. The seams no longer disagree — the register holds the
   check-to-scenario join and each entry names the row its own run credits, so a static credit
   reaches its own scenario as a measured one always has. The debit is raised per scenario and
@@ -46,8 +47,8 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
   builds the ceiling canon defines rather than a direction flag nothing yet asks for.
 
   WHY NO ENGINE SCENARIO RAISES A MEASURED OBLIGATION OF ITS OWN, AND IT IS NOT THAT THEY
-  CARRY STEPS. The tag is the discriminator and the steps say nothing about it (@SCN-LNT-006,
-  3F-3115), so a stepped scenario carrying "ci-run-time" would owe that check exactly as a
+  CARRY STEPS. The tag is the discriminator and the steps say nothing about it (3F-3115), so a
+  stepped scenario carrying "ci-run-time" would owe that check exactly as a
   stepless one does. The reason those scenarios stay silent is that NONE OF THEM CARRIES THE
   TAG AT ALL: the checks and thresholds they name are fixture data, planted per scenario
   inside a corpus their step definitions build, under fixture @SCN ids no feature file
@@ -79,7 +80,7 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
 
     ONE OBLIGATION, NAMED BY THE SAME RULES AS ANY OTHER. A measured check is a bare tag
     raised from the scenario that carries it — STEPS OR NONE, exactly as the static half is
-    raised (@SCN-LNT-006, 3F-3115) — and owed once however many of a scenario's effective
+    raised (3F-3115) — and owed once however many of a scenario's effective
     tags name it. Nothing about the debit rule is special-cased for it; what is new is that
     the obligation carries a number.
 
@@ -91,9 +92,8 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
     THE THRESHOLD IS KEYED BY @SCN, THEN BY CHECK. Keyed by the tag alone it could not
     express what canon asks of this axis — two scenarios sharing one characteristic with
     different ceilings — and flat under the @SCN it would re-open on the debit side the
-    non-uniqueness @SCN-LNT-012 closed on the credit side: a scenario may carry two bare
-    checks, so one @SCN can owe two obligations, and one number under it would answer for
-    both.
+    non-uniqueness the credit side closed: a scenario may carry two bare checks, so one @SCN
+    can owe two obligations, and one number under it would answer for both.
 
     @unit @integration @SCN-CIP-001
     Scenario: a scenario tagged with a measured check raises one Evidence Obligation carrying its threshold, steps or none
@@ -146,7 +146,7 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
     engine ingests that artefact as a third evidence stream. It carries what the ledger
     reconciles on — the @SCN naming the row, the bare check tag naming which of that row's
     obligations it answers, and the number — because a citation is not an address on its own
-    (@SCN-LNT-012) and one scenario may owe more than one measured check.
+    and one scenario may owe more than one measured check.
 
     THE ARTEFACT IS READ TOLERANTLY, ROW BY ROW. A malformed row is dropped rather than
     thrown on, for the reason every input at this edge is: the run's job is to produce a

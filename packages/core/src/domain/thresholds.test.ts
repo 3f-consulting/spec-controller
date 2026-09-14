@@ -52,8 +52,8 @@ describe("[SCN-CIP-001] the threshold registry reads a target's ceilings, keyed 
 
   it("strips a leading @ from the scenario id and from the check tag", () => {
     // A manifest written by hand will sooner or later spell either the way a feature file does.
-    // Normalising here rather than at each lookup is the stance `checkRegistryOf` already takes:
-    // one reader forgets, and the miss is silent.
+    // Normalising here rather than at each lookup is the stance this reader already takes: one
+    // reader forgets, and the miss is silent.
     const registry = thresholdsOf({ "@SCN-MSD-001": { "@ci-run-time": 75 } });
     expect(thresholdFor(registry, "SCN-MSD-001", "ci-run-time")).toStrictEqual({ threshold: 75 });
   });
@@ -76,7 +76,7 @@ describe("[SCN-CIP-001] the threshold registry reads a target's ceilings, keyed 
 
   it("names the measured check tags, unique and sorted", () => {
     // The obligation rule needs the tag SET to know which of a scenario's tags name a measured
-    // check at all — the measured twin of `registeredCheckTags`.
+    // check at all — the tag set a measured check owes its obligation from.
     const registry = thresholdsOf({
       "SCN-MSD-002": { coverage: 90 },
       "SCN-MSD-001": { "ci-run-time": 75, coverage: 85 },
@@ -128,7 +128,7 @@ describe("[SCN-CIP-001] the threshold registry reads a target's ceilings, keyed 
 
   it("is inert on a manifest that names no thresholds at all", () => {
     // A target that has authored none raises no measured obligations, so the whole axis is
-    // dormant until something supplies one — the same inertness `checkRegistryOf` has.
+    // dormant until something supplies one.
     const registry = thresholdsOf({});
     expect(measuredCheckTags(registry)).toEqual([]);
     expect(thresholdFor(registry, "SCN-MSD-001", "ci-run-time")).toBeNull();

@@ -1,27 +1,20 @@
 @TGT
-Feature: a target whose fitness checks are named by a bare registered check tag
+Feature: a target whose fitness checks are named by a bare check tag
 
-  Planted for @SCN-STG-005's @integration arm and used TWICE — this tree is byte-identical in
-  the scn-tags-fitness-unregistered fixture beside it, and only the package.json differs.
-  Without that pair every Then in the scenario reads `it passes`, and a rule that recognised
-  the registry's words would be indistinguishable from one that had stopped looking at tags
-  altogether.
+  Planted for @SCN-STG-005's @integration arm. This tree's package.json still configures
+  `specController.checkRegistry` for `lint:complexity` and `typecheck` — the old, retired way of
+  declaring a fitness check (3F-3161) — deliberately, so the arm proves the stronger claim: the
+  shipped command reds a bare check tag whether or not the target's manifest tries to register
+  it, because nothing can register one any longer.
 
   TWO SHAPES IN ONE TREE, WHICH IS THE POINT OF IT (3F-3126). SCN-TGT-002 is STEPLESS and
-  SCN-TGT-003 HAS STEPS, and each carries nothing but a bare registered check tag and its id.
-  Steps say only how a row was written; the registered tag is the claim about which axis it is
-  on. So the two shapes are one case, and the twin beside this tree has to red BOTH of them —
-  which is the arm that was missing while they were two fixtures with an arm each (3F-3305),
-  because no run ever compared them and the stepless shape was never shown to be the
-  registry's doing at all.
+  SCN-TGT-003 HAS STEPS, and each carries nothing but a bare check tag and its id. Steps say
+  only how a row was written, never whether the tag it carries means anything, so both must
+  red — a rule that reds one shape and greens the other is reading steps rather than tags.
 
-  The tags are registered by this fixture's OWN package.json, and `typecheck` is in the
-  registry on purpose: it carries no `lint:` prefix, so a tree that resolved check tags by
-  stripping a prefix would miss it (3F-2495).
-
-  SCN-TGT-001 CARRIES A TIER AND IS LEFT ALONE THROUGHOUT, here and in the twin. It is the
-  control: a command that redded the twin by having stopped recognising the scheme's own words,
-  rather than by reading this target's registry, would name it too.
+  SCN-TGT-001 CARRIES A TIER AND IS LEFT ALONE THROUGHOUT. It is the control: a command that
+  redded it too would have stopped recognising the scheme's own words, rather than redded a
+  word that means nothing here.
 
   @unit @SCN-TGT-001
   Scenario: a behavioural scenario carrying its tier

@@ -2,9 +2,11 @@
   "name": "scn-tags-two-checks-parked-fixture",
   "private": true,
   "specController": {
-    "checkRegistry": {
-      "lint:complexity": "complexity",
-      "typecheck": "typecheck"
+    "thresholds": {
+      "SCN-TGT-002": {
+        "ci-run-time": 75,
+        "coverage": 80
+      }
     }
   }
 }

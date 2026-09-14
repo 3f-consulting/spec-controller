@@ -5,7 +5,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: pnpm install --frozen-lockfile
-      - run: pnpm lint:foo
+      - id: SCN-TGT-001
+        run: pnpm lint:foo
       - run: pnpm lint:bar
       - run: pnpm test
       - run: pnpm cucumber

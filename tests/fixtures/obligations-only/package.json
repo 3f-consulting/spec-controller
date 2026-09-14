@@ -5,9 +5,13 @@
     "cucumber": "cucumber-js"
   },
   "specController": {
-    "checkRegistry": {
-      "lint:obligations-only": "obligations-only"
-    },
+    "fitnessChecks": [
+      {
+        "scn": "SCN-DEM-001",
+        "characteristic": "obligations-only",
+        "command": "pnpm lint:obligations-only"
+      }
+    ],
     "runners": {
       "unit": "vitest",
       "integration": "cucumber-js"

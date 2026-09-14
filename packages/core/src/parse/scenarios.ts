@@ -201,8 +201,8 @@ export function parseUntaggedScenarios(source: string): string[] {
  *
  * THE `stepless` CONDITION THAT USED TO STAND HERE WAS A PROXY, AND IT READ THE WRONG SIGNAL —
  * having nothing to exemplify is why a fitness scenario usually carries no steps, a correlate of
- * being non-behavioural rather than the thing itself. The CREDIT side never read it: `fitnessCitations`
- * has always reached a stepped row, so the debit alone stopped short and such a row produced a
+ * being non-behavioural rather than the thing itself. The CREDIT side never read it: the citation
+ * seam has always reached a stepped row, so the debit alone stopped short and such a row produced a
  * credit with no obligation to post to (3F-3092). Removing the condition removes that asymmetry;
  * no compensating rule is added on the credit side, and none is needed.
  *
@@ -214,10 +214,10 @@ export function parseUntaggedScenarios(source: string): string[] {
  * @SCN-STG-007, 3F-3126). So nothing asked the walk for a scenario's SHAPE, and the walk stopped
  * answering: steplessness is derived nowhere in this tree, and a scenario's axis is its tag.
  *
- * REGISTERED, NOT INFERRED. `checkTags` is the registry's answer (`domain/checkRegistry`), taken as
+ * SUPPLIED, NOT INFERRED. `checkTags` is the caller's set of recognised check tags, taken as
  * data. Without it every unrecognised tag would be a candidate check and `@smoke` would owe one;
  * with a prefix heuristic instead, `typecheck` would be missed, which is the reading 3F-2495 already
- * disproved on the discovery side. An empty registry raises nothing, so this is inert on a corpus
+ * disproved on the discovery side. An empty set raises nothing, so this is inert on a corpus
  * that has not been swept.
  *
  * `seen` CARRIES THE CHECKS ALREADY RAISED, and is mutated here: a scenario's effective tags are
@@ -231,10 +231,10 @@ export function parseUntaggedScenarios(source: string): string[] {
  * carries the CEILING that number is held against — read for THIS scenario, since canon's own shape
  * for the axis is several stepless scenarios sharing one characteristic with ceilings of their own.
  *
- * A MEASURED TAG IS RECOGNISED BY THE THRESHOLD INDEX, not by the check registry, and the two sets
- * are unioned by the caller. A measured check has no runnable script handle — nothing invokes
- * `ci-run-time` — so `checkRegistry` cannot name it, and a rule reading that set alone would raise
- * nothing for it: silent, which is worse than wrong.
+ * A MEASURED TAG IS RECOGNISED BY THE THRESHOLD INDEX. A measured check has no runnable script
+ * handle — nothing invokes `ci-run-time` — so a set built from discovered handles alone cannot
+ * name it, and a rule reading that alone would raise nothing for it: silent, which is worse than
+ * wrong.
  *
  * `measured: true` IS SET WHETHER OR NOT A CEILING WAS FOUND, and that is the point. The flag routes
  * the obligation to the comparison arm; the missing ceiling is what that arm then reports
@@ -315,9 +315,9 @@ export const FITNESS_AXIS_TAG = "fitness";
  * would send an un-authored one down the static route, to be reported as a check nobody wrote.
  *
  * NO REGISTRY HOP, and that is what conversion retires. An unconverted static check is discovered
- * as a script handle, and a handle does not know what it is for — hence `checkRegistry`, and hence
- * the corpus lookup behind it. This route reads the citation off the row rather than resolving it
- * onto one.
+ * as a script handle, and a handle does not know what it is for — hence the (now-retired)
+ * registry, and hence the corpus lookup behind it. This route reads the citation off the row
+ * rather than resolving it onto one.
  *
  * `seen` IS THE ARM ABOVE'S OWN SET, and shared deliberately. A check is owed once however it was
  * named: the axis tag can reach one scenario twice through its `Rule:` and its `Feature:`

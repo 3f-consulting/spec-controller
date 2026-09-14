@@ -54,7 +54,9 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
   ci.yml is a candidate now, so the denominator is this repository's whole pipeline: ten checks
   discovered, each carrying the code of the row it answers on its own step, and nought uncited.
   The residual that remains is a smaller one — specController.staticChecks is still honoured and
-  is now inert, and 3F-3161 owns its removal, which is a major version.
+  is now inert, and 3F-3161 owns its removal. That removal no longer engages a major version: the
+  compatibility commitment naming one was withdrawn (3F-3376), made to nobody, and no consumer
+  was ever measured routing credits through it.
 
   What is NOT vacuous over this tree is the number beside it. "11 static check(s) run" counts the
   running lint credits the CONVERTED rows post — eleven of the fourteen rows, the other three
@@ -304,10 +306,10 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     entry for an observation would put back exactly the check the narrowing excluded —
     and would do it from an input with nothing to say about which file was named.
 
-    THE MANIFEST IS NOT THE SOURCE HERE EITHER, on the terms the configured-check list
-    further down this file already answers to: a script CI does not run is not a gate.
-    The registry is a second manifest input and takes the same terms — it can change how
-    a run is READ, never produce one.
+    THE MANIFEST IS NOT THE SOURCE HERE EITHER: a script CI does not run is not a gate, and
+    would red every repository for owning a helper it never runs. The registry is a second
+    manifest input and takes the same terms — it can change how a run is READ, never produce
+    one.
 
     WHICH IS WHY THIS TARGET'S REGISTRY ENTRY IS LOAD-BEARING FOR THIS ARM, and not only
     for the sibling it shares the fixture with. The target maps lint:sweep to the bare
@@ -364,97 +366,6 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
       And a fitness scenario cites domain-purity
       When the reconciliation report is rendered for the target
       Then domain-purity is attributed to the scenario citing it, not reported uncited
-
-  Rule: a target can configure a script a static check, and the tool observes it on that axis
-
-    THE PREFIX SET WAS A DISCOVERY HEURISTIC AND NEVER A DEFINITION (3F-2495), AND IT IS GONE
-    (3F-3343). Static-axis membership is a property of the check — does it analyse source without
-    executing it — and `tsc --noEmit` has that property whatever its script is called. A check with
-    the property and no recognised prefix was a FALSE NEGATIVE, not an exclusion, and this
-    configuration is what a target used to close it with.
-
-    THE GAP IS CLOSED FOR EVERY SCRIPT AT ONCE NOW, so this key is honoured and inert. The
-    obligation-side observer never consulted the prefix set, so a non-prefixed check the corpus
-    reaches has always reconciled on its scenario's own row; what could not happen was finding a
-    non-prefixed check NOBODY took responsibility for. Discovery reaches every step of the
-    pipeline, so it happens whether this key names the script or not.
-
-    RENAMING WAS NEVER THE REMEDY, AND NOW NOTHING ASKS FOR ONE. A client's scripts are not ours to
-    rename, so the tool had to be able to be TOLD; the tool no longer needs telling. The key stays
-    honoured — it is what a consumer wrote, and removing it is 3F-3161's major version — and it
-    buys no exemption: a configured check is uncited, and reds, on exactly the terms every other
-    check is.
-
-    THE MANIFEST IS STILL NOT THE SOURCE, and the registry is held to the same terms. A
-    configured script CI does not run is not a gate, and would red every repository for owning
-    a helper; a registry entry is likewise a claim about how a run is READ, never one that a
-    run happened. So the two manifest keys are two answers to two questions — WHICH scripts
-    are checks here, and WHAT bare tag names this one — rather than one answer written twice.
-
-    WHAT MAKES A CONFIGURED CHECK UNCITED HAS MOVED, AND SO HAS DISCOVERING IT. Discovery keyed on
-    the prefix set plus this target's own configured check list, which is what 3F-2495 settled; it
-    now reaches this check because its STEP is one of the pipeline's, under any name at all. What the one posting rule changes is the test the verdict
-    turns on: the run resolves typecheck through the target's registry to a bare check tag,
-    and through its corpus to whatever stepless fitness scenario carries that tag — and this
-    target's corpus carries none, so the seam reaches no @SCN and the credit cites no scenario.
-
-    REGISTERED, AND STILL UNCITED, on the terms this feature file's other uncited arms hold.
-    The target below maps typecheck to the bare check typecheck in its own registry, so the
-    seam CAN resolve a tag for the handle; what nothing in its corpus does is carry that tag.
-    Leaving the handle out of the registry would report the same uncited check for a second
-    reason — a handle nothing registers reaches nothing either — and the target would then go
-    on passing under a reader that took every registered handle for an attributed one. One
-    fact holds this verdict, and it is the fact the cited twin flips.
-
-    THE CONFIGURATION BUYS NO EXEMPTION, which is the first of two things the second scenario
-    holds. Both targets configure the same script, run it in the same CI, and register the same
-    handle to the same bare check; the ONE fact between them is whether a stepless fitness
-    scenario carries that tag. So nothing but the citation can move either verdict, and widening
-    discovery cannot be built as a privileged class — found, counted, and never asked for its
-    attribution.
-
-    THE SECOND IS THE DOUBLE-COUNT, AND ONLY THE CITED TARGET CAN REACH IT. Both doors onto this
-    axis stand open over that target's handle: DISCOVERY finds typecheck because the manifest
-    configures it, and the REGISTRY reaches it because a scenario carries the tag it resolves to.
-    Over the uncited target the two doors AGREE — neither reaches a scenario, so the worst a lost
-    de-duplication costs there is one verdict said twice. Here they disagree about where the
-    credit lands: the obligation-side reader carries the citation and posts to the scenario's row,
-    while the running-check reader carries none, and a run nobody's citation placed still has to
-    land somewhere — so the same run reaches the books twice. MEASURED: remove the ingest edge's
-    no-double-observe filter and this target reports two static checks run over a tree running one.
-
-    THE COUNT IS WHAT SURFACES IT, which is why the scenario asserts the count and not only the
-    row. Reconciliation is per-OBLIGATION, so one obligation settled by either credit still reads
-    satisfied and the attributed row goes on saying exactly what it said before. A reader checking
-    only that the check was attributed and not reported uncited therefore greens a report claiming
-    a gate the target does not have — an invention, and this axis's own worst failure.
-
-    ONE RUN, ONE CREDIT, WHATEVER THE CHECK IS CALLED. A bare tag CAN equal the handle it is
-    registered for — typecheck resolves to typecheck, the ordinary case for a script whose name
-    already reads as its check — and this target is that collision. So the seam excludes a CITING
-    run by asking whether it cited, never what it is called: keyed on the handle instead, it would
-    take the citing run for the non-citing one and post it a second time to the row it had already
-    reached. That second posting is read on the row's own credits rather than in the count, which
-    cannot tell one observation posted twice from one posted once.
-
-    Both scenarios are needed because each is the other's control. Alone, the first is
-    satisfied by any change that reports every configured check uncited whether or not
-    anything cites it; alone, the second is satisfied by a tool that never reports
-    anything uncited at all.
-
-    @unit @integration @SCN-USG-009
-    Scenario: a configured fitness check no scenario cites is reported uncited, not invisible
-      Given a target that configures typecheck a static check and runs it in CI
-      And no fitness scenario cites typecheck
-      When the reconciliation report is rendered for the target
-      Then the Static checks section reports typecheck as an uncited static check
-
-    @unit @integration @SCN-USG-010
-    Scenario: a configured fitness check a scenario cites is attributed, not double-counted
-      Given a target that configures typecheck a static check and cites it
-      And a fitness scenario cites typecheck
-      When the reconciliation report is rendered for the target
-      Then typecheck is attributed to the scenario citing it, counted once and not reported uncited
 
   Rule: a runner named as a binary is recognised at the step that invokes it through a manifest script
 
@@ -604,6 +515,75 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
       When the reconciliation report is rendered for the target
       Then the report names that key as one it does not recognise
       And the check is on the books as an uncited static check
+
+  Rule: a manifest key this reader has retired is named on the report, never read
+
+    THIS IS THE SUB-ISSUE THE PARENT IS NAMED FOR. Every scenario above it takes the registry
+    route away in code; this one tells the consumer it is gone. specController.checkRegistry
+    used to be a second way to declare a fitness check — a runnable handle mapped to a bare
+    check tag, read here and joined to a stepless scenario carrying that tag — and none of that
+    reading survives (3F-3161). What is left to settle is not whether the key still works; it
+    does not, and nothing in this file undoes that. What is left is whether a consumer who wrote
+    it finds out.
+
+    RETIRED IS NOT UNRECOGNISED, AND THE TWO KEYS BESIDE EACH OTHER ARE WHY THE DISTINCTION
+    HOLDS. @SCN-USG-019's key is one the target INVENTED — this reader never read it under any
+    version of itself. checkRegistry is a key the target wrote CORRECTLY, under a name this
+    reader once read and has since stopped reading. The consumer did nothing wrong; the tool
+    changed under them. Naming it is the same duty as naming an invented key — a written
+    configuration that took no effect is a fact the report owes either way — so the account is
+    the same shape (@SCN-USG-019's unrecognisedRunnerKeys, mirrored here as retiredKeys) rather
+    than a second mechanism invented for a similar-looking problem.
+
+    NO NEW VERDICT, BECAUSE THE FAILURE ALREADY EXISTS ONCE THE READER STOPS. The check the
+    registry used to name still runs in CI and still reaches discovery by subtraction — nothing
+    about that changed — but with no registry to resolve it, its credit cites no scenario and
+    posts to suspense: `balance` is already out of balance over it, exit non-zero, before this
+    Rule adds a word. The bare-tagged scenario the registry used to answer carries no @SCN, so
+    it was always going to reconcile `no-scn-code` the moment nothing else claimed it
+    (@SCN-LDG-021) — that is not new either. What is new is the ONE LINE naming which key a
+    consumer wrote that no longer does anything, so an all-suspense report is not read as an
+    unexplained wall of failure.
+
+    THE CLAIM IS RED TODAY, GENUINELY, unlike most of this slice. Every check above proves code
+    already deleted; this one proves a name the report does not yet print. A target carrying
+    `checkRegistry` renders exactly as it would if the key had never retired at all — silent —
+    until this Rule's graft exists.
+
+    THE SECOND RETIRED KEY, THE SAME ACCOUNT. specController.staticChecks is the pair to
+    checkRegistry above rather than a second mechanism: append the key, and the same
+    retiredKeys field, the same graft, the same render account already carry it. What
+    differs is the CONSEQUENCE a consumer notices, because the two keys never did the same
+    job. checkRegistry named a check outright and produced a credit; staticChecks never
+    produced one — since 3F-3343 it settled nothing about WHETHER a step is a check, only
+    which of several scripts a step invoking more than one of them names AS the check
+    (3F-3396 deleted that tiebreak). Retiring it does not remove a check from the books; it
+    removes the tiebreak, so a step invoking two scripts is now named by the first one it
+    invokes rather than by the one the list nominated.
+
+    THAT SECOND CONSEQUENCE IS THE ONLY PLACE THE TIEBREAK'S REMOVAL IS OBSERVABLE AT ALL.
+    3F-3396 deleted the configured-check branch of handleOf and, with it, the scenario that
+    was the branch's only witness — leaving nothing in this corpus that drives a step invoking
+    more than one script. Naming the retired key alone would repeat the claim above over a
+    different word; asserting the fallback is what earns this its own scenario rather than an
+    arm of the one above.
+
+    @unit @integration @SCN-USG-021
+    Scenario: a manifest carrying specController.checkRegistry is named as a retired key, and none of its entries reaches the books
+      Given a target whose manifest registers a check through specController.checkRegistry, naming a check its CI runs
+      And that target's corpus carries a scenario tagged with the registry's bare check tag
+      When the reconciliation report is rendered for the target
+      Then the report names specController.checkRegistry as a key it no longer reads
+      And the check is on the books as an uncited static check, citing no scenario
+      And the bare-tagged scenario raises no Evidence Obligation
+
+    @unit @integration @SCN-USG-022
+    Scenario: a manifest carrying specController.staticChecks is named as a retired key, and no step is named by it
+      Given a target whose manifest carries a specController.staticChecks list
+      And a CI step invoking two of that target's scripts, one of them on that list
+      When the reconciliation report is rendered for the target
+      Then the report names specController.staticChecks as a key it no longer reads
+      And that step is reported under the first script it invokes, not the one the list nominated
 
   Rule: a step the manifest names a non-check is excluded, and the report says so
 

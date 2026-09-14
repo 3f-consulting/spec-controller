@@ -28,7 +28,7 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
   WHY THE ENGINE HAS NO OPINION ABOUT WHICH CHECKS ARE FLOORS. A mutation score is a floor in every
   repository there is, and a tool that knew that could read the direction off the tag and ask the
   manifest for nothing. It would also be name-matching — the engine holding a roster of what a
-  bare tag MEANS, which is exactly what @SCN-LNT-005 puts in the target's hands and what 3F-2511
+  bare tag MEANS, which is the target's own configuration to keep and what 3F-2511
   spent an increment removing. Canon names a published fitness registry as the eventual home for a
   characteristic's own properties, and that registry does not exist yet; when it does, a per-check
   default can sit above this entry and the entry becomes the override. Until then the target says

@@ -1,17 +1,19 @@
 /**
  * @SCN-USG-001 step defs — the uncited-static-check @integration arm.
  * Drives the REAL CLI over the usg fixture target (ci.yml runs lint:foo + lint:bar +
- * test + cucumber; the target registers BOTH handles and its corpus carries a stepless
- * fitness scenario for lint:foo alone) and asserts the persisted spec-reconciliation.md
- * carries the "### Static checks" cut reporting lint:bar as an uncited static check —
- * proving the registry → corpus → runningStaticChecks → reconcile → staticObservationTally
- * → render → disk wiring over real files, not an in-memory re-run (the anti-watermelon rule).
+ * test + cucumber; the target configures ONE fitnessChecks row for lint:foo and its
+ * lint:foo step carries that row's code as its own `id:`) and asserts the persisted
+ * spec-reconciliation.md carries the "### Static checks" cut reporting lint:bar as an
+ * uncited static check — proving the citedRow → runningStaticChecks → reconcile →
+ * staticObservationTally → render → disk wiring over real files, not an in-memory
+ * re-run (the anti-watermelon rule).
  *
  * WHAT MAKES A CHECK UNCITED HERE IS THE CITATION SEAM, not a lookup against an @lint=
- * spelling: lint:bar reaches no @SCN because nothing carries its bare check tag, so its
- * credit cites no scenario and lands on the suspense row. Both handles being registered is
- * what isolates that — an unregistered lint:bar would land in the same place for a reason
- * the retired rule could also produce.
+ * spelling: lint:bar reaches no @SCN because its step carries no `id:` and no configured
+ * row answers it, so its credit cites no scenario and lands on the suspense row. lint:foo
+ * carrying an `id:` and lint:bar carrying none is what isolates that — a step whose `id:`
+ * named no configured row would land in the same place for a reason the retired rule
+ * could also produce.
  * // @SCN-USG-001
  */
 import { Given, When, Then, After } from "@cucumber/cucumber";
@@ -49,12 +51,12 @@ const USG_GUARD_FIXTURE: UsgFixture = {
   packageJson: "tests/fixtures/usg-guard/package.json",
 };
 
-// @SCN-USG-005 — a third fixture target whose CI and manifest are BYTE-IDENTICAL to
-// USG_GUARD_FIXTURE's and whose corpus CARRIES the bare check they register (domain-purity) on a
-// stepless fitness scenario. Identical rather than merely alike, so the carried tag is the only
-// difference there is: the pair isolates the citation as the thing moving the verdict, and a
+// @SCN-USG-005 — a third fixture target whose corpus CARRIES a configured row for the check
+// USG_GUARD_FIXTURE's own CI script runs (domain-purity), and whose CI step states that row's
+// code as its own `id:`. USG_GUARD_FIXTURE still answers through the registry (a sibling
+// sub-issue's fixture); the pair isolates the citation as the thing moving the verdict, and a
 // second difference nobody meant has nowhere to drift in. The counts stay separable — here 1 run,
-// 0 uncited; there 1 run, 1 uncited — because the corpus is what separates them.
+// 0 uncited; there 1 run, 1 uncited — because the citation is what separates them.
 const USG_GUARD_NAMED_FIXTURE: UsgFixture = {
   features: "tests/fixtures/usg-guard-named/features",
   ci: "tests/fixtures/usg-guard-named/ci.yml",
@@ -63,11 +65,11 @@ const USG_GUARD_NAMED_FIXTURE: UsgFixture = {
 
 // @SCN-USG-006 — a fourth fixture target whose pipeline is SPLIT: ci.yml runs the suites and
 // no static check, nightly.yml runs lint:nightly, and the target CITES lint:nightly — its
-// registry maps the handle to the bare check nightly and its corpus carries that tag on a
-// stepless scenario. Its `ci` is a DIRECTORY, which is what makes it distinct from the three
-// above — every one of those supplies a single file, so none of them can tell whether the
-// reader is reading one source or many. Kept under workflows/ rather than .github/workflows/
-// so the fixture pins a directory rather than GitHub's layout.
+// specController.fitnessChecks configures one row for it and the lint:nightly step in
+// nightly.yml states that row's code as its own `id:`. Its `ci` is a DIRECTORY, which is what
+// makes it distinct from the three above — every one of those supplies a single file, so none
+// of them can tell whether the reader is reading one source or many. Kept under workflows/
+// rather than .github/workflows/ so the fixture pins a directory rather than GitHub's layout.
 const USG_SIBLING_FIXTURE: UsgFixture = {
   features: "tests/fixtures/usg-sibling/features",
   ci: "tests/fixtures/usg-sibling/workflows",
@@ -103,9 +105,10 @@ Given("a target whose CI runs the lint:foo and lint:bar checks", function () {
 // differ in nothing: giving each its own sentence would let the two premises drift apart and
 // leave neither scenario able to say the citation was the thing that moved the verdict.
 Given("only lint:foo is cited by a fitness scenario", function () {
-  // The fixture registers BOTH lint:foo → foo and lint:bar → bar, and its target.feature
-  // carries a stepless fitness scenario for foo alone on @SCN-TGT-001. So the seam resolves
-  // lint:foo to that scenario and reaches nothing for lint:bar — the uncited static check.
+  // The fixture configures ONE fitnessChecks row (SCN-TGT-001, characteristic foo) and only
+  // the lint:foo step carries that row's code as its own `id:` — lint:bar's step carries none.
+  // So the running-check observer reads lint:foo's citation off the step and reaches nothing
+  // for lint:bar — the uncited static check.
 });
 
 // @SCN-USG-003
@@ -157,20 +160,20 @@ Given("no fitness scenario cites domain-purity", function () {
 
 // @SCN-USG-005
 Given("a target whose CI runs the domain-purity script under no convention of ours", function () {
-  // The SAME script the twin's Given picks, under the same registry entry, in a target whose
-  // ci.yml and package.json are byte-identical to the twin's. Two Givens rather than one shared
-  // step because the two pick different corpora, which is the whole of what they pick.
+  // The SAME script the twin's Given picks, in a target whose corpus configures a row for it
+  // and whose CI step states that row's code. Two Givens rather than one shared step because
+  // the two pick different corpora, which is the whole of what they pick.
   activeFixture = USG_GUARD_NAMED_FIXTURE;
   activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg005-"));
 });
 
 // @SCN-USG-005
 Given("a fitness scenario cites domain-purity", function () {
-  // The usg-guard-named fixture registers domain-purity → the bare check domain-purity, and its
-  // target.feature carries that tag on the stepless @SCN-TGD-001. So the seam resolves the handle
-  // to a scenario, and the handle CI runs is attributed to that scenario's row instead of folding
-  // onto suspense. Registered-and-carried is the shape only the one posting rule can produce, and
-  // it is one tag apart from its uncited twin.
+  // The usg-guard-named fixture configures one fitnessChecks row for domain-purity
+  // (SCN-TGD-001), and its CI step carries that row's code as its own `id:`. So the
+  // running-check observer reads the citation off the step, and the handle CI runs is
+  // attributed to that row instead of folding onto suspense. Coded-and-configured is the shape
+  // only the one posting rule can produce, and it is one `id:` apart from its uncited twin.
 });
 
 /**
@@ -397,17 +400,17 @@ Then(
 );
 
 // @SCN-USG-002 — the CITED check is attributed, not an uncited static check. Same target as
-// @SCN-USG-001, one fact apart: a stepless fitness scenario carries lint:foo's registered check
-// tag and carries nothing for lint:bar. So lint:foo must reach that scenario's row and fold into
-// the running volume, while its twin lands in suspense.
+// @SCN-USG-001, one fact apart: lint:foo's CI step carries the code of the configured row
+// (SCN-TGT-001) as its `id:`, and lint:bar's step carries none. So lint:foo must reach that
+// row and fold into the running volume, while its twin lands in suspense.
 Then(
   "lint:foo is attributed to the scenario citing it, not reported uncited",
   function () {
     // ATTRIBUTED, ASSERTED POSITIVELY — the row, not the absence of a different row. The lint
-    // cut names the BARE check tag the registry resolves lint:foo to (foo), against the @SCN
-    // whose stepless scenario carries it. Both hops are visible in that one line, and neither
-    // is readable from a negative: a run under name-match holds only the handle lint:foo, the
-    // obligation the scenario raises is foo, and those two spellings never meet.
+    // cut names the BARE characteristic the configured row states (foo), against the @SCN its
+    // step's `id:` names. Both hops are visible in that one line, and neither is readable from
+    // a negative: a run under name-match holds only the handle lint:foo, the obligation the
+    // row states is foo, and those two spellings never meet.
     assert.ok(
       activeMd.includes(
         "| SCN-TGT-001 | foo | ✓ Evidence Observation satisfies its Evidence Obligation |"
@@ -429,12 +432,10 @@ Then(
 );
 
 // @SCN-USG-005 — the CITED script under no convention of ours is attributed, not an uncited
-// static check. The usg-guard-named fixture runs domain-purity in CI, registers it to the bare
-// check domain-purity, and carries that tag on a stepless fitness scenario. So the handle reaches
-// this axis through the OBLIGATION-side door (observedCheckHandles admits a handle whose
-// registered tag some scenario cites) and is filtered out of the running-check stream, which is
-// what stops one run being observed twice; the credit arrives carrying @SCN-TGD-001 and posts
-// there.
+// static check. The usg-guard-named fixture runs domain-purity in CI, configures one row for it
+// (SCN-TGD-001, characteristic domain-purity), and the domain-purity step's `id:` states that
+// row's code directly. So the running-check observer reads the citation off the step, and the
+// credit arrives carrying @SCN-TGD-001 and posts there.
 //
 // THIS ARM IS NOT DISCOVERY'S READER, and the comment says so because the pair invites the
 // opposite assumption. Its twin @SCN-USG-004 reaches the axis through DISCOVERY, which since
@@ -445,9 +446,9 @@ Then(
 // notChecks reds the twin's Then and leaves this one green.
 //
 // AND THE SPELLING CANNOT BE WHAT DECIDES, which the pair now shows rather than argues. This
-// target's ci.yml and package.json are byte-identical to the twin's, so any reader answering from
-// the handle's spelling answers the same way for both — and the two verdicts differ. What is left
-// to answer from is the corpus, which is the one posting rule.
+// target's ci.yml and package.json are no longer byte-identical to usg-guard's — usg-guard still
+// answers through the registry (a sibling sub-issue's fixture) — so what is left to answer from
+// is the citation each carries, which is the one posting rule.
 //
 // That handle itself is a CI script NAME — a value the derivation matches on, not
 // vocabulary — so it is deliberately untouched by the static-check rename (3F-1929; 3F-1852
@@ -456,9 +457,9 @@ Then(
   "domain-purity is attributed to the scenario citing it, not reported uncited",
   function () {
     // ATTRIBUTED, ASSERTED POSITIVELY — the row, not the absence of a different row, on the terms
-    // @SCN-USG-002 reads its own cited twin. The lint cut names the bare check tag the registry
-    // resolves the handle to, against the @SCN whose stepless scenario carries it; both hops are
-    // visible in that one line and neither is readable from a negative.
+    // @SCN-USG-002 reads its own cited twin. The lint cut names the bare characteristic the
+    // configured row states, against the @SCN its step's `id:` names; both hops are visible in
+    // that one line and neither is readable from a negative.
     assert.ok(
       activeMd.includes(
         "| SCN-TGD-001 | domain-purity | ✓ Evidence Observation satisfies its Evidence Obligation |"
@@ -676,23 +677,20 @@ When("the reconciliation report is rendered for that target's ci.yml alone", fun
 
 // @SCN-USG-008
 Then("lint:sweep is not counted among the running static checks", function () {
-  // BOTH DOORS, MEASURED BY PLANT — and they are not one fault seen twice. Widening
-  // ciSourcePathsOf so a file resolves to its parent directory's workflows reads
-  // nightly.yml, and DISCOVERY finds lint:sweep there. Opening the manifest door in
-  // observedCheckHandles so every registered handle is asked about regardless of carriage
-  // reaches lint:sweep without reading nightly.yml at all. Each reds the count below.
-  //
-  // The second only became reachable when this fixture gained its checkRegistry for
-  // @SCN-USG-007's registered-but-uncarried shape (3F-2582), which recorded the entry as
-  // inert for this arm. It is not: it is what stands the manifest door open over the very
-  // handle the narrowing excludes. Removing it as decoration would leave this scenario
-  // guarding one door of two, still green.
+  // ONE DOOR NOW, WHERE THERE USED TO BE TWO. Widening ciSourcePathsOf so a file resolves to
+  // its parent directory's workflows reads nightly.yml, and DISCOVERY finds lint:sweep there —
+  // that is the door this arm still guards. A SECOND door — the manifest's own registry,
+  // opened in `observedCheckHandles` so every registered handle was asked about regardless of
+  // carriage — used to reach lint:sweep without reading nightly.yml at all; this fixture's
+  // checkRegistry entry was kept for @SCN-USG-007's registered-but-uncarried shape (3F-2582)
+  // and doubled as that second door's guard. The registry route it opened retired whole
+  // (3F-3395), taking `observedCheckHandles` with it, so there is no second door left for this
+  // arm to guard against — the single remaining reading is discovery, scoped to the named file.
   assert.ok(
     activeMd.includes("0 static check(s) run, 0 uncited static check(s)"),
     `expected NOTHING observed: the caller named one workflow, and lint:sweep runs in ` +
       `another. Sweeping the parent directory off a file argument would widen a scope ` +
-      `the caller chose deliberately, and so would admitting lint:sweep off its registry ` +
-      `entry — an input that says nothing about which file was named. Got:\n${activeMd}`,
+      `the caller chose deliberately. Got:\n${activeMd}`,
   );
   assert.ok(
     !activeMd.includes("lint:sweep"),
@@ -705,9 +703,10 @@ Then(
   "lint:nightly reconciles satisfied, with no watermelon raised against it",
   function () {
     // THE ROW, UNDER THE BARE TAG. The run holds the handle lint:nightly and the obligation
-    // the stepless scenario raises is nightly; the registry is what joins them, so the cut
-    // names SCN-TGS-001 against `nightly`. Those two spellings never meet, which is why the
-    // retired name-match rule cannot settle this obligation at all.
+    // the stepless scenario raises is nightly; the step's own `id:` is what joins them —
+    // stating SCN-TGS-001 directly — so the cut names SCN-TGS-001 against `nightly`. Those two
+    // spellings never meet, which is why the retired name-match rule cannot settle this
+    // obligation at all.
     assert.ok(
       activeMd.includes("| SCN-TGS-001 | nightly | ✓ Evidence Observation satisfies its Evidence Obligation |"),
       `expected the nightly check SATISFIED — lint:nightly is invoked by nightly.yml, so the ` +
@@ -733,176 +732,6 @@ Then(
       `expected the target to reconcile BALANCED once both workflows are read — its only ` +
         `obligation is the fitness one, and it is settled. Got exit ${siblingStatus}. ` +
         `Report:\n${activeMd}`,
-    );
-  },
-);
-
-// ---------------------------------------------------------------------------
-// @SCN-USG-009 — the CONFIGURED static check. Its own fixture because every other @USG
-// target is discovered by a PREFIX, and the whole claim here is that discovery no longer
-// depends on one: sharing a fixture would let a prefix do the finding and leave the
-// configuration proving nothing.
-//
-// The fixture registers the handle as well (typecheck → the bare check typecheck), which is
-// what leaves the CITATION as the one fact holding the uncited verdict — an unregistered
-// handle reaches nothing for a second reason, and the arm would then pass under a reader that
-// took every registered handle for an attributed one. The fixture's own prose carries the
-// measurement of what that entry is worth; it is not decoration.
-// ---------------------------------------------------------------------------
-const USG_CONFIGURED_FIXTURE: UsgFixture = {
-  features: "tests/fixtures/usg-configured/features",
-  ci: "tests/fixtures/usg-configured/ci.yml",
-  packageJson: "tests/fixtures/usg-configured/package.json",
-};
-
-// @SCN-USG-009
-Given("a target that configures typecheck a static check and runs it in CI", function () {
-  activeFixture = USG_CONFIGURED_FIXTURE;
-  activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg009-"));
-});
-
-// @SCN-USG-009
-Given("no fitness scenario cites typecheck", function () {
-  // The usg-configured fixture registers typecheck → the bare check typecheck, and its
-  // target.feature carries no scenario tagged with that check. So the seam resolves the tag
-  // and then reaches no @SCN for it: the credit cites nothing, and the handle CI runs lands on
-  // the suspense row. Registered-but-uncarried is what keeps the citation the only fact
-  // separating this target from its cited twin — and it is also what stands the REGISTRY door
-  // open over this handle, so the plant below can be planted at all.
-});
-
-// @SCN-USG-009
-Then(
-  "the Static checks section reports typecheck as an uncited static check",
-  function () {
-    assert.match(
-      activeMd,
-      /### Static checks/,
-      `expected a Static checks section; got:\n${activeMd}`,
-    );
-    assert.ok(
-      activeMd.includes("1 static check(s) run, 1 uncited static check(s)"),
-      `expected typecheck counted as RUNNING and UNCITED. Three things hold this count, and a ` +
-        `reader who reds it has broken one of them. DISCOVERY has to find a script no prefix ` +
-        `recognises — before 3F-2495 tsc --noEmit reds the build on a violation, is static ` +
-        `analysis by any reading, and was invisible for not being called lint:typecheck. The ` +
-        `CITATION seam has to reach no @SCN for it, which is what leaves it uncited rather ` +
-        `than attributed. And the two DOORS onto this axis have to yield one observation, not ` +
-        `two: this target's registry names the handle, so the obligation-side observer can ` +
-        `answer for it as well, and the ingest edge's no-double-observe filter is the only ` +
-        `thing collapsing them. Got:\n${activeMd}`,
-    );
-
-    // THE LANDING, ROW-SCOPED. `(no scenario)` is the suspense row, and the credit has to be ON
-    // it rather than merely somewhere in the report — the same reading @SCN-USG-001 takes over
-    // its prefix-discovered twin, because a whole-report search cannot tell the suspense row
-    // from any other row that happens to mention the handle.
-    const cells = ledgerRowCells(activeMd, "(no scenario)");
-    const items = cells[cells.length - 2] ?? "";
-    assert.ok(
-      items.includes("lint ❓ Evidence Observation cites no Scenario (typecheck)"),
-      `expected the suspense row to carry typecheck as a cites-no-scenario credit naming the ` +
-        `handle that ran — the same landing a prefix-discovered check gets, because a ` +
-        `configuration buys no exemption; got "${items}" in:\n${activeMd}`,
-    );
-
-    // NEVER DROPPED, NEVER SMEARED — typecheck reaches the books on exactly one row. A rule
-    // that let an unresolved citation fall back to the handle would post it to a scenario's row
-    // as well; one that dropped it leaves the report silent about a gate nobody owns, which is
-    // the comfortable failure this axis exists to refuse.
-    const bearing = activeMd
-      .slice(activeMd.indexOf("## Scenario Reconciliations"))
-      .split("\n")
-      .filter((line) => line.startsWith("|") && line.includes("(typecheck)"))
-      .map((line) => line.split("|").map((c) => c.trim())[1]);
-    assert.deepEqual(
-      bearing,
-      ["(no scenario)"],
-      `expected typecheck's credit on the suspense row and on no other; got ` +
-        `${JSON.stringify(bearing)} in:\n${activeMd}`,
-    );
-
-    // test / cucumber run in this fixture's CI too. They pass through NEITHER door — no check
-    // prefix, not in staticChecks, and the registry names typecheck and nothing else — so the
-    // widened discovery must not drag the runtime axis's own sources onto this one.
-    assert.ok(
-      !activeMd.includes("(test)") && !activeMd.includes("(cucumber)"),
-      `expected test/cucumber NOT counted as static checks; got:\n${activeMd}`,
-    );
-  },
-);
-
-// ---------------------------------------------------------------------------
-// @SCN-USG-010 — the boundary keeping @SCN-USG-009 honest, and the one target on this axis where
-// the DOUBLE-COUNT is reachable. Same script, same configuration, same registry entry; the ONLY
-// difference from usg-configured is the bare @typecheck tag carried on its stepless scenario.
-//
-// WHICH IS WHAT PUTS THE DOUBLE-COUNT BACK IN RANGE. Both doors stand open over this handle, and
-// here they disagree about where the credit lands — the obligation-side reader carries the
-// citation and posts to SCN-TGN-001, the running-check reader carries none — so the ingest edge's
-// no-double-observe filter is the only thing collapsing them. Over usg-configured the two doors
-// AGREE, so the same plant costs it nothing worse than one verdict said twice.
-//
-// The comment this replaces recorded the opposite finding, and it was true of the fixture as it
-// then stood: with the retired tag form and no registry entry, removing that filter left the
-// report reading 1 run either way, because the by-name posting's per-handle `find` collapsed the
-// second observation before it could reach the tally. Re-measured under the citing shape, the
-// plant reds. (3F-2510 measured it honestly; 3F-2585 moved the target out from under the
-// measurement; 3F-2590 then deleted the by-name posting entirely.)
-// ---------------------------------------------------------------------------
-const USG_CONFIGURED_NAMED_FIXTURE: UsgFixture = {
-  features: "tests/fixtures/usg-configured-named/features",
-  ci: "tests/fixtures/usg-configured-named/ci.yml",
-  packageJson: "tests/fixtures/usg-configured-named/package.json",
-};
-
-// @SCN-USG-010
-Given("a target that configures typecheck a static check and cites it", function () {
-  activeFixture = USG_CONFIGURED_NAMED_FIXTURE;
-  activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg010-"));
-});
-
-// @SCN-USG-010
-Given("a fitness scenario cites typecheck", function () {
-  // The usg-configured-named fixture registers typecheck → the bare check typecheck, and its
-  // target.feature carries that tag on the stepless @SCN-TGN-001. So the seam resolves the handle
-  // to a scenario and the credit posts to that row instead of folding onto suspense.
-  // Registered-and-carried is the shape only the one posting rule can produce, and it is one tag
-  // apart from the uncited twin @SCN-USG-009 drives.
-});
-
-// @SCN-USG-010
-Then(
-  "typecheck is attributed to the scenario citing it, counted once and not reported uncited",
-  function () {
-    // THE COUNT LEADS, because it is the only reading the double-count moves. Reconciliation is
-    // per-OBLIGATION, so one obligation settled by either of two credits still reads satisfied and
-    // the attributed row below says exactly what it says now. MEASURED: remove the ingest edge's
-    // no-double-observe filter and this line reads 2 over a tree running one, while every other
-    // assertion in this step stays green.
-    assert.ok(
-      activeMd.includes("1 static check(s) run, 0 uncited static check(s)"),
-      `expected typecheck counted ONCE and attributed. Both doors onto this axis stand open ` +
-        `over this handle — the manifest configures it, and the registry reaches it because a ` +
-        `scenario carries the tag it resolves to — and the ingest edge's no-double-observe ` +
-        `filter is what keeps one run from reaching the books twice. Reporting a gate the ` +
-        `target does not have is an INVENTION, and this axis's worst failure. Got:\n${activeMd}`,
-    );
-    // ATTRIBUTED, ASSERTED POSITIVELY — the row, on the terms @SCN-USG-002 and @SCN-USG-005 read
-    // their own twins. The lint cut names the BARE check tag the registry resolves typecheck to,
-    // against the @SCN whose stepless scenario carries it; a reader that dropped the credit or
-    // banked it on a scenario the corpus never wrote satisfies the negative below and not this.
-    assert.ok(
-      activeMd.includes(
-        "| SCN-TGN-001 | typecheck | ✓ Evidence Observation satisfies its Evidence Obligation |",
-      ),
-      `expected typecheck attributed to the scenario citing it; got:\n${activeMd}`,
-    );
-    assert.ok(
-      !activeMd.includes("cites no Scenario (typecheck)"),
-      `expected NO uncited credit for typecheck: a fitness scenario cites it. Accusing an ` +
-        `attributed gate of being uncited sends a consultant to fix something that is not ` +
-        `broken. Got:\n${activeMd}`,
     );
   },
 );
@@ -1321,6 +1150,201 @@ Then("the check is on the books as an uncited static check", function () {
 });
 
 // ---------------------------------------------------------------------------
+// @SCN-USG-021 — THE RETIRED KEY, NAMED. Its own fixture, and the fixture's whole shape is that
+// `checkRegistry` is written CORRECTLY — a real CI step (`lint:foo`) mapped to a real bare check
+// tag a scenario below carries (`foo`) — the same shape @SCN-STG-005's scn-tags-fitness fixture
+// plants for the `tags` command. This arm is the reconciliation report's own side of the same
+// fact: nothing reads the block any longer, so the report has to say so, the check has to reach
+// the suspense row on its own, and the bare-tagged scenario has to reconcile like any other
+// untagged one.
+// ---------------------------------------------------------------------------
+const USG_CHECK_REGISTRY_RETIRED_FIXTURE: UsgFixture = {
+  features: "tests/fixtures/usg-check-registry-retired/features",
+  ci: "tests/fixtures/usg-check-registry-retired/ci.yml",
+  packageJson: "tests/fixtures/usg-check-registry-retired/package.json",
+};
+
+/** The `- <key> — retired: ...` lines of the report's `### Static checks` retired-key account. */
+function retiredKeyLines(md: string): string[] {
+  return reportSectionLines(md, "### Static checks").filter((line) => line.startsWith("- specController."));
+}
+
+// @SCN-USG-021
+Given(
+  "a target whose manifest registers a check through specController.checkRegistry, naming a check its CI runs",
+  function () {
+    activeFixture = USG_CHECK_REGISTRY_RETIRED_FIXTURE;
+    activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg021-"));
+    // THE PREMISE, ASSERTED FOR ITS SHAPE. The block names one entry, mapping a runnable handle
+    // to a bare check tag, or the scenario poses no question about the retired route at all.
+    const specController = manifestOf(USG_CHECK_REGISTRY_RETIRED_FIXTURE)[
+      "specController"
+    ] as Record<string, unknown>;
+    assert.deepEqual(
+      specController["checkRegistry"],
+      { "lint:foo": "foo" },
+      `the fixture must carry exactly the registry entry this scenario is about. Got: ` +
+        `${JSON.stringify(specController)}`,
+    );
+    const workflow = workflowOf(USG_CHECK_REGISTRY_RETIRED_FIXTURE);
+    assert.ok(
+      workflow.includes("run: pnpm lint:foo"),
+      `the fixture's CI must run the check the registry names, or nothing is available to reach ` +
+        `the books at all. Got:\n${workflow}`,
+    );
+  },
+);
+
+// @SCN-USG-021
+Given("that target's corpus carries a scenario tagged with the registry's bare check tag", function () {
+  const source = readFileSync(
+    join(process.cwd(), USG_CHECK_REGISTRY_RETIRED_FIXTURE.features, "target.feature"),
+    "utf8",
+  );
+  assert.ok(
+    /^\s*@foo\s*$/m.test(source) && source.includes("Scenario: the check the registry names is exercised"),
+    `the fixture's corpus must carry a scenario tagged with the registry's own bare check tag ` +
+      `("foo"), stepless, or the scenario poses no question about the join the registry used to ` +
+      `make. Got:\n${source}`,
+  );
+});
+
+// @SCN-USG-021
+Then("the report names specController.checkRegistry as a key it no longer reads", function () {
+  // THE NAME, NOT MERELY THE SILENCE. A reader that simply stopped reading the block satisfies
+  // every OTHER line of this scenario; only this line catches one that stopped reading it
+  // without saying so.
+  assert.deepEqual(
+    retiredKeyLines(activeMd),
+    [
+      "- specController.checkRegistry — retired: this reader no longer reads it, and none of its entries reach the books.",
+    ],
+    `expected the retired key NAMED on the report, the same duty @SCN-USG-019 gives an invented ` +
+      `key. Got:\n${activeMd}`,
+  );
+});
+
+// @SCN-USG-021
+Then("the check is on the books as an uncited static check, citing no scenario", function () {
+  // THE ROUTE IS GONE, NOT MERELY UNRESOLVED. Discovery finds the step by subtraction, exactly
+  // as it would over a target naming no registry at all — nothing about the retirement takes the
+  // check out of the books, and the retired key naming it changes nothing about where it lands.
+  assert.ok(
+    reportSectionLines(activeMd, "### Static checks").some((line) =>
+      line.includes("1 static check(s) run, 1 uncited static check(s)"),
+    ),
+    `expected lint:foo counted as the one running, one uncited static check. Got:\n${activeMd}`,
+  );
+  assert.ok(
+    suspenseRowCredits(activeMd).includes("lint:foo"),
+    `expected lint:foo's credit banked on the suspense row — cited by nothing, because nothing ` +
+      `resolves the registry that used to name its scenario. Got:\n${activeMd}`,
+  );
+});
+
+// @SCN-USG-021
+Then("the bare-tagged scenario raises no Evidence Obligation", function () {
+  // NO-SCN-CODE, THE ORDINARY RULE (@SCN-LDG-021) — NOT A FITNESS OBLIGATION THE REGISTRY USED
+  // TO RAISE. The scenario carries no @SCN, so with nothing left to resolve its bare tag it
+  // reconciles exactly as any other untagged scenario does: named on the untagged census, never
+  // as an answered — or even a missing — obligation.
+  assert.ok(
+    activeMd.includes("1 scenario(s) carry no @SCN tag:"),
+    `expected the bare-tagged scenario counted among the corpus's untagged half, raising no ` +
+      `obligation the registry no longer resolves. Got:\n${activeMd}`,
+  );
+  assert.ok(
+    activeMd.includes("target.feature : the check the registry names is exercised"),
+    `expected the bare-tagged scenario named by its own locator on the untagged census. Got:\n${activeMd}`,
+  );
+});
+
+// ---------------------------------------------------------------------------
+// @SCN-USG-022 — THE SECOND RETIRED KEY. Its own fixture: `specController.staticChecks` names
+// `check:types` among two scripts (`check:format` declared first, `check:types` second) a single
+// CI step invokes together — the tiebreak 3F-3396 deleted. This arm proves the report's two
+// separate consequences of retiring it: the key is NAMED (the same account @SCN-USG-021 grafts),
+// and the step it used to settle is now reported under the FIRST script it invokes rather than
+// the one the list nominated.
+// ---------------------------------------------------------------------------
+const USG_STATIC_CHECKS_RETIRED_FIXTURE: UsgFixture = {
+  features: "tests/fixtures/usg-static-checks-retired/features",
+  ci: "tests/fixtures/usg-static-checks-retired/ci.yml",
+  packageJson: "tests/fixtures/usg-static-checks-retired/package.json",
+};
+
+// @SCN-USG-022
+Given("a target whose manifest carries a specController.staticChecks list", function () {
+  activeFixture = USG_STATIC_CHECKS_RETIRED_FIXTURE;
+  activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg022-"));
+  // THE PREMISE, ASSERTED FOR ITS SHAPE. The list must nominate exactly the script the second
+  // Then's step invokes ALONGSIDE another, or the scenario poses no question about the tiebreak
+  // at all.
+  const specController = manifestOf(USG_STATIC_CHECKS_RETIRED_FIXTURE)[
+    "specController"
+  ] as Record<string, unknown>;
+  assert.deepEqual(
+    specController["staticChecks"],
+    ["check:types"],
+    `the fixture must carry exactly the staticChecks entry this scenario is about. Got: ` +
+      `${JSON.stringify(specController)}`,
+  );
+});
+
+// @SCN-USG-022
+Given("a CI step invoking two of that target's scripts, one of them on that list", function () {
+  // THE ORDER IS THE POINT. `check:format` is declared BEFORE `check:types` in the fixture's own
+  // scripts block, and the list nominates `check:types` — the two disagree, or the scenario
+  // cannot tell "first invoked" apart from "list nominated".
+  assert.deepEqual(
+    Object.keys(scriptsOf(USG_STATIC_CHECKS_RETIRED_FIXTURE)),
+    ["check:format", "check:types", "test", "cucumber"],
+    `expected check:format declared before check:types, or the fixture cannot isolate "first ` +
+      `invoked" from "list nominated". Got: ` +
+      `${JSON.stringify(scriptsOf(USG_STATIC_CHECKS_RETIRED_FIXTURE))}`,
+  );
+  const workflow = workflowOf(USG_STATIC_CHECKS_RETIRED_FIXTURE);
+  assert.ok(
+    /run:\s*\|\s*\n\s*pnpm check:format\s*\n\s*pnpm check:types/.test(workflow),
+    `the fixture's CI must run one step invoking BOTH scripts, or there is nothing for the ` +
+      `tiebreak to have settled. Got:\n${workflow}`,
+  );
+});
+
+// @SCN-USG-022
+Then("the report names specController.staticChecks as a key it no longer reads", function () {
+  assert.deepEqual(
+    retiredKeyLines(activeMd),
+    [
+      "- specController.staticChecks — retired: this reader no longer reads it, and none of its entries reach the books.",
+    ],
+    `expected the retired key NAMED on the report, the same duty @SCN-USG-021 gives ` +
+      `checkRegistry. Got:\n${activeMd}`,
+  );
+});
+
+// @SCN-USG-022
+Then(
+  "that step is reported under the first script it invokes, not the one the list nominated",
+  function () {
+    // THE TIEBREAK'S REMOVAL, THE ONLY PLACE IT IS OBSERVABLE. The step's credit reaches no
+    // citation either way (nothing cites either script), so both land in suspense — the fact
+    // this line is about is WHICH HANDLE it lands under.
+    const credits = suspenseRowCredits(activeMd);
+    assert.ok(
+      credits.includes("check:format"),
+      `expected the step reported under check:format — the first script it invokes — not the ` +
+        `list's nomination. Got suspense credits:\n${credits}\nfull report:\n${activeMd}`,
+    );
+    assert.ok(
+      !credits.includes("check:types"),
+      `expected check:types, the list's nomination, NOT naming the step now the tiebreak is ` +
+        `gone. Got suspense credits:\n${credits}\nfull report:\n${activeMd}`,
+    );
+  },
+);
+
+// ---------------------------------------------------------------------------
 // @SCN-USG-015 — THE CONSUMER'S OWN LIST. Its own fixture, and its shape is a pair plus a stale
 // line: `Rule check` is named a non-check and must leave the books, `Sweep check` is named by
 // nothing and must stay on them, and `Circular-import check` is the Sweep check's old name — an
@@ -1673,14 +1697,14 @@ Given("a check step of the same pipeline that runs a command", function () {
     `the fixture must run a SECOND check as an ordinary command, or a reader that discovered ` +
       `nothing at all satisfies the claim below. Got:\n${workflow}`,
   );
-  // REGISTERED AND CARRIED NOWHERE, so the control reaches the suspense row for the one reason the
-  // posting rule allows rather than for two — the shape usg-guard's own target states.
+  // CONFIGURED NOWHERE, so the control reaches the suspense row for the one reason the posting
+  // rule allows — the shape usg-guard's own target states.
   const specController = manifestOf(USG_ACTION_FIXTURE)["specController"] as Record<string, unknown>;
   assert.deepEqual(
-    specController["checkRegistry"],
-    { "domain-purity": "domain-purity" },
-    `the control's handle must be registered, or its credit lands on the suspense row for a ` +
-      `second reason and stops being a control for this one`,
+    specController["fitnessChecks"],
+    undefined,
+    `the control's handle must name no configured row, or its credit lands on the suspense row ` +
+      `for a second reason and stops being a control for this one`,
   );
   assert.ok(
     !readFileSync(

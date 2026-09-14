@@ -1,9 +1,0 @@
-{
-  "name": "scn-tags-fitness-unregistered-fixture",
-  "private": true,
-  "specController": {
-    "checkRegistry": {
-      "lint:vocab": "vocab"
-    }
-  }
-}

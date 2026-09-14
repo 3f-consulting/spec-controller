@@ -418,8 +418,6 @@ function parseRuntimeObservations(opts: ReconcileOptions, root: string | undefin
 type TargetManifest = PackageJsonScripts & {
   specController?: {
     deferralTags?: unknown;
-    staticChecks?: unknown;
-    checkRegistry?: unknown;
     thresholds?: unknown;
     fitnessChecks?: unknown;
     runners?: unknown;
@@ -429,9 +427,9 @@ type TargetManifest = PackageJsonScripts & {
 
 export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
   // Read the target's package.json ONCE — its `specController.*` config supplies the deferral-tag
-  // extension (@SCN-PND-021), the check registry (@SCN-LNT-005) and the configured check names
-  // (@SCN-USG-009), and its `scripts` back the `exists` read. The disk read stays at this impure
-  // edge; the engine takes the resolved values as injected params, staying pure.
+  // extension (@SCN-PND-021) and the configured fitness rows, and its `scripts` back the `exists`
+  // read. The disk read stays at this impure edge; the engine takes the resolved values as
+  // injected params, staying pure.
   const pkgPath = opts.packageJson ?? "package.json";
   const packageJson = readJsonIfPresent<TargetManifest>(pkgPath) ?? {};
   // The TARGET repo root — the credit locators are made relative to it, so a phantom-scenario row's

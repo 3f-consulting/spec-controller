@@ -2,13 +2,17 @@
   "name": "ten-outcome-corpus-fixture",
   "private": true,
   "scripts": {
-    "guard:wm": "echo the watermelon guard exists as a script but CI never runs it",
+    "guard:wm": "echo the watermelon guard runs in CI but its red does not gate the job",
     "test": "vitest run"
   },
   "specController": {
-    "checkRegistry": {
-      "guard:wm": "wm"
-    },
+    "fitnessChecks": [
+      {
+        "scn": "SCN-TOC-004",
+        "characteristic": "wm",
+        "command": "pnpm guard:wm"
+      }
+    ],
     "runners": {
       "unit": "vitest"
     },

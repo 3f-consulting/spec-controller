@@ -10,10 +10,6 @@
       "ci.yml:ci:Circular-import check",
       "ci.yml:ci:pnpm install --frozen-lockfile"
     ],
-    "checkRegistry": {
-      "lint:rules": "rules",
-      "lint:sweep": "sweep"
-    },
     "runners": {
       "unit": "vitest"
     }

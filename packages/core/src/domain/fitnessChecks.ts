@@ -15,15 +15,16 @@
  * the pair key, the reconciler's static arm and the report's roll-up are all untouched. What
  * changed is only where the word came from.
  *
- * NOT `checkRegistry`, AND THE DIFFERENCE IS THE SEAM THIS RETIRES. That registry answers "which
- * check is this runnable script handle", because a handle does not know what it is for; the `@SCN`
+ * NOT THE (RETIRED) CHECK REGISTRY, AND THE DIFFERENCE IS THE SEAM THIS RETIRES. That registry
+ * answered "which check is this runnable script handle", because a handle does not know what it
+ * is for; the `@SCN`
  * is then resolved through the corpus, a second hop. A converted check is never discovered as a
  * handle — it is a scenario that ran, carrying its own tag line — so the `@SCN` is the KEY here
  * rather than something a lookup has to recover.
  *
  * PURE AND INJECTED — the rows arrive as data, read from the TARGET's own manifest at the app edge
- * (`specController.fitnessChecks`), the stance `checkRegistry` and the threshold index already
- * take. A target that configures nothing raises nothing, so the reading is inert on a corpus
+ * (`specController.fitnessChecks`), the stance `thresholdsOf` already takes. A target that
+ * configures nothing raises nothing, so the reading is inert on a corpus
  * nobody has converted.
  */
 
@@ -93,7 +94,7 @@ const BAR_DIRECTIONS = ["atLeast", "atMost"] as const;
  *
  * BOTH TERMS ARE STORED BARE. A manifest written by hand will sooner or later spell an `@SCN` — and
  * a characteristic — the way a feature file does, and both lookups match bare; stripping once here
- * rather than at every call site is the stance `checkRegistryOf` and `thresholdsOf` already take.
+ * rather than at every call site is the stance `thresholdsOf` already takes.
  *
  * A ROW NAMING NEITHER TERM IS DROPPED WHOLE, never half-read. The two terms make one claim
  * together — THIS scenario asserts THIS characteristic — so a row missing either says nothing a

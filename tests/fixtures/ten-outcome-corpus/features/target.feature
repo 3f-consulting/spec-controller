@@ -26,11 +26,12 @@ Feature: ten-outcome corpus — a fixture shaped so the REAL reconcile emits all
     When no observation cites it
     Then it reconciles missing
 
-  # STEPLESS and carrying the bare check `wm`, which this target's registry maps onto the
-  # `guard:wm` script. A fitness obligation is raised off the bare tag, steps or none (@SCN-LNT-006), and the
-  # run cites this scenario, so the watermelon is reached by the one posting rule.
-  @wm @SCN-TOC-004
-  Scenario: watermelon — a static check that exists but is not wired into CI
+  # STEPLESS and configuring one row — SCN-TOC-004, characteristic wm — whose CI step carries that
+  # row's code as its own `id:` AND `continue-on-error: true`. The step RUNS (unlike the retired
+  # registry-only route), but its red does not gate the job, so the running-check observer reads it
+  # exists-and-unenforced: the watermelon by the SEVERED-STEP route (@SCN-LNT-032), not the registry.
+  @fitness @SCN-TOC-004
+  Scenario: watermelon — a static check whose step runs but whose red the job swallows
 
   @e2e @SCN-TOC-005
   Scenario: no-evidence-obligation — a real scenario cited at a quality-check it never named

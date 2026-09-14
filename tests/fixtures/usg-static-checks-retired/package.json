@@ -1,14 +1,12 @@
 {
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "check:format": "prettier --check .",
+    "check:types": "tsc --noEmit",
     "test": "vitest run",
     "cucumber": "cucumber-js"
   },
   "specController": {
-    "staticChecks": ["typecheck"],
-    "checkRegistry": {
-      "typecheck": "typecheck"
-    },
+    "staticChecks": ["check:types"],
     "runners": {
       "unit": "vitest",
       "integration": "cucumber-js"

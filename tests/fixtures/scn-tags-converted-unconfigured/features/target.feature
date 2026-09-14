@@ -6,9 +6,9 @@ Feature: a target whose fitness checks are converted scenarios
 
   Both scenarios below carry the fitness axis tag and their @SCN and nothing else, which is
   the whole of what a converted check's scenario says about itself: the tag names the axis and
-  the CHARACTERISTIC is on the configured row. Neither names a tier, and neither carries a word
-  this target's registry names — so both red the shipped command as tags that mean nothing here
-  unless the axis word is grammar in its own right.
+  the CHARACTERISTIC is on the configured row. Neither names a tier, and neither carries a bare
+  check tag any configured row names — so both red the shipped command as tags that mean nothing
+  here unless the axis word is grammar in its own right.
 
   THE PAIR IS THE RULING RATHER THAN AN ACCIDENT OF THE PLANT. SCN-TGT-001 is named by a
   configured row and SCN-TGT-002 is named by none — a half-converted check, whose tag moved and

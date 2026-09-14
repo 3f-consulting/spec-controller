@@ -53,7 +53,7 @@ const oneRow = resolveFitnessChecks(
 );
 
 function corpusOf(source: string, fitnessChecks = oneRow) {
-  return readTargetCorpus([source], [], new Map(), new Map(), fitnessChecks);
+  return readTargetCorpus([source], [], new Map(), fitnessChecks);
 }
 
 describe("[SCN-LNT-020] a @fitness scenario no configured row names raises no Evidence Obligation", () => {

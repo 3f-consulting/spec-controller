@@ -8,7 +8,7 @@
  * repository holds a manifest to this list any more.
  *
  * THE GATE THAT USED TO (3F-2996, retired 3F-3167). The set of words that could name a
- * characteristic was once read out of the target's own `specController.checkRegistry` and
+ * characteristic was once read out of the target's own check registry and
  * `specController.thresholds`, so adding a registry entry was simultaneously the act that MINTED
  * a characteristic and the act that CERTIFIED it. Fourteen tags for seven characteristics were
  * built over a month in a repository that reconciles its own tree on every push, and nothing
@@ -42,7 +42,7 @@
  * forgotten.
  *
  * PURE DATA AND ONE PREDICATE — no I/O, nothing imported, so it sits in `domain/` beside
- * `checkRegistry.ts` and `enginePurity` / `domainPurity` stay green by construction.
+ * the fitness-row readers, and `enginePurity` / `domainPurity` stay green by construction.
  */
 
 /**

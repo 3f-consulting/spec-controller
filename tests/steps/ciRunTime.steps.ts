@@ -14,7 +14,7 @@
  * the wrong input reads green at unit and wrong on the ledger.
  *
  * The threshold registry is core-INTERNAL (where this configuration is authored is still
- * settling — the same question `checkRegistryOf` is parked on), so it is reached by source path
+ * settling — the registry-home question, increment D), so it is reached by source path
  * rather than through the frozen v1 barrel.
  */
 

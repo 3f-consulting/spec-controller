@@ -12,12 +12,15 @@
  * symbol grep can see. Only reconciling a credit and reading where it landed can. So the retirement
  * is pinned by CONSTRUCTION here rather than by the absence of a word somewhere.
  *
- * THE COLLISION THE FALLBACK NEEDED. The by-handle arm compared an uncited observation's
- * `staticCheck` — the RUNNABLE handle — against the obligation's `staticCheck`, which is the BARE
- * check tag its stepless scenario carries. For a prefixed check those two spellings differ
- * (`lint:feature-codes` vs `traceability`) and the arm could never fire. A PREFIX-LESS check
- * carries its handle and its bare tag as the SAME WORD — the shape on which the retired route was
- * still live, and the whole reason this plant is worth having.
+ * THE COLLISION THE FALLBACK NEEDED, RESHAPED (3F-3161, @SCN-LNT-017). Until the registry route
+ * retired, this collision was a MISSPELT HANDLE — a script whose bare tag WAS registered but whose
+ * runnable handle was not, so hop 1 (`domain/checkRegistry`) missed it while the corpus still
+ * raised the obligation. That specific fault shape no longer exists: there is no handle-keyed
+ * lookup left to miss. The collision the surviving `id:` route can still produce is simpler and
+ * covers the same ground — a check CI runs whose step states no code (or one no configured row
+ * answers) cites nothing, exactly as an unregistered handle once did, and the corpus still raises
+ * the obligation because nothing about ITS reading changed. `tests/fixtures/usg/ci.yml` (3F-3377)
+ * already carries this exact shape at the cucumber layer; this is its unit-level twin.
  *
  * PLANTED WHOLE, AND IT USED TO BE THIS REPOSITORY'S OWN TREE (3F-3166). `typecheck` was the
  * collision: a prefix-less script that `specController.staticChecks` put on the books, so the CI
@@ -27,18 +30,15 @@
  * `specController.staticChecks` has
  * left this manifest. Under 3F-3139's migration NO check of this tree is discovered by handle at
  * all, which is 3F-3165's finding one step further on: the durable subject is a planted tree.
- * What the real read bought was a genuine workflow under the OBSERVER; what this arm asserts is the
- * CITATION SEAM, whose inputs — the registry and the corpus — were fixtures in it already. So the
- * plant wires exactly the handle the fixture registry misses, and states its own premise instead of
- * borrowing one from files other work edits.
+ * What the real read bought was a genuine workflow under the OBSERVER; what this arm asserts is
+ * what the RECONCILER does with a citation once resolved — the seam's inputs were fixtures here
+ * already, and are now injected directly (see below). So the plant wires exactly the handle the
+ * citation misses, and states its own premise instead of borrowing one from files other work edits.
  *
  * TWO FIXTURE FACTS, AND THE SECOND IS THE ONE THAT MAKES THE CREDIT UNCITED: the planted tree runs
  * a prefix-less `typecheck` script and configures it as a static check, so the observer produces a
- * credit; and the registry maps `lint:typecheck` where the script is really called `typecheck`, so
- * the running handle is UNREGISTERED and hop 1 of the citation seam returns null
- * (`domain/checkRegistry` — "a running check the registry cannot name reaches no @SCN, so its
- * observation cites nothing and lands in suspense"). The tag itself is registered, so the corpus
- * still raises the obligation.
+ * credit; and the injected citation names nothing for it, so hop 1 of the citation seam returns
+ * null. The tag itself is still raised by the corpus, so the corpus still raises the obligation.
  *
  * WHAT IT LOOKED LIKE BEFORE. The credit posted to SUSPENSE and, on the very same run, answered
  * SCN-AAA-001's obligation by handle — so the row read `balanced` on evidence that cited nothing
@@ -53,9 +53,8 @@
 
 import { describe, it, expect } from "vitest";
 import { reconcile } from "./evidenceReconciliation.js";
-import { checkRegistryOf, registeredCheckTags } from "./checkRegistry.js";
-import { citationOfScript, fitnessCitations } from "../parse/fitnessCitations.js";
-import { parseScenarios, parseTaggedScenarios } from "../parse/scenarios.js";
+import type { ScriptCitation } from "../parse/fitnessCitations.js";
+import { parseScenarios } from "../parse/scenarios.js";
 import { runningStaticChecks } from "../parse/runningStaticChecks.js";
 import type { PackageJsonScripts } from "../parse/checkScriptsRunInCI.js";
 
@@ -74,8 +73,7 @@ const UNREGISTERED_HANDLE = "typecheck";
  * of what the observer needs to produce the credit this arm is about.
  *
  * STATED HERE RATHER THAN READ, and the two halves have to agree or the observer finds nothing: a
- * `run:` step naming the script, and a `scripts` entry defining it. The configured set below is the
- * third half — the discovery route a prefix cannot reach (@SCN-USG-009).
+ * `run:` step naming the script, and a `scripts` entry defining it.
  */
 const PLANTED_CI = [
   `jobs:\n  ci:\n    steps:\n      - run: pnpm ${UNREGISTERED_HANDLE}\n`,
@@ -83,19 +81,14 @@ const PLANTED_CI = [
 const PLANTED_PACKAGE_JSON: PackageJsonScripts = {
   scripts: { [UNREGISTERED_HANDLE]: "tsc --noEmit" },
 };
-const PLANTED_STATIC_CHECKS = [UNREGISTERED_HANDLE];
 
-/**
- * The handle the fixture registry maps instead — a misspelling of the real one, which is what
- * leaves the running script unregistered while its bare tag stays known to the corpus.
- */
-const MISSPELT_HANDLE = "lint:typecheck";
+/** The seam's answer, injected — the step's own code names no configured row, so the run cites
+ *  nothing however discovery found it. See the file header for why this is injected rather than
+ *  derived through the seam. */
+const citedScn = (): ScriptCitation | null => null;
 
 describe("[SCN-USG-001] an uncited fitness credit lands in suspense and never answers an Evidence Obligation by name", () => {
   it("posts the citing-nothing credit to suspense, leaves the scenario naming that check missing, and answers no obligation anywhere with it", () => {
-    // The registry knows the TAG and misses the HANDLE — the fixture fact the citation seam turns on.
-    const registry = checkRegistryOf({ [MISSPELT_HANDLE]: UNREGISTERED_HANDLE });
-    const checkTags = registeredCheckTags(registry);
     const corpus = [
       "@LNT",
       "Feature: fixture",
@@ -103,21 +96,19 @@ describe("[SCN-USG-001] an uncited fitness credit lands in suspense and never an
       `    @${UNREGISTERED_HANDLE} @SCN-AAA-001`,
       "    Scenario: the tree compiles under the configured type settings",
     ].join("\n");
-    const scenarios = parseScenarios(corpus, [], checkTags);
+    const scenarios = parseScenarios(corpus, [], [UNREGISTERED_HANDLE]);
     // The obligation IS raised, and it names the BARE tag — which is the same word as the handle.
     // Without this the plant would prove only that an unnamed check reaches suspense, which is
     // @SCN-USG-001's plain case and was never what the by-handle arm keyed on.
     expect(scenarios.map((s) => [s.scnId, s.evidenceObligations])).toEqual([
       ["SCN-AAA-001", [{ qualityCheck: "lint", staticCheck: UNREGISTERED_HANDLE }]],
     ]);
-    const citations = fitnessCitations(parseTaggedScenarios(corpus), checkTags);
 
     const evidenceObservations = runningStaticChecks(
       PLANTED_CI,
       PLANTED_PACKAGE_JSON,
       NO_RUNNERS,
-      PLANTED_STATIC_CHECKS,
-      (script) => citationOfScript(script, registry, citations)
+      citedScn
     );
     // THE PROBE FIRED, ASSERTED BEFORE ANYTHING IS READ OFF IT. An observer that produced nothing
     // would let every assertion below pass over an empty ledger — a probe that never fired, reading

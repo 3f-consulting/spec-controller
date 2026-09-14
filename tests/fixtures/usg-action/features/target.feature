@@ -11,14 +11,13 @@ Feature: a fixture target whose CI runs a quality check as an action
   reconciler, and not a step this manifest names a non-check. What names it on them is the action
   reference itself, which is what GitHub shows for a step carrying no name: of its own.
 
-  ITS HANDLE IS REGISTERED BY NOTHING, and that is the consumer this scenario is about rather than
-  an omission. A pipeline whose analysis is CodeQL arrives having configured nothing at all, and
-  the first run it gets has to say the action ran and nothing cites it. Registering it here would
-  answer a question about the registry instead.
+  ITS HANDLE ANSWERS NO CONFIGURED ROW, and that is the consumer this scenario is about rather
+  than an omission. A pipeline whose analysis is CodeQL arrives having configured nothing at all,
+  and the first run it gets has to say the action ran and nothing cites it.
 
-  THE COMMAND CHECK IS THE CONTROL, and it is registered-and-uncarried so that it reaches the
-  suspense row for the one reason the posting rule allows: specController maps domain-purity to the
-  bare check domain-purity, and no scenario below carries that tag. Without a second check still on
+  THE COMMAND CHECK IS THE CONTROL, and it reaches the suspense row for the one reason the posting
+  rule allows: no `specController.fitnessChecks` row names domain-purity's characteristic and no
+  scenario below carries the tag such a row would have named. Without a second check still on
   the books, "the action is an uncited check" is satisfied by a reader that discovered nothing —
   and a reader that had traded its run: steps for uses: steps would satisfy it too.
 

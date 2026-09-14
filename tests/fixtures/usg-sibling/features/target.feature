@@ -5,18 +5,18 @@ Feature: a fixture target whose static check runs in a sibling workflow
   pipeline: ci.yml runs the suites and no static check at all, while nightly.yml runs
   lint:nightly on a schedule — the ordinary layout a slow gate ends up in.
 
-  The target CITES that check: its own specController.checkRegistry maps lint:nightly to
-  the bare check nightly, and the stepless fitness scenario below carries that tag. So the
-  seam resolves the handle to SCN-TGS-001 and the credit posts to that row, under the BARE
-  tag rather than the handle that ran. The point is that the cited set and the running set
-  agree once every workflow is read. Read ci.yml alone and they disagree, and the
-  disagreement is scored against the target: lint:nightly reports as a watermelon, a real
-  gate called fabricated.
+  The target CITES that check: its own specController.fitnessChecks configures one row —
+  SCN-TGS-001, characteristic nightly — and the lint:nightly step in nightly.yml carries
+  that row's code as its own `id:`. So the running-check observer reads the citation
+  directly off the step, under the BARE characteristic the row names rather than the
+  handle that ran. The point is that the cited set and the running set agree once every
+  workflow is read. Read ci.yml alone and they disagree, and the disagreement is scored
+  against the target: lint:nightly reports as a watermelon, a real gate called fabricated.
 
-  REGISTERED AND CARRIED ARE TWO FACTS, and this fixture holds both deliberately. Leaving
-  the handle out of the registry would take the citation away for a second reason — a handle
-  nothing registers reaches nothing either — and the target could then go on passing under a
-  reader that never asked whether anything CARRIED the check. Holding both leaves the
+  A CONFIGURED ROW AND A CODED STEP ARE TWO FACTS, and this fixture holds both
+  deliberately. Leaving the step uncoded would take the citation away for a second reason
+  — a step naming no row reaches nothing either — and the target could then go on passing
+  under a reader that never asked whether anything CITED the check. Holding both leaves the
   workflow split as the only thing this scenario turns on.
 
   NO TIER TAG ON THE ROW, WHICH IS WHAT KEEPS THIS TARGET BALANCED. Every other @USG fixture
@@ -31,5 +31,5 @@ Feature: a fixture target whose static check runs in a sibling workflow
 
   Rule: the target holds itself to the nightly check its CI runs
 
-    @nightly @SCN-TGS-001
+    @fitness @SCN-TGS-001
     Scenario: the tree stays inside the nightly threshold

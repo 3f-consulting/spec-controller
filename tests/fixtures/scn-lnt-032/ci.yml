@@ -5,6 +5,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Complexity
+        id: SCN-CVT-001
         continue-on-error: true
         run: pnpm lint:alpha
       - name: Anemic domain

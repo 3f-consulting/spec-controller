@@ -1,8 +1,8 @@
 /**
  * THE THRESHOLD INDEX — what ceiling a MEASURED fitness check is held to on a given scenario.
  *
- * The debit-side twin of `checkRegistry`, and the input that makes the measured axis possible at
- * all:
+ * The debit-side twin of the (now-retired) check registry, and the input that makes the measured
+ * axis possible at all:
  *
  *     @SCN + bare check tag  ──thresholds──▶  the ceiling
  *     SCN-CIP-001  ci-run-time                75
@@ -133,7 +133,7 @@ export function barOf(entry: unknown): ThresholdBar | null {
  * the miss would be silent.
  *
  * A MALFORMED BAR IS DROPPED, NOT TRUSTED AND NOT THROWN ON — the same defensive stance
- * `checkRegistryOf` and `resolveDeferralTags` take, and for a sharper reason here. A ceiling of
+ * `resolveDeferralTags` takes, and for a sharper reason here. A ceiling of
  * `NaN` fails every comparison, so `measured <= NaN` is false and an honestly-fast suite would read
  * `failing` with the blame on the suite rather than on the manifest. Throwing instead would turn one
  * bad character into a run that produces no verdict at all, which is loud nowhere; a dropped bar
@@ -191,9 +191,9 @@ export function thresholdFor(
 /**
  * The bare check tags this index knows to be MEASURED — unique and sorted.
  *
- * The measured twin of `registeredCheckTags`, and the reason a measured check is visible to the
- * obligation rule at all. A measured check has no runnable script handle, so it never appears in
- * `checkRegistry`; were the obligation-raising tag set the registry's alone, a stepless scenario
+ * The reason a measured check is visible to the obligation rule at all. A measured check has no
+ * runnable script handle, so it is never discoverable by one; were the obligation-raising tag
+ * set built from discovered handles alone, a stepless scenario
  * tagged with one would raise nothing and the axis would be silent rather than wrong. The two sets
  * are unioned at the edge that reads both.
  */

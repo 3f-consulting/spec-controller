@@ -27,12 +27,13 @@
  * something took out — each of which the report says out loud — so a false POSITIVE is visible and
  * correctable in one line of the consumer's own configuration.
  *
- * One of the two static-check observers: this one reads every static check CI RUNS; the
- * obligation-side observer (`checkStaticEvidenceObligations`) reads the OBLIGATION side (the
- * watermelon input). Both share the watermelon-critical CI-parse walk from `checkScriptsRunInCI`
- * (`ciWorkflowSteps`, of which `ciRunSteps` and `ciRunCommands` are the projections /
- * `commandInvokesScript`) — one parse, so the two cannot come to disagree about which steps a
- * workflow runs.
+ * THE ONLY STATIC-CHECK OBSERVER THE RECONCILIATION COMPOSITION WIRES IN (3F-3397). Discovery and
+ * attribution are one reader now: every running check reaches the books here, and the `citedScn`
+ * seam below stamps the credit's row as the step is observed — there is no second, obligation-side
+ * reader left to keep in agreement with it. `checkStaticEvidenceObligations` is a separate, frozen
+ * v1 API export (`@SCN-API-001`); nothing in this composition calls it. The CI-parse walk still
+ * comes from `checkScriptsRunInCI` (`ciWorkflowSteps`, of which `ciRunSteps` and `ciRunCommands`
+ * are the projections / `commandInvokesScript`).
  *
  * `exists: true` BY CONSTRUCTION — a step the pipeline runs is a check that is there to be run.
  * `enforcedOverRealSource` is READ, not assumed (@SCN-LNT-032): a step whose red its job survives
@@ -93,11 +94,12 @@ function namedRunnersAt(
 /**
  * WHAT THIS CANDIDATE IS CALLED — the runnable handle a report row and a reconciling credit carry.
  *
- * THE SCRIPT IT INVOKES, WHERE IT INVOKES ONE. A handle is where-to-fix: the thing a consumer runs
- * to reproduce the check, and the vocabulary every other reader on this axis already speaks — the
- * obligation-side observer answers per registered handle, the registry is keyed by one, and the
- * two streams are kept from double-observing one check by comparing them. A step that reaches its
- * check through the consumer's own manifest has that name available, so it is used.
+ * THE SCRIPT IT INVOKES, WHERE IT INVOKES ONE (3F-3397). A handle is where-to-fix: the thing a
+ * consumer runs to reproduce the check, and the vocabulary the citation seam already speaks — the
+ * `citedScn` callback below resolves a run through the target's registry to a bare check tag, and
+ * a handle spelled the same way is what lets a report row and a reconciling credit name the same
+ * check. A step that reaches its check through the consumer's own manifest has that name
+ * available, so it is used.
  *
  * OTHERWISE THE STEP'S OWN IDENTITY, which is GitHub's (`checkScriptsRunInCI`) and therefore the
  * string already in the consumer's run log. `pnpm exec eslint` and a bare `run: ruff` invoke no
@@ -110,21 +112,11 @@ function namedRunnersAt(
  * consumer's to reach — its identity is the action reference GitHub displays for it, or the
  * `name:` its author gave it. The branch is not a special case for actions: it is the same
  * fallback a command invoking no script of theirs already takes, arrived at one step earlier.
- *
- * A CONFIGURED STATIC CHECK WINS AMONG SEVERAL (@SCN-USG-009). `specController.staticChecks` no
- * longer decides membership — every script it could name is discovered anyway — but it is still
- * the consumer saying which of their scripts IS the static check, and a step invoking more than
- * one is exactly where that sentence still has something to settle. Honoured, and inert wherever
- * it has nothing to choose between.
  */
-function handleOf(
-  step: CiWorkflowStep,
-  scripts: Readonly<Record<string, string>>,
-  configuredStaticChecks: readonly string[]
-): string {
+function handleOf(step: CiWorkflowStep, scripts: Readonly<Record<string, string>>): string {
   if (!("runs" in step)) return step.identity;
   const invoked = Object.keys(scripts).filter((name) => commandInvokesScript(step.runs, name));
-  return invoked.find((name) => configuredStaticChecks.includes(name)) ?? invoked[0] ?? step.identity;
+  return invoked[0] ?? step.identity;
 }
 
 /**
@@ -194,14 +186,6 @@ export function runningStaticChecks(
   // `new-client` is sold on: a first run that says what your pipeline ran, out loud, before you
   // have configured anything at all.
   runners: Readonly<Record<string, string | null>>,
-  // @SCN-USG-009 (3F-2495) — scripts the TARGET configures AS static checks. It used to EXTEND the
-  // prefix discovery, reaching the checks whose names no convention of ours did; there is no
-  // discovery left for it to extend, because every step is discovered. It is still honoured, and
-  // what it still settles is `handleOf`'s question above — which of the scripts a step invokes is
-  // the check.
-  //
-  // Trailing and optional, so the frozen v1 barrel's symbol surface is untouched.
-  configuredStaticChecks: readonly string[] = [],
   // @SCN-LNT-001 (3F-2568) — THE OBSERVER STAMPS THE CITATION. Citation-routing inverts what
   // name-match relied on: the DEBIT used to cite, so a run never had to know which scenario it
   // belonged to. Now the CREDIT cites, and the only moment a run and the corpus are both in hand
@@ -288,7 +272,7 @@ export function runningStaticChecks(
   );
   return candidates
     .map((step) => {
-      const staticCheck = handleOf(step, scripts, configuredStaticChecks);
+      const staticCheck = handleOf(step, scripts);
       // AND THE SEAM IS ASKED WITH THE STEP (@SCN-LNT-031). Read as an INPUT to the citation and
       // not only as a refinement of one: the code the consumer wrote on the step names the
       // configured row, and that row is where the check tag a CI step cannot state comes from.

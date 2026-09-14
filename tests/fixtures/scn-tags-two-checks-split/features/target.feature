@@ -13,5 +13,5 @@ Feature: a target whose stepless scenario claims one fitness check
   Scenario: a behavioural scenario carrying two tiers
     Given the target source
 
-  @complexity @SCN-TGT-002
-  Scenario: the codebase stays inside the complexity thresholds
+  @ci-run-time @SCN-TGT-002
+  Scenario: the codebase stays inside the ci-run-time threshold

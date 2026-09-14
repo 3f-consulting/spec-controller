@@ -8,11 +8,12 @@
  * reader certifies a severed check as satisfied. Only the assembled reconciliation can say what the
  * ROW ends up reading.
  *
- * BOTH OBSERVERS ARE LOAD-BEARING HERE, AND THE TARGET IS SHAPED SO THAT THEY ARE. The first check
- * is registered, so the corpus obliges its handle and the OBLIGATION-side observer answers for it
- * while the running-check stream drops it; the second and third are configured rows their steps
- * cite, so the RUNNING-check observer answers for those. Neither module can be reverted without
- * redding this arm, which is what stops one of the two being threaded and called done.
+ * ALL THREE REACH THE RUNNING-CHECK OBSERVER THE SAME WAY (3F-3395, @SCN-LNT-017 — the last
+ * registry-`scn` scenario). The first check used to be REGISTERED, reaching the now-retired
+ * obligation-side observer while the running-check stream dropped it; it is now a `fitnessChecks`
+ * row like its siblings, and its CI step carries that row's own `@SCN` as its `id:` — the citedRow
+ * seam the running-check observer reads for all three. Severance stays the only variable the three
+ * differ on.
  *
  * THREE CHECKS FROM ONE TARGET. They run under one manifest, are discovered by one prefix, and
  * differ in exactly one thing — where the severance is written, or whether it is written at all.
@@ -35,7 +36,7 @@ Feature: a target's fitness corpus, two of whose three checks the job's verdict 
 
   Rule: the tree stays inside its thresholds
 
-    @complexity @SCN-CVT-001
+    @fitness @SCN-CVT-001
     Scenario: the codebase stays under its complexity threshold
 
     @fitness @SCN-CVT-002
@@ -46,11 +47,8 @@ Feature: a target's fitness corpus, two of whose three checks the job's verdict 
 `;
 
 /**
- * The target's manifest — three static checks named two ways, so both observers answer.
- *
- * The REGISTERED handle reaches the obligation-side observer (its check tag is one the corpus
- * carries, which is what puts it on `checkHandles`); the two CONFIGURED rows reach the
- * running-check observer, whose steps cite them by code.
+ * The target's manifest — three static checks, all three CONFIGURED rows their CI steps cite by
+ * code, so the one running-check observer answers for all three.
  */
 const severedManifest = {
   scripts: {
@@ -64,8 +62,8 @@ const severedManifest = {
     // terms as a command — a quality check can BE an action — so a pipeline that opens with a
     // checkout answers for it here, exactly as a consumer's own manifest does.
     notChecks: ["ci.yml:quality:Checkout"],
-    checkRegistry: { "lint:alpha": "complexity" },
     fitnessChecks: [
+      { scn: "SCN-CVT-001", characteristic: "complexity", command: "pnpm lint:alpha" },
       { scn: "SCN-CVT-002", characteristic: "traceability", command: "pnpm lint:beta" },
       { scn: "SCN-CVT-003", characteristic: "tech-conformance", command: "pnpm lint:gamma" },
     ],
@@ -88,6 +86,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Complexity
+        id: SCN-CVT-001
         continue-on-error: true
         run: pnpm lint:alpha
       - name: Anemic domain

@@ -3,7 +3,7 @@ Feature: a target's fitness corpus, two of whose three checks the job's verdict 
 
   Rule: the tree stays inside its thresholds
 
-    @complexity @SCN-CVT-001
+    @fitness @SCN-CVT-001
     Scenario: the codebase stays under its complexity threshold
 
     @fitness @SCN-CVT-002

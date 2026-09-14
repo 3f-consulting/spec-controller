@@ -375,27 +375,21 @@ Then("it fails, naming the unrecognised tag and the tier it resembles", function
  * check-tag union is resolved off the manifest at the command's cwd, so a run from `repoRoot`
  * would read THIS repository's registry while claiming to have read the fixture's.
  *
- * TWO SHAPES, ONE TREE (3F-3126). `scn-tags-fitness` carries its bare registered check tag on a
- * STEPLESS scenario and on a STEPPED one, and the twin must red BOTH. They were two fixtures
- * with an arm each until 3F-3305 — which is one tree per shape, no run in which the two are
- * compared, and (measured) no run at all in which the stepless shape was shown to be admitted
- * by the REGISTRY rather than by a rule that had stopped reading tags.
+ * NO LONGER A PAIR (3F-3161). This arm used to isolate `specController.checkRegistry` by
+ * running a byte-identical twin tree whose manifest didn't register the tag; that isolation is
+ * gone because there is nothing left to isolate — a bare check tag reds unconditionally now,
+ * registered or not. `scn-tags-fitness`'s own manifest still carries a `checkRegistry` block, so
+ * the arm proves the stronger claim in one run: the command reds the tag even though the
+ * target's (retired-style) config tried to declare it.
+ *
+ * TWO SHAPES, ONE TREE (3F-3126). `scn-tags-fitness` carries its bare check tag on a STEPLESS
+ * scenario and on a STEPPED one, and both must red: steps say only how a row was written, never
+ * whether the tag it carries means anything, so a rule that reds one shape and greens the other
+ * is reading steps rather than tags.
  */
 // @SCN-STG-005
-Given("a target whose scenario carries only its registered bare check tag", function () {
+Given("a target whose scenario carries a bare check tag", function () {
   corpusTarget = "tests/fixtures/scn-tags-fitness";
-});
-
-// @SCN-STG-005
-When("it runs over that same target with nothing registering its check tag", function () {
-  // Byte-for-byte the corpus above; only the manifest differs, so the pair isolates the
-  // REGISTRY rather than the tags or the steps. Without it every Then in this scenario reads
-  // `it passes` and a correct ruling is indistinguishable from a command that stopped looking.
-  //
-  // AND THE TWIN'S REGISTRY IS NOT EMPTY, deliberately: it registers `vocab`, a check this
-  // corpus does not carry. So the red is the registry's CONTENTS being read, never the mere
-  // presence of a registry block — an absent-vs-populated plant cannot tell those apart.
-  runTagsInTarget("tests/fixtures/scn-tags-fitness-unregistered");
 });
 
 // @SCN-STG-005
@@ -404,8 +398,8 @@ Then("it fails, naming the tag that means nothing there", function () {
     exitCode,
     1,
     `expected the shipped corpus check to fail (exit 1) over a target whose scenarios carry ` +
-      `@complexity and @typecheck with nothing registering either, but it exited ${exitCode}. ` +
-      `Output:\n${output}`
+      `@complexity and @typecheck, neither of which any grammar recognises now, but it exited ` +
+      `${exitCode}. Output:\n${output}`
   );
   // BOTH SHAPES, WHICH IS THE WHOLE OF THE STEPS-SAY-NOTHING RULING. SCN-TGT-002 is stepless
   // and SCN-TGT-003 has steps; a rule that read shape would name one of them and green the
@@ -413,19 +407,19 @@ Then("it fails, naming the tag that means nothing there", function () {
   assert.match(
     output,
     /SCN-TGT-002/,
-    `expected the STEPLESS scenario carrying the unregistered word to be named; got:\n${output}`
+    `expected the STEPLESS scenario carrying the bare check tag to be named; got:\n${output}`
   );
   assert.match(
     output,
     /SCN-TGT-003/,
-    `expected the STEPPED scenario carrying the unregistered word to be named too — steps say ` +
-      `only how a row was written (3F-3126); got:\n${output}`
+    `expected the STEPPED scenario carrying the bare check tag to be named too — steps say only ` +
+      `how a row was written (3F-3126); got:\n${output}`
   );
   assert.match(output, /@complexity\b/, `expected @complexity to be named; got:\n${output}`);
   assert.match(output, /@typecheck\b/, `expected @typecheck to be named; got:\n${output}`);
   // AND NOT THE TIERED CONTROL BESIDE THEM. SCN-TGT-001 carries @unit, which is the scheme's
-  // own word and nothing to do with this target's registry — so a command redding it has
-  // stopped recognising the grammar rather than read the manifest, and would exit 1 anyway.
+  // own word and nothing to do with a check tag — so a command redding it has stopped
+  // recognising the grammar rather than read the manifest, and would exit 1 anyway.
   assert.doesNotMatch(
     output,
     /SCN-TGT-001/,
@@ -436,16 +430,16 @@ Then("it fails, naming the tag that means nothing there", function () {
   assert.match(
     output,
     /2 finding\(s\)/,
-    `expected exactly the two unregistered check tags to be found — a third finding means the ` +
-      `command reds this tree for a reason this arm is not about; got:\n${output}`
+    `expected exactly the two bare check tags to be found — a third finding means the command ` +
+      `reds this tree for a reason this arm is not about; got:\n${output}`
   );
 });
 
 /**
  * @SCN-STG-005's CONVERTED route (3F-3138, 3F-3149). A converted check carries one word for the
  * whole axis and its CHARACTERISTIC is on a configured row, so `checkRegistry` names it nowhere
- * and never will — which is why the pair below turns on `specController.fitnessChecks` rather
- * than on the registry the pair above turns on.
+ * and never will — which is why the pair below turns on `specController.fitnessChecks` instead,
+ * the one route left by which a target can make a check-tag scenario pass.
  */
 // @SCN-STG-005
 When(
@@ -485,27 +479,24 @@ When("it runs over that same target with no fitness rows configured at all", fun
  * while claiming to have read the fixture's, and this repository's happen to name
  * `@ci-run-time` — so the arm would have greened on the wrong manifest.
  *
- * ONE TREE, TWO SOURCES (the union, not a swap). `scn-tags-measured` carries a MEASURED tag on
- * one scenario and a REGISTERED one on the other, and both must be admitted together. A command
- * that read the thresholds INSTEAD of the registry reds `@complexity` and fails the first
- * `Then it passes`; one that read the registry alone reds `@ci-run-time`, which is the red this
- * arm was written on. Two fixtures with an arm each would have greened either mistake.
+ * ONE MEASURED TAG, NOT TWO SOURCES (3F-3386, following 3F-3384). `scn-tags-measured` used to
+ * carry a MEASURED tag on one scenario and a REGISTERED one on a second, staging the union as an
+ * admit-both proof; `specController.checkRegistry` is no longer read by `checkTagsOf` at all, so
+ * that second scenario proved nothing a registry route could still get wrong — it would simply be
+ * unrecognised, redding for a reason this arm is not about. The fixture keeps only the measured
+ * scenario; the pair below isolates the ONE remaining source, thresholds present against
+ * thresholds absent.
  */
 // @SCN-STG-009
-Given("a target whose scenarios carry a measured check tag and a registered one", function () {
+Given("a target whose scenarios carry a measured check tag", function () {
   corpusTarget = "tests/fixtures/scn-tags-measured";
 });
 
 // @SCN-STG-009
 When("it runs over that same target with no thresholds configured", function () {
   // Byte-for-byte the corpus above; only the manifest differs, so the pair isolates the
-  // THRESHOLDS rather than the tags. Without it every Then in this scenario reads `it passes`
+  // THRESHOLDS rather than the tag. Without it every Then in this scenario reads `it passes`
   // and a correct ruling is indistinguishable from a command that stopped looking at tags.
-  //
-  // AND THE TWIN'S REGISTRY IS UNTOUCHED, deliberately: `lint:complexity` still registers
-  // `complexity` there, so the twin's `@complexity` scenario stays admitted and the one finding
-  // is the measured tag alone. A twin that dropped both blocks would red for two reasons and
-  // could not say which of them this arm is about.
   runTagsInTarget("tests/fixtures/scn-tags-measured-unconfigured");
 });
 
@@ -529,15 +520,6 @@ Then("it fails, naming the measured tag that means nothing there", function () {
     /SCN-TGT-001/,
     `expected the scenario carrying the unmeasured word to be named; got:\n${output}`
   );
-  // AND NOT THE REGISTERED ROW BESIDE IT. SCN-TGT-002 carries @complexity, which this twin's
-  // registry still names — so a command redding it has read the thresholds INSTEAD of the
-  // registry rather than as well as it, and would exit 1 here anyway.
-  assert.doesNotMatch(
-    output,
-    /SCN-TGT-002/,
-    `expected the REGISTERED control scenario to be left alone — the two sources are a union, ` +
-      `not a swap; got:\n${output}`
-  );
   // EXACTLY ONE FINDING, so the assertions above are statements about this tag rather than
   // about a command that reds this tree for some other reason as well.
   assert.match(
@@ -559,9 +541,15 @@ Then("it fails, naming the measured tag that means nothing there", function () {
  *
  * FROM INSIDE THE FIXTURE'S OWN TREE, which is load-bearing rather than hygiene: the set this
  * rule counts is `checkTagsOf`'s, resolved off the manifest at the command's cwd. A run from
- * `repoRoot` would read THIS repository's registry — which registers nothing at all since 3F-3287
- * converted the corpus to the axis tag — so both of the fixture's tags would name no check and
- * every arm below would read `it passes`.
+ * `repoRoot` would read THIS repository's thresholds instead of the fixture's own, so both of
+ * the fixture's tags would name a different check (or none) and every arm below would read
+ * something other than what it claims to.
+ *
+ * TWO MEASURED TAGS, NOT TWO REGISTERED ONES (3F-3385, following 3F-3384). `specController.
+ * checkRegistry` is no longer read by `checkTagsOf` at all, so the collision this Rule refuses
+ * can no longer be staged with two registered bare tags — it is measured, constructed rather
+ * than assumed, over the kinds `checkTagsOf` still admits beside the axis word: two distinct
+ * words this target's own `specController.thresholds` measures.
  *
  * FIVE PAIRS, AND NONE OF THEM IS SPARE. Red over two tags; green with one removed; green while
  * parked; red again when unparked; red over the same two tags with STEPS. The third and fourth
@@ -569,7 +557,7 @@ Then("it fails, naming the measured tag that means nothing there", function () {
  * 3F-3126's ruling that the tag names the axis and the steps say nothing about it.
  */
 // @SCN-STG-007
-Given("a target whose stepless scenario carries two registered bare check tags", function () {
+Given("a target whose stepless scenario carries two measured check tags", function () {
   corpusTarget = "tests/fixtures/scn-tags-two-checks";
 });
 
@@ -600,10 +588,10 @@ When("it runs over that same target with the parking tag taken off again", funct
 });
 
 // @SCN-STG-007
-When("it runs over a target whose STEPPED scenario carries two registered bare check tags", function () {
+When("it runs over a target whose STEPPED scenario carries two measured check tags", function () {
   // THE RULING (3F-3126): byte-for-byte `scn-tags-two-checks` with steps on the offending row.
-  // Same registry, same two tags, same verdict — the fitness axis is named by the check TAG, not
-  // by whether the author wrote a step.
+  // Same thresholds, same two tags, same verdict — the fitness axis is named by the check TAG,
+  // not by whether the author wrote a step.
   runTagsInTarget("tests/fixtures/scn-tags-two-checks-stepped");
 });
 
@@ -613,7 +601,7 @@ Then("it fails, naming the scenario and BOTH check tags", function () {
     exitCode,
     1,
     `expected the shipped corpus check to fail (exit 1) over a target whose scenario carries ` +
-      `two registered bare check tags, but it exited ${exitCode}. Output:\n${output}`
+      `two measured check tags, but it exited ${exitCode}. Output:\n${output}`
   );
   assert.match(
     output,
@@ -622,14 +610,14 @@ Then("it fails, naming the scenario and BOTH check tags", function () {
   );
   // BOTH tags, because the author has to choose which scenario keeps which check, and a message
   // naming one of them has already chosen for them.
-  assert.match(output, /@complexity\b/, `expected @complexity to be named; got:\n${output}`);
-  assert.match(output, /@typecheck\b/, `expected @typecheck to be named; got:\n${output}`);
+  assert.match(output, /@ci-run-time\b/, `expected @ci-run-time to be named; got:\n${output}`);
+  assert.match(output, /@coverage\b/, `expected @coverage to be named; got:\n${output}`);
   // IN DOCUMENT ORDER, so the message reads like the line the author is looking at. Matched on
   // the two tags' positions rather than on whatever joins them, so the assertion is about the
   // ORDER and not about the punctuation.
   assert.match(
     output,
-    /@complexity\b[^\n]*@typecheck\b/,
+    /@ci-run-time\b[^\n]*@coverage\b/,
     `expected both tags named in the order the scenario writes them; got:\n${output}`
   );
   // THE REMEDY NAMES NO SHAPE (3F-3133). It read "one stepless scenario per check" while the

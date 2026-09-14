@@ -191,7 +191,6 @@ describe("[SCN-USG-015] runningStaticChecks — a check whose every step the tar
       [CI_YML],
       SCRIPTS,
       NO_RUNNERS,
-      [],
       () => null,
       stepExclusions([CI_YML], ["ci.yml"], [...PLUMBING, ...notChecks]).isExcluded
     ).map((observation) => observation.staticCheck);
@@ -222,7 +221,7 @@ describe("[SCN-USG-015] runningStaticChecks — a check whose every step the tar
       "        run: pnpm lint:rules",
     ].join("\n");
     const resolved = stepExclusions([twice], ["ci.yml"], ["ci.yml:ci:Rule check"]);
-    const checks = runningStaticChecks([twice], SCRIPTS, NO_RUNNERS, [], () => null, resolved.isExcluded);
+    const checks = runningStaticChecks([twice], SCRIPTS, NO_RUNNERS, () => null, resolved.isExcluded);
     expect(checks.map((observation) => observation.staticCheck)).toEqual(["lint:rules", "lint:sweep"]);
   });
 });

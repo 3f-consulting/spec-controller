@@ -26,8 +26,9 @@
 
 import { describe, it, expect } from "vitest";
 
-import { checkRegistryOf, checkTagOfScript, registeredCheckTags } from "../domain/checkRegistry.js";
+import { fitnessChecksOf } from "../domain/fitnessChecks.js";
 import { measuredCheckTags, thresholdFor, thresholdsOf } from "../domain/thresholds.js";
+import { citationOfCitedRow } from "../parse/fitnessCitations.js";
 import { parseMeasuredEvidenceObservations } from "../parse/measurements.js";
 import { parseTaggedScenarios } from "../parse/scenarios.js";
 
@@ -82,30 +83,61 @@ describe("[SCN-TRM-001] a threshold's two key levels name the pair the target au
   });
 });
 
-describe("[SCN-TRM-001] a check-registry tag names the check the target authored", () => {
-  it("bares a tag padded in front of its sigil", () => {
-    const registry = checkRegistryOf({ "lint:complexity": "  @complexity" });
-    expect(checkTagOfScript(registry, "lint:complexity")).toBe("complexity");
+describe("[SCN-TRM-001] a configured row's scn and characteristic name the row the target authored", () => {
+  it("bares both terms of a row padded in front of their sigils", () => {
+    // Both terms, for the reason a measurement row's both terms are (@SCN-LNT-012): neither is an
+    // address on its own. A padded `scn` posts the obligation to no row a corpus can find; a padded
+    // `characteristic` reports the row under a word the target never wrote.
+    const index = fitnessChecksOf([{ scn: "  @SCN-MSD-001", characteristic: "  @complexity" }]);
+    expect(index.get("SCN-MSD-001")).toStrictEqual({ characteristic: "complexity" });
   });
 
-  it("bares a tag spelled with a space between the sigil and the term", () => {
-    const registry = checkRegistryOf({ "lint:complexity": "@ complexity" });
-    expect(checkTagOfScript(registry, "lint:complexity")).toBe("complexity");
+  it("bares a row spelled with a space between the sigil and the term", () => {
+    const index = fitnessChecksOf([{ scn: "@ SCN-MSD-001", characteristic: "@ complexity" }]);
+    expect(index.get("SCN-MSD-001")).toStrictEqual({ characteristic: "complexity" });
   });
 
-  it("drops an entry whose tag is nothing but whitespace and a sigil", () => {
-    // Dropped as an empty entry already is, rather than registering the handle against `"@"` — a
-    // tag no corpus carries, so the check would resolve to no scenario and land in suspense
-    // looking like a check nobody named.
-    const registry = checkRegistryOf({ "lint:complexity": "  @  " });
-    expect(checkTagOfScript(registry, "lint:complexity")).toBeNull();
-    expect(registeredCheckTags(registry)).toStrictEqual([]);
+  it("drops a row whose scn is nothing but whitespace and a sigil", () => {
+    // Dropped as `fitnessCheckOf` already drops a row naming no scenario — not indexed under `"@"`,
+    // a key no lookup asks for.
+    const index = fitnessChecksOf([{ scn: "  @  ", characteristic: "complexity" }]);
+    expect(index.size).toBe(0);
   });
 
   it("keeps a doubled sigil and an interior @ exactly as the target spelled them", () => {
-    const registry = checkRegistryOf({ doubled: "  @@complexity", interior: "  cucumber@e2e  " });
-    expect(checkTagOfScript(registry, "doubled")).toBe("@complexity");
-    expect(checkTagOfScript(registry, "interior")).toBe("cucumber@e2e");
+    const index = fitnessChecksOf([{ scn: "  @@SCN-MSD-001", characteristic: "  cucumber@e2e  " }]);
+    expect(index.get("@SCN-MSD-001")).toStrictEqual({ characteristic: "cucumber@e2e" });
+  });
+});
+
+describe("[SCN-TRM-001] a check step's id: names the row the target authored", () => {
+  const fitnessChecks = fitnessChecksOf([{ scn: "SCN-MSD-001", characteristic: "complexity" }]);
+
+  it("bares a step's id: padded in front of its sigil", () => {
+    expect(citationOfCitedRow("  @SCN-MSD-001", fitnessChecks)).toStrictEqual({
+      checkTag: "complexity",
+      scnId: "SCN-MSD-001",
+    });
+  });
+
+  it("bares a step's id: spelled with a space between the sigil and the term", () => {
+    expect(citationOfCitedRow("@ SCN-MSD-001", fitnessChecks)).toStrictEqual({
+      checkTag: "complexity",
+      scnId: "SCN-MSD-001",
+    });
+  });
+
+  it("names no row for a step's id: that is nothing but whitespace and a sigil", () => {
+    // Bared to `""`, which no configured row is keyed by — the same "an empty answer is an
+    // answer" reading `bareTerm`'s own doc-comment states, read here through the citation route
+    // rather than the registry one.
+    expect(citationOfCitedRow("  @  ", fitnessChecks)).toBeNull();
+  });
+
+  it("keeps a doubled sigil exactly as the step's id: spelled it, matching no un-doubled row", () => {
+    // `/^@/` strips one leading sigil only (@SCN-LNT-001's pinned reading); a doubled sigil is a
+    // different spelling, not whitespace, so it must NOT collapse onto a row named without it.
+    expect(citationOfCitedRow("  @@SCN-MSD-001", fitnessChecks)).toBeNull();
   });
 });
 

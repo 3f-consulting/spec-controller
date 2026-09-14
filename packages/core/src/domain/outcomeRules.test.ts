@@ -290,8 +290,24 @@ describe("[SCN-LDG-006] a phantom row's items carry only the fields the credit h
 });
 
 /**
- * `locatorOf` DROPS a locator a fitness credit arrived carrying (@SCN-LNT-001) — the one fixture
- * that can tell its guard apart from an unconditional read.
+ * `locatorOf` DROPS a locator a fitness credit arrived carrying — the one fixture that can tell
+ * its guard apart from an unconditional read.
+ *
+ * HOME: this pins the field-omission claim (@SCN-LDG-034, 3F-3407) — THE PHANTOM ROW'S KEY
+ * SHAPE, one destination over from (@SCN-LDG-008)'s "a runtime credit's item names no check" arm
+ * above. Fitness credits still exist and `locatorOf` still drops their locator exactly as this arm
+ * proves — deleting it would remove live, mutation-motivated protection; leaving it uncited (the
+ * state this arm sat in until now) would be a fabricated credit waiting to happen. HELPER-LEVEL
+ * COVERAGE, not a literal restatement of that scenario's Gherkin: `citesUnknownScenarioReconciliationsOf`
+ * is the SAME function its own `@integration` arm drives end to end (a fitness credit citing an
+ * unknown scenario posts a `cites-unknown-scenario` item to the phantom row, carrying the check it
+ * has a value for and no locator key) — this arm pins the same claim from inside the package,
+ * where the width-subtyping construction below is available to state it precisely.
+ *
+ * TWO-HOP SHAPE RETIRED. The fixture used to carry `checkTag` alongside `staticCheck` — a route
+ * that matched on both. `citesUnknownScenarioReconciliationsOf` matches on `staticCheck` alone
+ * (`isStaticCheckObservation`, keyed off `qualityCheck` and the ABSENCE of `measured`), so
+ * `checkTag` was dead weight on this fixture and is dropped.
  *
  * WHY NO INTERFACE NAMES THIS FIXTURE'S SHAPE, AND WHY THAT IS THE POINT. Neither fitness
  * observation names a `locator` AT ALL — not optional, absent: only `RuntimeEvidenceObservation`
@@ -315,16 +331,15 @@ describe("[SCN-LDG-006] a phantom row's items carry only the fields the credit h
  * `locator` key, and `toEqual` — or reading `item.locator` and calling it undefined — cannot see
  * the difference between an absent key and one holding `undefined`.
  */
-describe("[SCN-LNT-001] a fitness credit's item carries no locator, even when the credit carries one", () => {
+describe("[SCN-LDG-034] a fitness credit's item carries no locator, even when the credit carries one", () => {
   it("drops a locator a citing lint credit arrived with rather than stamping it on the item", () => {
     const guardWithLocator: GuardEvidenceObservation & { locator: string } = {
       qualityCheck: "lint",
       staticCheck: "lint:complexity",
-      checkTag: "complexity",
       scnId: "SCN-ZZZ-009",
       exists: true,
       enforcedOverRealSource: true,
-      locator: "packages/core/src/domain/checkRegistry.ts",
+      locator: "packages/core/src/domain/fitnessChecks.ts",
     };
     const [item] = citesUnknownScenarioReconciliationsOf([guardWithLocator]);
     expect(item).toStrictEqual({

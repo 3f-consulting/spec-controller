@@ -1,15 +1,15 @@
 {
   "scripts": {
-    "guard:cell-grid": "echo cell-grid-guard",
-    "guard:cell-grid-a": "echo cell-grid-guard-a",
-    "guard:cell-grid-b": "echo cell-grid-guard-b"
+    "guard:cell-grid": "echo cell-grid-guard"
   },
   "specController": {
-    "checkRegistry": {
-      "guard:cell-grid": "cell-grid",
-      "guard:cell-grid-a": "cell-grid-a",
-      "guard:cell-grid-b": "cell-grid-b"
-    },
+    "fitnessChecks": [
+      {
+        "scn": "SCN-CEL-001",
+        "characteristic": "cell-grid",
+        "command": "pnpm guard:cell-grid"
+      }
+    ],
     "notChecks": [
       "ci.yml:ci:pnpm install --frozen-lockfile"
     ]

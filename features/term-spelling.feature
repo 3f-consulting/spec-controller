@@ -1,14 +1,15 @@
 @TRM
 Feature: Term spelling — a term names the same pair however its author spelled it
 
-  A target adopting this tool hand-types terms into four places: the two key levels of
-  specController.thresholds, a check-registry tag, a deferral tag, and the two terms on a
-  measurement row. Every one of them is stored bare and looked up bare, because a hand writes a
-  tag the way a feature file does — and every one of them was stripping the sigil BEFORE
-  trimming, so a term padded in front of its @ was stored still carrying it and no bare lookup
-  ever found it again. Nothing red. thresholdFor answered null, a measurement row was dropped, a
-  registry entry was absent — and all three are legitimate readings of a key the manifest never
-  named, which is what made the miss silent instead of loud.
+  A target adopting this tool hand-types terms into five places: the two key levels of
+  specController.thresholds, a configured fitness row's scn and characteristic, a check step's
+  id:, a deferral tag, and the two terms on a measurement row. Every one of them is stored bare
+  and looked up bare, because a hand writes a tag the way a feature file does — and every one of
+  them was stripping the sigil BEFORE trimming, so a term padded in front of its @ was stored
+  still carrying it and no bare lookup ever found it again. Nothing red. thresholdFor answered
+  null, a measurement row was dropped, a configured row went unmatched — and all three are
+  legitimate readings of a key the manifest never named, which is what made the miss silent
+  instead of loud.
 
   IT NEVER FIRED HERE AND WOULD FIRE THERE, WHICH IS THE WHOLE OF ITS REACH. Both routes are
   hand-typed and this repository generates neither: a generated artefact carries no stray space.
@@ -32,15 +33,16 @@ Feature: Term spelling — a term names the same pair however its author spelled
     WHY BOTH TIERS, POSITIVELY. @unit proves the reading at each port that stores a term as a
     key — pure functions, provable in isolation, and the only place the empty, doubled-sigil
     and interior-@ boundaries can be held cheaply. @integration proves the SEAM that
-    composes them: a target's manifest read into a threshold registry, a registry, a deferral
-    set and a measurement row, the corpus read against all four, and the reconciler handed the
+    composes them: a target's manifest read into a threshold registry and a configured
+    fitness-check index, a deferral set and a measurement row, the corpus read against all
+    four, a check step's citation read against that same index, and the reconciler handed the
     result. That is the boundary this defect actually lived on — the readings each correct in
     isolation, every one of them wired to a lookup that asks bare — and it reads green at unit
     and wrong on the ledger. Neither arm subsumes the other.
 
     @unit @integration @SCN-TRM-001
     Scenario: a term is the same term however its author spaced it around the sigil, wherever a target hand-authors one
-      Given a target that hand-authors its terms — a threshold's two key levels, a check-registry tag, a deferral tag, and a measurement row's two terms
+      Given a target that hand-authors its terms — a threshold's two key levels, a configured row's scn and characteristic, a check step's id:, a deferral tag, and a measurement row's two terms
       And every one of them is spelled with whitespace in front of its sigil, the one spelling nothing in this repository generates
       When the corpus is reconciled against that target
       Then each term names exactly the pair its bare spelling names, so nothing the target plainly authored is dormant
