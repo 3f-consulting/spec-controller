@@ -34,7 +34,7 @@ Feature: This repository reconciles itself as a consumer, from the package it in
 
     @integration @SCN-SLF-008
     Scenario: a pinned reader that cannot accept this tree's argv refuses by name, rather than reporting a usage fault or a verdict
-      Given a consumer runs a spec-controller whose version is older than the tree it is reading
+      Given a consumer runs a spec-controller pinned to a version that does not match the tree it is reading
       When that reader is handed a flag its own version does not accept
       Then the refusal names the version that refused it, the flag, and the bump that cures it
       And the run exits with the usage status, not a reconciliation verdict
