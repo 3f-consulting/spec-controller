@@ -60,6 +60,22 @@ until a person promotes it:
 npm stage approve <package>@<version>
 ```
 
+**That command is newer than the npm on most machines, and the failure reads as a typo rather than
+as a version.** `npm stage` is not in npm 11.5.1 — the version OIDC trusted publishing needs — and
+arrived later; Node 24 bundles 11.19.x, which has it, and that is why `release.yml` pins Node 24
+rather than 22. An older local npm answers `Unknown command: "stage"`, which looks like a wrong
+command rather than an old one. Two ways through, neither requiring a global upgrade:
+
+```
+npx -y npm@latest stage approve <package>@<version>
+```
+
+`npx` reads your existing `~/.npmrc`, so your login carries. Or promote from the package's page on
+npmjs.com, which may be the easier route anyway given promotion needs proof of presence.
+
+*(Lived 2026-09-15, promoting `0.1.0-alpha.2`: the tag pushed, the workflow staged, and the promote
+stopped on a local npm two commands short of the one CI had been pinned to for this exact reason.)*
+
 or from the package's page on npmjs.com. **Promotion needs proof of presence and cannot use an
 identity minted for a workflow run**, so there is no automating it — which is the property, not the
 inconvenience. "Allow npm publish" is unchecked on both trusted publishers, so a workflow attempting
