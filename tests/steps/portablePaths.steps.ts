@@ -23,6 +23,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 
 // The temp TARGET repo (outside the run cwd) and the foreign cwd the CLI runs from.
 let targetRepo: string;
@@ -103,7 +104,8 @@ When(
     const mdPath = join(outDir, "spec-reconciliation.md");
     const jsonPath = join(outDir, "spec-reconciliation.json");
     const argv = [
-      join(repoRoot, "packages", "spec-controller", "src", "cli-balance", "cli.ts"),
+      ...SPEC_CONTROLLER_ARGV,
+      "balance",
       "--features", join(targetRepo, "features"),
       "--vitest", join(targetRepo, "vitest.json"),
       "--cucumber", join(targetRepo, "cucumber.json"),
@@ -111,7 +113,7 @@ When(
       "--format", `md:${mdPath}`,
       "--format", `json:${jsonPath}`,
     ];
-    const result = spawnSync(join(repoRoot, "node_modules", ".bin", "tsx"), argv, {
+    const result = spawnSync(NODE, argv, {
       cwd: foreignCwd,
       encoding: "utf8",
     });

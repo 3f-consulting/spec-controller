@@ -22,6 +22,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { executeKeptRun, type KeptRunPlan, type RunManifestMeta } from "../../packages/spec-controller/src/run-management/keptRun.js";
+import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 
 const FIXTURE = {
   features: "tests/fixtures/evidence-observation/features",
@@ -59,9 +60,10 @@ When("the kept run persists its machine artefact", function () {
     (formatSpecs) => {
       const formatArgs = formatSpecs.flatMap((spec) => ["--format", spec]);
       const result = spawnSync(
-        join(repoRoot, "node_modules", ".bin", "tsx"),
+        NODE,
         [
-          join(repoRoot, "packages", "spec-controller", "src", "cli-balance", "cli.ts"),
+          ...SPEC_CONTROLLER_ARGV,
+          "balance",
           "--features", abs(FIXTURE.features),
           "--vitest", abs(FIXTURE.vitest),
           "--cucumber", abs(FIXTURE.cucumber),
@@ -211,9 +213,10 @@ When("the run persists spec-reconciliation.json", function () {
     (formatSpecs) => {
       const formatArgs = formatSpecs.flatMap((spec) => ["--format", spec]);
       const result = spawnSync(
-        join(repoRoot, "node_modules", ".bin", "tsx"),
+        NODE,
         [
-          join(repoRoot, "packages", "spec-controller", "src", "cli-balance", "cli.ts"),
+          ...SPEC_CONTROLLER_ARGV,
+          "balance",
           "--features", abs(FIXTURE.features),
           "--vitest", abs(FIXTURE.vitest),
           "--cucumber", abs(FIXTURE.cucumber),
@@ -329,9 +332,10 @@ When("the reconciliation run persists spec-reconciliation.json", function () {
     (formatSpecs) => {
       const formatArgs = formatSpecs.flatMap((spec) => ["--format", spec]);
       const result = spawnSync(
-        join(repoRoot, "node_modules", ".bin", "tsx"),
+        NODE,
         [
-          join(repoRoot, "packages", "spec-controller", "src", "cli-balance", "cli.ts"),
+          ...SPEC_CONTROLLER_ARGV,
+          "balance",
           "--features", abs(RMD005_FIXTURE.features),
           "--vitest", abs(RMD005_FIXTURE.vitest),
           "--cucumber", abs(RMD005_FIXTURE.cucumber),
@@ -432,9 +436,10 @@ When("the coded-corpus reconciliation run persists its machine artefacts", funct
   const jsonPath = join(rmd006Dir, "spec-reconciliation.json");
   const mdPath = join(rmd006Dir, "spec-reconciliation.md");
   const result = spawnSync(
-    join(repoRoot, "node_modules", ".bin", "tsx"),
+    NODE,
     [
-      join(repoRoot, "packages", "spec-controller", "src", "cli-balance", "cli.ts"),
+      ...SPEC_CONTROLLER_ARGV,
+      "balance",
       "--features", abs(RMD006_FEATURES),
       "--target", "byfeature-fixture",
       "--format", `json:${jsonPath}`,
@@ -506,8 +511,6 @@ Given(
   "a reconciliation run persisted as spec-reconciliation.json alongside its direct markdown render",
   function () {
     const repoRoot = process.cwd();
-    const tsxBin = join(repoRoot, "node_modules", ".bin", "tsx");
-    const cli = join(repoRoot, "packages", "spec-controller", "src", "cli-balance", "cli.ts");
     const abs = (p: string): string => join(repoRoot, p);
     rmd007Dir = mkdtempSync(join(tmpdir(), "spec-controller-rmd007-"));
     rmd007JsonPath = join(rmd007Dir, "spec-reconciliation.json");
@@ -516,9 +519,10 @@ Given(
     // provenance (run timestamp / source sha) — the round-trip regenerates THIS run's document,
     // not another run's (two invocations would carry different run-start timestamps).
     const result = spawnSync(
-      tsxBin,
+      NODE,
       [
-        cli,
+        ...SPEC_CONTROLLER_ARGV,
+        "balance",
         "--features", abs(RMD007_FIXTURE.features),
         "--vitest", abs(RMD007_FIXTURE.vitest),
         "--target", "roundtrip-fixture",
@@ -539,11 +543,9 @@ Given(
 
 When("the markdown is regenerated from the saved spec-reconciliation.json alone", function () {
   const repoRoot = process.cwd();
-  const tsxBin = join(repoRoot, "node_modules", ".bin", "tsx");
-  const cli = join(repoRoot, "packages", "spec-controller", "src", "cli-balance", "cli.ts");
   // ONLY --render-from-json <path> — NO --features / --vitest, proving the JSON alone suffices
   // (no RunContext, no live inputs).
-  const regen = spawnSync(tsxBin, [cli, "--render-from-json", rmd007JsonPath], { cwd: rmd007Dir, encoding: "utf8" });
+  const regen = spawnSync(NODE, [...SPEC_CONTROLLER_ARGV, "balance", "--render-from-json", rmd007JsonPath], { cwd: rmd007Dir, encoding: "utf8" });
   assert.equal(regen.status, 0, `regenerating from the saved JSON exited non-zero:\n${regen.stderr}`);
   rmd007RegeneratedMd = regen.stdout;
 });
@@ -600,9 +602,10 @@ When("the report is serialised to spec-reconciliation.json", function () {
     (formatSpecs) => {
       const formatArgs = formatSpecs.flatMap((spec) => ["--format", spec]);
       const result = spawnSync(
-        join(repoRoot, "node_modules", ".bin", "tsx"),
+        NODE,
         [
-          join(repoRoot, "packages", "spec-controller", "src", "cli-balance", "cli.ts"),
+          ...SPEC_CONTROLLER_ARGV,
+          "balance",
           "--features", abs(RMD008_FIXTURE.features),
           "--ci", abs(RMD008_FIXTURE.ci),
           "--package-json", abs(RMD008_FIXTURE.packageJson),

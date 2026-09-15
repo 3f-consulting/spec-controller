@@ -174,14 +174,13 @@ function driveCleanRoom(packages: readonly PackedPackage[], packDir: string, pur
 let built: CleanRoom;
 
 Given("the two packages packed from a tree whose build has run", function () {
-  // THE BUILD IS RUN HERE RATHER THAN INHERITED FROM THE LADDER. `pnpm build` does precede
-  // `pnpm cucumber` in ci.yml and in the derived local ladder, so this is usually a no-op — but a
-  // scenario whose premise is "the build has run" and which relies on a neighbouring gate to have
-  // run it is a scenario that reds for somebody typing `pnpm cucumber` on a fresh clone, and reds
-  // in the vocabulary of a broken release rather than of an unbuilt tree.
-  const build = finish("pnpm", ["-r", "build"], repoRoot);
-  assert.equal(exitCodeOf(build), 0, `the tree must build before it can be packed. It said:\n${build.stderr}`);
-
+  // THE PREMISE IS PROVED, NOT RE-ESTABLISHED (3F-3423). This step used to run `pnpm -r build` in
+  // `repoRoot` itself, to hold the premise for somebody typing `pnpm cucumber` on a fresh clone.
+  // `builtCli.ts`'s freshness guard now refuses that run BY NAME, for every scenario, before the
+  // first one starts — so the build here bought nothing and cost the one thing a repo-root
+  // mutation costs under `parallel`: @SCN-RPT-029 ran the same command in the same directory, and
+  // two `tsc` processes emitting into the same `packages/*/dist` would have redded in the
+  // vocabulary of *the tree must build before it can be packed*, naming the wrong cause.
   const { packDir, packages } = packBoth(repoRoot, "built");
   built = driveCleanRoom(packages, packDir, "consumer");
 });

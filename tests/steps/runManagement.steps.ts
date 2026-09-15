@@ -38,6 +38,7 @@ import {
   type KeptRunPlan,
   type RunManifestMeta,
 } from "../../packages/spec-controller/src/run-management/keptRun.js";
+import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 
 // A fixture target with a reconcilable spec corpus + result reports (reused from @FMT/@RPT).
 const FIXTURE = {
@@ -94,9 +95,10 @@ When("a kept run is executed for that target", function () {
   plan = executeKeptRun({ storeRoot, target: TARGET, runId: RUN_ID }, META, (formatSpecs) => {
     const formatArgs = formatSpecs.flatMap((spec) => ["--format", spec]);
     const result = spawnSync(
-      join(repoRoot, "node_modules", ".bin", "tsx"),
+      NODE,
       [
-        join(repoRoot, "packages", "spec-controller", "src", "cli-balance", "cli.ts"),
+        ...SPEC_CONTROLLER_ARGV,
+        "balance",
         "--features", abs(FIXTURE.features),
         "--vitest", abs(FIXTURE.vitest),
         "--cucumber", abs(FIXTURE.cucumber),

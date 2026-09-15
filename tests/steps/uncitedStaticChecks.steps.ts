@@ -22,6 +22,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 
 interface UsgFixture {
   features: string;
@@ -189,14 +190,15 @@ function renderReportFor(fixture: UsgFixture, dir: string): string {
   const abs = (p: string): string => join(repoRoot, p);
   const reportPath = join(dir, "spec-reconciliation.md");
   const argv = [
-    join(repoRoot, "packages", "spec-controller", "src", "cli-balance", "cli.ts"),
+    ...SPEC_CONTROLLER_ARGV,
+    "balance",
     "--features", abs(fixture.features),
     "--ci", abs(fixture.ci),
     "--package-json", abs(fixture.packageJson),
     "--target", "usg-fixture",
     "--format", `md:${reportPath}`,
   ];
-  const result = spawnSync(join(repoRoot, "node_modules", ".bin", "tsx"), argv, {
+  const result = spawnSync(NODE, argv, {
     cwd: dir,
     encoding: "utf8",
   });
@@ -546,9 +548,10 @@ When(
     const abs = (p: string): string => join(repoRoot, p);
     const reportPath = join(activeDir, "spec-reconciliation.md");
     const result = spawnSync(
-      join(repoRoot, "node_modules", ".bin", "tsx"),
+      NODE,
       [
-        join(repoRoot, "packages", "spec-controller", "src", "cli-balance", "cli.ts"),
+        ...SPEC_CONTROLLER_ARGV,
+        "balance",
         "--features", abs(activeFixture.features),
         "--ci", abs(activeFixture.ci),
         "--package-json", abs(activeFixture.packageJson),
@@ -659,9 +662,10 @@ When("the reconciliation report is rendered for that target's ci.yml alone", fun
   const repoRoot = process.cwd();
   const reportPath = join(activeDir, "spec-reconciliation.md");
   const result = spawnSync(
-    join(repoRoot, "node_modules", ".bin", "tsx"),
+    NODE,
     [
-      join(repoRoot, "packages", "spec-controller", "src", "cli-balance", "cli.ts"),
+      ...SPEC_CONTROLLER_ARGV,
+      "balance",
       "--features", join(repoRoot, USG_SIBLING_UNCITED_FIXTURE.features),
       "--ci", join(repoRoot, USG_SIBLING_UNCITED_FIXTURE.ci, "ci.yml"),
       "--package-json", join(repoRoot, USG_SIBLING_UNCITED_FIXTURE.packageJson),
@@ -1861,9 +1865,10 @@ When("the target's first reconciliation is rendered", function () {
   const abs = (p: string): string => join(repoRoot, p);
   const reportPath = join(activeDir, "spec-reconciliation.md");
   const result = spawnSync(
-    join(repoRoot, "node_modules", ".bin", "tsx"),
+    NODE,
     [
-      join(repoRoot, "packages", "spec-controller", "src", "cli-balance", "cli.ts"),
+      ...SPEC_CONTROLLER_ARGV,
+      "balance",
       "--features", abs(activeFixture.features),
       "--ci", abs(activeFixture.ci),
       "--package-json", abs(activeFixture.packageJson),

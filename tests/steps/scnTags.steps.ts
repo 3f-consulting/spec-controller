@@ -26,12 +26,15 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const TSX = path.join(repoRoot, "node_modules", ".bin", "tsx");
 
 let exitCode: number;
 let output: string;
+
+/** The target the Given names, so the When that runs the command does not also choose it. */
+let corpusTarget: string;
 
 /**
  * THE SHARED GREEN, and it names no tree of its own. Every Rule in this file has a
@@ -62,19 +65,16 @@ Then("it passes", function () {
  * cwd: a run from repoRoot would read THIS repository's config while claiming to have
  * read the fixture's. A threshold is named nowhere but the target's own manifest, so the
  * measured arms would be reading ceilings their fixture never wrote.
+ *
+ * AND IT IS THE BUILT BINARY, NOT THE SOURCE (3F-3424) — `dist/cli.js` is the file `bin` points at,
+ * so "what a consumer gets" is now literally what this spawns rather than its TypeScript original.
  */
-// @SCN-STG-010
-const SPEC_CONTROLLER_CLI = path.join(repoRoot, "packages", "spec-controller", "src", "cli.ts");
-
-/** The target the Given names, so the When that runs the command does not also choose it. */
-let corpusTarget: string;
-
 // @SCN-STG-010
 function runTagsInTarget(targetRoot: string): void {
   const root = path.join(repoRoot, targetRoot);
   const result = spawnSync(
-    TSX,
-    [SPEC_CONTROLLER_CLI, "tags", "--features", path.join(root, "features")],
+    NODE,
+    [...SPEC_CONTROLLER_ARGV, "tags", "--features", path.join(root, "features")],
     { cwd: root, encoding: "utf8" }
   );
   assert.equal(result.error, undefined, `spec-controller failed to spawn: ${result.error?.message}`);

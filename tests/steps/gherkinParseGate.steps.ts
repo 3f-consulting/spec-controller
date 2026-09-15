@@ -30,6 +30,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { parseErrorsIn } from "../../packages/spec-controller/src/ingest/gherkinValidation.js";
+import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 
 // @SCN-GPG-002
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
@@ -96,14 +97,14 @@ function writeCorpus(files: readonly (readonly [string, string])[]): string {
  * The command `pnpm <check>` runs, read from the root package.json rather than restated here.
  *
  * The Examples cell is a script name followed by whatever arguments that script takes — for
- * `spec-controller tags`, the workspace CLI and the subcommand to give it. The script's own text
- * is a `tsx <entry>` invocation; anything else is a change this arm must be told about rather than
+ * `spec-controller tags`, the workspace CLI and the subcommand to give it. The entry it resolves to
+ * is THIS tree's built binary; anything else is a change this arm must be told about rather than
  * silently paper over.
  */
 function commandFor(check: string): readonly [string, readonly string[]] {
   const [scriptName, ...subcommand] = check.split(/\s+/);
   assert.ok(scriptName, `the Examples table names no command: "${check}"`);
-  // THE SOURCE CLI BY PATH, AND DELIBERATELY NOT THROUGH THE ROOT SCRIPT (3F-3413).
+  // THIS TREE'S CLI BY PATH, AND DELIBERATELY NOT THROUGH THE ROOT SCRIPT (3F-3413).
   //
   // This used to read `package.json`'s script for `scriptName` and assert it was a `tsx <entry>`
   // invocation, then spawn that entry. Two things were wrong with it once 3F-3105 pinned this
@@ -117,22 +118,24 @@ function commandFor(check: string): readonly [string, readonly string[]] {
   // So the entry is named directly. @SCN-GPG-002 is a claim about the product's behaviour and must
   // exercise the code under change, exactly as @SCN-SLF-008's arm does. The Examples cell still
   // names the command a consumer types; only the resolution of it is pinned to this tree.
-  const entry = path.join("packages", "spec-controller", "src", "cli.ts");
+  //
+  // WHAT 3F-3424 MOVED, AND WHAT IT DID NOT. The entry is now this tree's BUILT binary rather than
+  // its TypeScript source — `packages/spec-controller/dist/cli.js`, which is what `bin` points at
+  // and what an adopter runs. The distinction the paragraph above turns on is untouched: `dist/` is
+  // still THIS tree, compiled one step earlier by `pnpm build`, and is not the pinned published
+  // package the root script resolves. A regression in this tree's parse gate still reds here.
   assert.equal(
     scriptName,
     "spec-controller",
     `the Examples table names "${scriptName}", but this arm resolves only spec-controller's own CLI`,
   );
-  return [
-    path.join(repoRoot, "node_modules", ".bin", "tsx"),
-    [path.join(repoRoot, entry), ...subcommand],
-  ];
+  return [NODE, [...SPEC_CONTROLLER_ARGV, ...subcommand]];
 }
 
 /** Spawn the real check as its own process, with `corpusRoot` as its working directory. */
 function spawnCheckOver(check: string, corpusRoot: string): Outcome {
-  const [tsx, args] = commandFor(check);
-  const result = spawnSync(tsx, [...args], { cwd: corpusRoot, encoding: "utf8" });
+  const [host, args] = commandFor(check);
+  const result = spawnSync(host, [...args], { cwd: corpusRoot, encoding: "utf8" });
   assert.equal(result.error, undefined, `${check} failed to spawn: ${result.error?.message}`);
   return {
     exitCode: typeof result.status === "number" ? result.status : 1,

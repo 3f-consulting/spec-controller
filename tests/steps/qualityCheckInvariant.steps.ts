@@ -27,6 +27,7 @@ import {
 } from "../../packages/core/src/domain/qualityCheckReconciliation.js";
 import type { Outcome } from "../../packages/core/src/domain/qualityCheckReconciliation.js";
 import type { EvidenceObligation, EvidenceObservation } from "../../packages/core/src/domain/journal.js";
+import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 
 // @SCN-LDG-030
 
@@ -51,14 +52,15 @@ let profile: typeof OUTCOME_SIDE_PROFILE;
 let constructedPresence: Record<string, { obligation: boolean; observation: boolean }> = {};
 
 /**
- * Spawn the REAL top-level binary (packages/spec-controller/src/cli.ts) with the `balance`
+ * Spawn the REAL top-level binary (packages/spec-controller/dist/cli.js — the file `bin` points
+ * at, spawned under `node` since 3F-3424) with the `balance`
  * subcommand — the standalone core + app pipeline, no in-process shortcut.
  */
 function spawnBalance(args: string[]): SpawnSyncReturns<string> {
   const root = process.cwd();
   const result = spawnSync(
-    join(root, "node_modules", ".bin", "tsx"),
-    [join(root, "packages", "spec-controller", "src", "cli.ts"), "balance", ...args],
+    NODE,
+    [...SPEC_CONTROLLER_ARGV, "balance", ...args],
     { cwd: root, encoding: "utf8" },
   );
   assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);

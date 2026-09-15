@@ -26,4 +26,20 @@ export default {
   require: ["tests/steps/**/*.ts"],
   requireModule: ["tsx/cjs"],
   tags: "@integration or @e2e or @performance",
+
+  // 3F-3422 — TWO WORKERS, AND THE NUMBER IS TWO BECAUSE FOUR WAS MEASURED AND WAS WORSE. 3F-3421
+  // is what made the scenarios safe to interleave at all. Read off the jobs API on this branch,
+  // never the local clock: serial measured 149s and 142s, parallel: 2 measured 132/139/138/139
+  // (median 138.5s), and parallel: 4 measured 149/148/108 AND FAILED ALL THREE RUNS on a 5000ms
+  // step deadline blown under contention.
+  //
+  // DO NOT READ THIS KEY AS HAVING RESTORED SCN-FIT-013'S HEADROOM. IT DID NOT. The gain is 7%,
+  // the median still sits 18s under a 150s gate it used to sit 5s under, and every run still
+  // prints the over-the-trigger warning. What the readings showed is why: aggregate step time
+  // scales with the worker count (x1.88 at two workers, x3.64 at four) while the wall clock
+  // barely moves, so the workers are real and their throughput is spent making each step slower.
+  // The children are tsx/esbuild/tsc/pnpm, themselves threaded, so a serial run already has both
+  // of a 2-core ubuntu-latest's cores busy. The local 61.2s -> 33.0s came off 18 cores and does
+  // not transfer — which is the whole reason this was filed as a measurement and not an estimate.
+  parallel: 2,
 };

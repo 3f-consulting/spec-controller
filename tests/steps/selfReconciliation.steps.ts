@@ -23,10 +23,11 @@
 import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, statSync, utimesSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import path, { join } from "node:path";
 import { createRequire } from "node:module";
+import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 
 /**
  * A flag THIS version's registry does not name — the shape any version skew produces, whichever
@@ -72,9 +73,10 @@ Given(
 When("that reader is handed a flag its own version does not accept", function () {
   const repoRoot = process.cwd();
   slf008Result = spawnSync(
-    join(repoRoot, "node_modules", ".bin", "tsx"),
+    NODE,
     [
-      join(repoRoot, "packages", "spec-controller", "src", "cli-balance", "cli.ts"),
+      ...SPEC_CONTROLLER_ARGV,
+      "balance",
       "--features",
       "features",
       FLAG_THIS_VERSION_REFUSES,
@@ -266,6 +268,29 @@ Then(
  * re-implementation can only measure itself. Both plants are restored in a `finally` and the restore
  * is verified by hash, because a plant left behind silently poisons every arm after it.
  *
+ * AND WHY THE PLANTED DEFECT IS SWITCHED ON PER PROCESS RATHER THAN FOR EVERY READER ALIVE
+ * (3F-3421). In place means in a file every other scenario's reader loads too. `restored in a
+ * finally` bounds the plant in TIME, not in AUDIENCE: for the ~900ms the two source plants are
+ * live, any reader another scenario spawns off `packages/` loads the planted predicate and returns
+ * the planted verdict. Measured, not reasoned — five reproductions under `--parallel 4` each left
+ * five to eight scenarios of `uncited-static-checks.feature` reading exit 0 over a fixture that is
+ * out of balance, and the predicate their process had loaded, printed from the running module, was
+ * this plant's: `length === 0` replaced by the always-true edit. The serial runner hid it by
+ * leaving no other reader alive at the same time as the plant.
+ *
+ * SO THE PLANTED LINE IS INERT UNLESS THE PROCESS READING IT WAS SPAWNED BY THIS SCENARIO, which
+ * `slf007Run` says by putting `SLF007_SWITCH` in the environment of every reader it spawns — the
+ * clean runs included, so the ONLY difference between a clean observation and a planted one stays
+ * the file's content. Nothing in the product reads that name, so the switch is inert in every
+ * process but one carrying a planted file.
+ *
+ * THE TEETH ARE UNCHANGED, WHICH IS THE POINT OF PUTTING THE SWITCH ON THE OBSERVER RATHER THAN ON
+ * THE FIXTURE. Both observations below run WITH the switch set, so a gate that had resolved this
+ * repository's own source would load the planted predicate and its verdict would move — which is
+ * the assertion. The plant is weaker only for a process that was never part of this scenario, and
+ * that process is exactly the bystander it must not reach. It also makes a LEAKED plant survivable:
+ * a crash between write and restore no longer silently rebalances every run on the machine.
+ *
  * THE CONTROL IS THE POINT, NOT A FORMALITY. "The gate's verdict did not move" is exactly what a
  * plant that reached nothing also produces. So the same edit is first put to a reader run FROM that
  * source and must move its verdict; only then does the gate's silence mean the gate is not reading
@@ -307,9 +332,26 @@ function slf007Artefact(): string {
   return join(path.dirname(coreBarrel), "domain", "ledger.js");
 }
 
-/** The edit: make every row read as balanced, whatever it carries. */
+/**
+ * The name whose presence in a reader's environment arms the planted line below. Nothing in the
+ * product reads it; it exists so a planted file changes the verdict of the readers THIS scenario
+ * spawned and of no other process on the machine (3F-3421).
+ */
+const SLF007_SWITCH = "SPEC_CONTROLLER_SLF007_PLANT";
+
+/**
+ * The edit: make every row read as balanced, whatever it carries — for a reader this scenario
+ * spawned.
+ *
+ * THE UNSWITCHED HALF IS THE SOUND PREDICATE, CHARACTER FOR CHARACTER, and that is what makes a
+ * bystander's behaviour identical rather than merely similar: with the switch absent the `||`
+ * falls through to the line that was already there, so a reader another scenario spawned during
+ * the window evaluates exactly the code it would have evaluated with no plant at all.
+ */
 const SLF007_SOUND = "(row) => row.reconcilingItems.length === 0";
-const SLF007_DEFECT = "(row) => row.reconcilingItems.length >= 0";
+const SLF007_DEFECT =
+  `(row) => process.env[${JSON.stringify(SLF007_SWITCH)}] !== undefined || ` +
+  "row.reconcilingItems.length === 0";
 
 let slf007GateClean = -1;
 let slf007SourceClean = -1;
@@ -330,7 +372,10 @@ function slf007Run(argv: readonly string[]): number {
       "--cucumber", `${f}/cucumber.json`,
       "--target", "slf-007-plant",
     ],
-    { cwd: process.cwd(), encoding: "utf8" },
+    // The switch rides on EVERY reader this scenario spawns, planted or clean, so the file's
+    // content stays the single difference between the two observations (3F-3421). It names
+    // nothing the product reads, so the gate is still exactly the command ci.yml invokes.
+    { cwd: process.cwd(), encoding: "utf8", env: { ...process.env, [SLF007_SWITCH]: "1" } },
   );
   assert.equal(run.error, undefined, `reader failed to spawn: ${String(run.error)}`);
   assert.ok(typeof run.status === "number", "reader produced no exit status");
@@ -339,13 +384,31 @@ function slf007Run(argv: readonly string[]): number {
 
 /** The gate: exactly what ci.yml invokes. */
 const slf007Gate = (): number => slf007Run(["pnpm", "--silent", "spec-controller"]);
-/** A reader run from this repository's own source. */
+/**
+ * A reader run from this repository's own source.
+ *
+ * THE ONE SPAWN 3F-3424 LEFT ON `tsx`, AND IT HAS TO BE. Every other spec-controller spawn in this
+ * suite now runs `node packages/spec-controller/dist/cli.js` (tests/steps/support/builtCli.ts).
+ * This one cannot: the scenario plants a defect into `packages/core/src/domain/ledger.ts` and this
+ * reader's whole job is to SEE it — "a reader run from that source changes its verdict, so the
+ * defect is known to be live". A built reader would read a `dist` compiled before the plant, report
+ * no change, and the control would be unable to move. An arm that cannot move is not a control, and
+ * a defect nobody read and a defect nobody compiled produce the same silence.
+ */
 const slf007FromSource = (): number =>
   slf007Run([join("node_modules", ".bin", "tsx"), join("packages", "spec-controller", "src", "cli.ts")]);
 
 /** Plant the defect in `file`, run `observe`, and restore — verifying the restore by hash. */
 function slf007WithDefectIn(file: string, observe: () => number): number {
   const before = readFileSync(file, "utf8");
+  // THE TIMESTAMPS ARE PART OF WHAT IS RESTORED (3F-3424). The content restore below is
+  // hash-verified, so the file that comes back is byte-for-byte the one that was there — but a
+  // write moves mtime, and after 3F-3424 this suite has a reader of that mtime: the built-CLI
+  // freshness guard refuses a run whose `packages/*/src` is newer than its `dist`. Left alone,
+  // this plant would hand the NEXT `pnpm cucumber` a source tree stamped after the build it is
+  // about to spawn, and the guard would red on a file whose content never changed. A restore that
+  // leaves the file looking edited has not restored it.
+  const beforeTimes = statSync(file);
   assert.equal(
     (before.match(new RegExp(SLF007_SOUND.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g")) ?? []).length,
     1,
@@ -361,6 +424,7 @@ function slf007WithDefectIn(file: string, observe: () => number): number {
       createHash("sha256").update(before).digest("hex"),
       `${file} was NOT restored after the plant — every arm after this one is now unsound`,
     );
+    utimesSync(file, beforeTimes.atime, beforeTimes.mtime);
   }
 }
 

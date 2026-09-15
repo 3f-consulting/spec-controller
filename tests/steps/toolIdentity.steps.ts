@@ -193,13 +193,10 @@ let reported: { insideARepository: Provenance; outsideEveryRepository: Provenanc
 Given(
   "this release's packages installed into a directory that is a git repository, into a directory that is not one, and reached from a third through a node_modules symlink to a checkout of the tool",
   function () {
-    // THE BUILD IS RUN HERE RATHER THAN INHERITED FROM THE LADDER, for @SCN-REL-001's reason: a
-    // scenario whose premise is a packed artefact and which relies on a neighbouring gate to have
-    // produced one reds for somebody typing `pnpm cucumber` on a fresh clone, and reds in the
-    // vocabulary of a broken release rather than of an unbuilt tree.
-    const build = finish("pnpm", ["-r", "build"], repoRoot);
-    assert.equal(exitCodeOf(build), 0, `the tree must build before it can be packed. It said:\n${build.stderr}`);
-
+    // NO BUILD HERE, for @SCN-REL-001's reason (3F-3423): `builtCli.ts`'s freshness guard already
+    // refuses a run whose `dist` is absent or older than `src`, by name, for every scenario — and
+    // this step and @SCN-REL-001's shared a single `repoRoot` between them, which under `parallel`
+    // is the one arrangement neither of them wanted.
     const packDir = scratch("pack");
     const packages: PackedPackage[] = PACKAGE_DIRS.map((dir) => {
       const packageDir = path.join(repoRoot, dir);

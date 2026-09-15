@@ -33,6 +33,7 @@ import { writeOutputs, type OutputPayloads } from "../../packages/spec-controlle
 import { renderMarkdown } from "@3f-consulting/spec-controller-core";
 import { renderJson } from "@3f-consulting/spec-controller-core";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
+import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 
 // A fixture target with a reconcilable spec corpus + result reports (reused from @RPT).
 const FIXTURE = {
@@ -322,7 +323,7 @@ After({ tags: "@SCN-FMT-004" }, function () {
 
 // @SCN-FMT-005
 // This arm exercises the REAL CLI as a SUBPROCESS — the whole binary end-to-end, not the
-// in-process planOutput/writeOutputs the other arms drive. It runs `tsx src/cli.ts` with the
+// in-process planOutput/writeOutputs the other arms drive. It runs the BUILT `dist/cli.js` with the
 // reconcilable fixture AND two --format specs both bound for stdout (`--format md --format
 // json`), then asserts the REAL exit code (non-zero) and the REAL stderr text (the hint).
 // Anti-watermelon (authoring constraint): it reads the subprocess's actual exit +
@@ -343,9 +344,10 @@ When("the CLI is run with --format md and --format json", function () {
   const repoRoot = process.cwd();
   const abs = (p: string): string => join(repoRoot, p);
   fmt005Result = spawnSync(
-    join(repoRoot, "node_modules", ".bin", "tsx"),
+    NODE,
     [
-      join(repoRoot, "packages", "spec-controller", "src", "cli-balance", "cli.ts"),
+      ...SPEC_CONTROLLER_ARGV,
+      "balance",
       "--features", abs(FIXTURE.features),
       "--vitest", abs(FIXTURE.vitest),
       "--cucumber", abs(FIXTURE.cucumber),
@@ -399,7 +401,7 @@ After({ tags: "@SCN-FMT-005" }, function () {
 // REMOVED `--json <path>` flag. The pre-1084 flag used to write the JSON report to <path>;
 // it is gone, and the CLI must now reject it with a non-zero exit + a stderr migration hint
 // to `--format json:<path>`, WITHOUT writing the file (the removed flag never silently
-// no-ops and drops output). It runs `tsx src/cli.ts` with the reconcilable fixture AND
+// no-ops and drops output). It runs the BUILT `dist/cli.js` with the reconcilable fixture AND
 // `--json <abs path>`, then asserts the REAL exit code (non-zero), the REAL absence of the
 // file on disk, and the REAL stderr text (the hint). Anti-watermelon (authoring
 // constraint): it reads the subprocess's actual exit + filesystem + stderr, NEVER a re-run
@@ -420,9 +422,10 @@ When("the CLI is run with the removed --json flag", function () {
   const repoRoot = process.cwd();
   const abs = (p: string): string => join(repoRoot, p);
   fmt006Result = spawnSync(
-    join(repoRoot, "node_modules", ".bin", "tsx"),
+    NODE,
     [
-      join(repoRoot, "packages", "spec-controller", "src", "cli-balance", "cli.ts"),
+      ...SPEC_CONTROLLER_ARGV,
+      "balance",
       "--features", abs(FIXTURE.features),
       "--vitest", abs(FIXTURE.vitest),
       "--cucumber", abs(FIXTURE.cucumber),
@@ -477,7 +480,7 @@ After({ tags: "@SCN-FMT-006" }, function () {
 // UNSUPPORTED `--format xml`. Without the guard the CLI silently treats the unknown format
 // as markdown (the writer's default render branch) and exits 0; it must instead reject it
 // with a non-zero exit + a stderr hint LISTING the supported formats (md, json). It runs
-// `tsx src/cli.ts` with the reconcilable fixture AND `--format xml`, then asserts the REAL
+// the BUILT `dist/cli.js` with the reconcilable fixture AND `--format xml`, then asserts the REAL
 // exit code (non-zero) and the REAL stderr text (the hint). Anti-watermelon (authoring
 // constraint): it reads the subprocess's actual exit + stderr, NEVER a re-run of
 // the planOutput @unit — so a CLI that accepted xml (rendering markdown and exiting 0) REDS.
@@ -496,9 +499,10 @@ When("the CLI is run with --format xml", function () {
   const repoRoot = process.cwd();
   const abs = (p: string): string => join(repoRoot, p);
   fmt007Result = spawnSync(
-    join(repoRoot, "node_modules", ".bin", "tsx"),
+    NODE,
     [
-      join(repoRoot, "packages", "spec-controller", "src", "cli-balance", "cli.ts"),
+      ...SPEC_CONTROLLER_ARGV,
+      "balance",
       "--features", abs(FIXTURE.features),
       "--vitest", abs(FIXTURE.vitest),
       "--cucumber", abs(FIXTURE.cucumber),

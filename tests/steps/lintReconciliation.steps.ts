@@ -78,6 +78,7 @@ const NO_GATE_RECORD: KillFloorReader = () => null;
 // where a target's run record comes FROM is the gate's own question, and the reading is what
 // these arms prove.
 import { evidenceReconciliationFromSources } from "@3f-consulting/spec-controller-core";
+import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 
 // A target that has named no behavioural runners — the membership argument the observed prefix set
 // used to occupy (@SCN-USG-004, 3F-3343).
@@ -2388,9 +2389,10 @@ When(
     const repoRoot = process.cwd();
     const reportPath = join(mkdtempSync(join(tmpdir(), "scn-lnt-024-cli-")), "reconciliation.json");
     const result = spawnSync(
-      join(repoRoot, "node_modules", ".bin", "tsx"),
+      NODE,
       [
-        join(repoRoot, "packages", "spec-controller", "src", "cli-balance", "cli.ts"),
+        ...SPEC_CONTROLLER_ARGV,
+        "balance",
         "--features", join(measuredFixture, "features"),
         "--package-json", join(measuredFixture, "package.json"),
         // `--ci` NAMED AT THE FIXTURE, WHICH HOLDS NO WORKFLOW. The flag defaults to
@@ -2730,9 +2732,10 @@ When(
     const reportDir = mkdtempSync(join(tmpdir(), "spec-controller-lnt033-"));
     const reportPath = join(reportDir, "spec-reconciliation.md");
     const result = spawnSync(
-      join(process.cwd(), "node_modules", ".bin", "tsx"),
+      NODE,
       [
-        join(process.cwd(), "packages", "spec-controller", "src", "cli-balance", "cli.ts"),
+        ...SPEC_CONTROLLER_ARGV,
+        "balance",
         "--features", join(uncitedSeveredFixture, "features"),
         "--ci", join(uncitedSeveredFixture, "ci.yml"),
         "--package-json", join(uncitedSeveredFixture, "package.json"),

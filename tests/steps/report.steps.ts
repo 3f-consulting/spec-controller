@@ -28,6 +28,7 @@ import { writeOutputs, type OutputPayloads } from "../../packages/spec-controlle
 import type { OutputPlan } from "../../packages/spec-controller/src/cli-balance/emit/format.js";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
 import type { EvidenceObligations } from "@3f-consulting/spec-controller-core";
+import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 
 // Persist a run's report under <dir> via the REAL --format output path (writeOutputs) —
 // the SOLE output path since the runs/<target>/<ISO>/ auto-archive was removed with
@@ -83,14 +84,15 @@ function runCliForTarget(targetArg: string | undefined): string {
   targetSourcingDir = mkdtempSync(join(tmpdir(), "spec-controller-rpt001-target-"));
   const reportPath = join(targetSourcingDir, "spec-reconciliation.md");
   const argv = [
-    join(repoRoot, "packages", "spec-controller", "src", "cli-balance", "cli.ts"),
+    ...SPEC_CONTROLLER_ARGV,
+    "balance",
     "--features", abs(TARGET_FIXTURE.features),
     "--vitest", abs(TARGET_FIXTURE.vitest),
     "--cucumber", abs(TARGET_FIXTURE.cucumber),
     "--format", `md:${reportPath}`,
   ];
   if (targetArg !== undefined) argv.push("--target", targetArg);
-  const result = spawnSync(join(repoRoot, "node_modules", ".bin", "tsx"), argv, {
+  const result = spawnSync(NODE, argv, {
     cwd: targetSourcingDir,
     encoding: "utf8",
   });
@@ -1244,9 +1246,10 @@ When(
     cliDir027 = mkdtempSync(join(tmpdir(), "spec-controller-rpt027-cli-"));
     const reportPath = join(cliDir027, "spec-reconciliation.md");
     const result = spawnSync(
-      join(repoRoot, "node_modules", ".bin", "tsx"),
+      NODE,
       [
-        join(repoRoot, "packages", "spec-controller", "src", "cli-balance", "cli.ts"),
+        ...SPEC_CONTROLLER_ARGV,
+        "balance",
         "--features", abs(RPT027_INPUTS.features),
         "--package-json", abs(RPT027_INPUTS.packageJson),
         "--measurements", abs(RPT027_INPUTS.measurements),
@@ -1439,9 +1442,10 @@ When(
     cliDir028 = mkdtempSync(join(tmpdir(), "spec-controller-rpt028-cli-"));
     const reportPath = join(cliDir028, "spec-reconciliation.md");
     const result = spawnSync(
-      join(repoRoot, "node_modules", ".bin", "tsx"),
+      NODE,
       [
-        join(repoRoot, "packages", "spec-controller", "src", "cli-balance", "cli.ts"),
+        ...SPEC_CONTROLLER_ARGV,
+        "balance",
         "--features", abs(RPT028_HANDED.features),
         "--package-json", abs(RPT028_HANDED.packageJson),
         "--measurements", abs(RPT028_HANDED.measurements),

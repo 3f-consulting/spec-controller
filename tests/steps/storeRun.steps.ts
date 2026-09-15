@@ -16,6 +16,7 @@ import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { parse } from "yaml";
+import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 
 const FIXTURE = {
   features: "tests/fixtures/evidence-observation/features",
@@ -43,9 +44,9 @@ When("the operator runs balance under a store directive through the CLI binary",
   const root = process.cwd();
   // The REAL binary with a leading --store host modifier: host wraps balance via keptRun.
   storeResult = spawnSync(
-    join(root, "node_modules", ".bin", "tsx"),
+    NODE,
     [
-      join(root, "packages", "spec-controller", "src", "cli.ts"),
+      ...SPEC_CONTROLLER_ARGV,
       "--store",
       storeRoot,
       "--run-id",

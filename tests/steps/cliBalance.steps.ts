@@ -28,6 +28,7 @@ import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { cliRegistry } from "../../packages/spec-controller/src/cli-registry.js";
+import { NODE, SPEC_CONTROLLER_ARGV } from "./support/builtCli.js";
 
 /** The reconcilable fixture target — scenarios + a Vitest report. */
 const FIXTURE = {
@@ -120,7 +121,8 @@ let invocationCwd: string | undefined;
 let cliResult: SpawnSyncReturns<string>;
 
 /**
- * Spawn the REAL top-level binary entry (packages/spec-controller/src/cli.ts) with the
+ * Spawn the REAL top-level binary (packages/spec-controller/dist/cli.js — the file `bin` points
+ * at, spawned under `node` since 3F-3424) with the
  * `balance` subcommand and the given `--flag value` args — the standalone path, core +
  * app only, no engine. Shared by every When so each scenario asserts the real
  * subprocess's exit code / stdout / stderr, not an in-process call.
@@ -134,8 +136,8 @@ function spawnBalance(args: string[]): SpawnSyncReturns<string> {
   const cwd = invocationCwd ?? root;
   invocationCwd = undefined;
   const result = spawnSync(
-    join(root, "node_modules", ".bin", "tsx"),
-    [join(root, "packages", "spec-controller", "src", "cli.ts"), "balance", ...args],
+    NODE,
+    [...SPEC_CONTROLLER_ARGV, "balance", ...args],
     { cwd, encoding: "utf8" },
   );
   assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
@@ -429,8 +431,8 @@ let controllerResult: SpawnSyncReturns<string>;
 function spawnController(args: string[]): SpawnSyncReturns<string> {
   const root = process.cwd();
   const result = spawnSync(
-    join(root, "node_modules", ".bin", "tsx"),
-    [join(root, "packages", "spec-controller", "src", "cli.ts"), ...args],
+    NODE,
+    [...SPEC_CONTROLLER_ARGV, ...args],
     { cwd: root, encoding: "utf8" },
   );
   assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
