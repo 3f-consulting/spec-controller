@@ -17,18 +17,47 @@ on:
     tags: ["v*"]
   workflow_dispatch:
 
-# THE IDENTITY IS MINTED PER RUN, AND THERE IS NO CREDENTIAL ANYWHERE IN THIS FILE. `id-token: write`
-# is what lets npm's trusted publisher recognise this workflow; a repository secret would be a
-# credential that outlives the run, which is the thing an identity minted per run exists so that
-# nobody has to hold. `contents: read` is the checkout's and nothing more — this release writes
-# nothing back to the repository.
+# STAGING RUNS ON A TOKEN, BY npm's DESIGN — AND THIS FILE ONCE CLAIMED THE OPPOSITE. It read "THE
+# IDENTITY IS MINTED PER RUN, AND THERE IS NO CREDENTIAL ANYWHERE IN THIS FILE", carried
+# `id-token: write`, and was wrong: `npm stage publish` never looks at OIDC, so there was nothing to
+# mint an identity for. MEASURED IN npm's OWN SOURCE rather than inferred from behaviour — in npm
+# 11.19.1 AND 12.0.2, `lib/commands/publish.js` requires and calls `oidc()` (line 147 and 152
+# respectively), and `lib/commands/stage/publish.js` contains ZERO references to it. The only files
+# under `lib/` that mention OIDC at all are `utils/oidc.js`, `commands/publish.js` and
+# `commands/trust/circleci.js`. Staging is not among them and cannot be.
 #
-# PROVENANCE COMES FROM THE IDENTITY, NOT FROM A FLAG. npm emits the attestation itself once the
-# repository is public and emits none while it is private, and there is no flag path to write. Do
-# not add one.
+# SO THE FAILURE WAS NOT A MISCONFIGURED TRUSTED PUBLISHER, which is precisely what it read like
+# (run 34962420854). There was no exchange attempt in the log before a trusted publisher was
+# configured, and none after — staging never looks. It fell through to the `.npmrc` `setup-node`
+# writes, found the placeholder `XXXXX-XXXXX-XXXXX-XXXXX` that action leaves when no token is
+# supplied, and returned `E401 Unable to authenticate`.
+#
+# npm's OWN DOCUMENTATION STATES THE INTENDED SHAPE, and it is this file's shape plus a credential:
+# "The act of staging does not prompt for 2FA and can be done with any token type, the act of
+# approving will." The same paragraph names trusted publishing as one of the flows that LACKS
+# proof-of-presence — the alternative staging REPLACES, not a layer beneath it. The two do not
+# combine, and an attempt to have both is what this file spent two failed runs on.
+#
+# WHAT CARRIES THE INVARIANT IS THE APPROVE AND THE TOKEN'S SCOPE — NOT THE CREDENTIAL'S LIFETIME.
+# The property that matters is that no automated path reaches a consumer, and it now rests on two
+# things that are structural rather than conventional: staging places a version where nobody can
+# install it until a HUMAN runs `npm stage approve` (which does prompt for 2FA, and cannot be done
+# by a workflow), and the token this file carries is STAGE-ONLY — no bypass-2FA, no IP restriction,
+# no org access, scoped to exactly the two packages. It CANNOT publish. The register's long-standing
+# claim that direct publication is switched off is therefore now enforced by the credential itself
+# and not only by a registry setting somebody could change.
+#
+# NO PROVENANCE, AND THAT IS A REAL LOSS RATHER THAN A DETAIL. npm emits its attestation from the
+# OIDC publish path, and this release is not on that path, so these packages carry none. The
+# paragraph that used to stand here — "PROVENANCE COMES FROM THE IDENTITY, NOT FROM A FLAG" — went
+# with the premise it depended on. Nothing here can win it back; only `npm publish` over OIDC could,
+# and that is the flow with no proof-of-presence, which is the thing staging exists to refuse.
+#
+# `contents: read` is the checkout's and nothing more — this release writes nothing back to the
+# repository. `id-token: write` is GONE: nothing reads it now, and a permission a file asks for and
+# never uses is a claim it cannot honour.
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   release:
@@ -149,8 +178,57 @@ jobs:
       #
       # AND NOTHING RUNS AFTER THESE TWO. Everything this release verified, it verified before this
       # point, so a step behind them would be a change to the artefact nothing here has read.
+      #
+      # `--tag` IS NOT OPTIONAL FOR A PRERELEASE, AND ITS ABSENCE COST THE FIRST ONE (measured, run
+      # 34941985755): `npm error You must specify a tag using --tag when publishing a prerelease
+      # version.` npm refuses to infer a dist-tag for a version carrying a prerelease identifier,
+      # because the inference it would have to make is the dangerous one — defaulting to `latest`
+      # would hand every `npm i spec-controller` an alpha. `Stage core` failed and `Stage the CLI`
+      # never ran, so nothing was staged and nothing needed cleaning up.
+      #
+      # THE TAG IS DERIVED FROM THE VERSION, NEVER FIXED, AND THAT IS THE WHOLE POINT OF THESE FOUR
+      # LINES. A hard-coded `--tag alpha` is correct exactly until the first stable release, which it
+      # would then stage under `alpha` — a version nobody installing normally would ever receive,
+      # published by a green run, with no guard anywhere that would notice. Deriving it means the
+      # manifest is the single declaration: bump to `0.1.0` and the tag becomes `latest` by itself.
+      #
+      # THE DERIVATION IS THE PRERELEASE IDENTIFIER AND NOTHING CLEVERER. `${v#*-}` takes everything
+      # after the first `-`, `${t%%.*}` drops the numeric suffix: `0.1.0-alpha.2` -> `alpha`,
+      # `2.0.0-rc.1` -> `rc`, `1.0.0-beta` -> `beta`. A version with no `-` has no identifier and is
+      # a real release, so it takes `latest`. That is the convention the registry already shows —
+      # vue carries alpha/beta/rc, vite alpha/beta, typescript beta/rc, react beta/rc/canary — and
+      # in none of them is `latest` ever a prerelease.
+      #
+      # `next` IS NOT ONE OF THESE. It is a pointer at an upcoming major line, not a prerelease
+      # identifier, so nothing here sets it and the promote procedure no longer mentions it.
+      #
+      # EACH STEP READS ITS OWN PACKAGE'S MANIFEST rather than a value computed once and shared. The
+      # two release in lockstep at the same version (doc/releasing.md), so the answers agree today —
+      # but a shared value would be a second place the version is stated, and the only thing keeping
+      # it true would be that nobody edited one of them.
+      # WHEN THIS STEP RETURNS E401, READ IT AS AN EXPIRED SECRET AND NOTHING ELSE. `NPM_TOKEN` is a
+      # granular access token with a 90-DAY LIFETIME, so this WILL come back — rotate the secret and
+      # re-run, and it is a thirty-second fix. IT IS NEVER A TRUSTED-PUBLISHER PROBLEM: `npm stage
+      # publish` does not use OIDC (measured in npm's source — see the register above the
+      # `permissions:` block), so no trusted-publisher configuration can cause or cure an E401 here.
+      # Two runs were lost to exactly that misreading; this line exists so a third is not.
+      #
+      # `NODE_AUTH_TOKEN` IS THE NAME `setup-node` WROTE THE `.npmrc` TO EXPECT. That action's
+      # `registry-url` is what put an `.npmrc` on the runner at all, and it substitutes this variable
+      # into it. Without the `env:` below the file still resolves — to the literal placeholder
+      # `XXXXX-XXXXX-XXXXX-XXXXX`, which is what returned E401 on run 34962420854.
       - name: Stage core
-        run: npm stage publish "$RUNNER_TEMP/release"/3f-consulting-spec-controller-core-*.tgz
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          v="$(node -p "require('./packages/core/package.json').version")"
+          case "$v" in *-*) t="${v#*-}"; t="${t%%.*}" ;; *) t=latest ;; esac
+          npm stage publish "$RUNNER_TEMP/release"/3f-consulting-spec-controller-core-*.tgz --tag "$t"
 
       - name: Stage the CLI
-        run: npm stage publish "$RUNNER_TEMP/release"/spec-controller-*.tgz
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          v="$(node -p "require('./packages/spec-controller/package.json').version")"
+          case "$v" in *-*) t="${v#*-}"; t="${t%%.*}" ;; *) t=latest ;; esac
+          npm stage publish "$RUNNER_TEMP/release"/spec-controller-*.tgz --tag "$t"

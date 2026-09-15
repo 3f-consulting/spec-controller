@@ -27,8 +27,8 @@ importers:
         specifier: ^9.39.5
         version: 9.39.5
       spec-controller:
-        specifier: workspace:*
-        version: link:packages/spec-controller
+        specifier: 0.1.0-alpha.2
+        version: 0.1.0-alpha.2
       tsx:
         specifier: ^4.22.3
         version: 4.23.0
@@ -73,6 +73,10 @@ importers:
         version: 2.9.0
 
 packages:
+
+  '@3f-consulting/spec-controller-core@0.1.0-alpha.2':
+    resolution: {integrity: sha512-EpcK4P3q6YCOdObCSMU6+GHAqe/XguftERXuke+B5i3WLaNp/qnM1A3vC7Lm2/kNn9joriSV5WB1hd8t202iMA==}
+    engines: {node: '>=22'}
 
   '@babel/code-frame@7.29.7':
     resolution: {integrity: sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw==}
@@ -1831,6 +1835,11 @@ packages:
   spdx-license-ids@3.0.23:
     resolution: {integrity: sha512-CWLcCCH7VLu13TgOH+r8p1O/Znwhqv/dbb6lqWy67G+pT1kHmeD/+V36AVb/vq8QMIQwVShJ6Ssl5FPh0fuSdw==}
 
+  spec-controller@0.1.0-alpha.2:
+    resolution: {integrity: sha512-TKdA/qIj/TztgE0f0HE5BYGuGR9XLjdOm9YVdYYgeibAVpxdGqfpXyI60BYLSuX2O2wVG4k8ddXXo75ZuVtISQ==}
+    engines: {node: '>=22'}
+    hasBin: true
+
   stackback@0.0.2:
     resolution: {integrity: sha512-1XMJE5fQo1jGH6Y/7ebnwPOBEkIEnT4QF32d5R1+VXdXveM0IBMJt8zfaxX1P3QhVwrYe+576+jkANtSS2mBbw==}
 
@@ -2122,6 +2131,12 @@ packages:
     resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
 
 snapshots:
+
+  '@3f-consulting/spec-controller-core@0.1.0-alpha.2':
+    dependencies:
+      '@cucumber/gherkin': 41.0.0
+      '@cucumber/messages': 34.0.1
+      yaml: 2.9.0
 
   '@babel/code-frame@7.29.7':
     dependencies:
@@ -3876,6 +3891,13 @@ snapshots:
       spdx-license-ids: 3.0.23
 
   spdx-license-ids@3.0.23: {}
+
+  spec-controller@0.1.0-alpha.2:
+    dependencies:
+      '@3f-consulting/spec-controller-core': 0.1.0-alpha.2
+      '@cucumber/gherkin': 41.0.0
+      '@cucumber/messages': 34.0.1
+      yaml: 2.9.0
 
   stackback@0.0.2: {}
 

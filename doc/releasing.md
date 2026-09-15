@@ -108,6 +108,27 @@ time. The two readings differ nowhere except inside an installed tarball.
 
 Both packages are **semver**, and both are on `0.x`.
 
+### This repository pins spec-controller, and that pin is where a bump starts
+
+`package.json` at the workspace root carries `spec-controller` as an **exact published version** in
+`devDependencies`, and the root `spec-controller` script is the bare binary name — so `pnpm
+spec-controller …` runs the *installed* package. Both `ci.yml` steps that invoke the tool (`Corpus
+tags` and `Self-reconciliation balance`) go through it, which is what makes this repository an
+ordinary adopter of its own product rather than a special case (`3F-3105`).
+
+**That pin is the single declaration of which reader judges this tree.** There is no second
+"minimum readable version" banked anywhere, deliberately: a second spelling of the same fact agrees
+with the first only until somebody edits one of them.
+
+**When the model moves and the pinned reader can no longer read the tree**, the cure is the stage0
+bump in *Releasing while the self-reconciliation is red* below — publish from the branch, promote,
+bump the pin in the same review. The pinned reader says so itself: handed a flag its version does
+not accept, it names its own version and tells you to bump the pin (`@SCN-SLF-008`).
+
+**Never widen the pin to escape a skew.** A range or a dist-tag would make the red go away by
+making the reader unpredictable, which is the failure this arrangement exists to end — and
+`@SCN-SLF-009` reds on any specifier that is not one exact version.
+
 - **`0.x` says the surface may still move.** A minor bump on `0.x` may carry a breaking change, and
   a consumer who cannot absorb one should pin exactly rather than by caret.
 - **The frozen public contract is the CLI's flags and the core barrel** — what

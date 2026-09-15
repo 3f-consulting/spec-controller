@@ -103,14 +103,26 @@ function writeCorpus(files: readonly (readonly [string, string])[]): string {
 function commandFor(check: string): readonly [string, readonly string[]] {
   const [scriptName, ...subcommand] = check.split(/\s+/);
   assert.ok(scriptName, `the Examples table names no command: "${check}"`);
-  const pkg = JSON.parse(readFileSync(path.join(repoRoot, "package.json"), "utf8")) as {
-    scripts: Record<string, string | undefined>;
-  };
-  const script = pkg.scripts[scriptName];
-  assert.ok(script, `package.json names no script "${scriptName}" — the Examples table has drifted`);
-  const [runner, entry] = script.split(/\s+/);
-  assert.equal(runner, "tsx", `expected "${scriptName}" to be a tsx invocation; got "${script}"`);
-  assert.ok(entry, `"${scriptName}" names no entry point: "${script}"`);
+  // THE SOURCE CLI BY PATH, AND DELIBERATELY NOT THROUGH THE ROOT SCRIPT (3F-3413).
+  //
+  // This used to read `package.json`'s script for `scriptName` and assert it was a `tsx <entry>`
+  // invocation, then spawn that entry. Two things were wrong with it once 3F-3105 pinned this
+  // repository to its own published package. It BROKE, because the root `spec-controller` script is
+  // now the bare binary name rather than a `tsx` invocation — a re-derivation of how a command is
+  // spelled is coupled to a spelling that was free to change. And had it been "fixed" by running the
+  // script, this scenario would have quietly begun asserting the PUBLISHED artefact's parse gate
+  // instead of this tree's: a regression in the source parse gate would have gone green here, with
+  // nothing in the diff to say so.
+  //
+  // So the entry is named directly. @SCN-GPG-002 is a claim about the product's behaviour and must
+  // exercise the code under change, exactly as @SCN-SLF-008's arm does. The Examples cell still
+  // names the command a consumer types; only the resolution of it is pinned to this tree.
+  const entry = path.join("packages", "spec-controller", "src", "cli.ts");
+  assert.equal(
+    scriptName,
+    "spec-controller",
+    `the Examples table names "${scriptName}", but this arm resolves only spec-controller's own CLI`,
+  );
   return [
     path.join(repoRoot, "node_modules", ".bin", "tsx"),
     [path.join(repoRoot, entry), ...subcommand],

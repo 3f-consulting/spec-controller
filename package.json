@@ -1,7 +1,7 @@
 {
   "name": "spec-controller-workspace",
   "version": "0.0.0",
-  "description": "Workspace root for spec-controller — the reconciliation CLI and its pure core library.",
+  "description": "Workspace root for spec-controller \u2014 the reconciliation CLI and its pure core library.",
   "license": "MIT",
   "private": true,
   "type": "module",
@@ -19,8 +19,8 @@
     "mutation:regression": "tsx tests/checks/mutationRegressionCli.ts --scn SCN-FIT-017 --check mutation-regression",
     "timing:score": "tsx tests/checks/timingReaderCli.ts --check ci-run-time",
     "cucumber": "tsx tests/checks/timeStepCli.ts --scn SCN-FIT-013 --check ci-run-time -- cucumber-js",
-      "build": "pnpm -r build",
-    "spec-controller": "tsx packages/spec-controller/src/cli.ts",
+    "build": "pnpm -r build",
+    "spec-controller": "spec-controller",
     "lint:complexity-exceptions": "tsx tests/checks/lintComplexityExceptionsCli.ts",
     "lint:scn-subissues": "tsx tests/checks/lintScnSubIssuesCli.ts",
     "lint:anemic-domain": "tsx tests/checks/lintAnemicDomainCli.ts"
@@ -42,7 +42,11 @@
       "ci.yml:ci:Mutate this push against the recorded sweep"
     ],
     "fitnessChecks": [
-      { "scn": "SCN-FIT-001", "characteristic": "complexity", "command": "eslint" },
+      {
+        "scn": "SCN-FIT-001",
+        "characteristic": "complexity",
+        "command": "eslint"
+      },
       {
         "scn": "SCN-FIT-003",
         "characteristic": "complexity",
@@ -63,7 +67,11 @@
         "characteristic": "traceability",
         "command": "pnpm lint:scn-subissues"
       },
-      { "scn": "SCN-FIT-011", "characteristic": "typecheck", "command": "pnpm typecheck" },
+      {
+        "scn": "SCN-FIT-011",
+        "characteristic": "typecheck",
+        "command": "pnpm typecheck"
+      },
       {
         "scn": "SCN-FIT-012",
         "characteristic": "ci-run-time",
@@ -97,7 +105,7 @@
     "@stryker-mutator/vitest-runner": "^9.6.1",
     "@types/node": "^22.0.0",
     "eslint": "^9.39.5",
-    "spec-controller": "workspace:*",
+    "spec-controller": "0.1.0-alpha.2",
     "tsx": "^4.22.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.65.0",

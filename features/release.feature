@@ -137,7 +137,7 @@ Feature: A release verifies the artefact it publishes, in the tree a stranger in
       Then core is staged before the CLI that resolves it
       And nothing in the release runs after the staging
       And the CLI's packed manifest names the exact core version this release stages
-      And the release proves who it is without carrying a repository secret
+      And the release authenticates with its stage-only credential and claims no identity it never uses
       And a release that reverses the two, one that runs a step after staging, and one that publishes outright each red instead
 
   Rule: a release can be cut while the self-reconciliation is red
