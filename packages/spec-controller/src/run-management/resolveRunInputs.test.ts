@@ -18,6 +18,13 @@
  * resolveTargetRoot (@SCN-RPT-016) derives the portable-path root from the TARGET —
  * INDEPENDENT of the run cwd: a non-git target → dirname(--features); a git target → the
  * git top-level of dirname(--features); no --features → process.cwd() (the fallback).
+ *
+ * resolveToolIdentity carries two ids. @SCN-RPT-026 (3F-1916) is the original rule — the tool's own
+ * dir, never cwd. @SCN-RPT-029 (3F-3418) is the trap that guard could not see: the tool's own dir
+ * ITSELF sitting inside the target, which is every ordinary install. Its @integration arm
+ * (tests/steps/toolIdentity.steps.ts) stands where a consumer stands; the two arms below hold the
+ * DISCRIMINATOR, and they only hold it as a pair — arm 1 alone is satisfied by returning null
+ * everywhere, which is the symmetric wrong answer.
  */
 
 import { describe, it, expect } from "vitest";
@@ -75,6 +82,73 @@ describe("[SCN-RPT-026] resolveToolIdentity: the tool's own checkout, and a non-
       expect(identity.toolVersion).toBe("unknown");
     } finally {
       rmSync(bareDir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("[SCN-RPT-029] resolveToolIdentity: a tool resolved out of node_modules has no SHA of its own, though the tree it sits in is a git repository", () => {
+  /**
+   * A git repository a consumer could plausibly be, with a real HEAD and a package.json at its
+   * root — so both arms below walk up to the SAME version and neither can pass by finding none.
+   */
+  function consumerRepo(): { repo: string; head: string; cleanup: () => void } {
+    const repo = realpathSync(mkdtempSync(join(tmpdir(), "spec-controller-rpt029-")));
+    writeFileSync(
+      join(repo, "package.json"),
+      JSON.stringify({ name: "a-consumer", version: "7.7.7-consumer" }),
+    );
+    const git = (...args: string[]): string =>
+      execFileSync(
+        "git",
+        ["-C", repo, "-c", "user.email=fixture@example.invalid", "-c", "user.name=Fixture", ...args],
+        { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] },
+      ).trim();
+    git("init", "-q");
+    git("commit", "--allow-empty", "-q", "-m", "the consumer's own commit");
+    return { repo, head: git("rev-parse", "HEAD"), cleanup: () => rmSync(repo, { recursive: true, force: true }) };
+  }
+
+  it("returns a NULL sha for a toolDir under node_modules even though git -C that dir DOES answer with the enclosing repository's HEAD", () => {
+    const { repo, head, cleanup } = consumerRepo();
+    try {
+      const toolDir = join(repo, "node_modules", "spec-controller", "dist");
+      mkdirSync(toolDir, { recursive: true });
+
+      // THE ORDERING IS THE WHOLE OF THIS ARM'S TEETH. git really does answer here — it walks up
+      // out of node_modules to the consumer's .git and hands back the consumer's commit, and being
+      // .gitignored changes nothing. Without this line first, a null below is equally consistent
+      // with the guard firing and with git having failed for some unrelated reason, and the arm
+      // would keep passing if the guard were deleted on a machine with no git.
+      const gitAnswers = execFileSync("git", ["-C", toolDir, "rev-parse", "HEAD"], {
+        encoding: "utf8",
+      }).trim();
+      expect(gitAnswers).toBe(head);
+
+      const identity = resolveToolIdentity({ toolDir });
+
+      expect(identity.toolSha).toBeNull();
+      // And a run with no SHA is still attributable by version.
+      expect(identity.toolVersion).toBe("7.7.7-consumer");
+    } finally {
+      cleanup();
+    }
+  });
+
+  it("still returns the real HEAD for a toolDir in the SAME repository that is not under node_modules", () => {
+    const { repo, head, cleanup } = consumerRepo();
+    try {
+      // The development checkout, and the arm that reds on a fix answering null everywhere. The
+      // symmetric failure 3F-3418 names is trading one wrong SHA for another, and nothing on a
+      // rendered report would say which — so it is asserted positively rather than left to follow.
+      const toolDir = join(repo, "packages", "spec-controller", "src");
+      mkdirSync(toolDir, { recursive: true });
+
+      const identity = resolveToolIdentity({ toolDir });
+
+      expect(identity.toolSha).toBe(head);
+      expect(identity.toolVersion).toBe("7.7.7-consumer");
+    } finally {
+      cleanup();
     }
   });
 });

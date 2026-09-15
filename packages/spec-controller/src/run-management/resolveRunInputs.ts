@@ -6,12 +6,12 @@
  * CLI (cli-balance/cli.ts) calls these once to build the RunContext.
  *
  * Scenarios: @SCN-RPT-001 (the run-provenance slice); the --source-sha override;
- * @SCN-RPT-016 (target-root derivation).
+ * @SCN-RPT-016 (target-root derivation); @SCN-RPT-026 / @SCN-RPT-029 (the tool's own identity).
  */
 
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
@@ -54,17 +54,30 @@ export interface ToolIdentity {
  * distinct from the TARGET's `sourceSha`. Two facts, one call, threaded to both the
  * report provenance (RunContext) and the run.yaml manifest.
  *
- * **The correctness trap this exists to avoid:** at run time the process cwd is the
- * TARGET repo (reconcile runs there), so a bare `git rev-parse HEAD` would re-record the
- * TARGET's SHA — the exact bug this ticket fixes. So the SHA is read `git -C <the tool's
- * OWN dir>`, derived from `import.meta.url`, never cwd.
+ * **TWO TRAPS, AND THIS DOCBLOCK ONLY NAMED THE FIRST FOR ELEVEN WEEKS** (@SCN-RPT-029,
+ * 3F-3418). Nothing typechecks a comment, and the sentence below — true, and the whole of
+ * what was written here — is what made the second trap read as already-handled.
  *
- * `toolSha` is `git -C <toolDir> rev-parse HEAD` (trimmed), or `null` on any throw — the
- * tool installed as a package with no `.git`, git absent, or an empty answer — mirroring
- * `resolveSourceSha`'s fail-soft. `toolVersion` is read from the tool's own
- * `package.json` (walked up from `toolDir`), or `"unknown"` when none is found — so a run
- * stays attributable by version even when no SHA can be read. `toolDir` /
- * `packageJsonPath` are injectable for the `@unit` teeth (@SCN-RPT-026).
+ * **Trap one, cwd:** at run time the process cwd is the TARGET repo (reconcile runs
+ * there), so a bare `git rev-parse HEAD` would re-record the TARGET's SHA. So the SHA is
+ * read `git -C <the tool's OWN dir>`, derived from `import.meta.url`, never cwd (3F-1916).
+ *
+ * **Trap two, which the `-C` guard could not see:** the tool's own dir is ITSELF inside the
+ * target. For an installed package that dir is `<consumer>/node_modules/…`, which is inside
+ * the consumer's worktree, so `git -C` walks up to the consumer's `.git` and answers with
+ * the consumer's HEAD — being `.gitignore`d makes no difference, git does not stop at
+ * ignored directories. That is not an absent tool SHA, it is a WRONG one, and nothing on
+ * the rendered report distinguishes it from a genuine one. It is also the only case a
+ * consumer ever sees: every adopter installs into a git repository. `resolveToolSha`
+ * therefore answers a `node_modules` SEGMENT before it asks git at all.
+ *
+ * `toolSha` is `null` for a tool resolved out of `node_modules`, and otherwise
+ * `git -C <toolDir> rev-parse HEAD` (trimmed) or `null` on any throw — no `.git` above the
+ * tool, git absent, or an empty answer — mirroring `resolveSourceSha`'s fail-soft.
+ * `toolVersion` is read from the tool's own `package.json` (walked up from `toolDir`), or
+ * `"unknown"` when none is found — so a run stays attributable by version even when no SHA
+ * can be read. `toolDir` / `packageJsonPath` are injectable for the `@unit` teeth
+ * (@SCN-RPT-026, @SCN-RPT-029).
  */
 export function resolveToolIdentity(opts: { toolDir?: string; packageJsonPath?: string } = {}): ToolIdentity {
   const toolDir = opts.toolDir !== undefined && opts.toolDir.trim() !== ""
@@ -76,8 +89,30 @@ export function resolveToolIdentity(opts: { toolDir?: string; packageJsonPath?: 
   };
 }
 
-/** The tool's own git HEAD, read `-C <toolDir>` (never cwd), null on any throw. */
+/**
+ * The tool's own git HEAD, read `-C <toolDir>` (never cwd), null on any throw — and null
+ * without asking at all for a tool resolved out of `node_modules` (@SCN-RPT-029).
+ *
+ * A SEGMENT, NEVER A SUBSTRING. A directory honestly named `my_node_modules_backup` is not an
+ * install, and a checkout living under a directory literally named `node_modules` reporting null is
+ * the pathological trade every tool making this distinction takes.
+ *
+ * `sep`, NOT A REGEX OVER BOTH SEPARATORS. `[/\\]` would carry a branch no arm on this platform can
+ * reach, so a mutant deleting its second half would survive the mutation gate while nothing was
+ * worse. `sep` is what `fileURLToPath` produces on each platform, which is the only thing `toolDir`
+ * is ever built from.
+ *
+ * IT ANSWERS BEFORE THE `try`, NOT INSIDE IT. Returning null from a thrown git read and returning
+ * null because the tool is an install are the same recorded answer and not the same fact, and only
+ * the first of them is allowed to depend on git being present.
+ *
+ * WHAT IT DOES NOT CLAIM. Under `--preserve-symlinks` Node reports the symlink path rather than the
+ * realpath, so a linked development checkout would carry a `node_modules` segment and report null.
+ * That is a strictly safer wrong answer than today's, nothing in this repository passes the flag,
+ * and no arm covers it — named rather than guarded.
+ */
 function resolveToolSha(toolDir: string): string | null {
+  if (toolDir.split(sep).includes("node_modules")) return null;
   try {
     const out = execFileSync("git", ["-C", toolDir, "rev-parse", "HEAD"], {
       encoding: "utf8",

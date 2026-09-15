@@ -696,24 +696,52 @@ Feature: The report renders the ledger as sectioned facts
       Then the reconciliation-collection Subject cell reads "Scenario Reconciliation"
       And the headline verdict tally reads "N Scenario Reconciliation(s): X balanced, Y out-of-balance", never "N scenario(s):"
 
-  Rule: the tool identity is the tool's own checkout, and a non-git install resolves the SHA to null
+  Rule: the tool identity is the tool's OWN checkout — an installed tool has none, whatever repository it is sitting inside
 
-    Which spec-controller produced a run (@SCN-RPT-026, 3F-1916). resolveToolIdentity
-    answers "which tool is this?" from the tool's OWN install, never the target: the git
-    SHA is read `git -C <the tool's own dir>` (derived from import.meta.url), NEVER cwd —
-    at run time cwd is the target repo, so a cwd read would re-record the target's SHA, the
-    exact bug this closes. Run from the checkout, the tool SHA is the spec-controller repo
-    HEAD; installed as a package with no .git, the git read cannot answer and the SHA
-    resolves to a recorded null — while the version, read from the tool's own package.json,
-    is STILL present, so a run stays attributable by version even with no SHA. A pure
-    resolution rule proven in isolation by Vitest — the resolver → ctx → rendered-surface
-    thread is already proven by RPT-001/RPT-002's integration arms (mirrors RPT-003).
+    Which spec-controller produced a run (@SCN-RPT-026, 3F-1916; @SCN-RPT-029, 3F-3418).
+    resolveToolIdentity answers "which tool is this?" from the tool's OWN install, never the
+    target. Run from a checkout of itself the tool SHA is that checkout's HEAD; resolved out of
+    a node_modules tree the tool has no checkout of its own and the SHA resolves to a recorded
+    null — while the version, read from the tool's own package.json, is STILL present, so a run
+    stays attributable by version even with no SHA.
+
+    TWO TRAPS, AND THE SECOND IS WHY THIS RULE GAINED A SCENARIO (3F-3418). The first is cwd: at
+    run time cwd is the TARGET repo, so a bare `git rev-parse HEAD` would re-record the target's
+    SHA, and reading `git -C <the tool's own dir>` (derived from import.meta.url) is what closes
+    it. The second is that the tool's own dir is ITSELF inside the target — the ordinary installed
+    case, <consumer>/node_modules/…, and the only one a consumer ever sees. `git -C` walks up to
+    the consumer's .git and answers with the consumer's HEAD; being .gitignored makes no
+    difference, git does not stop at ignored directories, and nothing on the rendered report
+    distinguishes that answer from a genuine tool SHA. The `-C` guard could not see it, which is
+    why the node_modules segment is answered BEFORE git is asked at all.
+
+    THE TRADE THE SECOND GUARD MUST NOT MAKE. A tool reached through a node_modules symlink to a
+    checkout of itself is still a checkout of itself: Node resolves module symlinks, so the dir it
+    reports carries no node_modules segment and keeps its real SHA. Answering null everywhere
+    would trade one wrong SHA for another and nothing on the report would say which, so that arm
+    is asserted positively rather than left to follow.
+
+    RPT-026 is a pure resolution rule proven in isolation by Vitest — the resolver → ctx →
+    rendered-surface thread is already proven by RPT-001/RPT-002's integration arms (mirrors
+    RPT-003). RPT-029 is NOT, and that is the whole of its reason: this fault was invisible to
+    every projection over a hand-built RunContext, so its integration arm stands where a consumer
+    stands — the packed tarballs really installed, inside a real git repository, the real command
+    run there, the rendered line read back.
 
     @unit @SCN-RPT-026
     Scenario: resolveToolIdentity reads the tool's own repo HEAD, and falls back to a null SHA with the version still present when the tool is not a git checkout
       Given the tool resolves its own identity from its own directory
       Then the tool SHA is the spec-controller checkout HEAD, and the version is present, when run from the repo
       And the tool SHA is null but the tool version is still present when the tool is not a git checkout
+
+    @unit @integration @SCN-RPT-029
+    Scenario: a spec-controller resolved out of node_modules reports no tool SHA though the tree it sits in is a git repository, while one running from a checkout of itself still reports that checkout's HEAD
+      Given this release's packages installed into a directory that is a git repository, into a directory that is not one, and reached from a third through a node_modules symlink to a checkout of the tool
+      When each one runs a reconcile and the provenance it renders is read
+      Then the one installed inside a git repository reports no tool SHA, and does not name that repository's commit
+      And the one installed outside any repository reports no tool SHA
+      And the one reached from a checkout of the tool reports that checkout's commit, not the consumer's
+      And all three still report the tool's version
 
   Rule: the Run provenance names every stream the run was handed, and every one it was not
 
