@@ -75,8 +75,8 @@ export interface ReleaseFault {
     | "dependent-staged-first"
     | "acts-after-the-staging"
     | "engine-version-nobody-stages"
-    | "no-identity-to-prove"
-    | "carries-a-repository-secret";
+    | "stages-without-a-credential"
+    | "claims-an-identity-it-never-uses";
   readonly message: string;
 }
 
@@ -90,10 +90,19 @@ export interface ReleaseFault {
 const STAGES = /\bnpm\s+stage\s+publish\b/;
 const PUBLISHES_OUTRIGHT = /\bnpm\s+publish\b/;
 
-/** The permission an OIDC identity is minted under — the alternative to carrying a credential. */
+/**
+ * The permission an OIDC identity would be minted under — which THIS release must NOT ask for.
+ *
+ * `npm stage publish` DOES NOT USE OIDC, measured in npm's own source rather than inferred: in npm
+ * 11.19.1 and 12.0.2, `lib/commands/publish.js` calls `oidc()` and `lib/commands/stage/publish.js`
+ * contains zero references to it. So a release that stages cannot mint an identity to prove, and a
+ * file asking for the permission is stating a capability it never exercises — which is the shape
+ * that cost runs 34941985755 and 34962420854, both of which read like a misconfigured trusted
+ * publisher and were nothing of the kind.
+ */
 const IDENTITY = "id-token";
 
-/** How a workflow reaches a repository secret, and the only way it can hold one at all. */
+/** How a workflow reaches the stage-only credential `npm stage publish` authenticates with. */
 const A_REPOSITORY_SECRET = "secrets.";
 
 /** Everything about this release that would let a consumer resolve an engine that is not there. */
@@ -211,25 +220,41 @@ function engineVersionFaults(release: StagedRelease): ReleaseFault[] {
   ];
 }
 
-/** Whether the release proves who it is, and whether it is carrying a credential to do it. */
+/**
+ * Whether the release can authenticate at all, and whether it claims a capability it never uses.
+ *
+ * BOTH ARMS WERE THE OTHER WAY ROUND UNTIL 3F-3105, AND BOTH WERE WRONG. This function used to
+ * demand `id-token: write` and refuse any repository secret, encoding an OIDC premise that `npm
+ * stage publish` cannot satisfy — so the guard was green on a release that could not stage, twice.
+ * A premise stated in a comment and never executed is the fault this repository keeps meeting; this
+ * one was executed, and it executed the wrong premise, which is worse.
+ *
+ * WHAT CARRIES THE INVARIANT NOW. "No automated path reaches a consumer" does not rest on the
+ * credential's lifetime — it rests on `publishedOutright` above (nothing here publishes) plus the
+ * HUMAN `npm stage approve`, which prompts for 2FA and cannot be run by a workflow, plus the token
+ * being stage-only and unable to publish at all. npm's own documentation puts staging and trusted
+ * publishing side by side as alternatives: "The act of staging does not prompt for 2FA and can be
+ * done with any token type, the act of approving will."
+ */
 function identityFaults(stated: StatedRelease): ReleaseFault[] {
   const faults: ReleaseFault[] = [];
-  if (stated.permissions[IDENTITY] !== "write") {
+  if (!stated.body.includes(A_REPOSITORY_SECRET)) {
     faults.push({
-      kind: "no-identity-to-prove",
+      kind: "stages-without-a-credential",
       message:
-        `the staging job does not run with ${IDENTITY} write, so it can mint no identity to prove ` +
-        "to the registry. Nothing is staged, and the release fails where a reader will read it as " +
-        "a fault in the code.",
+        "the release reaches for no credential, so `npm stage publish` falls through to whatever " +
+        "`.npmrc` the runner holds — which is `setup-node`'s placeholder, and returns E401. " +
+        "Nothing is staged, and the failure reads like a trusted-publisher fault it is not.",
     });
   }
-  if (stated.body.includes(A_REPOSITORY_SECRET)) {
+  if (stated.permissions[IDENTITY] === "write") {
     faults.push({
-      kind: "carries-a-repository-secret",
+      kind: "claims-an-identity-it-never-uses",
       message:
-        "the release reaches for a repository secret. A credential a release carries is a " +
-        "credential that outlives the run, and it is the thing an identity minted per run exists " +
-        "so that nobody has to hold.",
+        `the release asks for ${IDENTITY} write, but \`npm stage publish\` never reads it — the ` +
+        "OIDC exchange lives in npm's `publish` command and nowhere in `stage/publish`. A " +
+        "permission a file asks for and never exercises is a claim it cannot honour, and it is " +
+        "what made two E401 runs read as a misconfigured trusted publisher.",
     });
   }
   return faults;

@@ -574,9 +574,9 @@ Then("the CLI's packed manifest names the exact core version this release stages
   );
 });
 
-Then("the release proves who it is without carrying a repository secret", function () {
-  assertNoReleaseFault(releaseFaultsFound, "no-identity-to-prove");
-  assertNoReleaseFault(releaseFaultsFound, "carries-a-repository-secret");
+Then("the release authenticates with its stage-only credential and claims no identity it never uses", function () {
+  assertNoReleaseFault(releaseFaultsFound, "stages-without-a-credential");
+  assertNoReleaseFault(releaseFaultsFound, "claims-an-identity-it-never-uses");
 });
 
 Then(
