@@ -149,8 +149,42 @@ jobs:
       #
       # AND NOTHING RUNS AFTER THESE TWO. Everything this release verified, it verified before this
       # point, so a step behind them would be a change to the artefact nothing here has read.
+      #
+      # `--tag` IS NOT OPTIONAL FOR A PRERELEASE, AND ITS ABSENCE COST THE FIRST ONE (measured, run
+      # 34941985755): `npm error You must specify a tag using --tag when publishing a prerelease
+      # version.` npm refuses to infer a dist-tag for a version carrying a prerelease identifier,
+      # because the inference it would have to make is the dangerous one — defaulting to `latest`
+      # would hand every `npm i spec-controller` an alpha. `Stage core` failed and `Stage the CLI`
+      # never ran, so nothing was staged and nothing needed cleaning up.
+      #
+      # THE TAG IS DERIVED FROM THE VERSION, NEVER FIXED, AND THAT IS THE WHOLE POINT OF THESE FOUR
+      # LINES. A hard-coded `--tag alpha` is correct exactly until the first stable release, which it
+      # would then stage under `alpha` — a version nobody installing normally would ever receive,
+      # published by a green run, with no guard anywhere that would notice. Deriving it means the
+      # manifest is the single declaration: bump to `0.1.0` and the tag becomes `latest` by itself.
+      #
+      # THE DERIVATION IS THE PRERELEASE IDENTIFIER AND NOTHING CLEVERER. `${v#*-}` takes everything
+      # after the first `-`, `${t%%.*}` drops the numeric suffix: `0.1.0-alpha.2` -> `alpha`,
+      # `2.0.0-rc.1` -> `rc`, `1.0.0-beta` -> `beta`. A version with no `-` has no identifier and is
+      # a real release, so it takes `latest`. That is the convention the registry already shows —
+      # vue carries alpha/beta/rc, vite alpha/beta, typescript beta/rc, react beta/rc/canary — and
+      # in none of them is `latest` ever a prerelease.
+      #
+      # `next` IS NOT ONE OF THESE. It is a pointer at an upcoming major line, not a prerelease
+      # identifier, so nothing here sets it and the promote procedure no longer mentions it.
+      #
+      # EACH STEP READS ITS OWN PACKAGE'S MANIFEST rather than a value computed once and shared. The
+      # two release in lockstep at the same version (doc/releasing.md), so the answers agree today —
+      # but a shared value would be a second place the version is stated, and the only thing keeping
+      # it true would be that nobody edited one of them.
       - name: Stage core
-        run: npm stage publish "$RUNNER_TEMP/release"/3f-consulting-spec-controller-core-*.tgz
+        run: |
+          v="$(node -p "require('./packages/core/package.json').version")"
+          case "$v" in *-*) t="${v#*-}"; t="${t%%.*}" ;; *) t=latest ;; esac
+          npm stage publish "$RUNNER_TEMP/release"/3f-consulting-spec-controller-core-*.tgz --tag "$t"
 
       - name: Stage the CLI
-        run: npm stage publish "$RUNNER_TEMP/release"/spec-controller-*.tgz
+        run: |
+          v="$(node -p "require('./packages/spec-controller/package.json').version")"
+          case "$v" in *-*) t="${v#*-}"; t="${t%%.*}" ;; *) t=latest ;; esac
+          npm stage publish "$RUNNER_TEMP/release"/spec-controller-*.tgz --tag "$t"
