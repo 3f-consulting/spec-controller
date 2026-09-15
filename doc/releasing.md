@@ -4,33 +4,44 @@ Two packages go out together: `@3f-consulting/spec-controller-core`, the pure en
 `spec-controller`, the command that resolves it. A release sends both, core first, from one run of
 `.github/workflows/release.yml`.
 
-**Read the first section before your first release.** The trap in it is not a code fault and does
-not read like a configuration fault either.
+**Read the first section before your first release.** The trap in it is an authentication error
+with no authentication cause.
 
 ---
 
-## Before your first release: npm never validated the trusted publisher
+## Before your first release: the credential, and what an `E401` means
 
-This repository publishes over OIDC. There is no `NPM_TOKEN`, no repository secret, and no
-`--provenance` flag — the workflow mints an identity per run under `id-token: write`, and npm's
-trusted-publisher configuration for each package says which workflow it will believe.
+**This repository stages with a token and promotes by hand.** `release.yml` reads `NPM_TOKEN` from
+the repository secrets on its two staging steps, and nothing else in the file authenticates.
 
-**npm does not validate that configuration when you save it.** A wrong organisation, a wrong
-repository name, a wrong workflow filename — all three are accepted silently at npm's form, and the
-first thing that notices is the first staging attempt. What you see then is an **authentication
-failure**, in a step that runs `npm`, in a job whose earlier steps were all green:
+**It does not use OIDC trusted publishing, and that is a fact about npm rather than a preference.**
+Measured in npm's own source, 11.19.1 and 12.0.2:
 
-> `npm error code E404` / `npm error need auth`
+```
+oidc() is called from lib/commands/publish.js only
+lib/commands/stage/publish.js has no reference to it
+```
 
-That reads like a code fault and it is not one. **Suspect the configuration first and the code
-second.** Check, on npmjs.com, for each of the two packages:
+`npm stage publish` never attempts the exchange. A staging workflow running under `id-token: write`
+with no token falls back to whatever is in the `.npmrc`, finds `actions/setup-node`'s placeholder
+`XXXXX-XXXXX-XXXXX-XXXXX`, and fails `E401`. **Configuring a trusted publisher on the package
+changes nothing, because npm never looks.** `man npm-stage` names trusted publishing as one of the
+flows that *lacks* proof-of-presence — the alternative staging replaces, not a layer beneath it.
+They are alternatives: a human gate, or provenance. This repository takes the human gate.
 
-- the organisation is `3f-consulting` and the repository is `spec-controller`;
-- the workflow filename is exactly `release.yml` — not a path, not `Release`, the filename;
-- the environment field is empty, because this workflow declares none.
+**So an `E401` at `Stage core` means the token and only the token** — expired, revoked, or the
+secret missing. Rotate it and re-run. It is never a trusted-publisher problem, and the hours are in
+believing otherwise.
 
-npm's publish errors lie about their cause in both directions: an `E404` on a `PUT` means
-*unauthenticated*, not *no such package*.
+**The token is stage-only.** It carries no publish right at all, so a future edit swapping
+`npm stage publish` for `npm publish` fails loudly rather than shipping to consumers unreviewed.
+That is what makes *nothing automated reaches a consumer* structural rather than conventional. It
+expires: rotation is revoke, reissue with the same settings, `gh secret set NPM_TOKEN`. Nothing in
+the repository changes, so no commit and no release are needed.
+
+*(Lived 2026-09-15, publishing `0.1.0-alpha.2`. Six faults in one attempt, three of them chasing an
+authentication error that had no authentication cause. Every one was a premise this file or*
+`release.yml` *stated confidently and nobody had executed.)*
 
 ---
 
@@ -54,32 +65,29 @@ Then it stops. **A staged version is not a released one.**
 ### The operator promotes
 
 `npm stage publish` puts a version on the registry in a staged state. Consumers cannot install it
-until a person promotes it:
+until a person promotes it, and promotion takes a **stage-id** — never a package spec:
 
 ```
-npm stage approve <package>@<version>
+npx -y npm@latest stage list
+npx -y npm@latest stage approve <stage-id>
 ```
 
-**That command is newer than the npm on most machines, and the failure reads as a typo rather than
-as a version.** `npm stage` is not in npm 11.5.1 — the version OIDC trusted publishing needs — and
-arrived later; Node 24 bundles 11.19.x, which has it, and that is why `release.yml` pins Node 24
-rather than 22. An older local npm answers `Unknown command: "stage"`, which looks like a wrong
-command rather than an old one. Two ways through, neither requiring a global upgrade:
+`stage list` prints the id, package, version, dist-tag and a **status**. A freshly staged version
+reads `validating` for a few moments before it reads `staged`; approve it then.
 
-```
-npx -y npm@latest stage approve <package>@<version>
-```
+**`npm stage approve <package>@<version>` is not a form of this command.** It fails with
+`stage-id must be a valid UUID`, which reads like a bad paste rather than a wrong shape.
 
-`npx` reads your existing `~/.npmrc`, so your login carries. Or promote from the package's page on
-npmjs.com, which may be the easier route anyway given promotion needs proof of presence.
+**`npm stage` is newer than the npm on most machines, and that failure reads as a typo rather than a
+version.** An older local npm answers `Unknown command: "stage"`. Node 24 bundles 11.19.x, which has
+it, and that is why `release.yml` pins Node 24 rather than 22. `npx -y npm@latest` sidesteps a
+global upgrade and reads your existing `~/.npmrc`, so your login carries. If you are not logged in,
+`stage list` answers `E401` — run `npx -y npm@latest login` first.
 
-*(Lived 2026-09-15, promoting `0.1.0-alpha.2`: the tag pushed, the workflow staged, and the promote
-stopped on a local npm two commands short of the one CI had been pinned to for this exact reason.)*
-
-or from the package's page on npmjs.com. **Promotion needs proof of presence and cannot use an
-identity minted for a workflow run**, so there is no automating it — which is the property, not the
-inconvenience. "Allow npm publish" is unchecked on both trusted publishers, so a workflow attempting
-an ordinary `npm publish` is **refused by the registry** and nothing arrives at all.
+**Approving prompts for proof of presence.** npm prints a URL, you authenticate in a browser, and
+only then does the version publish. That cannot use an identity minted for a workflow run, so there
+is no automating it — which is the property, not the inconvenience. Promoting from the package's
+page on npmjs.com does the same thing by the same rule.
 
 **A releaser who stages and walks away has not released.** Both packages need promoting, and core
 needs promoting **first**: the CLI's packed manifest names core by a concrete version, so between
@@ -140,6 +148,30 @@ making the reader unpredictable, which is the failure this arrangement exists to
   release that sent one without the other would leave a package naming an engine the registry does
   not have.
 
+
+### Prerelease dist-tags
+
+**A prerelease cannot be staged or published without `--tag`.** npm refuses it outright: *"You must
+specify a tag using --tag when publishing a prerelease version."* `release.yml` derives the tag from
+each package's own manifest rather than hard-coding one — the prerelease identifier becomes the
+dist-tag, a stable version becomes `latest`:
+
+```
+0.1.0-alpha.2 -> alpha    1.0.0-beta.3 -> beta    2.0.0-rc.1 -> rc    0.1.0 -> latest
+```
+
+A hard-coded `--tag alpha` would stage the first stable release under `alpha`, which is a silent
+fault with no guard.
+
+**`latest` is never a prerelease.** While these packages have no stable release the documented
+install line is:
+
+```
+npm i spec-controller@alpha
+```
+
+Do not hand-move `latest` onto a prerelease to make the bare install work; it moves on its own when
+`0.1.0` publishes.
 ---
 
 ## The release path asks nothing about this repository
@@ -189,8 +221,9 @@ tree, so the self-reconciliation reds on the very branch that fixes it.
 1. **The model change lands on a branch.** CI reds at `Self-reconciliation balance`, naming the skew.
 2. **Cut a prerelease tag from that branch** — `v0.1.0-alpha.N`. The release workflow stages both
    packages. It never asks the self-reconciliation anything, so the red does not stop it.
-3. **Promote the staged versions**, core first, with `npm stage approve` or from npmjs.com. Until
-   you do, nothing has changed for anybody.
+3. **Promote the staged versions**, core first, with `npm stage list` then
+   `npm stage approve <stage-id>` (see *The operator promotes*). Until you do, nothing has changed
+   for anybody.
 4. **Bump the pin on the branch**, in the same review, to the version you just promoted.
 5. **CI greens** — the new pinned reader can read the tree. The branch merges.
 
