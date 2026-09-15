@@ -148,19 +148,37 @@ Then("the run exits with the usage status, not a reconciliation verdict", functi
  *
  * THE DISCRIMINATOR IS THE RESOLVED PATH, AND IT IS NOT THE ONE 3F-3105 EXPECTED. The parent's
  * acceptance says the pinned reader proves itself by reporting its tool SHA as "not a git checkout".
- * MEASURED, AND IT DOES NOT — not because the pin is absent, but because `resolveToolSha` runs
- * `git -C <toolDir> rev-parse HEAD`, and an installed package lives under the CONSUMER's
- * `node_modules`, which is inside the consumer's git worktree. So git answers with the CONSUMER's
- * commit and provenance reports it as the TOOL's SHA. The same tarball installed outside any
- * repository answers `fatal: not a git repository` and reports null, which is how the scratch
- * measurement that shaped the design came to disagree with the repository.
+ * When this arm was written it did not: `resolveToolSha` ran `git -C <toolDir> rev-parse HEAD`, and
+ * an installed package lives under the CONSUMER's `node_modules`, which is inside the consumer's
+ * git worktree — so git walked up, answered with the CONSUMER's commit, and provenance reported it
+ * as the TOOL's SHA. Both readers carried the same version and both reported this repository's
+ * HEAD, so the report could not tell them apart and an arm asserting "not a git checkout" would
+ * have been asserting something false. This arm therefore used the discriminator that actually
+ * discriminated: WHERE the reader resolved from.
  *
- * SO THE REPORT CANNOT TELL THE TWO READERS APART TODAY — both carry version `0.1.0-alpha.2` and
- * both report this repository's HEAD — and an arm asserting "not a git checkout" would be asserting
- * something false. Filed as a product defect; until it lands and is published, this arm uses the
- * discriminator that actually discriminates: WHERE the reader resolved from. Undo the pin and the
- * resolution moves to `packages/spec-controller`, which is the whole of what this scenario claims.
+ * THAT DEFECT IS FIXED, PUBLISHED AND PINNED, SO THE SENTENCE ABOVE IS HISTORY RATHER THAN A
+ * STANDING FACT. 3F-3418 landed the guard — a tool resolved out of a `node_modules` tree has no
+ * checkout of itself whatever repository it sits inside — and 0.1.0-alpha.3 was promoted and pinned
+ * on 2026-09-15. The two readers ARE now distinguishable by the report: the pinned one says
+ * "unknown (not a git checkout)" and one run from this tree says this repository's HEAD.
+ *
+ * THE ARM HAS NOT MOVED WITH IT, DELIBERATELY. Changing what this scenario asserts is a scenario
+ * touch and it discharges 3F-3105's acceptance item 1 by its originally stated evidence, so it
+ * belongs to 3F-3420 rather than to the release mechanics that bumped the pin. Until then the
+ * resolved path stands and is still true: undo the pin and the resolution moves to
+ * `packages/spec-controller`, which is the whole of what this scenario claims.
  * ------------------------------------------------------------------------------------------- */
+
+/**
+ * Where the pinned reader resolves from — asked of Node, and asked in ONE place.
+ *
+ * Two arms need this answer: @SCN-SLF-009 asserts on the path itself, and @SCN-SLF-007 plants a
+ * defect in the core that reader loads. A second spelling would agree with this one by diligence
+ * and then drift, and the drift would present as a plant landing in an artefact nothing resolves.
+ */
+function pinnedReaderManifest(): string {
+  return createRequire(join(process.cwd(), "package.json")).resolve("spec-controller/package.json");
+}
 
 /** Where a resolved package lives, and where this repository's own source does not. */
 const INSTALLED = `${path.sep}node_modules${path.sep}`;
@@ -227,9 +245,7 @@ Then(
     // WHERE `spec-controller` RESOLVES FROM IS THE CLAIM. Not a re-reading of the manifest: this
     // asks Node the same question `pnpm spec-controller` asks when ci.yml invokes it, and the
     // answer moves to `packages/spec-controller/src` the moment the pin is undone.
-    const resolved = createRequire(join(process.cwd(), "package.json")).resolve(
-      "spec-controller/package.json",
-    );
+    const resolved = pinnedReaderManifest();
     assert.ok(
       resolved.includes(INSTALLED),
       `the reconciler resolves from ${resolved}, which is not an installed package — the pin is declared but not in force`,
@@ -259,19 +275,37 @@ Then(
 /** The fixture whose reconciliation is out-of-balance, so a flip to balanced is unmistakable. */
 const SLF007_FIXTURE = "tests/fixtures/evidence-observation";
 
-/** The verdict predicate, in this repository's source and in the resolved artefact's dist. */
+/** The verdict predicate in this repository's own source. */
 const SLF007_SOURCE = join("packages", "core", "src", "domain", "ledger.ts");
-const SLF007_ARTEFACT = join(
-  "node_modules",
-  ".pnpm",
-  "spec-controller@0.1.0-alpha.2",
-  "node_modules",
-  "@3f-consulting",
-  "spec-controller-core",
-  "dist",
-  "domain",
-  "ledger.js",
-);
+
+/**
+ * The same predicate inside the core the PINNED reader loads — RESOLVED, never spelled.
+ *
+ * THE VERSION IS NOT TYPED HERE, AND THAT IS THE WHOLE OF THE CHANGE. This was written out in
+ * full — `node_modules/.pnpm/spec-controller@<version>/node_modules/@3f-consulting/…` — which made
+ * it a SECOND statement of the pin, in a second file, kept true only by whoever bumped the first
+ * one remembering this one existed. `dry`'s "a rule stated twice is a rule obeyed in its laxest
+ * form", and the laxest form of a path is one that points somewhere real and wrong.
+ *
+ * IT IS ASKED OF NODE INSTEAD, FROM THE PINNED READER'S OWN CONTEXT. Resolving the core barrel from
+ * THIS repository would answer `packages/core` — the workspace link, the arrangement 3F-3105 ends —
+ * so the question is put to the CLI's own require context, which is by construction the module that
+ * CLI loads. It also knows nothing about pnpm's store layout, so a change of package manager moves
+ * it without an edit.
+ *
+ * AND THE STALE LITERAL WOULD NOT HAVE FAILED THE WAY IT LOOKED LIKE IT WOULD. On CI's cold install
+ * only the pinned version exists, so the old path would ENOENT — loud, if worded as a missing file
+ * rather than a stale pin. On a developer's WARM store the PREVIOUS version's directory is still
+ * there, so the same line finds a file, plants the defect in an artefact nothing resolves any more,
+ * and reds on the arm below instead. Two different reds, neither naming the cause; measured at the
+ * 0.1.0-alpha.3 bump, where both directories sat side by side.
+ */
+function slf007Artefact(): string {
+  const coreBarrel = createRequire(pinnedReaderManifest()).resolve(
+    "@3f-consulting/spec-controller-core",
+  );
+  return join(path.dirname(coreBarrel), "domain", "ledger.js");
+}
 
 /** The edit: make every row read as balanced, whatever it carries. */
 const SLF007_SOUND = "(row) => row.reconcilingItems.length === 0";
@@ -370,7 +404,7 @@ Then("the gate's own verdict does not move", function () {
 
 // @SCN-SLF-007
 Then("the same defect planted in the resolved artefact does move the gate's verdict", function () {
-  slf007GateWithArtefactPlanted = slf007WithDefectIn(SLF007_ARTEFACT, slf007Gate);
+  slf007GateWithArtefactPlanted = slf007WithDefectIn(slf007Artefact(), slf007Gate);
   assert.notEqual(
     slf007GateWithArtefactPlanted,
     slf007GateClean,

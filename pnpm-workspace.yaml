@@ -30,5 +30,5 @@ allowBuilds:
 # IT NEEDS PRUNING ON EVERY BUMP. Each stage0 bump adds two entries and the old pair becomes dead
 # weight; a list nobody prunes is how an exclusion stops being narrow. Replace them, do not append.
 minimumReleaseAgeExclude:
-  - '@3f-consulting/spec-controller-core@0.1.0-alpha.2'
-  - spec-controller@0.1.0-alpha.2
+  - '@3f-consulting/spec-controller-core@0.1.0-alpha.3'
+  - spec-controller@0.1.0-alpha.3
