@@ -157,11 +157,12 @@ const PLACEMENT_STEP = "Place the scheduled sweep's measurement";
  * The lines of ONE named step of the workflow, and nothing else.
  *
  * THE CLAIM WAS ALWAYS ABOUT THIS STEP AND USED TO BE MEASURED OVER THE WHOLE FILE, which held
- * while the file placed one thing. 3F-3333 added a second placement — the per-mutant record
- * SCN-FIT-017 is judged against — and every shape below matched twice, so an arm asserting an
- * ORDER inside this step failed over a step it says nothing about. Scoping is what keeps the
- * instrument pointed at the subject; it does not loosen it, because "exactly one" is still refused
- * inside the slice and the slice still has to exist.
+ * while the file placed one thing. 3F-3333 added a second placement — a per-mutant record another
+ * row was judged against — and every shape below matched twice, so an arm asserting an ORDER inside
+ * this step failed over a step it says nothing about. That second placement has since gone (3F-3457),
+ * so the whole-file reading would pass again today; the scoping STAYS, because it keeps the
+ * instrument pointed at its subject whatever else the file grows, and it does not loosen the claim —
+ * "exactly one" is still refused inside the slice and the slice still has to exist.
  */
 function theStep(lines: readonly string[], named: string): readonly string[] {
   const opens = lines.flatMap((line, at) => (line.includes(`- name: ${named}`) ? [at] : []));

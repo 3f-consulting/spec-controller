@@ -25,14 +25,15 @@ name: Mutation
 # population that shrank, a population that grew, and a gain nobody banked. That record was a pair
 # of counts a human kept, and it was measured blind: it read `detected: 694` against a live 807, so
 # the gate could only red on a loss of more than 113 kills, and at 3F-3321 a real lost kill went
-# past it reporting "no kill went missing". What replaced it is a per-mutant comparison the RUNNER
-# keeps — `pnpm mutation:regression` on every push, against the report this job already uploads —
-# so what this job owes is the report and the measurement, and nothing here judges either.
+# past it reporting "no kill went missing". What replaced it was a per-mutant comparison run on
+# every push — and THAT HAS NOW GONE TOO (3F-3457): it cost 50s of every CI run, and a per-push,
+# per-mutant comparison against a recorded sweep is ours rather than the community's. What gates
+# mutation now is this job's own `thresholds.break`, which is Stryker's documented CI shape.
 #
-# WHICH MAKES THE REPORT UPLOAD BELOW LOAD-BEARING IN A SECOND WAY. It was the operator's copy of
-# what the sweep found; it is now also the RECORD `pnpm mutation:regression` compares each push
-# against (SCN-FIT-017). Its `if: always()` and its path are unchanged and @SCN-MUT-016 still holds
-# both halves of the asymmetry below — what changed is who else reads what it leaves behind.
+# SO THE REPORT UPLOAD BELOW IS THE OPERATOR'S COPY OF WHAT THE SWEEP FOUND, AND NOTHING ELSE READS
+# IT. It was briefly also a record a per-push comparison read against; that comparison, its fitness
+# row and the whole comparator loop left at 3F-3457. Its `if: always()` and its path are unchanged
+# and @SCN-MUT-016 still holds both halves of the asymmetry below.
 on:
   schedule:
     # 03:17 UTC nightly — an off-the-hour minute so the run does not queue behind
@@ -43,6 +44,12 @@ on:
 jobs:
   mutation:
     runs-on: ubuntu-latest
+    # A BOUND ON A HUNG SWEEP, DELIBERATELY GENEROUS (3F-3457). Measured over 2026-09-01..16: 18
+    # runs, mean 5.8 min, max 8.0 min — and CLIMBING, 4.5 min on 1 Sep to 7.9 min on 15 Sep as the
+    # suite grew. an-adopters-repository's equivalent sweep runs 21–27 min, which is where this one is
+    # heading. Twenty-five is about three times today's max so that ordinary growth never trips it;
+    # a tighter bound would red on the suite getting bigger, which is not a fault.
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
 

@@ -16,7 +16,6 @@
     "test": "tsx tests/checks/timeStepCli.ts --scn SCN-FIT-012 --check ci-run-time -- vitest run",
     "mutation": "SPEC_CONTROLLER_SOURCE_ROOT=\"$PWD\" tsx tests/checks/mutationScoreCli.ts --scn SCN-FIT-002 --check mutation -- stryker run",
     "mutation:score": "tsx tests/checks/mutationScoreReaderCli.ts --scn SCN-FIT-002 --check mutation",
-    "mutation:regression": "tsx tests/checks/mutationRegressionCli.ts --scn SCN-FIT-017 --check mutation-regression",
     "timing:score": "tsx tests/checks/timingReaderCli.ts --check ci-run-time",
     "cucumber": "tsx tests/checks/timeStepCli.ts --scn SCN-FIT-013 --check ci-run-time -- cucumber-js",
     "build": "pnpm -r build",
@@ -38,9 +37,7 @@
       "ci.yml:ci:Install dependencies",
       "ci.yml:ci:Build",
       "ci.yml:ci:Place the scheduled sweep's measurement",
-      "ci.yml:ci:Place the suites' timings",
-      "ci.yml:ci:Place the recorded sweep",
-      "ci.yml:ci:Mutate this push against the recorded sweep"
+      "ci.yml:ci:Place the suites' timings"
     ],
     "fitnessChecks": [
       {
@@ -90,12 +87,6 @@
         "characteristic": "mutation",
         "command": "pnpm --silent mutation:score --supersedes SCN-MUT-011",
         "atLeast": 95
-      },
-      {
-        "scn": "SCN-FIT-017",
-        "characteristic": "mutation-regression",
-        "command": "pnpm --silent mutation:regression",
-        "atMost": 0
       }
     ]
   },

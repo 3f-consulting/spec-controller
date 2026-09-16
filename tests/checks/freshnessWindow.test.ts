@@ -23,11 +23,15 @@
  *   - A step COPIES INTO THE EVIDENCE ROOT when it runs `cp`/`mv`/`install` with the root as its
  *     destination. That catches a placement of something this arm has never heard of.
  *
- * Every copy into the root must then be either a placement of a measurement, which owes the window,
- * or a placement of the one thing the product itself names as NOT a measurement
- * (`RECORDED_SWEEP_PATH` — a per-mutant record, deliberately under no window, because age makes
- * that comparison stricter rather than staler). A fourth placement of anything else fails here,
- * which is what the derivation is for.
+ * Every copy into the root must then be a placement of a measurement, which owes the window. Any
+ * other placement fails here, which is what the derivation is for.
+ *
+ * THIS PARTITION HAD A SECOND ARM UNTIL 3F-3457 and now has none. The exempt artefact was a
+ * per-mutant record held deliberately under no window, which `ci.yml` placed for a lost-kill
+ * comparison to read. That comparison, its step and the whole `@MRG` loop left, so no workflow can
+ * place that file any more — and an arm with no possible member is not a rule being held, it is a
+ * branch nothing reaches. It went with them rather than standing as apparatus for an unreachable
+ * case. Nothing this arm ASSERTS changed: `@SCN-PLC-001..003` ran identically either side.
  *
  * THE RESIDUAL, NAMED: a step placing a measurement under a filename no reader reads, written by
  * something that is not a copy, is outside both derivations. Nothing downstream could read it
@@ -45,11 +49,7 @@ import path from "node:path";
 import { parse } from "yaml";
 import { describe, expect, it } from "vitest";
 
-import {
-  RECORDED_SWEEP_PATH,
-  SWEEP_RECORD_PATH,
-  timingsRecordPath,
-} from "./measurementArtefact.js";
+import { SWEEP_RECORD_PATH, timingsRecordPath } from "./measurementArtefact.js";
 
 const repoRoot = process.cwd();
 
@@ -128,10 +128,6 @@ function copiesIntoTheEvidenceRoot(step: Placement): boolean {
   return /\b(?:cp|mv|install|rsync)\b[^\n]*\$\{?SPEC_CONTROLLER_EVIDENCE_DIR\}?\//.test(step.code);
 }
 
-function placesTheRecord(step: Placement): boolean {
-  return names(collapseExpansions(step.code), RECORDED_SWEEP_PATH);
-}
-
 /**
  * A window value written HERE — the thing that must exist in exactly one place.
  *
@@ -197,14 +193,14 @@ describe("[SCN-PLC-003] the sweep and both suite timings are placed by one rule 
       ).toBe(true);
 
     // THE PARTITION, AND THE WHOLE REASON THE POPULATION IS DERIVED. Anything copied into the
-    // evidence root either carries a measurement — and owes the window — or is the one artefact
-    // the product itself names as not a measurement.
+    // evidence root carries a measurement, and owes the window. The exemption that used to sit
+    // beside this line went with the artefact it exempted (3F-3457).
     const unaccounted = copiesIn
-      .filter((step) => !placesAMeasurement(step) && !placesTheRecord(step))
+      .filter((step) => !placesAMeasurement(step))
       .map((step) => step.where);
     expect(
       unaccounted,
-      `these steps copy into the evidence root and place neither a measurement this arm can weigh nor the ${RECORDED_SWEEP_PATH} the product names as not a measurement`,
+      "these steps copy into the evidence root and place nothing this arm can weigh as a measurement",
     ).toEqual([]);
   });
 

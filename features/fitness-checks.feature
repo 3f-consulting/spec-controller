@@ -66,7 +66,7 @@ Feature: The fitness checks this repository configures, one scenario per row
 
   READER-SHAPED ROWS RUN BEHIND THE PRODUCERS THEY READ, AND THAT IS LOAD-BEARING RATHER THAN
   CONVENTIONAL. Some of these rows print a number an earlier step of the same run left behind — a
-  mutation sweep's record, a recorded sweep put beside this push's own, each suite's own timing —
+  mutation sweep's record, each suite's own timing —
   so a pipeline that puts their steps ahead of those producers meets absent artefacts and a wall of
   unsettled rows while doing exactly what it was told. Which rows those are is read off the rows
   themselves and is deliberately not counted here: a number in this prose is a second reading of
@@ -129,9 +129,3 @@ Feature: The fitness checks this repository configures, one scenario per row
     Given the mutation sweep's record for this push
     When the domain's score is read off that record
     Then that number is posted for the ledger to hold against the break threshold its runner reads from the same row
-
-  @fitness @SCN-FIT-017
-  Scenario: no mutant the recorded sweep detected survives this push
-    Given the recorded sweep's mutants and this push's own
-    When the two are compared, mutant for mutant
-    Then no mutant the recorded sweep detected survives this push

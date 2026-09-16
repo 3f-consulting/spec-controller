@@ -228,31 +228,6 @@ export const MEASUREMENT_ARTEFACT_PATH = "measurements.json";
 export const SWEEP_RECORD_PATH = "mutation-measurements.json";
 
 /**
- * Where a push places the RECORDED SWEEP the regression detector reads against this run's own
- * report, relative to the EVIDENCE ROOT (@SCN-MRG-006).
- *
- * IT IS NOT A MEASUREMENT AND THAT IS WHY IT IS NOT THE PATH ABOVE. The two files either side of
- * this one carry a row per measured check — two terms and a number. This one is a whole mutation
- * report: every mutant an earlier run made, where it was made, and what happened when the suite met
- * it. A score can say that a number fell; only the per-mutant document can say WHICH kill went
- * missing, which is the fault this repository exists to catch and the one a bar is three orders of
- * magnitude too coarse to see.
- *
- * AT THE EVIDENCE ROOT BECAUSE A PUSH PLACES IT, which is the property these three paths share and
- * the only one that decides where a file goes. It arrives the way the sweep's measurement arrives —
- * downloaded from the newest completed scheduled run on the gated branch — and it is read by a
- * command of this run's, on the same runner filesystem.
- *
- * AND IT IS NOT THE FILE THE SWEEP ITSELF WRITES BACK INTO. A run told to mutate incrementally
- * READS its incremental file and then REWRITES it with this run's own results merged in. Point the
- * comparison at that file after the sweep and it reads this run's report against a copy of this
- * run's report: nothing ever differs, no kill is ever lost, and the detector is a detector-shaped
- * silence. The placed record is therefore its own artefact under its own name, written once by the
- * placement and read by nothing that edits it.
- */
-export const RECORDED_SWEEP_PATH = "recorded-sweep.json";
-
-/**
  * Where THIS run's timed step leaves what it measured, relative to the EVIDENCE ROOT — a TIMINGS
  * RECORD, and not this run's credit stream either (3F-3166).
  *

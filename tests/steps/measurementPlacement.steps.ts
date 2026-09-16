@@ -75,7 +75,7 @@ import {
 } from "@3f-consulting/spec-controller-core/internal";
 import { parse } from "yaml";
 
-import { MEASUREMENT_ARTEFACT_PATH, RECORDED_SWEEP_PATH } from "../checks/measurementArtefact.js";
+import { MEASUREMENT_ARTEFACT_PATH } from "../checks/measurementArtefact.js";
 
 const repoRoot = process.cwd();
 const tsxBin = path.join(repoRoot, "node_modules", ".bin", "tsx");
@@ -810,8 +810,7 @@ function leaveBystandersInTheRoot(): void {
   const neighbour = subject === SWEEP ? PLACEABLE["the unit suite's timing"]! : SWEEP;
   bystanders = {
     [neighbour.placedAt]: `{"measurements":[{"scnId":"${neighbour.row}","checkTag":"${neighbour.checkTag}","measured":1}]}\n`,
-    [RECORDED_SWEEP_PATH]: '{"files":{}}\n',
-    [MEASUREMENT_ARTEFACT_PATH]: '{"measurements":[{"scnId":"SCN-FIT-017","checkTag":"mutation-regression","measured":0}]}\n',
+    [MEASUREMENT_ARTEFACT_PATH]: '{"measurements":[{"scnId":"SCN-AAA-001","checkTag":"coverage","measured":0}]}\n',
   };
   mkdirSync(plantedRoot, { recursive: true });
   for (const [at, held] of Object.entries(bystanders))

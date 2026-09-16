@@ -62,6 +62,12 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    # A BOUND ON A HUNG RELEASE, AND THE LOOSEST OF THE THREE ON PURPOSE (3F-3457). Measured over
+    # 2026-09-01..16: 4 runs, mean 2.8 min, max 3.0 min. Fifteen is about five times that, and the
+    # slack is the asymmetry: this job talks to a registry, and killing it between `Stage core` and
+    # `Stage the CLI` leaves exactly the half-sent release the ordering above exists to prevent.
+    # Waiting on a slow network costs minutes; a severed staging costs a version number.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
 

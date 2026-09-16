@@ -44,10 +44,15 @@ const SCN = "SCN-FIT-002";
  * not enforce — window dressing beside a bar (operator ruling, 2026-09-12). The value 95 survives
  * them by being promoted into the one threshold that ends a run.
  *
- * IT IS A FLOOR UNDER A SUITE THAT COLLAPSES, AND IT IS NOT THE LOST-KILL DETECTOR. Measured: with
- * one kill deliberately removed the sweep still scored 96.4% and Stryker exited 0. A single kill
- * going missing is caught by `pnpm mutation:regression`, per mutant, against the nightly's record —
- * never by this number, at any value a bar could honestly take.
+ * IT IS A FLOOR UNDER A SUITE THAT COLLAPSES, AND IT DETECTS NO LOST KILL. Measured: with one kill
+ * deliberately removed the sweep still scored 96.4% and Stryker exited 0, so a single kill going
+ * missing is invisible to this number at any value a bar could honestly take.
+ *
+ * NOTHING CATCHES THAT NOW, AND IT IS SAID HERE RATHER THAN LEFT TO BE FOUND (3F-3457). A per-mutant
+ * comparison against the nightly's record used to, on every push; it cost 50s of every CI run, and
+ * a per-push per-mutant comparison is ours rather than the community's, so it and the whole `@MRG`
+ * loop were retired. This threshold is what gates mutation now — Stryker's own documented shape —
+ * and the lost-kill class it cannot see is an accepted residual, not an oversight.
  *
  * IT THROWS RATHER THAN DEFAULTING. A row that lost its bar, or gained an object-shaped one, would
  * otherwise arrive here as `undefined` and Stryker would run with no break at all — a gate that
