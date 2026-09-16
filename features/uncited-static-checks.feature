@@ -2,9 +2,10 @@
 Feature: Detect uncited static-checks — a CI check no fitness scenario cites
 
   The static-check axis's UNCITED detection — the mirror of the
-  runtime axis's cites-no-scenario evidence observations. The axis was obligation→observation only
-  (checkStaticEvidenceObligations observes each check an obligation names), structurally blind to
-  the reverse: a check that runs in CI which nothing cites — an unposted credit.
+  runtime axis's cites-no-scenario evidence observations. The axis was once obligation→observation
+  only, reading each check an obligation NAMED, and was structurally blind to the reverse: a check
+  that runs in CI which nothing cites — an unposted credit. That obligation-side reader was deleted
+  at 3F-3410, so the running-check observer below is now the whole of the axis's input.
 
   The running-check observer emits every running CI check (the lint:* scripts a CI run: step
   invokes — runningStaticChecks) into the reconcile stream, so the ONE reconcile engine sees the

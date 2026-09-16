@@ -26,7 +26,6 @@ import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { parseScenarios, evidenceReconciliationOf } from "@3f-consulting/spec-controller-core";
-import { checkStaticEvidenceObligations } from "@3f-consulting/spec-controller-core";
 import type { PackageJsonScripts } from "@3f-consulting/spec-controller-core";
 import { reconcile } from "@3f-consulting/spec-controller-core";
 import { runReconcile } from "../../packages/spec-controller/src/ingest/ingestQualityChecks.js";

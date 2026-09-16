@@ -84,7 +84,6 @@ export { parseVitestEvidenceObservations } from "./parse/vitest.js";
 export type { VitestJsonReport } from "./parse/vitest.js";
 export { parseCucumberEvidenceObservations } from "./parse/cucumber.js";
 export type { CucumberJsonReport } from "./parse/cucumber.js";
-export { checkStaticEvidenceObligations } from "./parse/checkStaticEvidenceObligations.js";
 export { runningStaticChecks } from "./parse/runningStaticChecks.js";
 export { ciRunCommands, commandInvokesScript } from "./parse/checkScriptsRunInCI.js";
 export type { PackageJsonScripts } from "./parse/checkScriptsRunInCI.js";

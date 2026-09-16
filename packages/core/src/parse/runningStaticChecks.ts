@@ -30,8 +30,9 @@
  * THE ONLY STATIC-CHECK OBSERVER THE RECONCILIATION COMPOSITION WIRES IN (3F-3397). Discovery and
  * attribution are one reader now: every running check reaches the books here, and the `citedScn`
  * seam below stamps the credit's row as the step is observed — there is no second, obligation-side
- * reader left to keep in agreement with it. `checkStaticEvidenceObligations` is a separate v1 API
- * export; nothing in this composition calls it. The CI-parse walk still
+ * reader left to keep in agreement with it — and since 3F-3410 there is no such reader ANYWHERE:
+ * the obligation-side observer this sentence used to point at has been deleted, so this is the only
+ * static-check observer there is, not merely the only one wired in. The CI-parse walk still
  * comes from `checkScriptsRunInCI` (`ciWorkflowSteps`, of which `ciRunSteps` and `ciRunCommands`
  * are the projections / `commandInvokesScript`).
  *

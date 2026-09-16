@@ -24,7 +24,6 @@ import { describe, it, expect } from "vitest";
 import { staticObservationTally } from "./ledger.js";
 import { reconcile } from "./evidenceReconciliation.js";
 import { runningStaticChecks } from "../parse/runningStaticChecks.js";
-import { checkStaticEvidenceObligations } from "../parse/checkStaticEvidenceObligations.js";
 import type { PackageJsonScripts } from "../parse/checkScriptsRunInCI.js";
 import type { ScriptCitation } from "../parse/fitnessCitations.js";
 import type {
@@ -153,12 +152,15 @@ describe("[SCN-USG-001] a static check no fitness scenario cites is banked on th
   const citedScn = (script: string): ScriptCitation | null =>
     script === "lint:foo" ? { checkTag: "foo", scnId: "SCN-TGT-001" } : null;
 
-  // The obligation-side reader, for the handle the corpus obliges — the citing credit.
-  const citedCredits = checkStaticEvidenceObligations(["lint:foo"], [ci], pkg, citedScn);
-  // The running-check observer, for everything CI runs that the first did not cover — no citation.
-  const uncitedCredits = runningStaticChecks([ci], pkg, SUITE_RUNNERS).filter(
-    (o) => o.staticCheck !== "lint:foo"
-  );
+  // ONE observer, split by handle (3F-3458). The obligation-side reader that used to build the
+  // citing half has been deleted, and it did not need replacing with a literal: the running-check
+  // observer emits the same `GuardEvidenceObservation` shape, and this fixture's CI RUNS
+  // `pnpm lint:foo`, so the credit is still derived rather than seeded. Passing `citedScn` to the
+  // one call is what stamps the citation on `lint:foo` and leaves every other handle uncited,
+  // because the seam answers `null` for all of them.
+  const runningCredits = runningStaticChecks([ci], pkg, SUITE_RUNNERS, citedScn);
+  const citedCredits = runningCredits.filter((o) => o.staticCheck === "lint:foo");
+  const uncitedCredits = runningCredits.filter((o) => o.staticCheck !== "lint:foo");
   const ledger: Ledger = reconcile(fitness, [...citedCredits, ...uncitedCredits]);
 
   it("derives one citing credit and one uncited credit from the CI source (the corpus is real, not seeded)", () => {
@@ -301,9 +303,14 @@ describe("[SCN-USG-005] a cited static check under no convention of ours is attr
   const citedScn = (script: string): ScriptCitation | null =>
     script === "domain-purity" ? { checkTag: "domain-purity", scnId: "SCN-GRD-001" } : null;
 
-  // THE CREDIT — derived by the OBLIGATION-side reader, the door this corpus reaches the axis
-  // through, carrying the citation the seam resolved.
-  const credits = checkStaticEvidenceObligations(["domain-purity"], [guardCi], guardPkg, citedScn);
+  // THE CREDIT — derived by the RUNNING-CHECK observer, carrying the citation the seam resolved
+  // (3F-3459). The obligation-side reader that used to build it has been deleted; this fixture's CI
+  // RUNS `pnpm domain-purity`, so the credit is still derived from the CI source rather than seeded.
+  // Filtered to the one handle because the observer reports every candidate step this pipeline runs,
+  // and what this arm is about is the attribution of THIS one.
+  const credits = runningStaticChecks([guardCi], guardPkg, SUITE_RUNNERS, citedScn).filter(
+    (o) => o.staticCheck === "domain-purity"
+  );
   // THE CORPUS — one stepless fitness scenario, raising its obligation against the BARE tag.
   const fitness: Scenario[] = [
     {

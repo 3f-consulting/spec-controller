@@ -11,15 +11,18 @@
  * independence rule — not the seam's own resolution, which is `citationOfCitedRow`'s subject
  * (@SCN-LNT-031) and belongs to its own unit. Composing a manifest and a corpus to re-derive an
  * answer this file does not examine would be a second reading of a seam pinned elsewhere. Both
- * arms still drive their PRODUCTION observer (`runningStaticChecks` / `checkStaticEvidenceObligations`)
- * and the real `reconcile()` over real scenario input (evidence-manifesto §11A); only the citation
- * the observer is handed is hand-supplied, exactly as `staticObservationTally.test.ts` already does
- * for the same reason.
+ * arms still drive the PRODUCTION observer (`runningStaticChecks`) and the real `reconcile()` over
+ * real scenario input (evidence-manifesto §11A); only the citation the observer is handed is
+ * hand-supplied, exactly as `staticObservationTally.test.ts` already does for the same reason.
+ *
+ * ONE OBSERVER, NOT TWO, SINCE 3F-3410. The obligation-side reader the two-axis arm used to drive
+ * has been deleted. Its credit is still DERIVED rather than seeded: the watermelon precursor is
+ * reachable through the observer that survives, by wiring the check to a step the job survives
+ * instead of leaving it out of CI (`severedWiringFor`). §11A is preserved, not traded away.
  */
 
 import { describe, it, expect } from "vitest";
 import { reconcile } from "./evidenceReconciliation.js";
-import { checkStaticEvidenceObligations } from "../parse/checkStaticEvidenceObligations.js";
 import type { ScriptCitation } from "../parse/fitnessCitations.js";
 import { parseScenarios } from "../parse/scenarios.js";
 import { runningStaticChecks } from "../parse/runningStaticChecks.js";
@@ -63,6 +66,26 @@ const CHECK_TAG = "feature-codes";
 function wiringFor(script: string): { ciSource: string; packageJson: PackageJsonScripts } {
   return {
     ciSource: ["name: CI", "jobs:", "  ci:", "    steps:", `      - run: pnpm ${script}`].join("\n"),
+    packageJson: { scripts: { [script]: `tsx ${script}.ts` } },
+  };
+}
+
+/**
+ * The same wiring, SEVERED — the step runs the check and `continue-on-error` means its red is not
+ * its job's verdict. This is the second of the watermelon's two routes (@SCN-LNT-032): a check can
+ * fail to be enforced either by being absent from CI or by being wired to a step the job survives,
+ * and `runningStaticChecks` reads `abortsJob` off the step, so it observes THIS one for real.
+ */
+function severedWiringFor(script: string): { ciSource: string; packageJson: PackageJsonScripts } {
+  return {
+    ciSource: [
+      "name: CI",
+      "jobs:",
+      "  ci:",
+      "    steps:",
+      `      - run: pnpm ${script}`,
+      "        continue-on-error: true",
+    ].join("\n"),
     packageJson: { scripts: { [script]: `tsx ${script}.ts` } },
   };
 }
@@ -175,7 +198,7 @@ describe("[SCN-LNT-009] a fitness credit citing an @SCN no scenario carries post
  * That is not an endorsement of mixed tagging — whether a behavioural scenario may carry a fitness
  * tag is @SCN-STG-005's question — it is what the corpus reader admits.
  *
- * The fitness arm drives the real `checkStaticEvidenceObligations` DETECTOR over a planted tree and
+ * The fitness arm drives the real `runningStaticChecks` OBSERVER over a planted severed tree and
  * the obligations come from the real corpus reader, so what reconciles here is what the migration
  * produces rather than a hand-seeded pair (evidence-manifesto §11A). The reconciler already answers
  * each obligation independently, so this is green on first run — its TEETH are proven by mutation
@@ -183,30 +206,20 @@ describe("[SCN-LNT-009] a fitness credit citing an @SCN no scenario carries post
  *
  * Parent: @SCN-LNT-004.
  */
-const UNWIRED_SCRIPT = "lint:unwired-check";
+const SEVERED_SCRIPT = "lint:severed-check";
 
 /** The bare tag the citation names — a DIFFERENT word, so only the citation joins the fitness
  *  obligation to its credit. */
-const UNWIRED_CHECK = "unwired-check";
+const SEVERED_CHECK = "severed-check";
 
 describe("[SCN-LNT-004] a scenario requiring both a unit test and a fitness check reports each independently", () => {
   it("answers each obligation from a credit of its own axis — the unit credit satisfies the unit obligation, the citing fitness credit the watermelon — and never one from the other", () => {
-    // The planted tree: the check EXISTS as a script but its command is absent from CI, so the
-    // real detector reads exists:true, enforcedOverRealSource:false — the watermelon precursor.
-    const plantedCi = [
-      "name: CI",
-      "on: [push, pull_request]",
-      "jobs:",
-      "  ci:",
-      "    runs-on: ubuntu-latest",
-      "    steps:",
-      "      - uses: actions/checkout@v4",
-      "      - name: Test",
-      "        run: pnpm test",
-    ].join("\n");
-    const plantedPackageJson: PackageJsonScripts = {
-      scripts: { [UNWIRED_SCRIPT]: "tsx scripts/unwired-check.ts", test: "vitest run" },
-    };
+    // The planted tree: the check RUNS, and `continue-on-error` means its red is not its job's
+    // verdict — so the real observer reads exists:true, enforcedOverRealSource:false, which is the
+    // watermelon precursor. Severance rather than absence, because absence is observable only by
+    // an obligation-side reader and there is no longer one (3F-3410).
+    const { ciSource: plantedCi, packageJson: plantedPackageJson } =
+      severedWiringFor(SEVERED_SCRIPT);
 
     // TWO flat peer tags on ONE stepless scenario, read through the real corpus reader — so the
     // row's two obligations are the ones the tag pair actually raises.
@@ -214,17 +227,17 @@ describe("[SCN-LNT-004] a scenario requiring both a unit test and a fitness chec
       "@LNT",
       "Feature: fixture",
       "  Rule: a fixture rule",
-      `    @unit @${UNWIRED_CHECK} @SCN-AAA-001`,
+      `    @unit @${SEVERED_CHECK} @SCN-AAA-001`,
       "    Scenario: the tree stays inside this check's threshold",
     ].join("\n");
-    const scenarios = parseScenarios(corpus, [], [UNWIRED_CHECK]);
+    const scenarios = parseScenarios(corpus, [], [SEVERED_CHECK]);
     expect(scenarios.map((s) => s.evidenceObligations)).toEqual([
-      [{ qualityCheck: "unit" }, { qualityCheck: "lint", staticCheck: UNWIRED_CHECK }],
+      [{ qualityCheck: "unit" }, { qualityCheck: "lint", staticCheck: SEVERED_CHECK }],
     ]);
 
     // THE SEAM'S ANSWER, injected — see the file header.
     const citedScn = (script: string): ScriptCitation | null =>
-      script === UNWIRED_SCRIPT ? { checkTag: UNWIRED_CHECK, scnId: "SCN-AAA-001" } : null;
+      script === SEVERED_SCRIPT ? { checkTag: SEVERED_CHECK, scnId: "SCN-AAA-001" } : null;
 
     // The two credits, observed apart by their own readers and citing the SAME @SCN.
     const unitCredit: EvidenceObservation = {
@@ -232,17 +245,17 @@ describe("[SCN-LNT-004] a scenario requiring both a unit test and a fitness chec
       scnId: "SCN-AAA-001",
       status: "passed",
     };
-    const fitnessCredits = checkStaticEvidenceObligations(
-      [UNWIRED_SCRIPT],
+    const fitnessCredits = runningStaticChecks(
       [plantedCi],
       plantedPackageJson,
+      NO_RUNNERS,
       citedScn
-    );
+    ).filter((o) => o.staticCheck === SEVERED_SCRIPT);
     expect(fitnessCredits).toEqual([
       {
         qualityCheck: "lint",
-        staticCheck: UNWIRED_SCRIPT,
-        checkTag: UNWIRED_CHECK,
+        staticCheck: SEVERED_SCRIPT,
+        checkTag: SEVERED_CHECK,
         exists: true,
         enforcedOverRealSource: false,
         scnId: "SCN-AAA-001",
@@ -262,9 +275,9 @@ describe("[SCN-LNT-004] a scenario requiring both a unit test and a fitness chec
     // exhaustive — no third reading, and no axis answered twice.
     const watermelonItem = {
       qualityCheck: "lint",
-      staticCheck: UNWIRED_CHECK,
+      staticCheck: SEVERED_CHECK,
       outcome: "watermelon",
-      evidenceObligation: { qualityCheck: "lint", staticCheck: UNWIRED_CHECK },
+      evidenceObligation: { qualityCheck: "lint", staticCheck: SEVERED_CHECK },
       evidenceObservation: fitnessCredits[0],
     };
     expect(scenario?.qualityCheckReconciliations).toEqual([

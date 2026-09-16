@@ -27,11 +27,18 @@
  * refuse a build.
  *
  * ON THE PUBLIC `.` BARREL, NEVER `./internal`. A roster only the monorepo can import is
- * reachable by exactly the one product that does not need it. The barrel entry is a v1 contract
- * change. It USED to be reconciled against a hand-written surface updated in the same act, which
- * made the addition a reviewed decision rather than drift — the property that slice was about,
- * applied to itself. That surface left at 3F-3449 and nothing replaced it, so the reviewed-decision
- * property now rests on the reviewer and not on a check.
+ * reachable by exactly the one product that does not need it.
+ *
+ * AND THE BARREL ENTRY IS NOT A FROZEN CONTRACT — it stays on its merits (3F-3410). This used to
+ * say the entry was a "v1 contract change", reconciled against a hand-written surface updated in
+ * the same act. Both halves are gone: that surface left at 3F-3449, and a 0.x package does not
+ * freeze its exports, it drops the dead ones in a prerelease (operator, 2026-09-16). So nothing
+ * keeps this export here by inertia, and 3F-3410 — which deleted the obligation-side observer from
+ * this same barrel for having no caller — asked directly whether this one had one. It does, and not
+ * in this repository: canon names it (below), and a sibling product holds a vendored copy naming
+ * this module as its source, to be replaced by the import. A shared vocabulary's consumers are
+ * outside the repository that publishes it, so a grep of this tree is the wrong population to
+ * measure it by.
  *
  * ═══ THIS FILE IS A VENDORED COPY, AND SAYS SO ═══
  *
@@ -50,17 +57,17 @@
 /**
  * The characteristics the portfolio carries, transcribed from `fitness-functions.md`.
  *
- * STATIC CHECKS — canon's grouped-by-characteristic sentence, in its order: `complexity`
- * (complexity, complexity-exceptions), `function-length`, `tech-conformance` (domain-purity,
- * domain-no-globals, cross-aggregate-boundary, no-parallel-store, anemic-domain,
- * orchestration-thinness), `vocab` (vocab-audit, no-state-literals), `traceability` (scn-tags,
- * scn-references, feature-codes, scn-subissues), `lint` (style/form of code or spec prose),
- * `flag-hygiene` (flag-age, flag-states-matrix), `doc-accuracy`, and the discovery-reachable
- * `typecheck`, `security`, `licence`, `bundle-size`. `self-balance` closes the list — a static
- * check over the PRODUCED EVIDENCE rather than the source (canon, *Self-reconciliation*).
+ * THE WORDS ONLY — WHICH CHECKS SIT UNDER EACH IS NOT RECORDED HERE, AND THAT IS THE POINT
+ * (3F-3410). This docblock used to carry canon's grouped-by-characteristic sentence, naming the
+ * member checks per word. Canon removed that column on 2026-09-16 and said why in terms: the list
+ * had been transcribed HERE, so one unread list had become two drifting ones, and by then most of
+ * the checks it named had been deleted from this repository. Membership is recorded once, on each
+ * product's own `specController.fitnessChecks` rows — the only place the answer is true and the
+ * only place any reconciliation reads it (`dry`: the rows are the fact).
  *
- * MEASURED — assessed by running the suite and measuring it: `ci-run-time`, `coverage`,
- * `mutation` (canon, *Runtime fitness functions*).
+ * TWO GROUPS, WHICH IS CANON'S OWN SPLIT AND NOT A MEMBERSHIP CLAIM. The static checks read the
+ * source (or, for `self-balance`, the PRODUCED EVIDENCE rather than the source); the measured ones
+ * are assessed by running the suite and measuring it (canon, *Runtime fitness functions*).
  *
  * BARE, AND SORTED BY NEITHER. The words carry no `@` because every reader hands this list bare
  * terms (`bareTerm`, 3F-2976), and the order is canon's own so a reader diffing the two documents

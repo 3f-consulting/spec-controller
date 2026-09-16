@@ -3,10 +3,11 @@
  * observers import: walk the CI config STRUCTURALLY to its steps (`ciWorkflowSteps`, of which
  * `ciRunSteps` is the projection to the `run:` ones and `ciRunCommands` the projection to their
  * command strings), and test whether a command invokes
- * a given npm script by an EXACT package-manager invocation (`commandInvokesScript`). `checkStaticEvidenceObligations` (the obligation-side observer) and
- * `runningStaticChecks` (the running-check observer) both read a check's
- * enforcement off these, so the watermelon-critical parse lives in ONE place — a mis-read could
- * itself HIDE a watermelon (read a wired static check as unwired, or the reverse).
+ * a given npm script by an EXACT package-manager invocation (`commandInvokesScript`).
+ * `runningStaticChecks` (the running-check observer, and since 3F-3410 the only static-check
+ * observer) reads a check's enforcement off these, so the watermelon-critical parse lives in ONE
+ * place — a mis-read could itself HIDE a watermelon (read a severed static check as enforced, or
+ * the reverse).
  *
  * The CI config is parsed with the reputable `yaml` parser (jobs → steps → run, including
  * block-scalar `run:` and `if:`/matrix steps) — never line-scanned. The step mapping is read

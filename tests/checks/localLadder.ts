@@ -11,9 +11,9 @@
  * adds one.
  *
  * THE CI PARSE IS IMPORTED, NEVER REWRITTEN. `ciRunSteps` / `commandInvokesScript` are the
- * primitives `runningStaticChecks` and `checkStaticEvidenceObligations` already read a static
- * check's enforcement off. That parse is watermelon-critical — a mis-read could report a
- * wired check as unwired, or the reverse — which is exactly why it lives in one place. A
+ * primitives `runningStaticChecks` already reads a static check's enforcement off. That parse is
+ * watermelon-critical — a mis-read could report a wired check as unwired, or a severed one as
+ * enforced — which is exactly why it lives in one place. A
  * second YAML walk here would be a second thing to get wrong, disagreeing silently.
  *
  * THE MANIFEST IS NOT THE SOURCE; `ci.yml` IS. A `package.json` script CI does not run is not

@@ -1,9 +1,10 @@
 /**
- * Unit tests for the running-guard observer (src/ingest/ciGuards.ts) —
- * `runningStaticChecks` emits a GuardEvidenceObservation per running CI guard. The evidence-obligation
- * observer (`checkStaticEvidenceObligations`) is pinned in src/ingest/guard.test.ts; the shared CI-parse primitive both
- * use lives in src/ingest/ciCommands.ts. reconcile's folding of a no-evidence-obligation running static check onto
- * the suspense row is pinned in src/domain/evidenceReconciliation.test.ts.
+ * Unit tests for the running-check observer (`parse/runningStaticChecks.ts`) — it emits a
+ * GuardEvidenceObservation per running CI check, and since 3F-3410 it is the ONLY static-check
+ * observer: the obligation-side one this header used to point at has been deleted. The CI-parse
+ * primitive it reads enforcement off lives in `parse/checkScriptsRunInCI.ts`. reconcile's folding
+ * of a no-evidence-obligation running static check onto the suspense row is pinned in
+ * `domain/evidenceReconciliation.test.ts`.
  *
  * Parent: @SCN-USG-001 (the uncited static-check).
  */
