@@ -606,10 +606,32 @@ Then(
     // paragraph: something the tree used to check it no longer checks — a retired feature's code
     // is never reissued — and the arithmetic here is the only place a reader meets that fact as a
     // number. A bare 9 would have read as a tidy-up.
+    //
+    // AND UPWARD BY ONE — 9 TO 10 — WHEN 3F-3442 WIRED `lint:publint`. The ordinary upward
+    // direction, and the plainest instance of it this line has recorded: a community tool the
+    // repository had never run becomes a `run:` step invoking a manifest handle, so it is a gate
+    // here the moment it is a step there. Nothing moved, nothing was superseded and nothing was
+    // withdrawn — this is the arithmetic saying a check ARRIVED. The direction is the one that
+    // matters most to `scripts/verify.sh`'s own header: a new CI step whose gate never reached the
+    // local ladder is exactly the silently-narrowing green-check @SCN-LAD-001..006 exist to make
+    // impossible, so the number moving here is the derivation being watched, not maintained.
+    //
+    // AND UPWARD AGAIN — 10 TO 11 — WHEN 3F-3443 WIRED `lint:published-types`. The same upward
+    // direction as the line above and the sub-issue immediately before it: a second community tool
+    // the repository had never run becomes a `run:` step invoking a manifest handle, so it is a
+    // gate here the moment it is a step there. Nothing moved, nothing was superseded and nothing
+    // was withdrawn. WHAT IS WORTH A PARAGRAPH RATHER THAN A BARE INCREMENT is that this handle's
+    // command CHANGED SHAPE after it was wired and the derivation did not notice, which is the
+    // property being asserted. It landed as `bash scripts/lint-published-types.sh` and became a
+    // one-line `pnpm exec attw …` when that script was retired (3F-3440, on the ruling that the
+    // community's tools are called directly and this repository writes no apparatus for them).
+    // Eleven both times: membership is decided by the step invoking a manifest script, never by
+    // what that script turns out to be. A derivation that had keyed on the command's shape would
+    // have moved here, and nothing about the pipeline had.
     assert.equal(
       expected.length,
-      9,
-      `the real ci.yml must yield 9 local gates; it yielded ${expected.length}: ${expected.join(", ")}`,
+      11,
+      `the real ci.yml must yield 11 local gates; it yielded ${expected.length}: ${expected.join(", ")}`,
     );
 
     assert.deepEqual(listedGates(listing.stdout), expected, "--list must be the derived ladder");

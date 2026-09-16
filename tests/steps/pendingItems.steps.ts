@@ -21,7 +21,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseScenarios, reconcile, isBalanced, renderMarkdown, assembleRenderInput } from "@3f-consulting/spec-controller-core";
 import { runReconcile } from "../../packages/spec-controller/src/ingest/ingestQualityChecks.js";
-// The starter community-deferral policy now lives in the APP, not the core barrel (@SCN-API-001).
+// The starter community-deferral policy now lives in the APP, not the core barrel.
 // These @integration steps pass it explicitly into the pure `parseScenarios` — the same resolved
 // set the `balance` pipeline hands the parser at the ingest edge — so the scenario-scope deferral
 // path is exercised end-to-end (app policy → core parse), behaviour unchanged.

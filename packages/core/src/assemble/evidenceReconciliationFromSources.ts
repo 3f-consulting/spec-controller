@@ -28,8 +28,9 @@
  * engine to be read by nothing.
  *
  * THE INPUT IS AN INLINE OBJECT TYPE, deliberately. A named exported interface would be a second
- * symbol on the frozen v1 surface for a shape only this function takes, and `@SCN-API-001` freezes
- * that barrel exactly — one entry point means one name.
+ * symbol on the public v1 surface for a shape only this function takes — one entry point means one
+ * name. Nothing has reconciled that surface against a written-down list since 3F-3449, so the
+ * restraint is a judgement rather than something a guard would catch.
  */
 
 import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";

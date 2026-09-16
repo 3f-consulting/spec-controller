@@ -43,8 +43,9 @@ const cliPath = path.join(
   "tests/checks/lintScnSubIssuesCli.ts"
 );
 
-/** The @SCN cited — properly, in brackets — by the file's other, untouched test. */
-const SIBLING_CODE = "SCN-API-001";
+/** The @SCN cited — properly, in brackets — by the file's other, untouched test. A FIXTURE id,
+ * not one of this repository's (the fixture writes its own feature file for it). */
+const SIBLING_CODE = "SCN-AAA-001";
 /** A fixture id the new block NAMES in its title. Bare: the shape the defect was filed against. */
 const PROSE_FIXTURE_CODE = "SCN-PDX-008";
 /** A second id the same title names @-prefixed: the shape live in this repository's prose. */

@@ -51,18 +51,28 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
   when a consumer's tree produced it.
 
   IT IS CLOSED BY THE INVERSION RATHER THAN BY A TICKET THAT WAS STILL OWED. Every run: step of
-  ci.yml is a candidate now, so the denominator is this repository's whole pipeline: ten checks
-  discovered, each carrying the code of the row it answers on its own step, and nought uncited.
+  ci.yml is a candidate now, so the denominator is this repository's whole pipeline: every check it
+  runs is discovered, each carrying the code of the row it answers on its own step, and nought
+  uncited. (The count that stood here is gone for the reason the paragraph below gives.)
   The residual that remains is a smaller one — specController.staticChecks is still honoured and
   is now inert, and 3F-3161 owns its removal. That removal no longer engages a major version: the
   compatibility commitment naming one was withdrawn (3F-3376), made to nobody, and no consumer
   was ever measured routing credits through it.
 
-  What is NOT vacuous over this tree is the number beside it. "11 static check(s) run" counts the
-  running lint credits the CONVERTED rows post — eleven of the fourteen rows, the other three
-  being measured and so not static checks at all — so the running count is answered by the
-  converted rows' own CI steps and only the uncited count is answered by discovery. Reading both as products of
-  the same mechanism is the misreading this paragraph forecloses.
+  What is NOT vacuous over this tree is the number beside it. The "static check(s) run" figure counts
+  the running lint credits this pipeline's own candidate steps post, so it is answered by those steps
+  and only the uncited count is answered by discovery. Reading both as products of the same mechanism
+  is the misreading this paragraph forecloses.
+
+  THE FIGURES THEMSELVES ARE NO LONGER WRITTEN HERE, AND WHILE THEY WERE THEY WENT STALE UNNOTICED
+  (3F-3440). This paragraph read "11 static check(s) run — eleven of the fourteen rows, the other
+  three being measured and so not static checks at all". The manifest carries FOUR measured rows and
+  not three, and had before this ticket opened; adding rows to it then made the sentence wrong a
+  second way. Nothing reconciles a number in a preamble against the manifest it describes, which is
+  how it managed to be wrong twice without redding anything. `fitness-checks.feature` refuses this
+  exact thing in its own words — "a number in this prose is a second reading of the manifest, kept in
+  step by whoever remembers" — and that refusal is adopted here rather than the figures being
+  corrected to today's, which would only restart the clock.
 
   The unit arm proves runningStaticChecks + countStaticEvidenceObservationKinds + the render section
   in isolation; the integration arm drives the real file reads (ci.yml + package.json + features)

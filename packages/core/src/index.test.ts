@@ -5,14 +5,15 @@
  * Bidirectional evidence: the describe/it below carry the SCN-API-002 id,
  * back-linking to features/public-api.feature's @SCN-API-002 scenario.
  *
- * @SCN-API-001'S GUARD USED TO LIVE HERE AND NOW DOES NOT (3F-2838). It held this
- * barrel to a frozen enumeration this file carried, over a runtime reflection and
- * a compiler-API reading of the type surface it also carried. All three are now
- * `spec-controller`'s `tests/checks/publishedSurfaces.ts`, shared with the arms
- * that hold every other published subpath, and the citing test went with them:
- * `tests/checks/coreBarrelSurface.test.ts`. It could not stay here, because core
- * is the pure library and `spec-controller` depends on IT — a test in this package
- * importing that mechanism would invert the dependency and close a cycle.
+ * A SECOND GUARD USED TO LIVE HERE, AND THERE IS NOW NO SUCH GUARD ANYWHERE
+ * (3F-3449). It held this barrel to a frozen enumeration this file carried, over
+ * a runtime reflection and a compiler-API reading of the type surface it also
+ * carried; at 3F-2838 all three moved to `spec-controller`'s check tree with a
+ * citing test beside them. Both were deleted at 3F-3449 with the rest of the
+ * packaging checks this repository wrote for itself, and NOTHING REPLACES THEM —
+ * a symbol added to or dropped from the barrel reds nothing until a generated
+ * API report is adopted at 1.0. So do not read this file's green as saying
+ * anything about the barrel's SHAPE.
  *
  * WHAT STAYS IS WHAT WAS NEVER ABOUT THE SURFACE'S SHAPE. @SCN-API-002 is not a
  * question about which symbols cross the barrel; it is a question about what a
@@ -67,8 +68,9 @@ describe("[SCN-API-002] the v1 barrel exposes QualityCheckReconciliation for rea
     // a consumer READS is byte-plain over its fields — JSON.stringify omits the
     // brand, exactly as a v1 consumer serialising a Ledger relies on.
     expect(JSON.parse(JSON.stringify(externallyAssembledQcr))).toEqual(externallyAssembledQcr);
-    // The type is genuinely on the barrel's surface (@SCN-API-001 pins it in the
-    // frozen TYPE set) — reading is fully supported; only construction is closed.
+    // The type is genuinely on the barrel's surface — the `import type` at the
+    // head of this file is what says so, and it is the only thing that does
+    // since 3F-3449. Reading is fully supported; only construction is closed.
     void (_externalMintAttempt as unknown);
   });
 });

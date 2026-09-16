@@ -10,7 +10,7 @@
  * requires — one author keeping both books.
  *
  * WHY THE REAL-TREE ARM IS KEPT (Ruling B, measured not assumed). `package.json`'s
- * `specController.fitnessChecks` carries ten rows and NONE of them scans this repository's
+ * `specController.fitnessChecks` carries fourteen rows and NONE of them scans this repository's
  * source for readings; no other gate does either. Drop this arm and the check stops running
  * altogether — which is why it is the check rather than a second opinion about one.
  *

@@ -341,8 +341,9 @@ describe("[SCN-CLI-011] hasPendingItems + the --strict exit-3 escalation", () =>
  * matching features/ledger.feature's @SCN-LDG-018 scenario and its @integration Cucumber
  * step-block (tests/steps/ledger.steps.ts, `// @SCN-LDG-018`).
  *
- * NOTE: imported from `./reconcile.js`, NOT from the core barrel — the barrel export of
- * `hasBrokenEvidence` is @SCN-API-001's frozen-surface touch, owned by the next sub-issue (3F-1651).
+ * NOTE: imported from `./ledger.js`, the concept that OWNS the predicate, NOT from the core
+ * barrel — which re-exports it as well (3F-1651) but is the consumer-facing entry point, not the
+ * in-repo one.
  */
 describe("[SCN-LDG-018] hasBrokenEvidence — the whole-run soundness predicate", () => {
   /** A collection-failed vitest observation: errored before it named a test, so it cites no @SCN. */

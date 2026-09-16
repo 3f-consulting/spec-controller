@@ -22,7 +22,9 @@
     "spec-controller": "spec-controller",
     "lint:complexity-exceptions": "tsx tests/checks/lintComplexityExceptionsCli.ts",
     "lint:scn-subissues": "tsx tests/checks/lintScnSubIssuesCli.ts",
-    "lint:boundaries": "depcruise packages && eslint --config eslint.boundaries.mjs packages"
+    "lint:boundaries": "depcruise packages && eslint --config eslint.boundaries.mjs packages",
+    "lint:publint": "publint --pack pnpm packages/core && publint --pack pnpm packages/spec-controller",
+    "lint:published-types": "pnpm exec attw --profile esm-only \"$(pnpm --silent --filter @3f-consulting/spec-controller-core pack --pack-destination \"$(mktemp -d)\" | tail -1)\""
   },
   "specController": {
     "runners": {
@@ -30,8 +32,8 @@
       "integration": "cucumber-js"
     },
     "notChecks": [
-      "ci.yml:ci:actions/checkout@v7",
-      "ci.yml:ci:actions/setup-node@v6",
+      "ci.yml:ci:actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+      "ci.yml:ci:actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38",
       "ci.yml:ci:Enable corepack",
       "ci.yml:ci:Resolve the evidence root",
       "ci.yml:ci:Install dependencies",
@@ -71,6 +73,26 @@
         "command": "pnpm typecheck"
       },
       {
+        "scn": "SCN-FIT-018",
+        "characteristic": "lint",
+        "command": "pnpm lint:publint"
+      },
+      {
+        "scn": "SCN-FIT-019",
+        "characteristic": "typecheck",
+        "command": "pnpm lint:published-types"
+      },
+      {
+        "scn": "SCN-FIT-020",
+        "characteristic": "lint",
+        "command": "docker://rhysd/actionlint:1.7.12"
+      },
+      {
+        "scn": "SCN-FIT-021",
+        "characteristic": "security",
+        "command": "zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482"
+      },
+      {
         "scn": "SCN-FIT-012",
         "characteristic": "ci-run-time",
         "command": "pnpm --silent timing:score --scn SCN-FIT-012",
@@ -92,6 +114,7 @@
   },
   "devDependencies": {
     "@3f-consulting/spec-controller-core": "workspace:*",
+    "@arethetypeswrong/cli": "0.18.5",
     "@cucumber/cucumber": "^12.9.0",
     "@stryker-mutator/core": "^9.6.1",
     "@stryker-mutator/vitest-runner": "^9.6.1",
@@ -99,6 +122,7 @@
     "dependency-cruiser": "18.2.0",
     "eslint": "^9.39.5",
     "eslint-plugin-check-file": "3.3.2",
+    "publint": "0.3.24",
     "spec-controller": "0.1.0-alpha.3",
     "tsx": "^4.22.3",
     "typescript": "^5.8.3",

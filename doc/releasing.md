@@ -206,10 +206,6 @@ tag cut from an **unmerged branch** has not — which is exactly the case the ne
 What bounds it is that nothing merges by this route. `main` still requires the whole ladder, the
 self-reconciliation included.
 
-`@SCN-REL-004` in `features/release.feature` holds this rule, and holds it by putting the release's
-whole gate list to a run with a cold evidence root — one the reconciliation and the fitness axis both
-refuse — and watching every gate the release states pass it.
-
 ---
 
 ## Releasing while the self-reconciliation is red

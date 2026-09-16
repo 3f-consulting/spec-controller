@@ -28,9 +28,10 @@
  *
  * ON THE PUBLIC `.` BARREL, NEVER `./internal`. A roster only the monorepo can import is
  * reachable by exactly the one product that does not need it. The barrel entry is a v1 contract
- * change, and `publishedSurfaces.ts`' hand-written surface is updated in the same act — which
- * makes the addition a reviewed decision rather than drift, the property this whole slice is
- * about, applied to itself.
+ * change. It USED to be reconciled against a hand-written surface updated in the same act, which
+ * made the addition a reviewed decision rather than drift — the property that slice was about,
+ * applied to itself. That surface left at 3F-3449 and nothing replaced it, so the reviewed-decision
+ * property now rests on the reviewer and not on a check.
  *
  * ═══ THIS FILE IS A VENDORED COPY, AND SAYS SO ═══
  *

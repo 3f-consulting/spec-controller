@@ -34,12 +34,17 @@
  * several kinds it is not, so it crosses this line under the fuller name. The aliasing is
  * deliberate and one-directional: the internal spelling stays internal.
  *
- * AND NO DRIFT GUARD STANDS OVER IT, WHICH IS A DECISION RATHER THAN AN OPEN QUESTION. The sibling
- * core package's barrel is reflected and compared against a frozen list in both directions, so a
- * symbol quietly added or dropped reds. That is what a PUBLISHED surface is owed, and 3F-2859
- * stopped publishing this one: no manifest key resolves here, and no caller outside this repository
- * can spell the specifier at all. Freezing the list would make every refactor behind this barrel a
- * change to a contract nobody holds.
+ * AND NO DRIFT GUARD STANDS OVER IT, WHICH IS A DECISION RATHER THAN AN OPEN QUESTION. 3F-2859
+ * stopped publishing this barrel: no manifest key resolves here, and no caller outside this
+ * repository can spell the specifier at all. Freezing the list would make every refactor behind it
+ * a change to a contract nobody holds.
+ *
+ * THE COMPARISON THIS PARAGRAPH USED TO DRAW IS GONE, AND SAYING SO IS THE POINT. It read: the
+ * sibling core package's barrel IS reflected and compared against a frozen list in both directions,
+ * so a symbol quietly added or dropped reds — that being what a PUBLISHED surface is owed, and this
+ * one is not published. At 3F-3449 that arm was deleted with the rest of the packaging checks this
+ * repository wrote for itself, so NEITHER barrel is guarded now and the contrast no longer carries
+ * the argument. What still carries it is the second sentence above, which never depended on it.
  */
 
 export {

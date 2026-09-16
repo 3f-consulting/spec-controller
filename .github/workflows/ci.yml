@@ -89,14 +89,32 @@ jobs:
     # and @SCN-FIT-013, at 75s and 150s; this number is not one of them and must not be read as one.
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
+      # EVERY `uses:` IN THIS REPOSITORY NAMES A COMMIT, AND THE TAG IS A COMMENT (3F-3445,
+      # @SCN-FIT-021). A tag is a pointer its owner can move, so `@v7` says nothing about what this
+      # runner will actually fetch tomorrow — the same three words can resolve to a different tree
+      # on the next run, with no commit here and nothing to review. The audit step at the foot of
+      # this ladder reports an unpinned `uses:` at its highest severity, and eight of them were what
+      # it found the first time it read these three files. The SHA is what the runner resolves; the
+      # `# vX.Y.Z` after it is the release that commit WAS when it was pinned, which is what a
+      # reader needs to find the diff before bumping one.
+      #
+      # AND `persist-credentials: false`, WHICH COSTS THIS JOB NOTHING BECAUSE NOTHING IN IT TALKS
+      # TO THE REMOTE AFTER THIS STEP. `actions/checkout` otherwise leaves the job's token in
+      # `.git/config`, where every later step of this job can read it and anything a dependency of
+      # this build starts can read it too. Every git command this ladder runs is local to the
+      # checkout — `git diff`, `git merge-base`, `git log`, `git show` in `lintScnSubIssuesCli.ts`
+      # — and `fetch-depth: 0` is exactly what makes them local: the history they need is already
+      # on the disk. A step added later that fetches or pushes would fail loudly on a private
+      # repository rather than quietly, which is the right way round.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # Full history so the scenario sub-issue guard can diff HEAD against
           # the PR base ref (github.event.pull_request.base.sha). The default
           # shallow checkout would not contain the base commit.
           fetch-depth: 0
+          persist-credentials: false
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: 22
 
@@ -700,6 +718,159 @@ jobs:
         id: SCN-FIT-011
         if: always()
         run: pnpm typecheck
+
+      # `--pack pnpm` IS FIDELITY, NOT THE CHECK — AND THIS COMMENT CLAIMED THE OPPOSITE FOR TWO
+      # COMMITS (3F-3440, corrected after 3F-3443 measured it). It read "`--pack pnpm` IS THE WHOLE
+      # CHECK": pnpm's pack applies `publishConfig` wholesale and npm's does not, so pointed npm's
+      # way the linter would answer about the WORKSPACE map and its green would be true of a
+      # document the registry never sees.
+      #
+      # THE PREMISE ABOUT THE TWO PACKERS IS RIGHT. THE CONCLUSION ABOUT THIS TOOL IS NOT. `publint`
+      # reads `publishConfig` ITSELF, whichever packer it is handed. Measured both ways under one
+      # plant — `publishConfig.exports["."].default` pointed at a file the tarball does not carry —
+      # and `--pack npm` returned the identical `pkg.publishConfig.exports["."].default is
+      # ./dist/nope.js but the file does not exist`, exit 1, with `All good!` at control on both.
+      #
+      # SO THE FLAG STAYS, FOR A SMALLER AND STILL SUFFICIENT REASON: `release.yml` packs with pnpm,
+      # and a check run over a tarball the release does not send is a check of something nobody
+      # ships.
+      #
+      # AND THE RULE IS PER-TOOL, WHICH IS THE HALF WORTH CARRYING. It DOES hold for the step below:
+      # `attw` has no `publishConfig` reading of its own, so the packer decides what it sees and the
+      # wrong one manufactures a red that means nothing. Two tools, the same two packers, opposite
+      # consequences — a rule read off one of them does not transfer to the other, and reading it
+      # across is how this comment came to state a mechanism its own tool does not have.
+      - name: Published packages
+        id: SCN-FIT-018
+        if: always()
+        run: pnpm lint:publint
+
+      # THE PACKER IS THE CHECK HERE, AND THE WRONG ONE GIVES A RED THAT MEANS NOTHING (3F-3443).
+      # `attw`'s own `--pack` runs `npm pack`, which does not apply `publishConfig` — so pointed at
+      # the workspace directory it answers about `"." : "./src/index.ts"` and an `./internal`
+      # subpath the published package does not have, and reports 💀 on every resolution. That red
+      # names TypeScript sources no consumer receives, so clearing it would be work on a document
+      # the registry never sees. So the script packs with pnpm — which DOES apply `publishConfig`,
+      # verified by reading the manifest back out of the .tgz — and hands attw the TARBALL, which is
+      # also the artefact `release.yml` actually stages.
+      #
+      # AND THE PACKER RULE DOES NOT GENERALISE TO THE STEP ABOVE (3F-3442). `publint` reads
+      # `publishConfig` itself whichever packer it is given, so there the flag is fidelity. `attw`
+      # 0.18.5 reads only the manifest in front of it. The rule is per-tool; do not carry either
+      # half across.
+      #
+      # `--profile esm-only` IS WHAT `"type": "module"` EARNS, NOT A SUPPRESSION. The default
+      # profile adds one `cjs-resolves-to-esm` warning, which says a `require()` of this package
+      # resolves to ESM — the package's own declared design, clearable only by shipping a CommonJS
+      # build this project has decided not to ship. The profile ignores exactly the two resolutions
+      # that presume a CJS consumer and leaves every other finding able to red this gate.
+      - name: Published types
+        id: SCN-FIT-019
+        if: always()
+        run: pnpm lint:published-types
+
+      # THE FIRST CHECK IN THIS FILE THAT IS NOT A COMMAND, AND THE `id:` IS WHAT KEEPS IT ON THE
+      # BOOKS (3F-3444, @SCN-USG-013). A `uses:` step states no command at all, so discovery names
+      # it by the identity GitHub displays — this step's `name:` — and has no manifest handle to
+      # reach a row through. The `id:` is the citation and the only one available to an action
+      # step: without it this step is a candidate fitness check nothing cites, posts to the
+      # suspense row, and reds the self-reconciliation on itself.
+      #
+      # AND IT IS DELIBERATELY NOT A `pnpm verify` RUNG. That ladder is derived from the `run:`
+      # steps of this file that invoke a `package.json` script, so an action step is simply not one
+      # — the same shape `pnpm exec eslint` already has. @SCN-LAD-006's gate count is unmoved at
+      # eleven by this commit, which is the derivation being exact rather than a gap: a handle
+      # minted here to force this check onto the local ladder would be a convention invented to
+      # satisfy an arithmetic, and the tool ships no Node entry point to hang one on.
+      #
+      # THE DOCKER IMAGE IS THE TOOL'S OWN DOCUMENTED FORM, PINNED TO AN EXACT VERSION. The npm
+      # package spelled `actionlint` is a third-party wasm wrapper on an unrelated version line and
+      # exposes no executable (`npx -y actionlint@2.0.6` → "could not determine executable to
+      # run"). The other documented form is `curl ... | bash`, which pipes a network fetch into a
+      # shell inside the very job whose security the audit step beside it exists to read.
+      #
+      # WHAT IT FOUND THE FIRST TIME IT RAN OVER THIS TREE, AND WHAT WAS DONE ABOUT IT, IS IN
+      # `.github/actionlint.yaml` — two findings, one construct, one named suppression with the
+      # reason and the residual written out.
+      - name: Workflow correctness
+        id: SCN-FIT-020
+        if: always()
+        uses: docker://rhysd/actionlint:1.7.12
+
+      # THE AUDIT THIS FILE IS ITSELF A SUBJECT OF (3F-3445, @SCN-FIT-021). `actionlint` above asks
+      # whether Actions can RUN these three files; this asks whether running them is safe. Fifteen
+      # findings answered "not entirely" the first time it read them, and they were cleared rather
+      # than filtered: eight `uses:` references pinned to commits, `persist-credentials: false` on
+      # all three checkouts, a `permissions:` block written out on the nightly sweep, and
+      # `package-manager-cache: false` on the release's `setup-node` — each one argued at the line
+      # it changed.
+      #
+      # THE MAINTAINERS' OWN ACTION, WITH `advanced-security: false`, AND THE CONFIGURATION IS THE
+      # WHOLE OF WHY (3F-3445, operator ruling 2026-09-16). The action's DEFAULT is
+      # `advanced-security: true`, which switches zizmor to SARIF and uploads the result to code
+      # scanning; this repository is private with no Advanced Security, so the default is a step
+      # that runs, finds, and leaves the job green — the watermelon this product exists to name.
+      # That is a reason to configure the action, not to write the call ourselves.
+      #
+      # WHAT `advanced-security: false` ACTUALLY DOES WAS MEASURED, NOT READ OFF THE README. The
+      # action is a composite whose script ends `exit "${exitcode}"` — zizmor's own exit code,
+      # unconditionally — and that was confirmed by running `action.sh` at `cc914d7` end to end
+      # against this tree twice: clean, **exit 0**, printing `No findings to report. Good job!`;
+      # with one `uses:` un-pinned in `mutation.yml`, **exit 14**, printing the finding. So the
+      # action gates in this configuration, and the earlier register here — which dismissed it on
+      # the behaviour of a mode we would never enable — was answering a question nobody asked.
+      #
+      # `annotations:` IS LEFT AT ITS DEFAULT OF FALSE, AND THAT IS A TRADE THIS FILE HAS ALREADY
+      # MADE ELSEWHERE. Setting it swaps zizmor's human output for `--format=github`, which emits
+      # one `::error` per finding and NO summary line — measured, same two runs. The summary line
+      # is where this step's suppressions are counted out loud, which the paragraph below is about,
+      # and a silent suppression is worth more to a reader here than an inline marker.
+      #
+      # `online-audits: false` IS STATED, AND UNDER THIS ACTION IT IS THE ONLY THING KEEPING THE
+      # AUDIT SET DECIDED. zizmor is offline when it finds no token in its environment, so a bare
+      # CLI call here would be offline by accident; the action is not that — it passes
+      # `${{ github.token }}` into the container on every run by default, so the audit set would be
+      # decided by a token nobody in this file chose. The narrow input rather than `--offline`:
+      # `--offline` also forbids auditing remote repositories, which is a capability this step does
+      # not use and has no reason to withdraw.
+      #
+      # WHAT THAT COSTS, MEASURED ON THIS TREE RATHER THAN ASSUMED: the online audits — the ones
+      # that resolve a pinned commit against its repository, and the ones that read an advisory
+      # feed — do not run. Run WITH a token over these same three files, zizmor reports exactly
+      # what it reports without one: `No findings to report. Good job!`. So nothing is being hidden
+      # today. What is given up is a FUTURE finding about the world rather than about this tree —
+      # an advisory published against an action this file pins would red a build over a commit that
+      # changed nothing, which is the same trade `ci.yml` already makes by reading the nightly
+      # sweep's number instead of taking one.
+      #
+      # A BLANKET `--min-severity` IS BANNED AND IS NOT WHAT THE NAMED SUPPRESSIONS IN `release.yml`
+      # ARE. That flag would have cleared all fifteen findings in one character and left the eight
+      # High ones in the tree — the gate satisfied in form and defeated in substance. What
+      # `release.yml` carries instead is `# zizmor: ignore[<audit>]` comments, each naming ONE audit,
+      # each on the one line it excuses, each with the reason written above it. The count line above
+      # reports how many were ignored on every run, so a suppression is a number a reader meets
+      # rather than a silence.
+      #
+      # AND IT IS DELIBERATELY NOT A `pnpm verify` RUNG, the same as the step above it. The local
+      # ladder is derived from the `run:` steps of this file that invoke a `package.json` script,
+      # and this step has no `run:` at all — @SCN-LAD-006's count is unmoved by this commit.
+      # Minting a manifest handle to force it on would be a convention invented to satisfy an
+      # arithmetic.
+      #
+      # THE ACTION IS PINNED TO A COMMIT AND THE TOOL IS PINNED TO A VERSION, WHICH ARE TWO PINS
+      # AND NOT ONE. `version:` defaults to `latest`; left alone, this step would audit this tree
+      # with whatever the maintainers released this morning, which is the same unpinned-tool
+      # complaint zizmor itself raises about a `uses:` on a tag. The action resolves the version it
+      # is given to a DIGEST from a table it ships, so the image that runs is content-addressed.
+      - name: Workflow security
+        id: SCN-FIT-021
+        if: always()
+        uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
+        with:
+          version: "1.30.1"
+          inputs: .github/workflows/
+          advanced-security: false
+          online-audits: false
 
       # THE THREE MEASURED ROWS PRINT A NUMBER THEY DID NOT TAKE, WHICH IS WHY THEY ARE READERS AND
       # NOT SWEEPS. A step's outcome is an exit code and an exit code cannot carry a measurement, so

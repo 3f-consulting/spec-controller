@@ -670,7 +670,7 @@ export function parseTaggedScenarios(source: string): TaggedScenario[] {
  * unparseable source still THROWS from the walk rather than yielding an empty corpus.
  *
  * `checkTags` — the registry's bare check tags (@SCN-LNT-006) — is ADDITIVE and defaults to none, so
- * `parseScenarios` keeps its place on the frozen v1 barrel (@SCN-API-001) and every existing caller
+ * `parseScenarios` keeps its place on the v1 barrel and every existing caller
  * reads exactly the corpus it read before. A target that has registered nothing raises no fitness
  * obligations, which is what lets the bare-tag reading land ahead of the corpus sweep that uses it.
  *

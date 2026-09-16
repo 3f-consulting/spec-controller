@@ -5,8 +5,8 @@
  * established Cucumber deferral conventions.
  *
  * This is **product policy, not a core-domain invariant** — an evolvable list of tag
- * strings, so it lives in the application layer, NOT on the frozen v1 core barrel
- * (@SCN-API-001). The core `parseScenarios` recognises only the deferral set it is
+ * strings, so it lives in the application layer, NOT on the v1 core barrel.
+ * The core `parseScenarios` recognises only the deferral set it is
  * handed (its default is `[]`, a policy-free pure core); the app is the single source
  * of the starter policy and always passes the resolved set (starter ∪ configured) into
  * the parser at the ingest edge. Both `resolveDeferralTags` (the `@SCN-PND-021` config

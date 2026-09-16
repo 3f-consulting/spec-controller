@@ -129,3 +129,28 @@ Feature: The fitness checks this repository configures, one scenario per row
     Given the mutation sweep's record for this push
     When the domain's score is read off that record
     Then that number is posted for the ledger to hold against the break threshold its runner reads from the same row
+
+  @fitness @SCN-FIT-018
+  Scenario: every entry point, file and field the two packages publish is one a consumer can resolve
+    Given each package as its own pack would send it — its publish-time manifest standing in for its workspace manifest, wholesale
+    When the npm community's package linter reads what each one offers a consumer
+    Then every entry point either manifest publishes resolves to a file its own tarball carries
+    And no field either manifest publishes is one the ecosystem cannot read
+
+  @fitness @SCN-FIT-019
+  Scenario: the packed engine's declarations resolve for every consumer the package says it serves
+    Given the engine's tarball, as this release would send it
+    When every module resolution the package offers is followed to the declarations it lands on
+    Then each one lands on declarations the tarball carries, under the conditions the manifest named
+
+  @fitness @SCN-FIT-020
+  Scenario: every workflow file this repository runs is one GitHub Actions can execute as written
+    Given every workflow file under .github/workflows
+    When the community's workflow linter reads each against the Actions schema, its expression language and its shell
+    Then no workflow names a key, an expression, a context or a shell construct Actions would refuse
+
+  @fitness @SCN-FIT-021
+  Scenario: no workflow file this repository runs carries a CI security fault the community's auditor knows
+    Given every workflow file under .github/workflows
+    When the community's workflow auditor reads each for the faults in its catalogue
+    Then no workflow carries one this repository has not ruled on by name

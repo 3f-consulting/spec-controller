@@ -44,8 +44,9 @@ const cliPath = path.join(
   "tests/checks/lintScnSubIssuesCli.ts"
 );
 
-/** The @SCN cited by the file's OTHER, UNTOUCHED test — the sibling that must NOT vouch. */
-const SIBLING_CODE = "SCN-API-001";
+/** The @SCN cited by the file's OTHER, UNTOUCHED test — the sibling that must NOT vouch. A
+ * FIXTURE id, not one of this repository's (the fixture writes its own feature file for it). */
+const SIBLING_CODE = "SCN-AAA-001";
 /** The title of the new, uncited block the gate must name in its violation. */
 const UNCITED_BLOCK = "the doubling";
 

@@ -1,0 +1,53 @@
+# ACTIONLINT'S CONFIGURATION — ONE ENTRY, AND IT IS A SUPPRESSION (3F-3444, @SCN-FIT-020).
+#
+# WHAT actionlint 1.7.12 SAID ABOUT THIS TREE THE FIRST TIME IT WAS EVER RUN OVER IT, VERBATIM AND
+# WHOLE — two findings across three workflow files, both the same construct in the same step:
+#
+#   .github/workflows/ci.yml:1044:9: shellcheck reported issue in this script:
+#     SC2046:warning:1:160: Quote this to prevent word splitting [shellcheck]
+#   .github/workflows/ci.yml:1044:9: shellcheck reported issue in this script:
+#     SC2046:warning:1:293: Quote this to prevent word splitting [shellcheck]
+#
+# `release.yml` and `mutation.yml` were clean. The workflow line was 1016 before the step that
+# carries this check was written in and 1044 after — the pattern below does not read it, and it is
+# quoted only so a reader can find the step. Columns 160 and 293 ARE read, and they are the
+# character offsets of the two `$(` inside the `Self-reconciliation balance` step's own command
+# string — positional, so they are the same whichever shellcheck build reports them.
+#
+# WORD SPLITTING IS THE MECHANISM HERE, NOT AN OVERSIGHT, and that step's own comment says so in as
+# many words: "The `$(...)` is unquoted on purpose — the two tokens have to split." Each expansion
+# is `$([ -f "$DIR/x.json" ] && echo "--flag $DIR/x.json")` and has to yield TWO words where the
+# file exists and NO word where it does not. Quoted it yields exactly one word in both cases: a
+# flag and a path welded into a single token the CLI cannot read, or — worse — an EMPTY token,
+# which `balance` reds as a supplied-but-absent path with exit 2 (@SCN-CLI-002). So the fix
+# shellcheck is asking for would break the step it is asking about.
+#
+# THE WARNING IS REAL ABOUT A PATH CARRYING A SPACE, AND THIS PATH CARRIES NONE. It is
+# `$RUNNER_TEMP/spec-controller-evidence` on CI and the same name under `mktemp -d` locally, both
+# written by `scripts/verify.sh` and by the `Resolve the evidence root` step rather than supplied
+# by a caller.
+#
+# AND THE IDIOMATIC FIX IS BARRED BY A RULE THAT OUTRANKS IT. shellcheck's own answer to SC2046 is
+# a bash array, which needs a multi-line `run:`. `pnpm verify`'s ladder is DERIVED from this
+# workflow (`tests/checks/localLadder.ts`), and that derivation reports a multi-line `run:` as
+# `unsupported`, which reds the local green-check outright rather than running half a gate
+# (@SCN-LAD-001..006). The shellcheck-clean spelling of that line costs this repository a gate —
+# a worse trade than a suppression naming the two constructs it covers.
+#
+# THE RESIDUAL, SAID RATHER THAN LEFT TO BE INFERRED. actionlint filters by the ERROR MESSAGE and
+# by nothing else: there is no per-step directive, and a `# shellcheck disable=` line needs a
+# script with a line above the command, which a single-line `run:` does not have. So the narrowest
+# instrument the tool offers is this pattern, and it is pinned as far as it will go — one file, one
+# rule, one severity, script line 1, the message in full, and the two exact columns. What it
+# cannot exclude is a second SC2046 arriving at precisely column 160 or 293 of another single-line
+# `run:` in this same file. THE PINNING FAILS SAFE: edit the balance command and the columns move,
+# this pattern stops matching, and the gate REDS — it never goes quiet. That is the intended
+# behaviour and not a maintenance defect; a reader who moves that line is meant to come back here.
+#
+# NOTHING ELSE IS CONFIGURED. Every other rule in `ci.yml`, and every rule in every other workflow
+# file, is unsuppressed.
+
+paths:
+  .github/workflows/ci.yml:
+    ignore:
+      - 'shellcheck reported issue in this script: SC2046:warning:1:(160|293): Quote this to prevent word splitting'

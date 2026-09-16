@@ -237,8 +237,8 @@ interface QualityCheckReconciliationFields {
  * A single evidenceObligation's reconciliation outcome — the branded reconciling item. The fields
  * intersected with the nominal brand (@SCN-LDG-030): mintable ONLY by
  * `makeQualityCheckReconciliation`, so every QCR in the system has passed the (outcome,
- * side-presence) consistency check. The barrel (`index.ts`, @SCN-API-001) re-exports this TYPE via
- * `model.ts`; the phantom field adds no exported SYMBOL, so the symbol NAMES on the frozen v1
+ * side-presence) consistency check. The barrel (`index.ts`) re-exports this TYPE via
+ * `model.ts`; the phantom field adds no exported SYMBOL, so the symbol NAMES on the public v1
  * surface are unchanged — but constructibility is deliberately NARROWED: QCRs are engine-minted,
  * and the type is exported for READING the reconciliation the engine produced, not for external
  * CONSTRUCTION (the smart constructor is unexported). That narrowed contract is stated executably

@@ -18,15 +18,18 @@
  * symlinks, so the directory the tool sees is the checkout's own and carries no `node_modules`
  * segment; this arm is where that is measured rather than reasoned about.
  *
- * THE TARBALLS ARE PACKED ONCE, AND THE RECIPE IS NOT RE-DERIVED HERE. `cleanRoomPlan` already
- * decides which tarball each package becomes and what installs them where (@SCN-REL-001); a second
- * spelling of a tarball name or an install argv would agree with it by diligence and then drift,
- * and a plan naming a tarball that is not on disk fails as "no such file", which reads exactly like
- * a pack that never ran.
+ * THE PACK-AND-INSTALL APPARATUS IS THIS ARM'S OWN, AND THAT IS A CHANGE OF OWNER RATHER THAN A
+ * SECOND COPY (3F-3446). It was borrowed from the clean-room recipe, on the argument that a second
+ * spelling of a tarball name or an install argv would agree with the one reading by diligence and
+ * then drift. That argument was exactly right while there WAS another reading; the release now
+ * smokes its tarball in shell and the recipe has left the tree, so there is one spelling of each and
+ * it lives with its only consumer. A plan naming a tarball that is not on disk still fails as "no
+ * such file", which reads exactly like a pack that never ran.
  *
- * WHAT IT ASKS IS ITS OWN, AND DELIBERATELY NOT `CLEAN_ROOM_ASK`. That constant is `balance
- * --help`, which resolves the whole module graph and renders no provenance. This scenario's whole
- * subject is a rendered line, so it asks for a reconcile over a corpus each room plants.
+ * WHAT IT ASKS IS ITS OWN, AND DELIBERATELY NOT `balance --help`. That ask resolves the whole module
+ * graph and renders no provenance, which is what a smoke test wants and not what this is. This
+ * scenario's whole subject is a rendered line, so it asks for a reconcile over a corpus each room
+ * plants.
  *
  * EVERYTHING IT WRITES IS A `mkdtemp` OUTSIDE ANY SOURCE TREE, and every room is asserted to stand
  * outside this repository — a directory inside it resolves through this tree's own `node_modules`
@@ -43,6 +46,7 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readFileSync,
   realpathSync,
   rmSync,
   symlinkSync,
@@ -52,9 +56,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { cleanRoomPlan, type CleanRoomCommand, type PackedPackage } from "../checks/cleanRoomInstall.js";
 import { exitCodeOf, type FinishedCommand } from "../checks/measurementArtefact.js";
-import { packedPackageAt } from "../checks/packedPackages.js";
 
 // @SCN-RPT-029
 
@@ -153,6 +155,96 @@ function consumerRoom(purpose: string): string {
   return dir;
 }
 
+/** A package this arm packs — the fields that decide what it becomes and what it installs. */
+interface PackedPackage {
+  /** The manifest name, scoped or not. */
+  readonly name: string;
+  /** The manifest version, verbatim — a prerelease suffix travels into the tarball's name. */
+  readonly version: string;
+  /** The command this package installs, where it installs one. */
+  readonly bin?: string;
+}
+
+/** One command this arm runs, and the directory it is run in. */
+interface RoomCommand {
+  readonly command: string;
+  readonly args: readonly string[];
+  readonly cwd: string;
+}
+
+/**
+ * The package a directory holds, as this arm would pack it.
+ *
+ * THE FIRST `bin` ENTRY, AND ONLY WHERE THERE IS ONE. A package installing no command is ordinary —
+ * the engine is one — and which of the packed packages installs the command the rooms start is the
+ * caller's to find and to refuse, one assertion below.
+ */
+function packedPackageAt(packageDir: string): PackedPackage {
+  const manifest = JSON.parse(readFileSync(path.join(packageDir, "package.json"), "utf8")) as {
+    name: string;
+    version: string;
+    bin?: Record<string, string>;
+  };
+  const [bin] = Object.keys(manifest.bin ?? {});
+  return { name: manifest.name, version: manifest.version, ...(bin === undefined ? {} : { bin }) };
+}
+
+/**
+ * The tarball a packed package becomes, spelled the way npm spells it.
+ *
+ * The leading sigil goes and the scope's slash flattens to a dash, which is the one thing here that
+ * cannot come out right by accident: a scoped and an unscoped package sit side by side in this
+ * release and only one of them keeps its own name.
+ *
+ * WRITTEN THIS WAY RATHER THAN AS AN ANCHORED REPLACE, and the reason is a guard rather than taste.
+ * @SCN-TRM-001 scans this repository's source for a second reading of what a TERM bare is, and its
+ * needle is exactly an anchored replace of the sigil — a package name is not a term, but the scan is
+ * a scan by design and holds no list of files allowed to spell it.
+ *
+ * AND IN THIS HOME THAT SCAN DOES NOT REACH IT, WHICH IS MEASURED RATHER THAN ASSUMED (3F-3446). Its
+ * population is each package's `src` plus `tests/checks`; `tests/steps` is outside it, and an
+ * anchored replace planted here was confirmed to leave @SCN-TRM-001 green. So the spelling is
+ * carried over verbatim because it is the right one and the tidier form is a trap for the next
+ * reader — not because anything would red if it were tidied.
+ */
+function packedTarballName(packed: PackedPackage): string {
+  const unscoped = packed.name.startsWith("@") ? packed.name.slice(1) : packed.name;
+  return `${unscoped.split("/").join("-")}-${packed.version}.tgz`;
+}
+
+/**
+ * The installer is `npm` AND THAT IS NOT AN OVERSIGHT IN A pnpm WORKSPACE. A consumer installs with
+ * whatever they have, and npm is the one that hoists — which is what lets the core tarball at the
+ * top of the tree satisfy the CLI's concrete dependency on it, so each room resolves the core this
+ * arm just packed rather than whatever the registry is currently serving under that version.
+ * `--prefer-offline` keeps a warm cache out of the network's way; the three quiet flags keep a
+ * registry audit and a funding banner out of a step whose subject is neither.
+ */
+const INSTALL_ARGV = ["install", "--prefer-offline", "--no-audit", "--no-fund", "--loglevel=error"] as const;
+
+/** What one room takes: the tarballs installed into it, and the installed command started there. */
+interface RoomPlan {
+  readonly install: RoomCommand;
+  readonly run: RoomCommand;
+}
+
+/**
+ * Both commands for one room, derived together so nothing re-derives half of them — the install
+ * places the command at a path only the tarball names decide, and the run starts it there.
+ */
+function roomPlan(
+  packages: readonly PackedPackage[],
+  packDir: string,
+  room: string,
+  started: string,
+): RoomPlan {
+  const tarballs = packages.map((packed) => path.join(packDir, packedTarballName(packed)));
+  return {
+    install: { command: "npm", args: [...INSTALL_ARGV, ...tarballs], cwd: room },
+    run: { command: path.join(room, "node_modules", ".bin", started), args: [...ASK], cwd: room },
+  };
+}
+
 /** Pack one package into a destination, failing loudly rather than leaving an absent tarball. */
 function pack(packageDir: string, packDir: string): void {
   const packed = finish("pnpm", ["pack", "--pack-destination", packDir], packageDir);
@@ -166,7 +258,7 @@ function pack(packageDir: string, packDir: string): void {
 /** One room, arranged and ready to be run: what starts the tool there, and whose commit it sits on. */
 interface Room {
   readonly where: string;
-  readonly start: CleanRoomCommand;
+  readonly start: RoomCommand;
   /** The HEAD of the repository the room itself is, or null where it is not one. */
   readonly ownHead: string | null;
 }
@@ -193,17 +285,16 @@ let reported: { insideARepository: Provenance; outsideEveryRepository: Provenanc
 Given(
   "this release's packages installed into a directory that is a git repository, into a directory that is not one, and reached from a third through a node_modules symlink to a checkout of the tool",
   function () {
-    // NO BUILD HERE, for @SCN-REL-001's reason (3F-3423): `builtCli.ts`'s freshness guard already
-    // refuses a run whose `dist` is absent or older than `src`, by name, for every scenario — and
-    // this step and @SCN-REL-001's shared a single `repoRoot` between them, which under `parallel`
-    // is the one arrangement neither of them wanted.
+    // NO BUILD HERE (3F-3423): `builtCli.ts`'s freshness guard already refuses a run whose `dist`
+    // is absent or older than `src`, by name, for every scenario — and a second step building the
+    // same `repoRoot` under `parallel` is the one arrangement no scenario sharing it wanted.
     const packDir = scratch("pack");
     const packages: PackedPackage[] = PACKAGE_DIRS.map((dir) => {
       const packageDir = path.join(repoRoot, dir);
       pack(packageDir, packDir);
       return packedPackageAt(packageDir);
     });
-    const cli = packages.find((packed) => packed.bin !== undefined);
+    const cli = packages.find((packed): packed is PackedPackage & { bin: string } => packed.bin !== undefined);
     assert.ok(cli !== undefined, "one of the packed packages installs the command these rooms run");
 
     // ROOM 1 — the ordinary adopter, and the one that is wrong today. Every adopter installs into a
@@ -211,7 +302,7 @@ Given(
     // It is the arm the acceptance names, so it is a REAL npm install into a REAL repository.
     const gitRoom = consumerRoom("in-repo");
     const gitRoomHead = repositoryAt(gitRoom, "the consumer's own commit");
-    const installed = cleanRoomPlan({ packages, packDir, cleanRoom: gitRoom, ask: ASK });
+    const installed = roomPlan(packages, packDir, gitRoom, cli.bin);
     const install = finish(installed.install.command, installed.install.args, installed.install.cwd);
     assert.equal(exitCodeOf(install), 0, `the packed tarballs must install into ${gitRoom}. It said:\n${install.stderr}`);
     const installedModules = path.join(gitRoom, "node_modules");
@@ -264,7 +355,7 @@ Given(
       insideARepository: { where: "the room that is a git repository", start: installed.run, ownHead: gitRoomHead },
       outsideEveryRepository: {
         where: "the room that is not a git repository",
-        start: cleanRoomPlan({ packages, packDir, cleanRoom: plainRoom, ask: ASK }).run,
+        start: roomPlan(packages, packDir, plainRoom, cli.bin).run,
         ownHead: null,
       },
       throughASymlink: {

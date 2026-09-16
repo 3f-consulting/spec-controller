@@ -5,7 +5,7 @@
  *
  * Anti-watermelon (the @integration proof): this drives the REAL
  * lint:scn-subissues CLI as a SUBPROCESS over a throwaway git fixture shaped
- * like the change that surfaced the bug (3F-1725, the @SCN-API-001 rename) — a
+ * like the change that surfaced the bug (3F-1725's rename) — a
  * base commit with a cited @unit test, then a HEAD commit that RENAMES a
  * property accessor under a package's src dir and follows the rename INSIDE the
  * it-body, leaving the @SCN cite on the enclosing `describe` line UNCHANGED (a
@@ -41,8 +41,10 @@ const cliPath = path.join(
   "tests/checks/lintScnSubIssuesCli.ts"
 );
 
-/** The @SCN code the fixture's test CITES — on a describe line the rename never touches. */
-const CITED_CODE = "SCN-API-001";
+/** The @SCN code the fixture's test CITES — on a describe line the rename never touches. A
+ * FIXTURE id, not one of this repository's: the fixture writes its own features/target.feature
+ * carrying it, so a real code here would only be a grep hazard over this tree. */
+const CITED_CODE = "SCN-AAA-001";
 
 /** The fixture's production source — the file the rename churns. */
 const SRC_FILE = "packages/fixture-pkg/src/summary.ts";

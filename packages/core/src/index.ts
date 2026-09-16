@@ -2,20 +2,20 @@
  * The public core barrel — the single entrypoint of the
  * `@3f-consulting/spec-controller-core` package.
  *
- * This re-exports EXACTLY the frozen v1 contract surface. The `@unit` drift
- * guard for @SCN-API-001 (features/public-api.feature) reconciles this barrel's
- * actual exports against a surface written down for it, both directions — so a
- * symbol added here OR dropped reds CI. The surface is the contract downstream
- * consumers build on; it cannot drift silently.
+ * This re-exports the v1 contract surface — what a downstream consumer builds
+ * on.
  *
- * THE SURFACE IT IS HELD AGAINST IS NOT IN THIS PACKAGE, and following the guard
- * is a two-hop trip worth knowing about before it surprises somebody adding an
- * export. The list lives in the repository's check tree, at
- * `tests/checks/publishedSurfaces.ts`, beside the entries for every other
- * subpath these packages publish, and the citing test sits with it in
- * `tests/checks/coreBarrelSurface.test.ts`. It cannot live here: `core` is the
- * pure library and `spec-controller` depends on IT, so a test in this package
- * reading that registry would invert the dependency and close a cycle.
+ * NOTHING HOLDS IT TO A LIST, AND THAT IS NEW (3F-3449). Until that commit a
+ * `@unit` drift guard reconciled this barrel's actual exports against a surface
+ * written down for it in the repository's check tree, both directions, so a
+ * symbol added here or dropped reds CI. The list and its arm are gone, with the
+ * rest of the packaging checks this repository wrote for itself, and no
+ * replacement runs: the community's instrument is a generated `api-extractor`
+ * report, adopted at the 1.0 boundary where a stability promise exists again.
+ * SO AN EXPORT ADDED TO OR REMOVED FROM THIS FILE IS A DECISION NOBODY IS
+ * FORCED TO NOTICE. Treat a change here as a contract change on the strength of
+ * where you are typing it, because no gate will say so — and `0.x` promises
+ * nothing (`doc/compatibility.md`).
  *
  * SELECTIVE re-exports, NOT `export *`: the pure boundary is deliberate. The
  * core surface is filtered to pure symbols — no `fs` / `process.cwd` /
@@ -23,9 +23,10 @@
  * provenance, output routing, run-store, the CLI itself) lives in the
  * `spec-controller` package, not here.
  *
- * Groups + order mirror the frozen enumeration. Values are re-exported with
- * `export { … }`; types with `export type { … }` (so the runtime namespace
- * carries only the value bindings — the guard's `Object.keys` surface).
+ * Groups + order are this file's own, kept because a reader uses them; they no
+ * longer mirror an enumeration held elsewhere, because there is no longer one.
+ * Values are re-exported with `export { … }`; types with `export type { … }`,
+ * so the runtime namespace carries only the value bindings.
  */
 
 // --- Model (`model.ts`) — all types ---
@@ -69,14 +70,14 @@ export {
 // The runtime evidence-observation census (`census/evidenceObservations.ts`) is RETIRED (3F-2104):
 // its counting folds onto the Ledger (`runtimeObservationTally`, an internal domain fold), and its
 // 6 symbols + `EvidenceObservationsSection` left this frozen-in-intent surface. Pre-freeze, no
-// external consumer (unpublished package; only workspace dependents, all rewired). See @SCN-API-001.
+// external consumer (unpublished package; only workspace dependents, all rewired).
 
 // The static evidence-observation census (`census/staticEvidenceObservations.ts`) is RETIRED
 // (3F-2119): its counting folds onto the Ledger (`staticObservationTally`, an internal domain fold),
 // and its 2 symbols (`countStaticEvidenceObservationKinds` value / `StaticEvidenceObservationKindCounts`
 // type) left this frozen-in-intent surface. `StaticCheckTotals` (the materialised headline, now
 // Ledger-fold-sourced) STAYS on the barrel. Pre-freeze, no external consumer (unpublished package;
-// only workspace dependents, all rewired). See @SCN-API-001.
+// only workspace dependents, all rewired).
 
 // --- Parse — result/CI readers (`parse/*`) ---
 export { parseVitestEvidenceObservations } from "./parse/vitest.js";

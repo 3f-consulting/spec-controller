@@ -39,8 +39,9 @@ const cliPath = path.join(
   "tests/checks/lintScnSubIssuesCli.ts"
 );
 
-/** The @SCN cited on the brace-titled describe — the cite the touched `it` must inherit. */
-const CITED_CODE = "SCN-API-001";
+/** The @SCN cited on the brace-titled describe — the cite the touched `it` must inherit. A
+ * FIXTURE id, not one of this repository's (the fixture writes its own feature file for it). */
+const CITED_CODE = "SCN-AAA-001";
 
 const SRC_FILE = "packages/fixture-pkg/src/tally.ts";
 const TEST_FILE = "packages/fixture-pkg/src/tally.test.ts";

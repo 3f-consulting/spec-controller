@@ -3,11 +3,12 @@
  * — reached by the sibling `spec-controller` app via the package's `/internal`
  * subpath export (`@3f-consulting/spec-controller-core/internal`).
  *
- * NOT THE PUBLIC v1 CONTRACT. The frozen v1 surface is the `.` barrel
- * (`index.ts`) alone — `@SCN-API-001` builds its drift-guard Program over
- * `index.ts` only, so this entry is deliberately OUT of its scope. Do NOT put
- * public API here: a symbol an external consumer should depend on belongs on the
- * `.` barrel (and must then be added to `@SCN-API-001`'s frozen enumeration).
+ * NOT THE PUBLIC v1 CONTRACT. The v1 surface is the `.` barrel (`index.ts`)
+ * alone, and this entry is deliberately outside it. Do NOT put public API here:
+ * a symbol an external consumer should depend on belongs on the `.` barrel, and
+ * putting it there is a contract decision NOTHING CHECKS — the drift guard that
+ * reconciled that barrel against a written-down enumeration, in both directions,
+ * left at 3F-3449 and has no replacement before 1.0.
  * This file exists solely so in-repo consumers get a SANCTIONED seam for a
  * core-internal helper instead of reaching into `core/src` by a deep relative
  * path.
@@ -35,7 +36,7 @@ export { parseScnCitation, parseScnCitations } from "./lib/scnCitation.js";
 // de-duplicated by — reach it here rather than re-deriving it, which is what makes the artefact
 // producer's agreement with `parseMeasuredEvidenceObservations` true by construction instead of by
 // a comment saying it must be. Internal, not public — the sigil convention is spec-controller's own
-// reading of a term, not a v1 contract, and @SCN-API-001 freezes that barrel exactly.
+// reading of a term, not a v1 contract, and the `.` barrel is where a v1 contract goes.
 export { bareTerm } from "./lib/bareTerm.js";
 
 // `ScriptCitation` — the citation seam's shape, all that is left of it on this barrel now the
@@ -68,7 +69,7 @@ export type { TaggedScenario } from "./parse/scenarios.js";
 // the engine raised nothing for it, or the reverse — the seam 3F-3126 spent a slice closing.
 // A LITERAL RATHER THAN A RESOLVED SET, and deliberately: which words name a CHECK is the
 // target's answer, which AXIS a scenario is on is the model's, exactly as `unit` is. Internal,
-// not public — @SCN-API-001 freezes the `.` barrel exactly.
+// not public — the `.` barrel carries the v1 contract and this is not one.
 export { FITNESS_AXIS_TAG } from "./parse/scenarios.js";
 
 // `thresholdsOf` / `measuredCheckTags` / `thresholdFor` — the ONE reading of a target's authored
@@ -87,8 +88,7 @@ export type { ThresholdIndex, ThresholdBar } from "./domain/thresholds.js";
 // Observations (`parse/measurements`, @SCN-CIP-003). Shared because the balance command is the edge
 // that reads a target's files, and this is one of them. Internal, not public — where a measurement
 // artefact is AUTHORED is as open as the registry-home question the two entries above are parked
-// on, and the frozen v1 surface is not the place to settle it (@SCN-API-001 freezes that barrel
-// exactly, both directions).
+// on, and the v1 surface is not the place to settle it.
 export { parseMeasuredEvidenceObservations } from "./parse/measurements.js";
 export type { MeasurementReport } from "./parse/measurements.js";
 export type { MeasuredEvidenceObservation } from "./domain/journal.js";
@@ -110,8 +110,8 @@ export type { FitnessEvidenceObservation } from "./domain/journal.js";
 // prevent (3F-3042). Its only consumer OUTSIDE the engine is `tests/checks/localLadder.ts`;
 // `runningStaticChecks` reads the same walk in-engine for the `id:` (3F-3261). Internal, not
 // public — `ciRunCommands` remains
-// the v1 contract for anyone outside, and putting this on the frozen `.` barrel would widen a
-// frozen surface and owe @SCN-API-001 a hand-transcribed row to buy nothing.
+// the v1 contract for anyone outside, and putting this on the `.` barrel would widen the v1
+// contract to buy nothing.
 export { ciRunSteps } from "./parse/checkScriptsRunInCI.js";
 export type { CiRunStep } from "./parse/checkScriptsRunInCI.js";
 
@@ -121,8 +121,8 @@ export type { CiRunStep } from "./parse/checkScriptsRunInCI.js";
 // workflow runs — the third time that one-walk rule has held here, and for the reason it held the
 // first two. Internal, not public, on the same footing as `ciRunSteps`: `ciRunCommands` remains
 // the v1 contract for anyone outside, and the shape of a whole-pipeline step is a reading the
-// discovery inversion (3F-3343) is still settling, so freezing it now would owe @SCN-API-001 a
-// hand-transcribed row for a surface no consumer has yet asked for.
+// discovery inversion (3F-3343) is still settling, so putting it on the v1 contract now would
+// widen it for a surface no consumer has yet asked for.
 export { ciWorkflowSteps } from "./parse/checkScriptsRunInCI.js";
 export type { CiWorkflowStep, CiStepAction } from "./parse/checkScriptsRunInCI.js";
 
@@ -135,7 +135,7 @@ export type { CiWorkflowStep, CiStepAction } from "./parse/checkScriptsRunInCI.j
 // where they were the reason a PUBLISHED module imported this unpublished subpath — the fault
 // 3F-3086 repairs. Internal, not public: where a target's rows, bars and mints are AUTHORED
 // is the registry-home question (increment D), so the shape of what these read is not a v1
-// contract yet, and @SCN-API-001 freezes that barrel exactly. Nothing under `tests/checks/`
+// contract yet. Nothing under `tests/checks/`
 // travels in a tarball (`tsconfig.build.json` emits `src` alone), so reaching them here is the
 // seam working as 3F-2837 intended.
 export {

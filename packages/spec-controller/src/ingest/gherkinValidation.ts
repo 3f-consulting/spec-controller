@@ -23,11 +23,12 @@
  * PURE: `string → parse errors`. No fs, no process — the file READ lives beside it at the ingest
  * edge, as it does for every other input.
  *
- * WHY IT LIVES IN THE APP, NOT CORE. Core's barrel is the FROZEN v1 contract surface, guarded
- * both directions by @SCN-API-001 — a symbol added there reds CI. This validator is an INGEST
- * concern (it decides whether an input can be read at all), not part of the reconciliation
- * contract downstream consumers build on, so it belongs with the other readers at the app edge
- * and the frozen surface stays untouched.
+ * WHY IT LIVES IN THE APP, NOT CORE. Core's barrel is the v1 contract surface downstream consumers
+ * build on. Since 3F-3449 nothing reds when a symbol is added there — the guard that reconciled it
+ * both directions is gone — so keeping it narrow is a discipline rather than a gate. This validator
+ * is an INGEST concern (it decides whether an input can be read at all), not part of the
+ * reconciliation contract, so it belongs with the other readers at the app edge and the v1 surface
+ * stays untouched.
  */
 
 import { AstBuilder, GherkinClassicTokenMatcher, Parser } from "@cucumber/gherkin";

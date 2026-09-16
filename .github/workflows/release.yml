@@ -1,17 +1,17 @@
 name: Release
 
-# A TAG, OR A HAND-STARTED RUN, AND NOTHING ELSE (3F-3249, @SCN-REL-003). This is its own file
+# A TAG, OR A HAND-STARTED RUN, AND NOTHING ELSE (3F-3249). This is its own file
 # rather than a job in `ci.yml`, and the reason is that file's own trigger: it runs on `push: main`
 # AND on `pull_request`, so a release living inside it would attempt one on both. The alternative —
 # an `if:`-conditioned step in that job — would break the premise `ci.yml` states in its own header
 # and relies on: every step in it is unconditional, which is what lets a green there mean every gate
 # ran.
 #
-# AND THE SEPARATION IS WHAT KEEPS THE RELEASE REACHABLE WHILE THE RECONCILIATION IS RED (3F-3250,
-# @SCN-REL-004). Nothing below asks anything that is about THIS REPOSITORY rather than about the
-# artefact — not the self-reconciliation and not the fitness pass. A tree whose self-reconciliation reds can
-# still be released, which is the hatch the bootstrap in 3F-3105 needs: a model skew must not be
-# able to strand CI on a red only a hand publish can clear.
+# AND THE SEPARATION IS WHAT KEEPS THE RELEASE REACHABLE WHILE THE RECONCILIATION IS RED (3F-3250).
+# Nothing below asks anything that is about THIS REPOSITORY rather than about the artefact — not the
+# self-reconciliation and not the fitness pass. A tree whose self-reconciliation reds can still be
+# released, which is the hatch the bootstrap in 3F-3105 needs: a model skew must not be able to
+# strand CI on a red only a hand publish can clear.
 on:
   push:
     tags: ["v*"]
@@ -69,7 +69,15 @@ jobs:
     # Waiting on a slow network costs minutes; a severed staging costs a version number.
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
+      # PINNED TO A COMMIT WITH THE RELEASE AS A COMMENT, AND `persist-credentials: false` — the
+      # register above `ci.yml`'s checkout carries the argument for both (3F-3445, @SCN-FIT-021).
+      # It matters more here than there: this job holds a registry credential, and a job token left
+      # in `.git/config` beside it doubles what a compromised dependency of this build could reach.
+      # Nothing below talks to the remote — the release packs, smokes and stages, and writes
+      # nothing back to the repository, which is what the `permissions:` block above already says.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       # `registry-url` IS WHAT WRITES THE `.npmrc` npm AUTHENTICATES AGAINST, and it is the only
       # reason this action is configured at all beyond the Node version. No cache is asked for: a
@@ -90,10 +98,18 @@ jobs:
       # `engines` says `node >=22`, so both are runtimes a consumer may be on, and between the two
       # files both are covered — but a release that reds on something 22 never sees is a real
       # possibility and this comment is where a reader meets it.
-      - uses: actions/setup-node@v6
+      # `package-manager-cache: false` IS THE SENTENCE THIS STEP'S COMMENT ABOVE ALREADY MAKES,
+      # NOW MADE TO THE RUNNER RATHER THAN TO A READER (3F-3445, @SCN-FIT-021). "No cache is asked
+      # for" was true of the `cache:` input and false of the file: `setup-node` caches the package
+      # manager unless this input says otherwise, so the release WAS restoring a store some other
+      # run of this repository filled — which is exactly the reading the audit reported, on a
+      # workflow that publishes, at its highest severity. A prose intention and an input are not
+      # the same thing, and the gap between them is what the audit found.
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
+          package-manager-cache: false
 
       - name: Enable corepack
         run: corepack enable
@@ -113,7 +129,7 @@ jobs:
       # this release would send; everything after it is about the files it produced.
       #
       # THE FITNESS PASS IS NOT AMONG THEM, AND ITS ABSENCE IS THE RULE RATHER THAN AN OMISSION
-      # (3F-3250, @SCN-REL-004). The self-reconciliation was already excluded because it is a statement about
+      # (3F-3250). The self-reconciliation was already excluded because it is a statement about
       # THIS REPOSITORY'S BOOKKEEPING rather than about the artefact — and the fitness axis is that
       # same category row for row: complexity bars, corpus traceability, anemic-domain conformance,
       # this suite's own mutation score, the duration of the observer. Not one of them says the
@@ -163,16 +179,66 @@ jobs:
           pnpm --dir packages/core pack --pack-destination "$RUNNER_TEMP/release"
           pnpm --dir packages/spec-controller pack --pack-destination "$RUNNER_TEMP/release"
 
-      # THE SMOKE IS @SCN-REL-001'S RECIPE, RUN OVER THE FILES ABOVE. Every gate in this repository
-      # resolves through the WORKSPACE manifest, and npm REPLACES that manifest's `exports` map with
-      # `publishConfig.exports` wholesale at publish time. The two readings differ nowhere except
-      # inside an installed tarball — which is how 3F-3086's published CLI threw
-      # ERR_PACKAGE_PATH_NOT_EXPORTED on its first command with every gate green behind it. So the
-      # tarballs are installed where no checkout can help them and the command is started there.
+      # WHY THIS STEP EXISTS AT ALL, AND IT IS ABOUT THE RELEASE RATHER THAN ABOUT ANY CHECKER. Every
+      # gate in this repository resolves through the WORKSPACE manifest, and npm REPLACES that
+      # manifest's `exports` map with `publishConfig.exports` wholesale at publish time. The two
+      # readings differ nowhere except inside an installed tarball — which is how 3F-3086's published
+      # CLI threw ERR_PACKAGE_PATH_NOT_EXPORTED on its first command with every gate green behind it.
+      # So the tarballs are installed where no checkout can help them and the command is started
+      # there.
+      #
+      # SIX LINES OF SHELL, AND THEY USED TO BE A MODULE OF OURS (3F-3453). A 217-line recipe, a
+      # 122-line CLI over it and a 40-line manifest reader stood here, plus the @integration scenario
+      # that asserted the recipe by equality. Installing two tarballs into an empty directory and
+      # starting what they installed is what `npm` and a shell already do, and a release that
+      # verifies its artefact through apparatus this repository wrote is verifying its own apparatus
+      # at the same time.
+      #
+      # `npm`, NOT `pnpm`, AND THE CHOICE IS LOAD-BEARING. npm HOISTS, so the core tarball sitting at
+      # the top of this tree satisfies the CLI's now-concrete dependency on it — which means the
+      # smoke reads THE CORE THIS RELEASE JUST PACKED rather than whatever the registry is currently
+      # serving under that version. The three quiet flags keep a registry audit and a funding banner
+      # out of a step whose subject is neither; `--prefer-offline` keeps a warm cache out of the
+      # network's way.
+      #
+      # THE COMMAND IS REACHED BY PATH, `./node_modules/.bin/spec-controller`, WHICH IS THE POINT. A
+      # bare `spec-controller` could resolve to something the runner already had; this one can only
+      # be the bin the install just placed, and if the install placed nothing the line fails as "No
+      # such file or directory" rather than quietly running a stranger.
+      #
+      # BOTH DIRECTIONS WERE RUN BEFORE THIS REPLACED ANYTHING (3F-3453). Control, over the tarballs
+      # this tree packs: install 0, start 0. With `workspace:*` planted back into the packed CLI
+      # manifest: `npm error code EUNSUPPORTEDPROTOCOL`, install 1, and the start 127 because the
+      # command was never placed. The runner's default shell carries `-e`, so the step reds at the
+      # install; it would red at the start in any case.
+      # AND THE SUPPRESSION ON THE HEADER BELOW IS A FINDING THIS COMMIT CREATED THE VISIBILITY FOR,
+      # NOT ONE IT CREATED. `zizmor`'s `adhoc-packages` reports the `npm install` below as installing
+      # a package outside a lockfile — measured on this tree, 1 low, the audit's own words. The
+      # install itself is unchanged: the deleted CLI ran exactly this command, and the auditor could
+      # not see it because it sat behind `tsx tests/checks/cleanRoomInstallCli.ts`. Putting the
+      # recipe in shell is what handed it to the tool, which is an argument FOR the change rather
+      # than against it.
+      #
+      # IT IS SUPPRESSED BECAUSE THE FINDING'S CURE IS THIS STEP'S SUBJECT. A lockfile is the one
+      # thing a clean room must not have: the question being asked is what a STRANGER resolves, and
+      # a stranger installs these two tarballs with no lockfile of ours and takes whatever the
+      # registry serves for the CLI's transitive dependencies. Pinning that here would answer a
+      # question nobody has and stop answering the one 3F-3086 cost us. The two tarballs themselves
+      # are not ad hoc at all — they were packed twenty lines above, in this job, from this commit.
+      #
+      # THE COMMENT SITS ON THE `run: |` HEADER for the YAML reason argued in full at `Stage core`:
+      # inside a block scalar every line is content, so an ignore comment written beside the command
+      # is passed to bash and zizmor never sees it. It names ONE audit on ONE step.
       - name: Smoke the packed artefacts in a clean room
-        run: pnpm exec tsx tests/checks/cleanRoomInstallCli.ts --pack-dir "$RUNNER_TEMP/release" packages/core packages/spec-controller
+        run: | # zizmor: ignore[adhoc-packages]
+          room="$RUNNER_TEMP/clean-room"
+          rm -rf "$room"
+          mkdir -p "$room"
+          cd "$room"
+          npm install --prefer-offline --no-audit --no-fund --loglevel=error "$RUNNER_TEMP/release"/*.tgz
+          ./node_modules/.bin/spec-controller balance --help
 
-      # CORE FIRST, AND THE ORDER IS THE WHOLE OF @SCN-REL-003. The CLI's packed manifest names core
+      # CORE FIRST, AND THE ORDER IS LOAD-BEARING. The CLI's packed manifest names core
       # by a concrete version, so that version has to be resolvable the moment a consumer asks for
       # it. Send the CLI first and the release is broken between its own two acts: for as long as
       # the second one takes, `npm i spec-controller` resolves an engine nobody can fetch.
@@ -223,18 +289,43 @@ jobs:
       # `registry-url` is what put an `.npmrc` on the runner at all, and it substitutes this variable
       # into it. Without the `env:` below the file still resolves — to the literal placeholder
       # `XXXXX-XXXXX-XXXXX-XXXXX`, which is what returned E401 on run 34962420854.
+      # AND THE SUPPRESSION ON THE LINE BELOW IS THAT SAME MEASUREMENT, SAID TO THE AUDITOR
+      # (3F-3445, @SCN-FIT-021). `zizmor`'s `use-trusted-publishing` reports an `npm ... publish`
+      # authenticating from a secret and advises OIDC. Here that advice is not weaker than the
+      # alternative, it is UNREACHABLE: `npm stage publish` has no OIDC path at all, measured in
+      # npm's own source and written out in this file's register above — `lib/commands/publish.js`
+      # calls `oidc()`, `lib/commands/stage/publish.js` contains zero references to it, in npm
+      # 11.19.1 and 12.0.2 alike. There is no edit to this step that both takes the advice and
+      # keeps the staging, and HOW this release authenticates is 3F-3440's stated out-of-scope with
+      # a ruling of its own (lane rule 11). So it is suppressed by name, on its own line, twice —
+      # once per staging step — rather than by a severity filter that would have taken the eight
+      # unpinned-`uses:` findings down with it.
+      #
+      # THE COMMENT SITS ON THE `run: |` HEADER AND NOT ON THE COMMAND, WHICH IS YAML AND NOT A
+      # PREFERENCE. Inside a block scalar there are no comments — every line of the script is
+      # content — so a `# zizmor: ignore[...]` written beside `npm stage publish` is passed to bash
+      # and zizmor never sees it. Measured: with it there the finding was still reported. The
+      # header line is the nearest position the YAML parser reads as a comment.
+      #
+      # WHAT THE SUPPRESSION DOES NOT COVER, said rather than left to be assumed: it names ONE
+      # audit on ONE step. Every other audit still reads these lines, and a second `npm ... publish`
+      # added elsewhere in this file would be reported on its own.
       - name: Stage core
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
+        run: | # zizmor: ignore[use-trusted-publishing]
           v="$(node -p "require('./packages/core/package.json').version")"
           case "$v" in *-*) t="${v#*-}"; t="${t%%.*}" ;; *) t=latest ;; esac
           npm stage publish "$RUNNER_TEMP/release"/3f-consulting-spec-controller-core-*.tgz --tag "$t"
 
+      # THE SECOND SUPPRESSION, AND IT IS WRITTEN OUT RATHER THAN INHERITED FROM THE STEP ABOVE.
+      # A zizmor ignore comment excuses the line it sits on and nothing else, so two staging steps
+      # owe two of them; the reason is the one argued at `Stage core` and is the same npm source
+      # measurement.
       - name: Stage the CLI
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
+        run: | # zizmor: ignore[use-trusted-publishing]
           v="$(node -p "require('./packages/spec-controller/package.json').version")"
           case "$v" in *-*) t="${v#*-}"; t="${t%%.*}" ;; *) t=latest ;; esac
           npm stage publish "$RUNNER_TEMP/release"/spec-controller-*.tgz --tag "$t"

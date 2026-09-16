@@ -13,9 +13,10 @@ Feature: This repository reconciles itself as a consumer, from the package it in
   that route is the entire point of dogfooding. So there is no wrapper: a dependency, a `run:` step,
   and the verdict its exit code gives, exactly as an adopter runs it.
 
-  ITS PRECEDENT IN THIS CORPUS IS @LAD AND @REL, which assert properties of this repository's own
-  pipeline rather than of the product's behaviour. @REL states the discriminator this file inherits:
-  a scenario that reads a manifest is reading the source of the artefact, while a scenario that runs
+  ITS PRECEDENT IN THIS CORPUS IS @LAD, which asserts properties of this repository's own pipeline
+  rather than of the product's behaviour. THE DISCRIMINATOR THIS FILE TURNS ON IS NOW ITS OWN: it
+  was stated in the release feature, which left at 3F-3453 with the hand-written release checks. A
+  scenario that reads a manifest is reading the source of the artefact, while a scenario that runs
   the installed one is reading the artefact. Only the second stands where a consumer stands.
 
   NUMBERING RESUMES AT -007 AND THE GAP IS DELIBERATE. @SCN-SLF-001 and -002 asserted the wrapper's

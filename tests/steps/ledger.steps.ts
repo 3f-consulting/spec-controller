@@ -33,10 +33,9 @@ import {
 import type { Scenario, EvidenceObligation, EvidenceObservation, GuardEvidenceObservation, Ledger, ScenarioReconciliation, QualityCheckReconciliation, EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
 // The whole-run soundness predicate (@SCN-LDG-018), imported by MODULE PATH rather than from the
-// package barrel: the barrel is the FROZEN v1 surface (@SCN-API-001), and adding `hasBrokenEvidence`
-// to it is 3F-1651's contract touch, sequenced immediately after this sub-issue. Deep module
-// imports into packages/ are the established shape in these step files (cliBalance.steps.ts,
-// report.steps.ts, pendingItems.steps.ts).
+// package barrel. The barrel re-exports it too (3F-1651 put it there); the module path is the
+// in-repo route, and deep module imports into packages/ are the established shape in these step
+// files (cliBalance.steps.ts, report.steps.ts, pendingItems.steps.ts).
 import { hasBrokenEvidence, isBalanced } from "../../packages/core/src/domain/ledger.js";
 
 // Fixtures shared across steps within a scenario (isolated per scenario by Cucumber).
@@ -1411,8 +1410,7 @@ Then(
 // BOTH polarities in one scenario).
 //
 // `hasBrokenEvidence` is imported by MODULE PATH (see the file header), not from the package
-// barrel — the barrel is the FROZEN v1 surface (@SCN-API-001) and the export that adds it there is
-// 3F-1651's work, sequenced immediately after this sub-issue.
+// barrel, which re-exports it as well since 3F-1651.
 const LDG018_BROKEN_FILE = "packages/core/src/collection-failed.test.ts";
 const LDG018_MESSAGE = "Error: Cannot find package '@cucumber/tag-expressions'";
 // The two reconciliations the When produces: the run whose suite failed to collect, and the

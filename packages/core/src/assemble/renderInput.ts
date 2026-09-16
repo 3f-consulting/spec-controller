@@ -29,8 +29,8 @@ import { provenanceObject, type ProvenanceObject, type RunContext } from "../pro
 import type { EvidenceObligations, UntaggedScenario } from "../census/evidenceObligations.js";
 
 // The Ledger-pure summary-tally types moved to `domain/ledger` (3F-2000, Read @SCN-RMD-001) —
-// "the summary is its totals". Re-exported here so the frozen v1 barrel (`index.ts`,
-// @SCN-API-001) keeps the SAME surface off `./assemble/renderInput.js`; only the types' home moved.
+// "the summary is its totals". Re-exported here so the public v1 barrel (`index.ts`) keeps the
+// SAME surface off `./assemble/renderInput.js`; only the types' home moved.
 export type {
   ScenarioReconciliationTotals,
   EvidenceObligationTotals,
@@ -51,7 +51,7 @@ export interface EvidenceObligationsSection {
   proseOnlyCodes: string[];
 }
 
-// The observed-evidence `EvidenceObservationsSection` interface is RETIRED (@SCN-API-001, 3F-2104):
+// The observed-evidence `EvidenceObservationsSection` interface is RETIRED (3F-2104):
 // the section is no longer emitted (3F-2103), and its raw totals re-home onto
 // `summary.rawByRuntimeQualityCheck` (a Ledger fold). The per-`(scnId, quality-check)` `attributed[]`
 // re-represented the Ledger's posted credits and was deleted, not relocated.
@@ -98,7 +98,7 @@ export interface RenderInput {
   // The `evidenceObservations` section is RETIRED (@SCN-RPT-010, 3F-2103): the runtime
   // evidence-observation counting folds onto the Ledger (`runtimeObservationTally`), its raw totals
   // re-homed onto `summary.rawByRuntimeQualityCheck`; the posted credits live on the ledger rows.
-  // (`EvidenceObservationsSection` stays defined + barrel-exported until @SCN-API-001 / 3F-2104.)
+  // (`EvidenceObservationsSection` stays defined + barrel-exported until 3F-2104.)
   /**
    * The presentation metadata — the feature titles (`metadata.featureNames`, the
    * `feature-code → slug` map the by-feature cut names each feature in full from). It is

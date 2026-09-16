@@ -68,8 +68,8 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
     change is exactly that shape: the src rename churns the `it`-body while its
     cite, on the enclosing describe/it, stays a CONTEXT line — so the
     diff-only scan reads a cited scenario as uncited and reds a valid PR (lived:
-    3F-1725, the @SCN-API-001 rename; it erred safe but cost a CI cycle and would
-    fire on every future rename). The fix keeps the guard hermetic: the cite scan
+    3F-1725's rename; it erred safe but cost a CI cycle and would fire on every
+    future rename). The fix keeps the guard hermetic: the cite scan
     reads the CHECKED-OUT content of the changed test files — still the local
     tree, still no Linear call. The diff remains the CHANGE-DETECTOR; only the
     cite check moves to live file state.
