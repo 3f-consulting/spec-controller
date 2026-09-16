@@ -86,20 +86,69 @@ like a schedule that has lapsed.
     retention-days: 14
 ```
 
+**Write the window once, in a file each placement sources.** The moment you have
+a second thing to place — a suite timing, a coverage number — the window is
+copied, and two copies that happen to agree are not one rule. Keep the file out
+of your package scripts if, like this repository, you derive a local check ladder
+from them: this is a rule a placement asks, not a gate anybody runs.
+
+```bash
+# scripts/freshness-window.sh — sourced, never run.
+#
+# 26 h = a 24 h cadence + 2 h margin, in seconds. Write the DERIVATION, never the
+# bare number: a reader whose sweep runs twice daily gets 14 from the rule, rather
+# than copying 93600 and inheriting a cadence that is not theirs.
+MAX_AGE=93600
+
+# Given the moment a measurement was taken and the name of what is being placed,
+# answer whether it is still inside the window — refusing on stderr and returning
+# non-zero when it is not. It takes an EPOCH SECOND and never an ISO string:
+# parsing a run's `createdAt` and reading a file's mtime are spelled differently
+# on GNU and BSD, and both are the caller's transport problem.
+#
+# The age it computed is left in `FRESHNESS_AGE` for the caller's own sentence,
+# so a placement that succeeds can say how old what it placed is without a second
+# subtraction over a clock that has moved since.
+#
+# A NEGATIVE AGE IS REFUSED BEFORE THE WINDOW IS CONSULTED: a measurement dated in
+# the future is the one arithmetic that would otherwise pass every window there is.
+inside_the_freshness_window() {
+  local measured_at="$1"
+  local what="$2"
+
+  FRESHNESS_AGE=$(( $(date -u +%s) - measured_at ))
+
+  if [ "${FRESHNESS_AGE}" -lt 0 ]; then
+    echo "place: ${what} is dated ${FRESHNESS_AGE#-}s in the future; nothing is placed." >&2
+    return 1
+  fi
+
+  if [ "${FRESHNESS_AGE}" -gt "${MAX_AGE}" ]; then
+    echo "place: ${what} measured ${FRESHNESS_AGE}s ago, past the ${MAX_AGE}s window; nothing is placed. The row will read missing, which is the true sentence: the measurement has lapsed." >&2
+    return 1
+  fi
+
+  return 0
+}
+```
+
 **On push**, fetch the latest **finished** nightly's file. Every branch below that
 cannot finish the job places nothing, says why on stderr, and exits 0 — the
 reason is in [*Fail-closed*](#fail-closed--on-any-ambiguity-place-nothing), and
 the reason this step comes **first** in the job is in
-[*Ordering*](#ordering--the-fetch-runs-before-your-own-producers).
+[*Ordering*](#ordering--the-fetch-runs-before-your-own-producers). What is left in
+the step is this row's **transport** — which run to select, how to read its clock,
+how to fetch and place what it left. Many transports, one rule.
 
 ```yaml
 - name: Place the scheduled check's measurement
   env:
     GH_TOKEN: ${{ github.token }}
-    # The four terms that are the whole contract with the schedule: which
-    # workflow took the measurement, which LINE it was taken on, what it left the
-    # measurement under, and how long that number stays close enough to true
-    # about this code.
+    # The three terms that are the whole contract with the schedule: which
+    # workflow took the measurement, which LINE it was taken on, and what it left
+    # the measurement under. HOW LONG that number stays close enough to true about
+    # this code is not among them — it is in the sourced rule above, so that a
+    # second placement cannot disagree with this one about the window.
     #
     # BRANCH IS WRITTEN OUT RATHER THAN DERIVED FROM `github.ref_name`. This
     # ladder also runs on pull requests, and nothing sweeps a feature branch — so
@@ -109,12 +158,33 @@ the reason this step comes **first** in the job is in
     WORKFLOW: nightly.yml
     BRANCH: main
     ARTEFACT: nightly-measurements
-    MAX_AGE: "93600"           # 26 h = a 24 h cadence + 2 h margin, in seconds
   run: |
     # NO `-e`, DELIBERATELY. Every failure below is answered where it happens
     # with a sentence and `exit 0`; `-e` would turn one of them into a red step,
     # which is the one reading this must never manufacture.
     set -uo pipefail
+
+    . scripts/freshness-window.sh
+
+    # THIS STEP LEAVES THIS RUN'S MEASUREMENT IN THE EVIDENCE ROOT OR IT LEAVES
+    # NOTHING, AND THAT IS ONE RULE RATHER THAN A BRANCH. Every path below that
+    # does not place says "nothing is placed" and exits 0 — and on a root that
+    # OUTLIVES the run, that sentence has no effect at all: an earlier run's copy
+    # is still sitting here and the row's own command reads it. Removed HERE
+    # rather than at each refusal, for the reason `set -e` is cleared once above:
+    # eight paths out of this script place nothing and a ninth is one edit away,
+    # and a guarantee resting on a hand-derived list of them rests on the list.
+    #
+    # AND IT REMOVES THIS ROW, NEVER THE ROOT. What goes is exactly the record
+    # this step answers for; the test below decides whether it comes back. Other
+    # placements' records, and anything deliberately under no window, are not
+    # this step's to touch. Note the cost this takes deliberately: an absent
+    # source removes a copy that may still be inside its window, so the row can
+    # read `missing` where evidence arguably existed. The alternative needs the
+    # measurement's time to survive a copy that carries the COPY's time instead,
+    # and getting that wrong is a satisfied row on a stale number. Take the rule
+    # that fails loudly.
+    rm -f "${EVIDENCE_DIR}/measurements.json"
 
     # Downloaded to a scratch directory of its own, never straight to the path
     # the reconciliation reads: nothing reaches the evidence root until it has
@@ -154,17 +224,12 @@ the reason this step comes **first** in the job is in
       echo "place: run ${id} reports createdAt ${when}, which is not a moment this runner can read; nothing is placed." >&2
       exit 0
     fi
-    age=$(( $(date -u +%s) - measured_at ))
-
-    # A run dated in the future is a clock nobody can reason about, and it is the
-    # one arithmetic that would otherwise pass every window there is.
-    if [ "${age}" -lt 0 ]; then
-      echo "place: run ${id} is dated ${age#-}s in the future; nothing is placed." >&2
-      exit 0
-    fi
-
-    if [ "${age}" -gt "${MAX_AGE}" ]; then
-      echo "place: run ${id} measured ${age}s ago, past the ${MAX_AGE}s window; nothing is placed. The row will read missing, which is the true sentence: the schedule has lapsed." >&2
+    # THE WINDOW IS ASKED HERE, BEFORE THE PAYLOAD IS FETCHED AND BEFORE ANYTHING
+    # IS PLACED. A run past the window is never downloaded, so the reader
+    # downstream meets no record at all. The shared rule refuses a negative age
+    # too, and says why on stderr; this step's business is only that the refusal
+    # happens HERE, ahead of the fetch.
+    if ! inside_the_freshness_window "${measured_at}" "run ${id}"; then
       exit 0
     fi
 
@@ -193,9 +258,17 @@ the reason this step comes **first** in the job is in
     # A plain copy, because this step runs before your own producers and so
     # nothing has posted yet. The evidence root is a directory on the runner, not
     # in the checkout, so the first contributor to the job is what creates it.
-    mkdir -p "${EVIDENCE_DIR}"
-    cp "${found}" "${EVIDENCE_DIR}/measurements.json"
-    echo "place: placed ${ARTEFACT} from run ${id}, measured ${age}s ago, inside the ${MAX_AGE}s window:"
+    if ! { mkdir -p "${EVIDENCE_DIR}" && cp "${found}" "${EVIDENCE_DIR}/measurements.json"; }; then
+      # A HALF-WRITTEN COPY IS NOT A PLACEMENT EITHER. The removal above ran
+      # before this `cp` began, so what a failure here can leave behind is this
+      # run's own partial file — which the row's command would read as a
+      # measurement. The one branch that can put something there without placing
+      # it is the one branch that takes it away again.
+      rm -f "${EVIDENCE_DIR}/measurements.json"
+      echo "place: could not place ${ARTEFACT} from run ${id} into the evidence root; nothing is placed. The row will read missing, and this is NOT the lapsed schedule that sentence usually reports: the measurement arrived and this runner could not put it where the check that reports it reads it." >&2
+      exit 0
+    fi
+    echo "place: placed ${ARTEFACT} from run ${id}, measured ${FRESHNESS_AGE}s ago, inside the ${MAX_AGE}s window:"
     jq -r '.measurements[] | "place:   \(.scnId) \(.checkTag) = \(.measured)"' \
       "${EVIDENCE_DIR}/measurements.json"
 ```
@@ -263,6 +336,37 @@ window, place the file; past it, do not. When no fresh measurement is placed,
 that quietly stopped running reds on its own, and one that ran and failed reads
 `failing`, on the same books.
 
+**Past the window is not "do not place" — it is "remove".** On an evidence root
+that outlives the run, placing nothing has no effect: the last run's copy is
+still there, and the row's own command settles the bar with a number this run has
+already refused. Two outcomes on paper, one effect. So the placement's first act
+is to delete the record it answers for, and the window test then decides whether
+it comes back. If your root is a scratch directory GitHub discards between jobs
+you will not notice the difference — which is luck rather than mechanism, and it
+is not a property to build on.
+
+**A placement may only remove what it OWNS, and in this recipe that is the whole
+file — read why before you copy it.** `balance --measurements` takes ONE report,
+so this page's single placed row writes straight into it and nothing else in the
+run has written yet (see [*Ordering*](#ordering--the-fetch-runs-before-your-own-producers)):
+everything the removal takes is last run's, and the `cp` in the recipe above
+would have replaced all of it a moment later anyway. **That stops being true the
+moment you have a second placed row.** Two placements into one file, and
+whichever runs first removes the other's record as well — which is a root clear
+wearing a row removal's clothes, and a fresh instance of the fault this rule
+exists to close. Give each placed row its own record then, named for the row, and
+have each row's own command read its own file and post its number into the
+report. This repository shared one timings record between two rows until it hit
+the neighbouring version of the same problem — a shared record has one AGE, so
+one window decision placed or refused both rows together — and split it into a
+file per row.
+
+**One comparison means one file.** The window and the arithmetic against it live
+in `scripts/freshness-window.sh`, sourced by every placement; the steps hold only
+their own transport. Three placements that happen to agree on a number are three
+rules, and the day one of them moves, the other two go on being green about a
+window nobody is applying.
+
 Read the **run's** clock, never the payload's. A measurement cannot outlive the
 run that took it, so the run's own `createdAt` bounds anything the payload could
 claim — and unlike the payload's, it is not written by the very run being judged.
@@ -273,9 +377,9 @@ and a measurement that was not placed is simply not there to reconcile.
 
 **The window is a derivation, not a number you pick: your producer's cadence
 plus a margin.** A nightly is **24 h + 2 h = 26 h**. A twice-daily sweep reads
-the same rule and gets 14. Write the derivation into the workflow rather than
+the same rule and gets 14. Write the derivation into the sourced rule rather than
 the figure, so a change of cadence carries its own answer — and keep it in your
-workflow, never in the tool: it is a fact about your pipeline, not about your
+pipeline, never in the tool: it is a fact about your pipeline, not about your
 code.
 
 ---
@@ -283,7 +387,9 @@ code.
 ## Fail-closed — on any ambiguity, place nothing
 
 Every branch of the step above that cannot finish the job does the same three
-things: places nothing, prints why on stderr, and **exits 0**. That is not
+things: leaves nothing of its own in the evidence root — the record it answers
+for was removed at the top of the step, and nothing puts it back — prints why on
+stderr, and **exits 0**. That is not
 leniency — it is the opposite, and it is worth being explicit about why, because
 the permissive version of this step is easy to write by accident.
 
@@ -294,9 +400,10 @@ fails; an artefact holding no `measurements.json`; a payload that is not JSON, o
 whose `measurements` array is absent or empty — each of those is a case where the
 step does not know what it has, and the one outcome that must be unreachable is a
 stale or unattributable number posting as a fresh pass. An unguarded
-`date -d "$created"`, or a window comparison with no negative-age arm, gets you
-exactly that: a future-dated or unreadable timestamp satisfying the window and
-placing the file anyway.
+`date -d "$created"` gets you exactly that: an unreadable timestamp becoming
+arithmetic anyway and satisfying the window. The negative-age and past-window
+arms are not in the step at all — they are in the sourced rule, which is the only
+place either comparison is written.
 
 **Exit 0.** The step is not the arbiter — the ledger is. An unplaced file leaves
 the obligation reconciling `missing`, and the reconciliation reds on the row that

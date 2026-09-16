@@ -30,9 +30,24 @@
  * arbiters agreeing. The write happens first and unconditionally, because a slow failing suite
  * is still a slow suite and a dropped row reconciles as a step that never ran.
  *
- * IT READS THE RECORD BEFORE IT WRITES ONE (@SCN-CIP-011), because a run has as many timed
- * steps as it has timed suites and they all post into the one file. What that read is worth — and
- * what an unreadable one is worth — is `measurementArtefact.ts`'s to decide.
+ * IT READS THE RECORD BEFORE IT WRITES ONE (@SCN-CIP-011), because a step that runs twice — a
+ * re-run, a retried job — owes its bar one measurement and must replace its own row rather than
+ * append a second. What that read is worth — and what an unreadable one is worth — is
+ * `measurementArtefact.ts`'s to decide.
+ *
+ * AND THE RECORD IS THIS STEP'S OWN, ONE FILE PER MEASURED ROW (3F-3200). Both timed steps used to
+ * write into one file, and a shared file has one age: a freshness window over it would place or
+ * refuse two rows on one decision, and a job where only one of the two suites ran would rewrite it
+ * beside a day-old row and read as fresh. The path is named for the row this step answers, so its
+ * age is that row's age.
+ *
+ * IT IS STAGED RATHER THAN PLACED, WHICH IS WHERE THAT AGE IS FINALLY ASKED FOR (@SCN-PLC-001).
+ * This wrapper writes under the evidence root's staging stage and nothing else; a placement step
+ * of the pipeline carries the record into the root itself, and only while it is still inside the
+ * freshness window. So the root holds only what has been placed, this row's reader finds nothing
+ * at all where the measurement has lapsed, and STALE and ABSENT become one observable for a timed
+ * row. The wrapper gains no clock from any of it: it writes what it measured, where a placement
+ * will look, and the judgement is somebody else's.
  *
  * WHAT IT WRITES IS A TIMINGS RECORD AND NOT THIS RUN'S CREDIT STREAM (3F-3166). It used to be the
  * credit: the artefact this wrote WAS the file `balance --measurements` reads, because the two
@@ -62,10 +77,10 @@ import {
 
 import { killFloorReaderFor } from "../../packages/spec-controller/src/ingest/ingestQualityChecks.js";
 import {
-  TIMINGS_RECORD_PATH,
   exitCodeOf,
   measurementArtefactWith,
   resolveEvidenceRoot,
+  stagedTimingsRecordPath,
 } from "./measurementArtefact.js";
 import { measuredSecondsOf, timingReport } from "./stepTiming.js";
 
@@ -154,8 +169,11 @@ function alreadyPostedIn(artefactPath: string): string | undefined {
 // AGAINST THE EVIDENCE ROOT, NOT AGAINST `step.root` (3F-3099). A named target carries its own
 // evidence and resolves to exactly the path it always did; a run that named no target writes to a
 // temporary directory rather than into whatever tree it happens to be standing in.
-const artefactPath = path.join(resolveEvidenceRoot(step.namedRoot), TIMINGS_RECORD_PATH);
-// The parent is made rather than assumed: the evidence root is a directory nothing else creates,
+const artefactPath = path.join(
+  resolveEvidenceRoot(step.namedRoot),
+  stagedTimingsRecordPath(step.scnId),
+);
+// The parent is made rather than assumed: the staging stage is a directory nothing else creates,
 // so the first timed step of a job is the thing that creates it.
 mkdirSync(path.dirname(artefactPath), { recursive: true });
 writeFileSync(

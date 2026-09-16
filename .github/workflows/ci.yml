@@ -139,9 +139,10 @@ jobs:
       # it would leave SCN-FIT-002 reconciling `missing` on every push — a build redding over a
       # cadence rather than over the code — and reading it unconditionally would settle this tree's
       # bar with a number measured about a different tree. So it is placed only while it is still
-      # young enough to be about this code: 36 hours against a 03:17 UTC nightly leaves ~12 hours
-      # of slack in a healthy cadence, and ONE missed sweep ages the number out, places nothing,
-      # and reds the gate below. A sweep that quietly stops running cannot stay quiet.
+      # young enough to be about this code: 26 hours — a 24 hour cadence plus 2 hours of margin —
+      # leaves a 03:17 UTC nightly its own slot and one late start's worth of slack, and ONE missed
+      # sweep ages the number out, places nothing, and reds the gate below. A sweep that quietly
+      # stops running cannot stay quiet.
       #
       # IT LANDS A SWEEP RECORD, NOT A ROW OF THIS RUN'S CREDIT STREAM (3F-3152). It used to copy
       # the nightly's file straight into `measurements.json` — the artefact
@@ -168,9 +169,10 @@ jobs:
       # WRITTEN HERE RATHER THAN SHIPPED (3F-2841). This was a composite action over a CLI
       # (3F-2766, 3F-2810). Every piece of it is a native GitHub operation or a `date` subtraction
       # — upload a file, download it, check its age — so it is glue, and glue is written at the
-      # edge that needs it. The window stays an input here rather than a manifest field for the
-      # same reason it always did: a manifest is about BARS, which are facts about the code, and a
-      # window is a fact about the pipeline reading them.
+      # edge that needs it. The window is not a manifest field for the same reason it never was: a
+      # manifest is about BARS, which are facts about the code, and a window is a fact about the
+      # pipeline reading them. It no longer lives in THIS step either — it is written once in
+      # `scripts/freshness-window.sh`, which every placed row asks (3F-3200).
       #
       # AND IT IS NOT AN ARBITER. Every branch below places nothing, says why on stderr, and exits
       # 0. Having no measurement to place — no finished sweep, no artefact, a number past its
@@ -183,9 +185,11 @@ jobs:
       - name: Place the scheduled sweep's measurement
         env:
           GH_TOKEN: ${{ github.token }}
-          # The four terms that are the whole of which measurement crosses: which workflow took it,
-          # which LINE it was taken on (3F-2955), what it left the measurement under, and how long
-          # that number stays close enough to true about this code — 36 hours, in seconds.
+          # The three terms that are the whole of which measurement crosses: which workflow took
+          # it, which LINE it was taken on (3F-2955), and what it left the measurement under. HOW
+          # LONG that number stays close enough to true about this code is no longer among them —
+          # 26 hours, a 24 hour cadence plus 2 hours of margin, is written once in
+          # `scripts/freshness-window.sh` and asked by every placed row (3F-3200).
           #
           # BRANCH IS WRITTEN OUT RATHER THAN DERIVED FROM `github.ref_name`, WHICH IS THE ACCEPTED
           # COST STATED (@SCN-MUT-017). This ladder also runs on `pull_request`, and nothing sweeps
@@ -197,7 +201,6 @@ jobs:
           WORKFLOW: mutation.yml
           BRANCH: main
           ARTEFACT: mutation-measurement
-          MAX_AGE: "129600"
         run: |
           # ERREXIT ARRIVES FROM THE SHELL AND IS CLEARED HERE, OUT LOUD (3F-2960). GitHub invokes a
           # bare `run:` as `bash -e {0}` and this step names no `shell:`, so `-e` is ON unless it is
@@ -218,6 +221,42 @@ jobs:
           # silent wrong placement, which is the fail-open this whole line of work exists to close.
           set +e
           set -uo pipefail
+
+          # THE WINDOW AND THE COMPARISON AGAINST IT COME FROM ONE FILE, WHICH EVERY PLACED ROW
+          # ASKS (3F-3200). What is left here is this row's TRANSPORT — which run to select, how to
+          # read its clock, how to fetch and place what it left. Three sources, three transports,
+          # one rule.
+          . scripts/freshness-window.sh
+
+          # THIS STEP LEAVES THIS RUN'S MEASUREMENT IN THE EVIDENCE ROOT OR IT LEAVES NOTHING, AND
+          # THAT IS ONE RULE RATHER THAN A BRANCH (3F-3431). Every path below that does not place
+          # says "nothing is placed" on stderr and exits 0 — and on a root that OUTLIVES the run,
+          # that sentence had no effect at all: an earlier run's copy was still sitting here, and
+          # the row's own command read it and answered with a number this run had already refused.
+          # Two outcomes on paper, one effect. It reads as airtight on this pipeline solely because
+          # `$RUNNER_TEMP` is discarded between jobs, which is luck rather than mechanism — the same
+          # complaint this axis makes about the timings, one level down. A consumer will not have it.
+          #
+          # REMOVED HERE RATHER THAN AT EACH REFUSAL, FOR THE REASON `set +e` IS SET ONCE ABOVE.
+          # Eight paths out of this script place nothing and a ninth is one edit away; a guarantee
+          # resting on a hand-derived list of them rests on the artefact that moved under all three
+          # of the readings that produced three different lists. This line is correct over every
+          # branch whether or not anybody enumerated it, and over the one a later edit adds.
+          #
+          # AND IT REMOVES THIS ROW, NEVER THE ROOT. Clearing the evidence root before the producers
+          # run was rejected and this is not that (3F-3200, AMENDED 2026-09-16): what goes is
+          # exactly the record this step answers for, and the age test below still decides whether
+          # it comes back. The other placements' records, the per-mutant record that is deliberately
+          # under no window, and this run's credit stream are not this step's to touch.
+          #
+          # `no source -> remove` IS STRICTER THAN THE WINDOW ON PURPOSE, AND IS A DECISION. A copy
+          # placed two hours ago may still be inside the window, so removing it on an absent source
+          # can make SCN-FIT-002 read `missing` where evidence arguably existed — a false RED. The
+          # alternative, ageing the placed copy on its own account, needs the measurement's time to
+          # survive a copy that carries the COPY's time instead; get that wrong and the failure is a
+          # satisfied row on a stale number. In a product whose subject is false greens, take the
+          # rule that fails loudly.
+          rm -f "${SPEC_CONTROLLER_EVIDENCE_DIR}/mutation-measurements.json"
 
           into="${RUNNER_TEMP}/placed-measurement"
           rm -rf "${into}"
@@ -279,17 +318,13 @@ jobs:
             echo "place: run ${id} of ${WORKFLOW} reports createdAt ${when}, which is not a moment this runner can read; nothing is placed." >&2
             exit 0
           fi
-          age=$(( $(date -u +%s) - measured_at ))
 
-          # A run dated in the future is a clock nobody can reason about, and it is the one
-          # arithmetic that would otherwise pass every window there is.
-          if [ "${age}" -lt 0 ]; then
-            echo "place: run ${id} of ${WORKFLOW} is dated ${age#-}s in the future; nothing is placed." >&2
-            exit 0
-          fi
-
-          if [ "${age}" -gt "${MAX_AGE}" ]; then
-            echo "place: run ${id} of ${WORKFLOW} measured ${age}s ago, past the ${MAX_AGE}s window; nothing is placed. SCN-FIT-002 will read missing, which is the true sentence: the sweep has lapsed." >&2
+          # AND THE WINDOW IS CLEARED BEFORE THE PAYLOAD IS FETCHED AND BEFORE ANYTHING IS PLACED
+          # (@SCN-MUT-019). A run past the window is never downloaded and never placed, so the
+          # reader downstream meets no record at all — which is what makes stale and absent the
+          # same observable. The shared rule refuses a negative age too, and says why on stderr;
+          # this step's business is only that the refusal happens HERE, ahead of the fetch.
+          if ! inside_the_freshness_window "${measured_at}" "run ${id} of ${WORKFLOW}"; then
             exit 0
           fi
 
@@ -361,10 +396,15 @@ jobs:
           # running. Left generic, this branch would inherit that reading and send the reader to
           # mutation.yml's schedule over a fault in this runner — the defect moved, not closed.
           if ! { mkdir -p "${SPEC_CONTROLLER_EVIDENCE_DIR}" && cp "${found}" "${SPEC_CONTROLLER_EVIDENCE_DIR}/mutation-measurements.json"; }; then
+            # AND A HALF-WRITTEN COPY IS NOT A PLACEMENT EITHER. The removal above ran before this
+            # `cp` began, so what a failure here can leave behind is this run's own partial file —
+            # which the row's command would read as a measurement. The one branch that can put
+            # something there without placing it is the one branch that takes it away again.
+            rm -f "${SPEC_CONTROLLER_EVIDENCE_DIR}/mutation-measurements.json"
             echo "place: could not place ${ARTEFACT} from run ${id} of ${WORKFLOW} into the evidence root; nothing is placed. SCN-FIT-002 will read missing, and this is NOT the lapsed sweep that sentence usually reports: the measurement arrived and this runner could not put it where the check that reports it reads it." >&2
             exit 0
           fi
-          echo "place: placed ${ARTEFACT} from run ${id} of ${WORKFLOW}, measured ${age}s ago, inside the ${MAX_AGE}s window:"
+          echo "place: placed ${ARTEFACT} from run ${id} of ${WORKFLOW}, measured ${FRESHNESS_AGE}s ago, inside the ${MAX_AGE}s window:"
           jq -r '.measurements[] | "place:   \(.scnId) \(.checkTag) = \(.measured)"' "${SPEC_CONTROLLER_EVIDENCE_DIR}/mutation-measurements.json"
 
           # THE LAST ACT, BECAUSE A SCRIPT'S STATUS IS ITS LAST COMMAND'S. `set +e` stops a failure
@@ -492,6 +532,129 @@ jobs:
       # file formatter; the progress formatter stays on stdout.
       - name: Cucumber
         run: pnpm cucumber --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json"
+
+      # STEP 2b — THE TWO SUITES' TIMINGS, CARRIED INTO THIS RUN'S EVIDENCE ONLY WHILE THEY ARE
+      # STILL ABOUT THIS CODE (@SCN-PLC-001, 3F-3200).
+      #
+      # THE TWO PRODUCERS ABOVE NO LONGER WRITE INTO THE EVIDENCE ROOT. They write under its
+      # staging stage, and this step is what carries a record across — only while the record is
+      # inside the freshness window, which it asks the same shared rule the sweep's placement asks.
+      # The root therefore holds only what has been PLACED, so a lapsed timing is not there to be
+      # read and its row reconciles `missing`: stale and absent are one observable for a timed row,
+      # as they already were for the sweep.
+      #
+      # WHICH IS A MECHANISM WHERE THERE USED TO BE LUCK. Both timed rows behaved as though they had
+      # a window because `$RUNNER_TEMP` happens to be fresh on every CI job here — so on a runner
+      # with a persistent evidence root, a job where one suite did not run would read yesterday's
+      # number for that suite and settle its bar with it. A consumer copying this axis copies the
+      # arrangement, and they will not have `$RUNNER_TEMP`.
+      #
+      # THE MEASURED-AT IS THE STAGED FILE'S MODIFICATION TIME, AND THE `stat` IS THIS STEP'S OWN.
+      # `scripts/freshness-window.sh` takes an epoch second and never anything else — a file's mtime
+      # is `stat`, which spells its flags differently on either platform, exactly as parsing a run's
+      # `createdAt` is GNU `date` syntax. Both are the CALLER's transport problem and both stay at
+      # the caller, so no portability term sits in the one path every placed row goes through.
+      #
+      # ONE STEP PLACING TWO ROWS, NOT TWO STEPS PLACING ONE EACH. Two would move the declared
+      # ledger delta twice for no reading anyone can take, and `notChecks` — which this step is
+      # named in, in the same commit that added it — is the surface where an extra entry costs
+      # most. The rows are a term of this step rather than a loop over the manifest because a
+      # placement is glue at the edge: it knows which files this pipeline's producers stage, and
+      # nothing about which rows a manifest holds.
+      #
+      # AND IT IS NOT AN ARBITER. Every branch places nothing, says why on stderr, and exits 0 —
+      # having nothing to place is the ordinary reading of a cadence, and the place it is reported
+      # is downstream, on the row that owed the measurement. A step that redded here as well would
+      # make a green build depend on two arbiters agreeing.
+      #
+      # `if: always()` FOR THE REASON THE READERS BELOW CARRY IT, and the sweep's placement does not
+      # need it: that one runs ahead of everything that can red, and this one runs behind two
+      # suites. A failing suite is still a suite that ran and still took its wall-clock — the
+      # wrapper posts its measurement whatever the child exited with (@SCN-CIP-010) — so a
+      # placement skipped by a red would leave `Behavioural suite run time` reading `missing` over
+      # a suite that plainly ran. `always()` WIDENS: there is no run in which it is skipped and an
+      # unconditional step is not.
+      - name: Place the suites' timings
+        if: always()
+        env:
+          # The two rows this pipeline stages a timing for, written out rather than derived from
+          # the manifest: this step is glue at the edge and knows its own producers.
+          ROWS: SCN-FIT-012 SCN-FIT-013
+        run: |
+          # ERREXIT ARRIVES FROM THE SHELL AND IS CLEARED HERE, OUT LOUD, exactly as it is in the
+          # sweep's placement (3F-2960): GitHub invokes a bare `run:` as `bash -e {0}` and this
+          # step names no `shell:`. `-u` is kept, and is the one red route left — an unbound
+          # expansion exits 127, which says THIS SCRIPT IS BROKEN rather than YOUR CODE LOST A
+          # KILL, and dropping it would buy a `cp` of the empty string.
+          set +e
+          set -uo pipefail
+
+          # THE WINDOW AND THE COMPARISON AGAINST IT COME FROM ONE FILE, WHICH EVERY PLACED ROW
+          # ASKS (3F-3200). What is left here is these rows' transport: where the producer staged
+          # the record, how to read its clock, and where a placed one goes.
+          . scripts/freshness-window.sh
+
+          for scn in ${ROWS}; do
+            record="timings-${scn}-measurements.json"
+            staged="${SPEC_CONTROLLER_EVIDENCE_DIR}/staged/${record}"
+
+            # THIS ROW ENDS THIS STEP HOLDING THIS RUN'S TIMING OR HOLDING NOTHING (3F-3431), which
+            # is the sweep's rule above applied to a row whose source is a staged file rather than
+            # another workflow's run. Every `continue` below places nothing and says so, and on a
+            # root that outlives the run that sentence used to leave yesterday's number exactly
+            # where this row's command reads it. Written once per row for the reason it is written
+            # once there: four paths out of this loop place nothing, and a list of them is the
+            # artefact that goes stale.
+            #
+            # THE STAGED RECORD IS NOT WHAT GOES. It is left exactly where the wrapper put it, and
+            # its age is the test — clearing the root up front, before the producers run, is the
+            # shape that was rejected (3F-3200). What is removed is the PLACED copy, the one this
+            # step is answering for.
+            rm -f "${SPEC_CONTROLLER_EVIDENCE_DIR}/${record}"
+
+            # NOTHING STAGED IS THE ORDINARY CASE, NOT A FAULT. A job in which one suite did not
+            # run stages nothing for that row, and the sentence that reports it is the row's own:
+            # it reconciles `missing`, which is true.
+            if [ ! -f "${staged}" ]; then
+              echo "place: ${scn} staged no timings record at ${staged}; nothing is placed. The row will read missing, which is the true sentence: no measurement arrived." >&2
+              continue
+            fi
+
+            if ! measured_at="$(stat -c %Y "${staged}")"; then
+              echo "place: ${scn} staged a timings record at ${staged} whose modification time this runner cannot read; nothing is placed." >&2
+              continue
+            fi
+
+            # THE SHARED RULE, AND NOTHING OF THE WINDOW IS RESTATED HERE. It refuses an age past
+            # the window and an age in the future, says which and why on stderr, and leaves the age
+            # it computed in `FRESHNESS_AGE` for the sentence below — one subtraction, read twice.
+            if ! inside_the_freshness_window "${measured_at}" "the ${scn} timings record"; then
+              continue
+            fi
+
+            # GUARDED BECAUSE THE LINE UNDER IT MAKES A CLAIM (3F-2962). Clearing errexit above is a
+            # guarantee about whether this step REDS; it says nothing about whether what the step
+            # SAYS is true. Unguarded, a failed `cp` would fall through to a sentence asserting a
+            # placement that had not happened. The `mkdir` is in the same condition because the
+            # claim is that THE PLACEMENT succeeded, and the placement is both commands.
+            #
+            # A PLAIN COPY, AND THE STAGED RECORD IS LEFT WHERE IT IS. A staged record surviving
+            # from an earlier run is not tidied away, it is aged out — which is the operator's
+            # ruling on this ticket kept as a mechanism. What the refusal takes away is the PLACED
+            # copy and never the source it was placed from (3F-3431).
+            if ! { mkdir -p "${SPEC_CONTROLLER_EVIDENCE_DIR}" && cp "${staged}" "${SPEC_CONTROLLER_EVIDENCE_DIR}/${record}"; }; then
+              # A HALF-WRITTEN COPY IS NOT A PLACEMENT, and it is the one thing a failure here can
+              # leave where this row's command reads a measurement.
+              rm -f "${SPEC_CONTROLLER_EVIDENCE_DIR}/${record}"
+              echo "place: could not place ${scn}'s staged timings record into the evidence root; nothing is placed. The row will read missing, and this is NOT the lapsed measurement that sentence usually reports: the suite ran, its number was taken, and this runner could not put it where the check that reports it reads it." >&2
+              continue
+            fi
+            echo "place: placed ${scn}'s timings record, measured ${FRESHNESS_AGE}s ago, inside the ${MAX_AGE}s window."
+          done
+
+          # THE LAST ACT, BECAUSE A SCRIPT'S STATUS IS ITS LAST COMMAND'S. `set +e` stops a failure
+          # mid-script from killing the step; it does not stop the loop above from REPORTING one.
+          exit 0
 
       # STEP 2c — THIS PUSH'S OWN SWEEP, RUN AGAINST A COPY OF THE RECORD AND NEVER THE RECORD
       # ITSELF (@SCN-FIT-017, 3F-3326).

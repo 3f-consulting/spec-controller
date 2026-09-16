@@ -25,7 +25,7 @@
 import { Given, When, Then, After } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -34,10 +34,9 @@ import {
   type MeasuredEvidenceObservation,
 } from "@3f-consulting/spec-controller-core/internal";
 
-import { TIMINGS_RECORD_PATH } from "../checks/measurementArtefact.js";
-
 const repoRoot = process.cwd();
 const wrapper = path.join(repoRoot, "tests", "checks", "timeStepCli.ts");
+const reader = path.join(repoRoot, "tests", "checks", "timingReaderCli.ts");
 const tsxBin = path.join(repoRoot, "node_modules", ".bin", "tsx");
 
 /**
@@ -195,10 +194,11 @@ Then("its measurement is posted all the same", function () {
 
 // @SCN-CIP-011
 When(
-  "a second step citing the scenario {string} on that same check runs into the same artefact",
+  "a second step citing the scenario {string} on that same check runs",
   function (scnId: string) {
-    // The same planted root, which is what makes this the same run rather than two of them: one
-    // artefact is what `--measurements` names, and both of this repository's timed suites post into it.
+    // The same planted root, which is what makes this the same run rather than two of them. The
+    // two steps no longer share a FILE — each writes its own record — so what makes this one run
+    // is the evidence root they both resolve, and the credit stream they will both post into.
     firstStepScn = citedScn;
     citedScn = scnId;
     runWrapper(["sleep", String(SECOND_STEP_SECONDS)]);
@@ -207,33 +207,44 @@ When(
 );
 
 // @SCN-CIP-011
+When("each step's number is read back into the run's credit stream", function () {
+  runReader(firstStepScn);
+  runReader(citedScn);
+});
+
+// @SCN-CIP-011
 Then(
-  "the artefact is read as one Evidence Observation citing {string} and one citing {string}",
+  "the credit stream is read as one Evidence Observation citing {string} and one citing {string}",
   function (firstScn: string, secondScn: string) {
     assert.deepEqual(
-      observed().map((observation) => observation.scnId),
+      credited().map((observation) => observation.scnId),
       [firstScn, secondScn],
-      `both steps ran, so both rows must be there; the artefact reads ${JSON.stringify(observed())}`,
+      `both rows were read back, so both must be there; the credit stream reads ` +
+        `${JSON.stringify(credited())}`,
     );
   },
 );
 
 // @SCN-CIP-011
-When("the first step runs again, taking longer than it did before", function () {
-  citedScn = firstStepScn;
-  runWrapper(["sleep", String(RE_RUN_STEP_SECONDS)]);
-});
+When(
+  "the first step runs again, taking longer than it did before, and its number is read back",
+  function () {
+    citedScn = firstStepScn;
+    runWrapper(["sleep", String(RE_RUN_STEP_SECONDS)]);
+    runReader(firstStepScn);
+  },
+);
 
 // @SCN-CIP-011
 Then(
-  "{string} is answered by exactly one Evidence Observation, carrying what its step measured this time",
+  "{string} is answered in the credit stream by exactly one Evidence Observation, carrying what its step measured this time",
   function (scnId: string) {
-    const answering = observed().filter((observation) => observation.scnId === scnId);
+    const answering = credited().filter((observation) => observation.scnId === scnId);
     assert.equal(
       answering.length,
       1,
-      `a step running twice owes one measurement, not two; the artefact reads ` +
-        `${JSON.stringify(observed())}`,
+      `a step running twice owes one measurement, not two; the credit stream reads ` +
+        `${JSON.stringify(credited())}`,
     );
     // Above the first run's own duration, so a row left untouched from that run fails here — the
     // re-run replaced its own row rather than being dropped on the floor beside it.
@@ -246,14 +257,23 @@ Then(
 );
 
 // @SCN-CIP-011
-Then("{string} is still answered by the measurement it posted", function (scnId: string) {
-  assert.equal(
-    measurementCiting(scnId).measured,
-    secondStepMeasured,
-    `a step replaces its own row and nobody else's; ${scnId} posted ${secondStepMeasured} and ` +
-      `the artefact now reads ${JSON.stringify(observed())}`,
-  );
-});
+Then(
+  "{string} is still answered in the credit stream by the measurement it posted",
+  function (scnId: string) {
+    const answering = credited().filter((observation) => observation.scnId === scnId);
+    assert.equal(
+      answering.length,
+      1,
+      `${scnId} must be answered exactly once; the credit stream reads ${JSON.stringify(credited())}`,
+    );
+    assert.equal(
+      answering[0]!.measured,
+      secondStepMeasured,
+      `a step replaces its own row and nobody else's; ${scnId} measured ${secondStepMeasured} and ` +
+        `the credit stream now reads ${JSON.stringify(credited())}`,
+    );
+  },
+);
 
 // @SCN-CIP-012
 Given("its scenario is held to a ci-run-time ceiling far above what the step will take", function () {
@@ -325,11 +345,11 @@ function assertReportSays(expected: string): void {
 
 /** The one Evidence Observation citing that scenario, which is all any row is ever owed. */
 function measurementCiting(scnId: string): MeasuredEvidenceObservation {
-  const answering = observed().filter((observation) => observation.scnId === scnId);
+  const answering = observed(scnId).filter((observation) => observation.scnId === scnId);
   assert.equal(
     answering.length,
     1,
-    `${scnId} must be answered exactly once; the artefact reads ${JSON.stringify(observed())}`,
+    `${scnId} must be answered exactly once; the record reads ${JSON.stringify(observed(scnId))}`,
   );
   return answering[0]!;
 }
@@ -358,20 +378,97 @@ function runWrapper(command: readonly string[]): SpawnSyncReturns<string> {
 }
 
 /**
- * The record the wrapper wrote, read back through the reader `balance --measurements` uses.
+ * The record the wrapper wrote for one measured row, read back through the reader
+ * `balance --measurements` uses.
+ *
+ * ONE FILE PER MEASURED ROW (3F-3200). A shared record has ONE age, so a freshness window over it
+ * would be one decision for two rows — and a run where only one of two timed suites ran would
+ * rewrite it and read as fresh with a day-old row inside. So the record is named for the row that
+ * wrote it, and this reads the one belonging to the scenario it is asked about.
+ *
+ * AND THE FILENAME IS SPELLED HERE RATHER THAN IMPORTED FROM THE PRODUCER'S OWN MODULE, because
+ * this is the assertion. A path read out of the code under test agrees with that code whatever
+ * that code says; an arm that states independently where the file must land is the only one a
+ * producer writing somewhere else can fail.
+ *
+ * IT IS THE STAGING STAGE AND NOT THE EVIDENCE ROOT ITSELF (@SCN-PLC-001, 3F-3200). The evidence
+ * root holds only what a placement has carried into it, so a wrapper writing there directly would
+ * be a measurement that reached its row without ever being asked how old it was. Which record this
+ * scenario reads is not a detail of it: a wrapper writing into the root would pass every assertion
+ * below while the freshness window it is now staged behind reached nothing at all.
  *
  * THE READER IS THE CREDIT STREAM'S THOUGH THE FILE IS NOT (3F-3166). A timings record and a credit
  * stream are the same shape and are read by the same reader; what separates them is which question
  * they answer. Reading this one back through the real reader is what pins the producer and the
  * consumer to one shape — a mis-keyed row is not loud, it reconciles `missing`.
  */
-function observed(): MeasuredEvidenceObservation[] {
-  const artefactPath = path.join(plantedRoot, TIMINGS_RECORD_PATH);
+function observed(scnId: string = citedScn): MeasuredEvidenceObservation[] {
+  return rowsIn(
+    stagedRecord(scnId),
+    `the wrapper must stage its measurement for ${scnId} at`,
+  );
+}
+
+/** Where the wrapper stages one row's record, spelled independently of the code that writes it. */
+function stagedRecord(scnId: string): string {
+  return path.join(plantedRoot, "staged", `timings-${scnId}-measurements.json`);
+}
+
+/**
+ * The run's CREDIT STREAM, read back through the same reader — what `balance --measurements`
+ * names, and the one file every measured row's own step posts into (@SCN-CIP-011).
+ *
+ * THIS IS WHERE THE BESIDE-RULE IS STILL OBSERVABLE. The timed steps' records are one per row and
+ * hold one row each; the numbers they left meet here, beside the sweep's, which is why the
+ * scenario is read against this file and not against theirs.
+ */
+function credited(): MeasuredEvidenceObservation[] {
+  return rowsIn(
+    path.join(plantedRoot, "measurements.json"),
+    "the run's credit stream must be at",
+  );
+}
+
+/** Whatever rows an artefact holds, or a failure naming the file that was not there. */
+function rowsIn(artefactPath: string, absent: string): MeasuredEvidenceObservation[] {
   let source: string;
   try {
     source = readFileSync(artefactPath, "utf8");
   } catch {
-    assert.fail(`the wrapper must write its measurement to ${artefactPath}; nothing is there`);
+    assert.fail(`${absent} ${artefactPath}; nothing is there`);
   }
   return parseMeasuredEvidenceObservations(JSON.parse(source) as { measurements?: unknown });
+}
+
+/**
+ * Run the real reader over one row, which is what puts that row's number into the credit stream.
+ *
+ * THE READER AND NOT A HAND-WRITTEN POST, for the reason the wrapper is run rather than simulated:
+ * the claim is about what a RUN leaves behind, and the step a run executes is this command.
+ */
+function runReader(scnId: string): void {
+  // THE PLACEMENT STANDS BETWEEN THE WRAPPER AND THE READER, AND IS NOT THIS SCENARIO'S SUBJECT.
+  // A run reaches the reader through `Place the suites' timings`, which carries a staged record
+  // into the evidence root while it is inside the freshness window — whether it does that
+  // correctly is @SCN-PLC-001's whole claim, and arranging it here rather than asserting it is
+  // what keeps this arm pointed at the credit stream. The record was staged moments ago, so the
+  // window this stands in for would pass it.
+  copyFileSync(stagedRecord(scnId), path.join(plantedRoot, `timings-${scnId}-measurements.json`));
+
+  const run = spawnSync(
+    tsxBin,
+    [reader, "--scn", scnId, "--check", citedCheck, "--root", plantedRoot],
+    { cwd: repoRoot, encoding: "utf8" },
+  );
+
+  assert.equal(
+    run.error,
+    undefined,
+    `the reader must run; it failed to spawn: ${run.error?.message}`,
+  );
+  assert.equal(
+    run.status,
+    0,
+    `the reader must find ${scnId}'s number and post it; it exited ${run.status} saying:\n${run.stderr}`,
+  );
 }

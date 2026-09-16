@@ -7,8 +7,13 @@
  * `mutationScoreReaderCli`'S SIBLING, AND DELIBERATELY THE SAME SHAPE. The two differ in one fact —
  * which record they read — because their producers run on different cadences and nothing else about
  * them differs at all. A sweep record is written by a nightly hours ago and placed in; a timings
- * record is written by the two suites this job has already run. Both are `(@SCN, check) → number`,
+ * record is written by the suite this job has already run. Both are `(@SCN, check) → number`,
  * read back through the artefact's own row reader, and both print the number alone.
+ *
+ * AND THE RECORD IT READS IS THE ROW'S OWN (3F-3200). One file per measured row, named for the row,
+ * so that each timed row is placed or refused on its own record's age. The reader gains nothing
+ * from that and holds no clock: it resolves a path from the `@SCN` it was handed and reads what
+ * is there, exactly as it did when there was one file.
  *
  * WHICH IS THE GENERAL FORM RATHER THAN AN EXEMPTION (3F-3138's Ruling 1). A converted check's step
  * definition RUNS its row's command, always; what a target puts BEHIND that command is the target's
@@ -44,11 +49,11 @@ import path from "node:path";
 
 import {
   MEASUREMENT_ARTEFACT_PATH,
-  TIMINGS_RECORD_PATH,
   measurementAnswering,
   measurementsOf,
   postMeasurement,
   resolveEvidenceRoot,
+  timingsRecordPath,
 } from "./measurementArtefact.js";
 
 /** Everything the reader was told: which row of the record to print, and which tree to read. */
@@ -99,7 +104,10 @@ function timingReadOf(argv: readonly string[]): TimingRead {
 }
 
 const asked = timingReadOf(process.argv.slice(2));
-const recordPath = path.join(resolveEvidenceRoot(asked.namedRoot), TIMINGS_RECORD_PATH);
+const recordPath = path.join(
+  resolveEvidenceRoot(asked.namedRoot),
+  timingsRecordPath(asked.scnId),
+);
 
 /** Whatever the record holds, or nothing where there is nothing readable to find. */
 function recordAt(file: string): unknown {

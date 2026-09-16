@@ -270,6 +270,14 @@ placing.** The mechanism is **absence, not a timestamp**: past the window nothin
 command has nothing to print, its step reds, and the row reads `missing` — the true sentence, the
 sweep has lapsed. No clock lives in the reader and none lives on the row.
 
+**"Nothing is placed" is only half of the rule — a refusal also REMOVES.** Placing nothing has no
+effect at all on an evidence root that OUTLIVES the run: the last run's copy is still sitting
+there, the row's own command reads it, and the row is settled by a number this run has already
+refused. So each placement's first act is to delete the one record it answers for, and the age test
+then decides whether it comes back. That is what makes stale and absent the same observable, which
+is the claim the paragraph above rests on. It removes that one record and never the root — the
+other placements' records are not its to touch.
+
 **The window is a derivation, not a constant: the producer's cadence plus a margin.** A nightly
 sweep is **24 h + 2 h = 26 h**. A twice-daily sweep reads the same rule and gets 14. Copy the
 derivation, never our number.

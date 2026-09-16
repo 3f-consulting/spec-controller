@@ -294,6 +294,13 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
     alone. A wrapper that also redded would be grading its own homework — and worse, would
     make a green build depend on two things agreeing.
 
+    AND THE ARTEFACT RULE UNDER IT IS THE MEASURED STEP'S RATHER THAN THE TIMED STEP'S. Posting
+    beside what is already there, and replacing only your own row, is true of every producer on
+    this axis and not of timed ones alone — so @SCN-CIP-011 states it over the run's credit
+    stream, where a timed suite's reader and the sweep's still meet in one file. Each timed step
+    writes a record of its own now, one file per measured row, and one row is all it ever holds
+    (3F-3200).
+
     @integration @SCN-CIP-009
     Scenario: a timed step writes a measurement carrying the @SCN and check tag it was given
 
@@ -327,11 +334,12 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
       And its measurement is posted all the same
 
     @integration @SCN-CIP-011
-    Scenario: a second timed step in the same run adds its measurement beside the first rather than replacing it
+    Scenario: a second measured step in the same run posts its number beside the first rather than replacing it
 
-      ONE ARTEFACT, TWO CONTRIBUTING STEPS. `--measurements` names a single file and a run has as
-      many timed steps as it has timed suites, so the second step writes into what the first
-      one left. Writing rather than merging would leave only the later row, and the earlier
+      ONE CREDIT STREAM, AS MANY CONTRIBUTING STEPS AS THE RUN HAS MEASURED ROWS. `--measurements`
+      names a single file and every measured row's own step posts into it — a timed suite's
+      reader once per suite, the sweep's reader once — so the second step writes into what the
+      first one left. Writing rather than merging would leave only the later row, and the earlier
       suite's ceiling would reconcile missing — a step that plainly ran reported as one that
       never did, which is the reading @SCN-CIP-006 exists to keep unreachable.
 
@@ -341,13 +349,21 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
       would be handed two credits for one row and left choosing between them. A step owns its
       row: it adds beside everyone else's and replaces only its own.
 
+      AND IT IS NO LONGER THE TIMINGS RECORDS THIS IS SHOWN OVER, WHICH IS 3F-3200'S DOING. A
+      shared record has ONE age, so a freshness window over it would be one decision for two
+      rows — and a run where only one of the two suites ran would rewrite it and read as fresh
+      with a day-old row inside. Each timed step writes its own record now. The wrapping steps
+      no longer meet in one file; the numbers they leave still do, at the artefact the
+      reconciler reads.
+
       Given a timed step citing the scenario "SCN-MSD-001" on the check "ci-run-time"
       When the step runs and takes a measurable amount of wall-clock
-      And a second step citing the scenario "SCN-MSD-002" on that same check runs into the same artefact
-      Then the artefact is read as one Evidence Observation citing "SCN-MSD-001" and one citing "SCN-MSD-002"
-      When the first step runs again, taking longer than it did before
-      Then "SCN-MSD-001" is answered by exactly one Evidence Observation, carrying what its step measured this time
-      And "SCN-MSD-002" is still answered by the measurement it posted
+      And a second step citing the scenario "SCN-MSD-002" on that same check runs
+      And each step's number is read back into the run's credit stream
+      Then the credit stream is read as one Evidence Observation citing "SCN-MSD-001" and one citing "SCN-MSD-002"
+      When the first step runs again, taking longer than it did before, and its number is read back
+      Then "SCN-MSD-001" is answered in the credit stream by exactly one Evidence Observation, carrying what its step measured this time
+      And "SCN-MSD-002" is still answered in the credit stream by the measurement it posted
 
     @integration @SCN-CIP-012
     Scenario: every run prints the measurement against its trigger and its gate, naming the band it landed in

@@ -206,11 +206,21 @@ Then(
     // downloaded and never placed, so this reader meets no record at all — superseded code or
     // current. Move the window check after the download and this reds, which is exactly the edit
     // that would turn "answers a superseded code" into "answers a stale one".
+    //
+    // IT READS THE CALL, NOT THE COMPARISON, SINCE 3F-3200. The age-versus-window arithmetic moved
+    // into `scripts/freshness-window.sh` so that one window governs every placed row; the literal
+    // this used to pin is not in the step any more. The property is untouched — the shared rule is
+    // asked BEFORE the payload is fetched and before anything is placed — and only the line that
+    // stands for "the window is applied here" changed.
     const lines = theStep(
       readFileSync(path.join(repoRoot, LADDER), "utf8").split("\n"),
       PLACEMENT_STEP,
     );
-    const refusesPastTheWindow = theOneLine(lines, /-gt "\$\{MAX_AGE\}"/, "refuse a run past the window");
+    const refusesPastTheWindow = theOneLine(
+      lines,
+      /\binside_the_freshness_window "/,
+      "refuse a run past the window",
+    );
     const fetches = theOneLine(lines, /\bgh\s+run\s+download\b/, "fetch the payload");
     const places = theOneLine(lines, /cp "\$\{found\}"/, "place the record where this reader reads it");
     if (!(refusesPastTheWindow < fetches && fetches < places)) {

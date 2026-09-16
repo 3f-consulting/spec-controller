@@ -34,11 +34,14 @@
  *
  * SO COPYING THIS FILE WITHOUT A WINDOWED PLACEMENT BUYS A CHECK THAT GREENS OVER A NUMBER NOBODY
  * REFRESHED. The placement is the half that costs something, and it does not look like this: here
- * it is a step in `ci.yml` weighing a nightly run's own `createdAt` against a thirty-six hour
- * window and placing nothing once that lapses, so the row reads `missing` and the sentence above
- * is reached honestly (@SCN-MUT-020, @SCN-MUT-021 — the two arms that RUN that step rather than
- * reading it). Whoever adopts the expensive-producer pattern owes themselves that half in whatever
- * shape their own pipeline takes. Taking this file alone is taking the cheap half of a pair.
+ * it is a step in `ci.yml` weighing a nightly run's own `createdAt` against the freshness window —
+ * written once in `scripts/freshness-window.sh` and asked by every placed row (3F-3200) — placing
+ * nothing once that lapses and REMOVING whatever an earlier run placed, so the row reads `missing`
+ * and the sentence above is reached honestly. The arms that RUN that step rather than reading it
+ * are in features/measurement-placement.feature; they are named by file and by ticket because this
+ * sentence used to name two scenario codes that had never existed, and nothing checks a docblock.
+ * Whoever adopts the expensive-producer pattern owes themselves that half in whatever shape their
+ * own pipeline takes. Taking this file alone is taking the cheap half of a pair.
  *
  * AND LOCALLY THERE IS NO PLACEMENT AT ALL — AN ACCEPTED COST, STATED HERE RATHER THAN LEFT TO BE
  * DISCOVERED. The placement is a CI step, and the local ladder is derived from the `ci.yml` steps that

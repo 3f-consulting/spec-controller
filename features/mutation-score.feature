@@ -355,7 +355,7 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     ended on a ratchet verdict, so a night that lost a kill concluded `failure` — and the placement
     asked for the newest SUCCESSFUL run, which is every night but that one. Inside the freshness window it
     therefore reached back to the last GREEN nightly, placed ITS number, and SCN-FIT-002 reconciled
-    satisfied: for up to thirty-six hours the ladder went green over a regression the sweep had
+    satisfied: for a whole window's width the ladder went green over a regression the sweep had
     already detected and already said out loud, in the one window where the gate this axis exists
     for was blind to the only fault it is for. Past that window it placed nothing and the row read
     `missing` — the sentence for a sweep that LAPSED — which is a different fault, on a different
@@ -420,8 +420,8 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     THE SELECTION IS A CHAIN OF PROXIES, AND THIS IS THE ONE THAT WAS MISSING (3F-2955). What the
     ledger is asking is whether the number it settles SCN-FIT-002 with was measured about the tree
     it is judging, and no run says so outright — so the placement narrows on the facts that stand in
-    for it: the right workflow, a run that FINISHED (@SCN-MUT-015), a number still inside the 36h
-    window. It never narrowed on the LINE. `mutation.yml` enables `workflow_dispatch`, so a sweep
+    for it: the right workflow, a run that FINISHED (@SCN-MUT-015), a number still inside the
+    freshness window. It never narrowed on the LINE. `mutation.yml` enables `workflow_dispatch`, so a sweep
     hand-dispatched on a feature branch entered that list and, being newest, won it — and its
     number was placed and reconciled main's row. Measured on this repository on 2026-08-30: four
     dispatches on a feature branch sat newer than that day's nightly for ten hours, each inside the
@@ -453,7 +453,7 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
 
     THE BRANCH BUYS THE LINE, NOT THE TREE, AND THE SCENARIO BELOW CLAIMS ONLY THE FIRST. `main` at
     03:17 and `main` at 14:00 are different trees; ten commits can land between the sweep and the
-    push, and the 36h window is the only thing bounding that drift. This closes the different-LINE
+    push, and the freshness window is the only thing bounding that drift. This closes the different-LINE
     hole and leaves the different-COMMIT one exactly where it was. The tighter instrument is known
     and is not built here: take the newest completed run on this branch whose head commit is an
     ancestor of this push's HEAD, which refuses a measurement taken on a `main` since rewritten
@@ -481,7 +481,7 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
     says why on stderr; the stretch after the last of them places the file and then asserts the
     placement as fact. Under the cleared errexit (@SCN-MUT-015, 3F-2960) a failing `mkdir` or `cp`
     no longer stops the script, so that sentence runs anyway — "place: placed mutation-measurement
-    from run 33379199321 of mutation.yml, measured 27000s ago, inside the 129600s window:" — the
+    from run 34948297225 of mutation.yml, measured 83491s ago, inside the 93600s window:" — the
     `jq` beneath it fails against a file that is not there, and the terminal `exit 0` reports
     success. SCN-FIT-002 then reads `missing`, and `missing` is the sentence this repository
     reserves for a sweep that LAPSED. A mechanical fault wearing a cadence fault's face, with the
@@ -582,27 +582,31 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
   Rule: the measurement a push places is young enough to be about the code it will settle
 
     THE WINDOW HAD NO WITNESS, AND NOTHING IN THIS REPOSITORY WOULD HAVE NOTICED IT GO (3F-3156).
-    Thirty-six hours is the single thing standing between a lapsed nightly and a satisfied row: the
-    reader prints whatever number it finds and holds no clock of its own, by the ruling that retired
-    the payload's `measuredAt` (@SCN-MUT-019, 3F-2841). Delete the age comparison in the placement and
-    every static check in this tree stays green, every scenario above this Rule stays green, and a
-    number measured on a tree three weeks old settles SCN-FIT-002 satisfied. That is a watermelon by
-    this product's own meaning of the word, inside the product named for finding them.
+    The freshness window — a 24 h cadence plus 2 h of margin, written once in
+    `scripts/freshness-window.sh` since 3F-3200 — is the single thing standing between a lapsed
+    nightly and a satisfied row: the reader prints whatever number it finds and holds no clock of
+    its own, by the ruling that retired the payload's `measuredAt` (@SCN-MUT-019, 3F-2841). Delete
+    the age comparison in the placement and, when this was written, every static check in this tree
+    stayed green, every scenario above this Rule stayed green, and a number measured on a tree three
+    weeks old settled SCN-FIT-002 satisfied. That is a watermelon by this product's own meaning of
+    the word, inside the product named for finding them.
 
     IT HAD ONE ONCE, AND THE WITNESS DID NOT MOVE WHEN THE MECHANISM DID. Two scenarios held this
     axis — a measurement inside its window is posted, one older than its window is not — and both
     were deleted when the reader they were written against was retired (3F-2855, 3F-2856). The
-    window itself moved into the placement and arrived with nothing asking for it. The tell is still in
-    this file: the Rule above narrates "a number still inside the 36h window" as an aside, which is
-    what a fact looks like after it has stopped being checked and gone on being true.
+    window itself moved into the placement and arrived with nothing asking for it. The tell was in
+    this file: the Rule above narrated the window as an aside carrying a figure the placement had
+    already left behind, which is what a fact looks like after it has stopped being checked and gone
+    on being true. It is checked again from 3F-3200, in features/measurement-placement.feature.
 
     SO THE ARM RUNS THE PLACEMENT RATHER THAN READING IT, WHICH IS THE WHOLE OF THE DIFFERENCE HERE.
     Every other arm over this step reads its text: which run it selects, on which line, what it says
     once it has chosen. A text assertion cannot tell a window that FIRES from a window whose
     arithmetic is broken on the runner it runs on — and reading a mechanism's behaviour off its
     configuration is exactly the move that let this window lose its witness in the first place. The
-    step is taken out of the workflow every push runs, its own `env:` supplies the four terms, and it
-    is executed with the boundary to GitHub answered and nothing else replaced.
+    step is taken out of the workflow every push runs, its own `env:` supplies its three transport
+    terms and it sources the window rule the same way the workflow does, and it is executed with the
+    boundary to GitHub answered and nothing else replaced.
 
     AND THE ARITHMETIC IS GNU'S, WHICH MAKES A SHIM A CORRECTNESS TERM RATHER THAN PORTABILITY
     POLISH. `date -u -d "<iso>"` is GNU syntax; a BSD `date` refuses it and the step takes its own

@@ -189,7 +189,7 @@ export function resolveEvidenceRoot(
  * exemplar taught each of those levels to every consumer who copied the worked step.
  *
  * THE DIRECTORIES ONLY EVER EXISTED TO KEEP THREE FILENAMES APART. This path, `SWEEP_RECORD_PATH`
- * and `TIMINGS_RECORD_PATH` all ended `measurements.json`, so flattening collided and a folder was
+ * and `timingsRecordPath` all ended `measurements.json`, so flattening collided and a folder was
  * put in to separate them. That is a filename problem wearing a directory's clothes; the other two
  * are now qualified by their producer and the folders have no work left to do.
  *
@@ -253,7 +253,7 @@ export const SWEEP_RECORD_PATH = "mutation-measurements.json";
 export const RECORDED_SWEEP_PATH = "recorded-sweep.json";
 
 /**
- * Where THIS run's timed steps leave what they measured, relative to the EVIDENCE ROOT — a TIMINGS
+ * Where THIS run's timed step leaves what it measured, relative to the EVIDENCE ROOT — a TIMINGS
  * RECORD, and not this run's credit stream either (3F-3166).
  *
  * THE SAME SPLIT `SWEEP_RECORD_PATH` MAKES, FOR THE SAME REASON, AND IT ARRIVED WITH THE SAME
@@ -270,13 +270,62 @@ export const RECORDED_SWEEP_PATH = "recorded-sweep.json";
  * TWO FILES, TWO QUESTIONS, exactly as the sweep record puts it: what a producer MEASURED, and what
  * this run CREDITED. The shape is identical and one reader reads both.
  *
- * BOTH TIMED STEPS SHARE IT, which is why the merge rule above still matters here. A run has as many
- * timed steps as it has timed suites, and each owns its own row.
+ * ONE FILE PER MEASURED ROW, WHICH IS WHY THIS IS A FUNCTION AND NOT A CONSTANT (3F-3200). The two
+ * timed steps shared one record, and a shared record has ONE AGE — so a freshness window over it
+ * would be one decision for two rows, which is exactly the reading that ticket forbids in terms.
+ * Worse, a shared record puts the fault out of reach of a file-age window ALTOGETHER: on an
+ * evidence root that persists between runs, a job where only one of the two suites runs rewrites
+ * the file beside a row a day old, and the file's age is then zero. No setting of the window fixes
+ * that. Per row, a record's age is its own row's age and nobody else's.
+ *
+ * AND THE MERGE RULE DID NOT GO WITH IT. `measurementArtefactWith` still reads before it writes
+ * here, because the claim it carries is per row rather than per file: a step that runs twice — a
+ * re-run, a retried job — replaces its own row instead of appending a second. What moved is the
+ * OTHER half, that a run's measurements land BESIDE one another; that is now observable only where
+ * it is still true, at the credit stream both readers post into (@SCN-CIP-011).
  *
  * AT THE EVIDENCE ROOT, like the two paths above, qualified by its producer for the reason stated
- * there (3F-3320).
+ * there (3F-3320) — and now by the row that producer answered, which is the finer grain of the
+ * same rule rather than a second one.
  */
-export const TIMINGS_RECORD_PATH = "timings-measurements.json";
+export function timingsRecordPath(scnId: string): string {
+  // BARE, THROUGH THE ARTEFACT'S OWN READING OF A TERM (@SCN-TRM-001), which is the same reading
+  // the keying rule above uses. A caller may hand this a term spelled with its sigil, and
+  // `@SCN-FIT-012` and `SCN-FIT-012` naming two different files would split one row's record in
+  // two — a producer writing one and its reader looking in the other, reconciling `missing`.
+  return `timings-${bareTerm(scnId)}-measurements.json`;
+}
+
+/**
+ * Where a producer LEAVES a record for the placement to judge, before anything has been placed —
+ * one directory under the evidence root, and the whole of the staging stage (@SCN-PLC-001,
+ * 3F-3200).
+ *
+ * THE EVIDENCE ROOT ITSELF THEREFORE HOLDS ONLY WHAT HAS BEEN PLACED, which is the property every
+ * measured row's freshness now rests on. A timings record written straight into the root is read
+ * by its row's command whatever its age; written here, it is read only if a placement carried it
+ * across, and a placement carries it across only inside the freshness window. That is what makes
+ * STALE and ABSENT one observable for a timed row, as they already were for the sweep — whose
+ * record needs no staging stage because its producer is a different run entirely and its transport
+ * is the download.
+ *
+ * A SUBDIRECTORY RATHER THAN A SIBLING DIRECTORY, and the difference is who has to know. Readers
+ * read bare filenames at the root, so this is invisible to every one of them; `--root` still moves
+ * the whole step; one environment variable still governs; and `Resolve the evidence root` needs no
+ * edit, so its name stays true and its `notChecks` entry keeps matching. 3F-3320 flattened
+ * directories that distinguished nothing — this one distinguishes a stage.
+ *
+ * AND NOTHING CLEARS IT. A staged record that survives from an earlier run is left exactly where
+ * it is and its AGE is what decides — the operator's ruling on this ticket, kept as a mechanism
+ * rather than restated as an intention: the test is for fresh evidence, and a measurement inside
+ * the window IS fresh.
+ */
+export const STAGING_DIR = "staged";
+
+/** Where a timed step leaves its record for the placement, relative to the EVIDENCE ROOT. */
+export function stagedTimingsRecordPath(scnId: string): string {
+  return path.join(STAGING_DIR, timingsRecordPath(scnId));
+}
 
 /** Whether two rows answer the same thing — the @SCN naming the row and the check tag on it. */
 function isTheSameRowAs(row: Measurement, measurement: Measurement): boolean {
