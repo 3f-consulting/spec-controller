@@ -29,7 +29,8 @@
  * of the workspace, not of either package, so it has to be stated somewhere that can see both.
  * `packages/core` is the pure library and `spec-controller` depends on it — a core module reading
  * this one would invert that and close a cycle. Reading core's tree from `tests/checks/` is the
- * direction that already works: `enginePurity` and `domainPurity` both do it.
+ * direction that already works: `termSpelling` does it over the whole repository, as `enginePurity`
+ * did until 3F-3437 and `domainPurity` until 3F-3438.
  *
  * WHAT IS HERE. Three readings and one comparison. The VALUE half of a surface, which a runtime
  * namespace reports (@SCN-API-004); the TYPE half, which only the compiler can (@SCN-API-005); and

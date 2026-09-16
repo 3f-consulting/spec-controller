@@ -26,12 +26,13 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
   nothing else. An exclusion that widened would red on the guard, not on a reviewer noticing.
 
   WHERE IT LIVES, AND WHY NOT OUTSIDE THE DOMAIN. The obvious home for data the domain must not
-  mutate is a folder outside the domain — and the domain-purity guard (@SCN-DPG-001) exists to say
-  a domain module imports only the domain layer. So the catalogue stays INSIDE the domain and
-  leaves the mutated surface by CONFIG, which is the axis the problem is actually on: the mutate
-  glob is a statement about what mutation testing can usefully ask, not about what the domain may
-  depend on. Purity and mutability are two different questions and are answered in two different
-  files.
+  mutate is a folder outside the domain — and the boundary gate's domain-imports-adapter rule says
+  a domain module imports only the domain layer (the domain-purity guard said it until 3F-3438;
+  the rule that replaced it says the same thing from configuration). So the catalogue stays INSIDE
+  the domain and leaves the mutated surface by CONFIG, which is the axis the problem is actually
+  on: the mutate glob is a statement about what mutation testing can usefully ask, not about what
+  the domain may depend on. Purity and mutability are two different questions and are answered in
+  two different files.
 
   THE TWO CARVE-OUTS SURVIVE. A runner's own words are passed through verbatim, never rewritten
   into a catalogue entry (name-the-fault-never-the-cure), and a message with parameters keeps its

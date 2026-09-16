@@ -1,20 +1,26 @@
 /**
- * WHERE CHECK CODE LIVES, SPELLED ONCE (3F-3188).
+ * WHERE CHECK CODE LIVES, SPELLED ONCE FOR THE WALK (3F-3188; narrowed to one reader at 3F-3437).
  *
- * Two readers need this repository's check tree by name and they need it in different shapes:
- * `sourceFiles.ts` joins it onto the repository root to WALK it, and `enginePurity.ts` matches it
- * inside an import specifier to REFUSE it. Written down twice they agree until one is edited — and
- * the edit that moved this tree out of `packages/spec-controller/` (3F-3187) is precisely the edit
- * that would have done it. Before that move both readers were free of the question: every check
- * module lived under the app package, so the purity rule's one match over the PACKAGE name covered
- * them without naming them.
+ * `sourceFiles.ts` joins these segments onto the repository root to WALK this tree, and since
+ * 3F-3437 it is the only reader. There were two: `enginePurity.ts` matched the same home inside an
+ * import specifier to REFUSE it, and this module exists because a home written down twice agrees
+ * until one of them is edited — the edit that moved this tree out of `packages/spec-controller/`
+ * (3F-3187) being precisely the edit that would have done it. Before that move neither reader had
+ * the question: every check module lived under the app package, so the purity rule's one match over
+ * the PACKAGE name covered them without naming them.
  *
- * WHY IT IS ITS OWN MODULE RATHER THAN A CONSTANT IN `sourceFiles.ts`, which is otherwise the ONE
- * reading of which roots this repository's source lives under. `enginePurity.ts` must import this
- * as a VALUE, and `sourceFiles.ts` imports `node:fs`: a value import from there would hand a check
- * that is pure by construction a runtime edge to IO, which is the property `sourceFiles.ts`'s own
- * note records as deliberate and OBSERVED. A module with no imports at all can be read by both
- * without either of them acquiring anything.
+ * THE REFUSAL DID NOT LEAVE, IT LEFT THIS REPOSITORY'S OWN CODE (3F-3288). `core-imports-checks` in
+ * `.dependency-cruiser.mjs` refuses the same tree now, and it spells the path itself: it is
+ * configuration a third-party tool reads, and it cannot import a TypeScript constant. So a second
+ * spelling still exists and can no longer be shared. What changed is how a disagreement would
+ * surface — a moved tree now empties this walk's population and reds the floors in `sourceFiles.ts`,
+ * rather than leaving a refusal quietly matching a path no file has.
+ *
+ * WHY IT IS STILL ITS OWN MODULE rather than a constant in `sourceFiles.ts`, which is otherwise the
+ * ONE reading of which roots this repository's source lives under: a value here can be read by
+ * anything without acquiring `sourceFiles.ts`'s `node:fs` import along with it. That was load-bearing
+ * while a guard pure by construction was the second reader; with one reader it is a smaller
+ * argument, and merging the two is a change for whoever next has cause to open both.
  */
 
 /**
@@ -26,7 +32,8 @@
  * a module DOES and never what its home COSTS. Both candidate homes are shut, and each is shut by a
  * rule this repository already runs.
  *
- *   - `packages/core/src` is shut by @SCN-EPG-001's `io-import` arm. The fitness protocol imports
+ *   - `packages/core/src` is shut by `lint:boundaries`'s `core-imports-io` rule — @SCN-EPG-001's
+ *     `io-import` arm until 3F-3437, the same refusal read from config. The fitness protocol imports
  *     `node:fs` and `node:child_process`; the engine may import neither.
  *   - `packages/spec-controller/src` is shut by @SCN-API-007. That package PUBLISHES, so every module
  *     under its `src` travels in the tarball — and `measurementArtefact.ts` imports
@@ -45,11 +52,13 @@
  * consumer, carried into `dist` on every build". The red above is that same sentence, said by a check
  * instead of by a person.
  *
- * AND THE FIRST HOME'S RULE DOES NOT REACH THE SECOND. @SCN-EPG-001 walks `packages/core/src` and
- * nothing else, so a check-tree import planted in a `packages/spec-controller/src` module passes it
- * (measured 3F-3198, eight arms green over the plant). What refuses that import is
- * `tsconfig.build.json`'s `rootDir`, which reds `pnpm build` with TS6059. Two different mechanisms,
- * one for each package; neither covers the other's tree.
+ * AND THE FIRST HOME'S RULE DOES NOT REACH THE SECOND. `core-imports-checks` is scoped `from`
+ * `packages/core/src` and nothing else, so a check-tree import planted in a
+ * `packages/spec-controller/src` module passes it. Re-measured over the replacement at 3F-3437
+ * (that plant, `pnpm lint:boundaries`, rc=0), as it was over @SCN-EPG-001 at 3F-3198 (eight arms
+ * green over the plant) — a scope claim is worth re-running when the mechanism holding it changes.
+ * What refuses that import is `tsconfig.build.json`'s `rootDir`, which reds `pnpm build` with
+ * TS6059. Two different mechanisms, one for each package; neither covers the other's tree.
  *
  * WHAT WOULD RE-OPEN THE SECOND HOME: publishing the four symbols those three modules need on core's
  * frozen v1 barrel (@SCN-API-001). That widens a published surface, which is a slice of its own and
@@ -59,14 +68,9 @@
 /**
  * The check tree's path segments, relative to the repository root.
  *
- * Segments rather than a joined path because the two readers join differently — one with the
- * platform separator through `node:path`, one with the `/` an import specifier always uses. A
- * single pre-joined string would force one of them to split it back apart.
+ * Segments rather than a joined path because the one reader joins them with the platform separator
+ * through `node:path`, which takes them as arguments. A second reader took a POSIX-joined form to
+ * match inside an import specifier, where the separator is always `/`; it and its constant both
+ * left at 3F-3437.
  */
 export const CHECK_TREE_SEGMENTS = ["tests", "checks"] as const;
-
-/**
- * The same home as one POSIX path fragment — how an import specifier spells it, on every platform.
- * A specifier is not a filesystem path: it uses `/` even where `node:path` would use `\`.
- */
-export const CHECK_TREE_SPECIFIER_PATH = CHECK_TREE_SEGMENTS.join("/");

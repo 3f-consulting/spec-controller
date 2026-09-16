@@ -25,7 +25,8 @@
  *
  * NOTHING HERE READS A FILE, AND NOTHING HERE RE-READS ONE. Every input arrives already read,
  * for `evidenceReconciliationFromSources`'s reason: an engine handed a reader is an engine doing
- * I/O wearing a callback, and `@SCN-EPG-001` reds over exactly that.
+ * I/O wearing a callback, and `lint:boundaries`' `core-imports-io` rule reds over exactly that
+ * (@SCN-EPG-001's `io-import` arm until 3F-3437).
  *
  * WHAT IS LEFT IN THIS MODULE, AND WHAT MOVED OUT. The rules themselves live in three siblings —
  * `corpusCodeFaults.ts` (a code binding to a file), `corpusGrammarFaults.ts` (a tag meaning

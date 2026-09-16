@@ -63,10 +63,17 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
   WHICH TREE A FITNESS SCENARIO IS ABOUT IS THE GHERKIN'S TO SAY, AND THE STEP DEFINITION'S TO
   OBEY (ruled 2026-09-04). A fitness scenario names its subject in its own text — a PLANTED tree
   or THE REPOSITORY — and its step definition takes that subject rather than picking one for
-  itself. @SCN-ANM-001 holds the check against planted trees and @SCN-FIT-009 holds this
-  repository against the check; what tells them apart is a sentence a reviewer reads anyway, not
-  a path buried in a step definition. A step definition that runs its check over a fixture while
-  its scenario says the repository is then wrong IN THE DIFF, against that sentence.
+  itself. @SCN-FIT-009 says THIS REPOSITORY and is answered over this repository; what would tell
+  a planted-tree scenario apart from it is a sentence a reviewer reads anyway, not a path buried
+  in a step definition. A step definition that runs its check over a fixture while its scenario
+  says the repository is then wrong IN THE DIFF, against that sentence.
+
+  THE PAIRING THIS PARAGRAPH USED TO DRAW HAS LOST ITS OTHER HALF, AND THE RULING HAS NOT MOVED.
+  It read @SCN-ANM-001 (planted trees) against @SCN-FIT-009 (this repository); the first retired
+  with its check at 3F-3288, so the planted side simply has no live example today. The rule is
+  unchanged and is the reason the example is not replaced with an invented one: what a fitness
+  scenario is about is its own text's to say, whether or not a second scenario is standing beside
+  it to contrast with.
 
   IT IS A CONVENTION WRITTEN DOWN, NOT A STATIC CHECK BUILT, and the asymmetry is the reason. A
   check that exists but no CI step runs lives in the GAP BETWEEN TWO FILES — nobody meets it by

@@ -35,8 +35,14 @@ type Verdict = { headline: string; exit: string; gloss: string };
  * READ FROM `runProvenance`, WHICH IS WHY NO NEW FIELD IS OWED. `provenanceSection` derives both
  * the Inputs list and the "Not supplied" line from this same object, so the verdict names the
  * directory the header already accounts for and the two cannot disagree. A `process.cwd()` here
- * would be the obvious alternative and is barred twice over: this package is pure and the
- * domain-purity guard enforces it, and a resolved absolute path is not the fact a reader needs.
+ * would be the obvious alternative and is barred twice over: this package is pure and
+ * `lint:boundaries`'s `no-restricted-globals` rule enforces it over every non-test file under
+ * `packages/core/src`, and a resolved absolute path is not the fact a reader needs.
+ *
+ * THE RULE NAMED HERE WAS WRONG UNTIL 3F-3438 AND IS CORRECTED RATHER THAN RE-WORDED. It read "the
+ * domain-purity guard enforces it", and that guard never scanned `render/` — its population was
+ * `packages/core/src/domain` — nor did it look at a global at all, only at `from` specifiers. The
+ * bar was real; the mechanism cited for it was not.
  */
 function corpusExamined(provenance: ProvenanceObject): string {
   return provenance.inputs.features ?? DEFAULT_CORPUS_DIR;

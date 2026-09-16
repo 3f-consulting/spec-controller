@@ -1,34 +1,41 @@
 /**
- * The ONE source-tree walk the static checks share, the ONE element type they take (3F-2274), the
- * ONE anti-vacuity floor for the core-src population (3F-2266), and the ONE reading of which roots
- * this repository's own source lives under (3F-2988).
+ * The ONE source-tree walk the static checks shared (3F-2266), the ONE element type they took
+ * (3F-2274), and the ONE reading of which roots this repository's own source lives under, with the
+ * anti-vacuity floor for that population (3F-2988).
  *
- * Three guard tests — `noParallelStore`, `enginePurity` (@SCN-EPG-001) and `domainPurity`
- * (@SCN-DPG-001) — each carried a byte-identical copy of this walk, differing only in the
- * recursive-call name, the element type, and the root. The same rule written three times agrees by
- * COINCIDENCE, not by construction: change one walk, or bump one floor and not the others, and they
- * drift apart silently with nothing to red it. That is the agreeing-by-copy the domain-model work
- * spent five slices removing from the domain; this removes it from the guards' scaffolding.
+ * WRITTEN FOR THREE GUARD TESTS, AND ALL THREE HAVE NOW LEFT. `noParallelStore`, `enginePurity`
+ * (@SCN-EPG-001) and `domainPurity` (@SCN-DPG-001) each carried a byte-identical copy of this walk,
+ * differing only in the recursive-call name, the element type, and the root. The same rule written
+ * three times agrees by COINCIDENCE, not by construction: change one walk, or bump one floor and not
+ * the others, and they drift apart silently with nothing to red it. That is the agreeing-by-copy the
+ * domain-model work spent five slices removing from the domain; this removed it from the guards'
+ * scaffolding.
  *
  * `noParallelStore` LEFT AT 3F-3324 — it matched three retired spellings and said in its own
- * comment that a parallel store under a fresh name passed it. The unification above is why its
- * departure cost the survivors nothing: they had no copy of the walk to lose.
+ * comment that a parallel store under a fresh name passed it. `enginePurity` LEFT AT 3F-3437 and
+ * `domainPurity` AT 3F-3438, their rules re-stated as configuration two installed tools read
+ * (`pnpm lint:boundaries`). The unification above is why each departure cost the ones left behind
+ * nothing: they had no copy of the walk to lose.
  *
- * WHY IT LIVES HERE AND NOT IN THE ENGINE. It imports `node:fs`, and @SCN-EPG-001 reds any file
- * under `packages/core/src` that imports a node IO builtin — siting it in the engine would make the
- * purity guard fail on its own scaffolding. It must also stay OUT of the walked population, or it
- * would shift the very counts it is used to assert. `tests/checks/` satisfies both by
- * construction; it is where the guards it serves already live (product-not-app, reads the tree).
+ * SO THIS MODULE HAS EXACTLY ONE READER NOW — `termSpelling.test.ts` — AND SAYS SO RATHER THAN GOING
+ * ON DESCRIBING A SHARED WALK. Everything below is what that one reader takes: `resolveRepositoryRoot`,
+ * `collectRepositorySource` and the two halves it is built from (`repositorySourceRoots`,
+ * `collectSourceFiles`), the `CollectedFile` element, and the repository floor with its headroom.
+ * Nothing here is kept back for a caller who might arrive; a second reader would restore the
+ * sharing, and until one does this is a correctly-factored module with one client.
  *
- * WHAT IS SHARED AND WHAT IS NOT, COUNTED AFTER 3F-3324. The WALK has THREE readers: `enginePurity`
- * and `domainPurity` over named subtrees, and `termSpelling` over the whole repository via
- * `collectRepositorySource`. The ELEMENT TYPE is taken by TWO checkers — `checkEnginePurity` and
- * `checkDomainPurity` — plus `termSpelling`'s own local helper (3F-2274): one shape, stated once.
- * The core-src FLOOR has exactly ONE consumer, `enginePurity`, which is the state after
- * `noParallelStore` left; it is not a shared term any more, and the docblock beside it says so.
- * `domainPurity` walks a smaller subtree and keeps its own floor locally — a different population
- * is a different floor, and unifying them would be a behaviour change dressed as a tidy-up. The
- * asymmetry is deliberate; do not "finish the job" by moving the domain floor here.
+ * WHY IT LIVES HERE AND NOT IN THE ENGINE. It imports `node:fs`, and `lint:boundaries`'s
+ * `core-imports-io` rule reds any file under `packages/core/src` that imports a node IO builtin
+ * (@SCN-EPG-001's `io-import` arm until 3F-3437) — siting it in the engine would make the boundary
+ * gate fail on its own scaffolding. It must also stay OUT of the walked population, or it would
+ * shift the very counts it is used to assert. `tests/checks/` satisfies both by construction; it is
+ * where the guards it served already lived (product-not-app, reads the tree).
+ *
+ * WHAT LEFT WITH THE LAST GUARD, RECOUNTED AT 3F-3438. `coreSrcRoot`, `domainRoot` and
+ * `MIN_CORE_SRC_FILES_SCANNED` are gone. The core-src population lost its walker at 3F-3437 and the
+ * domain subtree lost its walker here, so what remained was a root nothing joined and a floor
+ * nothing asserted — dead weight that reads to the next person as a live constraint. The repository
+ * floor below is the only floor left, and `termSpelling.test.ts` is what asserts it.
  */
 
 /**
@@ -47,24 +54,26 @@ import { CHECK_TREE_SEGMENTS } from "./checkTree.js";
 /**
  * A file the walk collected — its repo-relative path and its raw source.
  *
- * THE element type — `checkEnginePurity` and `checkDomainPurity` both take this one, and
- * `termSpelling.test.ts` reads the collected files through it, so `{ path, source }` is stated
- * exactly ONCE in the repo (3F-2274). Each guard used to export its own structurally-identical
- * alias, which meant the shape agreed by COINCIDENCE: add a field to one and the others carry on
- * compiling while describing a different file. The walk was unified first (3F-2266); this is the
- * same argument applied to the walk's ELEMENT.
+ * THE element type — `checkEnginePurity` took this one until 3F-3437 and `checkDomainPurity` until
+ * 3F-3438, and `termSpelling.test.ts` reads the collected files through it, so `{ path, source }`
+ * is stated exactly ONCE in the repo (3F-2274). Each guard used to export its own
+ * structurally-identical alias, which meant the shape agreed by COINCIDENCE: add a field to one and
+ * the others carry on compiling while describing a different file. The walk was unified first
+ * (3F-2266); this is the same argument applied to the walk's ELEMENT.
  *
- * A guard imports it with `import type`, never a value import: this module reads `node:fs`, and the
- * guards are pure by construction — that is the whole reason the collector sits in `tests/checks/`
- * rather than in the engine, since @SCN-EPG-001 reds an IO import under `packages/core/src`. The
- * type import erases at compile, so no `check…()` acquires a runtime edge to the collector.
+ * A READER IMPORTS IT WITH `import type`, NEVER A VALUE IMPORT, and that instruction outlives the
+ * guards it was written for: this module reads `node:fs`, so a value import would hand its caller a
+ * runtime edge to an IO module. It is the whole reason the collector sits in `tests/checks/` rather
+ * than in the engine, since `core-imports-io` reds an IO import under `packages/core/src`. The type
+ * import erases at compile, so no caller acquires that edge.
  *
  * That erasure was OBSERVED, not assumed — each guard's emitted module was checked to carry zero
- * runtime imports, and the check was itself proven to fire on a planted runtime-used import. Worth
- * knowing if you touch this: esbuild elides a type-only-USED import in any syntax, so a bare
- * `import { CollectedFile }` also emits nothing TODAY. `import type` is still the form to write —
- * it states the intent, and it is the only one that stays safe if `verbatimModuleSyntax` is ever
- * enabled, where the bare form WOULD emit a real runtime import into a pure guard.
+ * runtime imports, and the check was itself proven to fire on a planted runtime-used import. Those
+ * guards have all gone (3F-3324, 3F-3437, 3F-3438) and `termSpelling.test.ts` imports it the same
+ * way. Worth knowing if you touch this: esbuild elides a type-only-USED import in any syntax, so a
+ * bare `import { CollectedFile }` also emits nothing TODAY. `import type` is still the form to write
+ * — it states the intent, and it is the only one that stays safe if `verbatimModuleSyntax` is ever
+ * enabled, where the bare form WOULD emit a real runtime import into a pure reader.
  */
 export interface CollectedFile {
   path: string;
@@ -134,55 +143,22 @@ export function resolveRepositoryRoot(
 }
 
 /**
- * The core engine's source root under a NAMED repository — the population `enginePurity` walks.
- *
- * IT TAKES ITS SUBJECT, AND THAT IS THE WHOLE OF 3F-3207. This was a module-level constant frozen
- * from the working directory at import, so the population every scope-dependent check walks was
- * inherited from wherever the process happened to be standing. Under a mutation runner that is the
- * instrumented sandbox, and the engine-purity guard then reported the instrument's own scaffolding
- * as engine code — a check answering confidently about the wrong tree. A root that arrives as an
- * argument cannot be inherited by accident, and "does it walk the tree it was told about" becomes a
- * question that can be asked at all.
- *
- * NO DEFAULT, DELIBERATELY. A defaulted root would leave the enumerator ambient for every caller
- * who wrote nothing, which is the condition being removed; the caller states the subject.
+ * The headroom a floor must keep below the real tree, in files (3F-2201) — asserted about
+ * `MIN_REPOSITORY_SOURCE_FILES_SCANNED`, which since 3F-3438 is the only floor here to assert it
+ * about.
  */
-export function coreSrcRoot(root: string): string {
-  return join(root, "packages", "core", "src");
-}
-
-/**
- * The domain subtree — DERIVED from `coreSrcRoot` rather than re-spelled, so "where core src is"
- * is stated exactly once.
- */
-export function domainRoot(root: string): string {
-  return join(coreSrcRoot(root), "domain");
-}
-
-/**
- * The anti-vacuity floor for the `coreSrcRoot` population: how many production files the walk
- * must find before a clean verdict counts as a scan at all (a check that scanned nothing isn't a
- * check).
- *
- * It sits well BELOW the real count, not just under it — a broken walk yields ~0, so catching that
- * needs no tight margin, while a tight one reds on ordinary deletion and blames a parallel store
- * for it (3F-2201). The required headroom is asserted, not merely intended.
- *
- * ONE CONSUMER, AND IT KEEPS THIS HOME ANYWAY (3F-3324). `noParallelStore` was the second reader
- * and has gone, so `enginePurity.test.ts` is now the only one. It stays here rather than moving
- * local to that one consumer because THIS is where the population it floors is defined —
- * `coreSrcRoot`, two declarations up — and a floor written apart from its population is a number
- * with nothing beside it to check it against.
- */
-export const MIN_CORE_SRC_FILES_SCANNED = 10;
-
-/** The headroom the floor must keep below the real tree, in files (3F-2201). */
 export const REQUIRED_FLOOR_HEADROOM = 10;
 
 /**
  * The anti-vacuity floor for the WHOLE-repository population `repositorySourceRoots` walks
- * (3F-2988) — the same reason as the core-src floor above, sized for a population roughly three
- * times larger, and with the same generous margin for exactly the same reason.
+ * (3F-2988): how many production files the walk must find before a clean verdict counts as a scan
+ * at all, because a check that scanned nothing is not a check. It sits well BELOW the real count,
+ * not just under it — a broken walk yields ~0, so catching that needs no tight margin, while a
+ * tight one reds on ordinary deletion and blames the rule for it (3F-2201).
+ *
+ * IT WAS THE SECOND OF TWO AND IS NOW THE ONLY ONE. The core-src floor stood above it until 3F-3438
+ * and carried that argument in full; this sentence keeps the argument rather than pointing at a
+ * paragraph that has gone. This floor is sized for a population roughly three times larger.
  */
 export const MIN_REPOSITORY_SOURCE_FILES_SCANNED = 40;
 
@@ -203,9 +179,11 @@ export const MIN_REPOSITORY_SOURCE_FILES_SCANNED = 40;
  * 90-odd files from every whole-tree scan while every one of them stayed green. One root, spelled
  * once, appended LAST so the collected order is the one the package walk already produced.
  *
- * "SPELLED ONCE" IS NOW LITERAL: the segments come from `checkTree.ts` (3F-3188), because a second
- * reader appeared. `enginePurity.ts` has to refuse an import of this same tree, and a home written
- * down in two places agrees only until one of them is edited.
+ * "SPELLED ONCE" WAS LITERAL WHILE THERE WERE TWO READERS: the segments come from `checkTree.ts`
+ * (3F-3188), because `enginePurity.ts` had to refuse an import of this same tree and a home written
+ * down in two places agrees only until one of them is edited. That guard went at 3F-3437 and the
+ * refusal is now `.dependency-cruiser.mjs`'s `core-imports-checks`, which spells the path itself
+ * because configuration cannot import a constant. This walk is the one reader left.
  *
  * It is the source counterpart of `vitest.config.ts`'s two include globs, which name the same pair
  * of roots for the same tree.

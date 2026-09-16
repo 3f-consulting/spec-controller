@@ -756,7 +756,8 @@ jobs:
       # a package.json script (@SCN-LAD-001..006), so these steps take it from four gates to nine —
       # the three `lint:` checks and `typecheck` return to the local green-check that the
       # conversion into the fitness pass had taken them out of, and the corpus-tags step arrives
-      # there with them. Writing `pnpm exec tsx tests/checks/lintAnemicDomainCli.ts` here would run
+      # there with them. Writing the boundary gate's two tools out by hand here — `pnpm exec
+      # depcruise packages && pnpm exec eslint --config eslint.boundaries.mjs packages` — would run
       # the same check and hold the ledger equally still, and now that the pass is gone `pnpm
       # verify` would have silently dropped to one. A green-check that narrows without saying so is
       # the fault @SCN-LAD-001..006 exist to make impossible; a step spelt to dodge them is the
@@ -808,10 +809,10 @@ jobs:
         if: always()
         run: pnpm spec-controller tags
 
-      - name: Anemic domain
+      - name: Import boundaries
         id: SCN-FIT-009
         if: always()
-        run: pnpm lint:anemic-domain
+        run: pnpm lint:boundaries
 
       # THE THREE KEYS ARE THIS STEP'S OWN, AND THEY ARE THE ONLY COPY. `Cucumber (fitness)` used
       # to carry the same block because the pass ran this check too; the pass is gone and this is

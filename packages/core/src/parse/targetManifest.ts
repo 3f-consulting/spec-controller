@@ -15,8 +15,9 @@
  * application layer single-sources (`DEFAULT_DEFERRAL_TAGS`), and a bar naming a mutation gate
  * needs that gate's record read off the target's tree. Both arrive as arguments — the starter
  * set as data, the record as a `KillFloorReader` closure the edge builds — so the engine keeps
- * knowing nothing about files, records or ratchets (@SCN-EPG-001, and 3F-2841's pattern: a
- * project-owned term arrives as an input).
+ * knowing nothing about files, records or ratchets (`lint:boundaries`' `core-imports-io` rule,
+ * which was @SCN-EPG-001's `io-import` arm until 3F-3437; and 3F-2841's pattern: a project-owned
+ * term arrives as an input).
  *
  * DEFENSIVE THROUGHOUT, AND THAT IS THE FAMILY'S STANCE RATHER THAN LOCAL CHOICES PER RESOLVER.
  * Config is data from outside: a missing, non-object or array-shaped value resolves EMPTY, and a

@@ -92,10 +92,13 @@ Feature: The fitness checks this repository configures, one scenario per row
     Then every tag on the corpus obeys them
 
   @fitness @SCN-FIT-009
-  Scenario: no domain module is named for a procedural layer
-    Given the modules of this repository's domain
-    When each module's name is read against the procedural-layer words
-    Then no domain module is named for one
+  Scenario: every architectural boundary this repository draws holds
+    Given this repository's own module graph and the names of its domain modules
+    When the installed boundary tools read them
+    Then no engine module imports the app package, the check tree, or a node IO builtin
+    And no engine module references the process global
+    And no domain module imports an adapter layer
+    And no domain module is named for a procedural layer
 
   @fitness @SCN-FIT-010
   Scenario: every scenario a change touches is named by a sub-issue of the ticket it is on

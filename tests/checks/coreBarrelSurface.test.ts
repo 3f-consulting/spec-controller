@@ -19,8 +19,9 @@
  * (and, until 3F-3229, @SCN-API-004 and @SCN-API-005) — and `packages/core` cannot import them. Core is the pure library
  * and `spec-controller` depends on it, so a core test reading this module would invert that
  * dependency and close a cycle. Reading core's tree from `tests/checks/` is the direction that
- * already works, and `enginePurity` and `domainPurity` both do it. So the scenario stayed exactly
- * where it was and its evidence came here.
+ * already works, and `termSpelling` does it over the whole repository (`enginePurity` did until
+ * 3F-3437 and `domainPurity` until 3F-3438). So the scenario stayed exactly where it was and its
+ * evidence came here.
  *
  * THIS FILE HOLDS NO ENUMERATION OF ITS OWN, AND THAT IS WHAT THE LIFT BOUGHT. The written-down
  * surface is the registry's core `.` entry, transcribed from `index.ts`'s own `export` statements.

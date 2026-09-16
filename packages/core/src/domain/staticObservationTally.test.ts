@@ -265,8 +265,9 @@ describe("[SCN-USG-001] a static check no fitness scenario cites is banked on th
  * from a CI source and a scripts manifest, never hand-written, and the Ledger is built by
  * `reconcile`, so every row is a shape the pipeline emits. The import of `../parse/` from a domain
  * TEST is the established idiom here (`evidenceReconciliation.test.ts` reads the same layer) and is
- * outside the domain-purity check's population by construction: its collector walks PRODUCTION
- * files only, excluding `*.test.ts`.
+ * outside `lint:boundaries`'s `domain-imports-adapter` rule by construction: the rule's `from`
+ * clause carries `pathNot: "\.test\.ts$"`. It was outside the domain-purity check's population for
+ * the same reason until 3F-3438 — that collector walked PRODUCTION files only.
  *
  * `domain-purity` is a script NAME — a value, not vocabulary — so the handle is deliberately
  * untouched by the static-check rename (3F-1929; 3F-1852 owns script names).

@@ -17,7 +17,8 @@
  *
  * PURE, LIKE ITS SIBLINGS. `checkMutateSurface` takes the parsed glob as data and returns the
  * violations; the config load lives in the `@unit` arm that drives this over the real config,
- * exactly as `domainPurity` splits its walk from its rule. `mutateGlobOf` reads the loaded config,
+ * exactly as `termSpelling` splits its repository walk from its spelling rule (and as `domainPurity`
+ * split its walk from its rule, until 3F-3438). `mutateGlobOf` reads the loaded config,
  * so a config that lost its `mutate` key throws here rather than reading as a surface with no
  * exclusions — the empty-vs-empty false green this guard would otherwise be wide open to.
  */

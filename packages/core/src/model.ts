@@ -18,7 +18,8 @@
  * This module stays as the stable internal aggregation point (`../model.js`) so the many
  * in-core importers and the frozen v1 barrel (`index.ts`, @SCN-API-001) see the SAME surface —
  * only the concepts' HOME moved. It is NOT a `domain/**` module itself (it re-exports across the
- * concept modules, an aggregation the domain-purity guard neither needs nor scans).
+ * concept modules, and it sits OUTSIDE `packages/core/src/domain/`, which is what `lint:boundaries`'s
+ * `domain-imports-adapter` rule is scoped to — the domain-purity guard's population until 3F-3438).
  */
 
 export * from "./domain/journal.js";

@@ -1,7 +1,7 @@
 {
   "name": "spec-controller-workspace",
   "version": "0.0.0",
-  "description": "Workspace root for spec-controller \u2014 the reconciliation CLI and its pure core library.",
+  "description": "Workspace root for spec-controller — the reconciliation CLI and its pure core library.",
   "license": "MIT",
   "private": true,
   "type": "module",
@@ -23,7 +23,7 @@
     "spec-controller": "spec-controller",
     "lint:complexity-exceptions": "tsx tests/checks/lintComplexityExceptionsCli.ts",
     "lint:scn-subissues": "tsx tests/checks/lintScnSubIssuesCli.ts",
-    "lint:anemic-domain": "tsx tests/checks/lintAnemicDomainCli.ts"
+    "lint:boundaries": "depcruise packages && eslint --config eslint.boundaries.mjs packages"
   },
   "specController": {
     "runners": {
@@ -61,7 +61,7 @@
       {
         "scn": "SCN-FIT-009",
         "characteristic": "tech-conformance",
-        "command": "pnpm lint:anemic-domain"
+        "command": "pnpm lint:boundaries"
       },
       {
         "scn": "SCN-FIT-010",
@@ -105,7 +105,9 @@
     "@stryker-mutator/core": "^9.6.1",
     "@stryker-mutator/vitest-runner": "^9.6.1",
     "@types/node": "^22.0.0",
+    "dependency-cruiser": "18.2.0",
     "eslint": "^9.39.5",
+    "eslint-plugin-check-file": "3.3.2",
     "spec-controller": "0.1.0-alpha.3",
     "tsx": "^4.22.3",
     "typescript": "^5.8.3",

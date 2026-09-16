@@ -616,25 +616,32 @@ Then(
   },
 );
 
-Then("lint:anemic-domain is one of them", function () {
-  // THE NAMED GATE, AND IT IS BACK TO THE ONE 3F-2444 WAS FILED FOR (3F-3272). `lint:anemic-domain`
-  // landed with a CI step and no matching line in the hand-maintained local list, which is how
-  // `pnpm verify` came to be a proper subset of CI — this scenario exists because of that check.
-  //
-  // IT STOPPED BEING NAMEABLE FOR TWO SLICES AND IS AGAIN. The check became a
-  // `specController.fitnessChecks` row running inside the cucumber fitness pass, so it was no
-  // longer a CI step and could not be a gate; `cucumber:fitness` held the name meanwhile, because
-  // every converted check ran behind that one gate and a ladder that lost it would drop the whole
-  // static axis at once. 3F-3271 gave the row its own step — `id: SCN-FIT-009` — and 3F-3272
-  // deleted the pass, so the founding case is a gate in its own right once more and the gate that
-  // stood in for it does not exist.
-  //
+Then("lint:scn-subissues is one of them", function () {
   // NAMED EXPLICITLY RATHER THAN LEFT TO THE EQUALITY ABOVE, so there is an assertion pointing at
   // one gate by name. Both sides of that equality are derived from the same ci.yml; this one is
   // not, and it is what would still red if the derivation and the workflow agreed on nothing.
+  //
+  // THE WITNESS WAS `lint:anemic-domain`, THE CHECK THIS SCENARIO WAS FILED OVER. That check
+  // landed with a CI step and no matching line in the hand-maintained local list, which is how
+  // `pnpm verify` came to be a proper subset of CI, and 3F-2444 is the ticket that found it. It
+  // then stopped being nameable for two slices — the check became a `specController.fitnessChecks`
+  // row inside the cucumber fitness pass, so it was not a CI step and could not be a gate, and
+  // `cucumber:fitness` stood in — before 3F-3271 gave the row its own step and 3F-3272 deleted the
+  // pass. That history is why this assertion exists. It was never a reason the assertion had to
+  // keep naming that script, and 3F-3288 deletes the script, so keeping it was not on offer.
+  //
+  // IT NAMES `lint:scn-subissues` BECAUSE THAT IS THE GATE NOTHING CAN TAKE AWAY (3F-3434). The
+  // witness has to be a script gated at EVERY commit of the slice that moved it, which rules out
+  // the gate replacing `lint:anemic-domain` — which, at the commit that moved this witness, did
+  // not exist yet (3F-3436 landed it one commit later, so this sentence is about that moment and
+  // not about the tree you are reading). And the conversion register rules this one
+  // permanently ours: it is 3F's own delivery discipline and ships to
+  // nobody, so no later conversion ticket retires it the way this one retired the last witness.
+  // The witness has been moved twice by work that had nothing to do with it; this is it not
+  // moving again.
   assert.ok(
-    listedGates(listing.stdout).includes("lint:anemic-domain"),
-    `lint:anemic-domain must be gated locally. The ladder was:\n${listing.stdout}`,
+    listedGates(listing.stdout).includes("lint:scn-subissues"),
+    `lint:scn-subissues must be gated locally. The ladder was:\n${listing.stdout}`,
   );
 });
 

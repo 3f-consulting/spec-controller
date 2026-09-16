@@ -15,7 +15,8 @@
  * WHY THE ARGUMENTS ARE DATA AND NOT READERS. Everything below is already in memory by the time
  * the edge calls this — the feature bytes, the manifest object, the CI bytes, the measurement
  * artefact, the runtime observations. Handing a reader for any of them would move I/O into the
- * engine wearing a callback, and `@SCN-EPG-001` reds over exactly that. `killFloor` is the one
+ * engine wearing a callback, and `lint:boundaries`' `core-imports-io` rule reds over exactly that
+ * (@SCN-EPG-001's `io-import` arm until 3F-3437). `killFloor` is the one
  * function, and only because a mutation record is opened lazily and at most once per pass: the
  * closure already exists at the edge and already carries that guarantee, so injecting it preserves
  * a behaviour rather than inventing a seam — and it is what keeps the engine from ever learning

@@ -42,7 +42,8 @@
  * forgotten.
  *
  * PURE DATA AND ONE PREDICATE — no I/O, nothing imported, so it sits in `domain/` beside
- * the fitness-row readers, and `enginePurity` / `domainPurity` stay green by construction.
+ * the fitness-row readers, and `pnpm lint:boundaries` stays green by construction — the whole of
+ * what asks that question, now that `domainPurity` has gone at 3F-3438.
  */
 
 /**

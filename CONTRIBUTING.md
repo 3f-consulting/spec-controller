@@ -57,9 +57,10 @@ none to the script.
 That is the second attempt at this. This document once listed five gates and said CI ran
 the same steps — CI ran thirteen, so an implementer who followed it correctly still skipped
 `lint:complexity`, and a red build was reported green (3F-2402). 3F-2420 replaced the prose
-list with a list inside the script, which then drifted the same way: `lint:anemic-domain`
-arrived with a CI step and no gate line, leaving `pnpm verify` a proper subset of CI for four
-commits. A hand-maintained list drifts wherever it is kept; a derivation has nothing to keep.
+list with a list inside the script, which then drifted the same way: the anemic-domain gate —
+converted into `lint:boundaries` at 3F-3288 and no longer a script of its own — arrived with a CI
+step and no gate line, leaving `pnpm verify` a proper subset of CI for four commits. A
+hand-maintained list drifts wherever it is kept; a derivation has nothing to keep.
 
 **Every converted check is a CI step, carrying its `@SCN` as the step's `id:`.** A converted check
 is both a row of `specController.fitnessChecks` and a `run:` step whose `id:` cites that row — the

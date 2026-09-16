@@ -8,8 +8,10 @@ Feature: The local green-check runs the ladder CI runs, derived rather than list
 
   THE SAME FAILURE RECURRED ONE LAYER IN. The list moved out of prose and into a
   script, and the script still drifted by hand: lint:anemic-domain landed with a CI
-  step and no matching gate line, so pnpm verify has been a proper SUBSET of CI ever
-  since. Moving a hand-maintained list somewhere tidier does not stop it being
+  step and no matching gate line, so pnpm verify was a proper SUBSET of CI until this
+  derivation replaced the list. The name is cited as the history that produced this
+  feature; nothing here rests on it still being a gate, and the scenario below names a
+  different one. Moving a hand-maintained list somewhere tidier does not stop it being
   hand-maintained.
 
   SO THE LADDER IS DERIVED, NOT LISTED. Every ci.yml run: step that invokes a
@@ -112,9 +114,9 @@ Feature: The local green-check runs the ladder CI runs, derived rather than list
   Rule: the derived ladder holds over the real repository
 
     @integration @SCN-LAD-006
-    Scenario: pnpm verify lists every CI script this repository runs, lint:anemic-domain among them
+    Scenario: pnpm verify lists every CI script this repository runs, lint:scn-subissues among them
       Given the real spec-controller repository
       When the local green-check lists the ladder it would run
       Then it lists every script the real CI runs, in CI's order
-      And lint:anemic-domain is one of them
+      And lint:scn-subissues is one of them
       And the count it reports is the number of gates it listed

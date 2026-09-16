@@ -1,0 +1,171 @@
+/**
+ * THE IMPORT-BOUNDARY HALF OF `pnpm lint:boundaries` — the CI step carrying `id: SCN-FIT-009`
+ * (@SCN-FIT-009, 3F-3288/3F-3436).
+ *
+ * WHAT THIS REPLACED, AND WHY IT IS A DELETION RATHER THAN A REWRITE. Three hand-written checks —
+ * `enginePurity.ts` (107), `domainPurity.ts` (88), `anemicDomain.ts` (93) plus its CLI (52) — asked
+ * questions about this repository's own import graph by matching regular expressions over
+ * comment-stripped source. They worked. The cost was that `tests/checks/` ships to nobody, so an
+ * adopter of spec-controller who wanted a purity boundary had to write one again. The operator's
+ * ruling of 2026-09-13 is that every build-your-own fitness check converts to a third-party one;
+ * this file and `eslint.boundaries.mjs` are the whole of the replacement, and no rule logic is
+ * written here — only configuration.
+ *
+ * THE RESOLUTION IS A STRENGTHENING, NOT A RESTATEMENT. The old checks matched the SPECIFIER; this
+ * matches the MODULE the specifier resolves to. A relative escape `../../spec-controller/src/host.js`
+ * is reported as `packages/spec-controller/src/host.ts` — an answer about the graph rather than about
+ * the string — and a dynamic `await import("node:fs")`, which the old regex could not see at all, is
+ * an edge like any other. Comment-stripping, which the old checks needed so a doc-comment naming
+ * `process.cwd()` was not a false positive, has no analogue here: a comment produces no edge.
+ *
+ * THE SCOPE MATCHES WHAT THE OLD CHECKS WALKED. `collectSourceFiles` took `*.ts` under the subtree
+ * and skipped `*.test.ts` and `*.d.ts`, so every `from` below carries `pathNot: "\\.test\\.ts$"`.
+ * (There is no `.d.ts` under `packages/core/src`, so that half of the old filter is not live and is
+ * deliberately not restated — a config term with no population is a term nobody can red.)
+ *
+ * WHAT IS NOT HERE, AND THE MEASUREMENT THAT PUT IT SOMEWHERE ELSE. A `forbidden` rule is evaluated
+ * per dependency EDGE, so a module with no imports cannot violate one. A planted, dependency-free
+ * `packages/core/src/domain/operations.ts` PASSED a `{ from: <anemic pattern>, to: {} }` rule and
+ * redded the same file the instant it imported one thing. Inert data is the anemic split's own end
+ * state, so that rule would have been blind exactly where it matters most. The procedural-layer
+ * filename rule therefore lives in `eslint.boundaries.mjs`, in `check-file/filename-blocklist`,
+ * which visits FILES. The `process` global is invisible to a module graph for the same structural
+ * reason and lands there too, in `no-restricted-globals`. Two tools, one gate, one claim — and the
+ * split is measured rather than stylistic.
+ *
+ * FOUR RULES HERE, NOT FIVE. `domain → app` needs no rule of its own: the domain is inside the core,
+ * so `core-imports-app` already refuses it. That was measured, not assumed.
+ */
+export default {
+  forbidden: [
+    /**
+     * `enginePurity`'s `impure-import`, app half — and `domainPurity`'s `app-import`, which the
+     * domain being inside the core makes redundant.
+     *
+     * Keeps the pure core embeddable by an external consumer without dragging the CLI, the ingest
+     * and the run-management along.
+     *
+     * THE `to.path` IS THREE PATTERNS AND ALL THREE ARE LOAD-BEARING. A bare `import
+     * "spec-controller"` from `packages/core/src` comes back `couldNotResolve: true` with
+     * `resolved: "spec-controller"` — the package IS installed, but it exports no root subpath — so
+     * a rule written only against `^packages/spec-controller/` lets that plant through in silence
+     * while the module count rises by one. A tool that cannot resolve a specifier does not say so in
+     * a rule's verdict; it says so in a field the rule never reads. The third pattern therefore
+     * matches the RAW specifier, and the workspace and installed forms are named beside it.
+     *
+     * THE `^` ANCHOR IS WHAT KEEPS THE CORE ITSELF OUT. `@3f-consulting/spec-controller-core` is the
+     * core and is fine; anchoring at the start of the specifier excludes it, exactly as the old
+     * check's `(?:^|\/)spec-controller(?:\/|$)` did.
+     */
+    {
+      name: "core-imports-app",
+      severity: "error",
+      comment:
+        "a core module must not import the spec-controller app package — by workspace path, by installed path, or by a bare specifier that resolves to nothing",
+      from: { path: "^packages/core/src/", pathNot: "\\.test\\.ts$" },
+      to: {
+        path: [
+          "^packages/spec-controller/",
+          "^node_modules/spec-controller/",
+          "^spec-controller(/|$)",
+        ],
+      },
+    },
+
+    /**
+     * `enginePurity`'s `impure-import`, check-tree half — the term 3F-3188 had to add when the
+     * checks moved out from under the app package and the package match stopped covering them for
+     * free.
+     *
+     * A core module must not import the check tree. Both homes reach the same verdict in the old
+     * check because the reason is one reason; they are two rules here because the resolved paths
+     * are two paths, and a rule names what it refuses.
+     */
+    {
+      name: "core-imports-checks",
+      severity: "error",
+      comment: "a core module must not import the check tree at tests/checks/",
+      from: { path: "^packages/core/src/", pathNot: "\\.test\\.ts$" },
+      to: { path: "^tests/checks/" },
+    },
+
+    /**
+     * `enginePurity`'s `io-import` — keeps the engine testable with data alone.
+     *
+     * `dependencyTypes: ["core"]` scopes the match to node builtins, so a local module whose path
+     * happens to begin with one of these words cannot trip it.
+     *
+     * IT REACHES ONE FORM THE OLD CHECK DID NOT. The old regex was `^node:(?:fs|child_process|process)`
+     * — `node:`-prefixed only — so a bare `import "fs"` passed it. The optional prefix here catches
+     * both, and `(/|$)` carries the sub-path forms (`node:fs/promises` resolves to `fs/promises`)
+     * while refusing a longer word that merely starts the same way.
+     */
+    {
+      name: "core-imports-io",
+      severity: "error",
+      comment: "a core module must not import a node IO builtin — the engine stays testable with data alone",
+      from: { path: "^packages/core/src/", pathNot: "\\.test\\.ts$" },
+      to: { dependencyTypes: ["core"], path: "^(node:)?(fs|child_process|process)(/|$)" },
+    },
+
+    /**
+     * `domainPurity`'s `adapter-import` — the INNER boundary, one level down from the package edge.
+     *
+     * A reconciliation concept reconciles; it does not parse a runner's output, render a report,
+     * assemble the document, or census the corpus. Those are the edges the domain sits inside,
+     * hexagonal — never the other way.
+     *
+     * IT IS A DENYLIST OF THE FOUR ADAPTER LAYERS, NOT AN ALLOWLIST, which is the old check's shape
+     * carried across unchanged: the sibling domain modules and the pure aggregation roots
+     * (`../model.js`, `../provenance/…`, `../lib/…`) stay permitted, and a fifth adapter layer added
+     * later is permitted until it is named here.
+     */
+    {
+      name: "domain-imports-adapter",
+      severity: "error",
+      comment: "a domain module must not import one of the core's adapter layers (parse, render, assemble, census)",
+      from: { path: "^packages/core/src/domain/", pathNot: "\\.test\\.ts$" },
+      to: { path: "^packages/core/src/(parse|render|assemble|census)/" },
+    },
+  ],
+  options: {
+    /**
+     * `doNotFollow` stops the cruise at the dependency's edge rather than hiding it: an import OF
+     * something under `node_modules` is still reported as an edge — which is what
+     * `^node_modules/spec-controller/` above matches — but its own graph is not walked.
+     */
+    doNotFollow: { path: "node_modules" },
+
+    /**
+     * The built output is the same modules compiled. Cruising it would double every count and report
+     * every violation twice, under a path no author edits.
+     */
+    exclude: { path: "(^|/)dist/" },
+
+    /**
+     * `tsPreCompilationDeps` is what makes a TYPE-ONLY import an edge. Without it `import type { X }
+     * from "…"` erases before the graph is built and the boundary would be crossable by anything
+     * that only needed a type — which is how a seam stops being a seam. Measured on this tree at
+     * `4c38255`: 509 dependencies with it, **349 without**. 160 edges, invisible.
+     */
+    tsConfig: { fileName: "tsconfig.json" },
+    tsPreCompilationDeps: true,
+
+    /**
+     * The workspace packages publish through `exports`, so the resolver is told to read that field
+     * and which conditions to honour.
+     *
+     * MEASURED, because the failure this prevents is silent rather than loud. Without it the cruise
+     * still says `✔ no dependency violations found` and still counts 509 dependencies — but the
+     * seven `@3f-consulting/spec-controller-core` imports come back `couldNotResolve: true` and the
+     * graph gains three bare-specifier pseudo-modules (154 rather than 151) where the barrel should
+     * be. The edges stop AT the barrel instead of passing through it to
+     * `packages/core/src/index.ts`, and a rule can only refuse a module the resolver found. A green
+     * from an unresolved graph reads exactly like a green from a clean one.
+     */
+    enhancedResolveOptions: {
+      exportsFields: ["exports"],
+      conditionNames: ["import", "require", "node", "default"],
+    },
+  },
+};
