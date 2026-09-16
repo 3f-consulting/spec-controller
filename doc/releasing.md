@@ -4,111 +4,144 @@ Two packages go out together: `@3f-consulting/spec-controller-core`, the pure en
 `spec-controller`, the command that resolves it. A release sends both, core first, from one run of
 `.github/workflows/release.yml`.
 
-**Read the first section before your first release.** The trap in it is an authentication error
-with no authentication cause.
+**A release is a tag push and nothing else.** There is no credential stored anywhere, nothing to
+promote afterwards and nothing to rotate. The portfolio-level rules live in
+`the maintainers' private notes`; this file is what is true of *these two
+packages*.
 
----
-
-## Before your first release: the credential, and what an `E401` means
-
-**This repository stages with a token and promotes by hand.** `release.yml` reads `NPM_TOKEN` from
-the repository secrets on its two staging steps, and nothing else in the file authenticates.
-
-**It does not use OIDC trusted publishing, and that is a fact about npm rather than a preference.**
-Measured in npm's own source, 11.19.1 and 12.0.2:
-
-```
-oidc() is called from lib/commands/publish.js only
-lib/commands/stage/publish.js has no reference to it
-```
-
-`npm stage publish` never attempts the exchange. A staging workflow running under `id-token: write`
-with no token falls back to whatever is in the `.npmrc`, finds `actions/setup-node`'s placeholder
-`XXXXX-XXXXX-XXXXX-XXXXX`, and fails `E401`. **Configuring a trusted publisher on the package
-changes nothing, because npm never looks.** `man npm-stage` names trusted publishing as one of the
-flows that *lacks* proof-of-presence — the alternative staging replaces, not a layer beneath it.
-They are alternatives: a human gate, or provenance. This repository takes the human gate.
-
-**So an `E401` at `Stage core` means the token and only the token** — expired, revoked, or the
-secret missing. Rotate it and re-run. It is never a trusted-publisher problem, and the hours are in
-believing otherwise.
-
-**The token is stage-only.** It carries no publish right at all, so a future edit swapping
-`npm stage publish` for `npm publish` fails loudly rather than shipping to consumers unreviewed.
-That is what makes *nothing automated reaches a consumer* structural rather than conventional. It
-expires: rotation is revoke, reissue with the same settings, `gh secret set NPM_TOKEN`. Nothing in
-the repository changes, so no commit and no release are needed.
-
-*(Lived 2026-09-15, publishing `0.1.0-alpha.2`. Six faults in one attempt, three of them chasing an
-authentication error that had no authentication cause. Every one was a premise this file or*
-`release.yml` *stated confidently and nobody had executed.)*
+**Read *When a publish returns `E401`* before your first release.** The trap in it is an
+authentication error whose cause is not authentication, and this file used to teach the exact
+opposite of what it now teaches.
 
 ---
 
 ## How a release is cut
 
-A release runs on a **tag** matching `v*`, or on a hand-started `workflow_dispatch`. Nothing else
-triggers it, and it is a separate file from `ci.yml` for that reason — `ci.yml` runs on every push
-to `main` and on every pull request, and a release living in it would attempt one on both.
+1. **Bump both packages** to the next version — `packages/core/package.json` and
+   `packages/spec-controller/package.json`, same version, one commit — and merge it.
+2. **Tag that commit and push the tag.** This is the human act, and the only one.
+3. **Watch the run.**
+4. **Verify on the registry.**
 
-The workflow, in order:
+```bash
+# on main, at the merge commit both manifests name
+git tag v0.1.0-alpha.N
+git push origin v0.1.0-alpha.N
+
+gh run watch "$(gh run list --workflow=release.yml --limit 1 --json databaseId -q '.[0].databaseId')"
+
+npm view spec-controller dist-tags
+npm view @3f-consulting/spec-controller-core dist-tags
+npm view spec-controller@0.1.0-alpha.N dependencies
+```
+
+The last line matters because the CLI's packed manifest names core by a **concrete** version: it is
+the check that the two went out in lockstep.
+
+### What the workflow does, in order
 
 1. Checks out, enables corepack, installs with a frozen lockfile.
 2. **Builds**, **typechecks**, runs **`pnpm test`** and **`pnpm cucumber`**.
 3. **Packs both packages, once.** Every step after this reads those same two files.
 4. **Smokes them in a clean room** — installs the tarballs into a directory holding nothing else of
    this repository, outside the workspace, and starts the command there.
-5. **Stages core, then the CLI**, with `npm stage publish`.
+5. **Publishes core, then the CLI**, with `npm publish` over the packed tarballs.
 
-Then it stops. **A staged version is not a released one.**
+Then it is done. Nothing is owed after the run goes green.
 
-### The operator promotes
+---
 
-`npm stage publish` puts a version on the registry in a staged state. Consumers cannot install it
-until a person promotes it, and promotion takes a **stage-id** — never a package spec:
+## Authentication — there is no credential
+
+The workflow authenticates with **npm trusted publishing**. The job asks GitHub for a short-lived
+OIDC id-token, npm exchanges it for a publish token scoped to the one package, and that token dies
+with the run. `permissions: id-token: write` is what switches it on and is the whole of the
+configuration.
+
+Three facts decide whether it works, and all three are measurable:
+
+- **The command has to be `npm publish`.** Measured in `npm@11.19.1`: `lib/commands/publish.js:147`
+  calls `oidc()`, unconditionally and not guarded on what kind of spec it was handed — which is why
+  publishing a *tarball* authenticates just as publishing a directory does.
+- **The npm has to be new enough.** Trusted publishing needs npm `>= 11.5.1`. `actions/setup-node`
+  offers no way to choose an npm; it installs whatever the Node it fetches bundles. Node 22 bundles
+  10.9.x and Node 24 bundles 11.19.x, which is why the workflow pins Node 24.
+- **Each package needs its own trusted publisher.** The exchange is per package
+  (`/-/npm/v1/oidc/token/exchange/package/<name>`), so both packages carry a connection on
+  npmjs.com naming the org, this repository, and `release.yml`.
+
+**No provenance attestation is produced, and that is not a misconfiguration.** npm enables
+provenance only when the id-token says the repository is public. This one is private, so none
+appears; it will start appearing by itself when the repository flips, with no edit here.
+
+### When a publish returns `E401`, read it as the trusted publisher
+
+**`oidc()` never throws.** Every failure inside it — the permission missing, the exchange refused,
+connection fields that do not match the run — logs at `verbose` and returns, and the publish then
+falls back to the `.npmrc` `actions/setup-node` wrote. That file holds the placeholder
+`XXXXX-XXXXX-XXXXX-XXXXX`, so what you see is:
 
 ```
-npx -y npm@latest stage list
-npx -y npm@latest stage approve <stage-id>
+npm error code E401
+npm error Unable to authenticate
 ```
 
-`stage list` prints the id, package, version, dist-tag and a **status**. A freshly staged version
-reads `validating` for a few moments before it reads `staged`; approve it then.
+with **nothing in the log to say an exchange was attempted at all**. It reads like a missing
+secret. There is no secret. It is the trusted publisher.
 
-**`npm stage approve <package>@<version>` is not a form of this command.** It fails with
-`stage-id must be a valid UUID`, which reads like a bad paste rather than a wrong shape.
+**`--loglevel=verbose` is where it says why** — the `oidc` lines name which of the checks failed.
+Then compare the connection on npmjs.com against the run:
 
-**`npm stage` is newer than the npm on most machines, and that failure reads as a typo rather than a
-version.** An older local npm answers `Unknown command: "stage"`. Node 24 bundles 11.19.x, which has
-it, and that is why `release.yml` pins Node 24 rather than 22. `npx -y npm@latest` sidesteps a
-global upgrade and reads your existing `~/.npmrc`, so your login carries. If you are not logged in,
-`stage list` answers `E401` — run `npx -y npm@latest login` first.
+| Field | Must be |
+|---|---|
+| Organization or user | the **GitHub org** |
+| Repository | the **repository** name — not the package name |
+| Workflow filename | `release.yml` — the file name alone |
+| Environment name | **blank** — this job declares no environment |
+| Allow npm publish | **ticked** |
 
-**Approving prompts for proof of presence.** npm prints a URL, you authenticate in a browser, and
-only then does the version publish. That cannot use an identity minted for a workflow run, so there
-is no automating it — which is the property, not the inconvenience. Promoting from the package's
-page on npmjs.com does the same thing by the same rule.
+npm does not validate any of these when the connection is saved, so a wrong one is only ever
+discovered here.
 
-**A releaser who stages and walks away has not released.** Both packages need promoting, and core
-needs promoting **first**: the CLI's packed manifest names core by a concrete version, so between
-the two promotions `npm i spec-controller` resolves an engine nobody can fetch.
+*(This file previously taught the inverse — that an `E401` on the publish step meant an expired
+token and could never be a trusted-publisher problem. That was true of the shape it described and
+is exactly wrong about this one. Lived 2026-09-15, publishing `0.1.0-alpha.2`: six faults in one
+attempt, three of them chasing an authentication error that had no authentication cause.)*
 
 ---
 
 ## What cannot be taken back
 
-**Staging is the recoverable half. Promotion is not.**
+**A published version cannot be recalled.** npm's unpublish window does not undo it: whether or not
+you unpublish inside the window, **that version number and that package name are burned** — npm
+will not let anyone republish them, you included.
 
-- A **staged** version that should not go out is simply never approved.
-- A **promoted** version cannot be recalled. npm's unpublish window does not undo it: whether or not
-  you unpublish inside the window, **that version number and that package name are burned** — npm
-  will not let anyone republish them, you included.
+There is no half-way house. The previous shape had one — a version could sit on the registry
+unreachable and simply never be approved — and it is gone with everything else that went with it.
+The tag push is now the point of no return, which is why the clean-room smoke in step 4 runs before
+it and why the question to answer before pushing a tag is not *"can I fix this later"* but *"is this
+the artefact"*.
 
-So the question to answer before typing `npm stage approve` is not "can I fix this later". It is
-"is this the artefact". The clean-room smoke in step 4 above exists because the answer used to be
-unknowable from inside the workspace: everything here resolves through the workspace manifest, and
-npm *replaces* that manifest's `exports` map with `publishConfig.exports` wholesale at publish
-time. The two readings differ nowhere except inside an installed tarball.
+### If the run fails
+
+- **Before anything published** — a fix confined to the workflow file cannot change the artefact,
+  because the versions come from each `package.json`. Force-move the tag onto the fixed commit
+  rather than burning a version number:
+
+  ```bash
+  git tag -f v0.1.0-alpha.N <sha>
+  git push --force origin v0.1.0-alpha.N
+  ```
+
+  **Check the registry first.** `npm view <pkg> versions` on both packages; if either already
+  carries the version, this route is closed.
+
+- **After core published and the CLI did not** — core's version number is spent. Cut the **next**
+  version for both packages. Never force-move a tag a published artefact came from.
+
+This asymmetry is why core publishes first. Between the two publishes there is a window in which
+`npm i spec-controller` would resolve an engine nobody can fetch, and sending core first is what
+keeps that window on the harmless side.
 
 ---
 
@@ -128,10 +161,14 @@ ordinary adopter of its own product rather than a special case (`3F-3105`).
 "minimum readable version" banked anywhere, deliberately: a second spelling of the same fact agrees
 with the first only until somebody edits one of them.
 
+**The pin is not the version this repository ships, and the two move independently.** A release
+bumps the two package manifests; the pin only follows when the *reader* needs to change, and it can
+only follow a version that has actually published. `pnpm-workspace.yaml`'s
+`minimumReleaseAgeExclude` names the **pinned** versions and is pruned when the pin moves — replace
+the pair, never append to it.
+
 **When the model moves and the pinned reader can no longer read the tree**, the cure is the stage0
-bump in *Releasing while the self-reconciliation is red* below — publish from the branch, promote,
-bump the pin in the same review. The pinned reader says so itself: handed a flag its version does
-not accept, it names its own version and tells you to bump the pin (`@SCN-SLF-008`).
+bump in *Releasing while the self-reconciliation is red* below.
 
 **Never widen the pin to escape a skew.** A range or a dist-tag would make the red go away by
 making the reader unpredictable, which is the failure this arrangement exists to end — and
@@ -148,19 +185,18 @@ making the reader unpredictable, which is the failure this arrangement exists to
   release that sent one without the other would leave a package naming an engine the registry does
   not have.
 
-
 ### Prerelease dist-tags
 
-**A prerelease cannot be staged or published without `--tag`.** npm refuses it outright: *"You must
-specify a tag using --tag when publishing a prerelease version."* `release.yml` derives the tag from
-each package's own manifest rather than hard-coding one — the prerelease identifier becomes the
+**A prerelease cannot be published without `--tag`.** npm refuses it outright: *"You must specify a
+tag using --tag when publishing a prerelease version."* `release.yml` derives the tag from each
+package's own manifest rather than hard-coding one — the prerelease identifier becomes the
 dist-tag, a stable version becomes `latest`:
 
 ```
 0.1.0-alpha.2 -> alpha    1.0.0-beta.3 -> beta    2.0.0-rc.1 -> rc    0.1.0 -> latest
 ```
 
-A hard-coded `--tag alpha` would stage the first stable release under `alpha`, which is a silent
+A hard-coded `--tag alpha` would publish the first stable release under `alpha`, which is a silent
 fault with no guard.
 
 **`latest` is never a prerelease.** While these packages have no stable release the documented
@@ -172,6 +208,7 @@ npm i spec-controller@alpha
 
 Do not hand-move `latest` onto a prerelease to make the bare install work; it moves on its own when
 `0.1.0` publishes.
+
 ---
 
 ## The release path asks nothing about this repository
@@ -215,13 +252,16 @@ when a change to the model means the **pinned published** spec-controller can no
 tree, so the self-reconciliation reds on the very branch that fixes it.
 
 1. **The model change lands on a branch.** CI reds at `Self-reconciliation balance`, naming the skew.
-2. **Cut a prerelease tag from that branch** — `v0.1.0-alpha.N`. The release workflow stages both
+2. **Cut a prerelease tag from that branch** — `v0.1.0-alpha.N`. The release workflow publishes both
    packages. It never asks the self-reconciliation anything, so the red does not stop it.
-3. **Promote the staged versions**, core first, with `npm stage list` then
-   `npm stage approve <stage-id>` (see *The operator promotes*). Until you do, nothing has changed
-   for anybody.
-4. **Bump the pin on the branch**, in the same review, to the version you just promoted.
-5. **CI greens** — the new pinned reader can read the tree. The branch merges.
+3. **Bump the pin on the branch**, in the same review, to the version just published — and prune
+   `pnpm-workspace.yaml`'s `minimumReleaseAgeExclude` to that pair rather than appending to it.
+4. **CI greens** — the new pinned reader can read the tree. The branch merges.
 
-Step 4 is what makes step 2's tag honest: the prerelease exists to be pinned, and a branch that
-staged one without bumping to it has published a version nothing uses.
+Step 3 is what makes step 2's tag honest: the prerelease exists to be pinned, and a branch that
+published one without bumping to it has released a version nothing uses.
+
+**This route publishes from an unmerged branch, so it is the one case where the tag-cutter's
+discipline is the whole of the repository's bars.** It is deliberate, it is bounded by the fact that
+nothing merges this way, and it is the only hatch — there is no other reason to tag anything but a
+commit on `main`.

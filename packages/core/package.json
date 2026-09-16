@@ -1,6 +1,6 @@
 {
   "name": "@3f-consulting/spec-controller-core",
-  "version": "0.1.0-alpha.3",
+  "version": "0.1.0-alpha.4",
   "description": "The pure, embeddable reconciliation core behind spec-controller — Gherkin/@SCN parse, the evidence model, reconcile primitives, and renderers. No CLI, no I/O.",
   "keywords": [
     "reconciliation",
@@ -10,11 +10,6 @@
     "double-entry",
     "spec-controller"
   ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/3f-consulting/spec-controller.git",
-    "directory": "packages/core"
-  },
   "license": "MIT",
   "type": "module",
   "engines": {

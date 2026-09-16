@@ -1,6 +1,6 @@
 {
   "name": "spec-controller",
-  "version": "0.1.0-alpha.3",
+  "version": "0.1.0-alpha.4",
   "description": "Reconcile the behaviour your scenarios name against the evidence that actually ran — the deterministic `balance` CLI.",
   "keywords": [
     "reconciliation",
@@ -10,11 +10,6 @@
     "double-entry",
     "cli"
   ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/3f-consulting/spec-controller.git",
-    "directory": "packages/spec-controller"
-  },
   "license": "MIT",
   "type": "module",
   "engines": {
