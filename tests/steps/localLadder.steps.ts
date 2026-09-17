@@ -628,10 +628,30 @@ Then(
     // Eleven both times: membership is decided by the step invoking a manifest script, never by
     // what that script turns out to be. A derivation that had keyed on the command's shape would
     // have moved here, and nothing about the pipeline had.
+    //
+    // AND BACK DOWN BY ONE — 11 TO 10 — WHEN 3F-3464 DELETED `lint:complexity-exceptions`. THE
+    // THIRD KIND, the one 3F-3099's paragraph was written for and 3F-3276's is the plainest
+    // instance of: the gate did not move and nothing replaced it, because its SUBJECT was
+    // withdrawn. @SCN-FIT-003 asked whether every recorded complexity exception still states the
+    // value the tree measures at that site, and as of 3F-3462 a recorded exception exempts nothing
+    // that gates: the changed-set block is emitted at `error` LAST, so it restores the standard
+    // over every file the change touched whatever the list says about it. The numbers therefore
+    // have no gating effect left for a reconciliation to defend, and the modules holding them
+    // leave two sub-issues later in this same PR. Not a supersession — nothing runs that reading
+    // under another handle, and 3F-3312's decrement is what one of those looks like — and not a
+    // gate that quietly stopped running, which is the reading only this paragraph separates from
+    // the identical arithmetic.
+    //
+    // AND THE THING A READER WILL OTHERWISE ASSUME, SAID OUT LOUD: the complexity gate itself was
+    // never on this ladder. @SCN-FIT-001's step spells `pnpm exec eslint`, which invokes no
+    // package.json script, so `commandInvokesScript` has never matched it and this number has
+    // never counted it. What left here is the RECONCILIATION of a list, not the three rules — the
+    // standard is enforced over exactly the population it was before, and this ladder is one
+    // shorter because the second command reading that list has no list to read.
     assert.equal(
       expected.length,
-      11,
-      `the real ci.yml must yield 11 local gates; it yielded ${expected.length}: ${expected.join(", ")}`,
+      10,
+      `the real ci.yml must yield 10 local gates; it yielded ${expected.length}: ${expected.join(", ")}`,
     );
 
     assert.deepEqual(listedGates(listing.stdout), expected, "--list must be the derived ladder");

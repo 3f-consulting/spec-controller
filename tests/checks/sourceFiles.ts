@@ -225,8 +225,11 @@ export function collectRepositorySource(root: string): CollectedFile[] {
  * anti-vacuity floor is EASIER to clear, so nothing reds.
  *
  * `.d.ts` IS THE WHOLE OF THE KNOWN SURFACE, AND THAT IS MEASURED RATHER THAN GUESSED AT. `.d.mts`
- * never entered the population, because `"x.d.mts".endsWith(".ts")` is false — four tracked
- * `.d.mts` declaration files sit under `tests/checks/` today and none of them is in the count.
+ * never entered the population, because `"x.d.mts".endsWith(".ts")` is false — every tracked
+ * `.d.mts` declaration file under `tests/checks/` is outside the count, at whatever tally that
+ * directory holds on the day. The figure that used to stand here said four and measured five when
+ * this line was next read (3F-3465): a cardinality nothing asserts is a cardinality nothing keeps
+ * true, and the claim is about the suffix test, which holds at any of them.
  * Widening this past `.d.ts` would be filtering for a case nothing has demonstrated.
  *
  * `root` IS A SECOND JOB, NOT A SECOND SPELLING OF THE FIRST (3F-3207). `dir` is the subtree to

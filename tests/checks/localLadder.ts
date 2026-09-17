@@ -143,8 +143,8 @@ export interface LocalLadder {
    *
    * An exclusion covering nothing excuses nothing by construction, so it reds nothing and
    * costs nothing to leave behind — which is how it survives to license the next script that
-   * takes the name. The ratchet `lint:complexity-exceptions` and `lint:exempt-data-floor`
-   * already apply to their own lists, applied to this one.
+   * takes the name. So this list carries the ratchet any register of excused things has to
+   * carry: an entry whose subject has gone is a finding here, not a no-op.
    */
   readonly stale: readonly LadderExclusion[];
   /**

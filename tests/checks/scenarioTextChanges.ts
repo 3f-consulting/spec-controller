@@ -20,9 +20,11 @@
  * codes out, no line arithmetic and no context width for anyone to defend.
  *
  * A NEW MODULE RATHER THAN MORE OF `scnSubIssueGate.ts`, on design and on mechanism, agreeing. That
- * file parses diffs and decides the gate; this is a corpus comparison over different inputs. And
- * it is the file already carrying two standing `complexityExceptions.mjs` entries, so growth there
- * is growth against numbers someone has to argue up; this module carries none.
+ * file parses diffs and decides the gate; this is a corpus comparison over different inputs. And it
+ * is already over the standard on `complexity` and on `max-lines-per-function`, so under
+ * @SCN-CPX-001 any change touching it reds until it comes back under; this module is under the
+ * standard. Which files carry that debt is deliberately written down nowhere — `pnpm exec eslint`
+ * reports every standing violation on every run.
  *
  * THE RENUMBER ARM CAME HERE FOR THE SAME REASON (@SCN-SSM-015, 3F-3057). "Is this scenario's body
  * otherwise unchanged" is the same shape of question over the same two `byCode` maps, and it was

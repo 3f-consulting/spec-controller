@@ -9,10 +9,17 @@
  * its author, so its green proved the check does what its author wrote rather than what the rule
  * requires — one author keeping both books.
  *
- * WHY THE REAL-TREE ARM IS KEPT (Ruling B, measured not assumed). `package.json`'s
- * `specController.fitnessChecks` carries fourteen rows and NONE of them scans this repository's
- * source for readings; no other gate does either. Drop this arm and the check stops running
- * altogether — which is why it is the check rather than a second opinion about one.
+ * WHY THE REAL-TREE ARM IS KEPT (Ruling B, measured not assumed). NO row of `package.json`'s
+ * `specController.fitnessChecks` scans this repository's source for readings, and no other gate
+ * does either. Drop this arm and the check stops running altogether — which is why it is the check
+ * rather than a second opinion about one.
+ *
+ * THE SENTENCE ABOVE USED TO CARRY A ROW COUNT AND THE COUNT WENT STALE (3F-3464). It said
+ * `fourteen` over a manifest holding thirteen, inside a ruling headed "measured not assumed", and
+ * nothing reconciles a number in a comment against the manifest it describes. What the ruling turns
+ * on is that NO row does this, which is true at any cardinality — so the figure is not corrected to
+ * today's, it is removed, exactly as `uncited-static-checks.feature` removed its own rather than
+ * restarting the clock.
  *
  * WHY A SCAN AND NOT A FIXED CORRECTION. 3F-2976's finding was never the inverted ordering. It was
  * that a rule this small — what a term looks like once its sigil and its whitespace are off — had

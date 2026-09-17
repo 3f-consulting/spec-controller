@@ -28,11 +28,6 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
   is the exact self-certification this feature just removed. Not a carve-out: test
   scope stays held to the two metrics that genuinely apply.
 
-  TODAY'S EXCEEDANCES ARE DATED DEBT, NOT A RAISED CEILING. Every file already over the
-  standard is enumerated per rule in complexityExceptions.mjs, carrying the value
-  measured on the day it was recorded. The list reads as a refactor backlog rather than
-  as headroom, and it can only shrink.
-
   THE CHECK NO LONGER HAS A SCRIPT NAME, AND THAT IS THE CONVERSION (3F-3151, under 3F-3138).
   It used to be `lint:complexity`, named with an observed prefix so `runningStaticChecks` would
   discover it — a real quality check kept off the books is exactly where a watermelon hides, so
@@ -45,7 +40,34 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
   registry entry and its CI step went with the seam — kept, the check would be discovered a
   second time, and one Evidence Obligation would answer to two credits.
 
-  Rule: code outside the exception list reds when it exceeds the external standard
+  Rule: code the change touches reds when it exceeds the external standard; code it does not touch is reported
+
+    tidy-kiwi, MECHANISED AT THE GATE (3F-3408). "You make the mess, you tidy it" stayed an
+    honour rule while the gate held the whole tree absolutely, because the only way to keep a
+    tree carrying existing debt green was a hand-written register of everything already over
+    the line. THE MEASUREMENT DOES NOT NARROW HERE. The whole measured population is still
+    analysed on every run and every violation in it is still reported; what narrows is the
+    PASS/FAIL. A file the change touched must meet the standard; a violation in a file nobody
+    touched is reported and does not red. The industry calls the same mechanism clean as you
+    code — SonarSource's term, named because the concept is theirs — and the principle is ours
+    and predates it.
+
+    SEVERITY IS THE WHOLE DISCRIMINATOR, WHICH IS WHY EVERY EXAMPLE BELOW NAMES ONE. eslint's
+    own vocabulary carries the split: an error exits 1, a warning is reported at exit 0. So
+    nothing reconciles a changed set against a population by hand — the report is the rules over
+    the measured globs at warning, and the gate is the same rules restated over the intersection
+    of those globs with what the change touched, at error. It also means an assertion on the
+    mere PRESENCE of a finding now proves nothing: a config emitting all three rules at warning
+    everywhere would satisfy every example this Rule carried before today and gate nothing at
+    all. Below, "reds" means error, "is reported" means warning, and "is not reported at all"
+    means no finding of any severity.
+
+    THE PAIR IS CHANGED VERSUS UNTOUCHED, AND IT IS WHAT PINS THE WORD "TOUCHES". The third and
+    fourth examples plant the SAME over-standard module at two paths differing in nothing but
+    changedness. The reding half alone would pass just as well against a gate still held over
+    the whole tree; the reported half alone would pass against a gate switched off. Neither half
+    is decoration — which is the same reason the pairing existed when its axis was the exception
+    list.
 
     THE TWO LINE RULES COUNT CODE, NOT DOCUMENTATION (3F-2395). 40 and 400 are held
     against the code a reader has to hold in their head, not against the file's bytes:
@@ -59,16 +81,19 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
     The last example below is the half that pins it, and it is not decoration. A module
     can now be three times the file ceiling long and still green, provided the length is
     explanation; the same length in code reds. Both halves are stated, because a rule
-    that only ever shows what it rejects leaves what it permits to be inferred.
+    that only ever shows what it rejects leaves what it permits to be inferred. Under the
+    severity split it says the stronger thing: documentation past the ceiling is not
+    reported at all, so it is absent from the report as well as from the gate.
 
     @integration @SCN-CPX-001
-    Scenario: a function or module over the external standard reds the build
+    Scenario: a changed file over the external standard reds the build, and an untouched one is reported
       Given the thresholds are the external standard, not a measurement of this tree
       When the complexity fitness function scans the real tree
-      Then a function over complexity 10 outside the exception list reds
-      And a function over 40 code lines outside the exception list reds
-      And a module over 400 code lines outside the exception list reds
-      And a module of pure documentation past the file ceiling does not red
+      Then a changed function over complexity 10 reds
+      And a changed function over 40 code lines reds
+      And a changed module over 400 code lines reds
+      And an untouched module over 400 code lines is reported without reding
+      And a module of pure documentation past the file ceiling is not reported at all
 
   Rule: the module-size ceiling does not govern the domain's concept modules
 
@@ -82,116 +107,63 @@ Feature: Reconcile the complexity and module-size thresholds over the real tree
     because the gate forced it. For an entity module coherence IS the tractability —
     read one module, see the whole concept — so max-lines yields to it.
 
+    WHETHER A FINDING REDS IS @SCN-CPX-001'S CLAIM, NOT THIS RULE'S (3F-3463). This Rule
+    says which of the three rules reach a concept module AT ALL, and max-lines reaching
+    one at severity off is the whole of the exclusion. What a finding then DOES — red, or
+    be reported at exit 0 — turns on whether the change touched the file, which is the
+    Rule above's subject and not this one's. So every example below is stated as found or
+    not found, at any severity: an entity root nobody touched produces a warning, and
+    saying "still reds" here would be this Rule asserting the other one's mechanism.
+
     NOT A BLANKET DOMAIN EXEMPTION, AND NOT A PER-FILE ONE. The excluded set names the
     concept modules; a value object, a composition or a helper living in the same
     directory stays under the ceiling, because nothing adds it to the set by living
-    there. And the set carries no measured value and no date — an exception entry says
-    "this file measures 575 today", a fact about debt; this says "this module is a
-    concept root", a fact about kind. The two never overlap, which is pinned.
+    there. And the set carries no measured value and no date, which is what always
+    separated it from the per-file allowance list that sat beside it until 3F-3466: an
+    allowance entry said "this file measures 575 today", a fact about debt; this says
+    "this module is a concept root", a fact about kind.
 
     ONLY MODULE SIZE YIELDS. complexity and max-lines-per-function apply to a concept
     module exactly as they do anywhere else, and that is what makes the exclusion safe
     to grant: a long module of small, simple, well-named functions is coherent, while a
     fat or complex FUNCTION is debt whatever module holds it. "Its ceiling" in the last
-    two examples is each module's own — the standard, or the frozen value where the debt
-    list already records one, since three of these modules do. Planting at the standard
-    alone would sit under those frozen ceilings and read as the gate having stopped
-    biting, when it is biting at exactly the number @SCN-CPX-002 froze.
+    two examples is each module's own, READ OFF eslint's OWN RESOLVED CONFIG for that
+    path and never re-derived. Every ceiling resolves to the standard from today
+    (3F-3466), so that read is now observationally identical to naming 10 and 40 here —
+    and it stays the read, because a number written into this Rule would be wrong the
+    moment a ceiling diverged again and would look right until someone measured. Asking
+    eslint is the one reading that cannot disagree with the check it is testing; that it
+    currently cannot disagree with a constant either is a fact about today's tree.
 
     The last three examples are the fence, and they are stated in the same scenario as
     the permission — a permitting rule whose limits live nowhere is indistinguishable
     from a hole, and this is precisely the rule that could become a hiding place.
 
     @integration @SCN-CPX-004
-    Scenario: a domain entity root outgrows the file ceiling without reding
+    Scenario: a domain entity root outgrows the file ceiling with no finding, and every per-unit rule still bites
       Given the concept modules the module-size rule does not govern
       When the complexity fitness function scans the real tree
-      Then an entity root far past the file ceiling does not red
-      And a non-root module in the same directory past the file ceiling still reds
-      And a function past its length ceiling in an entity root still reds
-      And a function past its complexity ceiling in an entity root still reds
+      Then an entity root far past the file ceiling produces no module-size finding
+      And a non-root module in the same directory past the file ceiling is still found
+      And a function past its length ceiling in an entity root is still found
+      And a function past its complexity ceiling in an entity root is still found
 
-  Rule: an exempt file reds when it worsens past its recorded value
+  Rule: the run says which population it gated and which it only reported
 
-    An exception excuses the debt a file already carries and buys not one line of
-    headroom. @SCN-CPX-001 recorded each exceedance's measured value but switched the
-    rule OFF for that file, so an exempt file could grow without limit; here each entry
-    becomes a FROZEN CEILING at exactly the recorded number. Both halves of the rule are
-    load-bearing: the file AT its recorded value must stay green — if the generated
-    ceilings were wrong the whole tree would red, and that is what the green half
-    catches — and one line past it must red naming that file and that rule.
+    THE DENOMINATOR, STATED BY THE RUN RATHER THAN INFERRED FROM IT. A gate over a subset
+    has two ways to report nothing, and they mean opposite things: the subset was clean, or
+    the subset was empty. On a trunk push it is always the second. Neither eslint's summary
+    line nor the step's recorded outcome can tell them apart, so the run states the sizes.
 
-    THE GUARANTEE, STATED AT ITS ACTUAL STRENGTH. eslint applies max-lines-per-function
-    per FILE, not per function, so a per-function ceiling is not expressible and each
-    entry carries that file's WORST offender for the rule. The guarantee is therefore
-    precisely: an exempt file reds when its WORST offender for that rule grows past the
-    recorded value — NOT that any function in it reds when it grows. A file frozen at 72
-    is frozen at 72 for every function in it, so a 41-line function there can reach 72
-    unnoticed. Said plainly because a gate must not certify more than it checks, which is
-    the whole point of 3F-2286. Closing that gap needs a different mechanism (a custom
-    rule, or the reconciliation reading per-function values) and is a separate behaviour
-    with its own @SCN — deliberately not folded in here.
+    IT IS A STATEMENT, NOT A SECOND VERDICT. Nothing here changes the exit code and nothing
+    here reds. Whether a finding reds is @SCN-CPX-001's claim; this Rule is only that the
+    run is readable.
 
-    An exempt file UNDER its recorded value stays green at this stage. Banking that
-    improvement is @SCN-CPX-003's behaviour, and implementing it here would leave that
-    scenario with no genuine red to drive it.
-
-    @integration @SCN-CPX-002
-    Scenario: an exempt file that grows past its recorded value reds the build
-      Given a file on the exception list at its recorded value
+    @integration @SCN-CPX-005
+    Scenario: the run states the size of the gated population and of the reported one
+      Given a changed set holding a file the complexity rules measure
       When the complexity fitness function scans the real tree
-      Then the file at its recorded value does not red
-      And the same file one line past its recorded value reds against that rule
-
-  Rule: the exception list must state the measured truth, so it can only tighten
-
-    THE RATCHET. @SCN-CPX-002 froze each exempt file at its recorded value, which stops
-    the debt growing. It does not stop the LIST going stale: a file improves, nobody
-    edits the entry, and the recorded number silently becomes headroom again. This Rule
-    makes the list a claim that must stay true — reconciled against the real tree, in
-    BOTH directions.
-
-    THREE REDS, THREE DIFFERENT SENTENCES. Measured ABOVE recorded is a regression, which
-    the @SCN-CPX-002 frozen ceiling also reds — both firing is correct, and each names
-    its own cause. Measured BELOW recorded is an improvement nobody banked, and it is the
-    half that makes this a ratchet rather than a ceiling that quietly stops descending.
-    No longer over the standard at all is a stale entry, and deleting it shrinks the list.
-    Each red names the file, the rule, the recorded value and the measured value, so its
-    stated cause IS its actual cause.
-
-    WHY THIS IS A SECOND NAMED CHECK, NOT MORE eslint. eslint can only red on
-    `value > max`; the load-bearing case here is `value < recorded`, which it cannot
-    express at all. So the reconciliation is its own command, `pnpm lint:complexity-exceptions`.
-
-    AND IT IS A CI STEP AGAIN, UNDER ITS ROW'S OWN CODE (3F-3165, under 3F-3139). It converted as
-    `@SCN-FIT-003`. The `lint:` prefix on the script name used to be load-bearing —
-    `runningStaticChecks` observed a CI script only when its name carried an observed prefix, so a
-    name outside that set would run in CI while being invisible to spec-controller's own ledger —
-    and the bare `@complexity` tag on a stepless scenario at the foot of this file was what kept
-    the run out of the suspense row. Neither holds now: the row states the `@SCN` and the
-    characteristic outright, a CI step carrying that code as its `id:` runs the command, and the
-    credit arrives citing the code that step carried. The prefix survives as a name a reader
-    recognises, not as a hook anything discovers — and since 3F-3343 there is no such hook to be:
-    the step is on the books because it is a step.
-
-    MEASURED WITH eslint, NEVER REIMPLEMENTED. The reconciliation runs the `ESLint` API at
-    the BARE standard — the same scope blocks the config uses, with the exception blocks
-    left off — and reads the actual values out of its messages. A second line/complexity
-    counter would agree with eslint by coincidence and drift the moment either changed.
-    The parse is PER RULE, because the three do not report uniformly: the two line rules
-    emit "too many lines (575)" while `complexity` emits "has a complexity of 21" with no
-    parenthesised number at all. A single parenthesis regex silently yields null for every
-    complexity entry — a third of the list reconciled against nothing, and passing — so
-    extraction is asserted non-null for every message.
-
-    ONE ENTRY PER FILE PER RULE, at that file's WORST offender, because that is the shape
-    that @SCN-CPX-002 froze. The reconciliation compares like with like: the worst measured
-    value for a file and rule against the value recorded for that same file and rule.
-
-    @integration @SCN-CPX-003
-    Scenario: an exception list that disagrees with the measured tree reds the build
-      Given an exception list recording each exempt file's measured value
-      When the exception list is reconciled against the real tree
-      Then a file measuring above its recorded value reds as a regression
-      And a file measuring below its recorded value reds as an improvement not banked
-      And a file no longer over the standard reds as a stale entry
+      Then the run states how many files it held to the standard
+      And it states that every other measured file is reported only
+      And a run whose changed set touches no measured file says so rather than staying silent
+      And neither statement changes the run's exit code

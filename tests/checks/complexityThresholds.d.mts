@@ -5,8 +5,9 @@
  *
  * `ratchet` was DELETED here by 3F-2286, which superseded 3F-2177's seed-at-measured-maximum rule.
  * A ratchet target only made sense as "the p90 this seed is heading toward"; with the threshold now
- * stated from outside the tree there is no seed to descend from, and the debt that used to be implied
- * by the gap is enumerated explicitly in `complexityExceptions.d.mts` instead.
+ * stated from outside the tree there is no seed to descend from. The debt the gap used to imply was
+ * enumerated in a dated list of per-file allowances until 3F-3466 deleted it; `pnpm exec eslint` now
+ * reports every standing violation on every run, which is where that debt is read from.
  */
 
 /**
@@ -50,21 +51,34 @@ export declare const TEST_THRESHOLD: ComplexityThreshold;
  */
 export declare const RETIRED_TREE_DERIVED_SEEDS: readonly number[];
 
-/** The three eslint rule ids the two scopes and the exception list share. */
+/** The three eslint rule ids both scopes share. */
 export type EslintRuleId = "complexity" | "max-lines" | "max-lines-per-function";
 
-/** One eslint rule entry: `"off"`, or `["error", …]` in the shape that rule takes. */
+/**
+ * The two severities a held rule can carry (@SCN-CPX-001, 3F-3462). `error` gates — eslint exits 1;
+ * `warn` reports — every finding is printed and eslint exits 0. Both are eslint's own vocabulary, so
+ * neither is a number measured from this tree.
+ */
+export type EslintSeverity = "error" | "warn";
+
+/** One eslint rule entry: `"off"`, or `[severity, …]` in the shape that rule takes. */
 export type RuleEntry =
   | "off"
-  | readonly ["error", number]
-  | readonly ["error", { max: number; skipBlankLines: false; skipComments: false }];
+  | readonly [EslintSeverity, number]
+  | readonly [EslintSeverity, { max: number; skipBlankLines: true; skipComments: true }];
 
 /**
- * One rule HELD at one ceiling, in the shape THAT rule takes (@SCN-CPX-002, 3F-2317).
+ * One rule HELD at one ceiling at one severity, in the shape THAT rule takes (@SCN-CPX-002, 3F-2317;
+ * the severity added by @SCN-CPX-001, 3F-3462).
  *
- * The ceiling may come from either side of the provenance line — a scope threshold stated from
- * outside this tree, or an exception's value measured from it — because the SHAPE is a property of
- * eslint's rules and not of any number. That is what lets one emitter serve both without either
- * module's guarantee bending.
+ * The ceiling could once come from either side of the provenance line — a scope threshold stated
+ * from outside this tree, or a per-file allowance measured from it — because the SHAPE is a property
+ * of eslint's rules and not of any number, and the SEVERITY is eslint's own vocabulary. Since 3F-3466
+ * every ceiling is a scope threshold, and the same indifference is what lets one emitter serve both
+ * the report and the gate without either guarantee bending.
  */
-export declare function ruleAtCeiling(rule: EslintRuleId, ceiling: RuleThreshold): RuleEntry;
+export declare function ruleAtCeiling(
+  rule: EslintRuleId,
+  ceiling: RuleThreshold,
+  severity: EslintSeverity,
+): RuleEntry;

@@ -4,9 +4,10 @@
  * Bidirectional evidence (Evidence Manifesto §9): the describe carries @SCN-RMD-008, matching
  * features/report-model.feature, so a grep of the id returns both halves.
  *
- * WHY A SEPARATE FILE. `renderInput.test.ts` — where @SCN-RMD-008's other arms live — measures
- * EXACTLY 626 code lines against a 626 complexity-exceptions ratchet, so one line added reds the
- * complexity check and raising the recorded value would widen the debt the ratchet holds down.
+ * WHY A SEPARATE FILE. `renderInput.test.ts` — where @SCN-RMD-008's other arms live — is far over
+ * the 400-code-line ceiling, so under @SCN-CPX-001 any change touching it reds until it comes back
+ * under the standard; appending arms to it is the one move that cannot work. (3F-3466 deleted the
+ * per-file allowance that used to freeze it at its measured value instead.)
  * The house pattern is a focused sibling file (`untaggedScenarioRow.test.ts`, `journal.test.ts`),
  * and an @SCN carrying arms in more than one file is routine (@SCN-CIP-003 has four).
  *

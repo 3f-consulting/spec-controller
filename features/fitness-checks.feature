@@ -73,17 +73,11 @@ Feature: The fitness checks this repository configures, one scenario per row
   the manifest, kept in step by whoever remembers.
 
   @fitness @SCN-FIT-001
-  Scenario: every function and module measures inside the external complexity standard, or inside its recorded exception
-    Given this repository's source as this push leaves it
-    And a recorded exception for each site held above the standard
+  Scenario: every function and module the push touches measures inside the external complexity standard
+    Given this repository's source as this push leaves it, and the files the push touched
     When the external complexity standard is applied across that source
-    Then every function and module measures inside the standard, or inside its own recorded exception
-
-  @fitness @SCN-FIT-003
-  Scenario: every recorded complexity exception states the value the tree currently measures
-    Given the recorded complexity exceptions, each naming a value
-    When each is read against what the tree now measures at that site
-    Then every exception states the value the tree currently measures
+    Then every function and module the push touched measures inside the standard
+    And every other site over the standard is reported without failing the run
 
   @fitness @SCN-FIT-014
   Scenario: every tag on the corpus obeys the @SCN scheme's own rules

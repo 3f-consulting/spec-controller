@@ -52,11 +52,11 @@ The scenario is **written beside its row rather than derived from it**:
 
 ```gherkin
   @fitness @SCN-FIT-001
-  Scenario: every function and module measures inside the external complexity standard, or inside its recorded exception
-    Given this repository's source as this push leaves it
-    And a recorded exception for each site held above the standard
+  Scenario: every function and module the push touches measures inside the external complexity standard
+    Given this repository's source as this push leaves it, and the files the push touched
     When the external complexity standard is applied across that source
-    Then every function and module measures inside the standard, or inside its own recorded exception
+    Then every function and module the push touched measures inside the standard
+    And every other site over the standard is reported without failing the run
 ```
 
 ```json
@@ -101,10 +101,10 @@ pipeline already produces. Its whole cost is one line per check step plus one st
 A check that is already a pipeline step needs nothing done to the command:
 
 ```yaml
-      - name: Complexity exceptions
-        id: SCN-FIT-003
+      - name: Import boundaries
+        id: SCN-FIT-009
         if: always()
-        run: pnpm lint:complexity-exceptions
+        run: pnpm lint:boundaries
 ```
 
 **The `id:` is the row's `@SCN`, never a handle of your own choosing.** A handle would need a fourth

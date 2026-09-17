@@ -1,13 +1,13 @@
 /**
  * The domain's CONCEPT MODULES — the files `max-lines` does not govern (@SCN-CPX-004, 3F-2416).
  *
- * A THIRD KIND OF NUMBERLESS FACT, BESIDE THE OTHER TWO. `complexityThresholds.mjs` holds numbers
- * stated from OUTSIDE this tree; `complexityExceptions.mjs` holds numbers MEASURED FROM it. This file
- * holds no number at all, and that is what it is for: it records what KIND of module each of these is,
- * not how big any of them happens to be today. An exception entry says "this file measures 575 on this
- * date" — a fact about debt, which must shrink. This says "this module is a concept root" — a fact
- * about the model, which does not shrink and carries no date to go stale. Three files, three kinds of
- * claim, and a reader never has to work out which they are looking at.
+ * A NUMBERLESS FACT, BESIDE THE ONE FILE THAT HOLDS NUMBERS. `complexityThresholds.mjs` holds numbers
+ * stated from OUTSIDE this tree. This file holds no number at all, and that is what it is for: it
+ * records what KIND of module each of these is, not how big any of them happens to be today. A third
+ * file sat beside them until 3F-3466 — a dated list of per-file allowances, each entry saying "this
+ * file measures 575 on this date", a fact about debt which had to shrink. This says "this module is a
+ * concept root", a fact about the model, which does not shrink and carries no date to go stale. The
+ * distinction is why the lists were never merged, and it is why this one outlived the other.
  *
  * ═══ WHY max-lines YIELDS HERE ═══
  *
@@ -21,10 +21,10 @@
  * because the gate forced it. So the guard states its scope rather than the model bending to it.
  *
  * ONLY MODULE SIZE YIELDS, AND THAT IS WHAT MAKES THIS SAFE TO GRANT. `complexity` 10 and
- * `max-lines-per-function` 40 apply to these modules exactly as they do anywhere else — three of them
- * carry a `max-lines-per-function` exception today and stay gated as the smells they are. A long
- * module of small, simple, well-named functions is coherent; a fat or complex FUNCTION is debt
- * whatever module holds it, and the per-unit gate takes it. Nothing can hide in this list.
+ * `max-lines-per-function` 40 apply to these modules exactly as they do anywhere else, and two of
+ * them are over `max-lines-per-function` today and reported as the smells they are. A long module of
+ * small, simple, well-named functions is coherent; a fat or complex FUNCTION is debt whatever module
+ * holds it, and the per-unit gate takes it. Nothing can hide in this list.
  *
  * ═══ WHY A STATED SET AND NOT A GLOB ═══
  *
@@ -40,11 +40,15 @@
  * adds it here by living in that directory. Written down because the two are observationally identical
  * today, and the difference is the entire point of not writing the glob.
  *
- * THE RESIDUAL, STATED. Whether a listed module really is a concept root is a judgement no gate can
- * make. What IS checked, by the `@unit` pin: every path exists, lives under a domain directory, is not
- * a test file, appears once, and carries no `max-lines` exception. The last of those is checked twice
- * over — `@SCN-CPX-003`'s reconciliation measures through this exclusion, so an entry added for one of
- * these paths reds as a stale entry with no help from the pin.
+ * THE RESIDUAL, STATED, AND IT IS LARGER THAN IT WAS. Whether a listed module really is a concept
+ * root is a judgement no gate can make, and NOTHING mechanical checks the entries at all: there is no
+ * `@unit` pin beside this module — measured, 3F-3466, and the claim that there was one is older than
+ * this branch. The only reader is the @SCN-CPX-004 cucumber arm, and what it proves is that `max-lines`
+ * resolves to `off` at each listed path and that the per-unit rules still bite there. It plants sources
+ * and never reads the tree, so a path that does not exist, is duplicated, or names a test file passes
+ * every one of its assertions. A per-file allowance list once covered the overlap from the other side;
+ * that reader (@SCN-CPX-003's Delete) and the list itself (3F-3466) are both retired, and the existence
+ * of each path is now checked by nothing.
  *
  * @type {readonly string[]}
  */

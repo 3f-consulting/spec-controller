@@ -24,8 +24,8 @@ Feature: The local green-check runs the ladder CI runs, derived rather than list
 
   WHAT IS LEFT OUT MUST SAY WHY, AND THE REASON MUST STILL HOLD. Naming the omission
   out loud was already the header's rule; it moves from a comment into a value the
-  emitter prints. An exclusion whose script CI no longer runs reds as stale — the
-  ratchet shape lint:complexity-exceptions and lint:exempt-data-floor already use.
+  emitter prints. An exclusion whose script CI no longer runs reds as stale — the ratchet
+  shape any register of excused things has to take, or the excuse outlives its subject.
 
   AND THE ONE THING LEFT OUT RUNS FIRST. An excluded step has one chance where every
   gate has two, and a run: step that reds aborts the job — so any gate ahead of the

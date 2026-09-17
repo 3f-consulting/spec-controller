@@ -22,14 +22,16 @@
  * stated independently of the code it judges, or it is not a fitness function — it is a mirror.
  *
  * So the numbers below are stated by bodies outside this repository, and NOTHING measured from this
- * tree may ever enter this file. The measured numbers live next door in `complexityExceptions.mjs`,
- * which carries the opposite guarantee — every number there IS a measurement of this tree. That is why
- * they are two modules and not one: a reader must never have to work out which kind a number is.
+ * tree may ever enter this file. It used to have a counterpart carrying the opposite guarantee — a
+ * dated list of per-file allowances, every number in it measured from this tree — and the two were
+ * separate modules precisely so a reader never had to work out which kind a number was. That list is
+ * gone (3F-3466) and no measured number survives anywhere in the check, so this file's guarantee is
+ * now the check's guarantee outright.
  *
  * `ratchet` is DELETED with the rule it served. It recorded each rule's measured p90 as the
  * destination a measured seed was heading toward; with no seed there is nothing to descend from. The
- * debt that gap used to imply is now enumerated file by file in the exception list, which is a
- * stronger form of the same intent — a backlog you can work through rather than an aspiration in a
+ * debt that gap used to imply is reported file by file by the check itself, on every run, which is
+ * a stronger form of the same intent — a backlog you can work through rather than an aspiration in a
  * comment.
  *
  * ═══ TWO SCOPES, ONE STANDARD ═══
@@ -44,7 +46,14 @@
  * WHEN THIS REDS ON LEGITIMATE GROWTH. That is the fitness function working, not crying wolf — the red
  * names the rule, the file and the measured value, so its stated cause IS its actual cause (contrast
  * 3F-2201, where a floor blamed a parallel store for an ordinary deletion). The response is to
- * refactor, or to record a dated exception carrying its measured value. Never slack added in advance.
+ * refactor. Never slack added in advance.
+ *
+ * AND THERE IS NO LONGER A SECOND OPTION, WHICH IS WHY THIS PARAGRAPH CHANGED (3F-3408). It used to
+ * read "refactor, OR record a dated exception carrying its measured value" — and nothing can record
+ * one any more: the dated exception list and its ratchet went with @SCN-CPX-002 and @SCN-CPX-003.
+ * Nothing needs to, either. A red here is now only ever about a file the change TOUCHED, held at the
+ * standard; a violation in a file nobody touched is reported at `warn` and exits 0. So the escape
+ * hatch is gone and the thing it existed to excuse cannot red you in the first place.
  */
 
 /**
@@ -122,20 +131,26 @@ export const TEST_THRESHOLD = {
 };
 
 /**
- * One eslint rule HELD at one ceiling, in the shape THAT rule takes (@SCN-CPX-002, 3F-2317).
+ * One eslint rule HELD at one ceiling at one severity, in the shape THAT rule takes (@SCN-CPX-002,
+ * 3F-2317; the severity added by @SCN-CPX-001, 3F-3462).
  *
  * WHY THIS LIVES IN THE MODULE WHOSE NUMBERS ALL COME FROM OUTSIDE. It takes a ceiling and holds
  * none: the SHAPE is a property of eslint's rules, which are as external as the standard itself, so
- * this file's guarantee is untouched. That is what lets ONE emitter serve both callers — the scope
- * blocks, whose ceilings are stated from outside, and the exception blocks, whose ceilings are
- * measured from this tree. Two emitters would be the agreeing-by-copy this codebase keeps removing:
- * they would agree on the shapes today and drift the first time eslint changed one.
+ * this file's guarantee is untouched. THE SEVERITY IS AS EXTERNAL AS THE SHAPE — `"error"` and
+ * `"warn"` are eslint's own vocabulary and neither is measured from this tree — so taking it as a
+ * parameter does not bend the contract either. That is what lets ONE emitter serve all callers: the
+ * scope blocks at `warn` (the report) and the same blocks restated at `error` over what the change
+ * touched (the gate). Two emitters would be the agreeing-by-copy this codebase keeps removing: they
+ * would agree on the shapes today and drift the first time eslint changed one.
  *
  * THE SHAPE IS NOT UNIFORM, AND GETTING IT WRONG IS SILENT. `complexity` takes a bare number
  * (`["error", 10]`); `max-lines` and `max-lines-per-function` take an options object
  * (`["error", { max, … }]`). Hand eslint the wrong one and it does not complain — it mis-reads the
  * option and applies no ceiling at all, which looks exactly like a file that is under its ceiling.
- * The @unit pin exists for that failure mode specifically, because nothing else would notice it.
+ * WHAT NOTICES IT IS THE @SCN-CPX-001 CUCUMBER ARM, which lints planted sources through the real
+ * config and reads the severity off the message. There is no `.test.ts` beside this module and the
+ * `@unit pin` this file's prose names above is not in the tree (measured, 3F-3462) — said here
+ * because a reader reaching for it to cover a new emitter will not find one.
  *
  * `skipBlankLines: true, skipComments: true` RIDES ON EVERY EMITTED LINE RULE (3F-2395). The
  * threshold holds the CODE a reader must hold in their head, not the file's bytes. Counting
@@ -144,18 +159,23 @@ export const TEST_THRESHOLD = {
  * this tree has already paid: two of the largest reductions ever banked here were partly comment
  * compactions counted as line count. `fitness-functions.md`, the portfolio standard promoted from
  * an adopter's repository 2026-08-04, rules the counting mode; it is stated here rather than left to eslint's defaults
- * because every value in `complexityExceptions.mjs` is measured in this mode, and any other mode
- * changes every number in the debt list at once and in silence.
+ * because the mode is part of what 40 and 400 MEAN, and changing it re-measures the whole population
+ * at once and in silence.
  *
  * A `"off"` ceiling passes straight through to eslint's own severity vocabulary, so the test scope's
- * `max-lines-per-function` ABSTENTION survives unchanged. Inventing a number for it here would
- * reinstate the self-certification 3F-2286 exists to remove.
+ * `max-lines-per-function` ABSTENTION survives unchanged — and it OUTRANKS the severity, because a
+ * rule that does not apply to a scope does not apply at either severity. Inventing a number for it
+ * here would reinstate the self-certification 3F-2286 exists to remove.
+ *
+ * THE SEVERITY IS REQUIRED, WITH NO DEFAULT. A default would be one of the two callers' answers
+ * silently applied to the other, and getting it wrong is exactly as quiet as getting the option shape
+ * wrong: a gate emitted at `warn` reports every violation in full and exits 0.
  *
  * @type {typeof import("./complexityThresholds.d.mts").ruleAtCeiling}
  */
-export const ruleAtCeiling = (rule, ceiling) => {
+export const ruleAtCeiling = (rule, ceiling, severity) => {
   if (ceiling === "off") return "off";
   return rule === "complexity"
-    ? ["error", ceiling]
-    : ["error", { max: ceiling, skipBlankLines: true, skipComments: true }];
+    ? [severity, ceiling]
+    : [severity, { max: ceiling, skipBlankLines: true, skipComments: true }];
 };

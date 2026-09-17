@@ -7,10 +7,9 @@
  * grep of it returns the scenario, this arm, the predicate arm and the ladder arm.
  *
  * IT IS ITS OWN FILE RATHER THAN THREE MORE ARMS IN markdown.test.ts, for the reason
- * provenanceSection.test.ts already records: `complexityExceptions.mjs` FREEZES that file at
- * exactly 1341 code lines and an exception buys no headroom, so arms appended to it red
- * `lint:complexity-exceptions` however good they are. The run verdict is a self-contained
- * emitter and its arms travel with it.
+ * provenanceSection.test.ts already records: that file is far over the 400-code-line ceiling, so
+ * under @SCN-CPX-001 a change touching it reds until it comes back under the standard. The run
+ * verdict is a self-contained emitter and its arms travel with it.
  *
  * THE HEADLINE WORD IS A RENDER WORD, NEVER THE PREDICATE'S NAME — the `hasBrokenEvidence` →
  * "UNSOUND", `isBalanced` → "balanced" precedent. What is pinned here is the sentence a consumer

@@ -654,11 +654,6 @@ jobs:
         # what a pipeline needs to put it on the PATH is the pipeline's business.
         run: pnpm exec eslint
 
-      - name: Complexity exceptions
-        id: SCN-FIT-003
-        if: always()
-        run: pnpm lint:complexity-exceptions
-
       # THE ONE STEP HERE THAT IS THE PRODUCT RATHER THAN A CHECK WE WROTE (3F-3311), AND IT IS NOW
       # THE ONLY ONE POLICING THE CORPUS. It stood beside two private copies of itself —
       # `lint:scn-tags` (620 lines over a hand-rolled line parser, left at 3F-3312) and
