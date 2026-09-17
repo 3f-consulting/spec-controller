@@ -31,7 +31,11 @@ import { IdGenerator, type FeatureChild, type GherkinDocument } from "@cucumber/
 import { bareTerm } from "../lib/bareTerm.js";
 import type { Scenario, EvidenceObligation, QualityCheck, RuntimeQualityCheck } from "../model.js";
 import { measuredCheckTags, thresholdFor, type ThresholdIndex } from "../domain/thresholds.js";
-import { carriesBar, type FitnessCheckIndex } from "../domain/fitnessChecks.js";
+import {
+  carriesBar,
+  type FitnessCheckIndex,
+  type UnspecifiedFitnessRow,
+} from "../domain/fitnessChecks.js";
 
 const SCN_CODE = /^SCN-[A-Z0-9]+-\d+$/;
 
@@ -393,6 +397,40 @@ export function unconfiguredFitnessScenarios(
     if (!unconfigured.includes(scenario.scnId)) unconfigured.push(scenario.scnId);
   }
   return unconfigured;
+}
+
+/**
+ * THE CONFIGURED ROWS THE CORPUS CARRIES NO SCENARIO FOR (3F-3472, @SCN-LNT-027) — the mirror of
+ * `unconfiguredFitnessScenarios` directly above, in MANIFEST order.
+ *
+ * THE RUN DOES NOT ALREADY RED ON IT, WHICH IS THE WHOLE DIFFERENCE BETWEEN THE TWO. Its mirror
+ * adds only a sentence, because a scenario no row names already reconciles to zero rows on both
+ * sides and is out of balance through the degenerate item. A row no scenario names raised NOTHING:
+ * the obligations travel with the scenarios, so a row with no scenario contributed a characteristic
+ * nobody asked for and the run read balanced over a check that was declared and never specified.
+ * `double-entry-manifesto.md` names that shape exactly — a ledger catches a credit that never
+ * arrived and is blind to a debit that was never raised.
+ *
+ * IT READS THE WALK IT IS HANDED, for its mirror's reason: a second walk would be free to disagree
+ * about which scenarios the corpus holds, and a row raised against a corpus the obligations were
+ * not taken from is the phantom-row fault (@SCN-LNT-009) reached from the manifest side.
+ *
+ * EVERY `@SCN`-CARRYING SCENARIO COUNTS, NOT THE `@fitness` ONES ALONE. The claim is that the
+ * corpus carries no scenario for the row — so a scenario carrying the row's code and saying nothing
+ * about the fitness axis is still a scenario somebody wrote under that code, and minting a debit
+ * beside it would report a check nobody has specified where one has been started.
+ */
+export function unspecifiedFitnessRows(
+  scenarios: readonly TaggedScenario[],
+  fitnessChecks: FitnessCheckIndex
+): UnspecifiedFitnessRow[] {
+  const carried = new Set(scenarios.map((scenario) => scenario.scnId));
+  const unspecified: UnspecifiedFitnessRow[] = [];
+  for (const [scnId, row] of fitnessChecks) {
+    if (carried.has(scnId)) continue;
+    unspecified.push({ scnId, characteristic: row.characteristic });
+  }
+  return unspecified;
 }
 
 /**

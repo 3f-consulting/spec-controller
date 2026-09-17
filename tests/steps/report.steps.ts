@@ -513,6 +513,12 @@ After({ tags: "@SCN-RPT-010" }, function () {
 const EVIDENCE_OBSERVATION_E2E_OPTS = {
   features: "tests/fixtures/evidence-observation-e2e/features",
   cucumber: "tests/fixtures/evidence-observation-e2e/cucumber.json",
+  // THE FIXTURE'S OWN MANIFEST, NAMED RATHER THAN DEFAULTED (3F-3471). `runReconcile` falls back to
+  // `"package.json"` — this tool's — so a target fixture that does not name one is reconciled
+  // against spec-controller's `specController` config: its fitness rows and a `notChecks` list
+  // written for a different repository. The fixture is the target, so the target's manifest is the
+  // one to read.
+  packageJson: "tests/fixtures/evidence-observation-e2e/package.json",
   // NB: no vitest report — the @e2e obligation is discharged solely by the cucumber run.
 };
 let runsRoot017: string;
@@ -616,6 +622,9 @@ After({ tags: "@SCN-RPT-017" }, function () {
 const EVIDENCE_OBSERVATION_INTEGRATION_E2E_OPTS = {
   features: "tests/fixtures/evidence-observation-integration-e2e/features",
   cucumber: "tests/fixtures/evidence-observation-integration-e2e/cucumber.json",
+  // The fixture's own manifest, for the reason given on EVIDENCE_OBSERVATION_E2E_OPTS above
+  // (3F-3471): defaulted, this target reconciles against spec-controller's manifest, not its own.
+  packageJson: "tests/fixtures/evidence-observation-integration-e2e/package.json",
   // NB: no vitest report — the @integration and @e2e obligations are both discharged by the one
   // cucumber pass (the multi-tag ruling: one execution exercises the integrated tiers, LDG-014).
 };

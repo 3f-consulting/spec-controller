@@ -881,8 +881,8 @@ Then(
 // handed-over CI run record never carried is broken evidence; a run handed NO record raises none
 // of it. The arm runs over a planted target repository (tests/fixtures/scn-lnt-027/) whose manifest
 // names two checks and whose corpus and run record each carry one — an emptied corpus in
-// miniature, since the missing check's Evidence Obligation went with its scenario and its credit
-// went with the step nothing recorded.
+// miniature, since the missing check's credit went with the step nothing recorded and its Evidence
+// Obligation is raised from the MANIFEST rather than from the scenario it has none of (3F-3472).
 //
 // BOTH READINGS FROM ONE TARGET, which is why the second Then reconciles the same fixture a second
 // time with the record withheld rather than reaching for a second one. Two fixtures could agree by
@@ -989,9 +989,10 @@ When(
 Then(
   "the row the record carried no step for is broken evidence naming it, and the run is unsound",
   function () {
-    // THE LEDGER WHOLE, because the fault is what is ABSENT from it. Before this rule the second
-    // row had no scenario, no Evidence Obligation and no credit, so it appeared nowhere and the
-    // run balanced over a check nothing recorded.
+    // THE LEDGER WHOLE, because what this target is for is what USED to be absent from it. Until
+    // 3F-3472 the second row had no scenario, no Evidence Obligation and no credit, so it appeared
+    // nowhere and the run balanced over a check nothing recorded; it now carries BOTH faults — a
+    // debit nothing observed, raised from the manifest, and a step the record it was handed omits.
     assert.deepEqual(
       unenumeratedReconciliation.ledger.scenarioReconciliations.map((row) => [
         row.scnId,
@@ -1002,9 +1003,11 @@ Then(
       [
         ["SCN-CVT-001", "scenario", "balanced", [["complexity", "satisfied"]]],
         ["(no scenario)", "suspense-scenario", "out-of-balance", [[undefined, "broken"]]],
+        ["SCN-CVT-002", "scenario", "out-of-balance", [["traceability", "missing"]]],
       ],
-      `expected the recorded row credited and the unrecorded one on the suspense row as ` +
-        `broken; got ${JSON.stringify(unenumeratedReconciliation.ledger.scenarioReconciliations)}`
+      `expected the recorded row credited, the unrecorded one on the suspense row as broken, and ` +
+        `the row the corpus carries no scenario for on its own out-of-balance row; ` +
+        `got ${JSON.stringify(unenumeratedReconciliation.ledger.scenarioReconciliations)}`
     );
     assert.equal(
       hasBrokenEvidence({
@@ -1026,12 +1029,17 @@ Then(
 
 // @SCN-LNT-027
 Then(
-  "the same target reconciled with no CI run record at all raises nothing broken — the scenario its corpus carries reconciles missing, and the run is merely out of balance",
+  "the same target reconciled with no CI run record at all raises nothing broken — the scenario its corpus carries reconciles missing, the row its corpus carries no scenario for is on the books as an Evidence Obligation nothing observed, and the run is merely out of balance",
   function () {
     // THE DISCRIMINATOR AGAINST FLATTENING THE TWO FACTS. Were `no record` read as `an empty
     // record`, this reading would call a consumer whose pipeline dumps none broken over a file it
     // has no reason to own — and every target reconciling today without one would move from out of
     // balance to unsound.
+    //
+    // AND THE SECOND ROW IS HERE TOO, WHICH IS WHAT SAYS NO RUN INPUT DECIDES IT (3F-3472). Its
+    // debit is raised from the manifest, so withholding the record leaves it exactly where the
+    // recorded reading put it; a rule the record could suppress would be the blindness this
+    // closes, one layer up.
     assert.deepEqual(
       unenumeratedNoRecordReconciliation.ledger.scenarioReconciliations.map((row) => [
         row.scnId,
@@ -1039,8 +1047,11 @@ Then(
         row.verdict,
         row.qualityCheckReconciliations.map((item) => [item.staticCheck, item.outcome]),
       ]),
-      [["SCN-CVT-001", "scenario", "out-of-balance", [["complexity", "missing"]]]],
-      `expected the one enumerable row to reconcile missing and no suspense row at all; got ` +
+      [
+        ["SCN-CVT-001", "scenario", "out-of-balance", [["complexity", "missing"]]],
+        ["SCN-CVT-002", "scenario", "out-of-balance", [["traceability", "missing"]]],
+      ],
+      `expected both rows to reconcile missing and no suspense row at all; got ` +
         `${JSON.stringify(unenumeratedNoRecordReconciliation.ledger.scenarioReconciliations)}`
     );
     assert.equal(
@@ -2797,5 +2808,203 @@ Then(
           `other; got ${JSON.stringify(bearing)} in:\n${uncitedSeveredMd}`
       );
     }
+  }
+);
+
+// -------------------------------------------------------------------------
+// @SCN-LNT-034 — a configured row whose @SCN no scenario in the corpus carries reaches the ledger as
+// an Evidence Obligation nothing observed, and no credit can settle it. The arm runs over a planted
+// target repository (tests/fixtures/scn-lnt-034/) whose manifest declares two checks and whose
+// corpus specifies one — a check declared and never written, which is the shape the rule exists for.
+//
+// TWO RUNS OF ONE TARGET, WHICH IS WHY THE FIXTURE CARRIES TWO WORKFLOWS AND ONE MANIFEST. The
+// manifest and the corpus disagree whatever a run did, so what varies between the readings is the
+// run alone: the first cites only the row the corpus specifies and writes no record at all, the
+// second states the unspecified row's code and hands over the record that run wrote. Split across
+// two targets they could agree by accident about a manifest neither of them shares (@SCN-LNT-027).
+//
+// THE FIRST RUN LEAVES THIS TARGET BALANCED BUT FOR THE ONE ROW, deliberately. A fixture out of
+// balance for some second reason would go on reporting a failed run with this rule removed, and the
+// verdict would be evidence of nothing.
+//
+// IT RUNS THE REAL CLI OVER REAL FILES, not an in-memory composition — this is the route an adopter
+// takes, and the verdict a consumer acts on is the process's own ending.
+// -------------------------------------------------------------------------
+
+/** @SCN-LNT-034 outcome: the planted target's root, and the two runs' reports and endings. */
+let unspecifiedRowFixture: string;
+let unspecifiedRowQuietRun: { status: number | null; md: string };
+let unspecifiedRowCitingRun: { status: number | null; md: string };
+
+/** The planted target's manifest, read once and shared by the Given and the When. */
+function unspecifiedRowManifest(): PackageJsonScripts & {
+  specController?: { fitnessChecks?: unknown };
+} {
+  return JSON.parse(
+    readFileSync(join(unspecifiedRowFixture, "package.json"), "utf8")
+  ) as PackageJsonScripts & { specController?: { fitnessChecks?: unknown } };
+}
+
+/**
+ * One reconciliation of the planted target through the shipped binary, for the run named by
+ * `workflow` and — where its pipeline wrote one — the record in `record`.
+ *
+ * The record is OMITTED from the argv rather than passed empty where no run wrote one, because that
+ * is what a consumer whose pipeline dumps none types (@SCN-LNT-027's distinction, one layer out).
+ */
+function reconcileUnspecifiedRowTarget(
+  workflow: string,
+  record?: string
+): { status: number | null; md: string } {
+  const reportDir = mkdtempSync(join(tmpdir(), "spec-controller-lnt034-"));
+  const reportPath = join(reportDir, "spec-reconciliation.md");
+  const result = spawnSync(
+    NODE,
+    [
+      ...SPEC_CONTROLLER_ARGV,
+      "balance",
+      "--features", join(unspecifiedRowFixture, "features"),
+      "--ci", join(unspecifiedRowFixture, workflow),
+      "--package-json", join(unspecifiedRowFixture, "package.json"),
+      ...(record === undefined ? [] : ["--ci-steps", join(unspecifiedRowFixture, record)]),
+      "--target", "lnt034-fixture",
+      "--format", `md:${reportPath}`,
+    ],
+    { cwd: reportDir, encoding: "utf8" }
+  );
+  assert.equal(result.error, undefined, `CLI failed to spawn: ${result.error?.message}`);
+  return { status: result.status, md: readFileSync(reportPath, "utf8") };
+}
+
+/** The by-scenario table of a report, as the rows a reader sees under `## Scenario Reconciliations`. */
+function scenarioReconciliationRows(md: string): string[] {
+  const section = md.slice(md.indexOf("## Scenario Reconciliations"));
+  return section
+    .split("\n")
+    .filter((line) => line.startsWith("| "))
+    .filter((line) => !line.startsWith("| Scenario |") && !line.startsWith("| --- |"));
+}
+
+// @SCN-LNT-034
+Given(
+  "a target's configured rows name a fitness check for two scenarios and its corpus carries a scenario for only the first",
+  function () {
+    unspecifiedRowFixture = join(process.cwd(), "tests/fixtures/scn-lnt-034");
+    // THE FIXTURE IS HELD TO THE ASYMMETRY THE WHOLE SCENARIO RESTS ON: two STATIC rows, and a
+    // corpus specifying one of them. Drift either way — a second scenario appearing, or a row
+    // carrying a bar and taking its credit from a measurement instead — and this arm would go on
+    // passing while asserting nothing about a row nobody specified.
+    assert.deepEqual(
+      [...resolveFitnessChecks(unspecifiedRowManifest(), NO_GATE_RECORD)].map(([scn, row]) => [
+        scn,
+        row.characteristic,
+        carriesBar(row),
+      ]),
+      [
+        ["SCN-CVT-001", "complexity", false],
+        ["SCN-CVT-002", "traceability", false],
+      ],
+      "expected two STATIC rows, one of which this target's corpus specifies"
+    );
+    assert.deepEqual(
+      parseTaggedScenarios(
+        readFileSync(join(unspecifiedRowFixture, "features/target.feature"), "utf8")
+      ).map((scenario) => scenario.scnId),
+      ["SCN-CVT-001"],
+      "expected the planted corpus to carry a scenario for the FIRST row and for nothing else"
+    );
+  }
+);
+
+// @SCN-LNT-034
+When("that target's evidence is reconciled with no CI run record at all", function () {
+  // THE QUIET RUN, read through the product's own workflow reader rather than re-derived from the
+  // YAML: one step, stating the code of the row this corpus does specify. That is what leaves the
+  // target balanced but for the unspecified row, so the ending below is about that row alone.
+  assert.deepEqual(
+    ciRunSteps([readFileSync(join(unspecifiedRowFixture, "ci.yml"), "utf8")]).map((step) => step.id),
+    ["SCN-CVT-001"],
+    "expected the quiet run to cite the specified row and run no other step"
+  );
+  unspecifiedRowQuietRun = reconcileUnspecifiedRowTarget("ci.yml");
+  // THE SAME TARGET'S SECOND RUN, taken here so both readings are of one manifest and one corpus.
+  // Its pipeline states the UNSPECIFIED row's code, which is the only route by which a credit could
+  // reach that row at all.
+  assert.deepEqual(
+    ciRunSteps([
+      readFileSync(join(unspecifiedRowFixture, "ci-citing-the-row.yml"), "utf8"),
+    ]).map((step) => step.id),
+    ["SCN-CVT-001", "SCN-CVT-002", "dump-the-step-record"],
+    "expected the second run to state the unspecified row's code, beside the step that wrote its record"
+  );
+  unspecifiedRowCitingRun = reconcileUnspecifiedRowTarget(
+    "ci-citing-the-row.yml",
+    "ci-steps.json"
+  );
+});
+
+// @SCN-LNT-034
+Then(
+  "the row the corpus carries no scenario for is on the books as an Evidence Obligation nothing observed, its row is out of balance, and the run fails",
+  function () {
+    // THE BY-SCENARIO TABLE WHOLE, because the claim is that a row is THERE where none used to be.
+    // Until 3F-3472 this target reported ONE row — the scenario its corpus carries, credited by the
+    // step citing it — and the run read balanced at exit 0 over a check it had declared and never
+    // specified.
+    assert.deepEqual(
+      scenarioReconciliationRows(unspecifiedRowQuietRun.md),
+      [
+        "| SCN-CVT-001 | L/1 | ✓ balanced | — |",
+        "| SCN-CVT-002 | L/- | ✗ out-of-balance | lint ∅ Evidence Observation is missing |",
+      ],
+      `expected the unspecified row on its own out-of-balance row beside the specified one; got ` +
+        `${JSON.stringify(scenarioReconciliationRows(unspecifiedRowQuietRun.md))}`
+    );
+    // AND THE OBLIGATION NAMES THE CHARACTERISTIC THE MANIFEST OWES IT AT, which is what makes this
+    // a debit rather than a sentence about a corpus: the row said what kind of check it is, and
+    // nothing observed it.
+    assert.match(
+      unspecifiedRowQuietRun.md,
+      /\| SCN-CVT-002 \| traceability \| ∅ Evidence Observation is missing \|/,
+      "expected the lint obligations table to owe the unspecified row at the characteristic it names"
+    );
+    // THE RUN'S OWN ENDING. Exit 1 is the out-of-balance verdict a consumer's pipeline acts on, and
+    // this target has no second reason to reach it.
+    assert.equal(
+      unspecifiedRowQuietRun.status,
+      1,
+      "expected the run to FAIL over the row nobody specified"
+    );
+  }
+);
+
+// @SCN-LNT-034
+Then(
+  "the same target reconciled with a CI step citing that row still does not balance it — the run's credit posts to a phantom row and the obligation stays missing",
+  function () {
+    // NO CREDIT CAN SETTLE THIS DEBIT, and it is a set the row is not a member of rather than a rule
+    // the code follows: the citation index is built from the corpus's scenarios alone. So the run
+    // that executed the check and said so credits a PHANTOM row, and the obligation is still
+    // missing on the row beside it — the same @SCN, twice, disagreeing.
+    //
+    // THIS IS THE ARM THAT HOLDS THE DESIGN SHUT. Synthesising a scenario for the row instead would
+    // put its code INTO that index, and this reading would report one BALANCED row: a check
+    // declared, never specified, cited by a run that executed something, reported green. That is a
+    // worse false green than the one the first reading closes.
+    assert.deepEqual(
+      scenarioReconciliationRows(unspecifiedRowCitingRun.md),
+      [
+        "| SCN-CVT-001 | L/1 | ✓ balanced | — |",
+        "| SCN-CVT-002 | L/- | ✗ out-of-balance | lint ∅ Evidence Observation is missing |",
+        "| SCN-CVT-002 | — | ✗ out-of-balance | lint 👻 Evidence Observation cites an unknown Scenario (traceability) |",
+      ],
+      `expected the credit on a phantom row and the obligation still missing beside it; got ` +
+        `${JSON.stringify(scenarioReconciliationRows(unspecifiedRowCitingRun.md))}`
+    );
+    assert.equal(
+      unspecifiedRowCitingRun.status,
+      1,
+      "expected the run to FAIL still, with its own step citing the row"
+    );
   }
 );

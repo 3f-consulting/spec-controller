@@ -73,7 +73,9 @@ import {
   citesUnknownScenarioReconciliationsOf,
   suspenseReconciliationsOf,
   noScnCodeReconciliations,
+  unspecifiedRowReconciliations,
 } from "./qualityCheckReconciliation.js";
+import type { UnspecifiedFitnessRow } from "./fitnessChecks.js";
 import {
   ledgerTally,
   runtimeObservationTally,
@@ -233,77 +235,76 @@ function routeCredits(
   return { citations, brokenEvidence, uncited, noEvidenceObligationGuards };
 }
 
-export function reconcile(
-  scenarios: Scenario[],
+/**
+ * ONE REAL SCENARIO'S ROW — the debit side reconciled against the observed evidence, the credit
+ * side's no-evidence-obligation items beside it, and the row assembled from both.
+ *
+ * ITS OWN FUNCTION, extracted at @SCN-LNT-027 (3F-3472) when the fourth population took `reconcile`
+ * past the `max-lines-per-function` ceiling — `routeCredits`' own precedent, and the same seam.
+ * Routing is one idea with a name, what each population RECONCILES to is another, and `reconcile`
+ * is the ORDER they are filed in. Nothing any of them decides moved.
+ */
+function scenarioRow(
+  d: Scenario,
   evidenceObservations: EvidenceObservation[],
-  untaggedScenarios: readonly string[] = []
-): Ledger {
-  const scenarioReconciliations: ScenarioReconciliation[] = [];
+  citations: CitationIndex,
+  evidenceObligationPairs: ReadonlySet<string>
+): ScenarioReconciliation {
+  // THE PENDING PARTITION (@SCN-PND-004) — `pendingItemsOf` and `evidenceObligationsOf`
+  // are exact complements over the scenario's obligations, so nothing is dropped and nothing is
+  // counted twice. Rule + rationale: `domain/journal`.
+  const pendingItems: PendingItem[] = pendingItemsOf(d);
 
-  // THE OBLIGATION SIDE, prepared once — the three sets the posting rule and the outcome rules read.
-  // Each is already the MODEL's own rule (never re-derived here), and each is built ONCE and
-  // shared, so no two consumers can drift: `scenarioIds` is which scenarios exist,
-  // and `evidenceObligationPairs` is what they name at each quality-check (3F-1858).
-  const scenarioIds = new Set(scenarios.map((d) => d.scnId));
-  // The NAMED pairs — the model's rule, built ONCE and shared with the census (3F-1858).
-  // Pending obligations are excluded: a pending obligation names nothing.
-  const evidenceObligationPairs = evidenceObligationPairsOf(scenarios);
-  // THE ONE ROUTING PASS (3F-2202) — asked of the posting rule, in one place, and read back as
-  // four streams. What each of them then RECONCILES to is the fold's, below.
-  const { citations, brokenEvidence, uncited, noEvidenceObligationGuards } = routeCredits(
-    evidenceObservations,
-    scenarioIds
+  // The DEBIT side — each NAMED obligation reconciled against the observed evidence.
+  const reconciledEvidenceObligations = evidenceObligationsOf(d.evidenceObligations).map((req) =>
+    reconcileEvidenceObligation(d.scnId, req, evidenceObservations)
   );
-  for (const d of scenarios) {
-    // THE PENDING PARTITION (@SCN-PND-004) — `pendingItemsOf` and `evidenceObligationsOf`
-    // are exact complements over the scenario's obligations, so nothing is dropped and nothing is
-    // counted twice. Rule + rationale: `domain/journal`.
-    const pendingItems: PendingItem[] = pendingItemsOf(d);
 
-    // The DEBIT side — each NAMED obligation reconciled against the observed evidence.
-    const reconciledEvidenceObligations = evidenceObligationsOf(d.evidenceObligations).map((req) =>
-      reconcileEvidenceObligation(d.scnId, req, evidenceObservations)
-    );
+  // The CREDIT side — NO-EVIDENCE-OBLIGATION (@SCN-LDG-008): a credit citing THIS real scenario at a
+  // quality-check it never named. Rule + rationale: `domain/qualityCheckReconciliation`.
+  const noEvidenceObligationItems = noEvidenceObligationReconciliationsOf(
+    d.scnId,
+    citations.creditsFor(d.scnId),
+    evidenceObligationPairs
+  );
 
-    // The CREDIT side — NO-EVIDENCE-OBLIGATION (@SCN-LDG-008): a credit citing THIS real scenario at a
-    // quality-check it never named. Rule + rationale: `domain/qualityCheckReconciliation`.
-    const noEvidenceObligationItems = noEvidenceObligationReconciliationsOf(
-      d.scnId,
-      citations.creditsFor(d.scnId),
-      evidenceObligationPairs
-    );
+  // The row's SUB-ROWS, degenerating to one `both-missing` item when the row reconciled to
+  // nothing either way (@SCN-LDG-009). Rule + rationale: `domain/scenarioReconciliation`.
+  const qualityCheckReconciliations = qualityCheckReconciliationsOf(
+    reconciledEvidenceObligations,
+    noEvidenceObligationItems,
+    pendingItems
+  );
+  return {
+    scnId: d.scnId,
+    kind: "scenario",
+    verdict: verdictFor(qualityCheckReconciliations),
+    // THE POSTED CREDITS (@SCN-LDG-022) — every credit CITING this scenario, whatever it
+    // reconciles to above. The citation index holds every citing credit, so this includes one citing a
+    // PENDING quality-check, which reconciles `no-evidence-obligation` (3F-1858 — it used to reconcile to
+    // NO ROW AT ALL, the false-green this posting made visible without fixing). It posts and is
+    // findable WHATEVER it reconciles to; posting is not classifying, and a misclassification
+    // must misfile an entry, never vaporise it. A fitness check's run is in here too and by the
+    // SAME route (3F-2590): it cites this scenario, so the citation index holds it like any other.
+    evidenceObservations: citations.creditsFor(d.scnId),
+    // THE POSTED DEBITS (@SCN-LDG-023) — every obligation THIS scenario RAISES, in document
+    // order, keyed by quality-check. The debit half of the same posting: where a credit is
+    // routed by its citation, a debit needs no routing at all — the account IS the scenario.
+    // Includes a PENDING obligation, which partitioned off above and earns NO reconciled row: it
+    // posts ANYWAY. Posting is not classifying, on this side too.
+    evidenceObligations: [...d.evidenceObligations],
+    qualityCheckReconciliations,
+    reconcilingItems: reconcilingItemsOf(qualityCheckReconciliations),
+    pendingItems,
+  };
+}
 
-    // The row's SUB-ROWS, degenerating to one `both-missing` item when the row reconciled to
-    // nothing either way (@SCN-LDG-009). Rule + rationale: `domain/scenarioReconciliation`.
-    const qualityCheckReconciliations = qualityCheckReconciliationsOf(
-      reconciledEvidenceObligations,
-      noEvidenceObligationItems,
-      pendingItems
-    );
-    scenarioReconciliations.push({
-      scnId: d.scnId,
-      kind: "scenario",
-      verdict: verdictFor(qualityCheckReconciliations),
-      // THE POSTED CREDITS (@SCN-LDG-022) — every credit CITING this scenario, whatever it
-      // reconciles to above. The citation index holds every citing credit, so this includes one citing a
-      // PENDING quality-check, which reconciles `no-evidence-obligation` (3F-1858 — it used to reconcile to
-      // NO ROW AT ALL, the false-green this posting made visible without fixing). It posts and is
-      // findable WHATEVER it reconciles to; posting is not classifying, and a misclassification
-      // must misfile an entry, never vaporise it. A fitness check's run is in here too and by the
-      // SAME route (3F-2590): it cites this scenario, so the citation index holds it like any other.
-      evidenceObservations: citations.creditsFor(d.scnId),
-      // THE POSTED DEBITS (@SCN-LDG-023) — every obligation THIS scenario RAISES, in document
-      // order, keyed by quality-check. The debit half of the same posting: where a credit is
-      // routed by its citation, a debit needs no routing at all — the account IS the scenario.
-      // Includes a PENDING obligation, which partitioned off above and earns NO reconciled row: it
-      // posts ANYWAY. Posting is not classifying, on this side too.
-      evidenceObligations: [...d.evidenceObligations],
-      qualityCheckReconciliations,
-      reconcilingItems: reconcilingItemsOf(qualityCheckReconciliations),
-      pendingItems,
-    });
-  }
-
+/**
+ * THE PHANTOM ROWS, assembled (@SCN-LDG-006). Extracted beside its siblings at 3F-3472; the
+ * routing that produced `citations.phantomIds` is `routeCredits`', and unchanged.
+ */
+function phantomScenarioRows(citations: CitationIndex): ScenarioReconciliation[] {
+  const rows: ScenarioReconciliation[] = [];
   // CREDIT-SIDE — PHANTOM scenarios (@SCN-LDG-006). One phantom Scenario Reconciliation per
   // UNKNOWN cited id, in first-seen order, its Quality Check Reconciliation(s) carrying the
   // outcome `cites-unknown-scenario` (and the evidence observation's locator, ruling Q5), verdict
@@ -317,7 +318,7 @@ export function reconcile(
     const credits = citations.creditsFor(scnId);
     // ASKED, not decided (3F-2204).
     const items = citesUnknownScenarioReconciliationsOf(credits);
-    scenarioReconciliations.push({
+    rows.push({
       scnId,
       kind: "phantom-scenario",
       // ASKED, not restated (3F-2204, the close-gate read). Canon says a phantom row is ALWAYS
@@ -339,7 +340,19 @@ export function reconcile(
       pendingItems: [],
     });
   }
+  return rows;
+}
 
+/**
+ * THE SUSPENSE ROW, assembled (@SCN-LDG-007) — nil rows or one. Extracted beside its siblings at
+ * 3F-3472; what lands on it is `routeCredits`' decision, and unchanged.
+ */
+function suspenseScenarioRows(
+  brokenEvidence: readonly (RuntimeEvidenceObservation | GuardEvidenceObservation)[],
+  uncited: readonly RuntimeEvidenceObservation[],
+  noEvidenceObligationGuards: readonly FitnessEvidenceObservation[]
+): ScenarioReconciliation[] {
+  const rows: ScenarioReconciliation[] = [];
   // THE SUSPENSE ROW (@SCN-LDG-007) — every entry that names no scenario aggregates into ONE row
   // (sentinel scnId `(no scenario)`), grouped LAST, verdict always out-of-balance.
   //
@@ -349,7 +362,7 @@ export function reconcile(
   // on it, so no credit means no row.
   if (brokenEvidence.length > 0 || uncited.length > 0 || noEvidenceObligationGuards.length > 0) {
     const items = suspenseReconciliationsOf(brokenEvidence, uncited, noEvidenceObligationGuards);
-    scenarioReconciliations.push({
+    rows.push({
       scnId: "(no scenario)",
       kind: "suspense-scenario",
       // ASKED, not restated — same reason as the phantom row. The `if` above is what makes this
@@ -367,7 +380,14 @@ export function reconcile(
       pendingItems: [],
     });
   }
+  return rows;
+}
 
+/**
+ * THE UNCODED-WORK ROWS, assembled (@SCN-LDG-021). Extracted beside its siblings at 3F-3472.
+ */
+function untaggedScenarioRows(untaggedScenarios: readonly string[]): ScenarioReconciliation[] {
+  const rows: ScenarioReconciliation[] = [];
   // UNCODED WORK (@SCN-LDG-021) — a scenario carrying no @SCN. It is REAL and ORDINARY
   // (`kind: "scenario"`, never phantom or suspense: it exists, and cucumber runs it); what is
   // absent is the CODE its obligation needs in order to link to an observation. It gets its own
@@ -377,7 +397,7 @@ export function reconcile(
   // are the item concept's (3F-2204, `noScnCodeReconciliations` — rule + rationale there).
   for (const name of untaggedScenarios) {
     const items = noScnCodeReconciliations();
-    scenarioReconciliations.push({
+    rows.push({
       // The scenario's NAME is its only handle — it has no code. (Precedent: the suspense row's
       // "(no scenario)" sentinel; `featureCodeOf` falls back to the raw id when it cannot parse.)
       scnId: name,
@@ -395,8 +415,102 @@ export function reconcile(
       pendingItems: [],
     });
   }
+  return rows;
+}
 
-  return { scenarioReconciliations };
+/**
+ * THE ROWS A CONFIGURED ROW WITH NO SCENARIO EARNS, assembled (@SCN-LNT-027, 3F-3472).
+ */
+function unspecifiedFitnessRowRows(
+  unspecifiedFitnessRows: readonly UnspecifiedFitnessRow[]
+): ScenarioReconciliation[] {
+  const rows: ScenarioReconciliation[] = [];
+  // A CONFIGURED ROW THE CORPUS CARRIES NO SCENARIO FOR (@SCN-LNT-027, 3F-3472) — a check the
+  // target's manifest declares and nothing in its corpus specifies. The obligations travel with
+  // the scenarios, so such a row raised NOTHING: it was not `missing`, not phantom, not suspense,
+  // and a tree carrying one reconciled balanced at exit 0 over a check declared and never written.
+  // `features/fitness-checks.feature` promises the opposite in terms — "a row whose scenario the
+  // corpus does not carry as an Evidence Obligation nothing observed" — and this is that promise.
+  //
+  // THE PRECEDENT IS UNCODED WORK, three lines up: a fact the ordinary obligation path cannot raise
+  // reaches the ledger by a reading of its own and gets its own out-of-balance row so the verdict
+  // can see it at all. There the CORPUS supplies a row the obligations cannot; here the MANIFEST
+  // does.
+  //
+  // THE ROW IS NOT IN `scenarioIds`, WHICH IS WHAT MAKES IT UNDISCHARGEABLE. That set was built
+  // from `scenarios` alone and is not widened here, so a credit citing this row's code still mints
+  // a PHANTOM row (@SCN-LDG-006, @SCN-LNT-009) and a broken credit still lands on SUSPENSE — and
+  // there is no route left by which any credit settles this debit. Synthesising a `Scenario` for
+  // the row instead would have put it INTO that set, so a run whose CI step cited a declared-but-
+  // unwritten check would reconcile BALANCED: a new false green, in the case the phantom row
+  // already covers.
+  for (const row of unspecifiedFitnessRows) {
+    const items = unspecifiedRowReconciliations(row.characteristic);
+    rows.push({
+      scnId: row.scnId,
+      kind: "scenario",
+      // ASKED, not restated — the phantom and suspense rows' rule. `unspecifiedRowReconciliations`
+      // always returns the one `missing` item, so the verdict follows from it.
+      verdict: verdictFor(items),
+      // No scenario carries this code, so the citation router posts no credit here — see above.
+      evidenceObservations: [],
+      // THE DEBIT IS REAL AND IS POSTED (@SCN-LDG-023). Unlike the untagged row above, which
+      // reaches the ledger by name and names no check, this row names exactly one characteristic:
+      // that is the obligation, and the manifest is what raised it.
+      evidenceObligations: [...items.map((item) => item.evidenceObligation!)],
+      qualityCheckReconciliations: items,
+      reconcilingItems: items,
+      pendingItems: [],
+    });
+  }
+  return rows;
+}
+
+export function reconcile(
+  scenarios: Scenario[],
+  evidenceObservations: EvidenceObservation[],
+  untaggedScenarios: readonly string[] = [],
+  /**
+   * The CONFIGURED ROWS the target's corpus carries no scenario for (@SCN-LNT-027, 3F-3472) — the
+   * fourth population, minted below.
+   *
+   * IT DEFAULTS, WHERE THE TWO GATES BELOW DELIBERATELY DO NOT (3F-2875). A gate that defaults is a
+   * gate a caller can forget and thereby CHANGE what the summary claims. This is a population, and
+   * an omitted population is indistinguishable from an empty one in the only way that matters:
+   * both mint no rows, and neither says anything about a manifest. Every caller that constructs
+   * `Scenario[]` by hand has no manifest to read rows from, which is `untaggedScenarios`' own
+   * argument for the default it already carries.
+   */
+  unspecifiedFitnessRows: readonly UnspecifiedFitnessRow[] = []
+): Ledger {
+  // THE OBLIGATION SIDE, prepared once — the three sets the posting rule and the outcome rules read.
+  // Each is already the MODEL's own rule (never re-derived here), and each is built ONCE and
+  // shared, so no two consumers can drift: `scenarioIds` is which scenarios exist,
+  // and `evidenceObligationPairs` is what they name at each quality-check (3F-1858).
+  const scenarioIds = new Set(scenarios.map((d) => d.scnId));
+  // The NAMED pairs — the model's rule, built ONCE and shared with the census (3F-1858).
+  // Pending obligations are excluded: a pending obligation names nothing.
+  const evidenceObligationPairs = evidenceObligationPairsOf(scenarios);
+  // THE ONE ROUTING PASS (3F-2202) — asked of the posting rule, in one place, and read back as
+  // four streams. What each of them then RECONCILES to is the fold's, below.
+  const { citations, brokenEvidence, uncited, noEvidenceObligationGuards } = routeCredits(
+    evidenceObservations,
+    scenarioIds
+  );
+  // THE ORDER THE POPULATIONS ARE FILED IN IS THE LEDGER'S GROUPING, and it is the whole of what
+  // this function decides now: the real scenario rows, then the phantom rows a credit invented,
+  // then the one suspense row, then uncoded work, then the configured rows no scenario specifies.
+  return {
+    scenarioReconciliations: [
+      ...scenarios.map((d) =>
+        scenarioRow(d, evidenceObservations, citations, evidenceObligationPairs)
+      ),
+      ...phantomScenarioRows(citations),
+      ...suspenseScenarioRows(brokenEvidence, uncited, noEvidenceObligationGuards),
+      ...untaggedScenarioRows(untaggedScenarios),
+      ...unspecifiedFitnessRowRows(unspecifiedFitnessRows),
+    ],
+  };
 }
 
 // -------------------------------------------------------------------------
@@ -847,8 +961,20 @@ export function evidenceReconciliationOf(
   evidenceObservations: EvidenceObservation[],
   untaggedScenarios: readonly string[],
   withRuntimeObservations: boolean,
-  withStaticChecks: boolean
+  withStaticChecks: boolean,
+  /**
+   * The CONFIGURED ROWS the corpus carries no scenario for (@SCN-LNT-027, 3F-3472) — passed
+   * through to `reconcile`, which mints one row apiece. It defaults for the reason given there, and
+   * that reason is NOT the trailing three's: a population omitted mints nothing and claims nothing,
+   * where a gate omitted silently changes what the summary says is in play.
+   */
+  unspecifiedFitnessRows: readonly UnspecifiedFitnessRow[] = []
 ): EvidenceReconciliation {
-  const ledger = reconcile(scenarios, evidenceObservations, untaggedScenarios);
+  const ledger = reconcile(
+    scenarios,
+    evidenceObservations,
+    untaggedScenarios,
+    unspecifiedFitnessRows
+  );
   return { summary: summaryOf(ledger, withRuntimeObservations, withStaticChecks), ledger };
 }

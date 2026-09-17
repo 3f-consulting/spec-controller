@@ -1,0 +1,21 @@
+{
+  "name": "unspecified-row-fitness-target-repo-fixture",
+  "private": true,
+  "scripts": {
+    "test": "vitest run"
+  },
+  "specController": {
+    "fitnessChecks": [
+      {
+        "scn": "SCN-CVT-001",
+        "characteristic": "complexity",
+        "command": "eslint"
+      },
+      {
+        "scn": "SCN-CVT-002",
+        "characteristic": "traceability",
+        "command": "scn-subissues"
+      }
+    ]
+  }
+}

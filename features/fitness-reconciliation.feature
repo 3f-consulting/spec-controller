@@ -388,6 +388,51 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       When that target's evidence is reconciled
       Then the second raises no Evidence Obligation, its row is out of balance, and the report names it as a fitness scenario no configured row names
 
+  Rule: a configured row the corpus carries no scenario for raises an Evidence Obligation nothing can observe
+
+    THE MANIFEST IS A SIDE OF THE BOOKS TOO, AND UNTIL THIS RULE ONLY THE CORPUS WAS. Evidence
+    Obligations travel with the scenarios, so a configured row the corpus carries no scenario for
+    raised nothing whatever: it was not missing, not a phantom and not suspense, and a target
+    carrying one reconciled BALANCED over a check it had declared and never specified.
+    `double-entry-manifesto.md` names that shape in terms — a ledger catches a credit that never
+    arrived and is blind to a debit that was never raised.
+
+    IT IS @SCN-LNT-020'S MIRROR AND THE OTHER HALF OF ONE PUBLISHED SENTENCE. This product's own
+    corpus promises both directions of the disagreement — a scenario whose code no row names
+    reported as unconfigured, and a row whose scenario the corpus does not carry reported as an
+    Evidence Obligation nothing observed. Only the first was ever performed.
+
+    THE TWO DIRECTIONS EARN DIFFERENT RECORDS, AND THE ASYMMETRY IS THE FACTS' OWN RATHER THAN AN
+    INCONSISTENCY. A `@fitness` scenario no row names has no characteristic, so there is nothing to
+    put on the books and the census is where it is named. A row the corpus has no scenario for
+    NAMES one, so there is a debit — which is why this direction is a ledger row and its mirror is
+    a line of prose.
+
+    @unit @integration @SCN-LNT-034
+    Scenario: a configured row whose @SCN no scenario in the corpus carries raises an Evidence Obligation nothing observed
+
+      THE DEBIT IS RAISED FROM THE ROW AND NO RUN INPUT DECIDES WHETHER IT EXISTS. The manifest and
+      the corpus disagree whatever a run did, so the first reading is handed no CI run record at
+      all — and the row is on the books anyway, out of balance on its own, at the characteristic the
+      row names. Every other account of that target agrees, so the run fails for this row and for
+      nothing else, which is the sharpest form the claim has.
+
+      AND NO CREDIT CAN SETTLE IT, WHICH IS WHY THERE IS A SECOND READING. The row is not in the set
+      the citation router posts against, so a run whose CI step states its code mints a PHANTOM row
+      (@SCN-LNT-009) and the obligation stays missing beside it. The obvious implementation —
+      synthesising a scenario for the row so the ordinary obligation path raises it — would put the
+      row INTO that set, and a check declared, never specified, and cited by a run that executed
+      something would then reconcile BALANCED. That is a worse false green than the one this Rule
+      closes, and this arm is what holds it shut.
+
+      BOTH READINGS ARE OF ONE TARGET, for @SCN-LNT-027's reason: split across two fixtures they
+      could agree by accident about a manifest neither of them shares.
+
+      Given a target's configured rows name a fitness check for two scenarios and its corpus carries a scenario for only the first
+      When that target's evidence is reconciled with no CI run record at all
+      Then the row the corpus carries no scenario for is on the books as an Evidence Obligation nothing observed, its row is out of balance, and the run fails
+      And the same target reconciled with a CI step citing that row still does not balance it — the run's credit posts to a phantom row and the obligation stays missing
+
   Rule: a check that did not run is broken evidence rather than an absent one
 
     `broken` IS CANON'S OWN WORD FOR IT AND NOTHING HERE IS NEW. It has meant a proof that never ran
@@ -430,7 +475,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       Given a target's configured rows name a static fitness check for each of two scenarios, and its corpus carries only the first
       When that target's evidence is reconciled with a CI run record carrying a step for that first row alone
       Then the row the record carried no step for is broken evidence naming it, and the run is unsound
-      And the same target reconciled with no CI run record at all raises nothing broken — the scenario its corpus carries reconciles missing, and the run is merely out of balance
+      And the same target reconciled with no CI run record at all raises nothing broken — the scenario its corpus carries reconciles missing, the row its corpus carries no scenario for is on the books as an Evidence Obligation nothing observed, and the run is merely out of balance
 
     @unit @integration @SCN-LNT-026
     Scenario: a check step's outcome credits its row only where it says what the check did, and every other reading is broken evidence rather than a credit

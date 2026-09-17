@@ -10,9 +10,10 @@
  * anything about.
  *
  * THE FIXTURE'S CORPUS CARRIES ONE OF THE TWO ROWS, WHICH IS THE SHAPE THE RULE EXISTS FOR. The
- * unrecorded row has no scenario, so it raises no Evidence Obligation and appears on no ledger
- * row — before this rule it produced NOTHING anywhere and the run read balanced. That is the
- * emptied corpus in miniature: what the corpus and the record lose together, the manifest keeps.
+ * unrecorded row has no scenario, so nothing on the corpus side raises an Evidence Obligation for
+ * it — it is raised from the ROW instead (3F-3472), and until that rule it produced NOTHING
+ * anywhere and the run read balanced over it. That is the emptied corpus in miniature: what the
+ * corpus and the record lose together, the manifest keeps.
  *
  * BOTH ARMS FROM ONE TARGET. Handed the record, the run is unsound; handed nothing, it is out of
  * balance exactly as it was. Two fixtures could have agreed by accident, and one default is all
@@ -108,15 +109,18 @@ function suspenseItemsOf(reconciliation: EvidenceReconciliation) {
 
 describe("[SCN-LNT-027] a configured row the CI run's record never carried is broken evidence", () => {
   it("names the row the record carried no step for, and stamps the run unsound", () => {
-    // THE WHOLE LEDGER, because the fault is what is ABSENT from it: before this rule the second
-    // row had no scenario, no obligation and no credit, so the run balanced over a check nothing
-    // recorded. Asserting the rows whole is what makes that absence visible.
+    // THE WHOLE LEDGER, because what this fixture is for is what USED to be absent from it: the
+    // second row had no scenario, no obligation and no credit, so the run balanced over a check
+    // nothing recorded. Asserting the rows whole is what made that absence visible, and it is what
+    // now shows the row on the books — its own out-of-balance row, raised from the manifest and
+    // sitting beside the suspense row the withheld step earned it.
     const reconciliation = reconcileUnenumerated(firstOnly);
     expect(
       reconciliation.ledger.scenarioReconciliations.map((row) => [row.scnId, row.verdict])
     ).toEqual([
       ["SCN-CVT-001", "balanced"],
       ["(no scenario)", "out-of-balance"],
+      ["SCN-CVT-002", "out-of-balance"],
     ]);
     expect(suspenseItemsOf(reconciliation)).toEqual([["broken", noStepRecorded("SCN-CVT-002")]]);
     expect(
@@ -124,7 +128,7 @@ describe("[SCN-LNT-027] a configured row the CI run's record never carried is br
     ).toBe(true);
   });
 
-  it("raises none of it for a run handed NO record — the row reconciles missing and the run is merely out of balance", () => {
+  it("raises none of it for a run handed NO record — both rows reconcile missing and the run is merely out of balance", () => {
     // THE DISCRIMINATOR AGAINST FLATTENING THE TWO FACTS. Flatten them and this arm reads unsound,
     // which would call a consumer whose pipeline dumps no record broken over a file it has no
     // reason to own — and would move every target reconciling today without one from a run out of
@@ -136,7 +140,13 @@ describe("[SCN-LNT-027] a configured row the CI run's record never carried is br
         row.verdict,
         row.qualityCheckReconciliations.map((item) => item.outcome),
       ])
-    ).toEqual([["SCN-CVT-001", "out-of-balance", ["missing"]]]);
+    ).toEqual([
+      ["SCN-CVT-001", "out-of-balance", ["missing"]],
+      // THE ROW WHOSE DEBIT NO RUN INPUT DECIDES (3F-3472). It is raised from the manifest alone,
+      // so withholding the record moves it not at all — which is the half of this target the
+      // no-record arm would otherwise be read as not seeing.
+      ["SCN-CVT-002", "out-of-balance", ["missing"]],
+    ]);
     expect(suspenseItemsOf(reconciliation)).toEqual([]);
     expect(
       hasBrokenEvidence({ scenarioReconciliations: reconciliation.ledger.scenarioReconciliations })

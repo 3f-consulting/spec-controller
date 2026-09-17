@@ -1,6 +1,6 @@
 /**
- * The TARGET's feature corpus read into the two readings one reconciliation needs — moved here
- * from the app's ingest edge (3F-3088).
+ * The TARGET's feature corpus read into the readings one reconciliation needs — moved here from
+ * the app's ingest edge (3F-3088).
  *
  * WHY IT LIVES IN THE ENGINE. Every line of it is a pure function of sources somebody else already
  * read off disk: the obligation rule and the measured-tag union are `parseScenarios` and
@@ -16,16 +16,21 @@
  * directly; there is no second discovery left to key a handle set off.
  */
 
-import type { FitnessCheckIndex } from "../domain/fitnessChecks.js";
+import type { FitnessCheckIndex, UnspecifiedFitnessRow } from "../domain/fitnessChecks.js";
 import { measuredCheckTags, type ThresholdIndex } from "../domain/thresholds.js";
 import { citationOfCitedRow, type ScriptCitation } from "./fitnessCitations.js";
-import { parseScenarios, parseTaggedScenarios, unconfiguredFitnessScenarios } from "./scenarios.js";
+import {
+  parseScenarios,
+  parseTaggedScenarios,
+  unconfiguredFitnessScenarios,
+  unspecifiedFitnessRows,
+} from "./scenarios.js";
 import type { Scenario } from "../model.js";
 
 /**
  * The target's feature corpus as ONE run reads it — the obligations it raises, the `@SCN` a run
- * whose CI step states a code cites, and the scenarios on the fitness axis no configured row
- * names.
+ * whose CI step states a code cites, the scenarios on the fitness axis no configured row names,
+ * and the configured rows the corpus carries no scenario for.
  *
  * THE READINGS ARE ONE, which is why they are produced together. All are derived from the same
  * bytes and the same configured rows, and the fault they exist to foreclose is precisely their
@@ -58,6 +63,18 @@ export interface TargetCorpus {
    * different reads — the same guarantee `citedRow` is composed here for.
    */
   unconfiguredFitnessScenarios: readonly string[];
+  /**
+   * The CONFIGURED ROWS the corpus carries no scenario for (@SCN-LNT-027, 3F-3472) — the other
+   * direction of the same disagreement, in manifest order, each with the characteristic its debit
+   * is owed at.
+   *
+   * IT IS HERE FOR THE MIRROR'S REASON AND NOT A WEAKER ONE. The corpus walk and the configured
+   * rows are both in hand exactly once, so the rows this names and the obligations `scenarios`
+   * raises are taken from ONE read of each side. Computed at the composition from `corpus.scenarios`
+   * it would be a second walk, free to disagree with the walk the obligations came from — which is
+   * the fault this whole reading exists to foreclose.
+   */
+  unspecifiedFitnessRows: readonly UnspecifiedFitnessRow[];
 }
 
 /**
@@ -89,13 +106,14 @@ export function readTargetCorpus(
   const scenarios = sources.flatMap((source) =>
     parseScenarios(source, deferralTags, obligationTags, thresholds, fitnessChecks)
   );
-  // THE UNCONFIGURED-SCENARIO READING'S OWN WALK. Kept as its own pass over the sources — the
-  // citation hop that once shared it retired with the registry, so there is only the one reader
-  // left to hand it to.
+  // THE TAGGED WALK THE TWO CORPUS-VS-MANIFEST READINGS SHARE. Kept as its own pass over the
+  // sources, and handed to BOTH of them — the disagreement each names is the other's direction, so
+  // taking them from one walk is what stops one reading seeing a scenario the other does not.
   const tagged = sources.flatMap((source) => parseTaggedScenarios(source));
   return {
     scenarios,
     citedRow: (citedScn) => citationOfCitedRow(citedScn, fitnessChecks),
     unconfiguredFitnessScenarios: unconfiguredFitnessScenarios(tagged, fitnessChecks),
+    unspecifiedFitnessRows: unspecifiedFitnessRows(tagged, fitnessChecks),
   };
 }

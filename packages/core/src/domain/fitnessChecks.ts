@@ -141,3 +141,25 @@ export function fitnessChecksOf(entries: unknown): FitnessCheckIndex {
   }
   return index;
 }
+
+/**
+ * ONE CONFIGURED ROW THE TARGET'S CORPUS CARRIES NO SCENARIO FOR (3F-3472) — a check the manifest
+ * declares and nothing in the corpus specifies.
+ *
+ * THE MIRROR OF `unconfiguredFitnessScenarios`, AND THE HALF THE BOOKS COULD NOT SEE. That one
+ * reads a `@fitness` scenario no row names; this reads a row no scenario names. The asymmetry
+ * between what each EARNS is the two facts' own: a scenario naming no row names no characteristic,
+ * so there is nothing to put on the books and the census says who — a row names one, so there IS a
+ * debit, and `features/fitness-checks.feature` promises it as "an Evidence Obligation nothing
+ * observed".
+ *
+ * IT CARRIES THE CHARACTERISTIC BECAUSE THE OBLIGATION IT RAISES NAMES ONE. The `@SCN` alone would
+ * leave the reader of this reading to go back to the index for the other half, which is the second
+ * read `readTargetCorpus` composes its readings together to foreclose.
+ */
+export interface UnspecifiedFitnessRow {
+  /** The `@SCN` the row states, which no scenario in the target's corpus carries. */
+  readonly scnId: string;
+  /** The bare characteristic the row asserts (`complexity`) — what its debit is owed at. */
+  readonly characteristic: string;
+}

@@ -1,0 +1,33 @@
+# The SAME target's workflow for the SECOND reading — the run that cites the row nobody specified.
+# Each check is an ordinary `run:` step stating the code of the row it answers, the unspecified row
+# among them, and the record's own step carries the `if: always()` that keeps it running past a red.
+#
+# IT IS THE ONLY ROUTE BY WHICH A CREDIT COULD REACH THAT ROW AT ALL, which is why the second
+# reading needs a pipeline of its own rather than a second record over the first. The credit it
+# raises posts to a PHANTOM row (@SCN-LNT-009), because the citation index is built from the
+# corpus's scenarios and this row is not one of them.
+#
+# NO COMMAND HERE IS ONE OF THAT REPOSITORY'S SCRIPTS, which is realistic rather than load-bearing —
+# a run handed its own record is answered for its CONFIGURED rows by that record, so the derivation
+# reader does not credit them a second time (3F-3360).
+name: fixture CI
+on: [push, pull_request]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Complexity
+        id: SCN-CVT-001
+        if: always()
+        run: eslint
+      - name: Traceability
+        id: SCN-CVT-002
+        if: always()
+        run: scn-subissues
+      - name: Dump this run's step record
+        id: dump-the-step-record
+        if: always()
+        env:
+          STEPS_JSON: ${{ toJSON(steps) }}
+        run: printf '%s' "$STEPS_JSON" > ci-steps.json

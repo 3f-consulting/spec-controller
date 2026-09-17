@@ -307,7 +307,12 @@ export function evidenceReconciliationFromSources(
     observationStreams(input, corpus, packageJson, fitnessChecks, runners.tiers, isExcluded),
     [...input.untaggedScenarios],
     true,
-    true
+    true,
+    // THE FOURTH POPULATION (@SCN-LNT-027, 3F-3472) — the configured rows this corpus carries no
+    // scenario for, taken from the SAME corpus reading the obligations were raised from. A row
+    // with no scenario raises nothing on the corpus side, so without this the check it declares
+    // reaches the books nowhere and the run reads balanced over it.
+    corpus.unspecifiedFitnessRows
   );
   return withReaderAccounts(
     reconciliation,

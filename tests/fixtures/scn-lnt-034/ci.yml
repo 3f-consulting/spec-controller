@@ -1,0 +1,18 @@
+# The fixture target's OWN workflow for the FIRST reading — the quiet run, standing in for another
+# repository's pipeline. Its one step states the code of the row that repository's corpus does
+# specify, and nothing here writes a run record at all.
+#
+# WHAT THIS RUN IS FOR IS WHAT IT LEAVES ALONE. The specified check is credited, so every other
+# account of this target agrees and the only thing out of balance is the row the corpus carries no
+# scenario for — which is what makes the run's ending an assertion about that row rather than a
+# verdict it happened to share with something else.
+name: fixture CI
+on: [push, pull_request]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Complexity
+        id: SCN-CVT-001
+        run: eslint
