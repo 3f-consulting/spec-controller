@@ -18,8 +18,9 @@
  * an edge like any other. Comment-stripping, which the old checks needed so a doc-comment naming
  * `process.cwd()` was not a false positive, has no analogue here: a comment produces no edge.
  *
- * THE SCOPE MATCHES WHAT THE OLD CHECKS WALKED. `collectSourceFiles` took `*.ts` under the subtree
- * and skipped `*.test.ts` and `*.d.ts`, so every `from` below carries `pathNot: "\\.test\\.ts$"`.
+ * THE SCOPE MATCHES WHAT THE OLD CHECKS WALKED. `collectSourceFiles` (left at 3F-3491) took `*.ts`
+ * under the subtree and skipped `*.test.ts` and `*.d.ts`, so every `from` below carries
+ * `pathNot: "\\.test\\.ts$"`.
  * (There is no `.d.ts` under `packages/core/src`, so that half of the old filter is not live and is
  * deliberately not restated — a config term with no population is a term nobody can red.)
  *

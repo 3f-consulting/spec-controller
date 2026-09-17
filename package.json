@@ -12,7 +12,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "tsx tests/checks/timeStepCli.ts --scn SCN-FIT-012 --check ci-run-time -- vitest run",
-    "mutation": "SPEC_CONTROLLER_SOURCE_ROOT=\"$PWD\" tsx tests/checks/mutationScoreCli.ts --scn SCN-FIT-002 --check mutation -- stryker run",
+    "mutation": "tsx tests/checks/mutationScoreCli.ts --scn SCN-FIT-002 --check mutation -- stryker run",
     "mutation:score": "tsx tests/checks/mutationScoreReaderCli.ts --scn SCN-FIT-002 --check mutation",
     "timing:score": "tsx tests/checks/timingReaderCli.ts --check ci-run-time",
     "cucumber": "tsx tests/checks/timeStepCli.ts --scn SCN-FIT-013 --check ci-run-time -- cucumber-js",

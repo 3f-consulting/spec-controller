@@ -1,26 +1,27 @@
 /**
- * WHERE CHECK CODE LIVES, SPELLED ONCE FOR THE WALK (3F-3188; narrowed to one reader at 3F-3437).
+ * WHERE CHECK CODE LIVES, SPELLED ONCE FOR THE WALK (3F-3188; its LAST reader left at 3F-3491).
  *
- * `sourceFiles.ts` joins these segments onto the repository root to WALK this tree, and since
- * 3F-3437 it is the only reader. There were two: `enginePurity.ts` matched the same home inside an
- * import specifier to REFUSE it, and this module exists because a home written down twice agrees
- * until one of them is edited — the edit that moved this tree out of `packages/spec-controller/`
- * (3F-3187) being precisely the edit that would have done it. Before that move neither reader had
- * the question: every check module lived under the app package, so the purity rule's one match over
- * the PACKAGE name covered them without naming them.
+ * THIS MODULE HAS NO READER AT ALL NOW, AND IT IS SAID HERE RATHER THAN LEFT TO BE FOUND. There
+ * were two. `enginePurity.ts` matched the same home inside an import specifier to REFUSE it and
+ * left at 3F-3437; the source walk that joined these segments onto the repository root to WALK this
+ * tree left at 3F-3491, with the scan of our own source it was written for. This module exists
+ * because a home written down twice agrees until one of them is edited — the edit that moved this
+ * tree out of `packages/spec-controller/` (3F-3187) being precisely the edit that would have done
+ * it. Before that move neither reader had the question: every check module lived under the app
+ * package, so the purity rule's one match over the PACKAGE name covered them without naming them.
+ *
+ * THE DEPARTURE IS OWED AS ITS OWN TICKET AND IS DELIBERATELY NOT TAKEN AT 3F-3491 (that slice's
+ * technical design, 3F-3480). Canon has a shared helper leave when its last importer does, and nine
+ * of this file's lines are the constant below. The other ninety are the ruling that follows, which
+ * `measurementArtefact.ts` points a reader at BY NAME — so deleting this file means re-homing a
+ * live ruling and repointing its citation, which is a decision about where a ruling lives rather
+ * than a consequence of the delete that emptied this one. An importer-less module that says so is a
+ * smaller debt than a ruling with no home.
  *
  * THE REFUSAL DID NOT LEAVE, IT LEFT THIS REPOSITORY'S OWN CODE (3F-3288). `core-imports-checks` in
  * `.dependency-cruiser.mjs` refuses the same tree now, and it spells the path itself: it is
  * configuration a third-party tool reads, and it cannot import a TypeScript constant. So a second
- * spelling still exists and can no longer be shared. What changed is how a disagreement would
- * surface — a moved tree now empties this walk's population and reds the floors in `sourceFiles.ts`,
- * rather than leaving a refusal quietly matching a path no file has.
- *
- * WHY IT IS STILL ITS OWN MODULE rather than a constant in `sourceFiles.ts`, which is otherwise the
- * ONE reading of which roots this repository's source lives under: a value here can be read by
- * anything without acquiring `sourceFiles.ts`'s `node:fs` import along with it. That was load-bearing
- * while a guard pure by construction was the second reader; with one reader it is a smaller
- * argument, and merging the two is a change for whoever next has cause to open both.
+ * spelling still exists, can no longer be shared, and is now the only one anything reads.
  */
 
 /**
@@ -91,9 +92,9 @@
 /**
  * The check tree's path segments, relative to the repository root.
  *
- * Segments rather than a joined path because the one reader joins them with the platform separator
- * through `node:path`, which takes them as arguments. A second reader took a POSIX-joined form to
- * match inside an import specifier, where the separator is always `/`; it and its constant both
- * left at 3F-3437.
+ * Segments rather than a joined path because the reader this shape was cut for joined them with the
+ * platform separator through `node:path`, which takes them as arguments; it left at 3F-3491. A
+ * second reader took a POSIX-joined form to match inside an import specifier, where the separator is
+ * always `/`; it and its constant both left at 3F-3437.
  */
 export const CHECK_TREE_SEGMENTS = ["tests", "checks"] as const;

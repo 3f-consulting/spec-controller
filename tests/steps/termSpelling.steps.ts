@@ -6,8 +6,7 @@
  * reconciler handed the result.
  *
  * @SCN-TRM-001 — the bidirectional @integration marker (Evidence Manifesto §9), matching
- * features/term-spelling.feature and the @unit pins in packages/core/src/lib/bareTerm.test.ts and
- * tests/checks/termSpelling.test.ts.
+ * features/term-spelling.feature and the @unit pin in packages/core/src/lib/bareTerm.test.ts.
  *
  * WHY THIS ARM AND NOT THE @unit PINS ALONE. Each reading is a pure function and each is provable
  * on its own; what none of them can show is that the term a reading STORES is the term the next

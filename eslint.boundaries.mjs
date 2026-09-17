@@ -36,10 +36,10 @@ export default [
    * `enginePurity`'s `io-global` arm — a core module must not reference the `process` global, so the
    * engine stays testable with data alone.
    *
-   * THE TEST EXCLUSION IS THE OLD CHECK'S SCOPE, CARRIED. `collectSourceFiles` skipped `*.test.ts`,
-   * so the arms beside the engine have always been free to read `process.cwd()`; keeping that
-   * exemption is fidelity, and removing it would be a behaviour change wearing a conversion's
-   * clothes.
+   * THE TEST EXCLUSION IS THE OLD CHECK'S SCOPE, CARRIED. `collectSourceFiles` (left at 3F-3491)
+   * skipped `*.test.ts`, so the arms beside the engine have always been free to read
+   * `process.cwd()`; keeping that exemption is fidelity, and removing it would be a behaviour
+   * change wearing a conversion's clothes.
    *
    * WHAT REPLACED THE OLD COMMENT-STRIPPING. The hand-written check matched `\bprocess\s*\.` over
    * source text and had to strip comments first, because three production files under this root

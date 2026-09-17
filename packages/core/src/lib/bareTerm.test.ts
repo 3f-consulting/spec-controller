@@ -5,10 +5,10 @@
  * Bidirectional evidence (Evidence Manifesto §9): every describe below carries [SCN-TRM-001],
  * matching features/term-spelling.feature and the @integration arm in
  * tests/steps/termSpelling.steps.ts. The app-side ports — a target's configured deferral tags and
- * the measurement artefact's row identity — are pinned in
- * tests/checks/termSpelling.test.ts, because `packages/core` cannot
- * import the app package and a core test that could would be the dependency cycle the seam exists
- * to refuse.
+ * the measurement artefact's row identity — are proven by that same @integration arm, which the
+ * Rule preamble credits with "a deferral set and a measurement row", because `packages/core`
+ * cannot import the app package and a core test that could would be the dependency cycle the seam
+ * exists to refuse.
  *
  * WHAT THE PINS ARE ABOUT. A term padded IN FRONT of its sigil — `"  @SCN-MSD-001"` — is the one
  * spelling nothing in this repository generates and the one a target types by hand. Each port

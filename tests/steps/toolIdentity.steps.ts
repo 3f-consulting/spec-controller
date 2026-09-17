@@ -195,17 +195,6 @@ function packedPackageAt(packageDir: string): PackedPackage {
  * The leading sigil goes and the scope's slash flattens to a dash, which is the one thing here that
  * cannot come out right by accident: a scoped and an unscoped package sit side by side in this
  * release and only one of them keeps its own name.
- *
- * WRITTEN THIS WAY RATHER THAN AS AN ANCHORED REPLACE, and the reason is a guard rather than taste.
- * @SCN-TRM-001 scans this repository's source for a second reading of what a TERM bare is, and its
- * needle is exactly an anchored replace of the sigil — a package name is not a term, but the scan is
- * a scan by design and holds no list of files allowed to spell it.
- *
- * AND IN THIS HOME THAT SCAN DOES NOT REACH IT, WHICH IS MEASURED RATHER THAN ASSUMED (3F-3446). Its
- * population is each package's `src` plus `tests/checks`; `tests/steps` is outside it, and an
- * anchored replace planted here was confirmed to leave @SCN-TRM-001 green. So the spelling is
- * carried over verbatim because it is the right one and the tidier form is a trap for the next
- * reader — not because anything would red if it were tidied.
  */
 function packedTarballName(packed: PackedPackage): string {
   const unscoped = packed.name.startsWith("@") ? packed.name.slice(1) : packed.name;
