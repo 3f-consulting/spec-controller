@@ -8,7 +8,7 @@
  *
  * IT IS ITS OWN FILE RATHER THAN THREE MORE ARMS IN markdown.test.ts, for the reason
  * provenanceSection.test.ts already records: that file is far over the 400-code-line ceiling, so
- * under @SCN-CPX-001 a change touching it reds until it comes back under the standard. The run
+ * under @SCN-FIT-001 a change touching it reds until it comes back under the standard. The run
  * verdict is a self-contained emitter and its arms travel with it.
  *
  * THE HEADLINE WORD IS A RENDER WORD, NEVER THE PREDICATE'S NAME — the `hasBrokenEvidence` →

@@ -5,7 +5,7 @@
  * features/report-model.feature, so a grep of the id returns both halves.
  *
  * WHY A SEPARATE FILE. `renderInput.test.ts` — where @SCN-RMD-008's other arms live — is far over
- * the 400-code-line ceiling, so under @SCN-CPX-001 any change touching it reds until it comes back
+ * the 400-code-line ceiling, so under @SCN-FIT-001 any change touching it reds until it comes back
  * under the standard; appending arms to it is the one move that cannot work. (3F-3466 deleted the
  * per-file allowance that used to freeze it at its measured value instead.)
  * The house pattern is a focused sibling file (`untaggedScenarioRow.test.ts`, `journal.test.ts`),

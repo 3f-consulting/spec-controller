@@ -6,7 +6,7 @@
  *
  * IT IS ITS OWN FILE RATHER THAN THREE MORE ARMS IN markdown.test.ts, and the reason is the
  * complexity gate rather than taste. That file is far over the 400-code-line ceiling, so under
- * @SCN-CPX-001 any change touching it reds until it comes back under the standard; appending
+ * @SCN-FIT-001 any change touching it reds until it comes back under the standard; appending
  * arms to it is the one move that cannot work. Which files carry that debt is not written down
  * anywhere and must not be — `pnpm exec eslint` reports every standing violation on every run.
  * The provenance section is a self-contained emitter and its arms travel with it.

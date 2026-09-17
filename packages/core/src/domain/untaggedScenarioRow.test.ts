@@ -5,7 +5,7 @@
  * features/ledger.feature, so a grep of the id returns both halves.
  *
  * WHY A SEPARATE FILE. `evidenceReconciliation.test.ts` — where @SCN-LDG-021's other arms live —
- * is far over the 400-code-line ceiling, so under @SCN-CPX-001 any change touching it reds until it
+ * is far over the 400-code-line ceiling, so under @SCN-FIT-001 any change touching it reds until it
  * comes back under the standard; appending arms to it is the one move that cannot work. (3F-3466
  * deleted the per-file allowance that used to freeze it at its measured value instead.) The house
  * pattern for that is a focused sibling file

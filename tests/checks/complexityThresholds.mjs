@@ -1,5 +1,5 @@
 /**
- * The complexity and module-size thresholds — the ONE place the numbers live (@SCN-CPX-001, 3F-2286).
+ * The complexity and module-size thresholds — the ONE place the numbers live (@SCN-FIT-001, 3F-2286).
  *
  * Consumed by `eslint.config.mjs` (the static check) and pinned by `complexityThreshold.test.ts` (the
  * @unit evidence). Neither restates them: a second copy would agree by COINCIDENCE and drift the
@@ -50,7 +50,7 @@
  *
  * AND THERE IS NO LONGER A SECOND OPTION, WHICH IS WHY THIS PARAGRAPH CHANGED (3F-3408). It used to
  * read "refactor, OR record a dated exception carrying its measured value" — and nothing can record
- * one any more: the dated exception list and its ratchet went with @SCN-CPX-002 and @SCN-CPX-003.
+ * one any more: the dated exception list and its ratchet went with 3F-2317's and 3F-3408's Deletes.
  * Nothing needs to, either. A red here is now only ever about a file the change TOUCHED, held at the
  * standard; a violation in a file nobody touched is reported at `warn` and exits 0. So the escape
  * hatch is gone and the thing it existed to excuse cannot red you in the first place.
@@ -131,8 +131,8 @@ export const TEST_THRESHOLD = {
 };
 
 /**
- * One eslint rule HELD at one ceiling at one severity, in the shape THAT rule takes (@SCN-CPX-002,
- * 3F-2317; the severity added by @SCN-CPX-001, 3F-3462).
+ * One eslint rule HELD at one ceiling at one severity, in the shape THAT rule takes (3F-2317; the
+ * severity added under @SCN-FIT-001, 3F-3462).
  *
  * WHY THIS LIVES IN THE MODULE WHOSE NUMBERS ALL COME FROM OUTSIDE. It takes a ceiling and holds
  * none: the SHAPE is a property of eslint's rules, which are as external as the standard itself, so
@@ -147,10 +147,11 @@ export const TEST_THRESHOLD = {
  * (`["error", 10]`); `max-lines` and `max-lines-per-function` take an options object
  * (`["error", { max, … }]`). Hand eslint the wrong one and it does not complain — it mis-reads the
  * option and applies no ceiling at all, which looks exactly like a file that is under its ceiling.
- * WHAT NOTICES IT IS THE @SCN-CPX-001 CUCUMBER ARM, which lints planted sources through the real
- * config and reads the severity off the message. There is no `.test.ts` beside this module and the
- * `@unit pin` this file's prose names above is not in the tree (measured, 3F-3462) — said here
- * because a reader reaching for it to cover a new emitter will not find one.
+ * AND NOTHING NOTICES IT ANY MORE (3F-3478). The cucumber arm that linted planted sources through the
+ * real config and read the severity off the message was withdrawn with its scenario, and nothing
+ * replaced it: there is no `.test.ts` beside this module either, and the `@unit pin` this file's
+ * prose names above is not in the tree (measured, 3F-3462). A reader reaching for either to cover a
+ * new emitter will find neither — so a wrong shape here is now silent end to end.
  *
  * `skipBlankLines: true, skipComments: true` RIDES ON EVERY EMITTED LINE RULE (3F-2395). The
  * threshold holds the CODE a reader must hold in their head, not the file's bytes. Counting

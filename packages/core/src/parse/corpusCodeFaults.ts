@@ -7,7 +7,7 @@
  * WHY THE MODULE IS SPLIT AT ALL, AND WHY ON THIS SEAM. The rules were authored in one module and
  * that module reached the 400-line `max-lines` ceiling with four more grammar clauses still to
  * land. The ceiling is not negotiable and an exception entry would have bought silence rather than
- * a smaller module (@SCN-CPX-001), so the split is the answer canon already named. The seam is the
+ * a smaller module (@SCN-FIT-001), so the split is the answer canon already named. The seam is the
  * one the rules themselves have: a code rule asks *does this code name exactly one file, and is
  * this scenario written in the file its own code names* — questions answered from the corpus's
  * SHAPE, needing nothing about the target. A grammar rule asks *does this word mean anything

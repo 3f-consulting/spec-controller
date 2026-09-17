@@ -7,7 +7,7 @@
  * a second corpus reader consumes it instead of re-deriving inheritance for itself.
  *
  * Its own file rather than a further block in scenarios.test.ts, which sits at a `max-lines`
- * exception — and an exception excuses existing debt, never headroom (complexity-threshold.feature).
+ * exception — and an exception excuses existing debt, never headroom.
  */
 
 import { describe, it, expect } from "vitest";

@@ -3,7 +3,7 @@
  * Evidence Obligation BY NAME (3F-2625).
  *
  * IN ITS OWN FILE, not appended to `lintReconciliation.test.ts`: that file sits against the
- * `max-lines` ceiling, which is a real gate here rather than a style preference (@SCN-CPX-004).
+ * `max-lines` ceiling, which is a real gate here rather than a style preference (@SCN-FIT-001).
  *
  * WHY A PLANT AND NOT A GREP. `3F-2590` retired the by-name posting route and its commit never
  * touched `qualityCheckReconciliation.ts`, so the by-handle half survived there. The miss was not

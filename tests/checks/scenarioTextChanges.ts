@@ -22,7 +22,7 @@
  * A NEW MODULE RATHER THAN MORE OF `scnSubIssueGate.ts`, on design and on mechanism, agreeing. That
  * file parses diffs and decides the gate; this is a corpus comparison over different inputs. And it
  * is already over the standard on `complexity` and on `max-lines-per-function`, so under
- * @SCN-CPX-001 any change touching it reds until it comes back under; this module is under the
+ * @SCN-FIT-001 any change touching it reds until it comes back under; this module is under the
  * standard. Which files carry that debt is deliberately written down nowhere — `pnpm exec eslint`
  * reports every standing violation on every run.
  *

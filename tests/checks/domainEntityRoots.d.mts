@@ -1,5 +1,5 @@
 /**
- * Types for `domainEntityRoots.mjs` (@SCN-CPX-004, 3F-2416) — the domain's concept modules.
+ * Types for `domainEntityRoots.mjs` (3F-2416) — the domain's concept modules.
  *
  * A SEPARATE module from `complexityThresholds.mjs`, on provenance: the thresholds are numbers
  * stated from outside this tree, and this is no number at all — a statement of what kind of module

@@ -22,7 +22,7 @@
  * much louder claim than nobody having set one.
  *
  * Its own module rather than a further function in `markdown.ts`, which sits at a `max-lines`
- * exception — and an exception excuses existing debt, never headroom (complexity-threshold.feature).
+ * exception — and an exception excuses existing debt, never headroom.
  */
 
 import { isMeasuredObservation } from "../model.js";

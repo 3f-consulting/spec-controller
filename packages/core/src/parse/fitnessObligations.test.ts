@@ -5,9 +5,9 @@ import { parseScenarios } from "./scenarios.js";
  * @unit for @SCN-LNT-007 — the retired `@lint=<handle>` form raises NOTHING.
  *
  * Its home is here rather than in `scenarios.test.ts` for that file's own reason: it sits at a
- * `max-lines` exception, and an exception excuses existing debt, never headroom
- * (complexity-threshold.feature). The claim also belongs beside @SCN-LNT-006's, since the two are
- * the same question asked of the two tag forms — one raises, the other no longer can.
+ * `max-lines` exception, and an exception excuses existing debt, never headroom. The claim also
+ * belongs beside @SCN-LNT-006's, since the two are the same question asked of the two tag forms
+ * — one raises, the other no longer can.
  */
 describe("[SCN-LNT-007] the retired @lint=<handle> form raises no Evidence Obligation", () => {
   /** A runnable handle the fixture registry below registers — the strongest case for the form,

@@ -2,7 +2,7 @@
  * THE RUN VERDICT — the headline sentence a reader meets first, and the exit code it names.
  *
  * Its own module rather than a further section in `markdown.ts`, which sits at a `max-lines`
- * exception — and an exception excuses existing debt, never headroom (complexity-threshold.feature).
+ * exception — and an exception excuses existing debt, never headroom.
  * The precedent is `measuredItem.ts`, moved out for the same reason; the move was forced here by
  * @SCN-CLI-019 adding a fifth verdict, and it is the emitter this file is named for.
  */

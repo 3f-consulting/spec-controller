@@ -1,7 +1,8 @@
 /**
- * Types for `complexityThresholds.mjs` (@SCN-CPX-001). The runtime module is plain ESM so eslint's own
- * loader can read it with no `jiti`; these types keep every TypeScript consumer — the @unit
- * pin and the Cucumber steps — fully typed against the same one source.
+ * Types for `complexityThresholds.mjs` (3F-2286). The runtime module is plain ESM so eslint's own
+ * loader can read it with no `jiti`; these types keep every TypeScript consumer typed against the
+ * same one source. The Cucumber steps that were one such consumer were withdrawn by 3F-3478, and the
+ * `@unit` pin this file used to name here is not in the tree (measured, 3F-3462).
  *
  * `ratchet` was DELETED here by 3F-2286, which superseded 3F-2177's seed-at-measured-maximum rule.
  * A ratchet target only made sense as "the p90 this seed is heading toward"; with the threshold now
@@ -55,7 +56,7 @@ export declare const RETIRED_TREE_DERIVED_SEEDS: readonly number[];
 export type EslintRuleId = "complexity" | "max-lines" | "max-lines-per-function";
 
 /**
- * The two severities a held rule can carry (@SCN-CPX-001, 3F-3462). `error` gates — eslint exits 1;
+ * The two severities a held rule can carry (@SCN-FIT-001, 3F-3462). `error` gates — eslint exits 1;
  * `warn` reports — every finding is printed and eslint exits 0. Both are eslint's own vocabulary, so
  * neither is a number measured from this tree.
  */
@@ -68,8 +69,8 @@ export type RuleEntry =
   | readonly [EslintSeverity, { max: number; skipBlankLines: true; skipComments: true }];
 
 /**
- * One rule HELD at one ceiling at one severity, in the shape THAT rule takes (@SCN-CPX-002, 3F-2317;
- * the severity added by @SCN-CPX-001, 3F-3462).
+ * One rule HELD at one ceiling at one severity, in the shape THAT rule takes (3F-2317; the severity
+ * added under @SCN-FIT-001, 3F-3462).
  *
  * The ceiling could once come from either side of the provenance line — a scope threshold stated
  * from outside this tree, or a per-file allowance measured from it — because the SHAPE is a property

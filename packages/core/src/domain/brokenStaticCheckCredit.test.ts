@@ -4,7 +4,7 @@
  * carries (@SCN-LNT-026).
  *
  * IN ITS OWN FILE, not appended to `evidenceReconciliation.test.ts`: that file sits against its
- * `max-lines` ceiling, which is a real gate here rather than a style preference (@SCN-CPX-004).
+ * `max-lines` ceiling, which is a real gate here rather than a style preference (@SCN-FIT-001).
  * `uncitedFitnessCredit.test.ts` is the same shape for the same reason.
  *
  * WHY A PLANT AND NOT THE ORDINARY ARMS. Every broken credit this repository's readers actually

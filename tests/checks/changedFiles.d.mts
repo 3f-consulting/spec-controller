@@ -1,7 +1,8 @@
 /**
- * Types for `changedFiles.mjs` (@SCN-CPX-001, 3F-3462). The runtime module is plain ESM so eslint's
- * own loader can read it with no `jiti`; these types keep its TypeScript consumers — the @SCN-CPX-001
- * cucumber arm, through `eslint.config.d.mts` — typed against the same one source.
+ * Types for `changedFiles.mjs` (3F-3462). The runtime module is plain ESM so eslint's own loader can
+ * read it with no `jiti`; these types keep its TypeScript consumers, through `eslint.config.d.mts`,
+ * typed against the same one source. The cucumber arm that was one such consumer was withdrawn by
+ * 3F-3478.
  */
 
 /**

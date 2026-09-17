@@ -11,7 +11,7 @@
  * redded a legitimate word would be wrong; this one reds two legitimate words for being on one
  * line. Two questions, two modules — and the joined module would have carried the grammar clauses
  * past the 400-line `max-lines` ceiling, which canon answers with a split and never with an
- * exception entry (@SCN-CPX-001).
+ * exception entry (@SCN-FIT-001).
  *
  * THE SET IS NOT ASSEMBLED HERE. `checkTagsOf` is the grammar module's, and it is imported rather
  * than rebuilt: a rule counting a NARROWER set than the grammar admits would green a corpus

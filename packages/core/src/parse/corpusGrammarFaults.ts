@@ -11,7 +11,7 @@
  * module's own set and asks a question of the SCENARIO rather than of any tag on it. Three
  * questions, three modules; the first split happened when the joined module reached the 400-line
  * `max-lines` ceiling with four more grammar clauses still to land, and the second when the claim
- * rule would have carried it past that ceiling again (@SCN-CPX-001, and never an exception entry).
+ * rule would have carried it past that ceiling again (@SCN-FIT-001, and never an exception entry).
  *
  * AND THE TARGET'S HALF IS RESOLVED HERE, NOT HANDED IN RESOLVED. The composition hands this
  * module a manifest rather than an answer, so the read lives beside the rule that uses it — the

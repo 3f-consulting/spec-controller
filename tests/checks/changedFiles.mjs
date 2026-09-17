@@ -1,5 +1,5 @@
 /**
- * WHAT DID THIS CHANGE TOUCH — the complexity gate's one answer (@SCN-CPX-001, 3F-3462, under 3F-3408).
+ * WHAT DID THIS CHANGE TOUCH — the complexity gate's one answer (@SCN-FIT-001, 3F-3462, under 3F-3408).
  *
  * `eslint.config.mjs` emits the three rules TWICE: at `warn` over `MEASURED_GLOBS` — the report, the
  * whole measured population, every run — and at `error` over the intersection of those globs with the
@@ -57,7 +57,7 @@ const git = (root, args) => {
     });
   } catch (cause) {
     throw new Error(
-      `@SCN-CPX-001: \`git ${args.join(" ")}\` failed in ${root}, so the complexity gate cannot ` +
+      `@SCN-FIT-001: \`git ${args.join(" ")}\` failed in ${root}, so the complexity gate cannot ` +
         `tell what this change touched. Returning nothing here would switch the gate off in ` +
         `silence, because an empty changed set is the ordinary answer on a trunk run.`,
       { cause },

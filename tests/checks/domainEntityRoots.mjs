@@ -1,5 +1,5 @@
 /**
- * The domain's CONCEPT MODULES — the files `max-lines` does not govern (@SCN-CPX-004, 3F-2416).
+ * The domain's CONCEPT MODULES — the files `max-lines` does not govern (3F-2416).
  *
  * A NUMBERLESS FACT, BESIDE THE ONE FILE THAT HOLDS NUMBERS. `complexityThresholds.mjs` holds numbers
  * stated from OUTSIDE this tree. This file holds no number at all, and that is what it is for: it
@@ -43,12 +43,15 @@
  * THE RESIDUAL, STATED, AND IT IS LARGER THAN IT WAS. Whether a listed module really is a concept
  * root is a judgement no gate can make, and NOTHING mechanical checks the entries at all: there is no
  * `@unit` pin beside this module — measured, 3F-3466, and the claim that there was one is older than
- * this branch. The only reader is the @SCN-CPX-004 cucumber arm, and what it proves is that `max-lines`
- * resolves to `off` at each listed path and that the per-unit rules still bite there. It plants sources
- * and never reads the tree, so a path that does not exist, is duplicated, or names a test file passes
- * every one of its assertions. A per-file allowance list once covered the overlap from the other side;
- * that reader (@SCN-CPX-003's Delete) and the list itself (3F-3466) are both retired, and the existence
- * of each path is now checked by nothing.
+ * this branch. AND THERE IS NO LONGER ANY READER AT ALL (3F-3478). The cucumber arm that proved
+ * `max-lines` resolves to `off` at each listed path, and that the per-unit rules still bite there,
+ * was withdrawn with its scenario; it planted sources and never read the tree, so it could not have
+ * caught a path that does not exist, is duplicated, or names a test file, and now nothing asserts
+ * this list in any form. Measured at that withdrawal: no module under these paths is within reach of
+ * the 400-code-line ceiling, so the exclusion suppresses nothing today either — it is exercised by
+ * nothing and asserted by nothing, and that residual is filed rather than cured here. A per-file
+ * allowance list once covered the overlap from the other side; that reader (3F-3408's Delete) and
+ * the list itself (3F-3466) are both retired, and the existence of each path is checked by nothing.
  *
  * @type {readonly string[]}
  */

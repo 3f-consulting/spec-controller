@@ -1,5 +1,5 @@
 /**
- * The complexity + module-size static check (@SCN-CPX-001, 3F-2286) — a CI step of its own.
+ * The complexity + module-size static check (@SCN-FIT-001, 3F-2286) — a CI step of its own.
  *
  * IT HAS NO SCRIPT NAME OF ITS OWN SINCE 3F-3151. `pnpm lint:complexity` was deleted when
  * @SCN-FIT-001 converted: the check is a row of `specController.fitnessChecks` naming that
@@ -26,7 +26,7 @@
  * someone wrote it down. Nothing excuses a violation now — every file in the measured population is
  * held at 10 / 40 / 400, and what decides whether a violation reds is changedness alone.
  *
- * ═══ THE REPORT AND THE GATE ARE TWO READINGS OF ONE ANALYSIS (@SCN-CPX-001, 3F-3462) ═══
+ * ═══ THE REPORT AND THE GATE ARE TWO READINGS OF ONE ANALYSIS (@SCN-FIT-001, 3F-3462) ═══
  *
  * `tidy-kiwi` — you make the mess, you tidy it — mechanised at the gate, which the industry calls
  * clean as you code (SonarSource's term, named because the concept is theirs). THE MEASUREMENT DOES
@@ -79,7 +79,7 @@
  * threshold and thereby overrides the production block for test files. That is the whole exclusion
  * mechanism — there is no `ignores` entry for tests, and adding one would silently un-hold them.
  *
- * ═══ THERE IS NO THIRD BLOCK, AND THAT IS THE END OF THE DEBT LIST (@SCN-CPX-002's Delete, 3F-3466) ═══
+ * ═══ THERE IS NO THIRD BLOCK, AND THAT IS THE END OF THE DEBT LIST (3F-3466) ═══
  *
  * A PER-FILE ALLOWANCE BLOCK SAT BETWEEN THE REPORT AND THE GATE UNTIL TODAY. One block per file per
  * rule, each freezing its file at the value someone measured on a stated date, at `warn`. It is gone,
@@ -119,11 +119,12 @@ import {
 } from "./tests/checks/complexityThresholds.mjs";
 
 /**
- * Re-exported so the @SCN-CPX-001 arm reads the gate's answer to WHAT THE CHANGE TOUCHED off the
- * config that uses it, rather than importing the module directly and hoping this file points at the
- * same one. With `configForChanged` beside it, the arm can weld what eslint resolves to that composer
- * applied to that reader — which is what makes its injected changed set a legitimate stand-in for a
- * real one it cannot stage.
+ * Re-exported so a consumer reads the gate's answer to WHAT THE CHANGE TOUCHED off the config that
+ * uses it, rather than importing the module directly and hoping this file points at the same one.
+ * `changedFiles.d.mts` types its consumers through here for that reason.
+ *
+ * ITS ONE READING CONSUMER WAS THE WITHDRAWN CUCUMBER ARM (3F-3478). The re-export stays because it
+ * is the answer another reader would otherwise restate, which is the failure it exists to prevent.
  */
 export { changedFiles };
 
@@ -161,10 +162,9 @@ const tsLanguageOptions = {
  * A SEVERITY inside the population and never to add a file to it. Test files live under these same
  * globs — the test block below restates rules for them, it does not add files.
  *
- * IT IS STILL EXPORTED WITH NO CONSUMER OUTSIDE THIS FILE (3F-3466). The exception-list
- * reconciliation was the reader that handed these globs to `lintFiles`, and it is retired; the
- * @SCN-CPX-001 arm reaches the population through `configForChanged` rather than through this name.
- * It stays exported because it is the answer another reader would otherwise restate, which is the
+ * IT IS STILL EXPORTED WITH NO CONSUMER OUTSIDE THIS FILE (3F-3466, 3F-3478). The exception-list
+ * reconciliation was the reader that handed these globs to `lintFiles`, and it is retired; no reader
+ * reaches the population through this name any more. It stays exported because it is the answer another reader would otherwise restate, which is the
  * failure it exists to prevent.
  *
  * @type {string[]}
@@ -222,7 +222,7 @@ const scopeBlocks = (severity, restrictTo) => [
     rules: thresholdRules(TEST_THRESHOLD, severity),
   },
   {
-    // The domain's concept modules: `max-lines` does not govern them (@SCN-CPX-004, 3F-2416). LAST of
+    // The domain's concept modules: `max-lines` does not govern them (3F-2416). LAST of
     // the three, so it wins over both scope blocks — the same later-wins rule the test block rides on.
     // It is restated inside the GATE composition too, for that reason: without it a changed entity
     // root would take `error` from the gate's production block and the exclusion would hold only for
@@ -237,7 +237,7 @@ const scopeBlocks = (severity, restrictTo) => [
 ];
 
 /**
- * WHAT eslint READS, composed from one list: what the change touched (@SCN-CPX-001, 3F-3462).
+ * WHAT eslint READS, composed from one list: what the change touched (@SCN-FIT-001, 3F-3462).
  *
  * The report first, the gate LAST so later-wins raises the changed files' severity over it. There is
  * no third composition and no `BARE_STANDARD_CONFIG` beside this one any more (3F-3466): that export
@@ -245,9 +245,8 @@ const scopeBlocks = (severity, restrictTo) => [
  * different things, and with the allowances gone the report blocks below ARE the bare standard.
  *
  * Exported as a FUNCTION, and the default export below is a call to it, so there is exactly one
- * composition of these blocks in the tree — the @SCN-CPX-001 arm drives this same function with a
- * changed set it supplies, because the real one cannot be staged deterministically, and it welds what
- * eslint resolves to `configForChanged(changedFiles(root))` block for block.
+ * composition of these blocks in the tree. Nothing outside this file drives it since 3F-3478
+ * withdrew the cucumber arm that did; what eslint runs is the call below and nothing else.
  *
  * @param {readonly string[]} changed
  * @returns {import("eslint").Linter.Config[]}
@@ -263,55 +262,11 @@ export const configForChanged = (changed) => [
 ];
 
 /**
- * WHAT THE RUN GATED AND WHAT IT ONLY REPORTED, IN ONE LINE (@SCN-CPX-005, 3F-3468).
- *
- * ONCE THE GATE'S POPULATION IS A SUBSET, `0 errors` MEANS TWO DIFFERENT THINGS — the changed set was
- * clean, or the changed set was empty. On a `push: main` run it is always the second, because the base
- * falls back to `origin/main` and that IS `HEAD` there. Neither eslint's summary line nor the step's
- * recorded `outcome` can tell the two apart, and the outcome is what the ledger reads: `balance` takes
- * SCN-FIT-001's credit from it, and it is `success` either way. A check that merely RAN then reads as
- * a check that ENFORCED, and the run's own output is the only place that difference can live.
- *
- * SO THIS IS A STATEMENT, NOT A SECOND VERDICT. It moves no severity, no finding and no exit code —
- * what reds is entirely `configForChanged`'s business, and this line is only that the run is readable.
- *
- * IT STATES A POPULATION, NEVER A FINDING COUNT. This file knows what the change touched; it cannot
- * know how many of those files carry a finding without matching `MEASURED_GLOBS` itself, and that
- * would be a second answer to which files are ours — the refusal the whole intersection design rests
- * on. So the honest sentence is the changed-file count plus the standing fact that the gate is that
- * count intersected with the measured population, and it says that and no more.
- *
- * AND THE EMPTY CASE IS STATED IN WORDS, NOT AS A ZERO. A `0` in a log reads as "nothing wrong"
- * rather than as a denominator, which is the misreading this line exists to prevent. A version that
- * printed only when the changed set was non-empty would satisfy every other reading of this mechanism
- * and go silent in exactly the situation it was written for.
- *
- * @param {readonly string[]} changed
- * @returns {string}
- */
-export const gatedPopulationStatement = (changed) =>
-  changed.length === 0
-    ? "complexity gate: this change touched no files, so nothing was held to the standard — the " +
-      "ordinary answer on a trunk run, where the base is HEAD. Every measured file is reported " +
-      "without reding."
-    : `complexity gate: this change touched ${changed.length} ` +
-      `${changed.length === 1 ? "file" : "files"}; those of them inside the measured population ` +
-      `were held to the standard. Every other measured file is reported without reding.`;
-
-/**
  * The changed set is read relative to THIS FILE'S directory, not `process.cwd()`. eslint resolves
  * `files` patterns against the config's own location, so the paths in the gate's intersection must be
  * relative to the same place or the intersection matches nothing — silently, since a file missing
  * from the gate is indistinguishable from one correctly outside it.
  */
 const changed = changedFiles(dirname(fileURLToPath(import.meta.url)));
-
-/**
- * ON stderr, SO THE REPORT IS BYTE-FOR-BYTE WHAT IT WAS. stdout is eslint's own report and things
- * parse it; this line is about the run rather than about a file, and putting it there would make
- * every reader of that report wrong. Module scope is deliberate too — it fires once, as the config
- * resolves its changed set, so it cannot be emitted twice or made conditional on a rule firing.
- */
-process.stderr.write(`${gatedPopulationStatement(changed)}\n`);
 
 export default configForChanged(changed);

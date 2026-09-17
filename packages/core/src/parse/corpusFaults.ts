@@ -32,7 +32,7 @@
  * `corpusCodeFaults.ts` (a code binding to a file), `corpusGrammarFaults.ts` (a tag meaning
  * something) and `corpusClaimFaults.ts` (how many checks one scenario claims) — because the joined
  * module reached the 400-line `max-lines` ceiling, twice, and canon rules that split rather than
- * an exception entry (@SCN-CPX-001). What stays here is the composition and the VOCABULARY: the
+ * an exception entry (@SCN-FIT-001). What stays here is the composition and the VOCABULARY: the
  * fault kinds, the shape of a discovered file, and the one entry point any sibling has. Splitting
  * on any other seam would have put a rule's inputs in one module and its finding's wording in
  * another.
