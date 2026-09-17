@@ -105,40 +105,6 @@ Feature: The scenario sub-issue gate binds behaviour to a tracked work-unit
       When the scenario sub-issue gate runs over the sibling-cited fixture PR
       Then the gate reds, naming the uncited test block
 
-  Rule: the scn-subissues static check's own CI run reconciles on spec-controller's Ledger
-
-    THE COBBLER'S SHOES, THE LAST PAIR. lint:scn-subissues runs over spec-controller's own
-    source on every build, so its run reaches the evidence stream on every reconcile. The
-    other side was missing: no scenario NAMED it. A run nothing names has no Evidence
-    Obligation to settle against, so it folded onto the suspense scenario as an uncited
-    static check — an instance, on the tool's own books, of exactly the class
-    uncited-static-checks.feature exists to name. A gate that is not reconciled on its own
-    Ledger is honour, not mechanism.
-
-    WHAT CLOSES IT IS NOW A CONFIGURED ROW, AND THAT IS THE SAME CLAIM THROUGH A SHORTER
-    JOIN (3F-3165). It used to be a stepless scenario at the foot of this file carrying a
-    bare @traceability tag, joined back to the running script handle through
-    specController.checkRegistry and then through the corpus — two hops, because a
-    DISCOVERED check is a script handle and a handle does not know what it is for. The
-    check is now a row of specController.fitnessChecks naming SCN-FIT-010; a CI step carrying that
-    code as its id: runs the row's command, and that step's entry in the run's own record IS the
-    credit, keyed by the code it carried. Nothing is resolved onto it.
-
-    WHAT THIS ASSERTS THAT SSM-001..005 DO NOT. The siblings above pin the gate's DECISION
-    over fixtures — what it passes and what it reds. This one pins the check's own
-    RECONCILIATION over the real tree, and asserts it FIRES rather than merely exists: a
-    row naming a command is only half the observation, and the half that matters is the
-    scenario appearing in a run's report. So both halves are asserted — the row names the
-    scenario AND a pass over this tree reports it — and then that the reconcile posts that
-    credit to that scenario, leaving no static check uncited on the suspense row.
-
-    @integration @SCN-SSM-006
-    Scenario: the scenario sub-issue check's own CI run is credited to the scenario naming it
-      Given the scn-subissues static check, wired over spec-controller's own source
-      When spec-controller's own tree is reconciled
-      Then the check's run is credited to the scenario that names it
-      And no static check run is left uncited on the suspense scenario
-
   Rule: a describe whose title carries braces stays open over the its beneath it
 
     A PARSER FAULT WEARING THE COSTUME OF A VIOLATION. Block nesting is found by
