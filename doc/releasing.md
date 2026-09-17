@@ -152,10 +152,13 @@ Both packages are **semver**, and both are on `0.x`.
 ### This repository pins spec-controller, and that pin is where a bump starts
 
 `package.json` at the workspace root carries `spec-controller` as an **exact published version** in
-`devDependencies`, and the root `spec-controller` script is the bare binary name — so `pnpm
-spec-controller …` runs the *installed* package. Both `ci.yml` steps that invoke the tool (`Corpus
-tags` and `Self-reconciliation balance`) go through it, which is what makes this repository an
-ordinary adopter of its own product rather than a special case (`3F-3105`).
+`devDependencies`, and there is no root script of that name — so `pnpm spec-controller …` falls
+through to `node_modules/.bin/spec-controller` and runs the *installed* package. Measured on
+`3F-3476`'s branch with the script gone: the report's own provenance reads `Tool version:
+0.1.0-alpha.3` and `Tool SHA: unknown (not a git checkout)`, against `0.1.0-alpha.4` and this
+checkout's HEAD for the workspace build run over the same argv. Both `ci.yml` steps that invoke the
+tool (`Corpus tags` and `Self-reconciliation balance`) go through it, which is what makes this
+repository an ordinary adopter of its own product rather than a special case (`3F-3105`).
 
 **That pin is the single declaration of which reader judges this tree.** There is no second
 "minimum readable version" banked anywhere, deliberately: a second spelling of the same fact agrees
@@ -171,8 +174,10 @@ the pair, never append to it.
 bump in *Releasing while the self-reconciliation is red* below.
 
 **Never widen the pin to escape a skew.** A range or a dist-tag would make the red go away by
-making the reader unpredictable, which is the failure this arrangement exists to end — and
-`@SCN-SLF-009` reds on any specifier that is not one exact version.
+making the reader unpredictable, which is the failure this arrangement exists to end. This is a
+convention and no guard enforces it: measured at `3F-3476`, `grep -rn devDependencies --include='*.ts'`
+returned two readers of the root `devDependencies` and both left with that slice, so nothing in the
+tree reds on a widened specifier.
 
 - **`0.x` says the surface may still move.** A minor bump on `0.x` may carry a breaking change, and
   a consumer who cannot absorb one should pin exactly rather than by caret.

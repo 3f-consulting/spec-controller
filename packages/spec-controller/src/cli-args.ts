@@ -70,7 +70,7 @@ export function parseArgs(argv: readonly string[]): Record<string, string> {
  * The dispatcher refuses such a command before this is ever reached, so the case is unreachable
  * today and stated here so it cannot become a silent "accept everything" later.
  *
- * IT NAMES THE VERSION THAT REFUSED, AND THAT IS FOR THE PINNED READER (3F-3105, @SCN-SLF-008).
+ * IT NAMES THE VERSION THAT REFUSED, AND THAT IS FOR THE PINNED READER (3F-3105, @SCN-CLI-009).
  * A consumer pins spec-controller and then moves their own tree; the pinned reader is handed argv
  * it was published too early — or too late — to understand, and an unadorned "unknown flag" is
  * indistinguishable from a typo. Naming the running version makes version skew legible from the CI

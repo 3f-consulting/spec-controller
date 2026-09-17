@@ -660,11 +660,12 @@ jobs:
       # self-reconciliation step below for the same reason, and the two steps now differ only in
       # which command they hand the binary.
       #
-      # ITS HANDLE IS OUTSIDE THE OBSERVED SET, AND THAT IS WHY NO PHANTOM CHECK ARRIVES WITH IT.
+      # IT INVOKES NO `package.json` SCRIPT, AND THAT IS WHY NO PHANTOM CHECK ARRIVES WITH IT.
       # `runningStaticChecks` counts a `package.json` script as a running static check when its
-      # name carries an observed prefix (`lint:` / `guard:`) and a CI `run:` step invokes it;
-      # `spec-controller` is the workspace CLI and carries neither, so this step adds an
-      # observation for SCN-FIT-014 and nothing to the static-check census.
+      # name carries an observed prefix (`lint:` / `guard:`) and a CI `run:` step invokes it. This
+      # tree has no `spec-controller` script at all since 3F-3476 — `pnpm` falls through to the
+      # pinned binary in `node_modules/.bin` — so there is no manifest entry for the rule to reach,
+      # and this step adds an observation for SCN-FIT-014 and nothing to the static-check census.
       #
       # SO THE `id:` IS THE WHOLE CITATION. The obligation is the `@fitness` scenario, the
       # command is the row in `specController.fitnessChecks`, and this step is the observation that
@@ -944,14 +945,14 @@ jobs:
       # its registry entry are retired, and the handle moved OUT of the observed set to match:
       # runningStaticChecks observes a `package.json` script as a running static check only
       # when its name carries an observed prefix (`lint:` / `guard:`) and a CI `run:` step
-      # invokes it, so `spec-controller` is deliberately outside it. Spelled `lint:` this step
-      # would cite nothing, post to the suspense row, and red on itself.
+      # invokes it, and this command invokes no manifest script at all (3F-3476). Given one,
+      # spelled `lint:`, this step would cite nothing, post to the suspense row, and red on itself.
       #
       # AND IT IS THE PRODUCT'S OWN BINARY, INVOKED THE WAY AN ADOPTER INVOKES IT (3F-3293).
       # It used to be a wrapper — a repository-local script, 325 lines of TypeScript resolving
       # seven scan surfaces before handing the argv on. No adopter can write that and none should,
-      # so the exemplar stopped teaching it: the surfaces are flags on this line, the `spec-controller`
-      # script is the workspace CLI and nothing else, and what this repository dogfoods is the
+      # so the exemplar stopped teaching it: the surfaces are flags on this line, `spec-controller`
+      # is the pinned published binary and nothing else, and what this repository dogfoods is the
       # command a consumer types. The wrapper's evidence-report precondition went with it, because
       # the CLI already holds that rule (@SCN-CLI-002) and a second implementation one level up is
       # the shape this repository keeps deleting.
@@ -964,9 +965,13 @@ jobs:
       # by the dump step above, so a developer's machine never has one and a local run must not be
       # called broken over it. The `$(...)` is unquoted on purpose — the two tokens have to split.
       #
-      # ONE LINE, AND ONE `package.json` SCRIPT. `commandInvokesScript` matches the token straight
-      # after `pnpm`, so `spec-controller` is the one hit and the `balance` word behind it is an
-      # argument.
+      # ONE LINE, AND NO `package.json` SCRIPT BEHIND IT. Nothing here is discovered from a script
+      # name: 3F-3476 deleted the root `spec-controller` script and this command still reconciles.
+      # `reconcilerSteps` recognises this step by comparing `spec-controller balance` — the
+      # invocation `ingest/ingestQualityChecks.ts` injects — as WHOLE ADJACENT shell tokens against
+      # the command, following manifest scripts where a step invokes one and matching the command
+      # directly where it does not. Adjacency is what keeps `Corpus tags` above on the books: the
+      # same binary, a different second token, an ordinary reconciled step.
       #
       # THE ONE-LINE PART USED TO BE ENFORCED AND IS NOW A CONVENTION WITH ONE REMAINING STAKE.
       # A derived local green-check reported a multi-line `run:` as `unsupported` and redded

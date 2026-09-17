@@ -24,7 +24,7 @@
 import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert/strict";
 import { spawnSync, type SpawnSyncReturns } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { cliRegistry } from "../../packages/spec-controller/src/cli-registry.js";
@@ -527,6 +527,45 @@ Then("nothing is reconciled to stdout", function () {
   // emitted — the unregistered flag never runs balance against zero evidence.
   assert.doesNotMatch(cliResult.stdout, /Evidence Reconciliation/);
 });
+
+// @SCN-CLI-009
+Then(
+  "the refusal names the version that refused it and the bump that cures a pinned skew",
+  function () {
+    // WHY THE REAL SUBPROCESS AND NOT THE STRING BUILDER. The @unit arm proves the builder
+    // interpolates the version it is handed; only this one proves the CLI hands it the version it
+    // actually IS, and that the whole message still reaches stderr rather than being trimmed on
+    // the way out.
+    //
+    // THE VERSION IS READ FROM THE PACKAGE MANIFEST, NEVER HARD-CODED — a hard-coded version reds
+    // on the next bump for a reason that has nothing to do with this behaviour. `spawnBalance`
+    // spawns the WORKSPACE built binary (support/builtCli.ts), so the version it reports is this
+    // manifest's, not the pinned dependency's.
+    const manifest = JSON.parse(
+      readFileSync(join(process.cwd(), "packages", "spec-controller", "package.json"), "utf8"),
+    ) as { version?: unknown };
+    assert.equal(
+      typeof manifest.version,
+      "string",
+      "the spec-controller package manifest must carry a version for the refusal to name",
+    );
+    const toolVersion = manifest.version as string;
+    assert.notEqual(toolVersion, "", "an empty version would make the version claim vacuous");
+
+    // The version doing the refusing — this is what makes a pinned reader's skew legible from the
+    // CI log alone, where the flag alone reads as a typo.
+    assert.ok(
+      cliResult.stderr.includes(toolVersion),
+      `expected the refusal to name the version that refused (${toolVersion}); got:\n${cliResult.stderr}`,
+    );
+    // The cure. A reader who can tell skew from a typo still has to be told what to do about it.
+    assert.match(
+      cliResult.stderr,
+      /bump the pin/i,
+      `expected the refusal to name the bump as the cure; got:\n${cliResult.stderr}`,
+    );
+  },
+);
 
 // @SCN-CLI-013
 // THE ANTI-DRIFT INVARIANT — the guard that would have CAUGHT 3F-1703 rather than fixed it.

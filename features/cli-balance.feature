@@ -313,3 +313,4 @@ Feature: spec-controller balance runs standalone
       When "spec-controller balance --bogus" is run through the CLI binary
       Then it exits with status 2 naming the unrecognised flag --bogus on stderr
       And nothing is reconciled to stdout
+      And the refusal names the version that refused it and the bump that cures a pinned skew

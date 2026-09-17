@@ -17,7 +17,6 @@
     "timing:score": "tsx tests/checks/timingReaderCli.ts --check ci-run-time",
     "cucumber": "tsx tests/checks/timeStepCli.ts --scn SCN-FIT-013 --check ci-run-time -- cucumber-js",
     "build": "pnpm -r build",
-    "spec-controller": "spec-controller",
     "lint:scn-subissues": "tsx tests/checks/lintScnSubIssuesCli.ts",
     "lint:boundaries": "depcruise packages && eslint --config eslint.boundaries.mjs packages",
     "lint:publint": "publint --pack pnpm packages/core && publint --pack pnpm packages/spec-controller",

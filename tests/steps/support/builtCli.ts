@@ -29,15 +29,9 @@
  * below — a silent pass over a stale `dist` is the worst outcome available here, and is worse than
  * the seconds are worth.
  *
- * NOT EVERY SPAWN IN THE SUITE MOVED, AND ONE OF THEM MUST NOT.
- * `selfReconciliation.steps.ts`'s `slf007FromSource` is @SCN-SLF-007's control — "a reader run from
- * THAT SOURCE", where the source is the file the scenario plants a defect into. A built reader
- * cannot see a plant in `packages/core/src`, so moving it would leave the control unable to move
- * and the scenario unable to mean anything (a defect planted in an unread file and a defect in a
- * file nobody built are the same silence). It stays on `tsx`, deliberately, and its docblock says so.
- * `tests/checks/*Cli.ts` — `lintScnSubIssuesCli`, `timeStepCli`, the mutation CLIs — also pay `tsx`
- * start-up, more per spawn; they have no build output today and giving them one is its own piece of
- * machinery, ruled out of 3F-3424's scope.
+ * NOT EVERY SPAWN IN THE SUITE MOVED. `tests/checks/*Cli.ts` — `lintScnSubIssuesCli`, `timeStepCli`,
+ * the mutation CLIs — pay `tsx` start-up, more per spawn; they have no build output today and
+ * giving them one is its own piece of machinery, ruled out of 3F-3424's scope.
  */
 
 import { BeforeAll } from "@cucumber/cucumber";

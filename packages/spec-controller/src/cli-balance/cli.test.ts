@@ -442,11 +442,12 @@ describe("[SCN-CLI-010] runBalance leaves the exit code 0 for an only-Pending-It
   });
 });
 
-// A stand-in version for the bounding tests. checkUnknownFlags NAMES the running version in its
-// refusal (3F-3105, @SCN-SLF-008) so a pinned reader's skew is legible from the message; these
-// arms are about WHICH flags are bounded, so any non-empty version serves, and using an obviously
-// fake one keeps them from reading as a version assertion they do not make.
-const SLF008_TOOL_VERSION = "9.9.9-test";
+// THE VERSION THE REFUSAL IS ABOUT. checkUnknownFlags NAMES the running version in its refusal
+// (3F-3105) so a pinned reader's skew is legible from the message alone, and the last arm below
+// asserts exactly that. It stays an obviously fake version — no release will ever carry it — so
+// `toContain` cannot be satisfied by anything but the interpolation under test; a real-looking
+// version could in principle collide with a substring the message already holds.
+const REFUSING_TOOL_VERSION = "9.9.9-test";
 
 describe("[SCN-CLI-009] checkUnknownFlags bounds balance to the flags the registry names", () => {
   // The registry-bounded parser (operator constraint 1): `balance` accepts ONLY registered
@@ -456,12 +457,12 @@ describe("[SCN-CLI-009] checkUnknownFlags bounds balance to the flags the regist
   it("returns null when every parsed flag is registered", () => {
     // Registered flags pass through: features/vitest/format/render-from-json/help are all in
     // the balance scope, so the bounded parser accepts them and the reconcile proceeds.
-    expect(checkUnknownFlags({ features: "features", vitest: "v.json" }, cliRegistry, "balance", SLF008_TOOL_VERSION)).toBeNull();
+    expect(checkUnknownFlags({ features: "features", vitest: "v.json" }, cliRegistry, "balance", REFUSING_TOOL_VERSION)).toBeNull();
     expect(
-      checkUnknownFlags({ format: "json:out.json", "render-from-json": "r.json" }, cliRegistry, "balance", SLF008_TOOL_VERSION),
+      checkUnknownFlags({ format: "json:out.json", "render-from-json": "r.json" }, cliRegistry, "balance", REFUSING_TOOL_VERSION),
     ).toBeNull();
     // No flags at all is trivially all-registered.
-    expect(checkUnknownFlags({}, cliRegistry, "balance", SLF008_TOOL_VERSION)).toBeNull();
+    expect(checkUnknownFlags({}, cliRegistry, "balance", REFUSING_TOOL_VERSION)).toBeNull();
   });
 
   it("returns a typed usage error naming an unregistered flag (the swallowed-typo footgun)", () => {
@@ -470,13 +471,31 @@ describe("[SCN-CLI-009] checkUnknownFlags bounds balance to the flags the regist
     // returns a non-null message that NAMES the offending flag, which runBalance routes to
     // stderr + exit 2 (usage, per 3F-1414's 0/1/2 taxonomy), never exit 1, never a silent
     // reconcile against the wrong intent.
-    const bogus = checkUnknownFlags({ bogus: "true" }, cliRegistry, "balance", SLF008_TOOL_VERSION);
+    const bogus = checkUnknownFlags({ bogus: "true" }, cliRegistry, "balance", REFUSING_TOOL_VERSION);
     expect(bogus).not.toBeNull();
     expect(bogus).toContain("--bogus");
 
-    const typo = checkUnknownFlags({ strcit: "true" }, cliRegistry, "balance", SLF008_TOOL_VERSION);
+    const typo = checkUnknownFlags({ strcit: "true" }, cliRegistry, "balance", REFUSING_TOOL_VERSION);
     expect(typo).not.toBeNull();
     expect(typo).toContain("--strcit");
+  });
+
+  it("names the version that refused and the bump as the cure, so a pinned reader's skew is legible", () => {
+    // WHY THE REFUSAL SAYS MORE THAN THE FLAG (3F-3105). A consumer pins spec-controller and then
+    // moves their own tree; the pinned reader is handed argv it was published too early — or too
+    // late — to understand, and a bare "unknown flag" is indistinguishable from a typo. Naming the
+    // running version makes skew legible from the CI log alone, and naming the bump says what to
+    // do about it.
+    //
+    // Teeth: the version asserted is the one this call HANDED IN, so a builder that stops
+    // interpolating `toolVersion` — or that names some other version — reds here; and the cure
+    // sentence is matched on its own, so dropping it while keeping the version reds too. The arms
+    // above would stay green through both, which is why this is its own `it` rather than two more
+    // assertions inside theirs.
+    const refusal = checkUnknownFlags({ bogus: "true" }, cliRegistry, "balance", REFUSING_TOOL_VERSION);
+    expect(refusal).not.toBeNull();
+    expect(refusal).toContain(REFUSING_TOOL_VERSION);
+    expect(refusal).toMatch(/bump the pin/i);
   });
 });
 

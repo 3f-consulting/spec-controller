@@ -103,20 +103,20 @@ function writeCorpus(files: readonly (readonly [string, string])[]): string {
 function commandFor(check: string): readonly [string, readonly string[]] {
   const [scriptName, ...subcommand] = check.split(/\s+/);
   assert.ok(scriptName, `the Examples table names no command: "${check}"`);
-  // THIS TREE'S CLI BY PATH, AND DELIBERATELY NOT THROUGH THE ROOT SCRIPT (3F-3413).
+  // THIS TREE'S CLI BY PATH, AND DELIBERATELY NOT THROUGH THE INSTALLED BINARY (3F-3413).
   //
   // This used to read `package.json`'s script for `scriptName` and assert it was a `tsx <entry>`
   // invocation, then spawn that entry. Two things were wrong with it once 3F-3105 pinned this
-  // repository to its own published package. It BROKE, because the root `spec-controller` script is
-  // now the bare binary name rather than a `tsx` invocation — a re-derivation of how a command is
-  // spelled is coupled to a spelling that was free to change. And had it been "fixed" by running the
-  // script, this scenario would have quietly begun asserting the PUBLISHED artefact's parse gate
-  // instead of this tree's: a regression in the source parse gate would have gone green here, with
-  // nothing in the diff to say so.
+  // repository to its own published package. It BROKE, because the script it re-derived the
+  // spelling from stopped being a `tsx` invocation — a re-derivation of how a command is spelled is
+  // coupled to a spelling that was free to change, and that script has since gone entirely
+  // (3F-3476). And had it been "fixed" by running the command, this scenario would have quietly
+  // begun asserting the PUBLISHED artefact's parse gate instead of this tree's: a regression in the
+  // source parse gate would have gone green here, with nothing in the diff to say so.
   //
   // So the entry is named directly. @SCN-GPG-002 is a claim about the product's behaviour and must
-  // exercise the code under change, exactly as @SCN-SLF-008's arm does. The Examples cell still
-  // names the command a consumer types; only the resolution of it is pinned to this tree.
+  // exercise the code under change. The Examples cell still names the command a consumer types;
+  // only the resolution of it is pinned to this tree.
   //
   // WHAT 3F-3424 MOVED, AND WHAT IT DID NOT. The entry is now this tree's BUILT binary rather than
   // its TypeScript source — `packages/spec-controller/dist/cli.js`, which is what `bin` points at
