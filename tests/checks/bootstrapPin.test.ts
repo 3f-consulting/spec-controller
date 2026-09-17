@@ -73,13 +73,28 @@ describe("[SCN-SLF-009] the reconciler is pinned to one exact published version"
   });
 
   it("routes the root script to the installed binary rather than to this tree's own source", () => {
-    // THE SCRIPT STAYS, AND DELETING IT WAS THE WRONG CALL — measured. `pnpm spec-controller …`
-    // does fall through to node_modules/.bin when no script of that name exists, so deleting it
-    // put the pinned binary in the judge's seat. But `localLadder` derives the local ladder by
-    // mapping each CI step to a package.json SCRIPT, so with no script the two steps that invoke
-    // this tool stopped being gates: `pnpm ladder` yielded 7 where CI runs 9, and @SCN-LAD-002 red.
-    // `pnpm verify` had quietly stopped running the corpus-tags check AND the self-reconciliation —
-    // the two gates this whole slice exists to make trustworthy.
+    // THE REASON THIS SCRIPT EXISTED HAS GONE, AND ITS REPLACEMENT WAS MEASURED RATHER THAN
+    // ASSUMED (3F-3475). It was here because a derived local ladder mapped each CI step to a
+    // package.json SCRIPT, so with no script the two steps invoking this tool stopped being local
+    // gates. That derivation is deleted. Re-measured on its branch WITHOUT it — this script
+    // removed, `balance` re-run over the same evidence — the report is unchanged in every cell:
+    // 246/243/3 scenario reconciliations, 406/403/3 obligations, 24 steps read, 12 candidates,
+    // 12 static checks run and 0 uncited, SCN-FIT-014 (`pnpm spec-controller tags`) still
+    // satisfied, the reconciler still recognised at `Self-reconciliation balance`, and the
+    // excluded-step list byte-identical. The product's own discovery does not need the alias.
+    //
+    // AND WHAT THAT MEASUREMENT DOES NOT SETTLE IS SAID RATHER THAN GLOSSED. It is a
+    // RECONCILIATION read off recorded evidence, so it shows the product's DISCOVERY is indifferent
+    // to the alias — it is not proof of WHICH BINARY answers when the script is absent. That claim
+    // is 3F-3293's, and the arm that would catch it moving is @SCN-SLF-009's `@integration` one,
+    // which reads the reader's own `Tool version:` line.
+    //
+    // SO WHAT THIS ARM STILL GUARDS IS THE SECOND CLAUSE, NOT THE FIRST. `pnpm spec-controller …`
+    // does fall through to node_modules/.bin when no script of that name exists, so while the
+    // script exists it is what decides which binary judges this tree — the fault 3F-3293 ended.
+    // Whether it must exist AT ALL now belongs to 3F-3476, which deletes this whole file and takes
+    // the script with it. The assertion below is left standing rather than quietly dropped, because
+    // retiring an assertion is a decision and it is not the deleting slice's to take.
     //
     // A script whose body is the bare binary name is not recursion: pnpm puts node_modules/.bin on
     // PATH, so the shell finds the installed executable, not this script. Measured, not assumed.
@@ -87,8 +102,9 @@ describe("[SCN-SLF-009] the reconciler is pinned to one exact published version"
 
     expect(
       script,
-      `the root "${RECONCILER}" script must exist: localLadder maps CI steps to scripts, and without it ` +
-        "the corpus-tags check and the self-reconciliation stop being local gates",
+      `the root "${RECONCILER}" script must exist — see the comment above: its original reason left ` +
+        "with the local ladder (3F-3475), and the script's own removal belongs to 3F-3476, which " +
+        "deletes this file. Until then this assertion stands.",
     ).toBeDefined();
 
     // THE TEETH. The fault this slice ends is the tool being run out of the tree it judges, and the

@@ -1,9 +1,10 @@
 # The fixture target's OWN workflow, standing in for another repository's pipeline — one whose
 # author reached for `continue-on-error` deliberately. The check runs, its red is swallowed, and
-# the job carries on. THIS FILE IS NOT THIS REPOSITORY'S LADDER: @SCN-LAD-008 still refuses the
-# attribute over .github/workflows/ci.yml, which is where that check reads and the only place it
-# reads. What is modelled here is a consumer's choice, and what this axis owes them for it is an
-# honest ledger rather than a refusal.
+# the job carries on. THIS FILE IS NOT THIS REPOSITORY'S PIPELINE: the attribute on a check step of
+# .github/workflows/ci.yml reconciles as the watermelon on this repository's own books, measured at
+# 3F-3475 by planting it on SCN-FIT-011 — the row came back "passing but fabricated" and the run
+# went out of balance. What is modelled here is a consumer's choice, and what this axis owes them
+# for it is that same honest ledger rather than a refusal.
 #
 # NO COMMAND HERE IS ONE OF THAT REPOSITORY'S SCRIPTS, which is realistic rather than load-bearing.
 # What isolates the record's reading is that a run handed its own record is answered for its

@@ -6,8 +6,8 @@
  * `@ci-run-time` axis — an Evidence Obligation carrying a ceiling, a measurement read into a
  * citing Evidence Observation, the reconciliation between them — and deliberately stopped
  * short of producing a measurement here. This module is the first half of that producer; the
- * spawn, the clock and the write live next door in `timeStepCli.ts`, the split
- * `localLadder.ts` / `localLadderCli.ts` already sets for a non-check in this directory.
+ * spawn, the clock and the write live next door in `timeStepCli.ts` — the pure half here, the
+ * process boundary there, so what is about time can be tested without spawning anything.
  *
  * WHAT IS LEFT HERE IS ONLY WHAT IS ABOUT TIME (3F-2754). The artefact a measurement posts
  * into, what a measurement IS, and the exit code a wrapper carries through are about MEASURING

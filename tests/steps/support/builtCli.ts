@@ -102,8 +102,8 @@ function newestMtime(dir: string): number {
  * THE FRESHNESS GUARD — `dist` must exist and must be at least as new as `src`, or this run stops
  * here with the cure named (3F-3424).
  *
- * WHY THERE IS A GUARD AT ALL. CI runs `pnpm build` before `Cucumber` and `scripts/verify.sh`'s
- * derived ladder carries that same step, so both routes into this suite build first. Somebody
+ * WHY THERE IS A GUARD AT ALL. CI runs `pnpm build` before `Cucumber`, so that route into this
+ * suite builds first. Somebody
  * typing `pnpm cucumber` on a fresh clone gets neither — and with the arms now spawning `dist`,
  * that run would either crash on a missing file (loud, fine) or, far worse, PASS over a `dist`
  * built from some earlier tree. A green over a stale artefact is a green about code nobody has.
@@ -127,7 +127,7 @@ BeforeAll(function () {
   if (!existsSync(SPEC_CONTROLLER_BIN)) {
     throw new Error(
       `the behavioural suite spawns the BUILT spec-controller binary, and it is not there: ` +
-        `${SPEC_CONTROLLER_BIN}\nRun \`pnpm build\` first (\`pnpm verify\` and CI both do).`,
+        `${SPEC_CONTROLLER_BIN}\nRun \`pnpm build\` first (CI does).`,
     );
   }
   for (const pkg of BUILT_PACKAGES) {
@@ -138,7 +138,7 @@ BeforeAll(function () {
     if (distAt === 0) {
       throw new Error(
         `packages/${pkg}/dist does not exist, and the behavioural suite spawns the built binary.\n` +
-          `Run \`pnpm build\` first (\`pnpm verify\` and CI both do).`,
+          `Run \`pnpm build\` first (CI does).`,
       );
     }
     if (srcAt > distAt) {
@@ -146,7 +146,7 @@ BeforeAll(function () {
         `packages/${pkg}/dist is OLDER than packages/${pkg}/src, so this run would spawn a binary ` +
           `built from a tree that is no longer here — and would report a verdict about code nobody ` +
           `has.\n  src newest:  ${new Date(srcAt).toISOString()}\n  dist newest: ` +
-          `${new Date(distAt).toISOString()}\nRun \`pnpm build\` first (\`pnpm verify\` and CI both do).`,
+          `${new Date(distAt).toISOString()}\nRun \`pnpm build\` first (CI does).`,
       );
     }
   }

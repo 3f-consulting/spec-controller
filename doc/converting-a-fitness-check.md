@@ -119,10 +119,10 @@ is not. What it buys is that an early red no longer decides the report — check
 of one another, and a row with no entry in the run record is broken evidence rather than a quiet
 absence, so without it one failure would be reported as one failure and nine unknowns.
 
-**Keep invoking the same handle the step already invoked.** Where your green-check is derived from
-the pipeline file — spec-controller's own `pnpm verify` is (`scripts/verify.sh`) — spelling the step
-as the CLI behind the handle runs the identical check and silently drops it from that green-check
-the day the pass is deleted.
+**Keep invoking the same handle the step already invoked.** Where you run a green-check derived from
+the pipeline file, spelling the step as the CLI behind the handle runs the identical check and
+silently drops it from that green-check the day the pass is deleted. spec-controller had exactly
+such a derivation and deleted it at 3F-3475 — the rule is yours to apply if you keep one.
 
 ### One dump step, at the end
 

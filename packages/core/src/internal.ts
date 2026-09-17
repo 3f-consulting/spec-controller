@@ -103,12 +103,13 @@ export { isMeasuredObservation, isStaticCheckObservation } from "./domain/journa
 export type { FitnessEvidenceObservation } from "./domain/journal.js";
 
 // `ciRunSteps` / `CiRunStep` — the CI walk `ciRunCommands` projects, carrying each `run:` step's
-// `id:` and whether its red would abort the job. Shared because the local-ladder derivation must
-// not open a second YAML walk to see `continue-on-error`: that key is on the same step mapping this
-// walk already visits, and a second reader would be free to disagree with the first about which
-// steps a workflow even runs — which is the silent disagreement the one-place rule exists to
-// prevent (3F-3042). Its only consumer OUTSIDE the engine is `tests/checks/localLadder.ts`;
-// `runningStaticChecks` reads the same walk in-engine for the `id:` (3F-3261). Internal, not
+// `id:` and whether its red would abort the job. Shared so that no caller opens a second YAML walk
+// to see `continue-on-error`: that key is on the same step mapping this walk already visits, and a
+// second reader would be free to disagree with the first about which steps a workflow even runs —
+// which is the silent disagreement the one-place rule exists to prevent (3F-3042). Its consumer
+// OUTSIDE the engine is `tests/steps/lintReconciliation.steps.ts`, at twelve call sites, one of
+// which reads `abortsJob`; `runningStaticChecks` reads the same walk in-engine for the `id:`
+// (3F-3261). The local-ladder derivation was the other outside consumer until 3F-3475. Internal, not
 // public — `ciRunCommands` remains
 // the v1 contract for anyone outside, and putting this on the `.` barrel would widen the v1
 // contract to buy nothing.

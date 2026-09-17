@@ -5,10 +5,11 @@
 # will settle. Every row that is placed asks this file, and nothing else anywhere holds a window or
 # compares an age to one — three arrangements that happen to agree is the state this replaces.
 #
-# IT IS SOURCED, NOT RUN, AND DELIBERATELY NOT A `package.json` SCRIPT. `pnpm ladder` derives the
-# local green-check from ci.yml's `run:` steps that invoke a package.json script; a script here
-# would join that ladder, and this is not a gate — it is a rule a placement asks. `Resolve the
-# evidence root` invokes none for the same reason (@SCN-LAD-001..006).
+# IT IS SOURCED, NOT RUN, AND DELIBERATELY NOT A `package.json` SCRIPT. This is not a gate — it is a
+# rule a placement asks — and the way a thing here becomes a gate is by acquiring a `run:` step of
+# ci.yml, which the product's own discovery then reports as a candidate fitness check. Excusing one
+# costs an entry in `specController.notChecks`, as `Resolve the evidence root` has. A derived local
+# ladder used to be the other reason; it left at 3F-3475 and this one is the whole of it.
 #
 # AND IT TAKES AN EPOCH SECOND, NEVER AN ISO STRING. Parsing a run's `createdAt` is GNU
 # `date -u -d` syntax that a BSD `date` refuses — measured at 3F-3156: with a BSD `date`, a run one

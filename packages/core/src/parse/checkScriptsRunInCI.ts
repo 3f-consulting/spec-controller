@@ -12,7 +12,7 @@
  * The CI config is parsed with the reputable `yaml` parser (jobs → steps → run, including
  * block-scalar `run:` and `if:`/matrix steps) — never line-scanned. The step mapping is read
  * for its `continue-on-error` and its `id:` as well as its `run:`, because a step whose red the job
- * would swallow is a check that reports without enforcing (3F-3042, @SCN-LAD-008) and a step's
+ * would swallow is a check that reports without enforcing (3F-3042, @SCN-LNT-032) and a step's
  * `id:` is where a consumer writes the `@SCN` its check cites (3F-3261). A static check's
  * command counts as enforced only on an EXACT
  * package-manager invocation of its script name (`pnpm <script>` / `pnpm run <script>` /
@@ -50,7 +50,7 @@ const CONTINUE_ON_ERROR = "continue-on-error";
  * null` for the reason the observation's own `scnId` is (`domain/journal.ts`) — an absent citation
  * carries no key at all.
  *
- * @SCN-LAD-008 — features/local-ladder.feature.
+ * @SCN-LNT-032 — features/fitness-reconciliation.feature.
  */
 export type CiRunStep = { readonly command: string; readonly id?: string } & StepAbortsJob;
 
@@ -298,7 +298,7 @@ export function ciRunCommands(ciSources: readonly string[]): string[] {
  * command stays in the step. Reading it here is what lets the derivation say WHICH row a wired
  * check answers, rather than only that it is wired.
  *
- * @SCN-LAD-008 — features/local-ladder.feature.
+ * @SCN-LNT-032 — features/fitness-reconciliation.feature.
  */
 export function ciRunSteps(ciSources: readonly string[]): CiRunStep[] {
   return ciWorkflowSteps(ciSources).flatMap((step) => ("runs" in step ? [runStepOf(step)] : []));

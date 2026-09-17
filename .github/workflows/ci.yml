@@ -41,9 +41,7 @@ concurrency:
 # behind the red, because nothing is believed about the run.
 #
 # WHAT IT COSTS IS ROUND-TRIPS, AND THIS REPOSITORY ALREADY PAYS THAT PRICE TWICE. A red build names
-# one failure where it could have named four. `scripts/verify.sh` chose the same trade in so many
-# words — "the first red stops the ladder and the last line says which gate" — and `mutation.yml`
-# chose it again for the sweep: "AND NO `if: always()`. A sweep that died left no verdict worth
+# one failure where it could have named four. `mutation.yml` chose the same trade for the sweep: "AND NO `if: always()`. A sweep that died left no verdict worth
 # reaching" (3F-2957, @SCN-MUT-016). Splitting these steps into independent jobs buys N checkouts and
 # N installs to make a RED build more talkative, and buys nothing where a decision is actually made.
 #
@@ -60,7 +58,7 @@ concurrency:
 #
 # WHAT IS DELIBERATELY REVERSED IS THE COST TRADE, AND ONLY FOR THE CHECK STEPS. 3F-3042's trade
 # above — a red names one failure where it could have named four — stands everywhere else in this
-# file, and stands in `scripts/verify.sh` and `mutation.yml` unchanged. It is reversed for the
+# file, and stands in `mutation.yml` unchanged. It is reversed for the
 # fitness check steps because those steps are INDEPENDENT of one another: eslint's red says nothing
 # about typecheck's, so stopping at the first tells a reader nothing they could have inferred. The
 # price is a slower red build; the ledger this file now feeds is the reason it is worth paying. A
@@ -73,8 +71,11 @@ concurrency:
 # over a step that enforced nothing. It is also the cheap answer this ticket was tempted by, and it
 # would have MANUFACTURED the invisibility it set out to close — the shared CI parse walked
 # `jobs -> steps -> run` and discarded every other key of the step, so a swallowed step read as
-# enforced and the ledger balanced it. Do not put it on a step or on this job: @SCN-LAD-008 reds
-# the ladder if you do, before a single gate has run.
+# enforced and the ledger balanced it. Do not put it on a step or on this job. A derived local
+# green-check used to refuse the attribute outright over this file; it left at 3F-3475, and what
+# enforces the rule now is the product's own reconciliation of this repository — measured there by
+# planting `continue-on-error: true` on SCN-FIT-011, which came back as the watermelon ("passing
+# but fabricated") and took the run out of balance. The fence is the ledger's, not a check of ours.
 
 jobs:
   ci:
@@ -149,12 +150,10 @@ jobs:
       # `measurementArtefact.ts` rather than guarded, because a check on this file's SHAPE is
       # exactly the control surface 3F-3099 exists to remove.
       #
-      # IT ADDS NO GATE. `pnpm verify`'s ladder is derived from the `run:` steps of this file that
-      # invoke a package.json script; this one invokes none, so the ladder is unchanged by it —
-      # nine gates as this file now stands — and `scripts/verify.sh` exports the same base for
-      # itself. (The number is not maintained here either: `pnpm ladder` prints it, and the closing
-      # line of `scripts/verify.sh` counts what it just ran. It is in this sentence only because a
-      # reader asking "unchanged from what?" deserves the figure.)
+      # IT IS NOT A CHECK, AND THE PRODUCT'S OWN DISCOVERY IS TOLD SO RATHER THAN LEFT TO GUESS.
+      # Every `run:` step of this file is a candidate fitness check; this one is excused by name in
+      # `specController.notChecks`, which is the one place that excuse is written. A derived local
+      # green-check used to have to be reasoned about here as well; it left at 3F-3475.
       - name: Resolve the evidence root
         run: echo "SPEC_CONTROLLER_EVIDENCE_DIR=$RUNNER_TEMP/spec-controller-evidence" >> "$GITHUB_ENV"
 
@@ -601,8 +600,7 @@ jobs:
       # AND THE GATES CAME BACK UP THE LADDER WITH THE SPLIT, WHICH IS THE COST THE CONVERSION PAID
       # BEING REFUNDED. `Lint complexity` and its siblings used to run near the top; converting them
       # put every one behind the whole test and cucumber ladder, inside one pass. They are steps
-      # again, and `pnpm verify`'s ladder is derived from this file, so each is a local gate in its
-      # own right once more.
+      # again, each reached in its own right and each reporting on its own.
       #
       # THE CONSUMER'S CI IS THE CREDIT JOURNAL, AND `balance` EXECUTES NOTHING. A quality check is
       # already a command in a pipeline; a run of that pipeline is already a record of what each
@@ -628,24 +626,20 @@ jobs:
       # so naming four failures beats naming one here. See the header for what that reverses and
       # what it does not.
       #
-      # THEY INVOKE THE package.json HANDLE AND NOT THE CLI BEHIND IT, WHICH IS WHAT PUTS THEM BACK
-      # IN THE LOCAL LADDER. `pnpm verify` is derived from the `run:` steps of THIS file that invoke
-      # a package.json script (@SCN-LAD-001..006), so these steps take it from four gates to nine —
-      # the three `lint:` checks and `typecheck` return to the local green-check that the
-      # conversion into the fitness pass had taken them out of, and the corpus-tags step arrives
-      # there with them. Writing the boundary gate's two tools out by hand here — `pnpm exec
-      # depcruise packages && pnpm exec eslint --config eslint.boundaries.mjs packages` — would run
-      # the same check and hold the ledger equally still, and now that the pass is gone `pnpm
-      # verify` would have silently dropped to one. A green-check that narrows without saying so is
-      # the fault @SCN-LAD-001..006 exist to make impossible; a step spelt to dodge them is the
-      # same fault wearing a longer command.
+      # THEY INVOKE THE package.json HANDLE AND NOT THE CLI BEHIND IT, AND THE REASON IS NOW ONLY
+      # THAT THE ROW SAYS SO. Each of these steps cites a row of `specController.fitnessChecks`
+      # through its `id:`, and that row's `command` is the handle — `pnpm lint:boundaries`, not
+      # `pnpm exec depcruise packages && pnpm exec eslint --config eslint.boundaries.mjs packages`,
+      # which would run the identical check. A reader matching the pipeline against the manifest
+      # reads the two spellings side by side, so keeping them the same is what makes that reading
+      # possible. Where the pipeline genuinely needs a different spelling it says so at the step, as
+      # `Complexity` does for `pnpm exec`.
       #
-      # THE `pnpm --silent` ROWS ARE NOT GATES, AND THAT IS THE DERIVATION BEING EXACT RATHER THAN
-      # A GAP. `--silent` sits where the script name would be, so the ladder does not match them;
-      # each reads an artefact an earlier step of THIS run wrote, so a local ladder running them out
-      # of that context would red on a missing record rather than on the code. How many there are is
-      # read off the rows and is deliberately not counted here — a number in this prose is a second
-      # reading of the manifest, kept in step by whoever remembers.
+      # THE SECOND REASON WAS MECHANICAL AND HAS GONE. A derived local green-check took its gate
+      # list from the `run:` steps of this file that invoked a package.json script, so a step spelt
+      # around the handle silently dropped out of it. That derivation was deleted at 3F-3475, and
+      # nothing mechanical now notices the difference — which is stated here rather than left for a
+      # reader to discover by changing one.
       - name: Complexity — eslint's complexity, max-lines and max-lines-per-function
         id: SCN-FIT-001
         if: always()
@@ -771,12 +765,10 @@ jobs:
       # step: without it this step is a candidate fitness check nothing cites, posts to the
       # suspense row, and reds the self-reconciliation on itself.
       #
-      # AND IT IS DELIBERATELY NOT A `pnpm verify` RUNG. That ladder is derived from the `run:`
-      # steps of this file that invoke a `package.json` script, so an action step is simply not one
-      # — the same shape `pnpm exec eslint` already has. @SCN-LAD-006's gate count is unmoved at
-      # eleven by this commit, which is the derivation being exact rather than a gap: a handle
-      # minted here to force this check onto the local ladder would be a convention invented to
-      # satisfy an arithmetic, and the tool ships no Node entry point to hang one on.
+      # AND IT GETS NO `package.json` HANDLE MINTED FOR IT. The tool ships no Node entry point to
+      # hang one on, and a handle invented so that an action step could be counted alongside `run:`
+      # ones would be a convention invented to satisfy an arithmetic. (A derived local green-check
+      # used to do that counting; it left at 3F-3475, so there is not even an arithmetic now.)
       #
       # THE DOCKER IMAGE IS THE TOOL'S OWN DOCUMENTED FORM, PINNED TO AN EXACT VERSION. The npm
       # package spelled `actionlint` is a third-party wasm wrapper on an unrelated version line and
@@ -846,11 +838,9 @@ jobs:
       # reports how many were ignored on every run, so a suppression is a number a reader meets
       # rather than a silence.
       #
-      # AND IT IS DELIBERATELY NOT A `pnpm verify` RUNG, the same as the step above it. The local
-      # ladder is derived from the `run:` steps of this file that invoke a `package.json` script,
-      # and this step has no `run:` at all — @SCN-LAD-006's count is unmoved by this commit.
-      # Minting a manifest handle to force it on would be a convention invented to satisfy an
-      # arithmetic.
+      # AND IT GETS NO `package.json` HANDLE EITHER, the same as the step above it: this step has
+      # no `run:` at all, and minting a handle to force one would be a convention invented to
+      # satisfy an arithmetic.
       #
       # THE ACTION IS PINNED TO A COMMIT AND THE TOOL IS PINNED TO A VERSION, WHICH ARE TWO PINS
       # AND NOT ONE. `version:` defaults to `latest`; left alone, this step would audit this tree
@@ -974,13 +964,18 @@ jobs:
       # by the dump step above, so a developer's machine never has one and a local run must not be
       # called broken over it. The `$(...)` is unquoted on purpose — the two tokens have to split.
       #
-      # ONE LINE, AND ONE `package.json` SCRIPT. `pnpm verify`'s ladder is DERIVED from this file
-      # (`localLadder.ts`), and that derivation reports a multi-line `run:` or a step invoking two
-      # scripts as `unsupported`, which reds the local green-check outright rather than running
-      # half a gate. `commandInvokesScript` matches the token straight after `pnpm`, so
-      # `spec-controller` is the one hit and the `balance` word behind it is an argument. The
-      # command string is carried verbatim into the local ladder, which is why the evidence paths
-      # are written against `SPEC_CONTROLLER_EVIDENCE_DIR`: `scripts/verify.sh` exports the same
-      # variable, so one string resolves in both environments.
+      # ONE LINE, AND ONE `package.json` SCRIPT. `commandInvokesScript` matches the token straight
+      # after `pnpm`, so `spec-controller` is the one hit and the `balance` word behind it is an
+      # argument.
+      #
+      # THE ONE-LINE PART USED TO BE ENFORCED AND IS NOW A CONVENTION WITH ONE REMAINING STAKE.
+      # A derived local green-check reported a multi-line `run:` as `unsupported` and redded
+      # outright; it left at 3F-3475, and the engine's own walk reads a multi-line block scalar on
+      # purpose. What still depends on this being one line is `.github/actionlint.yaml`, whose
+      # SC2046 suppression is pinned to two character columns of this very command — move it and
+      # that pattern stops matching and the gate REDS, which is the intended behaviour and is
+      # written up there. Whether to take shellcheck's idiomatic array instead was asked and
+      # answered NO on 2026-09-17 — the suppression's word-splitting reason stands alone, so
+      # nothing is owed and no ticket is open. The reasoning is in `.github/actionlint.yaml`.
       - name: Self-reconciliation balance
         run: pnpm spec-controller balance --features features --vitest "$SPEC_CONTROLLER_EVIDENCE_DIR/vitest.json" --cucumber "$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json" $([ -f "$SPEC_CONTROLLER_EVIDENCE_DIR/measurements.json" ] && echo "--measurements $SPEC_CONTROLLER_EVIDENCE_DIR/measurements.json") $([ -f "$SPEC_CONTROLLER_EVIDENCE_DIR/ci-steps.json" ] && echo "--ci-steps $SPEC_CONTROLLER_EVIDENCE_DIR/ci-steps.json") --ci .github/workflows/ci.yml --package-json package.json --target spec-controller

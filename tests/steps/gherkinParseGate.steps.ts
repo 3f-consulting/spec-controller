@@ -10,9 +10,8 @@
  *
  * THE COMMAND IS DERIVED, NOT RE-TYPED. The Examples cell names a package.json script and, after
  * it, the subcommand to hand that script; the script's own text is read from package.json rather
- * than restated here. So this arm cannot drift from what CI runs — the discipline `pnpm ladder`
- * already applies to the ladder itself. A step that re-typed `tsx …/cli.ts tags` would keep passing
- * after the script moved.
+ * than restated here. So this arm cannot drift from what CI runs. A step that re-typed
+ * `tsx …/cli.ts tags` would keep passing after the script moved.
  *
  * THE CORPUS IS STEERED BY THE WORKING DIRECTORY, which is how `tags` defaults both its inputs —
  * so it needs neither `--features` nor `--package-json` here, and the planted corpus is reached

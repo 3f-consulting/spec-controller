@@ -13,8 +13,10 @@ Feature: This repository reconciles itself as a consumer, from the package it in
   that route is the entire point of dogfooding. So there is no wrapper: a dependency, a `run:` step,
   and the verdict its exit code gives, exactly as an adopter runs it.
 
-  ITS PRECEDENT IN THIS CORPUS IS @LAD, which asserts properties of this repository's own pipeline
-  rather than of the product's behaviour. THE DISCRIMINATOR THIS FILE TURNS ON IS NOW ITS OWN: it
+  IT WAS NOT THE ONLY FILE HERE ASSERTING PROPERTIES OF THIS REPOSITORY'S OWN PIPELINE RATHER THAN
+  OF THE PRODUCT'S BEHAVIOUR, AND IT IS NOW. The local-ladder feature held the same shape and cited
+  this sentence as its warrant; it left at 3F-3475 with the 1,400 lines of derivation behind it.
+  THE DISCRIMINATOR THIS FILE TURNS ON IS NOW ITS OWN: it
   was stated in the release feature, which left at 3F-3453 with the hand-written release checks. A
   scenario that reads a manifest is reading the source of the artefact, while a scenario that runs
   the installed one is reading the artefact. Only the second stands where a consumer stands.

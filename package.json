@@ -10,8 +10,6 @@
   },
   "packageManager": "pnpm@11.2.2",
   "scripts": {
-    "verify": "bash scripts/verify.sh",
-    "ladder": "tsx tests/checks/localLadderCli.ts",
     "typecheck": "tsc --noEmit",
     "test": "tsx tests/checks/timeStepCli.ts --scn SCN-FIT-012 --check ci-run-time -- vitest run",
     "mutation": "SPEC_CONTROLLER_SOURCE_ROOT=\"$PWD\" tsx tests/checks/mutationScoreCli.ts --scn SCN-FIT-002 --check mutation -- stryker run",

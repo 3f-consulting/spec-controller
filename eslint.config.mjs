@@ -63,8 +63,9 @@
  * reading `process.env` would be fewer lines and would put the git command where a reader of the
  * pipeline sees it — AND THE GATE WOULD THEN EXIST ONLY IN CI. A developer running `pnpm exec eslint`
  * would get warnings and no gate, and the standard would be enforced nowhere they could act on it,
- * which is the user story inverted. @SCN-LAD-001..006 exist because a local green-check narrower than
- * CI is this repository's recurring fault; designing a new one in deliberately is not available.
+ * which is the user story inverted. A local check narrower than CI is this repository's recurring
+ * fault — 3F-2402 and 3F-2444 are both instances — so designing a new one in deliberately is not
+ * available, and that holds whether or not anything mechanical is watching for it (3F-3475).
  *
  * WIDENING THE SCOPE IS A DECISION, NOT HOUSEKEEPING. The production block covers
  * `packages/<pkg>/src` and `tests/checks`. Widening these globs admits a population nobody has

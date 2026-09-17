@@ -1527,10 +1527,12 @@ Then(
 // DISAGREE is the only document that tells the two readers apart. Measured under the plant that
 // rewrites the reader to take the laundered field: this arm reds and that one does not.
 //
-// THE PLANTED WORKFLOW CARRIES `continue-on-error` AND THIS REPOSITORY STILL MAY NOT. @SCN-LAD-008
-// refuses the attribute over .github/workflows/ci.yml — the only file it reads — and nothing here
-// touches that. What the fixture models is a consumer who reached for it deliberately, and what
-// this axis owes them is an honest ledger rather than a refusal.
+// THE PLANTED WORKFLOW CARRIES `continue-on-error` AND THIS REPOSITORY STILL MAY NOT — but the
+// mechanism saying so is now the product's, not a check of ours. A derived local ladder used to
+// refuse the attribute outright over .github/workflows/ci.yml; it left at 3F-3475, and what
+// replaces it is this very reading applied to our own books: planted on SCN-FIT-011, the row
+// reconciles "passing but fabricated" and the run goes out of balance. What the fixture models is a
+// consumer who reached for it deliberately, and what this axis owes them is that ledger.
 //
 // IT RUNS THE COMPOSITION rather than the record reader alone, for its siblings' reason: the claim
 // is about WHAT THE LEDGER SAYS, and a reader emitting an impeccable observation the composition

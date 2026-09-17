@@ -23,44 +23,52 @@ CI (`.github/workflows/ci.yml`) runs on every push to `main` and every PR, on
 ubuntu with a frozen lockfile. It is the single source of truth for "green" — a
 local pass on one machine is not evidence the gate holds in CI.
 
-**Before opening a PR, run `pnpm verify`.** That is the whole local check — one
-command, not a list to assemble by hand:
+**CI is the gate, and it is the only green.** No single local command reproduces it, and
+deliberately so: this repository once *derived* a local ladder from `ci.yml` so that a
+hand-assembled green-check could not silently narrow — and that derivation was 1,400 lines of
+check code of our own, in an exemplar whose whole claim is that a consumer writes none. It was
+deleted at 3F-3475. A consumer's pipeline is their gate, and ours is ours.
+
+The history is kept because it is why this document still lists no gates. It once listed five
+and said CI ran the same steps — CI ran thirteen, so an implementer who followed it *correctly*
+skipped `lint:complexity` and a red build was reported green (3F-2402). 3F-2420 moved the list
+into a script, which drifted the same way within four commits. **A hand-maintained list drifts
+wherever it is kept**, so there is none here either: read `.github/workflows/ci.yml`, which is
+the pipeline and the list at once.
+
+Before opening a PR, install with a frozen lockfile and run what your change touches:
 
 ```
+export SPEC_CONTROLLER_EVIDENCE_DIR="$(mktemp -d)"
 pnpm install --frozen-lockfile
-pnpm verify
+pnpm build
+pnpm typecheck
+pnpm test
+pnpm cucumber
 ```
 
-`pnpm verify` (`scripts/verify.sh`) runs every gate ci.yml runs except the ones it names
-as it goes, in ci.yml's order and on ci.yml's own command lines, stopping at the first red
-and naming the gate that died. Read the script's header for why both the order and the
-command strings are load-bearing.
+**None of that is a green-check, and a local pass is not evidence.** A red there is real and
+worth fixing before you push; a green across all of it says nothing about the gates it leaves
+out. The pull request's CI run is the verdict, and the only one.
 
-**The last gate is the self-reconciliation, and it reads what the two suites emitted.** It is
+**The self-reconciliation reads what the two suites emitted.** It is
 `pnpm spec-controller balance` — the product's own binary, run over this tree with this tree's
 scan surfaces (3F-3293). A `--vitest` or `--cucumber` path it is handed and cannot find is a
 **setup fault, not a verdict**: it exits 2 naming the flag and the path, because reconciling
 against a report that does not exist would report every obligation as unobserved, which means
-*the suite did not run*, never *the code is wrong*. Running the ladder in order emits both. If you
-are running the gate on its own, emit them first:
+*the suite did not run*, never *the code is wrong*. So emit both first, into the evidence root
+exported above:
 
 ```
 pnpm test --reporter=default --reporter=json --outputFile.json="$SPEC_CONTROLLER_EVIDENCE_DIR/vitest.json"
 pnpm cucumber --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json"
 ```
 
-**Nobody maintains that list, including this document.** The gates are *derived* from
-`.github/workflows/ci.yml` on every run: each `run:` step invoking a `package.json` script
-becomes a local gate (3F-2444). A step added to CI is gated locally with no edit here and
-none to the script.
-
-That is the second attempt at this. This document once listed five gates and said CI ran
-the same steps — CI ran thirteen, so an implementer who followed it correctly still skipped
-`lint:complexity`, and a red build was reported green (3F-2402). 3F-2420 replaced the prose
-list with a list inside the script, which then drifted the same way: the anemic-domain gate —
-converted into `lint:boundaries` at 3F-3288 and no longer a script of its own — arrived with a CI
-step and no gate line, leaving `pnpm verify` a proper subset of CI for four commits. A
-hand-maintained list drifts wherever it is kept; a derivation has nothing to keep.
+**It will still end at exit 1 on your machine, and that is the design rather than a fault** —
+see *A LOCAL SELF-RECONCILIATION REPORTS EVERY FITNESS ROW AS `missing`* below. Measured at
+3F-3475 over a tree identical to `origin/main`: every command above green, and the
+reconciliation out of balance on `@SCN-FIT-012`, `@SCN-FIT-013` and `@SCN-FIT-002`, because the
+step that PLACES a measurement is a step of `ci.yml` and your machine runs no pipeline.
 
 **Every converted check is a CI step, carrying its `@SCN` as the step's `id:`.** A converted check
 is both a row of `specController.fitnessChecks` and a `run:` step whose `id:` cites that row — the
@@ -71,18 +79,11 @@ what its steps did.
 a characteristic is a label on a row rather than a token the parser reads, so a check policing which
 characteristic words a manifest may name has nothing left to police.
 
-**What `pnpm verify` leaves out, it prints** — the step and the reason, every run, rather
-than in prose somebody has to keep true. **Today it leaves out nothing**, and the closing line
-says so by not mentioning an omission at all (3F-3165). The exclusion list is a target's to
-write, in `specController.ciOnlyExclusions`; this repository's is empty. It held one entry —
-`lint:scn-subissues`, whose inputs come from the pull request, so locally it answered on less
-than it needed and redded correct work — until that check learnt to say *I examined nothing*
-instead, with an ending of its own. **The printed reason is the source; this paragraph is
-orientation.** An exclusion excusing a step CI no longer runs still reds the ladder, and an
-excluded step CI runs behind a gate still reds it: such a step has one chance to run where
-every gate has two, so a red ahead of it takes it off the board without reporting it unrun.
-
-`bash scripts/verify.sh --list` prints the gates without running them.
+**What a step left out of the local run costs you, nothing prints any more.** There was a
+mechanism here — a derived ladder that named every omission and its reason on every run, and
+redded on an exclusion excusing a step CI no longer ran. It left with the derivation (3F-3475),
+and so did `specController.ciOnlyExclusions`, which nothing reads. What is left is the pipeline
+itself: a step you did not run locally is a step you find out about on the pull request.
 
 **Three rows are MEASURED — their evidence is a number rather than an exit code.** Each has a
 configured row in `specController.fitnessChecks` naming the characteristic, the command that
@@ -129,7 +130,7 @@ fitness axis's credit journal is the CI run's own record of what each of its ste
 no record, nothing is raised for any configured row, and each reconciles
 `missing` — out of balance at exit 1, and NOT unsound: a run handed no record of itself is a
 different fact from a run whose record carried nothing. **The checks themselves still run locally**
-— every one of them is a gate of `pnpm ladder` or a command you can type — and their teeth are their
+— every one of them is a step of `ci.yml` you can type at a shell — and their teeth are their
 own exit codes, unchanged. What a local run does not have is the ledger's view of them, and the one
 place that view is real is CI.
 
@@ -173,8 +174,8 @@ the zero is not left to infer which one it is.
 ## Reports live outside the repo
 
 Reconciliation reports are never committed. Nothing in the pipeline writes one into
-the tree: `pnpm verify` and `ci.yml` both resolve the evidence root to a temp
-directory (`SPEC_CONTROLLER_EVIDENCE_DIR`, defaulted to `$RUNNER_TEMP` / `$TMPDIR`),
+the tree: `ci.yml` resolves the evidence root to a temp directory
+(`SPEC_CONTROLLER_EVIDENCE_DIR`, `$RUNNER_TEMP` on a runner, whatever you export locally),
 so a report appearing under version control is now a deliberate act rather than an
 accident a guard has to catch. Kept reports belong in an external store.
 

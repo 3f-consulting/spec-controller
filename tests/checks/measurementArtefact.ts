@@ -134,15 +134,15 @@ export interface MeasurementArtefact {
  *
  *   `SPEC_CONTROLLER_EVIDENCE_DIR` — the environment's answer for a run that named no target: a
  *   CI job placing every stream on the runner's own disk, where the placement step and the read step
- *   share one filesystem, and `scripts/verify.sh` doing the same locally.
+ *   share one filesystem, and whatever a developer exports for a local run.
  *
  *   NEITHER — a temporary directory. `$RUNNER_TEMP` on a runner, `$TMPDIR` locally, and the
  *   platform's own answer where neither is set, which is the ordinary case on Linux.
  *
  * THE FLAG BEATS THE VARIABLE, AND THAT ORDER WAS MEASURED RATHER THAN CHOSEN. The design this
  * implements had the variable winning ALWAYS. It cannot: `ci.yml` sets the variable for its whole
- * job and `scripts/verify.sh` exports it for the whole ladder, so EVERY process the suite spawns
- * inherits it — including the planted-tree arms, which pass `--root <mkdtemp>` and would then read
+ * job, so EVERY process the suite spawns inherits it — including the planted-tree arms, which pass
+ * `--root <mkdtemp>` and would then read
  * the outer run's evidence instead of their own. Seven cucumber scenarios red on that, and the
  * fix is not to teach seven arms to unset a variable: an argument the caller passed is more
  * specific than the environment it happens to be standing in, which is the ordinary precedence a

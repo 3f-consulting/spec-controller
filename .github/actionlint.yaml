@@ -22,17 +22,21 @@
 # which `balance` reds as a supplied-but-absent path with exit 2 (@SCN-CLI-002). So the fix
 # shellcheck is asking for would break the step it is asking about.
 #
-# THE WARNING IS REAL ABOUT A PATH CARRYING A SPACE, AND THIS PATH CARRIES NONE. It is
-# `$RUNNER_TEMP/spec-controller-evidence` on CI and the same name under `mktemp -d` locally, both
-# written by `scripts/verify.sh` and by the `Resolve the evidence root` step rather than supplied
-# by a caller.
+# THE WARNING IS REAL ABOUT A PATH CARRYING A SPACE, AND THIS PATH CARRIES NONE. actionlint reads
+# workflow files and nothing else, so the only value in scope here is CI's:
+# `$RUNNER_TEMP/spec-controller-evidence`, written by the `Resolve the evidence root` step of this
+# same file rather than supplied by a caller.
 #
-# AND THE IDIOMATIC FIX IS BARRED BY A RULE THAT OUTRANKS IT. shellcheck's own answer to SC2046 is
-# a bash array, which needs a multi-line `run:`. `pnpm verify`'s ladder is DERIVED from this
-# workflow (`tests/checks/localLadder.ts`), and that derivation reports a multi-line `run:` as
-# `unsupported`, which reds the local green-check outright rather than running half a gate
-# (@SCN-LAD-001..006). The shellcheck-clean spelling of that line costs this repository a gate —
-# a worse trade than a suppression naming the two constructs it covers.
+# THE SECOND REASON THIS SUPPRESSION CARRIED HAS GONE, AND THE SUPPRESSION IS DELIBERATELY UNMOVED.
+# It used to argue that the idiomatic fix — shellcheck's own answer to SC2046, a bash array, which
+# needs a multi-line `run:` — was barred, because a derived local green-check reported a multi-line
+# `run:` as `unsupported` and redded outright. That derivation was deleted at 3F-3475, so the bar
+# it imposed no longer exists: `unsupported` was its notion alone, and the engine's own walk reads a
+# multi-line block scalar on purpose (`checkScriptsRunInCI.ts`). WHETHER THE IDIOMATIC FIX SHOULD
+# NOW BE TAKEN WAS ASKED AND ANSWERED NO, 2026-09-17. The first reason, word splitting, is untouched
+# and is sufficient on its own, so nothing is owed here and there is no debt to name: taking the
+# array would be REPLACING a working step of ours that reaches no consumer, not removing one. No
+# ticket is open for it and none should be, and the pattern below stands exactly as it was.
 #
 # THE RESIDUAL, SAID RATHER THAN LEFT TO BE INFERRED. actionlint filters by the ERROR MESSAGE and
 # by nothing else: there is no per-step directive, and a `# shellcheck disable=` line needs a

@@ -32,7 +32,8 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
   This line used to end "tsc deferred", and that deferral outlived its reason: `tsc --noEmit`
   is static analysis on any reading, spec-controller ran it in CI throughout, and the report
   said 11 checks run over a tree running twelve. A deferral recorded only in a feature preamble
-  is one nobody reads again — the arrangement scripts/verify.sh already carries two scars from.
+  is one nobody reads again — the arrangement this repository's own green-check twice wore a scar
+  from, at 3F-2402 and 3F-2444, before the whole of it was deleted at 3F-3475.
   The scenario @SCN-API-002 now names typecheck, so it is on the books rather than in a
   sentence. (That line must not START with the @-token: Gherkin reads a leading @ as a tag
   line and reds with "A tag may not contain whitespace" — which is exactly what it did here.)

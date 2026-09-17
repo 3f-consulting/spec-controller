@@ -214,8 +214,8 @@ Do not hand-move `latest` onto a prerelease to make the bare install work; it mo
 ## The release path asks nothing about this repository
 
 `release.yml` gates on what says **this artefact is sound**: the build, the typecheck, both suites,
-and the clean-room install of the packed tarballs. It runs **neither the self-reconciliation nor
-`pnpm verify`**, and that is a rule rather than an oversight:
+and the clean-room install of the packed tarballs. It **does not run the self-reconciliation**, and
+that is a rule rather than an oversight:
 
 > **The release path consults nothing that is about this repository rather than about the artefact.**
 
