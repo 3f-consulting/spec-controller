@@ -12,7 +12,9 @@
  * catalogue while the enum was still uninitialised, and every computed key would read `undefined`.
  * Splitting the vocabulary (the enum + union), the data (the catalogue) and the behaviour (this
  * class) into three modules makes the dependency a straight line — and leaves the catalogue alone
- * in its file, which is what lets @SCN-MSG-002's exclusion name a pure-data target and nothing else.
+ * in its file, which is what lets `stryker.config.mjs`'s `mutate` exclusion name a pure-data target
+ * and nothing else. The exclusion is the config's, not a scenario's: @SCN-MSG-002 claims only that
+ * every code has a message carrying its own fault's parameters (3F-3490).
  */
 
 import { QualityCheckFaultCode, type QualityCheckFault } from "./qualityCheckFault.js";

@@ -1,39 +1,30 @@
 /**
- * Unit arm for @SCN-MSG-002 — the catalogue is total over the fault codes with no empty entry, and
- * the stryker exclusion covers exactly it. `@unit`-only; the describe string carries the id, so a
- * grep of @SCN-MSG-002 returns both halves of the pair (Evidence Manifesto §9).
+ * Unit arm for @SCN-MSG-002 — the catalogue is total over the fault codes with no empty entry.
+ * `@unit`-only; the describe string carries the id, so a grep of @SCN-MSG-002 returns both halves
+ * of the pair (Evidence Manifesto §9).
  *
- * ONE ARM, OVER THE REAL ARTEFACTS. It is the only place either `stryker.config.mjs` or the
- * catalogue is compared to anything: no mutant is raised over the catalogue — that is what the
- * exclusion does — and @SCN-MSG-001's arm reads no message at all by its own ruling, so the
- * totality-and-parameters half belongs beside the exclusion that makes it necessary rather than in
- * a file of its own.
+ * BESIDE THE CATALOGUE IT IS ABOUT, SINCE 3F-3490. This arm was born under `tests/checks/` sharing
+ * ONE `it` with a check over this repository's own Stryker `mutate` glob — the two were filed
+ * together at 3F-2873, because the exclusion is what makes the totality-and-parameters half
+ * necessary in the first place. That check has gone: its subject was our configuration and not the
+ * product, and a scenario about it, in the corpus a consumer copies, teaches a local convention
+ * rather than a behaviour. What survived is an ordinary unit test about a domain table, so it now
+ * sits beside the table — which is also where a consumer would have put it.
  *
- * THE PLANTED ARM WENT AT 3F-3245. Its subject was this module's own implementation, so its green
- * proved the check does what its author wrote rather than what the rule requires — one author
- * keeping both books. Its removal cost this guard no reading of the repository.
+ * NOTHING HERE READS A CONFIG FILE. No `node:fs`, no `import` of `stryker.config.mjs`, nothing that
+ * knows where the repository root is. A surviving config read in a domain test would be the same
+ * scenario in a new house, and the exclusion's residual is now stated in the feature's own preamble
+ * rather than asserted here.
  *
  * NOTHING HERE READS A MESSAGE'S WORDING. That test is the wording-pin this whole feature exists to
  * make unnecessary. The non-blank probe INVOKES rather than inspects: the catalogue is a mapped type
  * over RENDERER FUNCTIONS, so every entry is truthy and only a call can judge one.
  */
 
-import { existsSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
 import { describe, it, expect } from "vitest";
 
-import {
-  QualityCheckFaultCode,
-  type QualityCheckFault,
-} from "../../packages/core/src/domain/qualityCheckFault.js";
-import { QUALITY_CHECK_FAULT_MESSAGES } from "../../packages/core/src/domain/qualityCheckFaultMessages.js";
-import { checkMutateSurface, mutateGlobOf } from "./mutateExclusion.js";
-
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-
-/** The real config this guard is about — loaded from disk, never a copy of it written here. */
-const STRYKER_CONFIG = "stryker.config.mjs";
+import { QualityCheckFaultCode, type QualityCheckFault } from "./qualityCheckFault.js";
+import { QUALITY_CHECK_FAULT_MESSAGES } from "./qualityCheckFaultMessages.js";
 
 /**
  * One sample fault per code, keyed the same way the catalogue is, so a future fault arrives with its
@@ -74,25 +65,8 @@ const FAULT_CODES = Object.values(QualityCheckFaultCode).filter(
 
 const SAMPLES: readonly QualityCheckFault[] = Object.values(SAMPLE_FAULTS);
 
-describe("[SCN-MSG-002] the catalogue is total over the fault codes with no empty entry, and the stryker exclusion covers exactly it", () => {
-  it("holds the REAL stryker config to the sanction list, and the REAL catalogue to every fault code", async () => {
-    // LOADED THE WAY THE RUNNER LOADS IT, AND ITS PRESENCE ASSERTED FIRST. A `.mjs` config is a
-    // module, so the read is an import, and an import of a file that is not there fails deep inside
-    // a loader naming a specifier rather than the artefact this guard is about. The presence line
-    // is what turns that into the sentence a reader needs.
-    const configPath = path.join(repoRoot, STRYKER_CONFIG);
-    expect(existsSync(configPath)).toBe(true);
-    const loaded = (await import(pathToFileURL(configPath).href)) as { default?: unknown };
-
-    // The dogfood green, read back off disk. This is the assertion that stops the exclusion being
-    // a hole: a later edit widening it to a directory reds HERE, not on a reviewer noticing that a
-    // mutation score improved for a reason nobody stated. The floor is the reader's live substitute
-    // — a `mutate` key read as `[]` rather than refused arrives here as a glob of length zero.
-    const glob = mutateGlobOf(loaded.default);
-    expect(glob.length).toBeGreaterThan(0);
-    expect(checkMutateSurface(glob)).toEqual([]);
-
-    // The other half of the same real artefact, and the reason the exclusion above is affordable.
+describe("[SCN-MSG-002] the catalogue is total over the fault codes with no empty entry", () => {
+  it("holds the REAL catalogue to every fault code, and every rendered message to its own fault's parameters", () => {
     // The mapped type forces this at compile time; the runtime pin catches what the type cannot
     // see — a spread or a computed key putting an entry in the table that no code claims, and an
     // enum member the type-checker was never asked about. No mutant is raised over the catalogue,

@@ -7,8 +7,13 @@
  * where it belongs. The split is what makes the mutate exclusion honest — "do not mutate this
  * file" is defensible over a table of sentences and indefensible over anything that decides
  * something. A render helper parked here would leave the deciding logic unmutated too, and the
- * exclusion would then hide more than the prose it was granted for. (@SCN-MSG-002, 3F-2873, reads
- * the real stryker config back and reds if the exclusion names anything wider than this file.)
+ * exclusion would then hide more than the prose it was granted for. NOTHING NOW ASSERTS THAT IT
+ * DOES NOT: a check read the real stryker config back and redded on an exclusion that had widened,
+ * until 3F-3490 retired it as a claim about our own configuration rather than about the product.
+ * @SCN-MSG-002 keeps the half that IS about the product — every code renders a non-blank message
+ * carrying its own fault's parameters, proved in `qualityCheckFaultMessages.test.ts` beside this
+ * file — and the widened-exclusion residual is stated in `features/message-catalogue.feature`'s
+ * preamble, where the next reader of the exclusion meets it.
  *
  * TOTALITY IS NOT ASSERTED, IT IS UNCONSTRUCTIBLE. `QualityCheckFaultMessages` is a mapped type
  * over the code union, so the compiler refuses both a code with no message AND a message reaching

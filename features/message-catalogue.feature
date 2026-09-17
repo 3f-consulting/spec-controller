@@ -18,12 +18,16 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
   that replace them are the ternaries deciding `Exists` against `None`, now asserted as fields.
 
   THE EXCLUSION IS THE PART THAT COULD BE A HOLE. "Do not mutate this file" is one edit away from
-  "do not mutate this directory", and nothing would go red. Two things close it, and neither is a
-  promise: the catalogue is a mapped type over the fault codes, so a code cannot exist without a
-  message and a template cannot reach for a parameter its fault does not carry (the compiler
-  forces both, the way `OUTCOME_DESCRIPTION` already forces an outcome to have a gloss), and a
-  guard reads the real stryker config back and asserts the exclusion names the catalogue and
-  nothing else. An exclusion that widened would red on the guard, not on a reviewer noticing.
+  "do not mutate this directory", and nothing would go red. What closes half of it is not a promise
+  but the compiler: the catalogue is a mapped type over the fault codes, so a code cannot exist
+  without a message and a template cannot reach for a parameter its fault does not carry, the way
+  `OUTCOME_DESCRIPTION` already forces an outcome to have a gloss. The exclusion ITSELF is held by
+  review alone, and that is said here rather than left to be found (3F-3479). A check used to read
+  the real stryker config back and red on an exclusion that had widened; its subject was this
+  repository's own Stryker configuration, which a reader who copies this corpus does not have, so it
+  left with the rest of our own check code. A widened exclusion now reds nothing — what it still
+  cannot do is make the catalogue lie. An accepted residual, not an oversight, and the same trade
+  `stryker.config.mjs` already carries in writing for the lost kill its own threshold cannot see.
 
   WHERE IT LIVES, AND WHY NOT OUTSIDE THE DOMAIN. The obvious home for data the domain must not
   mutate is a folder outside the domain — and the boundary gate's domain-imports-adapter rule says
@@ -49,12 +53,11 @@ Feature: Human-facing message prose lives off the mutated surface, keyed by a co
       And the refusal names its fault by code, and names which of the two sides diverged
       And the refusal carries the outcome, the side-presence canon required of that side, and the side-presence actually carried
 
-  Rule: every fault code has a message, and the mutate exclusion names the catalogue and nothing else
+  Rule: every fault code has a message that names its fault
 
     @unit @SCN-MSG-002
-    Scenario: the catalogue is total over the fault codes with no empty entry, and the stryker exclusion covers exactly it
+    Scenario: the catalogue is total over the fault codes with no empty entry
       Given a sample fault for every code a domain invariant can raise
       When each sample's message is rendered from the catalogue
       Then every code renders a message that is not blank
       And each message carries every parameter its own fault supplied
-      And the mutated surface excludes the catalogue and nothing wider
