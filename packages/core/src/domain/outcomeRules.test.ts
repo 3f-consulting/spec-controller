@@ -381,7 +381,7 @@ describe("[SCN-LDG-001] suspenseReconciliationsOf orders the suspense row's item
 
   /**
    * A broken item carries its WHERE-to-fix and WHAT-broke, and NO observation — a proof that never
-   * ran is not an observed piece of evidence (the side-profile invariant, @SCN-LDG-031).
+   * ran is not an observed piece of evidence.
    */
   it("carries locator + message on a broken item, and no evidence observation", () => {
     const [item] = suspenseReconciliationsOf([broken], [], []);
