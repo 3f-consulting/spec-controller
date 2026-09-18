@@ -1,10 +1,9 @@
 /**
  * The complexity and module-size thresholds — the ONE place the numbers live (@SCN-FIT-001, 3F-2286).
  *
- * Consumed by `eslint.config.mjs` (the static check) and pinned by `complexityThreshold.test.ts` (the
- * @unit evidence). Neither restates them: a second copy would agree by COINCIDENCE and drift the
- * moment either side is retuned, which is the agreeing-by-copy this codebase has spent several slices
- * removing from the domain and the static checks.
+ * Consumed by `eslint.config.mjs` (the static check), which does not restate them: a second copy would
+ * agree by COINCIDENCE and drift the moment either side is retuned, which is the agreeing-by-copy this
+ * codebase has spent several slices removing from the domain and the static checks.
  *
  * WHY THIS IS `.mjs` AND NOT `.ts`. eslint loads its flat config through Node's own ESM loader, so a
  * TypeScript config would need `jiti` as a third new devDependency to buy nothing — these are five
@@ -57,42 +56,23 @@
  */
 
 /**
- * Where each number came from. The citation is part of the contract, not a comment: a cited number and
- * an uncited one are indistinguishable once shipped, and the whole point of 3F-2286 is that these
- * three have provenance. The @unit pin asserts each entry is present and names its source.
- */
-export const STANDARD_SOURCES = {
-  complexity:
-    "NIST Special Publication 500-235 / McCabe — a cyclomatic complexity above 10 is the stated " +
-    "refactor line ('modules with complexity over 10 should be reduced'). SonarQube's default is a " +
-    "looser 15; the stricter of the two published lines is taken.",
-  maxLinesPerFunction:
-    "Google engineering practices — a function past roughly 40 lines should be considered for " +
-    "breaking up. Robert Martin's Clean Code is stricter again at ~20; 40 is the more widely " +
-    "published of the two and the less contested.",
-  maxLines:
-    "A CHOSEN ceiling, and named as one. No industry body publishes a hard file-length cap, so this " +
-    "is the one number here with no external source to cite — saying so plainly is the honest form. " +
-    "400 sits inside the 300-500 band the style guides that do speak use, and is an order of " +
-    "magnitude under this tree's worst file, which is what makes it a target rather than a mirror.",
-};
-
-/**
- * The numbers 3F-2177 measured off this tree, retired by 3F-2286.
- *
- * Kept — deliberately — so the @unit pin can assert NEGATIVE provenance: that no live threshold still
- * carries a number this tree produced. Enumerating them here rather than re-typing them in the test
- * means the assertion cannot pass by the test forgetting one, and a future edit that quietly
- * reinstated 1024 or 221 reds even if it updated the test's expectation to match.
- *
- * Production seeds 25 / 1024 / 261; test seeds 7 / 2419 / 221.
- *
- * @type {readonly number[]}
- */
-export const RETIRED_TREE_DERIVED_SEEDS = [25, 1024, 261, 7, 2419, 221];
-
-/**
  * Production code — `packages/<pkg>/src` and `tests/checks`, excluding test files.
+ *
+ * WHERE EACH NUMBER CAME FROM. The citation is part of the contract, not decoration: a cited number
+ * and an uncited one are indistinguishable once shipped, and the whole point of 3F-2286 is that these
+ * three have provenance.
+ *
+ *   - `complexity` 10 — NIST Special Publication 500-235 / McCabe — a cyclomatic complexity above 10
+ *     is the stated refactor line ('modules with complexity over 10 should be reduced'). SonarQube's
+ *     default is a looser 15; the stricter of the two published lines is taken.
+ *   - `maxLinesPerFunction` 40 — Google engineering practices — a function past roughly 40 lines
+ *     should be considered for breaking up. Robert Martin's Clean Code is stricter again at ~20; 40 is
+ *     the more widely published of the two and the less contested.
+ *   - `maxLines` 400 — A CHOSEN ceiling, and named as one. No industry body publishes a hard
+ *     file-length cap, so this is the one number here with no external source to cite — saying so
+ *     plainly is the honest form. 400 sits inside the 300-500 band the style guides that do speak
+ *     use, and is an order of magnitude under this tree's worst file, which is what makes it a target
+ *     rather than a mirror.
  *
  * @type {import("./complexityThresholds.d.mts").ComplexityThreshold}
  */
@@ -149,9 +129,9 @@ export const TEST_THRESHOLD = {
  * option and applies no ceiling at all, which looks exactly like a file that is under its ceiling.
  * AND NOTHING NOTICES IT ANY MORE (3F-3478). The cucumber arm that linted planted sources through the
  * real config and read the severity off the message was withdrawn with its scenario, and nothing
- * replaced it: there is no `.test.ts` beside this module either, and the `@unit pin` this file's
- * prose names above is not in the tree (measured, 3F-3462). A reader reaching for either to cover a
- * new emitter will find neither — so a wrong shape here is now silent end to end.
+ * replaced it: there is no `.test.ts` beside this module either — 3F-3245 deleted it, on the rule
+ * that a check's subject is its command. A reader reaching for either to cover a new emitter will
+ * find neither — so a wrong shape here is now silent end to end.
  *
  * `skipBlankLines: true, skipComments: true` RIDES ON EVERY EMITTED LINE RULE (3F-2395). The
  * threshold holds the CODE a reader must hold in their head, not the file's bytes. Counting
