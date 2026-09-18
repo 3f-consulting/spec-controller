@@ -1,11 +1,28 @@
 name: Release
 
-# A TAG, OR A HAND-STARTED RUN, AND NOTHING ELSE (3F-3249). This is its own file
-# rather than a job in `ci.yml`, and the reason is that file's own trigger: it runs on `push: main`
-# AND on `pull_request`, so a release living inside it would attempt one on both. The alternative —
-# an `if:`-conditioned step in that job — would break the premise `ci.yml` states in its own header
-# and relies on: every step in it is unconditional, which is what lets a green there mean every gate
-# ran.
+# EVERY MERGE TO `main` THAT CHANGES A PUBLISHED PACKAGE PUBLISHES IT, IN ITS OWN RUN (3F-3529).
+# Nobody cuts a release. The portfolio rule is `the maintainers' private notes` → "Continuous
+# delivery: every package-changing merge publishes, and the version is a counter".
+#
+# THE `paths:` LIST IS WHAT A TARBALL IS MADE OF, AND NOTHING ELSE. Both manifests ship
+# `files: ["dist"]`, and npm adds `package.json` and `README.md`. `dist` is `tsc` over `src` minus
+# its `*.test.ts`, through a `tsconfig.build.json` that extends the root `tsconfig.json`. A merge that
+# touches only `doc/`, `features/`, `tests/`, `.github/`, the root `package.json` or the lockfile
+# changes no artefact, so it starts no run. Replayed over the last 40 commits on `main` (3F-3529,
+# 2026-09-18), 24 would have published. The other 16 would not, and among them is `2b94da2`, the last
+# by-hand pin move. That is the loop guard for the bot that now moves the pin: its PR touches the
+# root `package.json` and the lockfile and nothing here.
+#
+# `push: tags` IS GONE, ON PURPOSE. A tag RECORDS a release, from the `tag` job at the foot of this
+# file; it never causes one. And a tag made with the default token starts no workflow anyway, so a
+# release listening for one would never fire.
+#
+# `workflow_dispatch` IS THE STAGE0 HATCH AND NOTHING ELSE. A hand-started run from an unmerged
+# branch publishes that branch's tree at the next counter number. `doc/releasing.md` says when.
+#
+# THIS IS STILL ITS OWN FILE RATHER THAN A JOB IN `ci.yml` (3F-3249). That file runs on
+# `pull_request` too, and every step in it is unconditional, which is what lets a green there mean
+# every gate ran. A release inside it would need an `if:` to stay off pull requests.
 #
 # AND THE SEPARATION IS WHAT KEEPS THE RELEASE REACHABLE WHILE THE RECONCILIATION IS RED (3F-3250).
 # Nothing below asks anything that is about THIS REPOSITORY rather than about the artefact — not the
@@ -14,11 +31,29 @@ name: Release
 # strand CI on a red only a hand publish can clear.
 on:
   push:
-    tags: ["v*"]
+    branches: [main]
+    paths:
+      - "packages/*/src/**"
+      - "!packages/*/src/**/*.test.ts"
+      - "packages/*/package.json"
+      - "packages/*/README.md"
+      - "packages/*/tsconfig.build.json"
+      - "tsconfig.json"
   workflow_dispatch:
 
-# A TAG PUSH PUBLISHES, AND THE CREDENTIAL THAT USED TO DO IT IS GONE (3F-3441). The two steps at
-# the foot of this file run `npm publish` under npm trusted publishing: the job asks GitHub for a
+# ONE RELEASE AT A TIME, AND THE COUNTER IS READ INSIDE THAT ONE (3F-3529). GitHub runs one run of
+# this group and holds at most one pending. A newer pending run cancels the older pending one:
+# with merges A, B and C close together, A publishes, B is cancelled, and C publishes. C's commit
+# contains B's change, because squash merges keep `main` linear, so nothing goes unpublished and no
+# number is minted twice. `cancel-in-progress: false` matters here: cancelling a RUNNING release
+# could land between `Publish core` and `Publish the CLI`.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+# NO CREDENTIAL IS STORED ANYWHERE, AND THE ONE THAT USED TO PUBLISH IS GONE (3F-3441). The two
+# publish steps at the foot of the `release` job run `npm publish` under npm trusted publishing:
+# the job asks GitHub for a
 # short-lived OIDC id-token, npm exchanges it for a publish token scoped to the one package, and
 # that token dies with the run. `permissions: id-token: write` is what switches it on and is the
 # whole of the configuration. No secret, no `env:` on either publish step, nothing to rotate.
@@ -72,36 +107,44 @@ on:
 # registry unreachable, where nobody could install it until a maintainer approved it in person with
 # proof of presence — a second gate against this workflow publishing on their behalf, and the one
 # npm recommends keeping. That gate is gone. The trade is the operator's, 2026-09-16: "I see zero
-# reason to deviate from convention in this space", npm's advice noted and declined. What is left
-# is that a tag push is a human act and nothing here publishes without one.
+# reason to deviate from convention in this space", npm's advice noted and declined. The last human
+# act left with 3F-3529: a merge publishes. What stands between a merge and the registry is the
+# required `ci` on the pull request, `main`'s `strict` protection, and every gate below.
 #
 # PROVENANCE TURNS ITSELF ON, AND NOT YET. `oidc.js` sets `provenance` only when the id-token's own
 # payload carries `repository_visibility === 'public'`. This repository is private, so no attestation
 # is produced and no flag written here would produce one. Nothing to configure now and nothing to
 # remember at the flip: it starts appearing by itself.
 #
-# `contents: read` is the checkout's and nothing more — this release writes nothing back to the
-# repository. `id-token: write` is read by npm, in the one call measured above, and by nothing else.
-permissions:
-  contents: read
-  id-token: write
+# NOTHING AT THE WORKFLOW LEVEL; EACH JOB ASKS FOR ITS OWN (3F-3529). The `release` job holds
+# `contents: read` for the checkout and the tag read, and `id-token: write` for npm, in the one call
+# measured above. Every gate, the pack, the smoke and both publishes run there WITHOUT a write
+# token. The one write this workflow makes — the tag — happens in its own job, which holds
+# `contents: write` and nothing else, and runs no code from this repository.
+permissions: {}
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      version: ${{ steps.counter.outputs.version }}
     # A BOUND ON A HUNG RELEASE, AND THE LOOSEST OF THE THREE ON PURPOSE (3F-3457). Measured over
     # 2026-09-01..16: 4 runs, mean 2.8 min, max 3.0 min. Fifteen is about five times that, and the
-    # slack is the asymmetry: this job talks to a registry, and killing it between `Stage core` and
-    # `Stage the CLI` leaves exactly the half-sent release the ordering above exists to prevent.
-    # Waiting on a slow network costs minutes; a severed staging costs a version number.
+    # slack is the asymmetry: this job talks to a registry, and killing it between `Publish core` and
+    # `Publish the CLI` leaves exactly the half-sent release the ordering below exists to prevent.
+    # Waiting on a slow network costs minutes; a severed publish costs a version number.
     timeout-minutes: 15
     steps:
       # PINNED TO A COMMIT WITH THE RELEASE AS A COMMENT, AND `persist-credentials: false` — the
       # register above `ci.yml`'s checkout carries the argument for both (3F-3445, @SCN-FIT-021).
       # It matters more here than there: this job holds a registry credential, and a job token left
       # in `.git/config` beside it doubles what a compromised dependency of this build could reach.
-      # Nothing below talks to the remote — the release packs, smokes and stages, and writes
-      # nothing back to the repository, which is what the `permissions:` block above already says.
+      # Nothing in this job talks to the remote through git. It reads the tag list over the API
+      # with a read-only token, and it writes nothing back to the repository — the tag is the
+      # `tag` job's, under its own permission.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -169,9 +212,9 @@ jobs:
       #
       # NOTHING THAT SPEAKS TO THE TARBALL IS LOST WITH IT. `SCN-FIT-011` IS `pnpm typecheck`, and
       # the step below runs it directly — the one artefact-relevant member of the axis is covered
-      # outside the pass. The repository bars are `ci.yml`'s, discharged on every merge to `main`;
-      # what a tag cut from an unmerged branch has not passed is the residual `doc/releasing.md`
-      # states, and it is the same one a tag has always carried.
+      # outside the pass. The repository bars are `ci.yml`'s, discharged on every merge to `main`
+      # before the merge can happen (`strict`). What a hand-started run from an unmerged branch has
+      # not passed is the residual `doc/releasing.md` states.
       #
       # AND NOT ONE OF THESE THREE CARRIES AN OBSERVED SCRIPT PREFIX, WHICH IS A CONSTRAINT ON THIS
       # FILE RATHER THAN A COINCIDENCE (3F-3249, planted). The reconciliation's CI scan is the
@@ -187,6 +230,52 @@ jobs:
 
       - name: Cucumber
         run: pnpm cucumber
+
+      # THE VERSION IS A COUNTER, AND IT LIVES IN THIS RUN'S WORKING COPY ONLY (3F-3529). `main` is
+      # protected, so nothing is committed back. The committed manifest names the LINE — everything
+      # before the last `.N` — and the operator's by-hand act is editing it: `0.2.0-alpha.0` or
+      # `1.0.0` starts a new line, and the first merge after publishes exactly that.
+      #
+      # THE HIGHEST NUMBER ALREADY ON THE LINE WINS, READ FROM THE REGISTRY AND THE TAGS TOGETHER.
+      # The registry alone can serve a stale packument for a moment after a publish. The tags alone
+      # miss a publish whose `tag` job failed. The union covers both, and it covers both PACKAGES:
+      # if core published and the CLI did not, the re-run takes the NEXT number for both, and the
+      # spent one is skipped rather than re-minted. Numbers compare as numbers (`alpha.10` beats
+      # `alpha.9`), and on a stable line the prereleases do not count.
+      #
+      # MEASURED BEFORE IT WAS WRITTEN HERE (3F-3529, 2026-09-18), in a clone at `1abdc39`:
+      # `base=0.1.0-alpha.5 max=5 next=0.1.0-alpha.6`. Both packed manifests then read
+      # `0.1.0-alpha.6`, and the CLI's names core at exactly `0.1.0-alpha.6` — `pnpm pack` rewrote
+      # `workspace:*` from the stamped manifest, so lockstep needs nothing more. The CLI reads its
+      # own version from its `package.json` at runtime, so stamping after the build is enough.
+      #
+      # NO `2>/dev/null` AND NO `|| true`, AND THE THREE READS ARE CHAINED WITH `&&`. If the
+      # registry or the API cannot be read, this step reds. A counter that quietly read less would
+      # re-mint a number npm refuses — later, and with a less useful error. The `&&` is load-bearing:
+      # inside `$( … )` bash clears `-e`, so with plain line breaks a failed `npm view` is swallowed
+      # whenever the last read succeeds. Measured under the runner's `bash -eo pipefail` (3F-3529):
+      # line breaks, first read failing: exit 0; `&&`: exit 1.
+      - name: Stamp the next counter version on both packages
+        id: counter
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          base="$(node -p "require('./packages/spec-controller/package.json').version")"
+          prefix="${base%.*}."
+          n="$(
+            {
+              npm view @3f-consulting/spec-controller-core versions --json &&
+              npm view spec-controller versions --json &&
+              gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/tags/v" --jq '[.[].ref | ltrimstr("refs/tags/v")]'
+            } | jq -r 'if type == "array" then .[] else . end' \
+              | awk -v p="$prefix" 'index($0, p) == 1 { s = substr($0, length(p) + 1); if (s ~ /^[0-9]+$/) print s }' \
+              | sort -n | tail -1
+          )"
+          if [ -n "$n" ]; then v="$prefix$((n + 1))"; else v="$base"; fi
+          echo "line ${prefix}N, highest published ${n:-none}, releasing $v"
+          (cd packages/core && npm pkg set version="$v")
+          (cd packages/spec-controller && npm pkg set version="$v")
+          echo "version=$v" >> "$GITHUB_OUTPUT"
 
       # PACKED ONCE, AND EVERY STEP BELOW READS THESE SAME FILES. `pnpm pack` performs the whole
       # manifest transformation a publish performs — `workspace:*` resolved to the concrete version
@@ -271,9 +360,9 @@ jobs:
       # the second one takes, `npm i spec-controller` resolves an engine nobody can fetch.
       #
       # AND THE TWO ARE NOT A TRANSACTION, WHICH IS WHERE THAT ORDER BITES. If core publishes and
-      # the CLI does not, core's version number is SPENT — npm never lets one be reused — and the
-      # cure is the next version, never a re-run of this tag. A tag may only be force-moved onto a
-      # fixed commit while NOTHING has published. `doc/releasing.md` carries both halves.
+      # the CLI does not, core's version number is SPENT — npm never lets one be reused. The cure
+      # is re-running this run: the counter above reads core's spent number off the registry and
+      # takes the next one for both (3F-3529). `doc/releasing.md` carries it.
       #
       # NO SUPPRESSION SITS ON EITHER STEP, AND THAT IS THE POINT OF THE CHANGE (3F-3441). `zizmor`'s
       # `use-trusted-publishing` reports an `npm publish` that authenticates from a stored secret and
@@ -282,8 +371,9 @@ jobs:
       # for them. The `adhoc-packages` ignore on the clean-room smoke is a different audit on a
       # different step and is untouched.
       #
-      # AND NOTHING RUNS AFTER THESE TWO. Everything this release verified, it verified before this
-      # point, so a step behind them would be a change to the artefact nothing here has read.
+      # AND NOTHING IN THIS JOB RUNS AFTER THESE TWO. Everything this release verified, it verified
+      # before this point, so a step behind them would be a change to the artefact nothing here has
+      # read. The `tag` job that follows changes no artefact; it records which commit was sent.
       #
       # `--tag` IS NOT OPTIONAL FOR A PRERELEASE, AND ITS ABSENCE COST THE FIRST ONE (measured, run
       # 34941985755): `npm error You must specify a tag using --tag when publishing a prerelease
@@ -308,10 +398,9 @@ jobs:
       # `next` IS NOT ONE OF THESE. It is a pointer at an upcoming major line, not a prerelease
       # identifier, so nothing here can ever set it and no procedure of ours asks anybody to.
       #
-      # EACH STEP READS ITS OWN PACKAGE'S MANIFEST rather than a value computed once and shared. The
-      # two release in lockstep at the same version (doc/releasing.md), so the answers agree today —
-      # but a shared value would be a second place the version is stated, and the only thing keeping
-      # it true would be that nobody edited one of them.
+      # EACH STEP READS ITS OWN PACKAGE'S MANIFEST, the one the counter stamped and the pack read.
+      # The counter wrote one number into both, so the answers agree — and a step that took the
+      # counter's output instead would be naming a version it had not checked was the one packed.
       - name: Publish core
         run: |
           v="$(node -p "require('./packages/core/package.json').version")"
@@ -328,3 +417,26 @@ jobs:
           v="$(node -p "require('./packages/spec-controller/package.json').version")"
           case "$v" in *-*) t="${v#*-}"; t="${t%%.*}" ;; *) t=latest ;; esac
           npm publish "$RUNNER_TEMP/release"/spec-controller-*.tgz --tag "$t"
+
+  # THE TAG RECORDS WHAT WAS PUBLISHED; IT NEVER CAUSES A RELEASE (3F-3529). It runs only after both
+  # publishes succeeded, on the commit this run built, named for the version the counter stamped.
+  # It is its own job so that the only token that can write to this repository never shares a
+  # runner with the gates, the dependency install or the pack. No checkout and no git: one API call.
+  #
+  # IT STARTS NOTHING, AND THAT IS CORRECT. A ref made with the default token raises no workflow
+  # event, and nothing in this repository listens for a tag any more.
+  #
+  # IF THIS JOB FAILS, NOTHING IS LOST BUT THE RECORD. The version is already on the registry, and
+  # the next run's counter reads the registry too, so it does not re-mint the number.
+  tag:
+    needs: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Tag the commit that was published
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.release.outputs.version }}
+        run: gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/v$VERSION" -f sha="$GITHUB_SHA"

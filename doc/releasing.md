@@ -4,10 +4,12 @@ Two packages go out together: `@3f-consulting/spec-controller-core`, the pure en
 `spec-controller`, the command that resolves it. A release sends both, core first, from one run of
 `.github/workflows/release.yml`.
 
-**A release is a tag push and nothing else.** There is no credential stored anywhere, nothing to
-promote afterwards and nothing to rotate. The portfolio-level rules live in
-`the maintainers' private notes`; this file is what is true of *these two
-packages*.
+**Nobody cuts a release.** Every merge to `main` that changes a published package publishes both
+packages in that merge's own run, at the next counter version, and then tags what it published.
+There is no credential stored anywhere, no release PR, nothing to promote afterwards and nothing to
+rotate. The portfolio rule is `the maintainers' private notes` → *Continuous delivery: every
+package-changing merge publishes, and the version is a counter*; this file is what is true of *these
+two packages*.
 
 **Read *When a publish returns `E401`* before your first release.** The trap in it is an
 authentication error whose cause is not authentication, and this file used to teach the exact
@@ -15,39 +17,74 @@ opposite of what it now teaches.
 
 ---
 
-## How a release is cut
+## How a release happens
 
-1. **Bump both packages** to the next version — `packages/core/package.json` and
-   `packages/spec-controller/package.json`, same version, one commit — and merge it.
-2. **Tag that commit and push the tag.** This is the human act, and the only one.
-3. **Watch the run.**
-4. **Verify on the registry.**
+**A merge publishes when it changes what a tarball is made of**, and only then. `release.yml` runs
+on `push` to `main` filtered to these paths:
+
+| Path | Why it is in the tarball |
+|---|---|
+| `packages/*/src/**`, except `*.test.ts` | compiled into `dist`, the one entry in `files` |
+| `packages/*/package.json`, `packages/*/README.md` | npm always packs both |
+| `packages/*/tsconfig.build.json`, the root `tsconfig.json` | decide what `dist` compiles to |
+
+A merge touching only `doc/`, `features/`, `tests/`, `.github/`, the root `package.json` or the
+lockfile publishes nothing. Replayed over the last 40 commits on `main` (3F-3529, 2026-09-18),
+24 would have published and 16 would not. Among the 16 is every docs-only commit and the last
+by-hand pin move.
+
+### The version is a counter
+
+The run takes the **line** from the committed CLI manifest — everything before its last `.N`, so
+`0.1.0-alpha.5` is the line `0.1.0-alpha.` — and finds the highest number already on that line across
+**both packages on the registry and the repository's `v*` tags**. It stamps the next number into both
+manifests **in the run's working copy only**. Nothing is committed back: `main` is protected, and the
+committed manifest is not the published version. It stays where a human last put it while the
+registry counts on.
+
+**Major and minor are a by-hand act, and it is an ordinary merge.** Edit both manifests to start a
+new line — `0.2.0-alpha.0`, or `1.0.0` — and merge. Nothing is on that line yet, so the run publishes
+exactly what you wrote; the next merge after it counts on from there. On a stable line the counter
+moves the patch number and ignores prereleases.
+
+### Watching one
 
 ```bash
-# on main, at the merge commit both manifests name
-git tag v0.1.0-alpha.N
-git push origin v0.1.0-alpha.N
-
-gh run watch "$(gh run list --workflow=release.yml --limit 1 --json databaseId -q '.[0].databaseId')"
+gh run list --workflow release.yml --limit 5
+gh run watch <run-id>
 
 npm view spec-controller dist-tags
 npm view @3f-consulting/spec-controller-core dist-tags
-npm view spec-controller@0.1.0-alpha.N dependencies
+npm view spec-controller@<version> dependencies
+git ls-remote --tags origin "v<version>"
 ```
 
-The last line matters because the CLI's packed manifest names core by a **concrete** version: it is
-the check that the two went out in lockstep.
+The `dependencies` line matters because the CLI's packed manifest names core by a **concrete**
+version: it is the check that the two went out in lockstep. Nothing is owed after the run goes green.
 
 ### What the workflow does, in order
 
+The `release` job:
+
 1. Checks out, enables corepack, installs with a frozen lockfile.
 2. **Builds**, **typechecks**, runs **`pnpm test`** and **`pnpm cucumber`**.
-3. **Packs both packages, once.** Every step after this reads those same two files.
-4. **Smokes them in a clean room** — installs the tarballs into a directory holding nothing else of
+3. **Stamps the next counter version** on both manifests in the working copy.
+4. **Packs both packages, once.** Every step after this reads those same two files.
+5. **Smokes them in a clean room** — installs the tarballs into a directory holding nothing else of
    this repository, outside the workspace, and starts the command there.
-5. **Publishes core, then the CLI**, with `npm publish` over the packed tarballs.
+6. **Publishes core, then the CLI**, with `npm publish` over the packed tarballs.
 
-Then it is done. Nothing is owed after the run goes green.
+Then the `tag` job creates `v<version>` on the commit that was built. It is its own job so the only
+token that can write to the repository never shares a runner with the build, and it starts no other
+workflow. **The tag records a release; it never causes one**, and nothing listens for tags any more.
+
+### Two merges close together
+
+Runs are serialised (`concurrency: release`, never cancelling a running one). GitHub holds at most
+one pending run, and a newer pending run cancels the older: for merges A, B and C in quick
+succession, A publishes, B is cancelled, C publishes — and C's commit contains B's change, because
+squash merges keep `main` linear. Each run reads the counter inside its own turn, after the previous
+run's publish and tag, so no number is minted twice.
 
 ---
 
@@ -118,28 +155,25 @@ will not let anyone republish them, you included.
 
 There is no half-way house. The previous shape had one — a version could sit on the registry
 unreachable and simply never be approved — and it is gone with everything else that went with it.
-The tag push is now the point of no return, which is why the clean-room smoke in step 4 runs before
-it and why the question to answer before pushing a tag is not *"can I fix this later"* but *"is this
-the artefact"*.
+**The merge is now the point of no return.** That is why the clean-room smoke runs before the
+publish, and why a pull request touching a package is reviewed as a release: the question is not
+*"can I fix this later"* but *"is this the artefact"*.
 
 ### If the run fails
 
-- **Before anything published** — a fix confined to the workflow file cannot change the artefact,
-  because the versions come from each `package.json`. Force-move the tag onto the fixed commit
-  rather than burning a version number:
+**Re-run it.** Nothing is tagged until both packages are on the registry, and the counter reads
+the registry, so a re-run always picks a number nobody has used.
 
-  ```bash
-  git tag -f v0.1.0-alpha.N <sha>
-  git push --force origin v0.1.0-alpha.N
-  ```
+- **Before anything published** — the re-run publishes the number the failed run would have. A fix
+  that needs a code change is an ordinary pull request, and its merge publishes.
+- **After core published and the CLI did not** — core's number is spent. The re-run's counter sees it
+  on the registry and takes the **next** number for both, so the two packages go out in lockstep one
+  number higher and the spent core version is simply never named by a CLI.
+- **After both published and the `tag` job failed** — the release happened; only its record is
+  missing. Nothing needs re-running. Create the tag by hand on the commit the run built, if you want
+  the record: `gh api repos/{owner}/{repo}/git/refs -f ref=refs/tags/v<version> -f sha=<sha>`.
 
-  **Check the registry first.** `npm view <pkg> versions` on both packages; if either already
-  carries the version, this route is closed.
-
-- **After core published and the CLI did not** — core's version number is spent. Cut the **next**
-  version for both packages. Never force-move a tag a published artefact came from.
-
-This asymmetry is why core publishes first. Between the two publishes there is a window in which
+Core publishes first because between the two publishes there is a window in which
 `npm i spec-controller` would resolve an engine nobody can fetch, and sending core first is what
 keeps that window on the harmless side.
 
@@ -164,11 +198,19 @@ repository an ordinary adopter of its own product rather than a special case (`3
 "minimum readable version" banked anywhere, deliberately: a second spelling of the same fact agrees
 with the first only until somebody edits one of them.
 
-**The pin is not the version this repository ships, and the two move independently.** A release
-bumps the two package manifests; the pin only follows when the *reader* needs to change, and it can
-only follow a version that has actually published. `pnpm-workspace.yaml`'s
-`minimumReleaseAgeExclude` names the **pinned** versions and is pruned when the pin moves — replace
-the pair, never append to it.
+**The pin follows the registry by bot PR, a day behind it (3F-3529).** `.github/dependabot.yml`
+lets Dependabot move exactly this one dependency, and keeps it exact. `dependabot-auto-merge.yml`
+merges its PR once `ci` is green. The PR touches the root `package.json` and the lockfile, neither of
+which is in `release.yml`'s `paths:`, so its merge publishes nothing and cannot loop.
+
+**The day is pnpm's, not ours.** pnpm 11 refuses a lockfile entry younger than its
+`minimumReleaseAge` — 1440 minutes by default, enforced in CI — so a same-day pin reds at
+`Install dependencies` with `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION`. Dependabot's `cooldown:
+default-days: 1` keeps its PRs outside that window, which is why `pnpm-workspace.yaml` no longer
+carries the hand-kept `minimumReleaseAgeExclude` pair it used to. Measured on 3F-3529's branch: with
+the pair removed, a frozen install passes under an explicit 1440-minute window and reds, naming
+exactly the two `0.1.0-alpha.3` entries, under a four-day one. The only route that still needs an
+exclude is the stage0 hatch below, which pins a version on the day it publishes.
 
 **When the model moves and the pinned reader can no longer read the tree**, the cure is the stage0
 bump in *Releasing while the self-reconciliation is red* below.
@@ -245,12 +287,11 @@ Two things go wrong when a release does ask:
   earlier shape, a record fetched from the nightly, was measured doing exactly that on a real
   release run: its step redded on a cold evidence root and the job died before it packed anything.
 
-**The residual, stated rather than hidden.** A tag can be cut from any commit, so the release path's
-rigour is the tag-cutter's discipline plus the workflow's own gates. Repository bars are `ci.yml`'s
-and are discharged on every merge to `main`: a tag cut from `main` has already passed all of them; a
-tag cut from an **unmerged branch** has not — which is exactly the case the next section is about.
-What bounds it is that nothing merges by this route. `main` still requires the whole ladder, the
-self-reconciliation included.
+**The residual, stated rather than hidden.** Repository bars are `ci.yml`'s, and `main`'s `strict`
+protection discharges them on every pull request before it can merge — so every merge-started
+release has already passed all of them. A run **started by hand from an unmerged branch** has not,
+which is exactly the case the next section is about. What bounds it is that nothing merges by that
+route. `main` still requires the whole ladder, the self-reconciliation included.
 
 ---
 
@@ -261,16 +302,20 @@ when a change to the model means the **pinned published** spec-controller can no
 tree, so the self-reconciliation reds on the very branch that fixes it.
 
 1. **The model change lands on a branch.** CI reds at `Self-reconciliation balance`, naming the skew.
-2. **Cut a prerelease tag from that branch** — `v0.1.0-alpha.N`. The release workflow publishes both
-   packages. It never asks the self-reconciliation anything, so the red does not stop it.
-3. **Bump the pin on the branch**, in the same review, to the version just published — and prune
-   `pnpm-workspace.yaml`'s `minimumReleaseAgeExclude` to that pair rather than appending to it.
-4. **CI greens** — the new pinned reader can read the tree. The branch merges.
+2. **Start the release by hand on that branch** — `gh workflow run release.yml --ref <branch>`. It
+   publishes both packages at the next counter number and tags the branch's commit. It never asks
+   the self-reconciliation anything, so the red does not stop it.
+3. **Bump the pin on the branch**, in the same review, to the version just published — and, because
+   that version is minutes old, add it to `pnpm-workspace.yaml` as a `minimumReleaseAgeExclude` pair
+   (core and the CLI), or CI reds at `Install dependencies` on pnpm's release-age policy.
+4. **CI greens** — the new pinned reader can read the tree. The branch merges, and because it touches
+   a package, the merge publishes the next number as any merge does.
+5. **Delete the exclude pair** once the pin has moved on: Dependabot moves the pin a day later, and
+   it does not edit `pnpm-workspace.yaml`. A pair naming a version the pin has left is dead weight.
 
-Step 3 is what makes step 2's tag honest: the prerelease exists to be pinned, and a branch that
-published one without bumping to it has released a version nothing uses.
+Step 3 is what makes step 2 honest: the prerelease exists to be pinned, and a branch that published
+one without bumping to it has released a version nothing uses.
 
-**This route publishes from an unmerged branch, so it is the one case where the tag-cutter's
-discipline is the whole of the repository's bars.** It is deliberate, it is bounded by the fact that
-nothing merges this way, and it is the only hatch — there is no other reason to tag anything but a
-commit on `main`.
+**This route publishes from an unmerged branch, so it is the one case where the person starting the
+run is the whole of the repository's bars.** It is deliberate, it is bounded by the fact that nothing
+merges this way, and it is the only reason to start `release.yml` by hand.

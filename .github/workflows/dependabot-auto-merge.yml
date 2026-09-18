@@ -1,0 +1,30 @@
+name: Dependabot auto-merge
+
+# THE PIN PR MERGES ITSELF WHEN `ci` IS GREEN (3F-3529). This asks GitHub to merge the PR once
+# `main`'s required check passes. It does not merge anything itself, and it does not bypass `ci`.
+# `.github/dependabot.yml` limits Dependabot to the one dependency it may move: the self-pin.
+#
+# THE GATE IS THE PR'S AUTHOR, NOT `github.actor`. `github.actor` is whoever triggered THIS event,
+# which a human re-running the job or pushing to the branch changes. zizmor's `bot-conditions` audit
+# names that as spoofable. `pull_request.user.login` is who opened the PR.
+#
+# `pull_request`, NOT `pull_request_target`. A Dependabot PR comes from this repository, so the
+# plain event already gets a token here, and `permissions:` can raise it for exactly this job.
+on: pull_request
+
+permissions: {}
+
+jobs:
+  auto-merge:
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Merge the pin PR once ci is green
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: gh pr merge --auto --squash "$PR_URL"

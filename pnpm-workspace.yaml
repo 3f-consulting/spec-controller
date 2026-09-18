@@ -6,29 +6,3 @@ packages:
 # CI. esbuild backs tsx + vitest's bundling.
 allowBuilds:
   esbuild: true
-
-# THE SUPPLY-CHAIN AGE GUARD, NARROWED TO OUR OWN TWO ARTEFACTS (3F-3413).
-#
-# pnpm refuses a lockfile entry whose version is newer than its minimum-release-age policy allows —
-# a guard against installing a just-published, just-compromised dependency. 3F-3105 pins this
-# repository to its own freshly-published spec-controller, so the pin trips it:
-#
-#   ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION — 2 lockfile entries failed verification
-#
-# THE POLICY IS ACTIVE IN CI AND NOT LOCALLY, WHICH IS WHY THIS COMMENT EXISTS. `pnpm config get
-# minimumReleaseAge` is undefined on a developer machine and a cold `pnpm install --frozen-lockfile`
-# there never prints the "Verifying lockfile against supply-chain policies" line at all. It passed
-# locally with node_modules deleted and failed in CI on the same lockfile (run 34972175498). Do not
-# conclude from a green local install that this block is unnecessary — local cannot see the check.
-#
-# WHY EXCLUDING IS ACCEPTABLE HERE AND WOULD NOT BE FOR A THIRD PARTY. These are the two packages
-# THIS repository publishes, from its own release workflow, in the commit that pins them. The risk
-# the policy exists to price — a stranger's compromised publish reaching us before anyone notices —
-# is not the risk being taken. The entries are pinned to exact versions, so they license nothing
-# beyond the two artefacts named.
-#
-# IT NEEDS PRUNING ON EVERY BUMP. Each stage0 bump adds two entries and the old pair becomes dead
-# weight; a list nobody prunes is how an exclusion stops being narrow. Replace them, do not append.
-minimumReleaseAgeExclude:
-  - '@3f-consulting/spec-controller-core@0.1.0-alpha.3'
-  - spec-controller@0.1.0-alpha.3

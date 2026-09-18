@@ -11,8 +11,10 @@ Requires Node ≥ 22. ESM only.
 ## Install
 
 ```
-npm install @3f-consulting/spec-controller-core
+npm install @3f-consulting/spec-controller-core@alpha
 ```
+
+`@alpha` is not optional until `0.1.0` publishes: a bare install resolves `latest`, which npm set to `0.1.0-alpha.1` on the first publish — a version from before the fitness axis was reworked.
 
 ## Your first call
 

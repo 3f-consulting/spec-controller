@@ -1,0 +1,27 @@
+version: 2
+
+# THE SELF-PIN FOLLOWS THE REGISTRY BY BOT PR, AND NOTHING ELSE IS UPDATED HERE (3F-3529). The root
+# `devDependencies["spec-controller"]` is the single declaration of which reader judges this tree
+# (`doc/releasing.md` → "This repository pins spec-controller"). Every package-changing merge now
+# publishes, so the pin would fall behind by hand. Dependabot moves it, keeps it EXACT, and
+# `dependabot-auto-merge.yml` merges the PR when `ci` is green. `allow:` names the one dependency;
+# every other dependency is out of this slice's scope.
+#
+# THE COOLDOWN IS pnpm's OWN RELEASE-AGE POLICY, MET RATHER THAN EXCLUDED. pnpm 11 refuses a lockfile
+# entry younger than `minimumReleaseAge`, 1440 minutes by default, and it is enforced in CI. A pin PR
+# for a version under a day old would red at `Install dependencies`. One day of cooldown keeps every
+# pin PR outside that window, which is why `pnpm-workspace.yaml` no longer carries a hand-kept
+# `minimumReleaseAgeExclude` pair.
+#
+# AND ITS MERGE CANNOT LOOP. The PR touches the root `package.json` and the lockfile, which are
+# outside `release.yml`'s `paths:`, and the merge is made under the default token, which starts no
+# workflow at all.
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: daily
+    allow:
+      - dependency-name: spec-controller
+    cooldown:
+      default-days: 1
