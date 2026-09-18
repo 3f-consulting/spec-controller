@@ -1171,7 +1171,7 @@ After({ tags: "@SCN-RPT-023" }, function () {
 // @SCN-RPT-027
 // The Run provenance names every stream the run was handed (3F-3155 / 3F-3184). Two arms,
 // both reading a PERSISTED Inputs block back off disk: the first threads a ctx carrying the
-// two optional streams through the production writer, the second runs the REAL CLI binary as
+// optional fitness stream through the production writer, the second runs the REAL CLI binary as
 // a subprocess so the flags travel argv -> reconcileInputsOf -> ctx.inputs -> renderer -> disk
 // without this file ever constructing the object under test.
 let ctx027: RunContext;
@@ -1180,25 +1180,23 @@ let markdown027: string;
 let cliDir027: string;
 let cliReport027: string;
 const RPT027_INPUTS = {
-  features: "tests/fixtures/scn-lnt-022/features",
-  packageJson: "tests/fixtures/scn-lnt-022/package.json",
-  measurements: "tests/fixtures/scn-lnt-022/measurements.json",
+  features: "tests/fixtures/rpt-streams/features",
+  packageJson: "tests/fixtures/rpt-streams/package.json",
   // THE FITNESS STREAM, WHICH IS THE CI RUN'S OWN STEP RECORD SINCE 3F-3272. The scenario says
   // "a fitness stream" and means the axis's credit stream; which document that is belongs in this
   // binding, not in the Gherkin. It was the fitness pass's cucumber report until the pass went.
-  ciSteps: "tests/fixtures/scn-lnt-022/ci-steps.json",
+  ciSteps: "tests/fixtures/rpt-streams/ci-steps.json",
 };
 
 // @SCN-RPT-027
 Given(
-  "a reconciliation run handed a measurement stream and a fitness stream alongside its feature corpus",
+  "a reconciliation run handed a fitness stream alongside its feature corpus",
   function () {
     ctx027 = {
       target: "streams-target",
       inputs: {
         features: RPT027_INPUTS.features,
         packageJson: RPT027_INPUTS.packageJson,
-        measurements: RPT027_INPUTS.measurements,
         ciSteps: RPT027_INPUTS.ciSteps,
       },
       runStart: new Date("2026-09-06T15:00:00.000Z"),
@@ -1219,36 +1217,30 @@ When("the run writes its markdown artifact for the streams it was handed", funct
 
 // @SCN-RPT-027
 Then(
-  "the persisted report's Inputs block names the measurement stream and the fitness stream, after the streams it already named",
+  "the persisted report's Inputs block names the fitness stream, after the streams it already named",
   function () {
-    // Teeth: today the canonical flag list stops at --package-json, so neither line is
-    // rendered and both assertions red. The ORDER assertion is the second half — the two
-    // streams are APPENDED, so no line that was already rendered moves.
-    const measurementLine = `  - \`--measurements ${RPT027_INPUTS.measurements}\``;
+    // Teeth: a canonical flag list without --ci-steps renders no such line and the first
+    // assertion reds. The ORDER assertion is the second half — the stream is APPENDED, so no
+    // line that was already rendered moves.
     const fitnessLine = `  - \`--ci-steps ${RPT027_INPUTS.ciSteps}\``;
     const packageJsonLine = `  - \`--package-json ${RPT027_INPUTS.packageJson}\``;
-    assert.ok(
-      markdown027.includes(measurementLine),
-      `expected the persisted Inputs block to name the measurement stream as "${measurementLine}"; got:\n${markdown027.slice(0, 800)}`
-    );
     assert.ok(
       markdown027.includes(fitnessLine),
       `expected the persisted Inputs block to name the fitness stream as "${fitnessLine}"; got:\n${markdown027.slice(0, 800)}`
     );
     assert.ok(
-      markdown027.indexOf(packageJsonLine) < markdown027.indexOf(measurementLine) &&
-        markdown027.indexOf(measurementLine) < markdown027.indexOf(fitnessLine),
-      `expected the two streams appended after --package-json, in that order; got:\n${markdown027.slice(0, 800)}`
+      markdown027.includes(packageJsonLine) && markdown027.indexOf(packageJsonLine) < markdown027.indexOf(fitnessLine),
+      `expected the fitness stream appended after --package-json; got:\n${markdown027.slice(0, 800)}`
     );
   }
 );
 
 // @SCN-RPT-027
-// The REAL binary, over a fixture corpus that is self-consistent with its own measurement stream
-// and its own CI step record (tests/fixtures/scn-lnt-022 — one static check, one measured), so the
-// run BALANCES and the arm reds on the provenance block rather than on a verdict.
+// The REAL binary, over a fixture corpus that is self-consistent with its own CI step record
+// (tests/fixtures/rpt-streams — two checks, each credited by its step),
+// so the run BALANCES and the arm reds on the provenance block rather than on a verdict.
 When(
-  "the real CLI reconciles a fixture corpus handed both a measurement stream and a fitness stream",
+  "the real CLI reconciles a fixture corpus handed a fitness stream",
   function () {
     const repoRoot = process.cwd();
     const abs = (p: string): string => join(repoRoot, p);
@@ -1261,7 +1253,6 @@ When(
         "balance",
         "--features", abs(RPT027_INPUTS.features),
         "--package-json", abs(RPT027_INPUTS.packageJson),
-        "--measurements", abs(RPT027_INPUTS.measurements),
         "--ci-steps", abs(RPT027_INPUTS.ciSteps),
         "--format", `md:${reportPath}`,
       ],
@@ -1294,10 +1285,10 @@ When(
 Then(
   "the persisted report's Inputs block names every stream that run received",
   function () {
-    // Teeth: the four flags this run was handed must ALL be named. The CLI already carried
-    // measurements and fitness on ctx.inputs; until the canonical list admits them the
-    // renderer drops them silently, which is exactly the ambiguity this scenario closes.
-    for (const flag of ["--features", "--package-json", "--measurements", "--ci-steps"]) {
+    // Teeth: the three flags this run was handed must ALL be named. The CLI carries the fitness
+    // stream on ctx.inputs; a canonical list that does not admit it has the renderer drop it
+    // silently, which is exactly the ambiguity this scenario closes.
+    for (const flag of ["--features", "--package-json", "--ci-steps"]) {
       assert.ok(
         cliReport027.includes(`  - \`${flag} `),
         `expected the persisted Inputs block to name "${flag}"; got:\n${cliReport027.slice(0, 800)}`
@@ -1332,10 +1323,9 @@ let markdownNone028: string;
 let cliDir028: string;
 let cliReport028: string;
 const RPT028_HANDED = {
-  features: "tests/fixtures/scn-lnt-022/features",
-  packageJson: "tests/fixtures/scn-lnt-022/package.json",
-  measurements: "tests/fixtures/scn-lnt-022/measurements.json",
-  ciSteps: "tests/fixtures/scn-lnt-022/ci-steps.json",
+  features: "tests/fixtures/rpt-streams/features",
+  packageJson: "tests/fixtures/rpt-streams/package.json",
+  ciSteps: "tests/fixtures/rpt-streams/ci-steps.json",
 };
 /** The three canonical flags the CLI arm deliberately withholds, in canonical render order. */
 const RPT028_WITHHELD = ["--vitest", "--cucumber", "--ci"];
@@ -1371,7 +1361,7 @@ When("that run writes its markdown artifact", function () {
     return readFileSync(join(runDir, "spec-reconciliation.md"), "utf8");
   };
   markdownPartial028 = render(
-    { features: RPT028_HANDED.features, measurements: RPT028_HANDED.measurements },
+    { features: RPT028_HANDED.features, ciSteps: RPT028_HANDED.ciSteps },
     "partial"
   );
   markdownEvery028 = render(
@@ -1381,7 +1371,6 @@ When("that run writes its markdown artifact", function () {
       cucumber: "cucumber.json",
       ci: ".github/workflows",
       packageJson: RPT028_HANDED.packageJson,
-      measurements: RPT028_HANDED.measurements,
       ciSteps: RPT028_HANDED.ciSteps,
     },
     "every"
@@ -1399,18 +1388,20 @@ Then(
     // line that also named a stream the run WAS handed.
     assert.equal(
       notSuppliedLine(markdownPartial028),
-      "- Not supplied: `--vitest`, `--cucumber`, `--ci`, `--package-json`, `--ci-steps`"
+      "- Not supplied: `--vitest`, `--cucumber`, `--ci`, `--package-json`"
     );
     // Beneath the Inputs list, above the timestamp — met while the reader is still reading
     // what the run was handed, not after the SHAs.
-    const iMeasurements = markdownPartial028.indexOf(`  - \`--measurements ${RPT028_HANDED.measurements}\``);
+    // The handed line must be PRESENT for the order to mean anything: an absent one is index -1,
+    // which is "before" every line there is.
+    const iCiSteps = markdownPartial028.indexOf(`  - \`--ci-steps ${RPT028_HANDED.ciSteps}\``);
     const iNotSupplied = markdownPartial028.indexOf("- Not supplied:");
     const iTimestamp = markdownPartial028.indexOf("- Run timestamp (UTC):");
     assert.equal(
-      iMeasurements < iNotSupplied && iNotSupplied < iTimestamp,
+      iCiSteps > -1 && iCiSteps < iNotSupplied && iNotSupplied < iTimestamp,
       true,
       `expected the not-supplied line between the Inputs list and the timestamp; got offsets ` +
-        `measurements=${iMeasurements} notSupplied=${iNotSupplied} timestamp=${iTimestamp}`
+        `ciSteps=${iCiSteps} notSupplied=${iNotSupplied} timestamp=${iTimestamp}`
     );
   }
 );
@@ -1433,16 +1424,16 @@ Then(
     );
     assert.equal(
       notSuppliedLine(markdownNone028),
-      "- Not supplied: `--features`, `--vitest`, `--cucumber`, `--ci`, `--package-json`, `--measurements`, `--ci-steps`"
+      "- Not supplied: `--features`, `--vitest`, `--cucumber`, `--ci`, `--package-json`, `--ci-steps`"
     );
   }
 );
 
 // @SCN-RPT-028
-// The REAL binary over tests/fixtures/scn-lnt-022 — the corpus that is self-consistent with its
-// own measurement stream and step record, so the run BALANCES (exit 0) and the arm's teeth are the
-// provenance block rather than a verdict. Three flags are withheld and four are handed, so one
-// run carries BOTH sides of the discrimination: the line names exactly the withheld three.
+// The REAL binary over tests/fixtures/rpt-streams — the corpus that is self-consistent with its
+// own step record, so the run BALANCES (exit 0) and the arm's teeth are the provenance block
+// rather than a verdict. Three flags are withheld and three are handed, so one run carries BOTH
+// sides of the discrimination: the line names exactly the withheld three.
 When(
   "the real CLI reconciles a fixture corpus with three of its streams withheld",
   function () {
@@ -1457,7 +1448,6 @@ When(
         "balance",
         "--features", abs(RPT028_HANDED.features),
         "--package-json", abs(RPT028_HANDED.packageJson),
-        "--measurements", abs(RPT028_HANDED.measurements),
         "--ci-steps", abs(RPT028_HANDED.ciSteps),
         "--format", `md:${reportPath}`,
       ],
@@ -1491,7 +1481,7 @@ Then(
   "the persisted report names exactly the withheld streams as not supplied, and none of the streams that run received",
   function () {
     // BOTH SIDES FROM ONE RUN. The equality names the withheld three and, by being an equality,
-    // refuses the four the run WAS handed — a line that named a supplied stream would red here
+    // refuses the three the run WAS handed — a line that named a supplied stream would red here
     // just as loudly as a line that named none of the withheld ones.
     assert.equal(
       notSuppliedLine(cliReport028),

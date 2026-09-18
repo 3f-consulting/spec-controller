@@ -52,11 +52,35 @@ import {
   symlinkSync,
   writeFileSync,
 } from "node:fs";
-import { tmpdir } from "node:os";
+import { constants, tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { exitCodeOf, type FinishedCommand } from "../checks/measurementArtefact.js";
+/** How a spawned command ended, in the two fields `spawnSync` reports it in. */
+interface FinishedCommand {
+  /** The code it exited with, or null where it never exited under its own power. */
+  readonly status: number | null;
+  /** The signal that killed it, or null where nothing did. */
+  readonly signal: NodeJS.Signals | null;
+}
+
+/** What a signalled death is worth as an exit code, before the signal's own number. */
+const SIGNAL_EXIT_CODE_BASE = 128;
+
+/**
+ * The code a spawned command's ending is worth, the way a shell would report it. It lived in
+ * `tests/checks/measurementArtefact.ts`, the remnant of the measured producers, and moved here, to its
+ * one caller, when that file left with the measured route (3F-3506).
+ */
+function exitCodeOf(command: FinishedCommand): number {
+  if (command.status !== null) return command.status;
+  // A command killed by a signal never exited and has no code of its own, so the shell's
+  // arithmetic answers for it — 128 + n, the spelling a CI log's reader already knows.
+  if (command.signal !== null) return SIGNAL_EXIT_CODE_BASE + constants.signals[command.signal];
+  // Neither: it could not be started at all. The one reading that must be unreachable here is the
+  // one that greens the build.
+  return 1;
+}
 
 // @SCN-RPT-029
 

@@ -483,9 +483,8 @@ Feature: Ledger over obligation-vs-observation evidence
       And the run's verdict and reconciling items are unchanged — posting classifies nothing
 
     # POSTING SAYS WHERE A CREDIT LANDS; THIS SCENARIO IS THE SAME RULE READ AS AN OUTCOME. Two
-    # rows can honestly share one characteristic — canon's own arrangement for a measured check
-    # (ci-run-time.feature's SCN-CIP-007) is two scenarios under one tag with ceilings of their
-    # own, each cited by its own measurement. The static axis has never had that shape pinned: one
+    # rows can honestly share one characteristic. The measured axis pinned that shape for its own
+    # credits until it retired (3F-3516); the static axis has never had it pinned: one
     # credit, two rows raising the SAME check, the credit naming only one of them. The credit cites
     # on this axis exactly as it does on every other, so it can discharge only the row it names —
     # the other reads missing, not absorbed and not left both-satisfied by a match keyed on the

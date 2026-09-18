@@ -9,8 +9,8 @@
  * comes back under the standard; appending arms to it is the one move that cannot work. (3F-3466
  * deleted the per-file allowance that used to freeze it at its measured value instead.) The house
  * pattern for that is a focused sibling file
- * (`journal.test.ts`, `absorbedFitnessCredit.test.ts`, `uncitedFitnessCredit.test.ts`), and an
- * @SCN carrying arms in more than one file is already routine (@SCN-CIP-003 has four).
+ * (`absorbedFitnessCredit.test.ts`, `uncitedFitnessCredit.test.ts`), and an @SCN carrying arms in
+ * more than one file is already routine.
  *
  * WHY @SCN-LDG-021 AND NOT @SCN-LDG-023 (3F-2883, correcting its own ticket). The two surviving
  * mutants sit on the untagged row's `evidenceObservations` (337) and `pendingItems` (343) — read

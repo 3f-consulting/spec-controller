@@ -138,8 +138,7 @@ The discoverable set is every step of the workflows `--ci` names that is not a d
 runner, the reconciler itself, or a step the manifest lists in `notChecks`; each check step carries
 its row's `@SCN` as its `id:`, so a discovered check that cites nothing is the only thing the count
 is reporting. The number beside it is produced by a different mechanism and is not vacuous: it
-counts the credits the static rows post, the measured rows being answered by a number rather than by
-an exit code.
+counts the credits the configured rows' steps post, each answered by its step's exit code.
 
 **Two retirements are in play here and they are not the same one.** The `lint:`/`guard:` **script
 prefixes** were retired by

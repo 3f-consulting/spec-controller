@@ -2120,9 +2120,9 @@ Then(
  * @SCN-LDG-035 (3F-3409) — a static-check credit discharges only the obligation on the row whose
  * @SCN it cites, even when a second row raises the SAME characteristic.
  *
- * @SCN-CIP-007 (ci-run-time.feature) already pins this shape on the MEASURED axis: two stepless
- * scenarios sharing one measured check, each answered by its own measurement. This scenario is
- * its STATIC-axis twin — the shape that axis had never had pinned, because the two scenarios
+ * The MEASURED axis pinned this shape for its own credits until it retired (3F-3516): two
+ * stepless scenarios sharing one measured check, each answered by its own measurement. This
+ * scenario is the STATIC axis's pin — the shape that axis had never had pinned, because the two scenarios
  * whose deletion left the gap (@SCN-LNT-008, @SCN-LNT-012) proved it through the retired
  * first-in-corpus / registry routes rather than the configured-row route that survives them.
  *
@@ -2152,7 +2152,7 @@ Given(
       `  @fitness @${secondScn}`,
       "  Scenario: the second row raising the shared check",
     ].join("\n");
-    scenarios = parseScenarios(source, [], [], undefined, fitnessChecks);
+    scenarios = parseScenarios(source, [], [], fitnessChecks);
   },
 );
 

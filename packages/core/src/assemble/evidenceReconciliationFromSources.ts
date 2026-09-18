@@ -13,17 +13,13 @@
  * (`3F-2804`). Nothing here is re-exported: the nine stay internal.
  *
  * WHY THE ARGUMENTS ARE DATA AND NOT READERS. Everything below is already in memory by the time
- * the edge calls this — the feature bytes, the manifest object, the CI bytes, the measurement
- * artefact, the runtime observations. Handing a reader for any of them would move I/O into the
+ * the edge calls this — the feature bytes, the manifest object, the CI bytes, the CI run's own
+ * record, the runtime observations. Handing a reader for any of them would move I/O into the
  * engine wearing a callback, and `lint:boundaries`' `core-imports-io` rule reds over exactly that
- * (@SCN-EPG-001's `io-import` arm until 3F-3437). `killFloor` is the one
- * function, and only because a mutation record is opened lazily and at most once per pass: the
- * closure already exists at the edge and already carries that guarantee, so injecting it preserves
- * a behaviour rather than inventing a seam — and it is what keeps the engine from ever learning
- * that mutation ratchets exist (`3F-2841`'s pattern, and `3F-2859` stands).
+ * (@SCN-EPG-001's `io-import` arm until 3F-3437).
  *
  * THE TARGET ROOT DOES NOT CROSS. It is resolved at the edge and every remaining use of it is
- * there: building the reader above, and relativising the runtime observations before they arrive.
+ * there: relativising the runtime observations before they arrive.
  * Threading it in as well would put `node:child_process` and `process.cwd()`'s answer inside the
  * engine to be read by nothing.
  *
@@ -37,10 +33,6 @@ import { evidenceReconciliationOf } from "../domain/evidenceReconciliation.js";
 import { bareTerm } from "../lib/bareTerm.js";
 import type { EvidenceObservation } from "../model.js";
 import type { CiWorkflowStep, PackageJsonScripts } from "../parse/checkScriptsRunInCI.js";
-import {
-  parseMeasuredEvidenceObservations,
-  type MeasurementReport,
-} from "../parse/measurements.js";
 import { ciStepRecordCredits, type CiStepRecord } from "../parse/ciStepRecord.js";
 import { recognisedRunners, runningStaticChecks } from "../parse/runningStaticChecks.js";
 import { readTargetCorpus, type TargetCorpus } from "../parse/targetCorpus.js";
@@ -55,9 +47,7 @@ import {
   resolveRetiredKeys,
   resolveRunners,
   type ResolvedRunners,
-  resolveThresholds,
   resolveFitnessChecks,
-  type KillFloorReader,
 } from "../parse/targetManifest.js";
 import type { BehaviouralRunner } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
@@ -67,7 +57,6 @@ type TargetManifest = PackageJsonScripts & {
   specController?: {
     deferralTags?: unknown;
     staticChecks?: unknown;
-    thresholds?: unknown;
     fitnessChecks?: unknown;
     runners?: unknown;
     notChecks?: unknown;
@@ -75,7 +64,8 @@ type TargetManifest = PackageJsonScripts & {
 };
 
 /**
- * THE FOUR OBSERVATION STREAMS a `balance` run reconciles, in one place.
+ * THE THREE OBSERVATION STREAMS a `balance` run reconciles, in one place — a fourth, the
+ * measurements, left with the measured axis (3F-3516).
  *
  * ITS OWN FUNCTION, extracted when the consumer's exclusion seam (@SCN-USG-015) took the
  * composition past the `max-lines-per-function` ceiling — `withUnconfiguredFitnessScenarios`'s
@@ -87,7 +77,6 @@ function observationStreams(
   input: {
     runtimeObservations: readonly EvidenceObservation[];
     ciSources: readonly string[];
-    measurements: MeasurementReport;
     ciStepRecord?: CiStepRecord;
   },
   corpus: TargetCorpus,
@@ -97,13 +86,12 @@ function observationStreams(
   isExcluded: StepExclusions["isExcluded"]
 ): EvidenceObservation[] {
   // WHICH ROWS THE RUN'S OWN RECORD ANSWERS FOR, so the derivation reader does not answer them
-  // again (@SCN-LNT-021, @SCN-LNT-022, @SCN-LNT-030; forced by @SCN-USG-004). A converted check
+  // again (@SCN-LNT-021, @SCN-LNT-030; forced by @SCN-USG-004). A converted check
   // used to be one no discovery reader could SEE — its command is not a script of the manifest, so
   // no prefix reached it — and that accident is what kept one check from being observed twice.
   // Under the inverted membership rule every step is discovered, so the guarantee has to be a
   // mechanism: where a run is handed its own record, the CONFIGURED rows are answered by that
-  // record (and by the measurement stream for the rows carrying a bar), and derivation answers the
-  // residue — the steps citing no configured row at all.
+  // record, and derivation answers the residue — the steps citing no configured row at all.
   //
   // IT IS THE ROWS AND NOT THE ENTRIES, because the record answers for a row it holds NO entry for
   // too: that is broken evidence naming the row (@SCN-LNT-027), and a derivation credit landing
@@ -146,11 +134,6 @@ function observationStreams(
     // named not one of these steps, which is every configured check broken. The reader tells
     // them apart; nothing here may.
     ...ciStepRecordCredits(input.ciStepRecord, fitnessChecks),
-    // THE THIRD STREAM (@SCN-CIP-003) — the measurements, which arrive already citing. They are
-    // read here rather than folded into `checkObservations` because that function's observer
-    // reads the target's CONFIG; a measurement is a fact about a run, and the only thing the
-    // three share is the axis they ride.
-    ...parseMeasuredEvidenceObservations(input.measurements),
   ];
 }
 
@@ -168,10 +151,8 @@ export interface EvidenceReconciliationSources {
   ciSources: readonly string[];
   ciSourceNames?: readonly string[];
   reconcilerInvocation?: string;
-  measurements: MeasurementReport;
   runtimeObservations: readonly EvidenceObservation[];
   deferralTags: readonly string[];
-  killFloor: KillFloorReader;
   ciStepRecord?: CiStepRecord;
 }
 
@@ -199,13 +180,10 @@ export interface EvidenceReconciliationSources {
  * could never be satisfied. Set at the edge, which is where the command line is a known fact;
  * optional, and a run told none recognises no reconciling step, which is the safe direction — a
  * candidate too many, named on the report, rather than a step taken off the books by nothing.
- * @param input.measurements the measurement artefact as JSON handed it over (@SCN-CIP-003) — the
- * third observation stream, which arrives already citing.
  * @param input.runtimeObservations the vitest / cucumber observations, parsed at the edge because
  * each source's fallback quality-check is the application layer's mapping, not the engine's.
  * @param input.deferralTags the application layer's STARTER deferral set, which a target's config
  * may only extend (@SCN-PND-021). Product policy, single-sourced there and never here.
- * @param input.killFloor the reader over the target's mutation records, injected as a closure.
  * @param input.ciStepRecord the CI RUN's own record of what each of its steps did (@SCN-LNT-021,
  * @SCN-LNT-028) — the CONVERTED checks' whole credit stream, and the observation side of the
  * fitness axis, beside the workflow FILE this composition already reads for the derivation side. Two documents, two questions: the file says a check is wired in,
@@ -285,11 +263,10 @@ export function evidenceReconciliationFromSources(
   // the characteristic a converted scenario owes and the CREDIT for the characteristic its reported
   // scenario answers, and two resolutions would be free to disagree about a manifest neither of
   // them wrote — the same guarantee `readTargetCorpus` composes its three readings for.
-  const fitnessChecks = resolveFitnessChecks(packageJson, input.killFloor);
+  const fitnessChecks = resolveFitnessChecks(packageJson);
   const corpus = readTargetCorpus(
     input.featureSources,
     resolveDeferralTags(packageJson, input.deferralTags),
-    resolveThresholds(packageJson, input.killFloor),
     fitnessChecks
   );
 

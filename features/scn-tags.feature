@@ -13,14 +13,14 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
   and is named by id in the report's own by-feature cut. So the tier-tag FLOOR this file was once
   named for was a second detector for a fault the thing a consumer already runs reports first, and
   it leaves with its scenario (3F-3308). What is left are the faults no cut of a reconciliation
-  names at all — a tag outside the grammar, a scenario claiming two checks, two files carrying one
-  header code, an id coded for another file.
+  names at all — a tag outside the grammar, two files carrying one header code, an id coded for
+  another file.
 
   A TIER TAG IS STILL GRAMMAR, WHICH IS THE HALF THAT STAYED. The tier tags are recognised
   words — @unit, @integration, @e2e, @performance, their pending variants and bare @lint —
   and what left with the floor is the OBLIGATION to carry one. The rest of the grammar is
   DERIVED, never restated: the @SCN id, the header code the file itself carries, a member of
-  the target's resolved deferral set, and any word that names a check.
+  the target's resolved deferral set, and the one word that names the fitness axis.
 
   AND THE PRIVATE CHECK IS GONE (3F-3309, 3F-3312). The parked-scenario Rule that stood below
   drove `lint:scn-tags` over the floor's parking exemption, which is why the floor's code
@@ -97,10 +97,10 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     and the starter set, because the rule that reds over a word should be reading
     the same config the engine beside it reads.
 
-    RECOGNISING A TAG IS ALSO PARKING IT, AND BOTH READINGS ARE NOW THE SHIPPED COMMAND'S
+    RECOGNISING A TAG IS ALSO PARKING IT, AND BOTH READINGS ARE NOW THE SHIPPED PACKAGE'S
     (3F-2655, 3F-3309). One resolved set answers two questions: here it says the word means
-    something, and at the one-check Rule below (@SCN-STG-007) it says the scenario is out of
-    scope until it is unparked. The two readings were once split across a package boundary —
+    something, and in the reconciliation (@SCN-PND-016) it says the scenario is out of scope
+    until it is unparked. The two readings were once split across a package boundary —
     this arm read the resolved set while the private check's tier floor asked a hard-coded
     `wip` — so a `@skip` scenario was recognised as a legitimate deferral and then failed for
     the deferral it had legitimately named. The floor is gone (3F-3308) and its code with it;
@@ -146,13 +146,12 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     remembered: the grammar walk reads a scenario's TAGS and never its steps, so there is no
     shape for a clause to key on and the two shapes are one case rather than two that agree.
 
-    SO THE GRAMMAR AND THE OBLIGATION RULE ASK ONE QUESTION OF ONE SET, and now from one
-    assembly inside one package. Both read the union of the target's registered check tags and its
-    measured ones, off its own manifest, and neither adds a condition of its own — so the words
-    this command calls legitimate are exactly the words the engine beside it raises obligations
-    from. What used to ask this question was a floor at a private CLI that assembled its own copy,
-    and the two disagreeing about the set is what cost a slice (3F-3126); the interim record that
-    stood here — DELIBERATELY THE STRICTER OF THE TWO until then (3F-3115) — retires with it.
+    SO THE GRAMMAR AND THE OBLIGATION RULE ASK ONE QUESTION OF ONE WORD, and now from one
+    assembly inside one package. Both read the fitness axis word, spelled once, and neither
+    respells it — so the word this command calls legitimate is exactly the word the engine
+    beside it raises obligations from. What used to ask this question was a floor at a private
+    CLI that assembled its own copy, and the two disagreeing about the set is what cost a slice
+    (3F-3126); the interim record that stood here — DELIBERATELY THE STRICTER OF THE TWO until then (3F-3115) — retires with it.
     There is no second assembly left to disagree.
 
     REGISTERED, NOT INFERRED. Which bare tags name a check is the registry's answer, resolved
@@ -186,37 +185,15 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     check this rule replaced carved the form out as a tier for as long as the form was live; the
     shipped one has no carve-out to remember to remove.
 
-    AND THE THRESHOLDS ARE THE ONLY PLACE A MEASURED CHECK IS NAMED (@SCN-STG-009). A MEASURED
-    check produces a number and is held against an authored ceiling; nothing invokes it, so it
-    has no runnable script handle and was never named by a registry — the debit side, the
-    target's own thresholds, is where it has always lived, and now that the registered half of
-    the union is retired it is the one source `checkTagsOf` reads besides the axis word. The
-    obligation rule already reads that same set and raises against it, so a command that stops
-    reading the thresholds — or reads a stale copy — reds an `@ci-run-time` scenario for
-    carrying a word that means nothing here, on the very tag its own obligation was raised from:
-    one finding and exit 1, over the planted target below. Configure the threshold and the word
-    is grammar; take it away and the same scenario reds for meaning nothing there — the pass is
-    the CONFIG's doing, never a hard-coded allowance for a word this command does not own.
-
-    AND THE THRESHOLDS ARE THE TREE THE MANIFEST CAME FROM (@SCN-MUT-012). A bar may name a
-    mutation gate rather than a figure, and resolving one means opening that gate's record on
-    the target's own tree — so the reader is a closure the command's edge builds over the target
-    root, handed to the same resolver the reconciliation beside it uses. Two roots and the two
-    answer for different trees. What that reader returns cannot move THIS verdict — a threshold
-    key survives whatever its bar resolves to, which is @SCN-MUT-003's ruling and the reason a
-    measured check stays measured when its bar cannot be read — so the discipline here is that
-    the set is resolved ONCE, by the resolver that owns it, rather than by a cheaper reading
-    that would agree with it today and drift the first time a bar decided a key.
-
-    AND THERE IS A THIRD SOURCE, WHICH IS NEITHER OF THOSE TWO (3F-3138). A CONVERTED check
-    carries one word for the whole axis — the fitness tag — and its CHARACTERISTIC moves to a
-    configured row. So there is nothing for a registry to name and never will be: a converted
-    check is not discovered as a runnable script handle at all — it is a scenario that ran,
-    carrying its own tag line. The route a registry once read handles through is retired whole
-    (3F-3395, the SCN-LNT-017 sub-issue — the last registry-`scn` scenario); the axis tag is now admitted
-    alongside the measured tags, widened ONCE, at the one place inside core that assembles the
-    set, so no second reader can come to disagree about it the way the floor and the obligation
-    rule did over steplessness.
+    AND THE ONE SOURCE LEFT IS NEITHER OF THOSE (3F-3138). A CONVERTED check carries one word
+    for the whole axis — the fitness tag — and its CHARACTERISTIC moves to a configured row. So
+    there is nothing for a registry to name and never will be: a converted check is not
+    discovered as a runnable script handle at all — it is a scenario that ran, carrying its own
+    tag line. The route a registry once read handles through is retired whole (3F-3395, the
+    SCN-LNT-017 sub-issue — the last registry-`scn` scenario), and the measured tags once
+    admitted beside the axis word left with the target's thresholds (3F-3516). The axis tag is
+    admitted ONCE, at the one place inside core that assembles the set, so no second reader can
+    come to disagree about it the way the floor and the obligation rule did over steplessness.
 
     THE AXIS WORD IS NOT THE TARGET'S TO GRANT. Which words name a CHECK is the target's answer —
     complexity, typecheck, mutation — and which axis a scenario is ON is the model's, exactly as
@@ -253,97 +230,6 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
       Then it passes
       When it runs over that same target with no fitness rows configured at all
       Then it passes
-
-    @integration @SCN-STG-009
-    Scenario: a word naming a MEASURED check is grammar, read off the target's own thresholds
-      Given a target whose scenarios carry a measured check tag
-      When the target runs the shipped corpus check
-      Then it passes
-      When it runs over that same target with no thresholds configured
-      Then it fails, naming the measured tag that means nothing there
-
-  Rule: a scenario names ONE check, and a second reds the corpus check
-
-    ONE CHECK PER FITNESS SCENARIO is canon (`fitness-functions.md`), and until now it
-    was only ever enforced from the CREDIT side: one run is not evidence for two scenarios, so a
-    check named by two fitness scenarios satisfies one and leaves the runner-up's obligation
-    reading missing. That reds the corpus fault where two scenarios reach one check. It has
-    nothing to say about the fault running the other way — one scenario reaching two checks —
-    because from the credit's point of view nothing is wrong there at all: two runs, two credits,
-    both citing honestly.
-
-    THE LEDGER IS BLIND TO IT, AND THAT MEASUREMENT IS WHY THIS RULE SHIPS AT ALL. A stepless
-    scenario carrying two registered bare check tags, both handles wired in CI, reconciles
-    BALANCED at exit 0 — two Evidence Obligations, two Evidence Observations, nothing out of
-    balance and nothing pending. Every other assertion this file makes about a corpus has some
-    cell of a reconciliation that already names the fault; this one has none, in any cut, at any
-    exit status.
-
-    SO THIS ENFORCES IT FROM THE CORPUS SIDE, at the point of authorship. `mechanism-over-honour`:
-    the model was made SOUND over the collision — each credit answers its own check — and this
-    makes the collision UNCONSTRUCTIBLE from a feature file. They are
-    complementary and neither replaces the other. The model still has to be sound, because a
-    REGISTRY mapping two handles onto one check reaches the same collision without any corpus
-    fault for this check to see; and this still has to red, because the author who wrote two
-    tags on one scenario meant two scenarios, and the cheapest moment to tell them is while
-    they are looking at the file.
-
-    WHAT WENT WRONG WITHOUT IT, MEASURED. The citation seam maps each bare tag to the scenario
-    carrying it, so two tags on one stepless scenario point both checks at the same @SCN. Before
-    the fix that compared check tags, a genuine `typecheck` watermelon turned `satisfied` off
-    `lint:complexity`'s credit and the row read `balanced` — a false green in the tool whose
-    subject is false greens.
-
-    THE RULE IS ABOUT WORDS THAT NAME A CHECK, AND THE TAG IS WHAT NAMES THE AXIS — steps or none
-    (3F-3126). It first shipped asking only about a STEPLESS scenario, defended like this: a
-    stepped scenario riding two check tags has a different fault — it names no tier — so telling
-    it "two checks" would send the author to delete a tag when what they owe is a tier. That
-    defence was downstream of the tier floor, and true only while the floor redded a stepped
-    check-tagged row as tier-less. Steps are a fact about how a row is written; the check tag is
-    the claim about which axis it is on, and 3F-3115 already moved the obligation rule
-    onto the tag alone. A scenario carrying two check tags meant two scenarios however it was
-    written. A behavioural scenario carrying @unit @integration names two TIERS and is owed
-    evidence on each — untouched, because neither tag names a check. One carrying its single
-    check tag beside its @SCN is the normal fitness shape — untouched. The message names BOTH
-    tags, because the author has to choose which scenario keeps which check and a message naming
-    one of them has already chosen for them.
-
-    THE SET IS THE ONE THE GRAMMAR ARM ADMITS, resolved by the same `checkTagsOf` and not a
-    second time. That is the whole of what 3F-3126 cost: the floor and the obligation rule
-    assembled their own copies of this set and came to disagree about it. A rule that counted a
-    narrower set than the grammar recognises would green a corpus claiming two checks by one of
-    the words the grammar had just called legitimate.
-
-    ASKED OF UNPARKED SCENARIOS ONLY, unlike the grammar question one Rule up (operator
-    ruling, 3F-2655). This Rule first shipped saying the opposite — that a parking tag
-    defers what a scenario OWES and so has nothing to say about its SHAPE. The ruling is that
-    parking is a SKIP-SIGNAL: a parked scenario is out of scope, and out of scope is not a place
-    where some questions still get asked. Both readings agree the split is the same edit whenever
-    it happens; they disagree about whether an author who has already said "not yet" should be
-    made to do it now, and canon says no.
-
-    THE SKIP IS NOT AN ERASURE, and the fourth pair below is what makes that a fact rather than a
-    promise: unpark the scenario and the same two tags red again, unchanged. What parking buys is
-    time, never a permanent exemption, and a rule that could be switched off for good by one tag
-    would be worth having only until someone noticed.
-
-    WHAT THE SKIP DOES NOT REACH IS THE GRAMMAR ARM one Rule up. A parked scenario's tags are
-    still read for well-formedness, because the deferral set is exactly what lets that arm
-    recognise the parking tag — so excusing it would make `@wip @untit` invisible.
-
-    @integration @SCN-STG-007
-    Scenario: two check tags on one unparked scenario red the shipped command, naming both — steps or none
-      Given a target whose stepless scenario carries two measured check tags
-      When the target runs the shipped corpus check
-      Then it fails, naming the scenario and BOTH check tags
-      When it runs over that same target with one of the two check tags removed
-      Then it passes
-      When it runs over that same target with both check tags kept and the scenario parked
-      Then it passes
-      When it runs over that same target with the parking tag taken off again
-      Then it fails, naming the scenario and BOTH check tags
-      When it runs over a target whose STEPPED scenario carries two measured check tags
-      Then it fails, naming the scenario and BOTH check tags
 
   Rule: one feature code names one feature file
 

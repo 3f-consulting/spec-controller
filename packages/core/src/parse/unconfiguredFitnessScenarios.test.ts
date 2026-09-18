@@ -46,14 +46,11 @@ const oneRow = resolveFitnessChecks(
     specController: {
       fitnessChecks: [{ scn: "SCN-HCV-001", characteristic: "complexity", command: "eslint" }],
     },
-  },
-  // No gate reference in these rows, so the reader is never asked; it is present because the
-  // resolver takes one, exactly as `resolveThresholds` does.
-  () => null
+  }
 );
 
 function corpusOf(source: string, fitnessChecks = oneRow) {
-  return readTargetCorpus([source], [], new Map(), fitnessChecks);
+  return readTargetCorpus([source], [], fitnessChecks);
 }
 
 describe("[SCN-LNT-020] a @fitness scenario no configured row names raises no Evidence Obligation", () => {

@@ -94,23 +94,6 @@ export function sourceTarget(args: Record<string, string>): string {
 }
 
 /**
- * Guard the supplied input-file/dir flags at the CLI edge (@SCN-CLI-002). A
- * mistyped `--vitest` / `--cucumber` / `--features` / `--ci` / `--package-json`
- * pointing at a non-existent path used to reconcile silently against ZERO evidence —
- * a terrifying false all-red report meaning "you forgot the reports", not "your code
- * is broken" (the dogfooding fault). These flags are Examples of ONE boundary
- * rule: a supplied-but-absent input path is a hard error, and a flag added to the set
- * inherits it rather than restating it. Scope is existence only
- * (readability / file-vs-dir type-correctness out of scope; `exists` covers the dir
- * flag and the file flags alike).
- *
- * PURE and `@unit`-testable like `checkLegacyJson` / `sourceTarget`: reads the parsed
- * args + an injected `exists` fn (no fs), returns the FIRST supplied-but-absent
- * `(flag, path)` as a typed error naming both — routed to stderr + a non-zero exit by
- * `runBalance` (the shared typed-error surface) — else null. An OMITTED flag is not an
- * error (legitimately optional: simply no evidence of that kind).
- */
-/**
  * The parsed args, as the reconciler's input paths — the one place a `--flag` name becomes a
  * `ReconcileOptions` key.
  *
@@ -125,11 +108,27 @@ function reconcileInputsOf(args: Record<string, string>): ReconcileOptions {
     cucumber: args["cucumber"],
     ci: args["ci"],
     packageJson: args["package-json"],
-    measurements: args["measurements"],
     ciSteps: args["ci-steps"],
   };
 }
 
+/**
+ * Guard the supplied input-file/dir flags at the CLI edge (@SCN-CLI-002). A
+ * mistyped `--vitest` / `--cucumber` / `--features` / `--ci` / `--package-json`
+ * pointing at a non-existent path used to reconcile silently against ZERO evidence —
+ * a terrifying false all-red report meaning "you forgot the reports", not "your code
+ * is broken" (the dogfooding fault). These flags are Examples of ONE boundary
+ * rule: a supplied-but-absent input path is a hard error, and a flag added to the set
+ * inherits it rather than restating it. Scope is existence only
+ * (readability / file-vs-dir type-correctness out of scope; `exists` covers the dir
+ * flag and the file flags alike).
+ *
+ * PURE and `@unit`-testable like `checkLegacyJson` / `sourceTarget`: reads the parsed
+ * args + an injected `exists` fn (no fs), returns the FIRST supplied-but-absent
+ * `(flag, path)` as a typed error naming both — routed to stderr + a non-zero exit by
+ * `refuseUnreadableInputs` (the shared typed-error surface) — else null. An OMITTED flag is not an
+ * error (legitimately optional: simply no evidence of that kind).
+ */
 export function checkInputsExist(
   args: Record<string, string>,
   exists: (path: string) => boolean,
@@ -138,7 +137,7 @@ export function checkInputsExist(
   // reported error (deterministic; the operator fixes and re-runs). Keys are the
   // parseArgs form (the `--` stripped); the message names the flag WITH its dashes.
   const flags = [
-    "vitest", "cucumber", "features", "ci", "package-json", "measurements", "ci-steps",
+    "vitest", "cucumber", "features", "ci", "package-json", "ci-steps",
   ] as const;
   for (const flag of flags) {
     const path = args[flag];
@@ -156,7 +155,7 @@ export function checkInputsExist(
  * process, and on garbage both reconcile normally (verified, 3F-1742 Discovery).
  */
 const JSON_INPUT_FLAGS = [
-  "vitest", "cucumber", "package-json", "measurements", "ci-steps",
+  "vitest", "cucumber", "package-json", "ci-steps",
 ] as const;
 
 /**
@@ -170,7 +169,7 @@ const JSON_INPUT_FLAGS = [
  *
  * PURE and `@unit`-testable like its sibling guards: reads the parsed args + an injected
  * `read` fn (no fs), returns the FIRST supplied-but-unparseable `(flag, path, failure)` as
- * a typed error naming all three — routed to stderr + exit 2 by `runBalance` — else null.
+ * a typed error naming all three — routed to stderr + exit 2 by `refuseUnreadableInputs` — else null.
  * An omitted flag is not an error, and an unreadable file (a race after the existence
  * check) reports as the same input fault rather than escaping as a crash.
  */
@@ -252,13 +251,7 @@ export function runBalance(argv: string[]): void {
   // guard's typed error is routed to stderr + a non-zero exit, exactly as planOutput's error
   // is below (the shared typed-error surface).
   const legacyJsonError = checkLegacyJson(args);
-  if (legacyJsonError) {
-    process.stderr.write(legacyJsonError + "\n");
-    // Usage/config error → exit 2 (the enumerated usage code, @SCN-CLI-002), distinct
-    // from the out-of-balance verdict code 1 (@SCN-CLI-004): an out-of-balance run must
-    // never masquerade as a usage error, nor the reverse.
-    process.exit(2);
-  }
+  if (legacyJsonError) exitUsage(legacyJsonError);
 
   // Registry-bounded parse (@SCN-CLI-009): `balance` accepts ONLY the flags its registry
   // scope LISTS. An unregistered flag — a typo `--strcit`, a stray `--bogus` — is a
@@ -275,106 +268,8 @@ export function runBalance(argv: string[]): void {
     return;
   }
 
-  // Render-from-saved-JSON mode (@SCN-RMD-007): regenerate the human markdown from a
-  // banked spec-reconciliation.json ALONE — no reconcile, no live inputs, no RunContext. Reads
-  // the file, JSON.parses it back into the whole-document report model, renders the markdown via
-  // renderReport, and writes it to stdout (the same trailing-newline convention as the writer's
-  // stdout path). The load-bearing proof that the JSON IS the model — returns before any reconcile.
-  // Saved-report READABILITY guard (@SCN-CLI-015). This branch RETURNS before the input
-  // guards below ever run, so it honoured NEITHER: a missing path crashed to ENOENT and a
-  // malformed file to SyntaxError, both landing on Node's default exit 1 — the
-  // out-of-balance code. The missing-path case was a live violation of @SCN-CLI-002's own
-  // shipped principle, which the CLI enforced for the five evidence flags and not for this
-  // one. The guard therefore runs INSIDE this branch, ahead of the read (3F-1764).
-  const unreadableSavedReportError = checkRenderFromJson(args, (path) =>
-    readFileSync(path, "utf8"),
-  );
-  if (unreadableSavedReportError) {
-    process.stderr.write(unreadableSavedReportError + "\n");
-    process.exit(2);
-  }
-
-  const rehydratePath = args["render-from-json"];
-  if (rehydratePath !== undefined) {
-    const savedReport = readFileSync(rehydratePath, "utf8");
-    process.stdout.write(renderReportFromJson(savedReport) + "\n");
-    return;
-  }
-
-  // Input-existence guard (@SCN-CLI-002): a supplied input-file/dir flag pointing at a
-  // non-existent path is a HARD ERROR — halt BEFORE reconciling, with a typed message
-  // naming the flag + path, never the silent zero-evidence all-red report a mistyped
-  // path used to produce (the dogfooding fault). Routed to stderr + a non-zero exit,
-  // exactly as the legacy-`--json` guard above (the shared typed-error surface). An
-  // omitted flag is legitimately optional and passes through untouched.
-  const missingInputError = checkInputsExist(args, existsSync);
-  if (missingInputError) {
-    process.stderr.write(missingInputError + "\n");
-    // Usage/input error → exit 2 (@SCN-CLI-002), distinct from the out-of-balance
-    // verdict code 1 (@SCN-CLI-004).
-    process.exit(2);
-  }
-
-  // Input-READABILITY guard (@SCN-CLI-014): existence is not enough. A report that is
-  // PRESENT but UNPARSEABLE (`--vitest /dev/null`, truncated JSON, non-JSON) used to throw
-  // mid-parse inside reconcileWithCensus, uncaught — and Node's default exit code is 1, the
-  // code reserved for a genuine OUT-OF-BALANCE verdict (@SCN-CLI-004). So a tool that
-  // CRASHED before reconciling was indistinguishable, by exit code, from an honest
-  // disagreement (3F-1742). Runs immediately after the existence guard and BEFORE any
-  // reconcile, routing to the same stderr + exit 2 lane: an input the tool cannot read is a
-  // usage fault, sibling to a missing path and an unrecognised flag — never a verdict.
-  const unparseableInputError = checkInputsParse(args, (path) => readFileSync(path, "utf8"));
-  if (unparseableInputError) {
-    process.stderr.write(unparseableInputError + "\n");
-    process.exit(2);
-  }
-
-  // The FEATURE-CORPUS integrity checkpoint (@SCN-CLI-016, 3F-1767). The feature corpus is an
-  // input too — the ledger's DEBIT side — and it was read by a hand-rolled TAG-LINE SCAN that
-  // never consulted a parser. So a malformed tag line simply stopped being a tag line and its
-  // scenario CEASED TO EXIST: one stray character deleted a failing row and turned an
-  // out-of-balance run (exit 1) into a clean BALANCED (exit 0). A dropped scenario cannot even
-  // reconcile `missing`, because it was never RAISED to be missing — the run read cleaner than
-  // reality, the exact false-green this tool exists to prevent.
-  //
-  // Validated with the REAL Gherkin parser (cucumber's own), so a file the tool would reconcile is
-  // at least a file cucumber would RUN. A file it rejects is an input we CANNOT READ: exit 2,
-  // halting BEFORE any reconcile, naming the file and the parse failure — the same Rule as
-  // @SCN-CLI-014 and @SCN-CLI-015 ("an input the tool cannot read is a usage error, never a
-  // verdict"), now on the obligation side. Never a verdict, and never a green.
-  //
-  // The corpus is EXTRACTED from the same real AST (@SCN-LDG-020), so what the tool reconciles is
-  // what cucumber runs — Feature/Rule tag inheritance included. This guard decides whether the file
-  // can be read at all; parseScenarios then reads it exactly as cucumber would.
-  const featureParseErrors = featureCorpusParseErrors(args["features"]);
-  if (featureParseErrors.length > 0) {
-    for (const { file, message } of featureParseErrors) {
-      process.stderr.write(`The --features corpus contains a feature file that could not be parsed: ${file}\n${message}\n`);
-    }
-    process.exit(2);
-  }
-
-  // AMBIGUOUS-CORPUS guard (@SCN-LDG-020's guardrail, 3F-1775). An @SCN identifies exactly ONE
-  // scenario — that is the whole basis of attributing evidence to it. Tag inheritance makes a
-  // DUPLICATE reachable: an @SCN hoisted to a Feature:/Rule: is inherited by every scenario
-  // beneath it (cucumber does this, so we do). One passing test would then mark EVERY scenario
-  // sharing that id `balanced` — including scenarios nothing proves — a BALANCED-WHEN-BROKEN run
-  // at exit 0. A new silent false-green, introduced by the very fix that closed the last one.
-  //
-  // So the corpus is REFUSED, not reconciled: the tool cannot know which scenario a citing test
-  // proves, and any verdict over it would be a guess. Same Rule as @SCN-CLI-014/015/016 — an input
-  // the tool cannot read is a usage error, never a verdict.
-  const duplicateScnIds = featureCorpusDuplicateScnIds(args["features"]);
-  if (duplicateScnIds.length > 0) {
-    process.stderr.write(
-      `The --features corpus names the same @SCN on more than one scenario: ` +
-        `${duplicateScnIds.join(", ")}.\n` +
-        `An @SCN identifies exactly one scenario — evidence citing a duplicated id cannot be ` +
-        `attributed, so no verdict over this corpus would be trustworthy. (An @SCN on a Feature: ` +
-        `or Rule: line is inherited by every scenario beneath it — name it on the scenario.)\n`
-    );
-    process.exit(2);
-  }
+  if (renderSavedReport(args)) return;
+  refuseUnreadableInputs(args);
 
   const inputs = reconcileInputsOf(args);
 
@@ -400,31 +295,7 @@ export function runBalance(argv: string[]): void {
   // renderer via writeOutputs only (markdown-only; the by-feature cut isn't on JSON).
   const featureNames = readFeatureNames(args["features"]);
 
-  // Build the run provenance ONCE (project design §1) — a sibling RunContext, the
-  // Ledger staying pure — reusing the existing runStart. The target is the
-  // operator's --target VERBATIM (unknown-target on omit; Fork A — no
-  // resolution, no basename guessing). Source SHA via the read-only target read, with
-  // --source-sha as the override (resolveSourceSha).
-  const ctx: RunContext = {
-    target: sourceTarget(args),
-    inputs,
-    runStart,
-    sourceSha: resolveSourceSha({
-      sourceSha: args["source-sha"],
-      targetDir: args["features"] !== undefined ? dirname(args["features"]) : undefined,
-    }),
-    // The TARGET repo root the recorded input paths are made portable against (fixed to
-    // the target root, not the run cwd, by @SCN-RPT-016) — the SAME
-    // root readEvidenceObservations passes to countRuntimeEvidenceObservationKinds, derived from
-    // --features, so a cross-repo reconcile records inputs relative (`features`) rather
-    // than leaking the target's absolute path.
-    root: resolveTargetRoot({ features: inputs.features }),
-    // The TOOL's own identity (@SCN-RPT-026, 3F-1916) — which spec-controller produced
-    // this run, distinct from the target's sourceSha. Read from the tool's OWN dir, never
-    // cwd (which is the target). One call, spread into the ctx; the same identity feeds
-    // the run.yaml manifest.
-    ...resolveToolIdentity(),
-  };
+  const ctx = runContextOf(args, inputs, runStart);
 
   // Plan the outputs from the --format specs (no flag → md→stdout) and write them via
   // the writer — the pure plan / impure writer split (@SCN-FMT-001). The plan
@@ -433,12 +304,7 @@ export function runBalance(argv: string[]): void {
   // legacy runs/<target>/<ISO>/ auto-archive was removed with @SCN-RUN-001, the
   // caller now routes stored runs (spec-controller's run-management layer).
   const planResult = planOutput(collectFormatSpecs(argv));
-  if (!planResult.ok) {
-    process.stderr.write(planResult.error + "\n");
-    // Usage/config error (bad --format spec) → exit 2 (@SCN-CLI-002), distinct from the
-    // out-of-balance verdict code 1 (@SCN-CLI-004).
-    process.exit(2);
-  }
+  if (!planResult.ok) exitUsage(planResult.error);
   writeOutputs(planResult.plan, { balance, ctx, evidenceObligations, withRuntimeObservations: true, withStaticChecks: true, featureNames });
 
   // The CI gate (@SCN-CLI-004): `balance` is a GATE, not just a reporter. AFTER the report
@@ -507,6 +373,150 @@ export function runBalance(argv: string[]): void {
   // Assigned only when NON-ZERO, so a balanced run still LEAVES process.exitCode at its default
   // rather than writing a 0 over it — the distinction @SCN-CLI-005 and @SCN-CLI-010 both rest on.
   if (code !== 0) process.exitCode = code;
+}
+
+/**
+ * A usage or input fault: the message on stderr, then exit 2 — the enumerated usage code
+ * (@SCN-CLI-002), distinct from the out-of-balance verdict code 1 (@SCN-CLI-004). An
+ * out-of-balance run must never masquerade as a usage error, nor the reverse.
+ */
+function exitUsage(message: string): never {
+  process.stderr.write(message + "\n");
+  process.exit(2);
+}
+
+/**
+ * Render-from-saved-JSON mode (@SCN-RMD-007): regenerate the human markdown from a
+ * banked spec-reconciliation.json ALONE — no reconcile, no live inputs, no RunContext. Reads
+ * the file, JSON.parses it back into the whole-document report model, renders the markdown via
+ * renderReport, and writes it to stdout (the same trailing-newline convention as the writer's
+ * stdout path). The load-bearing proof that the JSON IS the model — true when it answered the
+ * run, so `runBalance` returns before any reconcile.
+ */
+function renderSavedReport(args: Record<string, string>): boolean {
+  // Saved-report READABILITY guard (@SCN-CLI-015). This mode RETURNS before
+  // `refuseUnreadableInputs` ever runs, so it honoured NEITHER of its guards: a missing path
+  // crashed to ENOENT and a malformed file to SyntaxError, both landing on Node's default exit 1
+  // — the out-of-balance code. The missing-path case was a live violation of @SCN-CLI-002's own
+  // shipped principle, which the CLI enforced for the five evidence flags and not for this
+  // one. The guard therefore runs INSIDE this mode, ahead of the read (3F-1764).
+  const unreadableSavedReportError = checkRenderFromJson(args, (path) =>
+    readFileSync(path, "utf8"),
+  );
+  if (unreadableSavedReportError) exitUsage(unreadableSavedReportError);
+
+  const rehydratePath = args["render-from-json"];
+  if (rehydratePath === undefined) return false;
+  const savedReport = readFileSync(rehydratePath, "utf8");
+  process.stdout.write(renderReportFromJson(savedReport) + "\n");
+  return true;
+}
+
+/**
+ * The live-input guards, in the order they run: each halts at exit 2 BEFORE any reconcile,
+ * because an input the tool cannot read is a usage error, never a verdict.
+ */
+function refuseUnreadableInputs(args: Record<string, string>): void {
+  // Input-existence guard (@SCN-CLI-002): a supplied input-file/dir flag pointing at a
+  // non-existent path is a HARD ERROR — halt BEFORE reconciling, with a typed message
+  // naming the flag + path, never the silent zero-evidence all-red report a mistyped
+  // path used to produce (the dogfooding fault). Routed to stderr + a non-zero exit,
+  // exactly as the legacy-`--json` guard (the shared typed-error surface). An
+  // omitted flag is legitimately optional and passes through untouched.
+  const missingInputError = checkInputsExist(args, existsSync);
+  if (missingInputError) exitUsage(missingInputError);
+
+  // Input-READABILITY guard (@SCN-CLI-014): existence is not enough. A report that is
+  // PRESENT but UNPARSEABLE (`--vitest /dev/null`, truncated JSON, non-JSON) used to throw
+  // mid-parse inside reconcileWithCensus, uncaught — and Node's default exit code is 1, the
+  // code reserved for a genuine OUT-OF-BALANCE verdict (@SCN-CLI-004). So a tool that
+  // CRASHED before reconciling was indistinguishable, by exit code, from an honest
+  // disagreement (3F-1742). Runs immediately after the existence guard and BEFORE any
+  // reconcile, routing to the same stderr + exit 2 lane: an input the tool cannot read is a
+  // usage fault, sibling to a missing path and an unrecognised flag — never a verdict.
+  const unparseableInputError = checkInputsParse(args, (path) => readFileSync(path, "utf8"));
+  if (unparseableInputError) exitUsage(unparseableInputError);
+
+  // The FEATURE-CORPUS integrity checkpoint (@SCN-CLI-016, 3F-1767). The feature corpus is an
+  // input too — the ledger's DEBIT side — and it was read by a hand-rolled TAG-LINE SCAN that
+  // never consulted a parser. So a malformed tag line simply stopped being a tag line and its
+  // scenario CEASED TO EXIST: one stray character deleted a failing row and turned an
+  // out-of-balance run (exit 1) into a clean BALANCED (exit 0). A dropped scenario cannot even
+  // reconcile `missing`, because it was never RAISED to be missing — the run read cleaner than
+  // reality, the exact false-green this tool exists to prevent.
+  //
+  // Validated with the REAL Gherkin parser (cucumber's own), so a file the tool would reconcile is
+  // at least a file cucumber would RUN. A file it rejects is an input we CANNOT READ: exit 2,
+  // halting BEFORE any reconcile, naming the file and the parse failure — the same Rule as
+  // @SCN-CLI-014 and @SCN-CLI-015 ("an input the tool cannot read is a usage error, never a
+  // verdict"), now on the obligation side. Never a verdict, and never a green.
+  //
+  // The corpus is EXTRACTED from the same real AST (@SCN-LDG-020), so what the tool reconciles is
+  // what cucumber runs — Feature/Rule tag inheritance included. This guard decides whether the file
+  // can be read at all; parseScenarios then reads it exactly as cucumber would.
+  const featureParseErrors = featureCorpusParseErrors(args["features"]);
+  if (featureParseErrors.length > 0) {
+    for (const { file, message } of featureParseErrors) {
+      process.stderr.write(`The --features corpus contains a feature file that could not be parsed: ${file}\n${message}\n`);
+    }
+    process.exit(2);
+  }
+
+  // AMBIGUOUS-CORPUS guard (@SCN-LDG-020's guardrail, 3F-1775). An @SCN identifies exactly ONE
+  // scenario — that is the whole basis of attributing evidence to it. Tag inheritance makes a
+  // DUPLICATE reachable: an @SCN hoisted to a Feature:/Rule: is inherited by every scenario
+  // beneath it (cucumber does this, so we do). One passing test would then mark EVERY scenario
+  // sharing that id `balanced` — including scenarios nothing proves — a BALANCED-WHEN-BROKEN run
+  // at exit 0. A new silent false-green, introduced by the very fix that closed the last one.
+  //
+  // So the corpus is REFUSED, not reconciled: the tool cannot know which scenario a citing test
+  // proves, and any verdict over it would be a guess. Same Rule as @SCN-CLI-014/015/016 — an input
+  // the tool cannot read is a usage error, never a verdict.
+  const duplicateScnIds = featureCorpusDuplicateScnIds(args["features"]);
+  if (duplicateScnIds.length > 0) {
+    process.stderr.write(
+      `The --features corpus names the same @SCN on more than one scenario: ` +
+        `${duplicateScnIds.join(", ")}.\n` +
+        `An @SCN identifies exactly one scenario — evidence citing a duplicated id cannot be ` +
+        `attributed, so no verdict over this corpus would be trustworthy. (An @SCN on a Feature: ` +
+        `or Rule: line is inherited by every scenario beneath it — name it on the scenario.)\n`
+    );
+    process.exit(2);
+  }
+}
+
+/**
+ * Build the run provenance ONCE (project design §1) — a sibling RunContext, the
+ * Ledger staying pure — reusing the existing runStart. The target is the
+ * operator's --target VERBATIM (unknown-target on omit; Fork A — no
+ * resolution, no basename guessing). Source SHA via the read-only target read, with
+ * --source-sha as the override (resolveSourceSha).
+ */
+function runContextOf(
+  args: Record<string, string>,
+  inputs: ReconcileOptions,
+  runStart: Date,
+): RunContext {
+  return {
+    target: sourceTarget(args),
+    inputs,
+    runStart,
+    sourceSha: resolveSourceSha({
+      sourceSha: args["source-sha"],
+      targetDir: args["features"] !== undefined ? dirname(args["features"]) : undefined,
+    }),
+    // The TARGET repo root the recorded input paths are made portable against (fixed to
+    // the target root, not the run cwd, by @SCN-RPT-016) — the SAME
+    // root readEvidenceObservations passes to countRuntimeEvidenceObservationKinds, derived from
+    // --features, so a cross-repo reconcile records inputs relative (`features`) rather
+    // than leaking the target's absolute path.
+    root: resolveTargetRoot({ features: inputs.features }),
+    // The TOOL's own identity (@SCN-RPT-026, 3F-1916) — which spec-controller produced
+    // this run, distinct from the target's sourceSha. Read from the tool's OWN dir, never
+    // cwd (which is the target). One call, spread into the ctx; the same identity feeds
+    // the run.yaml manifest.
+    ...resolveToolIdentity(),
+  };
 }
 
 /**

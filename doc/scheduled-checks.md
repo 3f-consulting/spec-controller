@@ -125,10 +125,9 @@ In `package.json`, under `specController.fitnessChecks`:
       }
 ```
 
-There is no `atLeast`, and that is the point. A row with no bar is answered by
-its step's outcome, exactly like `eslint` or `pnpm typecheck`. The bar is 95 in
-Stryker's config and **nowhere else**; writing it on the row as well would be one
-number kept in two places. The `command` is the command a reader would type to
+The row names no bar — no row does. It is answered by its step's outcome,
+exactly like `eslint` or `pnpm typecheck`. The bar is 95 in Stryker's config and
+**nowhere else**. The `command` is the command a reader would type to
 see what the step reads. `balance` never runs it.
 
 The row has a scenario beside it, like every other fitness row. The scenario and

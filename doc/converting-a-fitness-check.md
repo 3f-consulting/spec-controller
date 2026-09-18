@@ -43,9 +43,9 @@ Its steps do not run, in the same way a `@unit` scenario's steps do not: Cucumbe
 the runner your CI already calls is what produces the evidence. Getting here from `annotated` is
 either your own work or `migrate`'s.
 
-**The row of `specController.fitnessChecks`** — `scn`, `characteristic`, `command`, and
-`atLeast` / `atMost` where the check produces a number — carries what is measured and against what
-bar. The sections below assume you are heading for `conformant`; if you are stopping at `annotated`,
+**The row of `specController.fitnessChecks`** — `scn`, `characteristic` and `command` — carries
+which scenario the check answers, what it asserts, and the command whose exit code is the verdict.
+It names no bar: a check that produces a number applies its own bar and exits non-zero below it. The sections below assume you are heading for `conformant`; if you are stopping at `annotated`,
 read them for the row and the CI step and skip the scenario.
 
 The scenario is **written beside its row rather than derived from it**:
@@ -229,16 +229,13 @@ runs no check on your behalf and binds nothing to your scenario's steps:
 
 | the row | how its credit arrives | what is asserted |
 |---|---|---|
-| no bar | its step's **outcome** in the run's own record | the command's **exit code** |
-| a bar (`atLeast` / `atMost`) | its command writes a **number** into the run's measurement record; its step's presence says it ran | the number, held against the bar by the ledger |
+| `scn`, `characteristic`, `command` | its step's **outcome** in the run's own record | the command's **exit code** |
 
-**The row's shape says which kind of check it is** — no type field, no second tag, no roster of
-measured characteristics for somebody to keep in step with the rows.
-
-**The bar is nowhere near the producer and must never be.** One bar per characteristic, and it
-belongs to the ledger. A measured row is answered when its command *wrote a number down*; whether
-that number clears the bar is the ledger's sentence. A producer comparing its own number would be
-grading its own homework, and the reconciliation would transcribe a verdict rather than reach one.
+**Every row is that one kind.** A check that measures something — a mutation score, a suite's
+wall-clock — states its bar where the tool already reads one (Stryker's `thresholds.break`,
+`timeout <seconds>` around the suite) and fails its step below it. The ledger reads the step's
+outcome, never a number. A row still carrying the retired `atLeast` / `atMost` keys is named on the
+report as carrying a retired key, and is credited by its step's outcome like any other (3F-3506).
 
 ---
 
@@ -459,8 +456,8 @@ is one no row configures, and the ledger's census names each of them.
    rows, and that holds for a manifest that says nothing at all. Both keys are documented in
    [`how_to_use.md`](./how_to_use.md).
 
-2. **Write the row** — `scn`, `characteristic`, `command`, plus `atLeast` / `atMost` where the check
-   produces a number.
+2. **Write the row** — `scn`, `characteristic`, `command`. A check that produces a number applies
+   its own bar and exits non-zero below it; the row names none.
 3. **Give the scenario the axis tag** and remove its characteristic tag. Write the scenario in your
    fitness corpus and the row beside it; neither half is derived from the other, which is what makes
    a scenario with no row, and a row with no scenario, something a run can report.

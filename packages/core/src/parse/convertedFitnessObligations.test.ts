@@ -9,11 +9,6 @@
  * Its own file rather than a further block in fitnessObligations.test.ts, which reads the OTHER
  * route — a registered bare characteristic tag. Two routes into one rule are two subjects, and the
  * assertion this file exists to make is that they arrive at the SAME obligation.
- *
- * AND @SCN-LNT-019 — which of the two obligation shapes the converted route raises, decided by the
- * ROW'S SHAPE: a row carrying a bar is measured and one carrying none is static. It reads the same
- * rule from the same direction, so it lands beside @SCN-LNT-018 rather than in a file of its own,
- * and the identity claim at the foot is against the THRESHOLD-registry route's measured answer.
  */
 
 import { describe, it, expect } from "vitest";
@@ -41,7 +36,7 @@ Feature: fitness
 
 describe("[SCN-LNT-018] a @fitness scenario owes the characteristic its configured row names", () => {
   it("raises one obligation, naming the characteristic the row names rather than the tag", () => {
-    expect(parseScenarios(convertedScenario, [], [], new Map(), CONFIGURED)).toEqual([
+    expect(parseScenarios(convertedScenario, [], [], CONFIGURED)).toEqual([
       {
         scnId: "SCN-AAA-001",
         evidenceObligations: [{ qualityCheck: "lint", staticCheck: "complexity" }],
@@ -63,7 +58,7 @@ Feature: fitness
     Scenario: the codebase stays under the complexity threshold
 `;
 
-    expect(parseScenarios(source, [], [], new Map(), CONFIGURED)).toEqual([
+    expect(parseScenarios(source, [], [], CONFIGURED)).toEqual([
       {
         scnId: "SCN-AAA-001",
         evidenceObligations: [{ qualityCheck: "lint", staticCheck: "complexity" }],
@@ -85,7 +80,7 @@ Feature: fitness
     Scenario: the codebase stays under the complexity threshold
 `;
 
-    expect(parseScenarios(convertedScenario, [], [], new Map(), CONFIGURED)).toEqual(
+    expect(parseScenarios(convertedScenario, [], [], CONFIGURED)).toEqual(
       parseScenarios(bareTagScenario, [], ["complexity"])
     );
   });
@@ -112,7 +107,7 @@ Feature: fitness
       Given a step
 `;
 
-    expect(parseScenarios(source, [], [], new Map(), CONFIGURED)).toEqual([
+    expect(parseScenarios(source, [], [], CONFIGURED)).toEqual([
       {
         scnId: "SCN-AAA-001",
         evidenceObligations: [
@@ -121,110 +116,5 @@ Feature: fitness
         ],
       },
     ]);
-  });
-});
-
-/** The converted rows for @SCN-LNT-019 — one floor, one bar nothing can read, one no bar at all. */
-const BY_SHAPE: FitnessCheckIndex = new Map([
-  ["SCN-AAA-002", { characteristic: "mutation", bar: { threshold: 90, atLeast: true } }],
-  ["SCN-AAA-003", { characteristic: "coverage", bar: null }],
-  ["SCN-AAA-001", { characteristic: "complexity" }],
-]);
-
-/** A converted scenario per row, in the order the expectations below read them. */
-const byShapeCorpus = `@FIT
-Feature: fitness
-
-  Rule: the tree stays inside its bars
-
-    @fitness @SCN-AAA-002
-    Scenario: the tree stays above its mutation floor
-
-    @fitness @SCN-AAA-003
-    Scenario: the tree stays above its coverage floor
-
-    @fitness @SCN-AAA-001
-    Scenario: the codebase stays under the complexity threshold
-`;
-
-describe("[SCN-LNT-019] the row's shape decides which obligation the converted route raises", () => {
-  it("raises measured where the row names a bar and static where it names none, in one read", () => {
-    // WHOLE-CORPUS equality, so a rule that raised the measured shape for all three — or the static
-    // shape for all three — reds as firmly as one that dropped a row.
-    expect(parseScenarios(byShapeCorpus, [], [], new Map(), BY_SHAPE)).toEqual([
-      {
-        scnId: "SCN-AAA-002",
-        evidenceObligations: [
-          {
-            qualityCheck: "lint",
-            staticCheck: "mutation",
-            measured: true,
-            threshold: 90,
-            atLeast: true,
-          },
-        ],
-      },
-      {
-        // MEASURED WITH NO BAR is the legal, loud shape (@SCN-CIP-002). The flag routes the
-        // obligation to the comparison arm and the missing bar is what that arm then reports;
-        // marking it measured only where a bar was read would send an un-authored one down the
-        // static route, to be reported as a check nobody wrote.
-        scnId: "SCN-AAA-003",
-        evidenceObligations: [{ qualityCheck: "lint", staticCheck: "coverage", measured: true }],
-      },
-      {
-        scnId: "SCN-AAA-001",
-        evidenceObligations: [{ qualityCheck: "lint", staticCheck: "complexity" }],
-      },
-    ]);
-  });
-
-  it("carries a ceiling row's bar sparsely — the number, and no direction beside it", () => {
-    // The direction is the TARGET's to author, never the engine's to infer from the characteristic
-    // (@SCN-MUT-001): a row naming `atMost` lands exactly the keys it landed before floors existed.
-    const ceiling: FitnessCheckIndex = new Map([
-      ["SCN-AAA-001", { characteristic: "ci-run-time", bar: { threshold: 75 } }],
-    ]);
-
-    expect(parseScenarios(convertedScenario, [], [], new Map(), ceiling)).toEqual([
-      {
-        scnId: "SCN-AAA-001",
-        evidenceObligations: [
-          { qualityCheck: "lint", staticCheck: "ci-run-time", measured: true, threshold: 75 },
-        ],
-      },
-    ]);
-  });
-
-  it("raises the SAME obligation the threshold-registry route raises for a measured check", () => {
-    // The two routes differ in where the bar was AUTHORED — a field of the converted row, or an
-    // entry under `specController.thresholds` — and in nothing downstream of that. Compared against
-    // the other route's own answer rather than against a literal, so a change to the measured shape
-    // moves both or reds here.
-    const byThresholdRegistry = `@FIT
-Feature: fitness
-
-  Rule: the tree stays inside its bars
-
-    @mutation @SCN-AAA-002
-    Scenario: the tree stays above its mutation floor
-`;
-    const converted = `@FIT
-Feature: fitness
-
-  Rule: the tree stays inside its bars
-
-    @fitness @SCN-AAA-002
-    Scenario: the tree stays above its mutation floor
-`;
-
-    expect(parseScenarios(converted, [], [], new Map(), BY_SHAPE)).toEqual(
-      parseScenarios(
-        byThresholdRegistry,
-        [],
-        [],
-        new Map([["SCN-AAA-002", new Map([["mutation", { threshold: 90, atLeast: true }]])]])
-      )
-    );
   });
 });

@@ -18,16 +18,21 @@ in the eight days that followed. A commitment maintained by hand against a
 moving model is one that gets broken quietly — so it is withdrawn deliberately
 instead, while withdrawing it still costs nobody anything.
 
-**What the reader accepts today.** `specController.thresholds`, `runners`,
-`notChecks`, `fitnessChecks` and the `--measurements` document shape are read
+**What the reader accepts today.** `specController.runners`, `notChecks` and
+`fitnessChecks` (`scn`, `characteristic`, `command`), and the `--ci-steps` record, are read
 exactly as they were.
 
-**Two manifest keys are no longer read, and a tree still carrying them is told
-so.** `specController.checkRegistry` and `specController.staticChecks` were
+**Manifest keys that are no longer read are named on the report, never read
+quietly.** `specController.checkRegistry` and `specController.staticChecks` were
 retired by `3F-3161`. Neither produces a credit, raises an obligation, or settles
 which script a CI step is named by; a bare characteristic tag on a scenario now
 means nothing, and a run over such a tree reports the retired key by name rather
-than reading it quietly. There is one way to declare a fitness check: a
+than reading it quietly. `specController.thresholds`, a `fitnessChecks` row's
+`atLeast` / `atMost` (a `mutationGate` bar sits under `atLeast`) and the
+`--measurements` flag were retired by `3F-3506`, with the measured route they
+belonged to: no number reaches the ledger any more. The first two are named on the
+report the same way; `--measurements` is an unknown flag, exit 2. There is one way
+to declare a fitness check: a
 `@fitness` scenario, a `specController.fitnessChecks` row, and the row's `@SCN`
 on the CI step's `id:`. See
 [`converting-a-fitness-check.md`](./converting-a-fitness-check.md).

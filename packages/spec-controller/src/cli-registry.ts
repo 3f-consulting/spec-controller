@@ -100,12 +100,6 @@ const balanceFlags: FlagSpec[] = [
       "The target's package.json — its `scripts`, and its specController.fitnessChecks rows: each names a scenario's @SCN, a characteristic, and the command that is the check.",
   },
   {
-    name: "--measurements",
-    arg: "<report.json>",
-    description:
-      "A measurement report — the number each measured check posted, evidence for the measured fitness checks.",
-  },
-  {
     name: "--ci-steps",
     arg: "<record.json>",
     description:

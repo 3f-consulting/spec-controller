@@ -1,0 +1,12 @@
+{
+  "scripts": {
+    "lint:foo": "eslint . --format json"
+  },
+  "specController": {
+    "thresholds": {
+      "SCN-TTH-001": {
+        "ci-run-time": 75
+      }
+    }
+  }
+}

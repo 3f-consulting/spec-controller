@@ -3,10 +3,9 @@
  * the app's ingest edge (3F-3088).
  *
  * WHY IT LIVES IN THE ENGINE. Every line of it is a pure function of sources somebody else already
- * read off disk: the obligation rule and the measured-tag union are `parseScenarios` and
- * `measuredCheckTags`, both core's own. Sitting at the app edge it was the reason a PUBLISHED
- * module imported core's unpublished `/internal` subpath for five symbols — the fault 3F-3086
- * repairs. One line made it impure and it was the only one: the feature discovery, which now
+ * read off disk: the obligation rule is `parseScenarios`, core's own. Sitting at the app edge it
+ * was the reason a PUBLISHED module imported core's unpublished `/internal` subpath for five
+ * symbols — the fault 3F-3086 repairs. One line made it impure and it was the only one: the feature discovery, which now
  * happens at the edge and arrives as `sources`.
  *
  * THE REGISTRY-KEYED READING THIS FILE ONCE ALSO PRODUCED — `checkHandles` and `citedScn`, the
@@ -17,7 +16,6 @@
  */
 
 import type { FitnessCheckIndex, UnspecifiedFitnessRow } from "../domain/fitnessChecks.js";
-import { measuredCheckTags, type ThresholdIndex } from "../domain/thresholds.js";
 import { citationOfCitedRow, type ScriptCitation } from "./fitnessCitations.js";
 import {
   parseScenarios,
@@ -88,7 +86,6 @@ export interface TargetCorpus {
 export function readTargetCorpus(
   sources: readonly string[],
   deferralTags: readonly string[],
-  thresholds: ThresholdIndex,
   /**
    * The target's CONFIGURED ROWS (@SCN-LNT-018) — the CONVERTED route's half of the debit side. It
    * reaches `parseScenarios`, which raises the Evidence Obligations, and `citedRow`, which reads a
@@ -97,14 +94,12 @@ export function readTargetCorpus(
    */
   fitnessChecks: FitnessCheckIndex
 ): TargetCorpus {
-  // THE OBLIGATION-RAISING TAG SET IS THE MEASURED HALF ALONE NOW (@SCN-CIP-001). The registered
-  // half of the union retired with the registry (3F-3161): every bare check tag a stepless
-  // scenario could carry against a registered handle is gone, and what is left is the measured
-  // axis's own tags — a measured check has no runnable script handle, so it can never be
-  // registered, and a corpus read against nothing else would raise nothing for it.
-  const obligationTags = measuredCheckTags(thresholds);
+  // NO BARE CHECK TAG RAISES AN OBLIGATION ON A TARGET'S CORPUS. The registered half of the
+  // union retired with the registry (3F-3161) and the measured half with the measured axis
+  // (3F-3516), so the bare-tag set handed to `parseScenarios` is empty: a fitness obligation is
+  // raised by the axis word and a configured row, and by nothing else.
   const scenarios = sources.flatMap((source) =>
-    parseScenarios(source, deferralTags, obligationTags, thresholds, fitnessChecks)
+    parseScenarios(source, deferralTags, [], fitnessChecks)
   );
   // THE TAGGED WALK THE TWO CORPUS-VS-MANIFEST READINGS SHARE. Kept as its own pass over the
   // sources, and handed to BOTH of them — the disagreement each names is the other's direction, so

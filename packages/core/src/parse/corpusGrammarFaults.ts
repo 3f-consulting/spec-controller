@@ -1,17 +1,17 @@
 /**
  * THE GRAMMAR RULES of `spec-controller tags` — everything about whether a TAG on a scenario
- * means anything. Its siblings hold the other two questions: `corpusCodeFaults.ts` whether a
- * feature code binds to one feature file, `corpusClaimFaults.ts` how many checks one scenario may
- * claim. `corpusFaults.ts` composes the three and is the only entry point any of them has.
+ * means anything. Its sibling holds the other question: `corpusCodeFaults.ts` whether a feature
+ * code binds to one feature file. `corpusFaults.ts` composes the two and is the only entry point
+ * either of them has.
  *
  * THE SEAM, STATED FROM THIS SIDE. A grammar rule asks *is this word part of the `@SCN` scheme*,
  * and the answer is assembled from places that are not this module's: the engine's own
  * quality-check maps, the `SCN-<FFF>-<NNN>` spelling `featureCodeOf` owns, and the target's own
- * manifest. A code rule needs none of those; it reads the corpus's shape. A claim rule reads this
- * module's own set and asks a question of the SCENARIO rather than of any tag on it. Three
- * questions, three modules; the first split happened when the joined module reached the 400-line
- * `max-lines` ceiling with four more grammar clauses still to land, and the second when the claim
- * rule would have carried it past that ceiling again (@SCN-FIT-001, and never an exception entry).
+ * manifest. A code rule needs none of those; it reads the corpus's shape. Two questions, two
+ * modules; the split happened when the joined module reached the 400-line `max-lines` ceiling
+ * with four more grammar clauses still to land (@SCN-FIT-001, and never an exception entry). The
+ * claim rule that once made a third sibling left with the measured axis (3F-3516): once the axis
+ * word is the only word that names a check, no scenario can claim two.
  *
  * AND THE TARGET'S HALF IS RESOLVED HERE, NOT HANDED IN RESOLVED. The composition hands this
  * module a manifest rather than an answer, so the read lives beside the rule that uses it — the
@@ -26,7 +26,6 @@
  * telling authors which words are legitimate.
  */
 
-import { measuredCheckTags } from "../domain/thresholds.js";
 import { featureCodeOf } from "../lib/featureCode.js";
 import type { CorpusFault, CorpusFile, TargetManifest } from "./corpusFaults.js";
 import {
@@ -35,11 +34,7 @@ import {
   RUNTIME_QUALITY_CHECK_TAGS,
   parseTaggedScenarios,
 } from "./scenarios.js";
-import {
-  type KillFloorReader,
-  resolveDeferralTags,
-  resolveThresholds,
-} from "./targetManifest.js";
+import { resolveDeferralTags } from "./targetManifest.js";
 
 /**
  * The tier tags an unrecognised tag is measured against, and the set that answers whether a tag
@@ -80,10 +75,11 @@ const TIER_TAGS: readonly string[] = [
  *
  * NO BARE TAG NAMES A CHECK ANY LONGER (3F-3161). The target's own check registry used to be
  * read here as the TARGET's answer for which bare words meant a check; that reading is retired,
- * and a bare check tag is grammar nowhere now, registered or not — the only words this function
- * still admits beside the scheme's own tiers are the converted axis word and a measured tag read
- * off the target's own thresholds. A target still writing one is read nowhere by this
- * assembly, which is the whole of what @SCN-STG-005 changed.
+ * and a bare check tag is grammar nowhere now, registered or not. The measured tags read off the
+ * target's own thresholds left with the measured axis (3F-3516), so the one word this function
+ * admits beside the scheme's own tiers is the converted axis word — and it reads no manifest to
+ * find it, because the word is the model's. A target still writing a bare check tag is read
+ * nowhere by this assembly, which is the whole of what @SCN-STG-005 changed.
  *
  * AND THE AXIS WORD IS NOT THE TARGET'S TO GRANT (3F-3138, 3F-3149). A CONVERTED check carries
  * one word for the whole axis and puts its CHARACTERISTIC on a configured row, so the retired
@@ -98,38 +94,9 @@ const TIER_TAGS: readonly string[] = [
  * there is. Redding it here too would print half of one fault in a second place with the wrong
  * remedy attached — *this word means nothing here*, said to an author whose scenario names the
  * one axis the model has.
- *
- * AND THE MEASURED SOURCE IS THE OTHER (@SCN-STG-009). A measured check produces a number held
- * against an authored ceiling; nothing invokes it, so it has no runnable script handle and was
- * never named by a registry either — the only place it is named is the target's thresholds. Skip
- * them and a target's `@ci-run-time` row reds on the very tag its own obligation was raised from,
- * which is why this assembly still has two sources rather than collapsing to the axis word alone.
- *
- * AND IT HAS A SECOND READER SINCE 3F-3307, which is what makes "one assembly" a fact rather than
- * a habit. `corpusClaimFaults.ts` asks a different question over this same set — how many of these
- * words one scenario may claim — and IMPORTS this function rather than rebuilding it. A rule
- * counting a narrower set than the grammar admits would green a corpus claiming two checks by one
- * of the words the grammar had just called legitimate; a wider one would red a word no obligation
- * is ever raised from. It is exported for that reason and no other: it is not on the barrel, and a
- * consumer's route to this capability stays the CLI.
- *
- * THE THRESHOLD READ TAKES THE KILL-FLOOR READER, and taking it is the discipline rather than a
- * need this rule can feel. A bar may name a mutation gate instead of a figure (@SCN-MUT-012), so
- * resolving one means opening that gate's record on the target's own tree — the closure the
- * command's edge builds over the target root, the same one the reconciliation beside it hands to
- * the same resolver. What it returns cannot move THIS answer: a threshold KEY survives whatever
- * its bar resolves to (@SCN-MUT-003), and the key set is the whole of what is read here. So a
- * cheaper reading would agree with the resolver today — and be a second answer the first time a
- * bar decided a key. The set is resolved once, by the resolver that owns it.
  */
-export function checkTagsOf(
-  packageJson: TargetManifest,
-  killFloor: KillFloorReader
-): readonly string[] {
-  return [
-    ...measuredCheckTags(resolveThresholds(packageJson, killFloor)),
-    FITNESS_AXIS_TAG,
-  ];
+function checkTagsOf(): readonly string[] {
+  return [FITNESS_AXIS_TAG];
 }
 
 /** Levenshtein distance, uncapped — the strings here are tag-length. */
@@ -226,11 +193,12 @@ function unrecognisedTagFault(tag: string): string {
 /**
  * Is this tag part of the `@SCN` scheme's grammar, on a scenario in this file?
  *
- * SIX CLAUSES, AND ONE OF THEM CARRIES THE WHOLE CHECK-TAG UNION. What this rule reaches is the
- * scheme's own words, the target's deferral set, and `checkTagsOf`'s two sources — the MEASURED
- * tags and the axis word (a bare check tag is grammar nowhere now, 3F-3161). That the union grew
- * and then shrank a source (@SCN-STG-009, @SCN-STG-005) changed nothing here, which is the point
- * of assembling it there: a clause reading one source at a time would have had to move with it.
+ * SIX CLAUSES, AND ONE OF THEM CARRIES THE WHOLE CHECK-TAG SET. What this rule reaches is the
+ * scheme's own words, the target's deferral set, and `checkTagsOf`'s one word — the axis word (a
+ * bare check tag is grammar nowhere now, 3F-3161, and the measured tags left with the measured
+ * axis, 3F-3516). That the set grew and then shrank to one source changed nothing here, which is
+ * the point of assembling it there: a clause reading one source at a time would have had to move
+ * with it.
  *
  * THE FILE'S HEADER CODE IS GRAMMAR, and that clause is new rather than moved. `@TGT` sits on the
  * `Feature:` line and `parseTaggedScenarios` inherits it onto every scenario beneath, exactly as
@@ -308,9 +276,8 @@ function isGrammar(
  *
  * @param features the target's discovered feature files, read once at the edge.
  * @param packageJson the TARGET's manifest, read HERE through the same resolvers the ingest edge
- * reads it with — one reading of `specController.deferralTags` (@SCN-PND-021) and one of
- * `specController.thresholds` (@SCN-STG-009), so the words this rule calls legitimate are exactly
- * the words the engine beside it honours as a skip and raises obligations from.
+ * reads it with — one reading of `specController.deferralTags` (@SCN-PND-021), so the words this
+ * rule calls legitimate are exactly the words the engine beside it honours as a skip.
  * The target's own check registry is retired and read nowhere in this assembly (@SCN-STG-005,
  * 3F-3161). A set handed in already resolved would have been a second answer travelling under the
  * first's name.
@@ -319,23 +286,17 @@ function isGrammar(
  * strings — and a copy held in core would be a second statement of it. Pass none and this clause
  * recognises nothing it was not given, which is the difference between owning a policy and
  * hard-coding someone else's.
- * @param killFloor the reader over the TARGET's mutation records, threaded through to the
- * threshold resolution because a bar may name a gate rather than a figure (@SCN-MUT-012). It is
- * the edge's closure over the target root, so the ceilings this rule reads and the records they
- * reach answer for one tree.
  */
 export function unrecognisedTags(
   features: readonly CorpusFile[],
   packageJson: TargetManifest,
-  starterDeferralTags: readonly string[],
-  killFloor: KillFloorReader
+  starterDeferralTags: readonly string[]
 ): CorpusFault[] {
   const deferralTags = resolveDeferralTags(packageJson, starterDeferralTags);
   // Both sets are resolved ONCE, before the walk, rather than per tag: the manifest cannot change
   // mid-corpus, and one resolution is what makes "the same set the obligation rule reads" a fact
-  // about this run rather than about each tag's turn through it. For the check tags it is also
-  // what keeps a target's mutation record opened once rather than once per tag.
-  const checkTags = checkTagsOf(packageJson, killFloor);
+  // about this run rather than about each tag's turn through it.
+  const checkTags = checkTagsOf();
   const faults: CorpusFault[] = [];
   for (const file of features) {
     for (const scenario of parseTaggedScenarios(file.source)) {

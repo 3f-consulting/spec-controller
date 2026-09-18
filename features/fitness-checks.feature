@@ -52,10 +52,11 @@ Feature: The fitness checks this repository configures, one scenario per row
   ASSERTED, as a `@unit` scenario's does; whether this push cleared it is the ledger's sentence,
   taken from the record.
 
-  WHICH BAR A ROW STATES IS ITS OWN SHAPE, AND IT NEVER REACHES THIS FILE. A row with no bar is
-  answered by its step's outcome, and a row carrying `atLeast` or `atMost` is answered by the number
-  its command wrote down. Whether that number clears the bar is the ledger's sentence, never this
-  file's — a scenario comparing its own measurement would be grading its own homework.
+  A ROW STATES NO BAR, AND NEITHER DOES THIS FILE. Every row is answered by its step's outcome: a
+  check that measures something holds its own bar — Stryker's `thresholds.break`, `timeout` around a
+  suite — and fails its step below it (3F-3506). Whether the step succeeded is the ledger's
+  sentence, never this file's — a scenario comparing its own measurement would be grading its own
+  homework.
 
   A BAR IS RAISED AS DELIBERATE PROCESS OPTIMISATION AND IS NEVER LOWERED BECAUSE A PUSH WENT RED.
   Raising one because the suite has got stronger and should be held higher is a change of its own,

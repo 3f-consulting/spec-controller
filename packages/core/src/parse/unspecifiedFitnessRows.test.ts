@@ -129,10 +129,8 @@ function reconcileTarget(ciSource: string, record?: CiStepRecord): EvidenceRecon
     untaggedScenarios: [],
     packageJson: manifest,
     ciSources: [ciSource],
-    measurements: {},
     runtimeObservations: [],
     deferralTags: [],
-    killFloor: () => null,
     ...(record === undefined ? {} : { ciStepRecord: record }),
   });
 }

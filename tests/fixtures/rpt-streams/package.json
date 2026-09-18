@@ -1,0 +1,21 @@
+{
+  "name": "streams-provenance-target-repo-fixture",
+  "private": true,
+  "scripts": {
+    "build": "tsc"
+  },
+  "specController": {
+    "fitnessChecks": [
+      {
+        "scn": "SCN-CVT-001",
+        "characteristic": "complexity",
+        "command": "eslint"
+      },
+      {
+        "scn": "SCN-CVT-003",
+        "characteristic": "mutation",
+        "command": "mutation-score"
+      }
+    ]
+  }
+}

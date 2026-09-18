@@ -18,17 +18,15 @@ import { relativizeToRoot } from "../lib/portablePath.js";
 
 /**
  * The CLI input paths/flags actually used for a run — each optional; only the ones
- * the operator supplied are present. Mirrors the CLI's ReconcileOptions (the same
- * --features/--vitest/--cucumber/--ci/--package-json/--measurements/--ci-steps seams).
+ * the operator supplied are present. The same --features/--vitest/--cucumber/--ci/
+ * --package-json/--ci-steps seams as the CLI's ReconcileOptions.
  *
- * `measurements` and the converted checks' credit stream joined the interface at 3F-3184
- * (@SCN-RPT-027). They were
- * ALREADY flowing through it: `reconcileInputsOf` builds one ReconcileOptions carrying all
- * seven and that same object is both reconciled and assigned to `ctx.inputs`, so structural
- * typing let the two ride along unseen and the block simply never named them. Both are
- * optional by design — passed only where the file exists — which is exactly why their
- * silence was ambiguous between "the run never got it" and "the run got it and the block
- * does not say so".
+ * The converted checks' credit stream joined the interface at 3F-3184 (@SCN-RPT-027). It was
+ * ALREADY flowing through it: `reconcileInputsOf` builds one ReconcileOptions and that same
+ * object is assigned to `ctx.inputs`, so structural typing let the stream ride along unseen and
+ * the block simply never named it. It is optional by design — passed only where the file
+ * exists — which is exactly why its silence was ambiguous between "the run never got it" and
+ * "the run got it and the block does not say so".
  */
 export interface RunInputs {
   features?: string;
@@ -36,7 +34,6 @@ export interface RunInputs {
   cucumber?: string;
   ci?: string;
   packageJson?: string;
-  measurements?: string;
   ciSteps?: string;
 }
 
@@ -88,8 +85,7 @@ const INPUT_FLAGS: readonly { key: keyof RunInputs; flag: string }[] = [
   // APPENDED, so no flag that was already rendered moves (@SCN-RPT-027). Widening this
   // list is the whole of the change: `presentInputs`, `provenanceObject`,
   // `projectProvenanceObject`, the markdown header and the JSON object all iterate it, so
-  // the two surfaces gain the streams in step and neither can drift from the other.
-  { key: "measurements", flag: "--measurements" },
+  // the two surfaces gain the stream in step and neither can drift from the other.
   { key: "ciSteps", flag: "--ci-steps" },
 ];
 
@@ -208,7 +204,7 @@ export function projectProvenanceObject(obj: ProvenanceObject): ProvenanceFacts 
   // The flags with no value, derived in the SAME pass over the SAME canonical list that
   // produces the flags with one (@SCN-RPT-028). One list, one traversal, two complementary
   // outputs — so a flag can never be named on both lines, nor missing from both, and adding
-  // an eighth input flag reaches the absence line without anyone remembering to.
+  // another input flag reaches the absence line without anyone remembering to.
   const absentInputs: string[] = [];
   for (const { key, flag } of INPUT_FLAGS) {
     const value = obj.inputs[key];

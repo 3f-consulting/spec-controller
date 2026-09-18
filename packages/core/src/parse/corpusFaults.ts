@@ -28,21 +28,19 @@
  * I/O wearing a callback, and `lint:boundaries`' `core-imports-io` rule reds over exactly that
  * (@SCN-EPG-001's `io-import` arm until 3F-3437).
  *
- * WHAT IS LEFT IN THIS MODULE, AND WHAT MOVED OUT. The rules themselves live in three siblings —
- * `corpusCodeFaults.ts` (a code binding to a file), `corpusGrammarFaults.ts` (a tag meaning
- * something) and `corpusClaimFaults.ts` (how many checks one scenario claims) — because the joined
- * module reached the 400-line `max-lines` ceiling, twice, and canon rules that split rather than
- * an exception entry (@SCN-FIT-001). What stays here is the composition and the VOCABULARY: the
- * fault kinds, the shape of a discovered file, and the one entry point any sibling has. Splitting
- * on any other seam would have put a rule's inputs in one module and its finding's wording in
- * another.
+ * WHAT IS LEFT IN THIS MODULE, AND WHAT MOVED OUT. The rules themselves live in two siblings —
+ * `corpusCodeFaults.ts` (a code binding to a file) and `corpusGrammarFaults.ts` (a tag meaning
+ * something) — because the joined module reached the 400-line `max-lines` ceiling, and canon rules
+ * that split rather than an exception entry (@SCN-FIT-001). A third sibling held the claim rule
+ * (how many checks one scenario claims) until it left with the measured axis (3F-3516). What
+ * stays here is the composition and the VOCABULARY: the fault kinds, the shape of a discovered
+ * file, and the one entry point any sibling has. Splitting on any other seam would have put a
+ * rule's inputs in one module and its finding's wording in another.
  */
 
 import type { PackageJsonScripts } from "./checkScriptsRunInCI.js";
-import { multipleCheckTags } from "./corpusClaimFaults.js";
 import { duplicateFeatureCodes, foreignScenarioCodes } from "./corpusCodeFaults.js";
 import { unrecognisedTags } from "./corpusGrammarFaults.js";
-import type { KillFloorReader } from "./targetManifest.js";
 
 /**
  * A target's manifest as these rules read it — its scripts, and its `specController` block.
@@ -54,7 +52,6 @@ import type { KillFloorReader } from "./targetManifest.js";
 export type TargetManifest = PackageJsonScripts & {
   specController?: {
     deferralTags?: unknown;
-    thresholds?: unknown;
     fitnessChecks?: unknown;
   };
 };
@@ -62,13 +59,13 @@ export type TargetManifest = PackageJsonScripts & {
 /**
  * One way a corpus breaks the `@SCN` scheme's own rules.
  *
- * FOUR KINDS, NOT ONE, because they are four faults with four different fixes — the same
+ * THREE KINDS, NOT ONE, because they are three faults with three different fixes — the same
  * argument that split the tier-tag check's findings three ways. `duplicate-feature-code` says
  * *give one of these files a code of its own*; `foreign-scenario-code` says *this id names a
- * file it is not written in*; `unrecognised-tag` says *this word means nothing here*; and
- * `multiple-check-tags` says *split this into two scenarios*. Collapsing any two would print one
- * fault's remedy at the other's author, which is precisely how a mistyped tier tag stayed
- * invisible for as long as it did.
+ * file it is not written in*; and `unrecognised-tag` says *this word means nothing here*. A
+ * fourth, `multiple-check-tags`, left with the measured axis (3F-3516). Collapsing any two would
+ * print one fault's remedy at the other's author, which is precisely how a mistyped tier tag
+ * stayed invisible for as long as it did.
  *
  * THE UNION IS THE COMMAND'S WHOLE VOCABULARY, and it is stated once here rather than grown a
  * member at a time by whichever rule landed last. That is also why it stayed in this module when
@@ -76,15 +73,13 @@ export type TargetManifest = PackageJsonScripts & {
  * assembled from both sides would be a statement about the command that no single file made. The
  * two CODE rules have producers — `duplicate-feature-code` (@SCN-STG-010) and
  * `foreign-scenario-code` (@SCN-STG-011); so does `unrecognised-tag` (@SCN-STG-002, and the
- * clauses that narrow what it reaches at @SCN-STG-003, @SCN-STG-004, @SCN-STG-005 and
- * @SCN-STG-009); and since 3F-3307 so does `multiple-check-tags` (@SCN-STG-007). Every member of
- * the union is now raised by a rule with a scenario of its own, which is the state the kinds were
- * written down ahead of.
+ * clauses that narrow what it reaches at @SCN-STG-003, @SCN-STG-004 and @SCN-STG-005). Every
+ * member of the union is raised by a rule with a scenario of its own, which is the state the kinds
+ * were written down ahead of.
  */
 export interface CorpusFault {
   readonly kind:
     | "unrecognised-tag"
-    | "multiple-check-tags"
     | "duplicate-feature-code"
     | "foreign-scenario-code";
   readonly message: string;
@@ -118,43 +113,27 @@ export interface CorpusFile {
  *
  * @param input.features the target's discovered feature files — slug, header code and source,
  * read ONCE at the edge so two discoveries can never disagree about which corpus was judged.
- * @param input.packageJson the TARGET's manifest, from which the check-tag union and the
- * recognised deferral set are resolved INSIDE this engine — through the same resolvers the
- * reconciliation reads them with, so the rules here admit exactly what the obligation rule
- * raises against. READ SINCE 3F-3303, by the grammar rules and only by them: the deferral set
- * (@SCN-PND-021), the REGISTERED half of the check-tag union (@SCN-STG-005) and, since 3F-3306,
- * its MEASURED half (@SCN-STG-009) are all resolved from it. The code rules never see it, which
- * is the seam the module split was drawn on.
+ * @param input.packageJson the TARGET's manifest, from which the recognised deferral set is
+ * resolved INSIDE this engine — through the same resolver the reconciliation reads it with, so the
+ * rules here admit exactly what the reconciliation honours as a skip. READ SINCE 3F-3303, by the
+ * grammar rules and only by them: the deferral set (@SCN-PND-021) is resolved from it. The
+ * check-tag halves once read from it — the REGISTERED half (@SCN-STG-005) and the MEASURED half
+ * — are retired (3F-3161, 3F-3516). The code rules never see it, which is the seam the module
+ * split was drawn on.
  * @param input.deferralTags the application layer's STARTER deferral set, which a target's
  * config may only extend. Product policy, single-sourced there and never here — the same
  * argument, and the same parameter, as the reconcile composition's. Read since 3F-3303, and
  * handed onward unresolved: what turns it into the target's recognised set is
  * `resolveDeferralTags`, called once beside the rule that asks the question.
- * @param input.killFloor the reader over the target's mutation records, injected as a closure
- * because the thresholds resolver has to reach one to read a bar that names a gate
- * (@SCN-MUT-012). READ SINCE 3F-3306, by the grammar rules and only by them: the check-tag
- * union's MEASURED half is the target's thresholds, and resolving those is what reaches a record.
- * It is handed onward UNUSED-LOOKING and that is deliberate — a threshold KEY survives whatever
- * its bar resolves to (@SCN-MUT-003), so this reader cannot move a tag-grammar verdict today.
- * What it buys is that the set is resolved by the resolver that owns it, on the tree the manifest
- * came from, rather than by a cheaper reading beside it that would agree until it did not.
  */
 export function corpusFaults(input: {
   features: readonly CorpusFile[];
   packageJson: TargetManifest;
   deferralTags: readonly string[];
-  killFloor: KillFloorReader;
 }): CorpusFault[] {
   return [
     ...duplicateFeatureCodes(input.features),
     ...foreignScenarioCodes(input.features),
-    ...unrecognisedTags(input.features, input.packageJson, input.deferralTags, input.killFloor),
-    // THE CLAIM RULE LAST, which is where the private check's own walk put it: below the grammar
-    // question, above nothing. Inside that walk the position WAS the parking scope — this rule
-    // ran only for scenarios the parked-continue had not already skipped — and here it can only
-    // order the findings, so the scope is a clause the rule writes out for itself. What the
-    // position still carries is the reading order: a corpus with both faults tells its author
-    // which of its words mean nothing before it tells them they have claimed two that do.
-    ...multipleCheckTags(input.features, input.packageJson, input.deferralTags, input.killFloor),
+    ...unrecognisedTags(input.features, input.packageJson, input.deferralTags),
   ];
 }

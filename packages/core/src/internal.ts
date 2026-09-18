@@ -31,11 +31,9 @@ export { parseScnCitation, parseScnCitations } from "./lib/scnCitation.js";
 // only a LEADING @ is a sigil. Shared because it was hand-copied seven times and the copies carried
 // the same anchored-strip-before-trim ordering, so a term a target typed with a stray space in
 // front of its @ was stored still carrying the @ and no bare lookup ever found it again — silently,
-// since an absent key is a legitimate reading everywhere it is asked for (3F-2976). The app's own
-// hand-authoring ports — a target's configured deferral tags, and the identity a measurement row is
-// de-duplicated by — reach it here rather than re-deriving it, which is what makes the artefact
-// producer's agreement with `parseMeasuredEvidenceObservations` true by construction instead of by
-// a comment saying it must be. Internal, not public — the sigil convention is spec-controller's own
+// since an absent key is a legitimate reading everywhere it is asked for (3F-2976). A caller outside
+// the engine reaches it here rather than re-deriving it, which is what keeps its reading of a term
+// the engine's by construction instead of by a comment saying it must be. Internal, not public — the sigil convention is spec-controller's own
 // reading of a term, not a v1 contract, and the `.` barrel is where a v1 contract goes.
 export { bareTerm } from "./lib/bareTerm.js";
 
@@ -60,11 +58,10 @@ export { parseTaggedScenarios } from "./parse/scenarios.js";
 export type { TaggedScenario } from "./parse/scenarios.js";
 
 // `FITNESS_AXIS_TAG` — the ONE spelling of the word a CONVERTED check's scenario carries
-// (`parse/scenarios`, @SCN-LNT-018). Shared because the corpus check's grammar and one-check
-// rules (@SCN-STG-005, @SCN-STG-007) must admit exactly the scenarios the obligation rule raises
-// against, and this word is now the third source of what names a check on a corpus — the two
-// resolvers beside it answer for a target's registry and its ceilings, and neither can ever carry
-// this one: a converted check has no runnable script handle and no authored ceiling, only a
+// (`parse/scenarios`, @SCN-LNT-018). Shared because the corpus check's grammar rule (@SCN-STG-005)
+// must admit exactly the scenarios the obligation rule raises against, and this word is the one
+// source left of what names a check on a corpus — the registry retired (3F-3161) and the measured
+// axis's ceilings with it (3F-3516); a converted check has no runnable script handle, only a
 // configured row. A second spelling in `tests/checks/` would be a word the floor admitted while
 // the engine raised nothing for it, or the reverse — the seam 3F-3126 spent a slice closing.
 // A LITERAL RATHER THAN A RESOLVED SET, and deliberately: which words name a CHECK is the
@@ -72,34 +69,11 @@ export type { TaggedScenario } from "./parse/scenarios.js";
 // not public — the `.` barrel carries the v1 contract and this is not one.
 export { FITNESS_AXIS_TAG } from "./parse/scenarios.js";
 
-// `thresholdsOf` / `measuredCheckTags` / `thresholdFor` — the ONE reading of a target's authored
-// BARS (`domain/thresholds`, @SCN-CIP-001; the bar carries the comparison it is read with per
-// @SCN-MUT-001). Shared because `measuredCheckTags` is the whole of the obligation-raising tag set
-// now the registry route retired (3F-3161): a measured check has no runnable script handle, so it
-// can never be registered, and no second reading is left for this one to be a union with. Any
-// second reader deciding independently which words name a measured check — the tier-tag floor
-// being the next one to need it (3F-2236) — would admit a tag the engine raises nothing for, or
-// refuse one it does. Internal, not public — where this configuration is AUTHORED moves with the
-// registry-home question.
-export { thresholdsOf, measuredCheckTags, thresholdFor } from "./domain/thresholds.js";
-export type { ThresholdIndex, ThresholdBar } from "./domain/thresholds.js";
-
-// `parseMeasuredEvidenceObservations` — the measurement artefact read into citing Evidence
-// Observations (`parse/measurements`, @SCN-CIP-003). Shared because the balance command is the edge
-// that reads a target's files, and this is one of them. Internal, not public — where a measurement
-// artefact is AUTHORED is as open as the registry-home question the two entries above are parked
-// on, and the v1 surface is not the place to settle it.
-export { parseMeasuredEvidenceObservations } from "./parse/measurements.js";
-export type { MeasurementReport } from "./parse/measurements.js";
-export type { MeasuredEvidenceObservation } from "./domain/journal.js";
-
-// `isMeasuredObservation` / `isStaticCheckObservation` — the sub-discriminators within the `lint`
-// axis (@SCN-CIP-003). Shared because `qualityCheck === "lint"` stopped narrowing to one interface
-// when the measured member joined the union, and every in-repo reader that wants a static check's
-// OWN fields — its runnable handle, its `exists`, its `enforcedOverRealSource` — now has to say
-// which of the two it means. A caller re-spelling the discriminator inline would be free to spell
-// it differently. Internal, not public — the union's third member is not on the frozen v1 surface.
-export { isMeasuredObservation, isStaticCheckObservation } from "./domain/journal.js";
+// `isStaticCheckObservation` — the predicate every in-repo reader that wants a static check's OWN
+// fields — its runnable handle, its `exists`, its `enforcedOverRealSource` — asks. The measured
+// member it once told apart from left with the measured axis (3F-3516); it stays shared because a
+// caller re-spelling the test inline would be free to spell it differently. Internal, not public.
+export { isStaticCheckObservation } from "./domain/journal.js";
 export type { FitnessEvidenceObservation } from "./domain/journal.js";
 
 // `ciRunSteps` / `CiRunStep` — the CI walk `ciRunCommands` projects, carrying each `run:` step's
@@ -127,14 +101,14 @@ export type { CiRunStep } from "./parse/checkScriptsRunInCI.js";
 export { ciWorkflowSteps } from "./parse/checkScriptsRunInCI.js";
 export type { CiWorkflowStep, CiStepAction } from "./parse/checkScriptsRunInCI.js";
 
-// The `resolve*` family — a target's `specController.*` configuration read into the rows, bars
-// and mints the reconciler takes (`parse/targetManifest`). Shared because they moved INTO the
+// The `resolve*` family — a target's `specController.*` configuration read into the rows and
+// mints the reconciler takes (`parse/targetManifest`). Shared because they moved INTO the
 // engine and the tree's own gates still read a target's config through them: the corpus check
-// (@SCN-STG-005) and the characteristic roster resolve the same rows, bars and mints the
+// (@SCN-STG-005) and the characteristic roster resolve the same rows and mints the
 // reconciler does, and a second reader deciding independently which words a manifest names would
 // admit a tag the engine raises nothing for. They sat at the app's ingest edge until 3F-3087,
 // where they were the reason a PUBLISHED module imported this unpublished subpath — the fault
-// 3F-3086 repairs. Internal, not public: where a target's rows, bars and mints are AUTHORED
+// 3F-3086 repairs. Internal, not public: where a target's rows and mints are AUTHORED
 // is the registry-home question (increment D), so the shape of what these read is not a v1
 // contract yet. Nothing under `tests/checks/`
 // travels in a tarball (`tsconfig.build.json` emits `src` alone), so reaching them here is the
@@ -142,11 +116,7 @@ export type { CiWorkflowStep, CiStepAction } from "./parse/checkScriptsRunInCI.j
 export {
   resolveDeferralTags,
   resolveFitnessChecks,
-  resolveThresholds,
 } from "./parse/targetManifest.js";
-// The TYPES beside the values: the app edge builds the `KillFloorReader` closure `resolveThresholds`
-// takes, over the reference shape a manifest states, so it needs both shapes to name them.
-export type { KillFloorReader, MutationGateReference } from "./parse/targetManifest.js";
 
 // `readTargetCorpus` HAS LEFT THIS SEAM (3F-3089), and the removal is the point rather than tidying.
 // It was shared here for exactly one consumer — the app's ingest edge, which composed the
@@ -154,35 +124,3 @@ export type { KillFloorReader, MutationGateReference } from "./parse/targetManif
 // (`assemble/evidenceReconciliationFromSources`), which is what takes the last crossing off the
 // published path. Nothing in this workspace reaches the corpus read any more, and this file
 // re-exports only what the app genuinely shares.
-
-// `fitnessChecksOf` / `FitnessCheck` / `FitnessCheckIndex` — the ONE reading of a target's
-// CONVERTED rows (`domain/fitnessChecks`, @SCN-LNT-018). Shared because a measured row's own
-// COMMAND must cite the characteristic its row names when it writes the number down
-// (@SCN-LNT-024), and that word is the same word the obligation side raises the Evidence
-// Obligation against. A second reader in `tests/checks/` deciding independently what
-// characteristic a row names would post a credit under one spelling while the debit was raised
-// under another — an obligation with no credit and a credit with no obligation, from one row, and
-// loud nowhere. The pass reads only `characteristic` here; the BAR stays the ledger's
-// (@SCN-LNT-019, 3F-2509) and nothing on the command side reaches for it. Internal, not public —
-// where these rows are AUTHORED moves with the registry-home question the entries above are
-// parked on.
-//
-// `carriesBar` IS THE SHAPE QUESTION AND NEVER THE VALUE, and the two are not the same crossing
-// (3F-3164). The bar's NUMBER stays the ledger's, as above; whether a row carries one at all is
-// what says which KIND of check it is — the static sentence asserts an exit code, the measured one
-// asserts that a number arrived. THE CONSUMER THAT MADE THIS CROSSING WAS A GENERATOR AND IS GONE
-// (3F-3244): the corpus is authored now, so nothing derives a scenario's sentence from this answer
-// and the two sides can disagree, which is what makes the disagreement reportable. It is shared for
-// the reason `fitnessChecksOf` is — a second reader answering "is this row measured" its own way
-// would put the credit side and the obligation rule at odds about which evidence one row produces.
-// The header on `carriesBar` states the one-spelling rule this export serves.
-//
-// AND NOTHING THROWS ON THIS PATH, WHICH IS DELIBERATE. `fitnessChecksOf` is what `balance` reads a
-// CONSUMER'S manifest through, and a throw there turns one bad character in a stranger's
-// `package.json` into a run with no verdict at all — loud nowhere. A malformed row is dropped and
-// the obligation it would have raised is simply not raised, which the ledger reports.
-export {
-  carriesBar,
-  fitnessChecksOf,
-} from "./domain/fitnessChecks.js";
-export type { FitnessCheck, FitnessCheckIndex } from "./domain/fitnessChecks.js";

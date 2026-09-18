@@ -1,8 +1,8 @@
 /**
  * THE CODE RULES of `spec-controller tags` — everything about a feature CODE binding to a feature
- * FILE. Its siblings hold the other two questions: `corpusGrammarFaults.ts` whether a tag on a
- * scenario means anything, `corpusClaimFaults.ts` how many checks one scenario may claim.
- * `corpusFaults.ts` composes the three and is the only entry point any of them has.
+ * FILE. Its sibling holds the other question: `corpusGrammarFaults.ts` whether a tag on a scenario
+ * means anything. `corpusFaults.ts` composes the two and is the only entry point either of them
+ * has.
  *
  * WHY THE MODULE IS SPLIT AT ALL, AND WHY ON THIS SEAM. The rules were authored in one module and
  * that module reached the 400-line `max-lines` ceiling with four more grammar clauses still to

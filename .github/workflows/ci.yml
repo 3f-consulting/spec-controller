@@ -475,8 +475,8 @@ jobs:
       # `mutation.yml`, and Stryker ends that run in failure when the score falls below the break
       # threshold its own config states. This step asks stock `gh` for the newest completed
       # `mutation.yml` run on `main` created inside the last 26 hours, and passes only if that run
-      # concluded `success`. The row names no `atLeast`, which is how the ledger reads it as a
-      # step-outcome row like SCN-FIT-001: this step's outcome is the evidence, and no code of ours
+      # concluded `success`. Like every row since 3F-3506, it names no bar, so the ledger reads it as
+      # it reads SCN-FIT-001: this step's outcome is the evidence, and no code of ours
       # stands between the sweep and the books. `--branch main` is the branch this ladder gates, so a
       # hand-dispatched sweep of another branch is never the one read.
       #
@@ -575,7 +575,7 @@ jobs:
       # IS THE WHOLE OF WHAT THE WRAPPER DID HERE. A `--ci-steps` path the CLI is handed and cannot
       # find is a usage fault to it and exits 2 — the wrong verdict. Absent, it leaves exactly its
       # own rows unanswered, and those reconciling `missing` is the honest reading: a step that never
-      # ran is never balanced (@SCN-CIP-006). `ci-steps.json` is written by the dump step above, so a
+      # ran is never balanced (@SCN-LNT-027). `ci-steps.json` is written by the dump step above, so a
       # developer's machine never has one and a local run must not be called broken over it. The
       # `$(...)` is unquoted on purpose — the two tokens have to split.
       #

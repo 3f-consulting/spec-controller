@@ -96,8 +96,8 @@ import {
 // THE POSTING RULE (3F-2202) — where an entry lands is canon's own glossary group, so it lives on
 // its own concept module. `reconcile` no longer decides a destination; it ASKS.
 import { postingOf } from "./posting.js";
-// The `lint` quality-check's own sub-discriminator (@SCN-CIP-003), asked here to NARROW what the
-// posting rule has already routed — see the fitness arm below.
+// The `lint` quality-check's own predicate, asked here to NARROW what the posting rule has already
+// routed — see the fitness arm below.
 import { isStaticCheckObservation } from "../model.js";
 
 /** A destination that names ONE row — the two citation-routed `Posting` kinds. */
@@ -185,9 +185,6 @@ function routeCredits(
   // same kind of absence, so it lands in the same stream and renders through the same section.
   const brokenEvidence: (RuntimeEvidenceObservation | GuardEvidenceObservation)[] = [];
   const uncited: RuntimeEvidenceObservation[] = [];
-  // The FITNESS union, not the static interface alone (@SCN-CIP-003). A measurement always cites —
-  // its runner stamps the citation — so it cannot in fact reach suspense; the stream is typed to
-  // what `postingOf` may hand it rather than to what today's producers happen to emit.
   const noEvidenceObligationGuards: FitnessEvidenceObservation[] = [];
   for (const o of evidenceObservations) {
     // The union NARROW — `qualityCheck === "lint"` is the `EvidenceObservation` union's TYPE TAG,
@@ -759,6 +756,10 @@ export interface Summary {
    * reading — `checkRegistry` first. Its entries reach no candidate, resolve no citation, and
    * are simply not there for anything downstream to find; naming the key is the only way a
    * consumer who wrote it in good faith learns that none of it is taking effect.
+   *
+   * AND A BAR A CONFIGURED ROW STILL CARRIES (@SCN-LNT-035), named with its row —
+   * `fitnessChecks[SCN-XXX-NNN].atLeast` / `.atMost` — in the same account, in manifest order.
+   * The row itself still reaches the books, credited by its step's outcome; only the bar is unread.
    *
    * PRESENT ONLY WHEN NON-EMPTY, so a target that carries no retired key — every target today
    * that has never written one — renders and serialises byte-identically to before.

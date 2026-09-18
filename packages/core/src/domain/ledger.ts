@@ -11,7 +11,6 @@ import type { ScenarioReconciliation } from "./scenarioReconciliation.js";
 // obligation-side rule is stated once, at the row.
 import { staticCheckReconciliationsOf, isScenario } from "./scenarioReconciliation.js";
 import type { RuntimeQualityCheck, GuardEvidenceObservation } from "./journal.js";
-import { isMeasuredObservation } from "./journal.js";
 
 /**
  * THE LEDGER — the accounts with their POSTED ENTRIES. Canon (double-entry-manifesto, chain
@@ -307,6 +306,31 @@ const QUALITY_CHECK_ORDER: readonly string[] = ["lint", "unit", "integration", "
  * `staticChecks`) are not Ledger-pure and are merged in by the assembler.
  */
 export function ledgerTally(balance: Ledger): LedgerTally {
+  const { scenarioReconciliations, pending } = scenarioReconciliationTally(balance);
+  return {
+    scenarioReconciliations,
+    evidenceObligations: evidenceObligationTotals(balance),
+    // The Pending Items tally (@SCN-PND-011) — its OWN summary count, SEPARATE from the
+    // scenario verdict counts and the evidence-obligation counts. A Pending Item is deferred,
+    // not out-of-balance, so it is never one of the `OUT_OF_BALANCE_OUTCOMES` (never a `byOutcome`
+    // leaf of its own, at any leaf count). Always present (a pure balance derive, like `lint`);
+    // reads 0 when no scenario raises a pending obligation.
+    pending,
+    // The static-only lint tally (RMD-005) — replicates markdown's `countStaticEvidenceObligations`
+    // (static evidenceObligations balanced / total). Always present (a pure balance derive); `byOutcome`
+    // is kind-agnostic and cannot evidenceObservations this static-only cut.
+    lint: lintTally(balance),
+  };
+}
+
+/**
+ * The row-level half of `ledgerTally` — the Scenario Reconciliation verdict totals and the
+ * Pending Items count, both read off one pass over the rows.
+ */
+function scenarioReconciliationTally(balance: Ledger): {
+  scenarioReconciliations: ScenarioReconciliationTotals;
+  pending: number;
+} {
   // The headline verdict tally counts EVERY Scenario Reconciliation (@SCN-RMD-001, 3F-1724):
   // the summary is the totals over ALL rows (double-entry-manifesto), and phantom / suspense
   // reconciliations are ALWAYS out-of-balance, so they count into the tally like any other row.
@@ -321,7 +345,7 @@ export function ledgerTally(balance: Ledger): LedgerTally {
   // scenarios-carrying-pending (a scenario may raise several), mirroring the out-of-balance
   // decomposition, which counts obligations, not scenarios. A Pending Item is a structurally
   // distinct category (never a reconciling item / evidence obligation), so it is tallied
-  // SEPARATELY here — never folded into `byOutcome` (the out-of-balance leaves) below.
+  // SEPARATELY here — never folded into `byOutcome` (the out-of-balance leaves).
   let pending = 0;
   for (const s of balance.scenarioReconciliations) {
     // Pending Items ride every row's `pendingItems` (only scenario rows carry them; a
@@ -336,7 +360,26 @@ export function ledgerTally(balance: Ledger): LedgerTally {
     if (s.kind === "suspense-scenario") suspense++;
     verdict[s.verdict]++;
   }
+  return {
+    scenarioReconciliations: {
+      // Every row's verdict is tallied, so this IS the count of all Scenario Reconciliations
+      // (scenario + phantom + suspense) — the manifesto's "the summary is the totals".
+      total: verdict.balanced + verdict["out-of-balance"],
+      balanced: verdict.balanced,
+      outOfBalance: verdict["out-of-balance"],
+      // Sub-counts: a breakdown OF the totals above (scenario = total − phantom − suspense).
+      phantom,
+      suspense,
+    },
+    pending,
+  };
+}
 
+/**
+ * The obligation-level half of `ledgerTally` — every Quality Check Reconciliation tallied by
+ * outcome, with the `missing` ones split by quality-check.
+ */
+function evidenceObligationTotals(balance: Ledger): EvidenceObligationTotals {
   // byOutcome tallies EVERY Quality Check Reconciliation across ALL rows (scenario AND
   // phantom), so `cites-unknown-scenario` reflects the real phantom count.
   const byOutcome: Record<Outcome, number> = {
@@ -374,36 +417,13 @@ export function ledgerTally(balance: Ledger): LedgerTally {
     }
   }
   const total = (Object.values(byOutcome) as number[]).reduce((a, b) => a + b, 0);
-
   return {
-    scenarioReconciliations: {
-      // Every row's verdict is tallied, so this IS the count of all Scenario Reconciliations
-      // (scenario + phantom + suspense) — the manifesto's "the summary is the totals".
-      total: verdict.balanced + verdict["out-of-balance"],
-      balanced: verdict.balanced,
-      outOfBalance: verdict["out-of-balance"],
-      // Sub-counts: a breakdown OF the totals above (scenario = total − phantom − suspense).
-      phantom,
-      suspense,
-    },
-    evidenceObligations: {
-      total,
-      byOutcome,
-      outOfBalance: total - byOutcome.satisfied,
-      missingByQualityCheck: QUALITY_CHECK_ORDER.filter((s) => (missing.get(s) ?? 0) > 0).map(
-        (subject) => ({ subject, count: missing.get(subject)! })
-      ),
-    },
-    // The Pending Items tally (@SCN-PND-011) — its OWN summary count, SEPARATE from the
-    // scenario verdict counts and the evidence-obligation counts. A Pending Item is deferred,
-    // not out-of-balance, so it is never one of the `OUT_OF_BALANCE_OUTCOMES` (never a `byOutcome`
-    // leaf of its own, at any leaf count). Always present (a pure balance derive, like `lint`);
-    // reads 0 when no scenario raises a pending obligation.
-    pending,
-    // The static-only lint tally (RMD-005) — replicates markdown's `countStaticEvidenceObligations`
-    // (static evidenceObligations balanced / total). Always present (a pure balance derive); `byOutcome`
-    // is kind-agnostic and cannot evidenceObservations this static-only cut.
-    lint: lintTally(balance),
+    total,
+    byOutcome,
+    outOfBalance: total - byOutcome.satisfied,
+    missingByQualityCheck: QUALITY_CHECK_ORDER.filter((s) => (missing.get(s) ?? 0) > 0).map(
+      (subject) => ({ subject, count: missing.get(subject)! })
+    ),
   };
 }
 
@@ -643,11 +663,6 @@ export function staticObservationTally(ledger: Ledger): StaticObservationTally {
       // THE STATIC SCOPING — only static-check credits ride the `lint` quality-check; a runtime
       // credit (the uncited/broken ones the suspense row also holds) is not a static observation.
       if (obs.qualityCheck !== "lint") continue;
-      // A MEASUREMENT rides the same axis and is not a static check (@SCN-CIP-003): nothing read a
-      // manifest or a workflow for it, so it is neither a running static check nor an uncited one.
-      // Counting it in either tally would report a static-analysis population this tree does not
-      // have — the parallel-store fault the Ledger folds exist to foreclose.
-      if (isMeasuredObservation(obs)) continue;
       // A BROKEN CREDIT IS NEITHER COUNT (@SCN-LNT-026). It reaches the suspense row for a reason
       // the uncited count does not name: the check DID have a scenario naming it, and it did not
       // run. Counting it as uncited would report a check nobody named, sending the reader to write

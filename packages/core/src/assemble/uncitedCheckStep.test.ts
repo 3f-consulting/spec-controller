@@ -97,10 +97,8 @@ function reconcileUnannotated(): EvidenceReconciliation {
     // The workflow FILE the entries above open with — the one half of an exclusion that does not
     // come out of the workflow's own text, and which a caller supplying none makes unnameable.
     ciSourceNames: ["ci.yml"],
-    measurements: {},
     runtimeObservations: [],
     deferralTags: [],
-    killFloor: () => null,
   });
 }
 

@@ -91,10 +91,8 @@ function reconcileUnenumerated(record?: CiStepRecord): EvidenceReconciliation {
     untaggedScenarios: [],
     packageJson: manifest,
     ciSources: [],
-    measurements: {},
     runtimeObservations: [],
     deferralTags: [],
-    killFloor: () => null,
     ...(record === undefined ? {} : { ciStepRecord: record }),
   });
 }
@@ -170,63 +168,5 @@ describe("[SCN-LNT-027] a configured row the CI run's record never carried is br
       runningStaticCheckCount: 1,
       uncitedStaticCheckCount: 0,
     });
-  });
-});
-
-/**
- * A target whose two rows differ in exactly one thing — the second names a bar, so its credit is
- * its NUMBER (@SCN-LNT-022) and never the record.
- */
-const measuredCorpus = `@CVT
-Feature: a converted target's fitness corpus, one static row and one measured
-
-  Rule: the tree stays inside its thresholds
-
-    @fitness @SCN-CVT-001
-    Scenario: the codebase stays under its complexity threshold
-
-    @fitness @SCN-CVT-003
-    Scenario: the domain's mutation score stays above its floor
-`;
-
-const measuredManifest = {
-  specController: {
-    fitnessChecks: [
-      { scn: "SCN-CVT-001", characteristic: "complexity", command: "eslint" },
-      { scn: "SCN-CVT-003", characteristic: "mutation", command: "mutation:score", atLeast: 90 },
-    ],
-  },
-};
-
-describe("[SCN-LNT-027] a MEASURED row is held to the same enumeration as a static one", () => {
-  it("reds a measured row the record carried no step for, though its number arrived and settled its obligation", () => {
-    // @SCN-LNT-022 skips a measured row's CREDIT, never its enumeration: its step is the one whose
-    // command wrote that number down (@SCN-LNT-024). A number arriving for a row the run recorded
-    // no step for is a number from a route that enumerates nothing — so the row balances on its
-    // number and the RUN is still unsound, which is the sharpest form of the claim.
-    const reconciliation = evidenceReconciliationFromSources({
-      featureSources: [measuredCorpus],
-      untaggedScenarios: [],
-      packageJson: measuredManifest,
-      ciSources: [],
-      measurements: {
-        measurements: [{ scnId: "SCN-CVT-003", checkTag: "mutation", measured: 92 }],
-      },
-      runtimeObservations: [],
-      deferralTags: [],
-      killFloor: () => null,
-      ciStepRecord: firstOnly,
-    });
-    expect(
-      reconciliation.ledger.scenarioReconciliations.map((row) => [row.scnId, row.verdict])
-    ).toEqual([
-      ["SCN-CVT-001", "balanced"],
-      ["SCN-CVT-003", "balanced"],
-      ["(no scenario)", "out-of-balance"],
-    ]);
-    expect(suspenseItemsOf(reconciliation)).toEqual([["broken", noStepRecorded("SCN-CVT-003")]]);
-    expect(
-      hasBrokenEvidence({ scenarioReconciliations: reconciliation.ledger.scenarioReconciliations })
-    ).toBe(true);
   });
 });

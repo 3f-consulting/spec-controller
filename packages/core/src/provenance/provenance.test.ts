@@ -62,13 +62,13 @@ describe("[SCN-RPT-001] provenance records input paths portably (relative to the
 });
 
 /**
- * The optional measurement stream and the CI step record on the canonical input list (@SCN-RPT-027,
+ * The optional fitness stream — the CI step record — on the canonical input list (@SCN-RPT-027,
  * 3F-3155). The isolation half of the pair: the @integration arm in
  * tests/steps/report.steps.ts runs the REAL CLI and reads the persisted block back, while
  * these arms pin the projection's ORDER and its additive JSON shape, which a rendered line
  * cannot show.
  */
-describe("[SCN-RPT-027] the provenance projection names the optional measurement stream and the CI step record", () => {
+describe("[SCN-RPT-027] the provenance projection names the optional CI step record", () => {
   const handed = (inputs: RunInputs): RunContext => ({
     target: "streams-target",
     inputs,
@@ -76,15 +76,12 @@ describe("[SCN-RPT-027] the provenance projection names the optional measurement
     sourceSha: "abc123",
   });
 
-  it("carries the measurement stream and the CI step record the run received onto the provenance object", () => {
-    const obj = provenanceObject(
-      handed({ features: "features", measurements: "measurements.json", ciSteps: "ci-steps.json" })
-    );
-    expect(obj.inputs.measurements).toBe("measurements.json");
+  it("carries the CI step record the run received onto the provenance object", () => {
+    const obj = provenanceObject(handed({ features: "features", ciSteps: "ci-steps.json" }));
     expect(obj.inputs.ciSteps).toBe("ci-steps.json");
   });
 
-  it("renders them APPENDED after --package-json, so no flag that was already listed moves", () => {
+  it("renders it APPENDED after --package-json, so no flag that was already listed moves", () => {
     const facts = projectProvenance(
       handed({
         features: "features",
@@ -92,7 +89,6 @@ describe("[SCN-RPT-027] the provenance projection names the optional measurement
         cucumber: "cucumber.json",
         ci: ".github/workflows",
         packageJson: "package.json",
-        measurements: "measurements.json",
         ciSteps: "ci-steps.json",
       })
     );
@@ -102,12 +98,11 @@ describe("[SCN-RPT-027] the provenance projection names the optional measurement
       "--cucumber",
       "--ci",
       "--package-json",
-      "--measurements",
       "--ci-steps",
     ]);
   });
 
-  it("is ADDITIVE on the JSON surface — a run handed neither stream serialises byte-identically", () => {
+  it("is ADDITIVE on the JSON surface — a run not handed it serialises byte-identically", () => {
     const obj = provenanceObject(
       handed({
         features: "features",
@@ -122,9 +117,11 @@ describe("[SCN-RPT-027] the provenance projection names the optional measurement
     );
   });
 
-  it("names an EMPTY stream path no more than it names an absent one — the presence filter is unchanged", () => {
-    const facts = projectProvenance(handed({ features: "features", measurements: "  ", ciSteps: "" }));
-    expect(facts.inputs.map((i) => i.flag)).toEqual(["--features"]);
+  it("names an EMPTY or blank stream path no more than it names an absent one — the presence filter is unchanged", () => {
+    for (const ciSteps of ["", "  "]) {
+      const facts = projectProvenance(handed({ features: "features", ciSteps }));
+      expect(facts.inputs.map((i) => i.flag)).toEqual(["--features"]);
+    }
   });
 });
 
@@ -146,21 +143,15 @@ describe("[SCN-RPT-028] the provenance projection names the canonical inputs the
   });
 
   it("names the canonical flags with no value, in canonical order", () => {
-    const facts = projectProvenance(handed({ features: "features", measurements: "measurements.json" }));
-    expect(facts.absentInputs).toEqual([
-      "--vitest",
-      "--cucumber",
-      "--ci",
-      "--package-json",
-      "--ci-steps",
-    ]);
+    const facts = projectProvenance(handed({ features: "features", ciSteps: "ci-steps.json" }));
+    expect(facts.absentInputs).toEqual(["--vitest", "--cucumber", "--ci", "--package-json"]);
   });
 
   it("counts an EMPTY value as absent — the same presence rule the Inputs list already applies", () => {
-    const facts = projectProvenance(handed({ features: "features", ciSteps: "   ", measurements: "" }));
+    const facts = projectProvenance(handed({ features: "features", ciSteps: "   ", packageJson: "" }));
     expect(facts.inputs.map((i) => i.flag)).toEqual(["--features"]);
     expect(facts.absentInputs).toContain("--ci-steps");
-    expect(facts.absentInputs).toContain("--measurements");
+    expect(facts.absentInputs).toContain("--package-json");
   });
 
   it("is empty when the run was handed every canonical stream — there is nothing to report absent", () => {
@@ -171,7 +162,6 @@ describe("[SCN-RPT-028] the provenance projection names the canonical inputs the
         cucumber: "cucumber.json",
         ci: ".github/workflows",
         packageJson: "package.json",
-        measurements: "measurements.json",
         ciSteps: "ci-steps.json",
       })
     );
@@ -187,7 +177,6 @@ describe("[SCN-RPT-028] the provenance projection names the canonical inputs the
       "--cucumber",
       "--ci",
       "--package-json",
-      "--measurements",
       "--ci-steps",
     ]);
   });

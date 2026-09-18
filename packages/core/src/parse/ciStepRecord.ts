@@ -39,11 +39,7 @@
  * edge from the target's own evidence, and the rows arrive from the target's own manifest.
  */
 
-import {
-  carriesBar,
-  type FitnessCheck,
-  type FitnessCheckIndex,
-} from "../domain/fitnessChecks.js";
+import type { FitnessCheck, FitnessCheckIndex } from "../domain/fitnessChecks.js";
 import type { EvidenceStatus } from "../domain/journal.js";
 import type { GuardEvidenceObservation } from "../model.js";
 
@@ -269,7 +265,7 @@ function rowHasNoEntryMessage(scnId: string): string {
 }
 
 /**
- * The credits a CI RUN'S OWN RECORD raises — one per entry naming a configured STATIC row, carrying
+ * The credits a CI RUN'S OWN RECORD raises — one per entry naming a configured row, carrying
  * WHAT ITS STEP DID: `satisfied` off a step that succeeded (@SCN-LNT-021) and `failing` off one
  * that failed (@SCN-LNT-028). There is no third answer: a step the record says was skipped is
  * broken evidence, whatever its row says (3F-3252).
@@ -304,24 +300,12 @@ function rowHasNoEntryMessage(scnId: string): string {
  * own checkout, over the target's own tree. Neither is the manifest-mentions-a-name reading the
  * discovered route takes.
  *
- * A MEASURED ROW RAISES NOTHING HERE, AND THAT IS THIS READER'S OWN CLAIM (@SCN-LNT-022): its
- * credit is its NUMBER, which arrives on the measurement stream already citing, and a credit
- * raised beside it would be a second credit answering one Evidence Obligation — quietly, because
- * the row does name that characteristic. A step's outcome is an exit code and an exit code is not
- * a measurement, so there was never a reading of this document that could have answered such a
- * row anyway.
- *
  * AN ENTRY NO CONFIGURED ROW ANSWERS IS NOT THIS READER'S BUSINESS. `checkout`, `setup-node` and
  * the dump step itself are steps and not checks, and silence about them is the correct report.
  *
- * AND A CONFIGURED ROW NO ENTRY ANSWERS RAISES A BROKEN CREDIT, WHATEVER ITS SHAPE (@SCN-LNT-027),
- * which is why this walks the ROWS as well as the record. The bar decides which stream carries a
- * row's credit and says nothing about whether the check ran, so a MEASURED row is held to this
- * second reading exactly as a static one is: its number is its credit and its own step is still
- * what says it ran — the step whose command wrote that number down (@SCN-LNT-024) — and a number
- * arriving for a row the run recorded no step for is a number from a route that enumerates nothing.
- * The rows are the denominator, and a check quietly lifted out of a pipeline goes dark on the side
- * the pipeline cannot reach.
+ * AND A CONFIGURED ROW NO ENTRY ANSWERS RAISES A BROKEN CREDIT (@SCN-LNT-027), which is why this
+ * walks the ROWS as well as the record. The rows are the denominator, and a check quietly lifted
+ * out of a pipeline goes dark on the side the pipeline cannot reach.
  */
 export function ciStepRecordCredits(
   record: CiStepRecord | undefined,
@@ -333,21 +317,15 @@ export function ciStepRecordCredits(
   for (const [citedScn, step] of Object.entries(record)) {
     const row = fitnessChecks.get(citedScn);
     if (row === undefined) continue;
-    // RECORDED BEFORE THE BAR IS ASKED ABOUT, and the order is the rule rather than a convenience.
-    // A measured row's CREDIT is skipped here (@SCN-LNT-022) and its ENUMERATION never was: its
-    // step appearing in the record is the step whose command wrote its number down (@SCN-LNT-024),
-    // and that is what says its check ran, exactly as for a static row. Asking `carriesBar` first
-    // would leave every measured row looking unrecorded on a record that carried it.
     recorded.add(citedScn);
-    if (carriesBar(row)) continue;
-    // NO `continue` ON A READING THIS READER HAS NONE FOR (@SCN-LNT-026). Every configured static
-    // row the record holds an entry for raises something; which of the two shapes it raises is the
+    // NO `continue` ON A READING THIS READER HAS NONE FOR (@SCN-LNT-026). Every configured row the
+    // record holds an entry for raises something; which of the two shapes it raises is the
     // credit builder's answer, and the fall-through reaches the loud one rather than the exit.
     credits.push(creditOf(citedScn, row, readingOf(step.outcome), step.outcome));
   }
   // AND THE ROWS ARE WALKED TOO, NOT ONLY THE RECORD (@SCN-LNT-027). The rows come from the
   // target's manifest and the enumeration from the run's own record, so a row the record held no
-  // entry for is a check that did not run — broken evidence naming that row, whatever its shape.
+  // entry for is a check that did not run — broken evidence naming that row.
   for (const [scnId, row] of fitnessChecks) {
     if (recorded.has(scnId)) continue;
     credits.push(brokenCreditOf(scnId, row, rowHasNoEntryMessage(scnId)));

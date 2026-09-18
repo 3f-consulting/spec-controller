@@ -34,8 +34,7 @@ import { checkUnknownFlags, parseArgs } from "../cli-args.js";
 import { DEFAULT_DEFERRAL_TAGS } from "../deferralTags.js";
 import { UnreadableFeatureCorpusError } from "../ingest/gherkinValidation.js";
 import { discoverFeatures } from "../ingest/ingestScenarios.js";
-import { killFloorReaderFor } from "../ingest/ingestQualityChecks.js";
-import { resolveTargetRoot, resolveToolIdentity } from "../run-management/resolveRunInputs.js";
+import { resolveToolIdentity } from "../run-management/resolveRunInputs.js";
 
 /** The corpus and the manifest, or the reason neither could be read. */
 type CorpusInputs =
@@ -43,7 +42,6 @@ type CorpusInputs =
       ok: true;
       features: { slug: string; featureCode: string | null; source: string }[];
       packageJson: Record<string, unknown>;
-      root: string;
     }
   | { ok: false; error: string };
 
@@ -79,7 +77,6 @@ function readCorpusInputs(featuresDir: string | undefined, manifestPath: string)
       packageJson: existsSync(manifestPath)
         ? (JSON.parse(readFileSync(manifestPath, "utf8")) as Record<string, unknown>)
         : {},
-      root: resolveTargetRoot({ features: featuresDir }),
     };
   } catch (err) {
     if (err instanceof UnreadableFeatureCorpusError) return { ok: false, error: err.message };
@@ -131,7 +128,6 @@ export function runTags(argv: string[]): void {
     // only extend. Single-sourced here for the reason the reconcile composition takes it as a
     // parameter: which words the community recognises is the product's answer, not the engine's.
     deferralTags: DEFAULT_DEFERRAL_TAGS,
-    killFloor: killFloorReaderFor(inputs.root),
   });
 
   if (faults.length === 0) {

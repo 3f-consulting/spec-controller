@@ -34,9 +34,8 @@ import type {
   RuntimeEvidenceObservation,
   GuardEvidenceObservation,
 } from "./journal.js";
-// The union's OWN sub-discriminator over the `lint` quality-check (@SCN-CIP-003) — asked rather
-// than a hand-written shape test, so this rule classes an observation exactly as the reconciler
-// does.
+// The union's OWN predicate over the `lint` quality-check — asked rather than a hand-written shape
+// test, so this rule classes an observation exactly as the reconciler does.
 // A value import, hence its own statement beside the type-only one above.
 import { isStaticCheckObservation } from "./journal.js";
 
@@ -143,10 +142,8 @@ export function postingOf(
     // to a phantom one — and so can neither discharge nor fail the obligation it cites. The
     // observation MAY carry an `scnId` and a `checkTag`, and does; both are ignored here.
     //
-    // THE SUB-DISCRIMINATOR IS PART OF THE TEST BECAUSE THE AXIS CARRIES TWO SHAPES (@SCN-CIP-003):
-    // only a static-check observation has the flag at all — a measurement is a number, and a
-    // number that never arrived is an absence rather than a broken proof — so asking through the
-    // union's own predicate is what stops this reaching for a field its sibling does not have.
+    // Asked through the union's own predicate, so this rule and the reconciler class a static-check
+    // observation the same way.
     if (isStaticCheckObservation(observation) && observation.broken === true) {
       return { kind: "suspense-scenario", posted: "broken" };
     }

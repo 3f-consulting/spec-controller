@@ -23,70 +23,28 @@
  * rather than something a lookup has to recover.
  *
  * PURE AND INJECTED — the rows arrive as data, read from the TARGET's own manifest at the app edge
- * (`specController.fitnessChecks`), the stance `thresholdsOf` already takes. A target that
+ * (`specController.fitnessChecks`), the stance the retired `thresholdsOf` took. A target that
  * configures nothing raises nothing, so the reading is inert on a corpus
  * nobody has converted.
  */
 
 import { bareTerm } from "../lib/bareTerm.js";
-import { barOf, type ThresholdBar } from "./thresholds.js";
 
 /**
  * ONE CONFIGURED ROW as the obligation rule reads it.
  *
  * The `scn` a row states is not a member here: it is this index's KEY, so a row cannot name one
  * scenario and be filed under another. The command a row states is not a member either — it is the
- * COMMAND half of the row and nothing on the debit side reads it. The BAR is, because whether the
- * row names one is what says the check is measured (@SCN-LNT-019).
- *
- * AND SO IS THE ENDING BY WHICH THAT COMMAND SAYS `I EXAMINED NOTHING` (3F-3177). It is not the
- * command: it is the row's sentence about how the command SPEAKS, and the credit side has to ask
- * it, because a skip in the run's step record is honest exactly where the row named the ending that
- * produced it and incidental everywhere else. One field read by two sides belongs in the ONE
- * reading of the rows, beside the bar — a second copy elsewhere is two readers of one fact.
+ * COMMAND half of the row and nothing on the debit side reads it. Every row is credited by its own
+ * step's outcome in the run's record, so the characteristic is the whole of what the ledger reads.
  */
 export interface FitnessCheck {
   /** The bare characteristic this check asserts (`complexity`). */
   readonly characteristic: string;
-  /**
-   * The BAR this check's number is held to (@SCN-LNT-019), and the field whose PRESENCE says the
-   * check is measured at all.
-   *
-   * THREE STATES, AND THE MIDDLE ONE IS THE POINT. Absent: the row named no bar key, so the check
-   * is static — the discrimination `thresholdsOf` has always made, where a check with no entry is
-   * already the static case. A bar: the row named one and it read. `null`: the row named one and
-   * authored none this could read, which keeps the check MEASURED with nothing to hold it to —
-   * `barOf`'s own way with an entry it cannot read, and the shape @SCN-CIP-002 exists to report.
-   *
-   * READ THROUGH `carriesBar`, NEVER BY REACHING FOR THIS FIELD, because both sides of the ledger
-   * ask the same question of it and one spelling is what keeps their answers the same.
-   */
-  readonly bar?: ThresholdBar | null;
-}
-
-/**
- * THE ONE PREDICATE — does this row carry a bar (@SCN-LNT-019).
- *
- * The DEBIT asks it to decide whether to raise a measured obligation or a static one; the CREDIT
- * asks it to decide whether a step's outcome raises a credit at all, a measured row's credit
- * being its NUMBER. Two questions, one fact, and one spelling: two readers over this field would
- * eventually differ, and the row whose bar nothing can read — measured, with `null` beside it — is
- * exactly where they would differ first, producing an obligation with no credit or two credits for
- * one obligation.
- */
-export function carriesBar(check: FitnessCheck): boolean {
-  return check.bar !== undefined;
 }
 
 /** The rows as the rule reads them — bare `@SCN` → the row naming that scenario's check. */
 export type FitnessCheckIndex = ReadonlyMap<string, FitnessCheck>;
-
-/**
- * The two keys a row names its bar with. Either one makes the row MEASURED, whatever stands beside
- * it — the key is the target saying this check produces a number, and only the value can fail to
- * read.
- */
-const BAR_DIRECTIONS = ["atLeast", "atMost"] as const;
 
 /**
  * One entry as a manifest spells it, read into the pair a lookup can use, or `null` where it names
@@ -94,7 +52,7 @@ const BAR_DIRECTIONS = ["atLeast", "atMost"] as const;
  *
  * BOTH TERMS ARE STORED BARE. A manifest written by hand will sooner or later spell an `@SCN` — and
  * a characteristic — the way a feature file does, and both lookups match bare; stripping once here
- * rather than at every call site is the stance `thresholdsOf` already takes.
+ * rather than at every call site is the stance the retired `thresholdsOf` took.
  *
  * A ROW NAMING NEITHER TERM IS DROPPED WHOLE, never half-read. The two terms make one claim
  * together — THIS scenario asserts THIS characteristic — so a row missing either says nothing a
@@ -110,13 +68,7 @@ function fitnessCheckOf(entry: unknown): readonly [string, FitnessCheck] | null 
   const scnId = bareTerm(named.scn);
   const characteristic = bareTerm(named.characteristic);
   if (scnId === "" || characteristic === "") return null;
-  // THE ROW'S SHAPE SAYS WHICH KIND OF CHECK IT IS — no type field, no second tag, no roster of
-  // measured characteristics somebody has to keep in step with the rows. The bar is read by the
-  // threshold index's OWN reader, handed the row whole: one grammar for `atLeast` / `atMost`, so a
-  // converted row and a threshold entry cannot come to disagree about what a target wrote.
-  const row = named as Record<string, unknown>;
-  if (!BAR_DIRECTIONS.some((direction) => direction in row)) return [scnId, { characteristic }];
-  return [scnId, { characteristic, bar: barOf(row) }];
+  return [scnId, { characteristic }];
 }
 
 /**

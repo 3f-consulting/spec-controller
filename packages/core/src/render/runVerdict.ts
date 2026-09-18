@@ -3,7 +3,8 @@
  *
  * Its own module rather than a further section in `markdown.ts`, which sits at a `max-lines`
  * exception — and an exception excuses existing debt, never headroom.
- * The precedent is `measuredItem.ts`, moved out for the same reason; the move was forced here by
+ * The precedent was `measuredItem.ts` (retired with the measured axis, 3F-3516), moved out for
+ * the same reason; the move was forced here by
  * @SCN-CLI-019 adding a fifth verdict, and it is the emitter this file is named for.
  */
 

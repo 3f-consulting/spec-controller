@@ -14,7 +14,7 @@
  */
 
 import { readFileSync, existsSync } from "node:fs";
-import { basename, join } from "node:path";
+import { basename } from "node:path";
 import { ciSourcePathsOf } from "./ciSourcePaths.js";
 import { discoverFeatures, type DiscoveredFeature } from "./ingestScenarios.js";
 import {
@@ -51,19 +51,6 @@ import {
 import { evidenceReconciliationFromSources } from "@3f-consulting/spec-controller-core";
 import type { PackageJsonScripts } from "@3f-consulting/spec-controller-core";
 import { resolveTargetRoot } from "../run-management/resolveRunInputs.js";
-// The record reader, reached for the RECORD half of a bar that names a gate (@SCN-MUT-012): its
-// conventional record name, its parser, and the floor a gate's own figures imply. Through the
-// barrel, which is the surface a caller holds. (The directory is still spelled `mutation-ratchet`
-// and the ratchet it was named for is deleted — 3F-3337 left the name standing rather than move a
-// module inside a delete; filed as a finding.)
-import {
-  gateRecordFor,
-  killFloorOf,
-  MalformedRecordError,
-  parseGateRecords,
-  RECORD_FILE,
-  type MutationGateRecord,
-} from "../mutation-ratchet/index.js";
 import type {
   Scenario,
   RuntimeQualityCheck,
@@ -99,71 +86,6 @@ const CUCUMBER_QUALITY_CHECK: RuntimeQualityCheck = "integration";
 const RECONCILER_INVOCATION = "spec-controller balance";
 
 /**
- * A refusal met with an absent bar rather than let out of this edge.
- *
- * NOTHING IS THROWN OUT OF HERE, and that is the stance rather than caution. A refusal that escapes
- * costs the whole run its verdict over one bad character in a file nobody may even be reading — a
- * fault that is loud nowhere, where an absent bar is loud on the ledger. It is `thresholdsOf`'s own
- * stance for a malformed entry, applied to the half of a bar that now lives in a second file.
- *
- * TWO CLASSES AND NO MORE. The record library normalises every fault it can see — the YAML parser's
- * own included — into `MalformedRecordError` precisely so a caller catches all of them by catching
- * one; beside it sits the read that never got as far as a record. A bare catch would swallow a
- * defect in this edge as well, and answer it with the same silent absence.
- */
-function orNoBar<T>(read: () => T): T | null {
-  try {
-    return read();
-  } catch (cause) {
-    if (cause instanceof MalformedRecordError || isReadRefusal(cause)) return null;
-    throw cause;
-  }
-}
-
-/** A filesystem refusal — the record was not there, or could not be opened. */
-function isReadRefusal(cause: unknown): boolean {
-  return cause instanceof Error && typeof (cause as NodeJS.ErrnoException).code === "string";
-}
-
-/**
- * A reader over ONE resolution pass's records.
- *
- * EACH RECORD IS OPENED ONCE, WHICH IS WHY THIS IS A CLOSURE AND NOT A FUNCTION PER REFERENCE. A
- * manifest may name several gates of one record, and a reader opening it per entry would let two
- * references answer for two different states of the same file — a rewrite landing mid-pass, a gate
- * present for one and gone for the next. One read makes the pass's bars one reading of one record.
- *
- * THE REFUSAL IS REMEMBERED TOO. Cacheing only the successes would re-open an absent or unreadable
- * record per reference, which is the same disagreement by the other door — and the likelier door,
- * since a record being rewritten is unreadable for exactly the window that matters.
- *
- * THE SUBTRACTION IS THE RECORD'S, NOT THIS EDGE'S. `killFloorOf` spends the allowance; an edge
- * computing `detected - slack` itself would be a second place holding a fact about the record.
- */
-export function killFloorReaderFor(
-  root: string
-  // The reader's shape is SPELLED here rather than imported, and that is the boundary working
-  // rather than a duplication. `KillFloorReader` and the reference it takes are core-internal —
-  // the registry-home question (increment D) still governs them — and this module is published, so
-  // naming them by their `./internal` types would put an unpublished specifier back in the tarball
-  // for a type alone. Structural typing is what makes the closure the engine's parameter accepts.
-): (reference: { readonly mutationGate: string; readonly recordFile?: string }) => number | null {
-  const opened = new Map<string, Map<string, MutationGateRecord> | null>();
-  return (reference) => {
-    const recordFile = reference.recordFile ?? RECORD_FILE;
-    if (!opened.has(recordFile)) {
-      opened.set(
-        recordFile,
-        orNoBar(() => parseGateRecords(readFileSync(join(root, recordFile), "utf8"), recordFile))
-      );
-    }
-    const records = opened.get(recordFile);
-    if (records == null) return null;
-    return orNoBar(() => killFloorOf(gateRecordFor(reference.mutationGate, records, recordFile)));
-  };
-}
-
-/**
  * The reconciler's resolved input paths — the CLI options threaded to the readers.
  * Every path is optional; a missing result file is tolerated (its evidence is
  * simply absent). `packageJson` is the EXTERNALLY-SPECIFIED package.json the static
@@ -177,12 +99,6 @@ export interface ReconcileOptions {
   cucumber?: string;
   ci?: string;
   packageJson?: string;
-  /**
-   * The measurement artefact (@SCN-CIP-003) — the number each measured check posted, and
-   * the credit side of every measured fitness check. Optional like the other result files: absent,
-   * it contributes nothing, and each measured obligation it would have answered reads `missing`.
-   */
-  measurements?: string;
   /**
    * The CI RUN'S OWN RECORD of what each of its steps did (@SCN-LNT-021, @SCN-LNT-028) — the credit
    * side of every CONVERTED fitness check, written by the consumer's own pipeline and by neither
@@ -411,14 +327,13 @@ function parseRuntimeObservations(opts: ReconcileOptions, root: string | undefin
  */
 /**
  * The TARGET's manifest as the reconcile composition reads it — the `scripts` the `exists` read
- * consults, and the `specController` block its resolvers narrow. Spelled here for the reason the
- * kill-floor reader's shape is: every field of it is `unknown` until the engine narrows it, so the
- * type is a statement about what a manifest on disk IS rather than a contract owed to anyone.
+ * consults, and the `specController` block its resolvers narrow. Every field of it is `unknown`
+ * until the engine narrows it, so the type is a statement about what a manifest on disk IS rather
+ * than a contract owed to anyone.
  */
 type TargetManifest = PackageJsonScripts & {
   specController?: {
     deferralTags?: unknown;
-    thresholds?: unknown;
     fitnessChecks?: unknown;
     runners?: unknown;
     notChecks?: unknown;
@@ -433,9 +348,8 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
   const pkgPath = opts.packageJson ?? "package.json";
   const packageJson = readJsonIfPresent<TargetManifest>(pkgPath) ?? {};
   // The TARGET repo root — the credit locators are made relative to it, so a phantom-scenario row's
-  // where-to-fix (ruling Q5) stays portable in a banked artefact, and a bar naming a mutation gate
-  // finds that target's record rather than this tool's own (@SCN-MUT-012). Resolved ONCE here and
-  // threaded, which is also what keeps `execFileSync` and `process.cwd()` out of the engine.
+  // where-to-fix (ruling Q5) stays portable in a banked artefact. Resolved ONCE here and threaded,
+  // which is also what keeps `execFileSync` and `process.cwd()` out of the engine.
   const root = resolveTargetRoot({ features: opts.features });
   // `--ci` names a workflow FILE or a DIRECTORY of them, and defaults to the directory
   // (@SCN-USG-006, 3F-2238): a pipeline split across files enforces its checks just as one
@@ -466,28 +380,24 @@ export function runReconcile(opts: ReconcileOptions): EvidenceReconciliation {
     // half of the entry that does not come out of the workflow's own text. The directory it sits
     // in is the caller's `--ci`, not the consumer's subject, so it is not part of what they write.
     ciSourceNames: ciPaths.map((path) => basename(path)),
-    measurements: readJsonIfPresent<{ measurements?: unknown }>(opts.measurements) ?? {},
     // The CONVERTED checks' credit stream, read at this edge like every other report. Absent it is
     // undefined rather than empty, and that distinction reaches the reader (@SCN-LNT-027): "no
     // record" is a run nobody recorded, "a record holding nothing" is a run that recorded none of
     // these steps, and those are opposite facts.
-    // STRUCTURALLY, NOT BY NAME, for the reason `measurements` above is read that way: this module
-    // travels in the tarball and reaches core through the PUBLIC barrel alone (3F-3086), and
+    // STRUCTURALLY, NOT BY NAME: this module travels in the tarball and reaches core through the PUBLIC barrel alone (3F-3086), and
     // `CiStepRecord` is not on it. The shape is the document's, which is the consumer's, so what is
     // written here is what the file holds rather than a contract owed to anyone.
     ciStepRecord: readJsonIfPresent<Record<string, { outcome?: string; conclusion?: string }>>(
       opts.ciSteps
     ),
     runtimeObservations: parseRuntimeObservations(opts, root),
-    // The three things the engine's resolvers cannot hold, and each for its own reason: the
-    // starter deferral set is the application layer's own policy, how this tool is invoked to
-    // reconcile is a fact about this product's command line, and the reader opens a file on the
-    // target's tree. THE PREFIX SET USED TO SIT HERE AND IS GONE (@SCN-USG-004, 3F-3343): the
+    // The two things the engine's resolvers cannot hold, and each for its own reason: the
+    // starter deferral set is the application layer's own policy, and how this tool is invoked to
+    // reconcile is a fact about this product's command line. THE PREFIX SET USED TO SIT HERE AND IS GONE (@SCN-USG-004, 3F-3343): the
     // engine no longer decides a check's membership by its name, so there is no convention left
     // for this edge to own.
     deferralTags: DEFAULT_DEFERRAL_TAGS,
     reconcilerInvocation: RECONCILER_INVOCATION,
-    killFloor: killFloorReaderFor(root),
   });
 }
 

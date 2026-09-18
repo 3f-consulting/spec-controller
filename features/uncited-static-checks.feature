@@ -580,6 +580,18 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     different word; asserting the fallback is what earns this its own scenario rather than an
     arm of the one above.
 
+    THE THIRD RETIRED KEY, AND THE ONE WHOSE CONSEQUENCE IS ALREADY PAID. specController.thresholds
+    held a scenario to a ceiling — keyed by @SCN, then by the check the ceiling was written for —
+    and it was the only thing that made a bare tag like ci-run-time raise a measured obligation at
+    all. That axis left whole (3F-3516), so the key is read by nothing and the obligation it used
+    to raise is raised by nothing: a scenario carrying that tag and no evidence tag reconciles as
+    any untagged-and-uncited scenario does. What is left is the same duty as the two keys above —
+    a consumer who wrote a ceiling in good faith is told it no longer holds anything — so the key
+    is appended to the same set and rendered by the same line. The scenario asserts the absence
+    beside the name because the absence is the half a consumer would otherwise have to infer: a
+    reader that named the key but still raised the obligation would be telling them two things
+    that cannot both be true.
+
     @unit @integration @SCN-USG-021
     Scenario: a manifest carrying specController.checkRegistry is named as a retired key, and none of its entries reaches the books
       Given a target whose manifest registers a check through specController.checkRegistry, naming a check its CI runs
@@ -596,6 +608,14 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
       When the reconciliation report is rendered for the target
       Then the report names specController.staticChecks as a key it no longer reads
       And that step is reported under the first script it invokes, not the one the list nominated
+
+    @unit @integration @SCN-USG-023
+    Scenario: a manifest carrying specController.thresholds is named as a retired key, and none of its entries raises an Evidence Obligation
+      Given a target whose manifest holds a scenario to a ceiling through specController.thresholds
+      And that target's corpus carries that scenario, tagged with the check its ceiling was written for and no evidence tag
+      When the reconciliation report is rendered for the target
+      Then the report names specController.thresholds as a key it no longer reads
+      And the scenario the ceiling names raises no Evidence Obligation
 
   Rule: a step the manifest names a non-check is excluded, and the report says so
 

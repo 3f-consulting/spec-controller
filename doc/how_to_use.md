@@ -59,8 +59,10 @@ answered by one push step that reads the newest nightly sweep's verdict:
 [`scheduled-checks.md`](./scheduled-checks.md).
 
 `characteristic` is data, not a tag — the report rolls up per characteristic, and a new one is a
-new word in a row rather than a change to any list. **The row's shape says which kind of check it
-is**: a row with a bar (`atLeast` / `atMost`) is measured, a row without one is static.
+new word in a row rather than a change to any list. **A row names no bar.** Its credit is its step's
+`outcome`: the tool's exit code on its own CI step is the verdict, whatever the tool measures. A row
+still carrying the retired `atLeast` / `atMost` keys is named on the report as carrying a retired
+key, and is credited by its step's outcome like any other.
 
 Neither half is derived from the other, and that is deliberate: a scenario with no row, and a row
 with no scenario, are both things a run can report.
@@ -200,7 +202,6 @@ spec-controller balance --features ./features \
 | `--cucumber <report.json>` | A Cucumber JSON report — runtime test evidence. |
 | `--ci <ci.yml>` | Your CI workflows — a file, or a directory of them (default `.github/workflows`). **This is the scope of discovery**: every step of every job it resolves is read, and narrowing it is how a whole workflow comes out. Also where an UNCONVERTED static check is found running over the real source, and where a check step's `id:` supplies the `@SCN` its result cites. |
 | `--package-json <path>` | The target's `package.json` — its `scripts`, its `specController.fitnessChecks` rows (see *Declaring a fitness check*), and its `specController.runners` / `specController.notChecks` (see *Naming your runners*). Defaults to `package.json` at the working directory. |
-| `--measurements <report.json>` | A measurement report — the number each measured check posted, evidence for the measured fitness checks (`ci-run-time` and its family). |
 | `--ci-steps <record.json>` | Your CI run's own record of what each of its steps did — the `toJSON(steps)` dump, evidence for the converted fitness checks. See *Wiring into CI*. Omit it if you have converted none. |
 | `--target <name>` | A name recorded verbatim in the report's provenance (which project this run reconciled). |
 | `--source-sha <sha>` | Override the git commit SHA recorded in provenance (defaults to the resolved HEAD). |
@@ -332,14 +333,13 @@ spec-controller balance --features ./features \
   --vitest ./vitest-report.json \
   --cucumber ./cucumber-report.json \
   --ci-steps ./ci-steps.json \
-  --measurements ./measurements.json \
   --ci ./.github/workflows/ci.yml \
   --package-json ./package.json \
   --format md:reconciliation.md \
   --format json:reconciliation.json
 ```
 
-Drop `--ci-steps` and `--measurements` if you have converted nothing. Converting checks you already have — with a worked before/after and the traps: [`converting-a-fitness-check.md`](./converting-a-fitness-check.md).
+Drop `--ci-steps` if you have converted nothing. Converting checks you already have — with a worked before/after and the traps: [`converting-a-fitness-check.md`](./converting-a-fitness-check.md).
 
 Keep the reports as build artefacts — but do **not** commit them into the repo. An Evidence Reconciliation enumerates a codebase's gaps, phantom scenarios, and watermelons; it is more sensitive than the code itself, so it belongs outside version control.
 

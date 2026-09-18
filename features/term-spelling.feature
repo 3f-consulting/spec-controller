@@ -1,20 +1,19 @@
 @TRM
 Feature: Term spelling — a term names the same pair however its author spelled it
 
-  A target adopting this tool hand-types terms into five places: the two key levels of
-  specController.thresholds, a configured fitness row's scn and characteristic, a check step's
-  id:, a deferral tag, and the two terms on a measurement row. Every one of them is stored bare
+  A target adopting this tool hand-types terms into three places: a configured fitness row's scn
+  and characteristic, a check step's id:, and a deferral tag. Every one of them is stored bare
   and looked up bare, because a hand writes a tag the way a feature file does — and every one of
   them was stripping the sigil BEFORE trimming, so a term padded in front of its @ was stored
-  still carrying it and no bare lookup ever found it again. Nothing red. thresholdFor answered
-  null, a measurement row was dropped, a configured row went unmatched — and all three are
-  legitimate readings of a key the manifest never named, which is what made the miss silent
+  still carrying it and no bare lookup ever found it again. Nothing red. A configured row went
+  unmatched, a check step cited nothing, a deferral tag deferred nothing — and each is a
+  legitimate reading of a key the manifest never named, which is what made the miss silent
   instead of loud.
 
-  IT NEVER FIRED HERE AND WOULD FIRE THERE, WHICH IS THE WHOLE OF ITS REACH. Both routes are
-  hand-typed and this repository generates neither: a generated artefact carries no stray space.
-  The consumer typing a threshold key into their own package.json is the one who gets a bar that
-  silently does not apply, and they get it through the published binary.
+  IT NEVER FIRED HERE AND WOULD FIRE THERE, WHICH IS THE WHOLE OF ITS REACH. Every route is
+  hand-typed and this repository generates none of them: a generated artefact carries no stray
+  space. The consumer typing a configured row into their own package.json is the one who gets a
+  row that silently never resolves, and they get it through the published binary.
 
   ONE RULE, SPELLED SEVEN TIMES, SO ONE BUG BECAME SEVEN. The correction is not the reordering;
   it is that a rule this small was hand-copied at all. dry's "a rule stated twice is a rule
@@ -38,16 +37,16 @@ Feature: Term spelling — a term names the same pair however its author spelled
     WHY BOTH TIERS, POSITIVELY. @unit proves the reading at each port that stores a term as a
     key — pure functions, provable in isolation, and the only place the empty, doubled-sigil
     and interior-@ boundaries can be held cheaply. @integration proves the SEAM that
-    composes them: a target's manifest read into a threshold registry and a configured
-    fitness-check index, a deferral set and a measurement row, the corpus read against all
-    four, a check step's citation read against that same index, and the reconciler handed the
-    result. That is the boundary this defect actually lived on — the readings each correct in
-    isolation, every one of them wired to a lookup that asks bare — and it reads green at unit
-    and wrong on the ledger. Neither arm subsumes the other.
+    composes them: a target's manifest read into a configured fitness-check index and a
+    deferral set, the corpus read against both, a check step's citation read against that same
+    index, and the reconciler handed the result. That is the boundary this defect actually
+    lived on — the readings each correct in isolation, every one of them wired to a lookup that
+    asks bare — and it reads green at unit and wrong on the ledger. Neither arm subsumes the
+    other.
 
     @unit @integration @SCN-TRM-001
     Scenario: a term is the same term however its author spaced it around the sigil, wherever a target hand-authors one
-      Given a target that hand-authors its terms — a threshold's two key levels, a configured row's scn and characteristic, a check step's id:, a deferral tag, and a measurement row's two terms
+      Given a target that hand-authors its terms — a configured row's scn and characteristic, a check step's id:, and a deferral tag
       And every one of them is spelled with whitespace in front of its sigil, the one spelling nothing in this repository generates
       When the corpus is reconciled against that target
       Then each term names exactly the pair its bare spelling names, so nothing the target plainly authored is dormant

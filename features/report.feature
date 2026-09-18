@@ -746,33 +746,32 @@ Feature: The report renders the ledger as sectioned facts
   Rule: the Run provenance names every stream the run was handed, and every one it was not
 
     What was this verdict computed from (@SCN-RPT-027, 3F-3155). The canonical input
-    list the Inputs block renders carried five flags, and neither the measurement stream
-    nor the fitness stream was among them — so a report whose every converted static-check
-    row was settled from that stream did not admit reading it. Both streams are
-    OPTIONAL by design, passed only where the file exists, so their absence from the block
-    was genuinely ambiguous between "the run never got it" and "the run got it and the
-    block does not say so" — the two readings the fitness characteristic exists to keep apart.
+    list the Inputs block renders carried five flags, and the fitness stream was not among
+    them — so a report whose every configured fitness row was credited from that stream did
+    not admit reading it. The stream is OPTIONAL by design, passed only where the file
+    exists, so its absence from the block was genuinely ambiguous between "the run never got
+    it" and "the run got it and the block does not say so" — the two readings the fitness
+    characteristic exists to keep apart.
 
-    THE CANONICAL LIST GAINS THE TWO STREAMS AND NOTHING ELSE MOVES. They are appended
-    after --package-json, so no line that was already rendered changes position; the
-    presence filter is untouched, so a run handed neither still renders exactly the flags
-    it was handed and its JSON provenance.inputs object serialises byte-identically. Both
-    surfaces project the SAME ctx.inputs — the object the reconcile itself consumed, which
-    already carried all seven keys — so the block is never a second opinion about what was
-    read.
+    THE CANONICAL LIST GAINS THE STREAM AND NOTHING ELSE MOVES. It is appended after
+    --package-json, so no line that was already rendered changes position; the presence
+    filter is untouched, so a run not handed it still renders exactly the flags it was
+    handed and its JSON provenance.inputs object serialises byte-identically. Both surfaces
+    project the SAME ctx.inputs — the object the reconcile itself consumed — so the block is
+    never a second opinion about what was read.
 
     The @integration arm runs the REAL CLI binary as a subprocess over a fixture corpus
-    handed both streams and reads the PERSISTED Inputs block back. A projection test
+    handed the fitness stream and reads the PERSISTED Inputs block back. A projection test
     compares a structure this repository wrote against a structure this repository wrote;
     it cannot tell a rendered line from a line the CLI never wrote, and the whole point of
     a provenance block is that the run actually produced it.
 
     @unit @integration @SCN-RPT-027
-    Scenario: the Inputs block names the optional measurement and fitness streams when the run received them
-      Given a reconciliation run handed a measurement stream and a fitness stream alongside its feature corpus
+    Scenario: the Inputs block names the optional fitness stream when the run received it
+      Given a reconciliation run handed a fitness stream alongside its feature corpus
       When the run writes its markdown artifact for the streams it was handed
-      Then the persisted report's Inputs block names the measurement stream and the fitness stream, after the streams it already named
-      When the real CLI reconciles a fixture corpus handed both a measurement stream and a fitness stream
+      Then the persisted report's Inputs block names the fitness stream, after the streams it already named
+      When the real CLI reconciles a fixture corpus handed a fitness stream
       Then the persisted report's Inputs block names every stream that run received
 
     @unit @integration @SCN-RPT-028

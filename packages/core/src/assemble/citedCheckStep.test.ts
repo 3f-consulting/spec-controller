@@ -85,10 +85,8 @@ function reconcileAnnotated(): EvidenceReconciliation {
     // The workflow FILE the exclusion above opens with — an entry can name no step of a
     // source this run was given no name for.
     ciSourceNames: ["ci.yml"],
-    measurements: {},
     runtimeObservations: [],
     deferralTags: [],
-    killFloor: () => null,
   });
 }
 

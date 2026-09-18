@@ -14,7 +14,7 @@ name: Mutation
 # was from 3F-3334, so a sweep scoring below 95 ends this job in failure. `ci.yml`'s `Mutation
 # score` step, carrying `id: SCN-FIT-002`, asks stock `gh` for the newest completed run of this
 # workflow on `main` created inside the last 26 hours and passes only if it concluded `success`.
-# The row names no `atLeast`, so the ledger reads it by that step's outcome and no number crosses
+# The row names no bar (no row does, 3F-3506), so the ledger reads it by that step's outcome and no number crosses
 # from this run to the push. This job used to wrap the sweep in a score producer and upload the
 # record it wrote for a later push to place and read; the placement and its reader left at 3F-3504,
 # and the producer and its upload at 3F-3505.

@@ -1349,6 +1349,84 @@ Then(
 );
 
 // ---------------------------------------------------------------------------
+// @SCN-USG-023 — THE THIRD RETIRED KEY. Its own fixture: `specController.thresholds` holds
+// SCN-TTH-001 to a ceiling on the bare check tag `ci-run-time`, and the corpus carries exactly
+// that scenario with that tag and no evidence tag — the shape the retired measured axis raised an
+// obligation from on the entry alone (3F-3516). This arm proves the key is NAMED (the same account
+// @SCN-USG-021 grafts) and that the scenario it names now owes nothing.
+// ---------------------------------------------------------------------------
+const USG_THRESHOLDS_RETIRED_FIXTURE: UsgFixture = {
+  features: "tests/fixtures/usg-thresholds-retired/features",
+  ci: "tests/fixtures/usg-thresholds-retired/ci.yml",
+  packageJson: "tests/fixtures/usg-thresholds-retired/package.json",
+};
+
+// @SCN-USG-023
+Given("a target whose manifest holds a scenario to a ceiling through specController.thresholds", function () {
+  activeFixture = USG_THRESHOLDS_RETIRED_FIXTURE;
+  activeDir = mkdtempSync(join(tmpdir(), "spec-controller-usg023-"));
+  // THE PREMISE, ASSERTED FOR ITS SHAPE: one entry, keyed by @SCN then by the check, or the
+  // scenario poses no question about what the retired key used to raise.
+  const specController = manifestOf(USG_THRESHOLDS_RETIRED_FIXTURE)["specController"] as Record<string, unknown>;
+  assert.deepEqual(
+    specController["thresholds"],
+    { "SCN-TTH-001": { "ci-run-time": 75 } },
+    `the fixture must carry exactly the thresholds entry this scenario is about. Got: ` +
+      `${JSON.stringify(specController)}`,
+  );
+});
+
+// @SCN-USG-023
+Given(
+  "that target's corpus carries that scenario, tagged with the check its ceiling was written for and no evidence tag",
+  function () {
+    const source = readFileSync(
+      join(process.cwd(), USG_THRESHOLDS_RETIRED_FIXTURE.features, "target.feature"),
+      "utf8",
+    );
+    const tagLines = source.split("\n").filter((line) => line.trim().startsWith("@"));
+    assert.deepEqual(
+      tagLines.map((line) => line.trim()),
+      ["@TTH", "@SCN-TTH-001 @ci-run-time"],
+      `the fixture's corpus must carry the entry's own @SCN tagged with the entry's own check and ` +
+        `no evidence tag, or an obligation it raised could come from somewhere else. Got:\n${source}`,
+    );
+  },
+);
+
+// @SCN-USG-023
+Then("the report names specController.thresholds as a key it no longer reads", function () {
+  // THE SAME LINE, WORD FOR WORD, AS checkRegistry's AND staticChecks' — one account, one shape.
+  assert.deepEqual(
+    retiredKeyLines(activeMd),
+    [
+      "- specController.thresholds — retired: this reader no longer reads it, and none of its entries reach the books.",
+    ],
+    `expected the retired key NAMED on the report, the same duty @SCN-USG-021 gives ` +
+      `checkRegistry. Got:\n${activeMd}`,
+  );
+});
+
+// @SCN-USG-023
+Then("the scenario the ceiling names raises no Evidence Obligation", function () {
+  // BOTH-MISSING, THE ORDINARY RULE FOR A SCENARIO CARRYING NO EVIDENCE TAG — NOT THE MEASURED
+  // OBLIGATION THE ENTRY USED TO RAISE. Its row's ONLY reconciling item says the obligation is
+  // absent, and the check the entry named appears nowhere on the books.
+  const cells = ledgerRowCells(activeMd, "SCN-TTH-001");
+  assert.equal(
+    cells[cells.length - 2],
+    "⊘ Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited",
+    `expected SCN-TTH-001 to owe nothing — its one reconciling item the both-missing one. Got ` +
+      `row:\n${cells.join(" | ")}\nfull report:\n${activeMd}`,
+  );
+  const ledger = activeMd.slice(activeMd.indexOf("## Scenario Reconciliations"));
+  assert.ok(
+    !ledger.includes("ci-run-time"),
+    `expected no obligation for the entry's check anywhere on the books. Got:\n${ledger}`,
+  );
+});
+
+// ---------------------------------------------------------------------------
 // @SCN-USG-015 — THE CONSUMER'S OWN LIST. Its own fixture, and its shape is a pair plus a stale
 // line: `Rule check` is named a non-check and must leave the books, `Sweep check` is named by
 // nothing and must stay on them, and `Circular-import check` is the Sweep check's old name — an

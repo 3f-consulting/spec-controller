@@ -25,11 +25,7 @@ import {
   noScnCodeReconciliations,
 } from "./qualityCheckReconciliation.js";
 import { qualityCheckReconciliationsOf } from "./scenarioReconciliation.js";
-import {
-  evidenceObligationsOf,
-  pendingItemsOf,
-  type MeasuredEvidenceObservation,
-} from "./journal.js";
+import { evidenceObligationsOf, pendingItemsOf } from "./journal.js";
 import type {
   Scenario,
   RuntimeEvidenceObservation,
@@ -115,8 +111,7 @@ describe("[SCN-LDG-001] noEvidenceObligationReconciliationsOf lists credits at q
  * fault is not an assertion.
  *
  * WHO PRODUCES A NAMELESS ONE. `fitnessCheckNameOf` reaches `undefined` only for a RUNTIME credit:
- * a static check's runnable handle and a measurement's bare check tag are each REQUIRED on their
- * own observation, so the handle fallback the rule documents is the last name a fitness credit has
+ * a static check's runnable handle is REQUIRED on its observation, so the handle fallback the rule documents is the last name a fitness credit has
  * rather than one it can lack. The case below that fallback is the runtime credit — it names a test
  * file instead and carries no check name at all. Its `locator` is optional, and `reconcile` is on
  * the core barrel with the field documented as omissible by a hand-built observation, so both
@@ -251,30 +246,6 @@ describe("[SCN-LDG-001] citesUnknownScenarioReconciliationsOf builds a phantom r
  * after the fault is not an assertion.
  */
 describe("[SCN-LDG-006] a phantom row's items carry only the fields the credit has", () => {
-  /**
-   * A MEASUREMENT can mint a phantom row too, and THE CHECK THAT RAN is the whole of what it can
-   * offer a reader: it is emitted by whatever measured the step rather than read from a test
-   * file, so it has no locator and its bare `checkTag` is the only name it has (@SCN-CIP-003).
-   */
-  it("carries a measured credit's bare check tag as the staticCheck, and no locator key", () => {
-    const measured: MeasuredEvidenceObservation = {
-      qualityCheck: "lint",
-      scnId: "SCN-ZZZ-009",
-      checkTag: "ci-run-time",
-      measured: 42,
-    };
-    const [item] = citesUnknownScenarioReconciliationsOf([measured]);
-    expect(item).toStrictEqual({
-      qualityCheck: "lint",
-      staticCheck: "ci-run-time",
-      outcome: "cites-unknown-scenario",
-      evidenceObservation: measured,
-    });
-    // Said twice on purpose: `toStrictEqual` reds an EXTRA key, `not.toHaveProperty` names WHICH
-    // key must be absent, so the intent survives a later rewrite of the object above.
-    expect(item).not.toHaveProperty("locator");
-  });
-
   it("carries neither a locator nor a staticCheck key when the runtime credit has no locator", () => {
     const noLocator = credit("unit", "SCN-ZZZ-009");
     const [item] = citesUnknownScenarioReconciliationsOf([noLocator]);
@@ -306,7 +277,7 @@ describe("[SCN-LDG-006] a phantom row's items carry only the fields the credit h
  *
  * TWO-HOP SHAPE RETIRED. The fixture used to carry `checkTag` alongside `staticCheck` — a route
  * that matched on both. `citesUnknownScenarioReconciliationsOf` matches on `staticCheck` alone
- * (`isStaticCheckObservation`, keyed off `qualityCheck` and the ABSENCE of `measured`), so
+ * (`isStaticCheckObservation`, keyed off `qualityCheck` alone), so
  * `checkTag` was dead weight on this fixture and is dropped.
  *
  * WHY NO INTERFACE NAMES THIS FIXTURE'S SHAPE, AND WHY THAT IS THE POINT. Neither fitness

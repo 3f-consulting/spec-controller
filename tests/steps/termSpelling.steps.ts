@@ -1,8 +1,7 @@
 /**
  * @integration for features/term-spelling.feature — the SEAM a hand-authored term crosses: a
- * target's manifest read into a threshold registry, a configured fitness-check index and a
- * deferral set, the corpus read against all three, the measurement artefact read into citing
- * credits, a check step's own citation read against the configured-row index, and the
+ * target's manifest read into a configured fitness-check index and a deferral set, the corpus
+ * read against both, a check step's own citation read against the configured-row index, and the
  * reconciler handed the result.
  *
  * @SCN-TRM-001 — the bidirectional @integration marker (Evidence Manifesto §9), matching
@@ -12,9 +11,8 @@
  * on its own; what none of them can show is that the term a reading STORES is the term the next
  * lookup ASKS FOR. That is the whole of this defect — seven readings each correct in isolation,
  * every one of them wired to a lookup that asks bare — and it reads green at unit and wrong on the
- * ledger. So this composes the real readers in process, the way ciRunTime.steps.ts does, rather
- * than spawning a binary: the boundary being proved is between the readings, not between a
- * command line and a file.
+ * ledger. So this composes the real readers in process rather than spawning a binary: the
+ * boundary being proved is between the readings, not between a command line and a file.
  *
  * EVERY TERM IS PADDED IN FRONT OF ITS SIGIL, which is the one spelling nothing in this repository
  * generates and the only one a target types by hand. The corpus is spelled the way a feature file
@@ -27,14 +25,7 @@ import assert from "node:assert/strict";
 
 import { parseScenarios, reconcile } from "@3f-consulting/spec-controller-core";
 import type { Ledger, ScenarioReconciliation } from "@3f-consulting/spec-controller-core";
-import {
-  isMeasuredObservation,
-  measuredCheckTags,
-  parseMeasuredEvidenceObservations,
-  resolveDeferralTags,
-  resolveFitnessChecks,
-  resolveThresholds,
-} from "@3f-consulting/spec-controller-core/internal";
+import { resolveDeferralTags, resolveFitnessChecks } from "@3f-consulting/spec-controller-core/internal";
 import type { ScriptCitation } from "@3f-consulting/spec-controller-core/internal";
 // NOT ON THE PUBLISHED BOUNDARY (technical design, 3F-3161's `## Technical design` -- "KEPT ...
 // citationOfCitedRow and ScriptCitation -- the id: route"). Reached by relative import the way
@@ -42,22 +33,17 @@ import type { ScriptCitation } from "@3f-consulting/spec-controller-core/interna
 // `/internal` for one seam test.
 import { citationOfCitedRow } from "../../packages/core/src/parse/fitnessCitations.js";
 
-import { killFloorReaderFor } from "../../packages/spec-controller/src/ingest/ingestQualityChecks.js";
 import { DEFAULT_DEFERRAL_TAGS } from "../../packages/spec-controller/src/deferralTags.js";
 
-/** The measured fitness scenario the target holds to a ceiling. */
-const MEASURED_SCN = "SCN-TRM-900";
 /** The converted fitness scenario the target's own configured row names a characteristic for. */
 const FITNESS_SCN = "SCN-TRM-901";
 /** The behavioural scenario the target's own deferral tag defers. */
 const DEFERRED_SCN = "SCN-TRM-902";
 
-const MEASURED_CHECK = "ci-run-time";
 const FITNESS_CHARACTERISTIC = "planted-fitness-check";
-const INTERIOR_CHECK = "cucumber@e2e";
 const DEFERRAL_TAG = "spike";
-const CEILING = 75;
-const MEASUREMENT = 40;
+/** A deferral tag spelled with an @ inside it — part of the name the target chose. */
+const INTERIOR_TAG = "cucumber@e2e";
 
 /**
  * The corpus, spelled the way a feature file spells tags — no padding anywhere.
@@ -67,9 +53,6 @@ const MEASUREMENT = 40;
  */
 const CORPUS = `@TRM
 Feature: the target's own corpus
-
-  @${MEASURED_CHECK} @${MEASURED_SCN}
-  Scenario: the suite completes within its CI threshold
 
   @fitness @${FITNESS_SCN}
   Scenario: a converted check the target has configured a row for
@@ -82,17 +65,11 @@ Feature: the target's own corpus
 /** The target's `package.json`, as the resolvers at the app edge are handed it. */
 let manifest: { specController?: Record<string, unknown> };
 
-/** The measurement artefact the target's run posted. */
-let artefact: { measurements: unknown[] };
-
 /** What the whole seam produced. */
 let ledger: Ledger;
 
 /** The deferral set the target's manifest resolved to — read by the corpus and asserted directly. */
 let deferralTags: readonly string[];
-
-/** The measured check tags the target's thresholds named. */
-let measuredTags: readonly string[];
 
 /** The CI check step's own `id:` — hand-authored, and the citation route reads it back bare. */
 let citedStepId: string;
@@ -114,22 +91,15 @@ function rowOf(scnId: string): ScenarioReconciliation {
 
 // @SCN-TRM-001
 Given(
-  "a target that hand-authors its terms — a threshold's two key levels, a configured row's scn and characteristic, a check step's id:, a deferral tag, and a measurement row's two terms",
+  "a target that hand-authors its terms — a configured row's scn and characteristic, a check step's id:, and a deferral tag",
   function () {
-    // Every port a target hand-authors a term at, in one manifest and one artefact — which is what
-    // makes this a seam and not four unit tests in a trench coat. Spelled bare here; the next step
-    // pads them.
+    // Every port a target hand-authors a term at, in one manifest — which is what makes this a
+    // seam and not three unit tests in a trench coat. Spelled bare here; the next step pads them.
     manifest = {
       specController: {
-        thresholds: {
-          [MEASURED_SCN]: { [MEASURED_CHECK]: CEILING, [INTERIOR_CHECK]: CEILING },
-        },
         fitnessChecks: [{ scn: FITNESS_SCN, characteristic: FITNESS_CHARACTERISTIC }],
-        deferralTags: [DEFERRAL_TAG],
+        deferralTags: [DEFERRAL_TAG, INTERIOR_TAG],
       },
-    };
-    artefact = {
-      measurements: [{ scnId: MEASURED_SCN, checkTag: MEASURED_CHECK, measured: MEASUREMENT }],
     };
     citedStepId = FITNESS_SCN;
   }
@@ -140,27 +110,14 @@ Given(
   "every one of them is spelled with whitespace in front of its sigil, the one spelling nothing in this repository generates",
   function () {
     // The re-spelling, and the ONLY difference between this scenario and a green one. A term that
-    // is nothing but whitespace and a sigil rides along at two of the ports, so the empty reading
+    // is nothing but whitespace and a sigil rides along in the deferral set, so the empty reading
     // is proved on the same pass rather than in a scenario of its own.
     const padded = (term: string): string => `  @${term}`;
     manifest = {
       specController: {
-        thresholds: {
-          [padded(MEASURED_SCN)]: {
-            [padded(MEASURED_CHECK)]: CEILING,
-            [`  ${INTERIOR_CHECK}  `]: CEILING,
-            "  @  ": CEILING,
-          },
-        },
         fitnessChecks: [{ scn: padded(FITNESS_SCN), characteristic: padded(FITNESS_CHARACTERISTIC) }],
-        deferralTags: [padded(DEFERRAL_TAG), "  @  "],
+        deferralTags: [padded(DEFERRAL_TAG), `  ${INTERIOR_TAG}  `, "  @  "],
       },
-    };
-    artefact = {
-      measurements: [
-        { scnId: padded(MEASURED_SCN), checkTag: padded(MEASURED_CHECK), measured: MEASUREMENT },
-        { scnId: "  @  ", checkTag: padded(MEASURED_CHECK), measured: MEASUREMENT },
-      ],
     };
     citedStepId = padded(FITNESS_SCN);
   }
@@ -169,17 +126,12 @@ Given(
 // @SCN-TRM-001
 When("the corpus is reconciled against that target", function () {
   // THE WHOLE SEAM IN ONE STEP. Readings of the target's hand-typed terms, the corpus read
-  // against them, the artefact read into citing credits, a check step's own citation read
-  // against the configured-row index, and the reconciler handed both sides. A reading that
-  // stores a term the next lookup cannot ask for shows here and nowhere else.
-  const thresholds = resolveThresholds(manifest, killFloorReaderFor(process.cwd()));
-  const fitnessChecks = resolveFitnessChecks(manifest, killFloorReaderFor(process.cwd()));
+  // against them, a check step's own citation read against the configured-row index, and the
+  // reconciler handed the result. A reading that stores a term the next lookup cannot ask for
+  // shows here and nowhere else.
+  const fitnessChecks = resolveFitnessChecks(manifest);
   deferralTags = resolveDeferralTags(manifest, DEFAULT_DEFERRAL_TAGS);
-  measuredTags = measuredCheckTags(thresholds);
-  ledger = reconcile(
-    parseScenarios(CORPUS, deferralTags, measuredTags, thresholds, fitnessChecks),
-    parseMeasuredEvidenceObservations(artefact)
-  );
+  ledger = reconcile(parseScenarios(CORPUS, deferralTags, [], fitnessChecks), []);
   citation = citationOfCitedRow(citedStepId, fitnessChecks);
 });
 
@@ -187,21 +139,6 @@ When("the corpus is reconciled against that target", function () {
 Then(
   "each term names exactly the pair its bare spelling names, so nothing the target plainly authored is dormant",
   function () {
-    // THE MEASURED PAIR — both key levels of the threshold, and both terms of the credit. Satisfied
-    // is the whole claim: the bar was found, the credit posted to the row that raised it, and the
-    // comparison was made. A padded key leaves this row raising nothing and the credit citing a
-    // scenario the corpus never named.
-    const measured = rowOf(MEASURED_SCN).qualityCheckReconciliations.find(
-      (r) => r.staticCheck === MEASURED_CHECK
-    );
-    assert.ok(measured, `expected a reconciliation for ${MEASURED_CHECK} on ${MEASURED_SCN}`);
-    assert.equal(measured.outcome, "satisfied");
-    assert.equal(measured.evidenceObligation?.threshold, CEILING);
-    const credit = measured.evidenceObservation;
-    assert.ok(credit && isMeasuredObservation(credit), "expected a measured credit on the row");
-    assert.equal(credit.measured, MEASUREMENT);
-    assert.equal(rowOf(MEASURED_SCN).verdict, "balanced");
-
     // THE CONFIGURED ROW'S SCN AND CHARACTERISTIC. A converted check's row is the target's own
     // second place to author an obligation, so a row stored under a key still carrying its @
     // would leave this axis-tagged scenario looking half-converted — the tag moved and the row
@@ -242,12 +179,13 @@ Then(
     // a new tag at every `@`, so `@cucumber@e2e` in a corpus is the two tags `cucumber` and `e2e`
     // and a corpus tag CANNOT carry an interior @ at all. There is therefore no reconciled route
     // for such a pair to travel, and what this arm can honestly say is that the reading the target
-    // hand-authored still names it. The credit-side reading of the same spelling is pinned at @unit.
+    // hand-authored still names it. The configured-row and check-step readings of the same
+    // spelling are pinned at @unit.
     assert.ok(
-      measuredTags.includes(INTERIOR_CHECK),
-      `expected the interior-@ check ${INTERIOR_CHECK}; got ${JSON.stringify(measuredTags)}`
+      deferralTags.includes(INTERIOR_TAG),
+      `expected the interior-@ deferral tag ${INTERIOR_TAG}; got ${JSON.stringify(deferralTags)}`
     );
-    assert.ok(!measuredTags.includes("cucumber"), "expected the interior @ neither eaten nor split");
+    assert.ok(!deferralTags.includes("cucumber"), "expected the interior @ neither eaten nor split");
   }
 );
 
@@ -255,18 +193,9 @@ Then(
 Then(
   "a term that is nothing but whitespace and a sigil names no pair at all, and is dropped as an empty one is",
   function () {
-    // Dropped, not stored as "@". A term nobody can ask for reaches the ledger as a bar that can
-    // never be settled and a credit citing a scenario nothing carries — a phantom row manufactured
-    // out of a stray space.
-    assert.ok(!measuredTags.includes("@"), `expected no "@" check tag; got ${JSON.stringify(measuredTags)}`);
+    // Dropped, not stored as "@" — a deferral tag nobody can ask for, which no corpus tag can
+    // ever match.
+    assert.ok(!deferralTags.includes("@"), `expected no "@" deferral tag; got ${JSON.stringify(deferralTags)}`);
     assert.ok(!deferralTags.includes(""), `expected no empty deferral tag; got ${JSON.stringify(deferralTags)}`);
-    const invented = ledger.scenarioReconciliations.filter(
-      (r) => r.scnId === "@" || r.scnId === ""
-    );
-    assert.deepEqual(
-      invented,
-      [],
-      `expected no row invented from an empty term; got ${JSON.stringify(invented.map((r) => r.scnId))}`
-    );
   }
 );

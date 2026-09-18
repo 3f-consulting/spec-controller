@@ -12,6 +12,14 @@
 import type { RenderInput } from "../assemble/renderInput.js";
 
 /**
+ * A BAR A CONFIGURED ROW STILL CARRIES (@SCN-LNT-035), named `fitnessChecks[<@SCN>].<key>` by the
+ * resolver. Its line says something different from a retired top-level key's, because its
+ * consequence is different: the row still reaches the books, credited by its own step's outcome;
+ * only the number on it is unread.
+ */
+const isRowBar = (key: string): boolean => key.startsWith("fitnessChecks[");
+
+/**
  * THE RETIRED-KEY ACCOUNT (@SCN-USG-021) — one line per `specController.*` key this reader has
  * retired that the target's manifest still carries, naming the key and saying what became of it.
  *
@@ -25,7 +33,11 @@ import type { RenderInput } from "../assemble/renderInput.js";
 const retiredKeyAccount = (keys: readonly string[] | undefined): string[] =>
   (keys ?? []).map(
     (key) =>
-      `- specController.${key} — retired: this reader no longer reads it, and none of its entries reach the books.`
+      `- specController.${key} — retired: ${
+        isRowBar(key)
+          ? "this reader no longer reads a row's bar, and the row is credited by its step's outcome."
+          : "this reader no longer reads it, and none of its entries reach the books."
+      }`
   );
 
 /**
