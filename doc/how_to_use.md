@@ -160,13 +160,15 @@ not obliged on this run"* are different claims, and only the first is modelled.
 ## Install
 
 ```sh
-npm install -g spec-controller
+npm install -g spec-controller@alpha
 ```
+
+`@alpha` is not optional until `0.1.0` publishes: a bare install resolves `latest`, which npm set to `0.1.0-alpha.1` on the first publish, and that version has neither `tags` nor `--ci-steps`.
 
 Or run without installing:
 
 ```sh
-npx spec-controller balance --features ./features …
+npx spec-controller@alpha balance --features ./features …
 ```
 
 ---

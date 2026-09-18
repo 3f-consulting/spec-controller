@@ -204,8 +204,11 @@ dist-tag, a stable version becomes `latest`:
 A hard-coded `--tag alpha` would publish the first stable release under `alpha`, which is a silent
 fault with no guard.
 
-**`latest` is never a prerelease.** While these packages have no stable release the documented
-install line is:
+**`latest` is never MOVED onto a prerelease — but it carries one today.** npm points `latest` at a
+package's first-ever publish whatever its version, so both packages have `latest` at
+`0.1.0-alpha.1`, the reader from before the fitness-axis rework: no `tags` command and no
+`--ci-steps` flag. A bare `npm i spec-controller` installs it. While these packages have no stable
+release the documented install line is therefore:
 
 ```
 npm i spec-controller@alpha
