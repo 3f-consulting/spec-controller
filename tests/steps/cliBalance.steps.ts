@@ -307,7 +307,6 @@ Given("a target whose vitest report carries a collection-failed suite", function
 
 // @SCN-CLI-010
 Given("a target whose only exception is Pending Items", function () {
-  const root = process.cwd();
   // The PENDING-ONLY fixture: every scenario's sole obligation is a deferred
   // `<quality-check>pending` one, so each partitions off to a one-sided Pending Item
   // (run-neutral by default — slice 2 / @SCN-PND-008), leaving ZERO reconciled rows. No
@@ -317,19 +316,25 @@ Given("a target whose only exception is Pending Items", function () {
   // no reconciling item anywhere, so process.exitCode stays 0. Distinct from CLI-005's
   // all-balanced target (that one carries NO Pending Item) — this pins that Pending Items
   // specifically are run-neutral without --strict, not merely that a clean run exits 0.
+  invocationArgs = pendingOnlyArgs();
+});
+
+/** The pending-only target's invocation — shared by @SCN-CLI-010/011 and @SCN-CLI-021's Example. */
+function pendingOnlyArgs(): string[] {
+  const root = process.cwd();
   assert.ok(existsSync(join(root, PENDING_ONLY.features)), `missing fixture features: ${PENDING_ONLY.features}`);
   assert.ok(
     existsSync(join(root, PENDING_ONLY.packageJson)),
     `missing fixture package.json: ${PENDING_ONLY.packageJson}`,
   );
-  invocationArgs = [
+  return [
     "--features",
     PENDING_ONLY.features,
     "--package-json",
     PENDING_ONLY.packageJson,
     ...NO_WORKFLOWS("tests/fixtures/pending-only"),
   ];
-});
+}
 
 // @SCN-CLI-010
 Then("the reconciliation reports a Pending Item", function () {
@@ -1289,3 +1294,89 @@ Then("that sentence names the corpus directory it examined", function () {
     `"I found no record" and "I found no regression" must not wear one word: the verdict never names the corpus directory (${CORPUS_DIR}) it examined.\n  ${line}`,
   );
 });
+
+/**
+ * @SCN-CLI-021 — under `--exit-zero` a verdict run prints the same report and exits 0 (3F-3526).
+ * The same target is run twice through the real binary, once without the flag and once with it;
+ * the pair is what every Then below reads.
+ */
+let exitZeroPair: { without: SpawnSyncReturns<string>; with: SpawnSyncReturns<string> } | undefined;
+
+// @SCN-CLI-021
+Given("a target that reconciles only-Pending-Items", function () {
+  invocationArgs = pendingOnlyArgs();
+});
+
+/** The Outline's `<flags>` cell as the argv it stands for; an unknown cell is a typo, not "no flags". */
+const EXIT_ZERO_FLAGS: Record<string, string[]> = {
+  "no flags": [],
+  "--strict": ["--strict"],
+};
+
+// @SCN-CLI-021
+When(
+  "{string} is invoked with {} over that target through the CLI binary, once without --exit-zero and once with it",
+  function (command: string, flags: string) {
+    assert.equal(command, "spec-controller balance");
+    const extra = EXIT_ZERO_FLAGS[flags];
+    assert.ok(extra !== undefined, `unrecognised <flags> cell: ${flags}`);
+    const without = spawnBalance([...invocationArgs, ...extra]);
+    const withFlag = spawnBalance([...invocationArgs, ...extra, "--exit-zero"]);
+    exitZeroPair = { without, with: withFlag };
+  },
+);
+
+function exitZeroRuns(): { without: SpawnSyncReturns<string>; with: SpawnSyncReturns<string> } {
+  assert.ok(exitZeroPair !== undefined, "the with/without --exit-zero pair was never run");
+  return exitZeroPair;
+}
+
+function statusOf(run: SpawnSyncReturns<string>, label: string, code: number): void {
+  assert.equal(
+    run.status,
+    code,
+    `expected ${label} to exit ${code}; got ${run.status}\nstdout:\n${run.stdout}\nstderr:\n${run.stderr}`,
+  );
+}
+
+// @SCN-CLI-021
+Then("without --exit-zero the command exits with status {int}", function (code: number) {
+  statusOf(exitZeroRuns().without, "the run without --exit-zero", code);
+});
+
+// @SCN-CLI-021
+Then("with --exit-zero the command exits with status {int}", function (code: number) {
+  statusOf(exitZeroRuns().with, "the run with --exit-zero", code);
+});
+
+/** The one line two processes may differ on: each stamps its own run start. */
+const RUN_TIMESTAMP_LINE = /^- Run timestamp \(UTC\): .+$/m;
+
+/** The report with its run-timestamp line masked — asserting the line exists, so the mask is never vacuous. */
+function maskRunTimestamp(stdout: string, label: string): string {
+  assert.match(stdout, RUN_TIMESTAMP_LINE, `${label} printed no run-timestamp line to mask`);
+  return stdout.replace(RUN_TIMESTAMP_LINE, "- Run timestamp (UTC): <masked>");
+}
+
+// @SCN-CLI-021
+Then(
+  "the two runs print the same Evidence Reconciliation to stdout, byte for byte but for the run timestamp each stamps for itself",
+  function () {
+    const { without, with: withFlag } = exitZeroRuns();
+    assert.match(without.stdout, /^# Evidence Reconciliation/m);
+    assert.equal(
+      maskRunTimestamp(withFlag.stdout, "the run with --exit-zero"),
+      maskRunTimestamp(without.stdout, "the run without --exit-zero"),
+      "--exit-zero changed the report: only the exit status may move",
+    );
+  },
+);
+
+// @SCN-CLI-022 — the one new step: the other Givens and Thens are @SCN-CLI-002/012/019's own.
+When(
+  "{string} is invoked with --exit-zero over that target through the CLI binary",
+  function (command: string) {
+    assert.equal(command, "spec-controller balance");
+    cliResult = spawnBalance([...invocationArgs, "--exit-zero"]);
+  },
+);

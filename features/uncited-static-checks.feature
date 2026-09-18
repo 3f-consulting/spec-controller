@@ -792,8 +792,8 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
 
     THE FIRST RUN STILL REDS, AND THAT IS NOT SOFTENED HERE. A candidate citing nothing posts to
     suspense, so a consumer who has configured nothing is out of balance on their first run. That is
-    the state as it stands, it is asserted rather than worked around, and the reporter mode that
-    changes it is 3F-3100's.
+    the state as it stands, and it is asserted rather than worked around. --exit-zero moves the
+    exit status of that run and never the report this Rule pins (3F-3100).
 
     THE EXACT SET IS THE CONTROL, not a count. A reader that discovered nothing satisfies no part of
     this; a reader that dropped uses: steps, or one that guessed at a default runner for a block the

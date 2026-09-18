@@ -369,7 +369,8 @@ export function runBalance(argv: string[]): void {
   // credits HAS a row — its suspense row — and is an ordinary out-of-balance report at exit 1
   // (@SCN-CLI-020). @SCN-CLI-004/005/010/012 are BYSTANDERS: every one of their fixtures carries
   // rows, so none reaches this branch.
-  const code = verdictExitCode(balance.ledger, args["strict"] !== undefined);
+  const verdict = verdictExitCode(balance.ledger, args["strict"] !== undefined);
+  const code = args["exit-zero"] !== undefined ? exitZeroStatus(verdict) : verdict;
   // Assigned only when NON-ZERO, so a balanced run still LEAVES process.exitCode at its default
   // rather than writing a 0 over it — the distinction @SCN-CLI-005 and @SCN-CLI-010 both rest on.
   if (code !== 0) process.exitCode = code;
@@ -534,6 +535,18 @@ function verdictExitCode(ledger: Ledger, strict: boolean): number {
   if (!isBalanced(ledger)) return 1;
   if (strict && hasPendingItems(ledger)) return 3;
   return 0;
+}
+
+/**
+ * The codes `--exit-zero` moves to 0 (@SCN-CLI-021, 3F-3100): the two VERDICTS on the target —
+ * out-of-balance and pending-under-`--strict`. Enumerated rather than "anything non-zero", because
+ * unsound (4) and nothing-to-reconcile (5) are not verdicts but the absence of a trustworthy one,
+ * and suppressing a verdict never suppresses that. Usage (2) exits before the ladder is reached.
+ */
+const VERDICT_CODES: ReadonlySet<number> = new Set([1, 3]);
+
+function exitZeroStatus(code: number): number {
+  return VERDICT_CODES.has(code) ? 0 : code;
 }
 
 // Only run the balance command when this module is executed directly

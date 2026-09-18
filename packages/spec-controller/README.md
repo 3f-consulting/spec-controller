@@ -30,6 +30,20 @@ spec-controller balance --features ./features
 
 Every scenario comes back as a row whether or not any evidence exists for it, so on this first run the ones you have supplied no reports for read **missing** and the run comes back out-of-balance. That is the shape of the tool rather than a fault in your repository: the reconciliation starts from what you specified, not from what a tool happened to find, and there is no input for which the right answer is silence.
 
+**`balance` fails your build out of the box.** An out-of-balance run exits `1`, so the first run above reds any pipeline you put it in. That is a deliberate departure from two tools it sits beside: Stryker's `thresholds.break` defaults to `null` (*"never let your build fail"*), and the Sonar scanner exits `0` whatever its quality gate says unless you set `sonar.qualitygate.wait`. Both make you opt in to gating. `balance` makes you opt out.
+
+### Report first, gate later
+
+To bring it into a pipeline you already have without redding it on day one, add `--exit-zero`:
+
+```
+spec-controller balance --features ./features --vitest ./vitest-report.json --exit-zero
+```
+
+The report is byte for byte the one the gate prints: the same rows, the same out-of-balance count, and the same headline naming the code the gate would give. Only the exit status moves. Out-of-balance (`1`) and pending under `--strict` (`3`) exit `0`. Usage (`2`), unsound (`4`) and nothing to reconcile (`5`) still fail, because each means the run could not give a verdict at all, and a flag that suppresses verdicts does not suppress that.
+
+Work the out-of-balance rows down, then delete `--exit-zero`, and the gate is on. Don't wrap the step in `continue-on-error` or `|| true` instead: those swallow the codes that mean the run could not be trusted, and they leave nothing in the command to say the gate is off.
+
 Now give it the evidence:
 
 ```
@@ -53,6 +67,8 @@ A scenario tagged `@unit` names an obligation — a unit test must exist and pas
 | `5` | nothing to reconcile — no scenario was declared and no evidence was produced, so the run had no basis for a verdict |
 
 The whole report is written before the code is set, so a failing run still tells you why.
+
+`--exit-zero` moves `1` and `3` to `0` and leaves every other code alone: see *Report first, gate later*.
 
 **Node's default is never one of these.** A run that cannot reconcile ends on an enumerated code of
 its own rather than falling out of the process — a crash that exits `1` would be indistinguishable,

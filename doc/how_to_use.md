@@ -152,8 +152,8 @@ and nothing in the resolution reads a manifest.
 
 **Your first run against an unannotated pipeline reds.** Every candidate cites nothing, so every
 credit posts to suspense and `balance` exits 1 — the ledger being right about a corpus that demands
-nothing yet. Adopting by observing rather than by redding the build is
-[3F-3100](3F-3100), and it is not in the tool today.
+nothing yet. To adopt by observing rather than by redding the build, run it with `--exit-zero`. You get
+the same report, and the out-of-balance verdict exits `0`. Remove the flag when you are ready to gate.
 
 **A check that legitimately applies to only some platforms is not served.** A matrix build uses
 `if:` to skip such a step, and that skip reds. *"The command examined nothing"* and *"this row was
@@ -207,6 +207,8 @@ spec-controller balance --features ./features \
 | `--source-sha <sha>` | Override the git commit SHA recorded in provenance (defaults to the resolved HEAD). |
 | `--format <fmt>[:<path>]` | Where to send output (`md` or `json`, optionally `:<path>` to write to a file). Repeatable. See below. |
 | `--render-from-json <path>` | Re-render Markdown from a previously saved Evidence Reconciliation JSON — no reconcile, no live inputs. |
+| `--strict` | Fail the run (exit `3`) when it carries Pending Items, which are otherwise run-neutral. |
+| `--exit-zero` | Print the same report, but exit `0` on an out-of-balance (`1`) or `--strict` pending (`3`) verdict. Usage (`2`), unsound (`4`) and nothing-to-reconcile (`5`) still fail. The on-ramp before gating. |
 | `--help`, `-h` | Show `balance`'s help and exit. |
 
 ### `--format` — routing the output
@@ -373,7 +375,7 @@ Two limits worth knowing. Each step's summary is capped at **1 MiB** — exceedi
 
 **A static check shows as `missing` or `watermelon` you didn't expect** — `missing` means the script named for that check isn't in `package.json`; `watermelon` means the script exists but no CI `run:` step actually invokes it over the real source. Both are real findings, not tool errors — that is the point.
 
-**My first run reds with a wall of uncited checks** — expected, and not a misconfiguration. Every step of the workflows `--ci` names is a candidate fitness check until something says otherwise, and a candidate that cites no scenario posts to suspense, so `balance` exits 1. Read the **Discovery scope** and **Step accounting** sections of the report: they name each workflow and job, how many steps were read, and what became of every one of them. Then name your runners, name your non-checks, or narrow `--ci` — see *Naming your runners, and the one limit that remains*.
+**My first run reds with a wall of uncited checks** — expected, and not a misconfiguration. Every step of the workflows `--ci` names is a candidate fitness check until something says otherwise, and a candidate that cites no scenario posts to suspense, so `balance` exits 1. Read the **Discovery scope** and **Step accounting** sections of the report: they name each workflow and job, how many steps were read, and what became of every one of them. Then name your runners, name your non-checks, or narrow `--ci` — see *Naming your runners, and the one limit that remains*. To keep the report while you work it down without redding the build, add `--exit-zero`; delete it when you are ready to gate.
 
 **A step I know is my test suite is reported as a check** — the runner recognition did not reach it. It matches a whole shell token of the step's command or of the `package.json` script the step invokes; a suite run through a `uses:` action, or one buried in a quoted argument to a wrapper, is not reached. Add the step to `specController.notChecks`. The failure direction is deliberate: a step wrongly reported is one line to fix, a step wrongly excluded would be invisible.
 

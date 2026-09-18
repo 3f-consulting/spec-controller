@@ -131,6 +131,10 @@ const balanceFlags: FlagSpec[] = [
     description: "Fail the run (exit 3) when it carries Pending Items — the opt-in that escalates otherwise-run-neutral deferred obligations.",
   },
   {
+    name: "--exit-zero",
+    description: "Print the same report but exit 0 on an out-of-balance (1) or --strict pending (3) verdict — the on-ramp before gating. Usage (2), unsound (4) and nothing-to-reconcile (5) still fail.",
+  },
+  {
     name: "--help",
     aliases: ["-h"],
     description: "Show this help and exit.",

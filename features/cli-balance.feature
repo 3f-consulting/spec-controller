@@ -272,6 +272,41 @@ Feature: spec-controller balance runs standalone
       And the command exits with status 1
       And the run is never read as one with nothing to reconcile
 
+  Rule: --exit-zero moves the verdict codes to 0 and never the couldn't-run codes
+
+    The on-ramp for a new-client or annotated adopter: the gate's report, stated exactly,
+    without the red. Gate stays the default. The flag is a CLI-edge suppression of the
+    process status only, invisible to the core exactly as --strict is — so the report,
+    headline included, still names the code the GATE gives; @SCN-CLI-013's agreement is
+    between the headline and the gate, and holds unchanged with no flag.
+
+    @SCN-CLI-021 @unit @e2e
+    Scenario Outline: under --exit-zero a <verdict> run prints the same report byte for byte and exits 0
+      Given a target that reconciles <verdict>
+      When "spec-controller balance" is invoked <flags> over that target through the CLI binary, once without --exit-zero and once with it
+      Then without --exit-zero the command exits with status <code>
+      And with --exit-zero the command exits with status 0
+      And the two runs print the same Evidence Reconciliation to stdout, byte for byte but for the run timestamp each stamps for itself
+
+      Examples:
+        | verdict            | flags         | code |
+        | all-balanced       | with no flags | 0    |
+        | out-of-balance     | with no flags | 1    |
+        | only-Pending-Items | with --strict | 3    |
+
+    @SCN-CLI-022 @unit @e2e
+    Scenario Outline: --exit-zero never masks a run that could give no verdict — <state> still exits <code>
+      Given <target>
+      When "spec-controller balance" is invoked with --exit-zero over that target through the CLI binary
+      Then the command exits with status <code>
+      And <evidence>
+
+      Examples:
+        | state                | target                                                         | code | evidence                                                                           |
+        | usage                | a target, and --vitest pointing at a path that does not exist  | 2    | stderr names --vitest and the missing path                                         |
+        | unsound              | a target whose vitest report carries a collection-failed suite | 4    | it prints the Evidence Reconciliation to stdout                                    |
+        | nothing to reconcile | a target that declared no scenario and produced no evidence    | 5    | the verdict headline says the run had nothing to reconcile, never that it balanced |
+
   Rule: the CLI answers --help from a single command/flag registry, completeness-guarded.
 
     `<command> --help` (and `-h`) prints THAT command's flags — each name +

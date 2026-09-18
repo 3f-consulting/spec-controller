@@ -210,9 +210,9 @@ rule silence hid checks you **have**, and a false negative is invisible.
 
 **Your first run reds, and it is meant to.** Every candidate cites nothing, so every credit posts to
 suspense and `balance` exits 1. That is the ledger being right about a corpus that demands nothing
-yet, not the tool failing to start — and it is the number that shrinks as you convert. Adopting by
-observing rather than by redding the build is
-[3F-3100](3F-3100), and it is not in the tool today.
+yet, not the tool failing to start — and it is the number that shrinks as you convert. To adopt by
+observing rather than by redding the build, add `--exit-zero`: the same report, with the
+out-of-balance verdict exiting `0`, until you delete the flag and turn the gate on.
 
 **`annotated` was never manifest-shaped either, and that is the point of putting the citation on the
 step.** An `id:` is a key of the step mapping, the command below it is any command in any language,

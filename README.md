@@ -121,6 +121,8 @@ spec-controller balance \
   --cucumber ./cucumber-report.json
 ```
 
+`balance` is a gate: an out-of-balance run exits `1` and fails your build. That diverges from Stryker, whose `thresholds.break` defaults to `null`, and from the Sonar scanner, which exits `0` unless you set `sonar.qualitygate.wait`. To report first and gate later, add `--exit-zero`. You get the same report, and exit `0` on an out-of-balance verdict or a `--strict` pending one. A usage fault, an unsound run or a run with nothing to reconcile still fails. Remove the flag when the ledger balances.
+
 By default the reconciliation report prints to stdout as Markdown. Route it to files, or emit JSON, with `--format` (repeatable):
 
 ```
