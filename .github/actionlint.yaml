@@ -10,12 +10,19 @@
 #
 # `release.yml` and `mutation.yml` were clean. The workflow line was 1016 before the step that
 # carries this check was written in and 1044 after — the pattern below does not read it, and it is
-# quoted only so a reader can find the step. Columns 160 and 293 ARE read, and they are the
-# character offsets of the two `$(` inside the `Self-reconciliation balance` step's own command
-# string — positional, so they are the same whichever shellcheck build reports them.
+# quoted only so a reader can find the step. The column IS read, and it is the character offset of
+# the `$(` inside the `Self-reconciliation balance` step's own command string — positional, so it
+# is the same whichever shellcheck build reports it.
+#
+# ONE EXPANSION NOW, AND ONE COLUMN (3F-3504). The `--measurements` expansion at column 160 left
+# when the only writer of its file did, so the `--ci-steps` expansion moved up into column 160 and
+# column 293 names nothing. Read off actionlint 1.7.12 with this file emptied, not counted:
+#
+#   .github/workflows/ci.yml:605:9: shellcheck reported issue in this script:
+#     SC2046:warning:1:160: Quote this to prevent word splitting [shellcheck]
 #
 # WORD SPLITTING IS THE MECHANISM HERE, NOT AN OVERSIGHT, and that step's own comment says so in as
-# many words: "The `$(...)` is unquoted on purpose — the two tokens have to split." Each expansion
+# many words: "The `$(...)` is unquoted on purpose — the two tokens have to split." The expansion
 # is `$([ -f "$DIR/x.json" ] && echo "--flag $DIR/x.json")` and has to yield TWO words where the
 # file exists and NO word where it does not. Quoted it yields exactly one word in both cases: a
 # flag and a path welded into a single token the CLI cannot read, or — worse — an EMPTY token,
@@ -42,9 +49,9 @@
 # by nothing else: there is no per-step directive, and a `# shellcheck disable=` line needs a
 # script with a line above the command, which a single-line `run:` does not have. So the narrowest
 # instrument the tool offers is this pattern, and it is pinned as far as it will go — one file, one
-# rule, one severity, script line 1, the message in full, and the two exact columns. What it
-# cannot exclude is a second SC2046 arriving at precisely column 160 or 293 of another single-line
-# `run:` in this same file. THE PINNING FAILS SAFE: edit the balance command and the columns move,
+# rule, one severity, script line 1, the message in full, and the one exact column. What it
+# cannot exclude is a second SC2046 arriving at precisely column 160 of another single-line
+# `run:` in this same file. THE PINNING FAILS SAFE: edit the balance command and the column moves,
 # this pattern stops matching, and the gate REDS — it never goes quiet. That is the intended
 # behaviour and not a maintenance defect; a reader who moves that line is meant to come back here.
 #
@@ -54,4 +61,4 @@
 paths:
   .github/workflows/ci.yml:
     ignore:
-      - 'shellcheck reported issue in this script: SC2046:warning:1:(160|293): Quote this to prevent word splitting'
+      - 'shellcheck reported issue in this script: SC2046:warning:1:160: Quote this to prevent word splitting'

@@ -68,8 +68,8 @@ pnpm cucumber --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json"
 see *A LOCAL SELF-RECONCILIATION REPORTS EVERY FITNESS ROW AS `missing`* below. Measured at
 3F-3475, and again once the run-time rows became step outcomes: every command above green, and the
 reconciliation out of balance on `@SCN-FIT-012`, `@SCN-FIT-013` and `@SCN-FIT-002` — the first two
-because their evidence is their step's outcome in the run's own step record, the third because the
-step that PLACES its measurement is a step of `ci.yml`, and your machine runs no pipeline.
+because their evidence is their step's outcome in the run's own step record, the third because its
+step reads the nightly sweep's verdict from inside `ci.yml`, and your machine runs no pipeline.
 
 **Every converted check is a CI step, carrying its `@SCN` as the step's `id:`.** A converted check
 is both a row of `specController.fitnessChecks` and a `run:` step whose `id:` cites that row — the
@@ -86,41 +86,33 @@ redded on an exclusion excusing a step CI no longer ran. It left with the deriva
 and so did `specController.ciOnlyExclusions`, which nothing reads. What is left is the pipeline
 itself: a step you did not run locally is a step you find out about on the pull request.
 
-**One row is MEASURED — its evidence is a number rather than an exit code.** It has a configured
-row in `specController.fitnessChecks` naming the characteristic, the command that prints the
-number, and the bar the ledger holds it to. That command is a CI step of its own; it writes what it
-read into the run's measurement record, and the self-reconciliation does the comparing. The row is
-answered when its command *wrote* a number — whether that number is inside its bar is the ledger's
-sentence, in one place.
-
 **The two run-time rows are not measured, and nothing here times a suite.** `@SCN-FIT-012` (the
 unit suite) and `@SCN-FIT-013` (the behavioural suite) are step-outcome rows: `ci.yml` runs each
 suite under `timeout 75` and `timeout 150`, the step carries the row's `@SCN` as its `id:`, and the
 row names no bar. A suite past its limit fails its step, and the ledger reads that outcome as it
 reads any other converted check's.
 
-**The measured row reads a number no local run takes.** `@SCN-FIT-002` — this repository's own domain-core
-mutation score — names `pnpm --silent mutation:score` and holds it to the `atLeast` on its own row.
-That same integer is the `break` threshold `stryker.config.mjs` reads back off the row, so the
-ledger and the runner cannot disagree about where the floor is.
+**The mutation row is not measured either, and it reads a verdict no local run takes.**
+`@SCN-FIT-002` — this repository's own domain-core mutation score — is a step-outcome row with no
+bar. `ci.yml`'s `Mutation score` step carries its `@SCN` as its `id:` and asks stock `gh` whether the
+newest `mutation.yml` run on `main`, created inside the last 26 hours, concluded `success`. The bar
+is the 95 `stryker.config.mjs` states as `thresholds.break`, and it is written nowhere else.
 
-A mutation sweep costs 8-12 minutes on CI, so it runs nightly
-(`.github/workflows/mutation.yml`) and leaves what it measured as a SWEEP RECORD; CI places
-that record into `mutation-measurements.json` while it is still young enough to be about
-the code being judged. **The window is the producer's cadence plus a margin — 24 h + 2 h = 26 h**
-for a nightly. Past it nothing is placed at all: the command then has nothing to print, its own
-step reds and the self-reconciliation reds on the row, which reads `missing`.
-That is how a nightly that stops running says so.
+A mutation sweep costs 8-12 minutes on CI, so it runs nightly (`.github/workflows/mutation.yml`).
+**The window is the schedule's cadence plus a margin — 24 h + 2 h = 26 h** for a nightly. A lapsed,
+crashed or below-bar sweep fails the step, and on an ordinary push that reds the job before the
+self-reconciliation runs, so the lapse shows as a red job rather than a `failing` line. The recipe,
+and what reading a verdict instead of a number gives up, is
+[`doc/scheduled-checks.md`](./doc/scheduled-checks.md).
 
-On your machine there is nothing to place, so run the sweep once:
+To see the score on your machine, run the sweep:
 
 ```
 pnpm mutation
 ```
 
-That is ~45 seconds locally and writes the sweep record, so `pnpm --silent mutation:score` has a
-number to print. Skipping it fails that command and leaves the self-reconciliation reporting the row as
-`missing` — the true sentence rather than a false red: no measurement arrived.
+That is `stryker run` and nothing else. It exits non-zero below 95, and the report is under
+`reports/mutation/`. Nothing a local run does settles the row.
 
 **A LOCAL SELF-RECONCILIATION REPORTS EVERY FITNESS ROW AS `missing`, AND THAT IS THE DESIGN RATHER
 THAN A FAULT.** A local run cannot settle a fitness row — only CI produces a step record. The
@@ -132,13 +124,6 @@ different fact from a run whose record carried nothing. **The checks themselves 
 — every one of them is a step of `ci.yml` you can type at a shell — and their teeth are their
 own exit codes, unchanged. What a local run does not have is the ledger's view of them, and the one
 place that view is real is CI.
-
-**And `measurements.json` — the credit stream — persists between local runs and
-is merged into, not rewritten.** CI starts cold; your machine does not. A row you renamed, or a
-producer you withheld to plant a fault, will find its own previous output waiting, so a plant can
-green on evidence it never produced and a stale credit can reconcile as a phantom row citing an
-unknown scenario. **Clear the artefact as part of any plant, and say what state the root was in
-when you report the result.**
 
 ## The report's `### Static checks` line, and which of its zeros is vacuous
 

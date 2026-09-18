@@ -2,20 +2,18 @@
  * THE MODULE'S OWN SURFACE — curated symbol by symbol, never a re-export of the tree behind it
  * (3F-2804, 3F-3337).
  *
- * WHAT IS BEHIND THIS BARREL NOW IS TWO READERS, AND THE RATCHET THEY WERE BUILT FOR IS GONE
+ * WHAT IS BEHIND THIS BARREL NOW IS ONE READER, AND THE RATCHET IT WAS BUILT FOR IS GONE
  * (3F-3337). `record.ts` reads a target's banked gate record and hands back the kill floor it
- * implies; `report.ts` counts a mutation report's own mutants into a measurement. What left with
- * the ratchet is everything that COMPARED the two — the verdicts, the up-only recorder, the
- * reconciliation entry and the command that ended on it — because this repository's gate is now a
- * per-mutant comparison the runner keeps, and nothing types a mutation count here any more.
+ * implies. What left with the ratchet is everything that COMPARED a record with a sweep — the
+ * verdicts, the up-only recorder, the reconciliation entry and the command that ended on it. The
+ * other reader, `report.ts`, counted a mutation report's own mutants into a measurement for this
+ * repository's nightly producer, and left with that producer (3F-3505): the push now reads the
+ * nightly sweep's own verdict, which Stryker reaches against the break threshold in its own config
+ * (3F-3483), so nothing here counts a mutant any more.
  *
- * ITS TWO CONSUMERS ARE BOTH IN THIS TREE, AND THEY WANT DIFFERENT HALVES. `ingest/
- * ingestQualityChecks.ts` wants the RECORD half: the engine's `mutationGate` bar kind lets a target
- * author a fitness row naming a gate instead of a figure, which is a published capability decided
- * over a target's own record (@SCN-MUT-012, @SCN-MUT-013). `tests/checks/mutationScoreCli.ts` wants
- * the REPORT half: `pnpm mutation:score` takes the two counts out of a sweep's report and divides
- * them (@SCN-MUT-007, @SCN-MUT-008). Neither wants the other's, which is why both are named here
- * rather than the tree behind them being passed on wholesale.
+ * ITS ONE CONSUMER IS IN THIS TREE. `ingest/ingestQualityChecks.ts` wants the RECORD: the engine's
+ * `mutationGate` bar kind lets a target author a fitness row naming a gate instead of a figure,
+ * which is a published capability decided over a target's own record (@SCN-MUT-012, @SCN-MUT-013).
  *
  * A BARREL THAT RE-EXPORTED EVERY MODULE WOULD BE A CONTRACT NOBODY WROTE. Each module below
  * exports what its own siblings need from it, and sibling-visibility is a much wider set than
@@ -56,10 +54,3 @@ export {
   RECORD_FILE,
   type GateRecord as MutationGateRecord,
 } from "./record.js";
-
-export {
-  measurementFromReport,
-  readMutationReport,
-  type MutationMeasurement,
-  type MutationReportRead,
-} from "./report.js";

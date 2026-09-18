@@ -277,42 +277,21 @@ Past the limit GNU `timeout` exits 124, the step's `outcome` is `failure`, and t
 outcome as any other converted check's does. Nothing times the suite, nothing writes a timing down,
 and nothing reads one back.
 
-**One row reads a number something else produced, and one rule governs it.**
+**A scheduled check is the step that reads its verdict, and it needs no number either.**
+`SCN-FIT-002` holds this repository's domain core to a mutation score, and a sweep costs 8-12
+minutes against a 2-minute ladder, so it runs nightly. The bar is Stryker's own
+`thresholds.break: 95`, so the nightly run concludes `failure` below it. The push step carries the
+row's `@SCN` as its `id:` and asks stock `gh` whether the newest finished nightly on `main`, created
+inside the last 26 hours, concluded `success`. The row names no bar:
 
-| row | what its command reads |
-| -- | -- |
-| `SCN-FIT-002` | the record placed from the nightly mutation sweep |
+```json
+{ "scn": "SCN-FIT-002", "characteristic": "mutation", "command": "gh run list --workflow mutation.yml" }
+```
 
-**A measurement is read only if THIS RUN placed it, and the placement decides freshness before
-placing.** The mechanism is **absence, not a timestamp**: past the window nothing is placed, the
-command has nothing to print, its step reds, and the row reads `missing` — the true sentence, the
-sweep has lapsed. No clock lives in the reader and none lives on the row.
-
-**"Nothing is placed" is only half of the rule — a refusal also REMOVES.** Placing nothing has no
-effect at all on an evidence root that OUTLIVES the run: the last run's copy is still sitting
-there, the row's own command reads it, and the row is settled by a number this run has already
-refused. So each placement's first act is to delete the one record it answers for, and the age test
-then decides whether it comes back. That is what makes stale and absent the same observable, which
-is the claim the paragraph above rests on. It removes that one record and never the root — the
-other placements' records are not its to touch.
-
-**The window is a derivation, not a constant: the producer's cadence plus a margin.** A nightly
-sweep is **24 h + 2 h = 26 h**. A twice-daily sweep reads the same rule and gets 14. Copy the
-derivation, never our number.
-
-⚠️ **Ordering is not a freshness mechanism.** A step placed ahead of the producer it reads meets an
-absent artefact and its row reads `missing` — which is the placement rule working, not a second
-rule beside it. Do not reason about which step runs first as though that were what makes a
-measurement valid.
-
-| row | why it cannot be run cold |
-|---|---|
-| `SCN-FIT-002` | `mutation:score` reads the record placed from the **nightly sweep**, and only while it is inside its window |
-
-That is why its step runs behind the placement: its evidence is collected somewhere other than the
-moment the row is read. `Freshness` is what decides whether it still counts — an explicit window
-for a scheduled producer, so a nightly that stops running reds on its own once the window lapses.
-The run-time rows above never meet the question, because their bar is the step that runs the suite.
+A lapsed schedule leaves no run inside the window, so the step fails, and so does a sweep that
+crashed or scored below its bar. The window is a derivation, not a constant: the schedule's cadence
+plus a margin, **24 h + 2 h = 26 h** for a nightly. Copy the derivation, never our number. The step
+itself, and what this shape gives up, are in [`scheduled-checks.md`](./scheduled-checks.md).
 
 **So what does the pipeline add, if the commands already work?** Enumeration, and only enumeration.
 A check reports what it found and says nothing when it finds none, so its silence cannot be told
@@ -327,16 +306,18 @@ migration should take away.
 
 ## Two things that are easy to get wrong
 
-**1. A reader-shaped check's step is answered by placement, not by position.** Some rows read what
-another step produced, such as a mutation sweep's placed record. If nothing placed a
-measurement for this run, the row reads `missing` and says so — whatever order the steps ran in.
-Putting such a step ahead of its producer therefore fails loudly rather than silently, which is the
-design and not a hazard to route around.
+**1. Where the tool has a bar of its own, carry its verdict across runs, not its number.** A check whose evidence is produced somewhere
+else, such as a nightly sweep, is tempting to carry across as its number: a producer writing a
+record, an upload, a placement on the push that checks the record's age, and a reader printing the
+number for a bar on the row. That is four pieces of your own code, and the scheduled run's own
+conclusion already says whether the number cleared the bar the tool was given. Read that
+conclusion in one step, as above. This repository built the four pieces, and deleted them
+(3F-3483).
 
-**A run-time check does not need that shape, so do not give it one.** It is tempting to measure a
-suite's wall-clock where the suite runs — a timing wrapper around the step, writing a record — and
-read it back in a step of its own. That is a producer, a record, a placement and a reader, all to
-put on the books a fact the step already has. Run the suite under `timeout <seconds>`, give the step
+**A run-time check does not need that shape either.** It is tempting to measure a suite's
+wall-clock where the suite runs — a timing wrapper around the step, writing a record — and read it
+back in a step of its own. That is a producer, a record and a reader, all to put on the books a
+fact the step already has. Run the suite under `timeout <seconds>`, give the step
 the row's `id:`, and let the row name no bar. This repository built the long way first, and deleted
 it.
 
@@ -489,35 +470,20 @@ is one no row configures, and the ledger's census names each of them.
 5. **Sweep the citations.** A minted `@SCN` changes every surface that names the old one — the
    corpus, step ids, unit-test pins, docblocks, workflow comments, the decision log. Grep for the
    retired code and expect zero hits.
-6. **Watch out for a measured check whose producer runs on another cadence.** Renaming the `@SCN`
-   of a static check touches only your own tree. A measured check's number is stamped with that
-   `@SCN` by whatever *produced* it — a nightly sweep, a scheduled job — and read back by both
-   terms. If the producer runs on a different schedule, or on a different branch, the newest record
-   available to your build was written by the code you are replacing, and the rename desynchronises
-   the two for as long as it takes the producer to run again. **There is no atomic version of that
-   change**, and the two honest routes are:
-
-   - **Expand / contract.** The reader accepts the superseded
-     code for one cycle. Say it on the row's own command line rather than in a manifest field —
-     the only thing that has to understand it is the row's *own reader*, which is your program, not
-     the reconciler, and the command line is the form a consumer can copy:
-
-     ```json
-     { "scn": "SCN-FIT-002", "characteristic": "mutation",
-       "command": "pnpm --silent mutation:score --supersedes SCN-MUT-011",
-       "atLeast": 80 }
-     ```
-
-     Move the **producer** to the new code in the same commit, or the transition never contracts.
-     Then take the flag off once one producer run has stamped the new code — **a transition with no
-     end is a resting state wearing a transition's name**, so file its removal as you add it.
-   - **Take the transient deliberately.** Rename both sides and accept a red window between the
-     merge and the producer's next run. Honest, and announced rather than discovered.
-
-   The route that is not available is deferring the mint indefinitely. A code is stable
-   forever and survives a feature-file rename, so a check may keep its code while its scenario
-   moves — but a migration that leaves one check in the old numbering has not migrated, it has
-   stopped.
+6. **Watch out for a check whose evidence is stamped with its `@SCN` somewhere you do not
+   rebuild.** Renaming the `@SCN` of a check answered by its step's outcome touches only your own
+   tree: the code lives on the row, the scenario and the step's `id:`, and all three move in one
+   commit. That includes a scheduled check read as its run's verdict, because a run's conclusion
+   carries no code. A check whose *number* is written down by a job on another cadence, stamped
+   with the `@SCN`, is different: the newest record your build can read was written by the code
+   you are replacing, and the rename desynchronises the two until that job runs again. **There is
+   no atomic version of that change.** Either have the row's reader accept the superseded code
+   for one cycle, and file the removal of that acceptance as you add it, or rename both sides and
+   accept a red window between the merge and the job's next run, announced rather than
+   discovered. The route that is not available is deferring the mint indefinitely. A code is
+   stable forever and survives a feature-file rename, so a check may keep its code while its
+   scenario moves, but a migration that leaves one check in the old numbering has not migrated,
+   it has stopped.
 7. **Compare the ledger shape, not the rows.** Every `@SCN` changed, so a row-for-row diff says
    nothing. Same characteristics claimed, same obligation count, same satisfied / missing verdicts,
    against a baseline captured **before the first edit**.

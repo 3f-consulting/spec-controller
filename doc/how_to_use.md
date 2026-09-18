@@ -49,11 +49,14 @@ scenario's code, what the check is *about*, and the command:
 "specController": {
   "fitnessChecks": [
     { "scn": "SCN-FIT-001", "characteristic": "complexity", "command": "eslint" },
-    { "scn": "SCN-FIT-002", "characteristic": "mutation",
-      "command": "pnpm --silent mutation:score", "atLeast": 90 }
+    { "scn": "SCN-FIT-002", "characteristic": "mutation", "command": "gh run list --workflow mutation.yml" }
   ]
 }
 ```
+
+Neither row carries a bar. The mutation bar is Stryker's own `thresholds.break`, and the row is
+answered by one push step that reads the newest nightly sweep's verdict:
+[`scheduled-checks.md`](./scheduled-checks.md).
 
 `characteristic` is data, not a tag — the report rolls up per characteristic, and a new one is a
 new word in a row rather than a change to any list. **The row's shape says which kind of check it
@@ -318,7 +321,7 @@ The point of `spec-controller` is continuous reconciliation, so `balance` belong
 
 **The `if: always()` goes on every check step, not just the dump.** Without it the first red aborts the job and every later check is skipped, so the ledger reports one `failing` and N `broken` — a worse account from a correct mechanism. **The dump must be `toJSON(steps)`**: it is the only place a step's `id` and its `outcome` travel together, and `outcome` is the field that survives `continue-on-error` where `conclusion` does not.
 
-**A reader-shaped check's step runs BEHIND the step it reads.** Some converted checks print a number an **earlier** step of the same run left behind — a nightly mutation sweep's banked record, say. Put such a step first and you meet absent artefacts and a wall of `missing` rows **while following this page exactly**.
+**A check that runs on a schedule is still one step here.** A nightly mutation sweep, say: the push step reads the newest scheduled run's conclusion with stock `gh` and carries the row's `@SCN` as its `id:`, like any other check step. Nothing is carried across from the scheduled run. The recipe is [`scheduled-checks.md`](./scheduled-checks.md).
 
 Then reconcile, once, over the reports and the record:
 

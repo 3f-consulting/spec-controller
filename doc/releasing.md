@@ -239,10 +239,11 @@ Two things go wrong when a release does ask:
   published* spec-controller and the model moves, the self-reconciliation reds — and the only cure is
   publishing a version that can read the new tree. A release path consulting the reconciliation
   would refuse to publish the cure for the disease.
-- **A lapsed cron blocks a release.** `SCN-FIT-002` prints a number a **scheduled nightly sweep**
-  leaves behind. `ci.yml` fetches that record; the release path has no equivalent, so on a runner
-  starting with a cold evidence root that row's own step reds and the job dies before it packs
-  anything. That was measured, on a real run, before it was removed.
+- **A lapsed cron blocks a release.** `SCN-FIT-002` is answered by the verdict of a **scheduled
+  nightly sweep**, and its step fails when no sweep of `main` finished inside the last 26 hours. A
+  release path that ran it would refuse to publish whenever the schedule had lapsed. The row's
+  earlier shape, a record fetched from the nightly, was measured doing exactly that on a real
+  release run: its step redded on a cold evidence root and the job died before it packed anything.
 
 **The residual, stated rather than hidden.** A tag can be cut from any commit, so the release path's
 rigour is the tag-cutter's discipline plus the workflow's own gates. Repository bars are `ci.yml`'s

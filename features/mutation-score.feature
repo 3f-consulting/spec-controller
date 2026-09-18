@@ -35,32 +35,6 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
   what its bar means, and a target authoring a mutation ceiling is wrong out loud rather than
   quietly overruled.
 
-  THE NUMBER IS DERIVED FROM THE MUTANTS, NEVER READ FROM THE RUNNER'S VERDICT. Stryker's report
-  carries the mutant statuses AND a thresholds block of its own, and reading the second one would
-  be transcribing a verdict the ledger exists to reconcile — the runner grading its own homework,
-  one artefact further out. So the producer reads the statuses, scores them, and hands the ledger a
-  number with no opinion attached. The runner's own break threshold is not the second bar it once
-  was: since 3F-3334 it is READ off the row the ledger holds this check to, so one number settles
-  one characteristic and two readers consult it. Which is exactly why the score posted here has to
-  be the same quantity the runner breaks on, counted the same way — two formulas over one report
-  would put the two arbiters back, agreeing until the day a report arrives that tells them apart.
-
-  THE CADENCE IS THE PART @ci-run-time NEVER HAD TO ANSWER. A timed suite is measured by the run
-  that is reconciling it, so the measurement is always this run's. A mutation sweep costs 8-12
-  minutes against a 2-minute ladder, so it is not this run's — it is last night's, and a
-  reconciliation that read last night's number as though it were this push's would be reporting a
-  measurement about a tree that is not the one being judged. What makes that honest is an expiry
-  rather than a promise: a measurement is posted only while it is young enough to still be about
-  this code, and one that has aged out is not posted at all. The row then reads missing, which is
-  the true sentence — no measurement arrived — and is the same reading a nightly that stopped
-  running produces, which is the point. A pipeline nobody runs cannot go quiet.
-
-  AND THE EXPIRY IS THE PRODUCER'S, NOT THE RECONCILER'S. The reconciler compares a number to a
-  bar; asking it what time it is would put a clock inside the one part of this system that is pure,
-  to reach a reading it already has a word for. Dropping a stale row at the edge is the stance every
-  reader at that edge already takes with a malformed one, and it costs the ledger no eleventh
-  outcome.
-
   Rule: a measured obligation carries the comparison its threshold is read with
 
     WHAT THE DEBIT HOLDS NOW. The obligation already carries the number; it gains the side of that
@@ -135,59 +109,6 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
       And that row does not read its bar as a maximum
       And the JSON carries that bar with the comparison the obligation named, on the row's own entries
 
-  Rule: a mutation run posts the score its mutants imply, as a percentage of the valid ones
-
-    THE PRODUCER, BUILT THE WAY THE TIMING WRAPPER WAS. It is told which scenario and which check
-    it is measuring, so the measurement arrives already citing; it posts beside whatever the run's
-    other producers left rather than over it; and the artefact it writes is asserted by reading it
-    back through the real reader, because a producer and a reader agreeing by inspection agree
-    until one of them is edited.
-
-    THE UNIT MOVES AND THE PRODUCER DOES NOT. It still reads the mutant statuses and still refuses
-    the report's own thresholds block; what it posts is that detected count as a PERCENTAGE of the
-    valid ones rather than the count itself. The count was right for a bar that was a banked kill
-    floor — a figure in the same unit, moving when a kill was lost. The bar is now the conventional
-    percentage the runner breaks on, and a count held against it reconciles satisfied at 807 and at
-    81 alike: a row that asks nothing of any suite, wearing the same green as one that does.
-
-    AND THE POPULATION IS THE BAR'S, WHICH IS THE HALF A REPORT CAN HIDE. The score is the detected
-    mutants over the VALID ones — the statuses a mutant could have been caught in — and the mutants
-    outside that population are outside it here too. A run in which nothing errored, nothing failed
-    to compile and nothing was ignored cannot tell that reading from one dividing by every mutant
-    the report mentions, so the scenario below plants all three and names the number the wrong
-    population produces. Two readers now settle this characteristic off one bar; they only agree
-    while they are dividing the same two facts.
-
-    @integration @SCN-MUT-007
-    Scenario: the number posted is the score the mutants' statuses imply, derived from them and never read from the report's own thresholds block
-      Given a mutation run citing the scenario "SCN-MSD-001" on the check "mutation"
-      And its mutants came back 7 killed and 2 timed out against 2 survived and 1 never covered
-      And beside them 1 errored, 1 failed to compile and 2 were ignored, none of which the metric counts as valid
-      And the report also carries a thresholds block of its own, naming numbers those mutants do not imply
-      When that run posts the score it measured
-      Then the measurement it posted is read back as exactly one Evidence Observation citing "SCN-MSD-001" on the check "mutation"
-      And it carries 75, those detected mutants as a percentage of the valid ones
-      And it carries neither number the report's own thresholds block names
-      And it carries neither 56.25 nor any other reading that counted the invalid mutants in with the valid
-      And it carries neither 9 nor any other count of those mutants
-
-    @integration @SCN-MUT-008
-    Scenario Outline: a mutation run that produced no readable report posts no measurement, rather than a count of zero
-      Given a mutation run citing the scenario "SCN-MSD-001" on the check "mutation"
-      And another producer of that same run has already posted a measurement of its own
-      And the sweep leaves "<report>" and ends "<ending>"
-      When that mutation run has finished sweeping
-      Then that mutation run posts no measurement of its own, rather than a count of zero
-      And the measurement the other producer posted is still there to be read
-      And that mutation run ends exactly as its sweep ended, rather than as a fault of its own
-
-      Examples:
-        | report                               | ending     |
-        | no mutation report at all            | cleanly    |
-        | no mutation report at all            | in failure |
-        | a mutation report with nothing in it | cleanly    |
-        | a mutation report nothing can parse  | cleanly    |
-
   Rule: a measured bar may name a mutation gate instead of a number, and is read as that gate's kill floor
 
     THE BAR STOPS BEING TYPED. A number in a manifest is a number somebody has to re-derive after
@@ -250,331 +171,65 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
         | holds text nothing can read as a record        |
         | holds the gate with counts it refuses as a bar |
 
-  Rule: spec-controller's own mutation gate is wired to one record, so its two readers cannot disagree
-
-    THE HONOUR-ARTEFACT LINK, MADE MECHANICAL. Two readers consult this repository's bar: the
-    ledger, which holds SCN-FIT-002's measured score to it, and the runner, which breaks on it. They
-    cannot disagree because there is only one of it — `package.json`'s SCN-FIT-002 row states the
-    integer and `stryker.config.mjs` reads THAT row rather than typing a copy beside it — and the
-    scenario below is what stops a rename on either side quietly turning one bar into two that agree
-    until somebody edits one.
-
-    IT USED TO KNOT FOUR ARTEFACTS AND IT NOW KNOTS TWO, WHICH IS THE RECORD LEAVING RATHER THAN THE
-    ARGUMENT WEAKENING (3F-3337). The four were the row, `quality-thresholds.yml`'s `domain` gate,
-    the nightly's ratchet verdict over that same gate, and the gate name the producer carried into
-    its own report read. All four stated one word, and the fourth was the one nothing would have
-    caught drifting. The banked record is deleted: the row now carries a percentage of its own, the
-    ratchet that reconciled against the record is gone, and the producer's gate name is a label on a
-    refusal rather than a term anything matches on. What is left is one integer with two readers,
-    which is the smallest shape this Rule can be true of.
-
-    AND IT IS READ OFF THE REAL ARTEFACTS. Every Rule above decides over planted data, which is what
-    lets those scenarios show a rule going wrong. This one is a claim about THIS repository's wiring,
-    so a planted copy of that wiring would be a scenario about nothing.
-
-    @integration @SCN-MUT-022
-    Scenario: the runner's break threshold is SCN-FIT-002's own bar, read off the real artefacts rather than typed beside it
-      Given this repository's own ledger row for its mutation score
-      When the runner that sweeps it is asked what it breaks on
-      Then the bar it breaks on is that row's own
-      And the same runner over a row carrying a different bar breaks on that one instead
-
   Rule: spec-controller's own mutation kills are on the books
 
     THE CHECK, TURNED ON ITS AUTHOR — the shape ci-run-time.feature and scn-tags.feature already
     take, and the reason this axis was filed at all. Every Rule
-    above is the engine and the producer deciding over planted data; this one is the characteristic
+    above is the engine deciding over planted data; this one is the characteristic
     held over this repository's own domain core, which is the claim each push actually makes. Until
     this line existed `pnpm mutation` reconciled nowhere: not uncited but INVISIBLE, because the
     ledger observes a script by its name and a measured check has no script name to observe, so the
     report read "0 uncited" over a tree that ran a sweep with real teeth and never mentioned it. A
     gate nobody's books carry is the hiding place ci-run-time.feature named.
 
-    THIS CHECK IS CONVERTED, AND IT IS THE SECOND OF 3F-3138's TWO WORKED EXAMPLES — the MEASURED
+    THIS CHECK IS CONVERTED, AND IT WAS THE SECOND OF 3F-3138's TWO WORKED EXAMPLES — the MEASURED
     one. It carried `@mutation` and no steps: the tag answered two questions at once, and a
     threshold had nothing to exemplify, so the measured run itself was the whole observation. Now
     the tag names only the AXIS and the characteristic has moved into a configured row of
-    `specController.fitnessChecks`. The sentence its scenario carries is not an example of a
-    threshold; its evidence is the row's command writing its number
-    into the run's record — the evidence this scenario always rested on, arriving from a step the
-    run's own record enumerates rather than from a wrapper nothing enumerated.
+    `specController.fitnessChecks`. It is no longer measured on the push (3F-3483): its evidence is
+    the outcome of the step the run's own record enumerates, which reads the nightly sweep's
+    verdict, so the row is a step-outcome row like the others and names no number of its own.
 
     ITS SCENARIO IS NO LONGER WRITTEN HERE — IT LIVES IN `features/fitness-checks.feature` (3F-3164,
     authored there rather than emitted since 3F-3244). What sat under this Rule now sits beside every
     other converted check's scenario, one file for the whole axis, each one written beside the row
     that names it. This Rule keeps its argument and no longer keeps a scenario.
 
-    IT WAS THE LAST CODE MINTED AND THE ONLY ONE THAT NEEDED A MECHANISM TO CROSS (3F-3168). Every
-    other converted check renamed freely, because both sides of its citation move in one commit.
-    This one does not: its code is stamped into the SWEEP RECORD by a producer that runs on a
-    different cadence, on a different branch. `pnpm mutation` writes `{ scnId, checkTag, measured }`
-    nightly on the gated branch; this push's `pnpm mutation:score` reads that row back by both
-    terms. Renaming the scenario renames the key on the READING side only — the newest record when
-    SCN-FIT-002 was minted had been written by the previous night's code and still said
-    SCN-MUT-011 — so the two would have been desynchronised for exactly as long as it takes a sweep
-    to run on the renamed tree, and the ledger would have read `missing` for a check that ran. The
-    reader therefore learned to answer a row from a measurement stamped with the code that row
-    supersedes (@SCN-MUT-019), the row states `--supersedes SCN-MUT-011` on its command line, and
-    the flag comes off once a nightly has stamped the new code (3F-3174). A transition that has no
-    end is a resting state wearing a transition's name.
+    IT WAS THE LAST CODE MINTED AND THE ONLY ONE THAT NEEDED A MECHANISM TO CROSS (3F-3168), AND
+    THE PUSH NO LONGER READS ANYTHING A CODE IS STAMPED INTO (3F-3483). Every other converted check
+    renamed freely, because both sides of its citation move in one commit. This one did not while
+    the push read a number: the code was stamped into the sweep's record by a producer that ran on
+    a different cadence, on a different branch, so a rename moved only the READING side, and the
+    reader had to learn to answer a row from a record stamped with the code it superseded
+    (3F-3174). The push now reads a workflow run's conclusion, and a conclusion carries no code,
+    so nothing the sweep leaves behind can fall out of step with a rename, and that reader has left
+    with the placement that fed it (3F-3504).
 
     AND THE AXIS TAG IS STILL ALONE ON ITS LINE. A tier tag beside it would raise a second Evidence
     Obligation, owed by a suite, that nothing here settles; the row would then be out-of-balance
     forever for naming evidence it never meant to claim.
 
-    THE BAR IS A CONVENTIONAL PERCENTAGE THE ROW STATES, AND IT STANDS STILL (3F-3334, 3F-3337).
-    The row used to name the `domain` gate of `quality-thresholds.yml` rather than a figure, and
-    that file stated what the gate last banked. Both are gone: a bar whose freshness depended on
-    somebody re-deriving it after every sweep is a bar maintained by memory, and the one this
-    repository carried went 7.7 points stale inside four days before a banked record replaced it and
-    then went blind by 113 kills. What the row holds now is an `atLeast` nobody has to re-bank, and
-    `stryker.config.mjs` reads that same integer for the threshold its sweep breaks on. Two bars for
-    one characteristic is a green build depending on two arbiters agreeing; one bar with two readers
-    cannot be. It also lives in exactly one KEY: `specController.thresholds` holds nothing for this
-    scenario at all, because the row is where a converted check says everything it says about
-    itself.
+    THE BAR IS A CONVENTIONAL PERCENTAGE, STATED ONCE, IN STRYKER'S OWN CONFIG, AND IT STANDS STILL
+    (3F-3334, 3F-3337, 3F-3483). The row used to name the `domain` gate of `quality-thresholds.yml`
+    rather than a figure, and that file stated what the gate last banked. Both are gone: a bar whose
+    freshness depended on somebody re-deriving it after every sweep is a bar maintained by memory,
+    and the one this repository carried went 7.7 points stale inside four days before a banked
+    record replaced it and then went blind by 113 kills. What stands now is the 95
+    `stryker.config.mjs` states as the threshold its sweep breaks on, a number nobody has to
+    re-bank, and the one place it is written. The row carries no `atLeast` and
+    `specController.thresholds` holds nothing for this scenario: the push does not compare a number,
+    it reads whether the sweep that did cleared its own bar.
 
     AND THE KILLS SETTLING IT ARE LAST NIGHT'S, WHICH IS WRITTEN DOWN RATHER THAN GLOSSED OVER. The
-    sweep costs 8-12 minutes against a 2-minute ladder, so it runs on a schedule and leaves what it
-    measured behind as a SWEEP RECORD; this push places that record while the run which produced
-    it is still young enough for its number to be about this code, and the row's command prints the
-    number the record holds. Past that window nothing is placed, the command has nothing to print,
-    the scenario fails and the row reads missing — the same reading a schedule that quietly stopped
-    running produces, now said in two places rather than one.
+    sweep costs 8-12 minutes against a 2-minute ladder, so it runs on a schedule on the gated
+    branch, and this push reads the verdict of the newest sweep started there inside the last 26
+    hours: young enough for its kills to be about this code. Past that window there is no sweep to
+    read, the step fails and the row reads failing — the same reading a sweep that crashed, or that
+    scored below its bar, produces. Three causes share one reading, and the nightly's own run is
+    where they are told apart.
 
-    THE RECORD IS NOT THE CREDIT STREAM, AND KEEPING THEM APART IS WHAT THE CONVERSION FORCED. A
-    placed number is not a credit this run produced; under conversion the row's own command posts
-    the credit, so a placed row sitting in `measurements.json` would be a second
-    credit for one Evidence Obligation. The sweep writes `mutation-measurements.json`, the
-    placement puts it there, and the one credit crosses into the run's own stream when the row's
-    step reads it and writes the number down.
-
-  Rule: the measurement a push places is the newest sweep's, whatever verdict that sweep reached
-
-    THE RUN THAT FOUND THE FAULT WAS THE ONE RUN NOTHING PLACED FROM (3F-2947). The nightly then
-    ended on a ratchet verdict, so a night that lost a kill concluded `failure` — and the placement
-    asked for the newest SUCCESSFUL run, which is every night but that one. Inside the freshness window it
-    therefore reached back to the last GREEN nightly, placed ITS number, and SCN-FIT-002 reconciled
-    satisfied: for a whole window's width the ladder went green over a regression the sweep had
-    already detected and already said out loud, in the one window where the gate this axis exists
-    for was blind to the only fault it is for. Past that window it placed nothing and the row read
-    `missing` — the sentence for a sweep that LAPSED — which is a different fault, on a different
-    night, sent to a different place. The two readings furthest apart collapsed onto one word and
-    the more actionable of them was the one that got lost.
-
-    THE ARTEFACT IS THE EVIDENCE; THE CONCLUSION IS ABOUT THE GATE. A run's conclusion answers
-    whether the nightly's own verdict passed, and that is not what the ledger is asking — it is
-    asking what this tree's domain core killed. Two questions, one of them the ledger's, so the
-    placement stops reading the answer to the other. It selects on COMPLETION rather than on
-    conclusion: a sweep still running has nothing to hand over yet, and a sweep that finished has,
-    whatever the verdict that followed it said.
-
-    AND SELECTING THAT RUN IS HALF A CLAIM, WHICH IS WHY THE ORDER IS THE OTHER HALF. A night's
-    number only crosses the boundary because the sweep leaves it behind before anything downstream of
-    it can red the run — put a step that can fail ahead of the upload and the night that found the
-    fault uploads nothing, the row reads `missing`, and the fail-open closes into the mislabelled red
-    this Rule also removes, with every selection assertion still green. The ratchet verdict that
-    prompted this is deleted (3F-3337) and the ordering rule outlived it: the workflow defends the
-    placement for the OPERATOR'S REPORT, and the ledger's measurement depends on it too, so it is
-    held here rather than in a comment.
-
-    AND THE PLACEMENT IS STILL NOT AN ARBITER, which is the part this leaves exactly as it was. Every
-    branch of it places nothing, says why on stderr, and exits 0; the verdict on a low number is the
-    ledger's, reached by the same comparison as every other verdict on this axis (@SCN-MUT-005).
-    What moves is WHICH run's number crosses the boundary, never who judges it once it has.
-
-    AND "EVERY BRANCH" WAS NEVER THE WHOLE STEP (3F-2960). The paragraph above was true of the
-    branches and false of the stretch between them. GitHub invokes a bare `run:` as `bash -e {0}`
-    and this step names no `shell:`, so errexit arrives from the SHELL; `set -uo pipefail` sets
-    nounset and pipefail and does not clear it. What guarded the branches was `if !` — a command in
-    an `if` condition is exempt from errexit — never the comment above them, which said the step ran
-    without `-e` and was wrong for as long as it had existed. Every command outside an `if` condition
-    could therefore red the one step this Rule exists to keep out of the verdict: a `cp` onto a full
-    disk would have redded the ladder as though the CODE had lost a kill.
-
-    AND THE FIX COUNTS NOTHING, WHICH IS THE WHOLE ARGUMENT FOR IT. Three attentive readings of this
-    one script produced three different lists of the commands that could red it — six, then nine,
-    then nine with one rationale that did not carry. None was careless, and a fourth pass would not
-    be proof the list had closed; it would be a fourth reading. So guarding each command where it
-    stands was ruled out on CORRECTNESS rather than on size: a guarantee resting on a hand-derived
-    enumeration rests on the one artefact that moved under all three. Telling the shell out loud to
-    clear what it inherited, and ending the script on `exit 0`, is correct over every command in it
-    whether or not anybody enumerated them, and over the one a later edit adds. Two lines, two
-    routes: the first stops a failure MID-SCRIPT from killing the step, the second stops the render
-    at the END of it from being reported as the step's verdict, because a script's status is its
-    last command's even with errexit cleared.
-
-    AND ONE RED ROUTE IS LEFT STANDING ON PURPOSE, WHICH IS WHY THE CLAIM BELOW IS NOT EVERY PATH.
-    `set -u` is kept: an unbound expansion exits 127 whatever errexit says, so nounset is a route by
-    which this step can still red. That red says THIS SCRIPT IS BROKEN rather than YOUR CODE LOST A
-    KILL — a different sentence, sent to a different place, and the one you want. Dropping `-u` to
-    close it would buy `cp "" mutation-measurements.json`: a silent wrong placement, which
-    is the fail-open shape this whole Rule exists to remove. So the claim below is about the
-    failures the placement meets IN DOING ITS JOB, and it holds the exception as a term it asserts
-    rather than leaving it an unstated residual — which is how the sentence it replaces went false.
-    That sentence pinned only that the script holds no `set -e`: true of the defect and of the fix
-    alike, which is how a wrong comment acquired a green tick.
-
-  Rule: the measurement a push places was taken on the branch this ladder gates, whatever branch a hand-dispatch reached for
-
-    THE SELECTION IS A CHAIN OF PROXIES, AND THIS IS THE ONE THAT WAS MISSING (3F-2955). What the
-    ledger is asking is whether the number it settles SCN-FIT-002 with was measured about the tree
-    it is judging, and no run says so outright — so the placement narrows on the facts that stand in
-    for it: the right workflow, a run that FINISHED (@SCN-MUT-015), a number still inside the
-    freshness window. It never narrowed on the LINE. `mutation.yml` enables `workflow_dispatch`, so a sweep
-    hand-dispatched on a feature branch entered that list and, being newest, won it — and its
-    number was placed and reconciled main's row. Measured on this repository on 2026-08-30: four
-    dispatches on a feature branch sat newer than that day's nightly for ten hours, each inside the
-    window, none distinguishable downstream from the nightly they displaced.
-
-    AND IT FAILS OPEN, WHICH IS WHY IT IS THIS AXIS'S FAULT RATHER THAN AN UNTIDINESS. A branch
-    that ADDS tests sweeps to a higher kill count. Placed onto main that number reconciles
-    `satisfied` over a main whose own kills had fallen — a regression masked by a measurement about
-    a different line, which is the fault @SCN-MUT-015 closes arriving by the other road. The two
-    are one defect wearing two faces: a number crossing this boundary that is not about the tree
-    being judged.
-
-    THE TERM IS THE BRANCH AND DELIBERATELY NOT THE EVENT, WHICH IS A RULING AND NOT A PREFERENCE.
-    Filtering on `--event schedule` excludes the same feature-branch dispatches and is the wrong
-    instrument three times over. It MANUFACTURES FALSE NEGATIVES: a hand-dispatch ON the gated
-    branch measures that branch's tree and is wanted — the re-run after an infra blip, a fresh
-    number after a large merge — and refusing it forces `missing`, which is the mislabelled red the
-    sibling scenario above spent a whole slice removing, walked back in through the fix for its
-    sibling. Its COUPLING IS INVISIBLE AND NOT OURS: it reaches the right answer only because GitHub
-    resolves cron against the default branch, so a second schedule, a `repository_dispatch`, or a
-    change in how GitHub resolves that ref silently selects a different set with nothing redding,
-    because it still works. And it NAMES THE WRONG SUBJECT: the branch is a fact about the artefact,
-    about which tree was mutated, where the event is a fact about provenance, about who asked.
-    Reading a credit off its provenance rather than off what it is evidence OF is the class of
-    opinion this codebase has spent increments removing. So the selection narrows on the branch,
-    states no event, and the scenario asserts that ABSENCE — for the reason the scenario above it
-    asserts the report upload's `if: always()`: a term nobody wrote down is the term a later
-    tidy-up adds for symmetry.
-
-    THE BRANCH BUYS THE LINE, NOT THE TREE, AND THE SCENARIO BELOW CLAIMS ONLY THE FIRST. `main` at
-    03:17 and `main` at 14:00 are different trees; ten commits can land between the sweep and the
-    push, and the freshness window is the only thing bounding that drift. This closes the different-LINE
-    hole and leaves the different-COMMIT one exactly where it was. The tighter instrument is known
-    and is not built here: take the newest completed run on this branch whose head commit is an
-    ancestor of this push's HEAD, which refuses a measurement taken on a `main` since rewritten
-    under it. It reaches the run object rather than the payload — the fact 3F-2841 already ruled
-    belongs to the run — and it carries a new failure mode to fence, since `actions/checkout`
-    clones shallow and an ancestry test that cannot reach the base owes a branch that places
-    nothing and exits 0 like every other. A later, tighter instrument rather than a competing one.
-
-    ACCEPTED COST, STATED. A `pull_request` build reconciles SCN-FIT-002 against the GATED branch's
-    nightly rather than against its own tree, because nothing sweeps a feature branch. Narrowing on
-    the branch under test instead would make the claim honest and red EVERY pull request — there is
-    no sweep to find — so the cost is taken deliberately: a pull request's mutation row is a
-    statement about the line it is merging into, not about itself. That is why the clause below
-    stops at which branch the run was taken on and does not go on to say the number is about the
-    tree this build is judging, which is true of a push and false of a pull request.
-
-    AND THE PLACEMENT IS STILL NOT AN ARBITER. Nothing here adds a path that reds: the narrowed
-    selection either finds a run or finds none, and finding none is the branch that already places
-    nothing, says why on stderr, and exits 0. What moves is WHICH run's number crosses the
-    boundary, never who judges it once it has.
-
-  Rule: the placement says only what it did — the one sentence claiming a placement stands inside the path that made it
-
-    THE ONE PATH THAT SAID SOMETHING FALSE (3F-2962). Every branch of this step places nothing and
-    says why on stderr; the stretch after the last of them places the file and then asserts the
-    placement as fact. Under the cleared errexit (@SCN-MUT-015, 3F-2960) a failing `mkdir` or `cp`
-    no longer stops the script, so that sentence runs anyway — "place: placed mutation-measurement
-    from run 34948297225 of mutation.yml, measured 83491s ago, inside the 93600s window:" — the
-    `jq` beneath it fails against a file that is not there, and the terminal `exit 0` reports
-    success. SCN-FIT-002 then reads `missing`, and `missing` is the sentence this repository
-    reserves for a sweep that LAPSED. A mechanical fault wearing a cadence fault's face, with the
-    log actively pointing the reader at mutation.yml's schedule — the conflation @SCN-MUT-015
-    removed one level up, arriving again one level down.
-
-    NEWLY REACHABLE, NOT NEWLY WRITTEN, AND THE TRADE THAT MADE IT SO WAS RIGHT. Before errexit was
-    cleared this path redded — loud, and the wrong shape, which is what 3F-2960 fixed: the ledger is
-    the single arbiter and it reds honestly on `missing`. What the trade did not carry across was
-    the SENTENCE. Clearing errexit is a guarantee about whether the step REDS, and it says nothing
-    about whether what the step SAYS is true; the two were being held by one mechanism, and only one
-    of them survived the fix.
-
-    AND THIS IS NOT THE ENUMERATION THAT WAS RULED OUT. @SCN-MUT-015 barred a hand-derived list of
-    fallible commands standing as the not-redding guarantee, because three attentive readings of
-    this script produced three different lists. `set +e` and the terminal `exit 0` still supply that
-    guarantee, over every command here and over the one a later edit adds; nothing below touches
-    them. What is added asks a different question and needs no list. This step writes TWO things to
-    stdout — the claim, and the `jq` that renders what was placed beneath it — and exactly one of
-    them is an `echo`. The claim is found as that unredirected `echo`: an identification that names
-    no command and excludes none, where excluding the render BY NAME would have been a list of one.
-    It is guarded because it is the claim, not because anybody enumerated what could fail before it.
-
-    AND WHAT IS HELD IS THE GUARD'S IDENTITY, NOT MERELY ADJACENCY — THE DIFFERENCE BETWEEN THE
-    PROXY AND THE PURPOSE. That nothing executable stands between the claim and a closed guard is a
-    proxy, and a sound one; it is not the sentence this Rule is cited for. Insert an unrelated
-    guarded branch between the placement and the claim and adjacency still holds while the claim has
-    stopped standing inside the path of the thing it claims — true today, and no longer true for the
-    reason it is quoted. So the guard immediately above the claim is identified by what its CONDITION
-    DOES: it performs the placement, naming the path the ledger later reads. Still one command, still
-    one claim, still no enumeration — and a command added in that gap reds this scenario whatever it
-    is, whether or not anybody thought it could fail. @SCN-MUT-015's fourth arm cannot see any of
-    this: it holds that every non-terminal `exit` is a branch's and says why on stderr first, which a
-    new branch satisfies by construction and which the defect never violated. The proxy/purpose slip
-    is written down here rather than left implied because on this axis it is the recurring one — the
-    proxy keeps being right and the prose keeps spending it.
-
-    AND THE WORDING IS NOT ASSERTED. The stderr sentence tells a placement this runner could not make
-    apart from a sweep that has stopped running, because a reader who meets `missing` needs to know
-    which of the two they are looking at. That is the sentence's job, and it is written down here
-    rather than pinned in the arm, for the reason @SCN-LDG-030 gives: an arm that pins wording reds
-    on an improvement to it.
-
-    AND THE RENDER BENEATH THE CLAIM IS LEFT EXACTLY AS IT IS. The `jq` reports what was placed,
-    reached only after the placement succeeded and the shape check passed. A failure there is the
-    runner's, it reports itself on stderr, and it asserts nothing. Guarding it would be symmetry
-    rather than a reason.
-
-    AND THE PLACEMENT IS STILL NOT AN ARBITER. The added branch places nothing, says why on stderr, and
-    exits 0, like every branch above it. `set +e` stays first, `set -u` stays on, `exit 0` stays
-    last. What moves is what the step SAYS on one path, never whether it reds on any.
-
-  Rule: a measurement stamped with a superseded @SCN answers the row that supersedes it, for exactly as long as the producer has not caught up
-
-    THE ONE ROW A MINT CANNOT REACH, AND THE REASON IS A SCHEDULE RATHER THAN A COUPLING. Every
-    other converted row's `@SCN` renames inside one tree: the corpus, the manifest and the citing
-    surfaces move in one commit and nothing outside the commit has an opinion. A MEASURED row's
-    number is stamped with its `@SCN` by whatever produced it, and this one's producer is a nightly
-    sweep on the gated branch. Rename the row and the newest record any build can reach was written
-    by the code being replaced, so the two are keyed apart until a sweep has run on the renamed
-    tree. There is no atomic version of that: rename and the tree reds until a schedule fires, wait
-    for the schedule and the rename was not atomic.
-
-    SO THE ROW STATES WHICH CODE ITS MEASUREMENT MAY STILL ARRIVE UNDER, AND A ROW THAT STATES
-    NOTHING KEEPS THE ONE-CODE READING. What a producer stamps is a fact about the producer, so the
-    row the producer answers is where it is written down. Opt-in, per row, never inferred — a row silent on the point
-    accepts only its own code, which is what every row had before any row could ask, so nothing
-    already written changes meaning by standing still.
-
-    AND IT IS TWO CODES FOR ONE ROW, NEVER A LOOSER RULE ABOUT RECORDS. A superseded code is
-    answered because the record PREDATES the rename, and never because the record is old — those
-    are different facts and only the first is a reason. This widens WHICH CODE COUNTS and leaves
-    WHICH RECORD COUNTS exactly where it was: a measurement carries no clock of its own, and the
-    window that keeps a lapsed sweep's number out is applied against the producing run's own clock
-    where the record is placed, before any code in it is read. A reader that had taken the age into
-    its own hands here would be the swallowed guarantee this Rule exists to keep unreachable.
-
-    IT IS A CONTRACT WITH AN END, AND THE END IS ONE SWEEP AWAY. The producer moves to the new code
-    in the same change; the first nightly after it stamps the new code, and from then on the
-    superseded code answers nothing because no record carries it. The statement on the row is what
-    a later reader removes, and it is written where they will find it.
-
-    @integration @SCN-MUT-019
-    Scenario Outline: a measurement stamped with a superseded code answers the row that supersedes it, and a row stating no superseded code keeps the one-code reading
-      Given a sweep record holding one measurement, stamped with the scenario "<stamped>" on the check "mutation"
-      And a row measuring "mutation" on the scenario "SCN-FIT-002", which <supersession>
-      When that row's check is asked for its measurement
-      Then it <answer>
-      And what keeps a lapsed sweep's number out is untouched: the measurement carries no clock of its own, and the window is applied against the producing run's own clock where the record is placed, before any code in it is read
-
-      Examples:
-        | stamped     | supersession                            | answer                                         |
-        | SCN-MUT-011 | states that it supersedes "SCN-MUT-011" | answers with the number that measurement holds |
-        | SCN-MUT-011 | states no superseded code               | refuses, naming the row it could not find      |
-        | SCN-FIT-002 | states that it supersedes "SCN-MUT-011" | answers with the number that measurement holds |
-        | SCN-LNT-001 | states that it supersedes "SCN-MUT-011" | refuses, naming the row it could not find      |
+    THE CREDIT IS THE STEP'S OWN OUTCOME, SO THERE IS ONE STREAM AND NOTHING TO KEEP APART. While the
+    push read a number, the sweep's placed record and the row's own credit were two streams that
+    had to be kept apart, or one Evidence Obligation would have been credited twice. A step outcome
+    is recorded once, in the run's own step record, and the sweep's report stays in the nightly
+    run that produced it.

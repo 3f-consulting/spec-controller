@@ -12,8 +12,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "mutation": "tsx tests/checks/mutationScoreCli.ts --scn SCN-FIT-002 --check mutation -- stryker run",
-    "mutation:score": "tsx tests/checks/mutationScoreReaderCli.ts --scn SCN-FIT-002 --check mutation",
+    "mutation": "stryker run",
     "cucumber": "cucumber-js",
     "build": "pnpm -r build",
     "lint:scn-subissues": "tsx tests/checks/lintScnSubIssuesCli.ts",
@@ -32,8 +31,7 @@
       "ci.yml:ci:Enable corepack",
       "ci.yml:ci:Resolve the evidence root",
       "ci.yml:ci:Install dependencies",
-      "ci.yml:ci:Build",
-      "ci.yml:ci:Place the scheduled sweep's measurement"
+      "ci.yml:ci:Build"
     ],
     "fitnessChecks": [
       {
@@ -94,8 +92,7 @@
       {
         "scn": "SCN-FIT-002",
         "characteristic": "mutation",
-        "command": "pnpm --silent mutation:score --supersedes SCN-MUT-011",
-        "atLeast": 95
+        "command": "gh run list --workflow mutation.yml"
       }
     ]
   },

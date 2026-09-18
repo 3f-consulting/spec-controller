@@ -29,9 +29,9 @@ Feature: The fitness checks this repository configures, one scenario per row
 
   A ROW MAY ALSO CARRY A CODE MINTED UNDER ANOTHER FEATURE, and that is the same rule. A code, once
   allocated, is stable forever: it survives a feature-file rename and is never reused. A check whose
-  code is cited by something outside this repository's corpus — a nightly producer's sweep record,
-  say — therefore keeps that code while its scenario moves here, and is re-minted only by the change
-  that can move every citing surface with it.
+  code is cited by something outside this repository's corpus — a record another pipeline stamps
+  with it, say — therefore keeps that code while its scenario moves here, and is re-minted only by
+  the change that can move every citing surface with it.
 
   THE TAG NAMES THE AXIS AND THE ROW NAMES THE SUBJECT. Every scenario here carries `@fitness` and
   no characteristic tag: which characteristic a check asserts, and which bar it is held to, are read
@@ -63,14 +63,6 @@ Feature: The fitness checks this repository configures, one scenario per row
   the regression it exists to catch, and it is banned. Canon's rule is that a bar rises or holds and
   never re-baselines down; a fixed bar obeys it by standing still, which is why it cannot go stale
   in the direction that matters.
-
-  READER-SHAPED ROWS RUN BEHIND THE PRODUCERS THEY READ, AND THAT IS LOAD-BEARING RATHER THAN
-  CONVENTIONAL. Some of these rows print a number an earlier step of the same run left behind — a
-  mutation sweep's record —
-  so a pipeline that puts their steps ahead of those producers meets absent artefacts and a wall of
-  unsettled rows while doing exactly what it was told. Which rows those are is read off the rows
-  themselves and is deliberately not counted here: a number in this prose is a second reading of
-  the manifest, kept in step by whoever remembers.
 
   @fitness @SCN-FIT-001
   Scenario: every function and module the push touches measures inside the external complexity standard
@@ -119,10 +111,11 @@ Feature: The fitness checks this repository configures, one scenario per row
     Then it finishes inside that limit
 
   @fitness @SCN-FIT-002
-  Scenario: the domain's mutation score, for the ledger to hold against the break threshold its runner reads from the same row
-    Given the mutation sweep's record for this push
-    When the domain's score is read off that record
-    Then that number is posted for the ledger to hold against the break threshold its runner reads from the same row
+  Scenario: the newest nightly mutation sweep of the gated branch, finished inside its window, cleared the break threshold its runner states
+    Given the gated branch's nightly mutation sweeps that started inside the window before this push and have since finished
+    When the newest of them is read for its verdict
+    Then it cleared the break threshold its runner states
+    And a window holding no such sweep fails the check rather than passing it
 
   @fitness @SCN-FIT-018
   Scenario: every entry point, file and field the two packages publish is one a consumer can resolve

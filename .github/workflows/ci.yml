@@ -5,11 +5,11 @@ on:
     branches: [main]
   pull_request:
 
-# THE LADDER READS ONE THING IT DOES NOT OWN (3F-2765): the measurement a scheduled
-# mutation sweep persisted, fetched off that workflow's own runs. `actions: read` is what
-# lets it, and the block is written out rather than left to the repository default so that
-# a default tightened elsewhere reds here, naming the permission, instead of reporting a
-# schedule that had lapsed.
+# THE LADDER READS ONE THING IT DOES NOT OWN (3F-2765, 3F-3483): the verdict of the nightly
+# mutation sweep, which the `Mutation score` step lists off `mutation.yml`'s own runs.
+# `actions: read` is what lets it, and the block is written out rather than left to the
+# repository default so that a default tightened elsewhere cannot reach this ladder: without the
+# permission that step fails, and its `failing` would read exactly like a schedule that had lapsed.
 permissions:
   contents: read
   actions: read
@@ -40,9 +40,10 @@ concurrency:
 # confined to runs whose verdict is already "not ok" — where nothing is believed about the steps
 # behind the red, because nothing is believed about the run.
 #
-# WHAT IT COSTS IS ROUND-TRIPS, AND THIS REPOSITORY ALREADY PAYS THAT PRICE TWICE. A red build names
-# one failure where it could have named four. `mutation.yml` chose the same trade for the sweep: "AND NO `if: always()`. A sweep that died left no verdict worth
-# reaching" (3F-2957, @SCN-MUT-016). Splitting these steps into independent jobs buys N checkouts and
+# WHAT IT COSTS IS ROUND-TRIPS. A red build names one failure where it could have named four.
+# `mutation.yml` used to make the same trade for the sweep, leaving its measurement upload unguarded
+# so that a sweep that died left no number worth reaching (3F-2957); that upload left with the
+# producer that wrote it (3F-3505). Splitting these steps into independent jobs buys N checkouts and
 # N installs to make a RED build more talkative, and buys nothing where a decision is actually made.
 #
 # AND THE FITNESS CHECK STEPS BELOW CARRY `if: always()`, WHICH MAKES THE PREMISE STRONGER RATHER
@@ -58,15 +59,14 @@ concurrency:
 #
 # WHAT IS DELIBERATELY REVERSED IS THE COST TRADE, AND ONLY FOR THE CHECK STEPS. 3F-3042's trade
 # above — a red names one failure where it could have named four — stands everywhere else in this
-# file, and stands in `mutation.yml` unchanged. It is reversed for the
-# fitness check steps because those steps are INDEPENDENT of one another: eslint's red says nothing
-# about typecheck's, so stopping at the first tells a reader nothing they could have inferred. The
-# price is a slower red build; the ledger this file now feeds is the reason it is worth paying. A
-# fitness row with no entry in the run record is BROKEN evidence and stamps the run unsound, so
-# without `always()` one early red would report one `failing` and nine `broken` — a worse account
-# from a correct mechanism. The exceptions are the two runners, `Test` and `Cucumber`: each is a
-# suite's run-time check (SCN-FIT-012, SCN-FIT-013) and that suite's runner at once, and each keeps
-# a runner's unconditional place at the head of the ladder.
+# file. It is reversed for the fitness check steps because those steps are INDEPENDENT of one
+# another: eslint's red says nothing about typecheck's, so stopping at the first tells a reader
+# nothing they could have inferred. The price is a slower red build; the ledger this file now feeds
+# is the reason it is worth paying. A fitness row with no entry in the run record is BROKEN evidence
+# and stamps the run unsound, so without `always()` one early red would report one `failing` and
+# nine `broken` — a worse account from a correct mechanism. The exceptions are the two runners,
+# `Test` and `Cucumber`: each is a suite's run-time check (SCN-FIT-012, SCN-FIT-013) and that
+# suite's runner at once, and each keeps a runner's unconditional place at the head of the ladder.
 #
 # ONE ATTRIBUTE WOULD FALSIFY ALL OF THIS, AND IT IS FENCED RATHER THAN ASKED FOR POLITELY.
 # `continue-on-error` severs job-green from step-ran: the step runs, reds, and the job ends green
@@ -129,14 +129,11 @@ jobs:
       #
       # spec-controller used to write its own output into its own source tree, and three pieces of
       # apparatus existed only because it did — a `.gitignore` block, a hygiene check, and that
-      # check's own coverage gap. The suites' reports and the placed sweep record are this run's
-      # OUTPUT, so they land on the runner's disk instead. `tests/checks/measurementArtefact.ts`
-      # reads this same name, so every producer and reader in this job resolves to one base whether
-      # it is reached through a command line here or through the resolver in TypeScript.
+      # check's own coverage gap. The suites' reports and the step record are this run's OUTPUT, so
+      # they land on the runner's disk instead.
       #
-      # ONE ENTRY, NOT FIVE, AND THAT IS THE POINT. The placement step places the sweep record, two suites
-      # write their reports, the one measured row's command writes the credit stream, the dump
-      # step writes this run's step record, and the self-reconciliation reads all of them; a `$RUNNER_TEMP`
+      # ONE ENTRY, NOT FOUR, AND THAT IS THE POINT. Two suites write their reports, the dump step
+      # writes this run's step record, and the self-reconciliation reads all of them; a `$RUNNER_TEMP`
       # expression repeated at each of them is a path that agrees today and drifts on the first edit
       # that misses one.
       #
@@ -148,9 +145,10 @@ jobs:
       #
       # AND IT SURVIVES BETWEEN THOSE STEPS BECAUSE THIS WORKFLOW STATES EXACTLY ONE JOB — verified
       # against the API rather than read off the indentation. One job is one runner filesystem.
-      # Split it in two and nothing reds: the placement's measurement stops reaching the read, and the
-      # ledger reports that in the vocabulary of a lapsed nightly sweep. That residual is named in
-      # `measurementArtefact.ts` rather than guarded, because a check on this file's SHAPE is
+      # Split it in two and the suites' reports stop reaching the read, which `balance` reds as a
+      # supplied-but-absent path (@SCN-CLI-002). The split that used to red NOTHING was the sweep
+      # record a placement step carried across, which read as a lapsed nightly; it left with that
+      # step (3F-3504), and no check on this file's SHAPE was ever added for it, because that is
       # exactly the control surface 3F-3099 exists to remove.
       #
       # IT IS NOT A CHECK, AND THE PRODUCT'S OWN DISCOVERY IS TOLD SO RATHER THAN LEFT TO GUESS.
@@ -174,285 +172,6 @@ jobs:
       # — it is a step the checks need, not a check.
       - name: Build
         run: pnpm build
-
-      # STEP 0 OF THE SELF-RECONCILIATION CHAIN — THE MEASUREMENT THIS PUSH DID NOT TAKE
-      # (@SCN-FIT-002, 3F-2765). A mutation sweep costs 8-12 minutes against this ladder's ~2
-      # minutes, so it runs nightly (mutation.yml) and its score is last night's. Refusing to read
-      # it would leave SCN-FIT-002 reconciling `missing` on every push — a build redding over a
-      # cadence rather than over the code — and reading it unconditionally would settle this tree's
-      # bar with a number measured about a different tree. So it is placed only while it is still
-      # young enough to be about this code: 26 hours — a 24 hour cadence plus 2 hours of margin —
-      # leaves a 03:17 UTC nightly its own slot and one late start's worth of slack, and ONE missed
-      # sweep ages the number out, places nothing, and reds the gate below. A sweep that quietly
-      # stops running cannot stay quiet.
-      #
-      # IT LANDS A SWEEP RECORD, NOT A ROW OF THIS RUN'S CREDIT STREAM (3F-3152). It used to copy
-      # the nightly's file straight into `measurements.json` — the artefact
-      # the self-reconciliation reads as what THIS run credited — and the merge argument that placement
-      # needed (land it first, let the two suite producers post beside it) went with it. Under a
-      # CONVERTED @SCN-FIT-002 the row's own command posts the credit, from the number this record
-      # holds, so a placed row sitting in the credit stream would be a second credit for one
-      # Evidence Obligation. Two files, two questions: what a sweep MEASURED, and what this run
-      # CREDITED. Nothing else reads or writes the path below, so there is no merge here at all.
-      #
-      # IT STILL RUNS FIRST, AND NOW FOR A PLAINER REASON. The `Mutation score` step below IS the
-      # row's command and it reads this file; a placement made after it would leave that step with
-      # nothing to print, and nothing to write, on every push.
-      #
-      # THE RECORD THIS PLACES MAY STILL SAY `SCN-MUT-011` — A TRANSITION WITH AN END (3F-3168,
-      # 3F-3174). The row was minted `SCN-FIT-002`, and the producer that stamps the record moved
-      # with it in the same commit; but the producer runs nightly on the gated branch, so the newest
-      # placeable record was written by the PREVIOUS night's code and carries the old code. The
-      # row's command therefore states `--supersedes SCN-MUT-011`, and the reader answers a row
-      # from a measurement stamped with the code that row supersedes (@SCN-MUT-019). Once one
-      # nightly has run on the renamed tree, no record carries the old code and the flag comes off
-      # (3F-3174) — otherwise the transition becomes the resting state.
-      #
-      # WRITTEN HERE RATHER THAN SHIPPED (3F-2841). This was a composite action over a CLI
-      # (3F-2766, 3F-2810). Every piece of it is a native GitHub operation or a `date` subtraction
-      # — upload a file, download it, check its age — so it is glue, and glue is written at the
-      # edge that needs it. The window is not a manifest field for the same reason it never was: a
-      # manifest is about BARS, which are facts about the code, and a window is a fact about the
-      # pipeline reading them. It no longer lives in THIS step either — it is written once in
-      # `scripts/freshness-window.sh`, which every placed row asks (3F-3200).
-      #
-      # AND IT IS NOT AN ARBITER. Every branch below places nothing, says why on stderr, and exits
-      # 0. Having no measurement to place — no finished sweep, no artefact, a number past its
-      # window, a payload that is not one — is the ordinary reading of a cadence, and the place it
-      # is reported is downstream: the `Mutation score` step reds, because the row's command has
-      # nothing to print, and the self-reconciliation reds on the row that owed the measurement, which
-      # reconciles `missing`. Both sentences are true and both are reached; a step that
-      # redded HERE as well would make a green build depend on arbiters agreeing, which is the
-      # argument features/mutation-score.feature already settles for the bar itself.
-      - name: Place the scheduled sweep's measurement
-        env:
-          GH_TOKEN: ${{ github.token }}
-          # The three terms that are the whole of which measurement crosses: which workflow took
-          # it, which LINE it was taken on (3F-2955), and what it left the measurement under. HOW
-          # LONG that number stays close enough to true about this code is no longer among them —
-          # 26 hours, a 24 hour cadence plus 2 hours of margin, is written once in
-          # `scripts/freshness-window.sh` and asked by every placed row (3F-3200).
-          #
-          # BRANCH IS WRITTEN OUT RATHER THAN DERIVED FROM `github.ref_name`, WHICH IS THE ACCEPTED
-          # COST STATED (@SCN-MUT-017). This ladder also runs on `pull_request`, and nothing sweeps
-          # a feature branch — so placing from the branch UNDER TEST would find no run and read
-          # `missing` on every pull request. A pull request's mutation row is therefore a statement
-          # about the line it is merging into, not about itself, and that is deliberate. The value
-          # is held to `on.push.branches` by a scenario, so a default-branch rename that moves one
-          # and not the other reds rather than leaving the placement reading a line nobody gates.
-          WORKFLOW: mutation.yml
-          BRANCH: main
-          ARTEFACT: mutation-measurement
-        run: |
-          # ERREXIT ARRIVES FROM THE SHELL AND IS CLEARED HERE, OUT LOUD (3F-2960). GitHub invokes a
-          # bare `run:` as `bash -e {0}` and this step names no `shell:`, so `-e` is ON unless it is
-          # switched off — `set -uo pipefail` sets nounset and pipefail and does not clear it. It was
-          # not cleared, and the comment that used to stand here said it was: every command outside
-          # an `if` condition could red the one step that must never manufacture a red. What guarded
-          # the branches was `if !`, never this comment.
-          #
-          # GUARDING EACH COMMAND WAS RULED OUT ON CORRECTNESS, NOT ON SIZE. Three attentive readings
-          # of this script produced three different lists of the commands that could red it, so a
-          # guarantee resting on such a list rests on the artefact that moved under all three. These
-          # two lines are correct over every command here whether or not anybody enumerated it, and
-          # over the one a later edit adds.
-          #
-          # `-u` IS KEPT, AND IS THE ONE RED ROUTE LEFT. An unbound expansion exits 127 whatever
-          # errexit says. That red says THIS SCRIPT IS BROKEN rather than YOUR CODE LOST A KILL, and
-          # dropping `-u` to close it would buy `cp "" mutation-measurements.json` — a
-          # silent wrong placement, which is the fail-open this whole line of work exists to close.
-          set +e
-          set -uo pipefail
-
-          # THE WINDOW AND THE COMPARISON AGAINST IT COME FROM ONE FILE, WHICH EVERY PLACED ROW
-          # ASKS (3F-3200). What is left here is this row's TRANSPORT — which run to select, how to
-          # read its clock, how to fetch and place what it left. The transport is this step's; the
-          # rule is not.
-          . scripts/freshness-window.sh
-
-          # THIS STEP LEAVES THIS RUN'S MEASUREMENT IN THE EVIDENCE ROOT OR IT LEAVES NOTHING, AND
-          # THAT IS ONE RULE RATHER THAN A BRANCH (3F-3431). Every path below that does not place
-          # says "nothing is placed" on stderr and exits 0 — and on a root that OUTLIVES the run,
-          # that sentence had no effect at all: an earlier run's copy was still sitting here, and
-          # the row's own command read it and answered with a number this run had already refused.
-          # Two outcomes on paper, one effect. It reads as airtight on this pipeline solely because
-          # `$RUNNER_TEMP` is discarded between jobs, which is luck rather than mechanism. A consumer
-          # will not have it.
-          #
-          # REMOVED HERE RATHER THAN AT EACH REFUSAL, FOR THE REASON `set +e` IS SET ONCE ABOVE.
-          # Eight paths out of this script place nothing and a ninth is one edit away; a guarantee
-          # resting on a hand-derived list of them rests on the artefact that moved under all three
-          # of the readings that produced three different lists. This line is correct over every
-          # branch whether or not anybody enumerated it, and over the one a later edit adds.
-          #
-          # AND IT REMOVES THIS ROW, NEVER THE ROOT. Clearing the evidence root before the producers
-          # run was rejected and this is not that (3F-3200, AMENDED 2026-09-16): what goes is
-          # exactly the record this step answers for, and the age test below still decides whether
-          # it comes back. The other placements' records, the per-mutant record that is deliberately
-          # under no window, and this run's credit stream are not this step's to touch.
-          #
-          # `no source -> remove` IS STRICTER THAN THE WINDOW ON PURPOSE, AND IS A DECISION. A copy
-          # placed two hours ago may still be inside the window, so removing it on an absent source
-          # can make SCN-FIT-002 read `missing` where evidence arguably existed — a false RED. The
-          # alternative, ageing the placed copy on its own account, needs the measurement's time to
-          # survive a copy that carries the COPY's time instead; get that wrong and the failure is a
-          # satisfied row on a stale number. In a product whose subject is false greens, take the
-          # rule that fails loudly.
-          rm -f "${SPEC_CONTROLLER_EVIDENCE_DIR}/mutation-measurements.json"
-
-          into="${RUNNER_TEMP}/placed-measurement"
-          rm -rf "${into}"
-          mkdir -p "${into}"
-
-          # THE NEWEST FINISHED RUN, NEVER THE NEWEST SUCCESSFUL ONE (3F-2947, @SCN-MUT-015). A
-          # run's conclusion answers whether the nightly's own VERDICT passed; this is asking what
-          # that night's sweep MEASURED, and the night that finds a regression is exactly the night
-          # whose conclusion is `failure`. Filtering on it reached back past that run to the last
-          # green one and placed ITS number — settling this tree's bar with a measurement about an
-          # older tree, and reconciling SCN-FIT-002 satisfied over a regression the sweep had
-          # already detected and already said out loud. `gh` reads both a run's status and its
-          # conclusion off this one flag; `completed` is the status, so it selects on having
-          # FINISHED and on nothing else. It excludes `queued` and `in_progress` on purpose: a
-          # sweep still running has nothing to hand across yet, and selecting it would download
-          # nothing and read `missing` for the ten minutes each night the sweep is live.
-          #
-          # AND THE NEWEST RUN ON THE LINE THIS LADDER GATES, NEVER THE NEWEST ANYWHERE (3F-2955,
-          # @SCN-MUT-017). `mutation.yml` enables `workflow_dispatch`, so a sweep hand-dispatched on
-          # a feature branch entered this list and, being newest, won it — and its number was placed
-          # and reconciled a MAIN push's row. Measured on this repository on 2026-08-30: four
-          # dispatches on a feature branch sat newer than that day's nightly for ten hours, each
-          # inside the window, none distinguishable downstream from the nightly they displaced. It
-          # fails OPEN: a branch that adds tests sweeps to a higher kill count, and placed onto
-          # main that number reconciles `satisfied` over a main whose own kills had fallen.
-          #
-          # THE TERM IS THE BRANCH AND DELIBERATELY NOT THE EVENT. `--event schedule` excludes the
-          # same dispatches and is the wrong instrument three times over: it refuses a hand-dispatch
-          # ON this branch — a measurement of the very tree being judged, forced to read `missing`,
-          # which is the mislabelled red @SCN-MUT-015 spent a slice removing; it reaches the right
-          # answer only because GitHub resolves cron against the default branch, so a second
-          # schedule or a change in that resolution silently selects a different set with nothing
-          # redding; and it names PROVENANCE where the claim is about the ARTEFACT — which tree was
-          # mutated. The scenario asserts the absence of an event filter for that reason, because a
-          # term nobody wrote down is the term a later tidy-up adds for symmetry.
-          #
-          # AND IT BUYS THE LINE, NOT THE TREE. `main` at 03:17 and `main` at 14:00 are different
-          # trees; the window above is the only thing bounding that drift. Ancestry of the run's
-          # head commit is the tighter instrument and is not built here — it owes a fence for the
-          # shallow checkout, and its own @SCN.
-          if ! latest="$(gh run list --workflow "${WORKFLOW}" --branch "${BRANCH}" --status completed --limit 1 --json databaseId,createdAt)"; then
-            echo "place: could not list runs of ${WORKFLOW} on ${BRANCH}; nothing is placed." >&2
-            exit 0
-          fi
-
-          id="$(printf '%s' "${latest}" | jq -r '.[0].databaseId // empty')"
-          when="$(printf '%s' "${latest}" | jq -r '.[0].createdAt // empty')"
-          if [ -z "${id}" ] || [ -z "${when}" ]; then
-            echo "place: ${WORKFLOW} names no finished run on ${BRANCH} carrying both an id and a createdAt; nothing is placed." >&2
-            exit 0
-          fi
-
-          # THE RUN'S OWN CLOCK, NEVER THE PAYLOAD'S (3F-2841). The retired persist stamped a
-          # `measuredAt` into the artefact for this arithmetic to read — a fact GitHub already
-          # records, and one written by the very run being judged. A measurement cannot outlive the
-          # run that took it, so the run's own clock bounds the payload's — and unlike the payload's
-          # it is not the judged run's to write.
-          if ! measured_at="$(date -u -d "${when}" +%s 2>/dev/null)"; then
-            echo "place: run ${id} of ${WORKFLOW} reports createdAt ${when}, which is not a moment this runner can read; nothing is placed." >&2
-            exit 0
-          fi
-
-          # AND THE WINDOW IS CLEARED BEFORE THE PAYLOAD IS FETCHED AND BEFORE ANYTHING IS PLACED
-          # (@SCN-MUT-019). A run past the window is never downloaded and never placed, so the
-          # reader downstream meets no record at all — which is what makes stale and absent the
-          # same observable. The shared rule refuses a negative age too, and says why on stderr;
-          # this step's business is only that the refusal happens HERE, ahead of the fetch.
-          if ! inside_the_freshness_window "${measured_at}" "run ${id} of ${WORKFLOW}"; then
-            exit 0
-          fi
-
-          if ! gh run download "${id}" --name "${ARTEFACT}" --dir "${into}"; then
-            echo "place: run ${id} of ${WORKFLOW} left no ${ARTEFACT} to download; nothing is placed." >&2
-            exit 0
-          fi
-
-          # Found by name wherever the upload put it: an artefact holding one file and an artefact
-          # holding a tree flatten differently.
-          #
-          # EITHER NAME, BECAUSE THIS IS A TRANSITION WITH AN END (3F-3320) — the same shape, and
-          # for the same structural reason, as `--supersedes SCN-MUT-011` on the row's command
-          # below. 3F-3320 renamed the sweep record `measurements.json` -> `mutation-measurements.json`
-          # so that flattening the evidence root could not collide it with the credit stream. But
-          # `mutation.yml` runs NIGHTLY ON THE GATED BRANCH, so the newest artefact this step can
-          # reach was uploaded by the PREVIOUS night's code and still holds the OLD basename. A
-          # `find` matching only the new one therefore places nothing on every push until a nightly
-          # has run on the renamed tree — measured, not predicted: the first CI run of this change
-          # said "holds no measurements.json; nothing is placed" and reconciled SCN-FIT-002 missing.
-          #
-          # IT FAILS IN THE ONE DIRECTION THAT IS SAFE TO WIDEN. This artefact is the sweep's alone
-          # and holds exactly one payload, so there is no second file either name could select by
-          # mistake; and whatever is found is still read by the `jq` below before it is placed, and
-          # still lands under the NEW name, so nothing downstream sees the old spelling.
-          #
-          # WHEN THE OLD ARM COMES OUT: once one nightly has run on main carrying this change, no
-          # reachable artefact holds `measurements.json` and the `-o` clause is dead. Take it out
-          # then — otherwise the transition becomes the resting state, which is the failure 3F-3174
-          # names for the superseded `@SCN` beside it.
-          found="$(find "${into}" -type f \( -name mutation-measurements.json -o -name measurements.json \) -print -quit)"
-          if [ -z "${found}" ]; then
-            echo "place: ${ARTEFACT} from run ${id} holds neither mutation-measurements.json nor measurements.json; nothing is placed." >&2
-            exit 0
-          fi
-
-          # WHAT ARRIVED IS READ BEFORE IT IS PLACED. An empty or malformed payload copied into the
-          # tree would settle nothing and read exactly like a payload that was never fetched, so the
-          # two are told apart here rather than left to be told apart by their absence. `.measurements`
-          # is the only key asked for, which is what makes the dated artefacts a previous nightly
-          # already uploaded readable without a migration: `measuredAt` sits beside it, unread.
-          if ! jq -e '(.measurements | type) == "array" and (.measurements | length) > 0' "${found}" >/dev/null 2>&1; then
-            echo "place: the payload at ${found} from run ${id} carries no measurements to place; nothing is placed." >&2
-            exit 0
-          fi
-
-          # A PLAIN COPY, BECAUSE NOTHING ELSE WRITES THIS FILE. The sweep record is the placement's
-          # alone — no producer of this run posts into it — so there is nothing here to merge with
-          # and nothing for a copy to overwrite. The evidence root is a directory on the runner
-          # that nothing else creates, so this is also what brings it into being (3F-3099).
-          #
-          # AND IT IS GUARDED BECAUSE THE LINE UNDER IT MAKES A CLAIM (3F-2962, @SCN-MUT-018).
-          # Clearing errexit above is a guarantee about whether this step REDS; it says nothing
-          # about whether what the step SAYS is true, and the two used to be held by one mechanism.
-          # Unguarded, a failed `mkdir` or `cp` fell straight through to that sentence, which
-          # asserted a placement that had not happened; the `jq` then failed against a file that was
-          # not there and the terminal `exit 0` reported success. This is the ONE branch here whose
-          # purpose is what is said rather than whether the step reds, and it counts nothing: the
-          # not-redding guarantee is still `set +e` plus the last line, over every command in this
-          # script whether or not anybody enumerated it.
-          #
-          # THE TWO COMMANDS ARE ONE CONDITION ON PURPOSE. The claim is that THE PLACEMENT
-          # succeeded, and the placement is the `mkdir` AND the `cp`. Guarding them separately
-          # would be two claims, and would rebuild at the scale of two the hand-derived list ruled
-          # out at the scale of nine.
-          #
-          # AND THE SENTENCE CONTRADICTS THE LAPSE READING RATHER THAN INHERITING IT. The window
-          # branch above has already taught this log that `missing` means the sweep has stopped
-          # running. Left generic, this branch would inherit that reading and send the reader to
-          # mutation.yml's schedule over a fault in this runner — the defect moved, not closed.
-          if ! { mkdir -p "${SPEC_CONTROLLER_EVIDENCE_DIR}" && cp "${found}" "${SPEC_CONTROLLER_EVIDENCE_DIR}/mutation-measurements.json"; }; then
-            # AND A HALF-WRITTEN COPY IS NOT A PLACEMENT EITHER. The removal above ran before this
-            # `cp` began, so what a failure here can leave behind is this run's own partial file —
-            # which the row's command would read as a measurement. The one branch that can put
-            # something there without placing it is the one branch that takes it away again.
-            rm -f "${SPEC_CONTROLLER_EVIDENCE_DIR}/mutation-measurements.json"
-            echo "place: could not place ${ARTEFACT} from run ${id} of ${WORKFLOW} into the evidence root; nothing is placed. SCN-FIT-002 will read missing, and this is NOT the lapsed sweep that sentence usually reports: the measurement arrived and this runner could not put it where the check that reports it reads it." >&2
-            exit 0
-          fi
-          echo "place: placed ${ARTEFACT} from run ${id} of ${WORKFLOW}, measured ${FRESHNESS_AGE}s ago, inside the ${MAX_AGE}s window:"
-          jq -r '.measurements[] | "place:   \(.scnId) \(.checkTag) = \(.measured)"' "${SPEC_CONTROLLER_EVIDENCE_DIR}/mutation-measurements.json"
-
-          # THE LAST ACT, BECAUSE A SCRIPT'S STATUS IS ITS LAST COMMAND'S. `set +e` stops a failure
-          # mid-script from killing the step; it does NOT stop the render above from REPORTING one.
-          # Two routes, two lines.
-          exit 0
 
       # STEP 1 OF THE SELF-RECONCILIATION CHAIN — the observed @unit stream. The run is
       # unchanged; it now also writes the machine-readable report the gate below reads.
@@ -722,7 +441,7 @@ jobs:
       # today. What is given up is a FUTURE finding about the world rather than about this tree —
       # an advisory published against an action this file pins would red a build over a commit that
       # changed nothing, which is the same trade `ci.yml` already makes by reading the nightly
-      # sweep's number instead of taking one.
+      # sweep's verdict instead of taking one.
       #
       # A BLANKET `--min-severity` IS BANNED AND IS NOT WHAT THE NAMED SUPPRESSIONS IN `release.yml`
       # ARE. That flag would have cleared all fifteen findings in one character and left the eight
@@ -751,18 +470,30 @@ jobs:
           advanced-security: false
           online-audits: false
 
-      # THE ONE MEASURED ROW PRINTS A NUMBER IT DID NOT TAKE, WHICH IS WHY IT IS A READER AND NOT A
-      # SWEEP. A step's outcome is an exit code and an exit code cannot carry a measurement, so the
-      # measured half keeps exactly what it has: the command writes the number into the measurement
-      # artefact (@SCN-LNT-024) and published core reads it through `--measurements`. Its STEP is
-      # still what says the check ran (@SCN-LNT-027) — a number arriving for a row the run recorded
-      # no step for is a number from a route that enumerates nothing. This step runs behind the
-      # producer it reads — the sweep's placement for SCN-FIT-002 — because a reader ahead of its
-      # producer has nothing to print.
+      # THE MUTATION ROW IS ANSWERED BY THE NIGHTLY SWEEP'S OWN VERDICT, NOT BY A NUMBER (3F-3483,
+      # proven in 3F-3484). A sweep costs 8-12 minutes against this ladder's ~2, so it runs nightly in
+      # `mutation.yml`, and Stryker ends that run in failure when the score falls below the break
+      # threshold its own config states. This step asks stock `gh` for the newest completed
+      # `mutation.yml` run on `main` created inside the last 26 hours, and passes only if that run
+      # concluded `success`. The row names no `atLeast`, which is how the ledger reads it as a
+      # step-outcome row like SCN-FIT-001: this step's outcome is the evidence, and no code of ours
+      # stands between the sweep and the books. `--branch main` is the branch this ladder gates, so a
+      # hand-dispatched sweep of another branch is never the one read.
+      #
+      # WHAT THAT GIVES UP, NAMED HERE RATHER THAN LEFT TO BE FOUND. (1) The ledger no longer shows
+      # the score: the row reads satisfied or failing, and the number stays in the nightly's Stryker
+      # report. (2) A lapsed schedule, a crashed sweep and a below-bar sweep all read `failing` — no
+      # run inside the window yields no conclusion, and no conclusion is not `success`. (3) The
+      # verdict is the whole nightly job's conclusion, so a failed report upload reads as a mutation
+      # failure. (4) The window's headroom is unchanged, about 1.4 h measured over six nights.
+      #
+      # `GH_TOKEN` is the run's own token; the workflow-wide `actions: read` is what lets it list runs.
       - name: Mutation score
         id: SCN-FIT-002
         if: always()
-        run: pnpm --silent mutation:score --supersedes SCN-MUT-011
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: test "$(gh run list --workflow mutation.yml --branch main --status completed --created ">=$(date -u -d '26 hours ago' +%FT%TZ)" --limit 1 --json conclusion --jq '.[0].conclusion')" = success
 
       # THE DUMP — THE ONLY PLACE `outcome` AND `id` ARE CARRIED TOGETHER (3F-3252).
       #
@@ -840,13 +571,18 @@ jobs:
       # the CLI already holds that rule (@SCN-CLI-002) and a second implementation one level up is
       # the shape this repository keeps deleting.
       #
-      # THE TWO OPTIONAL EVIDENCE FLAGS ARE PASSED ONLY WHERE THE FILE EXISTS, AND THAT CONDITIONAL
-      # IS THE WHOLE OF WHAT THE WRAPPER DID HERE. A `--measurements` or `--ci-steps` path the CLI
-      # is handed and cannot find is a usage fault to it and exits 2 — the wrong verdict. Absent,
-      # each leaves exactly its own rows unanswered, and those reconciling `missing` is the honest
-      # reading: a step that never ran is never balanced (@SCN-CIP-006). `ci-steps.json` is written
-      # by the dump step above, so a developer's machine never has one and a local run must not be
-      # called broken over it. The `$(...)` is unquoted on purpose — the two tokens have to split.
+      # THE ONE OPTIONAL EVIDENCE FLAG IS PASSED ONLY WHERE THE FILE EXISTS, AND THAT CONDITIONAL
+      # IS THE WHOLE OF WHAT THE WRAPPER DID HERE. A `--ci-steps` path the CLI is handed and cannot
+      # find is a usage fault to it and exits 2 — the wrong verdict. Absent, it leaves exactly its
+      # own rows unanswered, and those reconciling `missing` is the honest reading: a step that never
+      # ran is never balanced (@SCN-CIP-006). `ci-steps.json` is written by the dump step above, so a
+      # developer's machine never has one and a local run must not be called broken over it. The
+      # `$(...)` is unquoted on purpose — the two tokens have to split.
+      #
+      # THERE USED TO BE TWO. A `--measurements` expansion beside this one passed the credit stream
+      # a row's own command wrote, and the one writer of that file was the mutation row's reader,
+      # which left with the placement it read (3F-3504). An expansion over a file nothing writes can
+      # never fire, so it went too.
       #
       # ONE LINE, AND NO `package.json` SCRIPT BEHIND IT. Nothing here is discovered from a script
       # name: 3F-3476 deleted the root `spec-controller` script and this command still reconciles.
@@ -860,10 +596,10 @@ jobs:
       # A derived local green-check reported a multi-line `run:` as `unsupported` and redded
       # outright; it left at 3F-3475, and the engine's own walk reads a multi-line block scalar on
       # purpose. What still depends on this being one line is `.github/actionlint.yaml`, whose
-      # SC2046 suppression is pinned to two character columns of this very command — move it and
+      # SC2046 suppression is pinned to one character column of this very command — move it and
       # that pattern stops matching and the gate REDS, which is the intended behaviour and is
       # written up there. Whether to take shellcheck's idiomatic array instead was asked and
       # answered NO on 2026-09-17 — the suppression's word-splitting reason stands alone, so
       # nothing is owed and no ticket is open. The reasoning is in `.github/actionlint.yaml`.
       - name: Self-reconciliation balance
-        run: pnpm spec-controller balance --features features --vitest "$SPEC_CONTROLLER_EVIDENCE_DIR/vitest.json" --cucumber "$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json" $([ -f "$SPEC_CONTROLLER_EVIDENCE_DIR/measurements.json" ] && echo "--measurements $SPEC_CONTROLLER_EVIDENCE_DIR/measurements.json") $([ -f "$SPEC_CONTROLLER_EVIDENCE_DIR/ci-steps.json" ] && echo "--ci-steps $SPEC_CONTROLLER_EVIDENCE_DIR/ci-steps.json") --ci .github/workflows/ci.yml --package-json package.json --target spec-controller
+        run: pnpm spec-controller balance --features features --vitest "$SPEC_CONTROLLER_EVIDENCE_DIR/vitest.json" --cucumber "$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json" $([ -f "$SPEC_CONTROLLER_EVIDENCE_DIR/ci-steps.json" ] && echo "--ci-steps $SPEC_CONTROLLER_EVIDENCE_DIR/ci-steps.json") --ci .github/workflows/ci.yml --package-json package.json --target spec-controller

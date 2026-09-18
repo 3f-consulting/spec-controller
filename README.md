@@ -58,11 +58,12 @@ A fitness check is a whole-system characteristic — complexity, mutation score,
 "specController": {
   "fitnessChecks": [
     { "scn": "SCN-FIT-001", "characteristic": "complexity", "command": "eslint" },
-    { "scn": "SCN-FIT-002", "characteristic": "mutation",
-      "command": "pnpm --silent mutation:score", "atLeast": 90 }
+    { "scn": "SCN-FIT-002", "characteristic": "mutation", "command": "gh run list --workflow mutation.yml" }
   ]
 }
 ```
+
+Neither row carries a bar. The mutation bar is Stryker's own `thresholds.break`, and the row is answered by one push step that reads the newest nightly sweep's verdict: see [`doc/scheduled-checks.md`](./doc/scheduled-checks.md).
 
 **The characteristic is data, not a tag.** The tag says *how the claim is proved*; the field says *what it is about* — so the report still rolls up per characteristic, and a new characteristic is a new word in a row rather than a change to any list. **The row's shape says which kind of check it is**: a row with a bar is measured, a row without one is static. No type field, no second tag.
 
