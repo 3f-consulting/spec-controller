@@ -1,14 +1,19 @@
 /**
  * The CHECK-AGNOSTIC measurement artefact — what a measurement IS, where a run posts one, and
- * what posting BESIDE an earlier one means (@SCN-CIP-009, @SCN-CIP-011) — together with the
- * WRAPPER half of a measured producer, the exit code a wrapper carries through (@SCN-CIP-010).
+ * what posting BESIDE an earlier one means — together with the WRAPPER half of a measured
+ * producer, the exit code a wrapper carries through. The artefact now serves the mutation chain
+ * alone: the sweep's producer and the row's reader post and read through it, and their step arms
+ * read it back. @SCN-MUT-008 holds the two rules a producer here must keep — a row another
+ * producer left survives this one's run, and the wrapped command's ending is the producer's.
+ * (`exitCodeOf` has one caller outside that chain, `toolIdentity.steps.ts`, for its own spawns.)
  *
- * EXTRACTED OUT OF `stepTiming.ts` (3F-2754), WHICH IS A NAMING FIX AND NOT A DESIGN ONE. That
+ * EXTRACTED OUT OF A TIMING MODULE (3F-2754), WHICH WAS A NAMING FIX AND NOT A DESIGN ONE. That
  * module held two things that are not the same thing: the timing-specific READING — a band, a
  * variance margin, a wall-clock in seconds — and everything here, which never mentions a clock.
- * A mutation score posting into an artefact imported out of a module called `stepTiming` is the
+ * A mutation score posting into an artefact imported out of a module named for time was the
  * misnaming the vocabulary discipline exists to catch, so the half that is about MEASUREMENT
- * rather than about TIME moved out and took its terms with it.
+ * rather than about TIME moved out and took its terms with it. The timing half has since left the
+ * tree with the suites' run-time rows' conversion to step outcomes: nothing here times a suite.
  *
  * ONE MODULE AGAIN, BECAUSE EVERY CONSUMER IS IN THIS DIRECTORY (3F-2861). The artefact spent a
  * while in `src/measurements/`, promoted into product (3F-2763) so a second repository could lift
@@ -125,10 +130,10 @@ export interface MeasurementArtefact {
  * THREE RUNGS, IN THIS ORDER:
  *
  *   A NAMED TARGET ROOT — `--root` already means "you are pointing me at a self-contained
- *   target": `timeStepCli`'s own docblock has it that the wrapped command runs there and the
- *   artefact lands there. Evidence under a named root was never the fault, and every planted root
- *   in this repository's suite is already a `mkdtemp` outside any source tree. This rung is what
- *   lets every planted arm keep working with no edit, and it is the reason this change costs one
+ *   target": `mutationScoreCli`'s sweep runs there and its record lands there. Evidence under a
+ *   named root was never the fault, and every planted root in this repository's suite is already
+ *   a `mkdtemp` outside any source tree. This rung is what lets every planted arm keep working
+ *   with no edit, and it is the reason this change costs one
  *   scenario rather than the six an always-on `--evidence` flag would have touched.
  *
  *   `SPEC_CONTROLLER_EVIDENCE_DIR` — the environment's answer for a run that named no target: a
@@ -195,13 +200,13 @@ export function resolveEvidenceRoot(
  * path here goes through the evidence root, so a subtree under it distinguished nothing — and the
  * exemplar taught each of those levels to every consumer who copied the worked step.
  *
- * THE DIRECTORIES ONLY EVER EXISTED TO KEEP THREE FILENAMES APART. This path, `SWEEP_RECORD_PATH`
- * and `timingsRecordPath` all ended `measurements.json`, so flattening collided and a folder was
- * put in to separate them. That is a filename problem wearing a directory's clothes; the other two
- * are now qualified by their producer and the folders have no work left to do.
+ * THE DIRECTORIES ONLY EVER EXISTED TO KEEP FILENAMES APART. This path, `SWEEP_RECORD_PATH` and
+ * a per-suite timings record since deleted all ended `measurements.json`, so flattening collided
+ * and a folder was put in to separate them. That is a filename problem wearing a directory's
+ * clothes; the sweep record is now qualified by its producer and the folders have no work left to do.
  *
- * THIS ONE STAYS BARE ON PURPOSE. The other two are named for who WROTE them; this file has no
- * producer — it is what the reader CLIs post into — and `balance --measurements` points straight
+ * THIS ONE STAYS BARE ON PURPOSE. The sweep record is named for who WROTE it; this file has no
+ * producer — it is what the reader CLI posts into — and `balance --measurements` points straight
  * at it, so the flag and the filename agree. (`posted-measurements.json` was considered, naming
  * what actually distinguishes it — raw versus posted — at the cost of that agreement. Not taken.)
  */
@@ -233,80 +238,6 @@ export const MEASUREMENT_ARTEFACT_PATH = "measurements.json";
  * upload and the reader to chase.
  */
 export const SWEEP_RECORD_PATH = "mutation-measurements.json";
-
-/**
- * Where THIS run's timed step leaves what it measured, relative to the EVIDENCE ROOT — a TIMINGS
- * RECORD, and not this run's credit stream either (3F-3166).
- *
- * THE SAME SPLIT `SWEEP_RECORD_PATH` MAKES, FOR THE SAME REASON, AND IT ARRIVED WITH THE SAME
- * CONVERSION. `@ci-run-time` used to be a bare tag on two stepless scenarios, and the wrapper's
- * measurement WAS the credit: it posted straight into the artefact above and `balance --measurements`
- * read it as what this run credited. Under CONVERTED rows (@SCN-FIT-012 / @SCN-FIT-013) the fitness
- * pass posts the credit itself, from the number this record holds — so a wrapper still writing into
- * the credit stream would settle those obligations whether or not the pass that enumerates them ever
- * ran. That is not a double count, because a row is keyed by (`@SCN`, check) and the later write
- * would simply replace the earlier one; it is worse than a double count. It is a credit arriving by
- * a route that enumerates nothing, which is the single-entry fault this whole axis exists to close:
- * empty the corpus and every timing row would still read satisfied.
- *
- * TWO FILES, TWO QUESTIONS, exactly as the sweep record puts it: what a producer MEASURED, and what
- * this run CREDITED. The shape is identical and one reader reads both.
- *
- * ONE FILE PER MEASURED ROW, WHICH IS WHY THIS IS A FUNCTION AND NOT A CONSTANT (3F-3200). The two
- * timed steps shared one record, and a shared record has ONE AGE — so a freshness window over it
- * would be one decision for two rows, which is exactly the reading that ticket forbids in terms.
- * Worse, a shared record puts the fault out of reach of a file-age window ALTOGETHER: on an
- * evidence root that persists between runs, a job where only one of the two suites runs rewrites
- * the file beside a row a day old, and the file's age is then zero. No setting of the window fixes
- * that. Per row, a record's age is its own row's age and nobody else's.
- *
- * AND THE MERGE RULE DID NOT GO WITH IT. `measurementArtefactWith` still reads before it writes
- * here, because the claim it carries is per row rather than per file: a step that runs twice — a
- * re-run, a retried job — replaces its own row instead of appending a second. What moved is the
- * OTHER half, that a run's measurements land BESIDE one another; that is now observable only where
- * it is still true, at the credit stream both readers post into (@SCN-CIP-011).
- *
- * AT THE EVIDENCE ROOT, like the two paths above, qualified by its producer for the reason stated
- * there (3F-3320) — and now by the row that producer answered, which is the finer grain of the
- * same rule rather than a second one.
- */
-export function timingsRecordPath(scnId: string): string {
-  // BARE, THROUGH THE ARTEFACT'S OWN READING OF A TERM (@SCN-TRM-001), which is the same reading
-  // the keying rule above uses. A caller may hand this a term spelled with its sigil, and
-  // `@SCN-FIT-012` and `SCN-FIT-012` naming two different files would split one row's record in
-  // two — a producer writing one and its reader looking in the other, reconciling `missing`.
-  return `timings-${bareTerm(scnId)}-measurements.json`;
-}
-
-/**
- * Where a producer LEAVES a record for the placement to judge, before anything has been placed —
- * one directory under the evidence root, and the whole of the staging stage (3F-3200).
- *
- * THE EVIDENCE ROOT ITSELF THEREFORE HOLDS ONLY WHAT HAS BEEN PLACED, which is the property every
- * measured row's freshness now rests on. A timings record written straight into the root is read
- * by its row's command whatever its age; written here, it is read only if a placement carried it
- * across, and a placement carries it across only inside the freshness window. That is what makes
- * STALE and ABSENT one observable for a timed row, as they already were for the sweep — whose
- * record needs no staging stage because its producer is a different run entirely and its transport
- * is the download.
- *
- * A SUBDIRECTORY RATHER THAN A SIBLING DIRECTORY, and the difference is who has to know. Readers
- * read bare filenames at the root, so this is invisible to every one of them; `--root` still moves
- * the whole step; one environment variable still governs; and `Resolve the evidence root` needs no
- * edit, so its name stays true and its `notChecks` entry keeps matching. 3F-3320 flattened
- * directories that distinguished nothing — this one distinguishes a stage.
- *
- * AND NOTHING CLEARS IT. A staged record that survives from an earlier run is left exactly where
- * it is and its AGE is what decides — the operator's ruling on this ticket, kept as a mechanism
- * rather than restated as an intention: the test is for fresh evidence, and a measurement inside
- * the window IS fresh.
- */
-export const STAGING_DIR = "staged";
-
-/** Where a timed step leaves its record for the placement, relative to the EVIDENCE ROOT. */
-export function stagedTimingsRecordPath(scnId: string): string {
-  return path.join(STAGING_DIR, timingsRecordPath(scnId));
-}
 
 /** Whether two rows answer the same thing — the @SCN naming the row and the check tag on it. */
 function isTheSameRowAs(row: Measurement, measurement: Measurement): boolean {
@@ -381,10 +312,11 @@ export interface MeasurementAsk {
 /**
  * The row of a record that answers what a reader asked, or `undefined` where none does.
  *
- * ONE MATCHING RULE FOR EVERY READER OVER THIS ARTEFACT. The sweep record's reader and the timings
- * record's reader ask the same question of the same shape, and each used to spell the answer for
- * itself — two copies that agreed until the day one of them was edited, which is the arrangement
- * this module already refuses for the KEYING rule beside it (`isTheSameRowAs`).
+ * ONE MATCHING RULE FOR EVERY READER OVER THIS ARTEFACT. The sweep record's reader and a timings
+ * record's reader, since deleted, asked the same question of the same shape, and each used to spell
+ * the answer for itself — two copies that agreed until the day one of them was edited, which is the
+ * arrangement this module already refuses for the KEYING rule beside it (`isTheSameRowAs`). One
+ * reader is left, and the rule stays here so a second one asks it rather than restating it.
  *
  * BOTH TERMS, BARE, because neither is an address on its own (@SCN-LNT-012) and a record may hold
  * several rows: these records are keyed exactly as the credit stream is.
@@ -431,8 +363,8 @@ function alreadyPostedIn(source: string | undefined): Measurement[] {
 }
 
 /**
- * The artefact a run posts, carrying this measurement beside every other one the run made
- * (@SCN-CIP-011).
+ * The artefact a run posts, carrying this measurement beside every other one the run made — the
+ * rule @SCN-LNT-024 states for every producer on this axis.
  *
  * ONE ARTEFACT, AS MANY CONTRIBUTING PRODUCERS AS THE RUN HAS MEASURED CHECKS, so a producer is
  * told what is already there and posts INTO it. Writing over it would leave only the last row and
@@ -519,7 +451,7 @@ export interface FinishedCommand {
 const SIGNAL_EXIT_CODE_BASE = 128;
 
 /**
- * The code the wrapper exits with, which is the wrapped command's own (@SCN-CIP-010).
+ * The code the wrapper exits with, which is the wrapped command's own (@SCN-MUT-008).
  *
  * NOT THE WRAPPER'S OPINION OF WHAT IT MEASURED. The verdict on a measurement is the ledger's,
  * and a wrapper that also redded on it would be holding both the number and the bar that number

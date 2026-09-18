@@ -4,9 +4,8 @@
  *
  * The third evidence stream, and it belongs to neither of the other two. A runtime credit is read
  * from a runner's result JSON; a static credit is read from a target's CI config and manifest. A
- * measurement is neither a test result nor a fact about the tree: it is what the wrapper around a
- * timed step measured while the step ran, and nothing else in the pipeline is in a position to
- * know it.
+ * measurement is neither a test result nor a fact about the tree: it is what a producer measured
+ * while the step ran, and nothing else in the pipeline is in a position to know it.
  *
  * THE ARTEFACT:
  *

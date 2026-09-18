@@ -421,7 +421,7 @@ Then("the measurement the other producer posted is still there to be read", func
 Then(
   "that mutation run ends exactly as its sweep ended, rather than as a fault of its own",
   function () {
-    // @SCN-CIP-010, unchanged by having nothing to post: the producer is not an arbiter, and a
+    // The producer is not an arbiter, and having nothing to post does not change that: a
     // sweep that ended cleanly having written no report is a fault of the wiring that the LEDGER
     // reports, as a row reading missing. A producer redding on it would be a second arbiter of a
     // verdict that already has one.

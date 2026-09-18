@@ -16,11 +16,12 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
   check's does and exactly as a unit test's does. What differs is WHERE the citation comes
   from. A static check's run is a script handle, so its @SCN is resolved at observation time
   over two hops — handle to bare tag through the registry, bare tag to scenario through the
-  corpus. A measurement has no handle to resolve: the thing that measures the suite is the
-  timing wrapper around the step, and canon puts the check-to-scenario mapping in that
-  runner (double-entry-manifesto.md → Fitness Scenario, "the check-to-scenario mapping held
-  by the runner, as @ci-run-time's is"). So the measurement ARRIVES already citing, and the
-  two-hop seam is not consulted at all.
+  corpus. A measurement has no handle to resolve: the thing that measures the suite is a
+  producer the consumer runs around their own step, and canon puts the check-to-scenario
+  mapping in that runner (double-entry-manifesto.md → Fitness Scenario, "the check-to-scenario
+  mapping held by the runner, as @ci-run-time's is"). So the measurement ARRIVES already
+  citing, and the two-hop seam is not consulted at all. What the engine reads is the artefact,
+  whoever wrote it; this repository ships no such producer and runs none.
 
   WHICH IS WHY ONE TAG MAY NAME MANY SCENARIOS HERE — AND, NOW A REGISTRY ENTRY CAN SAY WHICH
   SCENARIO A CHECK CREDITS, ON THE STATIC AXIS TOO. Canon asks one thing of both: several
@@ -36,10 +37,10 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
 
   THE THRESHOLD IS A CEILING, WHICH IS WHAT THE WORD MEANS HERE — a bar you stay under, never
   an allowance drawn down. A measurement at or under its threshold is satisfied and
-  one over it is failing — the ordinary two-sided pair, no new outcome. The two-level
-  trigger-and-gate model the wrapper prints every run (measured against the engineering
-  anchor, with a variance band above it before anything reds) is the WRAPPER's report and
-  stays there: an "over the anchor but not yet red" band would be an eleventh outcome, and
+  one over it is failing — the ordinary two-sided pair, no new outcome. A two-level
+  trigger-and-gate reading (measured against an engineering anchor, with a variance band
+  above it before anything reds) is a report a producer may print for a person, and it stays
+  the producer's: an "over the anchor but not yet red" band would be an eleventh outcome, and
   the ledger has ten. What reaches the ledger is the failing threshold and the number.
 
   A FLOOR-SHAPED CHECK IS NOT IN SCOPE. A mutation score must be at LEAST its threshold,
@@ -55,15 +56,17 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
   carries. A check named inside a fixture is not a tag on the row that plants it — which is
   why every scenario here can spell "ci-run-time" out repeatedly without owing it once.
 
-  AND THE TWO OBLIGATIONS THIS REPOSITORY ACTUALLY OWES HAVE LEFT THIS FILE (3F-3166). They were
-  the last Rule here — two stepless scenarios carrying the bare tag, one per timed suite. They are
-  CONVERTED now: @SCN-FIT-012 and @SCN-FIT-013, authored in features/fitness-checks.feature beside
-  their rows in specController.fitnessChecks, where each names its own ceiling. Nothing about the
-  engine below moved with them; what changed is where the two claims about this tree are written,
-  and the ceilings they are held to are on their rows rather than in a second manifest key. The
-  ORDER was always the point and still is: raising an obligation before anything measured it would
-  leave a permanently unsettleable row, so the wrapper writes a timings record when the suite runs
-  and each row's own step reads it back afterwards, writing the number into the run's credit stream.
+  AND THIS REPOSITORY POSTS THIS AXIS NO MEASUREMENT AT ALL. Its own two run-time claims were once
+  the last Rule here — two stepless scenarios carrying the bare tag, one per suite — and left this
+  file at 3F-3166. They are @SCN-FIT-012 and @SCN-FIT-013, authored in
+  features/fitness-checks.feature beside their rows in specController.fitnessChecks, and they are
+  STEP-OUTCOME rows: each bar is the limit its CI step runs the suite under, that step carries the
+  row's @SCN as its `id:`, and the row names no `atMost`. A suite past its limit fails its step,
+  and the ledger reads that outcome as it reads any converted check's. So nothing here times a
+  suite, and no ci-run-time number is written for the engine below to read. The engine is
+  unchanged by that: every scenario in this file is product, for a consumer who does post a number,
+  and it still holds a measured row to the `atMost` authored on its debit and never to anything
+  the credit brings.
 
   Rule: a fitness scenario tagged with a measured check raises an Evidence Obligation carrying its threshold, steps or none
 
@@ -142,8 +145,8 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
   Rule: a measurement posts one Evidence Observation citing the @SCN its runner stamped
 
     THE NEW SOURCE. The measurement is neither a test result nor a fact about the tree, so it
-    arrives from neither reader: the timing wrapper that measures a step emits it, and the
-    engine ingests that artefact as a third evidence stream. It carries what the ledger
+    arrives from neither reader: whatever measures the step — a consumer's own timing wrapper,
+    say — emits it, and the engine ingests that artefact as a third evidence stream. It carries what the ledger
     reconciles on — the @SCN naming the row, the bare check tag naming which of that row's
     obligations it answers, and the number — because a citation is not an address on its own
     and one scenario may owe more than one measured check.
@@ -279,120 +282,3 @@ Feature: Reconcile a MEASURED fitness check against its threshold — the @ci-ru
       When the corpus and the measurements are reconciled and rendered
       Then the markdown names the check "ci-run-time" with its measurement 96.4 and its threshold 75
       And the JSON carries the measurement and the threshold on the row's own entries
-
-  Rule: a timed step measures itself and posts a measurement that already cites
-
-    THE PRODUCER, WHICH IS THE HALF 3F-2283 LEFT OUT. Every Rule above reads a measurement
-    that has already arrived; nothing in this repository made one. The producer is a wrapper
-    around a CI step: it runs the command, times the wall-clock, and writes the row. Canon
-    puts the check-to-scenario mapping in the runner, so the citation is handed to the wrapper
-    on its command line rather than resolved from anywhere — which is why a measurement needs
-    no two-hop seam and why one tag may honestly name many scenarios on this axis.
-
-    THE WRAPPER IS NOT AN ARBITER. It prints the two-level trigger-and-gate reading a human
-    wants and returns the wrapped command's own exit code; the timing VERDICT is the ledger's
-    alone. A wrapper that also redded would be grading its own homework — and worse, would
-    make a green build depend on two things agreeing.
-
-    AND THE ARTEFACT RULE UNDER IT IS THE MEASURED STEP'S RATHER THAN THE TIMED STEP'S. Posting
-    beside what is already there, and replacing only your own row, is true of every producer on
-    this axis and not of timed ones alone — so @SCN-CIP-011 states it over the run's credit
-    stream, where a timed suite's reader and the sweep's still meet in one file. Each timed step
-    writes a record of its own now, one file per measured row, and one row is all it ever holds
-    (3F-3200).
-
-    @integration @SCN-CIP-009
-    Scenario: a timed step writes a measurement carrying the @SCN and check tag it was given
-
-      THE SHAPE IS THE READER'S, WHICH IS WHY BOTH ARMS READ THE ARTEFACT BACK THROUGH THE
-      INGEST EDGE rather than against a literal of their own. A producer and a reader that
-      agree by inspection agree until the day one of them is edited, and a mis-keyed row does
-      not fail loudly — it reconciles missing, which is the one reading this axis exists to
-      keep unreachable. Asserting through the reader is the only form of this scenario that
-      cannot pass while the two halves disagree.
-
-      Given a timed step citing the scenario "SCN-MSD-001" on the check "ci-run-time"
-      When the step runs and takes a measurable amount of wall-clock
-      Then the artefact it wrote is read as exactly one Evidence Observation, citing "SCN-MSD-001" and naming the check "ci-run-time"
-      And that Evidence Observation carries the seconds the step took
-
-    @integration @SCN-CIP-010
-    Scenario: the wrapped command's exit code is the wrapper's — a failing suite reds however fast it ran
-
-      THE MEASUREMENT IS POSTED ALL THE SAME, which is the half of this easiest to lose. A slow
-      failing suite is still a slow suite, and a wrapper that skipped its write when the child
-      failed would leave that ceiling's row reading missing — a step that plainly ran reported
-      as one that never did, which is the reading this whole axis exists to keep unreachable.
-
-      A COMMAND KILLED BY A SIGNAL never exited, and so carries no code of its own. Reading that
-      absence as a zero would green a build whose suite was cut off mid-run, so the wrapper
-      answers for it in the shell's own arithmetic rather than in an opinion of its own.
-
-      Given a timed step citing the scenario "SCN-MSD-001" on the check "ci-run-time"
-      When the step runs and the command it wraps fails
-      Then the timed step fails exactly as the command it wrapped did
-      And its measurement is posted all the same
-
-    @integration @SCN-CIP-011
-    Scenario: a second measured step in the same run posts its number beside the first rather than replacing it
-
-      ONE CREDIT STREAM, AS MANY CONTRIBUTING STEPS AS THE RUN HAS MEASURED ROWS. `--measurements`
-      names a single file and every measured row's own step posts into it — a timed suite's
-      reader once per suite, the sweep's reader once — so the second step writes into what the
-      first one left. Writing rather than merging would leave only the later row, and the earlier
-      suite's ceiling would reconcile missing — a step that plainly ran reported as one that
-      never did, which is the reading @SCN-CIP-006 exists to keep unreachable.
-
-      WHICH IS NOT AN ARGUMENT FOR APPENDING, and that is why the row is keyed by @SCN and
-      check rather than by the end of the list. A step running twice — a re-run, a retried
-      job — would post a second row answering a debit that is owed once, and the reconciler
-      would be handed two credits for one row and left choosing between them. A step owns its
-      row: it adds beside everyone else's and replaces only its own.
-
-      AND IT IS NO LONGER THE TIMINGS RECORDS THIS IS SHOWN OVER, WHICH IS 3F-3200'S DOING. A
-      shared record has ONE age, so a freshness window over it would be one decision for two
-      rows — and a run where only one of the two suites ran would rewrite it and read as fresh
-      with a day-old row inside. Each timed step writes its own record now. The wrapping steps
-      no longer meet in one file; the numbers they leave still do, at the artefact the
-      reconciler reads.
-
-      Given a timed step citing the scenario "SCN-MSD-001" on the check "ci-run-time"
-      When the step runs and takes a measurable amount of wall-clock
-      And a second step citing the scenario "SCN-MSD-002" on that same check runs
-      And each step's number is read back into the run's credit stream
-      Then the credit stream is read as one Evidence Observation citing "SCN-MSD-001" and one citing "SCN-MSD-002"
-      When the first step runs again, taking longer than it did before, and its number is read back
-      Then "SCN-MSD-001" is answered in the credit stream by exactly one Evidence Observation, carrying what its step measured this time
-      And "SCN-MSD-002" is still answered in the credit stream by the measurement it posted
-
-    @integration @SCN-CIP-012
-    Scenario: every run prints the measurement against its trigger and its gate, naming the band it landed in
-
-      THE BAND OVER THE TRIGGER AND UNDER THE GATE IS THE WHOLE POINT OF PRINTING TWO NUMBERS.
-      A run in it is green, and the report says so — the suite has crossed the engineering
-      anchor its substrate decisions were made against, and the only place that fact can be
-      read is here. The ledger's ceiling is the gate, so a row in this band reconciles
-      satisfied exactly as one well under it does, and by the time the two readings differ
-      the slowdown is a red rather than a warning.
-
-      ONE NUMBER IS AUTHORED AND THE OTHER IS DERIVED, which is not a saving. Written side by
-      side in the manifest they could disagree, and a manifest whose trigger sat above its own
-      gate would print a run as inside the anchor and red it in the same job — with nothing to
-      say which of the two the author meant. So the ceiling is the manifest's, read through
-      the same `thresholdFor` the ledger reads it with, and the anchor is that ceiling divided
-      by the portfolio's variance margin.
-
-      AND A PAIR THE MANIFEST GIVES NO CEILING FOR IS NOT GIVEN ONE HERE. The measurement is
-      printed and the absence is named, mirroring the `null` the engine answers with: a
-      default invented in the report would be the one number on the line nobody chose, while
-      the absence is already loud on the ledger (@SCN-CIP-002), where it can be acted on.
-
-      Given a timed step citing the scenario "SCN-MSD-001" on the check "ci-run-time"
-      And its scenario is held to a ci-run-time ceiling far above what the step will take
-      When the step runs and takes a measurable amount of wall-clock
-      Then the report reads its measurement against that ceiling and against the trigger derived from it
-      And the report names the measurement as inside the trigger
-      When the ceiling is dropped below what the step measured and the step runs again
-      Then the report names the measurement as over the gate
-      When a step whose scenario the manifest holds to no ceiling at all runs
-      Then the report carries that step's measurement and says no threshold is configured

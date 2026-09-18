@@ -13,10 +13,10 @@
 #
 # AND IT TAKES AN EPOCH SECOND, NEVER AN ISO STRING. Parsing a run's `createdAt` is GNU
 # `date -u -d` syntax that a BSD `date` refuses — measured at 3F-3156: with a BSD `date`, a run one
-# hour old and a run forty hours old both placed nothing, for the same wrong reason. Reading a
-# staged file's mtime is `stat`, which spells its flags differently on either platform again. Both
-# are the CALLER's transport problem, so both stay at the caller: the one path every placed row
-# goes through needs only POSIX `date -u +%s`, and no portability term sits in it at all.
+# hour old and a run forty hours old both placed nothing, for the same wrong reason. A caller
+# reading a file's mtime instead would need `stat`, which spells its flags differently on either
+# platform again. Both are the CALLER's transport problem, so both stay at the caller: the one path
+# every placed row goes through needs only POSIX `date -u +%s`, and no portability term sits in it.
 
 # 26 h = a 24 h cadence + 2 h margin, in seconds. The derivation, never the bare number: a consumer
 # whose sweep runs twice daily reads the rule and gets 14, rather than copying 93600 and inheriting

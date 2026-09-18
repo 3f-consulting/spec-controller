@@ -64,7 +64,9 @@ concurrency:
 # price is a slower red build; the ledger this file now feeds is the reason it is worth paying. A
 # fitness row with no entry in the run record is BROKEN evidence and stamps the run unsound, so
 # without `always()` one early red would report one `failing` and nine `broken` — a worse account
-# from a correct mechanism.
+# from a correct mechanism. The exceptions are the two runners, `Test` and `Cucumber`: each is a
+# suite's run-time check (SCN-FIT-012, SCN-FIT-013) and that suite's runner at once, and each keeps
+# a runner's unconditional place at the head of the ladder.
 #
 # ONE ATTRIBUTE WOULD FALSIFY ALL OF THIS, AND IT IS FENCED RATHER THAN ASKED FOR POLITELY.
 # `continue-on-error` severs job-green from step-ran: the step runs, reds, and the job ends green
@@ -87,7 +89,8 @@ jobs:
     # WHAT IT IS FOR IS THE SIX-HOUR DEFAULT IT REPLACES. With no timeout a wedged job burns six
     # hours of a 3,000-minute monthly allowance before GitHub stops it — one hang costs more than
     # this whole ticket saves in a month. The repository's actual run-time gates are @SCN-FIT-012
-    # and @SCN-FIT-013, at 75s and 150s; this number is not one of them and must not be read as one.
+    # and @SCN-FIT-013, the `timeout 75` and `timeout 150` the `Test` and `Cucumber` steps run their
+    # suites under; this number is not one of them and must not be read as one.
     timeout-minutes: 15
     steps:
       # EVERY `uses:` IN THIS REPOSITORY NAMES A COMMIT, AND THE TAG IS A COMMENT (3F-3445,
@@ -132,7 +135,7 @@ jobs:
       # it is reached through a command line here or through the resolver in TypeScript.
       #
       # ONE ENTRY, NOT FIVE, AND THAT IS THE POINT. The placement step places the sweep record, two suites
-      # write their reports, the three measured rows' commands write the credit stream, the dump
+      # write their reports, the one measured row's command writes the credit stream, the dump
       # step writes this run's step record, and the self-reconciliation reads all of them; a `$RUNNER_TEMP`
       # expression repeated at each of them is a path that agrees today and drifts on the first edit
       # that misses one.
@@ -263,8 +266,8 @@ jobs:
 
           # THE WINDOW AND THE COMPARISON AGAINST IT COME FROM ONE FILE, WHICH EVERY PLACED ROW
           # ASKS (3F-3200). What is left here is this row's TRANSPORT — which run to select, how to
-          # read its clock, how to fetch and place what it left. Three sources, three transports,
-          # one rule.
+          # read its clock, how to fetch and place what it left. The transport is this step's; the
+          # rule is not.
           . scripts/freshness-window.sh
 
           # THIS STEP LEAVES THIS RUN'S MEASUREMENT IN THE EVIDENCE ROOT OR IT LEAVES NOTHING, AND
@@ -273,8 +276,8 @@ jobs:
           # that sentence had no effect at all: an earlier run's copy was still sitting here, and
           # the row's own command read it and answered with a number this run had already refused.
           # Two outcomes on paper, one effect. It reads as airtight on this pipeline solely because
-          # `$RUNNER_TEMP` is discarded between jobs, which is luck rather than mechanism — the same
-          # complaint this axis makes about the timings, one level down. A consumer will not have it.
+          # `$RUNNER_TEMP` is discarded between jobs, which is luck rather than mechanism. A consumer
+          # will not have it.
           #
           # REMOVED HERE RATHER THAN AT EACH REFUSAL, FOR THE REASON `set +e` IS SET ONCE ABOVE.
           # Eight paths out of this script place nothing and a ninth is one edit away; a guarantee
@@ -457,136 +460,26 @@ jobs:
       # reconciliation report enumerates this codebase's gaps and is this run's OUTPUT — writing
       # it into the source tree it is about is the defect 3F-3099 closes. The default reporter is
       # kept alongside so a failure is still readable in the log rather than only in JSON.
+      #
+      # AND IT IS SCN-FIT-012'S CHECK AS WELL AS THE UNIT RUNNER, WHICH IS WHY IT CARRIES `timeout`
+      # AND AN `id:`. The row's bar is the limit this step runs the suite under, in seconds: past it
+      # GNU `timeout` exits 124, the step's `outcome` is `failure`, and the dump below carries that
+      # to `balance` under this `id:`, which is the row's `@SCN`. No `if: always()`: a runner keeps
+      # its place at the head of the ladder.
       - name: Test
-        run: pnpm test --reporter=default --reporter=json --outputFile.json="$SPEC_CONTROLLER_EVIDENCE_DIR/vitest.json"
+        id: SCN-FIT-012
+        run: timeout 75 pnpm test --reporter=default --reporter=json --outputFile.json="$SPEC_CONTROLLER_EVIDENCE_DIR/vitest.json"
 
       # STEP 2 — the observed @integration / @e2e stream. `--format json:` adds a
       # file formatter; the progress formatter stays on stdout.
+      #
+      # AND IT IS SCN-FIT-013'S CHECK AS WELL AS THE BEHAVIOURAL RUNNER, for the reason `Test` is
+      # SCN-FIT-012's: the row's bar is the limit this step runs the suite under, in seconds; past
+      # it GNU `timeout` exits 124, the step's `outcome` is `failure`, and the dump below carries
+      # that to `balance` under this `id:`. No `if: always()`, for the same reason as `Test`.
       - name: Cucumber
-        run: pnpm cucumber --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json"
-
-      # STEP 2b — THE TWO SUITES' TIMINGS, CARRIED INTO THIS RUN'S EVIDENCE ONLY WHILE THEY ARE
-      # STILL ABOUT THIS CODE (3F-3200).
-      #
-      # THE TWO PRODUCERS ABOVE NO LONGER WRITE INTO THE EVIDENCE ROOT. They write under its
-      # staging stage, and this step is what carries a record across — only while the record is
-      # inside the freshness window, which it asks the same shared rule the sweep's placement asks.
-      # The root therefore holds only what has been PLACED, so a lapsed timing is not there to be
-      # read and its row reconciles `missing`: stale and absent are one observable for a timed row,
-      # as they already were for the sweep.
-      #
-      # WHICH IS A MECHANISM WHERE THERE USED TO BE LUCK. Both timed rows behaved as though they had
-      # a window because `$RUNNER_TEMP` happens to be fresh on every CI job here — so on a runner
-      # with a persistent evidence root, a job where one suite did not run would read yesterday's
-      # number for that suite and settle its bar with it. A consumer copying this axis copies the
-      # arrangement, and they will not have `$RUNNER_TEMP`.
-      #
-      # THE MEASURED-AT IS THE STAGED FILE'S MODIFICATION TIME, AND THE `stat` IS THIS STEP'S OWN.
-      # `scripts/freshness-window.sh` takes an epoch second and never anything else — a file's mtime
-      # is `stat`, which spells its flags differently on either platform, exactly as parsing a run's
-      # `createdAt` is GNU `date` syntax. Both are the CALLER's transport problem and both stay at
-      # the caller, so no portability term sits in the one path every placed row goes through.
-      #
-      # ONE STEP PLACING TWO ROWS, NOT TWO STEPS PLACING ONE EACH. Two would move the declared
-      # ledger delta twice for no reading anyone can take, and `notChecks` — which this step is
-      # named in, in the same commit that added it — is the surface where an extra entry costs
-      # most. The rows are a term of this step rather than a loop over the manifest because a
-      # placement is glue at the edge: it knows which files this pipeline's producers stage, and
-      # nothing about which rows a manifest holds.
-      #
-      # AND IT IS NOT AN ARBITER. Every branch places nothing, says why on stderr, and exits 0 —
-      # having nothing to place is the ordinary reading of a cadence, and the place it is reported
-      # is downstream, on the row that owed the measurement. A step that redded here as well would
-      # make a green build depend on two arbiters agreeing.
-      #
-      # `if: always()` FOR THE REASON THE READERS BELOW CARRY IT, and the sweep's placement does not
-      # need it: that one runs ahead of everything that can red, and this one runs behind two
-      # suites. A failing suite is still a suite that ran and still took its wall-clock — the
-      # wrapper posts its measurement whatever the child exited with (@SCN-CIP-010) — so a
-      # placement skipped by a red would leave `Behavioural suite run time` reading `missing` over
-      # a suite that plainly ran. `always()` WIDENS: there is no run in which it is skipped and an
-      # unconditional step is not.
-      - name: Place the suites' timings
-        if: always()
-        env:
-          # The two rows this pipeline stages a timing for, written out rather than derived from
-          # the manifest: this step is glue at the edge and knows its own producers.
-          ROWS: SCN-FIT-012 SCN-FIT-013
-        run: |
-          # ERREXIT ARRIVES FROM THE SHELL AND IS CLEARED HERE, OUT LOUD, exactly as it is in the
-          # sweep's placement (3F-2960): GitHub invokes a bare `run:` as `bash -e {0}` and this
-          # step names no `shell:`. `-u` is kept, and is the one red route left — an unbound
-          # expansion exits 127, which says THIS SCRIPT IS BROKEN rather than YOUR CODE LOST A
-          # KILL, and dropping it would buy a `cp` of the empty string.
-          set +e
-          set -uo pipefail
-
-          # THE WINDOW AND THE COMPARISON AGAINST IT COME FROM ONE FILE, WHICH EVERY PLACED ROW
-          # ASKS (3F-3200). What is left here is these rows' transport: where the producer staged
-          # the record, how to read its clock, and where a placed one goes.
-          . scripts/freshness-window.sh
-
-          for scn in ${ROWS}; do
-            record="timings-${scn}-measurements.json"
-            staged="${SPEC_CONTROLLER_EVIDENCE_DIR}/staged/${record}"
-
-            # THIS ROW ENDS THIS STEP HOLDING THIS RUN'S TIMING OR HOLDING NOTHING (3F-3431), which
-            # is the sweep's rule above applied to a row whose source is a staged file rather than
-            # another workflow's run. Every `continue` below places nothing and says so, and on a
-            # root that outlives the run that sentence used to leave yesterday's number exactly
-            # where this row's command reads it. Written once per row for the reason it is written
-            # once there: four paths out of this loop place nothing, and a list of them is the
-            # artefact that goes stale.
-            #
-            # THE STAGED RECORD IS NOT WHAT GOES. It is left exactly where the wrapper put it, and
-            # its age is the test — clearing the root up front, before the producers run, is the
-            # shape that was rejected (3F-3200). What is removed is the PLACED copy, the one this
-            # step is answering for.
-            rm -f "${SPEC_CONTROLLER_EVIDENCE_DIR}/${record}"
-
-            # NOTHING STAGED IS THE ORDINARY CASE, NOT A FAULT. A job in which one suite did not
-            # run stages nothing for that row, and the sentence that reports it is the row's own:
-            # it reconciles `missing`, which is true.
-            if [ ! -f "${staged}" ]; then
-              echo "place: ${scn} staged no timings record at ${staged}; nothing is placed. The row will read missing, which is the true sentence: no measurement arrived." >&2
-              continue
-            fi
-
-            if ! measured_at="$(stat -c %Y "${staged}")"; then
-              echo "place: ${scn} staged a timings record at ${staged} whose modification time this runner cannot read; nothing is placed." >&2
-              continue
-            fi
-
-            # THE SHARED RULE, AND NOTHING OF THE WINDOW IS RESTATED HERE. It refuses an age past
-            # the window and an age in the future, says which and why on stderr, and leaves the age
-            # it computed in `FRESHNESS_AGE` for the sentence below — one subtraction, read twice.
-            if ! inside_the_freshness_window "${measured_at}" "the ${scn} timings record"; then
-              continue
-            fi
-
-            # GUARDED BECAUSE THE LINE UNDER IT MAKES A CLAIM (3F-2962). Clearing errexit above is a
-            # guarantee about whether this step REDS; it says nothing about whether what the step
-            # SAYS is true. Unguarded, a failed `cp` would fall through to a sentence asserting a
-            # placement that had not happened. The `mkdir` is in the same condition because the
-            # claim is that THE PLACEMENT succeeded, and the placement is both commands.
-            #
-            # A PLAIN COPY, AND THE STAGED RECORD IS LEFT WHERE IT IS. A staged record surviving
-            # from an earlier run is not tidied away, it is aged out — which is the operator's
-            # ruling on this ticket kept as a mechanism. What the refusal takes away is the PLACED
-            # copy and never the source it was placed from (3F-3431).
-            if ! { mkdir -p "${SPEC_CONTROLLER_EVIDENCE_DIR}" && cp "${staged}" "${SPEC_CONTROLLER_EVIDENCE_DIR}/${record}"; }; then
-              # A HALF-WRITTEN COPY IS NOT A PLACEMENT, and it is the one thing a failure here can
-              # leave where this row's command reads a measurement.
-              rm -f "${SPEC_CONTROLLER_EVIDENCE_DIR}/${record}"
-              echo "place: could not place ${scn}'s staged timings record into the evidence root; nothing is placed. The row will read missing, and this is NOT the lapsed measurement that sentence usually reports: the suite ran, its number was taken, and this runner could not put it where the check that reports it reads it." >&2
-              continue
-            fi
-            echo "place: placed ${scn}'s timings record, measured ${FRESHNESS_AGE}s ago, inside the ${MAX_AGE}s window."
-          done
-
-          # THE LAST ACT, BECAUSE A SCRIPT'S STATUS IS ITS LAST COMMAND'S. `set +e` stops a failure
-          # mid-script from killing the step; it does not stop the loop above from REPORTING one.
-          exit 0
+        id: SCN-FIT-013
+        run: timeout 150 pnpm cucumber --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json"
 
       # STEP 2b — THE FITNESS ROWS, AS ONE CI STEP EACH THAT CITES THEM (3F-3271, under
       # 3F-3252; the second cucumber call they replaced was deleted at 3F-3272).
@@ -858,24 +751,14 @@ jobs:
           advanced-security: false
           online-audits: false
 
-      # THE THREE MEASURED ROWS PRINT A NUMBER THEY DID NOT TAKE, WHICH IS WHY THEY ARE READERS AND
-      # NOT SWEEPS. A step's outcome is an exit code and an exit code cannot carry a measurement, so
-      # the measured half keeps exactly what it has: the command writes the number into the
-      # measurement artefact (@SCN-LNT-024) and published core reads it through `--measurements`.
-      # Their STEPS are still what says the check ran (@SCN-LNT-027) — a number arriving for a row
-      # the run recorded no step for is a number from a route that enumerates nothing. These steps run
-      # behind the producers they read — `Test` for SCN-FIT-012, `Cucumber` for SCN-FIT-013, and the
-      # placement for SCN-FIT-002 — because a reader ahead of its producer has nothing to print.
-      - name: Unit suite run time
-        id: SCN-FIT-012
-        if: always()
-        run: pnpm --silent timing:score --scn SCN-FIT-012
-
-      - name: Behavioural suite run time
-        id: SCN-FIT-013
-        if: always()
-        run: pnpm --silent timing:score --scn SCN-FIT-013
-
+      # THE ONE MEASURED ROW PRINTS A NUMBER IT DID NOT TAKE, WHICH IS WHY IT IS A READER AND NOT A
+      # SWEEP. A step's outcome is an exit code and an exit code cannot carry a measurement, so the
+      # measured half keeps exactly what it has: the command writes the number into the measurement
+      # artefact (@SCN-LNT-024) and published core reads it through `--measurements`. Its STEP is
+      # still what says the check ran (@SCN-LNT-027) — a number arriving for a row the run recorded
+      # no step for is a number from a route that enumerates nothing. This step runs behind the
+      # producer it reads — the sweep's placement for SCN-FIT-002 — because a reader ahead of its
+      # producer has nothing to print.
       - name: Mutation score
         id: SCN-FIT-002
         if: always()

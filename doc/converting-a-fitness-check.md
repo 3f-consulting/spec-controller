@@ -258,11 +258,29 @@ pnpm typecheck
 Exit 0 is the check passing. No runner, no `balance`, no ceremony. That matters most when a check
 reds: you debug it by running it, not by reading a report about it.
 
-**The other three read a number something else produced, and one rule governs all three.**
+**A run-time bar is the step that runs the suite, and it needs no number at all.** `SCN-FIT-012`
+and `SCN-FIT-013` hold the unit suite and the behavioural suite to a limit. The limit is
+`timeout <seconds>` on the step that runs the suite, the step carries the row's `@SCN` as its
+`id:`, and the row names no bar:
+
+```yaml
+- name: Test
+  id: SCN-FIT-012
+  run: timeout 75 pnpm test   # plus the reporter flags that write the suite's report
+```
+
+```json
+{ "scn": "SCN-FIT-012", "characteristic": "ci-run-time", "command": "timeout 75 vitest run" }
+```
+
+Past the limit GNU `timeout` exits 124, the step's `outcome` is `failure`, and the row reads that
+outcome as any other converted check's does. Nothing times the suite, nothing writes a timing down,
+and nothing reads one back.
+
+**One row reads a number something else produced, and one rule governs it.**
 
 | row | what its command reads |
 | -- | -- |
-| `SCN-FIT-012` / `SCN-FIT-013` | a suite timing placed by the run that measured it |
 | `SCN-FIT-002` | the record placed from the nightly mutation sweep |
 
 **A measurement is read only if THIS RUN placed it, and the placement decides freshness before
@@ -289,15 +307,12 @@ measurement valid.
 
 | row | why it cannot be run cold |
 |---|---|
-| `SCN-FIT-012` / `SCN-FIT-013` | `timing:score` reads a measurement the behavioural suite wrote **earlier in the same run** |
 | `SCN-FIT-002` | `mutation:score` reads the record placed from the **nightly sweep**, and only while it is inside its window |
 
-The first two are why their steps run behind their producers, and they are one shape at two
-cadences: evidence
-collected somewhere other than the moment the row is read. `Freshness` is what decides whether it
-still counts — immediate for a push-path check, satisfied by construction because the suite that
-wrote the report ran in the same build; an explicit window for a scheduled one, so a nightly that
-stops running reds on its own once the window lapses.
+That is why its step runs behind the placement: its evidence is collected somewhere other than the
+moment the row is read. `Freshness` is what decides whether it still counts — an explicit window
+for a scheduled producer, so a nightly that stops running reds on its own once the window lapses.
+The run-time rows above never meet the question, because their bar is the step that runs the suite.
 
 **So what does the pipeline add, if the commands already work?** Enumeration, and only enumeration.
 A check reports what it found and says nothing when it finds none, so its silence cannot be told
@@ -313,15 +328,17 @@ migration should take away.
 ## Two things that are easy to get wrong
 
 **1. A reader-shaped check's step is answered by placement, not by position.** Some rows read what
-another step produced: a mutation sweep's placed record, a suite's own timing. If nothing placed a
+another step produced, such as a mutation sweep's placed record. If nothing placed a
 measurement for this run, the row reads `missing` and says so — whatever order the steps ran in.
 Putting such a step ahead of its producer therefore fails loudly rather than silently, which is the
 design and not a hazard to route around.
 
-**A run-time check is the archetype of that shape, not an exception to it.** The wall-clock a suite
-took cannot be measured from inside the step that reports it, so the measuring happens where the
-suite runs — a timing wrapper around the step, writing a record — and the reading happens in a step
-of its own, from a row whose command is a cheap reader over that record.
+**A run-time check does not need that shape, so do not give it one.** It is tempting to measure a
+suite's wall-clock where the suite runs — a timing wrapper around the step, writing a record — and
+read it back in a step of its own. That is a producer, a record, a placement and a reader, all to
+put on the books a fact the step already has. Run the suite under `timeout <seconds>`, give the step
+the row's `id:`, and let the row name no bar. This repository built the long way first, and deleted
+it.
 
 **2. `if: always()` goes on every check step, not only the dump.** Without it the first red aborts
 the job, every later check step is skipped, and the ledger reports one `failing` and N `broken` — a

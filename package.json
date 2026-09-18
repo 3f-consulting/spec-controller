@@ -11,11 +11,10 @@
   "packageManager": "pnpm@11.2.2",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "tsx tests/checks/timeStepCli.ts --scn SCN-FIT-012 --check ci-run-time -- vitest run",
+    "test": "vitest run",
     "mutation": "tsx tests/checks/mutationScoreCli.ts --scn SCN-FIT-002 --check mutation -- stryker run",
     "mutation:score": "tsx tests/checks/mutationScoreReaderCli.ts --scn SCN-FIT-002 --check mutation",
-    "timing:score": "tsx tests/checks/timingReaderCli.ts --check ci-run-time",
-    "cucumber": "tsx tests/checks/timeStepCli.ts --scn SCN-FIT-013 --check ci-run-time -- cucumber-js",
+    "cucumber": "cucumber-js",
     "build": "pnpm -r build",
     "lint:scn-subissues": "tsx tests/checks/lintScnSubIssuesCli.ts",
     "lint:boundaries": "depcruise packages && eslint --config eslint.boundaries.mjs packages",
@@ -34,8 +33,7 @@
       "ci.yml:ci:Resolve the evidence root",
       "ci.yml:ci:Install dependencies",
       "ci.yml:ci:Build",
-      "ci.yml:ci:Place the scheduled sweep's measurement",
-      "ci.yml:ci:Place the suites' timings"
+      "ci.yml:ci:Place the scheduled sweep's measurement"
     ],
     "fitnessChecks": [
       {
@@ -86,14 +84,12 @@
       {
         "scn": "SCN-FIT-012",
         "characteristic": "ci-run-time",
-        "command": "pnpm --silent timing:score --scn SCN-FIT-012",
-        "atMost": 75
+        "command": "timeout 75 vitest run"
       },
       {
         "scn": "SCN-FIT-013",
         "characteristic": "ci-run-time",
-        "command": "pnpm --silent timing:score --scn SCN-FIT-013",
-        "atMost": 150
+        "command": "timeout 150 cucumber-js"
       },
       {
         "scn": "SCN-FIT-002",

@@ -253,7 +253,7 @@ describe("[SCN-LDG-001] citesUnknownScenarioReconciliationsOf builds a phantom r
 describe("[SCN-LDG-006] a phantom row's items carry only the fields the credit has", () => {
   /**
    * A MEASUREMENT can mint a phantom row too, and THE CHECK THAT RAN is the whole of what it can
-   * offer a reader: it is emitted by the wrapper that timed a suite rather than read from a test
+   * offer a reader: it is emitted by whatever measured the step rather than read from a test
    * file, so it has no locator and its bare `checkTag` is the only name it has (@SCN-CIP-003).
    */
   it("carries a measured credit's bare check tag as the staticCheck, and no locator key", () => {

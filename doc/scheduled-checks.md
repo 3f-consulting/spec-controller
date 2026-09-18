@@ -359,7 +359,8 @@ have each row's own command read its own file and post its number into the
 report. This repository shared one timings record between two rows until it hit
 the neighbouring version of the same problem — a shared record has one AGE, so
 one window decision placed or refused both rows together — and split it into a
-file per row.
+file per row, before dropping timing records altogether for a `timeout` on each
+suite's own step.
 
 **One comparison means one file.** The window and the arithmetic against it live
 in `scripts/freshness-window.sh`, sourced by every placement; the steps hold only

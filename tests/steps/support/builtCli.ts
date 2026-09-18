@@ -29,8 +29,8 @@
  * below — a silent pass over a stale `dist` is the worst outcome available here, and is worse than
  * the seconds are worth.
  *
- * NOT EVERY SPAWN IN THE SUITE MOVED. `tests/checks/*Cli.ts` — `lintScnSubIssuesCli`, `timeStepCli`,
- * the mutation CLIs — pay `tsx` start-up, more per spawn; they have no build output today and
+ * NOT EVERY SPAWN IN THE SUITE MOVED. `tests/checks/*Cli.ts` — `lintScnSubIssuesCli` and the
+ * mutation CLIs — pay `tsx` start-up, more per spawn; they have no build output today and
  * giving them one is its own piece of machinery, ruled out of 3F-3424's scope.
  */
 

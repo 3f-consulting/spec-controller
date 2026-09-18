@@ -66,7 +66,7 @@ Feature: The fitness checks this repository configures, one scenario per row
 
   READER-SHAPED ROWS RUN BEHIND THE PRODUCERS THEY READ, AND THAT IS LOAD-BEARING RATHER THAN
   CONVENTIONAL. Some of these rows print a number an earlier step of the same run left behind — a
-  mutation sweep's record, each suite's own timing —
+  mutation sweep's record —
   so a pipeline that puts their steps ahead of those producers meets absent artefacts and a wall of
   unsettled rows while doing exactly what it was told. Which rows those are is read off the rows
   themselves and is deliberately not counted here: a number in this prose is a second reading of
@@ -107,16 +107,16 @@ Feature: The fitness checks this repository configures, one scenario per row
     Then it reports no error
 
   @fitness @SCN-FIT-012
-  Scenario: the unit suite's wall-clock, for the ledger to hold against its ceiling
+  Scenario: the unit suite finishes inside the limit its step runs it under
     Given the unit suite as this push runs it
-    When the wrapper that launched it records its wall-clock
-    Then that number is posted for the ledger to hold against the ceiling its row states
+    When it is run under the limit its step states
+    Then it finishes inside that limit
 
   @fitness @SCN-FIT-013
-  Scenario: the behavioural suite's wall-clock, for the ledger to hold against its ceiling
+  Scenario: the behavioural suite finishes inside the limit its step runs it under
     Given the behavioural suite as this push runs it
-    When the wrapper that launched it records its wall-clock
-    Then that number is posted for the ledger to hold against the ceiling its row states
+    When it is run under the limit its step states
+    Then it finishes inside that limit
 
   @fitness @SCN-FIT-002
   Scenario: the domain's mutation score, for the ledger to hold against the break threshold its runner reads from the same row

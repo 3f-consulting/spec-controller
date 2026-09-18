@@ -4,13 +4,13 @@
  *
  *     tsx mutationScoreCli.ts --scn <SCN-ID> --check <tag> [--root <dir>] -- <command> [args…]
  *
- * BUILT THE WAY THE TIMING WRAPPER WAS, because it is the same producer over a different number.
- * `timeStepCli.ts` wraps a step and reads a clock; this wraps a sweep and reads the report the
- * sweep left. Both are told which scenario and which check they are measuring, both write a row in
- * the one shape `balance --measurements` reads, and both carry the wrapped command's exit code out
- * unchanged. What is genuinely different is where the number comes from — and, since 3F-3152,
- * which FILE it lands in: a timed step measures the run it is part of and credits it, a sweep on
- * its own cadence leaves a record for a later run to place.
+ * BUILT THE WAY A TIMING WRAPPER WAS, because it is the same producer over a different number. This
+ * repository once wrapped its suites in one that timed a step and read a clock; that wrapper has
+ * left the tree, and this one wraps a sweep and reads the report the sweep left. It is told which
+ * scenario and which check it is measuring, writes a row in the one shape `balance --measurements`
+ * reads, and carries the wrapped command's exit code out unchanged. What is its own is where the
+ * number comes from — and, since 3F-3152, which FILE it lands in: a sweep on its own cadence does
+ * not credit the run it is part of, it leaves a record for a later run to place.
  *
  * THE CITATION IS AN ARGUMENT, NOT A LOOKUP. A static check's credit resolves its `@SCN` over two
  * hops from a script handle; a measurement has no handle to resolve, so canon puts the
@@ -18,7 +18,7 @@
  * Scenario). Here the runner is a command line, and the measurement it writes arrives already
  * citing.
  *
- * IT IS NOT AN ARBITER: its exit code is the wrapped command's, always (@SCN-CIP-010). The
+ * IT IS NOT AN ARBITER: its exit code is the wrapped command's, always (@SCN-MUT-008). The
  * verdict on a mutation measurement is the self-reconciliation's alone — which is the same argument, one
  * artefact further out, as the one that keeps this file away from the runner's own `thresholds`
  * block. A producer holding both the number and the bar that number is judged against would make
@@ -41,9 +41,9 @@
  * the credit stream would be a second credit for one Evidence Obligation. The shape of the file and
  * every rule about writing into it are unchanged; only which question it answers is.
  *
- * IT READS THE RECORD BEFORE IT WRITES ONE (@SCN-CIP-011) and posts BESIDE what it finds rather
- * than over it. What that read is worth — and what an unreadable one is worth — is
- * `measurementArtefact.ts`'s to decide.
+ * IT READS THE RECORD BEFORE IT WRITES ONE and posts BESIDE what it finds rather than over it — a
+ * row another producer left is still there after this one has run (@SCN-MUT-008). What that read
+ * is worth — and what an unreadable one is worth — is `measurementArtefact.ts`'s to decide.
  *
  * A SWEEP THAT LEFT NO READABLE REPORT LEFT NO NUMBER, SO IT POSTS NOTHING (@SCN-MUT-008).
  * Absent, empty and unparseable are one answer, and that answer is not zero: a zero is the score
@@ -55,7 +55,8 @@
  * sweep that died takes its own code out through here; a sweep that ended cleanly having written
  * no report is a wiring fault, and the place that reports it is the ledger, out loud, on the row
  * that owed the measurement. A producer redding on it as well would be the second arbiter
- * @SCN-CIP-010 exists to refuse — which is why only a fault in how this was CALLED exits 2.
+ * @SCN-MUT-008's last step exists to refuse — which is why only a fault in how this was CALLED
+ * exits 2.
  */
 
 import { spawnSync } from "node:child_process";
@@ -91,9 +92,9 @@ interface MutationSweep {
   /**
    * The root as it was GIVEN — `undefined` where `--root` was absent, never the default above.
    *
-   * Separate from `root` for the reason `timeStepCli`'s is: whether a self-contained target was
-   * NAMED is what decides where this run's output may land, and a producer comparing `root`
-   * against `process.cwd()` could not tell that from a target that happens to be the working tree.
+   * Separate from `root` because whether a self-contained target was NAMED is what decides where
+   * this run's output may land, and a producer comparing `root` against `process.cwd()` could not
+   * tell that from a target that happens to be the working tree.
    */
   readonly namedRoot: string | undefined;
   readonly command: readonly string[];
@@ -206,9 +207,9 @@ function alreadyPostedIn(artefactPath: string): string | undefined {
   }
 }
 
-// AGAINST THE EVIDENCE ROOT, NOT AGAINST `sweep.root` (3F-3099) — the same move the timed step
-// makes, and it must be the same one: the nightly names no root, so this is the write whose base
-// used to be spec-controller's own source tree.
+// AGAINST THE EVIDENCE ROOT, NOT AGAINST `sweep.root` (3F-3099) — the same move the credit
+// stream's reader makes, and it must be the same one: the nightly names no root, so this is the
+// write whose base used to be spec-controller's own source tree.
 const artefactPath = path.join(resolveEvidenceRoot(sweep.namedRoot), SWEEP_RECORD_PATH);
 // The parent is made rather than assumed: the evidence root is a directory nothing else creates,
 // so the first producer of a job is the thing that creates it.

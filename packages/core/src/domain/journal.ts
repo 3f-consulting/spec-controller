@@ -456,7 +456,7 @@ export interface GuardEvidenceObservation {
 
 /**
  * One observed MEASUREMENT — the evidence of a MEASURED fitness check (@SCN-CIP-003), emitted by
- * the timing wrapper that ran the suite rather than read from a config or a result file.
+ * whatever measured the step rather than read from a config or a result file.
  *
  * A THIRD MEMBER RATHER THAN A FLAG ON ITS SIBLING, and the reason is what the sibling MEANS.
  * `GuardEvidenceObservation` is one observed STATIC-check fact, read from the CI config and the

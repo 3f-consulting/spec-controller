@@ -244,10 +244,10 @@ describe("[SCN-USG-007] a static check running in ANY of a target's workflows is
   it("emits one observation per STEP when two workflows invoke the same check", () => {
     // A CANDIDATE IS A STEP, NOT A SCRIPT (@SCN-USG-004). This arm used to read the other way —
     // one check however many steps ran it — and the inversion moved it, deliberately rather than
-    // as a side-effect. A step is what carries an `id:`, so it is what can cite a row, and this
-    // repository's own pipeline has two steps running one script (`timing:score`) that answer two
-    // different fitness rows. Folding them would hand the first row's credit to both and leave the
-    // second reading `missing` over a check that ran.
+    // as a side-effect. A step is what carries an `id:`, so it is what can cite a row, and a
+    // pipeline may have two steps running one script that answer two different fitness rows —
+    // this repository's once did. Folding them would hand the first row's credit to both and leave
+    // the second reading `missing` over a check that ran.
     //
     // What the two share is their HANDLE, which is where-to-fix and does not have to be unique.
     expect(runningStaticChecks([nightly, nightly], pkg, SUITE_RUNNERS)).toEqual([

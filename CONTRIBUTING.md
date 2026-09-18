@@ -66,9 +66,10 @@ pnpm cucumber --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json"
 
 **It will still end at exit 1 on your machine, and that is the design rather than a fault** —
 see *A LOCAL SELF-RECONCILIATION REPORTS EVERY FITNESS ROW AS `missing`* below. Measured at
-3F-3475 over a tree identical to `origin/main`: every command above green, and the
-reconciliation out of balance on `@SCN-FIT-012`, `@SCN-FIT-013` and `@SCN-FIT-002`, because the
-step that PLACES a measurement is a step of `ci.yml` and your machine runs no pipeline.
+3F-3475, and again once the run-time rows became step outcomes: every command above green, and the
+reconciliation out of balance on `@SCN-FIT-012`, `@SCN-FIT-013` and `@SCN-FIT-002` — the first two
+because their evidence is their step's outcome in the run's own step record, the third because the
+step that PLACES its measurement is a step of `ci.yml`, and your machine runs no pipeline.
 
 **Every converted check is a CI step, carrying its `@SCN` as the step's `id:`.** A converted check
 is both a row of `specController.fitnessChecks` and a `run:` step whose `id:` cites that row — the
@@ -85,22 +86,20 @@ redded on an exclusion excusing a step CI no longer ran. It left with the deriva
 and so did `specController.ciOnlyExclusions`, which nothing reads. What is left is the pipeline
 itself: a step you did not run locally is a step you find out about on the pull request.
 
-**Three rows are MEASURED — their evidence is a number rather than an exit code.** Each has a
-configured row in `specController.fitnessChecks` naming the characteristic, the command that
-prints the number, and the bar the ledger holds it to. That command is a CI step of its own; it
-writes what it read into the run's measurement record, and the self-reconciliation does the
-comparing. The
-row is answered when its command *wrote* a number — whether that number is inside its bar is the
-ledger's sentence, in one place.
+**One row is MEASURED — its evidence is a number rather than an exit code.** It has a configured
+row in `specController.fitnessChecks` naming the characteristic, the command that prints the
+number, and the bar the ledger holds it to. That command is a CI step of its own; it writes what it
+read into the run's measurement record, and the self-reconciliation does the comparing. The row is
+answered when its command *wrote* a number — whether that number is inside its bar is the ledger's
+sentence, in one place.
 
-**Two of the three read what this run itself produced, which is why their steps run LAST.**
-`pnpm test` and `pnpm cucumber` are both wrapped in `timeStepCli`: each times its suite and writes
-a TIMINGS RECORD, and `@SCN-FIT-012` (the unit suite, at most 75s) and `@SCN-FIT-013` (the
-behavioural suite, at most 150s) read their own row back out of it. Producer then reader, in that
-order — put those steps ahead of the suites and both rows read `missing` while you do exactly what
-you were told.
+**The two run-time rows are not measured, and nothing here times a suite.** `@SCN-FIT-012` (the
+unit suite) and `@SCN-FIT-013` (the behavioural suite) are step-outcome rows: `ci.yml` runs each
+suite under `timeout 75` and `timeout 150`, the step carries the row's `@SCN` as its `id:`, and the
+row names no bar. A suite past its limit fails its step, and the ledger reads that outcome as it
+reads any other converted check's.
 
-**The third reads a number no local run takes.** `@SCN-FIT-002` — this repository's own domain-core
+**The measured row reads a number no local run takes.** `@SCN-FIT-002` — this repository's own domain-core
 mutation score — names `pnpm --silent mutation:score` and holds it to the `atLeast` on its own row.
 That same integer is the `break` threshold `stryker.config.mjs` reads back off the row, so the
 ledger and the runner cannot disagree about where the floor is.

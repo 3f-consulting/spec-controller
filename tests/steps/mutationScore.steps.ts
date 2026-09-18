@@ -110,8 +110,9 @@ function obligationFor(check: string): EvidenceObligation {
 Given(
   "the target's manifest authors {float} as a bare-number threshold for {string} on {string}",
   function (bar: number, check: string, scnId: string) {
-    // The bare form, which is the one two live @ci-run-time rows in this repository's own manifest
-    // are written in. Authored here as the manifest holds it — a number and nothing else.
+    // The bare form — a number and nothing else, read at-most. Authored here as a manifest holds
+    // it. This repository's own manifest no longer carries one: its two @ci-run-time rows are
+    // step-outcome rows and name no bar at all.
     thresholds = thresholdsOf({ [scnId]: { [check]: bar } });
     steplessRows = [];
   }
@@ -160,8 +161,8 @@ Then(
 Then("it holds nothing a measured Evidence Obligation did not already hold", function () {
   // The regression guard the bare form exists for, asserted on the KEY SET rather than on the
   // fields read one at a time: a widened index that leaked a term into the obligation would
-  // satisfy every field assertion above and change what the ledger serialises for the two live
-  // @ci-run-time rows, which is the one thing this scenario promises will not happen.
+  // satisfy every field assertion above and change what the ledger serialises for any row authored
+  // in the bare form, which is the one thing this scenario promises will not happen.
   assert.deepEqual(Object.keys(obligationFor("mutation")).sort(), [
     "measured",
     "qualityCheck",

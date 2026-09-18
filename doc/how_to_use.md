@@ -316,7 +316,7 @@ The point of `spec-controller` is continuous reconciliation, so `balance` belong
 
 **The `if: always()` goes on every check step, not just the dump.** Without it the first red aborts the job and every later check is skipped, so the ledger reports one `failing` and N `broken` — a worse account from a correct mechanism. **The dump must be `toJSON(steps)`**: it is the only place a step's `id` and its `outcome` travel together, and `outcome` is the field that survives `continue-on-error` where `conclusion` does not.
 
-**A reader-shaped check's step runs BEHIND the step it reads.** Some converted checks print a number an **earlier** step of the same run left behind — the behavioural suite's own wall-clock, a nightly mutation sweep's banked record. Put such a step first and you meet absent artefacts and a wall of `missing` rows **while following this page exactly**.
+**A reader-shaped check's step runs BEHIND the step it reads.** Some converted checks print a number an **earlier** step of the same run left behind — a nightly mutation sweep's banked record, say. Put such a step first and you meet absent artefacts and a wall of `missing` rows **while following this page exactly**.
 
 Then reconcile, once, over the reports and the record:
 

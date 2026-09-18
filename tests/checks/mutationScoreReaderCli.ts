@@ -180,8 +180,8 @@ function recordAt(file: string): unknown {
 // a ledger row that quietly reads `missing`.
 const rows = measurementsOf((recordAt(recordPath) as { measurements?: unknown } | undefined)?.measurements);
 // THROUGH THE ARTEFACT'S OWN MATCHING RULE, for the reason the row reader above is shared: this
-// used to spell both-terms-bare for itself beside a timings reader spelling it identically, and two
-// copies of one rule agree until the day one of them is edited (@SCN-MUT-019).
+// used to spell both-terms-bare for itself beside a second reader, since deleted, spelling it
+// identically, and two copies of one rule agree until the day one of them is edited (@SCN-MUT-019).
 const row = measurementAnswering(rows, {
   scnId: asked.scnId,
   checkTag: asked.checkTag,
