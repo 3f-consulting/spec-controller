@@ -1,6 +1,6 @@
 {
   "name": "@3f-consulting/spec-controller-core",
-  "version": "0.1.0-alpha.4",
+  "version": "0.1.0-alpha.5",
   "description": "The pure, embeddable reconciliation core behind spec-controller — Gherkin/@SCN parse, the evidence model, reconcile primitives, and renderers. No CLI, no I/O.",
   "keywords": [
     "reconciliation",

@@ -1,6 +1,6 @@
 {
   "name": "spec-controller",
-  "version": "0.1.0-alpha.4",
+  "version": "0.1.0-alpha.5",
   "description": "Reconcile the behaviour your scenarios name against the evidence that actually ran — the deterministic `balance` CLI.",
   "keywords": [
     "reconciliation",
