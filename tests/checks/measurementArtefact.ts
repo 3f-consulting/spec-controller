@@ -280,8 +280,7 @@ export function timingsRecordPath(scnId: string): string {
 
 /**
  * Where a producer LEAVES a record for the placement to judge, before anything has been placed —
- * one directory under the evidence root, and the whole of the staging stage (@SCN-PLC-001,
- * 3F-3200).
+ * one directory under the evidence root, and the whole of the staging stage (3F-3200).
  *
  * THE EVIDENCE ROOT ITSELF THEREFORE HOLDS ONLY WHAT HAS BEEN PLACED, which is the property every
  * measured row's freshness now rests on. A timings record written straight into the root is read

@@ -41,7 +41,7 @@
  * beside a day-old row and read as fresh. The path is named for the row this step answers, so its
  * age is that row's age.
  *
- * IT IS STAGED RATHER THAN PLACED, WHICH IS WHERE THAT AGE IS FINALLY ASKED FOR (@SCN-PLC-001).
+ * IT IS STAGED RATHER THAN PLACED, WHICH IS WHERE THAT AGE IS FINALLY ASKED FOR.
  * This wrapper writes under the evidence root's staging stage and nothing else; a placement step
  * of the pipeline carries the record into the root itself, and only while it is still inside the
  * freshness window. So the root holds only what has been placed, this row's reader finds nothing

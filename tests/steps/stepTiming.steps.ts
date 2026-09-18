@@ -391,7 +391,7 @@ function runWrapper(command: readonly string[]): SpawnSyncReturns<string> {
  * that code says; an arm that states independently where the file must land is the only one a
  * producer writing somewhere else can fail.
  *
- * IT IS THE STAGING STAGE AND NOT THE EVIDENCE ROOT ITSELF (@SCN-PLC-001, 3F-3200). The evidence
+ * IT IS THE STAGING STAGE AND NOT THE EVIDENCE ROOT ITSELF (3F-3200). The evidence
  * root holds only what a placement has carried into it, so a wrapper writing there directly would
  * be a measurement that reached its row without ever being asked how old it was. Which record this
  * scenario reads is not a detail of it: a wrapper writing into the root would pass every assertion
@@ -449,10 +449,9 @@ function rowsIn(artefactPath: string, absent: string): MeasuredEvidenceObservati
 function runReader(scnId: string): void {
   // THE PLACEMENT STANDS BETWEEN THE WRAPPER AND THE READER, AND IS NOT THIS SCENARIO'S SUBJECT.
   // A run reaches the reader through `Place the suites' timings`, which carries a staged record
-  // into the evidence root while it is inside the freshness window — whether it does that
-  // correctly is @SCN-PLC-001's whole claim, and arranging it here rather than asserting it is
-  // what keeps this arm pointed at the credit stream. The record was staged moments ago, so the
-  // window this stands in for would pass it.
+  // into the evidence root while it is inside the freshness window. Arranging it here rather than
+  // asserting it is what keeps this arm pointed at the credit stream. The record was staged
+  // moments ago, so the window this stands in for would pass it.
   copyFileSync(stagedRecord(scnId), path.join(plantedRoot, `timings-${scnId}-measurements.json`));
 
   const run = spawnSync(

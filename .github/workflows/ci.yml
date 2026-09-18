@@ -466,7 +466,7 @@ jobs:
         run: pnpm cucumber --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json"
 
       # STEP 2b — THE TWO SUITES' TIMINGS, CARRIED INTO THIS RUN'S EVIDENCE ONLY WHILE THEY ARE
-      # STILL ABOUT THIS CODE (@SCN-PLC-001, 3F-3200).
+      # STILL ABOUT THIS CODE (3F-3200).
       #
       # THE TWO PRODUCERS ABOVE NO LONGER WRITE INTO THE EVIDENCE ROOT. They write under its
       # staging stage, and this step is what carries a record across — only while the record is

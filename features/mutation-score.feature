@@ -578,39 +578,3 @@ Feature: Reconcile the mutation score against its threshold — the measured axi
         | SCN-MUT-011 | states no superseded code               | refuses, naming the row it could not find      |
         | SCN-FIT-002 | states that it supersedes "SCN-MUT-011" | answers with the number that measurement holds |
         | SCN-LNT-001 | states that it supersedes "SCN-MUT-011" | refuses, naming the row it could not find      |
-
-  Rule: the measurement a push places is young enough to be about the code it will settle
-
-    THE WINDOW HAD NO WITNESS, AND NOTHING IN THIS REPOSITORY WOULD HAVE NOTICED IT GO (3F-3156).
-    The freshness window — a 24 h cadence plus 2 h of margin, written once in
-    `scripts/freshness-window.sh` since 3F-3200 — is the single thing standing between a lapsed
-    nightly and a satisfied row: the reader prints whatever number it finds and holds no clock of
-    its own, by the ruling that retired the payload's `measuredAt` (@SCN-MUT-019, 3F-2841). Delete
-    the age comparison in the placement and, when this was written, every static check in this tree
-    stayed green, every scenario above this Rule stayed green, and a number measured on a tree three
-    weeks old settled SCN-FIT-002 satisfied. That is a watermelon by this product's own meaning of
-    the word, inside the product named for finding them.
-
-    IT HAD ONE ONCE, AND THE WITNESS DID NOT MOVE WHEN THE MECHANISM DID. Two scenarios held this
-    axis — a measurement inside its window is posted, one older than its window is not — and both
-    were deleted when the reader they were written against was retired (3F-2855, 3F-2856). The
-    window itself moved into the placement and arrived with nothing asking for it. The tell was in
-    this file: the Rule above narrated the window as an aside carrying a figure the placement had
-    already left behind, which is what a fact looks like after it has stopped being checked and gone
-    on being true. It is checked again from 3F-3200, in features/measurement-placement.feature.
-
-    SO THE ARM RUNS THE PLACEMENT RATHER THAN READING IT, WHICH IS THE WHOLE OF THE DIFFERENCE HERE.
-    Every other arm over this step reads its text: which run it selects, on which line, what it says
-    once it has chosen. A text assertion cannot tell a window that FIRES from a window whose
-    arithmetic is broken on the runner it runs on — and reading a mechanism's behaviour off its
-    configuration is exactly the move that let this window lose its witness in the first place. The
-    step is taken out of the workflow every push runs, its own `env:` supplies its three transport
-    terms and it sources the window rule the same way the workflow does, and it is executed with the
-    boundary to GitHub answered and nothing else replaced.
-
-    AND THE ARITHMETIC IS GNU'S, WHICH MAKES A SHIM A CORRECTNESS TERM RATHER THAN PORTABILITY
-    POLISH. `date -u -d "<iso>"` is GNU syntax; a BSD `date` refuses it and the step takes its own
-    "not a moment this runner can read" path, places nothing and exits 0. Measured at Analysis: with
-    a BSD `date`, a run one hour old and a run forty hours old both placed nothing, for the same
-    wrong reason. So the arm resolves a GNU `date` and REDS where it finds none. A skipped arm is a
-    credit saying a check ran when it did not, which is the fault one level up that 3F-3162 closed.
