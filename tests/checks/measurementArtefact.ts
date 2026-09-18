@@ -52,8 +52,7 @@
  * from core's UNPUBLISHED `./internal`, so under `packages/spec-controller/src` this module reported
  * as one an installed consumer meets as ERR_PACKAGE_PATH_NOT_EXPORTED. The check that reported it
  * left at 3F-3447, so between 3F-3198 and that ticket 3F-2861's sentence had a check saying it and
- * now has none before a release is tagged. The rule, and what is left holding it, are at
- * `checkTree.ts`.
+ * now has none before a release is tagged.
  */
 
 /**
