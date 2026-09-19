@@ -131,7 +131,7 @@ describe("[SCN-RPT-027] the provenance projection names the optional CI step rec
  * reading; it left the other one alive, because absence from a list only informs a reader who
  * already holds the list. These arms pin the derivation — the flags with no value, taken from
  * the SAME canonical list the Inputs line renders, so a flag can never be listed on one line
- * and missing from both. The rendering is @SCN-RPT-028's markdown.test.ts arms; the persisted
+ * and missing from both. The rendering is @SCN-RPT-028's provenanceSection.test.ts arms; the persisted
  * line is its @integration arm.
  */
 describe("[SCN-RPT-028] the provenance projection names the canonical inputs the run did not receive", () => {

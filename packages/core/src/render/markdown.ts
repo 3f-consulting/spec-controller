@@ -487,16 +487,35 @@ const lintSection: SectionEmitter = (report) => {
  * group key, so no discrepancy is dropped. The Feature cell reads `<slug> (<FFF>)` when a
  * `featureNames` map provides the slug for the code, else the bare `FFF` — the
  * fallback for an uncoded id (no file registers the code) or the no-map back-compat path.
- * Omitted entirely when no scenario is out of balance. A pure derive over
+ * Omitted entirely only when no Scenario Reconciliation of ANY kind is out of balance; the total line
+ * names the out-of-balance phantom/suspense rows the table cannot group (@SCN-RPT-030). A pure derive over
  * `report.ledger.scenarioReconciliations` (+ the model's `metadata.featureNames` title lookup);
  * markdown-only.
  */
 const byFeatureSection: SectionEmitter = (report) => {
-  // Scenario rows only (ruling Q3) — phantom/suspense rows are grouped at
-  // the end of the Ledger, not folded into the scenario out-of-balance-by-feature cut.
-  const scenarios = report.ledger.scenarioReconciliations.filter(
-    isScenario
-  );
+  // The TABLE groups scenario rows only (ruling Q3) — a phantom/suspense row names no feature file,
+  // so it has no group to sit in. The SENTENCE still counts it (@SCN-RPT-030, 3F-3297).
+  const rows = report.ledger.scenarioReconciliations;
+  const scenarios = rows.filter(isScenario);
+  const groups = outOfBalanceByFeature(scenarios);
+  const ungrouped = ungroupedOutOfBalance(report.summary.scenarioReconciliations);
+  if (groups.size === 0 && ungrouped.length === 0) return [];
+  const outOfBalance = scenarios.filter(
+    (s) => s.verdict === "out-of-balance"
+  ).length;
+  // Rows, not "out-of-balance scenarios": the old head read as M rows out of balance (3F-3297).
+  const head = `${outOfBalance} of ${scenarios.length} scenario rows out of balance`;
+  return [
+    "### Out-of-balance by feature",
+    "",
+    `${head}${groups.size > 0 ? ", grouped by feature" : ""}${ungroupedTail(ungrouped)}.`,
+    "",
+    ...byFeatureTableLines(groups, report.metadata?.featureNames),
+  ];
+};
+
+/** The out-of-balance scenario rows' ids under their feature code, in first-appearance order. */
+function outOfBalanceByFeature(scenarios: RenderInput["ledger"]["scenarioReconciliations"]): Map<string, string[]> {
   const groups = new Map<string, string[]>();
   for (const s of scenarios) {
     if (s.verdict !== "out-of-balance") continue;
@@ -505,26 +524,44 @@ const byFeatureSection: SectionEmitter = (report) => {
     ids.push(s.scnId);
     groups.set(code, ids);
   }
+  return groups;
+}
+
+/** The by-feature table, or no lines at all when no scenario row is out of balance. */
+function byFeatureTableLines(
+  groups: ReadonlyMap<string, readonly string[]>,
+  featureNames: Readonly<Record<string, string>> | undefined,
+): string[] {
   if (groups.size === 0) return [];
-  const outOfBalance = scenarios.filter(
-    (s) => s.verdict === "out-of-balance"
-  ).length;
-  const lines = [
-    "### Out-of-balance by feature",
-    "",
-    `The ${outOfBalance} of ${scenarios.length} out-of-balance scenarios, grouped by feature:`,
-    "",
-    "| Feature | Count | Out-of-balance `@SCN` ids |",
-    "| --- | --- | --- |",
-  ];
+  const lines = ["| Feature | Count | Out-of-balance `@SCN` ids |", "| --- | --- | --- |"];
   for (const [code, ids] of groups) {
-    const slug = report.metadata?.featureNames?.[code];
+    const slug = featureNames?.[code];
     const label = slug ? `${slug} (${code})` : code;
     lines.push(`| ${label} | ${ids.length} | ${ids.join(", ")} |`);
   }
   lines.push("");
   return lines;
-};
+}
+
+/**
+ * The rows no feature can group, ASKED of the model's own sub-counts rather than re-counted here: the
+ * phantom and suspense rows are always out of balance (`ScenarioReconciliationTotals`), and these are
+ * the same sub-counts the header's Scenario Reconciliation row is made of — so the sentence adds up
+ * to the header by construction. Zeros dropped; the ledger's own order.
+ */
+function ungroupedOutOfBalance(totals: RenderInput["summary"]["scenarioReconciliations"]): string[] {
+  return [
+    ...(totals.phantom > 0 ? [`${totals.phantom} phantom-scenario row(s)`] : []),
+    ...(totals.suspense > 0 ? [`${totals.suspense} suspense-scenario row(s)`] : []),
+  ];
+}
+
+/** The sentence's tail naming the ungrouped rows, or nothing when every out-of-balance row is grouped. */
+function ungroupedTail(ungrouped: readonly string[]): string {
+  return ungrouped.length > 0
+    ? `; ${ungrouped.join(" and ")} out of balance, not grouped by feature (no feature file names them)`
+    : "";
+}
 
 /**
  * The ledger (moved to the END) — the per-scenario table, with its summary lines on top: the

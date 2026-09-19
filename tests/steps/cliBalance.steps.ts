@@ -932,7 +932,7 @@ Then("stderr names the unparseable report and the parse failure", function () {
  *
  * The @unit halves are `[SCN-CLI-019]` in packages/core/src/domain/isBalanced.test.ts (the
  * predicate), packages/spec-controller/src/cli-balance/cli.test.ts (the ladder's first branch)
- * and packages/core/src/render/markdown.test.ts (the headline). A grep of SCN-CLI-019 returns
+ * and packages/core/src/render/runVerdictSection.test.ts (the headline). A grep of SCN-CLI-019 returns
  * the scenario and every arm.
  */
 

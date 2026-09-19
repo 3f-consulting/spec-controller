@@ -830,7 +830,7 @@ Then(
 // bare unit reconciles to a `missing` error, a reconciling item; the integration one
 // partitions to a Pending Item). Never a real `@<qc>pending` scenario in the scanned features/
 // corpus (fixture policy, evidence-manifesto §11B). The @unit arm
-// (packages/core/src/render/markdown.test.ts, [SCN-PND-010]) proves the same render distinction
+// (packages/core/src/render/markdownOutcomes.test.ts, [SCN-PND-010]) proves the same render distinction
 // over renderReport in isolation; the JSON side stays glue-free consistent
 // (packages/core/src/render/json.test.ts, [SCN-PND-010]).
 const RENDER_FIXTURE = join(
@@ -945,7 +945,7 @@ Then(
 // out-of-balance (2). Never a real `@<qc>pending` scenario in the scanned features/ corpus
 // (fixture policy, evidence-manifesto §11B). The @unit arm proves the summary materialisation
 // (packages/core/src/assemble/report.test.ts, [SCN-PND-011]) and the render + JSON consistency
-// (packages/core/src/render/markdown.test.ts + json.test.ts, [SCN-PND-011]) in isolation.
+// (packages/core/src/render/markdownOutcomes.test.ts + json.test.ts, [SCN-PND-011]) in isolation.
 const SUMMARY_TALLY_FIXTURE = join(
   process.cwd(),
   "tests/fixtures/pending-tags/features/summary-tally.feature"
@@ -1096,7 +1096,7 @@ Then(
 // obligation discharged by a passing unit observation → clean-balanced, `—`) and @SCN-PDD-002
 // (a sole `@integrationpending` → balanced-with-pending, `⏳ pending: integration`). Never a real
 // `@<qc>pending` scenario in the scanned features/ corpus (fixture policy, evidence-manifesto
-// §11B). The @unit arm (packages/core/src/render/markdown.test.ts, [SCN-PND-012]) proves the same
+// §11B). The @unit arm (packages/core/src/render/markdownOutcomes.test.ts, [SCN-PND-012]) proves the same
 // same-verdict render distinction over renderMarkdown in isolation.
 const BALANCED_CONTRAST_FIXTURE = join(
   process.cwd(),

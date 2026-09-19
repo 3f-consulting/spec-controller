@@ -618,7 +618,7 @@ After({ tags: "@SCN-RPT-017" }, function () {
 // Test volume must count it under BOTH integration and e2e, and the scenario NAMES both
 // obligations, so both the Integration and E2e cells must render their credit count, not ∅.
 // Per-tier counting is INHERITED from the parsed set. The @unit arm is the renderer's half, proven
-// in isolation over the cell-grid corpus in markdown.test.ts (the leaf cited [SCN-RPT-018]).
+// in isolation over the cell-grid corpus in markdownLedger.test.ts (the leaf cited [SCN-RPT-018]).
 const EVIDENCE_OBSERVATION_INTEGRATION_E2E_OPTS = {
   features: "tests/fixtures/evidence-observation-integration-e2e/features",
   cucumber: "tests/fixtures/evidence-observation-integration-e2e/cucumber.json",
@@ -1051,6 +1051,73 @@ Then(
 
 After({ tags: "@SCN-RPT-006" }, function () {
   if (runsRoot006 && existsSync(runsRoot006)) rmSync(runsRoot006, { recursive: true, force: true });
+});
+
+// @SCN-RPT-030
+// The stranded-citation shape a deletion leaves (3F-3297), through the REAL reconcile: the fixture's
+// vitest.json still cites @SCN-BFP-099, which no feature file names, beside one proven and one
+// unproven scenario. The fixture's own package.json and its workflow-free directory as --ci keep
+// this repository's pipeline off the books, so every row is the fixture's. The by-feature sentence
+// is read off the PERSISTED markdown and its numbers are reconciled against the header table's own
+// Scenario Reconciliation row — the two places a reader would compare.
+const BYFEATURE_PHANTOM = "tests/fixtures/byfeature-phantom";
+let runsRoot030: string;
+let md030: string;
+
+Given(
+  "a corpus whose evidence cites a scenario no feature file names, beside an out-of-balance scenario",
+  function () {
+    runsRoot030 = mkdtempSync(join(tmpdir(), "spec-controller-rpt030-"));
+  }
+);
+
+When("that corpus is reconciled and its report written", function () {
+  const opts = {
+    features: `${BYFEATURE_PHANTOM}/features`,
+    vitest: `${BYFEATURE_PHANTOM}/vitest.json`,
+    packageJson: `${BYFEATURE_PHANTOM}/package.json`,
+    ci: BYFEATURE_PHANTOM,
+  };
+  const balance = runReconcile(opts);
+  const ctx030: RunContext = {
+    target: "byfeature-phantom-fixture",
+    inputs: {},
+    runStart: new Date("2026-09-19T12:00:00.000Z"),
+    sourceSha: null,
+  };
+  const runDir = persistReport(runsRoot030, {
+    balance,
+    ctx: ctx030,
+    featureNames: readFeatureNames(opts.features),
+    withRuntimeObservations: true,
+  });
+  md030 = readFileSync(join(runDir, "spec-reconciliation.md"), "utf8");
+});
+
+Then(
+  "the by-feature total line counts the phantom-scenario row as out of balance and not grouped by feature, and its counts add up to the header's out-of-balance and total",
+  function () {
+    const expected =
+      "1 of 2 scenario rows out of balance, grouped by feature; 1 phantom-scenario row(s) out of " +
+      "balance, not grouped by feature (no feature file names them).";
+    assert.ok(md030.includes(expected), `expected the by-feature sentence "${expected}"; got:\n${md030}`);
+    // The phantom names no feature, so it is counted in the sentence and never grouped in the table.
+    assert.ok(md030.includes("| target (BFP) | 1 | SCN-BFP-002 |"), `expected the one grouped row; got:\n${md030}`);
+    assert.ok(!/\| [^|]* \| \d+ \| [^|]*SCN-BFP-099/.test(md030), `expected no table row for the phantom; got:\n${md030}`);
+    // Reconcile the sentence against the header's own row.
+    const header = /\| Scenario Reconciliation \| (\d+) \| (\d+) \| (\d+) \|/.exec(md030);
+    assert.ok(header, `expected the header's Scenario Reconciliation row; got:\n${md030}`);
+    const [total, , outOfBalance] = header.slice(1).map(Number) as [number, number, number];
+    const sentence = /(\d+) of (\d+) scenario rows out of balance[^;.]*; (\d+) phantom-scenario row\(s\)/.exec(md030);
+    assert.ok(sentence, `expected a sentence naming the phantom count; got:\n${md030}`);
+    const [grouped, scenarioRows, phantom] = sentence.slice(1).map(Number) as [number, number, number];
+    assert.equal(grouped + phantom, outOfBalance, "the sentence's out-of-balance rows add up to the header's");
+    assert.equal(scenarioRows + phantom, total, "the sentence's rows add up to the header's total");
+  }
+);
+
+After({ tags: "@SCN-RPT-030" }, function () {
+  if (runsRoot030 && existsSync(runsRoot030)) rmSync(runsRoot030, { recursive: true, force: true });
 });
 
 // @SCN-RPT-023

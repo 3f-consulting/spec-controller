@@ -155,8 +155,9 @@ Feature: The report renders the ledger as sectioned facts
     line and rendered as a TABLE by the reformat; the FFF prefix enriched to the
     full feature name). The per-scenario ledger lists every scenario in document
     order; it does not show which FEATURES carry the discrepancies. Under "## Summary
-    views", a "### Out-of-balance by feature" section opens with a total line ("The N of M
-    out-of-balance scenarios, grouped by feature:") then a "Feature | Count | Out-of-balance
+    views", a "### Out-of-balance by feature" section opens with a total line ("N of M
+    scenario rows out of balance, grouped by feature." — ruled 3F-3297: the old "The N of M
+    out-of-balance scenarios" read as M out of balance) then a "Feature | Count | Out-of-balance
     ids" table grouping the verdict === "out-of-balance" scenarios under the <FFF> parsed
     from each scnId (SCN-<FFF>-<NNN>), one row per feature with a per-feature count,
     so a reader sees the discrepancy CONCENTRATION by feature. The Feature cell reads
@@ -165,17 +166,32 @@ Feature: The report renders the ledger as sectioned facts
     renderer arg, markdown-only). An UNCODED id (an @SCN-XYZ-* whose XYZ no file carries)
     falls back to the bare FFF (the map misses) — as does the no-map back-compat path.
     Balanced scenarios are excluded (this is the discrepancy view). The scnId → <FFF> parse
-    REUSES the shared featureCodeOf helper rather than a fresh regex. Omitted entirely when
-    no scenario is out of balance. A pure derive over balance.scenarios + the markdown-only
-    label lookup. The @unit arm proves the render (full name + uncoded fallback) in
-    isolation; the @integration arm drives the REAL readFeatureNames→map→disk plumbing over
-    a fixture feature dir (a coded + an uncoded feature) to the persisted markdown.
+    REUSES the shared featureCodeOf helper rather than a fresh regex. A pure derive over
+    balance.scenarios + the markdown-only label lookup. The @unit arm proves the render (full
+    name + uncoded fallback) in isolation; the @integration arm drives the REAL
+    readFeatureNames→map→disk plumbing over a fixture feature dir (a coded + an uncoded
+    feature) to the persisted markdown.
+
+    THE TOTAL LINE ACCOUNTS FOR EVERY OUT-OF-BALANCE ROW (3F-3297). Only scenario rows are
+    grouped — a phantom-scenario or suspense-scenario row names no feature file, so it has no
+    group to sit in. But the sentence is what a reader arbitrating a deletion reads, and a
+    stranded citation is exactly what a deletion leaves: a feature file gone while evidence
+    still cites its scenarios. So the sentence names each out-of-balance phantom-scenario and
+    suspense-scenario count as not grouped by feature, and its numbers add up to the header's
+    out-of-balance and total. The section is omitted only when no Scenario Reconciliation of
+    any kind is out of balance; when only ungrouped rows are, it states them and has no table.
 
     @unit @integration @SCN-RPT-006
     Scenario: the by-feature cut names each out-of-balance feature in full, falling back to the bare code when uncoded
       Given a target feature directory whose features carry codes alongside an uncoded one
       When the run writes its artifacts with the feature-name map
       Then the persisted spec-reconciliation.md by-feature cut names the coded feature in full and falls back to the bare code for the uncoded id
+
+    @unit @integration @SCN-RPT-030
+    Scenario: the by-feature total line counts the out-of-balance rows no feature can group, even when they are the only ones
+      Given a corpus whose evidence cites a scenario no feature file names, beside an out-of-balance scenario
+      When that corpus is reconciled and its report written
+      Then the by-feature total line counts the phantom-scenario row as out of balance and not grouped by feature, and its counts add up to the header's out-of-balance and total
 
   Rule: the corpus census survives its own section's dissolution
 

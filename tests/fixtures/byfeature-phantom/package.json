@@ -1,0 +1,7 @@
+{
+  "name": "byfeature-phantom-fixture-target",
+  "private": true,
+  "scripts": {
+    "test": "vitest run"
+  }
+}
