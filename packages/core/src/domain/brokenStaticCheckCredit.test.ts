@@ -22,7 +22,7 @@
 
 import { describe, it, expect } from "vitest";
 import { reconcile } from "./evidenceReconciliation.js";
-import { hasBrokenEvidence } from "./ledger.js";
+import { hasBrokenEvidence, staticObservationTally } from "./ledger.js";
 import type { Scenario, EvidenceObservation } from "./journal.js";
 
 describe("[SCN-LNT-026] a BROKEN static-check credit is excluded from the obligation match whatever else it carries", () => {
@@ -91,5 +91,13 @@ describe("[SCN-LNT-026] a BROKEN static-check credit is excluded from the obliga
       },
     ]);
     expect(hasBrokenEvidence(balance)).toBe(true);
+    // AND IT IS NEITHER COUNT, for the same reason and on the same flag (3F-3531). It claims it
+    // exists and ran over the real tree, which is the shape the running-check filter would count —
+    // as a running check, and as an uncited one, since it sits on suspense. The flag is what says
+    // it never ran, so the tally must read it before either fact.
+    expect(staticObservationTally(balance)).toEqual({
+      runningStaticCheckCount: 0,
+      uncitedStaticCheckCount: 0,
+    });
   });
 });

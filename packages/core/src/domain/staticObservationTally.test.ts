@@ -88,6 +88,23 @@ describe("[SCN-USG-001] staticObservationTally folds the posted static-check cre
   it("returns EXACTLY the two-field surface (named is never materialised)", () => {
     expect(tally).toEqual({ runningStaticCheckCount: 2, uncitedStaticCheckCount: 1 });
   });
+
+  it("counts no runtime credit, whatever fields it arrives carrying", () => {
+    // THE STATIC SCOPING IS THE QUALITY-CHECK, NOT THE FIELDS (3F-3531). A runtime credit is not a
+    // static observation even when it carries `exists` and `enforcedOverRealSource` true — which
+    // `EvidenceObservation` admits from any consumer, with no cast, by width. Every runtime credit
+    // this repository's readers emit carries neither, so without this input the scoping clause is
+    // redundant by coincidence of absence and its removal changes no count.
+    const runtimeCarryingGuardFields = {
+      qualityCheck: "unit" as const,
+      scnId: "SCN-A",
+      status: "passed" as const,
+      exists: true,
+      enforcedOverRealSource: true,
+    };
+    const withRuntime = reconcile(scenarios, [...observations, runtimeCarryingGuardFields]);
+    expect(staticObservationTally(withRuntime)).toEqual(tally);
+  });
 });
 
 /**

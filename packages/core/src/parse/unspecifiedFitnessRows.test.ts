@@ -135,13 +135,24 @@ function reconcileTarget(ciSource: string, record?: CiStepRecord): EvidenceRecon
   });
 }
 
-/** Every row of the ledger, as `[scnId, kind, verdict, [staticCheck, outcome][]]`. */
+/**
+ * Every row of the ledger, as `[scnId, kind, verdict, [qualityCheck, staticCheck, outcome][],
+ * credits posted, pending items]`.
+ *
+ * THE POSTINGS ARE PART OF THE ROW'S ACCOUNT (3F-3531). "No credit can settle it" is a claim about
+ * where credits post, so the projection counts them: the unspecified row holds none even when a run
+ * cites its code, and the phantom row beside it holds exactly that one. Nothing on these books is
+ * deferred, so every row's pending count is nil — a row that invented a pending item would have its
+ * gap excused rather than reported.
+ */
 function rowsOf(reconciliation: EvidenceReconciliation) {
   return reconciliation.ledger.scenarioReconciliations.map((row) => [
     row.scnId,
     row.kind,
     row.verdict,
-    row.qualityCheckReconciliations.map((item) => [item.staticCheck, item.outcome]),
+    row.qualityCheckReconciliations.map((item) => [item.qualityCheck, item.staticCheck, item.outcome]),
+    row.evidenceObservations.length,
+    row.pendingItems.length,
   ]);
 }
 
@@ -153,8 +164,8 @@ describe("[SCN-LNT-034] a configured row the corpus carries no scenario for is o
     // declares and nothing specifies.
     const reconciliation = reconcileTarget(runCitingTheSpecifiedRowAlone);
     expect(rowsOf(reconciliation)).toEqual([
-      ["SCN-CVT-001", "scenario", "balanced", [["complexity", "satisfied"]]],
-      ["SCN-CVT-002", "scenario", "out-of-balance", [["traceability", "missing"]]],
+      ["SCN-CVT-001", "scenario", "balanced", [["lint", "complexity", "satisfied"]], 1, 0],
+      ["SCN-CVT-002", "scenario", "out-of-balance", [["lint", "traceability", "missing"]], 0, 0],
     ]);
     // AND THE DEBIT IS POSTED, NOT MERELY REPORTED. The row names exactly one characteristic — the
     // one its manifest row names — and that is the obligation the manifest raised.
@@ -175,14 +186,16 @@ describe("[SCN-LNT-034] a configured row the corpus carries no scenario for is o
     // credit landing on a PHANTOM row and the obligation still missing beside it.
     const reconciliation = reconcileTarget(runCitingTheUnspecifiedRow, bothStepsSucceeded);
     expect(rowsOf(reconciliation)).toEqual([
-      ["SCN-CVT-001", "scenario", "balanced", [["complexity", "satisfied"]]],
+      ["SCN-CVT-001", "scenario", "balanced", [["lint", "complexity", "satisfied"]], 1, 0],
       [
         "SCN-CVT-002",
         "phantom-scenario",
         "out-of-balance",
-        [["traceability", "cites-unknown-scenario"]],
+        [["lint", "traceability", "cites-unknown-scenario"]],
+        1,
+        0,
       ],
-      ["SCN-CVT-002", "scenario", "out-of-balance", [["traceability", "missing"]]],
+      ["SCN-CVT-002", "scenario", "out-of-balance", [["lint", "traceability", "missing"]], 0, 0],
     ]);
     expect(isBalanced(reconciliation.ledger)).toBe(false);
   });

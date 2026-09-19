@@ -98,9 +98,26 @@ function attemptMint(mint: () => unknown): Refusal {
   }
 }
 
-/** The other side-presence — canon's value, flipped, which is what a diverging side carries. */
+/**
+ * The other side-presence — canon's value, flipped, which is what a diverging side carries.
+ *
+ * EXHAUSTIVE, AND IT REFUSES A THIRD VALUE (3F-3531). The arms below derive every expectation from
+ * `OUTCOME_SIDE_PROFILE` itself, so a row whose value left canon's two words — `"None"` blanked, or
+ * the row emptied to `{}` — moves the expectation with it and agrees. A two-way ternary read
+ * anything that was not `"Exists"` as `"None"`, and ten such mutants survived the nightly sweep on
+ * it. The `never` holds the switch to the type, so a third `SidePresence` cannot slip past either.
+ */
 function flipped(presence: SidePresence): SidePresence {
-  return presence === "Exists" ? "None" : "Exists";
+  switch (presence) {
+    case "Exists":
+      return "None";
+    case "None":
+      return "Exists";
+    default: {
+      const outsideTheType: never = presence;
+      throw new Error(`not a side-presence: ${JSON.stringify(outsideTheType)}`);
+    }
+  }
 }
 
 describe("[SCN-LDG-030] a Quality Check Reconciliation's carried sides are consistent with its outcome (the invariant)", () => {

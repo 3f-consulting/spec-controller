@@ -156,5 +156,11 @@ describe("[SCN-LNT-014] a balanced row cannot absorb a stray fitness credit", ()
     expect(row.verdict).toBe("out-of-balance");
     // The one that matters: a row-level assertion alone would still pass if the roll-up dropped it.
     expect(isBalanced(rec.ledger)).toBe(false);
+    // AND "ALONE" HOLDS FOR THE RUN, NOT ONLY FOR THE ROW (3F-3531). The same books without the
+    // stray credit balance, so the `false` above is this credit's. A ledger out of balance somewhere
+    // else as well — a row nobody asked for, minted from a population the caller never passed —
+    // would read the same `false` and prove nothing about the credit.
+    const withoutTheStray = evidenceReconciliationOf(rowNaming(OWN), [credit(OWN)], [], true, true);
+    expect(isBalanced(withoutTheStray.ledger)).toBe(true);
   });
 });
