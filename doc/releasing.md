@@ -247,8 +247,9 @@ with `spec-controller` alone it reds naming core. The exemption names packages, 
 unlike the version-pinned pair 3F-3529 removed it needs no pruning; every other dependency stays
 under the policy in full.
 
-**When the model moves and the pinned reader can no longer read the tree**, the cure is the stage0
-bump in *Releasing while the self-reconciliation is red* below.
+**When the model moves and the pinned reader can no longer read the tree**, the cure is the expand
+merge in *A model change the pinned reader cannot read* below. The pin is never moved by hand to
+reach it.
 
 **Never widen the pin to escape a skew.** A range or a dist-tag would make the red go away by
 making the reader unpredictable, which is the failure this arrangement exists to end. This is a
@@ -322,33 +323,50 @@ Two things go wrong when a release does ask:
   earlier shape, a record fetched from the nightly, was measured doing exactly that on a real
   release run: its step redded on a cold evidence root and the job died before it packed anything.
 
-**The residual, stated rather than hidden.** Repository bars are `ci.yml`'s, and `main`'s `strict`
-protection discharges them on every pull request before it can merge — so every merge-started
-release has already passed all of them. A run **started by hand from an unmerged branch** has not,
-which is exactly the case the next section is about. What bounds it is that nothing merges by that
-route. `main` still requires the whole ladder, the self-reconciliation included.
+**And there is no residual left to state.** Repository bars are `ci.yml`'s, and `main`'s `strict`
+protection discharges them on every pull request before it can merge — so every release run has
+already passed all of them, because **every release run is a merge**. `release.yml` has no
+`workflow_dispatch` trigger and nothing else can start it, so no published version exists that
+`main` never contained.
 
 ---
 
-## Releasing while the self-reconciliation is red
+## A model change the pinned reader cannot read
 
-This is the hatch the rule above exists for: Rust's stage0 bump, in this repository's terms. Use it
-when a change to the model means the **pinned published** spec-controller can no longer read this
-tree, so the self-reconciliation reds on the very branch that fixes it.
+The reader that judges this tree is the **pinned published** spec-controller, so a change to the
+model it reads cannot land in one merge: on the branch that makes the change, the pinned reader is
+still the old one and `Self-reconciliation balance` reds. There was once a hatch here — a release
+started by hand from the branch, before it merged. It is gone (3F-3551), along with `release.yml`'s
+manual trigger, and **nothing publishes except a merge to `main`.**
 
-1. **The model change lands on a branch.** CI reds at `Self-reconciliation balance`, naming the skew.
-2. **Start the release by hand on that branch** — `gh workflow run release.yml --ref <branch>`. It
-   publishes both packages at the next counter number and tags the branch's commit. It never asks
-   the self-reconciliation anything, so the red does not stop it.
-3. **Bump the pin on the branch**, in the same review, to the version just published. That version
-   is minutes old, and the name-scoped `minimumReleaseAgeExclude` in `pnpm-workspace.yaml` is what
-   lets CI's `Install dependencies` accept it.
-4. **CI greens** — the new pinned reader can read the tree. The branch merges, and because it touches
-   a package, the merge publishes the next number as any merge does.
+A change like that lands as a **parallel change** — *expand–migrate–contract* — over two merges and
+a bot PR. Canon: `the maintainers' private notes` → *Such a repository changes
+its own model in expand/contract steps*; `the maintainers' private notes` → *Release —
+don't*, first bullet; `the maintainers' private notes` → *Nothing publishes except a merge to
+`main`*.
 
-Step 3 is what makes step 2 honest: the prerelease exists to be pinned, and a branch that published
-one without bumping to it has released a version nothing uses.
+1. **Expand.** The reader accepts both the old shape and the new one. That merge touches a package,
+   so it publishes.
+2. **The bot moves the pin.** Dependabot's PR moves the root `devDependencies["spec-controller"]` to
+   the release step 1 published, and `dependabot-auto-merge.yml` merges it on green — no human act.
+   The bot runs on a daily cron, `0 22 * * *`, weekends included, so this lags the publish by up to
+   24 hours and nothing shortens that but waiting. The name-scoped
+   `minimumReleaseAgeExclude` in `pnpm-workspace.yaml` is what lets its `Install dependencies`
+   accept a release hours old.
+3. **Migrate.** With the new reader pinned, the tree drops the old shape.
+4. **Contract.** The reader stops accepting the old shape **only once no adopter still writes it**,
+   and `doc/adopting-fitness-checks.md` says so in the same merge.
 
-**This route publishes from an unmerged branch, so it is the one case where the person starting the
-run is the whole of the repository's bars.** It is deliberate, it is bounded by the fact that nothing
-merges this way, and it is the only reason to start `release.yml` by hand.
+**Step 4 is a deliberate step, never a consequence of step 3.** The reader dropping a shape is what
+breaks an adopter's next pin bump, and an adopter is not this repository: they move on their own
+clock. The tree can be clean of the old shape for weeks before the reader is entitled to refuse it.
+
+**The order enforces itself.** Merge step 3 before the pin has moved and the pinned reader cannot
+read the tree, so `main` reds. And if a newer reader turns the tree red, the bot's pin PR is what
+goes red — that red is a finding about the tree, fixed in the tree, never by holding the pin back or
+publishing by hand.
+
+**Worked example — 3F-3525 and 3F-3575.** 3F-3525 taught the reader both the old and the new shape
+of a fitness check's declaration and merged on 2026-09-19 (`8bbf06d`), publishing `0.1.0-alpha.15`.
+Its contract, 3F-3575, drops the old shape from this repository's own `specController.fitnessChecks`
+rows — and it waits, because the self-pin is still `0.1.0-alpha.14` until the bot's PR lands.

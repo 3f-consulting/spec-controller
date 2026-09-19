@@ -17,8 +17,13 @@ name: Release
 # file; it never causes one. And a tag made with the default token starts no workflow anyway, so a
 # release listening for one would never fire.
 #
-# `workflow_dispatch` IS THE STAGE0 HATCH AND NOTHING ELSE. A hand-started run from an unmerged
-# branch publishes that branch's tree at the next counter number. `doc/releasing.md` says when.
+# AND THERE IS NO `workflow_dispatch` EITHER, SO A MERGE TO `main` IS THE ONLY THING THAT STARTS
+# THIS FILE (3F-3551). The trigger that used to be here published a branch that had not merged, at
+# the next counter number — a release that had passed none of `main`'s bars and that `main` never
+# contained. It went with the hatch it existed for: a model change the pinned reader cannot read
+# now lands as a parallel change over two merges, `doc/releasing.md` → "A model change the pinned
+# reader cannot read". A FAILED release run is re-run with `gh run rerun <id>`, which replays the
+# `push` event and needs no trigger of its own.
 #
 # THIS IS STILL ITS OWN FILE RATHER THAN A JOB IN `ci.yml` (3F-3249). That file runs on
 # `pull_request` too, and every step in it is unconditional, which is what lets a green there mean
@@ -27,8 +32,9 @@ name: Release
 # AND THE SEPARATION IS WHAT KEEPS THE RELEASE REACHABLE WHILE THE RECONCILIATION IS RED (3F-3250).
 # Nothing below asks anything that is about THIS REPOSITORY rather than about the artefact — not the
 # self-reconciliation and not the fitness pass. A tree whose self-reconciliation reds can still be
-# released, which is the hatch the bootstrap in 3F-3105 needs: a model skew must not be able to
-# strand CI on a red only a hand publish can clear.
+# released, which is what the expand step of a parallel change needs (3F-3551): the merge that
+# teaches the reader the new shape is the cure for the skew, and a release path consulting the
+# reconciliation would refuse to publish the cure for the disease.
 on:
   push:
     branches: [main]
@@ -39,7 +45,6 @@ on:
       - "packages/*/README.md"
       - "packages/*/tsconfig.build.json"
       - "tsconfig.json"
-  workflow_dispatch:
 
 # ONE RELEASE AT A TIME, AND THE COUNTER IS READ INSIDE THAT ONE (3F-3529). GitHub runs one run of
 # this group and holds at most one pending. A newer pending run cancels the older pending one:
@@ -213,8 +218,9 @@ jobs:
       # NOTHING THAT SPEAKS TO THE TARBALL IS LOST WITH IT. `SCN-FIT-011` IS `pnpm typecheck`, and
       # the step below runs it directly — the one artefact-relevant member of the axis is covered
       # outside the pass. The repository bars are `ci.yml`'s, discharged on every merge to `main`
-      # before the merge can happen (`strict`). What a hand-started run from an unmerged branch has
-      # not passed is the residual `doc/releasing.md` states.
+      # before the merge can happen (`strict`). AND THERE IS NO RESIDUAL LEFT IN THAT (3F-3551):
+      # since the `workflow_dispatch` trigger went, every run of this file is a merge that cleared
+      # the whole ladder, so no release exists that `main` did not contain.
       #
       # AND NOT ONE OF THESE THREE CARRIES AN OBSERVED SCRIPT PREFIX, WHICH IS A CONSTRAINT ON THIS
       # FILE RATHER THAN A COINCIDENCE (3F-3249, planted). The reconciliation's CI scan is the
