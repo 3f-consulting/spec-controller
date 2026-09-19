@@ -198,7 +198,7 @@ repository an ordinary adopter of its own product rather than a special case (`3
 "minimum readable version" banked anywhere, deliberately: a second spelling of the same fact agrees
 with the first only until somebody edits one of them.
 
-**The pin follows the registry by bot PR, on the day a release publishes (3F-3529, 3F-3530).** `.github/dependabot.yml`
+**The pin follows the registry by bot PR, within a day of a release publishing, weekends included (3F-3529, 3F-3530, 3F-3557).** `.github/dependabot.yml`
 lets Dependabot move exactly this one dependency, and keeps it exact. `dependabot-auto-merge.yml`
 merges its PR once `ci` is green. The PR touches the root `package.json` and the lockfile, neither of
 which is in `release.yml`'s `paths:`, so its merge publishes nothing and cannot loop.
@@ -222,9 +222,16 @@ an exact version, and nothing else in the root `package.json` changes (operator 
 A refused PR fails that job with the reason and is left disarmed; `ci` still gates the churn on a PR
 that passes.
 
-**`daily` means weekdays**, at a time GitHub assigns. A merge to `main` that changes
-`.github/dependabot.yml` starts a run at once, and so does *Check for updates* under Insights →
-Dependency graph → Dependabot. Neither is a hand move of the pin.
+**Dependabot checks once a day, every day, weekends included, so no human act is needed in the
+pin loop (operator, 2026-09-19, 3F-3557).** The schedule is `interval: cron` with
+`cronjob: "0 22 * * *"`, which is 22:00 UTC on all seven days. `daily`, which this replaced, runs
+Monday to Friday only, so a release published on a Saturday waited for Monday or for a person. Once a
+day is as often as GitHub allows: its config check rejects any `cronjob` that fires more often than
+every 24 hours. A pin therefore lags a publish by up to 24 hours. The operator accepted that, because
+only step 3 of an expand/contract waits on the pin, and an adopter's own Dependabot lags the same way.
+A merge to `main` that changes `.github/dependabot.yml` also starts a run at once. *Check for
+updates* under Insights → Dependency graph → Dependabot runs one early, but the loop never needs it,
+and neither is a hand move of the pin.
 
 **No day's wait — our own two packages are exempt from both age gates, by name (operator,
 2026-09-19).** `allow:` limits the bot to spec-controller, so a cooldown only delays our own

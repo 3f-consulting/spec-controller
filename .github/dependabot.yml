@@ -38,8 +38,15 @@ version: 2
 # accepted that churn only on a PR whose pin really moves (2026-09-19), and
 # `dependabot-auto-merge.yml` refuses every other PR.
 #
-# `daily` MEANS WEEKDAYS, at a time GitHub assigns. A merge to `main` that changes this file starts
-# a run at once, and so does *Check for updates* under Insights → Dependency graph → Dependabot.
+# ONCE A DAY, EVERY DAY, WEEKENDS INCLUDED — NO HUMAN ACT IN THE PIN LOOP (operator, 2026-09-19,
+# 3F-3557). `cron` at 22:00 UTC (the default zone) on all seven days of the week. `daily`, which this
+# replaced, runs Monday to Friday only, so a release published on a Saturday waited for Monday or for
+# a person pressing a button. Once a day is as often as GitHub allows: its config check rejected an
+# hourly `cronjob` with "has a minimum interval of 1 hours which is less than the minimum allowed
+# interval of 24 hours". So a pin lags a publish by up to 24 hours. The operator accepted that: only
+# step 3 of an expand/contract waits on the pin, and an adopter's own Dependabot lags the same way.
+# A merge to `main` that changes this file also starts a run at once. *Check for updates* under
+# Insights → Dependency graph → Dependabot runs one early, but the loop never needs it.
 #
 # AND ITS MERGE CANNOT LOOP. The PR touches the root `package.json` and the lockfile, which are
 # outside `release.yml`'s `paths:`, and the merge is made under the default token, which starts no
@@ -48,7 +55,8 @@ updates:
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: daily
+      interval: cron
+      cronjob: "0 22 * * *"
     allow:
       - dependency-name: spec-controller
     exclude-paths:
