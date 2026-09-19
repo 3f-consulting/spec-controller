@@ -18,7 +18,7 @@ what your corpus said was owed.
 
 ## Three states, and you choose where to stop
 
-Take one check — *every function and module measures inside the external complexity standard.* What
+Take one check — *every function measures inside the external complexity standard.* What
 you author for it, and what `balance` can say back, depends on which state you are in.
 
 | state | what you author | what the report says |
@@ -60,11 +60,12 @@ The scenario is **written beside its row rather than derived from it**:
 
 ```gherkin
   @fitness @SCN-FIT-001
-  Scenario: every function and module the push touches measures inside the external complexity standard
+  Scenario: every function the push touches measures inside the external complexity standard, and no dead suppression survives
     Given this repository's source as this push leaves it, and the files the push touched
     When the external complexity standard is applied across that source
-    Then every function and module the push touched measures inside the standard
-    And every other site over the standard is reported without failing the run
+    Then every function the push touched measures inside the standard
+    And every other function over the standard is reported without failing the run
+    And no suppression directive that suppresses nothing survives the run
 ```
 
 ```json

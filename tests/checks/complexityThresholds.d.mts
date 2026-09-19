@@ -19,27 +19,25 @@
  */
 export type RuleThreshold = number | "off";
 
-/** The three rule thresholds a scope holds. */
+/** The rule thresholds a scope holds. `max-lines` left with the file ceiling (3F-2320). */
 export interface ComplexityThreshold {
-  /** eslint `complexity` — the per-function cyclomatic ceiling. */
-  complexity: RuleThreshold;
-  /** eslint `max-lines` — the per-file ceiling. */
-  maxLines: RuleThreshold;
+  /** `sonarjs/cognitive-complexity` — the per-function cognitive ceiling (3F-2320). */
+  cognitiveComplexity: RuleThreshold;
   /** eslint `max-lines-per-function` — the per-function line ceiling; `"off"` for test scope. */
   maxLinesPerFunction: RuleThreshold;
 }
 
 /**
- * Production code: `packages/<pkg>/src`, `tests/checks`; excludes test files. Each number's external
- * source is cited on its declaration in `complexityThresholds.mjs` — the point of 3F-2286.
+ * Production code: `packages/<pkg>/src`, `tests/checks`, `tests/steps`; excludes test files. Each
+ * number's external source is cited on its declaration in `complexityThresholds.mjs` — 3F-2286.
  */
 export declare const PRODUCTION_THRESHOLD: ComplexityThreshold;
 
 /** Test code: the `.test.ts` files — same standard, with `max-lines-per-function` explicitly off. */
 export declare const TEST_THRESHOLD: ComplexityThreshold;
 
-/** The three eslint rule ids both scopes share. */
-export type EslintRuleId = "complexity" | "max-lines" | "max-lines-per-function";
+/** The eslint rule ids both scopes share. */
+export type EslintRuleId = "sonarjs/cognitive-complexity" | "max-lines-per-function";
 
 /**
  * The two severities a held rule can carry (@SCN-FIT-001, 3F-3462). `error` gates — eslint exits 1;

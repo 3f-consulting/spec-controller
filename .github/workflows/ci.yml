@@ -252,7 +252,7 @@ jobs:
       # around the handle silently dropped out of it. That derivation was deleted at 3F-3475, and
       # nothing mechanical now notices the difference — which is stated here rather than left for a
       # reader to discover by changing one.
-      - name: Complexity — eslint's complexity, max-lines and max-lines-per-function
+      - name: Complexity — eslint's cognitive-complexity and max-lines-per-function
         id: SCN-FIT-001
         if: always()
         # `pnpm exec` rather than the row's bare `eslint`, because a `run:` shell has no

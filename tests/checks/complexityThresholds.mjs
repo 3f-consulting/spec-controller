@@ -1,12 +1,13 @@
 /**
- * The complexity and module-size thresholds — the ONE place the numbers live (@SCN-FIT-001, 3F-2286).
+ * The complexity and function-length thresholds — the ONE place the numbers live (@SCN-FIT-001,
+ * 3F-2286). It held a module-size number too until 3F-2320 retired the file ceiling.
  *
  * Consumed by `eslint.config.mjs` (the static check), which does not restate them: a second copy would
  * agree by COINCIDENCE and drift the moment either side is retuned, which is the agreeing-by-copy this
  * codebase has spent several slices removing from the domain and the static checks.
  *
  * WHY THIS IS `.mjs` AND NOT `.ts`. eslint loads its flat config through Node's own ESM loader, so a
- * TypeScript config would need `jiti` as a third new devDependency to buy nothing — these are five
+ * TypeScript config would need `jiti` as a third new devDependency to buy nothing — these are four
  * numbers, not logic. Plain ESM is importable by eslint, by Vitest and by the Cucumber steps with no
  * loader at all. The types live beside it in `complexityThresholds.d.mts`, so TypeScript consumers are
  * still fully typed.
@@ -35,10 +36,10 @@
  *
  * ═══ TWO SCOPES, ONE STANDARD ═══
  *
- * Production and test code are held to the SAME `complexity` and `max-lines`, because an external
+ * Production and test code are held to the SAME `cognitiveComplexity`, because an external
  * standard does not bend to the population it is applied to. That is also, conveniently, the strongest
- * available evidence of provenance: the two populations differ by 2.4x at the file level and 3.5x at
- * the function level, so two MEASURED thresholds could not possibly coincide. Their coinciding is the
+ * available evidence of provenance: the two populations differed by 3.5x at the function level when
+ * this was written, so two MEASURED thresholds could not possibly coincide. Their coinciding is the
  * proof neither was measured here. (3F-2177's config asserted the opposite — that the scopes must
  * differ in both directions — which was true only while both were measurements.)
  *
@@ -60,25 +61,29 @@
  *
  * WHERE EACH NUMBER CAME FROM. The citation is part of the contract, not decoration: a cited number
  * and an uncited one are indistinguishable once shipped, and the whole point of 3F-2286 is that these
- * three have provenance.
+ * numbers have provenance.
  *
- *   - `complexity` 10 — NIST Special Publication 500-235 / McCabe — a cyclomatic complexity above 10
- *     is the stated refactor line ('modules with complexity over 10 should be reduced'). SonarQube's
- *     default is a looser 15; the stricter of the two published lines is taken.
+ *   - `cognitiveComplexity` 15 — SonarSource's published COGNITIVE COMPLEXITY metric and the default
+ *     of `sonarjs/cognitive-complexity`, the rule that implements it. It replaced a cyclomatic
+ *     `complexity` of 10 (NIST SP 500-235 / McCabe) at 3F-2320, on the portfolio ruling of
+ *     2026-09-18: cognitive complexity scores what makes code hard to READ — nesting and broken
+ *     flow — where cyclomatic scores a flat `switch` like nested conditionals. The looser NUMBER is
+ *     not a relaxation, because it is a number on a different scale: measured on this tree at the
+ *     swap, six cyclomatic findings became eight cognitive ones, and only one function was over the
+ *     old line and under the new.
  *   - `maxLinesPerFunction` 40 — Google engineering practices — a function past roughly 40 lines
  *     should be considered for breaking up. Robert Martin's Clean Code is stricter again at ~20; 40 is
  *     the more widely published of the two and the less contested.
- *   - `maxLines` 400 — A CHOSEN ceiling, and named as one. No industry body publishes a hard
- *     file-length cap, so this is the one number here with no external source to cite — saying so
- *     plainly is the honest form. 400 sits inside the 300-500 band the style guides that do speak
- *     use, and is an order of magnitude under this tree's worst file, which is what makes it a target
- *     rather than a mirror.
+ *   - `maxLines` 400 — GONE, and its going is the rule above enforced against itself (3F-2320). It was
+ *     the one number here that named itself A CHOSEN ceiling with no external source, because no
+ *     industry body publishes a hard file-length cap — which makes it exactly the self-chosen
+ *     threshold this file forbids. The portfolio retired the file ceiling outright on 2026-09-18;
+ *     what a long file costs is taken per FUNCTION by the two rules that remain.
  *
  * @type {import("./complexityThresholds.d.mts").ComplexityThreshold}
  */
 export const PRODUCTION_THRESHOLD = {
-  complexity: 10,
-  maxLines: 400,
+  cognitiveComplexity: 15,
   maxLinesPerFunction: 40,
 };
 
@@ -97,16 +102,17 @@ export const PRODUCTION_THRESHOLD = {
  * precisely the self-certification 3F-2286 removes. There is no external standard for test-container
  * length, so the honest move is to abstain from the rule and say so, not to fake a third number.
  *
- * NOT A CARVE-OUT. Test scope stays held to `complexity` 10 and `max-lines` 400 — the two metrics that
- * genuinely apply, at exactly the production numbers. Accepted residual, operator-ruled: a
- * straight-line test helper under complexity 10 inside a sub-400-line file escapes. Low-risk; revisit
+ * NOT A CARVE-OUT. Test scope stays held to `cognitiveComplexity` 15 — the metric that genuinely
+ * applies, at exactly the production number. Accepted residual, operator-ruled: a straight-line test
+ * helper under cognitive 15 escapes. (It used to add "inside a sub-400-line file"; with the file
+ * ceiling retired at 3F-2320 the residual is simply wider, which is stated rather than quietly
+ * dropped.) Low-risk; revisit
  * only if one actually appears.
  *
  * @type {import("./complexityThresholds.d.mts").ComplexityThreshold}
  */
 export const TEST_THRESHOLD = {
-  complexity: 10,
-  maxLines: 400,
+  cognitiveComplexity: 15,
   maxLinesPerFunction: "off",
 };
 
@@ -123,8 +129,8 @@ export const TEST_THRESHOLD = {
  * touched (the gate). Two emitters would be the agreeing-by-copy this codebase keeps removing: they
  * would agree on the shapes today and drift the first time eslint changed one.
  *
- * THE SHAPE IS NOT UNIFORM, AND GETTING IT WRONG IS SILENT. `complexity` takes a bare number
- * (`["error", 10]`); `max-lines` and `max-lines-per-function` take an options object
+ * THE SHAPE IS NOT UNIFORM, AND GETTING IT WRONG IS SILENT. `sonarjs/cognitive-complexity` takes a
+ * bare number (`["error", 15]`); `max-lines-per-function` takes an options object
  * (`["error", { max, … }]`). Hand eslint the wrong one and it does not complain — it mis-reads the
  * option and applies no ceiling at all, which looks exactly like a file that is under its ceiling.
  * AND NOTHING NOTICES IT ANY MORE (3F-3478). The cucumber arm that linted planted sources through the
@@ -156,7 +162,7 @@ export const TEST_THRESHOLD = {
  */
 export const ruleAtCeiling = (rule, ceiling, severity) => {
   if (ceiling === "off") return "off";
-  return rule === "complexity"
+  return rule === "sonarjs/cognitive-complexity"
     ? [severity, ceiling]
     : [severity, { max: ceiling, skipBlankLines: true, skipComments: true }];
 };

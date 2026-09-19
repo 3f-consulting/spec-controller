@@ -106,6 +106,7 @@
     "dependency-cruiser": "18.2.0",
     "eslint": "^9.39.5",
     "eslint-plugin-check-file": "3.3.2",
+    "eslint-plugin-sonarjs": "^4.2.1",
     "publint": "0.3.24",
     "spec-controller": "0.1.0-alpha.14",
     "tsx": "^4.22.3",

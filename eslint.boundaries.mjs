@@ -25,6 +25,20 @@ import tseslint from "typescript-eslint";
 
 export default [
   /**
+   * A SUPPRESSION CANNOT OUTLIVE ITS REASON (3F-2320), here as in `eslint.config.mjs`.
+   *
+   * The ruling (`fitness-functions.md` → *A suppression cannot outlive its reason*) is about the
+   * linter, not about either check, so both configs set it and neither is the exception. An
+   * `eslint-disable` that suppresses nothing is a claim that has stopped being true; ESLint 9
+   * defaults it to `"warn"`, which exits 0 and so cannot be told from no directive at all at the
+   * step's recorded outcome. An object with no `files` key matches every file this config lints.
+   *
+   * This is the ONLY thing 3F-2320 changed here. That ticket's scope statement rules this file's
+   * RULES out and this setting in, because the setting is mandatory everywhere.
+   */
+  { linterOptions: { reportUnusedDisableDirectives: "error" } },
+
+  /**
    * `dist/` is the same modules compiled; `.stryker-tmp/` holds whole sandbox COPIES of the tree
    * left behind by a mutation run, including files that no longer exist. Linting either reports a
    * violation at a path no author can edit, and a gate that reds on an artefact nobody wrote is a
