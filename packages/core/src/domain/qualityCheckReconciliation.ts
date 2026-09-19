@@ -14,6 +14,7 @@ import type {
   StaticCheckEvidenceObservation,
   FitnessEvidenceObservation,
   RuntimeEvidenceObservation,
+  EvidenceStatus,
 } from "./journal.js";
 import {
   isStaticCheckObservation,
@@ -339,6 +340,21 @@ function locatorOf(observation: EvidenceObservation): string | undefined {
 }
 
 /**
+ * THE CREDIT AN OBLIGATION IS READ BY, when several match it (3F-3547): the first that FAILED, else
+ * the first.
+ *
+ * A runner emits one credit per test, so one obligation is routinely answered by several, and a
+ * failed one is a failing observation whatever passed beside it — canon lets no sibling pass
+ * discharge it. Reading only the first match made the verdict depend on where a file sorts, and
+ * named a passing test on a row that should send its reader to the failed one. "First" is the
+ * caller's order, which `reconcile` fixes as evidence order (@SCN-RMD-009), so the named credit is
+ * deterministic; the outcome does not depend on the order at all.
+ */
+function answeringCredit<T extends { status?: EvidenceStatus }>(matches: readonly T[]): T | undefined {
+  return matches.find((o) => o.status === "failed") ?? matches[0];
+}
+
+/**
  * The static-check observation answering THIS scenario's `lint` obligation — ONE ROUTE, the
  * citation, on both of its terms (@SCN-LNT-001).
  *
@@ -390,7 +406,9 @@ function staticCheckObservationFor(
   checkTag: string,
   evidenceObservations: readonly EvidenceObservation[]
 ): StaticCheckEvidenceObservation | undefined {
-  return evidenceObservations.find(
+  // EVERY MATCH IS KEPT, NOT THE FIRST (@SCN-LNT-036) — the runtime arm's rule on this axis too: a
+  // failed credit beside a passing one for the same check is `failing`, wherever it sorts.
+  return answeringCredit(evidenceObservations.filter(
     (o): o is StaticCheckEvidenceObservation =>
       isStaticCheckObservation(o) &&
       // THE FAIL-SAFE, THE SAME ONE THE RUNTIME MATCH BELOW KEEPS (@SCN-LNT-026). A proof that
@@ -403,7 +421,7 @@ function staticCheckObservationFor(
       o.broken !== true &&
       o.scnId === scnId &&
       o.checkTag === checkTag
-  );
+  ));
 }
 
 /**
@@ -451,7 +469,7 @@ function reconcileStaticObligation(
   // `{exists:false}` — an ABSENCE, not an observed piece of evidence — so `missing` carries
   // NOTHING on the credit side (Obligation Exists, Observation None; double-entry-manifesto line
   // 36), uniform with the runtime `missing` path. `obs?.exists` (not `obs`) is the discriminator:
-  // `find` locating the absent-guard record must not be mistaken for an observation existing.
+  // the match locating the absent-guard record must not be mistaken for an observation existing.
   return makeQualityCheckReconciliation({
     qualityCheck: "lint",
     staticCheck: checkTag,
@@ -490,7 +508,10 @@ export function reconcileEvidenceObligation(
   // is structural rather than incidental: `broken` rides an OPTIONAL
   // FLAG on RuntimeEvidenceObservation, so a broken credit CAN carry an scnId and a status — the
   // guard is what makes the fail-safe hold whatever it carries.
-  const match = evidenceObservations.find(
+  //
+  // EVERY MATCH IS KEPT, NOT THE FIRST (@SCN-LDG-036), and `answeringCredit` reads them: a failed
+  // test beside a passing one citing the same scenario is `failing`, wherever its file sorts.
+  const match = answeringCredit(evidenceObservations.filter(
     (o): o is RuntimeEvidenceObservation =>
       // TWO SURVIVING MUTANTS LIVE ON THIS CLAUSE, KEPT DELIBERATELY (3F-2237). Stryker has no
       // equivalence detection, so a mutant no test can kill is indistinguishable from one nobody
@@ -524,7 +545,7 @@ export function reconcileEvidenceObligation(
       o.broken !== true &&
       o.qualityCheck === req.qualityCheck &&
       o.scnId === scnId
-  );
+  ));
   let outcome: Outcome;
   if (!match) {
     outcome = "missing";

@@ -756,6 +756,20 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       When that target's evidence is reconciled with the record that run wrote about itself
       Then that row's Evidence Obligation reads failing off what the step did, and nothing is read off what the job was told
 
+  Rule: a fitness obligation answered by several credits is failing when any of them failed
+
+    The behavioural axis's rule, on this axis too (@SCN-LDG-036): a failed credit is a failing
+    observation whatever passed beside it, and the item names the first failed one in evidence
+    order (3F-3547). No reader in this product delivers two credits with a verdict for one row and
+    check today — the run's record holds one entry per step code, and a row is keyed by its code —
+    so the published engine is where a consumer composing their own evidence meets it.
+
+    @unit @integration @SCN-LNT-036
+    Scenario: a failed fitness credit beside a passing one for the same check reads failing, and the ledger is out of balance
+      Given a scenario naming one fitness check, and two credits for that check citing it, the one read first passing and the other failed
+      When the published engine reconciles them
+      Then the check's obligation reads failing, carrying the failed credit, and the ledger is out of balance
+
   Rule: a configured row names no bar, and a bar a row still carries is named as a retired key
 
     A ROW IS ITS @SCN, ITS CHARACTERISTIC AND ITS COMMAND, and what answers it is its own step's

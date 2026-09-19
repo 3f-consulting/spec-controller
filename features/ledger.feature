@@ -35,6 +35,28 @@ Feature: Ledger over obligation-vs-observation evidence
       Then the ledger reports "SCN-LDG-002" as out of balance
       And the reconciling items for "SCN-LDG-002" are "failing"
 
+  Rule: an evidence obligation answered by several credits is failing when any of them failed, and names one that failed
+
+    A runner emits one credit per test, so a scenario cited by several tests carries several
+    credits at one quality check. A failed one is a failing observation whatever passed beside it,
+    and nothing about where its file sorts may discharge it (3F-3547). The item names the first
+    failed credit in the order the books read evidence in (@SCN-RMD-009); the rest stay posted on
+    the row.
+
+    @unit @integration @SCN-LDG-036
+    Scenario: a failing test in a file that sorts after a passing one citing the same scenario reads failing, and the run is out of balance
+      Given a runner report citing one scenario from two test files, the file that sorts first passing and the file that sorts last failing
+      When balance reconciles each runner report
+      Then the scenario's unit reconciliation reads failing, carrying the failed test's credit
+      And the scenario and the run are both out of balance
+
+    @unit @integration @SCN-LDG-037
+    Scenario: a passing and a failing test in one file citing the same scenario read failing, whichever order the two credits arrive in
+      Given a runner report citing one scenario from two tests in one file, one passing and one failing, and the same report with the two tests listed the other way round
+      When balance reconciles each runner report
+      Then the scenario's unit reconciliation reads failing, carrying the failed test's credit
+      And the scenario and the run are both out of balance
+
   Rule: a scenario that requires a level with no matching result is out of balance
 
     @unit @integration @SCN-LDG-003
