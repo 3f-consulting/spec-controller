@@ -31,7 +31,8 @@ than reading it quietly. `specController.thresholds`, a `fitnessChecks` row's
 `atLeast` / `atMost` (a `mutationGate` bar sits under `atLeast`) and the
 `--measurements` flag were retired by `3F-3506`, with the measured route they
 belonged to: no number reaches the ledger any more. The first two are named on the
-report the same way; `--measurements` is an unknown flag, exit 2. There is one way
+report the same way; `--measurements` is refused as retired, exit 2, and the refusal
+names what replaced it rather than a pin that would bring it back. There is one way
 to declare a fitness check: a
 `@fitness` scenario, a `specController.fitnessChecks` row, and the row's `@SCN`
 on the CI step's `id:`. See

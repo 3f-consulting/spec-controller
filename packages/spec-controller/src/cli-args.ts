@@ -18,7 +18,7 @@
  * on 3F-3286 rather than left silent.
  */
 
-import type { CliRegistry } from "./cli-registry.js";
+import type { CliRegistry, CommandSpec } from "./cli-registry.js";
 
 /**
  * Parse `--flag value` pairs from a command's argv into a record, keys with the `--` stripped.
@@ -84,6 +84,9 @@ export function parseArgs(argv: readonly string[]): Record<string, string> {
  * refusal is exactly that forbidden wrapper, and no other adopter could write one either. So the
  * refusal is the tool's own, which makes it universal rather than local.
  *
+ * EXCEPT FOR A FLAG THE COMMAND HAS RETIRED, where the bump is false advice: `retiredFlagRefusal`
+ * below names the retirement and its replacement instead (3F-3528).
+ *
  * THE STATUS DOES NOT MOVE. The caller still routes this to stderr and exit 2. A mistyped `--strcit`
  * is still a usage fault, and giving skew its own status would cost every adopter the ordinary
  * reading to serve the rarer one.
@@ -110,6 +113,7 @@ export function checkUnknownFlags(
   for (const key of Object.keys(args)) {
     if (!accepted.has(key)) {
       return (
+        retiredFlagRefusal(entry, key, command, toolVersion) ??
         `Unknown flag --${key} for 'spec-controller ${command}' — this is spec-controller ` +
         `${toolVersion}, and that flag is not in its ${command} scope.\n` +
         `If this version is pinned, the pin and the tree it is reading have drifted apart: ` +
@@ -119,4 +123,28 @@ export function checkUnknownFlags(
     }
   }
   return null;
+}
+
+/**
+ * THE REFUSAL FOR A FLAG THE COMMAND HAS RETIRED (@SCN-CLI-023, 3F-3528), or `undefined` when the
+ * flag is merely unregistered. The drift advice above is true of a flag newer than the pin and
+ * false of a retired one: every earlier version accepts it and no later one will, so the only pin
+ * that satisfies "bump the pin to a version that accepts it" is a downgrade back onto the route
+ * the retirement removed. So this names the retirement and the replacement, and offers no pin.
+ */
+function retiredFlagRefusal(
+  entry: CommandSpec | undefined,
+  key: string,
+  command: string,
+  toolVersion: string,
+): string | undefined {
+  const retired = entry?.retiredFlags?.find((flag) => flag.name.replace(/^-+/, "") === key);
+  if (retired === undefined) return undefined;
+  return (
+    `Retired flag ${retired.name} for 'spec-controller ${command}' — retired in spec-controller ` +
+    `${retired.retiredIn}, and no later version accepts it (this is spec-controller ${toolVersion}).\n` +
+    `Do not pin an earlier version to get it back: that restores the route it was retired with. ` +
+    `${retired.replacement}\n` +
+    `Run 'spec-controller ${command} --help' to see the flags this version accepts.`
+  );
 }

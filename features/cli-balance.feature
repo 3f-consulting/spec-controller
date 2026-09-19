@@ -349,3 +349,24 @@ Feature: spec-controller balance runs standalone
       Then it exits with status 2 naming the unrecognised flag --bogus on stderr
       And nothing is reconciled to stdout
       And the refusal names the version that refused it and the bump that cures a pinned skew
+
+  Rule: a flag balance has retired is refused as retired, naming what replaced it — never as skew a pin can cure
+
+    An unregistered flag is refused with drift advice (@SCN-CLI-009): the pin and the tree
+    have drifted, so bump the pin to a version that accepts it. That advice is true of a flag
+    newer than the pin and false of a flag the product has retired, which every earlier
+    version accepts and no later one will: the only pin that satisfies it is a downgrade back
+    onto the route the retirement removed (3F-3528). So a retired flag is refused as retired,
+    with the version that retired it and what took its place, and no pin is offered.
+
+    The retired flags are data on the command's registry entry, beside the flags it accepts,
+    and append-only: a flag retires once and is never accepted again.
+
+    @SCN-CLI-023 @unit @e2e
+    Scenario: a retired flag to balance is refused as retired, naming its replacement and no pin that restores it
+      Given a flag the balance command has retired
+      When balance is asked to run with that flag
+      Then balance refuses the run as a usage fault and reconciles nothing
+      And the refusal names the flag as retired, with the version that retired it
+      And the refusal names what replaced it
+      And the refusal advises no pin toward a version that still accepts the flag

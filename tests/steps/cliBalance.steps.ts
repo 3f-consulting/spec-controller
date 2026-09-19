@@ -572,6 +572,56 @@ Then(
   },
 );
 
+// @SCN-CLI-023
+// A flag balance has RETIRED, through the real built binary. `--measurements` is the one flag a
+// published version accepted that the current one does not (3F-3528). Its own step wording, so
+// @SCN-CLI-009's steps neither match nor move.
+let retiredFlagResult: SpawnSyncReturns<string>;
+
+// @SCN-CLI-023
+Given("a flag the balance command has retired", function () {
+  invocationArgs = ["--measurements", "x.json"];
+});
+
+// @SCN-CLI-023
+When("balance is asked to run with that flag", function () {
+  retiredFlagResult = spawnBalance(invocationArgs);
+});
+
+// @SCN-CLI-023
+Then("balance refuses the run as a usage fault and reconciles nothing", function () {
+  assert.equal(
+    retiredFlagResult.status,
+    2,
+    `expected exit 2; got ${retiredFlagResult.status}\nstderr:\n${retiredFlagResult.stderr}`,
+  );
+  assert.doesNotMatch(retiredFlagResult.stdout, /Evidence Reconciliation/);
+});
+
+// @SCN-CLI-023
+Then("the refusal names the flag as retired, with the version that retired it", function () {
+  // Same line, because the workspace's own version could otherwise satisfy a bare `includes`.
+  assert.match(
+    retiredFlagResult.stderr,
+    /--measurements[^\n]*retired[^\n]*0\.1\.0-alpha\.5/i,
+    `expected stderr to name --measurements as retired in 0.1.0-alpha.5; got:\n${retiredFlagResult.stderr}`,
+  );
+});
+
+// @SCN-CLI-023
+Then("the refusal names what replaced it", function () {
+  assert.ok(
+    retiredFlagResult.stderr.includes("--ci-steps") && /outcome/i.test(retiredFlagResult.stderr),
+    `expected stderr to name the step-outcome route through --ci-steps; got:\n${retiredFlagResult.stderr}`,
+  );
+});
+
+// @SCN-CLI-023
+Then("the refusal advises no pin toward a version that still accepts the flag", function () {
+  assert.doesNotMatch(retiredFlagResult.stderr, /bump the pin/i);
+  assert.doesNotMatch(retiredFlagResult.stderr, /accepts --measurements/);
+});
+
 // @SCN-CLI-013
 // THE ANTI-DRIFT INVARIANT — the guard that would have CAUGHT 3F-1703 rather than fixed it.
 //

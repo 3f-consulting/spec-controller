@@ -55,6 +55,24 @@ export interface CommandSpec {
    * every later command, a field that command does not read (3F-3298). Omit when none.
    */
   configHelp?: string[];
+  /**
+   * Flags this command once accepted and no longer does (3F-3528). Refused like any flag
+   * outside `flags`, but as retired: a flag every earlier version accepts and no later one will
+   * cannot be cured by bumping a pin, only by moving to what replaced it. Never read by the help
+   * renderers, so a retired flag cannot reach `--help` or become accepted by being listed here.
+   * APPEND-ONLY. Omit when none.
+   */
+  retiredFlags?: RetiredFlagSpec[];
+}
+
+/** A flag a command has retired: what it was, the first version to refuse it, and its successor. */
+export interface RetiredFlagSpec {
+  /** The retired flag with dashes (e.g. "--measurements"). */
+  name: string;
+  /** The first published version whose command no longer accepted it. */
+  retiredIn: string;
+  /** One sentence naming what a consumer does instead. */
+  replacement: string;
 }
 
 /** The two-scope registry: the global host-modifier scope, and the per-command scopes. */
@@ -158,6 +176,19 @@ const balanceConfigHelp: string[] = [
 ];
 
 /**
+ * The flags `balance` has retired. `--measurements` left with the measured route at 3F-3506: no
+ * number reaches the ledger, and a fitness check is credited by its own CI step's outcome.
+ */
+const balanceRetiredFlags: RetiredFlagSpec[] = [
+  {
+    name: "--measurements",
+    retiredIn: "0.1.0-alpha.5",
+    replacement:
+      "A fitness check is credited by the outcome of its own CI step: put the check's @SCN on that step's `id:` and hand balance the run's step record with --ci-steps.",
+  },
+];
+
+/**
  * The `tags` command's per-command scope (3F-3300). Two input flags and `--help`/`-h`, and the
  * two are `balance`'s own spellings on purpose: a consumer pointing one command at a corpus and a
  * manifest should not have to learn a second name for each when they point the other at the same
@@ -217,6 +248,7 @@ export const cliRegistry: CliRegistry = {
         "Reconcile Gherkin scenarios against test/CI evidence and emit the Evidence Reconciliation (Markdown to stdout by default).",
       flags: balanceFlags,
       configHelp: balanceConfigHelp,
+      retiredFlags: balanceRetiredFlags,
     },
     {
       name: "tags",
