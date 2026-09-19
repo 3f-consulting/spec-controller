@@ -85,8 +85,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   // The CORPUS — scenarios + observed evidence, spanning every cell case across
   // Lint / Unit / Integration. The balance below is RECONCILED from it, so every row is a shape
   // the pipeline actually emits:
-  //   SCN-A: @unit (2 observations) + two lint guards, one wired (satisfied) one not (watermelon)
-  //          → Lint 2 (guards PRESENT), Unit 2
+  //   SCN-A: @unit (2 observations) + one lint guard, wired (satisfied) → Lint L/1, Unit 2
   //   SCN-B: @unit, no observation → Unit ∅
   //   SCN-C: @unit (1 observation) + an integration observation it NEVER named → Unit 1,
   //          Integration (1) — the NO-EVIDENCE-OBLIGATION shape
@@ -95,13 +94,14 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
   //   SCN-F: @unitpending with a unit observation citing the pending pair → NO-EVIDENCE-OBLIGATION (3F-1858)
   //   SCN-G: TWO runtime tiers (@unit + @integration), one credit at each → Unit 1, Integration 1
   //          — the MULTI-TIER shape (@SCN-RPT-018): both cells must render their own count
+  //   SCN-H: one lint guard that exists but is not wired — the watermelon → Lint L/1 (PRESENT)
+  // ONE STATIC CHECK PER ROW (3F-3411): one scenario is one fitness check, so no row names two.
   const scenarios: Scenario[] = [
     {
       scnId: "SCN-A",
       evidenceObligations: [
         { qualityCheck: "unit" },
         { qualityCheck: "lint", staticCheck: "guard-x" },
-        { qualityCheck: "lint", staticCheck: "guard-y" },
       ],
     },
     { scnId: "SCN-B", evidenceObligations: [{ qualityCheck: "unit" }] },
@@ -110,6 +110,7 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     { scnId: "SCN-E", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "guard-z" }] },
     { scnId: "SCN-F", evidenceObligations: [{ qualityCheck: "unit", pending: true }] },
     { scnId: "SCN-G", evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }] },
+    { scnId: "SCN-H", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "guard-y" }] },
   ];
   const observations: EvidenceObservation[] = [
     { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
@@ -123,15 +124,11 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     // used to count ATTRIBUTED here while the reconciler posted no row at all — two classifiers
     // disagreeing, which is the divergence 3F-1831 collapses.
     { qualityCheck: "unit", scnId: "SCN-F", status: "passed" },
-    // The guards: guard-x wired into CI over real source → satisfied; guard-y exists but is not
-    // wired → the watermelon (PRESENT, so it counts into the Lint cell); guard-z has no
-    // observation at all → missing (∅).
-    // BOTH CITE SCN-A (3F-2625) — they answered its two obligations by handle until the by-handle
-    // arm was deleted. Each carries the bare check it IS, which is what tells the row's two fitness
-    // obligations apart (@SCN-LNT-012); the @SCN alone would hand guard-x's credit to both and turn
-    // the guard-y watermelon `satisfied`.
+    // The guards: guard-x wired into CI over real source → satisfied (SCN-A); guard-y exists but is
+    // not wired → the watermelon (SCN-H; PRESENT, so it counts into the Lint cell); guard-z has no
+    // observation at all → missing (∅, SCN-E). Each cites the one scenario that names it.
     { qualityCheck: "lint", staticCheck: "guard-x", checkTag: "guard-x", scnId: "SCN-A", exists: true, enforcedOverRealSource: true },
-    { qualityCheck: "lint", staticCheck: "guard-y", checkTag: "guard-y", scnId: "SCN-A", exists: true, enforcedOverRealSource: false },
+    { qualityCheck: "lint", staticCheck: "guard-y", checkTag: "guard-y", scnId: "SCN-H", exists: true, enforcedOverRealSource: false },
     // SCN-G's two credits — one at each tier it names (@SCN-RPT-018). The reconciler posts each
     // as its own credit on SCN-G's row (@SCN-LDG-022), which is what the two cells read.
     { qualityCheck: "unit", scnId: "SCN-G", status: "passed" },
@@ -167,9 +164,8 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
 
   it("encodes the four cell cases two-sided — named+met, named+missing, no-evidence-obligation, and absent", () => {
     const md = renderMarkdown(__er(balance, true, false), ctx);
-    // named & met → letter/count; SCN-A: Lint L2/2 (TWO named guards on the left — the
-    // evidence-obligation count, @SCN-RPT-011 — both present on the right), Unit U/2.
-    expect(md).toContain("| SCN-A | L2/2 | U/2 |  |");
+    // named & met → letter/count; SCN-A: Lint L/1 (its one named guard, present), Unit U/2.
+    expect(md).toContain("| SCN-A | L/1 | U/2 |  |");
     // named & missing → letter/- (no observation).
     expect(md).toContain("| SCN-B |  | U/- |  |");
     // not named but present → -/N: SCN-C's integration credit is NO-EVIDENCE-OBLIGATION — the reconciler
@@ -204,11 +200,12 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     expect(md).toContain("| SCN-F |  | -/1 |  |");
   });
 
-  it("counts the lint cell's right side by guards PRESENT (balanced or watermelon), not 0/1", () => {
+  it("counts a watermelon guard as PRESENT on the lint cell's right side, like a satisfied one", () => {
     const md = renderMarkdown(__er(balance, true, false), ctx);
-    // SCN-A names two static checks, both present (one balanced, one watermelon) → right side 2,
-    // and the evidence-obligation LEFT carries the evidence-obligation count (two lint QCRs) → L2 → L2/2.
-    expect(md).toContain("| SCN-A | L2/2 |");
+    // SCN-A's guard is satisfied and SCN-H's is the watermelon: the script exists, so both are
+    // present (its inadequacy is the 🍉 in Reconciling items) → L/1 on each, never L/-.
+    expect(md).toContain("| SCN-A | L/1 |");
+    expect(md).toContain("| SCN-H | L/1 |");
   });
 
   it("renders the grid with no Cell/Meaning legend — the grid speaks for itself", () => {

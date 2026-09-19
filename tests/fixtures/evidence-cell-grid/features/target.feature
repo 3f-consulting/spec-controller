@@ -29,8 +29,8 @@ Feature: an evidence-cell-grid fixture target spanning every four-way cell case
   of one characteristic are several SCENARIOS sharing that characteristic, told apart by `@SCN` —
   one scenario is one fitness check BY CONSTRUCTION. A row naming two characteristics has no
   expression in the target model this fixture exercises, so there is nothing left to plant it
-  with. `render/markdown.ts` still carries the `L2`/`L3` rendering branch this scenario was the
-  only producer of — deliberately left in place, not dead code to sweep, pending its own ticket.
+  with. The `L2`/`L3` rendering branch this scenario was the only producer of went too (3F-3411):
+  the Lint cell's left is the single `L`.
 
   This file lives under tests/fixtures/ (NOT features/), so neither the feature-code registry
   lint nor the scenario↔sub-issue gate sees @CEL / @SCN-CEL-NNN — they scan features/*.feature

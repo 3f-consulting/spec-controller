@@ -74,9 +74,8 @@ export function columnHeader(col: EvidenceColumn): string {
 /**
  * The quality-check → single-letter obligation glyph, parallel to `columnHeader` — the LEFT side
  * of the two-sided cell (the evidence obligation). A single letter names WHICH check is obligated; the right
- * side (after the `/`) carries the OBSERVATION count (the credit). Lint's left MAY carry a count
- * suffix (`L2`/`L3`) when a scenario names more than one static check — the evidence-obligation
- * count; the runtime letters stay countless (one obligation per tier).
+ * side (after the `/`) carries the OBSERVATION count (the credit). Every letter is countless: one
+ * obligation per tier, and one static check per row — one scenario is one fitness check (3F-3411).
  */
 const QUALITY_CHECK_LETTER: Record<QualityCheck, string> = {
   lint: "L",
@@ -122,18 +121,14 @@ function twoSided(left: string, right: string): string {
 /** The lint column's cell on a scenario row. */
 function lintCell(s: ScenarioReconciliation): string {
   // LEFT: a lint obligation is NAMED iff a lint QualityCheckReconciliation exists on the row
-  // (`L`; `L2`/`L3` when the row names >1 static check — the evidence-obligation count, one
-  // lint QCR per `@lint=<guard>` obligation). RIGHT: the PRESENT-guard count — the
-  // static checks `satisfied` or watermelon. Lint's right stays this static-outcome derivation
-  // (NOT `evidenceObservations`): lint carries no credit multiplicity, so the count is exact.
+  // (`L`). RIGHT: the PRESENT-guard count — the static checks `satisfied` or watermelon. Lint's
+  // right stays this static-outcome derivation (NOT `evidenceObservations`): lint carries no
+  // credit multiplicity, so the count is exact.
   // BOTH SIDES ASKED (3F-2203) — the named-guard sub-rows and the present-guard count are
   // model facts, read off the row. "Present" spans satisfied AND watermelon (a watermelon guard
   // EXISTS; its inadequacy is quality, shown in Reconciling items 🍉) — an outcome-vocabulary
   // rule, which is why the renderer no longer states it.
-  const statics = staticCheckReconciliationsOf(s);
-  const left = statics.length > 0
-    ? QUALITY_CHECK_LETTER.lint + (statics.length > 1 ? String(statics.length) : "")
-    : "-";
+  const left = staticCheckReconciliationsOf(s).length > 0 ? QUALITY_CHECK_LETTER.lint : "-";
   const present = presentStaticCheckCountOf(s);
   const right = present > 0 ? String(present) : "-";
   return twoSided(left, right);

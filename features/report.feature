@@ -304,9 +304,10 @@ Feature: The report renders the ledger as sectioned facts
     count, its failing-ness staying in the Verdict + Reconciling-items columns.
     The Lint cell reads the static evidence obligation outcomes (lint isn't a counted evidence observation):
     its right side is the count of guards present (balanced or the watermelon — the script exists; its
-    inadequacy is the 🍉 in Reconciling-items); its left is the single `L` (the L-count is a later
-    slice). No Cell/Meaning legend precedes the table — the grid speaks for itself. Markdown-only
-    — the observation atoms are already on JSON. The "count is backing, not
+    inadequacy is the 🍉 in Reconciling-items); its left is the single `L` — one scenario is one
+    fitness check, so a row names at most one static check (3F-3411). No Cell/Meaning legend
+    precedes the table — the grid speaks for itself. Markdown-only — the observation atoms are
+    already on JSON. The "count is backing, not
     quality — never rank by it" discipline is a documented rule, NOT rendered.
 
     The no-evidence-obligation cell (`-/N`) posts from ONE production shape (@SCN-LDG-008): the reconciler posts
