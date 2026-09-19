@@ -26,7 +26,7 @@ Feature: ten-outcome corpus — a fixture shaped so the REAL reconcile emits all
     When no observation cites it
     Then it reconciles missing
 
-  # STEPLESS and configuring one row — SCN-TOC-004, characteristic wm — whose CI step carries that
+  # STEPLESS and configuring one row — SCN-TOC-004 — whose CI step carries that
   # row's code as its own `id:` AND `continue-on-error: true`. The step RUNS (unlike the retired
   # registry-only route), but its red does not gate the job, so the running-check observer reads it
   # exists-and-unenforced: the watermelon by the SEVERED-STEP route (@SCN-LNT-032), not the registry.

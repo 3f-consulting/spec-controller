@@ -26,7 +26,7 @@
  *
  * Bidirectional evidence: the describe carries its @SCN id, matching
  * features/fitness-reconciliation.feature and the @integration steps in
- * tests/steps/lintReconciliation.steps.ts.
+ * tests/steps/fitnessReconciliation.steps.ts.
  */
 
 import { describe, it, expect } from "vitest";
@@ -51,8 +51,8 @@ Feature: a converted target's fitness corpus, carrying one of its two configured
 const manifest = {
   specController: {
     fitnessChecks: [
-      { scn: "SCN-CVT-001", characteristic: "complexity", command: "eslint" },
-      { scn: "SCN-CVT-002", characteristic: "traceability", command: "scn-subissues" },
+      { scn: "SCN-CVT-001", command: "eslint" },
+      { scn: "SCN-CVT-002", command: "scn-subissues" },
     ],
   },
 };
@@ -163,7 +163,7 @@ describe("[SCN-LNT-027] a configured row the CI run's record never carried is br
 
   it("counts an unrecorded row as no static check at all — neither run nor uncited", () => {
     // Where a broken credit would otherwise be counted twice over. It did not run, so it is not a
-    // running static check; a scenario DID name its characteristic, so it is not an uncited one.
+    // running static check; a scenario DID cite it, so it is not an uncited one.
     expect(reconcileUnenumerated(firstOnly).summary.staticChecks).toEqual({
       runningStaticCheckCount: 1,
       uncitedStaticCheckCount: 0,

@@ -3,7 +3,7 @@ Feature: a corpus whose only fitness credit is one satisfied citation-routed che
 
   A FIXTURE target (NOT under features/) standing in for a codebase whose ONLY fitness credit is a
   satisfied, CITATION-ROUTED check: one STEPLESS fitness scenario configures one row — SCN-DEM-001,
-  characteristic obligations-only — and its lint:obligations-only CI step carries that row's code as
+  and its lint:obligations-only CI step carries that row's code as
   its own `id:`, so the running-check observer reads the citation directly off the step rather than
   through a registered handle; package.json defines the script. So the check EXISTS and is ENFORCED
   over the real source → satisfied → the run is BALANCED. There is NO other credit shape — no

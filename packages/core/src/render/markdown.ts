@@ -15,7 +15,7 @@
  *
  * The report IS the reconciliation; the per-scenario Evidence reconciliation is its core, and the
  * summary views — the Evidence reconciliation aggregate (the balance-check that verifies the accounts
- * agree), lint evidence obligations, out-of-balance by feature — are cuts OF it. Layout
+ * agree), fitness evidence obligations, out-of-balance by feature — are cuts OF it. Layout
  * reorganised summary-first / ledger-last.
  *
  * Parent: (@SCN-LDG-001).
@@ -36,7 +36,7 @@ import { OUTCOME_DESCRIPTION, OUT_OF_BALANCE_OUTCOMES, OUTCOME_SIDE_PROFILE } fr
 import type { RunContext } from "../provenance/provenance.js";
 import type { EvidenceObligations } from "../census/evidenceObligations.js";
 // THE MODEL DERIVATIONS THE RENDERER READS (3F-2203) — it projects these; it does not compute them.
-import { brokenItemsOf, lintReconciliationsOf } from "../domain/ledger.js";
+import { brokenItemsOf, fitnessReconciliationsOf } from "../domain/ledger.js";
 import { isScenario } from "../domain/scenarioReconciliation.js";
 import { assembleRenderInput, type RenderInput } from "../assemble/renderInput.js";
 import type { EvidenceReconciliation } from "../domain/evidenceReconciliation.js";
@@ -100,8 +100,8 @@ const VERDICT_GLYPH: Record<ScenarioVerdict, string> = {
  * Render one reconciling item, labelled by its flat quality-check (the
  * label-=-tag rule): the `qualityCheck` value IS the tag word — a runtime item
  * is its bare level (`unit ✗ Evidence Observation is failing`,
- * `integration ∅ Evidence Observation is missing`, …); a lint item is
- * `lint 🍉 Evidence Observation is passing but fabricated`. The outcome renders as its
+ * `integration ∅ Evidence Observation is missing`, …); a fitness item is
+ * `fitness 🍉 Evidence Observation is passing but fabricated`. The outcome renders as its
  * CANON DESCRIPTION (the single-sourced `OUTCOME_DESCRIPTION`, 3F-1626) — never the bare
  * handle, which is meaningless to a human reading a CI log. The glyph is retained.
  */
@@ -129,7 +129,7 @@ function renderItem(item: ScenarioReconciliation["reconcilingItems"][number]): s
  */
 function creditSuffix(item: ScenarioReconciliation["reconcilingItems"][number]): string | undefined {
   // A CREDIT-SIDE item surfaces its WHERE-TO-FIX in the reconciliation cell (ruling
-  // Q5): a lint credit (the uncited static-check folded onto the suspense row, ruling
+  // Q5): a fitness credit (the uncited static-check folded onto the suspense row, ruling
   // Q4) shows its static check handle; a runtime credit (phantom `cites-unknown-scenario` or
   // suspense `cites-no-scenario`) shows its evidence observation locator. A DEBIT-side evidence obligation
   // (satisfied / missing / failing / watermelon) carries neither and renders bare, as before.
@@ -329,7 +329,7 @@ const runIntegritySection: SectionEmitter = (report) => {
 
 /**
  * The Summary-views parent heading — the derived cuts OF the reconciliation
- * (Evidence reconciliation, lint evidence obligations, out-of-balance by feature)
+ * (Evidence reconciliation, fitness evidence obligations, out-of-balance by feature)
  * read as cuts of the reconciliation, not a separate reconciliation. Always rendered (the
  * Evidence reconciliation beneath it are always present).
  */
@@ -438,39 +438,42 @@ function pendingTally(pending: number): string[] {
 }
 
 /**
- * Lint evidence obligations (@SCN-RPT-005; re-cut under Summary views with a total line, labelled
- * by the @lint TAG) — lifts every `@lint` evidence obligation out of the per-scenario trial
- * balance into its OWN `### Lint evidence obligations` table `| Scenario | Static check | Outcome |`,
+ * Fitness evidence obligations (@SCN-RPT-005; re-cut under Summary views with a total line,
+ * labelled by the quality check) — lifts every fitness evidence obligation out of the per-scenario
+ * trial balance into its OWN `### Fitness evidence obligations` table `| Scenario | Outcome |`,
  * one row per obligation in document order, each `outcome` carrying its `ITEM_GLYPH` glyph (so a
- * 🍉 watermelon reads at a glance). The total line STATES how many of them reconcile balanced —
- * read off the report's materialised `summary.lint` tally. Omitted entirely (returns `[]`) when no
- * scenario names a lint obligation. A pure derive over the ledger rows; markdown-only.
+ * 🍉 watermelon reads at a glance). The total line STATES how many of them reconcile satisfied —
+ * read off the report's materialised `summary.fitness` tally. Omitted entirely (returns `[]`) when
+ * no scenario names a fitness obligation. A pure derive over the ledger rows; markdown-only.
+ *
+ * NO CHECK COLUMN (3F-3525). The table once printed the characteristic an obligation was keyed by;
+ * one `@fitness` scenario is one check, what it is about is its scenario's title, and no report
+ * rolls a check up by a word. The `@SCN` is the row's whole identity.
  */
-const lintSection: SectionEmitter = (report) => {
-  // Scenario rows only — a lint evidence obligation is an obligation-side thing. The suspense row's
-  // lint credit (an uncited static-check, cites-no-scenario) is NOT an evidence obligation, so
-  // it stays out of this table + tally; it surfaces on the suspense row's reconciling items.
-  // ASKED, not derived (3F-2203) — the obligation-side lint sub-rows are a model list, and it is the SAME
-  // list `summary.lint` is tallied from, so the table and its total line cannot disagree. The
-  // scenario-rows-only cut (a suspense lint CREDIT is an observation, not an obligation) lives with
-  // the rule; it stood here and in `lintTally`, character-identical, agreeing by copy.
-  const rows = lintReconciliationsOf({
+const fitnessSection: SectionEmitter = (report) => {
+  // Scenario rows only — a fitness evidence obligation is an obligation-side thing. The suspense
+  // row's fitness credit (an uncited check, cites-no-scenario) is NOT an evidence obligation, so it
+  // stays out of this table + tally; it surfaces on the suspense row's reconciling items.
+  // ASKED, not derived (3F-2203) — the obligation-side fitness sub-rows are a model list, and it is
+  // the SAME list `summary.fitness` is tallied from, so the table and its total line cannot
+  // disagree.
+  const rows = fitnessReconciliationsOf({
     scenarioReconciliations: report.ledger.scenarioReconciliations,
   }).map(
     // The Outcome cell shows the canon DESCRIPTION, not the bare handle (3F-1626,
     // single-sourced from OUTCOME_DESCRIPTION); the ITEM_GLYPH glyph is retained.
     ({ scnId, reconciliation: r }) =>
-      `| ${scnId} | ${r.staticCheck!} | ${ITEM_GLYPH[r.outcome]} ${OUTCOME_DESCRIPTION[r.outcome]} |`
+      `| ${scnId} | ${ITEM_GLYPH[r.outcome]} ${OUTCOME_DESCRIPTION[r.outcome]} |`
   );
   if (rows.length === 0) return [];
-  const { satisfied, total } = report.summary.lint;
+  const { satisfied, total } = report.summary.fitness;
   return [
-    "### Lint evidence obligations",
+    "### Fitness evidence obligations",
     "",
-    `${satisfied} of ${total} lint evidence obligations reconcile satisfied.`,
+    `${satisfied} of ${total} fitness evidence obligations reconcile satisfied.`,
     "",
-    "| Scenario | Static check | Outcome |",
-    "| --- | --- | --- |",
+    "| Scenario | Outcome |",
+    "| --- | --- |",
     ...rows,
     "",
   ];
@@ -698,7 +701,7 @@ function ledgerTableLines(
  * The ordered section list (project design §2; reorganised summary-first / ledger-last,
  * test volume added): title → provenance → the run-integrity stamp (only when the run is
  * unsound) → Summary views
- * (Evidence reconciliation, test volume, lint evidence obligations, out-of-balance by feature)
+ * (Evidence reconciliation, test volume, fitness evidence obligations, out-of-balance by feature)
  * → the ledger. The `## Warnings` section was RETIRED entirely: the
  * no-evidence scenario (the earlier zero-evidence warning) is now a `both-missing` ledger
  * row, and the scenario-corpus
@@ -742,7 +745,7 @@ const SECTIONS: readonly SectionEmitter[] = [
   // the figure saying they are all of them — which is the axis's first non-negotiable, stated as
   // something checkable rather than as a sentence taken on trust.
   stepAccountingSection,
-  lintSection,
+  fitnessSection,
   byFeatureSection,
   ledgerSection,
 ];

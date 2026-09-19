@@ -90,7 +90,7 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
   it("is NOT balanced for a WATERMELON-ONLY run — every scenario balanced, yet a no-evidence-obligation static-check sits in the suspense row", () => {
     // The load-bearing case (@SCN-CLI-004): NO scenario is out-of-balance, so a
     // scan of scenario verdicts alone would exit 0 — the false pass. But a
-    // no-evidence-obligation static-check (a `lint` credit no @lint obligation names) posts a
+    // no-evidence-obligation static-check (a `fitness` credit no @fitness obligation names) posts a
     // `cites-no-scenario` reconciling item to the suspense row, so the WHOLE run is
     // out-of-balance. `isBalanced` consults every row's reconcilingItems and calls it false.
     const reconciliation: Ledger = {
@@ -103,9 +103,9 @@ describe("[SCN-CLI-004] isBalanced — the whole-run balance predicate over the 
           evidenceObservations: [],
           evidenceObligations: [],
           verdict: "out-of-balance",
-          qualityCheckReconciliations: [qcr({ qualityCheck: "lint", staticCheck: "guard:static", outcome: "cites-no-scenario" })],
+          qualityCheckReconciliations: [qcr({ qualityCheck: "fitness", staticCheck: "guard:static", outcome: "cites-no-scenario" })],
           pendingItems: [],
-          reconcilingItems: [qcr({ qualityCheck: "lint", staticCheck: "guard:static", outcome: "cites-no-scenario" })],
+          reconcilingItems: [qcr({ qualityCheck: "fitness", staticCheck: "guard:static", outcome: "cites-no-scenario" })],
         },
       ],
     };

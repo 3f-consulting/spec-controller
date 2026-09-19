@@ -62,7 +62,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
   was ever measured routing credits through it.
 
   What is NOT vacuous over this tree is the number beside it. The "static check(s) run" figure counts
-  the running lint credits this pipeline's own candidate steps post, so it is answered by those steps
+  the running fitness credits this pipeline's own candidate steps post, so it is answered by those steps
   and only the uncited count is answered by discovery. Reading both as products of the same mechanism
   is the misreading this paragraph forecloses.
 

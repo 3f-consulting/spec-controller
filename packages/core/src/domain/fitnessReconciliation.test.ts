@@ -25,6 +25,7 @@ import { describe, it, expect } from "vitest";
 import { reconcile } from "./evidenceReconciliation.js";
 import type { ScriptCitation } from "../parse/fitnessCitations.js";
 import { parseScenarios } from "../parse/scenarios.js";
+import { fitnessChecksOf } from "./fitnessChecks.js";
 import { runningStaticChecks } from "../parse/runningStaticChecks.js";
 import type { PackageJsonScripts } from "../parse/checkScriptsRunInCI.js";
 import type { EvidenceObservation } from "../model.js";
@@ -41,9 +42,6 @@ const NO_RUNNERS: Readonly<Record<string, string | null>> = {};
  *  above already records that this file plants its workflow and manifest rather than reading the
  *  tree, so the string is fixture data and its realness was never what the arms rest on. */
 const REAL_GUARD = "lint:feature-codes";
-
-/** The bare check tag the citation names — the seam's middle term, injected rather than mapped. */
-const CHECK_TAG = "feature-codes";
 
 /**
  * A workflow and a manifest that WIRE one static check — the fixture these three arms used to read
@@ -121,7 +119,7 @@ describe("[SCN-LNT-009] a fitness credit citing an @SCN no scenario carries post
     // THE SEAM'S ANSWER, injected — what citationOfCitedRow resolved when the check was OBSERVED,
     // over the corpus as it read at that time (the fitness scenario carried SCN-AAA-001).
     const citedScn = (script: string): ScriptCitation | null =>
-      script === REAL_GUARD ? { checkTag: CHECK_TAG, scnId: "SCN-AAA-001" } : null;
+      script === REAL_GUARD ? { scnId: "SCN-AAA-001" } : null;
 
     // The corpus AS IT READS WHEN THE LEDGER IS BUILT — renumbered. Nothing carries SCN-AAA-001
     // any more, so the credit names a row nobody wrote.
@@ -129,7 +127,7 @@ describe("[SCN-LNT-009] a fitness credit citing an @SCN no scenario carries post
       "@LNT",
       "Feature: fixture",
       "  Rule: a fixture rule",
-      `    @${CHECK_TAG} @SCN-AAA-002`,
+      "    @fitness @SCN-AAA-002",
       "    Scenario: the corpus keeps its feature codes inside the threshold",
     ].join("\n");
 
@@ -142,7 +140,9 @@ describe("[SCN-LNT-009] a fitness credit citing an @SCN no scenario carries post
     const observation = evidenceObservations.find((o) => o.staticCheck === REAL_GUARD);
     expect(observation?.scnId).toBe("SCN-AAA-001");
 
-    const scenarios = parseScenarios(corpusAtReconcile, [], [CHECK_TAG]);
+    const scenarios = parseScenarios(
+      corpusAtReconcile, [], fitnessChecksOf([{ scn: "SCN-AAA-002" }])
+    );
     expect(scenarios.map((s) => s.scnId)).toEqual(["SCN-AAA-002"]);
 
     const balance = reconcile(scenarios, evidenceObservations);
@@ -160,7 +160,7 @@ describe("[SCN-LNT-009] a fitness credit citing an @SCN no scenario carries post
     // destinations telling a reader different amounts about the same class of fault.
     expect(phantom?.qualityCheckReconciliations).toEqual([
       {
-        qualityCheck: "lint",
+        qualityCheck: "fitness",
         staticCheck: REAL_GUARD,
         outcome: "cites-unknown-scenario",
         evidenceObservation: observation,
@@ -193,8 +193,8 @@ describe("[SCN-LNT-009] a fitness credit citing an @SCN no scenario carries post
  * the SAME row, which is precisely the arrangement in which a reconciler answering an obligation by
  * the row it sits on, rather than by what it owes, would collapse them.
  *
- * THE FIXTURE IS STEPLESS, and that is how it is written rather than what the reader requires: a
- * bare check tag raises its obligation from the row that carries it, steps or none (@SCN-LNT-006).
+ * THE FIXTURE IS STEPLESS, and that is how it is written rather than what the reader requires: the
+ * `@fitness` tag and its configured row raise the obligation, steps or none (@SCN-LNT-018).
  * That is not an endorsement of mixed tagging — whether a behavioural scenario may carry a fitness
  * tag is @SCN-STG-005's question — it is what the corpus reader admits.
  *
@@ -207,10 +207,6 @@ describe("[SCN-LNT-009] a fitness credit citing an @SCN no scenario carries post
  * Parent: @SCN-LNT-004.
  */
 const SEVERED_SCRIPT = "lint:severed-check";
-
-/** The bare tag the citation names — a DIFFERENT word, so only the citation joins the fitness
- *  obligation to its credit. */
-const SEVERED_CHECK = "severed-check";
 
 describe("[SCN-LNT-004] a scenario requiring both a unit test and a fitness check reports each independently", () => {
   it("answers each obligation from a credit of its own axis — the unit credit satisfies the unit obligation, the citing fitness credit the watermelon — and never one from the other", () => {
@@ -227,17 +223,19 @@ describe("[SCN-LNT-004] a scenario requiring both a unit test and a fitness chec
       "@LNT",
       "Feature: fixture",
       "  Rule: a fixture rule",
-      `    @unit @${SEVERED_CHECK} @SCN-AAA-001`,
+      "    @unit @fitness @SCN-AAA-001",
       "    Scenario: the tree stays inside this check's threshold",
     ].join("\n");
-    const scenarios = parseScenarios(corpus, [], [SEVERED_CHECK]);
+    const scenarios = parseScenarios(
+      corpus, [], fitnessChecksOf([{ scn: "SCN-AAA-001" }])
+    );
     expect(scenarios.map((s) => s.evidenceObligations)).toEqual([
-      [{ qualityCheck: "unit" }, { qualityCheck: "lint", staticCheck: SEVERED_CHECK }],
+      [{ qualityCheck: "unit" }, { qualityCheck: "fitness" }],
     ]);
 
     // THE SEAM'S ANSWER, injected — see the file header.
     const citedScn = (script: string): ScriptCitation | null =>
-      script === SEVERED_SCRIPT ? { checkTag: SEVERED_CHECK, scnId: "SCN-AAA-001" } : null;
+      script === SEVERED_SCRIPT ? { scnId: "SCN-AAA-001" } : null;
 
     // The two credits, observed apart by their own readers and citing the SAME @SCN.
     const unitCredit: EvidenceObservation = {
@@ -253,9 +251,8 @@ describe("[SCN-LNT-004] a scenario requiring both a unit test and a fitness chec
     ).filter((o) => o.staticCheck === SEVERED_SCRIPT);
     expect(fitnessCredits).toEqual([
       {
-        qualityCheck: "lint",
+        qualityCheck: "fitness",
         staticCheck: SEVERED_SCRIPT,
-        checkTag: SEVERED_CHECK,
         exists: true,
         enforcedOverRealSource: false,
         scnId: "SCN-AAA-001",
@@ -274,10 +271,9 @@ describe("[SCN-LNT-004] a scenario requiring both a unit test and a fitness chec
     // obligation owes lands on the unit reading. The exact-list equality is what makes the pair
     // exhaustive — no third reading, and no axis answered twice.
     const watermelonItem = {
-      qualityCheck: "lint",
-      staticCheck: SEVERED_CHECK,
+      qualityCheck: "fitness",
       outcome: "watermelon",
-      evidenceObligation: { qualityCheck: "lint", staticCheck: SEVERED_CHECK },
+      evidenceObligation: { qualityCheck: "fitness" },
       evidenceObservation: fitnessCredits[0],
     };
     expect(scenario?.qualityCheckReconciliations).toEqual([

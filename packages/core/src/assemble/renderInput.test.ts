@@ -182,9 +182,9 @@ describe("[SCN-RMD-001] assembleRenderInput builds one whole-document report mod
         evidenceObservations: [],
         evidenceObligations: [],
         verdict: "out-of-balance",
-        qualityCheckReconciliations: [qcr({ qualityCheck: "lint", staticCheck: "guard:static", outcome: "cites-no-scenario" })],
+        qualityCheckReconciliations: [qcr({ qualityCheck: "fitness", staticCheck: "guard:static", outcome: "cites-no-scenario" })],
         pendingItems: [],
-        reconcilingItems: [qcr({ qualityCheck: "lint", staticCheck: "guard:static", outcome: "cites-no-scenario" })],
+        reconcilingItems: [qcr({ qualityCheck: "fitness", staticCheck: "guard:static", outcome: "cites-no-scenario" })],
       },
     ],
   };
@@ -417,7 +417,7 @@ describe("[SCN-RMD-003] the runtime-observation totals re-home onto summary; no 
  * The static-check census is `summary.staticChecks` COUNTS alone (2.4) — the standalone
  * member-list section (`guards` → `staticChecks`, `{ciGuards[], named[]}`) COLLAPSED, symmetric
  * with the runtime side. The static check member detail now lives in the rows (named → each scenario's
- * `@lint` sub-row; no-evidence-obligation → the suspense row's `cites-no-scenario` credit items), so there is
+ * fitness sub-row; no-evidence-obligation → the suspense row's `cites-no-scenario` credit items), so there is
  * no double-report and no census section on the JSON surface.
  */
 describe("[SCN-RMD-004] the static-check census is summary counts, no standalone section", () => {
@@ -427,10 +427,10 @@ describe("[SCN-RMD-004] the static-check census is summary counts, no standalone
   // (lint:foo, citing SCN-RMD-010 and posting to its row) + 1 uncited (lint:bar, no-evidence-obligation,
   // running → the suspense row) → the fold reads {runningStaticCheckCount: 2, uncitedStaticCheckCount: 1}.
   const staticChecksBalance: Ledger = reconcile(
-    [{ scnId: "SCN-RMD-010", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "foo" }] }],
+    [{ scnId: "SCN-RMD-010", evidenceObligations: [{ qualityCheck: "fitness" }] }],
     [
-      { qualityCheck: "lint", staticCheck: "lint:foo", checkTag: "foo", scnId: "SCN-RMD-010", exists: true, enforcedOverRealSource: true },
-      { qualityCheck: "lint", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "fitness", staticCheck: "lint:foo", scnId: "SCN-RMD-010", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "fitness", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
     ]
   );
 

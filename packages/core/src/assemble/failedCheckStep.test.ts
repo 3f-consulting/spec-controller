@@ -19,7 +19,7 @@
  *
  * Bidirectional evidence: the describe carries its @SCN id, matching
  * features/fitness-reconciliation.feature and the @integration steps in
- * tests/steps/lintReconciliation.steps.ts.
+ * tests/steps/fitnessReconciliation.steps.ts.
  */
 
 import { describe, it, expect } from "vitest";
@@ -52,7 +52,7 @@ const manifest = {
     // terms as a command — a quality check can BE an action — so a pipeline that opens with a
     // checkout answers for it here, exactly as a consumer's own manifest does.
     notChecks: ["ci.yml:quality:Checkout"],
-    fitnessChecks: [{ scn: "SCN-CVT-001", characteristic: "complexity", command: "eslint" }],
+    fitnessChecks: [{ scn: "SCN-CVT-001", command: "eslint" }],
   },
 };
 
@@ -114,16 +114,15 @@ describe("[SCN-LNT-028] a check step the run's record says failed posts a failin
         row.verdict,
         row.qualityCheckReconciliations.map((item) => [item.staticCheck, item.outcome]),
       ])
-    ).toEqual([["SCN-CVT-001", "scenario", "out-of-balance", [["complexity", "failing"]]]]);
+    ).toEqual([["SCN-CVT-001", "scenario", "out-of-balance", [[undefined, "failing"]]]]);
 
     // THE OBSERVATION IS CARRIED, WHICH IS WHAT `failing` MEANS AND `broken` DOES NOT. A check that
     // ran and found violations said something, and a reading that discarded it would be reporting
     // the strictly weaker fact that nothing was heard from the check at all.
     const [item] = reconciliation.ledger.scenarioReconciliations[0]!.qualityCheckReconciliations;
     expect(item?.evidenceObservation).toMatchObject({
-      qualityCheck: "lint",
+      qualityCheck: "fitness",
       scnId: "SCN-CVT-001",
-      checkTag: "complexity",
     });
 
     // AND THE RUN IS SOUND. `broken` stamps a run unsound — the evidence stream itself is faulty —

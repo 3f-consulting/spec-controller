@@ -11,7 +11,7 @@
  * edge to judge. ESLint visits FILES. Both rules live here for that one reason.
  *
  * WHY THIS IS A SECOND CONFIG RATHER THAN A BLOCK IN `eslint.config.mjs`. The root config IS the
- * `SCN-FIT-001` check, whose characteristic is `complexity`, and whose `MEASURED_GLOBS` export is
+ * `SCN-FIT-001` check — the complexity one — and whose `MEASURED_GLOBS` export is
  * that check's own answer to which files it judges. Boundary rules there would make one command
  * assert two unrelated claims under one citation, and would put rules into a config whose scope is
  * another check's measurement. One gate, one claim.

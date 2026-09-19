@@ -34,7 +34,7 @@
  *
  * Bidirectional evidence: the describe carries its @SCN id, matching
  * features/fitness-reconciliation.feature and the @integration steps in
- * tests/steps/lintReconciliation.steps.ts.
+ * tests/steps/fitnessReconciliation.steps.ts.
  */
 
 import { describe, it, expect } from "vitest";
@@ -60,8 +60,8 @@ Feature: a converted target's fitness corpus, carrying a scenario for one of its
 const manifest = {
   specController: {
     fitnessChecks: [
-      { scn: "SCN-CVT-001", characteristic: "complexity", command: "eslint" },
-      { scn: "SCN-CVT-002", characteristic: "traceability", command: "scn-subissues" },
+      { scn: "SCN-CVT-001", command: "eslint" },
+      { scn: "SCN-CVT-002", command: "scn-subissues" },
     ],
   },
 };
@@ -164,14 +164,14 @@ describe("[SCN-LNT-034] a configured row the corpus carries no scenario for is o
     // declares and nothing specifies.
     const reconciliation = reconcileTarget(runCitingTheSpecifiedRowAlone);
     expect(rowsOf(reconciliation)).toEqual([
-      ["SCN-CVT-001", "scenario", "balanced", [["lint", "complexity", "satisfied"]], 1, 0],
-      ["SCN-CVT-002", "scenario", "out-of-balance", [["lint", "traceability", "missing"]], 0, 0],
+      ["SCN-CVT-001", "scenario", "balanced", [["fitness", undefined, "satisfied"]], 1, 0],
+      ["SCN-CVT-002", "scenario", "out-of-balance", [["fitness", undefined, "missing"]], 0, 0],
     ]);
-    // AND THE DEBIT IS POSTED, NOT MERELY REPORTED. The row names exactly one characteristic — the
-    // one its manifest row names — and that is the obligation the manifest raised.
+    // AND THE DEBIT IS POSTED, NOT MERELY REPORTED. The row owes exactly one fitness obligation —
+    // the one its manifest row declares — keyed by its own @SCN and naming no word (3F-3570).
     const unspecified = reconciliation.ledger.scenarioReconciliations[1]!;
     expect(unspecified.evidenceObligations).toEqual([
-      { qualityCheck: "lint", staticCheck: "traceability" },
+      { qualityCheck: "fitness" },
     ]);
     // THE RUN'S OWN VERDICT, asked of the predicate the CLI edge maps to its exit code. Every other
     // account of this target agrees, so this is the row the run fails for and there is no second
@@ -186,16 +186,16 @@ describe("[SCN-LNT-034] a configured row the corpus carries no scenario for is o
     // credit landing on a PHANTOM row and the obligation still missing beside it.
     const reconciliation = reconcileTarget(runCitingTheUnspecifiedRow, bothStepsSucceeded);
     expect(rowsOf(reconciliation)).toEqual([
-      ["SCN-CVT-001", "scenario", "balanced", [["lint", "complexity", "satisfied"]], 1, 0],
+      ["SCN-CVT-001", "scenario", "balanced", [["fitness", undefined, "satisfied"]], 1, 0],
       [
         "SCN-CVT-002",
         "phantom-scenario",
         "out-of-balance",
-        [["lint", "traceability", "cites-unknown-scenario"]],
+        [["fitness", "SCN-CVT-002", "cites-unknown-scenario"]],
         1,
         0,
       ],
-      ["SCN-CVT-002", "scenario", "out-of-balance", [["lint", "traceability", "missing"]], 0, 0],
+      ["SCN-CVT-002", "scenario", "out-of-balance", [["fitness", undefined, "missing"]], 0, 0],
     ]);
     expect(isBalanced(reconciliation.ledger)).toBe(false);
   });

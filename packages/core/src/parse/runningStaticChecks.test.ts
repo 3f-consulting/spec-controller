@@ -1,6 +1,6 @@
 /**
  * Unit tests for the running-check observer (`parse/runningStaticChecks.ts`) — it emits a
- * StaticCheckEvidenceObservation per running CI check, and since 3F-3410 it is the ONLY static-check
+ * FitnessEvidenceObservation per running CI check, and since 3F-3410 it is the ONLY static-check
  * observer: the obligation-side one this header used to point at has been deleted. The CI-parse
  * primitive it reads enforcement off lives in `parse/checkScriptsRunInCI.ts`. reconcile's folding
  * of a no-evidence-obligation running static check onto the suspense row is pinned in
@@ -24,7 +24,7 @@ const SUITE_RUNNERS: Readonly<Record<string, string | null>> = {
   integration: "cucumber-js",
 };
 
-describe("[SCN-USG-001] runningStaticChecks — the running-guard observer (emits a StaticCheckEvidenceObservation per running CI guard)", () => {
+describe("[SCN-USG-001] runningStaticChecks — the running-guard observer (emits a FitnessEvidenceObservation per running CI guard)", () => {
   const usgPkg: PackageJsonScripts = {
     scripts: {
       "lint:foo": "echo foo",
@@ -47,15 +47,15 @@ describe("[SCN-USG-001] runningStaticChecks — the running-guard observer (emit
     "      - run: pnpm cucumber",
   ].join("\n");
 
-  // A running CI static check is emitted as a StaticCheckEvidenceObservation —
+  // A running CI static check is emitted as a FitnessEvidenceObservation —
   // exists + enforcedOverRealSource are true by construction (a step the pipeline runs). The
   // static analogue of the runner emitting a passing test result.
-  it("emits a StaticCheckEvidenceObservation for each check step a CI run step invokes (test / cucumber excluded)", () => {
+  it("emits a FitnessEvidenceObservation for each check step a CI run step invokes (test / cucumber excluded)", () => {
     // test + cucumber are the runtime axis's observed evidence, and what keeps them off this axis
     // is the runner block this target names — not anything about how they are spelled.
     expect(runningStaticChecks([usgCi], usgPkg, SUITE_RUNNERS)).toEqual([
-      { qualityCheck: "lint", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
-      { qualityCheck: "lint", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "fitness", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "fitness", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
     ]);
   });
 
@@ -64,8 +64,8 @@ describe("[SCN-USG-001] runningStaticChecks — the running-guard observer (emit
       scripts: { ...usgPkg.scripts, "lint:unwired": "echo unwired" },
     };
     expect(runningStaticChecks([usgCi], withUnwired, SUITE_RUNNERS)).toEqual([
-      { qualityCheck: "lint", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
-      { qualityCheck: "lint", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "fitness", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "fitness", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
     ]);
   });
 });
@@ -111,7 +111,7 @@ describe("[SCN-USG-003] test and cucumber CI steps are not candidate fitness che
     // here and all three steps are candidates, which is the `new-client` report and is exactly
     // what this scenario says a target naming its runners does not get.
     expect(runningStaticChecks([ci2], pkg2, resolveRunners(manifest).tiers)).toEqual([
-      { qualityCheck: "lint", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "fitness", staticCheck: "lint:foo", exists: true, enforcedOverRealSource: true },
     ]);
   });
 
@@ -123,7 +123,6 @@ describe("[SCN-USG-003] test and cucumber CI steps are not candidate fitness che
     // everything here, so the filter's placement is the only thing keeping them out.
     expect(
       runningStaticChecks([ci2], pkg2, resolveRunners(manifest).tiers, () => ({
-        checkTag: "foo",
         scnId: "SCN-TGT-001",
       })).map(
         (o) => o.staticCheck,
@@ -174,12 +173,12 @@ describe("[SCN-USG-004] runningStaticChecks observes a CI script matching no con
   // block now, and every step that is not a runner is a candidate.
   const membership = SUITE_RUNNERS;
 
-  it("emits a StaticCheckEvidenceObservation for a script no convention of ours reaches", () => {
+  it("emits a FitnessEvidenceObservation for a script no convention of ours reaches", () => {
     expect(
       runningStaticChecks([unprefixedCi], unprefixedPkg, membership)
     ).toEqual([
       {
-        qualityCheck: "lint",
+        qualityCheck: "fitness",
         staticCheck: "domain-purity",
         exists: true,
         enforcedOverRealSource: true,
@@ -208,7 +207,7 @@ describe("[SCN-USG-004] runningStaticChecks observes a CI script matching no con
 
     expect(observed).toEqual([
       {
-        qualityCheck: "lint",
+        qualityCheck: "fitness",
         staticCheck: "domain-purity",
         exists: true,
         enforcedOverRealSource: true,
@@ -237,7 +236,7 @@ describe("[SCN-USG-007] a static check running in ANY of a target's workflows is
 
   it("emits the check invoked by the SECOND source, which reading the first alone would miss", () => {
     expect(runningStaticChecks([ci, nightly], pkg, SUITE_RUNNERS)).toEqual([
-      { qualityCheck: "lint", staticCheck: "lint:sweep", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "fitness", staticCheck: "lint:sweep", exists: true, enforcedOverRealSource: true },
     ]);
   });
 
@@ -251,8 +250,8 @@ describe("[SCN-USG-007] a static check running in ANY of a target's workflows is
     //
     // What the two share is their HANDLE, which is where-to-fix and does not have to be unique.
     expect(runningStaticChecks([nightly, nightly], pkg, SUITE_RUNNERS)).toEqual([
-      { qualityCheck: "lint", staticCheck: "lint:sweep", exists: true, enforcedOverRealSource: true },
-      { qualityCheck: "lint", staticCheck: "lint:sweep", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "fitness", staticCheck: "lint:sweep", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "fitness", staticCheck: "lint:sweep", exists: true, enforcedOverRealSource: true },
     ]);
   });
 
@@ -263,7 +262,7 @@ describe("[SCN-USG-007] a static check running in ANY of a target's workflows is
     const malformed = "jobs:\n  - this: [is not\n    valid yaml";
 
     expect(runningStaticChecks([malformed, nightly], pkg, SUITE_RUNNERS)).toEqual([
-      { qualityCheck: "lint", staticCheck: "lint:sweep", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "fitness", staticCheck: "lint:sweep", exists: true, enforcedOverRealSource: true },
     ]);
   });
 });
@@ -321,7 +320,7 @@ describe("[SCN-USG-013] a `uses:` step is a candidate fitness check, reported by
     ].join("\n");
     expect(runningStaticChecks([severed], pkg, SUITE_RUNNERS)).toEqual([
       {
-        qualityCheck: "lint",
+        qualityCheck: "fitness",
         staticCheck: "github/codeql-action/analyze@v3",
         exists: true,
         enforcedOverRealSource: false,
@@ -372,7 +371,7 @@ describe("[SCN-USG-022] a step invoking two scripts is named by the first it inv
     // saw, so there is one handle to choose, never two credits for the same run.
     expect(runningStaticChecks([ci], pkg, SUITE_RUNNERS)).toEqual([
       {
-        qualityCheck: "lint",
+        qualityCheck: "fitness",
         staticCheck: "check:format",
         exists: true,
         enforcedOverRealSource: true,

@@ -8,7 +8,6 @@
     "fitnessChecks": [
       {
         "scn": "SCN-TGS-001",
-        "characteristic": "nightly",
         "command": "pnpm lint:nightly"
       }
     ],

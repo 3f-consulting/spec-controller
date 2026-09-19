@@ -4,7 +4,7 @@
  *
  * THE TWO-HOP REGISTRY ROUTE THIS FILE ONCE ALSO HELD IS RETIRED (3F-3161, @SCN-LNT-017 — the last
  * registry-`scn` scenario: a registry entry naming a scenario that carries a different
- * characteristic cited nothing, and no scenario is left needing that resolution at all).
+ * check word cited nothing, and no scenario is left needing that resolution at all).
  * The retired registry module (hop 1, script handle → bare check tag) and this module's own
  * `fitnessCitations` / `citationOfScript` (hop 2, bare check tag → the corpus's `@SCN`) went with
  * it. Every check now either states its own row's code on its CI step, or is a converted
@@ -14,13 +14,13 @@
  * NOT A HOP, AND THE DIFFERENCE IS WHERE IT STARTS. The retired hops resolved a runnable script
  * HANDLE into a scenario, because a handle does not know what it is for. An `id:` is not a handle:
  * it is the consumer SAYING which row this check answers — a citation, never a declaration — so
- * there is nothing to resolve. The row keyed by that code carries the characteristic, and both
- * terms come off one configured row rather than one being recovered from the other.
+ * there is nothing to resolve: the code IS the citation, and the row keyed by it is the
+ * consumer's declaration that the code names a configured check.
  *
  * IT REFINES, IT DOES NOT MANUFACTURE (@SCN-LNT-031, and 3F-3261's rule kept whole). A code no
  * configured row answers returns `null` rather than a citation half-assembled from the handle that
- * ran: an `id:` names a ROW and never a characteristic, and reaching for the script's name for the
- * missing half is the name-match this axis retired, in a new spelling. A step carrying no code at
+ * ran: an `id:` names a ROW, and reaching for the script's name when it names none is the
+ * name-match this axis retired, in a new spelling. A step carrying no code at
  * all is the same answer for the same reason — the target has said nothing about that check, so its
  * run cites nothing and posts to suspense, which is the state a consumer starts in.
  *
@@ -33,24 +33,15 @@ import type { FitnessCheckIndex } from "../domain/fitnessChecks.js";
 import { bareTerm } from "../lib/bareTerm.js";
 
 /**
- * WHAT A RUN CITES — both terms the seam resolved, not just the far one.
+ * WHAT A RUN CITES — the `@SCN` of the configured row its step's code names, which is the row the
+ * credit posts to and the one fitness obligation on it that the credit answers.
  *
- * The `@SCN` says WHICH ROW the credit posts to; the bare check tag says WHICH OBLIGATION on that
- * row it answers. Both are needed, because neither is unique on its own: a row may carry more than
- * one bare check tag, so two runs can honestly cite the same `@SCN` (@SCN-LNT-012), and answering
- * by `@SCN` alone hands the first credit found to every fitness obligation the row raises.
- *
- * THE TAG IS THE OBSERVATION'S OWN CHARACTERISTIC, which is why it is carried rather than looked up
- * again downstream. The obligation names the BARE tag its stepless scenario carries (`typecheck`);
- * the run knows only the RUNNABLE HANDLE that invoked it (`lint:complexity`). Those are two
- * vocabularies by design, and comparing them is name-match in a new spelling — it agrees only where
- * the words happen to coincide, which is the single unprefixed check. Resolving the tag HERE, where
- * the registry is already in hand, is what lets the reconciler compare like with like.
+ * ONE TERM SINCE 3F-3525. A citation once also carried the characteristic the row named, because
+ * a row could raise more than one fitness obligation and the word said which one a run answered.
+ * One `@fitness` scenario is one check now, so the `@SCN` is the whole address.
  */
 export interface ScriptCitation {
-  /** The BARE check tag this handle runs (`complexity`) — the word an obligation names. */
-  readonly checkTag: string;
-  /** The `@SCN` of the fitness scenario carrying that check — the row the credit posts to. */
+  /** The `@SCN` of the configured row the run's step names — the row the credit posts to. */
   readonly scnId: string;
 }
 
@@ -62,13 +53,13 @@ export interface ScriptCitation {
  * repeated here because this function is where it is proved. The retired hops resolved a runnable
  * script HANDLE into a scenario, because a handle does not know what it is for. An `id:` is not a
  * handle: it is the consumer SAYING which row this check answers — a citation, never a declaration
- * — so there is nothing to resolve. The row keyed by that code carries the characteristic, and both
- * terms come off one configured row rather than one being recovered from the other.
+ * — so there is nothing to resolve: the code IS the citation, and the row keyed by it is the
+ * consumer's declaration that the code names a configured check.
  *
  * IT REFINES, IT DOES NOT MANUFACTURE (@SCN-LNT-031, and 3F-3261's rule kept whole). A code no
  * configured row answers returns `null` rather than a citation half-assembled from the handle that
- * ran: an `id:` names a ROW and never a characteristic, and reaching for the script's name for the
- * missing half is the name-match this axis retired, in a new spelling. A step carrying no code at
+ * ran: an `id:` names a ROW, and reaching for the script's name when it names none is the
+ * name-match this axis retired, in a new spelling. A step carrying no code at
  * all is the same answer for the same reason — the target has said nothing about that check, so its
  * run cites nothing and posts to suspense, which is the state a consumer starts in.
  *
@@ -82,6 +73,5 @@ export function citationOfCitedRow(
 ): ScriptCitation | null {
   if (citedScn === undefined) return null;
   const scnId = bareTerm(citedScn);
-  const row = fitnessChecks.get(scnId);
-  return row === undefined ? null : { checkTag: row.characteristic, scnId };
+  return fitnessChecks.has(scnId) ? { scnId } : null;
 }

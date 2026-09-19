@@ -18,14 +18,14 @@ import {
 import { evidenceObligationsOf } from "../domain/journal.js";
 
 /**
- * One corpus-driven evidence column in the ledger: the lint (static) column,
+ * One corpus-driven evidence column in the ledger: the fitness column,
  * or a runtime quality-check column. The column SET is corpus-driven — only the quality-checks
  * the run raises or observes appear, so e2e / performance show up only when present.
  */
-export type EvidenceColumn = { kind: "lint" } | { kind: "runtime"; qualityCheck: RuntimeQualityCheck };
+export type EvidenceColumn = { kind: "fitness" } | { kind: "runtime"; qualityCheck: RuntimeQualityCheck };
 
 /**
- * The corpus-driven evidence columns: lint first (when any scenario names a static check), then
+ * The corpus-driven evidence columns: fitness first (when any scenario names a fitness check), then
  * each runtime quality-check present as an EVIDENCE OBLIGATION or as a posted EVIDENCE OBSERVATION
  * on a scenario row, in canonical quality-check order.
  */
@@ -38,8 +38,8 @@ export function evidenceColumns(
     isScenario
   );
   // ASKED (3F-2203) — whether a row has static-check sub-rows is the same model cut the grid cell
-  // and the lint table read. Whether a COLUMN then appears is the renderer's own business; what a
-  // row's lint sub-rows ARE is not.
+  // and the fitness table read. Whether a COLUMN then appears is the renderer's own business; what a
+  // row's fitness sub-rows ARE is not.
   const hasStatic = scenarioRows.some((s) => staticCheckReconciliationsOf(s).length > 0);
   const qualityChecksPresent = new Set<RuntimeQualityCheck>();
   // A column appears for every runtime quality-check present in EVIDENCE OBLIGATION or OBSERVATION on a scenario
@@ -51,23 +51,23 @@ export function evidenceColumns(
   for (const s of scenarioRows) {
     for (const o of s.qualityCheckReconciliations) {
       // A both-missing item carries no quality-check — it drives no column.
-      if (o.qualityCheck && o.qualityCheck !== "lint") qualityChecksPresent.add(o.qualityCheck);
+      if (o.qualityCheck && o.qualityCheck !== "fitness") qualityChecksPresent.add(o.qualityCheck);
     }
     for (const o of s.evidenceObservations) {
-      if (o.qualityCheck !== "lint") qualityChecksPresent.add(o.qualityCheck);
+      if (o.qualityCheck !== "fitness") qualityChecksPresent.add(o.qualityCheck);
     }
   }
   const columns: EvidenceColumn[] = [];
-  if (hasStatic) columns.push({ kind: "lint" });
+  if (hasStatic) columns.push({ kind: "fitness" });
   for (const qualityCheck of RUNTIME_QUALITY_CHECKS) {
     if (qualityChecksPresent.has(qualityCheck)) columns.push({ kind: "runtime", qualityCheck });
   }
   return columns;
 }
 
-/** The column's header — the tag word, title-cased (Lint / Unit / Integration / …). */
+/** The column's header — the quality-check word, title-cased (Fitness / Unit / Integration / …). */
 export function columnHeader(col: EvidenceColumn): string {
-  const word = col.kind === "lint" ? "lint" : col.qualityCheck;
+  const word = col.kind === "fitness" ? "fitness" : col.qualityCheck;
   return word.charAt(0).toUpperCase() + word.slice(1);
 }
 
@@ -78,7 +78,7 @@ export function columnHeader(col: EvidenceColumn): string {
  * obligation per tier, and one static check per row — one scenario is one fitness check (3F-3411).
  */
 const QUALITY_CHECK_LETTER: Record<QualityCheck, string> = {
-  lint: "L",
+  fitness: "F",
   unit: "U",
   integration: "I",
   e2e: "E",
@@ -94,8 +94,8 @@ const QUALITY_CHECK_LETTER: Record<QualityCheck, string> = {
  * in the Verdict + Reconciling-items columns), so `U/-` is unambiguously named-but-missing (zero
  * evidenceObservations). A `-/N` cell is a NO-EVIDENCE-OBLIGATION observation (a credit at a check the scenario
  * did not name, @SCN-LDG-008); a doubly-empty `-/-` renders BLANK (`""`) — no evidence obligation, no credit.
- * The lint cell reads the scenario's static evidenceObligation outcomes (lint is not a counted
- * evidence observation): its right side is the count of static checks PRESENT — `balanced` or the
+ * The fitness cell reads the scenario's fitness evidence obligation outcomes (a fitness credit is not
+ * a counted evidence observation): its right side is the count of checks PRESENT — `balanced` or the
  * watermelon (the script exists; its inadequacy is quality, in Reconciling-items 🍉), NOT a posted
  * credit. The count exposes backing, not quality — never rank by it.
  */
@@ -107,7 +107,7 @@ export function evidenceCell(
   // whole story is the credit-side reconciling item. Every evidence cell is neither-named-nor-
   // matched, so it reads `—`; the citation shows in Reconciling items.
   if (!isScenario(s)) return "—";
-  return col.kind === "lint" ? lintCell(s) : runtimeCell(s, col.qualityCheck);
+  return col.kind === "fitness" ? fitnessCell(s) : runtimeCell(s, col.qualityCheck);
 }
 
 /**
@@ -118,17 +118,17 @@ function twoSided(left: string, right: string): string {
   return left === "-" && right === "-" ? "" : `${left}/${right}`;
 }
 
-/** The lint column's cell on a scenario row. */
-function lintCell(s: ScenarioReconciliation): string {
-  // LEFT: a lint obligation is NAMED iff a lint QualityCheckReconciliation exists on the row
-  // (`L`). RIGHT: the PRESENT-guard count — the static checks `satisfied` or watermelon. Lint's
-  // right stays this static-outcome derivation (NOT `evidenceObservations`): lint carries no
-  // credit multiplicity, so the count is exact.
+/** The fitness column's cell on a scenario row. */
+function fitnessCell(s: ScenarioReconciliation): string {
+  // LEFT: a fitness obligation is NAMED iff a fitness QualityCheckReconciliation exists on the row
+  // (`F`). RIGHT: the PRESENT-check count — the checks `satisfied` or watermelon. The fitness
+  // right stays this outcome derivation (NOT `evidenceObservations`): one scenario is one check, so
+  // the count is exact.
   // BOTH SIDES ASKED (3F-2203) — the named-guard sub-rows and the present-guard count are
   // model facts, read off the row. "Present" spans satisfied AND watermelon (a watermelon guard
   // EXISTS; its inadequacy is quality, shown in Reconciling items 🍉) — an outcome-vocabulary
   // rule, which is why the renderer no longer states it.
-  const left = staticCheckReconciliationsOf(s).length > 0 ? QUALITY_CHECK_LETTER.lint : "-";
+  const left = staticCheckReconciliationsOf(s).length > 0 ? QUALITY_CHECK_LETTER.fitness : "-";
   const present = presentStaticCheckCountOf(s);
   const right = present > 0 ? String(present) : "-";
   return twoSided(left, right);

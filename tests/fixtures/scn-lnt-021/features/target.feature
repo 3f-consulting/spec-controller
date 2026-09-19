@@ -3,9 +3,9 @@ Feature: a converted target's fitness corpus, whose two checks both held on the 
 
   A FIXTURE feature standing in for ANOTHER repository, read cross-repo by spec-controller via
   --features. Both of its scenarios carry the bare fitness axis tag and their own @SCN, and a row
-  of that repository's specController.fitnessChecks names each of them with a characteristic and a
-  command. No characteristic tag appears anywhere in this file, and that repository configures no
-  check registry at all — so the only route from either scenario to a characteristic is its row.
+  of that repository's specController.fitnessChecks names each of them with a
+  command. No word naming what either check is about appears anywhere in this file or on its row (3F-3525),
+  and that repository configures no check registry at all — a scenario's own title says it.
 
   NEITHER CHECK IS ONE OF THAT REPOSITORY'S SCRIPTS, which is realistic rather than
   load-bearing. What leaves the run's record the only thing observing them is the composition: a run handed its own record is answered for its CONFIGURED

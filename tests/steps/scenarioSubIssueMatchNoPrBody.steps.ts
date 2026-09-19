@@ -18,7 +18,7 @@
  * @SCN-SSM-018 — bidirectional evidence marker. Grepping SCN-SSM-018 returns the scenario, this
  * step block, and the @unit arm in tests/checks/scnSubIssueGate.test.ts.
  *
- * Parent: 3F-3139 (collapse the fitness characteristics to one `@fitness` tag); this row is what
+ * Parent: 3F-3139 (collapse the fitness check tags to one `@fitness` tag); this row is what
  * makes `lint:scn-subissues` safe to convert, so it is sequenced ahead of the conversion.
  */
 

@@ -29,7 +29,7 @@ import { evidenceObligationsOf, pendingItemsOf } from "./journal.js";
 import type {
   Scenario,
   RuntimeEvidenceObservation,
-  StaticCheckEvidenceObservation,
+  FitnessEvidenceObservation,
   QualityCheckReconciliation,
 } from "../model.js";
 
@@ -140,8 +140,8 @@ describe("[SCN-LDG-008] a no-evidence-obligation item omits the keys its credit 
    * read from a target's config rather than from a test file.
    */
   it("names an untagged static check by its runnable handle, and carries no locator key", () => {
-    const untagged: StaticCheckEvidenceObservation = {
-      qualityCheck: "lint",
+    const untagged: FitnessEvidenceObservation = {
+      qualityCheck: "fitness",
       scnId: "SCN-AAA-001",
       staticCheck: "lint:nobody-asked",
       exists: true,
@@ -149,7 +149,7 @@ describe("[SCN-LDG-008] a no-evidence-obligation item omits the keys its credit 
     };
     const [item] = noEvidenceObligationReconciliationsOf("SCN-AAA-001", [untagged], pairs);
     expect(item).toStrictEqual({
-      qualityCheck: "lint",
+      qualityCheck: "fitness",
       staticCheck: "lint:nobody-asked",
       outcome: "no-evidence-obligation",
       evidenceObservation: untagged,
@@ -159,46 +159,47 @@ describe("[SCN-LDG-008] a no-evidence-obligation item omits the keys its credit 
 });
 
 /**
- * A RUNTIME credit's item names NO check, even when the credit arrived carrying a tag
- * (@SCN-LDG-008) — the one fixture that tells `fitnessCheckTagOf`'s guard apart from an
- * unconditional read of `checkTag`.
+ * A RUNTIME credit's item names NO check, even when the credit arrived carrying one
+ * (@SCN-LDG-008) — the one fixture that tells `fitnessCheckNameOf`'s guard apart from an
+ * unconditional read of `staticCheck`.
  *
  * WHY NO INTERFACE NAMES THIS SHAPE, AND WHY THAT IS THE POINT. `RuntimeEvidenceObservation` has
- * no `checkTag` field AT ALL — not optional, absent: only the two fitness observations carry one,
- * each as a required field of its own. So every type-legal runtime credit leaves
- * `observation.checkTag` `undefined` at runtime, where the guard and an unconditional
- * `return observation.checkTag` agree exactly. Read from inside this package alone the guard is
+ * no `staticCheck` field AT ALL — not optional, absent: only the fitness observation carries one,
+ * as a required field of its own. So every type-legal runtime credit leaves
+ * `observation.staticCheck` `undefined` at runtime, where the guard and an unconditional
+ * `return observation.staticCheck` agree exactly. Read from inside this package alone the guard is
  * unreachable, and pinning it would be theatre.
  *
  * It is reachable from OUTSIDE, which is the honest ground and a weaker one than "a runtime credit
  * carrying a check tag". `reconcile` and the observation union are on the published core barrel;
  * TypeScript's width subtyping admits a richer object through a variable binding, and a JavaScript
  * consumer is unconstrained by the interface at all — so a runtime credit built by a caller from a
- * shape that also has a `checkTag` is a thing the published surface genuinely accepts. The
+ * shape that also has a `staticCheck` is a thing the published surface genuinely accepts. The
  * intersection annotation below STATES that: it is not a cast past the contract, it is the shape an
  * external caller may legally hand in. What the guard promises is that such a tag never becomes THE
  * CHECK THAT RAN on the item — a runtime credit is named by its test file, and a check name it
  * never had would send a reader to a check that never ran.
  *
- * WHY THIS ARM CITES @SCN-LDG-008 RATHER THAN @SCN-LNT-013, whose source comment sits on the very
- * spread this reds. @SCN-LNT-013 is about a FITNESS credit and the check its item NAMES, and the
- * guard is already true for a fitness credit — so no fitness fixture can tell the two readings
- * apart, and an arm under that id would assert what its Gherkin never says. The fixture must be a
- * RUNTIME credit by construction, and a runtime credit reaching a real row at a quality-check it
- * never raised is precisely @SCN-LDG-008's Rule — as @SCN-LNT-013's own Rule puts it, "Nothing
- * about that rule is fitness-specific".
+ * WHY THIS ARM CITES @SCN-LDG-008. The guard is already true for a fitness credit — so no fitness
+ * fixture can tell the two readings apart. The fixture must be a RUNTIME credit by construction,
+ * and a runtime credit reaching a real row at a quality-check it never raised is precisely
+ * @SCN-LDG-008's Rule. (The fitness-side scenario this once contrasted with, @SCN-LNT-013, left
+ * with the characteristic, 3F-3563.)
  *
  * `toStrictEqual` + `not.toHaveProperty`, for the reason the block above gives: the mutant ADDS a
  * `staticCheck` key, and `toEqual` — or reading `item.staticCheck` and calling it undefined —
  * cannot see the difference between an absent key and one holding `undefined`.
  */
 describe("[SCN-LDG-008] a runtime credit's item names no check, even one the credit arrived carrying", () => {
-  it("withholds a checkTag a runtime credit arrived with rather than naming it the check that ran", () => {
-    const taggedRuntime: RuntimeEvidenceObservation & { checkTag: string } = {
+  it("withholds a check name a runtime credit arrived with rather than naming it the check that ran", () => {
+    // A `staticCheck` key on a RUNTIME credit, admitted by width subtyping with no cast. Only a
+    // fitness credit's `staticCheck` names the check that ran; the guard in `fitnessCheckNameOf`
+    // is what keeps this one out. (It was a stray `checkTag` until that field left, 3F-3570.)
+    const taggedRuntime: RuntimeEvidenceObservation & { staticCheck: string } = {
       qualityCheck: "integration",
       scnId: "SCN-AAA-001",
       status: "passed",
-      checkTag: "complexity",
+      staticCheck: "complexity",
     };
     const [item] = noEvidenceObligationReconciliationsOf(
       "SCN-AAA-001",
@@ -214,7 +215,7 @@ describe("[SCN-LDG-008] a runtime credit's item names no check, even one the cre
     expect(item).not.toHaveProperty("staticCheck");
     // The fixture cannot go vacuous by quietly losing the field: the tag IS on the credit and
     // rides through on `evidenceObservation`. It is kept out of the item's own naming alone.
-    expect(taggedRuntime.checkTag).toBe("complexity");
+    expect(taggedRuntime.staticCheck).toBe("complexity");
   });
 });
 
@@ -277,17 +278,17 @@ describe("[SCN-LDG-006] a phantom row's items carry only the fields the credit h
  *
  * TWO-HOP SHAPE RETIRED. The fixture used to carry `checkTag` alongside `staticCheck` — a route
  * that matched on both. `citesUnknownScenarioReconciliationsOf` matches on `staticCheck` alone
- * (`isStaticCheckObservation`, keyed off `qualityCheck` alone), so
+ * (`isFitnessObservation`, keyed off `qualityCheck` alone), so
  * `checkTag` was dead weight on this fixture and is dropped.
  *
  * WHY NO INTERFACE NAMES THIS FIXTURE'S SHAPE, AND WHY THAT IS THE POINT. Neither fitness
  * observation names a `locator` AT ALL — not optional, absent: only `RuntimeEvidenceObservation`
- * has the field. So this credit cannot be written as a plain `StaticCheckEvidenceObservation`, and every
+ * has the field. So this credit cannot be written as a plain `FitnessEvidenceObservation`, and every
  * type-legal fixture leaves `observation.locator` `undefined` at runtime, where the guard and an
  * unconditional `return observation.locator` agree exactly. Read from inside this package alone
  * the guard is unreachable, and pinning it would be theatre.
  *
- * It is reachable from OUTSIDE, which is the honest ground and a weaker one than "a lint
+ * It is reachable from OUTSIDE, which is the honest ground and a weaker one than "a fitness
  * observation carrying a locator". `reconcile` and the observation union are on the published core
  * barrel, and TypeScript's width subtyping admits a richer object through a variable binding while
  * a JS consumer is unconstrained by the interface at all — so a fitness credit built by a caller
@@ -303,9 +304,9 @@ describe("[SCN-LDG-006] a phantom row's items carry only the fields the credit h
  * the difference between an absent key and one holding `undefined`.
  */
 describe("[SCN-LDG-034] a fitness credit's item carries no locator, even when the credit carries one", () => {
-  it("drops a locator a citing lint credit arrived with rather than stamping it on the item", () => {
-    const guardWithLocator: StaticCheckEvidenceObservation & { locator: string } = {
-      qualityCheck: "lint",
+  it("drops a locator a citing fitness credit arrived with rather than stamping it on the item", () => {
+    const guardWithLocator: FitnessEvidenceObservation & { locator: string } = {
+      qualityCheck: "fitness",
       staticCheck: "lint:complexity",
       scnId: "SCN-ZZZ-009",
       exists: true,
@@ -314,7 +315,7 @@ describe("[SCN-LDG-034] a fitness credit's item carries no locator, even when th
     };
     const [item] = citesUnknownScenarioReconciliationsOf([guardWithLocator]);
     expect(item).toStrictEqual({
-      qualityCheck: "lint",
+      qualityCheck: "fitness",
       staticCheck: "lint:complexity",
       outcome: "cites-unknown-scenario",
       evidenceObservation: guardWithLocator,
@@ -332,8 +333,8 @@ describe("[SCN-LDG-001] suspenseReconciliationsOf orders the suspense row's item
     message: "Failed to collect",
   });
   const uncited = credit("unit", null, { locator: "tests/orphan.test.ts" });
-  const guard: StaticCheckEvidenceObservation = {
-    qualityCheck: "lint",
+  const guard: FitnessEvidenceObservation = {
+    qualityCheck: "fitness",
     staticCheck: "lint:nobody-asked",
     exists: true,
     enforcedOverRealSource: true,

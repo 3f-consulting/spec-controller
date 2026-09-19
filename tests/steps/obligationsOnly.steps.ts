@@ -7,8 +7,7 @@
  *
  * The @integration arm drives the REAL parse→reconcile pipeline over a fixture corpus
  * (tests/fixtures/obligations-only/) whose ONLY fitness credit is one satisfied, CITATION-ROUTED
- * check: a stepless fitness scenario configures one row — SCN-DEM-001, characteristic
- * obligations-only — and its lint:obligations-only CI step carries that row's code as its own
+ * check: a stepless fitness scenario configures one row — SCN-DEM-001 — and its lint:obligations-only CI step carries that row's code as its own
  * `id:`, so the run cites that scenario's @SCN directly. Nothing else can mint a suspense row here,
  * so there is none and summary.outOfBalance is 0, agreeing with the balanced verdict. Under the
  * rejected post-to-suspense treatment this corpus mints a spurious out-of-balance suspense row (the
@@ -44,7 +43,7 @@ let obligationsOnlyLedger: EvidenceReconciliation;
 Given("a corpus whose only fitness credit is a citation-routed check, wired and green in CI", function () {
   // The obligations-only fixture: one STEPLESS fitness scenario (SCN-DEM-001) carrying the
   // `@fitness` tag; a package.json whose `specController.fitnessChecks` configures a row for it
-  // (characteristic obligations-only) and whose `scripts` define it; a ci.yml running it with that
+  // (the row names SCN-DEM-001) and whose `scripts` define it; a ci.yml running it with that
   // row's code as the step's own `id:`. The check exists and is enforced over the real source →
   // satisfied, and its run cites SCN-DEM-001. There is NO other credit shape, so nothing else can
   // put a row out of balance.
@@ -66,9 +65,9 @@ When("the obligations-only corpus is reconciled", function () {
 Then("the fitness scenario reconciles satisfied and the run is balanced", function () {
   const account = obligationsOnlyLedger.ledger.scenarioReconciliations.find((r) => r.scnId === "SCN-DEM-001");
   assert.ok(account, "expected a ledger account for SCN-DEM-001; got none");
-  const lint = account.qualityCheckReconciliations.find((r) => r.qualityCheck === "lint");
-  assert.ok(lint, `expected SCN-DEM-001 to carry a fitness reconciliation; got ${JSON.stringify(account.qualityCheckReconciliations)}`);
-  assert.equal(lint.outcome, "satisfied", `expected the citation-routed check to reconcile satisfied; got "${lint.outcome}"`);
+  const fitness = account.qualityCheckReconciliations.find((r) => r.qualityCheck === "fitness");
+  assert.ok(fitness, `expected SCN-DEM-001 to carry a fitness reconciliation; got ${JSON.stringify(account.qualityCheckReconciliations)}`);
+  assert.equal(fitness.outcome, "satisfied", `expected the citation-routed check to reconcile satisfied; got "${fitness.outcome}"`);
   assert.equal(account.verdict, "balanced", `expected SCN-DEM-001 balanced; got "${account.verdict}"`);
   assert.equal(isBalanced(obligationsOnlyLedger.ledger), true, "expected the whole run to be balanced");
 });

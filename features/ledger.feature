@@ -125,7 +125,7 @@ Feature: Ledger over obligation-vs-observation evidence
     @unit @integration @SCN-LDG-034
     Scenario: a phantom row's item carries the keys its credit has a value for and omits the rest
       Given a scenario "SCN-LDG-034" requiring unit-level evidence
-      And a passing lint credit citing the phantom scenario "SCN-PHANTOM-034" naming the check "lint:complexity"
+      And a passing fitness credit citing the phantom scenario "SCN-PHANTOM-034" naming the check "lint:complexity"
       When the reconciler runs
       Then the ledger reports "SCN-PHANTOM-034" as a phantom-scenario reconciliation with a cites-unknown-scenario item
       And the phantom-scenario "SCN-PHANTOM-034"'s item carries the check "lint:complexity" and no locator key
@@ -513,19 +513,18 @@ Feature: Ledger over obligation-vs-observation evidence
       And the run's verdict and reconciling items are unchanged — posting classifies nothing
 
     # POSTING SAYS WHERE A CREDIT LANDS; THIS SCENARIO IS THE SAME RULE READ AS AN OUTCOME. Two
-    # rows can honestly share one characteristic. The measured axis pinned that shape for its own
-    # credits until it retired (3F-3516); the static axis has never had it pinned: one
-    # credit, two rows raising the SAME check, the credit naming only one of them. The credit cites
-    # on this axis exactly as it does on every other, so it can discharge only the row it names —
-    # the other reads missing, not absorbed and not left both-satisfied by a match keyed on the
-    # check alone.
+    # rows once could honestly share one characteristic word, and a match keyed on the word would
+    # hand one credit to both. The word is retired (3F-3525) and the rows below still carry it, so
+    # the fixture is the shape it guards: one credit, two rows, the credit citing only one of them.
+    # The credit cites on this axis exactly as it does on every other, so it can discharge only the
+    # row it names — the other reads missing, not absorbed and not left both-satisfied.
     @unit @integration @SCN-LDG-035
     Scenario: a static-check credit discharges only the obligation on the row whose @SCN it cites
-      Given two fitness scenarios "SCN-AAA-001" and "SCN-AAA-002" both raising the check "complexity"
-      And a static-check credit citing only "SCN-AAA-001", naming the check "complexity"
+      Given two fitness scenarios "SCN-AAA-001" and "SCN-AAA-002" whose rows share the retired characteristic word "complexity"
+      And a fitness credit citing only "SCN-AAA-001"
       When the ledger reconciles that shared-check run
-      Then the row "SCN-AAA-001" reconciles satisfied on the check "complexity", holding the credit
-      And the row "SCN-AAA-002" reconciles missing on the check "complexity", holding no credit
+      Then the row "SCN-AAA-001" reconciles satisfied, holding the credit
+      And the row "SCN-AAA-002" reconciles missing, holding no credit
 
   # THE OBLIGATIONS-ONLY CORPUS (@SCN-LDG-025, 3F-1851) — the HEADLINE AGREEING WITH THE VERDICT
   # (3F-1703), isolated so nothing else can produce it. This corpus is what makes that agreement
@@ -620,7 +619,7 @@ Feature: Ledger over obligation-vs-observation evidence
       And it carries no evidence obligation (the debit side is absent)
       And the JSON projects that evidence observation on the reconciliation
 
-  # LINT MISSING IS OBLIGATION-ONLY (@SCN-LDG-028, 3F-2016 / corrects 3F-1995). An absent
+  # FITNESS MISSING IS OBLIGATION-ONLY (@SCN-LDG-028, 3F-2016 / corrects 3F-1995). An absent
   # static check is read as {exists:false} — an ABSENCE, not an observation. Canon (double-entry-manifesto
   # line 36): missing = Obligation Exists, Observation None. Only a REAL observation (exists:true →
   # satisfied/watermelon) is carried; the absent-guard record is not modelled as an observation.
@@ -631,7 +630,7 @@ Feature: Ledger over obligation-vs-observation evidence
     Scenario: a fitness missing quality-check reconciliation carries its obligation and no observation
       Given a scenario "SCN-LDG-028" requiring a fitness check absent from both package.json and CI
       When the ledger reconciles that run
-      Then its lint Quality Check Reconciliation has outcome "missing"
+      Then its fitness Quality Check Reconciliation has outcome "missing"
       And it carries the evidence obligation it reconciles (the debit side)
       And it carries no evidence observation — an absent guard's {exists:false} is an absence, not an observation
 

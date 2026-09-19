@@ -8,7 +8,6 @@
     "fitnessChecks": [
       {
         "scn": "SCN-DEM-001",
-        "characteristic": "obligations-only",
         "command": "pnpm lint:obligations-only"
       }
     ],

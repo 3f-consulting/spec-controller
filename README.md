@@ -52,20 +52,20 @@ Each `@`-tag on a scenario names one **evidence obligation** — naming one **qu
 
 `@fitness`
 
-A fitness check is a whole-system characteristic — complexity, mutation score, type soundness, vocabulary, suite run time — and it is **three things**: the axis tag, an `@SCN`, and a command. You write the command **once, into a config file**, not into your pipeline:
+A fitness check is a whole-system property — complexity, mutation score, type soundness, vocabulary, suite run time — and it is **three things**: the axis tag, an `@SCN`, and a command. You write the command **once, into a config file**, not into your pipeline:
 
 ```json
 "specController": {
   "fitnessChecks": [
-    { "scn": "SCN-FIT-001", "characteristic": "complexity", "command": "eslint" },
-    { "scn": "SCN-FIT-002", "characteristic": "mutation", "command": "gh run list --workflow mutation.yml" }
+    { "scn": "SCN-FIT-001", "command": "eslint" },
+    { "scn": "SCN-FIT-002", "command": "gh run list --workflow mutation.yml" }
   ]
 }
 ```
 
 Neither row carries a bar. The mutation bar is Stryker's own `thresholds.break`, and the row is answered by one push step that reads the newest nightly sweep's verdict: see [`doc/scheduled-checks.md`](./doc/scheduled-checks.md).
 
-**The characteristic is data, not a tag.** The tag says *how the claim is proved*; the field says *what it is about* — so the report still rolls up per characteristic, and a new characteristic is a new word in a row rather than a change to any list. **The row's shape says which kind of check it is**: a row with a bar is measured, a row without one is static. No type field, no second tag.
+**One `@fitness` scenario is one check.** The tag says *how the claim is proved*; the scenario's **title** says what the check is about, and its `@SCN` is its identity — so several checks are several scenarios, and nothing classifies them further: no word on a row, no roster, no roll-up. A row of yours that still carries the retired `characteristic` key is read the same way, and the report names the key.
 
 So a stepped scenario tagged `@unit @integration` names two obligations; a fitness scenario names one. Each tag asserts *"to prove this, evidence of this quality-check must exist and hold"* — for a behavioural test, that it exists and passes; for a fitness check, that its command ran, and that any number it produced is inside its bar.
 
@@ -94,7 +94,7 @@ So a stepped scenario tagged `@unit @integration` names two obligations; a fitne
 
 `spec-controller` reconciles those obligations against the evidence that actually ran, and catches the **watermelon**: a check that is green but enforces nothing.
 
-Converting checks you already have — with a worked before/after, and the traps: [`doc/converting-a-fitness-check.md`](./doc/converting-a-fitness-check.md).
+Converting checks you already have — with a worked before/after, and the traps: [`doc/adopting-fitness-checks.md`](./doc/adopting-fitness-checks.md).
 
 ## How this relates to coverage and mutation testing
 

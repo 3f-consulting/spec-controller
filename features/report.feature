@@ -103,8 +103,8 @@ Feature: The report renders the ledger as sectioned facts
     failing, and the watermelon watermelon —
     populating the out-of-balance column only, always shown (a zero cause is itself a fact).
     The missing row carries the bare-level split as its Detail (a runtime
-    evidence obligation by its bare level, a static one as "lint" — the label-=-tag lock),
-    canonical order (lint first), counting evidence obligations not scenarios. The scenario and
+    evidence obligation by its bare level, a static one as "fitness" — the label-=-tag lock),
+    canonical order (fitness first), counting evidence obligations not scenarios. The scenario and
     evidence-obligation out-of-balance counts diverge on purpose — SCN-PST-035's two missing
     arms are why 43 out-of-balance scenarios become 44 out-of-balance evidence obligations — and the
     table presents that as a granularity fact, the nested causes reconciling to the
@@ -130,24 +130,28 @@ Feature: The report renders the ledger as sectioned facts
 
   Rule: the markdown report surfaces the fitness evidence obligations as their own section
 
-    The by-kind view (@SCN-RPT-005; re-cut under Summary views with a total
-    line by the reformat; labelled by the @lint TAG, not the kind).
-    The lint (@lint) evidence obligations sit mixed in with runtime items in the
+    The by-quality-check view (@SCN-RPT-005; re-cut under Summary views with a total
+    line by the reformat; labelled by the quality check, fitness, never an internal kind).
+    The fitness evidence obligations sit mixed in with runtime items in the
     per-scenario ledger. This section lifts them out: under "## Summary views", a
-    "### Lint evidence obligations" section opens with a total line ("N of M lint
-    evidence obligations reconcile balanced.") then a table listing each kind === "static"
-    evidence obligation with its scenario, static check handle, and reconciliation outcome — so the lint
-    axis (incl. any 🍉 watermelon) reads on its own. The label is the tag word "lint" (the
-    internal kind "static" is never rendered). Omitted entirely (total line and
-    all) when no scenario raises a fitness evidence obligation. A pure derive over
-    balance.scenarios[].evidenceObligations[] filtered on kind === "static" —
+    "### Fitness evidence obligations" section opens with a total line ("N of M fitness
+    evidence obligations reconcile satisfied.") then a table listing each fitness evidence
+    obligation by its scenario and its reconciliation outcome — so the fitness axis (incl. any
+    🍉 watermelon) reads on its own. Omitted entirely (total line and all) when no scenario
+    raises a fitness evidence obligation. A pure derive over the ledger's fitness sub-rows —
     markdown-only (project design §3), proven in isolation by Vitest.
+
+    NO CHECK COLUMN (3F-3525). The table once printed a "Static check" column carrying the
+    characteristic the obligation was keyed by — what the check was ABOUT. One @fitness scenario
+    is one check and what it is about is its scenario's title, so no report rolls a check up by a
+    word (canon: fitness-functions.md, "A fitness check is its scenario"); the scenario's @SCN is
+    the whole identity the row needs.
 
     @unit @SCN-RPT-005
     Scenario: the markdown report lists the fitness evidence obligations as their own section
       Given a reconciliation balance whose scenarios raise fitness evidence obligations spanning balanced and the watermelon, alongside runtime evidence obligations
       When the markdown report is rendered
-      Then it carries a "### Lint evidence obligations" section with a total line and a table listing each fitness evidence obligation's scenario, its check, and reconciliation outcome — including the 🍉 watermelon — and excluding the runtime evidence obligations
+      Then it carries a "### Fitness evidence obligations" section with a total line and a table listing each fitness evidence obligation's scenario and reconciliation outcome — including the 🍉 watermelon — and excluding the runtime evidence obligations
 
   Rule: the markdown report groups out-of-balance scenarios by feature
 
@@ -244,7 +248,7 @@ Feature: The report renders the ledger as sectioned facts
     the INPUT in canon, so the reconciled OUTPUT is never titled "Ledger"), keeps
     "## Run provenance" first, then groups the derived cuts under "## Summary views"
     (### Run verdict → ### Evidence reconciliation → ### Test volume → ### Static checks →
-    ### Lint evidence obligations → ### Out-of-balance by feature), and moves the per-scenario
+    ### Fitness evidence obligations → ### Out-of-balance by feature), and moves the per-scenario
     "## Scenario Reconciliations" table to the END with its
     summary lines on top (the verdict tally and the relocated excluded-occurrence bullet),
     "## Warnings" last. So the digestible summary leads and the 500-row ledger trails, and
@@ -252,7 +256,7 @@ Feature: The report renders the ledger as sectioned facts
     over existing data — no new derivation, the JSON surface unchanged (markdown-only).
     The RPT-004/005/006/007 scenarios are updated in the same change. Every reconciling
     item is labelled by its TAG (the bare level for runtime — unit / integration / … —
-    and "lint" for the static kind), never the internal kind axis. Proven in
+    and "fitness" for the fitness axis), never the internal kind axis. Proven in
     isolation by Vitest (the markdown integration thread is already proven by RPT-001).
 
     @unit @SCN-RPT-009
@@ -292,9 +296,9 @@ Feature: The report renders the ledger as sectioned facts
 
     Per-scenario evidence columns (@SCN-RPT-011), consuming the evidence observation
     aggregate. The ledger row gains corpus-driven columns between Scenario and Verdict —
-    Lint first, then the runtime levels present in evidence obligation or evidence observation (Unit, Integration,
+    Fitness first, then the runtime levels present in evidence obligation or evidence observation (Unit, Integration,
     e2e, Performance; e2e/performance only when a run has them). Each cell is two-sided,
-    `<obligation>/<observation>`: the LEFT is the evidence obligation — a single quality-check letter (L, U, I,
+    `<obligation>/<observation>`: the LEFT is the evidence obligation — a single quality-check letter (F, U, I,
     E, P) iff the scenario obligated this check, else `-`; the RIGHT is the observation count — the
     multiplicity of posted credits at this check (backing present, pass OR fail), else `-`. So a
     named-and-met cell reads `letter/N`; a named-and-missing cell reads `letter/-`; a
@@ -302,9 +306,9 @@ Feature: The report renders the ledger as sectioned facts
     a doubly-empty cell (no evidence obligation, no credit) renders BLANK.
     The cell counts BACKING, not quality — a failing evidence obligation shows its
     count, its failing-ness staying in the Verdict + Reconciling-items columns.
-    The Lint cell reads the static evidence obligation outcomes (lint isn't a counted evidence observation):
+    The Fitness cell reads the fitness evidence obligation outcomes (a fitness credit isn't a counted evidence observation):
     its right side is the count of guards present (balanced or the watermelon — the script exists; its
-    inadequacy is the 🍉 in Reconciling-items); its left is the single `L` — one scenario is one
+    inadequacy is the 🍉 in Reconciling-items); its left is the single `F` — one scenario is one
     fitness check, so a row names at most one static check (3F-3411). No Cell/Meaning legend
     precedes the table — the grid speaks for itself. Markdown-only — the observation atoms are
     already on JSON. The "count is backing, not
@@ -329,7 +333,7 @@ Feature: The report renders the ledger as sectioned facts
     Scenario: the ledger row shows corpus-driven evidence columns with the two-sided cell encoding
       Given a reconciliation over a corpus spanning every cell case — a satisfied obligation, a missing one, a no-evidence-obligation observation citing a scenario that never named that quality-check, a pending obligation with observations citing it at that pair, and a column absent for the scenario
       When the ledger is rendered
-      Then each scenario row carries one cell per corpus column (Lint first, then the runtime levels present) with the two-sided obligation-then-observation encoding — an evidence-obligation letter, an observation count, or blank
+      Then each scenario row carries one cell per corpus column (Fitness first, then the runtime levels present) with the two-sided obligation-then-observation encoding — an evidence-obligation letter, an observation count, or blank
       And the scenario whose only state at a quality-check is no-evidence-obligation renders a no-evidence-obligation observation there — a dash for the evidence obligation, the count for the observation
       And the scenario whose obligation at a quality-check is pending, with observations citing it at that pair, renders a no-evidence-obligation observation there — because the credit is now no-evidence-obligation, not attributed
       And no cell-key legend precedes the ledger table — the grid speaks for itself
@@ -536,7 +540,7 @@ Feature: The report renders the ledger as sectioned facts
     reading the report in a CI log. So the markdown renders each outcome's full CANON
     DESCRIPTION in place of the handle, EVERYWHERE an outcome surfaces to a reader: the
     Evidence-reconciliation summary's "↳" decomposition rows (Subject cell), the per-scenario
-    reconciling-items list, and the lint-obligation table's Outcome column. "↳ missing"
+    reconciling-items list, and the fitness-obligation table's Outcome column. "↳ missing"
     becomes "↳ Evidence Observation is missing"; "unit ∅ missing" becomes "unit ∅ Evidence
     Observation is missing"; "🍉 watermelon" becomes "🍉 Evidence Observation is passing but
     fabricated". The handle is GONE from the markdown; the glyph is retained. The descriptions
@@ -681,7 +685,7 @@ Feature: The report renders the ledger as sectioned facts
     necessary rather than less. A fitness credit now cites its OWN fitness
     scenario's @SCN and posts to an ordinary scenario row — so to a naive walk it looks
     EXACTLY like a runtime credit, indistinguishable by the account it landed on. The fold
-    must therefore skip it on the CHECK (`qualityCheck === "lint"`), never on the absence of
+    must therefore skip it on the CHECK (`qualityCheck === "fitness"`), never on the absence of
     a citation. Under the retired name-match posting a fitness credit cited nothing at all,
     so a walk keyed on "does it cite?" would have got the right answer for the wrong reason;
     that reading is now simply wrong, and the static axis the census must not see at all
@@ -767,8 +771,8 @@ Feature: The report renders the ledger as sectioned facts
     them — so a report whose every configured fitness row was credited from that stream did
     not admit reading it. The stream is OPTIONAL by design, passed only where the file
     exists, so its absence from the block was genuinely ambiguous between "the run never got
-    it" and "the run got it and the block does not say so" — the two readings the fitness
-    characteristic exists to keep apart.
+    it" and "the run got it and the block does not say so" — the two readings the Inputs block
+    exists to keep apart.
 
     THE CANONICAL LIST GAINS THE STREAM AND NOTHING ELSE MOVES. It is appended after
     --package-json, so no line that was already rendered changes position; the presence

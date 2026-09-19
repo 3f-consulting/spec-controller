@@ -9,8 +9,8 @@ Feature: A pending evidence obligation raises a Pending Item
   Seam: parse/scenarios.ts derives EvidenceObligation[] from a scenario's tags. A
   `<qc>pending` tag over a RECOGNISED quality-check derives `{ qualityCheck: <qc>, pending: true }`
   — the obligation gains a `pending?: boolean` flag (absent = a normal obligation).
-  `@lintpending` derives `{ qualityCheck: "lint", pending: true }` with NO guard payload
-  (one-sided; the guard doesn't exist yet). The `pending` suffix is significant: a SEPARATE
+  `@fitnesspending` derives `{ qualityCheck: "fitness", pending: true }` with NO check payload
+  (one-sided; the check does not exist yet). The `pending` suffix is significant: a SEPARATE
   recognition from the bare tier tag, so `@integrationpending` is not `@integration`. We give
   special meaning ONLY to our recognised lexicon (the five `<qc>pending`); anything outside it
   — an unknown `<x>pending`, or bare `@pending` — is ignored silently, exactly like any
@@ -29,7 +29,7 @@ Feature: A pending evidence obligation raises a Pending Item
 
       Examples:
         | tag                 | quality-check |
-        | @lintpending        | lint          |
+        | @fitnesspending     | fitness       |
         | @unitpending        | unit          |
         | @integrationpending | integration   |
         | @e2epending         | e2e           |
@@ -63,7 +63,7 @@ Feature: A pending evidence obligation raises a Pending Item
 
       Examples:
         | quality-check |
-        | lint          |
+        | fitness       |
         | unit          |
         | integration   |
         | e2e           |

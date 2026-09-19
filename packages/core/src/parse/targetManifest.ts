@@ -100,15 +100,15 @@ export function resolveDeferralTags(
 
 /**
  * The TARGET's CONFIGURED FITNESS ROWS (@SCN-LNT-018) — `specController.fitnessChecks`, read as
- * `@SCN → the characteristic that scenario asserts` through the engine's own `fitnessChecksOf`.
+ * the set of `@SCN`s it declares as configured checks, through the engine's own `fitnessChecksOf`.
  *
- * THE DEBIT SIDE OF A CONVERTED CHECK. A converted scenario carries `@fitness` and nothing about
- * its subject, so the characteristic it owes comes from here — and from the row whose `scn` is that
- * scenario's own, which is what removes the registry hop an unconverted static check needs.
+ * THE DEBIT SIDE OF A CONVERTED CHECK. A converted scenario carries `@fitness` and its `@SCN`; the
+ * row naming that `@SCN` is what declares it a configured check, which is what removes the registry
+ * hop an unconverted static check needs.
  *
- * IT IS THE TARGET'S, for the reason the check registry and the ceilings are (@SCN-LNT-005): a
- * characteristic means what the target says it means, and a row resolved from this tool's own
- * manifest would put an obligation on a target's books under a word it never wrote.
+ * IT IS THE TARGET'S, for the reason the check registry and the ceilings are (@SCN-LNT-005): which
+ * checks a repository declares is a fact about that repository, and a row resolved from this tool's
+ * own manifest would put an obligation on a target's books it never wrote.
  *
  * The fifth of this family's `specController.*` resolvers, and defensive like the four above it: a
  * missing or wrongly-shaped config resolves EMPTY, and a malformed row is dropped by
@@ -226,16 +226,23 @@ export function resolveRunners(packageJson: {
 const RETIRED_SPEC_CONTROLLER_KEYS = ["checkRegistry", "staticChecks", "thresholds"] as const;
 
 /**
- * THE BAR A CONFIGURED ROW STILL CARRIES (@SCN-LNT-035) — the row-level keys this reader has
- * retired, append-only like the top-level set above. Nothing reads a row's bar since 3F-3510: a
- * row is credited by its own step's outcome, so a bar left on it holds the check to nothing. A
- * `mutationGate` is a value of `atLeast`, so the key it sits under is what names it.
+ * THE ROW-LEVEL KEYS THIS READER HAS RETIRED (@SCN-LNT-035, @SCN-LNT-039), append-only like the
+ * top-level set above.
+ *
+ * Nothing reads a row's BAR since 3F-3510: a row is credited by its own step's outcome, so a bar
+ * left on it holds the check to nothing. A `mutationGate` is a value of `atLeast`, so the key it
+ * sits under is what names it. Nothing reads a row's CHARACTERISTIC since 3F-3525: one `@fitness`
+ * scenario is one check, keyed by its own `@SCN`, so the word says nothing the ledger reads.
+ *
+ * THE READER GOES ON ACCEPTING THEM, which is the point of naming rather than dropping. A
+ * consumer's rows carry these keys today; a reader that dropped such a row would take their checks
+ * dark (expand/contract step 4, `publishing-npm-packages.md`).
  *
  * NAMED WITH ITS ROW, `fitnessChecks[<@SCN>].<key>`, because a row-level key alone says nothing a
- * consumer could find it by. A row stating no usable `@SCN` names no bar: the row reader drops it
- * whole, and there is no handle to name its bar by.
+ * consumer could find it by. A row stating no usable `@SCN` names none of them: the row reader
+ * drops it whole, and there is no handle to name its keys by.
  */
-const RETIRED_ROW_KEYS = ["atLeast", "atMost"] as const;
+const RETIRED_ROW_KEYS = ["atLeast", "atMost", "characteristic"] as const;
 
 function retiredRowKeysOf(rows: unknown): string[] {
   if (!Array.isArray(rows)) return [];

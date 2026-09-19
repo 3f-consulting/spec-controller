@@ -68,7 +68,7 @@ Given(
   "a scenario {string} with no evidence-obligation tags",
   function (scnId: string) {
     // A feature snippet whose ONLY tag is the @SCN id — no @unit/@integration/@e2e/
-    // @performance/@lint — so the REAL reader emits `evidenceObligations: []`, the
+    // @performance/@fitness — so the REAL reader emits `evidenceObligations: []`, the
     // zero-obligation case.
     const feature = [
       "@WRN",

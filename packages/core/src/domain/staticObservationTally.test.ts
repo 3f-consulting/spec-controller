@@ -57,15 +57,15 @@ describe("[SCN-USG-001] staticObservationTally folds the posted static-check cre
   // The obligation names the BARE check and the run names the RUNNABLE handle, so only the
   // citation can join them. Built through reconcile(), so every row is a shape the pipeline emits.
   const scenarios: Scenario[] = [
-    { scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "foo" }] },
-    { scnId: "SCN-C", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "water" }] },
-    { scnId: "SCN-D", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "absent" }] },
+    { scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "fitness" }] },
+    { scnId: "SCN-C", evidenceObligations: [{ qualityCheck: "fitness" }] },
+    { scnId: "SCN-D", evidenceObligations: [{ qualityCheck: "fitness" }] },
   ];
   const observations: EvidenceObservation[] = [
-    { qualityCheck: "lint", staticCheck: "lint:foo", checkTag: "foo", scnId: "SCN-A", exists: true, enforcedOverRealSource: true },
-    { qualityCheck: "lint", staticCheck: "lint:water", checkTag: "water", scnId: "SCN-C", exists: true, enforcedOverRealSource: false },
-    { qualityCheck: "lint", staticCheck: "lint:absent", checkTag: "absent", scnId: "SCN-D", exists: false, enforcedOverRealSource: false },
-    { qualityCheck: "lint", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
+    { qualityCheck: "fitness", staticCheck: "lint:foo", scnId: "SCN-A", exists: true, enforcedOverRealSource: true },
+    { qualityCheck: "fitness", staticCheck: "lint:water", scnId: "SCN-C", exists: true, enforcedOverRealSource: false },
+    { qualityCheck: "fitness", staticCheck: "lint:absent", scnId: "SCN-D", exists: false, enforcedOverRealSource: false },
+    { qualityCheck: "fitness", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
   ];
   const ledger: Ledger = reconcile(scenarios, observations);
   const tally = staticObservationTally(ledger);
@@ -77,7 +77,7 @@ describe("[SCN-USG-001] staticObservationTally folds the posted static-check cre
     expect(tally.runningStaticCheckCount).toBe(3);
   });
 
-  it("counts the lint credits on the SUSPENSE row as the uncited static checks", () => {
+  it("counts the fitness credits on the SUSPENSE row as the uncited static checks", () => {
     // lint:bar cites no scenario — the reconciler folded it to the suspense row (@SCN-LDG-007). It is
     // the only uncited static check; every cited check sits on the row its run names.
     expect(tally.uncitedStaticCheckCount).toBe(1);
@@ -161,7 +161,7 @@ describe("[SCN-USG-001] a static check no fitness scenario cites is banked on th
 
   // ONE stepless fitness scenario, raising its obligation against the BARE tag.
   const fitness: Scenario[] = [
-    { scnId: "SCN-TGT-001", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "foo" }] },
+    { scnId: "SCN-TGT-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
   ];
 
   // The seam's answer, injected: `lint:foo` resolves to the scenario carrying its check, `lint:bar`
@@ -169,11 +169,11 @@ describe("[SCN-USG-001] a static check no fitness scenario cites is banked on th
   // own subject (@SCN-LNT-001); what is under test here is what the posting rule and the tally do
   // with the answer once it is null.
   const citedScn = (script: string): ScriptCitation | null =>
-    script === "lint:foo" ? { checkTag: "foo", scnId: "SCN-TGT-001" } : null;
+    script === "lint:foo" ? { scnId: "SCN-TGT-001" } : null;
 
   // ONE observer, split by handle (3F-3458). The obligation-side reader that used to build the
   // citing half has been deleted, and it did not need replacing with a literal: the running-check
-  // observer emits the same `StaticCheckEvidenceObservation` shape, and this fixture's CI RUNS
+  // observer emits the same `FitnessEvidenceObservation` shape, and this fixture's CI RUNS
   // `pnpm lint:foo`, so the credit is still derived rather than seeded. Passing `citedScn` to the
   // one call is what stamps the citation on `lint:foo` and leaves every other handle uncited,
   // because the seam answers `null` for all of them.
@@ -188,16 +188,15 @@ describe("[SCN-USG-001] a static check no fitness scenario cites is banked on th
     // emitted the handle TWICE fails here rather than inflating a count downstream.
     expect(citedCredits).toEqual([
       {
-        qualityCheck: "lint",
+        qualityCheck: "fitness",
         staticCheck: "lint:foo",
-        checkTag: "foo",
         exists: true,
         enforcedOverRealSource: true,
         scnId: "SCN-TGT-001",
       },
     ]);
     expect(uncitedCredits).toEqual([
-      { qualityCheck: "lint", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "fitness", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
     ]);
   });
 
@@ -207,10 +206,9 @@ describe("[SCN-USG-001] a static check no fitness scenario cites is banked on th
     // have joined these two.
     expect(rowFor(ledger, "SCN-TGT-001")?.qualityCheckReconciliations).toEqual([
       {
-        qualityCheck: "lint",
-        staticCheck: "foo",
+        qualityCheck: "fitness",
         outcome: "satisfied",
-        evidenceObligation: { qualityCheck: "lint", staticCheck: "foo" },
+        evidenceObligation: { qualityCheck: "fitness" },
         evidenceObservation: citedCredits[0],
       },
     ]);
@@ -222,7 +220,7 @@ describe("[SCN-USG-001] a static check no fitness scenario cites is banked on th
     // where-to-fix.
     expect(rowFor(ledger, "(no scenario)")?.qualityCheckReconciliations).toEqual([
       {
-        qualityCheck: "lint",
+        qualityCheck: "fitness",
         staticCheck: "lint:bar",
         outcome: "cites-no-scenario",
         evidenceObservation: uncitedCredits[0],
@@ -320,7 +318,7 @@ describe("[SCN-USG-005] a cited static check under no convention of ours is attr
   // `citationOfScript`'s own subject (@SCN-LNT-001); what is under test here is what the posting
   // rule does with an opaque handle under no convention of ours once the answer is an `@SCN`.
   const citedScn = (script: string): ScriptCitation | null =>
-    script === "domain-purity" ? { checkTag: "domain-purity", scnId: "SCN-GRD-001" } : null;
+    script === "domain-purity" ? { scnId: "SCN-GRD-001" } : null;
 
   // THE CREDIT — derived by the RUNNING-CHECK observer, carrying the citation the seam resolved
   // (3F-3459). The obligation-side reader that used to build it has been deleted; this fixture's CI
@@ -334,15 +332,14 @@ describe("[SCN-USG-005] a cited static check under no convention of ours is attr
   const fitness: Scenario[] = [
     {
       scnId: "SCN-GRD-001",
-      evidenceObligations: [{ qualityCheck: "lint", staticCheck: "domain-purity" }],
+      evidenceObligations: [{ qualityCheck: "fitness" }],
     },
   ];
   const ledger: Ledger = reconcile(fitness, credits);
 
   const observation = {
-    qualityCheck: "lint",
+    qualityCheck: "fitness",
     staticCheck: "domain-purity",
-    checkTag: "domain-purity",
     exists: true,
     enforcedOverRealSource: true,
     scnId: "SCN-GRD-001",
@@ -362,10 +359,9 @@ describe("[SCN-USG-005] a cited static check under no convention of ours is attr
     // at the unit layer.
     expect(accountFor(ledger, "SCN-GRD-001")?.qualityCheckReconciliations).toEqual([
       {
-        qualityCheck: "lint",
-        staticCheck: "domain-purity",
+        qualityCheck: "fitness",
         outcome: "satisfied",
-        evidenceObligation: { qualityCheck: "lint", staticCheck: "domain-purity" },
+        evidenceObligation: { qualityCheck: "fitness" },
         evidenceObservation: observation,
       },
     ]);

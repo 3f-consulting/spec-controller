@@ -134,8 +134,8 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     findings, exit 1, over this repository's own corpus on the commit before that clause landed.
 
     THE TAG IS THE DISCRIMINATOR, NOT THE SHAPE (3F-3126), AND THE SHIPPED COMMAND INHERITS THAT
-    RATHER THAN RE-DECIDING IT. A fitness scenario is a whole-system characteristic held against a
-    threshold, and the bare check tag is the whole of that claim; whether the row was given steps
+    RATHER THAN RE-DECIDING IT. A fitness scenario is a whole-system property held against a
+    threshold, and its axis tag is the whole of that claim; whether the row was given steps
     says only how it was written. This preamble used to say the opposite — STEPLESS IS THE
     DISCRIMINATOR FOR THIS FLOOR, NOT THE TAG, on the reading that letting a STEPPED row ride a
     bare check tag would re-admit name-match's own fault in a shorter spelling. That reading is
@@ -154,11 +154,12 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     (3F-3126); the interim record that stood here — DELIBERATELY THE STRICTER OF THE TWO until then (3F-3115) — retires with it.
     There is no second assembly left to disagree.
 
-    REGISTERED, NOT INFERRED. Which bare tags name a check is the registry's answer, resolved
-    from the target's own manifest the way the deferral set is. Inferring it from shape instead
-    would admit any word at all on a scenario that looked fitness-shaped, and a typo would then
-    read as legitimate grammar while raising no obligation — precisely the silent slip this Rule
-    exists to close.
+    ONE WORD, NEITHER INFERRED NOR REGISTERED. The only word that names the fitness axis is the
+    model's axis tag, below. No registry and no set of check tags says which other words are
+    checks, because a check is its @fitness scenario, told apart from every other by its @SCN
+    (3F-3525). Inferring a check from shape instead would admit any word at all on a scenario that
+    looked fitness-shaped, and a typo would then read as legitimate grammar while raising no
+    obligation — precisely the silent slip this Rule exists to close.
 
     AND THE NEGATIVE HALF, WHERE THE HIERARCHY WOULD COME BACK — now the SHIPPED command's
     (3F-3304). A tag that spells its group into itself — fitness=complexity — resembles no tier, so
@@ -186,7 +187,7 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     shipped one has no carve-out to remember to remove.
 
     AND THE ONE SOURCE LEFT IS NEITHER OF THOSE (3F-3138). A CONVERTED check carries one word
-    for the whole axis — the fitness tag — and its CHARACTERISTIC moves to a configured row. So
+    for the whole axis — the fitness tag — and its configured row carries its @SCN and its command. So
     there is nothing for a registry to name and never will be: a converted check is not
     discovered as a runnable script handle at all — it is a scenario that ran, carrying its own
     tag line. The route a registry once read handles through is retired whole (3F-3395, the
@@ -195,9 +196,8 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     admitted ONCE, at the one place inside core that assembles the set, so no second reader can
     come to disagree about it the way the floor and the obligation rule did over steplessness.
 
-    THE AXIS WORD IS NOT THE TARGET'S TO GRANT. Which words name a CHECK is the target's answer —
-    complexity, typecheck, mutation — and which axis a scenario is ON is the model's, exactly as
-    `unit` is. A target that
+    THE AXIS WORD IS NOT THE TARGET'S TO GRANT. What a check is ABOUT is its scenario's title, the
+    target's to write, and which axis a scenario is ON is the model's, exactly as `unit` is. A target that
     has converted nothing does not get to spell the axis differently, for the reason nobody spells
     `@unit` differently, so the word is admitted whatever the manifest holds. It arrives as
     FITNESS_AXIS_TAG — the one spelling of it (@SCN-LNT-020's and the obligation rule's own) — and

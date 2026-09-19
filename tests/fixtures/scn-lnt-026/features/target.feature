@@ -3,14 +3,14 @@ Feature: a converted target's fitness corpus, whose four checks ended four diffe
 
   A FIXTURE feature standing in for ANOTHER repository, read cross-repo by spec-controller via
   --features. Each of its scenarios carries the bare fitness axis tag and its own @SCN, and a row
-  of that repository's specController.fitnessChecks names each of them with a characteristic and a
-  command. No characteristic tag appears anywhere in this file, and that repository configures no
-  check registry at all — so the only route from a scenario to a characteristic is its own row.
+  of that repository's specController.fitnessChecks names each of them with a
+  command. No word naming what a check is about appears anywhere in this file or on its rows (3F-3525), and
+  that repository configures no check registry at all — a scenario's own title says it.
 
   NO ROW CAN ASK FOR A SKIP, and no field remains with which to try (3F-3252), so the third step's
   skip is broken evidence by the only route there is.
 
-  THE FOUR ROWS ARE OTHERWISE IDENTICAL IN SHAPE — static, one characteristic apiece, one command
+  THE FOUR ROWS ARE OTHERWISE IDENTICAL IN SHAPE — static, one command
   apiece, one step apiece wired the same way — so anything the four are heard to say differently
   came from what the run's record says about their steps and from nowhere else.
 

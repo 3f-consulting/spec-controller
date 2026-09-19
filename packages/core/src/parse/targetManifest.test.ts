@@ -100,6 +100,33 @@ describe("[SCN-USG-023] resolveRetiredKeys — the third retired key, thresholds
   });
 });
 
+describe("[SCN-LNT-039] resolveRetiredKeys — a characteristic a configured row still carries, named with its row", () => {
+  it("names a row's characteristic with the @SCN the row states, and reads the row in every other respect", () => {
+    // THE READER DOES NOT STOP ACCEPTING IT (3F-3525, expand/contract step 4): a consumer's rows
+    // carry the word today, so the row is read as any row is and the key is NAMED, never dropped.
+    expect(
+      resolveRetiredKeys({
+        specController: {
+          fitnessChecks: [
+            { scn: "SCN-CVT-001", characteristic: "complexity", command: "eslint" },
+            { scn: "SCN-CVT-002", command: "stryker run" },
+          ],
+        },
+      })
+    ).toEqual(["fitnessChecks[SCN-CVT-001].characteristic"]);
+  });
+
+  it("names a row's characteristic beside its bars, in the order the row wrote them", () => {
+    expect(
+      resolveRetiredKeys({
+        specController: {
+          fitnessChecks: [{ scn: "@SCN-CVT-001", atMost: 100, characteristic: "complexity" }],
+        },
+      })
+    ).toEqual(["fitnessChecks[SCN-CVT-001].atMost", "fitnessChecks[SCN-CVT-001].characteristic"]);
+  });
+});
+
 describe("[SCN-LNT-035] resolveRetiredKeys — a bar a configured row still carries, named with its row", () => {
   it("names a row's atLeast and atMost with the @SCN the row states, and a row carrying no bar names nothing", () => {
     // A MUTATION GATE IS A VALUE OF atLeast, so the key it sits under is what names it — the
@@ -108,9 +135,9 @@ describe("[SCN-LNT-035] resolveRetiredKeys — a bar a configured row still carr
       resolveRetiredKeys({
         specController: {
           fitnessChecks: [
-            { scn: "SCN-CVT-001", characteristic: "complexity", command: "eslint", atMost: 10 },
-            { scn: "SCN-CVT-002", characteristic: "mutation", atLeast: { mutationGate: "domain" }, atMost: 100 },
-            { scn: "SCN-CVT-003", characteristic: "traceability", command: "scn-subissues" },
+            { scn: "SCN-CVT-001", command: "eslint", atMost: 10 },
+            { scn: "SCN-CVT-002", atLeast: { mutationGate: "domain" }, atMost: 100 },
+            { scn: "SCN-CVT-003", command: "scn-subissues" },
           ],
         },
       })
@@ -134,7 +161,7 @@ describe("[SCN-LNT-035] resolveRetiredKeys — a bar a configured row still carr
       resolveRetiredKeys({
         specController: {
           staticChecks: ["typecheck"],
-          fitnessChecks: [{ scn: "SCN-CVT-001", characteristic: "complexity", atLeast: 1 }],
+          fitnessChecks: [{ scn: "SCN-CVT-001", atLeast: 1 }],
           checkRegistry: { "lint:foo": "foo" },
         },
       })
@@ -146,7 +173,7 @@ describe("[SCN-LNT-035] resolveRetiredKeys — a bar a configured row still carr
     // bar with no row to name it by has no line a consumer could correct from.
     expect(
       resolveRetiredKeys({
-        specController: { fitnessChecks: [{ characteristic: "complexity", atMost: 10 }, { scn: "", atMost: 1 }, "atMost", null] },
+        specController: { fitnessChecks: [{ atMost: 10 }, { scn: "", atMost: 1 }, "atMost", null] },
       })
     ).toEqual([]);
     expect(resolveRetiredKeys({ specController: { fitnessChecks: { atMost: 10 } } })).toEqual([]);

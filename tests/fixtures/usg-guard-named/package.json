@@ -8,7 +8,6 @@
     "fitnessChecks": [
       {
         "scn": "SCN-TGD-001",
-        "characteristic": "domain-purity",
         "command": "pnpm domain-purity"
       }
     ],

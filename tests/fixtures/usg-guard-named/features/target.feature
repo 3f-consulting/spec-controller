@@ -5,7 +5,7 @@ Feature: a fixture target citing the check its CI runs, under no convention of o
   way its own team names them — domain-purity, carrying neither lint: nor guard: nor any other
   prefix this tool has ever recognised — and whose CI step carries the code of the row it
   answers. This target's own specController.fitnessChecks configures one row — SCN-TGD-001,
-  characteristic domain-purity — and the domain-purity step's `id:` states that row's code
+  for domain-purity's scenario — and the domain-purity step's `id:` states that row's code
   directly, so the running-check observer reads the citation off the step and the credit posts
   to SCN-TGD-001 rather than to suspense.
 

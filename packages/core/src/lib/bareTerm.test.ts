@@ -29,46 +29,43 @@ import { fitnessChecksOf } from "../domain/fitnessChecks.js";
 import { citationOfCitedRow } from "../parse/fitnessCitations.js";
 import { parseTaggedScenarios } from "../parse/scenarios.js";
 
-describe("[SCN-TRM-001] a configured row's scn and characteristic name the row the target authored", () => {
-  it("bares both terms of a row padded in front of their sigils", () => {
-    // Both terms, because neither is an address on its own. A padded `scn` posts the obligation to
-    // no row a corpus can find; a padded `characteristic` reports the row under a word the target
-    // never wrote.
+describe("[SCN-TRM-001] a configured row's scn names the row the target authored", () => {
+  it("bares a row's scn padded in front of its sigil", () => {
+    // A padded `scn` would post the obligation to no row a corpus can find. The row's retired
+    // `characteristic` is not read at all (3F-3570), so how it is spaced changes nothing.
     const index = fitnessChecksOf([{ scn: "  @SCN-MSD-001", characteristic: "  @complexity" }]);
-    expect(index.get("SCN-MSD-001")).toStrictEqual({ characteristic: "complexity" });
+    expect([...index]).toStrictEqual(["SCN-MSD-001"]);
   });
 
   it("bares a row spelled with a space between the sigil and the term", () => {
-    const index = fitnessChecksOf([{ scn: "@ SCN-MSD-001", characteristic: "@ complexity" }]);
-    expect(index.get("SCN-MSD-001")).toStrictEqual({ characteristic: "complexity" });
+    const index = fitnessChecksOf([{ scn: "@ SCN-MSD-001" }]);
+    expect([...index]).toStrictEqual(["SCN-MSD-001"]);
   });
 
   it("drops a row whose scn is nothing but whitespace and a sigil", () => {
     // Dropped as `fitnessCheckOf` already drops a row naming no scenario — not indexed under `"@"`,
     // a key no lookup asks for.
-    const index = fitnessChecksOf([{ scn: "  @  ", characteristic: "complexity" }]);
+    const index = fitnessChecksOf([{ scn: "  @  " }]);
     expect(index.size).toBe(0);
   });
 
-  it("keeps a doubled sigil and an interior @ exactly as the target spelled them", () => {
-    const index = fitnessChecksOf([{ scn: "  @@SCN-MSD-001", characteristic: "  cucumber@e2e  " }]);
-    expect(index.get("@SCN-MSD-001")).toStrictEqual({ characteristic: "cucumber@e2e" });
+  it("keeps a doubled sigil exactly as the target spelled it", () => {
+    const index = fitnessChecksOf([{ scn: "  @@SCN-MSD-001" }]);
+    expect([...index]).toStrictEqual(["@SCN-MSD-001"]);
   });
 });
 
 describe("[SCN-TRM-001] a check step's id: names the row the target authored", () => {
-  const fitnessChecks = fitnessChecksOf([{ scn: "SCN-MSD-001", characteristic: "complexity" }]);
+  const fitnessChecks = fitnessChecksOf([{ scn: "SCN-MSD-001" }]);
 
   it("bares a step's id: padded in front of its sigil", () => {
     expect(citationOfCitedRow("  @SCN-MSD-001", fitnessChecks)).toStrictEqual({
-      checkTag: "complexity",
       scnId: "SCN-MSD-001",
     });
   });
 
   it("bares a step's id: spelled with a space between the sigil and the term", () => {
     expect(citationOfCitedRow("@ SCN-MSD-001", fitnessChecks)).toStrictEqual({
-      checkTag: "complexity",
       scnId: "SCN-MSD-001",
     });
   });

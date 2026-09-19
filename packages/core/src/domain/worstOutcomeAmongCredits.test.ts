@@ -56,7 +56,7 @@ const ARMS: Record<"runtime" | "fitness", Arm> = {
       })),
   },
   fitness: {
-    obligation: { qualityCheck: "lint", staticCheck: CHECK },
+    obligation: { qualityCheck: "fitness" },
     credit: fc
       .record({
         staticCheck: fc.constantFrom("lint:a", "lint:b"),
@@ -67,9 +67,8 @@ const ARMS: Record<"runtime" | "fitness", Arm> = {
         broken: fc.constantFrom(undefined, true as const),
       })
       .map(({ staticCheck, exists, enforcedOverRealSource, status, locator, broken }) => ({
-        qualityCheck: "lint" as const,
+        qualityCheck: "fitness" as const,
         staticCheck,
-        checkTag: CHECK,
         scnId: SCN,
         exists,
         enforcedOverRealSource,
@@ -88,7 +87,7 @@ const ARMS: Record<"runtime" | "fitness", Arm> = {
  */
 function readsAlone(credit: EvidenceObservation): Outcome {
   if ("broken" in credit && credit.broken) return "missing";
-  if (credit.qualityCheck !== "lint") return credit.status === "passed" ? "satisfied" : "failing";
+  if (credit.qualityCheck !== "fitness") return credit.status === "passed" ? "satisfied" : "failing";
   if (credit.status === "failed") return "failing";
   if (credit.enforcedOverRealSource) return "satisfied";
   return credit.exists ? "watermelon" : "missing";
@@ -99,7 +98,7 @@ function itemOf(arm: Arm, credits: EvidenceObservation[]) {
   const rows: Scenario[] = [{ scnId: SCN, evidenceObligations: [arm.obligation] }];
   const row = reconcile(rows, credits).scenarioReconciliations.find((r) => r.scnId === SCN)!;
   return row.qualityCheckReconciliations.find(
-    (i) => i.qualityCheck === arm.obligation.qualityCheck && i.staticCheck === arm.obligation.staticCheck
+    (i) => i.qualityCheck === arm.obligation.qualityCheck
   )!;
 }
 

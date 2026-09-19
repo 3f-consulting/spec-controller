@@ -6,13 +6,13 @@
  * over one unchanged tree. The ledger used to keep that order: a row's posted credits followed
  * it, and so did the credit each reconciliation names, because the first matching credit is the
  * one it names. Two runs over the same books then wrote two different reports. The report now
- * reads evidence in an order the evidence itself fixes: quality check in tier order with lint
+ * reads evidence in an order the evidence itself fixes: quality check in tier order with fitness
  * last, then locator, then the scenario cited, then everything else the credit says.
  */
 import type { EvidenceObservation } from "./journal.js";
 import { RUNTIME_QUALITY_CHECKS } from "./ledger.js";
 
-const QUALITY_CHECK_ORDER: readonly string[] = [...RUNTIME_QUALITY_CHECKS, "lint"];
+const QUALITY_CHECK_ORDER: readonly string[] = [...RUNTIME_QUALITY_CHECKS, "fitness"];
 
 // The last part is every field the credit carries, keys sorted, so two credits with the same key
 // serialise to the same bytes and the order between them cannot show in the report.

@@ -22,7 +22,7 @@
  *
  * Bidirectional evidence: the describe carries its @SCN id, matching
  * features/fitness-reconciliation.feature and the @integration steps in
- * tests/steps/lintReconciliation.steps.ts.
+ * tests/steps/fitnessReconciliation.steps.ts.
  */
 
 import { describe, it, expect } from "vitest";
@@ -135,13 +135,13 @@ describe("[SCN-LNT-033] the static-check census counts a check whose red its job
     );
     expect(suspense.flatMap((row) => row.evidenceObservations)).toEqual([
       {
-        qualityCheck: "lint",
+        qualityCheck: "fitness",
         staticCheck: "lint:advisory",
         exists: true,
         enforcedOverRealSource: false,
       },
       {
-        qualityCheck: "lint",
+        qualityCheck: "fitness",
         staticCheck: "lint:enforced",
         exists: true,
         enforcedOverRealSource: true,

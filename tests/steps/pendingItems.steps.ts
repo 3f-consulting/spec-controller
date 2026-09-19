@@ -101,11 +101,11 @@ Then("it raises a pending {string} obligation", function (qualityCheck: string) 
       pendingAtCheck.length
     } (all obligations: ${JSON.stringify(obligations)})`
   );
-  // A pending obligation is one-sided: no guard payload (the guard doesn't exist yet).
-  assert.equal(
-    pendingAtCheck[0]!.staticCheck,
-    undefined,
-    `a pending obligation carries no guard payload; got guard="${pendingAtCheck[0]!.staticCheck}"`
+  // A pending obligation is one-sided: the whole of it is its quality check and the pending flag.
+  assert.deepEqual(
+    pendingAtCheck[0],
+    { qualityCheck, pending: true },
+    `a pending obligation carries no payload beyond its quality check; got ${JSON.stringify(pendingAtCheck[0])}`
   );
 });
 

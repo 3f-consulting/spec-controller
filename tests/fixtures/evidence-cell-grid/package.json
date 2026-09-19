@@ -6,7 +6,6 @@
     "fitnessChecks": [
       {
         "scn": "SCN-CEL-001",
-        "characteristic": "cell-grid",
         "command": "pnpm guard:cell-grid"
       }
     ],

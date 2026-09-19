@@ -115,7 +115,7 @@ const balanceFlags: FlagSpec[] = [
     name: "--package-json",
     arg: "<path>",
     description:
-      "The target's package.json — its `scripts`, and its specController.fitnessChecks rows: each names a scenario's @SCN, a characteristic, and the command that is the check.",
+      "The target's package.json — its `scripts`, and its specController.fitnessChecks rows: each names a scenario's @SCN and the command that is the check.",
   },
   {
     name: "--ci-steps",
@@ -212,7 +212,7 @@ const tagsFlags: FlagSpec[] = [
     name: "--package-json",
     arg: "<path>",
     description:
-      "The target's package.json — its specController block, from which the words that name a check and the tags that park a scenario are resolved (default ./package.json).",
+      "The target's package.json — its specController block, from which the configured fitness rows and the tags that park a scenario are resolved (default ./package.json).",
   },
   {
     name: "--help",

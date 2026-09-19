@@ -125,7 +125,7 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     Completing "the whole document as one report model" (@SCN-RMD-005;
     operator ruling 2026-07-02 — MATERIALISE). Slice 1 (RMD-001) materialised most of the
     document, but three printed numbers were still renderer arithmetic, not model data: the
-    Test-volume totals, the Static-check totals, and the Lint tally. This scenario materialises
+    Test-volume totals, the Static-check totals, and the fitness tally. This scenario materialises
     all three into report.summary so a JSON consumer reads them (slice 2 later reads rather than
     computes them, byte-identical). The test-volume identity line is a reconciliation fact (a
     balance check, Σ = Σ) that belongs in the model, not asserted by the renderer:
@@ -134,9 +134,10 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     The static-check census carries runningStaticCheckCount and uncitedStaticCheckCount; the
     named count is implicit, running − uncited, and the completeness invariant is
-    asserted inside the counter rather than on the surface. The Lint tally is the static-only
-    evidence obligation cut (satisfied of total) — summary.byOutcome is kind-agnostic and cannot
-    provide the static-only lint total, so it is materialised explicitly. HELD (slice 5): the
+    asserted inside the counter rather than on the surface. The fitness tally is the fitness-only
+    evidence obligation cut (satisfied of total), under summary.fitness — summary.byOutcome is
+    kind-agnostic and cannot provide the fitness-only total, so it is materialised explicitly. (It
+    was summary.lint until 3F-3525, when the quality check took canon's name.) HELD (slice 5): the
     evidence obligation outcome field is untouched. Markdown is not migrated here (slice 2) and stays
     byte-identical. The @unit arm proves buildSummary / assembleReport in isolation; the @integration
     arm drives the REAL CLI over a fixture spanning attributed / phantom evidence observation /
@@ -145,10 +146,10 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
     the file.
 
     @unit @integration @SCN-RMD-005
-    Scenario: the summary materialises the test-volume, static-check, and lint totals with the test-volume balance identity and the static-check shape holding on the persisted file
+    Scenario: the summary materialises the test-volume, static-check, and fitness totals with the test-volume balance identity and the static-check shape holding on the persisted file
       Given a reconciliation run whose evidence spans attributed, phantom-id, and cites-no-scenario evidence observations and whose CI runs a check no fitness scenario cites
       When the reconciliation run persists spec-reconciliation.json
-      Then the summary carries the test-volume totals, the static-check totals, and the fitness-obligation tally
+      Then the summary carries the test-volume totals, the static-check totals, and the fitness-obligation tally under summary.fitness
       And the test-volume identity Σ rawByRuntimeQualityCheck = onScenario + onPhantomScenario + onSuspenseScenario holds on the persisted summary
       And the persisted static-check summary carries runningStaticCheckCount and uncitedStaticCheckCount with named implicit
 
@@ -203,13 +204,15 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
 
     Slice 1 of "[spec-controller] Reconciliation model — bidirectional reconciling items".
     The (kind, level) two-axis evidence coordinate collapses to ONE flat quality-check ∈
-    {lint, unit, integration, e2e, performance}: @lint is one quality-check value, not a
+    {fitness, unit, integration, e2e, performance}: fitness is one quality-check value, not a
     second axis. So the JSON evidenceReconciliation[].qualityCheckReconciliations[] / reconcilingItems[] sub-row
     was { kind, level, outcome } (runtime) / { kind, guard, outcome } (static); it becomes
-    { qualityCheck, outcome } (runtime) / { qualityCheck: "lint", guard, outcome } (static),
+    { qualityCheck, outcome } (runtime) / { qualityCheck: "fitness", staticCheck, outcome } (fitness),
     and the summary's missing split is renamed to missingByQualityCheck
     (same { subject, count } values, keyed by the flat quality-check). Kind / Level retire; the
-    two reconcile functions merge on the == lint watermelon discriminator. The markdown surface
+    two reconcile functions merge on the == fitness watermelon discriminator. The value was
+    spelled "lint" until 3F-3525: canon names the quality check fitness, and lint is a rejected
+    alias (double-entry-manifesto, Quality Check). The markdown surface
     stays byte-identical (the renderer already labels each item by its tag word, which IS the
     quality-check value), so the @SCN-RMD-007 round-trip still holds. HELD (slice 2):
     the outcome VALUES; (slice 4): the interim container terms (EvidenceReconciliation, trial balance).
@@ -223,17 +226,18 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
       Given a reconciliation whose scenarios raise runtime and fitness evidence obligations
       When the report is serialised to spec-reconciliation.json
       Then each evidence sub-row is keyed by one quality-check field with no kind or level
-      And a lint sub-row carries its quality-check "lint" alongside its check
+      And a fitness sub-row carries its quality-check "fitness" and names no characteristic
       And the summary's missing split is carried under missingByQualityCheck keyed by quality-check
 
   Rule: a row reads its evidence in one order, whatever order the runner reported it in
 
     A runner decides the order its report lists files in, and vitest's changes between two runs
     over one unchanged tree (3F-3495). The ledger kept that order, so a row's posted credits moved,
-    and so did the credit a reconciliation names, which is the first one that matches. The books
-    now read the evidence in an order the evidence itself fixes: quality check in tier order with
-    lint last, then location, then the scenario cited, then everything else the credit says. The
-    report is then a function of what was observed, never of the order it arrived in.
+    and so did the credit a reconciliation names — the first FAILED credit in evidence order, or,
+    where none failed, the first. The books now read the evidence in an order the evidence itself
+    fixes: quality check in tier order with fitness last, then location, then the scenario cited,
+    then everything else the credit says. The report is then a function of what was observed,
+    never of the order it arrived in.
 
     @unit @integration @SCN-RMD-009
     Scenario: two runs whose runner listed its files in different orders write the same report, each row's evidence in quality-check order then by location

@@ -219,7 +219,7 @@ jobs:
       # command did, written by the provider for its own purposes. So the fitness axis reads that
       # record instead of manufacturing a second one — which is what the cucumber fitness pass was,
       # and why it is deleted. What a consumer writes is an `id:` per check step and one dump step;
-      # `doc/converting-a-fitness-check.md` is the whole of it.
+      # `doc/adopting-fitness-checks.md` is the whole of it.
       #
       # THE `id:` IS THE `@SCN` ITSELF, AND IT CITES THE ROW RATHER THAN RESTATING IT. The
       # obligation stays in the `@fitness` scenario, the command stays in the row of

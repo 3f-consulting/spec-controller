@@ -120,7 +120,6 @@ In `package.json`, under `specController.fitnessChecks`:
 ```json
       {
         "scn": "SCN-FIT-002",
-        "characteristic": "mutation",
         "command": "gh run list --workflow mutation.yml"
       }
 ```

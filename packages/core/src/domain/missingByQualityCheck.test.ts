@@ -28,9 +28,9 @@
  * missingByQualityCheck keyed by quality-check"* — this field, by name. A missing e2e obligation
  * dropped from the split is that line being false, so presence is squarely the scenario's claim.
  * The SEQUENCE is the incremental part, and it is already this @SCN's: the pre-existing arm in
- * `renderInput.test.ts` asserts `toEqual([{lint,1},{unit,1}])` under the comment *"lint first (the
+ * `renderInput.test.ts` asserts `toEqual([{fitness,1},{unit,1}])` under the comment *"fitness first (the
  * canonical quality-check order)"*. This widens that same claim from two positions to five rather
- * than opening a new one. (`@SCN-RPT-004`'s Rule prose also says "canonical order (lint first)",
+ * than opening a new one. (`@SCN-RPT-004`'s Rule prose also says "canonical order (fitness first)",
  * but about the MARKDOWN Detail cell — one layer downstream of this constant, and reached through
  * a rendered string. The ledger-level pin belongs at the ledger.)
  *
@@ -47,24 +47,25 @@
 
 import { describe, it, expect } from "vitest";
 import { parseScenarios } from "../parse/scenarios.js";
+import { fitnessChecksOf } from "./fitnessChecks.js";
 import { reconcile } from "./evidenceReconciliation.js";
 import { ledgerTally } from "./ledger.js";
 
 describe("[SCN-RMD-008] the missing split carries every quality-check in canonical order", () => {
-  // ONE stepless scenario spanning all four runtime quality-checks. The registered bare check tag
-  // raises the fitness obligation naming `x` (@SCN-LNT-006), and each tier tag raises its own
+  // ONE stepless scenario spanning all four runtime quality-checks. `@fitness` and the configured
+  // row naming it raise the fitness obligation (@SCN-LNT-018), and each tier tag raises its own
   // runtime obligation, so the corpus raises five. `reconcile` is handed NO Evidence Observations,
   // so every one of the five reconciles `missing` — the outcome the split is built from.
   const feature = [
     "@RMD",
     "Feature: fixture",
     "  Rule: a fixture rule",
-    "    @unit @integration @e2e @performance @x @SCN-RMD-008",
+    "    @unit @integration @e2e @performance @fitness @SCN-RMD-008",
     "    Scenario: a fixture scenario",
   ].join("\n");
 
-  it("names lint, unit, integration, e2e and performance, in that order", () => {
-    const tally = ledgerTally(reconcile(parseScenarios(feature, [], ["x"]), []));
+  it("names fitness, unit, integration, e2e and performance, in that order", () => {
+    const tally = ledgerTally(reconcile(parseScenarios(feature, [], fitnessChecksOf([{ scn: "SCN-RMD-008" }])), []));
 
     // Five raised, five missing — so no quality-check is absent from the split because it had
     // nothing to report. Whatever the split omits, it omits while holding a missing obligation.
@@ -72,7 +73,7 @@ describe("[SCN-RMD-008] the missing split carries every quality-check in canonic
     expect(tally.evidenceObligations.byOutcome.missing).toBe(5);
 
     expect(tally.evidenceObligations.missingByQualityCheck).toEqual([
-      { subject: "lint", count: 1 },
+      { subject: "fitness", count: 1 },
       { subject: "unit", count: 1 },
       { subject: "integration", count: 1 },
       { subject: "e2e", count: 1 },

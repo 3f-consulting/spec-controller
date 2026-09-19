@@ -722,7 +722,7 @@ After({ tags: "@SCN-RPT-018" }, function () {
 // The ledger cell's four-way encoding, driven through the REAL reconcile + render over a fixture
 // target spanning EVERY cell case (the class @SCN-RPT-017 / @SCN-RPT-018 established: a cell bug
 // is only caught by the real pipeline, never by a hand-built balance). The fixture corpus
-// (tests/fixtures/evidence-cell-grid) carries: SCN-CEL-001 named+met at unit and lint;
+// (tests/fixtures/evidence-cell-grid) carries: SCN-CEL-001 named+met at unit and fitness;
 // SCN-CEL-002 named+missing at integration (and absent at the other columns); SCN-CEL-003
 // @e2e-only, cited by a VITEST unit observation — the NO-EVIDENCE-OBLIGATION credit-side row (@SCN-LDG-008),
 // kept OUT of `attributed` by the census, so its Unit cell must read (1), NOT ∅ (the SCN-CLI-054
@@ -747,14 +747,14 @@ let md011: string;
  * lists SCN-CEL-001 too, and it renders BEFORE the ledger).
  */
 function cellGridRow(scnId: string): string {
-  const ledger = md011.slice(md011.indexOf("| Scenario | Lint |"));
+  const ledger = md011.slice(md011.indexOf("| Scenario | Fitness |"));
   const row = ledger.split("\n").find((l) => l.startsWith(`| ${scnId} |`));
   assert.ok(row, `expected a ledger row for ${scnId}; got:\n${md011}`);
   return row!;
 }
 
 /**
- * The four EVIDENCE cells of a ledger row (Lint, Unit, Integration, E2e) — the row's cells
+ * The four EVIDENCE cells of a ledger row (Fitness, Unit, Integration, E2e) — the row's cells
  * between the scenario id and the Verdict. Compared as an array so a failure diffs the cells
  * themselves (`∅` vs `(1)`), not a bare true/false.
  */
@@ -762,7 +762,7 @@ function cellGridCells(scnId: string): string[] {
   const parts = cellGridRow(scnId)
     .split("|")
     .map((c) => c.trim());
-  // parts: ["", scnId, Lint, Unit, Integration, E2e, Verdict, Reconciling items, ""]
+  // parts: ["", scnId, Fitness, Unit, Integration, E2e, Verdict, Reconciling items, ""]
   return parts.slice(2, 6);
 }
 
@@ -786,19 +786,19 @@ When("the ledger is rendered", function () {
 });
 
 Then(
-  /^each scenario row carries one cell per corpus column \(Lint first, then the runtime levels present\) with the two-sided obligation-then-observation encoding — an evidence-obligation letter, an observation count, or blank$/,
+  /^each scenario row carries one cell per corpus column \(Fitness first, then the runtime levels present\) with the two-sided obligation-then-observation encoding — an evidence-obligation letter, an observation count, or blank$/,
   function () {
-    // The corpus NAMES lint + unit + integration + e2e (never performance), so the header is
-    // Lint first, then the runtime levels present in canonical order — no Performance column.
+    // The corpus NAMES fitness + unit + integration + e2e (never performance), so the header is
+    // Fitness first, then the runtime levels present in canonical order — no Performance column.
     assert.ok(
-      md011.includes("| Scenario | Lint | Unit | Integration | E2e | Verdict | Reconciling items |"),
-      `expected the corpus-driven header (Lint, Unit, Integration, E2e); got:\n${md011}`
+      md011.includes("| Scenario | Fitness | Unit | Integration | E2e | Verdict | Reconciling items |"),
+      `expected the corpus-driven header (Fitness, Unit, Integration, E2e); got:\n${md011}`
     );
-    // named & met → letter/count (SCN-CEL-001: one lint guard present, one unit observation).
+    // named & met → letter/count (SCN-CEL-001: one fitness check present, one unit observation).
     assert.deepStrictEqual(
       cellGridCells("SCN-CEL-001"),
-      ["L/1", "U/1", "", ""],
-      "expected SCN-CEL-001 (named and met at lint + unit) to render Lint L/1, Unit U/1, then blank"
+      ["F/1", "U/1", "", ""],
+      "expected SCN-CEL-001 (named and met at fitness + unit) to render Fitness F/1, Unit U/1, then blank"
     );
     // named & missing → letter/-; the columns it neither names nor is cited at → blank.
     assert.deepStrictEqual(
@@ -840,7 +840,7 @@ Then(
 
 Then("no cell-key legend precedes the ledger table — the grid speaks for itself", function () {
   const iKey = md011.indexOf("| Cell | Meaning |");
-  const iTable = md011.indexOf("| Scenario | Lint |");
+  const iTable = md011.indexOf("| Scenario | Fitness |");
   assert.ok(iKey < 0, `expected NO cell key legend in the persisted report; got:\n${md011}`);
   assert.ok(iTable >= 0, `expected the ledger grid table in the persisted report; got:\n${md011}`);
 });

@@ -69,19 +69,19 @@ export type { TaggedScenario } from "./parse/scenarios.js";
 // not public — the `.` barrel carries the v1 contract and this is not one.
 export { FITNESS_AXIS_TAG } from "./parse/scenarios.js";
 
-// `isStaticCheckObservation` — the predicate every in-repo reader that wants a static check's OWN
-// fields — its runnable handle, its `exists`, its `enforcedOverRealSource` — asks. The measured
+// `isFitnessObservation` — the predicate every in-repo reader that wants a fitness credit's OWN
+// fields — the check that ran, its `exists`, its `enforcedOverRealSource` — asks. The measured
 // member it once told apart from left with the measured axis (3F-3516); it stays shared because a
 // caller re-spelling the test inline would be free to spell it differently. Internal, not public.
-export { isStaticCheckObservation } from "./domain/journal.js";
-export type { FitnessEvidenceObservation } from "./domain/journal.js";
+// The type it narrows to is `FitnessEvidenceObservation`, on the `.` barrel (3F-3565).
+export { isFitnessObservation } from "./domain/journal.js";
 
 // `ciRunSteps` / `CiRunStep` — the CI walk `ciRunCommands` projects, carrying each `run:` step's
 // `id:` and whether its red would abort the job. Shared so that no caller opens a second YAML walk
 // to see `continue-on-error`: that key is on the same step mapping this walk already visits, and a
 // second reader would be free to disagree with the first about which steps a workflow even runs —
 // which is the silent disagreement the one-place rule exists to prevent (3F-3042). Its consumer
-// OUTSIDE the engine is `tests/steps/lintReconciliation.steps.ts`, at twelve call sites, one of
+// OUTSIDE the engine is `tests/steps/fitnessReconciliation.steps.ts`, at twelve call sites, one of
 // which reads `abortsJob`; `runningStaticChecks` reads the same walk in-engine for the `id:`
 // (3F-3261). The local-ladder derivation was the other outside consumer until 3F-3475. Internal, not
 // public — `ciRunCommands` remains
@@ -104,7 +104,7 @@ export type { CiWorkflowStep, CiStepAction } from "./parse/checkScriptsRunInCI.j
 // The `resolve*` family — a target's `specController.*` configuration read into the rows and
 // mints the reconciler takes (`parse/targetManifest`). Shared because they moved INTO the
 // engine and the tree's own gates still read a target's config through them: the corpus check
-// (@SCN-STG-005) and the characteristic roster resolve the same rows and mints the
+// (@SCN-STG-005) resolves the same rows and mints the
 // reconciler does, and a second reader deciding independently which words a manifest names would
 // admit a tag the engine raises nothing for. They sat at the app's ingest edge until 3F-3087,
 // where they were the reason a PUBLISHED module imported this unpublished subpath — the fault

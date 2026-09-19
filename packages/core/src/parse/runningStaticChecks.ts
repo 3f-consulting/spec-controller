@@ -1,9 +1,9 @@
 /**
- * The running-check observer — emit a `StaticCheckEvidenceObservation` for EVERY static check CI runs,
+ * The running-check observer — emit a `FitnessEvidenceObservation` for EVERY static check CI runs,
  * not just the obliged ones. This is the static analogue of the runner emitting every test result:
  * CI publishes no static check manifest, so the running set is DERIVED from the target's own
  * pipeline (@SCN-USG-001). It completes the static stream so the one reconcile engine sees every
- * running static check (a named one matches its `@lint` obligation; a no-evidence-obligation one
+ * running static check (a named one matches its `fitness` obligation; a no-evidence-obligation one
  * folds to the suspense row) — no derive-and-diff patch.
  *
  * WHAT A CANDIDATE IS, AND IT IS SAID BY SUBTRACTION (@SCN-USG-004, 3F-3343). A step of the
@@ -40,7 +40,7 @@
  * `enforcedOverRealSource` is READ, not assumed (@SCN-LNT-032): a step whose red its job survives
  * runs, reds and leaves the pipeline green, so being invoked is not being enforced. The named
  * static checks' OTHER watermelon detail — a static check that does not run at all — is the OTHER
- * observer's job. `qualityCheck: "lint"` is the static-check AXIS name, and never a convention.
+ * observer's job. `qualityCheck: "fitness"` is the static-check AXIS name, and never a convention.
  *
  * AND A STEP THIS READER IS NOT LOOKING AT IS NOT READ AT ALL (@SCN-USG-015, @SCN-USG-014). Two
  * different facts take a step out of discovery — the consumer named it a non-check, or it is the
@@ -55,7 +55,7 @@
  * @SCN-USG-014 (the reconciler's own steps).
  */
 
-import type { StaticCheckEvidenceObservation } from "../model.js";
+import type { FitnessEvidenceObservation } from "../model.js";
 import { commandRuns } from "./commandRuns.js";
 import {
   ciWorkflowSteps,
@@ -242,7 +242,7 @@ export function runningStaticChecks(
   // Trailing and optional: a target that names no non-checks observes exactly what it observed
   // before, byte for byte.
   isExcludedFromDiscovery: (step: CiWorkflowStep) => boolean = () => false
-): StaticCheckEvidenceObservation[] {
+): FitnessEvidenceObservation[] {
   const scripts = packageJson.scripts ?? {};
   // THE STEPS, NOT THEIR COMMANDS, AND THE WHOLE-PIPELINE WALK RATHER THAN ITS `run:` PROJECTION.
   // `ciRunSteps` is that projection and was what this reader took until @SCN-USG-015; the wider
@@ -279,7 +279,7 @@ export function runningStaticChecks(
       // configured row, and that row is where the check tag a CI step cannot state comes from.
       const citation = citedScn(staticCheck, step.id);
       return {
-        qualityCheck: "lint" as const,
+        qualityCheck: "fitness" as const,
         staticCheck,
         exists: true,
         // WHETHER THE JOB'S VERDICT DEPENDS ON THIS STEP (@SCN-LNT-032), read off the step that
@@ -291,12 +291,12 @@ export function runningStaticChecks(
         // Spread rather than two `?? undefined` assignments, so an observation that cites nothing
         // carries neither key and its JSON stays byte-identical. Both terms or neither — a
         // half-citation would be a shape no reader knows how to read, and the bare check tag is
-        // the term a CI step CANNOT state: `id:` names the row, never the characteristic the
+        // the row a CI step states by its `id:` — the one citation term (3F-3525), read off the
         // ledger reconciles on. So a step's `id:` refines which row a citation posts to; it does
         // not manufacture a citation where the seam reached no check tag at all — that target has
         // registered nothing, which is `new-client`, and its observations belong in suspense.
         ...(citation !== null
-          ? { scnId: step.id ?? citation.scnId, checkTag: citation.checkTag }
+          ? { scnId: step.id ?? citation.scnId }
           : {}),
       };
     })

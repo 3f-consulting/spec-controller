@@ -9,7 +9,6 @@
     "fitnessChecks": [
       {
         "scn": "SCN-CVT-001",
-        "characteristic": "complexity",
         "command": "eslint"
       }
     ]

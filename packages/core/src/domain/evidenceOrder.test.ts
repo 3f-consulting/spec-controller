@@ -21,7 +21,7 @@ const scenarios: Scenario[] = [
       { qualityCheck: "integration" },
       { qualityCheck: "e2e" },
       { qualityCheck: "performance" },
-      { qualityCheck: "lint", staticCheck: "tidy" },
+      { qualityCheck: "fitness" },
     ],
   },
 ];
@@ -31,10 +31,9 @@ const unitA: EvidenceObservation = { qualityCheck: "unit", scnId: SCN, status: "
 const integration: EvidenceObservation = { qualityCheck: "integration", scnId: SCN, status: "passed", locator: "f.feature" };
 const e2e: EvidenceObservation = { qualityCheck: "e2e", scnId: SCN, status: "passed", locator: "b.feature" };
 const performance: EvidenceObservation = { qualityCheck: "performance", scnId: SCN, status: "passed", locator: "a.feature" };
-const lint: EvidenceObservation = {
-  qualityCheck: "lint",
+const fitness: EvidenceObservation = {
+  qualityCheck: "fitness",
   staticCheck: "tidy",
-  checkTag: "tidy",
   scnId: SCN,
   exists: true,
   enforcedOverRealSource: true,
@@ -55,19 +54,19 @@ const coordinates = (observations: readonly EvidenceObservation[]) =>
 
 describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order the runner reported it in", () => {
   it("reconciles every arrival order of one evidence set to the same ledger", () => {
-    const evidence = [lint, integration, unitZ, e2e, unitA, performance];
+    const evidence = [fitness, integration, unitZ, e2e, unitA, performance];
     const ledgers = new Set(permutations(evidence).map((order) => JSON.stringify(reconcile(scenarios, order))));
     expect(ledgers.size).toBe(1);
   });
 
-  it("reads a row's credits by quality check in tier order, lint last, then by location", () => {
-    expect(coordinates(rowOf([lint, performance, e2e, integration, unitZ, unitA]).evidenceObservations)).toEqual([
+  it("reads a row's credits by quality check in tier order, fitness last, then by location", () => {
+    expect(coordinates(rowOf([fitness, performance, e2e, integration, unitZ, unitA]).evidenceObservations)).toEqual([
       ["unit", "a.test.ts"],
       ["unit", "z.test.ts"],
       ["integration", "f.feature"],
       ["e2e", "b.feature"],
       ["performance", "a.feature"],
-      ["lint", null],
+      ["fitness", null],
     ]);
   });
 
@@ -124,8 +123,8 @@ describe("[SCN-RMD-009] a row reads its evidence in one order, whatever order th
   });
 
   it("leaves the caller's evidence in the order the caller gave it", () => {
-    const evidence = [unitZ, lint, unitA];
+    const evidence = [unitZ, fitness, unitA];
     reconcile(scenarios, evidence);
-    expect(evidence).toEqual([unitZ, lint, unitA]);
+    expect(evidence).toEqual([unitZ, fitness, unitA]);
   });
 });

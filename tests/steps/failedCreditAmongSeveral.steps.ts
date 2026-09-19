@@ -147,15 +147,13 @@ Then("the scenario and the run are both out of balance", function () {
 // ---------------------------------------------------------------------------
 
 const FITNESS_SCN = "SCN-CVT-036";
-const CHECK = "complexity";
 let fitnessScenarios: Scenario[];
 let fitnessCredits: EvidenceObservation[];
 let fitnessLedger: Ledger;
 
 const staticCredit = (staticCheck: string, status: "passed" | "failed"): EvidenceObservation => ({
-  qualityCheck: "lint",
+  qualityCheck: "fitness",
   staticCheck,
-  checkTag: CHECK,
   scnId: FITNESS_SCN,
   exists: true,
   enforcedOverRealSource: true,
@@ -166,7 +164,7 @@ const staticCredit = (staticCheck: string, status: "passed" | "failed"): Evidenc
 Given(
   "a scenario naming one fitness check, and two credits for that check citing it, the one read first passing and the other failed",
   function () {
-    fitnessScenarios = [{ scnId: FITNESS_SCN, evidenceObligations: [{ qualityCheck: "lint", staticCheck: CHECK }] }];
+    fitnessScenarios = [{ scnId: FITNESS_SCN, evidenceObligations: [{ qualityCheck: "fitness" }] }];
     // Handed over failed-first: the books re-read them in evidence order, where `lint:a` leads.
     fitnessCredits = [staticCredit("lint:b", "failed"), staticCredit("lint:a", "passed")];
   }
@@ -186,13 +184,13 @@ Then(
     // THE GIVEN, HELD: the passing credit is the one the books read first, so a first-match reading
     // would have taken it.
     assert.deepEqual(
-      row.evidenceObservations.map((o) => [o.qualityCheck === "lint" ? o.staticCheck : o.locator, o.status]),
+      row.evidenceObservations.map((o) => [o.qualityCheck === "fitness" ? o.staticCheck : o.locator, o.status]),
       [["lint:a", "passed"], ["lint:b", "failed"]]
     );
-    const item = row.qualityCheckReconciliations.find((q) => q.staticCheck === CHECK);
+    const item = row.qualityCheckReconciliations.find((q) => q.qualityCheck === "fitness");
     const carried = item?.evidenceObservation;
     assert.deepEqual(
-      [item?.outcome, carried?.qualityCheck === "lint" ? carried.staticCheck : undefined, carried?.status],
+      [item?.outcome, carried?.qualityCheck === "fitness" ? carried.staticCheck : undefined, carried?.status],
       ["failing", "lint:b", "failed"]
     );
     assert.equal(row.verdict, "out-of-balance");
@@ -206,11 +204,10 @@ Then(
 // through the published engine.
 // ---------------------------------------------------------------------------
 
-/** A run of `CHECK` citing `FITNESS_SCN` that carries no verdict; only its wiring and file vary. */
+/** A run of the check citing `FITNESS_SCN` that carries no verdict; only its wiring and file vary. */
 const runOf = (enforcedOverRealSource: boolean, locator: string): EvidenceObservation => ({
-  qualityCheck: "lint",
+  qualityCheck: "fitness",
   staticCheck: "lint:alpha",
-  checkTag: CHECK,
   scnId: FITNESS_SCN,
   exists: true,
   enforcedOverRealSource,
@@ -225,7 +222,7 @@ let fitnessLedgers: Ledger[] = [];
 Given(
   "a scenario naming one fitness check, and two credits for that check citing it, one wired and one severed, and the same two with their locators swapped so each sorts first",
   function () {
-    fitnessScenarios = [{ scnId: FITNESS_SCN, evidenceObligations: [{ qualityCheck: "lint", staticCheck: CHECK }] }];
+    fitnessScenarios = [{ scnId: FITNESS_SCN, evidenceObligations: [{ qualityCheck: "fitness" }] }];
     // The measured false green is the first pair: the wired run's file sorts ahead of the severed one's.
     fitnessPairs = [
       { credits: [runOf(true, "a.feature"), runOf(false, "z.feature")], named: runOf(false, "z.feature") },
@@ -244,7 +241,7 @@ When("the published engine reconciles each pair", function () {
 Given(
   "a scenario naming one fitness check, and two credits for that check citing it, one wired and failed and one severed, and the same two with their locators swapped so each sorts first",
   function () {
-    fitnessScenarios = [{ scnId: FITNESS_SCN, evidenceObligations: [{ qualityCheck: "lint", staticCheck: CHECK }] }];
+    fitnessScenarios = [{ scnId: FITNESS_SCN, evidenceObligations: [{ qualityCheck: "fitness" }] }];
     const failedAt = (locator: string): EvidenceObservation => ({ ...runOf(true, locator), status: "failed" });
     fitnessPairs = [
       { credits: [failedAt("a.feature"), runOf(false, "z.feature")], named: failedAt("a.feature") },
@@ -258,7 +255,7 @@ function eachPairReads(outcome: string): void {
   fitnessLedgers.forEach((ledger, i) => {
     const row = ledger.scenarioReconciliations.find((r) => r.scnId === FITNESS_SCN);
     assert.ok(row, "the fitness scenario has no row");
-    const item = row.qualityCheckReconciliations.find((q) => q.staticCheck === CHECK);
+    const item = row.qualityCheckReconciliations.find((q) => q.qualityCheck === "fitness");
     assert.deepEqual([item?.outcome, item?.evidenceObservation], [outcome, fitnessPairs[i]!.named]);
     assert.equal(row.verdict, "out-of-balance");
     // The predicate the CLI's exit 1 reads.

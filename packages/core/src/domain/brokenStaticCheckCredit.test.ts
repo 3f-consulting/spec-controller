@@ -27,7 +27,7 @@ import type { Scenario, EvidenceObservation } from "./journal.js";
 
 describe("[SCN-LNT-026] a BROKEN static-check credit is excluded from the obligation match whatever else it carries", () => {
   it("leaves the obligation missing and posts to suspense even when the credit says the check exists and ran", () => {
-    // THE FAIL-SAFE'S OWN CLAIM, PROVED RATHER THAN STATED. `staticCheckObservationFor` excludes a
+    // THE FAIL-SAFE'S OWN CLAIM, PROVED RATHER THAN STATED. `fitnessCreditsCiting` excludes a
     // broken credit STRUCTURALLY — on the flag, before anything else it carries is read — and this
     // is the plant that says so: the observation below cites the right row at the right check AND
     // claims both facts TRUE, which is the shape a match would read as `satisfied`. Every credit
@@ -41,16 +41,15 @@ describe("[SCN-LNT-026] a BROKEN static-check credit is excluded from the obliga
       {
         scnId: "SCN-LNT-026",
         evidenceObligations: [
-          { qualityCheck: "lint", staticCheck: "traceability" },
+          { qualityCheck: "fitness" },
         ],
       },
     ];
     const evidenceObservations: EvidenceObservation[] = [
       {
-        qualityCheck: "lint",
+        qualityCheck: "fitness",
         staticCheck: "traceability",
         scnId: "SCN-LNT-026",
-        checkTag: "traceability",
         exists: true,
         enforcedOverRealSource: true,
         broken: true,
@@ -68,13 +67,9 @@ describe("[SCN-LNT-026] a BROKEN static-check credit is excluded from the obliga
     // discharge an obligation nor fail it, and it carries nothing on the credit side.
     expect(row?.qualityCheckReconciliations).toEqual([
       {
-        qualityCheck: "lint",
-        staticCheck: "traceability",
+        qualityCheck: "fitness",
         outcome: "missing",
-        evidenceObligation: {
-          qualityCheck: "lint",
-          staticCheck: "traceability",
-        },
+        evidenceObligation: { qualityCheck: "fitness" },
       },
     ]);
     // And the credit is not lost: it posts to suspense as broken, carrying its where-to-fix and
@@ -84,7 +79,7 @@ describe("[SCN-LNT-026] a BROKEN static-check credit is excluded from the obliga
     );
     expect(suspense?.qualityCheckReconciliations).toEqual([
       {
-        qualityCheck: "lint",
+        qualityCheck: "fitness",
         outcome: "broken",
         locator: "features/fitness-checks.feature",
         message: "the run's record says this check's step was skipped",

@@ -8,12 +8,10 @@
     "fitnessChecks": [
       {
         "scn": "SCN-CVT-001",
-        "characteristic": "complexity",
         "command": "eslint"
       },
       {
         "scn": "SCN-CVT-003",
-        "characteristic": "mutation",
         "command": "mutation-score"
       }
     ]

@@ -507,9 +507,9 @@ describe('[SCN-RPT-024] the reconciliation collection is named "Scenario Reconci
         evidenceObservations: [],
         evidenceObligations: [],
         verdict: "out-of-balance",
-        qualityCheckReconciliations: [qcr({ qualityCheck: "lint", staticCheck: "guard:static", outcome: "cites-no-scenario" })],
+        qualityCheckReconciliations: [qcr({ qualityCheck: "fitness", staticCheck: "guard:static", outcome: "cites-no-scenario" })],
         pendingItems: [],
-        reconcilingItems: [qcr({ qualityCheck: "lint", staticCheck: "guard:static", outcome: "cites-no-scenario" })],
+        reconcilingItems: [qcr({ qualityCheck: "fitness", staticCheck: "guard:static", outcome: "cites-no-scenario" })],
       },
     ],
   };

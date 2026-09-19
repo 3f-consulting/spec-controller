@@ -9,12 +9,10 @@
     "fitnessChecks": [
       {
         "scn": "SCN-CVT-001",
-        "characteristic": "complexity",
         "command": "eslint"
       },
       {
         "scn": "SCN-CVT-002",
-        "characteristic": "traceability",
         "command": "scn-subissues"
       }
     ]

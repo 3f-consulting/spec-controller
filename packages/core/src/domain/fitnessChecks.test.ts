@@ -8,7 +8,7 @@
  *
  * Bidirectional evidence: the describes carry the @SCN id, matching
  * features/fitness-reconciliation.feature and the @integration steps in
- * tests/steps/lintReconciliation.steps.ts. The rule that CONSUMES this index is pinned next
+ * tests/steps/fitnessReconciliation.steps.ts. The rule that CONSUMES this index is pinned next
  * door in parse/convertedFitnessObligations.test.ts; this file pins only the reading.
  */
 
@@ -16,44 +16,44 @@ import { describe, it, expect } from "vitest";
 import { fitnessChecksOf } from "./fitnessChecks.js";
 import { resolveFitnessChecks } from "../parse/targetManifest.js";
 
-describe("[SCN-LNT-018] the configured rows read into the registry the obligation rule takes", () => {
-  it("keys each row by the @SCN it names, holding the characteristic it asserts", () => {
+describe("[SCN-LNT-018] the configured rows read into the set of @SCNs the obligation rule takes", () => {
+  it("reads each row as the @SCN it names — the characteristic a row may still carry is not read", () => {
     expect([
       ...fitnessChecksOf([
-        { scn: "SCN-AAA-001", characteristic: "complexity", command: "eslint" },
+        { scn: "SCN-AAA-001", command: "eslint" },
         { scn: "SCN-AAA-007", characteristic: "mutation", command: "pnpm mutation:score" },
       ]),
-    ]).toEqual([
-      ["SCN-AAA-001", { characteristic: "complexity" }],
-      ["SCN-AAA-007", { characteristic: "mutation" }],
-    ]);
+    ]).toEqual(["SCN-AAA-001", "SCN-AAA-007"]);
   });
 
-  it("stores both terms BARE, so a row spelled the way a feature file spells them still matches", () => {
-    // A manifest written by hand will sooner or later carry the sigils — the stance the retired
-    // `thresholdsOf` took, and the lookup is bare on both sides.
-    expect([...fitnessChecksOf([{ scn: "@SCN-AAA-001", characteristic: "@complexity" }])]).toEqual([
-      ["SCN-AAA-001", { characteristic: "complexity" }],
-    ]);
+  it("keeps two rows that once shared a characteristic as two configured checks", () => {
+    // The word is retired; what keys a check is its own @SCN, so two rows sharing it are two.
+    expect([
+      ...fitnessChecksOf([
+        { scn: "SCN-AAA-012", characteristic: "ci-run-time", command: "timeout 75 vitest run" },
+        { scn: "SCN-AAA-013", characteristic: "ci-run-time", command: "timeout 150 cucumber-js" },
+      ]),
+    ]).toEqual(["SCN-AAA-012", "SCN-AAA-013"]);
   });
 
-  it("drops a row that names no scenario or no characteristic, rather than throwing", () => {
+  it("stores the @SCN BARE, so a row spelled the way a feature file spells it still matches", () => {
+    expect([...fitnessChecksOf([{ scn: "@SCN-AAA-001" }])]).toEqual(["SCN-AAA-001"]);
+  });
+
+  it("drops a row that names no scenario, rather than throwing", () => {
     // Config is data from outside: a check that throws on a typo produces no verdict at all, which
-    // is loud nowhere. A dropped row leaves its scenario naming no characteristic, which the
-    // corpus is where anybody notices.
+    // is loud nowhere. A dropped row leaves its scenario unconfigured, which the corpus reports.
     expect([
       ...fitnessChecksOf([
         { characteristic: "complexity" },
-        { scn: "SCN-AAA-001" },
-        { scn: "  ", characteristic: "complexity" },
-        { scn: "SCN-AAA-001", characteristic: "  " },
-        { scn: "SCN-AAA-001", characteristic: 7 },
+        { scn: "  " },
+        { scn: 7 },
         () => "not a row either",
         "not a row",
         null,
-        { scn: "SCN-AAA-004", characteristic: "complexity" },
+        { scn: "SCN-AAA-004" },
       ]),
-    ]).toEqual([["SCN-AAA-004", { characteristic: "complexity" }]]);
+    ]).toEqual(["SCN-AAA-004"]);
   });
 
   it("reads nothing from a value that is not a list of rows", () => {
@@ -65,16 +65,11 @@ describe("[SCN-LNT-018] the configured rows read into the registry the obligatio
 
 describe("[SCN-LNT-018] the rows come from the TARGET's manifest", () => {
   it("reads them from the target's own specController.fitnessChecks", () => {
-    // The target's, for the reason the check registry and the ceilings are (@SCN-LNT-005): a
-    // characteristic means what the target says it means, and a row resolved from this tool's own
-    // manifest would answer for a repository the run never read.
+    // The target's, for the reason the check registry and the ceilings are (@SCN-LNT-005): a row
+    // resolved from this tool's own manifest would answer for a repository the run never read.
     expect([
-      ...resolveFitnessChecks(
-        {
-          specController: { fitnessChecks: [{ scn: "SCN-AAA-001", characteristic: "complexity" }] },
-        }
-      ),
-    ]).toEqual([["SCN-AAA-001", { characteristic: "complexity" }]]);
+      ...resolveFitnessChecks({ specController: { fitnessChecks: [{ scn: "SCN-AAA-001" }] } }),
+    ]).toEqual(["SCN-AAA-001"]);
   });
 
   it("resolves empty for a manifest that configures none — inert on an unconverted target", () => {

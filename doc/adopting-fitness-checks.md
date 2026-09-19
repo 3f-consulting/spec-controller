@@ -1,9 +1,10 @@
-# Fitness checks — what one is, and how you declare it
+# Adopting fitness checks — what one is, and how you declare it
 
-*A fitness check is a characteristic your codebase must hold. **What you author to declare one
-depends on how far you have adopted** — there are three states and you can stop at any of them. This
-page states the model; if you are converting existing checks, the checklist is under* Converting an
-existing check.*
+*A fitness check is a whole-system property your codebase must hold, and **one `@fitness` scenario
+is one check**: its title says what the check is about, and its `@SCN` is its identity. **What you
+author to declare one depends on how far you have adopted** — there are three states and you can
+stop at any of them. This page states the model; if you are converting existing checks, the
+checklist is under* Converting an existing check.*
 
 For the compatibility position — why a `0.x` version promises nothing, and what changes at `1.0` —
 see [`compatibility.md`](./compatibility.md). For the flags and the CLI, see
@@ -43,10 +44,17 @@ Its steps do not run, in the same way a `@unit` scenario's steps do not: Cucumbe
 the runner your CI already calls is what produces the evidence. Getting here from `annotated` is
 either your own work or `migrate`'s.
 
-**The row of `specController.fitnessChecks`** — `scn`, `characteristic` and `command` — carries
-which scenario the check answers, what it asserts, and the command whose exit code is the verdict.
-It names no bar: a check that produces a number applies its own bar and exits non-zero below it. The sections below assume you are heading for `conformant`; if you are stopping at `annotated`,
-read them for the row and the CI step and skip the scenario.
+**The row of `specController.fitnessChecks`** — `scn` and `command` — carries which scenario the
+check answers and the command whose exit code is the verdict. It names nothing else: not a bar (a
+check that produces a number applies its own and exits non-zero below it), and not a word for what
+the check is about — the scenario's title says that, and the `@SCN` is the identity the ledger
+reads. The sections below assume you are heading for `conformant`; if you are stopping at
+`annotated`, read them for the row and the CI step and skip the scenario.
+
+**A row of yours that still carries `characteristic` is read exactly as one that does not.** The
+key is retired, and the reader goes on accepting it: your run names it on the report under
+`### Static checks` (`specController.fitnessChecks[<@SCN>].characteristic — retired: …`), balances
+as it did, and exits as it did. Drop it when it suits you.
 
 The scenario is **written beside its row rather than derived from it**:
 
@@ -60,7 +68,7 @@ The scenario is **written beside its row rather than derived from it**:
 ```
 
 ```json
-{ "scn": "SCN-FIT-001", "characteristic": "complexity", "command": "eslint" }
+{ "scn": "SCN-FIT-001", "command": "eslint" }
 ```
 
 **That is the whole scenario — a tag line, a title, and steps.** A fitness scenario is a
@@ -223,19 +231,20 @@ same way whatever it builds.
 
 ## No step definitions at all, however many checks convert
 
-A converted check's row carries its `@SCN`, its characteristic and its command. Nothing that varies
+A converted check's row carries its `@SCN` and its command. Nothing that varies
 between two checks is in the corpus, and nothing that is *common* to them is either — this product
 runs no check on your behalf and binds nothing to your scenario's steps:
 
 | the row | how its credit arrives | what is asserted |
 |---|---|---|
-| `scn`, `characteristic`, `command` | its step's **outcome** in the run's own record | the command's **exit code** |
+| `scn`, `command` | its step's **outcome** in the run's own record | the command's **exit code** |
 
 **Every row is that one kind.** A check that measures something — a mutation score, a suite's
 wall-clock — states its bar where the tool already reads one (Stryker's `thresholds.break`,
 `timeout <seconds>` around the suite) and fails its step below it. The ledger reads the step's
-outcome, never a number. A row still carrying the retired `atLeast` / `atMost` keys is named on the
-report as carrying a retired key, and is credited by its step's outcome like any other (3F-3506).
+outcome, never a number. A row still carrying a retired key — `atLeast` / `atMost` (3F-3506), or
+`characteristic` (3F-3525) — is named on the report as carrying one, and is credited by its step's
+outcome like any other.
 
 ---
 
@@ -267,7 +276,7 @@ and `SCN-FIT-013` hold the unit suite and the behavioural suite to a limit. The 
 ```
 
 ```json
-{ "scn": "SCN-FIT-012", "characteristic": "ci-run-time", "command": "timeout 75 vitest run" }
+{ "scn": "SCN-FIT-012", "command": "timeout 75 vitest run" }
 ```
 
 Past the limit GNU `timeout` exits 124, the step's `outcome` is `failure`, and the row reads that
@@ -282,7 +291,7 @@ row's `@SCN` as its `id:` and asks stock `gh` whether the newest finished nightl
 inside the last 26 hours, concluded `success`. The row names no bar:
 
 ```json
-{ "scn": "SCN-FIT-002", "characteristic": "mutation", "command": "gh run list --workflow mutation.yml" }
+{ "scn": "SCN-FIT-002", "command": "gh run list --workflow mutation.yml" }
 ```
 
 A lapsed schedule leaves no run inside the window, so the step fails, and so does a sweep that
@@ -410,6 +419,27 @@ whose `fitnessChecks` key is unreadable holds zero rows. A corpus emitted from t
 empty with them, and no rule above could see it. Authored, the corpus stands: every scenario in it
 is one no row configures, and the ledger's census names each of them.
 
+## The gates your checks run under
+
+*Your checks are one half of a wider arrangement, and the other half is the gates the portfolio
+holds every product to. This section names them and links their canon. **It states no number** —
+the numbers live in the canon pages below, and a copy here would drift from them.*
+
+| gate | what it binds |
+|---|---|
+| **Complexity and function length** | every function and module you touch measures inside an external standard, never your own current maximum. Canon: `technical-design/fitness-functions.md` → *Code-metric thresholds come from an external standard, never the code's own max*, and *The suite — the mandatory gates*. |
+| **Mutation** | your unit tests have teeth, measured per mutated scope against a held percentage, on a schedule rather than per push. Canon: `fitness-functions.md` → *Mutation thresholds are per-scope, and the bar is a held percentage*, and *When the score drops below the bar* — which forbids deleting code to raise a score. |
+| **Continuous delivery** | nothing publishes except a merge to `main`, and every package-changing merge publishes the next counter version with no stored credential. Canon: `technical-design/ci-and-release.md` and `technical-design/publishing-npm-packages.md` → *The model — every package-changing merge publishes, with no stored credential*. |
+| **Expand / contract** | a repository whose CI reads its own tree with its own pinned release changes that model in steps: the reader accepts both shapes and publishes, the bot moves the pin, the tree drops the old shape, and the reader stops accepting it only when no adopter still writes it. Canon: `publishing-npm-packages.md` → *Such a repository changes its own model in expand/contract steps*. |
+| **How a check's outcome reaches the Ledger** | the declaration, discovery and posting this page describes — the tag is the quality check, the row is the command, and the step's `id:` is the citation. Canon: `technical-design/fitness-evidence.md` → *The tag is the quality check; the row is the command*, and *The three adoption states*. |
+| **Self-reconciliation** | your own `Ledger` balances, run as a gate in your pipeline: `balance` over your corpus and your run's evidence, red on out-of-balance. Canon: `fitness-functions.md` → *Self-reconciliation — the capstone*. |
+
+**The canon pages are in 3F's `strategy` repository, which is private**, so they are named by page
+and section heading rather than linked. Ask for the page if you do not have it; what matters here
+is that every number lives in one of them and in no copy.
+
+---
+
 ## Converting an existing check — the checklist
 
 1. **Name your behavioural runners, and the steps that are not checks.** This comes first because it
@@ -459,9 +489,10 @@ is one no row configures, and the ledger's census names each of them.
    rows, and that holds for a manifest that says nothing at all. Both keys are documented in
    [`how_to_use.md`](./how_to_use.md).
 
-2. **Write the row** — `scn`, `characteristic`, `command`. A check that produces a number applies
-   its own bar and exits non-zero below it; the row names none.
-3. **Give the scenario the axis tag** and remove its characteristic tag. Write the scenario in your
+2. **Write the row** — `scn`, `command`. A check that produces a number applies its own bar and
+   exits non-zero below it; the row names none. A row of yours that still carries the retired
+   `characteristic` key is read the same way, and the report names the key.
+3. **Give the scenario the axis tag** and remove any word naming what it is about. Write the scenario in your
    fitness corpus and the row beside it; neither half is derived from the other, which is what makes
    a scenario with no row, and a row with no scenario, something a run can report.
 4. **Leave the command exactly where it is, and give its step the scenario's code as its `id:`.**
@@ -485,7 +516,7 @@ is one no row configures, and the ledger's census names each of them.
    scenario moves, but a migration that leaves one check in the old numbering has not migrated,
    it has stopped.
 7. **Compare the ledger shape, not the rows.** Every `@SCN` changed, so a row-for-row diff says
-   nothing. Same characteristics claimed, same obligation count, same satisfied / missing verdicts,
+   nothing. Same checks claimed, same obligation count, same satisfied / missing verdicts,
    against a baseline captured **before the first edit**.
 8. **Prove the comparison has teeth.** A matching ledger is also what *not migrating* produces.
    Break one row's `scn` so its credit cites nothing, confirm the comparison reds, and

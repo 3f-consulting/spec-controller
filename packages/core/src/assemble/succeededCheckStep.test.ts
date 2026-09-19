@@ -6,7 +6,7 @@
  * check is found as a runnable script handle, and a handle does not know what it is for — hence
  * `checkRegistry`, and hence the corpus lookup behind it, two hops to recover what the check was
  * about. Here the step's `id:` IS the code of the row it answers and that row carries the
- * characteristic: two terms from two places, neither resolved onto the other.
+ * @SCN: one term, read off what was observed.
  *
  * NO CHECK REGISTRY IS CONFIGURED ANYWHERE IN THIS FILE, and that absence is an assertion. A
  * reading that still needed the seam would find nothing here and both rows would reconcile
@@ -15,7 +15,7 @@
  * TWO ROWS FROM ONE RECORD, BECAUSE THE CLAIM IS THAT EACH IS CREDITED BY ITS OWN STEP. A reader
  * posting one entry's credit to every configured row, and a reader crossing the two, both leave
  * every row BALANCED and say so with the same verdict — so the assertion is over the
- * characteristic each row was credited FOR, per row, rather than over a count or a verdict.
+ * @SCN each row's credit cites, per row, rather than over a count or a verdict.
  *
  * IT READS THROUGH THE WHOLE COMPOSITION, for this axis's usual reason: the claim is about what the
  * LEDGER says, and a reader emitting an impeccable observation the composition never threads
@@ -23,7 +23,7 @@
  *
  * Bidirectional evidence: the describe carries its @SCN id, matching
  * features/fitness-reconciliation.feature and the @integration steps in
- * tests/steps/lintReconciliation.steps.ts.
+ * tests/steps/fitnessReconciliation.steps.ts.
  */
 
 import { describe, it, expect } from "vitest";
@@ -34,7 +34,7 @@ import type { EvidenceReconciliation } from "./renderInput.js";
 
 /**
  * The target's corpus — two stepless fitness scenarios, each named by one configured row, and no
- * characteristic tag anywhere in it. Neither word the rows name appears in this source, which is
+ * word naming what a check is about anywhere in it, nor on the rows, which is
  * what makes every expectation below a claim about the rows rather than about a tag that happens
  * to spell the same word.
  */
@@ -65,8 +65,8 @@ const manifest = {
     // checkout answers for it here, exactly as a consumer's own manifest does.
     notChecks: ["ci.yml:quality:Checkout"],
     fitnessChecks: [
-      { scn: "SCN-CVT-001", characteristic: "complexity", command: "eslint" },
-      { scn: "SCN-CVT-002", characteristic: "traceability", command: "scn-subissues" },
+      { scn: "SCN-CVT-001", command: "eslint" },
+      { scn: "SCN-CVT-002", command: "scn-subissues" },
     ],
   },
 };
@@ -124,7 +124,7 @@ function reconcile(): EvidenceReconciliation {
 }
 
 describe("[SCN-LNT-021] a static check's step the run's record says succeeded credits its own row", () => {
-  it("credits each row for the characteristic its OWN row names, and both balance", () => {
+  it("credits each row by the step citing its OWN @SCN, and both balance", () => {
     const reconciliation = reconcile();
 
     // THE LEDGER WHOLE, so a credit landing on the wrong row, or a second credit landing beside a
@@ -138,8 +138,8 @@ describe("[SCN-LNT-021] a static check's step the run's record says succeeded cr
         row.qualityCheckReconciliations.map((item) => [item.staticCheck, item.outcome]),
       ])
     ).toEqual([
-      ["SCN-CVT-001", "scenario", "balanced", [["complexity", "satisfied"]]],
-      ["SCN-CVT-002", "scenario", "balanced", [["traceability", "satisfied"]]],
+      ["SCN-CVT-001", "scenario", "balanced", [[undefined, "satisfied"]]],
+      ["SCN-CVT-002", "scenario", "balanced", [[undefined, "satisfied"]]],
     ]);
   });
 
@@ -151,18 +151,16 @@ describe("[SCN-LNT-021] a static check's step the run's record says succeeded cr
     // so a reading that needed one would carry neither.
     const [first, second] = reconcile().ledger.scenarioReconciliations;
     expect(first?.qualityCheckReconciliations[0]?.evidenceObservation).toEqual({
-      qualityCheck: "lint",
-      staticCheck: "complexity",
+      qualityCheck: "fitness",
+      staticCheck: "SCN-CVT-001",
       scnId: "SCN-CVT-001",
-      checkTag: "complexity",
       exists: true,
       enforcedOverRealSource: true,
       status: "passed",
     });
     expect(second?.qualityCheckReconciliations[0]?.evidenceObservation).toMatchObject({
-      staticCheck: "traceability",
+      staticCheck: "SCN-CVT-002",
       scnId: "SCN-CVT-002",
-      checkTag: "traceability",
     });
   });
 

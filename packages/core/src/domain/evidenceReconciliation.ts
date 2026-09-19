@@ -32,8 +32,8 @@
  *
  * Per the slice design: for each evidence obligation a scenario raises (a reconciling
  * item), present+pass → satisfied; present+fail → failing; absent →
- * missing. `reconcileEvidenceObligation` branches on the `qualityCheck === "lint"`
- * watermelon discriminator (replacing the retired `kind === "static"` split): a `lint`
+ * missing. `reconcileEvidenceObligation` branches on the `qualityCheck === "fitness"`
+ * watermelon discriminator (replacing the retired `kind === "static"` split): a `fitness`
  * evidence obligation reconciles against a static-check evidence observation (exists+wired → satisfied;
  * exists+unwired → watermelon; absent → missing); a runtime evidence obligation
  * reconciles against a test result matched by (scnId, quality-check).
@@ -51,7 +51,6 @@
 import type {
   RuntimeQualityCheck,
   Scenario,
-  StaticCheckEvidenceObservation,
   FitnessEvidenceObservation,
   EvidenceObservation,
   ScenarioReconciliation,
@@ -85,7 +84,7 @@ import type {
   ScenarioReconciliationTotals,
   EvidenceObligationTotals,
   MissingByQualityCheck,
-  LintTally,
+  FitnessTally,
 } from "./ledger.js";
 import {
   verdictFor,
@@ -97,9 +96,9 @@ import {
 // its own concept module. `reconcile` no longer decides a destination; it ASKS.
 import { postingOf } from "./posting.js";
 import { inEvidenceOrder } from "./evidenceOrder.js";
-// The `lint` quality-check's own predicate, asked here to NARROW what the posting rule has already
+// The `fitness` quality-check's own predicate, asked here to NARROW what the posting rule has already
 // routed — see the fitness arm below.
-import { isStaticCheckObservation } from "../model.js";
+import { isFitnessObservation } from "../model.js";
 
 /** A destination that names ONE row — the two citation-routed `Posting` kinds. */
 type CitedPosting = { kind: "scenario" | "phantom-scenario"; scnId: string };
@@ -149,7 +148,7 @@ interface RoutedCredits {
   /** The credits routed BY CITATION, plus the phantom ids they minted. */
   readonly citations: CitationIndex;
   /** Proofs that never ran, from EITHER axis (@SCN-LDG-017, @SCN-LNT-026). */
-  readonly brokenEvidence: readonly (RuntimeEvidenceObservation | StaticCheckEvidenceObservation)[];
+  readonly brokenEvidence: readonly (RuntimeEvidenceObservation | FitnessEvidenceObservation)[];
   /** Runtime credits that RAN and carried no `@SCN`. */
   readonly uncited: readonly RuntimeEvidenceObservation[];
   /** Static checks that ran with no Evidence Obligation naming them. */
@@ -184,14 +183,14 @@ function routeCredits(
   // BROKEN EVIDENCE FROM EITHER AXIS (@SCN-LNT-026). It was a runtime-only stream while `broken`
   // was a runtime-only fact; a converted static check that did not run is the same fact about the
   // same kind of absence, so it lands in the same stream and renders through the same section.
-  const brokenEvidence: (RuntimeEvidenceObservation | StaticCheckEvidenceObservation)[] = [];
+  const brokenEvidence: (RuntimeEvidenceObservation | FitnessEvidenceObservation)[] = [];
   const uncited: RuntimeEvidenceObservation[] = [];
   const noEvidenceObligationStaticChecks: FitnessEvidenceObservation[] = [];
   for (const o of evidenceObservations) {
-    // The union NARROW — `qualityCheck === "lint"` is the `EvidenceObservation` union's TYPE TAG,
+    // The union NARROW — `qualityCheck === "fitness"` is the `EvidenceObservation` union's TYPE TAG,
     // not a posting decision. Which axis a credit rides is read here; where it LANDS is the rule's,
     // on both branches.
-    if (o.qualityCheck === "lint") {
+    if (o.qualityCheck === "fitness") {
       const posting = postingOf(o, scenarioIds);
       // THE SPLIT ON THIS AXIS TOO (@SCN-LNT-026), the twin of the runtime arm's below. Both
       // reasons post to suspense because neither names a row, and they stay in separate streams
@@ -199,12 +198,12 @@ function routeCredits(
       // wants an obligation written for it; a broken one never ran and wants its harness fixed.
       //
       // THE SECOND CLAUSE IS THE NARROW, NOT A SECOND DECISION. `postingOf` reaches `broken` on
-      // this axis only through `isStaticCheckObservation`, so asking the same predicate here
+      // this axis only through `isFitnessObservation`, so asking the same predicate here
       // cannot disagree with it — it re-states what the rule already settled in the one form the
       // compiler accepts. Nothing falls between the two arms: an observation that somehow took
       // neither still lands in the second, misfiled rather than vaporised.
       if (posting.kind === "suspense-scenario") {
-        if (posting.posted === "broken" && isStaticCheckObservation(o)) brokenEvidence.push(o);
+        if (posting.posted === "broken" && isFitnessObservation(o)) brokenEvidence.push(o);
         else noEvidenceObligationStaticChecks.push(o);
       }
       // A CITING run files into the citation index like any other credit (@SCN-LNT-001) —
@@ -346,7 +345,7 @@ function phantomScenarioRows(citations: CitationIndex): ScenarioReconciliation[]
  * 3F-3472; what lands on it is `routeCredits`' decision, and unchanged.
  */
 function suspenseScenarioRows(
-  brokenEvidence: readonly (RuntimeEvidenceObservation | StaticCheckEvidenceObservation)[],
+  brokenEvidence: readonly (RuntimeEvidenceObservation | FitnessEvidenceObservation)[],
   uncited: readonly RuntimeEvidenceObservation[],
   noEvidenceObligationStaticChecks: readonly FitnessEvidenceObservation[]
 ): ScenarioReconciliation[] {
@@ -443,7 +442,7 @@ function unspecifiedFitnessRowRows(
   // unwritten check would reconcile BALANCED: a new false green, in the case the phantom row
   // already covers.
   for (const row of unspecifiedFitnessRows) {
-    const items = unspecifiedRowReconciliations(row.characteristic);
+    const items = unspecifiedRowReconciliations();
     rows.push({
       scnId: row.scnId,
       kind: "scenario",
@@ -453,7 +452,7 @@ function unspecifiedFitnessRowRows(
       // No scenario carries this code, so the citation router posts no credit here — see above.
       evidenceObservations: [],
       // THE DEBIT IS REAL AND IS POSTED (@SCN-LDG-023). Unlike the untagged row above, which
-      // reaches the ledger by name and names no check, this row names exactly one characteristic:
+      // reaches the ledger by name and names no check, this row is a declared check of its own:
       // that is the obligation, and the manifest is what raised it.
       evidenceObligations: [...items.map((item) => item.evidenceObligation!)],
       qualityCheckReconciliations: items,
@@ -547,9 +546,9 @@ export interface TestVolumeTotals {
  * The materialised static-check totals (RMD-005) — the static-check kind-counts the
  * markdown's `### Static checks` line derives, following the census shape exactly:
  * `runningStaticCheckCount` (the volume of running static checks) and `uncitedStaticCheckCount` (how many
- * of THOSE no `@lint` cites — a subset of the first, @SCN-LNT-033). The named count is IMPLICIT
+ * of THOSE no `@fitness` cites — a subset of the first, @SCN-LNT-033). The named count is IMPLICIT
  * (`running − uncited`) and is not carried (every named static check is already a reconciled
- * `@lint` sub-row); drawn from one population under one membership rule, it cannot go below nil.
+ * fitness sub-row); drawn from one population under one membership rule, it cannot go below nil.
  */
 export interface StaticCheckTotals {
   runningStaticCheckCount: number;
@@ -673,7 +672,7 @@ export interface Summary {
    * categorical, not arithmetic) nor into `evidenceObligations` — its own tally.
    * Counts Pending ITEMS, not scenarios-carrying-pending (mirroring the out-of-balance
    * decomposition, which counts obligations, not scenarios). Always present (a pure balance derive,
-   * like `lint`); reads 0 when no scenario raises a pending obligation.
+   * like `fitness`); reads 0 when no scenario raises a pending obligation.
    */
   pending: number;
   /** The runtime test-volume kind-counts (RMD-005) — present when the evidenceObservations read is threaded. */
@@ -689,8 +688,8 @@ export interface Summary {
   rawByRuntimeQualityCheck?: Record<RuntimeQualityCheck, number>;
   /** The static-check kind-counts (RMD-005) — present when the guard read is threaded. */
   staticChecks?: StaticCheckTotals;
-  /** The static-only lint evidenceObligation tally (RMD-005) — always present (a pure balance derive). */
-  lint: LintTally;
+  /** The fitness-only evidence obligation tally (RMD-005) — always present (a pure balance derive). */
+  fitness: FitnessTally;
   /**
    * The scenarios ON the fitness axis that no configured row NAMES (@SCN-LNT-020) — the corpus's
    * half-converted checks, in corpus order.
@@ -873,10 +872,10 @@ export interface EvidenceReconciliation {
  * Materialise the summary totals from the balance — the aggregate the markdown's trial-balance
  * table derives, carried AS DATA so a later render-from-saved-JSON rebuilds it with zero
  * computation (the MATERIALISE ruling). THIN COMPOSITION (3F-2000): the LEDGER-PURE totals
- * (`scenarioReconciliations`, `evidenceObligations`, `pending`, `lint`) come from `ledgerTally`
+ * (`scenarioReconciliations`, `evidenceObligations`, `pending`, `fitness`) come from `ledgerTally`
  * — the Ledger owns its own totals ("the summary is its totals") — and are MERGED here with the
  * census pass-throughs (`testVolume`, `staticChecks`), which are NOT Ledger-pure. The keys are
- * assembled in DOCUMENT ORDER (…, testVolume?, staticChecks?, lint) so the JSON stays
+ * assembled in DOCUMENT ORDER (…, testVolume?, staticChecks?, fitness) so the JSON stays
  * byte-identical.
  */
 export function summaryOf(
@@ -931,12 +930,12 @@ export function summaryOf(
     // play — now a FOLD OVER THE LEDGER (3F-2118, `staticObservationTally`), symmetric with the
     // runtime `testVolume` fold. The surface keeps the census shape exactly
     // (`{ runningStaticCheckCount, uncitedStaticCheckCount }`; named is implicit). The member detail
-    // lives in the rows (named → each scenario's `@lint` sub-row; no-evidence-obligation → the suspense
+    // lives in the rows (named → each scenario's fitness sub-row; no-evidence-obligation → the suspense
     // row) — there is no census section (2.4).
     ...(withStaticChecks ? { staticChecks } : {}),
-    // The static-only lint tally (RMD-005), a LEDGER-PURE derive from `ledgerTally` — LAST key in
+    // The static-only fitness tally (RMD-005), a LEDGER-PURE derive from `ledgerTally` — LAST key in
     // document order (after the census pass-throughs).
-    lint: tally.lint,
+    fitness: tally.fitness,
   };
 }
 

@@ -3,7 +3,7 @@ Feature: a converted target's fitness corpus, whose rows still carry the bars th
 
   A FIXTURE feature standing in for ANOTHER repository, read cross-repo by spec-controller via
   --features. Both of its scenarios carry the bare fitness axis tag and their own @SCN, and a row
-  of that repository's specController.fitnessChecks names each of them with a characteristic, a
+  of that repository's specController.fitnessChecks names each of them with a
   command and a bar written while bars were read — atMost on the first, an atLeast naming a
   mutation gate beside an atMost on the second. Nothing reads a bar now; the run's record of each
   check's step is what answers its row (@SCN-LNT-035).

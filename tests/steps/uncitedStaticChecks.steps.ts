@@ -106,7 +106,7 @@ Given("a target whose CI runs the lint:foo and lint:bar checks", function () {
 // differ in nothing: giving each its own sentence would let the two premises drift apart and
 // leave neither scenario able to say the citation was the thing that moved the verdict.
 Given("only lint:foo is cited by a fitness scenario", function () {
-  // The fixture configures ONE fitnessChecks row (SCN-TGT-001, characteristic foo) and only
+  // The fixture configures ONE fitnessChecks row (SCN-TGT-001) and only
   // the lint:foo step carries that row's code as its own `id:` — lint:bar's step carries none.
   // So the running-check observer reads lint:foo's citation off the step and reaches nothing
   // for lint:bar — the uncited static check.
@@ -225,11 +225,11 @@ When("the reconciliation report is rendered for the target", function () {
  * Row-scoped rather than a bare search of the report, because "posts to the suspense row" is a
  * claim about WHERE the credit landed, and a whole-report `includes` cannot tell the suspense
  * row from any other row that happens to mention the handle. Scoped to the ledger section for
- * the reason `lintReconciliation.steps.ts` scopes its own reader: the summary cuts above the
+ * the reason `fitnessReconciliation.steps.ts` scopes its own reader: the summary cuts above the
  * ledger also carry a scnId in a first cell.
  *
  * Cells are read from the END (`items` last, `verdict` before it) rather than by index from the
- * start: this arm runs with both axis gates ON, so the ledger carries a `Lint` column the
+ * start: this arm runs with both axis gates ON, so the ledger carries a `Fitness` column the
  * gates-off shape does not, and a positional read from the left silently returns the wrong cell.
  */
 function ledgerRowCells(md: string, scnId: string): string[] {
@@ -324,7 +324,7 @@ Then(
     const cells = ledgerRowCells(activeMd, "(no scenario)");
     const items = cells[cells.length - 2] ?? "";
     assert.ok(
-      items.includes("lint ❓ Evidence Observation cites no Scenario (lint:bar)"),
+      items.includes("fitness ❓ Evidence Observation cites no Scenario (lint:bar)"),
       `expected the suspense row to carry lint:bar as a cites-no-scenario credit naming the ` +
         `handle that ran; got "${items}" in:\n${activeMd}`
     );
@@ -351,8 +351,8 @@ Then(
 // because it is a step the manifest named neither a runner nor a non-check, which is the whole of
 // the inverted rule. The citation seam is what left it uncited — the registry resolves the handle
 // to the bare check domain-purity and the corpus carries that tag nowhere, so the credit cites
-// nothing. It lands on the suspense row under the `lint` quality-check (that VALUE is unchanged —
-// it names the static-check axis, and never a script convention).
+// nothing. It lands on the suspense row under the `fitness` quality-check — that value names the
+// fitness axis (canon's name for it since 3F-3525), and never a script convention.
 // `domain-purity` itself is a CI script NAME — a value the derivation matches on, not vocabulary —
 // so the handle is deliberately untouched by the static-check rename (3F-1929; 3F-1852 owns
 // script names).
@@ -378,7 +378,7 @@ Then(
     const cells = ledgerRowCells(activeMd, "(no scenario)");
     const items = cells[cells.length - 2] ?? "";
     assert.ok(
-      items.includes("lint ❓ Evidence Observation cites no Scenario (domain-purity)"),
+      items.includes("fitness ❓ Evidence Observation cites no Scenario (domain-purity)"),
       `expected the suspense row to carry domain-purity as a cites-no-scenario credit ` +
         `naming the handle that ran; got "${items}" in:\n${activeMd}`
     );
@@ -408,16 +408,14 @@ Then(
 Then(
   "lint:foo is attributed to the scenario citing it, not reported uncited",
   function () {
-    // ATTRIBUTED, ASSERTED POSITIVELY — the row, not the absence of a different row. The lint
-    // cut names the BARE characteristic the configured row states (foo), against the @SCN its
-    // step's `id:` names. Both hops are visible in that one line, and neither is readable from
-    // a negative: a run under name-match holds only the handle lint:foo, the obligation the
-    // row states is foo, and those two spellings never meet.
+    // ATTRIBUTED, ASSERTED POSITIVELY — the row, not the absence of a different row. The fitness
+    // cut names the @SCN its step's `id:` names, satisfied; that line is not readable from a
+    // negative: a run under name-match holds only the handle lint:foo, which names no row.
     assert.ok(
       activeMd.includes(
-        "| SCN-TGT-001 | foo | ✓ Evidence Observation satisfies its Evidence Obligation |"
+        "| SCN-TGT-001 | ✓ Evidence Observation satisfies its Evidence Obligation |"
       ),
-      `expected lint:foo's credit posted to SCN-TGT-001 under the bare check tag "foo" — the ` +
+      `expected lint:foo's credit posted to SCN-TGT-001, satisfied — the ` +
         `attribution the citation seam produces. Asserting only that no uncited credit names ` +
         `lint:foo is the weaker claim, and a reader posting the credit to a scenario the corpus ` +
         `never wrote satisfies it too. Got:\n${activeMd}`
@@ -435,7 +433,7 @@ Then(
 
 // @SCN-USG-005 — the CITED script under no convention of ours is attributed, not an uncited
 // static check. The usg-guard-named fixture runs domain-purity in CI, configures one row for it
-// (SCN-TGD-001, characteristic domain-purity), and the domain-purity step's `id:` states that
+// (SCN-TGD-001), and the domain-purity step's `id:` states that
 // row's code directly. So the running-check observer reads the citation off the step, and the
 // credit arrives carrying @SCN-TGD-001 and posts there.
 //
@@ -459,12 +457,11 @@ Then(
   "domain-purity is attributed to the scenario citing it, not reported uncited",
   function () {
     // ATTRIBUTED, ASSERTED POSITIVELY — the row, not the absence of a different row, on the terms
-    // @SCN-USG-002 reads its own cited twin. The lint cut names the bare characteristic the
-    // configured row states, against the @SCN its step's `id:` names; both hops are visible in
-    // that one line and neither is readable from a negative.
+    // @SCN-USG-002 reads its own cited twin. The fitness cut names the @SCN its step's `id:`
+    // names, satisfied; that line is not readable from a negative.
     assert.ok(
       activeMd.includes(
-        "| SCN-TGD-001 | domain-purity | ✓ Evidence Observation satisfies its Evidence Obligation |"
+        "| SCN-TGD-001 | ✓ Evidence Observation satisfies its Evidence Obligation |"
       ),
       `expected domain-purity's credit posted to SCN-TGD-001 — the attribution the citation seam ` +
         `produces. Asserting only that no uncited credit names the handle is the weaker claim, ` +
@@ -495,7 +492,7 @@ Then(
     // (3F-2578): registering `test` to the bare tag lint:foo already cites admits it through
     // observedCheckHandles, and the ONLY reader-visible trace is this line moving 2 -> 3 — the
     // credit is attributed, so it never reaches suspense, and it raises no obligation, so it
-    // never reaches the `### Lint evidence obligations` cut either. A count is the whole of what
+    // never reaches the `### Fitness evidence obligations` cut either. A count is the whole of what
     // the report says about a wrongly-derived step, which is why it is asserted first.
     assert.ok(
       activeMd.includes("2 static check(s) run, 1 uncited static check(s)"),
@@ -621,7 +618,7 @@ Then(
     const cells = ledgerRowCells(activeMd, "(no scenario)");
     const items = cells[cells.length - 2] ?? "";
     assert.ok(
-      items.includes("lint ❓ Evidence Observation cites no Scenario (lint:sweep)"),
+      items.includes("fitness ❓ Evidence Observation cites no Scenario (lint:sweep)"),
       `expected the suspense row to carry lint:sweep as a cites-no-scenario credit naming ` +
         `the handle that ran; got "${items}" in:\n${activeMd}`,
     );
@@ -706,13 +703,12 @@ Then("lint:sweep is not counted among the running static checks", function () {
 Then(
   "lint:nightly reconciles satisfied, with no watermelon raised against it",
   function () {
-    // THE ROW, UNDER THE BARE TAG. The run holds the handle lint:nightly and the obligation
-    // the stepless scenario raises is nightly; the step's own `id:` is what joins them —
-    // stating SCN-TGS-001 directly — so the cut names SCN-TGS-001 against `nightly`. Those two
-    // spellings never meet, which is why the retired name-match rule cannot settle this
-    // obligation at all.
+    // THE ROW, BY ITS @SCN. The run holds the handle lint:nightly; the step's own `id:` is what
+    // joins it to the row — stating SCN-TGS-001 directly — so the fitness cut names SCN-TGS-001,
+    // satisfied. The handle names no row, which is why the retired name-match rule cannot
+    // settle this obligation at all.
     assert.ok(
-      activeMd.includes("| SCN-TGS-001 | nightly | ✓ Evidence Observation satisfies its Evidence Obligation |"),
+      activeMd.includes("| SCN-TGS-001 | ✓ Evidence Observation satisfies its Evidence Obligation |"),
       `expected the nightly check SATISFIED — lint:nightly is invoked by nightly.yml, so the ` +
         `scenario citing it is telling the truth. Reading ci.yml alone is what makes the tool ` +
         `disagree. Report:\n${activeMd}`,
@@ -1806,7 +1802,7 @@ Then(
     // whole-report `includes` cannot tell the suspense row from any other row naming the action.
     assert.ok(
       suspenseRowCredits(activeMd).includes(
-        `lint ❓ Evidence Observation cites no Scenario (${USG_ACTION_REFERENCE})`,
+        `fitness ❓ Evidence Observation cites no Scenario (${USG_ACTION_REFERENCE})`,
       ),
       `expected the action on the books as an uncited static check, named by the action ` +
         `reference GitHub itself displays for a step carrying no name of its own. A reader that ` +
@@ -1842,7 +1838,7 @@ Then("the command check is on the books beside it", function () {
   );
   assert.ok(
     suspenseRowCredits(activeMd).includes(
-      "lint ❓ Evidence Observation cites no Scenario (domain-purity)",
+      "fitness ❓ Evidence Observation cites no Scenario (domain-purity)",
     ),
     `expected the command check still banked on the suspense row. Without it the assertion ` +
       `above passes over a reader that discovered nothing. Got:\n${activeMd}`,
@@ -1973,7 +1969,7 @@ Then(
   function () {
     const credits = suspenseRowCredits(activeMd);
     const banked = USG_NEW_CLIENT_CANDIDATES.filter((handle) =>
-      credits.includes(`lint ❓ Evidence Observation cites no Scenario (${handle})`),
+      credits.includes(`fitness ❓ Evidence Observation cites no Scenario (${handle})`),
     );
     // THE EXACT SET, ROW-SCOPED. "Every step" is a claim about which steps reached the books and
     // where their credits landed; a whole-report `includes` cannot tell the suspense row from any

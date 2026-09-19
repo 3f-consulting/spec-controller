@@ -3,39 +3,37 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
 
   The FITNESS axis. Alongside the behavioural quality-checks (the unit / integration / e2e /
   performance tests, each an EXAMPLE with steps), a fitness scenario DECLARES one Evidence
-  Obligation: a whole-system characteristic held against a threshold. In this repository the
-  scenario carries `@fitness` and a freshly minted code, and which characteristic it is about and
-  which bar it is held to are fields of its row in `specController.fitnessChecks`, read by the
-  ledger.
+  Obligation: a whole-system property held against a threshold. In this repository the scenario
+  carries `@fitness` and a freshly minted code; its TITLE says what the check is about, and the
+  command that settles it is the `command` of its row in `specController.fitnessChecks`, read by
+  the ledger. One @fitness scenario is one check (3F-3525): nothing classifies it further.
 
   A FITNESS SCENARIO IS A DECLARED OBLIGATION RATHER THAN A TEST, AND NOTHING RUNS IT. It is
   authored like every other scenario in this corpus, steps and all, and what keeps it off the
   runners is its TAG rather than its shape. What a step may not do is GRADE THE RUN: "Then the
   check passes" would have one row raise the obligation and answer it — BOTH SIDES OF THE ENTRY,
-  which is the one thing double entry cannot allow. A characteristic a scenario was written to hold
-  is one it holds because the scenario says so, never because somebody gave it a runnable example.
+  which is the one thing double entry cannot allow. A property a scenario was written to hold is
+  one it holds because the scenario says so, never because somebody gave it a runnable example.
 
   ONE POSTING RULE, over both axes, and the credit's citation is ONE HOP. The check's step in the
   CI config carries its row's @SCN as the step's `id:`; the run's own record says what that step
   did; `balance` reads the citation straight off it. Nothing is matched back by name and nothing is
   resolved through a second artefact, so there is no static-axis posting rule left to be special.
 
-  THE COMPATIBILITY PATH, WHICH SEVERAL RULES BELOW ARE ABOUT. A target may instead register its
-  checks under `specController.checkRegistry` and tag its scenarios with a BARE CHECK TAG, and the
-  reader still honours it: a scenario carrying a registered bare check raises one fitness Evidence
-  Obligation for that check. It is a SUPPORTED LEGACY READING rather than the current one — a real
-  consumer reconciles through it today and stops when it migrates, at which point the reader's
-  support for it goes in a MAJOR-version removal. Where a Rule below is about that reading, its own
-  preamble says so.
+  THE RETIRED PATHS RAISE NOTHING. A target that still carries `specController.checkRegistry`, or
+  tags its scenarios with a bare check word, has declared no check by it: the registry is named on
+  the report as a retired key (3F-3161), and a bare check word raises no Evidence Obligation, since
+  no set of registered check tags is read any more (3F-3561). A check is its `@fitness` scenario and
+  the configured row naming it.
 
   WHAT THE FILE IS CALLED, AND WHY THE CODE IS NOT. The feature code is @LNT because a code, once
   allocated, is stable forever: it survives a rename and is never reused — a rule this repository
   now keeps by hand and nothing enforces, the registry table that reserved each retired code having
   left with the check that read it. The name it was allocated under — the retired `@lint=<handle>`
   form, where a scenario named a runnable script and the run was matched back to it BY NAME — is
-  the thing this feature retired, so the FILE took the right name and the code stayed put. `@lint`
-  itself survives here as ONE bare check among many: the style-lint one, a flat peer of
-  `@complexity` and `@typecheck`.
+  the thing this feature retired, so the FILE took the right name and the code stayed put. Bare
+  `@lint` survives as GRAMMAR alone — recognised, raising nothing, kept because an adopter's corpus
+  still writes it (3F-3525).
 
   A fitness obligation reconciles as evidence only when the check actually holds over the
   REAL source: its command must be a `run:` step in the CI config over the real tree — not
@@ -87,10 +85,10 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     THE RETIRED SPELLING NAMED A TECHNIQUE, NOT A CHECK. Under name-match, a scenario declared its
     fitness check by spelling a runnable script handle — `@lint=lint:complexity` — and the run was
     matched back to it by name. The bare-tags Correction (canon 2026-08-07) retired that spelling
-    when the registered bare check tag took over as the one way to declare a check; what this Rule
-    holds is only that the retired spelling stays dead on every path a reader might be tempted to
-    re-route it through, including one where the handle it names is itself a registered check's
-    own script.
+    when the bare check tag took over, and a check is now declared by a @fitness scenario and the
+    configured row naming it (3F-3525). What this Rule holds is only that the retired spelling stays
+    dead on every path a reader might be tempted to re-route it through, including one where a
+    configured row names the very scenario it sits on.
 
     @unit @integration @SCN-LNT-007
     Scenario: a @lint=<check> tag raises no Evidence Obligation — the retired form is inert
@@ -109,14 +107,13 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       tags` reds an unrecognised tag once its lint= clause goes), not a permanent red on the
       books.
 
-      THE HANDLE IS REGISTERED HERE ON PURPOSE. If the retired form were quietly re-routed through
-      the registry — read the handle, look up its check, raise THAT obligation — the corpus would go
-      on reconciling and nobody would learn the form had been retired. So the fixture registers
-      exactly the handle the tag names, and still expects nothing: the debit no longer cites, on any
-      path.
+      THE ROW IS CONFIGURED HERE ON PURPOSE. No set of registered check tags exists any more, so the
+      only route left that raises a fitness obligation is a configured row naming a @fitness
+      scenario. The fixture configures exactly that row for this scenario and still expects
+      nothing: the retired tag does not put a scenario on the fitness axis, on any path.
 
-      Given "lint:feature-codes" is registered as the fitness check "feature-codes"
-      And a scenario tagged with the retired @lint= form naming the runnable handle "lint:feature-codes"
+      Given a configured row names the scenario the retired tag sits on
+      And that scenario is tagged with the retired @lint= form naming the runnable handle "lint:feature-codes"
       When the scenario corpus is read
       Then the scenario raises no Evidence Obligation at all — the retired form names nothing
 
@@ -132,7 +129,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     unit test's credit on its scenario lands a fitness check's.
 
     EXACTLY ONE ROW IS THE WHOLE POINT. Under name-match one run posted to EVERY row naming
-    it, which is how a whole-system characteristic came to be smeared across behavioural
+    it, which is how a whole-system property came to be smeared across behavioural
     examples it was never about — complexity is a property of the codebase, and a violation
     points at a file, not at the scenario that happened to spell the script's name. One run is
     one credit and cites one scenario, so a second scenario that would have claimed the same
@@ -163,7 +160,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       would collapse the two.
 
       THE FITNESS OBLIGATION COMES FROM THE ROW, the unit obligation from the tier tag — two
-      readers, one scenario. Nothing here cites SCN-AAA-001 on the lint axis, so that obligation
+      readers, one scenario. Nothing here cites SCN-AAA-001 on the fitness axis, so that obligation
       reconciles missing exactly as any obligation with no matching observation does (@SCN-LDG-028);
       what this scenario holds is not which outcome the fitness axis lands on but that it lands on
       one independently of the unit axis beside it.
@@ -173,11 +170,11 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       TWO-AXIS row is what this reads. What is settled here is only that the reconciler answers
       each obligation a row raises on its own axis.
 
-      Given a configured row names the scenario "SCN-AAA-001" as the fitness check "unwired-check"
+      Given a configured row names the scenario "SCN-AAA-001"
       And that scenario also carries the unit tier tag
       And the unit test for that scenario passes
       When the configured fitness check and the unit result are observed and reconciled
-      Then the scenario's fitness obligation reconciles missing, naming the check "unwired-check"
+      Then the scenario's fitness obligation reconciles missing
       And its unit obligation reconciles satisfied, omitted from the reconciling items
 
   Rule: a fitness credit matching no Evidence Obligation lands in suspense or on a phantom row
@@ -219,127 +216,62 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       about it can balance. Naming the check is what makes the row actionable: without it a reader
       learns only that some run cited a scenario that is gone.
 
-      Given a configured row names the scenario "SCN-AAA-001" as the fitness check "feature-codes"
-      And a @fitness scenario in the corpus carries a different check entirely
+      Given a configured row names the scenario "SCN-AAA-001"
+      And a @fitness scenario in the corpus carries a different @SCN entirely
       And a CI step names "lint:feature-codes" as answering the row "SCN-AAA-001"
       When the fitness check citing a configured row is observed and reconciled
       Then the run's credit posts to a phantom row for the @SCN it cited, naming the check "lint:feature-codes"
       And no scenario's row holds that credit
 
-  Rule: a fitness credit citing a real row at a check that row never named is no-evidence-obligation
+  Rule: a @fitness scenario is one check: its quality check is fitness, and its obligation is keyed by its own @SCN
 
-    THE SAME OUTCOME THE RUNTIME AXIS ALREADY PRODUCES, reached on a second axis. @SCN-LDG-008
-    settled what happens when a credit cites a REAL scenario at a quality-check that scenario never
-    named: it posts to that row against no obligation, and the row carries one credit-only
-    no-evidence-obligation item per such credit. Nothing about that rule is fitness-specific — what
-    was fitness-specific was that the fitness axis could not REACH it.
+    ONE @fitness SCENARIO IS ONE CHECK (3F-3525; canon fitness-evidence.md, "The tag is the quality
+    check; the row is the command"). Its quality check is fitness, exactly as unit is for a @unit
+    scenario: the obligation is raised by the tag and keyed by the scenario's own @SCN, and the
+    credit is the CI step whose id: is that @SCN. What a check is ABOUT is the scenario's title.
 
-    IT IS NOT THE UNMATCHED-CREDIT RULE ABOVE, and the distinction is the whole reason this sits in
-    its own Rule. Suspense and the phantom row are where a credit goes when it reaches NO real row —
-    it cited nothing, or it cited an @SCN the corpus does not carry. This credit reached a real row.
-    The row exists, the citation is right, and the only thing wrong is that the check is not one
-    that row owes. Filing it as a third destination of "the credit found nowhere to land" would
-    describe a credit that landed.
+    THE CHARACTERISTIC THAT ONCE KEYED IT IS RETIRED. The tag collapsed to `@fitness` (3F-3138) and
+    the word it carried — `complexity`, `mutation` — moved onto the configured row, where it went on
+    keying the obligation and the credit. Nothing needed it: one scenario is one check, so its @SCN
+    already says everything a word could. A row still carrying the word is read as any row is, and
+    the report names the key as retired.
 
-    WHY IT WAS UNREACHABLE UNTIL THE MATCH COMPARED CHECK TAGS. While a fitness credit was matched to its obligation
-    by the AXIS alone, any lint obligation answered any lint credit, so a credit landing on a real
-    row always matched something and this shape could not occur. Making the match compare CHECK TAGS
-    — the @SCN picks the row, the tag picks the obligation — created a credit that reaches a real
-    row and matches nothing on it. That was half a correction: the credit-side catch was still keyed
-    on the AXIS, so the credit it newly failed to match, it also newly failed to catch, and the
-    credit reconciled to nothing at all. Measured over a genuine watermelon, the run read balanced.
+    THE ROW IS THE CONSUMER'S DECLARATION OF A CHECK: the @SCN it is about and the command that is
+    the check. The command carries its own scope — `eslint src/` states which tree in the same
+    string — and is the consumer's pipeline's business; the ledger reads the @SCN.
 
-    @unit @integration @SCN-LNT-013
-    Scenario: a fitness credit citing a real row that does not name its check posts there as no-evidence-obligation
-
-      THE CREDIT REACHED A ROW AND ANSWERED NOTHING ON IT, so it surfaces as the credit-only item
-      that fact already has a name for. Every Evidence Observation posts somewhere and never
-      nowhere.
-
-      THE ROW'S OWN OBLIGATION IS UNTOUCHED BY IT, which is the half that keeps the two facts apart.
-      The scenario still owes the check it named and still reads whatever its own run says; the
-      stray credit is a second, independent item beside it. A reader who saw one row could not tell
-      which of the two things went wrong.
-
-      Given a fitness scenario "SCN-AAA-001" raises the check "complexity" and no other
-      And a run of the check "typecheck" cites "SCN-AAA-001"
-      When that corpus and those runs are reconciled
-      Then the row "SCN-AAA-001" holds a no-evidence-obligation item naming the check "typecheck"
-      And the row's own "complexity" obligation reconciles beside it, untouched
-
-    @unit @integration @SCN-LNT-014
-    Scenario: a balanced row cannot absorb a stray fitness credit — the run that read green over a watermelon reds
-
-      THE FAULT AT ITS MOST DANGEROUS, and the reason this is a slice rather than a tidy-up. When
-      the row's OWN obligation is satisfied, an absorbed credit leaves nothing behind at all: no
-      reconciling item, a balanced row, a balanced run, exit 0. Measured before the fix, over a
-      credit carrying a genuine watermelon — a check that exists and CI does not run — the tool
-      reported the tree as balanced. That is precisely the report this tool exists to refuse,
-      produced by the tool.
-
-      THE VERDICT IS THE ASSERTION, not the item. @SCN-LNT-013 pins that the credit becomes an item;
-      what is pinned here is that the item reaches the ROLL-UP — a row otherwise entirely clean is
-      made out-of-balance by a credit it never asked for, and the run's exit code follows. Asserting
-      the item alone would leave the green build unexplained, which is why the whole-run reading is
-      asserted and not only the row's.
-
-      Given a fitness scenario "SCN-AAA-001" raises the check "complexity" and no other
-      And the "complexity" run cites "SCN-AAA-001" and is wired into CI over the real source
-      And a run of the check "typecheck" cites "SCN-AAA-001" but CI does not run it
-      When that corpus and those runs are reconciled
-      Then the row "SCN-AAA-001" is out-of-balance over the stray credit alone
-      And the whole run reads out-of-balance
-
-  Rule: a converted check names its characteristic in data, and the tag names only the axis
-
-    THE COLLAPSE, WALKED THROUGH TWO CHECKS (3F-3138, the walking skeleton of 3F-3139). A
-    fitness scenario has carried a bare characteristic tag — `@complexity`, `@mutation` — and
-    that one token answered two questions at once: HOW is this claim proved, and WHAT is it
-    about. The tier tags answer only the first (`@unit` says nothing about the subject), and
-    nobody mints `@unit-parser`; fitness has been the exception and the exception was never
-    argued for. So the tag collapses to `@fitness` — one word for the whole axis, because post
-    conversion every fitness check runs under cucumber and posts through one report — and the
-    CHARACTERISTIC moves into a configured row, where it stays a first-class word the roll-up
-    still groups by.
-
-    THE ROW IS THE WHOLE OF WHAT A CHECK SAYS ABOUT ITSELF, AND IT IS THREE FIELDS: the `@SCN`
-    it is about, the characteristic it asserts, and the command that returns a violation.
-    Nothing else is needed, because the command carries its own scope — `eslint src/` states
-    which tree in the same string.
-
-    WHY THE CORPUS IS STILL NEEDED WHEN THE ROW ALREADY CARRIES ALL THREE. A linter reports
-    findings only, so its silence is ambiguous between nothing-wrong and nothing-looked.
-    Cucumber reports every scenario it ran, pass or fail — that enumeration is the thing the
-    fitness axis has never had, and the corpus is how a check acquires it. Reading the rows
-    alone and skipping the corpus would put this axis back to single entry.
+    WHY THE CORPUS IS STILL NEEDED WHEN THE ROW ALREADY NAMES THE CHECK. A linter reports findings
+    only, so its silence is ambiguous between nothing-wrong and nothing-looked. The corpus is where
+    a check's scenario is written, and the scenario is what raises the obligation a run answers.
+    Reading the rows alone and skipping the corpus would put this axis back to single entry.
 
     @unit @integration @SCN-LNT-018
-    Scenario: a @fitness scenario raises its Evidence Obligation for the characteristic its configured row names
+    Scenario: a @fitness scenario a configured row names raises exactly one fitness Evidence Obligation keyed by its own @SCN, and two whose rows once shared a word raise two
 
-      THE OBLIGATION IS THE SAME ONE A BARE CHECK TAG RAISES, and that is what keeps every reader
-      downstream untouched — the pair key, the reconciler's static arm, the roll-up. What changed is
-      only where the word came from: the tag says which axis the scenario is on, the configured row
-      says which characteristic it is about.
+      KEYED BY THE @SCN, SO A SHARED WORD CANNOT MERGE TWO CHECKS. This repository's own rows once
+      shared four words between twelve checks (`ci-run-time` twice, `typecheck` twice); each check
+      is its own scenario and owes its own obligation, and a run's step answers only the one
+      whose @SCN it carries (@SCN-LDG-035).
 
       OWED ONCE, HOWEVER MANY TIMES THE AXIS TAG REACHES THE ROW. A scenario's effective tags are
       its own plus its Rule's and its Feature's, so the axis tag can arrive twice; two obligations
-      for one characteristic would leave the second missing for ever, since one run is one credit
-      and can cite one @SCN.
+      for one check would leave the second missing for ever, since one run is one credit and can
+      cite one @SCN.
 
-      Given a configured row names the scenario "SCN-AAA-001" as the fitness check "complexity"
-      And that scenario carries the bare fitness axis tag and no characteristic tag
-      And the axis tag reaches it a second time, hoisted onto its Rule
+      Given two @fitness scenarios "SCN-AAA-001" and "SCN-AAA-002", each named by its own configured row
+      And both rows still carry the same retired characteristic word "typecheck"
+      And the axis tag reaches "SCN-AAA-001" a second time, hoisted onto its Rule
       When the scenario corpus is read
-      Then that scenario raises exactly one Evidence Obligation, naming the fitness check "complexity"
+      Then each scenario raises exactly one Evidence Obligation, at the quality check "fitness", naming no characteristic
 
     @unit @integration @SCN-LNT-020
     Scenario: a @fitness scenario no configured row names raises no Evidence Obligation and is reported as unconfigured
 
-      IT CANNOT RAISE ONE, AND REACHING FOR A NEAR CHARACTERISTIC IS THE FAULT RATHER THAN THE
-      CURE. A scenario carrying the bare axis tag whose @SCN no configured row names has said
-      which axis it is on and then said nothing about what it asserts. There is no characteristic
-      to raise an Evidence Obligation for, and the nearest word in the portfolio roster is a
-      courtesy that roster already refuses.
+      IT CANNOT RAISE ONE, BECAUSE NOTHING HAS DECLARED IT A CHECK. The row is the consumer's
+      declaration: this @SCN is a configured check, and this is the command that settles it. A
+      scenario carrying the axis tag that no row names has said which axis it is on and then
+      nothing else — half-converted, the tag written and the row never — so there is nothing for a
+      run to answer and no command a reader could be sent to.
 
       SILENCE IS THE WRONG ANSWER TOO, so it reds — on the outcome canon already carries for this
       shape rather than on a new one. The scenario is real, no Evidence Obligation was raised and
@@ -372,9 +304,9 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     Evidence Obligation nothing observed. Only the first was ever performed.
 
     THE TWO DIRECTIONS EARN DIFFERENT RECORDS, AND THE ASYMMETRY IS THE FACTS' OWN RATHER THAN AN
-    INCONSISTENCY. A `@fitness` scenario no row names has no characteristic, so there is nothing to
-    put on the books and the census is where it is named. A row the corpus has no scenario for
-    NAMES one, so there is a debit — which is why this direction is a ledger row and its mirror is
+    INCONSISTENCY. A `@fitness` scenario no row names is not a declared check, so there is nothing
+    to put on the books and the census is where it is named. A row IS that declaration, so there
+    is a debit — which is why this direction is a ledger row and its mirror is
     a line of prose.
 
     @unit @integration @SCN-LNT-034
@@ -382,8 +314,8 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
 
       THE DEBIT IS RAISED FROM THE ROW AND NO RUN INPUT DECIDES WHETHER IT EXISTS. The manifest and
       the corpus disagree whatever a run did, so the first reading is handed no CI run record at
-      all — and the row is on the books anyway, out of balance on its own, at the characteristic the
-      row names. Every other account of that target agrees, so the run fails for this row and for
+      all — and the row is on the books anyway, out of balance on its own, under the @SCN the row
+      names. Every other account of that target agrees, so the run fails for this row and for
       nothing else, which is the sharpest form the claim has.
 
       AND NO CREDIT CAN SETTLE IT, WHICH IS WHY THERE IS A SECOND READING. The row is not in the set
@@ -533,12 +465,12 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
 
   Rule: a running check's citation is the code its own CI step carries, resolved against the configured row that code names
 
-    THE ROW SUPPLIES THE CHARACTERISTIC AND THE STEP SUPPLIES THE CODE, WHICH IS WHY NEITHER HALF
-    IS TAKEN OFF THE SCRIPT'S NAME. A CI step can state which row its check answers and nothing
-    else: an id is a code, never a characteristic, and reading a characteristic off the handle that
-    ran would be the name-match this axis retired, in a new spelling. So the code is read from the
-    step and the characteristic from the row that code names — two facts from two places — and a
-    code no configured row answers reaches neither.
+    THE STEP SUPPLIES THE CODE AND THE ROW ANSWERS FOR IT, WHICH IS WHY NEITHER IS TAKEN OFF THE
+    SCRIPT'S NAME. A CI step can state which row its check answers and nothing else: an id is a
+    code, and reading a check's identity off the handle that ran would be the name-match this axis
+    retired, in a new spelling. So the code is read from the step and checked against the target's
+    configured rows — one term, from the consumer's own two documents — and a code no configured
+    row answers cites nothing.
 
     A STEP CARRYING NO CODE STILL CITES NOTHING, and that is the state above this one rather than a
     gap in it. A consumer who has annotated nothing runs checks that post to suspense and answer no
@@ -661,9 +593,8 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
     Scenario: a static check's step the run's record says succeeded credits its own row, citing its own @SCN
 
       THE CREDIT ARRIVES ALREADY CITING, so there is nothing left to resolve. The step's `id:` IS
-      the code of the row that step answers, and the row keyed by that code carries the
-      characteristic — two terms from two places, both read off what was observed. No check registry
-      is consulted and no corpus lookup stands behind it: the two hops a DISCOVERED check needs are
+      the code of the row that step answers, read off what was observed. No check registry is
+      consulted and no corpus lookup stands behind it: the two hops a DISCOVERED check needs are
       the two this route does not have.
 
       AND THE TWO FACTS SUCH A CREDIT CARRIES ARE OBSERVED RATHER THAN INFERRED. On the discovered
@@ -675,8 +606,8 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
 
       EACH ROW IS CREDITED BY ITS OWN STEP, WHICH IS WHY TWO ROWS ARE READ FROM ONE RECORD. A reader
       posting one entry's credit to every configured row, and a reader crossing the two, both leave
-      every row balanced and say so with the same verdict — so what discriminates is the
-      characteristic each row was credited FOR, asserted per row rather than counted.
+      every row balanced and say so with the same verdict — so what discriminates is the @SCN
+      each row's credit cites, asserted per row rather than counted.
 
       AND THE STEPS THAT ARE NOT CHECKS ARE SILENT. The record also holds the step that wrote it, and
       no configured row answers that id, so nothing anywhere on the ledger is about it. A pipeline
@@ -686,7 +617,7 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       Given a target whose configured rows name a static fitness check for each of the two scenarios its corpus carries, and no check registry naming either
       And its CI run's record says both of those checks' steps succeeded, beside the step that wrote the record
       When that target's evidence is reconciled with the record its own CI run wrote
-      Then each row is credited for the characteristic its own row names, both Evidence Obligations read satisfied, and the run balances
+      Then each row is credited by the step citing its own @SCN, both Evidence Obligations read satisfied, and the run balances
 
     @unit @integration @SCN-LNT-028
     Scenario: a check step that failed posts a failing observation, out of balance whatever the job concluded
@@ -785,11 +716,12 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       When the published engine reconciles each pair
       Then the check's obligation reads failing, carrying the failed credit, and the ledger is out of balance, both ways round
 
-  Rule: a configured row names no bar, and a bar a row still carries is named as a retired key
+  Rule: a configured row names no bar and no characteristic, and either one a row still carries is named as a retired key
 
-    A ROW IS ITS @SCN, ITS CHARACTERISTIC AND ITS COMMAND, and what answers it is its own step's
-    outcome in the run's record. A number written on a row is a bar, and nothing reads a bar any
-    more: the check's own exit code on its own step is the verdict (3F-3506).
+    A ROW IS ITS @SCN AND ITS COMMAND, and what answers it is its own step's outcome in the run's
+    record. A number written on a row is a bar, and nothing reads a bar any more: the check's own
+    exit code on its own step is the verdict (3F-3506). A word written on a row was a
+    characteristic, and nothing reads one of those either (3F-3525).
 
     NAMED, NEVER DROPPED SILENTLY. A consumer who wrote a bar on a row while bars were read
     believes it still holds their check to that number. So the report names the bar, with the row
@@ -808,3 +740,19 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       When that target's reconciliation report is rendered with the record its own CI run wrote
       Then the report names each bar a configured row carries as a retired key, with the row it sits on
       And each row is credited by its own step's outcome, both Evidence Obligations read satisfied, and the run balances
+
+    @unit @integration @SCN-LNT-039
+    Scenario: a configured row still carrying a characteristic is named on the report as carrying a retired key, and is credited exactly as a row carrying none
+
+      A CHARACTERISTIC IS THE SECOND RETIRED ROW KEY (3F-3525). One @fitness scenario is one check,
+      keyed by its own @SCN, so the word a row once carried says nothing the ledger reads. The
+      reader does NOT stop accepting it: a consumer's rows carry it today, and a reader that
+      dropped such a row would take their checks dark. It is read exactly as a row carrying none,
+      and the report names the key so the consumer can retire it in their own time.
+
+      Given a target whose configured row for its @fitness scenario still carries a characteristic
+      And its CI run's record says that check's step succeeded
+      When the characteristic-carrying target's reconciliation report is rendered with the record its own CI run wrote
+      Then the report names the characteristic the row carries as a retired key, with the row it sits on
+      And that row is credited by its own step's outcome, its Evidence Obligation reads satisfied, and the run balances at exit 0
+      And the same target with the characteristic removed reconciles to the same ledger and the same exit code, naming no retired key

@@ -20,7 +20,7 @@
  *
  * This re-homes the retired census's identity coverage (@SCN-LDG-008 / @SCN-RPT-017/023) onto the
  * fold: the no-evidence-obligation credit posts to its real scenario's account (onScenario), the broken credit
- * moves to suspense, the phantom to its invented account, and the lint credit is skipped.
+ * moves to suspense, the phantom to its invented account, and the fitness credit is skipped.
  *
  * Parent: (@SCN-RMD-003) — the runtime-observation tally is the Ledger's own fold.
  */
@@ -35,7 +35,7 @@ describe("[SCN-RMD-003] runtimeObservationTally folds the posted credits by scen
   // A SPANNING corpus reconciling to every credit account: SCN-A raises unit (2 matched credits)
   // and is ALSO cited at integration it never named (1 no-evidence-obligation); SCN-PHX-999 matches no scenario (1
   // phantom); a null-scnId credit cites no scenario (1 suspense); an ambiguous cucumber step is
-  // broken (1 suspense — it named no test); a static-check credit rides the `lint` quality-check
+  // broken (1 suspense — it named no test); a static-check credit rides the `fitness` quality-check
   // (must be SKIPPED). Built through reconcile(), so every row is a shape the pipeline emits.
   const scenarios: Scenario[] = [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }];
   const observations: EvidenceObservation[] = [
@@ -45,7 +45,7 @@ describe("[SCN-RMD-003] runtimeObservationTally folds the posted credits by scen
     { qualityCheck: "unit", scnId: "SCN-PHX-999", status: "passed" }, // PHANTOM
     { qualityCheck: "integration", scnId: null, status: "passed" }, // SUSPENSE (uncited)
     { qualityCheck: "e2e", scnId: "SCN-A", status: "failed", broken: true, locator: "features/x.feature" }, // SUSPENSE (broken)
-    { qualityCheck: "lint", staticCheck: "guard-x", exists: true, enforcedOverRealSource: true }, // SKIPPED (the `lint` quality-check)
+    { qualityCheck: "fitness", staticCheck: "guard-x", exists: true, enforcedOverRealSource: true }, // SKIPPED (the `fitness` quality-check)
   ];
   const ledger: Ledger = reconcile(scenarios, observations);
   const tally = runtimeObservationTally(ledger);
@@ -60,9 +60,9 @@ describe("[SCN-RMD-003] runtimeObservationTally folds the posted credits by scen
   // symptom RPT-017 names, and reds RPT-017's own @integration arm at the same step. The leaf
   // citation WINS over the describe's (@SCN-LDG-016, most-specific-citation-wins), so this credit
   // posts to RPT-017; @SCN-RMD-003 keeps the other three `it`s.
-  it("[SCN-RPT-017] counts raw per quality-check over ALL runtime credits, SKIPPING the lint credit", () => {
+  it("[SCN-RPT-017] counts raw per quality-check over ALL runtime credits, SKIPPING the fitness credit", () => {
     // unit: 2 (SCN-A) + 1 (phantom) = 3; integration: 1 (no-evidence-obligation) + 1 (suspense) = 2; e2e: 1
-    // (broken, on suspense). The lint guard credit is not counted — this is the runtime axis.
+    // (broken, on suspense). The fitness check credit is not counted — this is the runtime axis.
     expect(tally.rawByRuntimeQualityCheck).toEqual({ unit: 3, integration: 2, e2e: 1, performance: 0 });
   });
 

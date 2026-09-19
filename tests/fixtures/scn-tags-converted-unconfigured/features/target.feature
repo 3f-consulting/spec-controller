@@ -6,7 +6,7 @@ Feature: a target whose fitness checks are converted scenarios
 
   Both scenarios below carry the fitness axis tag and their @SCN and nothing else, which is
   the whole of what a converted check's scenario says about itself: the tag names the axis and
-  the CHARACTERISTIC is on the configured row. Neither names a tier, and neither carries a bare
+  the COMMAND is on the configured row. Neither names a tier, and neither carries a bare
   check tag any configured row names — so both red the shipped command as tags that mean nothing
   here unless the axis word is grammar in its own right.
 

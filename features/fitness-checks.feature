@@ -4,8 +4,8 @@ Feature: The fitness checks this repository configures, one scenario per row
   HOW A CHECK IS ADDED HERE, IN TWO STEPS — write the scenario, add the row. The scenario is
   authored like every other scenario in this corpus: a tag line carrying `@fitness` and a freshly
   minted code, a title saying what the check asserts, and steps saying it in Given/When/Then. The
-  row goes in `specController.fitnessChecks` in package.json, naming that same code, the
-  characteristic the check is about, and the command that runs it. Neither half is derived from the
+  row goes in `specController.fitnessChecks` in package.json, naming that same code and the
+  command that runs it. Neither half is derived from the
   other, which is what makes them two books rather than one read twice: a scenario derived from the
   row it is reconciled against could never disagree with it.
 
@@ -33,9 +33,9 @@ Feature: The fitness checks this repository configures, one scenario per row
   with it, say — therefore keeps that code while its scenario moves here, and is re-minted only by
   the change that can move every citing surface with it.
 
-  THE TAG NAMES THE AXIS AND THE ROW NAMES THE SUBJECT. Every scenario here carries `@fitness` and
-  no characteristic tag: which characteristic a check asserts, and which bar it is held to, are read
-  from its row by the ledger.
+  THE TAG NAMES THE AXIS AND THE TITLE NAMES THE CHECK. Every scenario here carries `@fitness` and
+  nothing else about its subject: what the check asserts is its title's to say, its `@SCN` is its
+  identity, and the command that settles it is on its row (3F-3525).
 
   AND WHAT KEEPS A SCENARIO HERE OFF THE RUNNERS IS ITS TAG, NEVER ITS SHAPE. `@fitness` sits
   outside the Cucumber profile's `@integration or @e2e or @performance` exactly as `@unit` does, so

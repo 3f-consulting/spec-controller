@@ -14,8 +14,8 @@ Feature: a pending-tag fixture target
 
   Rule: each recognised quality-check has a pending-tagged scenario
 
-    @lintpending @SCN-PDG-001
-    Scenario: a lint obligation deferred pending
+    @fitnesspending @SCN-PDG-001
+    Scenario: a fitness obligation deferred pending
       Given a fixture step
 
     @unitpending @SCN-PDG-002

@@ -68,10 +68,9 @@ function reconcile(barred: boolean): EvidenceReconciliation {
     packageJson: {
       specController: {
         fitnessChecks: [
-          { scn: "SCN-CVT-001", characteristic: "complexity", command: "eslint", ...bars({ atMost: 10 }) },
+          { scn: "SCN-CVT-001", command: "eslint", ...bars({ atMost: 10 }) },
           {
             scn: "SCN-CVT-002",
-            characteristic: "mutation",
             command: "stryker run",
             ...bars({ atLeast: { mutationGate: "domain" }, atMost: 100 }),
           },
@@ -118,8 +117,8 @@ describe("[SCN-LNT-035] a bar a configured row still carries is named as a retir
         row.qualityCheckReconciliations.map((item) => [item.staticCheck, item.outcome, item.evidenceObligation]),
       ])
     ).toEqual([
-      ["SCN-CVT-001", "balanced", [["complexity", "satisfied", { qualityCheck: "lint", staticCheck: "complexity" }]]],
-      ["SCN-CVT-002", "balanced", [["mutation", "satisfied", { qualityCheck: "lint", staticCheck: "mutation" }]]],
+      ["SCN-CVT-001", "balanced", [[undefined, "satisfied", { qualityCheck: "fitness" }]]],
+      ["SCN-CVT-002", "balanced", [[undefined, "satisfied", { qualityCheck: "fitness" }]]],
     ]);
   });
 

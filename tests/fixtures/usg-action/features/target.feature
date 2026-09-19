@@ -16,7 +16,7 @@ Feature: a fixture target whose CI runs a quality check as an action
   and the first run it gets has to say the action ran and nothing cites it.
 
   THE COMMAND CHECK IS THE CONTROL, and it reaches the suspense row for the one reason the posting
-  rule allows: no `specController.fitnessChecks` row names domain-purity's characteristic and no
+  rule allows: no `specController.fitnessChecks` row names domain-purity's scenario and no
   scenario below carries the tag such a row would have named. Without a second check still on
   the books, "the action is an uncited check" is satisfied by a reader that discovered nothing —
   and a reader that had traded its run: steps for uses: steps would satisfy it too.

@@ -11,17 +11,14 @@
     "fitnessChecks": [
       {
         "scn": "SCN-CVT-001",
-        "characteristic": "complexity",
         "command": "pnpm lint:alpha"
       },
       {
         "scn": "SCN-CVT-002",
-        "characteristic": "traceability",
         "command": "pnpm lint:beta"
       },
       {
         "scn": "SCN-CVT-003",
-        "characteristic": "tech-conformance",
         "command": "pnpm lint:gamma"
       }
     ]

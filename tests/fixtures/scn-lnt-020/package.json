@@ -8,7 +8,6 @@
     "fitnessChecks": [
       {
         "scn": "SCN-HCV-001",
-        "characteristic": "complexity",
         "command": "eslint"
       }
     ],

@@ -7,10 +7,10 @@
 
 import type { Outcome, QualityCheckReconciliation } from "./qualityCheckReconciliation.js";
 import type { ScenarioReconciliation } from "./scenarioReconciliation.js";
-// The row-level static-check cut (3F-2203) — the Ledger-wide lint list is built ON it, so the
+// The row-level static-check cut (3F-2203) — the Ledger-wide fitness list is built ON it, so the
 // obligation-side rule is stated once, at the row.
 import { staticCheckReconciliationsOf, isScenario } from "./scenarioReconciliation.js";
-import type { RuntimeQualityCheck, StaticCheckEvidenceObservation } from "./journal.js";
+import type { RuntimeQualityCheck, FitnessEvidenceObservation } from "./journal.js";
 
 /**
  * THE LEDGER — the accounts with their POSTED ENTRIES. Canon (double-entry-manifesto, chain
@@ -184,20 +184,20 @@ export function brokenItemsOf(reconciliation: Ledger): QualityCheckReconciliatio
 }
 
 /**
- * The OBLIGATION-SIDE static-check sub-rows across the whole Ledger (3F-2203) — each `lint` Quality
+ * The OBLIGATION-SIDE static-check sub-rows across the whole Ledger (3F-2203) — each `fitness` Quality
  * Check Reconciliation with the scnId of the row that names it, in row-then-document order.
  *
- * SCENARIO ROWS ONLY. A `lint` obligation is obligation-side, so a phantom or suspense row can carry
- * none; the suspense row's lint CREDIT (a no-evidence-obligation static check, `cites-no-scenario`) is an
- * observation, not an obligation, and must never inflate the obligation-side lint total.
+ * SCENARIO ROWS ONLY. A `fitness` obligation is obligation-side, so a phantom or suspense row can carry
+ * none; the suspense row's fitness CREDIT (a no-evidence-obligation static check, `cites-no-scenario`) is an
+ * observation, not an obligation, and must never inflate the obligation-side fitness total.
  *
- * ONE COPY, BY CONSTRUCTION. That scenario-rows-only filter plus the lint cut existed TWICE,
- * character-identical — here in `lintTally` and in the markdown's `### Lint evidence obligations`
+ * ONE COPY, BY CONSTRUCTION. That scenario-rows-only filter plus the fitness cut existed TWICE,
+ * character-identical — here in `fitnessTally` and in the markdown's `### Fitness evidence obligations`
  * table. They agreed by copy-paste, not construction: either could have grown a clause alone and
  * nothing would have redded. Same anaemia, same cure as `evidenceObligationPairsOf` and
  * the corpus's own fitness obligations; the tally and the table are now two readings of ONE list.
  */
-export function lintReconciliationsOf(
+export function fitnessReconciliationsOf(
   reconciliation: Ledger
 ): { scnId: string; reconciliation: QualityCheckReconciliation }[] {
   return reconciliation.scenarioReconciliations
@@ -211,7 +211,7 @@ export function lintReconciliationsOf(
 // THE LEDGER'S SUMMARY TALLY (3F-2000, Read @SCN-RMD-001) — co-located here because
 // "the summary is the totals" (double-entry-manifesto): the Ledger computes how many balance
 // because it IS the balance. These are the LEDGER-PURE derivations of the report's `summary`
-// (the verdict tally, `byOutcome`, `missingByQualityCheck`, `pending`, and the static-only lint
+// (the verdict tally, `byOutcome`, `missingByQualityCheck`, `pending`, and the static-only fitness
 // tally) — pure functions over `Ledger`, moved out of `assemble/report.ts`'s `buildSummary` /
 // `buildLintTally`. The census pass-throughs (`testVolume`, `staticChecks`) are NOT Ledger-pure
 // and stay in the assembler, which merges this tally with them.
@@ -254,7 +254,7 @@ export interface ScenarioReconciliationTotals {
   suspense: number;
 }
 
-/** A missing bucket — a rendered subject (a quality-check: `lint` or a runtime quality-check) and its count. */
+/** A missing bucket — a rendered subject (a quality-check: `fitness` or a runtime quality-check) and its count. */
 export interface MissingByQualityCheck {
   subject: string;
   count: number;
@@ -274,12 +274,12 @@ export interface EvidenceObligationTotals {
 }
 
 /**
- * The materialised lint tally (RMD-005) — the static-only evidenceObligation tally the markdown's
- * `### Lint evidence obligations` total line derives: how many `@lint` (static) evidence obligations
+ * The materialised fitness tally (RMD-005) — the static-only evidenceObligation tally the markdown's
+ * `### Fitness evidence obligations` total line derives: how many fitness evidence obligations
  * reconcile satisfied (balanced), out of the total raised. `summary.byOutcome` is
- * kind-agnostic and cannot express the static-only lint total, so it is materialised explicitly.
+ * kind-agnostic and cannot express the static-only fitness total, so it is materialised explicitly.
  */
-export interface LintTally {
+export interface FitnessTally {
   satisfied: number;
   total: number;
 }
@@ -293,11 +293,11 @@ export interface LedgerTally {
   scenarioReconciliations: ScenarioReconciliationTotals;
   evidenceObligations: EvidenceObligationTotals;
   pending: number;
-  lint: LintTally;
+  fitness: FitnessTally;
 }
 
-/** The canonical quality-check subject order (lint first, then the runtime quality-checks). */
-const QUALITY_CHECK_ORDER: readonly string[] = ["lint", "unit", "integration", "e2e", "performance"];
+/** The canonical quality-check subject order (fitness first, then the runtime quality-checks). */
+const QUALITY_CHECK_ORDER: readonly string[] = ["fitness", "unit", "integration", "e2e", "performance"];
 
 /**
  * Tally the LEDGER-PURE summary totals from the balance — the aggregate the markdown's
@@ -313,13 +313,13 @@ export function ledgerTally(balance: Ledger): LedgerTally {
     // The Pending Items tally (@SCN-PND-011) — its OWN summary count, SEPARATE from the
     // scenario verdict counts and the evidence-obligation counts. A Pending Item is deferred,
     // not out-of-balance, so it is never one of the `OUT_OF_BALANCE_OUTCOMES` (never a `byOutcome`
-    // leaf of its own, at any leaf count). Always present (a pure balance derive, like `lint`);
+    // leaf of its own, at any leaf count). Always present (a pure balance derive, like `fitness`);
     // reads 0 when no scenario raises a pending obligation.
     pending,
-    // The static-only lint tally (RMD-005) — replicates markdown's `countStaticEvidenceObligations`
+    // The static-only fitness tally (RMD-005) — replicates markdown's `countStaticEvidenceObligations`
     // (static evidenceObligations balanced / total). Always present (a pure balance derive); `byOutcome`
     // is kind-agnostic and cannot evidenceObservations this static-only cut.
-    lint: lintTally(balance),
+    fitness: fitnessTally(balance),
   };
 }
 
@@ -408,7 +408,7 @@ function evidenceObligationTotals(balance: Ledger): EvidenceObligationTotals {
   for (const s of balance.scenarioReconciliations) {
     for (const o of s.qualityCheckReconciliations) {
       byOutcome[o.outcome]++;
-      // The subject IS the flat quality-check — `lint` or a runtime quality-check. The
+      // The subject IS the flat quality-check — `fitness` or a runtime quality-check. The
       // both-missing item carries no quality-check (it is not a `missing` evidence obligation), so the
       // guard both narrows the type and keeps it out of the missing split.
       if (o.outcome === "missing" && o.qualityCheck) {
@@ -428,20 +428,20 @@ function evidenceObligationTotals(balance: Ledger): EvidenceObligationTotals {
 }
 
 /**
- * The static-only lint tally (RMD-005) — how many `@lint` (static) evidence obligations reconcile
+ * The static-only fitness tally (RMD-005) — how many fitness evidence obligations reconcile
  * satisfied (`balanced`), out of the total raised. Byte-for-byte the markdown's
  * `countStaticEvidenceObligations` (`src/render/markdown.ts`), so slice 2 can read `satisfied` / `total`
  * with zero byte change. `summary.byOutcome` counts ALL kinds, so the static-only total is derived
  * here explicitly.
  */
-export function lintTally(balance: Ledger): LintTally {
-  // TWO READINGS OF ONE LIST (3F-2203) — the obligation-side lint sub-rows come from
-  // `lintReconciliationsOf`, the same list the markdown's lint table renders. The
+export function fitnessTally(balance: Ledger): FitnessTally {
+  // TWO READINGS OF ONE LIST (3F-2203) — the obligation-side fitness sub-rows come from
+  // `fitnessReconciliationsOf`, the same list the markdown's fitness table renders. The
   // scenario-rows-only cut lives there, once, so the tally and the table cannot disagree.
-  const lint = lintReconciliationsOf(balance);
+  const fitness = fitnessReconciliationsOf(balance);
   return {
-    satisfied: lint.filter(({ reconciliation }) => reconciliation.outcome === "satisfied").length,
-    total: lint.length,
+    satisfied: fitness.filter(({ reconciliation }) => reconciliation.outcome === "satisfied").length,
+    total: fitness.length,
   };
 }
 
@@ -464,7 +464,7 @@ export const RUNTIME_QUALITY_CHECKS: readonly RuntimeQualityCheck[] = ["unit", "
  * The materialised runtime-observation totals — the aggregate the markdown's `### Test volume`
  * cut derives, carried AS DATA (the MATERIALISE ruling). Two keyings of the SAME posted credits:
  *   - `rawByRuntimeQualityCheck` — the per-quality-check evidence-observation total over ALL
- *     runtime credits, regardless of `@SCN` (the runtime axis; `lint` credits are not counted).
+ *     runtime credits, regardless of `@SCN` (the runtime axis; `fitness` credits are not counted).
  *   - the per-scenario-kind counts — how many credits posted to a scenario's account
  *     (`onScenario`), to an invented `phantom-scenario` account (`onPhantomScenario`), and to the
  *     `suspense-scenario` account (`onSuspenseScenario`).
@@ -506,7 +506,7 @@ export interface RuntimeObservationTally {
  * with the verdict — the views (Test volume, the per-quality-check table) are projections of the
  * same rows, not a parallel opinion kept in step.
  *
- * Static check (`lint`) credits are SKIPPED, ON THE CHECK and never on the absence of a citation
+ * Static check (`fitness`) credits are SKIPPED, ON THE CHECK and never on the absence of a citation
  * (@SCN-RPT-023). A fitness credit now CITES its own scenario and posts to an ordinary
  * scenario row, so to a naive walk it is indistinguishable from a runtime credit by the account it
  * landed on; the `qualityCheck` is the only thing that tells them apart. Counting one would fold
@@ -532,9 +532,9 @@ export function runtimeObservationTally(ledger: Ledger): RuntimeObservationTally
   // posted to — the reconciler's own ruling, never re-classified here.
   for (const row of ledger.scenarioReconciliations) {
     for (const obs of row.evidenceObservations) {
-      // THE RUNTIME SCOPING — a static check credit rides the `lint` quality-check and is not a
+      // THE RUNTIME SCOPING — a static check credit rides the `fitness` quality-check and is not a
       // runtime observation, so it is not counted (see the docstring).
-      if (obs.qualityCheck === "lint") continue;
+      if (obs.qualityCheck === "fitness") continue;
       rawByRuntimeQualityCheck[obs.qualityCheck]++;
       if (row.kind === "phantom-scenario") onPhantomScenario++;
       else if (row.kind === "suspense-scenario") onSuspenseScenario++;
@@ -606,7 +606,7 @@ export function runtimeObservationTally(ledger: Ledger): RuntimeObservationTally
  * that job's verdict, 3F-3280) and `uncitedStaticCheckCount` (how many of THOSE no scenario cites — a
  * static check running with nothing naming it, the mirror of a runtime `cites-no-scenario` credit).
  * The named count is IMPLICIT (`runningStaticCheckCount − uncitedStaticCheckCount`) and NOT carried:
- * every cited static check is already a reconciled `lint` sub-row and adds nothing the rows do not
+ * every cited static check is already a reconciled `fitness` sub-row and adds nothing the rows do not
  * already hold.
  *
  * THE SECOND COUNT IS A SUBSET OF THE FIRST, AND THAT IS WHAT MAKES THE IMPLICIT COUNT SOUND
@@ -622,7 +622,7 @@ export interface StaticObservationTally {
    * row's watermelon (@SCN-LNT-032), not a smaller number here.
    */
   runningStaticCheckCount: number;
-  /** Running static checks NO `@lint` cites — a SUBSET of the count above (named is implicit). */
+  /** Running static checks NO `@fitness` cites — a SUBSET of the count above (named is implicit). */
   uncitedStaticCheckCount: number;
 }
 
@@ -633,7 +633,7 @@ export interface StaticObservationTally {
  * its runtime sibling — RE-DERIVES NOTHING: the reconciler already decided which account every credit
  * posts to, so this can never disagree with the verdict.
  *
- * `uncitedStaticCheckCount` is the count of RUNNING lint credits on the SUSPENSE row — the
+ * `uncitedStaticCheckCount` is the count of RUNNING fitness credits on the SUSPENSE row — the
  * no-evidence-obligation static checks the reconciler folded there (a static check running with no
  * scenario citing it, `cites-no-scenario` on the credit side). THE RUNNING QUALIFIER IS APPLIED
  * HERE RATHER THAN ASSUMED (@SCN-LNT-033): the uncited count is the running count's suspense-row
@@ -641,7 +641,7 @@ export interface StaticObservationTally {
  * (3F-3280). A BROKEN credit reaches the same row by a different route (@SCN-LNT-026) and is
  * excluded: it is a check a scenario DID name, which did not run.
  *
- * `runningStaticCheckCount` is the count of lint credits that RAN, across ALL rows. One care-move
+ * `runningStaticCheckCount` is the count of fitness credits that RAN, across ALL rows. One care-move
  * the runtime axis does not need (see the block comment above):
  *   - FILTER TO WHAT RAN (`exists`): a missing (absent) or broken check STILL posts (posting is not
  *     classifying), but it did not run, so it is excluded — as the retired census's running-only
@@ -656,16 +656,16 @@ export function staticObservationTally(ledger: Ledger): StaticObservationTally {
   // counted — a missing or broken check, which posts but did not run, is filtered out (the
   // census's running-only `continue`). A severed check ran, so it counts (3F-3280).
   let runningStaticCheckCount = 0;
-  // The uncited static checks — the RUNNING lint credits the reconciler folded onto the SUSPENSE
+  // The uncited static checks — the RUNNING fitness credits the reconciler folded onto the SUSPENSE
   // row (a no-evidence-obligation running check, `cites-no-scenario`). Not a plain count of that
-  // row's lint credits: a broken credit lands there too and did not run (@SCN-LNT-026), so this
+  // row's fitness credits: a broken credit lands there too and did not run (@SCN-LNT-026), so this
   // count takes the running count's rule rather than a rule of its own (@SCN-LNT-033).
   let uncitedStaticCheckCount = 0;
   for (const row of ledger.scenarioReconciliations) {
     for (const obs of row.evidenceObservations) {
-      // THE STATIC SCOPING — only static-check credits ride the `lint` quality-check; a runtime
+      // THE STATIC SCOPING — only static-check credits ride the `fitness` quality-check; a runtime
       // credit (the uncited/broken ones the suspense row also holds) is not a static observation.
-      if (obs.qualityCheck !== "lint") continue;
+      if (obs.qualityCheck !== "fitness") continue;
       // A BROKEN CREDIT IS NEITHER COUNT (@SCN-LNT-026). It reaches the suspense row for a reason
       // the uncited count does not name: the check DID have a scenario naming it, and it did not
       // run. Counting it as uncited would report a check nobody named, sending the reader to write

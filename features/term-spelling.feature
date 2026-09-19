@@ -1,8 +1,8 @@
 @TRM
 Feature: Term spelling — a term names the same pair however its author spelled it
 
-  A target adopting this tool hand-types terms into three places: a configured fitness row's scn
-  and characteristic, a check step's id:, and a deferral tag. Every one of them is stored bare
+  A target adopting this tool hand-types terms into three places: a configured fitness row's scn,
+  a check step's id:, and a deferral tag. Every one of them is stored bare
   and looked up bare, because a hand writes a tag the way a feature file does — and every one of
   them was stripping the sigil BEFORE trimming, so a term padded in front of its @ was stored
   still carrying it and no bare lookup ever found it again. Nothing red. A configured row went
@@ -46,7 +46,7 @@ Feature: Term spelling — a term names the same pair however its author spelled
 
     @unit @integration @SCN-TRM-001
     Scenario: a term is the same term however its author spaced it around the sigil, wherever a target hand-authors one
-      Given a target that hand-authors its terms — a configured row's scn and characteristic, a check step's id:, and a deferral tag
+      Given a target that hand-authors its terms — a configured row's scn, a check step's id:, and a deferral tag
       And every one of them is spelled with whitespace in front of its sigil, the one spelling nothing in this repository generates
       When the corpus is reconciled against that target
       Then each term names exactly the pair its bare spelling names, so nothing the target plainly authored is dormant

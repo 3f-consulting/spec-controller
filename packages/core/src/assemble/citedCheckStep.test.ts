@@ -14,15 +14,13 @@
  * targets the pair could agree by accident: a reader citing nothing and a reader citing everything
  * each need a second run to catch, and the claim is that ONE run tells them apart.
  *
- * THE CHARACTERISTIC IS ASSERTED, NOT ONLY THE ROW. A citation is two terms, and only one of them
- * can be written on a CI step: an `id:` is a code and never a characteristic. So the credited
- * observation is read for its `checkTag` as well as its `scnId` — a `complexity` taken off the ROW
- * the code names, never off the `lint:alpha` handle that ran, which would be name-match in a new
- * spelling.
+ * THE ROW IS ASSERTED BY ITS @SCN. A citation is one term, and it is the one a CI step can
+ * write: an `id:`. So the credited observation is read for the `scnId` its step states — never for
+ * the `lint:alpha` handle that ran, which would be name-match in a new spelling.
  *
  * Bidirectional evidence: the describe carries its @SCN id, matching
  * features/fitness-reconciliation.feature and the @integration steps in
- * tests/steps/lintReconciliation.steps.ts.
+ * tests/steps/fitnessReconciliation.steps.ts.
  */
 
 import { describe, it, expect } from "vitest";
@@ -52,8 +50,8 @@ const manifest = {
     // checkout answers for it here, exactly as a consumer's own manifest does.
     notChecks: ["ci.yml:quality:Checkout"],
     fitnessChecks: [
-      { scn: "SCN-CVT-001", characteristic: "complexity", command: "pnpm lint:alpha" },
-      { scn: "SCN-CVT-002", characteristic: "traceability", command: "pnpm lint:beta" },
+      { scn: "SCN-CVT-001", command: "pnpm lint:alpha" },
+      { scn: "SCN-CVT-002", command: "pnpm lint:beta" },
     ],
   },
 };
@@ -106,27 +104,26 @@ describe("[SCN-LNT-031] a check step stating its row's code supplies that row's 
     // seam was wired both credits landed on the suspense row and both rows read `missing`, so a
     // fully annotated pipeline and a fully unannotated one produced the identical ledger.
     expect(rowsOf(reconcileAnnotated())).toEqual([
-      ["SCN-CVT-001", "scenario", "balanced", [["complexity", "satisfied"]]],
-      ["SCN-CVT-002", "scenario", "out-of-balance", [["traceability", "missing"]]],
+      ["SCN-CVT-001", "scenario", "balanced", [[undefined, "satisfied"]]],
+      ["SCN-CVT-002", "scenario", "out-of-balance", [[undefined, "missing"]]],
       ["(no scenario)", "suspense-scenario", "out-of-balance", [["lint:beta", "cites-no-scenario"]]],
     ]);
   });
 
-  it("stamps the credited run with the characteristic its ROW names, not the handle that ran", () => {
-    // BOTH TERMS OR NEITHER. The `@SCN` says which row the credit posts to and the bare check tag
-    // says which of that row's obligations it answers, and a CI step can state only the first —
-    // so a `checkTag` reading `lint:alpha` here would be the handle answering for the row.
+  it("stamps the credited run with the @SCN its step states, beside the handle that ran", () => {
+    // ONE TERM. The `@SCN` says which row the credit posts to, and it is the only thing a CI step
+    // can state — so a credit stamped with the `lint:alpha` handle instead would be the handle
+    // answering for the row.
     const credited = reconcileAnnotated().ledger.scenarioReconciliations.find(
       (row) => row.scnId === "SCN-CVT-001"
     );
     expect(credited?.evidenceObservations).toEqual([
       {
-        qualityCheck: "lint",
+        qualityCheck: "fitness",
         staticCheck: "lint:alpha",
         exists: true,
         enforcedOverRealSource: true,
         scnId: "SCN-CVT-001",
-        checkTag: "complexity",
       },
     ]);
   });

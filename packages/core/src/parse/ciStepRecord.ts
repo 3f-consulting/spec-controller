@@ -13,10 +13,9 @@
  * `outcome` and its `conclusion`. Nothing here executes a check, and nothing asks a consumer to
  * move a command out of their pipeline — the check already ran, as their own CI step.
  *
- * THE KEY IS THE CITATION AND THE ROW SUPPLIES THE REST. A step's `id:` is a CODE and never a
- * characteristic, so an entry naming a configured row is read for its verdict and the row it names
- * is read for the characteristic that verdict answers — two terms from two places, the same
- * arrangement the derivation side takes off a step's `id:`. An entry no configured row answers is
+ * THE KEY IS THE CITATION. A step's `id:` is the `@SCN` of the configured row it answers, so an
+ * entry naming a configured row is read for its verdict, and that verdict answers the one fitness
+ * obligation the row's scenario raises (3F-3525). An entry no configured row answers is
  * not this reader's business: `checkout` and `setup-node` are not checks, and silence about them
  * is the correct report rather than a gap in one.
  *
@@ -39,9 +38,9 @@
  * edge from the target's own evidence, and the rows arrive from the target's own manifest.
  */
 
-import type { FitnessCheck, FitnessCheckIndex } from "../domain/fitnessChecks.js";
+import type { FitnessCheckIndex } from "../domain/fitnessChecks.js";
 import type { EvidenceStatus } from "../domain/journal.js";
-import type { StaticCheckEvidenceObservation } from "../model.js";
+import type { FitnessEvidenceObservation } from "../model.js";
 
 /**
  * ONE STEP'S ENTRY in the record, as the dump wrote it.
@@ -180,20 +179,19 @@ function checkDidNotRunMessage(scnId: string, outcome: string | undefined): stri
  * so the honest values are the ones that assert nothing. It is also what keeps the roll-up right: a
  * check that did not run is not a running static check.
  *
- * AND IT CARRIES ITS `@SCN` AND ITS CHARACTERISTIC, which are known and true. What stops those
+ * AND IT CARRIES ITS `@SCN`, which is known and true. What stops that
  * being read as a citation is the reconciler's two fail-safes — `postingOf` takes `broken` before
  * `scnId`, and the obligation match excludes it — never their absence.
  */
-function namedOf(citedScn: string, row: FitnessCheck) {
+function namedOf(citedScn: string) {
   return {
-    qualityCheck: "lint",
-    // THE CHARACTERISTIC IN BOTH, because a check the record names has no runnable handle to put
-    // in either: the record knows a step id, and an id is a code and never a characteristic.
-    // `staticCheck` is where-to-fix and `checkTag` is what the reconciler matches on, and for this
-    // route the row's one word is the whole of what there is to name.
-    staticCheck: row.characteristic,
+    qualityCheck: "fitness",
+    // THE STEP'S OWN `id:` AS THE CHECK THAT RAN, because a check the record names has no runnable
+    // handle to put there: the record knows a step id and nothing else, and that id is the row's
+    // `@SCN` (3F-3525). `staticCheck` is where-to-fix, and the step carrying that id is exactly
+    // where a reader goes to fix it.
+    staticCheck: citedScn,
     scnId: citedScn,
-    checkTag: row.characteristic,
   } as const;
 }
 
@@ -207,13 +205,9 @@ function namedOf(citedScn: string, row: FitnessCheck) {
  * carries — and the day one of them stopped carrying `exists: false` is the day a check that did
  * not run started counting as a running one on exactly half the routes.
  */
-function brokenCreditOf(
-  citedScn: string,
-  row: FitnessCheck,
-  message: string
-): StaticCheckEvidenceObservation {
+function brokenCreditOf(citedScn: string, message: string): FitnessEvidenceObservation {
   return {
-    ...namedOf(citedScn, row),
+    ...namedOf(citedScn),
     exists: false,
     enforcedOverRealSource: false,
     broken: true,
@@ -223,15 +217,14 @@ function brokenCreditOf(
 
 function creditOf(
   citedScn: string,
-  row: FitnessCheck,
   reading: StepReading,
   outcome: string | undefined
-): StaticCheckEvidenceObservation {
+): FitnessEvidenceObservation {
   if (reading === null) {
-    return brokenCreditOf(citedScn, row, checkDidNotRunMessage(citedScn, outcome));
+    return brokenCreditOf(citedScn, checkDidNotRunMessage(citedScn, outcome));
   }
   return {
-    ...namedOf(citedScn, row),
+    ...namedOf(citedScn),
     // OBSERVED, NOT INFERRED, which is why both are asserted at all. The step RAN — that is what
     // the record says — and it ran in the target's own checkout, over the target's own tree.
     // Neither is the manifest-mentions-a-name reading the discovered route takes.
@@ -281,8 +274,7 @@ function rowHasNoEntryMessage(scnId: string): string {
  * THE CREDIT ARRIVES ALREADY CITING, WHICH IS THE SEAM THIS ROUTE RETIRES (@SCN-LNT-021). A
  * DISCOVERED check is found as a runnable script handle, and a handle does not know what it is
  * for — hence the (now-retired) registry, and hence the corpus lookup behind it. Here the
- * entry's key IS the code of the row it answers and that row carries the characteristic: two
- * terms from two places, neither resolved onto the other and no registry consulted at all.
+ * entry's key IS the code of the row it answers: one term, and no registry consulted at all.
  *
  * `failing`, AND THE THREE NEIGHBOURS IT IS NOT. `broken` is the never-ran case: it carries no
  * Evidence Observation and stamps the run unsound, so reading a failed step as broken would throw
@@ -310,25 +302,24 @@ function rowHasNoEntryMessage(scnId: string): string {
 export function ciStepRecordCredits(
   record: CiStepRecord | undefined,
   fitnessChecks: FitnessCheckIndex
-): StaticCheckEvidenceObservation[] {
+): FitnessEvidenceObservation[] {
   if (record === undefined) return [];
-  const credits: StaticCheckEvidenceObservation[] = [];
+  const credits: FitnessEvidenceObservation[] = [];
   const recorded = new Set<string>();
   for (const [citedScn, step] of Object.entries(record)) {
-    const row = fitnessChecks.get(citedScn);
-    if (row === undefined) continue;
+    if (!fitnessChecks.has(citedScn)) continue;
     recorded.add(citedScn);
     // NO `continue` ON A READING THIS READER HAS NONE FOR (@SCN-LNT-026). Every configured row the
     // record holds an entry for raises something; which of the two shapes it raises is the
     // credit builder's answer, and the fall-through reaches the loud one rather than the exit.
-    credits.push(creditOf(citedScn, row, readingOf(step.outcome), step.outcome));
+    credits.push(creditOf(citedScn, readingOf(step.outcome), step.outcome));
   }
   // AND THE ROWS ARE WALKED TOO, NOT ONLY THE RECORD (@SCN-LNT-027). The rows come from the
   // target's manifest and the enumeration from the run's own record, so a row the record held no
   // entry for is a check that did not run — broken evidence naming that row.
-  for (const [scnId, row] of fitnessChecks) {
+  for (const scnId of fitnessChecks) {
     if (recorded.has(scnId)) continue;
-    credits.push(brokenCreditOf(scnId, row, rowHasNoEntryMessage(scnId)));
+    credits.push(brokenCreditOf(scnId, rowHasNoEntryMessage(scnId)));
   }
   return credits;
 }

@@ -262,23 +262,23 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
     expect(/↳ Evidence Observation is missing \|[^\d]*3 \|/.test(md)).toBe(true);
   });
 
-  it("renders a missing static evidenceObligation as the bare 'lint' bucket, lint-first in the split", () => {
-    // Reconciler-built (§11A): the integration arm is RAISED BEFORE the lint arm, both missing
-    // (no runtime credit, no static-check observation) — the split still orders lint FIRST,
+  it("renders a missing static evidenceObligation as the bare 'fitness' bucket, fitness-first in the split", () => {
+    // Reconciler-built (§11A): the integration arm is RAISED BEFORE the fitness arm, both missing
+    // (no runtime credit, no static-check observation) — the split still orders fitness FIRST,
     // canonically, whatever order the tags name them in.
     const lintAndRuntime: Ledger = reconcile(
       [
         {
           scnId: "SCN-LNT-099",
-          evidenceObligations: [{ qualityCheck: "integration" }, { qualityCheck: "lint", staticCheck: "typecheck" }],
+          evidenceObligations: [{ qualityCheck: "integration" }, { qualityCheck: "fitness" }],
         },
       ],
       []
     );
     const md = renderMarkdown(__er(lintAndRuntime), ctx);
-    // The split maps the static evidenceObligation to the bare word "lint" and orders
+    // The split maps the static evidenceObligation to the bare word "fitness" and orders
     // it FIRST; the nested missing cause carries the full out-of-balance (2).
-    expect(md).toContain("1 lint + 1 integration");
+    expect(md).toContain("1 fitness + 1 integration");
     expect(/↳ Evidence Observation is missing \|[^\d]*2 \|/.test(md)).toBe(true);
   });
 
@@ -352,7 +352,7 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
 });
 
 /**
- * Unit test for the markdown lint-obligation section (@SCN-RPT-005).
+ * Unit test for the markdown fitness-obligation section (@SCN-RPT-005).
  *
  * Bidirectional evidence (Evidence Manifesto §9): the describe carries the
  * @SCN-RPT-005 id matching features/report.feature, so a grep of the id returns
@@ -362,56 +362,56 @@ describe("[SCN-RPT-004] the markdown report tallies evidenceObligations by recon
  *
  * Parent: (@SCN-RPT-005).
  */
-describe("[SCN-RPT-005] the markdown report lists the lint evidence obligations as their own section", () => {
-  // Reconciler-built (§11A): SCN-A raises unit + the guard-typecheck lint guard + integration
+describe("[SCN-RPT-005] the markdown report lists the fitness evidence obligations as their own section", () => {
+  // Reconciler-built (§11A): SCN-A raises unit + the guard-typecheck fitness check + integration
   // (unit passing, guard wired → satisfied, integration failing); SCN-B raises the guard-lint
-  // lint guard (exists-but-unwired → the watermelon) + e2e (no credit → missing). Runtime
-  // obligations must NOT leak into the lint-only section.
+  // fitness check (exists-but-unwired → the watermelon) + e2e (no credit → missing). Runtime
+  // obligations must NOT leak into the fitness-only section.
   const spanning: Ledger = reconcile(
     [
       {
         scnId: "SCN-A",
         evidenceObligations: [
           { qualityCheck: "unit" },
-          { qualityCheck: "lint", staticCheck: "guard-typecheck" },
+          { qualityCheck: "fitness" },
           { qualityCheck: "integration" },
         ],
       },
       {
         scnId: "SCN-B",
-        evidenceObligations: [{ qualityCheck: "lint", staticCheck: "guard-lint" }, { qualityCheck: "e2e" }],
+        evidenceObligations: [{ qualityCheck: "fitness" }, { qualityCheck: "e2e" }],
       },
     ],
     [
       { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
       { qualityCheck: "integration", scnId: "SCN-A", status: "failed" },
-      { qualityCheck: "lint", staticCheck: "lint:guard-typecheck", checkTag: "guard-typecheck", scnId: "SCN-A", exists: true, enforcedOverRealSource: true },
-      { qualityCheck: "lint", staticCheck: "lint:guard-lint", checkTag: "guard-lint", scnId: "SCN-B", exists: true, enforcedOverRealSource: false },
+      { qualityCheck: "fitness", staticCheck: "lint:guard-typecheck", scnId: "SCN-A", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "fitness", staticCheck: "lint:guard-lint", scnId: "SCN-B", exists: true, enforcedOverRealSource: false },
     ]
   );
 
-  it("renders a '### Lint evidence obligations' table with each static row's scenario, static check, and glyphed outcome — including the watermelon", () => {
+  it("renders a '### Fitness evidence obligations' table with each fitness row's scenario and glyphed outcome — including the watermelon", () => {
     const md = renderMarkdown(__er(spanning), ctx);
 
-    expect(md).toContain("### Lint evidence obligations");
-    // The total line outcomes how many of the static evidenceObligations reconcile satisfied.
-    expect(md).toContain("1 of 2 lint evidence obligations reconcile satisfied.");
-    // The table header.
-    expect(md).toContain("| Scenario | Static check | Outcome |");
-    // The satisfied static check, glyphed — the outcome shown as its canon description (3F-1626).
-    expect(md).toContain("| SCN-A | guard-typecheck | ✓ Evidence Observation satisfies its Evidence Obligation |");
-    // The watermelon static check, glyphed — the 🍉 reads at a glance.
-    expect(md).toContain(
-      "| SCN-B | guard-lint | 🍉 Evidence Observation is passing but fabricated |"
-    );
+    expect(md).toContain("### Fitness evidence obligations");
+    // The total line states how many of the fitness evidence obligations reconcile satisfied.
+    expect(md).toContain("1 of 2 fitness evidence obligations reconcile satisfied.");
+    // The table header — the scenario and its outcome, and no check column (3F-3525): what a check
+    // is about is its scenario's title, and no report rolls a check up by a word.
+    expect(md).toContain("| Scenario | Outcome |");
+    expect(md).not.toContain("| Scenario | Static check | Outcome |");
+    // The satisfied fitness obligation, glyphed — the outcome shown as its canon description (3F-1626).
+    expect(md).toContain("| SCN-A | ✓ Evidence Observation satisfies its Evidence Obligation |");
+    // The watermelon, glyphed — the 🍉 reads at a glance.
+    expect(md).toContain("| SCN-B | 🍉 Evidence Observation is passing but fabricated |");
   });
 
-  it("excludes the runtime evidenceObligations (the lint slice on its own)", () => {
+  it("excludes the runtime evidenceObligations (the fitness slice on its own)", () => {
     const md = renderMarkdown(__er(spanning), ctx);
     // Isolate THIS section's text (heading to the next section heading), so the
-    // assertion is about the lint cut, not the ledger that now
+    // assertion is about the fitness cut, not the ledger that now
     // follows it (the ledger legitimately renders runtime reconciling items).
-    const iSection = md.indexOf("### Lint evidence obligations");
+    const iSection = md.indexOf("### Fitness evidence obligations");
     const rest = md.slice(iSection + 1);
     const nextHeading = rest.search(/\n##/);
     const section = nextHeading >= 0 ? rest.slice(0, nextHeading) : rest;
@@ -421,29 +421,32 @@ describe("[SCN-RPT-005] the markdown report lists the lint evidence obligations 
     expect(section).not.toContain("e2e");
   });
 
-  it("renders the static evidenceObligations in document order", () => {
+  it("renders the fitness evidenceObligations in document order", () => {
     const md = renderMarkdown(__er(spanning), ctx);
-    const iTypecheck = md.indexOf("guard-typecheck");
-    const iLint = md.indexOf("guard-lint");
-    expect(iTypecheck).toBeGreaterThanOrEqual(0);
-    expect(iLint).toBeGreaterThanOrEqual(0);
-    expect(iTypecheck).toBeLessThan(iLint);
+    // Read inside the section: the rows are named by @SCN (no check column since 3F-3525), and the
+    // ledger below names the same scenarios again.
+    const section = md.slice(md.indexOf("### Fitness evidence obligations"), md.indexOf("## Scenario Reconciliations"));
+    const iA = section.indexOf("| SCN-A |");
+    const iB = section.indexOf("| SCN-B |");
+    expect(iA).toBeGreaterThanOrEqual(0);
+    expect(iB).toBeGreaterThanOrEqual(0);
+    expect(iA).toBeLessThan(iB);
   });
 
-  it("omits the section entirely (total line and all) when no scenario names a lint evidenceObligation", () => {
+  it("omits the section entirely (total line and all) when no scenario names a fitness evidenceObligation", () => {
     const runtimeOnly: Ledger = reconcile(
       [{ scnId: "SCN-A", evidenceObligations: [{ qualityCheck: "unit" }] }],
       [{ qualityCheck: "unit", scnId: "SCN-A", status: "passed" }]
     );
     const md = renderMarkdown(__er(runtimeOnly), ctx);
-    expect(md).not.toContain("### Lint evidence obligations");
-    expect(md).not.toContain("lint evidence obligations reconcile balanced");
+    expect(md).not.toContain("### Fitness evidence obligations");
+    expect(md).not.toContain("fitness evidence obligations reconcile satisfied");
   });
 
-  it("slots the lint section after the evidence reconciliation and before the ledger (no warnings section)", () => {
+  it("slots the fitness section after the evidence reconciliation and before the ledger (no warnings section)", () => {
     const md = renderMarkdown(__er(spanning), ctx);
     const iHeadline = md.indexOf("### Evidence reconciliation");
-    const iStatic = md.indexOf("### Lint evidence obligations");
+    const iStatic = md.indexOf("### Fitness evidence obligations");
     const iLedger = md.indexOf("## Scenario Reconciliations");
     expect(iHeadline).toBeGreaterThanOrEqual(0);
     expect(iStatic).toBeGreaterThanOrEqual(0);

@@ -26,7 +26,7 @@ node --version   # must be v22.x or higher
 
 ## Declaring a fitness check
 
-A **fitness check** is a whole-system characteristic — complexity, mutation score, type
+A **fitness check** is a whole-system property — complexity, mutation score, type
 soundness, vocabulary, suite run time. Declaring one takes four things, and **none of them is a
 cucumber step definition**. There is no fitness profile to configure and no step to write.
 
@@ -43,13 +43,13 @@ CI already runs is the evidence, and nothing here runs the steps:
 ```
 
 **2. A row in your `package.json`, under `specController.fitnessChecks`.** The row names the
-scenario's code, what the check is *about*, and the command:
+scenario's code and the command:
 
 ```json
 "specController": {
   "fitnessChecks": [
-    { "scn": "SCN-FIT-001", "characteristic": "complexity", "command": "eslint" },
-    { "scn": "SCN-FIT-002", "characteristic": "mutation", "command": "gh run list --workflow mutation.yml" }
+    { "scn": "SCN-FIT-001", "command": "eslint" },
+    { "scn": "SCN-FIT-002", "command": "gh run list --workflow mutation.yml" }
   ]
 }
 ```
@@ -58,11 +58,11 @@ Neither row carries a bar. The mutation bar is Stryker's own `thresholds.break`,
 answered by one push step that reads the newest nightly sweep's verdict:
 [`scheduled-checks.md`](./scheduled-checks.md).
 
-`characteristic` is data, not a tag — the report rolls up per characteristic, and a new one is a
-new word in a row rather than a change to any list. **A row names no bar.** Its credit is its step's
-`outcome`: the tool's exit code on its own CI step is the verdict, whatever the tool measures. A row
-still carrying the retired `atLeast` / `atMost` keys is named on the report as carrying a retired
-key, and is credited by its step's outcome like any other.
+**One `@fitness` scenario is one check**, identified by its `@SCN` and described by its title:
+nothing on the row says what the check is about. **A row names no bar** either. Its credit is its
+step's `outcome`: the tool's exit code on its own CI step is the verdict, whatever the tool
+measures. A row still carrying a retired key — `atLeast` / `atMost`, or `characteristic` — is named
+on the report as carrying one, and is credited by its step's outcome like any other.
 
 Neither half is derived from the other, and that is deliberate: a scenario with no row, and a row
 with no scenario, are both things a run can report.
@@ -101,7 +101,7 @@ rest read a number an earlier step, or a scheduled sweep, already left behind. W
 what.
 
 The worked before/after, the migration checklist, and the traps:
-[`converting-a-fitness-check.md`](./converting-a-fitness-check.md).
+[`adopting-fitness-checks.md`](./adopting-fitness-checks.md).
 
 ### Naming your runners, and the one limit that remains
 
@@ -341,7 +341,7 @@ spec-controller balance --features ./features \
   --format json:reconciliation.json
 ```
 
-Drop `--ci-steps` if you have converted nothing. Converting checks you already have — with a worked before/after and the traps: [`converting-a-fitness-check.md`](./converting-a-fitness-check.md).
+Drop `--ci-steps` if you have converted nothing. Converting checks you already have — with a worked before/after and the traps: [`adopting-fitness-checks.md`](./adopting-fitness-checks.md).
 
 Keep the reports as build artefacts — but do **not** commit them into the repo. An Evidence Reconciliation enumerates a codebase's gaps, phantom scenarios, and watermelons; it is more sensitive than the code itself, so it belongs outside version control.
 

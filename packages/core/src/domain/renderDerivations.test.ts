@@ -8,7 +8,7 @@
  * The criterion these serve: the renderer PROJECTS — any model fact it shows is read, not computed.
  * Each rule here had a second home in the renderer, agreeing by copy: `brokenItemsOf` (the
  * Run-integrity list), `presentStaticCheckCountOf` (the grid cell's right side),
- * `lintReconciliationsOf` (the lint table AND `lintTally`, character-identical).
+ * `fitnessReconciliationsOf` (the fitness table AND `fitnessTally`, character-identical).
  *
  * The Ledger is BUILT BY `reconcile()` over a spanning corpus, never hand-written
  * (evidence-manifesto §11A): the fixture can only state shapes the pipeline actually emits.
@@ -19,7 +19,7 @@
 import { describe, it, expect } from "vitest";
 
 import { reconcile } from "./evidenceReconciliation.js";
-import { brokenItemsOf, lintReconciliationsOf, lintTally, hasBrokenEvidence } from "./ledger.js";
+import { brokenItemsOf, fitnessReconciliationsOf, fitnessTally, hasBrokenEvidence } from "./ledger.js";
 import {
   isScenario,
   staticCheckReconciliationsOf,
@@ -29,34 +29,29 @@ import type { Scenario, EvidenceObservation, Ledger } from "../model.js";
 
 /**
  * A SPANNING corpus:
- *   SCN-AAA-001 — names a WIRED guard (satisfied) and an UNWIRED one (watermelon): both PRESENT.
+ *   SCN-AAA-001 — names a WIRED check (satisfied): PRESENT.
+ *   SCN-AAA-004 — names an UNWIRED check (watermelon): PRESENT too.
  *   SCN-AAA-002 — names an ABSENT guard (missing): not present.
  *   SCN-AAA-003 — a runtime obligation only: no static sub-rows at all.
- * Plus a no-evidence-obligation running guard (folds to the SUSPENSE row as a lint CREDIT — the shape that
- * must never inflate the OBLIGATION-side lint list) and a broken suite (the suspense `broken` item).
+ * Plus a no-evidence-obligation running guard (folds to the SUSPENSE row as a fitness CREDIT — the shape that
+ * must never inflate the OBLIGATION-side fitness list) and a broken suite (the suspense `broken` item).
  */
 const scenarios: Scenario[] = [
-  {
-    scnId: "SCN-AAA-001",
-    evidenceObligations: [
-      { qualityCheck: "lint", staticCheck: "lint:wired" },
-      { qualityCheck: "lint", staticCheck: "lint:unwired" },
-    ],
-  },
-  { scnId: "SCN-AAA-002", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "lint:absent" }] },
+  { scnId: "SCN-AAA-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
+  { scnId: "SCN-AAA-004", evidenceObligations: [{ qualityCheck: "fitness" }] },
+  { scnId: "SCN-AAA-002", evidenceObligations: [{ qualityCheck: "fitness" }] },
   { scnId: "SCN-AAA-003", evidenceObligations: [{ qualityCheck: "unit" }] },
 ];
 
 const evidenceObservations: EvidenceObservation[] = [
-  // BOTH FITNESS CREDITS CITE (3F-2625). They answered SCN-AAA-001's two obligations by HANDLE
-  // until the by-handle arm was deleted — a shape that only ever worked because name-match was
-  // alive, and one no observer emits. Under the one posting rule a credit carries the @SCN of the
-  // row it belongs to and the bare check it IS, and the two obligations on this row are told apart
-  // by the second of those (@SCN-LNT-012). The two words this fixture uses for a check are the same
-  // word, which is what makes it a fixture rather than a corpus.
-  { qualityCheck: "lint", staticCheck: "lint:wired", checkTag: "lint:wired", scnId: "SCN-AAA-001", exists: true, enforcedOverRealSource: true },
-  { qualityCheck: "lint", staticCheck: "lint:unwired", checkTag: "lint:unwired", scnId: "SCN-AAA-001", exists: true, enforcedOverRealSource: false },
-  { qualityCheck: "lint", staticCheck: "lint:no-evidence-obligation", exists: true, enforcedOverRealSource: true },
+  // BOTH FITNESS CREDITS CITE (3F-2625), each its own row: one @fitness scenario is one check, so a
+  // row raises at most one fitness obligation and the @SCN alone says which a credit answers
+  // (3F-3563). Each is the shape the discovered route emits — the runnable handle that ran, citing
+  // its row's @SCN. The handle-shaped `checkTag` this fixture once carried, a word no producer
+  // emitted, left with the field (3F-2656, folded into 3F-3570).
+  { qualityCheck: "fitness", staticCheck: "lint:wired", scnId: "SCN-AAA-001", exists: true, enforcedOverRealSource: true },
+  { qualityCheck: "fitness", staticCheck: "lint:unwired", scnId: "SCN-AAA-004", exists: true, enforcedOverRealSource: false },
+  { qualityCheck: "fitness", staticCheck: "lint:no-evidence-obligation", exists: true, enforcedOverRealSource: true },
   { qualityCheck: "unit", scnId: "SCN-AAA-003", status: "passed" },
   {
     qualityCheck: "unit",
@@ -140,13 +135,13 @@ describe("[SCN-LDG-001] presentStaticCheckCountOf counts PRESENCE, not quality",
    * shrinking this count. Counting only `satisfied` would make a watermelon read as an ABSENT
    * guard, which is a different fault with a different cure.
    */
-  it("counts a watermelon as present alongside a satisfied guard", () => {
-    const row = rowOf("SCN-AAA-001");
-    expect(staticCheckReconciliationsOf(row).map((r) => r.outcome)).toEqual([
-      "satisfied",
-      "watermelon",
-    ]);
-    expect(presentStaticCheckCountOf(row)).toBe(2);
+  it("counts a watermelon as present, exactly as it counts a satisfied check", () => {
+    const wired = rowOf("SCN-AAA-001");
+    const unwired = rowOf("SCN-AAA-004");
+    expect(staticCheckReconciliationsOf(wired).map((r) => r.outcome)).toEqual(["satisfied"]);
+    expect(staticCheckReconciliationsOf(unwired).map((r) => r.outcome)).toEqual(["watermelon"]);
+    expect(presentStaticCheckCountOf(wired)).toBe(1);
+    expect(presentStaticCheckCountOf(unwired)).toBe(1);
   });
 
   it("does NOT count a missing guard — no script at all is a real absence", () => {
@@ -161,18 +156,19 @@ describe("[SCN-LDG-001] presentStaticCheckCountOf counts PRESENCE, not quality",
   });
 });
 
-describe("[SCN-LDG-001] lintReconciliationsOf is the ONE named static-check list", () => {
+describe("[SCN-LDG-001] fitnessReconciliationsOf is the ONE named fitness list", () => {
   /**
-   * SCENARIO ROWS ONLY. The suspense row carries a lint CREDIT (the no-evidence-obligation running guard,
+   * SCENARIO ROWS ONLY. The suspense row carries a fitness CREDIT (the no-evidence-obligation running guard,
    * `cites-no-scenario`) — an observation, not an obligation. Including it would inflate the
-   * obligation-side lint total, and would do so in the table and the tally alike.
+   * obligation-side fitness total, and would do so in the table and the tally alike.
    */
-  it("excludes the suspense row's lint credit from the named list", () => {
-    const named = lintReconciliationsOf(ledger);
-    expect(named.map((d) => `${d.scnId}:${d.reconciliation.staticCheck}`)).toEqual([
-      "SCN-AAA-001:lint:wired",
-      "SCN-AAA-001:lint:unwired",
-      "SCN-AAA-002:lint:absent",
+  it("excludes the suspense row's fitness credit from the named list", () => {
+    const named = fitnessReconciliationsOf(ledger);
+    // Named by @SCN and outcome: a fitness sub-row names no check word since the re-key (3F-3570).
+    expect(named.map((d) => `${d.scnId}:${d.reconciliation.outcome}`)).toEqual([
+      "SCN-AAA-001:satisfied",
+      "SCN-AAA-004:watermelon",
+      "SCN-AAA-002:missing",
     ]);
     // The no-evidence-obligation guard IS on the ledger — it just is not an obligation.
     expect(
@@ -181,12 +177,12 @@ describe("[SCN-LDG-001] lintReconciliationsOf is the ONE named static-check list
   });
 
   /** The tally is a READING of the same list, so the table and its total line cannot disagree. */
-  it("is the source the lint tally folds", () => {
-    const named = lintReconciliationsOf(ledger);
-    expect(lintTally(ledger)).toEqual({
+  it("is the source the fitness tally folds", () => {
+    const named = fitnessReconciliationsOf(ledger);
+    expect(fitnessTally(ledger)).toEqual({
       satisfied: named.filter((d) => d.reconciliation.outcome === "satisfied").length,
       total: named.length,
     });
-    expect(lintTally(ledger)).toEqual({ satisfied: 1, total: 3 });
+    expect(fitnessTally(ledger)).toEqual({ satisfied: 1, total: 3 });
   });
 });

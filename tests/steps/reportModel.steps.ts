@@ -356,12 +356,13 @@ When("the reconciliation run persists spec-reconciliation.json", function () {
 });
 
 Then(
-  "the summary carries the test-volume totals, the static-check totals, and the fitness-obligation tally",
+  "the summary carries the test-volume totals, the static-check totals, and the fitness-obligation tally under summary.fitness",
   function () {
     const summary = rmd005Json.summary as {
       testVolume?: { totalEvidenceObservations: number; onScenario: number; onPhantomScenario: number; onSuspenseScenario: number };
       staticChecks?: { runningStaticCheckCount: number; uncitedStaticCheckCount: number };
-      lint?: { satisfied: number; total: number };
+      fitness?: { satisfied: number; total: number };
+      lint?: unknown;
     };
     assert.ok(summary, `expected a summary section; got keys: ${Object.keys(rmd005Json).join(", ")}`);
     // Test-volume totals — the evidence observation fixture: 5 raw = 1 on a scenario + 2
@@ -372,10 +373,12 @@ Then(
     // one (lint:foo) is implicit (running − uncited = 1).
     assert.ok(summary.staticChecks, `expected summary.staticChecks; got summary keys: ${Object.keys(summary).join(", ")}`);
     assert.deepEqual(summary.staticChecks, { runningStaticCheckCount: 2, uncitedStaticCheckCount: 1 });
-    // Lint tally — the static-only cut: lint:foo NAMED by SCN-TGT-001 and enforced in CI →
-    // 1 of 1 satisfied (the runtime evidence obligations do NOT count).
-    assert.ok(summary.lint, `expected summary.lint; got summary keys: ${Object.keys(summary).join(", ")}`);
-    assert.deepEqual(summary.lint, { satisfied: 1, total: 1 });
+    // Fitness tally — the fitness-only cut: lint:foo NAMED by SCN-TGT-001 and enforced in CI →
+    // 1 of 1 satisfied (the runtime evidence obligations do NOT count). Under `fitness`, never the
+    // retired key `lint`.
+    assert.ok(summary.fitness, `expected summary.fitness; got summary keys: ${Object.keys(summary).join(", ")}`);
+    assert.deepEqual(summary.fitness, { satisfied: 1, total: 1 });
+    assert.equal(summary.lint, undefined, "expected no summary.lint — the tally is keyed by the quality check, fitness");
   }
 );
 
@@ -574,9 +577,9 @@ After({ tags: "@SCN-RMD-007" }, function () {
 // Drives the REAL CLI over the usg fixture (SCN-TGT-001 carries @unit + the bare check @foo) with the
 // usg ci.yml/package.json but NO runner reports, so the runtime unit evidence obligation reconciles
 // missing and the lint:foo guard reconciles satisfied — a corpus with BOTH a runtime
-// sub-row AND a lint sub-row, and a non-empty missing split. Reading the persisted
+// sub-row AND a fitness sub-row, and a non-empty missing split. Reading the persisted
 // spec-reconciliation.json back, every evidence sub-row must be keyed by ONE flat quality-check
-// (no kind / no level), a lint sub-row must carry qualityCheck "lint" alongside its check, and the
+// (no kind / no level), a fitness sub-row must carry qualityCheck "fitness" and no characteristic, and the
 // summary's missing split must be under missingByQualityCheck (the retired grid key is gone).
 // Anti-watermelon: the assertions read the REAL persisted file.
 const RMD008_FIXTURE = {
@@ -642,15 +645,18 @@ Then("each evidence sub-row is keyed by one quality-check field with no kind or 
   }
 });
 
-Then('a lint sub-row carries its quality-check "lint" alongside its check', function () {
+Then('a fitness sub-row carries its quality-check "fitness" and names no characteristic', function () {
   const evidenceReconciliation = (rmd008Json.ledger as { scenarioReconciliations: unknown }).scenarioReconciliations as Array<{ qualityCheckReconciliations: Array<Record<string, unknown>> }>;
-  const lintRows = evidenceReconciliation
+  // The fitness sub-rows on SCENARIO rows (the obligation side): one @fitness scenario is one check,
+  // keyed by its @SCN, so the sub-row carries its quality check and no word naming the check
+  // (3F-3570). The value is "fitness", never the retired "lint" (3F-3564).
+  const fitnessRows = evidenceReconciliation
     .flatMap((s) => s.qualityCheckReconciliations)
-    .filter((o) => o.qualityCheck === "lint");
-  assert.ok(lintRows.length > 0, `expected at least one lint sub-row (the usg fixture carries the bare check @foo); got ${JSON.stringify(evidenceReconciliation)}`);
-  for (const row of lintRows) {
-    assert.equal(row.qualityCheck, "lint", `expected a lint sub-row's quality-check to be "lint"; got ${JSON.stringify(row)}`);
-    assert.ok(typeof row.staticCheck === "string" && row.staticCheck.length > 0, `expected a lint sub-row to carry its check identity; got ${JSON.stringify(row)}`);
+    .filter((o) => o.qualityCheck === "fitness" && o.evidenceObligation !== undefined);
+  assert.ok(fitnessRows.length > 0, `expected at least one fitness sub-row on the obligation side; got ${JSON.stringify(evidenceReconciliation)}`);
+  for (const row of fitnessRows) {
+    assert.equal(row.qualityCheck, "fitness", `expected a fitness sub-row's quality-check to be "fitness", never "lint"; got ${JSON.stringify(row)}`);
+    assert.ok(!("staticCheck" in row), `expected a fitness sub-row to name no characteristic; got ${JSON.stringify(row)}`);
   }
 });
 

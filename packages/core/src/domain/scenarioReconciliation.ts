@@ -185,7 +185,7 @@ export function reconcilingItemsOf(
  * is a scenario. This function is that sentence; every consumer that needs the real-scenario cut
  * asks it rather than restating it.
  *
- * It had no home and was open-coded FIVE times — four in the renderer, one in the Ledger's lint
+ * It had no home and was open-coded FIVE times — four in the renderer, one in the Ledger's fitness
  * fold — as the double negative `kind !== "phantom-scenario" && kind !== "suspense-scenario"`. They
  * agreed by copy, not by construction: any one could have grown a clause alone and nothing would
  * have redded.
@@ -201,22 +201,22 @@ export function isScenario(row: ScenarioReconciliation): boolean {
 }
 
 /**
- * A row's STATIC-CHECK sub-rows — its `lint` Quality Check Reconciliations, in document order, one
+ * A row's STATIC-CHECK sub-rows — its `fitness` Quality Check Reconciliations, in document order, one
  * per static-check obligation the scenario named (3F-2203).
  *
- * The OBLIGATION-side cut: `lint` reconciliations only ever arise from an obligation, so this
+ * The OBLIGATION-side cut: `fitness` reconciliations only ever arise from an obligation, so this
  * is the row's named-static-check count as well as its list. It is the single source both the
- * renderer's grid cell and the Ledger's `lintTally` read — they each re-derived it before, agreeing
+ * renderer's grid cell and the Ledger's `fitnessTally` read — they each re-derived it before, agreeing
  * by copy.
  */
 export function staticCheckReconciliationsOf(
   row: ScenarioReconciliation
 ): QualityCheckReconciliation[] {
-  return row.qualityCheckReconciliations.filter((r) => r.qualityCheck === "lint");
+  return row.qualityCheckReconciliations.filter((r) => r.qualityCheck === "fitness");
 }
 
 /**
- * How many of a row's named static checks are PRESENT (3F-2203) — the count of `lint`
+ * How many of a row's named static checks are PRESENT (3F-2203) — the count of `fitness`
  * reconciliations that found a real script, whether or not it is wired.
  *
  * PRESENCE IS NOT QUALITY, and that is the whole rule: `satisfied` (wired into CI over the real

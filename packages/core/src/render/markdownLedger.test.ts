@@ -53,7 +53,7 @@ const ctx: RunContext = {
  * id matching features/report.feature, so a grep of the id returns both halves.
  *
  * Proves the ledger's corpus-driven evidence columns in isolation: when the evidenceObservations
- * aggregate is threaded, each scenario row gains columns (Lint first, then the runtime
+ * aggregate is threaded, each scenario row gains columns (Fitness first, then the runtime
  * levels present in evidence obligation or evidenceObservations — e2e/performance only when present) with the
  * four-way evidence-obligation×evidenceObservations cell encoding (`N` backing present / `∅` missing /
  * `(N)` observations at a quality-check never named / `—` neither). The cell counts BACKING, not
@@ -83,34 +83,34 @@ const ctx: RunContext = {
  */
 describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence columns", () => {
   // The CORPUS — scenarios + observed evidence, spanning every cell case across
-  // Lint / Unit / Integration. The balance below is RECONCILED from it, so every row is a shape
+  // Fitness / Unit / Integration. The balance below is RECONCILED from it, so every row is a shape
   // the pipeline actually emits:
-  //   SCN-A: @unit (2 observations) + one lint guard, wired (satisfied) → Lint L/1, Unit 2
+  //   SCN-A: @unit (2 observations) + one fitness check, wired (satisfied) → Fitness F/1, Unit 2
   //   SCN-B: @unit, no observation → Unit ∅
   //   SCN-C: @unit (1 observation) + an integration observation it NEVER named → Unit 1,
   //          Integration (1) — the NO-EVIDENCE-OBLIGATION shape
   //   SCN-D: @integration (1 observation), no @unit → Unit —, Integration 1
-  //   SCN-E: one lint guard, absent → Lint ∅
+  //   SCN-E: one fitness check, absent → Fitness ∅
   //   SCN-F: @unitpending with a unit observation citing the pending pair → NO-EVIDENCE-OBLIGATION (3F-1858)
   //   SCN-G: TWO runtime tiers (@unit + @integration), one credit at each → Unit 1, Integration 1
   //          — the MULTI-TIER shape (@SCN-RPT-018): both cells must render their own count
-  //   SCN-H: one lint guard that exists but is not wired — the watermelon → Lint L/1 (PRESENT)
+  //   SCN-H: one fitness check that exists but is not wired — the watermelon → Fitness F/1 (PRESENT)
   // ONE STATIC CHECK PER ROW (3F-3411): one scenario is one fitness check, so no row names two.
   const scenarios: Scenario[] = [
     {
       scnId: "SCN-A",
       evidenceObligations: [
         { qualityCheck: "unit" },
-        { qualityCheck: "lint", staticCheck: "guard-x" },
+        { qualityCheck: "fitness" },
       ],
     },
     { scnId: "SCN-B", evidenceObligations: [{ qualityCheck: "unit" }] },
     { scnId: "SCN-C", evidenceObligations: [{ qualityCheck: "unit" }] },
     { scnId: "SCN-D", evidenceObligations: [{ qualityCheck: "integration" }] },
-    { scnId: "SCN-E", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "guard-z" }] },
+    { scnId: "SCN-E", evidenceObligations: [{ qualityCheck: "fitness" }] },
     { scnId: "SCN-F", evidenceObligations: [{ qualityCheck: "unit", pending: true }] },
     { scnId: "SCN-G", evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }] },
-    { scnId: "SCN-H", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "guard-y" }] },
+    { scnId: "SCN-H", evidenceObligations: [{ qualityCheck: "fitness" }] },
   ];
   const observations: EvidenceObservation[] = [
     { qualityCheck: "unit", scnId: "SCN-A", status: "passed" },
@@ -125,10 +125,10 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     // disagreeing, which is the divergence 3F-1831 collapses.
     { qualityCheck: "unit", scnId: "SCN-F", status: "passed" },
     // The guards: guard-x wired into CI over real source → satisfied (SCN-A); guard-y exists but is
-    // not wired → the watermelon (SCN-H; PRESENT, so it counts into the Lint cell); guard-z has no
+    // not wired → the watermelon (SCN-H; PRESENT, so it counts into the Fitness cell); guard-z has no
     // observation at all → missing (∅, SCN-E). Each cites the one scenario that names it.
-    { qualityCheck: "lint", staticCheck: "guard-x", checkTag: "guard-x", scnId: "SCN-A", exists: true, enforcedOverRealSource: true },
-    { qualityCheck: "lint", staticCheck: "guard-y", checkTag: "guard-y", scnId: "SCN-H", exists: true, enforcedOverRealSource: false },
+    { qualityCheck: "fitness", staticCheck: "guard-x", scnId: "SCN-A", exists: true, enforcedOverRealSource: true },
+    { qualityCheck: "fitness", staticCheck: "guard-y", scnId: "SCN-H", exists: true, enforcedOverRealSource: false },
     // SCN-G's two credits — one at each tier it names (@SCN-RPT-018). The reconciler posts each
     // as its own credit on SCN-G's row (@SCN-LDG-022), which is what the two cells read.
     { qualityCheck: "unit", scnId: "SCN-G", status: "passed" },
@@ -154,9 +154,9 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     expect(scnC.qualityCheckReconciliations.some((o) => o.qualityCheck === "integration" && o.outcome === "satisfied")).toBe(false);
   });
 
-  it("renders corpus-driven columns — Lint first, then the runtime levels present (e2e/performance absent)", () => {
+  it("renders corpus-driven columns — Fitness first, then the runtime levels present (e2e/performance absent)", () => {
     const md = renderMarkdown(__er(balance, true, false), ctx);
-    expect(md).toContain("| Scenario | Lint | Unit | Integration | Verdict | Reconciling items |");
+    expect(md).toContain("| Scenario | Fitness | Unit | Integration | Verdict | Reconciling items |");
     // e2e / performance are absent from this corpus, so they get no column.
     expect(md).not.toContain("| Performance |");
     expect(md).not.toContain(" E2e ");
@@ -164,8 +164,8 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
 
   it("encodes the four cell cases two-sided — named+met, named+missing, no-evidence-obligation, and absent", () => {
     const md = renderMarkdown(__er(balance, true, false), ctx);
-    // named & met → letter/count; SCN-A: Lint L/1 (its one named guard, present), Unit U/2.
-    expect(md).toContain("| SCN-A | L/1 | U/2 |  |");
+    // named & met → letter/count; SCN-A: Fitness F/1 (its one named guard, present), Unit U/2.
+    expect(md).toContain("| SCN-A | F/1 | U/2 |  |");
     // named & missing → letter/- (no observation).
     expect(md).toContain("| SCN-B |  | U/- |  |");
     // not named but present → -/N: SCN-C's integration credit is NO-EVIDENCE-OBLIGATION — the reconciler
@@ -174,8 +174,8 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     expect(md).toContain("| SCN-C |  | U/1 | -/1 |");
     // named elsewhere, absent here → blank left/right, and the named Integration reads I/1.
     expect(md).toContain("| SCN-D |  |  | I/1 |");
-    // lint named but its static check missing → L/- (named, no guard present).
-    expect(md).toContain("| SCN-E | L/- |  |  |");
+    // fitness named but its static check missing → F/- (named, no guard present).
+    expect(md).toContain("| SCN-E | F/- |  |  |");
   });
 
   // The MULTI-TIER view mirror (@SCN-RPT-018). The view-side half of the reconciler's
@@ -200,12 +200,12 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     expect(md).toContain("| SCN-F |  | -/1 |  |");
   });
 
-  it("counts a watermelon guard as PRESENT on the lint cell's right side, like a satisfied one", () => {
+  it("counts a watermelon guard as PRESENT on the fitness cell's right side, like a satisfied one", () => {
     const md = renderMarkdown(__er(balance, true, false), ctx);
     // SCN-A's guard is satisfied and SCN-H's is the watermelon: the script exists, so both are
-    // present (its inadequacy is the 🍉 in Reconciling items) → L/1 on each, never L/-.
-    expect(md).toContain("| SCN-A | L/1 |");
-    expect(md).toContain("| SCN-H | L/1 |");
+    // present (its inadequacy is the 🍉 in Reconciling items) → F/1 on each, never F/-.
+    expect(md).toContain("| SCN-A | F/1 |");
+    expect(md).toContain("| SCN-H | F/1 |");
   });
 
   it("renders the grid with no Cell/Meaning legend — the grid speaks for itself", () => {
@@ -214,13 +214,13 @@ describe("[SCN-RPT-011] the markdown ledger renders per-scenario evidence column
     // its ROW WORDING went at 3F-2329: subsumed by this one, blind to a legend returning in
     // canon words, and the last retired spelling here — now forbidden tree-wide. Grid stays.
     expect(md).not.toContain("| Cell | Meaning |");
-    expect(md).toContain("| Scenario | Lint |");
+    expect(md).toContain("| Scenario | Fitness |");
   });
 
   it("preserves the original three-column ledger when no evidenceObservations is threaded (back-compat)", () => {
     const md = renderMarkdown(__er(balance), ctx);
     expect(md).toContain("| Scenario | Verdict | Reconciling items |");
-    expect(md).not.toContain("| Scenario | Lint |");
+    expect(md).not.toContain("| Scenario | Fitness |");
     expect(md).not.toContain("| Cell | Meaning |");
   });
 });
@@ -374,16 +374,16 @@ describe("[SCN-USG-001] the markdown report renders the Static checks section", 
   // (lint:foo, posts to its scenario's `@lint` row) + 1 uncited (lint:bar, no-evidence-obligation, running,
   // folds to the suspense row) → the fold reads {runningStaticCheckCount: 2, uncitedStaticCheckCount: 1}.
   const twoRunningOneUncited: Ledger = reconcile(
-    [{ scnId: "SCN-USG-001", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "foo" }] }],
+    [{ scnId: "SCN-USG-001", evidenceObligations: [{ qualityCheck: "fitness" }] }],
     [
-      { qualityCheck: "lint", staticCheck: "lint:foo", checkTag: "foo", scnId: "SCN-USG-001", exists: true, enforcedOverRealSource: true },
-      { qualityCheck: "lint", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "fitness", staticCheck: "lint:foo", scnId: "SCN-USG-001", exists: true, enforcedOverRealSource: true },
+      { qualityCheck: "fitness", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
     ]
   );
   // One running CI guard, all named → the fold reads {runningStaticCheckCount: 1, uncitedStaticCheckCount: 0}.
   const oneRunningNoneUncited: Ledger = reconcile(
-    [{ scnId: "SCN-USG-001", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "foo" }] }],
-    [{ qualityCheck: "lint", staticCheck: "lint:foo", checkTag: "foo", scnId: "SCN-USG-001", exists: true, enforcedOverRealSource: true }]
+    [{ scnId: "SCN-USG-001", evidenceObligations: [{ qualityCheck: "fitness" }] }],
+    [{ qualityCheck: "fitness", staticCheck: "lint:foo", scnId: "SCN-USG-001", exists: true, enforcedOverRealSource: true }]
   );
 
   it("renders '### Static checks' with the counts line ONLY — the per-guard detail dissolved to the suspense row", () => {

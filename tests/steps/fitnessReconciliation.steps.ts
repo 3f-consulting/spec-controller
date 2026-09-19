@@ -39,9 +39,9 @@ import type { EvidenceReconciliation } from "../../packages/core/src/domain/evid
 // whole (3F-3395, @SCN-LNT-017 — the last registry-`scn` scenario).
 import { citationOfCitedRow } from "../../packages/core/src/parse/fitnessCitations.js";
 // A reader wanting a static check's own runnable handle asks the union's own predicate for one,
-// rather than re-spelling the `lint` test inline.
+// rather than re-spelling the `fitness` test inline.
 import {
-  isStaticCheckObservation,
+  isFitnessObservation,
   // @SCN-LNT-031 — the CI walk itself, so the planted workflow is held to what the scenario says
   // it holds (two plain `run:` steps, a code on one) by the reader the observer uses rather than
   // by a second reading of the same YAML.
@@ -80,8 +80,7 @@ const CTX: RunContext = {
   sourceSha: null,
 };
 
-// @SCN-LNT-006 outcome: the registered bare check tags, and the corpus source read against them.
-let obligationCheckTags: string[];
+// @SCN-LNT-007 / @SCN-LNT-018 outcome: the corpus source the obligation rule reads.
 let corpusSource: string;
 
 // @SCN-LNT-018 outcome: the CONFIGURED ROWS the converted route reads, over the same
@@ -116,7 +115,7 @@ const CITED_SCRIPT = "lint:feature-codes";
  *
  * Scoped to the `## Scenario Reconciliations` section: the reformat moved the ledger
  * to the end and added summary cuts above it that ALSO mention the scnId in a first cell —
- * the `### Lint evidence obligations` table (`| <scnId> | <guard> | <outcome> |`) and
+ * the `### Fitness evidence obligations` table (`| <scnId> | <outcome> |`) and
  * the by-feature table — so a whole-report search would shadow the ledger row. Searching
  * only the ledger, matching the scnId in the FIRST cell, keeps the assertions on-target.
  */
@@ -135,22 +134,21 @@ function rowCells(scnId: string): { verdict: string; items: string } {
 }
 
 // @SCN-LNT-007
-Given(
-  "{string} is registered as the fitness check {string}",
-  function (_script: string, check: string) {
-    // THE HANDLE ONCE ALSO MAPPED THROUGH A FIXTURE REGISTRY (retired whole, 3F-3395,
-    // @SCN-LNT-017 — the last registry-`scn` scenario); what survives of this step for its one
-    // remaining caller (@SCN-LNT-007) is the check TAG becoming a recognised one, directly — the
-    // fact the retired `@lint=<handle>` form's Given below reads to prove its claim is the
-    // STRONGER one: even a genuinely recognised check, the retired form still raises nothing.
-    obligationCheckTags = [check];
-  }
-);
+Given("a configured row names the scenario the retired tag sits on", function () {
+  // THE ONE ROUTE LEFT THAT RAISES A FITNESS OBLIGATION (3F-3561): no set of registered check tags
+  // exists any more, so the plant is a configured row naming the very scenario the retired tag
+  // sits on. A reader that re-routed `@lint=<handle>` onto the fitness axis would find this row and
+  // raise its obligation; the Then below refuses that. Read through core's own row reader, as a
+  // target's manifest is.
+  configuredFitnessChecks = resolveFitnessChecks({
+    specController: { fitnessChecks: [{ scn: "SCN-AAA-003" }] },
+  });
+});
 
 // @SCN-LNT-004
 Given("that scenario also carries the unit tier tag", function () {
   // ONE ROW, TWO AXES. The two tags are flat peers and each raises its own obligation —
-  // `{ qualityCheck: "unit" }` from @unit, `{ qualityCheck: "lint", staticCheck }` from the
+  // `{ qualityCheck: "unit" }` from @unit, `{ qualityCheck: "fitness", staticCheck }` from the
   // configured row @fitness resolves against (@SCN-LNT-018) — so the reconciler meets a row
   // owing evidence on both.
   //
@@ -179,9 +177,9 @@ When("the configured fitness check and the unit result are observed and reconcil
   // TWO READERS, ONE RECONCILE. The behavioural credit is a test run's result and the fitness
   // obligation is read off the configured row (@SCN-LNT-018) — they are observed apart and meet
   // only here, which is where independence is either kept or lost. Nothing cites SCN-AAA-001 on
-  // the lint axis, so no fitness observation is added: the obligation the row raises reconciles
+  // the fitness axis, so no fitness observation is added: the obligation the row raises reconciles
   // missing on its own, never smeared by the unit credit beside it.
-  scenarios = parseScenarios(fitnessCorpus, [], [], configuredFitnessChecks);
+  scenarios = parseScenarios(fitnessCorpus, [], configuredFitnessChecks);
   evidenceObservations = [unitCredit];
 
   const reconciliation = evidenceReconciliationOf(scenarios, evidenceObservations, [], false, false);
@@ -191,13 +189,13 @@ When("the configured fitness check and the unit result are observed and reconcil
 
 // @SCN-LNT-007
 Given(
-  "a scenario tagged with the retired @lint= form naming the runnable handle {string}",
+  "that scenario is tagged with the retired @lint= form naming the runnable handle {string}",
   function (handle: string) {
-    // THE HANDLE IS THE REGISTERED ONE. `obligationCheckTags` was set by the preceding Given to
-    // carry this handle's check, so the check this handle runs IS a recognised one — which is what
-    // makes the expectation below a claim about the reader rather than about an unknown word. A
-    // rule that re-routed the retired form onto a recognised tag would raise `feature-codes` here
-    // and pass a fixture whose handle names nothing recognised.
+    // THE SCENARIO IS THE CONFIGURED ONE. The preceding Given configured a row for SCN-AAA-003, so
+    // the one route that raises a fitness obligation is present for this very scenario — which is
+    // what makes the expectation below a claim about the reader rather than about a scenario no
+    // row names. A rule that re-routed the retired form onto the fitness axis would raise the row's
+    // obligation here.
     //
     // STEPPED, because that is the shape the retired form always rode: it named a runnable script
     // from a behavioural scenario, which is the smear the bare tag replaced. The scenario carries
@@ -214,31 +212,23 @@ Given(
   }
 );
 
-// @SCN-LNT-018
 // @SCN-LNT-004
 // @SCN-LNT-009
-Given(
-  "a configured row names the scenario {string} as the fitness check {string}",
-  function (scn: string, check: string) {
-    // THE ROW IS THE ONLY PLACE THE CHARACTERISTIC IS WRITTEN in this scenario — the corpus the
-    // next Given builds carries the bare axis tag and nothing else — so the expectation at the
-    // foot is a claim about this row rather than about a tag that happens to spell the same word.
-    // Keyed by the @SCN, which is what removes the registry hop: a converted check is not
-    // discovered as a script handle, it is a scenario that ran carrying its own tag line.
-    //
-    // @SCN-LNT-009 READS THIS ROW THE SAME WAY, and that is the point: the row names a scenario
-    // code, and whether the CORPUS agrees is a separate fact this Given makes no claim about
-    // either way. A phantom fixture and a satisfied one both start from the same row.
-    configuredFitnessChecks = new Map([[scn, { characteristic: check }]]);
-  }
-);
+Given("a configured row names the scenario {string}", function (scn: string) {
+  // THE ROW NAMES A SCENARIO CODE AND NOTHING ELSE the ledger reads: a check is its @fitness
+  // scenario, keyed by its @SCN (3F-3570). Read through the target's own manifest reader, so the
+  // index is the one a run builds.
+  configuredFitnessChecks = resolveFitnessChecks({
+    specController: { fitnessChecks: [{ scn, command: "pnpm lint:check" }] },
+  });
+});
 
 // @SCN-LNT-009
-Given("a @fitness scenario in the corpus carries a different check entirely", function () {
+Given("a @fitness scenario in the corpus carries a different @SCN entirely", function () {
   // A GENUINE, NON-EMPTY CORPUS — so the phantom result below is not read off an absent one. This
-  // scenario answers a DIFFERENT configured row (@SCN-LNT-018's shape: the bare @fitness axis tag,
-  // the characteristic supplied by a row rather than a bare check tag), which is what makes the
-  // phantom fact "no scenario carries SCN-AAA-001" rather than "no scenario exists at all".
+  // scenario is a converted check of its own (@SCN-LNT-018's shape: the axis tag and a configured
+  // row naming it), which is what makes the phantom fact "no scenario carries SCN-AAA-001" rather
+  // than "no scenario exists at all".
   fitnessCorpus = [
     "@LNT",
     "Feature: fixture",
@@ -276,12 +266,12 @@ When("the fitness check citing a configured row is observed and reconciled", fun
   // The corpus is consulted only downstream, by the reconciler, to find the scenario the posted
   // @SCN names — and it is THERE, not at the citation seam, that this fixture's row and corpus
   // disagree.
-  scenarios = parseScenarios(fitnessCorpus, [], [], configuredFitnessChecks);
+  scenarios = parseScenarios(fitnessCorpus, [], configuredFitnessChecks);
   evidenceObservations = runningStaticChecks(
     [plantedCiSource],
     plantedScripts,
     NO_RUNNERS,
-    (_script, citedByStep) => citationOfCitedRow(citedByStep, configuredFitnessChecks ?? new Map())
+    (_script, citedByStep) => citationOfCitedRow(citedByStep, configuredFitnessChecks ?? new Set<string>())
   );
 
   const reconciliation = evidenceReconciliationOf(scenarios, evidenceObservations, [], false, false);
@@ -289,57 +279,84 @@ When("the fitness check citing a configured row is observed and reconciled", fun
   markdown = renderMarkdown(reconciliation, CTX);
 });
 
+// @SCN-LNT-018 outcome: the two scenarios' codes, the rows naming them, and the retired word both
+// rows may still carry.
+let lnt018Scns: [string, string];
+let lnt018Word: string | undefined;
+
+/** The corpus: each scenario under its own Rule, the first Rule optionally carrying the axis tag. */
+function lnt018Corpus(hoisted: boolean): string {
+  const [first, second] = lnt018Scns;
+  return [
+    "@FIT",
+    "Feature: fitness",
+    ...(hoisted ? ["  @fitness"] : []),
+    "  Rule: the first check's rule",
+    `    @fitness @${first}`,
+    "    Scenario: the first check holds",
+    "  Rule: the second check's rule",
+    `    @fitness @${second}`,
+    "    Scenario: the second check holds",
+  ].join("\n");
+}
+
+/** The rows, read through the target's own manifest reader — with the retired word if set. */
+function lnt018Rows(): FitnessCheckIndex {
+  return resolveFitnessChecks({
+    specController: {
+      fitnessChecks: lnt018Scns.map((scn) =>
+        lnt018Word === undefined ? { scn } : { scn, characteristic: lnt018Word }
+      ),
+    },
+  });
+}
+
 // @SCN-LNT-018
 Given(
-  "that scenario carries the bare fitness axis tag and no characteristic tag",
-  function () {
-    // NO characteristic tag anywhere on the row. A rule still reading the tag for the subject has
-    // nothing to read here, so it answers the empty list and the Then reds — which is what makes
-    // this fixture a discriminator rather than a restatement of @SCN-LNT-006's.
-    corpusSource = [
-      "@FIT",
-      "Feature: fitness",
-      "  Rule: the tree stays inside its thresholds",
-      "    @fitness @SCN-AAA-001",
-      "    Scenario: the codebase stays under the threshold",
-    ].join("\n");
+  "two @fitness scenarios {string} and {string}, each named by its own configured row",
+  function (first: string, second: string) {
+    lnt018Scns = [first, second];
+    lnt018Word = undefined;
+    corpusSource = lnt018Corpus(false);
+    configuredFitnessChecks = lnt018Rows();
   }
 );
 
 // @SCN-LNT-018
-Given("the axis tag reaches it a second time, hoisted onto its Rule", function () {
+Given("both rows still carry the same retired characteristic word {string}", function (word: string) {
+  // THE SHAPE A SHARED WORD ONCE TOOK. A match keyed on the word would merge the two checks; the
+  // word is not read now, and each obligation is keyed by its own @SCN.
+  lnt018Word = word;
+  configuredFitnessChecks = lnt018Rows();
+});
+
+// @SCN-LNT-018
+Given("the axis tag reaches {string} a second time, hoisted onto its Rule", function (scn: string) {
   // A scenario's effective tags are its own plus its Rule's and its Feature's (@SCN-LDG-020), so
-  // the SAME corpus is rebuilt with the axis tag hoisted as well — one read, one row, the tag
-  // arriving twice. Owed once: two obligations for one characteristic would leave the second
-  // missing for ever, since one run is one credit and can cite one @SCN.
-  corpusSource = [
-    "@FIT",
-    "Feature: fitness",
-    "  @fitness",
-    "  Rule: the tree stays inside its thresholds",
-    "    @fitness @SCN-AAA-001",
-    "    Scenario: the codebase stays under the threshold",
-  ].join("\n");
+  // the axis tag is hoisted onto the FEATURE here and reaches both scenarios twice — one read, the
+  // tag arriving twice on the named one at least. Owed once.
+  assert.equal(scn, lnt018Scns[0], "the fixture hoists the axis tag above the first scenario");
+  corpusSource = lnt018Corpus(true);
 });
 
 // @SCN-LNT-007
 // @SCN-LNT-018
 When("the scenario corpus is read", function () {
-  scenarios = parseScenarios(corpusSource, [], obligationCheckTags, configuredFitnessChecks);
+  scenarios = parseScenarios(corpusSource, [], configuredFitnessChecks);
 });
 
 // @SCN-LNT-018
 Then(
-  "that scenario raises exactly one Evidence Obligation, naming the fitness check {string}",
-  function (check: string) {
-    // WHOLE-CORPUS equality, so "exactly one" excludes a rule that raised the obligation twice for
-    // the twice-arriving tag as firmly as one that raised it under another name or not at all.
+  "each scenario raises exactly one Evidence Obligation, at the quality check {string}, naming no characteristic",
+  function (qualityCheck: string) {
+    // WHOLE-CORPUS equality, keyed by @SCN: "exactly one" each excludes a rule that raised twice
+    // for the twice-arriving tag, one that merged the two checks sharing a word into one, and one
+    // that carried the word onto the obligation — the obligation is its quality check alone.
     assert.deepEqual(
-      scenarios.map((scenario) => scenario.evidenceObligations),
-      [[{ qualityCheck: "lint", staticCheck: check }]],
-      `expected the converted row to raise ONE lint Evidence Obligation naming "${check}" — the ` +
-        `tag names the axis and the configured row names the characteristic; ` +
-        `got ${JSON.stringify(scenarios)}`
+      scenarios.map((scenario) => [scenario.scnId, scenario.evidenceObligations]),
+      lnt018Scns.map((scnId) => [scnId, [{ qualityCheck }]]),
+      `expected each @fitness scenario to raise ONE "${qualityCheck}" Evidence Obligation keyed by ` +
+        `its own @SCN and naming no characteristic; got ${JSON.stringify(scenarios)}`
     );
   }
 );
@@ -400,8 +417,8 @@ Then(
     );
     assert.match(
       items,
-      /lint .*missing/,
-      `expected the lint missing reconciling item for "${check}"; got "${items}"`
+      /fitness .*missing/,
+      `expected the fitness missing reconciling item for "${check}"; got "${items}"`
     );
     assert.match(items, /∅/, `expected the missing item to carry the ∅ glyph; got "${items}"`);
   }
@@ -415,7 +432,7 @@ Then(
     // resolve, it resolved to a row that has since moved. Pinning it is what stops this arm
     // passing for the wrong reason (an unresolved citation goes to suspense, not here).
     const observation = evidenceObservations.find(
-      (o) => isStaticCheckObservation(o) && o.staticCheck === script
+      (o) => isFitnessObservation(o) && o.staticCheck === script
     );
     assert.equal(
       observation?.scnId,
@@ -437,7 +454,7 @@ Then(
         item.staticCheck,
         item.outcome,
       ]),
-      [["lint", script, "cites-unknown-scenario"]],
+      [["fitness", script, "cites-unknown-scenario"]],
       `expected one cites-unknown-scenario item naming "${script}"; got ${JSON.stringify(phantom?.qualityCheckReconciliations)}`
     );
 
@@ -451,8 +468,8 @@ Then(
     );
     assert.match(
       items,
-      /lint .*Evidence Observation cites an unknown Scenario/,
-      `expected the phantom row to carry the lint cites-unknown-scenario item; got "${items}"`
+      /fitness .*Evidence Observation cites an unknown Scenario/,
+      `expected the phantom row to carry the fitness cites-unknown-scenario item; got "${items}"`
     );
     assert.match(items, /👻/, `expected the phantom item to carry the 👻 glyph; got "${items}"`);
     assert.match(
@@ -469,7 +486,7 @@ Then("no scenario's row holds that credit", function () {
   // that let an unresolvable citation fall back to the handle puts the renumbered row in this list;
   // one that dropped the credit empties it. Both are the failures the phantom row exists to stop.
   const observation = evidenceObservations.find(
-    (o) => isStaticCheckObservation(o) && o.staticCheck === CITED_SCRIPT
+    (o) => isFitnessObservation(o) && o.staticCheck === CITED_SCRIPT
   );
   assert.ok(observation, `expected an observation of the running check "${CITED_SCRIPT}"`);
   assert.deepEqual(
@@ -483,18 +500,18 @@ Then("no scenario's row holds that credit", function () {
 
 // @SCN-LNT-004
 Then(
-  "the scenario's fitness obligation reconciles missing, naming the check {string}",
-  function (check: string) {
+  "the scenario's fitness obligation reconciles missing",
+  function () {
     // THE FITNESS AXIS, ANSWERED BY ITS OWN ABSENCE AND NOTHING ELSE. Nothing cites SCN-AAA-001 on
-    // the lint axis — the configured row raises the obligation and no CI step names it — so the
+    // the fitness axis — the configured row raises the obligation and no CI step names it — so the
     // item carries no Evidence Observation at all (Obligation Exists, Observation None; canon's
     // @SCN-LDG-028), never the green unit credit beside it.
     const row = fitnessLedger.scenarioReconciliations.find((r) => r.scnId === "SCN-AAA-001");
-    const item = (row?.qualityCheckReconciliations ?? []).find((i) => i.qualityCheck === "lint");
+    const item = (row?.qualityCheckReconciliations ?? []).find((i) => i.qualityCheck === "fitness");
     assert.deepEqual(
-      [item?.staticCheck, item?.outcome],
-      [check, "missing"],
-      `expected the fitness obligation to reconcile missing naming "${check}"; got ${JSON.stringify(item)}`
+      [item?.qualityCheck, item?.outcome, item?.evidenceObligation],
+      ["fitness", "missing", { qualityCheck: "fitness" }],
+      `expected the fitness obligation to reconcile missing; got ${JSON.stringify(item)}`
     );
     assert.equal(
       item?.evidenceObservation,
@@ -508,12 +525,12 @@ Then(
     assert.match(
       verdict,
       /out-of-balance/,
-      `expected the verdict cell to read out-of-balance for the unwired check "${check}"; got "${verdict}"`
+      `expected the verdict cell to read out-of-balance for the unobserved check; got "${verdict}"`
     );
     assert.match(
       items,
-      /lint .*missing/,
-      `expected the lint missing reconciling item for "${check}"; got "${items}"`
+      /fitness .*missing/,
+      `expected the fitness missing reconciling item; got "${items}"`
     );
     assert.match(items, /∅/, `expected the missing item to carry the ∅ glyph; got "${items}"`);
   }
@@ -548,7 +565,7 @@ Then("its unit obligation reconciles satisfied, omitted from the reconciling ite
   // read back off the report, where a bare regex over the whole thing could not see it.
   assert.deepEqual(
     (row?.reconcilingItems ?? []).map((i) => i.qualityCheck),
-    ["lint"],
+    ["fitness"],
     `expected only the fitness item to remain reconciling; got ${JSON.stringify(row?.reconcilingItems)}`
   );
   const { items } = rowCells("SCN-AAA-001");
@@ -564,23 +581,18 @@ Then(
   "the run of {string} cites no scenario and its credit posts to suspense",
   function (script: string) {
     // THE WHOLE CITATION WITHHELD, not a near-match and not a downgrade. The entry named a row
-    // the corpus does not carry with this characteristic, so the seam reaches no `@SCN` at all
+    // the corpus does not carry, so the seam reaches no `@SCN` at all
     // and the observation carries none — exactly the shape an UNREGISTERED handle already has.
     // A reading that fell back to the corpus hop stamps SCN-AAA-001 here and this reds on the
     // citation alone, before any row is read.
     const observation = evidenceObservations
-      .filter(isStaticCheckObservation)
+      .filter(isFitnessObservation)
       .find((o) => o.staticCheck === script);
     assert.ok(observation, `expected a run of ${script} to be observed over the real CI config`);
     assert.equal(
       observation.scnId,
       undefined,
       `expected ${script}'s run to cite no scenario; got ${JSON.stringify(observation)}`
-    );
-    assert.equal(
-      observation.checkTag,
-      undefined,
-      `expected ${script}'s run to carry no citation keys at all; got ${JSON.stringify(observation)}`
     );
 
     // THE CREDIT'S IDENTITY, counted across the WHOLE ledger — the assertion a fallback path
@@ -616,8 +628,8 @@ Then(
     );
     assert.match(
       items,
-      /lint .*Evidence Observation cites no Scenario/,
-      `expected the suspense row to carry the lint cites-no-scenario item; got "${items}"`
+      /fitness .*Evidence Observation cites no Scenario/,
+      `expected the suspense row to carry the fitness cites-no-scenario item; got "${items}"`
     );
     assert.match(
       items,
@@ -630,12 +642,12 @@ Then(
 
 // @SCN-LNT-017
 Then(
-  "the third fitness scenario reconciles satisfied for {string} alone, absorbing no credit meant for another characteristic",
+  "the third fitness scenario reconciles satisfied for {string} alone, absorbing no credit meant for another row",
   function (check: string) {
     // THE CONTROL, AND IT HAS TO BE ONE. The row the wrong entry named is cited by its OWN
     // handle and reconciles green, so this cannot be passed by a reading that simply fails to
     // credit it: the row is live throughout, and the question is only whether the stray credit
-    // reached it. Exactly one reconciling item, naming exactly this characteristic.
+    // reached it. Exactly one reconciling item, on exactly this row.
     const row = fitnessLedger.scenarioReconciliations.find((r) => r.scnId === "SCN-AAA-003");
     assert.deepEqual(
       (row?.qualityCheckReconciliations ?? []).map((item) => [item.staticCheck, item.outcome]),
@@ -643,7 +655,7 @@ Then(
       `expected SCN-AAA-003 to reconcile satisfied for "${check}" and nothing else; got ${JSON.stringify(row?.qualityCheckReconciliations)}`
     );
 
-    // ONE CREDIT ON THE ROW, and it is the one that named this characteristic. A reading that
+    // ONE CREDIT ON THE ROW, and it is the one that cited this @SCN. A reading that
     // tested the named @SCN's EXISTENCE rather than its MEMBERSHIP posts a second observation
     // here — lint:adopted-vocabulary's — and this list holds two.
     assert.deepEqual(
@@ -651,7 +663,7 @@ Then(
         (observation) => (observation as { staticCheck?: string }).staticCheck
       ),
       ["lint:feature-codes"],
-      `expected only the run naming this characteristic to credit SCN-AAA-003; got ${JSON.stringify(row?.evidenceObservations)}`
+      `expected only the run citing this @SCN to credit SCN-AAA-003; got ${JSON.stringify(row?.evidenceObservations)}`
     );
 
     // And the same fact read back off the rendered row — the report is where a reader meets it.
@@ -726,18 +738,18 @@ Then(
     const unnamed = rows.find((row) => row.scnId === "SCN-HCV-002");
 
     // BOTH ROWS, side by side, because the only thing separating them is whether a row names them.
-    // A rule reaching for a near characteristic — or for the axis word itself — puts an obligation
+    // A rule reaching for a near row — or for the axis word itself — puts an obligation
     // on the second and reds here.
     assert.deepEqual(
       named?.evidenceObligations,
-      [{ qualityCheck: "lint", staticCheck: "complexity" }],
-      `expected the named scenario to raise its row's characteristic; got ${JSON.stringify(named?.evidenceObligations)}`
+      [{ qualityCheck: "fitness" }],
+      `expected the named scenario to raise its row's obligation; got ${JSON.stringify(named?.evidenceObligations)}`
     );
     assert.deepEqual(
       unnamed?.evidenceObligations,
       [],
-      `expected the scenario no row names to raise NOTHING — there is no characteristic to raise ` +
-        `one for; got ${JSON.stringify(unnamed?.evidenceObligations)}`
+      `expected the scenario no row names to raise NOTHING — no row declares it a check, so ` +
+        `there is nothing to raise; got ${JSON.stringify(unnamed?.evidenceObligations)}`
     );
 
     // IT REDS, on the outcome canon already carries for this shape (Scenario Exists, Evidence
@@ -810,13 +822,10 @@ Given(
     // one of them. Drift — a second scenario appearing — and the arm would go on passing while
     // asserting nothing about an unrecorded row.
     assert.deepEqual(
-      [...resolveFitnessChecks(manifest)].map(([scn, row]) => [
-        scn,
-        row.characteristic,
-      ]),
+      [...resolveFitnessChecks(manifest)],
       [
-        ["SCN-CVT-001", "complexity"],
-        ["SCN-CVT-002", "traceability"],
+        "SCN-CVT-001",
+        "SCN-CVT-002",
       ],
       "expected two rows, one per scenario the manifest names"
     );
@@ -890,9 +899,9 @@ Then(
         row.qualityCheckReconciliations.map((item) => [item.staticCheck, item.outcome]),
       ]),
       [
-        ["SCN-CVT-001", "scenario", "balanced", [["complexity", "satisfied"]]],
+        ["SCN-CVT-001", "scenario", "balanced", [[undefined, "satisfied"]]],
         ["(no scenario)", "suspense-scenario", "out-of-balance", [[undefined, "broken"]]],
-        ["SCN-CVT-002", "scenario", "out-of-balance", [["traceability", "missing"]]],
+        ["SCN-CVT-002", "scenario", "out-of-balance", [[undefined, "missing"]]],
       ],
       `expected the recorded row credited, the unrecorded one on the suspense row as broken, and ` +
         `the row the corpus carries no scenario for on its own out-of-balance row; ` +
@@ -937,8 +946,8 @@ Then(
         row.qualityCheckReconciliations.map((item) => [item.staticCheck, item.outcome]),
       ]),
       [
-        ["SCN-CVT-001", "scenario", "out-of-balance", [["complexity", "missing"]]],
-        ["SCN-CVT-002", "scenario", "out-of-balance", [["traceability", "missing"]]],
+        ["SCN-CVT-001", "scenario", "out-of-balance", [[undefined, "missing"]]],
+        ["SCN-CVT-002", "scenario", "out-of-balance", [[undefined, "missing"]]],
       ],
       `expected both rows to reconcile missing and no suspense row at all; got ` +
         `${JSON.stringify(unenumeratedNoRecordReconciliation.ledger.scenarioReconciliations)}`
@@ -988,13 +997,10 @@ Given(
     // the manifest holds. Drift — a row losing its script — and the arm would go on passing while
     // asserting something else.
     assert.deepEqual(
-      [...resolveFitnessChecks(manifest)].map(([scn, row]) => [
-        scn,
-        row.characteristic,
-      ]),
+      [...resolveFitnessChecks(manifest)],
       [
-        ["SCN-CVT-001", "complexity"],
-        ["SCN-CVT-002", "traceability"],
+        "SCN-CVT-001",
+        "SCN-CVT-002",
       ],
       "expected two rows, one per scenario the planted corpus carries"
     );
@@ -1064,8 +1070,8 @@ Then(
         row.qualityCheckReconciliations.map((item) => [item.staticCheck, item.outcome]),
       ]),
       [
-        ["SCN-CVT-001", "scenario", "balanced", [["complexity", "satisfied"]]],
-        ["SCN-CVT-002", "scenario", "out-of-balance", [["traceability", "missing"]]],
+        ["SCN-CVT-001", "scenario", "balanced", [[undefined, "satisfied"]]],
+        ["SCN-CVT-002", "scenario", "out-of-balance", [[undefined, "missing"]]],
         [
           "(no scenario)",
           "suspense-scenario",
@@ -1076,16 +1082,15 @@ Then(
       `expected the annotated check's credit on its own row and the unannotated one in suspense; ` +
         `got ${JSON.stringify(annotatedReconciliation.ledger.scenarioReconciliations)}`
     );
-    // AND THE CREDIT CARRIES THE CHARACTERISTIC ITS ROW NAMES. A CI step states a code and never a
-    // characteristic, so a `checkTag` reading `lint:alpha` here would be the handle that ran
-    // answering for the row — name-match in a new spelling, which is what this route retired.
+    // AND THE CREDIT CARRIES THE HANDLE THAT RAN AND THE @SCN ITS STEP STATES — the one citation
+    // term since the characteristic left (3F-3570).
     assert.deepEqual(
       annotatedReconciliation.ledger.scenarioReconciliations
         .find((row) => row.scnId === "SCN-CVT-001")
-        ?.evidenceObservations.filter(isStaticCheckObservation)
-        .map((observation) => [observation.staticCheck, observation.checkTag, observation.scnId]),
-      [["lint:alpha", "complexity", "SCN-CVT-001"]],
-      "expected the credited run to carry the handle that ran and the characteristic its ROW names"
+        ?.evidenceObservations.filter(isFitnessObservation)
+        .map((observation) => [observation.staticCheck, observation.scnId]),
+      [["lint:alpha", "SCN-CVT-001"]],
+      "expected the credited run to carry the handle that ran and the @SCN its step states"
     );
   }
 );
@@ -1124,11 +1129,8 @@ Given(
     // THE FIXTURE IS HELD TO WHAT THIS SCENARIO RESTS ON: ONE row, naming the scenario the planted
     // corpus carries.
     assert.deepEqual(
-      [...resolveFitnessChecks(manifest)].map(([scn, row]) => [
-        scn,
-        row.characteristic,
-      ]),
-      [["SCN-CVT-001", "complexity"]],
+      [...resolveFitnessChecks(manifest)],
+      ["SCN-CVT-001"],
       "expected one row naming the scenario the planted corpus carries"
     );
     // AND WHAT KEEPS THE RUN RECORD ITS ONLY OBSERVER IS A MECHANISM, NOT AN ACCIDENT. The check is
@@ -1206,7 +1208,7 @@ Then(
         row.verdict,
         row.qualityCheckReconciliations.map((item) => [item.staticCheck, item.outcome]),
       ]),
-      [["SCN-CVT-001", "scenario", "out-of-balance", [["complexity", "failing"]]]],
+      [["SCN-CVT-001", "scenario", "out-of-balance", [[undefined, "failing"]]]],
       `expected the failed step's row to read failing; got ` +
         JSON.stringify(failedStepReconciliation.ledger.scenarioReconciliations)
     );
@@ -1216,9 +1218,9 @@ Then(
     assert.deepEqual(
       failedStepReconciliation.ledger.scenarioReconciliations
         .find((row) => row.scnId === "SCN-CVT-001")
-        ?.evidenceObservations.filter(isStaticCheckObservation)
-        .map((observation) => [observation.checkTag, observation.scnId]),
-      [["complexity", "SCN-CVT-001"]],
+        ?.evidenceObservations.filter(isFitnessObservation)
+        .map((observation) => [observation.staticCheck, observation.scnId]),
+      [["SCN-CVT-001", "SCN-CVT-001"]],
       "expected the failing row to carry the observation of the step that failed it"
     );
     // AND THE RUN IS SOUND. `broken` stamps a run unsound — the evidence stream itself is faulty —
@@ -1385,12 +1387,12 @@ Then(
     // half-citation appearing beside it would be a shape no reader downstream knows how to read.
     assert.deepEqual(
       unannotatedReconciliation.ledger.scenarioReconciliations[0]?.evidenceObservations
-        .filter(isStaticCheckObservation)
-        .map((observation) => [observation.staticCheck, observation.checkTag, observation.scnId]),
+        .filter(isFitnessObservation)
+        .map((observation) => [observation.staticCheck, observation.scnId]),
       [
-        ["lint:alpha", undefined, undefined],
-        ["lint:beta", undefined, undefined],
-        ["typecheck", undefined, undefined],
+        ["lint:alpha", undefined],
+        ["lint:beta", undefined],
+        ["typecheck", undefined],
       ],
       "expected each uncited check to carry the handle that ran and no citation at all"
     );
@@ -1436,11 +1438,8 @@ Given(
     // THE FIXTURE IS HELD TO WHAT THIS SCENARIO RESTS ON: ONE row, naming the scenario the planted
     // corpus carries.
     assert.deepEqual(
-      [...resolveFitnessChecks(manifest)].map(([scn, row]) => [
-        scn,
-        row.characteristic,
-      ]),
-      [["SCN-CVT-001", "complexity"]],
+      [...resolveFitnessChecks(manifest)],
+      ["SCN-CVT-001"],
       "expected one row naming the scenario the planted corpus carries"
     );
     const ciSource = readFileSync(join(swallowedRedFixture, "ci.yml"), "utf8");
@@ -1532,7 +1531,7 @@ Then(
         row.verdict,
         row.qualityCheckReconciliations.map((item) => [item.staticCheck, item.outcome]),
       ]),
-      [["SCN-CVT-001", "scenario", "out-of-balance", [["complexity", "failing"]]]],
+      [["SCN-CVT-001", "scenario", "out-of-balance", [[undefined, "failing"]]]],
       `expected the swallowed red to read failing off the step's own result; got ` +
         JSON.stringify(swallowedRedReconciliation.ledger.scenarioReconciliations)
     );
@@ -1541,9 +1540,9 @@ Then(
     assert.deepEqual(
       swallowedRedReconciliation.ledger.scenarioReconciliations
         .find((row) => row.scnId === "SCN-CVT-001")
-        ?.evidenceObservations.filter(isStaticCheckObservation)
-        .map((observation) => [observation.checkTag, observation.scnId]),
-      [["complexity", "SCN-CVT-001"]],
+        ?.evidenceObservations.filter(isFitnessObservation)
+        .map((observation) => [observation.staticCheck, observation.scnId]),
+      [["SCN-CVT-001", "SCN-CVT-001"]],
       "expected the failing row to carry the observation of the step whose red the job swallowed"
     );
     // AND THE RUN IS SOUND. The evidence stream did its job perfectly — it carried a red past a
@@ -1564,7 +1563,7 @@ Then(
 //
 // TWO ROWS FROM ONE RECORD, BECAUSE THE CLAIM IS THAT EACH IS CREDITED BY ITS OWN STEP. A reader
 // posting one entry's credit to every configured row, and a reader crossing the two, both leave
-// every row BALANCED — so the assertion is over the characteristic each row was credited FOR,
+// every row BALANCED — so the assertion is over the @SCN each row's credit cites,
 // per row, rather than over a verdict or a count.
 //
 // IT RUNS THE COMPOSITION rather than the record reader alone, for its siblings' reason: the claim
@@ -1588,15 +1587,12 @@ Given(
       specController?: { fitnessChecks?: unknown; checkRegistry?: unknown };
     };
     // THE FIXTURE IS HELD TO WHAT THIS SCENARIO SAYS IT HOLDS: TWO rows, each naming one of the
-    // corpus's two scenarios and each carrying its own characteristic.
+    // corpus's two scenarios.
     assert.deepEqual(
-      [...resolveFitnessChecks(manifest)].map(([scn, row]) => [
-        scn,
-        row.characteristic,
-      ]),
+      [...resolveFitnessChecks(manifest)],
       [
-        ["SCN-CVT-001", "complexity"],
-        ["SCN-CVT-002", "traceability"],
+        "SCN-CVT-001",
+        "SCN-CVT-002",
       ],
       "expected two rows, one per scenario the planted corpus carries"
     );
@@ -1616,7 +1612,7 @@ Given(
         ["SCN-CVT-001", false],
         ["SCN-CVT-002", false],
       ],
-      "expected the planted corpus to carry both scenarios on the axis and no characteristic tag"
+      "expected the planted corpus to carry both scenarios on the axis and no other tag"
     );
     const ciSource = readFileSync(join(succeededStepFixture, "ci.yml"), "utf8");
     // EACH CHECK'S STEP STATES THE CODE OF THE ROW IT ANSWERS, read by the product's own workflow
@@ -1691,7 +1687,7 @@ When("that target's evidence is reconciled with the record its own CI run wrote"
 
 // @SCN-LNT-021
 Then(
-  "each row is credited for the characteristic its own row names, both Evidence Obligations read satisfied, and the run balances",
+  "each row is credited by the step citing its own @SCN, both Evidence Obligations read satisfied, and the run balances",
   function () {
     // THE LEDGER WHOLE, so a credit landing on the wrong row, or a second credit landing beside a
     // first, is visible rather than absorbed. Under the reader before this scenario neither credit
@@ -1702,13 +1698,12 @@ Then(
         row.kind,
         row.verdict,
         row.qualityCheckReconciliations.map((item) => [
-          item.staticCheck,
+          item.qualityCheck,
           item.outcome,
           item.evidenceObservation !== undefined &&
-          isStaticCheckObservation(item.evidenceObservation)
+          isFitnessObservation(item.evidenceObservation)
             ? [
                 item.evidenceObservation.scnId,
-                item.evidenceObservation.checkTag,
                 item.evidenceObservation.exists,
                 item.evidenceObservation.enforcedOverRealSource,
               ]
@@ -1716,20 +1711,10 @@ Then(
         ]),
       ]),
       [
-        [
-          "SCN-CVT-001",
-          "scenario",
-          "balanced",
-          [["complexity", "satisfied", ["SCN-CVT-001", "complexity", true, true]]],
-        ],
-        [
-          "SCN-CVT-002",
-          "scenario",
-          "balanced",
-          [["traceability", "satisfied", ["SCN-CVT-002", "traceability", true, true]]],
-        ],
+        ["SCN-CVT-001", "scenario", "balanced", [["fitness", "satisfied", ["SCN-CVT-001", true, true]]]],
+        ["SCN-CVT-002", "scenario", "balanced", [["fitness", "satisfied", ["SCN-CVT-002", true, true]]]],
       ],
-      `expected each row to be credited for its OWN characteristic, both facts observed off the ` +
+      `expected each row to be credited by the step citing its OWN @SCN, both facts observed off the ` +
         `run; got ${JSON.stringify(succeededStepReconciliation.ledger.scenarioReconciliations)}`
     );
     // AND THE STEP THAT WROTE THE RECORD IS ON THE LEDGER NOWHERE. Two rows, no suspense row, and
@@ -1772,7 +1757,7 @@ Then(
 // so the failed step's credit carries what it found and its row REDS.
 //
 // THE CLAIM IS AN ABSENCE ON TWO OF THE FOUR ROWS, SO THE INSTRUMENT IS A CARDINALITY ONE. A stray
-// credit on either uncredited row is ABSORBED — each row names its own characteristic, so the extra
+// credit on either uncredited row is ABSORBED — each row is its own check, so the extra
 // credit answers its own obligation and the ledger goes on reading balanced there. What
 // discriminates is each row's credit list, asserted whole, and the running-static-check total.
 // -------------------------------------------------------------------------
@@ -1790,20 +1775,17 @@ Given(
     const manifest = JSON.parse(
       readFileSync(join(readingsFixture, "package.json"), "utf8")
     ) as PackageJsonScripts & { specController?: { fitnessChecks?: unknown } };
-    // THE FIXTURE IS HELD TO WHAT THIS SCENARIO RESTS ON: four rows, one characteristic apiece. No
+    // THE FIXTURE IS HELD TO WHAT THIS SCENARIO RESTS ON: four rows, one check apiece. No
     // row can excuse a skip at all (3F-3252), so there is no predicate to hold the fixture to.
     assert.deepEqual(
-      [...resolveFitnessChecks(manifest)].map(([scn, row]) => [
-        scn,
-        row.characteristic,
-      ]),
+      [...resolveFitnessChecks(manifest)],
       [
-        ["SCN-CVT-001", "complexity"],
-        ["SCN-CVT-002", "traceability"],
-        ["SCN-CVT-003", "duplication"],
-        ["SCN-CVT-004", "doc-accuracy"],
+        "SCN-CVT-001",
+        "SCN-CVT-002",
+        "SCN-CVT-003",
+        "SCN-CVT-004",
       ],
-      "expected four rows, one characteristic apiece"
+      "expected four rows, one check apiece"
     );
   }
 );
@@ -1872,16 +1854,16 @@ Then(
           item.staticCheck,
           item.outcome,
           item.evidenceObservation !== undefined &&
-          isStaticCheckObservation(item.evidenceObservation)
+          isFitnessObservation(item.evidenceObservation)
             ? item.evidenceObservation.status
             : null,
         ]),
       ]),
       [
-        ["SCN-CVT-001", "scenario", "balanced", [["complexity", "satisfied", "passed"]]],
-        ["SCN-CVT-002", "scenario", "out-of-balance", [["traceability", "failing", "failed"]]],
-        ["SCN-CVT-003", "scenario", "out-of-balance", [["duplication", "missing", null]]],
-        ["SCN-CVT-004", "scenario", "out-of-balance", [["doc-accuracy", "missing", null]]],
+        ["SCN-CVT-001", "scenario", "balanced", [[undefined, "satisfied", "passed"]]],
+        ["SCN-CVT-002", "scenario", "out-of-balance", [[undefined, "failing", "failed"]]],
+        ["SCN-CVT-003", "scenario", "out-of-balance", [[undefined, "missing", null]]],
+        ["SCN-CVT-004", "scenario", "out-of-balance", [[undefined, "missing", null]]],
         ["(no scenario)", "suspense-scenario", "out-of-balance", [
           [undefined, "broken", null],
           [undefined, "broken", null],
@@ -1967,14 +1949,11 @@ Given("a target whose corpus names three static checks its CI runs", function ()
   // would go on passing while asserting something else, or would quietly stop exercising the
   // observer.
   assert.deepEqual(
-    [...resolveFitnessChecks(manifest)].map(([scn, row]) => [
-      scn,
-      row.characteristic,
-    ]),
+    [...resolveFitnessChecks(manifest)],
     [
-      ["SCN-CVT-001", "complexity"],
-      ["SCN-CVT-002", "traceability"],
-      ["SCN-CVT-003", "tech-conformance"],
+      "SCN-CVT-001",
+      "SCN-CVT-002",
+      "SCN-CVT-003",
     ],
     "expected all three CONFIGURED static rows, each naming a script of this manifest"
   );
@@ -2063,9 +2042,9 @@ Then(
         row.qualityCheckReconciliations.map((item) => [item.staticCheck, item.outcome]),
       ]),
       [
-        ["SCN-CVT-001", "scenario", "out-of-balance", [["complexity", "watermelon"]]],
-        ["SCN-CVT-002", "scenario", "out-of-balance", [["traceability", "watermelon"]]],
-        ["SCN-CVT-003", "scenario", "balanced", [["tech-conformance", "satisfied"]]],
+        ["SCN-CVT-001", "scenario", "out-of-balance", [[undefined, "watermelon"]]],
+        ["SCN-CVT-002", "scenario", "out-of-balance", [[undefined, "watermelon"]]],
+        ["SCN-CVT-003", "scenario", "balanced", [[undefined, "satisfied"]]],
       ],
       `expected both severed checks to read the watermelon and the sibling to stay satisfied; ` +
         `got ${JSON.stringify(severedReconciliation.ledger.scenarioReconciliations)}`
@@ -2079,7 +2058,7 @@ Then(
       severedReconciliation.ledger.scenarioReconciliations
         .filter((row) => row.scnId !== "SCN-CVT-003")
         .flatMap((row) => row.evidenceObservations)
-        .filter(isStaticCheckObservation)
+        .filter(isFitnessObservation)
         .map((observation) => [
           observation.staticCheck,
           observation.exists,
@@ -2138,13 +2117,10 @@ Given(
       "expected exactly two checks, each a script under the one discovered prefix"
     );
     assert.deepEqual(
-      [...resolveFitnessChecks(manifest)].map(([scn, row]) => [
-        scn,
-        row.characteristic,
-      ]),
+      [...resolveFitnessChecks(manifest)],
       [
-        ["SCN-CVT-001", "complexity"],
-        ["SCN-CVT-002", "tech-conformance"],
+        "SCN-CVT-001",
+        "SCN-CVT-002",
       ],
       "expected BOTH rows configured, so the citation seam treats them identically"
     );
@@ -2341,14 +2317,8 @@ Given(
     // specifying one of them. Drift — a second scenario appearing — and this arm would go on
     // passing while asserting nothing about a row nobody specified.
     assert.deepEqual(
-      [...resolveFitnessChecks(unspecifiedRowManifest())].map(([scn, row]) => [
-        scn,
-        row.characteristic,
-      ]),
-      [
-        ["SCN-CVT-001", "complexity"],
-        ["SCN-CVT-002", "traceability"],
-      ],
+      [...resolveFitnessChecks(unspecifiedRowManifest())],
+      ["SCN-CVT-001", "SCN-CVT-002"],
       "expected two rows, one of which this target's corpus specifies"
     );
     assert.deepEqual(
@@ -2399,19 +2369,19 @@ Then(
     assert.deepEqual(
       scenarioReconciliationRows(unspecifiedRowQuietRun.md),
       [
-        "| SCN-CVT-001 | L/1 | ✓ balanced | — |",
-        "| SCN-CVT-002 | L/- | ✗ out-of-balance | lint ∅ Evidence Observation is missing |",
+        "| SCN-CVT-001 | F/1 | ✓ balanced | — |",
+        "| SCN-CVT-002 | F/- | ✗ out-of-balance | fitness ∅ Evidence Observation is missing |",
       ],
       `expected the unspecified row on its own out-of-balance row beside the specified one; got ` +
         `${JSON.stringify(scenarioReconciliationRows(unspecifiedRowQuietRun.md))}`
     );
-    // AND THE OBLIGATION NAMES THE CHARACTERISTIC THE MANIFEST OWES IT AT, which is what makes this
-    // a debit rather than a sentence about a corpus: the row said what kind of check it is, and
-    // nothing observed it.
+    // AND THE FITNESS OBLIGATIONS TABLE OWES THE ROW, which is what makes this a debit rather than
+    // a sentence about a corpus: the manifest declared a check, and nothing observed it. The table
+    // names the row by its @SCN and its outcome — no check column (@SCN-RPT-005, 3F-3525).
     assert.match(
       unspecifiedRowQuietRun.md,
-      /\| SCN-CVT-002 \| traceability \| ∅ Evidence Observation is missing \|/,
-      "expected the lint obligations table to owe the unspecified row at the characteristic it names"
+      /\| SCN-CVT-002 \| ∅ Evidence Observation is missing \|/,
+      "expected the fitness evidence obligations table to owe the unspecified row by its @SCN"
     );
     // THE RUN'S OWN ENDING. Exit 1 is the out-of-balance verdict a consumer's pipeline acts on, and
     // this target has no second reason to reach it.
@@ -2439,9 +2409,9 @@ Then(
     assert.deepEqual(
       scenarioReconciliationRows(unspecifiedRowCitingRun.md),
       [
-        "| SCN-CVT-001 | L/1 | ✓ balanced | — |",
-        "| SCN-CVT-002 | L/- | ✗ out-of-balance | lint ∅ Evidence Observation is missing |",
-        "| SCN-CVT-002 | — | ✗ out-of-balance | lint 👻 Evidence Observation cites an unknown Scenario (traceability) |",
+        "| SCN-CVT-001 | F/1 | ✓ balanced | — |",
+        "| SCN-CVT-002 | F/- | ✗ out-of-balance | fitness ∅ Evidence Observation is missing |",
+        "| SCN-CVT-002 | — | ✗ out-of-balance | fitness 👻 Evidence Observation cites an unknown Scenario (SCN-CVT-002) |",
       ],
       `expected the credit on a phantom row and the obligation still missing beside it; got ` +
         `${JSON.stringify(scenarioReconciliationRows(unspecifiedRowCitingRun.md))}`

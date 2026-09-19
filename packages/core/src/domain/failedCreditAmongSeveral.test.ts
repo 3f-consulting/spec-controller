@@ -111,15 +111,13 @@ describe("[SCN-LDG-037] a passing and a failing test in one file citing the same
 });
 
 describe("[SCN-LNT-036] a failed fitness credit beside a passing one for the same check reads failing", () => {
-  const CHECK = "complexity";
   const rowNamingCheck: Scenario[] = [
-    { scnId: SCN, evidenceObligations: [{ qualityCheck: "lint", staticCheck: CHECK }] },
+    { scnId: SCN, evidenceObligations: [{ qualityCheck: "fitness" }] },
   ];
-  /** A static credit for `CHECK` citing `SCN`, wired and run; only its handle and verdict vary. */
+  /** A fitness credit citing `SCN`, wired and run; only its handle and verdict vary. */
   const staticCredit = (staticCheck: string, status: "passed" | "failed"): EvidenceObservation => ({
-    qualityCheck: "lint",
+    qualityCheck: "fitness",
     staticCheck,
-    checkTag: CHECK,
     scnId: SCN,
     exists: true,
     enforcedOverRealSource: true,
@@ -132,8 +130,8 @@ describe("[SCN-LNT-036] a failed fitness credit beside a passing one for the sam
     // `lint:a` reads first in evidence order and passed; first-match read it and balanced.
     const ledger = reconcile(rowNamingCheck, [passing, failed]);
     const row = ledger.scenarioReconciliations.find((r) => r.scnId === SCN)!;
-    expect(row.qualityCheckReconciliations.map((i) => [i.staticCheck, i.outcome, i.evidenceObservation])).toEqual([
-      [CHECK, "failing", failed],
+    expect(row.qualityCheckReconciliations.map((i) => [i.qualityCheck, i.outcome, i.evidenceObservation])).toEqual([
+      ["fitness", "failing", failed],
     ]);
     expect(row.verdict).toBe("out-of-balance");
     expect(isBalanced(ledger)).toBe(false);
@@ -143,7 +141,7 @@ describe("[SCN-LNT-036] a failed fitness credit beside a passing one for the sam
     ["passing first", [passing, failed]],
     ["failed first", [failed, passing]],
   ])("reads failing with the two handed to the rule %s", (_order, credits) => {
-    const item = reconcileEvidenceObligation(SCN, { qualityCheck: "lint", staticCheck: CHECK }, credits);
+    const item = reconcileEvidenceObligation(SCN, { qualityCheck: "fitness" }, credits);
     expect([item.outcome, item.evidenceObservation]).toEqual(["failing", failed]);
   });
 
@@ -154,14 +152,12 @@ describe("[SCN-LNT-036] a failed fitness credit beside a passing one for the sam
 });
 
 describe("[SCN-LNT-037] a watermelon fitness credit beside a wired one for the same check reads watermelon, whichever one's locator sorts first", () => {
-  const CHECK = "complexity";
-  const obligation = { qualityCheck: "lint", staticCheck: CHECK } as const;
+  const obligation = { qualityCheck: "fitness" } as const;
   const rowNamingCheck: Scenario[] = [{ scnId: SCN, evidenceObligations: [obligation] }];
-  /** A credit for `CHECK` citing `SCN` that ran and carries no verdict; only its wiring and file vary. */
+  /** A fitness credit citing `SCN` that ran and carries no verdict; only its wiring and file vary. */
   const runOf = (enforcedOverRealSource: boolean, locator: string): EvidenceObservation => ({
-    qualityCheck: "lint",
+    qualityCheck: "fitness",
     staticCheck: "lint:alpha",
-    checkTag: CHECK,
     scnId: SCN,
     exists: true,
     enforcedOverRealSource,
@@ -170,7 +166,7 @@ describe("[SCN-LNT-037] a watermelon fitness credit beside a wired one for the s
   const itemOf = (credits: EvidenceObservation[]) => {
     const ledger = reconcile(rowNamingCheck, credits);
     const row = ledger.scenarioReconciliations.find((r) => r.scnId === SCN)!;
-    const item = row.qualityCheckReconciliations.find((i) => i.staticCheck === CHECK)!;
+    const item = row.qualityCheckReconciliations.find((i) => i.qualityCheck === "fitness")!;
     return { outcome: item.outcome, carried: item.evidenceObservation, verdict: row.verdict, balanced: isBalanced(ledger) };
   };
 
@@ -204,25 +200,22 @@ describe("[SCN-LNT-037] a watermelon fitness credit beside a wired one for the s
 });
 
 describe("[SCN-LNT-038] a failed fitness credit beside a watermelon one for the same check reads failing, whichever one's locator sorts first", () => {
-  const CHECK = "complexity";
-  const obligation = { qualityCheck: "lint", staticCheck: CHECK } as const;
+  const obligation = { qualityCheck: "fitness" } as const;
   const rowNamingCheck: Scenario[] = [{ scnId: SCN, evidenceObligations: [obligation] }];
-  /** A wired run of `CHECK` whose own verdict is a failure. */
+  /** A wired run of the check whose own verdict is a failure. */
   const failedRun = (locator: string): EvidenceObservation => ({
-    qualityCheck: "lint",
+    qualityCheck: "fitness",
     staticCheck: "lint:alpha",
-    checkTag: CHECK,
     scnId: SCN,
     exists: true,
     enforcedOverRealSource: true,
     status: "failed",
     locator,
   });
-  /** A severed run of `CHECK` carrying no verdict: on its own, a watermelon. */
+  /** A severed run of the check carrying no verdict: on its own, a watermelon. */
   const severedRun = (locator: string): EvidenceObservation => ({
-    qualityCheck: "lint",
+    qualityCheck: "fitness",
     staticCheck: "lint:alpha",
-    checkTag: CHECK,
     scnId: SCN,
     exists: true,
     enforcedOverRealSource: false,
@@ -237,7 +230,7 @@ describe("[SCN-LNT-038] a failed fitness credit beside a watermelon one for the 
     // asks in (@SCN-LNT-028) — so a failed run does not read watermelon because a severed one sits beside it.
     const ledger = reconcile(rowNamingCheck, [severed, failed]);
     const row = ledger.scenarioReconciliations.find((r) => r.scnId === SCN)!;
-    const item = row.qualityCheckReconciliations.find((i) => i.staticCheck === CHECK)!;
+    const item = row.qualityCheckReconciliations.find((i) => i.qualityCheck === "fitness")!;
     expect([item.outcome, item.evidenceObservation, row.verdict, isBalanced(ledger)]).toEqual([
       "failing",
       failed,

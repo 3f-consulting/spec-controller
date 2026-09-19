@@ -2,7 +2,7 @@
  * THE UNCITED FITNESS CREDIT, PLANTED — and the standing proof that no route answers an
  * Evidence Obligation BY NAME (3F-2625).
  *
- * IN ITS OWN FILE, not appended to `lintReconciliation.test.ts`: that file sits against the
+ * IN ITS OWN FILE, not appended to `fitnessReconciliation.test.ts`: that file sits against the
  * `max-lines` ceiling, which is a real gate here rather than a style preference (@SCN-FIT-001).
  *
  * WHY A PLANT AND NOT A GREP. `3F-2590` retired the by-name posting route and its commit never
@@ -55,6 +55,7 @@ import { describe, it, expect } from "vitest";
 import { reconcile } from "./evidenceReconciliation.js";
 import type { ScriptCitation } from "../parse/fitnessCitations.js";
 import { parseScenarios } from "../parse/scenarios.js";
+import { fitnessChecksOf } from "./fitnessChecks.js";
 import { runningStaticChecks } from "../parse/runningStaticChecks.js";
 import type { PackageJsonScripts } from "../parse/checkScriptsRunInCI.js";
 
@@ -93,15 +94,17 @@ describe("[SCN-USG-001] an uncited fitness credit lands in suspense and never an
       "@LNT",
       "Feature: fixture",
       "  Rule: a fixture rule",
-      `    @${UNREGISTERED_HANDLE} @SCN-AAA-001`,
+      "    @fitness @SCN-AAA-001",
       "    Scenario: the tree compiles under the configured type settings",
     ].join("\n");
-    const scenarios = parseScenarios(corpus, [], [UNREGISTERED_HANDLE]);
-    // The obligation IS raised, and it names the BARE tag — which is the same word as the handle.
+    const scenarios = parseScenarios(
+      corpus, [], fitnessChecksOf([{ scn: "SCN-AAA-001" }])
+    );
+    // The obligation IS raised, and it names the row's word — which is the same word as the handle.
     // Without this the plant would prove only that an unnamed check reaches suspense, which is
     // @SCN-USG-001's plain case and was never what the by-handle arm keyed on.
     expect(scenarios.map((s) => [s.scnId, s.evidenceObligations])).toEqual([
-      ["SCN-AAA-001", [{ qualityCheck: "lint", staticCheck: UNREGISTERED_HANDLE }]],
+      ["SCN-AAA-001", [{ qualityCheck: "fitness" }]],
     ]);
 
     const evidenceObservations = runningStaticChecks(
@@ -120,7 +123,7 @@ describe("[SCN-USG-001] an uncited fitness credit lands in suspense and never an
     // WHOLE-OBJECT, so the absence of `scnId` is pinned by its absence: an observer that
     // recovered the citation from the handle's shape carries the key and reds here.
     expect(observation).toEqual({
-      qualityCheck: "lint",
+      qualityCheck: "fitness",
       staticCheck: UNREGISTERED_HANDLE,
       exists: true,
       enforcedOverRealSource: true,
@@ -134,7 +137,7 @@ describe("[SCN-USG-001] an uncited fitness credit lands in suspense and never an
     expect(suspense?.verdict).toBe("out-of-balance");
     expect(suspense?.qualityCheckReconciliations).toEqual([
       {
-        qualityCheck: "lint",
+        qualityCheck: "fitness",
         staticCheck: UNREGISTERED_HANDLE,
         outcome: "cites-no-scenario",
         evidenceObservation: observation,
@@ -147,10 +150,9 @@ describe("[SCN-USG-001] an uncited fitness credit lands in suspense and never an
     const fitness = balance.scenarioReconciliations.find((s) => s.scnId === "SCN-AAA-001");
     expect(fitness?.verdict).toBe("out-of-balance");
     const missingItem = {
-      qualityCheck: "lint",
-      staticCheck: UNREGISTERED_HANDLE,
+      qualityCheck: "fitness",
       outcome: "missing",
-      evidenceObligation: { qualityCheck: "lint", staticCheck: UNREGISTERED_HANDLE },
+      evidenceObligation: { qualityCheck: "fitness" },
     };
     expect(fitness?.qualityCheckReconciliations).toEqual([missingItem]);
     expect(fitness?.reconcilingItems).toEqual([missingItem]);

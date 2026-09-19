@@ -26,7 +26,7 @@
  *
  * Bidirectional evidence: the describe carries its @SCN id, matching
  * features/fitness-reconciliation.feature and the @integration steps in
- * tests/steps/lintReconciliation.steps.ts.
+ * tests/steps/fitnessReconciliation.steps.ts.
  */
 
 import { describe, it, expect } from "vitest";
@@ -140,19 +140,19 @@ describe("[SCN-LNT-029] an unannotated pipeline is reported as every check it ru
     // reader downstream knows how to read.
     expect(reconcileUnannotated().ledger.scenarioReconciliations[0]?.evidenceObservations).toEqual([
       {
-        qualityCheck: "lint",
+        qualityCheck: "fitness",
         staticCheck: "lint:alpha",
         exists: true,
         enforcedOverRealSource: true,
       },
       {
-        qualityCheck: "lint",
+        qualityCheck: "fitness",
         staticCheck: "lint:beta",
         exists: true,
         enforcedOverRealSource: true,
       },
       {
-        qualityCheck: "lint",
+        qualityCheck: "fitness",
         staticCheck: "typecheck",
         exists: true,
         enforcedOverRealSource: true,

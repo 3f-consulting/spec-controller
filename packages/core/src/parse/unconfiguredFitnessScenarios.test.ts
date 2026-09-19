@@ -15,7 +15,7 @@
  *
  * Bidirectional evidence: the describes carry the @SCN id, matching
  * features/fitness-reconciliation.feature and the @integration steps in
- * tests/steps/lintReconciliation.steps.ts.
+ * tests/steps/fitnessReconciliation.steps.ts.
  */
 
 import { describe, it, expect } from "vitest";
@@ -44,7 +44,7 @@ Feature: a half-converted target's fitness corpus
 const oneRow = resolveFitnessChecks(
   {
     specController: {
-      fitnessChecks: [{ scn: "SCN-HCV-001", characteristic: "complexity", command: "eslint" }],
+      fitnessChecks: [{ scn: "SCN-HCV-001", command: "eslint" }],
     },
   }
 );
@@ -54,15 +54,15 @@ function corpusOf(source: string, fitnessChecks = oneRow) {
 }
 
 describe("[SCN-LNT-020] a @fitness scenario no configured row names raises no Evidence Obligation", () => {
-  it("raises the row's characteristic for the named scenario and NOTHING for the unnamed one", () => {
+  it("raises the fitness obligation for the named scenario and NOTHING for the unnamed one", () => {
     // WHOLE-CORPUS equality over both rows, and the two are deliberately side by side: the only
     // thing separating them is whether a row names them, so a rule that reached for a near
-    // characteristic — or for the axis word itself — reds here as firmly as one that raised
+    // row — or reaching for the axis word itself — reds here as firmly as one that raised
     // nothing for either.
     expect(corpusOf(halfConverted).scenarios).toEqual([
       {
         scnId: "SCN-HCV-001",
-        evidenceObligations: [{ qualityCheck: "lint", staticCheck: "complexity" }],
+        evidenceObligations: [{ qualityCheck: "fitness" }],
       },
       { scnId: "SCN-HCV-002", evidenceObligations: [] },
     ]);
@@ -78,7 +78,7 @@ describe("[SCN-LNT-020] the corpus names the fitness scenarios no configured row
     // The wholly-unconverted half-conversion: the tags moved and no row was ever written. Both
     // scenarios are named, in corpus order, because both said which axis they are on and neither
     // said what it is about.
-    expect(corpusOf(halfConverted, new Map()).unconfiguredFitnessScenarios).toEqual([
+    expect(corpusOf(halfConverted, new Set<string>()).unconfiguredFitnessScenarios).toEqual([
       "SCN-HCV-001",
       "SCN-HCV-002",
     ]);
@@ -98,7 +98,7 @@ Feature: an unconverted target
     @unit @SCN-HCV-004
     Scenario: a customer is greeted by name
 `;
-    expect(corpusOf(unconverted, new Map()).unconfiguredFitnessScenarios).toEqual([]);
+    expect(corpusOf(unconverted, new Set<string>()).unconfiguredFitnessScenarios).toEqual([]);
   });
 
   it("names a scenario ONCE though the axis tag reaches it twice", () => {
@@ -113,7 +113,7 @@ Feature: a half-converted target's fitness corpus
     @fitness @SCN-HCV-002
     Scenario: the tree stays above its mutation floor
 `;
-    expect(corpusOf(hoisted, new Map()).unconfiguredFitnessScenarios).toEqual(["SCN-HCV-002"]);
+    expect(corpusOf(hoisted, new Set<string>()).unconfiguredFitnessScenarios).toEqual(["SCN-HCV-002"]);
   });
 });
 
@@ -132,7 +132,7 @@ describe("[SCN-LNT-020] the report names them, and the run reds on the outcome c
     [
       {
         scnId: "SCN-HCV-001",
-        evidenceObligations: [{ qualityCheck: "lint", staticCheck: "complexity" }],
+        evidenceObligations: [{ qualityCheck: "fitness" }],
       },
       { scnId: "SCN-HCV-002", evidenceObligations: [] },
     ],

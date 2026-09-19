@@ -65,7 +65,7 @@ describe("[SCN-LDG-011] parseVitestEvidenceObservations stamps the caller-named 
     expect(out).toHaveLength(2);
     expect(out.every((r) => r.qualityCheck === "e2e")).toBe(true);
     // The status pass-through is unchanged by the quality-check parameter.
-    expect(out.map((r) => (r.qualityCheck !== "lint" ? r.status : null))).toEqual([
+    expect(out.map((r) => (r.qualityCheck !== "fitness" ? r.status : null))).toEqual([
       "passed",
       "failed",
     ]);
@@ -188,8 +188,8 @@ describe("[SCN-LDG-016] parseVitestEvidenceObservations attributes an assertion 
     // The MIRROR symptom, counted: the shadowed leaf's credit was STOLEN by the ancestor, which
     // then carried TWO credits for its one obligation. Reds with 2 (and 0) under the old reader.
     const out = parseVitestEvidenceObservations(report, "unit");
-    expect(out.filter((o) => o.qualityCheck !== "lint" && o.scnId === "SCN-ANC-016")).toHaveLength(1);
-    expect(out.filter((o) => o.qualityCheck !== "lint" && o.scnId === "SCN-LEA-016")).toHaveLength(1);
+    expect(out.filter((o) => o.qualityCheck !== "fitness" && o.scnId === "SCN-ANC-016")).toHaveLength(1);
+    expect(out.filter((o) => o.qualityCheck !== "fitness" && o.scnId === "SCN-LEA-016")).toHaveLength(1);
   });
 
   it("falls back to the ancestor path when the leaf's own title carries no citation", () => {
@@ -375,10 +375,10 @@ describe("[SCN-LDG-017] a collection-failed vitest file emits a broken observati
     const out = parseVitestEvidenceObservations(collectionFailed, "unit", "/r");
     expect(out).toHaveLength(1);
     // The reader emits runtime observations only (a static check observation is the static reader's), so
-    // narrow off the `lint` discriminator to read the credit-side locator.
+    // narrow off the `fitness` discriminator to read the credit-side locator.
     const observation = out[0]!;
-    expect(observation.qualityCheck).not.toBe("lint");
-    if (observation.qualityCheck === "lint") throw new Error("unreachable");
+    expect(observation.qualityCheck).not.toBe("fitness");
+    if (observation.qualityCheck === "fitness") throw new Error("unreachable");
     expect(observation.locator).toBe("harness.test.ts");
   });
 

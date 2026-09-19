@@ -30,13 +30,14 @@ import {
   parseVitestEvidenceObservations,
   type VitestJsonReport,
 } from "@3f-consulting/spec-controller-core";
-import type { Scenario, EvidenceObligation, EvidenceObservation, StaticCheckEvidenceObservation, Ledger, ScenarioReconciliation, QualityCheckReconciliation, EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
+import type { Scenario, EvidenceObligation, EvidenceObservation, FitnessEvidenceObservation, Ledger, ScenarioReconciliation, QualityCheckReconciliation, EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
 // The whole-run soundness predicate (@SCN-LDG-018), imported by MODULE PATH rather than from the
 // package barrel. The barrel re-exports it too (3F-1651 put it there); the module path is the
 // in-repo route, and deep module imports into packages/ are the established shape in these step
 // files (cliBalance.steps.ts, report.steps.ts, pendingItems.steps.ts).
 import { hasBrokenEvidence, isBalanced } from "../../packages/core/src/domain/ledger.js";
+import { fitnessChecksOf } from "../../packages/core/src/domain/fitnessChecks.js";
 
 // Fixtures shared across steps within a scenario (isolated per scenario by Cucumber).
 let scenarios: Scenario[];
@@ -205,18 +206,18 @@ Given(
   }
 );
 
-// @SCN-LDG-034 — the FITNESS-axis twin of SCN-LDG-006's runtime credit above: a lint credit
+// @SCN-LDG-034 — the FITNESS-axis twin of SCN-LDG-006's runtime credit above: a fitness credit
 // citing an @SCN no scenario carries also posts to the phantom account. It carries a value
 // for the check that ran — its whole where-to-fix — and, deliberately, a `locator` too: no
-// StaticCheckEvidenceObservation route ever populates one, but the shape can carry one (the same
+// FitnessEvidenceObservation route ever populates one, but the shape can carry one (the same
 // width-subtyping corner outcomeRules.test.ts's @SCN-LDG-034 @unit arm pins), and the item
 // must not surface it even so. The intersection type states what an external caller may
 // legally hand in; it is not a cast past the contract (see that arm's docblock at length).
 Given(
-  "a passing lint credit citing the phantom scenario {string} naming the check {string}",
+  "a passing fitness credit citing the phantom scenario {string} naming the check {string}",
   function (scnId: string, staticCheck: string) {
-    const credit: StaticCheckEvidenceObservation & { locator: string } = {
-      qualityCheck: "lint",
+    const credit: FitnessEvidenceObservation & { locator: string } = {
+      qualityCheck: "fitness",
       staticCheck,
       scnId,
       exists: true,
@@ -889,12 +890,12 @@ let ldg016LeafScnId: string;
  * a verdict and reconciling items, NOT a per-row credit COUNT, so a spurious SECOND credit on an
  * already-satisfied obligation is invisible in the rendered row (the ancestor reads `balanced`
  * under the old reader AND the new one). Counting the credits is what gives the mirror symptom
- * teeth. The `qualityCheck !== "lint"` guard narrows the EvidenceObservation union to the runtime
+ * teeth. The `qualityCheck !== "fitness"` guard narrows the EvidenceObservation union to the runtime
  * shape (a guard observation carries no scnId).
  */
 function creditsFor(scnId: string): EvidenceObservation[] {
   return (evidenceObservations ?? []).filter(
-    (o) => o.qualityCheck !== "lint" && o.scnId === scnId
+    (o) => o.qualityCheck !== "fitness" && o.scnId === scnId
   );
 }
 
@@ -1923,8 +1924,8 @@ Given(
     // LOAD-BEARING case: before this scenario it vanished from the model entirely, because there
     // was nowhere for a posted entry to sit. It posts and is findable WHATEVER it reconciles to.
     //
-    // SCN-AAA-004 is the FITNESS half of the span — a STEPLESS scenario carrying the bare check
-    // `named`, which is what raises a fitness obligation now that the technique has left the tag.
+    // SCN-AAA-004 is the FITNESS half of the span — a STEPLESS `@fitness` scenario its configured
+    // row names, which is what raises a fitness obligation now that the technique has left the tag.
     const source = `@AAA
 Feature: alpha
 
@@ -1940,10 +1941,10 @@ Feature: alpha
   Scenario: a pending-cited credit
     Given a thing
 
-  @named @SCN-AAA-004
-  Scenario: the fitness scenario carrying the bare check named
+  @fitness @SCN-AAA-004
+  Scenario: the fitness scenario its configured row names
 `;
-    scenarios = parseScenarios(source, [], ["named"]);
+    scenarios = parseScenarios(source, [], fitnessChecksOf([{ scn: "SCN-AAA-004" }]));
 
     const satisfied: EvidenceObservation = {
       scnId: "SCN-AAA-001", qualityCheck: "unit", status: "passed", locator: "a.test.ts",
@@ -1975,13 +1976,13 @@ Feature: alpha
     // handle, `named` the bare check): only the citation can join them.
     const citedFitnessCredit: EvidenceObservation = {
       scnId: "SCN-AAA-004",
-      qualityCheck: "lint", staticCheck: "lint:named", checkTag: "named", exists: true, enforcedOverRealSource: true,
+      qualityCheck: "fitness", staticCheck: "lint:named", exists: true, enforcedOverRealSource: true,
     };
     // An UNCITED fitness credit: the seam reached no @SCN for it — no fitness scenario carries its
     // check — so it belongs to no row → SUSPENSE, where it reconciles `cites-no-scenario`. The
     // fitness twin of the uncited runtime credit above, not a second rule.
     const uncitedFitnessCredit: EvidenceObservation = {
-      qualityCheck: "lint", staticCheck: "lint:nobody-cites-this", exists: true, enforcedOverRealSource: false,
+      qualityCheck: "fitness", staticCheck: "lint:nobody-cites-this", exists: true, enforcedOverRealSource: false,
     };
 
     ldgPostingObservations = [
@@ -2118,7 +2119,7 @@ Then(
 
 /**
  * @SCN-LDG-035 (3F-3409) — a static-check credit discharges only the obligation on the row whose
- * @SCN it cites, even when a second row raises the SAME characteristic.
+ * @SCN it cites, even when a second row still carries the SAME retired characteristic word.
  *
  * The MEASURED axis pinned this shape for its own credits until it retired (3F-3516): two
  * stepless scenarios sharing one measured check, each answered by its own measurement. This
@@ -2126,21 +2127,23 @@ Then(
  * whose deletion left the gap (@SCN-LNT-008, @SCN-LNT-012) proved it through the retired
  * first-in-corpus / registry routes rather than the configured-row route that survives them.
  *
- * `configuredFitnessChecks` carries BOTH scnIds against the same characteristic — the converted
- * route is keyed per-@SCN (`FitnessCheckIndex`), so two rows sharing one characteristic string is
+ * `configuredFitnessChecks` carries BOTH scnIds — the converted route is keyed per-@SCN
+ * (`FitnessCheckIndex`), so two rows that once shared one characteristic word is
  * an ordinary corpus, not a collision. Only one static-check credit exists, citing one of the two.
  */
 
 let ldg035Ledger: Ledger;
-let ldg035Credit: StaticCheckEvidenceObservation;
+let ldg035Credit: FitnessEvidenceObservation;
 
 // @SCN-LDG-035
 Given(
-  "two fitness scenarios {string} and {string} both raising the check {string}",
+  "two fitness scenarios {string} and {string} whose rows share the retired characteristic word {string}",
   function (firstScn: string, secondScn: string, check: string) {
-    const fitnessChecks = new Map([
-      [firstScn, { characteristic: check }],
-      [secondScn, { characteristic: check }],
+    // Both rows still carry the SAME retired characteristic word — the shape two checks sharing a
+    // word once took. The word is not read (3F-3570); what keys each obligation is its own @SCN.
+    const fitnessChecks = fitnessChecksOf([
+      { scn: firstScn, characteristic: check },
+      { scn: secondScn, characteristic: check },
     ]);
     const source = [
       "@AAA",
@@ -2152,21 +2155,20 @@ Given(
       `  @fitness @${secondScn}`,
       "  Scenario: the second row raising the shared check",
     ].join("\n");
-    scenarios = parseScenarios(source, [], [], fitnessChecks);
+    scenarios = parseScenarios(source, [], fitnessChecks);
   },
 );
 
 // @SCN-LDG-035
 Given(
-  "a static-check credit citing only {string}, naming the check {string}",
-  function (cited: string, check: string) {
+  "a fitness credit citing only {string}",
+  function (cited: string) {
     // THE SAME OBJECT SHAPE LDG-022's CITED FITNESS CREDIT USES — `staticCheck` the runnable
-    // handle (the where-to-fix), `checkTag` the bare characteristic the match compares.
+    // handle (the where-to-fix), `scnId` the one citation term the match reads (3F-3570).
     ldg035Credit = {
       scnId: cited,
-      qualityCheck: "lint",
-      staticCheck: `lint:${check}`,
-      checkTag: check,
+      qualityCheck: "fitness",
+      staticCheck: "lint:complexity",
       exists: true,
       enforcedOverRealSource: true,
     };
@@ -2181,18 +2183,18 @@ When("the ledger reconciles that shared-check run", function () {
 
 // @SCN-LDG-035
 Then(
-  "the row {string} reconciles satisfied on the check {string}, holding the credit",
-  function (scnId: string, check: string) {
+  "the row {string} reconciles satisfied, holding the credit",
+  function (scnId: string) {
     const row = ldg035Ledger.scenarioReconciliations.find(
       (r: ScenarioReconciliation) => r.scnId === scnId,
     );
     const item = (row?.qualityCheckReconciliations ?? []).find(
-      (i: QualityCheckReconciliation) => i.qualityCheck === "lint",
+      (i: QualityCheckReconciliation) => i.qualityCheck === "fitness",
     );
     assert.deepEqual(
-      [item?.staticCheck, item?.outcome],
-      [check, "satisfied"],
-      `expected the cited row "${scnId}" to reconcile satisfied on "${check}"; got ${JSON.stringify(item)}`,
+      [item?.qualityCheck, item?.outcome],
+      ["fitness", "satisfied"],
+      `expected the cited row "${scnId}" to reconcile satisfied; got ${JSON.stringify(item)}`,
     );
     assert.equal(
       item?.evidenceObservation,
@@ -2204,21 +2206,21 @@ Then(
 
 // @SCN-LDG-035
 Then(
-  "the row {string} reconciles missing on the check {string}, holding no credit",
-  function (scnId: string, check: string) {
+  "the row {string} reconciles missing, holding no credit",
+  function (scnId: string) {
     // THE DISCRIMINATOR. Under the bare `o.scnId === scnId` mutant neutered to `true`, this row's
-    // own match would find the SAME credit — checkTag alone matches, since both rows share it —
-    // and this row would wrongly reconcile satisfied off a credit that never cited it.
+    // own match would find the SAME credit — the quality check alone matches — and this row would
+    // wrongly reconcile satisfied off a credit that never cited it.
     const row = ldg035Ledger.scenarioReconciliations.find(
       (r: ScenarioReconciliation) => r.scnId === scnId,
     );
     const item = (row?.qualityCheckReconciliations ?? []).find(
-      (i: QualityCheckReconciliation) => i.qualityCheck === "lint",
+      (i: QualityCheckReconciliation) => i.qualityCheck === "fitness",
     );
     assert.deepEqual(
-      [item?.staticCheck, item?.outcome],
-      [check, "missing"],
-      `expected the uncited row "${scnId}" to reconcile missing on "${check}"; got ${JSON.stringify(item)}`,
+      [item?.qualityCheck, item?.outcome],
+      ["fitness", "missing"],
+      `expected the uncited row "${scnId}" to reconcile missing; got ${JSON.stringify(item)}`,
     );
     assert.equal(
       item?.evidenceObservation,
@@ -2272,10 +2274,10 @@ Feature: alpha
   Scenario: a pending obligation that earns no reconciled row
     Given a thing
 
-  @named @SCN-AAA-004
-  Scenario: a fitness obligation carrying its bare check
+  @fitness @SCN-AAA-004
+  Scenario: a fitness obligation its configured row names
 `;
-    scenarios = parseScenarios(source, [], ["named"]);
+    scenarios = parseScenarios(source, [], fitnessChecksOf([{ scn: "SCN-AAA-004" }]));
 
     // Read the debits back off the PARSED scenarios by identity — never hand-built here, so the
     // assertion is against what the engine was actually handed (evidence-manifesto §11A).
@@ -2353,13 +2355,11 @@ Then("each debit is findable on its account, keyed by quality-check", function (
     );
 
   assert.ok(findDebit("SCN-AAA-001", "unit"), "the runtime debit is findable by quality-check");
-  assert.equal(
-    findDebit("SCN-AAA-004", "lint")?.staticCheck,
-    "named",
-    "the fitness debit is findable by quality-check AND carries its BARE CHECK — the account " +
-      "records WHAT WAS NAMED, not merely that something was. The bare check is the identity now: " +
-      "the retired `@lint=<handle>` form named a runnable script, which is what put one technique " +
-      "in front of a whole class of fitness functions",
+  assert.deepEqual(
+    findDebit("SCN-AAA-004", "fitness"),
+    { qualityCheck: "fitness" },
+    "the fitness debit is findable by quality-check, and it is the WHOLE obligation: one @fitness " +
+      "scenario is one check, keyed by its own @SCN, so it names no characteristic (3F-3570)",
   );
   assert.ok(findDebit("SCN-AAA-002", "integration"), "each scenario's own debit is on its own account");
 
@@ -2410,7 +2410,7 @@ Then(
         ["SCN-AAA-002", "out-of-balance", ["missing"]],
         ["SCN-AAA-003", "balanced", []],
         // The fitness debit is raised but no credit answers it → `missing`, the same outcome the
-        // named lint debit earned before the identity moved.
+        // named fitness debit earned before the identity moved.
         ["SCN-AAA-004", "out-of-balance", ["missing"]],
         ["SCN-ZZZ-999", "out-of-balance", ["cites-unknown-scenario"]],
         ["(no scenario)", "out-of-balance", ["cites-no-scenario"]],
@@ -2439,7 +2439,7 @@ let ldg026ScnId: string;
  * The debit-side subject a preceding "…Quality Check Reconciliation has outcome" step establishes,
  * paired with the evidence obligation it must carry. The shared "it carries the evidence obligation
  * it reconciles (the debit side)" Then reads this, so both the runtime-debit (@SCN-LDG-026, unit)
- * and the lint-debit (@SCN-LDG-028, an absent guard) cases route through one step definition
+ * and the fitness-debit (@SCN-LDG-028, an absent guard) cases route through one step definition
  * without hardcoding a single quality-check. Set fresh by each scenario's outcome step.
  */
 let ldgDebitSubject:
@@ -2497,7 +2497,7 @@ Then("its unit Quality Check Reconciliation has outcome {string}", function (out
 });
 
 // @SCN-LDG-026 / @SCN-LDG-028 — shared debit-side assertion, subject established by the
-// preceding outcome step (the runtime unit debit, or the lint absent-guard debit).
+// preceding outcome step (the runtime unit debit, or the fitness absent-guard debit).
 Then("it carries the evidence obligation it reconciles \\(the debit side)", function () {
   // The DEBIT side is carried ON the reconciliation itself — the very obligation it reconciles —
   // not joined from a separate scenario-level array at print time.
@@ -2654,7 +2654,7 @@ Then("the JSON projects that evidence observation on the reconciliation", functi
   );
 });
 
-// LINT MISSING IS OBLIGATION-ONLY (@SCN-LDG-028, 3F-2016) — a lint `missing` Quality Check
+// FITNESS MISSING IS OBLIGATION-ONLY (@SCN-LDG-028, 3F-2016) — a fitness `missing` Quality Check
 // Reconciliation carries its evidence obligation and NO observation. An absent static check is
 // read as the negative fact {exists:false, enforcedOverRealSource:false}: an ABSENCE, not an
 // observed piece of evidence. Canon (double-entry-manifesto line 36): missing = Obligation Exists,
@@ -2669,20 +2669,22 @@ let ldg028ScnId: string;
 Given(
   "a scenario {string} requiring a fitness check absent from both package.json and CI",
   function (scnId: string) {
-    // A STEPLESS fitness scenario built through the REAL scenario reader (the bare-check →
+    // A STEPLESS fitness scenario built through the REAL scenario reader (the @fitness + configured-row →
     // fitness-obligation parse seam), and an absent-check observation: the negative fact the real
     // detector produces for a check named in NEITHER package.json NOR CI — exists:false,
-    // enforcedOverRealSource:false. So its lint obligation reconciles `missing` by absence: the
+    // enforcedOverRealSource:false. So its fitness obligation reconciles `missing` by absence: the
     // pure debit case (a required obligation present, its matching observation an ABSENCE).
     ldg028ScnId = scnId;
     const feature = [
       "@LDG",
       "Feature: fixture",
       "  Rule: a fixture rule",
-      `    @${LDG028_ABSENT_CHECK} @${scnId}`,
+      `    @fitness @${scnId}`,
       "    Scenario: a fixture scenario",
     ].join("\n");
-    scenarios = parseScenarios(feature, [], [LDG028_ABSENT_CHECK]);
+    scenarios = parseScenarios(
+      feature, [], fitnessChecksOf([{ scn: scnId }])
+    );
     // The absent-guard record: {exists:false} is an ABSENCE, the input the detector emits for a
     // guard present in neither source. NOT a real observation (contrast the watermelon's
     // exists:true). Stocked as the run's only observation.
@@ -2692,9 +2694,8 @@ Given(
     ldgPostingObservations = [
       {
         scnId,
-        qualityCheck: "lint",
+        qualityCheck: "fitness",
         staticCheck: LDG028_ABSENT_HANDLE,
-        checkTag: LDG028_ABSENT_CHECK,
         exists: false,
         enforcedOverRealSource: false,
       },
@@ -2702,35 +2703,35 @@ Given(
   },
 );
 
-/** The scenario's OWN lint Quality Check Reconciliation, off the ledger the shared When produced. */
+/** The scenario's OWN fitness Quality Check Reconciliation, off the ledger the shared When produced. */
 function ldg028LintReconciliation(): QualityCheckReconciliation {
   const row = ldgPostingLedger.ledger.scenarioReconciliations.find(
     (r: ScenarioReconciliation) => r.scnId === ldg028ScnId,
   );
   assert.ok(row, `expected a ledger row for ${ldg028ScnId}`);
   const qcr = row.qualityCheckReconciliations.find(
-    (o: QualityCheckReconciliation) => o.qualityCheck === "lint",
+    (o: QualityCheckReconciliation) => o.qualityCheck === "fitness",
   );
   assert.ok(
     qcr,
-    `expected a lint Quality Check Reconciliation on ${ldg028ScnId}; got ${JSON.stringify(row.qualityCheckReconciliations)}`,
+    `expected a fitness Quality Check Reconciliation on ${ldg028ScnId}; got ${JSON.stringify(row.qualityCheckReconciliations)}`,
   );
   return qcr;
 }
 
 // @SCN-LDG-028
-Then("its lint Quality Check Reconciliation has outcome {string}", function (outcome: string) {
-  // Row-scoped to the scenario's OWN lint reconciliation: the pure-debit `missing` outcome.
+Then("its fitness Quality Check Reconciliation has outcome {string}", function (outcome: string) {
+  // Row-scoped to the scenario's OWN fitness reconciliation: the pure-debit `missing` outcome.
   // Establishes the debit subject the shared "carries the evidence obligation" Then reads.
   const reconciliation = ldg028LintReconciliation();
   ldgDebitSubject = {
     reconciliation,
-    expectedObligation: { qualityCheck: "lint", staticCheck: LDG028_ABSENT_CHECK },
+    expectedObligation: { qualityCheck: "fitness" },
   };
   assert.equal(
     reconciliation.outcome,
     outcome,
-    `expected ${ldg028ScnId}'s lint reconciliation to read "${outcome}"`,
+    `expected ${ldg028ScnId}'s fitness reconciliation to read "${outcome}"`,
   );
 });
 
@@ -2738,7 +2739,7 @@ Then("its lint Quality Check Reconciliation has outcome {string}", function (out
 Then(
   "it carries no evidence observation — an absent guard's \\{exists:false} is an absence, not an observation",
   function () {
-    // The CREDIT side stays absent on a lint `missing`: the found {exists:false} absent-guard record
+    // The CREDIT side stays absent on a fitness `missing`: the found {exists:false} absent-guard record
     // is an ABSENCE, not an observation, so nothing is carried (Obligation Exists, Observation None —
     // canon line 36). Uniform with the runtime `missing` path, which already carries none.
     const observation = (ldg028LintReconciliation() as { evidenceObservation?: unknown })
@@ -2746,7 +2747,7 @@ Then(
     assert.equal(
       observation,
       undefined,
-      `expected the lint missing reconciliation to carry NO evidence observation — an absent guard's {exists:false} is an absence; got ${JSON.stringify(observation)}`,
+      `expected the fitness missing reconciliation to carry NO evidence observation — an absent guard's {exists:false} is an absence; got ${JSON.stringify(observation)}`,
     );
   },
 );

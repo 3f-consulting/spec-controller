@@ -51,20 +51,14 @@ Given(
       specController: { fitnessChecks: Record<string, unknown>[] };
     };
     assert.deepEqual(
-      manifest.specController.fitnessChecks.map(({ scn, characteristic, atLeast, atMost }) => ({
+      manifest.specController.fitnessChecks.map(({ scn, atLeast, atMost }) => ({
         scn,
-        characteristic,
         atLeast,
         atMost,
       })),
       [
-        { scn: "SCN-CVT-001", characteristic: "complexity", atLeast: undefined, atMost: 10 },
-        {
-          scn: "SCN-CVT-002",
-          characteristic: "mutation",
-          atLeast: { mutationGate: "domain" },
-          atMost: 100,
-        },
+        { scn: "SCN-CVT-001", atLeast: undefined, atMost: 10 },
+        { scn: "SCN-CVT-002", atLeast: { mutationGate: "domain" }, atMost: 100 },
       ],
       "expected the fixture's two rows to carry exactly the bars this scenario names"
     );
@@ -158,8 +152,8 @@ Then(
         ]),
       ]),
       [
-        ["SCN-CVT-001", "balanced", [["complexity", "satisfied", { qualityCheck: "lint", staticCheck: "complexity" }, "SCN-CVT-001", "passed"]]],
-        ["SCN-CVT-002", "balanced", [["mutation", "satisfied", { qualityCheck: "lint", staticCheck: "mutation" }, "SCN-CVT-002", "passed"]]],
+        ["SCN-CVT-001", "balanced", [[undefined, "satisfied", { qualityCheck: "fitness" }, "SCN-CVT-001", "passed"]]],
+        ["SCN-CVT-002", "balanced", [[undefined, "satisfied", { qualityCheck: "fitness" }, "SCN-CVT-002", "passed"]]],
       ],
       `expected each barred row credited by its own step, as a row carrying no bar is. Got ` +
         JSON.stringify(run.json.ledger.scenarioReconciliations)

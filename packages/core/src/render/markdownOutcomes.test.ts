@@ -53,7 +53,7 @@ const ctx: RunContext = {
  * The reconciling-item outcome is meaningless to a human as a bare handle in a CI log. This
  * pins that the markdown renders each outcome's CANON DESCRIPTION in place of the handle,
  * EVERYWHERE an outcome surfaces to a reader — the summary `↳` decomposition rows, the
- * per-scenario reconciling-items list, and the lint-obligation table's Outcome column — and
+ * per-scenario reconciling-items list, and the fitness-obligation table's Outcome column — and
  * that the handle is GONE. Single-source: the descriptions come from `OUTCOME_DESCRIPTION`
  * (model.ts), so the render cannot drift from the map (the drift class the census / views were
  * burned by). The JSON keeps the bare handle (proven separately in json.test.ts); this is the
@@ -67,19 +67,19 @@ const ctx: RunContext = {
  */
 describe("[SCN-RPT-020] the markdown renders each outcome's canon description, not the bare handle", () => {
   // A balance rich enough to exercise all three render sites: SCN-A carries a runtime debit
-  // (unit missing) and a lint watermelon (→ the lint table AND a per-scenario lint item);
+  // (unit missing) and a fitness watermelon (→ the fitness table AND a per-scenario fitness item);
   // SCN-B is the degenerate both-missing (neither-side) item; the suspense row carries a
   // credit-side cites-no-scenario item with a locator. The summary `↳` decomposition always
   // renders all nine leaves (zero counts shown), so every outcome's description is on the page.
   // Reconciler-built (§11A): rich enough to exercise all three render sites — SCN-A carries a
-  // runtime debit (unit missing) and a lint watermelon (→ the lint table AND a per-scenario lint
+  // runtime debit (unit missing) and a fitness watermelon (→ the fitness table AND a per-scenario fitness
   // item); SCN-B is the degenerate both-missing (neither-side); an uncited integration credit posts
   // the suspense row's credit-side cites-no-scenario item with a locator.
   const rich: Ledger = reconcile(
     [
       {
         scnId: "SCN-A",
-        evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "lint", staticCheck: "typecheck" }],
+        evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "fitness" }],
       },
       { scnId: "SCN-B", evidenceObligations: [] },
     ],
@@ -87,7 +87,7 @@ describe("[SCN-RPT-020] the markdown renders each outcome's canon description, n
       // CITES SCN-A (3F-2625) — it answered that obligation by handle until the by-handle arm was
       // deleted, which `typecheck` was uniquely able to do: it is the one check whose runnable
       // handle and bare check tag are the same word.
-      { qualityCheck: "lint", staticCheck: "typecheck", checkTag: "typecheck", scnId: "SCN-A", exists: true, enforcedOverRealSource: false },
+      { qualityCheck: "fitness", staticCheck: "typecheck", scnId: "SCN-A", exists: true, enforcedOverRealSource: false },
       { qualityCheck: "integration", scnId: null, status: "passed", locator: "tests/stray.test.ts:1" },
     ]
   );
@@ -122,9 +122,9 @@ describe("[SCN-RPT-020] the markdown renders each outcome's canon description, n
 
   it("renders each per-scenario reconciling item with the canon description, glyph retained", () => {
     const md = renderMarkdown(__er(rich), ctx);
-    // Debit runtime item, lint watermelon item, neither-side both-missing item, credit item.
+    // Debit runtime item, fitness watermelon item, neither-side both-missing item, credit item.
     expect(md).toContain("unit ∅ Evidence Observation is missing");
-    expect(md).toContain("lint 🍉 Evidence Observation is passing but fabricated");
+    expect(md).toContain("fitness 🍉 Evidence Observation is passing but fabricated");
     expect(md).toContain(
       "⊘ Evidence Obligation and Evidence Observation are both missing — the Scenario is untagged and uncited"
     );
@@ -137,9 +137,9 @@ describe("[SCN-RPT-020] the markdown renders each outcome's canon description, n
     expect(md).not.toContain("❓ cites-no-scenario");
   });
 
-  it("renders the lint table's Outcome column with the canon description", () => {
+  it("renders the fitness table's Outcome column with the canon description", () => {
     const md = renderMarkdown(__er(rich), ctx);
-    expect(md).toContain("| SCN-A | typecheck | 🍉 Evidence Observation is passing but fabricated |");
+    expect(md).toContain("| SCN-A | 🍉 Evidence Observation is passing but fabricated |");
   });
 
   it("single-sources the gloss from OUTCOME_DESCRIPTION — the render cannot drift from the map", () => {

@@ -103,7 +103,7 @@ function observationStreams(
   // let the poorer one win, which is measurable: a `continue-on-error` step the record says failed
   // reconciles `watermelon` rather than `failing` when both are posted.
   const answeredByTheRecord =
-    input.ciStepRecord === undefined ? new Set<string>() : new Set(fitnessChecks.keys());
+    input.ciStepRecord === undefined ? new Set<string>() : new Set(fitnessChecks);
   return [
     ...input.runtimeObservations,
     ...checkObservations(
@@ -125,7 +125,7 @@ function observationStreams(
     // EITHER: a target mid-conversion runs both kinds at once, and a converted check is simply
     // one no script-handle observer can see — it is never discovered, so nothing double-observes
     // it. The rows are the SAME reading the obligations were raised from, taken from `corpus`'s
-    // own registry, so a credit can never cite a characteristic the debit side never owed.
+    // own rows, so a credit can never cite an @SCN the debit side never read.
     //
     // THE OPTIONALITY IS PASSED THROUGH RATHER THAN FLATTENED (@SCN-LNT-027). A run handed NO
     // record is not a run handed a record carrying nothing, and those are opposite facts. The
@@ -260,7 +260,7 @@ export function evidenceReconciliationFromSources(
 ): EvidenceReconciliation {
   const { packageJson } = input;
   // ONE READING OF THE CONFIGURED ROWS, shared by both sides of this axis. The DEBIT reads them for
-  // the characteristic a converted scenario owes and the CREDIT for the characteristic its reported
+  // the fitness obligation a converted scenario owes and the CREDIT its reported
   // scenario answers, and two resolutions would be free to disagree about a manifest neither of
   // them wrote — the same guarantee `readTargetCorpus` composes its three readings for.
   const fitnessChecks = resolveFitnessChecks(packageJson);
@@ -641,7 +641,7 @@ function checkObservations(
       // exactly as an unannotated one — `new-client` reported over a target in `annotated`.
       //
       // THE HANDLE IS DELIBERATELY NOT CONSULTED. The row a step's code names carries the
-      // characteristic, so both terms come off ONE configured row; reaching for the script's
+      // @SCN, so the citation comes off ONE configured row; reaching for the script's
       // spelling to supply the half a CI step cannot state is the name-match this axis retired.
       // A step with no code, or one naming no configured row, reaches no citation and posts to
       // suspense — which is `new-client`, unnarrowed.

@@ -9,7 +9,6 @@
     "fitnessChecks": [
       {
         "scn": "SCN-TOC-004",
-        "characteristic": "wm",
         "command": "pnpm guard:wm"
       }
     ],

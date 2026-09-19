@@ -23,7 +23,7 @@
  *
  * Bidirectional evidence: the describe carries its @SCN id, matching
  * features/fitness-reconciliation.feature and the @integration steps in
- * tests/steps/lintReconciliation.steps.ts.
+ * tests/steps/fitnessReconciliation.steps.ts.
  */
 
 import { describe, it, expect } from "vitest";
@@ -63,9 +63,9 @@ const severedManifest = {
     // checkout answers for it here, exactly as a consumer's own manifest does.
     notChecks: ["ci.yml:quality:Checkout"],
     fitnessChecks: [
-      { scn: "SCN-CVT-001", characteristic: "complexity", command: "pnpm lint:alpha" },
-      { scn: "SCN-CVT-002", characteristic: "traceability", command: "pnpm lint:beta" },
-      { scn: "SCN-CVT-003", characteristic: "tech-conformance", command: "pnpm lint:gamma" },
+      { scn: "SCN-CVT-001", command: "pnpm lint:alpha" },
+      { scn: "SCN-CVT-002", command: "pnpm lint:beta" },
+      { scn: "SCN-CVT-003", command: "pnpm lint:gamma" },
     ],
   },
 };
@@ -131,9 +131,9 @@ describe("[SCN-LNT-032] a check the job's verdict does not depend on reconciles 
     // value. Asserting only the severed rows would pass over a reader that had started flagging
     // the third as well, which is the opposite fault and just as wrong.
     expect(rowsOf(reconcileSevered())).toEqual([
-      ["SCN-CVT-001", "scenario", "out-of-balance", [["complexity", "watermelon"]]],
-      ["SCN-CVT-002", "scenario", "out-of-balance", [["traceability", "watermelon"]]],
-      ["SCN-CVT-003", "scenario", "balanced", [["tech-conformance", "satisfied"]]],
+      ["SCN-CVT-001", "scenario", "out-of-balance", [[undefined, "watermelon"]]],
+      ["SCN-CVT-002", "scenario", "out-of-balance", [[undefined, "watermelon"]]],
+      ["SCN-CVT-003", "scenario", "balanced", [[undefined, "satisfied"]]],
     ]);
   });
 
@@ -148,20 +148,18 @@ describe("[SCN-LNT-032] a check the job's verdict does not depend on reconciles 
       .flatMap((row) => row.evidenceObservations);
     expect(observed).toEqual([
       {
-        qualityCheck: "lint",
+        qualityCheck: "fitness",
         staticCheck: "lint:alpha",
         exists: true,
         enforcedOverRealSource: false,
         scnId: "SCN-CVT-001",
-        checkTag: "complexity",
       },
       {
-        qualityCheck: "lint",
+        qualityCheck: "fitness",
         staticCheck: "lint:beta",
         exists: true,
         enforcedOverRealSource: false,
         scnId: "SCN-CVT-002",
-        checkTag: "traceability",
       },
     ]);
   });

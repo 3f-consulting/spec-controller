@@ -8,7 +8,7 @@ Feature: an evidence-cell-grid fixture target spanning every four-way cell case
   cell bug is only caught by the real pipeline, never by a hand-built balance).
 
   The four scenarios, and the cells they pin:
-    - @SCN-CEL-001 — @unit + the bare check @cell-grid, both discharged → Lint `1`, Unit `1`
+    - @SCN-CEL-001 — @unit + @fitness, both discharged → Fitness `1`, Unit `1`
       (named and met — the count).
     - @SCN-CEL-002 — @integration, NO cucumber observation → Integration `∅` (named, missing),
       and Unit / E2e `—` (a column absent for this scenario — neither named nor present).
@@ -26,11 +26,11 @@ Feature: an evidence-cell-grid fixture target spanning every four-way cell case
   existed only to plant a `specController.checkRegistry` collision) and went with the rest of the
   registry-route migration (3F-3395). Canon settles why it has no replacement: `double-entry-
   manifesto.md`'s Quality Check definition makes the check ITSELF the scenario, and several checks
-  of one characteristic are several SCENARIOS sharing that characteristic, told apart by `@SCN` —
-  one scenario is one fitness check BY CONSTRUCTION. A row naming two characteristics has no
+  of one kind are several SCENARIOS, told apart by `@SCN` —
+  one scenario is one fitness check BY CONSTRUCTION. A row naming two checks has no
   expression in the target model this fixture exercises, so there is nothing left to plant it
   with. The `L2`/`L3` rendering branch this scenario was the only producer of went too (3F-3411):
-  the Lint cell's left is the single `L`.
+  the Fitness cell's left is the single `F`.
 
   This file lives under tests/fixtures/ (NOT features/), so neither the feature-code registry
   lint nor the scenario↔sub-issue gate sees @CEL / @SCN-CEL-NNN — they scan features/*.feature
@@ -38,11 +38,11 @@ Feature: an evidence-cell-grid fixture target spanning every four-way cell case
 
   Rule: the fixture target spans every cell case
 
-    # STEPLESS, and the bare check raises its fitness obligation off that tag rather than off the
-    # shape (@SCN-LNT-006); the runtime tier rides alongside, making this a two-axis row
+    # STEPLESS, and `@fitness` with its configured row raises the fitness obligation rather than the
+    # shape (@SCN-LNT-018); the runtime tier rides alongside, making this a two-axis row
     # (@SCN-LNT-004).
     @unit @fitness @SCN-CEL-001
-    Scenario: a named, met obligation at unit and lint
+    Scenario: a named, met obligation at unit and fitness
 
     @integration @SCN-CEL-002
     Scenario: a named obligation with no evidence observation

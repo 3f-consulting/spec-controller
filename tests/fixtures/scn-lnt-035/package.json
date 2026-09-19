@@ -9,13 +9,11 @@
     "fitnessChecks": [
       {
         "scn": "SCN-CVT-001",
-        "characteristic": "complexity",
         "command": "eslint",
         "atMost": 10
       },
       {
         "scn": "SCN-CVT-002",
-        "characteristic": "mutation",
         "command": "stryker run",
         "atLeast": { "mutationGate": "domain" },
         "atMost": 100

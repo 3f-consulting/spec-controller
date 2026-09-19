@@ -5,10 +5,10 @@
  * and static), keyed by one flat `qualityCheck` per evidence obligation — the two-axis
  * `(kind, level)` grid collapsed to a single mutually-exclusive coordinate.
  *
- * `@lint` is one quality-check VALUE, not a second axis; `qualityCheck === "lint"` is the
+ * `@fitness` is one quality-check VALUE, not a second axis; `qualityCheck === "fitness"` is the
  * watermelon discriminator (replacing the retired `kind === "static"`). The runtime
  * quality-checks (@unit/@integration/@e2e/@performance) reconcile against emitted test
- * results; the `lint` quality-check reconciles a static check over the source artifact.
+ * results; the `fitness` quality-check reconciles a static check over the source artifact.
  *
  * The reconciled OUTCOMES these entries produce live in the sibling concept modules
  * (`qualityCheckReconciliation`, `scenarioReconciliation`, `ledger`), which import this one.
@@ -16,29 +16,29 @@
 
 /**
  * The flat quality-check — the single evidence coordinate. One
- * mutually-exclusive value per evidence obligation: `lint` (a static check over the
+ * mutually-exclusive value per evidence obligation: `fitness` (a static check over the
  * source) or a runtime test level (`unit`/`integration`/`e2e`/`performance`).
  * Retires the two-axis `Kind` × `Level` grid.
  */
-export type QualityCheck = "lint" | "unit" | "integration" | "e2e" | "performance";
+export type QualityCheck = "fitness" | "unit" | "integration" | "e2e" | "performance";
 
 /**
- * The runtime quality-checks — the flat coordinate MINUS `lint`, i.e. the value-set the
+ * The runtime quality-checks — the flat coordinate MINUS `fitness`, i.e. the value-set the
  * retired `Level` type named. Types the runtime-only surfaces (the observed readers' stamped
  * quality-check, the test-volume `rawByRuntimeQualityCheck` keying) without re-admitting
  * the two-axis grid.
  */
-export type RuntimeQualityCheck = Exclude<QualityCheck, "lint">;
+export type RuntimeQualityCheck = Exclude<QualityCheck, "fitness">;
 
 /**
  * One evidence obligation a scenario raises — a SINGLE flat shape keyed on
  * `qualityCheck` (no `kind`/`level` discriminated union):
  *   - `@unit`/`@integration`/… → `{ qualityCheck: <level> }`.
  *   - a `@fitness` scenario, via its `specController.fitnessChecks` row
- *                              → `{ qualityCheck: 'lint', staticCheck: <the row's characteristic> }`.
+ *                              → `{ qualityCheck: 'fitness' }`, keyed by the scenario's @SCN.
  *   - a registered bare check tag (e.g. `@complexity`)
- *                              → `{ qualityCheck: 'lint', staticCheck: <the tag> }`.
- * `staticCheck` is present IFF `qualityCheck === 'lint'` (the characteristic the check is about);
+ *                              → `{ qualityCheck: 'fitness', staticCheck: <the tag> }`.
+ * `staticCheck` is present on a fitness CREDIT (the check that ran) and never on an obligation;
  * a runtime evidence obligation carries no `staticCheck`. The `@lint=<handle>` rider that once
  * raised this went with the by-name route (3F-2590) and raises nothing now (@SCN-LNT-007).
  *
@@ -52,14 +52,12 @@ export type RuntimeQualityCheck = Exclude<QualityCheck, "lint">;
  */
 export interface EvidenceObligation {
   qualityCheck?: QualityCheck;
-  /** The `staticCheck` handle — present IFF `qualityCheck === 'lint'`. */
-  staticCheck?: string;
   /**
    * The obligation is owed but deliberately DEFERRED to a later slice — a
    * `<quality-check>pending` tag (evidence-manifesto §11B). ABSENT (undefined) on a
    * normal obligation; `true` on a pending one. A pending obligation is one-sided:
-   * `@lintpending` derives `{ qualityCheck: 'lint', pending: true }` with NO `staticCheck` payload
-   * (the static check doesn't exist yet). PARSE only — what a pending obligation DOES on the ledger
+   * `@fitnesspending` derives `{ qualityCheck: 'fitness', pending: true }` with NO `staticCheck`
+   * payload (the check does not exist yet). PARSE only — what a pending obligation DOES on the ledger
    * (the one-sided Pending Item) is a later slice.
    */
   pending?: boolean;
@@ -97,56 +95,35 @@ export interface Scenario {
  * reconciler's or a census's private business (`entity-owns-its-behaviour`) — the same reason
  * `OUT_OF_BALANCE_OUTCOMES` lives here rather than in the renderer that walks it.
  *
- * A runtime credit's quality-check is a `RuntimeQualityCheck`, so a `lint` obligation
+ * A runtime credit's quality-check is a `RuntimeQualityCheck`, so a `fitness` obligation
  * never matches one — as intended; the two axes key differently, see below.
  *
- * THE FITNESS KEY CARRIES ITS CHECK TAG (@SCN-LNT-013), and the asymmetry with the runtime key is
- * the design rather than an inconsistency. A runtime credit's `qualityCheck` IS its discriminating
- * term — an obligation at `unit` is answered by a credit at `unit`, and there is nothing finer to
- * key on. On the fitness axis the axis word is `lint` for EVERY check, so the axis alone cannot
- * discriminate: keyed on it, a row's obligation for one check answers a credit for any other.
- *
- * WHICH IS EXACTLY THE FAULT THIS CLOSES. `@SCN-LNT-012` made the debit MATCH compare check tags —
- * the `@SCN` picks the row, the tag picks the obligation — so a credit whose tag no obligation on
- * its row names matches nothing, correctly. This set stayed keyed on the axis, so the credit it
- * newly failed to match was also excluded from the credit-side items that should have caught it,
- * and it reconciled to NOTHING: filtered out of the debit by its tag and out of the credit side by
- * its axis. Measured over a genuine watermelon, the run read balanced, exit 0.
- *
- * BUILT AND READ TOGETHER. `noEvidenceObligationReconciliationsOf` composes the same key from the
- * CREDIT's own `checkTag`. A key built one way and read another is this same bug in a new spelling,
- * so the two are one change and are described in both places.
+ * ONE KEY SHAPE ON BOTH AXES (3F-3563). A fitness credit is keyed `(scnId, quality-check)` exactly
+ * as a runtime credit is: one `@fitness` scenario is one check, so a row raises at most one fitness
+ * obligation and the axis word discriminates as `unit` does. The check tag that once told two fitness
+ * obligations on one row apart (@SCN-LNT-012/013) left with the characteristic (3F-3525).
  */
 export function evidenceObligationPairsOf(scenarios: readonly Scenario[]): Set<string> {
   const pairs = new Set<string>();
   for (const scenario of scenarios) {
     for (const obligation of scenario.evidenceObligations) {
       if (obligation.pending === true) continue; // names nothing — see above.
-      pairs.add(evidenceObligationPairKey(scenario.scnId, obligation.qualityCheck, obligation.staticCheck));
+      pairs.add(evidenceObligationPairKey(scenario.scnId, obligation.qualityCheck));
     }
   }
   return pairs;
 }
 
 /**
- * THE ONE SPELLING of a `(scenario, what-it-names)` key — shared by the set above and by the
- * credit-side lookup, so the two cannot drift.
- *
- * `checkTag` is the FITNESS discriminator (the obligation's `staticCheck`, the credit's `checkTag`)
- * and is ignored on the runtime axis, where the quality-check already discriminates. A fitness
- * entry with NO tag keys distinctly from every tagged one rather than collapsing onto a bare
- * `"<scn> lint"` that a tagged obligation could answer — an uncited credit never reaches a real
- * row (`citationOfCitedRow` resolves the `@SCN` and the tag together or neither), and if one ever
- * did, it must not match by having nothing to compare.
+ * THE ONE SPELLING of a `(scenario, quality-check)` key — shared by the set above and by the
+ * credit-side lookup, so the two cannot drift. One shape on both axes since the check word
+ * left (3F-3563).
  */
 export function evidenceObligationPairKey(
   scnId: string,
-  qualityCheck: QualityCheck | undefined,
-  checkTag: string | undefined
+  qualityCheck: QualityCheck | undefined
 ): string {
-  return qualityCheck === "lint"
-    ? `${scnId} lint ${checkTag}`
-    : `${scnId} ${qualityCheck}`;
+  return `${scnId} ${qualityCheck}`;
 }
 
 /**
@@ -200,7 +177,7 @@ export type EvidenceStatus = "passed" | "failed";
  * quality-check is supplied by the CALLER, not inferred: the caller states the quality-check a
  * source yields and the reader stamps it — the core makes no source→quality-check assumption (the
  * JS-ecosystem default is set at the CLI edge: vitest⇒unit, cucumber⇒integration). A runtime
- * evidence observation never carries `lint`.
+ * evidence observation never carries `fitness`.
  */
 export interface RuntimeEvidenceObservation {
   qualityCheck: RuntimeQualityCheck;
@@ -226,7 +203,7 @@ export interface RuntimeEvidenceObservation {
    * observation cites no @SCN and can be attributed to NO scenario. ABSENT (undefined) on an
    * ordinary observation; `true` on broken evidence. The optional-flag shape, mirroring
    * `EvidenceObligation.pending?: true` (chosen over a third variant in the `EvidenceObservation`
-   * union, which would touch every `qualityCheck === "lint"` narrowing site).
+   * union, which would touch every `qualityCheck === "fitness"` narrowing site).
    *
    * READER-AGNOSTIC. `broken` has two producers and belongs to neither: a vitest suite that
    * failed to COLLECT (@SCN-LDG-017), and a cucumber step matched by two or more step
@@ -252,21 +229,23 @@ export interface RuntimeEvidenceObservation {
 }
 
 /**
- * One observed STATIC-check fact, read from the CI config + package.json by the
- * two static-check observers. NOT a result-JSON fact: the watermelon is an
- * ABSENCE of wiring no emitted test result can carry, so this is read from the
- * *config* of the real tree.
+ * One observed FITNESS fact — a check that ran, read from the CI run's own record of its steps, or
+ * from the CI config + package.json by the discovered-route observer. NOT a result-JSON fact: the
+ * watermelon is an ABSENCE of wiring no emitted test result can carry, so the discovered route
+ * reads the *config* of the real tree.
  */
-export interface StaticCheckEvidenceObservation {
-  /** A static check evidence observation is the `lint` quality-check (the watermelon discriminator). */
-  qualityCheck: "lint";
+export interface FitnessEvidenceObservation {
+  /** A fitness credit is the `fitness` quality-check (the watermelon discriminator). */
+  qualityCheck: "fitness";
   /**
    * WHAT THE CHECK IS CALLED — the runnable npm-script handle on the DISCOVERED route
-   * (`lint:complexity`), and the CHARACTERISTIC itself on the converted one (@SCN-LNT-021), because
-   * a converted check has no handle: it is not invoked by name, it is a scenario that ran.
+   * (`lint:complexity`), and the step's own `id:` on the converted one (@SCN-LNT-021), because a
+   * converted check has no handle the record knows: the record holds a step id, and that id is the
+   * row's `@SCN`.
    *
-   * It is the where-to-fix an unmatched credit carries, never what the reconciler matches on —
-   * that is `checkTag` below, and the difference between the two is stated there at length.
+   * It is the WHERE-TO-FIX an unmatched credit carries, never what the reconciler matches on: a
+   * credit answers the fitness obligation of the `@SCN` it cites, and nothing compares this word
+   * with anything (3F-3525).
    */
   staticCheck: string;
   /**
@@ -283,59 +262,33 @@ export interface StaticCheckEvidenceObservation {
    */
   scnId?: string;
   /**
-   * The BARE CHECK TAG this run IS (`complexity`) — the observation's own characteristic, resolved
-   * by the same citation seam that stamped `scnId` and stamped with it.
-   *
-   * WHAT THE LEDGER RECONCILES ON, which is why the observation carries it. `staticCheck` above is
-   * the RUNNABLE HANDLE (`lint:complexity`) — where-to-fix, the command a reader has to invoke —
-   * while an Evidence Obligation names the bare tag its stepless scenario carries. Those are two
-   * vocabularies by design, and matching one against the other is name-match wearing a new coat: it
-   * agrees only where the spellings coincide, which is `typecheck`, the one unprefixed check. The
-   * bare tag is what makes the comparison compare like with like.
-   *
-   * WITHOUT IT, THE `@SCN` HAS TO CARRY THE MATCH ALONE, and it cannot: a stepless scenario may
-   * carry more than one bare check tag, so two runs can honestly cite the same `@SCN` and the first
-   * one found answers both obligations (@SCN-LNT-012). Measured before this field existed — a
-   * genuine `typecheck` watermelon read `satisfied` off `lint:complexity`'s credit and the row read
-   * `balanced`.
-   *
-   * PRESENT EXACTLY WHEN `scnId` IS, never on its own: the seam resolves both terms or neither
-   * (`parse/fitnessCitations` → `citationOfCitedRow`), so an uncited observation carries no citation
-   * keys at all and its JSON is byte-identical to what it was. Optional for the same reason `scnId`
-   * is — this interface is on the frozen v1 barrel, and a required field would break external
-   * construction of a publicly exported type.
-   */
-  checkTag?: string;
-  /**
    * The static check EXISTS — and the route the observer took to that fact is now one of two
    * (@SCN-LNT-021).
    *
-   * INFERRED on the DISCOVERED route: a `package.json` `scripts` entry by that name is present, so
-   * something by that name could be invoked. OBSERVED on the CONVERTED route: the check's scenario
-   * step appears in the CI run's own record of what each of its steps did, which says it RAN — a
-   * stronger fact than a manifest holding a name, and one no manifest read can reach.
+   * SET BY CONSTRUCTION on the DISCOVERED route since 3F-3410 deleted the manifest-scripts
+   * observer: a step of the pipeline IS the check, so `runningStaticChecks` emits `exists: true`
+   * for every candidate step it reads. OBSERVED on the CONVERTED route: the check's step appears
+   * in the CI run's own record of what each of its steps did, which says it RAN — a stronger fact
+   * than a workflow holding a name, and one no config read can reach.
    *
    * The field means the same thing either way, which is why it is one field: this check is not
    * absent from the target. What differs is the strength of what stands behind it, and the
-   * converted route's is the stronger of the two — which is why `--ci` and its twin below
-   * eventually retire for converted checks (3F-3139).
+   * converted route's is the stronger of the two.
    */
   exists: boolean;
   /**
    * The static check ran OVER THE REAL TREE rather than over a fixture — and, as with `exists`
    * above, by one of two routes (@SCN-LNT-021).
    *
-   * INFERRED on the DISCOVERED route: the check appears as a step of the target's CI — a `run:` one
-   * or a `uses:` one (@SCN-USG-013) — the v1 (COARSE) signal, which verifies the check IS a CI step
-   * and NOT that it reads real source vs fixtures, the residual gap a later
-   * evidenceObservation-based check closes. OBSERVED on the
-   * CONVERTED route: the step ran inside the target's own pipeline, over the target's own checkout,
-   * so a step the run's record names ran over that tree — and the coarseness the workflow read
-   * carries is simply not on this path.
+   * ON THE DISCOVERED ROUTE IT IS WHETHER THE JOB'S VERDICT DEPENDS ON THE STEP (3F-3260,
+   * @SCN-LNT-032): `runningStaticChecks` sets it from the step's `abortsJob` — a step the job
+   * survives red is severed, and a severed check reads the watermelon however well it ran. OBSERVED
+   * on the CONVERTED route: the step ran inside the target's own pipeline, over the target's own
+   * checkout, so a step the run's record names ran over that tree.
    *
-   * NEITHER ROUTE READS THE CHECK'S OWN VERDICT, on this field or any other. Whether the check
-   * FOUND anything is the runner's exit code's answer; whether it RAN is this one's. Two questions,
-   * two mechanisms, and a converted check keeps that split exactly.
+   * NEITHER ROUTE READS THE CHECK'S OWN VERDICT HERE. Whether the check FOUND anything is `status`
+   * below; this field is whether a red of it would have counted. Two questions, two mechanisms, and
+   * a converted check keeps that split exactly.
    */
   enforcedOverRealSource: boolean;
   /**
@@ -380,10 +333,11 @@ export interface StaticCheckEvidenceObservation {
    * saying it did could only be read for whether it was named.
    *
    * THE SAME FAIL-SAFE, IN THE SAME TWO PLACES. `postingOf` takes `broken` on the FLAG before
-   * `scnId` is consulted, so a broken credit is never citation-routed; `staticCheckObservationFor`
+   * `scnId` is consulted, so a broken credit is never citation-routed; `fitnessCreditsCiting`
    * excludes it from the obligation match, so it can neither discharge nor fail the obligation it
    * cites. Both hold WHATEVER the observation structurally carries — and it does carry its `scnId`
-   * and `checkTag`, exactly as cucumber's broken observation carries the `@SCN` its scenario cited.
+   * and the check that ran, exactly as cucumber's broken observation carries the `@SCN` its
+   * scenario cited.
    *
    * `exists` AND `enforcedOverRealSource` READ `false` ON ONE, AND THAT IS NOT A NEGATIVE CLAIM
    * DRESSED UP. Both are OBSERVED facts on the converted route — the scenario appearing in the
@@ -415,36 +369,30 @@ export interface StaticCheckEvidenceObservation {
 }
 
 /**
- * The FITNESS observations — the `lint` quality-check's half of the union.
+ * Is this observation a FITNESS credit? The predicate every reader that wants a fitness credit's
+ * OWN fields — the check that ran, its `exists`, its `enforcedOverRealSource` — asks.
  *
- * ONE SHAPE SINCE THE MEASURED AXIS LEFT (3F-3516). A measurement once joined the static-check
- * fact here as a second member; with it gone the name is the static-check observation's, kept so a reader
- * that means "a fitness credit" still says so rather than naming the interface it happens to be.
- */
-export type FitnessEvidenceObservation = StaticCheckEvidenceObservation;
-
-/**
- * Is this observation a STATIC-CHECK fact? The predicate every reader that wants a static check's
- * OWN fields — its runnable handle, its `exists`, its `enforcedOverRealSource` — asks.
- *
- * It outlived the measured member it was written to tell apart from (3F-3516): the `lint`
+ * It outlived the measured member it was written to tell apart from (3F-3516): the `fitness`
  * quality-check is a single interface again, so this is the quality-check clause alone, and its
- * readers keep naming what they mean rather than spelling `qualityCheck === "lint"` at each site.
+ * readers keep naming what they mean rather than spelling `qualityCheck === "fitness"` at each site.
+ * ONE NAME for the type and the predicate since 3F-3565: the workspace-only alias
+ * `FitnessEvidenceObservation` became the published name, because the type carries runtime fitness
+ * credits (the suites' own timing) as well as static checks.
  */
-export function isStaticCheckObservation(
+export function isFitnessObservation(
   observation: EvidenceObservation
-): observation is StaticCheckEvidenceObservation {
-  return observation.qualityCheck === "lint";
+): observation is FitnessEvidenceObservation {
+  return observation.qualityCheck === "fitness";
 }
 
 /**
- * One observed evidence fact — a DISCRIMINATED UNION on `qualityCheck === "lint"`:
+ * One observed evidence fact — a DISCRIMINATED UNION on `qualityCheck === "fitness"`:
  * a runtime test result (keyed by scnId + its runtime quality-check) or a
- * static-check evidenceObservation (`qualityCheck: "lint"`, keyed by `staticCheck`). The
+ * static-check evidenceObservation (`qualityCheck: "fitness"`, keyed by `staticCheck`). The
  * reconciler matches each evidence obligation against evidence observations of the
  * same quality-check.
  */
-export type EvidenceObservation = RuntimeEvidenceObservation | StaticCheckEvidenceObservation;
+export type EvidenceObservation = RuntimeEvidenceObservation | FitnessEvidenceObservation;
 
 /**
  * A PENDING ITEM — the one-sided ledger entry a deliberately-DEFERRED evidence

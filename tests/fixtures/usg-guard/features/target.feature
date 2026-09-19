@@ -9,7 +9,7 @@ Feature: a fixture target whose CI runs a check under no convention of ours
   that separates this target from the silence it produced under the prefix set.
 
   THE HANDLE ANSWERS NO CONFIGURED ROW AND NO SCENARIO CARRIES ITS TAG, which is what leaves it
-  uncited: no `specController.fitnessChecks` row names domain-purity's characteristic and no CI
+  uncited: no `specController.fitnessChecks` row names domain-purity's scenario and no CI
   step states a row's code, so the seam that would resolve a citation has nothing to resolve. This
   manifest once also carried a `checkRegistry` entry making the same claim over the now-retired
   registry route (3F-3395); it changed nothing observable then either, since nothing in the corpus

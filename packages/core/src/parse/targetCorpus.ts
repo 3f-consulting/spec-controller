@@ -45,7 +45,7 @@ export interface TargetCorpus {
   scenarios: Scenario[];
   /**
    * What a run whose CI step STATES a code cites — the configured row that code names, read for
-   * the characteristic a CI step cannot state (@SCN-LNT-031).
+   * the row a step's `id:` names (@SCN-LNT-031).
    *
    * NO CODE IS THE SAME ANSWER AS AN UNANSWERED ONE — `null`, the run cites nothing, and it posts
    * to suspense. That is the state a consumer starts in, and this seam does not narrow it.
@@ -63,8 +63,8 @@ export interface TargetCorpus {
   unconfiguredFitnessScenarios: readonly string[];
   /**
    * The CONFIGURED ROWS the corpus carries no scenario for (@SCN-LNT-027, 3F-3472) — the other
-   * direction of the same disagreement, in manifest order, each with the characteristic its debit
-   * is owed at.
+   * direction of the same disagreement, in manifest order, each by the `@SCN` its debit is owed
+   * under.
    *
    * IT IS HERE FOR THE MIRROR'S REASON AND NOT A WEAKER ONE. The corpus walk and the configured
    * rows are both in hand exactly once, so the rows this names and the obligations `scenarios`
@@ -95,12 +95,10 @@ export function readTargetCorpus(
   fitnessChecks: FitnessCheckIndex
 ): TargetCorpus {
   // NO BARE CHECK TAG RAISES AN OBLIGATION ON A TARGET'S CORPUS. The registered half of the
-  // union retired with the registry (3F-3161) and the measured half with the measured axis
-  // (3F-3516), so the bare-tag set handed to `parseScenarios` is empty: a fitness obligation is
-  // raised by the axis word and a configured row, and by nothing else.
-  const scenarios = sources.flatMap((source) =>
-    parseScenarios(source, deferralTags, [], fitnessChecks)
-  );
+  // union retired with the registry (3F-3161), the measured half with the measured axis (3F-3516),
+  // and `parseScenarios`' check-tag parameter with it (3F-3561): a fitness
+  // obligation is raised by the axis word and a configured row, and by nothing else.
+  const scenarios = sources.flatMap((source) => parseScenarios(source, deferralTags, fitnessChecks));
   // THE TAGGED WALK THE TWO CORPUS-VS-MANIFEST READINGS SHARE. Kept as its own pass over the
   // sources, and handed to BOTH of them — the disagreement each names is the other's direction, so
   // taking them from one walk is what stops one reading seeing a scenario the other does not.

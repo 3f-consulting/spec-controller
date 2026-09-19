@@ -77,9 +77,9 @@ is both a row of `specController.fitnessChecks` and a `run:` step whose `id:` ci
 command in the pipeline, the obligation in the scenario, the observation in the run's own record of
 what its steps did.
 
-**A check that only held our vocabulary is deleted rather than converted.** With one `@fitness` tag,
-a characteristic is a label on a row rather than a token the parser reads, so a check policing which
-characteristic words a manifest may name has nothing left to police.
+**A check that only held our vocabulary is deleted rather than converted.** With one `@fitness` tag
+and no word classifying a check at all (3F-3525), there is nothing for a check policing such words
+to police.
 
 **What a step left out of the local run costs you, nothing prints any more.** There was a
 mechanism here — a derived ladder that named every omission and its reason on every run, and
@@ -160,7 +160,7 @@ consumer and no longer engages a major version** — the compatibility commitmen
 2026-09-13 ([3F-3376](3F-3376)) because it was made to nobody,
 and measurement found no consumer routing credits through the registry at all. Stated here, in
 `features/uncited-static-checks.feature`, and in
-[`doc/converting-a-fitness-check.md`](./doc/converting-a-fitness-check.md), so a reader who meets
+[`doc/adopting-fitness-checks.md`](./doc/adopting-fitness-checks.md), so a reader who meets
 the zero is not left to infer which one it is.
 
 ## Reports live outside the repo

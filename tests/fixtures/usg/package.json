@@ -9,7 +9,6 @@
     "fitnessChecks": [
       {
         "scn": "SCN-TGT-001",
-        "characteristic": "foo",
         "command": "pnpm lint:foo"
       }
     ],

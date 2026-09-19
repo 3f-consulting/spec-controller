@@ -45,16 +45,18 @@ import { resolveDeferralTags } from "./targetManifest.js";
  * then drift the first time a tier is added — and the check that then reds is the one telling
  * authors which words are legitimate.
  *
- * BARE `lint` IS ONE OF THEM and is not in either map, because `@lint` is not a runtime tier: it
- * is the style-lint check, a flat peer of `@complexity`, which raises a `lint` obligation without
- * a runtime observation. It is named here rather than pushed into `TAG_TO_QUALITY_CHECK`, where
- * it would start raising runtime obligations for every scenario that carries it.
+ * BARE `lint` STAYS GRAMMAR, AND ONLY BECAUSE AN ADOPTER WRITES IT (3F-3525). The quality check it
+ * once named is `fitness` now, and `@lint` raises nothing — it is in neither map. But an adopter's repository's corpus
+ * carries it (`an-adopters-repository/features/static-checks.feature`), and a reader does not contract a
+ * shape an adopter still writes (canon: publishing-npm-packages.md, expand/contract step 4). So it
+ * is admitted here, as a word, and raises no obligation anywhere; the day no adopter writes it, it
+ * leaves in a deliberate step that says so.
  *
- * `lintpending` ARRIVES WITH THE PENDING LIST, and that is one word wider than the private check
- * this rule moved out of. That check kept its own four-member tier list, so `@lintpending` was
- * unrecognised there while the engine beside it read the same tag as a deferred `lint`
- * obligation — two readers of one corpus disagreeing about one word, which is precisely the
- * second reading this module exists to end. Taking the engine's own lexicon closes it.
+ * THE PENDING SPELLINGS ARRIVE WITH THE PENDING LIST, derived from the engine's own lexicon. The
+ * private check this rule moved out of kept its own four-member tier list, so a pending fitness tag
+ * was unrecognised there while the engine beside it read the same tag as a deferred obligation —
+ * two readers of one corpus disagreeing about one word, which is precisely the second reading this
+ * module exists to end. Taking the engine's own lexicon closes it.
  */
 const TIER_TAGS: readonly string[] = [
   ...RUNTIME_QUALITY_CHECK_TAGS,
@@ -82,7 +84,7 @@ const TIER_TAGS: readonly string[] = [
  * nowhere by this assembly, which is the whole of what @SCN-STG-005 changed.
  *
  * AND THE AXIS WORD IS NOT THE TARGET'S TO GRANT (3F-3138, 3F-3149). A CONVERTED check carries
- * one word for the whole axis and puts its CHARACTERISTIC on a configured row, so the retired
+ * one word for the whole axis and its COMMAND on a configured row, so the retired
  * registry names it nowhere and never will. Which words name a CHECK is the target's
  * answer; which axis a scenario is ON is the model's, exactly as `unit` is — so the word is
  * admitted whatever the manifest holds, and a target that has converted nothing does not get to
@@ -95,7 +97,7 @@ const TIER_TAGS: readonly string[] = [
  * remedy attached — *this word means nothing here*, said to an author whose scenario names the
  * one axis the model has.
  */
-function checkTagsOf(): readonly string[] {
+function axisTagsOf(): readonly string[] {
   return [FITNESS_AXIS_TAG];
 }
 
@@ -193,8 +195,8 @@ function unrecognisedTagFault(tag: string): string {
 /**
  * Is this tag part of the `@SCN` scheme's grammar, on a scenario in this file?
  *
- * SIX CLAUSES, AND ONE OF THEM CARRIES THE WHOLE CHECK-TAG SET. What this rule reaches is the
- * scheme's own words, the target's deferral set, and `checkTagsOf`'s one word — the axis word (a
+ * SIX CLAUSES, AND ONE OF THEM CARRIES THE AXIS TAG. What this rule reaches is the
+ * scheme's own words, the target's deferral set, and `axisTagsOf`'s one word — the axis word (a
  * bare check tag is grammar nowhere now, 3F-3161, and the measured tags left with the measured
  * axis, 3F-3516). That the set grew and then shrank to one source changed nothing here, which is
  * the point of assembling it there: a clause reading one source at a time would have had to move
@@ -215,7 +217,7 @@ function unrecognisedTagFault(tag: string): string {
  * by a BARE tag — a flat peer of the behavioural tiers, not a member of some group — so it
  * matches nothing in `TIER_TAGS` and would otherwise red every fitness scenario in a corpus:
  * measured over this repository's own, ten findings and exit 1 on the commit before this clause
- * landed. The set is `checkTagsOf`'s and is resolved once, before the walk.
+ * landed. The set is `axisTagsOf`'s and is resolved once, before the walk.
  *
  * AND STEPS ARE NOT CONSULTED, WHICH IS STRUCTURAL RATHER THAN REMEMBERED (3F-3126). The tier
  * floor this rule replaced once keyed on steplessness, and a rule keyed on that correlate reds
@@ -236,13 +238,13 @@ function isGrammar(
   scenarioId: string,
   featureCode: string | null,
   deferralTags: readonly string[],
-  checkTags: readonly string[]
+  axisTags: readonly string[]
 ): boolean {
   if (tag === scenarioId) return true;
   if (featureCodeOf(tag) !== null) return true;
   if (featureCode !== null && tag === featureCode) return true;
   if (deferralTags.includes(tag)) return true;
-  if (checkTags.includes(tag)) return true;
+  if (axisTags.includes(tag)) return true;
   return TIER_TAGS.includes(tag);
 }
 
@@ -296,12 +298,12 @@ export function unrecognisedTags(
   // Both sets are resolved ONCE, before the walk, rather than per tag: the manifest cannot change
   // mid-corpus, and one resolution is what makes "the same set the obligation rule reads" a fact
   // about this run rather than about each tag's turn through it.
-  const checkTags = checkTagsOf();
+  const axisTags = axisTagsOf();
   const faults: CorpusFault[] = [];
   for (const file of features) {
     for (const scenario of parseTaggedScenarios(file.source)) {
       for (const tag of scenario.tags) {
-        if (isGrammar(tag, scenario.scnId, file.featureCode, deferralTags, checkTags)) continue;
+        if (isGrammar(tag, scenario.scnId, file.featureCode, deferralTags, axisTags)) continue;
         faults.push({
           kind: "unrecognised-tag",
           message:

@@ -14,7 +14,7 @@
  * the per-scenario reconciliation under `evidenceReconciliation` (RMD-002), and the observed
  * evidence under `evidenceObservations` (RMD-003) — every JSON section reads in the manifesto's
  * vocabulary. The static-check census is `summary.staticChecks` counts alone (2.4): its
- * member detail lives in the rows (named → `@lint` sub-rows; no-evidence-obligation → the suspense row),
+ * member detail lives in the rows (named → fitness sub-rows; no-evidence-obligation → the suspense row),
  * so there is no standalone `staticChecks` section — symmetric with the runtime side.
  *
  * Parent: (@SCN-RMD-001).
@@ -35,7 +35,7 @@ export type {
   ScenarioReconciliationTotals,
   EvidenceObligationTotals,
   MissingByQualityCheck,
-  LintTally,
+  FitnessTally,
 } from "../domain/ledger.js";
 export type {
   Summary,
@@ -142,7 +142,7 @@ export function assembleRenderInput(
         }
       : {}),
     // No staticChecks census SECTION (2.4): the guard member detail lives in the rows
-    // (named → each scenario's `@lint` sub-row; no-evidence-obligation → the suspense row), symmetric with
+    // (named → each scenario's fitness sub-row; no-evidence-obligation → the suspense row), symmetric with
     // the runtime side. The counts survive in `summary.staticChecks` (the balance-check identity).
 
     // No `evidenceObservations` SECTION (@SCN-RMD-003 / @SCN-RPT-010, 3F-2103): the runtime

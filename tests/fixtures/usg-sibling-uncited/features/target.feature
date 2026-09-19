@@ -7,7 +7,7 @@ Feature: a fixture target whose uncited static check runs in a sibling workflow
   in this corpus carries lint:sweep's check tag.
 
   THE HANDLE ANSWERS NO CONFIGURED ROW AND NO SCENARIO CARRIES ITS TAG, which is what leaves it
-  uncited: no `specController.fitnessChecks` row names sweep's characteristic and no CI step
+  uncited: no `specController.fitnessChecks` row names sweep's scenario and no CI step
   states a row's code, so the seam that would resolve a citation has nothing to resolve. This
   manifest once also carried a `checkRegistry` entry making the same claim over the now-retired
   registry route (3F-3395); it changed nothing observable then either, since nothing in the

@@ -1,30 +1,25 @@
 /**
  * @unit for @SCN-LNT-018 — the CONVERTED route into the fitness obligation rule: a scenario
- * carrying the bare axis tag `@fitness` owes the characteristic its CONFIGURED ROW names, once.
+ * carrying the axis tag `@fitness` that a CONFIGURED ROW names owes one fitness obligation, keyed
+ * by its own @SCN and naming no characteristic (3F-3570).
  *
  * Bidirectional evidence: the describe carries its @SCN id, matching
  * features/fitness-reconciliation.feature and the @integration steps in
- * tests/steps/lintReconciliation.steps.ts.
+ * tests/steps/fitnessReconciliation.steps.ts.
  *
- * Its own file rather than a further block in fitnessObligations.test.ts, which reads the OTHER
- * route — a registered bare characteristic tag. Two routes into one rule are two subjects, and the
- * assertion this file exists to make is that they arrive at the SAME obligation.
+ * Its own file rather than a further block in fitnessObligations.test.ts, which reads the retired
+ * `@lint=<handle>` form (@SCN-LNT-007). The registered bare-tag route this file once compared
+ * against is gone with `parseScenarios`' check-tag set (3F-3561), so this is the one route in.
  */
 
 import { describe, it, expect } from "vitest";
 import { parseScenarios } from "./scenarios.js";
-import type { FitnessCheckIndex } from "../domain/fitnessChecks.js";
+import { fitnessChecksOf, type FitnessCheckIndex } from "../domain/fitnessChecks.js";
 
-/** The configured rows, as the obligation rule takes them: bare `@SCN` → the characteristic. */
-const CONFIGURED: FitnessCheckIndex = new Map([
-  ["SCN-AAA-001", { characteristic: "complexity" }],
-]);
+/** The configured rows, read through core's own row reader exactly as a target's manifest is. */
+const CONFIGURED: FitnessCheckIndex = fitnessChecksOf([{ scn: "SCN-AAA-001", command: "eslint" }]);
 
-/**
- * A converted scenario: the bare AXIS tag, and no characteristic tag anywhere on it. The word
- * `complexity` appears nowhere in this source, which is the whole of what makes the expectation
- * below a claim about the row rather than about the tag.
- */
+/** A converted scenario: the AXIS tag, and nothing else naming what the check is about. */
 const convertedScenario = `@FIT
 Feature: fitness
 
@@ -34,20 +29,20 @@ Feature: fitness
     Scenario: the codebase stays under the complexity threshold
 `;
 
-describe("[SCN-LNT-018] a @fitness scenario owes the characteristic its configured row names", () => {
-  it("raises one obligation, naming the characteristic the row names rather than the tag", () => {
-    expect(parseScenarios(convertedScenario, [], [], CONFIGURED)).toEqual([
+describe("[SCN-LNT-018] a @fitness scenario a configured row names owes one fitness obligation keyed by its own @SCN", () => {
+  it("raises one obligation, at the quality check fitness, naming no characteristic", () => {
+    expect(parseScenarios(convertedScenario, [], CONFIGURED)).toEqual([
       {
         scnId: "SCN-AAA-001",
-        evidenceObligations: [{ qualityCheck: "lint", staticCheck: "complexity" }],
+        evidenceObligations: [{ qualityCheck: "fitness" }],
       },
     ]);
   });
 
   it("raises it ONCE when the axis tag reaches the scenario twice", () => {
     // A scenario's effective tags are its own plus its Rule's and its Feature's (@SCN-LDG-020), so
-    // the axis tag can arrive twice. It is owed once: two obligations for one characteristic would
-    // reconcile the second `missing` for ever, since one run is one credit and can cite one @SCN.
+    // the axis tag can arrive twice. It is owed once: two obligations for one check would reconcile
+    // the second `missing` for ever, since one run is one credit and can cite one @SCN.
     const source = `@FIT
 Feature: fitness
 
@@ -58,31 +53,37 @@ Feature: fitness
     Scenario: the codebase stays under the complexity threshold
 `;
 
-    expect(parseScenarios(source, [], [], CONFIGURED)).toEqual([
+    expect(parseScenarios(source, [], CONFIGURED)).toEqual([
       {
         scnId: "SCN-AAA-001",
-        evidenceObligations: [{ qualityCheck: "lint", staticCheck: "complexity" }],
+        evidenceObligations: [{ qualityCheck: "fitness" }],
       },
     ]);
   });
 
-  it("raises the SAME obligation a registered bare characteristic tag raises", () => {
-    // NOT A SECOND OBLIGATION SHAPE. Every reader downstream — the pair key, the reconciler's
-    // static arm, the roll-up — is keyed on this object, so the two routes must be
-    // indistinguishable once the obligation is raised. Compared against the OTHER route's own
-    // answer rather than against a literal, so a change to the shape moves both or reds here.
-    const bareTagScenario = `@FIT
+  it("raises two obligations for two scenarios whose rows share a retired characteristic word", () => {
+    // THE SHAPE A SHARED WORD ONCE TOOK: this repository's own rows gave `ci-run-time` to two
+    // checks. Each check is its own scenario, keyed by its own @SCN, so two rows are two obligations
+    // whatever word they still carry.
+    const source = `@FIT
 Feature: fitness
 
-  Rule: the tree stays inside its thresholds
+  Rule: the suites stay inside their limits
 
-    @complexity @SCN-AAA-001
-    Scenario: the codebase stays under the complexity threshold
+    @fitness @SCN-AAA-012
+    Scenario: the unit suite finishes inside its limit
+
+    @fitness @SCN-AAA-013
+    Scenario: the behavioural suite finishes inside its limit
 `;
-
-    expect(parseScenarios(convertedScenario, [], [], CONFIGURED)).toEqual(
-      parseScenarios(bareTagScenario, [], ["complexity"])
-    );
+    const rows = fitnessChecksOf([
+      { scn: "SCN-AAA-012", characteristic: "ci-run-time" },
+      { scn: "SCN-AAA-013", characteristic: "ci-run-time" },
+    ]);
+    expect(parseScenarios(source, [], rows)).toEqual([
+      { scnId: "SCN-AAA-012", evidenceObligations: [{ qualityCheck: "fitness" }] },
+      { scnId: "SCN-AAA-013", evidenceObligations: [{ qualityCheck: "fitness" }] },
+    ]);
   });
 
   it("raises nothing when no rows are configured — the reading is inert on an unconverted corpus", () => {
@@ -94,9 +95,8 @@ Feature: fitness
   });
 
   it("leaves the tier obligations of a converted scenario untouched", () => {
-    // The axis tag is answered ALONGSIDE the tier tags, never instead of them — the stance the
-    // registered-tag arm already takes (@SCN-LNT-006). A converted scenario that also carries a
-    // tier owes both, in the order the arms run.
+    // The axis tag is answered ALONGSIDE the tier tags, never instead of them. A converted
+    // scenario that also carries a tier owes both, in the order the arms run.
     const source = `@FIT
 Feature: fitness
 
@@ -107,12 +107,12 @@ Feature: fitness
       Given a step
 `;
 
-    expect(parseScenarios(source, [], [], CONFIGURED)).toEqual([
+    expect(parseScenarios(source, [], CONFIGURED)).toEqual([
       {
         scnId: "SCN-AAA-001",
         evidenceObligations: [
           { qualityCheck: "unit" },
-          { qualityCheck: "lint", staticCheck: "complexity" },
+          { qualityCheck: "fitness" },
         ],
       },
     ]);

@@ -122,11 +122,11 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
         evidenceObligations: [],
         verdict: "out-of-balance",
         qualityCheckReconciliations: [
-          qcr({ qualityCheck: "lint", staticCheck: "guard-lint", outcome: "watermelon" }),
+          qcr({ qualityCheck: "fitness", staticCheck: "guard-lint", outcome: "watermelon" }),
         ],
         pendingItems: [],
         reconcilingItems: [
-          qcr({ qualityCheck: "lint", staticCheck: "guard-lint", outcome: "watermelon" }),
+          qcr({ qualityCheck: "fitness", staticCheck: "guard-lint", outcome: "watermelon" }),
         ],
       },
       {
@@ -135,7 +135,7 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
         evidenceObservations: [],
         evidenceObligations: [],
         verdict: "balanced",
-        qualityCheckReconciliations: [qcr({ qualityCheck: "lint", staticCheck: "guard-lint", outcome: "satisfied" })],
+        qualityCheckReconciliations: [qcr({ qualityCheck: "fitness", staticCheck: "guard-lint", outcome: "satisfied" })],
         pendingItems: [],
         reconcilingItems: [],
       },
@@ -191,15 +191,15 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
     expect(md).not.toContain("scenario rows out of balance");
   });
 
-  it("slots the by-feature section after the lint section and before the ledger (no warnings section)", () => {
+  it("slots the by-feature section after the fitness section and before the ledger (no warnings section)", () => {
     // A balance carrying static-check evidenceObligations and an out-of-balance scenario — so
     // both summary-view sections render and their order can be asserted.
     const withAll: Ledger = reconcile(
-      [{ scnId: "SCN-LNT-002", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "guard-lint" }] }],
-      [{ qualityCheck: "lint", staticCheck: "guard-lint", exists: true, enforcedOverRealSource: false }]
+      [{ scnId: "SCN-LNT-002", evidenceObligations: [{ qualityCheck: "fitness" }] }],
+      [{ qualityCheck: "fitness", staticCheck: "guard-lint", exists: true, enforcedOverRealSource: false }]
     );
     const md = renderMarkdown(__er(withAll), ctx);
-    const iStatic = md.indexOf("### Lint evidence obligations");
+    const iStatic = md.indexOf("### Fitness evidence obligations");
     const iByFeature = md.indexOf("### Out-of-balance by feature");
     const iLedger = md.indexOf("## Scenario Reconciliations");
     expect(iStatic).toBeGreaterThanOrEqual(0);
@@ -215,12 +215,12 @@ describe("[SCN-RPT-006] the markdown report groups out-of-balance scenarios by f
     // The feature-name map (built from discoverFeatures: featureCode → filename slug).
     const featureNames = new Map([
       ["LDG", "ledger"],
-      ["LNT", "lint-evidence"],
+      ["LNT", "fitness-evidence"],
     ]);
     const md = renderMarkdown(__er(spanning, false, false), ctx, undefined, featureNames);
     // Each Feature cell reads "<full-name> (<FFF>)" — the count + ids columns unchanged.
     expect(md).toContain("| ledger (LDG) | 2 | SCN-LDG-003, SCN-LDG-007 |");
-    expect(md).toContain("| lint-evidence (LNT) | 1 | SCN-LNT-002 |");
+    expect(md).toContain("| fitness-evidence (LNT) | 1 | SCN-LNT-002 |");
   });
 
   it("falls back to the bare FFF for an uncoded id the map doesn't cover", () => {
@@ -426,7 +426,7 @@ describe("[SCN-RPT-008] the markdown report outcomes the excluded non-tag @SCN o
  * Proves the summary-first / ledger-last structure in isolation: renderMarkdown opens
  * with `# Evidence Reconciliation` (not `# Ledger`), keeps `## Run provenance`
  * first, groups the derived cuts under `## Summary views` (run verdict →
- * evidence reconciliation → test volume → static checks → lint evidence obligations →
+ * evidence reconciliation → test volume → static checks → fitness evidence obligations →
  * out-of-balance by feature), and moves the
  * per-scenario `## Scenario Reconciliations` ledger to the END with its summary lines on top,
  * `## Warnings` last. A pure derive over the balance; markdown-only (the JSON surface
@@ -441,11 +441,11 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
     [
       { scnId: "SCN-LDG-001", evidenceObligations: [{ qualityCheck: "unit" }] },
       { scnId: "SCN-LDG-002", evidenceObligations: [{ qualityCheck: "unit" }] },
-      { scnId: "SCN-LNT-001", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "guard-lint" }] },
+      { scnId: "SCN-LNT-001", evidenceObligations: [{ qualityCheck: "fitness" }] },
     ],
     [
       { qualityCheck: "unit", scnId: "SCN-LDG-001", status: "passed" },
-      { qualityCheck: "lint", staticCheck: "lint:guard-lint", checkTag: "guard-lint", scnId: "SCN-LNT-001", exists: true, enforcedOverRealSource: false },
+      { qualityCheck: "fitness", staticCheck: "lint:guard-lint", scnId: "SCN-LNT-001", exists: true, enforcedOverRealSource: false },
     ]
   );
 
@@ -470,7 +470,7 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
       "## Run provenance",
       "## Summary views",
       "### Evidence reconciliation",
-      "### Lint evidence obligations",
+      "### Fitness evidence obligations",
       "### Out-of-balance by feature",
       "## Scenario Reconciliations",
     ].map((h) => md.indexOf(h));
@@ -495,13 +495,13 @@ describe("[SCN-RPT-009] the markdown report renders summary-first, ledger-last",
     expect(iTable).toBeGreaterThan(md.indexOf("### Out-of-balance by feature"));
   });
 
-  it("labels the ledger's reconciling items by tag (unit / lint), never by the internal kind (runtime / static)", () => {
+  it("labels the ledger's reconciling items by tag (unit / fitness), never by the internal kind (runtime / static)", () => {
     const md = renderMarkdown(__er(reformatted), ctx);
-    // The runtime evidenceObligation renders its bare LEVEL; the static (@lint) evidenceObligation
-    // renders the tag word "lint" — both level-less of the kind axis.
+    // The runtime evidenceObligation renders its bare LEVEL; the static (@fitness) evidenceObligation
+    // renders the tag word "fitness" — both level-less of the kind axis.
     expect(md).toContain("| SCN-LDG-002 | ✗ out-of-balance | unit ∅ Evidence Observation is missing |");
     expect(md).toContain(
-      "| SCN-LNT-001 | ✗ out-of-balance | lint 🍉 Evidence Observation is passing but fabricated |"
+      "| SCN-LNT-001 | ✗ out-of-balance | fitness 🍉 Evidence Observation is passing but fabricated |"
     );
     // The kind axis ("runtime" / "static") is never rendered in the report.
     expect(md).not.toContain("runtime/");

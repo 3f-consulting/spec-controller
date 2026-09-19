@@ -19,7 +19,7 @@
  *
  * Bidirectional evidence: the describe carries its @SCN id, matching
  * features/fitness-reconciliation.feature and the @integration steps in
- * tests/steps/lintReconciliation.steps.ts.
+ * tests/steps/fitnessReconciliation.steps.ts.
  */
 
 import { describe, it, expect } from "vitest";
@@ -52,7 +52,7 @@ const manifest = {
     // terms as a command — a quality check can BE an action — so a pipeline that opens with a
     // checkout answers for it here, exactly as a consumer's own manifest does.
     notChecks: ["ci.yml:quality:Checkout"],
-    fitnessChecks: [{ scn: "SCN-CVT-001", characteristic: "complexity", command: "eslint" }],
+    fitnessChecks: [{ scn: "SCN-CVT-001", command: "eslint" }],
   },
 };
 
@@ -119,15 +119,14 @@ describe("[SCN-LNT-030] the reader takes the step's outcome, so a swallowed red 
         row.verdict,
         row.qualityCheckReconciliations.map((item) => [item.staticCheck, item.outcome]),
       ])
-    ).toEqual([["SCN-CVT-001", "scenario", "out-of-balance", [["complexity", "failing"]]]]);
+    ).toEqual([["SCN-CVT-001", "scenario", "out-of-balance", [[undefined, "failing"]]]]);
 
     // THE OBSERVATION IS CARRIED, which is the second half of the same discrimination: a reader
     // taking the laundered field raises no credit at all, so this item would hold none.
     const [item] = reconciliation.ledger.scenarioReconciliations[0]!.qualityCheckReconciliations;
     expect(item?.evidenceObservation).toMatchObject({
-      qualityCheck: "lint",
+      qualityCheck: "fitness",
       scnId: "SCN-CVT-001",
-      checkTag: "complexity",
     });
 
     // AND THE RUN IS SOUND. The evidence stream did its job perfectly — it carried a red past a

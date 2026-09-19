@@ -437,7 +437,7 @@ Then("it fails, naming the tag that means nothing there", function () {
 
 /**
  * @SCN-STG-005's CONVERTED route (3F-3138, 3F-3149). A converted check carries one word for the
- * whole axis and its CHARACTERISTIC is on a configured row, so `checkRegistry` names it nowhere
+ * whole axis and its COMMAND is on a configured row, so `checkRegistry` names it nowhere
  * and never will — which is why the pair below turns on `specController.fitnessChecks` instead,
  * the one route left by which a target can make a check-tag scenario pass.
  */

@@ -15,9 +15,10 @@
  * line carrying an @SCN id contributes that scenario's evidenceObligations from the level
  * tags found across the contiguous tag block.
  *
- * The `lint` quality-check is raised by a scenario's REGISTERED bare check tag, STEPS OR NONE
- * (`fitnessObligationsOf`, @SCN-LNT-006): the tag says which axis a scenario is on and the steps say
- * nothing about it (3F-3115). The retired `@lint=<guard>` form — where the scenario
+ * The `fitness` quality-check is raised by a scenario's `@fitness` axis tag and the configured row that
+ * names it, STEPS OR NONE (`convertedFitnessObligationsOf`, @SCN-LNT-018): the tag says which axis a
+ * scenario is on and the steps say nothing about it (3F-3115). No set of registered check tags raises
+ * one any more (3F-3561). The retired `@lint=<guard>` form — where the scenario
  * named a runnable npm script and the run was matched back to it BY NAME — raises nothing
  * (@SCN-LNT-007): it supplies no citation, so anything it raised could never be credited under
  * the one posting rule and would read `missing` for ever. The form is inert in the READER, which
@@ -39,11 +40,13 @@ const SCN_CODE = /^SCN-[A-Z0-9]+-\d+$/;
  * (the `@` stripped) that DEFERS an obligation to a later slice. Exact-match keyed, so the
  * `pending` suffix is significant: `integrationpending` is NOT `integration`, and an
  * unrecognised `<x>pending` (or bare `pending`) is absent from the map → ignored. Unlike
- * `TAG_TO_QUALITY_CHECK`, this covers ALL FIVE quality-checks including `lint` (a pending
- * lint obligation is one-sided — no `staticCheck` payload).
+ * `TAG_TO_QUALITY_CHECK`, this covers ALL FIVE quality-checks including `fitness` (a pending
+ * fitness obligation is one-sided — no `staticCheck` payload). The fitness spelling follows the
+ * quality check's name; the retired `lintpending` is not an alias, since no adopter writes it
+ * (3F-3569).
  */
 const PENDING_TAG_TO_QUALITY_CHECK: Record<string, QualityCheck> = {
-  lintpending: "lint",
+  fitnesspending: "fitness",
   unitpending: "unit",
   integrationpending: "integration",
   e2epending: "e2e",
@@ -182,110 +185,46 @@ export function parseUntaggedScenarios(source: string): string[] {
 }
 
 /**
- * THE FITNESS OBLIGATIONS a scenario's tags raise (@SCN-LNT-006) — one per REGISTERED bare check
- * tag it carries, whether or not the scenario carries steps.
- *
- * THE TECHNIQUE LEAVES THE TAG. Under name-match the DEBIT cited: a scenario carried
- * `@lint=<handle>` and a run was matched back to it by name, so an obligation could only be raised
- * by naming a runnable script — which put one technique in front of a whole class of fitness
- * functions, and is why `complexity`, `typecheck` and `vocab` all had to spell themselves
- * `lint:something` to be seen at all. A bare tag drops it: `@complexity` is a flat peer of `@unit`
- * exactly as `@unit` is a flat peer of `@integration`. There is no `@behavioural=unit`, so there is
- * no `@fitness=complexity` (canon 2026-08-07, the bare-tags Correction).
- *
- * THE TAG IS THE DISCRIMINATOR, AND THE STEPS ARE NOT (3F-3115). A scenario carrying a registered
- * bare check owes that check from the row that carries it; a scenario carrying a tier tag owes its
- * tier. Steps say how a scenario is WRITTEN, not which axis it is ON, so a fitness scenario handed
- * a runnable example keeps the characteristic it was written to hold instead of swapping axes.
- *
- * THE `stepless` CONDITION THAT USED TO STAND HERE WAS A PROXY, AND IT READ THE WRONG SIGNAL —
- * having nothing to exemplify is why a fitness scenario usually carries no steps, a correlate of
- * being non-behavioural rather than the thing itself. The CREDIT side never read it: the citation
- * seam has always reached a stepped row, so the debit alone stopped short and such a row produced a
- * credit with no obligation to post to (3F-3092). Removing the condition removes that asymmetry;
- * no compensating rule is added on the credit side, and none is needed.
- *
- * AND THE FIELD THAT OUTLIVED THE CONDITION IS GONE WITH IT (3F-3369). `TaggedScenario` carried a
- * `stepless` boolean on after the rule stopped reading it, kept by a reason that was wrong twice
- * (3F-3134): it named `parse/scnTags.ts` as the surviving reader, which is not a path in this
- * repository, and the corpus check it meant computed its own steplessness off its own line parser
- * and never read this one. Both rules that reason named read the tag instead (@SCN-STG-005, and
- * the one-check rule until it left with the measured axis; 3F-3126, 3F-3516). So nothing asked
- * the walk for a scenario's SHAPE, and the walk stopped answering: steplessness is derived
- * nowhere in this tree, and a scenario's axis is its tag.
- *
- * SUPPLIED, NOT INFERRED. `checkTags` is the caller's set of recognised check tags, taken as
- * data. Without it every unrecognised tag would be a candidate check and `@smoke` would owe one;
- * with a prefix heuristic instead, `typecheck` would be missed, which is the reading 3F-2495 already
- * disproved on the discovery side. An empty set raises nothing, so this is inert on a corpus
- * that has not been swept.
- *
- * `seen` CARRIES THE CHECKS ALREADY RAISED, and is mutated here: a scenario's effective tags are
- * its own plus its `Rule:`'s and its `Feature:`'s (@SCN-LDG-020), so one check can reach one
- * scenario twice and is owed once. Two obligations for one check would leave the second `missing`
- * for ever — one run is one credit and can cite one `@SCN`.
- */
-function fitnessObligationsOf(
-  tags: readonly string[],
-  checkTags: readonly string[],
-  seen: Set<string>
-): EvidenceObligation[] {
-  const registered = new Set(checkTags);
-  const raised: EvidenceObligation[] = [];
-  for (const tag of tags) {
-    if (!registered.has(tag) || seen.has(tag)) continue;
-    seen.add(tag);
-    raised.push({ qualityCheck: "lint", staticCheck: tag });
-  }
-  return raised;
-}
-
-/**
  * The one word a CONVERTED check's scenario carries — the axis, and nothing about the subject.
  *
- * It is a literal rather than a registered tag because it names no characteristic: `checkTags` is
- * the answer to "which words are checks here", and this word is the answer to "which axis is this
- * scenario on", which is the same question `unit` and `integration` answer for the other axis. A
- * target does not get to spell it differently for the reason nobody spells `@unit` differently.
+ * It is a literal, the model's own word: it answers "which axis is this scenario on", the question
+ * `unit` and `integration` answer for the other axis. A target does not get to spell it differently
+ * for the reason nobody spells `@unit` differently.
  */
 export const FITNESS_AXIS_TAG = "fitness";
 
 /**
- * The obligation a CONVERTED check's scenario raises (@SCN-LNT-018) — the characteristic its
- * CONFIGURED ROW names, once.
+ * The obligation a CONVERTED check's scenario raises (@SCN-LNT-018) — one, at the quality check
+ * `fitness`, keyed by the scenario's own `@SCN`.
  *
- * THE TAG NAMES THE AXIS AND THE ROW NAMES THE SUBJECT. A bare characteristic tag answered both at
- * once; the tier tags answer only the first, and nobody mints `@unit-parser`. So a converted
- * scenario carries `@fitness` alone and the characteristic is looked up by the scenario's own
- * `@SCN` — which is the row's KEY, so a row cannot name one scenario and be read against another.
+ * ONE @fitness SCENARIO IS ONE CHECK (3F-3525). The tag says which axis the scenario is on, exactly
+ * as `@unit` does, and the scenario's TITLE says what the check is about; nobody mints
+ * `@unit-parser`, and nothing classifies a fitness check further. The row is the consumer's
+ * declaration that this `@SCN` is a configured check, and its `@SCN` is the row's KEY, so a row
+ * cannot name one scenario and be read against another.
  *
- * NOT A SECOND OBLIGATION SHAPE. What comes back is the same
- * `{ qualityCheck: "lint", staticCheck: <characteristic> }` the registered-tag arm raises, so the
- * pair key, the reconciler's static arm and the roll-up are untouched: only where the word came
- * from changed.
+ * THE ONE ROUTE IN. The registered bare-tag arm that once raised the same obligation beside this
+ * one left with `parseScenarios`' check-tag set (3F-3561), so a fitness obligation is raised here
+ * and nowhere else.
  *
  * NO REGISTRY HOP, and that is what conversion retires. An unconverted static check is discovered
  * as a script handle, and a handle does not know what it is for — hence the (now-retired)
  * registry, and hence the corpus lookup behind it. This route reads the citation off the row
  * rather than resolving it onto one.
  *
- * `seen` IS THE ARM ABOVE'S OWN SET, and shared deliberately. A check is owed once however it was
- * named: the axis tag can reach one scenario twice through its `Rule:` and its `Feature:`
- * (@SCN-LDG-020), and a row whose characteristic a bare tag on the same scenario already raised
- * owes nothing further. Two obligations for one characteristic would leave the second `missing`
- * for ever, since one run is one credit and can cite one `@SCN`.
+ * OWED ONCE, BY CONSTRUCTION. The axis tag can reach one scenario twice, through its `Rule:` and
+ * its `Feature:` (@SCN-LDG-020), and this is asked once per scenario whatever its tag list holds,
+ * so the answer is one obligation or none. Two for one check would leave the second `missing` for
+ * ever, since one run is one credit and can cite one `@SCN`.
  */
 function convertedFitnessObligationsOf(
   tags: readonly string[],
   fitnessChecks: FitnessCheckIndex,
-  seen: Set<string>,
   scnId: string
 ): EvidenceObligation[] {
   if (!tags.includes(FITNESS_AXIS_TAG)) return [];
-  const row = fitnessChecks.get(scnId);
-  if (row === undefined || seen.has(row.characteristic)) return [];
-  seen.add(row.characteristic);
-  return [{ qualityCheck: "lint", staticCheck: row.characteristic }];
+  if (!fitnessChecks.has(scnId)) return [];
+  return [{ qualityCheck: "fitness" }];
 }
 
 /**
@@ -293,9 +232,9 @@ function convertedFitnessObligationsOf(
  * half-converted a check: the tag moved and the row was never written.
  *
  * IT RAISES NOTHING AND THAT IS NOT NEGOTIABLE. Such a scenario has said which axis it is on and
- * then said nothing about what it asserts; there is no characteristic to raise an obligation FOR,
- * and reaching for the nearest word is the near-match courtesy the portfolio roster already
- * refuses. So `convertedFitnessObligationsOf` above answers the empty list, and this reads the same
+ * then said nothing else at all: no row declares it a configured check, so there is nothing for a
+ * run to answer and no command to send a reader to. So `convertedFitnessObligationsOf` above
+ * answers the empty list, and this reads the same
  * two facts — the axis tag, and the row's absence — to say WHO.
  *
  * THE RUN ALREADY REDS ON IT, through no rule of this function's. A converted check's scenario
@@ -339,8 +278,8 @@ export function unconfiguredFitnessScenarios(
  * THE RUN DOES NOT ALREADY RED ON IT, WHICH IS THE WHOLE DIFFERENCE BETWEEN THE TWO. Its mirror
  * adds only a sentence, because a scenario no row names already reconciles to zero rows on both
  * sides and is out of balance through the degenerate item. A row no scenario names raised NOTHING:
- * the obligations travel with the scenarios, so a row with no scenario contributed a characteristic
- * nobody asked for and the run read balanced over a check that was declared and never specified.
+ * the obligations travel with the scenarios, so a row with no scenario contributed nothing at all
+ * and the run read balanced over a check that was declared and never specified.
  * `double-entry-manifesto.md` names that shape exactly — a ledger catches a credit that never
  * arrived and is blind to a debit that was never raised.
  *
@@ -359,9 +298,9 @@ export function unspecifiedFitnessRows(
 ): UnspecifiedFitnessRow[] {
   const carried = new Set(scenarios.map((scenario) => scenario.scnId));
   const unspecified: UnspecifiedFitnessRow[] = [];
-  for (const [scnId, row] of fitnessChecks) {
+  for (const scnId of fitnessChecks) {
     if (carried.has(scnId)) continue;
-    unspecified.push({ scnId, characteristic: row.characteristic });
+    unspecified.push({ scnId });
   }
   return unspecified;
 }
@@ -374,14 +313,12 @@ export function unspecifiedFitnessRows(
 function obligationsFromTags(
   tags: readonly string[],
   deferralTags: readonly string[],
-  checkTags: readonly string[],
   scnId: string,
   fitnessChecks: FitnessCheckIndex
 ): EvidenceObligation[] {
   const evidenceObligations: EvidenceObligation[] = [];
   const seenQualityChecks = new Set<RuntimeQualityCheck>();
   const seenPending = new Set<QualityCheck>();
-  const seenChecks = new Set<string>();
   for (const t of tags) {
     // A `<quality-check>pending` tag derives a DEFERRED, one-sided obligation
     // `{ qualityCheck, pending: true }` (no `staticCheck` payload). Tracked in its own set so
@@ -400,16 +337,10 @@ function obligationsFromTags(
       continue;
     }
   }
-  // The FITNESS obligations (@SCN-LNT-006), raised after the tier arms and BEFORE the deferral pass
+  // The FITNESS obligation (@SCN-LNT-018), raised after the tier arms and BEFORE the deferral pass
   // below, so a deferred fitness scenario defers like any other rather than escaping through a later
-  // arm. `seenChecks` keeps a check from being owed twice however many of a scenario's effective
-  // tags name it.
-  evidenceObligations.push(
-    ...fitnessObligationsOf(tags, checkTags, seenChecks),
-    // The CONVERTED route (@SCN-LNT-018), on the same `seen` set and after the registered-tag arm:
-    // a characteristic is owed once whichever of the two named it.
-    ...convertedFitnessObligationsOf(tags, fitnessChecks, seenChecks, scnId)
-  );
+  // arm.
+  evidenceObligations.push(...convertedFitnessObligationsOf(tags, fitnessChecks, scnId));
   // SCENARIO-SCOPE community deferral (@SCN-PND-016): when the tag block carries a
   // RECOGNISED community deferral tag (a bare tag ∈ the injected `deferralTags` set —
   // empty by default; the app passes its starter policy ∪ config), the whole scenario is
@@ -639,28 +570,26 @@ export function parseTaggedScenarios(source: string): TaggedScenario[] {
  * The corpus walk is `parseTaggedScenarios`'; this is the OBLIGATION rule applied over it. An
  * unparseable source still THROWS from the walk rather than yielding an empty corpus.
  *
- * `checkTags` — the registry's bare check tags (@SCN-LNT-006) — is ADDITIVE and defaults to none, so
- * `parseScenarios` keeps its place on the v1 barrel and every existing caller
- * reads exactly the corpus it read before. A target that has registered nothing raises no fitness
- * obligations, which is what lets the bare-tag reading land ahead of the corpus sweep that uses it.
+ * NO SET OF REGISTERED CHECK TAGS (3F-3561). The third parameter was once the target's bare check
+ * tags, the one place a registered word could raise a fitness obligation; it left with the
+ * characteristic's retirement, and a check is its `@fitness` scenario and the row naming it.
  *
- * `fitnessChecks` — the target's CONFIGURED ROWS (@SCN-LNT-018) — is trailing and optional for the
- * same reason, and carries the scenario's own `scnId` into the obligation rule: a converted check's
- * characteristic is keyed by the row it is owed on, so the rule cannot be applied to a tag set
+ * `fitnessChecks` — the target's CONFIGURED ROWS (@SCN-LNT-018) — is trailing and optional, so
+ * `parseScenarios` keeps its place on the v1 barrel and a caller with no rows reads exactly the
+ * corpus it read before, and carries the scenario's own `scnId` into the obligation rule: a converted check's
+ * obligation is keyed by the `@SCN` the row names, so the rule cannot be applied to a tag set
  * alone. Empty by default, so a target that has converted nothing raises nothing on this route.
  */
 export function parseScenarios(
   source: string,
   deferralTags: readonly string[] = [],
-  checkTags: readonly string[] = [],
-  fitnessChecks: FitnessCheckIndex = new Map()
+  fitnessChecks: FitnessCheckIndex = new Set()
 ): Scenario[] {
   return parseTaggedScenarios(source).map((scenario) => ({
     scnId: scenario.scnId,
     evidenceObligations: obligationsFromTags(
       scenario.tags,
       deferralTags,
-      checkTags,
       scenario.scnId,
       fitnessChecks
     ),

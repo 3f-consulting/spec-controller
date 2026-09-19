@@ -46,18 +46,18 @@ describe("[SCN-LDG-026] a Quality Check Reconciliation carries the evidence obli
   });
 });
 
-describe("[SCN-LDG-028] a lint missing reconciliation carries its obligation and no observation — an absent guard is an absence", () => {
-  it("a lint missing reconciliation carries its obligation and no observation — an absent guard's {exists:false} is not an observation", () => {
-    // The lint (static-check) branch, the ISOLATING absent-guard case: a required @lint obligation
+describe("[SCN-LDG-028] a fitness missing reconciliation carries its obligation and no observation — an absent guard is an absence", () => {
+  it("a fitness missing reconciliation carries its obligation and no observation — an absent guard's {exists:false} is not an observation", () => {
+    // The fitness (static-check) branch, the ISOLATING absent-guard case: a required @fitness obligation
     // whose guard is read as the negative fact {exists:false, enforcedOverRealSource:false} — an
     // ABSENCE, not an observed piece of evidence. reconcileEvidenceObligation FINDS that record (so
     // it can distinguish absent from watermelon), but an absence is not an observation: it must NOT
     // be carried as the credit side. Canon (double-entry-manifesto.md line 36): missing = Obligation
-    // Exists, Observation None. This is the lint analogue of the runtime pure-debit (@SCN-LDG-026),
+    // Exists, Observation None. This is the fitness analogue of the runtime pure-debit (@SCN-LDG-026),
     // which already carries none — the two producers must be symmetric.
-    const obligation: EvidenceObligation = { qualityCheck: "lint", staticCheck: "lint:absent-guard" };
+    const obligation: EvidenceObligation = { qualityCheck: "fitness" };
     const absentGuard: EvidenceObservation = {
-      qualityCheck: "lint",
+      qualityCheck: "fitness",
       staticCheck: "lint:absent-guard",
       exists: false,
       enforcedOverRealSource: false,
@@ -198,7 +198,7 @@ describe("[SCN-LDG-030] a Quality Check Reconciliation's carried sides are consi
  * [SCN-LDG-035] (3F-3409) — a static-check credit discharges only the obligation on the row whose
  * @SCN it cites, even when a second row raises the SAME bare check.
  *
- * THE MUTATION-RATCHET GAP THIS CLOSES. `staticCheckObservationFor`
+ * THE MUTATION-RATCHET GAP THIS CLOSES. `fitnessCreditsCiting`
  * (qualityCheckReconciliation.ts) matches an observation on THREE terms — not broken, `scnId ===
  * scnId`, `checkTag === checkTag` — and no existing scenario ever called it twice over one
  * observations array with two DIFFERENT scnId values sharing one checkTag. Neuter the `scnId`
@@ -214,12 +214,11 @@ describe("[SCN-LDG-030] a Quality Check Reconciliation's carried sides are consi
  */
 describe("[SCN-LDG-035] a static-check credit discharges only the obligation on the row whose @SCN it cites", () => {
   it("two rows share one checkTag; the cited row is satisfied and the other stays missing", () => {
-    const obligation: EvidenceObligation = { qualityCheck: "lint", staticCheck: "complexity" };
+    const obligation: EvidenceObligation = { qualityCheck: "fitness" };
     // ONE credit, citing SCN-AAA-001 only.
     const credit: EvidenceObservation = {
-      qualityCheck: "lint",
+      qualityCheck: "fitness",
       staticCheck: "lint:complexity",
-      checkTag: "complexity",
       scnId: "SCN-AAA-001",
       exists: true,
       enforcedOverRealSource: true,

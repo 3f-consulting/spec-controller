@@ -57,14 +57,14 @@ const __er = (ledger: Ledger, wo = false, wg = false): EvidenceReconciliation =>
 const scenarios: Scenario[] = [
   { scnId: "SCN-CHK-001", evidenceObligations: [{ qualityCheck: "unit" }] },
   { scnId: "SCN-CHK-002", evidenceObligations: [{ qualityCheck: "integration" }] },
-  { scnId: "SCN-CHK-003", evidenceObligations: [{ qualityCheck: "lint", staticCheck: "foo" }] },
+  { scnId: "SCN-CHK-003", evidenceObligations: [{ qualityCheck: "fitness" }] },
 ];
 const observations: EvidenceObservation[] = [
   { qualityCheck: "unit", scnId: "SCN-CHK-001", status: "passed" },
   { qualityCheck: "unit", scnId: "SCN-PHX-001", status: "passed" },
   { qualityCheck: "unit", scnId: null, status: "passed", locator: "src/b.test.ts" },
-  { qualityCheck: "lint", staticCheck: "lint:foo", checkTag: "foo", scnId: "SCN-CHK-003", exists: true, enforcedOverRealSource: true },
-  { qualityCheck: "lint", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
+  { qualityCheck: "fitness", staticCheck: "lint:foo", scnId: "SCN-CHK-003", exists: true, enforcedOverRealSource: true },
+  { qualityCheck: "fitness", staticCheck: "lint:bar", exists: true, enforcedOverRealSource: true },
 ];
 const balance: Ledger = reconcile(scenarios, observations);
 
@@ -119,7 +119,7 @@ describe("[SCN-RMD-007] the markdown regenerates from a saved spec-reconciliatio
     // The SUSPENSE row survives the round-trip — its S bullet, its ledger cell
     // (with the re-homed static check + the uncited-credit locator), and its cites-no-scenario items.
     expect(regenerated).toContain('1 suspense-scenario(s): credits citing no scenario, aggregated into "(no scenario)".');
-    expect(regenerated).toContain("lint ❓ Evidence Observation cites no Scenario (lint:bar)");
+    expect(regenerated).toContain("fitness ❓ Evidence Observation cites no Scenario (lint:bar)");
     expect(regenerated).toContain("unit ❓ Evidence Observation cites no Scenario (src/b.test.ts)");
   });
 

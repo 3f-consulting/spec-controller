@@ -12,12 +12,25 @@
 import type { RenderInput } from "../assemble/renderInput.js";
 
 /**
- * A BAR A CONFIGURED ROW STILL CARRIES (@SCN-LNT-035), named `fitnessChecks[<@SCN>].<key>` by the
- * resolver. Its line says something different from a retired top-level key's, because its
+ * WHAT BECAME OF ONE RETIRED KEY, in the words its own consequence earns.
+ *
+ * A ROW-LEVEL key — `fitnessChecks[<@SCN>].<key>`, a bar (@SCN-LNT-035) or a characteristic
+ * (@SCN-LNT-039) — says something different from a retired TOP-LEVEL key's, because its
  * consequence is different: the row still reaches the books, credited by its own step's outcome;
- * only the number on it is unread.
+ * only the value on it is unread. And the two row keys say different things in turn, because a
+ * reader told "this reader no longer reads a row's bar" of a characteristic learns nothing about
+ * the word they actually wrote.
  */
-const isRowBar = (key: string): boolean => key.startsWith("fitnessChecks[");
+const retiredKeyFate = (key: string): string => {
+  if (key.endsWith("].characteristic"))
+    return (
+      "this reader no longer reads a row's characteristic — one @fitness scenario is one check, " +
+      "keyed by its own @SCN — and the row is credited by its step's outcome."
+    );
+  if (key.startsWith("fitnessChecks["))
+    return "this reader no longer reads a row's bar, and the row is credited by its step's outcome.";
+  return "this reader no longer reads it, and none of its entries reach the books.";
+};
 
 /**
  * THE RETIRED-KEY ACCOUNT (@SCN-USG-021) — one line per `specController.*` key this reader has
@@ -31,14 +44,7 @@ const isRowBar = (key: string): boolean => key.startsWith("fitnessChecks[");
  * the answer.
  */
 const retiredKeyAccount = (keys: readonly string[] | undefined): string[] =>
-  (keys ?? []).map(
-    (key) =>
-      `- specController.${key} — retired: ${
-        isRowBar(key)
-          ? "this reader no longer reads a row's bar, and the row is credited by its step's outcome."
-          : "this reader no longer reads it, and none of its entries reach the books."
-      }`
-  );
+  (keys ?? []).map((key) => `- specController.${key} — retired: ${retiredKeyFate(key)}`);
 
 /**
  * Static checks (@SCN-USG-001) — the STATIC-check evidence observation side under
@@ -46,7 +52,7 @@ const retiredKeyAccount = (keys: readonly string[] | undefined): string[] =>
  * (`N static check(s) run, K uncited static check(s)`) alone — a pure counts summary, symmetric with
  * `### Test volume` (2.4). The named count is implicit (`running − uncited`), so it
  * is no longer printed. The per-guard member detail lives in the rows (named → each
- * scenario's `@lint` sub-row; no-evidence-obligation → the suspense row's `cites-no-scenario` credit items), so
+ * scenario's fitness sub-row; no-evidence-obligation → the suspense row's `cites-no-scenario` credit items), so
  * no list renders here. Omitted only when no static-check census is threaded (the back-compat path).
  * The counts read off the report's materialised `summary.staticChecks`.
  */
@@ -65,7 +71,7 @@ export const staticChecksSection = (report: RenderInput): string[] => {
   const retired = retiredKeyAccount(report.summary.retiredKeys);
   // A pure counts summary off `summary.staticChecks` (2.4) — symmetric with the
   // runtime `### Test volume` line. There is no census section: the per-guard DETAIL lives in
-  // the rows (named → each scenario's `@lint` sub-row; the no-evidence-obligation static-checks surface
+  // the rows (named → each scenario's fitness sub-row; the no-evidence-obligation static-checks surface
   // as `cites-no-scenario` credit items on the `(no scenario)` suspense row). Only the running
   // volume + the uncited count render here; the named count is implicit.
   return [

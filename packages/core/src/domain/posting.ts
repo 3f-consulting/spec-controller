@@ -14,7 +14,7 @@
  * one credit names one scenario and posts to EXACTLY ONE row, and a credit posting to no real
  * scenario is PHANTOM (its `@SCN` matches no scenario) or SUSPENSE (it cites nothing).
  *
- * THE BY-NAME ROUTE IS GONE, and with it the exception it forced. `lint` used to be the axis where
+ * THE BY-NAME ROUTE IS GONE, and with it the exception it forced. `fitness` used to be the axis where
  * the DEBIT cited: a scenario carried `@lint=<static-check>`, the run cited nothing, and it was
  * matched BY NAME to EVERY row whose obligation named it. That is why the invariant had to be
  * written "every evidence observation posts to AT LEAST ONE account, never to none" — not *exactly*
@@ -32,12 +32,12 @@ import type {
   Scenario,
   EvidenceObservation,
   RuntimeEvidenceObservation,
-  StaticCheckEvidenceObservation,
+  FitnessEvidenceObservation,
 } from "./journal.js";
-// The union's OWN predicate over the `lint` quality-check — asked rather than a hand-written shape
+// The union's OWN predicate over the `fitness` quality-check — asked rather than a hand-written shape
 // test, so this rule classes an observation exactly as the reconciler does.
 // A value import, hence its own statement beside the type-only one above.
-import { isStaticCheckObservation } from "./journal.js";
+import { isFitnessObservation } from "./journal.js";
 
 /**
  * WHERE an entry lands — the posting destination, one variant per route canon names.
@@ -63,7 +63,7 @@ export type Posting =
    *   - `broken`                   — a proof that NEVER RAN, so it names no test and cites
    *                                  nothing, WHATEVER `scnId` / `status` it structurally carries.
    *   - `cites-nothing`            — a runtime credit that RAN and carried no `@SCN`.
-   *   - `no-evidence-obligation-static-check`  — a static check that ran with no `@lint` naming it.
+   *   - `no-evidence-obligation-static-check`  — a static check that ran with no `@fitness` naming it.
    */
   | { kind: "suspense-scenario"; posted: "broken" | "cites-nothing" | "no-evidence-obligation-static-check" };
 
@@ -124,7 +124,7 @@ export function postingOf(
   scenarioIds: ReadonlySet<string>
 ): RuntimePosting;
 export function postingOf(
-  observation: StaticCheckEvidenceObservation,
+  observation: FitnessEvidenceObservation,
   scenarioIds: ReadonlySet<string>
 ): StaticCheckPosting;
 export function postingOf(
@@ -135,22 +135,22 @@ export function postingOf(
   observation: EvidenceObservation,
   scenarioIds: ReadonlySet<string>
 ): Posting {
-  if (observation.qualityCheck === "lint") {
+  if (observation.qualityCheck === "fitness") {
     // THE FAIL-SAFE FIRST (@SCN-LNT-026), which is the runtime arm's own arrangement one branch
     // down and carries its reason unchanged: broken is taken on the FLAG, before `scnId` is ever
     // consulted, so a proof that never ran can never be citation-routed — not to a real row, not
     // to a phantom one — and so can neither discharge nor fail the obligation it cites. The
-    // observation MAY carry an `scnId` and a `checkTag`, and does; both are ignored here.
+    // observation MAY carry an `scnId` and the check that ran, and does; both are ignored here.
     //
     // Asked through the union's own predicate, so this rule and the reconciler class a static-check
     // observation the same way.
-    if (isStaticCheckObservation(observation) && observation.broken === true) {
+    if (isFitnessObservation(observation) && observation.broken === true) {
       return { kind: "suspense-scenario", posted: "broken" };
     }
     // THE CITATION ROUTE (@SCN-LNT-001) — the run carries the `@SCN` of the fitness scenario that
     // raises its obligation, so it posts by citation like every other credit: exactly one row,
     // real or invented. This is deliberately the SAME rule the runtime arm applies below, not a
-    // static-axis variant of it — a whole-system characteristic belongs to the one scenario that
+    // static-axis variant of it — a whole-system property belongs to the one scenario that
     // holds it, and the moment the static axis is allowed its own posting rule is the moment the
     // smear can be reintroduced under a different name.
     if (observation.scnId !== undefined) {

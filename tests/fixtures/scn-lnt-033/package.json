@@ -9,12 +9,10 @@
     "notChecks": ["ci.yml:quality:Checkout"],
     "fitnessChecks": [
       {
-        "scn": "SCN-CVT-001",
-        "characteristic": "complexity"
+        "scn": "SCN-CVT-001"
       },
       {
-        "scn": "SCN-CVT-002",
-        "characteristic": "tech-conformance"
+        "scn": "SCN-CVT-002"
       }
     ]
   }

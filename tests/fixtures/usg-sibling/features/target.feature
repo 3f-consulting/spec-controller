@@ -6,9 +6,9 @@ Feature: a fixture target whose static check runs in a sibling workflow
   lint:nightly on a schedule — the ordinary layout a slow gate ends up in.
 
   The target CITES that check: its own specController.fitnessChecks configures one row —
-  SCN-TGS-001, characteristic nightly — and the lint:nightly step in nightly.yml carries
+  SCN-TGS-001 — and the lint:nightly step in nightly.yml carries
   that row's code as its own `id:`. So the running-check observer reads the citation
-  directly off the step, under the BARE characteristic the row names rather than the
+  directly off the step, under the @SCN the row names rather than the
   handle that ran. The point is that the cited set and the running set agree once every
   workflow is read. Read ci.yml alone and they disagree, and the disagreement is scored
   against the target: lint:nightly reports as a watermelon, a real gate called fabricated.

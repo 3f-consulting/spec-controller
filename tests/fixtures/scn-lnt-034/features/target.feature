@@ -6,8 +6,8 @@ Feature: a converted target's fitness corpus, carrying a scenario for one of the
   that repository's specController.fitnessChecks names it.
 
   THE SECOND ROW HAS NO SCENARIO ANYWHERE IN THIS CORPUS, AND THAT IS WHAT THIS TARGET IS FOR. It
-  is a check that repository has declared and never specified: the manifest says which
-  characteristic it is owed at, and nothing in the corpus says what it asserts. Before the rule
+  is a check that repository has declared and never specified: the manifest names the scenario code
+  its debit is owed under, and nothing in the corpus carries that code. Before the rule
   this fixture exists for, such a row raised nothing, so the run read balanced over it.
 
   This file lives under tests/fixtures/ (NOT features/), so neither the feature-code registry
