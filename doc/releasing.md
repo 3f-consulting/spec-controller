@@ -198,19 +198,47 @@ repository an ordinary adopter of its own product rather than a special case (`3
 "minimum readable version" banked anywhere, deliberately: a second spelling of the same fact agrees
 with the first only until somebody edits one of them.
 
-**The pin follows the registry by bot PR, a day behind it (3F-3529).** `.github/dependabot.yml`
+**The pin follows the registry by bot PR, on the day a release publishes (3F-3529, 3F-3530).** `.github/dependabot.yml`
 lets Dependabot move exactly this one dependency, and keeps it exact. `dependabot-auto-merge.yml`
 merges its PR once `ci` is green. The PR touches the root `package.json` and the lockfile, neither of
 which is in `release.yml`'s `paths:`, so its merge publishes nothing and cannot loop.
 
-**The day is pnpm's, not ours.** pnpm 11 refuses a lockfile entry younger than its
-`minimumReleaseAge` — 1440 minutes by default, enforced in CI — so a same-day pin reds at
-`Install dependencies` with `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION`. Dependabot's `cooldown:
-default-days: 1` keeps its PRs outside that window, which is why `pnpm-workspace.yaml` no longer
-carries the hand-kept `minimumReleaseAgeExclude` pair it used to. Measured on 3F-3529's branch: with
-the pair removed, a frozen install passes under an explicit 1440-minute window and reds, naming
-exactly the two `0.1.0-alpha.3` entries, under a four-day one. The only route that still needs an
-exclude is the stage0 hatch below, which pins a version on the day it publishes.
+**The bot sees the root pin only because `packages/spec-controller` is excluded from its view
+(3F-3530).** Dependabot's npm parser drops every manifest requirement whose name is also the name of
+a workspace package, and the workspace package here is named `spec-controller` — the name the root
+pins from the registry. The bot's first pin PR, #311, therefore moved no pin: it rewrote
+`pnpm-lock.yaml` alone and left the root at `0.1.0-alpha.3`. `exclude-paths: [packages/spec-controller]`
+in `.github/dependabot.yml` is the fix, measured with the Dependabot CLI over this tree: without it
+the job reproduced #311's shape exactly; with it, the root pin moved by one exact line, and core and
+the CLI moved together in the lockfile.
+
+**Its lockfile carries more than the pin, and that is accepted only when the pin really moves.**
+Dependabot's pnpm path always runs `pnpm update <dep>@<version> --lockfile-only --no-save -r`, which
+re-resolves in-range transitive packages as well; the same command under this repository's pnpm
+reproduces the same churn, and no Dependabot key turns it off. So `dependabot-auto-merge.yml` reads
+what the PR changes before it arms anything, and refuses unless the changed files are exactly the
+root `package.json` and `pnpm-lock.yaml`, the root pin differs from the merge base's, the new pin is
+an exact version, and nothing else in the root `package.json` changes (operator ruling, 2026-09-19).
+A refused PR fails that job with the reason and is left disarmed; `ci` still gates the churn on a PR
+that passes.
+
+**`daily` means weekdays**, at a time GitHub assigns. A merge to `main` that changes
+`.github/dependabot.yml` starts a run at once, and so does *Check for updates* under Insights →
+Dependency graph → Dependabot. Neither is a hand move of the pin.
+
+**No day's wait — our own two packages are exempt from both age gates, by name (operator,
+2026-09-19).** `allow:` limits the bot to spec-controller, so a cooldown only delays our own
+releases, and each was judged by this repository's `ci` before `release.yml` published it. So
+`.github/dependabot.yml` exempts spec-controller from Dependabot's cooldown with `cooldown: exclude:`
+— leaving `cooldown:` out would not do it, because GitHub then applies a default of three days. And
+because pnpm 11 refuses a lockfile entry younger than its `minimumReleaseAge` — 1440 minutes by
+default, enforced in CI — `pnpm-workspace.yaml`'s `minimumReleaseAgeExclude` names `spec-controller`
+and `@3f-consulting/spec-controller-core`, and nothing else. Measured over a Dependabot CLI dry run
+that pinned `0.1.0-alpha.12` three hours after it published: with no exemption the frozen install
+reds with `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION`, naming both entries; with both names it passes;
+with `spec-controller` alone it reds naming core. The exemption names packages, not versions, so
+unlike the version-pinned pair 3F-3529 removed it needs no pruning; every other dependency stays
+under the policy in full.
 
 **When the model moves and the pinned reader can no longer read the tree**, the cure is the stage0
 bump in *Releasing while the self-reconciliation is red* below.
@@ -305,13 +333,11 @@ tree, so the self-reconciliation reds on the very branch that fixes it.
 2. **Start the release by hand on that branch** — `gh workflow run release.yml --ref <branch>`. It
    publishes both packages at the next counter number and tags the branch's commit. It never asks
    the self-reconciliation anything, so the red does not stop it.
-3. **Bump the pin on the branch**, in the same review, to the version just published — and, because
-   that version is minutes old, add it to `pnpm-workspace.yaml` as a `minimumReleaseAgeExclude` pair
-   (core and the CLI), or CI reds at `Install dependencies` on pnpm's release-age policy.
+3. **Bump the pin on the branch**, in the same review, to the version just published. That version
+   is minutes old, and the name-scoped `minimumReleaseAgeExclude` in `pnpm-workspace.yaml` is what
+   lets CI's `Install dependencies` accept it.
 4. **CI greens** — the new pinned reader can read the tree. The branch merges, and because it touches
    a package, the merge publishes the next number as any merge does.
-5. **Delete the exclude pair** once the pin has moved on: Dependabot moves the pin a day later, and
-   it does not edit `pnpm-workspace.yaml`. A pair naming a version the pin has left is dead weight.
 
 Step 3 is what makes step 2 honest: the prerelease exists to be pinned, and a branch that published
 one without bumping to it has released a version nothing uses.

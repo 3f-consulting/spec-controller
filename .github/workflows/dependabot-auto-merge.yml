@@ -4,6 +4,26 @@ name: Dependabot auto-merge
 # `main`'s required check passes. It does not merge anything itself, and it does not bypass `ci`.
 # `.github/dependabot.yml` limits Dependabot to the one dependency it may move: the self-pin.
 #
+# BUT ONLY A PR THAT MOVES THE PIN (3F-3530). The bot's first pin PR, #311, changed nothing but
+# `pnpm-lock.yaml` — the root pin stayed where it was — and this workflow armed it all the same,
+# because the author was the only thing it read. The step below reads what the PR changes and
+# refuses, before anything is armed, unless all four hold:
+#   - the changed files are exactly the root `package.json` and `pnpm-lock.yaml`;
+#   - the root `devDependencies["spec-controller"]` differs from the merge base's;
+#   - the new pin is an exact version, never a range (`doc/releasing.md`: the pin is never widened);
+#   - nothing else in the root `package.json` changes.
+# The lockfile's other entries are not read. Dependabot's pnpm update re-resolves in-range
+# transitive packages on every pin PR, and the operator accepted that churn only on a PR whose pin
+# really moves (2026-09-19); `ci` still gates it. A refusal fails this job, names the reason, and
+# withdraws any arming an earlier push to the same PR made.
+#
+# THE BASE IS THE MERGE BASE, NOT `pull_request.base.sha`. A `main` that moved after the PR opened
+# would otherwise read as a change to `package.json` the PR never made.
+#
+# NO CHECKOUT. Every read is `gh api` with this job's own token, so no code from the PR runs here,
+# and every value from the event reaches the script through `env:`, never through an expression
+# inside `run:`.
+#
 # THE GATE IS THE PR'S AUTHOR, NOT `github.actor`. `github.actor` is whoever triggered THIS event,
 # which a human re-running the job or pushing to the branch changes. zizmor's `bot-conditions` audit
 # names that as spoofable. `pull_request.user.login` is who opened the PR.
@@ -23,6 +43,37 @@ jobs:
       contents: write
       pull-requests: write
     steps:
+      - name: Refuse a PR that moves no pin
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          refuse() {
+            echo "::error::Not arming auto-merge: $1."
+            gh pr merge --disable-auto "$PR_URL" || echo "(auto-merge was not armed on this PR)"
+            exit 1
+          }
+          merge_base=$(gh api "repos/$REPO/compare/$BASE_SHA...$HEAD_SHA" --jq .merge_base_commit.sha)
+          files=$(gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/files" --jq '.[].filename' | sort | paste -sd' ' -)
+          before=$(gh api -H 'Accept: application/vnd.github.raw' "repos/$REPO/contents/package.json?ref=$merge_base")
+          after=$(gh api -H 'Accept: application/vnd.github.raw' "repos/$REPO/contents/package.json?ref=$HEAD_SHA")
+          from=$(jq -r '.devDependencies["spec-controller"] // ""' <<<"$before")
+          to=$(jq -r '.devDependencies["spec-controller"] // ""' <<<"$after")
+          rest=$(jq -n --argjson a "$before" --argjson b "$after" \
+            '($a | del(.devDependencies["spec-controller"])) == ($b | del(.devDependencies["spec-controller"]))')
+          echo "Changed files: $files"
+          echo "Root spec-controller pin: '$from' -> '$to'"
+          [ "$files" = "package.json pnpm-lock.yaml" ] || refuse "it changes [$files], not exactly the root package.json and pnpm-lock.yaml"
+          [ "$from" != "$to" ] || refuse "the root spec-controller pin is unchanged at '$from'"
+          [[ "$to" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]] || refuse "the new pin '$to' is not an exact version"
+          [ "$rest" = true ] || refuse "the root package.json changes more than the spec-controller pin"
+          echo "The pin moves from $from to $to."
+
       - name: Merge the pin PR once ci is green
         env:
           GH_TOKEN: ${{ github.token }}

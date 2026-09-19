@@ -7,11 +7,39 @@ version: 2
 # `dependabot-auto-merge.yml` merges the PR when `ci` is green. `allow:` names the one dependency;
 # every other dependency is out of this slice's scope.
 #
-# THE COOLDOWN IS pnpm's OWN RELEASE-AGE POLICY, MET RATHER THAN EXCLUDED. pnpm 11 refuses a lockfile
-# entry younger than `minimumReleaseAge`, 1440 minutes by default, and it is enforced in CI. A pin PR
-# for a version under a day old would red at `Install dependencies`. One day of cooldown keeps every
-# pin PR outside that window, which is why `pnpm-workspace.yaml` no longer carries a hand-kept
-# `minimumReleaseAgeExclude` pair.
+# NO COOLDOWN FOR OUR OWN PACKAGE (operator, 2026-09-19, 3F-3530). `allow:` limits this bot to
+# spec-controller, so a cooldown here only delays our own releases, and each of those was judged by
+# this repository's own `ci` before `release.yml` published it. `exclude:` is how the cooldown is
+# switched off: leaving `cooldown:` out would not do it, because GitHub then applies a DEFAULT of
+# three days. Measured with the Dependabot CLI: exempted, the job targets the newest release, three
+# hours old at the time (`0.1.0-alpha.12`), where a one-day cooldown held it to `0.1.0-alpha.4`.
+#
+# AND SO pnpm's RELEASE-AGE POLICY EXEMPTS THE SAME PACKAGES, BY NAME, IN `pnpm-workspace.yaml`.
+# pnpm 11 refuses a lockfile entry younger than `minimumReleaseAge` — 1440 minutes by default,
+# enforced in CI at `Install dependencies` — so a pin to a day-young release reds there with
+# `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION`. The one-day cooldown this replaces existed only to stay
+# outside that window; the exemption now lives where the policy does, and names only spec-controller
+# and its core. Measured on the dry run's own lockfile; the numbers are beside the exemption.
+#
+# `exclude-paths` IS WHAT MAKES THE PR MOVE THE PIN AT ALL (3F-3530). Dependabot's npm parser drops
+# every manifest requirement whose name is the name of a workspace package, and
+# `packages/spec-controller` is named `spec-controller` — the very name the root pins from the
+# registry. Without the exclusion the root requirement never exists; the dependency survives only
+# through the lockfile, as a transitive one, and the bot's PR (#311) rewrote `pnpm-lock.yaml` and
+# no `package.json`. Measured with the Dependabot CLI over this tree: the same job without the key
+# reproduced #311's shape exactly; with it, the root pin moved one line, exactly, and core and the
+# CLI moved together in the lockfile. The update still runs in the full clone, so every workspace
+# importer stays in the lockfile. Do not remove it while the workspace package keeps that name.
+#
+# WHAT THE PR TOUCHES, AND WHAT IT CARRIES. The root `package.json` (the pin line, nothing else)
+# and `pnpm-lock.yaml`. The lockfile also carries pnpm's in-range re-resolution of transitive
+# packages, because Dependabot always runs `pnpm update <dep>@<version> --lockfile-only --no-save -r`
+# and that command re-resolves more than the one package; no key here turns it off. The operator
+# accepted that churn only on a PR whose pin really moves (2026-09-19), and
+# `dependabot-auto-merge.yml` refuses every other PR.
+#
+# `daily` MEANS WEEKDAYS, at a time GitHub assigns. A merge to `main` that changes this file starts
+# a run at once, and so does *Check for updates* under Insights → Dependency graph → Dependabot.
 #
 # AND ITS MERGE CANNOT LOOP. The PR touches the root `package.json` and the lockfile, which are
 # outside `release.yml`'s `paths:`, and the merge is made under the default token, which starts no
@@ -23,5 +51,8 @@ updates:
       interval: daily
     allow:
       - dependency-name: spec-controller
+    exclude-paths:
+      - packages/spec-controller
     cooldown:
-      default-days: 1
+      exclude:
+        - spec-controller

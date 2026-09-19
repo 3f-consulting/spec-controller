@@ -6,3 +6,24 @@ packages:
 # CI. esbuild backs tsx + vitest's bundling.
 allowBuilds:
   esbuild: true
+
+# OUR OWN TWO PACKAGES ARE EXEMPT FROM pnpm's RELEASE-AGE POLICY, BY NAME (3F-3530). pnpm 11 refuses
+# a lockfile entry younger than `minimumReleaseAge` — 1440 minutes by default, and enforced in CI at
+# `Install dependencies` — as a guard against a stranger's just-published, just-compromised release
+# reaching us before anyone notices. That is not the risk our own releases carry: each is published
+# by this repository's `release.yml`, from a merge whose `ci` has already judged it.
+#
+# THE BOT PINS THE NEWEST RELEASE THE DAY IT IS PUBLISHED, SO THIS IS WHAT LETS ITS PR INSTALL.
+# `.github/dependabot.yml` exempts spec-controller from Dependabot's cooldown (operator, 2026-09-19),
+# and a pin PR then names a version hours old. Measured over a Dependabot CLI dry run that moved the
+# pin to `0.1.0-alpha.12`, three hours after it published: with no exclusion, `pnpm install
+# --frozen-lockfile` reds with `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION`, naming both entries; with
+# both names below it passes; with `spec-controller` alone it reds again, naming core. Core is here
+# because the CLI depends on it at exactly its own version, so every pin move moves it too.
+#
+# NAMES, NOT VERSIONS. The pair this replaces (removed at 3F-3529) named exact versions and needed
+# pruning on every bump; a name covers every release of that package and nothing else, so there is
+# nothing to prune. Every other dependency stays under the policy in full.
+minimumReleaseAgeExclude:
+  - spec-controller
+  - "@3f-consulting/spec-controller-core"
