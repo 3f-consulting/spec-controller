@@ -521,7 +521,7 @@ jobs:
         # not on its own a signal that anything crossed. The byte count and the step count are that
         # signal, and the `jq` length is what would notice an expansion that resolved to `{}`. The
         # gate below now reads this file as the whole fitness axis's credit stream, so an empty one
-        # is ten broken rows and an unsound run rather than a quiet nothing.
+        # is every configured row broken and an unsound run rather than a quiet nothing.
         run: |
           mkdir -p "$SPEC_CONTROLLER_EVIDENCE_DIR"
           record="$SPEC_CONTROLLER_EVIDENCE_DIR/ci-steps.json"
@@ -573,9 +573,10 @@ jobs:
       #
       # THE ONE OPTIONAL EVIDENCE FLAG IS PASSED ONLY WHERE THE FILE EXISTS, AND THAT CONDITIONAL
       # IS THE WHOLE OF WHAT THE WRAPPER DID HERE. A `--ci-steps` path the CLI is handed and cannot
-      # find is a usage fault to it and exits 2 — the wrong verdict. Absent, it leaves exactly its
-      # own rows unanswered, and those reconciling `missing` is the honest reading: a step that never
-      # ran is never balanced (@SCN-LNT-027). `ci-steps.json` is written by the dump step above, so a
+      # find is a usage fault to it and exits 2 — the wrong verdict. Absent, the run reconciles as it
+      # did before there was a record (@SCN-LNT-027): a row whose step discovery reads as a check is
+      # credited from this file's text, a runner's row reconciles `missing`, and the run is out of
+      # balance rather than unsound. `ci-steps.json` is written by the dump step above, so a
       # developer's machine never has one and a local run must not be called broken over it. The
       # `$(...)` is unquoted on purpose — the two tokens have to split.
       #

@@ -345,7 +345,7 @@ record says about the running:
 | `outcome: failure` | a **failing** observation — the check ran and found something, out of balance whatever the job concluded |
 | **any skip whatever its cause**, a `cancelled` step, a status nobody anticipated | **broken evidence** — the row's Evidence Obligation reconciles `missing`, the run is unsound, `balance` exits **4** |
 | **no entry at all**, for a row a handed-over record never carried | **broken evidence**, citing that row |
-| **no record handed over at all** | unchanged — the rows reconcile `missing` and the run is out of balance at exit **1** |
+| **no record handed over at all** | unchanged — each row reconciles as it did before there was a record: answered from your pipeline's text where discovery reads its step as a check, `missing` where the step runs a named runner; a `missing` row puts the run out of balance at exit **1**, never unsound |
 
 The last two rows are one rule read twice. Your rows come from your manifest and their enumeration
 comes from the run's own record, so emptying either leaves the other standing — which is why an
@@ -354,10 +354,13 @@ nothing (no annotation, no dump) is untouched. Nothing in the record can reach y
 forge the other half.
 
 **And a LOCAL run is that last row, which is worth knowing before you meet it.** The dump is a step
-of your pipeline; running `balance` on your own machine hands it no record, so every configured row
-reconciles `missing` and the run is out of balance rather than unsound. The checks still run
-locally — they are commands — and their teeth are their own exit codes. What a local run does not
-have is the credit journal, because the credit journal is the pipeline's.
+of your pipeline; running `balance` on your own machine hands it no record, so it reads your
+pipeline's text instead of a run. A row whose step discovery reads as a check is answered from that
+text — credited where the step is there and its job does not survive its red, which is **not** a
+claim that the check ran — and a row whose step runs one of your named runners gets no such credit
+and reconciles `missing`, which puts the run out of balance rather than unsound. The checks still run locally — they are
+commands — and their teeth are their own exit codes. What a local run does not have is the credit
+journal, because the credit journal is the pipeline's.
 
 **If every row you convert is static, that difference is yours to know about.** A MEASURED row's
 credit is a number something has to produce, so a step that never runs produces none and the row

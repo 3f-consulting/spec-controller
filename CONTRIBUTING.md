@@ -65,11 +65,12 @@ pnpm cucumber --format json:"$SPEC_CONTROLLER_EVIDENCE_DIR/cucumber.json"
 ```
 
 **It will still end at exit 1 on your machine, and that is the design rather than a fault** —
-see *A LOCAL SELF-RECONCILIATION REPORTS EVERY FITNESS ROW AS `missing`* below. Measured at
-3F-3475, and again once the run-time rows became step outcomes: every command above green, and the
-reconciliation out of balance on `@SCN-FIT-012`, `@SCN-FIT-013` and `@SCN-FIT-002` — the first two
-because their evidence is their step's outcome in the run's own step record, the third because its
-step reads the nightly sweep's verdict from inside `ci.yml`, and your machine runs no pipeline.
+see *A LOCAL SELF-RECONCILIATION READS `ci.yml`, NOT A RUN* below. Measured at 3F-3501 with the
+pinned binary: every command above green, and the reconciliation out of balance on `@SCN-FIT-012`
+and `@SCN-FIT-013` alone. Those are the two run-time rows, and their steps are the suites' runners,
+so nothing credits them without the run's own step record — which only CI writes. Every other
+fitness row reads `satisfied` from `ci.yml`'s text, `@SCN-FIT-002` included, and that is not a
+verdict on any check.
 
 **Every converted check is a CI step, carrying its `@SCN` as the step's `id:`.** A converted check
 is both a row of `specController.fitnessChecks` and a `run:` step whose `id:` cites that row — the
@@ -112,18 +113,26 @@ pnpm mutation
 ```
 
 That is `stryker run` and nothing else. It exits non-zero below 95, and the report is under
-`reports/mutation/`. Nothing a local run does settles the row.
+`reports/mutation/`. Nothing a local run does settles the row. A local self-reconciliation does
+read `@SCN-FIT-002` `satisfied`, but only because `ci.yml` carries the `Mutation score` step: it
+runs no sweep and asks `gh` nothing — see below.
 
-**A LOCAL SELF-RECONCILIATION REPORTS EVERY FITNESS ROW AS `missing`, AND THAT IS THE DESIGN RATHER
-THAN A FAULT.** A local run cannot settle a fitness row — only CI produces a step record. The
-fitness axis's credit journal is the CI run's own record of what each of its steps did, dumped by an
+**A LOCAL SELF-RECONCILIATION READS `ci.yml`, NOT A RUN, AND THAT IS THE DESIGN RATHER THAN A
+FAULT.** A local run cannot settle a fitness row — only CI produces a step record. The fitness
+axis's credit journal is the CI run's own record of what each of its steps did, dumped by an
 `if: always()` step of `ci.yml`. Your machine runs no pipeline, so the self-reconciliation is handed
-no record, nothing is raised for any configured row, and each reconciles
-`missing` — out of balance at exit 1, and NOT unsound: a run handed no record of itself is a
-different fact from a run whose record carried nothing. **The checks themselves still run locally**
-— every one of them is a step of `ci.yml` you can type at a shell — and their teeth are their
-own exit codes, unchanged. What a local run does not have is the ledger's view of them, and the one
-place that view is real is CI.
+no record, and a run handed no record reconciles exactly as it did before there was one
+(`@SCN-LNT-027`). What answers is the running-check observer alone, and it reads `ci.yml`'s text
+(`@SCN-USG-001`): a configured row whose step it reads as a check is credited `satisfied` — a credit
+that says the step is in the pipeline and its job does not survive its red, **not that the check
+ran, let alone passed**. A row whose step runs one of the named behavioural runners is not a check
+to that reader, so nothing credits it and it reconciles `missing`. So the run is out of balance at
+exit 1, and NOT unsound: a run handed no record of itself is a different fact from a run whose
+record carried nothing, which makes every configured row broken evidence and exits 4. **The checks
+themselves still run locally** — every one of them is a step of `ci.yml` you can type at a shell —
+and their teeth are their own exit codes, unchanged. What a local run does not have is the ledger's
+view of them: a fitness row's local `satisfied` is a view of the pipeline's text, and the one place
+the view of a run is real is CI.
 
 ## The report's `### Static checks` line, and which of its zeros is vacuous
 
