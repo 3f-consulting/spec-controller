@@ -96,6 +96,7 @@ import {
 // THE POSTING RULE (3F-2202) — where an entry lands is canon's own glossary group, so it lives on
 // its own concept module. `reconcile` no longer decides a destination; it ASKS.
 import { postingOf } from "./posting.js";
+import { inEvidenceOrder } from "./evidenceOrder.js";
 // The `lint` quality-check's own predicate, asked here to NARROW what the posting rule has already
 // routed — see the fitness arm below.
 import { isStaticCheckObservation } from "../model.js";
@@ -488,10 +489,13 @@ export function reconcile(
   // The NAMED pairs — the model's rule, built ONCE and shared with the census (3F-1858).
   // Pending obligations are excluded: a pending obligation names nothing.
   const evidenceObligationPairs = evidenceObligationPairsOf(scenarios);
+  // ONE ORDER, WHATEVER THE RUNNERS REPORTED (@SCN-RMD-009, 3F-3495) — everything below reads
+  // the evidence in the order `inEvidenceOrder` fixes, never the order it arrived in.
+  const observations = inEvidenceOrder(evidenceObservations);
   // THE ONE ROUTING PASS (3F-2202) — asked of the posting rule, in one place, and read back as
   // four streams. What each of them then RECONCILES to is the fold's, below.
   const { citations, brokenEvidence, uncited, noEvidenceObligationStaticChecks } = routeCredits(
-    evidenceObservations,
+    observations,
     scenarioIds
   );
   // THE ORDER THE POPULATIONS ARE FILED IN IS THE LEDGER'S GROUPING, and it is the whole of what
@@ -500,7 +504,7 @@ export function reconcile(
   return {
     scenarioReconciliations: [
       ...scenarios.map((d) =>
-        scenarioRow(d, evidenceObservations, citations, evidenceObligationPairs)
+        scenarioRow(d, observations, citations, evidenceObligationPairs)
       ),
       ...phantomScenarioRows(citations),
       ...suspenseScenarioRows(brokenEvidence, uncited, noEvidenceObligationStaticChecks),

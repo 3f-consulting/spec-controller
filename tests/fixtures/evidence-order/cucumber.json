@@ -1,0 +1,8 @@
+[
+  {
+    "uri": "features/target.feature",
+    "elements": [
+      { "tags": [{ "name": "@SCN-TGT-001" }], "steps": [{ "result": { "status": "passed" } }] }
+    ]
+  }
+]

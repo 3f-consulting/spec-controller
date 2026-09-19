@@ -225,3 +225,20 @@ Feature: The reconciliation is one whole-document report model, serialised to sp
       Then each evidence sub-row is keyed by one quality-check field with no kind or level
       And a lint sub-row carries its quality-check "lint" alongside its check
       And the summary's missing split is carried under missingByQualityCheck keyed by quality-check
+
+  Rule: a row reads its evidence in one order, whatever order the runner reported it in
+
+    A runner decides the order its report lists files in, and vitest's changes between two runs
+    over one unchanged tree (3F-3495). The ledger kept that order, so a row's posted credits moved,
+    and so did the credit a reconciliation names, which is the first one that matches. The books
+    now read the evidence in an order the evidence itself fixes: quality check in tier order with
+    lint last, then location, then the scenario cited, then everything else the credit says. The
+    report is then a function of what was observed, never of the order it arrived in.
+
+    @unit @integration @SCN-RMD-009
+    Scenario: two runs whose runner listed its files in different orders write the same report, each row's evidence in quality-check order then by location
+      Given a runner report citing one scenario from two test files, and the same report with its files listed the other way round
+      When the reconciliation is run over each and persisted to spec-reconciliation.json
+      Then the two reports are identical apart from their run provenance
+      And the scenario's row reads its evidence in quality-check order, then by location
+      And its unit reconciliation names the same test file in both

@@ -1,0 +1,16 @@
+{
+  "testResults": [
+    {
+      "name": "tests/fixtures/evidence-order/z.test.ts",
+      "assertionResults": [
+        { "fullName": "[SCN-TGT-001] the scenario is proven from the file listed first", "status": "passed" }
+      ]
+    },
+    {
+      "name": "tests/fixtures/evidence-order/a.test.ts",
+      "assertionResults": [
+        { "fullName": "[SCN-TGT-001] the scenario is proven from the file listed second", "status": "passed" }
+      ]
+    }
+  ]
+}
