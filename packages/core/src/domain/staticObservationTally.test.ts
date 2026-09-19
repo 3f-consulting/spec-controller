@@ -10,9 +10,10 @@
  * and reads each off the row it posted to — the reconciler's own ruling, never re-classified. ONE
  * care-move the runtime fold does not need survives 3F-2590 (the identity-dedupe went with the
  * by-name route it existed to correct):
- *   - FILTER TO RUNNING (`exists && enforcedOverRealSource`) — a watermelon (exists, unwired) or
- *     missing (absent) check STILL posts (posting is not classifying), but does not RUN, so it is
- *     excluded, matching the retired census's running-only `continue`.
+ *   - FILTER TO WHAT RAN (`exists`, and not broken) — a watermelon RAN: its step is invoked and its
+ *     job survives its red, so it is counted, and whether it enforces is its ROW's answer, not the
+ *     census's (3F-3280, ruled 2026-09-17: change the count, not the word). A missing (absent)
+ *     check STILL posts (posting is not classifying), but it did not run, so it is excluded.
  * The Ledger is BUILT BY `reconcile()` over a spanning corpus, never hand-written
  * (evidence-manifesto §11A): the fixture can only state posted-entry shapes the pipeline emits.
  *
@@ -43,13 +44,14 @@ const SUITE_RUNNERS: Readonly<Record<string, string | null>> = {
 };
 
 
-describe("[SCN-USG-001] staticObservationTally folds the posted static-check credits, running-filtered", () => {
+describe("[SCN-USG-001] staticObservationTally folds the posted static-check credits, filtered to what ran", () => {
   // A SPANNING corpus reconciling to every static-check credit shape, all four CITATION-ROUTED
   // (3F-2590 removed the by-name route, and the identity-dedupe with it):
   //   foo   — RUNNING and cited by SCN-A: counted.
-  //   water — a WATERMELON (exists, unwired) cited by SCN-C: posts to its row but does NOT run →
-  //           the running filter excludes it. The one care-move this fold still needs.
-  //   absent— a MISSING check (absent) cited by SCN-D: posts but does NOT run → excluded.
+  //   water — a WATERMELON (exists, not enforced) cited by SCN-C: since 3F-3410 the only producer
+  //           of that shape is a step whose red its job survives, so it RAN → counted (3F-3280).
+  //   absent— a MISSING check (absent) cited by SCN-D: posts but does NOT run → excluded. The one
+  //           care-move this fold still needs.
   //   bar   — RUNNING and cited by nobody: the reconciler folds it to the SUSPENSE row → the 1
   //           uncited static check.
   // The obligation names the BARE check and the run names the RUNNABLE handle, so only the
@@ -68,10 +70,11 @@ describe("[SCN-USG-001] staticObservationTally folds the posted static-check cre
   const ledger: Ledger = reconcile(scenarios, observations);
   const tally = staticObservationTally(ledger);
 
-  it("counts the RUNNING checks and no others", () => {
-    // lint:foo (cited, running) and lint:bar (uncited, running) → 2. lint:water (watermelon) and
-    // lint:absent (missing) post but do NOT run, so the running filter excludes them.
-    expect(tally.runningStaticCheckCount).toBe(2);
+  it("counts every check that ran, the watermelon included, and not the missing one", () => {
+    // lint:foo (cited, enforced), lint:water (cited, a watermelon: it ran and its job survived its
+    // red) and lint:bar (uncited, enforced) → 3. lint:absent (missing) posts but did NOT run, so
+    // the filter excludes it. Whether lint:water enforces is its row's answer (3F-3280).
+    expect(tally.runningStaticCheckCount).toBe(3);
   });
 
   it("counts the lint credits on the SUSPENSE row as the uncited static checks", () => {
@@ -80,13 +83,13 @@ describe("[SCN-USG-001] staticObservationTally folds the posted static-check cre
     expect(tally.uncitedStaticCheckCount).toBe(1);
   });
 
-  it("keeps named implicit — runningStaticCheckCount − uncitedStaticCheckCount (the running named count)", () => {
-    // named is not on the surface; it is the implied remainder — here lint:foo.
-    expect(tally.runningStaticCheckCount - tally.uncitedStaticCheckCount).toBe(1);
+  it("keeps named implicit — runningStaticCheckCount − uncitedStaticCheckCount (the named checks that ran)", () => {
+    // named is not on the surface; it is the implied remainder — here lint:foo and lint:water.
+    expect(tally.runningStaticCheckCount - tally.uncitedStaticCheckCount).toBe(2);
   });
 
   it("returns EXACTLY the two-field surface (named is never materialised)", () => {
-    expect(tally).toEqual({ runningStaticCheckCount: 2, uncitedStaticCheckCount: 1 });
+    expect(tally).toEqual({ runningStaticCheckCount: 3, uncitedStaticCheckCount: 1 });
   });
 
   it("counts no runtime credit, whatever fields it arrives carrying", () => {

@@ -616,30 +616,28 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       Then the first two rows read the watermelon and leave balanced, and the third reconciles satisfied
 
     @unit @integration @SCN-LNT-033
-    Scenario: the static-check census counts only the checks the job's verdict depends on, on both of its counts
+    Scenario: the static-check census counts a check whose red its job survives as a check that ran, on both of its counts
 
-      THE TWO COUNTS ARE ONE SENTENCE, AND WHAT A READER TAKES FROM IT IS THE NUMBER NEITHER OF
-      THEM PRINTS. The census says how many static checks run and how many of those nothing names;
-      subtract and you have the checks that run AND are named, which is the figure a consumer reads
-      to learn how much of their pipeline is a gate somebody owns. Move one count's membership rule
-      and leave the other's, and that figure is wrong — undercounted here, and below nil on a
-      pipeline carrying more severed uncited checks than enforced ones.
+      THE SENTENCE SAYS RUN, SO THE NUMBER COUNTS WHAT RAN (3F-3280, ruled 2026-09-17: change the
+      count, not the word). A check behind continue-on-error runs: it is invoked, it analyses the
+      source, it reds, and its job carries on. The census used to leave it out because it enforces
+      nothing, and so printed one check fewer than had run, directly above a watermelon row for a
+      check that plainly had. Whether a check ENFORCES is already said where it can be said about
+      that one check — its own row reads the watermelon, by the rule above. The census is the other
+      reading: a report of what ran, with no debit side. Folding enforcement into it as well said
+      the same thing twice, and the second time it said it wrongly.
 
-      SO THE RULE ABOVE IS NOT FINISHED AT THE ROW. Reading the severance on the named side alone
-      repairs one number by breaking another: a severed check nobody cites leaves the running count
-      and stays in the uncited one, and the subtraction then reports fewer named checks than the
-      report's own rows carry. Both counts are folded from the same posted credits, so both take
-      the same membership rule or the fold contradicts itself.
-
-      AND IT IS A CONSISTENCY THE CENSUS ALREADY KEEPS, rather than a new one. The running count has
-      always excluded the unwired watermelon — a check that exists and enforces nothing is not
-      protection, so it is not counted as protection. A check whose red its job swallows is that
-      same claim reached through a different document, and counting it inflates the one line a
-      consumer reads for how much protection they have.
+      THE TWO COUNTS ARE STILL ONE SENTENCE, AND WHAT A READER TAKES FROM IT IS THE NUMBER NEITHER
+      OF THEM PRINTS. The census says how many static checks run and how many of those nothing
+      names; subtract and you have the checks that run AND are named. Move one count's membership
+      rule and leave the other's, and that figure is wrong: a severed check nobody cites counted as
+      running and not as uncited would appear as a named check nobody named. So both counts take
+      the one rule — the check is there and its credit is not broken evidence — and a missing or
+      broken check stays out of both, because neither of those ran.
 
       Given a target running two static checks no scenario cites, one of them behind continue-on-error
       When that target's census is taken from its manifest, its corpus and its workflow
-      Then the census reports one static check run and one uncited static check, so the named count it implies is nil
+      Then the census reports two static checks run and two uncited static checks, so the named count it implies is nil
 
   Rule: a check step's outcome in the CI run's record is the fitness credit
 

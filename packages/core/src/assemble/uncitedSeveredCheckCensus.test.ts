@@ -1,6 +1,7 @@
 /**
- * @unit for @SCN-LNT-033 — the static-check census counts only the checks the job's verdict
- * depends on, ON BOTH OF ITS COUNTS, so the named count it implies stays sound.
+ * @unit for @SCN-LNT-033 — the static-check census counts a check whose red its job survives as a
+ * check that RAN, ON BOTH OF ITS COUNTS, so the named count it implies stays sound (3F-3280, ruled
+ * 2026-09-17: change the count, not the word — whether the check enforces is its row's answer).
  *
  * IT READS THE CENSUS OFF THE WHOLE COMPOSITION rather than folding a hand-built Ledger. The two
  * counts are a fold over the credits the RECONCILER posted, so a Ledger assembled here would be a
@@ -101,23 +102,23 @@ function reconcileUncited(): EvidenceReconciliation {
   });
 }
 
-describe("[SCN-LNT-033] the static-check census counts only the checks the job's verdict depends on", () => {
-  it("counts the severed uncited check in neither census count", () => {
-    // BOTH COUNTS AS ONE VALUE, because the fault is a DISAGREEMENT between them rather than a
-    // wrong number in either. Asserting the uncited count alone would pass over a reader that had
-    // narrowed the running count to nothing as well, which is the opposite fault and just as
-    // wrong: two counts that agree by both being empty report a pipeline with no checks in it.
+describe("[SCN-LNT-033] the static-check census counts a check whose red its job survives as a check that ran", () => {
+  it("counts the severed uncited check in both census counts", () => {
+    // BOTH COUNTS AS ONE VALUE, because each wrong answer is a DISAGREEMENT between them. The
+    // enforced-only rule reads {1, 1}: one check fewer than ran. Counting the severed check as
+    // running but not as uncited reads {2, 1}, and the one check nothing names turns into a named
+    // one. Only {2, 2} says what ran and what nothing names.
     expect(reconcileUncited().summary.staticChecks).toEqual({
-      runningStaticCheckCount: 1,
-      uncitedStaticCheckCount: 1,
+      runningStaticCheckCount: 2,
+      uncitedStaticCheckCount: 2,
     });
   });
 
   it("leaves the named count it implies at nil, and never below it", () => {
     // THE FIGURE NOBODY PRINTS, ASSERTED ANYWAY. `running − uncited` is stated as the named count
-    // in the tally's own docblock and read by anyone holding the pair, and it is where the
-    // asymmetry surfaces: on this target the untreated fold reports −1 named checks, a number no
-    // pipeline can have. One severed uncited check is all it takes.
+    // in the tally's own docblock and read by anyone holding the pair, and it is where an
+    // asymmetry between the two counts surfaces: a fold that took the severed check into one count
+    // and not the other reports +1 or −1 named checks on a target whose corpus names none.
     const census = reconcileUncited().summary.staticChecks;
     const named = (census?.runningStaticCheckCount ?? 0) - (census?.uncitedStaticCheckCount ?? 0);
     expect(named).toBe(0);
@@ -128,7 +129,7 @@ describe("[SCN-LNT-033] the static-check census counts only the checks the job's
     // Dropping the severed check from the STREAM would satisfy the counts above by deleting the
     // check from the report — the reader would never learn they are running a check that guards
     // nothing and that nobody has named, which is two omissions at once and silent. It is counted
-    // as neither running nor uncited, and it is still on the books.
+    // as running and as uncited, and it is on the books still carrying enforcedOverRealSource: false.
     const suspense = reconcileUncited().ledger.scenarioReconciliations.filter(
       (row) => row.kind === "suspense-scenario"
     );

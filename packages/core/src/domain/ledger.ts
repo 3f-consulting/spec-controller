@@ -578,25 +578,32 @@ export function runtimeObservationTally(ledger: Ledger): RuntimeObservationTally
 // `Set` collapsing objects that can no longer repeat is a guard against an unreachable state, and
 // keeping it would leave a reader inferring a cardinality the model no longer has. What SURVIVES
 // is the axis the two folds still differ on: a credit is posted whatever it reconciles to
-// (posting is not classifying), so a watermelon/missing check posts too though it does not RUN —
-//   - FILTER TO RUNNING (`exists && enforcedOverRealSource`), so a watermelon/missing check
-//     that still posts is excluded — exactly the running-only `continue` the retired census applied.
+// (posting is not classifying), so a missing check posts too though it did not RUN —
+//   - FILTER TO WHAT RAN (`exists`, and not broken), so a missing or broken check that still posts
+//     is excluded — the running-only `continue` the retired census applied.
+//
+// THE FILTER IS `exists` AND NOT `exists && enforcedOverRealSource`, AND THAT IS A RULING (3F-3280,
+// 2026-09-17: change the count, not the word). The census prints "N static check(s) run", so it
+// counts what ran — and a check whose red its job survives RAN: it was invoked, it analysed the
+// source, it reddened, and the job went on. For one release this fold also asked whether the check
+// ENFORCED, and so printed one check fewer than had run, directly above the watermelon row for the
+// check it left out. Whether a check enforces is its ROW's answer (@SCN-LNT-032); the census is a
+// report of what ran, with no debit side, and saying enforcement twice said it wrongly the second
+// time. Since 3F-3410 every route that posts a static credit sets `exists` from the check having
+// run, so the flag is the whole of the question.
 //
 // AND THE FILTER IS ON BOTH COUNTS, WHICH IS ONE DECISION RATHER THAN TWO (@SCN-LNT-033). The
-// uncited count used to be a plain count of the suspense row's lint credits, resting on a stated
-// by-construction claim that only running checks ever reached that stream. `@SCN-LNT-032` falsified
-// it: a check whose red its job swallows is pushed into the same stream and is NOT running. Counted
-// there and not in the running total, it leaves the two counts folded from the same credits under
-// different membership rules — and the figure a reader takes from the pair is the SUBTRACTION,
-// which then reports fewer named checks than the report's own rows carry, and goes below nil on a
-// pipeline carrying more severed uncited checks than enforced ones.
+// figure a reader takes from the pair is the SUBTRACTION — the named checks that ran — and two
+// counts folded from the same credits under different membership rules make it wrong: a severed
+// check nobody cites, counted as running and not as uncited, would read as a named check nobody
+// named. So the uncited count is drawn from inside the running one, under the same rule.
 // ---------------------------------------------------------------------------
 
 /**
  * The materialised static-check totals — the STATIC-axis analogue of `RuntimeObservationTally`,
  * two counts read off the SAME posted static-check credits: `runningStaticCheckCount` (the volume of
- * distinct running static checks — every static-check script a CI `run:` step invokes AND whose red
- * is that job's verdict) and `uncitedStaticCheckCount` (how many of THOSE no scenario cites — a
+ * distinct static checks that RAN — every static check a CI step invokes, whether or not its red is
+ * that job's verdict, 3F-3280) and `uncitedStaticCheckCount` (how many of THOSE no scenario cites — a
  * static check running with nothing naming it, the mirror of a runtime `cites-no-scenario` credit).
  * The named count is IMPLICIT (`runningStaticCheckCount − uncitedStaticCheckCount`) and NOT carried:
  * every cited static check is already a reconciled `lint` sub-row and adds nothing the rows do not
@@ -609,10 +616,10 @@ export function runtimeObservationTally(ledger: Ledger): RuntimeObservationTally
  */
 export interface StaticObservationTally {
   /**
-   * The running static-check set volume — every check a step of the target's CI runs and whose red
-   * is that job's verdict, whatever form the step takes (@SCN-USG-013): a check can be an action as
-   * readily as a command. A check the job survives runs and enforces nothing, so it is not counted
-   * as protection (@SCN-LNT-032).
+   * The running static-check set volume — every check a step of the target's CI runs, whatever
+   * form the step takes (@SCN-USG-013): a check can be an action as readily as a command. A check
+   * whose red the job survives RAN and is counted (3F-3280); that it enforces nothing is its own
+   * row's watermelon (@SCN-LNT-032), not a smaller number here.
    */
   runningStaticCheckCount: number;
   /** Running static checks NO `@lint` cites — a SUBSET of the count above (named is implicit). */
@@ -628,35 +635,31 @@ export interface StaticObservationTally {
  *
  * `uncitedStaticCheckCount` is the count of RUNNING lint credits on the SUSPENSE row — the
  * no-evidence-obligation static checks the reconciler folded there (a static check running with no
- * scenario citing it, `cites-no-scenario` on the credit side). THE RUNNING QUALIFIER IS ENFORCED
- * HERE AND IS NO LONGER FREE (@SCN-LNT-033). It used to be a plain count, and the sentence in this
- * place said that by construction the app pushes only RUNNING checks into that stream
- * (`runningStaticChecks`), so every suspense lint credit was running. `@SCN-LNT-032` falsified
- * that: the same stream now carries a check whose red its job swallows, which is pushed into it and
- * is not running. So the filter below applies to BOTH counts, and the invariant the old sentence
- * asserted is the one this fold now MAKES TRUE. A BROKEN credit reaches the same row by a different
- * route (@SCN-LNT-026) and is excluded: it is a check a scenario DID name, which did not run.
+ * scenario citing it, `cites-no-scenario` on the credit side). THE RUNNING QUALIFIER IS APPLIED
+ * HERE RATHER THAN ASSUMED (@SCN-LNT-033): the uncited count is the running count's suspense-row
+ * subset, so the two take one membership rule. A severed check nobody cites RAN, and is in both
+ * (3F-3280). A BROKEN credit reaches the same row by a different route (@SCN-LNT-026) and is
+ * excluded: it is a check a scenario DID name, which did not run.
  *
- * `runningStaticCheckCount` is the count of RUNNING lint credits across ALL rows. One care-move the
- * runtime axis does not need (see the block comment above):
- *   - FILTER TO RUNNING (`exists && enforcedOverRealSource`): a watermelon (exists, unwired), a
- *     severed (wired, and the job's verdict does not depend on it) or a missing (absent) check
- *     STILL posts (posting is not classifying), but it does not RUN over the real source as a gate,
- *     so it is not a running static check — excluded here exactly as the retired census's
- *     running-only `continue` excluded it.
+ * `runningStaticCheckCount` is the count of lint credits that RAN, across ALL rows. One care-move
+ * the runtime axis does not need (see the block comment above):
+ *   - FILTER TO WHAT RAN (`exists`): a missing (absent) or broken check STILL posts (posting is not
+ *     classifying), but it did not run, so it is excluded — as the retired census's running-only
+ *     `continue` excluded it. A severed check (wired, and the job's verdict does not depend on it)
+ *     ran and is counted; its row reads the watermelon (3F-3280, ruled 2026-09-17).
  *
  * The named (implicit) count is `runningStaticCheckCount − uncitedStaticCheckCount`, and it cannot
  * go below nil: the uncited count is drawn from inside the running one.
  */
 export function staticObservationTally(ledger: Ledger): StaticObservationTally {
-  // The RUNNING static-check credits across ALL rows. Only running checks
-  // (`exists && enforcedOverRealSource`) are counted — a watermelon/missing check, which posts but
-  // does not run, is filtered out (the census's running-only `continue`).
+  // The static-check credits that RAN, across ALL rows. Only checks that ran (`exists`) are
+  // counted — a missing or broken check, which posts but did not run, is filtered out (the
+  // census's running-only `continue`). A severed check ran, so it counts (3F-3280).
   let runningStaticCheckCount = 0;
   // The uncited static checks — the RUNNING lint credits the reconciler folded onto the SUSPENSE
   // row (a no-evidence-obligation running check, `cites-no-scenario`). Not a plain count of that
-  // row's lint credits: the no-evidence-obligation stream also carries a check the job's verdict
-  // does not depend on, which is pushed into it and is not running (@SCN-LNT-033).
+  // row's lint credits: a broken credit lands there too and did not run (@SCN-LNT-026), so this
+  // count takes the running count's rule rather than a rule of its own (@SCN-LNT-033).
   let uncitedStaticCheckCount = 0;
   for (const row of ledger.scenarioReconciliations) {
     for (const obs of row.evidenceObservations) {
@@ -675,8 +678,9 @@ export function staticObservationTally(ledger: Ledger): StaticObservationTally {
       // edit to one of them, and the figure a reader takes from the pair — `running − uncited`,
       // the named count neither of them prints — cannot go below nil. Two sibling `if`s reading
       // the same credit under different conditions is exactly the arrangement that let a severed
-      // uncited check leave one count and stay in the other.
-      if (!obs.exists || !obs.enforcedOverRealSource) continue;
+      // uncited check leave one count and stay in the other. The rule is `exists` alone: a check
+      // whose red its job survives RAN, and the census counts what ran (3F-3280).
+      if (!obs.exists) continue;
       runningStaticCheckCount++;
       if (row.kind === "suspense-scenario") uncitedStaticCheckCount++;
     }

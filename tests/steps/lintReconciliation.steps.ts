@@ -2096,8 +2096,8 @@ Then(
 );
 
 // -------------------------------------------------------------------------
-// @SCN-LNT-033 — the static-check CENSUS counts only the checks the job's verdict depends on, on
-// BOTH of its counts. The arm drives the REAL `balance` CLI over a planted target repository
+// @SCN-LNT-033 — the static-check CENSUS counts a check whose red its job survives as a check that
+// RAN, on BOTH of its counts (3F-3280, ruled 2026-09-17: change the count, not the word). The arm drives the REAL `balance` CLI over a planted target repository
 // (tests/fixtures/scn-lnt-033/) whose manifest names two static checks, whose corpus names
 // neither, and whose workflow severs one of them — and reads the census off the persisted report
 // rather than off an in-memory re-run.
@@ -2214,12 +2214,13 @@ When(
 
 // @SCN-LNT-033
 Then(
-  "the census reports one static check run and one uncited static check, so the named count it implies is nil",
+  "the census reports two static checks run and two uncited static checks, so the named count it implies is nil",
   function () {
-    // BOTH COUNTS AS ONE LINE, because the fault is a DISAGREEMENT between them rather than a wrong
-    // number in either. A reader that had narrowed the running count as well would report "0 run,
-    // 0 uncited" — two counts agreeing by both being empty, which describes a pipeline with no
-    // checks in it.
+    // BOTH COUNTS AS ONE LINE, because the two ways to get this wrong are each a DISAGREEMENT
+    // between them. Counting the severed check as run but not as uncited reports "2 run, 1
+    // uncited", and so a named check nobody named. The enforced-only rule this scenario once pinned
+    // reports "1 run, 1 uncited", one check fewer than ran, directly above the watermelon row for
+    // the check it left out.
     //
     // AND THE LINE IS LIFTED BEFORE IT IS COMPARED, so a red prints the census the report actually
     // carries. A whole-report `includes` that fails says only that a string was absent, and the
@@ -2229,10 +2230,10 @@ Then(
       .find((line) => /static check\(s\) run, \d+ uncited static check\(s\)\./.test(line));
     assert.equal(
       censusLine,
-      "1 static check(s) run, 1 uncited static check(s).",
-      `expected the severed check to count in NEITHER census count, so the named count it ` +
-        `implies is 1 − 1 = 0. An untreated uncited count reports 2 uncited here and the ` +
-        `subtraction goes to −1, which is a number no pipeline can have.`
+      "2 static check(s) run, 2 uncited static check(s).",
+      `expected the severed check to count in BOTH census counts — it ran, and nothing names it — ` +
+        `so the named count it implies is 2 − 2 = 0. Whether it enforces is its row's answer ` +
+        `(the watermelon), not the census's.`
     );
 
     // THE COUNT MOVES AND THE POSTING DOES NOT. Dropping the severed check from the stream would
