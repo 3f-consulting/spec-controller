@@ -32,7 +32,7 @@ import type {
   Scenario,
   EvidenceObservation,
   RuntimeEvidenceObservation,
-  GuardEvidenceObservation,
+  StaticCheckEvidenceObservation,
 } from "./journal.js";
 // The union's OWN predicate over the `lint` quality-check — asked rather than a hand-written shape
 // test, so this rule classes an observation exactly as the reconciler does.
@@ -124,7 +124,7 @@ export function postingOf(
   scenarioIds: ReadonlySet<string>
 ): RuntimePosting;
 export function postingOf(
-  observation: GuardEvidenceObservation,
+  observation: StaticCheckEvidenceObservation,
   scenarioIds: ReadonlySet<string>
 ): StaticCheckPosting;
 export function postingOf(

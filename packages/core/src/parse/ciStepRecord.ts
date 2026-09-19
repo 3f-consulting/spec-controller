@@ -41,7 +41,7 @@
 
 import type { FitnessCheck, FitnessCheckIndex } from "../domain/fitnessChecks.js";
 import type { EvidenceStatus } from "../domain/journal.js";
-import type { GuardEvidenceObservation } from "../model.js";
+import type { StaticCheckEvidenceObservation } from "../model.js";
 
 /**
  * ONE STEP'S ENTRY in the record, as the dump wrote it.
@@ -211,7 +211,7 @@ function brokenCreditOf(
   citedScn: string,
   row: FitnessCheck,
   message: string
-): GuardEvidenceObservation {
+): StaticCheckEvidenceObservation {
   return {
     ...namedOf(citedScn, row),
     exists: false,
@@ -226,7 +226,7 @@ function creditOf(
   row: FitnessCheck,
   reading: StepReading,
   outcome: string | undefined
-): GuardEvidenceObservation {
+): StaticCheckEvidenceObservation {
   if (reading === null) {
     return brokenCreditOf(citedScn, row, checkDidNotRunMessage(citedScn, outcome));
   }
@@ -310,9 +310,9 @@ function rowHasNoEntryMessage(scnId: string): string {
 export function ciStepRecordCredits(
   record: CiStepRecord | undefined,
   fitnessChecks: FitnessCheckIndex
-): GuardEvidenceObservation[] {
+): StaticCheckEvidenceObservation[] {
   if (record === undefined) return [];
-  const credits: GuardEvidenceObservation[] = [];
+  const credits: StaticCheckEvidenceObservation[] = [];
   const recorded = new Set<string>();
   for (const [citedScn, step] of Object.entries(record)) {
     const row = fitnessChecks.get(citedScn);

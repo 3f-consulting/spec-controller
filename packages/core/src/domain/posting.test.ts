@@ -18,7 +18,7 @@
 import { describe, it, expect } from "vitest";
 
 import { postingOf } from "./posting.js";
-import type { GuardEvidenceObservation } from "../model.js";
+import type { StaticCheckEvidenceObservation } from "../model.js";
 
 const namedScenarioIds = new Set(["SCN-AAA-001", "SCN-AAA-002"]);
 
@@ -67,7 +67,7 @@ describe("[SCN-LDG-001] postingOf routes a RUNTIME credit by its citation", () =
 });
 
 describe("[SCN-LDG-001] postingOf routes a FITNESS credit by its citation, the same rule", () => {
-  const check = (staticCheck: string, scnId?: string): GuardEvidenceObservation => ({
+  const check = (staticCheck: string, scnId?: string): StaticCheckEvidenceObservation => ({
     qualityCheck: "lint",
     staticCheck,
     exists: true,

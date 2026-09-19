@@ -11,7 +11,7 @@ import type {
   QualityCheck,
   EvidenceObligation,
   EvidenceObservation,
-  GuardEvidenceObservation,
+  StaticCheckEvidenceObservation,
   FitnessEvidenceObservation,
   RuntimeEvidenceObservation,
 } from "./journal.js";
@@ -389,9 +389,9 @@ function staticCheckObservationFor(
   scnId: string,
   checkTag: string,
   evidenceObservations: readonly EvidenceObservation[]
-): GuardEvidenceObservation | undefined {
+): StaticCheckEvidenceObservation | undefined {
   return evidenceObservations.find(
-    (o): o is GuardEvidenceObservation =>
+    (o): o is StaticCheckEvidenceObservation =>
       isStaticCheckObservation(o) &&
       // THE FAIL-SAFE, THE SAME ONE THE RUNTIME MATCH BELOW KEEPS (@SCN-LNT-026). A proof that
       // never ran can neither discharge an obligation nor fail it, so a broken credit is excluded
@@ -691,9 +691,9 @@ export function citesUnknownScenarioReconciliationsOf(
  * rather than a runtime tier — which is read off the observation and not decided here.
  */
 export function suspenseReconciliationsOf(
-  brokenEvidence: readonly (RuntimeEvidenceObservation | GuardEvidenceObservation)[],
+  brokenEvidence: readonly (RuntimeEvidenceObservation | StaticCheckEvidenceObservation)[],
   uncited: readonly RuntimeEvidenceObservation[],
-  noEvidenceObligationGuards: readonly FitnessEvidenceObservation[]
+  noEvidenceObligationStaticChecks: readonly FitnessEvidenceObservation[]
 ): QualityCheckReconciliation[] {
   return [
     ...brokenEvidence.map((o) =>
@@ -712,7 +712,7 @@ export function suspenseReconciliationsOf(
         ...(o.locator !== undefined ? { locator: o.locator } : {}),
       })
     ),
-    ...noEvidenceObligationGuards.map((o) =>
+    ...noEvidenceObligationStaticChecks.map((o) =>
       makeQualityCheckReconciliation({
         qualityCheck: "lint" as const,
         // The check that ran: a static run knows its runnable handle.

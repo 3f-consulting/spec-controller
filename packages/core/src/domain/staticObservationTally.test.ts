@@ -173,7 +173,7 @@ describe("[SCN-USG-001] a static check no fitness scenario cites is banked on th
 
   // ONE observer, split by handle (3F-3458). The obligation-side reader that used to build the
   // citing half has been deleted, and it did not need replacing with a literal: the running-check
-  // observer emits the same `GuardEvidenceObservation` shape, and this fixture's CI RUNS
+  // observer emits the same `StaticCheckEvidenceObservation` shape, and this fixture's CI RUNS
   // `pnpm lint:foo`, so the credit is still derived rather than seeded. Passing `citedScn` to the
   // one call is what stamps the citation on `lint:foo` and leaves every other handle uncited,
   // because the seam answers `null` for all of them.

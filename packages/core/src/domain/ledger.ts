@@ -10,7 +10,7 @@ import type { ScenarioReconciliation } from "./scenarioReconciliation.js";
 // The row-level static-check cut (3F-2203) — the Ledger-wide lint list is built ON it, so the
 // obligation-side rule is stated once, at the row.
 import { staticCheckReconciliationsOf, isScenario } from "./scenarioReconciliation.js";
-import type { RuntimeQualityCheck, GuardEvidenceObservation } from "./journal.js";
+import type { RuntimeQualityCheck, StaticCheckEvidenceObservation } from "./journal.js";
 
 /**
  * THE LEDGER — the accounts with their POSTED ENTRIES. Canon (double-entry-manifesto, chain

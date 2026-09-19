@@ -257,7 +257,7 @@ export interface RuntimeEvidenceObservation {
  * ABSENCE of wiring no emitted test result can carry, so this is read from the
  * *config* of the real tree.
  */
-export interface GuardEvidenceObservation {
+export interface StaticCheckEvidenceObservation {
   /** A static check evidence observation is the `lint` quality-check (the watermelon discriminator). */
   qualityCheck: "lint";
   /**
@@ -418,10 +418,10 @@ export interface GuardEvidenceObservation {
  * The FITNESS observations — the `lint` quality-check's half of the union.
  *
  * ONE SHAPE SINCE THE MEASURED AXIS LEFT (3F-3516). A measurement once joined the static-check
- * fact here as a second member; with it gone the name is the guard observation's, kept so a reader
+ * fact here as a second member; with it gone the name is the static-check observation's, kept so a reader
  * that means "a fitness credit" still says so rather than naming the interface it happens to be.
  */
-export type FitnessEvidenceObservation = GuardEvidenceObservation;
+export type FitnessEvidenceObservation = StaticCheckEvidenceObservation;
 
 /**
  * Is this observation a STATIC-CHECK fact? The predicate every reader that wants a static check's
@@ -433,7 +433,7 @@ export type FitnessEvidenceObservation = GuardEvidenceObservation;
  */
 export function isStaticCheckObservation(
   observation: EvidenceObservation
-): observation is GuardEvidenceObservation {
+): observation is StaticCheckEvidenceObservation {
   return observation.qualityCheck === "lint";
 }
 
@@ -444,7 +444,7 @@ export function isStaticCheckObservation(
  * reconciler matches each evidence obligation against evidence observations of the
  * same quality-check.
  */
-export type EvidenceObservation = RuntimeEvidenceObservation | GuardEvidenceObservation;
+export type EvidenceObservation = RuntimeEvidenceObservation | StaticCheckEvidenceObservation;
 
 /**
  * A PENDING ITEM — the one-sided ledger entry a deliberately-DEFERRED evidence

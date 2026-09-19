@@ -29,7 +29,7 @@ import { evidenceObligationsOf, pendingItemsOf } from "./journal.js";
 import type {
   Scenario,
   RuntimeEvidenceObservation,
-  GuardEvidenceObservation,
+  StaticCheckEvidenceObservation,
   QualityCheckReconciliation,
 } from "../model.js";
 
@@ -140,7 +140,7 @@ describe("[SCN-LDG-008] a no-evidence-obligation item omits the keys its credit 
    * read from a target's config rather than from a test file.
    */
   it("names an untagged static check by its runnable handle, and carries no locator key", () => {
-    const untagged: GuardEvidenceObservation = {
+    const untagged: StaticCheckEvidenceObservation = {
       qualityCheck: "lint",
       scnId: "SCN-AAA-001",
       staticCheck: "lint:nobody-asked",
@@ -282,7 +282,7 @@ describe("[SCN-LDG-006] a phantom row's items carry only the fields the credit h
  *
  * WHY NO INTERFACE NAMES THIS FIXTURE'S SHAPE, AND WHY THAT IS THE POINT. Neither fitness
  * observation names a `locator` AT ALL — not optional, absent: only `RuntimeEvidenceObservation`
- * has the field. So this credit cannot be written as a plain `GuardEvidenceObservation`, and every
+ * has the field. So this credit cannot be written as a plain `StaticCheckEvidenceObservation`, and every
  * type-legal fixture leaves `observation.locator` `undefined` at runtime, where the guard and an
  * unconditional `return observation.locator` agree exactly. Read from inside this package alone
  * the guard is unreachable, and pinning it would be theatre.
@@ -304,7 +304,7 @@ describe("[SCN-LDG-006] a phantom row's items carry only the fields the credit h
  */
 describe("[SCN-LDG-034] a fitness credit's item carries no locator, even when the credit carries one", () => {
   it("drops a locator a citing lint credit arrived with rather than stamping it on the item", () => {
-    const guardWithLocator: GuardEvidenceObservation & { locator: string } = {
+    const guardWithLocator: StaticCheckEvidenceObservation & { locator: string } = {
       qualityCheck: "lint",
       staticCheck: "lint:complexity",
       scnId: "SCN-ZZZ-009",
@@ -332,7 +332,7 @@ describe("[SCN-LDG-001] suspenseReconciliationsOf orders the suspense row's item
     message: "Failed to collect",
   });
   const uncited = credit("unit", null, { locator: "tests/orphan.test.ts" });
-  const guard: GuardEvidenceObservation = {
+  const guard: StaticCheckEvidenceObservation = {
     qualityCheck: "lint",
     staticCheck: "lint:nobody-asked",
     exists: true,

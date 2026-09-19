@@ -37,7 +37,7 @@ export type {
   EvidenceObligation,
   Scenario,
   RuntimeEvidenceObservation,
-  GuardEvidenceObservation,
+  StaticCheckEvidenceObservation,
   EvidenceObservation,
   Outcome,
   ScenarioVerdict,

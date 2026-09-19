@@ -1,5 +1,5 @@
 /**
- * The running-check observer — emit a `GuardEvidenceObservation` for EVERY static check CI runs,
+ * The running-check observer — emit a `StaticCheckEvidenceObservation` for EVERY static check CI runs,
  * not just the obliged ones. This is the static analogue of the runner emitting every test result:
  * CI publishes no static check manifest, so the running set is DERIVED from the target's own
  * pipeline (@SCN-USG-001). It completes the static stream so the one reconcile engine sees every
@@ -55,7 +55,7 @@
  * @SCN-USG-014 (the reconciler's own steps).
  */
 
-import type { GuardEvidenceObservation } from "../model.js";
+import type { StaticCheckEvidenceObservation } from "../model.js";
 import { commandRuns } from "./commandRuns.js";
 import {
   ciWorkflowSteps,
@@ -242,7 +242,7 @@ export function runningStaticChecks(
   // Trailing and optional: a target that names no non-checks observes exactly what it observed
   // before, byte for byte.
   isExcludedFromDiscovery: (step: CiWorkflowStep) => boolean = () => false
-): GuardEvidenceObservation[] {
+): StaticCheckEvidenceObservation[] {
   const scripts = packageJson.scripts ?? {};
   // THE STEPS, NOT THEIR COMMANDS, AND THE WHOLE-PIPELINE WALK RATHER THAN ITS `run:` PROJECTION.
   // `ciRunSteps` is that projection and was what this reader took until @SCN-USG-015; the wider

@@ -51,7 +51,7 @@
 import type {
   RuntimeQualityCheck,
   Scenario,
-  GuardEvidenceObservation,
+  StaticCheckEvidenceObservation,
   FitnessEvidenceObservation,
   EvidenceObservation,
   ScenarioReconciliation,
@@ -148,11 +148,11 @@ interface RoutedCredits {
   /** The credits routed BY CITATION, plus the phantom ids they minted. */
   readonly citations: CitationIndex;
   /** Proofs that never ran, from EITHER axis (@SCN-LDG-017, @SCN-LNT-026). */
-  readonly brokenEvidence: readonly (RuntimeEvidenceObservation | GuardEvidenceObservation)[];
+  readonly brokenEvidence: readonly (RuntimeEvidenceObservation | StaticCheckEvidenceObservation)[];
   /** Runtime credits that RAN and carried no `@SCN`. */
   readonly uncited: readonly RuntimeEvidenceObservation[];
   /** Static checks that ran with no Evidence Obligation naming them. */
-  readonly noEvidenceObligationGuards: readonly FitnessEvidenceObservation[];
+  readonly noEvidenceObligationStaticChecks: readonly FitnessEvidenceObservation[];
 }
 
 /**
@@ -183,9 +183,9 @@ function routeCredits(
   // BROKEN EVIDENCE FROM EITHER AXIS (@SCN-LNT-026). It was a runtime-only stream while `broken`
   // was a runtime-only fact; a converted static check that did not run is the same fact about the
   // same kind of absence, so it lands in the same stream and renders through the same section.
-  const brokenEvidence: (RuntimeEvidenceObservation | GuardEvidenceObservation)[] = [];
+  const brokenEvidence: (RuntimeEvidenceObservation | StaticCheckEvidenceObservation)[] = [];
   const uncited: RuntimeEvidenceObservation[] = [];
-  const noEvidenceObligationGuards: FitnessEvidenceObservation[] = [];
+  const noEvidenceObligationStaticChecks: FitnessEvidenceObservation[] = [];
   for (const o of evidenceObservations) {
     // The union NARROW — `qualityCheck === "lint"` is the `EvidenceObservation` union's TYPE TAG,
     // not a posting decision. Which axis a credit rides is read here; where it LANDS is the rule's,
@@ -204,7 +204,7 @@ function routeCredits(
       // neither still lands in the second, misfiled rather than vaporised.
       if (posting.kind === "suspense-scenario") {
         if (posting.posted === "broken" && isStaticCheckObservation(o)) brokenEvidence.push(o);
-        else noEvidenceObligationGuards.push(o);
+        else noEvidenceObligationStaticChecks.push(o);
       }
       // A CITING run files into the citation index like any other credit (@SCN-LNT-001) —
       // exactly one row, real or invented. There is no third destination left (3F-2590).
@@ -229,7 +229,7 @@ function routeCredits(
         break;
     }
   }
-  return { citations, brokenEvidence, uncited, noEvidenceObligationGuards };
+  return { citations, brokenEvidence, uncited, noEvidenceObligationStaticChecks };
 }
 
 /**
@@ -345,9 +345,9 @@ function phantomScenarioRows(citations: CitationIndex): ScenarioReconciliation[]
  * 3F-3472; what lands on it is `routeCredits`' decision, and unchanged.
  */
 function suspenseScenarioRows(
-  brokenEvidence: readonly (RuntimeEvidenceObservation | GuardEvidenceObservation)[],
+  brokenEvidence: readonly (RuntimeEvidenceObservation | StaticCheckEvidenceObservation)[],
   uncited: readonly RuntimeEvidenceObservation[],
-  noEvidenceObligationGuards: readonly FitnessEvidenceObservation[]
+  noEvidenceObligationStaticChecks: readonly FitnessEvidenceObservation[]
 ): ScenarioReconciliation[] {
   const rows: ScenarioReconciliation[] = [];
   // THE SUSPENSE ROW (@SCN-LDG-007) — every entry that names no scenario aggregates into ONE row
@@ -357,8 +357,8 @@ function suspenseScenarioRows(
   // are the item concept's (3F-2204, `suspenseReconciliationsOf` — rule + rationale there). What
   // is decided HERE is only whether the row exists at all: suspense is minted by a credit landing
   // on it, so no credit means no row.
-  if (brokenEvidence.length > 0 || uncited.length > 0 || noEvidenceObligationGuards.length > 0) {
-    const items = suspenseReconciliationsOf(brokenEvidence, uncited, noEvidenceObligationGuards);
+  if (brokenEvidence.length > 0 || uncited.length > 0 || noEvidenceObligationStaticChecks.length > 0) {
+    const items = suspenseReconciliationsOf(brokenEvidence, uncited, noEvidenceObligationStaticChecks);
     rows.push({
       scnId: "(no scenario)",
       kind: "suspense-scenario",
@@ -368,7 +368,7 @@ function suspenseScenarioRows(
       // The credits citing NO scenario post here (@SCN-LDG-022) — the uncited, the broken (it
       // named no test, so it cites nothing whatever scnId it structurally carries), and the
       // no-evidence-obligation static checks. With the citation index this exhausts the credit stream.
-      evidenceObservations: [...brokenEvidence, ...uncited, ...noEvidenceObligationGuards],
+      evidenceObservations: [...brokenEvidence, ...uncited, ...noEvidenceObligationStaticChecks],
       // Suspense is MINTED BY A CREDIT too — it raises nothing, so it names nothing
       // (@SCN-LDG-023). It can therefore carry no Pending Item either.
       evidenceObligations: [],
@@ -490,7 +490,7 @@ export function reconcile(
   const evidenceObligationPairs = evidenceObligationPairsOf(scenarios);
   // THE ONE ROUTING PASS (3F-2202) — asked of the posting rule, in one place, and read back as
   // four streams. What each of them then RECONCILES to is the fold's, below.
-  const { citations, brokenEvidence, uncited, noEvidenceObligationGuards } = routeCredits(
+  const { citations, brokenEvidence, uncited, noEvidenceObligationStaticChecks } = routeCredits(
     evidenceObservations,
     scenarioIds
   );
@@ -503,7 +503,7 @@ export function reconcile(
         scenarioRow(d, evidenceObservations, citations, evidenceObligationPairs)
       ),
       ...phantomScenarioRows(citations),
-      ...suspenseScenarioRows(brokenEvidence, uncited, noEvidenceObligationGuards),
+      ...suspenseScenarioRows(brokenEvidence, uncited, noEvidenceObligationStaticChecks),
       ...untaggedScenarioRows(untaggedScenarios),
       ...unspecifiedFitnessRowRows(unspecifiedFitnessRows),
     ],

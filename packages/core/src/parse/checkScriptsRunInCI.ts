@@ -330,20 +330,20 @@ export function ciWorkflowSteps(ciSources: readonly string[]): CiWorkflowStep[] 
 
 /**
  * Does a single command LINE invoke the given npm script via a package manager?
- * Matches `pnpm <guard>`, `pnpm run <guard>`, `npm run <guard>`, `yarn <guard>`
+ * Matches `pnpm <script>`, `pnpm run <script>`, `npm run <script>`, `yarn <script>`
  * on an EXACT script-name token — no fuzzy substring (a fuzzy match could hide a
  * watermelon by treating a sibling static check's step as this static check's).
  */
-function lineInvokesScript(line: string, guard: string): boolean {
+function lineInvokesScript(line: string, script: string): boolean {
   const tokens = line.trim().split(/\s+/);
   for (let i = 0; i < tokens.length; i++) {
     const tok = tokens[i];
     if (tok === "pnpm" || tok === "yarn") {
       let j = i + 1;
       if (tokens[j] === "run") j++;
-      if (tokens[j] === guard) return true;
+      if (tokens[j] === script) return true;
     }
-    if (tok === "npm" && tokens[i + 1] === "run" && tokens[i + 2] === guard) {
+    if (tok === "npm" && tokens[i + 1] === "run" && tokens[i + 2] === script) {
       return true;
     }
   }
@@ -351,6 +351,6 @@ function lineInvokesScript(line: string, guard: string): boolean {
 }
 
 /** Does any line of a (possibly multi-line block-scalar) command invoke the script? */
-export function commandInvokesScript(command: string, guard: string): boolean {
-  return command.split(/\r?\n/).some((line) => lineInvokesScript(line, guard));
+export function commandInvokesScript(command: string, script: string): boolean {
+  return command.split(/\r?\n/).some((line) => lineInvokesScript(line, script));
 }

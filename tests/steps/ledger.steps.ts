@@ -30,7 +30,7 @@ import {
   parseVitestEvidenceObservations,
   type VitestJsonReport,
 } from "@3f-consulting/spec-controller-core";
-import type { Scenario, EvidenceObligation, EvidenceObservation, GuardEvidenceObservation, Ledger, ScenarioReconciliation, QualityCheckReconciliation, EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
+import type { Scenario, EvidenceObligation, EvidenceObservation, StaticCheckEvidenceObservation, Ledger, ScenarioReconciliation, QualityCheckReconciliation, EvidenceReconciliation } from "@3f-consulting/spec-controller-core";
 import type { RunContext } from "@3f-consulting/spec-controller-core";
 // The whole-run soundness predicate (@SCN-LDG-018), imported by MODULE PATH rather than from the
 // package barrel. The barrel re-exports it too (3F-1651 put it there); the module path is the
@@ -208,14 +208,14 @@ Given(
 // @SCN-LDG-034 — the FITNESS-axis twin of SCN-LDG-006's runtime credit above: a lint credit
 // citing an @SCN no scenario carries also posts to the phantom account. It carries a value
 // for the check that ran — its whole where-to-fix — and, deliberately, a `locator` too: no
-// GuardEvidenceObservation route ever populates one, but the shape can carry one (the same
+// StaticCheckEvidenceObservation route ever populates one, but the shape can carry one (the same
 // width-subtyping corner outcomeRules.test.ts's @SCN-LDG-034 @unit arm pins), and the item
 // must not surface it even so. The intersection type states what an external caller may
 // legally hand in; it is not a cast past the contract (see that arm's docblock at length).
 Given(
   "a passing lint credit citing the phantom scenario {string} naming the check {string}",
   function (scnId: string, staticCheck: string) {
-    const credit: GuardEvidenceObservation & { locator: string } = {
+    const credit: StaticCheckEvidenceObservation & { locator: string } = {
       qualityCheck: "lint",
       staticCheck,
       scnId,
@@ -2132,7 +2132,7 @@ Then(
  */
 
 let ldg035Ledger: Ledger;
-let ldg035Credit: GuardEvidenceObservation;
+let ldg035Credit: StaticCheckEvidenceObservation;
 
 // @SCN-LDG-035
 Given(

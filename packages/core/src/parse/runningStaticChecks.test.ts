@@ -1,6 +1,6 @@
 /**
  * Unit tests for the running-check observer (`parse/runningStaticChecks.ts`) — it emits a
- * GuardEvidenceObservation per running CI check, and since 3F-3410 it is the ONLY static-check
+ * StaticCheckEvidenceObservation per running CI check, and since 3F-3410 it is the ONLY static-check
  * observer: the obligation-side one this header used to point at has been deleted. The CI-parse
  * primitive it reads enforcement off lives in `parse/checkScriptsRunInCI.ts`. reconcile's folding
  * of a no-evidence-obligation running static check onto the suspense row is pinned in
@@ -24,7 +24,7 @@ const SUITE_RUNNERS: Readonly<Record<string, string | null>> = {
   integration: "cucumber-js",
 };
 
-describe("[SCN-USG-001] runningStaticChecks — the running-guard observer (emits a GuardEvidenceObservation per running CI guard)", () => {
+describe("[SCN-USG-001] runningStaticChecks — the running-guard observer (emits a StaticCheckEvidenceObservation per running CI guard)", () => {
   const usgPkg: PackageJsonScripts = {
     scripts: {
       "lint:foo": "echo foo",
@@ -47,10 +47,10 @@ describe("[SCN-USG-001] runningStaticChecks — the running-guard observer (emit
     "      - run: pnpm cucumber",
   ].join("\n");
 
-  // A running CI static check is emitted as a GuardEvidenceObservation —
+  // A running CI static check is emitted as a StaticCheckEvidenceObservation —
   // exists + enforcedOverRealSource are true by construction (a step the pipeline runs). The
   // static analogue of the runner emitting a passing test result.
-  it("emits a GuardEvidenceObservation for each check step a CI run step invokes (test / cucumber excluded)", () => {
+  it("emits a StaticCheckEvidenceObservation for each check step a CI run step invokes (test / cucumber excluded)", () => {
     // test + cucumber are the runtime axis's observed evidence, and what keeps them off this axis
     // is the runner block this target names — not anything about how they are spelled.
     expect(runningStaticChecks([usgCi], usgPkg, SUITE_RUNNERS)).toEqual([
@@ -174,7 +174,7 @@ describe("[SCN-USG-004] runningStaticChecks observes a CI script matching no con
   // block now, and every step that is not a runner is a candidate.
   const membership = SUITE_RUNNERS;
 
-  it("emits a GuardEvidenceObservation for a script no convention of ours reaches", () => {
+  it("emits a StaticCheckEvidenceObservation for a script no convention of ours reaches", () => {
     expect(
       runningStaticChecks([unprefixedCi], unprefixedPkg, membership)
     ).toEqual([
