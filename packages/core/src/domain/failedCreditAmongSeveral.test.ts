@@ -152,3 +152,105 @@ describe("[SCN-LNT-036] a failed fitness credit beside a passing one for the sam
     expect(isBalanced(ledger)).toBe(true);
   });
 });
+
+describe("[SCN-LNT-037] a watermelon fitness credit beside a wired one for the same check reads watermelon, whichever one's locator sorts first", () => {
+  const CHECK = "complexity";
+  const obligation = { qualityCheck: "lint", staticCheck: CHECK } as const;
+  const rowNamingCheck: Scenario[] = [{ scnId: SCN, evidenceObligations: [obligation] }];
+  /** A credit for `CHECK` citing `SCN` that ran and carries no verdict; only its wiring and file vary. */
+  const runOf = (enforcedOverRealSource: boolean, locator: string): EvidenceObservation => ({
+    qualityCheck: "lint",
+    staticCheck: "lint:alpha",
+    checkTag: CHECK,
+    scnId: SCN,
+    exists: true,
+    enforcedOverRealSource,
+    locator,
+  });
+  const itemOf = (credits: EvidenceObservation[]) => {
+    const ledger = reconcile(rowNamingCheck, credits);
+    const row = ledger.scenarioReconciliations.find((r) => r.scnId === SCN)!;
+    const item = row.qualityCheckReconciliations.find((i) => i.staticCheck === CHECK)!;
+    return { outcome: item.outcome, carried: item.evidenceObservation, verdict: row.verdict, balanced: isBalanced(ledger) };
+  };
+
+  it.each([
+    ["the wired run's file sorts first", runOf(true, "a.feature"), runOf(false, "z.feature")],
+    ["the severed run's file sorts first", runOf(true, "z.feature"), runOf(false, "a.feature")],
+  ])("reads watermelon, carrying the severed credit, with the row and the run out of balance, when %s", (_order, wired, severed) => {
+    // THE MEASURED FALSE GREEN (3F-3552): wired at `a.feature`, severed at `z.feature`. First-match
+    // read the wired credit, `satisfied`, balanced — the severed run vouched for by its sibling.
+    expect(itemOf([wired, severed])).toEqual({ outcome: "watermelon", carried: severed, verdict: "out-of-balance", balanced: false });
+  });
+
+  it.each([
+    ["wired first", [runOf(true, "m.feature"), runOf(false, "m.feature")]],
+    ["severed first", [runOf(false, "m.feature"), runOf(true, "m.feature")]],
+  ])("reads watermelon, carrying the severed credit, with the two handed to the rule %s", (_order, credits) => {
+    // NO EVIDENCE ORDER IN BETWEEN: the rule itself, on whatever order it is handed.
+    const item = reconcileEvidenceObligation(SCN, obligation, credits);
+    expect([item.outcome, item.evidenceObservation]).toEqual(["watermelon", runOf(false, "m.feature")]);
+  });
+
+  it("still reads satisfied when every run of the check is wired", () => {
+    // The control: the rule reads watermelon over a severed run, never over plurality.
+    expect(itemOf([runOf(true, "z.feature"), runOf(true, "a.feature")])).toEqual({
+      outcome: "satisfied",
+      carried: runOf(true, "a.feature"),
+      verdict: "balanced",
+      balanced: true,
+    });
+  });
+});
+
+describe("[SCN-LNT-038] a failed fitness credit beside a watermelon one for the same check reads failing, whichever one's locator sorts first", () => {
+  const CHECK = "complexity";
+  const obligation = { qualityCheck: "lint", staticCheck: CHECK } as const;
+  const rowNamingCheck: Scenario[] = [{ scnId: SCN, evidenceObligations: [obligation] }];
+  /** A wired run of `CHECK` whose own verdict is a failure. */
+  const failedRun = (locator: string): EvidenceObservation => ({
+    qualityCheck: "lint",
+    staticCheck: "lint:alpha",
+    checkTag: CHECK,
+    scnId: SCN,
+    exists: true,
+    enforcedOverRealSource: true,
+    status: "failed",
+    locator,
+  });
+  /** A severed run of `CHECK` carrying no verdict: on its own, a watermelon. */
+  const severedRun = (locator: string): EvidenceObservation => ({
+    qualityCheck: "lint",
+    staticCheck: "lint:alpha",
+    checkTag: CHECK,
+    scnId: SCN,
+    exists: true,
+    enforcedOverRealSource: false,
+    locator,
+  });
+
+  it.each([
+    ["the failed run's file sorts first", failedRun("a.feature"), severedRun("z.feature")],
+    ["the severed run's file sorts first", failedRun("z.feature"), severedRun("a.feature")],
+  ])("reads failing, carrying the failed credit, with the row and the run out of balance, when %s", (_order, failed, severed) => {
+    // THE RULED ORDER (3F-3552): failing outranks watermelon, the same order one credit's own ladder
+    // asks in (@SCN-LNT-028) — so a failed run does not read watermelon because a severed one sits beside it.
+    const ledger = reconcile(rowNamingCheck, [severed, failed]);
+    const row = ledger.scenarioReconciliations.find((r) => r.scnId === SCN)!;
+    const item = row.qualityCheckReconciliations.find((i) => i.staticCheck === CHECK)!;
+    expect([item.outcome, item.evidenceObservation, row.verdict, isBalanced(ledger)]).toEqual([
+      "failing",
+      failed,
+      "out-of-balance",
+      false,
+    ]);
+  });
+
+  it.each([
+    ["failed first", [failedRun("m.feature"), severedRun("m.feature")]],
+    ["severed first", [severedRun("m.feature"), failedRun("m.feature")]],
+  ])("reads failing, carrying the failed credit, with the two handed to the rule %s", (_order, credits) => {
+    const item = reconcileEvidenceObligation(SCN, obligation, credits);
+    expect([item.outcome, item.evidenceObservation]).toEqual(["failing", failedRun("m.feature")]);
+  });
+});

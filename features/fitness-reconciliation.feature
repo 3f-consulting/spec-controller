@@ -756,19 +756,34 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
       When that target's evidence is reconciled with the record that run wrote about itself
       Then that row's Evidence Obligation reads failing off what the step did, and nothing is read off what the job was told
 
-  Rule: a fitness obligation answered by several credits is failing when any of them failed
+  Rule: a fitness obligation answered by several credits reads the worst outcome any of them carries, and names a credit carrying it
 
-    The behavioural axis's rule, on this axis too (@SCN-LDG-036): a failed credit is a failing
-    observation whatever passed beside it, and the item names the first failed one in evidence
-    order (3F-3547). No reader in this product delivers two credits with a verdict for one row and
-    check today — the run's record holds one entry per step code, and a row is keyed by its code —
-    so the published engine is where a consumer composing their own evidence meets it.
+    The behavioural axis's rule, on this axis too (@SCN-LDG-036): each credit is read on its own,
+    and the obligation reads the worst of those readings — failing over watermelon over satisfied —
+    whatever sorts first (3F-3547, 3F-3552). No credit vouches for a sibling: a failed credit is
+    failing whatever passed beside it, and a severed run is a watermelon whatever wired run of the
+    same check sits beside it (@SCN-LNT-032). The item names the first credit carrying that outcome
+    in evidence order. No reader in this product delivers two credits for one row and check today —
+    the run's record holds one entry per step code, and a row is keyed by its code — so the
+    published engine is where a consumer composing their own evidence meets it.
 
     @unit @integration @SCN-LNT-036
     Scenario: a failed fitness credit beside a passing one for the same check reads failing, and the ledger is out of balance
       Given a scenario naming one fitness check, and two credits for that check citing it, the one read first passing and the other failed
       When the published engine reconciles them
       Then the check's obligation reads failing, carrying the failed credit, and the ledger is out of balance
+
+    @unit @integration @SCN-LNT-037
+    Scenario: a watermelon fitness credit beside a wired one for the same check reads watermelon, and the ledger is out of balance, whichever one's locator sorts first
+      Given a scenario naming one fitness check, and two credits for that check citing it, one wired and one severed, and the same two with their locators swapped so each sorts first
+      When the published engine reconciles each pair
+      Then the check's obligation reads watermelon, carrying the severed credit, and the ledger is out of balance, both ways round
+
+    @unit @integration @SCN-LNT-038
+    Scenario: a failed fitness credit beside a watermelon one for the same check reads failing, carrying the failed credit, whichever one's locator sorts first
+      Given a scenario naming one fitness check, and two credits for that check citing it, one wired and failed and one severed, and the same two with their locators swapped so each sorts first
+      When the published engine reconciles each pair
+      Then the check's obligation reads failing, carrying the failed credit, and the ledger is out of balance, both ways round
 
   Rule: a configured row names no bar, and a bar a row still carries is named as a retired key
 

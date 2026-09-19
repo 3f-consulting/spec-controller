@@ -1,7 +1,7 @@
 /**
  * Step definitions for an evidence obligation answered by several credits that disagree (3F-3547):
- * @SCN-LDG-036 and @SCN-LDG-037 (features/ledger.feature), @SCN-LNT-036
- * (features/fitness-reconciliation.feature).
+ * @SCN-LDG-036 and @SCN-LDG-037 (features/ledger.feature), @SCN-LNT-036, @SCN-LNT-037 and
+ * @SCN-LNT-038 (features/fitness-reconciliation.feature).
  *
  * The runtime arms: the REAL built CLI runs over the evidence-order fixture corpus (one scenario, SCN-TGT-001, raising
  * unit and integration) with a vitest report each Given writes, and everything is read back off the
@@ -198,6 +198,87 @@ Then(
     assert.equal(row.verdict, "out-of-balance");
     // The predicate the CLI's exit 1 reads.
     assert.equal(isBalanced(fitnessLedger), false);
+  }
+);
+
+// ---------------------------------------------------------------------------
+// @SCN-LNT-037 and @SCN-LNT-038 — a severed run beside a wired one, and beside a failed one,
+// through the published engine.
+// ---------------------------------------------------------------------------
+
+/** A run of `CHECK` citing `FITNESS_SCN` that carries no verdict; only its wiring and file vary. */
+const runOf = (enforcedOverRealSource: boolean, locator: string): EvidenceObservation => ({
+  qualityCheck: "lint",
+  staticCheck: "lint:alpha",
+  checkTag: CHECK,
+  scnId: FITNESS_SCN,
+  exists: true,
+  enforcedOverRealSource,
+  locator,
+});
+
+/** Each pair of credits to reconcile, and the credit a correct reading names on it. */
+let fitnessPairs: Array<{ credits: EvidenceObservation[]; named: EvidenceObservation }> = [];
+let fitnessLedgers: Ledger[] = [];
+
+// @SCN-LNT-037
+Given(
+  "a scenario naming one fitness check, and two credits for that check citing it, one wired and one severed, and the same two with their locators swapped so each sorts first",
+  function () {
+    fitnessScenarios = [{ scnId: FITNESS_SCN, evidenceObligations: [{ qualityCheck: "lint", staticCheck: CHECK }] }];
+    // The measured false green is the first pair: the wired run's file sorts ahead of the severed one's.
+    fitnessPairs = [
+      { credits: [runOf(true, "a.feature"), runOf(false, "z.feature")], named: runOf(false, "z.feature") },
+      { credits: [runOf(true, "z.feature"), runOf(false, "a.feature")], named: runOf(false, "a.feature") },
+    ];
+  }
+);
+
+// @SCN-LNT-037
+// @SCN-LNT-038
+When("the published engine reconciles each pair", function () {
+  fitnessLedgers = fitnessPairs.map(({ credits }) => reconcile(fitnessScenarios, credits));
+});
+
+// @SCN-LNT-038
+Given(
+  "a scenario naming one fitness check, and two credits for that check citing it, one wired and failed and one severed, and the same two with their locators swapped so each sorts first",
+  function () {
+    fitnessScenarios = [{ scnId: FITNESS_SCN, evidenceObligations: [{ qualityCheck: "lint", staticCheck: CHECK }] }];
+    const failedAt = (locator: string): EvidenceObservation => ({ ...runOf(true, locator), status: "failed" });
+    fitnessPairs = [
+      { credits: [failedAt("a.feature"), runOf(false, "z.feature")], named: failedAt("a.feature") },
+      { credits: [failedAt("z.feature"), runOf(false, "a.feature")], named: failedAt("z.feature") },
+    ];
+  }
+);
+
+/** Every pair's obligation reads `outcome`, naming the credit its Given said a correct reading names. */
+function eachPairReads(outcome: string): void {
+  fitnessLedgers.forEach((ledger, i) => {
+    const row = ledger.scenarioReconciliations.find((r) => r.scnId === FITNESS_SCN);
+    assert.ok(row, "the fitness scenario has no row");
+    const item = row.qualityCheckReconciliations.find((q) => q.staticCheck === CHECK);
+    assert.deepEqual([item?.outcome, item?.evidenceObservation], [outcome, fitnessPairs[i]!.named]);
+    assert.equal(row.verdict, "out-of-balance");
+    // The predicate the CLI's exit 1 reads.
+    assert.equal(isBalanced(ledger), false);
+  });
+}
+
+// @SCN-LNT-037
+Then(
+  "the check's obligation reads watermelon, carrying the severed credit, and the ledger is out of balance, both ways round",
+  function () {
+    eachPairReads("watermelon");
+  }
+);
+
+// @SCN-LNT-038
+Then(
+  "the check's obligation reads failing, carrying the failed credit, and the ledger is out of balance, both ways round",
+  function () {
+    eachPairReads("failing");
   }
 );
 

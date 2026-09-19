@@ -35,13 +35,14 @@ Feature: Ledger over obligation-vs-observation evidence
       Then the ledger reports "SCN-LDG-002" as out of balance
       And the reconciling items for "SCN-LDG-002" are "failing"
 
-  Rule: an evidence obligation answered by several credits is failing when any of them failed, and names one that failed
+  Rule: an evidence obligation answered by several credits reads the worst outcome any of them carries, and names a credit carrying it
 
     A runner emits one credit per test, so a scenario cited by several tests carries several
-    credits at one quality check. A failed one is a failing observation whatever passed beside it,
-    and nothing about where its file sorts may discharge it (3F-3547). The item names the first
-    failed credit in the order the books read evidence in (@SCN-RMD-009); the rest stay posted on
-    the row.
+    credits at one quality check. Each is read on its own, and the obligation reads the worst of
+    those readings — failing over watermelon over satisfied — on every quality check (3F-3547,
+    3F-3552). A failed one is a failing observation whatever passed beside it, and nothing about
+    where its file sorts may discharge it. The item names the first credit carrying that outcome
+    in the order the books read evidence in (@SCN-RMD-009); the rest stay posted on the row.
 
     @unit @integration @SCN-LDG-036
     Scenario: a failing test in a file that sorts after a passing one citing the same scenario reads failing, and the run is out of balance
@@ -56,6 +57,13 @@ Feature: Ledger over obligation-vs-observation evidence
       When balance reconciles each runner report
       Then the scenario's unit reconciliation reads failing, carrying the failed test's credit
       And the scenario and the run are both out of balance
+
+    @unit @SCN-LDG-038
+    Scenario: whatever credits answer one evidence obligation, on either arm, in any order and wherever their files sort, it reads the worst outcome among them and names a credit carrying it
+      Given any set of credits answering one evidence obligation, at a behavioural quality check or at a fitness check, arriving in any order and from any files
+      When the reconciler runs
+      Then the obligation reads the worst outcome any one of those credits reads on its own
+      And the credit its item names is one of them, and reads that same outcome on its own
 
   Rule: a scenario that requires a level with no matching result is out of balance
 

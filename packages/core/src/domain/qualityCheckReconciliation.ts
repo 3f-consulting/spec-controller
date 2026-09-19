@@ -14,7 +14,6 @@ import type {
   StaticCheckEvidenceObservation,
   FitnessEvidenceObservation,
   RuntimeEvidenceObservation,
-  EvidenceStatus,
 } from "./journal.js";
 import {
   isStaticCheckObservation,
@@ -340,22 +339,55 @@ function locatorOf(observation: EvidenceObservation): string | undefined {
 }
 
 /**
- * THE CREDIT AN OBLIGATION IS READ BY, when several match it (3F-3547): the first that FAILED, else
- * the first.
+ * The outcomes a single credit can carry, WORST FIRST (3F-3552) — the order the several credits
+ * answering one obligation are read in.
  *
- * A runner emits one credit per test, so one obligation is routinely answered by several, and a
- * failed one is a failing observation whatever passed beside it — canon lets no sibling pass
- * discharge it. Reading only the first match made the verdict depend on where a file sorts, and
- * named a passing test on a row that should send its reader to the failed one. "First" is the
- * caller's order, which `reconcile` fixes as evidence order (@SCN-RMD-009), so the named credit is
- * deterministic; the outcome does not depend on the order at all.
+ * `failing` OUTRANKS `watermelon` because one credit's own ladder already asks the check's verdict
+ * before its wiring (@SCN-LNT-028): a severed credit that failed reads `failing`. Reading several by
+ * the same order keeps one ladder for one credit and for many, so a failed credit never reads one
+ * way alone and another beside a severed sibling. EITHER outranks `satisfied`, because a credit
+ * reading otherwise is not vouched for by a sibling that passed (@SCN-LNT-032, 3F-3547).
+ *
+ * `missing` IS NOT HERE. It is not an outcome a credit carries: canon gives it no Observation, and
+ * the `{exists:false}` record is an absence that carries nothing (@SCN-LDG-028). Where any real credit
+ * answers, the observation side Exists, so an absence never outranks one and is never named.
  */
-function answeringCredit<T extends { status?: EvidenceStatus }>(matches: readonly T[]): T | undefined {
-  return matches.find((o) => o.status === "failed") ?? matches[0];
+const CREDIT_PRECEDENCE: readonly CreditOutcome[] = ["failing", "watermelon", "satisfied"];
+
+/** An outcome a single credit can carry — every one in the precedence, and nothing else. */
+type CreditOutcome = "failing" | "watermelon" | "satisfied";
+
+/** An obligation's reading over every credit answering it: the outcome, and the credit named. */
+interface Answer<T> {
+  outcome: Outcome;
+  credit?: T;
 }
 
 /**
- * The static-check observation answering THIS scenario's `lint` obligation — ONE ROUTE, the
+ * THE ONE RULE FOR SEVERAL CREDITS (3F-3552), on every arm: each credit is read on its own, the
+ * obligation reads the worst of those readings, and the item names the first credit carrying it.
+ *
+ * A runner emits one credit per test and a check can be run more than once, so one obligation is
+ * routinely answered by several credits. None of them vouches for a sibling: a failed test is failing
+ * whatever passed beside it (3F-3547), and a severed run is a watermelon whatever wired run of the same
+ * check sits beside it (@SCN-LNT-032). "First failed, else first" was this rule's first half, written
+ * for the one arm that had a failure to find; it read the watermelon off whichever credit sorted first.
+ *
+ * The OUTCOME does not depend on the order the credits arrive in — it is the worst any of them
+ * carries. The order decides only WHICH of the credits carrying it is named, and `reconcile` fixes
+ * that order as evidence order (@SCN-RMD-009), so the name is deterministic too. When no credit
+ * carries an outcome in the precedence, nothing answered, and the obligation reads `missing`.
+ */
+function answerOf<T>(matches: readonly T[], outcomeOf: (credit: T) => CreditOutcome | undefined): Answer<T> {
+  for (const outcome of CREDIT_PRECEDENCE) {
+    const credit = matches.find((match) => outcomeOf(match) === outcome);
+    if (credit) return { outcome, credit };
+  }
+  return { outcome: "missing" };
+}
+
+/**
+ * The static-check observations answering THIS scenario's `lint` obligation — ONE ROUTE, the
  * citation, on both of its terms (@SCN-LNT-001).
  *
  * THE CREDIT CITES, and it is the same rule the runtime arm applies: an observation citing this
@@ -405,10 +437,11 @@ function staticCheckObservationFor(
   scnId: string,
   checkTag: string,
   evidenceObservations: readonly EvidenceObservation[]
-): StaticCheckEvidenceObservation | undefined {
-  // EVERY MATCH IS KEPT, NOT THE FIRST (@SCN-LNT-036) — the runtime arm's rule on this axis too: a
-  // failed credit beside a passing one for the same check is `failing`, wherever it sorts.
-  return answeringCredit(evidenceObservations.filter(
+): StaticCheckEvidenceObservation[] {
+  // EVERY MATCH IS KEPT, NOT THE FIRST (@SCN-LNT-036, @SCN-LNT-037): `answerOf` reads them all, so a
+  // failed or severed credit beside a wired one that passed is what the obligation reads, wherever
+  // it sorts.
+  return evidenceObservations.filter(
     (o): o is StaticCheckEvidenceObservation =>
       isStaticCheckObservation(o) &&
       // THE FAIL-SAFE, THE SAME ONE THE RUNTIME MATCH BELOW KEEPS (@SCN-LNT-026). A proof that
@@ -421,18 +454,36 @@ function staticCheckObservationFor(
       o.broken !== true &&
       o.scnId === scnId &&
       o.checkTag === checkTag
-  ));
+  );
 }
 
 /**
- * Reconcile one STATIC-CHECK fitness obligation — the read-over-the-source arm, the fitness
- * axis's one route since its measured twin left (3F-3516). Three mappings on the static check
- * evidence observation:
+ * What ONE static-check credit carries on its own — the ladder `answerOf` ranks several by — or
+ * `undefined` for an absence, which carries nothing (@SCN-LDG-028): alone, its obligation reads
+ * `missing` because nothing answered it, not because the record carried a `missing` of its own.
+ *
+ * THE CHECK'S OWN VERDICT FIRST, WHERE THE OBSERVATION CARRIED ONE (@SCN-LNT-028), and the order is
+ * the rule rather than a convenience. `exists` and `enforcedOverRealSource` say a check is there and
+ * is wired, which is exactly what a check that ran and found violations also is — so asked in the
+ * other order the wiring facts would answer `satisfied` over a red and the verdict would never be
+ * reached. It is the same arrangement `broken` takes one function up, for the same reason: the fact
+ * that reds is the one asked about first.
  *   - wired into CI over the real source → satisfied.
  *   - exists (a package.json script) but NOT wired → THE WATERMELON: green on the surface, red
  *     within — a static check that guards nothing.
  *   - absent (no package.json script) → missing: a required ledger entry never recorded, GENUINELY
  *     DIFFERENT from the watermelon.
+ */
+function staticOutcomeOf(credit: StaticCheckEvidenceObservation): CreditOutcome | undefined {
+  if (credit.status === "failed") return "failing";
+  if (credit.enforcedOverRealSource) return "satisfied";
+  return credit.exists ? "watermelon" : undefined;
+}
+
+/**
+ * Reconcile one STATIC-CHECK fitness obligation — the read-over-the-source arm, the fitness
+ * axis's one route since its measured twin left (3F-3516). Every credit answering it is read by
+ * `staticOutcomeOf`, and the obligation reads the worst of them (`answerOf`, 3F-3552).
  *
  * NAMED FOR WHAT IT HOLDS. Every surviving fitness obligation carries the BARE CHECK TAG its
  * stepless scenario spells (`complexity`), never the runnable handle that invokes it
@@ -446,37 +497,27 @@ function reconcileStaticObligation(
   evidenceObservations: EvidenceObservation[]
 ): QualityCheckReconciliation {
   const checkTag = req.staticCheck!; // present by construction for a fitness evidence obligation.
-  const obs = staticCheckObservationFor(scnId, checkTag, evidenceObservations);
-  let outcome: Outcome;
-  // THE CHECK'S OWN VERDICT FIRST, WHERE THE OBSERVATION CARRIED ONE (@SCN-LNT-028), and the order
-  // is the rule rather than a convenience. `exists` and `enforcedOverRealSource` say a check is
-  // there and is wired, which is exactly what a check that ran and found violations also is — so
-  // asked in the other order the wiring facts would answer `satisfied` over a red and the verdict
-  // would never be reached. It is the same arrangement `broken` takes one function up, for the
-  // same reason: the fact that reds is the one asked about first.
-  if (obs?.status === "failed") {
-    outcome = "failing";
-  } else if (obs && obs.enforcedOverRealSource) {
-    outcome = "satisfied";
-  } else if (obs?.exists) {
-    outcome = "watermelon";
-  } else {
-    outcome = "missing";
-  }
-  // The CREDIT side (@SCN-LDG-027/@SCN-LDG-028): the matched static-check observation, carried
-  // ONLY when it is a REAL observation — `exists:true` (the two-sided `satisfied` / `watermelon`).
-  // A guard absent from both package.json and CI is FOUND as the negative fact
-  // `{exists:false}` — an ABSENCE, not an observed piece of evidence — so `missing` carries
-  // NOTHING on the credit side (Obligation Exists, Observation None; double-entry-manifesto line
-  // 36), uniform with the runtime `missing` path. `obs?.exists` (not `obs`) is the discriminator:
-  // the match locating the absent-guard record must not be mistaken for an observation existing.
+  const { outcome, credit } = answerOf(
+    staticCheckObservationFor(scnId, checkTag, evidenceObservations),
+    staticOutcomeOf
+  );
+  // The CREDIT side (@SCN-LDG-027/@SCN-LDG-028): the credit carrying the outcome, when one does. A
+  // guard absent from both package.json and CI is FOUND as the negative fact `{exists:false}` — an
+  // ABSENCE, not an observed piece of evidence — and it carries no outcome at all, so it is never the
+  // credit named: `missing` carries NOTHING on the credit side (Obligation Exists,
+  // Observation None; double-entry-manifesto line 36), uniform with the runtime `missing` path.
   return makeQualityCheckReconciliation({
     qualityCheck: "lint",
     staticCheck: checkTag,
     outcome,
     evidenceObligation: req,
-    ...(obs?.exists ? { evidenceObservation: obs } : {}),
+    ...(credit ? { evidenceObservation: credit } : {}),
   });
+}
+
+/** What ONE runtime credit reads on its own: present+pass → satisfied; present+fail → failing. */
+function runtimeOutcomeOf(credit: RuntimeEvidenceObservation): CreditOutcome {
+  return credit.status === "passed" ? "satisfied" : "failing";
 }
 
 /**
@@ -509,9 +550,9 @@ export function reconcileEvidenceObligation(
   // FLAG on RuntimeEvidenceObservation, so a broken credit CAN carry an scnId and a status — the
   // guard is what makes the fail-safe hold whatever it carries.
   //
-  // EVERY MATCH IS KEPT, NOT THE FIRST (@SCN-LDG-036), and `answeringCredit` reads them: a failed
-  // test beside a passing one citing the same scenario is `failing`, wherever its file sorts.
-  const match = answeringCredit(evidenceObservations.filter(
+  // EVERY MATCH IS KEPT, NOT THE FIRST (@SCN-LDG-036), and `answerOf` reads them: a failed test
+  // beside a passing one citing the same scenario is `failing`, wherever its file sorts.
+  const { outcome, credit } = answerOf(evidenceObservations.filter(
     (o): o is RuntimeEvidenceObservation =>
       // TWO SURVIVING MUTANTS LIVE ON THIS CLAUSE, KEPT DELIBERATELY (3F-2237). Stryker has no
       // equivalence detection, so a mutant no test can kill is indistinguishable from one nobody
@@ -545,23 +586,15 @@ export function reconcileEvidenceObligation(
       o.broken !== true &&
       o.qualityCheck === req.qualityCheck &&
       o.scnId === scnId
-  ));
-  let outcome: Outcome;
-  if (!match) {
-    outcome = "missing";
-  } else if (match.status === "passed") {
-    outcome = "satisfied";
-  } else {
-    outcome = "failing";
-  }
-  // The CREDIT side (@SCN-LDG-027): the matched runtime observation, present for the two-sided
+  ), runtimeOutcomeOf);
+  // The CREDIT side (@SCN-LDG-027): the credit carrying the outcome, present for the two-sided
   // outcomes `satisfied` / `failing` and absent for `missing` — the conditional spread keeps
   // `missing` observation-free (obligation Exists, observation None).
   return makeQualityCheckReconciliation({
     qualityCheck: req.qualityCheck,
     outcome,
     evidenceObligation: req,
-    ...(match ? { evidenceObservation: match } : {}),
+    ...(credit ? { evidenceObservation: credit } : {}),
   });
 }
 
