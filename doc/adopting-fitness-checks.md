@@ -430,6 +430,9 @@ reconciling **missing** and the run out of balance.
 
 ## The gates your checks run under
 
+*These gates bind 3F's own products, an adopter's repository among them. If you are not one of those, bring your own
+gates: nothing below binds you, and this page's model works the same without them.*
+
 *Your checks are one half of a wider arrangement, and the other half is the gates the portfolio
 holds every product to. This section names them and links their canon. **It states no number** —
 the numbers live in the canon pages below, and a copy here would drift from them.*
