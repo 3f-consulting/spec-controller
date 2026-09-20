@@ -36,6 +36,43 @@
  * DELETIONS DO NOT. A deleted file cannot violate a complexity rule, and its path would otherwise sit
  * in the gate block's `files` naming nothing on disk.
  *
+ * ═══ A THIRD-PARTY TOOL WAS TRIED AND CANNOT DO THIS (3F-3608, 2026-09-20) ═══
+ *
+ * The default for check code here is to convert it to something off the shelf (lane rule 24), so
+ * this module's survival is a claim that owes evidence. `eslint-plugin-diff@2.1.7` — the candidate
+ * that advertises exactly this job — was INSTALLED AND RUN against this repository, on a branch cut
+ * at 64e8c384 while main moved on to 6e37f88e. It fails all three questions the spike asked, in the
+ * five distinct ways below — questions 1 and 3 each fail twice — and every one of them is in the
+ * package's model rather than its version:
+ *
+ *   TWO-DOT, SO IT BLAMES THE WRONG AUTHOR. `dist/git.js` runs `git diff <commit>` and
+ *   `dist/processors.js` sets that commit to `origin/<branch>`; the package calls `merge-base`
+ *   nowhere. Measured on that branch: this module returned the 2 files the branch touched, the
+ *   plugin returned 11 — nine of them another branch's merge on main. That is the fault the
+ *   MERGE-BASE paragraph above exists to prevent.
+ *
+ *   IT CANNOT SEE AN UNTRACKED FILE. `--diff-filter=ACM` over `git diff` never lists one, so the
+ *   brand-new over-long module the UNTRACKED paragraph above calls the case a developer most needs
+ *   to see red is invisible to it.
+ *
+ *   IT HAS NO SEVERITY DIMENSION, so it deletes the report instead of narrowing the gate. It is a
+ *   processor that filters findings to changed LINES. Layered onto this repository's real config it
+ *   reported 196 files analysed and 0 messages, against the 20 warnings the bare run reports. The
+ *   report/gate split is two severities over one analysis; a filter cannot express it.
+ *
+ *   ITS CI ANCHOR IS THE BRANCH NAME, not the base commit — `GITHUB_BASE_REF`, not the
+ *   `GITHUB_BASE_SHA` this module and `lintScnSubIssuesCli.ts` both read.
+ *
+ *   AND ITS LOCAL MODE GATES NOTHING ONCE YOU COMMIT. Its default is `git diff HEAD`, so at the
+ *   same moment it listed 3 files to this module's 5 while the work was uncommitted, and 0 files
+ *   to this module's 5 after the work was committed — which is the ordinary state of a branch
+ *   between commit and push.
+ *
+ * SO THIS MODULE STAYS, ARGUED RATHER THAN ASSUMED. What would change the answer: a release that
+ * anchors on a merge base, emits severities rather than filtering, and reads the base commit rather
+ * than the branch name. (A `3.0.0-1` exists on the `next` tag and was NOT evaluated — this
+ * repository does not take a pre-release dependency, and all five faults above are in the model.)
+ *
  * ═══ IT THROWS RATHER THAN RETURNING NOTHING WHEN GIT CANNOT ANSWER ═══
  *
  * An empty list is a LEGITIMATE answer — it is the answer on every `push: main` run, where
