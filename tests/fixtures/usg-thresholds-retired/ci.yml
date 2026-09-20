@@ -1,8 +1,0 @@
-name: CI
-on: [push, pull_request]
-jobs:
-  ci:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Rule check
-        run: pnpm lint:foo

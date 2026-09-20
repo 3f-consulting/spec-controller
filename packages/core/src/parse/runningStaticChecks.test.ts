@@ -338,15 +338,18 @@ describe("[SCN-USG-013] a `uses:` step is a candidate fitness check, reported by
   });
 });
 
-describe("[SCN-USG-022] a step invoking two scripts is named by the first it invokes, the tiebreak's removal", () => {
-  // GREEN ON FIRST RUN, DELIBERATELY (3F-3399's carve-out — drive-scenario's discriminator: would
-  // the earlier sub-issue have shipped this code for its OWN red? Yes). `handleOf`'s
-  // `invoked[0] ?? step.identity` fallback is the exact line 3F-3396 landed deleting the
-  // configured-check tiebreak (specController.staticChecks no longer settles anything, so nothing
-  // is left to prefer); this arm adds no new production code, only the first witness of a
-  // multi-script step, which nothing in this tree exercised before. Mutation-proved locally
-  // (handleOf changed to prefer invoked[1] over invoked[0] — this arm reds; reverted) rather than
-  // staged red, because no CI-red is reachable for a guarantee already fully shipped by a sibling.
+describe("[SCN-USG-001] runningStaticChecks — a step invoking two scripts is named by the first it invokes", () => {
+  // ONE OBSERVATION PER CHECK STEP, which is @SCN-USG-001's own reading taken at its hardest
+  // input: a single CI `run:` block invoking two of the target's scripts is still ONE step this
+  // reader saw, so it yields ONE observation and there is one handle to choose. `handleOf`'s
+  // `invoked[0] ?? step.identity` is where that choice is made, and this is the ONLY arm in the
+  // tree that drives a multi-script step — nothing else exercises the fallback, so these teeth
+  // are load-bearing rather than incidental. Mutation-proved rather than staged red, because the
+  // behaviour it pins already ships — and proved by the NARROW mutant, which is the one that
+  // settles it: `invoked[invoked.length - 1]` is byte-identical for every single-script step and
+  // differs only here, so it reds exactly ONE test in the whole suite, this one, with Cucumber
+  // untouched (3F-3611). The obvious mutant, `invoked[1]`, reds eleven — `invoked[1]` is
+  // undefined for a single-script step — so it cannot tell a sole witness from a shared one.
   const pkg: PackageJsonScripts = {
     scripts: {
       "check:format": "prettier --check .",

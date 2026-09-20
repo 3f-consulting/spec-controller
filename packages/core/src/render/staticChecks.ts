@@ -12,31 +12,6 @@
 import type { RenderInput } from "../assemble/renderInput.js";
 
 /**
- * WHAT BECAME OF ONE RETIRED KEY, in the words its own consequence earns.
- *
- * A ROW-LEVEL FORM ONCE STOOD BESIDE THIS ONE — `fitnessChecks[<@SCN>].<key>`, a bar
- * (@SCN-LNT-035) or a characteristic (@SCN-LNT-039) — and said something different, because its
- * consequence was different: the row still reached the books and only the value on it was unread.
- * It left with the key its rows sat under (3F-3582). `fitnessChecks` is itself retired now, so
- * every retired key says the one thing again: nothing of it reaches the books.
- */
-const RETIRED_KEY_FATE = "this reader no longer reads it, and none of its entries reach the books.";
-
-/**
- * THE RETIRED-KEY ACCOUNT (@SCN-USG-021) — one line per `specController.*` key this reader has
- * retired that the target's manifest still carries, naming the key and saying what became of it.
- *
- * THE LINE EXISTS BECAUSE THE ALTERNATIVE IS SILENCE, the same argument
- * `behaviouralRunners.ts`'s `unrecognisedKeyAccount` makes for a key the target INVENTED: a
- * consumer who wrote `checkRegistry` in good faith, when it was read, believes it still routes
- * their checks. Nothing reads it now — the entries it names reach no candidate and resolve no
- * citation — so the only remaining question is whether they get to find that out, and this is
- * the answer.
- */
-const retiredKeyAccount = (keys: readonly string[] | undefined): string[] =>
-  (keys ?? []).map((key) => `- specController.${key} — retired: ${RETIRED_KEY_FATE}`);
-
-/**
  * Static checks (@SCN-USG-001) — the STATIC-check evidence observation side under
  * Summary views, the mirror of `### Test volume` on the runtime axis. Renders the counts line
  * (`N static check(s) run, K uncited static check(s)`) alone — a pure counts summary, symmetric with
@@ -54,11 +29,6 @@ export const staticChecksSection = (report: RenderInput): string[] => {
   // would print one fault twice with two remedies attached.
   const { staticChecks: counts } = report.summary;
   if (!counts) return [];
-  // THE RETIRED-KEY ACCOUNT (@SCN-USG-021) renders HERE, under the same heading, because a
-  // retired key is a fact about the STATIC axis: every key this reader has retired so far named
-  // a route onto this axis's books, never the runtime one. OMIT-WHEN-EMPTY, the same as every
-  // account beside it.
-  const retired = retiredKeyAccount(report.summary.retiredKeys);
   // A pure counts summary off `summary.staticChecks` (2.4) — symmetric with the
   // runtime `### Test volume` line. There is no census section: the per-guard DETAIL lives in
   // the rows (named → each scenario's fitness sub-row; the no-evidence-obligation static-checks surface
@@ -68,6 +38,5 @@ export const staticChecksSection = (report: RenderInput): string[] => {
     "### Static checks", "",
     `${counts.runningStaticCheckCount} static check(s) run, ${counts.uncitedStaticCheckCount} uncited static check(s).`,
     "",
-    ...(retired.length > 0 ? [...retired, ""] : []),
   ];
 };

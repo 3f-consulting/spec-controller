@@ -718,25 +718,6 @@ export interface Summary {
    */
   unrecognisedRunnerKeys?: readonly string[];
   /**
-   * THE specController.* KEYS THIS READER HAS RETIRED (@SCN-USG-021) — the top-level keys a
-   * manifest carries that this tool no longer reads, in the order the manifest wrote them.
-   *
-   * NOT unrecognisedRunnerKeys, which names a key the target INVENTED. This one names a key
-   * the target wrote CORRECTLY, under a name this reader once read and has since stopped
-   * reading — `checkRegistry` first. Its entries reach no candidate, resolve no citation, and
-   * are simply not there for anything downstream to find; naming the key is the only way a
-   * consumer who wrote it in good faith learns that none of it is taking effect.
-   *
-   * A ROW-LEVEL FORM ONCE RODE IN THE SAME ACCOUNT (the retired @SCN-LNT-035, @SCN-LNT-039) —
-   * `fitnessChecks[SCN-XXX-NNN].atLeast` and its siblings — because the row itself still reached
-   * the books and only the value on it was unread. It left with `fitnessChecks`, which is itself a
-   * retired key now (3F-3582) and earns one line like any other.
-   *
-   * PRESENT ONLY WHEN NON-EMPTY, so a target that carries no retired key — every target today
-   * that has never written one — renders and serialises byte-identically to before.
-   */
-  retiredKeys?: readonly string[];
-  /**
    * THE STEPS THE TARGET NAMES NON-CHECKS (@SCN-USG-015) — `specController.notChecks`' entries
    * that named a step of the pipeline this run read, each as the consumer wrote it.
    *

@@ -47,12 +47,24 @@ import { resolveDeferralTags } from "./targetManifest.js";
  * then drift the first time a tier is added — and the check that then reds is the one telling
  * authors which words are legitimate.
  *
- * BARE `lint` STAYS GRAMMAR, AND ONLY BECAUSE AN ADOPTER WRITES IT (3F-3525). The quality check it
- * once named is `fitness` now, and `@lint` raises nothing — it is in neither map. But an adopter's repository's corpus
- * carries it (`an-adopters-repository/features/static-checks.feature`), and a reader does not contract a
- * shape an adopter still writes (canon: publishing-npm-packages.md, expand/contract step 4). So it
- * is admitted here, as a word, and raises no obligation anywhere; the day no adopter writes it, it
- * leaves in a deliberate step that says so.
+ * AND BARE `lint` IS GONE FROM IT — THIS IS THE DELIBERATE STEP THE CARVE-OUT NAMED (3F-3614).
+ * The word was admitted here as a word and nothing more: the quality check it once named is
+ * `fitness` now, it is in neither map, and it raised no obligation anywhere. What it was kept for
+ * was an adopter's corpus that still wrote it (`an-adopters-repository/features/static-checks.feature`),
+ * on the reading that a reader does not contract a shape somebody still writes. The operator's
+ * ruling of 2026-09-20 retires that reading with the rest of the backward compatibility — an adopter's repository
+ * adopts the current model whole on restart — so the word is now what it has meant for a while:
+ * a tag that means nothing here, served by the same rule and the same message as any other.
+ *
+ * WHAT A CORPUS CARRYING IT GOT WHILE THE CARVE-OUT STOOD WAS SILENCE, which is what makes its
+ * removal a change of substance rather than tidying. `@lint` on an @SCN scenario looked like a
+ * word that named something, owed nothing, and was named by no report — the exact silent slip
+ * the rest of this module exists to close, standing inside the rule that closes it.
+ *
+ * ONE LITERAL LEFT, NOT THE SET. `TIER_TAGS` is what `isGrammar` reads for every tier tag there
+ * is, so a change taking the array out rather than the word would red every tiered scenario in
+ * every corpus — and would exit 1 over the same fixture. @SCN-STG-012's tree carries a tiered
+ * control beside its offending scenario for that reason, and its arm reads the finding.
  *
  * THE PENDING SPELLINGS ARRIVE WITH THE PENDING LIST, derived from the engine's own lexicon. The
  * private check this rule moved out of kept its own four-member tier list, so a pending fitness tag
@@ -62,7 +74,6 @@ import { resolveDeferralTags } from "./targetManifest.js";
  */
 const TIER_TAGS: readonly string[] = [
   ...RUNTIME_QUALITY_CHECK_TAGS,
-  "lint",
   ...PENDING_QUALITY_CHECK_TAGS,
 ];
 

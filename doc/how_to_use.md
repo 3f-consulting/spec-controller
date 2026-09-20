@@ -69,22 +69,11 @@ out of balance, exactly as a `@unit` scenario with no test does; a step stating 
 scenario carries posts to a **phantom** row, and a step stating none posts to **suspense**. All
 three are faults a run says out loud.
 
-**If your `package.json` still carries `specController.fitnessChecks`, nothing breaks and nothing
-changes.** The key is retired and the reader goes on accepting it. A run over such a tree prints one
-line under `### Static checks` —
-
-```
-- specController.fitnessChecks — retired: this reader no longer reads it, and none of its entries reach the books.
-```
-
-— and that is the whole of it: the line names **the key**, never the rows beneath it and never the
-keys a row carries, and the run reconciles to the same ledger and the same exit code as the same
-tree with the key deleted. Drop it when it suits you.
-
-**Retired as something you WRITE is a different claim from gone from what the reader ACCEPTS, and
-the two have separate dates.** Nothing above asks you for that key: the two artefacts are the whole
-of what you author. What the reader still does with a key an earlier adopter wrote is name it and
-read past it, and that stays true until a release says otherwise.
+**`specController.fitnessChecks` is not read, and is no longer named on the report either.** Until
+`3F-3606` (operator ruling 2026-09-20: no backward compatibility) a run over a tree carrying the key
+printed one line under `### Static checks` naming it as retired. That line is gone, along with the
+account behind it: the key is now passed over exactly as any other key this tool does not know, and
+the two artefacts above are the whole of what you author.
 
 **One `toJSON(steps)` dump step per job** is what lets the reconciler read what each step did, and
 `--ci-steps` is what points `balance` at it. That is wiring rather than declaration, so it is under

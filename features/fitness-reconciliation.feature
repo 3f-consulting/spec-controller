@@ -21,11 +21,12 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
   nothing is resolved through a second artefact, so there is no static-axis posting rule left to
   be special.
 
-  THE RETIRED PATHS RAISE NOTHING. A target that still carries `specController.checkRegistry`, or
-  tags its scenarios with a bare check word, has declared no check by it: the registry is named on
-  the report as a retired key (3F-3161), and a bare check word raises no Evidence Obligation, since
-  no set of registered check tags is read any more (3F-3561). A check is its `@fitness` scenario,
-  and nothing else declares it.
+  THE RETIRED PATHS RAISE NOTHING, AND ARE NAMED NOWHERE. A target that still carries
+  `specController.checkRegistry`, or tags its scenarios with a bare check word, has declared no
+  check by it: the registry is passed over like any key this reader has no reading for (3F-3161
+  stopped reading it; 3F-3606 removed the account that used to name it), and a bare check word
+  raises no Evidence Obligation, since no set of registered check tags is read any more (3F-3561).
+  A check is its `@fitness` scenario, and nothing else declares it.
 
   WHAT THE FILE IS CALLED, AND WHY THE CODE IS NOT. The feature code is @LNT because a code, once
   allocated, is stable forever: it survives a rename and is never reused — a rule this repository
@@ -33,8 +34,10 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
   left with the check that read it. The name it was allocated under — the retired `@lint=<handle>`
   form, where a scenario named a runnable script and the run was matched back to it BY NAME — is
   the thing this feature retired, so the FILE took the right name and the code stayed put. Bare
-  `@lint` survives as GRAMMAR alone — recognised, raising nothing, kept because an adopter's corpus
-  still writes it (3F-3525).
+  `@lint` survived for a while as GRAMMAR alone — recognised, raising nothing, kept because an
+  adopter's corpus still wrote it (3F-3525). It stopped being grammar at 3F-3606: the wait ended
+  with the compatibility position, and a bare `@lint` now reds the corpus check like any other
+  word that means nothing here (@SCN-STG-012).
 
   A fitness obligation reconciles as evidence only when the check actually holds over the
   REAL source: its command must be a `run:` step in the CI config over the real tree — not

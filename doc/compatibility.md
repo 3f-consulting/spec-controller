@@ -18,31 +18,25 @@ in the eight days that followed. A commitment maintained by hand against a
 moving model is one that gets broken quietly — so it is withdrawn deliberately
 instead, while withdrawing it still costs nobody anything.
 
-**What the reader accepts today.** `specController.runners` and `notChecks`, and the `--ci-steps`
-record, are read exactly as they were. `specController.fitnessChecks` is still ACCEPTED — a
-manifest carrying it reconciles exactly as the same tree without it does — but nothing of it is
-read; the key is named on the report (see below).
+**What the reader reads today.** `specController.runners` and `notChecks`, and the `--ci-steps`
+record. That is the whole list. There is one way to declare a fitness check, and it is two
+artefacts: a `@fitness` scenario, and its `@SCN` as the `id:` of the CI step that runs the check.
+See [`adopting-fitness-checks.md`](./adopting-fitness-checks.md).
 
-**Manifest keys that are no longer read are named on the report, never read
-quietly.** `specController.checkRegistry` and `specController.staticChecks` were
-retired by `3F-3161`. Neither produces a credit, raises an obligation, or settles
-which script a CI step is named by; a bare check tag on a scenario now means
-nothing, and a run over such a tree reports the retired key by name rather than
-reading it quietly. A `fitnessChecks` row's `characteristic` was retired by
-`3F-3525`, when the characteristic left the model: one `@fitness` scenario is one
-check, identified by its `@SCN` and described by its title. `specController.thresholds`, a
-`fitnessChecks` row's `atLeast` / `atMost` (a `mutationGate` bar sits under `atLeast`) and the
-`--measurements` flag were retired by `3F-3506`, with the measured route they
-belonged to: no number reaches the ledger any more. Those are named on the report the same way;
-`--measurements` is refused as retired, exit 2, and the refusal names what replaced it rather than
-a pin that would bring it back.
+**A key this reader has no reading for is passed over — it is not read, and it is not named
+either.** `specController.checkRegistry` and `specController.staticChecks` stopped being read at
+`3F-3161`; a `fitnessChecks` row's `characteristic` at `3F-3525`; `specController.thresholds` and a
+row's `atLeast` / `atMost` at `3F-3506`; `specController.fitnessChecks` itself at `3F-3582`. For a
+time the report carried a line per retired key a manifest still held, so that a consumer who had
+written one in good faith would find out it no longer did anything. **That account was removed at
+`3F-3606`** (operator ruling, 2026-09-20: no backward compatibility — no third party consumes this
+package, and the one adopter adopts the current model whole). A manifest carrying any of those keys
+now reconciles to the same ledger and the same exit code as the same manifest without them, with
+nothing on the report either way.
 
-**`specController.fitnessChecks` itself was retired by `3F-3582`,** and the whole key is now named
-on the report as one line. A `@fitness` scenario raises its obligation from its TAG, whether or not
-anything runs it, so nothing is left for a list to decide. There is one way to declare a fitness
-check, and it is two artefacts: a `@fitness` scenario, and its `@SCN` as the `id:` of the CI step
-that runs the check. See
-[`adopting-fitness-checks.md`](./adopting-fitness-checks.md).
+**The `--measurements` flag is the one retirement still answered out loud**, because a flag is
+given on a command line rather than sitting in a file: it is refused as retired, exit 2, and the
+refusal names what replaced it rather than a pin that would bring it back.
 
 **The observed script prefixes were already gone** before this page was rewritten
 — `3F-3343` retired `lint:`/`guard:` discovery and replaced it with declared

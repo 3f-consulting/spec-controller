@@ -371,6 +371,70 @@ Then("it fails, naming the unrecognised tag and the tier it resembles", function
 });
 
 /**
+ * @SCN-STG-012 — the RETIRED CHECK NAME, on the same shipped binary as the arms above.
+ *
+ * ITS `When` IS @SCN-STG-010'S, for that arm's reason: one step runs the command a `Given` chose
+ * the target for, so the arms cannot come to disagree about what "the shipped corpus check"
+ * means. What moved is the tree, and with it the word under test.
+ *
+ * BARE `lint` WAS ADMITTED AS A TIER WORD, and only because an adopter's corpus wrote it — the
+ * quality check it once named is `fitness` now and the word raises nothing anywhere. That
+ * carve-out ends with the rest of the backward compatibility (3F-3614), so a corpus still
+ * writing it is told so by the same rule and in the same message as any other tag that means
+ * nothing here.
+ *
+ * FROM INSIDE THE FIXTURE'S OWN TREE, for @SCN-STG-002's reason: the sets the grammar resolves
+ * come off the manifest at the command's cwd, so a run from `repoRoot` would read THIS
+ * repository's while claiming to have read the fixture's.
+ *
+ * TWO SCENARIOS IN ONE TREE, WHICH IS THIS ARM'S DISCRIMINATOR. One LITERAL leaves the derived
+ * tier set; the set itself stays, and it is what recognises `@unit`. A change that took the
+ * array out instead would red every tiered scenario in every corpus — and would exit 1 over
+ * this tree exactly as the intended change does. The tiered scenario beside the offending one
+ * is what tells those two apart, and it is read off the FINDING rather than the exit status.
+ */
+// @SCN-STG-012
+Given("a target whose @SCN scenario carries a bare @lint tag", function () {
+  corpusTarget = "tests/fixtures/scn-tags-bare-lint";
+});
+
+// @SCN-STG-012
+Then("it fails, naming the unrecognised tag", function () {
+  assert.equal(
+    exitCode,
+    1,
+    `expected the shipped corpus check to fail (exit 1) over a target whose @SCN scenario ` +
+      `carries bare @lint, but it exited ${exitCode}. Output:\n${output}`
+  );
+  // THE TAG, BOUND TO THE SCENARIO THAT CARRIES IT. `@lint` appearing somewhere in the output
+  // would be satisfied by a command redding this tree for another reason and quoting the corpus
+  // back; what this arm is about is a FINDING that names the retired word.
+  assert.match(
+    output,
+    /@SCN-TGT-001 carries @lint\b/,
+    `expected the finding to name the offending scenario and the retired word it carries; ` +
+      `got:\n${output}`
+  );
+  // AND NOT THE TIERED CONTROL BESIDE IT. `@unit` is the scheme's own word and stays grammar; a
+  // finding naming SCN-TGT-002 means the derived tier SET left rather than the one literal out
+  // of it — which reds every tiered scenario in every corpus, and exits 1 here either way.
+  assert.doesNotMatch(
+    output,
+    /SCN-TGT-002/,
+    `expected the tiered control scenario to be left alone — only the literal leaves the tier ` +
+      `set, never the set itself; got:\n${output}`
+  );
+  // EXACTLY ONE FINDING, so the assertions above are statements about this tag rather than about
+  // a command that reds this tree for some other reason as well.
+  assert.match(
+    output,
+    /1 finding\(s\)/,
+    `expected exactly the one retired-word tag to be found — a second finding means the command ` +
+      `reds this tree for a reason this arm is not about; got:\n${output}`
+  );
+});
+
+/**
  * @SCN-STG-005 — the words that NAME A CHECK, on the same shipped binary as the five above.
  *
  * ITS `When` IS @SCN-STG-010'S, for that arm's reason: one step runs the command a `Given`

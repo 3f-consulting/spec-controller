@@ -43,18 +43,26 @@ import { reconcilerSteps, type ReconcilerSteps } from "../parse/reconcilerSteps.
 import {
   resolveDeferralTags,
   resolveNotChecks,
-  resolveRetiredKeys,
   resolveRunners,
   type ResolvedRunners,
 } from "../parse/targetManifest.js";
 import type { BehaviouralRunner } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
 
-/** A target's manifest as this composition reads it — its scripts, and its `specController` block. */
+/**
+ * A target's manifest as this composition reads it — its scripts, and its `specController` block.
+ *
+ * EVERY FIELD HERE IS ONE A LIVE READER RESOLVES, and that is a published claim rather than an
+ * internal note: this type is reachable from the barrel through `EvidenceReconciliationSources`,
+ * so it is emitted into `dist/**\/*.d.ts` and ships under `files: ["dist"]`. A field listed here
+ * tells an adopter's editor that the key is one this reader takes. `staticChecks` was still
+ * listed after 3F-3161 stopped reading it and 3F-3396 deleted the tiebreak it settled — so the
+ * published types went on advertising a key nothing resolved, which is the same fault as a
+ * document promising a retired shape still works, reached through the type surface (3F-3606).
+ */
 type TargetManifest = PackageJsonScripts & {
   specController?: {
     deferralTags?: unknown;
-    staticChecks?: unknown;
     runners?: unknown;
     notChecks?: unknown;
   };
@@ -322,12 +330,7 @@ function withReaderAccounts(
     withScopeAccount(
       withExclusionAccount(
         withReconcilerAccount(
-          withRunnerAccount(
-            withRetiredKeysAccount(reconciliation, packageJson),
-            input.ciSources,
-            packageJson,
-            runners
-          ),
+          withRunnerAccount(reconciliation, input.ciSources, packageJson, runners),
           reconciler
         ),
         exclusions
@@ -343,32 +346,6 @@ function withReaderAccounts(
     reconciler,
     exclusions
   );
-}
-
-/**
- * THE RETIRED-KEY ACCOUNT (@SCN-USG-021) — the target's own `specController.*` keys this reader
- * no longer reads, carried onto the summary the factory built rather than threaded through it,
- * for the reason the half-converted scenarios beside it are: the factory's inputs are the
- * JOURNAL, and a retired key is neither an obligation nor an observation. Nothing reads it, so
- * there is no row for it to be derived from — only a name for the report to carry.
- *
- * READ OFF THE SAME MANIFEST EVERY OTHER GRAFT IN THIS MODULE COMES FROM, and nothing else: a
- * retired key is a fact about what the target WROTE, not about its pipeline, so it needs no CI
- * bytes and no corpus reading to resolve.
- *
- * ONLY WHEN THERE IS SOMETHING TO SAY, so a target that has never written a retired key — every
- * target today — renders and serialises byte-identically to before.
- */
-function withRetiredKeysAccount(
-  reconciliation: EvidenceReconciliation,
-  packageJson: TargetManifest
-): EvidenceReconciliation {
-  const retiredKeys = resolveRetiredKeys(packageJson);
-  if (retiredKeys.length === 0) return reconciliation;
-  return {
-    ...reconciliation,
-    summary: { ...reconciliation.summary, retiredKeys },
-  };
 }
 
 /**

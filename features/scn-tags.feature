@@ -17,8 +17,9 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
   another file.
 
   A TIER TAG IS STILL GRAMMAR, WHICH IS THE HALF THAT STAYED. The tier tags are recognised
-  words — @unit, @integration, @e2e, @performance, their pending variants and bare @lint —
-  and what left with the floor is the OBLIGATION to carry one. The rest of the grammar is
+  words — @unit, @integration, @e2e, @performance and their pending variants —
+  and what left with the floor is the OBLIGATION to carry one. Bare @lint was admitted here too,
+  for as long as an adopter's corpus still wrote it; it left at 3F-3606 and now reds (@SCN-STG-012). The rest of the grammar is
   DERIVED, never restated: the @SCN id, the header code the file itself carries, a member of
   the target's resolved deferral set, and the one word that names the fitness axis.
 
@@ -67,11 +68,33 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     reds all the same. A guess that steers the fix is worth having; a guess that
     decides the outcome would make the gate only as good as its edit distance.
 
+    AND THE RETIRED CHECK NAME IS OUTSIDE THE GRAMMAR TOO (3F-3614). Bare `@lint` was
+    admitted as a recognised word for as long as an adopter's corpus wrote it — a reader
+    does not contract a shape somebody still writes. The quality check it once named is
+    `fitness` now and the word raises nothing anywhere, so what a corpus carrying it got
+    was silence: a scenario that looks like it names something, owing nothing, named by no
+    report. The operator's ruling of 2026-09-20 ends the carve-out with the rest of the
+    backward compatibility, and the word is served by the rule above rather than by a clause
+    of its own — a tag that means nothing here, said in the one message there is for that.
+
+    ONE LITERAL LEAVES, NOT THE SET, and the fixture says so rather than the commit message.
+    The tier set is what recognises `@unit`, so a change that took the set out instead of the
+    word would red every tiered scenario in every corpus — and would exit 1 over this fixture
+    just the same. So the fixture carries a tiered scenario beside the offending one and the
+    arm reads the FINDING: the retired word named, the tiered control unnamed, one finding and
+    no more.
+
     @integration @SCN-STG-002
     Scenario: an unrecognised tag reds the shipped command, naming it and the tier it resembles
       Given a target whose @SCN scenario carries a mistyped tier tag
       When the target runs the shipped corpus check
       Then it fails, naming the unrecognised tag and the tier it resembles
+
+    @integration @SCN-STG-012
+    Scenario: a bare @lint tag reds the shipped command, the retired check name being grammar nowhere
+      Given a target whose @SCN scenario carries a bare @lint tag
+      When the target runs the shipped corpus check
+      Then it fails, naming the unrecognised tag
 
   Rule: a recognised community deferral tag is grammar, not a typo
 
@@ -126,8 +149,8 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     THE FLAT SET, AND WHAT THE GRAMMAR HAS TO ADMIT. A fitness check is named by a BARE tag —
     complexity, typecheck, vocab — a flat peer of the behavioural tiers rather than a member of
     some group. There is no behavioural=unit, so there is no fitness=complexity (canon 2026-08-07,
-    the bare-tags Correction). The scheme's own words are four tier tags, their pending variants
-    and bare lint, and a fitness scenario carries none of them: once the technique leaves the tag,
+    the bare-tags Correction). The scheme's own words are four tier tags and their pending variants,
+    and a fitness scenario carries none of them: once the technique leaves the tag,
     a fitness scenario carries its bare check and nothing else. So a word that NAMES A CHECK is
     grammar too (@SCN-STG-005), or the shipped command reds every one of the ten fitness scenarios
     in features/fitness-checks.feature for carrying a tag that means nothing here — measured, ten

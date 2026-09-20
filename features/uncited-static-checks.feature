@@ -56,10 +56,11 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
   ci.yml is a candidate now, so the denominator is this repository's whole pipeline: every check it
   runs is discovered, each carrying the code of the scenario it answers on its own step, and nought
   uncited. (The count that stood here is gone for the reason the paragraph below gives.)
-  The residual that remains is a smaller one — specController.staticChecks is still honoured and
-  is now inert, and 3F-3161 owns its removal. That removal no longer engages a major version: the
-  compatibility commitment naming one was withdrawn (3F-3376), made to nobody, and no consumer
-  was ever measured routing credits through it.
+  The residual that stood here is gone: specController.staticChecks stopped settling anything at
+  3F-3161, and 3F-3606 removed the last of it — the account that named a retired key on the report.
+  A manifest carrying the key is now passed over, named nowhere. That removal engaged no major
+  version: the compatibility commitment naming one was withdrawn (3F-3376), made to nobody, and no
+  consumer was ever measured routing credits through it.
 
   What is NOT vacuous over this tree is the number beside it. The "static check(s) run" figure counts
   the running fitness credits this pipeline's own candidate steps post, so it is answered by those steps
@@ -526,118 +527,6 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
       When the reconciliation report is rendered for the target
       Then the report names that key as one it does not recognise
       And the check is on the books as an uncited static check
-
-  Rule: a manifest key this reader has retired is named on the report, never read
-
-    THIS IS THE SUB-ISSUE THE PARENT IS NAMED FOR. Every scenario above it takes the registry
-    route away in code; this one tells the consumer it is gone. specController.checkRegistry
-    used to be a second way to declare a fitness check — a runnable handle mapped to a bare
-    check tag, read here and joined to a stepless scenario carrying that tag — and none of that
-    reading survives (3F-3161). What is left to settle is not whether the key still works; it
-    does not, and nothing in this file undoes that. What is left is whether a consumer who wrote
-    it finds out.
-
-    RETIRED IS NOT UNRECOGNISED, AND THE TWO KEYS BESIDE EACH OTHER ARE WHY THE DISTINCTION
-    HOLDS. @SCN-USG-019's key is one the target INVENTED — this reader never read it under any
-    version of itself. checkRegistry is a key the target wrote CORRECTLY, under a name this
-    reader once read and has since stopped reading. The consumer did nothing wrong; the tool
-    changed under them. Naming it is the same duty as naming an invented key — a written
-    configuration that took no effect is a fact the report owes either way — so the account is
-    the same shape (@SCN-USG-019's unrecognisedRunnerKeys, mirrored here as retiredKeys) rather
-    than a second mechanism invented for a similar-looking problem.
-
-    NO NEW VERDICT, BECAUSE THE FAILURE ALREADY EXISTS ONCE THE READER STOPS. The check the
-    registry used to name still runs in CI and still reaches discovery by subtraction — nothing
-    about that changed — but with no registry to resolve it, its credit cites no scenario and
-    posts to suspense: `balance` is already out of balance over it, exit non-zero, before this
-    Rule adds a word. The bare-tagged scenario the registry used to answer carries no @SCN, so
-    it was always going to reconcile `no-scn-code` the moment nothing else claimed it
-    (@SCN-LDG-021) — that is not new either. What is new is the ONE LINE naming which key a
-    consumer wrote that no longer does anything, so an all-suspense report is not read as an
-    unexplained wall of failure.
-
-    THE CLAIM IS RED TODAY, GENUINELY, unlike most of this slice. Every check above proves code
-    already deleted; this one proves a name the report does not yet print. A target carrying
-    `checkRegistry` renders exactly as it would if the key had never retired at all — silent —
-    until this Rule's graft exists.
-
-    THE SECOND RETIRED KEY, THE SAME ACCOUNT. specController.staticChecks is the pair to
-    checkRegistry above rather than a second mechanism: append the key, and the same
-    retiredKeys field, the same graft, the same render account already carry it. What
-    differs is the CONSEQUENCE a consumer notices, because the two keys never did the same
-    job. checkRegistry named a check outright and produced a credit; staticChecks never
-    produced one — since 3F-3343 it settled nothing about WHETHER a step is a check, only
-    which of several scripts a step invoking more than one of them names AS the check
-    (3F-3396 deleted that tiebreak). Retiring it does not remove a check from the books; it
-    removes the tiebreak, so a step invoking two scripts is now named by the first one it
-    invokes rather than by the one the list nominated.
-
-    THAT SECOND CONSEQUENCE IS THE ONLY PLACE THE TIEBREAK'S REMOVAL IS OBSERVABLE AT ALL.
-    3F-3396 deleted the configured-check branch of handleOf and, with it, the scenario that
-    was the branch's only witness — leaving nothing in this corpus that drives a step invoking
-    more than one script. Naming the retired key alone would repeat the claim above over a
-    different word; asserting the fallback is what earns this its own scenario rather than an
-    arm of the one above.
-
-    THE FOURTH RETIRED KEY, AND THE ONE A CONSUMER IS MOST LIKELY TO STILL BE WRITING.
-    specController.fitnessChecks was how a target declared its fitness checks: a list of entries,
-    each naming a scenario's @SCN and the command that is the check. Nothing reads it (3F-3582) —
-    a @fitness scenario raises its obligation from its tag, and the credit is the CI step whose
-    id: is that @SCN, so an adopter writes the scenario and annotates the step and nothing else.
-    The key is appended to the same set and rendered by the same line as the three above.
-
-    ITS SCENARIO ASSERTS A COMPARISON RATHER THAN AN ABSENCE, WHICH IS WHAT IT IS FOR. "Named" is
-    cheap; "changes nothing" is the promise an adopter relies on while their manifest still
-    carries the key, and it is what lets this repository's own package.json keep its list across
-    the expand merge. So the second arm reconciles the SAME corpus, CI and run record against a
-    manifest with the key struck out, and compares the whole ledger and the exit code. A reader
-    that named the key while still reading one of its entries would show as a diff there, and a
-    conserved exit code alone would hide a changed verdict.
-
-    THE THIRD RETIRED KEY, AND THE ONE WHOSE CONSEQUENCE IS ALREADY PAID. specController.thresholds
-    held a scenario to a ceiling — keyed by @SCN, then by the check the ceiling was written for —
-    and it was the only thing that made a bare tag like ci-run-time raise a measured obligation at
-    all. That axis left whole (3F-3516), so the key is read by nothing and the obligation it used
-    to raise is raised by nothing: a scenario carrying that tag and no evidence tag reconciles as
-    any untagged-and-uncited scenario does. What is left is the same duty as the two keys above —
-    a consumer who wrote a ceiling in good faith is told it no longer holds anything — so the key
-    is appended to the same set and rendered by the same line. The scenario asserts the absence
-    beside the name because the absence is the half a consumer would otherwise have to infer: a
-    reader that named the key but still raised the obligation would be telling them two things
-    that cannot both be true.
-
-    @unit @integration @SCN-USG-021
-    Scenario: a manifest carrying specController.checkRegistry is named as a retired key, and none of its entries reaches the books
-      Given a target whose manifest registers a check through specController.checkRegistry, naming a check its CI runs
-      And that target's corpus carries a scenario tagged with the registry's bare check tag
-      When the reconciliation report is rendered for the target
-      Then the report names specController.checkRegistry as a key it no longer reads
-      And the check is on the books as an uncited static check, citing no scenario
-      And the bare-tagged scenario raises no Evidence Obligation
-
-    @unit @integration @SCN-USG-022
-    Scenario: a manifest carrying specController.staticChecks is named as a retired key, and no step is named by it
-      Given a target whose manifest carries a specController.staticChecks list
-      And a CI step invoking two of that target's scripts, one of them on that list
-      When the reconciliation report is rendered for the target
-      Then the report names specController.staticChecks as a key it no longer reads
-      And that step is reported under the first script it invokes, not the one the list nominated
-
-    @unit @integration @SCN-USG-023
-    Scenario: a manifest carrying specController.thresholds is named as a retired key, and none of its entries raises an Evidence Obligation
-      Given a target whose manifest holds a scenario to a ceiling through specController.thresholds
-      And that target's corpus carries that scenario, tagged with the check its ceiling was written for and no evidence tag
-      When the reconciliation report is rendered for the target
-      Then the report names specController.thresholds as a key it no longer reads
-      And the scenario the ceiling names raises no Evidence Obligation
-
-    @unit @integration @SCN-USG-024
-    Scenario: a manifest carrying specController.fitnessChecks is named as a retired key, and the same target without it reconciles identically
-      Given a target whose manifest still declares its fitness check through specController.fitnessChecks
-      And that target's corpus carries that check's @fitness scenario, and its CI step states that scenario's @SCN
-      When that target's reconciliation report is rendered from its own manifest
-      Then the report names specController.fitnessChecks as a key it no longer reads
-      And the same target with the key removed reconciles to the same ledger and the same exit code, naming no retired key
 
   Rule: a step the manifest names a non-check is excluded, and the report says so
 

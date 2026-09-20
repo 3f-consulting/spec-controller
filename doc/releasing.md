@@ -372,4 +372,6 @@ by naming it as a retired key. Its migrate step, 3F-3603, deletes that key from 
 `package.json` — and it waits, because the pinned reader cannot read a tree with no list at all until
 the bot's PR moves the pin to 3F-3582's release. Written *at or after* that release, never as an
 equality: the pin lags and jumps. (Its predecessor pair, 3F-3525 and the cancelled 3F-3575, made the
-same shape one step earlier.)
+same shape one step earlier.) **The acceptance that example turns on was itself withdrawn later,
+by 3F-3606** — the reader no longer accepts the key or names it — which changes nothing about the
+ordering rule the example teaches: step 3 still cannot merge before the pin has moved.
