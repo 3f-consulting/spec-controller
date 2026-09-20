@@ -39,7 +39,9 @@ version: 2
 # `dependabot-auto-merge.yml` refuses every other PR.
 #
 # ONCE A DAY, EVERY DAY, WEEKENDS INCLUDED — NO HUMAN ACT IN THE PIN LOOP (operator, 2026-09-19,
-# 3F-3557). `cron` at 22:00 UTC (the default zone) on all seven days of the week. `daily`, which this
+# 3F-3557). `cron` at 11:30 UTC (the default zone) on all seven days of the week — 12:30 in London
+# while BST is in force, which is when the operator set it (2026-09-20; it was 22:00 UTC before that,
+# and the zone is UTC, so the London time shifts by an hour at the GMT/BST boundary). `daily`, which this
 # replaced, runs Monday to Friday only, so a release published on a Saturday waited for Monday or for
 # a person pressing a button. Once a day is as often as GitHub allows: its config check rejected an
 # hourly `cronjob` with "has a minimum interval of 1 hours which is less than the minimum allowed
@@ -56,7 +58,7 @@ updates:
     directory: /
     schedule:
       interval: cron
-      cronjob: "0 22 * * *"
+      cronjob: "30 11 * * *"
     allow:
       - dependency-name: spec-controller
     exclude-paths:
