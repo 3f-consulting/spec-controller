@@ -22,9 +22,10 @@ It has three pieces, and none of them is a number crossing a run boundary:
 
 1. **The bar lives in the tool's own config**, so the scheduled run's
    conclusion *is* the verdict.
-2. **One push step reads that conclusion**, carrying the row's `@SCN` as its
-   `id:`.
-3. **The row names no bar**, so the ledger reads it by that step's outcome.
+2. **One push step reads that conclusion**, carrying the scenario's `@SCN` as
+   its `id:`.
+3. **Nothing names a bar**, so the ledger reads the check by that step's
+   outcome.
 
 ---
 
@@ -75,8 +76,8 @@ Read it flag by flag:
 
 | part | what it decides |
 | -- | -- |
-| `id: SCN-FIT-002` | the step *is* the row's evidence. The run's own step record carries this `id` with the step's `outcome`, and `balance` reads that record. |
-| `if: always()` | the step runs even after an earlier check has redded, so its row gets an outcome instead of reading `broken`. |
+| `id: SCN-FIT-002` | the step *is* the scenario's evidence. The run's own step record carries this `id` with the step's `outcome`, and `balance` reads that record. |
+| `if: always()` | the step runs even after an earlier check has redded, so the scenario's row on the ledger gets an outcome instead of reading `broken`. |
 | `GH_TOKEN` | the run's own token. `gh` needs a token in the environment to call the API at all. |
 | `--workflow mutation.yml` | which scheduled workflow to read. |
 | `--branch main` | the branch this ladder gates. It is written out, not derived from `github.ref_name`: nothing sweeps a feature branch, so a pull request reads the verdict for the line it is merging into. A hand-dispatched sweep of some other branch is never the one read. |
@@ -128,10 +129,13 @@ The check is declared by its `@fitness` scenario and the CI step whose `id:` is 
 It is answered by that step's outcome, exactly like `eslint` or `pnpm typecheck`. The bar is 95 in
 Stryker's config and **nowhere else**. `balance` runs no check; it reads the record.
 
-The row has a scenario beside it, like every other fitness row. The scenario and
-the row are **two authored artefacts, neither derived from the other**, and a
-scenario with no row, or a row with no scenario, is something a run reports.
-This repository's is in
+**The two artefacts are that scenario and that step's `id:`, and there is no
+third.** They are **both authored, neither derived from the other**, which is
+what lets them disagree: a `@fitness` scenario whose `@SCN` no CI step states
+reconciles **missing** and the run is out of balance, and a step stating an
+`@SCN` no scenario carries posts to a **phantom** row. Nothing else declares
+this check — no manifest lists it, and no key names its bar. This repository's
+scenario is in
 [`features/fitness-checks.feature`](../features/fitness-checks.feature):
 
 ```gherkin

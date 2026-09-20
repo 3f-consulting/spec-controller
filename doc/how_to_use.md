@@ -27,8 +27,9 @@ node --version   # must be v22.x or higher
 ## Declaring a fitness check
 
 A **fitness check** is a whole-system property — complexity, mutation score, type
-soundness, vocabulary, suite run time. Declaring one takes four things, and **none of them is a
-cucumber step definition**. There is no fitness profile to configure and no step to write.
+soundness, vocabulary, suite run time. **There are two artefacts and no third**, and **neither of
+them is a cucumber step definition**. There is no fitness profile to configure, no manifest list,
+and no step to write.
 
 **1. A scenario, tagged `@fitness`, carrying an `@SCN`.** You write it exactly as you write a
 `@unit` one — steps, and a tag naming its axis. Its steps are the specification; the command your
@@ -44,8 +45,9 @@ CI already runs is the evidence, and nothing here runs the steps:
     And no suppression directive that suppresses nothing survives the run
 ```
 
-**2. The `@SCN` on the CI step that runs the check, as the step's `id:`.** That is the whole of
-the second artefact — there is no manifest list:
+**2. That scenario's `@SCN` as the `id:` of the CI step that already runs the check.** The check
+stays exactly where it is in your pipeline; what you add is a citation. That is the whole of the
+second artefact — there is no manifest list:
 
 ```yaml
       - name: Complexity
@@ -54,50 +56,50 @@ the second artefact — there is no manifest list:
         run: eslint
 ```
 
-Nothing carries a bar. The mutation bar is Stryker's own `thresholds.break`, and its scenario is
-answered by one push step that reads the newest nightly sweep's verdict:
-[`scheduled-checks.md`](./scheduled-checks.md).
+**That is the whole declaration.** **One `@fitness` scenario is one check**, identified by its
+`@SCN` and described by its title: nothing else says what the check is about. **Nothing names a
+bar** either — the mutation bar is Stryker's own `thresholds.break`, and its scenario is answered by
+one push step that reads the newest nightly sweep's verdict:
+[`scheduled-checks.md`](./scheduled-checks.md). The check's credit is its step's `outcome`: the
+tool's exit code on its own CI step is the verdict, whatever the tool measures.
 
-**One `@fitness` scenario is one check**, identified by its `@SCN` and described by its title:
-nothing else says what the check is about. **Nothing names a bar** either. Its credit is its
-step's `outcome`: the tool's exit code on its own CI step is the verdict, whatever the tool
-measures. A row still carrying a retired key — `atLeast` / `atMost`, or `characteristic` — is named
-on the report as carrying one, and is credited by its step's outcome like any other.
+**Neither artefact is derived from the other, and that is deliberate** — it is what lets the two
+disagree. A `@fitness` scenario whose `@SCN` no CI step states reconciles **missing** and the run is
+out of balance, exactly as a `@unit` scenario with no test does; a step stating an `@SCN` no
+scenario carries posts to a **phantom** row, and a step stating none posts to **suspense**. All
+three are faults a run says out loud.
 
-Neither half is derived from the other, and that is deliberate: a scenario with no row, and a row
-with no scenario, are both things a run can report.
+**If your `package.json` still carries `specController.fitnessChecks`, nothing breaks and nothing
+changes.** The key is retired and the reader goes on accepting it. A run over such a tree prints one
+line under `### Static checks` —
 
-**3. The scenario's `@SCN` as the `id:` of the step that already runs the command.** The check
-stays exactly where it is in your pipeline. What you add is a citation:
-
-```yaml
-- run: eslint
-  id: SCN-FIT-001
-  if: always()
+```
+- specController.fitnessChecks — retired: this reader no longer reads it, and none of its entries reach the books.
 ```
 
-**4. One `toJSON(steps)` dump step per job**, so the reconciler can read what each step did:
+— and that is the whole of it: the line names **the key**, never the rows beneath it and never the
+keys a row carries, and the run reconciles to the same ledger and the same exit code as the same
+tree with the key deleted. Drop it when it suits you.
 
-```yaml
-- if: always()
-  run: echo '${{ toJSON(steps) }}' > ci-steps.json
-```
+**Retired as something you WRITE is a different claim from gone from what the reader ACCEPTS, and
+the two have separate dates.** Nothing above asks you for that key: the two artefacts are the whole
+of what you author. What the reader still does with a key an earlier adopter wrote is name it and
+read past it, and that stays true until a release says otherwise.
 
-**The `if: always()` goes on every check step, not just the dump.** Without it the first red aborts
-the job and every later check is skipped, so the ledger reports one failure and N never-rans — a
-worse account from a correct mechanism. **And the dump must be `toJSON(steps)`**: it is the only
-place a step's `id` and its `outcome` travel together, and `outcome` is the field that survives
-`continue-on-error` where `conclusion` does not.
+**One `toJSON(steps)` dump step per job** is what lets the reconciler read what each step did, and
+`--ci-steps` is what points `balance` at it. That is wiring rather than declaration, so it is under
+*Wiring into CI* below, with the `if: always()` rule that goes with it.
 
-Then pass `--ci-steps ./ci-steps.json` to `balance` (see *Wiring into CI*).
+**The three adoption states — what you author at each, and what the report says back — are in
+[`adopting-fitness-checks.md`](./adopting-fitness-checks.md).** This page is the flags and the CLI.
 
 ### A converted check is still a command you can run
 
-Converting a check does not move it inside anything. Most of the rows in this repository's own
-manifest are a command you can paste into a terminal — `pnpm spec-controller tags`, `pnpm typecheck`, bare
+Converting a check does not move it inside anything. Most of the converted checks in this
+repository's own pipeline are a command you can paste into a terminal — `pnpm spec-controller tags`, `pnpm typecheck`, bare
 `eslint` — and exit 0 is the check passing, with no cucumber and no `spec-controller` involved. The
-rest read a number an earlier step, or a scheduled sweep, already left behind. What the row and the
-`id:` add is that the run becomes **observable**: the ledger can say the check ran, and against
+rest read a number an earlier step, or a scheduled sweep, already left behind. What the scenario and
+the `id:` add is that the run becomes **observable**: the ledger can say the check ran, and against
 what.
 
 The worked before/after, the migration checklist, and the traps:
@@ -324,7 +326,7 @@ The point of `spec-controller` is continuous reconciliation, so `balance` belong
 
 **The `if: always()` goes on every check step, not just the dump.** Without it the first red aborts the job and every later check is skipped, so the ledger reports one `failing` and N `broken` — a worse account from a correct mechanism. **The dump must be `toJSON(steps)`**: it is the only place a step's `id` and its `outcome` travel together, and `outcome` is the field that survives `continue-on-error` where `conclusion` does not.
 
-**A check that runs on a schedule is still one step here.** A nightly mutation sweep, say: the push step reads the newest scheduled run's conclusion with stock `gh` and carries the row's `@SCN` as its `id:`, like any other check step. Nothing is carried across from the scheduled run. The recipe is [`scheduled-checks.md`](./scheduled-checks.md).
+**A check that runs on a schedule is still one step here.** A nightly mutation sweep, say: the push step reads the newest scheduled run's conclusion with stock `gh` and carries the scenario's `@SCN` as its `id:`, like any other check step. Nothing is carried across from the scheduled run. The recipe is [`scheduled-checks.md`](./scheduled-checks.md).
 
 Then reconcile, once, over the reports and the record:
 
