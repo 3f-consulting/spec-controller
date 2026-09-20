@@ -3,7 +3,7 @@
  *
  * IT USED TO BE THE "complexity + MODULE-SIZE" check, and it is not one any more (3F-2320). The
  * portfolio retired the file-length ceiling on 2026-09-18: no external body publishes one, so any
- * number here would be the self-chosen threshold `complexityThresholds.mjs` forbids. What a long
+ * number here would be the self-chosen threshold THE PROVENANCE RULE BELOW forbids. What a long
  * file costs is taken per FUNCTION, by the two rules below.
  *
  * IT HAS NO SCRIPT NAME OF ITS OWN SINCE 3F-3151. `pnpm lint:complexity` was deleted when
@@ -26,9 +26,13 @@
  * is emitted from one place, `ruleAtCeiling`, because a second statement of it would silently
  * re-measure the whole population in a different unit.
  *
- * The thresholds are NOT written here — they live in `tests/checks/complexityThresholds.mjs`. See that
- * file for the external sources each number is cited to, and for why nothing measured off this tree
- * may enter it. NO NUMBER MEASURED FROM THIS TREE APPEARS ANYWHERE IN THIS CONFIG (3F-3466). One did
+ * THE THRESHOLDS ARE WRITTEN HERE, AND THEY USED TO BE A MODULE (3F-3607). A file of their own
+ * under `tests/checks/` held them from 3F-2286 until 2026-09-20, when the operator ruled that
+ * configuration should be treated like configuration. They are inline below, with the external
+ * source each number is cited to and the rule that nothing measured off this tree may enter them —
+ * the whole of that argument moved with the numbers, because numbers in a config with nothing
+ * saying where they came from are the state 3F-2286 existed to end.
+ * NO NUMBER MEASURED FROM THIS TREE APPEARS ANYWHERE IN THIS CONFIG (3F-3466). One did
  * until the dated debt list went: a per-file allowance, frozen at what the file measured on the day
  * someone wrote it down. Nothing excuses a violation now — every file in the measured population is
  * held at 15 / 40, and what decides whether a violation reds is changedness alone.
@@ -132,11 +136,6 @@ import { fileURLToPath } from "node:url";
 import tseslint from "typescript-eslint";
 import sonarjs from "eslint-plugin-sonarjs";
 import { changedFiles } from "./tests/checks/changedFiles.mjs";
-import {
-  PRODUCTION_THRESHOLD,
-  TEST_THRESHOLD,
-  ruleAtCeiling,
-} from "./tests/checks/complexityThresholds.mjs";
 
 /**
  * Re-exported so a consumer reads the gate's answer to WHAT THE CHANGE TOUCHED off the config that
@@ -147,6 +146,226 @@ import {
  * is the answer another reader would otherwise restate, which is the failure it exists to prevent.
  */
 export { changedFiles };
+
+/**
+ * ═══ THE THRESHOLDS — THE ONE PLACE THE NUMBERS LIVE (@SCN-FIT-001, 3F-2286, 3F-3607) ═══
+ *
+ * Four numbers and the emitter that shapes them into eslint rule entries. There was a module-size
+ * number here too until 3F-2320 retired the file ceiling.
+ *
+ * THEY WERE A MODULE OF THEIR OWN UNDER `tests/checks/`, WITH A DECLARATION FILE BESIDE IT, FROM
+ * 3F-2286 UNTIL 3F-3607, which inlined them on the operator's ruling of 2026-09-20 —
+ * configuration should be treated like configuration. eslint's numbers belong in eslint's own
+ * config, where any project writes them and where an adopter copying this file gets the numbers AND
+ * their provenance in one artefact rather than a second file to go and find. Nothing restates them: a second copy would
+ * agree by COINCIDENCE and drift the moment either side is retuned, which is the agreeing-by-copy
+ * this codebase has spent several slices removing from the domain and the static checks.
+ *
+ * NONE OF WHAT FOLLOWS IS EXPORTED, AND THAT IS PART OF THE MOVE RATHER THAN AN OVERSIGHT. A reader
+ * that needs a threshold asks eslint for the resolved config (`ESLint#calculateConfigForFile`) —
+ * the tool's own answer, which cannot disagree with what the tool enforces. Exporting them would
+ * rebuild the second route the module WAS. There is no such reader today: eslint itself was the
+ * only consumer the module ever had.
+ *
+ * WHY THIS FILE IS `.mjs` AND NOT `.ts`. eslint loads its flat config through Node's own ESM loader,
+ * so a TypeScript config would need `jiti` as a further devDependency to buy nothing — these are
+ * four numbers, not logic. Plain ESM is importable by eslint with no loader at all. The types that
+ * used to live in the declaration file beside the module are stated below as JSDoc typedefs; that
+ * block records why they were never enforcing anything.
+ *
+ * ═══ THE THRESHOLD COMES FROM OUTSIDE THE TREE (3F-2286, superseding 3F-2177) ═══
+ *
+ * 3F-2177 seeded each threshold at this tree's OWN measured maximum — complexity 25, function 261
+ * lines, file 1024 — reasoning that at exact-max there is zero headroom, so today is green and any
+ * growth reds. The arithmetic was right and the premise was wrong: it is "measure the current state,
+ * call it good". All three of those maxima sit well inside the industry high-risk / refactor band, so
+ * a threshold seeded there certifies whatever the code already does. A fitness function's line must be
+ * stated independently of the code it judges, or it is not a fitness function — it is a mirror.
+ *
+ * So the numbers below are stated by bodies outside this repository, and NOTHING measured from this
+ * tree may ever enter them. They used to have a counterpart carrying the opposite guarantee — a
+ * dated list of per-file allowances, every number in it measured from this tree — and the two were
+ * separate modules precisely so a reader never had to work out which kind a number was. That list is
+ * gone (3F-3466) and no measured number survives anywhere in the check, so this guarantee is now the
+ * check's guarantee outright.
+ *
+ * `ratchet` is DELETED with the rule it served. It recorded each rule's measured p90 as the
+ * destination a measured seed was heading toward; with no seed there is nothing to descend from. The
+ * debt that gap used to imply is reported file by file by the check itself, on every run, which is
+ * a stronger form of the same intent — a backlog you can work through rather than an aspiration in a
+ * comment.
+ *
+ * ═══ TWO SCOPES, ONE STANDARD ═══
+ *
+ * Production and test code are held to the SAME `cognitiveComplexity`, because an external
+ * standard does not bend to the population it is applied to. That is also, conveniently, the strongest
+ * available evidence of provenance: the two populations differed by 3.5x at the function level when
+ * this was written, so two MEASURED thresholds could not possibly coincide. Their coinciding is the
+ * proof neither was measured here. (3F-2177's config asserted the opposite — that the scopes must
+ * differ in both directions — which was true only while both were measurements.)
+ *
+ * WHEN THIS REDS ON LEGITIMATE GROWTH. That is the fitness function working, not crying wolf — the red
+ * names the rule, the file and the measured value, so its stated cause IS its actual cause (contrast
+ * 3F-2201, where a floor blamed a parallel store for an ordinary deletion). The response is to
+ * refactor. Never slack added in advance.
+ *
+ * AND THERE IS NO LONGER A SECOND OPTION, WHICH IS WHY THIS PARAGRAPH CHANGED (3F-3408). It used to
+ * read "refactor, OR record a dated exception carrying its measured value" — and nothing can record
+ * one any more: the dated exception list and its ratchet went with 3F-2317's and 3F-3408's Deletes.
+ * Nothing needs to, either. A red here is now only ever about a file the change TOUCHED, held at the
+ * standard; a violation in a file nobody touched is reported at `warn` and exits 0. So the escape
+ * hatch is gone and the thing it existed to excuse cannot red you in the first place.
+ */
+
+/**
+ * ═══ THE TYPES, WHICH USED TO BE A DECLARATION FILE (3F-3607) ═══
+ *
+ * A `.d.mts` beside the threshold module carried these from 3F-2286. IT ENFORCED NOTHING, and
+ * 3F-3607 proved that by plant rather than assuming it: there is no `allowJs`, so tsc never read
+ * the `.mjs` beside it — a threshold set to the string `"NOT_A_NUMBER"` left `pnpm typecheck`
+ * green — and
+ * `tsconfig.json`'s `include`, `["packages/*\/src", "tests"]`, excludes this config outright, so a
+ * JSDoc type repointed at a non-existent file left it green too. They were documentation for a
+ * reader, which is what they are here. Nothing is re-homed as a declaration file nothing consults.
+ *
+ * @typedef {number | "off"} RuleThreshold
+ *   One rule's threshold: a number, or the literal `"off"` when the rule does not apply to that
+ *   scope. `"off"` is EXPLICIT rather than an absent key — an absent key is indistinguishable from
+ *   an oversight, and a rule that goes silently unheld is exactly what nothing would notice; an
+ *   explicit `"off"` has to be written on purpose.
+ *
+ * @typedef {{ cognitiveComplexity: RuleThreshold, maxLinesPerFunction: RuleThreshold }} ComplexityThreshold
+ *   The rule thresholds a scope holds. `max-lines` left with the file ceiling (3F-2320).
+ *
+ * @typedef {"sonarjs/cognitive-complexity" | "max-lines-per-function"} EslintRuleId
+ *   The eslint rule ids both scopes share.
+ *
+ * @typedef {"error" | "warn"} EslintSeverity
+ *   The two severities a held rule can carry (@SCN-FIT-001, 3F-3462). `error` gates — eslint exits
+ *   1; `warn` reports — every finding is printed and eslint exits 0. Both are eslint's own
+ *   vocabulary, so neither is a number measured from this tree.
+ *
+ * @typedef {"off" | readonly [EslintSeverity, number] | readonly [EslintSeverity, { max: number, skipBlankLines: true, skipComments: true }]} RuleEntry
+ *   One eslint rule entry: `"off"`, or `[severity, …]` in the shape that rule takes.
+ */
+
+/**
+ * Production code — `packages/<pkg>/src`, `tests/checks` and `tests/steps`, excluding test files.
+ *
+ * WHERE EACH NUMBER CAME FROM. The citation is part of the contract, not decoration: a cited number
+ * and an uncited one are indistinguishable once shipped, and the whole point of 3F-2286 is that these
+ * numbers have provenance.
+ *
+ *   - `cognitiveComplexity` 15 — SonarSource's published COGNITIVE COMPLEXITY metric and the default
+ *     of `sonarjs/cognitive-complexity`, the rule that implements it. It replaced a cyclomatic
+ *     `complexity` of 10 (NIST SP 500-235 / McCabe) at 3F-2320, on the portfolio ruling of
+ *     2026-09-18: cognitive complexity scores what makes code hard to READ — nesting and broken
+ *     flow — where cyclomatic scores a flat `switch` like nested conditionals. The looser NUMBER is
+ *     not a relaxation, because it is a number on a different scale: measured on this tree at the
+ *     swap, six cyclomatic findings became eight cognitive ones, and only one function was over the
+ *     old line and under the new.
+ *   - `maxLinesPerFunction` 40 — Google engineering practices — a function past roughly 40 lines
+ *     should be considered for breaking up. Robert Martin's Clean Code is stricter again at ~20; 40 is
+ *     the more widely published of the two and the less contested.
+ *   - `maxLines` 400 — GONE, and its going is the rule above enforced against itself (3F-2320). It was
+ *     the one number here that named itself A CHOSEN ceiling with no external source, because no
+ *     industry body publishes a hard file-length cap — which makes it exactly the self-chosen
+ *     threshold this provenance rule forbids. The portfolio retired the file ceiling outright on
+ *     2026-09-18; what a long file costs is taken per FUNCTION by the two rules that remain.
+ *
+ * @type {ComplexityThreshold}
+ */
+const PRODUCTION_THRESHOLD = {
+  cognitiveComplexity: 15,
+  maxLinesPerFunction: 40,
+};
+
+/**
+ * Test code — `**\/*.test.ts`. The same standard, with ONE rule switched off.
+ *
+ * WHY `max-lines-per-function` IS OFF HERE, AND WHY NO NUMBER REPLACES IT (operator-ruled 2026-08-02).
+ * The rule measures production-function TRACTABILITY — can a reader hold this function in their head.
+ * A `describe` / `it` callback is not that: it is a CONTAINER, and a `describe` holding fifteen tests
+ * is not a 200-line function in the sense McCabe or Google's guidance addresses. Applying the
+ * production number there generated 110 exceptions recording nothing about code quality, and a list
+ * two-thirds noise is a list nobody reads — which defeats the point of visible debt.
+ *
+ * The important half is what is NOT done: no substitute number is invented. 3F-2177's config conceded
+ * the same category error and answered it with 221 — the test tree's own measured maximum — which is
+ * precisely the self-certification 3F-2286 removes. There is no external standard for test-container
+ * length, so the honest move is to abstain from the rule and say so, not to fake a third number.
+ *
+ * NOT A CARVE-OUT. Test scope stays held to `cognitiveComplexity` 15 — the metric that genuinely
+ * applies, at exactly the production number. Accepted residual, operator-ruled: a straight-line test
+ * helper under cognitive 15 escapes. (It used to add "inside a sub-400-line file"; with the file
+ * ceiling retired at 3F-2320 the residual is simply wider, which is stated rather than quietly
+ * dropped.) Low-risk; revisit only if one actually appears.
+ *
+ * @type {ComplexityThreshold}
+ */
+const TEST_THRESHOLD = {
+  cognitiveComplexity: 15,
+  maxLinesPerFunction: "off",
+};
+
+/**
+ * One eslint rule HELD at one ceiling at one severity, in the shape THAT rule takes (3F-2317; the
+ * severity added under @SCN-FIT-001, 3F-3462).
+ *
+ * WHY IT SITS BESIDE NUMBERS THAT ALL COME FROM OUTSIDE. It takes a ceiling and holds none: the
+ * SHAPE is a property of eslint's rules, which are as external as the standard itself, so the
+ * provenance guarantee above is untouched. THE SEVERITY IS AS EXTERNAL AS THE SHAPE — `"error"` and
+ * `"warn"` are eslint's own vocabulary and neither is measured from this tree — so taking it as a
+ * parameter does not bend the contract either. That is what lets ONE emitter serve all callers: the
+ * scope blocks at `warn` (the report) and the same blocks restated at `error` over what the change
+ * touched (the gate). Two emitters would be the agreeing-by-copy this codebase keeps removing: they
+ * would agree on the shapes today and drift the first time eslint changed one.
+ *
+ * THE SHAPE IS NOT UNIFORM, AND GETTING IT WRONG IS SILENT. `sonarjs/cognitive-complexity` takes a
+ * bare number (`["error", 15]`); `max-lines-per-function` takes an options object
+ * (`["error", { max, … }]`). Hand eslint the wrong one and it does not complain — it mis-reads the
+ * option and applies no ceiling at all, which looks exactly like a file that is under its ceiling.
+ * AND NOTHING NOTICES IT ANY MORE (3F-3478). The cucumber arm that linted planted sources through the
+ * real config and read the severity off the message was withdrawn with its scenario, and nothing
+ * replaced it: there was no `.test.ts` beside the module these lines came from either — 3F-3245
+ * deleted it, on the rule that a check's subject is its command — and 3F-3607 has since inlined the
+ * lot into a config nothing imports. A reader reaching for either to cover a new emitter will find
+ * neither — so a wrong shape here is now silent end to end. The arbiter, when one is needed, is the
+ * RESOLVED config: `ESLint#calculateConfigForFile` prints the entry eslint actually holds a file at.
+ *
+ * `skipBlankLines: true, skipComments: true` RIDES ON EVERY EMITTED LINE RULE (3F-2395). The
+ * threshold holds the CODE a reader must hold in their head, not the file's bytes. Counting
+ * documentation put the cheapest route under a ceiling on DELETING the comment that explains why the
+ * code is the shape it is — a fitness function pushing against what it exists to protect, and one
+ * this tree has already paid: two of the largest reductions ever banked here were partly comment
+ * compactions counted as line count. `fitness-functions.md`, the portfolio standard promoted from
+ * an adopter's repository 2026-08-04, rules the counting mode; it is stated here rather than left to eslint's defaults
+ * because the mode is part of what 40 and 400 MEAN, and changing it re-measures the whole population
+ * at once and in silence.
+ *
+ * A `"off"` ceiling passes straight through to eslint's own severity vocabulary, so the test scope's
+ * `max-lines-per-function` ABSTENTION survives unchanged — and it OUTRANKS the severity, because a
+ * rule that does not apply to a scope does not apply at either severity. Inventing a number for it
+ * here would reinstate the self-certification 3F-2286 exists to remove. THE BARE STRING IS THE POINT:
+ * eslint normalises `"off"` to severity 0 while KEEPING the options the production block already set,
+ * so a test file resolves to `[0, { max: 40, … }]`. Writing `[0]`, or omitting the rule, resolves
+ * differently.
+ *
+ * THE SEVERITY IS REQUIRED, WITH NO DEFAULT. A default would be one of the two callers' answers
+ * silently applied to the other, and getting it wrong is exactly as quiet as getting the option shape
+ * wrong: a gate emitted at `warn` reports every violation in full and exits 0.
+ *
+ * @param {EslintRuleId} rule
+ * @param {RuleThreshold} ceiling
+ * @param {EslintSeverity} severity
+ * @returns {RuleEntry}
+ */
+const ruleAtCeiling = (rule, ceiling, severity) => {
+  if (ceiling === "off") return "off";
+  return rule === "sonarjs/cognitive-complexity"
+    ? [severity, ceiling]
+    : [severity, { max: ceiling, skipBlankLines: true, skipComments: true }];
+};
 
 /**
  * Both rules at one scope's thresholds.
@@ -275,7 +494,7 @@ const intersect = (globs, restrictTo) =>
  * silent in the direction that matters: a gate block that stopped matching what the report block
  * matches reports a violation and gates nothing.
  *
- * @param {import("./tests/checks/complexityThresholds.d.mts").EslintSeverity} severity
+ * @param {EslintSeverity} severity
  * @param {readonly string[]} [restrictTo]
  */
 const scopeBlocks = (severity, restrictTo) => [

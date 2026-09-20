@@ -4,9 +4,10 @@
  * @SCN-PND-011). Each describe carries its own @SCN id and its own bidirectional-evidence note.
  *
  * SPLIT FROM `renderInput.test.ts` AT 3F-3537, AND FOR A MECHANICAL REASON. That file measured 626
- * code lines against the test ceiling of 400 (`tests/checks/complexityThresholds.mjs`), and the
- * complexity gate raises a touched file's standing findings to errors. No assertion moved in the
- * split. The file-local helpers below are copies of that file's own, which is this tree's
+ * code lines against the 400-line test ceiling then in force (retired portfolio-wide on
+ * 2026-09-18, 3F-2320; the surviving thresholds moved into `eslint.config.mjs` at 3F-3607),
+ * and the complexity gate raises a touched file's standing findings to errors. No assertion
+ * moved in the split. The file-local helpers below are copies of that file's own, which is this tree's
  * convention for test fixtures: a helper shared through a module under `src/` would ship in `dist`.
  */
 
