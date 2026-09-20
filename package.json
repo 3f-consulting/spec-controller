@@ -32,68 +32,6 @@
       "ci.yml:ci:Resolve the evidence root",
       "ci.yml:ci:Install dependencies",
       "ci.yml:ci:Build"
-    ],
-    "fitnessChecks": [
-      {
-        "scn": "SCN-FIT-001",
-        "characteristic": "complexity",
-        "command": "eslint"
-      },
-      {
-        "scn": "SCN-FIT-014",
-        "characteristic": "traceability",
-        "command": "pnpm spec-controller tags"
-      },
-      {
-        "scn": "SCN-FIT-009",
-        "characteristic": "tech-conformance",
-        "command": "pnpm lint:boundaries"
-      },
-      {
-        "scn": "SCN-FIT-010",
-        "characteristic": "traceability",
-        "command": "pnpm lint:scn-subissues"
-      },
-      {
-        "scn": "SCN-FIT-011",
-        "characteristic": "typecheck",
-        "command": "pnpm typecheck"
-      },
-      {
-        "scn": "SCN-FIT-018",
-        "characteristic": "lint",
-        "command": "pnpm lint:publint"
-      },
-      {
-        "scn": "SCN-FIT-019",
-        "characteristic": "typecheck",
-        "command": "pnpm lint:published-types"
-      },
-      {
-        "scn": "SCN-FIT-020",
-        "characteristic": "lint",
-        "command": "docker://rhysd/actionlint:1.7.12"
-      },
-      {
-        "scn": "SCN-FIT-021",
-        "characteristic": "security",
-        "command": "zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482"
-      },
-      {
-        "scn": "SCN-FIT-012",
-        "characteristic": "ci-run-time",
-        "command": "timeout 75 vitest run"
-      },
-      {
-        "scn": "SCN-FIT-013",
-        "characteristic": "ci-run-time",
-        "command": "timeout 150 cucumber-js"
-      },
-      {
-        "scn": "SCN-FIT-002",
-        "characteristic": "mutation",
-        "command": "gh run list --workflow mutation.yml"
-      }
     ]
   },
   "devDependencies": {

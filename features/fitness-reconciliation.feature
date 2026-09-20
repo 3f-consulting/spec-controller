@@ -5,8 +5,8 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
   performance tests, each an EXAMPLE with steps), a fitness scenario DECLARES one Evidence
   Obligation: a whole-system property held against a threshold. In this repository the scenario
   carries `@fitness` and a freshly minted code; its TITLE says what the check is about, and the
-  command that settles it is the `command` of its row in `specController.fitnessChecks`, read by
-  the ledger. One @fitness scenario is one check (3F-3525): nothing classifies it further.
+  command that settles it is the one its own CI step runs, stating that code as its `id:`. One
+  such scenario is one check (3F-3525): nothing classifies it further.
 
   A FITNESS SCENARIO IS A DECLARED OBLIGATION RATHER THAN A TEST, AND NOTHING RUNS IT. It is
   authored like every other scenario in this corpus, steps and all, and what keeps it off the
@@ -16,15 +16,16 @@ Feature: Reconcile every fitness function as a fitness scenario citing its own @
   one it holds because the scenario says so, never because somebody gave it a runnable example.
 
   ONE POSTING RULE, over both axes, and the credit's citation is ONE HOP. The check's step in the
-  CI config carries its row's @SCN as the step's `id:`; the run's own record says what that step
-  did; `balance` reads the citation straight off it. Nothing is matched back by name and nothing is
-  resolved through a second artefact, so there is no static-axis posting rule left to be special.
+  CI config carries its scenario's @SCN as the step's `id:`; the run's own record says what that
+  step did; `balance` reads the citation straight off it. Nothing is matched back by name and
+  nothing is resolved through a second artefact, so there is no static-axis posting rule left to
+  be special.
 
   THE RETIRED PATHS RAISE NOTHING. A target that still carries `specController.checkRegistry`, or
   tags its scenarios with a bare check word, has declared no check by it: the registry is named on
   the report as a retired key (3F-3161), and a bare check word raises no Evidence Obligation, since
-  no set of registered check tags is read any more (3F-3561). A check is its `@fitness` scenario and
-  the configured row naming it.
+  no set of registered check tags is read any more (3F-3561). A check is its `@fitness` scenario,
+  and nothing else declares it.
 
   WHAT THE FILE IS CALLED, AND WHY THE CODE IS NOT. The feature code is @LNT because a code, once
   allocated, is stable forever: it survives a rename and is never reused — a rule this repository

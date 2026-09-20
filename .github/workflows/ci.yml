@@ -253,9 +253,9 @@ jobs:
       - name: Complexity — eslint's cognitive-complexity and max-lines-per-function
         id: SCN-FIT-001
         if: always()
-        # `pnpm exec` rather than the row's bare `eslint`, because a `run:` shell has no
-        # `node_modules/.bin` on its PATH. The row states the bare command a consumer would type;
-        # what a pipeline needs to put it on the PATH is the pipeline's business.
+        # `pnpm exec` rather than a bare `eslint`, because a `run:` shell has no
+        # `node_modules/.bin` on its PATH. What a pipeline needs to put a command on the PATH is
+        # the pipeline's business, and no other artefact states that command.
         run: pnpm exec eslint
 
       # THE ONE STEP HERE THAT IS THE PRODUCT RATHER THAN A CHECK WE WROTE (3F-3311), AND IT IS NOW

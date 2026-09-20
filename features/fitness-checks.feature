@@ -1,13 +1,13 @@
 @FIT
-Feature: The fitness checks this repository configures, one scenario per row
+Feature: The fitness checks this repository declares, one scenario per check
 
-  HOW A CHECK IS ADDED HERE, IN TWO STEPS — write the scenario, add the row. The scenario is
+  HOW A CHECK IS ADDED HERE, IN TWO STEPS — write the scenario, annotate the step. The scenario is
   authored like every other scenario in this corpus: a tag line carrying `@fitness` and a freshly
   minted code, a title saying what the check asserts, and steps saying it in Given/When/Then. The
-  row goes in `specController.fitnessChecks` in package.json, naming that same code and the
-  command that runs it. Neither half is derived from the
+  CI step that already runs the check takes that same code as its `id:`, in the pipeline this
+  repository was running anyway. Neither half is derived from the
   other, which is what makes them two books rather than one read twice: a scenario derived from the
-  row it is reconciled against could never disagree with it.
+  step it is reconciled against could never disagree with it.
 
   SO A SCENARIO THE PIPELINE NEVER RUNS IS A FAULT SOMETHING SAYS OUT LOUD. Each scenario here
   raises its fitness Evidence Obligation from its @fitness tag; a scenario whose @SCN no CI step
@@ -15,27 +15,27 @@ Feature: The fitness checks this repository configures, one scenario per row
   does. That is the return on authoring the two halves independently, and the whole of it: the
   disagreement is reportable because it is possible.
 
-  WHY THE SCENARIOS EXIST AT ALL, given the rows already carry everything. A check reports its
+  WHY THE SCENARIOS EXIST AT ALL, given the pipeline already runs everything. A check reports its
   findings and says nothing when it finds none, so its silence cannot be told from its absence. The
   enumeration that tells them apart is the RUN's own record of its steps: the pipeline reports every
   step it ran and what each one did, and a scenario here is the obligation that record answers.
-  Reading the rows alone would put the axis back to single-entry.
+  Reading the pipeline alone would put the axis back to single-entry.
 
-  THE CODE IS STORED, NEVER POSITIONAL. Each scenario's `@SCN` is the one its row names, chosen
+  THE CODE IS STORED, NEVER POSITIONAL. Each scenario's `@SCN` is the one its CI step states, chosen
   when the check was added and never derived from where the scenario sits in this file, so
   inserting one renumbers nothing and every citation elsewhere in the tree stays true. The
   numbering below is not contiguous for that reason, and that is the rule working rather than a
   gap.
 
-  A ROW MAY ALSO CARRY A CODE MINTED UNDER ANOTHER FEATURE, and that is the same rule. A code, once
-  allocated, is stable forever: it survives a feature-file rename and is never reused. A check whose
-  code is cited by something outside this repository's corpus — a record another pipeline stamps
-  with it, say — therefore keeps that code while its scenario moves here, and is re-minted only by
-  the change that can move every citing surface with it.
+  A CHECK'S STEP MAY ALSO STATE A CODE MINTED UNDER ANOTHER FEATURE, and that is the same rule. A
+  code, once allocated, is stable forever: it survives a feature-file rename and is never reused.
+  A check whose code is cited by something outside this repository's corpus — a record another
+  pipeline stamps with it, say — therefore keeps that code while its scenario moves here, and is
+  re-minted only by the change that can move every citing surface with it.
 
   THE TAG NAMES THE AXIS AND THE TITLE NAMES THE CHECK. Every scenario here carries `@fitness` and
   nothing else about its subject: what the check asserts is its title's to say, its `@SCN` is its
-  identity, and the command that settles it is on its row (3F-3525).
+  identity, and the command that settles it is the one its CI step runs (3F-3525).
 
   AND WHAT KEEPS A SCENARIO HERE OFF THE RUNNERS IS ITS TAG, NEVER ITS SHAPE. `@fitness` sits
   outside the Cucumber profile's `@integration or @e2e or @performance` exactly as `@unit` does, so
@@ -52,11 +52,11 @@ Feature: The fitness checks this repository configures, one scenario per row
   ASSERTED, as a `@unit` scenario's does; whether this push cleared it is the ledger's sentence,
   taken from the record.
 
-  A ROW STATES NO BAR, AND NEITHER DOES THIS FILE. Every row is answered by its step's outcome: a
-  check that measures something holds its own bar — Stryker's `thresholds.break`, `timeout` around a
-  suite — and fails its step below it (3F-3506). Whether the step succeeded is the ledger's
-  sentence, never this file's — a scenario comparing its own measurement would be grading its own
-  homework.
+  NOTHING HERE STATES A BAR, AND NEITHER DOES THIS FILE. Every obligation is answered by its
+  step's outcome: a check that measures something holds its own bar — Stryker's
+  `thresholds.break`, `timeout` around a suite — and fails its step below it (3F-3506). Whether
+  the step succeeded is the ledger's sentence, never this file's — a scenario comparing its own
+  measurement would be grading its own homework.
 
   A BAR IS RAISED AS DELIBERATE PROCESS OPTIMISATION AND IS NEVER LOWERED BECAUSE A PUSH WENT RED.
   Raising one because the suite has got stronger and should be held higher is a change of its own,

@@ -203,17 +203,17 @@ Feature: The @SCN scheme polices itself — the rules a target runs from the pac
     FITNESS_AXIS_TAG — the one spelling of it (@SCN-LNT-020's and the obligation rule's own) — and
     is never re-written here, because a second literal would be a second answer travelling under
     the first's name. What that costs is nothing a target can feel: no other tag's reading changes,
-    and a corpus carrying the word without the rows is already reported, by name, one paragraph
-    down.
+    and a corpus carrying the word with nothing running it is already reported, by name, one
+    paragraph down.
 
-    AND A CONVERTED SCENARIO NO CONFIGURED ROW NAMES IS ADMITTED HERE, deliberately. Such a
+    AND A CONVERTED SCENARIO NO CI STEP CITES IS ADMITTED HERE, deliberately. Such a
     scenario has said which axis it is on and then said nothing about what it asserts, and that IS
     a corpus fault — but it is @SCN-LNT-020's, which names it by id and leaves the reader the one
-    remedy there is, which is to write the row; the run reds on it regardless, through the
-    degenerate both-missing item. Redding it here too would report half of one fault in a second
-    place with the wrong remedy attached — "this word means nothing here", said to an author whose
-    scenario names the one axis the model has — which is the wrong-message failure @SCN-STG-002
-    split the kinds to avoid. One fault, one place.
+    remedy there is, which is to cite its @SCN from the step that runs the check; the run reds on
+    it regardless, through the degenerate both-missing item. Redding it here too would report half
+    of one fault in a second place with the wrong remedy attached — "this word means nothing
+    here", said to an author whose scenario names the one axis the model has — which is the
+    wrong-message failure @SCN-STG-002 split the kinds to avoid. One fault, one place.
 
     @integration @SCN-STG-004
     Scenario: a group-prefixed check tag reds, naming the bare tag it should have been

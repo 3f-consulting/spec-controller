@@ -54,7 +54,7 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
 
   IT IS CLOSED BY THE INVERSION RATHER THAN BY A TICKET THAT WAS STILL OWED. Every run: step of
   ci.yml is a candidate now, so the denominator is this repository's whole pipeline: every check it
-  runs is discovered, each carrying the code of the row it answers on its own step, and nought
+  runs is discovered, each carrying the code of the scenario it answers on its own step, and nought
   uncited. (The count that stood here is gone for the reason the paragraph below gives.)
   The residual that remains is a smaller one — specController.staticChecks is still honoured and
   is now inert, and 3F-3161 owns its removal. That removal no longer engages a major version: the
@@ -68,13 +68,12 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
 
   THE FIGURES THEMSELVES ARE NO LONGER WRITTEN HERE, AND WHILE THEY WERE THEY WENT STALE UNNOTICED
   (3F-3440). This paragraph read "11 static check(s) run — eleven of the fourteen rows, the other
-  three being measured and so not static checks at all". The manifest carries FOUR measured rows and
-  not three, and had before this ticket opened; adding rows to it then made the sentence wrong a
-  second way. Nothing reconciles a number in a preamble against the manifest it describes, which is
-  how it managed to be wrong twice without redding anything. `fitness-checks.feature` refuses this
-  exact thing in its own words — "a number in this prose is a second reading of the manifest, kept in
-  step by whoever remembers" — and that refusal is adopted here rather than the figures being
-  corrected to today's, which would only restart the clock.
+  three being measured and so not static checks at all". The manifest carried FOUR measured rows and
+  not three, and had before that ticket opened; adding rows to it then made the sentence wrong a
+  second way. Nothing reconciles a number in a preamble against the tree it describes, which is
+  how it managed to be wrong twice without redding anything. A number in this prose is a second
+  reading of something nothing keeps it in step with, so the refusal to write one is adopted here
+  rather than the figures being corrected to today's, which would only restart the clock.
 
   The unit arm proves runningStaticChecks + countStaticEvidenceObservationKinds + the render section
   in isolation; the integration arm drives the real file reads (ci.yml + package.json + features)
