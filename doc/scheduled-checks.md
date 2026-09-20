@@ -113,21 +113,20 @@ and `--created` reads it.
 
 ---
 
-## 3. The row names no bar
+## 3. Nothing names a bar
 
-In `package.json`, under `specController.fitnessChecks`:
+The check is declared by its `@fitness` scenario and the CI step whose `id:` is that scenario's
+`@SCN`, and neither names a bar — nothing does:
 
-```json
-      {
-        "scn": "SCN-FIT-002",
-        "command": "gh run list --workflow mutation.yml"
-      }
+```yaml
+      - name: Mutation score
+        id: SCN-FIT-002
+        if: always()
+        run: gh run list --workflow mutation.yml ...
 ```
 
-The row names no bar — no row does. It is answered by its step's outcome,
-exactly like `eslint` or `pnpm typecheck`. The bar is 95 in Stryker's config and
-**nowhere else**. The `command` is the command a reader would type to
-see what the step reads. `balance` never runs it.
+It is answered by that step's outcome, exactly like `eslint` or `pnpm typecheck`. The bar is 95 in
+Stryker's config and **nowhere else**. `balance` runs no check; it reads the record.
 
 The row has a scenario beside it, like every other fitness row. The scenario and
 the row are **two authored artefacts, neither derived from the other**, and a

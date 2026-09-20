@@ -25,61 +25,67 @@
 
 import { describe, it, expect } from "vitest";
 
-import { fitnessChecksOf } from "../domain/fitnessChecks.js";
 import { citationOfCitedRow } from "../parse/fitnessCitations.js";
+import { resolveDeferralTags } from "../parse/targetManifest.js";
 import { parseTaggedScenarios } from "../parse/scenarios.js";
 
-describe("[SCN-TRM-001] a configured row's scn names the row the target authored", () => {
-  it("bares a row's scn padded in front of its sigil", () => {
-    // A padded `scn` would post the obligation to no row a corpus can find. The row's retired
-    // `characteristic` is not read at all (3F-3570), so how it is spaced changes nothing.
-    const index = fitnessChecksOf([{ scn: "  @SCN-MSD-001", characteristic: "  @complexity" }]);
-    expect([...index]).toStrictEqual(["SCN-MSD-001"]);
+/**
+ * THE PORT THIS BLOCK ONCE READ THROUGH WAS `fitnessChecksOf`, the manifest's fitness-check rows.
+ * That reader left with the key it read (3F-3582), and the spelling rule it proved did not: it is
+ * every `specController.*` port's. So the block re-points at `resolveDeferralTags`, a SURVIVING
+ * port that stores a hand-authored term as a key through the same `bareTerm`, and the rule keeps a
+ * live witness rather than losing one. `DEFAULT_DEFERRAL_TAGS` is the app's, so the starter set is
+ * passed in empty here and the extras are what is read.
+ */
+describe("[SCN-TRM-001] a configured deferral tag names the term the target authored", () => {
+  const configured = (tag: string): readonly string[] =>
+    resolveDeferralTags({ specController: { deferralTags: [tag] } }, []);
+
+  it("bares a tag padded in front of its sigil", () => {
+    // A padded tag would defer nothing: the lookup asks bare, and a key still carrying its `@` is
+    // one no lookup ever asks for.
+    expect(configured("  @flaky")).toStrictEqual(["flaky"]);
   });
 
-  it("bares a row spelled with a space between the sigil and the term", () => {
-    const index = fitnessChecksOf([{ scn: "@ SCN-MSD-001" }]);
-    expect([...index]).toStrictEqual(["SCN-MSD-001"]);
+  it("bares a tag spelled with a space between the sigil and the term", () => {
+    expect(configured("@ flaky")).toStrictEqual(["flaky"]);
   });
 
-  it("drops a row whose scn is nothing but whitespace and a sigil", () => {
-    // Dropped as `fitnessCheckOf` already drops a row naming no scenario — not indexed under `"@"`,
-    // a key no lookup asks for.
-    const index = fitnessChecksOf([{ scn: "  @  " }]);
-    expect(index.size).toBe(0);
+  it("drops a tag that is nothing but whitespace and a sigil", () => {
+    // Dropped rather than stored under `"@"`, a key no lookup asks for.
+    expect(configured("  @  ")).toStrictEqual([]);
   });
 
   it("keeps a doubled sigil exactly as the target spelled it", () => {
-    const index = fitnessChecksOf([{ scn: "  @@SCN-MSD-001" }]);
-    expect([...index]).toStrictEqual(["@SCN-MSD-001"]);
+    // `/^@/` strips ONE leading sigil; a doubled sigil is a different spelling, not whitespace.
+    expect(configured("  @@flaky")).toStrictEqual(["@flaky"]);
   });
 });
 
-describe("[SCN-TRM-001] a check step's id: names the row the target authored", () => {
-  const fitnessChecks = fitnessChecksOf([{ scn: "SCN-MSD-001" }]);
-
+describe("[SCN-TRM-001] a check step's id: names the scenario the target authored", () => {
   it("bares a step's id: padded in front of its sigil", () => {
-    expect(citationOfCitedRow("  @SCN-MSD-001", fitnessChecks)).toStrictEqual({
+    expect(citationOfCitedRow("  @SCN-MSD-001")).toStrictEqual({
       scnId: "SCN-MSD-001",
     });
   });
 
   it("bares a step's id: spelled with a space between the sigil and the term", () => {
-    expect(citationOfCitedRow("@ SCN-MSD-001", fitnessChecks)).toStrictEqual({
+    expect(citationOfCitedRow("@ SCN-MSD-001")).toStrictEqual({
       scnId: "SCN-MSD-001",
     });
   });
 
-  it("names no row for a step's id: that is nothing but whitespace and a sigil", () => {
-    // Bared to `""`, which no configured row is keyed by — the same "an empty answer is an
-    // answer" reading `bareTerm`'s own doc-comment states, read here through the citation route.
-    expect(citationOfCitedRow("  @  ", fitnessChecks)).toBeNull();
+  it("cites nothing for a step's id: that is nothing but whitespace and a sigil", () => {
+    // Bared to `""`, which is no `@SCN` — the same "an empty answer is an answer" reading
+    // `bareTerm`'s own doc-comment states, read here through the citation route.
+    expect(citationOfCitedRow("  @  ")).toBeNull();
   });
 
-  it("keeps a doubled sigil exactly as the step's id: spelled it, matching no un-doubled row", () => {
+  it("keeps a doubled sigil exactly as the step's id: spelled it, citing no un-doubled scenario", () => {
     // `/^@/` strips one leading sigil only (@SCN-LNT-001's pinned reading); a doubled sigil is a
-    // different spelling, not whitespace, so it must NOT collapse onto a row named without it.
-    expect(citationOfCitedRow("  @@SCN-MSD-001", fitnessChecks)).toBeNull();
+    // different spelling, not whitespace, so it bares to `@SCN-MSD-001` — which is not a bare
+    // `@SCN` code, so it cites nothing rather than collapsing onto the scenario named without it.
+    expect(citationOfCitedRow("  @@SCN-MSD-001")).toBeNull();
   });
 });
 

@@ -14,23 +14,13 @@ import type { RenderInput } from "../assemble/renderInput.js";
 /**
  * WHAT BECAME OF ONE RETIRED KEY, in the words its own consequence earns.
  *
- * A ROW-LEVEL key — `fitnessChecks[<@SCN>].<key>`, a bar (@SCN-LNT-035) or a characteristic
- * (@SCN-LNT-039) — says something different from a retired TOP-LEVEL key's, because its
- * consequence is different: the row still reaches the books, credited by its own step's outcome;
- * only the value on it is unread. And the two row keys say different things in turn, because a
- * reader told "this reader no longer reads a row's bar" of a characteristic learns nothing about
- * the word they actually wrote.
+ * A ROW-LEVEL FORM ONCE STOOD BESIDE THIS ONE — `fitnessChecks[<@SCN>].<key>`, a bar
+ * (@SCN-LNT-035) or a characteristic (@SCN-LNT-039) — and said something different, because its
+ * consequence was different: the row still reached the books and only the value on it was unread.
+ * It left with the key its rows sat under (3F-3582). `fitnessChecks` is itself retired now, so
+ * every retired key says the one thing again: nothing of it reaches the books.
  */
-const retiredKeyFate = (key: string): string => {
-  if (key.endsWith("].characteristic"))
-    return (
-      "this reader no longer reads a row's characteristic — one @fitness scenario is one check, " +
-      "keyed by its own @SCN — and the row is credited by its step's outcome."
-    );
-  if (key.startsWith("fitnessChecks["))
-    return "this reader no longer reads a row's bar, and the row is credited by its step's outcome.";
-  return "this reader no longer reads it, and none of its entries reach the books.";
-};
+const RETIRED_KEY_FATE = "this reader no longer reads it, and none of its entries reach the books.";
 
 /**
  * THE RETIRED-KEY ACCOUNT (@SCN-USG-021) — one line per `specController.*` key this reader has
@@ -44,7 +34,7 @@ const retiredKeyFate = (key: string): string => {
  * the answer.
  */
 const retiredKeyAccount = (keys: readonly string[] | undefined): string[] =>
-  (keys ?? []).map((key) => `- specController.${key} — retired: ${retiredKeyFate(key)}`);
+  (keys ?? []).map((key) => `- specController.${key} — retired: ${RETIRED_KEY_FATE}`);
 
 /**
  * Static checks (@SCN-USG-001) — the STATIC-check evidence observation side under
@@ -57,12 +47,12 @@ const retiredKeyAccount = (keys: readonly string[] | undefined): string[] =>
  * The counts read off the report's materialised `summary.staticChecks`.
  */
 export const staticChecksSection = (report: RenderInput): string[] => {
-  // THE HALF-CONVERTED CHECKS (@SCN-LNT-020) render HERE, under the same heading, because they are
-  // the same class of half-entry as an uncited static check — something the run saw and nothing
-  // owed — read off the other side of the books. FACTS ONLY, count and ids: the reader is told what
-  // the corpus said about itself and left with the one remedy there is, which is to write the row.
-  // OMIT-WHEN-EMPTY, so an unconverted corpus renders byte-identically to before.
-  const { staticChecks: counts, unconfiguredFitnessScenarios: halfConverted = [] } = report.summary;
+  // THE HALF-DECLARED CHECKS ONCE RENDERED HERE (@SCN-LNT-020) — a count and the ids of the
+  // `@fitness` scenarios no manifest entry named, beside the uncited static checks, because while
+  // such a scenario raised no obligation nothing on its own row could say who it was. It raises one
+  // now (3F-3582), so the row says who under the scenario's own `@SCN`, and a second sentence here
+  // would print one fault twice with two remedies attached.
+  const { staticChecks: counts } = report.summary;
   if (!counts) return [];
   // THE RETIRED-KEY ACCOUNT (@SCN-USG-021) renders HERE, under the same heading, because a
   // retired key is a fact about the STATIC axis: every key this reader has retired so far named
@@ -78,7 +68,6 @@ export const staticChecksSection = (report: RenderInput): string[] => {
     "### Static checks", "",
     `${counts.runningStaticCheckCount} static check(s) run, ${counts.uncitedStaticCheckCount} uncited static check(s).`,
     "",
-    ...(halfConverted.length > 0 ? [`${halfConverted.length} @fitness scenario(s) no configured row names: ${halfConverted.join(", ")}.`, ""] : []),
     ...(retired.length > 0 ? [...retired, ""] : []),
   ];
 };

@@ -781,32 +781,3 @@ export function bothMissingReconciliation(): QualityCheckReconciliation {
   return makeQualityCheckReconciliation({ outcome: "both-missing" });
 }
 
-/**
- * The item on the row a CONFIGURED ROW WITH NO SCENARIO earns (@SCN-LNT-027, 3F-3472) — canon's
- * `missing`: Obligation Exists, Observation None.
- *
- * NO NEW OUTCOME, AND THAT IS THE ARGUMENT RATHER THAN THE CONVENIENCE. A row the manifest declares
- * and no scenario specifies is a debit nothing observed, which is what `missing` already means and
- * what `features/fitness-checks.feature` promises in those words. Minting a fourth corpus-shape
- * outcome would put a second sentence beside a row canon already has a sentence for.
- *
- * THE OBLIGATION IS THE ROW'S OWN, and it is REAL — `{ qualityCheck: "fitness" }`, the same shape a
- * converted scenario raises. That is what separates this from the uncoded-work item beside it: THAT
- * one synthesises an empty `{}` because an untagged scenario names no check at all, and this row
- * IS a declared check. So the row posts it as a debit too, and
- * the summary counts the obligation the manifest raised.
- *
- * NOTHING HERE CAN DISCHARGE IT, and that is structural rather than asserted: no observation is
- * offered to this item at all, and the minted row's `@SCN` is not a member of the set the citation
- * router posts credits against. A credit citing the row's code still mints a phantom row
- * (@SCN-LNT-009); there is no route by which it reaches this one.
- */
-export function unspecifiedRowReconciliations(): QualityCheckReconciliation[] {
-  return [
-    makeQualityCheckReconciliation({
-      qualityCheck: "fitness",
-      outcome: "missing",
-      evidenceObligation: { qualityCheck: "fitness" },
-    }),
-  ];
-}

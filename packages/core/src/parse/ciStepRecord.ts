@@ -15,16 +15,15 @@
  *
  * THE KEY IS THE CITATION. A step's `id:` is the `@SCN` of the configured row it answers, so an
  * entry naming a configured row is read for its verdict, and that verdict answers the one fitness
- * obligation the row's scenario raises (3F-3525). An entry no configured row answers is
- * not this reader's business: `checkout` and `setup-node` are not checks, and silence about them
- * is the correct report rather than a gap in one.
+ * obligation that scenario raises (3F-3525). An entry whose key is not an `@SCN` is not this
+ * reader's business: `checkout` and `setup-node` are not checks, and silence about them is the
+ * correct report rather than a gap in one.
  *
- * AND THE ROWS ARE READ TOO, NOT ONLY THE RECORD (@SCN-LNT-027). An entry is one half of the
- * reading; the other is every configured row the record held no entry for, which is broken evidence
- * naming that row. It is the one comparison on this axis that survives its own subject vanishing:
- * the rows come from the target's manifest and the enumeration from the run's own record, so
- * emptying either leaves the other standing. Every other reading here loses both sides at once when
- * a check stops being wired, and a run over nothing balances.
+ * THE RECORD IS THE WHOLE OF WHAT IS READ (3F-3582). This reader once walked a second document
+ * beside it — `specController.fitnessChecks` — and raised broken evidence for every entry of it
+ * the record held no step for. That list is retired, and with it the denominator; none is needed,
+ * because the obligation is raised by the scenario's own tag, so a check quietly lifted out of a
+ * pipeline leaves its scenario's obligation answered by nothing and it reconciles `missing`.
  *
  * A RECORD NEVER HANDED OVER IS NOT A RECORD CARRYING NOTHING, AND THE OPTIONALITY REACHES THIS
  * MODULE rather than being flattened at the call site. `undefined` is a consumer whose pipeline
@@ -38,7 +37,9 @@
  * edge from the target's own evidence, and the rows arrive from the target's own manifest.
  */
 
-import type { FitnessCheckIndex } from "../domain/fitnessChecks.js";
+// THE ONE BARE-@SCN PATTERN, read from the corpus reader rather than restated (@SCN-TRM-001):
+// what it decides here is which of a run record's entries is a citation at all.
+import { SCN_CODE } from "./scenarios.js";
 import type { EvidenceStatus } from "../domain/journal.js";
 import type { FitnessEvidenceObservation } from "../model.js";
 
@@ -196,14 +197,12 @@ function namedOf(citedScn: string) {
 }
 
 /**
- * The BROKEN shape, spelled once for both the readings that reach it — an entry whose outcome this
- * reader cannot vouch for (@SCN-LNT-026), and a configured row the record held no entry for at all
- * (@SCN-LNT-027).
+ * The BROKEN shape — an entry whose outcome this reader cannot vouch for (@SCN-LNT-026).
  *
- * ONE SPELLING BECAUSE IT IS ONE OUTCOME. The two readings differ in what they say about the check
- * and in nothing else, so a second construction here would be free to omit a field the first
- * carries — and the day one of them stopped carrying `exists: false` is the day a check that did
- * not run started counting as a running one on exactly half the routes.
+ * SPELLED ONCE, AND IT USED TO HAVE A SECOND CALLER: a configured row the record held no entry for
+ * (the retired @SCN-LNT-027). That reading left with the manifest list it walked (3F-3582), and
+ * the shape stays one construction because the day it stopped carrying `exists: false` would be
+ * the day a check that did not run started counting as a running one.
  */
 function brokenCreditOf(citedScn: string, message: string): FitnessEvidenceObservation {
   return {
@@ -237,33 +236,14 @@ function creditOf(
   };
 }
 
-/**
- * WHAT the record said about a configured row it held no entry for, which is nothing at all — the
- * message a row's own absence from the record earns (@SCN-LNT-027).
- *
- * IT NAMES THE MANIFEST RATHER THAN THE PIPELINE, because the manifest is the document this reader
- * actually held. Which step should have carried the row's code is a real question and not one the
- * record can answer: the entry it would live in is precisely what the record did not carry. Naming
- * a workflow file this reader never read would be the prescribed cure a broken item refuses.
- *
- * IT IS NOT THE SENTENCE AN ENTRY WITH NO OUTCOME EARNS, and the two are kept apart because they
- * send a reader to different places. That one is a step this run recorded and said nothing about;
- * this one is a step the run did not record at all.
- */
-function rowHasNoEntryMessage(scnId: string): string {
-  return (
-    `${scnId}: the CI run's record carries no step for this row of ` +
-    "`specController.fitnessChecks` — so the check did not run."
-  );
-}
 
 /**
- * The credits a CI RUN'S OWN RECORD raises — one per entry naming a configured row, carrying
+ * The credits a CI RUN'S OWN RECORD raises — one per entry whose key is an `@SCN`, carrying
  * WHAT ITS STEP DID: `satisfied` off a step that succeeded (@SCN-LNT-021) and `failing` off one
  * that failed (@SCN-LNT-028). There is no third answer: a step the record says was skipped is
- * broken evidence, whatever its row says (3F-3252).
+ * broken evidence (3F-3252).
  *
- * AND BROKEN EVIDENCE OFF EVERY OTHER READING (@SCN-LNT-026), which is why this is one per configured
+ * AND BROKEN EVIDENCE OFF EVERY OTHER READING (@SCN-LNT-026), which is why this is one per citing
  * entry rather than one per entry that said something. The credit set is CLOSED to the three readings
  * that say what the check did; a skip no row asked for, a `cancelled` step, a status nobody
  * anticipated are each a step whose running this reader cannot vouch for, and the safe answer is the
@@ -274,7 +254,7 @@ function rowHasNoEntryMessage(scnId: string): string {
  * THE CREDIT ARRIVES ALREADY CITING, WHICH IS THE SEAM THIS ROUTE RETIRES (@SCN-LNT-021). A
  * DISCOVERED check is found as a runnable script handle, and a handle does not know what it is
  * for — hence the (now-retired) registry, and hence the corpus lookup behind it. Here the
- * entry's key IS the code of the row it answers: one term, and no registry consulted at all.
+ * entry's key IS the `@SCN` it answers: one term, and nothing consulted at all.
  *
  * `failing`, AND THE THREE NEIGHBOURS IT IS NOT. `broken` is the never-ran case: it carries no
  * Evidence Observation and stamps the run unsound, so reading a failed step as broken would throw
@@ -292,34 +272,28 @@ function rowHasNoEntryMessage(scnId: string): string {
  * own checkout, over the target's own tree. Neither is the manifest-mentions-a-name reading the
  * discovered route takes.
  *
- * AN ENTRY NO CONFIGURED ROW ANSWERS IS NOT THIS READER'S BUSINESS. `checkout`, `setup-node` and
- * the dump step itself are steps and not checks, and silence about them is the correct report.
+ * AN ENTRY WHOSE KEY IS NOT AN `@SCN` IS NOT THIS READER'S BUSINESS. A consumer puts an `id:` on a
+ * step for their own reasons — a counter, a step another step's `if:` reads — and those cite
+ * nothing; silence about them is the correct report, and crediting them would mint a phantom row
+ * about the consumer's own plumbing.
  *
- * AND A CONFIGURED ROW NO ENTRY ANSWERS RAISES A BROKEN CREDIT (@SCN-LNT-027), which is why this
- * walks the ROWS as well as the record. The rows are the denominator, and a check quietly lifted
- * out of a pipeline goes dark on the side the pipeline cannot reach.
+ * AND A SCENARIO NO ENTRY ANSWERS IS NOT THIS READER'S BUSINESS EITHER, WHICH IS WHAT CHANGED
+ * (3F-3582). While `specController.fitnessChecks` declared the checks, this walked the ROWS as
+ * well as the record and raised BROKEN evidence for a row the record held no entry for. The
+ * manifest list is retired, so there is no denominator here to walk — and none is needed: the
+ * obligation is raised by the scenario's tag, so a check quietly lifted out of a pipeline leaves
+ * its scenario's obligation answered by nothing and it reconciles `missing`. Both red; `missing`
+ * is canon's word for it and `broken` named a row that no longer exists.
  */
-export function ciStepRecordCredits(
-  record: CiStepRecord | undefined,
-  fitnessChecks: FitnessCheckIndex
-): FitnessEvidenceObservation[] {
+export function ciStepRecordCredits(record: CiStepRecord | undefined): FitnessEvidenceObservation[] {
   if (record === undefined) return [];
   const credits: FitnessEvidenceObservation[] = [];
-  const recorded = new Set<string>();
   for (const [citedScn, step] of Object.entries(record)) {
-    if (!fitnessChecks.has(citedScn)) continue;
-    recorded.add(citedScn);
-    // NO `continue` ON A READING THIS READER HAS NONE FOR (@SCN-LNT-026). Every configured row the
-    // record holds an entry for raises something; which of the two shapes it raises is the
-    // credit builder's answer, and the fall-through reaches the loud one rather than the exit.
+    if (!SCN_CODE.test(citedScn)) continue;
+    // NO `continue` ON A READING THIS READER HAS NONE FOR (@SCN-LNT-026). Every citing entry the
+    // record holds raises something; which of the two shapes it raises is the credit builder's
+    // answer, and the fall-through reaches the loud one rather than the exit.
     credits.push(creditOf(citedScn, readingOf(step.outcome), step.outcome));
-  }
-  // AND THE ROWS ARE WALKED TOO, NOT ONLY THE RECORD (@SCN-LNT-027). The rows come from the
-  // target's manifest and the enumeration from the run's own record, so a row the record held no
-  // entry for is a check that did not run — broken evidence naming that row.
-  for (const scnId of fitnessChecks) {
-    if (recorded.has(scnId)) continue;
-    credits.push(brokenCreditOf(scnId, rowHasNoEntryMessage(scnId)));
   }
   return credits;
 }

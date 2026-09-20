@@ -7,8 +7,8 @@
  * file costs is taken per FUNCTION, by the two rules below.
  *
  * IT HAS NO SCRIPT NAME OF ITS OWN SINCE 3F-3151. `pnpm lint:complexity` was deleted when
- * @SCN-FIT-001 converted: the check is a row of `specController.fitnessChecks` naming that
- * scenario and the command `eslint` — which is this config.
+ * @SCN-FIT-001 converted: the check is the `@fitness` scenario @SCN-FIT-001 and the CI step
+ * carrying that `@SCN` as its `id:`, running `eslint` — which is this config.
  * `ci.yml` runs it as the step carrying `id: SCN-FIT-001`. To measure the tree by hand,
  * `pnpm exec eslint`.
  *

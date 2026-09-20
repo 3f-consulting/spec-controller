@@ -34,7 +34,7 @@ export type RuntimeQualityCheck = Exclude<QualityCheck, "fitness">;
  * One evidence obligation a scenario raises — a SINGLE flat shape keyed on
  * `qualityCheck` (no `kind`/`level` discriminated union):
  *   - `@unit`/`@integration`/… → `{ qualityCheck: <level> }`.
- *   - a `@fitness` scenario, via its `specController.fitnessChecks` row
+ *   - a `@fitness` scenario, from its tag alone (3F-3582)
  *                              → `{ qualityCheck: 'fitness' }`, keyed by the scenario's @SCN.
  *   - a registered bare check tag (e.g. `@complexity`)
  *                              → `{ qualityCheck: 'fitness', staticCheck: <the tag> }`.

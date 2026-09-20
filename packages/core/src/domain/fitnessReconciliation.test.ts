@@ -25,7 +25,6 @@ import { describe, it, expect } from "vitest";
 import { reconcile } from "./evidenceReconciliation.js";
 import type { ScriptCitation } from "../parse/fitnessCitations.js";
 import { parseScenarios } from "../parse/scenarios.js";
-import { fitnessChecksOf } from "./fitnessChecks.js";
 import { runningStaticChecks } from "../parse/runningStaticChecks.js";
 import type { PackageJsonScripts } from "../parse/checkScriptsRunInCI.js";
 import type { EvidenceObservation } from "../model.js";
@@ -141,8 +140,7 @@ describe("[SCN-LNT-009] a fitness credit citing an @SCN no scenario carries post
     expect(observation?.scnId).toBe("SCN-AAA-001");
 
     const scenarios = parseScenarios(
-      corpusAtReconcile, [], fitnessChecksOf([{ scn: "SCN-AAA-002" }])
-    );
+      corpusAtReconcile);
     expect(scenarios.map((s) => s.scnId)).toEqual(["SCN-AAA-002"]);
 
     const balance = reconcile(scenarios, evidenceObservations);
@@ -167,6 +165,13 @@ describe("[SCN-LNT-009] a fitness credit citing an @SCN no scenario carries post
       },
     ]);
     expect(phantom?.reconcilingItems).toEqual(phantom?.qualityCheckReconciliations);
+    // AND ITS PENDING SIDE IS EMPTY BY CONSTRUCTION, asserted rather than assumed. A phantom row is
+    // minted by a CREDIT, so no scenario raised anything of it — and a Pending Item is a DEFERRED
+    // obligation, which is the one thing a row nobody wrote cannot have. Left unasserted, a row
+    // that grew one would read out-of-balance all the same and the report would offer a reader a
+    // deferral to chase on a scenario that does not exist. Measured, not assumed: 3F-3582's
+    // mutation sweep left `pendingItems: []` here as its one new survivor, and this kills it.
+    expect(phantom?.pendingItems).toEqual([]);
 
     // NEVER DROPPED, NEVER SMEARED — the credit's identity counted across the WHOLE ledger. A rule
     // that let an unresolvable citation fall back to the handle puts the renumbered row in this
@@ -227,8 +232,7 @@ describe("[SCN-LNT-004] a scenario requiring both a unit test and a fitness chec
       "    Scenario: the tree stays inside this check's threshold",
     ].join("\n");
     const scenarios = parseScenarios(
-      corpus, [], fitnessChecksOf([{ scn: "SCN-AAA-001" }])
-    );
+      corpus);
     expect(scenarios.map((s) => s.evidenceObligations)).toEqual([
       [{ qualityCheck: "unit" }, { qualityCheck: "fitness" }],
     ]);

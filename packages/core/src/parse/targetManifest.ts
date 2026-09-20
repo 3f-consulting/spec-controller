@@ -4,8 +4,8 @@
  *
  * WHY THEY LIVE IN THE ENGINE. Every one of them is a pure function of a manifest object
  * somebody else already read off disk, and every one of them is the ONE reading of the key it
- * names — `fitnessChecksOf` and `bareTerm` are both core's, so the reader and the
- * thing it reads through belonged on the same side of the package boundary. Sitting at the app
+ * names — `bareTerm` is core's, so the reader and the thing it reads through belonged on the same
+ * side of the package boundary. Sitting at the app
  * edge they were the reason a PUBLISHED module imported core's unpublished `/internal` subpath,
  * which is the fault 3F-3086 repairs; nothing about reading a parsed manifest ever needed the
  * edge that produced it.
@@ -24,7 +24,6 @@
  */
 
 import { bareTerm } from "../lib/bareTerm.js";
-import { fitnessChecksOf, type FitnessCheckIndex } from "../domain/fitnessChecks.js";
 // THE FOUR CANON TIERS, read from the ledger's own enumeration rather than restated here
 // (@SCN-USG-019). A second list of the same four would agree by coincidence, and this axis's
 // whole argument is that a list of names is the drift.
@@ -98,28 +97,6 @@ export function resolveDeferralTags(
 }
 
 
-/**
- * The TARGET's CONFIGURED FITNESS ROWS (@SCN-LNT-018) — `specController.fitnessChecks`, read as
- * the set of `@SCN`s it declares as configured checks, through the engine's own `fitnessChecksOf`.
- *
- * THE DEBIT SIDE OF A CONVERTED CHECK. A converted scenario carries `@fitness` and its `@SCN`; the
- * row naming that `@SCN` is what declares it a configured check, which is what removes the registry
- * hop an unconverted static check needs.
- *
- * IT IS THE TARGET'S, for the reason the check registry and the ceilings are (@SCN-LNT-005): which
- * checks a repository declares is a fact about that repository, and a row resolved from this tool's
- * own manifest would put an obligation on a target's books it never wrote.
- *
- * The fifth of this family's `specController.*` resolvers, and defensive like the four above it: a
- * missing or wrongly-shaped config resolves EMPTY, and a malformed row is dropped by
- * `fitnessChecksOf` rather than thrown. There is no starter set: a target that has converted
- * nothing owes nothing on this route, which is what keeps the reading inert on an unswept corpus.
- */
-export function resolveFitnessChecks(packageJson: {
-  specController?: { fitnessChecks?: unknown };
-}): FitnessCheckIndex {
-  return fitnessChecksOf(packageJson.specController?.fitnessChecks);
-}
 
 /**
  * WHAT A TARGET'S RUNNER BLOCK YIELDED — the entries keyed by a canon tier, and the keys that are
@@ -203,7 +180,8 @@ export function resolveRunners(packageJson: {
 }
 
 /**
- * THE specController.* KEYS THIS READER HAS RETIRED (@SCN-USG-021, @SCN-USG-022, @SCN-USG-023) —
+ * THE specController.* KEYS THIS READER HAS RETIRED (@SCN-USG-021, @SCN-USG-022, @SCN-USG-023,
+ * @SCN-USG-024) —
  * the top-level keys a manifest carries whose reading this tool has removed, in the order the
  * manifest wrote them.
  *
@@ -223,48 +201,28 @@ export function resolveRunners(packageJson: {
  * DEFENSIVE LIKE THE READERS ABOVE IT: a missing or non-object `specController` names no
  * retired key, never throws.
  */
-const RETIRED_SPEC_CONTROLLER_KEYS = ["checkRegistry", "staticChecks", "thresholds"] as const;
+const RETIRED_SPEC_CONTROLLER_KEYS = [
+  "checkRegistry",
+  "staticChecks",
+  "thresholds",
+  "fitnessChecks",
+] as const;
+
 
 /**
- * THE ROW-LEVEL KEYS THIS READER HAS RETIRED (@SCN-LNT-035, @SCN-LNT-039), append-only like the
- * top-level set above.
+ * ONE ACCOUNT, in the order the manifest wrote them: every retired top-level key the target still
+ * carries, naming itself.
  *
- * Nothing reads a row's BAR since 3F-3510: a row is credited by its own step's outcome, so a bar
- * left on it holds the check to nothing. A `mutationGate` is a value of `atLeast`, so the key it
- * sits under is what names it. Nothing reads a row's CHARACTERISTIC since 3F-3525: one `@fitness`
- * scenario is one check, keyed by its own `@SCN`, so the word says nothing the ledger reads.
- *
- * THE READER GOES ON ACCEPTING THEM, which is the point of naming rather than dropping. A
- * consumer's rows carry these keys today; a reader that dropped such a row would take their checks
- * dark (expand/contract step 4, `publishing-npm-packages.md`).
- *
- * NAMED WITH ITS ROW, `fitnessChecks[<@SCN>].<key>`, because a row-level key alone says nothing a
- * consumer could find it by. A row stating no usable `@SCN` names none of them: the row reader
- * drops it whole, and there is no handle to name its keys by.
- */
-const RETIRED_ROW_KEYS = ["atLeast", "atMost", "characteristic"] as const;
-
-function retiredRowKeysOf(rows: unknown): string[] {
-  if (!Array.isArray(rows)) return [];
-  return (rows as readonly unknown[]).flatMap((row) => {
-    if (!isBlock(row) || typeof row["scn"] !== "string") return [];
-    const scnId = bareTerm(row["scn"]);
-    if (scnId === "") return [];
-    return Object.keys(row)
-      .filter((key) => (RETIRED_ROW_KEYS as readonly string[]).includes(key))
-      .map((key) => `fitnessChecks[${scnId}].${key}`);
-  });
-}
-
-/**
- * ONE ACCOUNT FOR BOTH KINDS, in the order the manifest wrote them: a retired top-level key names
- * itself, and `fitnessChecks` names each bar its rows still carry.
+ * IT USED TO HAVE A SECOND KIND (@SCN-LNT-035, @SCN-LNT-039) — the keys a `fitnessChecks` ROW
+ * still carried, named as `fitnessChecks[<@SCN>].<key>`. That account left with the key its rows
+ * sat under (3F-3582): `fitnessChecks` is itself retired now, so a manifest carrying it earns ONE
+ * line, and naming the keys on rows the reader no longer reads at all would be saying the same
+ * retirement once per row.
  */
 export function resolveRetiredKeys(packageJson: { specController?: unknown }): readonly string[] {
   const configured = packageJson.specController;
   if (!isBlock(configured)) return [];
-  return Object.entries(configured).flatMap(([key, value]) => {
-    if (key === "fitnessChecks") return retiredRowKeysOf(value);
-    return (RETIRED_SPEC_CONTROLLER_KEYS as readonly string[]).includes(key) ? [key] : [];
-  });
+  return Object.keys(configured).filter((key) =>
+    (RETIRED_SPEC_CONTROLLER_KEYS as readonly string[]).includes(key)
+  );
 }

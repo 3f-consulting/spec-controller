@@ -15,7 +15,6 @@ import { assembleRenderInput } from "./renderInput.js";
 import { renderJson } from "../render/json.js";
 import { renderReport, renderMarkdown } from "../render/markdown.js";
 import { parseScenarios } from "../parse/scenarios.js";
-import { fitnessChecksOf } from "../domain/fitnessChecks.js";
 import { reconcile } from "../domain/evidenceReconciliation.js";
 import { makeQualityCheckReconciliation, OUTCOME_SIDE_PROFILE } from "../model.js";
 import type { Ledger } from "../model.js";
@@ -383,7 +382,7 @@ describe("[SCN-RMD-008] each reconciled evidence sub-row carries a single qualit
     "    Scenario: a fixture scenario",
   ].join("\n");
   const report = () =>
-    JSON.parse(JSON.stringify(assembleRenderInput(__er(reconcile(parseScenarios(feature, [], fitnessChecksOf([{ scn: "SCN-RMD-008" }])), [])), ctx))) as {
+    JSON.parse(JSON.stringify(assembleRenderInput(__er(reconcile(parseScenarios(feature), [])), ctx))) as {
       ledger: {
         scenarioReconciliations: Array<{
           qualityCheckReconciliations: Array<Record<string, unknown>>;

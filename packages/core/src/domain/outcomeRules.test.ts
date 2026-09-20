@@ -311,7 +311,7 @@ describe("[SCN-LDG-034] a fitness credit's item carries no locator, even when th
       scnId: "SCN-ZZZ-009",
       exists: true,
       enforcedOverRealSource: true,
-      locator: "packages/core/src/domain/fitnessChecks.ts",
+      locator: "packages/core/src/parse/fitnessCitations.ts",
     };
     const [item] = citesUnknownScenarioReconciliationsOf([guardWithLocator]);
     expect(item).toStrictEqual({

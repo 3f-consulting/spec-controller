@@ -1,18 +1,17 @@
 {
-  "name": "unspecified-row-fitness-target-repo-fixture",
+  "name": "fitness-checks-retired-target-repo-fixture",
   "private": true,
   "scripts": {
-    "test": "vitest run"
+    "build": "tsc"
   },
   "specController": {
+    "notChecks": [
+      "ci.yml:quality:Checkout"
+    ],
     "fitnessChecks": [
       {
         "scn": "SCN-CVT-001",
         "command": "eslint"
-      },
-      {
-        "scn": "SCN-CVT-002",
-        "command": "scn-subissues"
       }
     ]
   }

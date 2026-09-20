@@ -52,24 +52,22 @@ Each `@`-tag on a scenario names one **evidence obligation** — naming one **qu
 
 `@fitness`
 
-A fitness check is a whole-system property — complexity, mutation score, type soundness, vocabulary, suite run time — and it is **three things**: the axis tag, an `@SCN`, and a command. You write the command **once, into a config file**, not into your pipeline:
+A fitness check is a whole-system property — complexity, mutation score, type soundness, vocabulary, suite run time — and it is **two things**: the `@fitness` scenario, and its `@SCN` on the CI step that already runs the check:
 
-```json
-"specController": {
-  "fitnessChecks": [
-    { "scn": "SCN-FIT-001", "command": "eslint" },
-    { "scn": "SCN-FIT-002", "command": "gh run list --workflow mutation.yml" }
-  ]
-}
+```yaml
+      - name: Complexity
+        id: SCN-FIT-001
+        if: always()
+        run: eslint
 ```
 
-Neither row carries a bar. The mutation bar is Stryker's own `thresholds.break`, and the row is answered by one push step that reads the newest nightly sweep's verdict: see [`doc/scheduled-checks.md`](./doc/scheduled-checks.md).
+You write nothing of ours. There is no manifest list of fitness checks, and nothing carries a bar: the mutation bar is Stryker's own `thresholds.break`, and its scenario is answered by one push step that reads the newest nightly sweep's verdict: see [`doc/scheduled-checks.md`](./doc/scheduled-checks.md).
 
-**One `@fitness` scenario is one check.** The tag says *how the claim is proved*; the scenario's **title** says what the check is about, and its `@SCN` is its identity — so several checks are several scenarios, and nothing classifies them further: no word on a row, no roster, no roll-up. A row of yours that still carries the retired `characteristic` key is read the same way, and the report names the key.
+**One `@fitness` scenario is one check.** The tag says *how the claim is proved*; the scenario's **title** says what the check is about, and its `@SCN` is its identity — so several checks are several scenarios, and nothing classifies them further: no word, no roster, no roll-up. A `package.json` of yours that still carries the retired `specController.fitnessChecks` key reconciles exactly as the same tree without it does, and the report names the key.
 
 So a stepped scenario tagged `@unit @integration` names two obligations; a fitness scenario names one. Each tag asserts *"to prove this, evidence of this quality-check must exist and hold"* — for a behavioural test, that it exists and passes; for a fitness check, that its command ran, and that any number it produced is inside its bar.
 
-**Every credit posts the same way**: the evidence cites its scenario's `@SCN`. A behavioural test cites the stepped scenario it exercises; a fitness check cites the scenario whose row named it. One rule, one direction — a check running uncited posts to the suspense scenario and is surfaced, never dropped.
+**Every credit posts the same way**: the evidence cites its scenario's `@SCN`. A behavioural test cites the stepped scenario it exercises; a fitness check cites the scenario its CI step's `id:` names. One rule, one direction — a check running uncited posts to the suspense scenario and is surfaced, never dropped, and a `@fitness` scenario nothing cites reconciles **missing**, exactly as a `@unit` scenario with no test does.
 
 ### Your pipeline keeps every check exactly where it already is
 

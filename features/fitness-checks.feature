@@ -9,11 +9,11 @@ Feature: The fitness checks this repository configures, one scenario per row
   other, which is what makes them two books rather than one read twice: a scenario derived from the
   row it is reconciled against could never disagree with it.
 
-  SO A SCENARIO WITH NO ROW, AND A ROW WITH NO SCENARIO, ARE BOTH FAULTS SOMETHING SAYS OUT LOUD.
-  The ledger reports a scenario whose code no row names as unconfigured, and a row whose scenario
-  the corpus does not carry as an Evidence Obligation nothing observed. That is the return on
-  authoring the two halves independently, and the whole of it: the disagreement is reportable
-  because it is possible.
+  SO A SCENARIO THE PIPELINE NEVER RUNS IS A FAULT SOMETHING SAYS OUT LOUD. Each scenario here
+  raises its fitness Evidence Obligation from its @fitness tag; a scenario whose @SCN no CI step
+  states reconciles missing and the run is out of balance, exactly as a @unit scenario with no test
+  does. That is the return on authoring the two halves independently, and the whole of it: the
+  disagreement is reportable because it is possible.
 
   WHY THE SCENARIOS EXIST AT ALL, given the rows already carry everything. A check reports its
   findings and says nothing when it finds none, so its silence cannot be told from its absence. The

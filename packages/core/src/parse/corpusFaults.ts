@@ -54,7 +54,6 @@ import { unrecognisedTags } from "./corpusGrammarFaults.js";
 export type TargetManifest = PackageJsonScripts & {
   specController?: {
     deferralTags?: unknown;
-    fitnessChecks?: unknown;
   };
 };
 

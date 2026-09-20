@@ -221,11 +221,10 @@ jobs:
       # and why it is deleted. What a consumer writes is an `id:` per check step and one dump step;
       # `doc/adopting-fitness-checks.md` is the whole of it.
       #
-      # THE `id:` IS THE `@SCN` ITSELF, AND IT CITES THE ROW RATHER THAN RESTATING IT. The
-      # obligation stays in the `@fitness` scenario, the command stays in the row of
-      # `specController.fitnessChecks`, and this step produces the observation. Three books, three
-      # authors, none of them able to answer for another. An arbitrary handle would need a fourth
-      # artefact mapping it back, which is the roster this repository keeps deleting.
+      # THE `id:` IS THE `@SCN` ITSELF, AND IT IS THE WHOLE CITATION. The obligation stays in the
+      # `@fitness` scenario, and this step both runs the check and produces the observation. Two
+      # books, two authors, neither able to answer for the other. An arbitrary handle would need a
+      # third artefact mapping it back, which is the roster this repository keeps deleting.
       #
       # AND ONLY A STEP CARRYING AN `id:` IS IN THE `steps` CONTEXT AT ALL — GitHub's own rule, not
       # a filter written here. `checkout`, `setup-node` and `Install dependencies` are not checks
@@ -239,11 +238,10 @@ jobs:
       # what it does not.
       #
       # THEY INVOKE THE package.json HANDLE AND NOT THE CLI BEHIND IT, AND THE REASON IS NOW ONLY
-      # THAT THE ROW SAYS SO. Each of these steps cites a row of `specController.fitnessChecks`
-      # through its `id:`, and that row's `command` is the handle — `pnpm lint:boundaries`, not
+      # READABILITY. Each of these steps runs the handle — `pnpm lint:boundaries`, not
       # `pnpm exec depcruise packages && pnpm exec eslint --config eslint.boundaries.mjs packages`,
-      # which would run the identical check. A reader matching the pipeline against the manifest
-      # reads the two spellings side by side, so keeping them the same is what makes that reading
+      # which would run the identical check. Nothing reads the two spellings against each other any
+      # more (3F-3582 retired the manifest list), so keeping them the same is what makes that reading
       # possible. Where the pipeline genuinely needs a different spelling it says so at the step, as
       # `Complexity` does for `pnpm exec`.
       #
@@ -279,10 +277,9 @@ jobs:
       # pinned binary in `node_modules/.bin` — so there is no manifest entry for the rule to reach,
       # and this step adds an observation for SCN-FIT-014 and nothing to the static-check census.
       #
-      # SO THE `id:` IS THE WHOLE CITATION. The obligation is the `@fitness` scenario, the
-      # command is the row in `specController.fitnessChecks`, and this step is the observation that
-      # answers them — cited by `id:` alone (@SCN-LNT-031). Misspell it and the credit posts to the
-      # suspense row while the scenario reads unobserved.
+      # SO THE `id:` IS THE WHOLE CITATION. The obligation is the `@fitness` scenario and this
+      # step is the observation that answers it — cited by `id:` alone (@SCN-LNT-031). Misspell it
+      # and the credit posts to a PHANTOM row (@SCN-LNT-009) while the scenario reads `missing`.
       - name: Corpus tags
         id: SCN-FIT-014
         if: always()

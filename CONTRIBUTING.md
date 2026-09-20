@@ -73,9 +73,9 @@ fitness row reads `satisfied` from `ci.yml`'s text, `@SCN-FIT-002` included, and
 verdict on any check.
 
 **Every converted check is a CI step, carrying its `@SCN` as the step's `id:`.** A converted check
-is both a row of `specController.fitnessChecks` and a `run:` step whose `id:` cites that row — the
-command in the pipeline, the obligation in the scenario, the observation in the run's own record of
-what its steps did.
+is a `@fitness` scenario and a `run:` step whose `id:` is that scenario's `@SCN` — the command in
+the pipeline, the obligation in the scenario, the observation in the run's own record of what its
+steps did. Nothing else declares it (3F-3582).
 
 **A check that only held our vocabulary is deleted rather than converted.** With one `@fitness` tag
 and no word classifying a check at all (3F-3525), there is nothing for a check policing such words

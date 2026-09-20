@@ -115,7 +115,7 @@ const balanceFlags: FlagSpec[] = [
     name: "--package-json",
     arg: "<path>",
     description:
-      "The target's package.json — its `scripts`, and its specController.fitnessChecks rows: each names a scenario's @SCN and the command that is the check.",
+      "The target's package.json — its `scripts`, and its specController.runners and specController.notChecks. A fitness check is declared by its @fitness scenario and the CI step whose id: is that scenario's @SCN; no manifest key names one.",
   },
   {
     name: "--ci-steps",

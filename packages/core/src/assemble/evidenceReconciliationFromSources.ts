@@ -40,14 +40,12 @@ import { stepExclusions, type StepExclusions } from "../parse/stepExclusions.js"
 import { discoveryScope } from "../parse/discoveryScope.js";
 import { stepAccounting } from "../parse/stepAccounting.js";
 import { reconcilerSteps, type ReconcilerSteps } from "../parse/reconcilerSteps.js";
-import type { FitnessCheckIndex } from "../domain/fitnessChecks.js";
 import {
   resolveDeferralTags,
   resolveNotChecks,
   resolveRetiredKeys,
   resolveRunners,
   type ResolvedRunners,
-  resolveFitnessChecks,
 } from "../parse/targetManifest.js";
 import type { BehaviouralRunner } from "../domain/evidenceReconciliation.js";
 import type { EvidenceReconciliation } from "./renderInput.js";
@@ -57,7 +55,6 @@ type TargetManifest = PackageJsonScripts & {
   specController?: {
     deferralTags?: unknown;
     staticChecks?: unknown;
-    fitnessChecks?: unknown;
     runners?: unknown;
     notChecks?: unknown;
   };
@@ -68,10 +65,9 @@ type TargetManifest = PackageJsonScripts & {
  * measurements, left with the measured axis (3F-3516).
  *
  * ITS OWN FUNCTION, extracted when the consumer's exclusion seam (@SCN-USG-015) took the
- * composition past the `max-lines-per-function` ceiling — `withUnconfiguredFitnessScenarios`'s
- * precedent, and the same seam: the streams are one idea with a name, and what is left above is
- * the composition that reads a target and hands them to the factory. Nothing about any of them
- * changed in the move.
+ * composition past the `max-lines-per-function` ceiling: the streams are one idea with a name, and
+ * what is left above is the composition that reads a target and hands them to the factory. Nothing
+ * about any of them changed in the move.
  */
 function observationStreams(
   input: {
@@ -81,29 +77,33 @@ function observationStreams(
   },
   corpus: TargetCorpus,
   packageJson: TargetManifest,
-  fitnessChecks: FitnessCheckIndex,
   runnerTiers: Readonly<Record<string, string | null>>,
   isExcluded: StepExclusions["isExcluded"]
 ): EvidenceObservation[] {
-  // WHICH ROWS THE RUN'S OWN RECORD ANSWERS FOR, so the derivation reader does not answer them
-  // again (@SCN-LNT-021, @SCN-LNT-030; forced by @SCN-USG-004). A converted check
-  // used to be one no discovery reader could SEE — its command is not a script of the manifest, so
-  // no prefix reached it — and that accident is what kept one check from being observed twice.
-  // Under the inverted membership rule every step is discovered, so the guarantee has to be a
-  // mechanism: where a run is handed its own record, the CONFIGURED rows are answered by that
-  // record, and derivation answers the residue — the steps citing no configured row at all.
+  // WHICH CHECKS THE RUN'S OWN RECORD ANSWERS FOR, so the derivation reader does not answer them
+  // again (@SCN-LNT-021, @SCN-LNT-030; forced by @SCN-USG-004). A converted check used to be one
+  // no discovery reader could SEE — its command is not a script of the manifest, so no prefix
+  // reached it — and that accident is what kept one check from being observed twice. Under the
+  // inverted membership rule every step is discovered, so the guarantee has to be a mechanism:
+  // where a run is handed its own record, every step that CITES an `@SCN` is the record's to
+  // answer, and derivation answers the residue — the steps citing nothing.
   //
-  // IT IS THE ROWS AND NOT THE ENTRIES, because the record answers for a row it holds NO entry for
-  // too: that is broken evidence naming the row (@SCN-LNT-027), and a derivation credit landing
-  // beside it would soften the loudest thing this axis can say into an ordinary green.
+  // IT IS THE CITING STEPS AND NOT THE RECORD'S ENTRIES, and the difference is the one case that
+  // matters (3F-3582). A step whose `id:` is an `@SCN` that the record holds NO entry for is a
+  // check that did not run: nothing credits it, and its scenario's obligation reconciles `missing`.
+  // Keyed on the record's entries instead, such a step would fall through to derivation and be
+  // credited as merely WIRED IN — and the scenario would read SATISFIED over a check that never
+  // ran. That is the false green the retired manifest list used to hold shut by supplying a
+  // denominator, and this is what holds it shut without one. Measured, not asserted: planted at
+  // 3F-3592, the entry-keyed spelling reads `balanced / satisfied` where this reads
+  // `out-of-balance / missing`.
   //
   // NOT A FIFTH DISPOSITION AND NOT A DROP. The step is on the books either way; what this decides
   // is WHICH stream credits it, and the streams differ in what they know — the record carries what
   // the step DID, and a derivation credit carries only that it is wired in. Two credits on one row
   // let the poorer one win, which is measurable: a `continue-on-error` step the record says failed
   // reconciles `watermelon` rather than `failing` when both are posted.
-  const answeredByTheRecord =
-    input.ciStepRecord === undefined ? new Set<string>() : new Set(fitnessChecks);
+  const recordAnswersCitingSteps = input.ciStepRecord !== undefined;
   return [
     ...input.runtimeObservations,
     ...checkObservations(
@@ -112,7 +112,7 @@ function observationStreams(
       packageJson,
       runnerTiers,
       isExcluded,
-      answeredByTheRecord
+      recordAnswersCitingSteps
     ),
     // THE CONVERTED CHECKS' CREDITS (@SCN-LNT-021, @SCN-LNT-028) — the CI RUN'S OWN RECORD, the
     // observation side, beside the workflow FILE the two config-reading observers above already
@@ -127,13 +127,13 @@ function observationStreams(
     // it. The rows are the SAME reading the obligations were raised from, taken from `corpus`'s
     // own rows, so a credit can never cite an @SCN the debit side never read.
     //
-    // THE OPTIONALITY IS PASSED THROUGH RATHER THAN FLATTENED (@SCN-LNT-027). A run handed NO
-    // record is not a run handed a record carrying nothing, and those are opposite facts. The
-    // first is a consumer whose pipeline dumps no record, or a run nobody recorded: its rows
-    // reconcile missing and the run is out of balance. The second is a run that happened and
-    // named not one of these steps, which is every configured check broken. The reader tells
-    // them apart; nothing here may.
-    ...ciStepRecordCredits(input.ciStepRecord, fitnessChecks),
+    // THE OPTIONALITY IS PASSED THROUGH RATHER THAN FLATTENED (@SCN-LNT-020). A run handed NO
+    // record is not a run handed a record carrying nothing, and those are opposite facts: the
+    // first leaves the derivation stream to answer every citing step, the second hands them all
+    // to the record. Both leave a scenario nothing cites reconciling `missing`; what differs is
+    // WHICH stream may credit the steps that do cite. The reader tells them apart; nothing here
+    // may.
+    ...ciStepRecordCredits(input.ciStepRecord),
   ];
 }
 
@@ -259,15 +259,9 @@ export function evidenceReconciliationFromSources(
   input: EvidenceReconciliationSources
 ): EvidenceReconciliation {
   const { packageJson } = input;
-  // ONE READING OF THE CONFIGURED ROWS, shared by both sides of this axis. The DEBIT reads them for
-  // the fitness obligation a converted scenario owes and the CREDIT its reported
-  // scenario answers, and two resolutions would be free to disagree about a manifest neither of
-  // them wrote — the same guarantee `readTargetCorpus` composes its three readings for.
-  const fitnessChecks = resolveFitnessChecks(packageJson);
   const corpus = readTargetCorpus(
     input.featureSources,
-    resolveDeferralTags(packageJson, input.deferralTags),
-    fitnessChecks
+    resolveDeferralTags(packageJson, input.deferralTags)
   );
 
   // WHAT THE TARGET SAID ABOUT ITS OWN PIPELINE, read once (see `pipelineReadings`).
@@ -281,15 +275,10 @@ export function evidenceReconciliationFromSources(
   // runtime-observation and the static-check streams are threaded.
   const reconciliation = evidenceReconciliationOf(
     corpus.scenarios,
-    observationStreams(input, corpus, packageJson, fitnessChecks, runners.tiers, isExcluded),
+    observationStreams(input, corpus, packageJson, runners.tiers, isExcluded),
     [...input.untaggedScenarios],
     true,
-    true,
-    // THE FOURTH POPULATION (@SCN-LNT-027, 3F-3472) — the configured rows this corpus carries no
-    // scenario for, taken from the SAME corpus reading the obligations were raised from. A row
-    // with no scenario raises nothing on the corpus side, so without this the check it declares
-    // reaches the books nowhere and the run reads balanced over it.
-    corpus.unspecifiedFitnessRows
+    true
   );
   return withReaderAccounts(
     reconciliation,
@@ -334,10 +323,7 @@ function withReaderAccounts(
       withExclusionAccount(
         withReconcilerAccount(
           withRunnerAccount(
-            withRetiredKeysAccount(
-              withUnconfiguredFitnessScenarios(reconciliation, corpus),
-              packageJson
-            ),
+            withRetiredKeysAccount(reconciliation, packageJson),
             input.ciSources,
             packageJson,
             runners
@@ -572,30 +558,6 @@ function withRunnerAccount(
   };
 }
 
-/**
- * THE CORPUS'S HALF-CONVERTED CHECKS (@SCN-LNT-020), carried onto the summary the factory built
- * rather than threaded through it. The factory's inputs are the JOURNAL — obligations and
- * observations — and this is neither: it is what the corpus said about itself that no row answered,
- * so a scenario naming it raises nothing for a Ledger to hold. It is grafted where the corpus
- * reading and the reconciliation are both in hand, and only when there is something to name, so a
- * target that has converted nothing serialises exactly as before.
- *
- * ITS OWN FUNCTION, extracted when the credit stream (@SCN-LNT-021) took the composition past the
- * `max-lines-per-function` ceiling. The graft is one idea with a name; nothing about it changed.
- */
-function withUnconfiguredFitnessScenarios(
-  reconciliation: EvidenceReconciliation,
-  corpus: TargetCorpus
-): EvidenceReconciliation {
-  if (corpus.unconfiguredFitnessScenarios.length === 0) return reconciliation;
-  return {
-    ...reconciliation,
-    summary: {
-      ...reconciliation.summary,
-      unconfiguredFitnessScenarios: corpus.unconfiguredFitnessScenarios,
-    },
-  };
-}
 
 /**
  * The COMPLETE static stream the reconciliation consumes, from the RUNNING-check observer — the
@@ -625,10 +587,11 @@ function checkObservations(
   runnerTiers: Readonly<Record<string, string | null>>,
   // @SCN-USG-015 — the consumer's own exclusions, reaching the DISCOVERY observer.
   isExcluded: StepExclusions["isExcluded"],
-  // The configured rows this run's own record answers for — none when it was handed no record.
-  // Stated at the composition (`observationStreams`), because which STREAM answers a row is a
-  // question about the run's inputs and not one an observer has any business holding.
-  answeredByTheRecord: ReadonlySet<string>
+  // Whether this run was handed its own CI step record, in which case every step that CITES an
+  // `@SCN` is the record's to answer and derivation answers only the residue. Stated at the
+  // composition (`observationStreams`), because which STREAM answers a step is a question about the
+  // run's inputs and not one an observer has any business holding.
+  recordAnswersCitingSteps: boolean
 ): EvidenceObservation[] {
   return [
     ...runningStaticChecks(
@@ -640,13 +603,12 @@ function checkObservations(
       // discovered check on the live path cited nothing, so a fully annotated pipeline reconciled
       // exactly as an unannotated one — `new-client` reported over a target in `annotated`.
       //
-      // THE HANDLE IS DELIBERATELY NOT CONSULTED. The row a step's code names carries the
-      // @SCN, so the citation comes off ONE configured row; reaching for the script's
-      // spelling to supply the half a CI step cannot state is the name-match this axis retired.
-      // A step with no code, or one naming no configured row, reaches no citation and posts to
+      // THE HANDLE IS DELIBERATELY NOT CONSULTED. A step's `id:` IS the citation (3F-3582);
+      // reaching for the script's spelling to supply the half a CI step did not state is the
+      // name-match this axis retired. A step with no code reaches no citation and posts to
       // suspense — which is `new-client`, unnarrowed.
       (_script, citedByStep) => corpus.citedRow(citedByStep),
       isExcluded
-    ).filter((o) => !(o.scnId !== undefined && answeredByTheRecord.has(bareTerm(o.scnId)))),
+    ).filter((o) => !(recordAnswersCitingSteps && o.scnId !== undefined)),
   ];
 }

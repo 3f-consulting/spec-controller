@@ -10,7 +10,6 @@ import {
   parseScenarios,
   pendingQualityCheck,
 } from "./scenarios.js";
-import { fitnessChecksOf } from "../domain/fitnessChecks.js";
 
 // The recognised community deferral tags, passed EXPLICITLY into `parseScenarios`. The core
 // default is now `[]` (a policy-free pure core recognises only what it is told); the starter
@@ -211,9 +210,7 @@ describe("[SCN-PND-016] a recognised community deferral tag defers every named o
     // `@lint=<handle>` form this case used to carry raises nothing at all now (@SCN-LNT-007), so
     // it could no longer say whether deferral reached the fitness axis.
     const [scenario] = parseScenarios(asFeature(["@wip @fitness @SCN-XXX-110", "Scenario: a deferred fitness scenario"].join("\n")),
-      DEFERRAL_TAGS,
-      fitnessChecksOf([{ scn: "SCN-XXX-110" }])
-    );
+      DEFERRAL_TAGS);
     expect(scenario!.evidenceObligations).toEqual([
       { qualityCheck: "fitness", pending: true },
     ]);

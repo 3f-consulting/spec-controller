@@ -580,6 +580,21 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
     different word; asserting the fallback is what earns this its own scenario rather than an
     arm of the one above.
 
+    THE FOURTH RETIRED KEY, AND THE ONE A CONSUMER IS MOST LIKELY TO STILL BE WRITING.
+    specController.fitnessChecks was how a target declared its fitness checks: a list of entries,
+    each naming a scenario's @SCN and the command that is the check. Nothing reads it (3F-3582) —
+    a @fitness scenario raises its obligation from its tag, and the credit is the CI step whose
+    id: is that @SCN, so an adopter writes the scenario and annotates the step and nothing else.
+    The key is appended to the same set and rendered by the same line as the three above.
+
+    ITS SCENARIO ASSERTS A COMPARISON RATHER THAN AN ABSENCE, WHICH IS WHAT IT IS FOR. "Named" is
+    cheap; "changes nothing" is the promise an adopter relies on while their manifest still
+    carries the key, and it is what lets this repository's own package.json keep its list across
+    the expand merge. So the second arm reconciles the SAME corpus, CI and run record against a
+    manifest with the key struck out, and compares the whole ledger and the exit code. A reader
+    that named the key while still reading one of its entries would show as a diff there, and a
+    conserved exit code alone would hide a changed verdict.
+
     THE THIRD RETIRED KEY, AND THE ONE WHOSE CONSEQUENCE IS ALREADY PAID. specController.thresholds
     held a scenario to a ceiling — keyed by @SCN, then by the check the ceiling was written for —
     and it was the only thing that made a bare tag like ci-run-time raise a measured obligation at
@@ -616,6 +631,14 @@ Feature: Detect uncited static-checks — a CI check no fitness scenario cites
       When the reconciliation report is rendered for the target
       Then the report names specController.thresholds as a key it no longer reads
       And the scenario the ceiling names raises no Evidence Obligation
+
+    @unit @integration @SCN-USG-024
+    Scenario: a manifest carrying specController.fitnessChecks is named as a retired key, and the same target without it reconciles identically
+      Given a target whose manifest still declares its fitness check through specController.fitnessChecks
+      And that target's corpus carries that check's @fitness scenario, and its CI step states that scenario's @SCN
+      When that target's reconciliation report is rendered from its own manifest
+      Then the report names specController.fitnessChecks as a key it no longer reads
+      And the same target with the key removed reconciles to the same ledger and the same exit code, naming no retired key
 
   Rule: a step the manifest names a non-check is excluded, and the report says so
 

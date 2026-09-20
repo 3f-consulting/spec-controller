@@ -115,7 +115,6 @@ export type { CiWorkflowStep, CiStepAction } from "./parse/checkScriptsRunInCI.j
 // seam working as 3F-2837 intended.
 export {
   resolveDeferralTags,
-  resolveFitnessChecks,
 } from "./parse/targetManifest.js";
 
 // `readTargetCorpus` HAS LEFT THIS SEAM (3F-3089), and the removal is the point rather than tidying.

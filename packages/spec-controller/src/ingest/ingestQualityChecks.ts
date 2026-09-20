@@ -334,7 +334,6 @@ function parseRuntimeObservations(opts: ReconcileOptions, root: string | undefin
 type TargetManifest = PackageJsonScripts & {
   specController?: {
     deferralTags?: unknown;
-    fitnessChecks?: unknown;
     runners?: unknown;
     notChecks?: unknown;
   };

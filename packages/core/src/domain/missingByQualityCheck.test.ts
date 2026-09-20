@@ -47,7 +47,6 @@
 
 import { describe, it, expect } from "vitest";
 import { parseScenarios } from "../parse/scenarios.js";
-import { fitnessChecksOf } from "./fitnessChecks.js";
 import { reconcile } from "./evidenceReconciliation.js";
 import { ledgerTally } from "./ledger.js";
 
@@ -65,7 +64,7 @@ describe("[SCN-RMD-008] the missing split carries every quality-check in canonic
   ].join("\n");
 
   it("names fitness, unit, integration, e2e and performance, in that order", () => {
-    const tally = ledgerTally(reconcile(parseScenarios(feature, [], fitnessChecksOf([{ scn: "SCN-RMD-008" }])), []));
+    const tally = ledgerTally(reconcile(parseScenarios(feature), []));
 
     // Five raised, five missing — so no quality-check is absent from the split because it had
     // nothing to report. Whatever the split omits, it omits while holding a missing obligation.

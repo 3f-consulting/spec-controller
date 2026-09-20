@@ -44,19 +44,23 @@ Its steps do not run, in the same way a `@unit` scenario's steps do not: Cucumbe
 the runner your CI already calls is what produces the evidence. Getting here from `annotated` is
 either your own work or `migrate`'s.
 
-**The row of `specController.fitnessChecks`** — `scn` and `command` — carries which scenario the
-check answers and the command whose exit code is the verdict. It names nothing else: not a bar (a
-check that produces a number applies its own and exits non-zero below it), and not a word for what
-the check is about — the scenario's title says that, and the `@SCN` is the identity the ledger
-reads. The sections below assume you are heading for `conformant`; if you are stopping at
-`annotated`, read them for the row and the CI step and skip the scenario.
+**There are two artefacts and no third: the `@fitness` scenario, and its `@SCN` as the `id:` of the
+CI step that runs the check.** The scenario raises the obligation — from its tag, exactly as a
+`@unit` scenario's tag does — and the step's outcome answers it. Nothing else declares a check: no
+manifest list, no bar (a check that produces a number applies its own and exits non-zero below it),
+and no word for what the check is about, because the scenario's title says that and the `@SCN` is
+the identity the ledger reads. The sections below assume you are heading for `conformant`; if you
+are stopping at `annotated`, read them for the CI step and skip the scenario.
 
-**A row of yours that still carries `characteristic` is read exactly as one that does not.** The
-key is retired, and the reader goes on accepting it: your run names it on the report under
-`### Static checks` (`specController.fitnessChecks[<@SCN>].characteristic — retired: …`), balances
-as it did, and exits as it did. Drop it when it suits you.
+**If your `package.json` still carries `specController.fitnessChecks`, nothing breaks and nothing
+changes.** The key is retired and the reader goes on accepting it: your run names it on the report
+under `### Static checks` (`specController.fitnessChecks — retired: …`), reconciles exactly as the
+same tree without the key does, and exits the same. Drop it when it suits you. *(That paragraph is
+true of the release this merge publishes, and of every release after it: the reader stops accepting
+the key only when no adopter still writes it, and this page will say so in the same merge that does
+it.)*
 
-The scenario is **written beside its row rather than derived from it**:
+The scenario is **written beside the pipeline rather than derived from it**:
 
 ```gherkin
   @fitness @SCN-FIT-001
@@ -79,15 +83,16 @@ pipeline records what that step did, and `balance` reads the record. What its st
 both sides of the entry at once. A `Then` states the property asserted, exactly as a `@unit`
 scenario's does; whether this push cleared it is the ledger's sentence.
 
-**Two things to write, and that is the point.** A scenario emitted from the row it is reconciled
-against cannot disagree with it — that is one author wearing double-entry's clothes, and deleting a
-row would take its obligation with it, silently. Authored, the two sides can disagree, which is the
-only reason either of them is worth reading.
+**Two things to write, and that is the point.** A scenario emitted from the pipeline it is
+reconciled against cannot disagree with it — that is one author wearing double-entry's clothes, and
+deleting a step would take its obligation with it, silently. Authored, the two sides can disagree,
+which is the only reason either of them is worth reading.
 
-**So both halves of the pair are faults something says out loud.** The ledger reports a scenario
-whose code no row names as unconfigured, and a row whose scenario the corpus does not carry as an
-Evidence Obligation nothing observed. Under generation neither could happen and neither could be
-reported, which is the same trade every derived artefact makes.
+**So both halves of the pair are faults something says out loud.** A `@fitness` scenario whose
+`@SCN` no CI step states reconciles **missing** and the run is out of balance — the same sentence a
+`@unit` scenario with no test gets. A step stating an `@SCN` no scenario carries posts to a
+**phantom** row, and a step stating none posts to **suspense**. Under generation none of the three
+could happen and none could be reported, which is the same trade every derived artefact makes.
 
 **The `@SCN` is chosen when the check is added, never derived from the scenario's position.** A
 positional code would renumber every citation the moment a scenario was inserted, which is the
@@ -116,16 +121,17 @@ A check that is already a pipeline step needs nothing done to the command:
         run: pnpm lint:boundaries
 ```
 
-**The `id:` is the row's `@SCN`, never a handle of your own choosing.** A handle would need a fourth
-artefact mapping it back to a row — a roster, which is the thing this model does without — and the three
-authors would become four. The obligation stays in the `@fitness` scenario, the command stays in the
-row of `specController.fitnessChecks`, and the step produces the observation; none of the three can
-answer for another, which is the only reason reading them together says anything.
+**The `id:` is the scenario's `@SCN`, never a handle of your own choosing.** A handle would need a
+third artefact mapping it back to a scenario — a roster, which is the thing this model does without.
+The obligation stays in the `@fitness` scenario, and the step both runs the check and produces the
+observation; neither can answer for the other, which is the only reason reading them together says
+anything. An `id:` that is not an `@SCN` cites nothing, so the ids your pipeline already carries for
+its own reasons stay off the books.
 
 **`if: always()` is not the fail-fast trade being abandoned.** The default is `if: success()`, so
 `always()` WIDENS: there is no run in which an `always()` step is skipped and an unconditional one
 is not. What it buys is that an early red no longer decides the report — check steps are independent
-of one another, and a row with no entry in the run record is broken evidence rather than a quiet
+of one another, and a step the run record says was skipped is broken evidence rather than a quiet
 absence, so without it one failure would be reported as one failure and nine unknowns.
 
 **Keep invoking the same handle the step already invoked.** Where you run a green-check derived from
@@ -415,10 +421,11 @@ was not obliged on this run"* are different claims, and conflating them is exact
 hatch above — so this one gets its own name and its own second book if it is needed, never a
 self-certification.
 
-**An authored corpus cannot be emptied silently, and that is what authoring it buys.** A manifest
-whose `fitnessChecks` key is unreadable holds zero rows. A corpus emitted from those rows would
-empty with them, and no rule above could see it. Authored, the corpus stands: every scenario in it
-is one no row configures, and the ledger's census names each of them.
+**An authored corpus cannot be emptied silently, and that is what authoring it buys.** A corpus
+emitted from the pipeline would empty the moment the pipeline lost its annotations, and no rule
+above could see it. Authored, the corpus stands: every scenario in it raises its obligation from
+its own tag, so a pipeline that stopped citing them leaves every one of those obligations
+reconciling **missing** and the run out of balance.
 
 ## The gates your checks run under
 
@@ -432,7 +439,7 @@ the numbers live in the canon pages below, and a copy here would drift from them
 | **Mutation** | your unit tests have teeth, measured per mutated scope against a held percentage, on a schedule rather than per push. Canon: `fitness-functions.md` → *Mutation thresholds are per-scope, and the bar is a held percentage*, and *When the score drops below the bar* — which forbids deleting code to raise a score. |
 | **Continuous delivery** | nothing publishes except a merge to `main`, and every package-changing merge publishes the next counter version with no stored credential. Canon: `technical-design/ci-and-release.md` and `technical-design/publishing-npm-packages.md` → *The model — every package-changing merge publishes, with no stored credential*. |
 | **Expand / contract** | a repository whose CI reads its own tree with its own pinned release changes that model in steps: the reader accepts both shapes and publishes, the bot moves the pin, the tree drops the old shape, and the reader stops accepting it only when no adopter still writes it. Canon: `publishing-npm-packages.md` → *Such a repository changes its own model in expand/contract steps*. |
-| **How a check's outcome reaches the Ledger** | the declaration, discovery and posting this page describes — the tag is the quality check, the row is the command, and the step's `id:` is the citation. Canon: `technical-design/fitness-evidence.md` → *The tag is the quality check; the row is the command*, and *The three adoption states*. |
+| **How a check's outcome reaches the Ledger** | the declaration, discovery and posting this page describes — the tag is the quality check, and the step's `id:` is the citation. Canon: `technical-design/fitness-evidence.md` → *The tag is the quality check; nothing else declares it*, and *The three adoption states*. |
 | **Self-reconciliation** | your own `Ledger` balances, run as a gate in your pipeline: `balance` over your corpus and your run's evidence, red on out-of-balance. Canon: `fitness-functions.md` → *Self-reconciliation — the capstone*. |
 
 **The canon pages are in 3F's `strategy` repository, which is private**, so they are named by page

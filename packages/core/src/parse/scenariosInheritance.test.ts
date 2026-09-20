@@ -9,7 +9,6 @@ import { describe, it, expect } from "vitest";
 import {
   parseScenarios,
 } from "./scenarios.js";
-import { fitnessChecksOf } from "../domain/fitnessChecks.js";
 
 /**
  * @unit for @SCN-LDG-020 (3F-1775) — the PARSED corpus is what CUCUMBER runs.
@@ -97,8 +96,7 @@ Feature: alpha
   Scenario: alpha stays inside its threshold
 `;
     expect(parseScenarios(
-      fitnessSource, [], fitnessChecksOf([{ scn: "SCN-AAA-001" }])
-    )[0]!.evidenceObligations).toEqual([
+      fitnessSource)[0]!.evidenceObligations).toEqual([
       { qualityCheck: "fitness" },
     ]);
 
@@ -151,8 +149,7 @@ Feature: alpha
   Scenario: beta stays inside its threshold
 `;
     expect(parseScenarios(
-      source, [], fitnessChecksOf([{ scn: "SCN-AAA-002" }])
-    )).toEqual([
+      source)).toEqual([
       {
         scnId: "SCN-AAA-001",
         evidenceObligations: [{ qualityCheck: "unit" }, { qualityCheck: "integration" }],

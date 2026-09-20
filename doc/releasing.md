@@ -366,7 +366,10 @@ read the tree, so `main` reds. And if a newer reader turns the tree red, the bot
 goes red — that red is a finding about the tree, fixed in the tree, never by holding the pin back or
 publishing by hand.
 
-**Worked example — 3F-3525 and 3F-3575.** 3F-3525 taught the reader both the old and the new shape
-of a fitness check's declaration and merged on 2026-09-19 (`8bbf06d`), publishing `0.1.0-alpha.15`.
-Its contract, 3F-3575, drops the old shape from this repository's own `specController.fitnessChecks`
-rows — and it waits, because the self-pin is still `0.1.0-alpha.14` until the bot's PR lands.
+**Worked example — 3F-3582 and 3F-3603.** 3F-3582 taught the reader to raise a fitness obligation
+from the `@fitness` tag alone, and to accept a manifest still carrying `specController.fitnessChecks`
+by naming it as a retired key. Its migrate step, 3F-3603, deletes that key from this repository's own
+`package.json` — and it waits, because the pinned reader cannot read a tree with no list at all until
+the bot's PR moves the pin to 3F-3582's release. Written *at or after* that release, never as an
+equality: the pin lags and jumps. (Its predecessor pair, 3F-3525 and the cancelled 3F-3575, made the
+same shape one step earlier.)

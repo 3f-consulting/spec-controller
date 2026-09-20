@@ -18,10 +18,10 @@ in the eight days that followed. A commitment maintained by hand against a
 moving model is one that gets broken quietly — so it is withdrawn deliberately
 instead, while withdrawing it still costs nobody anything.
 
-**What the reader accepts today.** `specController.runners`, `notChecks` and
-`fitnessChecks` (`scn`, `command`), and the `--ci-steps` record, are read exactly as they were. A
-`fitnessChecks` row carrying the retired `characteristic` key is still accepted and read the same
-way; the key is named on the report (see below).
+**What the reader accepts today.** `specController.runners` and `notChecks`, and the `--ci-steps`
+record, are read exactly as they were. `specController.fitnessChecks` is still ACCEPTED — a
+manifest carrying it reconciles exactly as the same tree without it does — but nothing of it is
+read; the key is named on the report (see below).
 
 **Manifest keys that are no longer read are named on the report, never read
 quietly.** `specController.checkRegistry` and `specController.staticChecks` were
@@ -30,16 +30,18 @@ which script a CI step is named by; a bare check tag on a scenario now means
 nothing, and a run over such a tree reports the retired key by name rather than
 reading it quietly. A `fitnessChecks` row's `characteristic` was retired by
 `3F-3525`, when the characteristic left the model: one `@fitness` scenario is one
-check, identified by its `@SCN` and described by its title. The reader goes on
-accepting the key and names it on the report. `specController.thresholds`, a `fitnessChecks` row's
-`atLeast` / `atMost` (a `mutationGate` bar sits under `atLeast`) and the
+check, identified by its `@SCN` and described by its title. `specController.thresholds`, a
+`fitnessChecks` row's `atLeast` / `atMost` (a `mutationGate` bar sits under `atLeast`) and the
 `--measurements` flag were retired by `3F-3506`, with the measured route they
-belonged to: no number reaches the ledger any more. The first two are named on the
-report the same way; `--measurements` is refused as retired, exit 2, and the refusal
-names what replaced it rather than a pin that would bring it back. There is one way
-to declare a fitness check: a
-`@fitness` scenario, a `specController.fitnessChecks` row, and the row's `@SCN`
-on the CI step's `id:`. See
+belonged to: no number reaches the ledger any more. Those are named on the report the same way;
+`--measurements` is refused as retired, exit 2, and the refusal names what replaced it rather than
+a pin that would bring it back.
+
+**`specController.fitnessChecks` itself was retired by `3F-3582`,** and the whole key is now named
+on the report as one line. A `@fitness` scenario raises its obligation from its TAG, whether or not
+anything runs it, so nothing is left for a list to decide. There is one way to declare a fitness
+check, and it is two artefacts: a `@fitness` scenario, and its `@SCN` as the `id:` of the CI step
+that runs the check. See
 [`adopting-fitness-checks.md`](./adopting-fitness-checks.md).
 
 **The observed script prefixes were already gone** before this page was rewritten

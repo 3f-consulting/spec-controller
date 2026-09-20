@@ -100,82 +100,49 @@ describe("[SCN-USG-023] resolveRetiredKeys — the third retired key, thresholds
   });
 });
 
-describe("[SCN-LNT-039] resolveRetiredKeys — a characteristic a configured row still carries, named with its row", () => {
-  it("names a row's characteristic with the @SCN the row states, and reads the row in every other respect", () => {
-    // THE READER DOES NOT STOP ACCEPTING IT (3F-3525, expand/contract step 4): a consumer's rows
-    // carry the word today, so the row is read as any row is and the key is NAMED, never dropped.
+describe("[SCN-USG-024] resolveRetiredKeys — specController.fitnessChecks, the fourth retired key", () => {
+  it("names the key a manifest still carries, in the order the manifest wrote it", () => {
+    // THE READER DOES NOT STOP ACCEPTING IT (3F-3582, expand/contract step 4): a consumer's
+    // manifest carries the key today, and a reader that refused it would take their run down. It
+    // is named, and nothing of it is read.
+    expect(
+      resolveRetiredKeys({
+        specController: {
+          runners: { unit: "vitest" },
+          fitnessChecks: [{ scn: "SCN-CVT-001", command: "eslint" }],
+          notChecks: ["ci.yml:ci:Checkout"],
+        },
+      })
+    ).toEqual(["fitnessChecks"]);
+  });
+
+  it("names it ONCE however many entries it holds, and names nothing for a manifest without it", () => {
+    // ONE LINE PER KEY, NOT PER ENTRY. A row-level account rode in this same set until 3F-3582
+    // (the retired @SCN-LNT-035, @SCN-LNT-039); with the whole key retired, naming each entry
+    // would state one retirement once per entry.
     expect(
       resolveRetiredKeys({
         specController: {
           fitnessChecks: [
-            { scn: "SCN-CVT-001", characteristic: "complexity", command: "eslint" },
-            { scn: "SCN-CVT-002", command: "stryker run" },
+            { scn: "SCN-CVT-001", command: "eslint" },
+            { scn: "SCN-CVT-002", characteristic: "mutation", command: "stryker run" },
           ],
         },
       })
-    ).toEqual(["fitnessChecks[SCN-CVT-001].characteristic"]);
+    ).toEqual(["fitnessChecks"]);
+    expect(resolveRetiredKeys({ specController: { runners: {} } })).toEqual([]);
   });
 
-  it("names a row's characteristic beside its bars, in the order the row wrote them", () => {
+  it("keeps the manifest's order across all four retired keys — one account", () => {
     expect(
       resolveRetiredKeys({
         specController: {
-          fitnessChecks: [{ scn: "@SCN-CVT-001", atMost: 100, characteristic: "complexity" }],
-        },
-      })
-    ).toEqual(["fitnessChecks[SCN-CVT-001].atMost", "fitnessChecks[SCN-CVT-001].characteristic"]);
-  });
-});
-
-describe("[SCN-LNT-035] resolveRetiredKeys — a bar a configured row still carries, named with its row", () => {
-  it("names a row's atLeast and atMost with the @SCN the row states, and a row carrying no bar names nothing", () => {
-    // A MUTATION GATE IS A VALUE OF atLeast, so the key it sits under is what names it — the
-    // value is never inspected, only the key the consumer wrote.
-    expect(
-      resolveRetiredKeys({
-        specController: {
-          fitnessChecks: [
-            { scn: "SCN-CVT-001", command: "eslint", atMost: 10 },
-            { scn: "SCN-CVT-002", atLeast: { mutationGate: "domain" }, atMost: 100 },
-            { scn: "SCN-CVT-003", command: "scn-subissues" },
-          ],
-        },
-      })
-    ).toEqual([
-      "fitnessChecks[SCN-CVT-001].atMost",
-      "fitnessChecks[SCN-CVT-002].atLeast",
-      "fitnessChecks[SCN-CVT-002].atMost",
-    ]);
-  });
-
-  it("names a row's bars in the order the row wrote them, and the @SCN bare however the row spelled it", () => {
-    expect(
-      resolveRetiredKeys({
-        specController: { fitnessChecks: [{ scn: "@SCN-CVT-001", atMost: 100, atLeast: 90 }] },
-      })
-    ).toEqual(["fitnessChecks[SCN-CVT-001].atMost", "fitnessChecks[SCN-CVT-001].atLeast"]);
-  });
-
-  it("keeps the manifest's order across a retired top-level key and a row's bar — one account", () => {
-    expect(
-      resolveRetiredKeys({
-        specController: {
+          fitnessChecks: [{ scn: "SCN-CVT-001" }],
           staticChecks: ["typecheck"],
-          fitnessChecks: [{ scn: "SCN-CVT-001", atLeast: 1 }],
+          thresholds: {},
           checkRegistry: { "lint:foo": "foo" },
         },
       })
-    ).toEqual(["staticChecks", "fitnessChecks[SCN-CVT-001].atLeast", "checkRegistry"]);
-  });
-
-  it("names no bar on a row stating no @SCN to name it by, nor on rows that are not a list", () => {
-    // DEFENSIVE LIKE THE FAMILY: a row with no @SCN is already dropped by the row reader, and a
-    // bar with no row to name it by has no line a consumer could correct from.
-    expect(
-      resolveRetiredKeys({
-        specController: { fitnessChecks: [{ atMost: 10 }, { scn: "", atMost: 1 }, "atMost", null] },
-      })
-    ).toEqual([]);
-    expect(resolveRetiredKeys({ specController: { fitnessChecks: { atMost: 10 } } })).toEqual([]);
+    ).toEqual(["fitnessChecks", "staticChecks", "thresholds", "checkRegistry"]);
   });
 });

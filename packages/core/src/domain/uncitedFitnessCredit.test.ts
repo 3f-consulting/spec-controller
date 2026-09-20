@@ -56,7 +56,6 @@ import { describe, it, expect } from "vitest";
 import { reconcile } from "./evidenceReconciliation.js";
 import type { ScriptCitation } from "../parse/fitnessCitations.js";
 import { parseScenarios } from "../parse/scenarios.js";
-import { fitnessChecksOf } from "./fitnessChecks.js";
 import { runningStaticChecks } from "../parse/runningStaticChecks.js";
 import type { PackageJsonScripts } from "../parse/checkScriptsRunInCI.js";
 
@@ -99,8 +98,7 @@ describe("[SCN-USG-001] an uncited fitness credit lands in suspense and never an
       "    Scenario: the tree compiles under the configured type settings",
     ].join("\n");
     const scenarios = parseScenarios(
-      corpus, [], fitnessChecksOf([{ scn: "SCN-AAA-001" }])
-    );
+      corpus);
     // The obligation IS raised, and it names the row's word — which is the same word as the handle.
     // Without this the plant would prove only that an unnamed check reaches suspense, which is
     // @SCN-USG-001's plain case and was never what the by-handle arm keyed on.

@@ -264,6 +264,30 @@ Given("a target whose scenario carries a group-prefixed check tag", function () 
   corpusTarget = "tests/fixtures/scn-tags-group-prefixed";
 });
 
+
+/**
+ * THE RETIRED FORM, SERVED BY THE SAME RULE (@SCN-STG-004). It raises no Evidence Obligation
+ * (@SCN-LNT-007), so admitting it as a tier would let a scenario look tiered while owing nothing.
+ * Dropped of its group it names what is left, exactly like any other tag.
+ *
+ * ITS OWN FUNCTION, extracted at 3F-3602 when the Then below measured 44 lines against the
+ * function-length standard's 40. Nothing about what it asserts moved.
+ */
+function assertRetiredFormServedByTheSameRule(output: string): void {
+  assert.match(
+    output,
+    /@lint=typecheck/,
+    `expected the retired lint=<handle> form to be named as an offending tag rather than ` +
+      `admitted as a tier; got:\n${output}`
+  );
+  assert.match(
+    output,
+    /should have been @typecheck\b/,
+    `expected the retired form to be served by the SAME rule — dropped of its group, the ` +
+      `message names what is left; got:\n${output}`
+  );
+}
+
 // @SCN-STG-004
 Then("it fails, naming the bare tag the group-prefixed one should have been", function () {
   assert.equal(
@@ -290,21 +314,7 @@ Then("it fails, naming the bare tag the group-prefixed one should have been", fu
     `expected the message to name the bare tag the group-prefixed one should have been ` +
       `(@complexity); got:\n${output}`
   );
-  // THE RETIRED FORM, SERVED BY THE SAME RULE. It raises no Evidence Obligation
-  // (@SCN-LNT-007), so admitting it as a tier would let a scenario look tiered while owing
-  // nothing. Dropped of its group it names what is left, exactly like any other.
-  assert.match(
-    output,
-    /@lint=typecheck/,
-    `expected the retired lint=<handle> form to be named as an offending tag rather than ` +
-      `admitted as a tier; got:\n${output}`
-  );
-  assert.match(
-    output,
-    /should have been @typecheck\b/,
-    `expected the retired form to be served by the SAME rule — dropped of its group, the ` +
-      `message names what is left; got:\n${output}`
-  );
+  assertRetiredFormServedByTheSameRule(output);
   // AND NO NEAR-MISS GUESS ON EITHER. Edit distance has nothing to offer a tag that spells its
   // group into itself, so the two diagnoses must stay distinct: a "did you mean" here would be
   // the courtesy answering a question it cannot see, printed at an author whose intent is
@@ -460,5 +470,5 @@ When("it runs over that same target with no fitness rows configured at all", fun
   // is the target's answer, which axis a scenario is ON is the model's. A grammar gating the
   // axis word on the manifest would red here while the obligation rule — which reads the word
   // with no such gate — was naming SCN-TGT-001 and SCN-TGT-002 as scenarios on that very axis.
-  runTagsInTarget("tests/fixtures/scn-tags-converted-unconfigured");
+  runTagsInTarget("tests/fixtures/scn-tags-converted-no-manifest");
 });

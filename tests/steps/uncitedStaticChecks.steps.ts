@@ -42,7 +42,7 @@ const USG_FIXTURE: UsgFixture = {
 // that target stay intact.
 //
 // ITS MANIFEST NAMES ITS RUNNERS AND ITS INSTALL STEP, because under the inverted rule those
-// steps are candidates like any other and an unconfigured target reports four uncited checks
+// steps are candidates like any other and a target that has configured nothing reports four uncited checks
 // rather than one. That is the `new-client` report and it is correct; what this fixture is for
 // is the ONE unprefixed check, so the other three are taken out the way a consumer takes them
 // out. The check itself is named by nothing — which is the whole scenario.
@@ -2013,7 +2013,7 @@ Then("the report asks the target to configure nothing", function () {
   assert.equal(
     newClientStderr,
     "",
-    `expected the run to say nothing: an unconfigured target is a supported state, not an ` +
+    `expected the run to say nothing: a target that has configured nothing is a supported state, not an ` +
       `incomplete one. Got stderr:\n${newClientStderr}`,
   );
   // AND NEITHER OF THE TWO SECTIONS A CONFIGURED TARGET EARNS. Both are written only when there is

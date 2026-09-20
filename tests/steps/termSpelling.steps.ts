@@ -25,7 +25,7 @@ import assert from "node:assert/strict";
 
 import { parseScenarios, reconcile } from "@3f-consulting/spec-controller-core";
 import type { Ledger, ScenarioReconciliation } from "@3f-consulting/spec-controller-core";
-import { resolveDeferralTags, resolveFitnessChecks } from "@3f-consulting/spec-controller-core/internal";
+import { resolveDeferralTags } from "@3f-consulting/spec-controller-core/internal";
 import type { ScriptCitation } from "@3f-consulting/spec-controller-core/internal";
 // NOT ON THE PUBLISHED BOUNDARY (technical design, 3F-3161's `## Technical design` -- "KEPT ...
 // citationOfCitedRow and ScriptCitation -- the id: route"). Reached by relative import the way
@@ -125,13 +125,12 @@ Given(
 // @SCN-TRM-001
 When("the corpus is reconciled against that target", function () {
   // THE WHOLE SEAM IN ONE STEP. Readings of the target's hand-typed terms, the corpus read
-  // against them, a check step's own citation read against the configured-row index, and the
-  // reconciler handed the result. A reading that stores a term the next lookup cannot ask for
-  // shows here and nowhere else.
-  const fitnessChecks = resolveFitnessChecks(manifest);
+  // against them, a check step's own `id:` read back as its citation, and the reconciler handed
+  // the result. A reading that stores a term the next lookup cannot ask for shows here and
+  // nowhere else.
   deferralTags = resolveDeferralTags(manifest, DEFAULT_DEFERRAL_TAGS);
-  ledger = reconcile(parseScenarios(CORPUS, deferralTags, fitnessChecks), []);
-  citation = citationOfCitedRow(citedStepId, fitnessChecks);
+  ledger = reconcile(parseScenarios(CORPUS, deferralTags), []);
+  citation = citationOfCitedRow(citedStepId);
 });
 
 // @SCN-TRM-001

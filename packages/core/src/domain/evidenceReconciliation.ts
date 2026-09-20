@@ -72,9 +72,7 @@ import {
   citesUnknownScenarioReconciliationsOf,
   suspenseReconciliationsOf,
   noScnCodeReconciliations,
-  unspecifiedRowReconciliations,
 } from "./qualityCheckReconciliation.js";
-import type { UnspecifiedFitnessRow } from "./fitnessChecks.js";
 import {
   ledgerTally,
   runtimeObservationTally,
@@ -94,7 +92,7 @@ import {
 } from "./scenarioReconciliation.js";
 // THE POSTING RULE (3F-2202) — where an entry lands is canon's own glossary group, so it lives on
 // its own concept module. `reconcile` no longer decides a destination; it ASKS.
-import { postingOf } from "./posting.js";
+import { postingOf, type RuntimePosting, type StaticCheckPosting } from "./posting.js";
 import { inEvidenceOrder } from "./evidenceOrder.js";
 // The `fitness` quality-check's own predicate, asked here to NARROW what the posting rule has already
 // routed — see the fitness arm below.
@@ -170,6 +168,81 @@ interface RoutedCredits {
  * is one idea with a name and the fold below is another; nothing about what it decides moved, and
  * the exception list is untouched — an exception buys no headroom.
  */
+/**
+ * THE THREE SUSPENSE STREAMS a routing pass accumulates into, each in observation order.
+ *
+ * NAMED SO THE TWO PER-AXIS ROUTERS BELOW CAN BE HANDED THEM TOGETHER, rather than three
+ * parameters apiece. The suspense row's ITEM ORDER — broken first, then uncited, then the
+ * no-evidence-obligation static checks — is row assembly and stays the fold's, not this type's:
+ * what this names is only which stream a credit joins.
+ */
+interface SuspenseStreams {
+  readonly brokenEvidence: (RuntimeEvidenceObservation | FitnessEvidenceObservation)[];
+  readonly uncited: RuntimeEvidenceObservation[];
+  readonly noEvidenceObligationStaticChecks: FitnessEvidenceObservation[];
+}
+
+/**
+ * ONE FITNESS CREDIT'S DESTINATION, filed.
+ *
+ * THE SPLIT ON THIS AXIS (@SCN-LNT-026), the twin of the runtime router's below. Both suspense
+ * reasons post to suspense because neither names a row, and they stay in separate streams because
+ * they are different facts with different remedies: a check nobody named RAN and wants an
+ * obligation written for it; a broken one never ran and wants its harness fixed.
+ *
+ * THE SECOND CLAUSE IS THE NARROW, NOT A SECOND DECISION. `postingOf` reaches `broken` on this
+ * axis only through `isFitnessObservation`, so asking the same predicate here cannot disagree with
+ * it — it re-states what the rule already settled in the one form the compiler accepts. Nothing
+ * falls between the two arms: an observation that somehow took neither still lands in the second,
+ * misfiled rather than vaporised.
+ *
+ * A CITING run files into the citation index like any other credit (@SCN-LNT-001) — exactly one
+ * row, real or invented. There is no third destination left (3F-2590).
+ */
+function routeFitnessCredit(
+  observation: FitnessEvidenceObservation,
+  posting: StaticCheckPosting,
+  citations: CitationIndex,
+  streams: SuspenseStreams
+): void {
+  if (posting.kind !== "suspense-scenario") {
+    citations.file(posting, observation);
+    return;
+  }
+  if (posting.posted === "broken" && isFitnessObservation(observation)) {
+    streams.brokenEvidence.push(observation);
+  } else streams.noEvidenceObligationStaticChecks.push(observation);
+}
+
+/**
+ * ONE RUNTIME CREDIT'S DESTINATION, filed.
+ *
+ * THE CITATION INDEX holds real AND invented ids alike — a phantom row reads its posted credits
+ * from here too, so both citation-routed destinations file together.
+ *
+ * THE SPLIT (@SCN-LDG-017) — `broken` and `cites-nothing` both land on suspense because neither
+ * names a scenario, but they are different facts with different remedies (fix the harness vs add
+ * the `@SCN`), so their streams stay apart. The rule already told them apart.
+ */
+function routeRuntimeCredit(
+  observation: RuntimeEvidenceObservation,
+  posting: RuntimePosting,
+  citations: CitationIndex,
+  streams: SuspenseStreams
+): void {
+  switch (posting.kind) {
+    case "scenario":
+    case "phantom-scenario": {
+      citations.file(posting, observation);
+      break;
+    }
+    case "suspense-scenario":
+      if (posting.posted === "broken") streams.brokenEvidence.push(observation);
+      else streams.uncited.push(observation);
+      break;
+  }
+}
+
 function routeCredits(
   evidenceObservations: readonly EvidenceObservation[],
   scenarioIds: ReadonlySet<string>
@@ -183,51 +256,21 @@ function routeCredits(
   // BROKEN EVIDENCE FROM EITHER AXIS (@SCN-LNT-026). It was a runtime-only stream while `broken`
   // was a runtime-only fact; a converted static check that did not run is the same fact about the
   // same kind of absence, so it lands in the same stream and renders through the same section.
-  const brokenEvidence: (RuntimeEvidenceObservation | FitnessEvidenceObservation)[] = [];
-  const uncited: RuntimeEvidenceObservation[] = [];
-  const noEvidenceObligationStaticChecks: FitnessEvidenceObservation[] = [];
+  const streams: SuspenseStreams = {
+    brokenEvidence: [],
+    uncited: [],
+    noEvidenceObligationStaticChecks: [],
+  };
+  const { brokenEvidence, uncited, noEvidenceObligationStaticChecks } = streams;
   for (const o of evidenceObservations) {
     // The union NARROW — `qualityCheck === "fitness"` is the `EvidenceObservation` union's TYPE TAG,
     // not a posting decision. Which axis a credit rides is read here; where it LANDS is the rule's,
-    // on both branches.
+    // on both branches — each axis's router above.
     if (o.qualityCheck === "fitness") {
-      const posting = postingOf(o, scenarioIds);
-      // THE SPLIT ON THIS AXIS TOO (@SCN-LNT-026), the twin of the runtime arm's below. Both
-      // reasons post to suspense because neither names a row, and they stay in separate streams
-      // because they are different facts with different remedies: a check nobody named RAN and
-      // wants an obligation written for it; a broken one never ran and wants its harness fixed.
-      //
-      // THE SECOND CLAUSE IS THE NARROW, NOT A SECOND DECISION. `postingOf` reaches `broken` on
-      // this axis only through `isFitnessObservation`, so asking the same predicate here
-      // cannot disagree with it — it re-states what the rule already settled in the one form the
-      // compiler accepts. Nothing falls between the two arms: an observation that somehow took
-      // neither still lands in the second, misfiled rather than vaporised.
-      if (posting.kind === "suspense-scenario") {
-        if (posting.posted === "broken" && isFitnessObservation(o)) brokenEvidence.push(o);
-        else noEvidenceObligationStaticChecks.push(o);
-      }
-      // A CITING run files into the citation index like any other credit (@SCN-LNT-001) —
-      // exactly one row, real or invented. There is no third destination left (3F-2590).
-      else citations.file(posting, o);
+      routeFitnessCredit(o, postingOf(o, scenarioIds), citations, streams);
       continue;
     }
-    const posting = postingOf(o, scenarioIds);
-    switch (posting.kind) {
-      case "scenario":
-      case "phantom-scenario": {
-        // THE CITATION INDEX holds real AND invented ids alike — a phantom row reads its posted
-        // credits from here too, so both citation-routed destinations file together.
-        citations.file(posting, o);
-        break;
-      }
-      case "suspense-scenario":
-        // THE SPLIT (@SCN-LDG-017) — `broken` and `cites-nothing` both land on suspense because
-        // neither names a scenario, but they are different facts with different remedies (fix the
-        // harness vs add the @SCN), so their streams stay apart. The rule already told them apart.
-        if (posting.posted === "broken") brokenEvidence.push(o);
-        else uncited.push(o);
-        break;
-    }
+    routeRuntimeCredit(o, postingOf(o, scenarioIds), citations, streams);
   }
   return { citations, brokenEvidence, uncited, noEvidenceObligationStaticChecks };
 }
@@ -415,70 +458,11 @@ function untaggedScenarioRows(untaggedScenarios: readonly string[]): ScenarioRec
   return rows;
 }
 
-/**
- * THE ROWS A CONFIGURED ROW WITH NO SCENARIO EARNS, assembled (@SCN-LNT-027, 3F-3472).
- */
-function unspecifiedFitnessRowRows(
-  unspecifiedFitnessRows: readonly UnspecifiedFitnessRow[]
-): ScenarioReconciliation[] {
-  const rows: ScenarioReconciliation[] = [];
-  // A CONFIGURED ROW THE CORPUS CARRIES NO SCENARIO FOR (@SCN-LNT-027, 3F-3472) — a check the
-  // target's manifest declares and nothing in its corpus specifies. The obligations travel with
-  // the scenarios, so such a row raised NOTHING: it was not `missing`, not phantom, not suspense,
-  // and a tree carrying one reconciled balanced at exit 0 over a check declared and never written.
-  // `features/fitness-checks.feature` promises the opposite in terms — "a row whose scenario the
-  // corpus does not carry as an Evidence Obligation nothing observed" — and this is that promise.
-  //
-  // THE PRECEDENT IS UNCODED WORK, three lines up: a fact the ordinary obligation path cannot raise
-  // reaches the ledger by a reading of its own and gets its own out-of-balance row so the verdict
-  // can see it at all. There the CORPUS supplies a row the obligations cannot; here the MANIFEST
-  // does.
-  //
-  // THE ROW IS NOT IN `scenarioIds`, WHICH IS WHAT MAKES IT UNDISCHARGEABLE. That set was built
-  // from `scenarios` alone and is not widened here, so a credit citing this row's code still mints
-  // a PHANTOM row (@SCN-LDG-006, @SCN-LNT-009) and a broken credit still lands on SUSPENSE — and
-  // there is no route left by which any credit settles this debit. Synthesising a `Scenario` for
-  // the row instead would have put it INTO that set, so a run whose CI step cited a declared-but-
-  // unwritten check would reconcile BALANCED: a new false green, in the case the phantom row
-  // already covers.
-  for (const row of unspecifiedFitnessRows) {
-    const items = unspecifiedRowReconciliations();
-    rows.push({
-      scnId: row.scnId,
-      kind: "scenario",
-      // ASKED, not restated — the phantom and suspense rows' rule. `unspecifiedRowReconciliations`
-      // always returns the one `missing` item, so the verdict follows from it.
-      verdict: verdictFor(items),
-      // No scenario carries this code, so the citation router posts no credit here — see above.
-      evidenceObservations: [],
-      // THE DEBIT IS REAL AND IS POSTED (@SCN-LDG-023). Unlike the untagged row above, which
-      // reaches the ledger by name and names no check, this row is a declared check of its own:
-      // that is the obligation, and the manifest is what raised it.
-      evidenceObligations: [...items.map((item) => item.evidenceObligation!)],
-      qualityCheckReconciliations: items,
-      reconcilingItems: items,
-      pendingItems: [],
-    });
-  }
-  return rows;
-}
 
 export function reconcile(
   scenarios: Scenario[],
   evidenceObservations: EvidenceObservation[],
-  untaggedScenarios: readonly string[] = [],
-  /**
-   * The CONFIGURED ROWS the target's corpus carries no scenario for (@SCN-LNT-027, 3F-3472) — the
-   * fourth population, minted below.
-   *
-   * IT DEFAULTS, WHERE THE TWO GATES BELOW DELIBERATELY DO NOT (3F-2875). A gate that defaults is a
-   * gate a caller can forget and thereby CHANGE what the summary claims. This is a population, and
-   * an omitted population is indistinguishable from an empty one in the only way that matters:
-   * both mint no rows, and neither says anything about a manifest. Every caller that constructs
-   * `Scenario[]` by hand has no manifest to read rows from, which is `untaggedScenarios`' own
-   * argument for the default it already carries.
-   */
-  unspecifiedFitnessRows: readonly UnspecifiedFitnessRow[] = []
+  untaggedScenarios: readonly string[] = []
 ): Ledger {
   // THE OBLIGATION SIDE, prepared once — the three sets the posting rule and the outcome rules read.
   // Each is already the MODEL's own rule (never re-derived here), and each is built ONCE and
@@ -508,7 +492,6 @@ export function reconcile(
       ...phantomScenarioRows(citations),
       ...suspenseScenarioRows(brokenEvidence, uncited, noEvidenceObligationStaticChecks),
       ...untaggedScenarioRows(untaggedScenarios),
-      ...unspecifiedFitnessRowRows(unspecifiedFitnessRows),
     ],
   };
 }
@@ -691,26 +674,10 @@ export interface Summary {
   /** The fitness-only evidence obligation tally (RMD-005) — always present (a pure balance derive). */
   fitness: FitnessTally;
   /**
-   * The scenarios ON the fitness axis that no configured row NAMES (@SCN-LNT-020) — the corpus's
-   * half-converted checks, in corpus order.
-   *
-   * NOT A LEDGER FOLD, and it says so by being the one member here that is not. It is a fact about
-   * the CORPUS — what a scenario said about itself and what no row said back — which the Ledger
-   * cannot hold: such a scenario raises nothing, so nothing about it reaches a row except the
-   * degenerate `both-missing` item its emptiness earns, and that item's own gloss is about a
-   * scenario carrying no `@SCN`. It rides beside `staticChecks` for the reason that one does: the
-   * report's `### Static checks` section is where a half-entry the run saw and nothing owed is
-   * named, and this is that same class of half-entry on the other side of the books.
-   *
-   * PRESENT ONLY WHEN NON-EMPTY, so a target that has converted nothing — every target today —
-   * renders and serialises exactly as it did before.
-   */
-  unconfiguredFitnessScenarios?: readonly string[];
-  /**
    * THE STEPS RECOGNISED AS BEHAVIOURAL RUNNERS (@SCN-USG-011), in the order the pipeline runs
    * them — what the target named, found where its pipeline invokes it.
    *
-   * NOT A LEDGER FOLD, and it rides here for the reason `unconfiguredFitnessScenarios` does: it is
+   * NOT A LEDGER FOLD, and it rides here because it is
    * a fact about what the reader SAW, not about anything the books hold. A runner raises no
    * obligation and posts no credit — it is the disposition a step gets INSTEAD of reaching the
    * ledger — so there is no row for it to be derived from and it has to be carried.
@@ -760,9 +727,10 @@ export interface Summary {
    * are simply not there for anything downstream to find; naming the key is the only way a
    * consumer who wrote it in good faith learns that none of it is taking effect.
    *
-   * AND A BAR A CONFIGURED ROW STILL CARRIES (@SCN-LNT-035), named with its row —
-   * `fitnessChecks[SCN-XXX-NNN].atLeast` / `.atMost` — in the same account, in manifest order.
-   * The row itself still reaches the books, credited by its step's outcome; only the bar is unread.
+   * A ROW-LEVEL FORM ONCE RODE IN THE SAME ACCOUNT (the retired @SCN-LNT-035, @SCN-LNT-039) —
+   * `fitnessChecks[SCN-XXX-NNN].atLeast` and its siblings — because the row itself still reached
+   * the books and only the value on it was unread. It left with `fitnessChecks`, which is itself a
+   * retired key now (3F-3582) and earns one line like any other.
    *
    * PRESENT ONLY WHEN NON-EMPTY, so a target that carries no retired key — every target today
    * that has never written one — renders and serialises byte-identically to before.
@@ -965,20 +933,8 @@ export function evidenceReconciliationOf(
   evidenceObservations: EvidenceObservation[],
   untaggedScenarios: readonly string[],
   withRuntimeObservations: boolean,
-  withStaticChecks: boolean,
-  /**
-   * The CONFIGURED ROWS the corpus carries no scenario for (@SCN-LNT-027, 3F-3472) — passed
-   * through to `reconcile`, which mints one row apiece. It defaults for the reason given there, and
-   * that reason is NOT the trailing three's: a population omitted mints nothing and claims nothing,
-   * where a gate omitted silently changes what the summary says is in play.
-   */
-  unspecifiedFitnessRows: readonly UnspecifiedFitnessRow[] = []
+  withStaticChecks: boolean
 ): EvidenceReconciliation {
-  const ledger = reconcile(
-    scenarios,
-    evidenceObservations,
-    untaggedScenarios,
-    unspecifiedFitnessRows
-  );
+  const ledger = reconcile(scenarios, evidenceObservations, untaggedScenarios);
   return { summary: summaryOf(ledger, withRuntimeObservations, withStaticChecks), ledger };
 }

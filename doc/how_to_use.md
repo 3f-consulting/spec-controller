@@ -44,24 +44,22 @@ CI already runs is the evidence, and nothing here runs the steps:
     And no suppression directive that suppresses nothing survives the run
 ```
 
-**2. A row in your `package.json`, under `specController.fitnessChecks`.** The row names the
-scenario's code and the command:
+**2. The `@SCN` on the CI step that runs the check, as the step's `id:`.** That is the whole of
+the second artefact — there is no manifest list:
 
-```json
-"specController": {
-  "fitnessChecks": [
-    { "scn": "SCN-FIT-001", "command": "eslint" },
-    { "scn": "SCN-FIT-002", "command": "gh run list --workflow mutation.yml" }
-  ]
-}
+```yaml
+      - name: Complexity
+        id: SCN-FIT-001
+        if: always()
+        run: eslint
 ```
 
-Neither row carries a bar. The mutation bar is Stryker's own `thresholds.break`, and the row is
+Nothing carries a bar. The mutation bar is Stryker's own `thresholds.break`, and its scenario is
 answered by one push step that reads the newest nightly sweep's verdict:
 [`scheduled-checks.md`](./scheduled-checks.md).
 
 **One `@fitness` scenario is one check**, identified by its `@SCN` and described by its title:
-nothing on the row says what the check is about. **A row names no bar** either. Its credit is its
+nothing else says what the check is about. **Nothing names a bar** either. Its credit is its
 step's `outcome`: the tool's exit code on its own CI step is the verdict, whatever the tool
 measures. A row still carrying a retired key — `atLeast` / `atMost`, or `characteristic` — is named
 on the report as carrying one, and is credited by its step's outcome like any other.
@@ -203,7 +201,7 @@ spec-controller balance --features ./features \
 | `--vitest <report.json>` | A Vitest JSON report — runtime test evidence. |
 | `--cucumber <report.json>` | A Cucumber JSON report — runtime test evidence. |
 | `--ci <ci.yml>` | Your CI workflows — a file, or a directory of them (default `.github/workflows`). **This is the scope of discovery**: every step of every job it resolves is read, and narrowing it is how a whole workflow comes out. Also where an UNCONVERTED static check is found running over the real source, and where a check step's `id:` supplies the `@SCN` its result cites. |
-| `--package-json <path>` | The target's `package.json` — its `scripts`, its `specController.fitnessChecks` rows (see *Declaring a fitness check*), and its `specController.runners` / `specController.notChecks` (see *Naming your runners*). Defaults to `package.json` at the working directory. |
+| `--package-json <path>` | The target's `package.json` — its `scripts`, and its `specController.runners` / `specController.notChecks` (see *Naming your runners*). A fitness check is declared by its `@fitness` scenario and the CI step whose `id:` is that scenario's `@SCN`; no manifest key names one. Defaults to `package.json` at the working directory. |
 | `--ci-steps <record.json>` | Your CI run's own record of what each of its steps did — the `toJSON(steps)` dump, evidence for the converted fitness checks. See *Wiring into CI*. Omit it if you have converted none. |
 | `--target <name>` | A name recorded verbatim in the report's provenance (which project this run reconciled). |
 | `--source-sha <sha>` | Override the git commit SHA recorded in provenance (defaults to the resolved HEAD). |

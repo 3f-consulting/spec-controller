@@ -37,7 +37,6 @@ import type { RunContext } from "@3f-consulting/spec-controller-core";
 // in-repo route, and deep module imports into packages/ are the established shape in these step
 // files (cliBalance.steps.ts, report.steps.ts, pendingItems.steps.ts).
 import { hasBrokenEvidence, isBalanced } from "../../packages/core/src/domain/ledger.js";
-import { fitnessChecksOf } from "../../packages/core/src/domain/fitnessChecks.js";
 
 // Fixtures shared across steps within a scenario (isolated per scenario by Cucumber).
 let scenarios: Scenario[];
@@ -1419,6 +1418,48 @@ const LDG018_MESSAGE = "Error: Cannot find package '@cucumber/tag-expressions'";
 let ldg018BrokenRun: Ledger;
 let ldg018SoundRun: Ledger;
 
+
+/**
+ * RUN B, THE CONTROL (@SCN-LDG-018) — a scenario deferring its integration obligation beside a
+ * cleanly-collected proving file for its unit one. It carries a Pending Item and NO broken
+ * evidence, which is what gives the soundness predicate its teeth: soundness must key on the
+ * `broken` outcome specifically, not on "the run carries something unusual".
+ *
+ * ITS OWN FUNCTION, extracted at 3F-3602 when the Given below measured 54 lines against the
+ * function-length standard's 40. Built through the REAL scenario reader and the REAL vitest
+ * reader, exactly as it was inline.
+ */
+function ldg018CleanlyCollectingRun(): Ledger {
+  const soundFeature = [
+    "@LDG",
+    "Feature: fixture",
+    "  Rule: a fixture rule",
+    "    @unit @integrationpending @SCN-HNS-019",
+    "    Scenario: the scenario deferring its integration obligation",
+    "      Given a fixture step",
+  ].join("\n");
+  return reconcile(
+    parseScenarios(soundFeature),
+    parseVitestEvidenceObservations(
+      {
+        testResults: [
+          {
+            name: "packages/core/src/collects-fine.test.ts",
+            status: "passed",
+            assertionResults: [
+              {
+                fullName: "[SCN-HNS-019] the scenario deferring its integration obligation",
+                status: "passed",
+              },
+            ],
+          },
+        ],
+      } satisfies VitestJsonReport,
+      "unit"
+    )
+  );
+}
+
 // @SCN-LDG-018
 Given(
   "a run whose vitest report carries a collection-failed file, and a second run whose report collects cleanly but defers an obligation",
@@ -1458,34 +1499,7 @@ Given(
       )
     );
 
-    const soundFeature = [
-      "@LDG",
-      "Feature: fixture",
-      "  Rule: a fixture rule",
-      "    @unit @integrationpending @SCN-HNS-019",
-      "    Scenario: the scenario deferring its integration obligation",
-      "      Given a fixture step",
-    ].join("\n");
-    ldg018SoundRun = reconcile(
-      parseScenarios(soundFeature),
-      parseVitestEvidenceObservations(
-        {
-          testResults: [
-            {
-              name: "packages/core/src/collects-fine.test.ts",
-              status: "passed",
-              assertionResults: [
-                {
-                  fullName: "[SCN-HNS-019] the scenario deferring its integration obligation",
-                  status: "passed",
-                },
-              ],
-            },
-          ],
-        } satisfies VitestJsonReport,
-        "unit"
-      )
-    );
+    ldg018SoundRun = ldg018CleanlyCollectingRun();
   }
 );
 
@@ -1916,17 +1930,62 @@ let ldgPostingObservations: EvidenceObservation[];
 let ldg022ExpectedAccount: Map<EvidenceObservation, string>;
 let ldg022PendingCredit: EvidenceObservation;
 
-// @SCN-LDG-022
-Given(
-  "a run whose credits span every shape — satisfied, no-evidence-obligation, pending-cited, phantom, uncited, broken, a cited fitness check and an uncited one",
-  function () {
-    // SCN-AAA-003 carries @unitpending — a DEFERRED obligation. The credit citing it below is the
-    // LOAD-BEARING case: before this scenario it vanished from the model entirely, because there
-    // was nowhere for a posted entry to sit. It posts and is findable WHATEVER it reconciles to.
-    //
-    // SCN-AAA-004 is the FITNESS half of the span — a STEPLESS `@fitness` scenario its configured
-    // row names, which is what raises a fitness obligation now that the technique has left the tag.
-    const source = `@AAA
+
+/**
+ * THE FIVE CREDITS @SCN-LDG-022 POSTS SOMEWHERE OTHER THAN A REAL SCENARIO'S OWN ROW.
+ *
+ * ITS OWN FUNCTION, extracted at 3F-3602 when the Given below measured 57 lines against the
+ * function-length standard's 40. Nothing about any of them changed; they are named rather than
+ * positional so the expected-account map below stays readable as a mapping.
+ */
+function ldg022UncitedAndPhantomCredits(): Record<
+  "phantom" | "uncited" | "broken" | "citedFitnessCredit" | "uncitedFitnessCredit",
+  EvidenceObservation
+> {
+  return {
+    // Cites an @SCN no feature carries → posts to that PHANTOM account.
+    phantom: {
+      scnId: "SCN-ZZZ-999", qualityCheck: "unit", status: "passed", locator: "d.test.ts",
+    },
+    // Cites NO scenario → SUSPENSE.
+    uncited: {
+      scnId: null, qualityCheck: "unit", status: "passed", locator: "e.test.ts",
+    },
+    // The proof NEVER RAN — it named no test, so it cites no scenario → SUSPENSE (@SCN-LDG-017).
+    broken: {
+      scnId: null, qualityCheck: "unit", status: "failed", broken: true,
+      locator: "f.test.ts", message: "failed to collect",
+    },
+    // A CITED fitness credit — its CI step stated SCN-AAA-004 as the step's `id:`, so the run
+    // carries that @SCN and posts to exactly one row by the SAME rule the runtime credits use.
+    // Note `staticCheck` is the check that ran and the @SCN is the citation: two different things.
+    citedFitnessCredit: {
+      scnId: "SCN-AAA-004",
+      qualityCheck: "fitness", staticCheck: "lint:named", exists: true, enforcedOverRealSource: true,
+    },
+    // An UNCITED fitness credit: its step stated no @SCN, so it belongs to no row → SUSPENSE,
+    // where it reconciles `cites-no-scenario`. The fitness twin of the uncited runtime credit
+    // above, not a second rule.
+    uncitedFitnessCredit: {
+      qualityCheck: "fitness", staticCheck: "lint:nobody-cites-this", exists: true, enforcedOverRealSource: false,
+    },
+  };
+}
+
+
+/**
+ * THE CORPUS @SCN-LDG-022's SPAN IS READ OVER.
+ *
+ * SCN-AAA-003 carries `@unitpending` — a DEFERRED obligation, and the credit citing it is the
+ * LOAD-BEARING case: before that scenario it vanished from the model entirely, because there was
+ * nowhere for a posted entry to sit. It posts and is findable WHATEVER it reconciles to.
+ *
+ * SCN-AAA-004 is the FITNESS half of the span — a STEPLESS `@fitness` scenario, which is the whole
+ * of what raises a fitness obligation (3F-3582).
+ *
+ * A CONSTANT, hoisted at 3F-3602 to bring the Given below inside the function-length standard.
+ */
+const LDG022_SOURCE = `@AAA
 Feature: alpha
 
   @unit @SCN-AAA-001
@@ -1942,14 +2001,19 @@ Feature: alpha
     Given a thing
 
   @fitness @SCN-AAA-004
-  Scenario: the fitness scenario its configured row names
+  Scenario: the fitness scenario nothing but its tag declares
 `;
-    scenarios = parseScenarios(source, [], fitnessChecksOf([{ scn: "SCN-AAA-004" }]));
+
+// @SCN-LDG-022
+Given(
+  "a run whose credits span every shape — satisfied, no-evidence-obligation, pending-cited, phantom, uncited, broken, a cited fitness check and an uncited one",
+  function () {
+    scenarios = parseScenarios(LDG022_SOURCE);
 
     const satisfied: EvidenceObservation = {
       scnId: "SCN-AAA-001", qualityCheck: "unit", status: "passed", locator: "a.test.ts",
     };
-    // Cites a REAL scenario at a check it never named → `no-evidence-obligation`, on SCN-AAA-002's OWN row.
+    // Cites a REAL scenario at a check it never named → `no-evidence-obligation`, on its OWN row.
     const noEvidenceObligation: EvidenceObservation = {
       scnId: "SCN-AAA-002", qualityCheck: "integration", status: "passed", locator: "b.test.ts",
     };
@@ -1957,37 +2021,11 @@ Feature: alpha
     ldg022PendingCredit = {
       scnId: "SCN-AAA-003", qualityCheck: "unit", status: "passed", locator: "c.test.ts",
     };
-    // Cites an @SCN no feature carries → posts to that PHANTOM account.
-    const phantom: EvidenceObservation = {
-      scnId: "SCN-ZZZ-999", qualityCheck: "unit", status: "passed", locator: "d.test.ts",
-    };
-    // Cites NO scenario → SUSPENSE.
-    const uncited: EvidenceObservation = {
-      scnId: null, qualityCheck: "unit", status: "passed", locator: "e.test.ts",
-    };
-    // The proof NEVER RAN — it named no test, so it cites no scenario → SUSPENSE (@SCN-LDG-017).
-    const broken: EvidenceObservation = {
-      scnId: null, qualityCheck: "unit", status: "failed", broken: true,
-      locator: "f.test.ts", message: "failed to collect",
-    };
-    // A CITED fitness credit — the citation seam resolved `lint:named` to SCN-AAA-004's bare
-    // `named` check and stamped that @SCN on the run, so it posts to exactly one row by the SAME
-    // rule the runtime credits above use. Note the two words differ (`lint:named` the runnable
-    // handle, `named` the bare check): only the citation can join them.
-    const citedFitnessCredit: EvidenceObservation = {
-      scnId: "SCN-AAA-004",
-      qualityCheck: "fitness", staticCheck: "lint:named", exists: true, enforcedOverRealSource: true,
-    };
-    // An UNCITED fitness credit: the seam reached no @SCN for it — no fitness scenario carries its
-    // check — so it belongs to no row → SUSPENSE, where it reconciles `cites-no-scenario`. The
-    // fitness twin of the uncited runtime credit above, not a second rule.
-    const uncitedFitnessCredit: EvidenceObservation = {
-      qualityCheck: "fitness", staticCheck: "lint:nobody-cites-this", exists: true, enforcedOverRealSource: false,
-    };
+    const { phantom, uncited, broken, citedFitnessCredit, uncitedFitnessCredit } =
+      ldg022UncitedAndPhantomCredits();
 
-    ldgPostingObservations = [
-      satisfied, noEvidenceObligation, ldg022PendingCredit, phantom, uncited, broken, citedFitnessCredit, uncitedFitnessCredit,
-    ];
+    ldgPostingObservations = [satisfied, noEvidenceObligation, ldg022PendingCredit,
+      phantom, uncited, broken, citedFitnessCredit, uncitedFitnessCredit];
     evidenceObservations = ldgPostingObservations;
 
     // THE POSTING RULE IS THE CITATION, never the outcome.
@@ -2002,7 +2040,6 @@ Feature: alpha
       [citedFitnessCredit, "SCN-AAA-004"],
       [uncitedFitnessCredit, "(no scenario)"],
     ]);
-
   },
 );
 
@@ -2139,12 +2176,10 @@ let ldg035Credit: FitnessEvidenceObservation;
 Given(
   "two fitness scenarios {string} and {string} whose rows share the retired characteristic word {string}",
   function (firstScn: string, secondScn: string, check: string) {
-    // Both rows still carry the SAME retired characteristic word — the shape two checks sharing a
-    // word once took. The word is not read (3F-3570); what keys each obligation is its own @SCN.
-    const fitnessChecks = fitnessChecksOf([
-      { scn: firstScn, characteristic: check },
-      { scn: secondScn, characteristic: check },
-    ]);
+    // The word two checks once shared is not read at all (3F-3570), and neither is the manifest
+    // entry it sat on (3F-3582); what keys each obligation is the scenario's own @SCN. The word is
+    // kept in the step's TEXT because the shape it names is what this arm is about.
+    void check;
     const source = [
       "@AAA",
       "Feature: alpha",
@@ -2155,7 +2190,7 @@ Given(
       `  @fitness @${secondScn}`,
       "  Scenario: the second row raising the shared check",
     ].join("\n");
-    scenarios = parseScenarios(source, [], fitnessChecks);
+    scenarios = parseScenarios(source);
   },
 );
 
@@ -2277,7 +2312,7 @@ Feature: alpha
   @fitness @SCN-AAA-004
   Scenario: a fitness obligation its configured row names
 `;
-    scenarios = parseScenarios(source, [], fitnessChecksOf([{ scn: "SCN-AAA-004" }]));
+    scenarios = parseScenarios(source);
 
     // Read the debits back off the PARSED scenarios by identity — never hand-built here, so the
     // assertion is against what the engine was actually handed (evidence-manifesto §11A).
@@ -2683,8 +2718,7 @@ Given(
       "    Scenario: a fixture scenario",
     ].join("\n");
     scenarios = parseScenarios(
-      feature, [], fitnessChecksOf([{ scn: scnId }])
-    );
+      feature);
     // The absent-guard record: {exists:false} is an ABSENCE, the input the detector emits for a
     // guard present in neither source. NOT a real observation (contrast the watermelon's
     // exists:true). Stocked as the run's only observation.
