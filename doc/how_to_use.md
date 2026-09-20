@@ -35,11 +35,13 @@ cucumber step definition**. There is no fitness profile to configure and no step
 CI already runs is the evidence, and nothing here runs the steps:
 
 ```gherkin
-    @fitness @SCN-FIT-001
-    Scenario: no module exceeds the complexity bar
-      Given the modules of this repository
-      When each is measured against the complexity bar
-      Then no module exceeds it
+  @fitness @SCN-FIT-001
+  Scenario: every function the push touches measures inside the external complexity standard, and no dead suppression survives
+    Given this repository's source as this push leaves it, and the files the push touched
+    When the external complexity standard is applied across that source
+    Then every function the push touched measures inside the standard
+    And every other function over the standard is reported without failing the run
+    And no suppression directive that suppresses nothing survives the run
 ```
 
 **2. A row in your `package.json`, under `specController.fitnessChecks`.** The row names the
