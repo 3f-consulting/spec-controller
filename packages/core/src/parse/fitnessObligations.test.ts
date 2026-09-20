@@ -6,8 +6,8 @@ import { fitnessChecksOf } from "../domain/fitnessChecks.js";
  * @unit for @SCN-LNT-007 — the retired `@lint=<handle>` form raises NOTHING, and no set of
  * registered check tags is left to re-route it through (3F-3561).
  *
- * Its home is here rather than in `scenarios.test.ts` for that file's own reason: it sits near its
- * `max-lines` ceiling, and a ceiling is not headroom.
+ * Its home is here rather than in `scenarios.test.ts` for that file's own reason: it was near the
+ * file-length ceiling then in force (retired portfolio-wide on 2026-09-18, 3F-2320).
  */
 describe("[SCN-LNT-007] the retired @lint=<handle> form raises no Evidence Obligation", () => {
   /** The runnable handle the retired tag names. Never a script in this tree since 3F-3313. */

@@ -17,10 +17,10 @@
  * column: two jobs of one file, or the two figures of one job, are read against each other rather
  * than one sentence at a time. `behaviouralRunners.ts` takes the same shape for the same reason.
  *
- * Its own module rather than a further section in `markdown.ts`, which sits at a `max-lines`
- * exception — and an exception excuses existing debt, never headroom. The precedent is
- * `runVerdict.ts` and, along this axis, `behaviouralRunners.ts`, `excludedSteps.ts` and
- * `reconcilerSteps.ts`.
+ * Its own module rather than a further section in `markdown.ts`, under the file-length ceiling
+ * then in force — retired portfolio-wide on 2026-09-18 (3F-2320). What keeps it out is that it
+ * is a self-contained emitter, read on its own terms. The precedent is `runVerdict.ts` and,
+ * along this axis, `behaviouralRunners.ts`, `excludedSteps.ts` and `reconcilerSteps.ts`.
  */
 
 import type { RenderInput } from "../assemble/renderInput.js";

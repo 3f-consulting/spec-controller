@@ -10,9 +10,10 @@
  * same recognition also DECIDES membership rather than only reporting it, which is what makes the
  * visibility load-bearing instead of courteous.
  *
- * Its own module rather than a further section in `markdown.ts`, which sits at a `max-lines`
- * exception — and an exception excuses existing debt, never headroom. The precedent is
- * `runVerdict.ts`, moved out for exactly this reason.
+ * Its own module rather than a further section in `markdown.ts`, under the file-length ceiling
+ * then in force — retired portfolio-wide on 2026-09-18 (3F-2320). What keeps it out is that it
+ * is a self-contained emitter, read on its own terms. The precedent is `runVerdict.ts`, moved
+ * out for exactly this reason.
  */
 
 import type { RenderInput } from "../assemble/renderInput.js";

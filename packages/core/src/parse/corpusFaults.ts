@@ -30,8 +30,10 @@
  *
  * WHAT IS LEFT IN THIS MODULE, AND WHAT MOVED OUT. The rules themselves live in two siblings —
  * `corpusCodeFaults.ts` (a code binding to a file) and `corpusGrammarFaults.ts` (a tag meaning
- * something) — because the joined module reached the 400-line `max-lines` ceiling, and canon rules
- * that split rather than an exception entry (@SCN-FIT-001). A third sibling held the claim rule
+ * something) — because the joined module reached the 400-line file-length ceiling then in force,
+ * and canon ruled a split rather than an exception entry. (That ceiling was retired
+ * portfolio-wide on 2026-09-18, 3F-2320; the seam it prompted is the rules' own and stands
+ * without it.) A third sibling held the claim rule
  * (how many checks one scenario claims) until it left with the measured axis (3F-3516). What
  * stays here is the composition and the VOCABULARY: the fault kinds, the shape of a discovered
  * file, and the one entry point any sibling has. Splitting on any other seam would have put a

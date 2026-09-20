@@ -2,8 +2,9 @@
  * THE UNCITED FITNESS CREDIT, PLANTED — and the standing proof that no route answers an
  * Evidence Obligation BY NAME (3F-2625).
  *
- * IN ITS OWN FILE, not appended to `fitnessReconciliation.test.ts`: that file sits against the
- * `max-lines` ceiling, which is a real gate here rather than a style preference (@SCN-FIT-001).
+ * IN ITS OWN FILE, not appended to `fitnessReconciliation.test.ts`: that file was against the
+ * file-length ceiling then in force (retired portfolio-wide on 2026-09-18, 3F-2320), and a plant
+ * reads better standing alone than buried among ordinary arms in any case.
  *
  * WHY A PLANT AND NOT A GREP. `3F-2590` retired the by-name posting route and its commit never
  * touched `qualityCheckReconciliation.ts`, so the by-handle half survived there. The miss was not

@@ -1,9 +1,9 @@
 /**
  * THE RUNTIME TEST-VOLUME CENSUS a run banked — the `### Test volume` cut under Summary views.
  *
- * Its own module rather than a section in `markdown.ts`, which sits at a `max-lines` exception —
- * and an exception excuses existing debt, never headroom. Moved out whole at @SCN-USG-015, when
- * the excluded-step cut beside it needed the room; `runVerdict.ts`, `staticChecks.ts` and
+ * Its own module rather than a section in `markdown.ts`. Moved out whole at @SCN-USG-015, when
+ * the excluded-step cut beside it needed the room under the file-length ceiling then in force
+ * (retired portfolio-wide on 2026-09-18, 3F-2320); `runVerdict.ts`, `staticChecks.ts` and
  * `behaviouralRunners.ts` are the precedent, each moved for exactly this reason. It goes out
  * BESIDE `staticChecks.ts` deliberately: that module's own header already calls this section its
  * mirror on the runtime axis, and the two now sit where a reader looking for either finds both.

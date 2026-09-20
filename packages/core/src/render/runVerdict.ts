@@ -1,8 +1,9 @@
 /**
  * THE RUN VERDICT — the headline sentence a reader meets first, and the exit code it names.
  *
- * Its own module rather than a further section in `markdown.ts`, which sits at a `max-lines`
- * exception — and an exception excuses existing debt, never headroom.
+ * Its own module rather than a further section in `markdown.ts`, under the file-length ceiling
+ * then in force — retired portfolio-wide on 2026-09-18 (3F-2320). What keeps it out is that it
+ * is a self-contained emitter, read on its own terms.
  * The precedent was `measuredItem.ts` (retired with the measured axis, 3F-3516), moved out for
  * the same reason; the move was forced here by
  * @SCN-CLI-019 adding a fifth verdict, and it is the emitter this file is named for.

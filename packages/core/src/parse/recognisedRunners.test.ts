@@ -4,11 +4,11 @@
  * read out of the manifest by (`resolveRunners`, which lives in `./targetManifest.ts`).
  *
  * ITS OWN FILE, split off `runningStaticChecks.test.ts` at @SCN-USG-019 when the closure's arms
- * took that file past the 400-line `max-lines` ceiling. The seam is the one the two readers
- * already have: the file left behind pins the OBSERVER — which of a target's scripts CI runs as a
- * static check — and this one pins the disposition a step gets INSTEAD of reaching that observer.
- * They share a module and nothing else, and a `max-lines` exception buys headroom rather than
- * excusing debt, which is the one thing an exception is not for.
+ * took that file past the 400-line file-length ceiling then in force (retired portfolio-wide on
+ * 2026-09-18, 3F-2320). The seam is the one the two readers already have: the file left behind
+ * pins the OBSERVER — which of a target's scripts CI runs as a static check — and this one pins
+ * the disposition a step gets INSTEAD of reaching that observer. They share a module and nothing
+ * else, which is the whole of the reason they are two files and outlives the ceiling.
  *
  * Parent: @SCN-USG-011 (rule D), @SCN-USG-012 (its teeth), @SCN-USG-016 (the three states of a
  * tier), @SCN-USG-019 (the key set's closure).

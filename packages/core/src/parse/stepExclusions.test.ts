@@ -10,9 +10,9 @@
  * AND is named on the report — and splitting the resolution from its effect would leave two
  * files each passing on half of it.
  *
- * ITS OWN FILE for the reason `recognisedRunners.test.ts` is: `runningStaticChecks.test.ts` sits
- * near the 400-line `max-lines` ceiling, and an exception excuses debt rather than buying
- * headroom.
+ * ITS OWN FILE for the reason `recognisedRunners.test.ts` is: `runningStaticChecks.test.ts` was
+ * near the 400-line file-length ceiling then in force (retired portfolio-wide on 2026-09-18,
+ * 3F-2320), and these arms are a claim of their own in any case.
  *
  * Parent: @SCN-USG-015.
  */

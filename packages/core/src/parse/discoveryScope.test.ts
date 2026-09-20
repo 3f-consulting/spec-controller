@@ -16,8 +16,8 @@
  * the books.
  *
  * ITS OWN FILE for the reason `stepExclusions.test.ts` and `recognisedRunners.test.ts` are:
- * `runningStaticChecks.test.ts` sits near the 400-line `max-lines` ceiling, and an exception
- * excuses debt rather than buying headroom.
+ * `runningStaticChecks.test.ts` was near the 400-line file-length ceiling then in force (retired
+ * portfolio-wide on 2026-09-18, 3F-2320), and these arms are a claim of their own in any case.
  *
  * Parent: @SCN-USG-020.
  */

@@ -2,9 +2,9 @@
  * THE STATIC-CHECK CENSUS a run banked — the counts line under Summary views, and the corpus's
  * half-converted checks beside it.
  *
- * Its own module rather than a section in `markdown.ts`, which sits at a `max-lines` exception —
- * and an exception excuses existing debt, never headroom. Moved out whole at 3F-3353, when the
- * behavioural-runner cut beside it needed the room; `runVerdict.ts` is the precedent, moved for
+ * Its own module rather than a section in `markdown.ts`. Moved out whole at 3F-3353, when the
+ * behavioural-runner cut beside it needed the room under the file-length ceiling then in force
+ * (retired portfolio-wide on 2026-09-18, 3F-2320); `runVerdict.ts` is the precedent, moved for
  * exactly this reason. NOTHING about the section changed in the move: same emitter, same lines,
  * same omit-when-absent.
  */

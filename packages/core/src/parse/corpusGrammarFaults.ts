@@ -8,8 +8,10 @@
  * and the answer is assembled from places that are not this module's: the engine's own
  * quality-check maps, the `SCN-<FFF>-<NNN>` spelling `featureCodeOf` owns, and the target's own
  * manifest. A code rule needs none of those; it reads the corpus's shape. Two questions, two
- * modules; the split happened when the joined module reached the 400-line `max-lines` ceiling
- * with four more grammar clauses still to land (@SCN-FIT-001, and never an exception entry). The
+ * modules; the split happened when the joined module reached the 400-line file-length ceiling
+ * then in force, with four more grammar clauses still to land, and never by an exception entry.
+ * (That ceiling was retired portfolio-wide on 2026-09-18, 3F-2320; the two-question seam stands
+ * without it.) The
  * claim rule that once made a third sibling left with the measured axis (3F-3516): once the axis
  * word is the only word that names a check, no scenario can claim two.
  *

@@ -1,6 +1,6 @@
 /**
  * Unit tests for the tags a scenario inherits from its Feature and Rule (@SCN-LDG-020), split out
- * of scenarios.test.ts under the max-lines ceiling (3F-3559).
+ * of scenarios.test.ts at 3F-3559.
  *
  * Bidirectional evidence: each describe carries the @SCN id of its scenario (Evidence Manifesto §9).
  */

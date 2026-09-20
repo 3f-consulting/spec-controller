@@ -22,10 +22,11 @@
  * disagree it names both of them, because a bare "does not balance" over numbers a reader has to
  * subtract for themselves is the report withholding the one thing it knows.
  *
- * Its own module rather than a further section in `markdown.ts`, which sits at a `max-lines`
- * exception — and an exception excuses existing debt, never headroom. The precedent is
- * `runVerdict.ts` and, along this axis, `discoveryScope.ts`, `behaviouralRunners.ts`,
- * `excludedSteps.ts` and `reconcilerSteps.ts`.
+ * Its own module rather than a further section in `markdown.ts`, under the file-length ceiling
+ * then in force — retired portfolio-wide on 2026-09-18 (3F-2320). What keeps it out is that it
+ * is a self-contained emitter, read on its own terms. The precedent is `runVerdict.ts` and,
+ * along this axis, `discoveryScope.ts`, `behaviouralRunners.ts`, `excludedSteps.ts` and
+ * `reconcilerSteps.ts`.
  */
 
 import type { RenderInput } from "../assemble/renderInput.js";

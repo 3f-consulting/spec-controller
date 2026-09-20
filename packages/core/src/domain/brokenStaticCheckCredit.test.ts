@@ -3,8 +3,9 @@
  * NEVER RAN is excluded from the obligation match STRUCTURALLY, on the flag, whatever else it
  * carries (@SCN-LNT-026).
  *
- * IN ITS OWN FILE, not appended to `evidenceReconciliation.test.ts`: that file sits against its
- * `max-lines` ceiling, which is a real gate here rather than a style preference (@SCN-FIT-001).
+ * IN ITS OWN FILE, not appended to `evidenceReconciliation.test.ts`: that file was against the
+ * file-length ceiling then in force (retired portfolio-wide on 2026-09-18, 3F-2320), and a plant
+ * reads better standing alone than buried among ordinary arms in any case.
  * `uncitedFitnessCredit.test.ts` is the same shape for the same reason.
  *
  * WHY A PLANT AND NOT THE ORDINARY ARMS. Every broken credit this repository's readers actually

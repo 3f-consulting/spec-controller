@@ -6,8 +6,9 @@
  * the obligation rule in scenarios.test.ts; what is pinned here is the walk's own output, now that
  * a second corpus reader consumes it instead of re-deriving inheritance for itself.
  *
- * Its own file rather than a further block in scenarios.test.ts, which sits at a `max-lines`
- * exception — and an exception excuses existing debt, never headroom.
+ * Its own file rather than a further block in scenarios.test.ts, which was at the file-length
+ * ceiling then in force (retired portfolio-wide on 2026-09-18, 3F-2320); the walk's own output is
+ * a claim of its own in any case.
  */
 
 import { describe, it, expect } from "vitest";

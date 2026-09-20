@@ -3,8 +3,9 @@
  * gains when the runtime-observation axis is in play, and the two-sided cell under each.
  *
  * Its own module rather than a block in `markdown.ts`, moved out whole at 3F-3524 so the ledger
- * section's split into functions under the complexity and function-length ceilings did not push
- * the file past its `max-lines`; `staticChecks.ts` and `runVerdict.ts` are the precedent. NOTHING
+ * section's split into functions under the complexity and function-length standards did not push
+ * `markdown.ts` past the file-length ceiling then in force — retired portfolio-wide on
+ * 2026-09-18 (3F-2320); `staticChecks.ts` and `runVerdict.ts` are the precedent. NOTHING
  * about the grid changed in the move: same columns, same headers, same cells.
  */
 
@@ -25,6 +26,31 @@ import { evidenceObligationsOf } from "../domain/journal.js";
 export type EvidenceColumn = { kind: "fitness" } | { kind: "runtime"; qualityCheck: RuntimeQualityCheck };
 
 /**
+ * Which runtime quality-checks the scenario rows RAISE or OBSERVE — the set a column appears for.
+ *
+ * Both are read off the Ledger: a named or no-evidence-obligation quality-check surfaces as a
+ * `QualityCheckReconciliation` at that check; every observed credit surfaces as a posted credit on
+ * the row (@SCN-LDG-022). The retired census's `attributed[]` re-represented those posted credits
+ * — it added no quality-check the rows do not already carry (a matched/no-evidence-obligation credit always
+ * has its `QualityCheckReconciliation`), so folding the rows keeps the column set byte-identical.
+ */
+function runtimeQualityChecksPresent(
+  scenarioRows: readonly ScenarioReconciliation[]
+): ReadonlySet<RuntimeQualityCheck> {
+  const present = new Set<RuntimeQualityCheck>();
+  for (const s of scenarioRows) {
+    for (const o of s.qualityCheckReconciliations) {
+      // A both-missing item carries no quality-check — it drives no column.
+      if (o.qualityCheck && o.qualityCheck !== "fitness") present.add(o.qualityCheck);
+    }
+    for (const o of s.evidenceObservations) {
+      if (o.qualityCheck !== "fitness") present.add(o.qualityCheck);
+    }
+  }
+  return present;
+}
+
+/**
  * The corpus-driven evidence columns: fitness first (when any scenario names a fitness check), then
  * each runtime quality-check present as an EVIDENCE OBLIGATION or as a posted EVIDENCE OBSERVATION
  * on a scenario row, in canonical quality-check order.
@@ -41,22 +67,7 @@ export function evidenceColumns(
   // and the fitness table read. Whether a COLUMN then appears is the renderer's own business; what a
   // row's fitness sub-rows ARE is not.
   const hasStatic = scenarioRows.some((s) => staticCheckReconciliationsOf(s).length > 0);
-  const qualityChecksPresent = new Set<RuntimeQualityCheck>();
-  // A column appears for every runtime quality-check present in EVIDENCE OBLIGATION or OBSERVATION on a scenario
-  // row. Both are read off the Ledger: a named or no-evidence-obligation quality-check surfaces as a
-  // `QualityCheckReconciliation` at that check; every observed credit surfaces as a posted credit on
-  // the row (@SCN-LDG-022). The retired census's `attributed[]` re-represented those posted credits
-  // — it added no quality-check the rows do not already carry (a matched/no-evidence-obligation credit always
-  // has its `QualityCheckReconciliation`), so folding the rows keeps the column set byte-identical.
-  for (const s of scenarioRows) {
-    for (const o of s.qualityCheckReconciliations) {
-      // A both-missing item carries no quality-check — it drives no column.
-      if (o.qualityCheck && o.qualityCheck !== "fitness") qualityChecksPresent.add(o.qualityCheck);
-    }
-    for (const o of s.evidenceObservations) {
-      if (o.qualityCheck !== "fitness") qualityChecksPresent.add(o.qualityCheck);
-    }
-  }
+  const qualityChecksPresent = runtimeQualityChecksPresent(scenarioRows);
   const columns: EvidenceColumn[] = [];
   if (hasStatic) columns.push({ kind: "fitness" });
   for (const qualityCheck of RUNTIME_QUALITY_CHECKS) {

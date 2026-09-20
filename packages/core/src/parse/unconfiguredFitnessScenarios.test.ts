@@ -10,8 +10,7 @@
  *
  * THE REPORT HALF RIDES HERE TOO, though the surface it renders is the renderer's. The reading and
  * the naming are one claim in two halves — a scenario the corpus names must be one the rule raised
- * nothing for — and pinning them in two files would let each go on agreeing with itself. (The
- * renderer's own file also carries a recorded `max-lines` value, which an addition would regress.)
+ * nothing for — and pinning them in two files would let each go on agreeing with itself.
  *
  * Bidirectional evidence: the describes carry the @SCN id, matching
  * features/fitness-reconciliation.feature and the @integration steps in

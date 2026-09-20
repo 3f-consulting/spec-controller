@@ -1,7 +1,6 @@
 /**
  * Unit tests for the reconcile core's broken-evidence fail-safe and uncoded work
- * (src/domain/evidenceReconciliation.ts), split out of evidenceReconciliation.test.ts under the
- * max-lines ceiling (3F-3558).
+ * (src/domain/evidenceReconciliation.ts), split out of evidenceReconciliation.test.ts at 3F-3558.
  *
  * Bidirectional evidence: each describe/it carries the @SCN id of its scenario, so a grep of the
  * id returns both halves of the pair (Evidence Manifesto §9).
