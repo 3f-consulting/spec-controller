@@ -60,6 +60,12 @@ true of the release this merge publishes, and of every release after it: the rea
 the key only when no adopter still writes it, and this page will say so in the same merge that does
 it.)*
 
+**Retired as something you WRITE is a different claim from gone from what the reader ACCEPTS, and
+the two have separate dates.** Nothing below this line asks you for that key: the two artefacts
+above are the whole of what you author, and a check you convert from here on has no row anywhere.
+What the reader still does with a key an earlier adopter wrote is name it and read past it — which
+is the paragraph above, and it stays true until a release says otherwise.
+
 The scenario is **written beside the pipeline rather than derived from it**:
 
 ```gherkin
@@ -70,10 +76,6 @@ The scenario is **written beside the pipeline rather than derived from it**:
     Then every function the push touched measures inside the standard
     And every other function over the standard is reported without failing the run
     And no suppression directive that suppresses nothing survives the run
-```
-
-```json
-{ "scn": "SCN-FIT-001", "command": "eslint" }
 ```
 
 **That is the whole scenario — a tag line, a title, and steps.** A fitness scenario is a
@@ -238,30 +240,29 @@ same way whatever it builds.
 
 ## No step definitions at all, however many checks convert
 
-A converted check's row carries its `@SCN` and its command. Nothing that varies
-between two checks is in the corpus, and nothing that is *common* to them is either — this product
-runs no check on your behalf and binds nothing to your scenario's steps:
+A converted check is its scenario and its step, and there is no third place its `@SCN` or its
+command is written down. Nothing that varies between two checks is in the corpus, and nothing that
+is *common* to them is either — this product runs no check on your behalf and binds nothing to your
+scenario's steps:
 
-| the row | how its credit arrives | what is asserted |
+| what you author | how its credit arrives | what is asserted |
 |---|---|---|
-| `scn`, `command` | its step's **outcome** in the run's own record | the command's **exit code** |
+| a `@fitness` scenario, and its `@SCN` as a step's `id:` | that step's **outcome** in the run's own record | the command's **exit code** |
 
-**Every row is that one kind.** A check that measures something — a mutation score, a suite's
-wall-clock — states its bar where the tool already reads one (Stryker's `thresholds.break`,
+**Every converted check is that one kind.** A check that measures something — a mutation score, a
+suite's wall-clock — states its bar where the tool already reads one (Stryker's `thresholds.break`,
 `timeout <seconds>` around the suite) and fails its step below it. The ledger reads the step's
-outcome, never a number. A row still carrying a retired key — `atLeast` / `atMost` (3F-3506), or
-`characteristic` (3F-3525) — is named on the report as carrying one, and is credited by its step's
-outcome like any other.
+outcome, never a number, and nothing you author names a bar.
 
 ---
 
 ## What you have afterwards — the check is the command, and the pipeline is the enumerator
 
-**A converted check is not trapped anywhere.** Every row's `command` is a command you can run in a
-terminal, on its own, and its exit code is the check's verdict. The conversion took nothing away:
-the row holds the same string the CI step holds.
+**A converted check is not trapped anywhere.** Every converted check's command is a command you can
+run in a terminal, on its own, and its exit code is the check's verdict. The conversion took nothing
+away: the command is still the step's own, the same string it was before you cited it.
 
-Most rows are exactly that — a command you already run, or one off the shelf:
+Most converted checks are exactly that — a command you already run, or one off the shelf:
 
 ```sh
 eslint
@@ -273,17 +274,13 @@ reds: you debug it by running it, not by reading a report about it.
 
 **A run-time bar is the step that runs the suite, and it needs no number at all.** `SCN-FIT-012`
 and `SCN-FIT-013` hold the unit suite and the behavioural suite to a limit. The limit is
-`timeout <seconds>` on the step that runs the suite, the step carries the row's `@SCN` as its
-`id:`, and the row names no bar:
+`timeout <seconds>` on the step that runs the suite, the step carries the scenario's `@SCN` as its
+`id:`, and nothing else names the limit:
 
 ```yaml
 - name: Test
   id: SCN-FIT-012
   run: timeout 75 pnpm test   # plus the reporter flags that write the suite's report
-```
-
-```json
-{ "scn": "SCN-FIT-012", "command": "timeout 75 vitest run" }
 ```
 
 Past the limit GNU `timeout` exits 124, the step's `outcome` is `failure`, and the row reads that
@@ -294,11 +291,14 @@ and nothing reads one back.
 `SCN-FIT-002` holds this repository's domain core to a mutation score, and a sweep costs 8-12
 minutes against a 2-minute ladder, so it runs nightly. The bar is Stryker's own
 `thresholds.break: 95`, so the nightly run concludes `failure` below it. The push step carries the
-row's `@SCN` as its `id:` and asks stock `gh` whether the newest finished nightly on `main`, created
-inside the last 26 hours, concluded `success`. The row names no bar:
+scenario's `@SCN` as its `id:` and asks stock `gh` whether the newest finished nightly on `main`,
+created inside the last 26 hours, concluded `success`. Nothing on your side names the bar:
 
-```json
-{ "scn": "SCN-FIT-002", "command": "gh run list --workflow mutation.yml" }
+```yaml
+      - name: Mutation score
+        id: SCN-FIT-002
+        if: always()
+        run: gh run list --workflow mutation.yml ...
 ```
 
 A lapsed schedule leaves no run inside the window, so the step fails, and so does a sweep that
@@ -309,9 +309,9 @@ itself, and what this shape gives up, are in [`scheduled-checks.md`](./scheduled
 **So what does the pipeline add, if the commands already work?** Enumeration, and only enumeration.
 A check reports what it found and says nothing when it finds none, so its silence cannot be told
 from its absence. Running the commands by hand gives you each one's verdict; running them as steps
-of your pipeline makes **every configured row appear in that run's own record, whatever it did** —
-so a check that quietly stopped running shows up as a row the record carries no step for instead of
-as no output at all.
+of your pipeline makes **every check you have cited appear in that run's own record, whatever it
+did** — so a check that quietly stopped running shows up as a row the record carries no step for
+instead of as no output at all.
 
 **The commands are the evidence. Your pipeline is what makes the set of them observable.** That
 sentence is the whole of why the scenarios exist, and it is the one a product copying this
@@ -322,7 +322,7 @@ migration should take away.
 **1. Where the tool has a bar of its own, carry its verdict across runs, not its number.** A check whose evidence is produced somewhere
 else, such as a nightly sweep, is tempting to carry across as its number: a producer writing a
 record, an upload, a placement on the push that checks the record's age, and a reader printing the
-number for a bar on the row. That is four pieces of your own code, and the scheduled run's own
+number against a bar of its own. That is four pieces of your own code, and the scheduled run's own
 conclusion already says whether the number cleared the bar the tool was given. Read that
 conclusion in one step, as above. This repository built the four pieces, and deleted them
 (3F-3483).
@@ -331,8 +331,8 @@ conclusion in one step, as above. This repository built the four pieces, and del
 wall-clock where the suite runs — a timing wrapper around the step, writing a record — and read it
 back in a step of its own. That is a producer, a record and a reader, all to put on the books a
 fact the step already has. Run the suite under `timeout <seconds>`, give the step
-the row's `id:`, and let the row name no bar. This repository built the long way first, and deleted
-it.
+the scenario's `@SCN` as its `id:`, and let nothing name a bar. This repository built the long way
+first, and deleted it.
 
 **2. `if: always()` goes on every check step, not only the dump.** Without it the first red aborts
 the job, every later check step is skipped, and the ledger reports one `failing` and N `broken` — a
@@ -355,7 +355,7 @@ every step it is pointed at, so what it can get wrong is a step reported as a ch
 before you convert.** A fitness credit says the check RAN, so the reader reads what the run's own
 record says about the running:
 
-| what the record says of your row's step | what the ledger does |
+| what the record says of the step citing your scenario | what the ledger does |
 | -- | -- |
 | `outcome: success` | credits the row — the check ran and found nothing |
 | `outcome: failure` | a **failing** observation — the check ran and found something, out of balance whatever the job concluded |
@@ -363,11 +363,11 @@ record says about the running:
 | **no entry at all**, for a row a handed-over record never carried | **broken evidence**, citing that row |
 | **no record handed over at all** | unchanged — each row reconciles as it did before there was a record: answered from your pipeline's text where discovery reads its step as a check, `missing` where the step runs a named runner; a `missing` row puts the run out of balance at exit **1**, never unsound |
 
-The last two rows are one rule read twice. Your rows come from your manifest and their enumeration
-comes from the run's own record, so emptying either leaves the other standing — which is why an
-emptied corpus now reds instead of balancing over nothing, and why a target that has converted
-nothing (no annotation, no dump) is untouched. Nothing in the record can reach your manifest to
-forge the other half.
+The last two rows are one rule read twice. Your rows come from your corpus — one per `@fitness`
+scenario, raised by the tag — and their enumeration comes from the run's own record, so emptying
+either leaves the other standing, which is why an emptied corpus now reds instead of balancing over
+nothing, and why a target that has converted nothing (no annotation, no dump) is untouched. Nothing
+in the record can reach your corpus to forge the other half.
 
 **And a LOCAL run is that last row, which is worth knowing before you meet it.** The dump is a step
 of your pipeline; running `balance` on your own machine hands it no record, so it reads your
@@ -378,14 +378,15 @@ and reconciles `missing`, which puts the run out of balance rather than unsound.
 commands — and their teeth are their own exit codes. What a local run does not have is the credit
 journal, because the credit journal is the pipeline's.
 
-**If every row you convert is static, that difference is yours to know about.** A MEASURED row's
-credit is a number something has to produce, so a step that never runs produces none and the row
-fails closed unaided. A STATIC row needs **two facts from two places** — its step's status from the
-run record, and its own existence from your manifest — because one fact alone is something a skip
-can supply for free. That is why the two kinds are not made alike: the static row is given its
+**Every check you convert is credited this way, and the difference from the other shape is yours to
+know about.** A credit that is a NUMBER something has to produce fails closed unaided: a step that
+never runs produces none, and the row is short its credit whatever else happened. A credit that is a
+step's OUTCOME needs **two facts from two places** — the step's status from the run record, and the
+obligation's own existence from your corpus — because one fact alone is something a skip can supply
+for free. That is why the two shapes are not made alike: the outcome-credited row is given its
 second fact instead.
 
-**There is no field by which a row declares its own not-examined ending, and there must not be.** A
+**There is no field by which a check declares its own not-examined ending, and there must not be.** A
 step record carries a **status and no exit code**, so such a declaration could only be read for
 *whether it was named*, never checked against anything — `if: false` beside a declared ending would
 read satisfied for ever: a check switched off, green in the ledger, through the product's own
@@ -497,35 +498,36 @@ is that every number lives in one of them and in no copy.
    rows, and that holds for a manifest that says nothing at all. Both keys are documented in
    [`how_to_use.md`](./how_to_use.md).
 
-2. **Write the row** — `scn`, `command`. A check that produces a number applies its own bar and
-   exits non-zero below it; the row names none. A row of yours that still carries the retired
-   `characteristic` key is read the same way, and the report names the key.
-3. **Give the scenario the axis tag** and remove any word naming what it is about. Write the scenario in your
-   fitness corpus and the row beside it; neither half is derived from the other, which is what makes
-   a scenario with no row, and a row with no scenario, something a run can report.
-4. **Leave the command exactly where it is, and give its step the scenario's code as its `id:`.**
+2. **Write the scenario** — in your fitness corpus, carrying `@fitness` and a freshly minted `@SCN`,
+   with a title saying what the check is about and steps saying it in Given/When/Then. **That is
+   the first of the two artefacts, and there is no row to write beside it**: the tag raises the
+   obligation, so nothing has to name the scenario for it to be owed. A check that produces a number
+   applies its own bar and exits non-zero below it, and nothing you author names one.
+3. **Leave the command exactly where it is, and give its step the scenario's code as its `id:`.**
    A converted check is still a CI step; what changes is that the step now carries a citation, and
-   that the job ends with one `toJSON(steps)` dump the reconciler reads.
-5. **Sweep the citations.** A minted `@SCN` changes every surface that names the old one — the
+   that the job ends with one `toJSON(steps)` dump the reconciler reads. Neither artefact is derived
+   from the other, which is what makes a scenario no step cites, and a step citing an `@SCN` no
+   scenario carries, each something a run can report.
+4. **Sweep the citations.** A minted `@SCN` changes every surface that names the old one — the
    corpus, step ids, unit-test pins, docblocks, workflow comments, the decision log. Grep for the
    retired code and expect zero hits.
-6. **Watch out for a check whose evidence is stamped with its `@SCN` somewhere you do not
+5. **Watch out for a check whose evidence is stamped with its `@SCN` somewhere you do not
    rebuild.** Renaming the `@SCN` of a check answered by its step's outcome touches only your own
-   tree: the code lives on the row, the scenario and the step's `id:`, and all three move in one
+   tree: the code lives on the scenario and on the step's `id:`, and both move in one
    commit. That includes a scheduled check read as its run's verdict, because a run's conclusion
    carries no code. A check whose *number* is written down by a job on another cadence, stamped
    with the `@SCN`, is different: the newest record your build can read was written by the code
    you are replacing, and the rename desynchronises the two until that job runs again. **There is
-   no atomic version of that change.** Either have the row's reader accept the superseded code
-   for one cycle, and file the removal of that acceptance as you add it, or rename both sides and
-   accept a red window between the merge and the job's next run, announced rather than
+   no atomic version of that change.** Either have whatever reads that record accept the superseded
+   code for one cycle, and file the removal of that acceptance as you add it, or rename both sides
+   and accept a red window between the merge and the job's next run, announced rather than
    discovered. The route that is not available is deferring the mint indefinitely. A code is
    stable forever and survives a feature-file rename, so a check may keep its code while its
    scenario moves, but a migration that leaves one check in the old numbering has not migrated,
    it has stopped.
-7. **Compare the ledger shape, not the rows.** Every `@SCN` changed, so a row-for-row diff says
+6. **Compare the ledger shape, not the rows.** Every `@SCN` changed, so a row-for-row diff says
    nothing. Same checks claimed, same obligation count, same satisfied / missing verdicts,
    against a baseline captured **before the first edit**.
-8. **Prove the comparison has teeth.** A matching ledger is also what *not migrating* produces.
-   Break one row's `scn` so its credit cites nothing, confirm the comparison reds, and
+7. **Prove the comparison has teeth.** A matching ledger is also what *not migrating* produces.
+   Break one step's `id:` so its credit cites nothing, confirm the comparison reds, and
    restore. A comparison whose teeth are unproven is a diff that is not looking.
